@@ -1,0 +1,122 @@
+{
+  "enabled": true,
+  "forkProcessing": "enabled",
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:base"
+  ],
+  "timezone": "TIME_ZONE",
+  "repositories": ["CAPABILITY_REPO"],
+  "ignorePaths": ["IGNORE_PATHS"],
+  "rebaseStalePrs": true,
+  "dependencyDashboard": true,
+  "platform": "github",
+  "onboarding": false,
+  "dependencyDashboardTitle": "Renovate Dashboard 🤖",
+  "commitBodyTable": true,
+  "rebaseWhen": "conflicted",
+  "suppressNotifications": ["prIgnoreNotification"],
+  "assigneesFromCodeOwners": true,
+  "reviewersFromCodeOwners": true,
+  "helm-values": {
+    "fileMatch": ["./.+\\.yaml$"]
+  },
+  "kubernetes": {
+    "fileMatch": ["\\.yaml$"],
+    "ignorePaths": [
+      "ansible",
+      "scripts",
+      ".github"
+    ]
+  },
+  "hostRules": [
+    {
+      "matchHost": "registry1.dso.mil",
+      "hostType": "docker",
+      "description": "Encrypted creds for registry1, scoped to this Github org using: https://github.com/renovatebot/renovate/blob/main/docs/usage/configuration-options.md#encrypted",
+      "encrypted": {
+        "username": "wcFMA/xDdHCJBTolARAAiYqwOfwkjFnb7ifSRLxTGwyh5K8sUv4LFnEt9+clanU0hAoab9qY+98XLG9F5q+JuNWW9XSRgEYvg21LPhpux+2n+sF/n5UHNEc0X2C9zPVKBzRBu4RoNlsWNdq+wQaznHuw/iKmcDKddB29GTcXAC27ON78ex4jW4GBBEIY75OYfWUVJl3VM8cbK3t5iPNeldmdtS/1rEe8U2tGRdYvkwbMjM1hscHfc5wK06zt8NKz874jpqDYs9jT3FVrJbG9FHoTsrLvC9cEknu1BR3+LrEEV2UTpN+xkLbkCiI9F3rHwwYrAKpm3VDxjieWP2PbAZcazPvqNrC12pR3QrdbIN+6w7Xc9lIOuCcR+nB1mCTaZv4wGYoHmXat/nW58wAHqGzEnkfgfW7/dXvvZPoV/54CW2B8/iEp3oCf/mHk6tM/nlaN0fOcyFuLthD2t3L8bZEU8v88Bpa9sZgQYTg8vO3zGZeXqTznmq8NfseCXezho0syBize/4c7NI67JoVGJGUtOSZ56cNJkmNEhzH3CCKoD+j6shrojQ1yPLFgfxMa1zkp0tcAJ2dMxBbdMiGRKJcnJLRUi3N0z5I+JdydSZlFFj6Y+w7jWs1cff3mTyFCyhK3USyz+pF/ctTwpWixWWR7Zu/I0lqOr90LMri0bjzOf3xWP0eV3Osbi40BmdjScgG2LbZNVbKesnxaKLqzeubgLz9aTVTjHfHWQ753t4Ge/NPq+618M8JXuujYRc/Hw4bm1G7NHTKxPhiHCmDu+wPsNvt+nUvyk9Wb72XHYNdA8bUjV1gHj/1oSc3yGjOyiyaxDUR+nkPB8B+tr1cMWcVczw",
+        "password": "wcFMA/xDdHCJBTolAQ/9FqgG7wEhIpomA4DpTgDIQdShdkpUHxRCAaOXOaYamKxmyqQgX0N55hVvMt100/JK0AomtTehrWjsyYmvOA5bi2QqkJgEu7Vk/Nyg+CeJj27lZnbZ2wkWhIPUUZKbnGzNg8vmFqeSbI/nhcwwG+1Iiy06pBf/NB1V8KeezD3ICPJAe7HfW5FYDpuAnqo4ktagTEcmKp9bSztAEmNVgS325mE+SB5oGI7zZre4WLDmYCcawCJfwE2HqiWp9E42oiyEgsAa2RNmy/9RLMRq8QmAJY9UuAMDgyRUKh1bVEh2rhg3pV8N8ImqD8a7y/b5HOH5SE1b459K7rUACimJf8GtQtuUmU3bEhhYzafbN8sB6PByOgWEqPKvcCffLghCzsene4lOyie48rC0UZSTRrNiebcLLeJTnkQsUNm8x6GN34mZU4qkBam7Isvdyc7BcSo2rvMbsuMJEuns8Ua3TQlAab1PXofHjwf7aDPee4hLtJsR75IdeWA3mhPKo2hnZ08cBDwhsB7aXYxrH3rXAbPx7FvgcxGA73gCFwNXLf6S2xHb+D7C/ny4z9XhIQk4BrxKlmPFlfpELoijHQ34VBilM/XkeICbtBJghE31X3Ef/LZdLBsR9gvT4nK+zRRLVnEqndO4YkHFOjwKWQxyaGmN+ZE5gSbPx0R1EBo7vM48merSdgGRZxfF5OodxM/b3+xxBe6CXqi5yYVeNf/Op/lH/5baX6LUQCYHSNPXPHMstFYQm9QBwn6rA2aOYXojRehYwj8ymQo0wJ0TgVtGHDu+ODhTiPjZV1Mm7vVkucl63FLCDe7odIAgNVMBRInDbGYhKmA+I7To1gU"
+      }
+    }
+  ],
+  "regexManagers": [
+    {
+      "description": "Match on images in zarf yaml (e.g. - registry/repo/image:tag)",
+      "fileMatch": [ 
+        "^zarf\\.yaml$"
+      ],
+      "matchStrings": ["- (?<depName>.*):(?<currentValue>v\\d+\\.\\d+\\.\\d+)"],
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "semver"
+    },
+    {
+      "description": "Match on comments for helm charts in yaml files.",
+      "fileMatch": [".*\\.ya?ml$"],
+      "matchStrings": [
+        "registryUrl=(?<registryUrl>.*?)\n *chart: (?<depName>.*?)\n *version: (?<currentValue>.*)\n",
+        "# renovate: datasource=helm\n .*- name: (?<depName>.*?)\n *url: (?<registryUrl>.*?)\n *version: (?<currentValue>.*)\n"
+      ],
+      "datasourceTemplate": "helm"
+    },
+    {
+      "description": "Match on comments for zarf github actions in yaml files.",
+      "fileMatch": ["./.+\\.ya?ml$"],
+      "matchStrings": [
+        "# renovate: datasource=github-tags depName=(?<depName>.*?)( versioning=(?<versioning>.*?))?\\s.*?version:\\s*(?<currentValue>.*)\\s",
+        "# renovate: datasource=github-tags depName=(?<depName>.*?)( versioning=(?<versioning>.*?))?\\s.*?version:\\s*['\"](?<currentValue>.*)['\"]\\s"
+      ],
+      "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}",
+      "datasourceTemplate": "github-tags"
+    }
+  ],
+  "packageRules": [
+    {
+      "datasources": ["helm"],
+      "commitMessageTopic": "Helm chart {{depName}}",
+      "separateMinorPatch": true
+    },
+    {
+      "datasources": ["docker"],
+      "commitMessageTopic": "Docker image {{depName}}",
+      "commitMessageExtra": "to {{#if isSingleVersion}}v{{{toVersion}}}{{else}}{{{newValue}}}{{/if}}",
+      "enabled": true,
+      "separateMinorPatch": true
+    },
+    {
+      "datasources": ["docker"],
+      "updateTypes": ["major"],
+      "labels": ["renovate/image-release", "dependency/major"]
+    },
+    {
+      "datasources": ["docker"],
+      "updateTypes": ["minor"],
+      "labels": ["renovate/image-release", "dependency/minor"]
+    },
+    {
+      "datasources": ["docker"],
+      "updateTypes": ["patch"],
+      "labels": ["renovate/image-release", "dependency/patch"]
+    },
+    {
+      "datasources": ["helm"],
+      "updateTypes": ["major"],
+      "labels": ["renovate/helm-release", "dependency/major"]
+    },
+    {
+      "datasources": ["helm"],
+      "updateTypes": ["minor"],
+      "labels": ["renovate/helm-release", "dependency/minor"]
+    },
+    {
+      "datasources": ["helm"],
+      "updateTypes": ["patch"],
+      "labels": ["renovate/helm-release", "dependency/patch"]
+    },
+    {   
+        "description": "Group Github Actions updates.",
+        "matchPaths": [".github/**"],
+        "groupName": "GHA-DEPS"
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+bundle:
+  deploy:
+    zarf-packages:
+      init:
+        set:
+          GIT_SERVER_REPLICA_COUNT: 1
