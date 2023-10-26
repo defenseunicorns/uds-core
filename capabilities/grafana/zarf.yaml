@@ -1,0 +1,17 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/defenseunicorns/zarf/main/zarf.schema.json
+
+kind: ZarfPackageConfig
+metadata:
+  name: example
+  description: "Example description"
+  # x-release-please-start-version
+  version: "0.0.1"
+  # x-release-please-end
+
+
+components:
+  - name: test
+    actions:
+      onCreate:
+        after:
+        - cmd: echo "What can Doug do for you?"
