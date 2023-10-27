@@ -1,4 +1,4 @@
-Kyverno Policies BB Umbrella Template Values Exceptions: https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/values.yaml?ref_type=heads
+Kyverno Policies BB Umbrella Template Values Exceptions: https://repo1.dso.mil/big-bang/bigbang/-/blob/master/chart/templates/kyverno-policies/values.yaml?ref_type=heads
 	
 	
 	if twistlock or neuvector
