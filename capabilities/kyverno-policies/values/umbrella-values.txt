@@ -24,14 +24,11 @@ Kyverno Policies BB Umbrella Template Values Exceptions: https://repo1.dso.mil/b
 		
 	if fluentbit or neuvector
 		disallow-privileged-containers
-			exclude fluenbit ns and names
-			exclude neuvector ns and names
+			exclude ns and names
 	
 	if fluentbit or monitoring or twistlock
 		disallow-tolerations:
-			exclude fluentbit ns and names
-			exclude monitoring ns and names
-			exclude twistlock ns and names
+			exclude ns and names
 			
 	if neuvector
 		require-drop-all-capabilities:
