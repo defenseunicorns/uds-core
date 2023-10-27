@@ -114,13 +114,13 @@ jobs:
         shell: bash
         run: zarf package create --confirm
         working-directory: "${{ needs.setup.outputs.capability-path }}/.github/zarf-runner/test"
-
+        if: ${{ inputs.capability }} != ''
+        
       - name: Build Bundle
         shell: bash
         run: zarf package create --confirm
         working-directory: "${{ needs.setup.outputs.bundle-path }}/.github/zarf-runner/bob-the-builder"
         if: ${{ inputs.bundle }} != ''
-
       - name: Deploy Bundle
         shell: bash
         run: zarf package create --confirm
