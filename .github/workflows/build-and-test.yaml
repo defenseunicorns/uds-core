@@ -43,7 +43,7 @@ jobs:
           [ ${{ inputs.bundle }} != 'uds-core' ] && PATH="${{ inputs.bundle }}"
           echo "path=$PATH" >> $GITHUB_OUTPUT   
         if: ${{ inputs.bundle }} != ''
-      - name: Set Alternate Bundle Path
+      - name: Set Capability Path
         id: capability-default
         run: |
           echo "path=capabilities/${{ inputs.capability }}" >> $GITHUB_OUTPUT   
