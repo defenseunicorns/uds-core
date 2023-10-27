@@ -1,0 +1,314 @@
+upgrade:
+  # -- Upgrading from v2 to v3 is not allowed by default, set this to true once changes have been reviewed.
+  fromV2: true
+
+apiVersionOverride:
+  # -- (string) Override api version used to create `PodDisruptionBudget`` resources.
+  # When not specified the chart will check if `policy/v1/PodDisruptionBudget` is available to
+  # determine the api version automatically.
+  podDisruptionBudget: policy/v1
+
+# Configuration
+config:
+  # -- The registry hostname used for the image mutation.
+  defaultRegistry: registry1.dso.mil
+
+# -- Existing Image pull secrets for image verification policies, this will define the `--imagePullSecrets` argument
+existingImagePullSecrets:
+  - private-registry
+
+# Tests configuration
+test:
+  image:
+    # -- (string) Image registry
+    registry: registry1.dso.mil
+    # -- Image repository
+    repository: ironbank/redhat/ubi/ubi8-minimal
+    # -- Image tag
+    # Defaults to `latest` if omitted
+    tag: "8.8"
+    # -- (string) Image pull policy
+    # Defaults to image.pullPolicy if omitted
+    pullPolicy:
+
+  # -- Image pull secrets
+  imagePullSecrets:
+    - name: private-registry
+
+webhooksCleanup:
+  # -- Create a helm pre-delete hook to cleanup webhooks.
+  enabled: false
+  # -- `kubectl` image to run commands for deleting webhooks.
+  image: registry1.dso.mil/ironbank/opensource/kubernetes/kubectl:v1.28.2
+  # -- Image pull secrets
+  imagePullSecrets:
+    - name: private-registry
+
+# Features configuration
+features:
+  policyExceptions:
+    # -- Enables the feature
+    enabled: true # Defense Unicorns Default Value
+    # -- Restrict policy exceptions to a single namespace
+    namespace: "kyverno" # ?
+
+# Cleanup cronjobs to prevent internal resources from stacking up in the cluster
+cleanupJobs:
+  admissionReports:
+    image:
+      # -- (string) Image registry
+      registry: registry1.dso.mil
+      # -- Image repository
+      repository: ironbank/opensource/kubernetes/kubectl
+      # -- Image tag
+      # Defaults to `latest` if omitted
+      tag: "v1.28.2"
+      # -- (string) Image pull policy
+      # Defaults to image.pullPolicy if omitted
+      pullPolicy: ~
+
+    # -- Image pull secrets
+    imagePullSecrets:
+      - name: private-registry
+
+    # -- Security context for the pod
+    podSecurityContext:
+      runAsUser: 1000
+      runAsGroup: 1000
+      runAsNonRoot: true
+
+    # -- Security context for the containers
+    securityContext:
+      runAsUser: 1000
+      runAsGroup: 1000
+
+  clusterAdmissionReports:
+    image:
+      # -- (string) Image registry
+      registry: registry1.dso.mil
+      # -- Image repository
+      repository: ironbank/opensource/kubernetes/kubectl
+      # -- Image tag
+      # Defaults to `latest` if omitted
+      tag: "v1.28.2"
+      # -- (string) Image pull policy
+      # Defaults to image.pullPolicy if omitted
+      pullPolicy: ~
+
+    # -- Image pull secrets
+    imagePullSecrets:
+      - name: private-registry
+
+    # -- Security context for the pod
+    podSecurityContext:
+      runAsUser: 1000
+      runAsGroup: 1000
+      runAsNonRoot: true
+
+    # -- Security context for the containers
+    securityContext:
+      runAsUser: 1000
+      runAsGroup: 1000
+
+# Admission controller configuration
+admissionController:
+  # -- (int) Desired number of pods
+  replicas: 3
+
+  # -- Deployment update strategy.
+  # Ref: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy
+  # @default -- See [values.yaml](values.yaml)
+  updateStrategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0 # Defense Unicorns Default Value
+    type: RollingUpdate
+
+  # -- Security context for the pod
+  podSecurityContext:
+    runAsUser: 10001
+    runAsGroup: 10001
+    runAsNonRoot: true
+
+  # -- Image pull secrets
+  imagePullSecrets:
+    - name: private-registry
+
+  initContainer:
+    image:
+      # -- Image registry
+      registry: registry1.dso.mil
+      # -- Image repository
+      repository: ironbank/opensource/kyverno/kyvernopre
+      # -- (string) Image tag
+      # If missing, defaults to image.tag
+      tag: "v1.10.3"
+      # -- (string) Image pull policy
+      # If missing, defaults to image.pullPolicy
+      pullPolicy:
+
+    # -- Container security context
+    securityContext:
+      runAsUser: 10001
+      runAsGroup: 10001
+
+  container:
+    image:
+      # -- Image registry
+      registry: registry1.dso.mil
+      # -- Image repository
+      repository: ironbank/opensource/kyverno
+      # -- (string) Image tag
+      # Defaults to appVersion in Chart.yaml if omitted
+      tag: "v1.10.3"
+      # -- Image pull policy
+      pullPolicy: IfNotPresent
+
+    # -- Image pull secrets
+    imagePullSecrets:
+      - name: private-registry
+
+    resources:
+      # -- Pod resource limits
+      limits:
+        cpu: 1000m # Defense Unicorns Default Value
+        memory: 1Gi # Defense Unicorns Default Value
+      # -- Pod resource requests
+      requests:
+        cpu: 1000m # Defense Unicorns Default Value
+        memory: 1Gi # Defense Unicorns Default Value
+
+    # -- Container security context
+    securityContext:
+      runAsUser: 10001
+      runAsGroup: 10001
+
+    # -- Additional container args.
+    extraArgs:
+      clientRateLimitQPS: 300 # Defense Unicorns Default Value
+      clientRateLimitBurst: 300 # Defense Unicorns Default Value
+
+# Background controller configuration
+backgroundController:
+  image:
+    # -- Image registry
+    registry: registry1.dso.mil
+    # -- Image repository
+    repository: ironbank/opensource/kyverno/kyverno/background-controller
+    # -- Image tag
+    # Defaults to appVersion in Chart.yaml if omitted
+    tag: "1.10.3"
+    # -- Image pull policy
+    pullPolicy: IfNotPresent
+
+  # -- Image pull secrets
+  imagePullSecrets:
+    - name: private-registry
+
+  # -- (int) Desired number of pods
+  replicas: 2 # Defense Unicorns Default Value
+
+  # -- Extra arguments passed to the container on the command line
+  extraArgs:
+    clientRateLimitQPS: 300 # Defense Unicorns Default Value
+    clientRateLimitBurst: 300 # Defense Unicorns Default Value
+
+  # -- Security context for the pod
+  podSecurityContext:
+    runAsUser: 1000
+    runAsGroup: 1000
+    runAsNonRoot: true
+
+  # -- Security context for the containers
+  securityContext:
+    runAsUser: 1000
+    runAsGroup: 1000
+
+# Cleanup controller configuration
+cleanupController:
+  image:
+    # -- Image registry
+    registry: registry1.dso.mil
+    # -- Image repository
+    repository: ironbank/opensource/kyverno/kyverno/cleanup-controller
+    # -- (string) Image tag
+    # Defaults to appVersion in Chart.yaml if omitted
+    tag: "v1.10.3"
+    # -- Image pull policy
+    pullPolicy: IfNotPresent
+
+  # -- Image pull secrets
+  imagePullSecrets:
+    - name: private-registry
+
+  # -- (int) Desired number of pods
+  replicas: 2 # Defense Unicorns Default Value
+
+  # -- Extra arguments passed to the container on the command line
+  extraArgs:
+    clientRateLimitQPS: 300 # Defense Unicorns Default Value
+    clientRateLimitBurst: 300 # Defense Unicorns Default Value
+
+  # -- Security context for the pod
+  podSecurityContext:
+    runAsUser: 1000
+    runAsGroup: 1000
+    runAsNonRoot: true
+
+  # -- Security context for the containers
+  securityContext:
+    runAsUser: 1000
+    runAsGroup: 1000
+
+# Reports controller configuration
+reportsController:
+  image:
+    # -- Image registry
+    registry: registry1.dso.mil
+    # -- Image repository
+    repository: ironbank/opensource/kyverno/kyverno/reports-controller
+    # -- (string) Image tag
+    # Defaults to appVersion in Chart.yaml if omitted
+    tag: "1.10.3"
+    # -- Image pull policy
+    pullPolicy: IfNotPresent
+
+  # -- Image pull secrets
+  imagePullSecrets:
+    - name: private-registry
+
+  # -- (int) Desired number of pods
+  replicas: 2 # Defense Unicorns Default Value
+
+  # -- Extra arguments passed to the container on the command line
+  extraArgs:
+    clientRateLimitQPS: 300 # Defense Unicorns Default Value
+    clientRateLimitBurst: 300 # Defense Unicorns Default Value
+
+  resources:
+    # -- Pod resource limits
+    limits:
+      cpu: 2000m # Defense Unicorns Default Value
+      memory: 2Gi # Defense Unicorns Default Value
+    # -- Pod resource requests
+    requests:
+      cpu: 100m
+      memory: 64Mi
+
+  # -- Security context for the pod
+  podSecurityContext:
+    runAsUser: 1000
+    runAsGroup: 1000
+    runAsNonRoot: true
+
+  # -- Security context for the containers
+  securityContext:
+    runAsUser: 1000
+    runAsGroup: 1000
+## Custom Additions
+
+### This might be handled by an optional component or by Pepr
+# networkPolicies:
+#   enabled: true
+#   # See `kubectl cluster-info` and then resolve to IP
+#   controlPlaneCidr: 0.0.0.0/0

@@ -1,4 +1,4 @@
-# UDS Capability [name]
+# UDS Capability Kyverno
 
 ## How to upgrade this capability
 

@@ -2,16 +2,56 @@
 
 kind: ZarfPackageConfig
 metadata:
-  name: example
-  description: "Example description"
+  name: uds-capability-kyverno
+  description: "UDS wrapper of upstream Kyverno helm chart."
   # x-release-please-start-version
   version: "0.0.1"
   # x-release-please-end
 
-
 components:
-  - name: test
-    actions:
-      onCreate:
-        after:
-        - cmd: echo "What can Doug do for you?"
+  - name: kyverno
+    required: true
+    charts:
+      # renovate: datasource=helm
+      - name: kyverno
+        url: https://kyverno.github.io/kyverno/
+        version: v3.0.0
+        gitPath: kyverno/kyverno
+        namespace: kyverno
+        releaseName: kyverno
+        valuesFiles:
+          - values/kyverno-values.yaml
+
+    images:
+      - registry1.dso.mil/ironbank/redhat/ubi/ubi8-minimal:8.8
+      - registry1.dso.mil/ironbank/opensource/kubernetes/kubectl:v1.28.2
+      - registry1.dso.mil/ironbank/opensource/kyverno/kyvernopre:v1.10.3
+      - registry1.dso.mil/ironbank/opensource/kyverno:v1.10.3
+      - registry1.dso.mil/ironbank/opensource/kyverno/kyverno/background-controller:1.10.3
+      - registry1.dso.mil/ironbank/opensource/kyverno/kyverno/cleanup-controller:v1.10.3
+      - registry1.dso.mil/ironbank/opensource/kyverno/kyverno/reports-controller:1.10.3
+
+    # Probably will be handled by Pepr ?
+    # manifests:
+    #   - name: network-policies
+    #     namespace: kyverno
+    #     files:
+    #       - manifests/network-policy/allow-ns.yaml
+    #       - manifests/network-policy/egress-api-server.yaml
+    #       - manifests/network-policy/egress-default-deny.yaml
+    #       - manifests/network-policy/egress-image-repository.yaml
+    #       - manifests/network-policy/egress-kube-dns.yaml
+    #       - manifests/network-policy/ingress-default-deny.yaml
+    #       - manifests/network-policy/ingress-monitoring.yaml
+    #       - manifests/network-policy/ingress-webhook.yaml
+
+    # Maybe use this with the upcomig only.flavor ?
+    # images:
+    #   - busybox:1.35
+    #   - bitnami/kubectl:1.26.10
+    #   - bitnami/kubectl:1.26.4
+    #   - ghcr.io/kyverno/kyvernopre:v1.10.0
+    #   - ghcr.io/kyverno/kyverno:v1.10.0
+    #   - ghcr.io/kyverno/background-controller:v1.10.0
+    #   - ghcr.io/kyverno/cleanup-controller:v1.10.0
+    #   - ghcr.io/kyverno/reports-controller:v1.10.0
