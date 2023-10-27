@@ -1,0 +1,99 @@
+Kyverno Policies BB Umbrella Template Values Exceptions: https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/values.yaml?ref_type=heads
+	
+	
+	if twistlock or neuvector
+		disallow-host-namespaces
+			exclude ns and names
+		
+	// add istio.ingressGateways of type NodePort to nodePortIngressGateways
+	// add istio.values.ingressGateways of type NodePort to nodePortIngressGateways
+	
+
+	if nodePortIngressGateways
+		disallow-nodeport-services
+			exclude kind (svc) names and ns
+			
+	disallow-image-tags (enforce)
+	
+	disallow-istio-injection-bypass
+		if istio
+			exclude "istio-system"
+	
+	disallow-namespaces:
+		disallow bigbang and default
+		
+	if fluentbit or neuvector
+		disallow-privileged-containers
+			exclude fluenbit ns and names
+			exclude neuvector ns and names
+	
+	if fluentbit or monitoring or twistlock
+		disallow-tolerations:
+			exclude fluentbit ns and names
+			exclude monitoring ns and names
+			exclude twistlock ns and names
+			
+	if neuvector
+		require-drop-all-capabilities:
+			exclude neuvector ns and names
+	
+	require-image-signature (audit)
+	
+	if istio
+		requier-istio-on-namespaces:
+			exclude kube-node-lease, kube-public, kube-system, bigbang, default, flux-system, istio-operator, istio-system
+			
+	if istio
+		require-non-root-group:
+			excludeContainers istio-init
+		if deloyNodeAgent or twistlock or fluentbit or promtail
+			exclude:
+				ns and names (specific names)
+				
+	require-non-root-user
+		if istio
+			excludeContainers istio-init
+		if deployNodeAgent or twistlock or fluentbit or promtail
+			exclude:
+				ns and names (specific names)
+	
+	if twistlock
+		restrict-apparmor:
+			exclude ns and names
+		
+	restrict-capabilities
+		parameters.allow
+			- NET_BIND_SERVICE
+			if istio:
+				- NET_ADMIN
+				- NET_RAW
+	
+	
+	restrict-host-path-mount
+		if fluentbit or monitoring or promtail or twistlock or neuvector or deployNodeAgent
+			exclude ns and names
+	
+	restrict-host-path-mount-pv (enforce)
+	
+	restrict-host-path-write
+		if neuvector or twistlock
+			exclude ns and names
+		if fluentbit or promtail
+			parameters.allow
+				...
+				
+	restrict-image-registries (enforce)
+	
+	if fluentbit or promtail or twistlock
+		restrict-selinux-type
+			exclude ns and names
+		
+	if deployAgent
+		restrict-user-id
+			exclude ns and names
+			
+	if fluentbit or monitoring or promtail or twistlock or neuvector or deployAgent
+		restrict-volume-types:
+			exclude ns and names
+			
+	// merge policies from different values files
