@@ -26,15 +26,5 @@ components:
     actions:
       onCreate:
         before:
-          - description: Release the artifact
-            cmd: |
-                ARCH=$(uname -m)
-                [ "$ARCH" = "x86_64" ] && ARCH="amd64"
-                ./zarf p publish zarf-package-uds-capability-istio-$ARCH-0.1.0.tar.zst oci://ghcr.io/defenseunicorns/packages
-            dir: ../build
-          - description: Release the skeleton artifact
-            cmd: |
-                ARCH=$(uname -m)
-                [ "$ARCH" = "x86_64" ] && ARCH="amd64"
-                ./zarf p publish . oci://ghcr.io/defenseunicorns/packages
-            dir: ../../../
+          - description: Placeholder
+            cmd: echo "bundle release placeholder step"
