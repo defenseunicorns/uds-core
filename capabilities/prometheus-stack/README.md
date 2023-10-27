@@ -1,6 +1,6 @@
-# uds-capability-prometheus
+# uds-capability-prometheus-stack
 
-UDS Capability for monitoring using [kube-prometheus-stack](https://github.com/prometheus-operator/kube-prometheus) (except grafana)
+UDS Capability for Prometheus-Stack using [kube-prometheus-stack](https://github.com/prometheus-operator/kube-prometheus) (except Grafana)
 
 ## Prerequisites
 
@@ -23,5 +23,5 @@ zarf package deploy --confirm zarf-package-*.tar.zst
 ## Remove
 
 ```bash
-zarf package remove --confirm deploy uds-capability-prometheus
+zarf package remove --confirm deploy uds-capability-prometheus-stack
 ```

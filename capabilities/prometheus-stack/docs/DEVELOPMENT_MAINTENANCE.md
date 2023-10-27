@@ -1,4 +1,4 @@
-# UDS Capability Prometheus
+# UDS Capability Prometheus-Stack
 
 ## How to upgrade this capability
 
