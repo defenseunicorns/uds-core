@@ -107,13 +107,13 @@ jobs:
       - name: Deploy Capability
         shell: bash
         run: zarf package create --confirm --no-progress
-        working-directory: "${{ needs.setup.outputs.capability-path }}/.github/zarf-runner/farmer-pickles"
+        working-directory: "${{ needs.setup.outputs.capability-path }}/.github/zarf-runner/deploy"
         if: ${{ inputs.capability }} != ''
 
       - name: Test Capability
         shell: bash
         run: zarf package create --confirm --no-progress
-        working-directory: "${{ needs.setup.outputs.capability-path }}/.github/zarf-runner/bernard-bentley"
+        working-directory: "${{ needs.setup.outputs.capability-path }}/.github/zarf-runner/test"
 
       - name: Build Bundle
         shell: bash
@@ -124,11 +124,11 @@ jobs:
       - name: Deploy Bundle
         shell: bash
         run: zarf package create --confirm --no-progress
-        working-directory: "${{ needs.setup.outputs.bundle-path }}/.github/zarf-runner/farmer-pickles"
+        working-directory: "${{ needs.setup.outputs.bundle-path }}/.github/zarf-runner/deploy"
         if: ${{ inputs.bundle }} != ''
 
       - name: Test Bundle
         shell: bash
         run: zarf package create --confirm --no-progress
-        working-directory: "${{ needs.setup.outputs.bundle-path }}/.github/zarf-runner/bernard-bentley"
+        working-directory: "${{ needs.setup.outputs.bundle-path }}/.github/zarf-runner/test"
         if: ${{ inputs.bundle }} != ''

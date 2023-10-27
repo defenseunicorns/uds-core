@@ -9,17 +9,17 @@ components:
   - name: build
     required: true
     import:
-      path: ../bob-the-builder
+      path: ../build
 
   - name: deploy
     required: true
     import:
-      path: ../farmer-pickles
+      path: ../deploy
 
   - name: test
     required: true
     import:
-      path: ../bernard-bentley
+      path: ../test
 
   - name: release
     required: true

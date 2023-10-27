@@ -28,7 +28,7 @@ jobs:
 
       - name: Publish Zarf Package
         run: zarf package create . --confirm --no-progress
-        working-directory: ".github/zarf-runner/rusty-rogers"
+        working-directory: ".github/zarf-runner/release"
         timeout-minutes: 60
 
 
