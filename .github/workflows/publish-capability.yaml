@@ -1,6 +1,6 @@
 name: Publish Capability Package
 
-# Will remove before merge and make it only tags
+# This is a placeholder for now
 on:
   workflow_call:
     inputs:
@@ -27,7 +27,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Publish Zarf Package
-        run: zarf package create . --confirm --no-progress
+        run: zarf package create . --confirm
         working-directory: ".github/zarf-runner/release"
         timeout-minutes: 60
 
