@@ -27,3 +27,10 @@ components:
               npm ci
               npx --yes ts-node secret.ts
             dir: ../../../gw-tls
+        after:
+          - description: Wait for the istio gateway to have the label required for vs generation.
+            wait:
+              cluster:
+                kind: Gateway
+                name: uds/istio-domain=uds.dev
+                namespace: istio-tenant-gateway

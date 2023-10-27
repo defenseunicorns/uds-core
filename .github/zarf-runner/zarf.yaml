@@ -11,9 +11,9 @@ components:
   - name: deploy
     required: true
     import:
-      path: farmer-pickles
+      path: deploy
 
   - name: test
     required: true
     import:
-      path: bernard-bentley
+      path: test

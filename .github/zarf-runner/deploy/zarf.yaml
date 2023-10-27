@@ -17,14 +17,15 @@ components:
                 [ "$ARCH" = "x86_64" ] && ARCH="amd64"
                 ./uds deploy oci://ghcr.io/zachariahmiller/k3d-common:0.1.0-$ARCH --no-progress --confirm
             dir: ../build
-          - description: Deploy the istio
+          - description: Deploy the bundle
             cmd: |
                 ARCH=$(uname -m)
                 [ "$ARCH" = "x86_64" ] && ARCH="amd64"
-                ./zarf p d ../build/zarf-package-uds-capability-istio-$ARCH-1.19.3.tar.zst  --no-progress --confirm #${COMPONENTS}          
+                ./uds d ../build/uds-bundle-name-0.1.0-$ARCH.tar.zst  --no-progress --confirm #${COMPONENTS}          
           - description: Inject tls certificate
             cmd: |
-              npm install
-              npm install -g ts-node typescript '@types/node'
-              ts-node secret.ts
+              npm ci
+              npx --yes ts-node secret.ts
             dir: ../../../gw-tls
+
+
