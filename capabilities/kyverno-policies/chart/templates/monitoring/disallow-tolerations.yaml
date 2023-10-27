@@ -1,0 +1,20 @@
+apiVersion: kyverno.io/v2alpha1
+kind: PolicyException
+metadata:
+  name: disallow-tolerations
+  namespace: kyverno
+spec:
+  exceptions:
+    - policyName: disallow-tolerations
+      ruleNames:
+        - disallow-tolerations-pod-1
+        - disallow-tolerations-controller-1
+        - disallow-tolerations-cronjob-1
+        - disallow-tolerations-runtimeclass-1
+  match:
+    any:
+      - resources:
+          namespaces:
+            - monitoring
+          names:
+            - monitoring-monitoring-prometheus-node-exporter*

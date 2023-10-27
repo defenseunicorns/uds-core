@@ -1,0 +1,18 @@
+apiVersion: kyverno.io/v2alpha1
+kind: PolicyException
+metadata:
+  name: disallow-privileged-containers
+  namespace: kyverno
+spec:
+  exceptions:
+    - policyName: disallow-privileged-containers
+      ruleNames:
+        - priviledged-containers # this is misspelled in BB Kyverno-Policies
+  match:
+    any:
+      - resources:
+          namespaces:
+            - neuvector
+          names:
+            - neuvector-enforcer-pod*
+            - neuvector-controller-pod*

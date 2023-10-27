@@ -1,0 +1,21 @@
+# apiVersion: kyverno.io/v2alpha1
+# kind: PolicyException
+# metadata:
+#   name: disallow-nodeport-services
+#   namespace: kyverno
+# spec:
+#   exceptions:
+#     - policyName: disallow-nodeport-services
+#       ruleNames:
+#         - validate-nodeport
+#   match:
+#     any:
+#     - resources:
+#         kinds:
+#         - Service
+#         names:
+#         {{- range $name := $nodePortIngressGateways }}
+#         - {{ $name }}
+#         {{- end }}
+#         namespaces:
+#         - "istio-system"

@@ -20,5 +20,14 @@ components:
         namespace: kyverno
         releaseName: kyverno-policies
         valuesFiles:
+          - values/umbrella-values-dep.yaml
     images:
       - registry1.dso.mil/ironbank/opensource/kubernetes/kubectl:v1.28.3
+
+  - name: kyverno-policy-exceptions
+    required: true
+    charts:
+      - name: kyverno-policy-exceptions
+        localPath: chart
+        version: 0.0.1
+        namespace: kyverno
