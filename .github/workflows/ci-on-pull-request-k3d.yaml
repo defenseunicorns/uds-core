@@ -56,12 +56,13 @@ jobs:
     with:
       capability: ${{ matrix.capability }}
     secrets: inherit
-
+    if: ${{ needs.check-paths.outputs.capabilities }} != "[]"
 
   build-and-test-bundle:
     needs: [check-paths, build-and-test-capabilities]
     strategy:
       matrix:
         bundle: ${{ fromJSON(needs.check-paths.outputs.bundles) }}
-    uses: ./.github/workflows/build-and-test.yaml
+    uses: ./.github/workflows/build-and-test-bundle.yaml
     secrets: inherit
+    if: ${{ needs.check-paths.outputs.bundles }} != "[]"

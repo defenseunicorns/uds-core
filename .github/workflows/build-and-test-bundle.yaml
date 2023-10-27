@@ -1,4 +1,4 @@
-name: Build and Test uds core Capabilities on k3d
+name: Build and Test uds core bundles on k3d
 
 
 on:
@@ -91,28 +91,26 @@ jobs:
       - name: Install k3d
         run: |
           curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | TAG=v5.6.0 bash
-
-      - name: Build Capability
+        
+      - name: Build Bundle
         shell: bash
         run: zarf package create --confirm
-        working-directory: "${{ needs.setup.outputs.capability-path }}/.github/zarf-runner/bob-the-builder"
-        if: ${{ inputs.capability }} != ''
+        working-directory: "${{ needs.setup.outputs.bundle-path }}/.github/zarf-runner/bob-the-builder"
+        if: ${{ inputs.bundle }} != ''
 
-      - name: Deploy Capability
+      - name: Deploy Bundle
         shell: bash
         run: zarf package create --confirm
-        working-directory: "${{ needs.setup.outputs.capability-path }}/.github/zarf-runner/deploy"
-        if: ${{ inputs.capability }} != ''
+        working-directory: "${{ needs.setup.outputs.bundle-path }}/.github/zarf-runner/deploy"
+        if: ${{ inputs.bundle }} != ''
         env:
           TENANT_GATEWAY_TLS_CERT: ${{ secrets.TENANT_GATEWAY_TLS_CERT }}
           TENANT_GATEWAY_TLS_KEY: ${{ secrets.TENANT_GATEWAY_TLS_KEY}}
           ADMIN_GATEWAY_TLS_CERT: ${{ secrets.ADMIN_GATEWAY_TLS_CERT }}
           ADMIN_GATEWAY_TLS_KEY: ${{ secrets.ADMIN_GATEWAY_TLS_KEY}}
-
-
-      - name: Test Capability
+          
+      - name: Test Bundle
         shell: bash
         run: zarf package create --confirm
-        working-directory: "${{ needs.setup.outputs.capability-path }}/.github/zarf-runner/test"
-        if: ${{ inputs.capability }} != ''
-        
+        working-directory: "${{ needs.setup.outputs.bundle-path }}/.github/zarf-runner/test"
+        if: ${{ inputs.bundle }} != ''
