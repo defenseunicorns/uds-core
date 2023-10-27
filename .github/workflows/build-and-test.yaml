@@ -82,6 +82,7 @@ jobs:
           registry: ghcr.io
           username: dummy
           password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Use Node.js latest
         uses: actions/setup-node@5e21ff4d9bc1a8cf6de233a3057d20ec6b3fb69d # v3.8.1
         with:
@@ -102,6 +103,12 @@ jobs:
         run: zarf package create --confirm
         working-directory: "${{ needs.setup.outputs.capability-path }}/.github/zarf-runner/deploy"
         if: ${{ inputs.capability }} != ''
+        env:
+          TENANT_GATEWAY_TLS_CERT: ${{ secrets.TENANT_GATEWAY_TLS_CERT }}
+          TENANT_GATEWAY_TLS_KEY: ${{ secrets.TENANT_GATEWAY_TLS_KEY}}
+          ADMIN_GATEWAY_TLS_CERT: ${{ secrets.ADMIN_GATEWAY_TLS_CERT }}
+          ADMIN_GATEWAY_TLS_KEY: ${{ secrets.ADMIN_GATEWAY_TLS_KEY}}
+
 
       - name: Test Capability
         shell: bash

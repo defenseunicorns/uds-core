@@ -20,11 +20,6 @@ components:
               mkdir -p ../build
               curl -fL https://github.com/defenseunicorns/uds-cli/releases/download/###ZARF_PKG_TMPL_UDS_CLI_VERSION###/uds-cli_###ZARF_PKG_TMPL_UDS_CLI_VERSION###_$(uname -s)_${ARCH} -o ../build/uds
               chmod +x ../build/uds
-          - description: Build the pepr module
-            cmd: |
-              npm ci
-              npx pepr build
-            dir: ../../../pepr
           - description: Build the zarf packages
             cmd: |
-              ./zarf p c ../../../ --confirm --no-progress -o ../build
+              ./uds create ../../ --confirm --no-progress -o ../build
