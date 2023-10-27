@@ -2,16 +2,35 @@
 
 kind: ZarfPackageConfig
 metadata:
-  name: example
-  description: "Example description"
+  name: uds-capability-kyverno-policies
+  description: "UDS package for kyverno-policies"
   # x-release-please-start-version
   version: "0.0.1"
   # x-release-please-end
 
-
 components:
-  - name: test
+  - name: download-kyverno-policies-repo
+    required: true
     actions:
-      onCreate:
+      onDeploy:
         after:
-        - cmd: echo "What can Doug do for you?"
+          - cmd: mkdir -p repo
+          - cmd: tar -zxf tmp/kyverno-policies-3.0.4-bb.4.tar.gz -C repo/
+            description: "extract kyverno-policies repo"
+    files:
+      - source: https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/archive/3.0.4-bb.4/kyverno-policies-3.0.4-bb.4.tar.gz
+        target: tmp/kyverno-policies-3.0.4-bb.4.tar.gz
+  - name: kyverno-policies
+    required: true
+    actions:
+      onDeploy:
+        before:
+          - cmd: helm install kyverno-policies repo/kyverno-policies-3.0.4-bb.4/chart -n kyverno
+      # onSuccess:
+      #   - cmd: rm -f tmp/kyverno-policies-3.0.4-bb.4.tar.gz
+      #   - cmd: rm -r repo/
+      onRemove:
+        after:
+          - cmd: helm uninstall -n kyverno kyverno-policies
+    images:
+      - registry1.dso.mil/ironbank/opensource/kubernetes/kubectl:v1.28.3
