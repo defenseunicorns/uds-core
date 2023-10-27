@@ -1,4 +1,4 @@
-# UDS Capability [name]
+# UDS Capability Prometheus
 
 ## How to upgrade this capability
 
