@@ -1,0 +1,33 @@
+{
+  "name": "uds-pepr-istio",
+  "version": "0.2.0",
+  "description": "A resusable Pepr Capability for the Istio service mesh for use with UDS.",
+  "keywords": [
+    "pepr",
+    "k8s",
+    "policy-engine",
+    "pepr-module",
+    "security"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "pepr": {
+    "name": "UDS Pepr Istio",
+    "uuid": "uds-istio",
+    "onError": "audit",
+    "alwaysIgnore": {
+      "namespaces": [],
+      "labels": []
+    }
+  },
+  "scripts": {
+    "k3d-setup": "k3d cluster delete pepr-dev && k3d cluster create pepr-dev --k3s-arg '--debug@server:0'"
+  },
+  "dependencies": {
+    "pepr": "0.14.2"
+  },
+  "devDependencies": {
+    "typescript": "5.2.2"
+  }
+}

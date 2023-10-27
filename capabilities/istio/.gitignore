@@ -5,5 +5,5 @@ build/
 *.tar.zst
 zarf-sbom
 tmp/
-env.ts
-node_modules
+
+*node_modules

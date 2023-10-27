@@ -1,0 +1,72 @@
+---
+# Source: istio/templates/envoyfilter.yaml
+apiVersion: networking.istio.io/v1alpha3
+kind: EnvoyFilter
+metadata:
+  name: misdirected-request
+  namespace: istio-system
+spec:
+  configPatches:
+    - applyTo: HTTP_FILTER
+      match:
+        context: GATEWAY
+        listener:
+          filterChain:
+            filter:
+              name: envoy.filters.network.http_connection_manager
+              subFilter:
+                name: envoy.filters.http.router
+      patch:
+        operation: INSERT_BEFORE
+        value:
+          name: envoy.lua
+          typed_config:
+            "@type": "type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua"
+            inlineCode: |
+              function envoy_on_request(request_handle)
+                local serverName = request_handle:streamInfo():requestedServerName()
+                local authority = request_handle:headers():get(":authority")
+                if serverName ~= "" then
+                  local subdomain = string.sub(serverName, 0, 2)
+                  if (subdomain == "*." and not string.find(authority, serverName, 1, true)) then
+                    request_handle:respond({[":status"] = "421"}, "Misdirected Request")
+                  end
+                  if (subdomain ~= "*." and not string.find(authority, serverName, 1, true)) then
+                    request_handle:respond({[":status"] = "421"}, "Misdirected Request")
+                  end
+                end
+              end
+---
+# Source: istio/templates/envoyfilter.yaml
+apiVersion: networking.istio.io/v1alpha3
+kind: EnvoyFilter
+metadata:
+  name: remove-server-header
+  namespace: istio-system
+spec:
+  workloadSelector:
+    labels:
+      istio: ingressgateway
+  configPatches:
+    - applyTo: NETWORK_FILTER
+      match:
+        context: GATEWAY
+        listener:
+          filterChain:
+            filter:
+              name: "envoy.filters.network.http_connection_manager"
+      patch:
+        operation: MERGE
+        value:
+          typed_config:
+            "@type": "type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager"
+            server_header_transformation: PASS_THROUGH
+    - applyTo: ROUTE_CONFIGURATION
+      match:
+        context: GATEWAY
+      patch:
+        operation: MERGE
+        value:
+          response_headers_to_remove:
+            - "x-envoy-upstream-service-time"
+            - "server"

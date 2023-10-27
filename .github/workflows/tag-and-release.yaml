@@ -1,0 +1,26 @@
+name: Tag and Create Release
+
+on:
+  push:
+    branches:
+      - main
+jobs:
+    tag-new-version:
+      permissions: write-all
+      runs-on: ubuntu-latest
+      outputs:
+        release_created: ${{ steps.release-flag.outputs.release_created }}
+        release_tag: ${{ steps.release-tag.outputs.release_tag }}
+      steps:
+        - name: Create Release Tag
+          id: tag
+          uses: google-github-actions/release-please-action@v3
+          with:
+            command: manifest # use configs in release-please-config.json
+        - id: release-flag
+          run: echo "release_created=${{ steps.tag.outputs.release_created || false }}" >> $GITHUB_OUTPUT
+        - id: release-tag
+          run: echo "release_tag=${{ steps.tag.outputs.version || false }}" >> $GITHUB_OUTPUT
+  
+
+  

@@ -1,0 +1,34 @@
+name: Publish Capability Package
+
+# Will remove before merge and make it only tags
+on:
+  workflow_call:
+    inputs:
+      platform:
+        type: string
+        default: 'ubuntu-latest'
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish-package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: dummy
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish Zarf Package
+        run: zarf package create . --confirm --no-progress
+        working-directory: ".github/zarf-runner/rusty-rogers"
+        timeout-minutes: 60
+
+
