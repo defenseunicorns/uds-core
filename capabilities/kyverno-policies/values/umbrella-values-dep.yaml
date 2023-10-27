@@ -1,0 +1,27 @@
+policies:
+  disallow-image-tags:
+    enabled: true
+    validationFailureAction: enforce
+
+  disallow-namespaces:
+    enabled: true
+    validationFailureAction: enforce
+    parameters:
+      disallow:
+        - bigbang
+        - default
+
+  require-image-signature:
+    enabled: true
+    validationFailureAction: audit
+
+  restrict-host-path-mount-pv:
+    validationFailureAction: enforce
+
+  # ZARF APPROVED REGISTRIES ???? #
+  restrict-image-registries:
+    validationFailureAction: enforce
+    parameters:
+      allow:
+        - registry1.dso.mil
+        - registry.dso.mil

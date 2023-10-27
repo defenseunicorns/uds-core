@@ -1,0 +1,16 @@
+apiVersion: kyverno.io/v2alpha1
+kind: PolicyException
+metadata:
+  name: disallow-isto-injection-bypass
+  namespace: kyverno
+spec:
+  exceptions:
+    - policyName: disallow-istio-injection-bypass
+      ruleNames:
+        - host-namespaces
+        - autogen-host-namespaces
+  match:
+    any:
+      - resources:
+          namespaces:
+            - istio-system
