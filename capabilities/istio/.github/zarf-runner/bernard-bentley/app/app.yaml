@@ -19,8 +19,6 @@ metadata:
   labels:
     app: httpbin
     service: httpbin
-    uds/istio-gateway: tenant
-    uds/istio-host: demo
 spec:
   ports:
     - name: http
@@ -28,6 +26,15 @@ spec:
       targetPort: 80
   selector:
     app: httpbin
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: httpbin
+  namespace: test-app
+  labels:
+    "uds/istio-gateway": "tenant"
+    "uds/istio-host": "demo"
 ---
 apiVersion: apps/v1
 kind: Deployment
