@@ -24,7 +24,6 @@ components:
                 ./zarf p d ../build/zarf-package-uds-capability-istio-$ARCH-1.19.3.tar.zst  --no-progress --confirm #${COMPONENTS}          
           - description: Inject tls certificate
             cmd: |
-              npm install
-              npm install -g ts-node typescript '@types/node'
-              ts-node secret.ts
+              npm ci
+              npx --yes ts-node secret.ts
             dir: ../../../gw-tls

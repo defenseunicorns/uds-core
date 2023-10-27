@@ -1,6 +1,6 @@
 {
     "name": "burning.boats",
     "dependencies": {
-        "kubernetes-fluent-client": "1.7.0"
+        "kubernetes-fluent-client": "1.8.2"
     }
 }

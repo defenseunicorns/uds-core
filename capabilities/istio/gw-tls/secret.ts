@@ -1,5 +1,5 @@
 import { K8s, kind } from "kubernetes-fluent-client";
-
+//import "./env";
 
 const applySecret = (gw: string) =>
   K8s(kind.Secret).Apply({

@@ -17,9 +17,3 @@ components:
     required: true
     import:
       path: bernard-bentley
-
-
-  # - name: test-admin
-  #   required: true
-  #   import:
-  #     path: bernard-bentley

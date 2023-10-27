@@ -20,7 +20,7 @@ jobs:
   publish-package:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest] #windows-latest?
+        os: [ubuntu-latest] #windows-latest macos-latest
     uses: ./.github/workflows/publish-capability.yaml
     with:
       platform: ${{ matrix.os }}
