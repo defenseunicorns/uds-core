@@ -1,0 +1,7 @@
+name: admin
+
+domain: "admin.uds.dev"
+
+# Development certificate and key *.admin.uds.dev (127.0.0.1)
+# Publicly available, not for use in production environments
+

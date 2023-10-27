@@ -1,0 +1,31 @@
+kind: ZarfPackageConfig
+metadata:
+  name: bob-the-builder
+  url: https://welovebob.com/characters/bob.htm
+  image: https://welovebob.com/Images/characters/bob.jpg
+  description: "A zarf package to build/pull things"
+
+components:
+  - name: build
+    required: true
+    actions:
+      onCreate:
+        before:
+          - description: Load UDS CLI
+            cmd: |
+              [ -f ../build/uds ] && [ "$(../build/uds version)" == "###ZARF_PKG_TMPL_UDS_CLI_VERSION###" ] && exit 0
+              ARCH=$(uname -m)
+              [ "$ARCH" = "x86_64" ] && ARCH="amd64"
+              # Download the uds-cli binary
+              mkdir -p ../build
+              curl -fL https://github.com/defenseunicorns/uds-cli/releases/download/###ZARF_PKG_TMPL_UDS_CLI_VERSION###/uds-cli_###ZARF_PKG_TMPL_UDS_CLI_VERSION###_$(uname -s)_${ARCH} -o ../build/uds
+              chmod +x ../build/uds
+              # or brew tap defenseunicorns/tap && brew update && brew install uds after insatlling brew
+          - description: Build the pepr module
+            cmd: |
+              npm ci
+              npx pepr build
+            dir: ../../../pepr
+          - description: Build the zarf packages
+            cmd: |
+              ./zarf p c ../../../ --confirm --no-progress -o ../build

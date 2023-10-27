@@ -1,0 +1,36 @@
+kind: ZarfPackageConfig
+metadata:
+  name: farmer-pickles
+  url: https://welovebob.com/characters/farmer_pickles.htm
+  image: https://welovebob.com/Images/characters/farmer_pickles.jpg
+  description: "A zarf package to deploy things"
+
+components:
+  - name: deploy
+    required: true
+    actions:
+      onCreate:
+        before:
+          - description: Deploy the cluster bundle
+            cmd: |
+                ARCH=$(uname -m)
+                [ "$ARCH" = "x86_64" ] && ARCH="amd64"
+                ./uds deploy oci://ghcr.io/zachariahmiller/k3d-common:0.1.0-$ARCH --no-progress --confirm
+            dir: ../build
+          - description: Deploy the istio
+            cmd: |
+                ARCH=$(uname -m)
+                [ "$ARCH" = "x86_64" ] && ARCH="amd64"
+                ./zarf p d ../build/zarf-package-uds-capability-istio-$ARCH-1.19.3.tar.zst  --no-progress --confirm #${COMPONENTS}          
+          - description: Inject tls certificate
+            cmd: |
+              npm ci
+              npx --yes ts-node secret.ts
+            dir: ../../../gw-tls
+        after:
+          - description: Wait for the istio gateway to have the label required for vs generation.
+            wait:
+              cluster:
+                kind: Gateway
+                name: uds/istio-domain=uds.dev
+                namespace: istio-tenant-gateway
