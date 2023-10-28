@@ -20,7 +20,15 @@ The core applications are:
 
 ## Prerequisites
 
-[Bulleted-list, commands, etc; describing expected versions, deployed software, and other requirements]
+<!-- table -->
+
+| Dependency                                                     | Minimum Version |
+| -------------------------------------------------------------- | --------------- |
+| [Zarf](https://github.com/defenseunicorns/zarf/releases)       | 0.30.x          |
+| [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) | 0.7.x           |
+| [NodeJS](https://nodejs.org/en/download/)                      | LTS or Current  |
+
+<!-- endtable -->
 
 ## Create
 
@@ -28,7 +36,7 @@ The core applications are:
 
 ## Deploy
 
- [Steps used to deploy the UDS Bundle]
+[Steps used to deploy the UDS Bundle]
 
 ## Remove
 
