@@ -13,39 +13,38 @@ on:
 permissions:
   id-token: write
   contents: read
-  pull-requests: read 
+  pull-requests: read
 
 defaults:
   run:
     # We need -e -o pipefail for consistency with GitHub Actions' default behavior
     shell: bash -e -o pipefail {0}
 
-
-jobs: 
+jobs:
   check-paths:
     runs-on: ubuntu-latest
-    outputs: 
+    outputs:
       capabilities: ${{ steps.path-filter.outputs.changes }}
       bundles: ${{ steps.bundle-path-filter.outputs.changes }}
     steps:
-    - name: Checkout the code
-      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1   
+      - name: Checkout the code
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
-    - name: Check capability paths
-      id: path-filter
-      uses: dorny/paths-filter@v2
-      with:
-        filters: .github/filters.yaml
-    - name: Debug output
-      run: echo "${{ steps.path-filter.outputs.changes }}"  
- 
-    - name: Check bundle paths
-      id: bundle-path-filter
-      uses: dorny/paths-filter@v2
-      with:
-        filters: .github/bundle-filters.yaml
-    - name: Debug output
-      run: echo "${{ steps.bundle-path-filter.outputs.changes }}"
+      - name: Check capability paths
+        id: path-filter
+        uses: dorny/paths-filter@v2
+        with:
+          filters: .github/filters.yaml
+      - name: Debug output
+        run: echo "${{ steps.path-filter.outputs.changes }}"
+
+      - name: Check bundle paths
+        id: bundle-path-filter
+        uses: dorny/paths-filter@v2
+        with:
+          filters: .github/bundle-filters.yaml
+      - name: Debug output
+        run: echo "${{ steps.bundle-path-filter.outputs.changes }}"
 
   build-and-test-capabilities:
     needs: check-paths

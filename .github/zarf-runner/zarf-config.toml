@@ -2,4 +2,4 @@
 max_package_size = 99999999999
 
 [package.create.set]
-uds_cli_version = 'v0.0.6-alpha'
+uds_cli_version = 'v0.0.7-alpha'

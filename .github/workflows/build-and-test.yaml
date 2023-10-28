@@ -1,6 +1,5 @@
 name: Build and Test uds core Capabilities on k3d
 
-
 on:
   workflow_dispatch:
     inputs:
@@ -12,7 +11,7 @@ on:
         default: ""
       platform:
         type: string
-        default: 'ubuntu-latest'
+        default: "ubuntu-latest"
   workflow_call:
     inputs:
       capability:
@@ -23,7 +22,7 @@ on:
         default: ""
       platform:
         type: string
-        default: 'ubuntu-latest'
+        default: "ubuntu-latest"
 
 permissions:
   id-token: write
@@ -41,12 +40,12 @@ jobs:
         run: |
           PATH="."
           [ ${{ inputs.bundle }} != 'uds-core' ] && PATH="${{ inputs.bundle }}"
-          echo "path=$PATH" >> $GITHUB_OUTPUT   
+          echo "path=$PATH" >> $GITHUB_OUTPUT
         if: ${{ inputs.bundle }} != ''
       - name: Set Capability Path
         id: capability-default
         run: |
-          echo "path=capabilities/${{ inputs.capability }}" >> $GITHUB_OUTPUT   
+          echo "path=capabilities/${{ inputs.capability }}" >> $GITHUB_OUTPUT
         if: ${{ inputs.capability }} != ''
 
   build-and-test:
@@ -86,7 +85,7 @@ jobs:
       - name: Use Node.js latest
         uses: actions/setup-node@5e21ff4d9bc1a8cf6de233a3057d20ec6b3fb69d # v3.8.1
         with:
-          node-version: latest        
+          node-version: latest
 
       - name: Install k3d
         run: |
@@ -109,10 +108,8 @@ jobs:
           ADMIN_GATEWAY_TLS_CERT: ${{ secrets.ADMIN_GATEWAY_TLS_CERT }}
           ADMIN_GATEWAY_TLS_KEY: ${{ secrets.ADMIN_GATEWAY_TLS_KEY}}
 
-
       - name: Test Capability
         shell: bash
         run: zarf package create --confirm
         working-directory: "${{ needs.setup.outputs.capability-path }}/.github/zarf-runner/test"
         if: ${{ inputs.capability }} != ''
-        

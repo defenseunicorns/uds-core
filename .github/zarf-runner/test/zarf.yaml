@@ -13,4 +13,3 @@ components:
         before:
           - description: Placeholder
             cmd: echo "bundle test placeholder step"
-

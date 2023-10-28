@@ -2,7 +2,7 @@ name: build-and-publish
 
 on:
   push:
-    tags: [ "*" ]
+    tags: ["*"]
   workflow_dispatch:
 
 permissions:
@@ -15,7 +15,6 @@ defaults:
     # We need -e -o pipefail for consistency with GitHub Actions' default behavior
     shell: bash -e -o pipefail {0}
 
-
 jobs:
   publish-package:
     strategy:
@@ -25,4 +24,3 @@ jobs:
     with:
       platform: ${{ matrix.os }}
     secrets: inherit
-

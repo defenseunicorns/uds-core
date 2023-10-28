@@ -1,5 +1,4 @@
-
 istio:
-  - 'capabilities/istio/**/*'
+  - "capabilities/istio/**/*"
 neuvector:
-  - 'capabilities/neuvector/**/*'
+  - "capabilities/neuvector/**/*"
