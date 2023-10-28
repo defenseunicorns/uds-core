@@ -39,28 +39,29 @@ components:
     description: "Load TLS certs from env variables"
     actions:
       # Temporary hacks until UDS CLI supports variable mapping to chart values
+      # Note these are pre-encoded base64 values to avoid issues with newlines
       onDeploy:
         before:
           - cmd: echo ${ADMIN_GATEWAY_TLS_CERT}
-            # mute: true
+            mute: true
             setVariables:
               - name: ADMIN_GATEWAY_TLS_CERT
-                # sensitive: true
+                sensitive: true
           - cmd: echo ${ADMIN_GATEWAY_TLS_KEY}
-            # mute: true
+            mute: true
             setVariables:
               - name: ADMIN_GATEWAY_TLS_KEY
-                # sensitive: true
+                sensitive: true
           - cmd: echo ${TENANT_GATEWAY_TLS_CERT}
-            # mute: true
+            mute: true
             setVariables:
               - name: TENANT_GATEWAY_TLS_CERT
-                # sensitive: true
+                sensitive: true
           - cmd: echo ${TENANT_GATEWAY_TLS_KEY}
-            # mute: true
+            mute: true
             setVariables:
               - name: TENANT_GATEWAY_TLS_KEY
-                # sensitive: true
+                sensitive: true
 
   - name: istio-admin-gateway
     required: true

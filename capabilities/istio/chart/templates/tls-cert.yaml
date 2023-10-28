@@ -5,6 +5,7 @@ metadata:
   name: {{ .Values.tls.secretName }}
   namespace: {{ .Release.Namespace }}
 data:
+  # Pass in pre-encoded cert/key pair to make env var loading locally easier
   tls.crt: {{ .Values.tls.cert }}
   tls.key: {{ .Values.tls.key }}
 type: kubernetes.io/tls
