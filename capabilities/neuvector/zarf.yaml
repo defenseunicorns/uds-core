@@ -1,17 +1,48 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/defenseunicorns/zarf/main/zarf.schema.json
-
 kind: ZarfPackageConfig
 metadata:
-  name: example
-  description: "Example description"
-  # x-release-please-start-version
-  version: "0.0.1"
-  # x-release-please-end
-
+  name: uds-capability-neuvector
+  description: "UDS Neuvector Capability"
+  url: https://open-docs.neuvector.com/
+  version: 2.6.4
 
 components:
-  - name: test
-    actions:
-      onCreate:
-        after:
-        - cmd: echo "What can Doug do for you?"
+  - name: neuvector
+    required: true
+    description: "Deploy Neuvector"
+    charts:
+      - name: crd
+        url: https://neuvector.github.io/neuvector-helm/
+        version: 2.6.4
+        namespace: neuvector
+        gitPath: charts/crd
+      - name: core
+        url: https://neuvector.github.io/neuvector-helm/
+        version: 2.6.4
+        namespace: neuvector
+        gitPath: charts/core
+        valuesFiles:
+          - values/neuvector-minimal-values.yaml
+      - name: monitor
+        url: https://neuvector.github.io/neuvector-helm/
+        version: 2.6.4
+        namespace: neuvector
+        gitPath: charts/monitor
+        valuesFiles:
+          - values/neuvector-monitor-values.yaml
+    images:
+      - docker.io/neuvector/controller:5.2.2-s1
+      - docker.io/neuvector/manager:5.2.2-s1
+      - docker.io/neuvector/updater:latest
+      - docker.io/neuvector/scanner:latest
+      - docker.io/neuvector/enforcer:5.2.2-s1
+      - docker.io/istio/proxyv2:1.19.0
+      - docker.io/neuvector/prometheus-exporter:latest
+
+  - name: uds-neuvector-config
+    required: true
+    charts:
+      - name: uds-neuvector-config
+        namespace: neuvector
+        version: 0.1.0
+        localPath: chart
