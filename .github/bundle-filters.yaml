@@ -1,0 +1,3 @@
+uds-core:
+  # - 'capabilities/**/*'
+  - 'uds-*.y*ml'

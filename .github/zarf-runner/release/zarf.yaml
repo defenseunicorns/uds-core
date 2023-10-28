@@ -1,0 +1,30 @@
+kind: ZarfPackageConfig
+metadata:
+  name: rusty-rogers
+  url: https://btb.fandom.com/wiki/Rusty_Rogers
+  image: https://static.wikia.nocookie.net/btb/images/4/4a/RustyRogers.png
+  description: "A zarf package to publish things"
+
+components:
+  - name: build
+    required: true
+    import:
+      path: ../bob-the-builder
+
+  - name: deploy
+    required: true
+    import:
+      path: ../farmer-pickles
+
+  - name: test
+    required: true
+    import:
+      path: ../bernard-bentley
+
+  - name: release
+    required: true
+    actions:
+      onCreate:
+        before:
+          - description: Placeholder
+            cmd: echo "bundle release placeholder step"

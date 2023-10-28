@@ -1,0 +1,18 @@
+kind: ZarfPackageConfig
+metadata:
+  name: farmer-pickles
+  url: https://welovebob.com/characters/farmer_pickles.htm
+  image: https://welovebob.com/Images/characters/farmer_pickles.jpg
+  description: "A zarf package to deploy things"
+
+components:
+  - name: deploy
+    required: true
+    actions:
+      onCreate:
+        before:
+          - description: Placeholder
+            cmd: echo "bundle deploy placeholder step"
+
+
+
