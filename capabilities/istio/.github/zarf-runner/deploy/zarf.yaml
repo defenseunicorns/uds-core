@@ -22,11 +22,6 @@ components:
                 ARCH=$(uname -m)
                 [ "$ARCH" = "x86_64" ] && ARCH="amd64"
                 ./zarf p d ../build/zarf-package-uds-capability-istio-$ARCH-1.19.3.tar.zst  --no-progress --confirm #${COMPONENTS}          
-          - description: Inject tls certificate
-            cmd: |
-              npm ci
-              npx --yes ts-node secret.ts
-            dir: ../../../gw-tls
         after:
           - description: Wait for the istio gateway to have the label required for vs generation.
             wait:

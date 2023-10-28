@@ -5,7 +5,7 @@ metadata:
   name: {{ .Values.tls.secretName }}
   namespace: {{ .Release.Namespace }}
 data:
-  tls.crt: {{ .Values.tls.cert | b64enc }}
-  tls.key: {{ .Values.tls.key | b64enc }}
+  tls.crt: {{ .Values.tls.cert }}
+  tls.key: {{ .Values.tls.key }}
 type: kubernetes.io/tls
 {{- end }}
