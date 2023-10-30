@@ -1,0 +1,1079 @@
+{{- $pkg := "kyvernoPolicies" }}
+
+{{- if (get .Values $pkg).enabled }}
+{{- include "values-secret" (dict "root" $ "package" (dict "values" (fromYaml (include "bigbang.overlays.kyverno-policies" .))) "name" "kyverno-policies" "defaults" (include "bigbang.defaults.kyverno-policies" .)) }}
+{{- end }}
+
+{{- define "bigbang.defaults.kyverno-policies" -}}
+
+{{- $deployNodeAgent := (and .Values.addons.velero.enabled (dig "deployNodeAgent" false .Values.addons.velero.values)) }}
+
+# waitforready:
+#   imagePullSecrets:
+#   - name: private-registry
+
+policies:
+
+  # {{- if or .Values.twistlock.enabled .Values.neuvector.enabled }}
+  # disallow-host-namespaces:
+  #   exclude:
+  #     any:
+  #     {{- if .Values.twistlock.enabled }}
+  #     # Twistlock, by default, does its own network monitoring. hostNetworking is enabled by default for this purpose
+  #     # With hostNetworking enabled, Istio sidecar injection is disabled. If this function is disabled, Twistlock will
+  #     # not be able to self monitor. If both Istio sidecar injection and TL monitoring are disabled, a security gap will
+  #     # be created for network monitoring in Twistlock.  So, it is important to make sure at least one is enabled.
+  #     - resources:
+  #         namespaces:
+  #         - twistlock
+  #         names:
+  #         - twistlock-defender-ds*
+  #     {{- end }}
+  #     {{- if .Values.neuvector.enabled }}
+  #     # Neuvector needs access to host to inspect network traffic
+  #     - resources:
+  #         namespaces:
+  #         - neuvector
+  #         names:
+  #         - neuvector-enforcer-pod*
+  #     {{- end }}
+  # {{- end }}
+
+  #### NEED TO FIGURE OUT HOW TO REPLICATE THIS ####
+  {{- $nodePortIngressGateways := list }}
+  {{- range $name, $values := .Values.istio.ingressGateways }}
+  {{- if eq $values.type "NodePort" }}
+  {{- $nodePortIngressGateways = append $nodePortIngressGateways $name }}
+  {{- end }}
+  {{- end }}
+
+  {{- range $name, $values := .Values.istio.values.ingressGateways }}
+  {{- if eq (dig "k8s" "service" "type" "LoadBalancer" $values) "NodePort" }}
+  {{- $nodePortIngressGateways = append $nodePortIngressGateways $name }}
+  {{- end }}
+  {{- end }}
+
+
+
+  # {{- if or .Values.fluentbit.enabled .Values.monitoring.enabled .Values.twistlock.enabled }}
+  # disallow-tolerations:
+  #   exclude:
+  #     any:
+  #     {{- if .Values.fluentbit.enabled }}
+  #     # Fluent bit needs to be able to run on all nodes to gather logs from the host for containers
+  #     - resources:
+  #         namespaces:
+  #         - fluentbit
+  #         names:
+  #         - fluentbit-fluent-bit*
+  #     {{- end }}
+  #     {{- if .Values.monitoring.enabled }}
+  #     # Prometheus Node Exporter needs to be able to run on all nodes, regardless of taint, to gather node metrics
+  #     - resources:
+  #         namespaces:
+  #         - monitoring
+  #         names:
+  #         - monitoring-monitoring-prometheus-node-exporter*
+  #     {{- end }}
+  #     {{- if .Values.twistlock.enabled }}
+  #     # In order to provide real-time scanning of all nodes, Twistlock must ignore taints
+  #     - resources:
+  #         namespaces:
+  #         - twistlock
+  #         names:
+  #         - twistlock-defender-ds*
+  #     {{- end }}
+  # {{- end }}
+
+  # require-drop-all-capabilities:
+  #   validationFailureAction: audit
+  #   {{- if .Values.neuvector.enabled }}
+  #   exclude:
+  #     any:
+  #     # Neuvector needs access to host to inspect network traffic
+  #     - resources:
+  #         namespaces:
+  #         - neuvector
+  #         names:
+  #         - neuvector-enforcer-pod*
+  #         - neuvector-prometheus-exporter-pod*
+  #   {{- end }}
+
+  # require-istio-on-namespaces:
+  #   enabled: {{ .Values.istio.enabled }}
+  #   exclude:
+  #     any:
+  #     - resources:
+  #         namespaces:
+  #         # Kuberentes control plane does not use Istio
+  #         - kube-node-lease
+  #         - kube-public
+  #         - kube-system
+  #         # No pods in bigbang / default
+  #         - bigbang
+  #         - default
+  #         # Flux is installed prior to Istio
+  #         - flux-system
+  #         # Istio does not inject itself
+  #         - istio-operator
+  #         - istio-system
+
+  # require-non-root-group:
+  #   validationFailureAction: audit
+  #   {{- if .Values.istio.enabled }}
+  #   parameters:
+  #     excludeContainers:
+  #       - istio-init
+  #   {{- end }}
+  #   {{- if or $deployNodeAgent .Values.twistlock.enabled .Values.fluentbit.enabled .Values.promtail.enabled }}
+  #   exclude:
+  #     any:
+  #     {{- if $deployNodeAgent }}
+  #     # Velero.  The node agent backup tool requires root group access to see the host's runtime pod directory which is
+  #     # mounted inside velero/node agent pods.
+  #     - resources:
+  #         namespaces:
+  #         - velero
+  #         names:
+  #         - node-agent*
+  #     {{- end }}
+  #     {{- if .Values.twistlock.enabled }}
+  #     # Twistlock Defenders run as root to perform real time scanning on the nodes/cluster, including:
+  #     # - read logs from `/var/log` to watch for malicious processes
+  #     # - audit modifications to `/etc/passwd` (watching for suspicious changes)
+  #     # - access the container runtime socket (observing all running containers on a node)
+  #     - resources:
+  #         namespaces:
+  #         - twistlock
+  #         names:
+  #         - twistlock-defender-ds*
+  #     {{- end }}
+  #     {{- if .Values.fluentbit.enabled }}
+  #     # Fluentbit requires access to journalctl as well as /var/log.  This would require modifications
+  #     # to the host operating system, creating a user, adding that user to the  systemd-journal user group
+  #     # and then granting permissions recursively on /var/log.
+  #     - resources:
+  #         namespaces:
+  #         - fluentbit
+  #         names:
+  #         - fluentbit-fluent-bit*
+  #     {{- end }}
+  #     {{- if .Values.promtail.enabled }}
+  #     # promtail requires access to journalctl as well as /var/log.  This would require modifications
+  #     # to the host operating system, creating a user, adding that user to the  systemd-journal user group
+  #     # and then granting permissions recursively on /var/log.
+  #     # promtail requires access to /run/promtail for its buffering and persistent state.
+  #     - resources:
+  #         namespaces:
+  #         - promtail
+  #         names:
+  #         - promtail-promtail*
+  #     {{- end }}
+  #   {{- end }}
+
+  # require-non-root-user:
+  #   validationFailureAction: audit
+  #   {{ if .Values.istio.enabled }}
+  #   parameters:
+  #     excludeContainers:
+  #       - istio-init
+  #   {{- end }}
+  #   {{- if or $deployNodeAgent .Values.twistlock.enabled .Values.fluentbit.enabled .Values.promtail.enabled }}
+  #   exclude:
+  #     any:
+  #     {{- if $deployNodeAgent }}
+  #     # Velero.  The node agent backup tool requires root user access to the host's runtime pod directory which is
+  #     # mounted inside velero/node agent pods.
+  #     - resources:
+  #         namespaces:
+  #         - velero
+  #         names:
+  #         - node-agent*
+  #     {{- end }}
+  #     {{- if .Values.twistlock.enabled }}
+  #     # Twistlock Defenders run as root to perform real time scanning on the nodes/cluster, including:
+  #     # - read logs from `/var/log` to watch for malicious processes
+  #     # - audit modifications to `/etc/passwd` (watching for suspicious changes)
+  #     # - access the container runtime socket (observing all running containers on a node)
+  #     - resources:
+  #         namespaces:
+  #         - twistlock
+  #         names:
+  #         - twistlock-defender-ds*
+  #     {{- end }}
+  #     {{- if .Values.fluentbit.enabled }}
+  #     # Fluentbit requires access to journalctl as well as /var/log.  This would require modifications
+  #     # to the host operating system, creating a user, adding that user to the  systemd-journal user group
+  #     # and then granting permissions recursively on /var/log.
+  #     - resources:
+  #         namespaces:
+  #         - fluentbit
+  #         names:
+  #         - fluentbit-fluent-bit*
+  #     {{- end }}
+  #     {{- if .Values.promtail.enabled }}
+  #     # promtail requires access to journalctl as well as /var/log.  This would require modifications
+  #     # to the host operating system, creating a user, adding that user to the  systemd-journal user group
+  #     # and then granting permissions recursively on /var/log.
+  #     # promtail requires access to /run/promtail for its buffering and persistent state.
+  #     - resources:
+  #         namespaces:
+  #         - promtail
+  #         names:
+  #         - promtail-promtail*
+  #     {{- end }}
+  #   {{- end }}
+
+  # {{- if .Values.twistlock.enabled }}
+  # restrict-apparmor:
+  #   exclude:
+  #     any:
+  #     # NEEDS FURTHER JUSTIFICATION
+  #     # Twistlock Defenders use an `unconfined` appArmor profile.
+  #     - resources:
+  #         namespaces:
+  #         - twistlock
+  #         names:
+  #         - twistlock-defender-ds*
+  # {{- end }}
+
+  # restrict-capabilities:
+  #   validationFailureAction: audit
+  #   # NEEDS FURTHER JUSTIFICATION
+  #   # Twistlock Defenders require the following capabilities
+  #   # - NET_ADMIN  - Process monitoring and Iptables
+  #   # - NET_RAW    - Iptables (CNNF, runtime DNS, WAAS)  See https://bugzilla.redhat.com/show_bug.cgi?id=1895032
+  #   # - SYS_ADMIN  - filesystem monitoring
+  #   # - SYS_PTRACE - local audit monitoring
+  #   # - SYS_CHROOT - changing mount namespace using setns
+  #   # - MKNOD      - Create special files using mknod, used by docker-less registry scanning
+  #   # - SETFCAP    - Set file capabilties, used by docker-less registry scanning
+  #   # - IPC_LOCK
+  #   # {{- if .Values.twistlock.enabled }}
+  #   # exclude:
+  #   #   any:
+  #   #   - resources:
+  #   #       namespaces:
+  #   #       - twistlock
+  #   #       names:
+  #   #       - twistlock-defender-ds*
+  #   # {{- end }}
+  #   parameters:
+  #     allow:
+  #     # Defaults from https://kubernetes.io/docs/concepts/security/pod-security-standards/#restricted
+  #     - NET_BIND_SERVICE
+  #     {{- if .Values.istio.enabled }}
+  #     # Istio requires NET_ADMIN and NET_RAW for sidecar init: https://istio.io/latest/docs/ops/deployment/requirements/#pod-requirements
+  #     # It uses these permissions to setup iptables for network routing
+  #     # Cannot create exclusion since sidecar is injected in most containers, so allow the capabilities globally
+  #     - NET_ADMIN
+  #     - NET_RAW
+      # {{- end }}
+
+  # restrict-host-path-mount:
+  #   validationFailureAction: enforce
+  #   {{- if or .Values.fluentbit.enabled .Values.monitoring.enabled .Values.promtail.enabled .Values.twistlock.enabled .Values.neuvector.enabled $deployNodeAgent }}
+  #   exclude:
+  #     any:
+  #     {{- if .Values.fluentbit.enabled }}
+  #     - resources:
+  #         namespaces:
+  #         - fluentbit
+  #         names:
+  #         # Fluent Bit mounts the following hostPaths:
+  #         # - `/var/log`: to tail node logs (e.g. journal) and pod logs
+  #         # - `/var/lib/docker/containers`: to tail container logs
+  #         # - `/etc/machine-id`: to obtain the node's unique machine ID for identifying systemd log folder
+  #         # - `/var/log/flb-storage`: for Fluent Bit's buffering and persistent state
+  #         # Since logs can have sensitive information, it is better to exclude
+  #         # FluentBit from the policy than add the paths as allowable mounts
+  #         - fluentbit-fluent-bit*
+  #     {{- end }}
+  #     {{- if .Values.promtail.enabled }}
+  #         # Promtail mounts the following hostPaths:
+  #         # - `/var/log/pods`: to tail pod logs
+  #         # - `/var/lib/docker/containers`: to tail container logs
+  #         # - `/run/promtail`: for Promtail's buffering and persistent state
+  #         # Since logs can have sensitive information, it is better to exclude
+  #         # Promtail from the policy than add the paths as allowable mounts
+  #     - resources:
+  #         namespaces:
+  #         - promtail
+  #         names:
+  #         - promtail-promtail*
+  #     {{- end }}
+  #     {{- if .Values.monitoring.enabled }}
+  #     # Prometheus Node Exporter mounts the following hostPaths:
+  #     # - `/`: monitor disk usage on filesystem mounts using e2fs call
+  #     # - `/proc` and `/sys`: gather node metrics
+  #     # Since mounting the root would expose sensitive information, it is better to
+  #     # exlcude Prometheus Node Exporter than add the paths as allowable mounts
+  #     - resources:
+  #         namespaces:
+  #         - monitoring
+  #         names:
+  #         - monitoring-monitoring-prometheus-node-exporter*
+  #     {{- end }}
+  #     {{- if .Values.twistlock.enabled }}
+  #     # NEEDS FURTHER JUSTIFICATION
+  #     # Twistlock mounts the following hostPaths:
+  #     # - `/dev/log`: writing twistlock logs to syslog socket on node (if enabled)
+  #     # - `/var/lib/twistlock`: data folder reserved for twistlock
+  #     # - `/etc/passwd`: audits changes to passwd file
+  #     # - `/var/run`: communication to docker daemon
+  #     # - `/var/lib/containers`: Container images data from CRI
+  #     # - `/var/run/docker/netns`: Docker's Network Namespace
+  #     # - `/var/log/audit`: Audit logs
+  #     # Because the mounts are dynamically created for defenders at runtime, we cannot
+  #     # anticipate all of the paths it may mount and must exclude it from the policy
+  #     - resources:
+  #         namespaces:
+  #         - twistlock
+  #         names:
+  #         - twistlock-defender-ds*
+  #     {{- end }}
+  #     {{- if .Values.neuvector.enabled }}
+  #     # Neuvector mounts the following hostPaths:
+  #     # `/var/neuvector`: for Neuvector's buffering and persistent state
+  #     # `/var/run`: communication to docker daemon
+  #     # `/proc`: monitoring of proccesses for malicious activity
+  #     # `/sys/fs/cgroup`: important files the controller wants to monitor for malicious content
+  #     - resources:
+  #         namespaces:
+  #         - neuvector
+  #         names:
+  #         - neuvector-enforcer-pod*
+  #         - neuvector-controller-pod*
+  #     {{- end }}
+  #     {{- if $deployNodeAgent }}
+  #     # Velero.  The node agent backup tool requires root user access to the host's runtime pod directory which is
+  #     # mounted inside velero/node agent pods.  Since the host's pod runtime directory may expose sensitive information,
+  #     # it is better to exclude the node agent pods than to add the path as allowable mounts
+  #     - resources:
+  #         namespaces:
+  #         - velero
+  #         names:
+  #         - node-agent*
+  #     {{- end }}
+  #   {{- end }}
+
+
+  # restrict-host-path-write:
+  #   validationFailureAction: enforce
+  #   {{- if or .Values.neuvector.enabled .Values.twistlock.enabled }}
+  #   exclude:
+  #     any:
+  #     # NEEDS FURTHER JUSTIFICATION
+  #     # Twistlock mounts the following hostPaths as writable:
+  #     # - `/dev/log`: writing twistlock logs to syslog socket on node (if enabled)
+  #     # - `/var/lib/twistlock`: data folder reserved for twistlock
+  #     # - `/run` or `/var/run`: communication to docker daemon and IP tables
+  #     # - `/var/lib/containers`: Container images data from CRI
+  #     # - `/var/log/audit`: Audit logs
+  #     # Because the mounts are dynamically created for defenders at runtime, we cannot
+  #     # anticipate all of the paths it may mount and must exclude it from the policy
+  #     {{- if .Values.twistlock.enabled }}
+  #     - resources:
+  #         namespaces:
+  #         - twistlock
+  #         names:
+  #         - twistlock-defender-ds*
+  #     {{- end }}
+  #     {{- if .Values.neuvector.enabled }}
+  #     # Neuvector mounts the following hostPaths as writeable:
+  #     # `/var/neuvector`: for Neuvector's buffering and persistent state
+  #     - resources:
+  #         namespaces:
+  #         - neuvector
+  #         names:
+  #         - neuvector-controller-pod*
+  #         - neuvector-enforcer-pod*
+  #     {{- end }}
+  #   {{- end }}
+  #   {{- if or .Values.fluentbit.enabled .Values.promtail.enabled }}
+  #   parameters:
+  #     allow:
+  #     {{- if .Values.fluentbit.enabled }}
+  #     # FluentBit - `/var/log/flb-storage`: fluent bit buffering and persistent state
+  #     - /var/log/flb-storage/
+  #     # FluentBit - `/var/log`
+  #     # NO JUSTIFICATION - Issue opened at https://repo1.dso.mil/big-bang/product/packages/fluentbit/-/issues/31
+  #     # Temporarily added so policy could be enforced
+  #     - /var/log
+  #     {{- end }}
+  #     {{- if .Values.promtail.enabled }}
+  #     # Promtail - `/run/promtail`: promtail buffering and persistent state
+  #     - /run/promtail
+  #     {{- end }}
+  #   {{- end }}
+
+
+  # {{- if or .Values.fluentbit.enabled .Values.promtail.enabled .Values.twistlock.enabled }}
+  # restrict-selinux-type:
+  #   exclude:
+  #     any:
+  #     {{- if .Values.fluentbit.enabled }}
+  #     - resources:
+  #         namespaces:
+  #         - fluentbit
+  #         names:
+  #         # NEEDS FURTHER JUSTIFICATION
+  #         # FluentBit needs selinux option type spc_t
+  #         - fluentbit-fluent-bit*
+  #     {{- end }}
+  #     {{- if .Values.promtail.enabled }}
+  #     - resources:
+  #         namespaces:
+  #         - promtail
+  #         names:
+  #         # NEEDS FURTHER JUSTIFICATION
+  #         # Promtail needs selinux option type spc_t
+  #         - promtail-promtail*
+  #     {{- end }}
+  #     {{- if .Values.twistlock.enabled }}
+  #     # NEEDS FURTHER JUSTIFICATION
+  #     # Twistlock Defenders need selinux option type spc_t
+  #     - resources:
+  #         namespaces:
+  #         - twistlock
+  #         names:
+  #         - twistlock-defender-ds*
+  #     {{- end }}
+  # {{- end }}
+
+  # {{- if $deployNodeAgent }}
+  # restrict-user-id:
+  #   exclude:
+  #     any:
+  #     {{- if $deployNodeAgent }}
+  #     # Velero.  The node agent backup tool requires root user access to the host's runtime pod directory which is
+  #     # mounted inside velero/node agent pods.
+  #     - resources:
+  #         namespaces:
+  #         - velero
+  #         names:
+  #         - node-agent*
+  #     {{- end }}
+  # {{- end }}
+
+  # {{- if or .Values.fluentbit.enabled .Values.monitoring.enabled .Values.promtail.enabled .Values.twistlock.enabled .Values.neuvector.enabled $deployNodeAgent }}
+  # restrict-volume-types:
+  #   exclude:
+  #     any:
+  #     {{- if or .Values.fluentbit.enabled }}
+  #     - resources:
+  #         namespaces:
+  #         - fluentbit
+  #         names:
+  #         # Fluent bit containers requires HostPath volumes, to tail node and container logs.  It is also used for buffering
+  #         # https://docs.fluentbit.io/manual/pipeline/filters/kubernetes#workflow-of-tail-+-kubernetes-filter
+  #         - fluentbit-fluent-bit*
+  #         {{- end }}
+  #     {{- if .Values.promtail.enabled }}
+  #     - resources:
+  #         namespaces:
+  #         - promtail
+  #         names:
+  #         # NEEDS FURTHER JUSTIFICATION
+  #         # Promtail requires HostPath volume types
+  #         # https://github.com/grafana/helm-charts/blob/main/charts/promtail/templates/daemonset.yaml#L120
+  #         - promtail-promtail*
+  #     {{- end }}
+  #     {{- if .Values.monitoring.enabled }}
+  #     # Prometheus node exporter requires a HostPath volume to monitor host metrics in /proc and /sys
+  #     - resources:
+  #         namespaces:
+  #         - monitoring
+  #         names:
+  #         - monitoring-monitoring-prometheus-node-exporter*
+  #     {{- end }}
+  #     {{- if .Values.twistlock.enabled }}
+  #     # Twistlock requires access to node logs, syslog, and docker daemon for defense monitoring
+  #     # https://docs.paloaltonetworks.com/prisma/prisma-cloud/prisma-cloud-admin-compute/audit/logging.html
+  #     - resources:
+  #         namespaces:
+  #         - twistlock
+  #         names:
+  #         - twistlock-defender-ds*
+  #     {{- end }}
+  #     {{- if .Values.neuvector.enabled }}
+  #     # Neuvector requires HostPath volume types
+  #       # Neuvector mounts the following hostPaths:
+  #       # `/var/neuvector`: (as writable) for Neuvector's buffering and persistent state
+  #       # `/var/run`: communication to docker daemon
+  #       # `/proc`: monitoring of proccesses for malicious activity
+  #       # `/sys/fs/cgroup`: important files the controller wants to monitor for malicious content
+  #     # https://github.com/neuvector/neuvector-helm/blob/master/charts/core/templates/enforcer-daemonset.yaml#L108
+  #     - resources:
+  #         namespaces:
+  #         - neuvector
+  #         names:
+  #         - neuvector-enforcer-pod*
+  #         - neuvector-controller-pod*
+  #     {{- end }}
+  #     {{- if $deployNodeAgent }}
+  #     # Velero.  The node agent backup tool requires root user access to the host's runtime pod directory which is
+  #     # mounted inside velero/node agent pods.
+  #     - resources:
+  #         namespaces:
+  #         - velero
+  #         names:
+  #         - node-agent*
+  #     {{- end }}
+  # {{- end }}
+
+# {{- end }}
+
+
+#### NEED TO LOOK AT USING THIS ####
+
+{{- /* This function merges defaults in lists from above into overlays */ -}}
+{{- /* The end user will not have to replicate exclusions/repos from above when providing an overlay */ -}}
+{{- /* There is a hidden flag `skipOverlayMerge` that can be added to any policy to ignore the defaults */ -}}
+{{- define "bigbang.overlays.kyverno-policies" -}}
+  {{- $defaults := fromYaml (include "bigbang.defaults.kyverno-policies" .) -}}
+  {{- $overlays := dig "values" dict .Values.kyvernoPolicies -}}
+
+  {{- /* Global merge for exclude fields */ -}}
+  {{- if and (dig "exclude" "any" list $defaults) (dig "exclude" "any" list $overlays) -}}
+    {{ $_ := set $overlays.exclude "any" (concat $defaults.exclude.any $overlays.exclude.any) -}}
+  {{- end -}}
+  {{- if and (dig "exclude" "all" list $defaults) (dig "exclude" "all" list $overlays) -}}
+    {{ $_ := set $overlays.exclude "all" (concat $defaults.exclude.all $overlays.exclude.all) -}}
+  {{- end -}}
+
+  {{- /* Policy specific merges */ -}}
+  {{- range $policy, $default := $defaults.policies -}}
+    {{- $overlay := (dig "policies" $policy dict $overlays) -}}
+
+    {{- /* Only continue if an overlay matches a default constriant and hidden "skipOverlayMerge" is not set */ -}}
+    {{- if and $overlay (not $overlay.skipOverlayMerge) -}}
+
+      {{- /* Add exclude fields */ -}}
+      {{- if and (dig "exclude" "any" list $default) (dig "exclude" "any" list $overlay) -}}
+        {{ $_ := set $overlay.exclude "any" (concat $default.exclude.any $overlay.exclude.any) -}}
+      {{- end -}}
+      {{- if and (dig "exclude" "all" list $default) (dig "exclude" "all" list $overlay) -}}
+        {{ $_ := set $overlay.exclude "all" (concat $default.exclude.all $overlay.exclude.all) -}}
+      {{- end -}}
+
+      {{- /* Add match fields */ -}}
+      {{- if and (dig "match" "any" list $default) (dig "match" "any" list $overlay) -}}
+        {{ $_ := set $overlay.match "any" (concat $default.match.any $overlay.match.any) -}}
+      {{- end -}}
+      {{- if and (dig "match" "all" list $default) (dig "match" "all" list $overlay) -}}
+        {{ $_ := set $overlay.match "all" (concat $default.match.all $overlay.match.all) -}}
+      {{- end -}}
+
+      {{- /* Add parameters.allow fields */ -}}
+      {{- if and (dig "parameters" "allow" list $default) (dig "parameters" "allow" list $overlay) -}}
+        {{ $_ := set $overlay.parameters "allow" (concat $default.parameters.allow $overlay.parameters.allow) -}}
+      {{- end -}}
+
+      {{- /* Add parameters.disallow fields */ -}}
+      {{- if and (dig "parameters" "disallow" list $default) (dig "parameters" "disallow" list $overlay) -}}
+        {{ $_ := set $overlay.parameters "disallow" (concat $default.parameters.disallow $overlay.parameters.disallow) -}}
+      {{- end -}}
+
+      {{- /* Add parameters.require fields */ -}}
+      {{- if and (dig "parameters" "require" list $default) (dig "parameters" "require" list $overlay) -}}
+        {{ $_ := set $overlay.parameters "require" (concat $default.parameters.require $overlay.parameters.require) -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+{{ toYaml $overlays }}
+{{- end }}
+
+
+# additionalPolicies:
+#   restrict-image-registries:
+#     annotations:
+#       pod-policies.kyverno.io/autogen-controllers: none
+#       policies.kyverno.io/category: Best Practices (Security)
+#       policies.kyverno.io/description: Images from unknown, public registries can
+#         be of dubious quality and may not be scanned and secured, representing a high
+#         degree of risk. Requiring use of known, approved registries helps reduce threat
+#         exposure by ensuring image pulls only come from them. This policy validates
+#         that all images originate from a registry in the approved list.
+#       policies.kyverno.io/severity: high
+#       policies.kyverno.io/subject: Pod
+#       policies.kyverno.io/title: Restrict Image Registries
+#     enabled: true
+#     kind: ClusterPolicy
+#     spec:
+#       background: true
+#       rules:
+#       - match:
+#           any:
+#           - resources:
+#               kinds:
+#               - Pod
+#         name: validate-registries
+#         validate:
+#           foreach:
+#           - list: request.object.spec.[ephemeralContainers, initContainers, containers][]
+#             message: Image registry is not in the approved list
+#             pattern:
+#               image: 127.0.0.1:31999/* | 127.0.0.1:31999/* | quay.io/metallb/*
+#       validationFailureAction: Enforce
+#       webhookTimeoutSeconds: 30
+#   samplePolicy:
+#     annotations:
+#       policies.kyverno.io/category: Examples
+#       policies.kyverno.io/description: This sample policy blocks pods from deploying
+#         into the 'default' namespace.
+#       policies.kyverno.io/severity: low
+#       policies.kyverno.io/subject: Pod
+#       policies.kyverno.io/title: Sample Policy
+#     enabled: false
+#     kind: ClusterPolicy
+#     namespace: ""
+#     spec:
+#       rules:
+#       - match:
+#           any:
+#           - resources:
+#               kinds:
+#               - Pods
+#         name: sample-rule
+#         validate:
+#           message: Using 'default' namespace is not allowed.
+#           pattern:
+#             metadata:
+#               namespace: '!default'
+# background: true
+# bbtests:
+#   enabled: false
+#   imagePullSecret: private-registry
+#   scripts:
+#     additionalVolumeMounts:
+#     - mountPath: /yaml
+#       name: kyverno-policies-bbtest-manifests
+#     - mountPath: /.kube/cache
+#       name: kyverno-policies-bbtest-kube-cache
+#     additionalVolumes:
+#     - configMap:
+#         name: kyverno-policies-bbtest-manifests
+#       name: kyverno-policies-bbtest-manifests
+#     - emptyDir: {}
+#       name: kyverno-policies-bbtest-kube-cache
+#     envs:
+#       ENABLED_POLICIES: '{{ $p := list }}{{ range $k, $v := .Values.policies }}{{
+#         if $v.enabled }}{{ $p = append $p $k }}{{ end }}{{ end }}{{ join " " $p }}'
+#       IMAGE_PULL_SECRET: '{{ .Values.bbtests.imagePullSecret }}'
+#     image: registry1.dso.mil/ironbank/opensource/kubernetes/kubectl:1.27.3
+# customLabels: {}
+# enabled: true
+# exclude:
+#   any:
+#   - resources:
+#       namespaces:
+#       - zarf
+# excludeContainers: []
+# failurePolicy: Fail
+# gluon:
+#   global: {}
+# kyvernoVersion: autodetect
+# policies:
+#   clone-configs:
+#     enabled: false
+#     parameters:
+#       clone: []
+#   disallow-annotations:
+#     enabled: false
+#     parameters:
+#       disallow: []
+#     validationFailureAction: Audit
+#   disallow-deprecated-apis:
+#     enabled: false
+#     validationFailureAction: Audit
+#   disallow-host-namespaces:
+#     enabled: true
+#     exclude:
+#       any:
+#       - resources:
+#           names:
+#           - neuvector-enforcer-pod*
+#           namespaces:
+#           - neuvector
+#       - resources:
+#           namespaces:
+#           - metallb-system
+#     validationFailureAction: Enforce
+#   disallow-image-tags:
+#     enabled: true
+#     parameters:
+#       disallow:
+#       - latest
+#     validationFailureAction: enforce
+#   disallow-istio-injection-bypass:
+#     enabled: true
+#     exclude:
+#       any:
+#       - resources:
+#           namespaces:
+#           - istio-system
+#     validationFailureAction: Audit
+#   disallow-labels:
+#     enabled: false
+#     parameters:
+#       disallow: []
+#     validationFailureAction: Audit
+#   disallow-namespaces:
+#     enabled: true
+#     parameters:
+#       disallow:
+#       - bigbang
+#       - default
+#     validationFailureAction: enforce
+#   disallow-nodeport-services:
+#     enabled: true
+#     validationFailureAction: enforce
+#   disallow-pod-exec:
+#     enabled: false
+#     validationFailureAction: Audit
+#   disallow-privilege-escalation:
+#     enabled: true
+#     validationFailureAction: Enforce
+#   disallow-privileged-containers:
+#     enabled: true
+#     exclude:
+#       any:
+#       - resources:
+#           names:
+#           - neuvector-enforcer-pod*
+#           - neuvector-controller-pod*
+#           namespaces:
+#           - neuvector
+#     validationFailureAction: Enforce
+#   disallow-rbac-on-default-serviceaccounts:
+#     enabled: false
+#     exclude:
+#       any:
+#       - resources:
+#           name: system:service-account-issuer-discovery
+#     validationFailureAction: Audit
+#   disallow-selinux-options:
+#     enabled: true
+#     parameters:
+#       disallow:
+#       - user
+#       - role
+#     validationFailureAction: Enforce
+#   disallow-tolerations:
+#     enabled: false
+#     exclude:
+#       any:
+#       - resources:
+#           names:
+#           - monitoring-monitoring-prometheus-node-exporter*
+#           namespaces:
+#           - monitoring
+#     parameters:
+#       disallow:
+#       - key: node-role.kubernetes.io/master
+#     validationFailureAction: Audit
+#   require-annotations:
+#     enabled: false
+#     parameters:
+#       require: []
+#     validationFailureAction: Audit
+#   require-cpu-limit:
+#     enabled: false
+#     parameters:
+#       require:
+#       - <10
+#     validationFailureAction: Audit
+#   require-drop-all-capabilities:
+#     enabled: true
+#     exclude:
+#       any:
+#       - resources:
+#           names:
+#           - neuvector-enforcer-pod*
+#           - neuvector-prometheus-exporter-pod*
+#           namespaces:
+#           - neuvector
+#     validationFailureAction: audit
+#   require-image-signature:
+#     enabled: false
+#     parameters:
+#       require:
+#       - attestors:
+#         - count: 1
+#           entries:
+#           - keys:
+#               publicKeys: |-
+#                 -----BEGIN PUBLIC KEY-----
+#                 MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE7CjMGH005DFFz6mffqTIGurBt6fL
+#                 UfTZxuEDFRBS8mFJx1xw8DEVvjMibLTtqmAoJxUmzmGFgzz+LV875syVEg==
+#                 -----END PUBLIC KEY-----
+#         imageReferences:
+#         - registry1.dso.mil/ironbank/*
+#         mutateDigest: false
+#         verifyDigest: false
+#     validationFailureAction: audit
+#   require-istio-on-namespaces:
+#     enabled: true
+#     exclude:
+#       any:
+#       - resources:
+#           namespaces:
+#           - kube-node-lease
+#           - kube-public
+#           - kube-system
+#           - bigbang
+#           - default
+#           - flux-system
+#           - istio-operator
+#           - istio-system
+#     validationFailureAction: Audit
+#   require-labels:
+#     enabled: false
+#     parameters:
+#       require:
+#       - app.kubernetes.io/name
+#       - app.kubernetes.io/instance
+#       - app.kubernetes.io/version
+#     validationFailureAction: Audit
+#   require-memory-limit:
+#     enabled: false
+#     parameters:
+#       require:
+#       - <64Gi
+#     validationFailureAction: Audit
+#   require-non-root-group:
+#     enabled: true
+#     exclude:
+#       any:
+#       - resources:
+#           names:
+#           - promtail-promtail*
+#           namespaces:
+#           - promtail
+#     parameters:
+#       excludeContainers:
+#       - istio-init
+#     validationFailureAction: audit
+#   require-non-root-user:
+#     enabled: true
+#     exclude:
+#       any:
+#       - resources:
+#           names:
+#           - promtail-promtail*
+#           namespaces:
+#           - promtail
+#     parameters:
+#       excludeContainers:
+#       - istio-init
+#     validationFailureAction: audit
+#   require-probes:
+#     enabled: false
+#     parameters:
+#       require:
+#       - readinessProbe
+#       - livenessProbe
+#     validationFailureAction: Audit
+#   require-requests-equal-limits:
+#     enabled: false
+#     validationFailureAction: Audit
+#   require-ro-rootfs:
+#     enabled: false
+#     validationFailureAction: Audit
+#   restrict-apparmor:
+#     enabled: true
+#     parameters:
+#       allow:
+#       - runtime/default
+#       - localhost/*
+#     validationFailureAction: Enforce
+#   restrict-capabilities:
+#     enabled: true
+#     parameters:
+#       allow:
+#       - NET_BIND_SERVICE
+#       - NET_ADMIN
+#       - NET_RAW
+#     validationFailureAction: audit
+#   restrict-external-ips:
+#     enabled: true
+#     parameters:
+#       allow: []
+#     validationFailureAction: Enforce
+#   restrict-external-names:
+#     enabled: true
+#     parameters:
+#       allow: []
+#     validationFailureAction: Enforce
+#   restrict-group-id:
+#     enabled: false
+#     parameters:
+#       allow:
+#       - '>=1000'
+#     validationFailureAction: Audit
+#   restrict-host-path-mount:
+#     enabled: true
+#     exclude:
+#       any:
+#       - resources:
+#           names:
+#           - promtail-promtail*
+#           namespaces:
+#           - promtail
+#       - resources:
+#           names:
+#           - monitoring-monitoring-prometheus-node-exporter*
+#           namespaces:
+#           - monitoring
+#       - resources:
+#           names:
+#           - neuvector-enforcer-pod*
+#           - neuvector-controller-pod*
+#           namespaces:
+#           - neuvector
+#     parameters:
+#       allow:
+#       - /var/lib/rancher/k3s/storage/*
+#     validationFailureAction: enforce
+#   restrict-host-path-mount-pv:
+#     enabled: true
+#     parameters:
+#       allow:
+#       - /var/lib/rancher/k3s/storage/*
+#     validationFailureAction: enforce
+#   restrict-host-path-write:
+#     enabled: true
+#     exclude:
+#       any:
+#       - resources:
+#           names:
+#           - neuvector-controller-pod*
+#           namespaces:
+#           - neuvector
+#     parameters:
+#       allow:
+#       - /run/promtail
+#       - /var/lib/rancher/k3s/storage/*
+#     validationFailureAction: enforce
+#   restrict-host-ports:
+#     enabled: true
+#     exclude:
+#       any:
+#       - resources:
+#           namespaces:
+#           - metallb-system
+#     parameters:
+#       allow: []
+#     validationFailureAction: Enforce
+#   restrict-image-registries:
+#     enabled: false
+#     parameters:
+#       allow:
+#       - registry1.dso.mil
+#       - registry.dso.mil
+#     validationFailureAction: enforce
+#   restrict-proc-mount:
+#     enabled: true
+#     parameters:
+#       allow:
+#       - Default
+#     validationFailureAction: Enforce
+#   restrict-seccomp:
+#     enabled: true
+#     parameters:
+#       allow:
+#       - RuntimeDefault
+#       - Localhost
+#     validationFailureAction: Enforce
+#   restrict-selinux-type:
+#     enabled: true
+#     exclude:
+#       any:
+#       - resources:
+#           names:
+#           - promtail-promtail*
+#           namespaces:
+#           - promtail
+#     parameters:
+#       allow:
+#       - container_t
+#       - container_init_t
+#       - container_kvm_t
+#     validationFailureAction: Enforce
+#   restrict-sysctls:
+#     enabled: true
+#     parameters:
+#       allow:
+#       - kernel.shm_rmid_forced
+#       - net.ipv4.ip_local_port_range
+#       - net.ipv4.ip_unprivileged_port_start
+#       - net.ipv4.tcp_syncookies
+#       - net.ipv4.ping_group_range
+#     validationFailureAction: Enforce
+#   restrict-user-id:
+#     enabled: false
+#     parameters:
+#       allow:
+#       - '>=1000'
+#     validationFailureAction: Audit
+#   restrict-volume-types:
+#     enabled: true
+#     exclude:
+#       any:
+#       - resources:
+#           names:
+#           - promtail-promtail*
+#           namespaces:
+#           - promtail
+#       - resources:
+#           names:
+#           - monitoring-monitoring-prometheus-node-exporter*
+#           namespaces:
+#           - monitoring
+#       - resources:
+#           names:
+#           - neuvector-enforcer-pod*
+#           - neuvector-controller-pod*
+#           namespaces:
+#           - neuvector
+#     parameters:
+#       allow:
+#       - configMap
+#       - csi
+#       - downwardAPI
+#       - emptyDir
+#       - ephemeral
+#       - persistentVolumeClaim
+#       - projected
+#       - secret
+#     validationFailureAction: Enforce
+#   sample:
+#     enabled: false
+#     exclude: {}
+#     match: {}
+#     parameters:
+#       excludeContainers: []
+#     validationFailureAction: Audit
+#     webhookTimeoutSeconds: ""
+#   update-image-pull-policy:
+#     enabled: false
+#     parameters:
+#       update:
+#       - to: Always
+#   update-image-registry:
+#     enabled: false
+#     parameters:
+#       update: []
+#   update-token-automount:
+#     enabled: false
+# policyPreconditions: {}
+# validationFailureAction: ""
+# waitforready:
+#   enabled: true
+#   image:
+#     repository: registry1.dso.mil/ironbank/opensource/kubernetes/kubectl
+#     tag: 1.27.3
+#   imagePullSecrets:
+#   - name: private-registry
+# webhookTimeoutSeconds: 30

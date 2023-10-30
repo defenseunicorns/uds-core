@@ -20,7 +20,7 @@ components:
         namespace: kyverno
         releaseName: kyverno-policies
         valuesFiles:
-          - values/umbrella-values-dep.yaml
+          - values/overrides.yaml
     images:
       - registry1.dso.mil/ironbank/opensource/kubernetes/kubectl:v1.28.3
 
