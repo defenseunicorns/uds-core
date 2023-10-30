@@ -56,7 +56,8 @@ jobs:
     with:
       capability: ${{ matrix.capability }}
     secrets: inherit
-    if: ${{ needs.check-paths.outputs.capabilities }} != "[]"
+    if: ${{ needs.check-paths.outputs.capabilities != '[]' }}
+
 
   # build-and-test-bundle:
   #   needs: [check-paths, build-and-test-capabilities]
