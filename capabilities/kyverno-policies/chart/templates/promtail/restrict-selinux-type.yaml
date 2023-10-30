@@ -1,0 +1,20 @@
+apiVersion: kyverno.io/v2alpha1
+kind: PolicyException
+metadata:
+  name: promtail-restrict-selinux-type
+  namespace: kyverno
+spec:
+  exceptions:
+    - policyName: restrict-selinux-type
+      ruleNames:
+        - pod-selinux-options-type
+        - container-selinux-options-type
+  match:
+    any:
+      - resources:
+          namespaces:
+            - promtail
+          names:
+            # NEEDS FURTHER JUSTIFICATION
+            # Promtail needs selinux option type spc_t
+            - promtail-promtail*

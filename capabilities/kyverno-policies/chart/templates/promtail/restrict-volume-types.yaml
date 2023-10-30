@@ -1,0 +1,20 @@
+apiVersion: kyverno.io/v2alpha1
+kind: PolicyException
+metadata:
+  name: promtail-restrict-volume-types
+  namespace: kyverno
+spec:
+  exceptions:
+    - policyName: restrict-volume-types
+      ruleNames:
+        - restrict-volume-types
+  match:
+    any:
+      - resources:
+          namespaces:
+            - promtail
+          names:
+            # NEEDS FURTHER JUSTIFICATION
+            # Promtail requires HostPath volume types
+            # https://github.com/grafana/helm-charts/blob/main/charts/promtail/templates/daemonset.yaml#L120
+            - promtail-promtail*

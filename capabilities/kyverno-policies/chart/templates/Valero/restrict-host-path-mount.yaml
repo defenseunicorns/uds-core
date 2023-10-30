@@ -1,0 +1,20 @@
+apiVersion: kyverno.io/v2alpha1
+kind: PolicyException
+metadata:
+  name: valero-restrict-host-path-mount
+  namespace: kyverno
+spec:
+  exceptions:
+    - policyName: restrict-host-path-mount
+      ruleNames:
+        - restrict-hostpath-dirs
+  match:
+    any:
+      - resources:
+          namespaces:
+            - velero
+          names:
+            - node-agent*
+# Velero.  The node agent backup tool requires root user access to the host's runtime pod directory which is
+# mounted inside velero/node agent pods.  Since the host's pod runtime directory may expose sensitive information,
+# it is better to exclude the node agent pods than to add the path as allowable mounts

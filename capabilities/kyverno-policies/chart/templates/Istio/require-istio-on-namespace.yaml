@@ -1,0 +1,26 @@
+apiVersion: kyverno.io/v2alpha1
+kind: PolicyException
+metadata:
+  name: istio-require-istio-on-namespace
+  namespace: kyverno
+spec:
+  exceptions:
+    - policyName: require-istio-on-namespace
+      ruleNames:
+        - istio-on-namespace
+  match:
+    any:
+      - resources:
+          namespaces:
+            # Kuberentes control plane does not use Istio
+            - kube-node-lease
+            - kube-public
+            - kube-system
+            # No pods in bigbang / default
+            - bigbang
+            - default
+            # Flux is installed prior to Istio
+            - flux-system
+            # Istio does not inject itself
+            - istio-operator
+            - istio-system

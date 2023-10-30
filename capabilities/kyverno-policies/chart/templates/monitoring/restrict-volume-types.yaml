@@ -1,0 +1,18 @@
+apiVersion: kyverno.io/v2alpha1
+kind: PolicyException
+metadata:
+  name: monitoring-restrict-volume-types
+  namespace: kyverno
+spec:
+  exceptions:
+    - policyName: restrict-volume-types
+      ruleNames:
+        - restrict-volume-types
+  match:
+    any:
+      - resources:
+          namespaces:
+            - monitoring
+          names:
+            - monitoring-monitoring-prometheus-node-exporter*
+# Prometheus node exporter requires a HostPath volume to monitor host metrics in /proc and /sys

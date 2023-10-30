@@ -1,7 +1,7 @@
 apiVersion: kyverno.io/v2alpha1
 kind: PolicyException
 metadata:
-  name: disallow-host-namespaces
+  name: neuvector-disallow-host-namespaces
   namespace: kyverno
 spec:
   exceptions:
@@ -16,3 +16,4 @@ spec:
             - neuvector
           names:
             - neuvector-enforcer-pod*
+# Neuvector needs access to host to inspect network traffic

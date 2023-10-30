@@ -1,0 +1,19 @@
+apiVersion: kyverno.io/v2alpha1
+kind: PolicyException
+metadata:
+  name: promtail-require-non-root-group
+  namespace: kyverno
+spec:
+  exceptions:
+    - policyName: require-non-root-group
+      ruleNames:
+        - run-as-group
+        - fs-groups
+        - supplemental-groups
+  match:
+    any:
+      - resources:
+          namespaces:
+            - promtail
+          names:
+            - promtail-promtail*

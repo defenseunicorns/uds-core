@@ -1,0 +1,19 @@
+apiVersion: kyverno.io/v2alpha1
+kind: PolicyException
+metadata:
+  name: valero-restrict-volume-types
+  namespace: kyverno
+spec:
+  exceptions:
+    - policyName: restrict-volume-types
+      ruleNames:
+        - restrict-volume-types
+  match:
+    any:
+      - resources:
+          namespaces:
+            - velero
+          names:
+            - node-agent*
+# Velero.  The node agent backup tool requires root user access to the host's runtime pod directory which is
+# mounted inside velero/node agent pods.

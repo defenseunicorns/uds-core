@@ -1,3 +1,7 @@
+waitforready:
+  imagePullSecrets:
+    - name: private-registry
+
 policies:
   disallow-image-tags:
     enabled: true
@@ -25,3 +29,40 @@ policies:
       allow:
         - registry1.dso.mil
         - registry.dso.mil
+
+require-non-root-group:
+  validationFailureAction: audit
+  parameters:
+    excludeContainers:
+      - istio-init
+
+require-non-root-user:
+  validationFailureAction: audit
+  parameters:
+    excludeContainers:
+      - istio-init
+
+require-drop-all-capabilities:
+  validationFailureAction: audit
+
+restrict-capabilities:
+  validationFailureAction: audit
+  parameters:
+    allow:
+      # Defaults from https://kubernetes.io/docs/concepts/security/pod-security-standards/#restricted
+      - NET_BIND_SERVICE
+      # Istio requires NET_ADMIN and NET_RAW for sidecar init: https://istio.io/latest/docs/ops/deployment/requirements/#pod-requirements
+      # It uses these permissions to setup iptables for network routing
+      # Cannot create exclusion since sidecar is injected in most containers, so allow the capabilities globally
+      - NET_ADMIN
+      - NET_RAW
+
+restrict-host-path-mount:
+  validationFailureAction: enforce
+
+restrict-host-path-write:
+  validationFailureAction: enforce
+  parameters:
+    allow:
+      # Promtail - `/run/promtail`: promtail buffering and persistent state
+      - /run/promtail

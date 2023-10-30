@@ -1,12 +1,13 @@
 apiVersion: kyverno.io/v2alpha1
 kind: PolicyException
 metadata:
-  name: disallow-tolerations
+  name: monitoring-disallow-tolerations
   namespace: kyverno
 spec:
   exceptions:
     - policyName: disallow-tolerations
       ruleNames:
+        # re-evaluate these rules based on https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/disallow-tolerations.yaml?ref_type=heads
         - disallow-tolerations-pod-1
         - disallow-tolerations-controller-1
         - disallow-tolerations-cronjob-1

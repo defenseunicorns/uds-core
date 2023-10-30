@@ -1,0 +1,23 @@
+apiVersion: kyverno.io/v2alpha1
+kind: PolicyException
+metadata:
+  name: neuvector-restrict-host-path-mount
+  namespace: kyverno
+spec:
+  exceptions:
+    - policyName: restrict-host-path-mount
+      ruleNames:
+        - restrict-hostpath-dirs
+  match:
+    any:
+      - resources:
+          namespaces:
+            - neuvector
+          names:
+            - neuvector-enforcer-pod*
+            - neuvector-controller-pod*
+# Neuvector mounts the following hostPaths:
+# `/var/neuvector`: for Neuvector's buffering and persistent state
+# `/var/run`: communication to docker daemon
+# `/proc`: monitoring of proccesses for malicious activity
+# `/sys/fs/cgroup`: important files the controller wants to monitor for malicious content

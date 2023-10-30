@@ -1,0 +1,26 @@
+apiVersion: kyverno.io/v2alpha1
+kind: PolicyException
+metadata:
+  name: neuvector-restrict-volume-types
+  namespace: kyverno
+spec:
+  exceptions:
+    - policyName: restrict-volume-types
+      ruleNames:
+        - restrict-volume-types
+  match:
+    any:
+      - resources:
+          namespaces:
+            - neuvector
+          names:
+            - neuvector-enforcer-pod*
+            - neuvector-controller-pod*
+
+  # Neuvector requires HostPath volume types
+  # Neuvector mounts the following hostPaths:
+  # `/var/neuvector`: (as writable) for Neuvector's buffering and persistent state
+  # `/var/run`: communication to docker daemon
+  # `/proc`: monitoring of proccesses for malicious activity
+  # `/sys/fs/cgroup`: important files the controller wants to monitor for malicious content
+  # https://github.com/neuvector/neuvector-helm/blob/master/charts/core/templates/enforcer-daemonset.yaml#L108
