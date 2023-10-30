@@ -1,0 +1,5 @@
+service:
+  labels:
+    uds/istio-gateway: admin
+    uds/istio-host: grafana
+    uds/istio-port: "80"

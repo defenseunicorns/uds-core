@@ -1,17 +1,29 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/defenseunicorns/zarf/main/zarf.schema.json
-
 kind: ZarfPackageConfig
 metadata:
-  name: example
-  description: "Example description"
-  # x-release-please-start-version
-  version: "0.0.1"
-  # x-release-please-end
-
+  name: uds-capabilities-grafana
+  description: "UDS Grafana Capability"
+  url: https://grafana.com/grafana
+  version: 6.61.1
 
 components:
-  - name: test
-    actions:
-      onCreate:
-        after:
-        - cmd: echo "What can Doug do for you?"
+  - name: grafana
+    required: true
+    description: "Deploy Grafana"
+    charts:
+      - name: grafana
+        url: https://grafana.github.io/helm-charts/
+        version: 6.61.1
+        namespace: grafana
+        valuesFiles:
+          - values/values.yaml
+    images:
+      - docker.io/grafana/grafana:10.1.5
+
+  - name: uds-grafana-config
+    required: true
+    charts:
+      - name: uds-grafana-config
+        namespace: grafana
+        version: 0.1.0
+        localPath: chart
