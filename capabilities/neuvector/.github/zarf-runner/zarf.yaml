@@ -1,0 +1,25 @@
+kind: ZarfPackageConfig
+metadata:
+  name: bob-the-builder
+
+components:
+  - name: build
+    required: true
+    import:
+      path: bob-the-builder
+
+  - name: deploy
+    required: true
+    import:
+      path: deploy
+
+  - name: test
+    required: true
+    import:
+      path: test
+
+
+  # - name: test-admin
+  #   required: true
+  #   import:
+  #     path: bernard-bentley
