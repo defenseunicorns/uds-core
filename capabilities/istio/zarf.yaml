@@ -5,9 +5,6 @@ metadata:
   name: uds-capability-istio
   description: "UDS Istio Capability"
   url: https://istio.io/latest/
-  # x-release-please-start-version
-  version: 1.19.3
-  # x-release-please-end
 
 components:
   - name: istio-controlplane
@@ -33,35 +30,6 @@ components:
     images:
       - "docker.io/istio/pilot:1.19.3-distroless"
       - "docker.io/istio/proxyv2:1.19.3-distroless"
-
-  - name: istio-gw-certs
-    required: true
-    description: "Load TLS certs from env variables"
-    actions:
-      # Temporary hacks until UDS CLI supports variable mapping to chart values
-      # Note these are pre-encoded base64 values to avoid issues with newlines
-      onDeploy:
-        before:
-          - cmd: echo ${ADMIN_GATEWAY_TLS_CERT}
-            mute: true
-            setVariables:
-              - name: ADMIN_GATEWAY_TLS_CERT
-                sensitive: true
-          - cmd: echo ${ADMIN_GATEWAY_TLS_KEY}
-            mute: true
-            setVariables:
-              - name: ADMIN_GATEWAY_TLS_KEY
-                sensitive: true
-          - cmd: echo ${TENANT_GATEWAY_TLS_CERT}
-            mute: true
-            setVariables:
-              - name: TENANT_GATEWAY_TLS_CERT
-                sensitive: true
-          - cmd: echo ${TENANT_GATEWAY_TLS_KEY}
-            mute: true
-            setVariables:
-              - name: TENANT_GATEWAY_TLS_KEY
-                sensitive: true
 
   - name: istio-admin-gateway
     required: true

@@ -1,7 +1,3 @@
 name: admin
 
 domain: "admin.uds.dev"
-
-tls:
-  cert: "###ZARF_VAR_ADMIN_GATEWAY_TLS_CERT###"
-  key: "###ZARF_VAR_ADMIN_GATEWAY_TLS_KEY###"
