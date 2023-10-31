@@ -1,4 +1,4 @@
-## Welcome to the UDS Capability Template!
+## Welcome to the UDS Capability Neuvector!
 
 1. Update [CHANGELOG.md](CHANGELOG.md), [DEVELOPMENT_MAINTENANCE.md](docs/DEVELOPMENT_MAINTENANCE.md)
 1. Populate [README.md](README.md)
@@ -16,11 +16,14 @@
 
 ## Prerequisites
 
-[Bulleted-list, commands, etc; describing expected versions, deployed software, and other requirements]
+1. zarf >= 0.30.1
+2. docker or alternative
+3. k3d
 
 ## Create
 
-[Steps used to build the UDS Capability]
+1. Assuming you are already in the directory with this README.md, cd into .github/zarf-runner/
+2. run zarf p c . --confirm to deploy a test k3d cluster with istio and deploy neuvector
 
 ## Deploy
 

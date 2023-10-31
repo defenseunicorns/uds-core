@@ -1,0 +1,40 @@
+kind: ZarfPackageConfig
+metadata:
+  name: rusty-rogers
+  url: https://btb.fandom.com/wiki/Rusty_Rogers
+  image: https://static.wikia.nocookie.net/btb/images/4/4a/RustyRogers.png
+  description: "A zarf package to publish things"
+
+components:
+  - name: build
+    required: true
+    import:
+      path: ../build
+
+  - name: deploy
+    required: true
+    import:
+      path: ../deploy
+
+  - name: test
+    required: true
+    import:
+      path: ../test
+
+  - name: release
+    required: true
+    actions:
+      onCreate:
+        before:
+          - description: Release the artifact
+            cmd: |
+                ARCH=$(uname -m)
+                [ "$ARCH" = "x86_64" ] && ARCH="amd64"
+                ./zarf p publish zarf-package-uds-capability-istio-$ARCH-0.1.0.tar.zst oci://ghcr.io/defenseunicorns/packages
+            dir: ../build
+          - description: Release the skeleton artifact
+            cmd: |
+                ARCH=$(uname -m)
+                [ "$ARCH" = "x86_64" ] && ARCH="amd64"
+                ./zarf p publish . oci://ghcr.io/defenseunicorns/packages
+            dir: ../../../
