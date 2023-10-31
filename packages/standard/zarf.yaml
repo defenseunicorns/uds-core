@@ -15,7 +15,7 @@ variables:
 components:
   # Istio
   - name: istio-controlplane
-    group: istio
+    required: true
     import:
       path: ../../capabilities/istio
 
@@ -47,7 +47,7 @@ components:
           - "values/istio-passthrough-gateway.yaml"
 
   # Pepr the world
-  - name: pepr-uds-istio
+  - name: pepr-uds-core
     required: true
     import:
       path: ../../dist

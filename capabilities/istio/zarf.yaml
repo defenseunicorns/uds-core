@@ -8,7 +8,6 @@ metadata:
 
 components:
   - name: istio-controlplane
-    required: true
     description: "Install the Istio control plane based on https://istio.io/latest/docs/setup/install/helm/"
     charts:
       - name: base
@@ -32,7 +31,6 @@ components:
       - "docker.io/istio/proxyv2:1.19.3-distroless"
 
   - name: istio-admin-gateway
-    required: true
     description: "Deploy an admin gateway"
     charts:
       - name: gateway
@@ -48,7 +46,6 @@ components:
           - "values/config-admin.yaml"
 
   - name: istio-tenant-gateway
-    required: true
     description: "Deploy a tenant gateway"
     charts:
       - name: gateway
@@ -64,7 +61,6 @@ components:
           - "values/config-tenant.yaml"
 
   - name: istio-passthrough-gateway
-    required: true
     description: "Deploy a TLS passthrough gateway"
     charts:
       - name: gateway
