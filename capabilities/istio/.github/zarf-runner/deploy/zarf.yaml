@@ -24,6 +24,10 @@ components:
               ARCH=$(uname -m)
               [ "$ARCH" = "x86_64" ] && ARCH="amd64"
               ./zarf p d ../build/zarf-package-uds-capability-istio-$ARCH.tar.zst  --confirm 
+          - description: DEBUG get ns
+            cmd: |
+              ./zarf tools kubectl get namespaces
+            dir: ../../../../../
           - description: Inject tls certificate
             cmd: |
               npm ci
