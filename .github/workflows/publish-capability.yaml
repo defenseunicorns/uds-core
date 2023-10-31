@@ -6,7 +6,7 @@ on:
     inputs:
       platform:
         type: string
-        default: "ubuntu-latest"
+        default: 'ubuntu-latest'
 
 permissions:
   contents: read
@@ -18,7 +18,7 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
+        
       - name: Login to GHCR
         uses: docker/login-action@v3
         with:
@@ -30,3 +30,5 @@ jobs:
         run: zarf package create . --confirm
         working-directory: ".github/zarf-runner/release"
         timeout-minutes: 60
+
+
