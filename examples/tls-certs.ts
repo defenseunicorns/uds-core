@@ -1,6 +1,6 @@
 // Apply using `npx ts-node tls-certs.ts`
 
-import { K8s, kind, fromEnv } from "kubernetes-fluent-client";
+import { K8s, fromEnv, kind } from "kubernetes-fluent-client";
 
 // If the environment variable is not set, use the default certs
 if (!process.env.ADMIN_GATEWAY_TLS_CERT) {
@@ -26,6 +26,9 @@ Promise.all([
   // Tenant Gateway Secret, "*.burning.boats"
   applySecret("TENANT"),
 ])
+  .then(() => {
+    console.info("✅ Secrets applied");
+  })
   // If there's an error, log it and exit with an error code to fail the job.
   .catch(e => {
     console.error(e);
