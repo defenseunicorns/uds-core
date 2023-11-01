@@ -24,7 +24,7 @@ The core applications are:
 
 | Dependency                                                     | Minimum Version |
 | -------------------------------------------------------------- | --------------- |
-| [Zarf](https://github.com/defenseunicorns/zarf/releases)       | 0.30.x          |
+| [Zarf](https://github.com/defenseunicorns/zarf/releases)       | 0.31.x          |
 | [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) | 0.7.x           |
 | [NodeJS](https://nodejs.org/en/download/)                      | LTS or Current  |
 

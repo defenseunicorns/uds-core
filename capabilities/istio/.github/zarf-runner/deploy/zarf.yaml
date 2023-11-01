@@ -18,7 +18,7 @@ components:
             cmd: |
               ARCH=$(uname -m)
               [ "$ARCH" = "x86_64" ] && ARCH="amd64"
-              ./zarf p d oci://ghcr.io/defenseunicorns/packages/init:v0.31.0-rc1-$ARCH --confirm
+              ./zarf p d oci://ghcr.io/defenseunicorns/packages/init:v0.31.0-$ARCH --confirm
           - description: Deploy the istio
             cmd: |
               ARCH=$(uname -m)

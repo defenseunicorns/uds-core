@@ -16,7 +16,7 @@
 
 ## Prerequisites
 
-1. zarf >= 0.30.1
+1. zarf >= 0.31.x
 2. docker or alternative
 3. k3d
 
