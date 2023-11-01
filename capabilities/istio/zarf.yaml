@@ -4,6 +4,7 @@ kind: ZarfPackageConfig
 metadata:
   name: uds-capability-istio
   description: "UDS Istio Capability"
+  architecture: multi
   url: https://istio.io/latest/
 
 components:
@@ -74,3 +75,8 @@ components:
         namespace: istio-passthrough-gateway
         valuesFiles:
           - "values/config-passthrough.yaml"
+
+  - name: module
+    description: "Deploy the uds-istio pepr module"
+    import:
+      path: ../../dist
