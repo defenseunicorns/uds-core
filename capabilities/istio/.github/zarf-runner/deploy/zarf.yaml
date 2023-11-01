@@ -11,22 +11,25 @@ components:
     actions:
       onCreate:
         before:
-          - description: Deploy the cluster bundle
-            cmd: |
-                ARCH=$(uname -m)
-                [ "$ARCH" = "x86_64" ] && ARCH="amd64"
-                ./uds deploy oci://ghcr.io/zachariahmiller/k3d-common:0.1.0-$ARCH --no-progress --confirm
+          - description: Deploy the test cluster package
+            cmd: ./zarf p d oci://defenseunicorns/uds-k3d:0.1.10-multi --confirm
             dir: ../build
+          - description: deploy the init package to the cluster
+            cmd: |
+              ARCH=$(uname -m)
+              [ "$ARCH" = "x86_64" ] && ARCH="amd64"
+              ./zarf p d oci://ghcr.io/defenseunicorns/packages/init:v0.31.0-rc1-$ARCH --confirm
           - description: Deploy the istio
             cmd: |
-                ARCH=$(uname -m)
-                [ "$ARCH" = "x86_64" ] && ARCH="amd64"
-                ./zarf p d ../build/zarf-package-uds-capability-istio-$ARCH-1.19.3.tar.zst  --no-progress --confirm #${COMPONENTS}          
+              ARCH=$(uname -m)
+              [ "$ARCH" = "x86_64" ] && ARCH="amd64"
+              ./zarf p d ../build/zarf-package-uds-capability-istio-$ARCH.tar.zst  --confirm --components "istio-controlplane,istio-admin-gateway,istio-tenant-gateway,istio-passthrough-gateway,module"
+
           - description: Inject tls certificate
             cmd: |
               npm ci
-              npx --yes ts-node secret.ts
-            dir: ../../../gw-tls
+              npx --yes ts-node examples/tls-certs.ts
+            dir: ../../../../../
         after:
           - description: Wait for the istio gateway to have the label required for vs generation.
             wait:

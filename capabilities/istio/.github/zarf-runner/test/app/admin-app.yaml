@@ -20,7 +20,7 @@ metadata:
     app: httpbin
     service: httpbin
     uds/istio-gateway: admin
-    uds/istio-host: demo.admin.uds.dev
+    uds/istio-host: demo
 spec:
   ports:
     - name: http

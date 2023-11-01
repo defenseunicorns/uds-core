@@ -25,7 +25,9 @@ components:
             cmd: |
               npm ci
               npx pepr build
-            dir: ../../../pepr
+            dir: ../../../../../
+            env:
+              - "CAPABILITY=istio"
           - description: Build the zarf packages
             cmd: |
-              ./zarf p c ../../../ --confirm --no-progress -o ../build
+              ./zarf p c ../../../ --confirm -o ../build
