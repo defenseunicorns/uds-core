@@ -74,7 +74,7 @@ jobs:
         uses: defenseunicorns/setup-zarf@main
         with:
           # renovate: datasource=github-tags depName=defenseunicorns/zarf versioning=semver
-          version: v0.30.1
+          version: v0.31.0
           download-init-package: true
       - name: Login to GHCR
         uses: docker/login-action@v3
