@@ -1,0 +1,36 @@
+kind: ZarfPackageConfig
+metadata:
+  name: uds-core-istio-only
+  description: "UDS Core (Istio Only)"
+  authors: "Defense Unicorns - Product"
+  # x-release-please-start-version
+  version: "0.1.0"
+  # x-release-please-end
+
+components:
+  # Istio
+  - name: istio-controlplane
+    required: true
+    import:
+      path: ../standard
+
+  - name: istio-admin-gateway
+    required: true
+    import:
+      path: ../standard
+
+  - name: istio-tenant-gateway
+    required: true
+    import:
+      path: ../standard
+
+  - name: istio-passthrough-gateway
+    required: true
+    import:
+      path: ../standard
+
+  # Pepr the world
+  - name: pepr-uds-core
+    required: true
+    import:
+      path: ../standard
