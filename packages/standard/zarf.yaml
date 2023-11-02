@@ -74,3 +74,14 @@ components:
     required: true
     import:
       path: ../../capabilities/loki
+
+  # Loki
+  - name: prometheus-operator-crds
+    required: true
+    import:
+      path: ../../capabilities/prometheus-stack
+
+  - name: kube-prometheus-stack
+    required: true
+    import:
+      path: ../../capabilities/prometheus-stack
