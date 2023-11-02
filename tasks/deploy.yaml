@@ -1,0 +1,25 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/defenseunicorns/uds-cli/v0.0.8-alpha/tasks.schema.json
+
+tasks:
+  - name: example-bundle-k3d-standard
+    actions:
+      - description: "Deploy the UDS Core Standard Example Bundle"
+        cmd: "uds deploy examples/k3d-standard/uds-bundle-* --confirm --no-progress"
+
+      - task:
+          name: out-of-band-tls-certs
+
+  - name: example-bundle-k3d-istio-only
+    actions:
+      - description: "Deploy the UDS Core Istio Only Example Bundle"
+        cmd: "uds deploy examples/k3d-istio-only/uds-bundle-* --confirm --no-progress"
+
+      - task:
+          name: out-of-band-tls-certs
+
+  - name: out-of-band-tls-certs
+    actions:
+      - description: "Deploy the TLS certs for Istio"
+        cmd: |
+          npm ci
+          npx --yes ts-node examples/tls-certs.ts
