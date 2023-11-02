@@ -1,0 +1,12 @@
+{{- if .Values.grafana.enabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: neuvector-grafana-dashboards
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+data:
+  neuvector-dashboard.json: |
+  {{ .Files.Get "dashboards/neuvector-dashboard.json" | indent 4 }}
+{{- end }}
