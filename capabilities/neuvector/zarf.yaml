@@ -8,7 +8,6 @@ metadata:
 
 components:
   - name: neuvector
-    required: true
     description: "Deploy Neuvector"
     charts:
       - name: crd
@@ -40,7 +39,6 @@ components:
       - docker.io/neuvector/prometheus-exporter:latest
 
   - name: uds-neuvector-config
-    required: true
     charts:
       - name: uds-neuvector-config
         namespace: neuvector
