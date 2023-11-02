@@ -1,10 +1,10 @@
 import { Capability, K8s, Log, a, kind } from "pepr";
 
-import { Gateway } from "../crds/gateway-v1beta1";
+import { Gateway } from "./crds/gateway-v1beta1";
 import {
   PurpleDestination,
   VirtualService,
-} from "../crds/virtualservice-v1beta1";
+} from "./crds/virtualservice-v1beta1";
 
 export const IstioVirtualService = new Capability({
   name: "istio-virtual-service",
@@ -24,15 +24,6 @@ enum config {
 
 // Define the valid gateway names
 const validGateway = ["admin", "tenant", "passthrough"];
-
-// Watch Gateways to get the HTTPS domain for each gateway
-When(Gateway)
-  .IsCreatedOrUpdated()
-  .WithLabel(config.Domain)
-  .Watch(vs => {
-    // Store the domain for the gateway
-    Store.setItem(vs.metadata.name, vs.metadata.labels[config.Domain]);
-  });
 
 // Watch ConfigMaps with the "uds/istio-gateway" label to generate a VirtualServices
 When(a.ConfigMap)
@@ -72,10 +63,20 @@ async function handleSvc(svc: a.Service) {
     }
 
     // Get the gateway name
-    const gateways = [`istio-${gateway}-gateway/${gateway}-gateway`];
+    const gwNamespace = `istio-${gateway}-gateway`;
+    const gwName = `${gateway}-gateway`;
 
     // Get the domain for the gateway
-    const domain = Store.getItem(`${gateway}-gateway`);
+    let domain = Store.getItem(gwName);
+
+    // If the domain is not present, fetch it from the Gateway and store it
+    if (!domain) {
+      const gw = await K8s(Gateway).InNamespace(gwNamespace).Get(gwName);
+      domain = gw.metadata.labels[config.Domain];
+
+      // Store the domain for the gateway
+      Store.setItem(gwName, domain);
+    }
 
     // Get any the host or fallback to a wildcard
     const hostPrefix = svc.metadata.labels[config.Host] || "*";
@@ -114,7 +115,7 @@ async function handleSvc(svc: a.Service) {
       },
       spec: {
         hosts,
-        gateways,
+        gateways: [`${gwNamespace}/${gwName}`],
         http: [{ route: [{ destination }] }],
       },
     };

@@ -8,3 +8,6 @@ tmp/
 env.ts
 node_modules
 dist
+insecure*
+.env
+
