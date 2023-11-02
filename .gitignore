@@ -10,3 +10,5 @@ node_modules
 dist
 insecure*
 .env
+zarf
+tmp-tasks.yaml
