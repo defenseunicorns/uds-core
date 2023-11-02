@@ -4,7 +4,7 @@ metadata:
   name: uds-capability-neuvector
   description: "UDS Neuvector Capability"
   url: https://open-docs.neuvector.com/
-  version: 2.6.4
+
 
 components:
   - name: neuvector
