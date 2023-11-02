@@ -11,3 +11,4 @@ dist
 insecure*
 .env
 zarf
+tmp-tasks.yaml

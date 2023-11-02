@@ -7,7 +7,6 @@ metadata:
 
 components:
   - name: loki
-    required: true
     charts:
       - name: loki
         url: https://grafana.github.io/helm-charts/
@@ -18,7 +17,6 @@ components:
     images:
       - docker.io/grafana/loki:2.4.2
   - name: uds-loki-config
-    required: true
     charts:
       - name: uds-loki-config
         namespace: loki
