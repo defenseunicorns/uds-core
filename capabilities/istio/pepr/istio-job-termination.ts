@@ -1,5 +1,5 @@
 import { KubeConfig, Exec } from "@kubernetes/client-node";
-import { Capability, a, R, Log } from "pepr";
+import { Capability, a, Log, R } from "pepr";
 
 export const IstioJobTermination = new Capability({
   name: "istio-job-termination",
@@ -15,19 +15,13 @@ When(a.Pod)
   .WithLabel("service.istio.io/canonical-name")
   .Watch(async pod => {
     if (pod.status.phase == "Running") {
-      let podReadyForTermination = true;
-      pod.spec.containers.forEach(container => {
-        if (container.name == "istio-proxy") {
-          return;
-        }
-        const terminated = R.find(R.propEq(container.name, "name"))(
-          pod.status.containerStatuses,
-        ).state.terminated;
-        if (!terminated || terminated.exitCode != 0) {
-          podReadyForTermination = false;
-        }
-      });
-      // Validate status is still running due to multiple watches
+      const podReadyForTermination = R.all(containerStatus => {
+        return (
+          containerStatus.state.terminated?.exitCode == 0 ||
+          containerStatus.name == "istio-proxy"
+        );
+      })(pod.status.containerStatuses);
+
       if (podReadyForTermination) {
         Log.info("Attempting to terminate sidecar for " + pod.metadata.name);
         try {
