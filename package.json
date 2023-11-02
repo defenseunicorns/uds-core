@@ -25,6 +25,7 @@
     "k3d-setup": "k3d cluster delete pepr-dev && k3d cluster create pepr-dev --k3s-arg '--debug@server:0'"
   },
   "dependencies": {
+    "@kubernetes/client-node": "^1.0.0-rc3",
     "pepr": "0.15.0"
   },
   "devDependencies": {

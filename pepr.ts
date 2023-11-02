@@ -4,6 +4,7 @@ import cfg from "./package.json";
 
 import { IstioVirtualService } from "./capabilities/istio/pepr/istio-virtual-service";
 import { IstioInjection } from "./capabilities/istio/pepr/istio-injection";
+import { IstioJobTermination } from "./capabilities/istio/pepr/istio-job-termination";
 
 /**
  * This the root of the UDS Core Pepr Module. To operate on a specific capability, you can
@@ -13,7 +14,7 @@ import { IstioInjection } from "./capabilities/istio/pepr/istio-injection";
  * CAPABILITY=istio-virtual-service npx pepr build
  */
 const allCapabilities: Record<string, Capability[]> = {
-  istio: [IstioVirtualService, IstioInjection],
+  istio: [IstioVirtualService, IstioInjection, IstioJobTermination],
 };
 
 // Check if the CAPABILITY environment variable is set
