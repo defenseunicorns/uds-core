@@ -1,0 +1,76 @@
+variables:
+  - name: WORK_DIR
+    default: packages/standard
+  - name: ZARF_VER
+    default: "v0.31.0"
+  - name: NODE_VER
+    default: "v20.9.0"
+
+tasks:
+  - name: uds-core
+    actions:
+      - task:
+          name: set-env  
+      - task:
+          name: install-deps
+      - task: 
+          name: zarf-create 
+      - task:
+          name: create-testbed 
+      - task:
+          name: zarf-init
+      # Is there a better way currently? env?
+      - description: set package to deploy
+        mute: true
+        cmd:  echo "uds-core"
+        setVariables:
+          - name: DEPLOY_PACKAGE
+            sensitive: false
+      - task:
+          name: zarf-deploy
+
+      - description: Inject tls certificate
+        cmd: |
+          npm ci
+          npx --yes ts-node examples/tls-certs.ts
+
+  ### All Tasks below here are candidates to be made common beyond this repo ###
+
+  # Setup ENV
+  - name: set-env
+    actions:
+      - cmd: | 
+              ARCH=$(uname -m)
+              [ "$ARCH" = "x86_64" ] && ARCH="amd64"
+              echo $ARCH
+        setVariables:
+          - name: ARCH
+            sensitive: false
+      - cmd: | 
+              PLATFORM=$(uname -s)
+              echo $PLATFORM
+        setVariables:
+          - name: PLATFORM
+            sensitive: false
+
+  - name: install-deps
+    actions:
+      - description: Setup Zarf
+        cmd: |
+          curl -Lv --output zarf "https://github.com/defenseunicorns/zarf/releases/download/${ZARF_VAR_ZARF_VER}/zarf_${ZARF_VAR_ZARF_VER}_${PLATFORM}_${ARCH}"
+          chmod +x zarf
+
+  - name: zarf-create
+    actions:
+      - cmd: ./zarf package create ${ZARF_VAR_WORK_DIR} --confirm 
+
+  - name: zarf-deploy
+    actions:
+      - cmd: ./zarf package deploy zarf-package-${DEPLOY_PACKAGE}-* --confirm 
+  - name: zarf-init
+    actions:
+      - cmd: ./zarf package deploy oci://ghcr.io/defenseunicorns/packages/init:${ZARF_VAR_ZARF_VER}-$ARCH --confirm
+ 
+  - name: create-testbed
+    actions:
+      - cmd: ./zarf package deploy oci://defenseunicorns/uds-k3d:0.1.10-multi --confirm

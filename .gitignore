@@ -10,4 +10,4 @@ node_modules
 dist
 insecure*
 .env
-
+zarf

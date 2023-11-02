@@ -63,3 +63,14 @@ components:
     required: true
     import:
       path: ../../capabilities/neuvector
+
+  # Loki
+  - name: loki
+    required: true
+    import:
+      path: ../../capabilities/loki
+
+  - name: uds-loki-config
+    required: true
+    import:
+      path: ../../capabilities/loki
