@@ -4,9 +4,6 @@ nameOverride: loki
 fullnameOverride: loki
 # -- Overrides the chart's cluster label
 clusterLabelOverride: null
-# -- Image pull secrets for Docker images
-imagePullSecrets:
-  - name: private-registry
 loki:
   # Should authentication be enabled
   auth_enabled: false
