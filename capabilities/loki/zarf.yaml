@@ -4,8 +4,6 @@ kind: ZarfPackageConfig
 metadata:
   name: uds-capability-loki
   description: "UDS Loki Capability"
-  # x-release-please-start-version
-  version: 2.9.2
 
 components:
   - name: loki
@@ -24,5 +22,5 @@ components:
     charts:
       - name: uds-loki-config
         namespace: loki
-        version: 0.0.1
+        version: 0.1.0
         localPath: chart
