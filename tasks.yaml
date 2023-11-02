@@ -5,22 +5,29 @@ variables:
     default: "v0.31.0"
   - name: NODE_VER
     default: "v20.9.0"
+  - name: BUILD_DIR
+    default: "build"
 
 tasks:
   - name: uds-core
     actions:
       - task:
+          name: make-build-dir  
+      - task:
           name: set-env  
       - task:
           name: install-deps
+      - task: 
+          name: pepr-build
       - task: 
           name: zarf-create 
       - task:
           name: create-testbed 
       - task:
           name: zarf-init
+
       # Is there a better way currently? env?
-      - description: set package to deploy
+      - name: set package to deploy
         mute: true
         cmd:  echo "uds-core"
         setVariables:
@@ -29,12 +36,32 @@ tasks:
       - task:
           name: zarf-deploy
 
-      - description: Inject tls certificate
+      - name: Inject tls certificate
         cmd: |
           npm ci
           npx --yes ts-node examples/tls-certs.ts
 
+      # Is there a better way currently? env?      
+      - description: set test url
+        mute: true
+        cmd:  echo "neuvector.admin.uds.dev"
+        setVariables:
+          - name: URL
+            sensitive: false
+      - task:
+          name: wait-for-network
+          # Env does not seem to be working as i hoped
+          # env: 
+          #   - url="neuvector.admin.uds.dev"
+
+
+
   ### All Tasks below here are candidates to be made common beyond this repo ###
+
+
+  - name: make-build-dir
+    actions:
+      - cmd: mkdir -p ${ZARF_VAR_BUILD_DIR}
 
   # Setup ENV
   - name: set-env
@@ -57,16 +84,16 @@ tasks:
     actions:
       - description: Setup Zarf
         cmd: |
-          curl -Lv --output zarf "https://github.com/defenseunicorns/zarf/releases/download/${ZARF_VAR_ZARF_VER}/zarf_${ZARF_VAR_ZARF_VER}_${PLATFORM}_${ARCH}"
+          curl -sL --output zarf "https://github.com/defenseunicorns/zarf/releases/download/${ZARF_VAR_ZARF_VER}/zarf_${ZARF_VAR_ZARF_VER}_${PLATFORM}_${ARCH}"
           chmod +x zarf
 
   - name: zarf-create
     actions:
-      - cmd: ./zarf package create ${ZARF_VAR_WORK_DIR} --confirm 
+      - cmd: ./zarf package create ${ZARF_VAR_WORK_DIR} --confirm -o ${ZARF_VAR_BUILD_DIR}
 
   - name: zarf-deploy
     actions:
-      - cmd: ./zarf package deploy zarf-package-${DEPLOY_PACKAGE}-* --confirm 
+      - cmd: ./zarf package deploy ${ZARF_VAR_BUILD_DIR}/zarf-package-${DEPLOY_PACKAGE}-* --confirm 
   - name: zarf-init
     actions:
       - cmd: ./zarf package deploy oci://ghcr.io/defenseunicorns/packages/init:${ZARF_VAR_ZARF_VER}-$ARCH --confirm
@@ -74,3 +101,20 @@ tasks:
   - name: create-testbed
     actions:
       - cmd: ./zarf package deploy oci://defenseunicorns/uds-k3d:0.1.10-multi --confirm
+
+  - name: wait-for-network
+    actions: 
+      - description: Wait for test app to be accessible
+        wait:
+          network:
+            protocol: https
+            address: $URL
+
+  - name: pepr-build
+    actions:
+      - description: build pepr module
+        cmd: |     
+          npm ci
+          npx pepr build
+
+
