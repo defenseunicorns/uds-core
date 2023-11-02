@@ -1,7 +1,7 @@
 name: passthrough
 
 hosts:
-  - "keycloak.uds.dev"
+  - "keycloak"
 
 tls:
   enablePassthrough: true

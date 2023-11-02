@@ -6,6 +6,11 @@ metadata:
   description: "UDS Istio Capability"
   url: https://istio.io/latest/
 
+variables:
+  - name: DOMAIN
+    description: "Cluster domain"
+    default: "uds.dev"
+
 components:
   - name: istio-controlplane
     description: "Install the Istio control plane based on https://istio.io/latest/docs/setup/install/helm/"
