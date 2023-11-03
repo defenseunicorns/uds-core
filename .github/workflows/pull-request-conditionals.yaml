@@ -35,6 +35,7 @@ jobs:
         id: path-filter
         uses: dorny/paths-filter@v2
         with:
+          base: main
           filters: .github/filters.yaml
 
       # Outputs the result of the path filter for debugging.
