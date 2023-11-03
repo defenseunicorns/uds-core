@@ -1,0 +1,62 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-admin-app
+  labels:
+    zarf.dev/agent: ignore
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: httpbin
+  namespace: test-admin-app
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: httpbin
+  namespace: test-admin-app
+  labels:
+    app: httpbin
+    service: httpbin
+    uds/istio-gateway: admin
+    uds/istio-host: demo
+spec:
+  ports:
+    - name: http
+      port: 8000
+      targetPort: 80
+  selector:
+    app: httpbin
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin
+  namespace: test-admin-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: httpbin
+        version: v1
+    spec:
+      serviceAccountName: httpbin
+      containers:
+        - image: docker.io/kong/httpbin
+          imagePullPolicy: IfNotPresent
+          name: httpbin
+          resources:
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          ports:
+            - containerPort: 80

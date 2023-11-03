@@ -1,0 +1,22 @@
+kind: ZarfPackageConfig
+metadata:
+  name: test
+  url: https://welovebob.com/characters/mr_bentley.htm
+  image: https://welovebob.com/Images/characters/mr_bentley.jpg
+  description: "A zarf package to test things"
+
+components:
+  - name: test
+    required: true
+    actions:
+      onCreate:
+        before:
+          - description: Deploy the test app
+            cmd: |
+              ./zarf tools kubectl apply -f ./app/app.yaml
+        after:
+          - description: Wait for test app to be accessible
+            wait:
+              network:
+                protocol: https
+                address: demo.uds.dev

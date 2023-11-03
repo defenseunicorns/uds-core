@@ -3,8 +3,6 @@ name: Conditional Workflow on Pull Request
 # This workflow is triggered on pull requests to the main branch, but ignores certain paths.
 on:
   pull_request:
-    branches:
-      - main
     paths:
       - ".github/**"
       - "capabilities/**"
