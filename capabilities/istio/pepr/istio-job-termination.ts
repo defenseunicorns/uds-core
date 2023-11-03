@@ -1,5 +1,5 @@
-import { KubeConfig, Exec } from "@kubernetes/client-node";
-import { Capability, a, Log, R } from "pepr";
+import { Exec, KubeConfig } from "@kubernetes/client-node";
+import { Capability, Log, a } from "pepr";
 
 export const IstioJobTermination = new Capability({
   name: "istio-job-termination",
@@ -9,29 +9,43 @@ export const IstioJobTermination = new Capability({
 // Use the 'When' function to create a new action
 const { When } = IstioJobTermination;
 
+// Keep track of in-progress terminations
+const inProgress: Record<string, boolean> = {};
+
 When(a.Pod)
-  .IsCreatedOrUpdated() // IsCreated doesn't trigger enough :thinking:
+  .IsUpdated()
   .WithLabel("batch.kubernetes.io/job-name")
   .WithLabel("service.istio.io/canonical-name")
   .Watch(async pod => {
-    if (pod.status.phase == "Running") {
-      const podReadyForTermination = R.all(containerStatus => {
-        return (
-          containerStatus.state.terminated?.exitCode == 0 ||
-          containerStatus.name == "istio-proxy"
-        );
-      })(pod.status.containerStatuses);
+    const { metadata, status } = pod;
+    const { name, namespace } = metadata;
 
-      if (podReadyForTermination) {
-        Log.info("Attempting to terminate sidecar for " + pod.metadata.name);
+    // Ensure termination isn't already in progress
+    if (inProgress[name]) {
+      return;
+    }
+
+    // Only terminate if the pod is running
+    if (status.phase == "Running") {
+      // Check if the pod has a non-istio container that has terminated
+      const canTerminate = !!status?.containerStatuses?.find(
+        ({ name, state }) => name != "istio-proxy" && state?.terminated,
+      );
+
+      if (canTerminate) {
+        // Mark the pod as seen
+        inProgress[name] = true;
+
+        Log.info(`Attempting to terminate sidecar for ${namespace}/${name}`);
+
         try {
           const kc = new KubeConfig();
           kc.loadFromDefault();
           const exec = new Exec(kc);
 
           await exec.exec(
-            pod.metadata.namespace,
-            pod.metadata.name,
+            namespace,
+            name,
             "istio-proxy",
             ["pilot-agent", "request", "POST", "/quitquitquit"],
             null, // Could capture exec stdout here
@@ -39,9 +53,16 @@ When(a.Pod)
             process.stdin,
             true,
           );
+
+          Log.info(`Terminated sidecar for ${namespace}/${name}`);
         } catch (error) {
-          // This is buggy, too many watch triggers, exec will fail once pod terminates
-          Log.error(error, "Failed to terminate the pod sidecar");
+          Log.error(
+            error,
+            `Failed to terminate the sidecar for ${namespace}/${name}`,
+          );
+
+          // Remove the pod from the seen list
+          inProgress[name] = false;
         }
       }
     }
