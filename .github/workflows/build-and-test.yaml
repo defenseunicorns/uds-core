@@ -43,6 +43,11 @@ jobs:
         run: |
           curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | TAG=v5.6.0 bash
 
+      - name: Install UDS CLI
+        run: |
+          $(/home/linuxbrew/.linuxbrew/bin/brew shellenv)
+          brew update && brew install defenseunicorns/tap/uds
+
       - name: Build Capability
         shell: bash
         run: |
