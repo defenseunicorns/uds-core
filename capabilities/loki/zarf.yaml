@@ -2,16 +2,23 @@
 
 kind: ZarfPackageConfig
 metadata:
-  name: example
-  description: "Example description"
-  # x-release-please-start-version
-  version: "0.0.1"
-  # x-release-please-end
-
+  name: uds-capability-loki
+  description: "UDS Loki Capability"
 
 components:
-  - name: test
-    actions:
-      onCreate:
-        after:
-        - cmd: echo "What can Doug do for you?"
+  - name: loki
+    charts:
+      - name: loki
+        url: https://grafana.github.io/helm-charts/
+        version: 2.9.2
+        namespace: loki
+        valuesFiles:
+          - ./values/values.yaml
+    images:
+      - docker.io/grafana/loki:2.4.2
+  - name: uds-loki-config
+    charts:
+      - name: uds-loki-config
+        namespace: loki
+        version: 0.1.0
+        localPath: chart
