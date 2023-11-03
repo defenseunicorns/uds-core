@@ -1,14 +1,11 @@
-# yaml-language-server: $schema=https://raw.githubusercontent.com/defenseunicorns/uds-cli/v0.0.8-alpha/tasks.schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/defenseunicorns/uds-cli/v0.0.9-alpha/tasks.schema.json
 
 tasks:
   - name: all
     actions:
-      - task:
-          name: standard-package
-      - task:
-          name: istio-only-package
-      - task:
-          name: example-bundles
+      - task: standard-package
+      - task: istio-only-package
+      - task: example-bundles
 
   - name: standard-package
     actions:
