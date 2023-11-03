@@ -1,0 +1,57 @@
+name: Conditional Workflow on Pull Request
+
+# This workflow is triggered on pull requests to the main branch, but ignores certain paths.
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/**"
+      - "capabilities/**"
+      - "tasks/**"
+
+# Permissions for the GITHUB_TOKEN used by the workflow.
+permissions:
+  id-token: write # Needed for OIDC-related operations.
+  contents: read # Allows reading the content of the repository.
+  pull-requests: read # Allows reading pull request metadata.
+
+# Default settings for all run commands in the workflow jobs.
+defaults:
+  run:
+    shell: bash -e -o pipefail {0} # Ensures that scripts fail on error and pipefail is set.
+
+jobs:
+  # This job checks if there are changes in specific paths related to capabilities.
+  check-paths:
+    runs-on: ubuntu-latest
+    outputs:
+      capabilities: ${{ steps.path-filter.outputs.changes }}
+
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+
+      # Uses a custom action to filter paths for capabilities.
+      - name: Check capability paths
+        id: path-filter
+        uses: dorny/paths-filter@v2
+        with:
+          filters: .github/filters.yaml
+
+      # Outputs the result of the path filter for debugging.
+      - name: Debug output for capability paths
+        run: echo "${{ steps.path-filter.outputs.changes }}"
+
+  # This job triggers a separate workflow for each changed capability, if any.
+  build-and-test-capabilities:
+    needs: check-paths
+    if: ${{ needs.check-paths.outputs.capabilities != '[]' }} # Only run if there are capability changes.
+    strategy:
+      matrix:
+        capability: ${{ fromJSON(needs.check-paths.outputs.capabilities) }}
+    uses: ./.github/workflows/build-and-test.yaml
+    with:
+      capability: ${{ matrix.capability }}
+    secrets: inherit # Inherits all secrets from the parent workflow.
+

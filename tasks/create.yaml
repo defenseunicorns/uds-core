@@ -9,20 +9,14 @@ tasks:
 
   - name: standard-package
     actions:
-      - description: "Build the UDS Core Pepr Module"
-        cmd: |
-          npm ci
-          npx pepr build
+      - task: pepr-build
 
       - description: "Create the UDS Core Standard Zarf Package"
         cmd: "zarf package create packages/standard --confirm"
 
   - name: istio-only-package
     actions:
-      - description: "Build the UDS Core Pepr Module (Istio Only)"
-        cmd: |
-          npm ci
-          CAPABILITY=istio npx pepr build
+      - task: pepr-build
 
       - description: "Create the UDS Core Istio Zarf Package"
         cmd: "zarf package create packages/istio-only --confirm"
@@ -34,3 +28,17 @@ tasks:
 
       - description: "Create the UDS Core Istio Only Example Bundle"
         cmd: "uds create examples/k3d-istio-only --confirm --no-progress"
+
+  - name: single-capability
+    actions:
+      - task: pepr-build
+
+      - description: "Create the requested capability Zarf Package (must set CAPABILITY environment variable)"
+        cmd: "zarf package create capabilities/${CAPABILITY} --confirm"
+
+  - name: pepr-build
+    actions:
+      - description: "Build the UDS Core Pepr Module"
+        cmd: |
+          npm ci
+          npx pepr build
