@@ -1,5 +1,7 @@
 # uds-core monorepo
 
+**:warning: Warning**:  uds-core is in early alpha and is not ready for general consumption.
+
 The UDS Core Bundle groups foundational Unicorn Delivery Service applications that are heavily influence by PlatformOne's [Big Bang](https://repo1.dso.mil/big-bang/bigbang).
 
 The core applications are:
