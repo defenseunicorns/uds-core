@@ -16,10 +16,10 @@ on:
         description: "The name of the capability to test"
         required: true
 
-# # Abort prior jobs in the same workflow / PR
-# concurrency:
-#   group: test-capability-${{ github.ref }}-${{ inputs.capability }}
-#   cancel-in-progress: true
+# Abort prior jobs in the same workflow / PR
+concurrency:
+  group: test-capability-${{ github.ref }}-${{ inputs.capability }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
