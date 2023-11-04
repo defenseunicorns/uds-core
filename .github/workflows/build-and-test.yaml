@@ -18,7 +18,7 @@ on:
 
 # # Abort prior jobs in the same workflow / PR
 # concurrency:
-#   group: test-capability-${{ github.ref }}-${{ github.event.inputs.capability }}
+#   group: test-capability-${{ github.ref }}-${{ inputs.capability }}
 #   cancel-in-progress: true
 
 permissions:
@@ -28,7 +28,7 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
     env:
-      CAPABILITY: ${{ github.event.inputs.capability }}
+      CAPABILITY: ${{ inputs.capability }}
 
     steps:
       - name: Checkout repository
