@@ -27,7 +27,7 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    name: Build ${{ inputs.capability }}
+    name: Build
     env:
       CAPABILITY: ${{ inputs.capability }}
 
