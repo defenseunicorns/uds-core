@@ -16,10 +16,10 @@ on:
         description: "The name of the capability to test"
         required: true
 
-# Abort prior jobs in the same workflow / PR
-concurrency:
-  group: test-capability-${{ github.ref }}-${{ github.event.inputs.capability }}
-  cancel-in-progress: true
+# # Abort prior jobs in the same workflow / PR
+# concurrency:
+#   group: test-capability-${{ github.ref }}-${{ github.event.inputs.capability }}
+#   cancel-in-progress: true
 
 permissions:
   contents: read
@@ -47,10 +47,12 @@ jobs:
         run: |
           curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | TAG=v5.6.0 bash
 
+      - name: Set up Homebrew
+        uses: Homebrew/actions/setup-homebrew@master
+
       - name: Install UDS CLI
         run: |
-          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-          brew update && brew install defenseunicorns/tap/uds@0.0.10-alpha
+          brew install defenseunicorns/tap/uds@0.0.10-alpha
 
       - name: Build Capability
         shell: bash
