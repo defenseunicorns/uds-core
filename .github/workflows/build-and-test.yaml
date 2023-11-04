@@ -59,7 +59,9 @@ jobs:
 
       - name: Build Capability
         shell: bash
-        run: echo "capability is ${{ inputs.capability }}"
+        run: |
+          echo "capability is ${{ inputs.capability }}"
+          CAPABILITY=${{ inputs.capability }} uds run -f tasks/create.yaml single-capability
 
       # - name: Deploy Capability
       #   shell: bash
