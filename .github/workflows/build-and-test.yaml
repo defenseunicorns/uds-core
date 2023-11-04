@@ -59,7 +59,7 @@ jobs:
 
       - name: Build Capability
         shell: bash
-        run: echo "capability is $CAPABILITY"
+        run: echo "capability is ${{ inputs.capability }}"
 
       # - name: Deploy Capability
       #   shell: bash
