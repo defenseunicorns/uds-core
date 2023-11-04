@@ -53,4 +53,3 @@ jobs:
     with:
       capability: ${{ matrix.capability }}
     secrets: inherit # Inherits all secrets from the parent workflow.
-
