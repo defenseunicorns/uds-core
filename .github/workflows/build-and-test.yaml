@@ -49,8 +49,8 @@ jobs:
 
       - name: Install UDS CLI
         run: |
-          $(/home/linuxbrew/.linuxbrew/bin/brew shellenv)
-          brew update && brew install defenseunicorns/tap/uds
+          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+          brew update && brew install defenseunicorns/tap/uds@0.0.10-alpha
 
       - name: Build Capability
         shell: bash
