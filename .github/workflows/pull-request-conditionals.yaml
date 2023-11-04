@@ -1,4 +1,4 @@
-name: Conditional Workflow on Pull Request
+name: Filter
 
 # This workflow is triggered on pull requests to the main branch, but ignores certain paths.
 on:
@@ -23,6 +23,7 @@ jobs:
   # This job checks if there are changes in specific paths related to capabilities.
   check-paths:
     runs-on: ubuntu-latest
+    name: Check paths for capability changes
     outputs:
       capabilities: ${{ steps.path-filter.outputs.changes }}
 
@@ -46,6 +47,7 @@ jobs:
   build-and-test-capabilities:
     needs: check-paths
     if: ${{ needs.check-paths.outputs.capabilities != '[]' }} # Only run if there are capability changes.
+    name: Schedule
     strategy:
       matrix:
         capability: ${{ fromJSON(needs.check-paths.outputs.capabilities) }}
