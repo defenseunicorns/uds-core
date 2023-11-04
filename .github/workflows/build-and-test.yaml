@@ -27,6 +27,9 @@ permissions:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    env:
+      CAPABILITY: ${{ github.event.inputs.capability }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
@@ -41,7 +44,7 @@ jobs:
       - name: Use Node.js latest
         uses: actions/setup-node@8f152de45cc393bb48ce5d89d36b731f54556e65 # v4.0.0
         with:
-          node-version: latest
+          node-version: 20
 
       - name: Install k3d
         run: |
@@ -56,10 +59,7 @@ jobs:
 
       - name: Build Capability
         shell: bash
-        run: |
-          pwd
-          CAPABILITY=${{ github.event.inputs.capability }} uds run -f tasks/create.yaml single-capability
-          ll -h
+        run: uds run -f tasks/create.yaml single-capability
 
       # - name: Deploy Capability
       #   shell: bash
