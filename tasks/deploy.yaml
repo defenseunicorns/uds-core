@@ -29,4 +29,4 @@ tasks:
         cmd: |
           export ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')
           zarf package deploy build/zarf-package-uds-capability-${CAPABILITY}-${ARCH}.tar.zst --confirm
-          zarf package deploy build/zarf-package-pepr-uds-core-${ARCH}-*.tar.zst --confirm
+          zarf package deploy build/zarf-package-pepr-uds-core-${ARCH}-*.tar.zst --confirm || true
