@@ -39,19 +39,15 @@ jobs:
           base: main
           filters: .github/filters.yaml
 
-      # Outputs the result of the path filter for debugging.
-      - name: Debug output for capability paths
-        run: echo "${{ steps.path-filter.outputs.changes }}"
-
   # This job triggers a separate workflow for each changed capability, if any.
-  build-and-test-capabilities:
+  run-capability-test:
     needs: check-paths
     if: ${{ needs.check-paths.outputs.capabilities != '[]' }} # Only run if there are capability changes.
     name: Schedule
     strategy:
       matrix:
         capability: ${{ fromJSON(needs.check-paths.outputs.capabilities) }}
-    uses: ./.github/workflows/build-and-test.yaml
+    uses: ./.github/workflows/capability-test.yaml
     with:
       capability: ${{ matrix.capability }}
     secrets: inherit # Inherits all secrets from the parent workflow.

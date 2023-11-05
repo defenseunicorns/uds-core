@@ -1,0 +1,30 @@
+# action.yml
+name: "Setup Environment"
+description: "Setup dependencies for the testing UDS capabilities"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install Zarf
+      uses: defenseunicorns/setup-zarf@main
+      with:
+        # renovate: datasource=github-tags depName=defenseunicorns/zarf versioning=semver
+        version: v0.31.0
+        download-init-package: true
+
+    - name: Use Node.js latest
+      uses: actions/setup-node@8f152de45cc393bb48ce5d89d36b731f54556e65 # v4.0.0
+      with:
+        node-version: 20
+
+    - name: Install k3d
+      shell: bash
+      run: curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | TAG=v5.6.0 bash
+
+    - name: Set up Homebrew
+      uses: Homebrew/actions/setup-homebrew@master
+
+    - name: Install UDS CLI
+      shell: bash
+      # renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
+      run: brew install defenseunicorns/tap/uds@0.0.10-alpha

@@ -1,0 +1,13 @@
+# renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
+# yaml-language-server: $schema=https://raw.githubusercontent.com/defenseunicorns/uds-cli/v0.0.10-alpha/tasks.schema.json
+
+tasks:
+  - name: k3d-test-cluster
+    actions:
+      - description: "Create the K3d cluster"
+        # renovate: datasource=github-tags depName=defenseunicorns/uds-k3d versioning=semver
+        cmd: "zarf package deploy oci://defenseunicorns/uds-k3d:0.1.11-multi --confirm"
+
+      - description: "Initialize the cluster with Zarf"
+        # renovate: datasource=github-tags depName=defenseunicorns/init versioning=semver
+        cmd: "zarf package deploy oci://defenseunicorns/init:v0.31.0-$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/') --confirm"

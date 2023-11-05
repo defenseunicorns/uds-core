@@ -25,9 +25,9 @@ permissions:
   contents: read
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
-    name: Build
+    name: Test
     env:
       CAPABILITY: ${{ inputs.capability }}
 
@@ -35,34 +35,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
-      - name: Install Zarf
-        uses: defenseunicorns/setup-zarf@main
-        with:
-          # renovate: datasource=github-tags depName=defenseunicorns/zarf versioning=semver
-          version: v0.31.0
-          download-init-package: true
+      - name: Environment Setup
+        uses: ./.github/actions/setup
 
-      - name: Use Node.js latest
-        uses: actions/setup-node@8f152de45cc393bb48ce5d89d36b731f54556e65 # v4.0.0
-        with:
-          node-version: 20
+      - name: Create Capability Package
+        run: CAPABILITY=${{ inputs.capability }} uds run -f tasks/create.yaml single-capability
 
-      - name: Install k3d
-        run: |
-          curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | TAG=v5.6.0 bash
+      - name: Init Cluster
+        run: uds run -f tasks/setup.yaml k3d-test-cluster
 
-      - name: Set up Homebrew
-        uses: Homebrew/actions/setup-homebrew@master
-
-      - name: Install UDS CLI
-        run: |
-          brew install defenseunicorns/tap/uds@0.0.10-alpha
-
-      - name: Build Capability
-        shell: bash
-        run: |
-          echo "capability is ${{ inputs.capability }}"
-          CAPABILITY=${{ inputs.capability }} uds run -f tasks/create.yaml single-capability
+      - name: Deploy Capability
+        run: uds run -f tasks/deploy.yaml single-capability
 
       # - name: Deploy Capability
       #   shell: bash
@@ -74,9 +57,3 @@ jobs:
       #     TENANT_GATEWAY_TLS_KEY: ${{ secrets.TENANT_GATEWAY_TLS_KEY}}
       #     ADMIN_GATEWAY_TLS_CERT: ${{ secrets.ADMIN_GATEWAY_TLS_CERT }}
       #     ADMIN_GATEWAY_TLS_KEY: ${{ secrets.ADMIN_GATEWAY_TLS_KEY}}
-
-      # - name: Test Capability
-      #   shell: bash
-      #   run: zarf package create --confirm
-      #   working-directory: "${{ needs.setup.outputs.capability-path }}/.github/zarf-runner/test"
-      #   if: ${{ inputs.capability }} != ''
