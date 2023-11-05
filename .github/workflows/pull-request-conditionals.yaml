@@ -23,7 +23,7 @@ jobs:
   # This job checks if there are changes in specific paths related to capabilities.
   check-paths:
     runs-on: ubuntu-latest
-    name: Check paths for capability changes
+    name: Match changed capabilities
     outputs:
       capabilities: ${{ steps.path-filter.outputs.changes }}
 
