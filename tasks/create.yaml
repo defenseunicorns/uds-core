@@ -31,7 +31,7 @@ tasks:
       - task: pepr-build
 
       - description: "Create the Pepr Zarf Package, if it exists"
-        cmd: "[ -f dist/zarf.yaml ] && zarf package create dist --confirm"
+        cmd: "zarf package create dist --confirm || echo 'Pepr build not required'"
 
       - description: "Create the requested capability Zarf Package (must set CAPABILITY environment variable)"
         cmd: "zarf package create capabilities/${CAPABILITY} --confirm"
