@@ -43,7 +43,6 @@ jobs:
     needs: decide-runner
     runs-on: ${{ needs.decide-runner.outputs.runner_type }}
     name: Test Capability
-    if: ${{ inputs.capability != 'all' }}
     env:
       CAPABILITY: ${{ inputs.capability }}
 
