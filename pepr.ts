@@ -23,7 +23,7 @@ const allCapabilities = sortedCapabilities.flatMap(data => {
 
 const capability = process.env.CAPABILITY;
 
-if (!capability) {
+if (!capability || capability === "all") {
   // Start the Pepr module
   new PeprModule(cfg, allCapabilities);
 } else {

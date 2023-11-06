@@ -22,8 +22,6 @@ tasks:
     actions:
       - description: "Create the UDS Core Standard Zarf Package"
         cmd: uds run -f tasks/create.yaml standard-package --no-progress
-        env:
-          - CAPABILITY=""
 
       - description: "Create the UDS Core Standard Example Bundle"
         cmd: uds run -f tasks/create.yaml example-bundle-k3d-standard --no-progress
