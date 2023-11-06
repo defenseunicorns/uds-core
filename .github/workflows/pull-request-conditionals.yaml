@@ -1,6 +1,6 @@
 name: Filter
 
-# This workflow is triggered on pull requests to the main branch, but ignores certain paths.
+# This workflow is triggered on pull requests to the main branch.
 on:
   pull_request:
     paths:

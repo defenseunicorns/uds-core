@@ -35,25 +35,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
-      - name: Environment Setup
+      - name: Environment setup
         uses: ./.github/actions/setup
 
-      - name: Create Capability Package
+      - name: Create capability package
         run: CAPABILITY=${{ inputs.capability }} uds run -f tasks/create.yaml single-capability
 
-      - name: Init Cluster
+      - name: Init cluster
         run: uds run -f tasks/setup.yaml k3d-test-cluster
 
-      - name: Deploy Capability
+      - name: Deploy capability
         run: uds run -f tasks/deploy.yaml single-capability
 
-      # - name: Deploy Capability
-      #   shell: bash
-      #   run: zarf package create --confirm
-      #   working-directory: "${{ needs.setup.outputs.capability-path }}/.github/zarf-runner/deploy"
-      #   if: ${{ inputs.capability }} != ''
-      #   env:
-      #     TENANT_GATEWAY_TLS_CERT: ${{ secrets.TENANT_GATEWAY_TLS_CERT }}
-      #     TENANT_GATEWAY_TLS_KEY: ${{ secrets.TENANT_GATEWAY_TLS_KEY}}
-      #     ADMIN_GATEWAY_TLS_CERT: ${{ secrets.ADMIN_GATEWAY_TLS_CERT }}
-      #     ADMIN_GATEWAY_TLS_KEY: ${{ secrets.ADMIN_GATEWAY_TLS_KEY}}
+      - name: Validate capability
+        run: uds run -f capabilities/${{ inputs.capability }}/validate.yaml run

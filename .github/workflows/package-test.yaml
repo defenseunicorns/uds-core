@@ -1,0 +1,41 @@
+name: Test UDS Core
+
+# This workflow is triggered on pull requests to the main branch, but ignores certain paths.
+on:
+  pull_request:
+    paths-ignore:
+      - "**.md"
+      - "**.jpg"
+      - "**.png"
+      - "**.gif"
+      - "**.svg"
+      - "docs/**"
+      - "CODEOWNERS"
+
+# Abort prior jobs in the same workflow / PR
+concurrency:
+  group: package-test-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: uds-ubuntu-big-boy-4-core
+    name: Test
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+
+      - name: Environment Setup
+        uses: ./.github/actions/setup
+
+      - name: Create all package & bundles
+        run: |
+          uds run -f tasks/create.yaml standard-package
+          uds run -f tasks/create.yaml example-bundle-k3d-standard
+
+      - name: Deploy the example bundle
+        run: uds run -f tasks/deploy.yaml example-bundle-k3d-standard

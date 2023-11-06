@@ -9,7 +9,7 @@ import { istio } from "./capabilities/istio/pepr";
  * set the `CAPABILITY` environment variable to the name of the capability.
  *
  * Example:
- * CAPABILITY=istio-virtual-service npx pepr build\
+ * CAPABILITY=istio npx pepr build
  */
 const sortedCapabilities: Record<string, Capability[]>[] = [
   // Istio service mesh
@@ -28,7 +28,7 @@ if (!capability) {
   new PeprModule(cfg, allCapabilities);
 } else {
   console.log(
-    `\n\n************** Pepr capabilities limited to only ${capability} capabilities **************n\n`,
+    `\n\n************** Pepr capabilities limited to only ${capability} **************n\n`,
   );
 
   // If the CAPABILITY environment variable is set, then only use that capability
@@ -40,8 +40,6 @@ if (!capability) {
     console.error(`Capability ${capability} not found. Exiting...`);
     process.exit(1);
   }
-
-  console.log(`Active capabilities: ${activeCapabilities}`);
 
   // Start the Pepr module
   new PeprModule(cfg, activeCapabilities);
