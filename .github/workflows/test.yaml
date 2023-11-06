@@ -18,16 +18,17 @@ on:
 
 # Abort prior jobs in the same workflow / PR
 concurrency:
-  group: test-capability-${{ github.ref }}-${{ inputs.capability }}
+  group: test-${{ github.ref }}-${{ inputs.capability }}
   cancel-in-progress: true
 
 permissions:
   contents: read
 
 jobs:
-  test:
+  capability-test:
     runs-on: ubuntu-latest
-    name: Test
+    name: Test Capability
+    if: ${{ inputs.capability != 'all' }}
     env:
       CAPABILITY: ${{ inputs.capability }}
 
@@ -49,3 +50,23 @@ jobs:
 
       - name: Validate capability
         run: uds run -f capabilities/${{ inputs.capability }}/validate.yaml run
+
+  package-test:
+    runs-on: uds-ubuntu-big-boy-4-core
+    name: Test UDS Core
+    if: ${{ inputs.capability == 'all' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+
+      - name: Environment Setup
+        uses: ./.github/actions/setup
+
+      - name: Create all package & bundles
+        run: |
+          uds run -f tasks/create.yaml standard-package
+          uds run -f tasks/create.yaml example-bundle-k3d-standard
+
+      - name: Deploy the example bundle
+        run: uds run -f tasks/deploy.yaml example-bundle-k3d-standard

@@ -39,14 +39,6 @@ jobs:
           base: main
           filters: .github/filters.yaml
 
-  debug:
-    runs-on: ubuntu-latest
-    name: Debug
-    needs: check-paths
-    steps:
-      - name: Print capabilities
-        run: echo ${{ fromJSON(needs.check-paths.outputs.capabilities) }}
-
   # This job triggers a separate workflow for each changed capability, if any.
   run-capability-test:
     needs: check-paths
@@ -54,7 +46,7 @@ jobs:
     strategy:
       matrix:
         capability: ${{ fromJSON(needs.check-paths.outputs.capabilities) }}
-    uses: ./.github/workflows/capability-test.yaml
+    uses: ./.github/workflows/test.yaml
     with:
       capability: ${{ matrix.capability }}
     secrets: inherit # Inherits all secrets from the parent workflow.
