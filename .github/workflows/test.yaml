@@ -25,23 +25,8 @@ permissions:
   contents: read
 
 jobs:
-  decide-runner:
-    runs-on: ubuntu-latest
-    name: Runner Selection
-    outputs:
-      runner_type: ${{ steps.set_runner.outputs.runner }}
-    steps:
-      - id: set_runner
-        run: |
-          if [[ "${{ github.event.inputs.capability }}" == "all" ]]; then
-            echo "::set-output name=runner::uds-ubuntu-big-boy-4-core"
-          else
-            echo "::set-output name=runner::ubuntu-latest"
-          fi
-
   test:
-    needs: decide-runner
-    runs-on: ${{ needs.decide-runner.outputs.runner_type }}
+    runs-on: "${{ inputs.capability == 'all' && 'uds-ubuntu-big-boy-4-core' || 'ubuntu-latest'}}"
     name: Test
     env:
       CAPABILITY: ${{ inputs.capability }}
