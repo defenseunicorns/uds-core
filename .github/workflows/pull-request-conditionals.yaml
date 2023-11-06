@@ -23,7 +23,7 @@ jobs:
   # This job checks if there are changes in specific paths related to capabilities.
   check-paths:
     runs-on: ubuntu-latest
-    name: Match changed capabilities
+    name: Select Jobs
     outputs:
       capabilities: ${{ steps.path-filter.outputs.changes }}
 
@@ -36,7 +36,6 @@ jobs:
         id: path-filter
         uses: dorny/paths-filter@v2
         with:
-          base: main
           filters: .github/filters.yaml
 
   # This job triggers a separate workflow for each changed capability, if any.
