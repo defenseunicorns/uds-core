@@ -1,0 +1,36 @@
+# renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
+# yaml-language-server: $schema=https://raw.githubusercontent.com/defenseunicorns/uds-cli/v0.0.10-alpha/tasks.schema.json
+
+tasks:
+  - name: example-bundle-k3d-standard
+    actions:
+      - description: "Deploy the UDS Core Standard Example Bundle"
+        cmd: |
+          export ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')
+          uds deploy examples/k3d-standard/uds-bundle-k3d-uds-core-standard-${ARCH}-*.tar.zst --confirm --no-progress
+
+      - task: out-of-band-tls-certs
+
+  - name: example-bundle-k3d-istio-only
+    actions:
+      - description: "Deploy the UDS Core Istio Only Example Bundle"
+        cmd: |
+          export ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')
+          uds deploy examples/k3d-istio-only/ k3d-uds-core-istio-only- --confirm --no-progress"
+
+      - task: out-of-band-tls-certs
+
+  - name: out-of-band-tls-certs
+    actions:
+      - description: "Deploy the TLS certs for Istio"
+        cmd: |
+          npm ci
+          npx --yes ts-node examples/tls-certs.ts
+
+  - name: single-capability
+    actions:
+      - description: "Deploy the requested capability Zarf Package (must set CAPABILITY environment variable)"
+        cmd: |
+          export ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')
+          zarf package deploy build/zarf-package-uds-capability-${CAPABILITY}-${ARCH}.tar.zst --confirm
+          zarf package deploy build/zarf-package-pepr-uds-core-${ARCH}-*.tar.zst --confirm || true

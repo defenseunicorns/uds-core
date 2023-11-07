@@ -1,16 +1,11 @@
 kind: ZarfPackageConfig
 metadata:
-  name: uds-core
+  name: uds-core-standard
   description: "UDS Core"
   authors: "Defense Unicorns - Product"
   # x-release-please-start-version
   version: "0.1.0"
   # x-release-please-end
-
-variables:
-  - name: DOMAIN
-    description: "Cluster domain"
-    default: "uds.dev"
 
 components:
   # Istio
@@ -23,28 +18,16 @@ components:
     required: true
     import:
       path: ../../capabilities/istio
-    charts:
-      - name: uds-istio-config
-        valuesFiles:
-          - "values/istio-admin-gateway.yaml"
 
   - name: istio-tenant-gateway
     required: true
     import:
       path: ../../capabilities/istio
-    charts:
-      - name: uds-istio-config
-        valuesFiles:
-          - "values/istio-tenant-gateway.yaml"
 
   - name: istio-passthrough-gateway
     required: true
     import:
       path: ../../capabilities/istio
-    charts:
-      - name: uds-istio-config
-        valuesFiles:
-          - "values/istio-passthrough-gateway.yaml"
 
   # Pepr the world
   - name: pepr-uds-core

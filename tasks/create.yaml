@@ -1,0 +1,45 @@
+# renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
+# yaml-language-server: $schema=https://raw.githubusercontent.com/defenseunicorns/uds-cli/v0.0.10-alpha/tasks.schema.json
+
+tasks:
+  - name: standard-package
+    actions:
+      - task: pepr-build
+
+      - description: "Create the UDS Core Standard Zarf Package"
+        cmd: "zarf package create packages/standard --confirm"
+
+  - name: example-bundle-k3d-standard
+    actions:
+      - description: "Create the UDS Core Standard Example Bundle"
+        cmd: "uds create examples/k3d-standard --confirm --no-progress"
+
+  - name: istio-only-package
+    actions:
+      - task: pepr-build
+
+      - description: "Create the UDS Core Istio Zarf Package"
+        cmd: "zarf package create packages/istio-only --confirm"
+
+  - name: example-bundle-k3d-istio-only
+    actions:
+      - description: "Create the UDS Core Istio Only Example Bundle"
+        cmd: "uds create examples/k3d-istio-only --confirm --no-progress"
+
+  - name: single-capability
+    actions:
+      - task: pepr-build
+
+      - description: "Create the Pepr Zarf Package, if it exists"
+        cmd: "zarf package create dist --confirm || echo 'Pepr build not required'"
+
+      - description: "Create the requested capability Zarf Package (must set CAPABILITY environment variable)"
+        cmd: "zarf package create capabilities/${CAPABILITY} --confirm"
+
+  - name: pepr-build
+    actions:
+      - description: "Build the UDS Core Pepr Module"
+        cmd: |
+          rm -fr dist
+          npm ci
+          npx pepr build || echo "Pepr build not required"

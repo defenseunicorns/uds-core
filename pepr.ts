@@ -1,35 +1,46 @@
-import { Capability, Log, PeprModule } from "pepr";
+import { Capability, PeprModule } from "pepr";
 
 import cfg from "./package.json";
 
-import { IstioVirtualService } from "./capabilities/istio/pepr/istio-virtual-service";
-import { IstioInjection } from "./capabilities/istio/pepr/istio-injection";
+import { istio } from "./capabilities/istio/pepr";
 
 /**
  * This the root of the UDS Core Pepr Module. To operate on a specific capability, you can
  * set the `CAPABILITY` environment variable to the name of the capability.
  *
  * Example:
- * CAPABILITY=istio-virtual-service npx pepr build
+ * CAPABILITY=istio npx pepr build
  */
-const allCapabilities: Record<string, Capability[]> = {
-  istio: [IstioVirtualService, IstioInjection],
-};
+const sortedCapabilities: Record<string, Capability[]>[] = [
+  // Istio service mesh
+  { istio },
+];
 
-// Check if the CAPABILITY environment variable is set
-const activeCapabilities = allCapabilities[process.env.CAPABILITY || ""] || [];
+// Otherwise, use all capabilities
+const allCapabilities = sortedCapabilities.flatMap(data => {
+  return Object.values(data).flat();
+});
 
-// If there are active capabilities via the CAPABILITY environment variable, then log a message
-if (activeCapabilities.length > 0) {
-  Log.info(
-    `\n\n******************* Pepr capabilities limited to only ${process.env.CAPABILITY} capabilities *******************\n\n`,
-  );
+const capability = process.env.CAPABILITY;
+
+if (!capability || capability === "all") {
+  // Start the Pepr module
+  new PeprModule(cfg, allCapabilities);
 } else {
-  // Otherwise, use all capabilities
-  for (const caps of Object.values(allCapabilities)) {
-    activeCapabilities.push(...caps);
-  }
-}
+  console.log(
+    `\n\n************** Pepr capabilities limited to only ${capability} **************n\n`,
+  );
 
-// Start the Pepr module
-new PeprModule(cfg, activeCapabilities);
+  // If the CAPABILITY environment variable is set, then only use that capability
+  const activeCapabilities = sortedCapabilities.find(
+    data => data[capability],
+  )?.[capability];
+
+  if (!activeCapabilities || activeCapabilities.length < 1) {
+    console.error(`Capability ${capability} not found. Exiting...`);
+    process.exit(1);
+  }
+
+  // Start the Pepr module
+  new PeprModule(cfg, activeCapabilities);
+}

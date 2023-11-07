@@ -1,0 +1,30 @@
+# renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
+# yaml-language-server: $schema=https://raw.githubusercontent.com/defenseunicorns/uds-cli/v0.0.10-alpha/tasks.schema.json
+
+tasks:
+  - name: single-capability
+    description: "Build and test a single capability, must set CAPABILITY environment variable"
+    actions:
+      - description: "Create the capability package"
+        cmd: uds run -f tasks/create.yaml single-capability --no-progress
+
+      - description: "Create the K3d cluster"
+        cmd: uds run -f tasks/setup.yaml k3d-test-cluster --no-progress
+
+      - description: "Deploy the capability"
+        cmd: uds run -f tasks/deploy.yaml single-capability --no-progress
+
+      - description: "Validate the capability"
+        cmd: uds run -f capabilities/${CAPABILITY}/validate.yaml run --no-progress
+
+  - name: uds-core
+    description: "Build and test UDS Core"
+    actions:
+      - description: "Create the UDS Core Standard Zarf Package"
+        cmd: uds run -f tasks/create.yaml standard-package --no-progress
+
+      - description: "Create the UDS Core Standard Example Bundle"
+        cmd: uds run -f tasks/create.yaml example-bundle-k3d-standard --no-progress
+
+      - description: "Deploy the UDS Core Standard Example Bundle"
+        cmd: uds run -f tasks/deploy.yaml example-bundle-k3d-standard --no-progress

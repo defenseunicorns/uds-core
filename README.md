@@ -9,13 +9,13 @@ The core applications are:
 
 - [ ] Authservice
 - [ ] Grafana
-- [ ] Istio
+- [x] Istio
 - [ ] KeyCloak
 - [ ] Kiali
 - [ ] Kyverno
-- [ ] Loki
+- [x] Loki
 - [ ] Metrics Server
-- [ ] Neuvector
+- [x] Neuvector
 - [ ] Prometheus
 - [ ] Promtail
 - [ ] Tempo
@@ -28,46 +28,41 @@ The core applications are:
 | Dependency                                                     | Minimum Version |
 | -------------------------------------------------------------- | --------------- |
 | [Zarf](https://github.com/defenseunicorns/zarf/releases)       | 0.31.x          |
-| [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) | 0.7.x           |
+| [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) | 0.10.x          |
 | [NodeJS](https://nodejs.org/en/download/)                      | LTS or Current  |
 
 <!-- endtable -->
 
-## Create, Build, Test uds-core Package
+## Create, build, and test UDS Core Package
 
-1. Make sure you have uds-cli version v0.0.8-alpha or later and nodejs
-2. run ```uds run uds-core``` from the repo's root
+For complete testing, we test against a UDS Bundle that uses a locally-built Zarf package. Manually testing against the packages found under `/packages` is also possible using the `zarf` command.
 
-## Working with an individual Capability
+```bash
+uds run -f tasks/test.yaml uds-core
+```
 
-### To run full build, deploy, test of a Capability
+## Working with an individual capability
 
-1. cd into the zarf-runner directory of the capability you would like to test (e.g. ```capabilities/istio/.github/zarf-runner```)
-2. run ```zarf p c --confirm```
+### Create, build, and test a single Capability (e.g. Neuvector)
 
-### To Build a Capability
+```bash
+CAPABILITY=neuvector uds run -f tasks/test.yaml single-capability
+```
 
-1. cd into the zarf-runner/bob-the-builder directory of the capability you would like to test (e.g. ```capabilities/istio/.github/zarf-runner/bob-the-builder```)
-2. run ```zarf p c --confirm```
+### To build a single capability (e.g. Neuvector)
 
-### To Deploy a Capability
+```bash
+CAPABILITY=neuvector uds run -f tasks/create.yaml single-capability
+```
 
-1. cd into the zarf-runner/deploy directory of the capability you would like to test (e.g. ```capabilities/istio/.github/zarf-runner/deploy```)
-2. run ```zarf p c --confirm```
+### To deploy a single built capability (e.g. Neuvector)
 
-### To Test a Capability
+```bash
+CAPABILITY=neuvector uds run -f tasks/deploy.yaml single-capability
+```
 
-1. cd into the zarf-runner/test directory of the capability you would like to test (e.g. ```capabilities/istio/.github/zarf-runner/test```)
-2. run ```zarf p c --confirm```
+### To test a single capability (e.g. Neuvector)
 
-## Create 
-
-[Steps used to build the UDS Bundle]
-
-## Deploy
-
-[Steps used to deploy the UDS Bundle]
-
-## Remove
-
-[Steps used to remove the UDS Bundle]
+```bash
+uds run -f capabilities/neuvector/tasks/validate.yaml run
+```

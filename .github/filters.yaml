@@ -1,5 +1,40 @@
+all:
+  - ".github/**"
+  - "capabilities/**"
+  - "examples/**"
+  - "packages/**"
+  - "tasks/**"
+  - "pepr.ts"
+  - "package-lock.json"
+  - "zarf-config.yaml"
 
+authservice:
+  - "capabilities/authservice/**"
+grafana:
+  - "capabilities/grafana/**"
 istio:
-  - 'capabilities/istio/**/*'
-# neuvector:
-#   - 'capabilities/neuvector/**/*'
+  - "capabilities/istio/**"
+keycloak:
+  - "capabilities/keycloak/**"
+kiali:
+  - "capabilities/kiali/**"
+kyverno:
+  - "capabilities/kyverno/**"
+kyverno-policies:
+  - "capabilities/kyverno-policies/**"
+kyverno-reporter:
+  - "capabilities/kyverno-reporter/**"
+loki:
+  - "capabilities/loki/**"
+metrics-server:
+  - "capabilities/metrics-server/**"
+neuvector:
+  - "capabilities/neuvector/**"
+prometheus-stack:
+  - "capabilities/prometheus-stack/**"
+promtail:
+  - "capabilities/promtail/**"
+tempo:
+  - "capabilities/tempo/**"
+velero:
+  - "capabilities/velero/**"

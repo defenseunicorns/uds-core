@@ -6,9 +6,15 @@ metadata:
   description: "UDS Istio Capability"
   url: https://istio.io/latest/
 
+variables:
+  - name: DOMAIN
+    description: "Cluster domain"
+    default: "uds.dev"
+
 components:
   - name: istio-controlplane
     description: "Install the Istio control plane based on https://istio.io/latest/docs/setup/install/helm/"
+    required: true
     charts:
       - name: base
         namespace: istio-system
@@ -32,6 +38,7 @@ components:
 
   - name: istio-admin-gateway
     description: "Deploy an admin gateway"
+    required: true
     charts:
       - name: gateway
         releaseName: admin-ingressgateway
@@ -47,6 +54,7 @@ components:
 
   - name: istio-tenant-gateway
     description: "Deploy a tenant gateway"
+    required: true
     charts:
       - name: gateway
         releaseName: tenant-ingressgateway
@@ -62,6 +70,7 @@ components:
 
   - name: istio-passthrough-gateway
     description: "Deploy a TLS passthrough gateway"
+    required: true
     charts:
       - name: gateway
         releaseName: passthrough-ingressgateway
@@ -74,8 +83,3 @@ components:
         namespace: istio-passthrough-gateway
         valuesFiles:
           - "values/config-passthrough.yaml"
-
-  - name: module
-    description: "Deploy the uds-istio pepr module"
-    import:
-      path: ../../dist

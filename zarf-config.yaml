@@ -1,0 +1,6 @@
+# Disable until UDS CLI isn't super noisy
+no_progress: true
+
+package:
+  create:
+    output: build

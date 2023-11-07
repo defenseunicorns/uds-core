@@ -1,8 +1,8 @@
 # The gateway name prefix
 name: change-me
 
-# Hosts to add to this gateway
-domain: "uds.dev"
+# Domain name for the gateway
+domain: "###ZARF_VAR_DOMAIN###"
 
 # Hosts to add to this gateway
 hosts:
