@@ -16,7 +16,7 @@ tasks:
       - description: "Deploy the UDS Core Istio Only Example Bundle"
         cmd: |
           export ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')
-          uds deploy examples/k3d-istio-only/ k3d-uds-core-istio-only- --confirm --no-progress"
+          uds deploy examples/k3d-istio-only/uds-bundle-k3d-uds-core-istio-only-${ARCH}-*.tar.zst --confirm --no-progress
 
       - task: out-of-band-tls-certs
 
