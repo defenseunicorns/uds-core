@@ -188,7 +188,7 @@ prometheus:
       #upstream
       registry: quay.io
       repository: prometheus/prometheus
-      tag: v2.47.1
+      tag: v2.47.2
       #IB
       #registry: registry1.dso.mil
       #repository: ironbank/opensource/prometheus/prometheus
