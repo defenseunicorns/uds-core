@@ -1,0 +1,53 @@
+# renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
+# yaml-language-server: $schema=https://raw.githubusercontent.com/defenseunicorns/uds-cli/v0.0.12-alpha/tasks.schema.json
+
+variables:
+  - name: TARGET_REPO
+    default: oci://ghcr.io/defenseunicorns/packages
+
+  - name: VERSION
+    description: "The version of the packages to build"
+    # x-release-please-start-version
+    default: "0.1.0"
+    # x-release-please-end
+
+tasks:
+  - name: packages
+    description: "Build and publish the UDS packages"
+    actions:
+      - description: "Create the UDS Core Standard Zarf Package"
+        cmd: |
+          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress
+          ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml standard-package --no-progress
+
+      - description: "Create the UDS Core Istio Only Zarf Package"
+        cmd: |
+          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml istio-only-package --no-progress
+          ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml istio-only-package --no-progress
+
+      - description: "Publish the packages"
+        cmd: |
+          zarf package publish build/zarf-package-uds-core-amd64-${VERSION}.tar.zst ${TARGET_REPO}
+          zarf package publish build/zarf-package-uds-core-arm64-${VERSION}.tar.zst ${TARGET_REPO}
+          zarf package publish build/zarf-package-uds-core-istio-only-amd64-${VERSION}.tar.zst ${TARGET_REPO}
+          zarf package publish build/zarf-package-uds-core-istio-only-arm64-${VERSION}.tar.zst ${TARGET_REPO}
+
+  - name: example-bundles
+    description: "Build and publish UDS example bundles"
+    actions:
+      - description: "Create the UDS Core Standard Example Bundle"
+        cmd: |
+          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml example-bundle-k3d-standard --no-progress
+          ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml example-bundle-k3d-standard --no-progress
+
+      - description: Create the UDS Core Istio Only Example Bundle
+        cmd: |
+          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml example-bundle-k3d-istio-only --no-progress
+          ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml example-bundle-k3d-istio-only --no-progress
+
+      - description: "Publish the example bundles"
+        cmd: |
+          uds publish examples/k3d-standard/uds-bundle-k3d-uds-core-amd64-${VERSION}.tar.zst ${TARGET_REPO} --no-progress
+          uds publish examples/k3d-standard/uds-bundle-k3d-uds-core-arm64-${VERSION}.tar.zst ${TARGET_REPO} --no-progress
+          uds publish examples/k3d-istio-only/uds-bundle-k3d-uds-core-istio-only-amd64-${VERSION}.tar.zst ${TARGET_REPO} --no-progress
+          uds publish examples/k3d-istio-only/uds-bundle-k3d-uds-core-istio-only-arm64-${VERSION}.tar.zst ${TARGET_REPO} --no-progress

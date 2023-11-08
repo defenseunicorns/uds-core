@@ -1,5 +1,5 @@
 # renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
-# yaml-language-server: $schema=https://raw.githubusercontent.com/defenseunicorns/uds-cli/v0.0.10-alpha/tasks.schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/defenseunicorns/uds-cli/v0.0.12-alpha/tasks.schema.json
 
 tasks:
   - name: standard-package
@@ -12,7 +12,7 @@ tasks:
   - name: example-bundle-k3d-standard
     actions:
       - description: "Create the UDS Core Standard Example Bundle"
-        cmd: "uds create examples/k3d-standard --confirm --no-progress"
+        cmd: "uds create examples/k3d-standard --confirm --no-progress --architecture=${ZARF_ARCHITECTURE}"
 
   - name: istio-only-package
     actions:
@@ -24,7 +24,7 @@ tasks:
   - name: example-bundle-k3d-istio-only
     actions:
       - description: "Create the UDS Core Istio Only Example Bundle"
-        cmd: "uds create examples/k3d-istio-only --confirm --no-progress"
+        cmd: "uds create examples/k3d-istio-only --confirm --no-progress --architecture=${ZARF_ARCHITECTURE}"
 
   - name: single-capability
     actions:

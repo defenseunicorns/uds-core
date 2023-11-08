@@ -1,7 +1,7 @@
-# yaml-language-server: $schema=https://raw.githubusercontent.com/defenseunicorns/uds-cli/v0.0.10-alpha/uds.schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/defenseunicorns/uds-cli/v0.0.12-alpha/uds.schema.json
 kind: UDSBundle
 metadata:
-  name: k3d-uds-core-standard
+  name: k3d-uds-core
   description: An example UDS bundle for deploying the standard UDS Core capability on a development cluster
   # x-release-please-start-version
   version: "0.1.0"
@@ -16,7 +16,7 @@ zarf-packages:
     repository: ghcr.io/defenseunicorns/packages/init
     ref: v0.31.0
 
-  - name: uds-core-standard
+  - name: uds-core
     path: ../../build/
     # x-release-please-start-version
     ref: 0.1.0
