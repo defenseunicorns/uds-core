@@ -31,3 +31,5 @@ tasks:
 
       - description: "Deploy the UDS Core Standard Example Bundle"
         cmd: uds run -f tasks/deploy.yaml example-bundle-k3d-standard --no-progress
+
+      # @todo (jeff): we should run each of the capability tests here and also deploy a sample app
