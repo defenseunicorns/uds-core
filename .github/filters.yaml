@@ -1,7 +1,7 @@
 all:
   - ".github/**"
   - "capabilities/**"
-  - "examples/**"
+  - "bundles/**"
   - "packages/**"
   - "tasks/**"
   - "pepr.ts"

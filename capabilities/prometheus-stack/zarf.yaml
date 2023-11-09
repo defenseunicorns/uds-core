@@ -1,12 +1,7 @@
-# yaml-language-server: $schema=https://raw.githubusercontent.com/defenseunicorns/zarf/main/zarf.schema.json
-
 kind: ZarfPackageConfig
 metadata:
   name: uds-capability-prometheus-stack
   description: "UDS Prometheus-Stack Capability"
-  # x-release-please-start-version
-  version: "0.0.1"
-  # x-release-please-end
 
 components:
   - name: prometheus-operator-crds

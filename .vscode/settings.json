@@ -5,5 +5,17 @@
       "${workspaceFolder}/**",
       "node_modules/pepr/**"
     ]
+  },
+  "yaml.schemas": {
+    // renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
+    "https://raw.githubusercontent.com/defenseunicorns/uds-cli/v0.1.0/tasks.schema.json": [
+      "tasks.yaml",
+      "tasks/**/*.yaml",
+      "capabilities/**/validate.yaml"
+    ],
+    // renovate: datasource=github-tags depName=defenseunicorns/zarf versioning=semver
+    "https://raw.githubusercontent.com/defenseunicorns/zarf/v0.31.0/zarf.schema.json": [
+      "zarf.yaml"
+    ]
   }
 }

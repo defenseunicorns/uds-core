@@ -1,6 +1,3 @@
-# renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
-# yaml-language-server: $schema=https://raw.githubusercontent.com/defenseunicorns/uds-cli/v0.0.10-alpha/tasks.schema.json
-
 tasks:
   - name: run
     actions:

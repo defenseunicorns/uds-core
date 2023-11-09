@@ -1,0 +1,50 @@
+variables:
+  - name: TARGET_REPO
+    default: oci://ghcr.io/defenseunicorns/packages/uds
+
+  - name: VERSION
+    description: "The version of the packages to build"
+    # x-release-please-start-version
+    default: "0.1.0"
+    # x-release-please-end
+
+tasks:
+  - name: packages
+    description: "Build and publish the UDS packages"
+    actions:
+      - description: "Create the UDS Core Standard Zarf Package"
+        cmd: |
+          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress
+          ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml standard-package --no-progress
+
+      - description: "Create the UDS Core Istio Only Zarf Package"
+        cmd: |
+          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml istio-package --no-progress
+          ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml istio-package --no-progress
+
+      - description: "Publish the packages"
+        cmd: |
+          zarf package publish build/zarf-package-core-amd64-${VERSION}.tar.zst ${TARGET_REPO}
+          zarf package publish build/zarf-package-core-arm64-${VERSION}.tar.zst ${TARGET_REPO}
+          zarf package publish build/zarf-package-core-istio-amd64-${VERSION}.tar.zst ${TARGET_REPO}
+          zarf package publish build/zarf-package-core-istio-arm64-${VERSION}.tar.zst ${TARGET_REPO}
+
+  - name: bundles
+    description: "Build and publish UDS bundles"
+    actions:
+      - description: "Create the UDS Core Standard Bundle"
+        cmd: |
+          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml k3d-standard-bundle --no-progress
+          ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-standard-bundle --no-progress
+
+      - description: Create the UDS Core Istio Only Bundle
+        cmd: |
+          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml k3d-istio-bundle --no-progress
+          ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-istio-bundle --no-progress
+
+      - description: "Publish the bundles"
+        cmd: |
+          uds publish bundles/k3d-standard/uds-bundle-k3d-core-amd64-${VERSION}.tar.zst ${TARGET_REPO}/bundles --no-progress
+          uds publish bundles/k3d-standard/uds-bundle-k3d-core-arm64-${VERSION}.tar.zst ${TARGET_REPO}/bundles --no-progress
+          uds publish bundles/k3d-istio/uds-bundle-k3d-core-istio-amd64-${VERSION}.tar.zst ${TARGET_REPO}/bundles --no-progress
+          uds publish bundles/k3d-istio/uds-bundle-k3d-core-istio-arm64-${VERSION}.tar.zst ${TARGET_REPO}/bundles --no-progress

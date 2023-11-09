@@ -1,10 +1,8 @@
-# yaml-language-server: $schema=https://raw.githubusercontent.com/defenseunicorns/zarf/main/zarf.schema.json
 kind: ZarfPackageConfig
 metadata:
   name: uds-capabilities-grafana
   description: "UDS Grafana Capability"
   url: https://grafana.com/grafana
-  version: 6.61.1
 
 components:
   - name: grafana

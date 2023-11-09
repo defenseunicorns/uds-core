@@ -1,6 +1,6 @@
 kind: ZarfPackageConfig
 metadata:
-  name: uds-core-istio-only
+  name: core-istio
   description: "UDS Core (Istio Only)"
   authors: "Defense Unicorns - Product"
   # x-release-please-start-version
