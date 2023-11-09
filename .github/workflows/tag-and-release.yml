@@ -34,11 +34,8 @@ jobs:
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
-      - name: Setup Zarf
-        uses: defenseunicorns/setup-zarf@main
-        with:
-          # renovate: datasource=github-tags depName=defenseunicorns/zarf versioning=semver
-          version: v0.31.0
+      - name: Environment setup
+        uses: ./.github/actions/setup
 
       - name: Login to GHCR
         uses: docker/login-action@v3
