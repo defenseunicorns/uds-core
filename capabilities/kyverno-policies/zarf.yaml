@@ -2,14 +2,10 @@ kind: ZarfPackageConfig
 metadata:
   name: example
   description: "Example description"
-  # x-release-please-start-version
-  version: "0.0.1"
-  # x-release-please-end
-
 
 components:
   - name: test
     actions:
       onCreate:
         after:
-        - cmd: echo "What can Doug do for you?"
+          - cmd: echo "What can Doug do for you?"
