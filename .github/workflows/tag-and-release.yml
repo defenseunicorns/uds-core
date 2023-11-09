@@ -51,4 +51,4 @@ jobs:
         run: uds run -f tasks/publish.yaml packages
 
       - name: Publish UDS Example Bundles
-        run: uds run -f tasks/publish.yaml example-bundles
+        run: uds run -f tasks/publish.yaml bundles
