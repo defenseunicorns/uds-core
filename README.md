@@ -40,7 +40,7 @@ The core applications are:
 A common need is bootrapping a new UDS Core environment for development or testing. The command below will deploy a local K3d cluster with UDS Core on a Mac M1. See the remaining sections for more details if the different bundles & capabilities available.
 
 ```bash
-uds deploy oci://ghcr.io/defenseunicorns/packages/uds/bundles/k3d-core:0.1.0-arm64
+uds deploy oci://ghcr.io/defenseunicorns/packages/uds/bundles/k3d-core:0.1.3-arm64
 ```
 
 ### UDS Core Capabilities
