@@ -9,7 +9,7 @@
         { "type": "fix", "section": "Bug Fixes", "hidden": false },
         { "type": "chore", "section": "Miscellaneous", "hidden": false }
       ],
-      "versioning": "always-bump-patch",
+      "versioning": "default",
       "extra-files": [
         "README.md",
         "packages/istio/zarf.yaml",

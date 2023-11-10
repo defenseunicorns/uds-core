@@ -9,11 +9,13 @@ metadata:
 zarf-packages:
   - name: uds-k3d-dev
     repository: ghcr.io/defenseunicorns/packages/uds-k3d
-    ref: 0.1.11
+    # renovate: datasource=github-tags depName=defenseunicorns/uds-k3d versioning=semver
+    ref: 0.1.12
 
   - name: init
     repository: ghcr.io/defenseunicorns/packages/init
-    ref: v0.31.0
+    # renovate: datasource=github-tags depName=defenseunicorns/init versioning=semver
+    ref: v0.31.1
 
   - name: core
     path: ../../build/
