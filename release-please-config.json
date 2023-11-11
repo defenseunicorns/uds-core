@@ -1,0 +1,23 @@
+{
+  "packages": {
+    ".": {
+      "release-type": "simple",
+      "draft": false,
+      "changelog-path": "CHANGELOG.md",
+      "changelog-sections": [
+        { "type": "feat", "section": "Features", "hidden": false },
+        { "type": "fix", "section": "Bug Fixes", "hidden": false },
+        { "type": "chore", "section": "Miscellaneous", "hidden": false }
+      ],
+      "versioning": "default",
+      "extra-files": [
+        "README.md",
+        "packages/istio/zarf.yaml",
+        "packages/standard/zarf.yaml",
+        "bundles/k3d-istio/uds-bundle.yaml",
+        "bundles/k3d-standard/uds-bundle.yaml",
+        "tasks/publish.yaml"                
+      ]
+    }
+  }
+}

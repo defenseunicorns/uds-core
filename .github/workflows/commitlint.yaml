@@ -1,4 +1,4 @@
-name: PR Title Check
+name: Metadata
 
 on:
   pull_request:
@@ -8,6 +8,7 @@ on:
 jobs:
   title_check:
     runs-on: ubuntu-latest
+    name: Validate PR Title
     permissions:
       pull-requests: read
 

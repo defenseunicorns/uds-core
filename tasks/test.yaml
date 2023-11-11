@@ -1,0 +1,32 @@
+tasks:
+  - name: single-capability
+    description: "Build and test a single capability, must set CAPABILITY environment variable"
+    actions:
+      - description: "Create the capability package"
+        cmd: uds run -f tasks/create.yaml single-capability --no-progress
+
+      - description: "Create the K3d cluster"
+        cmd: uds run -f tasks/setup.yaml k3d-test-cluster --no-progress
+
+      - description: "Deploy the capability"
+        cmd: uds run -f tasks/deploy.yaml single-capability --no-progress
+
+      - description: "Validate the capability"
+        cmd: uds run -f capabilities/${CAPABILITY}/validate.yaml run --no-progress
+
+  - name: uds-core
+    description: "Build and test UDS Core"
+    actions:
+      - description: "Create the UDS Core Standard Zarf Package"
+        cmd: uds run -f tasks/create.yaml standard-package --no-progress
+
+      - description: "Create the UDS Core Istio Only Zarf Package (create only to validate)"
+        cmd: uds run -f tasks/create.yaml istio-package --no-progress
+
+      - description: "Create the UDS Core Standard Example Bundle"
+        cmd: uds run -f tasks/create.yaml k3d-standard-bundle --no-progress
+
+      - description: "Deploy the UDS Core Standard Example Bundle"
+        cmd: uds run -f tasks/deploy.yaml k3d-standard-bundle --no-progress
+
+      # @todo (jeff): we should run each of the capability tests here and also deploy a sample app

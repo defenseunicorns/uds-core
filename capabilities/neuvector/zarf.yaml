@@ -1,14 +1,13 @@
-# yaml-language-server: $schema=https://raw.githubusercontent.com/defenseunicorns/zarf/main/zarf.schema.json
 kind: ZarfPackageConfig
 metadata:
   name: uds-capability-neuvector
   description: "UDS Neuvector Capability"
   url: https://open-docs.neuvector.com/
 
-
 components:
   - name: neuvector
     description: "Deploy Neuvector"
+    required: true
     charts:
       - name: crd
         url: https://neuvector.github.io/neuvector-helm/

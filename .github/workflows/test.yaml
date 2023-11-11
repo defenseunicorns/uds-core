@@ -1,0 +1,47 @@
+name: Test individual capabilities
+
+on:
+  # Manual trigger
+  workflow_dispatch:
+    inputs:
+      capability:
+        type: string
+        description: "The name of the capability to test"
+        required: true
+  # Triggered by pull-request-conditionals.yaml
+  workflow_call:
+    inputs:
+      capability:
+        type: string
+        description: "The name of the capability to test"
+        required: true
+
+# Abort prior jobs in the same workflow / PR
+concurrency:
+  group: test-${{ github.ref }}-${{ inputs.capability }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: "${{ inputs.capability == 'all' && 'uds-ubuntu-big-boy-4-core' || 'ubuntu-latest'}}"
+    name: Test
+    env:
+      CAPABILITY: ${{ inputs.capability }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+
+      - name: Environment setup
+        uses: ./.github/actions/setup
+
+      - name: Test a single capability
+        if: ${{ inputs.capability != 'all' }}
+        run: uds run -f tasks/test.yaml single-capability
+
+      - name: Test UDS Core
+        if: ${{ inputs.capability == 'all' }}
+        run: uds run -f tasks/test.yaml uds-core

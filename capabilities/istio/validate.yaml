@@ -1,0 +1,23 @@
+tasks:
+  - name: run
+    actions:
+      - description: Validate the Istio Admin Gateway
+        wait:
+          cluster:
+            kind: Gateway
+            name: admin-gateway
+            namespace: istio-admin-gateway
+
+      - description: Validate the Istio Passthrough Gateway
+        wait:
+          cluster:
+            kind: Gateway
+            name: passthrough-gateway
+            namespace: istio-passthrough-gateway
+
+      - description: Validate the Istio Tenant Gateway
+        wait:
+          cluster:
+            kind: Gateway
+            name: tenant-gateway
+            namespace: istio-tenant-gateway
