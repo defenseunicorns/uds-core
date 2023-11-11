@@ -19,25 +19,27 @@ When(a.Pod)
   .Watch(async pod => {
     const { metadata, status } = pod;
     const { name, namespace } = metadata;
+    const key = `${namespace}/${name}`;
 
     // Ensure termination isn't already in progress
-    if (inProgress[name]) {
+    if (inProgress[key]) {
       return;
     }
 
     // Only terminate if the pod is running
     if (status.phase == "Running") {
-      // Check if the pod has a non-istio container that has terminated
-      const canTerminate = !!status?.containerStatuses?.find(
-        ({ name, state }) => name != "istio-proxy" && state?.terminated,
-      );
+      // Check all container statuses
+      const shouldTerminate = status?.containerStatuses
+        // Ignore the istio-proxy container
+        .filter(c => c.name != "istio-proxy")
+        // and if ALL are terminated AND have exit code 0, then shouldTerminate is true
+        .every(c => c.state.terminated && c.state.terminated.exitCode == 0);
 
-      if (canTerminate) {
+      if (shouldTerminate) {
         // Mark the pod as seen
-        inProgress[name] = true;
+        inProgress[key] = true;
 
-        Log.info(`Attempting to terminate sidecar for ${namespace}/${name}`);
-
+        Log.info(`Attempting to terminate sidecar for ${key}`);
         try {
           const kc = new KubeConfig();
           kc.loadFromDefault();
@@ -54,15 +56,12 @@ When(a.Pod)
             true,
           );
 
-          Log.info(`Terminated sidecar for ${namespace}/${name}`);
+          Log.info(`Terminated sidecar for ${key}`);
         } catch (error) {
-          Log.error(
-            error,
-            `Failed to terminate the sidecar for ${namespace}/${name}`,
-          );
+          Log.error(error, `Failed to terminate the sidecar for ${key}`);
 
           // Remove the pod from the seen list
-          inProgress[name] = false;
+          inProgress[key] = false;
         }
       }
     }
