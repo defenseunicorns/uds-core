@@ -43,6 +43,12 @@ A common need is bootrapping a new UDS Core environment for development or testi
 uds deploy oci://ghcr.io/defenseunicorns/packages/uds/bundles/k3d-core:0.1.3-arm64
 ```
 
+The bundle includes the uds.dev certs by default. To use custom certs, you can set the appropriate env variables and run
+
+```bash
+npx ts-node bundles/tls-certs.ts
+```
+
 ### UDS Core Capabilities
 
 UDS core publishes two capabilities:

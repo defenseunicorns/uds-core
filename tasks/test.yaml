@@ -23,10 +23,10 @@ tasks:
       - description: "Create the UDS Core Istio Only Zarf Package (create only to validate)"
         cmd: uds run -f tasks/create.yaml istio-package --no-progress
 
-      - description: "Create the UDS Core Standard Example Bundle"
+      - description: "Create the UDS Core Standard Bundle"
         cmd: uds run -f tasks/create.yaml k3d-standard-bundle --no-progress
 
-      - description: "Deploy the UDS Core Standard Example Bundle"
+      - description: "Deploy the UDS Core Standard Bundle"
         cmd: uds run -f tasks/deploy.yaml k3d-standard-bundle --no-progress
 
       # @todo (jeff): we should run each of the capability tests here and also deploy a sample app
