@@ -28,6 +28,10 @@ components:
         gitPath: charts/monitor
         valuesFiles:
           - values/neuvector-monitor-values.yaml
+      - name: uds-neuvector-config
+        namespace: neuvector
+        version: 0.1.0
+        localPath: chart
     images:
       - docker.io/neuvector/controller:5.2.2-s1
       - docker.io/neuvector/manager:5.2.2-s1
@@ -37,9 +41,6 @@ components:
       - docker.io/istio/proxyv2:1.19.0
       - docker.io/neuvector/prometheus-exporter:latest
 
-  - name: uds-neuvector-config
-    charts:
-      - name: uds-neuvector-config
-        namespace: neuvector
-        version: 0.1.0
-        localPath: chart
+
+
+

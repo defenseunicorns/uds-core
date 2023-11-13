@@ -6,7 +6,8 @@ metadata:
 spec:
   podSelector: 
     matchLabels:
-      {{- include "loki.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/instance: loki
+      app.kubernetes.io/name: loki
   policyTypes:
   - Egress
   egress:

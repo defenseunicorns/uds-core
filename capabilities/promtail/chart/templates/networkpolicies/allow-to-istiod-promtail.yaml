@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-to-istiod-promtail
+  namespace: {{ .Release.Namespace }}
+spec:
+  egress:
+  - ports:
+    - port: 15012
+      protocol: TCP
+    to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: istio-system
+      podSelector:
+        matchLabels:
+          app: istiod
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/instance: promtail
+      app.kubernetes.io/name: promtail
+  policyTypes:
+  - Egress

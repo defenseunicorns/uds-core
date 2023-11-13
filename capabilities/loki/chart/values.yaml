@@ -1,2 +1,2 @@
 grafana:
-  enabled: false
+  enabled: true

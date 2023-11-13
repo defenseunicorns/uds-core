@@ -17,6 +17,6 @@ spec:
               app: prometheus
           namespaceSelector:
             matchLabels:
-              app.kubernetes.io/name: monitoring
+              kubernetes.io/metadata.name: monitoring
   policyTypes:
     - Ingress
