@@ -142,9 +142,10 @@ resources:
     cpu: 100m
     memory: 256Mi
 
+# Below fails individual test when enabled since the crd is not there
 serviceMonitor:
   annotations: {}
-  enabled: true
+  enabled: false
   interval: null
   labels: {}
   metricRelabelings: []
