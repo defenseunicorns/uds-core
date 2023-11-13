@@ -1,17 +1,20 @@
+variables:
+  - name: VERSION
+    description: "The version of the packages to deploy"
+    # x-release-please-start-version
+    default: "0.1.3"
+    # x-release-please-end
+
 tasks:
   - name: k3d-standard-bundle
     actions:
       - description: "Deploy the UDS Core Standard Bundle"
-        cmd: uds deploy bundles/k3d-standard/uds-bundle-k3d-core-${UDS_ARCH}-*.tar.zst --confirm --no-progress
-
-      - task: out-of-band-tls-certs
+        cmd: uds deploy bundles/k3d-standard/uds-bundle-k3d-core-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress
 
   - name: k3d-istio-bundle
     actions:
       - description: "Deploy the UDS Core Istio Only Bundle"
-        cmd: uds deploy bundles/k3d-istio/uds-bundle-k3d-core-istio-${UDS_ARCH}-*.tar.zst --confirm --no-progress
-
-      - task: out-of-band-tls-certs
+        cmd: uds deploy bundles/k3d-istio/uds-bundle-k3d-core-istio-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress
 
   - name: out-of-band-tls-certs
     actions:
@@ -25,4 +28,4 @@ tasks:
       - description: "Deploy the requested capability Zarf Package (must set CAPABILITY environment variable)"
         cmd: |
           zarf package deploy build/zarf-package-uds-capability-${CAPABILITY}-${UDS_ARCH}.tar.zst --confirm
-          zarf package deploy build/zarf-package-pepr-uds-core-${UDS_ARCH}-*.tar.zst --confirm || true
+          zarf package deploy build/zarf-package-pepr-uds-core-${UDS_ARCH}-0.2.0.tar.zst --confirm || true
