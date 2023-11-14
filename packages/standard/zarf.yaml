@@ -12,22 +12,22 @@ components:
   - name: istio-controlplane
     required: true
     import:
-      path: ../../capabilities/istio
+      path: ../../src/istio
 
   - name: istio-admin-gateway
     required: true
     import:
-      path: ../../capabilities/istio
+      path: ../../src/istio
 
   - name: istio-tenant-gateway
     required: true
     import:
-      path: ../../capabilities/istio
+      path: ../../src/istio
 
   - name: istio-passthrough-gateway
     required: true
     import:
-      path: ../../capabilities/istio
+      path: ../../src/istio
 
   # Pepr the world
   - name: pepr-uds-core
@@ -40,20 +40,20 @@ components:
   - name: neuvector
     required: true
     import:
-      path: ../../capabilities/neuvector
+      path: ../../src/neuvector
 
   - name: uds-neuvector-config
     required: true
     import:
-      path: ../../capabilities/neuvector
+      path: ../../src/neuvector
 
   # Loki
   - name: loki
     required: true
     import:
-      path: ../../capabilities/loki
+      path: ../../src/loki
 
   - name: uds-loki-config
     required: true
     import:
-      path: ../../capabilities/loki
+      path: ../../src/loki

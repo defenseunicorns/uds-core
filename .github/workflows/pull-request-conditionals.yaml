@@ -5,7 +5,7 @@ on:
   pull_request:
     paths:
       - ".github/**"
-      - "capabilities/**"
+      - "src/**"
       - "tasks/**"
 
 # Permissions for the GITHUB_TOKEN used by the workflow.
@@ -20,32 +20,32 @@ defaults:
     shell: bash -e -o pipefail {0} # Ensures that scripts fail on error and pipefail is set.
 
 jobs:
-  # This job checks if there are changes in specific paths related to capabilities.
+  # This job checks if there are changes in specific paths source packages.
   check-paths:
     runs-on: ubuntu-latest
     name: Select Jobs
     outputs:
-      capabilities: ${{ steps.path-filter.outputs.changes }}
+      packages: ${{ steps.path-filter.outputs.changes }}
 
     steps:
       - name: Checkout the code
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
-      # Uses a custom action to filter paths for capabilities.
-      - name: Check capability paths
+      # Uses a custom action to filter paths for source packages.
+      - name: Check src paths
         id: path-filter
         uses: dorny/paths-filter@v2
         with:
           filters: .github/filters.yaml
 
-  # This job triggers a separate workflow for each changed capability, if any.
-  run-capability-test:
+  # This job triggers a separate workflow for each changed source package, if any.
+  run-package-test:
     needs: check-paths
     name: Schedule
     strategy:
       matrix:
-        capability: ${{ fromJSON(needs.check-paths.outputs.capabilities) }}
+        package: ${{ fromJSON(needs.check-paths.outputs.packages) }}
     uses: ./.github/workflows/test.yaml
     with:
-      capability: ${{ matrix.capability }}
+      package: ${{ matrix.package }}
     secrets: inherit # Inherits all secrets from the parent workflow.

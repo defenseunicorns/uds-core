@@ -1,0 +1,27 @@
+kind: ZarfPackageConfig
+metadata:
+  name: uds-core-grafana
+  description: "UDS Core Grafana"
+  url: https://grafana.com/grafana
+
+components:
+  - name: grafana
+    required: true
+    description: "Deploy Grafana"
+    charts:
+      - name: grafana
+        url: https://grafana.github.io/helm-charts/
+        version: 6.61.1
+        namespace: grafana
+        valuesFiles:
+          - values/values.yaml
+    images:
+      - docker.io/grafana/grafana:10.1.5
+
+  - name: uds-grafana-config
+    required: true
+    charts:
+      - name: uds-grafana-config
+        namespace: grafana
+        version: 0.1.0
+        localPath: chart
