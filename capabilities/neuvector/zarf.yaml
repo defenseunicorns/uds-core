@@ -20,7 +20,7 @@ components:
         namespace: neuvector
         gitPath: charts/core
         valuesFiles:
-          - values/neuvector-minimal-values.yaml
+          - values/values.yaml
       - name: monitor
         url: https://neuvector.github.io/neuvector-helm/
         version: 2.6.4
@@ -40,7 +40,3 @@ components:
       - docker.io/neuvector/enforcer:5.2.2-s1
       - docker.io/istio/proxyv2:1.19.0
       - docker.io/neuvector/prometheus-exporter:latest
-
-
-
-

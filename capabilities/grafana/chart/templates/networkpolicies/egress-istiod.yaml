@@ -11,7 +11,7 @@ spec:
   - to:
     - namespaceSelector:
         matchLabels:
-          app.kubernetes.io/name: istio-controlplane
+          kubernetes.io/metadata.name: istio-system
       podSelector:
         matchLabels:
           app: istiod

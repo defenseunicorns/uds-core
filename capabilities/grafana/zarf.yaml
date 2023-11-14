@@ -21,4 +21,8 @@ components:
         localPath: chart
     images:
       - docker.io/grafana/grafana:10.1.5
+      - docker.io/curlimages/curl:7.85.0
+      - docker.io/grafana/grafana-image-renderer:latest
+      - docker.io/library/busybox:1.31.1
+      - docker.io/bats/bats:v1.4.1
       - ghcr.io/kiwigrid/k8s-sidecar:1.25.2

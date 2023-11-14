@@ -13,10 +13,6 @@ alertmanager:
       #registry: registry1.dso.mil
       #repository: ironbank/opensource/prometheus/alertmanager
       #tag: v0.26.0
-    podMetadata:
-      annotations:
-        #PEPR?
-        bigbang.dev/istioVersion: 1.19.0-enterprise
     resources:
       limits:
         cpu: 500m

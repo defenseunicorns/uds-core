@@ -11,7 +11,7 @@ sidecar:
     tag: 1.25.2
   dashboards:
     enabled: true
-    label: "grafana_dashboard"
+    label: grafana_dashboard
   datasources:
     enabled: true
     label: grafana_datasource
