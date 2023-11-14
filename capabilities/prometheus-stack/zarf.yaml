@@ -10,7 +10,7 @@ components:
     charts:
       # https://github.com/prometheus-community/helm-charts/tree/main/charts/prometheus-operator-crds
       - name: prometheus-operator-crds
-        namespace: monitoring
+        namespace: uds-crds
         url: https://prometheus-community.github.io/helm-charts
         #version: 5.1.0 (old version - for testing upgrade)
         version: 6.0.0
