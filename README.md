@@ -14,7 +14,7 @@ The core applications are:
 - [ ] Kiali
 - [ ] Kyverno
 - [x] Loki
-- [ ] Metrics Server
+- [x] Metrics Server
 - [x] Neuvector
 - [ ] Prometheus
 - [ ] Promtail
