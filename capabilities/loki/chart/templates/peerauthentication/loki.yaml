@@ -9,4 +9,4 @@ spec:
   selector:
     matchLabels:
       app: loki
-      name: loki
+      
