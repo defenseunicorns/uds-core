@@ -294,10 +294,6 @@ prometheusOperator:
     #    runAsUser: 2000
     #    seccompProfile:
     #      type: RuntimeDefault
-    #NEEDED? (end)
-    # if not done, sidecar fails to terminate when job completes
-    annotations:
-        sidecar.istio.io/inject: "false"
     containerSecurityContext:
       capabilities:
         drop:
@@ -316,9 +312,6 @@ prometheusOperator:
         #registry: registry1.dso.mil
         #repository: ironbank/opensource/ingress-nginx/kube-webhook-certgen
         #tag: v1.3.0
-      # if not done, sidecar fails to terminate when job completes
-      podAnnotations:
-        sidecar.istio.io/inject: "false"
       resources:
         limits:
           cpu: 100m
