@@ -9,7 +9,6 @@ spec:
   selector:
     matchLabels:
       app: loki
-      name: loki
   portLevelMtls:
     # GRPC exception to support Loki internal communication
     "9095":

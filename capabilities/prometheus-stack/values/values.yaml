@@ -116,9 +116,6 @@ kube-state-metrics:
     #registry: registry1.dso.mil
     #repository: ironbank/opensource/kubernetes/kube-state-metrics
     #tag: v2.10.0
-  podAnnotations:
-    #PEPR?
-    bigbang.dev/istioVersion: 1.19.0-enterprise
   prometheus:
     monitor:
       #PEPR? (begin)
@@ -192,7 +189,6 @@ prometheus:
     podMetadata:
       annotations:
         #PEPR? (begin)
-        bigbang.dev/istioVersion: 1.19.0-enterprise
         #proxy.istio.io/config: |
         #  proxyMetadata:
         #    OUTPUT_CERTS: /etc/istio-output-certs
@@ -344,9 +340,6 @@ prometheusOperator:
   #  repository: registry1.dso.mil/ironbank/opensource/kubernetes/kubectl
   #  tag: v1.28.1
   #NEEDED? (end)
-  podAnnotations:
-    #PEPR?
-    bigbang.dev/istioVersion: 1.19.0-enterprise
   prometheusConfigReloader:
     enableProbe: false
     image:
