@@ -20,92 +20,10 @@ alertmanager:
       requests:
         cpu: 100m
         memory: 256Mi
-#NEEDED? (begin)
-#anchore:
-#  enabled: false
-#bbtests:
-#  cypress:
-#    artifacts: true
-#    envs:
-#      cypress_alertmanager_url: 'http://monitoring-kube-prometheus-alertmanager:9093'
-#      cypress_prometheus_url: 'http://monitoring-kube-prometheus-prometheus:9090'
-#  enabled: false
-#cleanUpgrade:
-#  enabled: false
-#  image:
-#    repository: registry1.dso.mil/ironbank/big-bang/base
-#    tag: 2.0.0
-#  resources:
-#    limits:
-#      cpu: 200m
-#      memory: 256Mi
-#    requests:
-#      cpu: 100m
-#      memory: 128Mi
-#  securityContext:
-#    allowPrivilegeEscalation: false
-#    capabilities:
-#      drop:
-#        - ALL
-#    readOnlyRootFilesystem: true
-#    runAsGroup: 1000
-#    runAsNonRoot: true
-#    runAsUser: 1000
-#NEEDED? (end)
 crds:
   enabled: false
-#NEEDED? (begin)
-#domain: bigbang.dev
-#flux:
-#  enabled: true
-#  namespace: flux-system
-#gitlabRunner:
-#  enabled: false
-#gluon:
-#  global:
-#    imagePullSecrets:
-#      - name: private-registry
-#    imageRegistry: ''
-#    rbac:
-#      create: true
-#      createAggregateClusterRoles: false
-#      pspAnnotations: {}
-#      pspEnabled: false
-#NEEDED? (end)
 grafana:
   enabled: false
-#NEEDED? (begin)
-#hostname: bigbang.dev
-#istio:
-#  alertmanager:
-#    annotations: {}
-#    enabled: false
-#    gateways:
-#      - istio-system/admin
-#    hosts:
-#      - 'alertmanager.{{ .Values.domain }}'
-#    labels: {}
-#    namespace: ''
-#    port: ''
-#    service: ''
-#  enabled: true
-#  injection: enabled
-#  mtls:
-#    mode: STRICT
-#  prometheus:
-#    annotations: {}
-#    enabled: false
-#    gateways:
-#      - istio-system/admin
-#    hosts:
-#      - 'prometheus.{{ .Values.domain }}'
-#    labels: {}
-#    namespace: ''
-#    port: ''
-#    service: ''
-#kiali:
-#  enabled: true
-#NEEDED? (end)
 kube-state-metrics:
   image:
     #upstream
@@ -118,6 +36,7 @@ kube-state-metrics:
     #tag: v2.10.0
   prometheus:
     monitor:
+      enabled: false
       #PEPR? (begin)
       #scheme: "https"
       #tlsConfig:
@@ -150,12 +69,6 @@ kubeStateMetrics:
     interval: ''
     selfMonitor:
       enabled: false
-#NEEDED? (begin)
-#loki:
-#  enabled: true
-#minioOperator:
-#  enabled: false
-#NEEDED? (end)
 nameOverride: kube-prometheus-stack
 networkPolicies:
   controlPlaneCidr: 0.0.0.0/0
@@ -164,15 +77,9 @@ networkPolicies:
     app: admin-ingressgateway
 nodeExporter:
   jobLabel: jobLabel
-  operatingSystems:
-    darwin:
+  prometheus:
+    monitor:
       enabled: false
-    linux:
-      enabled: false
-  serviceMonitor:
-    interval: ''
-#NEEDED?
-#openshift: false
 prometheus:
   prometheusSpec:
     enableFeatures:
@@ -188,13 +95,11 @@ prometheus:
       #tag: v2.47.0
     podMetadata:
       annotations:
-        #PEPR? (begin)
-        #proxy.istio.io/config: |
-        #  proxyMetadata:
-        #    OUTPUT_CERTS: /etc/istio-output-certs
-        #sidecar.istio.io/userVolumeMount: '[{"name": "istio-certs", "mountPath": "/etc/istio-output-certs"}]'
-        #traffic.sidecar.istio.io/includeOutboundIPRanges: ''
-        #PEPR? (end)
+        proxy.istio.io/config: |
+         proxyMetadata:
+           OUTPUT_CERTS: /etc/istio-output-certs
+        sidecar.istio.io/userVolumeMount: '[{"name": "istio-certs", "mountPath": "/etc/istio-output-certs"}]'
+        traffic.sidecar.istio.io/includeOutboundIPRanges: ''
       labels:
         app: prometheus
     podMonitorSelectorNilUsesHelmValues: false
@@ -217,15 +122,13 @@ prometheus:
             requests:
               storage: 50Gi
           storageClassName: null
-    #PEPR? (begin)
-    #volumeMounts:
-    #  - mountPath: /etc/prom-certs/
-    #    name: istio-certs
-    #volumes:
-    #  - emptyDir:
-    #      medium: Memory
-    #    name: istio-certs
-    #PEPR? (end)
+    volumeMounts:
+     - mountPath: /etc/prom-certs/
+       name: istio-certs
+    volumes:
+     - emptyDir:
+         medium: Memory
+       name: istio-certs
 prometheus-node-exporter:
   containerSecurityContext:
     capabilities:
@@ -248,6 +151,8 @@ prometheus-node-exporter:
     bigbang.dev/istioVersion: 1.19.0-enterprise
     cluster-autoscaler.kubernetes.io/safe-to-evict: 'true'
   prometheus:
+    monitor:
+      enabled: false
     #PEPR? (begin)
     #monitor:
     #  scheme: https

@@ -3,6 +3,8 @@ service:
     uds/istio-gateway: admin
     uds/istio-host: grafana
     uds/istio-port: "80"
+    uds/prometheus-port: "http"
+    uds/prometheus-label: "app.kubernetes.io/name"
 sidecar:
   image:
     # -- The Docker registry
