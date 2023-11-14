@@ -36,6 +36,12 @@ components:
       path: ../../dist
       name: module
 
+  # Metrics Server
+  - name: metrics-server
+    required: true
+    import:
+      path: ../../capabilities/metrics-server
+
   # Neuvector
   - name: neuvector
     required: true
