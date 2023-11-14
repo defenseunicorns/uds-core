@@ -20,7 +20,7 @@ components:
         namespace: neuvector
         gitPath: charts/core
         valuesFiles:
-          - values/neuvector-minimal-values.yaml
+          - values/values.yaml
       - name: monitor
         url: https://neuvector.github.io/neuvector-helm/
         version: 2.6.4
