@@ -9,6 +9,11 @@ metadata:
 
 components:
 
+  - name: prometheus-operator-crds
+    required: true
+    import:
+      path: ../../capabilities/prometheus-stack
+
   # Istio
   - name: istio-controlplane
     required: true
@@ -49,12 +54,7 @@ components:
     import:
       path: ../../capabilities/loki
 
-  # Prometheus
-  - name: prometheus-operator-crds
-    required: true
-    import:
-      path: ../../capabilities/prometheus-stack
-      
+  # Prometheus      
   - name: kube-prometheus-stack
     required: true
     import:
