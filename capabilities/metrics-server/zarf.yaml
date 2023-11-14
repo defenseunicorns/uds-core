@@ -6,6 +6,7 @@ metadata:
 
 components:
   - name: metrics-server
+    required: true
     charts:
       - name: metrics-server
         namespace: metrics-server
