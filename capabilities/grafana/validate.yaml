@@ -1,7 +1,8 @@
 tasks:
   - name: run
-    actions:
-      - description: Validate...
-        cmd: "echo Replace Me"
-        # wait:
-        #   cluster:
+    actions: 
+      - description: Wait for grafana app to be accessible
+        wait:
+          network:
+            protocol: https
+            address: grafana.admin.uds.dev
