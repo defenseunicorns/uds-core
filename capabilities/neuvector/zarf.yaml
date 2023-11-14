@@ -40,7 +40,3 @@ components:
       - docker.io/neuvector/enforcer:5.2.2-s1
       - docker.io/istio/proxyv2:1.19.0
       - docker.io/neuvector/prometheus-exporter:latest
-
-
-
-

@@ -11,10 +11,11 @@ spec:
     to:
     - namespaceSelector:
         matchLabels:
-          app.kubernetes.io/name: loki
+          kubernetes.io/metadata.name: loki
       podSelector:
         matchLabels:
-          app.kubernetes.io/name: loki
+          name: loki
+          app: loki
   podSelector:
     matchLabels:
       app.kubernetes.io/name: promtail

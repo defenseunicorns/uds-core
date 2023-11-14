@@ -8,4 +8,5 @@ spec:
     mode: STRICT
   selector:
     matchLabels:
-      {{- include "loki.selectorLabels" . | nindent 6 }}
+      app: loki
+      name: loki
