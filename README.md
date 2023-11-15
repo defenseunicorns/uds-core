@@ -7,19 +7,19 @@ UDS Core groups foundational Unicorn Delivery Service applications that are heav
 
 The core applications are:
 
-- [Authservice](./src/authservice/README.md) - Authorization
-- [Grafana](./src/grafana/README.md) - Monitoring
-- [Istio](./src/istio/README.md) - Service Mesh
-- [KeyCloak](./src/keycloak/README.md) - Identity & Access Management
-- [Kiali](./src/kiali/README.md) - Service Mesh Observability
-- [Kyverno](./src/kyverno/README.md) - Policy Engine
-- [Loki](./src/loki/README.md) - Log Aggregation
-- [Metrics Server](./src/metrics-server/README.md) - Metrics
-- [Neuvector](./src/neuvector/README.md) - Container Security
-- [Prometheus Stack](./src/prometheus-stack/README.md) - Monitoring
-- [Promtail](./src/promtail/README.md) - Log Aggregation
-- [Tempo](./src/tempo/README.md) - Tracing
-- [Velero](./src/velero/README.md) - Backup & Restore
+- [Authservice](https://github.com/istio-ecosystem/authservice) - Authorization
+- [Grafana](https://grafana.com/oss/grafana/) - Monitoring
+- [Istio](https://istio.io/) - Service Mesh
+- [KeyCloak](https://www.keycloak.org/) - Identity & Access Management
+- [Kiali](https://kiali.io/) - Service Mesh Observability
+- [Kyverno](https://kyverno.io/) - Policy Engine
+- [Loki](https://grafana.com/oss/loki/) - Log Aggregation
+- [Metrics Server](https://github.com/kubernetes-sigs/metrics-server) - Metrics
+- [Neuvector](https://open-docs.neuvector.com/) - Container Security
+- [Prometheus Stack](https://github.com/prometheus-operator/kube-prometheus) - Monitoring
+- [Promtail](https://grafana.com/docs/loki/latest/send-data/promtail/) - Log Aggregation
+- [Tempo](https://grafana.com/docs/tempo/latest/getting-started/) - Tracing
+- [Velero](https://velero.io/) - Backup & Restore
 
 ## Prerequisites
 
