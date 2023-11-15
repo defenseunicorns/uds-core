@@ -29,4 +29,9 @@ tasks:
       - description: "Deploy the UDS Core Standard Bundle"
         cmd: uds run -f tasks/deploy.yaml k3d-standard-bundle --no-progress
 
-      # @todo (jeff): we should run each of the package tests here and also deploy a sample app
+      - description: "Validated all packages"
+        # loop through each src/* package and run the validate.yaml task
+        cmd: |
+          for package in src/*; do
+            uds run -f src/${package}/validate.yaml run --no-progress
+          done
