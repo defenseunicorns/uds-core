@@ -2,7 +2,7 @@ variables:
   - name: VERSION
     description: "The version of the packages to deploy"
     # x-release-please-start-version
-    default: "0.1.3"
+    default: "0.2.0"
     # x-release-please-end
 
 tasks:
@@ -26,6 +26,7 @@ tasks:
   - name: single-capability
     actions:
       - description: "Deploy the requested capability Zarf Package (must set CAPABILITY environment variable)"
+        # @todo (jeff): this pepr package versioning is still janky
         cmd: |
           zarf package deploy build/zarf-package-uds-capability-${CAPABILITY}-${UDS_ARCH}.tar.zst --confirm
           zarf package deploy build/zarf-package-pepr-uds-core-${UDS_ARCH}-0.2.0.tar.zst --confirm || true
