@@ -132,8 +132,6 @@ extraVolumeMounts:
     readOnly: true
     subPath: machine-id
 
-hostname: null
-
 resources:
   limits:
     cpu: 500m

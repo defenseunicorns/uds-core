@@ -16,46 +16,6 @@ data:
       url: http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090
     - access: proxy
       editable: true
-      jsonData:
-        derivedFields:
-        - datasourceName: Tempo
-          datasourceUid: tempo
-          matcherRegex: traceID=(\w+)
-          name: TraceID
-          url: $${__value.raw}
       name: Loki
       type: loki
       url: http://loki.loki.svc.cluster.local:3100
-    - access: proxy
-      editable: true
-      isDefault: false
-      jsonData:
-        httpMethod: GET
-        lokiSearch:
-          datasourceUid: Loki
-        nodeGraph:
-          enabled: true
-        search:
-          hide: false
-        serviceMap:
-          datasourceUid: prometheus
-        tracesToLogs:
-          datasourceUid: Loki
-          filterBySpanID: false
-          filterByTraceID: false
-          mapTagNamesEnabled: false
-          mappedTags:
-          - key: service.name
-            value: service
-          spanEndTimeShift: 1h
-          spanStartTimeShift: 1h
-          tags:
-          - job
-          - instance
-          - pod
-          - namespace
-      name: Tempo
-      orgId: 1
-      type: tempo
-      uid: tempo
-      url: http://tempo.tempo.svc:3100

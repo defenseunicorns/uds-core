@@ -30,8 +30,6 @@ kube-state-metrics:
     #registry: registry1.dso.mil
     #repository: ironbank/opensource/kubernetes/kube-state-metrics
     #tag: v2.10.0
-  prometheus:
-    monitor:
   resources:
     limits:
       cpu: 500m
@@ -57,11 +55,6 @@ kubeStateMetrics:
     selfMonitor:
       enabled: false
 nameOverride: kube-prometheus-stack
-networkPolicies:
-  controlPlaneCidr: 0.0.0.0/0
-  enabled: true
-  ingressLabels:
-    app: admin-ingressgateway
 nodeExporter:
   jobLabel: jobLabel
   operatingSystems:

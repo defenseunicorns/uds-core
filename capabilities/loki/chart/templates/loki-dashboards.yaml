@@ -1,4 +1,3 @@
-{{- if .Values.grafana.enabled }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -9,4 +8,4 @@ metadata:
 data:
   grafana-loki-general.json: |
     {{ .Files.Get "dashboards/loki-dashboard-quick-search.json" | nindent 4 }}
-{{- end }}
+
