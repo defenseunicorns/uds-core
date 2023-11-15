@@ -8,7 +8,7 @@ spec:
     mode: STRICT
   selector:
     matchLabels:
-      app: loki
+      app.kubernetes.io/name: loki
   portLevelMtls:
     # GRPC exception to support Loki internal communication
     "9095":

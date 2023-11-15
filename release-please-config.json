@@ -16,13 +16,8 @@
         "packages/standard/zarf.yaml",
         "bundles/k3d-istio/uds-bundle.yaml",
         "bundles/k3d-standard/uds-bundle.yaml",
-<<<<<<< HEAD
-        "tasks/publish.yaml",
-        "tasks/deploy.yaml"                  
-=======
         "tasks/deploy.yaml",
         "tasks/publish.yaml"
->>>>>>> main
       ]
     }
   }

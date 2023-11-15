@@ -1,13 +1,6 @@
 config:
   clients:
-    - url: 'http://loki.loki.svc.cluster.local:3100/loki/api/v1/push'
-# config:
-#   clients:
-#     {{- if eq .Values.loki.strategy "monolith" }}
-#     - url: http://logging-loki.logging.svc.cluster.local:3100/loki/api/v1/push
-#     {{- else }}
-#     - url: http://logging-loki-write.logging.svc.cluster.local:3100/loki/api/v1/push
-#     {{- end }}
+    - url: 'http://loki-gateway.loki.svc.cluster.local:80/loki/api/v1/push'
 
   snippets:
     scrapeConfigs: >

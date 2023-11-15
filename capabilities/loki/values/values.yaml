@@ -99,5 +99,10 @@ sidecar:
 monitoring:
   enabled: true
   selfMonitoring:
+    enabled: false
     grafanaAgent:
-      installOperator: true
+      installOperator: false
+  lokiCanary:
+    enabled: false
+gateway:
+  enabled: true

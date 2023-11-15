@@ -14,8 +14,7 @@ spec:
           kubernetes.io/metadata.name: loki
       podSelector:
         matchLabels:
-          name: loki
-          app: loki
+          app.kubernetes.io/name: loki
   podSelector:
     matchLabels:
       app.kubernetes.io/name: promtail
