@@ -18,3 +18,8 @@ components:
         localPath: chart
     images:
       - docker.io/grafana/loki:2.9.2
+      - docker.io/nginxinc/nginx-unprivileged:1.24-alpine
+      - docker.io/grafana/agent-operator:v0.34.1
+      - docker.io/grafana/agent:v0.34.1
+      - docker.io/grafana/loki-canary:2.9.2
+      - quay.io/prometheus-operator/prometheus-config-reloader:v0.62.0
