@@ -33,5 +33,5 @@ tasks:
         # loop through each src/* package and run the validate.yaml task
         cmd: |
           for package in src/*; do
-            uds run -f src/${package}/validate.yaml run --no-progress
+            uds run -f ${package}/validate.yaml run --no-progress
           done
