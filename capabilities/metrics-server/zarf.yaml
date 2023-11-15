@@ -1,11 +1,18 @@
 kind: ZarfPackageConfig
 metadata:
-  name: example
-  description: "Example description"
+  name: uds-capability-metrics-server
+  description: "UDS Metrics Server"
+  url: https://github.com/kubernetes-sigs/metrics-server
 
 components:
-  - name: test
-    actions:
-      onCreate:
-        after:
-          - cmd: echo "What can Doug do for you?"
+  - name: metrics-server
+    required: true
+    charts:
+      - name: metrics-server
+        namespace: metrics-server
+        url: https://kubernetes-sigs.github.io/metrics-server
+        version: 3.11.0
+        valuesFiles:
+          - "values/values.yaml"
+    images:
+      - registry.k8s.io/metrics-server/metrics-server:v0.6.4
