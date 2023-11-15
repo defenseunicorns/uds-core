@@ -1,10 +1,6 @@
 alertmanager:
   alertmanagerSpec:
-    image:
-      #upstream
-      registry: quay.io
-      repository: prometheus/alertmanager
-      tag: v0.26.0
+    #image:
       #IB
       #registry: registry1.dso.mil
       #repository: ironbank/opensource/prometheus/alertmanager
@@ -21,11 +17,7 @@ crds:
 grafana:
   enabled: false
 kube-state-metrics:
-  image:
-    #upstream
-    registry: registry.k8s.io
-    repository: kube-state-metrics/kube-state-metrics
-    tag: ''
+  #image:
     #IB
     #registry: registry1.dso.mil
     #repository: ironbank/opensource/kubernetes/kube-state-metrics
@@ -68,11 +60,6 @@ prometheus:
   prometheusSpec:
     enableFeatures:
       - remote-write-receiver
-    image:
-      #upstream
-      registry: quay.io
-      repository: prometheus/prometheus
-      tag: v2.47.1
       #IB
       #registry: registry1.dso.mil
       #repository: ironbank/opensource/prometheus/prometheus
@@ -121,11 +108,7 @@ prometheus-node-exporter:
     readOnlyRootFilesystem: true
   hostNetwork: false
   hostPID: false
-  image:
-    #upstream
-    registry: quay.io
-    repository: prometheus/node-exporter
-    tag: ''
+  #image:
     #IB
     #registry: registry1.dso.mil
     #repository: ironbank/opensource/prometheus/node-exporter
@@ -155,11 +138,7 @@ prometheusOperator:
         capabilities:
           drop:
             - ALL
-      image:
-        #upstream
-        registry: registry.k8s.io
-        repository: ingress-nginx/kube-webhook-certgen
-        tag: v20221220-controller-v1.5.1-58-g787ea74b6
+      #image:
         #IB
         #registry: registry1.dso.mil
         #repository: ironbank/opensource/ingress-nginx/kube-webhook-certgen
@@ -180,22 +159,13 @@ prometheusOperator:
         #runAsGroup: 65532
         #runAsNonRoot: true
         #runAsUser: 65532
-  image:
-    #upstream
-    registry: quay.io
-    repository: prometheus-operator/prometheus-operator
-    tag: ""
+  #image:
     #IB
     #registry: registry1.dso.mil
     #repository: ironbank/opensource/prometheus-operator/prometheus-operator
     #tag: v0.68.0
   prometheusConfigReloader:
     enableProbe: false
-    image:
-      #upstream
-      registry: quay.io
-      repository: prometheus-operator/prometheus-config-reloader
-      tag: ""
       #IB
       #registry: registry1.dso.mil
       #repository: ironbank/opensource/prometheus-operator/prometheus-config-reloader
@@ -214,22 +184,14 @@ prometheusOperator:
     requests:
       cpu: 100m
       memory: 512Mi
-  thanosImage:
-    #upstream
-    registry: quay.io
-    repository: thanos/thanos
-    tag: v0.32.4
+  #thanosImage:
     #IB
     #registry: registry1.dso.mil
     #repository: ironbank/opensource/thanos/thanos
     #tag: v0.32.3
 thanosRuler:
   thanosRulerSpec:
-    image:
-      #upstream
-      registry: quay.io
-      repository: thanos/thanos
-      tag: v0.32.3
+    #image:
       #IB
       #registry: registry1.dso.mil
       #repository: ironbank/opensource/thanos/thanos
