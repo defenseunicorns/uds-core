@@ -20,10 +20,6 @@ kiali:
   - "src/kiali/**"
 kyverno:
   - "src/kyverno/**"
-kyverno-policies:
-  - "src/kyverno-policies/**"
-kyverno-reporter:
-  - "src/kyverno-reporter/**"
 loki:
   - "src/loki/**"
 metrics-server:

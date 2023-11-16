@@ -1,6 +1,6 @@
 kind: ZarfPackageConfig
 metadata:
-  name: example
+  name: uds-core-kiali
   description: "Example description"
 
 components:
