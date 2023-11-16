@@ -1,7 +1,7 @@
 kind: UDSBundle
 metadata:
   name: k3d-core-istio
-  description: An example UDS bundle for deploying Istio from UDS Core on a development cluster
+  description: A UDS bundle for deploying Istio from UDS Core on a development cluster
   # x-release-please-start-version
   version: "0.4.0"
   # x-release-please-end

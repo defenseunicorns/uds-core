@@ -1,0 +1,83 @@
+kind: ZarfPackageConfig
+metadata:
+  name: uds-core-istio
+  description: "UDS Core Istio package"
+  url: https://istio.io/latest/
+
+variables:
+  - name: DOMAIN
+    description: "Cluster domain"
+    default: "uds.dev"
+
+components:
+  - name: istio-controlplane
+    description: "Install the Istio control plane based on https://istio.io/latest/docs/setup/install/helm/"
+    required: true
+    charts:
+      - name: base
+        namespace: istio-system
+        url: https://istio-release.storage.googleapis.com/charts
+        version: 1.19.3
+      - name: istiod
+        namespace: istio-system
+        url: https://istio-release.storage.googleapis.com/charts
+        version: 1.19.3
+        valuesFiles:
+          - "values/values.yaml"
+    manifests:
+      - name: uds-global-istio-config
+        namespace: istio-system
+        files:
+          - "manifests/envoy-filters.yaml"
+          - "manifests/peer-authentication.yaml"
+    images:
+      - "docker.io/istio/pilot:1.19.3-distroless"
+      - "docker.io/istio/proxyv2:1.19.3-distroless"
+
+  - name: istio-admin-gateway
+    description: "Deploy an admin gateway"
+    required: true
+    charts:
+      - name: gateway
+        releaseName: admin-ingressgateway
+        namespace: istio-admin-gateway
+        url: https://istio-release.storage.googleapis.com/charts
+        version: 1.19.3
+      - name: uds-istio-config
+        version: 0.2.0
+        localPath: chart
+        namespace: istio-admin-gateway
+        valuesFiles:
+          - "values/config-admin.yaml"
+
+  - name: istio-tenant-gateway
+    description: "Deploy a tenant gateway"
+    required: true
+    charts:
+      - name: gateway
+        releaseName: tenant-ingressgateway
+        namespace: istio-tenant-gateway
+        url: https://istio-release.storage.googleapis.com/charts
+        version: 1.19.3
+      - name: uds-istio-config
+        version: 0.2.0
+        localPath: chart
+        namespace: istio-tenant-gateway
+        valuesFiles:
+          - "values/config-tenant.yaml"
+
+  - name: istio-passthrough-gateway
+    description: "Deploy a TLS passthrough gateway"
+    required: true
+    charts:
+      - name: gateway
+        releaseName: passthrough-ingressgateway
+        namespace: istio-passthrough-gateway
+        url: https://istio-release.storage.googleapis.com/charts
+        version: 1.19.3
+      - name: uds-istio-config
+        version: 0.2.0
+        localPath: chart
+        namespace: istio-passthrough-gateway
+        valuesFiles:
+          - "values/config-passthrough.yaml"

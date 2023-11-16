@@ -1,7 +1,7 @@
 kind: UDSBundle
 metadata:
   name: k3d-core
-  description: An example UDS bundle for deploying the standard UDS Core capability on a development cluster
+  description: A UDS bundle for deploying the standard UDS Core package on a development cluster
   # x-release-please-start-version
   version: "0.4.0"
   # x-release-please-end

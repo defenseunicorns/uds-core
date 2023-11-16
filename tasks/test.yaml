@@ -1,18 +1,18 @@
 tasks:
-  - name: single-capability
-    description: "Build and test a single capability, must set CAPABILITY environment variable"
+  - name: single-package
+    description: "Build and test a single package, must set UDS_PKG environment variable"
     actions:
-      - description: "Create the capability package"
-        cmd: uds run -f tasks/create.yaml single-capability --no-progress
+      - description: "Create the package"
+        cmd: uds run -f tasks/create.yaml single-package --no-progress
 
       - description: "Create the K3d cluster"
         cmd: uds run -f tasks/setup.yaml k3d-test-cluster --no-progress
 
-      - description: "Deploy the capability"
-        cmd: uds run -f tasks/deploy.yaml single-capability --no-progress
+      - description: "Deploy the package"
+        cmd: uds run -f tasks/deploy.yaml single-package --no-progress
 
-      - description: "Validate the capability"
-        cmd: uds run -f capabilities/${CAPABILITY}/validate.yaml run --no-progress
+      - description: "Validate the package"
+        cmd: uds run -f src/${UDS_PKG}/validate.yaml run --no-progress
 
   - name: uds-core
     description: "Build and test UDS Core"
@@ -29,4 +29,10 @@ tasks:
       - description: "Deploy the UDS Core Standard Bundle"
         cmd: uds run -f tasks/deploy.yaml k3d-standard-bundle --no-progress
 
-      # @todo (jeff): we should run each of the capability tests here and also deploy a sample app
+      - description: "Validated all packages"
+        # loop through each src/* package and run the validate.yaml task
+        cmd: |
+          set -e        
+          for package in src/*; do
+            uds run -f ${package}/validate.yaml run --no-progress
+          done

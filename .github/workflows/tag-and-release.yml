@@ -47,7 +47,7 @@ jobs:
       - name: Publish UDS Zarf Package
         run: uds run -f tasks/publish.yaml packages
 
-      - name: Publish UDS Example Bundles
+      - name: Publish UDS Bundles
         run: uds run -f tasks/publish.yaml bundles
 
       - name: Save logs

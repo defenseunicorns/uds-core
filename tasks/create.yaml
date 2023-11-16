@@ -23,20 +23,21 @@ tasks:
       - description: "Create the UDS Core Istio Only Bundle"
         cmd: "uds create bundles/k3d-istio --confirm --no-progress --architecture=${ZARF_ARCHITECTURE}"
 
-  - name: single-capability
+  - name: single-package
     actions:
       - task: pepr-build
 
       - description: "Create the Pepr Zarf Package, if it exists"
         cmd: "zarf package create dist --confirm || echo 'Pepr build not required'"
 
-      - description: "Create the requested capability Zarf Package (must set CAPABILITY environment variable)"
-        cmd: "zarf package create capabilities/${CAPABILITY} --confirm"
+      - description: "Create the requested Zarf Package (must set UDS_PKG environment variable)"
+        cmd: "zarf package create src/${UDS_PKG} --confirm"
 
   - name: pepr-build
     actions:
       - description: "Build the UDS Core Pepr Module"
         cmd: |
+          set -e        
           rm -fr dist
           npm ci
           npx pepr build || echo "Pepr build not required"

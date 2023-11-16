@@ -14,16 +14,19 @@ tasks:
     actions:
       - description: "Create the UDS Core Standard Zarf Package"
         cmd: |
+          set -e        
           ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress
           ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml standard-package --no-progress
 
       - description: "Create the UDS Core Istio Only Zarf Package"
         cmd: |
+          set -e        
           ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml istio-package --no-progress
           ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml istio-package --no-progress
 
       - description: "Publish the packages"
         cmd: |
+          set -e        
           zarf package publish build/zarf-package-core-amd64-${VERSION}.tar.zst ${TARGET_REPO}
           zarf package publish build/zarf-package-core-arm64-${VERSION}.tar.zst ${TARGET_REPO}
           zarf package publish build/zarf-package-core-istio-amd64-${VERSION}.tar.zst ${TARGET_REPO}
@@ -34,16 +37,19 @@ tasks:
     actions:
       - description: "Create the UDS Core Standard Bundle"
         cmd: |
+          set -e        
           ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml k3d-standard-bundle --no-progress
           ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-standard-bundle --no-progress
 
       - description: Create the UDS Core Istio Only Bundle
         cmd: |
+          set -e        
           ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml k3d-istio-bundle --no-progress
           ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-istio-bundle --no-progress
 
       - description: "Publish the bundles"
         cmd: |
+          set -e        
           uds publish bundles/k3d-standard/uds-bundle-k3d-core-amd64-${VERSION}.tar.zst ${TARGET_REPO}/bundles --no-progress
           uds publish bundles/k3d-standard/uds-bundle-k3d-core-arm64-${VERSION}.tar.zst ${TARGET_REPO}/bundles --no-progress
           uds publish bundles/k3d-istio/uds-bundle-k3d-core-istio-amd64-${VERSION}.tar.zst ${TARGET_REPO}/bundles --no-progress

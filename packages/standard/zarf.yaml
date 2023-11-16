@@ -8,32 +8,31 @@ metadata:
   # x-release-please-end
 
 components:
-
   - name: prometheus-operator-crds
     required: true
     import:
-      path: ../../capabilities/prometheus-stack
+      path: ../../src/prometheus-stack
 
   # Istio
   - name: istio-controlplane
     required: true
     import:
-      path: ../../capabilities/istio
+      path: ../../src/istio
 
   - name: istio-admin-gateway
     required: true
     import:
-      path: ../../capabilities/istio
+      path: ../../src/istio
 
   - name: istio-tenant-gateway
     required: true
     import:
-      path: ../../capabilities/istio
+      path: ../../src/istio
 
   - name: istio-passthrough-gateway
     required: true
     import:
-      path: ../../capabilities/istio
+      path: ../../src/istio
 
   # Pepr the world
   - name: pepr-uds-core
@@ -46,32 +45,32 @@ components:
   - name: metrics-server
     required: true
     import:
-      path: ../../capabilities/metrics-server
+      path: ../../src/metrics-server
 
   # Neuvector
   - name: neuvector
     required: true
     import:
-      path: ../../capabilities/neuvector
+      path: ../../src/neuvector
 
   # Loki
   - name: loki
     required: true
     import:
-      path: ../../capabilities/loki
+      path: ../../src/loki
 
-  # Prometheus      
+  # Prometheus
   - name: kube-prometheus-stack
     required: true
     import:
-      path: ../../capabilities/prometheus-stack
+      path: ../../src/prometheus-stack
 
   - name: promtail
     required: true
     import:
-      path: ../../capabilities/promtail
+      path: ../../src/promtail
 
   - name: grafana
     required: true
     import:
-      path: ../../capabilities/grafana
+      path: ../../src/grafana
