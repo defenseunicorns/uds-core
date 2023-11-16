@@ -105,4 +105,4 @@ monitoring:
   lokiCanary:
     enabled: false
 gateway:
-  enabled: true
+  enabled: false
