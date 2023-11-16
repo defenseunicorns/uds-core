@@ -1,0 +1,13 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: coredns-monitor
+  namespace: monitoring
+spec:
+  selector:
+    matchLabels:
+      k8s-app: coredns   # Replace with the label used by CoreDNS deployment
+  endpoints:
+  - port: metrics
+    path: /metrics
+    interval: 15s   # Adjust the scrape interval as needed

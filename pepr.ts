@@ -3,6 +3,7 @@ import { Capability, PeprModule } from "pepr";
 import cfg from "./package.json";
 
 import { istio } from "./capabilities/istio/pepr";
+import { prometheus } from "./capabilities/prometheus-stack/pepr";
 
 /**
  * This the root of the UDS Core Pepr Module. To operate on a specific capability, you can
@@ -14,6 +15,8 @@ import { istio } from "./capabilities/istio/pepr";
 const sortedCapabilities: Record<string, Capability[]>[] = [
   // Istio service mesh
   { istio },
+  // Prometheus metrics stack
+  { prometheus },
 ];
 
 // Otherwise, use all capabilities
