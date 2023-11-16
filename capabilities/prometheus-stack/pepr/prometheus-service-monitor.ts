@@ -13,27 +13,23 @@ const { When } = PrometheusServiceMonitor;
 // Mutate ServiceMonitors to add TLS configuration for Istio
 When(ServiceMonitor)
   .IsCreatedOrUpdated()
-  .Mutate(sm => {
+  .Mutate(async sm => {
     const namespaces = sm.Raw.spec.namespaceSelector?.matchNames || [
       sm.Raw.metadata.namespace,
     ];
     let istioInjected = false;
-    namespaces.forEach(async ns => {
-      Log.info(`Checking ${ns}`);
+    for (const ns of namespaces) {
       const namespace = await K8s(kind.Namespace).Get(ns);
-      Log.info(`Labels ${namespace.metadata.labels}`);
-      Log.info(`Labels ${namespace.metadata.labels["istio-injection"]}`);      
       if (
         namespace.metadata.labels &&
         namespace.metadata.labels["istio-injection"] === "enabled"
       ) {
         istioInjected = true;
       }
-    });
-    Log.info(`Is istio injected ${istioInjected}`);
+    }
 
     if (istioInjected) {
-      Log.info(`Patching service monitor ${sm} for mTLS metrics`);
+      Log.info(`Patching service monitor ${sm.Raw.metadata.namespace} for mTLS metrics`);
       const tlsConfig = {
         caFile: "/etc/prom-certs/root-cert.pem",
         certFile: "/etc/prom-certs/cert-chain.pem",
@@ -48,7 +44,7 @@ When(ServiceMonitor)
       });
       sm.Raw.spec.endpoints = endpoints;
     } else {
-      Log.info(`No changes needed for service monitor ${sm}`);
+      Log.info(`No mutations needed for service monitor ${sm.Raw.metadata.namespace}`);
     }
   });
 
