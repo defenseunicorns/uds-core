@@ -12,6 +12,6 @@ tasks:
         wait:
           cluster:
             kind: Pod
-            name: "app.kubernetes.io/component=gateway"
+            name: app.kubernetes.io/component=gateway
             namespace: loki
             condition: Ready

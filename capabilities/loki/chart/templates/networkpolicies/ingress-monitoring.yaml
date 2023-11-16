@@ -17,7 +17,6 @@ spec:
       podSelector:
         matchLabels:
           app.kubernetes.io/name: grafana
-
     - namespaceSelector:
         matchLabels:
           kubernetes.io/metadata.name: monitoring
@@ -25,5 +24,7 @@ spec:
         matchLabels:
           app.kubernetes.io/name: prometheus
     ports:
+    - port: 8080
+      protocol: TCP
     - port: 3100
       protocol: TCP

@@ -5,6 +5,7 @@ metadata:
 
 components:
   - name: loki
+    required: true
     charts:
       - name: loki
         url: https://grafana.github.io/helm-charts/

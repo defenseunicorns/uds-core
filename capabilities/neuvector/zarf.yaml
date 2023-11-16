@@ -38,5 +38,4 @@ components:
       - docker.io/neuvector/updater:latest
       - docker.io/neuvector/scanner:latest
       - docker.io/neuvector/enforcer:5.2.2-s1
-      - docker.io/istio/proxyv2:1.19.3-distroless
       - docker.io/neuvector/prometheus-exporter:latest

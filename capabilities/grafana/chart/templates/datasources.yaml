@@ -18,4 +18,4 @@ data:
       editable: true
       name: Loki
       type: loki
-      url: http://loki.loki.svc.cluster.local:3100
+      url: http://loki-gateway.loki.svc.cluster.local:80
