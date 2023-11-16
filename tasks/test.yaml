@@ -32,6 +32,7 @@ tasks:
       - description: "Validated all packages"
         # loop through each src/* package and run the validate.yaml task
         cmd: |
+          set -e        
           for package in src/*; do
             uds run -f ${package}/validate.yaml run --no-progress
           done
