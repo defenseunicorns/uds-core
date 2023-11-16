@@ -1,0 +1,18 @@
+name: save-logs
+description: "Save debug logs"
+
+runs:
+  using: composite
+  steps:
+    - name: Fix log permissions
+      run: |
+        sudo chown $USER /tmp/zarf-*.log || echo ""
+        sudo chown $USER /tmp/uds-*.log || echo ""
+      shell: bash
+
+    - uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
+      with:
+        name: debug-log
+        path: |
+          /tmp/zarf-*.log
+          /tmp/uds-*.log

@@ -46,3 +46,7 @@ jobs:
       - name: Test UDS Core
         if: ${{ inputs.capability == 'all' }}
         run: uds run -f tasks/test.yaml uds-core
+
+      - name: Save logs
+        if: always()
+        uses: ./.github/actions/save-logs
