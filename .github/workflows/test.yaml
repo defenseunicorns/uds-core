@@ -1,24 +1,24 @@
-name: Test individual capabilities
+name: Test packages
 
 on:
   # Manual trigger
   workflow_dispatch:
     inputs:
-      capability:
+      package:
         type: string
-        description: "The name of the capability to test"
+        description: "The name of the source package to test"
         required: true
   # Triggered by pull-request-conditionals.yaml
   workflow_call:
     inputs:
-      capability:
+      package:
         type: string
-        description: "The name of the capability to test"
+        description: "The name of the source package to test"
         required: true
 
 # Abort prior jobs in the same workflow / PR
 concurrency:
-  group: test-${{ github.ref }}-${{ inputs.capability }}
+  group: test-${{ github.ref }}-${{ inputs.package }}
   cancel-in-progress: true
 
 permissions:
@@ -26,11 +26,11 @@ permissions:
 
 jobs:
   test:
-    runs-on: "${{ inputs.capability == 'all' && 'uds-ubuntu-big-boy-8-core' || 'ubuntu-latest'}}"
+    runs-on: "${{ inputs.package == 'all' && 'uds-ubuntu-big-boy-8-core' || 'ubuntu-latest'}}"
     timeout-minutes: 30
     name: Test
     env:
-      CAPABILITY: ${{ inputs.capability }}
+      UDS_PKG: ${{ inputs.package }}
 
     steps:
       - name: Checkout repository
@@ -39,12 +39,12 @@ jobs:
       - name: Environment setup
         uses: ./.github/actions/setup
 
-      - name: Test a single capability
-        if: ${{ inputs.capability != 'all' }}
-        run: uds run -f tasks/test.yaml single-capability
+      - name: Test a single source package
+        if: ${{ inputs.package != 'all' }}
+        run: uds run -f tasks/test.yaml single-package
 
       - name: Test UDS Core
-        if: ${{ inputs.capability == 'all' }}
+        if: ${{ inputs.package == 'all' }}
         run: uds run -f tasks/test.yaml uds-core
 
       - name: Save logs

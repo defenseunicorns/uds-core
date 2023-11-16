@@ -1,0 +1,35 @@
+tasks:
+  - name: run
+    description: Test app used for UDS Core validation
+    actions:
+      - description: Apply the test resources
+        cmd: "kubectl apply -f 'src/test/app-*.yaml'"
+
+      - description: Wait for the admin app to be ready
+        wait:
+          cluster:
+            kind: Deployment
+            name: httpbin
+            namespace: test-admin-app
+
+      - description: Wait for the tenant app to be ready
+        wait:
+          cluster:
+            kind: Deployment
+            name: httpbin
+            namespace: test-app
+
+      - description: Verify the admin app is accessible
+        wait:
+          network:
+            protocol: https
+            address: demo.admin.uds.dev
+
+      - description: Verify the tenant app is accessible
+        wait:
+          network:
+            protocol: https
+            address: demo.uds.dev
+
+      - description: Remove the test resources
+        cmd: "kubectl delete -f 'src/test/app-*.yaml' --wait=false"

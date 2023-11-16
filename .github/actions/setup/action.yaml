@@ -1,6 +1,6 @@
 # action.yml
 name: "Setup Environment"
-description: "Setup dependencies for the testing UDS capabilities"
+description: "UDS Environment Setup"
 
 runs:
   using: "composite"

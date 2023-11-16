@@ -1,0 +1,22 @@
+kind: ZarfPackageConfig
+metadata:
+  name: uds-core-metrics-server
+  description: "UDS Metrics Server"
+  url: https://github.com/kubernetes-sigs/metrics-server
+
+components:
+  - name: metrics-server
+    required: true
+    charts:
+      - name: metrics-server
+        namespace: metrics-server
+        url: https://kubernetes-sigs.github.io/metrics-server
+        version: 3.11.0
+        valuesFiles:
+          - "values/values.yaml"
+      - name: uds-metrics-server-config
+        namespace: metrics-server
+        version: 0.1.0
+        localPath: chart
+    images:
+      - registry.k8s.io/metrics-server/metrics-server:v0.6.4

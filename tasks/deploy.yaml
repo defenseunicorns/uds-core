@@ -24,11 +24,11 @@ tasks:
           npm ci
           npx --yes ts-node bundles/tls-certs.ts
 
-  - name: single-capability
+  - name: single-package
     actions:
-      - description: "Deploy the requested capability Zarf Package (must set CAPABILITY environment variable)"
         # @todo (jeff): this pepr package versioning is still janky
+      - description: "Deploy the requested Zarf Package (must set UDS_PKG environment variable)"
         cmd: |
           set -e
-          zarf package deploy build/zarf-package-uds-capability-${CAPABILITY}-${UDS_ARCH}.tar.zst --confirm
+          zarf package deploy build/zarf-package-uds-core-${UDS_PKG}-${UDS_ARCH}.tar.zst --confirm
           zarf package deploy build/zarf-package-pepr-uds-core-${UDS_ARCH}-0.2.0.tar.zst --confirm || true

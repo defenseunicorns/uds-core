@@ -1,7 +1,7 @@
 {
   "name": "uds-core",
   "version": "0.2.0",
-  "description": "A collection of capabilities for the UDS platform",
+  "description": "A collection of capabilities for UDS Core",
   "keywords": [
     "pepr",
     "k8s",
