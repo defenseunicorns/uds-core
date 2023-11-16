@@ -6,7 +6,7 @@ metadata:
 spec:
   egress:
   - ports:
-    - port: 3100
+    - port: 8080
       protocol: TCP
     to:
     - namespaceSelector:
