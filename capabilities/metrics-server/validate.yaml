@@ -1,9 +1,15 @@
 tasks:
   - name: run
     actions:
-      - description: Wait for the metrics-server to be ready
+      - description: Wait for metrics-server pod(s) to be ready
         wait:
           cluster:
             kind: Deployment
             name: metrics-server
             namespace: metrics-server
+      - description: Wait for metrics-server API to be ready
+        wait:
+          cluster:
+            kind: APIService
+            name: v1beta1.metrics.k8s.io
+            condition: available
