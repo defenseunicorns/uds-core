@@ -29,7 +29,7 @@ When(ServiceMonitor)
     }
 
     if (istioInjected) {
-      Log.info(`Patching service monitor ${sm.Raw.metadata.namespace} for mTLS metrics`);
+      Log.info(`Patching service monitor ${sm.Raw.metadata.name} for mTLS metrics`);
       const tlsConfig = {
         caFile: "/etc/prom-certs/root-cert.pem",
         certFile: "/etc/prom-certs/cert-chain.pem",
@@ -44,7 +44,7 @@ When(ServiceMonitor)
       });
       sm.Raw.spec.endpoints = endpoints;
     } else {
-      Log.info(`No mutations needed for service monitor ${sm.Raw.metadata.namespace}`);
+      Log.info(`No mutations needed for service monitor ${sm.Raw.metadata.name}`);
     }
   });
 
