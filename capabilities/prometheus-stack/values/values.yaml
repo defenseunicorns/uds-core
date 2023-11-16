@@ -1,22 +1,10 @@
-# Default values for kube-prometheus-stack.
-# This is a YAML-formatted file.
-# Declare variables to be passed into your templates.
-
 alertmanager:
   alertmanagerSpec:
-    image:
-      #upstream
-      registry: quay.io
-      repository: prometheus/alertmanager
-      tag: v0.26.0
+    #image:
       #IB
       #registry: registry1.dso.mil
       #repository: ironbank/opensource/prometheus/alertmanager
       #tag: v0.26.0
-    podMetadata:
-      annotations:
-        #PEPR?
-        bigbang.dev/istioVersion: 1.19.0-enterprise
     resources:
       limits:
         cpu: 500m
@@ -24,115 +12,16 @@ alertmanager:
       requests:
         cpu: 100m
         memory: 256Mi
-#NEEDED? (begin)
-#anchore:
-#  enabled: false
-#bbtests:
-#  cypress:
-#    artifacts: true
-#    envs:
-#      cypress_alertmanager_url: 'http://monitoring-kube-prometheus-alertmanager:9093'
-#      cypress_prometheus_url: 'http://monitoring-kube-prometheus-prometheus:9090'
-#  enabled: false
-#cleanUpgrade:
-#  enabled: false
-#  image:
-#    repository: registry1.dso.mil/ironbank/big-bang/base
-#    tag: 2.0.0
-#  resources:
-#    limits:
-#      cpu: 200m
-#      memory: 256Mi
-#    requests:
-#      cpu: 100m
-#      memory: 128Mi
-#  securityContext:
-#    allowPrivilegeEscalation: false
-#    capabilities:
-#      drop:
-#        - ALL
-#    readOnlyRootFilesystem: true
-#    runAsGroup: 1000
-#    runAsNonRoot: true
-#    runAsUser: 1000
-#NEEDED? (end)
 crds:
   enabled: false
-#NEEDED? (begin)
-#domain: bigbang.dev
-#flux:
-#  enabled: true
-#  namespace: flux-system
-#gitlabRunner:
-#  enabled: false
-#gluon:
-#  global:
-#    imagePullSecrets:
-#      - name: private-registry
-#    imageRegistry: ''
-#    rbac:
-#      create: true
-#      createAggregateClusterRoles: false
-#      pspAnnotations: {}
-#      pspEnabled: false
-#NEEDED? (end)
 grafana:
   enabled: false
-#NEEDED? (begin)
-#hostname: bigbang.dev
-#istio:
-#  alertmanager:
-#    annotations: {}
-#    enabled: false
-#    gateways:
-#      - istio-system/admin
-#    hosts:
-#      - 'alertmanager.{{ .Values.domain }}'
-#    labels: {}
-#    namespace: ''
-#    port: ''
-#    service: ''
-#  enabled: true
-#  injection: enabled
-#  mtls:
-#    mode: STRICT
-#  prometheus:
-#    annotations: {}
-#    enabled: false
-#    gateways:
-#      - istio-system/admin
-#    hosts:
-#      - 'prometheus.{{ .Values.domain }}'
-#    labels: {}
-#    namespace: ''
-#    port: ''
-#    service: ''
-#kiali:
-#  enabled: true
-#NEEDED? (end)
 kube-state-metrics:
-  image:
-    #upstream
-    registry: registry.k8s.io
-    repository: kube-state-metrics/kube-state-metrics
-    tag: ''
+  #image:
     #IB
     #registry: registry1.dso.mil
     #repository: ironbank/opensource/kubernetes/kube-state-metrics
     #tag: v2.10.0
-  podAnnotations:
-    #PEPR?
-    bigbang.dev/istioVersion: 1.19.0-enterprise
-  prometheus:
-    monitor:
-      #PEPR? (begin)
-      #scheme: "https"
-      #tlsConfig:
-      #  caFile: /etc/prom-certs/root-cert.pem
-      #  certFile: /etc/prom-certs/cert-chain.pem
-      #  insecureSkipVerify: true
-      #  keyFile: /etc/prom-certs/key.pem
-      #PEPR? (end)
   resources:
     limits:
       cpu: 500m
@@ -157,18 +46,7 @@ kubeStateMetrics:
     interval: ''
     selfMonitor:
       enabled: false
-#NEEDED? (begin)
-#loki:
-#  enabled: true
-#minioOperator:
-#  enabled: false
-#NEEDED? (end)
 nameOverride: kube-prometheus-stack
-networkPolicies:
-  controlPlaneCidr: 0.0.0.0/0
-  enabled: true
-  ingressLabels:
-    app: admin-ingressgateway
 nodeExporter:
   jobLabel: jobLabel
   operatingSystems:
@@ -178,31 +56,21 @@ nodeExporter:
       enabled: false
   serviceMonitor:
     interval: ''
-#NEEDED?
-#openshift: false
 prometheus:
   prometheusSpec:
     enableFeatures:
       - remote-write-receiver
-    image:
-      #upstream
-      registry: quay.io
-      repository: prometheus/prometheus
-      tag: v2.47.1
       #IB
       #registry: registry1.dso.mil
       #repository: ironbank/opensource/prometheus/prometheus
       #tag: v2.47.0
     podMetadata:
       annotations:
-        #PEPR? (begin)
-        bigbang.dev/istioVersion: 1.19.0-enterprise
-        #proxy.istio.io/config: |
-        #  proxyMetadata:
-        #    OUTPUT_CERTS: /etc/istio-output-certs
-        #sidecar.istio.io/userVolumeMount: '[{"name": "istio-certs", "mountPath": "/etc/istio-output-certs"}]'
-        #traffic.sidecar.istio.io/includeOutboundIPRanges: ''
-        #PEPR? (end)
+        proxy.istio.io/config: |
+         proxyMetadata:
+           OUTPUT_CERTS: /etc/istio-output-certs
+        sidecar.istio.io/userVolumeMount: '[{"name": "istio-certs", "mountPath": "/etc/istio-output-certs"}]'
+        traffic.sidecar.istio.io/includeOutboundIPRanges: ''
       labels:
         app: prometheus
     podMonitorSelectorNilUsesHelmValues: false
@@ -225,15 +93,13 @@ prometheus:
             requests:
               storage: 50Gi
           storageClassName: null
-    #PEPR? (begin)
-    #volumeMounts:
-    #  - mountPath: /etc/prom-certs/
-    #    name: istio-certs
-    #volumes:
-    #  - emptyDir:
-    #      medium: Memory
-    #    name: istio-certs
-    #PEPR? (end)
+    volumeMounts:
+     - mountPath: /etc/prom-certs/
+       name: istio-certs
+    volumes:
+     - emptyDir:
+         medium: Memory
+       name: istio-certs
 prometheus-node-exporter:
   containerSecurityContext:
     capabilities:
@@ -242,29 +108,14 @@ prometheus-node-exporter:
     readOnlyRootFilesystem: true
   hostNetwork: false
   hostPID: false
-  image:
-    #upstream
-    registry: quay.io
-    repository: prometheus/node-exporter
-    tag: ''
+  #image:
     #IB
     #registry: registry1.dso.mil
     #repository: ironbank/opensource/prometheus/node-exporter
     #tag: v1.6.1
   podAnnotations:
-    #PEPR?
-    bigbang.dev/istioVersion: 1.19.0-enterprise
     cluster-autoscaler.kubernetes.io/safe-to-evict: 'true'
   prometheus:
-    #PEPR? (begin)
-    #monitor:
-    #  scheme: https
-    #  tlsConfig:
-    #    caFile: /etc/prom-certs/root-cert.pem
-    #    certFile: /etc/prom-certs/cert-chain.pem
-    #    insecureSkipVerify: true
-    #    keyFile: /etc/prom-certs/key.pem
-    #PEPR? (end)
   resources:
     limits:
       cpu: 500m
@@ -278,30 +129,6 @@ prometheus-node-exporter:
     attachMetadata: {}
 prometheusOperator:
   admissionWebhooks:
-    #NEEDED? (begin)
-    #cleanupProxy:
-    #  affinity: {}
-    #  annotations: {}
-    #  image:
-    #    repository: registry1.dso.mil/ironbank/big-bang/base
-    #    tag: 2.0.0
-    #  resources:
-    #    limits:
-    #      cpu: 100m
-    #      memory: 128Mi
-    #    requests:
-    #      cpu: 50m
-    #      memory: 128Mi
-    #  securityContext:
-    #    runAsGroup: 2000
-    #    runAsNonRoot: true
-    #    runAsUser: 2000
-    #    seccompProfile:
-    #      type: RuntimeDefault
-    #NEEDED? (end)
-    # if not done, sidecar fails to terminate when job completes
-    annotations:
-        sidecar.istio.io/inject: "false"
     containerSecurityContext:
       capabilities:
         drop:
@@ -311,18 +138,11 @@ prometheusOperator:
         capabilities:
           drop:
             - ALL
-      image:
-        #upstream
-        registry: registry.k8s.io
-        repository: ingress-nginx/kube-webhook-certgen
-        tag: v20221220-controller-v1.5.1-58-g787ea74b6
+      #image:
         #IB
         #registry: registry1.dso.mil
         #repository: ironbank/opensource/ingress-nginx/kube-webhook-certgen
         #tag: v1.3.0
-      # if not done, sidecar fails to terminate when job completes
-      podAnnotations:
-        sidecar.istio.io/inject: "false"
       resources:
         limits:
           cpu: 100m
@@ -339,32 +159,13 @@ prometheusOperator:
         #runAsGroup: 65532
         #runAsNonRoot: true
         #runAsUser: 65532
-  #NEEDED?
-  #clusterDomain: cluster.local
-  image:
-    #upstream
-    registry: quay.io
-    repository: prometheus-operator/prometheus-operator
-    tag: ""
+  #image:
     #IB
     #registry: registry1.dso.mil
     #repository: ironbank/opensource/prometheus-operator/prometheus-operator
     #tag: v0.68.0
-  #NEEDED? (begin)
-  #kubectlImage:
-  #  repository: registry1.dso.mil/ironbank/opensource/kubernetes/kubectl
-  #  tag: v1.28.1
-  #NEEDED? (end)
-  podAnnotations:
-    #PEPR?
-    bigbang.dev/istioVersion: 1.19.0-enterprise
   prometheusConfigReloader:
     enableProbe: false
-    image:
-      #upstream
-      registry: quay.io
-      repository: prometheus-operator/prometheus-config-reloader
-      tag: ""
       #IB
       #registry: registry1.dso.mil
       #repository: ironbank/opensource/prometheus-operator/prometheus-config-reloader
@@ -383,36 +184,16 @@ prometheusOperator:
     requests:
       cpu: 100m
       memory: 512Mi
-  thanosImage:
-    #upstream
-    registry: quay.io
-    repository: thanos/thanos
-    tag: v0.32.4
+  #thanosImage:
     #IB
     #registry: registry1.dso.mil
     #repository: ironbank/opensource/thanos/thanos
     #tag: v0.32.3
-#NEEDED? (begin)
-#redis:
-#  enabled: false
-#sso:
-#  enabled: false
-#tempo:
-#  enabled: true
-#NEEDED? (end)
 thanosRuler:
   thanosRulerSpec:
-    image:
-      #upstream
-      registry: quay.io
-      repository: thanos/thanos
-      tag: v0.32.3
+    #image:
       #IB
       #registry: registry1.dso.mil
       #repository: ironbank/opensource/thanos/thanos
       #tag: v0.32.3
-#NEEDED? (begin)
-#vault:
-#  enabled: false
-#  tlsDisable: true
-#NEEDED? (end)
+

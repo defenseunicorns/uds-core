@@ -1,7 +1,10 @@
 tasks:
   - name: run
     actions:
-      - description: Validate...
-        cmd: "echo Replace Me"
-        # wait:
-        #   cluster:
+      - description: Validate grafana is up
+        wait:
+          cluster:
+            kind: Pod
+            name: "app.kubernetes.io/instance=grafana"
+            namespace: grafana
+            condition: Ready

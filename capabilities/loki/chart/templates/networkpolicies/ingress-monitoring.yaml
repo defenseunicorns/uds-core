@@ -6,23 +6,25 @@ metadata:
 spec:
   podSelector:
     matchLabels:
-      {{- include "loki.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/name: loki
   policyTypes:
   - Ingress
   ingress:
   - from:
     - namespaceSelector:
         matchLabels:
-          app.kubernetes.io/name: monitoring
+          kubernetes.io/metadata.name: grafana
       podSelector:
         matchLabels:
           app.kubernetes.io/name: grafana
     - namespaceSelector:
         matchLabels:
-          app.kubernetes.io/name: monitoring
+          kubernetes.io/metadata.name: monitoring
       podSelector:
         matchLabels:
           app.kubernetes.io/name: prometheus
     ports:
+    - port: 8080
+      protocol: TCP
     - port: 3100
       protocol: TCP

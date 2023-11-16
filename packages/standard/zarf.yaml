@@ -8,6 +8,12 @@ metadata:
   # x-release-please-end
 
 components:
+
+  - name: prometheus-operator-crds
+    required: true
+    import:
+      path: ../../capabilities/prometheus-stack
+
   # Istio
   - name: istio-controlplane
     required: true
@@ -48,18 +54,24 @@ components:
     import:
       path: ../../capabilities/neuvector
 
-  - name: uds-neuvector-config
-    required: true
-    import:
-      path: ../../capabilities/neuvector
-
   # Loki
   - name: loki
     required: true
     import:
       path: ../../capabilities/loki
 
-  - name: uds-loki-config
+  # Prometheus      
+  - name: kube-prometheus-stack
     required: true
     import:
-      path: ../../capabilities/loki
+      path: ../../capabilities/prometheus-stack
+
+  - name: promtail
+    required: true
+    import:
+      path: ../../capabilities/promtail
+
+  - name: grafana
+    required: true
+    import:
+      path: ../../capabilities/grafana

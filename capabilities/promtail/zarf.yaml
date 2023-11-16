@@ -1,11 +1,25 @@
 kind: ZarfPackageConfig
 metadata:
-  name: example
-  description: "Example description"
+  name: uds-capability-promtail
+  description: "UDS Promtail Capability"
+  url: "https://grafana.com/docs/loki/latest/"
 
 components:
-  - name: test
-    actions:
-      onCreate:
-        after:
-          - cmd: echo "What can Doug do for you?"
+  - name: promtail
+    required: true
+    description: "Deploy Promtail"
+    charts:
+      - name: promtail
+        url: https://grafana.github.io/helm-charts/
+        version: 6.15.3
+        namespace: promtail
+        gitPath: charts/promtail
+        valuesFiles:
+          - values/values.yaml
+      - name: uds-promtail-config
+        namespace: promtail
+        version: 0.1.0
+        localPath: chart
+    images:
+      - docker.io/jimmidyson/configmap-reload:v0.8.0
+      - docker.io/grafana/promtail:2.9.2

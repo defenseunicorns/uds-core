@@ -20,7 +20,7 @@ components:
         namespace: neuvector
         gitPath: charts/core
         valuesFiles:
-          - values/neuvector-minimal-values.yaml
+          - values/values.yaml
       - name: monitor
         url: https://neuvector.github.io/neuvector-helm/
         version: 2.6.4
@@ -28,18 +28,14 @@ components:
         gitPath: charts/monitor
         valuesFiles:
           - values/neuvector-monitor-values.yaml
+      - name: uds-neuvector-config
+        namespace: neuvector
+        version: 0.1.0
+        localPath: chart
     images:
       - docker.io/neuvector/controller:5.2.2-s1
       - docker.io/neuvector/manager:5.2.2-s1
       - docker.io/neuvector/updater:latest
       - docker.io/neuvector/scanner:latest
       - docker.io/neuvector/enforcer:5.2.2-s1
-      - docker.io/istio/proxyv2:1.19.0
       - docker.io/neuvector/prometheus-exporter:latest
-
-  - name: uds-neuvector-config
-    charts:
-      - name: uds-neuvector-config
-        namespace: neuvector
-        version: 0.1.0
-        localPath: chart

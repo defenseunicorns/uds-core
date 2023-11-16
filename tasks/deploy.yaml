@@ -20,6 +20,7 @@ tasks:
     actions:
       - description: "Deploy the TLS certs for Istio"
         cmd: |
+          set -e
           npm ci
           npx --yes ts-node bundles/tls-certs.ts
 
@@ -28,5 +29,6 @@ tasks:
       - description: "Deploy the requested capability Zarf Package (must set CAPABILITY environment variable)"
         # @todo (jeff): this pepr package versioning is still janky
         cmd: |
+          set -e
           zarf package deploy build/zarf-package-uds-capability-${CAPABILITY}-${UDS_ARCH}.tar.zst --confirm
           zarf package deploy build/zarf-package-pepr-uds-core-${UDS_ARCH}-0.2.0.tar.zst --confirm || true

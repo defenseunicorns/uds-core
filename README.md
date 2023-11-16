@@ -8,7 +8,7 @@ The UDS Core Bundle groups foundational Unicorn Delivery Service applications th
 The core applications are:
 
 - [ ] Authservice
-- [ ] Grafana
+- [x] Grafana
 - [x] Istio
 - [ ] KeyCloak
 - [ ] Kiali
@@ -16,8 +16,8 @@ The core applications are:
 - [x] Loki
 - [x] Metrics Server
 - [x] Neuvector
-- [ ] Prometheus
-- [ ] Promtail
+- [x] Prometheus
+- [x] Promtail
 - [ ] Tempo
 - [ ] Velero
 

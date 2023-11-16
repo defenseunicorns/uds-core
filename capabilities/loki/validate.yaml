@@ -1,7 +1,17 @@
 tasks:
   - name: run
     actions:
-      - description: Validate...
-        cmd: "echo Replace Me"
-        # wait:
-        #   cluster:
+      - description: Validate loki
+        wait:
+          cluster:
+            kind: Pod
+            name: app.kubernetes.io/name=loki
+            namespace: loki
+            condition: Ready
+      - description: Validate loki-gw
+        wait:
+          cluster:
+            kind: Pod
+            name: app.kubernetes.io/component=gateway
+            namespace: loki
+            condition: Ready
