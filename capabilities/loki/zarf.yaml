@@ -15,7 +15,7 @@ components:
           - ./values/values.yaml
       - name: uds-loki-config
         namespace: loki
-        version: 0.1.0
+        version: 0.2.0
         localPath: chart
     images:
       - docker.io/grafana/loki:2.9.2
