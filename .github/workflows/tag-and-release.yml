@@ -49,3 +49,7 @@ jobs:
 
       - name: Publish UDS Example Bundles
         run: uds run -f tasks/publish.yaml bundles
+
+      - name: Save logs
+        if: always()
+        uses: ./.github/actions/save-logs

@@ -26,7 +26,8 @@ permissions:
 
 jobs:
   test:
-    runs-on: "${{ inputs.package == 'all' && 'uds-ubuntu-big-boy-4-core' || 'ubuntu-latest'}}"
+    runs-on: "${{ inputs.package == 'all' && 'uds-ubuntu-big-boy-8-core' || 'ubuntu-latest'}}"
+    timeout-minutes: 30
     name: Test
     env:
       UDS_PKG: ${{ inputs.package }}
@@ -45,3 +46,7 @@ jobs:
       - name: Test UDS Core
         if: ${{ inputs.package == 'all' }}
         run: uds run -f tasks/test.yaml uds-core
+
+      - name: Save logs
+        if: always()
+        uses: ./.github/actions/save-logs

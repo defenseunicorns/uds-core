@@ -1,3 +1,4 @@
+{{- if .Values.scalable }}
 apiVersion: "security.istio.io/v1beta1"
 kind: PeerAuthentication
 metadata:
@@ -8,8 +9,9 @@ spec:
     mode: STRICT
   selector:
     matchLabels:
-      {{- include "loki.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/name: loki
   portLevelMtls:
     # GRPC exception to support Loki internal communication
     "9095":
       mode: PERMISSIVE
+{{- end }}

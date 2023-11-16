@@ -6,17 +6,17 @@ metadata:
 spec:
   podSelector:
     matchLabels:
-      {{- include "loki.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/name: loki
   policyTypes:
   - Ingress
   ingress:
   - from:
     - namespaceSelector:
         matchLabels:
-          app.kubernetes.io/name: promtail
+          kubernetes.io/metadata.name: promtail
       podSelector:
         matchLabels:
           app.kubernetes.io/name: promtail
     ports:
-    - port: 3100
+    - port: 8080
       protocol: TCP

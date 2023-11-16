@@ -5,6 +5,8 @@ fullnameOverride: loki
 # -- Overrides the chart's cluster label
 clusterLabelOverride: null
 loki:
+  commonConfig:
+    replication_factor: 1
   # Should authentication be enabled
   auth_enabled: false
   # -- Additional storage config
@@ -99,5 +101,10 @@ sidecar:
 monitoring:
   enabled: true
   selfMonitoring:
+    enabled: false
     grafanaAgent:
-      installOperator: true
+      installOperator: false
+  lokiCanary:
+    enabled: false
+gateway:
+  enabled: true

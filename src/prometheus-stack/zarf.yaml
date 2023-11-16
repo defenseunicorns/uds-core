@@ -10,10 +10,10 @@ components:
     charts:
       # https://github.com/prometheus-community/helm-charts/tree/main/charts/prometheus-operator-crds
       - name: prometheus-operator-crds
-        namespace: monitoring
+        namespace: uds-crds
         url: https://prometheus-community.github.io/helm-charts
         #version: 5.1.0 (old version - for testing upgrade)
-        version: 6.0.0
+        version: 7.0.0
         valuesFiles:
           - "values/crd-values.yaml"
 
@@ -25,17 +25,17 @@ components:
         namespace: monitoring
         url: https://prometheus-community.github.io/helm-charts
         #version: 50.3.1 (old version - for testing upgrade)
-        version: 51.10.0
+        version: 54.0.1
         valuesFiles:
           - "values/values.yaml"
     images:
       #upstream images
       - "quay.io/prometheus/node-exporter:v1.6.1"
-      - "quay.io/prometheus-operator/prometheus-operator:v0.68.0"
-      - "registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.10.0"
+      - "quay.io/prometheus-operator/prometheus-operator:v0.69.1"
+      - "registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.10.1"
       - "quay.io/prometheus/alertmanager:v0.26.0"
-      - "quay.io/prometheus-operator/prometheus-config-reloader:v0.68.0"
-      - "quay.io/prometheus/prometheus:v2.47.1"
+      - "quay.io/prometheus-operator/prometheus-config-reloader:v0.69.1"
+      - "quay.io/prometheus/prometheus:v2.47.2"
       - "registry.k8s.io/ingress-nginx/kube-webhook-certgen:v20221220-controller-v1.5.1-58-g787ea74b6"
       #IB images
       #- "registry1.dso.mil/ironbank/opensource/prometheus/node-exporter:v1.6.1"

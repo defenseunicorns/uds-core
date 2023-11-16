@@ -4,10 +4,15 @@ metadata:
   description: "UDS Core"
   authors: "Defense Unicorns - Product"
   # x-release-please-start-version
-  version: "0.2.0"
+  version: "0.4.0"
   # x-release-please-end
 
 components:
+  - name: prometheus-operator-crds
+    required: true
+    import:
+      path: ../../src/prometheus-stack
+
   # Istio
   - name: istio-controlplane
     required: true
@@ -48,18 +53,24 @@ components:
     import:
       path: ../../src/neuvector
 
-  - name: uds-neuvector-config
-    required: true
-    import:
-      path: ../../src/neuvector
-
   # Loki
   - name: loki
     required: true
     import:
       path: ../../src/loki
 
-  - name: uds-loki-config
+  # Prometheus
+  - name: kube-prometheus-stack
     required: true
     import:
-      path: ../../src/loki
+      path: ../../src/prometheus-stack
+
+  - name: promtail
+    required: true
+    import:
+      path: ../../src/promtail
+
+  - name: grafana
+    required: true
+    import:
+      path: ../../src/grafana

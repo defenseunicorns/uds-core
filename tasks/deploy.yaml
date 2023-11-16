@@ -2,7 +2,7 @@ variables:
   - name: VERSION
     description: "The version of the packages to deploy"
     # x-release-please-start-version
-    default: "0.2.0"
+    default: "0.4.0"
     # x-release-please-end
 
 tasks:
@@ -20,6 +20,7 @@ tasks:
     actions:
       - description: "Deploy the TLS certs for Istio"
         cmd: |
+          set -e
           npm ci
           npx --yes ts-node bundles/tls-certs.ts
 
@@ -28,5 +29,6 @@ tasks:
         # @todo (jeff): this pepr package versioning is still janky
       - description: "Deploy the requested Zarf Package (must set UDS_PKG environment variable)"
         cmd: |
+          set -e
           zarf package deploy build/zarf-package-uds-core-${UDS_PKG}-${UDS_ARCH}.tar.zst --confirm
           zarf package deploy build/zarf-package-pepr-uds-core-${UDS_ARCH}-0.2.0.tar.zst --confirm || true

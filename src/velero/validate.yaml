@@ -1,7 +1,10 @@
 tasks:
   - name: run
     actions:
-      - description: Validate...
-        cmd: "echo Replace Me"
-        # wait:
-        #   cluster:
+      - description: Validate promail
+        wait:
+          cluster:
+            kind: Pod
+            name: app.kubernetes.io/instance=promtail
+            namespace: promtail
+            condition: Ready
