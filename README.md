@@ -37,10 +37,14 @@ The core applications are:
 
 ### Quickstart
 
-A common need is bootrapping a new UDS Core environment for development or testing. The command below will deploy a local K3d cluster with UDS Core on a Mac M1. See the remaining sections for more details if the different bundles & packages available.
+A common need is bootstrapping a new UDS Core environment for development or testing. The commands below will deploy the latest version of UDS Core. See the remaining sections for more details on the different bundles and packages available.
 
 ```bash
-uds deploy oci://ghcr.io/defenseunicorns/packages/uds/bundles/k3d-core:0.1.3-arm64
+# ARM version
+uds deploy oci://ghcr.io/defenseunicorns/packages/uds/bundles/k3d-core:arm64
+
+# AMD version
+uds deploy oci://ghcr.io/defenseunicorns/packages/uds/bundles/k3d-core:amd64
 ```
 
 The bundle includes the uds.dev certs by default. To use custom certs, you can set the appropriate env variables and run
@@ -69,8 +73,10 @@ Thes bundles are intended for boostrapping common development & testing environm
 
 For complete testing, we test against a UDS Bundle that uses a locally-built Zarf package. Manually testing against the packages found under `/packages` is also possible using the `zarf` command.
 
+#### Create, build, and test the UDS Core Package
+
 ```bash
-uds run -f tasks/test.yaml uds-core
+uds run test-uds-core
 ```
 
 ## Working with an individual package
@@ -80,22 +86,22 @@ The individual packages that make up UDS Core are broken down in `src/`, the com
 #### Create, build, and test a single package (e.g. Neuvector)
 
 ```bash
-UDS_PKG=neuvector uds run -f tasks/test.yaml single-package
+UDS_PKG=neuvector uds run test-single-package
 ```
 
 #### To build a single package (e.g. Neuvector)
 
 ```bash
-UDS_PKG=neuvector uds run -f tasks/create.yaml single-package
+UDS_PKG=neuvector uds run create-single-package
 ```
 
 #### To deploy a single built package (e.g. Neuvector)
 
 ```bash
-UDS_PKG=neuvector uds run -f tasks/deploy.yaml single-package
+UDS_PKG=neuvector uds run deploy-single-package
 ```
 
-#### To test a single package (e.g. Neuvector)
+#### To test a single package already deployed (e.g. Neuvector)
 
 ```bash
 uds run -f src/neuvector/tasks/validate.yaml run

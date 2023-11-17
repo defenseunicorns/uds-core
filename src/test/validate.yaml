@@ -23,13 +23,15 @@ tasks:
         wait:
           network:
             protocol: https
-            address: demo.admin.uds.dev
+            address: demo.admin.uds.dev/status/202
+            code: 202
 
       - description: Verify the tenant app is accessible
         wait:
           network:
             protocol: https
-            address: demo.uds.dev
+            address: demo.uds.dev/status/202
+            code: 202
 
       - description: Remove the test resources
         cmd: "kubectl delete -f 'src/test/app-*.yaml' --wait=false"

@@ -41,11 +41,11 @@ jobs:
 
       - name: Test a single source package
         if: ${{ inputs.package != 'all' }}
-        run: uds run -f tasks/test.yaml single-package
+        run: uds run test-single-package
 
       - name: Test UDS Core
         if: ${{ inputs.package == 'all' }}
-        run: uds run -f tasks/test.yaml uds-core
+        run: uds run test-uds-core
 
       - name: Save logs
         if: always()

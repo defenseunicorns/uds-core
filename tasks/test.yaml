@@ -1,15 +1,15 @@
+includes:
+  - create: ./tasks/create.yaml
+  - setup: ./tasks/setup.yaml
+  - deploy: ./tasks/deploy.yaml
+
 tasks:
   - name: single-package
     description: "Build and test a single package, must set UDS_PKG environment variable"
     actions:
-      - description: "Create the package"
-        cmd: uds run -f tasks/create.yaml single-package --no-progress
-
-      - description: "Create the K3d cluster"
-        cmd: uds run -f tasks/setup.yaml k3d-test-cluster --no-progress
-
-      - description: "Deploy the package"
-        cmd: uds run -f tasks/deploy.yaml single-package --no-progress
+      - task: create:single-package
+      - task: setup:k3d-test-cluster
+      - task: deploy:single-package
 
       - description: "Validate the package"
         cmd: uds run -f src/${UDS_PKG}/validate.yaml run --no-progress
@@ -17,17 +17,10 @@ tasks:
   - name: uds-core
     description: "Build and test UDS Core"
     actions:
-      - description: "Create the UDS Core Standard Zarf Package"
-        cmd: uds run -f tasks/create.yaml standard-package --no-progress
-
-      - description: "Create the UDS Core Istio Only Zarf Package (create only to validate)"
-        cmd: uds run -f tasks/create.yaml istio-package --no-progress
-
-      - description: "Create the UDS Core Standard Bundle"
-        cmd: uds run -f tasks/create.yaml k3d-standard-bundle --no-progress
-
-      - description: "Deploy the UDS Core Standard Bundle"
-        cmd: uds run -f tasks/deploy.yaml k3d-standard-bundle --no-progress
+      - task: create:standard-package
+      - task: create:istio-package
+      - task: create:k3d-standard-bundle
+      - task: deploy:k3d-standard-bundle
 
       - description: "Validated all packages"
         # loop through each src/* package and run the validate.yaml task

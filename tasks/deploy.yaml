@@ -26,9 +26,11 @@ tasks:
 
   - name: single-package
     actions:
-        # @todo (jeff): this pepr package versioning is still janky
+      # @todo (jeff): this pepr package versioning is still janky
       - description: "Deploy the requested Zarf Package (must set UDS_PKG environment variable)"
         cmd: |
           set -e
           zarf package deploy build/zarf-package-uds-core-${UDS_PKG}-${UDS_ARCH}.tar.zst --confirm
-          zarf package deploy build/zarf-package-pepr-uds-core-${UDS_ARCH}-0.2.0.tar.zst --confirm || true
+
+          peprBuild="build/zarf-package-pepr-uds-core-${UDS_ARCH}-0.2.0.tar.zst"
+          [ -f "${peprBuild}" ] && zarf package deploy "${peprBuild}" --confirm || echo "Pepr build not required"
