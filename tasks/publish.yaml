@@ -54,3 +54,10 @@ tasks:
           uds publish bundles/k3d-standard/uds-bundle-k3d-core-arm64-${VERSION}.tar.zst ${TARGET_REPO}/bundles --no-progress
           uds publish bundles/k3d-istio/uds-bundle-k3d-core-istio-amd64-${VERSION}.tar.zst ${TARGET_REPO}/bundles --no-progress
           uds publish bundles/k3d-istio/uds-bundle-k3d-core-istio-arm64-${VERSION}.tar.zst ${TARGET_REPO}/bundles --no-progress
+
+      - description: "Tag the latest bundles"
+        cmd: |
+          set -e
+          pkgPath="ghcr.io/defenseunicorns/packages/uds/bundles/k3d-core"
+          zarf tools registry copy ${pkgPath}:${VERSION}-arm64 ${pkgPath}:arm64
+          zarf tools registry copy ${pkgPath}:${VERSION}-amd64 ${pkgPath}:amd64
