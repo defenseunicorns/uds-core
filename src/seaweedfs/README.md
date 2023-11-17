@@ -29,10 +29,10 @@ aws configure
 S3_ENDPOINT=$(zarf t k get vs -n weed -o jsonpath='{.items[*].spec.hosts[0]}')
 
 # Make bucket
-aws --endpoint-url https://$S3_ENDPOINT:8333 s3 mb s3://newbucket3
+aws --endpoint-url https://$S3_ENDPOINT s3 mb s3://newbucket3
 
 # List buckets (should be none)
-aws --endpoint-url https://$S3_ENDPOINT:8333 s3 ls
+aws --endpoint-url https://$S3_ENDPOINT s3 ls
 
 ...etc
 ```
