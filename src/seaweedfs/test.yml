@@ -1,0 +1,91 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-seaweed
+  labels:
+    zarf.dev/agent: ignore
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: seaweedfs-dynamic-pvc
+  namespace: test-seaweed
+spec:
+  storageClassName: "seaweedfs-storage"
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: write-test-pod-1
+  namespace: test-seaweed
+spec:
+  containers:
+  - name: busybox
+    image: busybox
+    command: ["/bin/sh", "-ec", "while true; do echo 'Write from Pod 1' >> /mnt/data/testfile.txt; sleep 1; done"]
+    volumeMounts:
+    - name: my-volume
+      mountPath: /mnt/data
+  volumes:
+  - name: my-volume
+    persistentVolumeClaim:
+      claimName: seaweedfs-dynamic-pvc
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: write-test-pod-2
+  namespace: test-seaweed
+spec:
+  containers:
+  - name: busybox
+    image: busybox
+    command: ["/bin/sh", "-ec", "while true; do echo 'Write from Pod 2' >> /mnt/data/testfile.txt; sleep 2; done"]
+    volumeMounts:
+    - name: my-volume
+      mountPath: /mnt/data
+  volumes:
+  - name: my-volume
+    persistentVolumeClaim:
+      claimName: seaweedfs-dynamic-pvc
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: read-test-pod-1
+  namespace: test-seaweed
+spec:
+  containers:
+  - name: busybox
+    image: busybox
+    command: ["/bin/sh", "-ec", "while true; do cat /mnt/data/testfile.txt; sleep 5; done"]
+    volumeMounts:
+    - name: my-volume
+      mountPath: /mnt/data
+  volumes:
+  - name: my-volume
+    persistentVolumeClaim:
+      claimName: seaweedfs-dynamic-pvc
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: read-test-pod-2
+  namespace: test-seaweed
+spec:
+  containers:
+  - name: busybox
+    image: busybox
+    command: ["/bin/sh", "-ec", "while true; do cat /mnt/data/testfile.txt; sleep 10; done"]
+    volumeMounts:
+    - name: my-volume
+      mountPath: /mnt/data
+  volumes:
+  - name: my-volume
+    persistentVolumeClaim:
+      claimName: seaweedfs-dynamic-pvc

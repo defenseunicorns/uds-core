@@ -1,0 +1,16 @@
+master:
+  nodeSelector: |
+    kubernetes.io/os: linux
+volume:
+  nodeSelector: |
+    kubernetes.io/os: linux
+filer:
+  nodeSelector: |
+    kubernetes.io/os: linux
+  s3:
+    enabled: false
+s3:
+  enabled: true
+  nodeSelector: |
+    kubernetes.io/os: linux
+  enableAuth: true
