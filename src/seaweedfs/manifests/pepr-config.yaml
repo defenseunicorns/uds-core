@@ -7,3 +7,23 @@ metadata:
     "uds/istio-gateway": "admin"
     "uds/istio-host": "s3"
     "uds/istio-port": "8333"
+# ---
+# apiVersion: v1
+# kind: ConfigMap
+# metadata:
+#   name: seaweedfs-master
+#   namespace: weed
+#   labels:
+#     "uds/istio-gateway": "admin"
+#     "uds/istio-host": "seaweedfs-master"
+#     "uds/istio-port": "9333"
+# ---
+# apiVersion: v1
+# kind: ConfigMap
+# metadata:
+#   name: seaweedfs-filer
+#   namespace: weed
+#   labels:
+#     "uds/istio-gateway": "admin"
+#     "uds/istio-host": "seaweedfs-filer"
+#     "uds/istio-port": "8888"
