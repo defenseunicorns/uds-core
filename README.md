@@ -37,7 +37,7 @@ The core applications are:
 
 ### Quickstart
 
-A common need is bootstrapping a new UDS Core environment for development or testing. The commands below will deploy the latest version of UDS Core. See the remaining sections for more details if the different bundles & packages available.
+A common need is bootstrapping a new UDS Core environment for development or testing. The commands below will deploy the latest version of UDS Core. See the remaining sections for more details on the different bundles and packages available.
 
 ```bash
 # ARM version
