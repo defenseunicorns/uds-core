@@ -1,0 +1,30 @@
+includes:
+  - create: ./tasks/create.yaml
+  - setup: ./tasks/setup.yaml
+  - deploy: ./tasks/deploy.yaml
+  - test: ./tasks/test.yaml
+
+tasks:
+  - name: setup-cluster
+    actions:
+      - task: setup:k3d-test-cluster
+
+  - name: create-single-package
+    actions:
+      - task: create:single-package
+
+  - name: create-standard-package
+    actions:
+      - task: create:standard-package
+
+  - name: deploy-single-package
+    actions:
+      - task: deploy:single-package
+
+  - name: test-single-package
+    actions:
+      - task: test:single-package
+
+  - name: test-uds-core
+    actions:
+      - task: test:uds-core
