@@ -28,7 +28,7 @@ The core applications are:
 | Dependency                                                     | Minimum Version |
 | -------------------------------------------------------------- | --------------- |
 | [Zarf](https://github.com/defenseunicorns/zarf/releases)       | 0.31.1          |
-| [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) | 0.3.0           |
+| [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) | 0.3.1           |
 | [NodeJS](https://nodejs.org/en/download/)                      | LTS or Current  |
 
 <!-- endtable -->
@@ -47,10 +47,20 @@ uds deploy oci://ghcr.io/defenseunicorns/packages/uds/bundles/k3d-core:arm64
 uds deploy oci://ghcr.io/defenseunicorns/packages/uds/bundles/k3d-core:amd64
 ```
 
-The bundle includes the uds.dev certs by default. To use custom certs, you can set the appropriate env variables and run
+The bundle includes the uds.dev certs by default. You can use the bundle variables to override the default values. E.g. 
 
-```bash
-npx ts-node bundles/tls-certs.ts
+```yaml
+# uds-config.yaml
+bundle:
+  deploy:
+    zarf-packages:
+      core:
+        set:
+          # Be sure to pre-base64 encode the certs and keys
+          ADMIN_TLS_CERT: <base64 encoded cert>
+          ADMIN_TLS_KEY: <base64 encoded key>
+          TENANT_TLS_CERT: <base64 encoded cert>
+          TENANT_TLS_KEY: <base64 encoded key>
 ```
 
 ### UDS Core Packages
