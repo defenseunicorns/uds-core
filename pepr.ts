@@ -2,6 +2,7 @@ import { Capability, PeprModule } from "pepr";
 
 import cfg from "./package.json";
 
+import { policies } from "./src/policies";
 import { istio } from "./src/istio/pepr";
 
 /**
@@ -12,6 +13,9 @@ import { istio } from "./src/istio/pepr";
  * UDS_PKG=istio npx pepr build
  */
 const sortedCapabilities: Record<string, Capability[]>[] = [
+  // UDS Core Policies
+  { policies },
+
   // Istio service mesh
   { istio },
 ];
