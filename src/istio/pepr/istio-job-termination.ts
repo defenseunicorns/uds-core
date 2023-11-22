@@ -1,27 +1,21 @@
 import { Exec, KubeConfig } from "@kubernetes/client-node";
-import { Capability, Log, a } from "pepr";
+import { Log, a } from "pepr";
 
-export const IstioJobTermination = new Capability({
-  name: "istio-job-termination",
-  description: "Ensure Istio sidecars are terminated after job completion",
-});
-
-// Use the 'When' function to create a new action
-const { When } = IstioJobTermination;
+import { When } from "./register";
 
 // Keep track of in-progress terminations
 const inProgress: Record<string, boolean> = {};
 
+/**
+ * Watch Pods with the "batch.kubernetes.io/job-name" and "service.istio.io/canonical-name" labels
+ * to terminate the sidecar after the job completes successfully.
+ */
 When(a.Pod)
   .IsUpdated()
   .WithLabel("batch.kubernetes.io/job-name")
   .WithLabel("service.istio.io/canonical-name")
   .Watch(async pod => {
-    if (
-      !pod.metadata?.name ||
-      !pod.metadata.namespace ||
-      !pod.status?.containerStatuses
-    ) {
+    if (!pod.metadata?.name || !pod.metadata.namespace || !pod.status?.containerStatuses) {
       Log.error(pod, `Invalid Pod definition`);
       return;
     }

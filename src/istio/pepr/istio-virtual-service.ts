@@ -1,18 +1,8 @@
-import { Capability, K8s, Log, a, kind } from "pepr";
+import { K8s, Log, a, kind } from "pepr";
 
 import { Gateway } from "./crds/gateway-v1beta1";
-import {
-  PurpleDestination,
-  VirtualService,
-} from "./crds/virtualservice-v1beta1";
-
-export const IstioVirtualService = new Capability({
-  name: "istio-virtual-service",
-  description: "Generate Istio VirtualService resources",
-});
-
-// Use the 'When' function to create a new action
-const { When, Store } = IstioVirtualService;
+import { PurpleDestination, VirtualService } from "./crds/virtualservice-v1beta1";
+import { Store, When } from "./register";
 
 // Define the configuration keys
 enum config {
@@ -40,9 +30,7 @@ When(a.ConfigMap)
     const name = cm.metadata.name.replace(prefix, "");
 
     try {
-      const svc = await K8s(kind.Service)
-        .InNamespace(cm.metadata.namespace)
-        .Get(name);
+      const svc = await K8s(kind.Service).InNamespace(cm.metadata.namespace).Get(name);
 
       svc.metadata = svc.metadata || {};
 
@@ -59,12 +47,7 @@ When(a.ConfigMap)
 When(a.Service).IsCreatedOrUpdated().WithLabel(config.Gateway).Watch(handleSvc);
 
 async function handleSvc(svc: a.Service) {
-  if (
-    !svc.metadata?.labels ||
-    !svc.metadata.name ||
-    !svc.metadata.uid ||
-    !svc.spec?.ports
-  ) {
+  if (!svc.metadata?.labels || !svc.metadata.name || !svc.metadata.uid || !svc.spec?.ports) {
     Log.error(svc, `Invalid service definition`);
     return;
   }
