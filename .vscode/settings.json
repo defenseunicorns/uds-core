@@ -22,5 +22,9 @@
     "https://raw.githubusercontent.com/defenseunicorns/zarf/v0.31.1/zarf.schema.json": [
       "zarf.yaml"
     ]
-  }
+  },
+  "cSpell.words": [
+    "neuvector",
+    "promtail"
+  ]
 }
