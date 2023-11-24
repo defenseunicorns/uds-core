@@ -1,5 +1,7 @@
 import { a } from "pepr";
 
+import { isExempt } from "./exemptions";
+import { restrictHostNamespaces } from "./exemptions/networking";
 import { When } from "./register";
 
 /**
@@ -13,6 +15,10 @@ import { When } from "./register";
 When(a.Pod)
   .IsCreatedOrUpdated()
   .Validate(request => {
+    if (isExempt(request, restrictHostNamespaces)) {
+      return request.Approve();
+    }
+
     const pod = request.Raw.spec!;
 
     // If the pod is using the host network, IPC, or PID namespaces, deny the request.

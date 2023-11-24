@@ -1,5 +1,7 @@
 import { PeprValidateRequest, a } from "pepr";
 
+import { isExempt } from "./exemptions";
+import { restrictHostPathWrite, restrictVolumeType } from "./exemptions/storage";
 import { When } from "./register";
 
 /**
@@ -24,6 +26,10 @@ When(a.Pod)
       "projected",
       "secret",
     ];
+
+    if (isExempt(request, restrictVolumeType)) {
+      return request.Approve();
+    }
 
     // Check all volumes in the pod spec, if any
     for (const volume of volumes(request)) {
@@ -53,6 +59,10 @@ When(a.Pod)
 When(a.Pod)
   .IsCreatedOrUpdated()
   .Validate(request => {
+    if (isExempt(request, restrictHostPathWrite)) {
+      return request.Approve();
+    }
+
     for (const volume of volumes(request)) {
       // If the volume is a hostPath
       if (volume.hostPath) {
