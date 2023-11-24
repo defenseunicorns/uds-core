@@ -1,5 +1,5 @@
 import { ExemptList } from ".";
-import { neuvector } from "./matchers";
+import { neuvector, promtail } from "./matchers";
 
 export const restrictHostPathWrite: ExemptList = [
   /**
@@ -8,6 +8,16 @@ export const restrictHostPathWrite: ExemptList = [
    */
   neuvector.controller,
   neuvector.enforcer,
+
+  /**
+   * Promtail mounts the following hostPaths:
+   * - `/var/log/pods`: to tail pod logs
+   * - `/var/lib/docker/containers`: to tail container logs
+   * - `/run/promtail`: for Promtail's buffering and persistent state
+   * Since logs can have sensitive information, it is better to exclude
+   * Promtail from the policy than add the paths as allowable mounts
+   */
+  promtail.promtail,
 ];
 
 export const restrictVolumeType: ExemptList = [
@@ -28,8 +38,5 @@ export const restrictVolumeType: ExemptList = [
    * Promtail requires HostPath volume types
    * https://github.com/grafana/helm-charts/blob/main/charts/promtail/templates/daemonset.yaml#L120
    */
-  {
-    namespace: "promtail",
-    name: /^promtail-promtail.*/,
-  },
+  promtail.promtail,
 ];

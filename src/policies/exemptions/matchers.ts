@@ -10,3 +10,10 @@ export const neuvector: Record<string, Exempt> = {
     name: /^neuvector-enforcer-pod.*/,
   },
 };
+
+export const promtail: Record<string, Exempt> = {
+  promtail: {
+    namespace: "promtail",
+    name: /^promtail-.*/,
+  },
+};
