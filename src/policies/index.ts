@@ -1,3 +1,5 @@
+import "./security";
 import "./storage";
+import "./networking";
 
-export { policies } from "./register";
+export { policies } from "./common";

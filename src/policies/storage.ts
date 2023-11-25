@@ -1,8 +1,7 @@
-import { PeprValidateRequest, a } from "pepr";
+import { a } from "pepr";
 
-import { isExempt } from "./exemptions";
-import { restrictHostPathWrite, restrictVolumeType } from "./exemptions/storage";
-import { When } from "./register";
+import { When, containers, volumes } from "./common";
+import { exemptHostPathWrite, exemptVolumeType } from "./exemptions/storage";
 
 /**
  * Restrict Volume Types for Pods
@@ -27,7 +26,7 @@ When(a.Pod)
       "secret",
     ];
 
-    if (isExempt(request, restrictVolumeType)) {
+    if (exemptVolumeType(request)) {
       return request.Approve();
     }
 
@@ -59,7 +58,7 @@ When(a.Pod)
 When(a.Pod)
   .IsCreatedOrUpdated()
   .Validate(request => {
-    if (isExempt(request, restrictHostPathWrite)) {
+    if (exemptHostPathWrite(request)) {
       return request.Approve();
     }
 
@@ -82,17 +81,3 @@ When(a.Pod)
     // All volumes are allowed, so approve the request
     return request.Approve();
   });
-
-// Returns all volumes in the pod
-function volumes(request: PeprValidateRequest<a.Pod>) {
-  return request.Raw.spec?.volumes || [];
-}
-
-// Returns all containers in the pod
-function containers(request: PeprValidateRequest<a.Pod>) {
-  return [
-    ...(request.Raw.spec?.containers || []),
-    ...(request.Raw.spec?.initContainers || []),
-    ...(request.Raw.spec?.ephemeralContainers || []),
-  ];
-}

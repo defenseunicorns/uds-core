@@ -1,7 +1,7 @@
-import { ExemptList } from ".";
+import { registerExemptions } from ".";
 import { neuvector, promtail } from "./matchers";
 
-export const restrictHostPathWrite: ExemptList = [
+export const exemptHostPathWrite = registerExemptions([
   /**
    * Neuvector mounts the following hostPaths as writeable:
    * `/var/neuvector`: for Neuvector's buffering and persistent state
@@ -18,15 +18,15 @@ export const restrictHostPathWrite: ExemptList = [
    * Promtail from the policy than add the paths as allowable mounts
    */
   promtail.promtail,
-];
+]);
 
-export const restrictVolumeType: ExemptList = [
+export const exemptVolumeType = registerExemptions([
   /**
    * Neuvector requires HostPath volume types
    * Neuvector mounts the following hostPaths:
    * `/var/neuvector`: (as writable) for Neuvector's buffering and persistent state
    * `/var/run`: communication to docker daemon
-   * `/proc`: monitoring of proccesses for malicious activity
+   * `/proc`: monitoring of processes for malicious activity
    * `/sys/fs/cgroup`: important files the controller wants to monitor for malicious content
    * https://github.com/neuvector/neuvector-helm/blob/master/charts/core/templates/enforcer-daemonset.yaml#L108
    */
@@ -39,4 +39,4 @@ export const restrictVolumeType: ExemptList = [
    * https://github.com/grafana/helm-charts/blob/main/charts/promtail/templates/daemonset.yaml#L120
    */
   promtail.promtail,
-];
+]);

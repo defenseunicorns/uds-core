@@ -1,8 +1,7 @@
 import { a } from "pepr";
 
-import { isExempt } from "./exemptions";
-import { restrictHostNamespaces } from "./exemptions/networking";
-import { When } from "./register";
+import { When, containers } from "./common";
+import { exemptHostNamespaces } from "./exemptions/networking";
 
 /**
  * This policy prevents pods from sharing the host namespaces.
@@ -15,7 +14,7 @@ import { When } from "./register";
 When(a.Pod)
   .IsCreatedOrUpdated()
   .Validate(request => {
-    if (isExempt(request, restrictHostNamespaces)) {
+    if (exemptHostNamespaces(request)) {
       return request.Approve();
     }
 
@@ -26,6 +25,64 @@ When(a.Pod)
       return request.Deny(
         "Sharing the host namespaces is disallowed. The fields spec.hostNetwork, spec.hostIPC, and spec.hostPID must not be set to true.",
       );
+    }
+
+    return request.Approve();
+  });
+
+/**
+ * This policy restricts the use of host ports in Pods.
+ *
+ * Access to host ports can allow potential snooping of network traffic and should be
+ * restricted to a known list. This policy ensures only approved ports
+ * are defined in container's `hostPort` field.
+ */
+When(a.Pod)
+  .IsCreatedOrUpdated()
+  .Validate(request => {
+    // Check all containers in the pod spec, and find the first one that has a host port, if any
+    const hasHostPort = containers(request)
+      .flatMap(c => c.ports || [])
+      .find(p => p.hostPort);
+
+    // If the container has a host port, deny the request
+    if (hasHostPort) {
+      return request.Deny(
+        `Host ports are not allowed. Only exempted resources are allowed to use host ports.`,
+      );
+    }
+
+    return request.Approve();
+  });
+
+/**
+ * This policy restricts the use of external names in services to mitigate the risk of MITM attacks.
+ *
+ * Service external names can be exploited by attackers to redirect traffic to malicious locations.
+ */
+When(a.Service)
+  .IsCreatedOrUpdated()
+  .Validate(request => {
+    if (request.Raw.spec?.type === "ExternalName") {
+      return request.Deny("ExternalName services are not allowed.");
+    }
+
+    return request.Approve();
+  });
+
+/**
+ * This policy prevents the use of NodePort services in Kubernetes.
+ *
+ * NodePort services can pose security risks as they use a host port to receive traffic,
+ * which cannot be controlled by a NetworkPolicy. This policy ensures that Services
+ * do not use the NodePort type for enhanced security.
+ */
+When(a.Service)
+  .IsCreatedOrUpdated()
+  .Validate(request => {
+    // If the service is of type NodePort, deny the request.
+    if (request.Raw.spec?.type === "NodePort") {
+      return request.Deny("Services of type NodePort are not allowed.");
     }
 
     return request.Approve();

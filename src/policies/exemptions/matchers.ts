@@ -1,6 +1,6 @@
-import { Exempt } from ".";
+import { Matcher } from ".";
 
-export const neuvector: Record<string, Exempt> = {
+export const neuvector: Matcher = {
   controller: {
     namespace: "neuvector",
     name: /^neuvector-controller-pod.*/,
@@ -11,7 +11,7 @@ export const neuvector: Record<string, Exempt> = {
   },
 };
 
-export const promtail: Record<string, Exempt> = {
+export const promtail: Matcher = {
   promtail: {
     namespace: "promtail",
     name: /^promtail-.*/,
