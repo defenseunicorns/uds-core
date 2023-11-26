@@ -66,13 +66,13 @@ When(a.Pod)
       // If the volume is a hostPath
       if (volume.hostPath) {
         // Check all mounts in any container for this volume and verify they are readOnly
-        const allMountsReadOnly = containers(request)
+        const hasRWMount = containers(request)
           .flatMap(c => c.volumeMounts || [])
           .filter(mount => mount.name === volume.name)
-          .every(mount => mount.readOnly);
+          .find(mount => !mount.readOnly);
 
         // If any mount is not readOnly, deny the request
-        if (!allMountsReadOnly) {
+        if (hasRWMount) {
           return request.Deny(`hostPath volume '${volume.name}' must be mounted as readOnly.`);
         }
       }
