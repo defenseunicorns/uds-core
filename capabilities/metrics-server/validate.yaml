@@ -1,9 +1,0 @@
-tasks:
-  - name: run
-    actions:
-      - description: Wait for the metrics-server to be ready
-        wait:
-          cluster:
-            kind: Deployment
-            name: metrics-server
-            namespace: metrics-server

@@ -1,7 +1,7 @@
 {
   "name": "uds-core",
   "version": "0.2.0",
-  "description": "A collection of capabilities for the UDS platform",
+  "description": "A collection of capabilities for UDS Core",
   "keywords": [
     "pepr",
     "k8s",
@@ -25,7 +25,7 @@
     "k3d-setup": "k3d cluster delete pepr-dev && k3d cluster create pepr-dev --k3s-arg '--debug@server:0'"
   },
   "dependencies": {
-    "pepr": "0.15.0"
+    "pepr": "0.16.0"
   },
   "devDependencies": {
     "typescript": "5.2.2"

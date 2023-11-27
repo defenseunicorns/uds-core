@@ -1,0 +1,11 @@
+kind: ZarfPackageConfig
+metadata:
+  name: uds-core-keycloak
+  description: "Example description"
+
+components:
+  - name: test
+    actions:
+      onCreate:
+        after:
+          - cmd: echo "What can Doug do for you?"

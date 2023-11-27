@@ -1,0 +1,41 @@
+kind: ZarfPackageConfig
+metadata:
+  name: uds-core-neuvector
+  description: "UDS Core Neuvector"
+  url: https://open-docs.neuvector.com/
+
+components:
+  - name: neuvector
+    description: "Deploy Neuvector"
+    required: true
+    charts:
+      - name: crd
+        url: https://neuvector.github.io/neuvector-helm/
+        version: 2.6.4
+        namespace: neuvector
+        gitPath: charts/crd
+      - name: core
+        url: https://neuvector.github.io/neuvector-helm/
+        version: 2.6.4
+        namespace: neuvector
+        gitPath: charts/core
+        valuesFiles:
+          - values/values.yaml
+      - name: monitor
+        url: https://neuvector.github.io/neuvector-helm/
+        version: 2.6.4
+        namespace: neuvector
+        gitPath: charts/monitor
+        valuesFiles:
+          - values/neuvector-monitor-values.yaml
+      - name: uds-neuvector-config
+        namespace: neuvector
+        version: 0.1.0
+        localPath: chart
+    images:
+      - docker.io/neuvector/controller:5.2.2-s1
+      - docker.io/neuvector/manager:5.2.2-s1
+      - docker.io/neuvector/updater:latest
+      - docker.io/neuvector/scanner:latest
+      - docker.io/neuvector/enforcer:5.2.2-s1
+      - docker.io/neuvector/prometheus-exporter:latest
