@@ -1,6 +1,6 @@
 # NFS Provisioner
 
-The NFS Provisioner provides a simple non-production-ready RWX storage class.
+The NFS Provisioner provides a simple **NOT FOR PRODUCTION** RWX storage class. The deployment is configured with no persistence and designed for dev use only.
 
 ## Building/Deploying
 
@@ -18,4 +18,4 @@ zarf p deploy zarf-package-uds-core-nfs-provisioner-* --confirm
 
 ## Test/Validate
 
-Validate with `uds run -f validate.yaml run` which spins up multiple read/write pods with the same volume and validates they can run. You can view the log output to confirm they are all reading/writing to the same volume.
+Validate with `uds run -f validate.yaml run` which spins up multiple read/write pods with the same volume and validates they can run. You can view the log output to confirm they are all reading/writing on the same volume.
