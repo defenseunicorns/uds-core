@@ -1,0 +1,99 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-nfs
+  labels:
+    zarf.dev/agent: ignore
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nfs-dynamic-pvc
+  namespace: test-nfs
+spec:
+  storageClassName: "nfs"
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: write-test-pod-1
+  namespace: test-nfs
+  labels:
+    app: test-nfs
+spec:
+  containers:
+  - name: busybox
+    image: busybox
+    command: ["/bin/sh", "-ec", "while true; do echo 'Write from Pod 1' >> /mnt/data/testfile.txt; sleep 1; done"]
+    volumeMounts:
+    - name: my-volume
+      mountPath: /mnt/data
+  volumes:
+  - name: my-volume
+    persistentVolumeClaim:
+      claimName: nfs-dynamic-pvc
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: write-test-pod-2
+  namespace: test-nfs
+  labels:
+    app: test-nfs
+spec:
+  containers:
+  - name: busybox
+    image: busybox
+    command: ["/bin/sh", "-ec", "while true; do echo 'Write from Pod 2' >> /mnt/data/testfile.txt; sleep 2; done"]
+    volumeMounts:
+    - name: my-volume
+      mountPath: /mnt/data
+  volumes:
+  - name: my-volume
+    persistentVolumeClaim:
+      claimName: nfs-dynamic-pvc
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: read-test-pod-1
+  namespace: test-nfs
+  labels:
+    app: test-nfs
+spec:
+  containers:
+  - name: busybox
+    image: busybox
+    command: ["/bin/sh", "-ec", "while true; do cat /mnt/data/testfile.txt; sleep 5; done"]
+    volumeMounts:
+    - name: my-volume
+      mountPath: /mnt/data
+  volumes:
+  - name: my-volume
+    persistentVolumeClaim:
+      claimName: nfs-dynamic-pvc
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: read-test-pod-2
+  namespace: test-nfs
+  labels:
+    app: test-nfs
+spec:
+  containers:
+  - name: busybox
+    image: busybox
+    command: ["/bin/sh", "-ec", "while true; do cat /mnt/data/testfile.txt; sleep 10; done"]
+    volumeMounts:
+    - name: my-volume
+      mountPath: /mnt/data
+  volumes:
+  - name: my-volume
+    persistentVolumeClaim:
+      claimName: nfs-dynamic-pvc

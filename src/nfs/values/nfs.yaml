@@ -1,0 +1,5 @@
+storageClass:
+  mountOptions:
+    - vers=4 # Update to NFS v4
+    - retrans=2
+    - timeo=30

@@ -1,0 +1,19 @@
+tasks:
+  - name: run
+    actions:
+      - description: Validate NFS Provisioner
+        wait:
+          cluster:
+            kind: Pod
+            name: app=nfs-server-provisioner
+            namespace: nfs-provisioner
+            condition: Ready
+      - description: Apply test manifest
+        cmd: "kubectl apply -f test.yaml"
+      - description: Validate test pods mount RWX volume
+        wait:
+          cluster:
+            kind: Pod
+            name: app=test-nfs
+            namespace: test-nfs
+            condition: Ready

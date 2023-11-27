@@ -1,0 +1,17 @@
+kind: ZarfPackageConfig
+metadata:
+  name: uds-core-nfs-provisioner
+  description: "UDS Core NFS Provisioner"
+
+components:
+  - name: nfs-provisioner
+    required: true
+    charts:
+      - name: nfs-server-provisioner
+        url: https://kubernetes-sigs.github.io/nfs-ganesha-server-and-external-provisioner/
+        version: 1.8.0
+        namespace: nfs-provisioner
+        valuesFiles:
+          - ./values/nfs.yaml
+    images:
+      - registry.k8s.io/sig-storage/nfs-provisioner:v4.0.8
