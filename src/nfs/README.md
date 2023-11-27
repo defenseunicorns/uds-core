@@ -4,20 +4,15 @@ The NFS Provisioner provides a simple non-production-ready RWX storage class.
 
 ## Building/Deploying
 
-Due to NFS requirements you will need a custom k3s docker image with the nfs tools installed. You can build this locally with:
+Spin up a k3d cluster and zarf init, example:
 ```console
-docker build -t k3s-nfs:0.0.1 .
+zarf p deploy oci://ghcr.io/defenseunicorns/packages/uds-k3d:0.1.12-multi --confirm
+zarf init --confirm
 ```
 
-Then to spin up a k3d cluster:
-```console
-zarf p deploy oci://ghcr.io/defenseunicorns/packages/uds-k3d:0.1.12-multi --set K3D_IMAGE=k3s-nfs:0.0.1 --confirm
-```
-
-To deploy NFS:
+Build and deploy NFS provisioner:
 ```console
 zarf p create --confirm
-zarf init --confirm # If you haven't already init-ed
 zarf p deploy zarf-package-uds-core-nfs-provisioner-* --confirm
 ```
 

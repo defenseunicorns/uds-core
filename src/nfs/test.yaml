@@ -29,7 +29,7 @@ spec:
   containers:
   - name: busybox
     image: busybox
-    command: ["/bin/sh", "-ec", "while true; do echo 'Write from Pod 1' >> /mnt/data/testfile.txt; sleep 1; done"]
+    command: ["/bin/sh", "-ec", "while true; do echo '$(date) Write from Pod 1' >> /mnt/data/testfile.txt; sleep 5; done"]
     volumeMounts:
     - name: my-volume
       mountPath: /mnt/data
@@ -49,7 +49,7 @@ spec:
   containers:
   - name: busybox
     image: busybox
-    command: ["/bin/sh", "-ec", "while true; do echo 'Write from Pod 2' >> /mnt/data/testfile.txt; sleep 2; done"]
+    command: ["/bin/sh", "-ec", "while true; do echo '$(date) Write from Pod 2' >> /mnt/data/testfile.txt; sleep 5; done"]
     volumeMounts:
     - name: my-volume
       mountPath: /mnt/data
@@ -69,7 +69,7 @@ spec:
   containers:
   - name: busybox
     image: busybox
-    command: ["/bin/sh", "-ec", "while true; do cat /mnt/data/testfile.txt; sleep 5; done"]
+    command: ["/bin/sh", "-ec", "tail -f /mnt/data/testfile.txt"]
     volumeMounts:
     - name: my-volume
       mountPath: /mnt/data
@@ -89,7 +89,7 @@ spec:
   containers:
   - name: busybox
     image: busybox
-    command: ["/bin/sh", "-ec", "while true; do cat /mnt/data/testfile.txt; sleep 10; done"]
+    command: ["/bin/sh", "-ec", "tail -f /mnt/data/testfile.txt"]
     volumeMounts:
     - name: my-volume
       mountPath: /mnt/data
