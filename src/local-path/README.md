@@ -29,5 +29,3 @@ By mounting the same hostpath to all nodes, at the location that the local-path-
 mkdir -p /tmp/k3d # This will be our hostpath for the storage location
 k3d cluster create -v "$(pwd)/local-path-provisioner.yaml:/var/lib/rancher/k3s/server/manifests/local-path-provisioner.yaml@server:*" --k3s-arg "--disable=local-storage@server:*" -v "/tmp/k3d:/var/lib/rancher/k3s/storage@all" --agents 2
 ```
-
-Timing can get a little clunky with this, but it does work to support multi-node.
