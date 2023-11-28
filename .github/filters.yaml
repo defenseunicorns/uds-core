@@ -18,8 +18,6 @@ keycloak:
   - "src/keycloak/**"
 kiali:
   - "src/kiali/**"
-kyverno:
-  - "src/kyverno/**"
 loki:
   - "src/loki/**"
 metrics-server:
