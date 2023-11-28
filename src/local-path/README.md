@@ -16,6 +16,8 @@ Note that the only change in the custom manifest was the modification of `config
     }
 ```
 
+The base manifest is pulled from https://github.com/k3s-io/k3s/blob/master/manifests/local-storage.yaml
+
 ## Test/Validate
 
 Validate with `uds run -f validate.yaml run` which spins up multiple read/write pods with the same volume and validates they can run. You can view the log output to confirm they are all reading/writing on the same volume.
