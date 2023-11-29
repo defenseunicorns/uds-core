@@ -2,6 +2,7 @@ import { a } from "pepr";
 
 import { When, containers } from "./common";
 import { exemptDropAllCapabilities, exemptSELinuxTypes } from "./exemptions/security";
+import { V1SecurityContext } from "@kubernetes/client-node";
 
 /**
  * This policy ensures that Pods do not allow privilege escalation.
@@ -42,17 +43,36 @@ When(a.Pod)
  */
 When(a.Pod)
   .IsCreatedOrUpdated()
+  .Mutate(request => {
+    const pod = request.Raw.spec!;
+
+    // Ensure the securityContext field is defined
+    pod.securityContext = pod.securityContext || {};
+
+    // Set the runAsNonRoot field to true if it is undefined
+    if (pod.securityContext.runAsNonRoot === undefined) {
+      pod.securityContext.runAsNonRoot = true;
+    }
+  })
   .Validate(request => {
+    // Check if running as root by checking if runAsNonRoot is false or runAsUser is 0
+    const isRoot = (ctx: Partial<V1SecurityContext>) => {
+      const isRunAsRoot = ctx.runAsNonRoot === false;
+      const isRunAsRootUser = ctx.runAsUser === 0;
+
+      return isRunAsRoot || isRunAsRootUser;
+    };
+
     // Check pod securityContext
     const podCtx = request.Raw.spec?.securityContext || {};
-    if (podCtx.runAsNonRoot || podCtx.runAsUser) {
+    if (isRoot(podCtx)) {
       return request.Deny("Pod level securityContext does not meet the non-root user requirement.");
     }
 
     // Check container securityContext
     const hasRootContainer = containers(request)
       .flatMap(c => c.securityContext || {})
-      .find(ctx => ctx.runAsNonRoot || ctx.runAsUser);
+      .find(isRoot);
 
     if (hasRootContainer) {
       return request.Deny(
