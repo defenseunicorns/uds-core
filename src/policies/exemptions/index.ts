@@ -22,8 +22,6 @@ export type Exempt = {
 
 export type ExemptList = Array<Exempt>;
 
-export type Matcher = Record<string, Exempt>;
-
 /**
  * Register a list of exemptions to be used by the validation action.
  *

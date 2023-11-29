@@ -1,6 +1,6 @@
 import { a } from "pepr";
 
-import { When } from "./register";
+import { When } from "./common";
 
 /**
  * Watch Namespaces for creation or updates and ensure the istio-injection label is set

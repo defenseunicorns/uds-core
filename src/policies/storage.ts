@@ -10,6 +10,8 @@ import { exemptHostPathWrite, exemptVolumeType } from "./exemptions/storage";
  * in Container Storage Interface (CSI) drivers.  In addition, HostPath volumes should not be allowed
  * because host directories could be exploited to access shared data or escalate privileges.  This policy
  * restricts use of volume types to the allowed list.
+ *
+ * @related https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/restrict-volume-types.yaml
  */
 When(a.Pod)
   .IsCreatedOrUpdated()
@@ -54,6 +56,8 @@ When(a.Pod)
  * (see https://blog.aquasec.com/kubernetes-security-pod-escape-log-mounts). This policy checks containers for
  * hostPath volumes and validates they are explicitly mounted in readOnly mode.  It is strongly recommended to
  * pair this policy with another to restrict the path of hostPath volumes to a known list.
+ *
+ * @related https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/restrict-host-path-write.yaml
  */
 When(a.Pod)
   .IsCreatedOrUpdated()

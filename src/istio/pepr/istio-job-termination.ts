@@ -1,7 +1,7 @@
 import { Exec, KubeConfig } from "@kubernetes/client-node";
 import { Log, a } from "pepr";
 
-import { When } from "./register";
+import { When } from "./common";
 
 // Keep track of in-progress terminations
 const inProgress: Record<string, boolean> = {};

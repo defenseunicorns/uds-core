@@ -1,6 +1,7 @@
 import { a } from "pepr";
 
 import { When, containers } from "./common";
+import { exemptDropAllCapabilities, exemptSELinuxTypes } from "./exemptions/security";
 
 /**
  * This policy ensures that Pods do not allow privilege escalation.
@@ -10,6 +11,9 @@ import { When, containers } from "./common";
  *
  * Running containers in privileged mode disables many security mechanisms and grants extensive
  * access to host resources, which can lead to security breaches.
+ *
+ * @related https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/disallow-privilege-escalation.yaml
+ * @related https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/disallow-privileged-containers.yaml
  */
 When(a.Pod)
   .IsCreatedOrUpdated()
@@ -33,6 +37,8 @@ When(a.Pod)
  * Following the least privilege principle, containers should not be run as root. This policy ensures
  * containers either have `runAsNonRoot` set to `true` or `runAsUser` > 0. It applies to security contexts
  * defined at both the Pod level and individual container levels (including initContainers and ephemeralContainers).
+ *
+ * @related https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/require-non-root-user.yaml
  */
 When(a.Pod)
   .IsCreatedOrUpdated()
@@ -63,6 +69,8 @@ When(a.Pod)
  * The default /proc masks are set up to reduce the attack surface. This policy
  * ensures nothing but the specified procMount can be used. By default only "Default"
  * is allowed. Applies to all containers, initContainers, and ephemeralContainers in a Pod.
+ *
+ * @related https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/restrict-proc-mount.yaml
  */
 When(a.Pod)
   .IsCreatedOrUpdated()
@@ -84,6 +92,8 @@ When(a.Pod)
  * The SecComp profile should not be explicitly set to Unconfined. This policy ensures
  * that the `seccompProfile.Type` is undefined or restricted to `RuntimeDefault` or
  * `Localhost`. Applies to Pods and all types of containers within them.
+ *
+ * @related https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/restrict-seccomp.yaml
  */
 When(a.Pod)
   .IsCreatedOrUpdated()
@@ -113,10 +123,16 @@ When(a.Pod)
  * SELinux options can be used to escalate privileges. This policy ensures that the
  * `seLinuxOptions` type field is set to either `container_t`, `container_init_t`, or
  * `container_kvm_t`. Applies to Pods and all types of containers within them.
+ *
+ * @related https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/restrict-selinux-type.yaml
  */
 When(a.Pod)
   .IsCreatedOrUpdated()
   .Validate(request => {
+    if (exemptSELinuxTypes(request)) {
+      return request.Approve();
+    }
+
     const allowedSeLinuxTypes = ["container_t", "container_init_t", "container_kvm_t"];
 
     // Check Pod level security context
@@ -131,6 +147,66 @@ When(a.Pod)
 
     if (hasOtherSELinuxType) {
       return request.Deny(`Unauthorized SELinux type.`);
+    }
+
+    return request.Approve();
+  });
+
+/**
+ * Drop All Capabilities in Pods
+ *
+ * This policy ensures that all containers, initContainers, and ephemeralContainers in a Pod
+ * explicitly specify `drop: ["ALL"]` in their securityContext capabilities. Capabilities permit
+ * privileged actions without giving full root access. Dropping all capabilities and only adding
+ * back those that are required increases the security posture of the Pod.
+ *
+ * @related https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/require-drop-all-capabilities.yaml
+ */
+When(a.Pod)
+  .IsCreatedOrUpdated()
+  .Validate(request => {
+    if (exemptDropAllCapabilities(request)) {
+      return request.Approve();
+    }
+
+    const hasInvalidCapabilities = containers(request)
+      .flatMap(c => c.securityContext?.capabilities?.drop || [])
+      .find(c => c !== "ALL");
+
+    if (hasInvalidCapabilities) {
+      return request.Deny(
+        `Containers must drop all Linux capabilities by setting spec.containers[*].securityContext.capabilities.drop to 'ALL'.`,
+      );
+    }
+
+    return request.Approve();
+  });
+
+/**
+ * Restrict Capabilities in Pods
+ *
+ * This policy ensures that users cannot add additional capabilities beyond the allowed list to a Pod.
+ * The allowed capability in this policy is 'NET_BIND_SERVICE'. The policy checks that the `add` field
+ * in the `capabilities` of the `securityContext` for all containers, initContainers, and ephemeralContainers
+ * contains only the allowed capability. This helps in preventing the escalation of privileges by restricting
+ * the capabilities that can be added to a container.
+ *
+ * @related https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/restrict-capabilities.yaml
+ */
+When(a.Pod)
+  .IsCreatedOrUpdated()
+  .Validate(request => {
+    // Allowed capabilities list
+    const allowedCapabilities = ["NET_BIND_SERVICE"];
+
+    const hasInvalidCapabilities = containers(request)
+      .flatMap(c => c.securityContext?.capabilities?.add || [])
+      .find(c => !allowedCapabilities.includes(c));
+
+    if (hasInvalidCapabilities) {
+      return request.Deny(
+        `Containers must not add capabilities other than the allowed list: ${allowedCapabilities}`,
+      );
     }
 
     return request.Approve();

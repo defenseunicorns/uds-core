@@ -1,8 +1,8 @@
 import { K8s, Log, a, kind } from "pepr";
 
+import { Store, When } from "./common";
 import { Gateway } from "./crds/gateway-v1beta1";
 import { PurpleDestination, VirtualService } from "./crds/virtualservice-v1beta1";
-import { Store, When } from "./register";
 
 // Define the configuration keys
 enum config {
