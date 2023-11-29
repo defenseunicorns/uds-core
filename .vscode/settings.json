@@ -24,7 +24,22 @@
     ]
   },
   "cSpell.words": [
+    "alertmanager",
+    "Authservice",
+    "automount",
+    "controlplane",
+    "crds",
+    "distros",
+    "ironbank",
+    "Kiali",
+    "Kyverno",
+    "MITM",
     "neuvector",
-    "promtail"
+    "opensource",
+    "promtail",
+    "Quickstart",
+    "seccomp",
+    "Sysctls",
+    "Velero"
   ]
 }

@@ -118,17 +118,17 @@ When(a.Pod)
 When(a.Pod)
   .IsCreatedOrUpdated()
   .Validate(request => {
-    const authorizedTyes = ["RuntimeDefault", "Localhost"];
+    const authorizedTypes = ["RuntimeDefault", "Localhost"];
 
     // Check Pod level security context
     const podProfileType = request.Raw.spec?.securityContext?.seccompProfile?.type || "";
-    if (!authorizedTyes.includes(podProfileType)) {
+    if (!authorizedTypes.includes(podProfileType)) {
       return request.Deny(`The seccomp profile at Pod level is not in the allowed list.`);
     }
 
     const hasOtherSecProfileType = containers(request)
       .flatMap(c => c.securityContext?.seccompProfile)
-      .find(profile => !authorizedTyes.includes(profile?.type || ""));
+      .find(profile => !authorizedTypes.includes(profile?.type || ""));
 
     if (hasOtherSecProfileType) {
       return request.Deny(`Unauthorized seccomp profile type.`);
