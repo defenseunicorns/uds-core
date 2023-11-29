@@ -34,8 +34,12 @@ export const exemptVolumeType = registerExemptions([
   neuvector.enforcer,
 
   /**
-   * NEEDS FURTHER JUSTIFICATION
-   * Promtail requires HostPath volume types
+   * Promtail mounts the following hostPaths:
+   * - `/var/log/pods`: to tail pod logs
+   * - `/var/lib/docker/containers`: to tail container logs
+   * - `/run/promtail`: for Promtail's buffering and persistent state
+   * Since logs can have sensitive information, it is better to exclude
+   * Promtail from the policy than add the paths as allowable mounts
    * https://github.com/grafana/helm-charts/blob/main/charts/promtail/templates/daemonset.yaml#L120
    */
   promtail.promtail,
