@@ -1,8 +1,8 @@
 import { a } from "pepr";
 
-import { When, containers } from "./common";
-import { exemptDropAllCapabilities, exemptSELinuxTypes } from "./exemptions/security";
 import { V1SecurityContext } from "@kubernetes/client-node";
+import { When, securityContextContainers, securityContextMessage } from "./common";
+import { exemptDropAllCapabilities, exemptSELinuxTypes } from "./exemptions/security";
 
 /**
  * This policy ensures that Pods do not allow privilege escalation.
@@ -19,13 +19,17 @@ import { V1SecurityContext } from "@kubernetes/client-node";
 When(a.Pod)
   .IsCreatedOrUpdated()
   .Validate(request => {
-    const hasPrivilegedContainer = containers(request)
-      .flatMap(c => c.securityContext || {})
-      .find(ctx => ctx.allowPrivilegeEscalation || ctx.privileged);
+    const violations = securityContextContainers(request).filter(
+      c => c.ctx.allowPrivilegeEscalation || c.ctx.privileged,
+    );
 
-    if (hasPrivilegedContainer) {
+    if (violations.length) {
       return request.Deny(
-        "Privilege escalation is disallowed. The allowPrivilegeEscalation and privileged fields must be undefined or set to `false`.",
+        securityContextMessage(
+          "Privilege escalation is disallowed",
+          ["allowPrivilegeEscalation = false", "privileged = false"],
+          violations,
+        ),
       );
     }
 
@@ -70,13 +74,15 @@ When(a.Pod)
     }
 
     // Check container securityContext
-    const hasRootContainer = containers(request)
-      .flatMap(c => c.securityContext || {})
-      .find(isRoot);
+    const violations = securityContextContainers(request).filter(c => isRoot(c.ctx));
 
-    if (hasRootContainer) {
+    if (violations.length) {
       return request.Deny(
-        `Root user is not allowed. One or more containers in the Pod have a securityContext that does not meet the non-root user requirement.`,
+        securityContextMessage(
+          "Unauthorized container securityContext. Containers must not run as root.",
+          ["runAsNonRoot = false", "runAsUser > 0"],
+          violations,
+        ),
       );
     }
 
@@ -95,12 +101,16 @@ When(a.Pod)
 When(a.Pod)
   .IsCreatedOrUpdated()
   .Validate(request => {
-    const hasOtherProcMount = containers(request)
-      .flatMap(c => c.securityContext || {})
-      .find(ctx => ctx.procMount !== "Default");
+    const authorized = [undefined, "Default"];
 
-    if (hasOtherProcMount) {
-      return request.Deny(`Changing the proc mount from the default is not allowed.`);
+    const violations = securityContextContainers(request).filter(
+      c => !authorized.includes(c.ctx.procMount),
+    );
+
+    if (violations.length) {
+      return request.Deny(
+        securityContextMessage("Unauthorized procMount type", authorized, violations),
+      );
     }
 
     return request.Approve();
@@ -118,20 +128,28 @@ When(a.Pod)
 When(a.Pod)
   .IsCreatedOrUpdated()
   .Validate(request => {
-    const authorizedTypes = ["RuntimeDefault", "Localhost"];
+    const authorized = [undefined, "RuntimeDefault", "Localhost"];
 
     // Check Pod level security context
-    const podProfileType = request.Raw.spec?.securityContext?.seccompProfile?.type || "";
-    if (!authorizedTypes.includes(podProfileType)) {
-      return request.Deny(`The seccomp profile at Pod level is not in the allowed list.`);
+    const ctx = request.Raw.spec?.securityContext || {};
+    if (!authorized.includes(ctx.seccompProfile?.type)) {
+      return request.Deny(
+        securityContextMessage("Unauthorized pod seccomp profile type", authorized, [{ ctx }]),
+      );
     }
 
-    const hasOtherSecProfileType = containers(request)
-      .flatMap(c => c.securityContext?.seccompProfile)
-      .find(profile => !authorizedTypes.includes(profile?.type || ""));
+    const violations = securityContextContainers(request).filter(
+      c => !authorized.includes(c.ctx.seccompProfile?.type),
+    );
 
-    if (hasOtherSecProfileType) {
-      return request.Deny(`Unauthorized seccomp profile type.`);
+    if (violations.length) {
+      return request.Deny(
+        securityContextMessage(
+          "Unauthorized container seccomp profile type",
+          authorized,
+          violations,
+        ),
+      );
     }
 
     return request.Approve();
@@ -153,20 +171,22 @@ When(a.Pod)
       return request.Approve();
     }
 
-    const allowedSeLinuxTypes = ["container_t", "container_init_t", "container_kvm_t"];
+    const authorized = [undefined, "container_t", "container_init_t", "container_kvm_t"];
 
     // Check Pod level security context
-    const podSeLinuxType = request.Raw.spec?.securityContext?.seLinuxOptions?.type || "";
-    if (!allowedSeLinuxTypes.includes(podSeLinuxType)) {
-      return request.Deny(`Setting SELinux type at Pod level is restricted to the allowed list.`);
+    const podSeLinuxType = request.Raw.spec?.securityContext?.seLinuxOptions?.type;
+    if (!authorized.includes(podSeLinuxType)) {
+      return request.Deny(`Setting SELinux type at Pod level is restricted to the allowed list`);
     }
 
-    const hasOtherSELinuxType = containers(request)
-      .flatMap(c => c.securityContext?.seLinuxOptions?.type)
-      .find(t => !allowedSeLinuxTypes.includes(t || ""));
+    const violations = securityContextContainers(request).filter(
+      c => !authorized.includes(c.ctx.seLinuxOptions?.type),
+    );
 
-    if (hasOtherSELinuxType) {
-      return request.Deny(`Unauthorized SELinux type.`);
+    if (violations.length) {
+      return request.Deny(
+        securityContextMessage("Unauthorized container SELinux type", authorized, violations),
+      );
     }
 
     return request.Approve();
@@ -189,13 +209,15 @@ When(a.Pod)
       return request.Approve();
     }
 
-    const hasInvalidCapabilities = containers(request)
-      .flatMap(c => c.securityContext?.capabilities?.drop || [])
-      .find(c => c !== "ALL");
+    const authorized = ["ALL"];
 
-    if (hasInvalidCapabilities) {
+    const violations = securityContextContainers(request).filter(c => {
+      return !c.ctx.capabilities?.drop?.includes(authorized[0]);
+    });
+
+    if (violations) {
       return request.Deny(
-        `Containers must drop all Linux capabilities by setting spec.containers[*].securityContext.capabilities.drop to 'ALL'.`,
+        securityContextMessage("Unauthorized container capabilities", authorized, violations),
       );
     }
 
@@ -216,16 +238,15 @@ When(a.Pod)
 When(a.Pod)
   .IsCreatedOrUpdated()
   .Validate(request => {
-    // Allowed capabilities list
-    const allowedCapabilities = ["NET_BIND_SERVICE"];
+    const authorized = ["NET_BIND_SERVICE"];
 
-    const hasInvalidCapabilities = containers(request)
-      .flatMap(c => c.securityContext?.capabilities?.add || [])
-      .find(c => !allowedCapabilities.includes(c));
+    const violations = securityContextContainers(request).filter(
+      c => !c.ctx?.capabilities?.add?.includes(authorized[0]),
+    );
 
-    if (hasInvalidCapabilities) {
+    if (violations) {
       return request.Deny(
-        `Containers must not add capabilities other than the allowed list: ${allowedCapabilities}`,
+        securityContextMessage("Unauthorized container capabilities", authorized, violations),
       );
     }
 

@@ -10,7 +10,7 @@ import { exemptHostNamespaces } from "./exemptions/networking";
  * allow access to shared information and can be used to elevate privileges. Pods should not be allowed
  * access to host namespaces. This policy ensures fields which make use of these host namespaces are
  * set to `false`.
- * 
+ *
  * @related https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/disallow-host-namespaces.yaml
  */
 When(a.Pod)
@@ -38,7 +38,7 @@ When(a.Pod)
  * Access to host ports can allow potential snooping of network traffic and should be
  * restricted to a known list. This policy ensures only approved ports
  * are defined in container's `hostPort` field.
- * 
+ *
  * @related https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/restrict-host-ports.yaml
  */
 When(a.Pod)
@@ -63,7 +63,7 @@ When(a.Pod)
  * This policy restricts the use of external names in services to mitigate the risk of MITM attacks.
  *
  * Service external names can be exploited by attackers to redirect traffic to malicious locations.
- * 
+ *
  * @related https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/restrict-external-names.yaml
  */
 When(a.Service)
@@ -82,7 +82,7 @@ When(a.Service)
  * NodePort services can pose security risks as they use a host port to receive traffic,
  * which cannot be controlled by a NetworkPolicy. This policy ensures that Services
  * do not use the NodePort type for enhanced security.
- * 
+ *
  * @related https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/disallow-nodeport-services.yaml
  */
 When(a.Service)

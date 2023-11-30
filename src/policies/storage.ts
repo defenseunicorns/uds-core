@@ -39,7 +39,9 @@ When(a.Pod)
 
       // If the volume type is not in the allowed list, deny the request
       if (!allowedVolumeTypes.includes(volumeType)) {
-        return request.Deny(`Volume ${volume.name} has a disallowed volume type of '${volumeType}'.`);
+        return request.Deny(
+          `Volume ${volume.name} has a disallowed volume type of '${volumeType}'.`,
+        );
       }
     }
 

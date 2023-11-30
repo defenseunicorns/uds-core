@@ -1,4 +1,10 @@
+import { V1SecurityContext } from "@kubernetes/client-node";
 import { Capability, PeprValidateRequest, a } from "pepr";
+
+export type Ctx = {
+  name?: string;
+  ctx: V1SecurityContext;
+};
 
 export const policies = new Capability({
   name: "uds-core-policies",
@@ -20,4 +26,31 @@ export function containers(request: PeprValidateRequest<a.Pod>) {
     ...(request.Raw.spec?.initContainers || []),
     ...(request.Raw.spec?.ephemeralContainers || []),
   ];
+}
+
+/**
+ * Returns all containers in the pod that have a securityContext
+ *
+ * @param request
+ * @returns Map of container name to securityContext
+ */
+export function securityContextContainers(request: PeprValidateRequest<a.Pod>) {
+  return containers(request)
+    .filter(c => c.securityContext)
+    .map(
+      c =>
+        ({
+          name: c.name,
+          ctx: c.securityContext!,
+        }) as Ctx,
+    );
+}
+
+export function securityContextMessage(
+  msg: string,
+  authorized: (string | undefined)[],
+  ctx: Ctx[],
+) {
+  const violations = ctx.map(c => JSON.stringify(c)).join(" | ");
+  return `${msg}. Authorized: [${authorized}] Found: ${violations}`;
 }
