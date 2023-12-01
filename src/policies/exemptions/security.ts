@@ -1,5 +1,5 @@
 import { registerExemptions } from ".";
-import { neuvector, promtail } from "./matchers";
+import { neuvector, monitoring } from "./matchers";
 
 export const exemptPrivileged = registerExemptions([neuvector.enforcer, neuvector.controller]);
 
@@ -11,5 +11,5 @@ export const exemptDropAllCapabilities = registerExemptions([
 
 export const exemptSELinuxTypes = registerExemptions([
   // Promtail needs selinux option type spc_t
-  promtail.promtail,
+  monitoring.promtail,
 ]);

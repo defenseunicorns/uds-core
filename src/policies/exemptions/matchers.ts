@@ -15,9 +15,14 @@ export const neuvector = {
   } as Exempt,
 };
 
-export const promtail = {
+export const monitoring = {
   promtail: {
     namespace: "promtail",
     name: /^promtail-.*/,
+  } as Exempt,
+
+  prometheusStackExporter: {
+    namespace: "monitoring",
+    name: /^prometheus-node-exporter-.*/,
   } as Exempt,
 };

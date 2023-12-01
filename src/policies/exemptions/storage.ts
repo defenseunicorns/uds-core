@@ -1,5 +1,5 @@
 import { registerExemptions } from ".";
-import { neuvector, promtail } from "./matchers";
+import { neuvector, monitoring } from "./matchers";
 
 export const exemptHostPathWrite = registerExemptions([
   /**
@@ -17,7 +17,7 @@ export const exemptHostPathWrite = registerExemptions([
    * Since logs can have sensitive information, it is better to exclude
    * Promtail from the policy than add the paths as allowable mounts
    */
-  promtail.promtail,
+  monitoring.promtail,
 ]);
 
 export const exemptVolumeType = registerExemptions([
@@ -42,5 +42,7 @@ export const exemptVolumeType = registerExemptions([
    * Promtail from the policy than add the paths as allowable mounts
    * https://github.com/grafana/helm-charts/blob/main/charts/promtail/templates/daemonset.yaml#L120
    */
-  promtail.promtail,
+  monitoring.promtail,
+
+  monitoring.prometheusStackExporter,
 ]);
