@@ -56,6 +56,10 @@ When(a.Pod)
 When(a.Pod)
   .IsCreatedOrUpdated()
   .Mutate(request => {
+    if (exemptPrivileged(request)) {
+      return;
+    }
+
     const pod = request.Raw.spec!;
 
     // Ensure the securityContext field is defined
@@ -75,13 +79,12 @@ When(a.Pod)
     if (pod.securityContext.runAsGroup === undefined) {
       pod.securityContext.runAsGroup = 1000;
     }
-
-    // Set the fsGroup field to 1000 if it is undefined
-    if (pod.securityContext.fsGroup === undefined) {
-      pod.securityContext.fsGroup = 1000;
-    }
   })
   .Validate(request => {
+    if (exemptPrivileged(request)) {
+      return request.Approve();
+    }
+
     // Check if running as root by checking if runAsNonRoot is false or runAsUser is 0
     const isRoot = (ctx: Partial<V1SecurityContext>) => {
       const isRunAsRoot = ctx.runAsNonRoot === false;
@@ -228,6 +231,10 @@ When(a.Pod)
 When(a.Pod)
   .IsCreatedOrUpdated()
   .Mutate(request => {
+    if (exemptDropAllCapabilities(request)) {
+      return;
+    }
+
     // Always set drop: ["ALL"] for all containers
     for (const container of containers(request)) {
       container.securityContext = container.securityContext || {};
@@ -248,7 +255,11 @@ When(a.Pod)
 
     if (violations.length) {
       return request.Deny(
-        securityContextMessage("Unauthorized container capabilities", [authorized], violations),
+        securityContextMessage(
+          "Unauthorized container DROP capabilities in securityContext.capabilities.drop",
+          [authorized],
+          violations,
+        ),
       );
     }
 
@@ -277,7 +288,11 @@ When(a.Pod)
 
     if (violations.length) {
       return request.Deny(
-        securityContextMessage("Unauthorized container capabilities", authorized, violations),
+        securityContextMessage(
+          "Unauthorized container capabilities in securityContext.capabilities.add",
+          authorized,
+          violations,
+        ),
       );
     }
 

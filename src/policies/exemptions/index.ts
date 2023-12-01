@@ -1,5 +1,5 @@
 import { KubernetesObject } from "kubernetes-fluent-client";
-import { Log, PeprValidateRequest } from "pepr";
+import { Log, PeprMutateRequest, PeprValidateRequest } from "pepr";
 
 export type Exempt = {
   /**
@@ -35,7 +35,7 @@ export function registerExemptions(exemptList: ExemptList) {
    * @param request The request to check.
    * @returns True if the request is exempt, false otherwise.
    */
-  return <T extends KubernetesObject>(request: PeprValidateRequest<T>) => {
+  return <T extends KubernetesObject>(request: PeprValidateRequest<T> | PeprMutateRequest<T>) => {
     // Loop through the exempt list
     for (const exempt of exemptList) {
       // If the exempt name is specified, check it
@@ -44,7 +44,8 @@ export function registerExemptions(exemptList: ExemptList) {
       }
 
       // If the exempt name is specified, check it
-      if (exempt.name && !request.Raw.metadata?.name?.match(exempt.name)) {
+      const name = request.Raw.metadata?.name || request.Raw.metadata?.generateName;
+      if (exempt.name && !name?.match(exempt.name)) {
         continue;
       }
 
