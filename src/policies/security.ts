@@ -1,8 +1,12 @@
 import { a } from "pepr";
 
 import { V1SecurityContext } from "@kubernetes/client-node";
-import { When, securityContextContainers, securityContextMessage } from "./common";
-import { exemptDropAllCapabilities, exemptSELinuxTypes } from "./exemptions/security";
+import { When, containers, securityContextContainers, securityContextMessage } from "./common";
+import {
+  exemptDropAllCapabilities,
+  exemptPrivileged,
+  exemptSELinuxTypes,
+} from "./exemptions/security";
 
 /**
  * This policy ensures that Pods do not allow privilege escalation.
@@ -19,6 +23,10 @@ import { exemptDropAllCapabilities, exemptSELinuxTypes } from "./exemptions/secu
 When(a.Pod)
   .IsCreatedOrUpdated()
   .Validate(request => {
+    if (exemptPrivileged(request)) {
+      return request.Approve();
+    }
+
     const violations = securityContextContainers(request).filter(
       c => c.ctx.allowPrivilegeEscalation || c.ctx.privileged,
     );
@@ -56,6 +64,21 @@ When(a.Pod)
     // Set the runAsNonRoot field to true if it is undefined
     if (pod.securityContext.runAsNonRoot === undefined) {
       pod.securityContext.runAsNonRoot = true;
+    }
+
+    // Set the runAsUser field to 1000 if it is undefined
+    if (pod.securityContext.runAsUser === undefined) {
+      pod.securityContext.runAsUser = 1000;
+    }
+
+    // Set the runAsGroup field to 1000 if it is undefined
+    if (pod.securityContext.runAsGroup === undefined) {
+      pod.securityContext.runAsGroup = 1000;
+    }
+
+    // Set the fsGroup field to 1000 if it is undefined
+    if (pod.securityContext.fsGroup === undefined) {
+      pod.securityContext.fsGroup = 1000;
     }
   })
   .Validate(request => {
@@ -204,20 +227,28 @@ When(a.Pod)
  */
 When(a.Pod)
   .IsCreatedOrUpdated()
+  .Mutate(request => {
+    // Always set drop: ["ALL"] for all containers
+    for (const container of containers(request)) {
+      container.securityContext = container.securityContext || {};
+      container.securityContext.capabilities = container.securityContext.capabilities || {};
+      container.securityContext.capabilities.drop = ["ALL"];
+    }
+  })
   .Validate(request => {
     if (exemptDropAllCapabilities(request)) {
       return request.Approve();
     }
 
-    const authorized = ["ALL"];
+    const authorized = "ALL";
 
     const violations = securityContextContainers(request).filter(c => {
-      return !c.ctx.capabilities?.drop?.includes(authorized[0]);
+      return !c.ctx.capabilities?.drop?.includes(authorized);
     });
 
-    if (violations) {
+    if (violations.length) {
       return request.Deny(
-        securityContextMessage("Unauthorized container capabilities", authorized, violations),
+        securityContextMessage("Unauthorized container capabilities", [authorized], violations),
       );
     }
 
@@ -241,10 +272,10 @@ When(a.Pod)
     const authorized = ["NET_BIND_SERVICE"];
 
     const violations = securityContextContainers(request).filter(
-      c => !c.ctx?.capabilities?.add?.includes(authorized[0]),
+      c => c.ctx?.capabilities?.add && !c.ctx?.capabilities.add.includes(authorized[0]),
     );
 
-    if (violations) {
+    if (violations.length) {
       return request.Deny(
         securityContextMessage("Unauthorized container capabilities", authorized, violations),
       );

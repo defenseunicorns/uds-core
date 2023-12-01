@@ -1,5 +1,5 @@
 import { V1SecurityContext } from "@kubernetes/client-node";
-import { Capability, PeprValidateRequest, a } from "pepr";
+import { Capability, PeprMutateRequest, PeprValidateRequest, a } from "pepr";
 
 export type Ctx = {
   name?: string;
@@ -20,7 +20,7 @@ export function volumes(request: PeprValidateRequest<a.Pod>) {
 }
 
 // Returns all containers in the pod
-export function containers(request: PeprValidateRequest<a.Pod>) {
+export function containers(request: PeprValidateRequest<a.Pod> | PeprMutateRequest<a.Pod>) {
   return [
     ...(request.Raw.spec?.containers || []),
     ...(request.Raw.spec?.initContainers || []),
