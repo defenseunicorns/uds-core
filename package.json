@@ -18,6 +18,7 @@
     "onError": "audit",
     "alwaysIgnore": {
       "namespaces": [
+        "local-path-storage",
         "uds-dev-stack",
         "zarf"
       ],

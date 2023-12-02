@@ -23,6 +23,11 @@ export const monitoring = {
 
   prometheusStackExporter: {
     namespace: "monitoring",
-    name: /^prometheus-node-exporter-.*/,
+    name: /^kube-prometheus-stack-prometheus-node-exporter-.*/,
+  } as Exempt,
+
+  prometheusOperator: {
+    namespace: "monitoring",
+    name: /^prometheus-kube-prometheus-stack-prometheus-.*/,
   } as Exempt,
 };

@@ -18,6 +18,8 @@ export const exemptHostPathWrite = registerExemptions([
    * Promtail from the policy than add the paths as allowable mounts
    */
   monitoring.promtail,
+
+  monitoring.prometheusOperator,
 ]);
 
 export const exemptVolumeType = registerExemptions([
@@ -45,4 +47,5 @@ export const exemptVolumeType = registerExemptions([
   monitoring.promtail,
 
   monitoring.prometheusStackExporter,
+  monitoring.prometheusOperator,
 ]);
