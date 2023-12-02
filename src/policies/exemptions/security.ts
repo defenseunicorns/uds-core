@@ -1,7 +1,11 @@
 import { registerExemptions } from ".";
 import { neuvector, monitoring } from "./matchers";
 
-export const exemptPrivileged = registerExemptions([neuvector.enforcer, neuvector.controller]);
+export const exemptPrivileged = registerExemptions([
+  neuvector.enforcer,
+  neuvector.controller,
+  monitoring.promtail,
+]);
 
 export const exemptDropAllCapabilities = registerExemptions([
   neuvector.controller,
