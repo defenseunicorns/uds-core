@@ -23,16 +23,21 @@ zarf-packages:
     ref: 0.5.0
     # x-release-please-end
     overrides:
-      variables:
-        - name: ADMIN_TLS_CERT
-          description: "The TLS cert for the admin gateway (must be base64 encoded)"
-          path: istio-admin-gateway/uds-istio-config/tls.cert
-        - name: ADMIN_TLS_KEY
-          description: "The TLS key for the admin gateway (must be base64 encoded)"
-          path: istio-admin-gateway/uds-istio-config/tls.key
-        - name: TENANT_TLS_CERT
-          description: "The TLS cert for the tenant gateway (must be base64 encoded)"
-          path: istio-tenant-gateway/uds-istio-config/tls.cert
-        - name: TENANT_TLS_KEY
-          description: "The TLS key for the tenant gateway (must be base64 encoded)"
-          path: istio-tenant-gateway/uds-istio-config/tls.key
+      istio-admin-gateway:
+        uds-istio-config:
+          variables:
+            - name: ADMIN_TLS_CERT
+              description: "The TLS cert for the admin gateway (must be base64 encoded)"
+              path: tls.cert
+            - name: ADMIN_TLS_KEY
+              description: "The TLS key for the admin gateway (must be base64 encoded)"
+              path: tls.key
+      istio-tenant-gateway:
+        uds-istio-config:
+          variables:
+            - name: TENANT_TLS_CERT
+              description: "The TLS cert for the tenant gateway (must be base64 encoded)"
+              path: tls.cert
+            - name: TENANT_TLS_KEY
+              description: "The TLS key for the tenant gateway (must be base64 encoded)"
+              path: tls.key
