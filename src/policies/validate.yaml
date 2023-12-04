@@ -1,7 +1,4 @@
 tasks:
   - name: run
     actions:
-      - description: Validate...
-        cmd: "echo Replace Me"
-        # wait:
-        #   cluster:
+      - cmd: "npx jest src/policies/**/*.spec.ts"
