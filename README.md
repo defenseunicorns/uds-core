@@ -50,7 +50,7 @@ uds deploy oci://ghcr.io/defenseunicorns/packages/uds/bundles/k3d-core:amd64
 The bundle includes the uds.dev certs by default. You can use the UDS environment variables to override the default values. E.g. 
 
 ```bash
-# Set environment variables with the contents of you certificate and key files
+# Set environment variables with the contents of your certificate and key files
 UDS_ADMIN_TLS_CERT=$(cat admin.crt)
 UDS_ADMIN_TLS_KEY=$(cat admin.key)
 UDS_TENANT_TLS_CERT=$(cat tenant.crt)
