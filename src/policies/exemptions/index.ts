@@ -10,14 +10,6 @@ export type Exempt = {
    * Name of the resource to exempt. Can be a regular expression.
    */
   name?: string | RegExp;
-  // /**
-  //  * List of labels to match on the resource. All labels must match.
-  //  */
-  // allLabels?: Array<[string, string]>;
-  // /**
-  //  * List of labels to match on the resource. At least one label must match.
-  //  */
-  // someLabels?: Array<[string, string]>;
 };
 
 export type ExemptList = Array<Exempt>;
