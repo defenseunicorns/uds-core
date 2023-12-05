@@ -105,7 +105,7 @@ When(a.Pod)
     if (violations.length) {
       return request.Deny(
         securityContextMessage(
-          "Unauthorized container securityContext. Containers must not run as root.",
+          "Unauthorized container securityContext. Containers must not run as root",
           ["runAsNonRoot = false", "runAsUser > 0"],
           violations,
         ),
@@ -202,7 +202,11 @@ When(a.Pod)
     // Check Pod level security context
     const podSeLinuxType = request.Raw.spec?.securityContext?.seLinuxOptions?.type;
     if (!authorized.includes(podSeLinuxType)) {
-      return request.Deny(`Setting SELinux type at Pod level is restricted to the allowed list`);
+      return request.Deny(
+        securityContextMessage("Unauthorized pod SELinux type", authorized, [
+          { ctx: request.Raw.spec?.securityContext as V1SecurityContext },
+        ]),
+      );
     }
 
     const violations = securityContextContainers(request).filter(

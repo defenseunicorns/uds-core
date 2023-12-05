@@ -1,20 +1,9 @@
-import { beforeAll, describe, expect, it } from "@jest/globals";
+import { describe, expect, it } from "@jest/globals";
 import { K8s, kind } from "pepr";
 
-describe("storage policies", () => {
-  beforeAll(async () => {
-    // Ensure the policy-tests namespace exists
-    await K8s(kind.Namespace).Apply({
-      metadata: {
-        name: "policy-tests",
-        labels: {
-          "istio-injection": "disabled",
-          "zarf.dev/agent": "ignore",
-        },
-      },
-    });
-  });
+const failIfReached = () => expect(true).toBe(false);
 
+describe("storage policies", () => {
   it("should restrict volume types to the allowed list", async () => {
     const expected = (e: Error) =>
       expect(e).toMatchObject({
@@ -29,14 +18,14 @@ describe("storage policies", () => {
     return K8s(kind.Pod)
       .Apply({
         metadata: {
-          name: "httpbin",
+          name: "storage-volume-type",
           namespace: "policy-tests",
         },
         spec: {
           containers: [
             {
-              name: "httpbin",
-              image: "kennethreitz/httpbin",
+              name: "test",
+              image: "127.0.0.1/fake",
               volumeMounts: [
                 {
                   name: "host-vol",
@@ -56,6 +45,7 @@ describe("storage policies", () => {
           ],
         },
       })
+      .then(failIfReached)
       .catch(expected);
   });
 
@@ -73,14 +63,14 @@ describe("storage policies", () => {
     return K8s(kind.Pod)
       .Apply({
         metadata: {
-          name: "httpbin",
+          name: "storage-restrict-hostpath",
           namespace: "policy-tests",
         },
         spec: {
           containers: [
             {
-              name: "httpbin",
-              image: "kennethreitz/httpbin",
+              name: "test",
+              image: "127.0.0.1/fake",
               volumeMounts: [
                 {
                   name: "host-vol",
@@ -101,6 +91,7 @@ describe("storage policies", () => {
           ],
         },
       })
+      .then(failIfReached)
       .catch(expected);
   });
 });

@@ -1,20 +1,9 @@
-import { beforeAll, describe, expect, it } from "@jest/globals";
+import { describe, expect, it } from "@jest/globals";
 import { K8s, kind } from "pepr";
 
-describe("storage policies", () => {
-  beforeAll(async () => {
-    // Ensure the policy-tests namespace exists
-    await K8s(kind.Namespace).Apply({
-      metadata: {
-        name: "policy-tests",
-        labels: {
-          "istio-injection": "disabled",
-          "zarf.dev/agent": "ignore",
-        },
-      },
-    });
-  });
+const failIfReached = () => expect(true).toBe(false);
 
+describe("network policies", () => {
   it("should prevent pods from using the host network namespace", async () => {
     const expected = (e: Error) =>
       expect(e).toMatchObject({
@@ -26,16 +15,11 @@ describe("storage policies", () => {
         },
       });
 
-    const metadata = {
-      name: "httpbin",
-      namespace: "policy-tests",
-    };
-
     const spec = {
       containers: [
         {
-          name: "httpbin",
-          image: "kennethreitz/httpbin",
+          name: "test",
+          image: "127.0.0.1/fake",
         },
       ],
     };
@@ -44,32 +28,46 @@ describe("storage policies", () => {
       // Check for hostNetwork
       K8s(kind.Pod)
         .Apply({
-          metadata,
+          metadata: {
+            name: "network-host-network",
+            namespace: "policy-tests",
+          },
           spec: {
             hostNetwork: true,
             ...spec,
           },
         })
+        .then(failIfReached)
         .catch(expected),
+
       // Check for hostIPC
       K8s(kind.Pod)
         .Apply({
-          metadata,
+          metadata: {
+            name: "network-host-ipc",
+            namespace: "policy-tests",
+          },
           spec: {
             hostIPC: true,
             ...spec,
           },
         })
+        .then(failIfReached)
         .catch(expected),
+
       // Check for hostPID
       K8s(kind.Pod)
         .Apply({
-          metadata,
+          metadata: {
+            name: "network-host-pid",
+            namespace: "policy-tests",
+          },
           spec: {
             hostPID: true,
             ...spec,
           },
         })
+        .then(failIfReached)
         .catch(expected),
     ]);
   });
@@ -88,14 +86,14 @@ describe("storage policies", () => {
     return K8s(kind.Pod)
       .Apply({
         metadata: {
-          name: "httpbin",
+          name: "network-host-port",
           namespace: "policy-tests",
         },
         spec: {
           containers: [
             {
-              name: "httpbin",
-              image: "kennethreitz/httpbin",
+              name: "test",
+              image: "127.0.0.1/fake",
               ports: [
                 {
                   containerPort: 80,
@@ -106,6 +104,7 @@ describe("storage policies", () => {
           ],
         },
       })
+      .then(failIfReached)
       .catch(expected);
   });
 });

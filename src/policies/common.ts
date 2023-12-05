@@ -47,7 +47,9 @@ export function securityContextMessage(
   ctx: Ctx[],
 ) {
   const violations = ctx.map(c => JSON.stringify(c)).join(" | ");
-  return `${msg}. Authorized: [${authorized}] Found: ${violations}`;
+  const authMsg = authorized.filter(a => a).join(" | ");
+
+  return `${msg}. Authorized: [${authMsg}] Found: ${violations}`;
 }
 
 /**
