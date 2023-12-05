@@ -1,18 +1,8 @@
-import { Capability, K8s, Log, a, kind } from "pepr";
+import { K8s, Log, a, kind } from "pepr";
 
+import { Store, When } from "./common";
 import { Gateway } from "./crds/gateway-v1beta1";
-import {
-  PurpleDestination,
-  VirtualService,
-} from "./crds/virtualservice-v1beta1";
-
-export const IstioVirtualService = new Capability({
-  name: "istio-virtual-service",
-  description: "Generate Istio VirtualService resources",
-});
-
-// Use the 'When' function to create a new action
-const { When, Store } = IstioVirtualService;
+import { PurpleDestination, VirtualService } from "./crds/virtualservice-v1beta1";
 
 // Define the configuration keys
 enum config {
@@ -30,14 +20,19 @@ When(a.ConfigMap)
   .IsCreatedOrUpdated()
   .WithLabel(config.Gateway)
   .Watch(async cm => {
+    if (!cm.metadata?.name || !cm.metadata.namespace || !cm.metadata.labels) {
+      Log.error(cm, `Invalid ConfigMap definition`);
+      return;
+    }
+
     // Strip "uds-" prefix from the name
     const prefix = new RegExp(`^uds-`);
     const name = cm.metadata.name.replace(prefix, "");
 
     try {
-      const svc = await K8s(kind.Service)
-        .InNamespace(cm.metadata.namespace)
-        .Get(name);
+      const svc = await K8s(kind.Service).InNamespace(cm.metadata.namespace).Get(name);
+
+      svc.metadata = svc.metadata || {};
 
       // use the labels from the ConfigMap
       svc.metadata.labels = cm.metadata.labels;
@@ -52,12 +47,17 @@ When(a.ConfigMap)
 When(a.Service).IsCreatedOrUpdated().WithLabel(config.Gateway).Watch(handleSvc);
 
 async function handleSvc(svc: a.Service) {
+  if (!svc.metadata?.labels || !svc.metadata.name || !svc.metadata.uid || !svc.spec?.ports) {
+    Log.error(svc, `Invalid service definition`);
+    return;
+  }
+
   const logTitle = `VirtualService ${svc.metadata.namespace}/${svc.metadata.name}`;
 
   try {
     // Validate the gateway
-    const gateway = svc.metadata.labels[config.Gateway];
-    if (!validGateway.includes(gateway)) {
+    const gateway = svc.metadata.labels?.[config.Gateway];
+    if (!gateway || !validGateway.includes(gateway)) {
       Log.error(`Invalid gateway: ${gateway}`);
       return;
     }
@@ -72,10 +72,12 @@ async function handleSvc(svc: a.Service) {
     // If the domain is not present, fetch it from the Gateway and store it
     if (!domain) {
       const gw = await K8s(Gateway).InNamespace(gwNamespace).Get(gwName);
-      domain = gw.metadata.labels[config.Domain];
+      domain = gw.metadata?.labels?.[config.Domain] || "";
 
       // Store the domain for the gateway
-      Store.setItem(gwName, domain);
+      if (domain) {
+        Store.setItem(gwName, domain);
+      }
     }
 
     // Get any the host or fallback to a wildcard
@@ -89,7 +91,7 @@ async function handleSvc(svc: a.Service) {
       // Try to parse the port number from the label
       parseInt(svc.metadata.labels[config.Port]) ||
       // Try to parse the port number from a named port
-      svc.spec.ports.find(p => p.name.includes("http"))?.port ||
+      svc.spec.ports.find(p => p.name?.includes("http"))?.port ||
       // Fallback to the first port
       svc.spec.ports[0].port;
 
@@ -99,19 +101,19 @@ async function handleSvc(svc: a.Service) {
       port: { number },
     };
 
-    // Establish the owner ref
-    const ownerReference = {
-      apiVersion: svc.apiVersion,
-      uid: svc.metadata.uid,
-      kind: svc.kind,
-      name: svc.metadata.name,
-    };
-
-    const payload = {
+    const payload: VirtualService = {
       metadata: {
         name: svc.metadata.name,
         namespace: svc.metadata.namespace,
-        ownerReferences: [ownerReference],
+        // Establish the owner ref
+        ownerReferences: [
+          {
+            apiVersion: svc.apiVersion!,
+            kind: svc.kind!,
+            uid: svc.metadata.uid,
+            name: svc.metadata.name,
+          },
+        ],
       },
       spec: {
         hosts,

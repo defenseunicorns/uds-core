@@ -2,6 +2,7 @@ import { Capability, PeprModule } from "pepr";
 
 import cfg from "./package.json";
 
+import { policies } from "./src/policies";
 import { istio } from "./src/istio/pepr";
 
 /**
@@ -11,7 +12,10 @@ import { istio } from "./src/istio/pepr";
  * Example:
  * UDS_PKG=istio npx pepr build
  */
-const sortedCapabilities: Record<string, Capability[]>[] = [
+const sortedCapabilities: Record<string, Capability>[] = [
+  // UDS Core Policies
+  { policies },
+
   // Istio service mesh
   { istio },
 ];
@@ -32,13 +36,13 @@ if (!pkg || pkg === "all") {
   );
 
   // If the UDS_PKG environment variable is set, then only use that source package
-  const activeCapabilities = sortedCapabilities.find(data => data[pkg])?.[pkg];
+  const activeCapability = sortedCapabilities.find(data => data[pkg])?.[pkg];
 
-  if (!activeCapabilities || activeCapabilities.length < 1) {
+  if (!activeCapability) {
     console.error(`Source package ${pkg} not found. Exiting...`);
     process.exit(1);
   }
 
   // Start the Pepr module
-  new PeprModule(cfg, activeCapabilities);
+  new PeprModule(cfg, [activeCapability]);
 }

@@ -11,7 +11,7 @@
     "outDir": "dist",
     "resolveJsonModule": true,
     "rootDir": ".",
-    "strict": false,
+    "strict": true,
     "target": "ES2022",
     "useUnknownInCatchVariables": false
   },
