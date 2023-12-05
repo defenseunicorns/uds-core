@@ -77,9 +77,7 @@ describe("network policies", () => {
       expect(e).toMatchObject({
         ok: false,
         data: {
-          message: expect.stringContaining(
-            "Host ports are not allowed. Only exempted resources are allowed to use host ports.",
-          ),
+          message: expect.stringContaining("Host ports are not allowed."),
         },
       });
 
@@ -100,6 +98,60 @@ describe("network policies", () => {
                   hostPort: 8080,
                 },
               ],
+            },
+          ],
+        },
+      })
+      .then(failIfReached)
+      .catch(expected);
+  });
+
+  it("should prevent ExternalName services", async () => {
+    const expected = (e: Error) =>
+      expect(e).toMatchObject({
+        ok: false,
+        data: {
+          message: expect.stringContaining("ExternalName services are not allowed."),
+        },
+      });
+
+    return K8s(kind.Service)
+      .Apply({
+        metadata: {
+          name: "network-external-name",
+          namespace: "policy-tests",
+        },
+        spec: {
+          type: "ExternalName",
+          externalName: "example.com",
+        },
+      })
+      .then(failIfReached)
+      .catch(expected);
+  });
+
+  it("should prevent NodePort services", async () => {
+    const expected = (e: Error) =>
+      expect(e).toMatchObject({
+        ok: false,
+        data: {
+          message: expect.stringContaining("NodePort services are not allowed."),
+        },
+      });
+
+    return K8s(kind.Service)
+      .Apply({
+        metadata: {
+          name: "network-node-port",
+          namespace: "policy-tests",
+        },
+        spec: {
+          type: "NodePort",
+          ports: [
+            {
+              port: 80,
+              targetPort: 80,
+              nodePort: 30000,
             },
           ],
         },

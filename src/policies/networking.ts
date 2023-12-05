@@ -51,9 +51,7 @@ When(a.Pod)
 
     // If the container has a host port, deny the request
     if (hasHostPort) {
-      return request.Deny(
-        `Host ports are not allowed.`,
-      );
+      return request.Deny(`Host ports are not allowed.`);
     }
 
     return request.Approve();
