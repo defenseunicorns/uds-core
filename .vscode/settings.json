@@ -22,5 +22,24 @@
     "https://raw.githubusercontent.com/defenseunicorns/zarf/v0.31.1/zarf.schema.json": [
       "zarf.yaml"
     ]
-  }
+  },
+  "cSpell.words": [
+    "alertmanager",
+    "Authservice",
+    "automount",
+    "controlplane",
+    "crds",
+    "distros",
+    "ironbank",
+    "Kiali",
+    "Kyverno",
+    "MITM",
+    "neuvector",
+    "opensource",
+    "promtail",
+    "Quickstart",
+    "seccomp",
+    "Sysctls",
+    "Velero"
+  ]
 }

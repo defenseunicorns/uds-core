@@ -1,0 +1,4 @@
+tasks:
+  - name: run
+    actions:
+      - cmd: "npx jest src/policies/**/*.spec.ts"

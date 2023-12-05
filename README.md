@@ -73,7 +73,7 @@ UDS core publishes two packages:
 
 ### UDS Core Bundles
 
-Thes bundles are intended for boostrapping common development & testing environments and should not be used for produciton. They also serve as examples to create custom bundles.
+These bundles are intended for bootstrapping common development & testing environments and should not be used for production. They also serve as examples to create custom bundles.
 
 - [k3d-core](./bundles/k3d-core/README.md): A bundle to create a local k3d cluster with UDS Core installed.
 

@@ -1,14 +1,10 @@
-import { Capability, a } from "pepr";
+import { a } from "pepr";
 
-export const IstioInjection = new Capability({
-  name: "istio-injection",
-  description:
-    "Ensure Istio sidecar injection is explicitly enabled or disabled",
-});
+import { When } from "./common";
 
-// Use the 'When' function to create a new action
-const { When } = IstioInjection;
-
+/**
+ * Watch Namespaces for creation or updates and ensure the istio-injection label is set
+ */
 When(a.Namespace)
   .IsCreatedOrUpdated()
   .Mutate(ns => {

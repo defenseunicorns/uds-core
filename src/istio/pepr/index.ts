@@ -1,5 +1,5 @@
-import { IstioInjection } from "./istio-injection";
-import { IstioJobTermination } from "./istio-job-termination";
-import { IstioVirtualService } from "./istio-virtual-service";
+import "./istio-injection";
+import "./istio-job-termination";
+import "./istio-virtual-service";
 
-export const istio = [IstioInjection, IstioVirtualService, IstioJobTermination];
+export { istio } from "./common";
