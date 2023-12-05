@@ -90,7 +90,7 @@ When(a.Service)
   .Validate(request => {
     // If the service is of type NodePort, deny the request.
     if (request.Raw.spec?.type === "NodePort") {
-      return request.Deny("Services of type NodePort are not allowed.");
+      return request.Deny("NodePort services are not allowed.");
     }
 
     return request.Approve();
