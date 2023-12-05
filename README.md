@@ -28,7 +28,7 @@ The core applications are:
 | Dependency                                                     | Minimum Version |
 | -------------------------------------------------------------- | --------------- |
 | [Zarf](https://github.com/defenseunicorns/zarf/releases)       | 0.31.1          |
-| [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) | 0.3.1           |
+| [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) | 0.4.0           |
 | [NodeJS](https://nodejs.org/en/download/)                      | LTS or Current  |
 
 <!-- endtable -->
@@ -47,20 +47,17 @@ uds deploy oci://ghcr.io/defenseunicorns/packages/uds/bundles/k3d-core:arm64
 uds deploy oci://ghcr.io/defenseunicorns/packages/uds/bundles/k3d-core:amd64
 ```
 
-The bundle includes the uds.dev certs by default. You can use the bundle variables to override the default values. E.g. 
+The bundle includes the uds.dev certs by default. You can use the UDS environment variables to override the default values. E.g. 
 
-```yaml
-# uds-config.yaml
-bundle:
-  deploy:
-    zarf-packages:
-      core:
-        set:
-          # Be sure to pre-base64 encode the certs and keys
-          ADMIN_TLS_CERT: <base64 encoded cert>
-          ADMIN_TLS_KEY: <base64 encoded key>
-          TENANT_TLS_CERT: <base64 encoded cert>
-          TENANT_TLS_KEY: <base64 encoded key>
+```bash
+# Set environment variables with the contents of your certificate and key files
+UDS_ADMIN_TLS_CERT=$(cat admin.crt)
+UDS_ADMIN_TLS_KEY=$(cat admin.key)
+UDS_TENANT_TLS_CERT=$(cat tenant.crt)
+UDS_TENANT_TLS_KEY=$(cat tenant.key)
+
+# AMD version
+uds deploy ocs://ghcr.io/defenseunicorns/package/uds/bundles/k3d-core:amd64
 ```
 
 ### UDS Core Packages
