@@ -15,10 +15,11 @@ When(a.Pod)
   .WithLabel("batch.kubernetes.io/job-name")
   .WithLabel("service.istio.io/canonical-name")
   .Watch(async pod => {
-    if (!pod.metadata?.name || !pod.metadata.namespace || !pod.status?.containerStatuses) {
+    if (!pod.metadata?.name || !pod.metadata.namespace ) {
       Log.error(pod, `Invalid Pod definition`);
       return;
     }
+
 
     const { name, namespace } = pod.metadata;
     const key = `${namespace}/${name}`;
@@ -29,8 +30,12 @@ When(a.Pod)
     }
 
     // Only terminate if the pod is running
-    if (pod.status.phase == "Running") {
+    if (pod.status?.phase == "Running") {
       // Check all container statuses
+      if (!pod.status.containerStatuses) {
+        Log.error(pod, `Invalid container status in Pod`);
+        return;
+      }
       const shouldTerminate = pod.status.containerStatuses
         // Ignore the istio-proxy container
         .filter(c => c.name != "istio-proxy")
