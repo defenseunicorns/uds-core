@@ -28,7 +28,7 @@ The core applications are:
 | Dependency                                                     | Minimum Version |
 | -------------------------------------------------------------- | --------------- |
 | [Zarf](https://github.com/defenseunicorns/zarf/releases)       | 0.31.1          |
-| [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) | 0.4.0           |
+| [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) | 0.4.1           |
 | [NodeJS](https://nodejs.org/en/download/)                      | LTS or Current  |
 
 <!-- endtable -->
@@ -72,9 +72,9 @@ UDS core publishes two packages:
 
 These bundles are intended for bootstrapping common development & testing environments and should not be used for production. They also serve as examples to create custom bundles.
 
-- [k3d-core](./bundles/k3d-core/README.md): A bundle to create a local k3d cluster with UDS Core installed.
+- [k3d-core](./bundles/k3d-standard/README.md): A bundle to create a local k3d cluster with UDS Core installed.
 
-- [k3d-core-istio](./bundles/k3d-core-istio/README.md): A bundle to create a local k3d cluster with only Istio from UDS Core installed.
+- [k3d-core-istio](./bundles/k3d-istio/README.md): A bundle to create a local k3d cluster with only Istio from UDS Core installed.
 
 ## Development: Create, build, and test the UDS Core Package
 
