@@ -55,12 +55,12 @@ bundle:
         set:
           buckets:
             - name: "myfavoritebucket"
-                policy: "public"
-                purge: false
+              policy: "public"
+              purge: false
           users:
             - accessKey: console
-                secretKey: "console-secret"
-                policy: consoleAdmin   
+              secretKey: "console-secret"
+              policy: consoleAdmin
 ```
 
 For more details on how to customize the Minio deployment, please see [Configuring Minio](https://github.com/defenseunicorns/uds-k3d/blob/main/docs/MINIO.md).
