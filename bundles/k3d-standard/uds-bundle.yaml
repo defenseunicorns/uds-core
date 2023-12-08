@@ -10,7 +10,23 @@ zarf-packages:
   - name: uds-k3d-dev
     repository: ghcr.io/defenseunicorns/packages/uds-k3d
     # renovate: datasource=github-tags depName=defenseunicorns/uds-k3d versioning=semver
-    ref: 0.1.12
+    ref: 0.2.1
+    overrides:
+      uds-dev-stack:
+        minio:
+          variables:
+            - name: buckets
+              description: "Set Minio Buckets"
+              path: buckets
+            - name: svcaccts
+              description: "Minio Service Accounts"
+              path: svcaccts
+            - name: users
+              description: "Minio Users"
+              path: users
+            - name: policies
+              description: "Minio policies"
+              path: policies
 
   - name: init
     repository: ghcr.io/defenseunicorns/packages/init
