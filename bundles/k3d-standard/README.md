@@ -63,4 +63,4 @@ bundle:
                 policy: consoleAdmin   
 ```
 
-For more details on how to customize the Minio deployment, please see [Configuring Minio](docs/MINIO.md).
+For more details on how to customize the Minio deployment, please see [Configuring Minio](https://github.com/defenseunicorns/uds-k3d/blob/main/docs/MINIO.md).
