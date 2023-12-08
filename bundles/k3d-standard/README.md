@@ -26,6 +26,8 @@ The k3d uds-dev-stack provides:
 - [K3d](https://k3d.io/) - Containerized K3s Kubernetes Enviroment
 - [Minio](<https://min.io/>) - In-cluster S3 Object Storage (See below for more details)
 - [Local Path Provisioner](<https://github.com/rancher/local-path-provisioner>) - Storage Provider with RWX configured
+- [MetalLB](https://metallb.universe.tf/) - Provides type: LoadBalancer for cluster resources and Istio Gateways
+- [HAProxy](https://www.haproxy.org/) - Utilizes k3d host port mapping to bind ports 80 and 443, facilitating local FQDN-based routing through ACLs to MetalLB load balancer backends for Istio Gateways serving *.uds.dev, keycloak.uds.dev, and *.admin.uds.dev.
 
 ## Prerequisites
 
@@ -34,7 +36,7 @@ The k3d uds-dev-stack provides:
 | Dependency                                                     | Minimum Version |
 | -------------------------------------------------------------- | --------------- |
 | [Zarf](https://github.com/defenseunicorns/zarf/releases)       | 0.31.1          |
-| [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) | 0.4.0           |
+| [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) | 0.4.1           |
 | [NodeJS](https://nodejs.org/en/download/)                      | LTS or Current  |
 
 <!-- endtable -->
