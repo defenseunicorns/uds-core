@@ -34,4 +34,3 @@ tasks:
         for package in src/*; do
           uds run -f ${package}/validate.yaml run --no-progress
         done
-        #uds run -f bundles/k3d-standard/validate.yaml run --no-progress
