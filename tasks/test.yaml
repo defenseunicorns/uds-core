@@ -12,7 +12,7 @@ tasks:
       - task: deploy:single-package
 
       - description: "Validate the package"
-        cmd: uds run -f src/${UDS_PKG}/validate.yaml run --no-progress
+        cmd: uds run -f src/${UDS_PKG}/tasks.yaml validate --no-progress
 
   - name: uds-core
     description: "Build and test UDS Core"
@@ -27,5 +27,5 @@ tasks:
         cmd: |
           set -e        
           for package in src/*; do
-            uds run -f ${package}/validate.yaml run --no-progress
+            uds run -f ${package}/tasks.yaml validate --no-progress
           done

@@ -1,5 +1,5 @@
 tasks:
-  - name: run
+  - name: validate
     actions:
       - description: Validate grafana is up
         wait:
