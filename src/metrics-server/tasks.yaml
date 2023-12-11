@@ -1,5 +1,5 @@
 tasks:
-  - name: run
+  - name: validate
     actions:
       - description: Wait for metrics-server pod(s) to be ready
         wait:
