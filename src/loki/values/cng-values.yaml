@@ -1,0 +1,143 @@
+# -- Overrides the chart's name
+nameOverride: loki
+# -- Overrides the chart's computed fullname
+fullnameOverride: loki
+# -- Overrides the chart's cluster label
+clusterLabelOverride: null
+# kubectlImage:
+#   # -- The Docker registry
+#   registry: cng.dev
+#   # -- Docker image repository
+#   repository: chainguard/kubectl
+#   # -- Overrides the image tag whose default is the chart's appVersion
+#   tag: latest
+
+loki:
+  commonConfig:
+    replication_factor: 1
+  # Should authentication be enabled
+  auth_enabled: false
+  # -- Additional storage config
+  storage_config:
+    boltdb_shipper:
+      active_index_directory: /var/loki/boltdb-shipper-active
+      cache_location: /var/loki/boltdb-shipper-cache
+      cache_ttl: 24h
+    tsdb_shipper:
+      active_index_directory: /var/loki/tsdb-index
+      cache_location: /var/loki/tsdb-cache
+      cache_ttl: 24h
+    hedging:
+      at: "250ms"
+      max_per_second: 20
+      up_to: 3
+  image:
+    registry: cgr.dev
+    repository: chainguard/loki
+    tag: latest
+  podSecurityContext:
+    fsGroup: 10001
+    runAsGroup: 10001
+    runAsNonRoot: true
+    runAsUser: 10001
+  # -- The SecurityContext for Loki containers
+  containerSecurityContext:
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+        - ALL
+    allowPrivilegeEscalation: false
+enterprise:
+  # Enable enterprise features, license must be provided
+  enabled: false
+  # -- Configuration for `tokengen` target
+  tokengen:
+    # -- Additional annotations for the `tokengen` Job
+    annotations:
+      sidecar.istio.io/inject: "false"
+# RBAC configuration
+rbac:
+  # -- If pspEnabled true, a PodSecurityPolicy is created for K8s that use psp.
+  pspEnabled: false
+# -- Section for configuring optional Helm test
+test:
+  enabled: false
+# Configuration for the write pod(s)
+write:
+  resources:
+    limits:
+      cpu: 300m
+      memory: 2Gi
+    requests:
+      cpu: 300m
+      memory: 2Gi
+# Configuration for the read pod(s)
+read:
+  # -- Resource requests and limits for the read
+  resources:
+    limits:
+      cpu: 300m
+      memory: 2Gi
+    requests:
+      cpu: 300m
+      memory: 2Gi
+# Configuration for the single binary node(s)
+singleBinary:
+  # -- Number of replicas for the single binary
+  replicas: 1
+  # -- Resource requests and limits for the single binary
+  resources:
+    limits:
+      cpu: 100m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+  persistence:
+    # -- Enable StatefulSetAutoDeletePVC feature
+    enableStatefulSetAutoDeletePVC: false
+    # -- Enable persistent disk
+    enabled: true
+    # -- Size of persistent disk
+    size: 12Gi
+minio:
+  # -- Enable minio instance support, must have minio-operator installed
+  enabled: false
+sidecar:
+  resources:
+    limits:
+      cpu: 100m
+      memory: 100Mi
+    requests:
+      cpu: 100m
+      memory: 100Mi
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+      - ALL
+    seccompProfile:
+      type: RuntimeDefault
+  rules:
+    # -- Whether or not to create a sidecar to ingest rule from specific ConfigMaps and/or Secrets.
+    enabled: false
+
+monitoring:
+  enabled: true
+  selfMonitoring:
+    enabled: false
+    grafanaAgent:
+      installOperator: false
+  lokiCanary:
+    enabled: false
+gateway:
+  enabled: true
+  image:
+    # -- The Docker registry for the gateway image
+    registry: cgr.dev
+    # -- The gateway image repository
+    repository: chainguard/nginx
+    # -- The gateway image tag
+    tag: latest
+    # -- Overrides the gateway image tag with an image digest
+    digest: null

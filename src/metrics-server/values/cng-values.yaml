@@ -1,0 +1,12 @@
+image:
+  repository: cgr.dev/chainguard/metrics-server
+  tag: latest
+
+readinessProbe:
+  httpGet:
+    path: /readyz
+    port: https
+    scheme: HTTPS
+  initialDelaySeconds: 10
+  periodSeconds: 5
+  failureThreshold: 5

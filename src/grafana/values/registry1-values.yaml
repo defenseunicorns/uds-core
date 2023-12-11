@@ -1,0 +1,46 @@
+service:
+  labels:
+    uds/istio-gateway: admin
+    uds/istio-host: grafana
+    uds/istio-port: "80"
+
+image:
+  # -- The Docker registry
+  registry: registry1.dso.mil
+  # -- Docker image repository
+  repository: ironbank/opensource/grafana/grafana
+  # Overrides the Grafana image tag whose default is the chart appVersion
+  tag: 10.2.2
+  sha: ""
+  pullPolicy: IfNotPresent
+
+initChownData:
+  ## If false, data ownership will not be reset at startup
+  ## This allows the grafana-server to be run with an arbitrary user
+  ##
+  enabled: true
+
+  ## initChownData container image
+  ##
+  image:
+    registry: registry1.dso.mil
+    repository: ironbank/redhat/ubi/ubi9-minimal
+    tag: 9.3
+
+
+downloadDashboardsImage:
+  registry: registry1.dso.mil
+  repository: ironbank/redhat/ubi/ubi9-minimal
+  tag: 9.3
+
+sidecar:
+  image:
+    registry: registry1.dso.mil
+    repository: ironbank/kiwigrid/k8s-sidecar
+    tag: 1.25.2
+  dashboards:
+    enabled: true
+    label: grafana_dashboard
+  datasources:
+    enabled: true
+    label: grafana_datasource

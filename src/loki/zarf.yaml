@@ -6,13 +6,16 @@ metadata:
 components:
   - name: loki
     required: true
+    description: "Install Loki using upstream (docker) images"
+    only:
+      flavor: "upstream"
     charts:
       - name: loki
         url: https://grafana.github.io/helm-charts/
         version: 5.36.3
         namespace: loki
         valuesFiles:
-          - ./values/values.yaml
+          - ./values/upstream-values.yaml
       - name: uds-loki-config
         namespace: loki
         version: 0.2.0
@@ -20,3 +23,43 @@ components:
     images:
       - docker.io/grafana/loki:2.9.2
       - docker.io/nginxinc/nginx-unprivileged:1.24-alpine
+
+  - name: loki
+    required: true
+    description: "Install Loki using Chainguard images"
+    only:
+      flavor: "cng"
+    charts:
+      - name: loki
+        url: https://grafana.github.io/helm-charts/
+        version: 5.36.3
+        namespace: loki
+        valuesFiles:
+          - ./values/cng-values.yaml
+      - name: uds-loki-config
+        namespace: loki
+        version: 0.2.0
+        localPath: chart
+    images:
+      - cgr.dev/chainguard/loki:latest
+      - cgr.dev/chainguard/nginx:latest
+
+  - name: loki
+    required: true
+    description: "Install Loki using Chainguard images"
+    only:
+      flavor: "registry1"
+    charts:
+      - name: loki
+        url: https://grafana.github.io/helm-charts/
+        version: 5.36.3
+        namespace: loki
+        valuesFiles:
+          - ./values/registry1-values.yaml
+      - name: uds-loki-config
+        namespace: loki
+        version: 0.2.0
+        localPath: chart
+    images:
+      - registry1.dso.mil/ironbank/opensource/grafana/loki:2.9.2
+      - registry1.dso.mil/ironbank/opensource/nginx/nginx-alpine:1.25.2

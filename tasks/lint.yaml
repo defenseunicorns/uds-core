@@ -1,0 +1,9 @@
+tasks:
+  - name: run
+    description: "Lint and fix issues in the repo"
+    actions:
+      - description: "Pepr Format"
+        cmd: npx pepr format
+      - description: yaml lint
+        cmd: yamllint . -c .yamllint --no-warnings
+

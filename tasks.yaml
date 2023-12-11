@@ -3,7 +3,7 @@ includes:
   - setup: ./tasks/setup.yaml
   - deploy: ./tasks/deploy.yaml
   - test: ./tasks/test.yaml
-
+  - lint: ./tasks/lint.yaml
 tasks:
   - name: setup-cluster
     actions:
@@ -28,3 +28,7 @@ tasks:
   - name: test-uds-core
     actions:
       - task: test:uds-core
+
+  - name: lint
+    actions:
+      - task: lint:run

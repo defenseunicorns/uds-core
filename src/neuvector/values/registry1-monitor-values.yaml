@@ -1,0 +1,17 @@
+
+
+registry: registry1.dso.mil
+
+leastPrivilege: false
+
+exporter:
+  enabled: true
+  serviceMonitor:
+    enabled: false # true with settings
+  apiSvc: neuvector-svc-controller-api:10443
+  svc:
+    enabled: true
+    type: ClusterIP
+  image:
+    repository: ironbank/neuvector/neuvector/prometheus-exporter
+    tag: 5.1.0

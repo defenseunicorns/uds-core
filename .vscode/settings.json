@@ -19,7 +19,7 @@
       "src/**/validate.yaml"
     ],
     // renovate: datasource=github-tags depName=defenseunicorns/zarf versioning=semver
-    "https://raw.githubusercontent.com/defenseunicorns/zarf/v0.31.1/zarf.schema.json": [
+    "https://raw.githubusercontent.com/defenseunicorns/zarf/v0.31.3/zarf.schema.json": [
       "zarf.yaml"
     ]
   },

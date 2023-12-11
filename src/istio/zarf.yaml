@@ -11,8 +11,10 @@ variables:
 
 components:
   - name: istio-controlplane
-    description: "Install the Istio control plane based on https://istio.io/latest/docs/setup/install/helm/"
+    description: "Install the Istio control plane with upstream (docker) images based on https://istio.io/latest/docs/setup/install/helm/"
     required: true
+    only:
+      flavor: upstream
     charts:
       - name: base
         namespace: istio-system
@@ -23,7 +25,7 @@ components:
         url: https://istio-release.storage.googleapis.com/charts
         version: 1.19.3
         valuesFiles:
-          - "values/values.yaml"
+          - "values/upstream-values.yaml"
     manifests:
       - name: uds-global-istio-config
         namespace: istio-system
@@ -33,6 +35,60 @@ components:
     images:
       - "docker.io/istio/pilot:1.19.3-distroless"
       - "docker.io/istio/proxyv2:1.19.3-distroless"
+
+  - name: istio-controlplane
+    description: "Install the Istio control plane with upstream (docker) images based on https://istio.io/latest/docs/setup/install/helm/"
+    required: true
+    only:
+      flavor: registry1
+    charts:
+      - name: base
+        namespace: istio-system
+        url: https://istio-release.storage.googleapis.com/charts
+        version: 1.19.3
+      - name: istiod
+        namespace: istio-system
+        url: https://istio-release.storage.googleapis.com/charts
+        version: 1.19.3
+        valuesFiles:
+          - "values/registry1-values.yaml"
+    manifests:
+      - name: uds-global-istio-config
+        namespace: istio-system
+        files:
+          - "manifests/envoy-filters.yaml"
+          - "manifests/peer-authentication.yaml"
+    images:
+      # - "registry1.dso.mil/ironbank/opensource/istio/pilot:1.19.3"
+      # - "registry1.dso.mil/ironbank/opensource/istio/proxyv2:1.19.3"
+      - registry1.dso.mil/ironbank/tetrate/istio/proxyv2:1.19.3-tetratefips-v0
+      - registry1.dso.mil/ironbank/tetrate/istio/pilot:1.19.3-tetratefips-v0
+
+  - name: istio-controlplane
+    description: "Install the Istio control plane with upstream (docker) images based on https://istio.io/latest/docs/setup/install/helm/"
+    required: true
+    only:
+      flavor: cng
+    charts:
+      - name: base
+        namespace: istio-system
+        url: https://istio-release.storage.googleapis.com/charts
+        version: 1.19.3
+      - name: istiod
+        namespace: istio-system
+        url: https://istio-release.storage.googleapis.com/charts
+        version: 1.19.3
+        valuesFiles:
+          - "values/cng-values.yaml"
+    manifests:
+      - name: uds-global-istio-config
+        namespace: istio-system
+        files:
+          - "manifests/envoy-filters.yaml"
+          - "manifests/peer-authentication.yaml"
+    images:
+      - "cgr.dev/chainguard/istio-pilot:latest"
+      - "cgr.dev/chainguard/istio-proxy:latest"
 
   - name: istio-admin-gateway
     description: "Deploy an admin gateway"

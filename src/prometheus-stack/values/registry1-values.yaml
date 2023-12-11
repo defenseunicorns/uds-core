@@ -1,0 +1,187 @@
+alertmanager:
+  alertmanagerSpec:
+    image:
+      registry: registry1.dso.mil
+      repository: ironbank/opensource/prometheus/alertmanager
+      tag: v0.26.0
+    resources:
+      limits:
+        cpu: 500m
+        memory: 256Mi
+      requests:
+        cpu: 100m
+        memory: 256Mi
+crds:
+  enabled: false
+grafana:
+  enabled: false
+kube-state-metrics:
+  image:
+    registry: registry1.dso.mil
+    repository: ironbank/opensource/kubernetes/kube-state-metrics
+    tag: v2.10.1
+  resources:
+    limits:
+      cpu: 500m
+      memory: 128Mi
+    requests:
+      cpu: 10m
+      memory: 128Mi
+  securityContext:
+    enabled: true
+    fsGroup: 65532
+    runAsGroup: 65532
+    runAsNonRoot: true
+    runAsUser: 65532
+kubeStateMetrics:
+  serviceMonitor:
+    interval: ""
+    selfMonitor:
+      enabled: false
+nameOverride: kube-prometheus-stack
+nodeExporter:
+  jobLabel: jobLabel
+  operatingSystems:
+    darwin:
+      enabled: false
+    linux:
+      enabled: false
+  serviceMonitor:
+    interval: ""
+prometheus:
+  prometheusSpec:
+    enableFeatures:
+      - remote-write-receiver
+    image: 
+      registry: registry1.dso.mil
+      repository: ironbank/opensource/prometheus/prometheus
+      tag: v2.47.2
+    podMetadata:
+      annotations:
+        proxy.istio.io/config: |
+          proxyMetadata:
+            OUTPUT_CERTS: /etc/istio-output-certs
+        sidecar.istio.io/userVolumeMount: '[{"name": "istio-certs", "mountPath": "/etc/istio-output-certs"}]'
+        traffic.sidecar.istio.io/includeOutboundIPRanges: ""
+      labels:
+        app: prometheus
+    podMonitorSelectorNilUsesHelmValues: false
+    probeSelectorNilUsesHelmValues: false
+    resources:
+      limits:
+        cpu: 300m
+        memory: 2Gi
+      requests:
+        cpu: 100m
+        memory: 2Gi
+    ruleSelectorNilUsesHelmValues: false
+    serviceMonitorSelectorNilUsesHelmValues: false
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 50Gi
+          storageClassName: null
+    volumeMounts:
+      - mountPath: /etc/prom-certs/
+        name: istio-certs
+    volumes:
+      - emptyDir:
+          medium: Memory
+        name: istio-certs
+prometheus-node-exporter:
+  containerSecurityContext:
+    capabilities:
+      drop:
+        - ALL
+    readOnlyRootFilesystem: true
+  hostNetwork: false
+  hostPID: false
+  image:
+    registry: registry1.dso.mil
+    repository: ironbank/opensource/prometheus/node-exporter
+    tag: v1.6.1
+  podAnnotations:
+    cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
+  prometheus:
+  resources:
+    limits:
+      cpu: 500m
+      memory: 128Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+  serviceAccount:
+    name: null
+  serviceMonitor:
+    attachMetadata: {}
+prometheusOperator:
+  admissionWebhooks:
+    containerSecurityContext:
+      capabilities:
+        drop:
+          - ALL
+    patch:
+      enabled: true
+      image:
+        registry: registry1.dso.mil
+        repository: ironbank/opensource/ingress-nginx/kube-webhook-certgen
+        tag: v1.3.0
+      containerSecurityContext:
+        capabilities:
+          drop:
+            - ALL
+      registry: registry1.dso.mil
+      repository: ironbank/opensource/ingress-nginx/kube-webhook-certgen
+      tag: v1.3.0
+      resources:
+        limits:
+          cpu: 100m
+          memory: 128Mi
+        requests:
+          cpu: 50m
+          memory: 128Mi
+      securityContext:
+        runAsGroup: 65532
+        runAsNonRoot: true
+        runAsUser: 65532
+  image:
+    registry: registry1.dso.mil
+    repository: ironbank/opensource/prometheus-operator/prometheus-operator
+    tag: v0.69.1
+  prometheusConfigReloader:
+    enableProbe:
+      false
+    image:
+      registry: registry1.dso.mil
+      repository: ironbank/opensource/prometheus-operator/prometheus-config-reloader
+      tag: v0.69.1
+    resources:
+      limits:
+        cpu: 100m
+        memory: 128Mi
+      requests:
+        cpu: 50m
+        memory: 128Mi
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 512Mi
+  #thanosImage:
+  #IB
+  #registry: registry1.dso.mil
+  #repository: ironbank/opensource/thanos/thanos
+  #tag: v0.32.3
+thanosRuler:
+  thanosRulerSpec:
+    #image:
+    #IB
+    #registry: registry1.dso.mil
+    #repository: ironbank/opensource/thanos/thanos
+    #tag: v0.32.3

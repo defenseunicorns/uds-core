@@ -1,0 +1,166 @@
+config:
+  clients:
+    - url: 'http://loki-gateway.loki.svc.cluster.local:80/loki/api/v1/push'
+  snippets:
+    scrapeConfigs: >
+      - job_name: kubernetes-pods
+        pipeline_stages:
+          - cri: {}
+        kubernetes_sd_configs:
+          - role: pod
+        relabel_configs:
+          - source_labels:
+              - __meta_kubernetes_pod_node_name
+            target_label: __host__
+          - action: labelmap
+            regex: __meta_kubernetes_pod_label_(.+)
+          - action: replace
+            replacement: $1
+            separator: /
+            source_labels:
+              - __meta_kubernetes_namespace
+              - __meta_kubernetes_pod_name
+            target_label: job
+          - action: replace
+            source_labels:
+              - __meta_kubernetes_namespace
+            target_label: namespace
+          - action: replace
+            source_labels:
+              - __meta_kubernetes_pod_name
+            target_label: pod
+          - action: replace
+            source_labels:
+              - __meta_kubernetes_pod_container_name
+            target_label: container
+          - replacement: /var/log/pods/*$1/*.log
+            separator: /
+            source_labels:
+              - __meta_kubernetes_pod_uid
+              - __meta_kubernetes_pod_container_name
+            target_label: __path__
+          - action: replace
+            source_labels:
+            - __meta_kubernetes_pod_node_name
+            target_label: node_name
+          - action: replace
+            source_labels:
+            - __meta_kubernetes_namespace
+            target_label: namespace
+          - action: replace
+            replacement: $1
+            separator: /
+            source_labels:
+            - namespace
+            - app
+            target_label: job
+          - action: replace
+            source_labels:
+            - __meta_kubernetes_pod_name
+            target_label: pod
+          - action: replace
+            source_labels:
+            - __meta_kubernetes_pod_container_name
+            target_label: container
+          - action: replace
+            replacement: /var/log/pods/*$1/*.log
+            separator: /
+            source_labels:
+            - __meta_kubernetes_pod_uid
+            - __meta_kubernetes_pod_container_name
+            target_label: __path__
+      - job_name: systemd-messages
+        static_configs:
+          - targets: [localhost]
+            labels:
+              job: varlogs
+              host: "${NODE_HOSTNAME}"
+              __path__: /var/log/*
+        relabel_configs:
+          - source_labels:
+            - __journal_systemd_unit
+            target_label: systemd_unit
+          - source_labels:
+            - __journal_hostname
+            target_label: nodename
+          - source_labels:
+            - __journal_syslog_identifier
+            target_label: syslog_identifier
+  
+image:
+  registry: cgr.dev
+  repository: chainguard/promtail
+  tag: latest
+sidecar:
+  configReloader:
+    enabled: false
+    image:
+      registry: cgr.dev
+      repository: chainguard/configmap-reload
+      tag: latest
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  privileged: false
+  readOnlyRootFilesystem: true
+  runAsUser: 0
+  seLinuxOptions:
+    type: spc_t
+extraArgs:
+  - '-config.expand-env=true'
+
+extraEnv:
+  - name: NODE_HOSTNAME
+    valueFrom:
+      fieldRef:
+        fieldPath: spec.nodeName
+
+extraVolumes:
+  - hostPath:
+      path: /var/log
+    name: varlog
+  - hostPath:
+      path: /etc
+    name: machine-id
+
+extraVolumeMounts:
+  - mountPath: /var/log
+    name: varlog
+    readOnly: true
+  - mountPath: /etc/machine-id
+    name: machine-id
+    readOnly: true
+    subPath: machine-id
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 750Mi
+  requests:
+    cpu: 100m
+    memory: 256Mi
+
+# Below fails individual test when enabled since the crd is not there
+serviceMonitor:
+  annotations: {}
+  enabled: false
+  interval: null
+  labels: {}
+  metricRelabelings: []
+  namespace: null
+  namespaceSelector: {}
+  prometheusRule:
+    additionalLabels: {}
+    enabled: false
+    rules: []
+  relabelings: []
+  scheme: https
+  scrapeTimeout: null
+  targetLabels: []
+  tlsConfig:
+    caFile: /etc/prom-certs/root-cert.pem
+    certFile: /etc/prom-certs/cert-chain.pem
+    insecureSkipVerify: true
+    keyFile: /etc/prom-certs/key.pem

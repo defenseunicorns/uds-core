@@ -14,3 +14,4 @@ exporter:
   svc:
     enabled: true
     type: ClusterIP
+

@@ -1,0 +1,17 @@
+
+pilot:
+  hub: "registry1.dso.mil/ironbank/tetrate/istio"
+  tag: "1.19.3-tetratefips-v0"
+  image: pilot
+global:
+  # #variant: distroless
+  hub: "registry1.dso.mil/ironbank/tetrate/istio"
+  tag: "1.19.3-tetratefips-v0"
+  proxy_init:
+    # Base name for the proxy_init container, used to configure iptables.
+    image: proxyv2
+
+  proxy:
+    image: proxyv2
+meshConfig:
+  accessLogFile: /dev/stdout

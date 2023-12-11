@@ -7,16 +7,56 @@ metadata:
 components:
   - name: metrics-server
     required: true
+    only:
+      flavor: upstream
     charts:
       - name: metrics-server
         namespace: metrics-server
         url: https://kubernetes-sigs.github.io/metrics-server
         version: 3.11.0
         valuesFiles:
-          - "values/values.yaml"
+          - "values/upstream-values.yaml"
       - name: uds-metrics-server-config
         namespace: metrics-server
         version: 0.1.0
         localPath: chart
     images:
       - registry.k8s.io/metrics-server/metrics-server:v0.6.4
+
+  - name: metrics-server
+    required: true
+    only:
+      flavor: registry1
+    charts:
+      - name: metrics-server
+        namespace: metrics-server
+        url: https://kubernetes-sigs.github.io/metrics-server
+        version: 3.11.0
+        valuesFiles:
+          - "values/registry1-values.yaml"
+      - name: uds-metrics-server-config
+        namespace: metrics-server
+        version: 0.1.0
+        localPath: chart
+    images:
+      - registry1.dso.mil/ironbank/opensource/kubernetes-sigs/metrics-server:v0.6.4
+
+
+
+  - name: metrics-server
+    required: true
+    only:
+      flavor: cng
+    charts:
+      - name: metrics-server
+        namespace: metrics-server
+        url: https://kubernetes-sigs.github.io/metrics-server
+        version: 3.11.0
+        valuesFiles:
+          - "values/cng-values.yaml"
+      - name: uds-metrics-server-config
+        namespace: metrics-server
+        version: 0.1.0
+        localPath: chart
+    images:
+      - cgr.dev/chainguard/metrics-server:latest

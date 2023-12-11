@@ -1,7 +1,6 @@
 config:
   clients:
     - url: 'http://loki-gateway.loki.svc.cluster.local:80/loki/api/v1/push'
-
   snippets:
     scrapeConfigs: >
       - job_name: kubernetes-pods
@@ -88,7 +87,17 @@ config:
             - __journal_syslog_identifier
             target_label: syslog_identifier
   
-
+image:
+  registry: docker.io
+  repository: grafana/promtail
+  tag: null
+sidecar:
+  configReloader:
+    enabled: false
+    image:
+      registry: docker.io
+      repository: jimmidyson/configmap-reload
+      tag: v0.8.0
 containerSecurityContext:
   allowPrivilegeEscalation: false
   capabilities:

@@ -8,13 +8,15 @@ components:
   - name: grafana
     required: true
     description: "Deploy Grafana"
+    only:
+      flavor: upstream
     charts:
       - name: grafana
         url: https://grafana.github.io/helm-charts/
         version: 7.0.6
         namespace: grafana
         valuesFiles:
-          - values/values.yaml
+          - values/upstream-values.yaml
       - name: uds-grafana-config
         namespace: grafana
         version: 0.1.0
@@ -24,3 +26,47 @@ components:
       - docker.io/curlimages/curl:7.85.0
       - docker.io/library/busybox:1.31.1
       - ghcr.io/kiwigrid/k8s-sidecar:1.25.2
+
+  - name: grafana
+    required: true
+    description: "Deploy Grafana"
+    only:
+      flavor: registry1
+    charts:
+      - name: grafana
+        url: https://grafana.github.io/helm-charts/
+        version: 7.0.6
+        namespace: grafana
+        valuesFiles:
+          - values/registry1-values.yaml
+      - name: uds-grafana-config
+        namespace: grafana
+        version: 0.1.0
+        localPath: chart
+    images:
+      - registry1.dso.mil/ironbank/opensource/grafana/grafana:10.2.2
+      - registry1.dso.mil/ironbank/redhat/ubi/ubi9-minimal:9.3
+      - registry1.dso.mil/ironbank/kiwigrid/k8s-sidecar:1.25.2
+
+  - name: grafana
+    required: true
+    description: "Deploy Grafana"
+    only:
+      flavor: cng
+    charts:
+      - name: grafana
+        url: https://grafana.github.io/helm-charts/
+        version: 7.0.6
+        namespace: grafana
+        valuesFiles:
+          - values/cng-values.yaml
+      - name: uds-grafana-config
+        namespace: grafana
+        version: 0.1.0
+        localPath: chart
+    images:
+      - docker.io/grafana/grafana:10.1.5 # cgr.dev/chainguard/grafana:latest doesnt exist
+      - cgr.dev/chainguard/curl:latest
+      - cgr.dev/chainguard/busybox:latest
+      - cgr.dev/chainguard/k8s-sidecar:latest
+

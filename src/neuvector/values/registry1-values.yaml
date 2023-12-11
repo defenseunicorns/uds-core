@@ -1,0 +1,108 @@
+leastPrivilege: false #This is a new setting on version big bang has not added to umbrella yet
+autoGenerateCert: false
+registry: registry1.dso.mil
+tag: 5.2.2
+rbac: true 
+serviceAccount: default
+manager:
+  image:
+    repository: ironbank/neuvector/neuvector/manager
+  env:
+    ssl: false
+    disableFipsInJava: true
+  svc:
+    type: ClusterIP    
+
+enforcer:
+  image:
+    repository: ironbank/neuvector/neuvector/enforcer
+  containerSecurityContext:
+    capabilities:
+      drop:
+        - ALL
+    privileged: true
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+
+controller:
+  image:
+    repository: ironbank/neuvector/neuvector/controller
+  containerSecurityContext:
+    capabilities:
+      drop:
+        - ALL
+    privileged: true
+    runAsNonRoot: true
+    runAsUser: 1000
+  apisvc:
+    type: ClusterIP
+  secret:
+    enabled: true
+    data:
+      oidcinitcfg.yaml:
+        always_reload: true
+        client_id: null
+        client_secret: null
+        default_role: null
+        enable: true
+        issuer: https://login.dso.mil/auth/realms/baby-yoda
+      sysinitcfg.yaml:
+        always_reload: true
+        no_telemetry_report: true
+        scan_config:
+          auto_scan: true
+      userinitcfg.yaml:
+        always_reload: true
+        users:
+        - fullname: metrics
+          password: admin
+          role: reader
+          username: metrics
+        - fullname: admin
+          password: admin
+          role: admin
+          username: admin
+
+cve:
+  scanner:
+    affinity: {}
+    image:
+      repository: ironbank/neuvector/neuvector/scanner
+      tag: 5
+    containerSecurityContext:
+      capabilities:
+        drop:
+          - ALL
+      runAsNonRoot: true
+      runAsUser: 1000
+  updater:
+    enabled: true
+    image:
+      repository: ironbank/big-bang/base
+      tag: 2.1.0
+    containerSecurityContext:
+      capabilities:
+        drop:
+          - ALL
+      runAsNonRoot: true
+      runAsUser: 1000
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 1000
+
+k3s: 
+  enabled: true
+  runtimePath: /run/k3s/containerd/containerd.sock
+
+bottlerocket:
+  enabled: false
+  runtimePath: /run/dockershim.sock
+
+containerd:
+  enabled: false
+  path: /var/run/containerd/containerd.sock
+
+crdwebhook:
+  enabled: false
+  type: ClusterIP
