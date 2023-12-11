@@ -15,11 +15,10 @@ When(a.Pod)
   .WithLabel("batch.kubernetes.io/job-name")
   .WithLabel("service.istio.io/canonical-name")
   .Watch(async pod => {
-    if (!pod.metadata?.name || !pod.metadata.namespace ) {
+    if (!pod.metadata?.name || !pod.metadata.namespace) {
       Log.error(pod, `Invalid Pod definition`);
       return;
     }
-
 
     const { name, namespace } = pod.metadata;
     const key = `${namespace}/${name}`;
