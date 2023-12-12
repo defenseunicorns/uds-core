@@ -9,10 +9,20 @@ metadata:
 
 components:
   # Istio
+  - name: istio-crds
+    required: true
+    import:
+      path: ../../src/istio
+
   - name: istio-controlplane
     required: true
     import:
-      path: ../standard
+      path: ../../src/istio
+
+  - name: istio-config
+    required: true
+    import:
+      path: ../../src/istio
 
   - name: istio-admin-gateway
     required: true

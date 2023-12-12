@@ -14,7 +14,17 @@ components:
       path: ../../src/prometheus-stack
 
   # Istio
+  - name: istio-crds
+    required: true
+    import:
+      path: ../../src/istio
+
   - name: istio-controlplane
+    required: true
+    import:
+      path: ../../src/istio
+
+  - name: istio-config
     required: true
     import:
       path: ../../src/istio
