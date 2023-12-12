@@ -2,7 +2,7 @@ variables:
   - name: VERSION
     description: "The version of the packages to deploy"
     # x-release-please-start-version
-    default: "0.6.1"
+    default: "0.6.2"
     # x-release-please-end
 
 tasks:

@@ -3,7 +3,7 @@ metadata:
   name: k3d-core-istio
   description: A UDS bundle for deploying Istio from UDS Core on a development cluster
   # x-release-please-start-version
-  version: "0.6.1"
+  version: "0.6.2"
   # x-release-please-end
 
 zarf-packages:
@@ -36,7 +36,7 @@ zarf-packages:
   - name: core-istio
     path: ../../build/
     # x-release-please-start-version
-    ref: 0.6.1
+    ref: 0.6.2
     # x-release-please-end
     overrides:
       istio-admin-gateway:
