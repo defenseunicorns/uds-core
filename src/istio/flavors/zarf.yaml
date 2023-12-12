@@ -4,7 +4,6 @@ metadata:
 
 components:
   - name: istio-controlplane
-    required: true
     only:
       flavor: upstream
     charts:
@@ -19,7 +18,6 @@ components:
       - "docker.io/istio/proxyv2:1.19.3-distroless"
 
   - name: istio-controlplane
-    required: true
     only:
       flavor: registry1
     charts:
@@ -36,7 +34,6 @@ components:
       - registry1.dso.mil/ironbank/tetrate/istio/pilot:1.19.3-tetratefips-v0
 
   - name: istio-controlplane
-    required: true
     only:
       flavor: cng
     charts:
