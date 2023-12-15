@@ -6,3 +6,4 @@ metadata:
   labels:
     "uds/istio-gateway": "admin"
     "uds/istio-host": "neuvector"
+

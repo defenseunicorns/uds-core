@@ -2,8 +2,9 @@ import { Capability, PeprModule } from "pepr";
 
 import cfg from "./package.json";
 
-import { policies } from "./src/policies";
 import { istio } from "./src/istio/pepr";
+import { operator } from "./src/operator";
+import { policies } from "./src/policies";
 
 /**
  * This the root of the UDS Core Pepr Module. To operate on a specific source package, you can
@@ -13,6 +14,9 @@ import { istio } from "./src/istio/pepr";
  * UDS_PKG=istio npx pepr build
  */
 const sortedCapabilities: Record<string, Capability>[] = [
+  // UDS Core Operator
+  { operator },
+
   // UDS Core Policies
   { policies },
 
