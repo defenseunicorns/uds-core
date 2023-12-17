@@ -1,0 +1,12 @@
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: neuvector
+  namespace: {{ .Release.Namespace }}
+spec:
+  network:
+    expose:
+      - service: uds-neuvector-service-webui
+        gateway: admin
+        host: neuvector
+        port: 8443

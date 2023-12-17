@@ -1,12 +1,12 @@
 import { kind } from "pepr";
 
-export function allowEgressIstiod(ns: string): kind.NetworkPolicy {
+export function allowEgressIstiod(namespace: string): kind.NetworkPolicy {
   return {
     apiVersion: "networking.k8s.io/v1",
     kind: "NetworkPolicy",
     metadata: {
       name: "allow-egress-istiod",
-      namespace: ns,
+      namespace,
     },
     spec: {
       podSelector: {},

@@ -2,6 +2,7 @@ import { Capability, Log } from "pepr";
 
 import { UDSPackage } from "./crd";
 import "./crd/register";
+import { virtualService } from "./istio";
 import { syncNamespace } from "./namespace";
 import { networkPolicies } from "./network";
 
@@ -27,10 +28,12 @@ When(UDSPackage)
       const namespace = await syncNamespace(pkg);
 
       await networkPolicies(pkg, namespace);
+
+      await virtualService(pkg, namespace);
     } catch (e) {
       Log.error(
         e,
-        `Error configuring namespace or network policies for ${pkg.metadata.namespace}/${pkg.metadata.name}`,
+        `Error completing configuration for ${pkg.metadata.namespace}/${pkg.metadata.name}`,
       );
     }
   });

@@ -32,19 +32,23 @@ export interface Expose {
   /**
    * The name of the gateway to expose the service on
    */
-  gateway?: Gateway;
+  gateway: Gateway;
   /**
    * The hostname to expose the service on
    */
-  host?: string;
+  host: string;
   /**
-   * The name of the port to expose
+   * The mode to expose the service on
    */
-  port?: string;
+  mode?: Mode;
+  /**
+   * The port number to expose
+   */
+  port: number;
   /**
    * The name of the service to expose
    */
-  service?: string;
+  service: string;
 }
 
 /**
@@ -54,6 +58,14 @@ export enum Gateway {
   Admin = "admin",
   Passthrough = "passthrough",
   Tenant = "tenant",
+}
+
+/**
+ * The mode to expose the service on
+ */
+export enum Mode {
+  HTTP = "http",
+  TCP = "tcp",
 }
 
 /**

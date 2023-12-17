@@ -1,12 +1,12 @@
 import { kind } from "pepr";
 
-export function allowIngressSidecarMonitoring(ns: string): kind.NetworkPolicy {
+export function allowIngressSidecarMonitoring(namespace: string): kind.NetworkPolicy {
   return {
     apiVersion: "networking.k8s.io/v1",
     kind: "NetworkPolicy",
     metadata: {
       name: "allow-ingress-sidecar-monitoring",
-      namespace: ns,
+      namespace,
     },
     spec: {
       podSelector: {},

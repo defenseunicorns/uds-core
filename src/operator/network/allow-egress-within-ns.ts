@@ -1,12 +1,12 @@
 import { kind } from "pepr";
 
-export function allowEgressWithinNS(ns: string): kind.NetworkPolicy {
+export function allowEgressWithinNS(namespace: string): kind.NetworkPolicy {
   return {
     apiVersion: "networking.k8s.io/v1",
     kind: "NetworkPolicy",
     metadata: {
       name: "allow-egress-within-ns",
-      namespace: ns,
+      namespace,
     },
     spec: {
       podSelector: {},

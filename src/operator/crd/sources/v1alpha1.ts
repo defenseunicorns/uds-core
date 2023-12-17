@@ -26,14 +26,15 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
                   description: "Expose a service on an Istio Gateway",
                   items: {
                     type: "object",
+                    required: ["service", "port", "gateway", "host"],
                     properties: {
                       service: {
                         description: "The name of the service to expose",
                         type: "string",
                       },
                       port: {
-                        description: "The name of the port to expose",
-                        type: "string",
+                        description: "The port number to expose",
+                        type: "number",
                       },
                       gateway: {
                         description: "The name of the gateway to expose the service on",
@@ -43,6 +44,12 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
                       host: {
                         description: "The hostname to expose the service on",
                         type: "string",
+                      },
+                      mode: {
+                        description: "The mode to use when exposing the service",
+                        enum: ["http", "tcp"],
+                        type: "string",
+                        default: "http",
                       },
                     },
                   },

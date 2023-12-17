@@ -1,12 +1,12 @@
 import { kind } from "pepr";
 
-export function allowEgressDNS(ns: string): kind.NetworkPolicy {
+export function allowEgressDNS(namespace: string): kind.NetworkPolicy {
   return {
     apiVersion: "networking.k8s.io/v1",
     kind: "NetworkPolicy",
     metadata: {
       name: "allow-egress-dns",
-      namespace: ns,
+      namespace,
     },
     spec: {
       podSelector: {},
