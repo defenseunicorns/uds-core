@@ -2,4 +2,4 @@ apiVersion: uds.dev/v1alpha1
 kind: Package
 metadata:
   name: metrics-server
-  namespace: { { .Release.Namespace } }
+  namespace: {{ .Release.Namespace }}
