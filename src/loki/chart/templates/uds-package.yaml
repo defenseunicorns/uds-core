@@ -1,0 +1,22 @@
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: loki
+  namespace: {{ .Release.Namespace }}
+spec:
+  network:
+    policies:
+      allow:
+        - name: tempo-ingress-writes
+          direction: Ingress
+          podSelector:
+            matchLabels:
+              app: grafana
+          remoteNamespaceSelector:
+            matchLabels:
+              app.kubernetes.io/name: tempo
+          remotePodSelector:
+            matchLabels:
+              app.kubernetes.io/name: tempo
+          port: 9090
+          protocol: TCP

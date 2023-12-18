@@ -5,6 +5,7 @@ import "./crd/register";
 import { virtualService } from "./istio";
 import { syncNamespace } from "./namespace";
 import { networkPolicies } from "./network";
+import { UDSConfig } from "../config";
 
 export const operator = new Capability({
   name: "uds-core-operator",
@@ -29,7 +30,12 @@ When(UDSPackage)
 
       await networkPolicies(pkg, namespace);
 
-      await virtualService(pkg, namespace);
+      // Only configure the VirtualService if Istio is installed
+      if (UDSConfig.istioInstalled) {
+        await virtualService(pkg, namespace);
+      } else {
+        Log.warn(`Istio is not installed, skipping ${pkg.metadata.name} VirtualService.`);
+      }
     } catch (e) {
       Log.error(
         e,

@@ -1,0 +1,28 @@
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: grafana
+  namespace: {{ .Release.Namespace }}
+spec:
+  network:
+    expose:
+      - service: grafana
+        gateway: admin
+        host: grafana
+        port: 80
+  
+    policies:
+      allow:
+        - name: tempo-ingress-writes
+          direction: Ingress
+          podSelector:
+            matchLabels:
+              app: grafana
+          remoteNamespaceSelector:
+            matchLabels:
+              app.kubernetes.io/name: tempo
+          remotePodSelector:
+            matchLabels:
+              app.kubernetes.io/name: tempo
+          port: 9090
+          protocol: TCP

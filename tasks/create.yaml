@@ -33,7 +33,7 @@ tasks:
       - task: pepr-build
 
       - description: "Create the Pepr Zarf Package, if it exists"
-        cmd: "zarf package create dist --confirm || echo 'Pepr build not required'"
+        cmd: "zarf package create dist --confirm"
 
       - description: "Create the requested Zarf Package (must set UDS_PKG environment variable)"
         cmd: "zarf package create src/${UDS_PKG} --confirm"
@@ -46,4 +46,4 @@ tasks:
           set -e        
           rm -fr dist
           npm ci
-          npx pepr build || echo "Pepr build not required"
+          npx pepr build

@@ -1,8 +1,8 @@
 import { K8s, Log } from "pepr";
 import { V1OwnerReference } from "@kubernetes/client-node";
 
-import { UDSConfig } from "./config";
-import { UDSPackage } from "./crd";
+import { UDSConfig } from "../config";
+import { Gateway, UDSPackage } from "./crd";
 import { HTTPRoute, TCPRoute, VirtualService } from "./crd/generated/istio/virtualservice-v1beta1";
 
 /**
@@ -43,6 +43,9 @@ export async function virtualService(pkg: UDSPackage, namespace: string) {
       },
     ];
 
+    // For the admin gateway, we need to add the path prefix
+    const domain = (gateway === Gateway.Admin ? "admin." : "") + UDSConfig.domain;
+
     const payload: VirtualService = {
       metadata: {
         name,
@@ -51,7 +54,7 @@ export async function virtualService(pkg: UDSPackage, namespace: string) {
       },
       spec: {
         // Use the global DNS domain for the host
-        hosts: [`${host}.${UDSConfig.domain}`],
+        hosts: [`${host}.${domain}`],
         // Map the gateway (admin, passthrough or tenant) to the VirtualService
         gateways: [`istio-${gateway}-gateway/${gateway}-gateway`],
       },
