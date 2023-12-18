@@ -6,7 +6,8 @@ metadata:
 spec:
   network:
     expose:
-      - service: grafana
+      - name: grafana-ui
+        service: grafana
         gateway: admin
         host: grafana
         port: 80
