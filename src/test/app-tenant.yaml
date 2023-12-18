@@ -27,14 +27,19 @@ spec:
   selector:
     app: httpbin
 ---
-apiVersion: v1
-kind: ConfigMap
+apiVersion: uds.dev/v1alpha1
+kind: Package
 metadata:
   name: httpbin
   namespace: test-app
-  labels:
-    "uds/istio-gateway": "tenant"
-    "uds/istio-host": "demo"
+spec:
+  network:
+    expose:
+      - name: httpbin
+        service: httpbin
+        gateway: tenant
+        host: demo
+        port: 8000
 ---
 apiVersion: apps/v1
 kind: Deployment
