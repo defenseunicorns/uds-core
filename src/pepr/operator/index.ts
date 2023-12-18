@@ -1,11 +1,12 @@
 import { Capability, Log } from "pepr";
 
+import { UDSConfig } from "../config";
 import { UDSPackage } from "./crd";
 import "./crd/register";
+import { validator } from "./crd/validator";
 import { virtualService } from "./istio";
 import { syncNamespace } from "./namespace";
 import { networkPolicies } from "./network";
-import { UDSConfig } from "../config";
 
 export const operator = new Capability({
   name: "uds-core-operator",
@@ -16,6 +17,7 @@ export const { Store, When } = operator;
 
 When(UDSPackage)
   .IsCreatedOrUpdated()
+  .Validate(validator)
   .Watch(async pkg => {
     if (!pkg.metadata?.namespace) {
       Log.error(pkg, `Invalid Package definition`);
