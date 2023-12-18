@@ -27,9 +27,9 @@ export async function virtualService(pkg: UDSPackage, namespace: string) {
   for (const expose of pkg.spec?.network?.expose ?? []) {
     const { gateway, host, port, service, mode } = expose;
 
-    // Use the package name + service name as the VirtualService name
+    // Use the package name + unique name as the VirtualService name
     // This ensures we don't accidentally expose the same service multiple times
-    const name = `${pkgName}-${service}`;
+    const name = `${pkgName}-${expose.name}`;
 
     // Create the route to the service
     const route: TCPRoute[] | HTTPRoute[] = [

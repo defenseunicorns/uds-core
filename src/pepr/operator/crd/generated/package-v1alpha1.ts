@@ -38,9 +38,13 @@ export interface Expose {
    */
   host: string;
   /**
-   * The mode to expose the service on
+   * The mode to use when exposing the service
    */
   mode?: Mode;
+  /**
+   * The unique name to use as the VirtualService name
+   */
+  name: string;
   /**
    * The port number to expose
    */
@@ -61,7 +65,7 @@ export enum Gateway {
 }
 
 /**
- * The mode to expose the service on
+ * The mode to use when exposing the service
  */
 export enum Mode {
   HTTP = "http",

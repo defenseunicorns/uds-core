@@ -26,8 +26,12 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
                   description: "Expose a service on an Istio Gateway",
                   items: {
                     type: "object",
-                    required: ["service", "port", "gateway", "host"],
+                    required: ["name", "service", "port", "gateway", "host"],
                     properties: {
+                      name: {
+                        description: "The unique name to use as the VirtualService name",
+                        type: "string",
+                      },
                       service: {
                         description: "The name of the service to expose",
                         type: "string",
