@@ -6,7 +6,7 @@ metadata:
 spec:
   network:
     expose:
-      - service: uds-neuvector-service-webui
+      - service: neuvector-service-webui
         gateway: admin
         host: neuvector
         port: 8443
