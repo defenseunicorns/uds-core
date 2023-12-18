@@ -9,11 +9,11 @@ components:
     description: "Install kube-prometheus-stack operator crds using the helm chart https://github.com/prometheus-community/helm-charts/tree/main/charts/prometheus-operator-crds"
     charts:
       # https://github.com/prometheus-community/helm-charts/tree/main/charts/prometheus-operator-crds
+      #version: 5.1.0 (old version - for testing upgrade)
       - name: prometheus-operator-crds
-        namespace: uds-crds
         url: https://prometheus-community.github.io/helm-charts
-        #version: 5.1.0 (old version - for testing upgrade)
         version: 7.0.0
+        namespace: uds-crds
         valuesFiles:
           - "values/crd-values.yaml"
 
@@ -22,10 +22,10 @@ components:
     description: "Install kube-prometheus-stack using the helm chart https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack"
     charts:
       - name: kube-prometheus-stack
-        namespace: monitoring
         url: https://prometheus-community.github.io/helm-charts
-        #version: 50.3.1 (old version - for testing upgrade)
         version: 54.0.1
+        #version: 50.3.1 (old version - for testing upgrade)
+        namespace: monitoring
         valuesFiles:
           - "values/values.yaml"
     images:
