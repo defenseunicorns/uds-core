@@ -33,9 +33,9 @@ components:
         version: 0.1.0
         localPath: chart
     images:
-      - docker.io/neuvector/controller:5.2.2-s1
-      - docker.io/neuvector/manager:5.2.2-s1
+      - docker.io/neuvector/controller:5.2.2
+      - docker.io/neuvector/manager:5.2.2
       - docker.io/neuvector/updater:latest
       - docker.io/neuvector/scanner:latest
-      - docker.io/neuvector/enforcer:5.2.2-s1
+      - docker.io/neuvector/enforcer:5.2.2
       - docker.io/neuvector/prometheus-exporter:latest

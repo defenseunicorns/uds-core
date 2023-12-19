@@ -55,7 +55,9 @@
     },
     {
       "fileMatch": ["\\.*\\.ya?ml$"],
-      "matchStrings": ["- (?<depName>.*):(?<currentValue>.*)"],
+      "matchStrings": [
+        "- [\"]?(?<depName>[^\"\n]*):(?<currentValue>[^\"\n]*)[\"]?"
+      ],
       "datasourceTemplate": "docker"
     },
     {
