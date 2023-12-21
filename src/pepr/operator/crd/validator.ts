@@ -24,5 +24,14 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
     return req.Deny("networkPolicy.name must be unique");
   }
 
+  for (const policy of networkPolicy) {
+    // remoteGenerated cannot be combined with remoteNamespaceLabels or remotePodLabels
+    if (policy.remoteGenerated && (policy.remoteNamespaceLabels || policy.remotePodLabels)) {
+      return req.Deny(
+        "remoteGenerated cannot be combined with remoteNamespaceLabels or remotePodLabels",
+      );
+    }
+  }
+
   return req.Approve();
 }

@@ -18,13 +18,11 @@ K8s(UDSPackage)
               labels: {
                 demo: "test",
               },
-              podSelector: {
-                matchLabels: {
-                  app: "some-cool-test",
-                },
+              podLabels: {
+                app: "some-cool-test",
               },
               port: 80,
-              remoteNamespaceSelector: {},
+              remoteNamespaceLabels: {},
             },
           ],
         },

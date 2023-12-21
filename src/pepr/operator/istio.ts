@@ -25,7 +25,7 @@ export async function virtualService(pkg: UDSPackage, namespace: string) {
   ];
 
   for (const expose of pkg.spec?.network?.expose ?? []) {
-    const { gateway, host, port, service, mode } = expose;
+    const { gateway = Gateway.Tenant, host, port, service, mode } = expose;
 
     // Use the package name + unique name as the VirtualService name
     // This ensures we don't accidentally expose the same service multiple times
@@ -35,8 +35,8 @@ export async function virtualService(pkg: UDSPackage, namespace: string) {
     const route: TCPRoute[] | HTTPRoute[] = [
       {
         destination: {
-          // Use the service name as the host
-          host: `${service}.${namespace}.svc.cluster.local`,
+          // Use the service name as the host if provide, otherwise use the expose name
+          host: `${service || expose.name}.${namespace}.svc.cluster.local`,
           // The CRD only uses numeric ports
           port: { number: port },
         },
@@ -53,8 +53,8 @@ export async function virtualService(pkg: UDSPackage, namespace: string) {
         ownerReferences,
       },
       spec: {
-        // Use the global DNS domain for the host
-        hosts: [`${host}.${domain}`],
+        // Append the UDS Domain to the host. Use the expose name if no host is provided
+        hosts: [`${host || expose.name}.${domain}`],
         // Map the gateway (admin, passthrough or tenant) to the VirtualService
         gateways: [`istio-${gateway}-gateway/${gateway}-gateway`],
       },

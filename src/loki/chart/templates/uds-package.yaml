@@ -9,14 +9,11 @@ spec:
       allow:
         - name: tempo-ingress-writes
           direction: Ingress
-          podSelector:
-            matchLabels:
-              app: grafana
-          remoteNamespaceSelector:
-            matchLabels:
-              app.kubernetes.io/name: tempo
-          remotePodSelector:
-            matchLabels:
-              app.kubernetes.io/name: tempo
+          podLabels:
+            app: grafana
+          remoteNamespaceLabels:
+            app.kubernetes.io/name: tempo
+          remotePodLabels:
+            app.kubernetes.io/name: tempo
           port: 9090
           protocol: TCP

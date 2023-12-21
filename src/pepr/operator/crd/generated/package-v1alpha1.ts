@@ -30,13 +30,13 @@ export interface Network {
 
 export interface Expose {
   /**
-   * The name of the gateway to expose the service on
+   * The name of the gateway to expose the service on (default: tenant)
    */
-  gateway: Gateway;
+  gateway?: Gateway;
   /**
-   * The hostname to expose the service on
+   * The hostname to expose the service on (default: name)
    */
-  host: string;
+  host?: string;
   /**
    * The mode to use when exposing the service
    */
@@ -50,13 +50,13 @@ export interface Expose {
    */
   port: number;
   /**
-   * The name of the service to expose
+   * The name of the service to expose (default: name)
    */
-  service: string;
+  service?: string;
 }
 
 /**
- * The name of the gateway to expose the service on
+ * The name of the gateway to expose the service on (default: tenant)
  */
 export enum Gateway {
   Admin = "admin",
@@ -100,9 +100,10 @@ export interface Allow {
    */
   name: string;
   /**
-   * The local pod selector to apply the policy to
+   * Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all
+   * pods in the namespace
    */
-  podSelector: PodSelector;
+  podLabels?: { [key: string]: string };
   /**
    * The port to allow
    */
@@ -112,13 +113,17 @@ export interface Allow {
    */
   protocol?: Protocol;
   /**
-   * The remote namespace selector
+   * Custom generated remote selector for the policy
    */
-  remoteNamespaceSelector?: RemoteNamespaceSelector;
+  remoteGenerated?: RemoteGenerated;
   /**
-   * The remote pod selector
+   * The remote namespace selector labels
    */
-  remotePodSelector?: RemotePodSelector;
+  remoteNamespaceLabels?: { [key: string]: string };
+  /**
+   * The remote pod selector labels
+   */
+  remotePodLabels?: { [key: string]: string };
 }
 
 /**
@@ -127,16 +132,6 @@ export interface Allow {
 export enum Direction {
   Egress = "Egress",
   Ingress = "Ingress",
-}
-
-/**
- * The local pod selector to apply the policy to
- */
-export interface PodSelector {
-  /**
-   * The labels to match
-   */
-  matchLabels?: { [key: string]: string };
 }
 
 /**
@@ -149,23 +144,10 @@ export enum Protocol {
 }
 
 /**
- * The remote namespace selector
+ * Custom generated remote selector for the policy
  */
-export interface RemoteNamespaceSelector {
-  /**
-   * The labels to match
-   */
-  matchLabels?: { [key: string]: string };
-}
-
-/**
- * The remote pod selector
- */
-export interface RemotePodSelector {
-  /**
-   * The labels to match
-   */
-  matchLabels?: { [key: string]: string };
+export enum RemoteGenerated {
+  KubeAPI = "KubeAPI",
 }
 
 export enum DisableDefault {

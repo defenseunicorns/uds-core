@@ -9,7 +9,6 @@ import { allowIngressWithinNS } from "./allow-ingress-within-ns";
 import { defaultDenyAll } from "./default-deny-all";
 
 // Import the NetworkPolicy transforms webhook
-import "./transforms";
 import { builder } from "./builder";
 
 export async function networkPolicies(pkg: UDSPackage, namespace: string) {
@@ -37,7 +36,8 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
 
   // Process custom policies
   for (const policy of customPolicies) {
-    policies.push(builder(namespace, pkg, policy));
+    const generatedPolicy = await builder(namespace, pkg, policy);
+    policies.push(generatedPolicy);
   }
 
   for (const policy of policies) {

@@ -3,3 +3,19 @@ kind: Package
 metadata:
   name: metrics-server
   namespace: {{ .Release.Namespace }}
+spec:
+  network:
+    policies:
+      allow:
+        - name: kubeapi-egress
+          direction: Egress
+          remoteGenerated: KubeAPI
+          podLabels:
+            app.kubernetes.io/name: metrics-server
+        - name: istio-ingress
+          direction: Ingress
+          podLabels:
+            app.kubernetes.io/name: metrics-server
+          remoteNamespaceLabels:
+            kubernetes.io/metadata.name: "istio-system"
+          port: 443

@@ -26,14 +26,14 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
                   description: "Expose a service on an Istio Gateway",
                   items: {
                     type: "object",
-                    required: ["name", "service", "port", "gateway", "host"],
+                    required: ["name", "port"],
                     properties: {
                       name: {
                         description: "The unique name to use as the VirtualService name",
                         type: "string",
                       },
                       service: {
-                        description: "The name of the service to expose",
+                        description: "The name of the service to expose (default: name)",
                         type: "string",
                       },
                       port: {
@@ -41,12 +41,14 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
                         type: "number",
                       },
                       gateway: {
-                        description: "The name of the gateway to expose the service on",
+                        description:
+                          "The name of the gateway to expose the service on (default: tenant)",
                         enum: ["admin", "tenant", "passthrough"],
                         type: "string",
+                        default: "tenant",
                       },
                       host: {
-                        description: "The hostname to expose the service on",
+                        description: "The hostname to expose the service on (default: name)",
                         type: "string",
                       },
                       mode: {
@@ -75,7 +77,7 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
                       type: "array",
                       items: {
                         type: "object",
-                        required: ["name", "direction", "podSelector"],
+                        required: ["name", "direction"],
                         properties: {
                           name: {
                             description: "The name of the policy",
@@ -93,44 +95,32 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
                             enum: ["Ingress", "Egress"],
                             type: "string",
                           },
-                          podSelector: {
-                            description: "The local pod selector to apply the policy to",
+                          podLabels: {
+                            description:
+                              "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace",
                             type: "object",
-                            properties: {
-                              matchLabels: {
-                                description: "The labels to match",
-                                type: "object",
-                                additionalProperties: {
-                                  type: "string",
-                                },
-                              },
+                            additionalProperties: {
+                              type: "string",
                             },
                           },
-                          remoteNamespaceSelector: {
-                            description: "The remote namespace selector",
+                          remoteNamespaceLabels: {
+                            description: "The remote namespace selector labels",
                             type: "object",
-                            properties: {
-                              matchLabels: {
-                                description: "The labels to match",
-                                type: "object",
-                                additionalProperties: {
-                                  type: "string",
-                                },
-                              },
+                            additionalProperties: {
+                              type: "string",
                             },
                           },
-                          remotePodSelector: {
-                            description: "The remote pod selector",
+                          remotePodLabels: {
+                            description: "The remote pod selector labels",
                             type: "object",
-                            properties: {
-                              matchLabels: {
-                                description: "The labels to match",
-                                type: "object",
-                                additionalProperties: {
-                                  type: "string",
-                                },
-                              },
+                            additionalProperties: {
+                              type: "string",
                             },
+                          },
+                          remoteGenerated: {
+                            description: "Custom generated remote selector for the policy",
+                            type: "string",
+                            enum: ["KubeAPI"],
                           },
                           port: {
                             description: "The port to allow",
