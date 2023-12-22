@@ -9,9 +9,9 @@ components:
     required: true
     charts:
       - name: metrics-server
-        namespace: metrics-server
         url: https://kubernetes-sigs.github.io/metrics-server
         version: 3.11.0
+        namespace: metrics-server
         valuesFiles:
           - "values/values.yaml"
       - name: uds-metrics-server-config

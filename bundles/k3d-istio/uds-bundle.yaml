@@ -30,7 +30,7 @@ zarf-packages:
               
   - name: init
     repository: ghcr.io/defenseunicorns/packages/init
-    # renovate: datasource=github-tags depName=defenseunicorns/init versioning=semver
+    # renovate: datasource=github-tags depName=defenseunicorns/zarf versioning=semver
     ref: v0.31.1
 
   - name: core-istio
