@@ -7,13 +7,11 @@ spec:
   network:
     policies:
       allow:
-        - name: kubeapi-egress
-          direction: Egress
+        - direction: Egress
           remoteGenerated: KubeAPI
           podLabels:
             app.kubernetes.io/name: metrics-server
-        - name: istio-ingress
-          direction: Ingress
+        - direction: Ingress
           podLabels:
             app.kubernetes.io/name: metrics-server
           remoteNamespaceLabels:

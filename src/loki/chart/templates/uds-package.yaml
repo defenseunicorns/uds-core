@@ -7,8 +7,7 @@ spec:
   network:
     policies:
       allow:
-        - name: tempo-ingress-writes
-          direction: Ingress
+        - direction: Ingress
           podLabels:
             app: grafana
           remoteNamespaceLabels:

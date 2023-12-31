@@ -4,6 +4,20 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
   name: "v1alpha1",
   served: true,
   storage: true,
+  additionalPrinterColumns: [
+    {
+      name: "Status",
+      type: "string",
+      description: "The status of the package",
+      jsonPath: ".status.phase",
+    },
+    {
+      name: "Age",
+      type: "date",
+      description: "The age of the package",
+      jsonPath: ".metadata.creationTimestamp",
+    },
+  ],
   schema: {
     openAPIV3Schema: {
       type: "object",
@@ -26,18 +40,16 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
                   description: "Expose a service on an Istio Gateway",
                   items: {
                     type: "object",
-                    required: ["name", "port"],
+                    required: ["service", "host", "port"],
                     properties: {
-                      name: {
-                        description: "The unique name to use as the VirtualService name",
-                        type: "string",
-                      },
                       service: {
-                        description: "The name of the service to expose (default: name)",
+                        description: "The name of the service to expose",
                         type: "string",
                       },
                       port: {
                         description: "The port number to expose",
+                        minimum: 1,
+                        maximum: 65535,
                         type: "number",
                       },
                       gateway: {
@@ -48,7 +60,7 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
                         default: "tenant",
                       },
                       host: {
-                        description: "The hostname to expose the service on (default: name)",
+                        description: "The hostname to expose the service on",
                         type: "string",
                       },
                       mode: {
@@ -77,12 +89,8 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
                       type: "array",
                       items: {
                         type: "object",
-                        required: ["name", "direction"],
+                        required: ["direction"],
                         properties: {
-                          name: {
-                            description: "The name of the policy",
-                            type: "string",
-                          },
                           labels: {
                             description: "The labels to apply to the policy",
                             type: "object",
@@ -124,6 +132,8 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
                           },
                           port: {
                             description: "The port to allow",
+                            minimum: 1,
+                            maximum: 65535,
                             type: "number",
                           },
                           protocol: {

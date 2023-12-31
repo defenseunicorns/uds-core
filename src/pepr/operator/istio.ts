@@ -12,31 +12,36 @@ import { HTTPRoute, TCPRoute, VirtualService } from "./crd/generated/istio/virtu
  * @param namespace
  */
 export async function virtualService(pkg: UDSPackage, namespace: string) {
-  const { name: pkgName, uid } = pkg.metadata!;
+  const pkgName = pkg.metadata!.name!;
+  const uid = pkg.metadata!.uid!;
+
+  const generation = (pkg.metadata?.generation ?? 0).toString();
 
   // Use the CR as the owner ref for each VirtualService
   const ownerReferences: V1OwnerReference[] = [
     {
       apiVersion: pkg.apiVersion!,
       kind: pkg.kind!,
-      uid: uid!,
-      name: pkgName!,
+      uid: uid,
+      name: pkgName,
     },
   ];
 
-  for (const expose of pkg.spec?.network?.expose ?? []) {
+  // Get the list of exposed services
+  const exposeList = pkg.spec?.network?.expose ?? [];
+
+  // Iterate over each exposed service
+  for (const expose of exposeList) {
     const { gateway = Gateway.Tenant, host, port, service, mode } = expose;
 
-    // Use the package name + unique name as the VirtualService name
-    // This ensures we don't accidentally expose the same service multiple times
-    const name = `${pkgName}-${expose.name}`;
+    const name = `${pkgName}-${gateway}-${host}`.toLowerCase();
 
     // Create the route to the service
     const route: TCPRoute[] | HTTPRoute[] = [
       {
         destination: {
-          // Use the service name as the host if provide, otherwise use the expose name
-          host: `${service || expose.name}.${namespace}.svc.cluster.local`,
+          // Use the service name as the host
+          host: `${service}.${namespace}.svc.cluster.local`,
           // The CRD only uses numeric ports
           port: { number: port },
         },
@@ -50,11 +55,15 @@ export async function virtualService(pkg: UDSPackage, namespace: string) {
       metadata: {
         name,
         namespace,
+        labels: {
+          "uds/package": pkgName,
+          "uds/generation": generation,
+        },
         ownerReferences,
       },
       spec: {
-        // Append the UDS Domain to the host. Use the expose name if no host is provided
-        hosts: [`${host || expose.name}.${domain}`],
+        // Append the UDS Domain to the host
+        hosts: [`${host}.${domain}`],
         // Map the gateway (admin, passthrough or tenant) to the VirtualService
         gateways: [`istio-${gateway}-gateway/${gateway}-gateway`],
       },
@@ -67,5 +76,22 @@ export async function virtualService(pkg: UDSPackage, namespace: string) {
 
     // Apply the VirtualService
     await K8s(VirtualService).Apply(payload);
+  }
+
+  // Get all related VirtualServices in the namespace
+  const virtualServices = await K8s(VirtualService)
+    .InNamespace(namespace)
+    .WithLabel("uds/package", pkgName)
+    .Get();
+
+  // Find any orphaned VirtualServices (not matching the current generation)
+  const orphanedVS = virtualServices.items.filter(
+    vs => vs.metadata?.labels?.["uds/generation"] !== generation,
+  );
+
+  // Delete any orphaned VirtualServices
+  for (const vs of orphanedVS) {
+    Log.debug(vs, `Deleting orphaned VirtualService ${vs.metadata!.name}`);
+    await K8s(VirtualService).Delete(vs);
   }
 }

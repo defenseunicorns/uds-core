@@ -6,20 +6,17 @@ metadata:
 spec:
   network:
     expose:
-      - name: neuvector-dashboard
-        service: neuvector-service-webui
+      - service: neuvector-service-webui
         gateway: admin
         host: neuvector
         port: 8443
     policies:
       allow:
-        - name: controller-kubeapi-egress
-          direction: Egress
+        - direction: Egress
           remoteGenerated: KubeAPI
           podLabels:
             app: neuvector-controller-pod
-        - name: updater-kubeapi-egress
-          direction: Egress
+        - direction: Egress
           remoteGenerated: KubeAPI
           podLabels:
             app: neuvector-updater-pod

@@ -13,7 +13,6 @@ K8s(UDSPackage)
         policies: {
           allow: [
             {
-              name: "some-cool-test",
               direction: Direction.Ingress,
               labels: {
                 demo: "test",

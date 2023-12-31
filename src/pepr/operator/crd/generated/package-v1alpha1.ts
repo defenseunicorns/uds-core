@@ -4,7 +4,7 @@ import { GenericKind, RegisterKind } from "kubernetes-fluent-client";
 
 export class Package extends GenericKind {
   spec?: Spec;
-  status?: { [key: string]: never };
+  status?: { [key: string]: unknown };
 }
 
 export interface Spec {
@@ -34,25 +34,21 @@ export interface Expose {
    */
   gateway?: Gateway;
   /**
-   * The hostname to expose the service on (default: name)
+   * The hostname to expose the service on
    */
-  host?: string;
+  host: string;
   /**
    * The mode to use when exposing the service
    */
   mode?: Mode;
   /**
-   * The unique name to use as the VirtualService name
-   */
-  name: string;
-  /**
    * The port number to expose
    */
   port: number;
   /**
-   * The name of the service to expose (default: name)
+   * The name of the service to expose
    */
-  service?: string;
+  service: string;
 }
 
 /**
@@ -95,10 +91,6 @@ export interface Allow {
    * The labels to apply to the policy
    */
   labels?: { [key: string]: string };
-  /**
-   * The name of the policy
-   */
-  name: string;
   /**
    * Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all
    * pods in the namespace
