@@ -17,7 +17,7 @@ export async function builder(
   const target = Object.values(policy.podLabels!).join("-");
 
   // Create a unique name for the NetworkPolicy based on the package name, index, direction, pod labels, and port
-  const name = `${pkgName}-${idx}-${policy.direction}-${target}-${policy.port}`.toLowerCase();
+  const name = `allow-${policy.direction}-${target}-${pkgName}-${idx}`.toLowerCase();
 
   // Create the NetworkPolicy
   const generated: kind.NetworkPolicy = {
