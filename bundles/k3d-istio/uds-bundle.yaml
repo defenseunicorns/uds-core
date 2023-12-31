@@ -6,7 +6,7 @@ metadata:
   version: "0.6.2"
   # x-release-please-end
 
-zarf-packages:
+packages:
   - name: uds-k3d-dev
     repository: ghcr.io/defenseunicorns/packages/uds-k3d
     # renovate: datasource=github-tags depName=defenseunicorns/uds-k3d versioning=semver
@@ -27,7 +27,7 @@ zarf-packages:
             - name: policies
               description: "Minio policies"
               path: policies
-              
+
   - name: init
     repository: ghcr.io/defenseunicorns/packages/init
     # renovate: datasource=github-tags depName=defenseunicorns/init versioning=semver
