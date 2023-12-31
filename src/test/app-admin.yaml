@@ -32,8 +32,7 @@ metadata:
 spec:
   network:
     expose:
-      - name: httpbin
-        service: httpbin
+      - service: httpbin
         gateway: admin
         host: demo
         port: 8000
