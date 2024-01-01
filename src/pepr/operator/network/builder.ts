@@ -10,7 +10,6 @@ export async function builder(
   namespace: string,
   pkg: UDSPackage,
   policy: Allow,
-  generation: string,
   idx: number,
 ): Promise<kind.NetworkPolicy> {
   const pkgName = pkg.metadata!.name!;
@@ -27,8 +26,7 @@ export async function builder(
       name,
       namespace,
       labels: {
-        "uds/package": pkgName,
-        "uds/generation": generation,
+        "uds/builder": "true",
         ...policy.labels,
       },
     },

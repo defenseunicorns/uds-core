@@ -1,6 +1,6 @@
 import { K8s, Log, kind } from "pepr";
 
-import { DisableDefault, UDSPackage } from "../crd";
+import { DisableDefault, UDSPackage, getOwnerRef } from "../crd";
 import { allowEgressDNS } from "./allow-egress-dns";
 import { allowEgressIstiod } from "./allow-egress-istiod";
 import { allowEgressWithinNS } from "./allow-egress-within-ns";
@@ -39,13 +39,23 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
 
   // Process custom policies
   for (const [idx, policy] of customPolicies.entries()) {
-    const generatedPolicy = await builder(namespace, pkg, policy, generation, idx);
+    const generatedPolicy = await builder(namespace, pkg, policy, idx);
     policies.push(generatedPolicy);
   }
 
-  // Apply each policy, overwriting any existing policy
+  // Iterate over each policy and apply it
   for (const policy of policies) {
-    await K8s(kind.NetworkPolicy).Apply(policy);
+    // Add the package name and generation to the labels
+    policy.metadata = policy.metadata ?? {};
+    policy.metadata.labels = policy.metadata?.labels ?? {};
+    policy.metadata.labels["uds/package"] = pkg.metadata!.name!;
+    policy.metadata.labels["uds/generation"] = generation;
+
+    // Use the CR as the owner ref for each NetworkPolicy
+    policy.metadata.ownerReferences = getOwnerRef(pkg);
+
+    // Apply the NetworkPolicy and force overwrite any existing policy
+    await K8s(kind.NetworkPolicy).Apply(policy, { force: true });
   }
 
   // Delete any policies that are no longer needed
