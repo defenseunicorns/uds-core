@@ -22,12 +22,15 @@ export async function syncNamespace(pkg: UDSPackage) {
     labels[pkgLabel] = pkg.metadata.name;
 
     // Apply the updated Namespace
-    await K8s(kind.Namespace).Apply({
-      metadata: {
-        name: pkg.metadata.namespace,
-        labels,
+    await K8s(kind.Namespace).Apply(
+      {
+        metadata: {
+          name: pkg.metadata.namespace,
+          labels,
+        },
       },
-    });
+      { force: true },
+    );
   }
 
   return pkg.metadata.namespace;

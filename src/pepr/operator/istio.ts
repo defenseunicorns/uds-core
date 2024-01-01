@@ -1,8 +1,7 @@
 import { K8s, Log } from "pepr";
-import { V1OwnerReference } from "@kubernetes/client-node";
 
 import { UDSConfig } from "../config";
-import { Gateway, UDSPackage } from "./crd";
+import { Gateway, UDSPackage, getOwnerRef } from "./crd";
 import { HTTPRoute, TCPRoute, VirtualService } from "./crd/generated/istio/virtualservice-v1beta1";
 
 /**
@@ -13,19 +12,7 @@ import { HTTPRoute, TCPRoute, VirtualService } from "./crd/generated/istio/virtu
  */
 export async function virtualService(pkg: UDSPackage, namespace: string) {
   const pkgName = pkg.metadata!.name!;
-  const uid = pkg.metadata!.uid!;
-
   const generation = (pkg.metadata?.generation ?? 0).toString();
-
-  // Use the CR as the owner ref for each VirtualService
-  const ownerReferences: V1OwnerReference[] = [
-    {
-      apiVersion: pkg.apiVersion!,
-      kind: pkg.kind!,
-      uid: uid,
-      name: pkgName,
-    },
-  ];
 
   // Get the list of exposed services
   const exposeList = pkg.spec?.network?.expose ?? [];
@@ -59,7 +46,8 @@ export async function virtualService(pkg: UDSPackage, namespace: string) {
           "uds/package": pkgName,
           "uds/generation": generation,
         },
-        ownerReferences,
+        // Use the CR as the owner ref for each VirtualService
+        ownerReferences: getOwnerRef(pkg),
       },
       spec: {
         // Append the UDS Domain to the host
@@ -74,8 +62,8 @@ export async function virtualService(pkg: UDSPackage, namespace: string) {
 
     Log.debug(payload, `Applying VirtualService ${name}`);
 
-    // Apply the VirtualService
-    await K8s(VirtualService).Apply(payload);
+    // Apply the VirtualService and force overwrite any existing policy
+    await K8s(VirtualService).Apply(payload, { force: true });
   }
 
   // Get all related VirtualServices in the namespace
