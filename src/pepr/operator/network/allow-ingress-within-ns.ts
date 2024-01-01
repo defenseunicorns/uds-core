@@ -11,15 +11,6 @@ export function allowIngressWithinNS(namespace: string): kind.NetworkPolicy {
     spec: {
       podSelector: {},
       policyTypes: ["Ingress"],
-      ingress: [
-        {
-          from: [
-            {
-              namespaceSelector: {},
-            },
-          ],
-        },
-      ],
     },
   };
 }

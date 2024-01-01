@@ -11,15 +11,6 @@ export function allowEgressWithinNS(namespace: string): kind.NetworkPolicy {
     spec: {
       podSelector: {},
       policyTypes: ["Egress"],
-      egress: [
-        {
-          to: [
-            {
-              namespaceSelector: {},
-            },
-          ],
-        },
-      ],
     },
   };
 }
