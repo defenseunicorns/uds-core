@@ -20,3 +20,24 @@ spec:
           remoteGenerated: KubeAPI
           podLabels:
             app: neuvector-updater-pod
+        - direction: Ingress
+          remoteNamespaceLabels:
+            app.kubernetes.io/name: monitoring
+          remotePodLabels:
+            app: prometheus
+          podLabels:
+            app: neuvector-prometheus-exporter-pod
+          port: 8068
+
+
+      
+# apiVersion: networking.k8s.io/v1
+# kind: NetworkPolicy
+# metadata:
+#   name: allow-istio-ingress
+#   # namespace: {{ .Release.Namespace }}
+#   namespace: neuvector
+# spec:
+#   podSelector:
+#     matchLabels:
+#       app: neuvector-manager-pod

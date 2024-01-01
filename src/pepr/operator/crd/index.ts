@@ -6,6 +6,7 @@ export {
   Allow,
   DisableDefault,
   Gateway,
+  Direction,
   Package as UDSPackage,
 } from "./generated/package-v1alpha1";
 

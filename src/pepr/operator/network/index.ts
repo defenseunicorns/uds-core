@@ -1,6 +1,6 @@
 import { K8s, Log, kind } from "pepr";
 
-import { DisableDefault, UDSPackage, getOwnerRef } from "../crd";
+import { Allow, Direction, DisableDefault, Gateway, UDSPackage, getOwnerRef } from "../crd";
 import { allowEgressDNS } from "./allow-egress-dns";
 import { allowEgressIstiod } from "./allow-egress-istiod";
 import { allowEgressWithinNS } from "./allow-egress-within-ns";
@@ -40,6 +40,37 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
   // Process custom policies
   for (const [idx, policy] of customPolicies.entries()) {
     const generatedPolicy = await builder(namespace, pkg, policy, idx);
+    policies.push(generatedPolicy);
+  }
+
+  // Generate NetworkPolicies for any VirtualServices that are generated
+  const exposeList = pkg.spec?.network?.expose ?? [];
+  for (const [idx, expose] of exposeList.entries()) {
+    const { gateway = Gateway.Tenant, port, service } = expose;
+
+    let podLabels: Record<string, string> = {};
+    try {
+      const svcDef = await K8s(kind.Service).InNamespace(namespace).Get(service);
+      podLabels = svcDef.spec?.selector as Record<string, string>;
+    } catch (e) {
+      Log.error(e, `Unable to load the service ${namespace}/${service}`);
+    }
+
+    // Create the NetworkPolicy for the VirtualService
+    const policy: Allow = {
+      direction: Direction.Ingress,
+      podLabels,
+      remotePodLabels: {
+        app: `${gateway}-ingressgateway`,
+      },
+      remoteNamespaceLabels: {
+        "kubernetes.io/metadata.name": `istio-${gateway}-gateway`,
+      },
+      port,
+    };
+
+    // Generate the policy with a base index of 1000
+    const generatedPolicy = await builder(namespace, pkg, policy, 1000 + idx);
     policies.push(generatedPolicy);
   }
 
