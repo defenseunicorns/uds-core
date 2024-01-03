@@ -4,9 +4,10 @@ import { Package as UDSPackage } from "./generated/package-v1alpha1";
 
 export {
   Allow,
-  DisableDefault,
-  Gateway,
   Direction,
+  Gateway,
+  Phase,
+  Status,
   Package as UDSPackage,
 } from "./generated/package-v1alpha1";
 

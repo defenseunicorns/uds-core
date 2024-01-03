@@ -4,7 +4,7 @@ import { GenericKind, RegisterKind } from "kubernetes-fluent-client";
 
 export class Package extends GenericKind {
   spec?: Spec;
-  status?: { [key: string]: unknown };
+  status?: Status;
 }
 
 export interface Spec {
@@ -19,67 +19,13 @@ export interface Spec {
  */
 export interface Network {
   /**
-   * Expose a service on an Istio Gateway
-   */
-  expose?: Expose[];
-  /**
-   * NetworkPolicy configuration for the package
-   */
-  policies?: Policies;
-}
-
-export interface Expose {
-  /**
-   * The name of the gateway to expose the service on (default: tenant)
-   */
-  gateway?: Gateway;
-  /**
-   * The hostname to expose the service on
-   */
-  host: string;
-  /**
-   * The mode to use when exposing the service
-   */
-  mode?: Mode;
-  /**
-   * The port number to expose
-   */
-  port: number;
-  /**
-   * The name of the service to expose
-   */
-  service: string;
-}
-
-/**
- * The name of the gateway to expose the service on (default: tenant)
- */
-export enum Gateway {
-  Admin = "admin",
-  Passthrough = "passthrough",
-  Tenant = "tenant",
-}
-
-/**
- * The mode to use when exposing the service
- */
-export enum Mode {
-  HTTP = "http",
-  TCP = "tcp",
-}
-
-/**
- * NetworkPolicy configuration for the package
- */
-export interface Policies {
-  /**
-   * Allow specific traffic
+   * Allow specific traffic (namespace will have a default-deny policy)
    */
   allow?: Allow[];
   /**
-   * Disable default UDS NetworkPolicy configurations
+   * Expose a service on an Istio Gateway
    */
-  disableDefaults?: DisableDefault[];
+  expose?: Expose[];
 }
 
 export interface Allow {
@@ -139,12 +85,66 @@ export enum Protocol {
  * Custom generated remote selector for the policy
  */
 export enum RemoteGenerated {
+  IntraNamespace = "IntraNamespace",
   KubeAPI = "KubeAPI",
 }
 
-export enum DisableDefault {
-  DNSLookup = "dnsLookup",
-  PermissiveNamespace = "permissiveNamespace",
+export interface Expose {
+  /**
+   * The name of the gateway to expose the service on (default: tenant)
+   */
+  gateway?: Gateway;
+  /**
+   * The hostname to expose the service on
+   */
+  host: string;
+  /**
+   * The mode to use when exposing the service
+   */
+  mode?: Mode;
+  /**
+   * Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all
+   * pods in the namespace
+   */
+  podLabels: { [key: string]: string };
+  /**
+   * The port number to expose
+   */
+  port: number;
+  /**
+   * The name of the service to expose
+   */
+  service: string;
+}
+
+/**
+ * The name of the gateway to expose the service on (default: tenant)
+ */
+export enum Gateway {
+  Admin = "admin",
+  Passthrough = "passthrough",
+  Tenant = "tenant",
+}
+
+/**
+ * The mode to use when exposing the service
+ */
+export enum Mode {
+  HTTP = "http",
+  TCP = "tcp",
+}
+
+export interface Status {
+  endpoints?: string[];
+  networkPolicyCount?: number;
+  observedGeneration?: number;
+  phase?: Phase;
+}
+
+export enum Phase {
+  Failed = "Failed",
+  Pending = "Pending",
+  Ready = "Ready",
 }
 
 RegisterKind(Package, {

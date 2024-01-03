@@ -11,7 +11,7 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
   }
 
   // Ensure the name of each network policy is unique
-  const networkPolicy = req.Raw.spec?.network?.policies?.allow ?? [];
+  const networkPolicy = req.Raw.spec?.network?.allow ?? [];
 
   for (const policy of networkPolicy) {
     // remoteGenerated cannot be combined with remoteNamespaceLabels or remotePodLabels
