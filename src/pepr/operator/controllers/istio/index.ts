@@ -1,8 +1,12 @@
 import { K8s, Log } from "pepr";
 
-import { UDSConfig } from "../config";
-import { Gateway, UDSPackage, getOwnerRef } from "./crd";
-import { HTTPRoute, TCPRoute, VirtualService } from "./crd/generated/istio/virtualservice-v1beta1";
+import { UDSConfig } from "../../../config";
+import { Gateway, UDSPackage, getOwnerRef } from "../../crd";
+import {
+  HTTPRoute,
+  TCPRoute,
+  VirtualService,
+} from "../../crd/generated/istio/virtualservice-v1beta1";
 
 /**
  * Creates a VirtualService for each exposed service in the package
@@ -16,6 +20,8 @@ export async function virtualService(pkg: UDSPackage, namespace: string) {
 
   // Get the list of exposed services
   const exposeList = pkg.spec?.network?.expose ?? [];
+
+  const payloads: VirtualService[] = [];
 
   // Iterate over each exposed service
   for (const expose of exposeList) {
@@ -64,6 +70,8 @@ export async function virtualService(pkg: UDSPackage, namespace: string) {
 
     // Apply the VirtualService and force overwrite any existing policy
     await K8s(VirtualService).Apply(payload, { force: true });
+
+    payloads.push(payload);
   }
 
   // Get all related VirtualServices in the namespace
@@ -82,4 +90,7 @@ export async function virtualService(pkg: UDSPackage, namespace: string) {
     Log.debug(vs, `Deleting orphaned VirtualService ${vs.metadata!.name}`);
     await K8s(VirtualService).Delete(vs);
   }
+
+  // Return the list of generated VirtualServices
+  return payloads;
 }

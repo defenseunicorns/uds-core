@@ -1,19 +1,16 @@
 import { K8s, Log, kind } from "pepr";
 
-import { Allow, Direction, DisableDefault, Gateway, UDSPackage, getOwnerRef } from "../crd";
+import { Allow, Direction, Gateway, UDSPackage, getOwnerRef } from "../../crd";
 import { allowEgressDNS } from "./allow-egress-dns";
 import { allowEgressIstiod } from "./allow-egress-istiod";
-import { allowEgressWithinNS } from "./allow-egress-within-ns";
 import { allowIngressSidecarMonitoring } from "./allow-ingress-sidecar-monitoring";
-import { allowIngressWithinNS } from "./allow-ingress-within-ns";
 import { defaultDenyAll } from "./default-deny-all";
 
 // Import the NetworkPolicy transforms webhook
-import { builder } from "./builder";
+import { generate } from "./generate";
 
 export async function networkPolicies(pkg: UDSPackage, namespace: string) {
-  const disabled = pkg.spec?.network?.policies?.disableDefaults ?? [];
-  const customPolicies = pkg.spec?.network?.policies?.allow ?? [];
+  const customPolicies = pkg.spec?.network?.allow ?? [];
 
   // Get the current generation of the package
   const generation = (pkg.metadata?.generation ?? 0).toString();
@@ -21,40 +18,25 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
   const policies = [
     // All traffic must be explicitly allowed
     defaultDenyAll(namespace),
+
+    // Allow DNS lookups
+    allowEgressDNS(namespace),
+
     // Istio rules
     allowEgressIstiod(namespace),
     allowIngressSidecarMonitoring(namespace),
   ];
 
-  // Allow DNS lookups
-  if (!disabled.includes(DisableDefault.DNSLookup)) {
-    policies.push(allowEgressDNS(namespace));
-  }
-
-  // Allow all traffic within the namespace
-  if (!disabled.includes(DisableDefault.PermissiveNamespace)) {
-    policies.push(allowEgressWithinNS(namespace));
-    policies.push(allowIngressWithinNS(namespace));
-  }
-
   // Process custom policies
   for (const [idx, policy] of customPolicies.entries()) {
-    const generatedPolicy = await builder(namespace, pkg, policy, idx);
+    const generatedPolicy = await generate(namespace, pkg, policy, idx);
     policies.push(generatedPolicy);
   }
 
   // Generate NetworkPolicies for any VirtualServices that are generated
   const exposeList = pkg.spec?.network?.expose ?? [];
   for (const [idx, expose] of exposeList.entries()) {
-    const { gateway = Gateway.Tenant, port, service } = expose;
-
-    let podLabels: Record<string, string> = {};
-    try {
-      const svcDef = await K8s(kind.Service).InNamespace(namespace).Get(service);
-      podLabels = svcDef.spec?.selector as Record<string, string>;
-    } catch (e) {
-      Log.error(e, `Unable to load the service ${namespace}/${service}`);
-    }
+    const { gateway = Gateway.Tenant, port, podLabels } = expose;
 
     // Create the NetworkPolicy for the VirtualService
     const policy: Allow = {
@@ -70,7 +52,7 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
     };
 
     // Generate the policy with a base index of 1000
-    const generatedPolicy = await builder(namespace, pkg, policy, 1000 + idx);
+    const generatedPolicy = await generate(namespace, pkg, policy, 1000 + idx);
     policies.push(generatedPolicy);
   }
 
@@ -105,4 +87,7 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
     Log.debug(vs, `Deleting orphaned VirtualService ${vs.metadata!.name}`);
     await K8s(kind.NetworkPolicy).Delete(vs);
   }
+
+  // Return the list of policies
+  return policies;
 }

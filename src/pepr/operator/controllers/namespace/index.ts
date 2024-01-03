@@ -1,5 +1,5 @@
 import { K8s, kind } from "pepr";
-import { UDSPackage } from "./crd";
+import { UDSPackage } from "../../crd";
 
 /**
  * Syncs the package namespace istio-injection label and adds a label for the package name

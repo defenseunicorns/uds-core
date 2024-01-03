@@ -1,19 +1,19 @@
 import { V1APIGroup, V1NetworkPolicyPeer, V1NetworkPolicyPort } from "@kubernetes/client-node";
 import { K8s, Log, kind } from "pepr";
 
-import { Allow, UDSPackage } from "../crd";
-import { RemoteGenerated } from "../crd/generated/package-v1alpha1";
+import { Allow, UDSPackage } from "../../crd";
+import { RemoteGenerated } from "../../crd/generated/package-v1alpha1";
 
 let apiServerPeers: V1NetworkPolicyPeer[];
 
-export async function builder(
+export async function generate(
   namespace: string,
   pkg: UDSPackage,
   policy: Allow,
   idx: number,
 ): Promise<kind.NetworkPolicy> {
   const pkgName = pkg.metadata!.name!;
-  const target = Object.values(policy.podLabels!).join("-");
+  const target = Object.values(policy.podLabels || ["all-pods"]).join("-");
 
   // Create a unique name for the NetworkPolicy based on the package name, index, direction, pod labels, and port
   const name = `allow-${policy.direction}-${target}-${pkgName}-${idx}`.toLowerCase();
@@ -39,7 +39,25 @@ export async function builder(
   };
 
   // Create the remote (peer) to match against
-  let peers: V1NetworkPolicyPeer[];
+  let peers: V1NetworkPolicyPeer[] = [];
+
+  // Add the remoteNamespaceLabels if they exist
+  if (policy.remoteNamespaceLabels) {
+    peers.push({
+      namespaceSelector: {
+        matchLabels: policy.remoteNamespaceLabels,
+      },
+    });
+  }
+
+  // Add the remotePodLabels if they exist
+  if (policy.remotePodLabels) {
+    peers.push({
+      podSelector: {
+        matchLabels: policy.remotePodLabels,
+      },
+    });
+  }
 
   // Check if remoteGenerated is set
   switch (policy.remoteGenerated) {
@@ -48,18 +66,14 @@ export async function builder(
       peers = await generateKubeAPI();
       break;
 
-    // Default to namespace and pod labels
-    default:
-      peers = [
-        {
-          namespaceSelector: {
-            matchLabels: policy.remoteNamespaceLabels,
-          },
-          podSelector: {
-            matchLabels: policy.remotePodLabels,
-          },
+    // IntraNamespace maps to the current namespace
+    case RemoteGenerated.IntraNamespace:
+      peers.push({
+        podSelector: {
+          matchLabels: {},
         },
-      ];
+      });
+      break;
   }
 
   // Create the port  to match against
