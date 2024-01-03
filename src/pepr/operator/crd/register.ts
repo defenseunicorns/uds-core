@@ -2,8 +2,8 @@ import { K8s, Log, kind } from "pepr";
 
 import { v1alpha1 } from "./sources/v1alpha1";
 
-// Register the CRD if we're in watch mode
-if (process.env.PEPR_WATCH_MODE === "true") {
+// Register the CRD if we're in watch or dev mode
+if (process.env.PEPR_WATCH_MODE === "true" || process.env.PEPR_MODE === "dev") {
   K8s(kind.CustomResourceDefinition)
     .Apply(
       {
