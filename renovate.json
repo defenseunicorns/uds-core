@@ -1,6 +1,200 @@
 {
-  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "enabled": true,
   "extends": [
-    "config:base"
+    ":dependencyDashboard",
+    ":semanticCommits",
+    ":semanticCommitTypeAll(chore)"
+  ],
+  "forkProcessing": "enabled",
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "branchConcurrentLimit": 0,
+  "prConcurrentLimit": 0,
+  "prHourlyLimit": 0,
+  "rebaseStalePrs": true,
+  "platform": "github",
+  "requireConfig": "required",
+  "rebaseWhen": "conflicted",
+  "commitBodyTable": true,
+  "separateMajorMinor": false,
+  "suppressNotifications": ["prIgnoreNotification"],
+  "helm-values": {
+    "fileMatch": ["\\.*\\.ya?ml$"]
+  },
+  "kubernetes": {
+    "fileMatch": ["\\.*\\.ya?ml$"]
+  },
+  "regexManagers":[
+    {
+      "depNameTemplate": "defenseunicorns/uds-k3d",
+      "fileMatch": ["\\.*\\.ya?ml$"],
+      "matchStrings": [
+        "# renovate: datasource=github-tags depName=(?<depName>[^ ]+) versioning=(?<versioning>.*?)\n.*?(ref:) (?<currentValue>.*)"
+      ],
+      "datasourceTemplate": "github-tags",
+      "extractVersionTemplate": "^v(?<version>.*)$"
+    },
+    {
+      "fileMatch": ["\\.*\\.ya?ml$", "^\\.vscode/settings\\.json$"],
+      "matchStrings": [
+        "# renovate: datasource=github-tags depName=(?<depName>[^ ]+) versioning=(?<versioning>.*?)( extractVersion=(?<extractVersion>.*?))?\n.*?(version:|ref:) (?<currentValue>.*)",
+        "\/\/ renovate: datasource=github-tags depName=(?<depName>[^ ]+) versioning=(?<versioning>.*?)( extractVersion=(?<extractVersion>.*?))?\n.*?(https:\/\/raw.githubusercontent.com\/defenseunicorns\/zarf\/)(?<currentValue>[^\\s]+)\/"
+      ],
+      "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}",
+      "datasourceTemplate": "github-tags"
+
+    },
+    {
+      "depNameTemplate": "defenseunicorns/uds-cli",
+      "fileMatch": ["\\.*\\.ya?ml$", "^\\.vscode/settings\\.json$"],
+      "matchStrings": [
+        "# renovate: datasource=github-tags depName=(?<depName>[^ ]+) versioning=(?<versioning>[^\n]+)\n.*?uds@(?<currentValue>.*)",
+        "\/\/ renovate: datasource=github-tags depName=(?<depName>[^ ]+) versioning=(?<versioning>.*?)( extractVersion=(?<extractVersion>.*?))?\n.*?(https:\/\/raw.githubusercontent.com\/defenseunicorns\/uds-cli\/v)(?<currentValue>[^\\s]+)\/"
+      ],
+      "datasourceTemplate": "github-tags",
+      "extractVersionTemplate": "^v(?<version>.*)$"
+    },
+    {
+      "fileMatch": ["\\.*\\.ya?ml$"],
+      "matchStrings": [
+        "- [\"]?(?<depName>[^\"\n]*):(?<currentValue>[^\"\n]*)[\"]?"
+      ],
+      "datasourceTemplate": "docker"
+    },
+    {
+      "fileMatch": ["\\.*\\.ya?ml$"],
+      "matchStrings": [
+        "# renovate: datasource=docker( versioning=(?<versioning>.*?))?\n\\s*-\\s+(?<depName>[^:]+):(?<currentValue>.*)"
+      ],
+      "datasourceTemplate": "docker"
+    },
+    {
+      "fileMatch": ["\\.*\\.ya?ml$"],
+      "matchStrings": [
+        "# renovate: image=(?<depName>.*?)\\s*image:\\s.*:(?<currentValue>.*)",
+        "# renovate: image=(?<depName>.*?)\\s*tag:\\s*(?<currentValue>.*)"
+      ],
+      "datasourceTemplate": "docker"
+    },
+    {
+      "fileMatch": ["\\.*\\.ya?ml$"],
+      "matchStrings": [
+        "registryUrl=(?<registryUrl>.*?)\n *chart: (?<depName>.*?)\n *version: (?<currentValue>.*)\n",
+        "- name: (?<depName>.*?)\n *url: (?<registryUrl>.*?)\n *version: (?<currentValue>.*)\n"
+      ],
+      "datasourceTemplate": "helm"
+    },
+    {
+      "fileMatch": ["\\.*\\.ya?ml$"],
+      "matchStrings": [
+        "# renovate: datasource=gitlab-tags depName=(?<depName>.*?)( versioning=(?<versioning>.*?))?( registryUrl=(?<registryUrl>.*?))?\\s.*?_version:\\s*(?<currentValue>[.*])\\s",
+        "# renovate: datasource=gitlab-tags depName=(?<depName>.*?)( versioning=(?<versioning>.*?))?( registryUrl=(?<registryUrl>.*?))?\\s.*?_version:\\s*['\"](?<currentValue>.*)['\"]\\s"
+      ],
+      "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}",
+      "datasourceTemplate": "gitlab-tags"
+    },
+    {
+      "fileMatch": ["^chart/values\\.yaml$"],
+      "matchStrings": [
+        "registry: registry1.dso.mil\\s+tag:\\s+(?<currentValue>.+)"
+      ],
+      "depNameTemplate": "registry1.dso.mil/ironbank/neuvector/neuvector/manager",
+      "datasourceTemplate": "docker"
+    }
+
+  ],
+  "hostRules": [
+    {
+      "matchHost": "registry1.dso.mil",
+      "hostType": "docker",
+      "description": "Encrypted creds for registry1, scoped to this Github org using: https://github.com/renovatebot/renovate/blob/main/docs/usage/configuration-options.md#encrypted",
+      "encrypted": {
+        "username": "wcFMA/xDdHCJBTolAQ/9FXYzgNUO6MJ9crVH8W1p5U8ecnK6yamVOBmKib+9Lu4dtldIzqJBObR8Ctvq+our0VTXbhuCU0AvghJO+Rbjij+sDK3VNL93ojD2Xcd3IHeZhz4U+K2VPIRKHGPTC2mfc9pRZ076hoRqeAPWYrtU3gtNk7ZedMX75+yEuUWax5wS0gIjHnbu/R8fLTadNPbdyRaVGYembtuF8P2hMorCrjAED07UNivnaJaNb6Dj72Bticwqs2gIStoed3S8luzUJIgOOdS9J4Dq3ybkSIWg3+GJQhLyKIhZpgbRQoMbYLQ/z7obT1xX0avXnjobb5rW445R0LXLXj4MokgGo1p5cA+AhP5JEk49w2uutzD3tPZB58edH4USOk4q/9MXNdXzvU5RxOA6ScGeh1JNa+62/N4HA8UtYEudTFOcHkt3xq6h5VKc5k7JbvkCso29wqC8AR5ctBzuLspnzxhPrjm/BcfB/FMnwJE2MbtBxa8R1Z5Hd1DEfsEV57mF7dtV0SIImV+l/4bK/1xz/G9v31u/5DrfkQR6DjAvX8w4zUZE5gHKGsZoeZEFuUc5YQuwdeWEg20Qah4v6rbDfJUzXj9vbyFLMdIomPkuWkNSDzg6oMWCmeQAeL3+ykjsVdoBoJCvHvFEpw4dlrdlnQK1VXsWSX7TTDkRuYKQUKbKIBOWOCXScgFDQwu+f0mUkmFX1MrAojYgfWyZ1hlUDGcsE4pvTWJKP1lHykRM/qPUVh/YXfayh5upYh2MXT44yqMHhyNJE/KlCTp9KXsdflm3kaCAhqEC746IbvBpPjz3DTA7nwLUhDB3K2Zi9t/kIhMQCbV+wI2FgA",
+        "password": "wcFMA/xDdHCJBTolAQ/6A4VHieAREvIZ35w9tpdLuvCysq3951xcwBD+o5A6QNYz9K5J0X4NDp2NF5FwEeEBgh3CGF7t/jXHdvvFUSo1wnTT0N+XoU4fXta1px9rkZssPWaMmqbmQ+KWXrEo7SMYK4nXBdExtIZ/j8XvjvTZ1apAh+ySW41eAKXbeQC+5I2rjDJegH6hI7kGkQDzmSAoaDX/Nw8seccozzOj9GEGxPbtF1UYJIfG0jZObf0GowXXCtCOEd5QcQQnzILIaiN0tgZgXrQKFehMTboi8rgYLtRI3LIObUjxl7O59q7ZBCkUuyt9nYF14i9PD8IltVdPsTrGpyK/yQMFrjHWkIPGFHZC9dLyjQlhTjMFBYdye9KGfoZHnKR5pXZw7JvCho/PaP3S8y4LXPJa7YHty0wEcP1eWT0b1hapHnsyDEJ22xyCz0hVFeUnXRPj3zSqBzn4+wVPZmxcCwuLNmu28JJ76SNYAf/4hTjlc2+8WasB/C8rNA+ASf+C6SsMMp677JffWXJtfJHgtPGV+gTCBITG7D8pkCVyIdoiGDv503QDiw59YdocEHkIaRw6EzSZ5XFEHz0mbnTZ7HgRYPklsQzVvetEOmctFdZgYZZ1hjVOkWIjiuSR+hDc3IT/TdXEohZxizAZAEmmsli0Q70m2EWJo1tUqxS9soQGKGQc/crIdpHSdgFfBI3gyKZP4ehv1WzYqrWlg1syDgbNllgEJIIBxv+ZI+QMJUF8SdtleMkxE6PYvc1bzpj6nTrM1oahiK8BUKS+cTpXQr1+LneL1mQ/4rSqNQO5ooBweej3Ql0cDNzjahfYc/1AwctQOdjZRpmGUs+RaMezgF8"
+      }
+    }
+  ],
+  "packageRules": [
+    {
+      "matchFileNames": ["src/istio/**"],
+      "groupName": "istio",
+      "commitMessageTopic": "istio"
+    },
+    {
+      "matchFileNames": ["src/promtail/**"],
+      "groupName": "promtail",
+      "commitMessageTopic": "promtail"
+    },
+    {
+      "matchFileNames": ["src/velero/**"],
+      "groupName": "velero",
+      "commitMessageTopic": "velero"
+    },
+    {
+      "matchFileNames": ["src/tempo/**"],
+      "groupName": "tempo",
+      "commitMessageTopic": "tempo"
+    },
+    {
+      "matchFileNames": ["src/prometheus-stack/**"],
+      "groupName": "prometheus-stack",
+      "commitMessageTopic": "prometheus-stack"
+    },
+    {
+      "matchFileNames": ["src/neuvector/**"],
+      "groupName": "neuvector",
+      "commitMessageTopic": "neuvector"
+    },
+    {
+      "matchFileNames": ["src/metrics-server/**"],
+      "groupName": "metrics-server",
+      "commitMessageTopic": "metrics-server"
+    },
+    {
+      "matchFileNames": ["src/loki/**"],
+      "groupName": "loki",
+      "commitMessageTopic": "loki"
+    },
+    {
+      "matchFileNames": ["src/kiali/**"],
+      "groupName": "kiali",
+      "commitMessageTopic": "kiali"
+    },
+    {
+      "matchFileNames": ["src/keycloak/**"],
+      "groupName": "keycloak",
+      "commitMessageTopic": "keycloak"
+    },
+    {
+      "matchFileNames": ["src/grafana/**"],
+      "groupName": "grafana",
+      "commitMessageTopic": "grafana"
+    },
+    {
+      "matchPackageNames": ["defenseunicorns/zarf"],
+      "groupName": "zarf",
+      "commitMessageTopic": "zarf"
+    },
+    {
+      "matchPackageNames": ["defenseunicorns/uds-cli"],
+      "groupName": "uds",
+      "commitMessageTopic": "uds"
+    },
+    {
+      "matchPackageNames": ["defenseunicorns/uds-k3d"],
+      "groupName": "uds-k3d",
+      "commitMessageTopic": "uds-k3d"
+    },
+    { 
+      "matchFileNames": [".github/**"],
+      "excludePackageNames": ["defenseunicorns/zarf","defenseunicorns/uds-cli"],
+      "groupName": "githubactions",
+      "commitMessageTopic": "githubactions",
+      "pinDigests": true
+    },
+    {
+      "matchFileNames": ["package.json", "package-lock.json"],
+      "groupName": "pepr",
+      "commitMessageTopic": "pepr"
+    }
   ]
 }

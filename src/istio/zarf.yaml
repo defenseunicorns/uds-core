@@ -20,13 +20,13 @@ components:
     required: true
     charts:
       - name: base
-        namespace: istio-system
         url: https://istio-release.storage.googleapis.com/charts
         version: 1.19.3
+        namespace: istio-system
       - name: istiod
-        namespace: istio-system
         url: https://istio-release.storage.googleapis.com/charts
         version: 1.19.3
+        namespace: istio-system
         valuesFiles:
           - "values/values.yaml"
     manifests:
@@ -44,10 +44,10 @@ components:
     required: true
     charts:
       - name: gateway
-        releaseName: admin-ingressgateway
-        namespace: istio-admin-gateway
         url: https://istio-release.storage.googleapis.com/charts
         version: 1.19.3
+        releaseName: admin-ingressgateway
+        namespace: istio-admin-gateway
       - name: uds-istio-config
         version: 0.2.0
         localPath: chart
@@ -60,10 +60,10 @@ components:
     required: true
     charts:
       - name: gateway
-        releaseName: tenant-ingressgateway
-        namespace: istio-tenant-gateway
         url: https://istio-release.storage.googleapis.com/charts
         version: 1.19.3
+        releaseName: tenant-ingressgateway
+        namespace: istio-tenant-gateway        
       - name: uds-istio-config
         version: 0.2.0
         localPath: chart
@@ -76,10 +76,10 @@ components:
     required: true
     charts:
       - name: gateway
-        releaseName: passthrough-ingressgateway
-        namespace: istio-passthrough-gateway
         url: https://istio-release.storage.googleapis.com/charts
         version: 1.19.3
+        releaseName: passthrough-ingressgateway
+        namespace: istio-passthrough-gateway
       - name: uds-istio-config
         version: 0.2.0
         localPath: chart
