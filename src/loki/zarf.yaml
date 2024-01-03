@@ -9,7 +9,7 @@ components:
     charts:
       - name: loki
         url: https://grafana.github.io/helm-charts/
-        version: 5.36.3
+        version: 5.41.4
         namespace: loki
         valuesFiles:
           - ./values/values.yaml
@@ -18,5 +18,5 @@ components:
         version: 0.2.0
         localPath: chart
     images:
-      - docker.io/grafana/loki:2.9.2
-      - docker.io/nginxinc/nginx-unprivileged:1.24-alpine
+      - docker.io/grafana/loki:2.9.3
+      - docker.io/nginxinc/nginx-unprivileged:1.25-alpine
