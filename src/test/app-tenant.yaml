@@ -5,6 +5,21 @@ metadata:
   labels:
     zarf.dev/agent: ignore
 ---
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: httpbin
+  namespace: test-app
+spec:
+  network:
+    expose:
+      - service: httpbin
+        podLabels:
+          app: httpbin
+        gateway: tenant
+        host: demo
+        port: 8000
+---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -26,21 +41,6 @@ spec:
       targetPort: 80
   selector:
     app: httpbin
----
-apiVersion: uds.dev/v1alpha1
-kind: Package
-metadata:
-  name: httpbin
-  namespace: test-app
-spec:
-  network:
-    expose:
-      - service: httpbin
-        podLabels:
-          app: httpbin
-        gateway: tenant
-        host: demo
-        port: 8000
 ---
 apiVersion: apps/v1
 kind: Deployment

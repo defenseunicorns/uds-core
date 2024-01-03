@@ -31,6 +31,9 @@ export async function syncNamespace(pkg: UDSPackage) {
       },
       { force: true },
     );
+
+    // @todo: Add a finalizer to remove the label when the package is deleted
+    // @todo: Check for pods without sidecars and address them
   }
 
   return pkg.metadata.namespace;
