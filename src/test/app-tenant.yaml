@@ -36,6 +36,8 @@ spec:
   network:
     expose:
       - service: httpbin
+        podLabels:
+          app: httpbin
         gateway: tenant
         host: demo
         port: 8000
