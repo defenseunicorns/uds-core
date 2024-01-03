@@ -7,37 +7,32 @@ spec:
   network:
     expose:
       - service: neuvector-service-webui
+        podLabels:
+          app: neuvector-manager-pod
         gateway: admin
         host: neuvector
         port: 8443
-    policies:
-      allow:
-        - direction: Egress
-          remoteGenerated: KubeAPI
-          podLabels:
-            app: neuvector-controller-pod
-        - direction: Egress
-          remoteGenerated: KubeAPI
-          podLabels:
-            app: neuvector-updater-pod
-        - direction: Ingress
-          remoteNamespaceLabels:
-            app.kubernetes.io/name: monitoring
-          remotePodLabels:
-            app: prometheus
-          podLabels:
-            app: neuvector-prometheus-exporter-pod
-          port: 8068
 
+    allow:
+      # Permit intra-namespace communication
+      - direction: Ingress
+        remoteGenerated: IntraNamespace
+      - direction: Egress
+        remoteGenerated: IntraNamespace
 
-      
-# apiVersion: networking.k8s.io/v1
-# kind: NetworkPolicy
-# metadata:
-#   name: allow-istio-ingress
-#   # namespace: {{ .Release.Namespace }}
-#   namespace: neuvector
-# spec:
-#   podSelector:
-#     matchLabels:
-#       app: neuvector-manager-pod
+      - direction: Egress
+        remoteGenerated: KubeAPI
+        podLabels:
+          app: neuvector-controller-pod
+      - direction: Egress
+        remoteGenerated: KubeAPI
+        podLabels:
+          app: neuvector-updater-pod
+      - direction: Ingress
+        remoteNamespaceLabels:
+          app.kubernetes.io/name: monitoring
+        remotePodLabels:
+          app: prometheus
+        podLabels:
+          app: neuvector-prometheus-exporter-pod
+        port: 8068

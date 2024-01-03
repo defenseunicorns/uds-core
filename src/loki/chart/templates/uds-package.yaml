@@ -5,14 +5,13 @@ metadata:
   namespace: {{ .Release.Namespace }}
 spec:
   network:
-    policies:
-      allow:
-        - direction: Ingress
-          podLabels:
-            app: grafana
-          remoteNamespaceLabels:
-            app.kubernetes.io/name: tempo
-          remotePodLabels:
-            app.kubernetes.io/name: tempo
-          port: 9090
-          protocol: TCP
+    allow:
+      - direction: Ingress
+        podLabels:
+          app: grafana
+        remoteNamespaceLabels:
+          app.kubernetes.io/name: tempo
+        remotePodLabels:
+          app.kubernetes.io/name: tempo
+        port: 9090
+        protocol: TCP

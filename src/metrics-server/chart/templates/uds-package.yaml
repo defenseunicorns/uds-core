@@ -5,15 +5,14 @@ metadata:
   namespace: {{ .Release.Namespace }}
 spec:
   network:
-    policies:
-      allow:
-        - direction: Egress
-          remoteGenerated: KubeAPI
-          podLabels:
-            app.kubernetes.io/name: metrics-server
-        - direction: Ingress
-          podLabels:
-            app.kubernetes.io/name: metrics-server
-          remoteNamespaceLabels:
-            kubernetes.io/metadata.name: "istio-system"
-          port: 443
+    allow:
+      - direction: Egress
+        remoteGenerated: KubeAPI
+        podLabels:
+          app.kubernetes.io/name: metrics-server
+      - direction: Ingress
+        podLabels:
+          app.kubernetes.io/name: metrics-server
+        remoteNamespaceLabels:
+          kubernetes.io/metadata.name: "istio-system"
+        port: 443
