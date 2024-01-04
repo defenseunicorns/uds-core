@@ -7,12 +7,6 @@ spec:
   network:
     allow:
       - direction: Egress
-        remoteGenerated: KubeAPI
+        # todo: evaluate an "all nodes" generated rule
         podLabels:
           app.kubernetes.io/name: metrics-server
-      - direction: Ingress
-        podLabels:
-          app.kubernetes.io/name: metrics-server
-        remoteNamespaceLabels:
-          kubernetes.io/metadata.name: "istio-system"
-        port: 443
