@@ -8,10 +8,14 @@ spec:
     allow:
       - direction: Ingress
         podLabels:
-          app: grafana
+          app.kubernetes.io/name: loki
         remoteNamespaceLabels:
           app.kubernetes.io/name: tempo
         remotePodLabels:
           app.kubernetes.io/name: tempo
-        port: 9090
-        protocol: TCP
+        port: 8080
+
+      - direction: Egress
+        podLabels:
+          app.kubernetes.io/name: loki
+        remoteGenerated: anywhere

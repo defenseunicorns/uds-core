@@ -11,15 +11,30 @@ spec:
           app.kubernetes.io/name: grafana
         host: grafana
         gateway: admin
-        port: 80
+        port: 5000
+        ports: 
+         - 80
 
     allow:
       - direction: Ingress
         podLabels:
-          app: grafana
+          app.kubernetes.io/name: grafana
         remoteNamespaceLabels:
           app.kubernetes.io/name: tempo
         remotePodLabels:
           app.kubernetes.io/name: tempo
         port: 9090
-        protocol: TCP
+
+      - direction: Egress
+        podLabels:
+          app.kubernetes.io/name: grafana
+        remoteGenerated: anywhere
+
+      - direction: Egress
+        podLabels:
+          app.kubernetes.io/name: grafana
+        remoteNamespaceLabels:
+          app.kubernetes.io/name: tempo
+        remotePodLabels:
+          app.kubernetes.io/name: tempo
+        port: 9411
