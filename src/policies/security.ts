@@ -79,9 +79,9 @@ When(a.Pod)
     }
 
     // Set the runAsNonRoot field to true if it is undefined
-    if (pod.securityContext.runAsNonRoot === undefined) {
-      pod.securityContext.runAsNonRoot = true;
-    }
+    // if (pod.securityContext.runAsNonRoot === undefined) {
+    //   pod.securityContext.runAsNonRoot = true;
+    // }
 
     // // Set the runAsUser field to 1000 if it is undefined
     // if (pod.securityContext.runAsUser === undefined) {
