@@ -83,15 +83,15 @@ When(a.Pod)
       pod.securityContext.runAsNonRoot = true;
     }
 
-    // Set the runAsUser field to 1000 if it is undefined
-    if (pod.securityContext.runAsUser === undefined) {
-      pod.securityContext.runAsUser = 1000;
-    }
+    // // Set the runAsUser field to 1000 if it is undefined
+    // if (pod.securityContext.runAsUser === undefined) {
+    //   pod.securityContext.runAsUser = 1000;
+    // }
 
-    // Set the runAsGroup field to 1000 if it is undefined
-    if (pod.securityContext.runAsGroup === undefined) {
-      pod.securityContext.runAsGroup = 1000;
-    }
+    // // Set the runAsGroup field to 1000 if it is undefined
+    // if (pod.securityContext.runAsGroup === undefined) {
+    //   pod.securityContext.runAsGroup = 1000;
+    // }
   })
   .Validate(request => {
     if (exemptPrivileged(request)) {
