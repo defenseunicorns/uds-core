@@ -66,7 +66,7 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
 
     // If not the default deny all policy, add the index to the name
     if (idx > 0) {
-      policy.metadata.name = `allow-${pkg.metadata!.name}-${idx}-${policy.metadata.name}`;
+      policy.metadata.name = `allow-uds-${pkg.metadata!.name}-${idx}-${policy.metadata.name}`;
     }
 
     // Use the CR as the owner ref for each NetworkPolicy
