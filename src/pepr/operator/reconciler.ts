@@ -45,7 +45,7 @@ export async function reconciler(pkg: UDSPackage) {
       Log.warn(`Istio is not installed, skipping ${pkg.metadata.name} VirtualService.`);
     }
 
-    void updateStatus(pkg, {
+    await updateStatus(pkg, {
       phase: Phase.Ready,
       endpoints: vs.map(v => v.spec!.hosts!.join(",")),
       networkPolicyCount: netPol.length,
@@ -53,7 +53,7 @@ export async function reconciler(pkg: UDSPackage) {
     });
   } catch (e) {
     Log.error(e, `Error configuring for ${pkg.metadata.namespace}/${pkg.metadata.name}`);
-    void updateStatus(pkg, { phase: Phase.Failed });
+    void updateStatus(pkg, { phase: Phase.Failed, observedGeneration: pkg.metadata.generation });
   }
 }
 
