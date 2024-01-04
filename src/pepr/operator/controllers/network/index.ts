@@ -84,7 +84,7 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
 
   // Find any orphaned polices (not matching the current generation)
   const orphanedNetPol = policyList.items.filter(
-    vs => vs.metadata?.labels?.["uds/generation"] !== generation,
+    netPol => netPol.metadata?.labels?.["uds/generation"] !== generation,
   );
 
   // Delete any orphaned policies
