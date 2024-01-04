@@ -53,6 +53,7 @@ export async function reconciler(pkg: UDSPackage) {
     });
   } catch (e) {
     Log.error(e, `Error configuring for ${pkg.metadata.namespace}/${pkg.metadata.name}`);
+    // todo: need to evaluate when it is safe to retry (updating generation now avoids retrying infinitely)
     void updateStatus(pkg, { phase: Phase.Failed, observedGeneration: pkg.metadata.generation });
   }
 }
