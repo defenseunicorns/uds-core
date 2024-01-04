@@ -1,7 +1,7 @@
 import { V1NetworkPolicyPeer, V1NetworkPolicyPort } from "@kubernetes/client-node";
 import { kind } from "pepr";
 
-import { Allow, UDSPackage } from "../../crd";
+import { Allow } from "../../crd";
 import { RemoteGenerated } from "../../crd/generated/package-v1alpha1";
 import { anywhere } from "./generators/anywhere";
 import { cloudMetadata } from "./generators/cloudMetadata";
@@ -10,7 +10,6 @@ import { generateKubeAPI } from "./generators/kubeAPI";
 
 export async function generate(
   namespace: string,
-  pkg: UDSPackage,
   policy: Allow,
 ): Promise<kind.NetworkPolicy> {
   const target = Object.values(policy.podLabels || ["all-pods"]).join("-");
@@ -84,13 +83,15 @@ export async function generate(
     }
   }
 
-  // Create the port  to match against
-  const ports: V1NetworkPolicyPort[] = [
-    {
+  // Define the ports to allow from the ports property
+  const ports: V1NetworkPolicyPort[] = (policy.ports ?? []).map(port => ({ port }));
+
+  // Add the individual port if it exists
+  if (policy.port) {
+    ports.push({
       port: policy.port,
-      protocol: policy.protocol,
-    },
-  ];
+    });
+  }
 
   // Add the ingress or egress rule
   switch (policy.direction) {

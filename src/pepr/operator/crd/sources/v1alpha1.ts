@@ -160,15 +160,19 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
                         enum: ["KubeAPI", "IntraNamespace", "CloudMetadata", "Anywhere"],
                       },
                       port: {
-                        description: "The port to allow",
+                        description: "The port to allow (protocol is always TCP)",
                         minimum: 1,
                         maximum: 65535,
                         type: "number",
                       },
-                      protocol: {
-                        description: "The protocol (TCP, UDP, or SCTP) to allow. Defaults to TCP.",
-                        type: "string",
-                        enum: ["TCP", "UDP", "SCTP"],
+                      ports: {
+                        description: "A list of ports to allow (protocol is always TCP)",
+                        type: "array",
+                        items: {
+                          minimum: 1,
+                          maximum: 65535,
+                          type: "number",
+                        },
                       },
                     },
                   },

@@ -43,13 +43,13 @@ export interface Allow {
    */
   podLabels?: { [key: string]: string };
   /**
-   * The port to allow
+   * The port to allow (protocol is always TCP)
    */
   port?: number;
   /**
-   * The protocol (TCP, UDP, or SCTP) to allow. Defaults to TCP.
+   * A list of ports to allow (protocol is always TCP)
    */
-  protocol?: Protocol;
+  ports?: number[];
   /**
    * Custom generated remote selector for the policy
    */
@@ -70,15 +70,6 @@ export interface Allow {
 export enum Direction {
   Egress = "Egress",
   Ingress = "Ingress",
-}
-
-/**
- * The protocol (TCP, UDP, or SCTP) to allow. Defaults to TCP.
- */
-export enum Protocol {
-  SCTP = "SCTP",
-  TCP = "TCP",
-  UDP = "UDP",
 }
 
 /**

@@ -10,3 +10,4 @@ spec:
         # todo: evaluate an "all nodes" generated rule
         podLabels:
           app.kubernetes.io/name: metrics-server
+        remoteGenerated: anywhere

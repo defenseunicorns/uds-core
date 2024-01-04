@@ -17,6 +17,7 @@ spec:
       # Permit intra-namespace communication
       - direction: Ingress
         remoteGenerated: IntraNamespace
+
       - direction: Egress
         remoteGenerated: IntraNamespace
 
@@ -24,10 +25,12 @@ spec:
         remoteGenerated: KubeAPI
         podLabels:
           app: neuvector-controller-pod
+
       - direction: Egress
         remoteGenerated: KubeAPI
         podLabels:
           app: neuvector-updater-pod
+
       - direction: Ingress
         remoteNamespaceLabels:
           app.kubernetes.io/name: monitoring

@@ -29,7 +29,7 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
 
   // Process custom policies
   for (const policy of customPolicies) {
-    const generatedPolicy = await generate(namespace, pkg, policy);
+    const generatedPolicy = await generate(namespace, policy);
     policies.push(generatedPolicy);
   }
 
@@ -51,8 +51,8 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
       port,
     };
 
-    // Generate the policy with a base index of 1000
-    const generatedPolicy = await generate(namespace, pkg, policy);
+    // Generate the policy
+    const generatedPolicy = await generate(namespace, policy);
     policies.push(generatedPolicy);
   }
 
