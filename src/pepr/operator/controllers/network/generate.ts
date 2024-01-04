@@ -1,10 +1,12 @@
 import { V1NetworkPolicyPeer, V1NetworkPolicyPort } from "@kubernetes/client-node";
-import { K8s, Log, kind } from "pepr";
+import { kind } from "pepr";
 
 import { Allow, UDSPackage } from "../../crd";
 import { RemoteGenerated } from "../../crd/generated/package-v1alpha1";
-
-let apiServerPeers: V1NetworkPolicyPeer[];
+import { anywhere } from "./generators/anywhere";
+import { cloudMetadata } from "./generators/cloudMetadata";
+import { intraNamespace } from "./generators/intraNamespace";
+import { generateKubeAPI } from "./generators/kubeAPI";
 
 export async function generate(
   namespace: string,
@@ -58,21 +60,28 @@ export async function generate(
   }
 
   // Check if remoteGenerated is set
-  switch (policy.remoteGenerated) {
-    // KubeAPI maps to the Kubernetes API server
-    case RemoteGenerated.KubeAPI:
-      peers = await generateKubeAPI();
-      generated.metadata!.labels!["uds/generated"] = "kubeapi";
-      break;
+  if (policy.remoteGenerated) {
+    // Add the remoteGenerated label
+    generated.metadata!.labels!["uds/generated"] = policy.remoteGenerated;
 
-    // IntraNamespace maps to the current namespace
-    case RemoteGenerated.IntraNamespace:
-      peers.push({
-        podSelector: {
-          matchLabels: {},
-        },
-      });
-      break;
+    // Check if remoteGenerated is set
+    switch (policy.remoteGenerated) {
+      case RemoteGenerated.KubeAPI:
+        peers = await generateKubeAPI();
+        break;
+
+      case RemoteGenerated.CloudMetadata:
+        peers = cloudMetadata;
+        break;
+
+      case RemoteGenerated.IntraNamespace:
+        peers.push(intraNamespace);
+        break;
+
+      case RemoteGenerated.Anywhere:
+        peers = [anywhere];
+        break;
+    }
   }
 
   // Create the port  to match against
@@ -95,40 +104,4 @@ export async function generate(
   }
 
   return generated;
-}
-
-async function generateKubeAPI(): Promise<V1NetworkPolicyPeer[]> {
-  // Return the cached value if it exists
-  // @todo: evaluate if this ever changes with node autoscaling
-  if (apiServerPeers) {
-    return apiServerPeers;
-  }
-
-  try {
-    // Read the API server endpoints from the cluster
-    const { endpoints } = await K8s(kind.EndpointSlice).InNamespace("default").Get("kubernetes");
-
-    const peers = endpoints?.flatMap(e => e.addresses);
-
-    // If the peers are found, cache and return them
-    if (peers?.length) {
-      apiServerPeers = peers.flatMap(ip => ({
-        ipBlock: {
-          cidr: `${ip}/32`,
-        },
-      }));
-
-      return apiServerPeers;
-    }
-  } catch (err) {
-    Log.debug(err);
-  }
-
-  // Log a warning and default to 0.0.0.0/0 if the IP is not found
-  Log.warn("Unable to get api-server-cidr, defaulting to 0.0.0.0/0");
-  return [
-    {
-      ipBlock: { cidr: "0.0.0.0/0" },
-    },
-  ];
 }

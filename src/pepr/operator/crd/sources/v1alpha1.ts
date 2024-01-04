@@ -157,7 +157,7 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
                       remoteGenerated: {
                         description: "Custom generated remote selector for the policy",
                         type: "string",
-                        enum: ["KubeAPI", "IntraNamespace"],
+                        enum: ["KubeAPI", "IntraNamespace", "CloudMetadata", "Anywhere"],
                       },
                       port: {
                         description: "The port to allow",

@@ -85,6 +85,8 @@ export enum Protocol {
  * Custom generated remote selector for the policy
  */
 export enum RemoteGenerated {
+  Anywhere = "Anywhere",
+  CloudMetadata = "CloudMetadata",
   IntraNamespace = "IntraNamespace",
   KubeAPI = "KubeAPI",
 }
