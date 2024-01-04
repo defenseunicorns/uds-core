@@ -1,4 +1,4 @@
-import { V1APIGroup, V1NetworkPolicyPeer, V1NetworkPolicyPort } from "@kubernetes/client-node";
+import { V1NetworkPolicyPeer, V1NetworkPolicyPort } from "@kubernetes/client-node";
 import { K8s, Log, kind } from "pepr";
 
 import { Allow, UDSPackage } from "../../crd";
@@ -26,7 +26,7 @@ export async function generate(
       name,
       namespace,
       labels: {
-        "uds/builder": "true",
+        "uds/generator": "true",
         ...policy.labels,
       },
     },
@@ -64,6 +64,7 @@ export async function generate(
     // KubeAPI maps to the Kubernetes API server
     case RemoteGenerated.KubeAPI:
       peers = await generateKubeAPI();
+      generated.metadata!.labels!["uds/generated"] = "kubeapi";
       break;
 
     // IntraNamespace maps to the current namespace
@@ -107,29 +108,19 @@ async function generateKubeAPI(): Promise<V1NetworkPolicyPeer[]> {
 
   try {
     // Read the API server endpoints from the cluster
-    const { serverAddressByClientCIDRs } = await K8s(V1APIGroup).Raw("/api");
+    const { endpoints } = await K8s(kind.EndpointSlice).InNamespace("default").Get("kubernetes");
 
-    const peers = serverAddressByClientCIDRs?.flatMap(s => {
-      // Parse the value to get the host
-      const match = s.serverAddress.match(/^(?<host>[^:]+):(?<port>\d+)$/);
-
-      // Throw an error if the host is not found
-      if (!match?.groups?.host) {
-        throw new Error(`Unable to parse serverAddress: ${s.serverAddress}`);
-      }
-
-      // Otherwise, add the ipBlock to the peers map
-      return {
-        ipBlock: {
-          cidr: `${match.groups.host}/32`,
-        },
-      };
-    });
+    const peers = endpoints?.flatMap(e => e.addresses);
 
     // If the peers are found, cache and return them
     if (peers?.length) {
-      apiServerPeers = peers;
-      return peers;
+      apiServerPeers = peers.flatMap(ip => ({
+        ipBlock: {
+          cidr: `${ip}/32`,
+        },
+      }));
+
+      return apiServerPeers;
     }
   } catch (err) {
     Log.debug(err);
