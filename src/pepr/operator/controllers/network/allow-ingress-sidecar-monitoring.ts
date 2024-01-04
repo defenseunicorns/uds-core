@@ -5,7 +5,7 @@ export function allowIngressSidecarMonitoring(namespace: string): kind.NetworkPo
     apiVersion: "networking.k8s.io/v1",
     kind: "NetworkPolicy",
     metadata: {
-      name: "allow-ingress-sidecar-monitoring",
+      name: "ingress-sidecar-monitoring",
       namespace,
     },
     spec: {

@@ -5,7 +5,7 @@ export function allowEgressDNS(namespace: string): kind.NetworkPolicy {
     apiVersion: "networking.k8s.io/v1",
     kind: "NetworkPolicy",
     metadata: {
-      name: "allow-egress-dns",
+      name: `egress-dns`,
       namespace,
     },
     spec: {

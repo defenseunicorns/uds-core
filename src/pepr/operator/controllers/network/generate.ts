@@ -10,13 +10,11 @@ export async function generate(
   namespace: string,
   pkg: UDSPackage,
   policy: Allow,
-  idx: number,
 ): Promise<kind.NetworkPolicy> {
-  const pkgName = pkg.metadata!.name!;
   const target = Object.values(policy.podLabels || ["all-pods"]).join("-");
 
   // Create a unique name for the NetworkPolicy based on the package name, index, direction, pod labels, and port
-  const name = `allow-${policy.direction}-${target}-${pkgName}-${idx}`.toLowerCase();
+  const name = `${policy.direction}-${target}`.toLowerCase();
 
   // Create the NetworkPolicy
   const generated: kind.NetworkPolicy = {

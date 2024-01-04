@@ -5,7 +5,7 @@ export function allowEgressIstiod(namespace: string): kind.NetworkPolicy {
     apiVersion: "networking.k8s.io/v1",
     kind: "NetworkPolicy",
     metadata: {
-      name: "allow-egress-istiod",
+      name: `egress-istiod`,
       namespace,
     },
     spec: {

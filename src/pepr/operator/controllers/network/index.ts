@@ -28,14 +28,14 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
   ];
 
   // Process custom policies
-  for (const [idx, policy] of customPolicies.entries()) {
-    const generatedPolicy = await generate(namespace, pkg, policy, idx);
+  for (const policy of customPolicies) {
+    const generatedPolicy = await generate(namespace, pkg, policy);
     policies.push(generatedPolicy);
   }
 
   // Generate NetworkPolicies for any VirtualServices that are generated
   const exposeList = pkg.spec?.network?.expose ?? [];
-  for (const [idx, expose] of exposeList.entries()) {
+  for (const expose of exposeList) {
     const { gateway = Gateway.Tenant, port, podLabels } = expose;
 
     // Create the NetworkPolicy for the VirtualService
@@ -52,17 +52,22 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
     };
 
     // Generate the policy with a base index of 1000
-    const generatedPolicy = await generate(namespace, pkg, policy, 1000 + idx);
+    const generatedPolicy = await generate(namespace, pkg, policy);
     policies.push(generatedPolicy);
   }
 
   // Iterate over each policy and apply it
-  for (const policy of policies) {
+  for (const [idx, policy] of policies.entries()) {
     // Add the package name and generation to the labels
     policy.metadata = policy.metadata ?? {};
     policy.metadata.labels = policy.metadata?.labels ?? {};
     policy.metadata.labels["uds/package"] = pkg.metadata!.name!;
     policy.metadata.labels["uds/generation"] = generation;
+
+    // If not the default deny all policy, add the index to the name
+    if (idx > 0) {
+      policy.metadata.name = `allow-${pkg.metadata!.name}-${idx}-${policy.metadata.name}`;
+    }
 
     // Use the CR as the owner ref for each NetworkPolicy
     policy.metadata.ownerReferences = getOwnerRef(pkg);
@@ -83,9 +88,9 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
   );
 
   // Delete any orphaned policies
-  for (const vs of orphanedNetPol) {
-    Log.debug(vs, `Deleting orphaned VirtualService ${vs.metadata!.name}`);
-    await K8s(kind.NetworkPolicy).Delete(vs);
+  for (const netPol of orphanedNetPol) {
+    Log.debug(netPol, `Deleting orphaned VirtualService ${netPol.metadata!.name}`);
+    await K8s(kind.NetworkPolicy).Delete(netPol);
   }
 
   // Return the list of policies
