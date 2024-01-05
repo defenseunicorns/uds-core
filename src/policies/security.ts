@@ -78,7 +78,7 @@ When(a.Pod)
       pod.securityContext.runAsGroup = parseInt(runAsGroup)
     }
 
-    // Set the rsGroup field if it is defined in a label
+    // Set the fsGroup field if it is defined in a label
     const fsGroup = metadata.labels?.["uds/fsgroup"]
     if (fsGroup) {
       pod.securityContext.fsGroup = parseInt(fsGroup)
