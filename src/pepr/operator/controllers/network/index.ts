@@ -1,10 +1,10 @@
 import { K8s, Log, kind } from "pepr";
 
 import { Allow, Direction, Gateway, UDSPackage, getOwnerRef } from "../../crd";
-import { allowEgressDNS } from "./allow-egress-dns";
-import { allowEgressIstiod } from "./allow-egress-istiod";
-import { allowIngressSidecarMonitoring } from "./allow-ingress-sidecar-monitoring";
-import { defaultDenyAll } from "./default-deny-all";
+import { allowEgressDNS } from "./defaults/allow-egress-dns";
+import { allowEgressIstiod } from "./defaults/allow-egress-istiod";
+import { allowIngressSidecarMonitoring } from "./defaults/allow-ingress-sidecar-monitoring";
+import { defaultDenyAll } from "./defaults/default-deny-all";
 
 // Import the NetworkPolicy transforms webhook
 import { generate } from "./generate";
@@ -29,7 +29,7 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
 
   // Process custom policies
   for (const policy of customPolicies) {
-    const generatedPolicy = await generate(namespace, policy);
+    const generatedPolicy = generate(namespace, policy);
     policies.push(generatedPolicy);
   }
 
@@ -52,7 +52,7 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
     };
 
     // Generate the policy
-    const generatedPolicy = await generate(namespace, policy);
+    const generatedPolicy = generate(namespace, policy);
     policies.push(generatedPolicy);
   }
 

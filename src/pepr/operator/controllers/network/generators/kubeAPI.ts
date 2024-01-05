@@ -5,19 +5,21 @@ import { anywhere } from "./anywhere";
 
 let apiServerPeers: V1NetworkPolicyPeer[];
 
+void getAPIServerCIDR();
+
 /**
  * This generates a NetworkPolicyPeer that matches the API server endpoints.
  *
  * @returns A NetworkPolicyPeer that matches the API server endpoints
  */
-export async function generateKubeAPI(): Promise<V1NetworkPolicyPeer[]> {
-  // Return the cached value if it exists
-  // @todo: evaluate if this ever changes with node autoscaling
-  if (apiServerPeers) {
-    return apiServerPeers;
-  }
+export function generateKubeAPI(): V1NetworkPolicyPeer[] {
+  return apiServerPeers;
+}
 
+async function getAPIServerCIDR(): Promise<V1NetworkPolicyPeer[]> {
   try {
+    // @todo: evaluate if this ever changes with node autoscaling
+
     // Read the API server endpoints from the cluster
     const { endpoints } = await K8s(kind.EndpointSlice).InNamespace("default").Get("kubernetes");
 

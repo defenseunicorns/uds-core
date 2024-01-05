@@ -8,10 +8,7 @@ import { cloudMetadata } from "./generators/cloudMetadata";
 import { intraNamespace } from "./generators/intraNamespace";
 import { generateKubeAPI } from "./generators/kubeAPI";
 
-export async function generate(
-  namespace: string,
-  policy: Allow,
-): Promise<kind.NetworkPolicy> {
+export function generate(namespace: string, policy: Allow): kind.NetworkPolicy {
   const target = Object.values(policy.podLabels || ["all-pods"]).join("-");
 
   // Create a unique name for the NetworkPolicy based on the package name, index, direction, pod labels, and port
@@ -66,7 +63,7 @@ export async function generate(
     // Check if remoteGenerated is set
     switch (policy.remoteGenerated) {
       case RemoteGenerated.KubeAPI:
-        peers = await generateKubeAPI();
+        peers = generateKubeAPI();
         break;
 
       case RemoteGenerated.CloudMetadata:
