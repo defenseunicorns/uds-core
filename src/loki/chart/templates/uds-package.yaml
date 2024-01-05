@@ -18,4 +18,4 @@ spec:
       - direction: Egress
         podLabels:
           app.kubernetes.io/name: loki
-        remoteGenerated: anywhere
+        remoteGenerated: Anywhere
