@@ -72,7 +72,7 @@ When(a.Pod)
       pod.securityContext.runAsUser = parseInt(runAsUser)
     }
 
-    // Set the runAsUser field if it is defined in a label
+    // Set the runAsGroup field if it is defined in a label
     const runAsGroup = metadata.labels?.["uds/group"]
     if (runAsGroup) {
       pod.securityContext.runAsGroup = parseInt(runAsGroup)
