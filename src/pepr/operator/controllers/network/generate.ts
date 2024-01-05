@@ -9,10 +9,8 @@ import { intraNamespace } from "./generators/intraNamespace";
 import { generateKubeAPI } from "./generators/kubeAPI";
 
 export function generate(namespace: string, policy: Allow): kind.NetworkPolicy {
-  const target = Object.values(policy.podLabels || ["all-pods"]).join("-");
-
   // Create a unique name for the NetworkPolicy based on the package name, index, direction, pod labels, and port
-  const name = `${policy.direction}-${target}`.toLowerCase();
+  const name = generateName(policy);
 
   // Create the NetworkPolicy
   const generated: kind.NetworkPolicy = {
@@ -21,10 +19,7 @@ export function generate(namespace: string, policy: Allow): kind.NetworkPolicy {
     metadata: {
       name,
       namespace,
-      labels: {
-        "uds/generator": "true",
-        ...policy.labels,
-      },
+      labels: { ...policy.labels },
     },
     spec: {
       policyTypes: [policy.direction],
@@ -108,4 +103,33 @@ export function generate(namespace: string, policy: Allow): kind.NetworkPolicy {
   }
 
   return generated;
+}
+
+function generateName(policy: Allow) {
+  const name =
+    // Use the description if it exists
+    policy.description ||
+    // Otherwise use the direction, and combination of remote properties
+    [
+      Object.values(policy.podLabels || ["all pods"]),
+      policy.remoteGenerated || [
+        policy.remoteNamespace,
+        Object.values(policy.remotePodLabels || ["all pods"]),
+      ],
+    ]
+      // Flatten the array
+      .flat(1)
+      .join("-");
+
+  return (
+    `${policy.direction}-${name}`
+      // The name must be lowercase
+      .toLowerCase()
+      // Replace sequences of non-alphanumeric characters with a single '-'
+      .replace(/[^a-z0-9]+/g, "-")
+      // Truncate the name 245 characters
+      .slice(0, 245)
+      // Remove leading and trailing '-'
+      .replace(/^-|-$/g, "")
+  );
 }

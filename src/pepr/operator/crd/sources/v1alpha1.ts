@@ -127,6 +127,11 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
                           type: "string",
                         },
                       },
+                      description: {
+                        type: "string",
+                        description:
+                          "A description of the policy, this will become part of the policy name",
+                      },
                       direction: {
                         description: "The direction of the traffic",
                         enum: ["Ingress", "Egress"],

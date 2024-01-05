@@ -30,6 +30,10 @@ export interface Network {
 
 export interface Allow {
   /**
+   * A description of the policy, this will become part of the policy name
+   */
+  description?: string;
+  /**
    * The direction of the traffic
    */
   direction: Direction;
