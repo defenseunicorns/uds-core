@@ -55,11 +55,12 @@ export interface Allow {
    */
   remoteGenerated?: RemoteGenerated;
   /**
-   * The remote namespace selector labels
+   * The remote namespace to allow traffic to/from. Use * or empty string to allow all
+   * namespaces
    */
-  remoteNamespaceLabels?: { [key: string]: string };
+  remoteNamespace?: string;
   /**
-   * The remote pod selector labels
+   * The remote pod selector labels to allow traffic to/from
    */
   remotePodLabels?: { [key: string]: string };
 }

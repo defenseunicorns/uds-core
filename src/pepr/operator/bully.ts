@@ -42,7 +42,7 @@ setInterval(async () => {
               app: "some-cool-test",
             },
             port: 80,
-            remoteNamespaceLabels: {},
+            remoteNamespace: "",
           },
         ],
       },

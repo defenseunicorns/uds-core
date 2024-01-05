@@ -4,9 +4,7 @@ import { generate } from "../generate";
 export const allowIngressSidecarMonitoring = (namespace: string) =>
   generate(namespace, {
     direction: Direction.Ingress,
-    remoteNamespaceLabels: {
-      "kubernetes.io/metadata.name": "monitoring",
-    },
+    remoteNamespace: "monitoring",
     remotePodLabels: {
       app: "prometheus",
     },

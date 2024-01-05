@@ -32,8 +32,7 @@ spec:
           app: neuvector-updater-pod
 
       - direction: Ingress
-        remoteNamespaceLabels:
-          app.kubernetes.io/name: monitoring
+        remoteNamespace: monitoring
         remotePodLabels:
           app: prometheus
         podLabels:

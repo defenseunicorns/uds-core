@@ -42,11 +42,9 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
     const policy: Allow = {
       direction: Direction.Ingress,
       podLabels,
+      remoteNamespace: `istio-${gateway}-gateway`,
       remotePodLabels: {
         app: `${gateway}-ingressgateway`,
-      },
-      remoteNamespaceLabels: {
-        "kubernetes.io/metadata.name": `istio-${gateway}-gateway`,
       },
       port,
     };

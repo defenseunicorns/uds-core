@@ -1,4 +1,4 @@
-import { V1NetworkPolicyPeer, V1NetworkPolicyPort } from "@kubernetes/client-node";
+import { V1NetworkPolicyPeer, V1NetworkPolicyPort, V1LabelSelector } from "@kubernetes/client-node";
 import { kind } from "pepr";
 
 import { Allow } from "../../crd";
@@ -37,13 +37,19 @@ export function generate(namespace: string, policy: Allow): kind.NetworkPolicy {
   // Create the remote (peer) to match against
   let peers: V1NetworkPolicyPeer[] = [];
 
-  // Add the remoteNamespaceLabels if they exist
-  if (policy.remoteNamespaceLabels) {
-    peers.push({
-      namespaceSelector: {
-        matchLabels: policy.remoteNamespaceLabels,
-      },
-    });
+  // Add the remoteNamespace if they exist
+  if (policy.remoteNamespace !== undefined) {
+    const namespaceSelector: V1LabelSelector = {};
+
+    // Add the remoteNamespace to the namespaceSelector if it exists and is not "*", otherwise match all namespaces
+    if (policy.remoteNamespace !== "" && policy.remoteNamespace !== "*") {
+      namespaceSelector.matchLabels = {
+        "kubernetes.io/metadata.name": policy.remoteNamespace,
+      };
+    }
+
+    // Add the remoteNamespace to the peers
+    peers.push({ namespaceSelector });
   }
 
   // Add the remotePodLabels if they exist

@@ -4,7 +4,7 @@ import { generate } from "../generate";
 export const allowEgressDNS = (namespace: string) => {
   const netPol = generate(namespace, {
     direction: Direction.Egress,
-    remoteNamespaceLabels: {},
+    remoteNamespace: "*",
     port: 53,
   });
 

@@ -17,8 +17,7 @@ spec:
       - direction: Ingress
         podLabels:
           app.kubernetes.io/name: grafana
-        remoteNamespaceLabels:
-          app.kubernetes.io/name: tempo
+        remoteNamespace: tempo
         remotePodLabels:
           app.kubernetes.io/name: tempo
         port: 9090
@@ -31,8 +30,7 @@ spec:
       - direction: Egress
         podLabels:
           app.kubernetes.io/name: grafana
-        remoteNamespaceLabels:
-          app.kubernetes.io/name: tempo
+        remoteNamespace: tempo
         remotePodLabels:
           app.kubernetes.io/name: tempo
         port: 9411

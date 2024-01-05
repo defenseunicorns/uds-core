@@ -140,15 +140,13 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
                           type: "string",
                         },
                       },
-                      remoteNamespaceLabels: {
-                        description: "The remote namespace selector labels",
-                        type: "object",
-                        additionalProperties: {
-                          type: "string",
-                        },
+                      remoteNamespace: {
+                        description:
+                          "The remote namespace to allow traffic to/from. Use * or empty string to allow all namespaces",
+                        type: "string",
                       },
                       remotePodLabels: {
-                        description: "The remote pod selector labels",
+                        description: "The remote pod selector labels to allow traffic to/from",
                         type: "object",
                         additionalProperties: {
                           type: "string",
