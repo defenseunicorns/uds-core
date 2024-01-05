@@ -61,9 +61,28 @@ When(a.Pod)
     }
 
     const pod = request.Raw.spec!;
+    const metadata = request.Raw.metadata || {};
 
     // Ensure the securityContext field is defined
     pod.securityContext = pod.securityContext || {};
+
+    // Set the runAsUser field if it is defined in a label
+    const runAsUser = metadata.labels?.["uds/user"]
+    if (runAsUser) {
+      pod.securityContext.runAsUser = parseInt(runAsUser)
+    }
+
+    // Set the runAsGroup field if it is defined in a label
+    const runAsGroup = metadata.labels?.["uds/group"]
+    if (runAsGroup) {
+      pod.securityContext.runAsGroup = parseInt(runAsGroup)
+    }
+
+    // Set the fsGroup field if it is defined in a label
+    const fsGroup = metadata.labels?.["uds/fsgroup"]
+    if (fsGroup) {
+      pod.securityContext.fsGroup = parseInt(fsGroup)
+    }
 
     // Set the runAsNonRoot field to true if it is undefined
     if (pod.securityContext.runAsNonRoot === undefined) {
