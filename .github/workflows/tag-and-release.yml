@@ -15,7 +15,7 @@ jobs:
     steps:
       - name: Create release tag
         id: tag
-        uses: google-github-actions/release-please-action@v3
+        uses: google-github-actions/release-please-action@cc61a07e2da466bebbc19b3a7dd01d6aecb20d1e # v4
         with:
           command: manifest # use configs in release-please-config.json
       - id: release-flag
@@ -38,7 +38,7 @@ jobs:
         uses: ./.github/actions/setup
 
       - name: Login to GHCR
-        uses: docker/login-action@v3
+        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3
         with:
           registry: ghcr.io
           username: dummy
