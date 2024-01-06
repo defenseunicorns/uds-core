@@ -16,11 +16,11 @@ components:
     charts:
       - name: base
         url: https://istio-release.storage.googleapis.com/charts
-        version: 1.19.3
+        version: 1.20.1
         namespace: istio-system
       - name: istiod
         url: https://istio-release.storage.googleapis.com/charts
-        version: 1.19.3
+        version: 1.20.1
         namespace: istio-system
         valuesFiles:
           - "values/values.yaml"
@@ -31,8 +31,8 @@ components:
           - "manifests/envoy-filters.yaml"
           - "manifests/peer-authentication.yaml"
     images:
-      - "docker.io/istio/pilot:1.19.3-distroless"
-      - "docker.io/istio/proxyv2:1.19.3-distroless"
+      - "docker.io/istio/pilot:1.20.1-distroless"
+      - "docker.io/istio/proxyv2:1.20.1-distroless"
 
   - name: istio-admin-gateway
     description: "Deploy an admin gateway"
@@ -40,7 +40,7 @@ components:
     charts:
       - name: gateway
         url: https://istio-release.storage.googleapis.com/charts
-        version: 1.19.3
+        version: 1.20.1
         releaseName: admin-ingressgateway
         namespace: istio-admin-gateway
       - name: uds-istio-config
@@ -56,7 +56,7 @@ components:
     charts:
       - name: gateway
         url: https://istio-release.storage.googleapis.com/charts
-        version: 1.19.3
+        version: 1.20.1
         releaseName: tenant-ingressgateway
         namespace: istio-tenant-gateway        
       - name: uds-istio-config
@@ -72,7 +72,7 @@ components:
     charts:
       - name: gateway
         url: https://istio-release.storage.googleapis.com/charts
-        version: 1.19.3
+        version: 1.20.1
         releaseName: passthrough-ingressgateway
         namespace: istio-passthrough-gateway
       - name: uds-istio-config
