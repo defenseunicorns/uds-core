@@ -5,6 +5,8 @@ fullnameOverride: loki
 # -- Overrides the chart's cluster label
 clusterLabelOverride: null
 loki:
+  storage:
+    type: "filesystem"
   commonConfig:
     replication_factor: 1
   # Should authentication be enabled
