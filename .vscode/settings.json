@@ -3,6 +3,7 @@
     "enableTurboSourcemaps": true,
     "resolveSourceMapLocations": [
       "${workspaceFolder}/**",
+      "node_modules/kubernetes-fluent-client/**",
       "node_modules/pepr/**"
     ]
   },
@@ -19,7 +20,7 @@
       "src/**/validate.yaml"
     ],
     // renovate: datasource=github-tags depName=defenseunicorns/zarf versioning=semver
-    "https://raw.githubusercontent.com/defenseunicorns/zarf/v0.31.1/zarf.schema.json": [
+    "https://raw.githubusercontent.com/defenseunicorns/zarf/v0.31.4/zarf.schema.json": [
       "zarf.yaml"
     ]
   },

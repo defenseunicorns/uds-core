@@ -1,0 +1,15 @@
+tasks:
+  - name: validate
+    actions:
+      - cmd: "npx jest src/pepr/**/*.spec.ts"
+
+  - name: gen-crds
+    description: "Generate CRDS, requires a running kubernetes cluster"
+    actions:
+      - cmd: "npx ts-node src/pepr/operator/crd/register.ts"
+        env:
+          - "PEPR_WATCH_MODE=true"
+
+      - cmd: "npx kubernetes-fluent-client crd packages.uds.dev src/pepr/operator/crd/generated"
+
+      - cmd: "npx pepr format"

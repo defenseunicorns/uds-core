@@ -1,9 +1,3 @@
-service:
-  labels:
-    uds/istio-gateway: admin
-    uds/istio-host: grafana
-    uds/istio-port: "80"
-
 sidecar:
   image:
     # -- The Docker registry

@@ -5,6 +5,22 @@ metadata:
   labels:
     zarf.dev/agent: ignore
 ---
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: httpbin
+  namespace: test-app
+spec:
+  network:
+    expose:
+      - service: httpbin
+        podLabels:
+          app: httpbin
+        gateway: tenant
+        host: demo
+        port: 8000
+        targetPort: 80
+---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -26,15 +42,6 @@ spec:
       targetPort: 80
   selector:
     app: httpbin
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: httpbin
-  namespace: test-app
-  labels:
-    "uds/istio-gateway": "tenant"
-    "uds/istio-host": "demo"
 ---
 apiVersion: apps/v1
 kind: Deployment

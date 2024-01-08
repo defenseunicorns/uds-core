@@ -9,7 +9,7 @@ runs:
       uses: defenseunicorns/setup-zarf@main
       with:
         # renovate: datasource=github-tags depName=defenseunicorns/zarf versioning=semver
-        version: v0.31.1
+        version: v0.31.4
         download-init-package: true
 
     - name: Use Node.js latest

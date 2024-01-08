@@ -27,11 +27,11 @@ packages:
             - name: policies
               description: "Minio policies"
               path: policies
-              
+
   - name: init
     repository: ghcr.io/defenseunicorns/packages/init
     # renovate: datasource=github-tags depName=defenseunicorns/zarf versioning=semver
-    ref: v0.31.1
+    ref: v0.31.4
 
   - name: core-istio
     path: ../../build/
