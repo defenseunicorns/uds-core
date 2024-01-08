@@ -1,4 +1,5 @@
 import { K8s, kind } from "pepr";
+
 import { UDSPackage } from "../../crd";
 
 /**
@@ -6,7 +7,7 @@ import { UDSPackage } from "../../crd";
  *
  * @param pkg
  */
-export async function syncNamespace(pkg: UDSPackage) {
+export async function enableInjection(pkg: UDSPackage) {
   if (!pkg.metadata?.namespace || !pkg.metadata.name) {
     throw new Error(`Invalid Package definition, missing namespace or name`);
   }

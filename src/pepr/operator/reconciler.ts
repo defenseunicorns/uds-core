@@ -1,9 +1,9 @@
 import { K8s, Log } from "pepr";
 
 import { UDSConfig } from "../config";
-import { virtualService } from "./controllers/istio";
-import { syncNamespace } from "./controllers/namespace";
-import { networkPolicies } from "./controllers/network";
+import { enableInjection } from "./controllers/istio/injection";
+import { virtualService } from "./controllers/istio/virtual-service";
+import { networkPolicies } from "./controllers/network/policies";
 import { Phase, Status, UDSPackage } from "./crd";
 import { VirtualService } from "./crd/generated/istio/virtualservice-v1beta1";
 
@@ -39,7 +39,7 @@ export async function reconciler(pkg: UDSPackage) {
     let vs: VirtualService[] = [];
     if (UDSConfig.istioInstalled) {
       // Update the namespace to ensure the istio-injection label is set
-      await syncNamespace(pkg);
+      await enableInjection(pkg);
 
       // Create the VirtualService for each exposed service
       vs = await virtualService(pkg, namespace);
