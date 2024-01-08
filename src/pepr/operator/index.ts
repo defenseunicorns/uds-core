@@ -3,7 +3,7 @@ import { Capability } from "pepr";
 import { UDSPackage } from "./crd";
 import "./crd/register";
 import { validator } from "./crd/validator";
-import { Queue } from "./enque";
+import { Queue } from "./enqueue";
 
 export const operator = new Capability({
   name: "uds-core-operator",

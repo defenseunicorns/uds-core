@@ -2,7 +2,7 @@ import { beforeEach, expect, jest, describe, test } from "@jest/globals";
 import { Log } from "pepr";
 
 import { UDSPackage } from "./crd";
-import { Queue } from "./enque";
+import { Queue } from "./enqueue";
 import { reconciler } from "./reconciler";
 
 jest.mock("pepr", () => ({

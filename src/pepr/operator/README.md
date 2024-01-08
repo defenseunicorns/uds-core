@@ -1,6 +1,6 @@
 ## UDS Operator
 
-The UDS Operator manages the lifecycle of UDS Package CRs and their corresponding resources (e.g. NetworkPolicies, Istio VirtualServices, etc.). The operator uses [Pepr](https://pepr.dev) to bind the watch operations to the enque and reconciler. The operator is responsible for:
+The UDS Operator manages the lifecycle of UDS Package CRs and their corresponding resources (e.g. NetworkPolicies, Istio VirtualServices, etc.). The operator uses [Pepr](https://pepr.dev) to bind the watch operations to the enqueue and reconciler. The operator is responsible for:
 
 - enabling Istio sidecar injection in namespaces where the CR is deployed
 - establishing default-deny ingress/egress network policies 
@@ -20,7 +20,7 @@ The UDS Operator manages the lifecycle of UDS Package CRs and their correspondin
 │   ├── sources          # CRD source files
 │   ├── register.ts      # Registers the UDS Package CRD with the Kubernetes API
 │   └── validator.ts     # Validates UDS Package CRs with Pepr
-├── enque.ts             # Serializes UDS Package CRs for processing by the reconciler
+├── enqueue.ts             # Serializes UDS Package CRs for processing by the reconciler
 ├── index.ts             # Entrypoint for the UDS Operator
 └── reconciler.ts        # Reconciles UDS Package CRs via the controllers
 ```
