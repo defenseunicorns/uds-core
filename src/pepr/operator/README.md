@@ -1,5 +1,7 @@
 ## UDS Operator
 
+The UDS Operator manages the lifecycle of UDS Package CRs and their corresponding resources (e.g. NetworkPolicies, Istio VirtualServices, etc.). The operator uses [Pepr](https://pepr.dev) to bind the watch operations to the enque and reconciler.
+
 ### Key Files and Folders
 
 ```bash
