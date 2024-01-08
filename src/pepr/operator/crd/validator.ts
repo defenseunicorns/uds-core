@@ -15,8 +15,8 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
   const networkPolicy = req.Raw.spec?.network?.allow ?? [];
 
   for (const policy of networkPolicy) {
-    // remoteGenerated cannot be combined with remoteNamespaceLabels or remotePodLabels
-    if (policy.remoteGenerated && (policy.remotePodLabels || policy.remotePodLabels)) {
+    // remoteGenerated cannot be combined with remoteNamespace or remotePodLabels
+    if (policy.remoteGenerated && (policy.remoteNamespace || policy.remotePodLabels)) {
       return req.Deny("remoteGenerated cannot be combined with remoteNamespace or remotePodLabels");
     }
   }
