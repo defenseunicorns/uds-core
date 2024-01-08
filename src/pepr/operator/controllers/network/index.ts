@@ -36,7 +36,7 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
   // Generate NetworkPolicies for any VirtualServices that are generated
   const exposeList = pkg.spec?.network?.expose ?? [];
   for (const expose of exposeList) {
-    const { gateway = Gateway.Tenant, port, podLabels } = expose;
+    const { gateway = Gateway.Tenant, port, podLabels, targetPort } = expose;
 
     // Create the NetworkPolicy for the VirtualService
     const policy: Allow = {
@@ -46,7 +46,8 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
       remotePodLabels: {
         app: `${gateway}-ingressgateway`,
       },
-      port,
+      // Use the same port as the VirtualService if targetPort is not set
+      port: targetPort ?? port,
     };
 
     // Generate the policy

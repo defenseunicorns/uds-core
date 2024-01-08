@@ -113,6 +113,12 @@ export interface Expose {
    * The name of the service to expose
    */
   service: string;
+  /**
+   * The service targetPort (pod port). This defaults to port and is only required if the
+   * service port is different from the pod port (so the NetworkPolicy can be generated
+   * correctly).
+   */
+  targetPort?: number;
 }
 
 /**

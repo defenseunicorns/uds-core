@@ -11,7 +11,8 @@ spec:
           app.kubernetes.io/name: grafana
         host: grafana
         gateway: admin
-        port: 5000
+        port: 80
+        targetPort: 3000
 
     allow:
       - direction: Ingress

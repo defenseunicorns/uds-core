@@ -93,6 +93,13 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
                         maximum: 65535,
                         type: "number",
                       },
+                      targetPort: {
+                        description:
+                          "The service targetPort (pod port). This defaults to port and is only required if the service port is different from the pod port (so the NetworkPolicy can be generated correctly).",
+                        minimum: 1,
+                        maximum: 65535,
+                        type: "number",
+                      },
                       gateway: {
                         description:
                           "The name of the gateway to expose the service on (default: tenant)",
