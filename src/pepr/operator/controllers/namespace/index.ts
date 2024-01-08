@@ -5,7 +5,6 @@ import { UDSPackage } from "../../crd";
  * Syncs the package namespace istio-injection label and adds a label for the package name
  *
  * @param pkg
- * @returns the namespace if successful, otherwise an empty string
  */
 export async function syncNamespace(pkg: UDSPackage) {
   if (!pkg.metadata?.namespace || !pkg.metadata.name) {
@@ -35,6 +34,4 @@ export async function syncNamespace(pkg: UDSPackage) {
     // @todo: Add a finalizer to remove the label when the package is deleted
     // @todo: Check for pods without sidecars and address them
   }
-
-  return pkg.metadata.namespace;
 }

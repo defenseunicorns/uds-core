@@ -27,23 +27,27 @@ export async function reconciler(pkg: UDSPackage) {
     return;
   }
 
-  Log.debug(pkg, `Processing Package ${pkg.metadata.namespace}/${pkg.metadata.name}`);
+  const { namespace, name } = pkg.metadata;
+
+  Log.debug(pkg, `Processing Package ${namespace}/${name}`);
 
   // Configure the namespace and namespace-wide network policies
   try {
     void updateStatus(pkg, { phase: Phase.Pending });
 
-    const namespace = await syncNamespace(pkg);
-
-    const netPol = await networkPolicies(pkg, namespace);
-
     // Only configure the VirtualService if Istio is installed
     let vs: VirtualService[] = [];
     if (UDSConfig.istioInstalled) {
+      // Update the namespace to ensure the istio-injection label is set
+      await syncNamespace(pkg);
+
+      // Create the VirtualService for each exposed service
       vs = await virtualService(pkg, namespace);
     } else {
-      Log.warn(`Istio is not installed, skipping ${pkg.metadata.name} VirtualService.`);
+      Log.warn(`Istio is not installed, skipping ${name} VirtualService.`);
     }
+
+    const netPol = await networkPolicies(pkg, namespace);
 
     await updateStatus(pkg, {
       phase: Phase.Ready,
@@ -52,7 +56,7 @@ export async function reconciler(pkg: UDSPackage) {
       observedGeneration: pkg.metadata.generation,
     });
   } catch (e) {
-    Log.error(e, `Error configuring for ${pkg.metadata.namespace}/${pkg.metadata.name}`);
+    Log.error(e, `Error configuring for ${namespace}/${name}`);
     // todo: need to evaluate when it is safe to retry (updating generation now avoids retrying infinitely)
     void updateStatus(pkg, { phase: Phase.Failed, observedGeneration: pkg.metadata.generation });
   }
