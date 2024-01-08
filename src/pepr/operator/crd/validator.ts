@@ -1,4 +1,5 @@
 import { PeprValidateRequest } from "pepr";
+
 import { UDSPackage } from ".";
 
 const invalidNamespaces = ["kube-system", "kube-public", "_unknown_", "pepr-system"];

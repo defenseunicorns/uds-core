@@ -1,8 +1,7 @@
-import { V1NetworkPolicyPeer, V1NetworkPolicyPort, V1LabelSelector } from "@kubernetes/client-node";
+import { V1LabelSelector, V1NetworkPolicyPeer, V1NetworkPolicyPort } from "@kubernetes/client-node";
 import { kind } from "pepr";
 
-import { Allow } from "../../crd";
-import { RemoteGenerated } from "../../crd/generated/package-v1alpha1";
+import { Allow, RemoteGenerated } from "../../crd";
 import { anywhere } from "./generators/anywhere";
 import { cloudMetadata } from "./generators/cloudMetadata";
 import { intraNamespace } from "./generators/intraNamespace";

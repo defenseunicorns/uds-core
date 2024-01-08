@@ -1,12 +1,7 @@
 import { K8s, Log } from "pepr";
 
 import { UDSConfig } from "../../../config";
-import { Gateway, UDSPackage, getOwnerRef } from "../../crd";
-import {
-  HTTPRoute,
-  TCPRoute,
-  VirtualService,
-} from "../../crd/generated/istio/virtualservice-v1beta1";
+import { Gateway, Istio, UDSPackage, getOwnerRef } from "../../crd";
 
 /**
  * Creates a VirtualService for each exposed service in the package
@@ -21,7 +16,7 @@ export async function virtualService(pkg: UDSPackage, namespace: string) {
   // Get the list of exposed services
   const exposeList = pkg.spec?.network?.expose ?? [];
 
-  const payloads: VirtualService[] = [];
+  const payloads: Istio.VirtualService[] = [];
 
   // Iterate over each exposed service
   for (const expose of exposeList) {
@@ -30,7 +25,7 @@ export async function virtualService(pkg: UDSPackage, namespace: string) {
     const name = `${pkgName}-${gateway}-${host}`.toLowerCase();
 
     // Create the route to the service
-    const route: TCPRoute[] | HTTPRoute[] = [
+    const route: Istio.TCPRoute[] | Istio.HTTPRoute[] = [
       {
         destination: {
           // Use the service name as the host
@@ -44,7 +39,7 @@ export async function virtualService(pkg: UDSPackage, namespace: string) {
     // For the admin gateway, we need to add the path prefix
     const domain = (gateway === Gateway.Admin ? "admin." : "") + UDSConfig.domain;
 
-    const payload: VirtualService = {
+    const payload: Istio.VirtualService = {
       metadata: {
         name,
         namespace,
@@ -69,13 +64,13 @@ export async function virtualService(pkg: UDSPackage, namespace: string) {
     Log.debug(payload, `Applying VirtualService ${name}`);
 
     // Apply the VirtualService and force overwrite any existing policy
-    await K8s(VirtualService).Apply(payload, { force: true });
+    await K8s(Istio.VirtualService).Apply(payload, { force: true });
 
     payloads.push(payload);
   }
 
   // Get all related VirtualServices in the namespace
-  const virtualServices = await K8s(VirtualService)
+  const virtualServices = await K8s(Istio.VirtualService)
     .InNamespace(namespace)
     .WithLabel("uds/package", pkgName)
     .Get();
@@ -88,7 +83,7 @@ export async function virtualService(pkg: UDSPackage, namespace: string) {
   // Delete any orphaned VirtualServices
   for (const vs of orphanedVS) {
     Log.debug(vs, `Deleting orphaned VirtualService ${vs.metadata!.name}`);
-    await K8s(VirtualService).Delete(vs);
+    await K8s(Istio.VirtualService).Delete(vs);
   }
 
   // Return the list of generated VirtualServices

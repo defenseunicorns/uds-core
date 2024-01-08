@@ -9,7 +9,10 @@ export {
   Phase,
   Status,
   Package as UDSPackage,
+  RemoteGenerated,
 } from "./generated/package-v1alpha1";
+
+export * as Istio from "./generated/istio/virtualservice-v1beta1";
 
 export function getOwnerRef(pkg: UDSPackage): V1OwnerReference[] {
   const { name, uid } = pkg.metadata!;
