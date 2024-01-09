@@ -20,7 +20,7 @@ The UDS Operator manages the lifecycle of UDS Package CRs and their correspondin
 │   ├── sources          # CRD source files
 │   ├── register.ts      # Registers the UDS Package CRD with the Kubernetes API
 │   └── validator.ts     # Validates UDS Package CRs with Pepr
-├── enqueue.ts             # Serializes UDS Package CRs for processing by the reconciler
+├── enqueue.ts           # Serializes UDS Package CRs for processing by the reconciler
 ├── index.ts             # Entrypoint for the UDS Operator
 └── reconciler.ts        # Reconciles UDS Package CRs via the controllers
 ```
