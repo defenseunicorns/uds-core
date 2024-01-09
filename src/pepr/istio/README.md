@@ -1,3 +1,3 @@
 ## Istio Pepr Capability
 
-This single capability manages the lifecycle of jobs have Istio sidecars injected into them.
+This capability manages the lifecycle of jobs that have Istio sidecars injected into them.
