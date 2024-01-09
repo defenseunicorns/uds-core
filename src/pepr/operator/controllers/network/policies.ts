@@ -11,6 +11,7 @@ import { generate } from "./generate";
 
 export async function networkPolicies(pkg: UDSPackage, namespace: string) {
   const customPolicies = pkg.spec?.network?.allow ?? [];
+  const pkgName = pkg.metadata!.name!;
 
   // Get the current generation of the package
   const generation = (pkg.metadata?.generation ?? 0).toString();
@@ -60,14 +61,14 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
     // Add the package name and generation to the labels
     policy.metadata = policy.metadata ?? {};
     policy.metadata.labels = policy.metadata?.labels ?? {};
-    policy.metadata.labels["uds/package"] = pkg.metadata!.name!;
+    policy.metadata.labels["uds/package"] = pkgName;
     policy.metadata.labels["uds/generation"] = generation;
 
     // Add the package name to the name of the policy to ensure uniqueness
     if (idx < 1) {
-      policy.metadata.name = `deny-uds-${policy.metadata.name}`;
+      policy.metadata.name = `deny-${pkgName}-${policy.metadata.name}`;
     } else {
-      policy.metadata.name = `allow-uds-${policy.metadata.name}`;
+      policy.metadata.name = `allow-${pkgName}-${policy.metadata.name}`;
     }
 
     // Use the CR as the owner ref for each NetworkPolicy
@@ -80,7 +81,7 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
   // Delete any policies that are no longer needed
   const policyList = await K8s(kind.NetworkPolicy)
     .InNamespace(namespace)
-    .WithLabel("uds/package", pkg.metadata!.name!)
+    .WithLabel("uds/package", pkgName)
     .Get();
 
   // Find any orphaned polices (not matching the current generation)
