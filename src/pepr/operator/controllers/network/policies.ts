@@ -63,8 +63,10 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
     policy.metadata.labels["uds/package"] = pkg.metadata!.name!;
     policy.metadata.labels["uds/generation"] = generation;
 
-    // If not the default deny all policy, add the index to the name
-    if (idx > 0) {
+    // Add the package name to the name of the policy to ensure uniqueness
+    if (idx < 1) {
+      policy.metadata.name = `deny-uds-${policy.metadata.name}`;
+    } else {
       policy.metadata.name = `allow-uds-${policy.metadata.name}`;
     }
 

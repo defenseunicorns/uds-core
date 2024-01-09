@@ -5,7 +5,7 @@ export function defaultDenyAll(namespace: string): kind.NetworkPolicy {
     apiVersion: "networking.k8s.io/v1",
     kind: "NetworkPolicy",
     metadata: {
-      name: "uds-default-deny-all",
+      name: "default",
       namespace,
     },
     spec: {
