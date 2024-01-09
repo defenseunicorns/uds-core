@@ -28,6 +28,13 @@ export function generate(namespace: string, policy: Allow): kind.NetworkPolicy {
     },
   };
 
+  // Add the description if it exists to the annotations in case of truncation of the name
+  if (policy.description) {
+    generated.metadata!.annotations = {
+      "uds/description": policy.description,
+    };
+  }
+
   // Create the remote (peer) to match against
   let peers: V1NetworkPolicyPeer[] = [];
 
