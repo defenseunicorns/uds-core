@@ -41,6 +41,6 @@ async function getAPIServerCIDR(): Promise<V1NetworkPolicyPeer[]> {
   }
 
   // Log a warning and default to 0.0.0.0/0 if the IP is not found
-  Log.warn("Unable to get API server CIRD, defaulting to 0.0.0.0/0");
+  Log.warn("Unable to get API server CIDR, defaulting to 0.0.0.0/0");
   return [anywhere];
 }
