@@ -133,9 +133,5 @@ function generateName(policy: Allow) {
       .toLowerCase()
       // Replace sequences of non-alphanumeric characters with a single '-'
       .replace(/[^a-z0-9]+/g, "-")
-      // Truncate the name 245 characters
-      .slice(0, 245)
-      // Remove leading and trailing '-'
-      .replace(/^-|-$/g, "")
   );
 }

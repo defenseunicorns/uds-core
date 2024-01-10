@@ -71,6 +71,9 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
       policy.metadata.name = `allow-${pkgName}-${policy.metadata.name}`;
     }
 
+    // Truncate the name 250 characters and remove leading and trailing '-'
+    policy.metadata.name = policy.metadata.name.slice(0, 250).replace(/^-|-$/g, "");
+
     // Use the CR as the owner ref for each NetworkPolicy
     policy.metadata.ownerReferences = getOwnerRef(pkg);
 
