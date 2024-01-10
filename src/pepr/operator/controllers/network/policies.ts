@@ -94,7 +94,7 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
 
   // Delete any orphaned policies
   for (const netPol of orphanedNetPol) {
-    Log.debug(netPol, `Deleting orphaned VirtualService ${netPol.metadata!.name}`);
+    Log.debug(netPol, `Deleting orphaned NetworkPolicy ${netPol.metadata!.name}`);
     await K8s(kind.NetworkPolicy).Delete(netPol);
   }
 
