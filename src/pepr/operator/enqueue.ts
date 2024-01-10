@@ -53,14 +53,13 @@ export class Queue {
       // Reconcile the package
       await reconciler(item.pkg);
 
-      // Reset the pending promise flag and resolve the promise
-      this.#pendingPromise = false;
       item.resolve();
     } catch (e) {
-      // Reset the pending promise flag and reject the promise on error
-      this.#pendingPromise = false;
       item.reject(e);
     } finally {
+      // Reset the pending promise flag
+      this.#pendingPromise = false;
+
       // After the package is reconciled, dequeue the next package
       await this.#dequeue();
     }
