@@ -127,11 +127,5 @@ function generateName(policy: Allow) {
       .flat(1)
       .join("-");
 
-  return (
-    `${policy.direction}-${name}`
-      // The name must be lowercase
-      .toLowerCase()
-      // Replace sequences of non-alphanumeric characters with a single '-'
-      .replace(/[^a-z0-9]+/g, "-")
-  );
+  return `${policy.direction}-${name}`;
 }

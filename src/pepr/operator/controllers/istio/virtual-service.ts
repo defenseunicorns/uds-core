@@ -2,6 +2,7 @@ import { K8s, Log } from "pepr";
 
 import { UDSConfig } from "../../../config";
 import { Gateway, Istio, UDSPackage, getOwnerRef } from "../../crd";
+import { sanitizeResourceName } from "../utils";
 
 /**
  * Creates a VirtualService for each exposed service in the package
@@ -22,7 +23,8 @@ export async function virtualService(pkg: UDSPackage, namespace: string) {
   for (const expose of exposeList) {
     const { gateway = Gateway.Tenant, host, port, service, mode } = expose;
 
-    const name = `${pkgName}-${gateway}-${host}`.toLowerCase();
+    // Ensure the resource name is valid
+    const name = sanitizeResourceName(`${pkgName}-${gateway}-${host}`);
 
     // Create the route to the service
     const route: Istio.TCPRoute[] | Istio.HTTPRoute[] = [
