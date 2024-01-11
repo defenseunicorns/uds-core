@@ -97,10 +97,6 @@ export interface Expose {
    */
   host: string;
   /**
-   * The mode to use when exposing the service
-   */
-  mode?: Mode;
-  /**
    * Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all
    * pods in the namespace
    */
@@ -128,14 +124,6 @@ export enum Gateway {
   Admin = "admin",
   Passthrough = "passthrough",
   Tenant = "tenant",
-}
-
-/**
- * The mode to use when exposing the service
- */
-export enum Mode {
-  HTTP = "http",
-  TCP = "tcp",
 }
 
 export interface Status {

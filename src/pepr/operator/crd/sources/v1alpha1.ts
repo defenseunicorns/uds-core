@@ -111,12 +111,6 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
                         description: "The hostname to expose the service on",
                         type: "string",
                       },
-                      mode: {
-                        description: "The mode to use when exposing the service",
-                        enum: ["http", "tcp"],
-                        type: "string",
-                        default: "http",
-                      },
                     },
                   },
                 },

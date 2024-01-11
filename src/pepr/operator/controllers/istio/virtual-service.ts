@@ -17,17 +17,24 @@ export async function virtualService(pkg: UDSPackage, namespace: string) {
   // Get the list of exposed services
   const exposeList = pkg.spec?.network?.expose ?? [];
 
+  // Create a list of generated VirtualServices
   const payloads: Istio.VirtualService[] = [];
 
   // Iterate over each exposed service
   for (const expose of exposeList) {
-    const { gateway = Gateway.Tenant, host, port, service, mode } = expose;
+    const { gateway = Gateway.Tenant, host, port, service } = expose;
 
     // Ensure the resource name is valid
     const name = sanitizeResourceName(`${pkgName}-${gateway}-${host}`);
 
+    // For the admin gateway, we need to add the path prefix
+    const domain = (gateway === Gateway.Admin ? "admin." : "") + UDSConfig.domain;
+
+    // Append the domain to the host
+    const fqdn = `${host}.${domain}`;
+
     // Create the route to the service
-    const route: Istio.TCPRoute[] | Istio.HTTPRoute[] = [
+    const httpRoute: Istio.HTTPRoute[] = [
       {
         destination: {
           // Use the service name as the host
@@ -37,9 +44,6 @@ export async function virtualService(pkg: UDSPackage, namespace: string) {
         },
       },
     ];
-
-    // For the admin gateway, we need to add the path prefix
-    const domain = (gateway === Gateway.Admin ? "admin." : "") + UDSConfig.domain;
 
     const payload: Istio.VirtualService = {
       metadata: {
@@ -54,14 +58,23 @@ export async function virtualService(pkg: UDSPackage, namespace: string) {
       },
       spec: {
         // Append the UDS Domain to the host
-        hosts: [`${host}.${domain}`],
+        hosts: [fqdn],
         // Map the gateway (admin, passthrough or tenant) to the VirtualService
         gateways: [`istio-${gateway}-gateway/${gateway}-gateway`],
+        // Apply the route to the VirtualService
+        http: [{ route: httpRoute }],
       },
     };
 
-    // Add the route to the spec based on the mode
-    payload.spec![mode ?? "http"] = [{ route }];
+    // If the gateway is the passthrough gateway, apply the TLS match
+    if (gateway === Gateway.Passthrough) {
+      payload.spec!.tls = [
+        {
+          match: [{ port, sniHosts: [fqdn] }],
+          route: httpRoute,
+        },
+      ];
+    }
 
     Log.debug(payload, `Applying VirtualService ${name}`);
 
