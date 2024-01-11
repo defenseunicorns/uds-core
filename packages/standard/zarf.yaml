@@ -69,6 +69,11 @@ components:
     import:
       path: ../../src/loki
 
+  - name: loki-config
+    required: true
+    import:
+      path: ../../src/loki     
+
   # Prometheus
   - name: kube-prometheus-stack
     required: true
@@ -81,6 +86,11 @@ components:
       path: ../../src/promtail
 
   - name: grafana
+    required: true
+    import:
+      path: ../../src/grafana
+
+  - name: grafana-config
     required: true
     import:
       path: ../../src/grafana

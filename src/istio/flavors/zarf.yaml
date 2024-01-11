@@ -12,6 +12,7 @@ components:
         url: https://istio-release.storage.googleapis.com/charts
         version: 1.19.3
         valuesFiles:
+          - "values/values.yaml"
           - "values/upstream-values.yaml"
     images:
       - "docker.io/istio/pilot:1.19.3-distroless"
@@ -26,23 +27,8 @@ components:
         url: https://istio-release.storage.googleapis.com/charts
         version: 1.19.3
         valuesFiles:
+          - "values/values.yaml"
           - "values/registry1-values.yaml"
     images:
-      # - "registry1.dso.mil/ironbank/opensource/istio/pilot:1.19.3"
-      # - "registry1.dso.mil/ironbank/opensource/istio/proxyv2:1.19.3"
       - registry1.dso.mil/ironbank/tetrate/istio/proxyv2:1.19.3-tetratefips-v0
       - registry1.dso.mil/ironbank/tetrate/istio/pilot:1.19.3-tetratefips-v0
-
-  - name: istio-controlplane
-    only:
-      flavor: cng
-    charts:
-      - name: istiod
-        namespace: istio-system
-        url: https://istio-release.storage.googleapis.com/charts
-        version: 1.19.3
-        valuesFiles:
-          - "values/cng-values.yaml"
-    images:
-      - "cgr.dev/chainguard/istio-pilot:latest"
-      - "cgr.dev/chainguard/istio-proxy:latest"

@@ -1,0 +1,2 @@
+meshConfig:
+  accessLogFile: /dev/stdout

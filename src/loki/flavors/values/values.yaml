@@ -4,6 +4,7 @@ nameOverride: loki
 fullnameOverride: loki
 # -- Overrides the chart's cluster label
 clusterLabelOverride: null
+
 loki:
   commonConfig:
     replication_factor: 1
@@ -23,6 +24,13 @@ loki:
       at: "250ms"
       max_per_second: 20
       up_to: 3
+  # -- The SecurityContext for Loki containers
+  containerSecurityContext:
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+        - ALL
+    allowPrivilegeEscalation: false
 enterprise:
   # Enable enterprise features, license must be provided
   enabled: false
