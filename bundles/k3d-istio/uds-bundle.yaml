@@ -10,7 +10,7 @@ packages:
   - name: uds-k3d-dev
     repository: ghcr.io/defenseunicorns/packages/uds-k3d
     # renovate: datasource=github-tags depName=defenseunicorns/uds-k3d versioning=semver
-    ref: 0.2.1
+    ref: 0.3.0
     overrides:
       uds-dev-stack:
         minio:
@@ -31,7 +31,7 @@ packages:
   - name: init
     repository: ghcr.io/defenseunicorns/packages/init
     # renovate: datasource=github-tags depName=defenseunicorns/zarf versioning=semver
-    ref: v0.31.1
+    ref: v0.32.1
 
   - name: core-istio
     path: ../../build/

@@ -9,7 +9,7 @@ runs:
       uses: defenseunicorns/setup-zarf@main
       with:
         # renovate: datasource=github-tags depName=defenseunicorns/zarf versioning=semver
-        version: v0.31.1
+        version: v0.32.1
         download-init-package: true
 
     - name: Use Node.js latest
@@ -27,4 +27,4 @@ runs:
     - name: Install UDS CLI
       shell: bash
       # renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
-      run: brew install defenseunicorns/tap/uds@0.5.2
+      run: brew install defenseunicorns/tap/uds@0.5.3
