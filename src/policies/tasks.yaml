@@ -1,4 +1,4 @@
 tasks:
   - name: validate
     actions:
-      - cmd: "npx jest src/policies/**/*.spec.ts"
+      - cmd: "npx jest .*.spec.ts"

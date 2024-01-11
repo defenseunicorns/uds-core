@@ -34,3 +34,13 @@ tasks:
 
           peprBuild="build/zarf-package-pepr-uds-core-${UDS_ARCH}-0.2.0.tar.zst"
           [ -f "${peprBuild}" ] && zarf package deploy "${peprBuild}" --confirm || echo "Pepr build not required"
+
+  - name: latest-package-release
+    actions:
+      - description: "Deploy the latest UDS Core package release"
+        cmd: zarf package deploy oci://ghcr.io/defenseunicorns/packages/uds/core:${VERSION} --confirm
+
+  - name: standard-package
+    actions:
+      - description: "Deploy the standard UDS Core zarf package"
+        cmd: zarf package deploy build/zarf-package-core-${UDS_ARCH}-${VERSION}.tar.zst --confirm
