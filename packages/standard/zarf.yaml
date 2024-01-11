@@ -90,7 +90,3 @@ components:
     import:
       path: ../../src/grafana
 
-  - name: grafana-config
-    required: true
-    import:
-      path: ../../src/grafana

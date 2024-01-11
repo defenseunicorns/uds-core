@@ -1,0 +1,22 @@
+kind: ZarfPackageConfig
+metadata:
+  name: uds-core-grafana-common
+  description: "UDS Core Grafana Common"
+  url: https://grafana.com/grafana
+
+components:
+  - name: grafana
+    required: true
+    charts:
+      - name: grafana
+        url: https://grafana.github.io/helm-charts/
+        version: 7.0.6
+        namespace: grafana
+        valuesFiles:
+          - ../values/values.yaml
+      - name: uds-grafana-config
+        namespace: grafana
+        version: 0.1.0
+        localPath: ../chart #TODO look at moving chart location under common
+
+
