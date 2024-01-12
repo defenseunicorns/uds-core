@@ -13,5 +13,4 @@ global:
 
   proxy:
     image: proxyv2
-meshConfig:
-  accessLogFile: /dev/stdout
+

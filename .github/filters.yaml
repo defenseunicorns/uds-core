@@ -1,12 +1,5 @@
 all:
-  - ".github/**"
-  - "src/**"
-  - "bundles/**"
-  - "packages/**"
-  - "tasks/**"
-  - "pepr.ts"
-  - "package-lock.json"
-  - "zarf-config.yaml"
+  - "**"
 
 authservice:
   - "src/authservice/**"

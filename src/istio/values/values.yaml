@@ -1,0 +1,6 @@
+global:
+  variant: distroless
+meshConfig:
+  accessLogFile: /dev/stdout
+  defaultConfig:
+    holdApplicationUntilProxyStarts: true

@@ -4,9 +4,7 @@ name: Filter
 on:
   pull_request:
     paths:
-      - ".github/**"
-      - "src/**"
-      - "tasks/**"
+      - "**"
 
 # Permissions for the GITHUB_TOKEN used by the workflow.
 permissions:
