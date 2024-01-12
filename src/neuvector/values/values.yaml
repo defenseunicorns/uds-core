@@ -9,16 +9,6 @@ manager:
   svc:
     type: ClusterIP    
 
-enforcer:
-  containerSecurityContext:
-    capabilities:
-      drop:
-        - ALL
-    privileged: true
-  securityContext:
-    runAsNonRoot: true
-    runAsUser: 1000
-
 controller:
 
   apisvc:
@@ -53,23 +43,10 @@ controller:
 cve:
   scanner:
     affinity: {}
-    # containerSecurityContext:
-    #   capabilities:
-    #     drop:
-    #       - ALL
-    #   runAsNonRoot: true
-    #   runAsUser: 1000
+
   updater:
     enabled: true
-    # containerSecurityContext:
-    #   capabilities:
-    #     drop:
-    #       - ALL
-    #   runAsNonRoot: true
-    #   runAsUser: 1000
-    # securityContext:
-    #   runAsNonRoot: true
-    #   runAsUser: 1000
+
 
 k3s: 
   enabled: true

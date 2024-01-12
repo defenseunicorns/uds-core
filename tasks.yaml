@@ -29,7 +29,6 @@ tasks:
     actions:
       - task: test:uds-core
 
-
   - name: lint
     actions:
       - task: lint:run

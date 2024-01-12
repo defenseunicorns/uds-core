@@ -19,7 +19,7 @@ tasks:
       - task: pepr-build
 
       - description: "Create the UDS Core Istio Zarf Package"
-        cmd: "zarf package create packages/istio --confirm"
+        cmd: "zarf package create packages/istio --confirm  --flavor ${UDS_FLAVOR}"
 
   - name: k3d-istio-bundle
     description: "Create the K3d-UDS Core (Istio Only) Bundle"
