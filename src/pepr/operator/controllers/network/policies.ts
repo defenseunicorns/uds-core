@@ -48,6 +48,7 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
       },
       // Use the same port as the VirtualService if targetPort is not set
       port: targetPort ?? port,
+      description: `${Object.values(podLabels)} Istio ${gateway} gateway`,
     };
 
     // Generate the policy
