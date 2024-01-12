@@ -10,30 +10,15 @@ components:
     required: true
     only:
       flavor: upstream
+    import:
+      path: common
     charts:
-      - name: crd
-        url: https://neuvector.github.io/neuvector-helm/
-        version: 2.6.4
-        namespace: neuvector
-        gitPath: charts/crd
       - name: core
-        url: https://neuvector.github.io/neuvector-helm/
-        version: 2.6.4
-        namespace: neuvector
-        gitPath: charts/core
         valuesFiles:
           - values/upstream-values.yaml
       - name: monitor
-        url: https://neuvector.github.io/neuvector-helm/
-        version: 2.6.4
-        namespace: neuvector
-        gitPath: charts/monitor
         valuesFiles:
           - values/upstream-monitor-values.yaml
-      - name: uds-neuvector-config
-        namespace: neuvector
-        version: 0.1.0
-        localPath: chart
     images:
       - docker.io/neuvector/controller:5.2.2-s1
       - docker.io/neuvector/manager:5.2.2-s1
@@ -47,30 +32,15 @@ components:
     required: true
     only:
       flavor: registry1
+    import:
+      path: common
     charts:
-      - name: crd
-        url: https://neuvector.github.io/neuvector-helm/
-        version: 2.6.4
-        namespace: neuvector
-        gitPath: charts/crd
       - name: core
-        url: https://neuvector.github.io/neuvector-helm/
-        version: 2.6.4
-        namespace: neuvector
-        gitPath: charts/core
         valuesFiles:
           - values/registry1-values.yaml
       - name: monitor
-        url: https://neuvector.github.io/neuvector-helm/
-        version: 2.6.4
-        namespace: neuvector
-        gitPath: charts/monitor
         valuesFiles:
           - values/registry1-monitor-values.yaml
-      - name: uds-neuvector-config
-        namespace: neuvector
-        version: 0.1.0
-        localPath: chart
     images:
       - registry1.dso.mil/ironbank/neuvector/neuvector/controller:5.2.2
       - registry1.dso.mil/ironbank/neuvector/neuvector/manager:5.2.2

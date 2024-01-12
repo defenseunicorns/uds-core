@@ -1,7 +1,3 @@
-image:
-  repository: cgr.dev/chainguard/metrics-server
-  tag: latest
-
 readinessProbe:
   httpGet:
     path: /readyz

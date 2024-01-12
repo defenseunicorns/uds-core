@@ -1,0 +1,12 @@
+# todo figure out how to approach this piece and finish it or delete it
+components:
+  - name: istio-gateway
+    required: true
+    charts:
+      - name: gateway
+        url: https://istio-release.storage.googleapis.com/charts
+        version: 1.19.3
+      - name: uds-istio-config
+        version: 0.2.0
+        localPath: ../chart
+

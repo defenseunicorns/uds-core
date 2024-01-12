@@ -1,3 +1,4 @@
+
 kind: ZarfPackageConfig
 metadata:
   name: uds-core-loki
@@ -6,13 +7,33 @@ metadata:
 components:
   - name: loki
     required: true
+    description: "Install Loki using upstream (docker) images"
+    only:
+      flavor: "upstream"
     import:
-      path: flavors
-  - name: loki-config
-    required: true
-    description: "Install Loki config chart"
+      path: common
     charts:
-      - name: uds-loki-config
+      - name: loki
+        valuesFiles:
+          - ./values/upstream-values.yaml
+    images:
+      - docker.io/grafana/loki:2.9.2
+      - docker.io/nginxinc/nginx-unprivileged:1.24-alpine
+
+  - name: loki
+    required: true
+    description: "Install Loki using Chainguard images"
+    only:
+      flavor: "registry1"
+    import:
+      path: common
+    charts:
+      - name: loki
+        url: https://grafana.github.io/helm-charts/
+        version: 5.36.3
         namespace: loki
-        version: 0.2.0
-        localPath: chart
+        valuesFiles:
+          - ./values/registry1-values.yaml
+    images:
+      - registry1.dso.mil/ironbank/opensource/grafana/loki:2.9.2
+      - registry1.dso.mil/ironbank/opensource/nginx/nginx-alpine:1.25.2

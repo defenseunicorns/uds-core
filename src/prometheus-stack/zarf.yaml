@@ -8,11 +8,9 @@ components:
     required: true
     description: "Install kube-prometheus-stack operator crds using the helm chart https://github.com/prometheus-community/helm-charts/tree/main/charts/prometheus-operator-crds"
     charts:
-      # https://github.com/prometheus-community/helm-charts/tree/main/charts/prometheus-operator-crds
       - name: prometheus-operator-crds
         namespace: uds-crds
         url: https://prometheus-community.github.io/helm-charts
-        #version: 5.1.0 (old version - for testing upgrade)
         version: 7.0.0
         valuesFiles:
           - "values/crd-values.yaml"
@@ -22,16 +20,13 @@ components:
     description: "Install kube-prometheus-stack using the helm chart https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack"
     only:
       flavor: upstream
+    import: 
+      path: common
     charts:
       - name: kube-prometheus-stack
-        namespace: monitoring
-        url: https://prometheus-community.github.io/helm-charts
-        #version: 50.3.1 (old version - for testing upgrade)
-        version: 54.0.1
         valuesFiles:
           - "values/upstream-values.yaml"
     images:
-      #upstream images
       - "quay.io/prometheus/node-exporter:v1.6.1"
       - "quay.io/prometheus-operator/prometheus-operator:v0.69.1"
       - "registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.10.1"
@@ -45,12 +40,10 @@ components:
     description: "Install kube-prometheus-stack using the helm chart https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack"
     only:
       flavor: registry1
+    import:
+      path: common
     charts:
       - name: kube-prometheus-stack
-        namespace: monitoring
-        url: https://prometheus-community.github.io/helm-charts
-        #version: 50.3.1 (old version - for testing upgrade)
-        version: 54.0.1
         valuesFiles:
           - "values/registry1-values.yaml"
     images:
@@ -62,27 +55,3 @@ components:
       - "registry1.dso.mil/ironbank/opensource/prometheus/prometheus:v2.47.2"
       - "registry1.dso.mil/ironbank/opensource/ingress-nginx/kube-webhook-certgen:v1.3.0"
 
-
-  - name: kube-prometheus-stack
-    required: true
-    description: "Install kube-prometheus-stack using the helm chart https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack"
-    only:
-      flavor: cng
-    charts:
-      - name: kube-prometheus-stack
-        namespace: monitoring
-        url: https://prometheus-community.github.io/helm-charts
-        #version: 50.3.1 (old version - for testing upgrade)
-        version: 54.0.1
-        valuesFiles:
-          - "values/cng-values.yaml"
-    images:
-      #cng images
-      - cgr.dev/chainguard/kube-state-metrics:latest
-      - "quay.io/prometheus/node-exporter:v1.6.1"
-      - cgr.dev/chainguard/prometheus:latest
-      - cgr.dev/chainguard/prometheus-alertmanager:latest
-      - cgr.dev/chainguard/prometheus-config-reloader:latest
-      # - cgr.dev/chainguard/prometheus-node-exporter:latest
-      - cgr.dev/chainguard/prometheus-operator:latest
-      - registry.k8s.io/ingress-nginx/kube-webhook-certgen:v20221220-controller-v1.5.1-58-g787ea74b6
