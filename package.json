@@ -15,7 +15,7 @@
   "pepr": {
     "name": "UDS Core",
     "uuid": "uds-core",
-    "onError": "audit",
+    "onError": "reject",
     "alwaysIgnore": {
       "namespaces": [
         "uds-dev-stack",
