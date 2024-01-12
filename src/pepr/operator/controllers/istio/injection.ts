@@ -54,7 +54,7 @@ export async function enableInjection(pkg: UDSPackage) {
  *
  * @param pkg the package to cleanup
  */
-export async function namespaceFinalizer(pkg: UDSPackage) {
+export async function cleanupNamespace(pkg: UDSPackage) {
   if (!pkg.metadata?.namespace || !pkg.metadata.name) {
     throw new Error(`Invalid Package definition, missing namespace or name`);
   }
