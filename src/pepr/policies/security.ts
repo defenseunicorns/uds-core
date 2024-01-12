@@ -213,30 +213,25 @@ When(a.Pod)
   .IsCreatedOrUpdated()
   .Validate(request => {
     const seLinuxOptions = request.Raw.spec?.securityContext?.seLinuxOptions;
-    const authorized = ['user: undefined', 'role: undefined']
+    const authorized = ["user: undefined", "role: undefined"];
 
     // Check Pod level security context
-    if(seLinuxOptions?.user || seLinuxOptions?.role) {
-       return request.Deny(
-         securityContextMessage(`Unauthorized pod SELinux Options`, authorized, [
-           { ctx: request.Raw.spec?.securityContext as V1SecurityContext },
-         ]),
-       );
+    if (seLinuxOptions?.user || seLinuxOptions?.role) {
+      return request.Deny(
+        securityContextMessage(`Unauthorized pod SELinux Options`, authorized, [
+          { ctx: request.Raw.spec?.securityContext as V1SecurityContext },
+        ]),
+      );
     }
 
     // Check Container level security context
     const violations = securityContextContainers(request).filter(
-      c => c.ctx.seLinuxOptions?.user || c.ctx.seLinuxOptions?.role
+      c => c.ctx.seLinuxOptions?.user || c.ctx.seLinuxOptions?.role,
     );
-
 
     if (violations.length) {
       return request.Deny(
-        securityContextMessage(
-          "Unauthorized container SELinux Options",
-          authorized,
-          violations,
-        ),
+        securityContextMessage("Unauthorized container SELinux Options", authorized, violations),
       );
     }
 
