@@ -67,21 +67,21 @@ When(a.Pod)
     pod.securityContext = pod.securityContext || {};
 
     // Set the runAsUser field if it is defined in a label
-    const runAsUser = metadata.labels?.["uds/user"]
+    const runAsUser = metadata.labels?.["uds/user"];
     if (runAsUser) {
-      pod.securityContext.runAsUser = parseInt(runAsUser)
+      pod.securityContext.runAsUser = parseInt(runAsUser);
     }
 
     // Set the runAsGroup field if it is defined in a label
-    const runAsGroup = metadata.labels?.["uds/group"]
+    const runAsGroup = metadata.labels?.["uds/group"];
     if (runAsGroup) {
-      pod.securityContext.runAsGroup = parseInt(runAsGroup)
+      pod.securityContext.runAsGroup = parseInt(runAsGroup);
     }
 
     // Set the fsGroup field if it is defined in a label
-    const fsGroup = metadata.labels?.["uds/fsgroup"]
+    const fsGroup = metadata.labels?.["uds/fsgroup"];
     if (fsGroup) {
-      pod.securityContext.fsGroup = parseInt(fsGroup)
+      pod.securityContext.fsGroup = parseInt(fsGroup);
     }
 
     // Set the runAsNonRoot field to true if it is undefined
@@ -213,30 +213,25 @@ When(a.Pod)
   .IsCreatedOrUpdated()
   .Validate(request => {
     const seLinuxOptions = request.Raw.spec?.securityContext?.seLinuxOptions;
-    const authorized = ['user: undefined', 'role: undefined']
+    const authorized = ["user: undefined", "role: undefined"];
 
     // Check Pod level security context
-    if(seLinuxOptions?.user || seLinuxOptions?.role) {
-       return request.Deny(
-         securityContextMessage(`Unauthorized pod SELinux Options`, authorized, [
-           { ctx: request.Raw.spec?.securityContext as V1SecurityContext },
-         ]),
-       );
+    if (seLinuxOptions?.user || seLinuxOptions?.role) {
+      return request.Deny(
+        securityContextMessage(`Unauthorized pod SELinux Options`, authorized, [
+          { ctx: request.Raw.spec?.securityContext as V1SecurityContext },
+        ]),
+      );
     }
 
     // Check Container level security context
     const violations = securityContextContainers(request).filter(
-      c => c.ctx.seLinuxOptions?.user || c.ctx.seLinuxOptions?.role
+      c => c.ctx.seLinuxOptions?.user || c.ctx.seLinuxOptions?.role,
     );
-
 
     if (violations.length) {
       return request.Deny(
-        securityContextMessage(
-          "Unauthorized container SELinux Options",
-          authorized,
-          violations,
-        ),
+        securityContextMessage("Unauthorized container SELinux Options", authorized, violations),
       );
     }
 
