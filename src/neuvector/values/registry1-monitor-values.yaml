@@ -5,3 +5,10 @@ exporter:
   image:
     repository: ironbank/neuvector/neuvector/prometheus-exporter
     tag: 5.1.0
+
+  containerSecurityContext:
+    runAsUser: 1002
+    runAsGroup: 1002
+    capabilities:
+      drop:
+        - ALL
