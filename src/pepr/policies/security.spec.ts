@@ -239,6 +239,66 @@ describe("security policies", () => {
     ]);
   });
 
+
+    it("should disallow seLinuxOptions", async() => {
+    const expected = (e: Error) =>
+      expect(e).toMatchObject({
+        ok: false,
+        data: {
+          message: expect.stringContaining("SELinux Options. Authorized: [user: undefined | role: undefined]"),
+        },
+      });
+
+      return Promise.all([ K8s(kind.Pod)
+        .Apply({
+          metadata: {
+            name: "security-selinux-pod",
+            namespace: "policy-tests",
+          },
+          spec: {
+            securityContext: {
+              seLinuxOptions: {
+                user: "bad",
+                role: "bad",
+              },
+            },
+            containers: [
+              {
+                name: "test",
+                image: "127.0.0.1/fake",
+              },
+            ],
+          },
+        })
+        .then(failIfReached)
+        .catch(expected),
+
+      K8s(kind.Pod)
+        .Apply({
+          metadata: {
+            name: "security-selinux-pod",
+            namespace: "policy-tests",
+          },
+          spec: {
+            containers: [
+              {
+                name: "test",
+                image: "127.0.0.1/fake",
+                securityContext: {
+                  seLinuxOptions: {
+                    user: "bad",
+                    role: "bad"
+                  },
+                },
+              },
+            ],
+          },
+        })
+        .then(failIfReached)
+        .catch(expected)
+    ])
+  })
+
   it("should restrict seLinuxTypes", async () => {
     const expected = (e: Error) =>
       expect(e).toMatchObject({
