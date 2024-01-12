@@ -70,7 +70,7 @@ export async function virtualService(pkg: UDSPackage, namespace: string) {
     if (gateway === Gateway.Passthrough) {
       payload.spec!.tls = [
         {
-          match: [{ port, sniHosts: [fqdn] }],
+          match: [{ port: 443, sniHosts: [fqdn] }],
           route: httpRoute,
         },
       ];
