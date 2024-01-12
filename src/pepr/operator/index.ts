@@ -1,5 +1,6 @@
 import { Capability } from "pepr";
 
+import { namespaceFinalizer } from "./controllers/istio/injection";
 import { UDSPackage } from "./crd";
 import "./crd/register";
 import { validator } from "./crd/validator";
@@ -14,6 +15,10 @@ export const { Store, When } = operator;
 
 const queue = new Queue();
 
+// Watch for changes to the UDSPackage CRD to remove the finalizer
+When(UDSPackage).IsDeleted().Watch(namespaceFinalizer);
+
+// Watch for changes to the UDSPackage CRD to enqueue a package for processing
 When(UDSPackage)
   .IsCreatedOrUpdated()
   // Advanced CR validation
