@@ -47,6 +47,13 @@ jobs:
           username: dummy
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Login to Registry1
+        uses: docker/login-action@v3
+        with:
+          registry: registry1.dso.mil
+          username: ${{ secrets.IRON_BANK_ROBOT_USERNAME }}
+          password: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
+
       - name: Publish UDS Zarf Package
         run: uds run -f tasks/publish.yaml packages --set UDS_FLAVOR=${{ matrix.flavor }}
 
