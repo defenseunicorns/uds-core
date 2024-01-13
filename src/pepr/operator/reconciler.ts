@@ -33,7 +33,7 @@ export async function reconciler(pkg: UDSPackage) {
 
   // Configure the namespace and namespace-wide network policies
   try {
-    void updateStatus(pkg, { phase: Phase.Pending });
+    await updateStatus(pkg, { phase: Phase.Pending });
 
     const netPol = await networkPolicies(pkg, namespace);
 
