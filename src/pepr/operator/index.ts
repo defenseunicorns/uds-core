@@ -15,7 +15,7 @@ export const { Store, When } = operator;
 
 const queue = new Queue();
 
-// Watch for changes to the UDSPackage CRD to remove the finalizer
+// Watch for changes to the UDSPackage CRD and cleanup the namespace mutations
 When(UDSPackage).IsDeleted().Watch(cleanupNamespace);
 
 // Watch for changes to the UDSPackage CRD to enqueue a package for processing

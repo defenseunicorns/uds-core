@@ -35,6 +35,8 @@ export async function reconciler(pkg: UDSPackage) {
   try {
     void updateStatus(pkg, { phase: Phase.Pending });
 
+    const netPol = await networkPolicies(pkg, namespace);
+
     // Only configure the VirtualService if Istio is installed
     let vs: VirtualService[] = [];
     if (UDSConfig.istioInstalled) {
@@ -46,8 +48,6 @@ export async function reconciler(pkg: UDSPackage) {
     } else {
       Log.warn(`Istio is not installed, skipping ${name} VirtualService.`);
     }
-
-    const netPol = await networkPolicies(pkg, namespace);
 
     await updateStatus(pkg, {
       phase: Phase.Ready,
