@@ -5,7 +5,7 @@ import { Allow, RemoteGenerated } from "../../crd";
 import { anywhere } from "./generators/anywhere";
 import { cloudMetadata } from "./generators/cloudMetadata";
 import { intraNamespace } from "./generators/intraNamespace";
-import { generateKubeAPI } from "./generators/kubeAPI";
+import { kubeAPI } from "./generators/kubeAPI";
 
 export function generate(namespace: string, policy: Allow): kind.NetworkPolicy {
   // Create a unique name for the NetworkPolicy based on the package name, index, direction, pod labels, and port
@@ -70,7 +70,7 @@ export function generate(namespace: string, policy: Allow): kind.NetworkPolicy {
     // Check if remoteGenerated is set
     switch (policy.remoteGenerated) {
       case RemoteGenerated.KubeAPI:
-        peers = generateKubeAPI();
+        peers = kubeAPI();
         break;
 
       case RemoteGenerated.CloudMetadata:

@@ -1,6 +1,7 @@
-import { Capability } from "pepr";
+import { Capability, a } from "pepr";
 
-import {  cleanupNamespace } from "./controllers/istio/injection";
+import { cleanupNamespace } from "./controllers/istio/injection";
+import { initAPIServerCIDR, updateAPIServerCIDR } from "./controllers/network/generators/kubeAPI";
 import { UDSPackage } from "./crd";
 import "./crd/register";
 import { validator } from "./crd/validator";
@@ -13,7 +14,19 @@ export const operator = new Capability({
 
 export const { Store, When } = operator;
 
+// Create a queue to process the packages in serial order
 const queue = new Queue();
+
+// Pre-populate the API server CIDR since we are not persisting the EndpointSlice
+// Note ignore any errors since the watch will still be running hereafter
+void initAPIServerCIDR();
+
+// Watch for changes to the API server EndpointSlice and update the API server CIDR
+When(a.EndpointSlice)
+  .IsCreatedOrUpdated()
+  .InNamespace("default")
+  .WithName("kubernetes")
+  .Watch(updateAPIServerCIDR);
 
 // Watch for changes to the UDSPackage CRD and cleanup the namespace mutations
 When(UDSPackage).IsDeleted().Watch(cleanupNamespace);
