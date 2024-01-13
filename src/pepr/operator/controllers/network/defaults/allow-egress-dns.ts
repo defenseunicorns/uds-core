@@ -4,8 +4,11 @@ import { generate } from "../generate";
 export const allowEgressDNS = (namespace: string) => {
   const netPol = generate(namespace, {
     direction: Direction.Egress,
-    description: "DNS lookup to any DNS server",
-    remoteNamespace: "*",
+    description: "DNS lookup via CoreDNS",
+    remoteNamespace: "kube-system",
+    remotePodLabels: {
+      "k8s-app": "kube-dns",
+    },
     port: 53,
   });
 
