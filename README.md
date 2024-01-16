@@ -12,10 +12,10 @@ The core applications are:
 - [Istio](https://istio.io/) - Service Mesh
 - [KeyCloak](https://www.keycloak.org/) - Identity & Access Management
 - [Kiali](https://kiali.io/) - Service Mesh Observability
-- [Kyverno](https://kyverno.io/) - Policy Engine
 - [Loki](https://grafana.com/oss/loki/) - Log Aggregation
 - [Metrics Server](https://github.com/kubernetes-sigs/metrics-server) - Metrics
 - [Neuvector](https://open-docs.neuvector.com/) - Container Security
+- [Pepr](https://pepr.dev) - UDS policy engine & operator
 - [Prometheus Stack](https://github.com/prometheus-operator/kube-prometheus) - Monitoring
 - [Promtail](https://grafana.com/docs/loki/latest/send-data/promtail/) - Log Aggregation
 - [Tempo](https://grafana.com/docs/tempo/latest/getting-started/) - Tracing
@@ -47,17 +47,18 @@ uds deploy oci://ghcr.io/defenseunicorns/packages/uds/bundles/k3d-core:arm64
 uds deploy oci://ghcr.io/defenseunicorns/packages/uds/bundles/k3d-core:amd64
 ```
 
-The bundle includes the uds.dev certs by default. You can use the UDS environment variables to override the default values. E.g. 
+The bundle includes the uds.dev certs by default. You can use the UDS environment variables to override the default values. E.g.
 
 ```bash
-# Set environment variables with the contents of your certificate and key files
+# Set environment variables with the contents of your certificate and key files (must be base64 encoded)
 UDS_ADMIN_TLS_CERT=$(cat admin.crt)
 UDS_ADMIN_TLS_KEY=$(cat admin.key)
 UDS_TENANT_TLS_CERT=$(cat tenant.crt)
 UDS_TENANT_TLS_KEY=$(cat tenant.key)
 
-# AMD version
-uds deploy ocs://ghcr.io/defenseunicorns/package/uds/bundles/k3d-core:amd64
+UDS_DOMAIN=example.com
+
+uds deploy oci://ghcr.io/defenseunicorns/package/uds/bundles/k3d-core:amd64
 ```
 
 ### UDS Core Packages

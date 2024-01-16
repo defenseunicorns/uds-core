@@ -27,7 +27,7 @@ packages:
             - name: policies
               description: "Minio policies"
               path: policies
-              
+
   - name: init
     repository: ghcr.io/defenseunicorns/packages/init
     # renovate: datasource=github-tags depName=defenseunicorns/zarf versioning=semver

@@ -16,21 +16,10 @@ tasks:
       - description: "Deploy the UDS Core Istio Only Bundle"
         cmd: uds deploy bundles/k3d-istio/uds-bundle-k3d-core-istio-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress
 
-  - name: out-of-band-tls-certs
-    actions:
-      - description: "Deploy the TLS certs for Istio"
-        cmd: |
-          set -e
-          npm ci
-          npx --yes ts-node bundles/tls-certs.ts
-
   - name: single-package
     actions:
       # @todo (jeff): this pepr package versioning is still janky
+      - description: "Deploy the Pepr Module"
+        cmd: zarf package deploy build/zarf-package-pepr-uds-core-${UDS_ARCH}-0.2.0.tar.zst --confirm
       - description: "Deploy the requested Zarf Package (must set UDS_PKG environment variable)"
-        cmd: |
-          set -e
-          zarf package deploy build/zarf-package-uds-core-${UDS_PKG}-${UDS_ARCH}.tar.zst --confirm
-
-          peprBuild="build/zarf-package-pepr-uds-core-${UDS_ARCH}-0.2.0.tar.zst"
-          [ -f "${peprBuild}" ] && zarf package deploy "${peprBuild}" --confirm || echo "Pepr build not required"
+        cmd: zarf package deploy build/zarf-package-uds-core-${UDS_PKG}-${UDS_ARCH}.tar.zst --confirm
