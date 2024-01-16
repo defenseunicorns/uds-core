@@ -22,6 +22,10 @@
         "zarf"
       ],
       "labels": []
+    },
+    "env": {
+      "UDS_DOMAIN": "###ZARF_VAR_DOMAIN###",
+      "UDS_WITH_ISTIO": "###ZARF_CONST_WITH_ISTIO###"
     }
   },
   "scripts": {

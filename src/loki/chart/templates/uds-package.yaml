@@ -1,0 +1,58 @@
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: loki
+  namespace: {{ .Release.Namespace }}
+spec:
+  network:
+    allow:
+      # Permit intra-namespace communication for gateway -> loki read/write
+      - direction: Ingress
+        remoteGenerated: IntraNamespace
+
+      - direction: Egress
+        remoteGenerated: IntraNamespace
+
+      - direction: Ingress
+        podLabels:
+          app.kubernetes.io/name: loki
+        remoteNamespace: grafana
+        remotePodLabels:
+          app.kubernetes.io/name: grafana
+        ports:
+          - 8080
+        description: "Grafana Log Queries"
+
+      - direction: Ingress
+        podLabels:
+          app.kubernetes.io/name: loki
+        remoteNamespace: monitoring
+        remotePodLabels:
+          app.kubernetes.io/name: prometheus
+        ports:
+          - 3100
+          - 8080
+        description: "Prometheus Metrics"
+
+      - direction: Ingress
+        podLabels:
+          app.kubernetes.io/name: loki
+        remoteNamespace: promtail
+        remotePodLabels:
+          app.kubernetes.io/name: promtail
+        ports:
+          - 8080
+        description: "Promtail Log Storage"
+
+      # Todo: wide open for now for pushing to s3
+      - direction: Egress
+        podLabels:
+          app.kubernetes.io/name: loki
+        remoteGenerated: Anywhere
+
+      - direction: Egress
+        remoteNamespace: tempo
+        remotePodLabels:
+          app.kubernetes.io/name: tempo
+        port: 9411
+        description: "Tempo"
