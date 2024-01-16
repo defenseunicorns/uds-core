@@ -1,0 +1,37 @@
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: promtail
+  namespace: {{ .Release.Namespace }}
+spec:
+  network:
+    allow:
+      - direction: Ingress
+        podSelector:
+          app.kubernetes.io/name: promtail
+        remoteNamespace: monitoring
+        remotePodLabels:
+          app.kubernetes.io/name: prometheus
+        port: 3101
+        description: "Prometheus Metrics"
+
+      - direction: Egress
+        podSelector:
+          app.kubernetes.io/name: promtail
+        remoteGenerated: KubeAPI
+
+      - direction: Egress
+        remoteNamespace: tempo
+        remotePodLabels:
+          app.kubernetes.io/name: tempo
+        port: 9411
+        description: "Tempo"
+
+      - direction: Egress
+        podLabels:
+          app.kubernetes.io/name: promtail
+        remoteNamespace: loki
+        remotePodLabels:
+          app.kubernetes.io/name: loki
+        port: 8080
+        description: "Write Logs to Loki"

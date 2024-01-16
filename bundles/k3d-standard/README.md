@@ -12,10 +12,10 @@ The core applications are:
 - [Istio](https://istio.io/) - Service Mesh
 - [KeyCloak](https://www.keycloak.org/) - Identity & Access Management
 - [Kiali](https://kiali.io/) - Service Mesh Observability
-- [Kyverno](https://kyverno.io/) - Policy Engine
 - [Loki](https://grafana.com/oss/loki/) - Log Aggregation
 - [Metrics Server](https://github.com/kubernetes-sigs/metrics-server) - Metrics
 - [Neuvector](https://open-docs.neuvector.com/) - Container Security
+- [Pepr](https://pepr.dev) - UDS policy engine & operator
 - [Prometheus Stack](https://github.com/prometheus-operator/kube-prometheus) - Monitoring
 - [Promtail](https://grafana.com/docs/loki/latest/send-data/promtail/) - Log Aggregation
 - [Tempo](https://grafana.com/docs/tempo/latest/getting-started/) - Tracing
