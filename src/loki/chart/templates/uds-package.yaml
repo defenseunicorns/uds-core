@@ -6,6 +6,13 @@ metadata:
 spec:
   network:
     allow:
+      # Permit intra-namespace communication for gateway -> loki read/write
+      - direction: Ingress
+        remoteGenerated: IntraNamespace
+
+      - direction: Egress
+        remoteGenerated: IntraNamespace
+
       - direction: Ingress
         podLabels:
           app.kubernetes.io/name: loki
