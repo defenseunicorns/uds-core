@@ -10,7 +10,7 @@ components:
     description: "Deploy Promtail"
     only:
       flavor: upstream
-    import: 
+    import:
       path: common
     charts:
       - name: promtail
@@ -20,13 +20,12 @@ components:
       - docker.io/jimmidyson/configmap-reload:v0.8.0
       - docker.io/grafana/promtail:2.9.2
 
-
   - name: promtail
     required: true
     description: "Deploy Promtail"
     only:
       flavor: registry1
-    import: 
+    import:
       path: common
     charts:
       - name: promtail

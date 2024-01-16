@@ -1,4 +1,3 @@
-
 kind: ZarfPackageConfig
 metadata:
   name: uds-core-loki

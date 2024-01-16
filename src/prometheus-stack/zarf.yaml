@@ -20,7 +20,7 @@ components:
     description: "Install kube-prometheus-stack using the helm chart https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack"
     only:
       flavor: upstream
-    import: 
+    import:
       path: common
     charts:
       - name: kube-prometheus-stack
@@ -54,4 +54,3 @@ components:
       - "registry1.dso.mil/ironbank/opensource/prometheus-operator/prometheus-config-reloader:v0.69.1"
       - "registry1.dso.mil/ironbank/opensource/prometheus/prometheus:v2.47.2"
       - "registry1.dso.mil/ironbank/opensource/ingress-nginx/kube-webhook-certgen:v1.3.0"
-

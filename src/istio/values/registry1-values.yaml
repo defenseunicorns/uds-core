@@ -1,4 +1,3 @@
-
 pilot:
   hub: "registry1.dso.mil/ironbank/tetrate/istio"
   tag: "1.19.3-tetratefips-v0"

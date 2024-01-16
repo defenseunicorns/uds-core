@@ -1,4 +1,3 @@
-
 image:
   registry: registry1.dso.mil
   repository: ironbank/opensource/grafana/grafana
@@ -9,7 +8,6 @@ initChownData:
     registry: registry1.dso.mil
     repository: ironbank/redhat/ubi/ubi9-minimal
     tag: 9.3
-
 
 downloadDashboardsImage:
   registry: registry1.dso.mil

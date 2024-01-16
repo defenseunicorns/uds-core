@@ -17,7 +17,7 @@ kube-state-metrics:
     runAsUser: 65532
 prometheus:
   prometheusSpec:
-    image: 
+    image:
       registry: registry1.dso.mil
       repository: ironbank/opensource/prometheus/prometheus
       tag: v2.47.2
@@ -54,4 +54,3 @@ prometheusOperator:
       registry: registry1.dso.mil
       repository: ironbank/opensource/prometheus-operator/prometheus-config-reloader
       tag: v0.69.1
-

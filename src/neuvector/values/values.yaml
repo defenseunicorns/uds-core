@@ -1,13 +1,13 @@
 leastPrivilege: false #This is a new setting on version big bang has not added to umbrella yet
 autoGenerateCert: false
-rbac: true 
+rbac: true
 serviceAccount: default
 manager:
   env:
     ssl: false
     disableFipsInJava: true
   svc:
-    type: ClusterIP    
+    type: ClusterIP
 
 controller:
 
@@ -31,14 +31,14 @@ controller:
       userinitcfg.yaml:
         always_reload: true
         users:
-        - fullname: metrics
-          password: admin
-          role: reader
-          username: metrics
-        - fullname: admin
-          password: admin
-          role: admin
-          username: admin
+          - fullname: metrics
+            password: admin
+            role: reader
+            username: metrics
+          - fullname: admin
+            password: admin
+            role: admin
+            username: admin
 
 cve:
   scanner:
@@ -47,8 +47,7 @@ cve:
   updater:
     enabled: true
 
-
-k3s: 
+k3s:
   enabled: true
   runtimePath: /run/k3s/containerd/containerd.sock
 

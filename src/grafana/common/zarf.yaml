@@ -18,5 +18,3 @@ components:
         namespace: grafana
         version: 0.1.0
         localPath: ../chart #TODO look at moving chart location under common
-
-

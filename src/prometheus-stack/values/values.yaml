@@ -116,7 +116,7 @@ prometheusOperator:
           memory: 128Mi
 
   prometheusConfigReloader:
-    enableProbe: 
+    enableProbe:
       false
     resources:
       limits:
@@ -132,4 +132,3 @@ prometheusOperator:
     requests:
       cpu: 100m
       memory: 512Mi
-

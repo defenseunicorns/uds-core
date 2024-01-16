@@ -20,4 +20,3 @@ gateway:
     registry: registry1.dso.mil
     repository: ironbank/opensource/nginx/nginx-alpine
     tag: 1.25.2
-

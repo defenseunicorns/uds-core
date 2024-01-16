@@ -1,4 +1,3 @@
-
 image:
   registry: registry1.dso.mil
   repository: ironbank/opensource/grafana/promtail

@@ -64,7 +64,7 @@ components:
         url: https://istio-release.storage.googleapis.com/charts
         version: 1.19.3
         releaseName: tenant-ingressgateway
-        namespace: istio-tenant-gateway        
+        namespace: istio-tenant-gateway
       - name: uds-istio-config
         version: 0.2.0
         localPath: chart

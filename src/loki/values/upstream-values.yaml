@@ -9,4 +9,3 @@ gateway:
     registry: docker.io
     repository: nginxinc/nginx-unprivileged
     tag: 1.24-alpine
-

@@ -6,4 +6,3 @@ tasks:
         cmd: npx pepr format
       - description: yaml lint
         cmd: yamllint . -c .yamllint --no-warnings
-

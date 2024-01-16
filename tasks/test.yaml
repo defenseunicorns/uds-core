@@ -22,11 +22,10 @@ tasks:
       - task: create:k3d-standard-bundle
       - task: deploy:k3d-standard-bundle
 
-      -  description: "Validated all packages"
-          # loop through each src/* package and run the validate.yaml task
-          cmd: |
-            set -e        
-            for package in src/*; do
-              uds run -f ${package}/tasks.yaml validate --no-progress
-            done
-
+      - description: "Validated all packages"
+        # loop through each src/* package and run the validate.yaml task
+        cmd: |
+          set -e
+          for package in src/*; do
+            uds run -f ${package}/tasks.yaml validate --no-progress
+          done
