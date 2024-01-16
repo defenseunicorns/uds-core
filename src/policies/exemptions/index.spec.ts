@@ -8,14 +8,14 @@ describe("test registering exemptions", () => {
   const exemptNeuvectorEnforcer = registerExemptions([
     { name: neuvector.enforcer.name, namespace: neuvector.enforcer.namespace },
   ]);
-  
+
   it("should be exempt", () => {
     const isExempt = exemptNeuvectorEnforcer({
       Raw: {
         metadata: {
           name: "neuvector-enforcer-pod-x",
           namespace: "neuvector",
-        }
+        },
       },
     } as unknown as PeprValidateRequest<kind.Pod>);
     expect(isExempt).toBe(true);
