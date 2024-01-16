@@ -13,4 +13,3 @@ global:
 
   proxy:
     image: proxyv2
-

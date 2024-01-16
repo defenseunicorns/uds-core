@@ -1,12 +1,26 @@
-# todo figure out how to approach this piece and finish it or delete it
+kind: ZarfPackageConfig
+metadata:
+  name: uds-core-istio-common
+  description: "UDS Core Istio Common"
+  url: https://istio.io/latest/
+
 components:
-  - name: istio-gateway
+  - name: istio-controlplane
     required: true
     charts:
-      - name: gateway
+      - name: base
+        namespace: istio-system
         url: https://istio-release.storage.googleapis.com/charts
         version: 1.19.3
-      - name: uds-istio-config
-        version: 0.2.0
-        localPath: ../chart
-
+      - name: istiod
+        namespace: istio-system
+        url: https://istio-release.storage.googleapis.com/charts
+        version: 1.19.3
+        valuesFiles:
+          - "../values/common-values.yaml"
+    manifests:
+      - name: uds-global-istio-config
+        namespace: istio-system
+        files:
+          - "manifests/envoy-filters.yaml"
+          - "manifests/peer-authentication.yaml"
