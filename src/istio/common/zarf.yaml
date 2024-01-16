@@ -5,7 +5,7 @@ metadata:
   url: https://istio.io/latest/
 
 components:
-  - name: istio
+  - name: istio-controlplane
     required: true
     charts:
       - name: base

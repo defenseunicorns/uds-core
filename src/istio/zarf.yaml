@@ -10,7 +10,7 @@ variables:
     default: "uds.dev"
 
 components:
-  - name: istio
+  - name: istio-controlplane
     only:
       flavor: upstream
     import:
@@ -26,7 +26,7 @@ components:
       - "docker.io/istio/pilot:1.19.3-distroless"
       - "docker.io/istio/proxyv2:1.19.3-distroless"
 
-  - name: istio
+  - name: istio-controlplane
     only:
       flavor: registry1
     import:

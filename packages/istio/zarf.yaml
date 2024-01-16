@@ -9,7 +9,7 @@ metadata:
 
 components:
   # Istio
-  - name: istio
+  - name: istio-controlplane
     required: true
     import:
       path: ../../src/istio
