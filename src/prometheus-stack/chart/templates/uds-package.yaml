@@ -40,6 +40,15 @@ spec:
           app.kubernetes.io/name: prometheus
         description: "Metrics Scraping"
 
+      - direction: Ingress
+        remoteNamespace: grafana
+        remotePodLabels:
+          app.kubernetes.io/name: grafana
+        podLabels:
+          app.kubernetes.io/name: prometheus
+        port: 9090
+        description: "Grafana Metrics Queries"
+
       - direction: Egress
         remoteNamespace: tempo
         remotePodLabels:
