@@ -54,7 +54,7 @@ jobs:
           kubectl get package -A
 
       - name: Save logs
-        if: !cancelled()
+        if: always()
         uses: ./.github/actions/save-logs
 
   test-upgrade:
@@ -80,5 +80,5 @@ jobs:
           kubectl get package -A
 
       - name: Save logs
-        if: !cancelled()
+        if: always()
         uses: ./.github/actions/save-logs
