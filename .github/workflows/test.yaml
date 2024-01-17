@@ -47,8 +47,14 @@ jobs:
         if: ${{ inputs.package == 'all' }}
         run: uds run test-uds-core
 
+      - name: Debug Output
+        if: !cancelled()
+        run: |
+          kubectl get all -A
+          kubectl get package -A
+
       - name: Save logs
-        if: always()
+        if: !cancelled()
         uses: ./.github/actions/save-logs
 
   test-upgrade:
@@ -67,6 +73,12 @@ jobs:
       - name: Test upgrade
         run: uds run test-uds-core-upgrade
 
+      - name: Debug Output
+        if: !cancelled()
+        run: |
+          kubectl get all -A
+          kubectl get package -A
+
       - name: Save logs
-        if: always()
+        if: !cancelled()
         uses: ./.github/actions/save-logs
