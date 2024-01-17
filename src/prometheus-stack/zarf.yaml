@@ -23,10 +23,6 @@ components:
     import:
       path: common
     charts:
-      - name: uds-prometheus-config
-        namespace: monitoring
-        version: 0.1.0
-        localPath: chart
       - name: kube-prometheus-stack
         valuesFiles:
           - "values/upstream-values.yaml"
