@@ -48,7 +48,7 @@ jobs:
         run: uds run test-uds-core
 
       - name: Debug Output
-        if: !cancelled()
+        if: ${{ !cancelled() }}
         run: |
           kubectl get all -A
           kubectl get package -A
@@ -74,7 +74,7 @@ jobs:
         run: uds run test-uds-core-upgrade
 
       - name: Debug Output
-        if: !cancelled()
+        if: ${{ !cancelled() }}
         run: |
           kubectl get all -A
           kubectl get package -A
