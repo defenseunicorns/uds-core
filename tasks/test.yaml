@@ -1,4 +1,5 @@
 includes:
+  - lint: ./tasks/lint.yaml
   - create: ./tasks/create.yaml
   - setup: ./tasks/setup.yaml
   - deploy: ./tasks/deploy.yaml
@@ -17,6 +18,7 @@ tasks:
   - name: uds-core
     description: "Build and test UDS Core"
     actions:
+      - task: lint:format-pepr
       - task: create:standard-package
       - task: create:istio-package
       - task: create:k3d-standard-bundle

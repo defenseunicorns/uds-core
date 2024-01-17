@@ -1,0 +1,6 @@
+tasks:
+  - name: format-pepr
+    description: huh
+    actions:
+      - description: "Validate Pepr formatting"
+        cmd: npx pepr format --validate-only

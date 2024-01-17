@@ -1,4 +1,5 @@
 includes:
+  # - lint: ./tasks/lint.yaml
   - create: ./tasks/create.yaml
   - setup: ./tasks/setup.yaml
   - deploy: ./tasks/deploy.yaml
@@ -8,6 +9,11 @@ tasks:
   - name: setup-cluster
     actions:
       - task: setup:k3d-test-cluster
+
+  # - name: lint-uds-core
+  #   actions:
+  #     - task: lint:format-pepr
+  #     # - task: lint:yamllint
 
   - name: create-single-package
     actions:
