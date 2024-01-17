@@ -1,0 +1,13 @@
+tempo:
+  receivers:
+    zipkin:
+      endpoint: 0.0.0.0:9411
+  retention: 24h # Default retention since 100% of traces are captured
+persistence:
+  enabled: true
+  accessModes:
+    - ReadWriteOnce
+  size: 15Gi
+# Traces are sent to zipkin (9411) and bypass typical proxy <-> proxy traffic
+podAnnotations:
+  traffic.sidecar.istio.io/excludeInboundPorts: "9411"

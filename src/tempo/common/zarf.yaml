@@ -1,0 +1,20 @@
+kind: ZarfPackageConfig
+metadata:
+  name: uds-core-tempo-common
+  description: "UDS Core Tempo Common"
+  url: https://grafana.com/oss/tempo
+
+components:
+  - name: tempo
+    required: true
+    charts:
+      - name: tempo
+        url: https://grafana.github.io/helm-charts/
+        version: 1.7.1
+        namespace: tempo
+        valuesFiles:
+          - ../values/values.yaml
+      - name: uds-tempo-config
+        namespace: tempo
+        version: 0.1.0
+        localPath: ../chart

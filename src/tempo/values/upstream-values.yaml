@@ -1,0 +1,3 @@
+tempo:
+  repository: grafana/tempo
+  tag: 2.3.0

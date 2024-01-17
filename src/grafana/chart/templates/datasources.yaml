@@ -19,3 +19,14 @@ data:
       name: Loki
       type: loki
       url: http://loki-gateway.loki.svc.cluster.local:80
+      jsonData:
+        derivedFields:
+          - datasourceName: Tempo
+            matcherRegex: "traceID=(\\w+)"
+            name: TraceID
+            url: "$${__value.raw}"
+    - access: proxy
+      editable: true
+      name: Tempo
+      type: tempo
+      url: http://tempo.tempo.svc.cluster.local:3100

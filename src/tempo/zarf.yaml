@@ -1,11 +1,32 @@
 kind: ZarfPackageConfig
 metadata:
   name: uds-core-tempo
-  description: "Example description"
+  description: "UDS Core Tempo"
+  url: https://grafana.com/oss/tempo
 
 components:
-  - name: test
-    actions:
-      onCreate:
-        after:
-          - cmd: echo "What can Doug do for you?"
+  - name: tempo
+    required: true
+    only:
+      flavor: upstream
+    import:
+      path: common
+    charts:
+      - name: tempo
+        valuesFiles:
+          - values/upstream-values.yaml
+    images:
+      - docker.io/grafana/tempo:2.3.0
+
+  - name: tempo
+    required: true
+    only:
+      flavor: registry1
+    import:
+      path: common
+    charts:
+      - name: tempo
+        valuesFiles:
+          - values/registry1-values.yaml
+    images:
+      - registry1.dso.mil/ironbank/opensource/grafana/tempo:2.3.0-ubi9

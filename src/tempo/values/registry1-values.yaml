@@ -1,0 +1,3 @@
+tempo:
+  repository: registry1.dso.mil/ironbank/opensource/grafana/tempo
+  tag: 2.3.0-ubi9
