@@ -1,0 +1,13 @@
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: metrics-server
+  namespace: {{ .Release.Namespace }}
+spec:
+  network:
+    allow:
+      - direction: Egress
+        # todo: evaluate an "all nodes" generated rule
+        podLabels:
+          app.kubernetes.io/name: metrics-server
+        remoteGenerated: Anywhere

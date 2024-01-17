@@ -28,9 +28,6 @@ components:
       path: common
     charts:
       - name: loki
-        url: https://grafana.github.io/helm-charts/
-        version: 5.36.3
-        namespace: loki
         valuesFiles:
           - ./values/registry1-values.yaml
     images:

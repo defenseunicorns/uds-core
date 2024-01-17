@@ -8,6 +8,10 @@ components:
   - name: promtail
     required: true
     charts:
+      - name: uds-promtail-config
+        namespace: promtail
+        version: 0.1.0
+        localPath: ../chart
       - name: promtail
         url: https://grafana.github.io/helm-charts/
         version: 6.15.3
@@ -15,7 +19,4 @@ components:
         gitPath: charts/promtail
         valuesFiles:
           - ../values/values.yaml
-      - name: uds-promtail-config
-        namespace: promtail
-        version: 0.1.0
-        localPath: ../chart
+

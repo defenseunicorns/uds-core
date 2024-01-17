@@ -14,6 +14,10 @@ components:
         version: 2.6.4
         namespace: neuvector
         gitPath: charts/crd
+      - name: uds-neuvector-config
+        namespace: neuvector
+        version: 0.1.0
+        localPath: ../chart
       - name: core
         url: https://neuvector.github.io/neuvector-helm/
         version: 2.6.4
@@ -28,7 +32,4 @@ components:
         gitPath: charts/monitor
         valuesFiles:
           - ../values/monitor-values.yaml
-      - name: uds-neuvector-config
-        namespace: neuvector
-        version: 0.1.0
-        localPath: ../chart
+

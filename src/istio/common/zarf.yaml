@@ -17,7 +17,7 @@ components:
         url: https://istio-release.storage.googleapis.com/charts
         version: 1.19.3
         valuesFiles:
-          - "../values/common-values.yaml"
+          - "../values/values.yaml"
     manifests:
       - name: uds-global-istio-config
         namespace: istio-system

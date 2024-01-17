@@ -9,6 +9,11 @@ variables:
     description: "Cluster domain"
     default: "uds.dev"
 
+constants:
+  - name: WITH_ISTIO
+    description: "Track istio installation"
+    value: "true"
+
 components:
   - name: istio-controlplane
     only:
@@ -17,9 +22,6 @@ components:
       path: common
     charts:
       - name: istiod
-        namespace: istio-system
-        url: https://istio-release.storage.googleapis.com/charts
-        version: 1.19.3
         valuesFiles:
           - "values/upstream-values.yaml"
     images:
@@ -33,9 +35,6 @@ components:
       path: common
     charts:
       - name: istiod
-        namespace: istio-system
-        url: https://istio-release.storage.googleapis.com/charts
-        version: 1.19.3
         valuesFiles:
           - "values/registry1-values.yaml"
     images:

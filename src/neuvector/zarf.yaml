@@ -13,12 +13,14 @@ components:
     import:
       path: common
     charts:
+      - name: crd
       - name: core
         valuesFiles:
           - values/upstream-values.yaml
       - name: monitor
         valuesFiles:
           - values/upstream-monitor-values.yaml
+
     images:
       - docker.io/neuvector/controller:5.2.3
       - docker.io/neuvector/manager:5.2.3
