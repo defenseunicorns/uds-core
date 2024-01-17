@@ -50,7 +50,7 @@ jobs:
           password: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
 
       - name: Test a single source package
-        if: ${{ inputs.package != 'all' && matrix.flavor == 'upstream'}}
+        if: ${{ inputs.package != 'all' && matrix.flavor == 'upstream' }}
         run: uds run test-single-package --set FLAVOR=${{ matrix.flavor }}
 
       - name: Test UDS Core
@@ -76,6 +76,13 @@ jobs:
 
       - name: Environment setup
         uses: ./.github/actions/setup
+
+      - name: Login to Registry1
+        uses: docker/login-action@v3
+        with:
+          registry: registry1.dso.mil
+          username: ${{ secrets.IRON_BANK_ROBOT_USERNAME }}
+          password: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
 
       - name: Test upgrade
         run: uds run test-uds-core-upgrade --set FLAVOR=${{ matrix.flavor }}
