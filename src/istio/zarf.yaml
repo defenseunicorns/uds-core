@@ -16,6 +16,7 @@ constants:
 
 components:
   - name: istio-controlplane
+    required: true
     only:
       flavor: upstream
     import:
@@ -29,6 +30,7 @@ components:
       - "docker.io/istio/proxyv2:1.19.3-distroless"
 
   - name: istio-controlplane
+    required: true
     only:
       flavor: registry1
     import:
