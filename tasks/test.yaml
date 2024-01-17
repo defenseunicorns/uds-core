@@ -14,6 +14,17 @@ tasks:
       - description: "Validate the package"
         cmd: uds run -f src/${UDS_PKG}/tasks.yaml validate --no-progress
 
+  - name: validate-packages
+    description: "Validated all packages"
+    # loop through each src/* package and run the validate.yaml task
+    actions:
+      - cmd: |
+          set -e
+          for package in src/*; do
+            uds run -f ${package}/tasks.yaml validate --no-progress
+          done
+          set +e
+
   - name: uds-core
     description: "Build and test UDS Core"
     actions:
@@ -21,11 +32,13 @@ tasks:
       - task: create:istio-package
       - task: create:k3d-standard-bundle
       - task: deploy:k3d-standard-bundle
+      - task: validate-packages
 
-      - description: "Validated all packages"
-        # loop through each src/* package and run the validate.yaml task
-        cmd: |
-          set -e        
-          for package in src/*; do
-            uds run -f ${package}/tasks.yaml validate --no-progress
-          done
+  - name: uds-core-upgrade
+    description: "Test an upgrade from the latest released UDS Core package to current branch"
+    actions:
+      - task: setup:k3d-test-cluster
+      - task: deploy:latest-package-release
+      - task: create:standard-package
+      - task: deploy:standard-package
+      - task: validate-packages

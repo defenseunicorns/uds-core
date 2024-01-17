@@ -23,3 +23,13 @@ tasks:
         cmd: zarf package deploy build/zarf-package-pepr-uds-core-${UDS_ARCH}-0.2.0.tar.zst --confirm
       - description: "Deploy the requested Zarf Package (must set UDS_PKG environment variable)"
         cmd: zarf package deploy build/zarf-package-uds-core-${UDS_PKG}-${UDS_ARCH}.tar.zst --confirm
+
+  - name: latest-package-release
+    actions:
+      - description: "Deploy the latest UDS Core package release"
+        cmd: zarf package deploy oci://ghcr.io/defenseunicorns/packages/uds/core:${VERSION} --confirm
+
+  - name: standard-package
+    actions:
+      - description: "Deploy the standard UDS Core zarf package"
+        cmd: zarf package deploy build/zarf-package-core-${UDS_ARCH}-${VERSION}.tar.zst --confirm
