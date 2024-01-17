@@ -62,6 +62,9 @@ jobs:
         uses: ./.github/actions/save-logs
 
   test-upgrade:
+    strategy:
+      matrix:
+        flavor: [upstream, registry1]
     if: ${{ inputs.package == 'all' }}
     runs-on: "uds-ubuntu-big-boy-8-core"
     timeout-minutes: 30
@@ -75,7 +78,7 @@ jobs:
         uses: ./.github/actions/setup
 
       - name: Test upgrade
-        run: uds run test-uds-core-upgrade
+        run: uds run test-uds-core-upgrade --set FLAVOR=${{ matrix.flavor }}
 
       - name: Save logs
         if: always()

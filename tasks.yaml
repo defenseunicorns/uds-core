@@ -1,3 +1,7 @@
+variables:
+  - name: FLAVOR
+    default: upstream
+
 includes:
   - create: ./tasks/create.yaml
   - setup: ./tasks/setup.yaml
