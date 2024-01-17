@@ -17,4 +17,3 @@ components:
         namespace: loki
         valuesFiles:
           - ../values/values.yaml
-

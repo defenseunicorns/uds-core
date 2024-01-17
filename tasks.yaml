@@ -51,4 +51,3 @@ tasks:
   - name: lint
     actions:
       - task: lint:run
-

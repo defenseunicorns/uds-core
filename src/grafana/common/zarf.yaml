@@ -18,4 +18,3 @@ components:
         namespace: grafana
         valuesFiles:
           - ../values/values.yaml
-

@@ -18,7 +18,7 @@ components:
         valuesFiles:
           - values/upstream-values.yaml
       # Temporarily disabled until we can get the monitor chart working
-      # via https://github.com/neuvector/neuvector-helm/pull/355 
+      # via https://github.com/neuvector/neuvector-helm/pull/355
       # - name: monitor
       #   valuesFiles:
       #     - values/upstream-monitor-values.yaml
@@ -42,8 +42,8 @@ components:
       - name: core
         valuesFiles:
           - values/registry1-values.yaml
-      # Temporarily disabled until we can get the monitor chart working 
-      # via https://github.com/neuvector/neuvector-helm/pull/355 
+      # Temporarily disabled until we can get the monitor chart working
+      # via https://github.com/neuvector/neuvector-helm/pull/355
       # - name: monitor
       #   valuesFiles:
       #     - values/registry1-monitor-values.yaml
