@@ -51,11 +51,11 @@ jobs:
 
       - name: Test a single source package
         if: ${{ inputs.package != 'all' && matrix.flavor == 'upstream'}}
-        run: uds run test-single-package --set UDS_FLAVOR=${{ matrix.flavor }}
+        run: uds run test-single-package --set FLAVOR=${{ matrix.flavor }}
 
       - name: Test UDS Core
         if: ${{ inputs.package == 'all' }}
-        run: uds run test-uds-core --set UDS_FLAVOR=${{ matrix.flavor }}
+        run: uds run test-uds-core --set FLAVOR=${{ matrix.flavor }}
 
       - name: Save logs
         if: always()

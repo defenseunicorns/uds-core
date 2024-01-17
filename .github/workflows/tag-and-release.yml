@@ -55,7 +55,7 @@ jobs:
           password: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
 
       - name: Publish UDS Zarf Package
-        run: uds run -f tasks/publish.yaml packages --set UDS_FLAVOR=${{ matrix.flavor }}
+        run: uds run -f tasks/publish.yaml packages --set FLAVOR=${{ matrix.flavor }}
 
       - name: Publish UDS Bundles
         run: uds run -f tasks/publish.yaml bundles
