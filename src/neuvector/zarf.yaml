@@ -13,7 +13,6 @@ components:
     import:
       path: common
     charts:
-      - name: crd
       - name: core
         valuesFiles:
           - values/upstream-values.yaml
