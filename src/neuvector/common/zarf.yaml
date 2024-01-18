@@ -25,11 +25,10 @@ components:
         gitPath: charts/core
         valuesFiles:
           - ../values/values.yaml
-      # Temporarily disabled until we can get the monitor chart working via https://github.com/neuvector/neuvector-helm/pull/355
-      # - name: monitor
-      #   url: https://neuvector.github.io/neuvector-helm/
-      #   version: 2.6.4
-      #   namespace: neuvector
-      #   gitPath: charts/monitor
-      #   valuesFiles:
-      #     - ../values/monitor-values.yaml
+      - name: monitor
+        url: https://neuvector.github.io/neuvector-helm/
+        version: 2.6.4
+        namespace: neuvector
+        gitPath: charts/monitor
+        valuesFiles:
+          - ../values/monitor-values.yaml
