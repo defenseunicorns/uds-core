@@ -17,12 +17,9 @@ components:
       - name: core
         valuesFiles:
           - values/upstream-values.yaml
-      # Temporarily disabled until we can get the monitor chart working
-      # via https://github.com/neuvector/neuvector-helm/pull/355
-      # - name: monitor
-      #   valuesFiles:
-      #     - values/upstream-monitor-values.yaml
-
+      - name: monitor
+        valuesFiles:
+          - values/upstream-monitor-values.yaml
     images:
       - docker.io/neuvector/controller:5.2.3
       - docker.io/neuvector/manager:5.2.3
@@ -42,11 +39,9 @@ components:
       - name: core
         valuesFiles:
           - values/registry1-values.yaml
-      # Temporarily disabled until we can get the monitor chart working
-      # via https://github.com/neuvector/neuvector-helm/pull/355
-      # - name: monitor
-      #   valuesFiles:
-      #     - values/registry1-monitor-values.yaml
+      - name: monitor
+        valuesFiles:
+          - values/registry1-monitor-values.yaml
     images:
       - registry1.dso.mil/ironbank/neuvector/neuvector/controller:5.2.2
       - registry1.dso.mil/ironbank/neuvector/neuvector/manager:5.2.2
