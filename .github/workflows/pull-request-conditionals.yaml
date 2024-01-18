@@ -1,10 +1,8 @@
 name: Filter
 
-# This workflow is triggered on pull requests to the main branch.
+# This workflow is triggered on pull requests
 on:
   pull_request:
-    paths:
-      - "**"
 
 # Permissions for the GITHUB_TOKEN used by the workflow.
 permissions:
