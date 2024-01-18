@@ -55,7 +55,7 @@ jobs:
           password: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
 
       - name: Test a single source package
-        if: ${{ inputs.package != 'all' && inputs.flavor == 'upstream' }}
+        if: ${{ inputs.package != 'all' }}
         run: uds run test-single-package --set FLAVOR=${{ inputs.flavor }}
 
       - name: Test UDS Core
