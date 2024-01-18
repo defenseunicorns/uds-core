@@ -8,12 +8,20 @@ on:
         type: string
         description: "The name of the source package to test"
         required: true
+      flavor:
+        type: string
+        description: "Flavor of the source package to test"
+        required: true
   # Triggered by pull-request-conditionals.yaml
   workflow_call:
     inputs:
       package:
         type: string
         description: "The name of the source package to test"
+        required: true
+      flavor:
+        type: string
+        description: "Flavor of the source package to test"
         required: true
 
 # Abort prior jobs in the same workflow / PR
@@ -26,9 +34,6 @@ permissions:
 
 jobs:
   test:
-    strategy:
-      matrix:
-        flavor: [upstream, registry1]
     runs-on: "${{ inputs.package == 'all' && 'uds-ubuntu-big-boy-8-core' || 'ubuntu-latest'}}"
     timeout-minutes: 30
     name: Test
@@ -50,15 +55,15 @@ jobs:
           password: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
 
       - name: Test a single source package
-        if: ${{ inputs.package != 'all' && matrix.flavor == 'upstream' }}
-        run: uds run test-single-package --set FLAVOR=${{ matrix.flavor }}
+        if: ${{ inputs.package != 'all' && inputs.flavor == 'upstream' }}
+        run: uds run test-single-package --set FLAVOR=${{ inputs.flavor }}
 
       - name: Test UDS Core
         if: ${{ inputs.package == 'all' }}
-        run: uds run test-uds-core --set FLAVOR=${{ matrix.flavor }}
+        run: uds run test-uds-core --set FLAVOR=${{ inputs.flavor }}
 
       - name: Debug Output
-        if: ${{ !cancelled() }}
+        if: ${{ inputs.package != 'all' && !cancelled() }}
         run: |
           kubectl get all -A
           kubectl get package -A
@@ -68,9 +73,6 @@ jobs:
         uses: ./.github/actions/save-logs
 
   test-upgrade:
-    strategy:
-      matrix:
-        flavor: [upstream, registry1]
     if: ${{ inputs.package == 'all' }}
     runs-on: "uds-ubuntu-big-boy-8-core"
     timeout-minutes: 30
@@ -91,7 +93,7 @@ jobs:
           password: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
 
       - name: Test upgrade
-        run: uds run test-uds-core-upgrade --set FLAVOR=${{ matrix.flavor }}
+        run: uds run test-uds-core-upgrade --set FLAVOR=${{ inputs.flavor }}
 
       - name: Debug Output
         if: ${{ !cancelled() }}
