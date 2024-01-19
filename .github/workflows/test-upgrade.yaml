@@ -1,39 +1,29 @@
-name: Test packages
+name: Test Upgrade of UDS Core
 
 on:
   # Manual trigger
   workflow_dispatch:
     inputs:
-      package:
-        type: string
-        description: "The name of the source package to test"
-        required: true
       flavor:
         type: string
-        description: "Flavor of the source package to test"
+        description: "Flavor of the core package to test"
         required: true
   # Triggered by pull-request-conditionals.yaml
   workflow_call:
     inputs:
-      package:
-        type: string
-        description: "The name of the source package to test"
-        required: true
       flavor:
         type: string
-        description: "Flavor of the source package to test"
+        description: "Flavor of the core package to test"
         required: true
 
 permissions:
   contents: read
 
 jobs:
-  test:
-    runs-on: "${{ inputs.package == 'all' && 'uds-ubuntu-big-boy-8-core' || 'ubuntu-latest'}}"
+  test-upgrade:
+    runs-on: "uds-ubuntu-big-boy-8-core"
     timeout-minutes: 30
-    name: Test Install
-    env:
-      UDS_PKG: ${{ inputs.package }}
+    name: Test Upgrade
 
     steps:
       - name: Checkout repository
@@ -49,16 +39,11 @@ jobs:
           username: ${{ secrets.IRON_BANK_ROBOT_USERNAME }}
           password: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
 
-      - name: Test a single source package
-        if: ${{ inputs.package != 'all' }}
-        run: uds run test-single-package --set FLAVOR=${{ inputs.flavor }}
-
-      - name: Test UDS Core
-        if: ${{ inputs.package == 'all' }}
-        run: uds run test-uds-core --set FLAVOR=${{ inputs.flavor }}
+      - name: Test upgrade
+        run: uds run test-uds-core-upgrade --set FLAVOR=${{ inputs.flavor }}
 
       - name: Debug Output
-        if: ${{ inputs.package != 'all' && !cancelled() }}
+        if: ${{ !cancelled() }}
         run: |
           kubectl get all -A
           kubectl get package -A

@@ -15,6 +15,11 @@ defaults:
   run:
     shell: bash -e -o pipefail {0} # Ensures that scripts fail on error and pipefail is set.
 
+# Abort prior jobs in the same workflow / PR
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   # This job checks if there are changes in specific paths source packages.
   check-paths:
@@ -45,5 +50,18 @@ jobs:
     uses: ./.github/workflows/test.yaml
     with:
       package: ${{ matrix.package }}
+      flavor: ${{ matrix.flavor }}
+    secrets: inherit # Inherits all secrets from the parent workflow.
+
+  # This job triggers a separate workflow for each flavor core package.
+  run-package-upgrade-test:
+    needs: check-paths
+    name: Schedule
+    strategy:
+      matrix:
+        package: [all]
+        flavor: [upstream, registry1]
+    uses: ./.github/workflows/test-upgrade.yaml
+    with:
       flavor: ${{ matrix.flavor }}
     secrets: inherit # Inherits all secrets from the parent workflow.
