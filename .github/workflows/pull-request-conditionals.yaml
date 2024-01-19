@@ -47,3 +47,15 @@ jobs:
       package: ${{ matrix.package }}
       flavor: ${{ matrix.flavor }}
     secrets: inherit # Inherits all secrets from the parent workflow.
+
+  # This job triggers a separate workflow for each flavor core package.
+  run-package-upgrade-test:
+    name: Schedule
+    strategy:
+      matrix:
+        flavor: [upstream, registry1]
+    uses: ./.github/workflows/test-upgrade.yaml
+    with:
+      package: "all"
+      flavor: ${{ matrix.flavor }}
+    secrets: inherit # Inherits all secrets from the parent workflow.
