@@ -21,8 +21,24 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  lint-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install yamllint
+        run: pip install yamllint
+      - name: Set up Homebrew
+        uses: Homebrew/actions/setup-homebrew@master
+      - name: Install UDS CLI
+        shell: bash
+        # renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
+        run: brew install defenseunicorns/tap/uds@0.6.1
+      - name: Test a single source package
+        run: uds run lint-check
+
   # This job checks if there are changes in specific paths source packages.
   check-paths:
+    needs: lint-check
     runs-on: ubuntu-latest
     name: Select Jobs
     outputs:

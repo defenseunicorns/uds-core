@@ -52,6 +52,10 @@ tasks:
     actions:
       - task: test:uds-core-upgrade
 
-  - name: lint
+  - name: lint-check
     actions:
-      - task: lint:run
+      - task: lint:check
+
+  - name: lint-fix
+    actions:
+      - task: lint:fix
