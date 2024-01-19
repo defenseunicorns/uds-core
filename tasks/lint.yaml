@@ -9,7 +9,11 @@ tasks:
   - name: check
     description: "Run linting checks"
     actions:
+      - description: install pepr deps
+        cmd: npm ci
       - description: "Pepr Format check"
         cmd: npx pepr format --validate-only
+      - description: install yamllint deps
+        cmd: pip install yamllint
       - description: yaml lint
         cmd: yamllint . -c .yamllint --no-warnings
