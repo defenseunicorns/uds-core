@@ -18,7 +18,7 @@ on:
 
 # Abort prior jobs in the same workflow / PR
 concurrency:
-  group: test-${{ github.ref }}-${{ inputs.flavor }}-upgrade
+  group: test-${{ github.ref }}-all-${{ inputs.flavor }}
   cancel-in-progress: true
 
 permissions:
