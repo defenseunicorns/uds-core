@@ -15,6 +15,11 @@ defaults:
   run:
     shell: bash -e -o pipefail {0} # Ensures that scripts fail on error and pipefail is set.
 
+# Abort prior jobs in the same workflow / PR
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   # This job checks if there are changes in specific paths source packages.
   check-paths:

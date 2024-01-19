@@ -24,11 +24,6 @@ on:
         description: "Flavor of the source package to test"
         required: true
 
-# Abort prior jobs in the same workflow / PR
-concurrency:
-  group: test-${{ github.ref }}-${{ inputs.package }}-${{ inputs.flavor }}
-  cancel-in-progress: true
-
 permissions:
   contents: read
 
