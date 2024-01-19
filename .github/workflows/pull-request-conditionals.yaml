@@ -55,9 +55,11 @@ jobs:
 
   # This job triggers a separate workflow for each flavor core package.
   run-package-upgrade-test:
+    needs: check-paths
     name: Schedule
     strategy:
       matrix:
+        package: [all]
         flavor: [upstream, registry1]
     uses: ./.github/workflows/test-upgrade.yaml
     with:
