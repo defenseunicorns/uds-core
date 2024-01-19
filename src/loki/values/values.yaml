@@ -120,4 +120,3 @@ gateway:
   enabled: true
   # Remove default anti-affinity since this is a 1-replica setup
   affinity: ""
-

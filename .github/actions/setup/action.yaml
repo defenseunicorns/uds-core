@@ -38,7 +38,7 @@ runs:
       shell: bash
       # renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
       run: brew install defenseunicorns/tap/uds@0.6.1
-  
+
     - name: Login to GHCR
       uses: docker/login-action@v3
       with:
@@ -46,7 +46,7 @@ runs:
         username: dummy
         password: ${{ inputs.gh_token }}
 
-    # Retries intermittent registry1 login action 
+    # Retries intermittent registry1 login action
     - uses: Wandalen/wretry.action@v1
       with:
         attempt_limit: 3
@@ -55,4 +55,3 @@ runs:
           registry: registry1.dso.mil
           username: ${{ inputs.ib_user }}
           password: ${{ inputs.ib_password }}
-
