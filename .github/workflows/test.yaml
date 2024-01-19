@@ -41,6 +41,10 @@ jobs:
 
       - name: Environment setup
         uses: ./.github/actions/setup
+        with:
+          gh_token: ${{ secrets.GITHUB_TOKEN }}
+          ib_user: ${{ secrets.IRON_BANK_ROBOT_USERNAME }}
+          ib_password: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
 
       - name: Test a single source package
         if: ${{ inputs.package != 'all' }}

@@ -1,6 +1,16 @@
 # action.yml
 name: "Setup Environment"
 description: "UDS Environment Setup"
+inputs:
+  gh_token:
+    description: 'GITHUB_TOKEN'
+    required: true
+  ib_user:
+    description: 'IRON_BANK_ROBOT_USERNAME'
+    required: true
+  ib_password:
+    description: 'IRON_BANK_ROBOT_PASSWORD'
+    required: true
 
 runs:
   using: "composite"
@@ -34,7 +44,7 @@ runs:
       with:
         registry: ghcr.io
         username: dummy
-        password: ${{ secrets.GITHUB_TOKEN }}
+        password: ${{ inputs.gh_token }}
 
     # Retries intermittent registry1 login action 
     - uses: Wandalen/wretry.action@v1
@@ -43,6 +53,6 @@ runs:
         action: docker/login-action@v3
         with: |
           registry: registry1.dso.mil
-          username: ${{ secrets.IRON_BANK_ROBOT_USERNAME }}
-          password: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
+          username: ${{ inputs.ib_user }}
+          password: ${{ inputs.ib_password }}
 
