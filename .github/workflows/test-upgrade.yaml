@@ -1,0 +1,50 @@
+name: Test Upgrade of UDS Core
+
+on:
+  # Manual trigger
+  workflow_dispatch:
+    inputs:
+      flavor:
+        type: string
+        description: "Flavor of the core package to test"
+        required: true
+  # Triggered by pull-request-conditionals.yaml
+  workflow_call:
+    inputs:
+      flavor:
+        type: string
+        description: "Flavor of the core package to test"
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  test-upgrade:
+    runs-on: "uds-ubuntu-big-boy-8-core"
+    timeout-minutes: 30
+    name: Test Upgrade
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+
+      - name: Environment setup
+        uses: ./.github/actions/setup
+        with:
+          gh_token: ${{ secrets.GITHUB_TOKEN }}
+          ib_user: ${{ secrets.IRON_BANK_ROBOT_USERNAME }}
+          ib_password: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
+
+      - name: Test upgrade
+        run: uds run test-uds-core-upgrade --set FLAVOR=${{ inputs.flavor }}
+
+      - name: Debug Output
+        if: ${{ !cancelled() }}
+        run: |
+          kubectl get all -A
+          kubectl get package -A
+
+      - name: Save logs
+        if: always()
+        uses: ./.github/actions/save-logs

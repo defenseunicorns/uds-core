@@ -22,6 +22,9 @@ jobs:
         run: echo "release_created=${{ steps.tag.outputs.release_created || false }}" >> $GITHUB_OUTPUT
 
   publish-uds-core:
+    strategy:
+      matrix:
+        flavor: [upstream, registry1]
     needs: tag-new-version
     if: ${{ needs.tag-new-version.outputs.release_created == 'true'}}
     runs-on: ubuntu-latest
@@ -36,16 +39,13 @@ jobs:
 
       - name: Environment setup
         uses: ./.github/actions/setup
-
-      - name: Login to GHCR
-        uses: docker/login-action@v3
         with:
-          registry: ghcr.io
-          username: dummy
-          password: ${{ secrets.GITHUB_TOKEN }}
+          gh_token: ${{ secrets.GITHUB_TOKEN }}
+          ib_user: ${{ secrets.IRON_BANK_ROBOT_USERNAME }}
+          ib_password: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
 
       - name: Publish UDS Zarf Package
-        run: uds run -f tasks/publish.yaml packages
+        run: uds run -f tasks/publish.yaml packages --set FLAVOR=${{ matrix.flavor }}
 
       - name: Publish UDS Bundles
         run: uds run -f tasks/publish.yaml bundles

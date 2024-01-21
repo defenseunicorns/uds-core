@@ -1,9 +1,13 @@
+variables:
+  - name: FLAVOR
+    default: upstream
+
 includes:
   - create: ./tasks/create.yaml
   - setup: ./tasks/setup.yaml
   - deploy: ./tasks/deploy.yaml
   - test: ./tasks/test.yaml
-
+  - lint: ./tasks/lint.yaml
 tasks:
   - name: dev
     actions:
@@ -47,3 +51,11 @@ tasks:
   - name: test-uds-core-upgrade
     actions:
       - task: test:uds-core-upgrade
+
+  - name: lint-check
+    actions:
+      - task: lint:check
+
+  - name: lint-fix
+    actions:
+      - task: lint:fix

@@ -28,7 +28,7 @@ The core applications are:
 | Dependency                                                     | Minimum Version |
 | -------------------------------------------------------------- | --------------- |
 | [Zarf](https://github.com/defenseunicorns/zarf/releases)       | 0.32.1          |
-| [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) | 0.5.3           |
+| [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) | 0.6.1           |
 | [NodeJS](https://nodejs.org/en/download/)                      | LTS or Current  |
 
 <!-- endtable -->
@@ -41,10 +41,10 @@ A common need is bootstrapping a new UDS Core environment for development or tes
 
 ```bash
 # ARM version
-uds deploy oci://ghcr.io/defenseunicorns/packages/uds/bundles/k3d-core:arm64
+uds deploy oci://ghcr.io/defenseunicorns/packages/uds/bundles/upstream/k3d-core:arm64
 
 # AMD version
-uds deploy oci://ghcr.io/defenseunicorns/packages/uds/bundles/k3d-core:amd64
+uds deploy oci://ghcr.io/defenseunicorns/packages/uds/bundles/upstream/k3d-core:amd64
 ```
 
 The bundle includes the uds.dev certs by default. You can use the UDS environment variables to override the default values. E.g.
@@ -58,7 +58,15 @@ UDS_TENANT_TLS_KEY=$(cat tenant.key)
 
 UDS_DOMAIN=example.com
 
-uds deploy oci://ghcr.io/defenseunicorns/package/uds/bundles/k3d-core:amd64
+uds deploy oci://ghcr.io/defenseunicorns/package/uds/bundles/upstream/k3d-core:amd64
+```
+
+Note: In order to deploy using Iron Bank images, update the registry path replaceing ```upstream``` with ```registry1``` For example:
+
+```bash
+# ARM version
+uds deploy oci://ghcr.io/defenseunicorns/packages/uds/bundles/registry1/k3d-core:arm64
+
 ```
 
 ### UDS Core Packages
@@ -113,4 +121,11 @@ UDS_PKG=neuvector uds run deploy-single-package
 
 ```bash
 uds run -f src/neuvector/tasks/validate.yaml run
+```
+
+Note: The run tasks above default to targetting the upstream (oss) package flavor.
+In order to run any of the above commands against the registry1 flavor the command must be updated with ```--set FLAVOR=registry1``` For example:
+
+```bash
+uds run test-uds-core --set FLAVOR=registry1
 ```

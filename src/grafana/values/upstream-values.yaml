@@ -1,0 +1,22 @@
+sidecar:
+  image:
+    # -- The Docker registry
+    registry: ghcr.io
+    repository: kiwigrid/k8s-sidecar
+    tag: 1.25.2
+
+image:
+  registry: docker.io
+  repository: grafana/grafana
+  tag: 10.1.5
+
+initChownData:
+  image:
+    registry: docker.io
+    repository: library/busybox
+    tag: 1.31.1
+
+downloadDashboardsImage:
+  registry: docker.io
+  repository: curlimages/curl
+  tag: 7.85.0

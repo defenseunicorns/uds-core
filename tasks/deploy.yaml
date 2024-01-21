@@ -26,8 +26,12 @@ tasks:
 
   - name: latest-package-release
     actions:
+      - description: "Get latest tag version from OCI"
+        cmd: zarf tools registry ls ghcr.io/defenseunicorns/packages/uds/core | sort -V | tail -1
+        setVariables:
+          - name: LATEST_VERSION
       - description: "Deploy the latest UDS Core package release"
-        cmd: zarf package deploy oci://ghcr.io/defenseunicorns/packages/uds/core:${VERSION} --confirm
+        cmd: zarf package deploy oci://ghcr.io/defenseunicorns/packages/uds/core:${LATEST_VERSION} --confirm
 
   - name: standard-package
     actions:

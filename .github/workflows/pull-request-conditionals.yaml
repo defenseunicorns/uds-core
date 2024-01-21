@@ -15,9 +15,32 @@ defaults:
   run:
     shell: bash -e -o pipefail {0} # Ensures that scripts fail on error and pipefail is set.
 
+# Abort prior jobs in the same workflow / PR
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  lint-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js latest
+        uses: actions/setup-node@8f152de45cc393bb48ce5d89d36b731f54556e65 # v4.0.0
+        with:
+          node-version: 20
+      - name: Set up Homebrew
+        uses: Homebrew/actions/setup-homebrew@master
+      - name: Install UDS CLI
+        shell: bash
+        # renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
+        run: brew install defenseunicorns/tap/uds@0.6.1
+      - name: Run Formatting Checks
+        run: uds run lint-check
+
   # This job checks if there are changes in specific paths source packages.
   check-paths:
+    needs: lint-check
     runs-on: ubuntu-latest
     name: Select Jobs
     outputs:
@@ -41,7 +64,22 @@ jobs:
     strategy:
       matrix:
         package: ${{ fromJSON(needs.check-paths.outputs.packages) }}
+        flavor: [upstream, registry1]
     uses: ./.github/workflows/test.yaml
     with:
       package: ${{ matrix.package }}
+      flavor: ${{ matrix.flavor }}
+    secrets: inherit # Inherits all secrets from the parent workflow.
+
+  # This job triggers a separate workflow for each flavor core package.
+  run-package-upgrade-test:
+    needs: check-paths
+    name: Schedule
+    strategy:
+      matrix:
+        package: [all]
+        flavor: [upstream, registry1]
+    uses: ./.github/workflows/test-upgrade.yaml
+    with:
+      flavor: ${{ matrix.flavor }}
     secrets: inherit # Inherits all secrets from the parent workflow.

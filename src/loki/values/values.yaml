@@ -4,6 +4,7 @@ nameOverride: loki
 fullnameOverride: loki
 # -- Overrides the chart's cluster label
 clusterLabelOverride: null
+
 loki:
   storage:
     type: "filesystem"
@@ -25,6 +26,13 @@ loki:
       at: "250ms"
       max_per_second: 20
       up_to: 3
+  # -- The SecurityContext for Loki containers
+  containerSecurityContext:
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+        - ALL
+    allowPrivilegeEscalation: false
 enterprise:
   # Enable enterprise features, license must be provided
   enabled: false
@@ -93,7 +101,7 @@ sidecar:
     allowPrivilegeEscalation: false
     capabilities:
       drop:
-      - ALL
+        - ALL
     seccompProfile:
       type: RuntimeDefault
   rules:
@@ -112,6 +120,3 @@ gateway:
   enabled: true
   # Remove default anti-affinity since this is a 1-replica setup
   affinity: ""
-  # Temporary addition to handle upgrade scenarios removing affinity
-  deploymentStrategy:
-    type: Recreate

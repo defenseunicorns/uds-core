@@ -12,7 +12,7 @@ components:
   - name: istio-controlplane
     required: true
     import:
-      path: ../standard
+      path: ../../src/istio
 
   - name: istio-admin-gateway
     required: true

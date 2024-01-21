@@ -8,6 +8,10 @@ on:
         type: string
         description: "The name of the source package to test"
         required: true
+      flavor:
+        type: string
+        description: "Flavor of the source package to test"
+        required: true
   # Triggered by pull-request-conditionals.yaml
   workflow_call:
     inputs:
@@ -15,11 +19,10 @@ on:
         type: string
         description: "The name of the source package to test"
         required: true
-
-# Abort prior jobs in the same workflow / PR
-concurrency:
-  group: test-${{ github.ref }}-${{ inputs.package }}
-  cancel-in-progress: true
+      flavor:
+        type: string
+        description: "Flavor of the source package to test"
+        required: true
 
 permissions:
   contents: read
@@ -28,7 +31,7 @@ jobs:
   test:
     runs-on: "${{ inputs.package == 'all' && 'uds-ubuntu-big-boy-8-core' || 'ubuntu-latest'}}"
     timeout-minutes: 30
-    name: Test
+    name: Test Install
     env:
       UDS_PKG: ${{ inputs.package }}
 
@@ -38,43 +41,21 @@ jobs:
 
       - name: Environment setup
         uses: ./.github/actions/setup
+        with:
+          gh_token: ${{ secrets.GITHUB_TOKEN }}
+          ib_user: ${{ secrets.IRON_BANK_ROBOT_USERNAME }}
+          ib_password: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
 
       - name: Test a single source package
         if: ${{ inputs.package != 'all' }}
-        run: uds run test-single-package
+        run: uds run test-single-package --set FLAVOR=${{ inputs.flavor }}
 
       - name: Test UDS Core
         if: ${{ inputs.package == 'all' }}
-        run: uds run test-uds-core
+        run: uds run test-uds-core --set FLAVOR=${{ inputs.flavor }}
 
       - name: Debug Output
-        if: ${{ !cancelled() }}
-        run: |
-          kubectl get all -A
-          kubectl get package -A
-
-      - name: Save logs
-        if: always()
-        uses: ./.github/actions/save-logs
-
-  test-upgrade:
-    if: ${{ inputs.package == 'all' }}
-    runs-on: "uds-ubuntu-big-boy-8-core"
-    timeout-minutes: 30
-    name: Test Upgrade
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-
-      - name: Environment setup
-        uses: ./.github/actions/setup
-
-      - name: Test upgrade
-        run: uds run test-uds-core-upgrade
-
-      - name: Debug Output
-        if: ${{ !cancelled() }}
+        if: ${{ inputs.package != 'all' && !cancelled() }}
         run: |
           kubectl get all -A
           kubectl get package -A
