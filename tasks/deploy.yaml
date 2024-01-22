@@ -4,6 +4,8 @@ variables:
     # x-release-please-start-version
     default: "0.9.1"
     # x-release-please-end
+  - name: FLAVOR
+    default: upstream
 
 tasks:
   - name: k3d-standard-bundle
@@ -27,7 +29,7 @@ tasks:
   - name: latest-package-release
     actions:
       - description: "Get latest tag version from OCI"
-        cmd: zarf tools registry ls ghcr.io/defenseunicorns/packages/uds/core | sort -V | tail -1
+        cmd: zarf tools registry ls ghcr.io/defenseunicorns/packages/uds/core | grep ${FLAVOR} | sort -V | tail -1
         setVariables:
           - name: LATEST_VERSION
       - description: "Deploy the latest UDS Core package release"
