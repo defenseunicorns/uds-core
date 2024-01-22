@@ -37,7 +37,7 @@ runs:
     - name: Install UDS CLI
       shell: bash
       # renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
-      run: brew install defenseunicorns/tap/uds@0.6.1
+      run: brew install defenseunicorns/tap/uds@0.6.2
 
     - name: Login to GHCR
       uses: docker/login-action@v3
