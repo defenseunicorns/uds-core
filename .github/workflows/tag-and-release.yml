@@ -48,7 +48,7 @@ jobs:
         run: uds run -f tasks/publish.yaml packages --set FLAVOR=${{ matrix.flavor }}
 
       - name: Publish UDS Bundles
-        run: uds run -f tasks/publish.yaml bundles
+        run: uds run -f tasks/publish.yaml bundles --set FLAVOR=${{ matrix.flavor }}
 
       - name: Save logs
         if: always()

@@ -18,14 +18,14 @@ tasks:
       - description: "Create the UDS Core Standard Zarf Package"
         cmd: |
           set -e
-          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress
-          ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml standard-package --no-progress
+          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress --set FLAVOR=${FLAVOR}
+          ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml standard-package --no-progress --set FLAVOR=${FLAVOR}
 
       - description: "Create the UDS Core Istio Only Zarf Package"
         cmd: |
           set -e
-          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml istio-package --no-progress
-          ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml istio-package --no-progress
+          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml istio-package --no-progress --set FLAVOR=${FLAVOR}
+          ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml istio-package --no-progress --set FLAVOR=${FLAVOR}
 
       - description: "Publish the packages"
         cmd: |
