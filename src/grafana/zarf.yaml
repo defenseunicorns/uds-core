@@ -2,7 +2,7 @@ kind: ZarfPackageConfig
 metadata:
   name: uds-core-grafana
   description: "UDS Core Grafana"
-  url: https://grafana.com/grafanaa
+  url: https://grafana.com/grafana
 
 components:
   - name: grafana
