@@ -66,11 +66,11 @@ jobs:
         package: ${{ fromJSON(needs.check-paths.outputs.packages) }}
         flavor: [upstream, registry1]
         include:
-          - test_type: upgrade
+          - test_type: Upgrade
             package: all
     uses: ./.github/workflows/test.yaml
     with:
       package: ${{ matrix.package }}
       flavor: ${{ matrix.flavor }}
-      test_type: ${{ matrix.test_type || 'install' }}
+      test_type: ${{ matrix.test_type || 'Install' }}
     secrets: inherit # Inherits all secrets from the parent workflow.
