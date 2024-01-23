@@ -63,7 +63,7 @@ uds deploy oci://ghcr.io/defenseunicorns/package/uds/bundles/k3d-core-demo:amd64
 
 ### UDS Core Package
 
-UDS core publishes one packages:
+UDS core publishes one package:
 
 - [core](./packages/standard/README.md): The standard UDS Core package that is a collection of individual packages that are deployed as a single unit.
 
