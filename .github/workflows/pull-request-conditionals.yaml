@@ -68,6 +68,10 @@ jobs:
         include:
           - test_type: Upgrade
             package: all
+            flavor: registry1
+          - test_type: Upgrade
+            package: all
+            flavor: upstream
     uses: ./.github/workflows/test.yaml
     with:
       package: ${{ matrix.package }}
