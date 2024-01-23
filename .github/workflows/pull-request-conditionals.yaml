@@ -67,11 +67,11 @@ jobs:
         flavor: [upstream, registry1]
         test_type: [install]
         include:
-          - flavor: registry1
-            package: all
+          - package: all
+            flavor: registry1
             test_type: upgrade
-          - flavor: upstream
-            package: all
+          - package: all
+            flavor: upstream
             test_type: upgrade
     uses: ./.github/workflows/test.yaml
     with:
