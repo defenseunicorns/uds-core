@@ -39,7 +39,7 @@ jobs:
   test:
     runs-on: "${{ inputs.package == 'all' && 'uds-ubuntu-big-boy-8-core' || 'ubuntu-latest'}}"
     timeout-minutes: 30
-    name: Test ${{ inputs.test_type }}
+    name: Test
     env:
       UDS_PKG: ${{ inputs.package }}
 
@@ -55,15 +55,15 @@ jobs:
           ib_password: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
 
       - name: Test a single source package
-        if: ${{ inputs.package != 'all' && inputs.test_type == 'Install' }}
+        if: ${{ inputs.package != 'all' && inputs.test_type == 'install' }}
         run: uds run test-single-package --set FLAVOR=${{ inputs.flavor }}
 
       - name: Test UDS Core Install
-        if: ${{ inputs.package == 'all' && inputs.test_type == 'Install' }}
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
         run: uds run test-uds-core --set FLAVOR=${{ inputs.flavor }}
 
       - name: Test UDS Core Upgrade
-        if: ${{ inputs.package == 'all' && inputs.test_type == 'Upgrade' }}
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'upgrade' }}
         run: uds run test-uds-core-upgrade --set FLAVOR=${{ inputs.flavor }}
 
       - name: Debug Output
