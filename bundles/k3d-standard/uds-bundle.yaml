@@ -1,6 +1,6 @@
 kind: UDSBundle
 metadata:
-  name: k3d-core
+  name: k3d-core-demo
   description: A UDS bundle for deploying the standard UDS Core package on a development cluster
   # x-release-please-start-version
   version: "0.9.1"
@@ -10,7 +10,7 @@ packages:
   - name: uds-k3d-dev
     repository: ghcr.io/defenseunicorns/packages/uds-k3d
     # renovate: datasource=github-tags depName=defenseunicorns/uds-k3d versioning=semver
-    ref: 0.3.0
+    ref: 0.3.1
     overrides:
       uds-dev-stack:
         minio:
