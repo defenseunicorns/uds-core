@@ -61,7 +61,7 @@ UDS_DOMAIN=example.com
 uds deploy oci://ghcr.io/defenseunicorns/package/uds/bundles/k3d-core-demo:amd64
 ```
 
-### UDS Core Packages
+### UDS Core Package
 
 UDS core publishes one packages:
 
