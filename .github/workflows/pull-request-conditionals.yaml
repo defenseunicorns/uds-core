@@ -65,10 +65,14 @@ jobs:
       matrix:
         package: ${{ fromJSON(needs.check-paths.outputs.packages) }}
         flavor: [upstream, registry1]
+        include:
+          - test_type: upgrade
+            package: all
     uses: ./.github/workflows/test.yaml
     with:
       package: ${{ matrix.package }}
       flavor: ${{ matrix.flavor }}
+      test_type: ${{ matrix.test_type || 'install' }}
     secrets: inherit # Inherits all secrets from the parent workflow.
 
   # This job triggers a separate workflow for each flavor core package.
