@@ -70,6 +70,9 @@ jobs:
         if: ${{ always() }}
         run: |
           kubectl get all -A
+          echo
+          kubectl get pv,pvc -A
+          echo
           kubectl get package -A
 
       - name: Save logs
