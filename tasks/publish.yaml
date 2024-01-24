@@ -2,10 +2,13 @@ variables:
   - name: TARGET_REPO
     default: oci://ghcr.io/defenseunicorns/packages/uds
 
+  - name: FLAVOR
+    default: upstream
+
   - name: VERSION
     description: "The version of the packages to build"
     # x-release-please-start-version
-    default: "0.7.1"
+    default: "0.9.2"
     # x-release-please-end
 
 tasks:
@@ -14,50 +17,52 @@ tasks:
     actions:
       - description: "Create the UDS Core Standard Zarf Package"
         cmd: |
-          set -e        
-          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress
-          ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml standard-package --no-progress
+          set -e
+          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress --set FLAVOR=${FLAVOR}
+          ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml standard-package --no-progress --set FLAVOR=${FLAVOR}
 
       - description: "Create the UDS Core Istio Only Zarf Package"
         cmd: |
-          set -e        
-          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml istio-package --no-progress
-          ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml istio-package --no-progress
+          set -e
+          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml istio-package --no-progress --set FLAVOR=${FLAVOR}
+          ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml istio-package --no-progress --set FLAVOR=${FLAVOR}
 
       - description: "Publish the packages"
         cmd: |
-          set -e        
+          set -e
           zarf package publish build/zarf-package-core-amd64-${VERSION}.tar.zst ${TARGET_REPO}
-          zarf package publish build/zarf-package-core-arm64-${VERSION}.tar.zst ${TARGET_REPO}
-          zarf package publish build/zarf-package-core-istio-amd64-${VERSION}.tar.zst ${TARGET_REPO}
-          zarf package publish build/zarf-package-core-istio-arm64-${VERSION}.tar.zst ${TARGET_REPO}
+
+          # dont publish arm64 for registry1 since IB images are only amd64
+          if [ "${FLAVOR}" != "registry1" ]; then
+            zarf package publish build/zarf-package-core-arm64-${VERSION}.tar.zst ${TARGET_REPO}
+          fi
 
   - name: bundles
     description: "Build and publish UDS bundles"
     actions:
       - description: "Create the UDS Core Standard Bundle"
         cmd: |
-          set -e        
+          set -e
           ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml k3d-standard-bundle --no-progress
           ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-standard-bundle --no-progress
 
       - description: Create the UDS Core Istio Only Bundle
         cmd: |
-          set -e        
+          set -e
           ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml k3d-istio-bundle --no-progress
           ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-istio-bundle --no-progress
 
       - description: "Publish the bundles"
         cmd: |
-          set -e        
-          uds publish bundles/k3d-standard/uds-bundle-k3d-core-amd64-${VERSION}.tar.zst ${TARGET_REPO}/bundles --no-progress
-          uds publish bundles/k3d-standard/uds-bundle-k3d-core-arm64-${VERSION}.tar.zst ${TARGET_REPO}/bundles --no-progress
-          uds publish bundles/k3d-istio/uds-bundle-k3d-core-istio-amd64-${VERSION}.tar.zst ${TARGET_REPO}/bundles --no-progress
-          uds publish bundles/k3d-istio/uds-bundle-k3d-core-istio-arm64-${VERSION}.tar.zst ${TARGET_REPO}/bundles --no-progress
+          set -e
+          uds publish bundles/k3d-standard/uds-bundle-k3d-core-demo-arm64-${VERSION}.tar.zst ${TARGET_REPO}/bundles --no-progress
+          uds publish bundles/k3d-istio/uds-bundle-k3d-core-istio-dev-arm64-${VERSION}.tar.zst ${TARGET_REPO}/bundles --no-progress
+          uds publish bundles/k3d-standard/uds-bundle-k3d-core-demo-amd64-${VERSION}.tar.zst ${TARGET_REPO}/bundles --no-progress
+          uds publish bundles/k3d-istio/uds-bundle-k3d-core-istio-dev-amd64-${VERSION}.tar.zst ${TARGET_REPO}/bundles --no-progress
 
       - description: "Tag the latest bundles"
         cmd: |
           set -e
-          pkgPath="ghcr.io/defenseunicorns/packages/uds/bundles/k3d-core"
+          pkgPath="ghcr.io/defenseunicorns/packages/uds/bundles/k3d-core-demo"
           zarf tools registry copy ${pkgPath}:${VERSION}-arm64 ${pkgPath}:arm64
           zarf tools registry copy ${pkgPath}:${VERSION}-amd64 ${pkgPath}:amd64

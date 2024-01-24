@@ -3,7 +3,7 @@
 > [!WARNING]  
 > UDS Core is in early alpha and is not ready for general use.
 
-UDS Core groups foundational Unicorn Delivery Service applications that are heavily influenced [Big Bang](https://repo1.dso.mil/big-bang/bigbang).
+UDS Core groups foundational Unicorn Delivery Service applications inspired by [Big Bang](https://repo1.dso.mil/big-bang/bigbang).
 
 The core applications are:
 
@@ -12,10 +12,10 @@ The core applications are:
 - [Istio](https://istio.io/) - Service Mesh
 - [KeyCloak](https://www.keycloak.org/) - Identity & Access Management
 - [Kiali](https://kiali.io/) - Service Mesh Observability
-- [Kyverno](https://kyverno.io/) - Policy Engine
 - [Loki](https://grafana.com/oss/loki/) - Log Aggregation
 - [Metrics Server](https://github.com/kubernetes-sigs/metrics-server) - Metrics
 - [Neuvector](https://open-docs.neuvector.com/) - Container Security
+- [Pepr](https://pepr.dev) - UDS policy engine & operator
 - [Prometheus Stack](https://github.com/prometheus-operator/kube-prometheus) - Monitoring
 - [Promtail](https://grafana.com/docs/loki/latest/send-data/promtail/) - Log Aggregation
 - [Tempo](https://grafana.com/docs/tempo/latest/getting-started/) - Tracing
@@ -35,8 +35,8 @@ The k3d uds-dev-stack provides:
 
 | Dependency                                                     | Minimum Version |
 | -------------------------------------------------------------- | --------------- |
-| [Zarf](https://github.com/defenseunicorns/zarf/releases)       | 0.31.1          |
-| [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) | 0.4.1           |
+| [Zarf](https://github.com/defenseunicorns/zarf/releases)       | 0.32.1          |
+| [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) | 0.5.3           |
 | [NodeJS](https://nodejs.org/en/download/)                      | LTS or Current  |
 
 <!-- endtable -->

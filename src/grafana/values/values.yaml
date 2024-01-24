@@ -1,19 +1,7 @@
-service:
-  labels:
-    uds/istio-gateway: admin
-    uds/istio-host: grafana
-    uds/istio-port: "80"
-
 sidecar:
-  image:
-    # -- The Docker registry
-    registry: ghcr.io
-    repository: kiwigrid/k8s-sidecar
-    tag: 1.25.2
   dashboards:
     enabled: true
     label: grafana_dashboard
   datasources:
     enabled: true
     label: grafana_datasource
-

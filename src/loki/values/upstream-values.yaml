@@ -1,0 +1,11 @@
+loki:
+  image:
+    registry: docker.io
+    repository: grafana/loki
+    tag: 2.9.3
+
+gateway:
+  image:
+    registry: docker.io
+    repository: nginxinc/nginx-unprivileged
+    tag: 1.25-alpine

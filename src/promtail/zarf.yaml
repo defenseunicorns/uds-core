@@ -8,18 +8,29 @@ components:
   - name: promtail
     required: true
     description: "Deploy Promtail"
+    only:
+      flavor: upstream
+    import:
+      path: common
     charts:
       - name: promtail
-        url: https://grafana.github.io/helm-charts/
-        version: 6.15.3
-        namespace: promtail
-        gitPath: charts/promtail
         valuesFiles:
-          - values/values.yaml
-      - name: uds-promtail-config
-        namespace: promtail
-        version: 0.1.0
-        localPath: chart
+          - values/upstream-values.yaml
     images:
       - docker.io/jimmidyson/configmap-reload:v0.8.0
       - docker.io/grafana/promtail:2.9.2
+
+  - name: promtail
+    required: true
+    description: "Deploy Promtail"
+    only:
+      flavor: registry1
+    import:
+      path: common
+    charts:
+      - name: promtail
+        valuesFiles:
+          - values/registry1-values.yaml
+    images:
+      - registry1.dso.mil/ironbank/opensource/jimmidyson/configmap-reload:v0.8.0
+      - registry1.dso.mil/ironbank/opensource/grafana/promtail:v2.9.2

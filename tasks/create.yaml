@@ -1,3 +1,7 @@
+variables:
+  - name: FLAVOR
+    default: upstream
+
 tasks:
   - name: standard-package
     description: "Create the UDS Core Zarf Package"
@@ -5,7 +9,7 @@ tasks:
       - task: pepr-build
 
       - description: "Create the UDS Core Standard Zarf Package"
-        cmd: "zarf package create packages/standard --confirm"
+        cmd: "zarf package create packages/standard --confirm --flavor ${FLAVOR}"
 
   - name: k3d-standard-bundle
     description: "Create the K3d-UDS Core Bundle"
@@ -19,7 +23,7 @@ tasks:
       - task: pepr-build
 
       - description: "Create the UDS Core Istio Zarf Package"
-        cmd: "zarf package create packages/istio --confirm"
+        cmd: "zarf package create packages/istio --confirm --flavor ${FLAVOR}"
 
   - name: k3d-istio-bundle
     description: "Create the K3d-UDS Core (Istio Only) Bundle"
@@ -33,17 +37,17 @@ tasks:
       - task: pepr-build
 
       - description: "Create the Pepr Zarf Package, if it exists"
-        cmd: "zarf package create dist --confirm || echo 'Pepr build not required'"
+        cmd: "zarf package create dist --confirm"
 
       - description: "Create the requested Zarf Package (must set UDS_PKG environment variable)"
-        cmd: "zarf package create src/${UDS_PKG} --confirm"
+        cmd: "zarf package create src/${UDS_PKG} --confirm --flavor ${FLAVOR}"
 
   - name: pepr-build
     description: "Build the UDS Core Pepr Module"
     actions:
       - description: "Build the UDS Core Pepr Module"
         cmd: |
-          set -e        
+          set -e
           rm -fr dist
           npm ci
-          npx pepr build || echo "Pepr build not required"
+          npx pepr build

@@ -1,0 +1,16 @@
+{{- if .Capabilities.APIVersions.Has "security.istio.io/v1beta1" }}
+apiVersion: "security.istio.io/v1beta1"
+kind: PeerAuthentication
+metadata:
+  name: controller-neuvector
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    matchLabels:
+      app: neuvector-controller-pod
+  mtls:
+    mode: STRICT
+  portLevelMtls:
+    "18300":
+      mode: PERMISSIVE
+{{- end }}

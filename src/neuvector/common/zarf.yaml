@@ -1,0 +1,34 @@
+kind: ZarfPackageConfig
+metadata:
+  name: uds-core-neuvector-common
+  description: "UDS Core Neuvector Common"
+  url: https://open-docs.neuvector.com/
+
+components:
+  - name: neuvector
+    description: "Deploy Neuvector"
+    required: true
+    charts:
+      - name: crd
+        url: https://neuvector.github.io/neuvector-helm/
+        version: 2.6.4
+        namespace: neuvector
+        gitPath: charts/crd
+      - name: uds-neuvector-config
+        namespace: neuvector
+        version: 0.1.0
+        localPath: ../chart
+      - name: core
+        url: https://neuvector.github.io/neuvector-helm/
+        version: 2.6.4
+        namespace: neuvector
+        gitPath: charts/core
+        valuesFiles:
+          - ../values/values.yaml
+      - name: monitor
+        url: https://neuvector.github.io/neuvector-helm/
+        version: 2.6.4
+        namespace: neuvector
+        gitPath: charts/monitor
+        valuesFiles:
+          - ../values/monitor-values.yaml

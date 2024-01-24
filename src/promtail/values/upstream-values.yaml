@@ -1,0 +1,10 @@
+image:
+  registry: docker.io
+  repository: grafana/promtail
+  tag: null
+sidecar:
+  configReloader:
+    image:
+      registry: docker.io
+      repository: jimmidyson/configmap-reload
+      tag: v0.8.0
