@@ -69,11 +69,17 @@ jobs:
       - name: Debug Output
         if: ${{ always() }}
         run: |
+          echo "::group::kubectl get all"
           kubectl get all -A
-          echo
+          echo "::endgroup::"
+
+          echo "::group::kubectl get pv,pvc"
           kubectl get pv,pvc -A
-          echo
+          echo "::endgroup::"
+
+          echo "::group::kubectl get package"
           kubectl get package -A
+          echo "::endgroup::"
 
       - name: Save logs
         if: always()
