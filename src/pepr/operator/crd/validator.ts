@@ -1,6 +1,6 @@
 import { PeprValidateRequest } from "pepr";
 
-import { UDSPackage } from ".";
+import { Gateway, UDSPackage } from ".";
 import { generateName } from "../controllers/network/generate";
 import { sanitizeResourceName } from "../controllers/utils";
 
@@ -11,6 +11,18 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
 
   if (invalidNamespaces.includes(ns)) {
     return req.Deny("invalid namespace");
+  }
+
+  const exposeList = req.Raw.spec?.network?.expose ?? [];
+
+  for (const expose of exposeList) {
+    if (expose.gateway === Gateway.Passthrough) {
+      // This is an HTTPMatch rule, not TLSMatchAttribute
+      // https://istio.io/latest/docs/reference/config/networking/virtual-service/#HTTPMatchRequest
+      if (expose.match) {
+        return req.Deny("match cannot be used with passthrough gateway");
+      }
+    }
   }
 
   const networkPolicy = req.Raw.spec?.network?.allow ?? [];

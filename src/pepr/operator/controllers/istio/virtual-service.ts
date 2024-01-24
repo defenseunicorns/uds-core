@@ -22,7 +22,7 @@ export async function virtualService(pkg: UDSPackage, namespace: string) {
 
   // Iterate over each exposed service
   for (const expose of exposeList) {
-    const { gateway = Gateway.Tenant, host, port, service } = expose;
+    const { gateway = Gateway.Tenant, host, port, service, match } = expose;
 
     // Ensure the resource name is valid
     const name = sanitizeResourceName(`${pkgName}-${gateway}-${host}`);
@@ -34,7 +34,7 @@ export async function virtualService(pkg: UDSPackage, namespace: string) {
     const fqdn = `${host}.${domain}`;
 
     // Create the route to the service
-    const httpRoute: Istio.HTTPRoute[] = [
+    const route: Istio.HTTPRoute[] = [
       {
         destination: {
           // Use the service name as the host
@@ -62,7 +62,7 @@ export async function virtualService(pkg: UDSPackage, namespace: string) {
         // Map the gateway (admin, passthrough or tenant) to the VirtualService
         gateways: [`istio-${gateway}-gateway/${gateway}-gateway`],
         // Apply the route to the VirtualService
-        http: [{ route: httpRoute }],
+        http: [{ route, match }],
       },
     };
 
@@ -71,7 +71,7 @@ export async function virtualService(pkg: UDSPackage, namespace: string) {
       payload.spec!.tls = [
         {
           match: [{ port: 443, sniHosts: [fqdn] }],
-          route: httpRoute,
+          route,
         },
       ];
     }
