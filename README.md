@@ -28,7 +28,7 @@ The core applications are:
 | Dependency                                                     | Minimum Version |
 | -------------------------------------------------------------- | --------------- |
 | [Zarf](https://github.com/defenseunicorns/zarf/releases)       | 0.32.1          |
-| [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) | 0.6.1           |
+| [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) | 0.6.2           |
 | [NodeJS](https://nodejs.org/en/download/)                      | LTS or Current  |
 
 <!-- endtable -->
@@ -41,10 +41,10 @@ A common need is bootstrapping a new UDS Core environment for development or tes
 
 ```bash
 # ARM version
-uds deploy oci://ghcr.io/defenseunicorns/packages/uds/bundles/upstream/k3d-core:arm64
+uds deploy oci://ghcr.io/defenseunicorns/packages/uds/bundles/k3d-core-demo:arm64
 
 # AMD version
-uds deploy oci://ghcr.io/defenseunicorns/packages/uds/bundles/upstream/k3d-core:amd64
+uds deploy oci://ghcr.io/defenseunicorns/packages/uds/bundles/k3d-core-demo:amd64
 ```
 
 The bundle includes the uds.dev certs by default. You can use the UDS environment variables to override the default values. E.g.
@@ -58,32 +58,22 @@ UDS_TENANT_TLS_KEY=$(cat tenant.key)
 
 UDS_DOMAIN=example.com
 
-uds deploy oci://ghcr.io/defenseunicorns/package/uds/bundles/upstream/k3d-core:amd64
+uds deploy oci://ghcr.io/defenseunicorns/package/uds/bundles/k3d-core-demo:amd64
 ```
 
-Note: In order to deploy using Iron Bank images, update the registry path replaceing ```upstream``` with ```registry1``` For example:
+### UDS Core Package
 
-```bash
-# ARM version
-uds deploy oci://ghcr.io/defenseunicorns/packages/uds/bundles/registry1/k3d-core:arm64
-
-```
-
-### UDS Core Packages
-
-UDS core publishes two packages:
+UDS core publishes one package:
 
 - [core](./packages/standard/README.md): The standard UDS Core package that is a collection of individual packages that are deployed as a single unit.
-
-- [core-istio](./packages/istio/README.md): The UDS Core Istio package that only deploys Istio.
 
 ### UDS Core Bundles
 
 These bundles are intended for bootstrapping common development & testing environments and should not be used for production. They also serve as examples to create custom bundles.
 
-- [k3d-core](./bundles/k3d-standard/README.md): A bundle to create a local k3d cluster with UDS Core installed.
+- [k3d-core-demo](./bundles/k3d-standard/README.md): A bundle to create a local k3d cluster with UDS Core installed.
 
-- [k3d-core-istio](./bundles/k3d-istio/README.md): A bundle to create a local k3d cluster with only Istio from UDS Core installed.
+- [k3d-core-istio-dev](./bundles/k3d-istio/README.md): A bundle to create a local k3d cluster with only Istio from UDS Core installed.
 
 ## Development: Create, build, and test the UDS Core Package
 
