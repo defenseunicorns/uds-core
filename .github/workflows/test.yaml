@@ -12,7 +12,11 @@ on:
         type: string
         description: "Flavor of the source package to test"
         required: true
-  # Triggered by pull-request-conditionals.yaml
+      test_type:
+        type: string
+        description: "The type of test to perform"
+        required: true
+    # Triggered by pull-request-conditionals.yaml
   workflow_call:
     inputs:
       package:
@@ -23,6 +27,10 @@ on:
         type: string
         description: "Flavor of the source package to test"
         required: true
+      test_type:
+        type: string
+        description: "The type of test to perform"
+        required: true
 
 permissions:
   contents: read
@@ -31,7 +39,7 @@ jobs:
   test:
     runs-on: "${{ inputs.package == 'all' && 'uds-ubuntu-big-boy-8-core' || 'ubuntu-latest'}}"
     timeout-minutes: 30
-    name: Test Install
+    name: Test
     env:
       UDS_PKG: ${{ inputs.package }}
 
@@ -47,18 +55,31 @@ jobs:
           ib_password: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
 
       - name: Test a single source package
-        if: ${{ inputs.package != 'all' }}
+        if: ${{ inputs.package != 'all' && inputs.test_type == 'install' }}
         run: uds run test-single-package --set FLAVOR=${{ inputs.flavor }}
 
-      - name: Test UDS Core
-        if: ${{ inputs.package == 'all' }}
+      - name: Test UDS Core Install
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
         run: uds run test-uds-core --set FLAVOR=${{ inputs.flavor }}
 
+      - name: Test UDS Core Upgrade
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'upgrade' }}
+        run: uds run test-uds-core-upgrade --set FLAVOR=${{ inputs.flavor }}
+
       - name: Debug Output
-        if: ${{ inputs.package != 'all' && !cancelled() }}
+        if: ${{ always() }}
         run: |
+          echo "::group::kubectl get all"
           kubectl get all -A
+          echo "::endgroup::"
+
+          echo "::group::kubectl get pv,pvc"
+          kubectl get pv,pvc -A
+          echo "::endgroup::"
+
+          echo "::group::kubectl get package"
           kubectl get package -A
+          echo "::endgroup::"
 
       - name: Save logs
         if: always()
