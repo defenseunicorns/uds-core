@@ -15,7 +15,7 @@ tasks:
         task: setup:create-k3d-cluster
 
       - description: "Deploy the Istio source package with Zarf Dev"
-        cmd: "zarf dev deploy src/istio"
+        cmd: "zarf dev deploy src/istio --flavor ${FLAVOR}"
 
       - description: "Dev instructions"
         cmd: |
