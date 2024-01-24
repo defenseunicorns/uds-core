@@ -12,7 +12,7 @@ on:
         type: string
         description: "Flavor of the source package to test"
         required: true
-      test_typo:
+      test_type:
         type: string
         description: "The type of test to perform"
         required: true
