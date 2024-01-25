@@ -89,6 +89,10 @@ export enum RemoteGenerated {
 
 export interface Expose {
   /**
+   * A description of this expose entry, this will become part of the VirtualService name
+   */
+  description?: string;
+  /**
    * The name of the gateway to expose the service on (default: tenant)
    */
   gateway?: Gateway;
@@ -140,7 +144,7 @@ export interface Match {
   /**
    * The name assigned to a match.
    */
-  name?: string;
+  name: string;
   /**
    * Query parameters for matching.
    */

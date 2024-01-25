@@ -5,11 +5,12 @@ import { Package as UDSPackage } from "./generated/package-v1alpha1";
 export {
   Allow,
   Direction,
+  Expose,
   Gateway,
   Phase,
+  RemoteGenerated,
   Status,
   Package as UDSPackage,
-  RemoteGenerated,
 } from "./generated/package-v1alpha1";
 
 export * as Istio from "./generated/istio/virtualservice-v1beta1";

@@ -46,6 +46,7 @@ export const virtualServiceHttpMatch: V1JSONSchemaProps = {
       },
       uri: matchTemplate,
     },
+    required: ["name"],
     type: "object",
   },
   type: "array",
