@@ -20,9 +20,11 @@ tasks:
 
   - name: single-package
     actions:
-      # @todo (jeff): this pepr package versioning is still janky
       - description: "Deploy the Pepr Module"
-        cmd: zarf package deploy build/zarf-package-pepr-uds-core-${UDS_ARCH}-0.2.0.tar.zst --confirm
+        cmd: |
+          set -e
+          PEPR_VERSION=$(npm pkg get version | tr -d '"')
+          zarf package deploy build/zarf-package-pepr-uds-core-${UDS_ARCH}-${PEPR_VERSION}.tar.zst --confirm
       - description: "Deploy the requested Zarf Package (must set UDS_PKG environment variable)"
         cmd: zarf package deploy build/zarf-package-uds-core-${UDS_PKG}-${UDS_ARCH}.tar.zst --confirm
 

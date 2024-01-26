@@ -1,6 +1,6 @@
 {
   "name": "uds-core",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "A collection of capabilities for UDS Core",
   "keywords": [
     "pepr",
@@ -10,7 +10,7 @@
     "security"
   ],
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=20.0.0"
   },
   "pepr": {
     "name": "UDS Core",

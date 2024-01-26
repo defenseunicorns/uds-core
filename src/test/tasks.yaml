@@ -28,6 +28,20 @@ tasks:
             address: demo.admin.uds.dev/status/202
             code: 202
 
+      - description: Verify the VS Match rules for method regex/uri prefix
+        wait:
+          network:
+            protocol: https
+            address: demo.admin.uds.dev/status/302
+            code: 404
+
+      - description: Verify the VS Match rules for uri exact
+        wait:
+          network:
+            protocol: https
+            address: demo.admin.uds.dev/status/410
+            code: 410
+
       - description: Verify the tenant app is accessible
         wait:
           network:
