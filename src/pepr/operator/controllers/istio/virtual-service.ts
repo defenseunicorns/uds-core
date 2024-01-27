@@ -1,7 +1,7 @@
 import { K8s, Log } from "pepr";
 
 import { UDSConfig } from "../../../config";
-import { Gateway, Istio, UDSPackage, getOwnerRef } from "../../crd";
+import { Expose, Gateway, Istio, UDSPackage, getOwnerRef } from "../../crd";
 import { sanitizeResourceName } from "../utils";
 
 /**
@@ -22,10 +22,9 @@ export async function virtualService(pkg: UDSPackage, namespace: string) {
 
   // Iterate over each exposed service
   for (const expose of exposeList) {
-    const { gateway = Gateway.Tenant, host, port, service } = expose;
+    const { gateway = Gateway.Tenant, host, port, service, match } = expose;
 
-    // Ensure the resource name is valid
-    const name = sanitizeResourceName(`${pkgName}-${gateway}-${host}`);
+    const name = generateVSName(pkg, expose);
 
     // For the admin gateway, we need to add the path prefix
     const domain = (gateway === Gateway.Admin ? "admin." : "") + UDSConfig.domain;
@@ -34,7 +33,7 @@ export async function virtualService(pkg: UDSPackage, namespace: string) {
     const fqdn = `${host}.${domain}`;
 
     // Create the route to the service
-    const httpRoute: Istio.HTTPRoute[] = [
+    const route: Istio.HTTPRoute[] = [
       {
         destination: {
           // Use the service name as the host
@@ -62,7 +61,7 @@ export async function virtualService(pkg: UDSPackage, namespace: string) {
         // Map the gateway (admin, passthrough or tenant) to the VirtualService
         gateways: [`istio-${gateway}-gateway/${gateway}-gateway`],
         // Apply the route to the VirtualService
-        http: [{ route: httpRoute }],
+        http: [{ route, match }],
       },
     };
 
@@ -71,7 +70,7 @@ export async function virtualService(pkg: UDSPackage, namespace: string) {
       payload.spec!.tls = [
         {
           match: [{ port: 443, sniHosts: [fqdn] }],
-          route: httpRoute,
+          route,
         },
       ];
     }
@@ -103,4 +102,15 @@ export async function virtualService(pkg: UDSPackage, namespace: string) {
 
   // Return the list of generated VirtualServices
   return payloads;
+}
+
+export function generateVSName(pkg: UDSPackage, expose: Expose) {
+  const { gateway = Gateway.Tenant, host, port, service, match, description } = expose;
+
+  // Ensure the resource name is valid
+  const matchHash = match?.flatMap(m => m.name).join("-") || "";
+  const nameSuffix = description || `${host}-${port}-${service}-${matchHash}`;
+  const name = sanitizeResourceName(`${pkg.metadata!.name}-${gateway}-${nameSuffix}`);
+
+  return name;
 }
