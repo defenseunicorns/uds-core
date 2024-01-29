@@ -24,20 +24,20 @@ tasks:
         cmd: |
           set -e
           PEPR_VERSION=$(npm pkg get version | tr -d '"')
-          zarf package deploy build/zarf-package-pepr-uds-core-${UDS_ARCH}-${PEPR_VERSION}.tar.zst --confirm
+          uds zarf package deploy build/zarf-package-pepr-uds-core-${UDS_ARCH}-${PEPR_VERSION}.tar.zst --confirm
       - description: "Deploy the requested Zarf Package (must set UDS_PKG environment variable)"
-        cmd: zarf package deploy build/zarf-package-uds-core-${UDS_PKG}-${UDS_ARCH}.tar.zst --confirm
+        cmd: uds zarf package deploy build/zarf-package-uds-core-${UDS_PKG}-${UDS_ARCH}.tar.zst --confirm
 
   - name: latest-package-release
     actions:
       - description: "Get latest tag version from OCI"
-        cmd: zarf tools registry ls ghcr.io/defenseunicorns/packages/uds/core | grep ${FLAVOR} | sort -V | tail -1
+        cmd: uds zarf tools registry ls ghcr.io/defenseunicorns/packages/uds/core | grep ${FLAVOR} | sort -V | tail -1
         setVariables:
           - name: LATEST_VERSION
       - description: "Deploy the latest UDS Core package release"
-        cmd: zarf package deploy oci://ghcr.io/defenseunicorns/packages/uds/core:${LATEST_VERSION} --confirm
+        cmd: uds zarf package deploy oci://ghcr.io/defenseunicorns/packages/uds/core:${LATEST_VERSION} --confirm
 
   - name: standard-package
     actions:
       - description: "Deploy the standard UDS Core zarf package"
-        cmd: zarf package deploy build/zarf-package-core-${UDS_ARCH}-${VERSION}.tar.zst --confirm
+        cmd: uds zarf package deploy build/zarf-package-core-${UDS_ARCH}-${VERSION}.tar.zst --confirm
