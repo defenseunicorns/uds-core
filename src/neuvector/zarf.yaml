@@ -8,30 +8,17 @@ components:
   - name: neuvector
     description: "Deploy Neuvector"
     required: true
+    only:
+      flavor: upstream
+    import:
+      path: common
     charts:
-      - name: crd
-        url: https://neuvector.github.io/neuvector-helm/
-        version: 2.6.5
-        namespace: neuvector
-        gitPath: charts/crd
-      - name: uds-neuvector-config
-        namespace: neuvector
-        version: 0.1.0
-        localPath: chart
       - name: core
-        url: https://neuvector.github.io/neuvector-helm/
-        version: 2.6.5
-        namespace: neuvector
-        gitPath: charts/core
         valuesFiles:
-          - values/values.yaml
+          - values/upstream-values.yaml
       - name: monitor
-        url: https://neuvector.github.io/neuvector-helm/
-        version: 2.6.5
-        namespace: neuvector
-        gitPath: charts/monitor
         valuesFiles:
-          - values/neuvector-monitor-values.yaml
+          - values/upstream-monitor-values.yaml
     images:
       - docker.io/neuvector/controller:5.2.3
       - docker.io/neuvector/manager:5.2.3
@@ -39,3 +26,25 @@ components:
       - docker.io/neuvector/scanner:latest
       - docker.io/neuvector/enforcer:5.2.3
       - docker.io/neuvector/prometheus-exporter:latest
+
+  - name: neuvector
+    description: "Deploy Neuvector"
+    required: true
+    only:
+      flavor: registry1
+    import:
+      path: common
+    charts:
+      - name: core
+        valuesFiles:
+          - values/registry1-values.yaml
+      - name: monitor
+        valuesFiles:
+          - values/registry1-monitor-values.yaml
+    images:
+      - registry1.dso.mil/ironbank/neuvector/neuvector/controller:5.2.2
+      - registry1.dso.mil/ironbank/neuvector/neuvector/manager:5.2.2
+      - registry1.dso.mil/ironbank/big-bang/base:2.1.0
+      - registry1.dso.mil/ironbank/neuvector/neuvector/scanner:5
+      - registry1.dso.mil/ironbank/neuvector/neuvector/enforcer:5.2.2
+      - registry1.dso.mil/ironbank/neuvector/neuvector/prometheus-exporter:5.1.0

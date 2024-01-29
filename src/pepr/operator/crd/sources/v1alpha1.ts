@@ -1,5 +1,7 @@
 import { V1CustomResourceDefinitionVersion, V1JSONSchemaProps } from "@kubernetes/client-node";
 
+import { virtualServiceHttpMatch } from "./istio/virtualservice-v1beta1";
+
 export const v1alpha1: V1CustomResourceDefinitionVersion = {
   name: "v1alpha1",
   served: true,
@@ -57,12 +59,9 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
               type: "integer",
             },
           },
-          // JS Lib uses _ instead of - which makes the API Server very sad
-          "x-kubernetes-preserve-unknown-fields": true,
         } as V1JSONSchemaProps,
         spec: {
           type: "object",
-          "x-kubernetes-preserve-unknown-fields": true,
           properties: {
             network: {
               type: "object",
@@ -75,6 +74,11 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
                     type: "object",
                     required: ["service", "podLabels", "host", "port"],
                     properties: {
+                      description: {
+                        type: "string",
+                        description:
+                          "A description of this expose entry, this will become part of the VirtualService name",
+                      },
                       service: {
                         description: "The name of the service to expose",
                         type: "string",
@@ -111,6 +115,7 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
                         description: "The hostname to expose the service on",
                         type: "string",
                       },
+                      match: virtualServiceHttpMatch,
                     },
                   },
                 },

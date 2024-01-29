@@ -2,8 +2,10 @@ tasks:
   - name: validate
     description: Test app used for UDS Core validation
     actions:
+      - description: Create zarf package for the test resources
+        cmd: "zarf package create src/test --confirm"
       - description: Apply the test resources
-        cmd: "kubectl apply -f 'src/test/app-*.yaml'"
+        cmd: "zarf package deploy build/zarf-package-uds-core-test-apps-*.zst --confirm"
 
       - description: Wait for the admin app to be ready
         wait:
@@ -26,6 +28,20 @@ tasks:
             address: demo.admin.uds.dev/status/202
             code: 202
 
+      - description: Verify the VS Match rules for method regex/uri prefix
+        wait:
+          network:
+            protocol: https
+            address: demo.admin.uds.dev/status/302
+            code: 404
+
+      - description: Verify the VS Match rules for uri exact
+        wait:
+          network:
+            protocol: https
+            address: demo.admin.uds.dev/status/410
+            code: 410
+
       - description: Verify the tenant app is accessible
         wait:
           network:
@@ -34,4 +50,4 @@ tasks:
             code: 202
 
       - description: Remove the test resources
-        cmd: "kubectl delete -f 'src/test/app-*.yaml' --wait=false"
+        cmd: "zarf package remove build/zarf-package-uds-core-test-apps-*.zst --confirm"

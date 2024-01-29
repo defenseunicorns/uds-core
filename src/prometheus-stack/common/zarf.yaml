@@ -1,0 +1,20 @@
+kind: ZarfPackageConfig
+metadata:
+  name: uds-core-prometheus-stack-common
+  description: "UDS Core Prometheus-Stack Common"
+
+components:
+  - name: kube-prometheus-stack
+    required: true
+    description: "Install kube-prometheus-stack using the helm chart https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack"
+    charts:
+      - name: uds-prometheus-config
+        namespace: monitoring
+        version: 0.1.0
+        localPath: ../chart
+      - name: kube-prometheus-stack
+        namespace: monitoring
+        url: https://prometheus-community.github.io/helm-charts
+        version: 54.0.1
+        valuesFiles:
+          - "../values/values.yaml"

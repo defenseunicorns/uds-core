@@ -1,5 +1,3 @@
-global:
-  variant: distroless
 meshConfig:
   accessLogFile: /dev/stdout
   # This is the default log format from https://istio.io/latest/docs/tasks/observability/logs/access-log/#default-access-log-format with `traceID` added to the end to support log -> trace lookups

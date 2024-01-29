@@ -1,0 +1,18 @@
+kind: ZarfPackageConfig
+metadata:
+  name: uds-core-test-apps
+  description: "UDS Core Common test apps"
+  url: https://github.com/defenseunicorns/uds-core
+
+components:
+  - name: test-apps
+    required: true
+    manifests:
+      - name: app-admin
+        files:
+          - "app-admin.yaml"
+      - name: app-tenant
+        files:
+          - "app-tenant.yaml"
+    images:
+      - docker.io/kong/httpbin:latest

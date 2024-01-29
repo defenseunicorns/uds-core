@@ -1,0 +1,21 @@
+kind: ZarfPackageConfig
+metadata:
+  name: uds-core-promtail-common
+  description: "UDS Core Promtail Common"
+  url: "https://grafana.com/docs/loki/latest/"
+
+components:
+  - name: promtail
+    required: true
+    charts:
+      - name: uds-promtail-config
+        namespace: promtail
+        version: 0.1.0
+        localPath: ../chart
+      - name: promtail
+        url: https://grafana.github.io/helm-charts/
+        version: 6.15.3
+        namespace: promtail
+        gitPath: charts/promtail
+        valuesFiles:
+          - ../values/values.yaml
