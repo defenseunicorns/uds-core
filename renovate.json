@@ -79,7 +79,10 @@
       "fileMatch": ["\\.*\\.ya?ml$"],
       "matchStrings": [
         "registryUrl=(?<registryUrl>.*?)\n *chart: (?<depName>.*?)\n *version: (?<currentValue>.*)\n",
-        "- name: (?<depName>.*?)\n *url: (?<registryUrl>.*?)\n *version: (?<currentValue>.*)\n"
+        "- name: (?<depName>.*?)\n *url: (?<registryUrl>.*?)\n *version: (?<currentValue>.*)\n",
+        "- name: (?<depName>.*?)\n *version: (?<currentValue>.*)\n *url: (?<registryUrl>.*?)\n",
+        "- name: (?<depName>.*?)\n *namespace: .*\n *url: (?<registryUrl>.*?)\n *version: (?<currentValue>.*)\n",
+        "- name: (?<depName>.*?)\n *namespace: .*\n *version: (?<currentValue>.*)\n *url: (?<registryUrl>.*?)\n"
       ],
       "datasourceTemplate": "helm"
     },
