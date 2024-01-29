@@ -1,13 +1,9 @@
 # Unicorn Delivery Service - K3d Istio (UDS Core)
 
-> [!WARNING]  
-> UDS Core is in early alpha and is not ready for general use.
-
-UDS Core groups foundational Unicorn Delivery Service applications inspired by [Big Bang](https://repo1.dso.mil/big-bang/bigbang).
-
-The core applications are:
+This bundle is a trimmed-down version of [UDS Core](../k3d-standard/README.md) bundle, with only the following UDS Core applications installed:
 
 - [Istio](https://istio.io/) - Service Mesh
+- [Pepr](https://pepr.dev) - UDS policy engine & operator
 
 The k3d uds-dev-stack provides:
 
@@ -16,19 +12,6 @@ The k3d uds-dev-stack provides:
 - [Local Path Provisioner](https://github.com/rancher/local-path-provisioner/) - Local Storage with RWX
 - [MetalLB](https://metallb.universe.tf/) - Provides type: LoadBalancer for cluster resources and Istio Gateways
 - [HAProxy](https://www.haproxy.org/) - Utilizes k3d host port mapping to bind ports 80 and 443, facilitating local FQDN-based routing through ACLs to MetalLB load balancer backends for Istio Gateways serving *.uds.dev, keycloak.uds.dev, and *.admin.uds.dev.
-
-
-## Prerequisites
-
-<!-- table -->
-
-| Dependency                                                     | Minimum Version |
-| -------------------------------------------------------------- | --------------- |
-| [Zarf](https://github.com/defenseunicorns/zarf/releases)       | 0.32.1          |
-| [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) | 0.5.3           |
-| [NodeJS](https://nodejs.org/en/download/)                      | LTS or Current  |
-
-<!-- endtable -->
 
 ## Configuration
 

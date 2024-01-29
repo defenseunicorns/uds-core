@@ -1,10 +1,10 @@
 # Unicorn Delivery Service - Core (UDS Core)
 
-UDS Core is a provides a secure foundation for cloud-native systems that natively runs on airgap and egress-limited systems. UDS Core is based on the work of [Platform One](https://p1.dso.mil) and expands on the security posture of [Big Bang](https://repo1.dso.mil/big-bang/bigbang). We recommend using [UDS CLI](https://github.com/defenseunicorns/uds-cli?tab=readme-ov-file#install) to deploy UDS Core.
+UDS Core establishes a secure baseline for cloud-native systems and ships with first-class support for airgap and egress-limited systems. Based on the work of [Platform One](https://p1.dso.mil), UDS Core expands the security posture of [Big Bang](https://repo1.dso.mil/big-bang/bigbang) while providing advanced automation with the [UDS Operator](./src/pepr/operator/README.md) and [UDS Policy Engine](./src/pepr/policies/README.md). UDS Core is a collection of several individual applications into a single [Zarf](https://zarf.dev) package and we recommend using [UDS CLI](https://github.com/defenseunicorns/uds-cli?tab=readme-ov-file#install) to deploy it as a [UDS Bundle](#using-uds-core-in-production).
 
 #### tl;dr - [try it now](#quickstart)
 
-UDS Core is composed of several indvidual applications into a single [Zarf](https://zarf.dev) package. These applications are:
+#### Core applications:
 
 - [Grafana](https://grafana.com/oss/grafana/) - Monitoring
 - [Istio](https://istio.io/) - Service Mesh
@@ -15,7 +15,7 @@ UDS Core is composed of several indvidual applications into a single [Zarf](http
 - [Prometheus Stack](https://github.com/prometheus-operator/kube-prometheus) - Monitoring
 - [Promtail](https://grafana.com/docs/loki/latest/send-data/promtail/) - Log Aggregation
 
-Future applications:
+#### Future applications:
 
 - [Authservice](https://github.com/istio-ecosystem/authservice) - Authorization
 - [KeyCloak](https://www.keycloak.org/) - Identity & Access Management
