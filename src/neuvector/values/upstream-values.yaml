@@ -1,0 +1,53 @@
+registry: docker.io
+tag: 5.2.3
+manager:
+  image:
+    repository: neuvector/manager
+enforcer:
+  image:
+    repository: neuvector/enforcer
+  containerSecurityContext:
+    capabilities:
+      drop:
+        - ALL
+    privileged: true
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+
+controller:
+  image:
+    repository: neuvector/controller
+  containerSecurityContext:
+    capabilities:
+      drop:
+        - ALL
+    privileged: true
+    runAsNonRoot: true
+    runAsUser: 1000
+
+cve:
+  scanner:
+    image:
+      repository: neuvector/scanner
+      tag: latest
+    containerSecurityContext:
+      capabilities:
+        drop:
+          - ALL
+      runAsNonRoot: true
+      runAsUser: 1000
+  updater:
+    enabled: true
+    image:
+      repository: neuvector/updater
+      tag: latest
+    containerSecurityContext:
+      capabilities:
+        drop:
+          - ALL
+      runAsNonRoot: true
+      runAsUser: 1000
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 1000

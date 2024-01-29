@@ -1,0 +1,12 @@
+leastPrivilege: false
+
+exporter:
+  # Temporarily disabled until we can get the monitor chart working
+  # via https://github.com/neuvector/neuvector-helm/pull/355
+  enabled: false
+  serviceMonitor:
+    enabled: false
+  apiSvc: neuvector-svc-controller-api:10443
+  svc:
+    enabled: true
+    type: ClusterIP

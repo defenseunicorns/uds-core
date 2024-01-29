@@ -1,0 +1,19 @@
+kind: ZarfPackageConfig
+metadata:
+  name: uds-core-loki-common
+  description: "UDS Core Loki Common"
+
+components:
+  - name: loki
+    required: true
+    charts:
+      - name: uds-loki-config
+        namespace: loki
+        version: 0.2.0
+        localPath: ../chart
+      - name: loki
+        url: https://grafana.github.io/helm-charts/
+        version: 5.41.8
+        namespace: loki
+        valuesFiles:
+          - ../values/values.yaml

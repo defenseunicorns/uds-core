@@ -1,0 +1,53 @@
+registry: registry1.dso.mil
+tag: 5.2.2
+manager:
+  image:
+    repository: ironbank/neuvector/neuvector/manager
+enforcer:
+  image:
+    repository: ironbank/neuvector/neuvector/enforcer
+  containerSecurityContext:
+    capabilities:
+      drop:
+        - ALL
+    privileged: true
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+
+controller:
+  image:
+    repository: ironbank/neuvector/neuvector/controller
+  containerSecurityContext:
+    capabilities:
+      drop:
+        - ALL
+    privileged: true
+    runAsNonRoot: true
+    runAsUser: 1000
+
+cve:
+  scanner:
+    image:
+      repository: ironbank/neuvector/neuvector/scanner
+      tag: 5
+    containerSecurityContext:
+      capabilities:
+        drop:
+          - ALL
+      runAsNonRoot: true
+      runAsUser: 1000
+  updater:
+    enabled: true
+    image:
+      repository: ironbank/big-bang/base
+      tag: 2.1.0
+    containerSecurityContext:
+      capabilities:
+        drop:
+          - ALL
+      runAsNonRoot: true
+      runAsUser: 1000
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 1000

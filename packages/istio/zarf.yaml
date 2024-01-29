@@ -4,7 +4,7 @@ metadata:
   description: "UDS Core (Istio Only)"
   authors: "Defense Unicorns - Product"
   # x-release-please-start-version
-  version: "0.8.1"
+  version: "0.10.0"
   # x-release-please-end
 
 components:
@@ -12,7 +12,7 @@ components:
   - name: istio-controlplane
     required: true
     import:
-      path: ../standard
+      path: ../../src/istio
 
   - name: istio-admin-gateway
     required: true

@@ -89,6 +89,10 @@ export enum RemoteGenerated {
 
 export interface Expose {
   /**
+   * A description of this expose entry, this will become part of the VirtualService name
+   */
+  description?: string;
+  /**
    * The name of the gateway to expose the service on (default: tenant)
    */
   gateway?: Gateway;
@@ -96,6 +100,11 @@ export interface Expose {
    * The hostname to expose the service on
    */
   host: string;
+  /**
+   * Match the incoming request based on custom rules. Not permitted when using the
+   * passthrough gateway.
+   */
+  match?: Match[];
   /**
    * Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all
    * pods in the namespace
@@ -124,6 +133,50 @@ export enum Gateway {
   Admin = "admin",
   Passthrough = "passthrough",
   Tenant = "tenant",
+}
+
+export interface Match {
+  /**
+   * Flag to specify whether the URI matching should be case-insensitive.
+   */
+  ignoreUriCase?: boolean;
+  method?: Method;
+  /**
+   * The name assigned to a match.
+   */
+  name: string;
+  /**
+   * Query parameters for matching.
+   */
+  queryParams?: { [key: string]: QueryParam };
+  uri?: URI;
+}
+
+export interface Method {
+  exact?: string;
+  prefix?: string;
+  /**
+   * RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax).
+   */
+  regex?: string;
+}
+
+export interface QueryParam {
+  exact?: string;
+  prefix?: string;
+  /**
+   * RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax).
+   */
+  regex?: string;
+}
+
+export interface URI {
+  exact?: string;
+  prefix?: string;
+  /**
+   * RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax).
+   */
+  regex?: string;
 }
 
 export interface Status {

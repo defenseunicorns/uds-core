@@ -1,0 +1,10 @@
+image:
+  registry: registry1.dso.mil
+  repository: ironbank/opensource/grafana/promtail
+  tag: v2.9.2
+sidecar:
+  configReloader:
+    image:
+      registry: registry1.dso.mil
+      repository: opensource/jimmidyson/configmap-reload
+      tag: v0.8.0

@@ -1,0 +1,22 @@
+loki:
+  image:
+    registry: registry1.dso.mil
+    repository: ironbank/opensource/grafana/loki
+    tag: 2.9.3
+  podSecurityContext:
+    fsGroup: 10001
+    runAsGroup: 10001
+    runAsNonRoot: true
+    runAsUser: 10001
+  # -- The SecurityContext for Loki containers
+  containerSecurityContext:
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+        - ALL
+    allowPrivilegeEscalation: false
+gateway:
+  image:
+    registry: registry1.dso.mil
+    repository: ironbank/opensource/nginx/nginx-alpine
+    tag: 1.25.3

@@ -1,0 +1,56 @@
+alertmanager:
+  alertmanagerSpec:
+    image:
+      registry: registry1.dso.mil
+      repository: ironbank/opensource/prometheus/alertmanager
+      tag: v0.26.0
+kube-state-metrics:
+  image:
+    registry: registry1.dso.mil
+    repository: ironbank/opensource/kubernetes/kube-state-metrics
+    tag: v2.10.1
+  securityContext:
+    enabled: true
+    fsGroup: 65532
+    runAsGroup: 65532
+    runAsNonRoot: true
+    runAsUser: 65532
+prometheus:
+  prometheusSpec:
+    image:
+      registry: registry1.dso.mil
+      repository: ironbank/opensource/prometheus/prometheus
+      tag: v2.49.1
+prometheus-node-exporter:
+  image:
+    registry: registry1.dso.mil
+    repository: ironbank/opensource/prometheus/node-exporter
+    tag: v1.7.0
+prometheusOperator:
+  admissionWebhooks:
+    containerSecurityContext:
+      capabilities:
+        drop:
+          - ALL
+    patch:
+      enabled: true
+      image:
+        registry: registry1.dso.mil
+        repository: ironbank/opensource/ingress-nginx/kube-webhook-certgen
+        tag: v1.3.0
+      registry: registry1.dso.mil
+      repository: ironbank/opensource/ingress-nginx/kube-webhook-certgen
+      tag: v1.3.0
+      securityContext:
+        runAsGroup: 65532
+        runAsNonRoot: true
+        runAsUser: 65532
+  image:
+    registry: registry1.dso.mil
+    repository: ironbank/opensource/prometheus-operator/prometheus-operator
+    tag: v0.71.0
+  prometheusConfigReloader:
+    image:
+      registry: registry1.dso.mil
+      repository: ironbank/opensource/prometheus-operator/prometheus-config-reloader
+      tag: v0.71.0

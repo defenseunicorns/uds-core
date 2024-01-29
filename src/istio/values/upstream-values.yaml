@@ -1,0 +1,13 @@
+pilot:
+  hub: "docker.io/istio"
+  tag: "1.20.2-distroless"
+  image: pilot
+global:
+  # #variant: distroless
+  hub: "docker.io/istio"
+  tag: "1.20.2-distroless"
+  proxy_init:
+    # Base name for the proxy_init container, used to configure iptables.
+    image: proxyv2
+  proxy:
+    image: proxyv2
