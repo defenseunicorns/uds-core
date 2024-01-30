@@ -6,5 +6,5 @@ sidecar:
   configReloader:
     image:
       registry: registry1.dso.mil
-      repository: opensource/jimmidyson/configmap-reload
+      repository: ironbank/opensource/jimmidyson/configmap-reload
       tag: v0.8.0
