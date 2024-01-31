@@ -1,6 +1,6 @@
 # Unicorn Delivery Service - Core (UDS Core)
 
-UDS Core establishes a secure baseline for cloud-native systems and ships with first-class support for airgap and egress-limited systems. Based on the work of [Platform One](https://p1.dso.mil), UDS Core expands the security posture of [Big Bang](https://repo1.dso.mil/big-bang/bigbang) while providing advanced automation with the [UDS Operator](./src/pepr/operator/README.md) and [UDS Policy Engine](./src/pepr/policies/README.md). UDS Core is a collection of several individual applications into a single [Zarf](https://zarf.dev) package and we recommend using [UDS CLI](https://github.com/defenseunicorns/uds-cli?tab=readme-ov-file#install) to deploy it as a [UDS Bundle](#using-uds-core-in-production).
+UDS Core establishes a secure baseline for cloud-native systems and ships with compliance documentation and first-class support for airgap/egress-limited systems. Based on the work of [Platform One](https://p1.dso.mil), UDS Core expands on the security posture of [Big Bang](https://repo1.dso.mil/big-bang/bigbang) while providing advanced automation with the [UDS Operator](./src/pepr/operator/README.md) and [UDS Policy Engine](./src/pepr/policies/README.md). UDS Core is a collection of several individual applications into a single [Zarf](https://zarf.dev) package and we recommend using [UDS CLI](https://github.com/defenseunicorns/uds-cli?tab=readme-ov-file#install) to deploy it as a [UDS Bundle](#using-uds-core-in-production).
 
 #### tl;dr - [try it now](#quickstart)
 
@@ -27,7 +27,7 @@ UDS Core establishes a secure baseline for cloud-native systems and ships with f
 
 ### Prerequisites
 
-- [K3D](https://k3d.io/) for dev & test environments or any [CNCF Certified Kubernetes Cluster](https://www.cncf.io/training/certification/software-conformance/#logos) for production environments.
+- [K3D](https://k3d.io/) for dev & test environments or any [CNCF Certified Kubernetes Cluster](https://www.cncf.io/training/certification/software-conformance/#logos) for production environments [add link to our RKE2 based infra?].
 <!-- renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver -->
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli?tab=readme-ov-file#install) v0.6.2 or later
 
