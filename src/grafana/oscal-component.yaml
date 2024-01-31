@@ -36,10 +36,9 @@ component-definition:
 
                 # Control Implementation
                 Privileged events, including updating the deployment of an application, or use of privileged containers are collected as metrics by prometheus and displayed by Grafana.
-              
-              remarks: 
-                This control is fully implemented by this tool.
-            
+
+              remarks: This control is fully implemented by this tool.
+
             - uuid: 7449f733-6809-4a0b-a6f9-7857f46a106e
               control-id: au-2
               description: >-
@@ -57,8 +56,7 @@ component-definition:
                 Metrics information is stored on disk in a time series data base, and later queried through a separate component providing a web interface for the query language: PromQL.
                 Metrics data can be displayed through a Grafana dashboard for visualization.
 
-              remarks:
-                This control is fully implemented by this tool.
+              remarks: This control is fully implemented by this tool.
 
             - uuid: 6700f065-8e51-4224-a5a0-8d3aff9d8d96
               control-id: au-3.1
@@ -69,8 +67,7 @@ component-definition:
 
                 # Control Implementation
                 Grafana has pre-configured dashboards showing the audit records from Cluster Auditor saved in Prometheus.
-              remarks:
-                This control is fully implemented by this tool.
+              remarks: This control is fully implemented by this tool.
 
             - uuid: 36f95dfb-626f-4fce-8417-4d808560b9d3
               control-id: au-5.1
@@ -82,8 +79,7 @@ component-definition:
                 Alertmanager has pre-built alerts for PVC storage thresholds that would fire for PVCs supporting prometheus metrics storage.
                 Metrics data can be displayed through a Grafana dashboard for visualization.
 
-              remarks:
-                This control is fully implemented by this tool.
+              remarks: This control is fully implemented by this tool.
 
             - uuid: d2d90ddf-dcc9-4087-ad71-ac67b66a154a
               control-id: au-5.2
@@ -95,9 +91,8 @@ component-definition:
                 Alertmanager has pre-built alerts for failed pods that would show when ClusterAuditor is not processing events, or prometheus is unable to scrape events.
                 Prometheus also has a deadman's alert to ensure end users are seeing events from prometheus as part of its configuration.
                 Data can be displayed through a Grafana dashboard for visualization.
-              
-              remarks:
-                This control is fully implemented by this tool.
+
+              remarks: This control is fully implemented by this tool.
 
             - uuid: 042fae4b-2779-4cfb-b68d-6f2dcbaa10ad
               control-id: au-6.1
@@ -109,8 +104,7 @@ component-definition:
                 Cluster Auditor Events/Alerts could be exported from Prometheus to an external system. Integration for specific tooling would need to be completed by end user.
                 Metrics data can be displayed through a Grafana dashboard for visualization.
 
-              remarks:
-                This control is fully implemented by this tool.
+              remarks: This control is fully implemented by this tool.
 
             - uuid: c79cf2fa-2081-4034-831f-2c8016a275da
               control-id: au-6.3
@@ -121,8 +115,7 @@ component-definition:
                 # Control Implementation
                 Aggregating cluster auditor events across multiple sources (clusters) is possible with a multi-cluster deployment of prometheus/grafana.
 
-              remarks:
-                This control is fully implemented by this tool.
+              remarks: This control is fully implemented by this tool.
 
             - uuid: 80de1b87-8288-49ac-8a6b-fc71509df64b
               control-id: au-6.5
@@ -134,8 +127,7 @@ component-definition:
                 Cluster Auditor's audit data is consolidated with system monitoring tooling (node exporters) for consolidated view to enhance inappropriate or unusual activity.
                 Metrics data can be displayed through a Grafana dashboard for visualization.
 
-              remarks:
-                This control is fully implemented by this tool.
+              remarks: This control is fully implemented by this tool.
 
             - uuid: b8c17326-8821-4536-8409-64d571540e37
               control-id: au-6.6
@@ -147,8 +139,7 @@ component-definition:
                 Cluster Auditor data in prometheus would enable this, but would require prometheus to also obtain access to physical metrics.
                 Metrics data can be displayed through a Grafana dashboard for visualization.
 
-              remarks:
-                This control is fully implemented by this tool.
+              remarks: This control is fully implemented by this tool.
 
             - uuid: 8abbc53e-0ec4-49c6-8ef1-a1c237695f96
               control-id: au-7
@@ -161,8 +152,7 @@ component-definition:
                 # Control Implementation
                 Grafana is configured with a pre-built dashboard for policy violations that displays data collected by Cluster Auditor.
 
-              remarks:
-                This control is fully implemented by this tool.
+              remarks: This control is fully implemented by this tool.
 
             - uuid: 56d09aae-ab73-49d8-b2a4-1e81db2878eb
               control-id: au-7.1
@@ -172,9 +162,8 @@ component-definition:
 
                 # Control Implementation
                 Grafana is configured with a pre-built dashboard for policy violations that displays data collected by Cluster Auditor.
-              
-              remarks:
-                This control is fully implemented by this tool.
+
+              remarks: This control is fully implemented by this tool.
 
             - uuid: 9be1e683-93e1-4769-aa7d-951e2c8f8627
               control-id: au-8
@@ -187,9 +176,8 @@ component-definition:
                 # Control Implementation
                 Prometheus stores all data as time-series data, so the timestamps of when those violations were present is part of the data-stream.
                 Metrics data can be displayed through a Grafana dashboard for visualization.
-              
-              remarks:
-                This control is fully implemented by this tool.
+
+              remarks: This control is fully implemented by this tool.
 
             - uuid: f800923b-6367-4468-9f42-1afae4b6d38d
               control-id: au-9
@@ -203,8 +191,7 @@ component-definition:
                 identity provider. Grafana can also limit users to subsets of metrics within a datasource by the use of Label Based Access Control
                 when using Grafana Enterprise.
 
-              remarks:
-                This control is fully implemented by this tool.
+              remarks: This control is fully implemented by this tool.
 
             - uuid: 3c4bf1e8-b873-4c43-a912-5f443fc0208f
               control-id: au-9.2
@@ -217,8 +204,7 @@ component-definition:
                 the current big bang configuration of ClusterAuditor since external access to ClusterAuditor metrics is not exposed via Istio.
                 Metrics data can be displayed through a Grafana dashboard for visualization.
 
-              remarks:
-                This control is fully implemented by this tool.
+              remarks: This control is fully implemented by this tool.
 
             - uuid: 3c5ff037-ea46-4e41-b601-a9b223da30a8
               control-id: au-9.4
@@ -230,9 +216,8 @@ component-definition:
                 Grafana has the ability to provide Role Based Access Control to limit the data sources that end users can view by leveraging an
                 identity provider. Grafana can also limit users to subsets of metrics within a datasource by the use of Label Based Access Control
                 when using Grafana Enterprise.
-              
-              remarks:
-                This control is fully implemented by this tool.
+
+              remarks: This control is fully implemented by this tool.
 
             - uuid: 301093ed-d023-4bf8-a915-e624589acadd
               control-id: au-12.1

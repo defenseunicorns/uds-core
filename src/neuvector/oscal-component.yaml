@@ -56,10 +56,9 @@ component-definition:
 
                 # Control Implementation
                 NeuVector supports internal user accounts and roles in addition to LDAP and SSO for providing RBAC access.
-              
-              remarks:
-                This control is fully implemented by this tool.
- 
+
+              remarks: This control is fully implemented by this tool.
+
             - uuid: bf59763a-0c22-4046-ab00-1d2b47dad8df
               control-id: ac-2.1
               description: >-
@@ -68,10 +67,9 @@ component-definition:
 
                 # Control Implementation
                 NeuVector supports internal user accounts and roles in addition to LDAP and SSO for providing RBAC access.
-              
-              remarks:
-                This control is fully implemented by this tool.
- 
+
+              remarks: This control is fully implemented by this tool.
+
             - uuid: 051af8b7-75aa-4c26-9132-0cb46d5965aa
               control-id: ac-3
               description: >-
@@ -80,10 +78,9 @@ component-definition:
 
                 # Control Implementation
                 NeuVector supports internal user accounts and roles in addition to LDAP and SSO for providing RBAC access.
-              
-              remarks:
-                This control is fully implemented by this tool.
- 
+
+              remarks: This control is fully implemented by this tool.
+
             - uuid: df51cf5f-9c1b-4004-ae4a-195a663594ac
               control-id: ac-6
               description: >-
@@ -92,10 +89,9 @@ component-definition:
 
                 # Control Implementation
                 NeuVector supports mapping internal user accounts and roles in addition to LDAP and SSO roles or groups for providing RBAC access.
-              
-              remarks:
-                This control is fully implemented by this tool.
- 
+
+              remarks: This control is fully implemented by this tool.
+
             - uuid: f1b66def-f822-4859-a448-5d5f77cd6f75
               control-id: ac-6.1
               description: >-
@@ -106,9 +102,8 @@ component-definition:
 
                 # Control Implementation
                 NeuVector supports mapping internal user accounts and roles in addition to LDAP and SSO roles or groups for providing RBAC access.
-              
-              remarks:
-                This control is fully implemented by this tool.
+
+              remarks: This control is fully implemented by this tool.
 
             - uuid: 0b3faf98-8a76-4b49-8e4b-c785cf26cfbe
               control-id: ac-6.3
@@ -118,9 +113,8 @@ component-definition:
 
                 # Control Implementation
                 NeuVector supports mapping internal user accounts and roles in addition to LDAP and SSO roles or groups for providing RBAC access.
-              
-              remarks:
-                This control is fully implemented by this tool.
+
+              remarks: This control is fully implemented by this tool.
 
             - uuid: 921ec1c7-923c-4a28-a4dd-b59c1d3d9998
               control-id: ac-6.9
@@ -130,9 +124,8 @@ component-definition:
 
                 # Control Implementation
                 NeuVector provides logging access related audit events.
-              
-              remarks:
-                This control is fully implemented by this tool.
+
+              remarks: This control is fully implemented by this tool.
 
             - uuid: e196edcd-fd88-42c2-9a99-0e67e2ba8919
               control-id: ac-6.10
@@ -142,9 +135,8 @@ component-definition:
 
                 # Control Implementation
                 NeuVector supports mapping internal user accounts and roles in addition to LDAP and SSO roles or groups for providing RBAC access.
-              
-              remarks:
-                This control is fully implemented by this tool.
+
+              remarks: This control is fully implemented by this tool.
 
             - uuid: fc829f66-2354-4546-8e5d-f1e5d0287200
               control-id: au-2
@@ -158,9 +150,8 @@ component-definition:
 
                 # Control Implementation
                 NeuVector provides logging access related audit events.
-              
-              remarks:
-                This control is fully implemented by this tool.
+
+              remarks: This control is fully implemented by this tool.
 
             - uuid: e342a5af-b7d4-474b-9416-61e844083531
               control-id: au-3
@@ -176,9 +167,8 @@ component-definition:
 
                 # Control Implementation
                 NeuVector provides logging access related audit events.
-              
-              remarks:
-                This control is fully implemented by this tool.
+
+              remarks: This control is fully implemented by this tool.
 
             - uuid: 7562092e-d076-49f9-8f03-9e5e7908752c
               control-id: au-4
@@ -188,22 +178,20 @@ component-definition:
 
                 # Control Implementation
                 NeuVector can scale elastically based upon actual workload demands to allocate audit log storage capacity.
-              
-              remarks:
-                This control is fully implemented by this tool.
+
+              remarks: This control is fully implemented by this tool.
 
             - uuid: 9de67d41-1c18-4ebd-af55-cac2573aa77e
               control-id: ca-2.2
               description: >-
-               # Control Description
-                Include as part of control assessments, [Assignment: at least annually], [Selection: announced; unannounced], [Selection (one or more): in-depth monitoring; security instrumentation; automated security test cases; vulnerability scanning; malicious 
-                user testing; insider threat assessment; performance and load testing; data leakage or data loss assessment; [Assignment: organization-defined other forms of assessment]].
+                # Control Description
+                 Include as part of control assessments, [Assignment: at least annually], [Selection: announced; unannounced], [Selection (one or more): in-depth monitoring; security instrumentation; automated security test cases; vulnerability scanning; malicious 
+                 user testing; insider threat assessment; performance and load testing; data leakage or data loss assessment; [Assignment: organization-defined other forms of assessment]].
 
-               # Control Implementation
-               NeuVector continually monitors kubernetes environments and container images to detect misconfigurations, advanced network threats, and vulnerable hosts with all attempts to exploit a vulnerability is documented.
-              
-              remarks:
-                This control is fully implemented by this tool.
+                # Control Implementation
+                NeuVector continually monitors kubernetes environments and container images to detect misconfigurations, advanced network threats, and vulnerable hosts with all attempts to exploit a vulnerability is documented.
+
+              remarks: This control is fully implemented by this tool.
 
             - uuid: 2d771492-b5c8-4475-b258-0038287f29e6
               control-id: ca-7
@@ -220,10 +208,9 @@ component-definition:
 
                 # Control Implementation
                 NeuVector continually monitors kubernetes environments and container images to detect misconfigurations, advanced network threats, and vulnerable hosts with all attempts to exploit a vulnerability is documented.
-              
-              remarks:
-                This control is fully implemented by this tool.
- 
+
+              remarks: This control is fully implemented by this tool.
+
             - uuid: 2fb488b2-f7f7-4db9-8fc8-3de7f3a9daba
               control-id: cm-6
               description: >-
@@ -236,9 +223,8 @@ component-definition:
                 # Control Implementation
                 NeuVector is configured using Helm Charts. Default settings can be found.
 
-              remarks:
-                This control is fully implemented by this tool.
- 
+              remarks: This control is fully implemented by this tool.
+
             - uuid: a9d92277-809d-440f-82c9-35c820ba00b8
               control-id: cm-7
               description: >-
@@ -247,13 +233,12 @@ component-definition:
                 b. Prohibit or restrict the use of the following functions, ports, protocols, software, and/or services: [Assignment: organization-defined prohibited or restricted functions, system ports, protocols, software, and/or services]."
                 "CM-7 (b) Requirement: The service provider shall use the DoD STIGs or Center for Internet Security guidelines to establish list of prohibited or restricted functions, ports, protocols, and/or services or establishes its own list of prohibited or restricted functions, ports, protocols, and/or services if USGCB is not available.
                 CM-7 Guidance: Information on the USGCB checklists can be found at: https://csrc.nist.gov/projects/united-states-government-configuration-baseline."
-                
+
                 # Control Implementation
                 NeuVector is configured securely and only access to required ports are available.
-              
-              remarks:
-                This control is fully implemented by this tool.
- 
+
+              remarks: This control is fully implemented by this tool.
+
             - uuid: 8ef96f45-dfc4-41a8-999a-fc717e746966
               control-id: ra-5
               description: >-
@@ -270,10 +255,9 @@ component-definition:
 
                 # Control Implementation
                 NeuVector is Kubernetes and container security tool. NeuVector will scan containers for vulnerabilities in addition to continuous monitoring for active threats.
-              
-              remarks:
-                This control is fully implemented by this tool.
- 
+
+              remarks: This control is fully implemented by this tool.
+
             - uuid: 760dde06-de0b-4575-8575-95a5835f97c0
               control-id: ra-5.2
               description: >-
@@ -282,9 +266,8 @@ component-definition:
 
                 # Control Implementation
                 NeuVector container scanning vulnerability database is updated frequently.
-              
-              remarks:
-                This control is fully implemented by this tool.
+
+              remarks: This control is fully implemented by this tool.
 
             - uuid: 621595cd-f998-4f55-b68e-f765db48b332
               control-id: ra-5.3
@@ -294,9 +277,8 @@ component-definition:
 
                 # Control Implementation
                 NeuVector container scanning configurations depth can be modified.
-              
-              remarks:
-                This control is fully implemented by this tool.
+
+              remarks: This control is fully implemented by this tool.
 
             - uuid: 994b03df-8320-4987-887b-fac8088bd944
               control-id: ra-5.5
@@ -306,9 +288,8 @@ component-definition:
 
                 # Control Implementation
                 NeuVector supports mapping internal user accounts and roles in addition to LDAP and SSO roles or groups for providing RBAC access.
-              
-              remarks:
-                This control is fully implemented by this tool.
+
+              remarks: This control is fully implemented by this tool.
 
             - uuid: 5a7bddc2-f94c-46c8-a15a-1e2f4d4ab948
               control-id: sa-11
@@ -323,9 +304,8 @@ component-definition:
 
                 # Control Implementation
                 NeuVector continually monitors kubernetes environments and container images to detect misconfigurations, advanced network threats, and vulnerable hosts with all attempts to exploit a vulnerability is documented.
-              
-              remarks:
-                This control is fully implemented by this tool.
+
+              remarks: This control is fully implemented by this tool.
 
             - uuid: b6f194ad-bde3-479f-8a77-0ec4c9a5a77d
               control-id: sa-11.1
@@ -336,9 +316,8 @@ component-definition:
 
                 # Control Implementation
                 NeuVector continually monitors kubernetes environments and container images to detect misconfigurations, advanced network threats, and vulnerable hosts with all attempts to exploit a vulnerability is documented.
-              
-              remarks:
-                This control if fully implemented by this tool.
+
+              remarks: This control if fully implemented by this tool.
 
             - uuid: 82d3ab37-b934-4731-9198-56ced7d92708
               control-id: sc-7
@@ -350,10 +329,9 @@ component-definition:
 
                 # Control Implementation
                 NeuVector monitors all communications to external interfaces by only connecting to external networks through managed interfaces and utilizes whitelists and blacklists for rules at Layer 7.
-              
-              remarks:
-                This control is fully implemented by this tool.
- 
+
+              remarks: This control is fully implemented by this tool.
+
             - uuid: 132fb1ff-8b58-4cfd-8ad4-c01605d89f24
               control-id: sc-8
               description: >-
@@ -362,10 +340,9 @@ component-definition:
 
                 # Control Implementation
                 Data in transit is protected using a TLS connection and secured between components within the data center using an internal certificate until it is terminated at the application node. This ensures that data in transit is encrypted using SSL.
-              
-              remarks:
-                This control is fully implemented by this tool.
- 
+
+              remarks: This control is fully implemented by this tool.
+
             - uuid: 4faa4029-52bc-4d7f-9896-e43c6731d5e5
               control-id: si-2.3
               description: >-
@@ -375,10 +352,9 @@ component-definition:
 
                 # Control Implementation
                 NeuVector continually monitors your Kubernetes environments to detect misconfigurations, advanced network threats, and vulnerable hosts with all attempts to exploit a vulnerability is documented.
-              
-              remarks:
-                This control is fully implemented by this tool.
- 
+
+              remarks: This control is fully implemented by this tool.
+
             - uuid: c83fdce5-53f5-4860-a586-242d044efaa9
               control-id: si-4
               description: >-
@@ -394,13 +370,12 @@ component-definition:
                 e. Adjust the level of system monitoring activity when there is a change in risk to organizational operations and assets, individuals, other organizations, or the Nation;
                 f. Obtain legal opinion regarding system monitoring activities; and
                 g. Provide [Assignment: organization-defined system monitoring information] to [Assignment: organization-defined personnel or roles] [Selection (one or more): as needed; [Assignment: organization-defined frequency]]."
-                
+
                 # Control Implementation
                 NeuVector continually monitors your Kubernetes environments to detect misconfigurations, advanced network threats, and vulnerable hosts with all attempts to exploit a vulnerability is documented.
-              
-              remarks:
-                This control is fully implemented by this tool.
- 
+
+              remarks: This control is fully implemented by this tool.
+
             - uuid: ac61e461-5fb8-4cf1-89ff-36d002056fda
               control-id: si-5
               description: >-
@@ -412,9 +387,8 @@ component-definition:
 
                 # Control Implementation
                 NeuVector correlates configuration data with user behavior and network traffic to provide context around misconfigurations and threats in the form of actionable alerts.
-              
-              remarks:
-                This control is fully implemented by this too.
+
+              remarks: This control is fully implemented by this too.
 
             - uuid: 80552838-9db8-41f7-9603-d91f884aa7bb
               control-id: si-6
@@ -427,9 +401,8 @@ component-definition:
 
                 # Control Implementation
                 NeuVector correlates configuration data and network traffic to provide context around verification in the form of actionable alerts.
-              
-              remarks:
-                This control is fully implemented by this tool.
+
+              remarks: This control is fully implemented by this tool.
 
             - uuid: 9b4c7011-aa35-4f61-ade2-7c070bb51767
               control-id: si-11
@@ -440,13 +413,12 @@ component-definition:
 
                 # Control Implementation
                 NeuVector correlates configuration data and network traffic for error tracking to provide context around misconfigurations and threats in the form of actionable alerts.
-              
-              remarks:
-                This control is fully implemented by this tool.
- 
+
+              remarks: This control is fully implemented by this tool.
+
   back-matter:
     resources:
-    - uuid: 6ba32bca-c4e2-4f27-a99c-e5ba8251ac61
-      title: Defense Unicorns UDS Core
-      rlinks:
-      - href: https://github.com/defenseunicorns/uds-core
+      - uuid: 6ba32bca-c4e2-4f27-a99c-e5ba8251ac61
+        title: Defense Unicorns UDS Core
+        rlinks:
+          - href: https://github.com/defenseunicorns/uds-core
