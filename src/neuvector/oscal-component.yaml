@@ -162,7 +162,7 @@ component-definition:
                 b. When the event occurred;
                 c. Where the event occurred;
                 d. Source of the event;
-                e. Outcome of the event; and 
+                e. Outcome of the event; and
                 f. Identity of any individuals, subjects, or objects/entities associated with the event."
 
                 # Control Implementation
@@ -185,7 +185,7 @@ component-definition:
               control-id: ca-2.2
               description: >-
                 # Control Description
-                 Include as part of control assessments, [Assignment: at least annually], [Selection: announced; unannounced], [Selection (one or more): in-depth monitoring; security instrumentation; automated security test cases; vulnerability scanning; malicious 
+                 Include as part of control assessments, [Assignment: at least annually], [Selection: announced; unannounced], [Selection (one or more): in-depth monitoring; security instrumentation; automated security test cases; vulnerability scanning; malicious
                  user testing; insider threat assessment; performance and load testing; data leakage or data loss assessment; [Assignment: organization-defined other forms of assessment]].
 
                 # Control Implementation
@@ -247,7 +247,7 @@ component-definition:
                 b. Employ vulnerability monitoring tools and techniques that facilitate interoperability among tools and automate parts of the vulnerability management process by using standards for:
                 1. Enumerating platforms, software flaws, and improper configurations;
                 2. Formatting checklists and test procedures; and
-                3. Measuring vulnerability impact; 
+                3. Measuring vulnerability impact;
                 c. Analyze vulnerability scan reports and results from vulnerability monitoring;
                 d. Remediate legitimate vulnerabilities [Assignment: high-risk vulnerabilities mitigated within thirty (30) days from date of discovery; moderate-risk vulnerabilities mitigated within ninety (90) days from date of discovery; low risk vulnerabilities mitigated within one hundred and eighty (180) days from date of discovery] in accordance with an organizational assessment of risk;
                 e. Share information obtained from the vulnerability monitoring process and control assessments with [Assignment: organization-defined personnel or roles] to help eliminate similar vulnerabilities in other systems; and

@@ -62,7 +62,7 @@ component-definition:
               control-id: au-3.1
               description: >-
                 # Control Description
-                Generate audit records containing the following additional information: [Assignment: session, connection, transaction, or activity duration; for client-server transactions, the number of bytes received and bytes sent; additional informational messages to diagnose 
+                Generate audit records containing the following additional information: [Assignment: session, connection, transaction, or activity duration; for client-server transactions, the number of bytes received and bytes sent; additional informational messages to diagnose
                 or identify the event; characteristics that describe or identify the object or resource being acted upon; individual identities of group account users; full-text of privileged commands].
 
                 # Control Implementation
@@ -170,7 +170,7 @@ component-definition:
               description: >-
                 # Control Description
                 a. Use internal system clocks to generate time stamps for audit records; and
-                b. Record time stamps for audit records that meet [Assignment: one second granularity of time measurement] and that use Coordinated Universal Time, have a fixed local time offset 
+                b. Record time stamps for audit records that meet [Assignment: one second granularity of time measurement] and that use Coordinated Universal Time, have a fixed local time offset
                 from Coordinated Universal Time, or that include the local time offset as part of the time stamp.
 
                 # Control Implementation
