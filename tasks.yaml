@@ -2,6 +2,8 @@ variables:
   - name: FLAVOR
     default: upstream
 
+  - name: PKG
+
 includes:
   - create: ./tasks/create.yaml
   - setup: ./tasks/setup.yaml
@@ -9,13 +11,13 @@ includes:
   - test: ./tasks/test.yaml
   - lint: ./tasks/lint.yaml
 tasks:
-  - name: dev
+  - name: dev-setup
     actions:
       - description: "Create the dev cluster"
         task: setup:create-k3d-cluster
 
       - description: "Deploy the Istio source package with Zarf Dev"
-        cmd: "zarf dev deploy src/istio --flavor ${FLAVOR}"
+        cmd: "uds zarf dev deploy src/istio --flavor ${FLAVOR}"
 
       - description: "Dev instructions"
         cmd: |
@@ -23,6 +25,11 @@ tasks:
           echo "  - To test & develop the Pepr module, run 'npx pepr dev' from a Javascript debug terminal"
           echo "  - Otherwise run 'npx pepr deploy' to deploy the Pepr module to the cluster"
           echo "  - Additional source packages can be deployed with 'zarf dev deploy src/<package>'"
+
+  - name: dev-deploy
+    actions:
+      - description: "Deploy the given source package with Zarf Dev"
+        cmd: "uds zarf dev deploy src/${PKG} --flavor ${FLAVOR}"
 
   - name: setup-cluster
     actions:
