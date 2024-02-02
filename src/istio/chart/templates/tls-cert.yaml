@@ -1,11 +1,16 @@
-{{- if and .Values.tls.cert .Values.tls.key .Values.tls.secretName }}
+{{- $ns := .Release.Namespace -}}
+{{ range $tls := .Values.tls }}
+{{ if ne $tls.mode "PASSTHROUGH" }}
 apiVersion: v1
 kind: Secret
 metadata:
-  name: {{ .Values.tls.secretName }}
-  namespace: {{ .Release.Namespace }}
+  name: {{ $tls.name }}
+  namespace: {{ $ns }}
 data:
-  tls.crt: {{ .Values.tls.cert }}
-  tls.key: {{ .Values.tls.key }}
+  tls.crt: {{ $tls.cert }}
+  tls.key: {{ $tls.key }}
+  cacert: {{ $tls.cacert }}
 type: kubernetes.io/tls
-{{- end }}
+---
+{{ end }}
+{{ end }}

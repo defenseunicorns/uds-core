@@ -1,11 +1,20 @@
 kind: ZarfPackageConfig
 metadata:
   name: uds-core-keycloak
-  description: "Example description"
+  description: "Keycloak"
+
+variables:
+  - name: DOMAIN
+    description: "Cluster domain"
+    default: "uds.dev"
 
 components:
-  - name: test
-    actions:
-      onCreate:
-        after:
-          - cmd: echo "What can Doug do for you?"
+  - name: keycloak
+    required: true
+    charts:
+      - name: keycloak
+        namespace: keycloak
+        version: 23.0.5
+        localPath: chart
+    images:
+      - quay.io/keycloak/keycloak:23.0.5

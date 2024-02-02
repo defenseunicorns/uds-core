@@ -1,8 +1,5 @@
 name: passthrough
 
-hosts:
-  - "keycloak"
-  - "login"
-
 tls:
-  enablePassthrough: true
+  - name: passthrough
+    mode: PASSTHROUGH

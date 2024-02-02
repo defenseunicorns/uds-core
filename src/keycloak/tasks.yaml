@@ -5,3 +5,12 @@ tasks:
         cmd: "echo Replace Me"
         # wait:
         #   cluster:
+
+  - name: dev-theme
+    actions:
+      - description: "Copy theme to Keycloak (must be run from src/keycloak dir)"
+        cmd: |
+          set -e
+          PV=$(kubectl get pvc keycloak-themes -n keycloak -o jsonpath='{.spec.volumeName}')
+          THEME_PATH=$(kubectl get pv $PV -o jsonpath="{.spec.hostPath.path}")
+          docker cp theme k3d-uds-server-0:/$THEME_PATH

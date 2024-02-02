@@ -4,36 +4,36 @@ kind: Gateway
 metadata:
   name: {{ .Values.name }}-gateway
   namespace: {{ .Release.Namespace }}
-  labels:
-    "uds/istio-domain": {{ $domain }}
+  annotations:
+    
 spec:
   selector:
     app: {{ .Values.name }}-ingressgateway
   servers:
+    {{ range $tls := .Values.tls }}
     - hosts:
-        {{- range .Values.hosts }}
+        {{- range $tls.hosts | default (list "*") }}
         - "{{ . }}.{{ $domain }}"
         {{- end }}
       port:
-        name: http
+        name: "http-{{ $tls.name }}"
         number: 80
         protocol: HTTP
       tls:
         httpsRedirect: true
     - hosts:
-        {{- range .Values.hosts }}
+        {{- range $tls.hosts | default (list "*") }}
         - "{{ . }}.{{ $domain }}"
         {{- end }}
       port:
-        name: https
+        name: "https-{{ $tls.name }}"
         number: 443
         protocol: HTTPS
       tls:
-        {{- if .Values.tls.enablePassthrough }}
-        mode: PASSTHROUGH
-        {{- else }}
-        credentialName: {{ .Values.tls.secretName }}
+        mode: {{ $tls.mode }}
+        {{- if ne $tls.mode "PASSTHROUGH" }}
+        credentialName: {{ $tls.name }}
         minProtocolVersion: TLSV1_3
-        mode: SIMPLE
         {{- end }}
-
+    {{ end }}
+      

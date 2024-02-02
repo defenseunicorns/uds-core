@@ -1,0 +1,36 @@
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: keycloak
+  namespace: {{ .Release.Namespace }}
+spec:
+  network:
+    expose:
+      # This is probably better handled with a direct response instead... (also covered by Authz Policy)
+      - service: nowhere
+        podLabels:
+          app.kubernetes.io/name: keycloak
+        host: login
+        port: 8080
+        match:
+          - name: exclude-admin
+            uri:
+              regex: ^/admin/.*$
+
+      # @todo: need to add extra config to the routes (maybe operator improvement?)
+      # headers:                                                                                                                                                                                                                                     │
+      #   request:                                                                                                                                                                                                                                   │
+      #     set:                                                                                                                                                                                                                                     │
+      #       ssl-client-cert: '%DOWNSTREAM_PEER_CERT%'
+      - service: keycloak-http
+        podLabels:
+          app.kubernetes.io/name: keycloak
+        host: login
+        port: 8080
+
+      - service: keycloak-http
+        podLabels:
+          app.kubernetes.io/name: keycloak
+        gateway: admin
+        host: keycloak
+        port: 8080

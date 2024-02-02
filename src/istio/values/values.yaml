@@ -2,3 +2,5 @@ meshConfig:
   accessLogFile: /dev/stdout
   defaultConfig:
     holdApplicationUntilProxyStarts: true
+    gatewayTopology:
+      forwardClientCertDetails: SANITIZE

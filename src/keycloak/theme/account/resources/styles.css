@@ -1,0 +1,25 @@
+.pf-c-page__header {
+  border-bottom: 1px solid #747474;
+  backdrop-filter: blur(4px);
+  background-color: rgba(2, 25, 40, 0.85) !important;
+  z-index: 1;
+}
+
+.pf-c-page__header img {
+  max-height: 55px;
+  margin: 4px;
+}
+
+.pf-c-page,
+.pf-c-page__main-section {
+  background: none;
+}
+
+#page-sidebar {
+  background-color: rgba(2, 25, 40, 0.85) !important;
+  backdrop-filter: blur(4px);
+}
+
+body {
+  background-color: rgba(232, 232, 232, 0.85);
+}
