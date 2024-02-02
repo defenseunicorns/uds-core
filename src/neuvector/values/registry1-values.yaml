@@ -40,8 +40,8 @@ cve:
   updater:
     enabled: true
     image:
-      repository: ironbank/big-bang/base
-      tag: 2.1.0
+      repository: ironbank/redhat/ubi/ubi9-minimal
+      tag: 9.3
     containerSecurityContext:
       capabilities:
         drop:
