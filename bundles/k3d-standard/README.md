@@ -1,8 +1,6 @@
 # Unicorn Delivery Service - K3d Core Bundle (UDS Core)
 
-This bundle is used for demonstration, development, and testing of UDS Core. In addition to the [UDS Core applications](../../README.md#core-applications), it also includes:
-
-The k3d uds-dev-stack provides:
+This bundle is used for demonstration, development, and testing of UDS Core. In addition to the [UDS Core applications](../../README.md#core-applications), the included k3d uds-dev-stack provides:
 
 - [K3d](https://k3d.io/) - Containerized K3s Kubernetes Enviroment
 - [Minio](<https://min.io/>) - In-cluster S3 Object Storage (See below for more details)

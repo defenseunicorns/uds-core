@@ -35,7 +35,7 @@ UDS Core establishes a secure baseline for cloud-native systems and ships with c
 
 ### Using UDS Core in Production
 
-While the UDS Bundles above can be use for dev and test environments and include a K3d cluster, UDS Core publishes a UDS Package that is inteded to be used with your own UDS Bundle. You can use the [k3d-core-demo bundle](./bundles/k3d-standard/README.md) as an example.
+While the UDS Bundles published by this repo can be use for dev and test environments and include a K3d cluster, UDS Core also publishes a UDS Package that is intended to be used in your own UDS Bundle. You can use the [k3d-core-demo bundle](./bundles/k3d-standard/README.md) as an example.
 
 ---
 
@@ -44,7 +44,7 @@ While the UDS Bundles above can be use for dev and test environments and include
 UDS Core publishes bundles you can use for trying out UDS Core or for UDS Package development where you only need part of UDS Core. These bundles leverage [UDS K3d](https://github.com/defenseunicorns/uds-k3d) to create a local k3d cluster with tools installed to emulate a cloud environment.
 
 > [!NOTE]
-> UDS Bundles are intended for dev and test environments and should not be used for production. They also serve as examples to create custom bundles.
+> These UDS Bundles are intended for dev and test environments and should not be used for production. They also serve as examples to create custom bundles.
 
 #### Quickstart
 
