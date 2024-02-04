@@ -38,35 +38,56 @@ spec:
             - "--spi-theme-cache-templates=false"
             {{- else }}
             - "start"
+            # Needed for nginx provider
+            - "--auto-build"
             {{- end }}
             - "--features=preview"
           env:
             # Common configuration
+
+            # Enable health and metrics endpoints
             - name: KC_HEALTH_ENABLED
               value: "true"
             - name: KC_METRICS_ENABLED
               value: "true"
-            - name: KC_LOG_LEVEL
-              value: DEBUG
+
+            # Enable access log
             - name: QUARKUS_HTTP_ACCESS_LOG_ENABLED
               value: "true"          
-            # Network configuration
-            # - name: KC_HOSTNAME_URL
-            #   value: "https://{{ .Values.hostname }}.{{ .Values.domain }}:443"
-            # - name: KC_HOSTNAME_ADMIN_URL
-            #   value: "https://keycloak.admin.{{ .Values.domain }}:443"
+            
             # Hostname strict is not needed when used with Istio
             - name: KC_HOSTNAME_STRICT
               value: "false"
             - name: KC_HOSTNAME_STRICT_HTTPS
               value: "false"
-            # - name: KC_HOSTNAME_STRICT_BACKCHANNEL
-            #   value: "true"              
+            
+            # Set the proxy type to edge    
             - name: KC_PROXY
               value: edge
+            
+            # X509 configuration
+            # - name: KC_SPI_TRUSTSTORE_FILE_FILE
+            #   value: /truststore/truststore.jks
+            # - name: KC_SPI_TRUSTSTORE_FILE_PASSWORD
+            #   value: changeit
+            
+            ## Activate nginx provider
+            - name: KC_SPI_X509CERT_LOOKUP_PROVIDER
+              value: nginx
+            # Set nginx provider header name
+            - name: KC_SPI_X509CERT_LOOKUP_NGINX_SSL_CLIENT_CERT
+              value: istio-mtls-client-certificate
+            # Dumb value (not used in the nginx provider, but required by the SPI)
+            - name: KC_SPI_X509CERT_LOOKUP_NGINX_SSL_CLIENT_CERT_CHAIN_PREFIX
+              value: UNUSED
           {{- if .Values.devMode }}
-            # - name: KC_DB
-            #   value: dev-file
+            # Enable dubug logs in dev mode
+            - name: KC_LOG_LEVEL
+              value: DEBUG
+            - name: QUARKUS_LOG_CATEGORY__ORG_APACHE_HTTP__LEVEL
+              value: DEBUG
+            - name: QUARKUS_LOG_CATEGORY__ORG_KEYCLOAK_SERVICES_X509__LEVEL
+              value: TRACE
           {{- else }}
             # Infinispan cache configuration
             - name: KC_CACHE
