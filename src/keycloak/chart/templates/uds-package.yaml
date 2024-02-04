@@ -6,31 +6,47 @@ metadata:
 spec:
   network:
     expose:
-      # This is probably better handled with a direct response instead... (also covered by Authz Policy)
-      - service: nowhere
+      - description: "remove private paths from public gateway"
+        host: login
+        service: keycloak-http
+        podLabels:
+          app.kubernetes.io/name: keycloak
+        port: 8080
+        advancedHTTP:
+          match:
+            - name: redirect-welcome
+              uri:
+                exact: /
+            - name: redirect-admin
+              uri:
+                prefix: /admin/
+            - name: redirect-master-realm
+              uri:
+                prefix: /realms/master/
+          rewrite:
+            uri: "/realms/{{ .Values.realm }}/account"
+
+      - description: "public auth access with optional client certificate"
+        service: keycloak-http
         podLabels:
           app.kubernetes.io/name: keycloak
         host: login
         port: 8080
-        match:
-          - name: exclude-admin
-            uri:
-              regex: ^/admin/.*$
+        advancedHTTP:
+          headers:
+            request:
+              set:
+                istio-mtls-client-certificate: "%DOWNSTREAM_PEER_CERT%"
 
-      # @todo: need to add extra config to the routes (maybe operator improvement?)
-      # headers:                                                                                                                                                                                                                                     │
-      #   request:                                                                                                                                                                                                                                   │
-      #     set:                                                                                                                                                                                                                                     │
-      #       ssl-client-cert: '%DOWNSTREAM_PEER_CERT%'
-      - service: keycloak-http
-        podLabels:
-          app.kubernetes.io/name: keycloak
-        host: login
-        port: 8080
-
-      - service: keycloak-http
+      - description: "admin access with optional client certificate"
+        service: keycloak-http
         podLabels:
           app.kubernetes.io/name: keycloak
         gateway: admin
         host: keycloak
         port: 8080
+        advancedHTTP:
+          headers:
+            request:
+              set:
+                istio-mtls-client-certificate: "%DOWNSTREAM_PEER_CERT%"
