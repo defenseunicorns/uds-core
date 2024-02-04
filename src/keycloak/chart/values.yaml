@@ -13,6 +13,9 @@ hostname: login
 # The public domain name of the Keycloak server
 domain: "###ZARF_VAR_DOMAIN###"
 
+# The primary Keycloak realm
+realm: uds
+
 # Indicates whether information about services should be injected into Pod's environment variables, matching the syntax of Docker links
 enableServiceLinks: true
 
