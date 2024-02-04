@@ -23,6 +23,9 @@ spec:
             - name: redirect-master-realm
               uri:
                 prefix: /realms/master/
+            - name: redirect-metrics
+              uri:
+                prefix: /metrics
           rewrite:
             uri: "/realms/{{ .Values.realm }}/account"
 
