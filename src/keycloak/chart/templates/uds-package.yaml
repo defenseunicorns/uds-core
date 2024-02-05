@@ -28,6 +28,12 @@ spec:
                 prefix: /metrics
           rewrite:
             uri: "/realms/{{ .Values.realm }}/account"
+          headers:
+            request:
+              remove:
+                - istio-mtls-client-certificate            
+              add:
+                istio-mtls-client-certificate: "%DOWNSTREAM_PEER_CERT%"            
 
       - description: "public auth access with optional client certificate"
         service: keycloak-http
@@ -38,7 +44,9 @@ spec:
         advancedHTTP:
           headers:
             request:
-              set:
+              remove:
+                - istio-mtls-client-certificate            
+              add:
                 istio-mtls-client-certificate: "%DOWNSTREAM_PEER_CERT%"
 
       - description: "admin access with optional client certificate"
@@ -51,5 +59,7 @@ spec:
         advancedHTTP:
           headers:
             request:
-              set:
+              remove:
+                - istio-mtls-client-certificate
+              add:
                 istio-mtls-client-certificate: "%DOWNSTREAM_PEER_CERT%"
