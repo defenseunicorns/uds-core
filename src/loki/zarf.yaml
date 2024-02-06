@@ -16,7 +16,7 @@ components:
         valuesFiles:
           - ./values/upstream-values.yaml
     images:
-      - docker.io/grafana/loki:2.9.3
+      - docker.io/grafana/loki:2.9.4
       - docker.io/nginxinc/nginx-unprivileged:1.25-alpine
 
   - name: loki
@@ -31,5 +31,5 @@ components:
         valuesFiles:
           - ./values/registry1-values.yaml
     images:
-      - registry1.dso.mil/ironbank/opensource/grafana/loki:2.9.3
+      - registry1.dso.mil/ironbank/opensource/grafana/loki:2.9.4
       - registry1.dso.mil/ironbank/opensource/nginx/nginx-alpine:1.25.3
