@@ -3,9 +3,9 @@ tasks:
     description: Test app used for UDS Core validation
     actions:
       - description: Create zarf package for the test resources
-        cmd: "zarf package create src/test --confirm"
+        cmd: "uds zarf package create src/test --confirm"
       - description: Apply the test resources
-        cmd: "zarf package deploy build/zarf-package-uds-core-test-apps-*.zst --confirm"
+        cmd: "uds zarf package deploy build/zarf-package-uds-core-test-apps-*.zst --confirm"
 
       - description: Wait for the admin app to be ready
         wait:
@@ -50,4 +50,4 @@ tasks:
             code: 202
 
       - description: Remove the test resources
-        cmd: "zarf package remove build/zarf-package-uds-core-test-apps-*.zst --confirm"
+        cmd: "uds zarf package remove build/zarf-package-uds-core-test-apps-*.zst --confirm"
