@@ -1,0 +1,265 @@
+component-definition:
+  uuid: ff959bdb-7be9-49b3-9dc2-c41b34e7017d
+  metadata:
+    title: Promtail
+    last-modified: "2024-01-31T16:44:35Z"
+    version: "20240132"
+    oscal-version: 1.1.1
+    parties:
+      - uuid: f3cf70f8-ba44-4e55-9ea3-389ef24847d3
+        type: organization
+        name: Defense Unicorns
+        links:
+          - href: https://defenseunicorns.com
+            rel: website
+  components:
+    - uuid: 3ca1e9a3-a566-48d1-93af-200abd1245e3
+      type: software
+      title: Promtail
+      description: |
+        Log collector
+      purpose: Collects logs from the cluster
+      responsible-roles:
+        - role-id: provider
+          party-uuids:
+            - f3cf70f8-ba44-4e55-9ea3-389ef24847d3
+      control-implementations:
+        - uuid: d2afb4c4-2cd8-5305-a6cc-d1bc7b388d0c
+          source: https://raw.githubusercontent.com/GSA/fedramp-automation/93ca0e20ff5e54fc04140613476fba80f08e3c7d/dist/content/rev5/baselines/json/FedRAMP_rev5_HIGH-baseline-resolved-profile_catalog.json
+          description: Controls implemented by Promtail for inheritance by applications
+          implemented-requirements:
+            - uuid: 954ba9c8-452c-4503-a43f-c880a01b828d
+              control-id: ac-6.9
+              description: >-
+                # Control Description
+                  Misuse of privileged functions, either intentionally or unintentionally by authorized users, or by unauthorized external entities that have compromised information system accounts, is a serious and ongoing concern and can have significant adverse impacts on organizations.
+                  Auditing the use of privileged functions is one way to detect such misuse, and in doing so, help mitigate the risk from insider threats and the advanced persistent threat (APT).
+
+                # Control Implementation
+                  Promtail can be configured to collect all logs from Kubernetes and underlying operating systems, allowing the aggregation of privileged function calls.
+              remarks: This control is fully implemented by this tool.
+              links:
+                - href: "#98b97ec9-a9ce-4444-83d8-71066270a424"
+                  rel: reference
+                  text: Lula Validation
+                - href: "#fbe5855d-b4ea-4ff5-9f0d-5901d620577a"
+                  rel: reference
+                  text: Lula Validation
+
+            - uuid: 2a25a5a4-4fbc-4fbc-88e3-2e34ddc3fb0e
+              control-id: au-2
+              description: >-
+                # Control Description
+                  An event is any observable occurrence in an organizational information system.
+                  Organizations identify audit events as those events which are significant and relevant to the security of information systems and the environments in which those systems operate in order to meet specific and ongoing audit needs.
+                  Audit events can include, for example, password changes, failed logons, or failed accesses related to information systems, administrative privilege usage, PIV credential usage, or third-party credential usage.
+                  In determining the set of auditable events, organizations consider the auditing appropriate for each of the security controls to be implemented.
+                  To balance auditing requirements with other information system needs, this control also requires identifying that subset of auditable events that are audited at a given point in time.
+
+                # Control Implementation
+                  Logging daemons are present on each node that BigBang is installed on.  Out of the box, the following events are captured:
+                  * all containers emitting to STDOUT or STDERR (captured  by container runtime translating container logs to /var/log/containers).
+                  * all kubernetes api server requests.
+                  * all events emitted by the kubelet.
+              remarks: This control is fully implemented by this tool.
+              links:
+                - href: "#98b97ec9-a9ce-4444-83d8-71066270a424"
+                  rel: reference
+                  text: Lula Validation
+                - href: "#0be7345d-e9d3-4248-9c14-5fed8e7bfa01"
+                  rel: reference
+                  text: Lula Validation
+
+            - uuid: 762604db-77ec-415f-8728-c296873ab48b
+              control-id: au-3
+              description: >-
+                # Control Description
+                  Audit record content that may be necessary to satisfy the requirement of this control, includes, for example, time stamps, source and destination addresses, user/process identifiers, event descriptions, success/fail indications, filenames involved, and access control or flow control rules invoked.
+                  Event outcomes can include indicators of event success or failure and event-specific results (e.g., the security state of the information system after the event occurred).
+
+                # Control Implementation
+                  Logs are captured by promtail from the node. The node logs will contain the necessary log data from all pods/applications inside the selected nodes.
+                  Validating `logfmt` as the config.logFormat would be the goal. This is currently a secret mounted to /etc/promtail/promtail.yaml in the promtail container. We will ensure the promtail.yaml file is at a minimum the target config.
+                https://grafana.com/docs/loki/latest/send-data/promtail/stages/logfmt/
+              remarks: This control is fully implemented by this tool.
+              links:
+                - href: "#98b97ec9-a9ce-4444-83d8-71066270a424"
+                  rel: reference
+                  text: Lula Validation
+                - href: "#9bfc68e0-381a-4006-9f68-c293e3b20cee"
+                  rel: reference
+                  text: Lula Validation
+
+            - uuid: 9ad7ddfb-4701-4c34-88f7-9d85abb13d60
+              control-id: au-8
+              description: >-
+                # Control Description
+                  Time stamps generated by the information system include date and time.
+                  Time is commonly expressed in Coordinated Universal Time (UTC), a modern continuation of Greenwich Mean Time (GMT), or local time with an offset from UTC.
+                  Granularity of time measurements refers to the degree of synchronization between information system clocks and reference clocks, for example, clocks synchronizing within hundreds of milliseconds or within tens of milliseconds.
+                  Organizations may define different time granularities for different system components.
+                  Time service can also be critical to other security capabilities such as access control and identification and authentication, depending on the nature of the mechanisms used to support those capabilities.
+
+                # Control Implementation
+                  Records captured by the logging daemon are enriched to  ensure the following are always present:
+                  * time of the event (UTC).
+                  * source of event (pod, namespace, container id).
+                  Applications are responsible for providing all other information.
+                  Validating `logfmt` as the config.logFormat would be the goal. This is currently a secret mounted to /etc/promtail/promtail.yaml in the promtail container. We will ensure the promtail.yaml file is at a minimum the target config.
+                  https://grafana.com/docs/loki/latest/send-data/promtail/stages/logfmt/
+              remarks: This control is fully implemented by this tool.
+              links:
+                - href: "#98b97ec9-a9ce-4444-83d8-71066270a424"
+                  rel: reference
+                  text: Lula Validation
+                - href: "#9bfc68e0-381a-4006-9f68-c293e3b20cee"
+                  rel: reference
+                  text: Lula Validation
+
+  back-matter:
+    resources:
+      - uuid: D552C935-E40C-4A03-B5CC-4605EBD95B6D
+        title: Promtail
+        rlinks:
+          - href: https://grafana.com/docs/loki/latest/clients/promtail/
+      - uuid: 211C474B-E11A-4DD2-8075-50CDAC507CDC
+        title: Big Bang Promtail package
+        rlinks:
+          - href: https://repo1.dso.mil/platform-one/big-bang/apps/sandbox/promtail
+      - uuid: 98b97ec9-a9ce-4444-83d8-71066270a424
+        title: Lula Validation
+        rlinks:
+          - href: lula.dev
+        remarks: Validation health check
+        description: >-
+          target:
+            provider: opa
+            domain: kubernetes
+            payload:
+              resources:
+                - name: daemonsets
+                  resourceRule:
+                    Group: apps
+                    Version: v1
+                    Resource: daemonsets
+                    Namespaces: [promtail]
+              rego: |
+                package validate
+
+                import future.keywords.every
+
+                validate {
+                  every daemonset in input.daemonsets {
+                    daemonset.kind == "DaemonSet"
+                    podsScheduled := daemonset.status.desiredNumberScheduled
+                    numberAvailable := daemonset.status.numberAvailable
+                    numberReady := daemonset.status.numberReady
+                    podsScheduled == numberAvailable
+                    numberAvailable == numberReady
+                  }
+                }
+      - uuid: fbe5855d-b4ea-4ff5-9f0d-5901d620577a
+        title: Lula Validation
+        remarks: Log the execution of privileged functions.
+        rlinks:
+          - href: lula.dev
+        description: >-
+          target:
+            provider: opa
+            domain: kubernetes
+            payload:
+              resources:
+                - name: pods
+                  resourceRule:
+                    Group:
+                    Version: v1
+                    Resource: pods
+                    Namespaces: [promtail]
+              rego: |
+                package validate
+
+                import future.keywords.every
+
+                validate {
+                  every pod in input.pods {
+                    volumes := pod.spec.volumes
+
+                    some volume in volumes
+                    volume.name == "varlog"
+                    volume.hostPath.path == "/var/log"
+                  }
+                }
+      - uuid: 0be7345d-e9d3-4248-9c14-5fed8e7bfa01
+        title: Lula Validation
+        remarks:
+          a. Identify the types of events that the system is capable of logging in support of the audit function for organization-defined event types that the system is capable of logging;
+          b. Coordinate the event logging function with other organizational entities requiring audit-related information to guide and inform the selection criteria for events to be logged;
+          c. Specify the following event types for logging within the system organization-defined event types (subset of the event types defined in AU-2a.) along with the frequency of (or situation requiring) logging for each identified event type;
+          d. Provide a rationale for why the event types selected for logging are deemed to be adequate to support after-the-fact investigations of incidents; and
+          e. Review and update the event types selected for logging on an organization-defined frequency.
+        rlinks:
+          - href: lula.dev
+        description: >-
+          target:
+            provider: opa
+            domain: kubernetes
+            payload:
+              resources:
+                - name: pods
+                  resourceRule:
+                    Group:
+                    Version: v1
+                    Resource: pods
+                    Namespaces: [promtail]
+              rego: |
+                package validate
+
+                import future.keywords.every
+
+                validate {
+                  every pod in input.pods {
+                    volumes := pod.spec.volumes
+
+                    some volume in volumes
+                    volume.name == "pods"
+                    volume.hostPath.path == "/var/log/pods"
+                  }
+                }
+      - uuid: 9bfc68e0-381a-4006-9f68-c293e3b20cee
+        title: Lula Validation
+        remarks: Ensure that audit records contain information that establishes the following;
+          a. What type of event occurred;
+          b. When the event occurred;
+          c. Where the event occurred;
+          d. Source of the event;
+          e. Outcome of the event; and
+          f. Identity of any individuals, subjects, or objects/entities associated with the event.
+        rlinks:
+          - href: lula.dev
+        description: >-
+          target:
+            provider: opa
+            domain: kubernetes
+            payload:
+              resources:
+                - name: pods
+                  resourceRule:
+                    Group:
+                    Version: v1
+                    Resource: pods
+                    Namespaces: [promtail]
+              rego: |
+                package validate
+
+                import future.keywords.every
+
+                validate {
+                  every pod in input.pods {
+                    containers := pod.spec.containers
+
+                    some container in containers
+                    container.name == "promtail"
+                    some i
+                    container.args[i] == "-config.file=/etc/promtail/promtail.yaml"
+                  }
+                }

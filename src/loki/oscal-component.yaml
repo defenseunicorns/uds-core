@@ -1,0 +1,196 @@
+component-definition:
+  uuid: aaa97ff3-41f7-4f11-b74a-0cf0de527e6e
+  metadata:
+    title: Loki Component
+    last-modified: "2024-01-18T20:36:22Z"
+    version: "20240118"
+    oscal-version: 1.1.1
+    parties:
+      - uuid: f3cf70f8-ba44-4e55-9ea3-389ef24847d3
+        type: organization
+        name: Defense Unicorns
+        links:
+          - href: https://defenseunicorns.com
+            rel: website
+  components:
+    - uuid: a735b5a4-aabd-482d-b335-60ddcd4b1c00
+      type: software
+      title: Loki
+      description: |
+        Deployment of Loki as a lighter weight replacement for elasticsearch
+      purpose: Provides storage and indexing for logs in the cluster
+      responsible-roles:
+        - role-id: provider
+          party-uuids:
+            - f3cf70f8-ba44-4e55-9ea3-389ef24847d3
+      control-implementations:
+        - uuid: d2afb4c4-2cd8-5305-a6cc-d1bc7b388d0c
+          source: https://raw.githubusercontent.com/GSA/fedramp-automation/93ca0e20ff5e54fc04140613476fba80f08e3c7d/dist/content/rev5/baselines/json/FedRAMP_rev5_HIGH-baseline-resolved-profile_catalog.json
+          description: Controls implemented by Loki for inheritance by applications
+          implemented-requirements:
+            - uuid: 386fb410-27e5-413d-8e6d-607afa86bb72
+              control-id: ac-5
+              description: >-
+                # Control Description
+                "a. Identify and document [Assignment: organization-defined duties of individuals requiring separation]; and
+                b. Define system access authorizations to support separation of duties."
+
+                # Control Implementation
+                Loki implements RBAC to define system authorization and separation of duties.
+
+              remarks: This control is fully implemented by this tool.
+
+            - uuid: 60ad5f60-3852-49a1-961b-b6454edb8319
+              control-id: ac-6
+              description: >-
+                # Control Description
+                Employ the principle of least privilege, allowing only authorized accesses for users (or processes acting on behalf of users) that are necessary to accomplish assigned organizational tasks.
+
+                # Control Implementation
+                Loki implements RBAC to employ principle of least privilege.
+
+              remarks: This control is fully implemented by this tool.
+
+            - uuid: e7721974-f672-47cf-9421-e1530aec1217
+              control-id: ac-6.1
+              description: >-
+                # Control Description
+                "Authorize access for [Assignment: organization-defined individuals or roles] to:
+                (a) [Assignment: all functions not publicly accessible]]; and
+                (b) [Assignment: all security-relevant information not publicly available]]."
+
+                # Control Implementation
+                Loki implements RBAC to employ principle of least privilege.
+
+              remarks: This control is fully implemented by this tool.
+
+            - uuid: e36ba9d5-f12d-4524-a777-a041a0203bb6
+              control-id: ac-6.9
+              description: >-
+                # Control Description
+                Log the execution of privileged functions.
+
+                # Control Implementation
+                Privileged events that modify the application are logged in the application itself.
+
+              remarks: This control is fully implemented by this tool.
+
+            - uuid: d0ffa50d-d91f-4dc3-8827-24e0f84b49d2
+              control-id: ac-6.10
+              description: >-
+                # Control Description
+                Prevent non-privileged users from executing privileged functions.
+
+                # Control Implementation
+                Loki layers an additional RBAC layer that prohibits non-privileged users from executing privileged functions.
+
+              remarks: This control is fully implemented by this tool.
+
+            - uuid: 836408b9-1ae9-4c99-8510-6ee35a4d11e9
+              control-id: au-4
+              description: >-
+                # Control Description
+                Allocate audit log storage capacity to accommodate [Assignment: organization-defined audit log retention requirements].
+
+                # Control Implementation
+                Loki uses scalable object storage.
+
+              remarks: This control is fully implemented by this tool.
+
+            - uuid: 25477ca3-4607-449e-9d33-a2a67ede0019
+              control-id: au-6
+              description: >-
+                # Control Description
+                "a. Review and analyze system audit records [Assignment: at least weekly] for indications of [Assignment: organization-defined inappropriate or unusual activity] and the potential impact of the inappropriate or unusual activity;
+                b. Report findings to [Assignment: organization-defined personnel or roles]; and
+                c. Adjust the level of audit record review, analysis, and reporting within the system when there is a change in risk based on law enforcement information, intelligence information, or other credible sources of information."
+
+                # Control Implementation
+                Provides audit record query and analysis capabilities. Organization will implement record review and analysis.
+
+              remarks: This control is fully implemented by this tool.
+
+            - uuid: 29fdcbbd-02cc-4db1-a24e-5a146cccc254
+              control-id: au-6.1
+              description: >-
+                # Control Description
+                Integrate audit record review, analysis, and reporting processes using [Assignment: organization-defined automated mechanisms].
+
+                # Control Implementation
+                Provides audit record query and analysis capabilities. Organization will implement record review and analysis.
+
+              remarks: This control is fully implemented by this tool.
+
+            - uuid: 973c9f19-8c96-4c84-925a-b69f28625962
+              control-id: au7.1
+              description: >-
+                # Control Description
+                Provide and implement the capability to process, sort, and search audit records for events of interest based on the following content: [Assignment: organization-defined fields within audit records].
+
+                # Control Implementation
+                Loki provides an API for retrieving and filtering logs.
+
+              remarks: This control is fully implemented by this tool.
+
+            - uuid: 21879fc4-927e-4ad4-a049-c96cb581e260
+              control-id: au-9
+              description: >-
+                # Control Description
+                "a. Protect audit information and audit logging tools from unauthorized access, modification, and deletion; and
+                b. Alert [Assignment: organization-defined personnel or roles] upon detection of unauthorized access, modification, or deletion of audit information."
+
+                # Control Implementation
+                Access to metrics can be restricted to org-defined personnel behind a private endpoint and not given to mission owners.
+
+              remarks: This control is fully implemented by this tool.
+
+            - uuid: b89edef2-5668-407b-b3d5-86ca68862536
+              control-id: au-9.2
+              description: >-
+                # Control Description
+                Store audit records [Assignment: at least weekly] in a repository that is part of a physically different system or system component than the system or component being audited.
+
+                # Control Implementation
+                Supports any object storage.
+
+              remarks: This control is fully implemented by this tool.
+
+            - uuid: f3292e9a-1c10-45cd-9178-aeecbaec0283
+              control-id: au-9.4
+              description: >-
+                # Control Description
+                Authorize access to management of audit logging functionality to only [Assignment: organization-defined subset of privileged users or roles].
+
+                # Control Implementation
+                Enterprise version (Loki) implements RBAC.
+
+              remarks: This control is fully implemented by this tool.
+
+            - uuid: 20ecdb48-997e-4958-b74c-21f462049877
+              control-id: au-11
+              description: >-
+                # Control Description
+                Retain audit records for [Assignment: at least one (1) year] to provide support for after-the-fact investigations of incidents and to meet regulatory and organizational information retention requirements.
+
+                # Control Implementation
+                Can configure audit record storage retention policy for defined periods of time via the store(s) Loki is configured to use.
+
+              remarks: This control is fully implemented by this tool.
+
+            - uuid: 58766714-a477-42b9-bae4-856f14b58cea
+              control-id: au-12.1
+              description: >-
+                # Control Description
+                Compile audit records from [Assignment: all network, data storage, and computing devices] into a system-wide (logical or physical) audit trail that is time-correlated to within [Assignment: organization-defined level of tolerance for the relationship between time stamps of individual records in the audit trail].
+
+                # Control Implementation
+                Provides time-series event compilation capabilities.
+
+              remarks: This control is fully implemented by this tool.
+
+  back-matter:
+    resources:
+      - uuid: b989384f-54c9-4bb9-8cbd-ae993f8f6e0b
+        title: Defense Unicorns UDS Core
+        rlinks:
+          - href: https://github.com/defenseunicorns/uds-core

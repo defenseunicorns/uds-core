@@ -1,0 +1,237 @@
+component-definition:
+  uuid: 7d316238-f7c4-4d3b-ab33-6ecbf49de5a7
+  metadata:
+    title: Grafana
+    last-modified: "2024-01-18T16:36:58Z"
+    version: "20240118"
+    oscal-version: 1.1.1
+    parties:
+      - uuid: f3cf70f8-ba44-4e55-9ea3-389ef24847d3
+        type: organization
+        name: Defense Unicorns
+        links:
+          - href: https://defenseunicorns.com
+            rel: website
+  components:
+    - uuid: 375f8171-3eb9-48d6-be3c-c8f1c0fe05fa
+      type: software
+      title: Grafana
+      description: |
+        Grafana is an analytics and interactive visualization web application.
+      purpose: It provides charts, graphs, and alerts when connected to supported data sources.
+      responsible-roles:
+        - role-id: provider
+          party-uuids:
+            - f3cf70f8-ba44-4e55-9ea3-389ef24847d3
+      control-implementations:
+        - uuid: d2afb4c4-2cd8-5305-a6cc-d1bc7b388d0c
+          source: https://raw.githubusercontent.com/GSA/fedramp-automation/93ca0e20ff5e54fc04140613476fba80f08e3c7d/dist/content/rev5/baselines/json/FedRAMP_rev5_HIGH-baseline-resolved-profile_catalog.json
+          description: Controls implemented by Grafana for inheritance by applications.
+          implemented-requirements:
+            - uuid: 4d1f5291-8f3f-429c-af2f-b05455ef30f0
+              control-id: ac-6.9
+              description: >-
+                # Control Description
+                Log the execution of privileged functions.
+
+                # Control Implementation
+                Privileged events, including updating the deployment of an application, or use of privileged containers are collected as metrics by prometheus and displayed by Grafana.
+
+              remarks: This control is fully implemented by this tool.
+
+            - uuid: 7449f733-6809-4a0b-a6f9-7857f46a106e
+              control-id: au-2
+              description: >-
+                # Control Description
+                a. Identify the types of events that the system is capable of logging in support of the audit function: [Assignment: successful and unsuccessful account logon events, account management events, object access, policy change, privilege functions, process tracking, and system events. For Web applications: all administrator activity, authentication checks, authorization checks, data deletions, data access, data changes, and permission changes];
+                b. Coordinate the event logging function with other organizational entities requiring audit-related information to guide and inform the selection criteria for events to be logged;
+                c. Specify the following event types for logging within the system: [Assignment: organization-defined event types (subset of the event types defined in AU-2a.) along with the frequency of (or situation requiring) logging for each identified event type];
+                d. Provide a rationale for why the event types selected for logging are deemed to be adequate to support after-the-fact investigations of incidents; and
+                e. Review and update the event types selected for logging [Assignment: annually or whenever there is a change in the threat environment].
+
+                # Control Implementation
+                API endpoints suitable for capturing application level metrics are present on each of the supported applications running as containers.
+                In addition, system and cluster level metrics are emitted by containers with read only access to host level information.
+                Metrics are captured and stored by Prometheus, an web server capable of scraping endpoints formatted in the appropriate dimensional data format.
+                Metrics information is stored on disk in a time series data base, and later queried through a separate component providing a web interface for the query language: PromQL.
+                Metrics data can be displayed through a Grafana dashboard for visualization.
+
+              remarks: This control is fully implemented by this tool.
+
+            - uuid: 6700f065-8e51-4224-a5a0-8d3aff9d8d96
+              control-id: au-3.1
+              description: >-
+                # Control Description
+                Generate audit records containing the following additional information: [Assignment: session, connection, transaction, or activity duration; for client-server transactions, the number of bytes received and bytes sent; additional informational messages to diagnose
+                or identify the event; characteristics that describe or identify the object or resource being acted upon; individual identities of group account users; full-text of privileged commands].
+
+                # Control Implementation
+                Grafana has pre-configured dashboards showing the audit records from Cluster Auditor saved in Prometheus.
+              remarks: This control is fully implemented by this tool.
+
+            - uuid: 36f95dfb-626f-4fce-8417-4d808560b9d3
+              control-id: au-5.1
+              description: >-
+                # Control Description
+                Provide a warning to [Assignment: organization-defined personnel, roles, and/or locations] within [Assignment: organization-defined time period] when allocated audit log storage volume reaches [Assignment: organization-defined percentage] of repository maximum audit log storage capacity.
+
+                # Control Implementation
+                Alertmanager has pre-built alerts for PVC storage thresholds that would fire for PVCs supporting prometheus metrics storage.
+                Metrics data can be displayed through a Grafana dashboard for visualization.
+
+              remarks: This control is fully implemented by this tool.
+
+            - uuid: d2d90ddf-dcc9-4087-ad71-ac67b66a154a
+              control-id: au-5.2
+              description: >-
+                # Control Description
+                Provide an alert within [Assignment: real-time] to [Assignment: service provider personnel with authority to address failed audit events] when the following audit failure events occur: [Assignment: audit failure events requiring real-time alerts, as defined by organization audit policy].
+
+                # Control Implementation
+                Alertmanager has pre-built alerts for failed pods that would show when ClusterAuditor is not processing events, or prometheus is unable to scrape events.
+                Prometheus also has a deadman's alert to ensure end users are seeing events from prometheus as part of its configuration.
+                Data can be displayed through a Grafana dashboard for visualization.
+
+              remarks: This control is fully implemented by this tool.
+
+            - uuid: 042fae4b-2779-4cfb-b68d-6f2dcbaa10ad
+              control-id: au-6.1
+              description: >-
+                # Control Description
+                Integrate audit record review, analysis, and reporting processes using [Assignment: organization-defined automated mechanisms].
+
+                # Control Implementation
+                Cluster Auditor Events/Alerts could be exported from Prometheus to an external system. Integration for specific tooling would need to be completed by end user.
+                Metrics data can be displayed through a Grafana dashboard for visualization.
+
+              remarks: This control is fully implemented by this tool.
+
+            - uuid: c79cf2fa-2081-4034-831f-2c8016a275da
+              control-id: au-6.3
+              description: >-
+                # Control Description
+                Analyze and correlate audit records across different repositories to gain organization-wide situational awareness.
+
+                # Control Implementation
+                Aggregating cluster auditor events across multiple sources (clusters) is possible with a multi-cluster deployment of prometheus/grafana.
+
+              remarks: This control is fully implemented by this tool.
+
+            - uuid: 80de1b87-8288-49ac-8a6b-fc71509df64b
+              control-id: au-6.5
+              description: >-
+                # Control Description
+                Integrate analysis of audit records with analysis of Selection (one or more): vulnerability scanning information; performance data; information system monitoring information; penetration test data; [Assignment: organization-defined data/information collected from other sources]] to further enhance the ability to identify inappropriate or unusual activity.
+
+                # Control Implementation
+                Cluster Auditor's audit data is consolidated with system monitoring tooling (node exporters) for consolidated view to enhance inappropriate or unusual activity.
+                Metrics data can be displayed through a Grafana dashboard for visualization.
+
+              remarks: This control is fully implemented by this tool.
+
+            - uuid: b8c17326-8821-4536-8409-64d571540e37
+              control-id: au-6.6
+              description: >-
+                # Control Description
+                Correlate information from audit records with information obtained from monitoring physical access to further enhance the ability to identify suspicious, inappropriate, unusual, or malevolent activity.
+
+                # Control Implementation
+                Cluster Auditor data in prometheus would enable this, but would require prometheus to also obtain access to physical metrics.
+                Metrics data can be displayed through a Grafana dashboard for visualization.
+
+              remarks: This control is fully implemented by this tool.
+
+            - uuid: 8abbc53e-0ec4-49c6-8ef1-a1c237695f96
+              control-id: au-7
+              description: >-
+                # Control Description
+                Provide and implement an audit record reduction and report generation capability that:
+                a. Supports on-demand audit record review, analysis, and reporting requirements and after-the-fact investigations of incidents; and
+                b. Does not alter the original content or time ordering of audit records.
+
+                # Control Implementation
+                Grafana is configured with a pre-built dashboard for policy violations that displays data collected by Cluster Auditor.
+
+              remarks: This control is fully implemented by this tool.
+
+            - uuid: 56d09aae-ab73-49d8-b2a4-1e81db2878eb
+              control-id: au-7.1
+              description: >-
+                # Control Description
+                Provide and implement the capability to process, sort, and search audit records for events of interest based on the following content: [Assignment: organization-defined fields within audit records].
+
+                # Control Implementation
+                Grafana is configured with a pre-built dashboard for policy violations that displays data collected by Cluster Auditor.
+
+              remarks: This control is fully implemented by this tool.
+
+            - uuid: 9be1e683-93e1-4769-aa7d-951e2c8f8627
+              control-id: au-8
+              description: >-
+                # Control Description
+                a. Use internal system clocks to generate time stamps for audit records; and
+                b. Record time stamps for audit records that meet [Assignment: one second granularity of time measurement] and that use Coordinated Universal Time, have a fixed local time offset
+                from Coordinated Universal Time, or that include the local time offset as part of the time stamp.
+
+                # Control Implementation
+                Prometheus stores all data as time-series data, so the timestamps of when those violations were present is part of the data-stream.
+                Metrics data can be displayed through a Grafana dashboard for visualization.
+
+              remarks: This control is fully implemented by this tool.
+
+            - uuid: f800923b-6367-4468-9f42-1afae4b6d38d
+              control-id: au-9
+              description: >-
+                # Control Description
+                a. Protect audit information and audit logging tools from unauthorized access, modification, and deletion; and
+                b. Alert [Assignment: organization-defined personnel or roles] upon detection of unauthorized access, modification, or deletion of audit information.
+
+                # Control Implementation
+                Grafana has the ability to provide Role Based Access Control to limit the data sources that end users can view by leveraging an
+                identity provider. Grafana can also limit users to subsets of metrics within a datasource by the use of Label Based Access Control
+                when using Grafana Enterprise.
+
+              remarks: This control is fully implemented by this tool.
+
+            - uuid: 3c4bf1e8-b873-4c43-a912-5f443fc0208f
+              control-id: au-9.2
+              description: >-
+                # Control Description
+                Store audit records [Assignment: at least weekly] in a repository that is part of a physically different system or system component than the system or component being audited.
+
+                # Control Implementation
+                Prometheus can scrape external components outside of the system, but this configuration is not easily supported as part of
+                the current big bang configuration of ClusterAuditor since external access to ClusterAuditor metrics is not exposed via Istio.
+                Metrics data can be displayed through a Grafana dashboard for visualization.
+
+              remarks: This control is fully implemented by this tool.
+
+            - uuid: 3c5ff037-ea46-4e41-b601-a9b223da30a8
+              control-id: au-9.4
+              description: >-
+                # Control Description
+                Authorize access to management of audit logging functionality to only [Assignment: organization-defined subset of privileged users or roles].
+
+                # Control Implementation
+                Grafana has the ability to provide Role Based Access Control to limit the data sources that end users can view by leveraging an
+                identity provider. Grafana can also limit users to subsets of metrics within a datasource by the use of Label Based Access Control
+                when using Grafana Enterprise.
+
+              remarks: This control is fully implemented by this tool.
+
+            - uuid: 301093ed-d023-4bf8-a915-e624589acadd
+              control-id: au-12.1
+              description: >-
+                # Control Description
+                Compile audit records from [Assignment: all network, data storage, and computing devices] into a system-wide (logical or physical) audit trail that is time-correlated to within [Assignment: organization-defined level of tolerance for the relationship between time stamps of individual records in the audit trail].
+
+                # Control Implementation
+                Compatible metrics endpoints emitted from each application is compiled by Prometheus and displayed through Grafana with associated timestamps
+                of when the data was collected.
+
+  back-matter:
+    resources:
+      - uuid: d429396c-1dab-4712-9034-607c90a63b8a
+        title: Defense Unicorns UDS Core
+        rlinks:
+          - href: https://github.com/defenseunicorns/uds-core
