@@ -35,21 +35,6 @@ spec:
               add:
                 istio-mtls-client-certificate: "%DOWNSTREAM_PEER_CERT%"
 
-      - description: "public auth cert info"
-        host: login
-        advancedHTTP:
-          match:
-            - name: cert-info
-              uri:
-                exact: /get-cert-info
-          directResponse:
-            status: 200
-          headers:
-            response:
-              add:
-                certificate: "%DOWNSTREAM_PEER_CERT%"
-                subject: "%DOWNSTREAM_PEER_SUBJECT%"
-
       - description: "public auth access with optional client certificate"
         service: keycloak-http
         podLabels:
