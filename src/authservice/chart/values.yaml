@@ -1,0 +1,162 @@
+# -- Default values for authservice.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# -- When setting this above 1, a redis configuration is required.
+replicaCount: 1
+
+image:
+  repository: ghcr.io/istio-ecosystem/authservice/authservice
+  pullPolicy: IfNotPresent
+  # -- Overrides the image tag whose default is the chart appVersion.
+  tag: ""
+
+# -- Issuer and jwks URIs if not using Keycloak
+issuer_uri: ""
+jwks_uri: ""
+
+# -- If true will allow the requests even no filter chain match is found
+allow_unmatched_requests: false
+
+# -- Extra Ruleset for AuthorizationPolicy CUSTOM action to forward to Authservice.
+# To enable `allow_unmatched_requests` must be `false`. These custom rules mean that only these requests
+# will be routed and will break default BigBang setup for `prometheus/alertmanager/tempo` unless added.
+# Path specific Operations are not supported, it is recommended to use only hosts, notHosts, & method operations.
+# See reference: https://istio.io/latest/docs/reference/config/security/authorization-policy/
+custom_authpolicy_rules:
+  - when:
+      - key: request.headers[authorization]
+        notValues:
+          - "*"
+
+global:
+  # -- Global Authorization URI value to set if not using Keycloak
+  # authorization_uri: ""
+  # Global Token URI Value to set if not using Keycloak
+  # token_uri: ""
+  # Default client_id to be used in each chain
+  client_id: "global_id"
+  # -- default client_secret to be used in each chain
+  client_secret: "global_secret"
+  match:
+    # -- Header to match.  The value ":authority" is used to match the requested hostname
+    header: ":authority"
+    # -- value matches the start of the header value defined above
+    prefix: "bigbang"
+  # -- Logout URL for the client
+  logout_path: "/globallogout"
+  # -- Logout Redirect URI for the client
+  logout_redirect_uri: ""
+  absolute_session_timeout: 0
+  idle_session_timeout: 0
+  # -- CA signing the OIDC provider. Passed through as a Helm multi-line string. See README for example.
+  certificate_authority: ""
+  # certificate_authority: |
+  #   -----BEGIN CERTIFICATE-----
+  #   MIIE4jCCAsqgAwIBAgIBATANBgkqhkiG9w0BAQsFADARMQ8wDQYDVQQDEwZzZm8t
+  #   Y2EwHhcNMTkxMjIwMDAxNjI1WhcNMjEwNjIwMDAxNjIxWjARMQ8wDQYDVQQDEwZz
+  #   -----END CERTIFICATE-----
+
+  # -- URI for Redis instance used for OIDC token storage/retrieval. This may also be specified per-chain.
+  # redis_server_uri: tcp://{{ .Release.Name }}-{{ .Release.Namespace }}-auth-redis-master:6379/
+  oidc:
+    # -- OpenID Connect hostname.  Assumption of Keycloak based on URL construction
+    host: login.dso.mil
+    # -- Realm for OpenID Connect
+    realm: baby-yoda
+  # -- escaped json for the JWKS
+  jwks: ""
+  # jwks: "{\"keys\":[{\"kid\":\"4CK69bW66HE2wph9VuBs0fTc1MaETSTpU1iflEkBHR4\",\"kty\":\"RSA\",\"alg\":\"RS256\",\"use\":\"sig\",\"n\":\"hiML1kjw-sw25BgaZI1AyfgcCRBPJKPE-wwttqa7NNxptr_5RCBGuJXqDyo3p1vjcbb8KjdKnXI7kWer8b2Pz_RP1m_QcPrKOxSluk7GZF8ARsc6FPGbzYgi8o8cBVSsaml6HZzpN3ZnH4DFZ27ifM-Ul_PyMxZ2aweohIaizXp-rgF7Rqpav5NXUwmcSyH8LP92NVIuFlD3HYTDGosVbfA_u_H25Z4XCGKW_vLDTNrl8PcA3HqIoD-vNavysdxAq_KNw7iLLc0KLsjFYSdJL_54H7QubsGR0AyIrLLurJbqAtvttGJK38k5XYWKIwYGtu6iiJwjSb7UtonVdPh8Vw\",\"e\":\"AQAB\",\"x5c\":[\"MIICoTCCAYkCBgFyLIEqUjANBgkqhkiG9w0BAQsFADAUMRIwEAYDVQQDDAliYWJ5LXlvZGEwHhcNMjAwNTE5MTAzNDIyWhcNMzAwNTE5MTAzNjAyWjAUMRIwEAYDVQQDDAliYWJ5LXlvZGEwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCGIwvWSPD6zDbkGBpkjUDJ+BwJEE8ko8T7DC22prs03Gm2v/lEIEa4leoPKjenW+NxtvwqN0qdcjuRZ6vxvY/P9E/Wb9Bw+so7FKW6TsZkXwBGxzoU8ZvNiCLyjxwFVKxqaXodnOk3dmcfgMVnbuJ8z5SX8/IzFnZrB6iEhqLNen6uAXtGqlq/k1dTCZxLIfws/3Y1Ui4WUPcdhMMaixVt8D+78fblnhcIYpb+8sNM2uXw9wDceoigP681q/Kx3ECr8o3DuIstzQouyMVhJ0kv/ngftC5uwZHQDIissu6sluoC2+20YkrfyTldhYojBga27qKInCNJvtS2idV0+HxXAgMBAAEwDQYJKoZIhvcNAQELBQADggEBAIVkoDYkM6ryBcuchdAL5OmyKbmmY4WDrMlatfa3uniK5jvFXrmVaJ3rcu0apdY/NhBeLSOLFVlC5w1QroGUhWm0EjAA4zyuU63Pk0sro0vyHrxztBrGPQrGXI3kjXEssaehZZvYP4b9VtYpus6oGP6bTmaDw94Zu+WrDsWdFs+27VEYwBuU0D6E+ENDGlfR+9ADEW53t6H2M3H0VsOtbArEutYgb4gmQcOIBygC7L1tGJ4IqbnhTYLh9DMKNklU+tq8TMHacps9FxELpeAib3O0J0E5zYXdraQobCCe+ao1Y7sA/wqcGQBCVuoFgty7Y37nNL7LMvygcafgqVDqw5U=\"],\"x5t\":\"mxFIwx7EdgxyC3Y6ODLx8yr8Bx8\",\"x5t#S256\":\"SdT7ScKVOnBW6qs_MuYdTGVtMGwYK_-nmQF9a_8lXco\"}]}"
+
+  # -- Request URI that has the JWKs. If neither jwks or jwks_uri are specified the jwks_uri is computed based on the provided OIDC realm and and host"
+  jwks_uri: ""
+
+  # -- Request interval to check whether new JWKs are available.
+  periodic_fetch_interval_sec: 60
+
+  # -- If set to true, the verification of the destination certificate will be skipped when making a request to the JWKs URI and the token endpoint. This option is useful when you want to use a self-signed certificate for testing purposes, but basically should not be set to true in any other cases.
+  skip_verify_peer_cert: false
+
+# -- Individual chains.  Must have a `name` value and a `callback_uri`
+# NOTE: if using "match" can only specify `prefix` OR `equality`, not both
+chains:
+  # minimal:
+  #   callback_uri: https://minimal.bigbang.dev
+  # full:
+  #   match:
+  #     header: ":authority"
+  #     prefix: "localhost"
+  #     equality: "localhost.localdomain"
+  #   authorization_uri: "https://example.com/auth"
+  #   token_uri: "https://example.com/token"
+  #   client_id: platform1_a8604cc9-f5e9-4656-802d-d05624370245_hello-world-authservice
+  #   client_secret: secret_value
+  #   callback_uri: https://localhost/login
+  #   cookie_name_prefix: differentThanFull # Override the cookie name prefix in case you need it to be something else (ex. two apps share the same cookie)
+  #   redis_server_uri: tcp://localhost:6379/
+  #   logout:
+  #     path: "/logout"
+  #   absolute_session_timeout: timeout_value
+  #   idle_session_timeout: timeout_value
+  #   oidc:
+  #     host: local_oidc_host
+  #     realm: local_oidc_realm
+  #   jwks_uri: "https://keycloak.bigbang.dev/auth/realms/baby-yoda/protocol/openid-connect/certs"
+  #   periodic_fetch_interval_sec: 60
+  #   certificate_authority: |
+  #     -----BEGIN CERTIFICATE-----
+  #     MIIE4jCCAsqgAwIBAgIBATANBgkqhkiG9w0BAQsFADARMQ8wDQYDVQQDEwZzZm8t
+  #     Y2EwHhcNMTkxMjIwMDAxNjI1WhcNMjEwNjIwMDAxNjIxWjARMQ8wDQYDVQQDEwZz
+  #     -----END CERTIFICATE-----
+  #   scopes:
+  #     - additionalScope1
+  #     - additionalScope2
+  # must have at least one entry, so we include this default filter
+  local:
+    match:
+      header: ":local"
+      prefix: "localhost"
+    client_id: local_id
+    client_secret: local_secret
+    callback_uri: https://localhost/login
+    logout_path: "/local"
+
+nameOverride: "authservice"
+
+podAnnotations: {}
+
+podSecurityContext: {}
+
+securityContext: {}
+
+resources: {}
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# -- Log level for the deployment
+config:
+  logLevel: trace
+
+# -- Label to determine what workloads (pods/deployments) should be protected by authservice.
+selector:
+  key: protect
+  value: keycloak
+
+# -- Values to bypass OIDC chains in favor or using istio authorizationpolicies.security.istio.io
+# and requestauthentications.security.istio.io for certain endpoints.
+trigger_rules: []
+# - excluded_paths:
+#     - exact: /api/healthcheck
+#   included_paths:
+#     - prefix: /
+# See reference: https://github.com/istio-ecosystem/authservice/blob/master/docs/README.md
