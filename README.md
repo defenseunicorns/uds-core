@@ -99,7 +99,7 @@ uds run test-uds-core
 This will create a local k3d cluster, install UDS Core, and run a series of tests against it, the same tests that are run in CI. If you want to run the tests against a specific package, you can use the `PKG` env variable. The following example runs the tests against the metrics-server package:
 
 ```bash
-PKG=metrics-server uds run test-single-package
+UDS_PKG=metrics-server uds run test-single-package
 ```
 
 Note you can specify the `--set FLAVOR=registry1` flag to test using Iron Bank images instead of the upstream images.
