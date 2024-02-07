@@ -1,7 +1,7 @@
 includes:
-  - create: ./tasks/create.yaml
-  - setup: ./tasks/setup.yaml
-  - deploy: ./tasks/deploy.yaml
+  - create: ./create.yaml
+  - setup: ./setup.yaml
+  - deploy: ./deploy.yaml
 
 tasks:
   - name: single-package
