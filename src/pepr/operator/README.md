@@ -32,13 +32,6 @@ spec:
         podLabels:
           app.kubernetes.io/name: grafana
         remoteGenerated: Anywhere
-
-      - direction: Egress
-        remoteNamespace: tempo
-        remotePodLabels:
-          app.kubernetes.io/name: tempo
-        port: 9411
-        description: "Tempo"
 ```
 
 ### Key Files and Folders

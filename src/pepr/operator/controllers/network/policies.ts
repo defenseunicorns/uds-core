@@ -5,6 +5,7 @@ import { sanitizeResourceName } from "../utils";
 import { allowEgressDNS } from "./defaults/allow-egress-dns";
 import { allowEgressIstiod } from "./defaults/allow-egress-istiod";
 import { allowIngressSidecarMonitoring } from "./defaults/allow-ingress-sidecar-monitoring";
+import { allowEgressTempo } from "./defaults/allow-egress-tempo";
 import { defaultDenyAll } from "./defaults/default-deny-all";
 import { generate } from "./generate";
 
@@ -25,6 +26,9 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
     // Istio rules
     allowEgressIstiod(namespace),
     allowIngressSidecarMonitoring(namespace),
+
+    // Allow traces to be sent to Tempo
+    allowEgressTempo(namespace),
   ];
 
   // Process custom policies

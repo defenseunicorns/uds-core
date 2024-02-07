@@ -39,10 +39,3 @@ spec:
           app: neuvector-prometheus-exporter-pod
         port: 8068
         description: "Prometheus Metrics"
-
-      - direction: Egress
-        remoteNamespace: tempo
-        remotePodLabels:
-          app.kubernetes.io/name: tempo
-        port: 9411
-        description: "Tempo"

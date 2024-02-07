@@ -48,10 +48,3 @@ spec:
           app.kubernetes.io/name: prometheus
         port: 9090
         description: "Grafana Metrics Queries"
-
-      - direction: Egress
-        remoteNamespace: tempo
-        remotePodLabels:
-          app.kubernetes.io/name: tempo
-        port: 9411
-        description: "Tempo"

@@ -21,13 +21,6 @@ spec:
         remoteGenerated: KubeAPI
 
       - direction: Egress
-        remoteNamespace: tempo
-        remotePodLabels:
-          app.kubernetes.io/name: tempo
-        port: 9411
-        description: "Tempo"
-
-      - direction: Egress
         podLabels:
           app.kubernetes.io/name: promtail
         remoteNamespace: loki
