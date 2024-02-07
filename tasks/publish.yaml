@@ -64,5 +64,4 @@ tasks:
         cmd: |
           set -e
           pkgPath="ghcr.io/defenseunicorns/packages/uds/bundles/k3d-core-demo"
-          zarf tools registry copy ${pkgPath}:${VERSION}-arm64 ${pkgPath}:arm64
-          zarf tools registry copy ${pkgPath}:${VERSION}-amd64 ${pkgPath}:amd64
+          zarf tools registry copy ${pkgPath}:${VERSION} ${pkgPath}:latest
