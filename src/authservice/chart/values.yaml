@@ -81,7 +81,7 @@ global:
 # NOTE: if using "match" can only specify `prefix` OR `equality`, not both
 chains:
   # minimal:
-  #   callback_uri: https://minimal.bigbang.dev
+  #   callback_uri: https://minimal.uds.dev
   # full:
   #   match:
   #     header: ":authority"
@@ -89,7 +89,7 @@ chains:
   #     equality: "localhost.localdomain"
   #   authorization_uri: "https://example.com/auth"
   #   token_uri: "https://example.com/token"
-  #   client_id: platform1_a8604cc9-f5e9-4656-802d-d05624370245_hello-world-authservice
+  #   client_id: uds_a8604cc9-f5e9-4656-802d-d05624370245_hello-world-authservice
   #   client_secret: secret_value
   #   callback_uri: https://localhost/login
   #   cookie_name_prefix: differentThanFull # Override the cookie name prefix in case you need it to be something else (ex. two apps share the same cookie)
@@ -101,7 +101,7 @@ chains:
   #   oidc:
   #     host: local_oidc_host
   #     realm: local_oidc_realm
-  #   jwks_uri: "https://keycloak.bigbang.dev/auth/realms/baby-yoda/protocol/openid-connect/certs"
+  #   jwks_uri: "https://keycloak.uds.dev/auth/realms/doug/protocol/openid-connect/certs"
   #   periodic_fetch_interval_sec: 60
   #   certificate_authority: |
   #     -----BEGIN CERTIFICATE-----
