@@ -15,15 +15,6 @@ spec:
         targetPort: 3000
 
     allow:
-      - direction: Ingress
-        podLabels:
-          app.kubernetes.io/name: grafana
-        remoteNamespace: tempo
-        remotePodLabels:
-          app.kubernetes.io/name: tempo
-        port: 9090
-        description: "Tempo Datasource"
-
       - direction: Egress
         podLabels:
           app.kubernetes.io/name: grafana
