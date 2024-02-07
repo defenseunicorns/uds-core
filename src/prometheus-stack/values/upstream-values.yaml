@@ -40,9 +40,9 @@ prometheusOperator:
   image:
     registry: quay.io
     repository: prometheus-operator/prometheus-operator
-    tag: v0.71.0
+    tag: v0.71.2
   prometheusConfigReloader:
     image:
       registry: quay.io
       repository: prometheus-operator/prometheus-config-reloader
-      tag: v0.71.0
+      tag: v0.71.2

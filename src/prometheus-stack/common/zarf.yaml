@@ -15,6 +15,6 @@ components:
       - name: kube-prometheus-stack
         namespace: monitoring
         url: https://prometheus-community.github.io/helm-charts
-        version: 54.0.1
+        version: 56.6.2
         valuesFiles:
           - "../values/values.yaml"
