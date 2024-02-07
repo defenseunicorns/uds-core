@@ -8,13 +8,13 @@ components:
   - name: tempo
     required: true
     charts:
+      - name: uds-tempo-config
+        namespace: tempo
+        version: 0.1.0
+        localPath: ../chart
       - name: tempo
         url: https://grafana.github.io/helm-charts/
         version: 1.7.1
         namespace: tempo
         valuesFiles:
           - ../values/values.yaml
-      - name: uds-tempo-config
-        namespace: tempo
-        version: 0.1.0
-        localPath: ../chart

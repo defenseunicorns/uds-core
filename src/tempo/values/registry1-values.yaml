@@ -1,3 +1,8 @@
 tempo:
   repository: registry1.dso.mil/ironbank/opensource/grafana/tempo
   tag: 2.3.0-ubi9
+securityContext:
+  fsGroup: 1001
+  runAsGroup: 1001
+  runAsNonRoot: true
+  runAsUser: 1001
