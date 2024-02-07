@@ -17,7 +17,7 @@ spec:
         gateway: admin
         host: demo
         port: 8000
-        targetPort: 80
+        podPort: 80
         advancedHTTP:
           match:
             - name: test-get-and-prefix
@@ -47,7 +47,7 @@ spec:
   ports:
     - name: http
       port: 8000
-      targetPort: 80
+      podPort: 80
   selector:
     app: httpbin
 ---

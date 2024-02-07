@@ -17,7 +17,7 @@ spec:
         gateway: tenant
         host: demo
         port: 8000
-        targetPort: 80
+        podPort: 80
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -37,7 +37,7 @@ spec:
   ports:
     - name: http
       port: 8000
-      targetPort: 80
+      podPort: 80
   selector:
     app: httpbin
 ---
