@@ -21,11 +21,19 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
 
   for (const expose of exposeList) {
     if (expose.gateway === Gateway.Passthrough) {
-      // This is an HTTPMatch rule, not TLSMatchAttribute
-      // https://istio.io/latest/docs/reference/config/networking/virtual-service/#HTTPMatchRequest
-      if (expose.match) {
-        return req.Deny("match cannot be used with passthrough gateway");
+      if (expose.advancedHTTP) {
+        return req.Deny("advancedHTTP cannot be used with passthrough gateway");
       }
+    }
+
+    // directResponse cannot be combined with service, port or pod configs
+    if (
+      expose.advancedHTTP?.directResponse &&
+      (expose.service || expose.podLabels || expose.port || expose.podPort || expose.targetPort)
+    ) {
+      return req.Deny(
+        "directResponse cannot be combined with service, port, podLabels, podPort or targetPort",
+      );
     }
 
     // Ensure the service name is unique
