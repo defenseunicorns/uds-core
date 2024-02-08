@@ -40,7 +40,7 @@ runs:
         password: ${{ inputs.gh_token }}
 
     # Retries intermittent registry1 login action
-    - uses: Wandalen/wretry.action@v1
+    - uses: Wandalen/wretry.action@v1.4.1
       with:
         attempt_limit: 3
         action: docker/login-action@v3
