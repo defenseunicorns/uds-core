@@ -7,7 +7,7 @@ spec:
   network:
     expose:
       - description: "remove private paths from public gateway"
-        host: login
+        host: sso
         service: keycloak-http
         podLabels:
           app.kubernetes.io/name: keycloak
@@ -39,7 +39,7 @@ spec:
         service: keycloak-http
         podLabels:
           app.kubernetes.io/name: keycloak
-        host: login
+        host: sso
         port: 8080
         advancedHTTP:
           headers:

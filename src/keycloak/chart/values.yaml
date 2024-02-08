@@ -7,9 +7,6 @@ image:
   # The Keycloak image pull policy
   pullPolicy: IfNotPresent
 
-# The public host name of the Keycloak server
-hostname: login
-
 # The public domain name of the Keycloak server
 domain: "###ZARF_VAR_DOMAIN###"
 

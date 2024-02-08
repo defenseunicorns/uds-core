@@ -5,7 +5,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
 spec:
   hosts:
-    - "login.{{ .Values.domain }}"
+    - "sso.{{ .Values.domain }}"
   gateways:
     - istio-tenant-gateway/tenant-gateway
   http:
