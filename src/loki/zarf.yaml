@@ -21,7 +21,7 @@ components:
 
   - name: loki
     required: true
-    description: "Install Loki using Chainguard images"
+    description: "Install Loki using registry1 images"
     only:
       flavor: "registry1"
     import:
