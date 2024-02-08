@@ -18,15 +18,10 @@ tasks:
       - description: "Deploy the UDS Core Istio Only Bundle"
         cmd: uds deploy bundles/k3d-istio/uds-bundle-k3d-core-istio-dev-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress
 
-  - name: single-package
+  - name: k3d-single-bundle
     actions:
-      - description: "Deploy the Pepr Module"
-        cmd: |
-          set -e
-          PEPR_VERSION=$(npm pkg get version | tr -d '"')
-          uds zarf package deploy build/zarf-package-pepr-uds-core-${UDS_ARCH}-${PEPR_VERSION}.tar.zst --confirm
-      - description: "Deploy the requested Zarf Package (must set UDS_PKG environment variable)"
-        cmd: uds zarf package deploy build/zarf-package-uds-core-${UDS_PKG}-${UDS_ARCH}.tar.zst --confirm
+      - description: "Deploy the UDS Single Bundle"
+        cmd: uds deploy bundles/k3d-single/uds-bundle-k3d-core-single-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress
 
   - name: latest-package-release
     actions:

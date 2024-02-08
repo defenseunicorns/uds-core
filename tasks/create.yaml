@@ -31,6 +31,12 @@ tasks:
       - description: "Create the UDS Core Istio Only Bundle"
         cmd: "uds create bundles/k3d-istio --confirm --no-progress --architecture=${ZARF_ARCHITECTURE}"
 
+  - name: k3d-single-bundle
+    description: "Create the single package test Bundle"
+    actions:
+      - description: "Create the single package test Bundle"
+        cmd: "uds create bundles/k3d-single --confirm --no-progress --architecture=${ZARF_ARCHITECTURE}"
+
   - name: single-package
     description: "Create a single Zarf Package, must set UDS_PKG environment variable"
     actions:
@@ -41,6 +47,9 @@ tasks:
 
       - description: "Create the requested Zarf Package (must set UDS_PKG environment variable)"
         cmd: "uds zarf package create src/${UDS_PKG} --confirm --flavor ${FLAVOR}"
+
+      - description: "Move to the loading dock"
+        cmd: "mv build/zarf-package-uds-core-${UDS_PKG}-${UDS_ARCH}.tar.zst build/zarf-package-uds-core-single-${UDS_ARCH}-dev.tar.zst"
 
   - name: pepr-build
     description: "Build the UDS Core Pepr Module"
