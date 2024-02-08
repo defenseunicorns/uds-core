@@ -1,6 +1,12 @@
 name: save-logs
 description: "Save debug logs"
 
+inputs:
+  suffix:
+    description: 'Suffix to append to the debug log'
+    required: false
+    default: ''
+
 runs:
   using: composite
   steps:
@@ -12,7 +18,7 @@ runs:
 
     - uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4.3.1
       with:
-        name: debug-log
+        name: debug-log${{ inputs.suffix }}
         path: |
           /tmp/zarf-*.log
           /tmp/uds-*.log
