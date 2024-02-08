@@ -1,7 +1,0 @@
-tasks:
-  - name: validate
-    actions:
-      - description: Validate...
-        cmd: "echo Replace Me"
-        # wait:
-        #   cluster:
