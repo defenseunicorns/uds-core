@@ -45,5 +45,3 @@ runs:
         registry: registry1.dso.mil
         username: ${{ inputs.ib_user }}
         password: ${{ inputs.ib_password }}
-
-
