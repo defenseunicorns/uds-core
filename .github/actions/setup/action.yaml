@@ -16,7 +16,7 @@ runs:
   using: "composite"
   steps:
     - name: Use Node.js latest
-      uses: actions/setup-node@8f152de45cc393bb48ce5d89d36b731f54556e65 # v4.0.0
+      uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
       with:
         node-version: 20
 
@@ -33,18 +33,15 @@ runs:
       run: brew install defenseunicorns/tap/uds@0.8.1
 
     - name: Login to GHCR
-      uses: docker/login-action@v3
+      uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3
       with:
         registry: ghcr.io
         username: dummy
         password: ${{ inputs.gh_token }}
 
-    # Retries intermittent registry1 login action
-    - uses: Wandalen/wretry.action@0f47298855b1e679b5f7d95b2135e3c0813b0f01
+    - name: Login to registry1
+      uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3
       with:
-        attempt_limit: 3
-        action: docker/login-action@v3
-        with: |
-          registry: registry1.dso.mil
-          username: ${{ inputs.ib_user }}
-          password: ${{ inputs.ib_password }}
+        registry: registry1.dso.mil
+        username: ${{ inputs.ib_user }}
+        password: ${{ inputs.ib_password }}
