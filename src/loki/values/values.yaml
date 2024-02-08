@@ -7,7 +7,17 @@ clusterLabelOverride: null
 
 loki:
   storage:
-    type: "filesystem"
+    bucketNames:
+      chunks: uds-loki-chunks
+      ruler: uds-loki-rules
+      admin: uds-loki-admin
+    type: s3
+    s3:
+      endpoint: http://minio.uds-dev-stack.svc.cluster.local:9000
+      secretAccessKey: logging-secret
+      accessKeyId: logging
+      s3ForcePathStyle: true
+      insecure: false
   commonConfig:
     replication_factor: 1
   # Should authentication be enabled
@@ -50,6 +60,12 @@ test:
   enabled: false
 # Configuration for the write pod(s)
 write:
+  # Remove default anti-affinity since this is a 1-replica setup
+  affinity: ""
+
+  # replicas to 1 to save resources
+  replicas: 1
+
   resources:
     limits:
       cpu: 300m
@@ -59,6 +75,12 @@ write:
       memory: 2Gi
 # Configuration for the read pod(s)
 read:
+  # Remove default anti-affinity since this is a 1-replica setup
+  affinity: ""
+
+  # replicas to 1 to save resources
+  replicas: 1
+
   # -- Resource requests and limits for the read
   resources:
     limits:
@@ -70,7 +92,7 @@ read:
 # Configuration for the single binary node(s)
 singleBinary:
   # -- Number of replicas for the single binary
-  replicas: 1
+  replicas: 0
   # -- Resource requests and limits for the single binary
   resources:
     limits:
@@ -120,3 +142,10 @@ gateway:
   enabled: true
   # Remove default anti-affinity since this is a 1-replica setup
   affinity: ""
+
+backend:
+  # Remove default anti-affinity since this is a 1-replica setup
+  affinity: ""
+
+  # replicas to 1 to save resources
+  replicas: 1

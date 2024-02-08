@@ -14,6 +14,17 @@ packages:
     overrides:
       uds-dev-stack:
         minio:
+          values:
+            - path: "buckets"
+              value:
+                - name: "uds-loki-chunks"
+                - name: "uds-loki-rules"
+                - name: "uds-loki-admin"
+            - path: "users"
+              value:
+                - accessKey: logging
+                  secretKey: "logging-secret"
+                  policy: readwrite
           variables:
             - name: buckets
               description: "Set Minio Buckets"
@@ -39,6 +50,30 @@ packages:
     ref: 0.10.0
     # x-release-please-end
     overrides:
+      loki:
+        loki:
+          variables:
+            - name: LOKI_CHUNKS_BUCKET
+              description: "The object storage bucket for Loki chunks"
+              path: loki.storage.bucketNames.chunks
+            - name: LOKI_RULES_BUCKET
+              description: "The object storage bucket for Loki rules"
+              path: loki.storage.bucketNames.rules
+            - name: LOKI_ADMIN_BUCKET
+              description: "The object storage bucket for Loki admin"
+              path: loki.storage.bucketNames.admin
+            - name: LOKI_S3_ENDPOINT
+              description: "The S3 endpoint"
+              path: loki.storage.s3.endpoint
+            - name: LOKI_S3_REGION
+              description: "The S3 region"
+              path: loki.storage.s3.region
+            - name: LOKI_S3_ACCESS_KEY_ID
+              description: "The S3 Access Key ID"
+              path: loki.storage.s3.accessKeyId
+            - name: LOKI_S3_SECRET_ACCESS_KEY
+              path: loki.storage.s3.secretAccessKey
+              description: "The S3 Secret Access Key"
       istio-admin-gateway:
         uds-istio-config:
           variables:
