@@ -1,4 +1,4 @@
-const isZarfEnv = process.env.UDS_DOMAIN !== "###ZARF_VAR_DOMAIN###";
+const isZarfEnv = process.env.UDS_DOMAIN === "###ZARF_VAR_DOMAIN###";
 
 export const UDSConfig = {
   // Ignore the UDS_DOMAIN if not deployed by Zarf

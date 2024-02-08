@@ -13,14 +13,10 @@ spec:
       - direction: Egress
         remoteGenerated: IntraNamespace
 
+      # Egress must be allowed to the external facing Keycloak endpoint
       - direction: Egress
-        podLabels:
-          app.kubernetes.io/name: authservice
-        remoteNamespace: keycloak
-        remotePodLabels:
-          app.kubernetes.io/name: keycloak
-        port: 8080
-        description: "Keycloak"
+        remoteGenerated: Anywhere
+        description: "SSO Provider"
 
       - direction: Ingress
         podLabels:
