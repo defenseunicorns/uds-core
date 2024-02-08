@@ -33,9 +33,15 @@ runs:
       run: brew install defenseunicorns/tap/uds@0.8.1
 
     - name: Login to GHCR
-      shell: bash
-      run: echo "${{ inputs.gh_token }}" | uds zarf tools registry login ghcr.io -u dummy --password-stdin
+      uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3
+      with:
+        registry: ghcr.io
+        username: dummy
+        password: ${{ inputs.gh_token }}
 
     - name: Login to registry1
-      shell: bash
-      run: echo "${{ inputs.ib_password }}" | uds zarf tools registry login registry1.dso.mil -u ${{ inputs.ib_user }} --password-stdin
+      uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3
+      with:
+        registry: registry1.dso.mil
+        username: ${{ inputs.ib_user }}
+        password: ${{ inputs.ib_password }}
