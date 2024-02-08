@@ -25,7 +25,7 @@ const allow = {
         enum: ["Ingress", "Egress"],
         type: "string",
       },
-      podLabels: {
+      selector: {
         description:
           "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace",
         type: "object",
@@ -38,7 +38,7 @@ const allow = {
           "The remote namespace to allow traffic to/from. Use * or empty string to allow all namespaces",
         type: "string",
       },
-      remotePodLabels: {
+      remoteSelector: {
         description: "The remote pod selector labels to allow traffic to/from",
         type: "object",
         additionalProperties: {
@@ -65,6 +65,21 @@ const allow = {
           type: "number",
         },
       },
+      // Deprecated fields
+      podLabels: {
+        description: "Deprectated: use selector",
+        type: "object",
+        additionalProperties: {
+          type: "string",
+        },
+      },
+      remotePodLabels: {
+        description: "Deprectated: use remoteSelector",
+        type: "object",
+        additionalProperties: {
+          type: "string",
+        },
+      },
     },
   } as V1JSONSchemaProps,
 } as V1JSONSchemaProps;
@@ -78,6 +93,9 @@ const expose = {
     anyOf: [
       {
         required: ["service", "podLabels", "port"],
+      },
+      {
+        required: ["service", "selector", "port"],
       },
       {
         required: ["advancedHTTP"],
@@ -109,7 +127,7 @@ const expose = {
         maximum: 65535,
         type: "number",
       },
-      podLabels: {
+      selector: {
         description:
           "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace",
         type: "object",
@@ -117,23 +135,23 @@ const expose = {
           type: "string",
         },
       },
-      podPort: {
-        description:
-          "The service targetPort (pod port). This defaults to port and is only required if the service port is different from the pod port (so the NetworkPolicy can be generated correctly).",
-        minimum: 1,
-        maximum: 65535,
-        type: "number",
-      },
-      // Deprecated fields
-      match: {
-        description: "Deprecated: use advancedHTTP.match",
-        ...advancedHTTP.properties?.match,
-      },
       targetPort: {
         description: "Deprecated: use podPort",
         minimum: 1,
         maximum: 65535,
         type: "number",
+      },
+      // Deprecated field
+      match: {
+        description: "Deprecated: use advancedHTTP.match",
+        ...advancedHTTP.properties?.match,
+      },
+      podLabels: {
+        description: "Deprectated: use selector",
+        type: "object",
+        additionalProperties: {
+          type: "string",
+        },
       },
       advancedHTTP,
     },

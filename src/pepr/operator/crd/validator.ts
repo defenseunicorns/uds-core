@@ -29,11 +29,9 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
     // directResponse cannot be combined with service, port or pod configs
     if (
       expose.advancedHTTP?.directResponse &&
-      (expose.service || expose.podLabels || expose.port || expose.podPort || expose.targetPort)
+      (expose.service || expose.selector || expose.port || expose.targetPort)
     ) {
-      return req.Deny(
-        "directResponse cannot be combined with service, port, podLabels, podPort or targetPort",
-      );
+      return req.Deny("directResponse cannot be combined with service, port, selector, targetPort");
     }
 
     // Ensure the service name is unique
@@ -56,9 +54,9 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
   const networkPolicyNames = new Set<string>();
 
   for (const policy of networkPolicy) {
-    // remoteGenerated cannot be combined with remoteNamespace or remotePodLabels
-    if (policy.remoteGenerated && (policy.remoteNamespace || policy.remotePodLabels)) {
-      return req.Deny("remoteGenerated cannot be combined with remoteNamespace or remotePodLabels");
+    // remoteGenerated cannot be combined with remoteNamespace or remoteSelector
+    if (policy.remoteGenerated && (policy.remoteNamespace || policy.remoteSelector)) {
+      return req.Deny("remoteGenerated cannot be combined with remoteNamespace or remoteSelector");
     }
 
     // Ensure the policy name is unique

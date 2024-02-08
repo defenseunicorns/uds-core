@@ -7,7 +7,7 @@ spec:
   network:
     expose:
       - service: neuvector-service-webui
-        podLabels:
+        selector:
           app: neuvector-manager-pod
         gateway: admin
         host: neuvector
@@ -23,26 +23,26 @@ spec:
 
       - direction: Egress
         remoteGenerated: KubeAPI
-        podLabels:
+        selector:
           app: neuvector-controller-pod
 
       - direction: Egress
         remoteGenerated: KubeAPI
-        podLabels:
+        selector:
           app: neuvector-updater-pod
 
       - direction: Ingress
         remoteNamespace: monitoring
-        remotePodLabels:
+        remoteSelector:
           app: prometheus
-        podLabels:
+        selector:
           app: neuvector-prometheus-exporter-pod
         port: 8068
         description: "Prometheus Metrics"
 
       - direction: Egress
         remoteNamespace: tempo
-        remotePodLabels:
+        remoteSelector:
           app.kubernetes.io/name: tempo
         port: 9411
         description: "Tempo"

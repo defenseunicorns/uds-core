@@ -10,7 +10,7 @@ spec:
         podSelector:
           app.kubernetes.io/name: promtail
         remoteNamespace: monitoring
-        remotePodLabels:
+        remoteSelector:
           app.kubernetes.io/name: prometheus
         port: 3101
         description: "Prometheus Metrics"
@@ -22,16 +22,16 @@ spec:
 
       - direction: Egress
         remoteNamespace: tempo
-        remotePodLabels:
+        remoteSelector:
           app.kubernetes.io/name: tempo
         port: 9411
         description: "Tempo"
 
       - direction: Egress
-        podLabels:
+        selector:
           app.kubernetes.io/name: promtail
         remoteNamespace: loki
-        remotePodLabels:
+        remoteSelector:
           app.kubernetes.io/name: loki
         port: 8080
         description: "Write Logs to Loki"
