@@ -85,4 +85,4 @@ jobs:
         if: always()
         uses: ./.github/actions/save-logs
         with:
-          suffix: -${{ inputs.package }}-${{ inputs.flavor }}
+          suffix: -${{ inputs.test_type }}-${{ inputs.package }}-${{ inputs.flavor }}
