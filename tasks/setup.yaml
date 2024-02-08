@@ -37,5 +37,5 @@ tasks:
              uds zarf tools registry digest \
                ${REGISTRY1_TEST_IMAGE} \
                >/dev/null || (sleep "${INPUT_REGISTRY_RETRY_INTERVAL}"; exit 1)
-          fi 
+          fi
         maxRetries: 10
