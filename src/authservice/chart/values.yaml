@@ -20,7 +20,7 @@ allow_unmatched_requests: false
 
 # -- Extra Ruleset for AuthorizationPolicy CUSTOM action to forward to Authservice.
 # To enable `allow_unmatched_requests` must be `false`. These custom rules mean that only these requests
-# will be routed and will break default BigBang setup for `prometheus/alertmanager/tempo` unless added.
+# will be routed and will break default UDS Core setup for `prometheus/alertmanager/tempo` unless added.
 # Path specific Operations are not supported, it is recommended to use only hosts, notHosts, & method operations.
 # See reference: https://istio.io/latest/docs/reference/config/security/authorization-policy/
 custom_authpolicy_rules:
@@ -42,7 +42,7 @@ global:
     # -- Header to match.  The value ":authority" is used to match the requested hostname
     header: ":authority"
     # -- value matches the start of the header value defined above
-    prefix: "bigbang"
+    prefix: "uds"
   # -- Logout URL for the client
   logout_path: "/globallogout"
   # -- Logout Redirect URI for the client

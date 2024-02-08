@@ -8,6 +8,7 @@ metadata:
   # x-release-please-end
 
 components:
+  # CRDs
   - name: prometheus-operator-crds
     required: true
     import:
@@ -65,12 +66,20 @@ components:
     import:
       path: ../../src/prometheus-stack
 
+  # Promtail
   - name: promtail
     required: true
     import:
       path: ../../src/promtail
 
+  # Grafana
   - name: grafana
     required: true
     import:
       path: ../../src/grafana
+
+  # Authservice
+  - name: authservice
+    required: true
+    import:
+      path: ../../src/authservice
