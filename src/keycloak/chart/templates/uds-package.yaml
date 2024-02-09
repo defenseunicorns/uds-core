@@ -9,7 +9,7 @@ spec:
       - description: "remove private paths from public gateway"
         host: sso
         service: keycloak-http
-        podLabels:
+        selector:
           app.kubernetes.io/name: keycloak
         port: 8080
         advancedHTTP:
@@ -37,7 +37,7 @@ spec:
 
       - description: "public auth access with optional client certificate"
         service: keycloak-http
-        podLabels:
+        selector:
           app.kubernetes.io/name: keycloak
         host: sso
         port: 8080
@@ -51,7 +51,7 @@ spec:
 
       - description: "admin access with optional client certificate"
         service: keycloak-http
-        podLabels:
+        selector:
           app.kubernetes.io/name: keycloak
         gateway: admin
         host: keycloak
