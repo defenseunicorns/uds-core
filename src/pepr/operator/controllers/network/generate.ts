@@ -23,7 +23,7 @@ export function generate(namespace: string, policy: Allow): kind.NetworkPolicy {
     spec: {
       policyTypes: [policy.direction],
       podSelector: {
-        matchLabels: policy.podLabels,
+        matchLabels: policy.selector,
       },
     },
   };
@@ -53,11 +53,11 @@ export function generate(namespace: string, policy: Allow): kind.NetworkPolicy {
     peers.push({ namespaceSelector });
   }
 
-  // Add the remotePodLabels if they exist
-  if (policy.remotePodLabels) {
+  // Add the remoteSelector if they exist
+  if (policy.remoteSelector) {
     peers.push({
       podSelector: {
-        matchLabels: policy.remotePodLabels,
+        matchLabels: policy.remoteSelector,
       },
     });
   }
@@ -122,10 +122,10 @@ export function generateName(policy: Allow) {
     policy.description ||
     // Otherwise use the direction, and combination of remote properties
     [
-      Object.values(policy.podLabels || ["all pods"]),
+      Object.values(policy.selector || ["all pods"]),
       policy.remoteGenerated || [
         policy.remoteNamespace,
-        Object.values(policy.remotePodLabels || ["all pods"]),
+        Object.values(policy.remoteSelector || ["all pods"]),
       ],
     ]
       // Flatten the array

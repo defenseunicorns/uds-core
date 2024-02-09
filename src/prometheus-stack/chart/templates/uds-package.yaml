@@ -15,43 +15,43 @@ spec:
 
       - direction: Egress
         remoteGenerated: KubeAPI
-        podLabels:
+        selector:
           app: kube-prometheus-stack-operator
 
       - direction: Egress
         remoteGenerated: KubeAPI
-        podLabels:
+        selector:
           app.kubernetes.io/name: kube-state-metrics
 
       - direction: Egress
         remoteGenerated: KubeAPI
-        podLabels:
+        selector:
           app: kube-prometheus-stack-admission-create
 
       - direction: Egress
         remoteGenerated: KubeAPI
-        podLabels:
+        selector:
           app: kube-prometheus-stack-admission-patch
 
       # todo: lockdown egress to scrape targets
       - direction: Egress
         remoteNamespace: "" 
-        podLabels:
+        selector:
           app.kubernetes.io/name: prometheus
         description: "Metrics Scraping"
 
       - direction: Ingress
         remoteNamespace: grafana
-        remotePodLabels:
+        remoteSelector:
           app.kubernetes.io/name: grafana
-        podLabels:
+        selector:
           app.kubernetes.io/name: prometheus
         port: 9090
         description: "Grafana Metrics Queries"
 
       - direction: Egress
         remoteNamespace: tempo
-        remotePodLabels:
+        remoteSelector:
           app.kubernetes.io/name: tempo
         port: 9411
         description: "Tempo"

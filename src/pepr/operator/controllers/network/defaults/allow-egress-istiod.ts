@@ -6,7 +6,7 @@ export const allowEgressIstiod = (namespace: string) =>
     direction: Direction.Egress,
     description: "Istiod communication",
     remoteNamespace: "istio-system",
-    remotePodLabels: {
+    remoteSelector: {
       istio: "pilot",
     },
     port: 15012,

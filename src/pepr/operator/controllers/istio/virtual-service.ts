@@ -22,7 +22,7 @@ export async function virtualService(pkg: UDSPackage, namespace: string) {
 
   // Iterate over each exposed service
   for (const expose of exposeList) {
-    const { gateway = Gateway.Tenant, host, port, service, match } = expose;
+    const { gateway = Gateway.Tenant, host, port, service, advancedHTTP = {} } = expose;
 
     const name = generateVSName(pkg, expose);
 
@@ -31,6 +31,8 @@ export async function virtualService(pkg: UDSPackage, namespace: string) {
 
     // Append the domain to the host
     const fqdn = `${host}.${domain}`;
+
+    const http: Istio.HTTP = { ...advancedHTTP };
 
     // Create the route to the service
     const route: Istio.HTTPRoute[] = [
@@ -43,6 +45,11 @@ export async function virtualService(pkg: UDSPackage, namespace: string) {
         },
       },
     ];
+
+    if (!advancedHTTP.directResponse) {
+      // Create the route to the service if not using advancedHTTP.directResponse
+      http.route = route;
+    }
 
     const payload: Istio.VirtualService = {
       metadata: {
@@ -61,7 +68,7 @@ export async function virtualService(pkg: UDSPackage, namespace: string) {
         // Map the gateway (admin, passthrough or tenant) to the VirtualService
         gateways: [`istio-${gateway}-gateway/${gateway}-gateway`],
         // Apply the route to the VirtualService
-        http: [{ route, match }],
+        http: [http],
       },
     };
 
@@ -105,10 +112,10 @@ export async function virtualService(pkg: UDSPackage, namespace: string) {
 }
 
 export function generateVSName(pkg: UDSPackage, expose: Expose) {
-  const { gateway = Gateway.Tenant, host, port, service, match, description } = expose;
+  const { gateway = Gateway.Tenant, host, port, service, description, advancedHTTP } = expose;
 
   // Ensure the resource name is valid
-  const matchHash = match?.flatMap(m => m.name).join("-") || "";
+  const matchHash = advancedHTTP?.match?.flatMap(m => m.name).join("-") || "";
   const nameSuffix = description || `${host}-${port}-${service}-${matchHash}`;
   const name = sanitizeResourceName(`${pkg.metadata!.name}-${gateway}-${nameSuffix}`);
 

@@ -12,24 +12,25 @@ spec:
   network:
     expose:
       - service: httpbin
-        podLabels:
+        selector:
           app: httpbin
         gateway: admin
         host: demo
         port: 8000
         targetPort: 80
-        match:
-          - name: test-get-and-prefix
-            method:
-              # Only allow GET requests
-              regex: GET
-            uri:
-              # Only allow routing to /status/2*, everything else should 404
-              prefix: /status/2
-          - name: test-exact
-            uri:
-              # Only allow routing to /status/410
-              exact: /status/410
+        advancedHTTP:
+          match:
+            - name: test-get-and-prefix
+              method:
+                # Only allow GET requests
+                regex: GET
+              uri:
+                # Only allow routing to /status/2*, everything else should 404
+                prefix: /status/2
+            - name: test-exact
+              uri:
+                # Only allow routing to /status/410
+                exact: /status/410
 ---
 apiVersion: v1
 kind: ServiceAccount

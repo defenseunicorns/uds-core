@@ -14,20 +14,20 @@ spec:
         remoteGenerated: IntraNamespace
 
       - direction: Ingress
-        podLabels:
+        selector:
           app.kubernetes.io/name: loki
         remoteNamespace: grafana
-        remotePodLabels:
+        remoteSelector:
           app.kubernetes.io/name: grafana
         ports:
           - 8080
         description: "Grafana Log Queries"
 
       - direction: Ingress
-        podLabels:
+        selector:
           app.kubernetes.io/name: loki
         remoteNamespace: monitoring
-        remotePodLabels:
+        remoteSelector:
           app.kubernetes.io/name: prometheus
         ports:
           - 3100
@@ -35,10 +35,10 @@ spec:
         description: "Prometheus Metrics"
 
       - direction: Ingress
-        podLabels:
+        selector:
           app.kubernetes.io/name: loki
         remoteNamespace: promtail
-        remotePodLabels:
+        remoteSelector:
           app.kubernetes.io/name: promtail
         ports:
           - 8080
@@ -46,13 +46,13 @@ spec:
 
       # Todo: wide open for now for pushing to s3
       - direction: Egress
-        podLabels:
+        selector:
           app.kubernetes.io/name: loki
         remoteGenerated: Anywhere
 
       - direction: Egress
         remoteNamespace: tempo
-        remotePodLabels:
+        remoteSelector:
           app.kubernetes.io/name: tempo
         port: 9411
         description: "Tempo"
