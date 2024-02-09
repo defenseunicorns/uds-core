@@ -1,121 +1,105 @@
 # Unicorn Delivery Service - Core (UDS Core)
 
-> [!WARNING]  
-> UDS Core is in early alpha and is not ready for general use.
+UDS Core establishes a secure baseline for cloud-native systems and ships with compliance documentation and first-class support for airgap/egress-limited systems. Based on the work of [Platform One](https://p1.dso.mil), UDS Core expands on the security posture of [Big Bang](https://repo1.dso.mil/big-bang/bigbang) while providing advanced automation with the [UDS Operator](./src/pepr/operator/README.md) and [UDS Policy Engine](./src/pepr/policies/README.md). UDS Core is a collection of several individual applications combined into a single [Zarf](https://zarf.dev) package and we recommend using [UDS CLI](https://github.com/defenseunicorns/uds-cli?tab=readme-ov-file#install) to deploy it as a [UDS Bundle](#using-uds-core-in-production).
 
-UDS Core groups foundational Unicorn Delivery Service applications inspired by [Big Bang](https://repo1.dso.mil/big-bang/bigbang).
+#### tl;dr - [try it now](#quickstart)
 
-The core applications are:
+#### Core Applications
 
-- [Authservice](https://github.com/istio-ecosystem/authservice) - Authorization
 - [Grafana](https://grafana.com/oss/grafana/) - Monitoring
 - [Istio](https://istio.io/) - Service Mesh
-- [KeyCloak](https://www.keycloak.org/) - Identity & Access Management
-- [Kiali](https://kiali.io/) - Service Mesh Observability
 - [Loki](https://grafana.com/oss/loki/) - Log Aggregation
 - [Metrics Server](https://github.com/kubernetes-sigs/metrics-server) - Metrics
 - [Neuvector](https://open-docs.neuvector.com/) - Container Security
 - [Pepr](https://pepr.dev) - UDS policy engine & operator
 - [Prometheus Stack](https://github.com/prometheus-operator/kube-prometheus) - Monitoring
 - [Promtail](https://grafana.com/docs/loki/latest/send-data/promtail/) - Log Aggregation
+
+#### Future Applications
+
+- [Authservice](https://github.com/istio-ecosystem/authservice) - Authorization
+- [KeyCloak](https://www.keycloak.org/) - Identity & Access Management
+- [Kiali](https://kiali.io/) - Service Mesh Observability
 - [Tempo](https://grafana.com/docs/tempo/latest/getting-started/) - Tracing
 - [Velero](https://velero.io/) - Backup & Restore
 
-## Prerequisites
+---
 
-<!-- table -->
+### Prerequisites
 
-| Dependency                                                     | Minimum Version |
-| -------------------------------------------------------------- | --------------- |
-| [Zarf](https://github.com/defenseunicorns/zarf/releases)       | 0.32.1          |
-| [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) | 0.6.2           |
-| [NodeJS](https://nodejs.org/en/download/)                      | LTS or Current  |
+- [K3D](https://k3d.io/) for dev & test environments or any [CNCF Certified Kubernetes Cluster](https://www.cncf.io/training/certification/software-conformance/#logos) for production environments.
+<!-- renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver -->
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli?tab=readme-ov-file#install) v0.8.1 or later
 
-<!-- endtable -->
+---
 
-## Users
+### Using UDS Core in Production
 
-### Quickstart
+While the UDS Bundles published by this repo can be use for dev and test environments and include a K3d cluster, UDS Core also publishes a UDS Package that is intended to be used in your own UDS Bundle. You can use the [k3d-core-demo bundle](./bundles/k3d-standard/README.md) as an example.
 
-A common need is bootstrapping a new UDS Core environment for development or testing. The commands below will deploy the latest version of UDS Core. See the remaining sections for more details on the different bundles and packages available.
+---
+
+### Quickstart, Dev & Test Environments
+
+UDS Core publishes bundles you can use for trying out UDS Core or for UDS Package development where you only need part of UDS Core. These bundles leverage [UDS K3d](https://github.com/defenseunicorns/uds-k3d) to create a local k3d cluster with tools installed to emulate a cloud environment.
+
+> [!NOTE]
+> These UDS Bundles are intended for dev and test environments and should not be used for production. They also serve as examples to create custom bundles.
+
+#### Quickstart
+
+If you want to try out UDS Core, you can use the [k3d-core-demo bundle](./bundles/k3d-standard/README.md) to create a local k3d cluster with UDS Core installed by running the following command:
+
+<!-- x-release-please-start-version -->
 
 ```bash
-# ARM version
-uds deploy oci://ghcr.io/defenseunicorns/packages/uds/bundles/k3d-core-demo:arm64
-
-# AMD version
-uds deploy oci://ghcr.io/defenseunicorns/packages/uds/bundles/k3d-core-demo:amd64
+uds deploy k3d-core-demo:0.12.0
 ```
 
-The bundle includes the uds.dev certs by default. You can use the UDS environment variables to override the default values. E.g.
+<!-- x-release-please-end -->
+
+#### UDS Package Development
+
+In addition to the demo bundle, a [k3d-core-istio-dev bundle](./bundles/k3d-istio/README.md) also exists to work with UDS Core with only Istio & Pepr installed. Run the command below to use it:
+
+<!-- x-release-please-start-version -->
 
 ```bash
-# Set environment variables with the contents of your certificate and key files (must be base64 encoded)
-UDS_ADMIN_TLS_CERT=$(cat admin.crt)
-UDS_ADMIN_TLS_KEY=$(cat admin.key)
-UDS_TENANT_TLS_CERT=$(cat tenant.crt)
-UDS_TENANT_TLS_KEY=$(cat tenant.key)
-
-UDS_DOMAIN=example.com
-
-uds deploy oci://ghcr.io/defenseunicorns/package/uds/bundles/k3d-core-demo:amd64
+uds deploy k3d-core-istio-dev:0.12.0
 ```
 
-### UDS Core Package
+<!-- x-release-please-end -->
 
-UDS core publishes one package:
+#### Developing UDS Core
 
-- [core](./packages/standard/README.md): The standard UDS Core package that is a collection of individual packages that are deployed as a single unit.
+UDS Core development leverages the `uds zarf dev deploy` command. For convenience, a UDS Task is provided to setup the environment. You'll need to have [NodeJS](https://nodejs.org/en/download/) 20 or later installed to continue. Here's an example of a flow developing the [metrics-server package](./src/metrics-server/README.md):
 
-### UDS Core Bundles
+```bash
+# Create the dev environment
+uds run dev
 
-These bundles are intended for bootstrapping common development & testing environments and should not be used for production. They also serve as examples to create custom bundles.
+# If developing the Pepr module:
+npx pepr dev
 
-- [k3d-core-demo](./bundles/k3d-standard/README.md): A bundle to create a local k3d cluster with UDS Core installed.
+# If not developing the Pepr module (can be run multiple times):
+npx pepr deploy
 
-- [k3d-core-istio-dev](./bundles/k3d-istio/README.md): A bundle to create a local k3d cluster with only Istio from UDS Core installed.
+# Deploy the package (can be run multiple times)
+uds run dev-deploy --set PKG=metrics-server
+```
 
-## Development: Create, build, and test the UDS Core Package
+#### Testing UDS Core
 
-For complete testing, we test against a UDS Bundle that uses a locally-built Zarf package. Manually testing against the packages found under `/packages` is also possible using the `zarf` command.
-
-#### Create, build, and test the UDS Core Package
+You can perform a complete test of UDS Core by running the following command:
 
 ```bash
 uds run test-uds-core
 ```
 
-## Working with an individual package
-
-The individual packages that make up UDS Core are broken down in `src/`, the commands below can be used to work with them individually in development.
-
-#### Create, build, and test a single package (e.g. Neuvector)
+This will create a local k3d cluster, install UDS Core, and run a series of tests against it, the same tests that are run in CI. If you want to run the tests against a specific package, you can use the `PKG` env variable. The following example runs the tests against the metrics-server package:
 
 ```bash
-UDS_PKG=neuvector uds run test-single-package
+UDS_PKG=metrics-server uds run test-single-package
 ```
 
-#### To build a single package (e.g. Neuvector)
-
-```bash
-UDS_PKG=neuvector uds run create-single-package
-```
-
-#### To deploy a single built package (e.g. Neuvector)
-
-```bash
-UDS_PKG=neuvector uds run deploy-single-package
-```
-
-#### To test a single package already deployed (e.g. Neuvector)
-
-```bash
-uds run -f src/neuvector/tasks/validate.yaml run
-```
-
-Note: The run tasks above default to targetting the upstream (oss) package flavor.
-In order to run any of the above commands against the registry1 flavor the command must be updated with ```--set FLAVOR=registry1``` For example:
-
-```bash
-uds run test-uds-core --set FLAVOR=registry1
-```
+Note you can specify the `--set FLAVOR=registry1` flag to test using Iron Bank images instead of the upstream images.

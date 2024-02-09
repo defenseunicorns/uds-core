@@ -7,7 +7,18 @@ spec:
   network:
     allow:
       - direction: Egress
-        # todo: evaluate an "all nodes" generated rule
-        podLabels:
+        selector:
           app.kubernetes.io/name: metrics-server
+        # todo: evaluate an "all nodes" generated rule
         remoteGenerated: Anywhere
+        port: 10250
+      - direction: Egress
+        selector:
+          app.kubernetes.io/name: metrics-server
+        remoteGenerated: KubeAPI
+      - direction: Ingress
+        selector:
+          app.kubernetes.io/name: metrics-server
+        # todo: evaluate a "KubeAPI" _ingress_ generated rule
+        remoteGenerated: Anywhere
+        port: 10250

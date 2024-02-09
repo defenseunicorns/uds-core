@@ -8,7 +8,7 @@ variables:
   - name: VERSION
     description: "The version of the packages to build"
     # x-release-please-start-version
-    default: "0.10.0"
+    default: "0.12.0"
     # x-release-please-end
 
 tasks:
@@ -30,11 +30,11 @@ tasks:
       - description: "Publish the packages"
         cmd: |
           set -e
-          zarf package publish build/zarf-package-core-amd64-${VERSION}.tar.zst ${TARGET_REPO}
+          uds zarf package publish build/zarf-package-core-amd64-${VERSION}.tar.zst ${TARGET_REPO}
 
           # dont publish arm64 for registry1 since IB images are only amd64
           if [ "${FLAVOR}" != "registry1" ]; then
-            zarf package publish build/zarf-package-core-arm64-${VERSION}.tar.zst ${TARGET_REPO}
+            uds zarf package publish build/zarf-package-core-arm64-${VERSION}.tar.zst ${TARGET_REPO}
           fi
 
   - name: bundles
@@ -64,5 +64,4 @@ tasks:
         cmd: |
           set -e
           pkgPath="ghcr.io/defenseunicorns/packages/uds/bundles/k3d-core-demo"
-          zarf tools registry copy ${pkgPath}:${VERSION}-arm64 ${pkgPath}:arm64
-          zarf tools registry copy ${pkgPath}:${VERSION}-amd64 ${pkgPath}:amd64
+          uds zarf tools registry copy ${pkgPath}:${VERSION} ${pkgPath}:latest

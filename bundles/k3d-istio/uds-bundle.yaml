@@ -3,7 +3,7 @@ metadata:
   name: k3d-core-istio-dev
   description: A UDS bundle for deploying Istio from UDS Core on a development cluster
   # x-release-please-start-version
-  version: "0.10.0"
+  version: "0.12.0"
   # x-release-please-end
 
 packages:
@@ -31,12 +31,12 @@ packages:
   - name: init
     repository: ghcr.io/defenseunicorns/packages/init
     # renovate: datasource=github-tags depName=defenseunicorns/zarf versioning=semver
-    ref: v0.32.1
+    ref: v0.32.2
 
   - name: core-istio
     path: ../../build/
     # x-release-please-start-version
-    ref: 0.10.0
+    ref: 0.12.0
     # x-release-please-end
     overrides:
       istio-admin-gateway:

@@ -12,7 +12,7 @@ spec:
   network:
     expose:
       - service: httpbin
-        podLabels:
+        selector:
           app: httpbin
         gateway: tenant
         host: demo

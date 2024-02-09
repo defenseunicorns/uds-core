@@ -3,10 +3,43 @@
 The UDS Operator manages the lifecycle of UDS Package CRs and their corresponding resources (e.g. NetworkPolicies, Istio VirtualServices, etc.). The operator uses [Pepr](https://pepr.dev) to bind the watch operations to the enqueue and reconciler. The operator is responsible for:
 
 - enabling Istio sidecar injection in namespaces where the CR is deployed
-- establishing default-deny ingress/egress network policies 
+- establishing default-deny ingress/egress network policies
 - creating a layered allow-list based approach on top of the default deny network policies including some basic defaults such as Istio requirements and DNS egress
 - providing targeted remote endpoints network policies such as `KubeAPI` and `CloudMetadata` to make policies more DRY and provide dynamic bindings where a static definition is not possible
 - creating Istio Virtual Services & related ingress gateway network policies
+
+### Example UDS Package CR
+
+```yaml
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: grafana
+  namespace: grafana
+spec:
+  network:
+    expose:
+      - service: grafana
+        selector:
+          app.kubernetes.io/name: grafana
+        host: grafana
+        gateway: admin
+        port: 80
+        targetPort: 3000
+
+    allow:
+      - direction: Egress
+        selector:
+          app.kubernetes.io/name: grafana
+        remoteGenerated: Anywhere
+
+      - direction: Egress
+        remoteNamespace: tempo
+        remoteSelector:
+          app.kubernetes.io/name: tempo
+        port: 9411
+        description: "Tempo"
+```
 
 ### Key Files and Folders
 
@@ -24,7 +57,6 @@ The UDS Operator manages the lifecycle of UDS Package CRs and their correspondin
 ├── index.ts             # Entrypoint for the UDS Operator
 └── reconciler.ts        # Reconciles UDS Package CRs via the controllers
 ```
-
 
 ### Flow
 

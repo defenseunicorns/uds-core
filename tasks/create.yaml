@@ -9,7 +9,7 @@ tasks:
       - task: pepr-build
 
       - description: "Create the UDS Core Standard Zarf Package"
-        cmd: "zarf package create packages/standard --confirm --flavor ${FLAVOR}"
+        cmd: "uds zarf package create packages/standard --confirm --flavor ${FLAVOR}"
 
   - name: k3d-standard-bundle
     description: "Create the K3d-UDS Core Bundle"
@@ -23,7 +23,7 @@ tasks:
       - task: pepr-build
 
       - description: "Create the UDS Core Istio Zarf Package"
-        cmd: "zarf package create packages/istio --confirm --flavor ${FLAVOR}"
+        cmd: "uds zarf package create packages/istio --confirm --flavor ${FLAVOR}"
 
   - name: k3d-istio-bundle
     description: "Create the K3d-UDS Core (Istio Only) Bundle"
@@ -37,10 +37,10 @@ tasks:
       - task: pepr-build
 
       - description: "Create the Pepr Zarf Package, if it exists"
-        cmd: "zarf package create dist --confirm"
+        cmd: "uds zarf package create dist --confirm"
 
       - description: "Create the requested Zarf Package (must set UDS_PKG environment variable)"
-        cmd: "zarf package create src/${UDS_PKG} --confirm --flavor ${FLAVOR}"
+        cmd: "uds zarf package create src/${UDS_PKG} --confirm --flavor ${FLAVOR}"
 
   - name: pepr-build
     description: "Build the UDS Core Pepr Module"

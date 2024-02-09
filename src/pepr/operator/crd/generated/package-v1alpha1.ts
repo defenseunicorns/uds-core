@@ -42,8 +42,7 @@ export interface Allow {
    */
   labels?: { [key: string]: string };
   /**
-   * Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all
-   * pods in the namespace
+   * Deprecated: use selector
    */
   podLabels?: { [key: string]: string };
   /**
@@ -64,9 +63,18 @@ export interface Allow {
    */
   remoteNamespace?: string;
   /**
-   * The remote pod selector labels to allow traffic to/from
+   * Deprecated: use remoteSelector
    */
   remotePodLabels?: { [key: string]: string };
+  /**
+   * The remote pod selector labels to allow traffic to/from
+   */
+  remoteSelector?: { [key: string]: string };
+  /**
+   * Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all
+   * pods in the namespace
+   */
+  selector?: { [key: string]: string };
 }
 
 /**
@@ -110,8 +118,7 @@ export interface Expose {
    */
   match?: ExposeMatch[];
   /**
-   * Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all
-   * pods in the namespace
+   * Deprecated: use selector
    */
   podLabels?: { [key: string]: string };
   /**
@@ -124,6 +131,11 @@ export interface Expose {
    * The port number to expose
    */
   port?: number;
+  /**
+   * Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all
+   * pods in the namespace
+   */
+  selector?: { [key: string]: string };
   /**
    * The name of the service to expose
    */
