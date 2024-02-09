@@ -1,6 +1,7 @@
 import { K8s, Log, kind } from "pepr";
 
 import { v1alpha1 } from "./sources/v1alpha1";
+import { expv1alpha1 } from "./sources/exemption/exp-v1alpha1";
 
 // Register the CRD if we're in watch or dev mode
 if (process.env.PEPR_WATCH_MODE === "true" || process.env.PEPR_MODE === "dev") {
@@ -28,6 +29,38 @@ if (process.env.PEPR_WATCH_MODE === "true" || process.env.PEPR_MODE === "dev") {
     )
     .then(() => {
       Log.info("CRD registered");
+    })
+    .catch(err => {
+      Log.error(err);
+
+      // Sad times, let's exit
+      process.exit(1);
+    });
+
+  K8s(kind.CustomResourceDefinition)
+    .Apply(
+      {
+        apiVersion: "apiextensions.k8s.io/v1",
+        kind: "CustomResourceDefinition",
+        metadata: {
+          name: "exemptions.uds.dev",
+        },
+        spec: {
+          group: "uds.dev",
+          versions: [expv1alpha1],
+          scope: "Namespaced",
+          names: {
+            plural: "exemptions",
+            singular: "exemption",
+            kind: "Exemption",
+            shortNames: ["exmpt"],
+          },
+        },
+      },
+      { force: true },
+    )
+    .then(() => {
+      Log.info("Exemption CRD registered");
     })
     .catch(err => {
       Log.error(err);

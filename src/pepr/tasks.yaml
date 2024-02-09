@@ -12,4 +12,6 @@ tasks:
 
       - cmd: "npx kubernetes-fluent-client crd packages.uds.dev src/pepr/operator/crd/generated"
 
+      - cmd: "npx kubernetes-fluent-client crd exemptions.uds.dev src/pepr/operator/crd/generated"
+
       - cmd: "npx pepr format"

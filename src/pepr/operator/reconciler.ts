@@ -4,7 +4,7 @@ import { UDSConfig } from "../config";
 import { enableInjection } from "./controllers/istio/injection";
 import { virtualService } from "./controllers/istio/virtual-service";
 import { networkPolicies } from "./controllers/network/policies";
-import { Phase, Status, UDSPackage } from "./crd";
+import { Phase, Status, UDSExemption, UDSPackage } from "./crd";
 import { VirtualService } from "./crd/generated/istio/virtualservice-v1beta1";
 import { migrate } from "./crd/migrate";
 
@@ -65,17 +65,55 @@ export async function reconciler(pkg: UDSPackage) {
   }
 }
 
+export async function exemptionReconciler(exemption: UDSExemption) {
+    if (!exemption.metadata?.namespace) {
+      Log.error(exemption, `Invalid Exemption definition`);
+      return;
+    }
+
+    const isPending = exemption.status?.phase === Phase.Pending;
+    const isCurrentGeneration =
+      exemption.metadata.generation === exemption.status?.observedGeneration;
+
+    if (isPending || isCurrentGeneration) {
+      Log.debug(exemption, `Skipping pending or completed exemption`);
+      return;
+    }
+
+    const { namespace, name } = exemption.metadata;
+
+    Log.debug(exemption, `Processing Exemption ${namespace}/${name}`);
+
+    try {
+      await updateStatus(exemption, { phase: Phase.Pending });
+
+      // parse CR and add exemptions to pepr policies store
+
+      await updateStatus(exemption, {
+        phase: Phase.Ready,
+        observedGeneration: exemption.metadata.generation,
+      });
+    } catch (e) {
+      Log.error(e, `Error configuring for ${namespace}/${name}`);
+      // todo: need to evaluate when it is safe to retry (updating generation now avoids retrying infinitely)
+      void updateStatus(exemption, {
+        phase: Phase.Failed,
+        observedGeneration: exemption.metadata.generation,
+      });
+    }
+}
+
 /**
  * Updates the status of the package
  *
- * @param pkg The package to update
+ * @param cr The package to update
  * @param status The new status
  */
-async function updateStatus(pkg: UDSPackage, status: Status) {
+async function updateStatus(cr: UDSPackage | UDSExemption, status: Status) {
   await K8s(UDSPackage).PatchStatus({
     metadata: {
-      name: pkg.metadata!.name,
-      namespace: pkg.metadata!.namespace,
+      name: cr.metadata!.name,
+      namespace: cr.metadata!.namespace,
     },
     status,
   });
