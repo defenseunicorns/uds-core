@@ -7,10 +7,9 @@ import "./crd/register";
 import { validator } from "./crd/validator";
 import { Queue } from "./enqueue";
 
-import {  Log } from "pepr";
+import { Log } from "pepr";
 import { updateStatus } from "./reconciler";
 import { addExemptions } from "./controllers/exemptions/exemptions";
-
 
 export const operator = new Capability({
   name: "uds-core-operator",
@@ -44,7 +43,6 @@ When(UDSPackage)
   // Enqueue the package for processing
   .Watch(pkg => queue.enqueue(pkg));
 
-
 // (TODO) remove exemptions on delete of CR
 // Watch for changes to the UDSExemption CRD and cleanup the namespace mutations
 // When(UDSExemption).IsDeleted().Watch(cleanupNamespace);
@@ -54,40 +52,38 @@ When(UDSExemption)
   .IsCreatedOrUpdated()
   .InNamespace("uds-policy-exemptions")
   .Reconcile(async (exmpt: UDSExemption) => {
-    
-      if (!exmpt.metadata?.namespace) {
-        Log.error(exmpt, `Invalid Exemption definition`);
-        return;
-      }
+    if (!exmpt.metadata?.namespace) {
+      Log.error(exmpt, `Invalid Exemption definition`);
+      return;
+    }
 
-      const isPending = exmpt.status?.phase === Phase.Pending;
-      const isCurrentGeneration =
-        exmpt.metadata?.generation === exmpt.status?.observedGeneration;
+    const isPending = exmpt.status?.phase === Phase.Pending;
+    const isCurrentGeneration = exmpt.metadata?.generation === exmpt.status?.observedGeneration;
 
-      if (isPending || isCurrentGeneration) {
-        Log.debug(exmpt, `Skipping pending or completed exemption`);
-        return;
-      }
+    if (isPending || isCurrentGeneration) {
+      Log.debug(exmpt, `Skipping pending or completed exemption`);
+      return;
+    }
 
-      const { namespace, name } = exmpt.metadata;
+    const { namespace, name } = exmpt.metadata;
 
-      Log.debug(exmpt, `Processing Exemption ${namespace}/${name}`);
+    Log.debug(exmpt, `Processing Exemption ${namespace}/${name}`);
 
-      try {
-        await updateStatus(exmpt, { phase: Phase.Pending });
+    try {
+      await updateStatus(exmpt, { phase: Phase.Pending });
 
-        addExemptions(exmpt);
+      await addExemptions(exmpt);
 
-        await updateStatus(exmpt, {
-          phase: Phase.Ready,
-          observedGeneration: exmpt.metadata.generation,
-        });
-      } catch (e) {
-        Log.error(e, `Error configuring for ${namespace}/${name}`);
-        // todo: need to evaluate when it is safe to retry (updating generation now avoids retrying infinitely)
-        void updateStatus(exmpt, {
-          phase: Phase.Failed,
-          observedGeneration: exmpt.metadata.generation,
-        });
-      }
-    })
+      await updateStatus(exmpt, {
+        phase: Phase.Ready,
+        observedGeneration: exmpt.metadata.generation,
+      });
+    } catch (e) {
+      Log.error(e, `Error configuring for ${namespace}/${name}`);
+      // todo: need to evaluate when it is safe to retry (updating generation now avoids retrying infinitely)
+      void updateStatus(exmpt, {
+        phase: Phase.Failed,
+        observedGeneration: exmpt.metadata.generation,
+      });
+    }
+  });

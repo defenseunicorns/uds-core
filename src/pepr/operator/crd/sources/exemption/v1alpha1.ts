@@ -1,6 +1,6 @@
 import { V1CustomResourceDefinitionVersion, V1JSONSchemaProps } from "@kubernetes/client-node";
 
-export const expv1alpha1: V1CustomResourceDefinitionVersion = {
+export const v1alpha1: V1CustomResourceDefinitionVersion = {
   name: "v1alpha1",
   served: true,
   storage: true,

@@ -1,7 +1,7 @@
 import { V1OwnerReference } from "@kubernetes/client-node";
 
 import { Package as UDSPackage } from "./generated/package-v1alpha1";
-import { Exemption as UDSExemption} from './generated/exemption-v1alpha1';
+import { Exemption as UDSExemption } from "./generated/exemption-v1alpha1";
 
 export {
   Allow,

@@ -1,7 +1,6 @@
 import { K8s, Log, kind } from "pepr";
-
 import { v1alpha1 } from "./sources/v1alpha1";
-import { expv1alpha1 } from "./sources/exemption/exp-v1alpha1";
+import { v1alpha1 as exemption } from "./sources/exemption/v1alpha1";
 
 // Register the CRD if we're in watch or dev mode
 if (process.env.PEPR_WATCH_MODE === "true" || process.env.PEPR_MODE === "dev") {
@@ -47,7 +46,7 @@ if (process.env.PEPR_WATCH_MODE === "true" || process.env.PEPR_MODE === "dev") {
         },
         spec: {
           group: "uds.dev",
-          versions: [expv1alpha1],
+          versions: [exemption],
           scope: "Namespaced",
           names: {
             plural: "exemptions",
