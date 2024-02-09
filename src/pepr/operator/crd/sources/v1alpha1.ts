@@ -147,7 +147,7 @@ const expose = {
         ...advancedHTTP.properties?.match,
       },
       podLabels: {
-        description: "Deprectated: use selector",
+        description: "Deprecated: use selector",
         type: "object",
         additionalProperties: {
           type: "string",
