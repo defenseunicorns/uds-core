@@ -19,3 +19,13 @@ tasks:
     actions:
       - cmd: istioctl proxy-config log keycloak-0.keycloak --level debug
       # - cmd: kubectl -n keycloak logs keycloak-0 -c istio-proxy -f
+
+  - name: regenerate-test-pki
+    actions:
+      - cmd: |
+          set -e
+          openssl genrsa -out test.pem 2048
+          openssl genrsa -out ca.pem 2048
+          openssl req -x509 -new -nodes -key ca.pem -sha256 -days 1825 -out ca.crt -subj "/C=US/O=U.S. Government/OU=DoD/OU=PKI/CN=DOD ID CA-59 FAKE TEST"
+          openssl req -new -key test.pem -out test.csr -config csr.conf
+          openssl x509 -req -in test.csr -CA ca.crt -CAkey ca.pem -CAcreateserial -out test.crt -days 365 -extensions v3_ext -extfile csr.conf
