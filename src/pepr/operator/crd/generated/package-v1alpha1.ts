@@ -42,7 +42,7 @@ export interface Allow {
    */
   labels?: { [key: string]: string };
   /**
-   * Deprectated: use selector
+   * Deprecated: use selector
    */
   podLabels?: { [key: string]: string };
   /**
@@ -63,7 +63,7 @@ export interface Allow {
    */
   remoteNamespace?: string;
   /**
-   * Deprectated: use remoteSelector
+   * Deprecated: use remoteSelector
    */
   remotePodLabels?: { [key: string]: string };
   /**
@@ -118,7 +118,7 @@ export interface Expose {
    */
   match?: ExposeMatch[];
   /**
-   * Deprectated: use selector
+   * Deprecated: use selector
    */
   podLabels?: { [key: string]: string };
   /**
