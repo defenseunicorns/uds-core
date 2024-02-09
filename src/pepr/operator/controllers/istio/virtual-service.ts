@@ -51,11 +51,6 @@ export async function virtualService(pkg: UDSPackage, namespace: string) {
       http.route = route;
     }
 
-    // Manage deprecated match field
-    if (expose.match) {
-      http.match = expose.match;
-    }
-
     const payload: Istio.VirtualService = {
       metadata: {
         name,

@@ -4,17 +4,20 @@ import { Gateway, UDSPackage } from ".";
 import { generateName } from "../controllers/network/generate";
 import { sanitizeResourceName } from "../controllers/utils";
 import { generateVSName } from "../controllers/istio/virtual-service";
+import { migrate } from "./migrate";
 
 const invalidNamespaces = ["kube-system", "kube-public", "_unknown_", "pepr-system"];
 
 export async function validator(req: PeprValidateRequest<UDSPackage>) {
-  const ns = req.Raw.metadata?.namespace ?? "_unknown_";
+  const pkg = migrate(req.Raw);
+
+  const ns = pkg.metadata?.namespace ?? "_unknown_";
 
   if (invalidNamespaces.includes(ns)) {
     return req.Deny("invalid namespace");
   }
 
-  const exposeList = req.Raw.spec?.network?.expose ?? [];
+  const exposeList = pkg.spec?.network?.expose ?? [];
 
   // Track the names of the virtual services to ensure they are unique
   const virtualServiceNames = new Set<string>();
@@ -48,7 +51,7 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
     virtualServiceNames.add(name);
   }
 
-  const networkPolicy = req.Raw.spec?.network?.allow ?? [];
+  const networkPolicy = pkg.spec?.network?.allow ?? [];
 
   // Track the names of the network policies to ensure they are unique
   const networkPolicyNames = new Set<string>();
@@ -60,7 +63,7 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
     }
 
     // Ensure the policy name is unique
-    const name = sanitizeResourceName(`allow-${req.Raw.metadata?.name}-${generateName(policy)}`);
+    const name = sanitizeResourceName(`allow-${pkg.metadata?.name}-${generateName(policy)}`);
     if (networkPolicyNames.has(name)) {
       return req.Deny(
         `The combination of characteristics of this network allow rule would create a duplicate NetworkPolicy. ` +
