@@ -76,7 +76,7 @@ UDS Core development leverages the `uds zarf dev deploy` command. For convenienc
 
 ```bash
 # Create the dev environment
-uds run dev
+uds run dev-setup
 
 # If developing the Pepr module:
 npx pepr dev
