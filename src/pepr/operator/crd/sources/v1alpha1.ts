@@ -74,7 +74,7 @@ const allow = {
         },
       },
       remotePodLabels: {
-        description: "Deprectated: use remoteSelector",
+        description: "Deprecated: use remoteSelector",
         type: "object",
         additionalProperties: {
           type: "string",
