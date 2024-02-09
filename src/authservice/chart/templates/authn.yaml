@@ -1,6 +1,5 @@
 # Authservice is non-functional without Istio/RequestAuthentication but we wrap this in a conditional to handle standalone testing
 {{- if .Capabilities.APIVersions.Has "security.istio.io/v1beta1" }}
-{{- $jwks_uri := default $.Values.global.jwks_uri $.Values.jwks_uri }}
 apiVersion: security.istio.io/v1beta1
 kind: RequestAuthentication
 metadata:
@@ -11,15 +10,9 @@ spec:
     matchLabels:
       {{ .Values.selector.key }}: {{ .Values.selector.value | quote }}
   jwtRules:
-    {{- if .Values.issuer_uri }}
-    - issuer: {{ .Values.issuer_uri }}
-    {{- else }}
     - issuer: https://{{ .Values.global.oidc.host }}/auth/realms/{{ .Values.global.oidc.realm }}
-    {{- end }}
     {{- if .Values.global.jwks }}
       jwks: {{ .Values.global.jwks | quote }}
-    {{- else if $jwks_uri }}
-      jwksUri: {{ $jwks_uri }}
     {{- else }}
       jwksUri: https://{{ .Values.global.oidc.host }}/auth/realms/{{ .Values.global.oidc.realm }}/protocol/openid-connect/certs
     {{- end }}

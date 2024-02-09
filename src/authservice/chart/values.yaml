@@ -7,10 +7,6 @@ image:
   # -- Overrides the image tag whose default is the chart appVersion.
   tag: ""
 
-# -- Issuer and jwks URIs if not using Keycloak
-issuer_uri: ""
-jwks_uri: ""
-
 # -- If true will allow the requests even no filter chain match is found
 allow_unmatched_requests: false
 

@@ -37,9 +37,5 @@ spec:
   - from:
     - source:
         requestPrincipals:
-        {{- if .Values.issuer_uri }}
-        - "{{ .Values.issuer_uri }}/*"
-        {{- else }}
         - "https://{{ .Values.global.oidc.host }}/auth/realms/{{ .Values.global.oidc.realm }}/*"
-        {{- end }}
 {{- end }}
