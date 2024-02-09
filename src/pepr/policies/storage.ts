@@ -65,7 +65,7 @@ When(a.Pod)
 When(a.Pod)
   .IsCreatedOrUpdated()
   .Validate(async request => {
-    const exemptions = await getExemptionsFor(Policy.RestrictHostPathVolumeWritePaths);
+    const exemptions = await getExemptionsFor(Policy.RestrictHostPathWrite);
     if (exemptions(request)) {
       return request.Approve();
     }
