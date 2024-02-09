@@ -52,11 +52,11 @@ global:
     host: login.uds.dev
     # -- Realm for OpenID Connect
     realm: doug
-  # -- JWKS, formatted as escaped JSON string
-  jwks: ""
 
-  # -- Request URI that has the JWKs. If neither jwks or jwks_uri are specified the jwks_uri is computed based on the provided OIDC realm and and host"
+  # -- Request URI that has the JWKs. If neither jwks or jwks_uri are specified the jwks_uri is computed based on the provided OIDC realm and and host
   jwks_uri: ""
+  # -- JWKS, takes precedence over jwks_uri if specified. Must be formatted as an escaped JSON string.
+  jwks: ""
 
   # -- Request interval to check whether new JWKs are available.
   periodic_fetch_interval_sec: 60
