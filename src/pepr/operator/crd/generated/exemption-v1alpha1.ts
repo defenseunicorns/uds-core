@@ -24,9 +24,9 @@ export interface ExemptionElement {
    */
   matcher: Matcher;
   /**
-   * The name of policy to override
+   * A list of policies to override
    */
-  policyName: PolicyName;
+  policies: Policy[];
 }
 
 /**
@@ -37,15 +37,11 @@ export interface Matcher {
   namespace: string;
 }
 
-/**
- * The name of policy to override
- */
-export enum PolicyName {
+export enum Policy {
   PolicyNames = "policyNames...",
 }
 
 export interface Status {
-  exemptedPolicyCount?: number;
   observedGeneration?: number;
   phase?: Phase;
 }

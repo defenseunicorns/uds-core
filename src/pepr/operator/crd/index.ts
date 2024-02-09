@@ -1,7 +1,12 @@
 import { V1OwnerReference } from "@kubernetes/client-node";
+// import { GenericKind } from "kubernetes-fluent-client";
 
 import { Package as UDSPackage } from "./generated/package-v1alpha1";
 import { Exemption as UDSExemption } from "./generated/exemption-v1alpha1";
+
+// export interface UDSCR extends GenericKind {};
+
+export type UDSCR = UDSPackage | UDSExemption;
 
 export {
   Allow,
@@ -17,7 +22,7 @@ export {
 export {
   ExemptionElement,
   Matcher,
-  PolicyName,
+  Policy,
   Status as ExmptStatus,
   Phase as ExmptPhase,
   Exemption as UDSExemption,
@@ -25,7 +30,7 @@ export {
 
 export * as Istio from "./generated/istio/virtualservice-v1beta1";
 
-export function getOwnerRef(cr: UDSPackage | UDSExemption): V1OwnerReference[] {
+export function getOwnerRef(cr: UDSCR): V1OwnerReference[] {
   const { name, uid } = cr.metadata!;
 
   return [

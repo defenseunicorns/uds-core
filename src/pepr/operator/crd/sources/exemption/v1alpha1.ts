@@ -45,17 +45,20 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
               description: "Policy exemptions",
               items: {
                 type: "object",
-                required: ["policyName", "matcher"],
+                required: ["policies", "matcher"],
                 properties: {
                   description: {
                     type: "string",
                     description:
                       "A description of this exemption, this will become part of the exemption name",
                   },
-                  policyName: {
-                    description: "The name of policy to override",
-                    type: "string",
-                    enum: ["policyNames..."],
+                  policies: {
+                    description: "A list of policies to override",
+                    type: "array",
+                    items: {
+                      type: "string",
+                      enum: ["policyNames..."],
+                    },
                   },
                   matcher: {
                     description: "Name and namespace of pod to exempt. Regex allowed for name.",
