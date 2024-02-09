@@ -1,12 +1,14 @@
 import { a } from "pepr";
 
 import { V1SecurityContext } from "@kubernetes/client-node";
-import { When, containers, securityContextContainers, securityContextMessage } from "./common";
 import {
-  exemptDropAllCapabilities,
-  exemptPrivileged,
-  exemptSELinuxTypes,
-} from "./exemptions/security";
+  When,
+  containers,
+  getExemptionsFor,
+  securityContextContainers,
+  securityContextMessage,
+} from "./common";
+import { Policy } from "../operator/crd";
 
 /**
  * This policy ensures that Pods do not allow privilege escalation.
@@ -22,8 +24,9 @@ import {
  */
 When(a.Pod)
   .IsCreatedOrUpdated()
-  .Validate(request => {
-    if (exemptPrivileged(request)) {
+  .Validate(async request => {
+    const exemptions = await getExemptionsFor(Policy.DisallowPrivileged);
+    if (exemptions(request)) {
       return request.Approve();
     }
 
@@ -55,8 +58,9 @@ When(a.Pod)
  */
 When(a.Pod)
   .IsCreatedOrUpdated()
-  .Mutate(request => {
-    if (exemptPrivileged(request)) {
+  .Mutate(async request => {
+    const exemptions = await getExemptionsFor(Policy.RequireNonRootUser);
+    if (exemptions(request)) {
       return;
     }
 
@@ -99,11 +103,11 @@ When(a.Pod)
       pod.securityContext.runAsGroup = 1000;
     }
   })
-  .Validate(request => {
-    if (exemptPrivileged(request)) {
+  .Validate(async request => {
+    const exemptions = await getExemptionsFor(Policy.RequireNonRootUser);
+    if (exemptions(request)) {
       return request.Approve();
     }
-
     // Check if running as root by checking if runAsNonRoot is false or runAsUser is 0
     const isRoot = (ctx: Partial<V1SecurityContext>) => {
       const isRunAsRoot = ctx.runAsNonRoot === false;
@@ -145,7 +149,11 @@ When(a.Pod)
  */
 When(a.Pod)
   .IsCreatedOrUpdated()
-  .Validate(request => {
+  .Validate(async request => {
+    const exemptions = await getExemptionsFor(Policy.RestrictProcMount);
+    if (exemptions(request)) {
+      return request.Approve();
+    }
     const authorized = [undefined, "Default"];
 
     const violations = securityContextContainers(request).filter(
@@ -172,7 +180,12 @@ When(a.Pod)
  */
 When(a.Pod)
   .IsCreatedOrUpdated()
-  .Validate(request => {
+  .Validate(async request => {
+    const exemptions = await getExemptionsFor(Policy.RestrictSeccomp);
+    if (exemptions(request)) {
+      return request.Approve();
+    }
+
     const authorized = [undefined, "RuntimeDefault", "Localhost"];
 
     // Check Pod level security context
@@ -211,7 +224,12 @@ When(a.Pod)
  */
 When(a.Pod)
   .IsCreatedOrUpdated()
-  .Validate(request => {
+  .Validate(async request => {
+    const exemptions = await getExemptionsFor(Policy.DisallowSELinuxOptions);
+    if (exemptions(request)) {
+      return request.Approve();
+    }
+
     const seLinuxOptions = request.Raw.spec?.securityContext?.seLinuxOptions;
     const authorized = ["user: undefined", "role: undefined"];
 
@@ -249,8 +267,9 @@ When(a.Pod)
  */
 When(a.Pod)
   .IsCreatedOrUpdated()
-  .Validate(request => {
-    if (exemptSELinuxTypes(request)) {
+  .Validate(async request => {
+    const exemptions = await getExemptionsFor(Policy.RestrictSELinuxType);
+    if (exemptions(request)) {
       return request.Approve();
     }
 
@@ -291,8 +310,9 @@ When(a.Pod)
  */
 When(a.Pod)
   .IsCreatedOrUpdated()
-  .Mutate(request => {
-    if (exemptDropAllCapabilities(request)) {
+  .Mutate(async request => {
+    const exemptions = await getExemptionsFor(Policy.DropAllCapabilities);
+    if (exemptions(request)) {
       return;
     }
 
@@ -303,11 +323,11 @@ When(a.Pod)
       container.securityContext.capabilities.drop = ["ALL"];
     }
   })
-  .Validate(request => {
-    if (exemptDropAllCapabilities(request)) {
+  .Validate(async request => {
+    const exemptions = await getExemptionsFor(Policy.DropAllCapabilities);
+    if (exemptions(request)) {
       return request.Approve();
     }
-
     const authorized = "ALL";
 
     const violations = securityContextContainers(request).filter(c => {
@@ -340,7 +360,11 @@ When(a.Pod)
  */
 When(a.Pod)
   .IsCreatedOrUpdated()
-  .Validate(request => {
+  .Validate(async request => {
+    const exemptions = await getExemptionsFor(Policy.RestrictCapabilities);
+    if (exemptions(request)) {
+      return request.Approve();
+    }
     const authorized = ["NET_BIND_SERVICE"];
 
     const violations = securityContextContainers(request).filter(

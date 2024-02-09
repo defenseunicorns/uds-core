@@ -57,7 +57,22 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
                     type: "array",
                     items: {
                       type: "string",
-                      enum: ["policyNames..."],
+                      enum: [
+                        "Dissallow_Host_Namespaces",
+                        "Disallow_NodePort_Services",
+                        "Disallow_Privileged",
+                        "Disallow_SELinux_Options",
+                        "Drop_All_Capabilities",
+                        "Require_Non_Root_User",
+                        "Restrict_Capabilities",
+                        "Restrict_External_Names",
+                        "Restrict_HostPath_Write",
+                        "Restrict_Host_Ports",
+                        "Restrict_Proc_Mount",
+                        "Restrict_Seccomp",
+                        "Restrict_SELinux_Type",
+                        "Restrict_Volume_Types",
+                      ],
                     },
                   },
                   matcher: {

@@ -38,7 +38,20 @@ export interface Matcher {
 }
 
 export enum Policy {
-  PolicyNames = "policyNames...",
+  DisallowNodePortServices = "Disallow_NodePort_Services",
+  DisallowPrivileged = "Disallow_Privileged",
+  DisallowSELinuxOptions = "Disallow_SELinux_Options",
+  DissallowHostNamespaces = "Dissallow_Host_Namespaces",
+  DropAllCapabilities = "Drop_All_Capabilities",
+  RequireNonRootUser = "Require_Non_Root_User",
+  RestrictCapabilities = "Restrict_Capabilities",
+  RestrictExternalNames = "Restrict_External_Names",
+  RestrictHostPathWrite = "Restrict_HostPath_Write",
+  RestrictHostPorts = "Restrict_Host_Ports",
+  RestrictProcMount = "Restrict_Proc_Mount",
+  RestrictSELinuxType = "Restrict_SELinux_Type",
+  RestrictSeccomp = "Restrict_Seccomp",
+  RestrictVolumeTypes = "Restrict_Volume_Types",
 }
 
 export interface Status {

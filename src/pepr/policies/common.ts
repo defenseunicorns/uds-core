@@ -1,6 +1,7 @@
 import { V1SecurityContext, V1Container } from "@kubernetes/client-node";
 import { Capability, PeprMutateRequest, PeprValidateRequest, a } from "pepr";
 import { registerExemptions } from "./exemptions";
+import { Policy } from "../operator/crd";
 
 export type Ctx = {
   name?: string;
@@ -29,8 +30,9 @@ export function containers(request: PeprValidateRequest<a.Pod> | PeprMutateReque
   ];
 }
 
-export function getExemptionsFor(policy: string) {
-  const exemptionsList = JSON.parse(Store.getItem(policy) || "[]");
+// Get registered exemptions from the Pepr Policy Store
+export async function getExemptionsFor(policy: Policy) {
+  const exemptionsList = await JSON.parse(Store.getItem(policy) || "[]");
   return registerExemptions(exemptionsList);
 }
 
