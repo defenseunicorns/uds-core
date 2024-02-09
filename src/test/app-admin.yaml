@@ -47,7 +47,7 @@ spec:
   ports:
     - name: http
       port: 8000
-      podPort: 80
+      targetPort: 80
   selector:
     app: httpbin
 ---

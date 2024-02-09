@@ -136,11 +136,13 @@ const expose = {
         },
       },
       targetPort: {
-        description: "Deprecated: use podPort",
+        description:
+          "The service targetPort. This defaults to port and is only required if the service port is different from the target port (so the NetworkPolicy can be generated correctly).",
         minimum: 1,
         maximum: 65535,
         type: "number",
       },
+      advancedHTTP,
       // Deprecated field
       match: {
         description: "Deprecated: use advancedHTTP.match",
@@ -153,7 +155,6 @@ const expose = {
           type: "string",
         },
       },
-      advancedHTTP,
     },
   } as V1JSONSchemaProps,
 } as V1JSONSchemaProps;
