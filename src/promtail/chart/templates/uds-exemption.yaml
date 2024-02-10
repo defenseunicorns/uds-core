@@ -1,0 +1,24 @@
+apiVersion: uds.dev/v1alpha1
+kind: Exemption
+metadata:
+  name: promtail
+  namespace: uds-policy-exemptions
+spec:
+  exemptions:
+    - policies:
+        - Dissallow_Privileged
+        - Require_Non_Root_user
+        - Restrict_SELinux_Types
+        - Restrict_HostPath_Write
+        - Restrict_Volume_Types
+      matcher:
+        namespace: promtail
+        name: "/^promtail-.*/"
+
+#  Promtail mounts the following hostPaths:
+#  - `/var/log/pods`: to tail pod logs
+#  - `/var/lib/docker/containers`: to tail container logs
+#  - `/run/promtail`: for Promtail's buffering and persistent state
+#  Since logs can have sensitive information, it is better to exclude
+#  Promtail from the policy than add the paths as allowable mounts
+#  https://github.com/grafana/helm-charts/blob/main/charts/promtail/templates/daemonset.yaml#L120

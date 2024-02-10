@@ -1,0 +1,47 @@
+apiVersion: uds.dev/v1alpha1
+kind: Exemption
+metadata:
+  name: neuvector
+  namespace: uds-policy-exemptions
+spec:
+  exemptions:
+    - policies:
+        - Dissallow_Host_Namespaces
+        - Dissalow_Privileged
+        - Require_Non_Root_user
+        - Drop_All_Capabilities
+        - Restrict_HostPath_Write
+        - Restrict_Volume_Types
+      matcher:
+        namespace: neuvector
+        name: "/^neuvector-enforcer-pod.*/"
+    
+    - policies:
+        - Dissallow_Privileged
+        - Require_Non_Root_user
+        - Drop_All_Capabilities
+        - Restrict_HostPath_Write
+        - Restrict_Volume_Types
+      matcher:
+        namespace: neuvector
+        name: "/^neuvector-controller-pod.*/"
+
+    - policies:
+        - Drop_All_Capabilities
+      matcher:
+        namespace: neuvector
+        name: "/^neuvector-prometheus-exporter-pod.*/"
+
+  
+  # Neuvector mounts the following hostPaths as writeable:
+  # `/var/neuvector`: for Neuvector's buffering and persistent state
+  
+   
+  # Neuvector requires HostPath volume types
+  # Neuvector mounts the following hostPaths:
+  # `/var/neuvector`: (as writable) for Neuvector's buffering and persistent state
+  # `/var/run`: communication to docker daemon
+  # `/proc`: monitoring of processes for malicious activity
+  # `/sys/fs/cgroup`: important files the controller wants to monitor for malicious content
+  # https://github.com/neuvector/neuvector-helm/blob/master/charts/core/templates/enforcer-daemonset.yaml#L108
+   
