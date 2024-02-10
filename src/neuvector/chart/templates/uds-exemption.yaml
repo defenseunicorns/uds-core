@@ -6,9 +6,9 @@ metadata:
 spec:
   exemptions:
     - policies:
-        - Dissallow_Host_Namespaces
-        - Dissalow_Privileged
-        - Require_Non_Root_user
+        - Disallow_Host_Namespaces
+        - Disallow_Privileged
+        - Require_Non_Root_User
         - Drop_All_Capabilities
         - Restrict_HostPath_Write
         - Restrict_Volume_Types
@@ -17,8 +17,8 @@ spec:
         name: "/^neuvector-enforcer-pod.*/"
     
     - policies:
-        - Dissallow_Privileged
-        - Require_Non_Root_user
+        - Disallow_Privileged
+        - Require_Non_Root_User
         - Drop_All_Capabilities
         - Restrict_HostPath_Write
         - Restrict_Volume_Types

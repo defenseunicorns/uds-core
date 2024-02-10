@@ -38,10 +38,10 @@ export interface Matcher {
 }
 
 export enum Policy {
+  DisallowHostNamespaces = "Disallow_Host_Namespaces",
   DisallowNodePortServices = "Disallow_NodePort_Services",
   DisallowPrivileged = "Disallow_Privileged",
   DisallowSELinuxOptions = "Disallow_SELinux_Options",
-  DissallowHostNamespaces = "Dissallow_Host_Namespaces",
   DropAllCapabilities = "Drop_All_Capabilities",
   RequireNonRootUser = "Require_Non_Root_User",
   RestrictCapabilities = "Restrict_Capabilities",

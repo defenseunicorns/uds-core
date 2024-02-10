@@ -58,7 +58,7 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
                     items: {
                       type: "string",
                       enum: [
-                        "Dissallow_Host_Namespaces",
+                        "Disallow_Host_Namespaces",
                         "Disallow_NodePort_Services",
                         "Disallow_Privileged",
                         "Disallow_SELinux_Options",

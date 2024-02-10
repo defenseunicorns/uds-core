@@ -16,7 +16,7 @@ import { Policy } from "../operator/crd";
 When(a.Pod)
   .IsCreatedOrUpdated()
   .Validate(async request => {
-    const exemptions = await getExemptionsFor(Policy.DissallowHostNamespaces);
+    const exemptions = await getExemptionsFor(Policy.DisallowHostNamespaces);
     if (exemptions(request)) {
       return request.Approve();
     }
