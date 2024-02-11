@@ -17,19 +17,16 @@ tasks:
     actions:
       - description: "Create the UDS Core Standard Zarf Package"
         cmd: |
-          set -e
           ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress --set FLAVOR=${FLAVOR}
           ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml standard-package --no-progress --set FLAVOR=${FLAVOR}
 
       - description: "Create the UDS Core Istio Only Zarf Package"
         cmd: |
-          set -e
           ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml istio-package --no-progress --set FLAVOR=${FLAVOR}
           ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml istio-package --no-progress --set FLAVOR=${FLAVOR}
 
       - description: "Publish the packages"
         cmd: |
-          set -e
           uds zarf package publish build/zarf-package-core-amd64-${VERSION}.tar.zst ${TARGET_REPO}
 
           # dont publish arm64 for registry1 since IB images are only amd64
@@ -42,19 +39,16 @@ tasks:
     actions:
       - description: "Create the UDS Core Standard Bundle"
         cmd: |
-          set -e
           ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml k3d-standard-bundle --no-progress
           ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-standard-bundle --no-progress
 
       - description: Create the UDS Core Istio Only Bundle
         cmd: |
-          set -e
           ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml k3d-istio-bundle --no-progress
           ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-istio-bundle --no-progress
 
       - description: "Publish the bundles"
         cmd: |
-          set -e
           uds publish bundles/k3d-standard/uds-bundle-k3d-core-demo-arm64-${VERSION}.tar.zst ${TARGET_REPO}/bundles --no-progress
           uds publish bundles/k3d-istio/uds-bundle-k3d-core-istio-dev-arm64-${VERSION}.tar.zst ${TARGET_REPO}/bundles --no-progress
           uds publish bundles/k3d-standard/uds-bundle-k3d-core-demo-amd64-${VERSION}.tar.zst ${TARGET_REPO}/bundles --no-progress
@@ -62,6 +56,5 @@ tasks:
 
       - description: "Tag the latest bundles"
         cmd: |
-          set -e
           pkgPath="ghcr.io/defenseunicorns/packages/uds/bundles/k3d-core-demo"
           uds zarf tools registry copy ${pkgPath}:${VERSION} ${pkgPath}:latest

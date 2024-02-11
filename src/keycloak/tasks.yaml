@@ -10,7 +10,6 @@ tasks:
     actions:
       - description: "Copy theme to Keycloak (must be run from src/keycloak dir)"
         cmd: |
-          set -e
           PV=$(kubectl get pvc keycloak-themes -n keycloak -o jsonpath='{.spec.volumeName}')
           THEME_PATH=$(kubectl get pv $PV -o jsonpath="{.spec.hostPath.path}")
           docker cp theme k3d-uds-server-0:/$THEME_PATH
@@ -18,12 +17,11 @@ tasks:
   - name: debug-istio-traffic
     actions:
       - cmd: istioctl proxy-config log keycloak-0.keycloak --level debug
-      # - cmd: kubectl -n keycloak logs keycloak-0 -c istio-proxy -f
+      - cmd: kubectl -n keycloak logs keycloak-0 -c istio-proxy -f
 
   - name: regenerate-test-pki
     actions:
       - cmd: |
-          set -e
           openssl genrsa -out test.pem 2048
           openssl genrsa -out ca.pem 2048
           openssl req -x509 -new -nodes -key ca.pem -sha256 -days 1825 -out ca.crt -subj "/C=US/O=U.S. Government/OU=DoD/OU=PKI/CN=DOD ID CA-59 FAKE TEST"
