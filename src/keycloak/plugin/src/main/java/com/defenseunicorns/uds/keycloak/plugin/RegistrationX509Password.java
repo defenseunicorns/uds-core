@@ -165,7 +165,7 @@ public class RegistrationX509Password extends RegistrationPassword {
      */
     @Override
     public String getDisplayType() {
-        return "Platform One X509 Password Validation";
+        return "UDS X509 Password Validation";
     }
 
     /**

@@ -97,7 +97,7 @@ public class RegistrationValidation extends RegistrationUserCreation {
 
     @Override
     public String getDisplayType() {
-        return "Platform One Registration Validation";
+        return "UDS Registration Validation";
     }
 
     @Override
