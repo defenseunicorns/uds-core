@@ -1,0 +1,3 @@
+image:
+  repository: registry1.dso.mil/ironbank/istio-ecosystem/authservice
+  tag: "0.5.3"

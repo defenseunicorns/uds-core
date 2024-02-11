@@ -1,0 +1,28 @@
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: authservice
+  namespace: {{ .Release.Namespace }}
+spec:
+  network:
+    allow:
+      # Permit intra-namespace communication for multi-replica setup
+      - direction: Ingress
+        remoteGenerated: IntraNamespace
+
+      - direction: Egress
+        remoteGenerated: IntraNamespace
+
+      # Egress must be allowed to the external facing Keycloak endpoint
+      - direction: Egress
+        remoteGenerated: Anywhere
+        description: "SSO Provider"
+
+      - direction: Ingress
+        podLabels:
+          app.kubernetes.io/name: authservice
+        remoteNamespace: "" # Any namespace could have a protected app
+        remotePodLabels:
+          {{ .Values.selector.key }}: {{ .Values.selector.value }}
+        port: 10003
+        description: "Protected Apps"

@@ -1,0 +1,17 @@
+tasks:
+  - name: validate
+    actions:
+      - description: Validate UDS Package Authservice is reconciled
+        wait:
+          cluster:
+            kind: Package
+            name: authservice
+            namespace: authservice
+            condition: "'{.status.phase}'=Ready"
+      - description: Validate authservice is up
+        wait:
+          cluster:
+            kind: Pod
+            name: "app.kubernetes.io/name=authservice"
+            namespace: authservice
+            condition: Ready
