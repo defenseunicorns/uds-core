@@ -19,10 +19,10 @@ spec:
                 exact: /
             - name: redirect-admin
               uri:
-                prefix: /admin/
+                prefix: /admin
             - name: redirect-master-realm
               uri:
-                prefix: /realms/master/
+                prefix: /realms/master
             - name: redirect-metrics
               uri:
                 prefix: /metrics
