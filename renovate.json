@@ -8,6 +8,7 @@
   "forkProcessing": "enabled",
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "branchConcurrentLimit": 0,
+  "labels": ["renovate"],
   "prConcurrentLimit": 0,
   "prHourlyLimit": 0,
   "rebaseStalePrs": true,

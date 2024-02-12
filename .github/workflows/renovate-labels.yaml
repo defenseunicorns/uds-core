@@ -1,0 +1,23 @@
+name: Renovate Labels
+
+on:
+  pull_request:
+    branches: [main]
+    types: [reopened, synchronize]
+
+permissions:
+  contents: read
+
+jobs:
+  remove_labels:
+    if: ${{ github.actor == 'renovate[bot]' }}
+    runs-on: ubuntu-latest
+    name: Remove Labels
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Remove Labels
+        env:
+          GH_TOKEN: ${{ github.token }}
+        # If a Renovate PR is updated, remove the "waiting" labels so that it is re-evaluated
+        run: gh pr edit --add-label "renovate" --remove-label "waiting on ironbank,waiting on helm chart" ${{ github.event.pull_request.number }}
