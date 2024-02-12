@@ -1,10 +1,8 @@
 kind: UDSBundle
 metadata:
-  name: k3d-core-single
-  description: A UDS bundle for deploying a single package from UDS Core on a development cluster
-  # x-release-please-start-version
-  version: "0.11.0"
-  # x-release-please-end
+  name: k3d-core-test
+  description: A UDS bundle for deploying uds-k3d-dev for CI/test
+  version: test
 
 packages:
   - name: uds-k3d-dev
@@ -30,12 +28,3 @@ packages:
     repository: ghcr.io/defenseunicorns/packages/init
     # renovate: datasource=github-tags depName=defenseunicorns/zarf versioning=semver
     ref: v0.32.2
-
-  # Pepr the world
-  - name: pepr-uds-core
-    ref:  0.3.0
-    path: ../../build/
-
-  - name: uds-core-single
-    ref: dev
-    path: ../../build/
