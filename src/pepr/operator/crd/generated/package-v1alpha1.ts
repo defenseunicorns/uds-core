@@ -26,6 +26,10 @@ export interface Network {
    * Expose a service on an Istio Gateway
    */
   expose?: Expose[];
+  /**
+   * Create SSO client configurations
+   */
+  sso?: Sso[];
 }
 
 export interface Allow {
@@ -409,6 +413,63 @@ export interface FluffyURI {
    * RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax).
    */
   regex?: string;
+}
+
+export interface Sso {
+  /**
+   * Always list this client in the Account UI, even if the user does not have an active
+   * session.
+   */
+  alwaysDisplayInConsole?: boolean;
+  /**
+   * Default URL to use when the auth server needs to redirect or link back to the client.
+   */
+  baseUrl?: string;
+  /**
+   * The client authenticator type
+   */
+  clientAuthenticatorType?: ClientAuthenticatorType;
+  /**
+   * The client identifier registered with the identity provider.
+   */
+  clientId: string;
+  /**
+   * Default client scopes
+   */
+  defaultClientScopes?: string[];
+  /**
+   * A description for the client, can be a URL to an image to replace the login logo
+   */
+  description?: string;
+  /**
+   * Whether the SSO client is enabled
+   */
+  enabled?: boolean;
+  /**
+   * If true, the client will generate a new Auth Service client as well
+   */
+  isAuthSvcClient?: boolean;
+  /**
+   * Specifies display name of the client
+   */
+  name: string;
+  /**
+   * Root URL appended to relative URLs
+   */
+  rootUrl?: string;
+  /**
+   * Allowed CORS origins. To permit all origins of Valid Redirect URIs, add '+'. This does
+   * not include the '*' wildcard though. To permit all origins, explicitly add '*'.
+   */
+  webOrigins?: string[];
+}
+
+/**
+ * The client authenticator type
+ */
+export enum ClientAuthenticatorType {
+  ClientJwt = "client-jwt",
+  ClientSecret = "client-secret",
 }
 
 export interface Status {

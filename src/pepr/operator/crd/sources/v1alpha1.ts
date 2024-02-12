@@ -159,6 +159,75 @@ const expose = {
   } as V1JSONSchemaProps,
 } as V1JSONSchemaProps;
 
+const sso = {
+  description: "Create SSO client configurations",
+  type: "array",
+  items: {
+    type: "object",
+    required: ["clientId", "name"],
+    properties: {
+      isAuthSvcClient: {
+        description: "If true, the client will generate a new Auth Service client as well",
+        type: "boolean",
+        default: false,
+      },
+      clientId: {
+        description: "The client identifier registered with the identity provider.",
+        type: "string",
+      },
+      name: {
+        description: "Specifies display name of the client",
+        type: "string",
+      },
+      description: {
+        description:
+          "A description for the client, can be a URL to an image to replace the login logo",
+        type: "string",
+      },
+      rootUrl: {
+        description: "Root URL appended to relative URLs",
+        type: "string",
+      },
+      baseUrl: {
+        description:
+          "Default URL to use when the auth server needs to redirect or link back to the client.",
+        type: "string",
+      },
+      webOrigins: {
+        description:
+          "Allowed CORS origins. To permit all origins of Valid Redirect URIs, add '+'. This does not include the '*' wildcard though. To permit all origins, explicitly add '*'.",
+        type: "array",
+        items: {
+          type: "string",
+        },
+      },
+      enabled: {
+        description: "Whether the SSO client is enabled",
+        type: "boolean",
+        default: true,
+      },
+      alwaysDisplayInConsole: {
+        description:
+          "Always list this client in the Account UI, even if the user does not have an active session.",
+        type: "boolean",
+        default: false,
+      },
+      clientAuthenticatorType: {
+        description: "The client authenticator type",
+        type: "string",
+        enum: ["client-secret", "client-jwt"],
+      },
+      defaultClientScopes: {
+        description: "Default client scopes",
+        type: "array",
+        items: {
+          type: "string",
+        },
+      },
+    },
+  } as V1JSONSchemaProps,
+} as V1JSONSchemaProps;
+
 export const v1alpha1: V1CustomResourceDefinitionVersion = {
   name: "v1alpha1",
   served: true,
@@ -226,6 +295,7 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
               properties: {
                 expose,
                 allow,
+                sso,
               },
             },
           },
