@@ -1,0 +1,133 @@
+# -- When setting this above 1, a redis configuration is required.
+replicaCount: 1
+
+image:
+  repository: ghcr.io/istio-ecosystem/authservice/authservice
+  pullPolicy: IfNotPresent
+  # -- Overrides the image tag whose default is the chart appVersion.
+  tag: ""
+
+# -- If true will allow the requests even no filter chain match is found
+allow_unmatched_requests: false
+
+# -- Extra Ruleset for AuthorizationPolicy CUSTOM action to forward to Authservice.
+# To enable `allow_unmatched_requests` must be `false`. These custom rules mean that only these requests
+# will be routed and will break default UDS Core setup for `prometheus/alertmanager/tempo` unless added.
+# Path specific Operations are not supported, it is recommended to use only hosts, notHosts, & method operations.
+# See reference: https://istio.io/latest/docs/reference/config/security/authorization-policy/
+custom_authpolicy_rules:
+  - when:
+      - key: request.headers[authorization]
+        notValues:
+          - "*"
+
+global:
+  # -- Default client_id to be used in each chain
+  client_id: "global_id"
+  # -- Default client_secret to be used in each chain
+  client_secret: "global_secret"
+  match:
+    # -- Header to match.  The value ":authority" is used to match the requested hostname
+    header: ":authority"
+    # -- value matches the start of the header value defined above
+    prefix: "uds"
+  # -- Logout URL for the client
+  logout_path: "/globallogout"
+  # -- Logout Redirect URI for the client
+  logout_redirect_uri: ""
+  absolute_session_timeout: 0
+  idle_session_timeout: 0
+  # -- CA that signed the OIDC provider cert. Passed through as a Helm multi-line string.
+  certificate_authority: ""
+
+  # -- URI for Redis instance used for OIDC token storage/retrieval. This may also be specified per-chain, example: tcp://redis:6379/
+  redis_server_uri: ""
+
+  oidc:
+    # -- OpenID Connect hostname.  Assumption of Keycloak based on URL construction
+    host: login.uds.dev
+    # -- Realm for OpenID Connect
+    realm: doug
+
+  # -- JWKS, a default jwks_uri is computed if not specified. Must be formatted as an escaped JSON string.
+  jwks: ""
+
+  # -- Request interval to check whether new JWKs are available.
+  periodic_fetch_interval_sec: 60
+
+  # -- If set to true, the verification of the destination certificate will be skipped when making a request to the JWKs URI and the token endpoint. This option is useful when you want to use a self-signed certificate for testing purposes, but basically should not be set to true in any other cases.
+  skip_verify_peer_cert: false
+
+# -- Individual chains.  Must have a `name` value and a `callback_uri`, full example of all fields provided below.
+# NOTE: if using "match" can only specify `prefix` OR `equality`, not both
+chains:
+  # Default Filter to prevent errors on launch
+  local:
+    match:
+      header: ":local"
+      prefix: "localhost"
+    client_id: local_id
+    client_secret: local_secret
+    callback_uri: https://localhost/login
+    logout_path: "/local"
+  # example_chain:
+  #   match:
+  #     header: ":authority"
+  #     prefix: "localhost"
+  #     equality: "localhost.localdomain"
+  #   client_id: my_uds_app
+  #   client_secret: secret_value
+  #   callback_uri: https://myapp.uds.dev/login
+  #   cookie_name_prefix: differentThanFull # Override the cookie name prefix in case you need it to be something else (ex. two apps share the same cookie)
+  #   logout:
+  #     path: "/logout"
+  #   absolute_session_timeout: timeout_value
+  #   idle_session_timeout: timeout_value
+  #   jwks_uri: https://myapp.uds.dev/jwks # Override if this client is on a different realm
+  #   oidc:
+  #     host: local_oidc_host
+  #     realm: local_oidc_realm
+  #   periodic_fetch_interval_sec: 60
+  #   scopes:
+  #     - additionalScope1
+  #     - additionalScope2
+
+nameOverride: "authservice"
+
+podAnnotations: {}
+
+podSecurityContext: {}
+
+securityContext: {}
+
+resources: {}
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# -- Log level for the deployment
+config:
+  logLevel: trace
+
+# -- Label to determine what workloads (pods/deployments) should be protected by authservice.
+selector:
+  key: protect
+  value: keycloak
+
+# -- Values to bypass OIDC chains in favor or using istio authorizationpolicies.security.istio.io
+# and requestauthentications.security.istio.io for certain endpoints.
+trigger_rules: []
+# - excluded_paths:
+#     - exact: /api/healthcheck
+#   included_paths:
+#     - prefix: /
+# See reference: https://github.com/istio-ecosystem/authservice/blob/master/docs/README.md
