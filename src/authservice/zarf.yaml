@@ -1,11 +1,32 @@
 kind: ZarfPackageConfig
 metadata:
   name: uds-core-authservice
-  description: "Example description"
+  description: "UDS Core Authservice"
+  url: https://github.com/istio-ecosystem/authservice
 
 components:
-  - name: test
-    actions:
-      onCreate:
-        after:
-          - cmd: echo "What can Doug do for you?"
+  - name: authservice
+    required: true
+    only:
+      flavor: upstream
+    import:
+      path: common
+    charts:
+      - name: authservice
+        valuesFiles:
+          - values/upstream-values.yaml
+    images:
+      - ghcr.io/istio-ecosystem/authservice/authservice:0.5.3
+
+  - name: authservice
+    required: true
+    only:
+      flavor: registry1
+    import:
+      path: common
+    charts:
+      - name: authservice
+        valuesFiles:
+          - values/registry1-values.yaml
+    images:
+      - registry1.dso.mil/ironbank/istio-ecosystem/authservice:0.5.3
