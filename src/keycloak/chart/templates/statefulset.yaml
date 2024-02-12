@@ -33,6 +33,7 @@ spec:
           args:
             {{- if .Values.devMode }}
             - "start-dev"
+            # Do not cache themes in dev mode to support hot-reloading
             - "--spi-theme-static-max-age=-1"
             - "--spi-theme-cache-themes=false"
             - "--spi-theme-cache-templates=false"
@@ -41,6 +42,8 @@ spec:
             # Needed for nginx provider
             - "--auto-build"
             {{- end }}
+            # This will only import the realm if it does not exist
+            - "--import-realm"
             - "--features=preview"
           env:
             # Common configuration
@@ -61,7 +64,7 @@ spec:
             - name: KC_HOSTNAME_STRICT_HTTPS
               value: "false"
             
-            # Set the proxy type to edge    
+            # Set the proxy type to edge to avoid weird Keycloak behavior
             - name: KC_PROXY
               value: edge
             
@@ -71,7 +74,7 @@ spec:
             # - name: KC_SPI_TRUSTSTORE_FILE_PASSWORD
             #   value: changeit
             
-            ## Activate nginx provider
+            ## Activate the nginx provider
             - name: KC_SPI_X509CERT_LOOKUP_PROVIDER
               value: nginx
             # Set nginx provider header name
@@ -159,10 +162,15 @@ spec:
             initialDelaySeconds: 10
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-          {{- if .Values.devMode }}
           volumeMounts:
-            - name: data
-              mountPath: /opt/keycloak/data
+            - name: uds-auth-extension
+              mountPath: /opt/keycloak/providers/uds-auth-extension.jar
+              subPath: uds-auth-extension.jar
+            - name: realm-import
+              mountPath: /opt/keycloak/data/import
+          {{- if .Values.devMode }}
+            - name: dev-db
+              mountPath: /opt/keycloak/data/h2
             - name: themes
               mountPath: /opt/keycloak/themes
           {{- end }}
@@ -188,11 +196,17 @@ spec:
       priorityClassName: {{ . }}
       {{- end }}
       terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
-      {{- if .Values.devMode }}
       volumes:
-        - name: data
+        - name: uds-auth-extension
+          configMap:
+            name: {{ include "keycloak.fullname" . }}-uds-auth-extension
+        - name: realm-import
+          secret:
+            secretName: {{ include "keycloak.fullname" . }}-realm-import
+      {{- if .Values.devMode }}
+        - name: dev-db
           persistentVolumeClaim:
-            claimName: {{ include "keycloak.fullname" . }}-data
+            claimName: {{ include "keycloak.fullname" . }}-dev-db
         - name: themes
           persistentVolumeClaim:
             claimName: {{ include "keycloak.fullname" . }}-themes
