@@ -16,26 +16,3 @@ tasks:
       - description: "Initialize the cluster with Zarf"
         # renovate: datasource=github-tags depName=defenseunicorns/init versioning=semver
         cmd: "uds zarf package deploy oci://defenseunicorns/init:v0.32.1 --confirm"
-
-  - name: registry-login
-    inputs:
-      registry:
-        default: registry1.dso.mil
-      registry-username:
-      registry-password:
-      registry-retry-interval:
-        default: 5
-    actions:
-      - cmd: |
-          echo "$INPUT_REGISTRY_PASSWORD" | uds zarf tools registry login \
-            --username "${INPUT_REGISTRY_USERNAME}" \
-            --password-stdin \
-            "${INPUT_REGISTRY}" \
-            >/dev/null
-
-          if [ "$INPUT_REGISTRY" = "registry1.dso.mil" ]; then
-             uds zarf tools registry digest \
-               ${REGISTRY1_TEST_IMAGE} \
-               >/dev/null || (sleep "${INPUT_REGISTRY_RETRY_INTERVAL}"; exit 1)
-          fi
-        maxRetries: 10
