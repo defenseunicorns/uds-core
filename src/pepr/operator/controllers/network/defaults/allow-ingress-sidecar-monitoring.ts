@@ -6,7 +6,7 @@ export const allowIngressSidecarMonitoring = (namespace: string) =>
     direction: Direction.Ingress,
     description: "Sidecar monitoring",
     remoteNamespace: "monitoring",
-    remotePodLabels: {
+    remoteSelector: {
       app: "prometheus",
     },
     port: 15020,

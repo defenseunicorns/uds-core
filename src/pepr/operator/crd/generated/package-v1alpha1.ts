@@ -42,8 +42,7 @@ export interface Allow {
    */
   labels?: { [key: string]: string };
   /**
-   * Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all
-   * pods in the namespace
+   * Deprecated: use selector
    */
   podLabels?: { [key: string]: string };
   /**
@@ -64,9 +63,18 @@ export interface Allow {
    */
   remoteNamespace?: string;
   /**
-   * The remote pod selector labels to allow traffic to/from
+   * Deprecated: use remoteSelector
    */
   remotePodLabels?: { [key: string]: string };
+  /**
+   * The remote pod selector labels to allow traffic to/from
+   */
+  remoteSelector?: { [key: string]: string };
+  /**
+   * Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all
+   * pods in the namespace
+   */
+  selector?: { [key: string]: string };
 }
 
 /**
@@ -89,6 +97,10 @@ export enum RemoteGenerated {
 
 export interface Expose {
   /**
+   * Advanced HTTP settings for the route.
+   */
+  advancedHTTP?: AdvancedHTTP;
+  /**
    * A description of this expose entry, this will become part of the VirtualService name
    */
   description?: string;
@@ -104,26 +116,245 @@ export interface Expose {
    * Match the incoming request based on custom rules. Not permitted when using the
    * passthrough gateway.
    */
-  match?: Match[];
+  match?: ExposeMatch[];
+  /**
+   * Deprecated: use selector
+   */
+  podLabels?: { [key: string]: string };
+  /**
+   * The port number to expose
+   */
+  port?: number;
   /**
    * Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all
    * pods in the namespace
    */
-  podLabels: { [key: string]: string };
-  /**
-   * The port number to expose
-   */
-  port: number;
+  selector?: { [key: string]: string };
   /**
    * The name of the service to expose
    */
-  service: string;
+  service?: string;
   /**
-   * The service targetPort (pod port). This defaults to port and is only required if the
-   * service port is different from the pod port (so the NetworkPolicy can be generated
-   * correctly).
+   * Deprecated: use podPort
    */
   targetPort?: number;
+}
+
+/**
+ * Advanced HTTP settings for the route.
+ */
+export interface AdvancedHTTP {
+  /**
+   * Cross-Origin Resource Sharing policy (CORS).
+   */
+  corsPolicy?: CorsPolicy;
+  /**
+   * A HTTP rule can either return a direct_response, redirect or forward (default) traffic.
+   */
+  directResponse?: DirectResponse;
+  headers?: Headers;
+  /**
+   * Match the incoming request based on custom rules. Not permitted when using the
+   * passthrough gateway.
+   */
+  match?: AdvancedHTTPMatch[];
+  /**
+   * Retry policy for HTTP requests.
+   */
+  retries?: Retries;
+  /**
+   * Rewrite HTTP URIs and Authority headers.
+   */
+  rewrite?: Rewrite;
+  /**
+   * Timeout for HTTP requests, default is disabled.
+   */
+  timeout?: string;
+  /**
+   * Weight specifies the relative proportion of traffic to be forwarded to the destination.
+   */
+  weight?: number;
+}
+
+/**
+ * Cross-Origin Resource Sharing policy (CORS).
+ */
+export interface CorsPolicy {
+  /**
+   * Indicates whether the caller is allowed to send the actual request (not the preflight)
+   * using credentials.
+   */
+  allowCredentials?: boolean;
+  /**
+   * List of HTTP headers that can be used when requesting the resource.
+   */
+  allowHeaders?: string[];
+  /**
+   * List of HTTP methods allowed to access the resource.
+   */
+  allowMethods?: string[];
+  allowOrigin?: string[];
+  /**
+   * String patterns that match allowed origins.
+   */
+  allowOrigins?: AllowOrigin[];
+  /**
+   * A list of HTTP headers that the browsers are allowed to access.
+   */
+  exposeHeaders?: string[];
+  /**
+   * Specifies how long the results of a preflight request can be cached.
+   */
+  maxAge?: string;
+}
+
+export interface AllowOrigin {
+  exact?: string;
+  prefix?: string;
+  /**
+   * RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax).
+   */
+  regex?: string;
+}
+
+/**
+ * A HTTP rule can either return a direct_response, redirect or forward (default) traffic.
+ */
+export interface DirectResponse {
+  /**
+   * Specifies the content of the response body.
+   */
+  body?: Body;
+  /**
+   * Specifies the HTTP response status to be returned.
+   */
+  status: number;
+}
+
+/**
+ * Specifies the content of the response body.
+ */
+export interface Body {
+  /**
+   * response body as base64 encoded bytes.
+   */
+  bytes?: string;
+  string?: string;
+}
+
+export interface Headers {
+  request?: Request;
+  response?: Response;
+}
+
+export interface Request {
+  add?: { [key: string]: string };
+  remove?: string[];
+  set?: { [key: string]: string };
+}
+
+export interface Response {
+  add?: { [key: string]: string };
+  remove?: string[];
+  set?: { [key: string]: string };
+}
+
+export interface AdvancedHTTPMatch {
+  /**
+   * Flag to specify whether the URI matching should be case-insensitive.
+   */
+  ignoreUriCase?: boolean;
+  method?: PurpleMethod;
+  /**
+   * The name assigned to a match.
+   */
+  name: string;
+  /**
+   * Query parameters for matching.
+   */
+  queryParams?: { [key: string]: PurpleQueryParam };
+  uri?: PurpleURI;
+}
+
+export interface PurpleMethod {
+  exact?: string;
+  prefix?: string;
+  /**
+   * RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax).
+   */
+  regex?: string;
+}
+
+export interface PurpleQueryParam {
+  exact?: string;
+  prefix?: string;
+  /**
+   * RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax).
+   */
+  regex?: string;
+}
+
+export interface PurpleURI {
+  exact?: string;
+  prefix?: string;
+  /**
+   * RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax).
+   */
+  regex?: string;
+}
+
+/**
+ * Retry policy for HTTP requests.
+ */
+export interface Retries {
+  /**
+   * Number of retries to be allowed for a given request.
+   */
+  attempts?: number;
+  /**
+   * Timeout per attempt for a given request, including the initial call and any retries.
+   */
+  perTryTimeout?: string;
+  /**
+   * Specifies the conditions under which retry takes place.
+   */
+  retryOn?: string;
+  /**
+   * Flag to specify whether the retries should retry to other localities.
+   */
+  retryRemoteLocalities?: boolean;
+}
+
+/**
+ * Rewrite HTTP URIs and Authority headers.
+ */
+export interface Rewrite {
+  /**
+   * rewrite the Authority/Host header with this value.
+   */
+  authority?: string;
+  /**
+   * rewrite the path (or the prefix) portion of the URI with this value.
+   */
+  uri?: string;
+  /**
+   * rewrite the path portion of the URI with the specified regex.
+   */
+  uriRegexRewrite?: URIRegexRewrite;
+}
+
+/**
+ * rewrite the path portion of the URI with the specified regex.
+ */
+export interface URIRegexRewrite {
+  /**
+   * RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax).
+   */
+  match?: string;
+  /**
+   * The string that should replace into matching portions of original URI.
+   */
+  rewrite?: string;
 }
 
 /**
@@ -135,12 +366,12 @@ export enum Gateway {
   Tenant = "tenant",
 }
 
-export interface Match {
+export interface ExposeMatch {
   /**
    * Flag to specify whether the URI matching should be case-insensitive.
    */
   ignoreUriCase?: boolean;
-  method?: Method;
+  method?: FluffyMethod;
   /**
    * The name assigned to a match.
    */
@@ -148,11 +379,11 @@ export interface Match {
   /**
    * Query parameters for matching.
    */
-  queryParams?: { [key: string]: QueryParam };
-  uri?: URI;
+  queryParams?: { [key: string]: FluffyQueryParam };
+  uri?: FluffyURI;
 }
 
-export interface Method {
+export interface FluffyMethod {
   exact?: string;
   prefix?: string;
   /**
@@ -161,7 +392,7 @@ export interface Method {
   regex?: string;
 }
 
-export interface QueryParam {
+export interface FluffyQueryParam {
   exact?: string;
   prefix?: string;
   /**
@@ -170,7 +401,7 @@ export interface QueryParam {
   regex?: string;
 }
 
-export interface URI {
+export interface FluffyURI {
   exact?: string;
   prefix?: string;
   /**

@@ -6,7 +6,7 @@ export const allowEgressDNS = (namespace: string) => {
     direction: Direction.Egress,
     description: "DNS lookup via CoreDNS",
     remoteNamespace: "kube-system",
-    remotePodLabels: {
+    remoteSelector: {
       "k8s-app": "kube-dns",
     },
     port: 53,

@@ -53,7 +53,7 @@ If you want to try out UDS Core, you can use the [k3d-core-demo bundle](./bundle
 <!-- x-release-please-start-version -->
 
 ```bash
-uds deploy k3d-core-demo:0.11.0
+uds deploy k3d-core-demo:0.12.0
 ```
 
 <!-- x-release-please-end -->
@@ -65,14 +65,14 @@ In addition to the demo bundle, a [k3d-core-istio-dev bundle](./bundles/k3d-isti
 <!-- x-release-please-start-version -->
 
 ```bash
-uds deploy k3d-core-istio-dev:0.11.0
+uds deploy k3d-core-istio-dev:0.12.0
 ```
 
 <!-- x-release-please-end -->
 
 #### Developing UDS Core
 
-UDS Core development leverages the `zarf dev deploy` command. For convenience, a UDS Task is provided to setup the environment. You'll need to have [NodeJS](https://nodejs.org/en/download/) 20 or later installed to continue. Here's an example of a flow developing the [metrics-server package](./src/metrics-server/README.md):
+UDS Core development leverages the `uds zarf dev deploy` command. For convenience, a UDS Task is provided to setup the environment. You'll need to have [NodeJS](https://nodejs.org/en/download/) 20 or later installed to continue. Here's an example of a flow developing the [metrics-server package](./src/metrics-server/README.md):
 
 ```bash
 # Create the dev environment

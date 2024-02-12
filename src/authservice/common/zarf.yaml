@@ -1,0 +1,14 @@
+kind: ZarfPackageConfig
+metadata:
+  name: uds-core-authservice-common
+  description: "UDS Core Authservice Common"
+  url: https://github.com/istio-ecosystem/authservice
+
+components:
+  - name: authservice
+    required: true
+    charts:
+      - name: authservice
+        localPath: ../chart
+        version: 0.5.3
+        namespace: authservice
