@@ -85,7 +85,7 @@ jobs:
         if: ${{ failure() }}
         run: |
           echo "::group::kubectl get events"
-          kubectl get events -A
+          kubectl get events -A --sort-by='.lastTimestamp'
           echo "::endgroup::"
 
       - name: Save logs
