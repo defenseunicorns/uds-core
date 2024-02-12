@@ -47,15 +47,22 @@ ${msg("loginTitle",(realm.displayName!''))}
                         <div class="col-sm-1">&nbsp;</div>
                         <div class="col-sm-6 my-auto">
                             <#if client?? && client.name?has_content>
-                                <h2 class="client-unique-name">
-${client.name?no_esc}
-</h2>
+                                <#-- Check if the client name matches the specific entry -->
+                                <#if client.name == "${" + "client_account-console" + "}">
+                                    <h2 class="client-unique-name">
+                                        My Account
+                                    </h2>
+                                <#else>
+                                    <h2 class="client-unique-name">
+                                        ${client.name?no_esc}
+                                    </h2>
+                                </#if>
                             <#else>
                                 <h2>
-${kcSanitize(msg("loginTitleHtml",(realm.displayNameHtml!'')))?no_esc}
-</h2>
+                                    ${kcSanitize(msg("loginTitleHtml",(realm.displayNameHtml!'')))?no_esc}
+                                </h2>
                             </#if>
-                        </div>
+                        </div>                        
                     </div>
                     <br>
                     <div class="card-body">
