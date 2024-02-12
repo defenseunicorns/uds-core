@@ -85,6 +85,10 @@ jobs:
           kubectl get events -A --sort-by='.lastTimestamp'
           echo "::endgroup::"
 
+          echo "::group::kubectl get pending pods"
+          kubectl get pods -A | grep -i Pending | awk '{print "kubectl describe pod -n " $1 " " $2}' | bash
+          echo "::endgroup::"
+
       - name: Save logs
         if: always()
         uses: ./.github/actions/save-logs
