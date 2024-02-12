@@ -4,6 +4,14 @@ import { Policy, UDSExemption } from "../../crd";
 
 type Matcher = { name: string; namespace: string };
 
+// Remove leading and trailing / if added by user to matcher name
+function removeRegexSlash(name: string) {
+  if (name[0] === "/" && name[name.length - 1] === "/") {
+    name = name.slice(1, name.length - 1);
+  }
+  return name;
+}
+
 // *** Using setItemAndWait() ***
 
 // Add Exemptions to Pepr store as "policy": "[{matcher}]"
@@ -57,10 +65,18 @@ export async function addExemptions(exmpt: UDSExemption) {
   Log.debug(`Time to complete exemption write: ${t1 - t0}`);
 }
 
-// Remove leading and trailing / if added by user to matcher name
-function removeRegexSlash(name: string) {
-  if (name[0] === "/" && name[name.length - 1] === "/") {
-    name = name.slice(1, name.length - 1);
+export async function removeExemptions(exmpt: UDSExemption) {
+  const { Store } = policies;
+
+  if (exmpt.spec && exmpt.spec.exemptions) {
+    for (const e of exmpt.spec.exemptions) {
+      const name = removeRegexSlash(e.matcher.name);
+      for (const p of e.policies) {
+        const exemptionList: Matcher[] = JSON.parse(Store.getItem(p) || "[]");
+        //filter matchers, returning those that do not match current exemption.matcher.name
+        const filteredList = exemptionList.filter((m) => m.name !== name)
+        await Store.setItemAndWait(p, JSON.stringify(filteredList));
+      }
+    }
   }
-  return name;
 }

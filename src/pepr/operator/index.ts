@@ -9,7 +9,7 @@ import { Queue } from "./enqueue";
 
 import { Log } from "pepr";
 import { updateStatus } from "./reconciler";
-import { addExemptions } from "./controllers/exemptions/exemptions";
+import { addExemptions, removeExemptions } from "./controllers/exemptions/exemptions";
 import { exmptValidator } from "./crd/exmpt-validator";
 
 export const operator = new Capability({
@@ -45,8 +45,8 @@ When(UDSPackage)
   .Watch(pkg => queue.enqueue(pkg));
 
 // (TODO) remove exemptions on delete of CR
-// Watch for changes to the UDSExemption CRD and cleanup the namespace mutations
-// When(UDSExemption).IsDeleted().Watch(cleanupNamespace);
+//Watch for changes to the UDSExemption CRD and cleanup the namespace mutations
+When(UDSExemption).IsDeleted().Watch(removeExemptions);
 
 // todo validate
 When(UDSExemption)
