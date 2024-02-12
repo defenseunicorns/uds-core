@@ -14,7 +14,7 @@ spec:
         - Restrict_Volume_Types
       matcher:
         namespace: neuvector
-        name: "/^neuvector-enforcer-pod.*/"
+        name: "^neuvector-enforcer-pod.*"
     
     - policies:
         - Disallow_Privileged
@@ -24,13 +24,13 @@ spec:
         - Restrict_Volume_Types
       matcher:
         namespace: neuvector
-        name: "/^neuvector-controller-pod.*/"
+        name: "^neuvector-controller-pod.*"
 
     - policies:
         - Drop_All_Capabilities
       matcher:
         namespace: neuvector
-        name: "/^neuvector-prometheus-exporter-pod.*/"
+        name: "^neuvector-prometheus-exporter-pod.*"
 
   
   # Neuvector mounts the following hostPaths as writeable:

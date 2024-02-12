@@ -4,7 +4,7 @@ import { UDSConfig } from "../config";
 import { enableInjection } from "./controllers/istio/injection";
 import { virtualService } from "./controllers/istio/virtual-service";
 import { networkPolicies } from "./controllers/network/policies";
-import { Phase, Status, UDSCR, UDSPackage } from "./crd";
+import { Phase, Status, UDSCR, UDSExemption, UDSPackage } from "./crd";
 import { VirtualService } from "./crd/generated/istio/virtualservice-v1beta1";
 import { migrate } from "./crd/migrate";
 
@@ -72,7 +72,8 @@ export async function reconciler(pkg: UDSPackage) {
  * @param status The new status
  */
 export async function updateStatus(cr: UDSCR, status: Status) {
-  await K8s(UDSPackage).PatchStatus({
+  const model = cr.kind === "Package" ? UDSPackage : UDSExemption;
+  await K8s(model).PatchStatus({
     metadata: {
       name: cr.metadata!.name,
       namespace: cr.metadata!.namespace,

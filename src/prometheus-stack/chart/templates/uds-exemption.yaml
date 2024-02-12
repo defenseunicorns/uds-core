@@ -10,12 +10,12 @@ spec:
         - Restrict_Volume_Types
       matcher:
         namespace: monitoring
-        name: "/^prometheus-kube-prometheus-stack-prometheus-.*/"
+        name: "^prometheus-kube-prometheus-stack-prometheus-.*"
       
     - policies:
         - Restrict_Volume_Types
       matcher:
         namespace: monitoring
-        name: "/^kube-prometheus-stack-prometheus-node-exporter-.*/"
+        name: "^kube-prometheus-stack-prometheus-node-exporter-.*"
 
 

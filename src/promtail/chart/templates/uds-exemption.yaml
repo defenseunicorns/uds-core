@@ -13,7 +13,7 @@ spec:
         - Restrict_Volume_Types
       matcher:
         namespace: promtail
-        name: "/^promtail-.*/"
+        name: "^promtail-.*"
 
 #  Promtail mounts the following hostPaths:
 #  - `/var/log/pods`: to tail pod logs

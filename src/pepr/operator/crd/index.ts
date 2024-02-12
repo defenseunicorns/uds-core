@@ -1,12 +1,7 @@
 import { V1OwnerReference } from "@kubernetes/client-node";
-// import { GenericKind } from "kubernetes-fluent-client";
+import { GenericKind } from "kubernetes-fluent-client";
 
-import { Package as UDSPackage } from "./generated/package-v1alpha1";
-import { Exemption as UDSExemption } from "./generated/exemption-v1alpha1";
-
-// export interface UDSCR extends GenericKind {};
-
-export type UDSCR = UDSPackage | UDSExemption;
+export interface UDSCR extends GenericKind {}
 
 export {
   Allow,
