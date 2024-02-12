@@ -6,6 +6,7 @@ import { virtualService } from "./controllers/istio/virtual-service";
 import { networkPolicies } from "./controllers/network/policies";
 import { Phase, Status, UDSPackage } from "./crd";
 import { VirtualService } from "./crd/generated/istio/virtualservice-v1beta1";
+import { migrate } from "./crd/migrate";
 
 /**
  * The reconciler is called from the queue and is responsible for reconciling the state of the package
@@ -14,6 +15,8 @@ import { VirtualService } from "./crd/generated/istio/virtualservice-v1beta1";
  * @param pkg the package to reconcile
  */
 export async function reconciler(pkg: UDSPackage) {
+  migrate(pkg);
+
   if (!pkg.metadata?.namespace) {
     Log.error(pkg, `Invalid Package definition`);
     return;

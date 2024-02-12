@@ -20,7 +20,7 @@ spec:
   network:
     expose:
       - service: grafana
-        podLabels:
+        selector:
           app.kubernetes.io/name: grafana
         host: grafana
         gateway: admin
@@ -29,13 +29,13 @@ spec:
 
     allow:
       - direction: Egress
-        podLabels:
+        selector:
           app.kubernetes.io/name: grafana
         remoteGenerated: Anywhere
 
       - direction: Egress
         remoteNamespace: tempo
-        remotePodLabels:
+        remoteSelector:
           app.kubernetes.io/name: tempo
         port: 9411
         description: "Tempo"

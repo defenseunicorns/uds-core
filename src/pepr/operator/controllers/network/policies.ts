@@ -35,20 +35,21 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
 
   // Generate NetworkPolicies for any VirtualServices that are generated
   const exposeList = pkg.spec?.network?.expose ?? [];
-  for (const expose of exposeList) {
-    const { gateway = Gateway.Tenant, port, podLabels, targetPort } = expose;
+  // Iterate over each exposed service, excluding directResponse services
+  for (const expose of exposeList.filter(exp => !exp.advancedHTTP?.directResponse)) {
+    const { gateway = Gateway.Tenant, port, selector = {}, targetPort } = expose;
 
     // Create the NetworkPolicy for the VirtualService
     const policy: Allow = {
       direction: Direction.Ingress,
-      podLabels,
+      selector,
       remoteNamespace: `istio-${gateway}-gateway`,
-      remotePodLabels: {
+      remoteSelector: {
         app: `${gateway}-ingressgateway`,
       },
       // Use the same port as the VirtualService if targetPort is not set
       port: targetPort ?? port,
-      description: `${Object.values(podLabels)} Istio ${gateway} gateway`,
+      description: `${Object.values(selector)} Istio ${gateway} gateway`,
     };
 
     // Generate the policy

@@ -1,0 +1,41 @@
+# Authservice is non-functional without Istio/AuthorizationPolicy but we wrap this in a conditional to handle standalone testing
+{{- if .Capabilities.APIVersions.Has "security.istio.io/v1beta1" }}
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: authservice
+  namespace: istio-system
+spec:
+  selector:
+    matchLabels:
+      {{ .Values.selector.key }}: {{ .Values.selector.value | quote }}
+  action: CUSTOM
+  provider:
+    name: authservice
+  rules:
+  {{- if .Values.allow_unmatched_requests }}
+  - {}
+  {{- else if .Values.custom_authpolicy_rules }}
+{{ .Values.custom_authpolicy_rules | toYaml | indent 2 }}
+  {{- else }}
+  - to:
+    - operation:
+        hosts:
+        - "*.{{ .Values.domain }}"
+  {{- end }}
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: jwt-authz
+  namespace: istio-system
+spec:
+  selector:
+    matchLabels:
+      {{ .Values.selector.key }}: {{ .Values.selector.value | quote }}
+  rules:
+  - from:
+    - source:
+        requestPrincipals:
+        - "https://{{ .Values.global.oidc.host }}/auth/realms/{{ .Values.global.oidc.realm }}/*"
+{{- end }}
