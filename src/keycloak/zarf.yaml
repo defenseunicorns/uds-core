@@ -18,3 +18,16 @@ components:
         localPath: chart
     images:
       - quay.io/keycloak/keycloak:23.0.4
+      - uds-core-config:keycloak
+    actions:
+      onCreate:
+        before:
+          - cmd: "docker build customization -t uds-core-config:keycloak"
+            description: "Build Keycloak configuration image"
+      onDeploy:
+        before:
+          # todo(jeff): need a way to test if this is `zarf dev deploy`
+          - description: "Import image if in dev mode"
+            # Ignore errors for now
+            cmd: "k3d image import -c uds uds-core-config:keycloak || true"
+            mute: true

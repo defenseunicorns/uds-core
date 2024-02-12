@@ -24,6 +24,32 @@ spec:
         {{- printf "%s: %s" $key (tpl $value $ | quote) | nindent 8 }}
         {{- end }}
     spec:
+      initContainers:
+        - name: uds-config
+          image: "{{ .Values.configImage }}"
+          command: ['sh' , '-c']
+          args:
+            - |
+              # Ensure the import directory exists
+              mkdir -p /opt/keycloak/data/import/
+              # Copy the files to their respective directories
+              cp -fu realm.json /opt/keycloak/data/import/realm.json
+              cp -fur theme /opt/keycloak/themes/theme
+              cp -fu *.jar /opt/keycloak/providers/
+          securityContext:
+            runAsUser: 65532
+            runAsGroup: 65532
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+          volumeMounts:
+            - name: providers
+              mountPath: /opt/keycloak/providers
+            - name: data
+              mountPath: /opt/keycloak/data
+            - name: themes
+              mountPath: /opt/keycloak/themes
       containers:
         - name: keycloak
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
@@ -39,8 +65,8 @@ spec:
             - "--spi-theme-cache-templates=false"
             {{- else }}
             - "start"
-            # Needed for nginx provider
-            - "--auto-build"
+            # # Needed for nginx provider
+            # - "--auto-build"
             {{- end }}
             # This will only import the realm if it does not exist
             - "--import-realm"
@@ -163,17 +189,12 @@ spec:
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:
-            - name: uds-auth-extension
-              mountPath: /opt/keycloak/providers/uds-auth-extension.jar
-              subPath: uds-auth-extension.jar
-            - name: realm-import
-              mountPath: /opt/keycloak/data/import
-          {{- if .Values.devMode }}
-            - name: dev-db
-              mountPath: /opt/keycloak/data/h2
+            - name: providers
+              mountPath: /opt/keycloak/providers
+            - name: data
+              mountPath: /opt/keycloak/data
             - name: themes
               mountPath: /opt/keycloak/themes
-          {{- end }}
       enableServiceLinks: {{ .Values.enableServiceLinks }}
       restartPolicy: {{ .Values.restartPolicy }}
       {{- with .Values.nodeSelector }}
@@ -197,17 +218,11 @@ spec:
       {{- end }}
       terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
       volumes:
-        - name: uds-auth-extension
-          configMap:
-            name: {{ include "keycloak.fullname" . }}-uds-auth-extension
-        - name: realm-import
-          secret:
-            secretName: {{ include "keycloak.fullname" . }}-realm-import
-      {{- if .Values.devMode }}
-        - name: dev-db
+        - name: providers
+          emptyDir: {}
+        - name: data
           persistentVolumeClaim:
-            claimName: {{ include "keycloak.fullname" . }}-dev-db
+            claimName: {{ include "keycloak.fullname" . }}-data
         - name: themes
           persistentVolumeClaim:
             claimName: {{ include "keycloak.fullname" . }}-themes
-      {{- end }}

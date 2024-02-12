@@ -1,10 +1,18 @@
 tasks:
   - name: validate
     actions:
-      - description: Validate...
-        cmd: "echo Replace Me"
-        # wait:
-        #   cluster:
+      - description: Validate admin interface
+        wait:
+          network:
+            protocol: https
+            address: keycloak.admin.uds.dev
+            code: 200
+      - description: Validate public interface
+        wait:
+          network:
+            protocol: https
+            address: sso.uds.dev
+            code: 200
 
   - name: dev-theme
     actions:
@@ -12,7 +20,7 @@ tasks:
         cmd: |
           PV=$(kubectl get pvc keycloak-themes -n keycloak -o jsonpath='{.spec.volumeName}')
           THEME_PATH=$(kubectl get pv $PV -o jsonpath="{.spec.hostPath.path}")
-          docker cp theme k3d-uds-server-0:/$THEME_PATH
+          docker cp customization/theme k3d-uds-server-0:/$THEME_PATH
 
   - name: debug-istio-traffic
     actions:

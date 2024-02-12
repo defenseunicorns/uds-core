@@ -3,9 +3,11 @@ image:
   # repository: registry1.dso.mil/ironbank/opensource/keycloak/keycloak
   repository: quay.io/keycloak/keycloak
   # Overrides the Keycloak image tag whose default is the chart appVersion
-  tag: "23.0.5"
+  tag: "23.0.4"
   # The Keycloak image pull policy
   pullPolicy: IfNotPresent
+
+configImage: uds-core-config:keycloak
 
 # The public domain name of the Keycloak server
 domain: "###ZARF_VAR_DOMAIN###"
@@ -26,7 +28,7 @@ updateStrategy: RollingUpdate
 restartPolicy: Always
 
 # Termination grace period in seconds for Keycloak shutdown. Clusters with a large cache might need to extend this to give Infinispan more time to rebalance
-terminationGracePeriodSeconds: 30
+terminationGracePeriodSeconds: 5
 
 # The internal Kubernetes cluster domain
 clusterDomain: cluster.local

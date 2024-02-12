@@ -1,8 +1,7 @@
-{{- if .Values.devMode }}
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
-  name: {{ include "keycloak.fullname" . }}-dev-db
+  name: {{ include "keycloak.fullname" . }}-data
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "keycloak.labels" . | nindent 4 }}
@@ -26,4 +25,3 @@ spec:
   resources:
     requests:
       storage: 512Mi
-{{- end }}
