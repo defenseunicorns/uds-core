@@ -4,7 +4,6 @@ import { Policy, UDSExemption } from "../../crd";
 
 type Matcher = { name: string; namespace: string };
 
-
 // *** Using setItemAndWait() ***
 
 // Add Exemptions to Pepr store as "policy": "[{matcher}]"
@@ -25,7 +24,6 @@ type Matcher = { name: string; namespace: string };
 //   Log.debug(`Time to complete exemption write: ${t1 - t0}`);
 // }
 
-
 // *** Use Local Map to then Update Store ***
 // Add Exemptions to Pepr store as "policy": "[{matcher}]"
 export async function addExemptions(exmpt: UDSExemption) {
@@ -45,9 +43,7 @@ export async function addExemptions(exmpt: UDSExemption) {
 
   // Iterate through local Map and update Store
   for (const [k, v] of exemptionMap.entries()) {
-    const exemptionList: Matcher[] = JSON.parse(
-      Store.getItem(k) || "[]",
-    );
+    const exemptionList: Matcher[] = JSON.parse(Store.getItem(k) || "[]");
 
     // Iterate though each policies array of matchers and push each matcher to list for Store
     v.forEach(matcher => {

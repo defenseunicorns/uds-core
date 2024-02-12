@@ -10,6 +10,7 @@ import { Queue } from "./enqueue";
 import { Log } from "pepr";
 import { updateStatus } from "./reconciler";
 import { addExemptions } from "./controllers/exemptions/exemptions";
+import { exmptValidator } from "./crd/exmpt-validator";
 
 export const operator = new Capability({
   name: "uds-core-operator",
@@ -51,6 +52,7 @@ When(UDSPackage)
 When(UDSExemption)
   .IsCreatedOrUpdated()
   .InNamespace("uds-policy-exemptions")
+  .Validate(exmptValidator)
   .Reconcile(async (exmpt: UDSExemption) => {
     if (!exmpt.metadata?.namespace) {
       Log.error(exmpt, `Invalid Exemption definition`);
