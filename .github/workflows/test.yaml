@@ -81,6 +81,13 @@ jobs:
           kubectl get package -A
           echo "::endgroup::"
 
+      - name: Debug Events Output
+        if: ${{ failure() }}
+        run: |
+          echo "::group::kubectl get events"
+          kubectl get events -A --sort-by='.lastTimestamp'
+          echo "::endgroup::"
+
       - name: Save logs
         if: always()
         uses: ./.github/actions/save-logs
