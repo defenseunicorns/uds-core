@@ -5,6 +5,16 @@ metadata:
   namespace: {{ .Release.Namespace }}
 spec:
   network:
+    allow:
+      - description: "UDS Operator"
+        direction: Ingress
+        selector:
+          app.kubernetes.io/name: keycloak
+        remoteNamespace: pepr-system
+        remoteSelector:
+          app: pepr-uds-core-watcher
+        port: 8080
+        
     expose:
       - description: "remove private paths from public gateway"
         host: sso
