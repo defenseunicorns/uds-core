@@ -2,7 +2,7 @@
     "id": "uds",
     "realm": "uds",
     "displayName": "Unicorn Delivery Service",
-    "displayNameHtml": "DevSecOps Collaboration Workspace",
+    "displayNameHtml": "Identity Service",
     "enabled": true,
     "registrationAllowed": true,
     "registrationEmailAsUsername": false,
