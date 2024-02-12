@@ -34,14 +34,14 @@ ${msg("loginTitle",(realm.displayName!''))}
 <body class="${properties.kcBodyClass!}">
     <div class="container-fluid">
         <div class="row justify-content-center">
-            <div class="col-xl-6 col-lg-8 col-md-12">
+            <div class="col-xl-5 col-lg-7 col-md-10">
                 <div class="card">
                     <div class="card-header branding row">
                         <div class="col-sm-5 p-0">
                             <#if client?? && client.description?has_content>
                                 <img src="${client.description}"/>
                             <#else>
-                                <img src="${url.resourcesPath}/img/p1-logo.png"/>
+                                <img src="${url.resourcesPath}/img/uds-logo.svg"/>
                             </#if>
                         </div>
                         <div class="col-sm-1">&nbsp;</div>

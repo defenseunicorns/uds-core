@@ -75,7 +75,7 @@
 
 .error-messages,
 .has-error .form-control {
-  background-color: rgba(255, 0, 0, 0.2) !important;
+  background-color: rgb(58 11 11) !important;
   color: #fff !important;
   border-color: #c00;
 }
@@ -147,19 +147,26 @@ ul#kc-totp-supported-apps {
 }
 
 .btn-primary {
-  background-color: rgba(120, 197, 222, 0.85) !important;
+  background-color: transparent !important;
   background-image: linear-gradient(
     to bottom,
-    rgba(91, 184, 215, 0.95) 0,
-    rgba(30, 100, 123, 0.95) 100%
+    rgb(95 110 173 / 10%) 0,
+    hsl(203.05deg 100% 70.39% / 36%) 100%
   ) !important;
-  border-color: #195266 !important;
+  border-color: #68c5ff !important;
   border-radius: 4px !important;
   color: #fff;
+  width: 275px !important;
+  margin: 0 auto;
+  text-transform: uppercase;
 }
 
 .btn-primary:hover {
-  background-image: none !important;
+  background-image: linear-gradient(
+    to top,
+    rgb(95 110 173 / 28%) 0,
+    hsl(203.05deg 100% 70.39% / 58%) 100%
+  ) !important;
 }
 
 .location-input {
@@ -179,7 +186,8 @@ ul#kc-totp-supported-apps {
 
 .card #certificate_subjectdn,
 .card a {
-  color: #00ff7b !important;
+  /* color: #00ff7b !important; */
+  color: #68c5ff !important;
   font-weight: 500;
   letter-spacing: 0.1rem;
   text-shadow: 2px 4px 3px rgba(0, 0, 0, 0.1);
@@ -260,6 +268,11 @@ ul#kc-totp-supported-apps {
   margin: 30px auto;
 }
 
+.card .card-header {
+  min-height: 250px;
+  align-content: flex-end;
+}
+
 .card .card-body {
   backdrop-filter: blur(4px);
   background: rgba(255, 255, 255, 0.05);
@@ -292,6 +305,7 @@ body {
   margin: 0;
   padding: 0;
   position: absolute;
+  overflow-x: hidden;
 }
 
 body > .container-fluid {
@@ -306,7 +320,7 @@ body > .container-fluid {
   height: 65px;
   border-top: 1px solid #747474;
   backdrop-filter: blur(4px);
-  background-color: rgba(2, 25, 40, 0.85) !important;
+  background-color: rgba(100, 100, 100, 0.05) !important;
   z-index: 1;
 }
 

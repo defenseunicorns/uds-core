@@ -10,15 +10,6 @@
                             ${cacIdentity}
                         </p>
                     </div>
-                    <#else>
-                        <div class="alert alert-info cac-info">
-                            <h2>Regular User Registration</h2>
-                            <p>Use your company or government email address as your access will be based off of your validated email address.</p>
-                            <p class="font-weight-bold">For assistance contact your team admin, <a
-                                    href="https://sso-info.il2.dso.mil/" target="_blank">click here</a> or <a id="helpdesk"
-                                    href="mailto:help@dsop.io">email us</a>.
-                            </p>
-                        </div>
                 </#if>
                 <div class="row">
                     <div class="col-lg-6 form-group ${messagesPerField.printIfExists('firstName','has-error')}">
