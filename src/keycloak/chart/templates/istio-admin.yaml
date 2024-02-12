@@ -15,6 +15,9 @@ spec:
           - "/admin/*"
           - "/realms/master/*"
           - "/metrics*"
+          # Never allow anonymous client registration from a gateway
+          # This is another fallback protection, as the KC policy already blocks it
+          - "/realms/*/clients-registrations/default*"
     when:
     - key: source.namespace
       notValues: ["istio-admin-gateway"]
