@@ -3,6 +3,7 @@ import { K8s, Log } from "pepr";
 import { UDSConfig } from "../config";
 import { enableInjection } from "./controllers/istio/injection";
 import { virtualService } from "./controllers/istio/virtual-service";
+import { keycloak } from "./controllers/keycloak/client-sync";
 import { networkPolicies } from "./controllers/network/policies";
 import { Phase, Status, UDSPackage } from "./crd";
 import { VirtualService } from "./crd/generated/istio/virtualservice-v1beta1";
@@ -52,8 +53,12 @@ export async function reconciler(pkg: UDSPackage) {
       Log.warn(`Istio is not installed, skipping ${name} VirtualService.`);
     }
 
+    // Configure SSO
+    const ssoClients = await keycloak(pkg);
+
     await updateStatus(pkg, {
       phase: Phase.Ready,
+      ssoClients,
       endpoints: vs.map(v => v.spec!.hosts!.join(",")),
       networkPolicyCount: netPol.length,
       observedGeneration: pkg.metadata.generation,

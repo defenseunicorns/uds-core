@@ -240,6 +240,12 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
       jsonPath: ".status.phase",
     },
     {
+      name: "SSO Clients",
+      type: "string",
+      description: "SSO Clients created by the package",
+      jsonPath: ".status.ssoClients",
+    },
+    {
       name: "Endpoints",
       type: "string",
       description: "Service endpoints exposed by the package",
@@ -275,6 +281,12 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
               enum: ["Pending", "Ready", "Failed"],
               type: "string",
             },
+            ssoClients: {
+              type: "array",
+              items: {
+                type: "string",
+              },
+            },
             endpoints: {
               type: "array",
               items: {
@@ -295,9 +307,9 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
               properties: {
                 expose,
                 allow,
-                sso,
               },
             },
+            sso,
           },
         } as V1JSONSchemaProps,
       },

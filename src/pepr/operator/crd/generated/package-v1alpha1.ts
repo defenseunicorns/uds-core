@@ -12,6 +12,10 @@ export interface Spec {
    * Network configuration for the package
    */
   network?: Network;
+  /**
+   * Create SSO client configurations
+   */
+  sso?: Sso[];
 }
 
 /**
@@ -26,10 +30,6 @@ export interface Network {
    * Expose a service on an Istio Gateway
    */
   expose?: Expose[];
-  /**
-   * Create SSO client configurations
-   */
-  sso?: Sso[];
 }
 
 export interface Allow {
@@ -477,6 +477,7 @@ export interface Status {
   networkPolicyCount?: number;
   observedGeneration?: number;
   phase?: Phase;
+  ssoClients?: string[];
 }
 
 export enum Phase {
