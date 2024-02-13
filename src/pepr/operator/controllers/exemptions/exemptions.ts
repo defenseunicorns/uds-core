@@ -74,7 +74,7 @@ export async function removeExemptions(exmpt: UDSExemption) {
       for (const p of e.policies) {
         const exemptionList: Matcher[] = JSON.parse(Store.getItem(p) || "[]");
         //filter matchers, returning those that do not match current exemption.matcher.name
-        const filteredList = exemptionList.filter((m) => m.name !== name)
+        const filteredList = exemptionList.filter(m => m.name !== name);
         await Store.setItemAndWait(p, JSON.stringify(filteredList));
       }
     }
