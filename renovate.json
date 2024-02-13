@@ -121,7 +121,7 @@
     {
       "fileMatch": ["^\\.github/workflows/commitlint\\.yaml$"],
       "matchStrings": [
-        "npm install --save-dev @(?<depName>.*?)@(?<currentValue>.+)"
+        "npm install --save-dev (?<depName>@?.*?)@(?<currentValue>.+)"
       ],
       "datasourceTemplate": "npm"
     }
