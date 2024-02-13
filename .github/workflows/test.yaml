@@ -85,7 +85,11 @@ jobs:
           kubectl get events -A --sort-by='.lastTimestamp'
           echo "::endgroup::"
 
-          echo "::group::kubectl get pending pods"
+          echo "::group::kubectl describe nodes"
+          kubectl describe nodes
+          echo "::endgroup::"
+          
+          echo "::group::kubectl describe pending pods"
           kubectl get pods -A | grep -i Pending | awk '{print "kubectl describe pod -n " $1 " " $2}' | bash
           echo "::endgroup::"
 
