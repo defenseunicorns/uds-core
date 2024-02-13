@@ -31,8 +31,8 @@ export function containers(request: PeprValidateRequest<a.Pod> | PeprMutateReque
 }
 
 // Get registered exemptions from the Pepr Policy Store
-export async function getExemptionsFor(policy: Policy) {
-  const exemptionsList = await JSON.parse(Store.getItem(policy) || "[]");
+export function getExemptionsFor(policy: Policy) {
+  const exemptionsList = JSON.parse(Store.getItem(policy) || "[]");
   return registerExemptions(exemptionsList);
 }
 

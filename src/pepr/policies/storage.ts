@@ -28,7 +28,7 @@ When(a.Pod)
       "secret",
     ];
 
-    const exemptions = await getExemptionsFor(Policy.RestrictVolumeTypes);
+    const exemptions = getExemptionsFor(Policy.RestrictVolumeTypes);
     if (exemptions(request)) {
       return request.Approve();
     }
@@ -65,7 +65,7 @@ When(a.Pod)
 When(a.Pod)
   .IsCreatedOrUpdated()
   .Validate(async request => {
-    const exemptions = await getExemptionsFor(Policy.RestrictHostPathWrite);
+    const exemptions = getExemptionsFor(Policy.RestrictHostPathWrite);
     if (exemptions(request)) {
       return request.Approve();
     }

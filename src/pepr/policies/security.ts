@@ -25,7 +25,7 @@ import { Policy } from "../operator/crd";
 When(a.Pod)
   .IsCreatedOrUpdated()
   .Validate(async request => {
-    const exemptions = await getExemptionsFor(Policy.DisallowPrivileged);
+    const exemptions = getExemptionsFor(Policy.DisallowPrivileged);
     if (exemptions(request)) {
       return request.Approve();
     }
@@ -59,7 +59,7 @@ When(a.Pod)
 When(a.Pod)
   .IsCreatedOrUpdated()
   .Mutate(async request => {
-    const exemptions = await getExemptionsFor(Policy.RequireNonRootUser);
+    const exemptions = getExemptionsFor(Policy.RequireNonRootUser);
     if (exemptions(request)) {
       return;
     }
@@ -104,7 +104,7 @@ When(a.Pod)
     }
   })
   .Validate(async request => {
-    const exemptions = await getExemptionsFor(Policy.RequireNonRootUser);
+    const exemptions = getExemptionsFor(Policy.RequireNonRootUser);
     if (exemptions(request)) {
       return request.Approve();
     }
@@ -150,7 +150,7 @@ When(a.Pod)
 When(a.Pod)
   .IsCreatedOrUpdated()
   .Validate(async request => {
-    const exemptions = await getExemptionsFor(Policy.RestrictProcMount);
+    const exemptions = getExemptionsFor(Policy.RestrictProcMount);
     if (exemptions(request)) {
       return request.Approve();
     }
@@ -181,7 +181,7 @@ When(a.Pod)
 When(a.Pod)
   .IsCreatedOrUpdated()
   .Validate(async request => {
-    const exemptions = await getExemptionsFor(Policy.RestrictSeccomp);
+    const exemptions = getExemptionsFor(Policy.RestrictSeccomp);
     if (exemptions(request)) {
       return request.Approve();
     }
@@ -225,7 +225,7 @@ When(a.Pod)
 When(a.Pod)
   .IsCreatedOrUpdated()
   .Validate(async request => {
-    const exemptions = await getExemptionsFor(Policy.DisallowSELinuxOptions);
+    const exemptions = getExemptionsFor(Policy.DisallowSELinuxOptions);
     if (exemptions(request)) {
       return request.Approve();
     }
@@ -268,7 +268,7 @@ When(a.Pod)
 When(a.Pod)
   .IsCreatedOrUpdated()
   .Validate(async request => {
-    const exemptions = await getExemptionsFor(Policy.RestrictSELinuxType);
+    const exemptions = getExemptionsFor(Policy.RestrictSELinuxType);
     if (exemptions(request)) {
       return request.Approve();
     }
@@ -311,7 +311,7 @@ When(a.Pod)
 When(a.Pod)
   .IsCreatedOrUpdated()
   .Mutate(async request => {
-    const exemptions = await getExemptionsFor(Policy.DropAllCapabilities);
+    const exemptions = getExemptionsFor(Policy.DropAllCapabilities);
     if (exemptions(request)) {
       return;
     }
@@ -324,7 +324,7 @@ When(a.Pod)
     }
   })
   .Validate(async request => {
-    const exemptions = await getExemptionsFor(Policy.DropAllCapabilities);
+    const exemptions = getExemptionsFor(Policy.DropAllCapabilities);
     if (exemptions(request)) {
       return request.Approve();
     }
@@ -361,7 +361,7 @@ When(a.Pod)
 When(a.Pod)
   .IsCreatedOrUpdated()
   .Validate(async request => {
-    const exemptions = await getExemptionsFor(Policy.RestrictCapabilities);
+    const exemptions = getExemptionsFor(Policy.RestrictCapabilities);
     if (exemptions(request)) {
       return request.Approve();
     }

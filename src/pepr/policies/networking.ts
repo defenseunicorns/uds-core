@@ -16,7 +16,7 @@ import { Policy } from "../operator/crd";
 When(a.Pod)
   .IsCreatedOrUpdated()
   .Validate(async request => {
-    const exemptions = await getExemptionsFor(Policy.DisallowHostNamespaces);
+    const exemptions = getExemptionsFor(Policy.DisallowHostNamespaces);
     if (exemptions(request)) {
       return request.Approve();
     }
@@ -45,7 +45,7 @@ When(a.Pod)
 When(a.Pod)
   .IsCreatedOrUpdated()
   .Validate(async request => {
-    const exemptions = await getExemptionsFor(Policy.RestrictHostPorts);
+    const exemptions = getExemptionsFor(Policy.RestrictHostPorts);
     if (exemptions(request)) {
       return request.Approve();
     }
@@ -73,7 +73,7 @@ When(a.Pod)
 When(a.Service)
   .IsCreatedOrUpdated()
   .Validate(async request => {
-    const exemptions = await getExemptionsFor(Policy.RestrictExternalNames);
+    const exemptions = getExemptionsFor(Policy.RestrictExternalNames);
     if (exemptions(request)) {
       return request.Approve();
     }
@@ -96,7 +96,7 @@ When(a.Service)
 When(a.Service)
   .IsCreatedOrUpdated()
   .Validate(async request => {
-    const exemptions = await getExemptionsFor(Policy.DisallowNodePortServices);
+    const exemptions = getExemptionsFor(Policy.DisallowNodePortServices);
     if (exemptions(request)) {
       return request.Approve();
     }
