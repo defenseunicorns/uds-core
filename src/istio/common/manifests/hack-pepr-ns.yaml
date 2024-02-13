@@ -1,7 +1,0 @@
-# todo(jeff): this is an ugly hack until we can have pepr generate the namespace with custom labels
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: pepr-system
-  labels:
-    istio-injection: enabled
