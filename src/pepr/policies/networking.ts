@@ -1,7 +1,8 @@
 import { a } from "pepr";
 
-import { When, containers, getExemptionsFor } from "./common";
+import { When, containers } from "./common";
 import { Policy } from "../operator/crd";
+import { isExempt } from "./exemptions";
 
 /**
  * This policy prevents pods from sharing the host namespaces.
@@ -15,9 +16,8 @@ import { Policy } from "../operator/crd";
  */
 When(a.Pod)
   .IsCreatedOrUpdated()
-  .Validate(async request => {
-    const exemptions = getExemptionsFor(Policy.DisallowHostNamespaces);
-    if (exemptions(request)) {
+  .Validate(request => {
+    if (isExempt(Policy.DisallowPrivileged, request)) {
       return request.Approve();
     }
 
@@ -44,9 +44,8 @@ When(a.Pod)
  */
 When(a.Pod)
   .IsCreatedOrUpdated()
-  .Validate(async request => {
-    const exemptions = getExemptionsFor(Policy.RestrictHostPorts);
-    if (exemptions(request)) {
+  .Validate(request => {
+    if (isExempt(Policy.RestrictHostPorts, request)) {
       return request.Approve();
     }
 
@@ -72,9 +71,8 @@ When(a.Pod)
  */
 When(a.Service)
   .IsCreatedOrUpdated()
-  .Validate(async request => {
-    const exemptions = getExemptionsFor(Policy.RestrictExternalNames);
-    if (exemptions(request)) {
+  .Validate(request => {
+    if (isExempt(Policy.RestrictExternalNames, request)) {
       return request.Approve();
     }
     if (request.Raw.spec?.type === "ExternalName") {
@@ -95,9 +93,8 @@ When(a.Service)
  */
 When(a.Service)
   .IsCreatedOrUpdated()
-  .Validate(async request => {
-    const exemptions = getExemptionsFor(Policy.DisallowNodePortServices);
-    if (exemptions(request)) {
+  .Validate(request => {
+    if (isExempt(Policy.DisallowNodePortServices, request)) {
       return request.Approve();
     }
     // If the service is of type NodePort, deny the request.

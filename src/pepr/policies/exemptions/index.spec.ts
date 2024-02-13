@@ -1,15 +1,19 @@
-import { describe, expect, it } from "@jest/globals";
-import { registerExemptions } from ".";
+import { beforeAll, describe, expect, it, jest } from "@jest/globals";
+import { isExempt } from ".";
 import { PeprValidateRequest } from "pepr";
 import { kind } from "pepr";
+import { Policy } from "../../operator/crd";
+import { Store } from "../common";
 
 describe("test registering exemptions", () => {
-  const exemptNeuvectorEnforcer = registerExemptions([
-    { name: "^neuvector-enforcer-pod.*", namespace: "neuvector" },
-  ]);
+  beforeAll(() => {
+    jest
+      .spyOn(Store, "getItem")
+      .mockReturnValue('[{namespace: "neuvector", name: "^neuvector-enforcer-pod-.*"}]');
+  });
 
   it("should be exempt", () => {
-    const isExempt = exemptNeuvectorEnforcer({
+    const exempt = isExempt(Policy.DisallowPrivileged, {
       Raw: {
         metadata: {
           name: "neuvector-enforcer-pod-x",
@@ -17,11 +21,11 @@ describe("test registering exemptions", () => {
         },
       },
     } as unknown as PeprValidateRequest<kind.Pod>);
-    expect(isExempt).toBe(true);
+    expect(exempt).toBe(true);
   });
 
   it("should not be exempt", () => {
-    const isExempt = exemptNeuvectorEnforcer({
+    const exempt = isExempt(Policy.DisallowPrivileged, {
       Raw: {
         metadata: {
           name: "promtail",
@@ -29,6 +33,6 @@ describe("test registering exemptions", () => {
         },
       },
     } as unknown as PeprValidateRequest<kind.Pod>);
-    expect(isExempt).toBe(false);
+    expect(exempt).toBe(false);
   });
 });

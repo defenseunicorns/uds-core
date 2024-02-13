@@ -1,7 +1,8 @@
 import { a } from "pepr";
 
-import { When, containers, getExemptionsFor, volumes } from "./common";
+import { When, containers, volumes } from "./common";
 import { Policy } from "../operator/crd";
+import { isExempt } from "./exemptions";
 
 /**
  * Restrict Volume Types for Pods
@@ -15,7 +16,7 @@ import { Policy } from "../operator/crd";
  */
 When(a.Pod)
   .IsCreatedOrUpdated()
-  .Validate(async request => {
+  .Validate(request => {
     // List of allowed volume types
     const allowedVolumeTypes = [
       "configMap",
@@ -28,8 +29,7 @@ When(a.Pod)
       "secret",
     ];
 
-    const exemptions = getExemptionsFor(Policy.RestrictVolumeTypes);
-    if (exemptions(request)) {
+    if (isExempt(Policy.RestrictVolumeTypes, request)) {
       return request.Approve();
     }
 
@@ -64,9 +64,8 @@ When(a.Pod)
  */
 When(a.Pod)
   .IsCreatedOrUpdated()
-  .Validate(async request => {
-    const exemptions = getExemptionsFor(Policy.RestrictHostPathWrite);
-    if (exemptions(request)) {
+  .Validate(request => {
+    if (isExempt(Policy.RestrictHostPathWrite, request)) {
       return request.Approve();
     }
 
