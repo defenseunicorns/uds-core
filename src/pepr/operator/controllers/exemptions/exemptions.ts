@@ -30,33 +30,67 @@ function removeRegexSlash(name: string) {
 //   Log.debug(`Time to complete exemption write: ${t1 - t0}`);
 // }
 
+function isAlreadyAdded(matchers: Matcher[], name: string) {
+  for (const m of matchers) {
+    if (m.name === name) {
+      return true;
+    }
+  }
+}
+
+const policyList = Object.values(Policy);
+
 // *** Use Local Map to then Update Store ***
 // Add Exemptions to Pepr store as "policy": "[{matcher}]"
-export async function addExemptions(exmpt: UDSExemption) {
+export async function processExemptions(exmpt: UDSExemption) {
   const t0 = performance.now();
   const { Store } = policies;
 
   // Aggregate matchers for each policy into local Map
   const exemptionMap = new Map<Policy, Matcher[]>();
-  exmpt.spec?.exemptions?.forEach(e => {
-    const name = removeRegexSlash(e.matcher.name);
-    e.policies.forEach(p => {
-      const exmptList = exemptionMap.get(p) || [];
-      exmptList.push({ namespace: e.matcher.namespace, name: name });
-      exemptionMap.set(p, exmptList);
-    });
-  });
+  const exemptions = exmpt.spec?.exemptions ?? [];
+
+  // Iterate through each policy
+  for (const p of policyList) {
+    exemptionMap.set(p, JSON.parse(Store.getItem(p) || "[]"));
+
+    // Iterate through all exemption blocks
+    for (const e of exemptions) {
+      const matchers = exemptionMap.get(p) ?? [];
+      const name = removeRegexSlash(e.matcher.name);
+
+      if (e.policies.includes(p)) {
+        // Do additional checks if policy already has matchers
+        if (matchers.length > 0) {
+          if (isAlreadyAdded(matchers, name)) {
+            continue;
+          } else {
+            matchers.push({ namespace: e.matcher.namespace, name: name });
+            exemptionMap.set(p, matchers);
+          }
+        } else {
+          // Else add to policy for the first time
+          exemptionMap.set(p, [{ namespace: e.matcher.namespace, name: name }]);
+        }
+      } else {
+        // check if matcher should be removed from this policy because no longer in CR
+        for (const m of matchers) {
+          if (m.name === name) {
+            Log.debug(`Removing ${name} from ${p}`);
+            exemptionMap.set(
+              p,
+              matchers.filter(m => m.name !== name),
+            );
+          }
+        }
+      }
+    }
+  }
 
   // Iterate through local Map and update Store
   for (const [k, v] of exemptionMap.entries()) {
-    const exemptionList: Matcher[] = JSON.parse(Store.getItem(k) || "[]");
-
-    // Iterate though each policy's array of matchers and push each matcher to list for Store
-    v.forEach(matcher => {
-      exemptionList.push(matcher);
-    });
-
-    Store.setItem(k, JSON.stringify(exemptionList));
+    Log.debug(`Adding to policy ${k}: ${v}`);
+    Store.setItem(k, JSON.stringify(v));
   }
 
   const t1 = performance.now();

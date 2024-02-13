@@ -9,7 +9,7 @@ import { Queue } from "./enqueue";
 
 import { Log } from "pepr";
 import { updateStatus } from "./reconciler";
-import { addExemptions, removeExemptions } from "./controllers/exemptions/exemptions";
+import { processExemptions, removeExemptions } from "./controllers/exemptions/exemptions";
 import { exmptValidator } from "./crd/exmpt-validator";
 
 export const operator = new Capability({
@@ -74,7 +74,7 @@ When(UDSExemption)
     try {
       await updateStatus(exmpt, { phase: Phase.Pending });
 
-      await addExemptions(exmpt);
+      await processExemptions(exmpt);
 
       await updateStatus(exmpt, {
         phase: Phase.Ready,
