@@ -1,18 +1,6 @@
 import { KubernetesObject } from "kubernetes-fluent-client";
 import { Log, PeprMutateRequest, PeprValidateRequest } from "pepr";
-
-export type Exempt = {
-  /**
-   * Namespace of the resource to exempt.
-   */
-  namespace?: string;
-  /**
-   * Name of the resource to exempt. Can be a regular expression.
-   */
-  name?: string | RegExp;
-};
-
-export type ExemptList = Array<Exempt>;
+import { Matcher } from "../../operator/crd";
 
 /**
  * Register a list of exemptions to be used by the validation action.
@@ -20,7 +8,7 @@ export type ExemptList = Array<Exempt>;
  * @param exemptList
  * @returns A function that can be used to check if a request is exempt.
  */
-export function registerExemptions(exemptList: ExemptList) {
+export function registerExemptions(exemptList: Matcher[]) {
   /**
    * Check if the request is exempt from validation.
    *

@@ -2,11 +2,10 @@ import { describe, expect, it } from "@jest/globals";
 import { registerExemptions } from ".";
 import { PeprValidateRequest } from "pepr";
 import { kind } from "pepr";
-import { neuvector } from "./matchers";
 
 describe("test registering exemptions", () => {
   const exemptNeuvectorEnforcer = registerExemptions([
-    { name: neuvector.enforcer.name, namespace: neuvector.enforcer.namespace },
+    { name: "^neuvector-enforcer-pod.*", namespace: "neuvector" },
   ]);
 
   it("should be exempt", () => {

@@ -1,10 +1,8 @@
 import { Log } from "pepr";
 import { policies } from "../../../policies/index";
-import { Policy, UDSExemption } from "../../crd";
+import { Matcher, Policy, UDSExemption } from "../../crd";
 
-type Matcher = { name: string; namespace: string };
-
-// Remove leading and trailing / if added by user to matcher name
+// Remove leading and trailing '/' if added by user to matcher name
 function removeRegexSlash(name: string) {
   if (name[0] === "/" && name[name.length - 1] === "/") {
     name = name.slice(1, name.length - 1);
@@ -38,7 +36,7 @@ export async function addExemptions(exmpt: UDSExemption) {
   const t0 = performance.now();
   const { Store } = policies;
 
-  // Aggregate matchers for each policy into local Map for speed
+  // Aggregate matchers for each policy into local Map
   const exemptionMap = new Map<Policy, Matcher[]>();
   exmpt.spec?.exemptions?.forEach(e => {
     const name = removeRegexSlash(e.matcher.name);
@@ -53,7 +51,7 @@ export async function addExemptions(exmpt: UDSExemption) {
   for (const [k, v] of exemptionMap.entries()) {
     const exemptionList: Matcher[] = JSON.parse(Store.getItem(k) || "[]");
 
-    // Iterate though each policies array of matchers and push each matcher to list for Store
+    // Iterate though each policy's array of matchers and push each matcher to list for Store
     v.forEach(matcher => {
       exemptionList.push(matcher);
     });
