@@ -44,11 +44,10 @@ When(UDSPackage)
   // Enqueue the package for processing
   .Watch(pkg => queue.enqueue(pkg));
 
-// (TODO) remove exemptions on delete of CR
-//Watch for changes to the UDSExemption CRD and cleanup the namespace mutations
+//Watch for changes to the UDSExemption CRD and cleanup exemptions in policies Store
 When(UDSExemption).IsDeleted().Watch(removeExemptions);
 
-// todo validate
+// Watch for changes to the UDSExemption CRD to enqueue an exemption for processing
 When(UDSExemption)
   .IsCreatedOrUpdated()
   .InNamespace("uds-policy-exemptions")
@@ -74,7 +73,7 @@ When(UDSExemption)
     try {
       await updateStatus(exmpt, { phase: Phase.Pending });
 
-      await processExemptions(exmpt);
+      processExemptions(exmpt);
 
       await updateStatus(exmpt, {
         phase: Phase.Ready,

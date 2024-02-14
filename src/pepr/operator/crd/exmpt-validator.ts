@@ -2,17 +2,8 @@ import { PeprValidateRequest } from "pepr";
 
 import { UDSExemption } from ".";
 
-const validNS = "uds-policy-exemptions";
-
 export async function exmptValidator(req: PeprValidateRequest<UDSExemption>) {
-  const exmpt = req.Raw;
-  const ns = exmpt.metadata?.namespace;
-
-  if (ns !== validNS) {
-    return req.Deny(`Invalid namespace ${ns}; must be ${validNS}`);
-  }
-
-  const exemptions = exmpt.spec?.exemptions ?? [];
+  const exemptions = req.Raw.spec?.exemptions ?? [];
   if (exemptions.length === 0) {
     return req.Deny("Invalid number of exemptions: must have at least 1");
   }

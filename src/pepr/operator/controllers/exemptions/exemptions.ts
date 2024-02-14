@@ -41,7 +41,7 @@ const policyList = Object.values(Policy);
 
 // *** Use Local Map to then Update Store ***
 // Add Exemptions to Pepr store as "policy": "[{matcher}]"
-export async function processExemptions(exmpt: UDSExemption) {
+export function processExemptions(exmpt: UDSExemption) {
   const t0 = performance.now();
   const { Store } = policies;
 
