@@ -8,9 +8,9 @@ clusterLabelOverride: null
 loki:
   storage:
     bucketNames:
-      chunks: uds-loki-chunks
-      ruler: uds-loki-rules
-      admin: uds-loki-admin
+      chunks: test
+      ruler: test
+      admin: test
     type: s3
     s3:
       endpoint: http://minio.uds-dev-stack.svc.cluster.local:9000
@@ -63,32 +63,11 @@ write:
   # Remove default anti-affinity since this is a 1-replica setup
   affinity: ""
 
-  # replicas to 1 to save resources
-  replicas: 1
-
-  resources:
-    limits:
-      cpu: 300m
-      memory: 2Gi
-    requests:
-      cpu: 300m
-      memory: 2Gi
 # Configuration for the read pod(s)
 read:
   # Remove default anti-affinity since this is a 1-replica setup
   affinity: ""
 
-  # replicas to 1 to save resources
-  replicas: 1
-
-  # -- Resource requests and limits for the read
-  resources:
-    limits:
-      cpu: 300m
-      memory: 2Gi
-    requests:
-      cpu: 300m
-      memory: 2Gi
 # Configuration for the single binary node(s)
 singleBinary:
   # -- Number of replicas for the single binary
@@ -146,6 +125,3 @@ gateway:
 backend:
   # Remove default anti-affinity since this is a 1-replica setup
   affinity: ""
-
-  # replicas to 1 to save resources
-  replicas: 1
