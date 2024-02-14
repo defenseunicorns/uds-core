@@ -53,7 +53,7 @@ jobs:
       # Uses a custom action to filter paths for source packages.
       - name: Check src paths
         id: path-filter
-        uses: dorny/paths-filter@v2
+        uses: dorny/paths-filter@0bc4621a3135347011ad047f9ecf449bf72ce2bd # v3
         with:
           filters: .github/filters.yaml
 
