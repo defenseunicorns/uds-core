@@ -27,13 +27,13 @@ export async function reconciler(pkg: UDSPackage) {
   const isCurrentGeneration = pkg.metadata.generation === pkg.status?.observedGeneration;
 
   if (isPending || isCurrentGeneration) {
-    Log.debug(pkg, `Skipping pending or completed package`);
+    Log.info(pkg, `Skipping pending or completed package`);
     return;
   }
 
   const { namespace, name } = pkg.metadata;
 
-  Log.debug(pkg, `Processing Package ${namespace}/${name}`);
+  Log.info(pkg, `Processing Package ${namespace}/${name}`);
 
   // Configure the namespace and namespace-wide network policies
   try {
@@ -77,6 +77,7 @@ export async function reconciler(pkg: UDSPackage) {
  * @param status The new status
  */
 async function updateStatus(pkg: UDSPackage, status: Status) {
+  Log.debug(pkg.metadata, `Updating status to ${status.phase}`);
   await K8s(UDSPackage).PatchStatus({
     metadata: {
       name: pkg.metadata!.name,

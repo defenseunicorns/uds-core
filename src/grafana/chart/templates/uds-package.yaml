@@ -4,6 +4,9 @@ metadata:
   name: grafana
   namespace: {{ .Release.Namespace }}
 spec:
+  sso:
+    - name: Grafana
+      clientId: grafana
   network:
     expose:
       - service: grafana

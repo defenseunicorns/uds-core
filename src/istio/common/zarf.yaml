@@ -24,4 +24,4 @@ components:
         files:
           - "manifests/envoy-filters.yaml"
           - "manifests/peer-authentication.yaml"
-          - "manifests/hack-pepr-ns.yaml"
+          - "manifests/hack-pepr.yaml"
