@@ -22,7 +22,9 @@ jobs:
         uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
 
       - name: Install commitlint
-        run: npm install --save-dev @commitlint/{config-conventional,cli}
+        run: |
+          npm install --save-dev @commitlint/config-conventional@18.6.0
+          npm install --save-dev @commitlint/cli@18.6.0
 
       - name: Lint PR title
         env:
