@@ -89,8 +89,8 @@ jobs:
           kubectl describe nodes
           echo "::endgroup::"
 
-          echo "::group::kubectl describe pending pods"
-          kubectl get pods -A | grep -i Pending | awk '{print "kubectl describe pod -n " $1 " " $2}' | bash
+          echo "::group::docker get node logs"
+          docker logs k3d-uds-server-0
           echo "::endgroup::"
 
       - name: Save logs
