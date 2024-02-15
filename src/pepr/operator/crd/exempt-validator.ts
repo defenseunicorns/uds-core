@@ -2,7 +2,7 @@ import { PeprValidateRequest } from "pepr";
 
 import { UDSExemption } from ".";
 
-export async function exmptValidator(req: PeprValidateRequest<UDSExemption>) {
+export async function exemptValidator(req: PeprValidateRequest<UDSExemption>) {
   const exemptions = req.Raw.spec?.exemptions ?? [];
   if (exemptions.length === 0) {
     return req.Deny("Invalid number of exemptions: must have at least 1");

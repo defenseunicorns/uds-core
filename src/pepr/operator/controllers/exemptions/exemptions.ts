@@ -2,25 +2,6 @@ import { Log } from "pepr";
 import { policies } from "../../../policies/index";
 import { Matcher, Policy, UDSExemption } from "../../crd";
 
-// *** Using setItemAndWait() ***
-// Add Exemptions to Pepr store as "policy": "[{matcher}]"
-// export async function addExemptions(exmpt: UDSExemption) {
-//   const t0 = performance.now();
-//   const { Store } = policies;
-//   if (exmpt.spec && exmpt.spec.exemptions) {
-//     for (const e of exmpt.spec.exemptions) {
-//       const name = removeRegexSlash(e.matcher.name);
-//       for (const p of e.policies) {
-//         const exemptionList = JSON.parse(Store.getItem(p) || "[]");
-//         exemptionList.push({ namespace: e.matcher.namespace, name: name });
-//         await Store.setItemAndWait(p, JSON.stringify(exemptionList));
-//       }
-//     }
-//   }
-//   const t1 = performance.now();
-//   Log.debug(`Time to complete exemption write: ${t1 - t0}`);
-// }
-
 // Remove leading and trailing '/' if added by user to matcher name
 function removeRegexSlash(name: string) {
   if (name[0] === "/" && name[name.length - 1] === "/") {
@@ -37,20 +18,18 @@ function isAlreadyAdded(matchers: Matcher[], name: string) {
   }
 }
 
-const policyList = Object.values(Policy);
-
-// *** Use Local Map to then Update Store ***
 // Add Exemptions to Pepr store as "policy": "[{matcher}]"
-export function processExemptions(exmpt: UDSExemption) {
-  const t0 = performance.now();
+export function processExemptions(exempt: UDSExemption) {
   const { Store } = policies;
+  const policyList = Object.values(Policy);
+  const exemptions = exempt.spec?.exemptions ?? [];
 
-  // Aggregate matchers for each policy into local Map
+  // Use local map for matchers aggregation before writing to store
   const exemptionMap = new Map<Policy, Matcher[]>();
-  const exemptions = exmpt.spec?.exemptions ?? [];
 
   // Iterate through all policies -- important for removing exemptions if CR is updated
   for (const p of policyList) {
+    // Set local map with current state of store
     exemptionMap.set(p, JSON.parse(Store.getItem(p) || "[]"));
 
     for (const e of exemptions) {
@@ -90,14 +69,12 @@ export function processExemptions(exmpt: UDSExemption) {
     Log.debug(`Adding to policy ${k}: ${JSON.stringify(v)}`);
     Store.setItem(k, JSON.stringify(v));
   }
-
-  const t1 = performance.now();
-  Log.debug(`Time to complete exemption write: ${t1 - t0}`);
 }
 
-export async function removeExemptions(exmpt: UDSExemption) {
+// Remove Exemptions when CR is deleted; Using setItemAndAwait() to avoid using local map if speed is not as important
+export async function removeExemptions(exempt: UDSExemption) {
   const { Store } = policies;
-  const exemptions = exmpt.spec?.exemptions ?? [];
+  const exemptions = exempt.spec?.exemptions ?? [];
 
   for (const e of exemptions) {
     const name = removeRegexSlash(e.matcher.name);

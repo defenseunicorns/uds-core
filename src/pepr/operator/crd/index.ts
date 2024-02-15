@@ -18,8 +18,8 @@ export {
   ExemptionElement,
   Matcher,
   Policy,
-  Status as ExmptStatus,
-  Phase as ExmptPhase,
+  Status as ExemptStatus,
+  Phase as ExemptPhase,
   Exemption as UDSExemption,
 } from "./generated/exemption-v1alpha1";
 

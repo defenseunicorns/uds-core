@@ -52,7 +52,7 @@ if (process.env.PEPR_WATCH_MODE === "true" || process.env.PEPR_MODE === "dev") {
             plural: "exemptions",
             singular: "exemption",
             kind: "Exemption",
-            shortNames: ["exmpt"],
+            shortNames: ["exempt"],
           },
         },
       },

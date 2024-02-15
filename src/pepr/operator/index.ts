@@ -10,7 +10,7 @@ import { Queue } from "./enqueue";
 import { Log } from "pepr";
 import { updateStatus } from "./reconciler";
 import { processExemptions, removeExemptions } from "./controllers/exemptions/exemptions";
-import { exmptValidator } from "./crd/exmpt-validator";
+import { exemptValidator } from "./crd/exempt-validator";
 
 export const operator = new Capability({
   name: "uds-core-operator",
@@ -51,40 +51,40 @@ When(UDSExemption).IsDeleted().Watch(removeExemptions);
 When(UDSExemption)
   .IsCreatedOrUpdated()
   .InNamespace("uds-policy-exemptions")
-  .Validate(exmptValidator)
-  .Reconcile(async (exmpt: UDSExemption) => {
-    if (!exmpt.metadata?.namespace) {
-      Log.error(exmpt, `Invalid Exemption definition`);
+  .Validate(exemptValidator)
+  .Reconcile(async (exempt: UDSExemption) => {
+    if (!exempt.metadata?.namespace) {
+      Log.error(exempt, `Invalid Exemption definition`);
       return;
     }
 
-    const isPending = exmpt.status?.phase === Phase.Pending;
-    const isCurrentGeneration = exmpt.metadata?.generation === exmpt.status?.observedGeneration;
+    const isPending = exempt.status?.phase === Phase.Pending;
+    const isCurrentGeneration = exempt.metadata?.generation === exempt.status?.observedGeneration;
 
     if (isPending || isCurrentGeneration) {
-      Log.debug(exmpt, `Skipping pending or completed exemption`);
+      Log.debug(exempt, `Skipping pending or completed exemption`);
       return;
     }
 
-    const { namespace, name } = exmpt.metadata;
+    const { namespace, name } = exempt.metadata;
 
-    Log.debug(exmpt, `Processing Exemption ${namespace}/${name}`);
+    Log.debug(exempt, `Processing Exemption ${namespace}/${name}`);
 
     try {
-      await updateStatus(exmpt, { phase: Phase.Pending });
+      await updateStatus(exempt, { phase: Phase.Pending });
 
-      processExemptions(exmpt);
+      processExemptions(exempt);
 
-      await updateStatus(exmpt, {
+      await updateStatus(exempt, {
         phase: Phase.Ready,
-        observedGeneration: exmpt.metadata.generation,
+        observedGeneration: exempt.metadata.generation,
       });
     } catch (e) {
       Log.error(e, `Error configuring for ${namespace}/${name}`);
       // todo: need to evaluate when it is safe to retry (updating generation now avoids retrying infinitely)
-      void updateStatus(exmpt, {
+      void updateStatus(exempt, {
         phase: Phase.Failed,
-        observedGeneration: exmpt.metadata.generation,
+        observedGeneration: exempt.metadata.generation,
       });
     }
   });
