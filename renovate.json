@@ -117,6 +117,13 @@
       ],
       "registryUrlTemplate": "https://{{{registryUrl}}}",
       "datasourceTemplate": "docker"
+    },
+    {
+      "fileMatch": ["^\\.github/workflows/commitlint\\.yaml$"],
+      "matchStrings": [
+        "npm install --save-dev (?<depName>@?.*?)@(?<currentValue>.+)"
+      ],
+      "datasourceTemplate": "npm"
     }
   ],
   "hostRules": [
