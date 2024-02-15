@@ -19,8 +19,8 @@
       "tasks/**/*.yaml",
       "src/**/validate.yaml"
     ],
-    // renovate: datasource=github-tags depName=defenseunicorns/zarf versioning=semver
-    "https://raw.githubusercontent.com/defenseunicorns/zarf/v0.32.2/zarf.schema.json": [
+    // renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
+    "https://raw.githubusercontent.com/defenseunicorns/uds-cli/v0.9.0/zarf.schema.json": [
       "zarf.yaml"
     ]
   },
