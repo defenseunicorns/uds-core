@@ -49,10 +49,12 @@ jobs:
 
       - name: Environment setup
         uses: ./.github/actions/setup
-        with:
-          gh_token: ${{ secrets.GITHUB_TOKEN }}
-          ib_user: ${{ secrets.IRON_BANK_ROBOT_USERNAME }}
-          ib_password: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
+
+      - name: Login to GHCR
+        run: uds run registry-login --set REGISTRY=ghcr.io --set REGISTRY_USERNAME=dummy --set REGISTRY_PASSWORD=${{ secrets.GITHUB_TOKEN }} --set REGISTRY_RETRY_INTERVAL=90
+
+      - name: Login to registry1
+        run: uds run registry-login --set REGISTRY=registry1.dso.mil --set REGISTRY_USERNAME=${{ secrets.IRON_BANK_ROBOT_USERNAME }} --set REGISTRY_PASSWORD=${{ secrets.IRON_BANK_ROBOT_PASSWORD }} --set REGISTRY_RETRY_INTERVAL=90
 
       - name: Test a single source package
         if: ${{ inputs.package != 'all' && inputs.test_type == 'install' }}
