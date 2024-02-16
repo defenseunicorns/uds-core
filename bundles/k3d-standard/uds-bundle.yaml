@@ -10,27 +10,21 @@ packages:
   - name: uds-k3d-dev
     repository: ghcr.io/defenseunicorns/packages/uds-k3d
     # renovate: datasource=github-tags depName=defenseunicorns/uds-k3d versioning=semver
-    ref: 0.3.1
+    ref: 0.4.0
     overrides:
       uds-dev-stack:
         minio:
-          values:
-            - path: "users"
-              value:
-                - accessKey: logging
-                  secretKey: "logging-secret"
-                  policy: readwrite
           variables:
-            - name: buckets
+            - name: BUCKETS
               description: "Set Minio Buckets"
               path: buckets
-            - name: svcaccts
+            - name: SVCACCTS
               description: "Minio Service Accounts"
               path: svcaccts
-            - name: users
+            - name: USERS
               description: "Minio Users"
               path: users
-            - name: policies
+            - name: POLICIES
               description: "Minio policies"
               path: policies
 
