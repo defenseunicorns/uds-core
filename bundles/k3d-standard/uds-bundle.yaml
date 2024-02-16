@@ -63,6 +63,18 @@ packages:
             - name: LOKI_S3_SECRET_ACCESS_KEY
               path: loki.storage.s3.secretAccessKey
               description: "The S3 Secret Access Key"
+            - name: LOKI_WRITE_REPLICAS
+              path: write.replicas
+              description: "Loki write replicas"
+              default: "1"
+            - name: LOKI_READ_REPLICAS
+              path: read.replicas
+              description: "Loki read replicas"
+              default: "1"
+            - name: LOKI_BACKEND_REPLICAS
+              path: backend.replicas
+              description: "Loki backend replicas"
+              default: "1"
       istio-admin-gateway:
         uds-istio-config:
           variables:

@@ -58,15 +58,6 @@ rbac:
 # -- Section for configuring optional Helm test
 test:
   enabled: false
-# Configuration for the write pod(s)
-write:
-  # Remove default anti-affinity since this is a 1-replica setup
-  affinity: ""
-
-# Configuration for the read pod(s)
-read:
-  # Remove default anti-affinity since this is a 1-replica setup
-  affinity: ""
 
 # Configuration for the single binary node(s)
 singleBinary:
@@ -119,9 +110,3 @@ monitoring:
     enabled: false
 gateway:
   enabled: true
-  # Remove default anti-affinity since this is a 1-replica setup
-  affinity: ""
-
-backend:
-  # Remove default anti-affinity since this is a 1-replica setup
-  affinity: ""

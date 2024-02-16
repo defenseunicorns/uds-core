@@ -7,9 +7,8 @@ tasks:
   - name: single-package
     description: "Build and test a single package, must set UDS_PKG environment variable"
     actions:
-      - task: create:k3d-test-bundle
-      - task: deploy:k3d-test-bundle
       - task: create:single-package
+      - task: setup:k3d-test-cluster
       - task: deploy:single-package
 
       - description: "Validate the package"
@@ -38,8 +37,7 @@ tasks:
   - name: uds-core-upgrade
     description: "Test an upgrade from the latest released UDS Core package to current branch"
     actions:
-      - task: create:k3d-test-bundle
-      - task: deploy:k3d-test-bundle
+      - task: setup:k3d-test-cluster
       - task: deploy:latest-package-release
       - task: create:standard-package
       - task: deploy:standard-package

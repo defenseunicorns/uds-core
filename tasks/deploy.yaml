@@ -28,11 +28,6 @@ tasks:
       - description: "Deploy the requested Zarf Package (must set UDS_PKG environment variable)"
         cmd: uds zarf package deploy build/zarf-package-uds-core-${UDS_PKG}-${UDS_ARCH}.tar.zst --confirm
 
-  - name: k3d-test-bundle
-    actions:
-      - description: "Deploy the UDS Test Bundle"
-        cmd: uds deploy bundles/k3d-test/uds-bundle-k3d-core-test-${UDS_ARCH}-test.tar.zst --confirm --no-progress
-
   - name: latest-package-release
     actions:
       - description: "Get latest tag version from OCI"

@@ -31,12 +31,6 @@ tasks:
       - description: "Create the UDS Core Istio Only Bundle"
         cmd: "uds create bundles/k3d-istio --confirm --no-progress --architecture=${ZARF_ARCHITECTURE}"
 
-  - name: k3d-test-bundle
-    description: "Create the test Bundle"
-    actions:
-      - description: "Create the test Bundle"
-        cmd: "uds create bundles/k3d-test --confirm --no-progress --architecture=${ZARF_ARCHITECTURE}"
-
   - name: single-package
     description: "Create a single Zarf Package, must set UDS_PKG environment variable"
     actions:
