@@ -8,14 +8,14 @@ clusterLabelOverride: null
 loki:
   storage:
     bucketNames:
-      chunks: test
-      ruler: test
-      admin: test
+      chunks: uds
+      ruler: uds
+      admin: uds
     type: s3
     s3:
       endpoint: http://minio.uds-dev-stack.svc.cluster.local:9000
-      secretAccessKey: logging-secret
-      accessKeyId: logging
+      secretAccessKey: uds-secret
+      accessKeyId: uds
       s3ForcePathStyle: true
       insecure: false
   commonConfig:
