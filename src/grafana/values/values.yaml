@@ -5,3 +5,26 @@ sidecar:
   datasources:
     enabled: true
     label: grafana_datasource
+
+extraSecretMounts:
+  - name: auth-generic-oauth-secret-mount
+    secretName: sso-client-admin-grafana
+    defaultMode: 0440
+    mountPath: /etc/secrets/auth_generic_oauth
+    readOnly: true
+
+grafana.ini:
+  server:
+    # domain: admin.uds.dev
+    root_url: https://grafana.admin.uds.dev
+  auth.generic_oauth:
+    enabled: true
+    client_id: $__file{/etc/secrets/auth_generic_oauth/clientId}
+    client_secret: $__file{/etc/secrets/auth_generic_oauth/secret}
+    scopes: openid
+    name: UDS Identity Service
+    auth_url: https://keycloak.admin.uds.dev/realms/uds/protocol/openid-connect/auth
+    token_url: http://keycloak-http.keycloak.svc.cluster.local:8080/realms/uds/protocol/openid-connect/token
+    api_url: http://keycloak-http.keycloak.svc.cluster.local:8080/realms/uds/protocol/openid-connect/userinfo
+    allow_sign_up: true
+    # role_attribute_path: Viewer

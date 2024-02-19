@@ -422,10 +422,6 @@ export interface Sso {
    */
   alwaysDisplayInConsole?: boolean;
   /**
-   * Default URL to use when the auth server needs to redirect or link back to the client.
-   */
-  baseUrl?: string;
-  /**
    * The client authenticator type
    */
   clientAuthenticatorType?: ClientAuthenticatorType;
@@ -454,9 +450,21 @@ export interface Sso {
    */
   name: string;
   /**
+   * Valid URI pattern a browser can redirect to after a successful login. Simple wildcards
+   * are allowed such as 'http://example.com/*'. Relative path can be specified too such as
+   * /my/relative/path/*. Relative paths are relative to the client root URL, or if none is
+   * specified the auth server root URL is used. For SAML, you must set valid URI patterns if
+   * you are relying on the consumer service URL embedded with the login request.
+   */
+  redirectUris?: string[];
+  /**
    * Root URL appended to relative URLs
    */
   rootUrl?: string;
+  /**
+   * The name of the secret to store the client secret
+   */
+  secretName?: string;
   /**
    * Allowed CORS origins. To permit all origins of Valid Redirect URIs, add '+'. This does
    * not include the '*' wildcard though. To permit all origins, explicitly add '*'.
