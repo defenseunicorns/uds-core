@@ -5,7 +5,7 @@ import { initAPIServerCIDR, updateAPIServerCIDR } from "./controllers/network/ge
 import { UDSPackage } from "./crd";
 import "./crd/register";
 import { validator } from "./crd/validator";
-import { Queue } from "./enqueue";
+import { reconciler } from "./reconciler";
 
 export const operator = new Capability({
   name: "uds-core-operator",
@@ -14,12 +14,11 @@ export const operator = new Capability({
 
 export const { Store, When } = operator;
 
-// Create a queue to process the packages in serial order
-const queue = new Queue();
-
 // Pre-populate the API server CIDR since we are not persisting the EndpointSlice
 // Note ignore any errors since the watch will still be running hereafter
 void initAPIServerCIDR();
+
+// When(a.Secret).IsCreatedOrUpdated().WithLabel("uds.dev/secret-mapper").Mutate(injectSecret);
 
 // Watch for changes to the API server EndpointSlice and update the API server CIDR
 When(a.EndpointSlice)
@@ -37,4 +36,4 @@ When(UDSPackage)
   // Advanced CR validation
   .Validate(validator)
   // Enqueue the package for processing
-  .Watch(pkg => queue.enqueue(pkg));
+  .Reconcile(reconciler);
