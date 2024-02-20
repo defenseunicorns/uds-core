@@ -19,7 +19,7 @@ export interface Client {
   protocol: string;
   publicClient: boolean;
   redirectUris: string[];
-  registrationAccessToken: string;
+  registrationAccessToken?: string;
   secret: string;
   serviceAccountsEnabled: boolean;
   standardFlowEnabled: boolean;

@@ -6,6 +6,7 @@ import { UDSPackage } from "./crd";
 import "./crd/register";
 import { validator } from "./crd/validator";
 import { reconciler } from "./reconciler";
+import { purgeSSOClients } from "./controllers/keycloak/client-sync";
 
 export const operator = new Capability({
   name: "uds-core-operator",
@@ -26,7 +27,15 @@ When(a.EndpointSlice)
   .Watch(updateAPIServerCIDR);
 
 // Watch for changes to the UDSPackage CRD and cleanup the namespace mutations
-When(UDSPackage).IsDeleted().Watch(cleanupNamespace);
+When(UDSPackage)
+  .IsDeleted()
+  .Watch(async pkg => {
+    // Cleanup the namespace
+    await cleanupNamespace(pkg);
+
+    // Remove any SSO clients
+    await purgeSSOClients(pkg, []);
+  });
 
 // Watch for changes to the UDSPackage CRD to enqueue a package for processing
 When(UDSPackage)
