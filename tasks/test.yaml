@@ -9,7 +9,7 @@ tasks:
     actions:
       - task: create:single-package
       - cmd: |
-          [ "$UDS_PKG" == "loki" ] && echo "3" || echo "1"
+          [ "$UDS_PKG" = "loki" ] && echo "3" || echo "1"
         setVariables:
           - name: NODES
       - task: setup:create-k3d-cluster
