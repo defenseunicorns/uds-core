@@ -13,7 +13,7 @@ components:
         localPath: ../chart
       - name: loki
         url: https://grafana.github.io/helm-charts/
-        version: 5.42.2
+        version: 5.43.1
         namespace: loki
         valuesFiles:
           - ../values/values.yaml

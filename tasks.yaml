@@ -10,6 +10,7 @@ includes:
   - deploy: ./tasks/deploy.yaml
   - test: ./tasks/test.yaml
   - lint: ./tasks/lint.yaml
+  - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/v0.2.0/tasks/setup.yaml
 tasks:
   - name: dev-setup
     actions:
@@ -34,6 +35,15 @@ tasks:
   - name: setup-cluster
     actions:
       - task: setup:k3d-test-cluster
+
+  - name: registry-login
+    actions:
+      - task: common-setup:registry-login
+        with:
+          registry: ${REGISTRY}
+          registryUsername: ${REGISTRY_USERNAME}
+          registryPassword: ${REGISTRY_PASSWORD}
+          registryRetryInterval: ${REGISTRY_RETRY_INTERVAL}
 
   - name: create-single-package
     actions:

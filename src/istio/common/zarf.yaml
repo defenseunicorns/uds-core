@@ -10,11 +10,11 @@ components:
     charts:
       - name: base
         url: https://istio-release.storage.googleapis.com/charts
-        version: 1.20.2
+        version: 1.20.3
         namespace: istio-system
       - name: istiod
         url: https://istio-release.storage.googleapis.com/charts
-        version: 1.20.2
+        version: 1.20.3
         namespace: istio-system
         valuesFiles:
           - "../values/values.yaml"
