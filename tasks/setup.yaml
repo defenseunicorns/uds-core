@@ -1,16 +1,16 @@
 tasks:
   - name: create-k3d-cluster
+    inputs:
+      nodes:
+        default: "1"
+        description: This is the number of nodes
+      init:
+        default: "true"
+        description: Initialize the cluster with Zarf
     actions:
-      - description: "Create the K3d cluster"
+      - description: Create a K3d cluster
         # renovate: datasource=github-tags depName=defenseunicorns/uds-k3d versioning=semver
-        cmd: |
-          K3D_ARGS="--servers 1"
-          [ "$UDS_PKG" == "loki" ] && K3D_ARGS="--servers 3"; uds zarf package deploy oci://defenseunicorns/uds-k3d:0.4.0 --confirm --set=K3D_EXTRA_ARGS="$K3D_ARGS"
-
-  - name: k3d-test-cluster
-    actions:
-      - task: create-k3d-cluster
-
-      - description: "Initialize the cluster with Zarf"
+        cmd: 'uds zarf package deploy oci://defenseunicorns/uds-k3d:0.4.0 --confirm --set=K3D_EXTRA_ARGS="--servers $INPUT_NODES"'
+      - description: Conditionally Zarf init the cluster
         # renovate: datasource=github-tags depName=defenseunicorns/init versioning=semver
-        cmd: "uds zarf package deploy oci://defenseunicorns/init:v0.32.1 --confirm"
+        cmd: '[ "$INPUT_INIT" = "true" ] && uds zarf package deploy oci://defenseunicorns/init:v0.32.1 --confirm || echo "Skipping Zarf init"'
