@@ -18,8 +18,6 @@ export const { Store, When } = operator;
 // Note ignore any errors since the watch will still be running hereafter
 void initAPIServerCIDR();
 
-// When(a.Secret).IsCreatedOrUpdated().WithLabel("uds.dev/secret-mapper").Mutate(injectSecret);
-
 // Watch for changes to the API server EndpointSlice and update the API server CIDR
 When(a.EndpointSlice)
   .IsCreatedOrUpdated()
