@@ -55,7 +55,7 @@ If you want to try out UDS Core, you can use the [k3d-core-demo bundle](./bundle
 <!-- x-release-please-start-version -->
 
 ```bash
-uds deploy k3d-core-demo:0.12.0
+uds deploy k3d-core-demo:0.13.0
 ```
 
 <!-- x-release-please-end -->
@@ -67,7 +67,7 @@ In addition to the demo bundle, a [k3d-core-istio-dev bundle](./bundles/k3d-isti
 <!-- x-release-please-start-version -->
 
 ```bash
-uds deploy k3d-core-istio-dev:0.12.0
+uds deploy k3d-core-istio-dev:0.13.0
 ```
 
 <!-- x-release-please-end -->
