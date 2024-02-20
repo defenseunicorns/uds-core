@@ -44,7 +44,8 @@ components:
 
   # Metrics Server
   - name: metrics-server
-    required: true
+    # default instead of required to support deselection to use a distro-default metrics-server
+    default: true
     import:
       path: ../../src/metrics-server
 
