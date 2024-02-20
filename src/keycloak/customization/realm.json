@@ -278,6 +278,17 @@
             "optionalClientScopes": []
         }
     ],
+    "clientScopeMappings": {
+        "account": [
+            {
+                "client": "account-console",
+                "roles": [
+                    "manage-account",
+                    "view-groups"
+                ]
+            }
+        ]
+    },
     "clientScopes": [
         {
             "id": "d5e5210c-7293-4cb8-a211-be929277e8cd",
@@ -845,6 +856,49 @@
         "phone",
         "microprofile-jwt"
     ],
+    "roles": {
+        "realm": [
+            {
+                "id": "9ea75587-8587-40f9-a818-75b93297024b",
+                "name": "default-roles-uds",
+                "description": "${role_default-roles}",
+                "composite": true,
+                "composites": {
+                    "realm": [
+                        "offline_access",
+                        "uma_authorization"
+                    ],
+                    "client": {
+                        "account": [
+                            "manage-account",
+                            "view-groups"
+                        ]
+                    }
+                },
+                "clientRole": false,
+                "containerId": "uds",
+                "attributes": {}
+            },
+            {
+                "id": "7ba621e6-7339-4433-a464-efc6b8ba46fa",
+                "name": "offline_access",
+                "description": "${role_offline-access}",
+                "composite": false,
+                "clientRole": false,
+                "containerId": "uds",
+                "attributes": {}
+            },
+            {
+                "id": "5bbfe3cf-841b-4f40-ba93-6466b1e943fd",
+                "name": "uma_authorization",
+                "description": "${role_uma_authorization}",
+                "composite": false,
+                "clientRole": false,
+                "containerId": "uds",
+                "attributes": {}
+            }
+        ]
+    },
     "loginTheme": "theme",
     "accountTheme": "theme",
     "eventsEnabled": true,
