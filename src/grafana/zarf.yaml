@@ -4,6 +4,11 @@ metadata:
   description: "UDS Core Grafana"
   url: https://grafana.com/grafana
 
+variables:
+  - name: DOMAIN
+    description: "Cluster domain"
+    default: "uds.dev"
+
 components:
   - name: grafana
     required: true

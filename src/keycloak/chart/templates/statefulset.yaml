@@ -73,6 +73,8 @@ spec:
             - "--features=preview"
           env:
             # Common configuration
+            - name: UDS_DOMAIN
+              value: "{{ .Values.domain }}"
 
             # Enable health and metrics endpoints
             - name: KC_HEALTH_ENABLED

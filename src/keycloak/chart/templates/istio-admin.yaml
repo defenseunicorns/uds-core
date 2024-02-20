@@ -12,12 +12,18 @@ spec:
   - to:
     - operation:
         paths: 
-          - "/admin/*"
-          - "/realms/master/*"
+          - "/admin*"
+          - "/realms/master*"
           - "/metrics*"
-          # Never allow anonymous client registration from a gateway
-          # This is another fallback protection, as the KC policy already blocks it
-          - "/realms/*/clients-registrations/default*"
     when:
     - key: source.namespace
       notValues: ["istio-admin-gateway"]
+  - to:
+    - operation:
+        paths: 
+          # Never allow anonymous client registration except from the pepr-system namespace
+          # This is another fallback protection, as the KC policy already blocks it
+          - "/realms/{{ .Values.realm }}/clients-registrations/*"
+    when:
+    - key: source.namespace
+      notValues: ["pepr-system"]

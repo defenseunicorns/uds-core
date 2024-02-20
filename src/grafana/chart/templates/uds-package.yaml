@@ -6,7 +6,7 @@ metadata:
 spec:
   sso:
     - name: Grafana Dashboard
-      clientId: admin-grafana
+      clientId: uds-core-admin-grafana
       redirectUris:
         - "https://grafana.admin.UDS_DOMAIN/login/generic_oauth"
 
