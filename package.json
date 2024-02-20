@@ -25,7 +25,8 @@
     },
     "env": {
       "UDS_DOMAIN": "###ZARF_VAR_DOMAIN###",
-      "UDS_WITH_ISTIO": "###ZARF_CONST_WITH_ISTIO###"
+      "UDS_WITH_ISTIO": "###ZARF_CONST_WITH_ISTIO###",
+      "UDS_ALLOW_ALL_NS_EXEMPTIONS": "###ZARF_VAR_ALLOW_ALL_NS_EXEMPTIONS###"
     }
   },
   "scripts": {

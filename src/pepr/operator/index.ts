@@ -50,7 +50,6 @@ When(UDSExemption).IsDeleted().Watch(removeExemptions);
 // Watch for changes to the UDSExemption CRD to enqueue an exemption for processing
 When(UDSExemption)
   .IsCreatedOrUpdated()
-  .InNamespace("uds-policy-exemptions")
   .Validate(exemptValidator)
   .Reconcile(async (exempt: UDSExemption) => {
     if (!exempt.metadata?.namespace) {

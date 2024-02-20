@@ -1,9 +1,20 @@
 import { PeprValidateRequest } from "pepr";
 
 import { UDSExemption } from ".";
+import { UDSConfig } from "../../config";
+
+const validNs = "uds-policy-exemptions";
 
 export async function exemptValidator(req: PeprValidateRequest<UDSExemption>) {
-  const exemptions = req.Raw.spec?.exemptions ?? [];
+  const exempt = req.Raw;
+
+  if (!UDSConfig.allowAllNSExemptions) {
+    if (exempt.metadata?.namespace !== validNs) {
+      return req.Deny(`Invalid namespace "${exempt.metadata?.namespace}": must be "${validNs}"`);
+    }
+  }
+
+  const exemptions = exempt.spec?.exemptions ?? [];
   if (exemptions.length === 0) {
     return req.Deny("Invalid number of exemptions: must have at least 1");
   }
@@ -13,7 +24,7 @@ export async function exemptValidator(req: PeprValidateRequest<UDSExemption>) {
     try {
       new RegExp(e.matcher.name);
     } catch (err) {
-      return req.Deny(`Invalid regular expression pattern for ${e.matcher.name}: ${err}`);
+      return req.Deny(`Invalid regular expression pattern ${e.matcher.name}: ${err}`);
     }
   }
 
