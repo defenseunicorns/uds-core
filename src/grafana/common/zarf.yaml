@@ -20,11 +20,11 @@ components:
           - ../values/values.yaml
     actions:
       onDeploy:
-        onSuccess:
+        after:
           - description: "Wait for UDS Operator sync"
             wait:
               cluster:
                 kind: Package
                 name: grafana
                 namespace: grafana
-                condition: "{.status.phase}='Ready'"
+                condition: "'{.status.phase}'=Ready"                

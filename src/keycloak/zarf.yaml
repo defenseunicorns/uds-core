@@ -18,7 +18,6 @@ components:
         localPath: chart
     images:
       - quay.io/keycloak/keycloak:23.0.4
-      # todo(jeff): this seems to be broken when performing SBOM generation
       - uds-core-config:keycloak
     actions:
       onCreate:
