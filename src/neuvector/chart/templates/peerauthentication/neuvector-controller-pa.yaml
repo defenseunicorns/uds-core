@@ -13,4 +13,7 @@ spec:
   portLevelMtls:
     "18300":
       mode: PERMISSIVE
+    # Allow webhooks to operate permissive since ingress originates from the nodes
+    "30443":
+      mode: PERMISSIVE
 {{- end }}

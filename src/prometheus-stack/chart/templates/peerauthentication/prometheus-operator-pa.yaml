@@ -1,17 +1,17 @@
 {{- if .Capabilities.APIVersions.Has "security.istio.io/v1beta1" }}
-apiVersion: security.istio.io/v1beta1
+apiVersion: "security.istio.io/v1beta1"
 kind: PeerAuthentication
 metadata:
-  name: metrics-server-api-exception
+  name: prometheus-operator-webhook
   namespace: {{ .Release.Namespace }}
 spec:
-  mtls:
-    mode: STRICT
   selector:
     matchLabels:
-      app.kubernetes.io/name: metrics-server
+      app: kube-prometheus-stack-operator
+  mtls:
+    mode: STRICT
   portLevelMtls:
-    # Allow api service calls to operate permissive since ingress originates from the nodes
+    # Allow webhooks to operate permissive since ingress originates from the nodes
     "10250":
       mode: PERMISSIVE
 {{- end }}
