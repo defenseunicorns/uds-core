@@ -462,6 +462,10 @@ export interface Sso {
    */
   rootUrl?: string;
   /**
+   * The client secret. Typically left blank and auto-generated.
+   */
+  secret?: string;
+  /**
    * The name of the secret to store the client secret
    */
   secretName?: string;
