@@ -32,6 +32,14 @@ spec:
           app: neuvector-updater-pod
 
       - direction: Ingress
+        # todo: evaluate a "KubeAPI" _ingress_ generated rule for webhook calls
+        remoteGenerated: Anywhere
+        selector:
+          app: neuvector-controller-pod
+        port: 30443
+        description: "Webhook"
+
+      - direction: Ingress
         remoteNamespace: monitoring
         remoteSelector:
           app: prometheus

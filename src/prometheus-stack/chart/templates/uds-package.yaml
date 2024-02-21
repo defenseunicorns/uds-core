@@ -33,6 +33,14 @@ spec:
         selector:
           app: kube-prometheus-stack-admission-patch
 
+      - direction: Ingress
+        # todo: evaluate a "KubeAPI" _ingress_ generated rule for webhook calls
+        remoteGenerated: Anywhere
+        selector:
+          app: kube-prometheus-stack-operator
+        port: 10250
+        description: "Webhook"
+
       # todo: lockdown egress to scrape targets
       - direction: Egress
         remoteNamespace: "" 
