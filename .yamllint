@@ -12,7 +12,7 @@ ignore:
 
 rules:
   anchors: enable
-  braces: enable
+  braces: disable
   brackets: enable
   colons: enable
   commas: enable
