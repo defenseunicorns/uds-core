@@ -27,4 +27,4 @@ components:
                 kind: Package
                 name: grafana
                 namespace: grafana
-                condition: "'{.status.phase}'=Ready"                
+                condition: "'{.status.phase}'=Ready"
