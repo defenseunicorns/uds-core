@@ -36,5 +36,5 @@ components:
         valuesFiles:
           - "values/registry1-values.yaml"
     images:
-      - registry1.dso.mil/opensource/keycloak/keycloak:23.0.4
+      - registry1.dso.mil/ironbank/opensource/keycloak/keycloak:23.0.4
       - uds-core-config:keycloak
