@@ -179,6 +179,10 @@ const sso = {
         description: "The client identifier registered with the identity provider.",
         type: "string",
       },
+      secret: {
+        description: "The client secret. Typically left blank and auto-generated.",
+        type: "string",
+      },
       name: {
         description: "Specifies display name of the client",
         type: "string",
