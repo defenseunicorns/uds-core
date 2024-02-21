@@ -13,7 +13,7 @@ components:
     required: true
     only:
       flavor: upstream
-    import: 
+    import:
       path: common
     charts:
       - name: keycloak
@@ -29,7 +29,7 @@ components:
       flavor: registry1
       cluster:
         architecture: amd64
-    import: 
+    import:
       path: common
     charts:
       - name: keycloak

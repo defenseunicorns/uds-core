@@ -47,7 +47,7 @@ components:
     required: true
     import:
       path: ../../src/metrics-server
-  
+
   # Keycloak
   - name: keycloak
     required: true
