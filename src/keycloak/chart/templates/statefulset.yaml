@@ -54,6 +54,8 @@ spec:
         - name: keycloak
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+          {{- toYaml .Values.securityContext | nindent 12 }}
           command: 
             - "/opt/keycloak/bin/kc.sh"
           args:
