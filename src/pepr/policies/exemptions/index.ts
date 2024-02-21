@@ -4,7 +4,7 @@ import { Policy } from "../../operator/crd";
 import { Store } from "../common";
 
 /**
- * Register a list of exemptions to be used by the validation action.
+ * Check a resource against an exemption list for use by the validation action.
  *
  * @param policy Policy to get exemptions for
  * @param request The request to check.
@@ -18,7 +18,7 @@ export function isExempt<T extends KubernetesObject>(
 
   // Loop through the exempt list
   for (const exempt of exemptList) {
-    // If the exempt name is specified, check it
+    // If the exempt namespace is specified, check it
     if (exempt.namespace && exempt.namespace !== request.Raw.metadata?.namespace) {
       continue;
     }

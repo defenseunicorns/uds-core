@@ -17,7 +17,7 @@ import { isExempt } from "./exemptions";
 When(a.Pod)
   .IsCreatedOrUpdated()
   .Validate(request => {
-    if (isExempt(Policy.DisallowPrivileged, request)) {
+    if (isExempt(Policy.DisallowHostNamespaces, request)) {
       return request.Approve();
     }
 
