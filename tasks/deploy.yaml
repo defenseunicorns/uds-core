@@ -35,7 +35,7 @@ tasks:
         setVariables:
           - name: LATEST_VERSION
       - description: "Deploy the latest UDS Core package release"
-        cmd: uds zarf package deploy oci://ghcr.io/defenseunicorns/packages/uds/core:${LATEST_VERSION} --confirm
+        cmd: uds zarf package deploy oci://ghcr.io/defenseunicorns/packages/uds/core:${LATEST_VERSION} --confirm --components="metrics-server" # Temporary addition to workaround https://github.com/defenseunicorns/zarf/issues/2320
 
   - name: standard-package
     actions:
