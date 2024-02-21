@@ -9,13 +9,11 @@ UDS Core establishes a secure baseline for cloud-native systems and ships with c
 - [Grafana](https://grafana.com/oss/grafana/) - Monitoring
 - [Istio](https://istio.io/) - Service Mesh
 - [Loki](https://grafana.com/oss/loki/) - Log Aggregation
-- [Metrics Server](https://github.com/kubernetes-sigs/metrics-server)* - Metrics
+- [Metrics Server](https://github.com/kubernetes-sigs/metrics-server) - Metrics
 - [Neuvector](https://open-docs.neuvector.com/) - Container Security
 - [Pepr](https://pepr.dev) - UDS policy engine & operator
 - [Prometheus Stack](https://github.com/prometheus-operator/kube-prometheus) - Monitoring
 - [Promtail](https://grafana.com/docs/loki/latest/send-data/promtail/) - Log Aggregation
-
-*Supports component deselection to use a Kubernetes distribution provided metrics-server.
 
 #### Future Applications
 
@@ -55,7 +53,7 @@ If you want to try out UDS Core, you can use the [k3d-core-demo bundle](./bundle
 <!-- x-release-please-start-version -->
 
 ```bash
-uds deploy k3d-core-demo:0.13.0
+uds deploy k3d-core-demo:0.13.1
 ```
 
 <!-- x-release-please-end -->
@@ -67,7 +65,7 @@ In addition to the demo bundle, a [k3d-core-istio-dev bundle](./bundles/k3d-isti
 <!-- x-release-please-start-version -->
 
 ```bash
-uds deploy k3d-core-istio-dev:0.13.0
+uds deploy k3d-core-istio-dev:0.13.1
 ```
 
 <!-- x-release-please-end -->
