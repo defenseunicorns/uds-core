@@ -1,0 +1,4 @@
+image:
+  repository: registry1.dso.mil/opensource/keycloak/keycloak
+  tag: "23.0.4"
+configImage: uds-core-config:keycloak
