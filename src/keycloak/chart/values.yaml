@@ -7,7 +7,8 @@ image:
   # The Keycloak image pull policy
   pullPolicy: IfNotPresent
 
-configImage: uds-core-config:keycloak
+# renovate: datasource=github-tags depName=defenseunicorns/uds-config versioning=semver
+configImage: ghcr.io/defenseunicorns/uds/identity-config:0.2.1
 
 # The public domain name of the Keycloak server
 domain: "###ZARF_VAR_DOMAIN###"

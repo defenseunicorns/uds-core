@@ -105,7 +105,8 @@ async function syncClient(
     await K8s(kind.Secret).Apply({
       metadata: {
         namespace: pkg.metadata!.namespace,
-        name,
+        // Use the CR secret name if provided, otherwise use the client name
+        name: clientReq.secretName || name,
       },
       stringData: clientToStringmap(client),
     });
