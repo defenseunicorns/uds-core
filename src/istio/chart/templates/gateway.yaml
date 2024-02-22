@@ -33,7 +33,7 @@ spec:
         mode: {{ $tls.mode }}
         {{- if ne $tls.mode "PASSTHROUGH" }}
         credentialName: {{ $tls.name }}
-        minProtocolVersion: TLSV1_3
+        # minProtocolVersion: TLSV1_3
         {{- end }}
     {{ end }}
       

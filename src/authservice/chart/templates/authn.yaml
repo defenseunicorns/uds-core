@@ -10,11 +10,11 @@ spec:
     matchLabels:
       {{ .Values.selector.key }}: {{ .Values.selector.value | quote }}
   jwtRules:
-    - issuer: https://{{ .Values.global.oidc.host }}/auth/realms/{{ .Values.global.oidc.realm }}
+    - issuer: https://{{ .Values.global.oidc.host }}/realms/{{ .Values.global.oidc.realm }}
     {{- if .Values.global.jwks }}
       jwks: {{ .Values.global.jwks | quote }}
     {{- else }}
-      jwksUri: https://{{ .Values.global.oidc.host }}/auth/realms/{{ .Values.global.oidc.realm }}/protocol/openid-connect/certs
+      jwksUri: https://{{ .Values.global.oidc.host }}/realms/{{ .Values.global.oidc.realm }}/protocol/openid-connect/certs
     {{- end }}
       forwardOriginalToken: true
 {{- end }}

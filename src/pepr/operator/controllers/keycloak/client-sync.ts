@@ -4,6 +4,7 @@ import { Store } from "../..";
 import { UDSConfig } from "../../../config";
 import { Sso, UDSPackage } from "../../crd";
 import { Client } from "./types";
+import { updateConfig } from "./authservice";
 
 const apiURL =
   "http://keycloak-http.keycloak.svc.cluster.local:8080/realms/uds/clients-registrations/default";
@@ -103,6 +104,7 @@ async function syncClient(
 
     if (isAuthSvcClient) {
       // Do things here
+      updateConfig(client);
     }
 
     return name;
@@ -114,7 +116,7 @@ async function syncClient(
 
     // Retry the request
     Log.warn(pkg.metadata, `Failed to process client request: ${clientReq.clientId}, retrying`);
-    return syncClient(clientReq, pkg, true);
+    return syncClient({ isAuthSvcClient, ...clientReq }, pkg, true);
   }
 }
 

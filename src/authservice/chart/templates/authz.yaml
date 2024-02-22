@@ -37,5 +37,5 @@ spec:
   - from:
     - source:
         requestPrincipals:
-        - "https://{{ .Values.global.oidc.host }}/auth/realms/{{ .Values.global.oidc.realm }}/*"
+        - "https://{{ .Values.global.oidc.host }}/realms/{{ .Values.global.oidc.realm }}/*"
 {{- end }}

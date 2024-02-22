@@ -27,6 +27,15 @@ tasks:
           echo "  - Otherwise run 'npx pepr deploy' to deploy the Pepr module to the cluster"
           echo "  - Additional source packages can be deployed with 'zarf dev deploy src/<package>'"
 
+      - description: "Deploy Pepr"
+        cmd: "npx pepr deploy --confirm"
+
+      - description: "Deploy Keycloak"
+        cmd: "uds run dev-deploy --set PKG=keycloak"
+
+      - description: "Deploy Authservice"
+        cmd: "uds run dev-deploy --set PKG=authservice"
+
   - name: dev-deploy
     actions:
       - description: "Deploy the given source package with Zarf Dev"
