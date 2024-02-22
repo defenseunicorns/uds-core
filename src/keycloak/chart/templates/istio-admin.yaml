@@ -10,22 +10,22 @@ spec:
       {{- include "keycloak.selectorLabels" . | nindent 6 }}
   action: DENY
   rules:
-  - to:
-    - operation:
-        paths: 
-          - "/admin*"
-          - "/realms/master*"
-          - "/metrics*"
-    from:
-    - source:
-      notNamespaces: ["istio-admin-gateway"]
-  - to:
-    - operation:
-        paths: 
-          # Never allow anonymous client registration except from the pepr-system namespace
-          # This is another fallback protection, as the KC policy already blocks it
-          - "/realms/{{ .Values.realm }}/clients-registrations/*"
-    from:
-    - source:
-      notNamespaces: ["pepr-system"]
+    - to:
+        - operation:
+            paths:
+              - "/admin*"
+              - "/realms/master*"
+              - "/metrics*"
+      from:
+        - source:
+            notNamespaces: ["istio-admin-gateway"]
+    - to:
+        - operation:
+            paths:
+              # Never allow anonymous client registration except from the pepr-system namespace
+              # This is another fallback protection, as the KC policy already blocks it
+              - "/realms/{{ .Values.realm }}/clients-registrations/*"
+      from:
+        - source:
+            notNamespaces: ["pepr-system"]
 {{- end }}

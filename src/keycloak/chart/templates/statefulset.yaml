@@ -27,15 +27,6 @@ spec:
       initContainers:
         - name: uds-config
           image: "{{ .Values.configImage }}"
-          command: ['sh' , '-c']
-          args:
-            - |
-              # Ensure the import directory exists
-              mkdir -p /opt/keycloak/data/import/
-              # Copy the files to their respective directories
-              cp -fu realm.json /opt/keycloak/data/import/realm.json
-              cp -fur theme /opt/keycloak/themes/theme
-              cp -fu *.jar /opt/keycloak/providers/
           securityContext:
             runAsUser: 65532
             runAsGroup: 65532
