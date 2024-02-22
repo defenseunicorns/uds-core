@@ -11,4 +11,3 @@ components:
         namespace: keycloak
         version: 23.0.4
         localPath: ../chart
-
