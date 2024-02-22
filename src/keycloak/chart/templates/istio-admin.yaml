@@ -15,9 +15,9 @@ spec:
           - "/admin*"
           - "/realms/master*"
           - "/metrics*"
-    when:
-    - key: source.namespace
-      notValues: ["istio-admin-gateway"]
+    from:
+    - source:
+      notNamespaces: ["istio-admin-gateway"]
   - to:
     - operation:
         paths: 
