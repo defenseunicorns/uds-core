@@ -40,4 +40,3 @@ components:
       - registry1.dso.mil/ironbank/opensource/keycloak/keycloak:23.0.4
       # renovate: datasource=github-tags depName=defenseunicorns/uds-config versioning=semver
       - ghcr.io/defenseunicorns/uds/identity-config:0.2.1
-
