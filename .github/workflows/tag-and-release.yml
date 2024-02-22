@@ -50,7 +50,7 @@ jobs:
 
       - name: Create Standard Package and Bundle
         if: ${{ matrix.type == 'standard-package' }}
-        run: | 
+        run: |
           set -e
           ZARF_ARCHITECTURE=${{ matrix.arch }} uds run -f tasks/create.yaml standard-package --no-progress --set FLAVOR=${FLAVOR}
           ZARF_ARCHITECTURE=${{ matrix.arch }} uds run -f tasks/create.yaml k3d-standard-bundle --no-progress
