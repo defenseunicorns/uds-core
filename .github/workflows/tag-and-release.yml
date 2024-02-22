@@ -78,7 +78,7 @@ jobs:
         run: uds run -f tasks/publish.yaml standard-bundle --set uds_arch=${{ matrix.arch }}
 
       - name: Publish UDS Istio Bundles
-        if: ${{ matrix.flavor != 'registry1' && matrix.type == 'standard-package' }}
+        if: ${{ matrix.flavor != 'registry1' && matrix.type == 'istio-package' }}
         run: uds run -f tasks/publish.yaml istio-bundle --set uds_arch=${{ matrix.arch }}
 
       - name: Save logs
