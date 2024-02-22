@@ -28,3 +28,4 @@ spec:
     from:
     - source:
       notNamespaces: ["pepr-system"]
+{{- end }}
