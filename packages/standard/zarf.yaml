@@ -4,7 +4,7 @@ metadata:
   description: "UDS Core"
   authors: "Defense Unicorns - Product"
   # x-release-please-start-version
-  version: "0.13.0"
+  version: "0.13.1"
   # x-release-please-end
 
 components:
@@ -44,8 +44,7 @@ components:
 
   # Metrics Server
   - name: metrics-server
-    # default instead of required to support deselection to use a distro-default metrics-server
-    default: true
+    required: true
     import:
       path: ../../src/metrics-server
 
