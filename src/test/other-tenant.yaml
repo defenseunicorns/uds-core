@@ -1,0 +1,88 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: other-test-app
+---
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: httpbin-other
+  namespace: other-test-app
+spec:
+  sso:
+    - name: Other SSO
+      clientId: uds-core-other-httpbin
+      redirectUris:
+        - "https://foo.UDS_DOMAIN/login"
+      isAuthSvcClient: true
+  network:
+    expose:
+      - service: httpbin
+        selector:
+          app: httpbin
+        gateway: tenant
+        host: foo
+        port: 8000
+        targetPort: 80
+    allow:
+      - direction: Egress
+        remoteNamespace: authservice
+        remoteSelector:
+          app.kubernetes.io/name: authservice
+        port: 10003
+        description: "Authservice"
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: httpbin
+  namespace: other-test-app
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: httpbin
+  namespace: other-test-app
+  labels:
+    app: httpbin
+    service: httpbin
+spec:
+  ports:
+    - name: http
+      port: 8000
+      targetPort: 80
+  selector:
+    app: httpbin
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin
+  namespace: other-test-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: httpbin
+        version: v1
+        protect: keycloak
+    spec:
+      serviceAccountName: httpbin
+      containers:
+        - image: docker.io/kong/httpbin
+          imagePullPolicy: IfNotPresent
+          name: httpbin
+          resources:
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          ports:
+            - containerPort: 80

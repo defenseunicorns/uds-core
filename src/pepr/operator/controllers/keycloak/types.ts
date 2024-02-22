@@ -38,14 +38,15 @@ export interface AuthserviceConfig {
 }
 
 interface OIDCConfig {
-  skip_verify_peer_cert: boolean;
+  skip_verify_peer_cert?: boolean;
   authorization_uri: string;
-  callback_uri: string;
+  callback_uri?: string;
+  cookie_name_prefix?: string;
   token_uri: string;
   jwks_fetcher?: JWKSFetcher;
   client_id: string;
   client_secret: string;
-  id_token: Token;
+  id_token?: Token;
   access_token?: Token;
   trusted_certificate_authority?: string;
   logout: Logout;

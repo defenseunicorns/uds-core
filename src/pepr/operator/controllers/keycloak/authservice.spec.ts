@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, jest, test } from "@jest/globals";
 
-import { buildChain } from "./authservice";
-import { Client } from "./types";
+import { Action, AuthServiceEvent, buildChain, buildConfig } from "./authservice";
+import { AuthserviceConfig, Client } from "./types";
+import * as mockConfig from "./mock-authservice-config.json";
 
 describe("authservice", () => {
   let mockClient: Client;
@@ -11,7 +12,7 @@ describe("authservice", () => {
 
     mockClient = {
       clientId: "test-client",
-      redirectUris: ["https://demo.uds.dev/login"],
+      redirectUris: ["https://foo.uds.dev/login"],
       secret: "test-secret",
       alwaysDisplayInConsole: false,
       attributes: {},
@@ -39,8 +40,13 @@ describe("authservice", () => {
   });
 
   test("should test authservice chain build", async () => {
-    const chain = buildChain(mockClient);
-    expect(chain.name).toEqual(mockClient.clientId);
+    const chain = buildChain({
+      client: mockClient,
+      name: "sso-client-test",
+      action: Action.Add,
+    } as AuthServiceEvent);
+    expect(chain.name).toEqual("sso-client-test");
+    expect(chain.match.prefix).toEqual("foo.uds.dev");
     expect(chain.filters.length).toEqual(1);
 
     expect(chain.filters[0].oidc_override.authorization_uri).toEqual(
@@ -52,5 +58,45 @@ describe("authservice", () => {
     expect(chain.filters[0].oidc_override.client_secret).toEqual(mockClient.secret);
 
     expect(chain.filters[0].oidc_override.callback_uri).toEqual(mockClient.redirectUris[0]);
+  });
+
+  test("should test authservice chain removal", async () => {
+    const config = buildConfig(mockConfig as AuthserviceConfig, {
+      client: mockClient,
+      name: "local",
+      action: Action.Remove,
+    });
+
+    expect(config.chains.length).toEqual(0);
+    expect(config.listen_address).toEqual("0.0.0.0");
+  });
+
+  test("should test authservice chain addition", async () => {
+    let config = buildConfig(mockConfig as AuthserviceConfig, {
+      client: mockClient,
+      name: "local",
+      action: Action.Remove,
+    });
+
+    config = buildConfig(config, { client: mockClient, name: "sso-client-a", action: Action.Add });
+    config = buildConfig(config, { client: mockClient, name: "sso-client-b", action: Action.Add });
+
+    expect(config.chains.length).toEqual(2);
+  });
+
+  test("should test chain removal by name", async () => {
+    let config = buildConfig(mockConfig as AuthserviceConfig, {
+      client: mockClient,
+      name: "nothere",
+      action: Action.Remove,
+    });
+    expect(config.chains.length).toEqual(1);
+
+    config = buildConfig(mockConfig as AuthserviceConfig, {
+      client: mockClient,
+      name: "local",
+      action: Action.Remove,
+    });
+    expect(config.chains.length).toEqual(0);
   });
 });

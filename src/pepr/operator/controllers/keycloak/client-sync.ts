@@ -4,7 +4,7 @@ import { Store } from "../..";
 import { UDSConfig } from "../../../config";
 import { Sso, UDSPackage } from "../../crd";
 import { Client } from "./types";
-import { updateConfig } from "./authservice";
+import { Action, updateConfig } from "./authservice";
 
 const apiURL =
   "http://keycloak-http.keycloak.svc.cluster.local:8080/realms/uds/clients-registrations/default";
@@ -48,6 +48,14 @@ export async function purgeSSOClients(pkg: UDSPackage, refs: string[] = []) {
     const clientId = ref.replace("sso-client-", "");
     if (token) {
       await apiCall({ clientId }, "DELETE", token);
+
+      // find sso by clientId
+      const sso = pkg.spec?.sso?.find(sso => sso.clientId === clientId);
+
+      // if sso.isAuthSvcClient is true, remove from authservice config
+      if (sso && sso.isAuthSvcClient) {
+        await updateConfig({name: ref, action: Action.Remove });
+      }
     } else {
       Log.warn(pkg.metadata, `Failed to remove client ${clientId}, token not found`);
     }
@@ -104,7 +112,7 @@ async function syncClient(
 
     if (isAuthSvcClient) {
       // Do things here
-      updateConfig(client);
+      await updateConfig({ client, name, action: Action.Add });
     }
 
     return name;
