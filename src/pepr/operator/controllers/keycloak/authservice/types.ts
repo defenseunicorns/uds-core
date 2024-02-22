@@ -1,3 +1,16 @@
+import { Client } from "../types";
+
+export enum Action {
+  Add = "Add",
+  Remove = "Remove",
+}
+
+export interface AuthServiceEvent {
+  name: string;
+  action: Action;
+  client?: Client;
+}
+
 export interface AuthserviceConfig {
   allow_unmatched_requests: boolean;
   listen_address: string;
