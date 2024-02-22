@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, jest, test } from "@jest/globals";
 
 import { Action, AuthServiceEvent, buildChain, buildConfig } from "./authservice";
-import { AuthserviceConfig, Client } from "./types";
-import * as mockConfig from "./mock-authservice-config.json";
+import { Client } from "../types";
+import { AuthserviceConfig } from "./types";
+import * as mockConfig from "../mock-authservice-config.json";
 
 describe("authservice", () => {
   let mockClient: Client;

@@ -1,5 +1,6 @@
 import { K8s, Log, kind } from "pepr";
-import { AuthserviceConfig, Chain, Client } from "./types";
+import { Client } from "../types";
+import { AuthserviceConfig, Chain } from "./types";
 import { createHash } from "crypto";
 
 const namespace = "authservice";
@@ -7,7 +8,7 @@ const secretName = "authservice";
 
 export enum Action {
   Add = "Add",
-  Remove = "Remove"
+  Remove = "Remove",
 }
 export interface AuthServiceEvent {
   name: string;
