@@ -25,7 +25,7 @@ const mockExemption = {
       },
     ],
   },
-};
+} as Exemption;
 
 describe("Test Exemptions Controller", () => {
   beforeEach(() => {
@@ -54,7 +54,7 @@ describe("Test Exemptions Controller", () => {
   });
 
   it("Add exemptions for the first time", async () => {
-    processExemptions(mockExemption as Exemption);
+    processExemptions(mockExemption);
     expect(Store.getItem(Policy.DisallowPrivileged)).toEqual(
       `[${JSON.stringify(enforcerMatcher)},${JSON.stringify(controllerMatcher)}]`,
     );
@@ -66,8 +66,8 @@ describe("Test Exemptions Controller", () => {
   });
 
   it("Tries to add same exemptions again and doesn't", async () => {
-    processExemptions(mockExemption as Exemption);
-    processExemptions(mockExemption as Exemption);
+    processExemptions(mockExemption);
+    processExemptions(mockExemption);
     expect(Store.getItem(Policy.DisallowPrivileged)).toEqual(
       `[${JSON.stringify(enforcerMatcher)},${JSON.stringify(controllerMatcher)}]`,
     );
@@ -78,23 +78,23 @@ describe("Test Exemptions Controller", () => {
     );
   });
 
-  it("Removes exemptions when CR updates", async () => {
+  it("Removes exemptions policies when CR updates", async () => {
     const mockExemption2 = {
       spec: {
         exemptions: [
-          ...mockExemption.spec.exemptions,
+          ...mockExemption.spec?.exemptions!,
           { matcher: enforcerMatcher, policies: ["Disallow_Privileged"] },
         ],
       },
-    };
-    processExemptions(mockExemption as Exemption);
+    } as Exemption;
+    processExemptions(mockExemption);
     expect(Store.getItem(Policy.DropAllCapabilities)).toEqual(
       `[${JSON.stringify(enforcerMatcher)},${JSON.stringify(controllerMatcher)},${JSON.stringify(
         prometheusMatcher,
       )}]`,
     );
 
-    processExemptions(mockExemption2 as Exemption);
+    processExemptions(mockExemption2);
     expect(Store.getItem(Policy.DisallowPrivileged)).toEqual(
       `[${JSON.stringify(enforcerMatcher)},${JSON.stringify(controllerMatcher)}]`,
     );
@@ -103,9 +103,30 @@ describe("Test Exemptions Controller", () => {
     );
   });
 
-  it("Removes exemptions when CR is deleted", async () => {
-    processExemptions(mockExemption as Exemption);
-    await removeExemptions(mockExemption as Exemption);
+  it('Removes matchers from policy if matcher removed from CR', () => {
+    const mockExemption3 = {
+      spec: {
+        exemptions: [
+          {
+            matcher: controllerMatcher,
+            policies: ["Disallow_Privileged", "Drop_All_Capabilities"],
+          },
+          {
+            matcher: prometheusMatcher,
+            policies: ["Drop_All_Capabilities"],
+          },
+        ],
+      },
+    } as Exemption;
+    processExemptions(mockExemption)
+    processExemptions(mockExemption3)
+    expect(Store.getItem(Policy.DisallowPrivileged)).toEqual(`[${JSON.stringify(controllerMatcher)}]`)
+    expect(Store.getItem(Policy.DropAllCapabilities)).toEqual(`[${JSON.stringify(controllerMatcher)},${JSON.stringify(prometheusMatcher)}]`)
+  })
+
+  it("Removes exemptions when CR is deleted", () => {
+    processExemptions(mockExemption);
+    removeExemptions(mockExemption);
     expect(Store.getItem(Policy.DisallowPrivileged)).toEqual("[]");
     expect(Store.getItem(Policy.DropAllCapabilities)).toEqual("[]");
   });
