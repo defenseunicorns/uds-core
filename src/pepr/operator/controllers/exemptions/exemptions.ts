@@ -2,7 +2,7 @@ import { Log } from "pepr";
 import { policies } from "../../../policies/index";
 import { Matcher, Policy, UDSExemption } from "../../crd";
 
-type PolicyExemptions = Matcher & {owner: string}
+type PolicyExemptions = Matcher & { owner: string };
 
 // Remove leading and trailing '/' if added by user to matcher name
 function removeRegexSlash(name: string) {
@@ -39,8 +39,8 @@ export function processExemptions(exempt: UDSExemption) {
 
     for (const e of exemptions) {
       const name = removeRegexSlash(e.matcher.name);
-      
-      exemptMatchers.push(name)
+
+      exemptMatchers.push(name);
 
       //get updated matchers every loop iteration
       const matchers = exemptionMap.get(p) ?? [];
@@ -51,14 +51,20 @@ export function processExemptions(exempt: UDSExemption) {
           if (isAlreadyAdded(matchers, name)) {
             continue;
           } else {
-            Log.debug(`Adding from exemption ${exempt.metadata?.name}, ${name}, to ${p}`)
-            matchers.push({ namespace: e.matcher.namespace, name: name, owner: exempt.metadata?.uid || '' });
+            Log.debug(`Adding from exemption ${exempt.metadata?.name}, ${name}, to ${p}`);
+            matchers.push({
+              namespace: e.matcher.namespace,
+              name: name,
+              owner: exempt.metadata?.uid || "",
+            });
             exemptionMap.set(p, matchers);
           }
         } else {
           // Else add to policy for the first time
-          Log.debug(`Adding from exemption ${exempt.metadata?.name}, ${name}, to ${p}`);  
-          exemptionMap.set(p, [{ namespace: e.matcher.namespace, name: name, owner: exempt.metadata?.uid || '' }]);
+          Log.debug(`Adding from exemption ${exempt.metadata?.name}, ${name}, to ${p}`);
+          exemptionMap.set(p, [
+            { namespace: e.matcher.namespace, name: name, owner: exempt.metadata?.uid || "" },
+          ]);
         }
       } else {
         // check if policy has this matcher from previous version of CR
@@ -75,11 +81,11 @@ export function processExemptions(exempt: UDSExemption) {
     }
 
     // Look through matchers of each policy and determine if the matcher no longer exists in updated version of CR
-    const updatedPolicyMatchers = exemptionMap.get(p) ?? [];    
+    const updatedPolicyMatchers = exemptionMap.get(p) ?? [];
     for (const m of updatedPolicyMatchers) {
       // if m.name not found in exemptionBlocks and owner ref is same then remove
-      if(m.owner === exempt.metadata?.uid)  {
-        if(!exemptMatchers.includes(m.name)) {
+      if (m.owner === exempt.metadata?.uid) {
+        if (!exemptMatchers.includes(m.name)) {
           const filteredList = updatedPolicyMatchers.filter(mp => mp.name !== m.name);
           exemptionMap.set(p, filteredList);
         }
@@ -87,11 +93,13 @@ export function processExemptions(exempt: UDSExemption) {
     }
   }
 
-
-
   // Iterate through local Map and update Store
   for (const [policy, matchers] of exemptionMap.entries()) {
-    Log.debug(`Adding from exemption ${exempt.metadata?.name} to policy ${policy}: ${JSON.stringify(matchers)}`);
+    Log.debug(
+      `Adding from exemption ${exempt.metadata?.name} to policy ${policy}: ${JSON.stringify(
+        matchers,
+      )}`,
+    );
     Store.setItem(policy, JSON.stringify(matchers));
   }
 }

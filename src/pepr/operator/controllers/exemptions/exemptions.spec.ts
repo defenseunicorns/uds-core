@@ -90,7 +90,7 @@ describe("Test Exemptions Controller", () => {
           {
             matcher: prometheusMatcher,
             policies: ["Drop_All_Capabilities"],
-          }
+          },
         ],
       },
     } as Exemption;
@@ -110,7 +110,7 @@ describe("Test Exemptions Controller", () => {
     );
   });
 
-  it('Removes matchers from policy if matcher removed from CR', () => {
+  it("Removes matchers from policy if matcher removed from CR", () => {
     const mockExemption3 = {
       spec: {
         exemptions: [
@@ -125,11 +125,15 @@ describe("Test Exemptions Controller", () => {
         ],
       },
     } as Exemption;
-    processExemptions(mockExemption)
-    processExemptions(mockExemption3)
-    expect(Store.getItem(Policy.DisallowPrivileged)).toEqual(`[${JSON.stringify(controllerMatcher)}]`)
-    expect(Store.getItem(Policy.DropAllCapabilities)).toEqual(`[${JSON.stringify(controllerMatcher)},${JSON.stringify(prometheusMatcher)}]`)
-  })
+    processExemptions(mockExemption);
+    processExemptions(mockExemption3);
+    expect(Store.getItem(Policy.DisallowPrivileged)).toEqual(
+      `[${JSON.stringify(controllerMatcher)}]`,
+    );
+    expect(Store.getItem(Policy.DropAllCapabilities)).toEqual(
+      `[${JSON.stringify(controllerMatcher)},${JSON.stringify(prometheusMatcher)}]`,
+    );
+  });
 
   it("Removes exemptions when CR is deleted", () => {
     processExemptions(mockExemption);
