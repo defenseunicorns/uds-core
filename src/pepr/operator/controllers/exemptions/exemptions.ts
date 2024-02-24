@@ -52,13 +52,13 @@ export function processExemptions(exempt: UDSExemption) {
             continue;
           } else {
             Log.debug(`Adding from exemption ${exempt.metadata?.name}, ${name}, to ${p}`)
-            matchers.push({ namespace: e.matcher.namespace, name: name, owner: exempt.metadata?.uid! });
+            matchers.push({ namespace: e.matcher.namespace, name: name, owner: exempt.metadata?.uid || '' });
             exemptionMap.set(p, matchers);
           }
         } else {
           // Else add to policy for the first time
           Log.debug(`Adding from exemption ${exempt.metadata?.name}, ${name}, to ${p}`);  
-          exemptionMap.set(p, [{ namespace: e.matcher.namespace, name: name, owner: exempt.metadata?.uid! }]);
+          exemptionMap.set(p, [{ namespace: e.matcher.namespace, name: name, owner: exempt.metadata?.uid || '' }]);
         }
       } else {
         // check if policy has this matcher from previous version of CR

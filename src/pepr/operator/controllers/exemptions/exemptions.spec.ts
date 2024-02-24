@@ -82,8 +82,15 @@ describe("Test Exemptions Controller", () => {
     const mockExemption2 = {
       spec: {
         exemptions: [
-          ...mockExemption.spec?.exemptions!,
           { matcher: enforcerMatcher, policies: ["Disallow_Privileged"] },
+          {
+            matcher: controllerMatcher,
+            policies: ["Disallow_Privileged", "Drop_All_Capabilities"],
+          },
+          {
+            matcher: prometheusMatcher,
+            policies: ["Drop_All_Capabilities"],
+          }
         ],
       },
     } as Exemption;
