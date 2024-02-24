@@ -1,4 +1,4 @@
 image:
   repository: quay.io/keycloak/keycloak
   tag: "23.0.4"
-configImage: uds-core-config:keycloak
+configImage: ghcr.io/defenseunicorns/uds/identity-config:0.2.1

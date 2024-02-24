@@ -8,4 +8,4 @@ securityContext:
   capabilities:
     drop:
       - ALL
-configImage: uds-core-config:keycloak
+configImage: ghcr.io/defenseunicorns/uds/identity-config:0.2.1
