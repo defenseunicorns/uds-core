@@ -8,20 +8,30 @@ const mockStore = new Map<string, string>();
 const enforcerMatcher = { namespace: "neuvector", name: "^neuvector-enforcer-pod.*" };
 const controllerMatcher = { namespace: "neuvector", name: "^neuvector-controller-pod.*" };
 const prometheusMatcher = { namespace: "neuvector", name: "^neuvector-prometheus-exporter-pod.*" };
+const storedEnforcerMatcher = { ...enforcerMatcher, owner: "exemption-uid" };
+const storedControllerMatcher = { ...controllerMatcher, owner: "exemption-uid" };
+const storedPrometheusMatcher = { ...prometheusMatcher, owner: "exemption-uid" };
 const mockExemption = {
+  metadata: {
+    uid: "exemption-uid",
+  },
   spec: {
     exemptions: [
       {
         matcher: enforcerMatcher,
-        policies: ["Disallow_Privileged", "Drop_All_Capabilities"],
+        policies: [
+          Policy.DisallowPrivileged,
+          Policy.DropAllCapabilities,
+          Policy.RequireNonRootUser,
+        ],
       },
       {
         matcher: controllerMatcher,
-        policies: ["Disallow_Privileged", "Drop_All_Capabilities"],
+        policies: [Policy.DisallowPrivileged, Policy.DropAllCapabilities],
       },
       {
         matcher: prometheusMatcher,
-        policies: ["Drop_All_Capabilities"],
+        policies: [Policy.DropAllCapabilities],
       },
     ],
   },
@@ -56,12 +66,12 @@ describe("Test Exemptions Controller", () => {
   it("Add exemptions for the first time", async () => {
     processExemptions(mockExemption);
     expect(Store.getItem(Policy.DisallowPrivileged)).toEqual(
-      `[${JSON.stringify(enforcerMatcher)},${JSON.stringify(controllerMatcher)}]`,
+      `[${JSON.stringify(storedEnforcerMatcher)},${JSON.stringify(storedControllerMatcher)}]`,
     );
     expect(Store.getItem(Policy.DropAllCapabilities)).toEqual(
-      `[${JSON.stringify(enforcerMatcher)},${JSON.stringify(controllerMatcher)},${JSON.stringify(
-        prometheusMatcher,
-      )}]`,
+      `[${JSON.stringify(storedEnforcerMatcher)},${JSON.stringify(
+        storedControllerMatcher,
+      )},${JSON.stringify(storedPrometheusMatcher)}]`,
     );
   });
 
@@ -69,12 +79,12 @@ describe("Test Exemptions Controller", () => {
     processExemptions(mockExemption);
     processExemptions(mockExemption);
     expect(Store.getItem(Policy.DisallowPrivileged)).toEqual(
-      `[${JSON.stringify(enforcerMatcher)},${JSON.stringify(controllerMatcher)}]`,
+      `[${JSON.stringify(storedEnforcerMatcher)},${JSON.stringify(storedControllerMatcher)}]`,
     );
     expect(Store.getItem(Policy.DropAllCapabilities)).toEqual(
-      `[${JSON.stringify(enforcerMatcher)},${JSON.stringify(controllerMatcher)},${JSON.stringify(
-        prometheusMatcher,
-      )}]`,
+      `[${JSON.stringify(storedEnforcerMatcher)},${JSON.stringify(
+        storedControllerMatcher,
+      )},${JSON.stringify(storedPrometheusMatcher)}]`,
     );
   });
 
@@ -82,45 +92,49 @@ describe("Test Exemptions Controller", () => {
     const mockExemption2 = {
       spec: {
         exemptions: [
-          { matcher: enforcerMatcher, policies: ["Disallow_Privileged"] },
+          { matcher: enforcerMatcher, policies: [Policy.DisallowPrivileged] },
           {
             matcher: controllerMatcher,
-            policies: ["Disallow_Privileged", "Drop_All_Capabilities"],
+            policies: [Policy.DropAllCapabilities],
           },
           {
             matcher: prometheusMatcher,
-            policies: ["Drop_All_Capabilities"],
+            policies: [Policy.DropAllCapabilities],
           },
         ],
       },
     } as Exemption;
     processExemptions(mockExemption);
     expect(Store.getItem(Policy.DropAllCapabilities)).toEqual(
-      `[${JSON.stringify(enforcerMatcher)},${JSON.stringify(controllerMatcher)},${JSON.stringify(
-        prometheusMatcher,
-      )}]`,
+      `[${JSON.stringify(storedEnforcerMatcher)},${JSON.stringify(
+        storedControllerMatcher,
+      )},${JSON.stringify(storedPrometheusMatcher)}]`,
+    );
+
+    expect(Store.getItem(Policy.RequireNonRootUser)).toEqual(
+      `[${JSON.stringify(storedEnforcerMatcher)}]`,
     );
 
     processExemptions(mockExemption2);
+    expect(Store.getItem(Policy.RequireNonRootUser)).toEqual("[]");
     expect(Store.getItem(Policy.DisallowPrivileged)).toEqual(
-      `[${JSON.stringify(enforcerMatcher)},${JSON.stringify(controllerMatcher)}]`,
+      `[${JSON.stringify(storedEnforcerMatcher)}]`,
     );
     expect(Store.getItem(Policy.DropAllCapabilities)).toEqual(
-      `[${JSON.stringify(controllerMatcher)},${JSON.stringify(prometheusMatcher)}]`,
+      `[${JSON.stringify(storedControllerMatcher)},${JSON.stringify(storedPrometheusMatcher)}]`,
     );
   });
 
-  it("Removes matchers from policy if matcher removed from CR", () => {
+  it("Removes multiple matchers from policy if matcher removed from CR", () => {
     const mockExemption3 = {
+      metadata: {
+        uid: "exemption-uid",
+      },
       spec: {
         exemptions: [
           {
             matcher: controllerMatcher,
-            policies: ["Disallow_Privileged", "Drop_All_Capabilities"],
-          },
-          {
-            matcher: prometheusMatcher,
-            policies: ["Drop_All_Capabilities"],
+            policies: [Policy.DisallowPrivileged, Policy.DropAllCapabilities],
           },
         ],
       },
@@ -128,10 +142,10 @@ describe("Test Exemptions Controller", () => {
     processExemptions(mockExemption);
     processExemptions(mockExemption3);
     expect(Store.getItem(Policy.DisallowPrivileged)).toEqual(
-      `[${JSON.stringify(controllerMatcher)}]`,
+      `[${JSON.stringify(storedControllerMatcher)}]`,
     );
     expect(Store.getItem(Policy.DropAllCapabilities)).toEqual(
-      `[${JSON.stringify(controllerMatcher)},${JSON.stringify(prometheusMatcher)}]`,
+      `[${JSON.stringify(storedControllerMatcher)}]`,
     );
   });
 
