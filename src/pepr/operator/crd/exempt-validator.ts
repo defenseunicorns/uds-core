@@ -10,7 +10,7 @@ export async function exemptValidator(req: PeprValidateRequest<UDSExemption>) {
 
   if (!UDSConfig.allowAllNSExemptions) {
     if (exempt.metadata?.namespace !== validNs) {
-      return req.Deny(`Invalid namespace "${exempt.metadata?.namespace}": must be "${validNs}"`);
+      return req.Deny(`Invalid namespace "${exempt.metadata?.namespace}" for UDSExemption ${exempt.metadata?.name}: must be "${validNs}"`);
     }
   }
 

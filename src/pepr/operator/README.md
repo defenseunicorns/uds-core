@@ -10,6 +10,7 @@ The UDS Operator manages the lifecycle of UDS Package CRs and their correspondin
 - creating Istio Virtual Services & related ingress gateway network policies
 
 #### Exemption
+- allowing exemptions only in the `uds-policy-exemptions` namespace unless configured to allow in all namespaces (see [configuring policy exemptions](../../../docs/CONFIGURE_POLICY_EXEMPTIONS.md))
 - updating the policies Pepr store with registered exemptions 
 
 ### Example UDS Package CR
