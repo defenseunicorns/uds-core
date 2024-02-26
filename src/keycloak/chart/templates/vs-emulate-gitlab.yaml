@@ -1,3 +1,4 @@
+{{- if .Capabilities.APIVersions.Has "security.istio.io/v1beta1" }}
 apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
 metadata:
@@ -39,3 +40,4 @@ spec:
               number: 8080
       rewrite:
         uri: "/realms/{{ .Values.realm }}/protocol/openid-connect/token"
+{{- end }}  

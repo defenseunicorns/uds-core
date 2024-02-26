@@ -11,12 +11,32 @@ variables:
 components:
   - name: keycloak
     required: true
+    only:
+      flavor: upstream
+    import:
+      path: common
     charts:
       - name: keycloak
-        namespace: keycloak
-        version: 23.0.4
-        localPath: chart
+        valuesFiles:
+          - "values/upstream-values.yaml"
     images:
       - quay.io/keycloak/keycloak:23.0.4
+      # renovate: datasource=github-tags depName=defenseunicorns/uds-config versioning=semver
+      - ghcr.io/defenseunicorns/uds/identity-config:0.2.1
+
+  - name: keycloak
+    required: true
+    only:
+      flavor: registry1
+      cluster:
+        architecture: amd64
+    import:
+      path: common
+    charts:
+      - name: keycloak
+        valuesFiles:
+          - "values/registry1-values.yaml"
+    images:
+      - registry1.dso.mil/ironbank/opensource/keycloak/keycloak:23.0.4
       # renovate: datasource=github-tags depName=defenseunicorns/uds-config versioning=semver
       - ghcr.io/defenseunicorns/uds/identity-config:0.2.1

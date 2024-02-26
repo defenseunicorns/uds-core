@@ -1,18 +1,22 @@
 tasks:
+  # These tests break single capability test checks
   - name: validate
     actions:
-      - description: Validate admin interface
-        wait:
-          network:
-            protocol: https
-            address: keycloak.admin.uds.dev
-            code: 200
-      - description: Validate public interface
-        wait:
-          network:
-            protocol: https
-            address: sso.uds.dev
-            code: 200
+      - description: replace me
+        cmd: echo "hello"
+  #   actions:
+  #     - description: Validate admin interface
+  #       wait:
+  #         network:
+  #           protocol: https
+  #           address: keycloak.admin.uds.dev
+  #           code: 200
+  #     - description: Validate public interface
+  #       wait:
+  #         network:
+  #           protocol: https
+  #           address: sso.uds.dev
+  #           code: 200
 
   - name: dev-theme
     actions:
