@@ -28,8 +28,16 @@ function addIfIncludesPolicy(
     owner: ownerId,
   };
 
+  const isDuplicate = storedMatchers.some(m => {
+    return (
+      m.name === matcherToStore.name &&
+      m.namespace === matcherToStore.namespace &&
+      m.owner === matcherToStore.owner
+    );
+  });
+
   // add if not already added to policy's exemption list
-  if (exemption.policies.includes(policy) && !storedMatchers.some(m => m.name === matcherName)) {
+  if (exemption.policies.includes(policy) && !isDuplicate) {
     policyMap.set(policy, [...storedMatchers, matcherToStore]);
   }
 }
@@ -40,19 +48,22 @@ function deleteIfPolicyRemoved(
   policyMap: PolicyMap,
   matcherPolicies: Policy[],
   matcherName: string,
+  ownerId: string,
   storedMatchers: StoredMatcher[],
 ) {
   if (storedMatchers.some(sm => sm.name === matcherName) && !matcherPolicies.includes(policy)) {
     policyMap.set(
       policy,
-      storedMatchers.filter(sm => sm.name !== matcherName),
+      storedMatchers.filter(sm => {
+        if (sm.name !== matcherName || (sm.name === matcherName && sm.owner !== ownerId)) return sm;
+      }),
     );
     Log.debug(`Removing ${matcherName} from ${policy}`);
   }
 }
 
 // Delete matchers from the store if they no longer exist on a UDSExemption
-function deleteIfRemovedMatchers(
+function deleteIfMatchersRemoved(
   policyMap: PolicyMap,
   policy: Policy,
   currExemptMatchers: Set<string>,
@@ -101,14 +112,21 @@ export function processExemptions(exempt: UDSExemption) {
       currExemptMatchers.add(name);
 
       // Check if matcher no longer has this policy from previous CR version
-      deleteIfPolicyRemoved(p, policyMap, e.policies, name, updatedMatchers);
+      deleteIfPolicyRemoved(
+        p,
+        policyMap,
+        e.policies,
+        name,
+        exempt.metadata?.uid || "",
+        updatedMatchers,
+      );
 
       // Add if exemption has this policy in its list
       addIfIncludesPolicy(p, policyMap, e, exempt.metadata?.uid || "", name, updatedMatchers);
     }
 
     // Check if policy should no longer have this matcher from previous CR version
-    deleteIfRemovedMatchers(policyMap, p, currExemptMatchers, exempt.metadata?.uid || "");
+    deleteIfMatchersRemoved(policyMap, p, currExemptMatchers, exempt.metadata?.uid || "");
   }
 
   updateStore(policyMap, Store);
@@ -133,7 +151,9 @@ export function removeExemptions(exempt: UDSExemption) {
     const name = removeRegexSlash(e.matcher.name);
     for (const p of e.policies) {
       const matchers = policyMap.get(p) || [];
-      const filteredList = matchers.filter(m => m.name !== name);
+      const filteredList = matchers.filter(m => {
+        if (m.name !== name || (m.name === name && m.owner !== exempt.metadata?.uid)) return m;
+      });
       policyMap.set(p, filteredList);
     }
   }

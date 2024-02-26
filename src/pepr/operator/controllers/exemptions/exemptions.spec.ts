@@ -69,7 +69,7 @@ describe("Test Exemptions Controller", () => {
     );
   });
 
-  it("Tries to add same exemptions again and doesn't", async () => {
+  it("Does not add duplicate matchers for same CR", async () => {
     processExemptions(neuvectorMockExemption);
     processExemptions(neuvectorMockExemption);
     expect(Store.getItem(Policy.DisallowPrivileged)).toEqual(
@@ -82,8 +82,36 @@ describe("Test Exemptions Controller", () => {
     );
   });
 
+  it("Adds duplicate matchers if from separate CR", () => {
+    processExemptions(neuvectorMockExemption);
+    processExemptions({ ...neuvectorMockExemption, metadata: { uid: exemption2UID } });
+
+    expect(Store.getItem(Policy.DisallowPrivileged)).toEqual(
+      `[${JSON.stringify(storedEnforcerMatcher)},${JSON.stringify(
+        storedControllerMatcher,
+      )},${JSON.stringify({ ...storedEnforcerMatcher, owner: exemption2UID })},${JSON.stringify({
+        ...storedControllerMatcher,
+        owner: exemption2UID,
+      })}]`,
+    );
+    expect(Store.getItem(Policy.DropAllCapabilities)).toEqual(
+      `[${JSON.stringify(storedEnforcerMatcher)},${JSON.stringify(
+        storedControllerMatcher,
+      )},${JSON.stringify(storedPrometheusMatcher)},${JSON.stringify({
+        ...storedEnforcerMatcher,
+        owner: exemption2UID,
+      })},${JSON.stringify({ ...storedControllerMatcher, owner: exemption2UID })},${JSON.stringify({
+        ...storedPrometheusMatcher,
+        owner: exemption2UID,
+      })}]`,
+    );
+  });
+
   it("Removes exemptions policies when CR updates", async () => {
     const updatedNeuvectorExemption = {
+      metadata: {
+        uid: exemption1UID,
+      },
       spec: {
         exemptions: [
           { matcher: enforcerMatcher, policies: [Policy.DisallowPrivileged] },
@@ -144,7 +172,7 @@ describe("Test Exemptions Controller", () => {
     );
   });
 
-  it("Removes exemptions when CR is deleted", () => {
+  it("Removes all CRs exemptions when deleted", () => {
     processExemptions(neuvectorMockExemption);
     removeExemptions(neuvectorMockExemption);
     expect(Store.getItem(Policy.DisallowPrivileged)).toEqual("[]");
@@ -182,6 +210,58 @@ describe("Test Exemptions Controller", () => {
     );
     expect(Store.getItem(Policy.RequireNonRootUser)).toEqual(
       `[${JSON.stringify(storedPromtailMatcher)}]`,
+    );
+  });
+
+  it("Does not delete duplicate exemptions if set by separate CRs", () => {
+    const neuvectorMockExemption2 = {
+      metadata: {
+        uid: exemption1UID,
+      },
+      spec: {
+        exemptions: [
+          {
+            matcher: enforcerMatcher,
+            policies: [
+              Policy.DisallowPrivileged,
+              Policy.DropAllCapabilities,
+              Policy.RequireNonRootUser,
+            ],
+          },
+        ],
+      },
+    } as Exemption;
+
+    const neuvectorDuplicatMockExemption = {
+      metadata: {
+        uid: exemption2UID,
+      },
+      spec: {
+        exemptions: [
+          {
+            matcher: enforcerMatcher,
+            policies: [
+              Policy.DisallowPrivileged,
+              Policy.DropAllCapabilities,
+              Policy.RequireNonRootUser,
+            ],
+          },
+        ],
+      },
+    } as Exemption;
+
+    processExemptions(neuvectorMockExemption2);
+    processExemptions(neuvectorDuplicatMockExemption);
+    removeExemptions(neuvectorDuplicatMockExemption);
+
+    expect(Store.getItem(Policy.DisallowPrivileged)).toEqual(
+      `[${JSON.stringify(storedEnforcerMatcher)}]`,
+    );
+    expect(Store.getItem(Policy.DropAllCapabilities)).toEqual(
+      `[${JSON.stringify(storedEnforcerMatcher)}]`,
+    );
+    expect(Store.getItem(Policy.RequireNonRootUser)).toEqual(
+      `[${JSON.stringify(storedEnforcerMatcher)}]`,
     );
   });
 });
