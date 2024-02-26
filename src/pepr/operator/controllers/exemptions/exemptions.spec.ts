@@ -8,12 +8,16 @@ const mockStore = new Map<string, string>();
 const enforcerMatcher = { namespace: "neuvector", name: "^neuvector-enforcer-pod.*" };
 const controllerMatcher = { namespace: "neuvector", name: "^neuvector-controller-pod.*" };
 const prometheusMatcher = { namespace: "neuvector", name: "^neuvector-prometheus-exporter-pod.*" };
-const storedEnforcerMatcher = { ...enforcerMatcher, owner: "exemption-uid" };
-const storedControllerMatcher = { ...controllerMatcher, owner: "exemption-uid" };
-const storedPrometheusMatcher = { ...prometheusMatcher, owner: "exemption-uid" };
-const mockExemption = {
+const promtailMatcher = { namespace: "promtail", name: "^promtail-.*" };
+const exemption1UID = "exemption-1-uid";
+const exemption2UID = "exemption-2-uid";
+const storedEnforcerMatcher = { ...enforcerMatcher, owner: exemption1UID };
+const storedControllerMatcher = { ...controllerMatcher, owner: exemption1UID };
+const storedPrometheusMatcher = { ...prometheusMatcher, owner: exemption1UID };
+const storedPromtailMatcher = { ...promtailMatcher, owner: exemption2UID };
+const neuvectorMockExemption = {
   metadata: {
-    uid: "exemption-uid",
+    uid: exemption1UID,
   },
   spec: {
     exemptions: [
@@ -46,16 +50,6 @@ describe("Test Exemptions Controller", () => {
     jest.spyOn(Store, "setItem").mockImplementation((key: string, val: string) => {
       mockStore.set(key, val);
     });
-
-    jest.spyOn(Store, "setItemAndWait").mockImplementation(async (key: string, val: string) => {
-      await new Promise((resolve, reject) => {
-        try {
-          resolve(mockStore.set(key, val));
-        } catch {
-          reject;
-        }
-      });
-    });
   });
 
   afterEach(() => {
@@ -64,7 +58,7 @@ describe("Test Exemptions Controller", () => {
   });
 
   it("Add exemptions for the first time", async () => {
-    processExemptions(mockExemption);
+    processExemptions(neuvectorMockExemption);
     expect(Store.getItem(Policy.DisallowPrivileged)).toEqual(
       `[${JSON.stringify(storedEnforcerMatcher)},${JSON.stringify(storedControllerMatcher)}]`,
     );
@@ -76,8 +70,8 @@ describe("Test Exemptions Controller", () => {
   });
 
   it("Tries to add same exemptions again and doesn't", async () => {
-    processExemptions(mockExemption);
-    processExemptions(mockExemption);
+    processExemptions(neuvectorMockExemption);
+    processExemptions(neuvectorMockExemption);
     expect(Store.getItem(Policy.DisallowPrivileged)).toEqual(
       `[${JSON.stringify(storedEnforcerMatcher)},${JSON.stringify(storedControllerMatcher)}]`,
     );
@@ -89,7 +83,7 @@ describe("Test Exemptions Controller", () => {
   });
 
   it("Removes exemptions policies when CR updates", async () => {
-    const mockExemption2 = {
+    const updatedNeuvectorExemption = {
       spec: {
         exemptions: [
           { matcher: enforcerMatcher, policies: [Policy.DisallowPrivileged] },
@@ -104,18 +98,18 @@ describe("Test Exemptions Controller", () => {
         ],
       },
     } as Exemption;
-    processExemptions(mockExemption);
+
+    processExemptions(neuvectorMockExemption);
     expect(Store.getItem(Policy.DropAllCapabilities)).toEqual(
       `[${JSON.stringify(storedEnforcerMatcher)},${JSON.stringify(
         storedControllerMatcher,
       )},${JSON.stringify(storedPrometheusMatcher)}]`,
     );
-
     expect(Store.getItem(Policy.RequireNonRootUser)).toEqual(
       `[${JSON.stringify(storedEnforcerMatcher)}]`,
     );
 
-    processExemptions(mockExemption2);
+    processExemptions(updatedNeuvectorExemption);
     expect(Store.getItem(Policy.RequireNonRootUser)).toEqual("[]");
     expect(Store.getItem(Policy.DisallowPrivileged)).toEqual(
       `[${JSON.stringify(storedEnforcerMatcher)}]`,
@@ -126,9 +120,9 @@ describe("Test Exemptions Controller", () => {
   });
 
   it("Removes multiple matchers from policy if matcher removed from CR", () => {
-    const mockExemption3 = {
+    const updatedNeuvectorExemption = {
       metadata: {
-        uid: "exemption-uid",
+        uid: exemption1UID,
       },
       spec: {
         exemptions: [
@@ -139,8 +133,9 @@ describe("Test Exemptions Controller", () => {
         ],
       },
     } as Exemption;
-    processExemptions(mockExemption);
-    processExemptions(mockExemption3);
+
+    processExemptions(neuvectorMockExemption);
+    processExemptions(updatedNeuvectorExemption);
     expect(Store.getItem(Policy.DisallowPrivileged)).toEqual(
       `[${JSON.stringify(storedControllerMatcher)}]`,
     );
@@ -150,9 +145,43 @@ describe("Test Exemptions Controller", () => {
   });
 
   it("Removes exemptions when CR is deleted", () => {
-    processExemptions(mockExemption);
-    removeExemptions(mockExemption);
+    processExemptions(neuvectorMockExemption);
+    removeExemptions(neuvectorMockExemption);
     expect(Store.getItem(Policy.DisallowPrivileged)).toEqual("[]");
     expect(Store.getItem(Policy.DropAllCapabilities)).toEqual("[]");
+  });
+
+  it("Does not remove exemptions set by separate CR from the one being deleted", () => {
+    const promtailMockExemption = {
+      metadata: {
+        uid: exemption2UID,
+      },
+      spec: {
+        exemptions: [
+          {
+            matcher: promtailMatcher,
+            policies: [
+              Policy.DisallowPrivileged,
+              Policy.DropAllCapabilities,
+              Policy.RequireNonRootUser,
+            ],
+          },
+        ],
+      },
+    } as Exemption;
+
+    processExemptions(neuvectorMockExemption);
+    processExemptions(promtailMockExemption);
+    removeExemptions(neuvectorMockExemption);
+
+    expect(Store.getItem(Policy.DisallowPrivileged)).toEqual(
+      `[${JSON.stringify(storedPromtailMatcher)}]`,
+    );
+    expect(Store.getItem(Policy.DropAllCapabilities)).toEqual(
+      `[${JSON.stringify(storedPromtailMatcher)}]`,
+    );
+    expect(Store.getItem(Policy.RequireNonRootUser)).toEqual(
+      `[${JSON.stringify(storedPromtailMatcher)}]`,
+    );
   });
 });
