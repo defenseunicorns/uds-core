@@ -22,7 +22,8 @@ components:
     images:
       - quay.io/keycloak/keycloak:23.0.4
       # renovate: datasource=github-tags depName=defenseunicorns/uds-config versioning=semver
-      - ghcr.io/defenseunicorns/uds/identity-config:0.2.1
+      # - ghcr.io/defenseunicorns/uds/identity-config:0.2.1
+      - ghcr.io/mjnagel/uds-identity-config:0.3.0-dev
 
   - name: keycloak
     required: true
