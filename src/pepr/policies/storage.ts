@@ -16,6 +16,15 @@ import { isExempt } from "./exemptions";
  */
 When(a.Pod)
   .IsCreatedOrUpdated()
+  .Mutate(request => {
+    if (isExempt(Policy.RestrictVolumeTypes, request)) {
+      request.SetAnnotation(
+        `uds-core.pepr.dev/uds-core-policies.${Policy.RestrictVolumeTypes}`,
+        "exempted",
+      );
+      return;
+    }
+  })
   .Validate(request => {
     // List of allowed volume types
     const allowedVolumeTypes = [
@@ -64,6 +73,15 @@ When(a.Pod)
  */
 When(a.Pod)
   .IsCreatedOrUpdated()
+  .Mutate(request => {
+    if (isExempt(Policy.RestrictHostPathWrite, request)) {
+      request.SetAnnotation(
+        `uds-core.pepr.dev/uds-core-policies.${Policy.RestrictHostPathWrite}`,
+        "exempted",
+      );
+      return;
+    }
+  })
   .Validate(request => {
     if (isExempt(Policy.RestrictHostPathWrite, request)) {
       return request.Approve();

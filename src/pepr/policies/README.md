@@ -1,24 +1,10 @@
 ## Common Pepr Policies for UDS Core
 
-Thess policies are based on the [Big Bang](https://p1.dso.mil/services/big-bang) policies created with Kyverno. You can find the source policies [here](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies).
+These policies are based on the [Big Bang](https://p1.dso.mil/services/big-bang) policies created with Kyverno. You can find the source policies [here](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies).
 
 Exemptions can be specified by a [UDS Exemption CR](../operator/README.md). These take the place of Kyverno Exceptions.
 
-
-"Disallow_Host_Namespaces",
-                        "Disallow_NodePort_Services",
-                        "Disallow_Privileged",
-                        "Disallow_SELinux_Options",
-                        "Drop_All_Capabilities",
-                        "Require_Non_Root_User",
-                        "Restrict_Capabilities",
-                        "Restrict_External_Names",
-                        "Restrict_HostPath_Write",
-                        "Restrict_Host_Ports",
-                        "Restrict_Proc_Mount",
-                        "Restrict_Seccomp",
-                        "Restrict_SELinux_Type",
-                        "Restrict_Volume_Types",
+If a resource is exempted, it will be annotated as `uds-core.pepr.dev/uds-core-policies.<POLICY>: exempted`
 
 ## Current Policies
 

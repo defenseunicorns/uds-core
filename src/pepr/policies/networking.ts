@@ -16,6 +16,15 @@ import { isExempt } from "./exemptions";
  */
 When(a.Pod)
   .IsCreatedOrUpdated()
+  .Mutate(request => {
+    if (isExempt(Policy.DisallowHostNamespaces, request)) {
+      request.SetAnnotation(
+        `uds-core.pepr.dev/uds-core-policies.${Policy.DisallowHostNamespaces}`,
+        "exempted",
+      );
+      return;
+    }
+  })
   .Validate(request => {
     if (isExempt(Policy.DisallowHostNamespaces, request)) {
       return request.Approve();
@@ -44,6 +53,15 @@ When(a.Pod)
  */
 When(a.Pod)
   .IsCreatedOrUpdated()
+  .Mutate(request => {
+    if (isExempt(Policy.RestrictHostPorts, request)) {
+      request.SetAnnotation(
+        `uds-core.pepr.dev/uds-core-policies.${Policy.RestrictHostPorts}`,
+        "exempted",
+      );
+      return;
+    }
+  })
   .Validate(request => {
     if (isExempt(Policy.RestrictHostPorts, request)) {
       return request.Approve();
@@ -71,6 +89,15 @@ When(a.Pod)
  */
 When(a.Service)
   .IsCreatedOrUpdated()
+  .Mutate(request => {
+    if (isExempt(Policy.RestrictExternalNames, request)) {
+      request.SetAnnotation(
+        `uds-core.pepr.dev/uds-core-policies.${Policy.RestrictExternalNames}`,
+        "exempted",
+      );
+      return;
+    }
+  })
   .Validate(request => {
     if (isExempt(Policy.RestrictExternalNames, request)) {
       return request.Approve();
@@ -93,6 +120,15 @@ When(a.Service)
  */
 When(a.Service)
   .IsCreatedOrUpdated()
+  .Mutate(request => {
+    if (isExempt(Policy.DisallowNodePortServices, request)) {
+      request.SetAnnotation(
+        `uds-core.pepr.dev/uds-core-policies.${Policy.DisallowNodePortServices}`,
+        "exempted",
+      );
+      return;
+    }
+  })
   .Validate(request => {
     if (isExempt(Policy.DisallowNodePortServices, request)) {
       return request.Approve();
