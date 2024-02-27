@@ -1,7 +1,8 @@
+includes:
+  - test: ./tasks/deployment-validation.yaml
+
 tasks:
   - name: validate
     actions:
-      - description: Validate...
-        cmd: "echo Replace Me"
-        # wait:
-        #   cluster:
+      - task: test:health-check
+      - task: test:execute-backup

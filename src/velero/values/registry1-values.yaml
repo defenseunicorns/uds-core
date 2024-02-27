@@ -1,0 +1,3 @@
+plugins:
+  aws:
+    enabled: true
