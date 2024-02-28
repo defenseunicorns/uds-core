@@ -17,17 +17,6 @@ components:
           - "values/upstream-values.yaml"
     images:
       - registry.k8s.io/metrics-server/metrics-server:v0.7.0
-    actions:
-      onDeploy:
-        after:
-          - description: Validate Metrics-Server Package
-            maxTotalSeconds: 300
-            wait:
-              cluster:
-                kind: Packages
-                name: metrics-server
-                namespace: metrics-server
-                condition: "'{.status.phase}'=Ready"
 
   - name: metrics-server
     required: true
@@ -41,14 +30,3 @@ components:
           - "values/registry1-values.yaml"
     images:
       - registry1.dso.mil/ironbank/opensource/kubernetes-sigs/metrics-server:v0.7.0
-    actions:
-      onDeploy:
-        after:
-          - description: Validate Metrics-Server Package
-            maxTotalSeconds: 300
-            wait:
-              cluster:
-                kind: Packages
-                name: metrics-server
-                namespace: metrics-server
-                condition: "'{.status.phase}'=Ready"

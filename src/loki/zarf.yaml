@@ -18,17 +18,6 @@ components:
     images:
       - docker.io/grafana/loki:2.9.4
       - docker.io/nginxinc/nginx-unprivileged:1.25-alpine
-    actions:
-      onDeploy:
-        after:
-          - description: Validate Loki Package
-            maxTotalSeconds: 300
-            wait:
-              cluster:
-                kind: Packages
-                name: loki
-                namespace: loki
-                condition: "'{.status.phase}'=Ready"
 
   - name: loki
     required: true
@@ -44,14 +33,3 @@ components:
     images:
       - registry1.dso.mil/ironbank/opensource/grafana/loki:2.9.4
       - registry1.dso.mil/ironbank/opensource/nginx/nginx-alpine:1.25.3
-    actions:
-      onDeploy:
-        after:
-          - description: Validate Loki Package
-            maxTotalSeconds: 300
-            wait:
-              cluster:
-                kind: Packages
-                name: loki
-                namespace: loki
-                condition: "'{.status.phase}'=Ready"
