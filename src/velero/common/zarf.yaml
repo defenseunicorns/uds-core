@@ -7,22 +7,20 @@ metadata:
 variables:
   - name: VELERO_BUCKET_PROVIDER_URL
     description: "S3 compatible object storage service for use with Velero"
-    #default: "Intentionally no default value is configured"
-    #example: "http://minio.minio.svc.cluster.local:9000"
+    default: "http://minio.uds-dev-stack.svc.cluster.local:9000"
   - name: VELERO_BUCKET
     description: "S3 compatible object storage bucket for use with Velero"
-    #default: "Intentionally no default value is configured"
-    #example: "velero"
+    default: "uds"
   - name: VELERO_BUCKET_REGION
     description: "Region of the bucket for use with Velero"
-    #default: "Intentionally no default value is configured"
+    default: "uds-dev-stack"
   - name: VELERO_BUCKET_KEY
     description: "Key to use when connecting to the Velero bucket"
-    #default: "Intentionally no default value is configured"
+    default: "uds"
   - name: VELERO_BUCKET_KEY_SECRET
     sensitive: true
     description: "Key secret to use when connecting to the Velero bucket"
-    #default: "Intentionally no default value is configured"
+    default: "uds-secret"
 
 components:
   - name: velero

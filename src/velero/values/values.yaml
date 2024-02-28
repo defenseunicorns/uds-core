@@ -1,4 +1,3 @@
-
 credentials:
   useSecret: true
   name: "velero-bucket-credentials"
