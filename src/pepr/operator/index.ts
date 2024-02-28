@@ -1,19 +1,12 @@
-import { Capability, a } from "pepr";
+import { a } from "pepr";
 
+import { When } from "./common";
 import { cleanupNamespace } from "./controllers/istio/injection";
+import { purgeSSOClients } from "./controllers/keycloak/client-sync";
 import { initAPIServerCIDR, updateAPIServerCIDR } from "./controllers/network/generators/kubeAPI";
 import { UDSPackage } from "./crd";
-import "./crd/register";
 import { validator } from "./crd/validator";
 import { reconciler } from "./reconciler";
-import { purgeSSOClients } from "./controllers/keycloak/client-sync";
-
-export const operator = new Capability({
-  name: "uds-core-operator",
-  description: "The UDS Operator is responsible for managing the lifecycle of UDS resources",
-});
-
-export const { Store, When } = operator;
 
 // Pre-populate the API server CIDR since we are not persisting the EndpointSlice
 // Note ignore any errors since the watch will still be running hereafter
