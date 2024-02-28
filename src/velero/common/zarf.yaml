@@ -36,7 +36,7 @@ components:
         namespace: velero
         url: https://vmware-tanzu.github.io/helm-charts
         version: 5.4.1
-        repoName: vmware-tanzu
+        repoName: velero
         releaseName: velero
         valuesFiles:
           - ../values/values.yaml
