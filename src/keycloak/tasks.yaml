@@ -1,4 +1,5 @@
 tasks:
+  # These tests break single capability test checks
   - name: validate
     actions:
       - description: Validate Keycloak is up

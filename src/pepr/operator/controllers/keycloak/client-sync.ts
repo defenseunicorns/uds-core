@@ -1,7 +1,7 @@
 import { K8s, Log, fetch, kind } from "pepr";
 
-import { Store } from "../..";
 import { UDSConfig } from "../../../config";
+import { Store } from "../../common";
 import { Sso, UDSPackage } from "../../crd";
 import { Client } from "./types";
 import { updateConfig } from "./authservice/authservice";
@@ -9,7 +9,6 @@ import { Action } from "./authservice/types";
 
 const apiURL =
   "http://keycloak-http.keycloak.svc.cluster.local:8080/realms/uds/clients-registrations/default";
-// const apiURL = "https://keycloak.admin.uds.dev/realms/uds/clients-registrations/default";
 
 /**
  * Create or update the Keycloak clients for the package
