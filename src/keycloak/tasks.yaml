@@ -1,6 +1,13 @@
 tasks:
   - name: validate
     actions:
+      - description: Validate Keycloak is up
+        wait:
+          cluster:
+            kind: Pod
+            name: "app.kubernetes.io/instance=keycloak"
+            namespace: keycloak
+            condition: Ready
       - description: Validate admin interface
         wait:
           network:
