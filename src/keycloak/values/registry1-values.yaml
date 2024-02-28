@@ -8,4 +8,4 @@ securityContext:
   capabilities:
     drop:
       - ALL
-# configImage: ghcr.io/defenseunicorns/uds/identity-config:x.x.x
+# configImage: registry1.dso.mil/opensource/defense-unicorns/uds-identity-config:x.x.x

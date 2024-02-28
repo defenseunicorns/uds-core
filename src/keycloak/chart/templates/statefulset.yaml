@@ -34,9 +34,6 @@ spec:
             requests:
               cpu: "100m"
               memory: "128Mi"
-          env:
-            - name: CUSTOM_TRUSTSTORE
-              value: "{{ .Values.customTruststorePath }}"
           volumeMounts:
             - name: providers
               mountPath: /opt/keycloak/providers
@@ -97,8 +94,8 @@ spec:
             # X509 configuration
             - name: KC_SPI_TRUSTSTORE_FILE_FILE
               value: /opt/keycloak/conf/truststore.jks
-            - name: KC_SPI_TRUSTSTORE_FILE_PASSWORD
-              value: {{ .Values.truststorePassword }}
+            - name: KC_HTTPS_CLIENT_AUTH
+              value: request
 
             ## Activate the nginx provider
             - name: KC_SPI_X509CERT_LOOKUP_PROVIDER
