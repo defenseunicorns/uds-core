@@ -94,6 +94,8 @@ spec:
             # X509 configuration
             - name: KC_SPI_TRUSTSTORE_FILE_FILE
               value: /opt/keycloak/conf/truststore.jks
+            - name: KC_SPI_TRUSTSTORE_FILE_PASSWORD
+              value: "password"
             - name: KC_HTTPS_CLIENT_AUTH
               value: request
 
