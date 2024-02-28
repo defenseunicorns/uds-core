@@ -29,9 +29,10 @@ tasks:
             name: app=neuvector-scanner-pod
             condition: Ready
             namespace: neuvector
-      - description: Validate Neuvector Interface
-        wait:
-          network:
-            protocol: https
-            address: neuvector.admin.uds.dev
-            code: 200
+      #  todo: Fix single package validation checks in CI where Istio isn't installed
+      # - description: Validate Neuvector Interface
+      #   wait:
+      #     network:
+      #       protocol: https
+      #       address: neuvector.admin.uds.dev
+      #       code: 200
