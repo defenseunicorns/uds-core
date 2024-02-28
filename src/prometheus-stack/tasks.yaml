@@ -22,3 +22,10 @@ tasks:
             name: app.kubernetes.io/name=kube-state-metrics
             namespace: monitoring
             condition: Ready
+      - description: Validate prometheus node exporter
+        wait:
+          cluster:
+            kind: Pod
+            name: app.kubernetes.io/name=prometheus-node-exporter
+            namespace: monitoring
+            condition: Ready

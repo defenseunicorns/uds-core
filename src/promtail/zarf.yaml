@@ -19,6 +19,17 @@ components:
     images:
       - docker.io/jimmidyson/configmap-reload:v0.8.0
       - docker.io/grafana/promtail:2.9.2
+    actions:
+      onDeploy:
+        after:
+          - description: Validate Promtail Package
+            maxTotalSeconds: 300
+            wait:
+              cluster:
+                kind: Packages
+                name: promtail
+                namespace: promtail
+                condition: "'{.status.phase}'=Ready"
 
   - name: promtail
     required: true
@@ -34,3 +45,14 @@ components:
     images:
       - registry1.dso.mil/ironbank/opensource/jimmidyson/configmap-reload:v0.8.0
       - registry1.dso.mil/ironbank/opensource/grafana/promtail:v2.9.2
+    actions:
+      onDeploy:
+        after:
+          - description: Validate Promtail Package
+            maxTotalSeconds: 300
+            wait:
+              cluster:
+                kind: Packages
+                name: promtail
+                namespace: promtail
+                condition: "'{.status.phase}'=Ready"

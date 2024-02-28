@@ -26,6 +26,17 @@ components:
       - docker.io/neuvector/scanner:latest
       - docker.io/neuvector/enforcer:5.2.3
       - docker.io/neuvector/prometheus-exporter:5.2.3
+    actions:
+      onDeploy:
+        after:
+          - description: Validate Neuvector Package
+            maxTotalSeconds: 300
+            wait:
+              cluster:
+                kind: Packages
+                name: neuvector
+                namespace: neuvector
+                condition: "'{.status.phase}'=Ready"
 
   - name: neuvector
     description: "Deploy Neuvector"
@@ -48,3 +59,14 @@ components:
       - registry1.dso.mil/ironbank/neuvector/neuvector/scanner:5
       - registry1.dso.mil/ironbank/neuvector/neuvector/enforcer:5.2.2
       - registry1.dso.mil/ironbank/neuvector/neuvector/prometheus-exporter:5.1.0
+    actions:
+      onDeploy:
+        after:
+          - description: Validate Neuvector Package
+            maxTotalSeconds: 300
+            wait:
+              cluster:
+                kind: Packages
+                name: neuvector
+                namespace: neuvector
+                condition: "'{.status.phase}'=Ready"
