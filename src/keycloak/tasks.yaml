@@ -49,6 +49,7 @@ tasks:
           export cacert=$(cat cacert.b64)
           # This is a hack to get the value into the yaml file, not sure it belongs
           yq e -i '.tls[0].cacert = env(cacert)' src/istio/values/config-tenant.yaml
+          yq e -i '.tls[0].cacert = env(cacert)' src/istio/values/config-admin.yaml
 
   - name: debug-istio-traffic
     actions:
