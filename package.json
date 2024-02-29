@@ -1,6 +1,6 @@
 {
   "name": "uds-core",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "A collection of capabilities for UDS Core",
   "keywords": [
     "pepr",
@@ -16,6 +16,11 @@
     "name": "UDS Core",
     "uuid": "uds-core",
     "onError": "reject",
+    "customLabels": {
+      "namespace": {
+        "istio-injection": "enabled"
+      }
+    },
     "alwaysIgnore": {
       "namespaces": [
         "uds-dev-stack",
