@@ -12,4 +12,3 @@ insecure*
 .env
 zarf
 tmp-tasks.yaml
-uds-core-config:keycloak
