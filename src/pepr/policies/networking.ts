@@ -16,9 +16,7 @@ import { isExempt, markExemption } from "./exemptions";
  */
 When(a.Pod)
   .IsCreatedOrUpdated()
-  .Mutate(request => {
-    if (markExemption(request, Policy.DisallowHostNamespaces)) return;
-  })
+  .Mutate(markExemption(Policy.DisallowHostNamespaces))
   .Validate(request => {
     if (isExempt(request, Policy.DisallowHostNamespaces)) {
       return request.Approve();
@@ -47,9 +45,7 @@ When(a.Pod)
  */
 When(a.Pod)
   .IsCreatedOrUpdated()
-  .Mutate(request => {
-    if (markExemption(request, Policy.RestrictHostPorts)) return;
-  })
+  .Mutate(markExemption(Policy.RestrictHostPorts))
   .Validate(request => {
     if (isExempt(request, Policy.RestrictHostPorts)) {
       return request.Approve();
@@ -77,9 +73,7 @@ When(a.Pod)
  */
 When(a.Service)
   .IsCreatedOrUpdated()
-  .Mutate(request => {
-    if (markExemption(request, Policy.RestrictExternalNames)) return;
-  })
+  .Mutate(markExemption(Policy.RestrictExternalNames))
   .Validate(request => {
     if (isExempt(request, Policy.RestrictExternalNames)) {
       return request.Approve();
@@ -102,9 +96,7 @@ When(a.Service)
  */
 When(a.Service)
   .IsCreatedOrUpdated()
-  .Mutate(request => {
-    if (markExemption(request, Policy.DisallowNodePortServices)) return;
-  })
+  .Mutate(markExemption(Policy.DisallowNodePortServices))
   .Validate(request => {
     if (isExempt(request, Policy.DisallowNodePortServices)) {
       return request.Approve();

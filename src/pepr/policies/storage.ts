@@ -16,9 +16,7 @@ import { isExempt, markExemption } from "./exemptions";
  */
 When(a.Pod)
   .IsCreatedOrUpdated()
-  .Mutate(request => {
-    if (markExemption(request, Policy.RestrictVolumeTypes)) return;
-  })
+  .Mutate(markExemption(Policy.RestrictVolumeTypes))
   .Validate(request => {
     // List of allowed volume types
     const allowedVolumeTypes = [
@@ -67,9 +65,7 @@ When(a.Pod)
  */
 When(a.Pod)
   .IsCreatedOrUpdated()
-  .Mutate(request => {
-    if (markExemption(request, Policy.RestrictHostPathWrite)) return;
-  })
+  .Mutate(markExemption(Policy.RestrictHostPathWrite))
   .Validate(request => {
     if (isExempt(request, Policy.RestrictHostPathWrite)) {
       return request.Approve();

@@ -1,5 +1,5 @@
 import { KubernetesObject } from "kubernetes-fluent-client";
-import { Log, PeprMutateRequest, PeprValidateRequest } from "pepr";
+import { Log, PeprMutateRequest, PeprValidateRequest, a } from "pepr";
 import { Policy } from "../../operator/crd";
 import { Store } from "../common";
 
@@ -39,18 +39,16 @@ export function isExempt<T extends KubernetesObject>(
 }
 
 /**
- *
- * @param request
+ * 
  * @param policy
- * @returns
+ * @returns Function that takes PeprMutateRequest and evaluates if request isExempt()
  */
-export function markExemption<T extends KubernetesObject>(
-  request: PeprMutateRequest<T>,
-  policy: Policy,
-) {
-  if (isExempt(request, policy)) {
-    request.SetAnnotation(`uds-core.pepr.dev/uds-core-policies.${policy}`, "exempted");
-    return true;
-  }
-  return false;
+export function markExemption<T extends KubernetesObject>(policy: Policy) {
+  return (request: PeprMutateRequest<T>) => {
+    if (isExempt(request, policy)) {
+      request.SetAnnotation(`uds-core.pepr.dev/uds-core-policies.${policy}`, "exempted");
+      return;
+    }
+  };
 }
+
