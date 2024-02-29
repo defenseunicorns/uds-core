@@ -46,55 +46,51 @@ By overriding the velero values in the bundle as follows:
 
 ## Deploy
 
-### Use zarf to login to the needed registries i.e. registry1.dso.mil
-
-```bash
-# Download Zarf
-make build/zarf
-
-# Login to the registry
-set +o history
-
-# registry1.dso.mil (To access registry1 images needed during build time)
-export REGISTRY1_USERNAME="YOUR-USERNAME-HERE"
-export REGISTRY1_TOKEN="YOUR-TOKEN-HERE"
-echo $REGISTRY1_TOKEN | build/zarf tools registry login registry1.dso.mil --username $REGISTRY1_USERNAME --password-stdin
-
-set -o history
-```
-
 ### Build and Deploy Everything locally via UDS tasks
 
 ```bash
 # build the bundle for testing
-uds run create-test-bundle
+UDS_PKG=velero uds run create-single-package
 
 # setup a k3d test env
 uds run setup-test-cluster
 
 # deploy the bundle
-uds run deploy-test-bundle
+UDS_PKG=velero uds run deploy-single-package
 ```
 
-## Declare This Package In Your UDS Bundle
-
-Below is an example of how to use this projects zarf package in your UDS Bundle
-
-```yaml
-kind: UDSBundle
-metadata:
-  name: example-bundle
-  description: An Example UDS Bundle
-  version: 0.0.1
-  architecture: amd64
-
-packages:
-  # Velero
-  - name: velero
-    repository: ghcr.io/defenseunicorns/uds/velero
-    ref: x.x.x
+### Test the package via UDS tasks
+Running the following will check that the velero deployment exists in the cluster and attempt to execute a backup:
+```bash
+uds run -f src/velero/tasks.yaml validate
 ```
+> Alternatively, you can combine package creation, cluster setup, package deploy and the test command with a simple `UDS_PKG=velero uds run test-single-package`
+
 ## Manually trigger the default backup for testing purposes
 ```
 velero backup create --from-schedule velero-udsbackup -n velero
+```
+> NOTE: requires [the velero CLI](https://velero.io/docs/v1.3.0/velero-install/)
+
+Alternatively, manually create a `backup` object with `kubectl`:
+```bash
+uds zarf tools kubectl apply -f - <<-EOF
+  apiVersion: velero.io/v1
+  kind: Backup
+  metadata:
+    name: ${BACKUP_NAME}
+    namespace: velero
+  spec:
+    csiSnapshotTimeout: 0s
+    excludedNamespaces:
+    - kube-system
+    - flux
+    - velero
+    hooks: {}
+    includeClusterResources: true
+    itemOperationTimeout: 0s
+    metadata: {}
+    snapshotVolumes: false
+    ttl: 240h0m0s
+EOF
 ```
