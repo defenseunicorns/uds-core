@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, jest } from "@jest/globals";
 import { ExemptionElement, Policy } from "./generated/exemption-v1alpha1";
 import { PeprValidateRequest } from "pepr";
-import { UDSExemption } from ".";
+import { MatcherKind, UDSExemption } from ".";
 import { exemptValidator } from "./exempt-validator";
 import { UDSConfig } from "../../config";
 
@@ -16,6 +16,7 @@ const mockExemptions = [
     matcher: {
       name: "^neuvector-enforcer-pod.*",
       namespace: "neuvector",
+      kind: MatcherKind.Pod,
     },
   },
 ];
@@ -25,6 +26,7 @@ const makeMockReq = ({ ns = "uds-policy-exemptions", exempts = mockExemptions }:
     Raw: {
       metadata: {
         namespace: ns,
+        name: "exemption",
       },
       spec: {
         exemptions: exempts,
@@ -51,7 +53,7 @@ describe("Test validation of Exemption CRs", () => {
     await exemptValidator(mockReq);
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
     expect(mockReq.Deny).toHaveBeenCalledWith(
-      `Invalid namespace "${mockReq.Raw.metadata?.namespace}": must be "uds-policy-exemptions"`,
+      `Invalid namespace "${mockReq.Raw.metadata?.namespace}" for UDSExemption ${mockReq.Raw.metadata?.name}: must be "uds-policy-exemptions"`,
     );
   });
 
@@ -82,6 +84,28 @@ describe("Test validation of Exemption CRs", () => {
     await exemptValidator(mockReq);
     expect(mockReq.Deny).toHaveBeenCalledWith(
       `Invalid regular expression pattern )^neuvector-enforcer-pod*: SyntaxError: Invalid regular expression: /)^neuvector-enforcer-pod*/: Unmatched ')'`,
+    );
+  });
+
+  it("allows correct kind for policies", async () => {
+    const mockReq = makeMockReq({});
+    await exemptValidator(mockReq);
+    expect(mockReq.Approve).toHaveBeenCalled();
+  });
+
+  it("denies wrong kind for policies", async () => {
+    const mockReq = makeMockReq({
+      exempts: [
+        {
+          ...mockExemptions[0],
+          matcher: { ...mockExemptions[0].matcher, kind: MatcherKind.Services },
+        },
+      ],
+    });
+
+    await exemptValidator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledWith(
+      `Invalid kind "${MatcherKind.Services}" for matcher "${mockExemptions[0].matcher.name}" with policy "${mockExemptions[0].policies[0]}": "${mockExemptions[0].policies[0]}" can only be exempted for kind "${MatcherKind.Pod}"`,
     );
   });
 });

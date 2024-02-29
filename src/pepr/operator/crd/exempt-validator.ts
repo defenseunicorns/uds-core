@@ -1,9 +1,18 @@
 import { PeprValidateRequest } from "pepr";
 
-import { UDSExemption } from ".";
+import { MatcherKind, Policy, UDSExemption } from ".";
 import { UDSConfig } from "../../config";
 
 const validNs = "uds-policy-exemptions";
+const kindToPolicyMap = new Map<MatcherKind, Policy[]>([
+  [
+    MatcherKind.Pod,
+    Object.values(Policy).filter(
+      p => p != Policy.DisallowNodePortServices && p != Policy.RestrictExternalNames,
+    ),
+  ],
+  [MatcherKind.Services, [Policy.RestrictExternalNames, Policy.DisallowNodePortServices]],
+]);
 
 export async function exemptValidator(req: PeprValidateRequest<UDSExemption>) {
   const exempt = req.Raw;
@@ -19,6 +28,19 @@ export async function exemptValidator(req: PeprValidateRequest<UDSExemption>) {
   const exemptions = exempt.spec?.exemptions ?? [];
   if (exemptions.length === 0) {
     return req.Deny("Invalid number of exemptions: must have at least 1");
+  }
+
+  for (const e of exemptions) {
+    const policies = kindToPolicyMap.get(e.matcher.kind!)!;
+    for (const p of e.policies) {
+      if (!policies.includes(p)) {
+        const validKind =
+          e.matcher.kind === MatcherKind.Pod ? MatcherKind.Services : MatcherKind.Pod;
+        return req.Deny(
+          `Invalid kind "${e.matcher.kind}" for matcher "${e.matcher.name}" with policy "${p}": "${p}" can only be exempted for kind "${validKind}"`,
+        );
+      }
+    }
   }
 
   // Check that each matcher name is valid regex

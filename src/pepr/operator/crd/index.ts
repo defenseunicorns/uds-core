@@ -16,6 +16,7 @@ export {
   ExemptionElement,
   Matcher,
   Policy,
+  Kind as MatcherKind,
   Status as ExemptStatus,
   Phase as ExemptPhase,
   Exemption as UDSExemption,

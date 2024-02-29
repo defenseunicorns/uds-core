@@ -1,7 +1,7 @@
 tasks:
   - name: validate
     actions:
-      - cmd: "npx jest src/pepr/**/*.spec.ts"
+      - cmd: "npx jest src/pepr/**/"
 
   - name: gen-crds
     description: "Generate CRDS, requires a running kubernetes cluster"
