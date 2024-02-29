@@ -1,16 +1,13 @@
 image:
   # The Keycloak image repository
-  # repository: registry1.dso.mil/ironbank/opensource/keycloak/keycloak
   repository: quay.io/keycloak/keycloak
   # Overrides the Keycloak image tag whose default is the chart appVersion
   tag: "23.0.4"
   # The Keycloak image pull policy
   pullPolicy: IfNotPresent
 
-# renovate: datasource=github-tags depName=defenseunicorns/uds-config versioning=semver
-# todo: switch to published ghcr image
-# configImage: ghcr.io/defenseunicorns/uds/identity-config:0.3.0
-configImage: ghcr.io/mjnagel/uds-identity-config:0.3.0-dev
+# renovate: datasource=github-tags depName=defenseunicorns/uds-identity-config versioning=semver
+configImage: ghcr.io/defenseunicorns/uds/identity-config:0.3.1
 
 # The public domain name of the Keycloak server
 domain: "###ZARF_VAR_DOMAIN###"
