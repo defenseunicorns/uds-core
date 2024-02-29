@@ -30,7 +30,7 @@ if (process.env.PEPR_WATCH_MODE === "true" || process.env.PEPR_MODE === "dev") {
       Log.info("CRD registered");
     })
     .catch(err => {
-      Log.error(err);
+      Log.error({ err }, "Failed to register CRD");
 
       // Sad times, let's exit
       process.exit(1);
