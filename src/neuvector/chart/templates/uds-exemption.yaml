@@ -15,7 +15,7 @@ spec:
       matcher:
         namespace: neuvector
         name: "^neuvector-enforcer-pod.*"
-      title: "neuvector-enforcer-pod exemptions"
+      title: "neuvector-enforcer-pod"
       description: "Neuvector requires HostPath volume types
           Neuvector mounts the following hostPaths:
           `/var/neuvector`: (as writable) for Neuvector's buffering and persistent state
@@ -33,8 +33,8 @@ spec:
       matcher:
         namespace: neuvector
         name: "^neuvector-controller-pod.*"
-      title: "neuvector-controller-pod exemptions"
-      description: "Neuvector requires HostPath volume types. 
+      title: "neuvector-controller-pod"
+      description: "Neuvector requires HostPath volume types.
           Neuvector mounts the following hostPaths:
           `/var/neuvector`: (as writable) for Neuvector's buffering and persistent state
           `/var/run`: communication to docker daemon
@@ -47,4 +47,4 @@ spec:
       matcher:
         namespace: neuvector
         name: "^neuvector-prometheus-exporter-pod.*"
-      title: "neuvector-prometheus-exporter-pod exemptions"
+      title: "neuvector-prometheus-exporter-pod"
