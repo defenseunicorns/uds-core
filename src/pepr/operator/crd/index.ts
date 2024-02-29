@@ -1,8 +1,6 @@
 import { V1OwnerReference } from "@kubernetes/client-node";
 import { GenericKind } from "kubernetes-fluent-client";
 
-export interface UDSCR extends GenericKind {}
-
 export {
   Allow,
   Direction,
@@ -25,7 +23,7 @@ export {
 
 export * as Istio from "./generated/istio/virtualservice-v1beta1";
 
-export function getOwnerRef(cr: UDSCR): V1OwnerReference[] {
+export function getOwnerRef(cr: GenericKind): V1OwnerReference[] {
   const { name, uid } = cr.metadata!;
 
   return [

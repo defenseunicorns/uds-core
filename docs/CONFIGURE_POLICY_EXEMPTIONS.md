@@ -1,11 +1,10 @@
 ## Configuring UDS-CORE Policy Exemptions
 
-By default policy exemptions ([UDSExemptions](../src/pepr/operator/crd/generated/exemption-v1alpha1.ts)) are only allowed in a single namespace -- `uds-policy-exemptions`. While this is an anti-pattern for how CRDs typically work in Kubernetes, we believe this is a best practice for these reasons:
+By default policy exemptions ([UDSExemptions](../src/pepr/operator/crd/generated/exemption-v1alpha1.ts)) are only allowed in a single namespace -- `uds-policy-exemptions`. We recognize this is not a conventional pattern in K8s, but believe it is ideal for UDS for the following reasons:
 
-- makes maintaining rbac for controlling exemptions easier
-- reduces the risk that an unintentional mis-configuration of rbac allows a cluster exemption that would otherwise be denied
-- increases organization for cluster management, monitoring, and reporting
-- promotes a flow or process of approval
+- highlights the fact that an exemption can reduce the overall security posture of the cluster 
+- makes maintaining RBAC for controlling exemptions more straightforward
+- reduces the risk that an unintentional mis-configuration of RBAC allows a cluster exemption that would otherwise be denied
 
 ## Allow All Namespaces
 
