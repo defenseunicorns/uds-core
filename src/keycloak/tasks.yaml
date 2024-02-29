@@ -1,3 +1,14 @@
+# todo: REMOVETHIS once remote tasks used
+variables:
+  - name: VERSION
+    description: "The image tag"
+    # x-release-please-start-version
+    default: "0.3.0"
+    # x-release-please-end
+  - name: IMAGE_NAME
+    description: "The repository + name for the published image"
+    default: "ghcr.io/defenseunicorns/uds/identity-config"
+
 tasks:
   # These tests break single capability test checks
   - name: validate
@@ -18,6 +29,7 @@ tasks:
   #           address: sso.uds.dev
   #           code: 200
 
+  # todo: use remote tasks for all of the below
   - name: dev-theme
     actions:
       - description: "Copy theme to Keycloak (must be run from src/keycloak dir)"
@@ -25,6 +37,18 @@ tasks:
           PV=$(kubectl get pvc keycloak-themes -n keycloak -o jsonpath='{.spec.volumeName}')
           THEME_PATH=$(kubectl get pv $PV -o jsonpath="{.spec.hostPath.path}")
           docker cp customization/theme k3d-uds-server-0:/$THEME_PATH
+
+  - name: cacert
+    description: "Get the CA cert value for the Istio Gateway"
+    actions:
+      # This is written to a file rather than printed because it is a massive value to copy out of the terminal
+      - cmd: |
+          docker run --rm --entrypoint sh ${IMAGE_NAME}:${VERSION} -c "cat /home/nonroot/authorized_certs.pem | base64 -w 0" > cacert.b64
+          echo "Base64 encoded CA Cert value is in cacert.b64, this can be passed to your Istio tenant gateway for Keycloak OPTIONAL_MUTUAL"
+      - cmd: |
+          export cacert=$(cat cacert.b64)
+          # This is a hack to get the value into the yaml file, not sure it belongs
+          yq e -i '.tls[0].cacert = env(cacert)' src/istio/values/config-tenant.yaml
 
   - name: debug-istio-traffic
     actions:
