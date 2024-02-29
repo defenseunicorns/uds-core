@@ -33,7 +33,9 @@ components:
         valuesFiles:
           - values/registry1-values.yaml
     images:
-      - registry1.dso.mil/ironbank/opensource/kubernetes/kubectl:v1.28.6
+      # The kubectl image used by default in the repo1 chart does not support the runtime command of the upstream chart (`which` has been removed in the IB image) -- suggest replacing with an alternative kubectl image
+      # - registry1.dso.mil/ironbank/opensource/kubernetes/kubectl:v1.28.6
+      - registry1.dso.mil/ironbank/opensource/kubernetes-1.21/kubectl:v1.21.14
       - registry1.dso.mil/ironbank/opensource/velero/velero:v1.12.3
       - registry1.dso.mil/ironbank/opensource/velero/velero-plugin-for-csi:v0.6.3
       - registry1.dso.mil/ironbank/opensource/velero/velero-plugin-for-aws:v1.8.2
