@@ -7,7 +7,7 @@ import { networkPolicies } from "./controllers/network/policies";
 import { Phase, Status, UDSExemption, UDSPackage } from "./crd";
 import { VirtualService } from "./crd/generated/istio/virtualservice-v1beta1";
 import { migrate } from "./crd/migrate";
-import { GenericKind } from "kubernetes-fluent-client"; 
+import { GenericKind } from "kubernetes-fluent-client";
 
 /**
  * The reconciler is called from the queue and is responsible for reconciling the state of the package
