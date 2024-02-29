@@ -41,16 +41,16 @@ export async function reconciler(pkg: UDSPackage) {
 
     const netPol = await networkPolicies(pkg, namespace);
 
-    // Only configure the VirtualService if Istio is installed
+    // Only configure the VirtualService if not running in single test mode
     let vs: VirtualService[] = [];
-    if (UDSConfig.istioInstalled) {
+    if (!UDSConfig.isSingleTest) {
       // Update the namespace to ensure the istio-injection label is set
       await enableInjection(pkg);
 
       // Create the VirtualService for each exposed service
       vs = await virtualService(pkg, namespace);
     } else {
-      Log.warn(`Istio is not installed, skipping ${name} VirtualService.`);
+      Log.warn(`Running in single test mode, skipping ${name} VirtualService.`);
     }
 
     // Configure SSO
@@ -63,8 +63,8 @@ export async function reconciler(pkg: UDSPackage) {
       networkPolicyCount: netPol.length,
       observedGeneration: pkg.metadata.generation,
     });
-  } catch (e) {
-    Log.error(e, `Error configuring for ${namespace}/${name}`);
+  } catch (err) {
+    Log.error({ err }, `Error configuring ${namespace}/${name}`);
     // todo: need to evaluate when it is safe to retry (updating generation now avoids retrying infinitely)
     void updateStatus(pkg, { phase: Phase.Failed, observedGeneration: pkg.metadata.generation });
   }
