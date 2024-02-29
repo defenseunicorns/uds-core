@@ -9,30 +9,32 @@ describe("test registering exemptions", () => {
   beforeAll(() => {
     jest
       .spyOn(Store, "getItem")
-      .mockReturnValue('[{namespace: "neuvector", name: "^neuvector-enforcer-pod-.*"}]');
+      .mockReturnValue('[{"namespace": "neuvector", "name": "^neuvector-enforcer-pod-.*"}]');
   });
 
   it("should be exempt", () => {
-    const exempt = isExempt(Policy.DisallowPrivileged, {
+    const req = {
       Raw: {
         metadata: {
           name: "neuvector-enforcer-pod-x",
           namespace: "neuvector",
         },
       },
-    } as unknown as PeprValidateRequest<kind.Pod>);
+    } as unknown as PeprValidateRequest<kind.Pod>;
+    const exempt = isExempt(req, Policy.DisallowPrivileged);
     expect(exempt).toBe(true);
   });
 
   it("should not be exempt", () => {
-    const exempt = isExempt(Policy.DisallowPrivileged, {
+    const req = {
       Raw: {
         metadata: {
           name: "promtail",
           namespace: "monitoring",
         },
       },
-    } as unknown as PeprValidateRequest<kind.Pod>);
+    } as unknown as PeprValidateRequest<kind.Pod>;
+    const exempt = isExempt(req, Policy.DisallowPrivileged);
     expect(exempt).toBe(false);
   });
 });

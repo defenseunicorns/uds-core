@@ -2,7 +2,7 @@ import { a } from "pepr";
 
 import { When, containers, volumes } from "./common";
 import { Policy } from "../operator/crd";
-import { isExempt } from "./exemptions";
+import { isExempt, markExemption } from "./exemptions";
 
 /**
  * Restrict Volume Types for Pods
@@ -17,13 +17,7 @@ import { isExempt } from "./exemptions";
 When(a.Pod)
   .IsCreatedOrUpdated()
   .Mutate(request => {
-    if (isExempt(Policy.RestrictVolumeTypes, request)) {
-      request.SetAnnotation(
-        `uds-core.pepr.dev/uds-core-policies.${Policy.RestrictVolumeTypes}`,
-        "exempted",
-      );
-      return;
-    }
+    if (markExemption(request, Policy.RestrictVolumeTypes)) return;
   })
   .Validate(request => {
     // List of allowed volume types
@@ -38,7 +32,7 @@ When(a.Pod)
       "secret",
     ];
 
-    if (isExempt(Policy.RestrictVolumeTypes, request)) {
+    if (isExempt(request, Policy.RestrictVolumeTypes)) {
       return request.Approve();
     }
 
@@ -74,16 +68,10 @@ When(a.Pod)
 When(a.Pod)
   .IsCreatedOrUpdated()
   .Mutate(request => {
-    if (isExempt(Policy.RestrictHostPathWrite, request)) {
-      request.SetAnnotation(
-        `uds-core.pepr.dev/uds-core-policies.${Policy.RestrictHostPathWrite}`,
-        "exempted",
-      );
-      return;
-    }
+    if (markExemption(request, Policy.RestrictHostPathWrite)) return;
   })
   .Validate(request => {
-    if (isExempt(Policy.RestrictHostPathWrite, request)) {
+    if (isExempt(request, Policy.RestrictHostPathWrite)) {
       return request.Approve();
     }
 

@@ -11,8 +11,8 @@ import { Store } from "../common";
  * @returns True if exempt and false otherwise
  */
 export function isExempt<T extends KubernetesObject>(
-  policy: Policy,
   request: PeprValidateRequest<T> | PeprMutateRequest<T>,
+  policy: Policy,
 ) {
   const exemptList = JSON.parse(Store.getItem(policy) || "[]");
 
@@ -35,5 +35,22 @@ export function isExempt<T extends KubernetesObject>(
   }
 
   // No exemptions matched
+  return false;
+}
+
+/**
+ *
+ * @param request
+ * @param policy
+ * @returns
+ */
+export function markExemption<T extends KubernetesObject>(
+  request: PeprMutateRequest<T>,
+  policy: Policy,
+) {
+  if (isExempt(request, policy)) {
+    request.SetAnnotation(`uds-core.pepr.dev/uds-core-policies.${policy}`, "exempted");
+    return true;
+  }
   return false;
 }

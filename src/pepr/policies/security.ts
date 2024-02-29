@@ -3,7 +3,7 @@ import { a } from "pepr";
 import { V1SecurityContext } from "@kubernetes/client-node";
 import { When, containers, securityContextContainers, securityContextMessage } from "./common";
 import { Policy } from "../operator/crd";
-import { isExempt } from "./exemptions";
+import { isExempt, markExemption } from "./exemptions";
 
 /**
  * This policy ensures that Pods do not allow privilege escalation.
@@ -20,16 +20,10 @@ import { isExempt } from "./exemptions";
 When(a.Pod)
   .IsCreatedOrUpdated()
   .Mutate(request => {
-    if (isExempt(Policy.DisallowPrivileged, request)) {
-      request.SetAnnotation(
-        `uds-core.pepr.dev/uds-core-policies.${Policy.DisallowPrivileged}`,
-        "exempted",
-      );
-      return;
-    }
+    if (markExemption(request, Policy.DisallowPrivileged)) return;
   })
   .Validate(request => {
-    if (isExempt(Policy.DisallowPrivileged, request)) {
+    if (isExempt(request, Policy.DisallowPrivileged)) {
       return request.Approve();
     }
 
@@ -62,13 +56,7 @@ When(a.Pod)
 When(a.Pod)
   .IsCreatedOrUpdated()
   .Mutate(request => {
-    if (isExempt(Policy.RequireNonRootUser, request)) {
-      request.SetAnnotation(
-        `uds-core.pepr.dev/uds-core-policies.${Policy.RequireNonRootUser}`,
-        "exempted",
-      );
-      return;
-    }
+    if (markExemption(request, Policy.RequireNonRootUser)) return;
 
     const pod = request.Raw.spec!;
     const metadata = request.Raw.metadata || {};
@@ -110,7 +98,7 @@ When(a.Pod)
     }
   })
   .Validate(request => {
-    if (isExempt(Policy.RequireNonRootUser, request)) {
+    if (isExempt(request, Policy.RequireNonRootUser)) {
       return request.Approve();
     }
     // Check if running as root by checking if runAsNonRoot is false or runAsUser is 0
@@ -155,16 +143,10 @@ When(a.Pod)
 When(a.Pod)
   .IsCreatedOrUpdated()
   .Mutate(request => {
-    if (isExempt(Policy.RestrictProcMount, request)) {
-      request.SetAnnotation(
-        `uds-core.pepr.dev/uds-core-policies.${Policy.RestrictProcMount}`,
-        "exempted",
-      );
-      return;
-    }
+    if (markExemption(request, Policy.RestrictProcMount)) return;
   })
   .Validate(request => {
-    if (isExempt(Policy.RestrictProcMount, request)) {
+    if (isExempt(request, Policy.RestrictProcMount)) {
       return request.Approve();
     }
     const authorized = [undefined, "Default"];
@@ -194,16 +176,10 @@ When(a.Pod)
 When(a.Pod)
   .IsCreatedOrUpdated()
   .Mutate(request => {
-    if (isExempt(Policy.RestrictSeccomp, request)) {
-      request.SetAnnotation(
-        `uds-core.pepr.dev/uds-core-policies.${Policy.RestrictSeccomp}`,
-        "exempted",
-      );
-      return;
-    }
+    if (markExemption(request, Policy.RestrictSeccomp)) return;
   })
   .Validate(request => {
-    if (isExempt(Policy.RestrictSeccomp, request)) {
+    if (isExempt(request, Policy.RestrictSeccomp)) {
       return request.Approve();
     }
 
@@ -246,16 +222,10 @@ When(a.Pod)
 When(a.Pod)
   .IsCreatedOrUpdated()
   .Mutate(request => {
-    if (isExempt(Policy.DisallowSELinuxOptions, request)) {
-      request.SetAnnotation(
-        `uds-core.pepr.dev/uds-core-policies.${Policy.DisallowSELinuxOptions}`,
-        "exempted",
-      );
-      return;
-    }
+    if (markExemption(request, Policy.DisallowSELinuxOptions)) return;
   })
   .Validate(request => {
-    if (isExempt(Policy.DisallowSELinuxOptions, request)) {
+    if (isExempt(request, Policy.DisallowSELinuxOptions)) {
       return request.Approve();
     }
 
@@ -297,16 +267,10 @@ When(a.Pod)
 When(a.Pod)
   .IsCreatedOrUpdated()
   .Mutate(request => {
-    if (isExempt(Policy.RestrictSELinuxType, request)) {
-      request.SetAnnotation(
-        `uds-core.pepr.dev/uds-core-policies.${Policy.RestrictSELinuxType}`,
-        "exempted",
-      );
-      return;
-    }
+    if (markExemption(request, Policy.RestrictSELinuxType)) return;
   })
   .Validate(request => {
-    if (isExempt(Policy.RestrictSELinuxType, request)) {
+    if (isExempt(request, Policy.RestrictSELinuxType)) {
       return request.Approve();
     }
 
@@ -348,13 +312,7 @@ When(a.Pod)
 When(a.Pod)
   .IsCreatedOrUpdated()
   .Mutate(request => {
-    if (isExempt(Policy.DropAllCapabilities, request)) {
-      request.SetAnnotation(
-        `uds-core.pepr.dev/uds-core-policies.${Policy.DropAllCapabilities}`,
-        "exempted",
-      );
-      return;
-    }
+    if (markExemption(request, Policy.DropAllCapabilities)) return;
 
     // Always set drop: ["ALL"] for all containers
     for (const container of containers(request)) {
@@ -364,7 +322,7 @@ When(a.Pod)
     }
   })
   .Validate(request => {
-    if (isExempt(Policy.DropAllCapabilities, request)) {
+    if (isExempt(request, Policy.DropAllCapabilities)) {
       return request.Approve();
     }
     const authorized = "ALL";
@@ -400,16 +358,10 @@ When(a.Pod)
 When(a.Pod)
   .IsCreatedOrUpdated()
   .Mutate(request => {
-    if (isExempt(Policy.RestrictCapabilities, request)) {
-      request.SetAnnotation(
-        `uds-core.pepr.dev/uds-core-policies.${Policy.RestrictCapabilities}`,
-        "exempted",
-      );
-      return;
-    }
+    if (markExemption(request, Policy.RestrictCapabilities)) return;
   })
   .Validate(request => {
-    if (isExempt(Policy.RestrictCapabilities, request)) {
+    if (isExempt(request, Policy.RestrictCapabilities)) {
       return request.Approve();
     }
     const authorized = ["NET_BIND_SERVICE"];

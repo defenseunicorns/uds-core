@@ -2,7 +2,7 @@ import { a } from "pepr";
 
 import { When, containers } from "./common";
 import { Policy } from "../operator/crd";
-import { isExempt } from "./exemptions";
+import { isExempt, markExemption } from "./exemptions";
 
 /**
  * This policy prevents pods from sharing the host namespaces.
@@ -17,16 +17,10 @@ import { isExempt } from "./exemptions";
 When(a.Pod)
   .IsCreatedOrUpdated()
   .Mutate(request => {
-    if (isExempt(Policy.DisallowHostNamespaces, request)) {
-      request.SetAnnotation(
-        `uds-core.pepr.dev/uds-core-policies.${Policy.DisallowHostNamespaces}`,
-        "exempted",
-      );
-      return;
-    }
+    if (markExemption(request, Policy.DisallowHostNamespaces)) return;
   })
   .Validate(request => {
-    if (isExempt(Policy.DisallowHostNamespaces, request)) {
+    if (isExempt(request, Policy.DisallowHostNamespaces)) {
       return request.Approve();
     }
 
@@ -54,16 +48,10 @@ When(a.Pod)
 When(a.Pod)
   .IsCreatedOrUpdated()
   .Mutate(request => {
-    if (isExempt(Policy.RestrictHostPorts, request)) {
-      request.SetAnnotation(
-        `uds-core.pepr.dev/uds-core-policies.${Policy.RestrictHostPorts}`,
-        "exempted",
-      );
-      return;
-    }
+    if (markExemption(request, Policy.RestrictHostPorts)) return;
   })
   .Validate(request => {
-    if (isExempt(Policy.RestrictHostPorts, request)) {
+    if (isExempt(request, Policy.RestrictHostPorts)) {
       return request.Approve();
     }
 
@@ -90,16 +78,10 @@ When(a.Pod)
 When(a.Service)
   .IsCreatedOrUpdated()
   .Mutate(request => {
-    if (isExempt(Policy.RestrictExternalNames, request)) {
-      request.SetAnnotation(
-        `uds-core.pepr.dev/uds-core-policies.${Policy.RestrictExternalNames}`,
-        "exempted",
-      );
-      return;
-    }
+    if (markExemption(request, Policy.RestrictExternalNames)) return;
   })
   .Validate(request => {
-    if (isExempt(Policy.RestrictExternalNames, request)) {
+    if (isExempt(request, Policy.RestrictExternalNames)) {
       return request.Approve();
     }
     if (request.Raw.spec?.type === "ExternalName") {
@@ -121,16 +103,10 @@ When(a.Service)
 When(a.Service)
   .IsCreatedOrUpdated()
   .Mutate(request => {
-    if (isExempt(Policy.DisallowNodePortServices, request)) {
-      request.SetAnnotation(
-        `uds-core.pepr.dev/uds-core-policies.${Policy.DisallowNodePortServices}`,
-        "exempted",
-      );
-      return;
-    }
+    if (markExemption(request, Policy.DisallowNodePortServices)) return;
   })
   .Validate(request => {
-    if (isExempt(Policy.DisallowNodePortServices, request)) {
+    if (isExempt(request, Policy.DisallowNodePortServices)) {
       return request.Approve();
     }
     // If the service is of type NodePort, deny the request.
