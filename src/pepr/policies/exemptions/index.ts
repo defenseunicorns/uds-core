@@ -1,5 +1,5 @@
 import { KubernetesObject } from "kubernetes-fluent-client";
-import { Log, PeprMutateRequest, PeprValidateRequest, a } from "pepr";
+import { Log, PeprMutateRequest, PeprValidateRequest } from "pepr";
 import { Policy } from "../../operator/crd";
 import { Store } from "../common";
 
@@ -39,7 +39,7 @@ export function isExempt<T extends KubernetesObject>(
 }
 
 /**
- * 
+ *
  * @param policy
  * @returns Function that takes PeprMutateRequest and evaluates if request isExempt()
  */
@@ -51,4 +51,3 @@ export function markExemption<T extends KubernetesObject>(policy: Policy) {
     }
   };
 }
-

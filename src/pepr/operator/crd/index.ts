@@ -8,7 +8,7 @@ export {
   Gateway,
   Phase,
   RemoteGenerated,
-  Status,
+  Status as PkgStatus,
   Package as UDSPackage,
 } from "./generated/package-v1alpha1";
 

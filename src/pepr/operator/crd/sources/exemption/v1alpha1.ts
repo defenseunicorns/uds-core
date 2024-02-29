@@ -12,6 +12,12 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
       jsonPath: ".status.phase",
     },
     {
+      name: "Exemptions",
+      type: "string",
+      description: "Titles of the exemptions",
+      jsonPath: ".status.titles",
+    },
+    {
       name: "Age",
       type: "date",
       description: "The age of the exemption",
@@ -35,6 +41,12 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
               enum: ["Pending", "Ready", "Failed"],
               type: "string",
             },
+            titles: {
+              type: "array",
+              items: {
+                type: "string",
+              },
+            },
           },
         } as V1JSONSchemaProps,
         spec: {
@@ -47,10 +59,13 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
                 type: "object",
                 required: ["policies", "matcher"],
                 properties: {
+                  title: {
+                    type: "string",
+                    description: "title to give the exemption for reporting purposes",
+                  },
                   description: {
                     type: "string",
-                    description:
-                      "A description of this exemption, this will become part of the exemption name",
+                    description: "Reasons as to why this exemption is needed",
                   },
                   policies: {
                     description: "A list of policies to override",
@@ -76,7 +91,7 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
                     },
                   },
                   matcher: {
-                    description: "Name and namespace of pod to exempt. Regex allowed for name.",
+                    description: "Resource to exempt (Regex allowed for name)",
                     type: "object",
                     required: ["namespace", "name"],
                     properties: {
@@ -85,6 +100,11 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
                       },
                       name: {
                         type: "string",
+                      },
+                      kind: {
+                        type: "string",
+                        enum: ["pod", "services"],
+                        default: "pod",
                       },
                     },
                   },

@@ -16,25 +16,35 @@ export interface Spec {
 
 export interface ExemptionElement {
   /**
-   * A description of this exemption, this will become part of the exemption name
+   * Reasons as to why this exemption is needed
    */
   description?: string;
   /**
-   * Name and namespace of pod to exempt. Regex allowed for name.
+   * Resource to exempt (Regex allowed for name)
    */
   matcher: Matcher;
   /**
    * A list of policies to override
    */
   policies: Policy[];
+  /**
+   * title to give the exemption for reporting purposes
+   */
+  title?: string;
 }
 
 /**
- * Name and namespace of pod to exempt. Regex allowed for name.
+ * Resource to exempt (Regex allowed for name)
  */
 export interface Matcher {
+  kind?: Kind;
   name: string;
   namespace: string;
+}
+
+export enum Kind {
+  Pod = "pod",
+  Services = "services",
 }
 
 export enum Policy {
@@ -57,6 +67,7 @@ export enum Policy {
 export interface Status {
   observedGeneration?: number;
   phase?: Phase;
+  titles?: string[];
 }
 
 export enum Phase {

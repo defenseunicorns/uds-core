@@ -1,10 +1,9 @@
-import { PeprMutateRequest, a } from "pepr";
+import { a } from "pepr";
 
 import { V1SecurityContext } from "@kubernetes/client-node";
 import { When, containers, securityContextContainers, securityContextMessage } from "./common";
 import { Policy } from "../operator/crd";
-import { isExempt, markExemption, } from "./exemptions";
-
+import { isExempt, markExemption } from "./exemptions";
 
 /**
  * This policy ensures that Pods do not allow privilege escalation.
@@ -56,47 +55,48 @@ When(a.Pod)
   .IsCreatedOrUpdated()
   .Mutate(request => {
     markExemption(Policy.RequireNonRootUser)(request);
-    if(request.HasAnnotation(`uds-core.pepr.dev/uds-core-policies.${Policy.RequireNonRootUser}`)) return;
+    if (request.HasAnnotation(`uds-core.pepr.dev/uds-core-policies.${Policy.RequireNonRootUser}`))
+      return;
 
-      const pod = request.Raw.spec!;
-      const metadata = request.Raw.metadata || {};
+    const pod = request.Raw.spec!;
+    const metadata = request.Raw.metadata || {};
 
-      // Ensure the securityContext field is defined
-      pod.securityContext = pod.securityContext || {};
+    // Ensure the securityContext field is defined
+    pod.securityContext = pod.securityContext || {};
 
-      // Set the runAsUser field if it is defined in a label
-      const runAsUser = metadata.labels?.["uds/user"];
-      if (runAsUser) {
-        pod.securityContext.runAsUser = parseInt(runAsUser);
-      }
+    // Set the runAsUser field if it is defined in a label
+    const runAsUser = metadata.labels?.["uds/user"];
+    if (runAsUser) {
+      pod.securityContext.runAsUser = parseInt(runAsUser);
+    }
 
-      // Set the runAsGroup field if it is defined in a label
-      const runAsGroup = metadata.labels?.["uds/group"];
-      if (runAsGroup) {
-        pod.securityContext.runAsGroup = parseInt(runAsGroup);
-      }
+    // Set the runAsGroup field if it is defined in a label
+    const runAsGroup = metadata.labels?.["uds/group"];
+    if (runAsGroup) {
+      pod.securityContext.runAsGroup = parseInt(runAsGroup);
+    }
 
-      // Set the fsGroup field if it is defined in a label
-      const fsGroup = metadata.labels?.["uds/fsgroup"];
-      if (fsGroup) {
-        pod.securityContext.fsGroup = parseInt(fsGroup);
-      }
+    // Set the fsGroup field if it is defined in a label
+    const fsGroup = metadata.labels?.["uds/fsgroup"];
+    if (fsGroup) {
+      pod.securityContext.fsGroup = parseInt(fsGroup);
+    }
 
-      // Set the runAsNonRoot field to true if it is undefined
-      if (pod.securityContext.runAsNonRoot === undefined) {
-        pod.securityContext.runAsNonRoot = true;
-      }
+    // Set the runAsNonRoot field to true if it is undefined
+    if (pod.securityContext.runAsNonRoot === undefined) {
+      pod.securityContext.runAsNonRoot = true;
+    }
 
-      // Set the runAsUser field to 1000 if it is undefined
-      if (pod.securityContext.runAsUser === undefined) {
-        pod.securityContext.runAsUser = 1000;
-      }
+    // Set the runAsUser field to 1000 if it is undefined
+    if (pod.securityContext.runAsUser === undefined) {
+      pod.securityContext.runAsUser = 1000;
+    }
 
-      // Set the runAsGroup field to 1000 if it is undefined
-      if (pod.securityContext.runAsGroup === undefined) {
-        pod.securityContext.runAsGroup = 1000;
-      }
-    })
+    // Set the runAsGroup field to 1000 if it is undefined
+    if (pod.securityContext.runAsGroup === undefined) {
+      pod.securityContext.runAsGroup = 1000;
+    }
+  })
   .Validate(request => {
     if (isExempt(request, Policy.RequireNonRootUser)) {
       return request.Approve();
@@ -304,10 +304,9 @@ When(a.Pod)
 When(a.Pod)
   .IsCreatedOrUpdated()
   .Mutate(request => {
-    markExemption(Policy.DropAllCapabilities)(request)
+    markExemption(Policy.DropAllCapabilities)(request);
     if (request.HasAnnotation(`uds-core.pepr.dev/uds-core-policies.${Policy.RequireNonRootUser}`))
       return;
-    
 
     // Always set drop: ["ALL"] for all containers
     for (const container of containers(request)) {

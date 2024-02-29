@@ -73,10 +73,10 @@ When(UDSExemption)
       await updateStatus(exempt, { phase: Phase.Pending });
 
       processExemptions(exempt);
-
       await updateStatus(exempt, {
         phase: Phase.Ready,
         observedGeneration: exempt.metadata.generation,
+        titles: exempt.spec?.exemptions?.map(e => e.title || ""),
       });
     } catch (e) {
       Log.error(e, `Error configuring for ${namespace}/${name}`);
