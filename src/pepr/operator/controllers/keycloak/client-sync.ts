@@ -106,19 +106,34 @@ async function syncClient(
     }
 
     return name;
-  } catch (e) {
+  } catch (err) {
+    const msg =
+      `Failed to process client request '${clientReq.clientId}' for ` +
+      `${pkg.metadata?.namespace}/${pkg.metadata?.name}`;
+    Log.error({ err }, msg);
+
     if (isRetry) {
-      Log.error(e, pkg.metadata, `Failed to process client request: ${clientReq.clientId}`);
-      throw e;
+      Log.error(`${msg}, retry failed, aborting`);
+      throw err;
     }
 
     // Retry the request
-    Log.warn(pkg.metadata, `Failed to process client request: ${clientReq.clientId}, retrying`);
+    Log.warn(`${msg}, retrying`);
     return syncClient(clientReq, pkg, true);
   }
 }
 
 async function apiCall(sso: Partial<Sso>, method = "POST", authToken = "") {
+  // Handle single test mode
+  if (UDSConfig.isSingleTest) {
+    Log.warn(`Generating fake client for '${sso.clientId}' in single test mode`);
+    return {
+      ...sso,
+      secret: sso.secret || "fake-secret",
+      registrationAccessToken: "fake-registration-access-token",
+    } as Client;
+  }
+
   const req = {
     body: JSON.stringify(sso) as string | undefined,
     method,
