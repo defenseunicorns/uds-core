@@ -4,8 +4,6 @@ kind: Gateway
 metadata:
   name: {{ .Values.name }}-gateway
   namespace: {{ .Release.Namespace }}
-  annotations:
-    
 spec:
   selector:
     app: {{ .Values.name }}-ingressgateway
