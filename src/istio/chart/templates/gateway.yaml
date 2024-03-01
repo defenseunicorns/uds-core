@@ -1,4 +1,5 @@
 {{- $domain := .Values.domain }}
+{{- if .Values.tls }}
 apiVersion: networking.istio.io/v1beta1
 kind: Gateway
 metadata:
@@ -8,13 +9,13 @@ spec:
   selector:
     app: {{ .Values.name }}-ingressgateway
   servers:
-    {{ range $tls := .Values.tls }}
+    {{ range $name,$tls := .Values.tls }}
     - hosts:
         {{- range $tls.hosts | default (list "*") }}
         - "{{ . }}.{{ $domain }}"
         {{- end }}
       port:
-        name: "http-{{ $tls.name }}"
+        name: "http-{{ $name }}"
         number: 80
         protocol: HTTP
       tls:
@@ -24,14 +25,14 @@ spec:
         - "{{ . }}.{{ $domain }}"
         {{- end }}
       port:
-        name: "https-{{ $tls.name }}"
+        name: "https-{{ $name }}"
         number: 443
         protocol: HTTPS
       tls:
         mode: {{ $tls.mode }}
         {{- if ne $tls.mode "PASSTHROUGH" }}
-        credentialName: {{ $tls.name }}
+        credentialName: {{ $name }}
         minProtocolVersion: TLSV1_3
         {{- end }}
     {{ end }}
-      
+{{ end }}
