@@ -5,8 +5,8 @@ name: change-me
 domain: "###ZARF_VAR_DOMAIN###"
 
 # tls:
-#   # Name of the gateway port to use for TLS
-#   - name: https
+#   # Name of the gateway port to use for TLS, this is effectively a "list" in map form
+#   https:
 
 #     # The TLS mode for the gateway. One of `SIMPLE`, `MUTUAL`, 'OPTIONAL_MUTUAL', `PASSTHROUGH`
 #     mode: SIMPLE

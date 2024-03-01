@@ -1,5 +1,5 @@
 name: passthrough
 
 tls:
-  - name: passthrough
+  passthrough:
     mode: PASSTHROUGH

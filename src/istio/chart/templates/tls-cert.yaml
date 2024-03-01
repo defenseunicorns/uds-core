@@ -1,10 +1,10 @@
 {{- $ns := .Release.Namespace -}}
-{{ range $tls := .Values.tls }}
+{{ range $name,$tls := .Values.tls }}
 {{ if ne $tls.mode "PASSTHROUGH" }}
 apiVersion: v1
 kind: Secret
 metadata:
-  name: {{ $tls.name }}
+  name: {{ $name }}
   namespace: {{ $ns }}
 data:
   tls.crt: {{ $tls.cert }}
