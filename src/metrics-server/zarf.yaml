@@ -16,7 +16,7 @@ components:
         valuesFiles:
           - "values/upstream-values.yaml"
     images:
-      - registry.k8s.io/metrics-server/metrics-server:v0.6.4
+      - registry.k8s.io/metrics-server/metrics-server:v0.7.0
 
   - name: metrics-server
     required: true
@@ -29,4 +29,4 @@ components:
         valuesFiles:
           - "values/registry1-values.yaml"
     images:
-      - registry1.dso.mil/ironbank/opensource/kubernetes-sigs/metrics-server:v0.6.4
+      - registry1.dso.mil/ironbank/opensource/kubernetes-sigs/metrics-server:v0.7.0
