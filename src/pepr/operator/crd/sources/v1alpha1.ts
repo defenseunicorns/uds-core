@@ -164,7 +164,7 @@ const sso = {
   type: "array",
   items: {
     type: "object",
-    required: ["clientId", "name"],
+    required: ["clientId", "name", "redirectUris"],
     properties: {
       isAuthSvcClient: {
         description: "If true, the client will generate a new Auth Service client as well",
@@ -198,11 +198,12 @@ const sso = {
       },
       redirectUris: {
         description:
-          "Valid URI pattern a browser can redirect to after a successful login. Simple wildcards are allowed such as 'http://example.com/*'. Relative path can be specified too such as /my/relative/path/*. Relative paths are relative to the client root URL, or if none is specified the auth server root URL is used. For SAML, you must set valid URI patterns if you are relying on the consumer service URL embedded with the login request.",
+          "Valid URI pattern a browser can redirect to after a successful login. Simple wildcards are allowed such as 'https://unicorns.uds.dev/*'",
         type: "array",
         items: {
           type: "string",
         },
+        minItems: 1,
       },
       webOrigins: {
         description:

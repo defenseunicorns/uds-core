@@ -24,6 +24,13 @@ spec:
         remoteGenerate: Anywhere
         port: 8080
 
+      - description: "OCSP Lookup"
+        direction: Egress
+        selector:
+          app.kubernetes.io/name: keycloak        
+        port: 443
+        remoteGenerate: Anywhere
+
     expose:
       - description: "remove private paths from public gateway"
         host: sso

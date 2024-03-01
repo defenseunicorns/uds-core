@@ -8,7 +8,7 @@ spec:
     - name: Grafana Dashboard
       clientId: uds-core-admin-grafana
       redirectUris:
-        - "https://grafana.admin.UDS_DOMAIN/login/generic_oauth"
+        - "https://grafana.admin.{{ .Values.domain }}/login/generic_oauth"
 
   network:
     expose:
