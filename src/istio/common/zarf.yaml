@@ -25,3 +25,8 @@ components:
           - "manifests/envoy-filters.yaml"
           - "manifests/peer-authentication.yaml"
           - "manifests/hack-pepr.yaml"
+    actions:
+      onDeploy:
+        after:
+          - description: "Ensure istio-injection is enabled for Pepr"
+            cmd: "./zarf tools kubectl label namespace pepr-system istio-injection=enabled --overwrite"

@@ -16,11 +16,6 @@
     "name": "UDS Core",
     "uuid": "uds-core",
     "onError": "reject",
-    "customLabels": {
-      "namespace": {
-        "istio-injection": "enabled"
-      }
-    },
     "alwaysIgnore": {
       "namespaces": [
         "uds-dev-stack",

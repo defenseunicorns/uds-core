@@ -1,3 +1,11 @@
+# Have to pre-create the namespace and also patch it with the istio-injection label later because
+# Helm is kind of dumb: https://github.com/helm/helm/issues/350
+kind: Namespace
+metadata:
+  name: pepr-system
+  labels:
+    istio-injection: enabled
+---
 apiVersion: "security.istio.io/v1beta1"
 kind: PeerAuthentication
 metadata:
