@@ -23,8 +23,8 @@ jobs:
 
       - name: Install commitlint
         run: |
-          npm install --save-dev @commitlint/config-conventional@18.6.2
-          npm install --save-dev @commitlint/cli@18.6.1
+          npm install --save-dev @commitlint/config-conventional@19.0.3
+          npm install --save-dev @commitlint/cli@19.0.3
 
       - name: Lint PR title
         env:
