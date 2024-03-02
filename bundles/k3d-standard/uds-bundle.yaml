@@ -42,19 +42,18 @@ packages:
       istio-admin-gateway:
         uds-istio-config:
           variables:
-            # todo: make it soe we don't have to override tls.keycloak also
             - name: ADMIN_TLS_CERT
               description: "The TLS cert for the admin gateway (must be base64 encoded)"
-              path: tls.admin.cert
+              path: tls.cert
             - name: ADMIN_TLS_KEY
               description: "The TLS key for the admin gateway (must be base64 encoded)"
-              path: tls.admin.key
+              path: tls.key
       istio-tenant-gateway:
         uds-istio-config:
           variables:
             - name: TENANT_TLS_CERT
               description: "The TLS cert for the tenant gateway (must be base64 encoded)"
-              path: tls.tenant.cert
+              path: tls.cert
             - name: TENANT_TLS_KEY
               description: "The TLS key for the tenant gateway (must be base64 encoded)"
-              path: tls.tenant.key
+              path: tls.key

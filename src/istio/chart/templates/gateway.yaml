@@ -9,9 +9,9 @@ spec:
   selector:
     app: {{ .Values.name }}-ingressgateway
   servers:
-    {{ range $name,$tls := .Values.tls }}
+    {{ range $name,$server := .Values.tls.servers }}
     - hosts:
-        {{- range $tls.hosts | default (list "*") }}
+        {{- range $server.hosts | default (list "*") }}
         - "{{ . }}.{{ $domain }}"
         {{- end }}
       port:
@@ -21,7 +21,7 @@ spec:
       tls:
         httpsRedirect: true
     - hosts:
-        {{- range $tls.hosts | default (list "*") }}
+        {{- range $server.hosts | default (list "*") }}
         - "{{ . }}.{{ $domain }}"
         {{- end }}
       port:
@@ -29,9 +29,9 @@ spec:
         number: 443
         protocol: HTTPS
       tls:
-        mode: {{ $tls.mode }}
-        {{- if ne $tls.mode "PASSTHROUGH" }}
-        credentialName: {{ $name }}
+        mode: {{ $server.mode }}
+        {{- if ne $server.mode "PASSTHROUGH" }}
+        credentialName: gateway-tls
         minProtocolVersion: TLSV1_3
         {{- end }}
     {{ end }}
