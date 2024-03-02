@@ -16,6 +16,9 @@ extraSecretMounts:
 grafana.ini:
   server:
     root_url: https://grafana.admin.###ZARF_VAR_DOMAIN###
+  auth:
+    # Disable the login form to force users to use SSO
+    disable_login_form: true
   auth.generic_oauth:
     # https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/keycloak/
     enabled: true
@@ -32,3 +35,5 @@ grafana.ini:
     # Require a UDS Core group to access Grafana
     role_attribute_path: "contains(groups[], '/UDS Core/Admin') && 'Admin' || contains(groups[], '/UDS Core/Auditor') && 'Viewer' || 'Unauthorized'"
     role_attribute_strict: true
+    # Automatically redirect to the SSO login page
+    auto_login: true
