@@ -14,7 +14,7 @@ spec:
         remoteSelector:
           app: pepr-uds-core-watcher
         port: 8080
-        
+
       # Temp workaround for any cluster pod
       # @todo: remove this once cluster pods is a remote generated target
       - description: "Keycloak backchannel access"
@@ -27,7 +27,7 @@ spec:
       - description: "OCSP Lookup"
         direction: Egress
         selector:
-          app.kubernetes.io/name: keycloak        
+          app.kubernetes.io/name: keycloak
         port: 443
         remoteGenerate: Anywhere
 
