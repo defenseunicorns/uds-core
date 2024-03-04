@@ -40,6 +40,5 @@ schedules:
       snapshotVolumes: false
       excludedNamespaces:
         - kube-system
-        - flux
         - velero
       ttl: "240h"
