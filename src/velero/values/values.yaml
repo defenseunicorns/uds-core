@@ -1,14 +1,3 @@
-kubectl:
-  # Container Level Security Context for the 'kubectl' container of the crd jobs. Optional.
-  # See: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
-  containerSecurityContext:
-    capabilities:
-      drop:
-        - ALL
-  # Annotations to set for the upgrade/cleanup job. Optional.
-  annotations:
-    sidecar.istio.io/inject: 'false'
-
 credentials:
   useSecret: true
   name: "velero-bucket-credentials"
