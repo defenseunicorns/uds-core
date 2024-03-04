@@ -42,5 +42,10 @@
     "seccomp",
     "Sysctls",
     "Velero"
-  ]
+  ],
+"[typescript]": {
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": "always"
+    }
+  }
 }
