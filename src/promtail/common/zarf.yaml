@@ -19,3 +19,14 @@ components:
         gitPath: charts/promtail
         valuesFiles:
           - ../values/values.yaml
+    actions:
+      onDeploy:
+        after:
+          - description: Validate Promtail Package
+            maxTotalSeconds: 300
+            wait:
+              cluster:
+                kind: Packages
+                name: promtail
+                namespace: promtail
+                condition: "'{.status.phase}'=Ready"

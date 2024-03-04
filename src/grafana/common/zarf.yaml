@@ -21,10 +21,11 @@ components:
     actions:
       onDeploy:
         after:
-          - description: "Wait for UDS Operator sync"
+          - description: Validate Grafana Package
+            maxTotalSeconds: 300
             wait:
               cluster:
-                kind: Package
+                kind: Packages
                 name: grafana
                 namespace: grafana
                 condition: "'{.status.phase}'=Ready"
