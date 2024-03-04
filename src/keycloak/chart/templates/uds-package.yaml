@@ -1,0 +1,133 @@
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: keycloak
+  namespace: {{ .Release.Namespace }}
+spec:
+  network:
+    allow:
+      - description: "UDS Operator"
+        direction: Ingress
+        selector:
+          app.kubernetes.io/name: keycloak
+        remoteNamespace: pepr-system
+        remoteSelector:
+          app: pepr-uds-core-watcher
+        port: 8080
+        
+      # Temp workaround for any cluster pod
+      # @todo: remove this once cluster pods is a remote generated target
+      - description: "Keycloak backchannel access"
+        direction: Ingress
+        selector:
+          app.kubernetes.io/name: keycloak
+        remoteGenerate: Anywhere
+        port: 8080
+
+      - description: "OCSP Lookup"
+        direction: Egress
+        selector:
+          app.kubernetes.io/name: keycloak        
+        port: 443
+        remoteGenerate: Anywhere
+
+    expose:
+      - description: "remove private paths from public gateway"
+        host: sso
+        service: keycloak-http
+        selector:
+          app.kubernetes.io/name: keycloak
+        port: 8080
+        advancedHTTP:
+          match:
+            - name: redirect-welcome
+              uri:
+                exact: /
+            - name: redirect-admin
+              uri:
+                prefix: /admin
+            - name: redirect-master-realm
+              uri:
+                prefix: /realms/master
+            - name: redirect-metrics
+              uri:
+                prefix: /metrics
+          rewrite:
+            uri: "/realms/{{ .Values.realm }}/account"
+          headers:
+            request:
+              remove:
+                - istio-mtls-client-certificate
+              add:
+                istio-mtls-client-certificate: "%DOWNSTREAM_PEER_CERT%"
+
+      - description: "public auth access with optional client certificate"
+        service: keycloak-http
+        selector:
+          app.kubernetes.io/name: keycloak
+        host: sso
+        port: 8080
+        advancedHTTP:
+          headers:
+            request:
+              remove:
+                - istio-mtls-client-certificate
+              add:
+                istio-mtls-client-certificate: "%DOWNSTREAM_PEER_CERT%"
+
+      - description: "admin access with optional client certificate"
+        service: keycloak-http
+        selector:
+          app.kubernetes.io/name: keycloak
+        gateway: admin
+        host: keycloak
+        port: 8080
+        advancedHTTP:
+          headers:
+            request:
+              remove:
+                - istio-mtls-client-certificate
+              add:
+                istio-mtls-client-certificate: "%DOWNSTREAM_PEER_CERT%"
+
+      - description: "emulate gitlab authorize endpoint"
+        service: keycloak-http
+        selector:
+          app.kubernetes.io/name: keycloak
+        host: sso
+        port: 8080
+        advancedHTTP:
+          match:
+            - name: gitlab-authorize
+              uri:
+                prefix: /oauth/authorize
+          rewrite:
+            uri: "/realms/{{ .Values.realm }}/protocol/openid-connect/auth"
+
+      - description: "emulate gitlab user endpoint"
+        service: keycloak-http
+        selector:
+          app.kubernetes.io/name: keycloak
+        host: sso
+        port: 8080
+        advancedHTTP:
+          match:
+            - name: gitlab-user
+              uri:
+                prefix: /api/v4/user
+          rewrite:
+            uri: "/realms/{{ .Values.realm }}/protocol/openid-connect/userinfo"
+
+      - description: "emulate gitlab token endpoint"
+        service: keycloak-http
+        selector:
+          app.kubernetes.io/name: keycloak
+        host: sso
+        port: 8080
+        advancedHTTP:
+          match:
+            - name: gitlab-token
+              uri:
+                prefix: /oauth/token
+          rewrite:
+            uri: "/realms/{{ .Values.realm }}/protocol/openid-connect/token"

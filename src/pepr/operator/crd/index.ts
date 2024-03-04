@@ -10,6 +10,7 @@ export {
   Phase,
   RemoteGenerated,
   Status,
+  Sso,
   Package as UDSPackage,
 } from "./generated/package-v1alpha1";
 

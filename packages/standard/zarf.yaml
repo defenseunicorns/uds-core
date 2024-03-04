@@ -48,6 +48,12 @@ components:
     import:
       path: ../../src/metrics-server
 
+  # Keycloak
+  - name: keycloak
+    required: true
+    import:
+      path: ../../src/keycloak
+
   # Neuvector
   - name: neuvector
     required: true

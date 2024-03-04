@@ -36,7 +36,7 @@ describe("reconciler", () => {
   test("should skip processing for pending or completed packages", async () => {
     mockPackage.status!.phase = Phase.Pending;
     await reconciler(mockPackage);
-    expect(Log.debug).toHaveBeenCalledWith(
+    expect(Log.info).toHaveBeenCalledWith(
       expect.anything(),
       "Skipping pending or completed package",
     );
@@ -44,7 +44,7 @@ describe("reconciler", () => {
     mockPackage.status!.phase = Phase.Ready;
     mockPackage.status!.observedGeneration = mockPackage.metadata!.generation;
     await reconciler(mockPackage);
-    expect(Log.debug).toHaveBeenCalledWith(
+    expect(Log.info).toHaveBeenCalledWith(
       expect.anything(),
       "Skipping pending or completed package",
     );
