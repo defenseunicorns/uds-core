@@ -1,0 +1,18 @@
+apiVersion: v2
+name: keycloak
+version: 23.0.4
+description: Open Source Identity and Access Management For Modern Applications and Services
+keywords:
+  - sso
+  - idm
+  - openid connect
+  - saml
+  - kerberos
+  - ldap
+home: https://www.keycloak.org/
+icon: https://www.keycloak.org/resources/images/keycloak_icon_512px.svg
+sources:
+  - https://github.com/codecentric/helm-charts
+  - https://github.com/jboss-dockerfiles/keycloak
+  - https://github.com/bitnami/charts/tree/master/bitnami/postgresql
+  - https://repo1.dso.mil/big-bang/product/packages/keycloak

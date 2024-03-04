@@ -136,11 +136,13 @@ const expose = {
         },
       },
       targetPort: {
-        description: "Deprecated: use podPort",
+        description:
+          "The service targetPort. This defaults to port and is only required if the service port is different from the target port (so the NetworkPolicy can be generated correctly).",
         minimum: 1,
         maximum: 65535,
         type: "number",
       },
+      advancedHTTP,
       // Deprecated field
       match: {
         description: "Deprecated: use advancedHTTP.match",
@@ -153,7 +155,87 @@ const expose = {
           type: "string",
         },
       },
-      advancedHTTP,
+    },
+  } as V1JSONSchemaProps,
+} as V1JSONSchemaProps;
+
+const sso = {
+  description: "Create SSO client configurations",
+  type: "array",
+  items: {
+    type: "object",
+    required: ["clientId", "name", "redirectUris"],
+    properties: {
+      isAuthSvcClient: {
+        description: "If true, the client will generate a new Auth Service client as well",
+        type: "boolean",
+        default: false,
+      },
+      secretName: {
+        description: "The name of the secret to store the client secret",
+        type: "string",
+      },
+      clientId: {
+        description: "The client identifier registered with the identity provider.",
+        type: "string",
+      },
+      secret: {
+        description: "The client secret. Typically left blank and auto-generated.",
+        type: "string",
+      },
+      name: {
+        description: "Specifies display name of the client",
+        type: "string",
+      },
+      description: {
+        description:
+          "A description for the client, can be a URL to an image to replace the login logo",
+        type: "string",
+      },
+      rootUrl: {
+        description: "Root URL appended to relative URLs",
+        type: "string",
+      },
+      redirectUris: {
+        description:
+          "Valid URI pattern a browser can redirect to after a successful login. Simple wildcards are allowed such as 'https://unicorns.uds.dev/*'",
+        type: "array",
+        items: {
+          type: "string",
+        },
+        minItems: 1,
+      },
+      webOrigins: {
+        description:
+          "Allowed CORS origins. To permit all origins of Valid Redirect URIs, add '+'. This does not include the '*' wildcard though. To permit all origins, explicitly add '*'.",
+        type: "array",
+        items: {
+          type: "string",
+        },
+      },
+      enabled: {
+        description: "Whether the SSO client is enabled",
+        type: "boolean",
+        default: true,
+      },
+      alwaysDisplayInConsole: {
+        description:
+          "Always list this client in the Account UI, even if the user does not have an active session.",
+        type: "boolean",
+        default: false,
+      },
+      clientAuthenticatorType: {
+        description: "The client authenticator type",
+        type: "string",
+        enum: ["client-secret", "client-jwt"],
+      },
+      defaultClientScopes: {
+        description: "Default client scopes",
+        type: "array",
+        items: {
+          type: "string",
+        },
+      },
     },
   } as V1JSONSchemaProps,
 } as V1JSONSchemaProps;
@@ -168,6 +250,12 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
       type: "string",
       description: "The status of the package",
       jsonPath: ".status.phase",
+    },
+    {
+      name: "SSO Clients",
+      type: "string",
+      description: "SSO Clients created by the package",
+      jsonPath: ".status.ssoClients",
     },
     {
       name: "Endpoints",
@@ -205,6 +293,12 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
               enum: ["Pending", "Ready", "Failed"],
               type: "string",
             },
+            ssoClients: {
+              type: "array",
+              items: {
+                type: "string",
+              },
+            },
             endpoints: {
               type: "array",
               items: {
@@ -227,6 +321,7 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
                 allow,
               },
             },
+            sso,
           },
         } as V1JSONSchemaProps,
       },
