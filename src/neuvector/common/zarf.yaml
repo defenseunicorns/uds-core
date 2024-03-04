@@ -32,3 +32,14 @@ components:
         gitPath: charts/monitor
         valuesFiles:
           - ../values/monitor-values.yaml
+    actions:
+      onDeploy:
+        after:
+          - description: Validate Neuvector Package
+            maxTotalSeconds: 300
+            wait:
+              cluster:
+                kind: Packages
+                name: neuvector
+                namespace: neuvector
+                condition: "'{.status.phase}'=Ready"

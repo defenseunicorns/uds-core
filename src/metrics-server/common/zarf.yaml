@@ -18,3 +18,14 @@ components:
         version: 3.12.0
         valuesFiles:
           - "../values/values.yaml"
+    actions:
+      onDeploy:
+        after:
+          - description: Validate Metrics-Server Package
+            maxTotalSeconds: 300
+            wait:
+              cluster:
+                kind: Packages
+                name: metrics-server
+                namespace: metrics-server
+                condition: "'{.status.phase}'=Ready"
