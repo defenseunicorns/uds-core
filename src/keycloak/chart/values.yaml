@@ -7,7 +7,7 @@ image:
   pullPolicy: IfNotPresent
 
 # renovate: datasource=github-tags depName=defenseunicorns/uds-identity-config versioning=semver
-configImage: ghcr.io/defenseunicorns/uds/identity-config:0.3.2
+configImage: ghcr.io/defenseunicorns/uds/identity-config:0.3.4
 
 # The public domain name of the Keycloak server
 domain: "###ZARF_VAR_DOMAIN###"
@@ -41,6 +41,12 @@ fips: false
 
 #  Pod priority class name
 priorityClassName: ""
+
+# Pod level securityContext
+podSecurityContext: {}
+
+# Keycloak container securityContext
+securityContext: {}
 
 # Pod affinity
 affinity: |
