@@ -1,0 +1,56 @@
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: neuvector
+  namespace: {{ .Release.Namespace }}
+spec:
+  network:
+    expose:
+      - service: neuvector-service-webui
+        selector:
+          app: neuvector-manager-pod
+        gateway: admin
+        host: neuvector
+        port: 8443
+
+    allow:
+      # Permit intra-namespace communication
+      - direction: Ingress
+        remoteGenerated: IntraNamespace
+
+      - direction: Egress
+        remoteGenerated: IntraNamespace
+
+      - direction: Egress
+        remoteGenerated: KubeAPI
+        selector:
+          app: neuvector-controller-pod
+
+      - direction: Egress
+        remoteGenerated: KubeAPI
+        selector:
+          app: neuvector-updater-pod
+
+      - direction: Ingress
+        # todo: evaluate a "KubeAPI" _ingress_ generated rule for webhook calls
+        remoteGenerated: Anywhere
+        selector:
+          app: neuvector-controller-pod
+        port: 30443
+        description: "Webhook"
+
+      - direction: Ingress
+        remoteNamespace: monitoring
+        remoteSelector:
+          app: prometheus
+        selector:
+          app: neuvector-prometheus-exporter-pod
+        port: 8068
+        description: "Prometheus Metrics"
+
+      - direction: Egress
+        remoteNamespace: tempo
+        remoteSelector:
+          app.kubernetes.io/name: tempo
+        port: 9411
+        description: "Tempo"
