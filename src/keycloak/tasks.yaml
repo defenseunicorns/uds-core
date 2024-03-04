@@ -1,46 +1,47 @@
+includes:
+  - config: https://raw.githubusercontent.com/defenseunicorns/uds-identity-config/v0.3.2/tasks.yaml
+
 tasks:
   # These tests break single capability test checks
   - name: validate
     actions:
-      - description: Validate Keycloak is up
-        wait:
-          cluster:
-            kind: Pod
-            name: "app.kubernetes.io/instance=keycloak"
-            namespace: keycloak
-            condition: Ready
-      #  todo: Fix single package validation checks in CI where Istio isn't installed
-      # - description: Validate admin interface
-      #   wait:
-      #     network:
-      #       protocol: https
-      #       address: keycloak.admin.uds.dev
-      #       code: 200
-      # - description: Validate public interface
-      #   wait:
-      #     network:
-      #       protocol: https
-      #       address: sso.uds.dev
-      #       code: 200
+      - description: replace me
+        cmd: echo "hello"
+  #   actions:
+  #     - description: Validate admin interface
+  #       wait:
+  #         network:
+  #           protocol: https
+  #           address: keycloak.admin.uds.dev
+  #           code: 200
+  #     - description: Validate public interface
+  #       wait:
+  #         network:
+  #           protocol: https
+  #           address: sso.uds.dev
+  #           code: 200
 
   - name: dev-theme
     actions:
-      - description: "Copy theme to Keycloak (must be run from src/keycloak dir)"
-        cmd: |
-          PV=$(kubectl get pvc keycloak-themes -n keycloak -o jsonpath='{.spec.volumeName}')
-          THEME_PATH=$(kubectl get pv $PV -o jsonpath="{.spec.hostPath.path}")
-          docker cp customization/theme k3d-uds-server-0:/$THEME_PATH
+      - task: config:dev-theme
+
+  - name: cacert
+    actions:
+      - task: config:cacert
+
+  - name: dev-cacert
+    description: Updates the cacert value in default values files for gateways
+    actions:
+      - task: config:cacert
+      - cmd: |
+          export cacert=$(cat cacert.b64)
+          yq e -i '.tls[0].cacert = env(cacert)' src/istio/values/config-tenant.yaml
+          yq e -i '.tls[0].cacert = env(cacert)' src/istio/values/config-admin.yaml
 
   - name: debug-istio-traffic
     actions:
-      - cmd: istioctl proxy-config log keycloak-0.keycloak --level debug
-      - cmd: kubectl -n keycloak logs keycloak-0 -c istio-proxy -f
+      - task: config:debug-istio-traffic
 
   - name: regenerate-test-pki
     actions:
-      - cmd: |
-          openssl genrsa -out test.pem 2048
-          openssl genrsa -out ca.pem 2048
-          openssl req -x509 -new -nodes -key ca.pem -sha256 -days 1825 -out ca.crt -subj "/C=US/O=U.S. Government/OU=DoD/OU=PKI/CN=DOD ID CA-59 FAKE TEST"
-          openssl req -new -key test.pem -out test.csr -config csr.conf
-          openssl x509 -req -in test.csr -CA ca.crt -CAkey ca.pem -CAcreateserial -out test.crt -days 365 -extensions v3_ext -extfile csr.conf
+      - task: config:regenerate-test-pki

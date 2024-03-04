@@ -12,3 +12,14 @@ components:
         localPath: ../chart
         version: 0.5.3
         namespace: authservice
+    actions:
+      onDeploy:
+        after:
+          - description: Validate Authservice Package
+            maxTotalSeconds: 300
+            wait:
+              cluster:
+                kind: Packages
+                name: authservice
+                namespace: authservice
+                condition: "'{.status.phase}'=Ready"

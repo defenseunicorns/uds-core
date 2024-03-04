@@ -6,7 +6,6 @@ import { virtualService } from "./controllers/istio/virtual-service";
 import { keycloak } from "./controllers/keycloak/client-sync";
 import { networkPolicies } from "./controllers/network/policies";
 import { Phase, Status, UDSPackage } from "./crd";
-import { VirtualService } from "./crd/generated/istio/virtualservice-v1beta1";
 import { migrate } from "./crd/migrate";
 
 /**
@@ -42,13 +41,13 @@ export async function reconciler(pkg: UDSPackage) {
     const netPol = await networkPolicies(pkg, namespace);
 
     // Only configure the VirtualService if not running in single test mode
-    let vs: VirtualService[] = [];
+    let endpoints: string[] = [];
     if (!UDSConfig.isSingleTest) {
       // Update the namespace to ensure the istio-injection label is set
       await enableInjection(pkg);
 
       // Create the VirtualService for each exposed service
-      vs = await virtualService(pkg, namespace);
+      endpoints = await virtualService(pkg, namespace);
     } else {
       Log.warn(`Running in single test mode, skipping ${name} VirtualService.`);
     }
@@ -59,14 +58,23 @@ export async function reconciler(pkg: UDSPackage) {
     await updateStatus(pkg, {
       phase: Phase.Ready,
       ssoClients,
-      endpoints: vs.map(v => v.spec!.hosts!.join(",")),
+      endpoints,
       networkPolicyCount: netPol.length,
       observedGeneration: pkg.metadata.generation,
     });
   } catch (err) {
+    if (err.status === 404) {
+      Log.warn({ err }, `Package ${namespace}/${name} seems to have been deleted`);
+      return;
+    }
+
     Log.error({ err }, `Error configuring ${namespace}/${name}`);
+
     // todo: need to evaluate when it is safe to retry (updating generation now avoids retrying infinitely)
-    void updateStatus(pkg, { phase: Phase.Failed, observedGeneration: pkg.metadata.generation });
+    const status = { phase: Phase.Failed, observedGeneration: pkg.metadata.generation };
+    updateStatus(pkg, status).catch(finalErr => {
+      Log.error({ err: finalErr }, `Error updating status for ${namespace}/${name} failed`);
+    });
   }
 }
 

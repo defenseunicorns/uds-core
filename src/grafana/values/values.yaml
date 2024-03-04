@@ -16,6 +16,9 @@ extraSecretMounts:
 grafana.ini:
   server:
     root_url: https://grafana.admin.###ZARF_VAR_DOMAIN###
+  auth:
+    # Disable the login form to force users to use SSO
+    disable_login_form: true
   auth.generic_oauth:
     # https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/keycloak/
     enabled: true
@@ -26,9 +29,11 @@ grafana.ini:
     login_attribute_path: preferred_username
     name_attribute_path: name
     name: UDS Identity Service
-    auth_url: https://keycloak.admin.###ZARF_VAR_DOMAIN###/realms/uds/protocol/openid-connect/auth
+    auth_url: https://sso.###ZARF_VAR_DOMAIN###/realms/uds/protocol/openid-connect/auth
     token_url: http://keycloak-http.keycloak.svc.cluster.local:8080/realms/uds/protocol/openid-connect/token
     allow_sign_up: true
     # Require a UDS Core group to access Grafana
     role_attribute_path: "contains(groups[], '/UDS Core/Admin') && 'Admin' || contains(groups[], '/UDS Core/Auditor') && 'Viewer' || 'Unauthorized'"
     role_attribute_strict: true
+    # Automatically redirect to the SSO login page
+    auto_login: true

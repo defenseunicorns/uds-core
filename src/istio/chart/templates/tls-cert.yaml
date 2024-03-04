@@ -1,16 +1,14 @@
-{{- $ns := .Release.Namespace -}}
-{{ range $tls := .Values.tls }}
-{{ if ne $tls.mode "PASSTHROUGH" }}
+{{- $tls := .Values.tls }}
+{{ if $tls.cert }}
 apiVersion: v1
 kind: Secret
 metadata:
-  name: {{ $tls.name }}
-  namespace: {{ $ns }}
+  name: gateway-tls
+  namespace: {{ .Release.Namespace }}
 data:
   tls.crt: {{ $tls.cert }}
   tls.key: {{ $tls.key }}
   cacert: {{ $tls.cacert }}
 type: kubernetes.io/tls
 ---
-{{ end }}
 {{ end }}

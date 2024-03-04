@@ -5,24 +5,22 @@ name: change-me
 domain: "###ZARF_VAR_DOMAIN###"
 
 # tls:
-#   # Name of the gateway port to use for TLS
-#   - name: https
+#   # The TLS certificate for the gateway, if not in 'PASSTHROUGH' mode (base64 encoded)
+#   cert: ""
 
-#     # The TLS mode for the gateway. One of `SIMPLE`, `MUTUAL`, 'OPTIONAL_MUTUAL', `PASSTHROUGH`
-#     mode: SIMPLE
+#   # The TLS key for the gateway, if not in 'PASSTHROUGH' mode (base64 encoded)
+#   key: ""
 
-#     # Hosts to add to this gateway
-#     hosts:
-#       - "*"
+#   # The CA certificate for the gateway when using `MUTUAL' or 'OPTIONAL_MUTUAL' (base64 encoded)
+#   cacert: ""
 
-#     # The secret name for the TLS certificate when not using passthrough mode
-#     secretName: gw-cert
+#   # Map of gateway server entries
+#   servers:
+#     # Name of the gateway port to use for TLS, this is effectively a "list" in map form
+#     https:
+#       # The TLS mode for the gateway. One of `SIMPLE`, `MUTUAL`, 'OPTIONAL_MUTUAL', `PASSTHROUGH`
+#       mode: SIMPLE
 
-#     # For TLS SIMPLE mode, the TLS certificate data for the gateway (base64 encoded)
-#     cert: ""
-
-#     # For TLS SIMPLE mode, the TLS key data for the gateway (base64 encoded)
-#     key: ""
-
-#     # For mTLS mode, the CA certificate data for the gateway (base64 encoded)
-#     cacert: ""
+#       # Hosts to add to this gateway
+#       hosts:
+#         - "*"

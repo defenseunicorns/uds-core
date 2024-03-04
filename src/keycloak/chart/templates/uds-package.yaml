@@ -24,6 +24,13 @@ spec:
         remoteGenerate: Anywhere
         port: 8080
 
+      - description: "OCSP Lookup"
+        direction: Egress
+        selector:
+          app.kubernetes.io/name: keycloak        
+        port: 443
+        remoteGenerate: Anywhere
+
     expose:
       - description: "remove private paths from public gateway"
         host: sso
@@ -82,3 +89,45 @@ spec:
                 - istio-mtls-client-certificate
               add:
                 istio-mtls-client-certificate: "%DOWNSTREAM_PEER_CERT%"
+
+      - description: "emulate gitlab authorize endpoint"
+        service: keycloak-http
+        selector:
+          app.kubernetes.io/name: keycloak
+        host: sso
+        port: 8080
+        advancedHTTP:
+          match:
+            - name: gitlab-authorize
+              uri:
+                prefix: /oauth/authorize
+          rewrite:
+            uri: "/realms/{{ .Values.realm }}/protocol/openid-connect/auth"
+
+      - description: "emulate gitlab user endpoint"
+        service: keycloak-http
+        selector:
+          app.kubernetes.io/name: keycloak
+        host: sso
+        port: 8080
+        advancedHTTP:
+          match:
+            - name: gitlab-user
+              uri:
+                prefix: /api/v4/user
+          rewrite:
+            uri: "/realms/{{ .Values.realm }}/protocol/openid-connect/userinfo"
+
+      - description: "emulate gitlab token endpoint"
+        service: keycloak-http
+        selector:
+          app.kubernetes.io/name: keycloak
+        host: sso
+        port: 8080
+        advancedHTTP:
+          match:
+            - name: gitlab-token
+              uri:
+                prefix: /oauth/token
+          rewrite:
+            uri: "/realms/{{ .Values.realm }}/protocol/openid-connect/token"

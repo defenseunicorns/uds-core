@@ -76,16 +76,6 @@ async function syncClient(
 
     let client: Client;
 
-    // If the redirectUris are not set, default to *
-    if (!clientReq.redirectUris) {
-      clientReq.redirectUris = ["*"];
-    } else {
-      // Replace UDS_DOMAIN with the actual domain for each redirectUri
-      clientReq.redirectUris = clientReq.redirectUris.map(uri =>
-        uri.replace("UDS_DOMAIN", UDSConfig.domain),
-      );
-    }
-
     // If and existing client is found, update it
     if (token && !isRetry) {
       Log.debug(pkg.metadata, `Found existing token for ${clientReq.clientId}`);

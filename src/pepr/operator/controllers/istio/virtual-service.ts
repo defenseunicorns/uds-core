@@ -107,8 +107,8 @@ export async function virtualService(pkg: UDSPackage, namespace: string) {
     await K8s(Istio.VirtualService).Delete(vs);
   }
 
-  // Return the list of generated VirtualServices
-  return payloads;
+  // Return the list of unique hostnames
+  return [...new Set(payloads.map(v => v.spec!.hosts!).flat())];
 }
 
 export function generateVSName(pkg: UDSPackage, expose: Expose) {
