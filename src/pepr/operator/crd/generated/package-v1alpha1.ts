@@ -12,6 +12,10 @@ export interface Spec {
    * Network configuration for the package
    */
   network?: Network;
+  /**
+   * Create SSO client configurations
+   */
+  sso?: Sso[];
 }
 
 /**
@@ -135,7 +139,8 @@ export interface Expose {
    */
   service?: string;
   /**
-   * Deprecated: use podPort
+   * The service targetPort. This defaults to port and is only required if the service port is
+   * different from the target port (so the NetworkPolicy can be generated correctly).
    */
   targetPort?: number;
 }
@@ -410,11 +415,78 @@ export interface FluffyURI {
   regex?: string;
 }
 
+export interface Sso {
+  /**
+   * Always list this client in the Account UI, even if the user does not have an active
+   * session.
+   */
+  alwaysDisplayInConsole?: boolean;
+  /**
+   * The client authenticator type
+   */
+  clientAuthenticatorType?: ClientAuthenticatorType;
+  /**
+   * The client identifier registered with the identity provider.
+   */
+  clientId: string;
+  /**
+   * Default client scopes
+   */
+  defaultClientScopes?: string[];
+  /**
+   * A description for the client, can be a URL to an image to replace the login logo
+   */
+  description?: string;
+  /**
+   * Whether the SSO client is enabled
+   */
+  enabled?: boolean;
+  /**
+   * If true, the client will generate a new Auth Service client as well
+   */
+  isAuthSvcClient?: boolean;
+  /**
+   * Specifies display name of the client
+   */
+  name: string;
+  /**
+   * Valid URI pattern a browser can redirect to after a successful login. Simple wildcards
+   * are allowed such as 'https://unicorns.uds.dev/*'
+   */
+  redirectUris: string[];
+  /**
+   * Root URL appended to relative URLs
+   */
+  rootUrl?: string;
+  /**
+   * The client secret. Typically left blank and auto-generated.
+   */
+  secret?: string;
+  /**
+   * The name of the secret to store the client secret
+   */
+  secretName?: string;
+  /**
+   * Allowed CORS origins. To permit all origins of Valid Redirect URIs, add '+'. This does
+   * not include the '*' wildcard though. To permit all origins, explicitly add '*'.
+   */
+  webOrigins?: string[];
+}
+
+/**
+ * The client authenticator type
+ */
+export enum ClientAuthenticatorType {
+  ClientJwt = "client-jwt",
+  ClientSecret = "client-secret",
+}
+
 export interface Status {
   endpoints?: string[];
   networkPolicyCount?: number;
   observedGeneration?: number;
   phase?: Phase;
+  ssoClients?: string[];
 }
 
 export enum Phase {

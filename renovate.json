@@ -27,7 +27,16 @@
       "depNameTemplate": "defenseunicorns/uds-k3d",
       "fileMatch": ["\\.*\\.ya?ml$"],
       "matchStrings": [
-        "# renovate: datasource=github-tags depName=(?<depName>[^ ]+) versioning=(?<versioning>.*?)\n.*?(ref:) (?<currentValue>.*)"
+        "# renovate: datasource=github-tags depName=uds-k3d versioning=(?<versioning>.*?)\n.*?(ref:) (?<currentValue>.*)"
+      ],
+      "datasourceTemplate": "github-tags",
+      "extractVersionTemplate": "^v(?<version>.*)$"
+    },
+    {
+      "depNameTemplate": "defenseunicorns/uds-identity-config",
+      "fileMatch": ["\\.*\\.ya?ml$"],
+      "matchStrings": [
+        "# renovate: datasource=github-tags depName=defenseunicorns/uds-identity-config versioning=(?<versioning>.*?)\n.*?(identity-config:)(?<currentValue>.*)"
       ],
       "datasourceTemplate": "github-tags",
       "extractVersionTemplate": "^v(?<version>.*)$"
@@ -39,7 +48,14 @@
       ],
       "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}",
       "datasourceTemplate": "github-tags"
-
+    },
+    {
+      "fileMatch": [".*(\\.ya?ml|\\.json)$"],
+      "matchStrings": [
+          "https:\\/\\/raw\\.githubusercontent\\.com\\/(?<depName>[^\\/]+\\/[^\\/]+)\\/(?<currentValue>[^\\/]+)"
+      ],
+      "versioningTemplate": "semver-coerced",
+      "datasourceTemplate": "github-tags"
     },
     {
       "depNameTemplate": "defenseunicorns/uds-cli",

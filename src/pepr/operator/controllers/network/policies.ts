@@ -15,6 +15,8 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
   // Get the current generation of the package
   const generation = (pkg.metadata?.generation ?? 0).toString();
 
+  Log.debug(pkg.metadata, `Generating NetworkPolicies for generation ${generation}`);
+
   const policies = [
     // All traffic must be explicitly allowed
     defaultDenyAll(namespace),

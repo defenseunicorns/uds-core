@@ -75,5 +75,17 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
     networkPolicyNames.add(name);
   }
 
+  const ssoClients = pkg.spec?.sso ?? [];
+
+  // Ensure the client IDs are unique
+  const clientIDs = new Set<string>();
+
+  for (const client of ssoClients) {
+    if (clientIDs.has(client.clientId)) {
+      return req.Deny(`The client ID "${client.clientId}" is not unique`);
+    }
+    clientIDs.add(client.clientId);
+  }
+
   return req.Approve();
 }
