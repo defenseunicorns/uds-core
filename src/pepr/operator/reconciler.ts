@@ -3,9 +3,9 @@ import { K8s, Log } from "pepr";
 import { UDSConfig } from "../config";
 import { enableInjection } from "./controllers/istio/injection";
 import { virtualService } from "./controllers/istio/virtual-service";
+import { keycloak } from "./controllers/keycloak/client-sync";
 import { networkPolicies } from "./controllers/network/policies";
 import { Phase, Status, UDSPackage } from "./crd";
-import { VirtualService } from "./crd/generated/istio/virtualservice-v1beta1";
 import { migrate } from "./crd/migrate";
 
 /**
@@ -26,13 +26,13 @@ export async function reconciler(pkg: UDSPackage) {
   const isCurrentGeneration = pkg.metadata.generation === pkg.status?.observedGeneration;
 
   if (isPending || isCurrentGeneration) {
-    Log.debug(pkg, `Skipping pending or completed package`);
+    Log.info(pkg, `Skipping pending or completed package`);
     return;
   }
 
   const { namespace, name } = pkg.metadata;
 
-  Log.debug(pkg, `Processing Package ${namespace}/${name}`);
+  Log.info(pkg, `Processing Package ${namespace}/${name}`);
 
   // Configure the namespace and namespace-wide network policies
   try {
@@ -40,28 +40,41 @@ export async function reconciler(pkg: UDSPackage) {
 
     const netPol = await networkPolicies(pkg, namespace);
 
-    // Only configure the VirtualService if Istio is installed
-    let vs: VirtualService[] = [];
-    if (UDSConfig.istioInstalled) {
+    // Only configure the VirtualService if not running in single test mode
+    let endpoints: string[] = [];
+    if (!UDSConfig.isSingleTest) {
       // Update the namespace to ensure the istio-injection label is set
       await enableInjection(pkg);
 
       // Create the VirtualService for each exposed service
-      vs = await virtualService(pkg, namespace);
+      endpoints = await virtualService(pkg, namespace);
     } else {
-      Log.warn(`Istio is not installed, skipping ${name} VirtualService.`);
+      Log.warn(`Running in single test mode, skipping ${name} VirtualService.`);
     }
+
+    // Configure SSO
+    const ssoClients = await keycloak(pkg);
 
     await updateStatus(pkg, {
       phase: Phase.Ready,
-      endpoints: vs.map(v => v.spec!.hosts!.join(",")),
+      ssoClients,
+      endpoints,
       networkPolicyCount: netPol.length,
       observedGeneration: pkg.metadata.generation,
     });
-  } catch (e) {
-    Log.error(e, `Error configuring for ${namespace}/${name}`);
+  } catch (err) {
+    if (err.status === 404) {
+      Log.warn({ err }, `Package ${namespace}/${name} seems to have been deleted`);
+      return;
+    }
+
+    Log.error({ err }, `Error configuring ${namespace}/${name}`);
+
     // todo: need to evaluate when it is safe to retry (updating generation now avoids retrying infinitely)
-    void updateStatus(pkg, { phase: Phase.Failed, observedGeneration: pkg.metadata.generation });
+    const status = { phase: Phase.Failed, observedGeneration: pkg.metadata.generation };
+    updateStatus(pkg, status).catch(finalErr => {
+      Log.error({ err: finalErr }, `Error updating status for ${namespace}/${name} failed`);
+    });
   }
 }
 
@@ -72,6 +85,7 @@ export async function reconciler(pkg: UDSPackage) {
  * @param status The new status
  */
 async function updateStatus(pkg: UDSPackage, status: Status) {
+  Log.debug(pkg.metadata, `Updating status to ${status.phase}`);
   await K8s(UDSPackage).PatchStatus({
     metadata: {
       name: pkg.metadata!.name,

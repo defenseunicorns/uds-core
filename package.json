@@ -1,6 +1,6 @@
 {
   "name": "uds-core",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "A collection of capabilities for UDS Core",
   "keywords": [
     "pepr",
@@ -25,14 +25,14 @@
     },
     "env": {
       "UDS_DOMAIN": "###ZARF_VAR_DOMAIN###",
-      "UDS_WITH_ISTIO": "###ZARF_CONST_WITH_ISTIO###"
+      "UDS_SINGLE_TEST": "###ZARF_VAR_UDS_SINGLE_TEST###"
     }
   },
   "scripts": {
     "k3d-setup": "k3d cluster delete pepr-dev && k3d cluster create pepr-dev --k3s-arg '--debug@server:0'"
   },
   "dependencies": {
-    "pepr": "0.25.0"
+    "pepr": "0.27.0"
   },
   "devDependencies": {
     "@jest/globals": "29.7.0",
