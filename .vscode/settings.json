@@ -38,9 +38,11 @@
     "neuvector",
     "opensource",
     "promtail",
+    "Quarkus",
     "Quickstart",
     "seccomp",
     "Sysctls",
     "Velero"
-  ]
+  ],
+  "cSpell.enabled": true
 }
