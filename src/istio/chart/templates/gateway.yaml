@@ -1,39 +1,38 @@
 {{- $domain := .Values.domain }}
+{{- if .Values.tls }}
 apiVersion: networking.istio.io/v1beta1
 kind: Gateway
 metadata:
   name: {{ .Values.name }}-gateway
   namespace: {{ .Release.Namespace }}
-  labels:
-    "uds/istio-domain": {{ $domain }}
 spec:
   selector:
     app: {{ .Values.name }}-ingressgateway
   servers:
+    {{ range $name,$server := .Values.tls.servers }}
     - hosts:
-        {{- range .Values.hosts }}
+        {{- range $server.hosts | default (list "*") }}
         - "{{ . }}.{{ $domain }}"
         {{- end }}
       port:
-        name: http
+        name: "http-{{ $name }}"
         number: 80
         protocol: HTTP
       tls:
         httpsRedirect: true
     - hosts:
-        {{- range .Values.hosts }}
+        {{- range $server.hosts | default (list "*") }}
         - "{{ . }}.{{ $domain }}"
         {{- end }}
       port:
-        name: https
+        name: "https-{{ $name }}"
         number: 443
         protocol: HTTPS
       tls:
-        {{- if .Values.tls.enablePassthrough }}
-        mode: PASSTHROUGH
-        {{- else }}
-        credentialName: {{ .Values.tls.secretName }}
+        mode: {{ $server.mode }}
+        {{- if ne $server.mode "PASSTHROUGH" }}
+        credentialName: gateway-tls
         minProtocolVersion: TLSV1_3
-        mode: SIMPLE
         {{- end }}
-
+    {{ end }}
+{{ end }}

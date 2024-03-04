@@ -1,11 +1,40 @@
 kind: ZarfPackageConfig
 metadata:
   name: uds-core-keycloak
-  description: "Example description"
+  description: "Keycloak"
+
+variables:
+  - name: DOMAIN
+    description: "Cluster domain"
+    default: "uds.dev"
 
 components:
-  - name: test
-    actions:
-      onCreate:
-        after:
-          - cmd: echo "What can Doug do for you?"
+  - name: keycloak
+    required: true
+    only:
+      flavor: upstream
+    import:
+      path: common
+    charts:
+      - name: keycloak
+        valuesFiles:
+          - "values/upstream-values.yaml"
+    images:
+      - quay.io/keycloak/keycloak:23.0.4
+      - ghcr.io/defenseunicorns/uds/identity-config:0.3.2
+
+  - name: keycloak
+    required: true
+    only:
+      flavor: registry1
+      cluster:
+        architecture: amd64
+    import:
+      path: common
+    charts:
+      - name: keycloak
+        valuesFiles:
+          - "values/registry1-values.yaml"
+    images:
+      - registry1.dso.mil/ironbank/opensource/keycloak/keycloak:23.0.4
+      - ghcr.io/defenseunicorns/uds/identity-config:0.3.2
