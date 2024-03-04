@@ -1,7 +1,47 @@
+includes:
+  - config: https://raw.githubusercontent.com/defenseunicorns/uds-identity-config/v0.3.2/tasks.yaml
+
 tasks:
+  # These tests break single capability test checks
   - name: validate
     actions:
-      - description: Validate...
-        cmd: "echo Replace Me"
-        # wait:
-        #   cluster:
+      - description: replace me
+        cmd: echo "hello"
+  #   actions:
+  #     - description: Validate admin interface
+  #       wait:
+  #         network:
+  #           protocol: https
+  #           address: keycloak.admin.uds.dev
+  #           code: 200
+  #     - description: Validate public interface
+  #       wait:
+  #         network:
+  #           protocol: https
+  #           address: sso.uds.dev
+  #           code: 200
+
+  - name: dev-theme
+    actions:
+      - task: config:dev-theme
+
+  - name: cacert
+    actions:
+      - task: config:cacert
+
+  - name: dev-cacert
+    description: Updates the cacert value in default values files for gateways
+    actions:
+      - task: config:cacert
+      - cmd: |
+          export cacert=$(cat cacert.b64)
+          yq e -i '.tls[0].cacert = env(cacert)' src/istio/values/config-tenant.yaml
+          yq e -i '.tls[0].cacert = env(cacert)' src/istio/values/config-admin.yaml
+
+  - name: debug-istio-traffic
+    actions:
+      - task: config:debug-istio-traffic
+
+  - name: regenerate-test-pki
+    actions:
+      - task: config:regenerate-test-pki

@@ -38,14 +38,16 @@
     "neuvector",
     "opensource",
     "promtail",
+    "Quarkus",
     "Quickstart",
     "seccomp",
     "Sysctls",
     "Velero"
   ],
-"[typescript]": {
+  "cSpell.enabled": true,
+  "[typescript]": {
     "editor.codeActionsOnSave": {
         "source.organizeImports": "always"
     }
-  }
+  },
 }

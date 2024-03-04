@@ -1,0 +1,232 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "keycloak.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "keycloak.labels" . | nindent 4 }}
+    {{- range $key, $value := .Values.statefulsetLabels }}
+    {{- printf "%s: %s" $key (tpl $value $ | quote) | nindent 4 }}
+    {{- end }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "keycloak.selectorLabels" . | nindent 6 }}
+  serviceName: {{ include "keycloak.fullname" . }}-headless
+  podManagementPolicy: {{ .Values.podManagementPolicy }}
+  updateStrategy:
+    type: {{ .Values.updateStrategy }}
+  template:
+    metadata:
+      labels:
+        {{- include "keycloak.selectorLabels" . | nindent 8 }}
+        {{- range $key, $value := .Values.podLabels }}
+        {{- printf "%s: %s" $key (tpl $value $ | quote) | nindent 8 }}
+        {{- end }}
+    spec:
+      initContainers:
+        - name: uds-config
+          image: "{{ .Values.configImage }}"
+          securityContext:
+            runAsUser: 65532
+            runAsGroup: 65532
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+          volumeMounts:
+            - name: providers
+              mountPath: /opt/keycloak/providers
+            - name: data
+              mountPath: /opt/keycloak/data
+            - name: themes
+              mountPath: /opt/keycloak/themes
+            - name: conf
+              mountPath: /opt/keycloak/conf
+      containers:
+        - name: keycloak
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+          {{- toYaml .Values.securityContext | nindent 12 }}
+          command: 
+            - "/opt/keycloak/bin/kc.sh"
+          args:
+            {{- if .Values.devMode }}
+            - "start-dev"
+            # Do not cache themes in dev mode to support hot-reloading
+            - "--spi-theme-static-max-age=-1"
+            - "--spi-theme-cache-themes=false"
+            - "--spi-theme-cache-templates=false"
+            {{- else }}
+            - "start"
+            # # Needed for nginx provider
+            # - "--auto-build"
+            {{- end }}
+            # This will only import the realm if it does not exist
+            - "--import-realm"
+            - "--features=preview"
+          env:
+            # Common configuration
+            - name: UDS_DOMAIN
+              value: "{{ .Values.domain }}"
+
+            # Enable health and metrics endpoints
+            - name: KC_HEALTH_ENABLED
+              value: "true"
+            - name: KC_METRICS_ENABLED
+              value: "true"
+
+            # Enable access log
+            - name: QUARKUS_HTTP_ACCESS_LOG_ENABLED
+              value: "true"          
+            
+            # Hostname strict is not needed when used with Istio
+            - name: KC_HOSTNAME_STRICT
+              value: "false"
+            - name: KC_HOSTNAME_STRICT_HTTPS
+              value: "false"
+            
+            # Set the proxy type to edge to avoid weird Keycloak behavior
+            - name: KC_PROXY
+              value: edge
+            
+            # X509 configuration
+            - name: KC_SPI_TRUSTSTORE_FILE_FILE
+              value: /opt/keycloak/conf/truststore.jks
+            - name: KC_SPI_TRUSTSTORE_FILE_PASSWORD
+              value: "password"
+            - name: KC_HTTPS_CLIENT_AUTH
+              value: request
+
+            ## Activate the nginx provider
+            - name: KC_SPI_X509CERT_LOOKUP_PROVIDER
+              value: nginx
+            # Set nginx provider header name
+            - name: KC_SPI_X509CERT_LOOKUP_NGINX_SSL_CLIENT_CERT
+              value: istio-mtls-client-certificate
+            # Dumb value (not used in the nginx provider, but required by the SPI)
+            - name: KC_SPI_X509CERT_LOOKUP_NGINX_SSL_CLIENT_CERT_CHAIN_PREFIX
+              value: UNUSED
+          {{- if .Values.devMode }}
+            # Enable dubug logs in dev mode
+            - name: KC_LOG_LEVEL
+              value: DEBUG
+            - name: QUARKUS_LOG_CATEGORY__ORG_APACHE_HTTP__LEVEL
+              value: DEBUG
+            - name: QUARKUS_LOG_CATEGORY__ORG_KEYCLOAK_SERVICES_X509__LEVEL
+              value: TRACE
+          {{- else }}
+            # Infinispan cache configuration
+            - name: KC_CACHE
+              value: ispn
+            - name: KC_CACHE_STACK
+              value: kubernetes
+            - name: KC_SPI_STICKY_SESSION_ENCODER_INFINISPAN_SHOULD_ATTACH_ROUTE
+              value: "false"               
+            # java opts for jgroups required for infinispan distributed cache when using the kubernetes stack.
+            # https://www.keycloak.org/server/caching
+            - name: JAVA_OPTS_APPEND
+              value: -Djgroups.dns.query={{ include "keycloak.fullname" . }}-headless
+   
+            # Postgres database configuration
+            - name: KC_DB 
+              value: postgres
+            - name: KC_DB_URL_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "keycloak.fullname" . }}-postgresql
+                  key: host
+            - name: KC_DB_URL_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "keycloak.fullname" . }}-postgresql
+                  key: port
+            - name: KC_DB_URL_DATABASE
+              valuefrom:
+                secretKeyRef:
+                  name: {{ include "keycloak.fullname" . }}-postgresql
+                  key: database
+            - name: KC_DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "keycloak.fullname" . }}-postgresql
+                  key: username
+            - name: KC_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "keycloak.fullname" . }}-postgresql
+                  key: password
+            # FIPS Mode
+            {{- if .Values.fips }}
+            # https://access.redhat.com/documentation/en-us/openjdk/11/html-single/configuring_openjdk_11_on_rhel_with_fips/index
+            - name: JAVA_TOOL_OPTIONS
+              value: "-Dcom.redhat.fips=true"
+            {{- end }}
+          {{- end }}
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: http
+              scheme: HTTP
+            failureThreshold: 15
+            timeoutSeconds: 2
+            periodSeconds: 15
+            initialDelaySeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: http
+              scheme: HTTP
+            failureThreshold: 15
+            timeoutSeconds: 2
+            initialDelaySeconds: 10
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: providers
+              mountPath: /opt/keycloak/providers
+            - name: data
+              mountPath: /opt/keycloak/data
+            - name: themes
+              mountPath: /opt/keycloak/themes
+            - name: conf
+              mountPath: /opt/keycloak/conf
+              readOnly: true
+      enableServiceLinks: {{ .Values.enableServiceLinks }}
+      restartPolicy: {{ .Values.restartPolicy }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- tpl . $ | nindent 8 }}
+      {{- end }}
+      {{- with .Values.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- tpl . $ | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.priorityClassName }}
+      priorityClassName: {{ . }}
+      {{- end }}
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+      volumes:
+        - name: providers
+          emptyDir: {}
+        - name: conf
+          emptyDir: {}
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ include "keycloak.fullname" . }}-data
+        - name: themes
+          persistentVolumeClaim:
+            claimName: {{ include "keycloak.fullname" . }}-themes

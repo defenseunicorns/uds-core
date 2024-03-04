@@ -6,8 +6,10 @@ UDS Core establishes a secure baseline for cloud-native systems and ships with c
 
 #### Core Applications
 
+- [Authservice](https://github.com/istio-ecosystem/authservice) - Authorization
 - [Grafana](https://grafana.com/oss/grafana/) - Monitoring
 - [Istio](https://istio.io/) - Service Mesh
+- [KeyCloak](https://www.keycloak.org/) - Identity & Access Management
 - [Loki](https://grafana.com/oss/loki/) - Log Aggregation
 - [Metrics Server](https://github.com/kubernetes-sigs/metrics-server) - Metrics
 - [Neuvector](https://open-docs.neuvector.com/) - Container Security
@@ -17,8 +19,6 @@ UDS Core establishes a secure baseline for cloud-native systems and ships with c
 
 #### Future Applications
 
-- [Authservice](https://github.com/istio-ecosystem/authservice) - Authorization
-- [KeyCloak](https://www.keycloak.org/) - Identity & Access Management
 - [Kiali](https://kiali.io/) - Service Mesh Observability
 - [Tempo](https://grafana.com/docs/tempo/latest/getting-started/) - Tracing
 - [Velero](https://velero.io/) - Backup & Restore
@@ -76,7 +76,7 @@ UDS Core development leverages the `uds zarf dev deploy` command. For convenienc
 
 ```bash
 # Create the dev environment
-uds run dev
+uds run dev-setup
 
 # If developing the Pepr module:
 npx pepr dev

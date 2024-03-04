@@ -1,0 +1,3 @@
+image:
+  repository: quay.io/keycloak/keycloak
+  tag: "23.0.4"

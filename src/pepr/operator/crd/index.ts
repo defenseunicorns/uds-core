@@ -7,18 +7,19 @@ export {
   Expose,
   Gateway,
   Phase,
-  RemoteGenerated,
   Status as PkgStatus,
+  RemoteGenerated,
+  Sso,
   Package as UDSPackage,
 } from "./generated/package-v1alpha1";
 
 export {
+  Phase as ExemptPhase,
+  Status as ExemptStatus,
   ExemptionElement,
   Matcher,
-  Policy,
   Kind as MatcherKind,
-  Status as ExemptStatus,
-  Phase as ExemptPhase,
+  Policy,
   Exemption as UDSExemption,
 } from "./generated/exemption-v1alpha1";
 

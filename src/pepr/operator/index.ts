@@ -1,26 +1,17 @@
-import { Capability, a } from "pepr";
-
+import { Log, a } from "pepr";
+import { When } from "./common";
+import { processExemptions, removeExemptions } from "./controllers/exemptions/exemptions";
 import { cleanupNamespace } from "./controllers/istio/injection";
+import { purgeSSOClients } from "./controllers/keycloak/client-sync";
 import { initAPIServerCIDR, updateAPIServerCIDR } from "./controllers/network/generators/kubeAPI";
 import { Phase, UDSExemption, UDSPackage } from "./crd";
+import { exemptValidator } from "./crd/exempt-validator";
 import "./crd/register";
 import { validator } from "./crd/validator";
-import { Queue } from "./enqueue";
+import { reconciler, updateStatus } from "./reconciler";
 
-import { Log } from "pepr";
-import { updateStatus } from "./reconciler";
-import { processExemptions, removeExemptions } from "./controllers/exemptions/exemptions";
-import { exemptValidator } from "./crd/exempt-validator";
-
-export const operator = new Capability({
-  name: "uds-core-operator",
-  description: "The UDS Operator is responsible for managing the lifecycle of UDS resources",
-});
-
-export const { Store, When } = operator;
-
-// Create a queue to process the packages in serial order
-const queue = new Queue();
+// Export the operator capability for registration in the root pepr.ts
+export { operator } from "./common";
 
 // Pre-populate the API server CIDR since we are not persisting the EndpointSlice
 // Note ignore any errors since the watch will still be running hereafter
@@ -34,7 +25,15 @@ When(a.EndpointSlice)
   .Watch(updateAPIServerCIDR);
 
 // Watch for changes to the UDSPackage CRD and cleanup the namespace mutations
-When(UDSPackage).IsDeleted().Watch(cleanupNamespace);
+When(UDSPackage)
+  .IsDeleted()
+  .Watch(async pkg => {
+    // Cleanup the namespace
+    await cleanupNamespace(pkg);
+
+    // Remove any SSO clients
+    await purgeSSOClients(pkg, []);
+  });
 
 // Watch for changes to the UDSPackage CRD to enqueue a package for processing
 When(UDSPackage)
@@ -42,7 +41,7 @@ When(UDSPackage)
   // Advanced CR validation
   .Validate(validator)
   // Enqueue the package for processing
-  .Watch(pkg => queue.enqueue(pkg));
+  .Reconcile(reconciler);
 
 //Watch for changes to the UDSExemption CRD and cleanup exemptions in policies Store
 When(UDSExemption).IsDeleted().Watch(removeExemptions);

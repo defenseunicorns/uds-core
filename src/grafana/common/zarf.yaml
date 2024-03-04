@@ -18,3 +18,13 @@ components:
         namespace: grafana
         valuesFiles:
           - ../values/values.yaml
+    actions:
+      onDeploy:
+        after:
+          - description: "Wait for UDS Operator sync"
+            wait:
+              cluster:
+                kind: Package
+                name: grafana
+                namespace: grafana
+                condition: "'{.status.phase}'=Ready"
