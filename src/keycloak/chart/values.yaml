@@ -107,6 +107,10 @@ postgresql:
   password: keycloak
   # PostgreSQL Database to create
   database: keycloak
+  # PostgreSQL host
+  host: postgresql
+  # PostgreSQL port
+  port: 5432
 
 serviceMonitor:
   # If `true`, a ServiceMonitor resource for the prometheus-operator is created
