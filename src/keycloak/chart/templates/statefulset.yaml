@@ -23,6 +23,10 @@ spec:
         {{- range $key, $value := .Values.podLabels }}
         {{- printf "%s: %s" $key (tpl $value $ | quote) | nindent 8 }}
         {{- end }}
+       {{- if not .Values.devMode }}
+      annotations:
+        postgres-hash: {{ include (print $.Template.BasePath "/secret-postgresql.yaml") . | sha256sum }}        
+      {{- end }}
     spec:
       securityContext:
       {{- toYaml .Values.podSecurityContext | nindent 8 }}
