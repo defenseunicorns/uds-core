@@ -52,7 +52,7 @@ export enum Policy {
   DisallowNodePortServices = "DisallowNodePortServices",
   DisallowPrivileged = "DisallowPrivileged",
   DisallowSELinuxOptions = "DisallowSELinuxOptions",
-  DropAllCapabilities = "Drop_AllCapabilities",
+  DropAllCapabilities = "DropAllCapabilities",
   RequireNonRootUser = "RequireNonRootUser",
   RestrictCapabilities = "RestrictCapabilities",
   RestrictExternalNames = "RestrictExternalNames",

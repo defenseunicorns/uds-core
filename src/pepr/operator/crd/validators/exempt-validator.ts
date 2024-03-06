@@ -1,7 +1,7 @@
 import { PeprValidateRequest } from "pepr";
 
-import { MatcherKind, Policy, UDSExemption } from ".";
-import { UDSConfig } from "../../config";
+import { MatcherKind, Policy, UDSExemption } from "..";
+import { UDSConfig } from "../../../config";
 
 const validNs = "uds-policy-exemptions";
 const kindToPolicyMap = new Map<MatcherKind, Policy[]>([

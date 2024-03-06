@@ -77,7 +77,7 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
                         "DisallowNodePortServices",
                         "DisallowPrivileged",
                         "DisallowSELinuxOptions",
-                        "Drop_AllCapabilities",
+                        "DropAllCapabilities",
                         "RequireNonRootUser",
                         "RestrictCapabilities",
                         "RestrictExternalNames",

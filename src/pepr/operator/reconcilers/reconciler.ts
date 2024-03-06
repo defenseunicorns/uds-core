@@ -1,13 +1,13 @@
-import { K8s, Log } from "pepr";
+import { Log } from "pepr";
 
-import { GenericKind } from "kubernetes-fluent-client";
-import { UDSConfig } from "../config";
-import { enableInjection } from "./controllers/istio/injection";
-import { virtualService } from "./controllers/istio/virtual-service";
-import { keycloak } from "./controllers/keycloak/client-sync";
-import { networkPolicies } from "./controllers/network/policies";
-import { ExemptStatus, Phase, PkgStatus, UDSExemption, UDSPackage } from "./crd";
-import { migrate } from "./crd/migrate";
+import { UDSConfig } from "../../config";
+import { updateStatus } from "../common";
+import { enableInjection } from "../controllers/istio/injection";
+import { virtualService } from "../controllers/istio/virtual-service";
+import { keycloak } from "../controllers/keycloak/client-sync";
+import { networkPolicies } from "../controllers/network/policies";
+import { Phase, UDSPackage } from "../crd";
+import { migrate } from "../crd/migrate";
 
 /**
  * The reconciler is called from the queue and is responsible for reconciling the state of the package
@@ -77,22 +77,4 @@ export async function reconciler(pkg: UDSPackage) {
       Log.error({ err: finalErr }, `Error updating status for ${namespace}/${name} failed`);
     });
   }
-}
-
-/**
- * Updates the status of the package
- *
- * @param cr The package to update
- * @param status The new status
- */
-export async function updateStatus(cr: GenericKind, status: PkgStatus | ExemptStatus) {
-  const model = cr.kind === "Package" ? UDSPackage : UDSExemption;
-  Log.debug(cr.metadata, `Updating status to ${status.phase}`);
-  await K8s(model).PatchStatus({
-    metadata: {
-      name: cr.metadata!.name,
-      namespace: cr.metadata!.namespace,
-    },
-    status,
-  });
 }
