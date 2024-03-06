@@ -3,7 +3,11 @@ import { When } from "./common";
 import { processExemptions, removeExemptions } from "./controllers/exemptions/exemptions";
 import { cleanupNamespace } from "./controllers/istio/injection";
 import { purgeSSOClients } from "./controllers/keycloak/client-sync";
-import { initAPIServerCIDR, updateAPIServerCIDR } from "./controllers/network/generators/kubeAPI";
+import {
+  initAPIServerCIDR,
+  updateAPIServerCIDRFromEndpointSlice,
+  updateAPIServerCIDRFromService,
+} from "./controllers/network/generators/kubeAPI";
 import { Phase, UDSExemption, UDSPackage } from "./crd";
 import { exemptValidator } from "./crd/exempt-validator";
 import "./crd/register";
@@ -22,7 +26,14 @@ When(a.EndpointSlice)
   .IsCreatedOrUpdated()
   .InNamespace("default")
   .WithName("kubernetes")
-  .Watch(updateAPIServerCIDR);
+  .Watch(updateAPIServerCIDRFromEndpointSlice);
+
+// Watch for changes to the API server Service and update the API server CIDR
+When(a.Service)
+  .IsCreatedOrUpdated()
+  .InNamespace("default")
+  .WithName("kubernetes")
+  .Watch(updateAPIServerCIDRFromService);
 
 // Watch for changes to the UDSPackage CRD and cleanup the namespace mutations
 When(UDSPackage)
