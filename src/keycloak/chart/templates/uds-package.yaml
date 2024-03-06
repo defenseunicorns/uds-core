@@ -31,6 +31,15 @@ spec:
         port: 443
         remoteGenerate: Anywhere
 
+      {{- if not .Values.devMode }}
+      - description: "PostgresQL Database access"
+        direction: Egress
+        selector:
+          app.kubernetes.io/name: keycloak
+        port: {{ .Values.postgresql.port }}
+        remoteGenerate: Anywhere
+      {{- end }}
+
     expose:
       - description: "remove private paths from public gateway"
         host: sso
