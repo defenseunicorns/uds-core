@@ -149,7 +149,7 @@ spec:
                   name: {{ include "keycloak.fullname" . }}-postgresql
                   key: port
             - name: KC_DB_URL_DATABASE
-              valuefrom:
+              valueFrom:
                 secretKeyRef:
                   name: {{ include "keycloak.fullname" . }}-postgresql
                   key: database
