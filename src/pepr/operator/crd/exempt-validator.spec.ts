@@ -1,9 +1,9 @@
 import { afterEach, describe, expect, it, jest } from "@jest/globals";
-import { ExemptionElement, Policy } from "./generated/exemption-v1alpha1";
 import { PeprValidateRequest } from "pepr";
 import { MatcherKind, UDSExemption } from ".";
-import { exemptValidator } from "./exempt-validator";
 import { UDSConfig } from "../../config";
+import { exemptValidator } from "./exempt-validator";
+import { ExemptionElement, Policy } from "./generated/exemption-v1alpha1";
 
 type mockReqArgs = {
   ns?: string;
@@ -98,14 +98,14 @@ describe("Test validation of Exemption CRs", () => {
       exempts: [
         {
           ...mockExemptions[0],
-          matcher: { ...mockExemptions[0].matcher, kind: MatcherKind.Services },
+          matcher: { ...mockExemptions[0].matcher, kind: MatcherKind.Service },
         },
       ],
     });
 
     await exemptValidator(mockReq);
     expect(mockReq.Deny).toHaveBeenCalledWith(
-      `Invalid kind "${MatcherKind.Services}" for matcher "${mockExemptions[0].matcher.name}" with policy "${mockExemptions[0].policies[0]}": "${mockExemptions[0].policies[0]}" can only be exempted for kind "${MatcherKind.Pod}"`,
+      `Invalid kind "${MatcherKind.Service}" for matcher "${mockExemptions[0].matcher.name}" with policy "${mockExemptions[0].policies[0]}": "${mockExemptions[0].policies[0]}" can only be exempted for kind "${MatcherKind.Pod}"`,
     );
   });
 });

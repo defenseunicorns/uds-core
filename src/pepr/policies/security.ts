@@ -1,8 +1,8 @@
 import { a } from "pepr";
 
 import { V1SecurityContext } from "@kubernetes/client-node";
-import { When, containers, securityContextContainers, securityContextMessage } from "./common";
 import { Policy } from "../operator/crd";
+import { When, containers, securityContextContainers, securityContextMessage } from "./common";
 import { isExempt, markExemption } from "./exemptions";
 
 /**
@@ -55,8 +55,9 @@ When(a.Pod)
   .IsCreatedOrUpdated()
   .Mutate(request => {
     markExemption(Policy.RequireNonRootUser)(request);
-    if (request.HasAnnotation(`uds-core.pepr.dev/uds-core-policies.${Policy.RequireNonRootUser}`))
+    if (request.HasAnnotation(`uds-core.pepr.dev/uds-core-policies.${Policy.RequireNonRootUser}`)) {
       return;
+    }
 
     const pod = request.Raw.spec!;
     const metadata = request.Raw.metadata || {};

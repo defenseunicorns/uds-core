@@ -6,11 +6,11 @@ metadata:
 spec:
   exemptions:
     - policies:
-        - Disallow_Privileged
-        - Require_Non_Root_User
-        - Restrict_SELinux_Type
-        - Restrict_HostPath_Write
-        - Restrict_Volume_Types
+        - DisallowPrivileged
+        - RequireNonRootUser
+        - RestrictSELinuxType
+        - RestrictHostPathWrite
+        - RestrictVolumeTypes
       matcher:
         namespace: promtail
         name: "^promtail-.*"

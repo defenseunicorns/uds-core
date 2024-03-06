@@ -6,15 +6,15 @@ metadata:
 spec:
   exemptions:
     - policies:
-        - Restrict_HostPath_Write
-        - Restrict_Volume_Types
+        - RestrictHostPathWrite
+        - RestrictVolumeTypes
       matcher:
         namespace: monitoring
         name: "^prometheus-kube-prometheus-stack-prometheus-.*"
       title: "prometheus kube stack"
 
     - policies:
-        - Restrict_Volume_Types
+        - RestrictVolumeTypes
       matcher:
         namespace: monitoring
         name: "^kube-prometheus-stack-prometheus-node-exporter-.*"

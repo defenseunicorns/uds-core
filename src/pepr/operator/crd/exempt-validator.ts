@@ -11,7 +11,7 @@ const kindToPolicyMap = new Map<MatcherKind, Policy[]>([
       p => p != Policy.DisallowNodePortServices && p != Policy.RestrictExternalNames,
     ),
   ],
-  [MatcherKind.Services, [Policy.RestrictExternalNames, Policy.DisallowNodePortServices]],
+  [MatcherKind.Service, [Policy.RestrictExternalNames, Policy.DisallowNodePortServices]],
 ]);
 
 export async function exemptValidator(req: PeprValidateRequest<UDSExemption>) {
@@ -35,7 +35,7 @@ export async function exemptValidator(req: PeprValidateRequest<UDSExemption>) {
     for (const p of e.policies) {
       if (!policies.includes(p)) {
         const validKind =
-          e.matcher.kind === MatcherKind.Pod ? MatcherKind.Services : MatcherKind.Pod;
+          e.matcher.kind === MatcherKind.Pod ? MatcherKind.Service : MatcherKind.Pod;
         return req.Deny(
           `Invalid kind "${e.matcher.kind}" for matcher "${e.matcher.name}" with policy "${p}": "${p}" can only be exempted for kind "${validKind}"`,
         );

@@ -6,12 +6,12 @@ metadata:
 spec:
   exemptions:
     - policies:
-        - Disallow_Host_Namespaces
-        - Disallow_Privileged
-        - Require_Non_Root_User
-        - Drop_All_Capabilities
-        - Restrict_HostPath_Write
-        - Restrict_Volume_Types
+        - DisallowHostNamespaces
+        - DisallowPrivileged
+        - RequireNonRootUser
+        - DropAllCapabilities
+        - RestrictHostPathWrite
+        - RestrictVolumeTypes
       matcher:
         namespace: neuvector
         name: "^neuvector-enforcer-pod.*"
@@ -25,11 +25,11 @@ spec:
           https://github.com/neuvector/neuvector-helm/blob/master/charts/core/templates/enforcer-daemonset.yaml#L108"
 
     - policies:
-        - Disallow_Privileged
-        - Require_Non_Root_User
-        - Drop_All_Capabilities
-        - Restrict_HostPath_Write
-        - Restrict_Volume_Types
+        - DisallowPrivileged
+        - RequireNonRootUser
+        - DropAllCapabilities
+        - RestrictHostPathWrite
+        - RestrictVolumeTypes
       matcher:
         namespace: neuvector
         name: "^neuvector-controller-pod.*"
@@ -43,7 +43,7 @@ spec:
           https://github.com/neuvector/neuvector-helm/blob/master/charts/core/templates/enforcer-daemonset.yaml#L108"
 
     - policies:
-        - Drop_All_Capabilities
+        - DropAllCapabilities
       matcher:
         namespace: neuvector
         name: "^neuvector-prometheus-exporter-pod.*"
