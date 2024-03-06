@@ -4,6 +4,7 @@ import { UDSConfig } from "../config";
 import { enableInjection } from "./controllers/istio/injection";
 import { virtualService } from "./controllers/istio/virtual-service";
 import { keycloak } from "./controllers/keycloak/client-sync";
+import { serviceMonitor } from "./controllers/monitoring/service-monitor";
 import { networkPolicies } from "./controllers/network/policies";
 import { Phase, Status, UDSPackage } from "./crd";
 import { migrate } from "./crd/migrate";
@@ -42,14 +43,21 @@ export async function reconciler(pkg: UDSPackage) {
 
     // Only configure the VirtualService if not running in single test mode
     let endpoints: string[] = [];
+    let monitors: string[] = [];
     if (!UDSConfig.isSingleTest) {
       // Update the namespace to ensure the istio-injection label is set
       await enableInjection(pkg);
 
       // Create the VirtualService for each exposed service
       endpoints = await virtualService(pkg, namespace);
+
+      // Create the ServiceMonitor for each monitored service
+      monitors = await serviceMonitor(pkg, namespace);
     } else {
-      Log.warn(`Running in single test mode, skipping ${name} VirtualService.`);
+      // todo: nuance here for single test monitoring (self monitoring?)
+      Log.warn(
+        `Running in single test mode, skipping ${name} VirtualServices and ServiceMonitors.`,
+      );
     }
 
     // Configure SSO
@@ -59,6 +67,7 @@ export async function reconciler(pkg: UDSPackage) {
       phase: Phase.Ready,
       ssoClients,
       endpoints,
+      monitors,
       networkPolicyCount: netPol.length,
       observedGeneration: pkg.metadata.generation,
     });

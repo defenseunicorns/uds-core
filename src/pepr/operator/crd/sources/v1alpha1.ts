@@ -159,6 +159,32 @@ const expose = {
   } as V1JSONSchemaProps,
 } as V1JSONSchemaProps;
 
+const monitor = {
+  description: "Create Service Monitor configurations",
+  type: "array",
+  items: {
+    type: "object",
+    required: ["port", "selector"],
+    properties: {
+      description: {
+        type: "string",
+        description: "A description of the policy, this will become part of the policy name",
+      },
+      port: {
+        description: "The port name for the serviceMonitor",
+        type: "string",
+      },
+      selector: {
+        description: "Labels to match services in the namespace for the service monitor.",
+        type: "object",
+        additionalProperties: {
+          type: "string",
+        },
+      },
+    },
+  },
+};
+
 const sso = {
   description: "Create SSO client configurations",
   type: "array",
@@ -264,6 +290,12 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
       jsonPath: ".status.endpoints",
     },
     {
+      name: "Monitors",
+      type: "string",
+      description: "Service monitors for the package",
+      jsonPath: ".status.monitors",
+    },
+    {
       name: "Network Policies",
       type: "integer",
       description: "The number of network policies created by the package",
@@ -305,6 +337,12 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
                 type: "string",
               },
             },
+            monitors: {
+              type: "array",
+              items: {
+                type: "string",
+              },
+            },
             networkPolicyCount: {
               type: "integer",
             },
@@ -321,6 +359,7 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
                 allow,
               },
             },
+            monitor,
             sso,
           },
         } as V1JSONSchemaProps,

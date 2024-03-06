@@ -9,6 +9,10 @@ export class Package extends GenericKind {
 
 export interface Spec {
   /**
+   * Create Service Monitor configurations
+   */
+  monitor?: Monitor[];
+  /**
    * Network configuration for the package
    */
   network?: Network;
@@ -16,6 +20,21 @@ export interface Spec {
    * Create SSO client configurations
    */
   sso?: Sso[];
+}
+
+export interface Monitor {
+  /**
+   * A description of the policy, this will become part of the policy name
+   */
+  description?: string;
+  /**
+   * The port name for the serviceMonitor
+   */
+  port: string;
+  /**
+   * Labels to match services in the namespace for the service monitor.
+   */
+  selector: { [key: string]: string };
 }
 
 /**
@@ -483,6 +502,7 @@ export enum ClientAuthenticatorType {
 
 export interface Status {
   endpoints?: string[];
+  monitors?: string[];
   networkPolicyCount?: number;
   observedGeneration?: number;
   phase?: Phase;
