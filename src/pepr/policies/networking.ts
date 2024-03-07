@@ -1,7 +1,8 @@
 import { a } from "pepr";
 
 import { When, containers } from "./common";
-import { exemptHostNamespaces } from "./exemptions/networking";
+import { Policy } from "../operator/crd";
+import { isExempt, markExemption } from "./exemptions";
 
 /**
  * This policy prevents pods from sharing the host namespaces.
@@ -15,8 +16,9 @@ import { exemptHostNamespaces } from "./exemptions/networking";
  */
 When(a.Pod)
   .IsCreatedOrUpdated()
+  .Mutate(markExemption(Policy.DisallowHostNamespaces))
   .Validate(request => {
-    if (exemptHostNamespaces(request)) {
+    if (isExempt(request, Policy.DisallowHostNamespaces)) {
       return request.Approve();
     }
 
@@ -43,7 +45,12 @@ When(a.Pod)
  */
 When(a.Pod)
   .IsCreatedOrUpdated()
+  .Mutate(markExemption(Policy.RestrictHostPorts))
   .Validate(request => {
+    if (isExempt(request, Policy.RestrictHostPorts)) {
+      return request.Approve();
+    }
+
     // Check all containers in the pod spec, and find the first one that has a host port, if any
     const hasHostPort = containers(request)
       .flatMap(c => c.ports || [])
@@ -66,7 +73,11 @@ When(a.Pod)
  */
 When(a.Service)
   .IsCreatedOrUpdated()
+  .Mutate(markExemption(Policy.RestrictExternalNames))
   .Validate(request => {
+    if (isExempt(request, Policy.RestrictExternalNames)) {
+      return request.Approve();
+    }
     if (request.Raw.spec?.type === "ExternalName") {
       return request.Deny("ExternalName services are not allowed.");
     }
@@ -85,7 +96,11 @@ When(a.Service)
  */
 When(a.Service)
   .IsCreatedOrUpdated()
+  .Mutate(markExemption(Policy.DisallowNodePortServices))
   .Validate(request => {
+    if (isExempt(request, Policy.DisallowNodePortServices)) {
+      return request.Approve();
+    }
     // If the service is of type NodePort, deny the request.
     if (request.Raw.spec?.type === "NodePort") {
       return request.Deny("NodePort services are not allowed.");
