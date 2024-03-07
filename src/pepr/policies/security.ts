@@ -306,8 +306,9 @@ When(a.Pod)
   .IsCreatedOrUpdated()
   .Mutate(request => {
     markExemption(Policy.DropAllCapabilities)(request);
-    if (request.HasAnnotation(`uds-core.pepr.dev/uds-core-policies.${Policy.RequireNonRootUser}`))
+    if (request.HasAnnotation(`uds-core.pepr.dev/uds-core-policies.${Policy.RequireNonRootUser}`)) {
       return;
+    }
 
     // Always set drop: ["ALL"] for all containers
     for (const container of containers(request)) {

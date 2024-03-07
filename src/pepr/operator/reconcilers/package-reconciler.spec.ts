@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, jest, test } from "@jest/globals";
 
 import { K8s, Log } from "pepr";
 import { Phase, UDSPackage } from "../crd";
-import { reconciler } from "./reconciler";
+import { reconciler } from "./package-reconciler";
 
 jest.mock("kubernetes-fluent-client");
 jest.mock("pepr");

@@ -11,9 +11,9 @@ import {
 import { UDSExemption, UDSPackage } from "./crd";
 import "./crd/register";
 import { exemptValidator } from "./crd/validators/exempt-validator";
-import { validator } from "./crd/validators/validator";
+import { validator } from "./crd/validators/package-validator";
 import { exemptReconciler } from "./reconcilers/exempt-reconciler";
-import { reconciler } from "./reconcilers/reconciler";
+import { reconciler } from "./reconcilers/package-reconciler";
 
 // Export the operator capability for registration in the root pepr.ts
 export { operator } from "./common";
