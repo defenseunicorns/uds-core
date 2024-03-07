@@ -1,5 +1,5 @@
 includes:
-  - config: https://raw.githubusercontent.com/defenseunicorns/uds-identity-config/v0.3.2/tasks.yaml
+  - config: https://raw.githubusercontent.com/defenseunicorns/uds-identity-config/v0.3.4/tasks.yaml
 
 tasks:
   # These tests break single capability test checks

@@ -44,5 +44,10 @@
     "Sysctls",
     "Velero"
   ],
-  "cSpell.enabled": true
+  "cSpell.enabled": true,
+  "[typescript]": {
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": "always"
+    }
+  },
 }
