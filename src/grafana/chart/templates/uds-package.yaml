@@ -4,6 +4,12 @@ metadata:
   name: grafana
   namespace: {{ .Release.Namespace }}
 spec:
+  sso:
+    - name: Grafana Dashboard
+      clientId: uds-core-admin-grafana
+      redirectUris:
+        - "https://grafana.admin.{{ .Values.domain }}/login/generic_oauth"
+
   network:
     expose:
       - service: grafana

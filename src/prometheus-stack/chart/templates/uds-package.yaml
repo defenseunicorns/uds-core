@@ -43,7 +43,7 @@ spec:
 
       # todo: lockdown egress to scrape targets
       - direction: Egress
-        remoteNamespace: "" 
+        remoteNamespace: ""
         selector:
           app.kubernetes.io/name: prometheus
         description: "Metrics Scraping"

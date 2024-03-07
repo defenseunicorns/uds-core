@@ -9,11 +9,6 @@ variables:
     description: "Cluster domain"
     default: "uds.dev"
 
-constants:
-  - name: WITH_ISTIO
-    description: "Track istio installation"
-    value: "true"
-
 components:
   - name: istio-controlplane
     required: true

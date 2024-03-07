@@ -1,10 +1,10 @@
 import { PeprValidateRequest } from "pepr";
 
-import { Gateway, UDSPackage } from ".";
-import { generateName } from "../controllers/network/generate";
-import { sanitizeResourceName } from "../controllers/utils";
-import { generateVSName } from "../controllers/istio/virtual-service";
-import { migrate } from "./migrate";
+import { Gateway, UDSPackage } from "..";
+import { generateVSName } from "../../controllers/istio/virtual-service";
+import { generateName } from "../../controllers/network/generate";
+import { sanitizeResourceName } from "../../controllers/utils";
+import { migrate } from "../migrate";
 
 const invalidNamespaces = ["kube-system", "kube-public", "_unknown_", "pepr-system"];
 
@@ -73,6 +73,18 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
     }
     // Add the name to the set to track it
     networkPolicyNames.add(name);
+  }
+
+  const ssoClients = pkg.spec?.sso ?? [];
+
+  // Ensure the client IDs are unique
+  const clientIDs = new Set<string>();
+
+  for (const client of ssoClients) {
+    if (clientIDs.has(client.clientId)) {
+      return req.Deny(`The client ID "${client.clientId}" is not unique`);
+    }
+    clientIDs.add(client.clientId);
   }
 
   return req.Approve();
