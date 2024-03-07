@@ -12,6 +12,7 @@ export const UDSConfig = {
   domain,
   // Track if we are running a single test mode
   isSingleTest: process.env.UDS_SINGLE_TEST === "true",
+  allowAllNSExemptions: process.env.UDS_ALLOW_ALL_NS_EXEMPTIONS === "true",
 };
 
 Log.info(UDSConfig, "Loaded UDS Config");
