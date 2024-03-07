@@ -38,4 +38,3 @@ tasks:
             pkgPath="ghcr.io/defenseunicorns/packages/uds/bundles/k3d-core-demo"
             uds zarf tools registry copy ${pkgPath}:${VERSION} ${pkgPath}:latest
           fi
-
