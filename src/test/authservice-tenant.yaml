@@ -10,10 +10,10 @@ metadata:
   namespace: other-test-app
 spec:
   sso:
-    - name: Other SSO
+    - name: Demo SSO
       clientId: uds-core-other-httpbin
       redirectUris:
-        - "https://foo.UDS_DOMAIN/login"
+        - "https://podinfo.uds.dev/login"
       isAuthSvcClient: true
   network:
     expose:
@@ -21,7 +21,7 @@ spec:
         selector:
           app: httpbin
         gateway: tenant
-        host: foo
+        host: podinfo
         port: 8000
         targetPort: 80
     allow:

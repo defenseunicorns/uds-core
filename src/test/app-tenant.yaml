@@ -9,12 +9,6 @@ metadata:
   name: httpbin
   namespace: test-app
 spec:
-  sso:
-    - name: HTTP BIN SSO
-      clientId: uds-core-httpbin
-      redirectUris:
-        - "https://demo.UDS_DOMAIN/login"
-      isAuthSvcClient: true
   network:
     expose:
       - service: httpbin
@@ -70,7 +64,6 @@ spec:
       labels:
         app: httpbin
         version: v1
-        protect: keycloak
     spec:
       serviceAccountName: httpbin
       containers:
