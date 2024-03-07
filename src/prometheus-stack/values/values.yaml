@@ -45,6 +45,7 @@ prometheus:
             OUTPUT_CERTS: /etc/istio-output-certs
         sidecar.istio.io/userVolumeMount: '[{"name": "istio-certs", "mountPath": "/etc/istio-output-certs"}]'
         traffic.sidecar.istio.io/includeOutboundIPRanges: ""
+        traffic.sidecar.istio.io/includeInboundPorts: "9090"
       labels:
         app: prometheus
     podMonitorSelectorNilUsesHelmValues: false

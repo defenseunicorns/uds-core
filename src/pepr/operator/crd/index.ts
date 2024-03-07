@@ -15,7 +15,7 @@ export {
 } from "./generated/package-v1alpha1";
 
 export * as Istio from "./generated/istio/virtualservice-v1beta1";
-export * as Monitoring from "./generated/monitoring/servicemonitor-v1";
+export * as Prometheus from "./generated/prometheus/servicemonitor-v1";
 
 export function getOwnerRef(pkg: UDSPackage): V1OwnerReference[] {
   const { name, uid } = pkg.metadata!;

@@ -1,6 +1,6 @@
 import { K8s, Log, kind } from "pepr";
 
-import { Monitoring, UDSPackage, getOwnerRef } from "../../crd";
+import { Prometheus, UDSPackage, getOwnerRef } from "../../crd";
 import { Monitor } from "../../crd/generated/package-v1alpha1";
 import { sanitizeResourceName } from "../utils";
 
@@ -18,27 +18,31 @@ export async function serviceMonitor(pkg: UDSPackage, namespace: string) {
   const monitorList = pkg.spec?.monitor ?? [];
 
   // Create a list of generated ServiceMonitors
-  const payloads: Monitoring.ServiceMonitor[] = [];
+  const payloads: Prometheus.ServiceMonitor[] = [];
 
   for (const monitor of monitorList) {
+    // todo: Get the service to translate port number -> name
+    const svc = await K8s(kind.Service).Get("name");
+    const portName = svc.spec?.ports?.find(p => p.port === monitor.port)?.name;
+
     const name = generateSMName(pkg, monitor);
     const tlsConfig = {
       caFile: "/etc/prom-certs/root-cert.pem",
       certFile: "/etc/prom-certs/cert-chain.pem",
       keyFile: "/etc/prom-certs/key.pem",
-      insecureSkipVerify: true,
+      insecureSkipVerify: true, // Prometheus does not support Istio security naming, thus skip verifying target pod certificate
     };
-    const endpoints: Monitoring.Endpoint[] = [
+    const endpoints: Prometheus.Endpoint[] = [
       {
-        scheme: Monitoring.Scheme.HTTPS,
+        scheme: Prometheus.Scheme.HTTPS,
         tlsConfig: tlsConfig,
-        port: monitor.port,
+        port: portName,
       },
     ];
-    const selector: Monitoring.Selector = {
+    const selector: Prometheus.Selector = {
       matchLabels: monitor.selector,
     };
-    const payload: Monitoring.ServiceMonitor = {
+    const payload: Prometheus.ServiceMonitor = {
       metadata: {
         name,
         namespace,
@@ -55,13 +59,13 @@ export async function serviceMonitor(pkg: UDSPackage, namespace: string) {
     };
 
     // Apply the VirtualService and force overwrite any existing policy
-    await K8s(Monitoring.ServiceMonitor).Apply(payload, { force: true });
+    await K8s(Prometheus.ServiceMonitor).Apply(payload, { force: true });
 
     payloads.push(payload);
   }
 
   // Get all related ServiceMonitors in the namespace
-  const serviceMonitors = await K8s(Monitoring.ServiceMonitor)
+  const serviceMonitors = await K8s(Prometheus.ServiceMonitor)
     .InNamespace(namespace)
     .WithLabel("uds/package", pkgName)
     .Get();
@@ -74,7 +78,7 @@ export async function serviceMonitor(pkg: UDSPackage, namespace: string) {
   // Delete any orphaned VirtualServices
   for (const sm of orphanedSM) {
     Log.debug(sm, `Deleting orphaned ServiceMonitor ${sm.metadata!.name}`);
-    await K8s(Monitoring.ServiceMonitor).Delete(sm);
+    await K8s(Prometheus.ServiceMonitor).Delete(sm);
   }
 
   // Return the list of monitor names
@@ -87,40 +91,4 @@ export function generateSMName(pkg: UDSPackage, monitor: Monitor) {
   const name = sanitizeResourceName(`${pkg.metadata!.name}-${nameSuffix}`);
 
   return name;
-}
-
-// todo: should we even do this?
-/**
- * Mutate a service monitor to enable mTLS metrics
- *
- * @param sm Service Monitor
- */
-export async function mutateServiceMonitor(sm: Monitoring.ServiceMonitor) {
-  const namespaces = sm.Raw.spec.namespaceSelector?.matchNames || [sm.Raw.metadata?.namespace];
-  let istioInjected = false;
-  for (const ns of namespaces) {
-    const namespace = await K8s(kind.Namespace).Get(ns);
-    if (namespace.metadata?.labels && namespace.metadata.labels["istio-injection"] === "enabled") {
-      istioInjected = true;
-    }
-  }
-
-  if (istioInjected) {
-    Log.info(`Patching service monitor ${sm.Raw.metadata.name} for mTLS metrics`);
-    const tlsConfig = {
-      caFile: "/etc/prom-certs/root-cert.pem",
-      certFile: "/etc/prom-certs/cert-chain.pem",
-      keyFile: "/etc/prom-certs/key.pem",
-      insecureSkipVerify: true,
-    };
-
-    const endpoints: Monitoring.Endpoint[] = sm.Raw.spec.endpoints;
-    endpoints.forEach(endpoint => {
-      endpoint.scheme = Monitoring.Scheme.HTTPS;
-      endpoint.tlsConfig = tlsConfig;
-    });
-    sm.Raw.spec.endpoints = endpoints;
-  } else {
-    Log.info(`No mutations needed for service monitor ${sm.Raw.metadata?.name}`);
-  }
 }

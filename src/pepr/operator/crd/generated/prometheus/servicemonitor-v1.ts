@@ -9,7 +9,7 @@ export class ServiceMonitor extends GenericKind {
   /**
    * Specification of desired Service selection for target discovery by Prometheus.
    */
-  spec: Spec;
+  spec?: Spec;
 }
 
 /**
