@@ -32,7 +32,8 @@ spec:
         mode: {{ $server.mode }}
         {{- if ne $server.mode "PASSTHROUGH" }}
         credentialName: gateway-tls
-        minProtocolVersion: TLSV1_3
+        # TODO: Authservice does not support TLSv1.3
+        # minProtocolVersion: TLSV1_3
         {{- end }}
     {{ end }}
 {{ end }}
