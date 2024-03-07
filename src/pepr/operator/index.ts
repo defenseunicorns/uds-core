@@ -1,6 +1,6 @@
 import { a } from "pepr";
-
 import { When } from "./common";
+import { removeExemptions } from "./controllers/exemptions/exemptions";
 import { cleanupNamespace } from "./controllers/istio/injection";
 import { purgeSSOClients } from "./controllers/keycloak/client-sync";
 import {
@@ -8,9 +8,12 @@ import {
   updateAPIServerCIDRFromEndpointSlice,
   updateAPIServerCIDRFromService,
 } from "./controllers/network/generators/kubeAPI";
-import { UDSPackage } from "./crd";
-import { validator } from "./crd/validator";
-import { reconciler } from "./reconciler";
+import { UDSExemption, UDSPackage } from "./crd";
+import "./crd/register";
+import { exemptValidator } from "./crd/validators/exempt-validator";
+import { validator } from "./crd/validators/package-validator";
+import { exemptReconciler } from "./reconcilers/exempt-reconciler";
+import { reconciler } from "./reconcilers/package-reconciler";
 
 // Export the operator capability for registration in the root pepr.ts
 export { operator } from "./common";
@@ -51,3 +54,9 @@ When(UDSPackage)
   .Validate(validator)
   // Enqueue the package for processing
   .Reconcile(reconciler);
+
+//Watch for changes to the UDSExemption CRD and cleanup exemptions in policies Store
+When(UDSExemption).IsDeleted().Watch(removeExemptions);
+
+// Watch for changes to the UDSExemption CRD to enqueue an exemption for processing
+When(UDSExemption).IsCreatedOrUpdated().Validate(exemptValidator).Reconcile(exemptReconciler);

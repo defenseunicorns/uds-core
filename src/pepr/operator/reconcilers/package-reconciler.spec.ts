@@ -1,15 +1,15 @@
 import { beforeEach, describe, expect, jest, test } from "@jest/globals";
 
 import { K8s, Log } from "pepr";
-import { Phase, UDSPackage } from "./crd";
-import { reconciler } from "./reconciler";
+import { Phase, UDSPackage } from "../crd";
+import { reconciler } from "./package-reconciler";
 
 jest.mock("kubernetes-fluent-client");
 jest.mock("pepr");
-jest.mock("../config");
-jest.mock("./controllers/istio/injection");
-jest.mock("./controllers/istio/virtual-service");
-jest.mock("./controllers/network/policies");
+jest.mock("../../config");
+jest.mock("../controllers/istio/injection");
+jest.mock("../controllers/istio/virtual-service");
+jest.mock("../controllers/network/policies");
 
 describe("reconciler", () => {
   let mockPackage: UDSPackage;
