@@ -2,17 +2,19 @@ name: Validate Docs
 
 on:
   pull_request:
-    types: [labeled]
+    types: [opened, reopened, synchronize, labeled]
 
 jobs:
   add_reviewer:
     runs-on: ubuntu-latest
     steps:
-      - name: Check if labeled with needs-docs
-        id: check_label
-        run: echo "::set-output name=needs_docs::$(echo ${{ github.event.label.name == 'needs-docs' }})"
+      - name: Checkout
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          fetch-depth: 0
+
       - name: Add reviewer if labeled
-        if: steps.check_label.outputs.needs_docs == 'true'
+        if: ${{ contains( github.event.pull_request.labels.*.name, 'needs-docs' ) }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh pr edit --add-reviewer ${{ vars.DOCS_REVIEWER }}
