@@ -1,0 +1,19 @@
+name: Validate Docs
+
+on:
+  pull_request:
+    types: [labeled]
+
+jobs:
+  add_reviewer:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check if labeled with needs-docs
+        id: check_label
+        run: echo "::set-output name=needs_docs::$(echo ${{ github.event.label.name == 'needs-docs' }})"
+      - name: Add reviewer if labeled
+        if: steps.check_label.outputs.needs_docs == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh pr edit --add-reviewer ${{ vars.DOCS_REVIEWER }}
+      # todo: add docs linting/formatting?
