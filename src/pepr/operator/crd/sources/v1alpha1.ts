@@ -168,7 +168,7 @@ const monitor = {
     properties: {
       description: {
         type: "string",
-        description: "A description of the policy, this will become part of the policy name",
+        description: "A description of the service monitor, this will become part of the name",
       },
       port: {
         description: "The port for the serviceMonitor",
@@ -183,23 +183,9 @@ const monitor = {
           type: "string",
         },
       },
-      podSelector: {
-        description: "Labels to match services in the namespace for the service monitor.",
-        type: "object",
-        additionalProperties: {
-          type: "string",
-        },
-      },
       path: {
         description: "HTTP path from which to scrape for metrics, defaults to `/metrics`",
         type: "string",
-      },
-      targetPort: {
-        description:
-          "The service targetPort. This defaults to port and is only required if the service port is different from the target port (so the NetworkPolicy can be generated correctly).",
-        minimum: 1,
-        maximum: 65535,
-        type: "number",
       },
     },
   },

@@ -63,7 +63,7 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
   const monitorList = pkg.spec?.monitor ?? [];
   // Iterate over each ServiceMonitor
   for (const monitor of monitorList) {
-    const { port, selector, targetPort } = monitor;
+    const { port, selector } = monitor;
     // Create the NetworkPolicy for the ServiceMonitor
     const policy: Allow = {
       direction: Direction.Ingress,
@@ -72,8 +72,8 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
       remoteSelector: {
         app: `prometheus`,
       },
-      // Use the same port as the ServiceMonitor if targetPort is not set
-      port: targetPort ?? port,
+      // todo: lookup targetPort based on svc
+      port: port,
       description: `${Object.values(selector)} Metrics`,
     };
     // Generate the policy

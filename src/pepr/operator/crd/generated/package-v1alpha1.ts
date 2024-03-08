@@ -24,17 +24,13 @@ export interface Spec {
 
 export interface Monitor {
   /**
-   * A description of the policy, this will become part of the policy name
+   * A description of the service monitor, this will become part of the name
    */
   description?: string;
   /**
    * HTTP path from which to scrape for metrics, defaults to `/metrics`
    */
   path?: string;
-  /**
-   * Labels to match services in the namespace for the service monitor.
-   */
-  podSelector?: { [key: string]: string };
   /**
    * The port for the serviceMonitor
    */
@@ -43,11 +39,6 @@ export interface Monitor {
    * Labels to match services in the namespace for the service monitor.
    */
   selector: { [key: string]: string };
-  /**
-   * The service targetPort. This defaults to port and is only required if the service port is
-   * different from the target port (so the NetworkPolicy can be generated correctly).
-   */
-  targetPort?: number;
 }
 
 /**
