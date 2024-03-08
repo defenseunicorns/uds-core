@@ -45,8 +45,18 @@ tasks:
   - name: pepr-build
     description: "Build the UDS Core Pepr Module"
     actions:
+      - description: "Set custom pepr image if registry1 flavor"
+        cmd: |
+          if [ "${FLAVOR}" = "registry1" ]; then
+            echo "--custom-image registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller:v0.26.2"
+          else 
+            echo ""
+          fi
+        setVariables:
+          - name: CUSTOM_PEPR_IMAGE
+
       - description: "Build the UDS Core Pepr Module"
         cmd: |
           rm -fr dist
           npm ci
-          npx pepr build
+          npx pepr build ${CUSTOM_PEPR_IMAGE}
