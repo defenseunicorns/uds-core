@@ -5,17 +5,16 @@ on:
     types: [opened, reopened, synchronize, labeled]
 
 jobs:
-  add_reviewer:
+  reviewer:
+    name: Add Reviewer
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-        with:
-          fetch-depth: 0
 
       - name: Add reviewer if labeled
         if: ${{ contains( github.event.pull_request.labels.*.name, 'needs-docs' ) }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh pr edit --add-reviewer ${{ vars.DOCS_REVIEWER }}
-      # todo: add docs linting/formatting?
+  # todo: add docs linting/formatting
