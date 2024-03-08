@@ -2,7 +2,13 @@ import { a } from "pepr";
 
 import { V1SecurityContext } from "@kubernetes/client-node";
 import { Policy } from "../operator/crd";
-import { When, containers, securityContextContainers, securityContextMessage } from "./common";
+import {
+  When,
+  annotateMutation,
+  containers,
+  securityContextContainers,
+  securityContextMessage,
+} from "./common";
 import { isExempt, markExemption } from "./exemptions";
 
 /**
@@ -97,6 +103,8 @@ When(a.Pod)
     if (pod.securityContext.runAsGroup === undefined) {
       pod.securityContext.runAsGroup = 1000;
     }
+
+    annotateMutation(request, Policy.RequireNonRootUser);
   })
   .Validate(request => {
     if (isExempt(request, Policy.RequireNonRootUser)) {
@@ -316,6 +324,7 @@ When(a.Pod)
       container.securityContext.capabilities = container.securityContext.capabilities || {};
       container.securityContext.capabilities.drop = ["ALL"];
     }
+    annotateMutation(request, Policy.DropAllCapabilities);
   })
   .Validate(request => {
     if (isExempt(request, Policy.DropAllCapabilities)) {
