@@ -107,7 +107,7 @@ When(a.Pod)
     // Set the runAsGroup field to 1000 if it is undefined
     if (pod.securityContext.runAsGroup === undefined) {
       pod.securityContext.runAsGroup = 1000;
-      annotateMutation(request, Policy.RequireNonRootUser,"securityContext.runAsGroup");
+      annotateMutation(request, Policy.RequireNonRootUser, "securityContext.runAsGroup");
     }
   })
   .Validate(request => {
@@ -328,7 +328,11 @@ When(a.Pod)
       container.securityContext.capabilities = container.securityContext.capabilities || {};
       container.securityContext.capabilities.drop = ["ALL"];
     }
-    annotateMutation(request, Policy.DropAllCapabilities, "container.securityContext.capabilities.drop",);
+    annotateMutation(
+      request,
+      Policy.DropAllCapabilities,
+      "container.securityContext.capabilities.drop",
+    );
   })
   .Validate(request => {
     if (isExempt(request, Policy.DropAllCapabilities)) {
