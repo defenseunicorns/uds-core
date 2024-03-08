@@ -8,3 +8,10 @@ tasks:
             name: "app.kubernetes.io/instance=grafana"
             namespace: grafana
             condition: Ready
+      #  todo: Fix single package validation checks in CI where Istio isn't installed
+      # - description: Validate grafana interface
+      #   wait:
+      #     network:
+      #       protocol: https
+      #       address: grafana.admin.uds.dev
+      #       code: 200

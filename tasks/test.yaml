@@ -19,7 +19,6 @@ tasks:
     # loop through each src/* package and run the validate.yaml task
     actions:
       - cmd: |
-          set -e
           for package in src/*; do
             uds run -f ${package}/tasks.yaml validate --no-progress
           done

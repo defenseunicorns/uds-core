@@ -1,0 +1,13 @@
+kind: ZarfPackageConfig
+metadata:
+  name: uds-core-keycloak-common
+  description: "UDS Keycloak Common"
+  url: https://github.com/keycloak/keycloak
+
+components:
+  - name: keycloak
+    charts:
+      - name: keycloak
+        namespace: keycloak
+        version: 23.0.4
+        localPath: ../chart
