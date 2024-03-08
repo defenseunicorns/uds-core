@@ -67,14 +67,18 @@ tasks:
         cmd: |
           set -e
           SSO_REDIRECT=$(uds zarf tools kubectl run curl-test --image=arunvelsriram/utils -q --restart=Never --rm -i -- curl -Ls -o /dev/null -w %{url_effective} "https://protected.uds.dev")
-          if [[ "${SSO_REDIRECT}" == "https://sso.uds.dev"* ]]; then
-            echo "Protected by authservice"
-            echo $SSO_REDIRECT
-          else
-            echo "App is not protected by authservice"
-            echo $SSO_REDIRECT
-            exit 1
-          fi
+
+          case "${SSO_REDIRECT}" in
+          "https://sso.uds.dev"*)
+              echo "Protected by authservice"
+              ;;
+          *)
+              # Fallback option if the condition is false
+              echo "App is not protected by authservice"
+              echo $SSO_REDIRECT
+              exit 1
+              ;;
+          esac
 
       - description: Remove the test resources
         cmd: "uds zarf package remove build/zarf-package-uds-core-test-apps-*.zst --confirm"
