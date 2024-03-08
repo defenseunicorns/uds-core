@@ -20,5 +20,12 @@ jobs:
         if: ${{ contains( github.event.pull_request.labels.*.name, 'needs-docs' ) }}
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh pr edit --add-reviewer ${{ vars.DOCS_REVIEWER }} ${{ github.event.pull_request.number }}
+        # This has to be done via API call because of https://github.com/cli/cli/issues/4844
+        run: |
+            gh api \
+            --method POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            /repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/requested_reviewers \
+            -f "reviewers[]=${{ vars.DOCS_REVIEWER }}" \
   # todo: add docs linting/formatting
