@@ -3,9 +3,9 @@ import { K8s, Log, fetch, kind } from "pepr";
 import { UDSConfig } from "../../../config";
 import { Store } from "../../common";
 import { Sso, UDSPackage } from "../../crd";
-import { Client } from "./types";
 import { updateConfig } from "./authservice/authservice";
 import { Action } from "./authservice/types";
+import { Client } from "./types";
 
 const apiURL =
   "http://keycloak-http.keycloak.svc.cluster.local:8080/realms/uds/clients-registrations/default";
@@ -102,7 +102,7 @@ async function syncClient(
     });
 
     if (isAuthSvcClient) {
-      // Do things here
+      // Add additional authservice config
       await updateConfig({ client, name, action: Action.Add });
     }
 

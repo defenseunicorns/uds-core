@@ -1,19 +1,19 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: other-test-app
+  name: authservice-test-app
 ---
 apiVersion: uds.dev/v1alpha1
 kind: Package
 metadata:
   name: httpbin-other
-  namespace: other-test-app
+  namespace: authservice-test-app
 spec:
   sso:
     - name: Demo SSO
-      clientId: uds-core-other-httpbin
+      clientId: uds-core-httpbin
       redirectUris:
-        - "https://podinfo.uds.dev/login"
+        - "https://protected.uds.dev/login"
       isAuthSvcClient: true
   network:
     expose:
@@ -21,28 +21,21 @@ spec:
         selector:
           app: httpbin
         gateway: tenant
-        host: podinfo
+        host: protected
         port: 8000
         targetPort: 80
-    allow:
-      - direction: Egress
-        remoteNamespace: authservice
-        remoteSelector:
-          app.kubernetes.io/name: authservice
-        port: 10003
-        description: "Authservice"
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: httpbin
-  namespace: other-test-app
+  namespace: authservice-test-app
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: httpbin
-  namespace: other-test-app
+  namespace: authservice-test-app
   labels:
     app: httpbin
     service: httpbin
@@ -58,7 +51,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: httpbin
-  namespace: other-test-app
+  namespace: authservice-test-app
 spec:
   replicas: 1
   selector:

@@ -59,6 +59,22 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
     policies.push(generatedPolicy);
   }
 
+  // Add policy if authservice enabled (if any pkg.spec.sso[*].isAuthSvcClient is true)
+  if (pkg.spec?.sso?.some(sso => sso.isAuthSvcClient)) {
+    const policy: Allow = {
+      direction: Direction.Egress,
+      selector: { protect: "keycloak" },
+      remoteNamespace: "authservice",
+      remoteSelector: { "app.kubernetes.io/name": "authservice" },
+      port: 10003,
+      description: "Authservice Egress",
+    };
+
+    // Generate the policy
+    const generatedPolicy = generate(namespace, policy);
+    policies.push(generatedPolicy);
+  }
+
   // Iterate over each policy and apply it
   for (const [idx, policy] of policies.entries()) {
     // Add the package name and generation to the labels

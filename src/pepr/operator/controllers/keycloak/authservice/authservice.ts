@@ -1,13 +1,14 @@
-import { K8s, Log, kind } from "pepr";
-import { Action, AuthServiceEvent, AuthserviceConfig, Chain } from "./types";
 import { createHash } from "crypto";
+import { K8s, Log, kind } from "pepr";
+import { UDSConfig } from "../../../../config";
+import { Action, AuthServiceEvent, AuthserviceConfig, Chain } from "./types";
 
 const namespace = "authservice";
 const secretName = "authservice";
+const baseDomain = `https://sso.${UDSConfig.domain}`;
+const realm = "uds";
 
 // write authservice config to secret
-// TODO: support removal/syncing chains
-// need to key everything by name (same name used in pepr store)
 export async function updateConfig(event: AuthServiceEvent) {
   const authSvcSecret = await K8s(kind.Secret).InNamespace(namespace).Get(secretName);
 
@@ -38,8 +39,6 @@ export function buildConfig(config: AuthserviceConfig, event: AuthServiceEvent) 
 }
 
 export function buildChain(update: AuthServiceEvent) {
-  const baseDomain = "https://sso.uds.dev";
-  const realm = "uds";
   // TODO: get this from the package
   // parse the hostname from the first client redirect uri
   const hostname = new URL(update.client!.redirectUris[0]).hostname;

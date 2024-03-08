@@ -14,5 +14,9 @@ components:
       - name: app-tenant
         files:
           - "app-tenant.yaml"
+      - name: app-authservice-tenant
+        files:
+          - "app-authservice-tenant.yaml"
     images:
       - docker.io/kong/httpbin:latest
+      - arunvelsriram/utils

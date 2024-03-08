@@ -49,5 +49,32 @@ tasks:
             address: demo.uds.dev/status/202
             code: 202
 
+      - description: Verify the authservice tenant app is accessible
+        wait:
+          network:
+            protocol: https
+            address: protected.uds.dev
+            code: 200
+
+      - description: Wait for authservice to reload configuration
+        wait:
+          cluster:
+            kind: Deployment
+            name: authservice
+            namespace: authservice
+
+      - description: Verify the authservice tenant app is protected
+        cmd: |
+          set -e
+          SSO_REDIRECT=$(uds zarf tools kubectl run curl-test --image=arunvelsriram/utils -q --restart=Never --rm -i -- curl -Ls -o /dev/null -w %{url_effective} "https://protected.uds.dev")
+          if [[ "${SSO_REDIRECT}" == "https://sso.uds.dev"* ]]; then
+            echo "Protected by authservice"
+            echo $SSO_REDIRECT
+          else
+            echo "App is not protected by authservice"
+            echo $SSO_REDIRECT
+            exit 1
+          fi
+
       - description: Remove the test resources
         cmd: "uds zarf package remove build/zarf-package-uds-core-test-apps-*.zst --confirm"
