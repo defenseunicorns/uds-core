@@ -55,8 +55,10 @@ jobs:
           ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml ${{ matrix.type}}-package --no-progress --set FLAVOR=${{ matrix.flavor }}
           ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-${{ matrix.type }}-bundle --no-progress
 
-      - name: Deploy amd64 Bundles
-        run: uds run -f tasks/deploy.yaml k3d-${{ matrix.type }}-bundle --no-pogress --set uds_arch=amd64
+      - name: Test amd64 Bundle
+        run: |
+          uds run -f tasks/deploy.yaml k3d-${{ matrix.type }}-bundle --no-progress --set uds_arch=amd64
+          uds run -f tasks/test.yaml validate-packages --no-progress
 
       - name: Publish Standard Package
         if: ${{ matrix.type == 'standard' }}
