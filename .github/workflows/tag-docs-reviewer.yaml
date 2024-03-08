@@ -20,5 +20,5 @@ jobs:
         if: ${{ contains( github.event.pull_request.labels.*.name, 'needs-docs' ) }}
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh pr edit ${{ github.event.pull_request.number }} --add-reviewer= ${{ vars.DOCS_REVIEWER }}
+        run: gh pr edit ${{ github.event.pull_request.number }} --add-reviewer ${{ vars.DOCS_REVIEWER }}
   # todo: add docs linting/formatting
