@@ -75,39 +75,39 @@ When(a.Pod)
     const runAsUser = metadata.labels?.["uds/user"];
     if (runAsUser) {
       pod.securityContext.runAsUser = parseInt(runAsUser);
-      annotateMutation(request, Policy.RequireNonRootUser, "securityContext.runAsUser");
+      annotateMutation(request, "securityContext.runAsUser");
     }
 
     // Set the runAsGroup field if it is defined in a label
     const runAsGroup = metadata.labels?.["uds/group"];
     if (runAsGroup) {
       pod.securityContext.runAsGroup = parseInt(runAsGroup);
-      annotateMutation(request, Policy.RequireNonRootUser, "securityContext.runAsGroup");
+      annotateMutation(request, "securityContext.runAsGroup");
     }
 
     // Set the fsGroup field if it is defined in a label
     const fsGroup = metadata.labels?.["uds/fsgroup"];
     if (fsGroup) {
       pod.securityContext.fsGroup = parseInt(fsGroup);
-      annotateMutation(request, Policy.RequireNonRootUser, "securityContext.fsGroup");
+      annotateMutation(request, "securityContext.fsGroup");
     }
 
     // Set the runAsNonRoot field to true if it is undefined
     if (pod.securityContext.runAsNonRoot === undefined) {
       pod.securityContext.runAsNonRoot = true;
-      annotateMutation(request, Policy.RequireNonRootUser, "securityContext.runAsNonRoot");
+      annotateMutation(request, "securityContext.runAsNonRoot");
     }
 
     // Set the runAsUser field to 1000 if it is undefined
     if (pod.securityContext.runAsUser === undefined) {
       pod.securityContext.runAsUser = 1000;
-      annotateMutation(request, Policy.RequireNonRootUser, "securityContext.runAsUser");
+      annotateMutation(request, "securityContext.runAsUser");
     }
 
     // Set the runAsGroup field to 1000 if it is undefined
     if (pod.securityContext.runAsGroup === undefined) {
       pod.securityContext.runAsGroup = 1000;
-      annotateMutation(request, Policy.RequireNonRootUser, "securityContext.runAsGroup");
+      annotateMutation(request, "securityContext.runAsGroup");
     }
   })
   .Validate(request => {
@@ -330,7 +330,6 @@ When(a.Pod)
     }
     annotateMutation(
       request,
-      Policy.DropAllCapabilities,
       "container.securityContext.capabilities.drop",
     );
   })

@@ -1,6 +1,5 @@
 import { KubernetesObject, V1Container, V1SecurityContext } from "@kubernetes/client-node";
 import { Capability, PeprMutateRequest, PeprValidateRequest, a } from "pepr";
-import { Policy } from "../operator/crd";
 
 export type Ctx = {
   name?: string;
@@ -94,8 +93,7 @@ export function isIstioInitContainer(
 
 export function annotateMutation<T extends KubernetesObject>(
   request: PeprMutateRequest<T>,
-  policy: Policy,
   value: string,
 ) {
-  request.SetAnnotation(`uds-core-policies.${policy}.mutated`, value);
+  request.SetAnnotation(`policies.uds.core/mutated`, value);
 }
