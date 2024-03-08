@@ -25,7 +25,6 @@ jobs:
     strategy:
       matrix:
         flavor: [upstream, registry1]
-        type: [standard, istio]
     needs: tag-new-version
     if: ${{ needs.tag-new-version.outputs.release_created == 'true'}}
     runs-on: "uds-ubuntu-big-boy-8-core"
@@ -49,25 +48,30 @@ jobs:
 
       - name: Create Packages and Bundles
         run: |
-          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml ${{ matrix.type}}-package --no-progress --set FLAVOR=${{ matrix.flavor }}
-          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml k3d-${{ matrix.type }}-bundle --no-progress
+          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress --set FLAVOR=${{ matrix.flavor }}
+          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml k3d-standard-bundle --no-progress
 
-          ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml ${{ matrix.type}}-package --no-progress --set FLAVOR=${{ matrix.flavor }}
-          ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-${{ matrix.type }}-bundle --no-progress
+          ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml standard-package --no-progress --set FLAVOR=${{ matrix.flavor }}
+          ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-standard-bundle --no-progress
 
+          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml istio-package --no-progress --set FLAVOR=${{ matrix.flavor }}
+          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml k3d-istio-bundle --no-progress
+
+          ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml istio-package --no-progress --set FLAVOR=${{ matrix.flavor }}
+          ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-istio-bundle --no-progress
+
+      # Standard Package by default tests what's in the Istio Package
       - name: Test amd64 Bundle
         run: |
-          uds run -f tasks/deploy.yaml k3d-${{ matrix.type }}-bundle --no-progress --set uds_arch=amd64
+          uds run -f tasks/deploy.yaml k3d-standard-bundle --no-progress
           uds run -f tasks/test.yaml validate-packages --no-progress
 
       - name: Publish Standard Package
-        if: ${{ matrix.type == 'standard' }}
-        run: uds run -f tasks/publish.yaml ${{ matrix.type }}-package --set FLAVOR=${{ matrix.flavor }}
-
+        run: uds run -f tasks/publish.yaml standard-package --set FLAVOR=${{ matrix.flavor }}
 
       - name: Publish Upstream Flavored Bundles
         if: ${{ matrix.flavor != 'registry1'}}
-        run: uds run -f tasks/publish.yaml bundles --set TYPE=${{ matrix.type }}
+        run: uds run -f tasks/publish.yaml bundles
 
       - name: Save logs
         if: always()
