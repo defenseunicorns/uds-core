@@ -328,10 +328,7 @@ When(a.Pod)
       container.securityContext.capabilities = container.securityContext.capabilities || {};
       container.securityContext.capabilities.drop = ["ALL"];
     }
-    annotateMutation(
-      request,
-      "container.securityContext.capabilities.drop",
-    );
+    annotateMutation(request, "container.securityContext.capabilities.drop");
   })
   .Validate(request => {
     if (isExempt(request, Policy.DropAllCapabilities)) {
