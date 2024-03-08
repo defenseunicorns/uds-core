@@ -4,14 +4,13 @@ on:
   pull_request:
     types: [opened, reopened, synchronize, labeled]
 
-permissions: write-all # temporary to test if this fixes permissions
-  # contents: write
-  # pull-requests: write
-
 jobs:
   reviewer:
     name: Add Reviewer
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - name: Checkout
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
