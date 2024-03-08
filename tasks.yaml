@@ -74,7 +74,7 @@ tasks:
       - task: create:standard-package
 
   - name: deploy-single-package
-    description: "Deploy PEpr Module and a Zarf Package using UDS_PKG environment variable"
+    description: "Deploy Pepr Module and a Zarf Package using UDS_PKG environment variable"
     actions:
       - task: deploy:single-package
 
