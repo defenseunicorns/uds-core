@@ -18,13 +18,6 @@ spec:
         host: demo
         port: 8000
         targetPort: 80
-    allow:
-      - direction: Egress
-        remoteNamespace: authservice
-        remoteSelector:
-          app.kubernetes.io/name: authservice
-        port: 10003
-        description: "Authservice"
 ---
 apiVersion: v1
 kind: ServiceAccount

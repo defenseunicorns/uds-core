@@ -29,8 +29,8 @@ tasks:
           echo "  - Otherwise run 'npx pepr deploy' to deploy the Pepr module to the cluster"
           echo "  - Additional source packages can be deployed with 'zarf dev deploy src/<package>'"
 
-  - name: identity-setup
-    description: "Create k3d cluster with istio, Pepr, Keycloak, and Authservice"
+  - name: dev-identity
+    description: "Create k3d cluster with istio, Pepr, Keycloak, and Authservice for development"
     actions:
       - task: dev-setup
 

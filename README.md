@@ -103,35 +103,3 @@ UDS_PKG=metrics-server uds run test-single-package
 ```
 
 Note you can specify the `--set FLAVOR=registry1` flag to test using Iron Bank images instead of the upstream images.
-
-#### Testing UDS Core Keycloak and Authservice
-
-To setup the cluster with Keycloak and Authservice deployed, run:
-
-```bash
-uds run identity-setup
-```
-
-To be able to access the Keycloak Admin Portal, it's necessary to expose the route with:
-
-```bash
-zarf connect keycloak
-```
-
-Because the Keycloak has been created anonymously, there is no admin credentials to know. An admin user will be required to be set up first, which should be done on webpage that is auto-loaded by the zarf connect command.
-
-Once the admin portal has been accessed, create a user in the `uds` client.
-
-To test the user authentication portal, navigate to [sso.uds.dev](https://sso.uds.dev/).
-
-##### Pepr and Authservice
-
-Pepr will manage the automation of adding clients to the authservice, this can be manually achieved by using the following steps:
-
-1. Cluster with Authservice and Keycloak deployed
-
-2. (Optional) Use `zarf tools monitor` for visually seeing the test service deploy and Authservice cycle with new client creation for test service.
-
-3. In a different terminal run `kubectl apply -f src/test/app-tenant.yaml`, this will deploy the `test-app` and cause the Authservice to add a new client that should be protected.
-
-4. Accessing [demo.uds.dev](https://demo.uds.dev) should result in a redirect to the keycloak user authentication page
