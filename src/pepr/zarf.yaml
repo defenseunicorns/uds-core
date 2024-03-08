@@ -1,11 +1,11 @@
 kind: ZarfPackageConfig
 metadata:
-  name: uds-core-neuvector
-  description: "UDS Core Neuvector"
-  url: https://open-docs.neuvector.com/
+  name: uds-core-pepr
+  description: "UDS Core Pepr Config"
 
 components:
-  - name: uds-pepr-config
+  - name: uds-core-pepr-config
+    required: true
     charts:
       - name: uds-pepr-config
         namespace: pepr-system

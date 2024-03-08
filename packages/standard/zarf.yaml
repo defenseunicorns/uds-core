@@ -42,6 +42,12 @@ components:
       path: ../../dist
       name: module
 
+  - name: uds-core-pepr
+    required: true
+    import:
+      path: ../../src/pepr
+      name: uds-core-pepr-config
+
   # Metrics Server
   - name: metrics-server
     required: true
