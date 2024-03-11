@@ -1,0 +1,179 @@
+component-definition:
+  uuid: 3a8605ce-29b9-475c-bcf4-e52cf79c6193
+  metadata:
+    title: Pepr
+    last-modified: "2024-02-12T16:33:43Z"
+    version: "20240212"
+    oscal-version: 1.1.1
+    parties:
+      - uuid: f3cf70f8-ba44-4e55-9ea3-389ef24847d3
+        type: organization
+        name: Defense Unicorns
+        links:
+          - href: https://defenseunicorns.com
+            rel: website
+  components:
+    - uuid: d6fe2152-dcac-41e6-a4f6-a8d6fadbb955
+      type: software
+      title: Pepr
+      description: |
+        Pepr is Type safe K8s middleware for humans. Pepr can create policies to validate, mutate, and generate Kubernetes resources and configurations.
+      purpose: To simplify Kubernetes security and configuration management by automating policy enforcement and compliance checks directly within the Kubernetes environment.
+      responsible-roles:
+        - role-id: provider
+          party-uuids:
+            - f3cf70f8-ba44-4e55-9ea3-389ef24847d3
+      control-implementations:
+        - uuid: d2afb4c4-2cd8-5305-a6cc-d1bc7b388d0c
+          source: https://raw.githubusercontent.com/GSA/fedramp-automation/93ca0e20ff5e54fc04140613476fba80f08e3c7d/dist/content/rev5/baselines/json/FedRAMP_rev5_HIGH-baseline-resolved-profile_catalog.json
+          description: Controls implemented by NeuVector for inheritance by applications
+
+          implemented-requirements:
+            - uuid: 5d925850-78e0-4613-8920-3e7dae23eb98
+              control-id: cm-4
+              description: >-
+                # Control Description
+                Analyze changes to the system to determine potential security and privacy impacts prior to change implementation.
+
+                # Control Implementation
+                Policies prevent unauthorized changes form occurring within the system.
+
+              remarks: This control is fully implemented by this tool.
+
+            - uuid: 4e41328c-e74b-4bcc-876d-cb36342e7160
+              control-id: cm-4.1
+              description: >-
+                # Control Description
+                Analyze changes to the system in a separate test environment before implementation in an operational environment, looking for security and privacy impacts due to flaws, weaknesses, incompatibility, or intentional malice.
+
+                # Control Implementation
+                Use of auditing failures due in a test environment would allow changes to be tested against policies without blocking development. Allowing for policies to be mirrored and enforced in production.
+
+              remarks: This control is fully implemented by this tool.
+
+            - uuid: 1346a928-047f-4dd2-8b2c-8da95267d604
+              control-id: cm-6
+              description: >-
+                # Control Description
+                "a. Establish and document configuration settings for components employed within the system that reflect the most restrictive mode consistent with operational requirements using [Assignment: United States Government Configuration Baseline (USGCB)];
+                b. Implement the configuration settings;
+                c. Identify, document, and approve any deviations from established configuration settings for [Assignment: organization-defined system components] based on [Assignment: organization-defined operational requirements]; and
+                d. Monitor and control changes to the configuration settings in accordance with organizational policies and procedures."
+
+                # Control Implementation
+                Policies are configured for cluster-wide and namespaced policies for system configuration. Exceptions can be implemented to policies that will allow for explicit deviations approved by policies/configurations declared in git.
+
+              remarks: This control is fully implemented by this tool.
+
+            - uuid: 54c07740-ef72-4069-8d44-7bc40b6676d2
+              control-id: cm-7
+              description: >-
+                # Control Description
+                "a. Configure the system to provide only [Assignment: organization-defined mission essential capabilities]; and
+                b. Prohibit or restrict the use of the following functions, ports, protocols, software, and/or services: [Assignment: organization-defined prohibited or restricted functions, system ports, protocols, software, and/or services]."
+
+                # Control Implementation
+                Policies are enabled to prevent the use of specific service types (IE, LoadBalancer or NodePort).
+
+              remarks: This control is fully implemented by this tool.
+
+            - uuid: 16da533a-8b34-40ed-acc3-d5fbc55b4790
+              control-id: cm-7.5
+              description: >-
+                # Control Description
+                "(a) Identify [Assignment: organization-defined software programs authorized to execute on the system];
+                (b) Employ a deny-all, permit-by-exception policy to allow the execution of authorized software programs on the system; and
+                (c) Review and update the list of authorized software programs [Assignment: organization-defined frequency]."
+
+                # Control Implementation
+                Policies are written to enact deny-all for workloads unless exceptions are identified.
+
+              remarks: This control is fully implemented by this tool.
+
+            # - uuid: 8f806594-9b62-42ff-bba9-62f1c07ffc5d
+            #   control-id: cm-8.3
+            #   description: >-
+            #     # Control Description
+            #     "(a) Detect the presence of unauthorized hardware, software, and firmware components within the system using [Assignment: organization-defined automated mechanisms] [Assignment: organization-defined frequency]; and
+            #     (b) Take the following actions when unauthorized components are detected: [Selection (one or more): disable network access by such components; isolate the components; notify [Assignment: organization-defined personnel or roles]]."
+
+            #     # Control Implementation
+            #     Policies can be written to validate all software workloads can be verified against a signature.
+
+            #   remarks: This control is fully implemented by this tool.
+
+            - uuid: f2cd4b8b-2cbe-4dc1-967f-2e35fce78c6e
+              control-id: sc.5
+              description: >-
+                # Control Description
+                "a. [Selection: Protect against; Limit] the effects of the following types of denial-of-service events: [Assignment: organization-defined types of denial-of-service events]; and
+                b. Employ the following controls to achieve the denial-of-service objective: [Assignment: organization-defined controls by type of denial-of-service event]."
+
+                # Control Implementation
+                Policies are enabled to limit the effects of a denial of service attack.
+                For example, when a Pod requests an emptyDir, by default it does not have a size limit which may allow it to consume excess or all of the space in the medium backing the volume.
+                This can quickly overrun a Node and may result in a denial of service for other workloads. This policy adds a sizeLimit field to all Pods mounting emptyDir volumes, if not present, and sets it to 100Mi.
+
+              remarks: This control is partially implemented by this tool.
+
+            - uuid: 9157dc3f-d9ea-4f1f-bf7b-723f0afe0340
+              control-id: sc-7.20
+              description: >-
+                # Control Description
+                Provide the capability to dynamically isolate [Assignment: organization-defined system components] from other system components.
+
+                # Control Implementation
+                Policies can be written to Kubernetes Namespaces as a feature that provide a way to segment and isolate cluster resources across multiple applications and users. As a best practice, workloads should be isolated with Namespaces.
+
+              remarks: This control is fully implemented by this tool.
+
+            - uuid: 3cefa46c-19e0-43f1-8d4f-96df8460af62
+              control-id: sc-7.21
+              description: >-
+                # Control Description
+                Employ boundary protection mechanisms to isolate [Assignment: organization-defined system components] supporting [Assignment: organization-defined missions and/or business functions].
+
+                # Control Implementation
+                Policies are enabled to the boundary needed for incoming (ingress) and outgoing (egress) traffic and configure a network policy and/or a constraint configuration.
+
+              remarks: This control is partially implemented by this tool.
+
+            # - uuid: 93c62894-5bb4-402c-97ac-1ce26dcb465a
+            #   control-id: sc-7.25
+            #   description: >-
+            #     # Control Description
+            #     Prohibit the direct connection of [Assignment: organization-defined unclassified national security system] to an external network without the use of [Assignment: organization-defined boundary protection device].
+
+            #     # Control Implementation
+            #     Policies are enabled to get block outgoing (egress) traffic to a specific external network. Configure a network policy and/or a constraint configuration.
+
+            #   remarks: This control is partially implemented by this tool.
+
+            - uuid: 271f61df-fe7a-4f98-8da4-f7d40cccfe2a
+              control-id: si-4.22
+              description: >-
+                # Control Description
+                "(a) Detect network services that have not been authorized or approved by [Assignment: organization-defined authorization or approval processes]; and
+                (b) [Selection (one or more): Audit; Alert [Assignment: organization-defined personnel or roles]] when detected."
+
+                # Control Implementation
+                A validation rule can be made for network services that are not approved/authorized and a policy report can  be created to audit the event.
+
+              remarks: This control is partially implemented by this tool.
+
+          # - uuid: 0c129016-6b58-41db-9a7f-d21cd05e2d2f
+          #   control-id: sr-11
+          #   description: >-
+          #     # Control Description
+          #     "a. Develop and implement anti-counterfeit policy and procedures that include the means to detect and prevent counterfeit components from entering the system; and
+          #     b. Report counterfeit system components to [Selection (one or more): source of counterfeit component; [Assignment: organization-defined external reporting organizations]; [Assignment: organization-defined personnel or roles]]."
+
+          #     # Control Implementation
+          #     Cluster-Wide Policies are enabled to require all images be verified through signature verification.
+
+  back-matter:
+    resources:
+      - uuid: f4939e12-b78b-487d-bd4a-fec1b3be9ff3
+        title: Defense Unicorns UDS Core
+        rlinks:
+          - href: https://github.com/defenseunicorns/uds-core
