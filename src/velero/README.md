@@ -44,6 +44,9 @@ By overriding the velero values in the bundle as follows:
               value: "velero-bucket-credentials"
 ```
 
+## Plugin Compatability
+This package currently assumes the availability of S3 API compatible object storage. As such, only the AWS specific plugin image is included. More information about all available plugins [can be found in the upstream docs](https://velero.io/plugins/). Ironbank includes images for Azure and the generic CSI driver, but those are currently excluded from this package. We may revisit package defaults at some point in the future depending on usage and user requests.
+
 ## Deploy
 
 ### Build and Deploy Everything locally via UDS tasks
