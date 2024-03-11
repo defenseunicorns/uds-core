@@ -63,18 +63,22 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
   const monitorList = pkg.spec?.monitor ?? [];
   // Iterate over each ServiceMonitor
   for (const monitor of monitorList) {
-    const { port, selector } = monitor;
+    const { port, targetPort, service } = monitor;
+    // Lookup the service to get the appropriate pod selector
+    const svc = await K8s(kind.Service).InNamespace(namespace).Get(service);
+    const podSelector = svc.spec?.selector;
+
     // Create the NetworkPolicy for the ServiceMonitor
     const policy: Allow = {
       direction: Direction.Ingress,
-      selector,
+      selector: podSelector,
       remoteNamespace: `monitoring`,
       remoteSelector: {
         app: `prometheus`,
       },
       // todo: lookup targetPort based on svc
-      port: port,
-      description: `${Object.values(selector)} Metrics`,
+      port: targetPort ?? port,
+      description: `${podSelector} Metrics`,
     };
     // Generate the policy
     const generatedPolicy = generate(namespace, policy);

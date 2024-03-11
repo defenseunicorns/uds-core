@@ -24,10 +24,6 @@ export interface Spec {
 
 export interface Monitor {
   /**
-   * A description of the service monitor, this will become part of the name
-   */
-  description?: string;
-  /**
    * HTTP path from which to scrape for metrics, defaults to `/metrics`
    */
   path?: string;
@@ -36,9 +32,14 @@ export interface Monitor {
    */
   port: number;
   /**
-   * Labels to match services in the namespace for the service monitor.
+   * The name of the service to monitor
    */
-  selector: { [key: string]: string };
+  service: string;
+  /**
+   * The service targetPort. This defaults to port and is only required if the service port is
+   * different from the target port (so the NetworkPolicy can be generated correctly).
+   */
+  targetPort?: number;
 }
 
 /**

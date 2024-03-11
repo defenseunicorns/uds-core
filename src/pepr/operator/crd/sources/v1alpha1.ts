@@ -164,24 +164,24 @@ const monitor = {
   type: "array",
   items: {
     type: "object",
-    required: ["port", "selector"],
+    required: ["port", "service"],
     properties: {
-      description: {
-        type: "string",
-        description: "A description of the service monitor, this will become part of the name",
-      },
       port: {
         description: "The port for the serviceMonitor",
         minimum: 1,
         maximum: 65535,
         type: "number",
       },
-      selector: {
-        description: "Labels to match services in the namespace for the service monitor.",
-        type: "object",
-        additionalProperties: {
-          type: "string",
-        },
+      targetPort: {
+        description:
+          "The service targetPort. This defaults to port and is only required if the service port is different from the target port (so the NetworkPolicy can be generated correctly).",
+        minimum: 1,
+        maximum: 65535,
+        type: "number",
+      },
+      service: {
+        type: "string",
+        description: "The name of the service to monitor",
       },
       path: {
         description: "HTTP path from which to scrape for metrics, defaults to `/metrics`",

@@ -21,10 +21,20 @@ export async function serviceMonitor(pkg: UDSPackage, namespace: string) {
   const payloads: Prometheus.ServiceMonitor[] = [];
 
   for (const monitor of monitorList) {
-    // todo: Get the service to translate port number -> name
-    const svc = await K8s(kind.Service).Get("name");
+    // Lookup the service to get the appropriate port name and service selector
+    const svc = await K8s(kind.Service).InNamespace(namespace).Get(monitor.service);
     const portName = svc.spec?.ports?.find(p => p.port === monitor.port)?.name;
+    const svcSelector = svc.metadata?.labels;
 
+    if (!portName || !svcSelector) {
+      if (!portName && !svcSelector) {
+        throw new Error("Both port name and service selector are missing.");
+      } else if (!portName) {
+        throw new Error("Port name is missing.");
+      } else {
+        throw new Error("Service selector is missing.");
+      }
+    }
     const name = generateSMName(pkg, monitor);
     const tlsConfig = {
       caFile: "/etc/prom-certs/root-cert.pem",
@@ -37,10 +47,11 @@ export async function serviceMonitor(pkg: UDSPackage, namespace: string) {
         scheme: Prometheus.Scheme.HTTPS,
         tlsConfig: tlsConfig,
         port: portName,
+        path: monitor.path || "/metrics",
       },
     ];
     const selector: Prometheus.Selector = {
-      matchLabels: monitor.selector,
+      matchLabels: svcSelector,
     };
     const payload: Prometheus.ServiceMonitor = {
       metadata: {
@@ -87,7 +98,7 @@ export async function serviceMonitor(pkg: UDSPackage, namespace: string) {
 
 export function generateSMName(pkg: UDSPackage, monitor: Monitor) {
   // Ensure the resource name is valid
-  const nameSuffix = monitor.description || `${monitor.selector}-${monitor.port}`;
+  const nameSuffix = `${monitor.service}-${monitor.port}`;
   const name = sanitizeResourceName(`${pkg.metadata!.name}-${nameSuffix}`);
 
   return name;
