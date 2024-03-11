@@ -1,24 +1,7 @@
-alertmanager:
-  alertmanagerSpec:
-    resources:
-      limits:
-        cpu: 500m
-        memory: 256Mi
-      requests:
-        cpu: 100m
-        memory: 256Mi
 crds:
   enabled: false
 grafana:
   enabled: false
-kube-state-metrics:
-  resources:
-    limits:
-      cpu: 500m
-      memory: 128Mi
-    requests:
-      cpu: 10m
-      memory: 128Mi
 kubeStateMetrics:
   serviceMonitor:
     interval: ""
@@ -45,7 +28,6 @@ prometheus:
             OUTPUT_CERTS: /etc/istio-output-certs
         sidecar.istio.io/userVolumeMount: '[{"name": "istio-certs", "mountPath": "/etc/istio-output-certs"}]'
         traffic.sidecar.istio.io/includeOutboundIPRanges: ""
-        traffic.sidecar.istio.io/includeInboundPorts: "9090"
       labels:
         app: prometheus
     podMonitorSelectorNilUsesHelmValues: false
@@ -77,37 +59,14 @@ prometheus:
         name: istio-certs
 prometheus-node-exporter:
   containerSecurityContext:
-    capabilities:
-      drop:
-        - ALL
     readOnlyRootFilesystem: true
   hostNetwork: false
   hostPID: false
   podAnnotations:
     cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
-  prometheus:
-  resources:
-    limits:
-      cpu: 500m
-      memory: 128Mi
-    requests:
-      cpu: 100m
-      memory: 128Mi
-  serviceAccount:
-    name: null
-  serviceMonitor:
-    attachMetadata: {}
 prometheusOperator:
   admissionWebhooks:
-    containerSecurityContext:
-      capabilities:
-        drop:
-          - ALL
     patch:
-      containerSecurityContext:
-        capabilities:
-          drop:
-            - ALL
       resources:
         limits:
           cpu: 100m
@@ -115,7 +74,6 @@ prometheusOperator:
         requests:
           cpu: 50m
           memory: 128Mi
-
   prometheusConfigReloader:
     enableProbe:
       false
