@@ -1,10 +1,10 @@
 import { PeprValidateRequest } from "pepr";
 
-import { Gateway, UDSPackage } from ".";
-import { generateName } from "../controllers/network/generate";
-import { sanitizeResourceName } from "../controllers/utils";
-import { generateVSName } from "../controllers/istio/virtual-service";
-import { migrate } from "./migrate";
+import { Gateway, UDSPackage } from "..";
+import { generateVSName } from "../../controllers/istio/virtual-service";
+import { generateName } from "../../controllers/network/generate";
+import { sanitizeResourceName } from "../../controllers/utils";
+import { migrate } from "../migrate";
 
 const invalidNamespaces = ["kube-system", "kube-public", "_unknown_", "pepr-system"];
 

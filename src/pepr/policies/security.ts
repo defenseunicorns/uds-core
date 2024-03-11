@@ -1,12 +1,15 @@
 import { a } from "pepr";
 
 import { V1SecurityContext } from "@kubernetes/client-node";
-import { When, containers, securityContextContainers, securityContextMessage } from "./common";
+import { Policy } from "../operator/crd";
 import {
-  exemptDropAllCapabilities,
-  exemptPrivileged,
-  exemptSELinuxTypes,
-} from "./exemptions/security";
+  When,
+  annotateMutation,
+  containers,
+  securityContextContainers,
+  securityContextMessage,
+} from "./common";
+import { isExempt, markExemption } from "./exemptions";
 
 /**
  * This policy ensures that Pods do not allow privilege escalation.
@@ -22,8 +25,9 @@ import {
  */
 When(a.Pod)
   .IsCreatedOrUpdated()
+  .Mutate(markExemption(Policy.DisallowPrivileged))
   .Validate(request => {
-    if (exemptPrivileged(request)) {
+    if (isExempt(request, Policy.DisallowPrivileged)) {
       return request.Approve();
     }
 
@@ -56,7 +60,8 @@ When(a.Pod)
 When(a.Pod)
   .IsCreatedOrUpdated()
   .Mutate(request => {
-    if (exemptPrivileged(request)) {
+    markExemption(Policy.RequireNonRootUser)(request);
+    if (request.HasAnnotation(`uds-core.pepr.dev/uds-core-policies.${Policy.RequireNonRootUser}`)) {
       return;
     }
 
@@ -98,12 +103,13 @@ When(a.Pod)
     if (pod.securityContext.runAsGroup === undefined) {
       pod.securityContext.runAsGroup = 1000;
     }
+
+    annotateMutation(request, Policy.RequireNonRootUser);
   })
   .Validate(request => {
-    if (exemptPrivileged(request)) {
+    if (isExempt(request, Policy.RequireNonRootUser)) {
       return request.Approve();
     }
-
     // Check if running as root by checking if runAsNonRoot is false or runAsUser is 0
     const isRoot = (ctx: Partial<V1SecurityContext>) => {
       const isRunAsRoot = ctx.runAsNonRoot === false;
@@ -145,7 +151,11 @@ When(a.Pod)
  */
 When(a.Pod)
   .IsCreatedOrUpdated()
+  .Mutate(markExemption(Policy.RestrictProcMount))
   .Validate(request => {
+    if (isExempt(request, Policy.RestrictProcMount)) {
+      return request.Approve();
+    }
     const authorized = [undefined, "Default"];
 
     const violations = securityContextContainers(request).filter(
@@ -172,7 +182,12 @@ When(a.Pod)
  */
 When(a.Pod)
   .IsCreatedOrUpdated()
+  .Mutate(markExemption(Policy.RestrictSeccomp))
   .Validate(request => {
+    if (isExempt(request, Policy.RestrictSeccomp)) {
+      return request.Approve();
+    }
+
     const authorized = [undefined, "RuntimeDefault", "Localhost"];
 
     // Check Pod level security context
@@ -211,7 +226,12 @@ When(a.Pod)
  */
 When(a.Pod)
   .IsCreatedOrUpdated()
+  .Mutate(markExemption(Policy.DisallowSELinuxOptions))
   .Validate(request => {
+    if (isExempt(request, Policy.DisallowSELinuxOptions)) {
+      return request.Approve();
+    }
+
     const seLinuxOptions = request.Raw.spec?.securityContext?.seLinuxOptions;
     const authorized = ["user: undefined", "role: undefined"];
 
@@ -249,8 +269,9 @@ When(a.Pod)
  */
 When(a.Pod)
   .IsCreatedOrUpdated()
+  .Mutate(markExemption(Policy.RestrictSELinuxType))
   .Validate(request => {
-    if (exemptSELinuxTypes(request)) {
+    if (isExempt(request, Policy.RestrictSELinuxType)) {
       return request.Approve();
     }
 
@@ -292,7 +313,8 @@ When(a.Pod)
 When(a.Pod)
   .IsCreatedOrUpdated()
   .Mutate(request => {
-    if (exemptDropAllCapabilities(request)) {
+    markExemption(Policy.DropAllCapabilities)(request);
+    if (request.HasAnnotation(`uds-core.pepr.dev/uds-core-policies.${Policy.RequireNonRootUser}`)) {
       return;
     }
 
@@ -302,12 +324,12 @@ When(a.Pod)
       container.securityContext.capabilities = container.securityContext.capabilities || {};
       container.securityContext.capabilities.drop = ["ALL"];
     }
+    annotateMutation(request, Policy.DropAllCapabilities);
   })
   .Validate(request => {
-    if (exemptDropAllCapabilities(request)) {
+    if (isExempt(request, Policy.DropAllCapabilities)) {
       return request.Approve();
     }
-
     const authorized = "ALL";
 
     const violations = securityContextContainers(request).filter(c => {
@@ -340,7 +362,11 @@ When(a.Pod)
  */
 When(a.Pod)
   .IsCreatedOrUpdated()
+  .Mutate(markExemption(Policy.RestrictCapabilities))
   .Validate(request => {
+    if (isExempt(request, Policy.RestrictCapabilities)) {
+      return request.Approve();
+    }
     const authorized = ["NET_BIND_SERVICE"];
 
     const violations = securityContextContainers(request).filter(

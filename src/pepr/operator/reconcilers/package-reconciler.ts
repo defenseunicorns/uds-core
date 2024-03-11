@@ -1,12 +1,13 @@
-import { K8s, Log } from "pepr";
+import { Log } from "pepr";
 
-import { UDSConfig } from "../config";
-import { enableInjection } from "./controllers/istio/injection";
-import { virtualService } from "./controllers/istio/virtual-service";
-import { keycloak } from "./controllers/keycloak/client-sync";
-import { networkPolicies } from "./controllers/network/policies";
-import { Phase, Status, UDSPackage } from "./crd";
-import { migrate } from "./crd/migrate";
+import { UDSConfig } from "../../config";
+import { updateStatus } from "../common";
+import { enableInjection } from "../controllers/istio/injection";
+import { virtualService } from "../controllers/istio/virtual-service";
+import { keycloak } from "../controllers/keycloak/client-sync";
+import { networkPolicies } from "../controllers/network/policies";
+import { Phase, UDSPackage } from "../crd";
+import { migrate } from "../crd/migrate";
 
 /**
  * The reconciler is called from the queue and is responsible for reconciling the state of the package
@@ -76,21 +77,4 @@ export async function reconciler(pkg: UDSPackage) {
       Log.error({ err: finalErr }, `Error updating status for ${namespace}/${name} failed`);
     });
   }
-}
-
-/**
- * Updates the status of the package
- *
- * @param pkg The package to update
- * @param status The new status
- */
-async function updateStatus(pkg: UDSPackage, status: Status) {
-  Log.debug(pkg.metadata, `Updating status to ${status.phase}`);
-  await K8s(UDSPackage).PatchStatus({
-    metadata: {
-      name: pkg.metadata!.name,
-      namespace: pkg.metadata!.namespace,
-    },
-    status,
-  });
 }

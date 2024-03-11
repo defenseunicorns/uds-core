@@ -1,52 +1,53 @@
 import { KubernetesObject } from "kubernetes-fluent-client";
 import { Log, PeprMutateRequest, PeprValidateRequest } from "pepr";
-
-export type Exempt = {
-  /**
-   * Namespace of the resource to exempt.
-   */
-  namespace?: string;
-  /**
-   * Name of the resource to exempt. Can be a regular expression.
-   */
-  name?: string | RegExp;
-};
-
-export type ExemptList = Array<Exempt>;
+import { Policy } from "../../operator/crd";
+import { Store } from "../common";
 
 /**
- * Register a list of exemptions to be used by the validation action.
+ * Check a resource against an exemption list for use by the validation action.
  *
- * @param exemptList
- * @returns A function that can be used to check if a request is exempt.
+ * @param policy Policy to get exemptions for
+ * @param request The request to check.
+ * @returns True if exempt and false otherwise
  */
-export function registerExemptions(exemptList: ExemptList) {
-  /**
-   * Check if the request is exempt from validation.
-   *
-   * @param request The request to check.
-   * @returns True if the request is exempt, false otherwise.
-   */
-  return <T extends KubernetesObject>(request: PeprValidateRequest<T> | PeprMutateRequest<T>) => {
-    // Loop through the exempt list
-    for (const exempt of exemptList) {
-      // If the exempt name is specified, check it
-      if (exempt.namespace && exempt.namespace !== request.Raw.metadata?.namespace) {
-        continue;
-      }
+export function isExempt<T extends KubernetesObject>(
+  request: PeprValidateRequest<T> | PeprMutateRequest<T>,
+  policy: Policy,
+) {
+  const exemptList = JSON.parse(Store.getItem(policy) || "[]");
 
-      // If the exempt name is specified, check it
-      const name = request.Raw.metadata?.name || request.Raw.metadata?.generateName;
-      if (exempt.name && !name?.match(exempt.name)) {
-        continue;
-      }
-
-      // If we get here, the request is exempt
-      Log.info("request is exempt", { exempt });
-      return true;
+  // Loop through the exempt list
+  for (const exempt of exemptList) {
+    // If the exempt namespace is specified, check it
+    if (exempt.namespace && exempt.namespace !== request.Raw.metadata?.namespace) {
+      continue;
     }
 
-    // No exemptions matched
-    return false;
+    // If the exempt name is specified, check it
+    const name = request.Raw.metadata?.name || request.Raw.metadata?.generateName;
+    if (exempt.name && !name?.match(exempt.name)) {
+      continue;
+    }
+
+    // If we get here, the request is exempt
+    Log.info("request is exempt", { exempt });
+    return true;
+  }
+
+  // No exemptions matched
+  return false;
+}
+
+/**
+ *
+ * @param policy
+ * @returns Function that takes PeprMutateRequest and evaluates if request isExempt()
+ */
+export function markExemption<T extends KubernetesObject>(policy: Policy) {
+  return (request: PeprMutateRequest<T>) => {
+    if (isExempt(request, policy)) {
+      request.SetAnnotation(`uds-core.pepr.dev/uds-core-policies.${policy}`, "exempted");
+      return;
+    }
   };
 }
