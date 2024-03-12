@@ -38,8 +38,6 @@ tasks:
       - task: create:istio-package
       - task: create:k3d-standard-bundle
       - task: deploy:k3d-standard-bundle
-        with:
-          nodes: 3
       - task: validate-packages
 
   - name: uds-core-upgrade
