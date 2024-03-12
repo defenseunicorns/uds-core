@@ -48,7 +48,7 @@ tasks:
       - description: "Set custom pepr image if registry1 flavor"
         cmd: |
           if [ "${FLAVOR}" = "registry1" ]; then
-            echo "--custom-image registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller:v0.26.2"
+            echo "--custom-image registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller:v0.27.0"
           else
             echo ""
           fi
