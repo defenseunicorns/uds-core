@@ -5,28 +5,18 @@ import { ExemptionElement, Matcher, Policy, UDSExemption } from "../../crd";
 type StoredMatcher = Matcher & { owner: string };
 type PolicyMap = Map<Policy, StoredMatcher[]>;
 
-// Remove leading and trailing '/' if added by user to matcher name
-function removeRegexSlash(name: string) {
-  if (name[0] === "/" && name[name.length - 1] === "/") {
-    name = name.slice(1, name.length - 1);
-  }
-  return name;
-}
-
 function addIfIncludesPolicy(
   policy: Policy,
   policyMap: PolicyMap,
-  exemption: ExemptionElement,
+  exemptionEl: ExemptionElement,
   ownerId: string,
-  matcherName: string,
-  storedMatchers: StoredMatcher[],
 ) {
+  const storedMatchers = policyMap.get(policy) ?? [];
   const matcherToStore = {
-    namespace: exemption.matcher.namespace,
-    name: matcherName,
+    namespace: exemptionEl.matcher.namespace,
+    name: exemptionEl.matcher.name,
     owner: ownerId,
   };
-
   const isDuplicate = storedMatchers.some(m => {
     return (
       m.name === matcherToStore.name &&
@@ -36,7 +26,7 @@ function addIfIncludesPolicy(
   });
 
   // add if not already added to policy's exemption list
-  if (exemption.policies.includes(policy) && !isDuplicate) {
+  if (exemptionEl.policies.includes(policy) && !isDuplicate) {
     policyMap.set(policy, [...storedMatchers, matcherToStore]);
   }
 }
@@ -45,11 +35,13 @@ function addIfIncludesPolicy(
 function deleteIfPolicyRemoved(
   policy: Policy,
   policyMap: PolicyMap,
-  matcherPolicies: Policy[],
-  matcherName: string,
+  exemptionEl: ExemptionElement,
   ownerId: string,
-  storedMatchers: StoredMatcher[],
 ) {
+  const matcherName = exemptionEl.matcher.name;
+  const matcherPolicies = exemptionEl.policies;
+  const storedMatchers = policyMap.get(policy) ?? [];
+
   if (storedMatchers.some(sm => sm.name === matcherName) && !matcherPolicies.includes(policy)) {
     policyMap.set(
       policy,
@@ -63,8 +55,8 @@ function deleteIfPolicyRemoved(
 
 // Delete matchers from the store if they no longer exist on a UDSExemption
 function deleteIfMatchersRemoved(
-  policyMap: PolicyMap,
   policy: Policy,
+  policyMap: PolicyMap,
   currExemptMatchers: Set<string>,
   ownerId: string,
 ) {
@@ -92,49 +84,39 @@ function updateStore(policyMap: PolicyMap) {
   }
 }
 
-
 function setupPolicyMap() {
   const { Store } = policies;
   const policyMap: PolicyMap = new Map();
   const policyList = Object.values(Policy);
-  
+
   for (const p of policyList) {
     policyMap.set(p, JSON.parse(Store.getItem(p) || "[]"));
   }
-  
-  return {policyMap, policyList};
+
+  return { policyMap, policyList };
 }
 
 // Add Exemptions to Pepr store as "policy": "[{...matcher, owner: uid}]"
 //(Performance Optimization) Use local map to do aggregation before updating store
 export function processExemptions(exempt: UDSExemption) {
-  const {policyMap, policyList} = setupPolicyMap();
+  const { policyMap, policyList } = setupPolicyMap();
   const currExemptMatchers: Set<string> = new Set();
-  const ownerId = exempt.metadata?.uid || ""
+  const ownerId = exempt.metadata?.uid || "";
 
   // Iterate through all policies -- important for removing exemptions if CR is updated
   for (const p of policyList) {
     for (const e of exempt.spec?.exemptions ?? []) {
-      const name = removeRegexSlash(e.matcher.name);
-      const updatedMatchers = policyMap.get(p) ?? [];
-      currExemptMatchers.add(name);
-
-      // Check if matcher no longer has this policy from previous CR version
-      deleteIfPolicyRemoved(
-        p,
-        policyMap,
-        e.policies,
-        name,
-        ownerId,
-        updatedMatchers,
-      );
+      currExemptMatchers.add(e.matcher.name);
 
       // Add if exemption has this policy in its list
-      addIfIncludesPolicy(p, policyMap, e, ownerId, name, updatedMatchers);
+      addIfIncludesPolicy(p, policyMap, e, ownerId);
+
+      // Check if matcher no longer has this policy from previous CR version
+      deleteIfPolicyRemoved(p, policyMap, e, ownerId);
     }
 
     // Check if policy should no longer have this matcher from previous CR version
-    deleteIfMatchersRemoved(policyMap, p, currExemptMatchers, ownerId);
+    deleteIfMatchersRemoved(p, policyMap, currExemptMatchers, ownerId);
   }
 
   updateStore(policyMap);
@@ -148,11 +130,14 @@ export function removeExemptions(exempt: UDSExemption) {
 
   // Loop through exemptions and remove matchers from policies in the local map
   for (const e of exempt.spec?.exemptions ?? []) {
-    const name = removeRegexSlash(e.matcher.name);
     for (const p of e.policies) {
       const matchers = policyMap.get(p) || [];
       const filteredList = matchers.filter(m => {
-        if (m.name !== name || (m.name === name && m.owner !== exempt.metadata?.uid)) return m;
+        if (
+          m.name !== e.matcher.name ||
+          (m.name === e.matcher.name && m.owner !== exempt.metadata?.uid)
+        )
+          return m;
       });
       policyMap.set(p, filteredList);
     }
