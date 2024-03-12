@@ -18,6 +18,8 @@ nodeExporter:
   serviceMonitor:
     interval: ""
 prometheus:
+  serviceMonitor:
+    selfMonitor: false
   prometheusSpec:
     enableFeatures:
       - remote-write-receiver
