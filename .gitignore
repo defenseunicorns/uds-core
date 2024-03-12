@@ -12,3 +12,4 @@ insecure*
 .env
 zarf
 tmp-tasks.yaml
+cacert.b64

@@ -1,0 +1,21 @@
+apiVersion: uds.dev/v1alpha1
+kind: Exemption
+metadata:
+  name: monitoring
+  namespace: uds-policy-exemptions
+spec:
+  exemptions:
+    - policies:
+        - RestrictHostPathWrite
+        - RestrictVolumeTypes
+      matcher:
+        namespace: monitoring
+        name: "^prometheus-kube-prometheus-stack-prometheus-.*"
+      title: "prometheus kube stack"
+
+    - policies:
+        - RestrictVolumeTypes
+      matcher:
+        namespace: monitoring
+        name: "^kube-prometheus-stack-prometheus-node-exporter-.*"
+      title: "prometheus node exporter"
