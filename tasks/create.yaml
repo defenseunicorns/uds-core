@@ -54,4 +54,3 @@ tasks:
           rm -fr dist
           npm ci
           npx pepr build $CUSTOM_PEPR_IMAGE
-
