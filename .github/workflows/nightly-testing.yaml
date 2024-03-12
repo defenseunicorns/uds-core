@@ -1,0 +1,21 @@
+name: Nightly Testing
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # Runs at midnight every day
+
+jobs:
+  nightly-testing:
+    runs-on: ubuntu-latest
+
+# RKE2 and EKS Jobs
+
+# can we call infra code from other repos like uds-prod-infrastructure
+
+# deploy core
+
+# run tests
+    # any specific distrubution tests
+    # connection tests between core services
+        # kubectl commands?
+        # base cypress tests?
