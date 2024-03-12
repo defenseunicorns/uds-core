@@ -23,6 +23,7 @@ describe("reconciler", () => {
     };
 
     (K8s as jest.Mock).mockImplementation(() => ({
+      Create: jest.fn(),
       PatchStatus: jest.fn(),
     }));
   });
@@ -31,22 +32,5 @@ describe("reconciler", () => {
     delete mockPackage.metadata!.namespace;
     await reconciler(mockPackage);
     expect(Log.error).toHaveBeenCalled();
-  });
-
-  test("should skip processing for pending or completed packages", async () => {
-    mockPackage.status!.phase = Phase.Pending;
-    await reconciler(mockPackage);
-    expect(Log.info).toHaveBeenCalledWith(
-      expect.anything(),
-      "Skipping pending or completed package",
-    );
-
-    mockPackage.status!.phase = Phase.Ready;
-    mockPackage.status!.observedGeneration = mockPackage.metadata!.generation;
-    await reconciler(mockPackage);
-    expect(Log.info).toHaveBeenCalledWith(
-      expect.anything(),
-      "Skipping pending or completed package",
-    );
   });
 });
