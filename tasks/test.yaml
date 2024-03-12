@@ -18,7 +18,7 @@ tasks:
       - task: deploy:single-package
 
       - description: "Validate the package"
-        cmd: uds run -f src/${UDS_PKG}/tasks.yaml validate --no-progress
+        cmd: uds run -f src/${UDS_PKG}/tasks.yaml validate
 
   - name: validate-packages
     description: "Validated all packages"
@@ -27,7 +27,7 @@ tasks:
       - cmd: |
           set -e
           for package in src/*; do
-            uds run -f ${package}/tasks.yaml validate --no-progress
+            uds run -f ${package}/tasks.yaml validate
           done
           set +e
 
@@ -38,6 +38,8 @@ tasks:
       - task: create:istio-package
       - task: create:k3d-standard-bundle
       - task: deploy:k3d-standard-bundle
+        with:
+          nodes: 3
       - task: validate-packages
 
   - name: uds-core-upgrade

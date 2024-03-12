@@ -9,9 +9,13 @@ variables:
 
 tasks:
   - name: k3d-standard-bundle
+    inputs:
+      nodes:
+        default: "1"
+        description: This is the number of nodes
     actions:
       - description: "Deploy the UDS Core Standard Bundle"
-        cmd: uds deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress
+        cmd: uds deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --confirm --set K3D_EXTRA_ARGS="--servers $INPUT_NODES" --no-progress
 
   - name: k3d-istio-bundle
     actions:
