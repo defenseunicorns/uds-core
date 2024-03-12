@@ -1,3 +1,4 @@
+{{- if .Values.devMode }}
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
@@ -25,3 +26,4 @@ spec:
   resources:
     requests:
       storage: 512Mi
+{{- end }}

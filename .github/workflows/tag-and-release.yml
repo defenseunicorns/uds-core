@@ -27,7 +27,7 @@ jobs:
         flavor: [upstream, registry1]
     needs: tag-new-version
     if: ${{ needs.tag-new-version.outputs.release_created == 'true'}}
-    runs-on: ubuntu-latest
+    runs-on: "uds-ubuntu-big-boy-8-core"
     name: Publish packages
 
     permissions:
@@ -46,11 +46,31 @@ jobs:
       - name: Login to registry1
         run: uds run registry-login --set REGISTRY=registry1.dso.mil --set REGISTRY_USERNAME=${{ secrets.IRON_BANK_ROBOT_USERNAME }} --set REGISTRY_PASSWORD=${{ secrets.IRON_BANK_ROBOT_PASSWORD }} --set REGISTRY_RETRY_INTERVAL=90
 
-      - name: Publish UDS Zarf Package
-        run: uds run -f tasks/publish.yaml packages --set FLAVOR=${{ matrix.flavor }}
+      - name: Create Packages and Bundles
+        run: |
+          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress --set FLAVOR=${{ matrix.flavor }}
+          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml k3d-standard-bundle --no-progress
 
-      - name: Publish UDS Bundles
-        if: ${{ matrix.flavor != 'registry1' }}
+          ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml standard-package --no-progress --set FLAVOR=${{ matrix.flavor }}
+          ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-standard-bundle --no-progress
+
+          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml istio-package --no-progress --set FLAVOR=${{ matrix.flavor }}
+          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml k3d-istio-bundle --no-progress
+
+          ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml istio-package --no-progress --set FLAVOR=${{ matrix.flavor }}
+          ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-istio-bundle --no-progress
+
+      # Standard Package by default tests what's in the Istio Package
+      - name: Test amd64 Bundle
+        run: |
+          uds run -f tasks/deploy.yaml k3d-standard-bundle --no-progress
+          uds run -f tasks/test.yaml validate-packages --no-progress
+
+      - name: Publish Standard Package
+        run: uds run -f tasks/publish.yaml standard-package --set FLAVOR=${{ matrix.flavor }}
+
+      - name: Publish Upstream Flavored Bundles
+        if: ${{ matrix.flavor != 'registry1'}}
         run: uds run -f tasks/publish.yaml bundles
 
       - name: Save logs

@@ -230,9 +230,16 @@ spec:
           emptyDir: {}
         - name: conf
           emptyDir: {}
+      {{- if .Values.devMode }}
         - name: data
           persistentVolumeClaim:
             claimName: {{ include "keycloak.fullname" . }}-data
         - name: themes
           persistentVolumeClaim:
             claimName: {{ include "keycloak.fullname" . }}-themes
+      {{- else }}
+        - name: data
+          emptyDir: {}
+        - name: themes
+          emptyDir: {}
+      {{- end }}
