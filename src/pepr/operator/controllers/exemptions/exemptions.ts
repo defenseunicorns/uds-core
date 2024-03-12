@@ -1,7 +1,6 @@
 import { Log } from "pepr";
 import { policies } from "../../../policies/index";
 import { ExemptionElement, Matcher, Policy, UDSExemption } from "../../crd";
-import { PeprStore } from "pepr/dist/lib/storage";
 
 type StoredMatcher = Matcher & { owner: string };
 type PolicyMap = Map<Policy, StoredMatcher[]>;
@@ -85,28 +84,37 @@ function deleteIfMatchersRemoved(
 }
 
 // Iterate through local Map and update Store
-function updateStore(policyMap: PolicyMap, store: PeprStore) {
+function updateStore(policyMap: PolicyMap) {
+  const { Store } = policies;
   for (const [policy, matchers] of policyMap.entries()) {
     Log.debug(`Updating uds policy ${policy} exemptions: ${JSON.stringify(matchers)}`);
-    store.setItem(policy, JSON.stringify(matchers));
+    Store.setItem(policy, JSON.stringify(matchers));
   }
+}
+
+
+function setupPolicyMap() {
+  const { Store } = policies;
+  const policyMap: PolicyMap = new Map();
+  const policyList = Object.values(Policy);
+  
+  for (const p of policyList) {
+    policyMap.set(p, JSON.parse(Store.getItem(p) || "[]"));
+  }
+  
+  return {policyMap, policyList};
 }
 
 // Add Exemptions to Pepr store as "policy": "[{...matcher, owner: uid}]"
 //(Performance Optimization) Use local map to do aggregation before updating store
 export function processExemptions(exempt: UDSExemption) {
-  const { Store } = policies;
-  const policyMap: PolicyMap = new Map();
-  const policyList = Object.values(Policy);
-  const exemptions = exempt.spec?.exemptions ?? [];
+  const {policyMap, policyList} = setupPolicyMap();
   const currExemptMatchers: Set<string> = new Set();
+  const ownerId = exempt.metadata?.uid || ""
 
   // Iterate through all policies -- important for removing exemptions if CR is updated
   for (const p of policyList) {
-    // Set local map with current state of store
-    policyMap.set(p, JSON.parse(Store.getItem(p) || "[]"));
-
-    for (const e of exemptions) {
+    for (const e of exempt.spec?.exemptions ?? []) {
       const name = removeRegexSlash(e.matcher.name);
       const updatedMatchers = policyMap.get(p) ?? [];
       currExemptMatchers.add(name);
@@ -117,37 +125,29 @@ export function processExemptions(exempt: UDSExemption) {
         policyMap,
         e.policies,
         name,
-        exempt.metadata?.uid || "",
+        ownerId,
         updatedMatchers,
       );
 
       // Add if exemption has this policy in its list
-      addIfIncludesPolicy(p, policyMap, e, exempt.metadata?.uid || "", name, updatedMatchers);
+      addIfIncludesPolicy(p, policyMap, e, ownerId, name, updatedMatchers);
     }
 
     // Check if policy should no longer have this matcher from previous CR version
-    deleteIfMatchersRemoved(policyMap, p, currExemptMatchers, exempt.metadata?.uid || "");
+    deleteIfMatchersRemoved(policyMap, p, currExemptMatchers, ownerId);
   }
 
-  updateStore(policyMap, Store);
+  updateStore(policyMap);
 }
 
 //(Performance Optimization) Use local map to do aggregation before updating store
 export function removeExemptions(exempt: UDSExemption) {
-  const { Store } = policies;
-  const exemptions = exempt.spec?.exemptions ?? [];
-  const policyMap: PolicyMap = new Map();
-  const policyList = Object.values(Policy);
+  const { policyMap } = setupPolicyMap();
 
   Log.debug(`Removing policy exemptions for ${exempt.metadata?.name}`);
 
-  // Set local map with current state of store
-  for (const p of policyList) {
-    policyMap.set(p, JSON.parse(Store.getItem(p) || "[]"));
-  }
-
   // Loop through exemptions and remove matchers from policies in the local map
-  for (const e of exemptions) {
+  for (const e of exempt.spec?.exemptions ?? []) {
     const name = removeRegexSlash(e.matcher.name);
     for (const p of e.policies) {
       const matchers = policyMap.get(p) || [];
@@ -158,5 +158,5 @@ export function removeExemptions(exempt: UDSExemption) {
     }
   }
 
-  updateStore(policyMap, Store);
+  updateStore(policyMap);
 }
