@@ -16,12 +16,19 @@ Beyond mutations we also support generating service monitors from the `monitor` 
 ...
 spec:
   monitor:
-    - service: "foobar"
-      port: 1234
-      targetPort: 4321 # Optional, defaults to `port`
-      path: "/mymetrics" # Optional, defaults to "/metrics"
+    - selector: # Selector for the service to monitor
+        app: foobar
+      portName: metrics # Name of the port to monitor
+      targetPort: 1234 # Corresponding target port on the pod/container (for network policy)
+      # Optional properties depending on your application
+      description: "Metrics" # Add to customize the service monitor name
+      podSelector: # Add if pod labels are different than `selector` (for network policy)
+        app: barfoo
+      path: "/mymetrics" # Add if metrics are exposed on a different path than "/metrics"
 ```
 
 This config is used to generate service monitors and corresponding network policies to setup scraping for your applications. The `ServiceMonitor`s will have the necessary `tlsConfig` and `scheme` to work in an istio environment. 
 
 This spec intentionally does not support all options available with a `ServiceMonitor`. While we may add additional fields in the future, we do not want to simply rebuild the `ServiceMonitor` spec since mutations are already available to handle Istio specifics. The current subset of spec options is based on the bare minimum necessary to craft resources.
+
+NOTE: While this is a rather verbose spec, each of the above fields are strictly required to craft the necessary service monitor and network policy resources. We could lookup some of these values if we assumed the service already existed (selectors, ports, etc), but this would result in new challenges to handle upgrades when those values change (to ensure that pepr is watching for changes and updating the dependent resources appropriately). This more verbose spec provides the best of both worlds - a simplified interface compared to the `ServiceMonitor` spec, and a faster/easier reconciliation loop.

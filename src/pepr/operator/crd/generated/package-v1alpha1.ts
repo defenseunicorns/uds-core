@@ -24,22 +24,31 @@ export interface Spec {
 
 export interface Monitor {
   /**
+   * A description of this monitor entry, this will become part of the ServiceMonitor name
+   */
+  description?: string;
+  /**
    * HTTP path from which to scrape for metrics, defaults to `/metrics`
    */
   path?: string;
   /**
-   * The port for the serviceMonitor
+   * Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all
+   * pods in the namespace
    */
-  port: number;
+  podSelector?: { [key: string]: string };
   /**
-   * The name of the service to monitor
+   * The port name for the serviceMonitor
    */
-  service: string;
+  portName: string;
   /**
-   * The service targetPort. This defaults to port and is only required if the service port is
-   * different from the target port (so the NetworkPolicy can be generated correctly).
+   * Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all
+   * pods in the namespace
    */
-  targetPort?: number;
+  selector: { [key: string]: string };
+  /**
+   * The service targetPort. This is required so the NetworkPolicy can be generated correctly.
+   */
+  targetPort: number;
 }
 
 /**

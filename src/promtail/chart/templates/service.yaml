@@ -1,0 +1,17 @@
+# Upstream chart can create this service but it is conditionally tied to other resources we don't want
+apiVersion: v1
+kind: Service
+metadata:
+  name: promtail-metrics
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: promtail
+spec:
+  clusterIP: None
+  ports:
+    - name: http-metrics
+      port: 3101
+      targetPort: http-metrics
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: promtail

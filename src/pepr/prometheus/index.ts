@@ -16,6 +16,10 @@ const { When } = prometheus;
 When(Prometheus.ServiceMonitor)
   .IsCreatedOrUpdated()
   .Mutate(async sm => {
+    // todo: add something like this, or handle injection/mtls better?
+    if (sm.Raw.metadata?.labels?.["uds/skip-mutate"]) {
+      return;
+    }
     const namespaces = sm.Raw.spec?.namespaceSelector?.matchNames || [sm.Raw.metadata?.namespace];
     let istioInjected = false;
 

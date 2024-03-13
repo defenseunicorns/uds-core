@@ -164,24 +164,39 @@ const monitor = {
   type: "array",
   items: {
     type: "object",
-    required: ["port", "service"],
+    required: ["portName", "selector", "targetPort"],
     properties: {
-      port: {
-        description: "The port for the serviceMonitor",
-        minimum: 1,
-        maximum: 65535,
-        type: "number",
+      description: {
+        type: "string",
+        description:
+          "A description of this monitor entry, this will become part of the ServiceMonitor name",
+      },
+      portName: {
+        description: "The port name for the serviceMonitor",
+        type: "string",
       },
       targetPort: {
         description:
-          "The service targetPort. This defaults to port and is only required if the service port is different from the target port (so the NetworkPolicy can be generated correctly).",
+          "The service targetPort. This is required so the NetworkPolicy can be generated correctly.",
         minimum: 1,
         maximum: 65535,
         type: "number",
       },
-      service: {
-        type: "string",
-        description: "The name of the service to monitor",
+      selector: {
+        description:
+          "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace",
+        type: "object",
+        additionalProperties: {
+          type: "string",
+        },
+      },
+      podSelector: {
+        description:
+          "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace",
+        type: "object",
+        additionalProperties: {
+          type: "string",
+        },
       },
       path: {
         description: "HTTP path from which to scrape for metrics, defaults to `/metrics`",

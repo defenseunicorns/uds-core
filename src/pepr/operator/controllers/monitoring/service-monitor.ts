@@ -1,4 +1,4 @@
-import { K8s, Log, kind } from "pepr";
+import { K8s, Log } from "pepr";
 
 import { Prometheus, UDSPackage, getOwnerRef } from "../../crd";
 import { Monitor } from "../../crd/generated/package-v1alpha1";
@@ -21,20 +21,7 @@ export async function serviceMonitor(pkg: UDSPackage, namespace: string) {
   const payloads: Prometheus.ServiceMonitor[] = [];
 
   for (const monitor of monitorList) {
-    // Lookup the service to get the appropriate port name and service selector
-    const svc = await K8s(kind.Service).InNamespace(namespace).Get(monitor.service);
-    const portName = svc.spec?.ports?.find(p => p.port === monitor.port)?.name;
-    const svcSelector = svc.metadata?.labels;
-
-    if (!portName || !svcSelector) {
-      if (!portName && !svcSelector) {
-        throw new Error("Both port name and service selector are missing.");
-      } else if (!portName) {
-        throw new Error("Port name is missing.");
-      } else {
-        throw new Error("Service selector is missing.");
-      }
-    }
+    const { selector, portName } = monitor;
     const name = generateSMName(pkg, monitor);
     const tlsConfig = {
       caFile: "/etc/prom-certs/root-cert.pem",
@@ -50,8 +37,8 @@ export async function serviceMonitor(pkg: UDSPackage, namespace: string) {
         path: monitor.path || "/metrics",
       },
     ];
-    const selector: Prometheus.Selector = {
-      matchLabels: svcSelector,
+    const promSelector: Prometheus.Selector = {
+      matchLabels: selector,
     };
     const payload: Prometheus.ServiceMonitor = {
       metadata: {
@@ -65,7 +52,7 @@ export async function serviceMonitor(pkg: UDSPackage, namespace: string) {
       },
       spec: {
         endpoints: endpoints,
-        selector: selector,
+        selector: promSelector,
       },
     };
 
@@ -97,8 +84,10 @@ export async function serviceMonitor(pkg: UDSPackage, namespace: string) {
 }
 
 export function generateSMName(pkg: UDSPackage, monitor: Monitor) {
+  const { selector, portName, description } = monitor;
+
   // Ensure the resource name is valid
-  const nameSuffix = `${monitor.service}-${monitor.port}`;
+  const nameSuffix = description || `${Object.values(selector)}-${portName}`;
   const name = sanitizeResourceName(`${pkg.metadata!.name}-${nameSuffix}`);
 
   return name;
