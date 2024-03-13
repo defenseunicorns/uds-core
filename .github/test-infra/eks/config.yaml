@@ -1,0 +1,38 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: "###ZARF_VAR_CLUSTER_NAME###"
+  region: us-east-2
+  version: "1.27"
+  tags:
+    PermissionsBoundary: "###ZARF_VAR_PERMISSIONS_BOUNDARY_NAME###"
+
+iam:
+  withOIDC: true
+  serviceRolePermissionsBoundary: "###ZARF_VAR_PERMISSIONS_BOUNDARY_ARN###"
+
+addons:
+  - name: aws-ebs-csi-driver
+    version: v1.25.0-eksbuild.1
+
+    attachPolicyARNs:
+      - arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy
+    permissionsBoundary: "###ZARF_VAR_PERMISSIONS_BOUNDARY_ARN###"
+    tags:
+      PermissionsBoundary: "###ZARF_VAR_PERMISSIONS_BOUNDARY_NAME###"
+
+  - name: vpc-cni
+    permissionsBoundary: "###ZARF_VAR_PERMISSIONS_BOUNDARY_ARN###"
+    tags:
+      PermissionsBoundary: "###ZARF_VAR_PERMISSIONS_BOUNDARY_NAME###"
+
+managedNodeGroups:
+  - name: ng-1
+    instanceType: m5.2xlarge
+    desiredCapacity: 3
+    volumeSize: 150
+    tags:
+      PermissionsBoundary: "###ZARF_VAR_PERMISSIONS_BOUNDARY_NAME###"
+    iam:
+      instanceRolePermissionsBoundary: "###ZARF_VAR_PERMISSIONS_BOUNDARY_ARN###"

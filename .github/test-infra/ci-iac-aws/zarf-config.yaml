@@ -1,0 +1,19 @@
+package:
+  create:
+    max_package_size: "1000000000"
+    set:
+      terraform_version: "1.5.7"
+  deploy:
+    set:
+      # -- Name of the EKS cluster
+      eks_cluster_name: "uds-core-aws"
+      # -- Name of existing Terraform state bucket
+      state_bucket_name: "uds-dev-state-bucket"
+      # -- Key path to Terraform state file within the bucket
+      state_key: "tfstate/dev/uds-dev-state-bucket.tfstate"
+      # -- Name of DynamoDB table used for Terraform state locking
+      state_dynamodb_table_name: "uds-dev-state-dynamodb"
+      # -- AWS region
+      region: "us-west-2"
+      # -- If set to true, force delete all resources on removal (i.e. loki S3 bucket, PVCs, etc)
+      ephemeral: "true"

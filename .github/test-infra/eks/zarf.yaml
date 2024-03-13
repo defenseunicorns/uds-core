@@ -1,0 +1,49 @@
+kind: ZarfPackageConfig
+metadata:
+  name: distro-eks
+  description: "Deploy an EKS K8s cluster"
+  architecture: multi
+  version: "0.15.1"
+
+variables:
+  - name: CLUSTER_NAME
+    prompt: true
+  - name: PERMISSIONS_BOUNDARY_ARN
+  - name: PERMISSIONS_BOUNDARY_NAME
+
+components:
+  - name: load-eksctl
+    required: true
+    actions:
+      onDeploy:
+        after:
+          # Remove existing eksctl
+          - cmd: rm -f eksctl
+          # Extract the correct linux or mac binary from the tarball
+          - cmd: ./zarf tools archiver decompress archives/eksctl_$(uname -s)_$(uname -m).tar.gz .
+          # Cleanup temp files
+          - cmd: rm -fr archives
+    files:
+      - source: config.yaml
+        target: config.yaml
+      - source: https://github.com/weaveworks/eksctl/releases/download/###ZARF_PKG_VAR_EKSCTL_VERSION###/eksctl_Darwin_amd64.tar.gz
+        target: archives/eksctl_Darwin_x86_64.tar.gz
+      - source: https://github.com/weaveworks/eksctl/releases/download/###ZARF_PKG_VAR_EKSCTL_VERSION###/eksctl_Darwin_arm64.tar.gz
+        target: archives/eksctl_Darwin_arm64.tar.gz
+      - source: https://github.com/weaveworks/eksctl/releases/download/###ZARF_PKG_VAR_EKSCTL_VERSION###/eksctl_Linux_amd64.tar.gz
+        target: archives/eksctl_Linux_x86_64.tar.gz
+
+  - name: deploy-eks-cluster
+    required: true
+    actions:
+      onDeploy:
+        before:
+          - cmd: ./eksctl create cluster --dry-run -f config.yaml
+          - cmd: sleep 15
+          - cmd: ./eksctl create cluster -f config.yaml
+        after:
+          - cmd: ./eksctl utils write-kubeconfig -c ${ZARF_VAR_CLUSTER_NAME}
+      onRemove:
+        before:
+          - cmd: ./eksctl delete cluster -f config.yaml --disable-nodegroup-eviction --wait
+

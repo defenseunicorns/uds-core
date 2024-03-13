@@ -1,0 +1,68 @@
+name: Test UDS Core On EKS
+
+on:
+  workflow_call:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  test-clean-install:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_COMMERCIAL_ORG_ROLE_TO_ASSUME }}
+          role-session-name: ${{ github.job || github.event.client_payload.pull_request.head.sha || github.sha }}
+          aws-region: us-east-2
+          role-duration-seconds: 21600
+
+      - name: Set Terraform version
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.5.7"
+
+      - name: Environment setup
+        uses: ./.github/actions/setup
+    
+      - name: Login to registry1
+        run: uds run registry-login --set REGISTRY=registry1.dso.mil --set REGISTRY_USERNAME=${{ secrets.IRON_BANK_ROBOT_USERNAME }} --set REGISTRY_PASSWORD=${{ secrets.IRON_BANK_ROBOT_PASSWORD }} --set REGISTRY_RETRY_INTERVAL=90
+
+      - name: Set eks_cluster_name
+        id: get_cluster_name
+        env:
+          SHA: ${{ github.sha }}
+        run: |
+          echo "eks_cluster_name=uds-core-aws-${SHA:0:7}" >> $GITHUB_OUTPUT
+          echo "short_sha=${SHA:0:7}" >> $GITHUB_OUTPUT
+
+      - name: Create EKSCTL Package
+        run: uds zarf package create .github/test-infra/eks -o .github/packages --confirm
+
+      - name: Create CI-IAC-AWS Package
+        run: uds zarf package create .github/test-infra/ci-iac-aws -o .github/packages --confirm
+
+      - name: Create UDS Core Package
+        run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress -o .github/packages
+
+      - name: Create Bundle
+        env:
+          UDS_EKS_CLUSTER_NAME: ${{ steps.get_cluster_name.outputs.eks_cluster_name }}
+          UDS_PERMISSIONS_BOUNDARY_ARN:  ${{ secrets.PERMISSIONS_BOUNDARY_ARN }}
+          UDS_PERMISSIONS_BOUNDARY_NAME: ${{ secrets.PERMISSIONS_BOUNDARY_NAME }}
+        run: uds create .github/bundles --confirm
+
+      - name: Deploy Bundle
+        run: uds deploy .github/bundles/uds-bundle-uds-core-eks-nightly-*.tar.gz --confirm
+
+      - name: Remove UDS Core And Teardown EKS
+        if: always()
+        run: uds remove .github/bundles/uds-bundle-uds-core-eks-*.tar.gz --confirm
+        timeout-minutes: 60
+        continue-on-error: true
