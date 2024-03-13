@@ -2,7 +2,7 @@ registry: registry1.dso.mil
 exporter:
   image:
     repository: ironbank/neuvector/neuvector/prometheus-exporter
-    tag: 5.1.0
+    tag: 5.3.0
 
   containerSecurityContext:
     runAsUser: 1002
