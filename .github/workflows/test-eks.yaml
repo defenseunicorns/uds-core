@@ -30,7 +30,7 @@ jobs:
 
       - name: Environment setup
         uses: ./.github/actions/setup
-    
+
       - name: Login to registry1
         run: uds run registry-login --set REGISTRY=registry1.dso.mil --set REGISTRY_USERNAME=${{ secrets.IRON_BANK_ROBOT_USERNAME }} --set REGISTRY_PASSWORD=${{ secrets.IRON_BANK_ROBOT_PASSWORD }} --set REGISTRY_RETRY_INTERVAL=90
 
@@ -54,7 +54,7 @@ jobs:
       - name: Create Bundle
         env:
           UDS_EKS_CLUSTER_NAME: ${{ steps.get_cluster_name.outputs.eks_cluster_name }}
-          UDS_PERMISSIONS_BOUNDARY_ARN:  ${{ secrets.PERMISSIONS_BOUNDARY_ARN }}
+          UDS_PERMISSIONS_BOUNDARY_ARN: ${{ secrets.PERMISSIONS_BOUNDARY_ARN }}
           UDS_PERMISSIONS_BOUNDARY_NAME: ${{ secrets.PERMISSIONS_BOUNDARY_NAME }}
         run: uds create .github/bundles --confirm
 

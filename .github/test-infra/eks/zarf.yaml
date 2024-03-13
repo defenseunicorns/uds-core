@@ -46,4 +46,3 @@ components:
       onRemove:
         before:
           - cmd: ./eksctl delete cluster -f config.yaml --disable-nodegroup-eviction --wait
-
