@@ -238,7 +238,7 @@
       "pinDigests": true
     },
     {
-      "matchFileNames": ["package.json", "package-lock.json"],
+      "matchFileNames": ["package.json", "package-lock.json", "tasks/create.yaml"],
       "groupName": "pepr",
       "commitMessageTopic": "pepr"
     }
