@@ -1,8 +1,8 @@
 import { K8s, Log } from "pepr";
 
 import { UDSConfig } from "../../../config";
-import { Expose, Gateway, Istio, UDSPackage, getOwnerRef } from "../../crd";
-import { sanitizeResourceName } from "../utils";
+import { Expose, Gateway, Istio, UDSPackage } from "../../crd";
+import { getOwnerRef, sanitizeResourceName } from "../utils";
 
 /**
  * Creates a VirtualService for each exposed service in the package

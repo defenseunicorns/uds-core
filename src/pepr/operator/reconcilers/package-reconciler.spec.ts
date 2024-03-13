@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, jest, test } from "@jest/globals";
 
 import { K8s, Log } from "pepr";
 import { Phase, UDSPackage } from "../crd";
-import { reconciler } from "./package-reconciler";
+import { packageReconciler } from "./package-reconciler";
 
 jest.mock("kubernetes-fluent-client");
 jest.mock("pepr");
@@ -30,7 +30,7 @@ describe("reconciler", () => {
 
   test("should log an error for invalid package definitions", async () => {
     delete mockPackage.metadata!.namespace;
-    await reconciler(mockPackage);
+    await packageReconciler(mockPackage);
     expect(Log.error).toHaveBeenCalled();
   });
 });

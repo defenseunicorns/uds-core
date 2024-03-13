@@ -15,7 +15,7 @@ import { migrate } from "../crd/migrate";
  *
  * @param pkg the package to reconcile
  */
-export async function reconciler(pkg: UDSPackage) {
+export async function packageReconciler(pkg: UDSPackage) {
   if (isPendingOrCurrent(pkg)) {
     return;
   }

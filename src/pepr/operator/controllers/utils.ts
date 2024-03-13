@@ -1,5 +1,5 @@
-import { brotliCompress, brotliDecompress } from "zlib";
-import { promisify } from "util";
+import { V1OwnerReference } from "@kubernetes/client-node";
+import { GenericKind } from "kubernetes-fluent-client";
 
 /**
  * Sanitize a resource name to make it a valid Kubernetes resource name.
@@ -22,15 +22,19 @@ export function sanitizeResourceName(name: string) {
 }
 
 /**
- * Compresses a string or buffer using Brotli algorithm.
- * @param {Buffer | string} input - The input data to compress. Can be a string or a Buffer.
- * @returns {Promise<Buffer>} A promise that resolves with the compressed data as a Buffer.
+ * Get the owner reference for a custom resource
+ * @param cr the custom resource to get the owner reference for
+ * @returns the owner reference for the custom resource
  */
-export const compress = promisify(brotliCompress);
+export function getOwnerRef(cr: GenericKind): V1OwnerReference[] {
+  const { name, uid } = cr.metadata!;
 
-/**
- * Decompresses a Brotli-compressed buffer.
- * @param {Buffer} inputBuffer - The Brotli-compressed data to decompress.
- * @returns {Promise<Buffer>} A promise that resolves with the decompressed data as a Buffer.
- */
-export const decompress = promisify(brotliDecompress);
+  return [
+    {
+      apiVersion: cr.apiVersion!,
+      kind: cr.kind!,
+      uid: uid!,
+      name: name!,
+    },
+  ];
+}
