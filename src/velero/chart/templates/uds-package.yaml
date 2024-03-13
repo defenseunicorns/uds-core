@@ -25,21 +25,3 @@ spec:
           app.kubernetes.io/name: velero
         port: 8068
         description: "Prometheus Metrics"
-
-      - direction: Ingress
-        selector:
-          app.kubernetes.io/name: velero
-        remoteNamespace: promtail
-        remoteSelector:
-          app.kubernetes.io/name: promtail
-        ports:
-          - 8080
-        description: "Promtail Log Storage"
-
-      - direction: Egress
-        remoteNamespace: tempo
-        remoteSelector:
-          app.kubernetes.io/name: tempo
-        port: 9411
-        description: "Tempo"
-        
