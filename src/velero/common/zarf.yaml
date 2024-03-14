@@ -1,0 +1,40 @@
+kind: ZarfPackageConfig
+metadata:
+  name: uds-core-velero-common
+  description: "UDS Core Velero Common"
+  url: https://velero.io/
+
+variables:
+  - name: VELERO_BUCKET_PROVIDER_URL
+    description: "S3 compatible object storage service for use with Velero"
+    default: "http://minio.uds-dev-stack.svc.cluster.local:9000"
+  - name: VELERO_BUCKET
+    description: "S3 compatible object storage bucket for use with Velero"
+    default: "uds"
+  - name: VELERO_BUCKET_REGION
+    description: "Region of the bucket for use with Velero"
+    default: "uds-dev-stack"
+  - name: VELERO_BUCKET_KEY
+    description: "Key to use when connecting to the Velero bucket"
+    default: "uds"
+  - name: VELERO_BUCKET_KEY_SECRET
+    sensitive: true
+    description: "Key secret to use when connecting to the Velero bucket"
+    default: "uds-secret"
+
+components:
+  - name: velero
+    required: true
+    charts:
+      - name: uds-velero-config
+        namespace: velero
+        version: 0.1.0
+        localPath: ../chart
+      - name: velero
+        namespace: velero
+        url: https://vmware-tanzu.github.io/helm-charts
+        version: 5.4.1
+        repoName: velero
+        releaseName: velero
+        valuesFiles:
+          - ../values/values.yaml

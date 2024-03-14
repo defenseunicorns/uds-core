@@ -1,0 +1,27 @@
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: velero
+  namespace: {{ .Release.Namespace }}
+spec:
+  network:
+    allow:
+      # Todo: wide open for now for pushing to s3
+      - direction: Egress
+        podLabels:
+          app.kubernetes.io/name: velero
+        remoteGenerated: Anywhere
+
+      - direction: Egress
+        podLabels:
+          batch.kubernetes.io/job-name: "velero-upgrade-crds"
+        remoteGenerated: KubeAPI
+
+      - direction: Ingress
+        remoteNamespace: monitoring
+        remoteSelector:
+          app: prometheus
+        selector:
+          app.kubernetes.io/name: velero
+        port: 8068
+        description: "Prometheus Metrics"
