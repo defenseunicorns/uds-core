@@ -81,7 +81,7 @@ uds zarf tools kubectl apply -f - <<-EOF
   apiVersion: velero.io/v1
   kind: Backup
   metadata:
-    name: ${BACKUP_NAME}
+    name: test-backup
     namespace: velero
   spec:
     csiSnapshotTimeout: 0s

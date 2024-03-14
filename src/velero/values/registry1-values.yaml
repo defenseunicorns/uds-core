@@ -1,15 +1,15 @@
 image:
   repository: registry1.dso.mil/ironbank/opensource/velero/velero
-  tag: v1.12.3
+  tag: v1.13.0
 
 kubectl:
   image:
-    repository: registry1.dso.mil/ironbank/opensource/kubernetes-1.21/kubectl
-    tag: v1.21.14
+    repository: registry1.dso.mil/ironbank/big-bang/base
+    tag: 2.1.0
 
 initContainers:
   - name: velero-plugin-for-aws
-    image: registry1.dso.mil/ironbank/opensource/velero/velero-plugin-for-aws:v1.8.2
+    image: registry1.dso.mil/ironbank/opensource/velero/velero-plugin-for-aws:v1.9.0
     imagePullPolicy: IfNotPresent
     volumeMounts:
       - mountPath: /target
