@@ -89,3 +89,9 @@ components:
     required: true
     import:
       path: ../../src/authservice
+
+  # Velero
+  - name: velero
+    required: true
+    import:
+      path: ../../src/velero
