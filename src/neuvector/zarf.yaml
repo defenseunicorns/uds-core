@@ -20,12 +20,12 @@ components:
         valuesFiles:
           - values/upstream-monitor-values.yaml
     images:
-      - docker.io/neuvector/controller:5.2.3
-      - docker.io/neuvector/manager:5.2.3
+      - docker.io/neuvector/controller:5.3.0
+      - docker.io/neuvector/manager:5.3.0
       - docker.io/neuvector/updater:latest
       - docker.io/neuvector/scanner:latest
-      - docker.io/neuvector/enforcer:5.2.3
-      - docker.io/neuvector/prometheus-exporter:5.2.3
+      - docker.io/neuvector/enforcer:5.3.0
+      - docker.io/neuvector/prometheus-exporter:5.3.0
 
   - name: neuvector
     description: "Deploy Neuvector"
@@ -42,9 +42,9 @@ components:
         valuesFiles:
           - values/registry1-monitor-values.yaml
     images:
-      - registry1.dso.mil/ironbank/neuvector/neuvector/controller:5.2.2
-      - registry1.dso.mil/ironbank/neuvector/neuvector/manager:5.2.2
+      - registry1.dso.mil/ironbank/neuvector/neuvector/controller:5.3.0
+      - registry1.dso.mil/ironbank/neuvector/neuvector/manager:5.3.0
       - registry1.dso.mil/ironbank/redhat/ubi/ubi9-minimal:9.3
       - registry1.dso.mil/ironbank/neuvector/neuvector/scanner:5
-      - registry1.dso.mil/ironbank/neuvector/neuvector/enforcer:5.2.2
-      - registry1.dso.mil/ironbank/neuvector/neuvector/prometheus-exporter:5.1.0
+      - registry1.dso.mil/ironbank/neuvector/neuvector/enforcer:5.3.0
+      - registry1.dso.mil/ironbank/neuvector/neuvector/prometheus-exporter:5.3.0

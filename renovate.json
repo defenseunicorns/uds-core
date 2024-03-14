@@ -84,7 +84,7 @@
     {
       "fileMatch": ["\\.*\\.ya?ml$"],
       "matchStrings": [
-        "# renovate: datasource=docker( versioning=(?<versioning>.*?))?\n\\s*-\\s+(?<depName>[^:]+):(?<currentValue>.*)"
+        "# renovate: datasource=docker( versioning=(?<versioning>.*?))?\n\\s+.+:(?<depName>[^:]+):(?<currentValue>.*)"
       ],
       "datasourceTemplate": "docker"
     },
@@ -238,7 +238,7 @@
       "pinDigests": true
     },
     {
-      "matchFileNames": ["package.json", "package-lock.json"],
+      "matchFileNames": ["package.json", "package-lock.json", "tasks/create.yaml"],
       "groupName": "pepr",
       "commitMessageTopic": "pepr"
     }

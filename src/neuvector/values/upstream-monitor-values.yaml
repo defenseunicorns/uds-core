@@ -2,4 +2,4 @@ registry: docker.io
 exporter:
   image:
     repository: neuvector/prometheus-exporter
-    tag: 5.2.3
+    tag: 5.3.0
