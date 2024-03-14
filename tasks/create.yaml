@@ -2,6 +2,10 @@ variables:
   - name: FLAVOR
     default: upstream
 
+  - name: REGISTRY1_PEPR_IMAGE
+    # renovate: datasource=docker versioning=semver
+    default: registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller:v0.27.0
+
 tasks:
   - name: standard-package
     description: "Create the UDS Core Zarf Package"
@@ -47,6 +51,7 @@ tasks:
     actions:
       - description: "Build the UDS Core Pepr Module"
         cmd: |
+          CUSTOM_PEPR_IMAGE=$( [ "${FLAVOR}" = "registry1" ] && echo "--custom-image ${REGISTRY1_PEPR_IMAGE}" ) || CUSTOM_PEPR_IMAGE=""
           rm -fr dist
           npm ci
-          npx pepr build
+          npx pepr build $CUSTOM_PEPR_IMAGE
