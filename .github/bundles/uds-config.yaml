@@ -4,6 +4,6 @@ variables:
   #   permissions_boundary_arn: $PERMISSIONS_BOUNDARY_ARN
   #   permissions_boundary_name: $PERMISSIONS_BOUNDARY_NAME
   ci-iac-aws:
-    state_bucket_name: uds-aws-ci-commercial-us-east-2-5246-tfstate
-    state_key: tfstate/ci/install/${SHA:0:7}-dubbd-aws.tfstate
-    state_dynamodb_table_name: uds-aws-ci-commercial-org-us-east-2-5246-tfstate-lock
+    state_bucket_name: uds-aws-ci-commercial-us-west-2-5246-tfstate
+    state_key: tfstate/ci/install/${SHORT_SHA}-core-aws.tfstate
+    state_dynamodb_table_name: uds-aws-ci-commercial-org-us-west-2-5246-tfstate-lock

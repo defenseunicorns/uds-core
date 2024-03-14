@@ -12,8 +12,6 @@ metadata:
   vendor: Defense Unicorns
 
 variables:
-  - name: TERRAFORM_VERSION
-
   - name: STATE_BUCKET_NAME
     description: "Name of the pre-existing Terraform state S3 bucket"
   - name: STATE_KEY
@@ -22,7 +20,7 @@ variables:
     description: "Name of the DynamoDB table used for Terraform state locking"
   - name: REGION
     description: "The AWS region to run the Terraform in"
-    default: "us-east-2"
+    default: "us-west-2"
   - name: PERMISSIONS_BOUNDARY_NAME
     default: ""
   - name: USE_PERMISSIONS_BOUNDARY
@@ -39,29 +37,6 @@ variables:
     default: "true"
 
 components:
-  # - name: set-ephemeral
-  #   required: true
-  #   actions:
-  #     onDeploy:
-  #       before:
-  #         - cmd: |
-  #             if [ -z "${ZARF_VAR_LOKI_FORCE_DESTROY}" ]; then
-  #               echo "${ZARF_VAR_EPHEMERAL}"
-  #             else
-  #               echo "${ZARF_VAR_LOKI_FORCE_DESTROY}"
-  #             fi
-  #           mute: true
-  #           setVariables:
-  #             - name: LOKI_FORCE_DESTROY
-  #         - cmd: |
-  #             if [ -z "${ZARF_VAR_VELERO_FORCE_DESTROY}" ]; then
-  #               echo "${ZARF_VAR_EPHEMERAL}"
-  #             else
-  #               echo "${ZARF_VAR_VELERO_FORCE_DESTROY}"
-  #             fi
-  #           mute: true
-  #           setVariables:
-  #             - name: VELERO_FORCE_DESTROY
   - name: download-terraform
     required: true
     actions:
@@ -71,18 +46,14 @@ components:
               rm -f run/loki/terraform || true
               rm -f run/velero/terraform || true
             description: Clean up previous install since archiver doesn't overwrite the output
-          - cmd: "./extract-terraform.sh ###ZARF_PKG_TMPL_TERRAFORM_VERSION###"
+          - cmd: "./extract-terraform.sh ###ZARF_VAR_TERRAFORM_VERSION###"
     files:
       - source: extract.sh
         target: extract-terraform.sh
         executable: true
       # terraform binary into zarf package
-      - source: https://releases.hashicorp.com/terraform/###ZARF_PKG_TMPL_TERRAFORM_VERSION###/terraform_###ZARF_PKG_TMPL_TERRAFORM_VERSION###_darwin_arm64.zip
-        target: tmp/terraform_###ZARF_PKG_TMPL_TERRAFORM_VERSION###_darwin_arm64.zip
-      - source: https://releases.hashicorp.com/terraform/###ZARF_PKG_TMPL_TERRAFORM_VERSION###/terraform_###ZARF_PKG_TMPL_TERRAFORM_VERSION###_darwin_amd64.zip
-        target: tmp/terraform_###ZARF_PKG_TMPL_TERRAFORM_VERSION###_darwin_amd64.zip
-      - source: https://releases.hashicorp.com/terraform/###ZARF_PKG_TMPL_TERRAFORM_VERSION###/terraform_###ZARF_PKG_TMPL_TERRAFORM_VERSION###_linux_amd64.zip
-        target: tmp/terraform_###ZARF_PKG_TMPL_TERRAFORM_VERSION###_linux_amd64.zip
+      - source: https://releases.hashicorp.com/terraform/1.5.7/terraform_1.5.7_linux_amd64.zip
+        target: tmp/terraform_1.5.7_linux_amd64.zip
   - name: loki-module
     required: true
     actions:

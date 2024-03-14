@@ -26,11 +26,7 @@ components:
     files:
       - source: config.yaml
         target: config.yaml
-      - source: https://github.com/weaveworks/eksctl/releases/download/###ZARF_PKG_VAR_EKSCTL_VERSION###/eksctl_Darwin_amd64.tar.gz
-        target: archives/eksctl_Darwin_x86_64.tar.gz
-      - source: https://github.com/weaveworks/eksctl/releases/download/###ZARF_PKG_VAR_EKSCTL_VERSION###/eksctl_Darwin_arm64.tar.gz
-        target: archives/eksctl_Darwin_arm64.tar.gz
-      - source: https://github.com/weaveworks/eksctl/releases/download/###ZARF_PKG_VAR_EKSCTL_VERSION###/eksctl_Linux_amd64.tar.gz
+      - source: https://github.com/weaveworks/eksctl/releases/download/v0.165.0/eksctl_Linux_amd64.tar.gz
         target: archives/eksctl_Linux_x86_64.tar.gz
 
   - name: deploy-eks-cluster

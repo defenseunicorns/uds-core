@@ -6,16 +6,6 @@ on:
 
 jobs:
   nightly-testing:
-    runs-on: ubuntu-latest
-
-# RKE2 and EKS Jobs
-
-# can we call infra code from other repos like uds-prod-infrastructure
-
-# deploy core
-
-# run tests
-    # any specific distrubution tests
-    # connection tests between core services
-        # kubectl commands?
-        # base cypress tests?
+    name: Test Core on EKS
+    uses: ./.github/workflows/test-eks.yaml
+    secrets: inherit

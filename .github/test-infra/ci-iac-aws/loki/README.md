@@ -18,7 +18,7 @@ No requirements.
 | Name | Source | Version |
 |------|--------|---------|
 | <a name="module_S3"></a> [S3](#module\_S3) | github.com/defenseunicorns/delivery-aws-iac//modules/s3-irsa | v0.0.4-alpha |
-| <a name="module_generate_kms"></a> [generate\_kms](#module\_generate\_kms) | github.com/defenseunicorns/uds-iac-aws-kms | dubbd-test |
+| <a name="module_generate_kms"></a> [generate\_kms](#module\_generate\_kms) | github.com/defenseunicorns/uds-iac-aws-kms | uds-core-test |
 
 ## Resources
 

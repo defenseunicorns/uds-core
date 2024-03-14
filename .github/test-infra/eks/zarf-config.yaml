@@ -1,8 +1,0 @@
-package:
-  create:
-    max_package_size: "1000000000"
-    set:
-      eksctl_version: v0.165.0
-  deploy:
-    set:
-      cluster_name: uds-core-aws-install

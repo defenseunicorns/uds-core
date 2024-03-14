@@ -96,9 +96,9 @@ module "generate_kms" {
   kms_key_alias_name_prefix = "${local.name}-" # Prefix for KMS key alias.
   kms_key_deletion_window   = var.kms_key_deletion_window
   # Waiting period for scheduled KMS Key deletion. Can be 7-30 days.
-  kms_key_description = "${local.name} DUBBD deployment Velero Key" # Description for the KMS key.
+  kms_key_description = "${local.name} UDS Core deployment Velero Key" # Description for the KMS key.
   tags = {
-    Deployment = "UDS DUBBD ${local.name}"
+    Deployment = "UDS Core ${local.name}"
   }
 }
 
