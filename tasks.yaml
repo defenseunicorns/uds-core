@@ -77,3 +77,23 @@ tasks:
   - name: lint-fix
     actions:
       - task: lint:fix
+
+  - name: debug
+    description: "Debug Output"
+    actions:
+      - cmd: |
+          echo "::group::kubectl get all"
+          kubectl get all -A
+          echo "::endgroup::"
+
+          echo "::group::kubectl get pv,pvc"
+          kubectl get pv,pvc -A
+          echo "::endgroup::"
+
+          echo "::group::kubectl get package"
+          kubectl get package -A
+          echo "::endgroup::"
+
+          echo "::group::kubectl get events"
+          kubectl get events -A --sort-by='.lastTimestamp'
+          echo "::endgroup::"
