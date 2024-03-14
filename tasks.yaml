@@ -77,3 +77,9 @@ tasks:
   - name: lint-fix
     actions:
       - task: lint:fix
+
+  - name: test12345
+    actions:
+      - task: test:package
+        with:
+          path: build123

@@ -41,3 +41,13 @@ tasks:
       - task: create:standard-package
       - task: deploy:standard-package
       - task: validate-packages
+  - name: package
+    inputs:
+      options:
+        description: For setting deploy time variables and flags
+      path:
+        description: fun stuff
+        default: $(pwd)
+    actions:
+      - description: Deploy the UDS Zarf Package
+        cmd: uds zarf package deploy ${{ .inputs.path }}/zarf-package-*-${UDS_ARCH}-*.tar.zst --confirm --no-progress ${{ .inputs.options }}
