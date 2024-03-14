@@ -16,12 +16,12 @@ UDS Core establishes a secure baseline for cloud-native systems and ships with c
 - [Pepr](https://pepr.dev) - UDS policy engine & operator
 - [Prometheus Stack](https://github.com/prometheus-operator/kube-prometheus) - Monitoring
 - [Promtail](https://grafana.com/docs/loki/latest/send-data/promtail/) - Log Aggregation
+- [Velero](https://velero.io/) - Backup & Restore
 
 #### Future Applications
 
 - [Kiali](https://kiali.io/) - Service Mesh Observability
 - [Tempo](https://grafana.com/docs/tempo/latest/getting-started/) - Tracing
-- [Velero](https://velero.io/) - Backup & Restore
 
 ---
 
