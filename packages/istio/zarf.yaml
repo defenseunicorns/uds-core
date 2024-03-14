@@ -11,28 +11,23 @@ components:
   # Istio
   - name: istio-controlplane
     required: false
-    default: false
     import:
       path: ../../src/istio
 
   - name: istio-admin-gateway
     required: false
-    default: false
     import:
       path: ../standard
 
   - name: istio-tenant-gateway
     required: false
-    default: false
     import:
       path: ../standard
 
   - name: istio-passthrough-gateway
     required: false
-    default: false
     import:
       path: ../standard
-
 
   # Pepr the world
   - name: pepr-uds-core

@@ -32,6 +32,9 @@ tasks:
   - name: k3d-istio-bundle
     description: "Create the K3d-UDS Core (Istio Only) Bundle"
     actions:
+      - description: "Copy dev istio package to faux keycloak package for bundle creation"
+        cmd: "cp build/zarf-package-core-istio-${ZARF_ARCHITECTURE}-*.tar.zst $(ls build/zarf-package-core-istio-${ZARF_ARCHITECTURE}-*.tar.zst | sed 's/core-istio/core-keycloak/')"
+        
       - description: "Create the UDS Core Istio Only Bundle"
         cmd: "uds create bundles/k3d-istio --confirm --no-progress --architecture=${ZARF_ARCHITECTURE}"
 

@@ -64,7 +64,6 @@ packages:
               description: "The TLS key for the tenant gateway (must be base64 encoded)"
               path: tls.key
 
-
   - name: core-keycloak
     path: ../../build/
     optionalComponents:
