@@ -10,7 +10,13 @@ permissions:
 jobs:
   test-clean-install:
     runs-on: ubuntu-latest
-
+    env:
+      SHA: ${{ github.sha }}
+      UDS_PERMISSIONS_BOUNDARY_ARN: ${{ secrets.PERMISSIONS_BOUNDARY_ARN }}
+      UDS_PERMISSIONS_BOUNDARY_NAME: ${{ secrets.PERMISSIONS_BOUNDARY_NAME }}
+      UDS_STATE_BUCKET_NAME: uds-aws-ci-commercial-us-west-2-5246-tfstate
+      UDS_STATE_KEY: tfstate/ci/install/${SHA:0:7}-core-aws.tfstate
+      UDS_STATE_DYNAMODB_TABLE_NAME: uds-aws-ci-commercial-org-us-west-2-5246-tfstate-lock
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -36,13 +42,13 @@ jobs:
 
       - name: Set eks_cluster_name
         id: get_cluster_name
-        env:
-          SHA: ${{ github.sha }}
         run: |
           echo "eks_cluster_name=uds-core-aws-${SHA:0:7}" >> $GITHUB_OUTPUT
           echo "short_sha=${SHA:0:7}" >> $GITHUB_OUTPUT
 
       - name: Create EKSCTL Package
+        env:
+          UDS_CLUSTER_NAME: ${{ steps.get_cluster_name.outputs.eks_cluster_name }}
         run: uds zarf package create .github/test-infra/eks -o .github/packages --confirm
 
       - name: Create CI-IAC-AWS Package
@@ -52,18 +58,19 @@ jobs:
         run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress -o .github/packages
 
       - name: Create Bundle
-        env:
-          UDS_EKS_CLUSTER_NAME: ${{ steps.get_cluster_name.outputs.eks_cluster_name }}
-          UDS_PERMISSIONS_BOUNDARY_ARN: ${{ secrets.PERMISSIONS_BOUNDARY_ARN }}
-          UDS_PERMISSIONS_BOUNDARY_NAME: ${{ secrets.PERMISSIONS_BOUNDARY_NAME }}
-          SHORT_SHA: ${{ steps.get_cluster_name.outputs.short_sha }}
         run: uds create .github/bundles --confirm
 
+      - name: Deploy Cluster
+        run: uds zarf package deploy .github/packages/zarf-package-distro-eks-*.tar.zst --confirm
+
+      - name: Deploy CI-IAC-AWS Package
+        run: uds zarf package deploy .github/packages/zarf-package-ci-iac-aws-*.tar.zst
+
       - name: Deploy Bundle
-        run: uds deploy .github/bundles/uds-bundle-uds-core-eks-nightly-*.tar.gz --confirm
+        run: uds deploy .github/bundles/uds-bundle-uds-core-eks-nightly-*.tar.zst --confirm
 
       - name: Remove UDS Core And Teardown EKS
         if: always()
-        run: uds remove .github/bundles/uds-bundle-uds-core-eks-*.tar.gz --confirm
+        run: uds remove .github/bundles/uds-bundle-uds-core-eks-*.tar.zst --confirm
         timeout-minutes: 60
         continue-on-error: true

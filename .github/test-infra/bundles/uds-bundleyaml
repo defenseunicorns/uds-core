@@ -1,0 +1,73 @@
+kind: UDSBundle
+metadata:
+  name: uds-core-eks-nightly
+  description: A UDS bundle for deploying EKS and UDS Core
+  # x-release-please-start-version
+  version: "0.15.1"
+  # x-release-please-end
+
+packages:
+  - name: init
+    repository: ghcr.io/defenseunicorns/packages/init
+    # renovate: datasource=github-tags depName=defenseunicorns/zarf versioning=semver
+    ref: v0.32.4
+
+  - name: core
+    path: ../packages/
+    # x-release-please-start-version
+    ref: 0.15.1
+    # x-release-please-end
+    overrides:
+      loki:
+          variables:
+            - name: LOKI_CHUNKS_BUCKET
+              description: "The object storage bucket for Loki chunks"
+              path: loki.storage.bucketNames.chunks
+            - name: LOKI_RULER_BUCKET
+              description: "The object storage bucket for Loki ruler"
+              path: loki.storage.bucketNames.ruler
+            - name: LOKI_ADMIN_BUCKET
+              description: "The object storage bucket for Loki admin"
+              path: loki.storage.bucketNames.admin
+            - name: LOKI_S3_REGION
+              description: "The S3 region"
+              path: loki.storage.s3.region
+            # - name: LOKI_S3_ENDPOINT
+            #   description: "The S3 endpoint"
+            #   path: loki.storage.s3.endpoint
+            # - name: LOKI_S3_ACCESS_KEY_ID
+            #   description: "The S3 Access Key ID"
+            #   path: loki.storage.s3.accessKeyId
+            # - name: LOKI_S3_SECRET_ACCESS_KEY
+            #   path: loki.storage.s3.secretAccessKey
+            #   description: "The S3 Secret Access Key"
+            # - name: LOKI_WRITE_REPLICAS
+            #   path: write.replicas
+            #   description: "Loki write replicas"
+            #   default: "1"
+            # - name: LOKI_READ_REPLICAS
+            #   path: read.replicas
+            #   description: "Loki read replicas"
+            #   default: "1"
+            # - name: LOKI_BACKEND_REPLICAS
+            #   path: backend.replicas
+            #   description: "Loki backend replicas"
+            #   default: "1"
+    #   istio-admin-gateway:
+    #     uds-istio-config:
+    #       variables:
+    #         - name: ADMIN_TLS_CERT
+    #           description: "The TLS cert for the admin gateway (must be base64 encoded)"
+    #           path: tls.cert
+    #         - name: ADMIN_TLS_KEY
+    #           description: "The TLS key for the admin gateway (must be base64 encoded)"
+    #           path: tls.key
+    #   istio-tenant-gateway:
+    #     uds-istio-config:
+    #       variables:
+    #         - name: TENANT_TLS_CERT
+    #           description: "The TLS cert for the tenant gateway (must be base64 encoded)"
+    #           path: tls.cert
+    #         - name: TENANT_TLS_KEY
+    #           description: "The TLS key for the tenant gateway (must be base64 encoded)"
+    #           path: tls.key

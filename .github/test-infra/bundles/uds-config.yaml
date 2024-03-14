@@ -1,0 +1,10 @@
+# Overwritten at deploy time by the ci-iac-aws package
+options:
+  architecture:
+variables:
+  core:
+    loki_bucket_chunks: ${ZARF_VAR_LOKI_S3_BUCKET}
+    loki_bucket_ruler: ${ZARF_VAR_LOKI_S3_BUCKET}
+    loki_bucket_admin: ${ZARF_VAR_LOKI_S3_BUCKET}
+    loki_region: ${ZARF_VAR_LOKI_S3_AWS_REGION}
+    loki_role_arn: ${ZARF_VAR_LOKI_S3_ROLE_ARN}

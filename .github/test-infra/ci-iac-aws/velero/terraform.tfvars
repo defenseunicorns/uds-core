@@ -1,6 +1,6 @@
 region        = "###ZARF_VAR_REGION###"
-name          = "###ZARF_VAR_EKS_CLUSTER_NAME###"
-bucket_name   = "###ZARF_VAR_EKS_CLUSTER_NAME###-velero"
+name          = "###ZARF_VAR_CLUSTER_NAME###"
+bucket_name   = "###ZARF_VAR_CLUSTER_NAME###-velero"
 force_destroy = "###ZARF_VAR_VELERO_FORCE_DESTROY###"
 
 kubernetes_service_account = "velero-velero-server"

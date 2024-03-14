@@ -12,6 +12,9 @@ metadata:
   vendor: Defense Unicorns
 
 variables:
+  - name: CLUSTER_NAME
+    description: "Used in loki and velero terraform.tfvars"
+    prompt: true
   - name: STATE_BUCKET_NAME
     description: "Name of the pre-existing Terraform state S3 bucket"
   - name: STATE_KEY
@@ -169,21 +172,15 @@ components:
       onDeploy:
         after:
           - cmd: |
-              cat <<EOF> setenv-uds-package.sh
-              export ZARF_PACKAGE_DEPLOY_SET='{ \
-              "STATE_BUCKET_NAME": "${ZARF_VAR_STATE_BUCKET_NAME}", \
-              "STATE_KEY": "${ZARF_VAR_STATE_KEY}", \
-              "STATE_DYNAMODB_TABLE_NAME": "${ZARF_VAR_STATE_DYNAMODB_TABLE_NAME}", \
-              "NAME": "${ZARF_VAR_EKS_CLUSTER_NAME}", \
-              "REGION": "${ZARF_VAR_REGION}", \
-              "EPHEMERAL": "${ZARF_VAR_EPHEMERAL}", \
-              "LOKI_FORCE_DESTROY": "${ZARF_VAR_LOKI_FORCE_DESTROY}", \
-              "VELERO_FORCE_DESTROY": "${ZARF_VAR_VELERO_FORCE_DESTROY}", \
-              "LOKI_S3_BUCKET": "${ZARF_VAR_LOKI_S3_BUCKET}", \
-              "LOKI_S3_AWS_REGION": "${ZARF_VAR_LOKI_S3_AWS_REGION}", \
-              "LOKI_S3_ROLE_ARN": "${ZARF_VAR_LOKI_S3_ROLE_ARN}", \
-              "VELERO_S3_BUCKET": "${ZARF_VAR_VELERO_S3_BUCKET}", \
-              "VELERO_S3_AWS_REGION": "${ZARF_VAR_VELERO_S3_AWS_REGION}", \
-              "VELERO_S3_ROLE_ARN": "${ZARF_VAR_VELERO_S3_ROLE_ARN}" \
-              }'
+              cat <<EOF> ../bundles/uds-config.yaml
+              options:
+                architecture: amd64
+
+              variables:
+                core:
+                  loki_bucket_chunks: ${ZARF_VAR_LOKI_S3_BUCKET}
+                  loki_bucket_ruler: ${ZARF_VAR_LOKI_S3_BUCKET}
+                  loki_bucket_admin: ${ZARF_VAR_LOKI_S3_BUCKET}
+                  loki_region: ${ZARF_VAR_LOKI_S3_AWS_REGION}
+                  loki_role_arn: "${ZARF_VAR_LOKI_S3_ROLE_ARN}"
               EOF
