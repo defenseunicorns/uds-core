@@ -1,0 +1,44 @@
+credentials:
+  useSecret: true
+  name: "velero-bucket-credentials"
+  secretContents:
+    cloud: |
+      [default]
+      aws_access_key_id=###ZARF_VAR_VELERO_BUCKET_KEY###
+      aws_secret_access_key=###ZARF_VAR_VELERO_BUCKET_KEY_SECRET###
+configuration:
+  backupStorageLocation:
+    - name: default
+      provider: aws
+      bucket: "###ZARF_VAR_VELERO_BUCKET###"
+      config:
+        region: "###ZARF_VAR_VELERO_BUCKET_REGION###"
+        s3ForcePathStyle: true
+        s3Url: "###ZARF_VAR_VELERO_BUCKET_PROVIDER_URL###"
+      credential:
+        name: "velero-bucket-credentials"
+        key: "cloud"
+  # volumeSnapshotLocation:
+  #   - name: default
+  #     provider: aws
+  #     config:
+  #       region: "###ZARF_VAR_VELERO_BUCKET_REGION###"
+  #       s3ForcePathStyle: true
+  #       s3Url: "###ZARF_VAR_VELERO_BUCKET_PROVIDER_URL###"
+  #     credential:
+  #       name: "velero-bucket-credentials"
+  #       key: "cloud"
+snapshotsEnabled: false
+schedules:
+  udsbackup:
+    disabled: false
+    schedule: "0 3 * * *"
+    useOwnerReferencesInBackup: false
+    template:
+      csiSnapshotTimeout: 0s
+      includeClusterResources: true
+      snapshotVolumes: false
+      excludedNamespaces:
+        - kube-system
+        - velero
+      ttl: "240h"
