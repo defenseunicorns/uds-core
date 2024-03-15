@@ -50,22 +50,22 @@ jobs:
       - name: Create EKSCTL Package
         env:
           UDS_CLUSTER_NAME: ${{ steps.get_cluster_name.outputs.eks_cluster_name }}
-        run: uds zarf package create .github/test-infra/eks -o .github/packages --confirm
+        run: uds zarf package create .github/test-infra/eks --confirm
 
       - name: Create CI-IAC-AWS Package
-        run: uds zarf package create .github/test-infra/ci-iac-aws -o .github/packages --confirm
+        run: uds zarf package create .github/test-infra/ci-iac-aws --confirm
 
       - name: Create UDS Core Package
-        run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress -o .github/packages
+        run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress
 
       - name: Create Bundle
         run: uds create .github/bundles --confirm
 
       - name: Deploy Cluster
-        run: uds zarf package deploy .github/packages/zarf-package-distro-eks-*.tar.zst --confirm
+        run: uds zarf package deploy build/zarf-package-distro-eks-*.tar.zst --confirm
 
       - name: Deploy CI-IAC-AWS Package
-        run: uds zarf package deploy .github/packages/zarf-package-ci-iac-aws-*.tar.zst
+        run: uds zarf package deploy build/zarf-package-ci-iac-aws-*.tar.zst
 
       - name: Deploy Bundle
         run: uds deploy .github/bundles/uds-bundle-uds-core-eks-nightly-*.tar.zst --confirm
