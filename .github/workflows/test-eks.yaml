@@ -65,13 +65,14 @@ jobs:
           --set permissions_boundary_arn=$UDS_PERMISSIONS_BOUNDARY_ARN
 
       - name: Deploy CI-IAC-AWS Package
-        run: uds zarf package deploy build/zarf-package-ci-iac-aws-*.tar.zst --confirm \
+        run: uds zarf package deploy build/zarf-package-ci-iac-aws-*.tar.zst \
           --set cluster_name=$UDS_CLUSTER_NAME \
           --set permissions_boundary_name=$UDS_PERMISSIONS_BOUNDARY_NAME \
           --set permissions_boundary_arn=$UDS_PERMISSIONS_BOUNDARY_ARN \
           --set state_bucket_name=$UDS_STATE_BUCKET_NAME \
           --set state_key=$UDS_STATE_KEY \
-          --set state_dynamodb_table_name=$UDS_STATE_DYNAMODB_TABLE_NAME
+          --set state_dynamodb_table_name=$UDS_STATE_DYNAMODB_TABLE_NAME \
+          --confirm
 
       - name: Deploy Bundle
         run: uds deploy .github/bundles/uds-bundle-uds-core-eks-nightly-*.tar.zst --confirm

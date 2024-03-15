@@ -49,7 +49,7 @@ components:
               rm -f run/loki/terraform || true
               rm -f run/velero/terraform || true
             description: Clean up previous install since archiver doesn't overwrite the output
-          - cmd: "./extract-terraform.sh ###ZARF_VAR_TERRAFORM_VERSION###"
+          - cmd: "./extract-terraform.sh 1.5.7"
     files:
       - source: extract.sh
         target: extract-terraform.sh
@@ -182,5 +182,8 @@ components:
                   loki_bucket_ruler: ${ZARF_VAR_LOKI_S3_BUCKET}
                   loki_bucket_admin: ${ZARF_VAR_LOKI_S3_BUCKET}
                   loki_region: ${ZARF_VAR_LOKI_S3_AWS_REGION}
-                  loki_role_arn: "${ZARF_VAR_LOKI_S3_ROLE_ARN}"
+                  loki_role_arn: ${ZARF_VAR_LOKI_S3_ROLE_ARN}
+                  bucket_id: ${ZARF_VAR_VELERO_S3_BUCKET}
+                  bucket_region: ${ZARF_VAR_VELERO_S3_AWS_REGION}
+                  s3_role_arn: ${ZARF_VAR_S3_ROLE_ARN}
               EOF
