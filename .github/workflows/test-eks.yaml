@@ -21,6 +21,9 @@ jobs:
         run: |
           echo "UDS_CLUSTER_NAME=uds-core-aws-${SHA:0:7}" >> $GITHUB_ENV
           echo "UDS_STATE_KEY="tfstate/ci/install/${SHA:0:7}-core-aws.tfstate >> $GITHUB_ENV
+          if [ -z "$UDS_PERMISSIONS_BOUNDARY_ARN" ]; then
+              echo "PERMISSIONS_BOUNDARY_ARN is empty"
+          fi
 
       - name: Checkout repository
         uses: actions/checkout@v4
