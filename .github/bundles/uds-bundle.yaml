@@ -19,6 +19,7 @@ packages:
     # x-release-please-end
     overrides:
       loki:
+        loki:
           variables:
             - name: LOKI_CHUNKS_BUCKET
               description: "The object storage bucket for Loki chunks"
