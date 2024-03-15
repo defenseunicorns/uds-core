@@ -17,6 +17,7 @@ jobs:
       UDS_STATE_BUCKET_NAME: uds-aws-ci-commercial-us-west-2-5246-tfstate
       UDS_STATE_KEY: tfstate/ci/install/${SHA:0:7}-core-aws.tfstate
       UDS_STATE_DYNAMODB_TABLE_NAME: uds-aws-ci-commercial-org-us-west-2-5246-tfstate-lock
+      UDS_CLUSTER_NAME: uds-core-aws-${SHA:0:7}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -41,15 +42,13 @@ jobs:
       - name: Login to registry1
         run: uds run registry-login --set REGISTRY=registry1.dso.mil --set REGISTRY_USERNAME=${{ secrets.IRON_BANK_ROBOT_USERNAME }} --set REGISTRY_PASSWORD=${{ secrets.IRON_BANK_ROBOT_PASSWORD }} --set REGISTRY_RETRY_INTERVAL=90
 
-      - name: Set eks_cluster_name
-        id: get_cluster_name
-        run: |
-          echo "eks_cluster_name=uds-core-aws-${SHA:0:7}" >> $GITHUB_OUTPUT
-          echo "short_sha=${SHA:0:7}" >> $GITHUB_OUTPUT
+      # - name: Set eks_cluster_name
+      #   id: get_cluster_name
+      #   run: |
+      #     echo "eks_cluster_name=uds-core-aws-${SHA:0:7}" >> $GITHUB_OUTPUT
+      #     echo "short_sha=${SHA:0:7}" >> $GITHUB_OUTPUT
 
       - name: Create EKSCTL Package
-        env:
-          UDS_CLUSTER_NAME: ${{ steps.get_cluster_name.outputs.eks_cluster_name }}
         run: uds run create-package-no-pepr --set path=.github/test-infra/eks
 
       - name: Create CI-IAC-AWS Package
@@ -62,7 +61,7 @@ jobs:
         run: uds create .github/bundles --confirm
 
       - name: Deploy Cluster
-        run: uds zarf package deploy build/zarf-package-distro-eks-*.tar.zst --confirm
+        run: uds zarf package deploy build/zarf-package-distro-eks-*.tar.zst --confirm --set cluster_name=$UDS_CLUSTER_NAME
 
       - name: Deploy CI-IAC-AWS Package
         run: uds zarf package deploy build/zarf-package-ci-iac-aws-*.tar.zst
