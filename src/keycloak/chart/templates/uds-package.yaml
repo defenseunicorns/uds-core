@@ -28,7 +28,9 @@ spec:
         direction: Egress
         selector:
           app.kubernetes.io/name: keycloak
-        port: 443
+        ports:
+          - 443
+          - 80
         remoteGenerate: Anywhere
 
       {{- if not .Values.devMode }}
