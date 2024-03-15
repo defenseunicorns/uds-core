@@ -60,12 +60,24 @@ uds deploy k3d-core-demo:0.15.1
 
 #### UDS Package Development
 
-In addition to the demo bundle, a [k3d-core-istio-dev bundle](./bundles/k3d-istio/README.md) also exists to work with UDS Core with only Istio & Pepr installed. Run the command below to use it:
+In addition to the demo bundle, a [k3d-core-istio-dev bundle](./bundles/k3d-istio/README.md) also exists to work with UDS Core with only Istio, Keycloak & Pepr installed. Run one of the commands below to use it.
+
+Deploy Istio, Keycloak and Pepr:
 
 <!-- x-release-please-start-version -->
 
 ```bash
 uds deploy k3d-core-istio-dev:0.15.1
+```
+
+<!-- x-release-please-end -->
+
+Deploy just Istio and Pepr:
+
+<!-- x-release-please-start-version -->
+
+```bash
+uds deploy k3d-core-istio-dev:0.15.1 -p "uds-k3d-dev, init, core-istio"
 ```
 
 <!-- x-release-please-end -->
