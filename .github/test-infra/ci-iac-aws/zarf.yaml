@@ -172,7 +172,7 @@ components:
       onDeploy:
         after:
           - cmd: |
-              cat <<EOF> ../bundles/uds-config.yaml
+              cat <<EOF> ../../bundles/uds-config.yaml
               options:
                 architecture: amd64
 
