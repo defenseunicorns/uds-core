@@ -1,41 +1,34 @@
 import { Log } from "pepr";
-import { updateStatus } from "../common";
+
+import { handleFailure, isPendingOrCurrent, updateStatus } from ".";
 import { processExemptions } from "../controllers/exemptions/exemptions";
 import { Phase, UDSExemption } from "../crd";
 
 export async function exemptReconciler(exempt: UDSExemption) {
-  if (!exempt.metadata?.namespace) {
-    Log.error(exempt, `Invalid Exemption definition`);
+  if (isPendingOrCurrent(exempt)) {
     return;
   }
 
-  const isPending = exempt.status?.phase === Phase.Pending;
-  const isCurrentGeneration = exempt.metadata?.generation === exempt.status?.observedGeneration;
-
-  if (isPending || isCurrentGeneration) {
-    Log.debug(exempt, `Skipping pending or completed exemption`);
-    return;
-  }
-
-  const { namespace, name } = exempt.metadata;
+  const metadata = exempt.metadata!;
+  const { namespace, name } = metadata;
 
   Log.debug(exempt, `Processing Exemption ${namespace}/${name}`);
 
   try {
+    // Mark the exemption as pending
     await updateStatus(exempt, { phase: Phase.Pending });
 
+    // Process the exemptions
     processExemptions(exempt);
+
+    // Mark the exemption as ready
     await updateStatus(exempt, {
       phase: Phase.Ready,
-      observedGeneration: exempt.metadata.generation,
+      observedGeneration: metadata.generation,
       titles: exempt.spec?.exemptions?.map(e => e.title || e.matcher.name),
     });
-  } catch (e) {
-    Log.error(e, `Error configuring for ${namespace}/${name}`);
-    // todo: need to evaluate when it is safe to retry (updating generation now avoids retrying infinitely)
-    void updateStatus(exempt, {
-      phase: Phase.Failed,
-      observedGeneration: exempt.metadata.generation,
-    });
+  } catch (err) {
+    // Handle the failure
+    void handleFailure(err, exempt);
   }
 }

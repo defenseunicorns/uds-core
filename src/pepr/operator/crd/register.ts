@@ -1,6 +1,7 @@
 import { K8s, Log, kind } from "pepr";
-import { v1alpha1 as pkg } from "./sources/v1alpha1";
+
 import { v1alpha1 as exemption } from "./sources/exemption/v1alpha1";
+import { v1alpha1 as pkg } from "./sources/package/v1alpha1";
 
 // Register the CRD if we're in watch or dev mode
 if (process.env.PEPR_WATCH_MODE === "true" || process.env.PEPR_MODE === "dev") {

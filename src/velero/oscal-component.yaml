@@ -1,0 +1,119 @@
+component-definition:
+  uuid: D73CF4E6-D893-4BDE-A195-C4DE782DF63B
+  metadata:
+    title: Velero Component
+    last-modified: '2022-04-08T12:00:00Z'
+    version: "20220408"
+    oscal-version: 1.1.1
+    parties:
+      # Should be consistent across all of the packages, but where is ground truth?
+      - uuid: 72134592-08C2-4A77-8BAD-C880F109367A
+        type: organization
+        name: Platform One
+        links:
+          - href: https://p1.dso.mil
+            rel: website
+  components: # for BB, this would be all the pieces of big bang
+    - uuid: 3127D34A-517B-473B-83B0-6536179ABE38
+      type: software
+      title: Velero
+      description: |
+        Velero is an open source tool to safely backup and restore, perform disaster recovery, and migrate Kubernetes cluster resources and persistent volumes
+      purpose: Provides backup and restore capabilities to a Kubernetes cluster
+      responsible-roles:
+        - role-id: provider
+          party-uuids:
+            - 72134592-08C2-4A77-8BAD-C880F109367A # matches parties entry for p1
+      control-implementations:
+        - uuid: 5108E5FC-C45F-477B-8542-9C5611A92485
+          source: https://raw.githubusercontent.com/usnistgov/oscal-content/master/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_catalog.json
+          description:
+            Controls implemented by velero for inheritance by applications
+          implemented-requirements:
+            - uuid: 2ADA7512-E0D5-4CAE-81BC-C889C640AF93
+              control-id: cp-6
+              description: >-
+                  Velero can take backups of your application configuration/data and store them off-site in either an approved cloud environment or on-premise location.
+            - uuid: 6C3339A0-9636-4E35-8FA8-731CF900B326
+              control-id: "cp-6.1"
+              description: >-
+                  Velero can take backups of your application configuration/data and store them off-site in either an approved cloud environment or on-premise location.
+            - uuid: 2799CCBF-C48D-4451-85BA-EBD9B949C361
+              control-id: cp-6.2
+              description: >-
+                  Velero can restore application configuration/data from an approved cloud provider or on-premise location on-demand.
+            - uuid: 0AE59B43-50A7-4420-881B-E0635CCB8424
+              control-id: cp-6.3
+              description: >-
+                  Velero supports back-ups to multiple cloud environments (including geo-separated locations for high availibility) and on-premise environments in the event of an accessibility disruptions.
+            - uuid: B11B38B8-8744-4DFD-8C1A-4A4EDD7F9574
+              control-id: cp-7
+              description: >-
+                    Velero can restore application configuration/data from an approved cloud provider or on-premise location to an alternative deployment environment on-demand.
+            - uuid: D74C3A8C-E5B0-4F81-895D-FB2A318D723B
+              control-id: cp-7.1
+              description: >-
+                  Velero supports back-ups to  and restores from multiple cloud environments (including geo-separated locations for high availibility) and on-premise environments in the event of an accessibility disruptions.
+            - uuid: 72D7145F-7A3F-47AF-835F-7E3D6EFAE1CC
+              control-id: cp-7.2
+              description: >-
+                    Velero supports back-ups to  and restores from multiple cloud environments (including geo-separated locations for high availibility) and on-premise environments in the event of an accessibility disruptions.
+            - uuid: 5B0AA4CB-9C49-4D32-8242-5631788BD941
+              control-id: cp-9
+              description: >-
+                  "Velero gives you tools to back up and restore your Kubernetes cluster resources and persistent volumes. You can run Velero with a cloud provider or on-premises. This includes:
+                    - System components/data.
+                    - User-level information/application metadata.
+                    - User-level storage/data.
+                    - Scheduled back-ups with configurable scopes.
+                    - Multi-cloud and on-premise support for availability of backup."
+            - uuid: 8E5917F3-3E45-46C1-8585-48550E19AFFB
+              control-id: cp-9.1
+              description: >-
+                  Velero provides feedback/logging of back-up status for configuration/data via kubectl or the Velero CLI tool.
+                  Velero can restore your production configuration/data to validation environment to ensure reliability/integrity.
+            - uuid: 51191D0E-0C7B-4D2D-861D-202AC8C505CF
+              control-id: cp-9.2
+              description: >-
+                  Velero can be configured to restore only certain components of a back-up when necessary.
+            - uuid: C650411C-33FD-4B59-8899-AC34B43C860F
+              control-id: cp-9.3
+              description: >-
+                  Velero supports back-ups to multiple cloud environments (including geo-separated locations for high availibility) and on-premise environments.
+            - uuid: 8AB09B17-301B-4836-835B-9CE22A9E2300
+              control-id: cp-9.5
+              description: >-
+                  Velero gives you tools to back up and restore your Kubernetes cluster resources and persistent volumes. You can run Velero with a cloud provider or on-premises. This includes:
+                  - System components/data.
+                  - User-level information/application metadata.
+                  - User-level storage/data.
+                  - Scheduled back-ups with configurable scopes.
+                  - Multi-cloud and on-premise support for availability of backup.
+            - uuid: 7FACB782-C183-4585-8C0B-17824438FEA6
+              control-id: cp-9.8
+              description: >-
+                  Velero supports encryption of backups via its supported providers' encryption support/mechanisms.
+
+            - uuid: 26B3D98B-0C9D-434B-8DE5-06CBBC46A38C
+              control-id: cp-10
+              description: >-
+                  Velero can restore application configuration/data from an approved cloud provider or on-premise location on-demand.
+            - uuid: 3EA444B7-61ED-43DD-8B3D-24B55F286E59
+              control-id: cp-10.4
+              description: >-
+                  Velero gives you tools to back up and restore your Kubernetes cluster resources and persistent volumes. You can run Velero with a cloud provider or on-premises. This includes:
+                  - System components/data.
+                  - User-level information/application metadata.
+                  - User-level storage/data.
+                  - Scheduled back-ups with configurable scopes.
+                  - Multi-cloud and on-premise support for availability of backup.
+  back-matter:
+    resources:
+      - uuid: DDC5B579-87DE-41FE-8D87-B4422A7F0A98
+        title: Github Repo - Velero
+        rlinks:
+          - href: https://github.com/vmware-tanzu/velero
+      - uuid: BB87D415-A459-4778-BCDB-B33B4579C00F
+        title: Big Bang Velero package
+        rlinks:
+          - href: https://repo1.dso.mil/platform-one/big-bang/apps/cluster-utilities/velero
