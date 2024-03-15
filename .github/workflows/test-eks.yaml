@@ -77,8 +77,24 @@ jobs:
       - name: Deploy Bundle
         run: uds deploy .github/bundles/uds-bundle-uds-core-eks-nightly-*.tar.zst --confirm
 
-      - name: Remove UDS Core And Teardown EKS
+      - name: Remove UDS Core
         if: always()
         run: uds remove .github/bundles/uds-bundle-uds-core-eks-*.tar.zst --confirm
+        timeout-minutes: 60
+        continue-on-error: true
+
+      - name: Remove CI-DUBBD-IAC-AWS
+        if: always()
+        run: uds zarf package remove build/zarf-package-ci-iac-aws-*.tar.zst --confirm
+        working-directory: .github/test-infra/ci-dubbd-iac-aws
+        timeout-minutes: 60
+        continue-on-error: true
+
+      - name: Teardown EKS cluster
+        if: always()
+        # can't do a zarf package remove since there's no kubernetes cluster.
+        run: |
+          ./eksctl delete cluster -f config.yaml --disable-nodegroup-eviction --wait
+        working-directory: .github/test-infra/eks
         timeout-minutes: 60
         continue-on-error: true
