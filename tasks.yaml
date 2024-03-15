@@ -64,6 +64,10 @@ tasks:
   - name: deploy-single-package
     actions:
       - task: deploy:single-package
+  
+  - name: deploy-package-no-pepr
+    actions:
+      - task: deploy:no-pepr-package
 
   - name: test-single-package
     actions:

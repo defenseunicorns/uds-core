@@ -59,7 +59,7 @@ tasks:
   - name: no-pepr-package
     inputs:
       options:
-        description: For setting deploy time variables and flags
+        description: For setting create time variables and flags
       path:
         description: file path for package
         default: $(pwd)
