@@ -12,12 +12,12 @@ jobs:
     runs-on: ubuntu-latest
     env:
       SHA: ${{ github.sha }}
+      UDS_CLUSTER_NAME: uds-core-aws-${{ github.sha[0:7] }}
       UDS_PERMISSIONS_BOUNDARY_ARN: ${{ secrets.PERMISSIONS_BOUNDARY_ARN }}
       UDS_PERMISSIONS_BOUNDARY_NAME: ${{ secrets.PERMISSIONS_BOUNDARY_NAME }}
       UDS_STATE_BUCKET_NAME: uds-aws-ci-commercial-us-west-2-5246-tfstate
-      UDS_STATE_KEY: tfstate/ci/install/${SHA:0:7}-core-aws.tfstate
+      UDS_STATE_KEY: tfstate/ci/install/${{ github.sha[0:7] }}-core-aws.tfstate
       UDS_STATE_DYNAMODB_TABLE_NAME: uds-aws-ci-commercial-org-us-west-2-5246-tfstate-lock
-      UDS_CLUSTER_NAME: uds-core-aws-${SHA:0:7}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
