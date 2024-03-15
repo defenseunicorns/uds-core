@@ -2,7 +2,7 @@ apiVersion: eksctl.io/v1alpha5
 kind: ClusterConfig
 
 metadata:
-  name: "###ZARF_VAR_CLUSTER_NAME###"
+  name: "uds-core-aws-3a9b6e6"
   region: us-west-2
   version: "1.27"
   tags:
