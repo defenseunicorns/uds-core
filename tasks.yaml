@@ -54,6 +54,13 @@ tasks:
     actions:
       - task: create:standard-package
 
+  - name: create-package-no-pepr
+    actions:
+      - task: create:no-pepr-package
+        with:
+          options: ${OPTIONS}
+          path: ${PATH}
+
   - name: deploy-single-package
     actions:
       - task: deploy:single-package

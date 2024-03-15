@@ -55,3 +55,14 @@ tasks:
           rm -fr dist
           npm ci
           npx pepr build $CUSTOM_PEPR_IMAGE
+
+  - name: no-pepr-package
+    inputs:
+      options:
+        description: For setting deploy time variables and flags
+      path:
+        description: file path for package
+        default: $(pwd)
+    actions:
+      - description: Deploy the UDS Zarf Package
+        cmd: uds zarf package create ${{ .inputs.path }} --confirm ${{ .inputs.options }}
