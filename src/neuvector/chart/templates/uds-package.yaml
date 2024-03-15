@@ -4,6 +4,15 @@ metadata:
   name: neuvector
   namespace: {{ .Release.Namespace }}
 spec:
+  monitor:
+    - selector:
+        app: neuvector-prometheus-exporter
+      podSelector:
+        app: neuvector-prometheus-exporter-pod
+      portName: metrics
+      targetPort: 8068
+      description: "Metrics"
+
   network:
     expose:
       - service: neuvector-service-webui
@@ -38,15 +47,6 @@ spec:
           app: neuvector-controller-pod
         port: 30443
         description: "Webhook"
-
-      - direction: Ingress
-        remoteNamespace: monitoring
-        remoteSelector:
-          app: prometheus
-        selector:
-          app: neuvector-prometheus-exporter-pod
-        port: 8068
-        description: "Prometheus Metrics"
 
       - direction: Egress
         remoteNamespace: tempo

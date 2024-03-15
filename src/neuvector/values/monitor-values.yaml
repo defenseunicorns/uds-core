@@ -1,9 +1,8 @@
 leastPrivilege: false
 
 exporter:
-  # Temporarily disabled until we can get the monitor chart working
-  # via https://github.com/neuvector/neuvector-helm/pull/355
-  enabled: false
+  enabled: true
+  # Disable serviceMonitor in favor of the one provided by the UDS Package
   serviceMonitor:
     enabled: false
   apiSvc: neuvector-svc-controller-api:10443
