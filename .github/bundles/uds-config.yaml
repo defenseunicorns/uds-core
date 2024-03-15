@@ -1,6 +1,6 @@
 # Overwritten at deploy time by the ci-iac-aws package
 options:
-  architecture:
+  architecture: amd64
 variables:
   core:
     loki_bucket_chunks: ${ZARF_VAR_LOKI_S3_BUCKET}
