@@ -103,5 +103,5 @@ export function annotateMutation<T extends KubernetesObject>(
   request: PeprMutateRequest<T>,
   policy: Policy,
 ) {
-  request.SetAnnotation(`policies.uds.core/mutated`, transform(policy));
+  request.SetAnnotation(`uds-core.pepr.dev/mutated`, transform(policy));
 }
