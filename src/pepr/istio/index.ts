@@ -9,14 +9,14 @@ export const istio = new Capability({
 const { When } = istio;
 
 // Keep track of in-progress terminations
-const inProgress: Record<string, boolean> = {};
+const inProgress = new Set<string>();
 
 /**
  * Watch Pods with the "batch.kubernetes.io/job-name" and "service.istio.io/canonical-name" labels
  * to terminate the sidecar after the job completes successfully.
  */
 When(a.Pod)
-  .IsUpdated()
+  .IsCreatedOrUpdated()
   .WithLabel("batch.kubernetes.io/job-name")
   .WithLabel("service.istio.io/canonical-name")
   .Watch(async pod => {
@@ -34,7 +34,7 @@ When(a.Pod)
     const key = `${namespace}/${name}`;
 
     // Ensure termination isn't already in progress
-    if (inProgress[key]) {
+    if (inProgress.has(key)) {
       return;
     }
 
@@ -53,7 +53,7 @@ When(a.Pod)
 
       if (shouldTerminate) {
         // Mark the pod as seen
-        inProgress[key] = true;
+        inProgress.add(key);
 
         Log.info(`Attempting to terminate sidecar for ${key}`);
         try {
@@ -77,7 +77,7 @@ When(a.Pod)
           Log.error({ err }, `Failed to terminate the sidecar for ${key}`);
 
           // Remove the pod from the seen list
-          inProgress[key] = false;
+          inProgress.delete(key);
         }
       }
     }
