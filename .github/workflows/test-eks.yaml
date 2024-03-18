@@ -57,18 +57,18 @@ jobs:
       - name: Create Bundle
         run: uds create .github/bundles --confirm
 
-      # - name: Deploy Cluster
-      #   run: |
-      #     uds zarf package deploy build/zarf-package-distro-eks-*.tar.zst \
-      #       --set cluster_name=$UDS_CLUSTER_NAME \
-      #       --set permissions_boundary_name=$UDS_PERMISSIONS_BOUNDARY_NAME \
-      #       --set permissions_boundary_arn=$UDS_PERMISSIONS_BOUNDARY_ARN \
-      #       --confirm 
+      - name: Deploy Cluster
+        run: |
+          uds zarf package deploy build/zarf-package-distro-eks-*.tar.zst \
+            --set cluster_name=$UDS_CLUSTER_NAME \
+            --set permissions_boundary_name=$UDS_PERMISSIONS_BOUNDARY_NAME \
+            --set permissions_boundary_arn=$UDS_PERMISSIONS_BOUNDARY_ARN \
+            --confirm 
 
       - name: Deploy CI-IAC-AWS Package
         run: |
           uds zarf package deploy build/zarf-package-ci-iac-aws-*.tar.zst \
-            --set cluster_name=uds-core-aws-3a9b6e6 \
+            --set cluster_name=$UDS_CLUSTER_NAME \
             --set permissions_boundary_name=$UDS_PERMISSIONS_BOUNDARY_NAME \
             --set permissions_boundary_arn=$UDS_PERMISSIONS_BOUNDARY_ARN \
             --set state_bucket_name=$UDS_STATE_BUCKET_NAME \
