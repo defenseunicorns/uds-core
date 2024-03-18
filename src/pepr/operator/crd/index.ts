@@ -1,6 +1,3 @@
-import { V1OwnerReference } from "@kubernetes/client-node";
-import { GenericKind } from "kubernetes-fluent-client";
-
 export {
   Allow,
   Direction,
@@ -26,16 +23,3 @@ export {
 
 export * as Istio from "./generated/istio/virtualservice-v1beta1";
 export * as Prometheus from "./generated/prometheus/servicemonitor-v1";
-
-export function getOwnerRef(cr: GenericKind): V1OwnerReference[] {
-  const { name, uid } = cr.metadata!;
-
-  return [
-    {
-      apiVersion: cr.apiVersion!,
-      kind: cr.kind!,
-      uid: uid!,
-      name: name!,
-    },
-  ];
-}

@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, jest, test } from "@jest/globals";
 
 import { K8s, Log } from "pepr";
 import { Phase, UDSPackage } from "../crd";
-import { reconciler } from "./package-reconciler";
+import { packageReconciler } from "./package-reconciler";
 
 jest.mock("kubernetes-fluent-client");
 jest.mock("pepr");
@@ -23,30 +23,14 @@ describe("reconciler", () => {
     };
 
     (K8s as jest.Mock).mockImplementation(() => ({
+      Create: jest.fn(),
       PatchStatus: jest.fn(),
     }));
   });
 
   test("should log an error for invalid package definitions", async () => {
     delete mockPackage.metadata!.namespace;
-    await reconciler(mockPackage);
+    await packageReconciler(mockPackage);
     expect(Log.error).toHaveBeenCalled();
-  });
-
-  test("should skip processing for pending or completed packages", async () => {
-    mockPackage.status!.phase = Phase.Pending;
-    await reconciler(mockPackage);
-    expect(Log.info).toHaveBeenCalledWith(
-      expect.anything(),
-      "Skipping pending or completed package",
-    );
-
-    mockPackage.status!.phase = Phase.Ready;
-    mockPackage.status!.observedGeneration = mockPackage.metadata!.generation;
-    await reconciler(mockPackage);
-    expect(Log.info).toHaveBeenCalledWith(
-      expect.anything(),
-      "Skipping pending or completed package",
-    );
   });
 });

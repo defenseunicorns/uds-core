@@ -1,7 +1,7 @@
 import { K8s, Log, kind } from "pepr";
 
-import { Allow, Direction, Gateway, UDSPackage, getOwnerRef } from "../../crd";
-import { sanitizeResourceName } from "../utils";
+import { Allow, Direction, Gateway, UDSPackage } from "../../crd";
+import { getOwnerRef, sanitizeResourceName } from "../utils";
 import { allowEgressDNS } from "./defaults/allow-egress-dns";
 import { allowEgressIstiod } from "./defaults/allow-egress-istiod";
 import { allowIngressSidecarMonitoring } from "./defaults/allow-ingress-sidecar-monitoring";

@@ -1,6 +1,6 @@
 import { V1CustomResourceDefinitionVersion, V1JSONSchemaProps } from "@kubernetes/client-node";
 
-import { advancedHTTP } from "./istio/virtualservice-v1beta1";
+import { advancedHTTP } from "../istio/virtualservice-v1beta1";
 
 const allow = {
   description: "Allow specific traffic (namespace will have a default-deny policy)",
