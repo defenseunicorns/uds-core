@@ -63,7 +63,7 @@ tasks:
 
               # get backup object
               uds zarf tools kubectl get backups -n velero ${BACKUP_NAME} -o yaml
-              zarf tools kubectl get backups -A -o yaml
+              uds zarf tools kubectl get backups -A -o yaml
               echo "::endgroup::"
 
               # get backupstoragelocations
