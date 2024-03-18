@@ -20,7 +20,7 @@ tasks:
     actions:
       - cmd: |
           for package in src/*; do
-            uds run -f ${package}/tasks.yaml validate
+            uds run -f ${package}/tasks.yaml validate --no-progress
           done
           set +e
 
