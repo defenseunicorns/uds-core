@@ -63,6 +63,8 @@ jobs:
             --set cluster_name=$UDS_CLUSTER_NAME \
             --set permissions_boundary_name=$UDS_PERMISSIONS_BOUNDARY_NAME \
             --set permissions_boundary_arn=$UDS_PERMISSIONS_BOUNDARY_ARN \
+            --set aws_ci_dev_arn=${{ secrets.AWS_CI_DEV_ARN }} \
+            --set aws_ci_account=${{ secrets.AWS_CI_ACCOUNT }} \
             --confirm 
 
       - name: Deploy CI-IAC-AWS Package
@@ -79,21 +81,21 @@ jobs:
       - name: Deploy Bundle
         run: uds deploy .github/bundles/uds-bundle-uds-core-eks-nightly-*.tar.zst --confirm
 
-      - name: Remove UDS Core
-        if: always()
-        run: uds remove .github/bundles/uds-bundle-uds-core-eks-*.tar.zst --confirm
-        timeout-minutes: 60
-        continue-on-error: true
+      # - name: Remove UDS Core
+      #   if: always()
+      #   run: uds remove .github/bundles/uds-bundle-uds-core-eks-*.tar.zst --confirm
+      #   timeout-minutes: 60
+      #   continue-on-error: true
 
-      - name: Remove CI-DUBBD-IAC-AWS
-        if: always()
-        run: uds zarf package remove build/zarf-package-ci-iac-aws-*.tar.zst --confirm
-        timeout-minutes: 60
-        continue-on-error: true
+      # - name: Remove CI-DUBBD-IAC-AWS
+      #   if: always()
+      #   run: uds zarf package remove build/zarf-package-ci-iac-aws-*.tar.zst --confirm
+      #   timeout-minutes: 60
+      #   continue-on-error: true
 
-      - name: Teardown EKS cluster
-        if: always()
-        # can't do a zarf package remove since there's no kubernetes cluster.
-        run: uds zarf package remove build/zarf-package-distro-eks-*.tar.zst --confirm
-        timeout-minutes: 60
-        continue-on-error: true
+      # - name: Teardown EKS cluster
+      #   if: always()
+      #   # can't do a zarf package remove since there's no kubernetes cluster.
+      #   run: uds zarf package remove build/zarf-package-distro-eks-*.tar.zst --confirm
+      #   timeout-minutes: 60
+      #   continue-on-error: true
