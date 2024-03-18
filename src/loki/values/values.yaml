@@ -110,3 +110,17 @@ monitoring:
     enabled: false
 gateway:
   enabled: true
+  # Remove default anti-affinity to support single node
+  affinity: ""
+
+read:
+  # Remove default anti-affinity to support single node
+  affinity: ""
+
+write:
+  # Remove default anti-affinity to support single node
+  affinity: ""
+
+backend:
+  # Remove default anti-affinity to support single node
+  affinity: ""

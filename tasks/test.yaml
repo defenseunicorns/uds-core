@@ -8,17 +8,11 @@ tasks:
     description: "Build and test a single package, must set UDS_PKG environment variable"
     actions:
       - task: create:single-package
-      - cmd: |
-          [ "$UDS_PKG" = "loki" ] && echo "3" || echo "1"
-        setVariables:
-          - name: NODES
-      - task: setup:create-k3d-cluster
-        with:
-          nodes: ${NODES}
+      - task: setup:k3d-test-cluster
       - task: deploy:single-package
 
       - description: "Validate the package"
-        cmd: uds run -f src/${UDS_PKG}/tasks.yaml validate
+        cmd: uds run -f src/${UDS_PKG}/tasks.yaml validate --no-progress
 
   - name: validate-packages
     description: "Validated all packages"
@@ -42,9 +36,7 @@ tasks:
   - name: uds-core-upgrade
     description: "Test an upgrade from the latest released UDS Core package to current branch"
     actions:
-      - task: setup:create-k3d-cluster
-        with:
-          nodes: 3
+      - task: setup:k3d-test-cluster
       - task: deploy:latest-package-release
       - task: create:standard-package
       - task: deploy:standard-package
