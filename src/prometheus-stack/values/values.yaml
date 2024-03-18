@@ -2,6 +2,7 @@ crds:
   enabled: false
 grafana:
   enabled: false
+  forceDeployDashboards: true
 kubeStateMetrics:
   serviceMonitor:
     interval: ""
