@@ -16,12 +16,12 @@ UDS Core establishes a secure baseline for cloud-native systems and ships with c
 - [Pepr](https://pepr.dev) - UDS policy engine & operator
 - [Prometheus Stack](https://github.com/prometheus-operator/kube-prometheus) - Monitoring
 - [Promtail](https://grafana.com/docs/loki/latest/send-data/promtail/) - Log Aggregation
+- [Velero](https://velero.io/) - Backup & Restore
 
 #### Future Applications
 
 - [Kiali](https://kiali.io/) - Service Mesh Observability
 - [Tempo](https://grafana.com/docs/tempo/latest/getting-started/) - Tracing
-- [Velero](https://velero.io/) - Backup & Restore
 
 ---
 
@@ -53,7 +53,7 @@ If you want to try out UDS Core, you can use the [k3d-core-demo bundle](./bundle
 <!-- x-release-please-start-version -->
 
 ```bash
-uds deploy k3d-core-demo:0.15.1
+uds deploy k3d-core-demo:0.16.1
 ```
 
 <!-- x-release-please-end -->
@@ -65,7 +65,7 @@ In addition to the demo bundle, a [k3d-core-istio-dev bundle](./bundles/k3d-isti
 <!-- x-release-please-start-version -->
 
 ```bash
-uds deploy k3d-core-istio-dev:0.15.1
+uds deploy k3d-core-istio-dev:0.16.1
 ```
 
 <!-- x-release-please-end -->

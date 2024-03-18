@@ -4,7 +4,7 @@ metadata:
   description: "UDS Core"
   authors: "Defense Unicorns - Product"
   # x-release-please-start-version
-  version: "0.15.1"
+  version: "0.16.1"
   # x-release-please-end
 
 components:
@@ -89,3 +89,9 @@ components:
     required: true
     import:
       path: ../../src/authservice
+
+  # Velero
+  - name: velero
+    required: true
+    import:
+      path: ../../src/velero

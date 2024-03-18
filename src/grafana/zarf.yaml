@@ -21,10 +21,10 @@ components:
         valuesFiles:
           - values/upstream-values.yaml
     images:
-      - docker.io/grafana/grafana:10.3.1
-      - docker.io/curlimages/curl:8.5.0
+      - docker.io/grafana/grafana:10.4.0
+      - docker.io/curlimages/curl:8.6.0
       - docker.io/library/busybox:1.36.1
-      - ghcr.io/kiwigrid/k8s-sidecar:1.25.3
+      - ghcr.io/kiwigrid/k8s-sidecar:1.26.1
 
   - name: grafana
     required: true
@@ -37,6 +37,6 @@ components:
         valuesFiles:
           - values/registry1-values.yaml
     images:
-      - registry1.dso.mil/ironbank/opensource/grafana/grafana:10.3.1
+      - registry1.dso.mil/ironbank/opensource/grafana/grafana:10.4.0
       - registry1.dso.mil/ironbank/redhat/ubi/ubi9-minimal:9.3
-      - registry1.dso.mil/ironbank/kiwigrid/k8s-sidecar:1.25.3
+      - registry1.dso.mil/ironbank/kiwigrid/k8s-sidecar:1.26.1
