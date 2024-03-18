@@ -1,8 +1,8 @@
 import { K8s, Log } from "pepr";
 
-import { Prometheus, UDSPackage, getOwnerRef } from "../../crd";
+import { Prometheus, UDSPackage } from "../../crd";
 import { Monitor } from "../../crd/generated/package-v1alpha1";
-import { sanitizeResourceName } from "../utils";
+import { getOwnerRef, sanitizeResourceName } from "../utils";
 
 /**
  * Generate a service monitor for a service
