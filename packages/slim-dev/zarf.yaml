@@ -1,7 +1,7 @@
 kind: ZarfPackageConfig
 metadata:
-  name: core-istio
-  description: "UDS Core (Istio Only, Keycloak Optionally)"
+  name: core-slim-dev
+  description: "UDS Core (Istio, UDS Operator and Keycloak)"
   authors: "Defense Unicorns - Product"
   # x-release-please-start-version
   version: "0.16.1"
@@ -10,33 +10,33 @@ metadata:
 components:
   # Istio
   - name: istio-controlplane
-    required: false
+    required: true
     import:
       path: ../../src/istio
 
   - name: istio-admin-gateway
-    required: false
+    required: true
     import:
       path: ../standard
 
   - name: istio-tenant-gateway
-    required: false
+    required: true
     import:
       path: ../standard
 
   - name: istio-passthrough-gateway
-    required: false
+    required: true
     import:
       path: ../standard
 
   # Pepr the world
   - name: pepr-uds-core
-    required: false
+    required: true
     import:
       path: ../standard
 
   # Keycloak
   - name: keycloak
-    required: false
+    required: true
     import:
-      path: ../../src/keycloak
+      path: ../standard

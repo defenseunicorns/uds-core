@@ -67,20 +67,11 @@ Deploy Istio, Keycloak and Pepr:
 <!-- x-release-please-start-version -->
 
 ```bash
-uds deploy k3d-core-istio-dev:0.16.1
+uds deploy k3d-core-slim-dev:0.16.1
 ```
 
 <!-- x-release-please-end -->
 
-Deploy just Istio and Pepr:
-
-<!-- x-release-please-start-version -->
-
-```bash
-uds deploy k3d-core-istio-dev:0.15.1 -p "uds-k3d-dev, init, core-istio"
-```
-
-<!-- x-release-please-end -->
 
 #### Developing UDS Core
 
