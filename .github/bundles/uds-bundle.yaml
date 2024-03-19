@@ -18,21 +18,6 @@ packages:
     ref: 0.16.1
     # x-release-please-end
     overrides:
-    #   loki:
-    #     loki:
-    #       variables:
-    #         - name: LOKI_CHUNKS_BUCKET
-    #           description: "The object storage bucket for Loki chunks"
-    #           path: loki.storage.bucketNames.chunks
-    #         - name: LOKI_RULER_BUCKET
-    #           description: "The object storage bucket for Loki ruler"
-    #           path: loki.storage.bucketNames.ruler
-    #         - name: LOKI_ADMIN_BUCKET
-    #           description: "The object storage bucket for Loki admin"
-    #           path: loki.storage.bucketNames.admin
-    #         - name: LOKI_S3_REGION
-    #           description: "The S3 region"
-    #           path: loki.storage.s3.region
       velero:
         velero:
           variables:
