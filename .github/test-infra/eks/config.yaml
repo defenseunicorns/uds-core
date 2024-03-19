@@ -46,3 +46,8 @@ managedNodeGroups:
       PermissionsBoundary: "###ZARF_VAR_PERMISSIONS_BOUNDARY_NAME###"
     iam:
       instanceRolePermissionsBoundary: "###ZARF_VAR_PERMISSIONS_BOUNDARY_ARN###"
+    ami: "###ZARF_VAR_AMI_ID###"
+    amiFamily: AmazonLinux2
+    overrideBootstrapCommand: |
+      #!/bin/bash
+      /etc/eks/bootstrap.sh ###ZARF_VAR_CLUSTER_NAME### --container-runtime containerd

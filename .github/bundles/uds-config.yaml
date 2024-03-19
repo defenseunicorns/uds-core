@@ -1,10 +1,17 @@
-# Overwritten at deploy time by the ci-iac-aws package
 options:
   architecture: amd64
+
 variables:
   core:
-    loki_bucket_chunks: ${ZARF_VAR_LOKI_S3_BUCKET}
-    loki_bucket_ruler: ${ZARF_VAR_LOKI_S3_BUCKET}
-    loki_bucket_admin: ${ZARF_VAR_LOKI_S3_BUCKET}
-    loki_region: ${ZARF_VAR_LOKI_S3_AWS_REGION}
-    loki_role_arn: ${ZARF_VAR_LOKI_S3_ROLE_ARN}
+    loki_bucket_chunks: uds-core-aws-tristan-test-loki-20240319154604610600000001
+    loki_bucket_ruler: uds-core-aws-tristan-test-loki-20240319154604610600000001
+    loki_bucket_admin: uds-core-aws-tristan-test-loki-20240319154604610600000001
+    loki_region: us-west-2
+    loki_role_arn: arn:aws:iam::x:role/uds-core-aws-tristan-test-loki-logging-loki-irsa
+    VELERO_USE_SECRET: "false"
+    # VELERO_S3_URL: ""
+    VELERO_IRSA_ANNOTATION: |
+      eks.amazonaws.com/role-arn: arn:aws:iam::x:role/uds-core-aws-tristan-test-velero-velero-velero-server-irsa
+    VELERO_BUCKET: uds-core-aws-tristan-test-velero-20240319154717125400000001
+    VELERO_BUCKET_REGION: us-west-2
+    VELERO_BUCKET_PROVIDER_URL: ""

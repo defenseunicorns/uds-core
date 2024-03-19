@@ -10,6 +10,8 @@ variables:
     prompt: true
   - name: PERMISSIONS_BOUNDARY_ARN
   - name: PERMISSIONS_BOUNDARY_NAME
+  - name: AMI_ID
+    default: ami-068ab6ac1cec494e0
 
 components:
   - name: load-eksctl
