@@ -7,11 +7,11 @@ variables:
     loki_bucket_ruler: uds-core-aws-tristan-test-loki-20240319154604610600000001
     loki_bucket_admin: uds-core-aws-tristan-test-loki-20240319154604610600000001
     loki_region: us-west-2
-    loki_role_arn: arn:aws:iam::x:role/uds-core-aws-tristan-test-loki-logging-loki-irsa
+    loki_role_arn: <irsa-role-arn>
     VELERO_USE_SECRET: "false"
     # VELERO_S3_URL: ""
     VELERO_IRSA_ANNOTATION: |
-      eks.amazonaws.com/role-arn: arn:aws:iam::x:role/uds-core-aws-tristan-test-velero-velero-velero-server-irsa
+      eks.amazonaws.com/role-arn: <irsa-role-arn>
     VELERO_BUCKET: uds-core-aws-tristan-test-velero-20240319154717125400000001
     VELERO_BUCKET_REGION: us-west-2
     VELERO_BUCKET_PROVIDER_URL: ""
