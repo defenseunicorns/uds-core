@@ -46,6 +46,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      
+      - name: Top Check
+        run: top
 
       - name: Environment setup
         uses: ./.github/actions/setup
@@ -67,6 +70,10 @@ jobs:
       - name: Test UDS Core Upgrade
         if: ${{ inputs.package == 'all' && inputs.test_type == 'upgrade' }}
         run: uds run test-uds-core-upgrade --set FLAVOR=${{ inputs.flavor }}
+
+      - name: Top Check
+        if: ${{ always() }}
+        run: top
 
       - name: Debug Output
         if: ${{ always() }}
