@@ -82,6 +82,8 @@ tasks:
     description: "Debug Output"
     actions:
       - cmd: |
+          sysctl -a
+
           echo "::group::kubectl get all"
           kubectl get all -A
           echo "::endgroup::"
