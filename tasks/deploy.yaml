@@ -45,7 +45,7 @@ tasks:
     inputs:
       options:
         description: For setting deploy time variables and flags
-      package: 
+      package:
         description: Path and name of package to deploy
         default: build/zarf-package-*.tar.zst
     actions:
