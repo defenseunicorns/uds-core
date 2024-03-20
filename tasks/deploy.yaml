@@ -41,13 +41,3 @@ tasks:
       - description: "Deploy the standard UDS Core zarf package"
         cmd: uds zarf package deploy build/zarf-package-core-${UDS_ARCH}-${VERSION}.tar.zst --confirm
 
-  - name: no-pepr-package
-    inputs:
-      options:
-        description: For setting deploy time variables and flags
-      package:
-        description: Path and name of package to deploy
-        default: build/zarf-package-*.tar.zst
-    actions:
-      - description: Deploy the UDS Zarf Package
-        cmd: uds zarf package deploy ${{ .inputs.package }} --confirm --no-progress ${{ .inputs.options }}

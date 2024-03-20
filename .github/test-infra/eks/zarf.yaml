@@ -7,7 +7,6 @@ metadata:
 
 variables:
   - name: CLUSTER_NAME
-    prompt: true
   - name: PERMISSIONS_BOUNDARY_ARN
   - name: PERMISSIONS_BOUNDARY_NAME
   - name: AMI_ID

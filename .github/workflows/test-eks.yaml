@@ -12,17 +12,17 @@ jobs:
     runs-on: ubuntu-latest
     env:
       SHA: ${{ github.sha }}
-      ZARF_PERMISSIONS_BOUNDARY_ARN: ${{ secrets.PERMISSIONS_BOUNDARY_ARN }}
-      ZARF_PERMISSIONS_BOUNDARY_NAME: ${{ secrets.PERMISSIONS_BOUNDARY_NAME }}
-      ZARF_STATE_BUCKET_NAME: uds-aws-ci-commercial-us-west-2-5246-tfstate
-      ZARF_STATE_DYNAMODB_TABLE_NAME: uds-aws-ci-commercial-org-us-west-2-5246-tfstate-lock
-      ZARF_AWS_CI_DEV_ARN: ${{ secrets.AWS_CI_DEV_ARN }}
-      ZARF_AWS_CI_ACCOUNT: ${{ secrets.AWS_CI_ACCOUNT }}
+      PERMISSIONS_BOUNDARY_ARN: ${{ secrets.PERMISSIONS_BOUNDARY_ARN }}
+      PERMISSIONS_BOUNDARY_NAME: ${{ secrets.PERMISSIONS_BOUNDARY_NAME }}
+      STATE_BUCKET_NAME: uds-aws-ci-commercial-us-west-2-5246-tfstate
+      STATE_DYNAMODB_TABLE_NAME: uds-aws-ci-commercial-org-us-west-2-5246-tfstate-lock
+      AWS_CI_DEV_ARN: ${{ secrets.AWS_CI_DEV_ARN }}
+      AWS_CI_ACCOUNT: ${{ secrets.AWS_CI_ACCOUNT }}
     steps:
       - name: Set ENV
         run: |
-          echo "ZARF_CLUSTER_NAME=uds-core-aws-${SHA:0:7}" >> $GITHUB_ENV
-          echo "ZARF_STATE_KEY="tfstate/ci/install/${SHA:0:7}-core-aws.tfstate >> $GITHUB_ENV
+          echo "CLUSTER_NAME=uds-core-aws-${SHA:0:7}" >> $GITHUB_ENV
+          echo "STATE_KEY="tfstate/ci/install/${SHA:0:7}-core-aws.tfstate >> $GITHUB_ENV
 
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -57,10 +57,24 @@ jobs:
         run: uds create .github/bundles --confirm
 
       - name: Deploy Cluster
-        run: uds run deploy-no-pepr-package --set package=build/zarf-package-distro-eks-*.tar.zst
+        run: | 
+          uds zarf package deploy build/zarf-package-distro-eks-*.tar.zst \
+            --set cluster_name=$CLUSTER_NAME \
+            --set permissions_boundary_arn=$PERMISSIONS_BOUNDARY_ARN \
+            --set permission_boundary_name=$PERMISSIONS_BOUNDARY_NAME \
+            --confirm
 
       - name: Deploy CI-IAC-AWS Package
-        run: uds run deploy-no-pepr-package --set package=build/zarf-package-ci-iac-aws-*.tar.zst
+        run: |
+          uds zarf package deploy build/zarf-package-ci-iac-aws-*.tar.zst \
+            --set cluster_name=$CLUSTER_NAME \
+            --set permission_boundary_name=$PERMISSIONS_BOUNDARY_NAME \
+            --set state_bucket_name=$STATE_BUCKET_NAME \
+            --set state_dynamodb_table_name=$STATE_DYNAMODB_TABLE_NAME \
+            --set state_key=$STATE_KEY \
+            --set aws_ci_dev_arn=$AWS_CI_DEV_ARN \
+            --set aws_ci_account=$AWS_CI_ACCOUNT \
+            --confirm
 
       - name: Deploy Bundle
         env:
