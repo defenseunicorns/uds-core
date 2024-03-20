@@ -8,7 +8,7 @@ variables:
   - name: VERSION
     description: "The version of the packages to build"
     # x-release-please-start-version
-    default: "0.16.0"
+    default: "0.16.1"
     # x-release-please-end
 
 tasks:
@@ -31,8 +31,8 @@ tasks:
           uds publish bundles/k3d-standard/uds-bundle-k3d-*-amd64-${VERSION}.tar.zst ${TARGET_REPO}/bundles --no-progress
           uds publish bundles/k3d-standard/uds-bundle-k3d-*-arm64-${VERSION}.tar.zst ${TARGET_REPO}/bundles --no-progress
 
-          uds publish bundles/k3d-istio/uds-bundle-k3d-*-arm64-${VERSION}.tar.zst ${TARGET_REPO}/bundles --no-progress
-          uds publish bundles/k3d-istio/uds-bundle-k3d-*-amd64-${VERSION}.tar.zst ${TARGET_REPO}/bundles --no-progress
+          uds publish bundles/k3d-slim-dev/uds-bundle-k3d-*-arm64-${VERSION}.tar.zst ${TARGET_REPO}/bundles --no-progress
+          uds publish bundles/k3d-slim-dev/uds-bundle-k3d-*-amd64-${VERSION}.tar.zst ${TARGET_REPO}/bundles --no-progress
 
       - description: "Tag the latest bundles"
         cmd: |
