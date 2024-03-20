@@ -8,6 +8,12 @@ import { Client } from "./types";
 const apiURL =
   "http://keycloak-http.keycloak.svc.cluster.local:8080/realms/uds/clients-registrations/default";
 
+// Template regex to match clientField() references, see https://regex101.com/r/e41Dsk/3 for details
+const secretTemplateRegex = new RegExp(
+  'clientField\\(([a-zA-Z]+)\\)(?:\\["?([\\w]+)"?\\]|(\\.json\\(\\)))?',
+  "gm",
+);
+
 /**
  * Create or update the Keycloak clients for the package
  *
@@ -53,7 +59,7 @@ export async function purgeSSOClients(pkg: UDSPackage, refs: string[] = []) {
 }
 
 async function syncClient(
-  { isAuthSvcClient, ...clientReq }: Sso,
+  { isAuthSvcClient, secretName, secretTemplate, ...clientReq }: Sso,
   pkg: UDSPackage,
   isRetry = false,
 ) {
@@ -61,7 +67,7 @@ async function syncClient(
 
   try {
     // Not including the CR data in the ref because Keycloak client IDs must be unique already
-    const name = getClientName(clientReq);
+    const name = `sso-client-${clientReq.clientId}`;
     const token = Store.getItem(name);
 
     let client: Client;
@@ -86,9 +92,9 @@ async function syncClient(
       metadata: {
         namespace: pkg.metadata!.namespace,
         // Use the CR secret name if provided, otherwise use the client name
-        name: clientReq.secretName || name,
+        name: secretName || name,
       },
-      stringData: clientToStringmap(client),
+      stringData: generateSecretData(client, secretTemplate),
     });
 
     if (isAuthSvcClient) {
@@ -99,12 +105,12 @@ async function syncClient(
   } catch (err) {
     const msg =
       `Failed to process client request '${clientReq.clientId}' for ` +
-      `${pkg.metadata?.namespace}/${pkg.metadata?.name}`;
+      `${pkg.metadata?.namespace}/${pkg.metadata?.name}. This can occur if a client already exists with the same ID that Pepr isn't tracking.`;
     Log.error({ err }, msg);
 
     if (isRetry) {
       Log.error(`${msg}, retry failed, aborting`);
-      throw err;
+      throw new Error(`${msg}. RETRY FAILED, aborting: ${JSON.stringify(err)}`);
     }
 
     // Retry the request
@@ -155,12 +161,13 @@ async function apiCall(sso: Partial<Sso>, method = "POST", authToken = "") {
   return resp.data;
 }
 
-function getClientName(client: Partial<Sso>) {
-  return `sso-client-${client.clientId}`;
-}
-
-function clientToStringmap(client: Client) {
+function generateSecretData(client: Client, secretTemplate?: { [key: string]: string }) {
   const stringMap: Record<string, string> = {};
+
+  if (secretTemplate) {
+    // Iterate over the secret template entry and process each value
+    return templateData(secretTemplate, stringMap, client);
+  }
 
   // iterate over the client object and convert all values to strings
   for (const [key, value] of Object.entries(client)) {
@@ -173,5 +180,37 @@ function clientToStringmap(client: Client) {
     }
   }
 
+  return stringMap;
+}
+function templateData(
+  secretTemplate: { [key: string]: string },
+  stringMap: Record<string, string>,
+  client: Client,
+) {
+  for (const [key, value] of Object.entries(secretTemplate)) {
+    // Replace any clientField() references with the actual client data
+    stringMap[key] = value.replace(
+      secretTemplateRegex,
+      (_match, fieldName: keyof Client, key, json) => {
+        // Make typescript happy with a more generic type
+        const value = client[fieldName] as Record<string | number, string> | string;
+
+        // If a key is provided, use it to get the value
+        if (key) {
+          return String(value[key] ?? "");
+        }
+
+        // If .json() is provided, convert the value to a JSON string
+        if (json) {
+          return JSON.stringify(value);
+        }
+
+        // Otherwise, convert the value to a string
+        return value !== undefined ? String(value) : "";
+      },
+    );
+  }
+
+  // Return the processed secret template without any further processing
   return stringMap;
 }
