@@ -12,17 +12,17 @@ jobs:
     runs-on: ubuntu-latest
     env:
       SHA: ${{ github.sha }}
-      UDS_PERMISSIONS_BOUNDARY_ARN: ${{ secrets.PERMISSIONS_BOUNDARY_ARN }}
-      UDS_PERMISSIONS_BOUNDARY_NAME: ${{ secrets.PERMISSIONS_BOUNDARY_NAME }}
-      UDS_STATE_BUCKET_NAME: uds-aws-ci-commercial-us-west-2-5246-tfstate
-      UDS_STATE_DYNAMODB_TABLE_NAME: uds-aws-ci-commercial-org-us-west-2-5246-tfstate-lock
-      UDS_AWS_CI_DEV_ARN: ${{ secrets.AWS_CI_DEV_ARN }}
-      UDS_AWS_CI_ACCOUNT: ${{ secrets.AWS_CI_ACCOUNT }}
+      ZARF_PERMISSIONS_BOUNDARY_ARN: ${{ secrets.PERMISSIONS_BOUNDARY_ARN }}
+      ZARF_PERMISSIONS_BOUNDARY_NAME: ${{ secrets.PERMISSIONS_BOUNDARY_NAME }}
+      ZARF_STATE_BUCKET_NAME: uds-aws-ci-commercial-us-west-2-5246-tfstate
+      ZARF_STATE_DYNAMODB_TABLE_NAME: uds-aws-ci-commercial-org-us-west-2-5246-tfstate-lock
+      ZARF_AWS_CI_DEV_ARN: ${{ secrets.AWS_CI_DEV_ARN }}
+      ZARF_AWS_CI_ACCOUNT: ${{ secrets.AWS_CI_ACCOUNT }}
     steps:
       - name: Set ENV
         run: |
-          echo "UDS_CLUSTER_NAME=uds-core-aws-${SHA:0:7}" >> $GITHUB_ENV
-          echo "UDS_STATE_KEY="tfstate/ci/install/${SHA:0:7}-core-aws.tfstate >> $GITHUB_ENV
+          echo "ZARF_CLUSTER_NAME=uds-core-aws-${SHA:0:7}" >> $GITHUB_ENV
+          echo "ZARF_STATE_KEY="tfstate/ci/install/${SHA:0:7}-core-aws.tfstate >> $GITHUB_ENV
 
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -57,8 +57,6 @@ jobs:
         run: uds create .github/bundles --confirm
 
       - name: Deploy Cluster
-        env:
-          UDS_CLUSTER_NAME: $UDS_CLUSTER_NAME
         run: uds run deploy-no-pepr-package --set package=build/zarf-package-distro-eks-*.tar.zst
 
       - name: Deploy CI-IAC-AWS Package
