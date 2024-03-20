@@ -57,6 +57,8 @@ jobs:
         run: uds create .github/bundles --confirm
 
       - name: Deploy Cluster
+        env:
+          UDS_CLUSTER_NAME: $UDS_CLUSTER_NAME
         run: uds run deploy-no-pepr-package --set package=build/zarf-package-distro-eks-*.tar.zst
 
       - name: Deploy CI-IAC-AWS Package
