@@ -36,7 +36,7 @@ permissions:
   contents: read
 
 env:
-  UDS_K3D_EXTRA_ARGS: "--image=rancher/k3s:v1.27.11-k3s1"
+  UDS_K3D_EXTRA_ARGS: "--image rancher/k3s:v1.27.11-k3s1"
 
 jobs:
   test:
