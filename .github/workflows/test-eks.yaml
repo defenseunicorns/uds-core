@@ -66,7 +66,7 @@ jobs:
         run: |
           uds zarf package deploy build/zarf-package-ci-iac-aws-*.tar.zst \
             --set cluster_name=$CLUSTER_NAME \
-            --set permission_boundary_name=$PERMISSIONS_BOUNDARY_NAME \
+            --set permissions_boundary_name=$PERMISSIONS_BOUNDARY_NAME \
             --set state_bucket_name=$STATE_BUCKET_NAME \
             --set state_dynamodb_table_name=$STATE_DYNAMODB_TABLE_NAME \
             --set state_key=$STATE_KEY \
