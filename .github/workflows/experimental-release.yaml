@@ -1,0 +1,86 @@
+name: Publish UDS Core Experimental
+
+on:
+  schedule:
+    - cron: "0 10 * * *"
+  workflow_dispatch:
+
+jobs:
+  publish-experimental-release:
+    strategy:
+      matrix:
+        flavor: [upstream, registry1]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+
+      - name: Environment setup
+        uses: ./.github/actions/setup
+
+      - name: Login to GHCR
+        run: uds run registry-login --set REGISTRY=ghcr.io --set REGISTRY_USERNAME=dummy --set REGISTRY_PASSWORD=${{ secrets.GITHUB_TOKEN }} --set REGISTRY_RETRY_INTERVAL=90
+
+      - name: Login to registry1
+        run: uds run registry-login --set REGISTRY=registry1.dso.mil --set REGISTRY_USERNAME=${{ secrets.IRON_BANK_ROBOT_USERNAME }} --set REGISTRY_PASSWORD=${{ secrets.IRON_BANK_ROBOT_PASSWORD }} --set REGISTRY_RETRY_INTERVAL=90
+
+      - name: Set versions to experimental
+        run: |
+          yq -ei '.metadata.version="experimental", (.packages[]|select(has("ref"))|select(.name=="core")).ref="experimental"' bundles/k3d-standard/uds-bundle.yaml
+          yq -ei '.metadata.version="experimental", (.packages[]|select(has("ref"))|select(.name=="core-slim-dev")).ref="experimental"' bundles/k3d-slim-dev/uds-bundle.yaml
+          yq -ei '.metadata.version="experimental"' packages/slim-dev/zarf.yaml
+          yq -ei '.metadata.version="experimental"' packages/standard/zarf.yaml
+
+      - name: Create Packages and Bundles
+        run: |
+
+          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress --set FLAVOR=${{ matrix.flavor }}
+          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml k3d-standard-bundle --no-progress
+          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml slim-dev-package --no-progress --set FLAVOR=${{ matrix.flavor }}
+          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml k3d-slim-dev-bundle --no-progress
+
+          if [ "${{ matrix.flavor }}" != "registry1" ]; then
+            ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml standard-package --no-progress --set FLAVOR=${{ matrix.flavor }}
+            ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-standard-bundle --no-progress
+            ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml slim-dev-package --no-progress --set FLAVOR=${{ matrix.flavor }}
+            ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-slim-dev-bundle --no-progress
+          fi
+
+      # Standard Package by default tests what's in the Istio Package
+      #- name: Test amd64 Bundle
+      #  run: |
+      #    uds run -f tasks/deploy.yaml k3d-standard-bundle --no-progress
+      #    uds run -f tasks/test.yaml validate-packages --no-progress
+
+      - name: Publish Standard Package
+        run: uds run -f tasks/publish.yaml standard-package --set FLAVOR=${{ matrix.flavor }} --set VERSION=experimental
+
+      - name: Publish Upstream Flavored Bundles
+        if: ${{ matrix.flavor != 'registry1'}}
+        run: uds run -f tasks/publish.yaml bundles --set VERSION=experimental
+
+      - name: Save logs
+        if: always()
+        uses: ./.github/actions/save-logs
+        with:
+          suffix: -${{ matrix.flavor }}
+
+
+  update-experimental-tag:
+    needs: publish-experimental-release
+    env:
+      GH_TOKEN: ${{ github.token }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+
+      - name: Update experimental tag
+        run: |
+          if gh release view experimental; then
+            gh release delete experimental --cleanup-tag -y
+          fi
+          gh release create experimental -t "experimental" -n "" --prerelease
