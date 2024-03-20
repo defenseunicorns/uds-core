@@ -21,19 +21,19 @@ tasks:
       - description: "Create the UDS Core Standard Bundle"
         cmd: "uds create bundles/k3d-standard --confirm --no-progress --architecture=${ZARF_ARCHITECTURE}"
 
-  - name: istio-package
+  - name: slim-dev-package
     description: "Create the UDS Core (Istio Only) Zarf Package"
     actions:
       - task: pepr-build
 
       - description: "Create the UDS Core Istio Zarf Package"
-        cmd: "uds zarf package create packages/istio --confirm --flavor ${FLAVOR}"
+        cmd: "uds zarf package create packages/slim-dev --confirm --flavor ${FLAVOR}"
 
-  - name: k3d-istio-bundle
-    description: "Create the K3d-UDS Core (Istio Only) Bundle"
+  - name: k3d-slim-dev-bundle
+    description: "Create the K3d-UDS Core (Istio and Keycloak Only) Bundle"
     actions:
-      - description: "Create the UDS Core Istio Only Bundle"
-        cmd: "uds create bundles/k3d-istio --confirm --no-progress --architecture=${ZARF_ARCHITECTURE}"
+      - description: "Create the UDS Core Istio and Keycloak Only Bundle"
+        cmd: "uds create bundles/k3d-slim-dev --confirm --no-progress --architecture=${ZARF_ARCHITECTURE}"
 
   - name: single-package
     description: "Create a single Zarf Package, must set UDS_PKG environment variable"

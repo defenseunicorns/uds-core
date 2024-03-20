@@ -14,6 +14,6 @@ tasks:
       - description: "Pepr Format check"
         cmd: npx pepr format --validate-only
       - description: install yamllint deps
-        cmd: pip install yamllint
+        cmd: CMD=pip && which $CMD || CMD=pip3 && $CMD install yamllint
       - description: yaml lint
         cmd: yamllint . -c .yamllint --no-warnings
