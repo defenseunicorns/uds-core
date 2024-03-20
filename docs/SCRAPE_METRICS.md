@@ -35,7 +35,7 @@ NOTE: While this is a rather verbose spec, each of the above fields are strictly
 
 ## Notes on Alternative Approaches
 
-In coming up with this feature a few alternative approaches were approaches were considered but not chosen due to issues with each one. In our view the current spec provides the best balance of a simplified interface compared to the `ServiceMonitor` spec, and a faster/easier reconciliation loop.
+In coming up with this feature a few alternative approaches were approaches were considered but not chosen due to issues with each one. The current spec provides the best balance of a simplified interface compared to the `ServiceMonitor` spec, and a faster/easier reconciliation loop.
 
 ### Generation based on service lookup
 
@@ -45,4 +45,4 @@ An alternative spec option would use the service name instead of selectors/port 
 
 ### Generation of service + monitor
 
-Another alternative approach would be to use a pod selector and port only. We would then generate both a service and servicemonitor, giving us full control of the port names and selectors. This seems like a viable path, but does add an extra resource for us to generate and manage. There could be unknown side effects of generating services that could clash with other services (particularly with istio and endpoints). This does on the whole seem like a very straightforward approach which would simplify the end user experience and may be worth switching to.
+Another alternative approach would be to use a pod selector and port only. We would then generate both a service and servicemonitor, giving us full control of the port names and selectors. This seems like a viable path, but does add an extra resource for us to generate and manage. There could be unknown side effects of generating services that could clash with other services (particularly with istio and endpoints). This would otherwise be a relative straightforward approach and is worth evaluating again if we want to simplify the spec later on.
