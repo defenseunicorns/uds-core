@@ -10,7 +10,7 @@ includes:
   - deploy: ./tasks/deploy.yaml
   - test: ./tasks/test.yaml
   - lint: ./tasks/lint.yaml
-  - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/v0.2.2/tasks/setup.yaml
+  - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/v0.3.2/tasks/setup.yaml
 
 tasks:
   - name: dev-setup
@@ -54,20 +54,9 @@ tasks:
     actions:
       - task: create:standard-package
 
-  - name: create-package-no-pepr
-    actions:
-      - task: create:no-pepr-package
-        with:
-          options: ${OPTIONS}
-          path: ${PATH}
-
   - name: deploy-single-package
     actions:
       - task: deploy:single-package
-  
-  - name: deploy-package-no-pepr
-    actions:
-      - task: deploy:no-pepr-package
 
   - name: test-single-package
     actions:

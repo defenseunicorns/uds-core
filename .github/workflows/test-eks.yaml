@@ -16,6 +16,8 @@ jobs:
       UDS_PERMISSIONS_BOUNDARY_NAME: ${{ secrets.PERMISSIONS_BOUNDARY_NAME }}
       UDS_STATE_BUCKET_NAME: uds-aws-ci-commercial-us-west-2-5246-tfstate
       UDS_STATE_DYNAMODB_TABLE_NAME: uds-aws-ci-commercial-org-us-west-2-5246-tfstate-lock
+      UDS_AWS_CI_DEV_ARN: ${{ secrets.AWS_CI_DEV_ARN }}
+      UDS_AWS_CI_ACCOUNT: ${{ secrets.AWS_CI_ACCOUNT }}
     steps:
       - name: Set ENV
         run: |
@@ -42,14 +44,11 @@ jobs:
       - name: Environment setup
         uses: ./.github/actions/setup
 
-      - name: Login to registry1
-        run: uds run registry-login --set REGISTRY=registry1.dso.mil --set REGISTRY_USERNAME=${{ secrets.IRON_BANK_ROBOT_USERNAME }} --set REGISTRY_PASSWORD=${{ secrets.IRON_BANK_ROBOT_PASSWORD }} --set REGISTRY_RETRY_INTERVAL=90
-
       - name: Create EKSCTL Package
-        run: uds run create-package-no-pepr --set path=.github/test-infra/eks
+        run: uds run -f tasks/create.yaml no-pepr-package --set path=.github/test-infra/eks
 
       - name: Create CI-IAC-AWS Package
-        run: uds run create-package-no-pepr --set path=.github/test-infra/ci-iac-aws
+        run: uds run -f tastks/create.yaml no-pepr-package --set path=.github/test-infra/ci-iac-aws
 
       - name: Create UDS Core Package
         run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package
@@ -58,25 +57,10 @@ jobs:
         run: uds create .github/bundles --confirm
 
       - name: Deploy Cluster
-        run: |
-          uds zarf package deploy build/zarf-package-distro-eks-*.tar.zst \
-            --set cluster_name=$UDS_CLUSTER_NAME \
-            --set permissions_boundary_name=$UDS_PERMISSIONS_BOUNDARY_NAME \
-            --set permissions_boundary_arn=$UDS_PERMISSIONS_BOUNDARY_ARN \
-            --set aws_ci_dev_arn=${{ secrets.AWS_CI_DEV_ARN }} \
-            --set aws_ci_account=${{ secrets.AWS_CI_ACCOUNT }} \
-            --confirm 
+        run: uds run -f tasks/deploy.yaml no-pepr-package --set path=build/zarf-package-distro-eks-*.tar.zst
 
       - name: Deploy CI-IAC-AWS Package
-        run: |
-          uds zarf package deploy build/zarf-package-ci-iac-aws-*.tar.zst \
-            --set cluster_name=$UDS_CLUSTER_NAME \
-            --set permissions_boundary_name=$UDS_PERMISSIONS_BOUNDARY_NAME \
-            --set permissions_boundary_arn=$UDS_PERMISSIONS_BOUNDARY_ARN \
-            --set state_bucket_name=$UDS_STATE_BUCKET_NAME \
-            --set state_key=$UDS_STATE_KEY \
-            --set state_dynamodb_table_name=$UDS_STATE_DYNAMODB_TABLE_NAME \
-            --confirm
+        run: uds run -f tasks/deploy.yaml no-pepr-package --set path=build/zarf-package-ci-iac-aws-*.tar.zst
 
       - name: Deploy Bundle
         env:
@@ -97,7 +81,6 @@ jobs:
 
       - name: Teardown EKS cluster
         if: always()
-        # can't do a zarf package remove since there's no kubernetes cluster.
         run: uds zarf package remove build/zarf-package-distro-eks-*.tar.zst --confirm
         timeout-minutes: 30
         continue-on-error: true

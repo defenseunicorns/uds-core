@@ -1,3 +1,6 @@
+includes:
+  - common: https://raw.githubusercontent.com/defenseunicorns/uds-common/v0.3.2/tasks/create.yaml
+
 variables:
   - name: FLAVOR
     default: upstream
@@ -57,12 +60,8 @@ tasks:
           npx pepr build $CUSTOM_PEPR_IMAGE
 
   - name: no-pepr-package
-    inputs:
-      options:
-        description: For setting create time variables and flags
-      path:
-        description: file path for package
-        default: $(pwd)
     actions:
-      - description: Deploy the UDS Zarf Package
-        cmd: uds zarf package create ${{ .inputs.path }} --confirm ${{ .inputs.options }}
+      - task: common:package
+        with:
+          options: ${OPTIONS}
+          path: ${PATH}
