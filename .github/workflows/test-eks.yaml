@@ -48,7 +48,7 @@ jobs:
         run: uds run -f tasks/create.yaml no-pepr-package --set path=.github/test-infra/eks
 
       - name: Create CI-IAC-AWS Package
-        run: uds run -f tastks/create.yaml no-pepr-package --set path=.github/test-infra/ci-iac-aws
+        run: uds run -f tasks/create.yaml no-pepr-package --set path=.github/test-infra/ci-iac-aws
 
       - name: Create UDS Core Package
         run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package
