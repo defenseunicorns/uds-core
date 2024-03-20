@@ -50,14 +50,14 @@ jobs:
         run: |
           ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress --set FLAVOR=${{ matrix.flavor }}
           ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml k3d-standard-bundle --no-progress
-          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml istio-package --no-progress --set FLAVOR=${{ matrix.flavor }}
-          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml k3d-istio-bundle --no-progress
+          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml slim-dev-package --no-progress --set FLAVOR=${{ matrix.flavor }}
+          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml k3d-slim-dev-bundle --no-progress
 
           if [ "${{ matrix.flavor }}" != "registry1" ]; then
             ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml standard-package --no-progress --set FLAVOR=${{ matrix.flavor }}
             ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-standard-bundle --no-progress
-            ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml istio-package --no-progress --set FLAVOR=${{ matrix.flavor }}
-            ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-istio-bundle --no-progress
+            ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml slim-dev-package --no-progress --set FLAVOR=${{ matrix.flavor }}
+            ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-slim-dev-bundle --no-progress
           fi
 
       # Standard Package by default tests what's in the Istio Package
