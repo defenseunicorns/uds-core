@@ -12,9 +12,9 @@
       "versioning": "default",
       "extra-files": [
         "README.md",
-        "packages/istio/zarf.yaml",
+        "packages/slim-dev/zarf.yaml",
         "packages/standard/zarf.yaml",
-        "bundles/k3d-istio/uds-bundle.yaml",
+        "bundles/k3d-slim-dev/uds-bundle.yaml",
         "bundles/k3d-standard/uds-bundle.yaml",
         "tasks/deploy.yaml",
         "tasks/publish.yaml"
