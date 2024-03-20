@@ -40,4 +40,3 @@ tasks:
     actions:
       - description: "Deploy the standard UDS Core zarf package"
         cmd: uds zarf package deploy build/zarf-package-core-${UDS_ARCH}-${VERSION}.tar.zst --confirm
-
