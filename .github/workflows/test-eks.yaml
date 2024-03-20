@@ -57,10 +57,10 @@ jobs:
         run: uds create .github/bundles --confirm
 
       - name: Deploy Cluster
-        run: uds run -f tasks/deploy.yaml no-pepr-package --set path=build/zarf-package-distro-eks-*.tar.zst
+        run: uds run deploy-no-pepr-package --set package=build/zarf-package-distro-eks-*.tar.zst
 
       - name: Deploy CI-IAC-AWS Package
-        run: uds run -f tasks/deploy.yaml no-pepr-package --set path=build/zarf-package-ci-iac-aws-*.tar.zst
+        run: uds run deploy-no-pepr-package --set package=build/zarf-package-ci-iac-aws-*.tar.zst
 
       - name: Deploy Bundle
         env:

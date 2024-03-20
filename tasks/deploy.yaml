@@ -1,6 +1,3 @@
-includes:
-  - common: https://raw.githubusercontent.com/defenseunicorns/uds-common/v0.3.2/tasks/deploy.yaml
-
 variables:
   - name: VERSION
     description: "The version of the packages to deploy"
@@ -45,8 +42,12 @@ tasks:
         cmd: uds zarf package deploy build/zarf-package-core-${UDS_ARCH}-${VERSION}.tar.zst --confirm
 
   - name: no-pepr-package
+    inputs:
+      options:
+        description: For setting deploy time variables and flags
+      package: 
+        description: Path and name of package to deploy
+        default: build/zarf-package-*.tar.zst
     actions:
-      - task: common:package
-        with:
-          options: ${OPTIONS}
-          path: ${PATH}
+      - description: Deploy the UDS Zarf Package
+        cmd: uds zarf package deploy ${{ .inputs.package }} --confirm --no-progress ${{ .inputs.options }}

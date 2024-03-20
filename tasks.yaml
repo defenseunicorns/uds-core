@@ -58,6 +58,12 @@ tasks:
     actions:
       - task: deploy:single-package
 
+  - name: deploy-no-pepr-package
+    actions:
+      - task: deploy:no-pepr-package
+        with:
+          package: ${PACKAGE}
+
   - name: test-single-package
     actions:
       - task: test:single-package
