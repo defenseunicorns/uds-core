@@ -31,8 +31,8 @@ tasks:
           uds publish bundles/k3d-standard/uds-bundle-k3d-*-amd64-${VERSION}.tar.zst ${TARGET_REPO}/bundles --no-progress
           uds publish bundles/k3d-standard/uds-bundle-k3d-*-arm64-${VERSION}.tar.zst ${TARGET_REPO}/bundles --no-progress
 
-          uds publish bundles/k3d-istio/uds-bundle-k3d-*-arm64-${VERSION}.tar.zst ${TARGET_REPO}/bundles --no-progress
-          uds publish bundles/k3d-istio/uds-bundle-k3d-*-amd64-${VERSION}.tar.zst ${TARGET_REPO}/bundles --no-progress
+          uds publish bundles/k3d-slim-dev/uds-bundle-k3d-*-arm64-${VERSION}.tar.zst ${TARGET_REPO}/bundles --no-progress
+          uds publish bundles/k3d-slim-dev/uds-bundle-k3d-*-amd64-${VERSION}.tar.zst ${TARGET_REPO}/bundles --no-progress
 
       - description: "Tag the latest bundles"
         cmd: |

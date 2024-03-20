@@ -1,8 +1,9 @@
-# Unicorn Delivery Service - K3d Istio (UDS Core)
+# Unicorn Delivery Service - K3d Slim Dev (UDS Core)
 
 This bundle is a trimmed-down version of [UDS Core](../k3d-standard/README.md) bundle, with only the following UDS Core applications installed:
 
 - [Istio](https://istio.io/) - Service Mesh
+- [KeyCloak](https://www.keycloak.org/) - Identity & Access Management
 - [Pepr](https://pepr.dev) - UDS policy engine & operator
 
 The k3d uds-dev-stack provides:
