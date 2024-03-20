@@ -16,8 +16,6 @@ jobs:
       PERMISSIONS_BOUNDARY_NAME: ${{ secrets.PERMISSIONS_BOUNDARY_NAME }}
       STATE_BUCKET_NAME: uds-aws-ci-commercial-us-west-2-5246-tfstate
       STATE_DYNAMODB_TABLE_NAME: uds-aws-ci-commercial-org-us-west-2-5246-tfstate-lock
-      AWS_CI_DEV_ARN: ${{ secrets.AWS_CI_DEV_ARN }}
-      AWS_CI_ACCOUNT: ${{ secrets.AWS_CI_ACCOUNT }}
     steps:
       - name: Set ENV
         run: |
@@ -72,8 +70,6 @@ jobs:
             --set state_bucket_name=$STATE_BUCKET_NAME \
             --set state_dynamodb_table_name=$STATE_DYNAMODB_TABLE_NAME \
             --set state_key=$STATE_KEY \
-            --set aws_ci_dev_arn=$AWS_CI_DEV_ARN \
-            --set aws_ci_account=$AWS_CI_ACCOUNT \
             --confirm
 
       - name: Deploy Bundle

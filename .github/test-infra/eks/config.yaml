@@ -12,16 +12,6 @@ iam:
   withOIDC: true
   serviceRolePermissionsBoundary: "###ZARF_VAR_PERMISSIONS_BOUNDARY_ARN###"
 
-# For dev access during testing
-iamIdentityMappings:
-  - arn: "###ZARF_VAR_AWS_CI_DEV_ARN###"
-    groups:
-      - system:masters
-    username: UdsCiDevs
-    noDuplicateARNs: true # prevents shadowing of ARNs
-
-  - account: "###ZARF_VAR_AWS_CI_ACCOUNT###" # account must be configured with no other options
-
 addons:
   - name: aws-ebs-csi-driver
     version: v1.25.0-eksbuild.1
@@ -51,3 +41,4 @@ managedNodeGroups:
     overrideBootstrapCommand: |
       #!/bin/bash
       /etc/eks/bootstrap.sh ###ZARF_VAR_CLUSTER_NAME### --container-runtime containerd
+
