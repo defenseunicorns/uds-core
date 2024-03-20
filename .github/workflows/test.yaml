@@ -48,7 +48,7 @@ jobs:
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
       - name: Top Check
-        run: top -b -n1
+        run: top -1 -b -n1
 
       - name: Environment setup
         uses: ./.github/actions/setup
@@ -73,7 +73,7 @@ jobs:
 
       - name: Top Check
         if: ${{ always() }}
-        run: top -b -n1
+        run: top -1 -b -n1
 
       - name: Debug Output
         if: ${{ always() }}
