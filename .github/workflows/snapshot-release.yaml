@@ -1,4 +1,4 @@
-name: Publish UDS Core Experimental
+name: Publish UDS Core Snapshot
 
 on:
   schedule:
@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  publish-experimental-release:
+  publish-snapshot-release:
     strategy:
       matrix:
         flavor: [upstream, registry1]
@@ -17,6 +17,9 @@ jobs:
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
+      - name: Get git commit short sha
+        run: echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
       - name: Environment setup
         uses: ./.github/actions/setup
 
@@ -26,16 +29,15 @@ jobs:
       - name: Login to registry1
         run: uds run registry-login --set REGISTRY=registry1.dso.mil --set REGISTRY_USERNAME=${{ secrets.IRON_BANK_ROBOT_USERNAME }} --set REGISTRY_PASSWORD=${{ secrets.IRON_BANK_ROBOT_PASSWORD }} --set REGISTRY_RETRY_INTERVAL=90
 
-      - name: Set versions to experimental
+      - name: Set versions to snapshot
         run: |
-          yq -ei '.metadata.version="experimental", (.packages[]|select(has("ref"))|select(.name=="core")).ref="experimental"' bundles/k3d-standard/uds-bundle.yaml
-          yq -ei '.metadata.version="experimental", (.packages[]|select(has("ref"))|select(.name=="core-slim-dev")).ref="experimental"' bundles/k3d-slim-dev/uds-bundle.yaml
-          yq -ei '.metadata.version="experimental"' packages/slim-dev/zarf.yaml
-          yq -ei '.metadata.version="experimental"' packages/standard/zarf.yaml
+          yq -ei '.metadata.version=env(SHORT_SHA), (.packages[]|select(has("ref"))|select(.name=="core")).ref=env(SHORT_SHA)' bundles/k3d-standard/uds-bundle.yaml
+          yq -ei '.metadata.version=env(SHORT_SHA), (.packages[]|select(has("ref"))|select(.name=="core-slim-dev")).ref=env(SHORT_SHA)' bundles/k3d-slim-dev/uds-bundle.yaml
+          yq -ei '.metadata.version=env(SHORT_SHA)' packages/slim-dev/zarf.yaml
+          yq -ei '.metadata.version=env(SHORT_SHA)' packages/standard/zarf.yaml
 
       - name: Create Packages and Bundles
         run: |
-
           ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress --set FLAVOR=${{ matrix.flavor }}
           ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml k3d-standard-bundle --no-progress
           ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml slim-dev-package --no-progress --set FLAVOR=${{ matrix.flavor }}
@@ -55,11 +57,11 @@ jobs:
       #    uds run -f tasks/test.yaml validate-packages --no-progress
 
       - name: Publish Standard Package
-        run: uds run -f tasks/publish.yaml standard-package --set FLAVOR=${{ matrix.flavor }} --set VERSION=experimental
+        run: uds run -f tasks/publish.yaml standard-package --set FLAVOR=${{ matrix.flavor }} --set TARGET_REPO="ghcr.io/defenseunicorns/packages/uds/snapshots" --set VERSION="${SHORT_SHA}"
 
       - name: Publish Upstream Flavored Bundles
         if: ${{ matrix.flavor != 'registry1'}}
-        run: uds run -f tasks/publish.yaml bundles --set VERSION=experimental
+        run: uds run -f tasks/publish.yaml bundles --set TARGET_REPO="ghcr.io/defenseunicorns/packages/uds/snapshots" --set VERSION="${SHORT_SHA}"
 
       - name: Save logs
         if: always()
@@ -68,8 +70,8 @@ jobs:
           suffix: -${{ matrix.flavor }}
 
 
-  update-experimental-tag:
-    needs: publish-experimental-release
+  update-snapshot-tag:
+    needs: publish-snapshot-release
     env:
       GH_TOKEN: ${{ github.token }}
     runs-on: ubuntu-latest
@@ -78,9 +80,9 @@ jobs:
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
-      - name: Update experimental tag
+      - name: Update snapshot-latest tag
         run: |
-          if gh release view experimental; then
-            gh release delete experimental --cleanup-tag -y
+          if gh release view snapshot-latest; then
+            gh release delete snapshot-latest --cleanup-tag -y
           fi
-          gh release create experimental -t "experimental" -n "" --prerelease
+          gh release create snapshot-latest -t "snapshot-latest" -n "" --prerelease
