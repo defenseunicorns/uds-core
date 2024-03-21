@@ -16,6 +16,11 @@ tasks:
       - description: "Deploy the UDS Core Standard Bundle"
         cmd: uds deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress
 
+  - name: k3d-ha-bundle
+    actions:
+      - description: "Deploy the UDS Core HA Bundle"
+        cmd: uds deploy bundles/k3d-ha/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress -ltrace
+
   - name: k3d-slim-dev-bundle
     actions:
       - description: "Deploy the UDS Core Slim Dev Only Bundle"

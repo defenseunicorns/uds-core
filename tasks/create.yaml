@@ -18,11 +18,23 @@ tasks:
       - description: "Create the UDS Core Standard Zarf Package"
         cmd: "uds zarf package create packages/standard --confirm --no-progress --flavor ${FLAVOR}"
 
+  - name: pg-package
+    description: "Create the UDS Core Zarf Package"
+    actions:
+      - description: "Create the UDS Core Standard Zarf Package"
+        cmd: "uds zarf package create packages/postgres --confirm --flavor ${FLAVOR}"
+
   - name: k3d-standard-bundle
     description: "Create the K3d-UDS Core Bundle"
     actions:
       - description: "Create the UDS Core Standard Bundle"
         cmd: "uds create bundles/k3d-standard --confirm --no-progress --architecture=${ZARF_ARCHITECTURE}"
+
+  - name: k3d-ha-bundle
+    description: "Create the K3d-UDS Core Bundle"
+    actions:
+      - description: "Create the UDS Core HA Bundle"
+        cmd: "uds create bundles/k3d-ha --confirm --no-progress --architecture=${ZARF_ARCHITECTURE}"
 
   - name: slim-dev-package
     description: "Create the UDS Core (Istio Only) Zarf Package"
