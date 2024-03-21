@@ -77,3 +77,10 @@ tasks:
   - name: lint-fix
     actions:
       - task: lint:fix
+
+  - name: ha-keycloak
+    actions:
+      - task: create:pg-package
+      - task: create:slim-dev-package
+      - task: create:k3d-ha-bundle
+      - task: deploy:k3d-ha-bundle

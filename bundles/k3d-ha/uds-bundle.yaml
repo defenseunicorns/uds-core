@@ -1,0 +1,79 @@
+kind: UDSBundle
+metadata:
+  name: k3d-core-demo
+  description: A UDS bundle for deploying the standard UDS Core package on a development cluster
+  # x-release-please-start-version
+  version: "0.16.1"
+  # x-release-please-end
+
+packages:
+  - name: uds-k3d-dev
+    repository: ghcr.io/defenseunicorns/packages/uds-k3d
+    # renovate: datasource=github-tags depName=defenseunicorns/uds-k3d versioning=semver
+    ref: 0.5.0
+    overrides:
+      uds-dev-stack:
+        minio:
+          variables:
+            - name: buckets
+              description: "Set Minio Buckets"
+              path: buckets
+            - name: svcaccts
+              description: "Minio Service Accounts"
+              path: svcaccts
+            - name: users
+              description: "Minio Users"
+              path: users
+            - name: policies
+              description: "Minio policies"
+              path: policies
+
+  - name: init
+    repository: ghcr.io/defenseunicorns/packages/init
+    # renovate: datasource=github-tags depName=defenseunicorns/zarf versioning=semver
+    ref: v0.32.5
+
+  - name: postgres-operator
+    repository: ghcr.io/defenseunicorns/packages/uds/postgres-operator
+    ref: 1.10.1-uds.4-upstream
+
+  - name: ha-dev
+    path: ../../build/
+    ref: dev
+    exports:
+      - name: DATABASE_USERNAME
+      - name: DATABASE_PASSWORD
+
+  - name: core-slim-dev
+    path: ../../build/
+    # x-release-please-start-version
+    ref: 0.16.1
+    # x-release-please-end
+    overrides:
+      keycloak:
+        keycloak:
+          values:
+            - path: "postgresql.username"
+              value: ${DATABASE_USERNAME}
+            - path: "postgresql.password"
+              value: ${DATABASE_PASSWORD}
+            - path: "devMode"
+              value: false
+      istio-admin-gateway:
+        uds-istio-config:
+          variables:
+            - name: ADMIN_TLS_CERT
+              description: "The TLS cert for the admin gateway (must be base64 encoded)"
+              path: tls.cert
+            - name: ADMIN_TLS_KEY
+              description: "The TLS key for the admin gateway (must be base64 encoded)"
+              path: tls.key
+      istio-tenant-gateway:
+        uds-istio-config:
+          variables:
+            - name: TENANT_TLS_CERT
+              description: "The TLS cert for the tenant gateway (must be base64 encoded)"
+              path: tls.cert
+            - name: TENANT_TLS_KEY
+              description: "The TLS key for the tenant gateway (must be base64 encoded)"
+              path: tls.key

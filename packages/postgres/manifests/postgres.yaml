@@ -1,0 +1,21 @@
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: keycloak
+---
+apiVersion: acid.zalan.do/v1
+kind: postgresql
+metadata:
+  name: postgresql
+  namespace: keycloak
+spec:
+  teamId: "uds"
+  volume:
+    size: 1Gi
+  numberOfInstances: 2
+  users:
+    keycloak: []  # database owner
+  databases:
+    keycloak: keycloak
+  postgresql:
+    version: "13"
