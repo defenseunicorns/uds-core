@@ -5,6 +5,11 @@ fullnameOverride: loki
 # -- Overrides the chart's cluster label
 clusterLabelOverride: null
 
+# Prevent startup issues with service existence/resolution
+memberlist:
+  service:
+    publishNotReadyAddresses: true
+
 loki:
   storage:
     bucketNames:
@@ -20,6 +25,8 @@ loki:
       insecure: false
   commonConfig:
     replication_factor: 1
+  extraMemberlistConfig:
+    rejoin_interval: 120s
   # Should authentication be enabled
   auth_enabled: false
   # -- Additional storage config
