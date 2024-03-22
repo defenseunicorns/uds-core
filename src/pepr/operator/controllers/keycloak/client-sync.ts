@@ -94,7 +94,7 @@ async function syncClient(
         // Use the CR secret name if provided, otherwise use the client name
         name: secretName || name,
       },
-      stringData: generateSecretData(client, secretTemplate),
+      data: generateSecretData(client, secretTemplate),
     });
 
     if (isAuthSvcClient) {
@@ -162,35 +162,39 @@ async function apiCall(sso: Partial<Sso>, method = "POST", authToken = "") {
 }
 
 export function generateSecretData(client: Client, secretTemplate?: { [key: string]: string }) {
-  const stringMap: Record<string, string> = {};
-
   if (secretTemplate) {
     // Iterate over the secret template entry and process each value
-    return templateData(secretTemplate, stringMap, client);
+    return templateData(secretTemplate, client);
   }
+
+  const stringMap: Record<string, string> = {};
 
   // iterate over the client object and convert all values to strings
   for (const [key, value] of Object.entries(client)) {
-    if (typeof value === "object") {
-      // For objects and arrays, convert to a JSON string
-      stringMap[key] = JSON.stringify(value);
-    } else {
-      // For primitive values, convert directly to string
-      stringMap[key] = String(value);
-    }
+    // For objects and arrays, convert to a JSON string
+    const processed = typeof value === "object" ? JSON.stringify(value) : String(value);
+
+    // Convert the value to a base64 encoded string
+    stringMap[key] = Buffer.from(processed).toString("base64");
   }
 
   return stringMap;
 }
 
-function templateData(
-  secretTemplate: { [key: string]: string },
-  stringMap: Record<string, string>,
-  client: Client,
-) {
+/**
+ * Process the secret template and convert the client data to base64 encoded strings for use in a secret
+ *
+ * @param secretTemplate The template to use for generating the secret
+ * @param client
+ * @returns
+ */
+function templateData(secretTemplate: { [key: string]: string }, client: Client) {
+  const stringMap: Record<string, string> = {};
+
+  // Iterate over the secret template and process each entry
   for (const [key, value] of Object.entries(secretTemplate)) {
     // Replace any clientField() references with the actual client data
-    stringMap[key] = value.replace(
+    const templated = value.replace(
       secretTemplateRegex,
       (_match, fieldName: keyof Client, key, json) => {
         // Make typescript happy with a more generic type
@@ -210,6 +214,9 @@ function templateData(
         return value !== undefined ? String(value) : "";
       },
     );
+
+    // Convert the templated value to a base64 encoded string
+    stringMap[key] = Buffer.from(templated).toString("base64");
   }
 
   // Return the processed secret template without any further processing
