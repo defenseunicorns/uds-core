@@ -29,16 +29,6 @@ variables:
   - name: USE_PERMISSIONS_BOUNDARY
     default: "true"
 
-  - name: EPHEMERAL
-    description: "Set whether the cluster should be considered ephemeral - if true all resources will be force destroyed on removal"
-    default: "true"
-  - name: LOKI_FORCE_DESTROY
-    description: "If set to true, delete the S3 bucket and corresponding KMS key associated with the Loki bucket. Overrides ephemeral setting."
-    default: "true"
-  - name: VELERO_FORCE_DESTROY
-    description: "If set to true, delete the S3 bucket and corresponding KMS key associated with the Velero bucket. Overrides ephemeral setting."
-    default: "true"
-
 components:
   - name: download-terraform
     required: true
