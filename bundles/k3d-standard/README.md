@@ -9,7 +9,7 @@ This bundle is used for demonstration, development, and testing of UDS Core. In 
 - [HAProxy](https://www.haproxy.org/) - Utilizes k3d host port mapping to bind ports 80 and 443, facilitating local FQDN-based routing through ACLs to MetalLB load balancer backends for Istio Gateways serving *.uds.dev, keycloak.uds.dev, and *.admin.uds.dev.
 
 ## Available Overrides
-## Package: uds-k3d
+### Package: uds-k3d
 ##### uds-dev-stack (minio)
 | Variable | Description | Path |
 |----------|-------------|------|
@@ -19,7 +19,7 @@ This bundle is used for demonstration, development, and testing of UDS Core. In 
 | `POLICIES` | Minio policies | policies |
 
 
-## Package: core
+### Package: core
 ##### loki (loki)
 | Variable | Description | Path |
 |----------|-------------|------|
