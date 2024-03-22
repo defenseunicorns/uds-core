@@ -54,6 +54,12 @@ components:
     import:
       path: ../../src/keycloak
 
+  # Neuvector
+  - name: neuvector
+    required: true
+    import:
+      path: ../../src/neuvector
+
   # Loki
   - name: loki
     required: true

@@ -1,28 +1,27 @@
 tasks:
   - name: validate
     actions:
-      - cmd: echo "skipping"
-      # - description: Validate Neuvector Enforcer
-      #   wait:
-      #     cluster:
-      #       kind: Pod
-      #       name: app=neuvector-enforcer-pod
-      #       condition: Ready
-      #       namespace: neuvector
-      # - description: Validate Neuvector Manager
-      #   wait:
-      #     cluster:
-      #       kind: Pod
-      #       name: app=neuvector-manager-pod
-      #       condition: Ready
-      #       namespace: neuvector
-      # - description: Validate Neuvector Scanner
-      #   wait:
-      #     cluster:
-      #       kind: Pod
-      #       name: app=neuvector-scanner-pod
-      #       condition: Ready
-      #       namespace: neuvector
+      - description: Validate Neuvector Enforcer
+        wait:
+          cluster:
+            kind: Pod
+            name: app=neuvector-enforcer-pod
+            condition: Ready
+            namespace: neuvector
+      - description: Validate Neuvector Manager
+        wait:
+          cluster:
+            kind: Pod
+            name: app=neuvector-manager-pod
+            condition: Ready
+            namespace: neuvector
+      - description: Validate Neuvector Scanner
+        wait:
+          cluster:
+            kind: Pod
+            name: app=neuvector-scanner-pod
+            condition: Ready
+            namespace: neuvector
       #  todo: Fix single package validation checks in CI where Istio isn't installed
       # - description: Validate Neuvector Interface
       #   wait:
