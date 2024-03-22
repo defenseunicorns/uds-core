@@ -87,6 +87,8 @@ jobs:
           kubectl get events -A --sort-by='.lastTimestamp'
           echo "::endgroup::"
 
+          kubectl logs -l app.kubernetes.io/instance=promtail -n promtail
+
       - name: Save logs
         if: always()
         uses: ./.github/actions/save-logs

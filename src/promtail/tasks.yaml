@@ -1,8 +1,6 @@
 tasks:
   - name: validate
     actions:
-      - description: logs
-        cmd: uds zarf tools kubectl logs -l app.kubernetes.io/instance=promtail -n promtail
       - description: Validate promail
         wait:
           cluster:
