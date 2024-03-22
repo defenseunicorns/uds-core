@@ -35,6 +35,9 @@ on:
 permissions:
   contents: read
 
+env:
+  UDS_K3D_EXTRA_ARGS: "--k3s-arg --debug@server:0"
+
 jobs:
   test:
     runs-on: "${{ inputs.package == 'all' && 'uds-ubuntu-big-boy-8-core' || 'ubuntu-latest'}}"
@@ -86,8 +89,6 @@ jobs:
           echo "::group::kubectl get events"
           kubectl get events -A --sort-by='.lastTimestamp'
           echo "::endgroup::"
-
-          kubectl logs -l app.kubernetes.io/instance=promtail -n promtail
 
       - name: Save logs
         if: always()
