@@ -32,7 +32,7 @@ tasks:
   - name: dev-cacert
     description: Updates the cacert value in default values files for gateways
     actions:
-      # - task: config:cacert
+      - task: config:cacert
       - cmd: |
           yq eval-all --inplace 'select(fileIndex == 0) * select(fileIndex == 1)' src/istio/values/config-tenant.yaml tls_cacert.yaml
           yq eval-all --inplace 'select(fileIndex == 0) * select(fileIndex == 1)' src/istio/values/config-admin.yaml tls_cacert.yaml
