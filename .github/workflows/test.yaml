@@ -95,3 +95,4 @@ jobs:
         uses: ./.github/actions/save-logs
         with:
           suffix: -${{ inputs.test_type }}-${{ inputs.package }}-${{ inputs.flavor }}
+
