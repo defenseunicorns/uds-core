@@ -3,6 +3,7 @@ import { K8s, Log, fetch, kind } from "pepr";
 import { UDSConfig } from "../../../config";
 import { Store } from "../../common";
 import { Sso, UDSPackage } from "../../crd";
+import { getOwnerRef } from "../utils";
 import { Client } from "./types";
 
 const apiURL =
@@ -51,6 +52,7 @@ export async function purgeSSOClients(pkg: UDSPackage, refs: string[] = []) {
     const token = Store.getItem(ref);
     const clientId = ref.replace("sso-client-", "");
     if (token) {
+      Store.removeItem(ref);
       await apiCall({ clientId }, "DELETE", token);
     } else {
       Log.warn(pkg.metadata, `Failed to remove client ${clientId}, token not found`);
@@ -93,6 +95,11 @@ async function syncClient(
         namespace: pkg.metadata!.namespace,
         // Use the CR secret name if provided, otherwise use the client name
         name: secretName || name,
+        labels: {
+          "uds/package": pkg.metadata!.name,
+        },
+        // Use the CR as the owner ref for each VirtualService
+        ownerReferences: getOwnerRef(pkg),
       },
       data: generateSecretData(client, secretTemplate),
     });
