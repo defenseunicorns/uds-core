@@ -163,11 +163,14 @@ async function apiCall(sso: Partial<Sso>, method = "POST", authToken = "") {
 
 export function generateSecretData(client: Client, secretTemplate?: { [key: string]: string }) {
   if (secretTemplate) {
+    Log.debug(`Using secret template for client: ${client.clientId}`);
     // Iterate over the secret template entry and process each value
     return templateData(secretTemplate, client);
   }
 
   const stringMap: Record<string, string> = {};
+
+  Log.debug(`Using client data for secret: ${client.clientId}`);
 
   // iterate over the client object and convert all values to strings
   for (const [key, value] of Object.entries(client)) {
