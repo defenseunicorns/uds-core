@@ -467,6 +467,10 @@ export interface Sso {
    */
   secretName?: string;
   /**
+   * A template for the generated secret
+   */
+  secretTemplate?: { [key: string]: string };
+  /**
    * Allowed CORS origins. To permit all origins of Valid Redirect URIs, add '+'. This does
    * not include the '*' wildcard though. To permit all origins, explicitly add '*'.
    */
