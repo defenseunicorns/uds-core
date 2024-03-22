@@ -48,6 +48,7 @@ spec:
           app.kubernetes.io/name: tempo
         port: 9411
         description: "Tempo"
+
   # SSO allows for the creation of Keycloak clients and with automatic secret generation
   sso:
     - name: Grafana Dashboard

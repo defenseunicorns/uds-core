@@ -72,7 +72,7 @@ async function syncClient(
 
     let client: Client;
 
-    // If and existing client is found, update it
+    // If an existing client is found, update it
     if (token && !isRetry) {
       Log.debug(pkg.metadata, `Found existing token for ${clientReq.clientId}`);
       client = await apiCall(clientReq, "PUT", token);
@@ -161,7 +161,7 @@ async function apiCall(sso: Partial<Sso>, method = "POST", authToken = "") {
   return resp.data;
 }
 
-function generateSecretData(client: Client, secretTemplate?: { [key: string]: string }) {
+export function generateSecretData(client: Client, secretTemplate?: { [key: string]: string }) {
   const stringMap: Record<string, string> = {};
 
   if (secretTemplate) {
@@ -182,6 +182,7 @@ function generateSecretData(client: Client, secretTemplate?: { [key: string]: st
 
   return stringMap;
 }
+
 function templateData(
   secretTemplate: { [key: string]: string },
   stringMap: Record<string, string>,
