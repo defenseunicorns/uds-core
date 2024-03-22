@@ -36,7 +36,7 @@ permissions:
   contents: read
 
 env:
-  UDS_K3D_EXTRA_ARGS: "--k3s-arg --debug@server:0 --k3s-arg --disable-network-policy"
+  UDS_K3D_EXTRA_ARGS: "--k3s-arg --debug@server:0 --k3s-arg --disable-network-policy@server:0"
 
 jobs:
   test:
