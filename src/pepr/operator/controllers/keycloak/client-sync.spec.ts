@@ -31,7 +31,7 @@ const mockClient: Client = {
   standardFlowEnabled: true,
 };
 
-const mockClientStringified = {
+const mockClientStringified: Record<string, string> = {
   alwaysDisplayInConsole: "true",
   attributes: '{"first":"attribute"}',
   authenticationFlowBindingOverrides: "{}",
@@ -62,7 +62,12 @@ const mockClientStringified = {
 
 describe("Test Secret & Template Data Generation", () => {
   it("generates data without template", async () => {
-    expect(generateSecretData(mockClient)).toEqual(mockClientStringified);
+    const expected: Record<string, string> = {};
+
+    for (const key in mockClientStringified) {
+      expected[key] = Buffer.from(mockClientStringified[key]).toString("base64");
+    }
+    expect(generateSecretData(mockClient)).toEqual(expected);
   });
 
   it("generates data from template: no key or .json()", () => {
@@ -70,7 +75,7 @@ describe("Test Secret & Template Data Generation", () => {
       "auth.json": JSON.stringify({ client_id: "clientField(clientId)" }),
     };
     expect(generateSecretData(mockClient, mockTemplate)).toEqual({
-      "auth.json": '{"client_id":"testId"}',
+      "auth.json": Buffer.from('{"client_id":"testId"}').toString("base64"),
     });
   });
 
@@ -79,7 +84,7 @@ describe("Test Secret & Template Data Generation", () => {
       "auth.json": JSON.stringify({ redirect_uri: "clientField(redirectUris)[0]" }),
     };
     expect(generateSecretData(mockClient, mockTemplate)).toEqual({
-      "auth.json": '{"redirect_uri":"https://demo.uds.dev/login"}',
+      "auth.json": Buffer.from('{"redirect_uri":"https://demo.uds.dev/login"}').toString("base64"),
     });
   });
 
@@ -88,7 +93,7 @@ describe("Test Secret & Template Data Generation", () => {
       "auth.json": JSON.stringify({ defaultScopes: "clientField(attributes).json()" }),
     };
     expect(generateSecretData(mockClient, mockTemplate)).toEqual({
-      "auth.json": '{"defaultScopes":"{"first":"attribute"}"}',
+      "auth.json": Buffer.from('{"defaultScopes":"{"first":"attribute"}"}').toString("base64"),
     });
   });
 });
