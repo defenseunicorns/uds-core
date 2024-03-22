@@ -35,4 +35,3 @@ runs:
           /tmp/zarf-*.log
           /tmp/uds-*.log
           /tmp/k3d-uds-*.log
-
