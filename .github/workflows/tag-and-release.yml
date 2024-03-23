@@ -66,6 +66,10 @@ jobs:
           uds run -f tasks/deploy.yaml k3d-standard-bundle --no-progress
           uds run -f tasks/test.yaml validate-packages --no-progress
 
+      - name: Debug Output
+        if: ${{ always() }}
+        run: uds run dump-cluster-info
+
       - name: Publish Standard Package
         run: uds run -f tasks/publish.yaml standard-package --set FLAVOR=${{ matrix.flavor }}
 
