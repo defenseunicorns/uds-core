@@ -28,10 +28,9 @@ runs:
         uds zarf tools kubectl get pods --all-namespaces -o=jsonpath='{range .items[*]}{.metadata.namespace}{"\t"}{.metadata.name}{"\n"}{end}' | while IFS=$'\t' read -r namespace pod; do kubectl logs --all-containers --namespace="$namespace" "$pod" > "/tmp/uds-${namespace}-${pod}.log" || true; done
       shell: bash
 
-
     - name: Dump kube-router Metrics
       run: |
-        uds zarf tools kubectl get --raw /api/v1/nodes/k3d-uds-server-0/proxy/metrics | grep router > "/tmp/uds-router-metrics.log"
+        uds zarf tools kubectl get --raw /api/v1/nodes/k3d-uds-server-0/proxy/metrics > "/tmp/uds-router-metrics.log"
       shell: bash
 
     - uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4.3.1
