@@ -41,7 +41,7 @@ env:
 
 jobs:
   test:
-    runs-on: "${{ inputs.package == 'all' && 'uds-ubuntu-big-boy-16-core' || 'ubuntu-latest'}}"
+    runs-on: "${{ inputs.package == 'all' && 'uds-ubuntu-big-boy-8-core' || 'ubuntu-latest'}}"
     timeout-minutes: 30
     name: Test
     env:
