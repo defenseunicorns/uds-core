@@ -2,7 +2,7 @@ image:
   # The Keycloak image repository
   repository: quay.io/keycloak/keycloak
   # Overrides the Keycloak image tag whose default is the chart appVersion
-  tag: "23.0.4"
+  tag: "24.0.2"
   # The Keycloak image pull policy
   pullPolicy: IfNotPresent
 
