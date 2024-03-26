@@ -1,0 +1,23 @@
+apiVersion: uds.dev/v1alpha1
+kind: Exemption
+metadata:
+  name: podinfo
+  namespace: uds-policy-exemptions
+spec:
+  exemptions:
+    - policies:
+        - DisallowPrivileged
+        - RequireNonRootUser
+        - DropAllCapabilities
+        
+      matcher:
+        namespace: podinfo
+        name: "^podinfo.*"
+    
+    - policies:
+        - DisallowNodePortServices
+      matcher:
+        namespace: podinfo
+        name: "^podinfo.*"
+        kind: service
+

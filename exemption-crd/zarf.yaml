@@ -1,0 +1,13 @@
+kind: ZarfPackageConfig
+metadata:
+  name: exemption-crd
+  yolo: true
+  version: 0.1.0
+
+components:
+  - name: crd
+    required: true
+    manifests:
+      - name: exemption-crd
+        files:
+          - ./crd.yaml
