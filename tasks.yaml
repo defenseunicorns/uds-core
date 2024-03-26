@@ -4,7 +4,7 @@ variables:
 
   - name: PKG
 
-  - name: UDS_K3D_IMAGE
+  - name: K3D_IMAGE
     default: "ghcr.io/defenseunicorns/oss/uds-k3d-k3s:v1.28.7-k3s1"
 
 includes:
