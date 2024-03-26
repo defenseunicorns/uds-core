@@ -175,6 +175,14 @@ const sso = {
         description: "The name of the secret to store the client secret",
         type: "string",
       },
+      secretTemplate: {
+        description: "A template for the generated secret",
+        // Create a map of the secret data
+        type: "object",
+        additionalProperties: {
+          type: "string",
+        },
+      },
       clientId: {
         description: "The client identifier registered with the identity provider.",
         type: "string",

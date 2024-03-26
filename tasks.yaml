@@ -4,13 +4,16 @@ variables:
 
   - name: PKG
 
+  - name: K3D_IMAGE
+    default: "ghcr.io/defenseunicorns/oss/uds-k3d-k3s:v1.28.7-k3s1"
+
 includes:
   - create: ./tasks/create.yaml
   - setup: ./tasks/setup.yaml
   - deploy: ./tasks/deploy.yaml
   - test: ./tasks/test.yaml
   - lint: ./tasks/lint.yaml
-  - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/v0.2.2/tasks/setup.yaml
+  - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/v0.3.6/tasks/setup.yaml
 
 tasks:
   - name: dev-setup
@@ -77,3 +80,37 @@ tasks:
   - name: lint-fix
     actions:
       - task: lint:fix
+
+  - name: dump-cluster-info
+    actions:
+      - description: dump cluster info
+        cmd: |
+          echo "\n\n"
+          echo "##################################################################################################"
+          echo "###                                  kubectl get all                                          ####"
+          echo "##################################################################################################\n"
+          kubectl get all -A
+
+          echo "\n\n"
+          echo "##################################################################################################"
+          echo "###                                  kubectl get pv,pvc                                       ####"
+          echo "##################################################################################################\n"
+          kubectl get pv,pvc -A
+
+          echo "\n\n"
+          echo "##################################################################################################"
+          echo "###                                  kubectl get package                                      ####"
+          echo "##################################################################################################\n"
+          kubectl get package -A
+
+          echo "\n\n"
+          echo "##################################################################################################"
+          echo "###                                  kubectl get events                                       ####"
+          echo "##################################################################################################\n"
+          kubectl get events -A --sort-by='.lastTimestamp'
+
+          echo "\n\n"
+          echo "##################################################################################################"
+          echo "###                                  kubectl descibe node                                     ####"
+          echo "##################################################################################################\n"
+          kubectl describe nodes

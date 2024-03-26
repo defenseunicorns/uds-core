@@ -15,7 +15,7 @@ jobs:
     steps:
       - name: Create release tag
         id: tag
-        uses: google-github-actions/release-please-action@cc61a07e2da466bebbc19b3a7dd01d6aecb20d1e # v4
+        uses: google-github-actions/release-please-action@a37ac6e4f6449ce8b3f7607e4d97d0146028dc0b # v4
         with:
           command: manifest # use configs in release-please-config.json
       - id: release-flag
@@ -65,6 +65,10 @@ jobs:
         run: |
           uds run -f tasks/deploy.yaml k3d-standard-bundle --no-progress
           uds run -f tasks/test.yaml validate-packages --no-progress
+
+      - name: Debug Output
+        if: ${{ always() }}
+        run: uds run dump-cluster-info
 
       - name: Publish Standard Package
         run: uds run -f tasks/publish.yaml standard-package --set FLAVOR=${{ matrix.flavor }}
