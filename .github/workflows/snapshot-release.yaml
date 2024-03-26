@@ -1,4 +1,4 @@
-name: Publish UDS Core Snapshot
+name: Release UDS Core Snapshot
 
 on:
   schedule:

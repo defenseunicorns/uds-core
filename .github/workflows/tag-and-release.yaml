@@ -1,4 +1,4 @@
-name: Publish UDS Core
+name: Release UDS Core
 
 on:
   push:
