@@ -37,7 +37,7 @@ permissions:
 
 env:
   UDS_K3D_EXTRA_ARGS: "--k3s-arg --debug@server:0"
-  UDS_K3D_IMAGE: "rjferguson21/k3s:v1.27.11-k3s1"
+  UDS_K3D_IMAGE: "rjferguson21/k3s:v1.28.7-k3s1"
 
 jobs:
   test:
