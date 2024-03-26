@@ -10,7 +10,7 @@ includes:
   - deploy: ./tasks/deploy.yaml
   - test: ./tasks/test.yaml
   - lint: ./tasks/lint.yaml
-  - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/v0.2.2/tasks/setup.yaml
+  - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/v0.3.6/tasks/setup.yaml
 
 tasks:
   - name: dev-setup
