@@ -1,32 +1,18 @@
 name: Publish UDS Core
 
 on:
-  push:
-    branches:
-      - main
+  workflow_call:
+    inputs:
+      snapshot:
+        required: true
+        type: string
 
 jobs:
-  tag-new-version:
-    name: Tag New Version
-    permissions: write-all
-    runs-on: ubuntu-latest
-    outputs:
-      release_created: ${{ steps.release-flag.outputs.release_created }}
-    steps:
-      - name: Create release tag
-        id: tag
-        uses: google-github-actions/release-please-action@cc61a07e2da466bebbc19b3a7dd01d6aecb20d1e # v4
-        with:
-          command: manifest # use configs in release-please-config.json
-      - id: release-flag
-        run: echo "release_created=${{ steps.tag.outputs.release_created || false }}" >> $GITHUB_OUTPUT
 
   publish-uds-core:
     strategy:
       matrix:
         flavor: [upstream, registry1]
-    needs: tag-new-version
-    if: ${{ needs.tag-new-version.outputs.release_created == 'true'}}
     runs-on: "uds-ubuntu-big-boy-8-core"
     name: Publish packages
 
@@ -45,6 +31,21 @@ jobs:
 
       - name: Login to registry1
         run: uds run registry-login --set REGISTRY=registry1.dso.mil --set REGISTRY_USERNAME=${{ secrets.IRON_BANK_ROBOT_USERNAME }} --set REGISTRY_PASSWORD=${{ secrets.IRON_BANK_ROBOT_PASSWORD }} --set REGISTRY_RETRY_INTERVAL=90
+
+      - name: Get snapshot version using git commit short sha and date
+        if: ${{ github.event.inputs.snapshot == 'true' }}
+        run: |
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          RELEASE_DATE=$(date +'%Y-%m-%d')
+          echo "SNAPSHOT_VERSION=${RELEASE_DATE}-${SHORT_SHA}" >> $GITHUB_ENV
+
+      - name: Set versions to snapshot
+        if: ${{ github.event.inputs.snapshot == 'true' }}
+        run: |
+          yq -ei '.metadata.version=env(SNAPSHOT_VERSION), (.packages[]|select(has("ref"))|select(.name=="k3d-core-demo")).ref=env(SNAPSHOT_VERSION)' bundles/k3d-standard/uds-bundle.yaml
+          yq -ei '.metadata.version=env(SNAPSHOT_VERSION), (.packages[]|select(has("ref"))|select(.name=="k3d-core-slim-dev")).ref=env(SNAPSHOT_VERSION)' bundles/k3d-slim-dev/uds-bundle.yaml
+          yq -ei '.metadata.version=env(SNAPSHOT_VERSION)' packages/standard/zarf.yaml
+          yq -ei '.metadata.version=env(SNAPSHOT_VERSION)' packages/slim-dev/zarf.yaml
 
       - name: Create Packages and Bundles
         run: |
@@ -66,12 +67,25 @@ jobs:
           uds run -f tasks/deploy.yaml k3d-standard-bundle --no-progress
           uds run -f tasks/test.yaml validate-packages --no-progress
 
+      - name: Debug Output
+        if: ${{ always() }}
+        run: uds run dump-cluster-info
+
       - name: Publish Standard Package
+        if: ${{ github.event.inputs.snapshot != 'true' }}
         run: uds run -f tasks/publish.yaml standard-package --set FLAVOR=${{ matrix.flavor }}
 
       - name: Publish Upstream Flavored Bundles
-        if: ${{ matrix.flavor != 'registry1'}}
+        if: ${{ github.event.inputs.snapshot != 'true' && matrix.flavor != 'registry1' }}
         run: uds run -f tasks/publish.yaml bundles
+
+      - name: Publish Standard Package Snapshot
+        if: ${{ github.event.inputs.snapshot == 'true' }}
+        run: uds run -f tasks/publish.yaml standard-package --set FLAVOR=${{ matrix.flavor }} --set TARGET_REPO="ghcr.io/defenseunicorns/packages/uds/snapshots" --set VERSION="${SNAPSHOT_VERSION}"
+
+      - name: Publish Upstream Flavored Bundles Snapshot
+        if: ${{ github.event.inputs.snapshot == 'true' && matrix.flavor != 'registry1' }}
+        run: uds run -f tasks/publish.yaml bundles --set TARGET_REPO="ghcr.io/defenseunicorns/packages/uds/snapshots" --set VERSION="${SNAPSHOT_VERSION}"
 
       - name: Save logs
         if: always()

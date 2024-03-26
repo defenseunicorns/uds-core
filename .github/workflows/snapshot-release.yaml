@@ -4,73 +4,23 @@ on:
   schedule:
     - cron: "0 10 * * *"
   workflow_dispatch:
+    inputs:
+      snapshot:
+        required: true
+        default: 'true'
+        type: string
 
 jobs:
   publish-snapshot-release:
-    strategy:
-      matrix:
-        flavor: [upstream, registry1]
-    runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       packages: write
-    steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+    uses: ./.github/workflows/publish.yaml
+    with:
+      snapshot: 'true'
+    secrets: inherit
 
-      - name: Get git commit short sha
-        run: echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-
-      - name: Environment setup
-        uses: ./.github/actions/setup
-
-      - name: Login to GHCR
-        run: uds run registry-login --set REGISTRY=ghcr.io --set REGISTRY_USERNAME=dummy --set REGISTRY_PASSWORD=${{ secrets.GITHUB_TOKEN }} --set REGISTRY_RETRY_INTERVAL=90
-
-      - name: Login to registry1
-        run: uds run registry-login --set REGISTRY=registry1.dso.mil --set REGISTRY_USERNAME=${{ secrets.IRON_BANK_ROBOT_USERNAME }} --set REGISTRY_PASSWORD=${{ secrets.IRON_BANK_ROBOT_PASSWORD }} --set REGISTRY_RETRY_INTERVAL=90
-
-      - name: Set versions to snapshot
-        run: |
-          yq -ei '.metadata.version=env(SHORT_SHA), (.packages[]|select(has("ref"))|select(.name=="core")).ref=env(SHORT_SHA)' bundles/k3d-standard/uds-bundle.yaml
-          yq -ei '.metadata.version=env(SHORT_SHA), (.packages[]|select(has("ref"))|select(.name=="core-slim-dev")).ref=env(SHORT_SHA)' bundles/k3d-slim-dev/uds-bundle.yaml
-          yq -ei '.metadata.version=env(SHORT_SHA)' packages/slim-dev/zarf.yaml
-          yq -ei '.metadata.version=env(SHORT_SHA)' packages/standard/zarf.yaml
-
-      - name: Create Packages and Bundles
-        run: |
-          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress --set FLAVOR=${{ matrix.flavor }}
-          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml k3d-standard-bundle --no-progress
-          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml slim-dev-package --no-progress --set FLAVOR=${{ matrix.flavor }}
-          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml k3d-slim-dev-bundle --no-progress
-
-          if [ "${{ matrix.flavor }}" != "registry1" ]; then
-            ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml standard-package --no-progress --set FLAVOR=${{ matrix.flavor }}
-            ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-standard-bundle --no-progress
-            ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml slim-dev-package --no-progress --set FLAVOR=${{ matrix.flavor }}
-            ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-slim-dev-bundle --no-progress
-          fi
-
-      # Standard Package by default tests what's in the Istio Package
-      #- name: Test amd64 Bundle
-      #  run: |
-      #    uds run -f tasks/deploy.yaml k3d-standard-bundle --no-progress
-      #    uds run -f tasks/test.yaml validate-packages --no-progress
-
-      - name: Publish Standard Package
-        run: uds run -f tasks/publish.yaml standard-package --set FLAVOR=${{ matrix.flavor }} --set TARGET_REPO="ghcr.io/defenseunicorns/packages/uds/snapshots" --set VERSION="${SHORT_SHA}"
-
-      - name: Publish Upstream Flavored Bundles
-        if: ${{ matrix.flavor != 'registry1'}}
-        run: uds run -f tasks/publish.yaml bundles --set TARGET_REPO="ghcr.io/defenseunicorns/packages/uds/snapshots" --set VERSION="${SHORT_SHA}"
-
-      - name: Save logs
-        if: always()
-        uses: ./.github/actions/save-logs
-        with:
-          suffix: -${{ matrix.flavor }}
-
-
-  update-snapshot-tag:
+  update-snapshot-latest-tag:
     needs: publish-snapshot-release
     env:
       GH_TOKEN: ${{ github.token }}
@@ -79,10 +29,15 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-
+        with:
+          fetch-tags: 'true'
       - name: Update snapshot-latest tag
         run: |
+          # get last release tag
+          LAST_RELEASE_TAG="$(gh release list --exclude-drafts --exclude-pre-releases --json tagName --jq '.[0].tagName')"
+          # cleanup old release
           if gh release view snapshot-latest; then
             gh release delete snapshot-latest --cleanup-tag -y
           fi
-          gh release create snapshot-latest -t "snapshot-latest" -n "" --prerelease
+          # generate new release
+          gh release create snapshot-latest -t "snapshot-latest" --prerelease --notes-start-tag "${LAST_RELEASE_TAG}" --generate-notes
