@@ -15,8 +15,6 @@ jobs:
       - name: Create release tag
         id: tag
         uses: google-github-actions/release-please-action@a37ac6e4f6449ce8b3f7607e4d97d0146028dc0b # v4
-        with:
-          command: manifest # use configs in release-please-config.json
       - id: release-flag
         run: echo "release_created=${{ steps.tag.outputs.release_created || false }}" >> $GITHUB_OUTPUT 
 
