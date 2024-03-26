@@ -3,10 +3,17 @@ import { K8s, Log, fetch, kind } from "pepr";
 import { UDSConfig } from "../../../config";
 import { Store } from "../../common";
 import { Sso, UDSPackage } from "../../crd";
+import { getOwnerRef } from "../utils";
 import { Client } from "./types";
 
 const apiURL =
   "http://keycloak-http.keycloak.svc.cluster.local:8080/realms/uds/clients-registrations/default";
+
+// Template regex to match clientField() references, see https://regex101.com/r/e41Dsk/3 for details
+const secretTemplateRegex = new RegExp(
+  'clientField\\(([a-zA-Z]+)\\)(?:\\["?([\\w]+)"?\\]|(\\.json\\(\\)))?',
+  "gm",
+);
 
 /**
  * Create or update the Keycloak clients for the package
@@ -45,6 +52,7 @@ export async function purgeSSOClients(pkg: UDSPackage, refs: string[] = []) {
     const token = Store.getItem(ref);
     const clientId = ref.replace("sso-client-", "");
     if (token) {
+      Store.removeItem(ref);
       await apiCall({ clientId }, "DELETE", token);
     } else {
       Log.warn(pkg.metadata, `Failed to remove client ${clientId}, token not found`);
@@ -53,7 +61,7 @@ export async function purgeSSOClients(pkg: UDSPackage, refs: string[] = []) {
 }
 
 async function syncClient(
-  { isAuthSvcClient, ...clientReq }: Sso,
+  { isAuthSvcClient, secretName, secretTemplate, ...clientReq }: Sso,
   pkg: UDSPackage,
   isRetry = false,
 ) {
@@ -61,12 +69,12 @@ async function syncClient(
 
   try {
     // Not including the CR data in the ref because Keycloak client IDs must be unique already
-    const name = getClientName(clientReq);
+    const name = `sso-client-${clientReq.clientId}`;
     const token = Store.getItem(name);
 
     let client: Client;
 
-    // If and existing client is found, update it
+    // If an existing client is found, update it
     if (token && !isRetry) {
       Log.debug(pkg.metadata, `Found existing token for ${clientReq.clientId}`);
       client = await apiCall(clientReq, "PUT", token);
@@ -86,9 +94,14 @@ async function syncClient(
       metadata: {
         namespace: pkg.metadata!.namespace,
         // Use the CR secret name if provided, otherwise use the client name
-        name: clientReq.secretName || name,
+        name: secretName || name,
+        labels: {
+          "uds/package": pkg.metadata!.name,
+        },
+        // Use the CR as the owner ref for each VirtualService
+        ownerReferences: getOwnerRef(pkg),
       },
-      stringData: clientToStringmap(client),
+      data: generateSecretData(client, secretTemplate),
     });
 
     if (isAuthSvcClient) {
@@ -99,12 +112,12 @@ async function syncClient(
   } catch (err) {
     const msg =
       `Failed to process client request '${clientReq.clientId}' for ` +
-      `${pkg.metadata?.namespace}/${pkg.metadata?.name}`;
+      `${pkg.metadata?.namespace}/${pkg.metadata?.name}. This can occur if a client already exists with the same ID that Pepr isn't tracking.`;
     Log.error({ err }, msg);
 
     if (isRetry) {
       Log.error(`${msg}, retry failed, aborting`);
-      throw err;
+      throw new Error(`${msg}. RETRY FAILED, aborting: ${JSON.stringify(err)}`);
     }
 
     // Retry the request
@@ -155,23 +168,67 @@ async function apiCall(sso: Partial<Sso>, method = "POST", authToken = "") {
   return resp.data;
 }
 
-function getClientName(client: Partial<Sso>) {
-  return `sso-client-${client.clientId}`;
-}
+export function generateSecretData(client: Client, secretTemplate?: { [key: string]: string }) {
+  if (secretTemplate) {
+    Log.debug(`Using secret template for client: ${client.clientId}`);
+    // Iterate over the secret template entry and process each value
+    return templateData(secretTemplate, client);
+  }
 
-function clientToStringmap(client: Client) {
   const stringMap: Record<string, string> = {};
+
+  Log.debug(`Using client data for secret: ${client.clientId}`);
 
   // iterate over the client object and convert all values to strings
   for (const [key, value] of Object.entries(client)) {
-    if (typeof value === "object") {
-      // For objects and arrays, convert to a JSON string
-      stringMap[key] = JSON.stringify(value);
-    } else {
-      // For primitive values, convert directly to string
-      stringMap[key] = String(value);
-    }
+    // For objects and arrays, convert to a JSON string
+    const processed = typeof value === "object" ? JSON.stringify(value) : String(value);
+
+    // Convert the value to a base64 encoded string
+    stringMap[key] = Buffer.from(processed).toString("base64");
   }
 
+  return stringMap;
+}
+
+/**
+ * Process the secret template and convert the client data to base64 encoded strings for use in a secret
+ *
+ * @param secretTemplate The template to use for generating the secret
+ * @param client
+ * @returns
+ */
+function templateData(secretTemplate: { [key: string]: string }, client: Client) {
+  const stringMap: Record<string, string> = {};
+
+  // Iterate over the secret template and process each entry
+  for (const [key, value] of Object.entries(secretTemplate)) {
+    // Replace any clientField() references with the actual client data
+    const templated = value.replace(
+      secretTemplateRegex,
+      (_match, fieldName: keyof Client, key, json) => {
+        // Make typescript happy with a more generic type
+        const value = client[fieldName] as Record<string | number, string> | string;
+
+        // If a key is provided, use it to get the value
+        if (key) {
+          return String(value[key] ?? "");
+        }
+
+        // If .json() is provided, convert the value to a JSON string
+        if (json) {
+          return JSON.stringify(value);
+        }
+
+        // Otherwise, convert the value to a string
+        return value !== undefined ? String(value) : "";
+      },
+    );
+
+    // Convert the templated value to a base64 encoded string
+    stringMap[key] = Buffer.from(templated).toString("base64");
+  }
+
+  // Return the processed secret template without any further processing
   return stringMap;
 }

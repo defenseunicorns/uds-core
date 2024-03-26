@@ -1,8 +1,8 @@
-# Welcome to the [NAME] UDS Bundle
+# Welcome to UDS Core
 
-Thank you for your interest in this Defense Unicorns UDS Bundle!
+Thank you for your interest in Defense Unicorns UDS Core!
 
-This document describes the process and requirements for contributing to this UDS Bundle.
+This document describes the process and requirements for contributing to this UDS Core repo.
 
 ## Table of Contents
 
