@@ -4,7 +4,7 @@ variables:
 
   - name: REGISTRY1_PEPR_IMAGE
     # renovate: datasource=docker versioning=semver
-    default: registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller:v0.28.6
+    default: registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller:v0.28.3
 
 tasks:
   - name: standard-package
