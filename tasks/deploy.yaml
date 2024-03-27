@@ -23,9 +23,9 @@ tasks:
       - description: "Deploy the Pepr Module"
         cmd: |
           PEPR_VERSION=$(npm pkg get version | tr -d '"')
-          uds zarf package deploy build/zarf-package-pepr-uds-core-${UDS_ARCH}-${PEPR_VERSION}.tar.zst --confirm --set UDS_SINGLE_TEST=true
+          uds zarf package deploy build/zarf-package-pepr-uds-core-${UDS_ARCH}-${PEPR_VERSION}.tar.zst --confirm --no-progress --set UDS_SINGLE_TEST=true
       - description: "Deploy the requested Zarf Package (must set UDS_PKG environment variable)"
-        cmd: uds zarf package deploy build/zarf-package-uds-core-${UDS_PKG}-${UDS_ARCH}.tar.zst --confirm
+        cmd: uds zarf package deploy build/zarf-package-uds-core-${UDS_PKG}-${UDS_ARCH}.tar.zst --confirm --no-progress
 
   - name: latest-package-release
     actions:
@@ -34,9 +34,9 @@ tasks:
         setVariables:
           - name: LATEST_VERSION
       - description: "Deploy the latest UDS Core package release"
-        cmd: uds zarf package deploy oci://ghcr.io/defenseunicorns/packages/uds/core:${LATEST_VERSION} --confirm --components="metrics-server" # Temporary addition to workaround https://github.com/defenseunicorns/zarf/issues/2320
+        cmd: uds zarf package deploy oci://ghcr.io/defenseunicorns/packages/uds/core:${LATEST_VERSION} --confirm --no-progress"
 
   - name: standard-package
     actions:
       - description: "Deploy the standard UDS Core zarf package"
-        cmd: uds zarf package deploy build/zarf-package-core-${UDS_ARCH}-${VERSION}.tar.zst --confirm
+        cmd: uds zarf package deploy build/zarf-package-core-${UDS_ARCH}-${VERSION}.tar.zst --no-progress --confirm --no-progress

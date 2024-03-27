@@ -21,6 +21,11 @@ spec:
       - direction: Egress
         remoteGenerated: KubeAPI
         selector:
+          app: prometheus
+
+      - direction: Egress
+        remoteGenerated: KubeAPI
+        selector:
           app.kubernetes.io/name: kube-state-metrics
 
       - direction: Egress

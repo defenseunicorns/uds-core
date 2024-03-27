@@ -65,26 +65,3 @@ resources:
   requests:
     cpu: 100m
     memory: 256Mi
-
-# Below fails individual test when enabled since the crd is not there
-serviceMonitor:
-  annotations: {}
-  enabled: false
-  interval: null
-  labels: {}
-  metricRelabelings: []
-  namespace: null
-  namespaceSelector: {}
-  prometheusRule:
-    additionalLabels: {}
-    enabled: false
-    rules: []
-  relabelings: []
-  scheme: https
-  scrapeTimeout: null
-  targetLabels: []
-  tlsConfig:
-    caFile: /etc/prom-certs/root-cert.pem
-    certFile: /etc/prom-certs/cert-chain.pem
-    insecureSkipVerify: true
-    keyFile: /etc/prom-certs/key.pem
