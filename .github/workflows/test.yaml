@@ -70,7 +70,7 @@ jobs:
 
       - name: Debug Output
         if: ${{ always() }}
-        run: uds run dump-cluster-info
+        uses: ./.github/actions/debug-output
 
       - name: Save logs
         if: always()
