@@ -21,8 +21,8 @@ components:
         valuesFiles:
           - "values/upstream-values.yaml"
     images:
-      - "docker.io/istio/pilot:1.20.3-distroless"
-      - "docker.io/istio/proxyv2:1.20.3-distroless"
+      - "docker.io/istio/pilot:1.21.0-distroless"
+      - "docker.io/istio/proxyv2:1.21.0-distroless"
 
   - name: istio-controlplane
     required: true
@@ -35,15 +35,15 @@ components:
         valuesFiles:
           - "values/registry1-values.yaml"
     images:
-      - registry1.dso.mil/ironbank/tetrate/istio/proxyv2:1.20.3-tetratefips-v0
-      - registry1.dso.mil/ironbank/tetrate/istio/pilot:1.20.3-tetratefips-v0
+      - registry1.dso.mil/ironbank/tetrate/istio/proxyv2:1.20.4-tetratefips-v0
+      - registry1.dso.mil/ironbank/tetrate/istio/pilot:1.20.4-tetratefips-v0
 
   - name: istio-admin-gateway
     required: true
     charts:
       - name: gateway
         url: https://istio-release.storage.googleapis.com/charts
-        version: 1.20.3
+        version: 1.21.0
         releaseName: admin-ingressgateway
         namespace: istio-admin-gateway
       - name: uds-istio-config
@@ -58,7 +58,7 @@ components:
     charts:
       - name: gateway
         url: https://istio-release.storage.googleapis.com/charts
-        version: 1.20.3
+        version: 1.21.0
         releaseName: tenant-ingressgateway
         namespace: istio-tenant-gateway
       - name: uds-istio-config
@@ -73,7 +73,7 @@ components:
     charts:
       - name: gateway
         url: https://istio-release.storage.googleapis.com/charts
-        version: 1.20.3
+        version: 1.21.0
         releaseName: passthrough-ingressgateway
         namespace: istio-passthrough-gateway
       - name: uds-istio-config
