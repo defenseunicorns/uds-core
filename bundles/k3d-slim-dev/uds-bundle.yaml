@@ -31,7 +31,7 @@ packages:
   - name: init
     repository: ghcr.io/defenseunicorns/packages/init
     # renovate: datasource=github-tags depName=defenseunicorns/zarf versioning=semver
-    ref: v0.32.5
+    ref: v0.32.6
 
   - name: core-slim-dev
     path: ../../build/
