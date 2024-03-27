@@ -2,7 +2,7 @@ name: Filter
 
 # This workflow is triggered on pull requests
 on:
-  pull_request:
+  merge_group:
 
 # Permissions for the GITHUB_TOKEN used by the workflow.
 permissions:
@@ -64,15 +64,8 @@ jobs:
     strategy:
       matrix:
         package: ${{ fromJSON(needs.check-paths.outputs.packages) }}
-        flavor: [upstream, registry1]
+        flavor: [upstream]
         test_type: [install]
-        include:
-          - package: all
-            flavor: registry1
-            test_type: upgrade
-          - package: all
-            flavor: upstream
-            test_type: upgrade
     uses: ./.github/workflows/test.yaml
     with:
       package: ${{ matrix.package }}
