@@ -1,6 +1,6 @@
 variables:
   - name: TARGET_REPO
-    default: oci://ghcr.io/defenseunicorns/packages/uds
+    default: ghcr.io/defenseunicorns/packages/uds
 
   - name: FLAVOR
     default: upstream
@@ -15,12 +15,20 @@ tasks:
   - name: standard-package
     description: "Publish the UDS package"
     actions:
-      - cmd: |
-          uds zarf package publish build/zarf-package-core-amd64-${VERSION}.tar.zst ${TARGET_REPO}
+      - description: "Publish amd64/arm64 packages per flavor"
+        cmd: |
+          uds zarf package publish build/zarf-package-core-amd64-${VERSION}.tar.zst oci://${TARGET_REPO}
 
           # dont publish arm64 for registry1 since IB images are only amd64
           if [ "${FLAVOR}" != "registry1" ]; then
-            uds zarf package publish build/zarf-package-core-arm64-${VERSION}.tar.zst ${TARGET_REPO}
+            uds zarf package publish build/zarf-package-core-arm64-${VERSION}.tar.zst oci://${TARGET_REPO}
+          fi
+
+      - description: "Tag the latest package (if a snapshot release)"
+        cmd: |
+          if [ $(echo "${TARGET_REPO}" | grep 'snapshot') ]; then
+             pkgPath="${TARGET_REPO}/core"
+             uds zarf tools registry copy ${pkgPath}:${VERSION}-${FLAVOR} ${pkgPath}:latest-${FLAVOR}
           fi
 
   - name: bundles
@@ -28,13 +36,15 @@ tasks:
     actions:
       - description: "Publish amd64 and arm64 bundles"
         cmd: |
-          uds publish bundles/k3d-standard/uds-bundle-k3d-*-amd64-${VERSION}.tar.zst ${TARGET_REPO}/bundles --no-progress
-          uds publish bundles/k3d-standard/uds-bundle-k3d-*-arm64-${VERSION}.tar.zst ${TARGET_REPO}/bundles --no-progress
+          uds publish bundles/k3d-standard/uds-bundle-k3d-*-amd64-${VERSION}.tar.zst oci://${TARGET_REPO}/bundles --no-progress
+          uds publish bundles/k3d-standard/uds-bundle-k3d-*-arm64-${VERSION}.tar.zst oci://${TARGET_REPO}/bundles --no-progress
 
-          uds publish bundles/k3d-slim-dev/uds-bundle-k3d-*-arm64-${VERSION}.tar.zst ${TARGET_REPO}/bundles --no-progress
-          uds publish bundles/k3d-slim-dev/uds-bundle-k3d-*-amd64-${VERSION}.tar.zst ${TARGET_REPO}/bundles --no-progress
+          uds publish bundles/k3d-slim-dev/uds-bundle-k3d-*-arm64-${VERSION}.tar.zst oci://${TARGET_REPO}/bundles --no-progress
+          uds publish bundles/k3d-slim-dev/uds-bundle-k3d-*-amd64-${VERSION}.tar.zst oci://${TARGET_REPO}/bundles --no-progress
 
       - description: "Tag the latest bundles"
         cmd: |
-          pkgPath="ghcr.io/defenseunicorns/packages/uds/bundles/k3d-core-demo"
+          pkgPath="${TARGET_REPO}/bundles/k3d-core-demo"
+          uds zarf tools registry copy ${pkgPath}:${VERSION} ${pkgPath}:latest
+          pkgPath="${TARGET_REPO}/bundles/k3d-core-slim-dev"
           uds zarf tools registry copy ${pkgPath}:${VERSION} ${pkgPath}:latest
