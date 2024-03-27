@@ -1,7 +1,7 @@
 image:
   registry: registry1.dso.mil
   repository: ironbank/opensource/grafana/grafana
-  tag: 10.4.0
+  tag: 10.4.1
 
 initChownData:
   image:
