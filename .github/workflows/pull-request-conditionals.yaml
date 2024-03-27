@@ -3,6 +3,7 @@ name: Filter
 # This workflow is triggered on pull requests
 on:
   merge_group:
+    types: [checks_requested]
 
 # Permissions for the GITHUB_TOKEN used by the workflow.
 permissions:
