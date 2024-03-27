@@ -72,6 +72,22 @@ describe("Test validation of Exemption CRs", () => {
     );
   });
 
+  it("denies matcher regex patterns with leading and trailing slashes", async () => {
+    const wrongMatcherName = "/^neuvector-enforcer-pod*/";
+    const mockReq = makeMockReq({
+      exempts: [
+        {
+          ...mockExemptions[0],
+          matcher: { ...mockExemptions[0].matcher, name: wrongMatcherName },
+        },
+      ],
+    });
+    await exemptValidator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledWith(
+      `Invalid matcher name "${wrongMatcherName}": please remove the leading and trailing slashes`,
+    );
+  });
+
   it("validates regex patterns in matchers", async () => {
     const mockReq = makeMockReq({
       exempts: [
