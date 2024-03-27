@@ -1,0 +1,4 @@
+apiVersion: v1
+version: 0.1.0
+appVersion: 0.1.0
+name: uds-podinfo-config

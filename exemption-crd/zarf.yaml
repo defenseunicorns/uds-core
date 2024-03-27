@@ -7,7 +7,10 @@ metadata:
 components:
   - name: crd
     required: true
-    manifests:
-      - name: exemption-crd
-        files:
-          - ./crd.yaml
+    actions:
+      onDeploy:
+        after:
+          - cmd: uds zarf tools kubectl apply -f ./crd.yaml --force=true
+    files:
+      - source: ./crd.yaml
+        target: ./crd.yaml

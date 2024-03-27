@@ -8,7 +8,10 @@ components:
   - name: demo-helm-charts
     required: true
     charts:
-      # Charts are organized in a list with unique chart names per component - note that a Zarf chart name does not need to match the chart name in a Chart.yaml
+      - name: uds-podinfo-config
+        namespace: podinfo
+        version: 0.1.0
+        localPath: config-chart
       - name: podinfo-local
         version: 6.4.0
         namespace: podinfo
