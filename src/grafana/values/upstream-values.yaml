@@ -8,7 +8,7 @@ sidecar:
 image:
   registry: docker.io
   repository: grafana/grafana
-  tag: 10.4.0
+  tag: 10.4.1
 
 initChownData:
   image:
@@ -19,4 +19,4 @@ initChownData:
 downloadDashboardsImage:
   registry: docker.io
   repository: curlimages/curl
-  tag: 8.6.0
+  tag: 8.7.1
