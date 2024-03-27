@@ -1,27 +1,24 @@
-all:
-  - "**"
-
 authservice:
-  - "src/authservice/**"
+  - "**"
 grafana:
-  - "src/grafana/**"
+  - "**"
 istio:
-  - "src/istio/**"
+  - "**"
 keycloak:
-  - "src/keycloak/**"
+  - "**"
 kiali:
-  - "src/kiali/**"
+  - "**"
 loki:
-  - "src/loki/**"
+  - "**"
 metrics-server:
-  - "src/metrics-server/**"
+  - "**"
 neuvector:
-  - "src/neuvector/**"
+  - "**"
 prometheus-stack:
-  - "src/prometheus-stack/**"
+  - "**"
 promtail:
-  - "src/promtail/**"
+  - "**"
 tempo:
-  - "src/tempo/**"
+  - "**"
 velero:
-  - "src/velero/**"
+  - "**"
