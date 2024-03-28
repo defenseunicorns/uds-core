@@ -15,6 +15,12 @@ domain: "###ZARF_VAR_DOMAIN###"
 # The primary Keycloak realm
 realm: uds
 
+# Generates an initial password for first admin user - only use if install is headless
+# (i.e. cannot hit keycloak UI with `zarf connect keycloak`), password should be changed after initial login
+insecureAdminPasswordGeneration:
+  enabled: false
+  username: admin
+
 # Indicates whether information about services should be injected into Pod's environment variables, matching the syntax of Docker links
 enableServiceLinks: true
 
