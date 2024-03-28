@@ -12,7 +12,7 @@ For more information on Keycloak and its capabilities, see its [documentation](h
 
 When `devMode: true` is set, the chart will deploy a single Keycloak Pod with an in-memory database and scaling turned off.
 
-#### Autoscaling
+### Autoscaling
 
 The example autoscaling configuration in the values file scales from three up to a maximum of ten Pods using CPU utilization as the metric. Scaling up is done as quickly as required but scaling down is done at a maximum rate of one Pod per five minutes.
 
@@ -22,6 +22,14 @@ Autoscaling can be enabled as follows:
 autoscaling:
   enabled: true
 ```
+
+### Admin User Creation
+
+To be able to access the Keycloak administrative console you must create an initial admin user. You can do this using `zarf connect keycloak` which will launch a port-forward session to Keycloak. From there you will be prompted for the initial admin username and password.
+
+If you are unable to open a browser to create this user (i.e. a headless install), the chart provides values under `insecureAdminPasswordGeneration` which will generate the initial admin user for you and place the password in a secret (`keycloak-admin-password`) in cluster. To use this set `insecureAdminPasswordGeneration.enabled` to `true`, and (optionally) set `insecureAdminPasswordGeneration.username` to the desired username.
+
+Note that this is highly discouraged as it is often used as a shared admin account rather than a being tied to a specific user. If you do use this toggle, you should immediately change the password after initial login so that your admin account information is not exposed in the cluster secret. This secret will only contain the initial password and will not be updated after you change the password during initial login.
 
 ## Why StatefulSet?
 
