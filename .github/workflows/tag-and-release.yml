@@ -68,7 +68,7 @@ jobs:
 
       - name: Debug Output
         if: ${{ always() }}
-        run: uds run dump-cluster-info
+        uses: ./.github/actions/debug-output
 
       - name: Publish Standard Package
         run: uds run -f tasks/publish.yaml standard-package --set FLAVOR=${{ matrix.flavor }}
