@@ -10,7 +10,7 @@ packages:
   - name: uds-k3d-dev
     repository: ghcr.io/defenseunicorns/packages/uds-k3d
     # renovate: datasource=github-tags depName=defenseunicorns/uds-k3d versioning=semver
-    ref: 0.5.0
+    ref: 0.6.0
     overrides:
       uds-dev-stack:
         minio:
