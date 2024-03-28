@@ -29,7 +29,7 @@ To be able to access the Keycloak administrative console you must create an init
 
 If you are unable to open a browser to create this user (i.e. a headless install), the chart provides values under `insecureAdminPasswordGeneration` which will generate the initial admin user for you and place the password in a secret (`keycloak-admin-password`) in cluster. To use this set `insecureAdminPasswordGeneration.enabled` to `true`, and (optionally) set `insecureAdminPasswordGeneration.username` to the desired username.
 
-Note that this is highly discouraged as it is often used as a shared admin account rather than a being tied to a specific user. If you do use this toggle, you must should immediately change the password after initial login so that your admin account information is not exposed in the cluster secret. This secret will only contain the initial password and will not be updated after you change the password during initial login.
+Note that this is highly discouraged as it is often used as a shared admin account rather than a being tied to a specific user. If you do use this toggle, you should immediately change the password after initial login so that your admin account information is not exposed in the cluster secret. This secret will only contain the initial password and will not be updated after you change the password during initial login.
 
 ## Why StatefulSet?
 
