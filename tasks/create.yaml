@@ -1,3 +1,6 @@
+includes:
+  - common: https://raw.githubusercontent.com/defenseunicorns/uds-common/v0.3.2/tasks/create.yaml
+
 variables:
   - name: FLAVOR
     default: upstream
@@ -55,3 +58,10 @@ tasks:
           rm -fr dist
           npm ci
           npx pepr build $CUSTOM_PEPR_IMAGE
+
+  - name: no-pepr-package
+    actions:
+      - task: common:package
+        with:
+          options: ${OPTIONS}
+          path: ${PATH}

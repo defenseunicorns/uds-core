@@ -1,0 +1,11 @@
+name: Nightly Testing
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # Runs at midnight every day
+
+jobs:
+  nightly-testing:
+    name: Test Core on EKS
+    uses: ./.github/workflows/test-eks.yaml
+    secrets: inherit
