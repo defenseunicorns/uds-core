@@ -10,6 +10,8 @@ tasks:
         env:
           - "PEPR_WATCH_MODE=true"
 
+      - cmd: "kubectl get crd exemptions.uds.dev -o yaml > exemption-crd/crd.yaml"
+
       - cmd: "npx kubernetes-fluent-client crd packages.uds.dev src/pepr/operator/crd/generated"
 
       - cmd: "npx kubernetes-fluent-client crd exemptions.uds.dev src/pepr/operator/crd/generated"
