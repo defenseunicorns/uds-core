@@ -9,18 +9,18 @@
   },
   "yaml.schemas": {
     // renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
-    "https://raw.githubusercontent.com/defenseunicorns/uds-cli/v0.9.2/uds.schema.json": [
+    "https://raw.githubusercontent.com/defenseunicorns/uds-cli/v0.10.1/uds.schema.json": [
       "uds-bundle.yaml"
     ],
 
     // renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
-    "https://raw.githubusercontent.com/defenseunicorns/uds-cli/v0.9.2/tasks.schema.json": [
+    "https://raw.githubusercontent.com/defenseunicorns/uds-cli/v0.10.1/tasks.schema.json": [
       "tasks.yaml",
       "tasks/**/*.yaml",
       "src/**/validate.yaml"
     ],
     // renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
-    "https://raw.githubusercontent.com/defenseunicorns/uds-cli/v0.9.2/zarf.schema.json": [
+    "https://raw.githubusercontent.com/defenseunicorns/uds-cli/v0.10.1/zarf.schema.json": [
       "zarf.yaml"
     ]
   },

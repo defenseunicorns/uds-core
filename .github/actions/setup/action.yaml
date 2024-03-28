@@ -30,4 +30,4 @@ runs:
     - name: Install UDS CLI
       shell: bash
       # renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
-      run: brew install defenseunicorns/tap/uds@0.9.2
+      run: brew install defenseunicorns/tap/uds@0.10.1
