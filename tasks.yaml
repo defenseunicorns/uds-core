@@ -34,11 +34,11 @@ tasks:
         cmd: "uds zarf dev deploy src/${PKG} --flavor ${FLAVOR}"
 
 
-  - name: deploy-test
+  - name: crd-test
     actions:
       - cmd: uds zarf package create test-podinfo --confirm
       - cmd: uds zarf package create exemption-crd --confirm
-      # - task: create:slim-dev-package
+      - task: create:slim-dev-package
       - task: setup:create-k3d-cluster
       - cmd: uds zarf package deploy build/zarf-package-exemption-crd-*.tar.zst --confirm
       - cmd: uds zarf package deploy oci://ghcr.io/defenseunicorns/packages/init:v0.32.5 --confirm
