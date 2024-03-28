@@ -29,4 +29,4 @@ components:
         valuesFiles:
           - values/registry1-values.yaml
     images:
-      - registry1.dso.mil/ironbank/istio-ecosystem/authservice:0.5.3
+      - registry1.dso.mil/ironbank/istio-ecosystem/authservice:1.0.0
