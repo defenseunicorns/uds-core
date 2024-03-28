@@ -27,3 +27,24 @@ packages:
             - name: VELERO_IRSA_ANNOTATION
               description: "IRSA ARN annotation to use for Velero"
               path: serviceAccount.server.annotations
+      loki:
+        loki:
+          variables:
+            - name: LOKI_CHUNKS_BUCKET
+              description: "The object storage bucket for Loki chunks"
+              path: loki.storage.bucketNames.chunks
+            - name: LOKI_RULER_BUCKET
+              description: "The object storage bucket for Loki ruler"
+              path: loki.storage.bucketNames.ruler
+            - name: LOKI_ADMIN_BUCKET
+              description: "The object storage bucket for Loki admin"
+              path: loki.storage.bucketNames.admin
+            - name: LOKI_S3_ENDPOINT
+              description: "The S3 endpoint"
+              path: loki.storage.s3.endpoint
+            - name: LOKI_S3_REGION
+              description: "The S3 region"
+              path: loki.storage.s3.region
+            - name: LOKI_IRSA_ANNOTATION
+              description: "The irsa role annotation"
+              path: loki.serviceAccount.annotations

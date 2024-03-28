@@ -168,17 +168,19 @@ components:
 
               variables:
                 core:
-                  # loki_bucket_chunks: ${ZARF_VAR_LOKI_S3_BUCKET}
-                  # loki_bucket_ruler: ${ZARF_VAR_LOKI_S3_BUCKET}
-                  # loki_bucket_admin: ${ZARF_VAR_LOKI_S3_BUCKET}
-                  # loki_region: ${ZARF_VAR_LOKI_S3_AWS_REGION}
-                  # loki_role_arn: ${ZARF_VAR_LOKI_S3_ROLE_ARN}
-                  VELERO_USE_SECRET: false
-                  VELERO_IRSA_ANNOTATION:
+                  loki_chunks_bucket: ${ZARF_VAR_LOKI_S3_BUCKET}
+                  loki_ruler_bucket: ${ZARF_VAR_LOKI_S3_BUCKET}
+                  loki_admin_bucket: ${ZARF_VAR_LOKI_S3_BUCKET}
+                  loki_s3_region: ${ZARF_VAR_LOKI_S3_AWS_REGION}
+                  loki_s3-endpoint: ""
+                  loki_irsa_annotation: 
+                    eks.amazonaws.com/role-arn: ${ZARF_VAR_LOKI_S3_ROLE_ARN}
+                  velero_use_secret: false
+                  velero_irsa_annotation:
                     eks.amazonaws.com/role-arn: "${ZARF_VAR_VELERO_S3_ROLE_ARN}"
-                  VELERO_BUCKET: ${ZARF_VAR_VELERO_S3_BUCKET}
-                  VELERO_BUCKET_REGION: ${ZARF_VAR_VELERO_S3_AWS_REGION}
-                  VELERO_BUCKET_PROVIDER_URL: ""
+                  velero_bucket: ${ZARF_VAR_VELERO_S3_BUCKET}
+                  velero_bucket_region: ${ZARF_VAR_VELERO_S3_AWS_REGION}
+                  velero_bucket_provider_url: ""
                   velero_bucket_credential_name: ""
                   velero_bucket_credential_key: ""
               EOF
