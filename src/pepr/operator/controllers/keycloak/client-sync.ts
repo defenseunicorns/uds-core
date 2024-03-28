@@ -4,6 +4,8 @@ import { UDSConfig } from "../../../config";
 import { Store } from "../../common";
 import { Sso, UDSPackage } from "../../crd";
 import { getOwnerRef } from "../utils";
+import { updateConfig } from "./authservice/authservice";
+import { Action } from "./authservice/types";
 import { Client } from "./types";
 
 const apiURL =
@@ -54,6 +56,14 @@ export async function purgeSSOClients(pkg: UDSPackage, refs: string[] = []) {
     if (token) {
       Store.removeItem(ref);
       await apiCall({ clientId }, "DELETE", token);
+
+      // find sso by clientId
+      const sso = pkg.spec?.sso?.find(sso => sso.clientId === clientId);
+
+      // if sso.isAuthSvcClient is true, remove from authservice config
+      if (sso && sso.isAuthSvcClient) {
+        await updateConfig({ name: ref, action: Action.Remove });
+      }
     } else {
       Log.warn(pkg.metadata, `Failed to remove client ${clientId}, token not found`);
     }
@@ -105,7 +115,8 @@ async function syncClient(
     });
 
     if (isAuthSvcClient) {
-      // Do things here
+      // Add additional authservice config
+      await updateConfig({ client, name, action: Action.Add });
     }
 
     return name;
@@ -121,8 +132,8 @@ async function syncClient(
     }
 
     // Retry the request
-    Log.warn(`${msg}, retrying`);
-    return syncClient(clientReq, pkg, true);
+    Log.warn(pkg.metadata, `Failed to process client request: ${clientReq.clientId}, retrying`);
+    return syncClient({ isAuthSvcClient, ...clientReq }, pkg, true);
   }
 }
 
