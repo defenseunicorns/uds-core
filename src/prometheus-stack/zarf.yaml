@@ -10,7 +10,7 @@ components:
     charts:
       - name: prometheus-operator-crds
         url: https://prometheus-community.github.io/helm-charts
-        version: 9.0.1
+        version: 10.0.0
         namespace: uds-crds
         valuesFiles:
           - "values/crd-values.yaml"
@@ -28,11 +28,11 @@ components:
           - "values/upstream-values.yaml"
     images:
       - "quay.io/prometheus/node-exporter:v1.7.0"
-      - "quay.io/prometheus-operator/prometheus-operator:v0.71.2"
-      - "registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.10.1"
-      - "quay.io/prometheus/alertmanager:v0.26.0"
-      - "quay.io/prometheus-operator/prometheus-config-reloader:v0.71.2"
-      - "quay.io/prometheus/prometheus:v2.49.1"
+      - "quay.io/prometheus-operator/prometheus-operator:v0.72.0"
+      - "registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.11.0"
+      - "quay.io/prometheus/alertmanager:v0.27.0"
+      - "quay.io/prometheus-operator/prometheus-config-reloader:v0.72.0"
+      - "quay.io/prometheus/prometheus:v2.51.0"
       - "registry.k8s.io/ingress-nginx/kube-webhook-certgen:v20221220-controller-v1.5.1-58-g787ea74b6"
 
   - name: kube-prometheus-stack
@@ -48,9 +48,9 @@ components:
           - "values/registry1-values.yaml"
     images:
       - "registry1.dso.mil/ironbank/opensource/prometheus/node-exporter:v1.7.0"
-      - "registry1.dso.mil/ironbank/opensource/prometheus-operator/prometheus-operator:v0.71.2"
-      - "registry1.dso.mil/ironbank/opensource/kubernetes/kube-state-metrics:v2.10.1"
-      - "registry1.dso.mil/ironbank/opensource/prometheus/alertmanager:v0.26.0"
-      - "registry1.dso.mil/ironbank/opensource/prometheus-operator/prometheus-config-reloader:v0.71.2"
-      - "registry1.dso.mil/ironbank/opensource/prometheus/prometheus:v2.49.1"
+      - "registry1.dso.mil/ironbank/opensource/prometheus-operator/prometheus-operator:v0.72.0"
+      - "registry1.dso.mil/ironbank/opensource/kubernetes/kube-state-metrics:v2.11.0"
+      - "registry1.dso.mil/ironbank/opensource/prometheus/alertmanager:v0.27.0"
+      - "registry1.dso.mil/ironbank/opensource/prometheus-operator/prometheus-config-reloader:v0.72.0"
+      - "registry1.dso.mil/ironbank/opensource/prometheus/prometheus:v2.51.0"
       - "registry1.dso.mil/ironbank/opensource/ingress-nginx/kube-webhook-certgen:v1.3.0"
