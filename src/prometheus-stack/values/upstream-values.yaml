@@ -20,7 +20,7 @@ prometheus:
     image:
       registry: quay.io
       repository: prometheus/prometheus
-      tag: v2.51.0
+      tag: v2.51.1
 prometheus-node-exporter:
   image:
     registry: quay.io
