@@ -32,6 +32,9 @@ jobs:
           role-session-name: ${{ github.job || github.event.client_payload.pull_request.head.sha || github.sha }}
           aws-region: us-west-2
           role-duration-seconds: 21600
+      
+      - name: Environment setup
+        uses: ./.github/actions/setup
 
       - name: Install eksctl
         run: uds run -f tasks/iac.yaml install-eksctl
@@ -40,9 +43,6 @@ jobs:
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: "1.5.7"
-
-      - name: Environment setup
-        uses: ./.github/actions/setup
 
       - name: Create UDS Core Package
         run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package
