@@ -1,13 +1,7 @@
 variables:
   - name: CLUSTER_NAME
-  - name: STATE_BUCKET_NAME
-  - name: STATE_KEY
-  - name: STATE_DYNAMODB_TABLE_NAME
-  - name: REGION
   - name: PERMISSIONS_BOUNDARY_NAME
   - name: PERMISSIONS_BOUNDARY_ARN
-  - name: USE_PERMISSIONS_BOUNDARY
-    default: "true"
   - name: AMI_ID
     default: ami-068ab6ac1cec494e0
 

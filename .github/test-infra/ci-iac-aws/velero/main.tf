@@ -56,7 +56,7 @@ locals {
 
 module "S3" {
   source                  = "github.com/defenseunicorns/terraform-aws-uds-s3?ref=v0.0.6"
-  name_prefix             = "${var.bucket_name}-"
+  name_prefix             = "${var.velero_bucket_name}-"
   kms_key_arn             = local.kms_key_arn
   force_destroy           = var.force_destroy
   create_bucket_lifecycle = true

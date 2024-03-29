@@ -39,7 +39,7 @@ variable "create_kms_key" {
   default     = true
 }
 
-variable "bucket_name" {
+variable "loki_bucket_name" {
   description = "Name for S3 bucket"
   type        = string
 }

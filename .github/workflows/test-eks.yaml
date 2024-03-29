@@ -36,7 +36,7 @@ jobs:
       - name: Install eksctl
         run: uds run -f tasks/iac.yaml install-eksctl
 
-      - name: Set Terraform version
+      - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: "1.5.7"
@@ -54,6 +54,13 @@ jobs:
         run: uds run -f tasks/iac.yaml create-cluster
 
       - name: Create IAC
+        env:
+          TF_VAR_REGION: us-west-2
+          TF_VAR_NAME: $UDS_CLUSTER_NAME
+          TF_VAR_LOKI_BUCKET_NAME: "${UDS_CLUSTER_NAME}-loki"
+          TF_VAR_VELERO_BUCKET_NAME: "${UDS_CLUSTER_NAME}-velero"
+          TF_VAR_USE_PERMISSIONS_BOUNDARY: true
+          TF_VAR_PERMISSIONS_BOUNDARY_NAME: $UDS_PERMISSIONS_BOUNDARY_NAME
         run: uds run -f tasks/iac.yaml create-iac
 
       - name: Deploy Bundle
