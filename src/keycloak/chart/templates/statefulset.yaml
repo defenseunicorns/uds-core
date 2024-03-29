@@ -170,6 +170,18 @@ spec:
               value: "-Dcom.redhat.fips=true"
             {{- end }}
           {{- end }}
+          {{- if .Values.insecureAdminPasswordGeneration.enabled }}
+            - name: KEYCLOAK_ADMIN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "keycloak.fullname" . }}-admin-password
+                  key: username
+            - name: KEYCLOAK_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "keycloak.fullname" . }}-admin-password
+                  key: password
+          {{- end }}
           ports:
             - name: http
               containerPort: 8080
