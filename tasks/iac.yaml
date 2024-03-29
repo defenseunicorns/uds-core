@@ -5,6 +5,7 @@ variables:
   - name: PERMISSIONS_BOUNDARY_ARN
   - name: STATE_BUCKET_NAME
   - name: STATE_DYNAMODB_TABLE_NAME
+  - name: STATE_KEY
   - name: AMI_ID
     default: ami-068ab6ac1cec494e0
 
@@ -76,8 +77,8 @@ tasks:
   - name: create-iac
     actions:
       - task: apply-terraform
-      # - task: terraform-outputs
-      # - task: create-uds-config
+      - task: terraform-outputs
+      - task: create-uds-config
 
   - name: destroy-iac
     actions:
@@ -88,6 +89,7 @@ tasks:
       - cmd: echo ${STATE_KEY} | sed 's/\.tfstate/-buckets.tfstate/g'
         setVariables:
           - name: BUCKETS_STATE_KEY
+        dir: .github/test-infra/buckets-iac
       - cmd: echo ${BUCKETS_STATE_KEY}
       - cmd: |
           terraform init -force-copy \
