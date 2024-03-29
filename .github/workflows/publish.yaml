@@ -69,7 +69,7 @@ jobs:
 
       - name: Debug Output
         if: ${{ always() }}
-        run: uds run dump-cluster-info
+        uses: ./.github/actions/debug-output
 
       - name: Publish Standard Package
         if: ${{ !inputs.snapshot }}

@@ -77,6 +77,15 @@ spec:
       matcher:
         namespace: neuvector
         name: "^neuvector-enforcer-pod.*"
+        kind: pod
+      title: "neuvector-enforcer-pod"
+      description: "Neuvector requires HostPath volume types
+          Neuvector mounts the following hostPaths:
+          `/var/neuvector`: (as writable) for Neuvector's buffering and persistent state
+          `/var/run`: communication to docker daemon
+          `/proc`: monitoring of processes for malicious activity
+          `/sys/fs/cgroup`: important files the controller wants to monitor for malicious content
+          https://github.com/neuvector/neuvector-helm/blob/master/charts/core/templates/enforcer-daemonset.yaml#L108"
 
     - policies:
         - DisallowPrivileged
@@ -87,12 +96,21 @@ spec:
       matcher:
         namespace: neuvector
         name: "^neuvector-controller-pod.*"
+      title: "neuvector-controller-pod"
+      description: "Neuvector requires HostPath volume types.
+          Neuvector mounts the following hostPaths:
+          `/var/neuvector`: (as writable) for Neuvector's buffering and persistent state
+          `/var/run`: communication to docker daemon
+          `/proc`: monitoring of processes for malicious activity
+          `/sys/fs/cgroup`: important files the controller wants to monitor for malicious content
+          https://github.com/neuvector/neuvector-helm/blob/master/charts/core/templates/enforcer-daemonset.yaml#L108"
 
     - policies:
         - DropAllCapabilities
       matcher:
         namespace: neuvector
         name: "^neuvector-prometheus-exporter-pod.*"
+      title: "neuvector-prometheus-exporter-pod"
 ```
 
 ### Example UDS Package CR with SSO Templating
