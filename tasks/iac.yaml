@@ -1,7 +1,10 @@
 variables:
   - name: CLUSTER_NAME
+  - name: REGION
   - name: PERMISSIONS_BOUNDARY_NAME
   - name: PERMISSIONS_BOUNDARY_ARN
+  - name: STATE_BUCKET_NAME
+  - name: STATE_DYNAMODB_TABLE_NAME
   - name: AMI_ID
     default: ami-068ab6ac1cec494e0
 
@@ -63,99 +66,77 @@ tasks:
 
       - cmd: eksctl create cluster --dry-run -f cluster-config.yaml
       - cmd: sleep 5
-      - cmd: eksctl create cluster -f .github/test-infra/eks/config.yaml
+      - cmd: eksctl create cluster -f cluster-config.yaml
       - cmd: eksctl utils write-kubeconfig -c ${CLUSTER_NAME}
       
   - name: destroy-cluster
     actions:
-      - cmd: eksctl delete cluster -f .github/test-infra/eks/config.yaml --disable-nodegroup-eviction --wait
+      - cmd: eksctl delete cluster -f cluster-config.yaml --disable-nodegroup-eviction --wait
 
   - name: create-iac
     actions:
-      - task: loki-execute-terraform
-      - task: loki-outputs
-      - task: velero-execute-terraform
-      - task: velero-outputs
-      - task: export-outputs
+      - task: apply-terraform
+        with:
+          module: loki
+      - task: terraform-outputs
+        with:
+          module: loki
+      - task: apply-terraform
+        with:
+          module: velero
+      - task: terraform-outputs
+        with:
+          module: velero
+      - task: create-uds-config
 
   - name: destroy-iac
     actions:
-      - task: destory-loki
-      - task: destroy-velero
+      - task: destory-terraform
+        with:
+          module: loki
+      - task: destory-terraform
+        with:
+          module: velero
 
-  - name: loki-execute-terraform
+  - name: apply-terraform
+    inputs:
+      module:
+        description: "name of iac module to apply"
     actions:
-      - cmd: echo ${STATE_KEY} | sed 's/\.tfstate/-loki.tfstate/g'
+      - cmd: echo ${STATE_KEY} | sed 's/\.tfstate/-$INPUT_MODULE.tfstate/g'
         setVariables:
-          - name: STATE_KEY_LOKI
+          - name: MODULE_STATE_KEY
       - cmd: |
           terraform init -force-copy \
           -backend-config="bucket=${STATE_BUCKET_NAME}" \
-          -backend-config="key=${STATE_KEY_LOKI}" \
+          -backend-config="key=${MODULE_STATE_KEY}" \
           -backend-config="region=${REGION}" \
           -backend-config="dynamodb_table=${STATE_DYNAMODB_TABLE_NAME}"
-        dir: .github/test-infra/ci-iac-aws/loki
-      - cmd: terraform apply -auto-approve
-        dir: .github/test-infra/ci-iac-aws/loki
+          
+          terraform apply -auto-approve
+        dir: .github/test-infra/ci-iac-aws/$INPUT_MODULE
+  
+  - name: terraform-outputs
+    inputs:
+      module:
+        description: "name of module to grab outputs for"
+    actions:
+      - cmd: |
+          "${INPUT_MODULE}_S3_BUCKET=$(terraform output -raw s3_bucket)"
+          "${INPUT_MODULE}_S3_AWS_REGION=$(terraform output -raw aws_region)"
+          "${INPUT_MODULE}_S3_ROLE_ARN=$(terraform output -raw irsa_role_arn)"
+        dir: .github/test-infra/ci-iac-aws/$INPUT_MODULE
 
-  - name: destory-loki
+  - name: destory-terraform
+    inputs:
+      module:
+        description: "name of iac to destroy"
     actions:
       - cmd: |
           terraform destroy -auto-approve
-        dir: .github/test-infra/ci-iac-aws/loki
-  
-  - name: loki-outputs
-    actions:
-      - cmd: terraform output -raw s3_bucket
-        dir: .github/test-infra/ci-iac-aws/loki
-        setVariables:
-          - name: LOKI_S3_BUCKET
-      - cmd: terraform output -raw aws_region
-        dir: .github/test-infra/ci-iac-aws/loki
-        setVariables:
-          - name: LOKI_S3_AWS_REGION
-      - cmd: terraform output -raw irsa_role_arn
-        dir: .github/test-infra/ci-iac-aws/loki
-        setVariables:
-          - name: LOKI_S3_ROLE_ARN
+        dir: .github/test-infra/ci-iac-aws/$INPUT_MODULE
 
-  - name: velero-execute-terraform
-    actions:
-      - cmd: echo ${STATE_KEY} | sed 's/\.tfstate/-velero.tfstate/g'
-        dir: .github/test-infra/ci-iac-aws/velero
-        setVariables:
-          - name: STATE_KEY_VELERO
-      - cmd: |
-          terraform init -force-copy \
-          -backend-config="bucket=${STATE_BUCKET_NAME}" \
-          -backend-config="key=${STATE_KEY_VELERO}" \
-          -backend-config="region=${REGION}" \
-          -backend-config="dynamodb_table=${STATE_DYNAMODB_TABLE_NAME}"
-        dir: .github/test-infra/ci-iac-aws/velero
-      - cmd: terraform apply -auto-approve
-        dir: .github/test-infra/ci-iac-aws/velero
-
-  - name: destroy-velero
-    actions:
-      - cmd: terraform destroy -auto-approve
-        dir: .github/test-infra/ci-iac-aws/velero
-
-  - name: velero-outputs
-    actions:
-      - cmd: terraform output -raw s3_bucket
-        dir: .github/test-infra/ci-iac-aws/velero
-        setVariables:
-          - name: VELERO_S3_BUCKET
-      - cmd: terraform output -raw aws_region
-        dir: .github/test-infra/ci-iac-aws/velero
-        setVariables:
-          - name: VELERO_S3_AWS_REGION
-      - cmd: terraform output -raw irsa_role_arn
-        dir: .github/test-infra/ci-iac-aws/velero
-        setVariables:
-          - name: VELERO_S3_ROLE_ARN
-
-  - name: export-outputs
+  - name: create-uds-config
     actions:
       - cmd: |
           cat <<EOF> .github/bundles/uds-config.yaml

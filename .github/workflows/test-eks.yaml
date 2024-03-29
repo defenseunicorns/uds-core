@@ -12,6 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       SHA: ${{ github.sha }}
+      UDS_REGION: us-west-2
       UDS_PERMISSIONS_BOUNDARY_ARN: ${{ secrets.PERMISSIONS_BOUNDARY_ARN }}
       UDS_PERMISSIONS_BOUNDARY_NAME: ${{ secrets.PERMISSIONS_BOUNDARY_NAME }}
       UDS_STATE_BUCKET_NAME: uds-aws-ci-commercial-us-west-2-5246-tfstate
@@ -55,7 +56,7 @@ jobs:
 
       - name: Create IAC
         env:
-          TF_VAR_REGION: us-west-2
+          TF_VAR_REGION: $UDS_REGION
           TF_VAR_NAME: $UDS_CLUSTER_NAME
           TF_VAR_LOKI_BUCKET_NAME: "${UDS_CLUSTER_NAME}-loki"
           TF_VAR_VELERO_BUCKET_NAME: "${UDS_CLUSTER_NAME}-velero"

@@ -59,9 +59,3 @@ tasks:
           npm ci
           npx pepr build $CUSTOM_PEPR_IMAGE
 
-  - name: no-pepr-package
-    actions:
-      - task: common:package
-        with:
-          options: ${OPTIONS}
-          path: ${PATH}
