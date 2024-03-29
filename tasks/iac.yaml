@@ -61,7 +61,7 @@ tasks:
               amiFamily: AmazonLinux2
               overrideBootstrapCommand: |
                 #!/bin/bash
-                /etc/eks/bootstrap.sh CLUSTER_NAME --container-runtime containerd
+                /etc/eks/bootstrap.sh ${CLUSTER_NAME} --container-runtime containerd
           EOF
 
       - cmd: eksctl create cluster --dry-run -f cluster-config.yaml
@@ -76,65 +76,44 @@ tasks:
   - name: create-iac
     actions:
       - task: apply-terraform
-        with:
-          module: loki
       - task: terraform-outputs
-        with:
-          module: loki
-      - task: apply-terraform
-        with:
-          module: velero
-      - task: terraform-outputs
-        with:
-          module: velero
       - task: create-uds-config
 
   - name: destroy-iac
     actions:
       - task: destory-terraform
-        with:
-          module: loki
-      - task: destory-terraform
-        with:
-          module: velero
 
   - name: apply-terraform
-    inputs:
-      module:
-        description: "name of iac module to apply"
     actions:
-      - cmd: echo ${STATE_KEY} | sed 's/\.tfstate/-$INPUT_MODULE.tfstate/g'
+      - cmd: echo ${STATE_KEY} | sed 's/\.tfstate/-buckets.tfstate/g'
         setVariables:
-          - name: MODULE_STATE_KEY
+          - name: BUCKETS_STATE_KEY
       - cmd: |
           terraform init -force-copy \
           -backend-config="bucket=${STATE_BUCKET_NAME}" \
-          -backend-config="key=${MODULE_STATE_KEY}" \
+          -backend-config="key=${BUCKETS_STATE_KEY}" \
           -backend-config="region=${REGION}" \
           -backend-config="dynamodb_table=${STATE_DYNAMODB_TABLE_NAME}"
           
           terraform apply -auto-approve
-        dir: .github/test-infra/ci-iac-aws/$INPUT_MODULE
+        dir: .github/test-infra/buckets-iac
   
   - name: terraform-outputs
-    inputs:
-      module:
-        description: "name of module to grab outputs for"
     actions:
       - cmd: |
-          "${INPUT_MODULE}_S3_BUCKET=$(terraform output -raw s3_bucket)"
-          "${INPUT_MODULE}_S3_AWS_REGION=$(terraform output -raw aws_region)"
-          "${INPUT_MODULE}_S3_ROLE_ARN=$(terraform output -raw irsa_role_arn)"
-        dir: .github/test-infra/ci-iac-aws/$INPUT_MODULE
+          "LOKI_S3_BUCKET=$(terraform output -raw loki_s3_bucket)"
+          "LOKI_S3_AWS_REGION=$(terraform output -raw aws_region)"
+          "LOKI_S3_ROLE_ARN=$(terraform output -raw loki_irsa_role_arn)"
+          "VELERO_S3_BUCKET=$(terraform output -raw velero_s3_bucket)"
+          "VELERO_S3_AWS_REGION=$(terraform output -raw aws_region)"
+          "VELERO_S3_ROLE_ARN=$(terraform output -raw velero_irsa_role_arn)"
+        dir: .github/test-infra/buckets-iac
 
   - name: destory-terraform
-    inputs:
-      module:
-        description: "name of iac to destroy"
     actions:
       - cmd: |
           terraform destroy -auto-approve
-        dir: .github/test-infra/ci-iac-aws/$INPUT_MODULE
+        dir: .github/test-infra/buckets-iac
 
   - name: create-uds-config
     actions:

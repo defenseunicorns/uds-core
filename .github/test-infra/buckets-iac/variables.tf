@@ -8,16 +8,28 @@ variable "name" {
   type        = string
 }
 
-variable "kms_key_arn" {
+variable "permissions_boundary_name" {
+  description = "The name of the permissions boundary for IAM resources.  This will be used for tagging and to build out the ARN."
   type        = string
-  description = "KMS Key ARN if known, if not, will be generated"
   default     = null
+}
+
+variable "use_permissions_boundary" {
+  description = "Whether to use IAM permissions boundary for resources."
+  type        = bool
+  default     = true
 }
 
 variable "force_destroy" {
   description = "Option to set force destroy"
   type        = bool
   default     = false
+}
+
+variable "kms_key_arn" {
+  type        = string
+  description = "KMS Key ARN if known, if not, will be generated"
+  default     = null
 }
 
 variable "key_owner_arns" {
@@ -39,29 +51,32 @@ variable "create_kms_key" {
   default     = true
 }
 
-variable "velero_bucket_name" {
-  description = "Name for S3 bucket"
+variable "loki_bucket_name" {
+  description = "Name for loki S3 bucket"
   type        = string
 }
 
-variable "kubernetes_service_account" {
+variable "loki_service_account" {
   description = "Name of the service account to bind to. Used to generate fully qualified subject for service account."
   type        = string
 }
 
-variable "kubernetes_namespace" {
+variable "loki_namespace" {
   description = "Name of the namespace that the service account exists in. Used to generate fully qualified subject for the service account."
   type        = string
 }
 
-variable "permissions_boundary_name" {
-  description = "The name of the permissions boundary for IAM resources.  This will be used for tagging and to build out the ARN."
+variable "velero_bucket_name" {
+  description = "Name for velero S3 bucket"
   type        = string
-  default     = null
 }
 
-variable "use_permissions_boundary" {
-  description = "Whether to use IAM permissions boundary for resources."
-  type        = bool
-  default     = true
+variable "velero_service_account" {
+  description = "Name of the service account to bind to. Used to generate fully qualified subject for service account."
+  type        = string
+}
+
+variable "velero_namespace" {
+  description = "Name of the namespace that the service account exists in. Used to generate fully qualified subject for the service account."
+  type        = string
 }
