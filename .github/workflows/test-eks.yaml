@@ -12,20 +12,19 @@ jobs:
     runs-on: ubuntu-latest
     env:
       SHA: ${{ github.sha }}
-      PERMISSIONS_BOUNDARY_ARN: ${{ secrets.PERMISSIONS_BOUNDARY_ARN }}
-      PERMISSIONS_BOUNDARY_NAME: ${{ secrets.PERMISSIONS_BOUNDARY_NAME }}
-      STATE_BUCKET_NAME: uds-aws-ci-commercial-us-west-2-5246-tfstate
-      STATE_DYNAMODB_TABLE_NAME: uds-aws-ci-commercial-org-us-west-2-5246-tfstate-lock
+      UDS_PERMISSIONS_BOUNDARY_ARN: ${{ secrets.PERMISSIONS_BOUNDARY_ARN }}
+      UDS_PERMISSIONS_BOUNDARY_NAME: ${{ secrets.PERMISSIONS_BOUNDARY_NAME }}
+      UDS_STATE_BUCKET_NAME: uds-aws-ci-commercial-us-west-2-5246-tfstate
+      UDS_STATE_DYNAMODB_TABLE_NAME: uds-aws-ci-commercial-org-us-west-2-5246-tfstate-lock
     steps:
       - name: Set ENV
         run: |
-          echo "CLUSTER_NAME=uds-core-aws-${SHA:0:7}" >> $GITHUB_ENV
-          echo "STATE_KEY="tfstate/ci/install/${SHA:0:7}-core-aws.tfstate >> $GITHUB_ENV
+          echo "UDS_CLUSTER_NAME=uds-core-aws-${SHA:0:7}" >> $GITHUB_ENV
+          echo "UDS_STATE_KEY="tfstate/ci/install/${SHA:0:7}-core-aws.tfstate >> $GITHUB_ENV
 
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # login to aws
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -33,6 +32,9 @@ jobs:
           role-session-name: ${{ github.job || github.event.client_payload.pull_request.head.sha || github.sha }}
           aws-region: us-west-2
           role-duration-seconds: 21600
+
+      - name: Install eksctl
+        run: uds run -f tasks/iac.yaml install-eksctl
 
       - name: Set Terraform version
         uses: hashicorp/setup-terraform@v3
@@ -42,35 +44,17 @@ jobs:
       - name: Environment setup
         uses: ./.github/actions/setup
 
-      - name: Create EKSCTL Package
-        run: uds run -f tasks/create.yaml no-pepr-package --set path=.github/test-infra/eks
-
-      - name: Create CI-IAC-AWS Package
-        run: uds run -f tasks/create.yaml no-pepr-package --set path=.github/test-infra/ci-iac-aws
-
       - name: Create UDS Core Package
         run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package
 
       - name: Create Bundle
         run: uds create .github/bundles --confirm
 
-      - name: Deploy Cluster
-        run: |
-          uds zarf package deploy build/zarf-package-distro-eks-*.tar.zst \
-            --set cluster_name=$CLUSTER_NAME \
-            --set permissions_boundary_arn=$PERMISSIONS_BOUNDARY_ARN \
-            --set permissions_boundary_name=$PERMISSIONS_BOUNDARY_NAME \
-            --confirm
+      - name: Create Cluster
+        run: uds run -f tasks/iac.yaml create-cluster
 
-      - name: Deploy CI-IAC-AWS Package
-        run: |
-          uds zarf package deploy build/zarf-package-ci-iac-aws-*.tar.zst \
-            --set cluster_name=$CLUSTER_NAME \
-            --set permissions_boundary_name=$PERMISSIONS_BOUNDARY_NAME \
-            --set state_bucket_name=$STATE_BUCKET_NAME \
-            --set state_dynamodb_table_name=$STATE_DYNAMODB_TABLE_NAME \
-            --set state_key=$STATE_KEY \
-            --confirm
+      - name: Create IAC
+        run: uds run -f tasks/iac.yaml create-iac
 
       - name: Deploy Bundle
         env:
@@ -83,14 +67,14 @@ jobs:
         timeout-minutes: 30
         continue-on-error: true
 
-      - name: Remove CI-DUBBD-IAC-AWS
+      - name: Remove IAC
         if: always()
-        run: uds zarf package remove build/zarf-package-ci-iac-aws-*.tar.zst --confirm
+        run: uds run -f tasks/iac.yaml destroy-iac
         timeout-minutes: 30
         continue-on-error: true
 
       - name: Teardown EKS cluster
         if: always()
-        run: uds zarf package remove build/zarf-package-distro-eks-*.tar.zst --confirm
+        run: uds run -f tasks/iac.yaml destroy-cluster
         timeout-minutes: 30
         continue-on-error: true

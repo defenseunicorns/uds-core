@@ -26,7 +26,6 @@ terraform {
   }
 }
 
-# taken from zarf bb repo
 resource "random_id" "default" {
   byte_length = 2
 }
