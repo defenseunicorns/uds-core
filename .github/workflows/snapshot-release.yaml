@@ -4,11 +4,6 @@ on:
   schedule:
     - cron: "0 10 * * *"
   workflow_dispatch:
-    inputs:
-      snapshot:
-        required: true
-        default: 'true'
-        type: string
 
 jobs:
   publish-snapshot-release:
@@ -17,7 +12,7 @@ jobs:
       packages: write
     uses: ./.github/workflows/publish.yaml
     with:
-      snapshot: 'true'
+      snapshot: true
     secrets: inherit
 
   update-snapshot-latest-tag:
