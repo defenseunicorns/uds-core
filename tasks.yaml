@@ -61,6 +61,10 @@ tasks:
     actions:
       - task: deploy:single-package
 
+  - name: deploy-standard-bundle
+    actions:
+      - task: deploy:k3d-standard-bundle
+
   - name: test-single-package
     actions:
       - task: test:single-package
