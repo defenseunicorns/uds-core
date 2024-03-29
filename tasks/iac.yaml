@@ -97,8 +97,8 @@ tasks:
           -backend-config="key=${BUCKETS_STATE_KEY}" \
           -backend-config="region=${REGION}" \
           -backend-config="dynamodb_table=${STATE_DYNAMODB_TABLE_NAME}"
-          
-          terraform apply -auto-approve
+        dir: .github/test-infra/buckets-iac
+      - cmd: terraform apply -auto-approve
         dir: .github/test-infra/buckets-iac
   
   - name: terraform-outputs
