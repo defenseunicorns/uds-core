@@ -3,12 +3,12 @@ alertmanager:
     image:
       registry: quay.io
       repository: prometheus/alertmanager
-      tag: v0.26.0
+      tag: v0.27.0
 kube-state-metrics:
   image:
     registry: registry.k8s.io
     repository: kube-state-metrics/kube-state-metrics
-    tag: v2.10.1
+    tag: v2.11.0
   securityContext:
     enabled: true
     fsGroup: 65534
@@ -20,7 +20,7 @@ prometheus:
     image:
       registry: quay.io
       repository: prometheus/prometheus
-      tag: v2.49.1
+      tag: v2.51.0
 prometheus-node-exporter:
   image:
     registry: quay.io
@@ -40,9 +40,9 @@ prometheusOperator:
   image:
     registry: quay.io
     repository: prometheus-operator/prometheus-operator
-    tag: v0.71.2
+    tag: v0.72.0
   prometheusConfigReloader:
     image:
       registry: quay.io
       repository: prometheus-operator/prometheus-config-reloader
-      tag: v0.71.2
+      tag: v0.72.0

@@ -84,7 +84,7 @@
     {
       "fileMatch": ["\\.*\\.ya?ml$"],
       "matchStrings": [
-        "# renovate: datasource=docker( versioning=(?<versioning>.*?))?\n\\s+.+:(?<depName>[^:]+):(?<currentValue>.*)"
+        "# renovate: datasource=docker( versioning=(?<versioning>.*?))?\n\\s+.+:\\s+(?<depName>[^:]+):(?<currentValue>.*)"
       ],
       "datasourceTemplate": "docker"
     },

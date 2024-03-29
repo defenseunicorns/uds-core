@@ -4,7 +4,7 @@ variables:
 
   - name: REGISTRY1_PEPR_IMAGE
     # renovate: datasource=docker versioning=semver
-    default: registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller:v0.28.3
+    default: registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller:v0.28.6
 
 tasks:
   - name: standard-package
@@ -41,7 +41,7 @@ tasks:
       - task: pepr-build
 
       - description: "Create the Pepr Zarf Package, if it exists"
-        cmd: "uds zarf package create dist --confirm"
+        cmd: "uds zarf package create dist --confirm --no-progress"
 
       - description: "Create the requested Zarf Package (must set UDS_PKG environment variable)"
         cmd: "uds zarf package create src/${UDS_PKG} --confirm --no-progress --flavor ${FLAVOR}"
