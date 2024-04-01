@@ -28,8 +28,8 @@ resource "aws_s3_bucket_policy" "velero_bucket_policy" {
           AWS = module.velero_irsa.role_arn
         }
         Resource = [
-          module.velero_s3.bucket_arn,
-          "${module.velero_s3.bucket_arn}/*"
+          module.velero_S3.bucket_arn,
+          "${module.velero_S3.bucket_arn}/*"
         ]
       }
     ]
@@ -99,7 +99,7 @@ resource "aws_iam_policy" "velero_policy" {
             "s3:ListMultipartUploadParts"
           ]
           Resource = [
-            "arn:${data.aws_partition.current.partition}:s3:::${module.velero_s3.bucket_name}/*"
+            "arn:${data.aws_partition.current.partition}:s3:::${module.velero_S3.bucket_name}/*"
           ]
         },
         {
@@ -108,7 +108,7 @@ resource "aws_iam_policy" "velero_policy" {
             "s3:ListBucket"
           ],
           Resource = [
-            "arn:${data.aws_partition.current.partition}:s3:::${module.velero_s3.bucket_name}/*"
+            "arn:${data.aws_partition.current.partition}:s3:::${module.velero_S3.bucket_name}/*"
           ]
         },
         {

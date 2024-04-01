@@ -28,8 +28,8 @@ resource "aws_s3_bucket_policy" "loki_bucket_policy" {
           AWS = module.loki_irsa.role_arn
         }
         Resource = [
-          module.loki_s3.bucket_arn,
-          "${module.loki_s3.bucket_arn}/*"
+          module.loki_S3.bucket_arn,
+          "${module.loki_S3.bucket_arn}/*"
         ]
       }
     ]
@@ -76,12 +76,12 @@ resource "aws_iam_policy" "loki_policy" {
       {
         Effect   = "Allow"
         Action   = ["s3:ListBucket"]
-        Resource = ["arn:${data.aws_partition.current.partition}:s3:::${module.loki_s3.bucket_name}"]
+        Resource = ["arn:${data.aws_partition.current.partition}:s3:::${module.loki_S3.bucket_name}"]
       },
       {
         Effect   = "Allow"
         Action   = ["s3:*Object"]
-        Resource = ["arn:${data.aws_partition.current.partition}:s3:::${module.loki_s3.bucket_name}/*"]
+        Resource = ["arn:${data.aws_partition.current.partition}:s3:::${module.loki_S3.bucket_name}/*"]
       },
       {
         Effect = "Allow"
