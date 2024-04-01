@@ -25,4 +25,3 @@ output "velero_s3" {
 output "velero_s3_bucket" {
   value = module.velero_S3.bucket_name
 }
-
