@@ -62,7 +62,7 @@ jobs:
           TF_VAR_loki_bucket_name: "uds-core-aws-3f0cc44-loki"
           TF_VAR_velero_bucket_name: "uds-core-aws-3f0cc44-velero"
           TF_VAR_use_permissions_boundary: true
-          TF_VAR_permissions_boundary_name: $UDS_PERMISSIONS_BOUNDARY_NAME
+          TF_VAR_permissions_boundary_name: ${{ env.UDS_PERMISSIONS_BOUNDARY_NAME }}
         run: uds run -f tasks/iac.yaml create-iac
 
       # - name: Deploy Core Bundle
