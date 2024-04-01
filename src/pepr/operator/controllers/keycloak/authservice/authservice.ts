@@ -1,12 +1,23 @@
 import { createHash } from "crypto";
 import { K8s, Log, kind } from "pepr";
 import { UDSConfig } from "../../../../config";
+import { UDSPackage } from "../../../crd";
+import { updatePolicy } from "./authorization-policy";
 import { Action, AuthServiceEvent, AuthserviceConfig, Chain } from "./types";
 
 const namespace = "authservice";
 const secretName = "authservice";
 const baseDomain = `https://sso.${UDSConfig.domain}`;
 const realm = "uds";
+
+export async function reconcileAuthservice(
+  event: AuthServiceEvent,
+  labelSelector: { [key: string]: string },
+  pkg: UDSPackage,
+) {
+  await updateConfig(event);
+  await updatePolicy(event, labelSelector, pkg);
+}
 
 // write authservice config to secret
 export async function updateConfig(event: AuthServiceEvent) {

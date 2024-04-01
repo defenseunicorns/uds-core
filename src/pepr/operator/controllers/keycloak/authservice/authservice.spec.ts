@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, jest, test } from "@jest/globals";
+import { UDSPackage } from "../../../crd";
 import { Client } from "../types";
+import { updatePolicy } from "./authorization-policy";
 import { buildChain, buildConfig } from "./authservice";
 import * as mockConfig from "./mock-authservice-config.json";
 import { Action, AuthServiceEvent, AuthserviceConfig } from "./types";
@@ -98,5 +100,22 @@ describe("authservice", () => {
       action: Action.Remove,
     });
     expect(config.chains.length).toEqual(0);
+  });
+
+  test("should build an authorization policy", async () => {
+    const labelSelector = { foo: "bar" };
+    const pkg: UDSPackage = {
+      metadata: {
+        name: "test",
+        namespace: "default",
+        generation: 1,
+      },
+    };
+    try {
+      await updatePolicy({ name: "auth-test", action: Action.Add }, labelSelector, pkg);
+      await updatePolicy({ name: "auth-test", action: Action.Remove }, labelSelector, pkg);
+    } catch(e) {
+      expect(e).toBeUndefined();
+    }
   });
 });

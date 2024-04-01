@@ -14,7 +14,8 @@ spec:
       clientId: uds-core-httpbin
       redirectUris:
         - "https://protected.uds.dev/login"
-      isAuthSvcClient: true
+      enableAuthserviceSelector:
+        app: httpbin
   network:
     expose:
       - service: httpbin

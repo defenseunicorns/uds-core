@@ -438,13 +438,14 @@ export interface Sso {
    */
   description?: string;
   /**
+   * Labels to match pods to automatically protect with authservice. Leave empty to disable
+   * authservice protection
+   */
+  enableAuthserviceSelector?: { [key: string]: string };
+  /**
    * Whether the SSO client is enabled
    */
   enabled?: boolean;
-  /**
-   * If true, the client will generate a new Auth Service client as well
-   */
-  isAuthSvcClient?: boolean;
   /**
    * Specifies display name of the client
    */

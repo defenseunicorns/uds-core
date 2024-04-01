@@ -59,8 +59,8 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
     policies.push(generatedPolicy);
   }
 
-  // Add policy if authservice enabled (if any pkg.spec.sso[*].isAuthSvcClient is true)
-  if (pkg.spec?.sso?.some(sso => sso.isAuthSvcClient)) {
+  // Add policy if authservice enabled (if any pkg.spec.sso[*].enableAuthserviceSelector is set)
+  if (pkg.spec?.sso?.some(sso => sso.enableAuthserviceSelector)) {
     const policy: Allow = {
       direction: Direction.Egress,
       selector: { protect: "keycloak" },

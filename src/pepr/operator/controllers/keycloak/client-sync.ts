@@ -4,12 +4,14 @@ import { UDSConfig } from "../../../config";
 import { Store } from "../../common";
 import { Sso, UDSPackage } from "../../crd";
 import { getOwnerRef } from "../utils";
-import { updateConfig } from "./authservice/authservice";
+import { reconcileAuthservice } from "./authservice/authservice";
 import { Action } from "./authservice/types";
 import { Client } from "./types";
 
 const apiURL =
   "http://keycloak-http.keycloak.svc.cluster.local:8080/realms/uds/clients-registrations/default";
+
+// const apiURL = "http://localhost:8080/realms/uds/clients-registrations/default";
 
 // Template regex to match clientField() references, see https://regex101.com/r/e41Dsk/3 for details
 const secretTemplateRegex = new RegExp(
@@ -29,7 +31,7 @@ export async function keycloak(pkg: UDSPackage) {
   const clientReqs = pkg.spec?.sso || [];
   const refs: string[] = [];
 
-  // Pull the isAuthSvcClient prop as it's not part of the KC client spec
+  // Pull the enableAuthserviceSelector prop as it's not part of the KC client spec
   for (const clientReq of clientReqs) {
     const ref = await syncClient(clientReq, pkg);
     refs.push(ref);
@@ -60,9 +62,13 @@ export async function purgeSSOClients(pkg: UDSPackage, refs: string[] = []) {
       // find sso by clientId
       const sso = pkg.spec?.sso?.find(sso => sso.clientId === clientId);
 
-      // if sso.isAuthSvcClient is true, remove from authservice config
-      if (sso && sso.isAuthSvcClient) {
-        await updateConfig({ name: ref, action: Action.Remove });
+      // if sso.enableAuthserviceSelector was set, remove from authservice config
+      if (sso && sso.enableAuthserviceSelector) {
+        await reconcileAuthservice(
+          { name: ref, action: Action.Remove },
+          sso.enableAuthserviceSelector,
+          pkg,
+        );
       }
     } else {
       Log.warn(pkg.metadata, `Failed to remove client ${clientId}, token not found`);
@@ -71,7 +77,7 @@ export async function purgeSSOClients(pkg: UDSPackage, refs: string[] = []) {
 }
 
 async function syncClient(
-  { isAuthSvcClient, secretName, secretTemplate, ...clientReq }: Sso,
+  { enableAuthserviceSelector, secretName, secretTemplate, ...clientReq }: Sso,
   pkg: UDSPackage,
   isRetry = false,
 ) {
@@ -114,9 +120,13 @@ async function syncClient(
       data: generateSecretData(client, secretTemplate),
     });
 
-    if (isAuthSvcClient) {
+    if (enableAuthserviceSelector) {
       // Add additional authservice config
-      await updateConfig({ client, name, action: Action.Add });
+      await reconcileAuthservice(
+        { client, name, action: Action.Add },
+        enableAuthserviceSelector,
+        pkg,
+      );
     }
 
     return name;
@@ -133,7 +143,7 @@ async function syncClient(
 
     // Retry the request
     Log.warn(pkg.metadata, `Failed to process client request: ${clientReq.clientId}, retrying`);
-    return syncClient({ isAuthSvcClient, ...clientReq }, pkg, true);
+    return syncClient({ enableAuthserviceSelector, ...clientReq }, pkg, true);
   }
 }
 

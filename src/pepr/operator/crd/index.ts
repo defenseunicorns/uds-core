@@ -20,4 +20,6 @@ export {
   Exemption as UDSExemption,
 } from "./generated/exemption-v1alpha1";
 
+export { Action, AuthorizationPolicy } from "./generated/istio/authorizationpolicy-v1beta1";
+export { RequestAuthentication } from "./generated/istio/requestauthentication-v1";
 export * as Istio from "./generated/istio/virtualservice-v1beta1";

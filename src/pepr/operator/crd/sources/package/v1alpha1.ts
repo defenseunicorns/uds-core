@@ -166,10 +166,13 @@ const sso = {
     type: "object",
     required: ["clientId", "name", "redirectUris"],
     properties: {
-      isAuthSvcClient: {
-        description: "If true, the client will generate a new Auth Service client as well",
-        type: "boolean",
-        default: false,
+      enableAuthserviceSelector: {
+        description:
+          "Labels to match pods to automatically protect with authservice. Leave empty to disable authservice protection",
+        type: "object",
+        additionalProperties: {
+          type: "string",
+        },
       },
       secretName: {
         description: "The name of the secret to store the client secret",
