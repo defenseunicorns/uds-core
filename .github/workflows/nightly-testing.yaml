@@ -2,7 +2,7 @@ name: Nightly Testing
 
 on:
   schedule:
-    - cron: '0 0 * * *' # Runs at midnight every day
+    - cron: '0 6 * * *' # Runs at midnight Mountain every day
   pull_request:
 
 jobs:
