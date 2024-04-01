@@ -37,44 +37,43 @@ jobs:
       - name: Environment setup
         uses: ./.github/actions/setup
 
-      # - name: Install eksctl
-      #   run: uds run -f tasks/iac.yaml install-eksctl
+      - name: Install eksctl
+        run: uds run -f tasks/iac.yaml install-eksctl
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: "1.5.7"
 
-      # - name: Create UDS Core Package
-      #   run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package
+      - name: Create UDS Core Package
+        run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package
 
-      # - name: Create Core Bundle
-      #   run: uds create .github/bundles --confirm
+      - name: Create Core Bundle
+        run: uds create .github/bundles --confirm
 
-      # - name: Create Cluster
-      #   run: uds run -f tasks/iac.yaml create-cluster
+      - name: Create Cluster
+        run: uds run -f tasks/iac.yaml create-cluster
 
       - name: Create IAC
         env:
           TF_VAR_region: ${{ env.UDS_REGION }}
-          # TF_VAR_name: $UDS_CLUSTER_NAME
-          TF_VAR_name: uds-core-aws-3f0cc44
-          TF_VAR_loki_bucket_name: "uds-core-aws-3f0cc44-loki"
-          TF_VAR_velero_bucket_name: "uds-core-aws-3f0cc44-velero"
+          TF_VAR_name: ${{ env.UDS_CLUSTER_NAME }}
+          TF_VAR_loki_bucket_name: "${{ env.UDS_CLUSTER_NAME }}-loki"
+          TF_VAR_velero_bucket_name: "${{ env.UDS_CLUSTER_NAME }}-velero"
           TF_VAR_use_permissions_boundary: true
-          TF_VAR_permissions_boundary_name: ${{ env.UDS_PERMISSIONS_BOUNDARY_NAME }}
+          TF_VAR_permissions_boundary_arn: ${{ env.UDS_PERMISSIONS_BOUNDARY_NAME }}
         run: uds run -f tasks/iac.yaml create-iac
 
-      # - name: Deploy Core Bundle
-      #   env:
-      #     UDS_CONFIG: .github/bundles/uds-config.yaml
-      #   run: uds deploy .github/bundles/uds-bundle-uds-core-eks-nightly-*.tar.zst --confirm
+      - name: Deploy Core Bundle
+        env:
+          UDS_CONFIG: .github/bundles/uds-config.yaml
+        run: uds deploy .github/bundles/uds-bundle-uds-core-eks-nightly-*.tar.zst --confirm
 
-      # - name: Remove UDS Core
-      #   if: always()
-      #   run: uds remove .github/bundles/uds-bundle-uds-core-eks-*.tar.zst --confirm
-      #   timeout-minutes: 30
-      #   continue-on-error: true
+      - name: Remove UDS Core
+        if: always()
+        run: uds remove .github/bundles/uds-bundle-uds-core-eks-*.tar.zst --confirm
+        timeout-minutes: 30
+        continue-on-error: true
 
       - name: Remove IAC
         if: always()
@@ -82,8 +81,8 @@ jobs:
         timeout-minutes: 30
         continue-on-error: true
 
-      # - name: Teardown EKS cluster
-      #   if: always()
-      #   run: uds run -f tasks/iac.yaml destroy-cluster
-      #   timeout-minutes: 30
-      #   continue-on-error: true
+      - name: Teardown EKS cluster
+        if: always()
+        run: uds run -f tasks/iac.yaml destroy-cluster
+        timeout-minutes: 30
+        continue-on-error: true

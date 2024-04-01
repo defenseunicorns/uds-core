@@ -82,11 +82,12 @@ tasks:
 
   - name: destroy-iac
     actions:
-      - task: destory-terraform
+      - cmd: terraform destroy -auto-approve
+        dir: .github/test-infra/buckets-iac
 
   - name: apply-terraform
     actions:
-      - cmd: echo ${STATE_KEY} | sed 's/\.tfstate/-buckets.tfstate/g'
+      - cmd: echo ${STATE_KEY} | sed 's/\.tfstate/-buckets1.tfstate/g'
         setVariables:
           - name: BUCKETS_STATE_KEY
         dir: .github/test-infra/buckets-iac
@@ -103,19 +104,29 @@ tasks:
   
   - name: terraform-outputs
     actions:
-      - cmd: |
-          "LOKI_S3_BUCKET=$(terraform output -raw loki_s3_bucket)"
-          "LOKI_S3_AWS_REGION=$(terraform output -raw aws_region)"
-          "LOKI_S3_ROLE_ARN=$(terraform output -raw loki_irsa_role_arn)"
-          "VELERO_S3_BUCKET=$(terraform output -raw velero_s3_bucket)"
-          "VELERO_S3_AWS_REGION=$(terraform output -raw aws_region)"
-          "VELERO_S3_ROLE_ARN=$(terraform output -raw velero_irsa_role_arn)"
+      - cmd: terraform output -raw loki_s3_bucket
+        setVariables: 
+          - name: "LOKI_S3_BUCKET"
         dir: .github/test-infra/buckets-iac
-
-  - name: destory-terraform
-    actions:
-      - cmd: |
-          terraform destroy -auto-approve
+      - cmd: terraform output -raw aws_region
+        setVariables: 
+          - name: LOKI_S3_AWS_REGION
+        dir: .github/test-infra/buckets-iac
+      - cmd: terraform output -raw loki_irsa_role_arn
+        setVariables: 
+          - name: LOKI_S3_ROLE_ARN
+        dir: .github/test-infra/buckets-iac
+      - cmd: terraform output -raw velero_s3_bucket
+        setVariables: 
+          - name: VELERO_S3_BUCKET
+        dir: .github/test-infra/buckets-iac
+      - cmd: terraform output -raw aws_region
+        setVariables: 
+          - name: VELERO_S3_AWS_REGION
+        dir: .github/test-infra/buckets-iac
+      - cmd: terraform output -raw velero_irsa_role_arn
+        setVariables: 
+          - name: VELERO_S3_ROLE_ARN
         dir: .github/test-infra/buckets-iac
 
   - name: create-uds-config
@@ -132,7 +143,7 @@ tasks:
               loki_s3_region: ${LOKI_S3_AWS_REGION}
               loki_s3-endpoint: ""
               loki_irsa_annotation:
-                eks.amazonaws.com/role-arn: ${LOKI_S3_ROLE_ARN}
+                eks.amazonaws.com/role-arn: "${LOKI_S3_ROLE_ARN}"
               velero_use_secret: false
               velero_irsa_annotation:
                 eks.amazonaws.com/role-arn: "${VELERO_S3_ROLE_ARN}"
