@@ -1,11 +1,12 @@
 locals {
   velero_name  = "${var.name}-velero"
+  velero_kms_key_arn = module.velero_generate_kms[0].kms_key_arn
 }
 
 module "velero_S3" {
   source                  = "github.com/defenseunicorns/terraform-aws-uds-s3?ref=v0.0.6"
   name_prefix             = "${var.velero_bucket_name}-"
-  kms_key_arn             = local.kms_key_arn
+  kms_key_arn             = local.velero_kms_key_arn
   force_destroy           = var.force_destroy
   create_bucket_lifecycle = true
 }
@@ -36,7 +37,7 @@ resource "aws_s3_bucket_policy" "velero_bucket_policy" {
 }
 
 module "velero_generate_kms" {
-  count  = local.generate_kms_key
+  count  = 1
   source = "github.com/defenseunicorns/terraform-aws-uds-kms?ref=v0.0.2"
 
   key_owners = var.key_owner_arns
@@ -53,8 +54,8 @@ module "velero_generate_kms" {
 module "velero_irsa" {
   source                        = "github.com/defenseunicorns/terraform-aws-uds-irsa?ref=v0.0.2"
   name                          = local.velero_name
-  kubernetes_service_account    = var.kubernetes_service_account
-  kubernetes_namespace          = var.kubernetes_namespace
+  kubernetes_service_account    = var.velero_service_account
+  kubernetes_namespace          = var.velero_namespace
   oidc_provider_arn             = local.oidc_arn
   role_permissions_boundary_arn = local.iam_role_permissions_boundary
 
@@ -116,7 +117,7 @@ resource "aws_iam_policy" "velero_policy" {
             "kms:GenerateDataKey",
             "kms:Decrypt"
           ]
-          Resource = [local.kms_key_arn]
+          Resource = [local.velero_kms_key_arn]
         }
 
       ]

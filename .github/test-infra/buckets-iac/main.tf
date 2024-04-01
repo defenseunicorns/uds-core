@@ -42,9 +42,6 @@ data "aws_region" "current" {}
 locals {
   oidc_url_without_protocol = substr(data.aws_eks_cluster.existing.identity[0].oidc[0].issuer, 8, -1)
   oidc_arn                  = "arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/${local.oidc_url_without_protocol}"
-
-  generate_kms_key              = var.create_kms_key ? 1 : 0
-  kms_key_arn                   = var.kms_key_arn == null ? module.generate_kms[0].kms_key_arn : var.kms_key_arn
   iam_role_permissions_boundary = var.use_permissions_boundary ? "arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:policy/${var.permissions_boundary_name}" : null
 }
 

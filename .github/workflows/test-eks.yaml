@@ -37,27 +37,28 @@ jobs:
       - name: Environment setup
         uses: ./.github/actions/setup
 
-      - name: Install eksctl
-        run: uds run -f tasks/iac.yaml install-eksctl
+      # - name: Install eksctl
+      #   run: uds run -f tasks/iac.yaml install-eksctl
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: "1.5.7"
 
-      - name: Create UDS Core Package
-        run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package
+      # - name: Create UDS Core Package
+      #   run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package
 
-      - name: Create Core Bundle
-        run: uds create .github/bundles --confirm
+      # - name: Create Core Bundle
+      #   run: uds create .github/bundles --confirm
 
-      - name: Create Cluster
-        run: uds run -f tasks/iac.yaml create-cluster
+      # - name: Create Cluster
+      #   run: uds run -f tasks/iac.yaml create-cluster
 
       - name: Create IAC
         env:
           TF_VAR_region: $UDS_REGION
-          TF_VAR_name: $UDS_CLUSTER_NAME
+          # TF_VAR_name: $UDS_CLUSTER_NAME
+          F_VAR_name: uds-core-aws-3f0cc44
           TF_VAR_loki_bucket_name: "${UDS_CLUSTER_NAME}-loki"
           TF_VAR_velero_bucket_name: "${UDS_CLUSTER_NAME}-velero"
           TF_VAR_use_permissions_boundary: true
