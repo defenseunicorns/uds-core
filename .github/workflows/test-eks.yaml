@@ -53,6 +53,7 @@ jobs:
 
       - name: Create Cluster
         run: uds run -f tasks/iac.yaml create-cluster
+        timeout-minutes: 60
 
       - name: Create IAC
         env:
@@ -61,24 +62,26 @@ jobs:
           TF_VAR_loki_bucket_name: "${{ env.UDS_CLUSTER_NAME }}-loki"
           TF_VAR_velero_bucket_name: "${{ env.UDS_CLUSTER_NAME }}-velero"
           TF_VAR_use_permissions_boundary: true
-          TF_VAR_permissions_boundary_arn: ${{ env.UDS_PERMISSIONS_BOUNDARY_NAME }}
+          TF_VAR_permissions_boundary_name: ${{ env.UDS_PERMISSIONS_BOUNDARY_NAME }}
         run: uds run -f tasks/iac.yaml create-iac
+        timeout-minutes: 20
 
       - name: Deploy Core Bundle
         env:
           UDS_CONFIG: .github/bundles/uds-config.yaml
         run: uds deploy .github/bundles/uds-bundle-uds-core-eks-nightly-*.tar.zst --confirm
+        timeout-minutes: 20
 
       - name: Remove UDS Core
         if: always()
         run: uds remove .github/bundles/uds-bundle-uds-core-eks-*.tar.zst --confirm
-        timeout-minutes: 30
+        timeout-minutes: 10
         continue-on-error: true
 
       - name: Remove IAC
         if: always()
         run: uds run -f tasks/iac.yaml destroy-iac
-        timeout-minutes: 30
+        timeout-minutes: 10
         continue-on-error: true
 
       - name: Teardown EKS cluster
