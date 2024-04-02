@@ -22,12 +22,12 @@ jobs:
         run: |
           echo "UDS_CLUSTER_NAME=uds-core-aws-${SHA:0:7}" >> $GITHUB_ENV
           echo "UDS_STATE_KEY="tfstate/ci/install/${SHA:0:7}-core-aws.tfstate >> $GITHUB_ENV
-          echo "TF_VAR_region: ${UDS_REGION}" >> $GITHUB_ENV
-          echo "TF_VAR_name: ${UDS_CLUSTER_NAME}" >> $GITHUB_ENV
-          echo "TF_VAR_loki_bucket_name: ${UDS_CLUSTER_NAME}-loki" >> $GITHUB_ENV
-          echo "TF_VAR_velero_bucket_name: ${UDS_CLUSTER_NAME}-velero" >> $GITHUB_ENV
-          echo "TF_VAR_use_permissions_boundary: true" >> $GITHUB_ENV
-          echo "TF_VAR_permissions_boundary_name: ${UDS_PERMISSIONS_BOUNDARY_NAME}" >> $GITHUB_ENV
+          echo "TF_VAR_region=${UDS_REGION}" >> $GITHUB_ENV
+          echo "TF_VAR_name=${UDS_CLUSTER_NAME}" >> $GITHUB_ENV
+          echo "TF_VAR_loki_bucket_name=${UDS_CLUSTER_NAME}-loki" >> $GITHUB_ENV
+          echo "TF_VAR_velero_bucket_name=${UDS_CLUSTER_NAME}-velero" >> $GITHUB_ENV
+          echo "TF_VAR_use_permissions_boundary=true" >> $GITHUB_ENV
+          echo "TF_VAR_permissions_boundary_name=${UDS_PERMISSIONS_BOUNDARY_NAME}" >> $GITHUB_ENV
 
       - name: Checkout repository
         uses: actions/checkout@v4
