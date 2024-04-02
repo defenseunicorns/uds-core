@@ -51,31 +51,31 @@ jobs:
         with:
           terraform_version: "1.5.7"
 
-      # - name: Create UDS Core Package
-      #   run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package
+      - name: Create UDS Core Package
+        run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package
 
-      # - name: Create Core Bundle
-      #   run: uds create .github/bundles --confirm
+      - name: Create Core Bundle
+        run: uds create .github/bundles --confirm
 
-      # - name: Create Cluster
-      #   run: uds run -f tasks/iac.yaml create-cluster
-      #   timeout-minutes: 60
+      - name: Create Cluster
+        run: uds run -f tasks/iac.yaml create-cluster
+        timeout-minutes: 60
 
       - name: Create IAC 
         run: uds run -f tasks/iac.yaml create-iac
         timeout-minutes: 20
 
-      # - name: Deploy Core Bundle
-      #   env:
-      #     UDS_CONFIG: .github/bundles/uds-config.yaml
-      #   run: uds deploy .github/bundles/uds-bundle-uds-core-eks-nightly-*.tar.zst --confirm
-      #   timeout-minutes: 20
+      - name: Deploy Core Bundle
+        env:
+          UDS_CONFIG: .github/bundles/uds-config.yaml
+        run: uds deploy .github/bundles/uds-bundle-uds-core-eks-nightly-*.tar.zst --confirm
+        timeout-minutes: 20
 
-      # - name: Remove UDS Core
-      #   if: always()
-      #   run: uds remove .github/bundles/uds-bundle-uds-core-eks-*.tar.zst --confirm
-      #   timeout-minutes: 10
-      #   continue-on-error: true
+      - name: Remove UDS Core
+        if: always()
+        run: uds remove .github/bundles/uds-bundle-uds-core-eks-*.tar.zst --confirm
+        timeout-minutes: 10
+        continue-on-error: true
 
       - name: Remove IAC
         if: always()
@@ -83,8 +83,8 @@ jobs:
         timeout-minutes: 10
         continue-on-error: true
 
-      # - name: Teardown EKS cluster
-      #   if: always()
-      #   run: uds run -f tasks/iac.yaml destroy-cluster
-      #   timeout-minutes: 30
-      #   continue-on-error: true
+      - name: Teardown EKS cluster
+        if: always()
+        run: uds run -f tasks/iac.yaml destroy-cluster
+        timeout-minutes: 30
+        continue-on-error: true
