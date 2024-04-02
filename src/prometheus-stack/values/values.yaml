@@ -94,3 +94,12 @@ prometheusOperator:
     requests:
       cpu: 100m
       memory: 512Mi
+
+alertmanager:
+  alertmanagerSpec:
+    scheme: "https"
+    tlsConfig:
+      caFile: /etc/prom-certs/root-cert.pem
+      certFile: /etc/prom-certs/cert-chain.pem
+      insecureSkipVerify: true
+      keyFile: /etc/prom-certs/key.pem
