@@ -23,5 +23,5 @@ spec:
           app: prometheus
         selector:
           app.kubernetes.io/name: velero
-        port: 8068
+        port: 8085
         description: "Prometheus Metrics"

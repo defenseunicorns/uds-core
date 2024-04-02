@@ -23,16 +23,8 @@ export async function serviceMonitor(pkg: UDSPackage, namespace: string) {
   for (const monitor of monitorList) {
     const { selector, portName } = monitor;
     const name = generateSMName(pkg, monitor);
-    const tlsConfig = {
-      caFile: "/etc/prom-certs/root-cert.pem",
-      certFile: "/etc/prom-certs/cert-chain.pem",
-      keyFile: "/etc/prom-certs/key.pem",
-      insecureSkipVerify: true, // Prometheus does not support Istio security naming, thus skip verifying target pod certificate
-    };
     const endpoints: Prometheus.Endpoint[] = [
       {
-        scheme: Prometheus.Scheme.HTTPS,
-        tlsConfig: tlsConfig,
         port: portName,
         path: monitor.path || "/metrics",
       },

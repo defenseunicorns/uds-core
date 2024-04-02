@@ -73,7 +73,6 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
       remoteSelector: {
         app: `prometheus`,
       },
-      // todo: lookup targetPort based on svc
       port: targetPort,
       description: `${Object.values(selector)} Metrics`,
     };

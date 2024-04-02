@@ -8,7 +8,6 @@ export const prometheus = new Capability({
 
 const { When } = prometheus;
 
-// todo: should we even do this?
 /**
  * Mutate a service monitor to enable mTLS metrics
  *
@@ -16,8 +15,8 @@ const { When } = prometheus;
 When(Prometheus.ServiceMonitor)
   .IsCreatedOrUpdated()
   .Mutate(async sm => {
-    // todo: add something like this, or handle injection/mtls better?
-    if (sm.Raw.metadata?.labels?.["uds/skip-mutate"]) {
+    // Provide an opt-out of mutation to handle complicated scenarios
+    if (sm.Raw.metadata?.labels?.["uds/skip-sm-mutate"]) {
       return;
     }
     const namespaces = sm.Raw.spec?.namespaceSelector?.matchNames || [sm.Raw.metadata?.namespace];
@@ -36,8 +35,7 @@ When(Prometheus.ServiceMonitor)
       }
     }
 
-    // todo: should we just assume istio injection?
-    // todo: making an assumption about STRICT mTLS here, should we try to check that?
+    // This assumes istio-injection == strict mTLS due to complexity around mTLS lookup
     if (istioInjected) {
       if (sm.Raw.spec?.endpoints === undefined) {
         return;

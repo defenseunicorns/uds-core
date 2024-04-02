@@ -9,7 +9,7 @@ spec:
         app.kubernetes.io/name: promtail
       targetPort: 3101
       portName: http-metrics
-      description: "Metrics"
+      description: Metrics
 
   network:
     allow:
