@@ -49,7 +49,6 @@ export async function packageReconciler(pkg: UDSPackage) {
       // Create the ServiceMonitor for each monitored service
       monitors = await serviceMonitor(pkg, namespace!);
     } else {
-      // todo: nuance here for single test monitoring (self monitoring?)
       Log.warn(
         `Running in single test mode, skipping ${name} VirtualServices and ServiceMonitors.`,
       );

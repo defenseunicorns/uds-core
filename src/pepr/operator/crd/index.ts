@@ -7,7 +7,6 @@ export {
   Status as PkgStatus,
   RemoteGenerated,
   Sso,
-  Status,
   Package as UDSPackage,
 } from "./generated/package-v1alpha1";
 
