@@ -33,32 +33,23 @@ variable "kms_key_deletion_window" {
   default     = 7
 }
 
-variable "loki_bucket_name" {
-  description = "Name for loki S3 bucket"
-  type        = string
+variable "bucket_configurations" {
+  type = map(object({
+    name           = string
+    service_account = string
+    namespace = string
+  }))
+  default = {
+    loki = {
+      name           = "loki"
+      service_account = "logging-loki"
+      namespace = "logging"
+    }
+    velero = {
+      name           = "velero"
+      service_account = "velero-server"
+      namespace = "velero"
+    }
+  }
 }
 
-variable "loki_service_account" {
-  description = "Name of the service account to bind to. Used to generate fully qualified subject for service account."
-  type        = string
-}
-
-variable "loki_namespace" {
-  description = "Name of the namespace that the service account exists in. Used to generate fully qualified subject for the service account."
-  type        = string
-}
-
-variable "velero_bucket_name" {
-  description = "Name for velero S3 bucket"
-  type        = string
-}
-
-variable "velero_service_account" {
-  description = "Name of the service account to bind to. Used to generate fully qualified subject for service account."
-  type        = string
-}
-
-variable "velero_namespace" {
-  description = "Name of the namespace that the service account exists in. Used to generate fully qualified subject for the service account."
-  type        = string
-}

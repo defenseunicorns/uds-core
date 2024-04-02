@@ -3,25 +3,25 @@ output "aws_region" {
 }
 
 output "loki_irsa_role_arn" {
-  value = module.loki_irsa.role_arn
+  value = module.irsa["loki"].role_arn
 }
 
 output "loki_s3" {
-  value = module.loki_S3
+  value = module.S3["loki"]
 }
 
 output "loki_s3_bucket" {
-  value = module.loki_S3.bucket_name
+  value = module.S3["loki"].bucket_name
 }
 
 output "velero_irsa_role_arn" {
-  value = module.velero_irsa.role_arn
+  value = module.irsa["velero"].role_arn
 }
 
 output "velero_s3" {
-  value = module.velero_S3
+  value = module.S3["velero"]
 }
 
 output "velero_s3_bucket" {
-  value = module.velero_S3.bucket_name
+  value = module.S3["velero"].bucket_name
 }
