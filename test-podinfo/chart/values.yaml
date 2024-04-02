@@ -29,7 +29,7 @@ faults:
 service:
   enabled: true
   annotations: {}
-  type: ClusterIP
+  type: ClusterIP # change to NodePort for upgrade test
   metricsPort: 9797
   httpPort: 9898
   externalPort: 9898

@@ -11,57 +11,57 @@ spec:
     listKind: ExemptionList
     plural: exemptions
     shortNames:
-    - exempt
+      - exempt
     singular: exemption
   scope: Namespaced
   versions:
-  - additionalPrinterColumns:
-    - description: The status of the exemption
-      jsonPath: .status.phase
-      name: Status
-      type: string
-    - description: Titles of the exemptions
-      jsonPath: .status.titles
-      name: Exemptions
-      type: string
-    - description: The age of the exemption
-      jsonPath: .metadata.creationTimestamp
-      name: Age
-      type: date
-    name: v1alpha1
-    schema:
-      openAPIV3Schema:
-        properties:
-          spec:
-            properties:
-              exemptions:
-                description: Policy exemptions
-                items:
-                  properties:
-                    description:
-                      description: Reasons as to why this exemption is needed
-                      type: string
-                    matcher:
-                      description: Resource to exempt (Regex allowed for name)
-                      properties:
-                        kind:
-                          default: pod
-                          enum:
+    - additionalPrinterColumns:
+        - description: The status of the exemption
+          jsonPath: .status.phase
+          name: Status
+          type: string
+        - description: Titles of the exemptions
+          jsonPath: .status.titles
+          name: Exemptions
+          type: string
+        - description: The age of the exemption
+          jsonPath: .metadata.creationTimestamp
+          name: Age
+          type: date
+  name: v1alpha1
+  schema:
+    openAPIV3Schema:
+      properties:
+        spec:
+          properties:
+            exemptions:
+              description: Policy exemptions
+              items:
+                properties:
+                  description:
+                    description: Reasons as to why this exemption is needed
+                    type: string
+                  matcher:
+                    description: Resource to exempt (Regex allowed for name)
+                    properties:
+                      kind:
+                        default: pod
+                        enum:
                           - pod
                           - service
-                          type: string
-                        name:
-                          type: string
-                        namespace:
-                          type: string
-                      required:
+                        type: string
+                      name:
+                        type: string
+                      namespace:
+                        type: string
+                    required:
                       - namespace
                       - name
-                      type: object
-                    policies:
-                      description: A list of policies to override
-                      items:
-                        enum:
+                    type: object
+                  policies:
+                    description: A list of policies to override
+                    items:
+                      enum:
                         - DisallowHostNamespaces
                         - DisallowNodePortServices
                         - DisallowPrivileged
@@ -76,36 +76,35 @@ spec:
                         - RestrictSeccomp
                         - RestrictSELinuxType
                         - RestrictVolumeTypes
-                        type: string
-                      type: array
-                    title:
-                      description: title to give the exemption for reporting purposes
                       type: string
-                  required:
+                    type: array
+                  title:
+                    description: title to give the exemption for reporting purposes
+                    type: string
+                required:
                   - policies
                   - matcher
                   - title
-                  type: object
-                type: array
-            type: object
-          status:
-            properties:
-              observedGeneration:
-                type: integer
-              phase:
-                enum:
+                type: object
+              type: array
+          type: object
+        status:
+          properties:
+            observedGeneration:
+              type: integer
+            phase:
+              enum:
                 - Pending
                 - Ready
                 - Failed
+              type: string
+            titles:
+              items:
                 type: string
-              titles:
-                items:
-                  type: string
-                type: array
-            type: object
-        type: object
+              type: array
+          type: object
+      type: object
     served: true
     storage: true
     subresources:
       status: {}
-

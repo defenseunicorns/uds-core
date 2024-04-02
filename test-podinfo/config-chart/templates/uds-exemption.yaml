@@ -13,7 +13,7 @@ spec:
       matcher:
         namespace: podinfo
         name: "^podinfo.*"
-    
+
     # - policies:
     #     - DisallowNodePortServices
     #   title: "podinfo2"
