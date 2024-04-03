@@ -69,7 +69,7 @@ tasks:
       - cmd: sleep 5
       - cmd: eksctl create cluster -f cluster-config.yaml
       - cmd: eksctl utils write-kubeconfig -c ${CLUSTER_NAME}
-      
+
   - name: destroy-cluster
     actions:
       - cmd: eksctl delete cluster -f cluster-config.yaml --disable-nodegroup-eviction --wait
@@ -101,31 +101,31 @@ tasks:
         dir: .github/test-infra/buckets-iac
       - cmd: terraform apply -auto-approve
         dir: .github/test-infra/buckets-iac
-  
+
   - name: terraform-outputs
     actions:
       - cmd: terraform output -raw loki_s3_bucket
-        setVariables: 
+        setVariables:
           - name: "LOKI_S3_BUCKET"
         dir: .github/test-infra/buckets-iac
       - cmd: terraform output -raw aws_region
-        setVariables: 
+        setVariables:
           - name: LOKI_S3_AWS_REGION
         dir: .github/test-infra/buckets-iac
       - cmd: terraform output -raw loki_irsa_role_arn
-        setVariables: 
+        setVariables:
           - name: LOKI_S3_ROLE_ARN
         dir: .github/test-infra/buckets-iac
       - cmd: terraform output -raw velero_s3_bucket
-        setVariables: 
+        setVariables:
           - name: VELERO_S3_BUCKET
         dir: .github/test-infra/buckets-iac
       - cmd: terraform output -raw aws_region
-        setVariables: 
+        setVariables:
           - name: VELERO_S3_AWS_REGION
         dir: .github/test-infra/buckets-iac
       - cmd: terraform output -raw velero_irsa_role_arn
-        setVariables: 
+        setVariables:
           - name: VELERO_S3_ROLE_ARN
         dir: .github/test-infra/buckets-iac
 

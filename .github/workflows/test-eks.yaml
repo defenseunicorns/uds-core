@@ -58,7 +58,7 @@ jobs:
         run: uds run -f tasks/iac.yaml create-cluster
         timeout-minutes: 60
 
-      - name: Create IAC 
+      - name: Create IAC
         run: uds run -f tasks/iac.yaml create-iac
         timeout-minutes: 20
 
