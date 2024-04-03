@@ -21,6 +21,10 @@ variables:
     sensitive: true
     description: "Key secret to use when connecting to the Velero bucket"
     default: "uds-secret"
+  - name: VELERO_BUCKET_CREDENTIAL_NAME
+    default: "velero-bucket-credentials"
+  - name: VELERO_BUCKET_CREDENTIAL_KEY
+    default: "cloud"
 
 components:
   - name: velero
