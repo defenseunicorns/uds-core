@@ -1,0 +1,30 @@
+name: Release UDS Core
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  tag-new-version:
+    permissions: write-all
+    runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release-flag.outputs.release_created }}
+    steps:
+      - name: Create release tag
+        id: tag
+        uses: google-github-actions/release-please-action@a37ac6e4f6449ce8b3f7607e4d97d0146028dc0b # v4
+      - id: release-flag
+        run: echo "release_created=${{ steps.tag.outputs.release_created || false }}" >> $GITHUB_OUTPUT
+
+  publish-uds-core-release:
+    needs: tag-new-version
+    if: ${{ needs.tag-new-version.outputs.release_created == 'true'}}
+    permissions:
+      contents: write
+      packages: write
+    uses: ./.github/workflows/publish.yaml
+    with:
+      snapshot: false
+    secrets: inherit
