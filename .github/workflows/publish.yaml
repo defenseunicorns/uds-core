@@ -69,7 +69,7 @@ jobs:
           uds run -f tasks/test.yaml validate-packages --no-progress
 
       - name: Debug Output
-        if: ${{ always() }}
+        if: ${{ always() && !inputs.snapshot }}
         uses: ./.github/actions/debug-output
 
       - name: Publish Standard Package
