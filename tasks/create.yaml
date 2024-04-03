@@ -1,3 +1,6 @@
+includes:
+  - common: https://raw.githubusercontent.com/defenseunicorns/uds-common/v0.3.2/tasks/create.yaml
+
 variables:
   - name: FLAVOR
     default: upstream
