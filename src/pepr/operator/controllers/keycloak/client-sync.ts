@@ -137,6 +137,9 @@ async function apiCall(sso: Partial<Sso>, method = "POST", authToken = "") {
     } as Client;
   }
 
+  Log.info(`ewyles- Generating client for '${sso.clientId}'`);
+  Log.info(`ewyles - ${JSON.stringify(sso)}`);
+
   const req = {
     body: JSON.stringify(sso) as string | undefined,
     method,

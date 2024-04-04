@@ -31,6 +31,17 @@ tasks:
           echo "  - Otherwise run 'npx pepr deploy' to deploy the Pepr module to the cluster"
           echo "  - Additional source packages can be deployed with 'zarf dev deploy src/<package>'"
 
+  - name: slim-dev
+    actions:
+      - description: "Create slim dev package"
+        task: create:slim-dev-package
+
+      - description: "Build slim dev bundle"
+        task: create:k3d-slim-dev-bundle
+
+      - description: "Deploy slim dev bundle"
+        task: deploy:k3d-slim-dev-bundle
+
   - name: dev-deploy
     actions:
       - description: "Deploy the given source package with Zarf Dev"

@@ -200,6 +200,46 @@ const sso = {
           "A description for the client, can be a URL to an image to replace the login logo",
         type: "string",
       },
+      protocol: {
+        description: "Specifies the protocol of the client, either 'openid-connect' or 'saml'",
+        type: "string",
+        enum: ["openid-connect", "saml"],
+      },
+      attributes: {
+        description: "Specifies attributes for the client.",
+        type: "object",
+        additionalProperties: {
+          type: "string",
+        },
+      },
+      protocolMappers: {
+        description: "Protocol Mappers to configure on the client",
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            name: {
+              description: "Name of the mapper",
+              type: "string",
+            },
+            protocol: {
+              description: "Protocol of the mapper",
+              type: "string",
+            },
+            protocolMapper: {
+              description: "Protocol Mapper type of the mapper",
+              type: "string",
+            },
+            config: {
+              description: "Configuration options for the mapper.",
+              type: "object",
+              additionalProperties: {
+                type: "string",
+              },
+            },
+          },
+        },
+      },
       rootUrl: {
         description: "Root URL appended to relative URLs",
         type: "string",
