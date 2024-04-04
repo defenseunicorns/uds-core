@@ -114,7 +114,7 @@ describe("authservice", () => {
     try {
       await updatePolicy({ name: "auth-test", action: Action.Add }, labelSelector, pkg);
       await updatePolicy({ name: "auth-test", action: Action.Remove }, labelSelector, pkg);
-    } catch(e) {
+    } catch (e) {
       expect(e).toBeUndefined();
     }
   });
