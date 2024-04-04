@@ -81,6 +81,10 @@ tasks:
     actions:
       - task: deploy:single-package
 
+  - name: deploy-standard-bundle
+    actions:
+      - task: deploy:k3d-standard-bundle
+
   - name: test-single-package
     description: "Build and test a single package, must set UDS_PKG environment variable"
     actions:

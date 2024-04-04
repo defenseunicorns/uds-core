@@ -1,0 +1,38 @@
+name: Release UDS Core Snapshot
+
+on:
+  schedule:
+    - cron: "0 10 * * *"
+  workflow_dispatch:
+
+jobs:
+  publish-snapshot-release:
+    permissions:
+      contents: write
+      packages: write
+    uses: ./.github/workflows/publish.yaml
+    with:
+      snapshot: true
+    secrets: inherit
+
+  update-snapshot-latest-tag:
+    needs: publish-snapshot-release
+    env:
+      GH_TOKEN: ${{ github.token }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          fetch-tags: 'true'
+      - name: Update snapshot-latest tag
+        run: |
+          # get last release tag
+          LAST_RELEASE_TAG="$(gh release list --exclude-drafts --exclude-pre-releases --json tagName --jq '.[0].tagName')"
+          # cleanup old release
+          if gh release view snapshot-latest; then
+            gh release delete snapshot-latest --cleanup-tag -y
+          fi
+          # generate new release
+          gh release create snapshot-latest -t "snapshot-latest" --prerelease --notes-start-tag "${LAST_RELEASE_TAG}" --generate-notes

@@ -16,8 +16,8 @@ configuration:
         s3ForcePathStyle: true
         s3Url: "###ZARF_VAR_VELERO_BUCKET_PROVIDER_URL###"
       credential:
-        name: "velero-bucket-credentials"
-        key: "cloud"
+        name: "###ZARF_VAR_VELERO_BUCKET_CREDENTIAL_NAME###"
+        key: "###ZARF_VAR_VELERO_BUCKET_CREDENTIAL_KEY###"
   # volumeSnapshotLocation:
   #   - name: default
   #     provider: aws
