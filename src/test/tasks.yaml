@@ -20,7 +20,7 @@ tasks:
             kind: Deployment
             name: httpbin
             namespace: test-app
-      
+
       - description: Wait for the tenant encode app to be ready
         wait:
           cluster:
@@ -62,7 +62,7 @@ tasks:
             protocol: https
             address: demo.uds.dev/status%2f/202
             code: 202
-      
+
       - description: Verify the tenant encode app is accessible
         wait:
           network:
