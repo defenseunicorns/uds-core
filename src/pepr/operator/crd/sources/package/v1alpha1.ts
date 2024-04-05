@@ -327,6 +327,10 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
               properties: {
                 expose,
                 allow,
+                retainEncodedSlashes: {
+                  type: "boolean",
+                  description: "Whether to retain encoded slashes in URL paths (i.e. %2F and %5C)",
+                },
               },
             },
             sso,

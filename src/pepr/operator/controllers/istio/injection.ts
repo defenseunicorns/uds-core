@@ -20,9 +20,9 @@ export async function enableInjection(pkg: UDSPackage) {
   const annotations = sourceNS.metadata?.annotations || {};
   const pkgKey = `uds.dev/pkg-${pkg.metadata.name}`;
 
-  // Save the original value of the istio-injection label only if it's not already set
-  if (!annotations[injectionLabel]) {
-    annotations[injectionAnnotation] = labels[injectionLabel] || "non-existent";
+  // If the original namespace injectionLabel did not exist, mark it as non-existent in the annotations
+  if (!labels[injectionLabel]) {
+    annotations[injectionAnnotation] = "non-existent";
   }
 
   // Ensure the namespace is configured

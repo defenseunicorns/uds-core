@@ -30,6 +30,10 @@ export interface Network {
    * Expose a service on an Istio Gateway
    */
   expose?: Expose[];
+  /**
+   * Whether to retain encoded slashes in URL paths (i.e. %2F and %5C)
+   */
+  retainEncodedSlashes?: boolean;
 }
 
 export interface Allow {

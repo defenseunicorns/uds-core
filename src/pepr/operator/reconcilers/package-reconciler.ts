@@ -4,6 +4,7 @@ import { handleFailure, shouldSkip, updateStatus } from ".";
 import { UDSConfig } from "../../config";
 import { enableInjection } from "../controllers/istio/injection";
 import { virtualService } from "../controllers/istio/virtual-service";
+import { envoyFilter } from "../controllers/istio/envoy-filter";
 import { keycloak } from "../controllers/keycloak/client-sync";
 import { networkPolicies } from "../controllers/network/policies";
 import { Phase, UDSPackage } from "../crd";
@@ -43,8 +44,13 @@ export async function packageReconciler(pkg: UDSPackage) {
 
       // Create the VirtualService for each exposed service
       endpoints = await virtualService(pkg, namespace!);
+
+      // Create the EnvoyFilter for each exposed service
+      await envoyFilter(pkg, namespace!);
     } else {
-      Log.warn(`Running in single test mode, skipping ${name} VirtualService.`);
+      Log.warn(
+        `Running in single test mode, skipping ${name} Istio Injection, VirtualServices and EnvoyFilter.`,
+      );
     }
 
     // Configure SSO
