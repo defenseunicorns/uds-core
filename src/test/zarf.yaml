@@ -3,7 +3,6 @@ metadata:
   name: uds-core-test-apps
   description: "UDS Core Common test apps"
   url: https://github.com/defenseunicorns/uds-core
-  yolo: true
 
 components:
   - name: test-apps
@@ -18,3 +17,5 @@ components:
       - name: app-tenant-encode
         files:
           - "app-tenant-encode.yaml"
+    images:
+      - docker.io/kong/httpbin:latest
