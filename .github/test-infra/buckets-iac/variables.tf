@@ -42,8 +42,8 @@ variable "bucket_configurations" {
   default = {
     loki = {
       name           = "loki"
-      service_account = "logging-loki"
-      namespace = "logging"
+      service_account = "loki"
+      namespace = "loki"
     }
     velero = {
       name           = "velero"
