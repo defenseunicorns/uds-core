@@ -27,7 +27,7 @@ tasks:
             protocol: https
             address: demo.admin.uds.dev/status/202
             code: 202
-      
+
       - description: Verify the admin app decodes encoded slashes
         wait:
           network:
