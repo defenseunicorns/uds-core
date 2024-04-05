@@ -32,7 +32,7 @@ tasks:
         wait:
           network:
             protocol: https
-            address: demo.uds.dev/status%2f202
+            address: demo.uds.dev/status%2f/202
             code: 202
 
       - description: Verify the VS Match rules for method regex/uri prefix
@@ -60,7 +60,7 @@ tasks:
         wait:
           network:
             protocol: https
-            address: demo.uds.dev/status%2f202
+            address: demo.uds.dev/status%2f/202
             code: 404
 
       - description: Remove the test resources
