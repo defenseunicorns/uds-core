@@ -35,7 +35,8 @@
   },
   "dependencies": {
     "@types/xml2js": "^0.4.14",
-    "pepr": "0.28.7"
+    "pepr": "0.28.7",
+    "xml2js": "^0.6.2"
   },
   "devDependencies": {
     "@jest/globals": "29.7.0",
