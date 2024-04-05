@@ -27,6 +27,13 @@ tasks:
             protocol: https
             address: demo.admin.uds.dev/status/202
             code: 202
+      
+      - description: Verify the admin app decodes encoded slashes
+        wait:
+          network:
+            protocol: https
+            address: demo.uds.dev/status%2f202
+            code: 202
 
       - description: Verify the VS Match rules for method regex/uri prefix
         wait:
@@ -48,6 +55,13 @@ tasks:
             protocol: https
             address: demo.uds.dev/status/202
             code: 202
+
+      - description: Verify the tenant app retains encoded slashes
+        wait:
+          network:
+            protocol: https
+            address: demo.uds.dev/status%2f202
+            code: 404
 
       - description: Remove the test resources
         cmd: "uds zarf package remove build/zarf-package-uds-core-test-apps-*.zst --confirm"

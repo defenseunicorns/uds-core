@@ -10,6 +10,7 @@ metadata:
   namespace: test-app
 spec:
   network:
+    retainEncodedSlashes: true
     expose:
       - service: httpbin
         selector:
