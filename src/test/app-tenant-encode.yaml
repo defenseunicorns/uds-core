@@ -1,21 +1,22 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: test-app
+  name: test-encode-app
 ---
 apiVersion: uds.dev/v1alpha1
 kind: Package
 metadata:
   name: httpbin
-  namespace: test-app
+  namespace: test-encode-app
 spec:
   network:
+    retainEncodedSlashes: true
     expose:
       - service: httpbin
         selector:
           app: httpbin
         gateway: tenant
-        host: demo
+        host: demo-encode
         port: 8000
         targetPort: 80
 ---
@@ -23,13 +24,13 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: httpbin
-  namespace: test-app
+  namespace: test-encode-app
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: httpbin
-  namespace: test-app
+  namespace: test-encode-app
   labels:
     app: httpbin
     service: httpbin
@@ -45,7 +46,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: httpbin
-  namespace: test-app
+  namespace: test-encode-app
 spec:
   replicas: 1
   selector:

@@ -20,19 +20,19 @@ tasks:
             kind: Deployment
             name: httpbin
             namespace: test-app
+      
+      - description: Wait for the tenant encode app to be ready
+        wait:
+          cluster:
+            kind: Deployment
+            name: httpbin
+            namespace: test-encode-app
 
       - description: Verify the admin app is accessible
         wait:
           network:
             protocol: https
             address: demo.admin.uds.dev/status/202
-            code: 202
-
-      - description: Verify the admin app decodes encoded slashes
-        wait:
-          network:
-            protocol: https
-            address: demo.uds.dev/status%2f/202
             code: 202
 
       - description: Verify the VS Match rules for method regex/uri prefix
@@ -56,11 +56,25 @@ tasks:
             address: demo.uds.dev/status/202
             code: 202
 
-      - description: Verify the tenant app retains encoded slashes
+      - description: Verify the tenant app decodes encoded slashes
         wait:
           network:
             protocol: https
             address: demo.uds.dev/status%2f/202
+            code: 202
+      
+      - description: Verify the tenant encode app is accessible
+        wait:
+          network:
+            protocol: https
+            address: demo-encode.uds.dev/status/202
+            code: 202
+
+      - description: Verify the tenant encode app retains encoded slashes
+        wait:
+          network:
+            protocol: https
+            address: demo-encode.uds.dev/status%2f/202
             code: 404
 
       - description: Remove the test resources
