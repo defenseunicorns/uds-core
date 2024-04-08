@@ -43,7 +43,6 @@ export async function packageReconciler(pkg: UDSPackage) {
 
       // Create the VirtualService for each exposed service
       endpoints = await virtualService(pkg, namespace!);
-
     } else {
       Log.warn(`Running in single test mode, skipping ${name} VirtualService.`);
     }
