@@ -18,11 +18,11 @@ controller:
     data:
       oidcinitcfg.yaml:
         always_reload: true
-        client_id: null
-        client_secret: null
+        client_id: ###ZARF_VAR_SSO_CLIENT###
+        client_secret: 5ireZpyYKsC5aXxhSOolONsCcax19Vyn
         default_role: null
         enable: true
-        issuer: https://login.dso.mil/auth/realms/baby-yoda
+        issuer: ###ZARF_VAR_SSO_ISSUER###
       sysinitcfg.yaml:
         always_reload: true
         no_telemetry_report: true

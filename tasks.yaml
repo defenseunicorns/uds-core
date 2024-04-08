@@ -84,3 +84,14 @@ tasks:
   - name: lint-fix
     actions:
       - task: lint:fix
+
+
+  - name: key
+    actions:
+      - task: dev-setup
+      - cmd: npx pepr deploy --confirm
+      - cmd: uds run dev-deploy --set PKG=keycloak
+
+  - name: neu
+    actions:
+      - cmd: uds run dev-deploy --set PKG=neuvector

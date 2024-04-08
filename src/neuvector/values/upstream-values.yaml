@@ -17,7 +17,7 @@ enforcer:
 
 controller:
   image:
-    repository: neuvector/controller
+    repository: rjferguson21/neuvector-controller
   containerSecurityContext:
     capabilities:
       drop:

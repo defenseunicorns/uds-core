@@ -4,6 +4,12 @@ metadata:
   name: neuvector
   namespace: {{ .Release.Namespace }}
 spec:
+  sso:
+    - name: Neuvector Dashboard
+      clientId: {{ .Values.ssoClient }}
+      redirectUris:
+        - "https://neuvector.admin.{{ .Values.domain }}/openId_auth"
+
   network:
     expose:
       - service: neuvector-service-webui
@@ -14,6 +20,11 @@ spec:
         port: 8443
 
     allow:
+      - direction: Egress
+        selector:
+          app: neuvector-controller-pod
+        remoteGenerated: Anywhere
+
       # Permit intra-namespace communication
       - direction: Ingress
         remoteGenerated: IntraNamespace

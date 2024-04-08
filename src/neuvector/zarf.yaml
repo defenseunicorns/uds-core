@@ -4,6 +4,19 @@ metadata:
   description: "UDS Core Neuvector"
   url: https://open-docs.neuvector.com/
 
+variables:
+  - name: DOMAIN
+    description: "Cluster domain"
+    default: "uds.dev"
+
+  - name: SSO_CLIENT
+    description: "Name of Keycloak Client for Neuvector"
+    default: "uds-core-admin-neuvector"
+
+  - name: SSO_ISSUER
+    description: "Location of Identity Provider"
+    default: https://sso.uds.dev/realms/###ZARF_VAR_SSO_CLIENT###
+
 components:
   - name: neuvector
     description: "Deploy Neuvector"
@@ -20,7 +33,7 @@ components:
         valuesFiles:
           - values/upstream-monitor-values.yaml
     images:
-      - docker.io/neuvector/controller:5.3.0
+      - rjferguson21/neuvector-controller:5.3.0
       - docker.io/neuvector/manager:5.3.0
       - docker.io/neuvector/updater:latest
       - docker.io/neuvector/scanner:latest

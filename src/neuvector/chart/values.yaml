@@ -1,2 +1,6 @@
 grafana:
   enabled: false
+
+domain: "###ZARF_VAR_DOMAIN###"
+
+ssoClient: "###ZARF_VAR_SSO_CLIENT###"
