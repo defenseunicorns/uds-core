@@ -35,8 +35,8 @@ To enable authentication for applications that do not have native OIDC configura
 
 Follow these steps to protect your application with AuthService:
 
-* Set the `isAuthSvcClient` field to `true` in the `sso` configuration of the Package.
-* Ensure that the pods of the application are labeled with: `protect: keycloak`.
+* Set `enableAuthserviceSelector` with a matching label selector in the `sso` configuration of the Package.
+* Ensure that the pods of the application are labeled with the corresponding selector
 
 ```yaml
 apiVersion: uds.dev/v1alpha1
@@ -50,7 +50,8 @@ spec:
       clientId: uds-core-httpbin
       redirectUris:
         - "https://httpbin.uds.dev/login"
-      isAuthSvcClient: true
+      enableAuthserviceSelector:
+        app: httpbin
 ```
 For a complete example, see [app-authservice-tenant.yaml](../src/test/app-authservice-tenant.yaml)
 

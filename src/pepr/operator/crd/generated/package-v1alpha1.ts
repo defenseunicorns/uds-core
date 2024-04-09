@@ -438,7 +438,7 @@ export interface Sso {
    */
   description?: string;
   /**
-   * Labels to match pods to automatically protect with authservice. Leave empty to disable
+   * Labels to match pods to automatically protect with authservice. Leave null to disable
    * authservice protection
    */
   enableAuthserviceSelector?: { [key: string]: string };
