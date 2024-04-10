@@ -20,9 +20,9 @@ export async function enableInjection(pkg: UDSPackage) {
   const annotations = sourceNS.metadata?.annotations || {};
   const pkgKey = `uds.dev/pkg-${pkg.metadata.name}`;
 
-  // If the original namespace injectionLabel did not exist, mark it as non-existent in the annotations
-  if (!labels[injectionLabel]) {
-    annotations[injectionAnnotation] = "non-existent";
+  // Mark the original namespace injection setting for if all packages are removed
+  if (!annotations[injectionAnnotation]) {
+    annotations[injectionAnnotation] = labels[injectionLabel] || "non-existent";
   }
 
   // Ensure the namespace is configured
