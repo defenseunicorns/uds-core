@@ -10,7 +10,7 @@ For more information on Keycloak and its capabilities, see its [documentation](h
 
 ### Dev Mode
 
-When `devMode: true` is set, the chart will deploy a single Keycloak Pod with an in-memory database and scaling turned off.
+When `devMode: true` is set, the chart will deploy a single Keycloak Pod with an in-memory database and scaling turned off. Devmode also levarages PVCs by default for `data` and `themes`.
 
 ### Autoscaling
 
