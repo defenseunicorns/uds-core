@@ -7,6 +7,7 @@ metadata:
 components:
   - name: authservice
     required: true
+    description: "A simple authentication service for Istio"
     charts:
       - name: authservice
         localPath: ../chart

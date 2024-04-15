@@ -29,6 +29,7 @@ variables:
 components:
   - name: velero
     required: true
+    description: "A backup and restore tool for Kubernetes resources and persistent volumes"
     charts:
       - name: uds-velero-config
         namespace: velero

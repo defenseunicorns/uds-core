@@ -7,6 +7,7 @@ metadata:
 components:
   - name: istio-controlplane
     required: true
+    description: "Service Mesh"
     charts:
       - name: base
         url: https://istio-release.storage.googleapis.com/charts

@@ -6,7 +6,6 @@ metadata:
 
 components:
   - name: neuvector
-    description: "Deploy Neuvector"
     required: true
     only:
       flavor: upstream

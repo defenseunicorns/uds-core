@@ -1,7 +1,7 @@
 kind: ZarfPackageConfig
 metadata:
   name: uds-core-keycloak
-  description: "Keycloak"
+  description: "An identity and access management (IDAM) tool used to authenticate users for access to applications"
 
 variables:
   - name: DOMAIN

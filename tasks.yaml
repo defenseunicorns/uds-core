@@ -84,3 +84,9 @@ tasks:
   - name: lint-fix
     actions:
       - task: lint:fix
+
+  - name: donk
+    actions:
+      - task: create:standard-package
+      - cmd: |
+          docker run -v $(pwd)/build:/build ghcr.io/defenseunicorns-dashdays/donk:0.0.1 /build/zarf-package-core-amd64-0.18.0.tar.zst --pre-processor=/app/enrich --template=templates/core-summarized.hbs > CORE.md

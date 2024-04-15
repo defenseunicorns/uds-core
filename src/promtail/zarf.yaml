@@ -7,7 +7,6 @@ metadata:
 components:
   - name: promtail
     required: true
-    description: "Deploy Promtail"
     only:
       flavor: upstream
     import:
@@ -22,7 +21,6 @@ components:
 
   - name: promtail
     required: true
-    description: "Deploy Promtail"
     only:
       flavor: registry1
     import:

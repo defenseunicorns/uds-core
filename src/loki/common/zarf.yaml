@@ -6,6 +6,7 @@ metadata:
 components:
   - name: loki
     required: true
+    description: "Loki is a horizontally-scalable, highly-available, multi-tenant log aggregation system"
     charts:
       - name: uds-loki-config
         namespace: loki

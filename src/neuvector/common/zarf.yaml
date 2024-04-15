@@ -6,7 +6,7 @@ metadata:
 
 components:
   - name: neuvector
-    description: "Deploy Neuvector"
+    description: "A kubernetes security suite that provides CVE scanning for hosts and images, as well as runtime security monitoring and protection"
     required: true
     charts:
       - name: crd

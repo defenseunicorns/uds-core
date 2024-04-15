@@ -7,6 +7,7 @@ metadata:
 components:
   - name: grafana
     required: true
+    description: "The open-source platform for monitoring and observability"
     charts:
       - name: uds-grafana-config
         namespace: grafana

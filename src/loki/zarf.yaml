@@ -6,7 +6,6 @@ metadata:
 components:
   - name: loki
     required: true
-    description: "Install Loki using upstream (docker) images"
     only:
       flavor: "upstream"
     import:
@@ -21,7 +20,6 @@ components:
 
   - name: loki
     required: true
-    description: "Install Loki using registry1 images"
     only:
       flavor: "registry1"
     import:
