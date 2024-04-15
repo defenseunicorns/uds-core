@@ -88,5 +88,7 @@ tasks:
   - name: donk
     actions:
       - task: create:standard-package
+      - task: create:slim-dev-package
       - cmd: |
-          docker run -v $(pwd)/build:/build ghcr.io/defenseunicorns-dashdays/donk:0.0.1 /build/zarf-package-core-amd64-0.18.0.tar.zst --pre-processor=/app/enrich --template=templates/core-summarized.hbs > CORE.md
+          docker run -v $(pwd)/build:/build ghcr.io/defenseunicorns-dashdays/donk:0.0.2 /build/zarf-package-core-amd64-0.18.0.tar.zst --pre-processor=/app/enrich --template=templates/core-summarized.hbs > docs/CORE.md
+          docker run -v $(pwd)/build:/build ghcr.io/defenseunicorns-dashdays/donk:0.0.2 /build/zarf-package-core-slim-dev-amd64-0.18.0.tar.zst > docs/SLIM-DEV.md
