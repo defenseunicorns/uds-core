@@ -34,9 +34,7 @@
     "k3d-setup": "k3d cluster delete pepr-dev && k3d cluster create pepr-dev --k3s-arg '--debug@server:0'"
   },
   "dependencies": {
-    "@types/xml2js": "^0.4.14",
-    "pepr": "0.28.7",
-    "xml2js": "^0.6.2"
+    "pepr": "0.28.7"
   },
   "devDependencies": {
     "@jest/globals": "29.7.0",

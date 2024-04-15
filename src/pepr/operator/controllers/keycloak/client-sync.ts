@@ -1,6 +1,5 @@
 import { K8s, Log, fetch, kind } from "pepr";
 
-import { parseString } from "xml2js";
 import { UDSConfig } from "../../../config";
 import { Store } from "../../common";
 import { Sso, UDSPackage } from "../../crd";
@@ -16,6 +15,16 @@ const samlDescriptorUrl =
 const secretTemplateRegex = new RegExp(
   'clientField\\(([a-zA-Z]+)\\)(?:\\["?([\\w]+)"?\\]|(\\.json\\(\\)))?',
   "gm",
+);
+
+// Template regex to match IDPSSODescriptor in the SAML IDP Descriptor XML, see https://regex101.com/r/DGvzjd/1
+const idpSSODescriptorRegex = new RegExp(
+  /<[^>]*:IDPSSODescriptor[^>]*>((.|[\n\r])*)<\/[^>]*:IDPSSODescriptor>/,
+);
+
+// Template regex to match the X509Certificate within the IDPSSODescriptor XML, see https://regex101.com/r/NjGZF5/1
+const x509CertRegex = new RegExp(
+  /<[^>]*:X509Certificate[^>]*>((.|[\n\r])*)<\/[^>]*:X509Certificate>/,
 );
 
 /**
@@ -205,21 +214,12 @@ export async function getSamlCertificate() {
     return undefined;
   }
 
-  const xml = resp.data;
-  let certificate = undefined;
+  return extractSamlCertificateFromXML(resp.data);
+}
 
-  parseString(xml, function (err, result) {
-    try {
-      certificate =
-        result["md:EntityDescriptor"]["md:IDPSSODescriptor"][0]["md:KeyDescriptor"][0][
-          "ds:KeyInfo"
-        ][0]["ds:X509Data"][0]["ds:X509Certificate"][0];
-    } catch (error) {
-      return;
-    }
-  });
-
-  return certificate;
+export function extractSamlCertificateFromXML(xmlString: string) {
+  const extractedIDPSSODescriptor = xmlString.match(idpSSODescriptorRegex)?.[1] || "";
+  return extractedIDPSSODescriptor.match(x509CertRegex)?.[1] || "";
 }
 
 /**
