@@ -22,7 +22,6 @@ components:
     images:
       - quay.io/keycloak/keycloak:24.0.2
       - ghcr.io/defenseunicorns/uds/identity-config:0.4.0
-      - rjferguson21/uds-core-config:keycloak-certs
 
   - name: keycloak
     required: true
@@ -39,4 +38,3 @@ components:
     images:
       - registry1.dso.mil/ironbank/opensource/keycloak/keycloak:24.0.2
       - ghcr.io/defenseunicorns/uds/identity-config:0.4.0
-      - rjferguson21/uds-core-config:keycloak-certs
