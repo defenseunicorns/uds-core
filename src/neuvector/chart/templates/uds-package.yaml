@@ -4,15 +4,14 @@ metadata:
   name: neuvector
   namespace: {{ .Release.Namespace }}
 spec:
-  # Disabled until exporter securityContext is configurable
-  # monitor:
-  #   - selector:
-  #       app: neuvector-prometheus-exporter
-  #     podSelector:
-  #       app: neuvector-prometheus-exporter-pod
-  #     portName: metrics
-  #     targetPort: 8068
-  #     description: "Metrics"
+  monitor:
+    - selector:
+        app: neuvector-prometheus-exporter
+      podSelector:
+        app: neuvector-prometheus-exporter-pod
+      portName: metrics
+      targetPort: 8068
+      description: "Metrics"
 
   network:
     expose:

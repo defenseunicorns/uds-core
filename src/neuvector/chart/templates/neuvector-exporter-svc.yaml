@@ -1,0 +1,19 @@
+# This is a temporary addition until the upstream sets `appProtocol` by default in a chart release
+# See: https://github.com/neuvector/neuvector-helm/issues/390 and https://github.com/neuvector/neuvector-helm/pull/389
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: neuvector-prometheus-exporter
+  name: neuvector-prometheus-exporter
+  namespace: neuvector
+spec:
+  ports:
+  - name: metrics
+    port: 8068
+    protocol: TCP
+    appProtocol: http
+    targetPort: 8068
+  selector:
+    app: neuvector-prometheus-exporter-pod
+  type: ClusterIP

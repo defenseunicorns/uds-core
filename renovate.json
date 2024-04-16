@@ -119,7 +119,7 @@
     {
       "fileMatch": ["^src/neuvector/values/upstream-values\\.yaml$"],
       "matchStrings": [
-        "registry: docker.io\\s+tag:\\s+(?<currentValue>.+)"
+        "registry: docker.io\\s+tag:\\s+[\"]?(?<currentValue>[^\"]*)[\"]?"
       ],
       "depNameTemplate": "docker.io/neuvector/controller",
       "datasourceTemplate": "docker"
@@ -127,7 +127,7 @@
     {
       "fileMatch": ["^src/neuvector/values/registry1-values\\.yaml$"],
       "matchStrings": [
-        "registry: registry1.dso.mil\\s+tag:\\s+(?<currentValue>.+)"
+        "registry: registry1.dso.mil\\s+tag:\\s+[\"]?(?<currentValue>[^\"]*)[\"]?"
       ],
       "depNameTemplate": "registry1.dso.mil/ironbank/neuvector/neuvector/controller",
       "datasourceTemplate": "docker"
@@ -135,7 +135,7 @@
     {
       "fileMatch": ["^src/neuvector/values/.*\\.yaml$"],
       "matchStrings": [
-        "registry:\\s+(?<registryUrl>.*?)\n(.|\\s)*repository:\\s+(?<depName>.*?)\\s+tag:\\s+(?<currentValue>.+)"
+        "registry:\\s+(?<registryUrl>.*?)\n(.|\\s)*repository:\\s+(?<depName>.*?)\\s+tag:\\s+[\"]?(?<currentValue>[^\"]*)[\"]?"
       ],
       "registryUrlTemplate": "https://{{{registryUrl}}}",
       "datasourceTemplate": "docker"
