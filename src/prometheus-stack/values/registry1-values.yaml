@@ -8,7 +8,7 @@ kube-state-metrics:
   image:
     registry: registry1.dso.mil
     repository: ironbank/opensource/kubernetes/kube-state-metrics
-    tag: v2.11.0
+    tag: v2.12.0
   securityContext:
     enabled: true
     fsGroup: 65532
@@ -20,7 +20,7 @@ prometheus:
     image:
       registry: registry1.dso.mil
       repository: ironbank/opensource/prometheus/prometheus
-      tag: v2.51.0
+      tag: v2.51.2
 prometheus-node-exporter:
   image:
     registry: registry1.dso.mil
@@ -48,9 +48,9 @@ prometheusOperator:
   image:
     registry: registry1.dso.mil
     repository: ironbank/opensource/prometheus-operator/prometheus-operator
-    tag: v0.72.0
+    tag: v0.73.1
   prometheusConfigReloader:
     image:
       registry: registry1.dso.mil
       repository: ironbank/opensource/prometheus-operator/prometheus-config-reloader
-      tag: v0.72.0
+      tag: v0.73.1
