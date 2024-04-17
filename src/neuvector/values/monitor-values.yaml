@@ -1,7 +1,8 @@
 leastPrivilege: false
 
 exporter:
-  enabled: true
+  # This is disabled pending further discussion/upstream changes to handle metrics with SSO setup
+  enabled: false
   # Disable serviceMonitor to handle standalone testing, handled by UDS Package
   serviceMonitor:
     enabled: false

@@ -17,8 +17,8 @@ metrics-server:
   - "src/metrics-server/**"
 neuvector:
   - "src/neuvector/**"
-prometheus-stack:
-  - "src/prometheus-stack/**"
+# prometheus-stack:
+#   - "src/prometheus-stack/**"
 promtail:
   - "src/promtail/**"
 tempo:

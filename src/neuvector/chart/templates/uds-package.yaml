@@ -4,14 +4,15 @@ metadata:
   name: neuvector
   namespace: {{ .Release.Namespace }}
 spec:
-  monitor:
-    - selector:
-        app: neuvector-prometheus-exporter
-      podSelector:
-        app: neuvector-prometheus-exporter-pod
-      portName: metrics
-      targetPort: 8068
-      description: "Metrics"
+  # This is disabled pending further discussion/upstream changes to handle metrics with SSO setup
+  # monitor:
+  #   - selector:
+  #       app: neuvector-prometheus-exporter
+  #     podSelector:
+  #       app: neuvector-prometheus-exporter-pod
+  #     portName: metrics
+  #     targetPort: 8068
+  #     description: "Metrics"
 
   network:
     expose:
