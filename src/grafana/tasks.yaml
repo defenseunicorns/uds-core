@@ -8,9 +8,18 @@ tasks:
             name: "app.kubernetes.io/instance=grafana"
             namespace: grafana
             condition: Ready
-      - description: Validate grafana interface
-        wait:
-          network:
-            protocol: https
-            address: grafana.admin.uds.dev
-            code: 302 # Expect a 302 redirect to keycloak
+      - description: Validate grafana virtual service
+        cmd: |
+          if [ "$(curl -isS https://grafana.admin.uds.dev --output /dev/null -w '%{http_code}')" == "302" ]; then
+            echo "Grafana is up and running."
+          else
+            echo "ERROR: Grafana returned a $(curl -isS https://grafana.admin.uds.dev --output /dev/null -w '%{http_code}') code."
+            exit 1
+          fi
+
+          if curl -L -isS https://grafana.admin.uds.dev --output /dev/null -w '%{url_effective}' | grep "sso.uds.dev" 2>&1 1>/dev/null; then
+            echo "Grafana is redirecting to SSO as expected."
+          else
+            echo "ERROR: Grafana is redirecting to $(curl -L -isS https://grafana.admin.uds.dev --output /dev/null -w '%{url_effective}')."
+            exit 1
+          fi
