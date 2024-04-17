@@ -91,6 +91,29 @@ resources:
     cpu: "1"
     memory: "1Gi"
 
+# Persistence settings for PVC management (when enabled=false, an emptyDir will be used)
+# `devMode` overrides the enabled flag for `data` and `themes` to allow hot-reloads of the theme/plugin in k3d
+#
+#  NOTE:
+#    Default persistence settings should be sufficient for *nearly all use cases*, especially when used in conjunction with
+#      the [uds-identity-config](https://github.com/defenseunicorns/uds-identity-config) image which is included by default.
+#      Unique situations may require changes, but care should be taken to account for an appropriate accessMode for your environment.
+persistence:
+  accessMode: ReadWriteOnce
+  storageClassName: ""
+  providers:
+    enabled: false
+    size: "512Mi"
+  conf:
+    enabled: false
+    size: "512Mi"
+  data:
+    enabled: false
+    size: "512Mi"
+  themes:
+    enabled: false
+    size: "512Mi"
+
 # Pod disruption budget
 podDisruptionBudget: {}
 
