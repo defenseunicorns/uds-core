@@ -49,10 +49,6 @@ tasks:
       - description: "Create the requested Zarf Package (must set UDS_PKG environment variable)"
         cmd: "uds zarf package create src/${UDS_PKG} --confirm --no-progress --flavor ${FLAVOR}"
 
-  - name: single-package-istio
-    description: "Create a single Zarf Package + the Istio package, must set UDS_PKG environment variable"
-    actions:
-      - task: single-package
       - description: "Create the Istio Zarf Package, if UDS_PKG != istio"
         cmd: |
           if [ "${UDS_PKG}" != "istio" ]; then
