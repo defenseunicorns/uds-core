@@ -12,12 +12,8 @@ spec:
   resources:
     requests:
       storage: {{ .Values.persistence.providers.size | quote }}
-  {{ if .Values.persistence.storageClassName }}
-  {{- if (eq "-" .Values.persistence.storageClassName) }}
-  storageClassName: ""
-  {{- else }}
+  {{- if .Values.persistence.storageClassName }}
   storageClassName: "{{ .Values.persistence.storageClassName }}"
-  {{- end }}
   {{- end }}
 ---
 {{- end }}
@@ -36,12 +32,8 @@ spec:
   resources:
     requests:
       storage: {{ .Values.persistence.conf.size | quote }}
-  {{ if .Values.persistence.storageClassName }}
-  {{- if (eq "-" .Values.persistence.storageClassName) }}
-  storageClassName: ""
-  {{- else }}
+  {{- if .Values.persistence.storageClassName }}
   storageClassName: "{{ .Values.persistence.storageClassName }}"
-  {{- end }}
   {{- end }}
 ---
 {{- end }}
@@ -61,12 +53,8 @@ spec:
   resources:
     requests:
       storage: {{ .Values.persistence.data.size | quote }}
-  {{ if .Values.persistence.storageClassName }}
-  {{- if (eq "-" .Values.persistence.storageClassName) }}
-  storageClassName: ""
-  {{- else }}
+  {{- if .Values.persistence.storageClassName }}
   storageClassName: "{{ .Values.persistence.storageClassName }}"
-  {{- end }}
   {{- end }}
 ---
 {{- end }}
@@ -87,10 +75,6 @@ spec:
     requests:
       storage: {{ .Values.persistence.themes.size | quote }}
   {{- if .Values.persistence.storageClassName }}
-  {{- if (eq "-" .Values.persistence.storageClassName) }}
-  storageClassName: ""
-  {{- else }}
   storageClassName: "{{ .Values.persistence.storageClassName }}"
-  {{- end }}
   {{- end }}
 {{- end }}
