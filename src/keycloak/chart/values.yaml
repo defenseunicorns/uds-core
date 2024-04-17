@@ -2,12 +2,12 @@ image:
   # The Keycloak image repository
   repository: quay.io/keycloak/keycloak
   # Overrides the Keycloak image tag whose default is the chart appVersion
-  tag: "23.0.4"
+  tag: "24.0.2"
   # The Keycloak image pull policy
   pullPolicy: IfNotPresent
 
 # renovate: datasource=github-tags depName=defenseunicorns/uds-identity-config versioning=semver
-configImage: ghcr.io/defenseunicorns/uds/identity-config:0.3.6
+configImage: ghcr.io/defenseunicorns/uds/identity-config:0.4.0
 
 # The public domain name of the Keycloak server
 domain: "###ZARF_VAR_DOMAIN###"
@@ -90,6 +90,29 @@ resources:
   limits:
     cpu: "1"
     memory: "1Gi"
+
+# Persistence settings for PVC management (when enabled=false, an emptyDir will be used)
+# `devMode` overrides the enabled flag for `data` and `themes` to allow hot-reloads of the theme/plugin in k3d
+#
+#  NOTE:
+#    Default persistence settings should be sufficient for *nearly all use cases*, especially when used in conjunction with
+#      the [uds-identity-config](https://github.com/defenseunicorns/uds-identity-config) image which is included by default.
+#      Unique situations may require changes, but care should be taken to account for an appropriate accessMode for your environment.
+persistence:
+  accessMode: ReadWriteOnce
+  storageClassName: ""
+  providers:
+    enabled: false
+    size: "512Mi"
+  conf:
+    enabled: false
+    size: "512Mi"
+  data:
+    enabled: false
+    size: "512Mi"
+  themes:
+    enabled: false
+    size: "512Mi"
 
 # Pod disruption budget
 podDisruptionBudget: {}

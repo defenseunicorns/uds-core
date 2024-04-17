@@ -98,10 +98,6 @@ spec:
               value: edge
             
             # X509 configuration
-            - name: KC_SPI_TRUSTSTORE_FILE_FILE
-              value: /opt/keycloak/conf/truststore.jks
-            - name: KC_SPI_TRUSTSTORE_FILE_PASSWORD
-              value: "password"
             - name: KC_HTTPS_CLIENT_AUTH
               value: request
 
@@ -239,19 +235,32 @@ spec:
       terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
       volumes:
         - name: providers
+          {{- if .Values.persistence.providers.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ include "keycloak.fullname" . }}-providers
+          {{- else }}
           emptyDir: {}
+          {{- end }}
         - name: conf
+          {{- if .Values.persistence.conf.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ include "keycloak.fullname" . }}-conf
+          {{- else }}
           emptyDir: {}
-      {{- if .Values.devMode }}
+          {{- end }}
         - name: data
+          {{- if or .Values.persistence.data.enabled .Values.devMode }}
+          # devMode enables this PVC by default to preserve legacy behavior
           persistentVolumeClaim:
             claimName: {{ include "keycloak.fullname" . }}-data
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
         - name: themes
+          {{- if or .Values.persistence.themes.enabled .Values.devMode }}
+          # devMode enables this PVC by default to preserve legacy behavior
           persistentVolumeClaim:
             claimName: {{ include "keycloak.fullname" . }}-themes
-      {{- else }}
-        - name: data
+          {{- else }}
           emptyDir: {}
-        - name: themes
-          emptyDir: {}
-      {{- end }}
+          {{- end }}
