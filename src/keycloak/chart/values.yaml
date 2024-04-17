@@ -92,7 +92,7 @@ resources:
     memory: "1Gi"
 
 # Persistence settings for PVC management (when enabled=false, an emptyDir will be used)
-# `devMode` overrides the enabled flag for `data` and `themes` to preserve legacy behavior
+# `devMode` overrides the enabled flag for `data` and `themes` to allow hot-reloads of the theme/plugin in k3d
 persistence:
   accessMode: ReadWriteOnce
   storageClassName: ""
