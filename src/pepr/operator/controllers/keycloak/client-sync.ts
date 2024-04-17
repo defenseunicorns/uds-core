@@ -101,8 +101,8 @@ async function syncClient(
     // Remove the registrationAccessToken from the client object to avoid problems (one-time use token)
     delete client.registrationAccessToken;
 
-    if (clientReq.protocol && clientReq.protocol === "saml") {
-      client.samlCertificate = await getSamlCertificate();
+    if (clientReq.protocol === "saml") {
+      client.samlIdpCertificate = await getSamlCertificate();
     }
 
     // Create or update the client secret

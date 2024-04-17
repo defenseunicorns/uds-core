@@ -25,5 +25,5 @@ export interface Client {
   standardFlowEnabled: boolean;
   surrogateAuthRequired: boolean;
   webOrigins: string[];
-  samlCertificate?: string;
+  samlIdpCertificate?: string;
 }
