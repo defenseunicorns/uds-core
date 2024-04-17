@@ -14,9 +14,9 @@ controller:
   apisvc:
     type: ClusterIP
   configmap:
-    enabled: false
+    enabled: true
     data:
-      sysinitcfg.yaml:
+      sysinitcfg.yaml: |
         always_reload: true
         no_telemetry_report: true
         scan_config:

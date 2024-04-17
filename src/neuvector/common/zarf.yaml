@@ -43,3 +43,7 @@ components:
                 name: neuvector
                 namespace: neuvector
                 condition: "'{.status.phase}'=Ready"
+          - description: Annotate Controller deployment for Neuvector SSO secret
+            cmd: |
+              SSO_CHECKSUM=$(kubectl get secret neuvector-secret -o json -n neuvector | sha256sum | cut -d' ' -f1)
+              kubectl annotate deployment neuvector-controller-pod -n neuvector neuvector-uds-secret=$SSO_CHECKSUM
