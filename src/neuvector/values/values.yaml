@@ -23,6 +23,9 @@ controller:
           auto_scan: true
   secret:
     enabled: false
+  env:
+    - name: NO_DEFAULT_ADMIN
+      value: "1"
 
 cve:
   scanner:
