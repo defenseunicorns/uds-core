@@ -96,8 +96,8 @@ resources:
 #
 #  NOTE:
 #    Default persistence settings should be sufficient for *nearly all use cases*, especially when used in conjunction with
-#      the [uds-identity-config](https://github.com/defenseunicorns/uds-identity-config) image which is included by default. 
-#      Unique situations may require changes, but care should be taken to account for an appropriate accessMode for your environment. 
+#      the [uds-identity-config](https://github.com/defenseunicorns/uds-identity-config) image which is included by default.
+#      Unique situations may require changes, but care should be taken to account for an appropriate accessMode for your environment.
 persistence:
   accessMode: ReadWriteOnce
   storageClassName: ""
