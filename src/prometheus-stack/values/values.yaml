@@ -95,7 +95,6 @@ prometheusOperator:
       cpu: 100m
       memory: 512Mi
 
-# todo: this does not work on single package testing because istio certs are missing
 alertmanager:
   alertmanagerSpec:
     scheme: "https"
