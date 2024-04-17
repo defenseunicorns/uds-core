@@ -86,7 +86,7 @@ spec:
   resources:
     requests:
       storage: {{ .Values.persistence.themes.size | quote }}
-  {{ if .Values.persistence.storageClassName }}
+  {{- if .Values.persistence.storageClassName }}
   {{- if (eq "-" .Values.persistence.storageClassName) }}
   storageClassName: ""
   {{- else }}
