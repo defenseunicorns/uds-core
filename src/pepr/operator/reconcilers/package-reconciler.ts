@@ -39,19 +39,22 @@ export async function packageReconciler(pkg: UDSPackage) {
     // Only configure the VirtualService if not running in single test mode
     let endpoints: string[] = [];
     let monitors: string[] = [];
-    if (!UDSConfig.isSingleTest) {
+    if (!UDSConfig.isSingleTest || UDSConfig.isSingleTestIstio) {
       // Update the namespace to ensure the istio-injection label is set
       await enableInjection(pkg);
 
       // Create the VirtualService for each exposed service
       endpoints = await virtualService(pkg, namespace!);
-
+    } else {
+      Log.warn(
+        `Running in single test mode, skipping ${name} Istio Injection and VirtualServices.`,
+      );
+    }
+    if (!UDSConfig.isSingleTest) {
       // Create the ServiceMonitor for each monitored service
       monitors = await serviceMonitor(pkg, namespace!);
     } else {
-      Log.warn(
-        `Running in single test mode, skipping ${name} VirtualServices and ServiceMonitors.`,
-      );
+      Log.warn(`Running in single test mode, skipping ${name} ServiceMonitors.`);
     }
 
     // Configure SSO

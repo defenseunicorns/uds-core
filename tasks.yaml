@@ -53,6 +53,10 @@ tasks:
     actions:
       - task: create:single-package
 
+  - name: create-single-package-istio
+    actions:
+      - task: create:single-package-istio
+
   - name: create-standard-package
     actions:
       - task: create:standard-package
@@ -61,6 +65,10 @@ tasks:
     actions:
       - task: deploy:single-package
 
+  - name: deploy-single-package-istio
+    actions:
+      - task: deploy:single-package-istio
+
   - name: deploy-standard-bundle
     actions:
       - task: deploy:k3d-standard-bundle
@@ -68,6 +76,10 @@ tasks:
   - name: test-single-package
     actions:
       - task: test:single-package
+
+  - name: test-single-package-istio
+    actions:
+      - task: test:single-package-istio
 
   - name: test-uds-core
     actions:

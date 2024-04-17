@@ -12,6 +12,9 @@ export const UDSConfig = {
   domain,
   // Track if we are running a single test mode
   isSingleTest: process.env.UDS_SINGLE_TEST === "true",
+  // Track if istio is enabled (for single test mode)
+  isSingleTestIstio:
+    process.env.UDS_SINGLE_TEST === "true" && process.env.UDS_SINGLE_TEST_ISTIO === "true",
   // Allow UDS policy exemptions to be used in any namespace
   allowAllNSExemptions: process.env.UDS_ALLOW_ALL_NS_EXEMPTIONS === "true",
 };

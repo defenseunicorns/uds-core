@@ -14,6 +14,16 @@ tasks:
       - description: "Validate the package"
         cmd: uds run -f src/${UDS_PKG}/tasks.yaml validate --no-progress
 
+  - name: single-package-istio
+    description: "Build and test a single package with Istio, must set UDS_PKG environment variable"
+    actions:
+      - task: create:single-package-istio
+      - task: setup:k3d-test-cluster
+      - task: deploy:single-package-istio
+
+      - description: "Validate the package"
+        cmd: uds run -f src/${UDS_PKG}/tasks.yaml validate --no-progress
+
   - name: validate-packages
     description: "Validated all packages"
     # loop through each src/* package and run the validate.yaml task
