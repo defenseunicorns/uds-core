@@ -10,7 +10,7 @@ tasks:
             condition: Ready
       - description: Validate grafana virtual service
         cmd: |
-          if [ "$(curl -isS https://grafana.admin.uds.dev --output /dev/null -w '%{http_code}')" == "302" ]; then
+          if [ "$(curl -isS https://grafana.admin.uds.dev --output /dev/null -w '%{http_code}')" = "302" ]; then
             echo "Grafana is up and running."
           else
             echo "ERROR: Grafana returned a $(curl -isS https://grafana.admin.uds.dev --output /dev/null -w '%{http_code}') code."
