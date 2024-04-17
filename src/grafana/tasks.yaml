@@ -13,4 +13,4 @@ tasks:
           network:
             protocol: https
             address: grafana.admin.uds.dev
-            code: 200
+            code: 302 # Expect a 302 redirect to keycloak
