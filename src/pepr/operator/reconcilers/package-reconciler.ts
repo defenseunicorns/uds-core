@@ -49,9 +49,7 @@ export async function packageReconciler(pkg: UDSPackage) {
       // Create the ServiceMonitor for each monitored service
       monitors = await serviceMonitor(pkg, namespace!);
     } else {
-      Log.warn(
-        `Running in single test mode, skipping ${name} ServiceMonitors.`,
-      );
+      Log.warn(`Running in single test mode, skipping ${name} ServiceMonitors.`);
     }
 
     // Configure SSO

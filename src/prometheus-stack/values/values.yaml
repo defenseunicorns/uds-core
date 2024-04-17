@@ -41,7 +41,7 @@ prometheus:
         memory: 2Gi
       requests:
         cpu: 100m
-        memory: 2Gi
+        memory: 512Mi
     ruleSelectorNilUsesHelmValues: false
     serviceMonitorSelectorNilUsesHelmValues: false
     storageSpec:
