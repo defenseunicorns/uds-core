@@ -16,8 +16,11 @@ domain: "###ZARF_VAR_DOMAIN###"
 realm: uds
 
 # UDS Identity Config Environment Variables
-identityConfigEnv:
-  ssoEnabled: false
+realmInitEnv:
+  realm_googleIdpEnabled: false
+  # Other UDS Identity Config fields that will be used in the realm.json initalization of keycloak
+  # realm_googleIdpClientId: ""
+  # realm_googleIdpClientSecret: ""
 
 # Generates an initial password for first admin user - only use if install is headless
 # (i.e. cannot hit keycloak UI with `zarf connect keycloak`), password should be changed after initial login
