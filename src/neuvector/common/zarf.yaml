@@ -46,4 +46,4 @@ components:
           - description: Annotate Controller deployment for Neuvector SSO secret
             cmd: |
               SSO_CHECKSUM=$(./zarf tools kubectl get secret neuvector-secret -o json -n neuvector | sha256sum | cut -d' ' -f1)
-              ./zarf tools kubectl patch deployment neuvector-controller-pod -n neuvector -p "{\"spec\":{\"template\":{\"metadata\":{\"annotations\":{\"neuvector-uds-secret\":\"$SSO_CHECKSUM\"}}}}}"
+              ./zarf tools kubectl patch deployment neuvector-controller-pod -n neuvector -p "{\"spec\":{\"template\":{\"metadata\":{\"annotations\":{\"checksum/uds-sso-secret\":\"$SSO_CHECKSUM\"}}}}}"
