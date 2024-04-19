@@ -15,6 +15,13 @@ domain: "###ZARF_VAR_DOMAIN###"
 # The primary Keycloak realm
 realm: uds
 
+# UDS Identity Config Environment Variables. More info here: https://github.com/defenseunicorns/uds-identity-config/blob/main/docs/CUSTOMIZE.md#override-default-realm
+realmInitEnv:
+  GOOGLE_IDP_ENABLED: false
+  # Other UDS Identity Config fields that will be used in the realm.json initalization of keycloak
+  # GOOGLE_IDP_CLIENTID: ""
+  # GOOGLE_IDP_CLIENT_SECRET: ""
+
 # Generates an initial password for first admin user - only use if install is headless
 # (i.e. cannot hit keycloak UI with `zarf connect keycloak`), password should be changed after initial login
 insecureAdminPasswordGeneration:
@@ -90,6 +97,29 @@ resources:
   limits:
     cpu: "1"
     memory: "1Gi"
+
+# Persistence settings for PVC management (when enabled=false, an emptyDir will be used)
+# `devMode` overrides the enabled flag for `data` and `themes` to allow hot-reloads of the theme/plugin in k3d
+#
+#  NOTE:
+#    Default persistence settings should be sufficient for *nearly all use cases*, especially when used in conjunction with
+#      the [uds-identity-config](https://github.com/defenseunicorns/uds-identity-config) image which is included by default.
+#      Unique situations may require changes, but care should be taken to account for an appropriate accessMode for your environment.
+persistence:
+  accessMode: ReadWriteOnce
+  storageClassName: ""
+  providers:
+    enabled: false
+    size: "512Mi"
+  conf:
+    enabled: false
+    size: "512Mi"
+  data:
+    enabled: false
+    size: "512Mi"
+  themes:
+    enabled: false
+    size: "512Mi"
 
 # Pod disruption budget
 podDisruptionBudget: {}
