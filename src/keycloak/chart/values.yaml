@@ -7,13 +7,20 @@ image:
   pullPolicy: IfNotPresent
 
 # renovate: datasource=github-tags depName=defenseunicorns/uds-identity-config versioning=semver
-configImage: ghcr.io/defenseunicorns/uds/identity-config:0.4.0
+configImage: ghcr.io/defenseunicorns/uds/identity-config:0.4.1
 
 # The public domain name of the Keycloak server
 domain: "###ZARF_VAR_DOMAIN###"
 
 # The primary Keycloak realm
 realm: uds
+
+# UDS Identity Config Environment Variables. More info here: https://github.com/defenseunicorns/uds-identity-config/blob/main/docs/CUSTOMIZE.md#templated-realm-values
+realmInitEnv:
+  GOOGLE_IDP_ENABLED: false
+  # Other UDS Identity Config fields that will be used in the realm.json initalization of keycloak
+  # GOOGLE_IDP_CLIENTID: ""
+  # GOOGLE_IDP_CLIENT_SECRET: ""
 
 # Generates an initial password for first admin user - only use if install is headless
 # (i.e. cannot hit keycloak UI with `zarf connect keycloak`), password should be changed after initial login
