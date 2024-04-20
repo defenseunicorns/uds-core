@@ -455,6 +455,10 @@ export interface Sso {
    */
   alwaysDisplayInConsole?: boolean;
   /**
+   * Specifies attributes for the client.
+   */
+  attributes?: { [key: string]: string };
+  /**
    * The client authenticator type
    */
   clientAuthenticatorType?: ClientAuthenticatorType;
@@ -482,6 +486,10 @@ export interface Sso {
    * Specifies display name of the client
    */
   name: string;
+  /**
+   * Specifies the protocol of the client, either 'openid-connect' or 'saml'
+   */
+  protocol?: Protocol;
   /**
    * Valid URI pattern a browser can redirect to after a successful login. Simple wildcards
    * are allowed such as 'https://unicorns.uds.dev/*'
@@ -516,6 +524,14 @@ export interface Sso {
 export enum ClientAuthenticatorType {
   ClientJwt = "client-jwt",
   ClientSecret = "client-secret",
+}
+
+/**
+ * Specifies the protocol of the client, either 'openid-connect' or 'saml'
+ */
+export enum Protocol {
+  OpenidConnect = "openid-connect",
+  Saml = "saml",
 }
 
 export interface Status {

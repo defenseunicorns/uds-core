@@ -247,6 +247,18 @@ const sso = {
           "A description for the client, can be a URL to an image to replace the login logo",
         type: "string",
       },
+      protocol: {
+        description: "Specifies the protocol of the client, either 'openid-connect' or 'saml'",
+        type: "string",
+        enum: ["openid-connect", "saml"],
+      },
+      attributes: {
+        description: "Specifies attributes for the client.",
+        type: "object",
+        additionalProperties: {
+          type: "string",
+        },
+      },
       rootUrl: {
         description: "Root URL appended to relative URLs",
         type: "string",
