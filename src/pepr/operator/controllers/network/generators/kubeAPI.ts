@@ -1,5 +1,5 @@
 import { V1NetworkPolicyPeer } from "@kubernetes/client-node";
-import { K8s, Log, R, kind } from "pepr";
+import { K8s, kind, Log, R } from "pepr";
 
 import { RemoteGenerated } from "../../../crd";
 import { anywhere } from "./anywhere";
@@ -36,8 +36,16 @@ export function kubeAPI() {
  * @param slice The EndpointSlice for the API server
  */
 export async function updateAPIServerCIDRFromEndpointSlice(slice: kind.EndpointSlice) {
-  const svc = await K8s(kind.Service).InNamespace("default").Get("kubernetes");
-  await updateAPIServerCIDR(slice, svc);
+  try {
+    Log.debug(
+      "Processing watch for endpointslices, getting k8s service for updating API server CIDR",
+    );
+    const svc = await K8s(kind.Service).InNamespace("default").Get("kubernetes");
+    await updateAPIServerCIDR(slice, svc);
+  } catch (err) {
+    const msg = "Failed to update network policies from endpoint slice watch";
+    Log.error({ err }, msg);
+  }
 }
 
 /**
@@ -45,8 +53,16 @@ export async function updateAPIServerCIDRFromEndpointSlice(slice: kind.EndpointS
  * @param svc The Service for the API server
  */
 export async function updateAPIServerCIDRFromService(svc: kind.Service) {
-  const slice = await K8s(kind.EndpointSlice).InNamespace("default").Get("kubernetes");
-  await updateAPIServerCIDR(slice, svc);
+  try {
+    Log.debug(
+      "Processing watch for api service, getting endpoint slices for updating API server CIDR",
+    );
+    const slice = await K8s(kind.EndpointSlice).InNamespace("default").Get("kubernetes");
+    await updateAPIServerCIDR(slice, svc);
+  } catch (err) {
+    const msg = "Failed to update network policies from api service watch";
+    Log.error({ err }, msg);
+  }
 }
 
 /**
@@ -74,24 +90,29 @@ export async function updateAPIServerCIDR(slice: kind.EndpointSlice, svc: kind.S
       },
     }));
 
-    // Get all the KubeAPI NetworkPolicies
-    const netPols = await K8s(kind.NetworkPolicy)
-      .WithLabel("uds.dev/generated", RemoteGenerated.KubeAPI)
-      .Get();
+    try {
+      // Get all the KubeAPI NetworkPolicies
+      const netPols = await K8s(kind.NetworkPolicy)
+        .WithLabel("uds.dev/generated", RemoteGenerated.KubeAPI)
+        .Get();
 
-    for (const netPol of netPols.items) {
-      // Get the old peers
-      const oldPeers = netPol.spec?.egress?.[0].to;
+      for (const netPol of netPols.items) {
+        // Get the old peers
+        const oldPeers = netPol.spec?.egress?.[0].to;
 
-      // Update the NetworkPolicy if the peers have changed
-      if (!R.equals(oldPeers, apiServerPeers)) {
-        // Note using the apiServerPeers variable here instead of the oldPeers variable
-        // in case another EndpointSlice is updated before this one
-        netPol.spec!.egress![0].to = apiServerPeers;
+        // Update the NetworkPolicy if the peers have changed
+        if (!R.equals(oldPeers, apiServerPeers)) {
+          // Note using the apiServerPeers variable here instead of the oldPeers variable
+          // in case another EndpointSlice is updated before this one
+          netPol.spec!.egress![0].to = apiServerPeers;
 
-        Log.debug(`Updating ${netPol.metadata!.namespace}/${netPol.metadata!.name}`);
-        await K8s(kind.NetworkPolicy).Apply(netPol);
+          Log.debug(`Updating ${netPol.metadata!.namespace}/${netPol.metadata!.name}`);
+          await K8s(kind.NetworkPolicy).Apply(netPol);
+        }
       }
+    } catch (err) {
+      const msg = "Failed to update network policies with new API CIDRs";
+      Log.error({ err }, msg);
     }
   }
 }
