@@ -11,9 +11,7 @@ let apiServerPeers: V1NetworkPolicyPeer[];
  * Initialize the API server CIDR by getting the EndpointSlice and Service for the API server
  */
 export async function initAPIServerCIDR() {
-  const slice = await K8s(kind.EndpointSlice).InNamespace("default").Get(
-    "kubernetes",
-  );
+  const slice = await K8s(kind.EndpointSlice).InNamespace("default").Get("kubernetes");
   const svc = await K8s(kind.Service).InNamespace("default").Get("kubernetes");
   await updateAPIServerCIDR(slice, svc);
 }
@@ -37,16 +35,12 @@ export function kubeAPI() {
  * When the kubernetes EndpointSlice is created or updated, update the API server CIDR
  * @param slice The EndpointSlice for the API server
  */
-export async function updateAPIServerCIDRFromEndpointSlice(
-  slice: kind.EndpointSlice,
-) {
+export async function updateAPIServerCIDRFromEndpointSlice(slice: kind.EndpointSlice) {
   try {
     Log.debug(
       "Processing watch for endpointslices, getting k8s service for updating API server CIDR",
     );
-    const svc = await K8s(kind.Service).InNamespace("default").Get(
-      "kubernetes",
-    );
+    const svc = await K8s(kind.Service).InNamespace("default").Get("kubernetes");
     await updateAPIServerCIDR(slice, svc);
   } catch (err) {
     const msg = "Failed to update network policies from endpoint slice watch";
@@ -63,9 +57,7 @@ export async function updateAPIServerCIDRFromService(svc: kind.Service) {
     Log.debug(
       "Processing watch for api service, getting endpoint slices for updating API server CIDR",
     );
-    const slice = await K8s(kind.EndpointSlice).InNamespace("default").Get(
-      "kubernetes",
-    );
+    const slice = await K8s(kind.EndpointSlice).InNamespace("default").Get("kubernetes");
     await updateAPIServerCIDR(slice, svc);
   } catch (err) {
     const msg = "Failed to update network policies from api service watch";
@@ -79,15 +71,12 @@ export async function updateAPIServerCIDRFromService(svc: kind.Service) {
  * @param slice The EndpointSlice for the API server
  * @param svc The Service for the API server
  */
-export async function updateAPIServerCIDR(
-  slice: kind.EndpointSlice,
-  svc: kind.Service,
-) {
+export async function updateAPIServerCIDR(slice: kind.EndpointSlice, svc: kind.Service) {
   const { endpoints } = slice;
   const k8sApiIP = svc.spec?.clusterIP;
 
   // Flatten the endpoints into a list of IPs
-  const peers = endpoints?.flatMap((e) => e.addresses);
+  const peers = endpoints?.flatMap(e => e.addresses);
 
   if (k8sApiIP) {
     peers?.push(k8sApiIP);
@@ -95,7 +84,7 @@ export async function updateAPIServerCIDR(
 
   // If the peers are found, cache and process them
   if (peers?.length) {
-    apiServerPeers = peers.flatMap((ip) => ({
+    apiServerPeers = peers.flatMap(ip => ({
       ipBlock: {
         cidr: `${ip}/32`,
       },
@@ -116,9 +105,7 @@ export async function updateAPIServerCIDR(
         // in case another EndpointSlice is updated before this one
         netPol.spec!.egress![0].to = apiServerPeers;
 
-        Log.debug(
-          `Updating ${netPol.metadata!.namespace}/${netPol.metadata!.name}`,
-        );
+        Log.debug(`Updating ${netPol.metadata!.namespace}/${netPol.metadata!.name}`);
         await K8s(kind.NetworkPolicy).Apply(netPol);
       }
     }
