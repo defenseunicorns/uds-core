@@ -33,7 +33,7 @@ When(a.EndpointSlice)
   .IsCreatedOrUpdated()
   .InNamespace("default")
   .WithName("kubernetes")
-  .Watch(updateAPIServerCIDRFromEndpointSlice);
+  .Reconcile(updateAPIServerCIDRFromEndpointSlice);
 
 // Watch for changes to the API server Service and update the API server CIDR
 When(a.Service)
