@@ -12,23 +12,25 @@ const uidSeen = new Set<string>();
  * @param cr The custom resource to check
  * @returns true if the CRD is pending or the current generation has been processed
  */
-export function isPendingOrCurrent(cr: UDSExemption | UDSPackage) {
+export function shouldSkip(cr: UDSExemption | UDSPackage) {
   const isPending = cr.status?.phase === Phase.Pending;
   const isCurrentGeneration = cr.metadata?.generation === cr.status?.observedGeneration;
 
   // First check if the CR has been seen before and return false if it has not
   // This ensures that all CRs are processed at least once during the lifetime of the pod
   if (!uidSeen.has(cr.metadata!.uid!)) {
-    Log.debug(cr, `First time processed during this pod's lifetime`);
+    Log.debug(cr, `Should skip? No, first time processed during this pod's lifetime`);
     uidSeen.add(cr.metadata!.uid!);
     return false;
   }
 
   // This is the second time the CR has been seen, so check if it is pending or the current generation
   if (isPending || isCurrentGeneration) {
-    Log.debug(cr, `Skipping pending or completed exemption`);
+    Log.debug(cr, `Should skip? Yes, pending or current generation and not first time seen`);
     return true;
   }
+
+  Log.debug(cr, `Should skip? No, not pending or current generation and not first time seen`);
 
   return false;
 }

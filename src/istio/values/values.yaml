@@ -1,7 +1,7 @@
 meshConfig:
   accessLogFile: /dev/stdout
   pathNormalization:
-    normalization: DECODE_AND_MERGE_SLASHES
+    normalization: MERGE_SLASHES
   defaultConfig:
     holdApplicationUntilProxyStarts: true
     gatewayTopology:

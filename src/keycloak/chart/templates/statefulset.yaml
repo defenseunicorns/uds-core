@@ -72,6 +72,9 @@ spec:
             # This will only import the realm if it does not exist
             - "--import-realm"
             - "--features=preview"
+          envFrom:
+            - secretRef:
+                name: {{ include "keycloak.fullname" . }}-realm-env            
           env:
             # Common configuration
             - name: UDS_DOMAIN
@@ -98,10 +101,6 @@ spec:
               value: edge
             
             # X509 configuration
-            - name: KC_SPI_TRUSTSTORE_FILE_FILE
-              value: /opt/keycloak/conf/truststore.jks
-            - name: KC_SPI_TRUSTSTORE_FILE_PASSWORD
-              value: "password"
             - name: KC_HTTPS_CLIENT_AUTH
               value: request
 
@@ -170,6 +169,18 @@ spec:
               value: "-Dcom.redhat.fips=true"
             {{- end }}
           {{- end }}
+          {{- if .Values.insecureAdminPasswordGeneration.enabled }}
+            - name: KEYCLOAK_ADMIN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "keycloak.fullname" . }}-admin-password
+                  key: username
+            - name: KEYCLOAK_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "keycloak.fullname" . }}-admin-password
+                  key: password
+          {{- end }}
           ports:
             - name: http
               containerPort: 8080
@@ -227,19 +238,32 @@ spec:
       terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
       volumes:
         - name: providers
+          {{- if .Values.persistence.providers.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ include "keycloak.fullname" . }}-providers
+          {{- else }}
           emptyDir: {}
+          {{- end }}
         - name: conf
+          {{- if .Values.persistence.conf.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ include "keycloak.fullname" . }}-conf
+          {{- else }}
           emptyDir: {}
-      {{- if .Values.devMode }}
+          {{- end }}
         - name: data
+          {{- if or .Values.persistence.data.enabled .Values.devMode }}
+          # devMode enables this PVC by default to preserve legacy behavior
           persistentVolumeClaim:
             claimName: {{ include "keycloak.fullname" . }}-data
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
         - name: themes
+          {{- if or .Values.persistence.themes.enabled .Values.devMode }}
+          # devMode enables this PVC by default to preserve legacy behavior
           persistentVolumeClaim:
             claimName: {{ include "keycloak.fullname" . }}-themes
-      {{- else }}
-        - name: data
+          {{- else }}
           emptyDir: {}
-        - name: themes
-          emptyDir: {}
-      {{- end }}
+          {{- end }}

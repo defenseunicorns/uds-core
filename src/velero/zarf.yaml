@@ -16,9 +16,9 @@ components:
         valuesFiles:
           - values/upstream-values.yaml
     images:
-      - velero/velero:v1.13.0
-      - velero/velero-plugin-for-aws:v1.9.0
-      - docker.io/bitnami/kubectl:1.28.6
+      - velero/velero:v1.13.1
+      - velero/velero-plugin-for-aws:v1.9.1
+      - docker.io/bitnami/kubectl:1.29.3
 
   - name: velero
     required: true
@@ -31,6 +31,6 @@ components:
         valuesFiles:
           - values/registry1-values.yaml
     images:
-      - registry1.dso.mil/ironbank/opensource/velero/velero:v1.13.0
-      - registry1.dso.mil/ironbank/opensource/velero/velero-plugin-for-aws:v1.9.0
+      - registry1.dso.mil/ironbank/opensource/velero/velero:v1.13.1
+      - registry1.dso.mil/ironbank/opensource/velero/velero-plugin-for-aws:v1.9.1
       - registry1.dso.mil/ironbank/big-bang/base:2.1.0

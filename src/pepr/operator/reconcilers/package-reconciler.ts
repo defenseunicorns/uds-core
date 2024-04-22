@@ -1,6 +1,6 @@
 import { Log } from "pepr";
 
-import { handleFailure, isPendingOrCurrent, updateStatus } from ".";
+import { handleFailure, shouldSkip, updateStatus } from ".";
 import { UDSConfig } from "../../config";
 import { enableInjection } from "../controllers/istio/injection";
 import { virtualService } from "../controllers/istio/virtual-service";
@@ -16,14 +16,15 @@ import { migrate } from "../crd/migrate";
  * @param pkg the package to reconcile
  */
 export async function packageReconciler(pkg: UDSPackage) {
-  if (isPendingOrCurrent(pkg)) {
-    return;
-  }
-
   const metadata = pkg.metadata!;
   const { namespace, name } = metadata;
 
   Log.info(pkg, `Processing Package ${namespace}/${name}`);
+
+  if (shouldSkip(pkg)) {
+    Log.info(pkg, `Skipping Package ${namespace}/${name}`);
+    return;
+  }
 
   // Migrate the package to the latest version
   migrate(pkg);

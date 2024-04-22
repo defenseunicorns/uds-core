@@ -5,11 +5,28 @@ fullnameOverride: loki
 # -- Overrides the chart's cluster label
 clusterLabelOverride: null
 
+# Prevent startup issues with service existence/resolution
+memberlist:
+  service:
+    publishNotReadyAddresses: true
+
 loki:
   storage:
-    type: "filesystem"
+    bucketNames:
+      chunks: uds
+      ruler: uds
+      admin: uds
+    type: s3
+    s3:
+      endpoint: http://minio.uds-dev-stack.svc.cluster.local:9000
+      secretAccessKey: uds-secret
+      accessKeyId: uds
+      s3ForcePathStyle: true
+      insecure: false
   commonConfig:
     replication_factor: 1
+  extraMemberlistConfig:
+    rejoin_interval: 120s
   # Should authentication be enabled
   auth_enabled: false
   # -- Additional storage config
@@ -48,29 +65,11 @@ rbac:
 # -- Section for configuring optional Helm test
 test:
   enabled: false
-# Configuration for the write pod(s)
-write:
-  resources:
-    limits:
-      cpu: 300m
-      memory: 2Gi
-    requests:
-      cpu: 300m
-      memory: 2Gi
-# Configuration for the read pod(s)
-read:
-  # -- Resource requests and limits for the read
-  resources:
-    limits:
-      cpu: 300m
-      memory: 2Gi
-    requests:
-      cpu: 300m
-      memory: 2Gi
+
 # Configuration for the single binary node(s)
 singleBinary:
   # -- Number of replicas for the single binary
-  replicas: 1
+  replicas: 0
   # -- Resource requests and limits for the single binary
   resources:
     limits:
@@ -118,5 +117,17 @@ monitoring:
     enabled: false
 gateway:
   enabled: true
-  # Remove default anti-affinity since this is a 1-replica setup
+  # Remove default anti-affinity to support single node
+  affinity: ""
+
+read:
+  # Remove default anti-affinity to support single node
+  affinity: ""
+
+write:
+  # Remove default anti-affinity to support single node
+  affinity: ""
+
+backend:
+  # Remove default anti-affinity to support single node
   affinity: ""

@@ -1,0 +1,21 @@
+name: debug-output
+description: "Print out basic debug info for a k8s cluster"
+
+runs:
+  using: composite
+  steps:
+    - name: Print basic debug info for a k8s cluster
+      run: |
+        echo "::group::kubectl get all"
+        uds zarf tools kubectl get all -A
+        echo "::endgroup::"
+        echo "::group::kubectl get pv,pvc"
+        uds zarf tools kubectl get pv,pvc -A
+        echo "::endgroup::"
+        echo "::group::kubectl get package"
+        uds zarf tools kubectl get package -A
+        echo "::endgroup::"
+        echo "::group::kubectl get events"
+        uds zarf tools kubectl get events -A --sort-by='.lastTimestamp'
+        echo "::endgroup::"
+      shell: bash

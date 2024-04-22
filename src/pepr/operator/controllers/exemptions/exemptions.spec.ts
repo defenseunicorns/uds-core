@@ -1,14 +1,26 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { Store } from "../../../policies/common";
-import { processExemptions, removeExemptions } from "./exemptions";
-import { Policy } from "../../crd";
+import { MatcherKind, Policy } from "../../crd";
 import { Exemption } from "../../crd/generated/exemption-v1alpha1";
+import { processExemptions, removeExemptions } from "./exemptions";
 
 const mockStore = new Map<string, string>();
-const enforcerMatcher = { namespace: "neuvector", name: "^neuvector-enforcer-pod.*" };
-const controllerMatcher = { namespace: "neuvector", name: "^neuvector-controller-pod.*" };
-const prometheusMatcher = { namespace: "neuvector", name: "^neuvector-prometheus-exporter-pod.*" };
-const promtailMatcher = { namespace: "promtail", name: "^promtail-.*" };
+const enforcerMatcher = {
+  namespace: "neuvector",
+  name: "^neuvector-enforcer-pod.*",
+  kind: MatcherKind.Pod,
+};
+const controllerMatcher = {
+  namespace: "neuvector",
+  name: "^neuvector-controller-pod.*",
+  kind: MatcherKind.Pod,
+};
+const prometheusMatcher = {
+  namespace: "neuvector",
+  name: "^neuvector-prometheus-exporter-pod.*",
+  kind: MatcherKind.Pod,
+};
+const promtailMatcher = { namespace: "promtail", name: "^promtail-.*", kind: MatcherKind.Pod };
 const exemption1UID = "exemption-1-uid";
 const exemption2UID = "exemption-2-uid";
 const storedEnforcerMatcher = { ...enforcerMatcher, owner: exemption1UID };
@@ -41,7 +53,7 @@ const neuvectorMockExemption = {
   },
 } as Exemption;
 
-describe("Test Exemptions Controller", () => {
+describe("Test processExemptions()", () => {
   beforeEach(() => {
     jest.spyOn(Store, "getItem").mockImplementation((key: string) => {
       return mockStore.get(key) || null;
@@ -59,6 +71,9 @@ describe("Test Exemptions Controller", () => {
 
   it("Add exemptions for the first time", async () => {
     processExemptions(neuvectorMockExemption);
+    expect(Store.getItem(Policy.RequireNonRootUser)).toEqual(
+      `[${JSON.stringify(storedEnforcerMatcher)}]`,
+    );
     expect(Store.getItem(Policy.DisallowPrivileged)).toEqual(
       `[${JSON.stringify(storedEnforcerMatcher)},${JSON.stringify(storedControllerMatcher)}]`,
     );
@@ -107,7 +122,7 @@ describe("Test Exemptions Controller", () => {
     );
   });
 
-  it("Removes exemptions policies when CR updates", async () => {
+  it("Removes exemptions from policy if policies removed from matcher policy list on update", async () => {
     const updatedNeuvectorExemption = {
       metadata: {
         uid: exemption1UID,
@@ -128,16 +143,8 @@ describe("Test Exemptions Controller", () => {
     } as Exemption;
 
     processExemptions(neuvectorMockExemption);
-    expect(Store.getItem(Policy.DropAllCapabilities)).toEqual(
-      `[${JSON.stringify(storedEnforcerMatcher)},${JSON.stringify(
-        storedControllerMatcher,
-      )},${JSON.stringify(storedPrometheusMatcher)}]`,
-    );
-    expect(Store.getItem(Policy.RequireNonRootUser)).toEqual(
-      `[${JSON.stringify(storedEnforcerMatcher)}]`,
-    );
-
     processExemptions(updatedNeuvectorExemption);
+
     expect(Store.getItem(Policy.RequireNonRootUser)).toEqual("[]");
     expect(Store.getItem(Policy.DisallowPrivileged)).toEqual(
       `[${JSON.stringify(storedEnforcerMatcher)}]`,
@@ -147,7 +154,7 @@ describe("Test Exemptions Controller", () => {
     );
   });
 
-  it("Removes multiple matchers from policy if matcher removed from CR", () => {
+  it("Removes matchers from policy if matchers removed from CR", () => {
     const updatedNeuvectorExemption = {
       metadata: {
         uid: exemption1UID,
@@ -158,18 +165,172 @@ describe("Test Exemptions Controller", () => {
             matcher: controllerMatcher,
             policies: [Policy.DisallowPrivileged, Policy.DropAllCapabilities],
           },
+          {
+            matcher: { ...enforcerMatcher, kind: MatcherKind.Service },
+            policies: [Policy.DisallowNodePortServices],
+          },
         ],
       },
     } as Exemption;
 
     processExemptions(neuvectorMockExemption);
     processExemptions(updatedNeuvectorExemption);
+    expect(Store.getItem(Policy.RequireNonRootUser)).toEqual("[]");
     expect(Store.getItem(Policy.DisallowPrivileged)).toEqual(
       `[${JSON.stringify(storedControllerMatcher)}]`,
     );
     expect(Store.getItem(Policy.DropAllCapabilities)).toEqual(
       `[${JSON.stringify(storedControllerMatcher)}]`,
     );
+    expect(Store.getItem(Policy.DisallowNodePortServices)).toEqual(
+      `[${JSON.stringify({ ...storedEnforcerMatcher, kind: MatcherKind.Service })}]`,
+    );
+  });
+
+  it("Adds duplicate exemptions set by same CR if different matcher kind", () => {
+    const neuvectorMockExemption2 = {
+      metadata: {
+        uid: exemption1UID,
+      },
+      spec: {
+        exemptions: [
+          {
+            matcher: enforcerMatcher,
+            policies: [
+              Policy.DisallowPrivileged,
+              Policy.DropAllCapabilities,
+              Policy.RequireNonRootUser,
+            ],
+          },
+          {
+            matcher: { ...enforcerMatcher, kind: MatcherKind.Service },
+            policies: [Policy.DisallowNodePortServices],
+          },
+        ],
+      },
+    } as Exemption;
+
+    processExemptions(neuvectorMockExemption2);
+
+    expect(Store.getItem(Policy.DisallowPrivileged)).toEqual(
+      `[${JSON.stringify(storedEnforcerMatcher)}]`,
+    );
+    expect(Store.getItem(Policy.DropAllCapabilities)).toEqual(
+      `[${JSON.stringify(storedEnforcerMatcher)}]`,
+    );
+    expect(Store.getItem(Policy.RequireNonRootUser)).toEqual(
+      `[${JSON.stringify(storedEnforcerMatcher)}]`,
+    );
+    expect(Store.getItem(Policy.DisallowNodePortServices)).toEqual(
+      `[${JSON.stringify({ ...storedEnforcerMatcher, kind: MatcherKind.Service })}]`,
+    );
+  });
+
+  it("Adds duplicate exemptions set by same CR if different namespace", () => {
+    const diffNS = "differentNS";
+    const neuvectorMockExemption2 = {
+      metadata: {
+        uid: exemption1UID,
+      },
+      spec: {
+        exemptions: [
+          {
+            matcher: enforcerMatcher,
+            policies: [
+              Policy.DisallowPrivileged,
+              Policy.DropAllCapabilities,
+              Policy.RequireNonRootUser,
+            ],
+          },
+          {
+            matcher: { ...enforcerMatcher, namespace: diffNS },
+            policies: [
+              Policy.DisallowPrivileged,
+              Policy.DropAllCapabilities,
+              Policy.RequireNonRootUser,
+            ],
+          },
+        ],
+      },
+    } as Exemption;
+
+    processExemptions(neuvectorMockExemption2);
+
+    expect(Store.getItem(Policy.DisallowPrivileged)).toEqual(
+      `[${JSON.stringify(storedEnforcerMatcher)},${JSON.stringify({
+        ...storedEnforcerMatcher,
+        namespace: diffNS,
+      })}]`,
+    );
+    expect(Store.getItem(Policy.DropAllCapabilities)).toEqual(
+      `[${JSON.stringify(storedEnforcerMatcher)},${JSON.stringify({
+        ...storedEnforcerMatcher,
+        namespace: diffNS,
+      })}]`,
+    );
+    expect(Store.getItem(Policy.RequireNonRootUser)).toEqual(
+      `[${JSON.stringify(storedEnforcerMatcher)},${JSON.stringify({
+        ...storedEnforcerMatcher,
+        namespace: diffNS,
+      })}]`,
+    );
+  });
+
+  it("Adds duplicate exemptions set by same CR if different namespace and different policy list", () => {
+    const diffNS = "differentNS";
+    const neuvectorMockExemption2 = {
+      metadata: {
+        uid: exemption1UID,
+      },
+      spec: {
+        exemptions: [
+          {
+            matcher: enforcerMatcher,
+            policies: [
+              Policy.DisallowPrivileged,
+              Policy.DropAllCapabilities,
+              Policy.RequireNonRootUser,
+            ],
+          },
+          {
+            matcher: { ...enforcerMatcher, namespace: diffNS },
+            policies: [Policy.DisallowPrivileged],
+          },
+        ],
+      },
+    } as Exemption;
+
+    processExemptions(neuvectorMockExemption2);
+
+    expect(Store.getItem(Policy.DisallowPrivileged)).toEqual(
+      `[${JSON.stringify(storedEnforcerMatcher)},${JSON.stringify({
+        ...storedEnforcerMatcher,
+        namespace: diffNS,
+      })}]`,
+    );
+    expect(Store.getItem(Policy.DropAllCapabilities)).toEqual(
+      `[${JSON.stringify(storedEnforcerMatcher)}]`,
+    );
+    expect(Store.getItem(Policy.RequireNonRootUser)).toEqual(
+      `[${JSON.stringify(storedEnforcerMatcher)}]`,
+    );
+  });
+});
+
+describe("Test removeExemptions()", () => {
+  beforeEach(() => {
+    jest.spyOn(Store, "getItem").mockImplementation((key: string) => {
+      return mockStore.get(key) || null;
+    });
+
+    jest.spyOn(Store, "setItem").mockImplementation((key: string, val: string) => {
+      mockStore.set(key, val);
+    });
+  });
+
+  afterEach(() => {
+    mockStore.clear();
+    jest.restoreAllMocks();
   });
 
   it("Removes all CRs exemptions when deleted", () => {

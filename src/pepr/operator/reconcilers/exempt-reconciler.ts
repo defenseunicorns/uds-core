@@ -1,11 +1,11 @@
 import { Log } from "pepr";
 
-import { handleFailure, isPendingOrCurrent, updateStatus } from ".";
+import { handleFailure, shouldSkip, updateStatus } from ".";
 import { processExemptions } from "../controllers/exemptions/exemptions";
 import { Phase, UDSExemption } from "../crd";
 
 export async function exemptReconciler(exempt: UDSExemption) {
-  if (isPendingOrCurrent(exempt)) {
+  if (shouldSkip(exempt)) {
     return;
   }
 

@@ -1,4 +1,45 @@
-{{- if .Values.devMode }}
+{{- if .Values.persistence.providers.enabled }}
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: {{ include "keycloak.fullname" . }}-providers
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "keycloak.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - {{ .Values.persistence.accessMode | quote }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.providers.size | quote }}
+  {{- if .Values.persistence.storageClassName }}
+  storageClassName: "{{ .Values.persistence.storageClassName }}"
+  {{- end }}
+---
+{{- end }}
+
+{{- if .Values.persistence.conf.enabled }}
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: {{ include "keycloak.fullname" . }}-conf
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "keycloak.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - {{ .Values.persistence.accessMode | quote }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.conf.size | quote }}
+  {{- if .Values.persistence.storageClassName }}
+  storageClassName: "{{ .Values.persistence.storageClassName }}"
+  {{- end }}
+---
+{{- end }}
+
+{{- if or .Values.persistence.data.enabled .Values.devMode }}
+# devMode enables this PVC by default to preserve legacy behavior
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
@@ -8,11 +49,18 @@ metadata:
     {{- include "keycloak.labels" . | nindent 4 }}
 spec:
   accessModes:
-    - ReadWriteOnce
+    - {{ .Values.persistence.accessMode | quote }}
   resources:
     requests:
-      storage: 512Mi
+      storage: {{ .Values.persistence.data.size | quote }}
+  {{- if .Values.persistence.storageClassName }}
+  storageClassName: "{{ .Values.persistence.storageClassName }}"
+  {{- end }}
 ---
+{{- end }}
+
+{{- if or .Values.persistence.themes.enabled .Values.devMode }}
+# devMode enables this PVC by default to preserve legacy behavior
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
@@ -22,8 +70,11 @@ metadata:
     {{- include "keycloak.labels" . | nindent 4 }}
 spec:
   accessModes:
-    - ReadWriteOnce
+    - {{ .Values.persistence.accessMode | quote }}
   resources:
     requests:
-      storage: 512Mi
+      storage: {{ .Values.persistence.themes.size | quote }}
+  {{- if .Values.persistence.storageClassName }}
+  storageClassName: "{{ .Values.persistence.storageClassName }}"
+  {{- end }}
 {{- end }}

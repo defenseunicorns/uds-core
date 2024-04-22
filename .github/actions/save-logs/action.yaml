@@ -10,6 +10,24 @@ inputs:
 runs:
   using: composite
   steps:
+    - name: Pull logs from containerd
+      run: |
+        CONTAINER_NAME="k3d-uds-server-0"
+        if docker ps | grep -q "$CONTAINER_NAME"; then
+          echo "Container $CONTAINER_NAME is running. Proceeding with log copy..."
+          docker cp ${CONTAINER_NAME}:/var/log/ /tmp/uds-containerd-logs
+        else
+          echo "Container $CONTAINER_NAME is not running. Skipping log copy."
+        fi
+      shell: bash
+
+    - name: Dump Node Logs
+      run: |
+        docker ps --filter "name=k3d" --format "{{.Names}}" | while read line; do
+          docker logs "$line" 2> /tmp/$line.log
+        done
+      shell: bash
+
     - name: Fix log permissions
       run: |
         sudo chown $USER /tmp/zarf-*.log || echo ""
@@ -22,3 +40,5 @@ runs:
         path: |
           /tmp/zarf-*.log
           /tmp/uds-*.log
+          /tmp/uds-containerd-logs
+          /tmp/k3d-uds-*.log

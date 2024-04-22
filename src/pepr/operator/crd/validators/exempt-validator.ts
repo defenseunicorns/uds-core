@@ -1,7 +1,10 @@
 import { PeprValidateRequest } from "pepr";
-
 import { MatcherKind, Policy, UDSExemption } from "..";
 import { UDSConfig } from "../../../config";
+
+function checkForSlashes(name: string) {
+  return name[0] === "/" && name[name.length - 1] === "/";
+}
 
 const validNs = "uds-policy-exemptions";
 const kindToPolicyMap = new Map<MatcherKind, Policy[]>([
@@ -16,7 +19,9 @@ const kindToPolicyMap = new Map<MatcherKind, Policy[]>([
 
 export async function exemptValidator(req: PeprValidateRequest<UDSExemption>) {
   const exempt = req.Raw;
+  const exemptions = exempt.spec?.exemptions ?? [];
 
+  // Validate exemption namespace is uds-policy-exempts unless allowAllNSExemptions is true
   if (!UDSConfig.allowAllNSExemptions) {
     if (exempt.metadata?.namespace !== validNs) {
       return req.Deny(
@@ -25,11 +30,12 @@ export async function exemptValidator(req: PeprValidateRequest<UDSExemption>) {
     }
   }
 
-  const exemptions = exempt.spec?.exemptions ?? [];
+  // Validate there's at least 1 exemption element
   if (exemptions.length === 0) {
     return req.Deny("Invalid number of exemptions: must have at least 1");
   }
 
+  // Validate exemption element policies and matcher kind are compatible
   for (const e of exemptions) {
     const policies = kindToPolicyMap.get(e.matcher.kind!)!;
     for (const p of e.policies) {
@@ -43,8 +49,14 @@ export async function exemptValidator(req: PeprValidateRequest<UDSExemption>) {
     }
   }
 
-  // Check that each matcher name is valid regex
+  // Validate that each matcher name does not contain leading or trailing slashes and is a valid regex pattern
   for (const e of exemptions) {
+    if (checkForSlashes(e.matcher.name)) {
+      return req.Deny(
+        `Invalid matcher name "${e.matcher.name}": please remove the leading and trailing slashes`,
+      );
+    }
+
     try {
       new RegExp(e.matcher.name);
     } catch (err) {

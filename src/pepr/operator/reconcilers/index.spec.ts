@@ -3,7 +3,7 @@ import { GenericKind } from "kubernetes-fluent-client";
 import { K8s, Log, kind } from "pepr";
 
 import { Mock } from "jest-mock";
-import { handleFailure, isPendingOrCurrent, updateStatus, writeEvent } from ".";
+import { handleFailure, shouldSkip, updateStatus, writeEvent } from ".";
 import { ExemptStatus, Phase, PkgStatus, UDSExemption, UDSPackage } from "../crd";
 
 jest.mock("pepr", () => ({
@@ -29,12 +29,12 @@ describe("isPendingOrCurrent", () => {
 
   it("should return false for a new CR", () => {
     const cr = { metadata: { uid: "1" }, status: { phase: Phase.Pending } } as UDSPackage;
-    expect(isPendingOrCurrent(cr)).toBe(false);
+    expect(shouldSkip(cr)).toBe(false);
   });
 
   it("should return true for a pending CR on subsequent calls", () => {
     const cr = { metadata: { uid: "1" }, status: { phase: Phase.Pending } } as UDSPackage;
-    expect(isPendingOrCurrent(cr)).toBe(true);
+    expect(shouldSkip(cr)).toBe(true);
   });
 
   it("should return true for a CR with current generation on subsequent calls", () => {
@@ -42,7 +42,7 @@ describe("isPendingOrCurrent", () => {
       metadata: { uid: "1", generation: 1 },
       status: { observedGeneration: 1 },
     } as UDSPackage;
-    expect(isPendingOrCurrent(cr)).toBe(true);
+    expect(shouldSkip(cr)).toBe(true);
   });
 
   it("should return false for a CR with different generation on subsequent calls", () => {
@@ -50,7 +50,7 @@ describe("isPendingOrCurrent", () => {
       metadata: { uid: "1", generation: 2 },
       status: { observedGeneration: 1 },
     } as UDSPackage;
-    expect(isPendingOrCurrent(cr)).toBe(false);
+    expect(shouldSkip(cr)).toBe(false);
   });
 });
 
