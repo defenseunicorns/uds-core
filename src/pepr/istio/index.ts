@@ -19,7 +19,7 @@ When(a.Pod)
   .IsCreatedOrUpdated()
   .WithLabel("batch.kubernetes.io/job-name")
   .WithLabel("service.istio.io/canonical-name")
-  .Watch(async pod => {
+  .Reconcile(async pod => {
     Log.info(
       pod,
       `Processing Pod ${pod.metadata?.namespace}/${pod.metadata?.name} for istio job termination`,
