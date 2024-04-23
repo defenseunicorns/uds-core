@@ -12,7 +12,7 @@ spec:
   teamId: "uds"
   volume:
     size: 1Gi
-  numberOfInstances: 2
+  numberOfInstances: 1
   users:
     keycloak: []  # database owner
   databases:
