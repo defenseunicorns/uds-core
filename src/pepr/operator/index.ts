@@ -40,7 +40,7 @@ When(a.Service)
   .IsCreatedOrUpdated()
   .InNamespace("default")
   .WithName("kubernetes")
-  .Watch(updateAPIServerCIDRFromService);
+  .Reconcile(updateAPIServerCIDRFromService);
 
 // Watch for changes to the UDSPackage CRD and cleanup the namespace mutations
 When(UDSPackage)
