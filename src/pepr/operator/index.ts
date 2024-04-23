@@ -40,12 +40,12 @@ When(a.Service)
   .IsCreatedOrUpdated()
   .InNamespace("default")
   .WithName("kubernetes")
-  .Watch(updateAPIServerCIDRFromService);
+  .Reconcile(updateAPIServerCIDRFromService);
 
 // Watch for changes to the UDSPackage CRD and cleanup the namespace mutations
 When(UDSPackage)
   .IsDeleted()
-  .Watch(async pkg => {
+  .Watch(async (pkg) => {
     // Cleanup the namespace
     await cleanupNamespace(pkg);
 
@@ -65,4 +65,6 @@ When(UDSPackage)
 When(UDSExemption).IsDeleted().Watch(removeExemptions);
 
 // Watch for changes to the UDSExemption CRD to enqueue an exemption for processing
-When(UDSExemption).IsCreatedOrUpdated().Validate(exemptValidator).Reconcile(exemptReconciler);
+When(UDSExemption).IsCreatedOrUpdated().Validate(exemptValidator).Reconcile(
+  exemptReconciler,
+);
