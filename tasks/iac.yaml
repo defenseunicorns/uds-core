@@ -141,7 +141,7 @@ tasks:
               loki_ruler_bucket: ${LOKI_S3_BUCKET}
               loki_admin_bucket: ${LOKI_S3_BUCKET}
               loki_s3_region: ${LOKI_S3_AWS_REGION}
-              loki_s3-endpoint: ""
+              loki_s3_endpoint: ""
               loki_irsa_annotation:
                 eks.amazonaws.com/role-arn: "${LOKI_S3_ROLE_ARN}"
               velero_use_secret: false

@@ -8,7 +8,7 @@ variables:
     loki_ruler_bucket: ${ZARF_VAR_LOKI_S3_BUCKET}
     loki_admin_bucket: ${ZARF_VAR_LOKI_S3_BUCKET}
     loki_s3_region: ${ZARF_VAR_LOKI_S3_AWS_REGION}
-    loki_s3-endpoint: ""
+    loki_s3_endpoint: ""
     loki_irsa_annotation:
       eks.amazonaws.com/role-arn: ${ZARF_VAR_LOKI_S3_ROLE_ARN}
     velero_use_secret: false

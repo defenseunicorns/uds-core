@@ -47,4 +47,4 @@ packages:
               path: loki.storage.s3.region
             - name: LOKI_IRSA_ANNOTATION
               description: "The irsa role annotation"
-              path: loki.serviceAccount.annotations
+              path: serviceAccount.annotations
