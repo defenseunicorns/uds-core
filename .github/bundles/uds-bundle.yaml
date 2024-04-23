@@ -26,9 +26,16 @@ packages:
               path: credentials.useSecret
             - name: VELERO_IRSA_ANNOTATION
               description: "IRSA ARN annotation to use for Velero"
-              path: serviceAccount.server.annotations
+              path: serviceAccount.server.annotations.irsa/role-arn
       loki:
         loki:
+          values:
+            - path: loki.storage.s3.endpoint
+              value: ""
+            - path: loki.storage.s3.secretAccessKey
+              value: ""
+            - path: loki.storage.s3.accessKeyId
+              value: ""
           variables:
             - name: LOKI_CHUNKS_BUCKET
               description: "The object storage bucket for Loki chunks"
@@ -47,4 +54,4 @@ packages:
               path: loki.storage.s3.region
             - name: LOKI_IRSA_ANNOTATION
               description: "The irsa role annotation"
-              path: serviceAccount.annotations
+              path: serviceAccount.annotations.irsa/role-arn
