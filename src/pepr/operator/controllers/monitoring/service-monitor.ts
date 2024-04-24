@@ -21,7 +21,7 @@ export async function serviceMonitor(pkg: UDSPackage, namespace: string) {
   const payloads: Prometheus.ServiceMonitor[] = [];
 
   for (const monitor of monitorList) {
-    const payload = generateServiceMonitor(pkg, monitor, namespace, pkgName, generation)
+    const payload = generateServiceMonitor(pkg, monitor, namespace, pkgName, generation);
 
     // Apply the VirtualService and force overwrite any existing policy
     await K8s(Prometheus.ServiceMonitor).Apply(payload, { force: true });
@@ -60,7 +60,13 @@ export function generateSMName(pkg: UDSPackage, monitor: Monitor) {
   return name;
 }
 
-export function generateServiceMonitor(pkg: UDSPackage, monitor: Monitor, namespace: string, pkgName: string, generation: string) {
+export function generateServiceMonitor(
+  pkg: UDSPackage,
+  monitor: Monitor,
+  namespace: string,
+  pkgName: string,
+  generation: string,
+) {
   const { selector, portName } = monitor;
   const name = generateSMName(pkg, monitor);
   const payload: Prometheus.ServiceMonitor = {
