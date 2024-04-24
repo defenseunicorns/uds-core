@@ -8,7 +8,7 @@ All service monitors are mutated to set the scrape scheme to HTTPS and set the T
 
 Assumptions are made about STRICT mTLS here for simplicity, based on the `istio-injection` namespace label. Without making these assumptions we would need to query `PeerAuthentication` resources or another resource to determine the exact workload mTLS posture.
 
-Note: This mutation is the default behavior for all service monitors but can be skipped using the label `uds/skip-sm-mutate` (any value). Skipping this mutation should only be done if your service exposes metrics on a PERMISSIVE mTLS port.
+Note: This mutation is the default behavior for all service monitors but can be skipped using the annotation key `uds/skip-sm-mutate` (with any value). Skipping this mutation should only be done if your service exposes metrics on a PERMISSIVE mTLS port.
 
 ## Package CR `monitor` field
 

@@ -23,15 +23,6 @@ export async function serviceMonitor(pkg: UDSPackage, namespace: string) {
   for (const monitor of monitorList) {
     const { selector, portName } = monitor;
     const name = generateSMName(pkg, monitor);
-    const endpoints: Prometheus.Endpoint[] = [
-      {
-        port: portName,
-        path: monitor.path || "/metrics",
-      },
-    ];
-    const promSelector: Prometheus.Selector = {
-      matchLabels: selector,
-    };
     const payload: Prometheus.ServiceMonitor = {
       metadata: {
         name,
@@ -43,8 +34,15 @@ export async function serviceMonitor(pkg: UDSPackage, namespace: string) {
         ownerReferences: getOwnerRef(pkg),
       },
       spec: {
-        endpoints: endpoints,
-        selector: promSelector,
+        endpoints: [
+          {
+            port: portName,
+            path: monitor.path || "/metrics",
+          },
+        ],
+        selector: {
+          matchLabels: selector,
+        },
       },
     };
 
@@ -72,7 +70,7 @@ export async function serviceMonitor(pkg: UDSPackage, namespace: string) {
   }
 
   // Return the list of monitor names
-  return [...new Set(payloads.map(sm => sm.metadata!.name!).flat())];
+  return [...new Set(payloads.map(sm => sm.metadata!.name!))];
 }
 
 export function generateSMName(pkg: UDSPackage, monitor: Monitor) {

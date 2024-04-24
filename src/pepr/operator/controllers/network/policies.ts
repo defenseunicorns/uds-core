@@ -69,9 +69,9 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
     const policy: Allow = {
       direction: Direction.Ingress,
       selector: podSelector ?? selector,
-      remoteNamespace: `monitoring`,
+      remoteNamespace: "monitoring",
       remoteSelector: {
-        app: `prometheus`,
+        app: "prometheus",
       },
       port: targetPort,
       description: `${Object.values(selector)} Metrics`,

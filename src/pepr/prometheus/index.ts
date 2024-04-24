@@ -1,4 +1,4 @@
-import { Capability, K8s, Log, kind } from "pepr";
+import { Capability, K8s, kind, Log } from "pepr";
 import { Prometheus } from "../operator/crd";
 
 export const prometheus = new Capability({
@@ -10,33 +10,17 @@ const { When } = prometheus;
 
 /**
  * Mutate a service monitor to enable mTLS metrics
- *
  */
 When(Prometheus.ServiceMonitor)
   .IsCreatedOrUpdated()
   .Mutate(async sm => {
     // Provide an opt-out of mutation to handle complicated scenarios
-    if (sm.Raw.metadata?.labels?.["uds/skip-sm-mutate"]) {
+    if (sm.Raw.metadata?.annotations?.["uds/skip-sm-mutate"]) {
       return;
-    }
-    const namespaces = sm.Raw.spec?.namespaceSelector?.matchNames || [sm.Raw.metadata?.namespace];
-    let istioInjected = false;
-
-    for (const ns of namespaces) {
-      if (ns === undefined) {
-        return;
-      }
-      const namespace = await K8s(kind.Namespace).Get(ns);
-      if (
-        namespace.metadata?.labels &&
-        namespace.metadata.labels["istio-injection"] === "enabled"
-      ) {
-        istioInjected = true;
-      }
     }
 
     // This assumes istio-injection == strict mTLS due to complexity around mTLS lookup
-    if (istioInjected) {
+    if (await isIstioInjected(sm)) {
       if (sm.Raw.spec?.endpoints === undefined) {
         return;
       }
@@ -58,3 +42,17 @@ When(Prometheus.ServiceMonitor)
       Log.info(`No mutations needed for service monitor ${sm.Raw.metadata?.name}`);
     }
   });
+
+async function isIstioInjected(sm: Prometheus.ServiceMonitor) {
+  const namespaces = sm.Raw.spec?.namespaceSelector?.matchNames || [sm.Raw.metadata?.namespace] || [
+      "default",
+    ];
+
+  for (const ns of namespaces) {
+    const namespace = await K8s(kind.Namespace).Get(ns);
+    if (namespace.metadata?.labels && namespace.metadata.labels["istio-injection"] === "enabled") {
+      return true;
+    }
+  }
+  return false;
+}
