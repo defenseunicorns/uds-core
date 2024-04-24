@@ -47,7 +47,7 @@ export async function serviceMonitor(pkg: UDSPackage, namespace: string) {
   }
 
   // Return the list of monitor names
-  return [...new Set(payloads.map(sm => sm.metadata!.name!))];
+  return [...payloads.map(sm => sm.metadata!.name!)];
 }
 
 export function generateSMName(pkg: UDSPackage, monitor: Monitor) {
