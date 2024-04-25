@@ -4,7 +4,7 @@ config:
 
   snippets:
     scrapeConfigs: |
-      # From upstream chart https://github.com/grafana/helm-charts/blob/main/charts/promtail/values.yaml
+      # Upstream Defaults https://github.com/grafana/helm-charts/blob/main/charts/promtail/values.yaml
       # See also https://github.com/grafana/loki/blob/master/production/ksonnet/promtail/scrape_config.libsonnet for reference
       - job_name: kubernetes-pods
         pipeline_stages:
@@ -45,6 +45,7 @@ config:
           {{- with .Values.config.snippets.extraRelabelConfigs }}
           {{- toYaml . | nindent 4 }}
           {{- end }}
+      # UDS CORE Defaults
       - job_name: systemd-messages
         static_configs:
           - targets: [localhost]
