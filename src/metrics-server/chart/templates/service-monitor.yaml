@@ -1,0 +1,20 @@
+{{- if .Capabilities.APIVersions.Has "monitoring.coreos.com/v1" }}
+# The serviceMonitor for metrics-server is unique due to permissive mTLS on its port, so it is created outside of the Package spec
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  annotation:
+    uds/skip-sm-mutate: "true"
+  name: metrics-server-metrics
+  namespace: metrics-server
+spec:
+  endpoints:
+  - path: /metrics
+    port: https
+    scheme: https
+    tlsConfig:
+      insecureSkipVerify: true
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: metrics-server
+{{- end }}
