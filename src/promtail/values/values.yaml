@@ -63,6 +63,13 @@ config:
           - source_labels:
             - __journal_syslog_identifier
             target_label: syslog_identifier
+      - job_name: kubernetes-logs
+        static_configs:
+          - targets: [localhost]
+            labels:
+              job: kubernetes-logs
+              host: "${NODE_HOSTNAME}"
+              __path__: /var/log/kubernetes/**/*.log
 
 containerSecurityContext:
   allowPrivilegeEscalation: false
@@ -90,6 +97,9 @@ extraVolumes:
   - hostPath:
       path: /etc
     name: machine-id
+  - hostPath:
+      path: /var/lib/rancher/rke2/server/logs/audit.log
+    name: audit-logs
 
 extraVolumeMounts:
   - mountPath: /var/log
@@ -99,6 +109,9 @@ extraVolumeMounts:
     name: machine-id
     readOnly: true
     subPath: machine-id
+  - mountPath: /var/lib/rancher/rke2/server/logs/audit.log
+    name: audit-logs
+    readOnly: true
 
 resources:
   limits:
