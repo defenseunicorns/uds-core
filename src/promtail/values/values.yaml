@@ -97,9 +97,6 @@ extraVolumes:
   - hostPath:
       path: /etc
     name: machine-id
-  - hostPath:
-      path: /var/lib/rancher/rke2/server/logs/audit.log
-    name: audit-logs
 
 extraVolumeMounts:
   - mountPath: /var/log
@@ -109,9 +106,6 @@ extraVolumeMounts:
     name: machine-id
     readOnly: true
     subPath: machine-id
-  - mountPath: /var/lib/rancher/rke2/server/logs/audit.log
-    name: audit-logs
-    readOnly: true
 
 resources:
   limits:
