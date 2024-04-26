@@ -4,6 +4,16 @@ metadata:
   name: neuvector
   namespace: {{ .Release.Namespace }}
 spec:
+  # This is disabled pending further discussion/upstream changes to handle metrics with SSO setup
+  # monitor:
+  #   - selector:
+  #       app: neuvector-prometheus-exporter
+  #     podSelector:
+  #       app: neuvector-prometheus-exporter-pod
+  #     portName: metrics
+  #     targetPort: 8068
+  #     description: "Metrics"
+
   sso:
     - name: Neuvector
       clientId: uds-core-admin-neuvector
@@ -23,6 +33,7 @@ spec:
               global_role: admin
             - group: /UDS Core/Auditor
               global_role: reader
+
   network:
     expose:
       - service: neuvector-service-webui
@@ -68,15 +79,6 @@ spec:
           app: neuvector-controller-pod
         port: 30443
         description: "Webhook"
-
-      - direction: Ingress
-        remoteNamespace: monitoring
-        remoteSelector:
-          app: prometheus
-        selector:
-          app: neuvector-prometheus-exporter-pod
-        port: 8068
-        description: "Prometheus Metrics"
 
       - direction: Egress
         remoteNamespace: tempo

@@ -8,6 +8,7 @@ ignore:
   - '**/.terraform/**'
   - '**/chart/templates**'
   - 'node_modules/**'
+  - 'dist/**'
 
 rules:
   anchors: enable
