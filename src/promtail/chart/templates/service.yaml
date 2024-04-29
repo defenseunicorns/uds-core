@@ -1,0 +1,18 @@
+# Upstream chart can create this service but it is conditionally tied to the serviceMonitor which would cause errors in single package testing
+# This would be resolved by https://github.com/grafana/helm-charts/pull/3083 when merged and released
+apiVersion: v1
+kind: Service
+metadata:
+  name: promtail-metrics
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: promtail
+spec:
+  clusterIP: None
+  ports:
+    - name: http-metrics
+      port: 3101
+      targetPort: http-metrics
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: promtail

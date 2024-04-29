@@ -42,3 +42,6 @@ schedules:
         - kube-system
         - velero
       ttl: "240h"
+metrics:
+  serviceMonitor:
+    enabled: true

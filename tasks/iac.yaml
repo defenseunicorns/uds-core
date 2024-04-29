@@ -141,12 +141,9 @@ tasks:
               loki_ruler_bucket: ${LOKI_S3_BUCKET}
               loki_admin_bucket: ${LOKI_S3_BUCKET}
               loki_s3_region: ${LOKI_S3_AWS_REGION}
-              loki_s3-endpoint: ""
-              loki_irsa_annotation:
-                eks.amazonaws.com/role-arn: "${LOKI_S3_ROLE_ARN}"
+              loki_irsa_annotation: "${LOKI_S3_ROLE_ARN}"
               velero_use_secret: false
-              velero_irsa_annotation:
-                eks.amazonaws.com/role-arn: "${VELERO_S3_ROLE_ARN}"
+              velero_irsa_annotation: ${VELERO_S3_ROLE_ARN}"
               velero_bucket: ${VELERO_S3_BUCKET}
               velero_bucket_region: ${VELERO_S3_AWS_REGION}
               velero_bucket_provider_url: ""
