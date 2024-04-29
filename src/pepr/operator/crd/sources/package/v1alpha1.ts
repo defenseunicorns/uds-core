@@ -159,6 +159,53 @@ const expose = {
   } as V1JSONSchemaProps,
 } as V1JSONSchemaProps;
 
+const monitor = {
+  description: "Create Service Monitor configurations",
+  type: "array",
+  items: {
+    type: "object",
+    required: ["portName", "selector", "targetPort"],
+    properties: {
+      description: {
+        type: "string",
+        description:
+          "A description of this monitor entry, this will become part of the ServiceMonitor name",
+      },
+      portName: {
+        description: "The port name for the serviceMonitor",
+        type: "string",
+      },
+      targetPort: {
+        description:
+          "The service targetPort. This is required so the NetworkPolicy can be generated correctly.",
+        minimum: 1,
+        maximum: 65535,
+        type: "number",
+      },
+      selector: {
+        description:
+          "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace",
+        type: "object",
+        additionalProperties: {
+          type: "string",
+        },
+      },
+      podSelector: {
+        description:
+          "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace",
+        type: "object",
+        additionalProperties: {
+          type: "string",
+        },
+      },
+      path: {
+        description: "HTTP path from which to scrape for metrics, defaults to `/metrics`",
+        type: "string",
+      },
+    },
+  },
+};
+
 const sso = {
   description: "Create SSO client configurations",
   type: "array",
@@ -199,6 +246,18 @@ const sso = {
         description:
           "A description for the client, can be a URL to an image to replace the login logo",
         type: "string",
+      },
+      protocol: {
+        description: "Specifies the protocol of the client, either 'openid-connect' or 'saml'",
+        type: "string",
+        enum: ["openid-connect", "saml"],
+      },
+      attributes: {
+        description: "Specifies attributes for the client.",
+        type: "object",
+        additionalProperties: {
+          type: "string",
+        },
       },
       rootUrl: {
         description: "Root URL appended to relative URLs",
@@ -272,6 +331,12 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
       jsonPath: ".status.endpoints",
     },
     {
+      name: "Monitors",
+      type: "string",
+      description: "Service monitors for the package",
+      jsonPath: ".status.monitors",
+    },
+    {
       name: "Network Policies",
       type: "integer",
       description: "The number of network policies created by the package",
@@ -313,6 +378,12 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
                 type: "string",
               },
             },
+            monitors: {
+              type: "array",
+              items: {
+                type: "string",
+              },
+            },
             networkPolicyCount: {
               type: "integer",
             },
@@ -329,6 +400,7 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
                 allow,
               },
             },
+            monitor,
             sso,
           },
         } as V1JSONSchemaProps,

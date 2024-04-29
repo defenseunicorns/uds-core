@@ -1,0 +1,152 @@
+variables:
+  - name: CLUSTER_NAME
+  - name: REGION
+  - name: PERMISSIONS_BOUNDARY_NAME
+  - name: PERMISSIONS_BOUNDARY_ARN
+  - name: STATE_BUCKET_NAME
+  - name: STATE_DYNAMODB_TABLE_NAME
+  - name: STATE_KEY
+  - name: AMI_ID
+    default: ami-068ab6ac1cec494e0
+
+tasks:
+  - name: install-eksctl
+    actions:
+      - cmd: |
+          curl --silent --location "https://github.com/weaveworks/eksctl/releases/download/v0.165.0/eksctl_Linux_amd64.tar.gz" | tar xz -C /tmp
+          sudo mv /tmp/eksctl /usr/local/bin
+
+  - name: create-cluster
+    actions:
+      - cmd: |
+          cat <<EOF> cluster-config.yaml
+          apiVersion: eksctl.io/v1alpha5
+          kind: ClusterConfig
+
+          metadata:
+            name: ${CLUSTER_NAME}
+            region: us-west-2
+            version: "1.27"
+            tags:
+              PermissionsBoundary: ${PERMISSIONS_BOUNDARY_NAME}
+
+          iam:
+            withOIDC: true
+            serviceRolePermissionsBoundary: ${PERMISSIONS_BOUNDARY_ARN}
+
+          addons:
+            - name: aws-ebs-csi-driver
+              version: v1.25.0-eksbuild.1
+
+              attachPolicyARNs:
+                - arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy
+              permissionsBoundary: ${PERMISSIONS_BOUNDARY_ARN}
+              tags:
+                PermissionsBoundary: ${PERMISSIONS_BOUNDARY_NAME}
+
+            - name: vpc-cni
+              permissionsBoundary: ${PERMISSIONS_BOUNDARY_ARN}
+              tags:
+                PermissionsBoundary: ${PERMISSIONS_BOUNDARY_NAME}
+
+          managedNodeGroups:
+            - name: ng-1
+              instanceType: m5.2xlarge
+              desiredCapacity: 3
+              volumeSize: 150
+              tags:
+                PermissionsBoundary: ${PERMISSIONS_BOUNDARY_NAME}
+              iam:
+                instanceRolePermissionsBoundary: ${PERMISSIONS_BOUNDARY_ARN}
+              ami: ${AMI_ID}
+              amiFamily: AmazonLinux2
+              overrideBootstrapCommand: |
+                #!/bin/bash
+                /etc/eks/bootstrap.sh ${CLUSTER_NAME} --container-runtime containerd
+          EOF
+
+      - cmd: eksctl create cluster --dry-run -f cluster-config.yaml
+      - cmd: sleep 5
+      - cmd: eksctl create cluster -f cluster-config.yaml
+      - cmd: eksctl utils write-kubeconfig -c ${CLUSTER_NAME}
+
+  - name: destroy-cluster
+    actions:
+      - cmd: eksctl delete cluster -f cluster-config.yaml --disable-nodegroup-eviction --wait
+
+  - name: create-iac
+    actions:
+      - task: apply-terraform
+      - task: terraform-outputs
+      - task: create-uds-config
+
+  - name: destroy-iac
+    actions:
+      - cmd: terraform destroy -auto-approve
+        dir: .github/test-infra/buckets-iac
+
+  - name: apply-terraform
+    actions:
+      - cmd: echo ${STATE_KEY} | sed 's/\.tfstate/-buckets1.tfstate/g'
+        setVariables:
+          - name: BUCKETS_STATE_KEY
+        dir: .github/test-infra/buckets-iac
+      - cmd: echo ${BUCKETS_STATE_KEY}
+      - cmd: |
+          terraform init -force-copy \
+          -backend-config="bucket=${STATE_BUCKET_NAME}" \
+          -backend-config="key=${BUCKETS_STATE_KEY}" \
+          -backend-config="region=${REGION}" \
+          -backend-config="dynamodb_table=${STATE_DYNAMODB_TABLE_NAME}"
+        dir: .github/test-infra/buckets-iac
+      - cmd: terraform apply -auto-approve
+        dir: .github/test-infra/buckets-iac
+
+  - name: terraform-outputs
+    actions:
+      - cmd: terraform output -raw loki_s3_bucket
+        setVariables:
+          - name: "LOKI_S3_BUCKET"
+        dir: .github/test-infra/buckets-iac
+      - cmd: terraform output -raw aws_region
+        setVariables:
+          - name: LOKI_S3_AWS_REGION
+        dir: .github/test-infra/buckets-iac
+      - cmd: terraform output -raw loki_irsa_role_arn
+        setVariables:
+          - name: LOKI_S3_ROLE_ARN
+        dir: .github/test-infra/buckets-iac
+      - cmd: terraform output -raw velero_s3_bucket
+        setVariables:
+          - name: VELERO_S3_BUCKET
+        dir: .github/test-infra/buckets-iac
+      - cmd: terraform output -raw aws_region
+        setVariables:
+          - name: VELERO_S3_AWS_REGION
+        dir: .github/test-infra/buckets-iac
+      - cmd: terraform output -raw velero_irsa_role_arn
+        setVariables:
+          - name: VELERO_S3_ROLE_ARN
+        dir: .github/test-infra/buckets-iac
+
+  - name: create-uds-config
+    actions:
+      - cmd: |
+          cat <<EOF> .github/bundles/uds-config.yaml
+          options:
+          architecture: amd6
+          variables:
+            core:
+              loki_chunks_bucket: ${LOKI_S3_BUCKET}
+              loki_ruler_bucket: ${LOKI_S3_BUCKET}
+              loki_admin_bucket: ${LOKI_S3_BUCKET}
+              loki_s3_region: ${LOKI_S3_AWS_REGION}
+              loki_irsa_annotation: "${LOKI_S3_ROLE_ARN}"
+              velero_use_secret: false
+              velero_irsa_annotation: ${VELERO_S3_ROLE_ARN}"
+              velero_bucket: ${VELERO_S3_BUCKET}
+              velero_bucket_region: ${VELERO_S3_AWS_REGION}
+              velero_bucket_provider_url: ""
+              velero_bucket_credential_name: ""
+              velero_bucket_credential_key: ""
+          EOF

@@ -20,8 +20,8 @@ export async function enableInjection(pkg: UDSPackage) {
   const annotations = sourceNS.metadata?.annotations || {};
   const pkgKey = `uds.dev/pkg-${pkg.metadata.name}`;
 
-  // Save the original value of the istio-injection label only if it's not already set
-  if (!annotations[injectionLabel]) {
+  // Mark the original namespace injection setting for if all packages are removed
+  if (!annotations[injectionAnnotation]) {
     annotations[injectionAnnotation] = labels[injectionLabel] || "non-existent";
   }
 

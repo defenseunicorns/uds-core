@@ -9,6 +9,10 @@ export class Package extends GenericKind {
 
 export interface Spec {
   /**
+   * Create Service Monitor configurations
+   */
+  monitor?: Monitor[];
+  /**
    * Network configuration for the package
    */
   network?: Network;
@@ -16,6 +20,35 @@ export interface Spec {
    * Create SSO client configurations
    */
   sso?: Sso[];
+}
+
+export interface Monitor {
+  /**
+   * A description of this monitor entry, this will become part of the ServiceMonitor name
+   */
+  description?: string;
+  /**
+   * HTTP path from which to scrape for metrics, defaults to `/metrics`
+   */
+  path?: string;
+  /**
+   * Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all
+   * pods in the namespace
+   */
+  podSelector?: { [key: string]: string };
+  /**
+   * The port name for the serviceMonitor
+   */
+  portName: string;
+  /**
+   * Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all
+   * pods in the namespace
+   */
+  selector: { [key: string]: string };
+  /**
+   * The service targetPort. This is required so the NetworkPolicy can be generated correctly.
+   */
+  targetPort: number;
 }
 
 /**
@@ -422,6 +455,10 @@ export interface Sso {
    */
   alwaysDisplayInConsole?: boolean;
   /**
+   * Specifies attributes for the client.
+   */
+  attributes?: { [key: string]: string };
+  /**
    * The client authenticator type
    */
   clientAuthenticatorType?: ClientAuthenticatorType;
@@ -449,6 +486,10 @@ export interface Sso {
    * Specifies display name of the client
    */
   name: string;
+  /**
+   * Specifies the protocol of the client, either 'openid-connect' or 'saml'
+   */
+  protocol?: Protocol;
   /**
    * Valid URI pattern a browser can redirect to after a successful login. Simple wildcards
    * are allowed such as 'https://unicorns.uds.dev/*'
@@ -485,8 +526,17 @@ export enum ClientAuthenticatorType {
   ClientSecret = "client-secret",
 }
 
+/**
+ * Specifies the protocol of the client, either 'openid-connect' or 'saml'
+ */
+export enum Protocol {
+  OpenidConnect = "openid-connect",
+  Saml = "saml",
+}
+
 export interface Status {
   endpoints?: string[];
+  monitors?: string[];
   networkPolicyCount?: number;
   observedGeneration?: number;
   phase?: Phase;

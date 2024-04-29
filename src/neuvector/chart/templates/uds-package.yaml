@@ -4,6 +4,36 @@ metadata:
   name: neuvector
   namespace: {{ .Release.Namespace }}
 spec:
+  # This is disabled pending further discussion/upstream changes to handle metrics with SSO setup
+  # monitor:
+  #   - selector:
+  #       app: neuvector-prometheus-exporter
+  #     podSelector:
+  #       app: neuvector-prometheus-exporter-pod
+  #     portName: metrics
+  #     targetPort: 8068
+  #     description: "Metrics"
+
+  sso:
+    - name: Neuvector
+      clientId: uds-core-admin-neuvector
+      redirectUris:
+        - "https://neuvector.admin.{{ .Values.domain }}/openId_auth"
+      secretName: neuvector-secret
+      secretTemplate:
+        oidcinitcfg.yaml: |-
+          always_reload: true
+          client_id: clientField(clientId)
+          client_secret: clientField(secret)
+          enable: true
+          group_claim: groups
+          issuer: https://sso.{{ .Values.domain }}/realms/uds
+          group_mapped_roles:
+            - group: /UDS Core/Admin
+              global_role: admin
+            - group: /UDS Core/Auditor
+              global_role: reader
+
   network:
     expose:
       - service: neuvector-service-webui
@@ -26,6 +56,12 @@ spec:
         selector:
           app: neuvector-controller-pod
 
+      # Access to SSO for OIDC
+      - direction: Egress
+        remoteGenerated: Anywhere
+        selector:
+          app: neuvector-controller-pod
+
       - direction: Egress
         remoteGenerated: KubeAPI
         selector:
@@ -43,15 +79,6 @@ spec:
           app: neuvector-controller-pod
         port: 30443
         description: "Webhook"
-
-      - direction: Ingress
-        remoteNamespace: monitoring
-        remoteSelector:
-          app: prometheus
-        selector:
-          app: neuvector-prometheus-exporter-pod
-        port: 8068
-        description: "Prometheus Metrics"
 
       - direction: Egress
         remoteNamespace: tempo
