@@ -59,9 +59,8 @@ tasks:
     description: "Generate the latest UDS Exemption CRD and create the Zarf package for publishing"
     actions:
       - cmd: uds run -f src/pepr/tasks.yaml gen-crds
-      - cmd: |
-          do yq stuff to CRD here
-      - cmd: uds zarf package create packages/exemption-crd
+      - cmd: yq -ei 'del(.metadata.creationTimestamp, .metadata.generation, .metadata.resourceVersion, .metadata.uid, .status)' packages/exemption-crd/crd.yaml
+      - cmd: uds zarf package create packages/exemption-crd --confirm --no-progress
 
   - name: pepr-build
     description: "Build the UDS Core Pepr Module"
