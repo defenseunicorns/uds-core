@@ -7,7 +7,7 @@ on:
     paths:
       - tasks/iac.yaml
       - .github/workflows/test-eks.yaml
-      - .github/bundles/*
+      - .github/bundles/infra-bundle/*
       - .github/test-infra/buckets-iac/*
 
 jobs:

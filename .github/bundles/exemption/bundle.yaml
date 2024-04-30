@@ -1,0 +1,88 @@
+kind: UDSBundle
+metadata:
+  name: k3d-core-slim-dev
+  description: A UDS bundle for deploying Istio from UDS Core on a development cluster
+  # x-release-please-start-version
+  version: "0.20.0"
+  # x-release-please-end
+
+packages:
+  - name: uds-k3d-dev
+    repository: ghcr.io/defenseunicorns/packages/uds-k3d
+    # renovate: datasource=github-tags depName=defenseunicorns/uds-k3d versioning=semver
+    ref: 0.6.0
+    overrides:
+      uds-dev-stack:
+        minio:
+          variables:
+            - name: buckets
+              description: "Set Minio Buckets"
+              path: buckets
+            - name: svcaccts
+              description: "Minio Service Accounts"
+              path: svcaccts
+            - name: users
+              description: "Minio Users"
+              path: users
+            - name: policies
+              description: "Minio policies"
+              path: policies
+
+  - name: init
+    repository: ghcr.io/defenseunicorns/packages/init
+    # renovate: datasource=github-tags depName=defenseunicorns/zarf versioning=semver
+    ref: v0.33.1
+
+  - name: podinfo
+    repository: ghcr.io/defenseunicorns/packages/uds/podinfo
+    ref: 0.4.0-test
+
+  - name: core-slim-dev
+    path: ../../../build/
+    # x-release-please-start-version
+    ref: 0.20.0
+    # x-release-please-end
+    overrides:
+      pre-core-exemptions:
+        pre-core-exemptions:
+          values:
+            - path: enabled
+              value: true
+            - path: exemptions
+              value: |
+                    exemptions:
+                      - policies:
+                          - DisallowPrivileged
+                          - RequireNonRootUser
+                          - DropAllCapabilities
+                        title: "podinfo1"
+                        matcher:
+                          namespace: podinfo
+                          name: "^podinfo.*"
+                          test: 1
+                      - policies:
+                          - DisallowNodePortServices
+                        title: "podinfo2"
+                        matcher:
+                          namespace: podinfo
+                          name: "^.*-local.*"
+                          kind: service
+                          test: 2
+      istio-admin-gateway:
+        uds-istio-config:
+          variables:
+            - name: ADMIN_TLS_CERT
+              description: "The TLS cert for the admin gateway (must be base64 encoded)"
+              path: tls.cert
+            - name: ADMIN_TLS_KEY
+              description: "The TLS key for the admin gateway (must be base64 encoded)"
+              path: tls.key
+      istio-tenant-gateway:
+        uds-istio-config:
+          variables:
+            - name: TENANT_TLS_CERT
+              description: "The TLS cert for the tenant gateway (must be base64 encoded)"
+              path: tls.cert
+            - name: TENANT_TLS_KEY
+              description: "The TLS key for the tenant gateway (must be base64 encoded)"
+              path: tls.key

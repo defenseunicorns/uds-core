@@ -24,6 +24,14 @@ tasks:
           done
           set +e
 
+  - name: pre-core-exemptions
+    description: "Deploy and Validate pre-core-exemptions package"
+    actions:
+      - task: create:slim-dev-package
+      - task: uds create .github/bundles/exemption --confirm
+      - task: uds deploy .github/bundles/exemption/uds-bundle-*.tar.zst --confirm
+
+
   - name: uds-core
     description: "Build and test UDS Core"
     actions:

@@ -132,7 +132,7 @@ tasks:
   - name: create-uds-config
     actions:
       - cmd: |
-          cat <<EOF> .github/bundles/uds-config.yaml
+          cat <<EOF> .github/bundles/infra-bundle/uds-config.yaml
           options:
           architecture: amd6
           variables:
