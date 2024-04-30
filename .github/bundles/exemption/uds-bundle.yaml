@@ -34,8 +34,8 @@ packages:
     ref: v0.33.1
 
   - name: podinfo
-    repository: ghcr.io/defenseunicorns/packages/uds/podinfo
-    ref: 0.4.0-test
+    repository: ghcr.io/defenseunicorns/uds-cli/podinfo
+    ref: 0.0.1
 
   - name: core-slim-dev
     path: ../../../build/

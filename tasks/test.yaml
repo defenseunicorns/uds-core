@@ -28,8 +28,9 @@ tasks:
     description: "Deploy and Validate pre-core-exemptions package"
     actions:
       - task: create:slim-dev-package
-      - task: uds create .github/bundles/exemption --confirm
-      - task: uds deploy .github/bundles/exemption/uds-bundle-*.tar.zst --confirm
+      - cmd: uds create .github/bundles/exemption --confirm
+      - cmd: uds deploy .github/bundles/exemption/uds-bundle-*.tar.zst --confirm
+      - cmd: uds run -f src/pre-core-exemptions/task.yaml validate --no-progress
 
 
   - name: uds-core

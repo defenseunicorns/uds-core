@@ -13,7 +13,7 @@ packages:
     ref: v0.33.1
 
   - name: core
-    path: ../../build/
+    path: ../../../build/
     # x-release-please-start-version
     ref: 0.20.0
     # x-release-please-end
