@@ -1,7 +1,6 @@
-leastPrivilege: false #This is a new setting on version big bang has not added to umbrella yet
+leastPrivilege: true
 autoGenerateCert: false
 rbac: true
-serviceAccount: default
 manager:
   env:
     ssl: false
