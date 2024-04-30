@@ -1,0 +1,12 @@
+kind: ZarfPackageConfig
+metadata:
+  name: uds-core-pre-core-exemptions
+
+components:
+  - name: pre-core-exemptions
+    required: true
+    charts:
+      - name: pre-core-exemptions
+        namespace: uds-policy-exemptions
+        version: 0.1.0
+        localPath: chart

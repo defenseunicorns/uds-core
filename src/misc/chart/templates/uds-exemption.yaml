@@ -1,9 +1,0 @@
-{{- if .Values.exemptionsPassthrough.enabled }}
-apiVersion: uds.dev/v1alpha1
-kind: Exemption
-metadata:
-  name: uds-passthrough
-  namespace: {{ .Values.exemptionsPassthrough.namespace }}
-spec:
-  {{ .Values.exemptionsPassthrough.exemptions }}
-{{- end }}

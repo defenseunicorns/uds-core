@@ -1,0 +1,9 @@
+{{- if .Values.enabled }}
+apiVersion: uds.dev/v1alpha1
+kind: Exemption
+metadata:
+  name: pre-core-exemptions
+  namespace: {{ .Values.namespace }}
+spec:
+  {{ .Values.exemptions }}
+{{- end }}

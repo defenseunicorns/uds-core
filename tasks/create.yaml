@@ -55,6 +55,14 @@ tasks:
             uds zarf package create src/istio --confirm --no-progress --flavor ${FLAVOR}
           fi
 
+  - name: exemption-crd-package
+    description: "Generate the latest UDS Exemption CRD and create the Zarf package for publishing"
+    actions:
+      - cmd: uds run -f src/pepr/tasks.yaml gen-crds
+      - cmd: |
+          do yq stuff to CRD here
+      - cmd: uds zarf package create packages/exemption-crd
+
   - name: pepr-build
     description: "Build the UDS Core Pepr Module"
     actions:

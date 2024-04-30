@@ -42,10 +42,10 @@ components:
       path: ../../dist
       name: module
 
-  - name: uds-misc-chart
+  - name: pre-core-exemptions
     required: true
     import:
-      path: ../../src/misc
+      path: ../../src/pre-core-exemptions
 
   # Metrics Server
   - name: metrics-server

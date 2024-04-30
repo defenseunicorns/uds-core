@@ -35,7 +35,7 @@ components:
     import:
       path: ../standard
 
-  - name: uds-misc-chart
+  - name: pre-core-exemptions
     required: true
     import:
       path: ../standard
