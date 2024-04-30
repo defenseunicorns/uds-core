@@ -41,6 +41,11 @@ components:
     import:
       path: ../../dist
       name: module
+  
+  - name: uds-misc-chart
+    required: true
+    import:
+      path: ../../src/misc
 
   # Metrics Server
   - name: metrics-server

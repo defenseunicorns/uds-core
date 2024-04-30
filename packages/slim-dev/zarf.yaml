@@ -35,6 +35,11 @@ components:
     import:
       path: ../standard
 
+  - name: uds-misc-chart
+    required: true
+    import:
+      path: ../standard
+
   # Keycloak
   - name: keycloak
     required: true

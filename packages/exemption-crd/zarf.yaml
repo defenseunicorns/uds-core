@@ -1,0 +1,15 @@
+kind: ZarfPackageConfig
+metadata:
+  name: uds-core-exemption-crd
+  yolo: true
+  # x-release-please-start-version
+  version: 0.20.0
+  # x-release-please-end
+
+components:
+  - name: exemption-crd
+    required: true
+    manifests:
+      - name: crd
+        files:
+          - ./crd.yaml

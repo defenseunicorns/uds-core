@@ -1,0 +1,5 @@
+tasks:
+  - name: validate
+    actions:
+      - description: Validate...
+        cmd: echo "do nothing for now"

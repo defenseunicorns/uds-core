@@ -1,0 +1,4 @@
+exemptionsPassthrough:
+  enabled: false
+  namespace: uds-policy-exemptions
+  exemptions: {}
