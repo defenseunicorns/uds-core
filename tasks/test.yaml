@@ -30,7 +30,7 @@ tasks:
       - task: create:slim-dev-package
       - cmd: uds create .github/bundles/exemption --confirm
       - cmd: uds deploy .github/bundles/exemption/uds-bundle-*.tar.zst --confirm
-      - cmd: uds run -f src/pre-core-exemptions/task.yaml validate --no-progress
+      - cmd: uds run -f src/pre-core-exemptions/tasks.yaml validate --no-progress
 
 
   - name: uds-core
