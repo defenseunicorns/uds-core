@@ -3,4 +3,3 @@ name: uds-misc-chart
 description: Helm chart for UDS scoped resources
 type: application
 version: 0.1.0
-

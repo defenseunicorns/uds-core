@@ -41,7 +41,7 @@ components:
     import:
       path: ../../dist
       name: module
-  
+
   - name: uds-misc-chart
     required: true
     import:

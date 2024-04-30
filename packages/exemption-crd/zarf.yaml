@@ -12,4 +12,5 @@ components:
     manifests:
       - name: crd
         files:
+        # generated in CI
           - ./crd.yaml
