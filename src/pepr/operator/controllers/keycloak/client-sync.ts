@@ -8,11 +8,23 @@ import { Client } from "./types";
 
 const apiURL =
   "http://keycloak-http.keycloak.svc.cluster.local:8080/realms/uds/clients-registrations/default";
+const samlDescriptorUrl =
+  "http://keycloak-http.keycloak.svc.cluster.local:8080/realms/uds/protocol/saml/descriptor";
 
 // Template regex to match clientField() references, see https://regex101.com/r/e41Dsk/3 for details
 const secretTemplateRegex = new RegExp(
   'clientField\\(([a-zA-Z]+)\\)(?:\\["?([\\w]+)"?\\]|(\\.json\\(\\)))?',
   "gm",
+);
+
+// Template regex to match IDPSSODescriptor in the SAML IDP Descriptor XML, see https://regex101.com/r/DGvzjd/1
+const idpSSODescriptorRegex = new RegExp(
+  /<[^>]*:IDPSSODescriptor[^>]*>((.|[\n\r])*)<\/[^>]*:IDPSSODescriptor>/,
+);
+
+// Template regex to match the X509Certificate within the IDPSSODescriptor XML, see https://regex101.com/r/NjGZF5/1
+const x509CertRegex = new RegExp(
+  /<[^>]*:X509Certificate[^>]*>((.|[\n\r])*)<\/[^>]*:X509Certificate>/,
 );
 
 /**
@@ -88,6 +100,10 @@ async function syncClient(
 
     // Remove the registrationAccessToken from the client object to avoid problems (one-time use token)
     delete client.registrationAccessToken;
+
+    if (clientReq.protocol === "saml") {
+      client.samlIdpCertificate = await getSamlCertificate();
+    }
 
     // Create or update the client secret
     await K8s(kind.Secret).Apply({
@@ -189,6 +205,21 @@ export function generateSecretData(client: Client, secretTemplate?: { [key: stri
   }
 
   return stringMap;
+}
+
+export async function getSamlCertificate() {
+  const resp = await fetch<string>(samlDescriptorUrl);
+
+  if (!resp.ok) {
+    return undefined;
+  }
+
+  return extractSamlCertificateFromXML(resp.data);
+}
+
+export function extractSamlCertificateFromXML(xmlString: string) {
+  const extractedIDPSSODescriptor = xmlString.match(idpSSODescriptorRegex)?.[1] || "";
+  return extractedIDPSSODescriptor.match(x509CertRegex)?.[1] || "";
 }
 
 /**

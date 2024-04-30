@@ -1,5 +1,5 @@
 import { describe, expect, it } from "@jest/globals";
-import { generateSecretData } from "./client-sync";
+import { extractSamlCertificateFromXML, generateSecretData } from "./client-sync";
 import { Client } from "./types";
 
 const mockClient: Client = {
@@ -59,6 +59,41 @@ const mockClientStringified: Record<string, string> = {
   webOrigins: "[]",
   standardFlowEnabled: "true",
 };
+
+describe("Test XML Extraction Using Regex", () => {
+  it("extract xml", async () => {
+    // Sample XML string with namespace prefixes
+    const xmlString = `
+    <md:EntityDescriptor xmlns="urn:oasis:names:tc:SAML:2.0:metadata" xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion" xmlns:ds="http://www.w3.org/2000/09/xmldsig#" entityID="https://keycloak.admin.uds.dev/realms/uds">
+        <md:IDPSSODescriptor WantAuthnRequestsSigned="true" protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
+            <md:KeyDescriptor use="signing">
+                <ds:KeyInfo>
+                    <ds:KeyName>SO1zm7gOpX2xlm16-pZ08zOJui0i7PwEHIqM6h4d9Sw</ds:KeyName>
+                    <ds:X509Data>
+                        <ds:X509Certificate>FOUND THE CERT</ds:X509Certificate>
+                    </ds:X509Data>
+                </ds:KeyInfo>
+            </md:KeyDescriptor>
+            <md:ArtifactResolutionService Binding="urn:oasis:names:tc:SAML:2.0:bindings:SOAP" Location="https://keycloak.admin.uds.dev/realms/uds/protocol/saml/resolve" index="0"></md:ArtifactResolutionService>
+            <md:SingleLogoutService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="https://keycloak.admin.uds.dev/realms/uds/protocol/saml"></md:SingleLogoutService>
+            <md:SingleLogoutService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="https://keycloak.admin.uds.dev/realms/uds/protocol/saml"></md:SingleLogoutService>
+            <md:SingleLogoutService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Artifact" Location="https://keycloak.admin.uds.dev/realms/uds/protocol/saml"></md:SingleLogoutService>
+            <md:SingleLogoutService Binding="urn:oasis:names:tc:SAML:2.0:bindings:SOAP" Location="https://keycloak.admin.uds.dev/realms/uds/protocol/saml"></md:SingleLogoutService>
+            <md:NameIDFormat>urn:oasis:names:tc:SAML:2.0:nameid-format:persistent</md:NameIDFormat>
+            <md:NameIDFormat>urn:oasis:names:tc:SAML:2.0:nameid-format:transient</md:NameIDFormat>
+            <md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified</md:NameIDFormat>
+            <md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress</md:NameIDFormat>
+            <md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="https://keycloak.admin.uds.dev/realms/uds/protocol/saml"></md:SingleSignOnService>
+            <md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="https://keycloak.admin.uds.dev/realms/uds/protocol/saml"></md:SingleSignOnService>
+            <md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:SOAP" Location="https://keycloak.admin.uds.dev/realms/uds/protocol/saml"></md:SingleSignOnService>
+            <md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Artifact" Location="https://keycloak.admin.uds.dev/realms/uds/protocol/saml"></md:SingleSignOnService>
+        </md:IDPSSODescriptor>
+    </md:EntityDescriptor>
+    `;
+
+    expect(extractSamlCertificateFromXML(xmlString)).toEqual("FOUND THE CERT");
+  });
+});
 
 describe("Test Secret & Template Data Generation", () => {
   it("generates data without template", async () => {

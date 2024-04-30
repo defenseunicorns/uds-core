@@ -6,3 +6,5 @@ readinessProbe:
   initialDelaySeconds: 10
   periodSeconds: 5
   failureThreshold: 5
+metrics:
+  enabled: true

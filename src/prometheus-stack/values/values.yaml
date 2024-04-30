@@ -1,24 +1,8 @@
-alertmanager:
-  alertmanagerSpec:
-    resources:
-      limits:
-        cpu: 500m
-        memory: 256Mi
-      requests:
-        cpu: 100m
-        memory: 256Mi
 crds:
   enabled: false
 grafana:
   enabled: false
-kube-state-metrics:
-  resources:
-    limits:
-      cpu: 500m
-      memory: 128Mi
-    requests:
-      cpu: 10m
-      memory: 128Mi
+  forceDeployDashboards: true
 kubeStateMetrics:
   serviceMonitor:
     interval: ""
@@ -35,6 +19,8 @@ nodeExporter:
   serviceMonitor:
     interval: ""
 prometheus:
+  serviceMonitor:
+    selfMonitor: false
   prometheusSpec:
     enableFeatures:
       - remote-write-receiver
@@ -55,7 +41,7 @@ prometheus:
         memory: 2Gi
       requests:
         cpu: 100m
-        memory: 2Gi
+        memory: 512Mi
     ruleSelectorNilUsesHelmValues: false
     serviceMonitorSelectorNilUsesHelmValues: false
     storageSpec:
@@ -76,37 +62,14 @@ prometheus:
         name: istio-certs
 prometheus-node-exporter:
   containerSecurityContext:
-    capabilities:
-      drop:
-        - ALL
     readOnlyRootFilesystem: true
   hostNetwork: false
   hostPID: false
   podAnnotations:
     cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
-  prometheus:
-  resources:
-    limits:
-      cpu: 500m
-      memory: 128Mi
-    requests:
-      cpu: 100m
-      memory: 128Mi
-  serviceAccount:
-    name: null
-  serviceMonitor:
-    attachMetadata: {}
 prometheusOperator:
   admissionWebhooks:
-    containerSecurityContext:
-      capabilities:
-        drop:
-          - ALL
     patch:
-      containerSecurityContext:
-        capabilities:
-          drop:
-            - ALL
       resources:
         limits:
           cpu: 100m
@@ -114,7 +77,6 @@ prometheusOperator:
         requests:
           cpu: 50m
           memory: 128Mi
-
   prometheusConfigReloader:
     enableProbe:
       false
@@ -132,3 +94,12 @@ prometheusOperator:
     requests:
       cpu: 100m
       memory: 512Mi
+
+alertmanager:
+  alertmanagerSpec:
+    scheme: "https"
+    tlsConfig:
+      caFile: /etc/prom-certs/root-cert.pem
+      certFile: /etc/prom-certs/cert-chain.pem
+      insecureSkipVerify: true
+      keyFile: /etc/prom-certs/key.pem
