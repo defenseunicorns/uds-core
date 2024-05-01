@@ -16,6 +16,12 @@ includes:
   - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/v0.3.6/tasks/setup.yaml
 
 tasks:
+
+  - name: default
+    actions:
+      - description: "Build, deploy and test UDS Core"
+        task: test-uds-core
+
   - name: dev-setup
     actions:
       - description: "Create the dev cluster"

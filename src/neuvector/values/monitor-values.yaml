@@ -1,4 +1,4 @@
-leastPrivilege: false
+leastPrivilege: true
 
 exporter:
   # This is disabled pending further discussion/upstream changes to handle metrics with SSO setup
