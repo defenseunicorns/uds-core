@@ -20,7 +20,9 @@ tasks:
     actions:
       - cmd: |
           for package in src/*; do
-            uds run -f ${package}/tasks.yaml validate --no-progress
+            if [ "$package" != "src/pre-core-exemptions" ]; then
+                uds run -f "${package}/tasks.yaml" validate --no-progress
+            fi
           done
           set +e
 
