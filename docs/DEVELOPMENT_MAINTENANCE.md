@@ -1,3 +1,9 @@
+---
+title: UDS Core Development & MAINTENANCE
+type: docs
+weight: 2
+---
+
 # UDS Bundle [name]
 
 ## How to upgrade this bundle
