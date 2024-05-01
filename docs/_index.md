@@ -1,6 +1,6 @@
 ---
-title: UDS Core
-linkTitle: UDS Core
+title: UDS Core Experiment
+linkTitle: UDS Core Experiment
 type: docs
 menu:
     main:
