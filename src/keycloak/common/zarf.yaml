@@ -9,5 +9,5 @@ components:
     charts:
       - name: keycloak
         namespace: keycloak
-        version: 24.0.2
+        version: 24.0.3
         localPath: ../chart
