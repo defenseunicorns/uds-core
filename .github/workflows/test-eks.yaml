@@ -49,7 +49,7 @@ jobs:
           terraform_version: "1.5.7"
 
       - name: Create UDS Core Package
-        run: uds run -f tasks/create.yaml standard-package --no-progress
+        run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress
 
       - name: Create Core Bundle
         run: uds create .github/bundles --confirm --no-progress
