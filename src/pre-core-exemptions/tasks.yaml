@@ -1,3 +1,4 @@
+# works in conjunction with .github/bundles/exemption/uds-bundle.yaml
 variables:
   - name: PODINFO_NAME
 

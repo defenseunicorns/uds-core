@@ -5,6 +5,5 @@ metadata:
   name: pre-core-exemptions
   namespace: {{ .Values.namespace }}
 spec:
-  exemptions:
-    {{ .Values.exemptions }}
+  exemptions: {{ .Values.exemptions | nindent 4 }}
 {{- end }}
