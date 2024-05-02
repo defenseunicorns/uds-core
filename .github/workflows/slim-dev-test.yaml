@@ -34,7 +34,7 @@ jobs:
   # This job runs the slim-dev bundle create/deploy process.
   test:
     name: Test
-    runs-on: ubuntu
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout the code
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
