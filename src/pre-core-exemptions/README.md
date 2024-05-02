@@ -1,12 +1,8 @@
 # Pre Core Exemptions
 
-This package serves as a way for users deploying uds-core to pass exemptions to core for things that are deployed before core.
+This package serves as a way for users deploying uds-core to create exemption resources for things that are deployed before core.
 
-For example, if a team is deploying a bundle containing a custom init package that has rook-ceph, the first time it
-deploys everything will be fine, but if it cycles for whatever reason once core is deployed then rook-ceph will be denied by Pepr policies. Thus an exemption CR is needed.
-The problem, though, is the init package can't deploy an exemption resource when the exemption CRD has not yet been deployed by core. 
-
-This package solves that timing issue by applying whatever exemptions are given to it as soon as the Pepr core module has been successfully deployed.
+For instance, when a team is deploying a bundle that includes a custom init package with rook-ceph. During install, everything goes smoothly because Pepr's validation is not present. However, during an upgrade after the core deployment, Pepr policies will deny new rook-ceph pods.
 
 ## How to Use
 

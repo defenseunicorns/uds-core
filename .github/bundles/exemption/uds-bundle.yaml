@@ -1,7 +1,7 @@
 kind: UDSBundle
 metadata:
-  name: k3d-core-slim-dev
-  description: A UDS bundle for deploying Istio from UDS Core on a development cluster
+  name: exemption-test
+  description: A UDS bundle for testing pre core exemptions
   # x-release-please-start-version
   version: "0.21.0"
   # x-release-please-end

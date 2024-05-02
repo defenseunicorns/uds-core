@@ -1,16 +1,17 @@
 kind: ZarfPackageConfig
 metadata:
-  name: uds-core-exemption-crd
+  name: uds-crds
   yolo: true
   # x-release-please-start-version
-  version: 0.20.0
+  version: 0.21.0
   # x-release-please-end
 
 components:
-  - name: exemption-crd
+  - name: crds
     required: true
     manifests:
-      - name: crd
+      - name: crds
         files:
         # generated in CI
-          - ./crd.yaml
+          - ./exemption-crd.yaml
+          - ./package-crd.yaml

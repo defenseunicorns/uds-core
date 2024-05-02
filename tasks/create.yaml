@@ -55,12 +55,13 @@ tasks:
             uds zarf package create src/istio --confirm --no-progress --flavor ${FLAVOR}
           fi
 
-  - name: exemption-crd-package
-    description: "Generate the latest UDS Exemption CRD and create the Zarf package for publishing"
+  - name: uds-crds-package
+    description: "Generate the latest UDS Package and Exemption CRDs and create the Zarf package for publishing"
     actions:
       - cmd: uds run -f src/pepr/tasks.yaml gen-crds
-      - cmd: yq -ei 'del(.metadata.creationTimestamp, .metadata.generation, .metadata.resourceVersion, .metadata.uid, .status)' packages/exemption-crd/crd.yaml
-      - cmd: uds zarf package create packages/exemption-crd --confirm --no-progress
+      - cmd: yq -ei 'del(.metadata.creationTimestamp, .metadata.generation, .metadata.resourceVersion, .metadata.uid, .status)' packages/uds-crds/exemption-crd.yaml
+      - cmd: yq -ei 'del(.metadata.creationTimestamp, .metadata.generation, .metadata.resourceVersion, .metadata.uid, .status)' packages/uds-crds/package-crd.yaml
+      - cmd: uds zarf package create packages/uds-crds --confirm --no-progress
 
   - name: pepr-build
     description: "Build the UDS Core Pepr Module"
