@@ -9,3 +9,4 @@ components:
       - name: pre-core-exemptions
         namespace: uds-policy-exemptions
         version: 0.1.0
+        localPath: ./chart
