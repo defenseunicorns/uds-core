@@ -21,3 +21,4 @@ export {
 } from "./generated/exemption-v1alpha1";
 
 export * as Istio from "./generated/istio/virtualservice-v1beta1";
+export * as Prometheus from "./generated/prometheus/servicemonitor-v1";

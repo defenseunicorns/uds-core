@@ -15,10 +15,19 @@ spec:
             paths:
               - "/admin*"
               - "/realms/master*"
-              - "/metrics*"
       from:
         - source:
-            notNamespaces: ["istio-admin-gateway"]
+            notNamespaces:
+              - istio-admin-gateway
+    - to:
+        - operation:
+            paths:
+            - /metrics*
+      from:
+        - source:
+            notNamespaces:
+            - istio-admin-gateway
+            - monitoring
     - to:
         - operation:
             paths:
