@@ -8,6 +8,12 @@ metadata:
   # x-release-please-end
 
 components:
+  # CRDs
+  - name: prometheus-operator-crds
+    required: true
+    import:
+      path: ../../src/prometheus-stack
+
   # Istio
   - name: istio-controlplane
     required: true

@@ -14,36 +14,46 @@ export async function serviceMonitor(pkg: UDSPackage, namespace: string) {
   const pkgName = pkg.metadata!.name!;
   const generation = (pkg.metadata?.generation ?? 0).toString();
 
+  Log.debug(`Reconciling ServiceMonitors for ${pkgName}`);
+
   // Get the list of monitored services
   const monitorList = pkg.spec?.monitor ?? [];
 
   // Create a list of generated ServiceMonitors
   const payloads: Prometheus.ServiceMonitor[] = [];
 
-  for (const monitor of monitorList) {
-    const payload = generateServiceMonitor(pkg, monitor, namespace, pkgName, generation);
+  try {
+    for (const monitor of monitorList) {
+      const payload = generateServiceMonitor(pkg, monitor, namespace, pkgName, generation);
 
-    // Apply the VirtualService and force overwrite any existing policy
-    await K8s(Prometheus.ServiceMonitor).Apply(payload, { force: true });
+      Log.debug(payload, `Applying ServiceMonitor ${payload.metadata?.name}`);
 
-    payloads.push(payload);
-  }
+      // Apply the ServiceMonitor and force overwrite any existing policy
+      await K8s(Prometheus.ServiceMonitor).Apply(payload, { force: true });
 
-  // Get all related ServiceMonitors in the namespace
-  const serviceMonitors = await K8s(Prometheus.ServiceMonitor)
-    .InNamespace(namespace)
-    .WithLabel("uds/package", pkgName)
-    .Get();
+      payloads.push(payload);
+    }
 
-  // Find any orphaned VirtualServices (not matching the current generation)
-  const orphanedSM = serviceMonitors.items.filter(
-    sm => sm.metadata?.labels?.["uds/generation"] !== generation,
-  );
+    // Get all related ServiceMonitors in the namespace
+    const serviceMonitors = await K8s(Prometheus.ServiceMonitor)
+      .InNamespace(namespace)
+      .WithLabel("uds/package", pkgName)
+      .Get();
 
-  // Delete any orphaned VirtualServices
-  for (const sm of orphanedSM) {
-    Log.debug(sm, `Deleting orphaned ServiceMonitor ${sm.metadata!.name}`);
-    await K8s(Prometheus.ServiceMonitor).Delete(sm);
+    // Find any orphaned ServiceMonitors (not matching the current generation)
+    const orphanedSM = serviceMonitors.items.filter(
+      sm => sm.metadata?.labels?.["uds/generation"] !== generation,
+    );
+
+    // Delete any orphaned ServiceMonitors
+    for (const sm of orphanedSM) {
+      Log.debug(sm, `Deleting orphaned ServiceMonitor ${sm.metadata!.name}`);
+      await K8s(Prometheus.ServiceMonitor).Delete(sm);
+    }
+  } catch (err) {
+    throw new Error(
+      `Failed to process ServiceMonitors for ${pkgName}, cause: ${JSON.stringify(err)}`,
+    );
   }
 
   // Return the list of monitor names
