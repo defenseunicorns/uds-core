@@ -51,7 +51,9 @@ export async function serviceMonitor(pkg: UDSPackage, namespace: string) {
       await K8s(Prometheus.ServiceMonitor).Delete(sm);
     }
   } catch (err) {
-    throw new Error(`Failed to process ServiceMonitors for ${pkgName}, cause: ${JSON.stringify(err)}`);
+    throw new Error(
+      `Failed to process ServiceMonitors for ${pkgName}, cause: ${JSON.stringify(err)}`,
+    );
   }
 
   // Return the list of monitor names
