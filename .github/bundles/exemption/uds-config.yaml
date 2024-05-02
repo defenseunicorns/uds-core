@@ -1,5 +1,5 @@
 variables:
-  core-slim-dev:
+  core:
     PRE_CORE_EXEMPTIONS_ENABLED: true
     PRE_CORE_EXEMPTIONS: |
           - policies:
