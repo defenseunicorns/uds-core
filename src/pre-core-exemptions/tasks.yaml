@@ -12,15 +12,10 @@ tasks:
             name: pre-core-exemptions
             namespace: uds-policy-exemptions
             condition: exists
-
-      - description: Get podinfo name
-        cmd: echo $(uds zarf tools kubectl get pods -n podinfo -o jsonpath='{.items[0].metadata.name}')
-        setVariables:
-          - name: PODINFO_NAME
-
-      - description: Cycle podinfo
-        cmd: uds zarf tools kubectl delete pod -n podinfo ${PODINFO_NAME}
-
+      - description: Create Podinfo Zarf Pkg
+        cmd: uds zarf package create src/pre-core-exemptions/test --confirm --no-progress
+      - description: Deploy Podinfo Zarf Pkg
+        cmd: uds zarf package deploy build/zarf-package-podinfo-*.tar.zst --confirm --no-progress
       - description: Check for podinfo to come back up
         wait:
           cluster:

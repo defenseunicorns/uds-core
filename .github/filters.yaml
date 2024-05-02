@@ -25,5 +25,3 @@ tempo:
   - "src/tempo/**"
 velero:
   - "src/velero/**"
-pre-core-exemptions:
-  - "src/pre-core-exemptions/**"

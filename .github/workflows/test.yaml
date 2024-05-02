@@ -57,12 +57,8 @@ jobs:
         run: uds run registry-login --set REGISTRY=registry1.dso.mil --set REGISTRY_USERNAME=${{ secrets.IRON_BANK_ROBOT_USERNAME }} --set REGISTRY_PASSWORD=${{ secrets.IRON_BANK_ROBOT_PASSWORD }} --set REGISTRY_RETRY_INTERVAL=90
 
       - name: Test a single source package
-        if: ${{ inputs.package != 'all' && inputs.package != 'pre-core-exemptions' && inputs.test_type == 'install' }}
+        if: ${{ inputs.package != 'all' && inputs.test_type == 'install' }}
         run: uds run test-single-package --set FLAVOR=${{ inputs.flavor }}
-
-      - name: Test pre core exemptions package
-        if: ${{ inputs.package == 'pre-core-exemptions' && inputs.test_type == 'install'}}
-        run: uds run test-pre-core-exemptions
 
       - name: Test UDS Core Install
         if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}

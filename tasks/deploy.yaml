@@ -9,14 +9,22 @@ variables:
 
 tasks:
   - name: k3d-standard-bundle
+    inputs:
+      config:
+        default: ""
+        description: "path to uds-config to use"
     actions:
       - description: "Deploy the UDS Core Standard Bundle"
-        cmd: uds deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --set=uds-k3d-dev.K3D_IMAGE=${K3D_IMAGE} --confirm --no-progress
+        cmd: UDS_CONFIG=$INPUT_CONFIG uds deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --set=uds-k3d-dev.K3D_IMAGE=${K3D_IMAGE} --confirm --no-progress --no-tea
 
   - name: k3d-slim-dev-bundle
+    inputs:
+      config:
+        default: ""
+        description: "path to uds-config to use"
     actions:
       - description: "Deploy the UDS Core Slim Dev Only Bundle"
-        cmd: uds deploy bundles/k3d-slim-dev/uds-bundle-k3d-core-slim-dev-${UDS_ARCH}-${VERSION}.tar.zst --set=uds-k3d-dev.K3D_IMAGE=${K3D_IMAGE} --confirm --no-progress
+        cmd: UDS_CONFIG=$INPUT_CONFIG uds deploy bundles/k3d-slim-dev/uds-bundle-k3d-core-slim-dev-${UDS_ARCH}-${VERSION}.tar.zst --set=uds-k3d-dev.K3D_IMAGE=${K3D_IMAGE} --confirm --no-progress --no-tea
 
   - name: single-package
     actions:

@@ -20,20 +20,9 @@ tasks:
     actions:
       - cmd: |
           for package in src/*; do
-            if [ "$package" != "src/pre-core-exemptions" ]; then
-                uds run -f "${package}/tasks.yaml" validate --no-progress
-            fi
+              uds run -f "${package}/tasks.yaml" validate --no-progress
           done
           set +e
-
-  - name: pre-core-exemptions
-    description: "Deploy and Validate pre-core-exemptions package"
-    actions:
-      - task: create:slim-dev-package
-      - cmd: uds create .github/bundles/exemption --confirm
-      - cmd: uds deploy .github/bundles/exemption/uds-bundle-*.tar.zst --confirm
-      - cmd: uds run -f src/pre-core-exemptions/tasks.yaml validate --no-progress
-
 
   - name: uds-core
     description: "Build and test UDS Core"
@@ -42,6 +31,8 @@ tasks:
       - task: create:slim-dev-package
       - task: create:k3d-standard-bundle
       - task: deploy:k3d-standard-bundle
+        with:
+          config: .github/bundles/exemption/uds-config.yaml
       - task: validate-packages
 
   - name: uds-core-upgrade
