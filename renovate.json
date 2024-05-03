@@ -42,6 +42,14 @@
       "extractVersionTemplate": "^v(?<version>.*)$"
     },
     {
+      "fileMatch": [".*\\.ya?ml$"],
+      "matchStrings": [
+          "# renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)( versioning=(?<versioning>.*?))?( extractVersion=(?<extractVersion>.*?))?( registryUrl=(?<registryUrl>.*?))?\\s.*:\\s*['\"]?(?<currentValue>[v0-9].*?)['\"]?(\\s|$)"
+      ],
+      "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver-coerced{{/if}}",
+      "extractVersionTemplate": "{{#if extractVersion}}{{{extractVersion}}}{{else}}^(?<version>.*)${{/if}}"
+    },
+    {
       "fileMatch": ["\\.*\\.ya?ml$"],
       "matchStrings": [
         "# renovate: datasource=github-tags depName=(?<depName>[^ ]+) versioning=(?<versioning>.*?)( extractVersion=(?<extractVersion>.*?))?\n.*?(version:|ref:) (?<currentValue>.*)"
