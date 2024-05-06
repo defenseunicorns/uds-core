@@ -1,7 +1,16 @@
 import { K8s, Log } from "pepr";
 
 import { UDSConfig } from "../../../config";
-import { Expose, Gateway, IstioServiceEntry, IstioLocation, IstioResolution, IstioPort, IstioEndpoint, UDSPackage } from "../../crd";
+import {
+  Expose,
+  Gateway,
+  IstioServiceEntry,
+  IstioLocation,
+  IstioResolution,
+  IstioPort,
+  IstioEndpoint,
+  UDSPackage,
+} from "../../crd";
 import { getOwnerRef, sanitizeResourceName } from "../utils";
 
 /**
@@ -28,7 +37,7 @@ export async function serviceEntry(pkg: UDSPackage, namespace: string) {
 
     // If we have already made a ServiceEntry with this name, skip (i.e. if advancedHTTP was used)
     if (serviceEntryNames.get(name)) {
-      continue
+      continue;
     }
 
     // For the admin gateway, we need to add the path prefix
@@ -41,12 +50,12 @@ export async function serviceEntry(pkg: UDSPackage, namespace: string) {
       name: "https",
       number: 443,
       protocol: "HTTPS",
-    }
+    };
 
     const serviceEntryEndpoint: IstioEndpoint = {
       // Map the gateway (admin, passthrough or tenant) to the ServiceEntry
-      address: `${gateway}-ingressgateway.istio-${gateway}-gateway.svc.cluster.local`
-    }
+      address: `${gateway}-ingressgateway.istio-${gateway}-gateway.svc.cluster.local`,
+    };
 
     const payload: IstioServiceEntry = {
       metadata: {
@@ -69,13 +78,12 @@ export async function serviceEntry(pkg: UDSPackage, namespace: string) {
       },
     };
 
-
     Log.debug(payload, `Applying ServiceEntry ${payload.metadata?.name}`);
 
     // Apply the ServiceEntry and force overwrite any existing policy
     await K8s(IstioServiceEntry).Apply(payload, { force: true });
 
-    serviceEntryNames.set(name, true)
+    serviceEntryNames.set(name, true);
   }
 
   // Get all related ServiceEntries in the namespace

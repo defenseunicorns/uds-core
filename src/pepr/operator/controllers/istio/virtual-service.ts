@@ -1,7 +1,14 @@
 import { K8s, Log } from "pepr";
 
 import { UDSConfig } from "../../../config";
-import { Expose, Gateway, IstioVirtualService, IstioHTTP, IstioHTTPRoute, UDSPackage } from "../../crd";
+import {
+  Expose,
+  Gateway,
+  IstioVirtualService,
+  IstioHTTP,
+  IstioHTTPRoute,
+  UDSPackage,
+} from "../../crd";
 import { getOwnerRef, sanitizeResourceName } from "../utils";
 
 /**
