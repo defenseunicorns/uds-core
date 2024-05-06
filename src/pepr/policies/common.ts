@@ -103,5 +103,10 @@ export function annotateMutation<T extends KubernetesObject>(
   request: PeprMutateRequest<T>,
   policy: Policy,
 ) {
-  request.SetAnnotation(`uds-core.pepr.dev/mutated`, transform(policy));
+  const key = "uds-core.pepr.dev/mutated";
+  const annotations = request.Raw.metadata?.annotations ?? {};
+  const valStr = annotations[key];
+  const arr = JSON.parse(valStr || "[]");
+  arr.push(transform(policy));
+  request.SetAnnotation(key, JSON.stringify(arr));
 }
