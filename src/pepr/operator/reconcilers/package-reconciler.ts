@@ -4,6 +4,7 @@ import { handleFailure, shouldSkip, updateStatus } from ".";
 import { UDSConfig } from "../../config";
 import { enableInjection } from "../controllers/istio/injection";
 import { virtualService } from "../controllers/istio/virtual-service";
+import { serviceEntry } from "../controllers/istio/service-entry";
 import { keycloak } from "../controllers/keycloak/client-sync";
 import { serviceMonitor } from "../controllers/monitoring/service-monitor";
 import { networkPolicies } from "../controllers/network/policies";
@@ -42,6 +43,9 @@ export async function packageReconciler(pkg: UDSPackage) {
 
     // Create the VirtualService for each exposed service
     endpoints = await virtualService(pkg, namespace!);
+
+    // Create the ServiceEntry for each exposed service
+    await serviceEntry(pkg, namespace!);
 
     // Only configure the ServiceMonitors if not running in single test mode
     let monitors: string[] = [];
