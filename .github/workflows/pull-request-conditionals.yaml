@@ -64,18 +64,18 @@ jobs:
     needs: check-paths
     name: Schedule
     strategy:
+      max-parallel: 1
       matrix:
         package: ${{ fromJSON(needs.check-paths.outputs.packages) }}
-        flavor: [upstream]
-        # flavor: [upstream, registry1]
+        flavor: [upstream, registry1]
         test_type: [install]
-        # include:
-        #   - package: all
-        #     flavor: registry1
-        #     test_type: upgrade
-        #   - package: all
-        #     flavor: upstream
-        #     test_type: upgrade
+        include:
+          - package: all
+            flavor: registry1
+            test_type: upgrade
+          - package: all
+            flavor: upstream
+            test_type: upgrade
     uses: ./.github/workflows/test.yaml
     with:
       package: ${{ matrix.package }}
