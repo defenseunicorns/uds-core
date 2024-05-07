@@ -94,13 +94,13 @@ export async function serviceEntry(pkg: UDSPackage, namespace: string) {
 
   // Find any orphaned ServiceEntries (not matching the current generation)
   const orphanedSE = serviceEntries.items.filter(
-    vs => vs.metadata?.labels?.["uds/generation"] !== generation,
+    se => se.metadata?.labels?.["uds/generation"] !== generation,
   );
 
   // Delete any orphaned ServiceEntries
-  for (const vs of orphanedSE) {
-    Log.debug(vs, `Deleting orphaned ServiceEntry ${vs.metadata!.name}`);
-    await K8s(IstioServiceEntry).Delete(vs);
+  for (const se of orphanedSE) {
+    Log.debug(se, `Deleting orphaned ServiceEntry ${se.metadata!.name}`);
+    await K8s(IstioServiceEntry).Delete(se);
   }
 }
 
