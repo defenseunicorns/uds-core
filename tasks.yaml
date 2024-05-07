@@ -30,6 +30,9 @@ tasks:
       - description: "Deploy the Istio source package with Zarf Dev"
         cmd: "uds zarf dev deploy src/istio --flavor ${FLAVOR}"
 
+      - description: "Deploy the Prometheus-Stack source package with Zarf Dev to only install the CRDs"
+        cmd: "uds zarf dev deploy src/prometheus-stack --flavor crds-only"
+
       - description: "Dev instructions"
         cmd: |
           echo "Next steps:"
