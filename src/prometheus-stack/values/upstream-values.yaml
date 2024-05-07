@@ -25,7 +25,7 @@ prometheus-node-exporter:
   image:
     registry: quay.io
     repository: prometheus/node-exporter
-    tag: v1.7.0
+    tag: v1.8.0
 prometheusOperator:
   admissionWebhooks:
     patch:
@@ -40,9 +40,9 @@ prometheusOperator:
   image:
     registry: quay.io
     repository: prometheus-operator/prometheus-operator
-    tag: v0.73.1
+    tag: v0.73.2
   prometheusConfigReloader:
     image:
       registry: quay.io
       repository: prometheus-operator/prometheus-config-reloader
-      tag: v0.73.1
+      tag: v0.73.2
