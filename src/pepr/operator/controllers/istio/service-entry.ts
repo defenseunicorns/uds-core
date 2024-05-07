@@ -105,11 +105,10 @@ export async function serviceEntry(pkg: UDSPackage, namespace: string) {
 }
 
 export function generateSEName(pkg: UDSPackage, expose: Expose) {
-  const { gateway = Gateway.Tenant, host, port, service, description } = expose;
+  const { gateway = Gateway.Tenant, host } = expose;
 
   // Ensure the resource name is valid
-  const nameSuffix = description || `${host}-${port}-${service}`;
-  const name = sanitizeResourceName(`${pkg.metadata!.name}-${gateway}-${nameSuffix}`);
+  const name = sanitizeResourceName(`${pkg.metadata!.name}-${gateway}-${host}`);
 
   return name;
 }

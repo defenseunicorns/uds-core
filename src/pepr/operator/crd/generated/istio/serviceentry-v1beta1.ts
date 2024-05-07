@@ -138,4 +138,5 @@ RegisterKind(ServiceEntry, {
   group: "networking.istio.io",
   version: "v1beta1",
   kind: "ServiceEntry",
+  plural: "serviceentries",
 });
