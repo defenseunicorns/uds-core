@@ -1,5 +1,3 @@
-
-
 manager:
   image:
     registry: docker.io
