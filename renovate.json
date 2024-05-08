@@ -18,6 +18,15 @@
       }
     }
   ],
+  "regexManagers": [
+    {
+        "fileMatch": ["\\.*\\.ya?ml$"],
+        "matchStrings": [
+          "# renovate: datasource=docker( versioning=(?<versioning>.*?))?\n\\s+.+:\\s+(?<depName>[^:]+):(?<currentValue>.*)"
+        ],
+        "datasourceTemplate": "docker"
+    }
+  ],
   "packageRules": [
     {
       "matchFileNames": ["src/istio/**"],
