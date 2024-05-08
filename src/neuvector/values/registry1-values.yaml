@@ -1,11 +1,13 @@
-registry: registry1.dso.mil
-tag: "5.3.2"
 manager:
   image:
+    registry: registry1.dso.mil
     repository: ironbank/neuvector/neuvector/manager
+    tag: "5.3.2"
 enforcer:
   image:
+    registry: registry1.dso.mil
     repository: ironbank/neuvector/neuvector/enforcer
+    tag: "5.3.2"
   containerSecurityContext:
     capabilities:
       drop:
@@ -17,7 +19,9 @@ enforcer:
 
 controller:
   image:
+    registry: registry1.dso.mil
     repository: ironbank/neuvector/neuvector/controller
+    tag: "5.3.2"
   containerSecurityContext:
     capabilities:
       drop:
@@ -29,6 +33,7 @@ controller:
 cve:
   scanner:
     image:
+      registry: registry1.dso.mil
       repository: ironbank/neuvector/neuvector/scanner
       tag: "5"
     containerSecurityContext:
@@ -40,6 +45,7 @@ cve:
   updater:
     enabled: true
     image:
+      registry: registry1.dso.mil
       repository: ironbank/redhat/ubi/ubi9-minimal
       tag: "9.3"
     containerSecurityContext:

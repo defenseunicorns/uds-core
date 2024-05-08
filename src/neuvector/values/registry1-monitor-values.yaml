@@ -1,6 +1,6 @@
-registry: registry1.dso.mil
 exporter:
   image:
+    registry: registry1.dso.mil
     repository: ironbank/neuvector/neuvector/prometheus-exporter
     tag: 5.3.2
 
