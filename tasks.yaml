@@ -86,10 +86,6 @@ tasks:
     actions:
       - task: test:single-package
 
-  - name: test-pre-core-exemptions
-    actions:
-      - task: test:pre-core-exemptions
-
   - name: test-uds-core
     actions:
       - task: test:uds-core
