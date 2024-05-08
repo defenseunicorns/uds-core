@@ -13,7 +13,7 @@ components:
         variables:
           - name: PRE_CORE_EXEMPTIONS_ENABLED
             description: "Toggle to disable or enable pre-core-exemptions"
-            path: enable
+            path: enabled
           - name: PRE_CORE_EXEMPTIONS_NAMESPACE
             description: "The namespace to deploy pre-core-exemptions to (default uds-policy-exemptions). See docs/CONFIGURE_POLICY_EXEMPTIONS.md in order to change this."
             path: namespace

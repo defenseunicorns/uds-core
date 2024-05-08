@@ -6,18 +6,13 @@ For instance, when a team is deploying a bundle that includes a custom init pack
 
 ## How to Use
 
-Add helm values overrides to your `uds-bundle.yaml`:
-
+Option 1: Set as values in bundle overrides
 ```yaml
 kind: UDSBundle
 metadata:
   name: example helm overrides
 
 packages:
-  - name: custom-init
-    repository: ghcr.io/custom-init
-    ref: v0.1.0
-
   - name: core
     path: ghcr.io/defenseunicorns/packages/uds/core
     ref: 0.20.0-upstream
@@ -47,3 +42,70 @@ packages:
                     kind: service
                     test: 2
 ```
+
+Option 2: Set as variables in bundle overrides and use `uds-config.yaml`
+```yaml
+kind: UDSBundle
+metadata:
+  name: example helm overrides
+
+packages:
+  - name: core
+    path: ../../build/
+    overrides:
+      pre-core-exemptions:
+        pre-core-exemptions:
+          variables:
+            - name: PRE_CORE_EXEMPTIONS_ENABLED
+              path: enabled
+            - name: PRE_CORE_EXEMPTIONS
+              path: exemptions
+```
+
+```yaml
+variables:
+  core:
+    PRE_CORE_EXEMPTIONS_ENABLED: true
+    PRE_CORE_EXEMPTIONS: |
+          - policies:
+              - DisallowPrivileged
+              - RequireNonRootUser
+              - DropAllCapabilities
+            title: "podinfo1"
+            matcher:
+              namespace: podinfo
+              name: "^podinfo.*"
+          - policies:
+              - DisallowNodePortServices
+            title: "podinfo2"
+            matcher:
+              namespace: podinfo
+              name: "^.*-local.*"
+              kind: service
+```
+
+Option 3: If deploying the standard package not as part of a bundle, you can use a `zarf-config.yaml`
+
+```yaml
+package:
+  deploy:
+    set:
+      pre_core_exemptions_enabled: true
+      pre_core_exemptions: |
+          - policies:
+              - DisallowPrivileged
+              - RequireNonRootUser
+              - DropAllCapabilities
+            title: "podinfo1"
+            matcher:
+              namespace: podinfo
+              name: "^podinfo.*"
+          - policies:
+              - DisallowNodePortServices
+            title: "podinfo2"
+            matcher:
+              namespace: podinfo
+              name: "^.*-local.*"
+              kind: service
+```
+
