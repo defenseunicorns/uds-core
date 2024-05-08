@@ -47,7 +47,7 @@ cve:
     image:
       registry: registry1.dso.mil
       repository: ironbank/redhat/ubi/ubi9-minimal
-      tag: "9.3"
+      tag: "9.4"
     containerSecurityContext:
       capabilities:
         drop:
