@@ -4,9 +4,6 @@
     ":semanticCommits",
     ":semanticCommitTypeAll(chore)"
   ],
-  "helm-values": {
-    "ignorePaths": ["src/neuvector/values"]
-  },
   "hostRules": [
     {
       "matchHost": "registry1.dso.mil",
