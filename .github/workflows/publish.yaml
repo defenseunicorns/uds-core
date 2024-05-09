@@ -27,10 +27,10 @@ jobs:
         uses: ./.github/actions/setup
 
       - name: Login to GHCR
-        run: uds run registry-login --set REGISTRY=ghcr.io --set REGISTRY_USERNAME=dummy --set REGISTRY_PASSWORD=${{ secrets.GITHUB_TOKEN }} --set REGISTRY_RETRY_INTERVAL=90 --no-progress
+        run: uds run registry-login --set REGISTRY=ghcr.io --set REGISTRY_USERNAME=dummy --set REGISTRY_PASSWORD=${{ secrets.GITHUB_TOKEN }} --set REGISTRY_RETRY_INTERVAL=90
 
       - name: Login to registry1
-        run: uds run registry-login --set REGISTRY=registry1.dso.mil --set REGISTRY_USERNAME=${{ secrets.IRON_BANK_ROBOT_USERNAME }} --set REGISTRY_PASSWORD=${{ secrets.IRON_BANK_ROBOT_PASSWORD }} --set REGISTRY_RETRY_INTERVAL=90 --no-progress
+        run: uds run registry-login --set REGISTRY=registry1.dso.mil --set REGISTRY_USERNAME=${{ secrets.IRON_BANK_ROBOT_USERNAME }} --set REGISTRY_PASSWORD=${{ secrets.IRON_BANK_ROBOT_PASSWORD }} --set REGISTRY_RETRY_INTERVAL=90
 
       - name: (Snapshot) Get snapshot version using git commit short sha and date
         if: ${{ inputs.snapshot }}
@@ -71,7 +71,7 @@ jobs:
       # Cluster must be up for generating the CRD
       - name: Create Exemption CRD Package
         if: ${{ matrix.flavor == 'upstream' }}
-        run: uds run -f tasks/create.yaml exemption-crd-package --no-progress
+        run: uds run -f tasks/create.yaml exemption-crd-package
 
       - name: Debug Output
         if: ${{ always() && !inputs.snapshot }}
@@ -79,23 +79,23 @@ jobs:
 
       - name: Publish Standard Package
         if: ${{ !inputs.snapshot }}
-        run: uds run -f tasks/publish.yaml standard-package --set FLAVOR=${{ matrix.flavor }} --no-progress
+        run: uds run -f tasks/publish.yaml standard-package --set FLAVOR=${{ matrix.flavor }}
 
       - name: Publish Upstream Flavored Bundles
         if: ${{ !inputs.snapshot && matrix.flavor != 'registry1' }}
-        run: uds run -f tasks/publish.yaml bundles --no-progress
+        run: uds run -f tasks/publish.yaml bundles
 
       - name: Publish Exemption CRD Package
         if: ${{ matrix.flavor == 'upstream' }}
-        run: uds run -f tasks/publish.yaml exemption-crd-package --no-progress
+        run: uds run -f tasks/publish.yaml exemption-crd-package
 
       - name: (Snapshot) Publish Standard Package
         if: ${{ inputs.snapshot }}
-        run: uds run -f tasks/publish.yaml standard-package --set FLAVOR=${{ matrix.flavor }} --set TARGET_REPO="ghcr.io/defenseunicorns/packages/uds/snapshots" --set VERSION="${SNAPSHOT_VERSION}" --no-progress
+        run: uds run -f tasks/publish.yaml standard-package --set FLAVOR=${{ matrix.flavor }} --set TARGET_REPO="ghcr.io/defenseunicorns/packages/uds/snapshots" --set VERSION="${SNAPSHOT_VERSION}"
 
       - name: (Snapshot) Publish Upstream Flavored Bundles
         if: ${{ inputs.snapshot && matrix.flavor != 'registry1' }}
-        run: uds run -f tasks/publish.yaml bundles --set TARGET_REPO="ghcr.io/defenseunicorns/packages/uds/snapshots" --set VERSION="${SNAPSHOT_VERSION}" --no-progress
+        run: uds run -f tasks/publish.yaml bundles --set TARGET_REPO="ghcr.io/defenseunicorns/packages/uds/snapshots" --set VERSION="${SNAPSHOT_VERSION}"
 
       - name: Save logs
         if: always()

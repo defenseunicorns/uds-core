@@ -41,7 +41,7 @@ jobs:
       - name: Environment setup
         uses: ./.github/actions/setup
       - name: Deploy Slim Dev Bundle
-        run: uds run slim-dev --no-progress
+        run: uds run slim-dev
       - name: Debug Output
         if: ${{ always() }}
         uses: ./.github/actions/debug-output
