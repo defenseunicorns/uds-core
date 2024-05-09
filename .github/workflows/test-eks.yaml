@@ -65,7 +65,7 @@ jobs:
       - name: Deploy Core Bundle
         env:
           UDS_CONFIG: .github/bundles/uds-config.yaml
-        run: uds deploy .github/bundles/uds-bundle-uds-core-eks-nightly-*.tar.zst --confirm --no-tea
+        run: uds deploy .github/bundles/uds-bundle-uds-core-eks-nightly-*.tar.zst --confirm
         timeout-minutes: 20
 
       - name: Remove UDS Core
