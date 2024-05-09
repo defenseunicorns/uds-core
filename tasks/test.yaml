@@ -27,8 +27,17 @@ tasks:
   - name: uds-core
     description: "Build and test UDS Core"
     actions:
+      - cmd: |
+          echo "CHECKING Zarf Cache" 
+          ls ~/.zarf-cache/images || true
       - task: create:standard-package
+      - cmd: |
+          echo "CHECKING Zarf Cache" 
+          ls ~/.zarf-cache/images || true
       - task: create:slim-dev-package
+      - cmd: |
+          echo "CHECKING Zarf Cache" 
+          ls ~/.zarf-cache/images || true
       - task: create:k3d-standard-bundle
       - task: deploy:k3d-standard-bundle
       - task: validate-packages
