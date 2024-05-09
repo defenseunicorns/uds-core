@@ -4,6 +4,10 @@
     ":semanticCommits",
     ":semanticCommitTypeAll(chore)"
   ],
+  "branchConcurrentLimit": 0,
+  "prConcurrentLimit": 0,
+  "prHourlyLimit": 0,
+  "separateMajorMinor": false,
   "hostRules": [
     {
       "matchHost": "registry1.dso.mil",
@@ -19,13 +23,6 @@
     "ignorePaths": ["src/neuvector/values"]
   },
   "regexManagers": [
-    {
-        "fileMatch": ["\\.*\\.ya?ml$"],
-        "matchStrings": [
-          "# renovate: datasource=docker( versioning=(?<versioning>.*?))?\n\\s+.+:\\s+(?<depName>[^:]+):(?<currentValue>.*)"
-        ],
-        "datasourceTemplate": "docker"
-    },
     {
       "fileMatch": ["^src/neuvector/values/.*\\.yaml$"],
       "matchStrings": [
