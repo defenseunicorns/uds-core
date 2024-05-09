@@ -1,5 +1,6 @@
 import { K8s, Log } from "pepr";
 
+import { V1OwnerReference } from "@kubernetes/client-node";
 import { Prometheus, UDSPackage } from "../../crd";
 import { Monitor } from "../../crd/generated/package-v1alpha1";
 import { getOwnerRef, sanitizeResourceName } from "../utils";
@@ -13,6 +14,7 @@ import { getOwnerRef, sanitizeResourceName } from "../utils";
 export async function serviceMonitor(pkg: UDSPackage, namespace: string) {
   const pkgName = pkg.metadata!.name!;
   const generation = (pkg.metadata?.generation ?? 0).toString();
+  const ownerRefs = getOwnerRef(pkg);
 
   Log.debug(`Reconciling ServiceMonitors for ${pkgName}`);
 
@@ -24,7 +26,7 @@ export async function serviceMonitor(pkg: UDSPackage, namespace: string) {
 
   try {
     for (const monitor of monitorList) {
-      const payload = generateServiceMonitor(pkg, monitor, namespace, pkgName, generation);
+      const payload = generateServiceMonitor(monitor, namespace, pkgName, generation, ownerRefs);
 
       Log.debug(payload, `Applying ServiceMonitor ${payload.metadata?.name}`);
 
@@ -60,25 +62,25 @@ export async function serviceMonitor(pkg: UDSPackage, namespace: string) {
   return [...payloads.map(sm => sm.metadata!.name!)];
 }
 
-export function generateSMName(pkg: UDSPackage, monitor: Monitor) {
+export function generateSMName(pkgName: string, monitor: Monitor) {
   const { selector, portName, description } = monitor;
 
   // Ensure the resource name is valid
   const nameSuffix = description || `${Object.values(selector)}-${portName}`;
-  const name = sanitizeResourceName(`${pkg.metadata!.name}-${nameSuffix}`);
+  const name = sanitizeResourceName(`${pkgName}-${nameSuffix}`);
 
   return name;
 }
 
 export function generateServiceMonitor(
-  pkg: UDSPackage,
   monitor: Monitor,
   namespace: string,
   pkgName: string,
   generation: string,
+  ownerRefs: V1OwnerReference[],
 ) {
   const { selector, portName } = monitor;
-  const name = generateSMName(pkg, monitor);
+  const name = generateSMName(pkgName, monitor);
   const payload: Prometheus.ServiceMonitor = {
     metadata: {
       name,
@@ -87,7 +89,7 @@ export function generateServiceMonitor(
         "uds/package": pkgName,
         "uds/generation": generation,
       },
-      ownerReferences: getOwnerRef(pkg),
+      ownerReferences: ownerRefs,
     },
     spec: {
       endpoints: [
