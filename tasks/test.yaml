@@ -28,6 +28,9 @@ tasks:
     description: "Build and test UDS Core"
     actions:
       - task: create:slim-dev-package
+      - cmd: |
+          echo "LS Zarf Cache"
+          ls ~/.zarf-cache/images || true
       - task: create:standard-package
       - task: create:k3d-standard-bundle
       - task: deploy:k3d-standard-bundle
