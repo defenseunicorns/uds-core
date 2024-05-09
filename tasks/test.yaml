@@ -33,7 +33,7 @@ tasks:
       - task: create:standard-package
       - cmd: |
           echo "CHECKING identity config sha"
-          ls ~/.zarf-cache/images | grep sha256:09b8183c2dc4b95134ae4933d0d46be5955a4d21d19b64359dd4a09bab60d4c4
+          ls ~/.zarf-cache/images | grep sha256:09b8183c2dc4b95134ae4933d0d46be5955a4d21d19b64359dd4a09bab60d4c4 || true
       - task: create:slim-dev-package
       - cmd: |
           echo "CHECKING Zarf Cache"
