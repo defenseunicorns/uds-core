@@ -1,4 +1,4 @@
-# UDS-CORE Groups and Accesses
+# UDS-CORE Groups
 
 UDS Core deploys Keycloak which has some preconfigured groups that applications inherit from SSO and IDP configurations.
 
