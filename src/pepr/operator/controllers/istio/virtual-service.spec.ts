@@ -15,7 +15,7 @@ describe("test generate virtual service", () => {
 
   const host = "test";
   const port = 8080;
-  const service = "test-service"
+  const service = "test-service";
 
   const namespace = "test";
   const pkgName = "test";
@@ -31,7 +31,9 @@ describe("test generate virtual service", () => {
     const payload = generateVirtualService(expose, namespace, pkgName, generation, ownerRefs);
 
     expect(payload).toBeDefined();
-    expect(payload.metadata?.name).toEqual(`${pkgName}-${Gateway.Tenant}-${host}-${port}-${service}`);
+    expect(payload.metadata?.name).toEqual(
+      `${pkgName}-${Gateway.Tenant}-${host}-${port}-${service}`,
+    );
     expect(payload.metadata?.namespace).toEqual(namespace);
 
     expect(payload.spec?.hosts).toBeDefined();
@@ -39,11 +41,15 @@ describe("test generate virtual service", () => {
 
     expect(payload.spec?.http).toBeDefined();
     expect(payload.spec!.http![0].route).toBeDefined();
-    expect(payload.spec!.http![0].route![0].destination?.host).toEqual(`${service}.${namespace}.svc.cluster.local`);
+    expect(payload.spec!.http![0].route![0].destination?.host).toEqual(
+      `${service}.${namespace}.svc.cluster.local`,
+    );
     expect(payload.spec!.http![0].route![0].destination?.port?.number).toEqual(port);
 
     expect(payload.spec?.gateways).toBeDefined();
-    expect(payload.spec!.gateways![0]).toEqual(`istio-${Gateway.Tenant}-gateway/${Gateway.Tenant}-gateway`);
+    expect(payload.spec!.gateways![0]).toEqual(
+      `istio-${Gateway.Tenant}-gateway/${Gateway.Tenant}-gateway`,
+    );
   });
 
   it("should create an admin VirtualService object", () => {
@@ -64,8 +70,8 @@ describe("test generate virtual service", () => {
 
   it("should create an advancedHttp VirtualService object", () => {
     const advancedHTTP = {
-      directResponse: { status: 404 }
-    }
+      directResponse: { status: 404 },
+    };
     const expose: Expose = {
       host,
       port,
@@ -98,7 +104,9 @@ describe("test generate virtual service", () => {
     expect(payload.spec!.tls![0].match![0].port).toEqual(443);
     expect(payload.spec!.tls![0].match![0].sniHosts![0]).toEqual(`${host}.${UDSConfig.domain}`);
     expect(payload.spec!.tls![0].route).toBeDefined();
-    expect(payload.spec!.http![0].route![0].destination?.host).toEqual(`${service}.${namespace}.svc.cluster.local`);
+    expect(payload.spec!.http![0].route![0].destination?.host).toEqual(
+      `${service}.${namespace}.svc.cluster.local`,
+    );
     expect(payload.spec!.http![0].route![0].destination?.port?.number).toEqual(port);
   });
 });

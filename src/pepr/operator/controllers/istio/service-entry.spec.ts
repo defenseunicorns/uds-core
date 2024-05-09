@@ -15,7 +15,7 @@ describe("test generate service entry", () => {
 
   const host = "test";
   const port = 8080;
-  const service = "test-service"
+  const service = "test-service";
 
   const namespace = "test";
   const pkgName = "test";
@@ -46,6 +46,8 @@ describe("test generate service entry", () => {
     expect(payload.spec!.ports![0].protocol).toEqual("HTTPS");
 
     expect(payload.spec?.endpoints).toBeDefined();
-    expect(payload.spec!.endpoints![0].address).toEqual(`${Gateway.Tenant}-ingressgateway.istio-${Gateway.Tenant}-gateway.svc.cluster.local`);
+    expect(payload.spec!.endpoints![0].address).toEqual(
+      `${Gateway.Tenant}-ingressgateway.istio-${Gateway.Tenant}-gateway.svc.cluster.local`,
+    );
   });
 });
