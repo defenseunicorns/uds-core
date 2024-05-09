@@ -27,9 +27,9 @@ tasks:
   - name: uds-core
     description: "Build and test UDS Core"
     actions:
+      - task: create:slim-dev-package
       - task: create:standard-package
       - task: create:k3d-standard-bundle
-      - task: create:slim-dev-package
       - task: deploy:k3d-standard-bundle
       - task: validate-packages
 
