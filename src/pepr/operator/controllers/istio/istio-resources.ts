@@ -41,6 +41,7 @@ export async function istioResources(pkg: UDSPackage, namespace: string) {
     const sePayload = generateServiceEntry(expose, namespace, pkgName, generation, ownerRefs);
 
     // If we have already made a ServiceEntry with this name, skip (i.e. if advancedHTTP was used)
+    // TODO: (@MJNAGEL) - want to validate that skipping this here doesn't miss any edge cases
     if (serviceEntryNames.get(sePayload.metadata!.name!)) {
       continue;
     }
