@@ -20,11 +20,11 @@ components:
         valuesFiles:
           - values/upstream-monitor-values.yaml
     images:
-      - docker.io/neuvector/controller:5.3.2
-      - docker.io/neuvector/manager:5.3.2
+      - docker.io/neuvector/controller:8241.2
+      - docker.io/neuvector/manager:8241.2
       - docker.io/neuvector/updater:latest
       - docker.io/neuvector/scanner:latest
-      - docker.io/neuvector/enforcer:5.3.2
+      - docker.io/neuvector/enforcer:8241.2
       - docker.io/neuvector/prometheus-exporter:5.3.2
 
   - name: neuvector
