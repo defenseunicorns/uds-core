@@ -40,7 +40,8 @@ components:
     required: true
     import:
       path: ../../dist
-
+      name: module
+      
   # Keycloak
   - name: keycloak
     required: true
