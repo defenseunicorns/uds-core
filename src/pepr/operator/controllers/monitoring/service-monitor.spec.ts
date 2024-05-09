@@ -1,5 +1,6 @@
 import { describe, expect, it } from "@jest/globals";
 import { generateServiceMonitor } from "./service-monitor";
+import { Monitor } from "../../crd";
 
 describe("test generate service monitor", () => {
   it("should return a valid Service Monitor object", () => {
@@ -14,7 +15,7 @@ describe("test generate service monitor", () => {
     const portName = "http-metrics";
     const metricsPath = "/test";
     const selectorApp = "test";
-    const monitor = {
+    const monitor: Monitor = {
       portName: portName,
       path: metricsPath,
       targetPort: 1234,

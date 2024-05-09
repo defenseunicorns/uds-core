@@ -2,6 +2,7 @@ export {
   Allow,
   Direction,
   Expose,
+  Monitor,
   Gateway,
   Phase,
   Status as PkgStatus,

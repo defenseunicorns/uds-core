@@ -1,8 +1,7 @@
 import { K8s, Log } from "pepr";
 
 import { V1OwnerReference } from "@kubernetes/client-node";
-import { Prometheus, UDSPackage } from "../../crd";
-import { Monitor } from "../../crd/generated/package-v1alpha1";
+import { Prometheus, UDSPackage, Monitor } from "../../crd";
 import { getOwnerRef, sanitizeResourceName } from "../utils";
 
 /**
