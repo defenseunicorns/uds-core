@@ -27,18 +27,12 @@ tasks:
   - name: uds-core
     description: "Build and test UDS Core"
     actions:
-      - cmd: |
-          echo "CHECKING Zarf Cache"
-          ls ~/.zarf-cache/images || true
       - task: create:standard-package
-      - cmd: |
-          echo "CHECKING identity config sha"
-          ls ~/.zarf-cache/images | grep sha256:09b8183c2dc4b95134ae4933d0d46be5955a4d21d19b64359dd4a09bab60d4c4 || true
+      - cmd: uds zarf tools clear-cache
       - task: create:slim-dev-package
       - cmd: |
           echo "CHECKING Zarf Cache"
           ls ~/.zarf-cache/images || true
-
       - task: create:k3d-standard-bundle
       - task: deploy:k3d-standard-bundle
       - task: validate-packages
