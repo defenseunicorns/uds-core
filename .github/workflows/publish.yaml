@@ -27,10 +27,10 @@ jobs:
         uses: ./.github/actions/setup
 
       - name: Login to GHCR
-        run: uds run registry-login --set REGISTRY=ghcr.io --set REGISTRY_USERNAME=dummy --set REGISTRY_PASSWORD=${{ secrets.GITHUB_TOKEN }} --set REGISTRY_RETRY_INTERVAL=90
+        run: uds run registry-login --set REGISTRY=ghcr.io --set REGISTRY_USERNAME=dummy --set REGISTRY_PASSWORD=${{ secrets.GITHUB_TOKEN }} --set REGISTRY_RETRY_INTERVAL=90 --no-progress
 
       - name: Login to registry1
-        run: uds run registry-login --set REGISTRY=registry1.dso.mil --set REGISTRY_USERNAME=${{ secrets.IRON_BANK_ROBOT_USERNAME }} --set REGISTRY_PASSWORD=${{ secrets.IRON_BANK_ROBOT_PASSWORD }} --set REGISTRY_RETRY_INTERVAL=90
+        run: uds run registry-login --set REGISTRY=registry1.dso.mil --set REGISTRY_USERNAME=${{ secrets.IRON_BANK_ROBOT_USERNAME }} --set REGISTRY_PASSWORD=${{ secrets.IRON_BANK_ROBOT_PASSWORD }} --set REGISTRY_RETRY_INTERVAL=90 --no-progress
 
       - name: (Snapshot) Get snapshot version using git commit short sha and date
         if: ${{ inputs.snapshot }}
@@ -50,13 +50,13 @@ jobs:
       - name: Create Packages and Bundles
         run: |
           ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress --set FLAVOR=${{ matrix.flavor }}
-          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml k3d-standard-bundle --no-progress
+          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml k3d-standard-bundle --no-progress --no-progress
           ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml slim-dev-package --no-progress --set FLAVOR=${{ matrix.flavor }}
-          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml k3d-slim-dev-bundle --no-progress
+          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml k3d-slim-dev-bundle --no-progress --no-progress
 
           if [ "${{ matrix.flavor }}" != "registry1" ]; then
             ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml standard-package --no-progress --set FLAVOR=${{ matrix.flavor }}
-            ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-standard-bundle --no-progress
+            ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-standard-bundle --no-progress 
             ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml slim-dev-package --no-progress --set FLAVOR=${{ matrix.flavor }}
             ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-slim-dev-bundle --no-progress
           fi
@@ -74,19 +74,19 @@ jobs:
 
       - name: Publish Standard Package
         if: ${{ !inputs.snapshot }}
-        run: uds run -f tasks/publish.yaml standard-package --set FLAVOR=${{ matrix.flavor }}
+        run: uds run -f tasks/publish.yaml standard-package --set FLAVOR=${{ matrix.flavor }} --no-progress
 
       - name: Publish Upstream Flavored Bundles
         if: ${{ !inputs.snapshot && matrix.flavor != 'registry1' }}
-        run: uds run -f tasks/publish.yaml bundles
+        run: uds run -f tasks/publish.yaml bundles --no-progress
 
       - name: (Snapshot) Publish Standard Package
         if: ${{ inputs.snapshot }}
-        run: uds run -f tasks/publish.yaml standard-package --set FLAVOR=${{ matrix.flavor }} --set TARGET_REPO="ghcr.io/defenseunicorns/packages/uds/snapshots" --set VERSION="${SNAPSHOT_VERSION}"
+        run: uds run -f tasks/publish.yaml standard-package --set FLAVOR=${{ matrix.flavor }} --set TARGET_REPO="ghcr.io/defenseunicorns/packages/uds/snapshots" --set VERSION="${SNAPSHOT_VERSION}" --no-progress
 
       - name: (Snapshot) Publish Upstream Flavored Bundles
         if: ${{ inputs.snapshot && matrix.flavor != 'registry1' }}
-        run: uds run -f tasks/publish.yaml bundles --set TARGET_REPO="ghcr.io/defenseunicorns/packages/uds/snapshots" --set VERSION="${SNAPSHOT_VERSION}"
+        run: uds run -f tasks/publish.yaml bundles --set TARGET_REPO="ghcr.io/defenseunicorns/packages/uds/snapshots" --set VERSION="${SNAPSHOT_VERSION}" --no-progress
 
       - name: Save logs
         if: always()
