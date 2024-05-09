@@ -23,13 +23,15 @@ Neuvector [maps the groups](https://github.com/defenseunicorns/uds-core/blob/mai
 
 ## Keycloak 
 > [!IMPORTANT]
-> All groups are under the Uds-Core parent group. Frequently a group will be referred to as Uds-Core/Admin or Uds-Core/Auditor. In the Keycloak UI this requires an additional click to get down to the sub groups.
+> All groups are under the Uds Core parent group. Frequently a group will be referred to as Uds Core/Admin or Uds Core/Auditor. In the Keycloak UI this requires an additional click to get down to the sub groups.
 
 ### Identity Providers ( IDP )
 
-Generally we recommend following our process for configuring an IDP and and it's group mappings. `uds-identity-config` has some [more docs](https://github.com/defenseunicorns/uds-identity-config/blob/main/docs/CUSTOMIZE.md#customizing-realm) for the process of defining the environment variables for the [realm.json](https://github.com/defenseunicorns/uds-identity-config/blob/main/src/realm.json#L1712-L1813) file as well.
+UDS Core ships with a [templated](https://github.com/defenseunicorns/uds-identity-config/blob/main/src/realm.json#L1712-L1813) Google SAML IDP, more documentation to configure the `realmInitEnv` values in [uds-identity-config](https://github.com/defenseunicorns/uds-identity-config/blob/main/docs/CUSTOMIZE.md#customizing-realm).
 
-At this time Google SAML is the only provider configured to work with UDS Core Keycloak out of the box. Using Google Workspace for configuring the groups that should be mapped to Keycloak groups via an `Advanced Attribute to Group`.
+Configuring your own IDP can be achieved via:
+* Custom uds-identity-config with a templated realm.json
 
-There is nothing limiting the use of other IDP's, for example using gitlab or another Keycloak.
+* Keycloak Admin UI and click ops
 
+* Custom [realm.json](https://github.com/defenseunicorns/uds-identity-config/blob/main/src/realm.json#L1712-L1813) for direct import in Keycloak 
