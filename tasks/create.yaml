@@ -16,7 +16,7 @@ tasks:
       - task: pepr-build
 
       - description: "Create the UDS Core Standard Zarf Package"
-        cmd: "uds zarf package create packages/standard --confirm --no-progress --flavor ${FLAVOR}"
+        cmd: "zarf package create packages/standard --confirm --no-progress --flavor ${FLAVOR}"
 
   - name: k3d-standard-bundle
     description: "Create the K3d-UDS Core Bundle"
@@ -30,7 +30,7 @@ tasks:
       - task: pepr-build
 
       - description: "Create the UDS Core Istio Zarf Package"
-        cmd: "uds zarf package create packages/slim-dev --confirm --no-progress --flavor ${FLAVOR}"
+        cmd: "zarf package create packages/slim-dev --confirm --no-progress --flavor ${FLAVOR}"
 
   - name: k3d-slim-dev-bundle
     description: "Create the K3d-UDS Core (Istio and Keycloak Only) Bundle"
