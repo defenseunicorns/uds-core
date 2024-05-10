@@ -196,8 +196,8 @@ graph TD
     G -->|Yes| H["Log: Skipping pkg"]
     G -->|No| I["Update pkg status to Phase.Pending"]
     I --> J{"Check if Istio is installed"}
-    J -->|Yes| K["Add injection label, process expose CRs for Virtual Services"]
-    J -->|No| L["Skip Virtual Service Creation"]
+    J -->|Yes| K["Add injection label, process expose CRs for Istio Resources"]
+    J -->|No| L["Skip Istio Resource Creation"]
     K --> M["Create default network policies in namespace"]
     L --> M
     M --> N["Process allow CRs for network policies"]
