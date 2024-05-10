@@ -20,8 +20,8 @@ components:
         valuesFiles:
           - "values/upstream-values.yaml"
     images:
-      - quay.io/keycloak/keycloak:24.0.4
-      - ghcr.io/defenseunicorns/uds/identity-config:0.4.3
+      # - quay.io/keycloak/keycloak:24.0.4
+      # - ghcr.io/defenseunicorns/uds/identity-config:0.4.3
 
   - name: keycloak
     required: true
