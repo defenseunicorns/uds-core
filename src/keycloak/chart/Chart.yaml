@@ -1,5 +1,6 @@
 apiVersion: v2
 name: keycloak
+# renovate: datasource=docker depName=quay.io/keycloak/keycloak versioning=semver
 version: 24.0.3
 description: Open Source Identity and Access Management For Modern Applications and Services
 keywords:
