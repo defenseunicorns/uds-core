@@ -66,7 +66,7 @@ jobs:
     strategy:
       matrix:
         package: ${{ fromJSON(needs.check-paths.outputs.packages) }}
-        flavor: [upstream]
+        flavor: [upstream, registry1]
         test_type: [install]
         include:
           - package: all

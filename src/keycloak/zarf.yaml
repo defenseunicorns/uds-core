@@ -23,18 +23,18 @@ components:
       - quay.io/keycloak/keycloak:24.0.4
       - ghcr.io/defenseunicorns/uds/identity-config:0.4.3
 
-  # - name: keycloak
-  #   required: true
-  #   only:
-  #     flavor: registry1
-  #     cluster:
-  #       architecture: amd64
-  #   import:
-  #     path: common
-  #   charts:
-  #     - name: keycloak
-  #       valuesFiles:
-  #         - "values/registry1-values.yaml"
-  #   images:
-  #     - registry1.dso.mil/ironbank/opensource/keycloak/keycloak:24.0.3
-  #     - ghcr.io/defenseunicorns/uds/identity-config:0.4.3
+  - name: keycloak
+    required: true
+    only:
+      flavor: registry1
+      cluster:
+        architecture: amd64
+    import:
+      path: common
+    charts:
+      - name: keycloak
+        valuesFiles:
+          - "values/registry1-values.yaml"
+    images:
+      - registry1.dso.mil/ironbank/opensource/keycloak/keycloak:24.0.3
+      - ghcr.io/defenseunicorns/uds/identity-config:0.4.3
