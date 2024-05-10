@@ -65,7 +65,7 @@ jobs:
     strategy:
       matrix:
         package: [all]
-        flavor: [registry1]
+        flavor: [upstream]
         test_type: [install]
     uses: ./.github/workflows/test.yaml
     with:
