@@ -28,8 +28,6 @@ tasks:
     description: "Build and test UDS Core"
     actions:
       - task: create:standard-package
-      - cmd: uds zarf tools clear-cache
-      - task: create:slim-dev-package
       - task: create:k3d-standard-bundle
       - task: deploy:k3d-standard-bundle
       - task: validate-packages
