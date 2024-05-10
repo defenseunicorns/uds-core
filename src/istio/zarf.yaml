@@ -21,8 +21,8 @@ components:
         valuesFiles:
           - "values/upstream-values.yaml"
     images:
-      - "docker.io/istio/pilot:1.21.2-distroless"
-      - "docker.io/istio/proxyv2:1.21.2-distroless"
+      # - "docker.io/istio/pilot:1.21.2-distroless"
+      # - "docker.io/istio/proxyv2:1.21.2-distroless"
 
   - name: istio-controlplane
     required: true
