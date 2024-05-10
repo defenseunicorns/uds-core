@@ -40,5 +40,5 @@ tasks:
       - task: deploy:latest-package-release
       - task: create:standard-package
       - task: deploy:standard-package
-      - task: uds zarf tools clear-cache
+      - cmd: uds zarf tools clear-cache
       - task: validate-packages
