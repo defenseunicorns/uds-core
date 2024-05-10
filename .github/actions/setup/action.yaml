@@ -31,7 +31,8 @@ runs:
       shell: bash
       # renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
       run: brew install defenseunicorns/tap/uds@0.10.4
-
+    
+    # pushing change just to see what happens
     - name: Install Zarf
       uses: defenseunicorns/setup-zarf@main
       with:
