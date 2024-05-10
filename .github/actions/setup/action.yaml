@@ -35,5 +35,5 @@ runs:
     - name: Install Zarf
       uses: defenseunicorns/setup-zarf@main
       with:
-        version: v0.33.2
+        version: v0.33.0
         download-init-package: true
