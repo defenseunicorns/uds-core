@@ -1,8 +1,11 @@
-## Configuring UDS-CORE Policy Exemptions
+---
+title: Configuring UDS-CORE Policy Exemptions
+type: docs
+---
 
 By default policy exemptions ([UDSExemptions](../src/pepr/operator/crd/generated/exemption-v1alpha1.ts)) are only allowed in a single namespace -- `uds-policy-exemptions`. We recognize this is not a conventional pattern in K8s, but believe it is ideal for UDS for the following reasons:
 
-- highlights the fact that an exemption can reduce the overall security posture of the cluster 
+- highlights the fact that an exemption can reduce the overall security posture of the cluster
 - makes maintaining RBAC for controlling exemptions more straightforward
 - reduces the risk that an unintentional mis-configuration of RBAC allows a cluster exemption that would otherwise be denied
 
@@ -15,6 +18,7 @@ If you believe that the default scoping is not the right approach for your clust
 or via a uds bundle config:
 
 uds-config.yaml
+
 ```yaml
 options:
   # options here

@@ -1,4 +1,7 @@
-# UDS Bundle [name]
+---
+title: UDS Bundle [name]
+type: docs
+---
 
 ## How to upgrade this bundle
 
