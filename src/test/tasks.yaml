@@ -3,7 +3,7 @@ tasks:
     description: Test app used for UDS Core validation
     actions:
       - description: Create zarf package for the test resources
-        cmd: "uds zarf package create src/test --confirm --no-progress"
+        cmd: "zarf package create src/test --confirm --no-progress"
       - description: Apply the test resources
         cmd: "uds zarf package deploy build/zarf-package-uds-core-test-apps-*.zst --confirm --no-progress"
 
