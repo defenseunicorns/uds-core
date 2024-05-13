@@ -38,3 +38,5 @@ runs:
         gh run download 9068288781 -R github.com/defenseunicorns/zarf -n build-artifacts
         chmod +x zarf
         mv zarf /usr/local/bin
+      env:
+        GH_TOKEN: ${{ github.token }}
