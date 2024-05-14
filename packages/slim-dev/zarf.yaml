@@ -23,23 +23,24 @@ components:
   - name: istio-admin-gateway
     required: true
     import:
-      path: ../standard
+      path: ../../src/istio
 
   - name: istio-tenant-gateway
     required: true
     import:
-      path: ../standard
+      path: ../../src/istio
 
   - name: istio-passthrough-gateway
     required: true
     import:
-      path: ../standard
+      path: ../../src/istio
 
   # Pepr the world
   - name: pepr-uds-core
     required: true
     import:
-      path: ../standard
+      path: ../../dist
+      name: module
 
   - name: pre-core-exemptions
     required: true
@@ -50,4 +51,4 @@ components:
   - name: keycloak
     required: true
     import:
-      path: ../standard
+      path: ../../src/keycloak

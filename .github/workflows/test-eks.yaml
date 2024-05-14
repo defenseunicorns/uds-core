@@ -41,7 +41,7 @@ jobs:
         uses: ./.github/actions/setup
 
       - name: Install eksctl
-        run: uds run -f tasks/iac.yaml install-eksctl
+        run: uds run -f tasks/iac.yaml install-eksctl --no-progress
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -49,17 +49,17 @@ jobs:
           terraform_version: "1.5.7"
 
       - name: Create UDS Core Package
-        run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package
+        run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress
 
       - name: Create Core Bundle
         run: uds create .github/bundles/infra-bundle --confirm
 
       - name: Create Cluster
-        run: uds run -f tasks/iac.yaml create-cluster
+        run: uds run -f tasks/iac.yaml create-cluster --no-progress
         timeout-minutes: 60
 
       - name: Create IAC
-        run: uds run -f tasks/iac.yaml create-iac
+        run: uds run -f tasks/iac.yaml create-iac --no-progress
         timeout-minutes: 20
 
       - name: Deploy Core Bundle
@@ -76,12 +76,12 @@ jobs:
 
       - name: Remove IAC
         if: always()
-        run: uds run -f tasks/iac.yaml destroy-iac
+        run: uds run -f tasks/iac.yaml destroy-iac --no-progress
         timeout-minutes: 10
         continue-on-error: true
 
       - name: Teardown EKS cluster
         if: always()
-        run: uds run -f tasks/iac.yaml destroy-cluster
+        run: uds run -f tasks/iac.yaml destroy-cluster --no-progress
         timeout-minutes: 30
         continue-on-error: true
