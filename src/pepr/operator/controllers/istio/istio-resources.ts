@@ -6,7 +6,7 @@ import { generateVirtualService } from "./virtual-service";
 import { generateServiceEntry } from "./service-entry";
 
 /**
- * Creates a VirtualService for each exposed service in the package
+ * Creates a VirtualService and ServiceEntry for each exposed service in the package
  *
  * @param pkg
  * @param namespace
