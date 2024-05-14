@@ -1,20 +1,21 @@
 import { describe, expect, it } from "@jest/globals";
 import { generateServiceMonitor } from "./service-monitor";
+import { Monitor } from "../../crd";
 
 describe("test generate service monitor", () => {
   it("should return a valid Service Monitor object", () => {
-    const pkg = {
-      apiVersion: "uds.dev/v1alpha1",
-      kind: "Package",
-      metadata: {
+    const ownerRefs = [
+      {
+        apiVersion: "uds.dev/v1alpha1",
+        kind: "Package",
         name: "test",
         uid: "f50120aa-2713-4502-9496-566b102b1174",
       },
-    };
+    ];
     const portName = "http-metrics";
     const metricsPath = "/test";
     const selectorApp = "test";
-    const monitor = {
+    const monitor: Monitor = {
       portName: portName,
       path: metricsPath,
       targetPort: 1234,
@@ -25,7 +26,7 @@ describe("test generate service monitor", () => {
     const namespace = "test";
     const pkgName = "test";
     const generation = "1";
-    const payload = generateServiceMonitor(pkg, monitor, namespace, pkgName, generation);
+    const payload = generateServiceMonitor(monitor, namespace, pkgName, generation, ownerRefs);
 
     expect(payload).toBeDefined();
     expect(payload.metadata?.name).toEqual(`${pkgName}-${selectorApp}-${portName}`);
