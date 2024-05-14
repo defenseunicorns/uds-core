@@ -1,5 +1,5 @@
 ---
-title: UDS Core Development Maintenance
+title: Development Maintenance
 type: docs
 weight: 2
 ---

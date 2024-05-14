@@ -1,7 +1,7 @@
 ---
-title: UDS Core User Groups
+title: User Groups
 type: docs
-weight: 2
+weight: 6
 ---
 
 UDS Core deploys Keycloak which has some preconfigured groups that applications inherit from SSO and IDP configurations.
@@ -25,9 +25,10 @@ Neuvector [maps the groups](https://github.com/defenseunicorns/uds-core/blob/mai
 | `Admin`        | `admin`                |
 | `Auditor`      | `reader`               |
 
-## Keycloak 
-> [!IMPORTANT]
-> All groups are under the Uds Core parent group. Frequently a group will be referred to as Uds Core/Admin or Uds Core/Auditor. In the Keycloak UI this requires an additional click to get down to the sub groups.
+## Keycloak
+{{% alert-note %}}
+All groups are under the Uds Core parent group. Frequently a group will be referred to as Uds Core/Admin or Uds Core/Auditor. In the Keycloak UI this requires an additional click to get down to the sub groups.
+{{% /alert-note %}}
 
 ### Identity Providers ( IDP )
 
