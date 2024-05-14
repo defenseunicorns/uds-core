@@ -90,11 +90,11 @@ function deleteIfMatchersRemoved(
 }
 
 // Iterate through local Map and update Store
-function updateStore(policyMap: PolicyMap) {
+async function updateStore(policyMap: PolicyMap) {
   const { Store } = policies;
   for (const [policy, matchers] of policyMap.entries()) {
     Log.debug(`Updating uds policy ${policy} exemptions: ${JSON.stringify(matchers)}`);
-    Store.setItem(policy, JSON.stringify(matchers));
+    Store.setItemAndWait(policy, JSON.stringify(matchers));
   }
 }
 
@@ -112,7 +112,7 @@ function setupPolicyMap() {
 
 // Add Exemptions to Pepr store as "policy": "[{...matcher, owner: uid}]"
 //(Performance Optimization) Use local map to do aggregation before updating store
-export function processExemptions(exempt: UDSExemption) {
+export async function processExemptions(exempt: UDSExemption) {
   const { policyMap, policyList } = setupPolicyMap();
   const currExemptMatchers: StoredMatcher[] = [];
   const ownerId = exempt.metadata?.uid || "";
@@ -136,11 +136,11 @@ export function processExemptions(exempt: UDSExemption) {
     deleteIfMatchersRemoved(p, policyMap, currExemptMatchers, ownerId);
   }
 
-  updateStore(policyMap);
+  await updateStore(policyMap);
 }
 
 //(Performance Optimization) Use local map to do aggregation before updating store
-export function removeExemptions(exempt: UDSExemption) {
+export async function removeExemptions(exempt: UDSExemption) {
   const { policyMap } = setupPolicyMap();
 
   Log.debug(`Removing policy exemptions for ${exempt.metadata?.name}`);
@@ -156,5 +156,5 @@ export function removeExemptions(exempt: UDSExemption) {
     }
   }
 
-  updateStore(policyMap);
+  await updateStore(policyMap);
 }

@@ -19,7 +19,7 @@ export async function exemptReconciler(exempt: UDSExemption) {
     await updateStatus(exempt, { phase: Phase.Pending });
 
     // Process the exemptions
-    processExemptions(exempt);
+    await processExemptions(exempt);
 
     // Mark the exemption as ready
     await updateStatus(exempt, {
