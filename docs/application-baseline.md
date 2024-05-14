@@ -1,5 +1,5 @@
 ---
-title: UDS Core Baseline
+title: Application Baseline
 type: docs
 weight: 1
 ---
