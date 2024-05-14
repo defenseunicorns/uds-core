@@ -1,7 +1,7 @@
 ---
 title: User Groups
 type: docs
-weight: 6
+weight: 4
 ---
 
 UDS Core deploys Keycloak which has some preconfigured groups that applications inherit from SSO and IDP configurations.
