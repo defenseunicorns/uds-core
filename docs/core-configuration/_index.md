@@ -1,6 +1,6 @@
 ---
 title: UDS Core Configuration
-linkTitle: Core Configuration
+type: docs
 weight: 3
 ---
 
