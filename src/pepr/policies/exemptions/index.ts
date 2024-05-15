@@ -1,7 +1,7 @@
 import { KubernetesObject } from "kubernetes-fluent-client";
 import { Log, PeprMutateRequest, PeprValidateRequest } from "pepr";
+import { policyExemptionMap } from "..";
 import { Policy } from "../../operator/crd";
-import { Store } from "../common";
 
 /**
  * Check a resource against an exemption list for use by the validation action.
@@ -14,7 +14,7 @@ export function isExempt<T extends KubernetesObject>(
   request: PeprValidateRequest<T> | PeprMutateRequest<T>,
   policy: Policy,
 ) {
-  const exemptList = JSON.parse(Store.getItem(policy) || "[]");
+  const exemptList = policyExemptionMap.get(policy) || [];
 
   // Loop through the exempt list
   for (const exempt of exemptList) {
