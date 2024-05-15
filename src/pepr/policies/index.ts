@@ -18,6 +18,7 @@ for (const p of policyList) {
 }
 
 export async function startExemptionWatch() {
+  // only run in admission controller
   if (process.env.PEPR_WATCH_MODE === "false") {
     const watcher = K8s(UDSExemption).Watch(async (exemption, phase) => {
       console.log(`Exemption ${exemption.metadata?.name} is ${phase}`);
