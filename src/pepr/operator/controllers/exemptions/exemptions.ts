@@ -2,6 +2,14 @@ import { Log } from "pepr";
 import { PolicyMap, StoredMatcher } from "../../../policies";
 import { ExemptionElement, Policy, UDSExemption } from "../../crd";
 
+export enum WatchPhase {
+  Added = "ADDED",
+  Modified = "MODIFIED",
+  Deleted = "DELETED",
+  Bookmark = "BOOKMARK",
+  Error = "ERROR",
+}
+
 const isSame = (a: StoredMatcher, b: StoredMatcher) => {
   return (
     a.name === b.name && a.namespace === b.namespace && a.kind == b.kind && a.owner === b.owner
@@ -90,7 +98,7 @@ function deleteIfMatchersRemoved(
 //(Performance Optimization) Use local map to do aggregation before updating store
 export function processExemptions(
   exempt: UDSExemption,
-  phase: string,
+  phase: WatchPhase,
   exemptionMap: Map<Policy, StoredMatcher[]>,
 ) {
   const currExemptMatchers: StoredMatcher[] = [];
@@ -116,7 +124,7 @@ export function processExemptions(
     deleteIfMatchersRemoved(p, exemptionMap, currExemptMatchers, ownerId);
   }
 
-  if (phase === "DELETED") {
+  if (phase === WatchPhase.Deleted) {
     removeExemptions(exempt, exemptionMap);
   }
 }

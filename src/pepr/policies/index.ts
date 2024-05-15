@@ -22,7 +22,7 @@ export async function startExemptionWatch() {
     const watcher = K8s(UDSExemption).Watch(async (exemption, phase) => {
       console.log(`Exemption ${exemption.metadata?.name} is ${phase}`);
 
-      await processExemptions(exemption, phase, policyExemptionMap);
+      processExemptions(exemption, phase, policyExemptionMap);
     });
 
     // This will run until the process is terminated or the watch is aborted

@@ -4,7 +4,7 @@ import { K8s, Log, kind } from "pepr";
 
 import { Mock } from "jest-mock";
 import { handleFailure, shouldSkip, updateStatus, writeEvent } from ".";
-import { ExemptStatus, Phase, PkgStatus, UDSExemption, UDSPackage } from "../crd";
+import { Phase, PkgStatus, UDSPackage } from "../crd";
 
 jest.mock("pepr", () => ({
   K8s: jest.fn(),
@@ -77,17 +77,6 @@ describe("updateStatus", () => {
       status,
     });
   });
-
-  it("should update the status of an exemption", async () => {
-    const cr = { kind: "Exemption", metadata: { name: "test", namespace: "default" } };
-    const status = { phase: Phase.Ready };
-    await updateStatus(cr as GenericKind, status as ExemptStatus);
-    expect(K8s).toHaveBeenCalledWith(UDSExemption);
-    expect(PatchStatus).toHaveBeenCalledWith({
-      metadata: { name: "test", namespace: "default" },
-      status,
-    });
-  });
 });
 
 describe("writeEvent", () => {
@@ -149,7 +138,7 @@ describe("handleFailure", () => {
   it("should handle a 404 error", async () => {
     const err = { status: 404, message: "Not found" };
     const cr = { metadata: { namespace: "default", name: "test" } };
-    await handleFailure(err, cr as UDSPackage | UDSExemption);
+    await handleFailure(err, cr as UDSPackage);
     expect(Log.warn).toHaveBeenCalledWith({ err }, "Package metadata seems to have been deleted");
     expect(Create).not.toHaveBeenCalled();
   });
@@ -161,7 +150,7 @@ describe("handleFailure", () => {
       apiVersion: "v1",
       metadata: { namespace: "default", name: "test", generation: 1, uid: "1" },
     };
-    await handleFailure(err, cr as UDSPackage | UDSExemption);
+    await handleFailure(err, cr as UDSPackage);
     expect(Log.error).toHaveBeenCalledWith({ err }, "Error configuring default/test");
 
     expect(Create).toHaveBeenCalledWith({
