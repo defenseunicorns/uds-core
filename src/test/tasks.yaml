@@ -49,5 +49,15 @@ tasks:
             address: demo.uds.dev/status/202
             code: 202
 
+      - cmd: uds zarf tools kubectl get pods -n podinfo -o=jsonpath='{.items[0].metadata.name}'
+        setVariables:
+          - name: PODINFO_NAME
+      - description: Check for podinfo to come back up
+        wait:
+          cluster:
+            kind: Pod
+            name: ${PODINFO_NAME}
+            namespace: podinfo
+
       - description: Remove the test resources
         cmd: "uds zarf package remove build/zarf-package-uds-core-test-apps-*.zst --confirm"
