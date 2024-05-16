@@ -15,7 +15,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = ">= 4.0, != 5.17.0"
+      version = ">= 4.0"
     }
 
     random = {
@@ -40,23 +40,23 @@ data "aws_partition" "current" {}
 data "aws_region" "current" {}
 
 locals {
-  oidc_url_without_protocol = substr(data.aws_eks_cluster.existing.identity[0].oidc[0].issuer, 8, -1)
-  oidc_arn                  = "arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/${local.oidc_url_without_protocol}"
+  oidc_url_without_protocol     = substr(data.aws_eks_cluster.existing.identity[0].oidc[0].issuer, 8, -1)
+  oidc_arn                      = "arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/${local.oidc_url_without_protocol}"
   iam_role_permissions_boundary = var.use_permissions_boundary ? "arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:policy/${var.permissions_boundary_name}" : null
-  
+
   bucket_configurations = {
     for instance in var.bucket_configurations :
     instance.name => {
-      name = "${var.name}-${instance.name}"
+      name            = "${var.name}-${instance.name}"
       service_account = instance.service_account
-      namespace = instance.namespace
-    } 
+      namespace       = instance.namespace
+    }
   }
 
   kms_key_arns = module.generate_kms
 
   iam_policies = {
-    "loki" = resource.aws_iam_policy.loki_policy.arn
+    "loki"   = resource.aws_iam_policy.loki_policy.arn
     "velero" = resource.aws_iam_policy.velero_policy.arn
   }
 }
@@ -67,7 +67,7 @@ resource "random_id" "unique_id" {
 
 module "generate_kms" {
   for_each = local.bucket_configurations
-  source = "github.com/defenseunicorns/terraform-aws-uds-kms?ref=v0.0.2"
+  source   = "github.com/defenseunicorns/terraform-aws-uds-kms?ref=v0.0.2"
 
   key_owners = var.key_owner_arns
   # A list of IAM ARNs for those who will have full key permissions (`kms:*`)
@@ -81,7 +81,7 @@ module "generate_kms" {
 }
 
 module "S3" {
-  for_each = local.bucket_configurations
+  for_each                = local.bucket_configurations
   source                  = "github.com/defenseunicorns/terraform-aws-uds-s3?ref=v0.0.6"
   name_prefix             = "${each.value.name}-"
   kms_key_arn             = local.kms_key_arns[each.key].kms_key_arn
@@ -90,7 +90,7 @@ module "S3" {
 }
 
 module "irsa" {
-  for_each = local.bucket_configurations
+  for_each                      = local.bucket_configurations
   source                        = "github.com/defenseunicorns/terraform-aws-uds-irsa?ref=v0.0.2"
   name                          = each.value.name
   kubernetes_service_account    = each.value.service_account
@@ -105,7 +105,7 @@ module "irsa" {
 
 resource "aws_s3_bucket_policy" "bucket_policy" {
   for_each = local.bucket_configurations
-  bucket = module.S3[each.key].bucket_name
+  bucket   = module.S3[each.key].bucket_name
 
   policy = jsonencode({
     Version = "2012-10-17"
