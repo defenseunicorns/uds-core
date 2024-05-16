@@ -17,18 +17,16 @@ const isSame = (a: StoredMatcher, b: StoredMatcher) => {
 };
 
 // Iterate through each exemption block of CR and add matchers to PolicyMap
-function addToMap(
-  map: PolicyMap,
-  exemption: UDSExemption
-) {
-  const exemptions = exemption.spec?.exemptions ?? []
+function addToMap(map: PolicyMap, exemption: UDSExemption) {
+  const exemptions = exemption.spec?.exemptions ?? [];
   for (const e of exemptions) {
     const matcherToStore = {
       ...e.matcher,
-      owner: exemption.metadata?.uid!,
+      owner: exemption.metadata?.uid || "",
     };
 
-    for (const p of e.policies) {
+    const policies = e.policies ?? [];
+    for (const p of policies) {
       const storedMatchers = map.get(p) ?? [];
       map.set(p, [...storedMatchers, matcherToStore]);
     }
@@ -82,15 +80,15 @@ export function processExemptions(
   phase: WatchPhase,
   exemptionMap: PolicyMap,
 ) {
-  if(phase === WatchPhase.Added) {
+  if (phase === WatchPhase.Added) {
     addToMap(exemptionMap, exempt);
   }
 
-  if(phase === WatchPhase.Modified) {
+  if (phase === WatchPhase.Modified) {
     const tempMap = setupMap();
-    addToMap(tempMap, exempt)
-    compareAndMerge(tempMap, exemptionMap)
-}
+    addToMap(tempMap, exempt);
+    compareAndMerge(tempMap, exemptionMap);
+  }
 
   if (phase === WatchPhase.Deleted) {
     removeExemptions(exempt, exemptionMap);

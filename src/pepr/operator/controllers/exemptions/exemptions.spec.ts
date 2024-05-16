@@ -100,10 +100,7 @@ describe("Test processExemptions() no duplicate matchers in same CR", () => {
         exemptions: [
           {
             matcher: enforcerMatcher,
-            policies: [
-              Policy.DisallowPrivileged,
-              Policy.DropAllCapabilities,
-            ],
+            policies: [Policy.DisallowPrivileged, Policy.DropAllCapabilities],
           },
           {
             matcher: controllerMatcher,
@@ -123,9 +120,17 @@ describe("Test processExemptions() no duplicate matchers in same CR", () => {
 
     processExemptions(neuvectorMockExemption, WatchPhase.Added, exemptionMap);
     processExemptions(updatedNeuvectorExemption, WatchPhase.Modified, exemptionMap);
-    expect(exemptionMap.get(Policy.RequireNonRootUser)).toEqual([{...storedPromtailMatcher, owner: exemption1UID}]);
-    expect(exemptionMap.get(Policy.DisallowPrivileged)).toEqual([storedEnforcerMatcher, storedControllerMatcher]);
-    expect(exemptionMap.get(Policy.DropAllCapabilities)).toEqual([storedEnforcerMatcher, storedControllerMatcher]);
+    expect(exemptionMap.get(Policy.RequireNonRootUser)).toEqual([
+      { ...storedPromtailMatcher, owner: exemption1UID },
+    ]);
+    expect(exemptionMap.get(Policy.DisallowPrivileged)).toEqual([
+      storedEnforcerMatcher,
+      storedControllerMatcher,
+    ]);
+    expect(exemptionMap.get(Policy.DropAllCapabilities)).toEqual([
+      storedEnforcerMatcher,
+      storedControllerMatcher,
+    ]);
     expect(exemptionMap.get(Policy.DisallowHostNamespaces)).toEqual([storedControllerMatcher]);
   });
 
@@ -256,7 +261,7 @@ describe("Test processExemptions() no duplicate matchers in same CR", () => {
 describe("Test processExemptions() duplicate matchers in same CR", () => {
   beforeEach(() => {
     exemptionMap = setupMap();
-  })
+  });
 
   const sameMatcherMockExemption = {
     metadata: {
@@ -280,61 +285,64 @@ describe("Test processExemptions() duplicate matchers in same CR", () => {
     },
   };
 
-    it("Adds same matchers with different policies", () => {
-      processExemptions(sameMatcherMockExemption, WatchPhase.Added, exemptionMap);
-      expect(exemptionMap.get(Policy.RequireNonRootUser)).toEqual([storedEnforcerMatcher]);
-      expect(exemptionMap.get(Policy.DisallowPrivileged)).toEqual([storedEnforcerMatcher]);
-      expect(exemptionMap.get(Policy.DropAllCapabilities)).toEqual([storedEnforcerMatcher]);
-    });
+  it("Adds same matchers with different policies", () => {
+    processExemptions(sameMatcherMockExemption, WatchPhase.Added, exemptionMap);
+    expect(exemptionMap.get(Policy.RequireNonRootUser)).toEqual([storedEnforcerMatcher]);
+    expect(exemptionMap.get(Policy.DisallowPrivileged)).toEqual([storedEnforcerMatcher]);
+    expect(exemptionMap.get(Policy.DropAllCapabilities)).toEqual([storedEnforcerMatcher]);
+  });
 
-    it("Does not re-add matchers on updates", () => {
-      processExemptions(sameMatcherMockExemption, WatchPhase.Added, exemptionMap);
-      processExemptions(sameMatcherMockExemption, WatchPhase.Modified, exemptionMap);
+  it("Does not re-add matchers on updates", () => {
+    processExemptions(sameMatcherMockExemption, WatchPhase.Added, exemptionMap);
+    processExemptions(sameMatcherMockExemption, WatchPhase.Modified, exemptionMap);
 
-      expect(exemptionMap.get(Policy.RequireNonRootUser)).toEqual([storedEnforcerMatcher]);
-      expect(exemptionMap.get(Policy.DisallowPrivileged)).toEqual([storedEnforcerMatcher]);
-      expect(exemptionMap.get(Policy.DropAllCapabilities)).toEqual([storedEnforcerMatcher]);
-    })
+    expect(exemptionMap.get(Policy.RequireNonRootUser)).toEqual([storedEnforcerMatcher]);
+    expect(exemptionMap.get(Policy.DisallowPrivileged)).toEqual([storedEnforcerMatcher]);
+    expect(exemptionMap.get(Policy.DropAllCapabilities)).toEqual([storedEnforcerMatcher]);
+  });
 
-     it("Handles updates - remove policy, remove matcher, add policy, add matcher", async () => {
-      // remove RequireNonRoot from enforcerMatcher (satisfies remove matcher in this duplicate case)
-      // add DisallowHostNamespaces to enforcerMatcher
-      // add controllerMatcher with DisallowPrivileged
-       const updateSameMatcherMock = {
-         metadata: {
-           uid: exemption1UID,
-         },
-         spec: {
-           exemptions: [
-             {
-               matcher: enforcerMatcher,
-               policies: [Policy.DisallowPrivileged],
-             },
-             {
-               matcher: enforcerMatcher,
-               policies: [Policy.DropAllCapabilities],
-             },
-             {
-              matcher: enforcerMatcher,
-              policies: [Policy.DisallowHostNamespaces]
-             }, 
-             {
-              matcher: controllerMatcher,
-              policies: [Policy.DisallowPrivileged]
-             }
-           ],
-         },
-       } as Exemption;
+  it("Handles updates - remove policy, remove matcher, add policy, add matcher", async () => {
+    // remove RequireNonRoot from enforcerMatcher (satisfies remove matcher in this duplicate case)
+    // add DisallowHostNamespaces to enforcerMatcher
+    // add controllerMatcher with DisallowPrivileged
+    const updateSameMatcherMock = {
+      metadata: {
+        uid: exemption1UID,
+      },
+      spec: {
+        exemptions: [
+          {
+            matcher: enforcerMatcher,
+            policies: [Policy.DisallowPrivileged],
+          },
+          {
+            matcher: enforcerMatcher,
+            policies: [Policy.DropAllCapabilities],
+          },
+          {
+            matcher: enforcerMatcher,
+            policies: [Policy.DisallowHostNamespaces],
+          },
+          {
+            matcher: controllerMatcher,
+            policies: [Policy.DisallowPrivileged],
+          },
+        ],
+      },
+    } as Exemption;
 
-       processExemptions(sameMatcherMockExemption, WatchPhase.Added, exemptionMap);
-       processExemptions(updateSameMatcherMock, WatchPhase.Modified, exemptionMap);
+    processExemptions(sameMatcherMockExemption, WatchPhase.Added, exemptionMap);
+    processExemptions(updateSameMatcherMock, WatchPhase.Modified, exemptionMap);
 
-       expect(exemptionMap.get(Policy.RequireNonRootUser)).toEqual([]);
-       expect(exemptionMap.get(Policy.DisallowPrivileged)).toEqual([storedEnforcerMatcher, storedControllerMatcher]);
-       expect(exemptionMap.get(Policy.DropAllCapabilities)).toEqual([storedEnforcerMatcher]);
-       expect(exemptionMap.get(Policy.DisallowHostNamespaces)).toEqual([storedEnforcerMatcher])
-     });
-})
+    expect(exemptionMap.get(Policy.RequireNonRootUser)).toEqual([]);
+    expect(exemptionMap.get(Policy.DisallowPrivileged)).toEqual([
+      storedEnforcerMatcher,
+      storedControllerMatcher,
+    ]);
+    expect(exemptionMap.get(Policy.DropAllCapabilities)).toEqual([storedEnforcerMatcher]);
+    expect(exemptionMap.get(Policy.DisallowHostNamespaces)).toEqual([storedEnforcerMatcher]);
+  });
+});
 
 describe("Test processExemptions(); phase DELETED", () => {
   beforeEach(() => {
