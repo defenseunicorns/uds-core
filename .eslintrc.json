@@ -14,5 +14,13 @@
   "root": true,
   "rules": {
     "@typescript-eslint/no-floating-promises": ["error"]
-  }
+  },
+  "overrides": [
+    {
+      "files": [ "src/pepr/operator/crd/generated/**/*.ts", "src/pepr/operator/crd/generated/*.ts" ],
+      "rules": {
+        "@typescript-eslint/no-explicit-any": "off"
+      }
+    }
+  ]
 }

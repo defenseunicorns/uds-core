@@ -8,7 +8,7 @@ The UDS Operator manages the lifecycle of UDS Package CRs and their correspondin
 - establishing default-deny ingress/egress network policies
 - creating a layered allow-list based approach on top of the default deny network policies including some basic defaults such as Istio requirements and DNS egress
 - providing targeted remote endpoints network policies such as `KubeAPI` and `CloudMetadata` to make policies more DRY and provide dynamic bindings where a static definition is not possible
-- creating Istio Virtual Services & related ingress gateway network policies
+- creating Istio Virtual Services, Service Entries & related ingress gateway network policies
 
 #### Exemption
 
@@ -25,7 +25,7 @@ metadata:
   namespace: grafana
 spec:
   network:
-    # Expose rules generate Istio VirtualServices and related network policies
+    # Expose rules generate Istio VirtualServices, ServiceEntries and related network policies
     expose:
       - service: grafana
         selector:
@@ -196,8 +196,8 @@ graph TD
     G -->|Yes| H["Log: Skipping pkg"]
     G -->|No| I["Update pkg status to Phase.Pending"]
     I --> J{"Check if Istio is installed"}
-    J -->|Yes| K["Add injection label, process expose CRs for Virtual Services"]
-    J -->|No| L["Skip Virtual Service Creation"]
+    J -->|Yes| K["Add injection label, process expose CRs for Istio Resources"]
+    J -->|No| L["Skip Istio Resource Creation"]
     K --> M["Create default network policies in namespace"]
     L --> M
     M --> N["Process allow CRs for network policies"]

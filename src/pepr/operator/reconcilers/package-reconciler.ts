@@ -3,7 +3,7 @@ import { Log } from "pepr";
 import { handleFailure, shouldSkip, updateStatus } from ".";
 import { UDSConfig } from "../../config";
 import { enableInjection } from "../controllers/istio/injection";
-import { virtualService } from "../controllers/istio/virtual-service";
+import { istioResources } from "../controllers/istio/istio-resources";
 import { keycloak } from "../controllers/keycloak/client-sync";
 import { serviceMonitor } from "../controllers/monitoring/service-monitor";
 import { networkPolicies } from "../controllers/network/policies";
@@ -40,8 +40,8 @@ export async function packageReconciler(pkg: UDSPackage) {
     // Update the namespace to ensure the istio-injection label is set
     await enableInjection(pkg);
 
-    // Create the VirtualService for each exposed service
-    endpoints = await virtualService(pkg, namespace!);
+    // Create the VirtualService and ServiceEntry for each exposed service
+    endpoints = await istioResources(pkg, namespace!);
 
     // Only configure the ServiceMonitors if not running in single test mode
     let monitors: string[] = [];
