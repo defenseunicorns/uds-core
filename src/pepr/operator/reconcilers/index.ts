@@ -1,4 +1,3 @@
-import { GenericKind } from "kubernetes-fluent-client";
 import { K8s, Log, kind } from "pepr";
 
 import { Phase, PkgStatus, UDSPackage } from "../crd";
@@ -12,7 +11,7 @@ const uidSeen = new Set<string>();
  * @param cr The custom resource to check
  * @returns true if the CRD is pending or the current generation has been processed
  */
-export function shouldSkip(cr: GenericKind) {
+export function shouldSkip(cr: UDSPackage) {
   const isPending = cr.status?.phase === Phase.Pending;
   const isCurrentGeneration = cr.metadata?.generation === cr.status?.observedGeneration;
 

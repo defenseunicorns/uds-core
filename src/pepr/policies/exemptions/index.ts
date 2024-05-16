@@ -1,7 +1,7 @@
 import { KubernetesObject } from "kubernetes-fluent-client";
 import { Log, PeprMutateRequest, PeprValidateRequest } from "pepr";
-import { policyExemptionMap } from "..";
 import { Policy } from "../../operator/crd";
+import { policyExemptionMap } from "../common";
 
 /**
  * Check a resource against an exemption list for use by the validation action.

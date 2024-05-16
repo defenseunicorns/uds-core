@@ -1,15 +1,19 @@
 import { beforeAll, describe, expect, it, jest } from "@jest/globals";
+import { PeprValidateRequest, kind } from "pepr";
 import { isExempt } from ".";
-import { PeprValidateRequest } from "pepr";
-import { kind } from "pepr";
-import { Policy } from "../../operator/crd";
-import { Store } from "../common";
+import { MatcherKind, Policy } from "../../operator/crd";
+import { policyExemptionMap } from "../common";
 
 describe("test registering exemptions", () => {
   beforeAll(() => {
-    jest
-      .spyOn(Store, "getItem")
-      .mockReturnValue('[{"namespace": "neuvector", "name": "^neuvector-enforcer-pod-.*"}]');
+    jest.spyOn(policyExemptionMap, "get").mockReturnValue([
+      {
+        namespace: "neuvector",
+        name: "^neuvector-enforcer-pod-.*",
+        kind: MatcherKind.Pod,
+        owner: "uid",
+      },
+    ]);
   });
 
   it("should be exempt", () => {

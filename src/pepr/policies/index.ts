@@ -2,6 +2,7 @@
 import { K8s } from "pepr";
 import { processExemptions } from "../operator/controllers/exemptions/exemptions";
 import { Matcher, Policy, UDSExemption } from "../operator/crd";
+import { policyExemptionMap } from "./common";
 import "./networking";
 import "./security";
 import "./storage";
@@ -10,14 +11,14 @@ export { policies } from "./common";
 
 export type StoredMatcher = Matcher & { owner: string };
 export type PolicyMap = Map<Policy, StoredMatcher[]>;
-export const policyExemptionMap: PolicyMap = new Map();
-
-const policyList = Object.values(Policy);
-for (const p of policyList) {
-  policyExemptionMap.set(p, []);
-}
 
 export async function startExemptionWatch() {
+  // initialize in-memory map
+  const policyList = Object.values(Policy);
+  for (const p of policyList) {
+    policyExemptionMap.set(p, []);
+  }
+
   // only run in admission controller
   if (process.env.PEPR_WATCH_MODE === "false") {
     const watcher = K8s(UDSExemption).Watch(async (exemption, phase) => {
