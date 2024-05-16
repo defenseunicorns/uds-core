@@ -38,6 +38,8 @@ export function isExempt<T extends KubernetesObject>(
   return false;
 }
 
+export const exemptionAnnotationPrefix = "uds-core.pepr.dev/uds-core-policies";
+
 /**
  *
  * @param policy
@@ -46,7 +48,7 @@ export function isExempt<T extends KubernetesObject>(
 export function markExemption<T extends KubernetesObject>(policy: Policy) {
   return (request: PeprMutateRequest<T>) => {
     if (isExempt(request, policy)) {
-      request.SetAnnotation(`uds-core.pepr.dev/uds-core-policies.${policy}`, "exempted");
+      request.SetAnnotation(`${exemptionAnnotationPrefix}.${policy}`, "exempted");
       return;
     }
   };

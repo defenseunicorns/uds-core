@@ -1,0 +1,14 @@
+apiVersion: uds.dev/v1alpha1
+kind: Exemption
+metadata:
+  name: podinfo4
+  namespace: uds-policy-exemptions
+spec:
+  exemptions:
+    - policies:
+        - DisallowNodePortServices
+      title: "podinfo2"
+      matcher:
+        namespace: podinfo
+        name: "^podinfo.*"
+        kind: service

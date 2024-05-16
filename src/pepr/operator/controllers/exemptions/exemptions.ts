@@ -17,7 +17,7 @@ const isSame = (a: StoredMatcher, b: StoredMatcher) => {
 };
 
 // Iterate through each exemption block of CR and add matchers to PolicyMap
-function addToMap(map: PolicyMap, exemption: UDSExemption) {
+function addToMap(map: PolicyMap, exemption: UDSExemption, log: boolean = true) {
   const exemptions = exemption.spec?.exemptions ?? [];
   for (const e of exemptions) {
     const matcherToStore = {
@@ -28,6 +28,9 @@ function addToMap(map: PolicyMap, exemption: UDSExemption) {
     const policies = e.policies ?? [];
     for (const p of policies) {
       const storedMatchers = map.get(p) ?? [];
+      if (log) {
+        console.log(`Adding to ${p}: ${JSON.stringify([...storedMatchers, matcherToStore])}`);
+      }
       map.set(p, [...storedMatchers, matcherToStore]);
     }
   }
@@ -60,8 +63,8 @@ function compareAndMerge(tempMap: PolicyMap, realMap: PolicyMap) {
         mergedMatchers.push(im);
       }
     }
-
     realMap.set(policy, mergedMatchers);
+    console.log(`Updating ${policy} with: ${mergedMatchers}`);
   }
 }
 
@@ -86,7 +89,7 @@ export function processExemptions(
 
   if (phase === WatchPhase.Modified) {
     const tempMap = setupMap();
-    addToMap(tempMap, exempt);
+    addToMap(tempMap, exempt, false);
     compareAndMerge(tempMap, exemptionMap);
   }
 
@@ -96,7 +99,7 @@ export function processExemptions(
 }
 
 export function removeExemptions(exempt: UDSExemption, exemptionMap: PolicyMap) {
-  Log.debug(`Removing policy exemptions for ${exempt.metadata?.name}`);
+  Log.debug(`Removing all policy exemptions for ${exempt.metadata?.name}`);
 
   // Loop through exemptions and remove matchers from policies in the local map
   for (const e of exempt.spec?.exemptions ?? []) {
