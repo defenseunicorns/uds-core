@@ -3,8 +3,8 @@ title: UDS Core
 linkTitle: UDS Core
 type: docs
 menu:
-    main:
-        weight: 30
+  main:
+    weight: 30
 ---
 
 ## What is UDS Core?
