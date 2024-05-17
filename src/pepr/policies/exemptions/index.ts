@@ -18,25 +18,26 @@ export function isExempt<T extends KubernetesObject>(
   const resourceName = request.Raw.metadata?.name || request.Raw.metadata?.generateName;
   const resourceNamespace = request.Raw.metadata?.namespace;
 
-  Log.debug(
-    `Checking for ${resourceName} in ${policy} exemption list: ${JSON.stringify(exemptList)}`,
-  );
+  if (exemptList.length != 0) {
+    // Debug log to provide current exemptions for policy
+    Log.info(
+      `Checking ${resourceName} against ${policy} exemptions: ${JSON.stringify(exemptList)}`,
+    );
+    for (const exempt of exemptList) {
+      // If the exempt namespace is specified, check it
+      if (exempt.namespace !== resourceNamespace) {
+        continue;
+      }
 
-  // Loop through the exempt list
-  for (const exempt of exemptList) {
-    // If the exempt namespace is specified, check it
-    if (exempt.namespace && exempt.namespace !== resourceNamespace) {
-      continue;
+      // If the exempt name is specified, check it
+      if (!resourceName?.match(exempt.name)) {
+        continue;
+      }
+
+      // If we get here, the request is exempt
+      Log.info(`${resourceName} is exempt from ${policy}`);
+      return true;
     }
-
-    // If the exempt name is specified, check it
-    if (exempt.name && !resourceName?.match(exempt.name)) {
-      continue;
-    }
-
-    // If we get here, the request is exempt
-    Log.info("request is exempt", { exempt });
-    return true;
   }
 
   // No exemptions matched

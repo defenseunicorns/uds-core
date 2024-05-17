@@ -7,7 +7,7 @@ spec:
   exemptions:
     - policies:
         - DisallowNodePortServices
-      title: "podinfo2"
+      title: "podinfo4"
       matcher:
         namespace: podinfo
         name: "^podinfo.*"

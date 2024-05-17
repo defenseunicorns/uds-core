@@ -27,44 +27,46 @@ function addToMap(map: PolicyMap, exemption: UDSExemption, log: boolean = true) 
 
     const policies = e.policies ?? [];
     for (const p of policies) {
-      const storedMatchers = map.get(p) ?? [];
+      // Append the matcher to the list of stored matchers for this policy
+      const storedMatchers = map.get(p) || [];
+      storedMatchers.push(matcherToStore);
+      map.set(p, storedMatchers);
       if (log) {
-        Log.debug(`Adding to ${p}: ${JSON.stringify([...storedMatchers, matcherToStore])}`);
+        Log.debug(`Added exemption to ${p}: ${JSON.stringify(matcherToStore)}`);
       }
-      map.set(p, [...storedMatchers, matcherToStore]);
     }
   }
 }
 
 // Update the PolicyMap, adding or subtracting matchers based on comparison of maps
-function compareAndMerge(tempMap: PolicyMap, realMap: PolicyMap) {
+function compareAndMerge(tempMap: PolicyMap, realMap: PolicyMap, owner: string) {
   for (const [policy, currentMatchers] of realMap.entries()) {
     const incomingMatchers = tempMap.get(policy) || [];
     const mergedMatchers = [];
 
     for (const cm of currentMatchers) {
-      // add currentMatcher back to map if it exists in the new list and add all matchers that are from a different owner
-      if (
-        incomingMatchers.some(im => {
-          isSame(im, cm) || im.owner != cm.owner;
-        })
-      ) {
+      // add currentMatcher back to map if it exists in the new list
+      if (incomingMatchers.includes(cm)) {
+        mergedMatchers.push(cm);
+      }
+      // add all exemptions owned by a different owner
+      if (cm.owner !== owner) {
         mergedMatchers.push(cm);
       }
     }
 
     for (const im of incomingMatchers) {
       // add incomingMatcher if it's new (e.g. does not match anything in the updated list)
-      if (
-        !mergedMatchers.some(mm => {
-          isSame(mm, im);
-        })
-      ) {
+      if (!mergedMatchers.includes(im)) {
         mergedMatchers.push(im);
       }
     }
-    realMap.set(policy, mergedMatchers);
-    Log.debug(`Updating ${policy}: ${JSON.stringify(mergedMatchers)}`);
+
+    // Only update the map if there are diffs
+    if (currentMatchers !== mergedMatchers) {
+      realMap.set(policy, mergedMatchers);
+      Log.debug(`Updated exemptions for ${policy}: ${JSON.stringify(mergedMatchers)}`);
+    }
   }
 }
 
@@ -83,24 +85,26 @@ export function processExemptions(
   phase: WatchPhase,
   exemptionMap: PolicyMap,
 ) {
-  if (phase === WatchPhase.Added) {
-    addToMap(exemptionMap, exempt);
-  }
+  const exemptionOwner = exempt.metadata?.uid || "";
+  switch (phase) {
+    case WatchPhase.Added:
+      addToMap(exemptionMap, exempt);
+      break;
 
-  if (phase === WatchPhase.Modified) {
-    const tempMap = setupMap();
-    addToMap(tempMap, exempt, false);
-    compareAndMerge(tempMap, exemptionMap);
-  }
+    case WatchPhase.Modified: {
+      const tempMap = setupMap();
+      addToMap(tempMap, exempt, false);
+      compareAndMerge(tempMap, exemptionMap, exemptionOwner);
+      break;
+    }
 
-  if (phase === WatchPhase.Deleted) {
-    removeExemptions(exempt, exemptionMap);
+    case WatchPhase.Deleted:
+      removeExemptions(exempt, exemptionMap);
+      break;
   }
 }
 
 export function removeExemptions(exempt: UDSExemption, exemptionMap: PolicyMap) {
-  Log.debug(`Removing all policy exemptions for ${exempt.metadata?.name}`);
-
   // Loop through exemptions and remove matchers from policies in the local map
   for (const e of exempt.spec?.exemptions ?? []) {
     for (const p of e.policies) {
@@ -111,4 +115,5 @@ export function removeExemptions(exempt: UDSExemption, exemptionMap: PolicyMap) 
       exemptionMap.set(p, filteredList);
     }
   }
+  Log.debug(`Removed all policy exemptions for ${exempt.metadata?.name}`);
 }

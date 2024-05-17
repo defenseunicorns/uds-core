@@ -7,7 +7,7 @@ spec:
   exemptions:
     - policies:
         - DropAllCapabilities
-      title: "podinfo1"
+      title: "podinfo3"
       matcher:
         namespace: podinfo
         name: "^podinfo.*"

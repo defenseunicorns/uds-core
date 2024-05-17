@@ -403,7 +403,7 @@ describe("Test processExemptions(); phase DELETED", () => {
       },
     } as Exemption;
 
-    const neuvectorDuplicatMockExemption = {
+    const neuvectorDuplicateMockExemption = {
       metadata: {
         uid: exemption2UID,
       },
@@ -422,11 +422,66 @@ describe("Test processExemptions(); phase DELETED", () => {
     } as Exemption;
 
     processExemptions(neuvectorMockExemption2, WatchPhase.Added, exemptionMap);
-    processExemptions(neuvectorDuplicatMockExemption, WatchPhase.Added, exemptionMap);
-    processExemptions(neuvectorDuplicatMockExemption, WatchPhase.Deleted, exemptionMap);
+    processExemptions(neuvectorDuplicateMockExemption, WatchPhase.Added, exemptionMap);
+    processExemptions(neuvectorDuplicateMockExemption, WatchPhase.Deleted, exemptionMap);
 
     expect(exemptionMap.get(Policy.DisallowPrivileged)).toEqual([storedEnforcerMatcher]);
     expect(exemptionMap.get(Policy.DropAllCapabilities)).toEqual([storedEnforcerMatcher]);
     expect(exemptionMap.get(Policy.RequireNonRootUser)).toEqual([storedEnforcerMatcher]);
+  });
+
+  it("Does not delete exemptions for the same policies from separate CRs during modification", async () => {
+    const neuvectorMockExemption = {
+      metadata: {
+        uid: exemption1UID,
+      },
+      spec: {
+        exemptions: [
+          {
+            matcher: enforcerMatcher,
+            policies: [Policy.RequireNonRootUser, Policy.DropAllCapabilities],
+          },
+        ],
+      },
+    } as Exemption;
+
+    const promtailMockExemption = {
+      metadata: {
+        uid: exemption2UID,
+      },
+      spec: {
+        exemptions: [
+          {
+            matcher: promtailMatcher,
+            policies: [Policy.DisallowPrivileged],
+          },
+        ],
+      },
+    } as Exemption;
+
+    const promtailUpdatedMockExemption = {
+      metadata: {
+        uid: exemption2UID,
+      },
+      spec: {
+        exemptions: [
+          {
+            matcher: promtailMatcher,
+            policies: [Policy.DisallowPrivileged, Policy.RequireNonRootUser],
+          },
+        ],
+      },
+    } as Exemption;
+
+    processExemptions(neuvectorMockExemption, WatchPhase.Added, exemptionMap);
+    processExemptions(promtailMockExemption, WatchPhase.Added, exemptionMap);
+    processExemptions(promtailUpdatedMockExemption, WatchPhase.Modified, exemptionMap);
+
+    expect(exemptionMap.get(Policy.RequireNonRootUser)).toEqual([
+      storedEnforcerMatcher,
+      storedPromtailMatcher,
+    ]);
+    expect(exemptionMap.get(Policy.DropAllCapabilities)).toEqual([storedEnforcerMatcher]);
+    expect(exemptionMap.get(Policy.DisallowPrivileged)).toEqual([storedPromtailMatcher]);
   });
 });
