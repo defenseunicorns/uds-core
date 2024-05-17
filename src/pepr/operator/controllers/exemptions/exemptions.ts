@@ -16,6 +16,24 @@ const isSame = (a: StoredMatcher, b: StoredMatcher) => {
   );
 };
 
+function isSameMatcherList(a: StoredMatcher[], b: StoredMatcher[]): boolean {
+  if (a.length !== b.length) {
+    return false;
+  }
+
+  // Order mismatches do not matter for our matcher lists, sort to organize identical
+  const sortedA = [...a].sort();
+  const sortedB = [...b].sort();
+
+  sortedA.every(function (element, index) {
+    if (element === sortedB[index]) {
+      return false;
+    }
+  });
+
+  return true;
+}
+
 // Iterate through each exemption block of CR and add matchers to PolicyMap
 function addToMap(map: PolicyMap, exemption: UDSExemption, log: boolean = true) {
   const exemptions = exemption.spec?.exemptions ?? [];
@@ -63,7 +81,7 @@ function compareAndMerge(tempMap: PolicyMap, realMap: PolicyMap, owner: string) 
     }
 
     // Only update the map if there are diffs
-    if (currentMatchers !== mergedMatchers) {
+    if (!isSameMatcherList(currentMatchers, mergedMatchers)) {
       realMap.set(policy, mergedMatchers);
       Log.debug(`Updated exemptions for ${policy}: ${JSON.stringify(mergedMatchers)}`);
     }
