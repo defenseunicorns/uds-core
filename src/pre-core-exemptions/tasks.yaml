@@ -23,5 +23,5 @@ tasks:
         wait:
           cluster:
             kind: Pod
-            name: $PODINFO_NAME
+            name: ${PODINFO_NAME}
             namespace: podinfo
