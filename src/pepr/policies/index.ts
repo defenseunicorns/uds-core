@@ -1,5 +1,5 @@
 // Various validation actions for Kubernetes resources from Big Bang
-import { K8s } from "pepr";
+import { K8s, Log } from "pepr";
 import { processExemptions } from "../operator/controllers/exemptions/exemptions";
 import { Matcher, Policy, UDSExemption } from "../operator/crd";
 import { policyExemptionMap } from "./common";
@@ -22,7 +22,7 @@ export async function startExemptionWatch() {
   // only run in admission controller
   if (process.env.PEPR_WATCH_MODE === "false") {
     const watcher = K8s(UDSExemption).Watch(async (exemption, phase) => {
-      console.log(`Exemption ${exemption.metadata?.name} is ${phase}`);
+      Log.debug(`Exemption ${exemption.metadata?.name} is ${phase}`);
 
       processExemptions(exemption, phase, policyExemptionMap);
     });

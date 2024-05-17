@@ -29,7 +29,7 @@ function addToMap(map: PolicyMap, exemption: UDSExemption, log: boolean = true) 
     for (const p of policies) {
       const storedMatchers = map.get(p) ?? [];
       if (log) {
-        console.log(`Adding to ${p}: ${JSON.stringify([...storedMatchers, matcherToStore])}`);
+        Log.debug(`Adding to ${p}: ${JSON.stringify([...storedMatchers, matcherToStore])}`);
       }
       map.set(p, [...storedMatchers, matcherToStore]);
     }
@@ -64,7 +64,7 @@ function compareAndMerge(tempMap: PolicyMap, realMap: PolicyMap) {
       }
     }
     realMap.set(policy, mergedMatchers);
-    console.log(`Updating ${policy} with: ${mergedMatchers}`);
+    Log.debug(`Updating ${policy}: ${mergedMatchers}`);
   }
 }
 
