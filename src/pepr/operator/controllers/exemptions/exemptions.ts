@@ -64,7 +64,7 @@ function compareAndMerge(tempMap: PolicyMap, realMap: PolicyMap) {
       }
     }
     realMap.set(policy, mergedMatchers);
-    Log.debug(`Updating ${policy}: ${mergedMatchers}`);
+    Log.debug(`Updating ${policy}: ${JSON.stringify(mergedMatchers)}`);
   }
 }
 
