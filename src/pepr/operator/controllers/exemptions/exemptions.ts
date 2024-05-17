@@ -1,5 +1,5 @@
-import { Log } from "pepr";
-import { PolicyMap, StoredMatcher } from "../../../policies";
+import { Log, R } from "pepr";
+import { PolicyMap } from "../../../policies";
 import { Policy, UDSExemption } from "../../crd";
 
 export enum WatchPhase {
@@ -8,30 +8,6 @@ export enum WatchPhase {
   Deleted = "DELETED",
   Bookmark = "BOOKMARK",
   Error = "ERROR",
-}
-
-const isSame = (a: StoredMatcher, b: StoredMatcher) => {
-  return (
-    a.name === b.name && a.namespace === b.namespace && a.kind == b.kind && a.owner === b.owner
-  );
-};
-
-function isSameMatcherList(a: StoredMatcher[], b: StoredMatcher[]): boolean {
-  if (a.length !== b.length) {
-    return false;
-  }
-
-  // Order mismatches do not matter for our matcher lists, sort to organize identical
-  const sortedA = [...a].sort();
-  const sortedB = [...b].sort();
-
-  sortedA.every(function (element, index) {
-    if (element === sortedB[index]) {
-      return false;
-    }
-  });
-
-  return true;
 }
 
 // Iterate through each exemption block of CR and add matchers to PolicyMap
@@ -63,27 +39,23 @@ function compareAndMerge(tempMap: PolicyMap, realMap: PolicyMap, owner: string) 
     const mergedMatchers = [];
 
     for (const cm of currentMatchers) {
-      // add currentMatcher back to map if it exists in the new list
-      if (incomingMatchers.includes(cm)) {
+      // Add current matchers back to map if they exists in the new list
+      if (R.includes(cm, incomingMatchers)) {
         mergedMatchers.push(cm);
       }
-      // add all exemptions owned by a different owner
+      // Add all matchers owned by a different owner
       if (cm.owner !== owner) {
         mergedMatchers.push(cm);
       }
     }
 
-    for (const im of incomingMatchers) {
-      // add incomingMatcher if it's new (e.g. does not match anything in the updated list)
-      if (!mergedMatchers.includes(im)) {
-        mergedMatchers.push(im);
-      }
-    }
+    // Combine new matchers with old, ignoring duplicates
+    const newMatchers = R.union(mergedMatchers, incomingMatchers);
 
     // Only update the map if there are diffs
-    if (!isSameMatcherList(currentMatchers, mergedMatchers)) {
-      realMap.set(policy, mergedMatchers);
-      Log.debug(`Updated exemptions for ${policy}: ${JSON.stringify(mergedMatchers)}`);
+    if (!R.equals(currentMatchers, newMatchers)) {
+      realMap.set(policy, newMatchers);
+      Log.debug(`Updated exemptions for ${policy}: ${JSON.stringify(newMatchers)}`);
     }
   }
 }
@@ -128,7 +100,7 @@ export function removeExemptions(exempt: UDSExemption, exemptionMap: PolicyMap) 
     for (const p of e.policies) {
       const matchers = exemptionMap.get(p) || [];
       const filteredList = matchers.filter(m => {
-        if (!isSame(m, { ...e.matcher, owner: exempt.metadata?.uid || "" })) return m;
+        if (!R.equals(m, { ...e.matcher, owner: exempt.metadata?.uid || "" })) return m;
       });
       exemptionMap.set(p, filteredList);
     }
