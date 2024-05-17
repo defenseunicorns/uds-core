@@ -10,9 +10,11 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
       properties: {
         spec: {
           type: "object",
+          required: ["exemptions"],
           properties: {
             exemptions: {
               type: "array",
+              minItems: 1,
               description: "Policy exemptions",
               items: {
                 type: "object",

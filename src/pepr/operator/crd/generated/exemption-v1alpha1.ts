@@ -10,7 +10,7 @@ export interface Spec {
   /**
    * Policy exemptions
    */
-  exemptions?: ExemptionElement[];
+  exemptions: ExemptionElement[];
 }
 
 export interface ExemptionElement {
