@@ -50,5 +50,13 @@ tasks:
             address: demo.uds.dev/status/202
             code: 202
 
+      - description: Verify podinfo is healthy
+        wait:
+          cluster:
+            kind: Pod
+            name: app.kubernetes.io/name=podinfo
+            namespace: podinfo
+            condition: Ready
+
       - description: Remove the test resources
         cmd: "uds zarf package remove build/zarf-package-uds-core-test-apps-*.zst --confirm --no-progress"
