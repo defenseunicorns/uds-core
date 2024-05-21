@@ -1,6 +1,6 @@
 import { Log } from "pepr";
 import { StoredMatcher } from "../../../policies";
-import { ExemptionElement, Policy, UDSExemption } from "../../crd";
+import { Matcher, Policy, UDSExemption } from "../../crd";
 
 export type PolicyOwnerMap = Map<string, UDSExemption>;
 export type PolicyMap = Map<Policy, StoredMatcher[]>;
@@ -23,36 +23,30 @@ function setByPolicy(policy: Policy, matchers: StoredMatcher[]): void {
   policyExemptionMap.set(policy, matchers);
 }
 
-function getMatchersFromExemptionElement(
-  owner: string = "",
-  exemption: ExemptionElement,
-): StoredMatcher {
-  return {
-    ...exemption.matcher,
+function addMatcher(matcher: Matcher, p: Policy, owner: string = ""): void {
+  const storedMatcher = {
+    ...matcher,
     owner,
   };
-}
 
-function addMatcherToPolicy(p: Policy, matcher: StoredMatcher): void {
   const storedMatchers = getByPolicy(p);
-  storedMatchers.push(matcher);
+  storedMatchers.push(storedMatcher);
 }
 
 // Iterate through each exemption block of CR and add matchers to PolicyMap
 function add(exemption: UDSExemption, log: boolean = true) {
+  // Remove any existing exemption for this owner, in case of WatchPhase.Modified
   remove(exemption);
-  policyOwnerMap.set(exemption.metadata?.uid || "", exemption);
+  const owner = exemption.metadata?.uid || "";
+  policyOwnerMap.set(owner, exemption);
 
-  const exemptions = exemption.spec?.exemptions ?? [];
-  for (const e of exemptions) {
-    const matcherToStore = getMatchersFromExemptionElement(exemption.metadata?.uid, e);
-
+  for (const e of exemption.spec?.exemptions ?? []) {
     const policies = e.policies ?? [];
     for (const p of policies) {
       // Append the matcher to the list of stored matchers for this policy
-      addMatcherToPolicy(p, matcherToStore);
+      addMatcher(e.matcher, p, owner);
       if (log) {
-        Log.debug(`Added exemption to ${p}: ${JSON.stringify(matcherToStore)}`);
+        Log.debug(`Added exemption to ${p}: ${JSON.stringify(e.matcher)}`);
       }
     }
   }
@@ -63,8 +57,7 @@ function remove(exemption: UDSExemption) {
   const prevExemption = policyOwnerMap.get(owner);
 
   if (prevExemption) {
-    const exemptions = prevExemption.spec?.exemptions ?? [];
-    for (const e of exemptions) {
+    for (const e of prevExemption.spec?.exemptions ?? []) {
       const policies = e.policies ?? [];
       for (const p of policies) {
         const existingMatchers = getByPolicy(p);
