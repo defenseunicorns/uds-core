@@ -58,7 +58,7 @@ let exemptionMap: PolicyMap;
 describe("Test processExemptions() no duplicate matchers in same CR", () => {
   beforeEach(() => {
     initPolicyMap();
-    exemptionMap = policyExemptionMap
+    exemptionMap = policyExemptionMap;
   });
 
   it("Add exemptions for the first time", async () => {
@@ -263,7 +263,7 @@ describe("Test processExemptions() no duplicate matchers in same CR", () => {
 describe("Test processExemptions() duplicate matchers in same CR", () => {
   beforeEach(() => {
     initPolicyMap();
-    exemptionMap = policyExemptionMap
+    exemptionMap = policyExemptionMap;
   });
 
   const sameMatcherMockExemption = {
@@ -350,7 +350,7 @@ describe("Test processExemptions() duplicate matchers in same CR", () => {
 describe("Test processExemptions(); phase DELETED", () => {
   beforeEach(() => {
     initPolicyMap();
-    exemptionMap = policyExemptionMap
+    exemptionMap = policyExemptionMap;
   });
 
   it("Removes all CRs exemptions when deleted", async () => {

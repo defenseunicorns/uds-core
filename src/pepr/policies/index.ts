@@ -13,8 +13,7 @@ export type StoredMatcher = Matcher & { owner: string };
 export type PolicyMap = Map<Policy, StoredMatcher[]>;
 
 export async function startExemptionWatch() {
-  initPolicyMap()
-
+  initPolicyMap();
 
   // only run in admission controller
   if (process.env.PEPR_WATCH_MODE === "false") {

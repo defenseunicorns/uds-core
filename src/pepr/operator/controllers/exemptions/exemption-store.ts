@@ -4,8 +4,8 @@ import { ExemptionElement, Policy, UDSExemption } from "../../crd";
 
 export type PolicyOwnerMap = Map<string, UDSExemption>;
 export type PolicyMap = Map<Policy, StoredMatcher[]>;
-export let policyExemptionMap: PolicyMap; 
-export let policyOwnerMap: PolicyOwnerMap; 
+export let policyExemptionMap: PolicyMap;
+export let policyOwnerMap: PolicyOwnerMap;
 
 export function initPolicyMap(): void {
   policyExemptionMap = new Map();
@@ -16,14 +16,17 @@ export function initPolicyMap(): void {
 }
 
 export function getByPolicy(policy: Policy): StoredMatcher[] {
-  return  policyExemptionMap.get(policy) || [];
+  return policyExemptionMap.get(policy) || [];
 }
 
 function setByPolicy(policy: Policy, matchers: StoredMatcher[]): void {
   policyExemptionMap.set(policy, matchers);
 }
 
-function getMatchersFromExemptionElement(owner: string = "", exemption: ExemptionElement): StoredMatcher {
+function getMatchersFromExemptionElement(
+  owner: string = "",
+  exemption: ExemptionElement,
+): StoredMatcher {
   return {
     ...exemption.matcher,
     owner,
@@ -31,7 +34,7 @@ function getMatchersFromExemptionElement(owner: string = "", exemption: Exemptio
 }
 
 export function addMatcherToPolicy(p: Policy, matcher: StoredMatcher): void {
-  const storedMatchers = getByPolicy(p)
+  const storedMatchers = getByPolicy(p);
   storedMatchers.push(matcher);
 }
 
@@ -42,7 +45,7 @@ export function addExemption(exemption: UDSExemption, log: boolean = true) {
 
   const exemptions = exemption.spec?.exemptions ?? [];
   for (const e of exemptions) {
-    const matcherToStore = getMatchersFromExemptionElement(exemption.metadata?.uid, e)
+    const matcherToStore = getMatchersFromExemptionElement(exemption.metadata?.uid, e);
 
     const policies = e.policies ?? [];
     for (const p of policies) {
@@ -58,13 +61,13 @@ export function addExemption(exemption: UDSExemption, log: boolean = true) {
 export function deleteExemption(exemption: UDSExemption) {
   const owner = exemption.metadata?.uid || "";
   const prevExemption = policyOwnerMap.get(owner);
-  
+
   if (prevExemption) {
     const exemptions = prevExemption.spec?.exemptions ?? [];
     for (const e of exemptions) {
       const policies = e.policies ?? [];
       for (const p of policies) {
-        const existingMatchers = getByPolicy(p)
+        const existingMatchers = getByPolicy(p);
         const filteredList = existingMatchers.filter(m => {
           return m.owner !== owner;
         });

@@ -10,10 +10,7 @@ export enum WatchPhase {
 }
 
 // Handle adding, updating, and deleting exemptions from Policymap
-export function processExemptions(
-  exempt: UDSExemption,
-  phase: WatchPhase,
-) {
+export function processExemptions(exempt: UDSExemption, phase: WatchPhase) {
   switch (phase) {
     case WatchPhase.Added:
     case WatchPhase.Modified: {
