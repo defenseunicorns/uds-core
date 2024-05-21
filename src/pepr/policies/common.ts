@@ -1,6 +1,5 @@
 import { KubernetesObject, V1Container, V1SecurityContext } from "@kubernetes/client-node";
 import { Capability, PeprMutateRequest, PeprValidateRequest, a } from "pepr";
-import { PolicyMap } from ".";
 import { Policy } from "../operator/crd";
 
 export type Ctx = {
@@ -15,7 +14,6 @@ export const policies = new Capability({
 });
 
 export const { When } = policies;
-export const policyExemptionMap: PolicyMap = new Map();
 
 // Returns all volumes in the pod
 export function volumes(request: PeprValidateRequest<a.Pod>) {
