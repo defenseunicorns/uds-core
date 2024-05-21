@@ -4,10 +4,10 @@ import { ExemptionElement, Policy, UDSExemption } from "../../crd";
 
 export type PolicyOwnerMap = Map<string, UDSExemption>;
 export type PolicyMap = Map<Policy, StoredMatcher[]>;
-export let policyExemptionMap: PolicyMap;
-export let policyOwnerMap: PolicyOwnerMap;
+let policyExemptionMap: PolicyMap;
+let policyOwnerMap: PolicyOwnerMap;
 
-export function initPolicyMap(): void {
+function init(): void {
   policyExemptionMap = new Map();
   policyOwnerMap = new Map();
   for (const p of Object.values(Policy)) {
@@ -15,7 +15,7 @@ export function initPolicyMap(): void {
   }
 }
 
-export function getByPolicy(policy: Policy): StoredMatcher[] {
+function getByPolicy(policy: Policy): StoredMatcher[] {
   return policyExemptionMap.get(policy) || [];
 }
 
@@ -33,14 +33,14 @@ function getMatchersFromExemptionElement(
   };
 }
 
-export function addMatcherToPolicy(p: Policy, matcher: StoredMatcher): void {
+function addMatcherToPolicy(p: Policy, matcher: StoredMatcher): void {
   const storedMatchers = getByPolicy(p);
   storedMatchers.push(matcher);
 }
 
 // Iterate through each exemption block of CR and add matchers to PolicyMap
-export function addExemption(exemption: UDSExemption, log: boolean = true) {
-  deleteExemption(exemption);
+function add(exemption: UDSExemption, log: boolean = true) {
+  remove(exemption);
   policyOwnerMap.set(exemption.metadata?.uid || "", exemption);
 
   const exemptions = exemption.spec?.exemptions ?? [];
@@ -58,7 +58,7 @@ export function addExemption(exemption: UDSExemption, log: boolean = true) {
   }
 }
 
-export function deleteExemption(exemption: UDSExemption) {
+function remove(exemption: UDSExemption) {
   const owner = exemption.metadata?.uid || "";
   const prevExemption = policyOwnerMap.get(owner);
 
@@ -80,3 +80,11 @@ export function deleteExemption(exemption: UDSExemption) {
     Log.debug(`No existing exemption for owner ${owner}`);
   }
 }
+
+// export object with all included export as properties
+export const ExemptionStore = {
+  init,
+  add,
+  remove,
+  getByPolicy,
+};

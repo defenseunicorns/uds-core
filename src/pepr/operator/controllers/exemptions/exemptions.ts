@@ -1,5 +1,5 @@
 import { UDSExemption } from "../../crd";
-import { addExemption, deleteExemption } from "./exemption-store";
+import { ExemptionStore } from "./exemption-store";
 
 export enum WatchPhase {
   Added = "ADDED",
@@ -10,16 +10,16 @@ export enum WatchPhase {
 }
 
 // Handle adding, updating, and deleting exemptions from Policymap
-export function processExemptions(exempt: UDSExemption, phase: WatchPhase) {
+export function processExemptions(exemption: UDSExemption, phase: WatchPhase) {
   switch (phase) {
     case WatchPhase.Added:
     case WatchPhase.Modified: {
-      addExemption(exempt);
+      ExemptionStore.add(exemption);
       break;
     }
 
     case WatchPhase.Deleted:
-      deleteExemption(exempt);
+      ExemptionStore.remove(exemption);
       break;
   }
 }

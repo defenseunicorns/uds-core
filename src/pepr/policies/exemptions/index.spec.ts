@@ -1,16 +1,13 @@
 import { beforeAll, describe, expect, it, jest } from "@jest/globals";
 import { PeprValidateRequest, kind } from "pepr";
 import { isExempt } from ".";
-import {
-  initPolicyMap,
-  policyExemptionMap,
-} from "../../operator/controllers/exemptions/exemption-store";
+import { ExemptionStore } from "../../operator/controllers/exemptions/exemption-store";
 import { MatcherKind, Policy } from "../../operator/crd";
 
 describe("test registering exemptions", () => {
   beforeAll(() => {
-    initPolicyMap();
-    jest.spyOn(policyExemptionMap, "get").mockReturnValue([
+    ExemptionStore.init();
+    jest.spyOn(ExemptionStore, "getByPolicy").mockReturnValue([
       {
         namespace: "neuvector",
         name: "^neuvector-enforcer-pod-.*",

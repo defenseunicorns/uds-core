@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "@jest/globals";
 import { Matcher, MatcherKind, Policy } from "../../crd";
-import { addExemption, deleteExemption, getByPolicy, initPolicyMap } from "./exemption-store";
+import { ExemptionStore } from "./exemption-store";
 
 const enforcerMatcher = {
   namespace: "neuvector",
@@ -32,56 +32,56 @@ const getExemption = (uid: string, matcher: Matcher, policies: Policy[]) => {
 
 describe("Exemption Store", () => {
   beforeEach(() => {
-    initPolicyMap();
+    ExemptionStore.init();
   });
 
   it("Add exemption", async () => {
     const e = getExemption("uid", enforcerMatcher, [Policy.DisallowPrivileged]);
-    addExemption(e);
-    const matchers = getByPolicy(Policy.DisallowPrivileged);
+    ExemptionStore.add(e);
+    const matchers = ExemptionStore.getByPolicy(Policy.DisallowPrivileged);
 
     expect(matchers).toHaveLength(1);
   });
 
   it("Delete exemption", async () => {
     const e = getExemption("uid", enforcerMatcher, [Policy.DisallowPrivileged]);
-    addExemption(e);
-    let matchers = getByPolicy(Policy.DisallowPrivileged);
+    ExemptionStore.add(e);
+    let matchers = ExemptionStore.getByPolicy(Policy.DisallowPrivileged);
     expect(matchers).toHaveLength(1);
-    deleteExemption(e);
+    ExemptionStore.remove(e);
 
-    matchers = getByPolicy(Policy.DisallowPrivileged);
+    matchers = ExemptionStore.getByPolicy(Policy.DisallowPrivileged);
     expect(matchers).toHaveLength(0);
   });
 
   it("Update exemption", async () => {
     const enforcerException = getExemption("uid", enforcerMatcher, [Policy.DisallowPrivileged]);
-    addExemption(enforcerException);
+    ExemptionStore.add(enforcerException);
 
-    let matchers = getByPolicy(Policy.DisallowPrivileged);
+    let matchers = ExemptionStore.getByPolicy(Policy.DisallowPrivileged);
     expect(matchers).toHaveLength(1);
 
     const controllerExemption = getExemption("uid", controllerMatcher, [Policy.RequireNonRootUser]);
-    addExemption(controllerExemption);
+    ExemptionStore.add(controllerExemption);
 
-    matchers = getByPolicy(Policy.DisallowPrivileged);
+    matchers = ExemptionStore.getByPolicy(Policy.DisallowPrivileged);
     expect(matchers).toHaveLength(0);
   });
 
   it("Add multiple policies", async () => {
     const enforcerException = getExemption("foo", enforcerMatcher, [Policy.DisallowPrivileged]);
-    addExemption(enforcerException);
+    ExemptionStore.add(enforcerException);
 
-    let matchers = getByPolicy(Policy.DisallowPrivileged);
+    let matchers = ExemptionStore.getByPolicy(Policy.DisallowPrivileged);
     expect(matchers).toHaveLength(1);
 
     const controllerExemption = getExemption("bar", controllerMatcher, [Policy.RequireNonRootUser]);
-    addExemption(controllerExemption);
+    ExemptionStore.add(controllerExemption);
 
-    matchers = getByPolicy(Policy.DisallowPrivileged);
+    matchers = ExemptionStore.getByPolicy(Policy.DisallowPrivileged);
     expect(matchers).toHaveLength(1);
 
-    matchers = getByPolicy(Policy.RequireNonRootUser);
+    matchers = ExemptionStore.getByPolicy(Policy.RequireNonRootUser);
     expect(matchers).toHaveLength(1);
   });
 
@@ -90,10 +90,10 @@ describe("Exemption Store", () => {
     const otherEnforcerException = getExemption("bar", enforcerMatcher, [
       Policy.DisallowPrivileged,
     ]);
-    addExemption(enforcerException);
-    addExemption(otherEnforcerException);
+    ExemptionStore.add(enforcerException);
+    ExemptionStore.add(otherEnforcerException);
 
-    const matchers = getByPolicy(Policy.DisallowPrivileged);
+    const matchers = ExemptionStore.getByPolicy(Policy.DisallowPrivileged);
     expect(matchers).toHaveLength(2);
   });
 });

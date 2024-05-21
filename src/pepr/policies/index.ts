@@ -1,6 +1,6 @@
 // Various validation actions for Kubernetes resources from Big Bang
 import { K8s, Log } from "pepr";
-import { initPolicyMap } from "../operator/controllers/exemptions/exemption-store";
+import { ExemptionStore } from "../operator/controllers/exemptions/exemption-store";
 import { processExemptions } from "../operator/controllers/exemptions/exemptions";
 import { Matcher, Policy, UDSExemption } from "../operator/crd";
 import "./networking";
@@ -13,7 +13,7 @@ export type StoredMatcher = Matcher & { owner: string };
 export type PolicyMap = Map<Policy, StoredMatcher[]>;
 
 export async function startExemptionWatch() {
-  initPolicyMap();
+  ExemptionStore.init();
 
   // only run in admission controller
   if (process.env.PEPR_WATCH_MODE === "false") {

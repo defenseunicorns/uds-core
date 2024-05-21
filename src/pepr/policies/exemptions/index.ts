@@ -1,6 +1,6 @@
 import { KubernetesObject } from "kubernetes-fluent-client";
 import { Log, PeprMutateRequest, PeprValidateRequest } from "pepr";
-import { getByPolicy } from "../../operator/controllers/exemptions/exemption-store";
+import { ExemptionStore } from "../../operator/controllers/exemptions/exemption-store";
 import { Policy } from "../../operator/crd";
 
 /**
@@ -14,7 +14,7 @@ export function isExempt<T extends KubernetesObject>(
   request: PeprValidateRequest<T> | PeprMutateRequest<T>,
   policy: Policy,
 ) {
-  const exemptList = getByPolicy(policy);
+  const exemptList = ExemptionStore.getByPolicy(policy);
   const resourceName = request.Raw.metadata?.name || request.Raw.metadata?.generateName;
   const resourceNamespace = request.Raw.metadata?.namespace;
 
