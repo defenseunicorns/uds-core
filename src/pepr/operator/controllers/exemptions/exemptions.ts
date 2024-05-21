@@ -13,10 +13,9 @@ export enum WatchPhase {
 export function processExemptions(exemption: UDSExemption, phase: WatchPhase) {
   switch (phase) {
     case WatchPhase.Added:
-    case WatchPhase.Modified: {
+    case WatchPhase.Modified:
       ExemptionStore.add(exemption);
       break;
-    }
 
     case WatchPhase.Deleted:
       ExemptionStore.remove(exemption);

@@ -20,7 +20,7 @@ export function isExempt<T extends KubernetesObject>(
 
   if (exemptList.length != 0) {
     // Debug log to provide current exemptions for policy
-    Log.info(
+    Log.debug(
       `Checking ${resourceName} against ${policy} exemptions: ${JSON.stringify(exemptList)}`,
     );
     for (const exempt of exemptList) {
