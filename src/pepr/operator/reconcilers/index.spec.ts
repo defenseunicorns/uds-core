@@ -163,7 +163,10 @@ describe("handleFailure", () => {
       metadata: { namespace: "default", name: "test", generation: 1, uid: "1" },
     };
     await handleFailure(err, cr as UDSPackage | UDSExemption);
-    expect(Log.error).toHaveBeenCalledWith({ err }, "Reconciliation attempt 1 failed for default/test, retrying...");
+    expect(Log.error).toHaveBeenCalledWith(
+      { err },
+      "Reconciliation attempt 1 failed for default/test, retrying...",
+    );
 
     expect(Create).toHaveBeenCalledWith({
       type: "Warning",
@@ -202,7 +205,10 @@ describe("handleFailure", () => {
       status: { phase: Phase.Pending, retryAttempt: 5 },
     };
     await handleFailure(err, cr as UDSPackage | UDSExemption);
-    expect(Log.error).toHaveBeenCalledWith({ err }, "Error configuring default/test, maxed out retries");
+    expect(Log.error).toHaveBeenCalledWith(
+      { err },
+      "Error configuring default/test, maxed out retries",
+    );
 
     expect(Create).toHaveBeenCalledWith({
       type: "Warning",
