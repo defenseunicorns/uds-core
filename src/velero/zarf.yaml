@@ -18,6 +18,7 @@ components:
     images:
       - velero/velero:v1.13.2
       - velero/velero-plugin-for-aws:v1.9.2
+      - velero/velero-plugin-for-csi:v0.7.0
       - docker.io/bitnami/kubectl:1.30.0
 
   - name: velero
@@ -33,4 +34,5 @@ components:
     images:
       - registry1.dso.mil/ironbank/opensource/velero/velero:v1.13.2
       - registry1.dso.mil/ironbank/opensource/velero/velero-plugin-for-aws:v1.9.2
+      - registry1.dso.mil/ironbank/opensource/velero/velero-plugin-for-csi:v0.7.0
       - registry1.dso.mil/ironbank/big-bang/base:2.1.0
