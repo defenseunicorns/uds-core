@@ -4,7 +4,7 @@ import { K8s, Log, kind } from "pepr";
 import { ExemptStatus, Phase, PkgStatus, UDSExemption, UDSPackage } from "../crd";
 import { Status } from "../crd/generated/package-v1alpha1";
 
-const uidSeen = new Set<string>();
+export const uidSeen = new Set<string>();
 
 /**
  * Checks if the CRD is pending or the current generation has been processed
@@ -17,10 +17,9 @@ export function shouldSkip(cr: UDSExemption | UDSPackage) {
   const isCurrentGeneration = cr.metadata?.generation === cr.status?.observedGeneration;
 
   // First check if the CR has been seen before and return false if it has not
-  // This ensures that all CRs are processed at least once during the lifetime of the pod
+  // This ensures that all CRs are processed at least once by this version of pepr-core
   if (!uidSeen.has(cr.metadata!.uid!)) {
     Log.debug(cr, `Should skip? No, first time processed during this pod's lifetime`);
-    uidSeen.add(cr.metadata!.uid!);
     return false;
   }
 
