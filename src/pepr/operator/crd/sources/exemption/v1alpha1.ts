@@ -47,6 +47,9 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
                 type: "string",
               },
             },
+            retryAttempt: {
+              type: "integer",
+            },
           },
         } as V1JSONSchemaProps,
         spec: {

@@ -99,19 +99,31 @@ export async function handleFailure(
 ) {
   const metadata = cr.metadata!;
   const identifier = `${metadata.namespace}/${metadata.name}`;
+  let status: Status;
 
+  // todo: identify exact 404 we are targetting, possibly in `updateStatus`
   if (err.status === 404) {
     Log.warn({ err }, `Package metadata seems to have been deleted`);
     return;
   }
 
-  Log.error({ err }, `Error configuring ${identifier}`);
+  const retryAttempt = cr.status?.retryAttempt || 0
 
-  // todo: need to evaluate when it is safe to retry (updating generation now avoids retrying infinitely)
-  const status = {
-    phase: Phase.Failed,
-    observedGeneration: metadata.generation,
-  } as Status;
+  if (retryAttempt < 5) {
+    const currRetry = retryAttempt + 1;
+    Log.error({ err }, `Reconciliation attempt ${currRetry} failed for ${identifier}, retrying...`);
+
+    status = {
+      retryAttempt: currRetry,
+    };
+  } else {
+    Log.error({ err }, `Error configuring ${identifier}, maxed out retries`);
+
+    status = {
+      phase: Phase.Failed,
+      observedGeneration: metadata.generation,
+    };
+  }
 
   // Write an event for the error
   void writeEvent(cr, { message: err.message });

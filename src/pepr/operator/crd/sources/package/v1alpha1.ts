@@ -387,6 +387,9 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
             networkPolicyCount: {
               type: "integer",
             },
+            retryAttempt: {
+              type: "integer",
+            },
           },
         } as V1JSONSchemaProps,
         spec: {
