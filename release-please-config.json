@@ -11,7 +11,7 @@
       ],
       "versioning": "default",
       "extra-files": [
-        ".github/bundles/uds-bundle.yaml",
+        ".github/bundles/infra-bundle/uds-bundle.yaml",
         "README.md",
         "packages/slim-dev/zarf.yaml",
         "packages/standard/zarf.yaml",

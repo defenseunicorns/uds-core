@@ -20,7 +20,7 @@ tasks:
     actions:
       - cmd: |
           for package in src/*; do
-            uds run -f ${package}/tasks.yaml validate --no-progress
+              uds run -f "${package}/tasks.yaml" validate --no-progress
           done
           set +e
 
@@ -30,6 +30,8 @@ tasks:
       - task: create:standard-package
       - task: create:k3d-standard-bundle
       - task: deploy:k3d-standard-bundle
+        with:
+          config: .github/bundles/exemption/uds-config.yaml
       - cmd: uds zarf tools clear-cache
       - task: validate-packages
 

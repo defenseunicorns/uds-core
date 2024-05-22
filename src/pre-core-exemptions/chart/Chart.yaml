@@ -1,0 +1,5 @@
+apiVersion: v2
+name: pre-core-exemptions
+description: Helm chart for exemptions that are required before core but couldn't be applied before core
+type: application
+version: 0.1.0

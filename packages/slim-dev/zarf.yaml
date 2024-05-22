@@ -42,6 +42,11 @@ components:
       path: ../../dist
       name: module
 
+  - name: pre-core-exemptions
+    required: true
+    import:
+      path: ../standard
+
   # Keycloak
   - name: keycloak
     required: true

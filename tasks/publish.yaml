@@ -48,3 +48,8 @@ tasks:
           uds zarf tools registry copy ${pkgPath}:${VERSION} ${pkgPath}:latest
           pkgPath="${TARGET_REPO}/bundles/k3d-core-slim-dev"
           uds zarf tools registry copy ${pkgPath}:${VERSION} ${pkgPath}:latest
+
+  - name: exemption-crd-package
+    description: "Publish the UDS Exemption CRD Package"
+    actions:
+      - cmd: uds publish build/zarf-package-uds-core-exemption-crd-*.tar.zst oci://${TARGET_REPO} --no-progress
