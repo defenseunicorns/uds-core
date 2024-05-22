@@ -67,4 +67,5 @@ RegisterKind(Exemption, {
   group: "uds.dev",
   version: "v1alpha1",
   kind: "Exemption",
+  plural: "exemptions",
 });
