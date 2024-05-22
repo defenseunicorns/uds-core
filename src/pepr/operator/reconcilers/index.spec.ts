@@ -3,7 +3,7 @@ import { GenericKind } from "kubernetes-fluent-client";
 import { K8s, Log, kind } from "pepr";
 
 import { Mock } from "jest-mock";
-import { handleFailure, shouldSkip, updateStatus, writeEvent } from ".";
+import { handleFailure, shouldSkip, uidSeen, updateStatus, writeEvent } from ".";
 import { ExemptStatus, Phase, PkgStatus, UDSExemption, UDSPackage } from "../crd";
 
 jest.mock("pepr", () => ({
@@ -33,6 +33,7 @@ describe("isPendingOrCurrent", () => {
   });
 
   it("should return true for a pending CR on subsequent calls", () => {
+    uidSeen.add("1");
     const cr = { metadata: { uid: "1" }, status: { phase: Phase.Pending } } as UDSPackage;
     expect(shouldSkip(cr)).toBe(true);
   });
@@ -154,7 +155,7 @@ describe("handleFailure", () => {
     expect(Create).not.toHaveBeenCalled();
   });
 
-  it("should handle a failure", async () => {
+  it("should retry a failure", async () => {
     const err = { status: 500, message: "Internal server error" };
     const cr = {
       kind: "Package",
@@ -162,7 +163,52 @@ describe("handleFailure", () => {
       metadata: { namespace: "default", name: "test", generation: 1, uid: "1" },
     };
     await handleFailure(err, cr as UDSPackage | UDSExemption);
-    expect(Log.error).toHaveBeenCalledWith({ err }, "Error configuring default/test");
+    expect(Log.error).toHaveBeenCalledWith(
+      { err },
+      "Reconciliation attempt 1 failed for default/test, retrying...",
+    );
+
+    expect(Create).toHaveBeenCalledWith({
+      type: "Warning",
+      reason: "ReconciliationFailed",
+      message: "Internal server error",
+      metadata: {
+        namespace: cr.metadata!.namespace,
+        generateName: cr.metadata!.name,
+      },
+      involvedObject: {
+        apiVersion: cr.apiVersion,
+        kind: cr.kind,
+        name: cr.metadata!.name,
+        namespace: cr.metadata!.namespace,
+        uid: cr.metadata!.uid,
+      },
+      firstTimestamp: expect.any(Date),
+      reportingComponent: "uds.dev/operator",
+      reportingInstance: process.env.HOSTNAME,
+    });
+
+    expect(PatchStatus).toHaveBeenCalledWith({
+      metadata: { namespace: "default", name: "test" },
+      status: {
+        retryAttempt: 1,
+      },
+    });
+  });
+
+  it("should fail after 5 retries", async () => {
+    const err = { status: 500, message: "Internal server error" };
+    const cr = {
+      kind: "Package",
+      apiVersion: "v1",
+      metadata: { namespace: "default", name: "test", generation: 1, uid: "1" },
+      status: { phase: Phase.Pending, retryAttempt: 5 },
+    };
+    await handleFailure(err, cr as UDSPackage | UDSExemption);
+    expect(Log.error).toHaveBeenCalledWith(
+      { err },
+      "Error configuring default/test, maxed out retries",
+    );
 
     expect(Create).toHaveBeenCalledWith({
       type: "Warning",
