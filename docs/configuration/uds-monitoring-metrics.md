@@ -1,4 +1,8 @@
-# Monitoring / Metrics Scraping in UDS Core
+---
+title: Monitoring and Metrics
+type: docs
+weight: 1
+---
 
 UDS Core leverages Pepr to handle setup of Prometheus scraping metrics endpoints, with the particular configuration necessary to work in a STRICT mTLS (Istio) environment. We handle this with both mutations of existing service monitors and generation of service monitors via the `Package` CR. 
 
