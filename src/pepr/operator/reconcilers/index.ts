@@ -107,7 +107,7 @@ export async function handleFailure(
     return;
   }
 
-  const retryAttempt = cr.status?.retryAttempt || 0
+  const retryAttempt = cr.status?.retryAttempt || 0;
 
   if (retryAttempt < 5) {
     const currRetry = retryAttempt + 1;
