@@ -1,10 +1,11 @@
 import { Log } from "pepr";
 
-import { handleFailure, isPendingOrCurrent, updateStatus } from ".";
+import { handleFailure, shouldSkip, uidSeen, updateStatus } from ".";
 import { UDSConfig } from "../../config";
 import { enableInjection } from "../controllers/istio/injection";
-import { virtualService } from "../controllers/istio/virtual-service";
+import { istioResources } from "../controllers/istio/istio-resources";
 import { keycloak } from "../controllers/keycloak/client-sync";
+import { serviceMonitor } from "../controllers/monitoring/service-monitor";
 import { networkPolicies } from "../controllers/network/policies";
 import { Phase, UDSPackage } from "../crd";
 import { migrate } from "../crd/migrate";
@@ -16,14 +17,15 @@ import { migrate } from "../crd/migrate";
  * @param pkg the package to reconcile
  */
 export async function packageReconciler(pkg: UDSPackage) {
-  if (isPendingOrCurrent(pkg)) {
-    return;
-  }
-
   const metadata = pkg.metadata!;
   const { namespace, name } = metadata;
 
   Log.info(pkg, `Processing Package ${namespace}/${name}`);
+
+  if (shouldSkip(pkg)) {
+    Log.info(pkg, `Skipping Package ${namespace}/${name}`);
+    return;
+  }
 
   // Migrate the package to the latest version
   migrate(pkg);
@@ -34,16 +36,20 @@ export async function packageReconciler(pkg: UDSPackage) {
 
     const netPol = await networkPolicies(pkg, namespace!);
 
-    // Only configure the VirtualService if not running in single test mode
     let endpoints: string[] = [];
-    if (!UDSConfig.isSingleTest) {
-      // Update the namespace to ensure the istio-injection label is set
-      await enableInjection(pkg);
+    // Update the namespace to ensure the istio-injection label is set
+    await enableInjection(pkg);
 
-      // Create the VirtualService for each exposed service
-      endpoints = await virtualService(pkg, namespace!);
+    // Create the VirtualService and ServiceEntry for each exposed service
+    endpoints = await istioResources(pkg, namespace!);
+
+    // Only configure the ServiceMonitors if not running in single test mode
+    let monitors: string[] = [];
+    if (!UDSConfig.isSingleTest) {
+      // Create the ServiceMonitor for each monitored service
+      monitors = await serviceMonitor(pkg, namespace!);
     } else {
-      Log.warn(`Running in single test mode, skipping ${name} VirtualService.`);
+      Log.warn(`Running in single test mode, skipping ${name} ServiceMonitors.`);
     }
 
     // Configure SSO
@@ -53,9 +59,14 @@ export async function packageReconciler(pkg: UDSPackage) {
       phase: Phase.Ready,
       ssoClients,
       endpoints,
+      monitors,
       networkPolicyCount: netPol.length,
       observedGeneration: metadata.generation,
+      retryAttempt: 0, // todo: make this nullable when kfc generates the type
     });
+
+    // Update to indicate this version of pepr-core has reconciled the package successfully once
+    uidSeen.add(pkg.metadata!.uid!);
   } catch (err) {
     void handleFailure(err, pkg);
   }

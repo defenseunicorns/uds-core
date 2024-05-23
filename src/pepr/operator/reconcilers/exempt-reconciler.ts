@@ -1,11 +1,11 @@
 import { Log } from "pepr";
 
-import { handleFailure, isPendingOrCurrent, updateStatus } from ".";
+import { handleFailure, shouldSkip, uidSeen, updateStatus } from ".";
 import { processExemptions } from "../controllers/exemptions/exemptions";
 import { Phase, UDSExemption } from "../crd";
 
 export async function exemptReconciler(exempt: UDSExemption) {
-  if (isPendingOrCurrent(exempt)) {
+  if (shouldSkip(exempt)) {
     return;
   }
 
@@ -27,6 +27,9 @@ export async function exemptReconciler(exempt: UDSExemption) {
       observedGeneration: metadata.generation,
       titles: exempt.spec?.exemptions?.map(e => e.title || e.matcher.name),
     });
+
+    // Update to indicate this version of pepr-core has reconciled the package successfully once
+    uidSeen.add(exempt.metadata!.uid!);
   } catch (err) {
     // Handle the failure
     void handleFailure(err, exempt);

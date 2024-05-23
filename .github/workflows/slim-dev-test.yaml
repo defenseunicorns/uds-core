@@ -1,0 +1,52 @@
+name: Slim Dev
+
+# This workflow is triggered on pull requests
+on:
+  pull_request:
+    # milestoned is added here as a workaround for release-please not triggering PR workflows (PRs should be added to a milestone to trigger the workflow).
+    types: [milestoned, opened, reopened, synchronize]
+    paths:
+      - src/pepr/*
+      - src/keycloak/*
+      - src/istio/*
+      - src/prometheus-stack/*
+      - packages/slim-dev/*
+      - bundles/core-slim-dev/*
+      - .github/workflows/slim-dev*
+
+# Permissions for the GITHUB_TOKEN used by the workflow.
+permissions:
+  id-token: write # Needed for OIDC-related operations.
+  contents: read # Allows reading the content of the repository.
+  pull-requests: read # Allows reading pull request metadata.
+
+# Default settings for all run commands in the workflow jobs.
+defaults:
+  run:
+    shell: bash -e -o pipefail {0} # Ensures that scripts fail on error and pipefail is set.
+
+# Abort prior jobs in the same workflow / PR
+concurrency:
+  group: test-slim-dev-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # This job runs the slim-dev bundle create/deploy process.
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      - name: Environment setup
+        uses: ./.github/actions/setup
+      - name: Deploy Slim Dev Bundle
+        run: uds run slim-dev --no-progress
+      - name: Debug Output
+        if: ${{ always() }}
+        uses: ./.github/actions/debug-output
+      - name: Save logs
+        if: always()
+        uses: ./.github/actions/save-logs
+        with:
+          suffix: -slim-dev

@@ -1,12 +1,13 @@
-leastPrivilege: false
+leastPrivilege: true
 
 exporter:
-  # Temporarily disabled until we can get the monitor chart working
-  # via https://github.com/neuvector/neuvector-helm/pull/355
+  # This is disabled pending further discussion/upstream changes to handle metrics with SSO setup
   enabled: false
+  # Disable serviceMonitor to handle standalone testing, handled by UDS Package
   serviceMonitor:
     enabled: false
   apiSvc: neuvector-svc-controller-api:10443
   svc:
-    enabled: true
+    # Temporary disabling of service to allow adding appProtocol via custom service in the config chart
+    enabled: false
     type: ClusterIP

@@ -1,0 +1,87 @@
+name: Test Core On EKS
+
+on:
+  workflow_call:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  test-eks-install:
+    runs-on: ubuntu-latest
+    env:
+      SHA: ${{ github.sha }}
+      UDS_REGION: us-west-2
+      UDS_PERMISSIONS_BOUNDARY_ARN: ${{ secrets.PERMISSIONS_BOUNDARY_ARN }}
+      UDS_PERMISSIONS_BOUNDARY_NAME: ${{ secrets.PERMISSIONS_BOUNDARY_NAME }}
+      UDS_STATE_BUCKET_NAME: uds-aws-ci-commercial-us-west-2-5246-tfstate
+      UDS_STATE_DYNAMODB_TABLE_NAME: uds-aws-ci-commercial-org-us-west-2-5246-tfstate-lock
+    steps:
+      - name: Set ENV
+        run: |
+          echo "UDS_CLUSTER_NAME=uds-core-aws-${SHA:0:7}" >> $GITHUB_ENV
+          echo "UDS_STATE_KEY="tfstate/ci/install/${SHA:0:7}-core-aws.tfstate >> $GITHUB_ENV
+          echo "TF_VAR_region=${UDS_REGION}" >> $GITHUB_ENV
+          echo "TF_VAR_name=uds-core-aws-${SHA:0:7}" >> $GITHUB_ENV
+          echo "TF_VAR_use_permissions_boundary=true" >> $GITHUB_ENV
+          echo "TF_VAR_permissions_boundary_name=${UDS_PERMISSIONS_BOUNDARY_NAME}" >> $GITHUB_ENV
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_COMMERCIAL_ROLE_TO_ASSUME }}
+          role-session-name: ${{ github.job || github.event.client_payload.pull_request.head.sha || github.sha }}
+          aws-region: ${{ env.UDS_REGION }}
+          role-duration-seconds: 21600
+      - name: Environment setup
+        uses: ./.github/actions/setup
+
+      - name: Install eksctl
+        run: uds run -f tasks/iac.yaml install-eksctl --no-progress
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.5.7"
+
+      - name: Create UDS Core Package
+        run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress
+
+      - name: Create Core Bundle
+        run: uds create .github/bundles --confirm
+
+      - name: Create Cluster
+        run: uds run -f tasks/iac.yaml create-cluster --no-progress
+        timeout-minutes: 60
+
+      - name: Create IAC
+        run: uds run -f tasks/iac.yaml create-iac --no-progress
+        timeout-minutes: 20
+
+      - name: Deploy Core Bundle
+        env:
+          UDS_CONFIG: .github/bundles/uds-config.yaml
+        run: uds deploy .github/bundles/uds-bundle-uds-core-eks-nightly-*.tar.zst --confirm
+        timeout-minutes: 20
+
+      - name: Remove UDS Core
+        if: always()
+        run: uds remove .github/bundles/uds-bundle-uds-core-eks-*.tar.zst --confirm
+        timeout-minutes: 10
+        continue-on-error: true
+
+      - name: Remove IAC
+        if: always()
+        run: uds run -f tasks/iac.yaml destroy-iac --no-progress
+        timeout-minutes: 10
+        continue-on-error: true
+
+      - name: Teardown EKS cluster
+        if: always()
+        run: uds run -f tasks/iac.yaml destroy-cluster --no-progress
+        timeout-minutes: 30
+        continue-on-error: true

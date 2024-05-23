@@ -1,0 +1,103 @@
+name: Publish UDS Core
+
+on:
+  workflow_call:
+    inputs:
+      snapshot:
+        description: 'true - for snapshot release'
+        required: true
+        type: boolean
+
+jobs:
+  publish-uds-core:
+    strategy:
+      matrix:
+        flavor: [upstream, registry1]
+    runs-on: "uds-ubuntu-big-boy-8-core"
+    name: Publish packages
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+
+      - name: Environment setup
+        uses: ./.github/actions/setup
+
+      - name: Login to GHCR
+        run: uds run registry-login --set REGISTRY=ghcr.io --set REGISTRY_USERNAME=dummy --set REGISTRY_PASSWORD=${{ secrets.GITHUB_TOKEN }} --set REGISTRY_RETRY_INTERVAL=90 --no-progress
+
+      - name: Login to registry1
+        run: uds run registry-login --set REGISTRY=registry1.dso.mil --set REGISTRY_USERNAME=${{ secrets.IRON_BANK_ROBOT_USERNAME }} --set REGISTRY_PASSWORD=${{ secrets.IRON_BANK_ROBOT_PASSWORD }} --set REGISTRY_RETRY_INTERVAL=90 --no-progress
+
+      - name: (Snapshot) Get snapshot version using git commit short sha and date
+        if: ${{ inputs.snapshot }}
+        run: |
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          RELEASE_DATE=$(date +'%Y-%m-%d')
+          echo "SNAPSHOT_VERSION=${RELEASE_DATE}-${SHORT_SHA}" >> $GITHUB_ENV
+
+      - name: (Snapshot) Set versions to snapshot
+        if: ${{ inputs.snapshot }}
+        run: |
+          yq -ei '.metadata.version=env(SNAPSHOT_VERSION), (.packages[]|select(has("ref"))|select(.name=="core")).ref=env(SNAPSHOT_VERSION)' bundles/k3d-standard/uds-bundle.yaml
+          yq -ei '.metadata.version=env(SNAPSHOT_VERSION), (.packages[]|select(has("ref"))|select(.name=="core-slim-dev")).ref=env(SNAPSHOT_VERSION)' bundles/k3d-slim-dev/uds-bundle.yaml
+          yq -ei '.metadata.version=env(SNAPSHOT_VERSION)' packages/standard/zarf.yaml
+          yq -ei '.metadata.version=env(SNAPSHOT_VERSION)' packages/slim-dev/zarf.yaml
+
+      - name: Create Packages and Bundles
+        run: |
+          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress --set FLAVOR=${{ matrix.flavor }}
+          uds zarf tools clear-cache
+          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml k3d-standard-bundle --no-progress
+          uds zarf tools clear-cache
+          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml slim-dev-package --no-progress --set FLAVOR=${{ matrix.flavor }}
+          uds zarf tools clear-cache
+          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml k3d-slim-dev-bundle --no-progress
+          uds zarf tools clear-cache
+
+          if [ "${{ matrix.flavor }}" != "registry1" ]; then
+            ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml standard-package --no-progress --set FLAVOR=${{ matrix.flavor }}
+            uds zarf tools clear-cache
+            ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-standard-bundle --no-progress
+            uds zarf tools clear-cache
+            ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml slim-dev-package --no-progress --set FLAVOR=${{ matrix.flavor }}
+            uds zarf tools clear-cache
+            ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-slim-dev-bundle --no-progress
+            uds zarf tools clear-cache
+          fi
+
+      # Standard Package by default tests what's in the Istio Package
+      - name: Test amd64 Bundle
+        if: ${{ !inputs.snapshot }}
+        run: |
+          uds run deploy-standard-bundle --no-progress
+          uds run -f tasks/test.yaml validate-packages --no-progress
+
+      - name: Debug Output
+        if: ${{ always() && !inputs.snapshot }}
+        uses: ./.github/actions/debug-output
+
+      - name: Publish Standard Package
+        if: ${{ !inputs.snapshot }}
+        run: uds run -f tasks/publish.yaml standard-package --set FLAVOR=${{ matrix.flavor }} --no-progress
+
+      - name: Publish Upstream Flavored Bundles
+        if: ${{ !inputs.snapshot && matrix.flavor != 'registry1' }}
+        run: uds run -f tasks/publish.yaml bundles --no-progress
+
+      - name: (Snapshot) Publish Standard Package
+        if: ${{ inputs.snapshot }}
+        run: uds run -f tasks/publish.yaml standard-package --set FLAVOR=${{ matrix.flavor }} --set TARGET_REPO="ghcr.io/defenseunicorns/packages/uds/snapshots" --set VERSION="${SNAPSHOT_VERSION}" --no-progress
+
+      - name: (Snapshot) Publish Upstream Flavored Bundles
+        if: ${{ inputs.snapshot && matrix.flavor != 'registry1' }}
+        run: uds run -f tasks/publish.yaml bundles --set TARGET_REPO="ghcr.io/defenseunicorns/packages/uds/snapshots" --set VERSION="${SNAPSHOT_VERSION}" --no-progress
+
+      - name: Save logs
+        if: always()
+        uses: ./.github/actions/save-logs
+        with:
+          suffix: -${{ matrix.flavor }}

@@ -3,7 +3,8 @@ name: Metadata
 on:
   pull_request:
     branches: [main]
-    types: [opened, edited, synchronize]
+    # milestoned is added here as a workaround for release-please not triggering PR workflows (PRs should be added to a milestone to trigger the workflow).
+    types: [milestoned, opened, reopened, edited, synchronize]
 
 jobs:
   title_check:
@@ -23,8 +24,8 @@ jobs:
 
       - name: Install commitlint
         run: |
-          npm install --save-dev @commitlint/config-conventional@19.0.3
-          npm install --save-dev @commitlint/cli@19.0.3
+          npm install --save-dev @commitlint/config-conventional@19.1.0
+          npm install --save-dev @commitlint/cli@19.2.1
 
       - name: Lint PR title
         env:

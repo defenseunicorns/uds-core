@@ -3,6 +3,8 @@ name: Filter
 # This workflow is triggered on pull requests
 on:
   pull_request:
+    # milestoned is added here as a workaround for release-please not triggering PR workflows (PRs should be added to a milestone to trigger the workflow).
+    types: [milestoned, opened, reopened, synchronize]
 
 # Permissions for the GITHUB_TOKEN used by the workflow.
 permissions:
@@ -34,9 +36,9 @@ jobs:
       - name: Install UDS CLI
         shell: bash
         # renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
-        run: brew install defenseunicorns/tap/uds@0.9.2
+        run: brew install defenseunicorns/tap/uds@0.10.4
       - name: Run Formatting Checks
-        run: uds run lint-check
+        run: uds run lint-check --no-progress
 
   # This job checks if there are changes in specific paths source packages.
   check-paths:
