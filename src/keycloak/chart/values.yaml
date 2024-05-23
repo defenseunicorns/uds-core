@@ -49,6 +49,11 @@ clusterDomain: cluster.local
 # Sets development mode for Keycloak. This disables caching, Postgres and HPAs and should only be used for testing
 devMode: true
 
+# Enable SMTP networkPolicy and config
+smtp:
+  enabled: false
+  port: 587
+
 # Configure FIPS mode for Keycloak
 fips: false
 
