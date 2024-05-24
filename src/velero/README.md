@@ -100,7 +100,7 @@ EOF
 
 ## Manually restore backup
 ```bash
-velero restore create velero-test-nexus-restore-$(date +%s) \
+velero restore create uds-restore-$(date +%s) \
   --from-backup <backup-name> \
   --include-namespaces <namespaces-to-restore> --wait
 ```
