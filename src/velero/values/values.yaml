@@ -7,7 +7,7 @@ credentials:
       aws_access_key_id=###ZARF_VAR_VELERO_BUCKET_KEY###
       aws_secret_access_key=###ZARF_VAR_VELERO_BUCKET_KEY_SECRET###
 configuration:
-  beackupStorageLocation:
+  backupStorageLocation:
     - name: default
       provider: aws
       bucket: "###ZARF_VAR_VELERO_BUCKET###"
