@@ -44,12 +44,12 @@ spec:
         remoteGenerate: Anywhere
 
       {{- if .Values.smtp.enabled }}
-        - description: "SMTP access"
-          direction: Egress
-          selector:
-            app.kubernetes.io/name: keycloak
-          port: {{ .Values.smtp.port }}
-          remoteGenerate: Anywhere
+      - description: "SMTP access"
+        direction: Egress
+        selector:
+          app.kubernetes.io/name: keycloak
+        port: {{ .Values.smtp.port }}
+        remoteGenerate: Anywhere
       {{- end }}
 
       {{- if not .Values.devMode }}
