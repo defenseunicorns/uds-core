@@ -7,8 +7,7 @@ credentials:
       aws_access_key_id=###ZARF_VAR_VELERO_BUCKET_KEY###
       aws_secret_access_key=###ZARF_VAR_VELERO_BUCKET_KEY_SECRET###
 configuration:
-{{- include "Chart.configuration" . | indent 2 -}}
-  backupStorageLocation:
+  beackupStorageLocation:
     - name: default
       provider: aws
       bucket: "###ZARF_VAR_VELERO_BUCKET###"
@@ -46,6 +45,3 @@ schedules:
 metrics:
   serviceMonitor:
     enabled: true
-
-initContainers:
-{{- include "Chart.initContainers" . | indent 2 -}}

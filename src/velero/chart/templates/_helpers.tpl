@@ -84,5 +84,5 @@ Set values for CSI implementation
 
 {{- define ".Chart.configuration" -}}
 {{- if .Values.enableCSI -}}
-  features: EnableCSI
+features: EnableCSI
 {{- end -}}
