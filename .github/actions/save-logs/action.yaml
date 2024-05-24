@@ -40,5 +40,7 @@ runs:
         path: |
           /tmp/zarf-*.log
           /tmp/uds-*.log
+          /tmp/maru-*.log
+          /tmp/debug-*.log
           /tmp/uds-containerd-logs
           /tmp/k3d-uds-*.log

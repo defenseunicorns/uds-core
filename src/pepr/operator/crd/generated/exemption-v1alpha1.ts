@@ -67,6 +67,7 @@ export enum Policy {
 export interface Status {
   observedGeneration?: number;
   phase?: Phase;
+  retryAttempt?: number;
   titles?: string[];
 }
 
@@ -80,4 +81,5 @@ RegisterKind(Exemption, {
   group: "uds.dev",
   version: "v1alpha1",
   kind: "Exemption",
+  plural: "exemptions",
 });
