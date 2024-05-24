@@ -97,3 +97,15 @@ uds zarf tools kubectl apply -f - <<-EOF
     ttl: 240h0m0s
 EOF
 ```
+
+## Manually restore backup
+```bash
+velero restore create velero-test-nexus-restore-$(date +%s) \
+  --from-backup <backup-name> \
+  --include-namespaces <namespaces-to-restore> --wait
+```
+
+> **Note**
+> The default behavior of Velero will not recreate resources that already exist.
+> If the intention is to restore data on a PV, the PV/PVC will have to be deleted
+> before running the restore.
