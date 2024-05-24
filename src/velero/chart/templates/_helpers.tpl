@@ -64,7 +64,7 @@ Create the name of the service account to use
 {{/*
 Set values for CSI implementation
 */}}
-{{- define ".Chart.initContainers" -}}
+{{- define "uds-velero-config.initContainers" -}}
 {{- if and (eq .Values.flavor "registry1") .Values.enableCSI -}}
 - name: velero-plugin-for-csi
   image: registry1.dso.mil/ironbank/opensource/velero/velero-plugin-for-csi:v0.7.0
@@ -82,7 +82,8 @@ Set values for CSI implementation
 {{- end -}}
 {{- end -}}
 
-{{- define ".Chart.configuration" -}}
+{{- define "uds-velero-config.configuration" -}}
 {{- if .Values.enableCSI -}}
 features: EnableCSI
+{{- end -}}
 {{- end -}}
