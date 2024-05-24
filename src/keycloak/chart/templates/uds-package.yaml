@@ -31,7 +31,7 @@ spec:
         direction: Ingress
         selector:
           app.kubernetes.io/name: keycloak
-        remoteGenerate: Anywhere
+        remoteGenerated: Anywhere
         port: 8080
 
       - description: "OCSP Lookup"
@@ -41,7 +41,7 @@ spec:
         ports:
           - 443
           - 80
-        remoteGenerate: Anywhere
+        remoteGenerated: Anywhere
 
       {{- if .Values.smtp.enabled }}
       - description: "SMTP access"
@@ -49,7 +49,7 @@ spec:
         selector:
           app.kubernetes.io/name: keycloak
         port: {{ .Values.smtp.port }}
-        remoteGenerate: Anywhere
+        remoteGenerated: Anywhere
       {{- end }}
 
       {{- if not .Values.devMode }}
@@ -58,7 +58,7 @@ spec:
         selector:
           app.kubernetes.io/name: keycloak
         port: {{ .Values.postgresql.port }}
-        remoteGenerate: Anywhere
+        remoteGenerated: Anywhere
       {{- end }}
 
     expose:
