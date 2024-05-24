@@ -27,7 +27,7 @@ components:
         valuesFiles:
           - "values/upstream-values.yaml"
     images:
-      - "quay.io/prometheus/node-exporter:v1.8.0"
+      - "quay.io/prometheus/node-exporter:v1.8.1"
       - "quay.io/prometheus-operator/prometheus-operator:v0.74.0"
       - "registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.12.0"
       - "quay.io/prometheus/alertmanager:v0.27.0"
@@ -47,7 +47,7 @@ components:
         valuesFiles:
           - "values/registry1-values.yaml"
     images:
-      - "registry1.dso.mil/ironbank/opensource/prometheus/node-exporter:v1.8.0"
+      - "registry1.dso.mil/ironbank/opensource/prometheus/node-exporter:v1.8.1"
       - "registry1.dso.mil/ironbank/opensource/prometheus-operator/prometheus-operator:v0.74.0"
       - "registry1.dso.mil/ironbank/opensource/kubernetes/kube-state-metrics:v2.12.0"
       - "registry1.dso.mil/ironbank/opensource/prometheus/alertmanager:v0.27.0"

@@ -94,7 +94,7 @@
       "commitMessageTopic": "grafana"
     },
     {
-      "matchPackageNames": ["defenseunicorns/zarf"],
+      "matchPackageNames": ["defenseunicorns/zarf", "ghcr.io/defenseunicorns/packages/init"],
       "groupName": "zarf",
       "commitMessageTopic": "zarf"
     },
@@ -104,7 +104,7 @@
       "commitMessageTopic": "uds"
     },
     {
-      "matchPackageNames": ["defenseunicorns/uds-k3d"],
+      "matchPackageNames": ["defenseunicorns/uds-k3d", "ghcr.io/defenseunicorns/packages/uds-k3d"],
       "groupName": "uds-k3d",
       "commitMessageTopic": "uds-k3d"
     },
