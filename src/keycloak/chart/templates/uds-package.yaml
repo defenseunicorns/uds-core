@@ -43,6 +43,15 @@ spec:
           - 80
         remoteGenerate: Anywhere
 
+      {{- if .Values.smtp.enabled }}
+      - description: "SMTP access"
+        direction: Egress
+        selector:
+          app.kubernetes.io/name: keycloak
+        port: {{ .Values.smtp.port }}
+        remoteGenerate: Anywhere
+      {{- end }}
+
       {{- if not .Values.devMode }}
       - description: "PostgresQL Database access"
         direction: Egress
