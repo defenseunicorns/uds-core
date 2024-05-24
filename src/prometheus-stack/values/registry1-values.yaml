@@ -25,7 +25,7 @@ prometheus-node-exporter:
   image:
     registry: registry1.dso.mil
     repository: ironbank/opensource/prometheus/node-exporter
-    tag: v1.8.0
+    tag: v1.8.1
 prometheusOperator:
   admissionWebhooks:
     containerSecurityContext:
