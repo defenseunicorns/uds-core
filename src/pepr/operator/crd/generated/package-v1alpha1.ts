@@ -540,6 +540,7 @@ export interface Status {
   networkPolicyCount?: number;
   observedGeneration?: number;
   phase?: Phase;
+  retryAttempt?: number;
   ssoClients?: string[];
 }
 
@@ -553,4 +554,5 @@ RegisterKind(Package, {
   group: "uds.dev",
   version: "v1alpha1",
   kind: "Package",
+  plural: "packages",
 });
