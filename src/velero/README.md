@@ -109,3 +109,7 @@ velero restore create uds-restore-$(date +%s) \
 > The default behavior of Velero will not recreate resources that already exist.
 > If the intention is to restore data on a PV, the PV/PVC will have to be deleted
 > before running the restore.
+
+> **Note**
+> Additional configuration will be required to get CSI backed PVCs to be snapshotted
+> as noted in the [Velero documentation](https://velero.io/docs/main/csi/#prerequisites) - VolumeSnapshotLocation, VolumeSnapshotClass, etc.
