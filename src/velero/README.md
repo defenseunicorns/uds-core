@@ -97,3 +97,20 @@ uds zarf tools kubectl apply -f - <<-EOF
     ttl: 240h0m0s
 EOF
 ```
+
+## Manually restore backup
+```bash
+velero restore create uds-restore-$(date +%s) \
+  --from-backup <backup-name> \
+  --include-namespaces <namespaces-to-restore> --wait
+```
+
+> [!NOTE]
+> The default behavior of Velero will not recreate resources that already exist.
+> If the intention is to restore data on a PV, the PV/PVC will have to be deleted
+> before running the restore.
+
+> [!NOTE]
+> Additional configuration will be required to get CSI backed PVCs to be snapshotted
+> as noted in the [Velero documentation](https://velero.io/docs/main/csi/#prerequisites) - VolumeSnapshotLocation, VolumeSnapshotClass, etc.
+> as well as switching `snapshotVolume` to `true` in the backup config.
