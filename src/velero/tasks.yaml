@@ -38,7 +38,7 @@ tasks:
               includeClusterResources: true
               itemOperationTimeout: 0s
               metadata: {}
-              snapshotVolumes: false
+              snapshotVolumes: true
               ttl: 240h0m0s
           EOF
       - description: wait for the backup object
