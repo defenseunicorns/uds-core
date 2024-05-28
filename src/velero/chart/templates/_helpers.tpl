@@ -60,30 +60,3 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
-
-{{/*
-Set values for CSI implementation
-*/}}
-{{- define "uds-velero-config.initContainers" -}}
-{{- if and (eq .Values.flavor "registry1") .Values.enableCSI -}}
-- name: velero-plugin-for-csi
-  image: registry1.dso.mil/ironbank/opensource/velero/velero-plugin-for-csi:v0.7.0
-  imagePullPolicy: IfNotPresent
-  volumeMounts:
-  - mountPath: /target
-    name: plugins
-{{- else if and (eq .Values.flavor "upstream") .Values.enableCSI -}}
-- name: velero-plugin-for-csi
-  image: velero/velero-plugin-for-csi:v0.7.0
-  imagePullPolicy: IfNotPresent
-  volumeMounts:
-    - mountPath: /target
-      name: plugins
-{{- end -}}
-{{- end -}}
-
-{{- define "uds-velero-config.configuration" -}}
-{{- if .Values.enableCSI -}}
-features: EnableCSI
-{{- end -}}
-{{- end -}}
