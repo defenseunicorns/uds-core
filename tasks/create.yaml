@@ -1,5 +1,5 @@
 includes:
-  - common: https://raw.githubusercontent.com/defenseunicorns/uds-common/v0.4.3/tasks/create.yaml
+  - common: https://raw.githubusercontent.com/defenseunicorns/uds-common/v0.4.5/tasks/create.yaml
 
 variables:
   - name: FLAVOR
