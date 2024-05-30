@@ -1,7 +1,8 @@
 import { Capability } from "pepr";
+import { registerCRDs } from "./crd/register";
 
-// Register the CRD
-import "./crd/register";
+// Apply the CRDs to the cluster
+void registerCRDs();
 
 export const operator = new Capability({
   name: "uds-core-operator",
