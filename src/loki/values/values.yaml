@@ -25,6 +25,15 @@ loki:
       insecure: false
   commonConfig:
     replication_factor: 1
+  schemaConfig:
+    configs:
+      - from: 2024-04-01
+        store: tsdb
+        object_store: s3
+        schema: v13
+        index:
+          prefix: loki_tsdb_
+          period: 24h
   extraMemberlistConfig:
     rejoin_interval: 120s
   # Should authentication be enabled
@@ -67,6 +76,7 @@ test:
   enabled: false
 
 # Configuration for the single binary node(s)
+deploymentMode: SingleBinary
 singleBinary:
   # -- Number of replicas for the single binary
   replicas: 0
@@ -107,27 +117,26 @@ sidecar:
     # -- Whether or not to create a sidecar to ingest rule from specific ConfigMaps and/or Secrets.
     enabled: false
 
-monitoring:
-  enabled: true
-  selfMonitoring:
-    enabled: false
-    grafanaAgent:
-      installOperator: false
-  lokiCanary:
-    enabled: false
+memcachedExporter:
+  # -- Whether memcached metrics should be exported
+  enabled: false
+
+lokiCanary:
+  enabled: false
+
 gateway:
   enabled: true
   # Remove default anti-affinity to support single node
-  affinity: ""
+  affinity: {}
 
 read:
   # Remove default anti-affinity to support single node
-  affinity: ""
+  affinity: {}
 
 write:
   # Remove default anti-affinity to support single node
-  affinity: ""
+  affinity: {}
 
 backend:
   # Remove default anti-affinity to support single node
-  affinity: ""
+  affinity: {}
