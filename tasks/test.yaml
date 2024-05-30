@@ -30,7 +30,6 @@ tasks:
       - task: create:standard-package
       - task: create:k3d-standard-bundle
       - task: deploy:k3d-standard-bundle
-      - cmd: uds zarf tools clear-cache
       - task: validate-packages
 
   - name: uds-core-upgrade
@@ -40,5 +39,4 @@ tasks:
       - task: deploy:latest-package-release
       - task: create:standard-package
       - task: deploy:standard-package
-      - cmd: uds zarf tools clear-cache
       - task: validate-packages
