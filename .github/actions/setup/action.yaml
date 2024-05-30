@@ -2,13 +2,13 @@
 name: "Setup Environment"
 description: "UDS Environment Setup"
 inputs:
-  gh_token:
+  ghToken:
     description: 'GITHUB_TOKEN'
     required: true
-  ib_user:
+  registry1Username:
     description: 'IRON_BANK_ROBOT_USERNAME'
     required: true
-  ib_password:
+  registry1Password:
     description: 'IRON_BANK_ROBOT_PASSWORD'
     required: true
 
@@ -31,3 +31,18 @@ runs:
       shell: bash
       # renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
       run: brew install defenseunicorns/tap/uds@0.11.0
+
+    - name: Iron Bank Login
+      if: ${{ inputs.registry1Username != '' }}
+      env:
+        REGISTRY_USERNAME: ${{ inputs.registry1Username }}
+        REGISTRY_PASSWORD: ${{ inputs.registry1Password }}
+      run: echo "${{ env.REGISTRY_PASSWORD }}" | uds zarf tools registry login -u "${{ env.REGISTRY_USERNAME }}" --password-stdin registry1.dso.mil
+      shell: bash
+
+    - name: GHCR Login
+      if: ${{ inputs.ghToken != '' }}
+      env:
+        GH_TOKEN: ${{ inputs.ghToken }}
+      run: echo "${{ env.GH_TOKEN }}" | uds zarf tools registry login -u "dummy" --password-stdin ghcr.io
+      shell: bash
