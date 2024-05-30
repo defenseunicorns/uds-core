@@ -3,7 +3,7 @@ import { K8s, Log, kind } from "pepr";
 import { v1alpha1 as exemption } from "./sources/exemption/v1alpha1";
 import { v1alpha1 as pkg } from "./sources/package/v1alpha1";
 
-// Register the CRD if we're in watch or dev mode
+// Register the Package CRD if we're in watch or dev mode
 if (process.env.PEPR_WATCH_MODE === "true" || process.env.PEPR_MODE === "dev") {
   K8s(kind.CustomResourceDefinition)
     .Apply(
@@ -36,7 +36,10 @@ if (process.env.PEPR_WATCH_MODE === "true" || process.env.PEPR_MODE === "dev") {
       // Sad times, let's exit
       process.exit(1);
     });
+}
 
+// Register the Exemption CRD if we're in "admission" or dev mode (Exemptions are watched by the admission controllers)
+if (process.env.PEPR_WATCH_MODE === "false" || process.env.PEPR_MODE === "dev") {
   K8s(kind.CustomResourceDefinition)
     .Apply(
       {
