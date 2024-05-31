@@ -1,0 +1,16 @@
+# This pod monitor is used instead of a service monitor to handle mTLS with self-monitoring
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: prometheus-pod-monitor
+  namespace: monitoring
+spec:
+  selector:
+    matchLabels:
+      app: prometheus
+  podMetricsEndpoints:
+    - port: http-web
+    - port: reloader-web
+  namespaceSelector:
+    matchNames:
+      - monitoring

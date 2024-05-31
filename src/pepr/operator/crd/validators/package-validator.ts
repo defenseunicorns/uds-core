@@ -11,6 +11,7 @@ const invalidNamespaces = ["kube-system", "kube-public", "_unknown_", "pepr-syst
 export async function validator(req: PeprValidateRequest<UDSPackage>) {
   const pkg = migrate(req.Raw);
 
+  const pkgName = pkg.metadata?.name ?? "_unknown_";
   const ns = pkg.metadata?.namespace ?? "_unknown_";
 
   if (invalidNamespaces.includes(ns)) {
@@ -38,7 +39,7 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
     }
 
     // Ensure the service name is unique
-    const name = generateVSName(req.Raw, expose);
+    const name = generateVSName(pkgName, expose);
     if (virtualServiceNames.has(name)) {
       return req.Deny(
         `The combination of characteristics of this expose entry would create a duplicate VirtualService. ` +

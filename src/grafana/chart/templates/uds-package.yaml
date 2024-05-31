@@ -10,6 +10,13 @@ spec:
       redirectUris:
         - "https://grafana.admin.{{ .Values.domain }}/login/generic_oauth"
 
+  monitor:
+    - selector:
+        app.kubernetes.io/name: grafana
+      targetPort: 3000
+      portName: service
+      description: Metrics
+
   network:
     expose:
       - service: grafana

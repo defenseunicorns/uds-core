@@ -2,6 +2,7 @@ sidecar:
   dashboards:
     enabled: true
     label: grafana_dashboard
+    searchNamespace: ALL
   datasources:
     enabled: true
     label: grafana_datasource
@@ -37,3 +38,6 @@ grafana.ini:
     role_attribute_strict: true
     # Automatically redirect to the SSO login page
     auto_login: true
+
+service:
+  appProtocol: "http"

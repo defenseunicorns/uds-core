@@ -5,7 +5,7 @@ variables:
   - name: PKG
 
   - name: K3D_IMAGE
-    default: "ghcr.io/defenseunicorns/oss/uds-k3d-k3s:v1.28.7-k3s1"
+    default: "rancher/k3s:v1.29.5-k3s1"
 
 includes:
   - create: ./tasks/create.yaml
@@ -13,9 +13,14 @@ includes:
   - deploy: ./tasks/deploy.yaml
   - test: ./tasks/test.yaml
   - lint: ./tasks/lint.yaml
-  - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/v0.3.6/tasks/setup.yaml
 
 tasks:
+
+  - name: default
+    actions:
+      - description: "Build, deploy and test UDS Core"
+        task: test-uds-core
+
   - name: dev-setup
     description: "Create k3d cluster with istio"
     actions:
@@ -25,12 +30,27 @@ tasks:
       - description: "Deploy the Istio source package with Zarf Dev"
         cmd: "uds zarf dev deploy src/istio --flavor ${FLAVOR}"
 
+      # Note, this abuses the --flavor flag to only install the CRDs from this package - the "crds-only" flavor is not an explicit flavor of the package
+      - description: "Deploy the Prometheus-Stack source package with Zarf Dev to only install the CRDs"
+        cmd: "uds zarf dev deploy src/prometheus-stack --flavor crds-only"
+
       - description: "Dev instructions"
         cmd: |
           echo "Next steps:"
           echo "  - To test & develop the Pepr module, run 'npx pepr dev' from a Javascript debug terminal"
           echo "  - Otherwise run 'npx pepr deploy' to deploy the Pepr module to the cluster"
           echo "  - Additional source packages can be deployed with 'zarf dev deploy src/<package>'"
+
+  - name: slim-dev
+    actions:
+      - description: "Create slim dev package"
+        task: create:slim-dev-package
+
+      - description: "Build slim dev bundle"
+        task: create:k3d-slim-dev-bundle
+
+      - description: "Deploy slim dev bundle"
+        task: deploy:k3d-slim-dev-bundle
 
   - name: dev-identity
     description: "Create k3d cluster with istio, Pepr, Keycloak, and Authservice for development"

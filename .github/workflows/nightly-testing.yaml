@@ -3,6 +3,12 @@ name: Nightly Testing
 on:
   schedule:
     - cron: '0 6 * * *' # Runs at midnight Mountain every day
+  pull_request:
+    paths:
+      - tasks/iac.yaml
+      - .github/workflows/test-eks.yaml
+      - .github/bundles/*
+      - .github/test-infra/buckets-iac/*
 
 jobs:
   nightly-testing:

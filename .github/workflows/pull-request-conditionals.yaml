@@ -3,6 +3,8 @@ name: Filter
 # This workflow is triggered on pull requests
 on:
   pull_request:
+    # milestoned is added here as a workaround for release-please not triggering PR workflows (PRs should be added to a milestone to trigger the workflow).
+    types: [milestoned, opened, reopened, synchronize]
 
 # Permissions for the GITHUB_TOKEN used by the workflow.
 permissions:
@@ -24,7 +26,7 @@ jobs:
   lint-check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4
       - name: Use Node.js latest
         uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
         with:
@@ -34,9 +36,9 @@ jobs:
       - name: Install UDS CLI
         shell: bash
         # renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
-        run: brew install defenseunicorns/tap/uds@0.9.2
+        run: brew install defenseunicorns/tap/uds@0.11.0
       - name: Run Formatting Checks
-        run: uds run lint-check
+        run: uds run lint-check --no-progress
 
   # This job checks if there are changes in specific paths source packages.
   check-paths:
@@ -48,7 +50,7 @@ jobs:
 
     steps:
       - name: Checkout the code
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
 
       # Uses a custom action to filter paths for source packages.
       - name: Check src paths

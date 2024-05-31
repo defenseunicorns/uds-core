@@ -3,19 +3,18 @@ metadata:
   name: uds-core-eks-nightly
   description: A UDS bundle for deploying EKS and UDS Core
   # x-release-please-start-version
-  version: "0.18.0"
+  version: "0.22.0"
   # x-release-please-end
 
 packages:
   - name: init
     repository: ghcr.io/defenseunicorns/packages/init
-    # renovate: datasource=github-tags depName=defenseunicorns/zarf versioning=semver
-    ref: v0.33.0
+    ref: v0.34.0
 
   - name: core
     path: ../../build/
     # x-release-please-start-version
-    ref: 0.18.0
+    ref: 0.22.0
     # x-release-please-end
     overrides:
       velero:
@@ -26,9 +25,16 @@ packages:
               path: credentials.useSecret
             - name: VELERO_IRSA_ANNOTATION
               description: "IRSA ARN annotation to use for Velero"
-              path: serviceAccount.server.annotations
+              path: serviceAccount.server.annotations.irsa/role-arn
       loki:
         loki:
+          values:
+            - path: loki.storage.s3.endpoint
+              value: ""
+            - path: loki.storage.s3.secretAccessKey
+              value: ""
+            - path: loki.storage.s3.accessKeyId
+              value: ""
           variables:
             - name: LOKI_CHUNKS_BUCKET
               description: "The object storage bucket for Loki chunks"
@@ -39,12 +45,9 @@ packages:
             - name: LOKI_ADMIN_BUCKET
               description: "The object storage bucket for Loki admin"
               path: loki.storage.bucketNames.admin
-            - name: LOKI_S3_ENDPOINT
-              description: "The S3 endpoint"
-              path: loki.storage.s3.endpoint
             - name: LOKI_S3_REGION
               description: "The S3 region"
               path: loki.storage.s3.region
             - name: LOKI_IRSA_ANNOTATION
               description: "The irsa role annotation"
-              path: loki.serviceAccount.annotations
+              path: serviceAccount.annotations.irsa/role-arn

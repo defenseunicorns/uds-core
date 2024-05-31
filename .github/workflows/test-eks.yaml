@@ -28,10 +28,10 @@ jobs:
           echo "TF_VAR_permissions_boundary_name=${UDS_PERMISSIONS_BOUNDARY_NAME}" >> $GITHUB_ENV
 
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4
         with:
           role-to-assume: ${{ secrets.AWS_COMMERCIAL_ROLE_TO_ASSUME }}
           role-session-name: ${{ github.job || github.event.client_payload.pull_request.head.sha || github.sha }}
@@ -41,25 +41,25 @@ jobs:
         uses: ./.github/actions/setup
 
       - name: Install eksctl
-        run: uds run -f tasks/iac.yaml install-eksctl
+        run: uds run -f tasks/iac.yaml install-eksctl --no-progress
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@651471c36a6092792c552e8b1bef71e592b462d8 # v3
         with:
           terraform_version: "1.5.7"
 
       - name: Create UDS Core Package
-        run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package
+        run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress
 
       - name: Create Core Bundle
         run: uds create .github/bundles --confirm
 
       - name: Create Cluster
-        run: uds run -f tasks/iac.yaml create-cluster
+        run: uds run -f tasks/iac.yaml create-cluster --no-progress
         timeout-minutes: 60
 
       - name: Create IAC
-        run: uds run -f tasks/iac.yaml create-iac
+        run: uds run -f tasks/iac.yaml create-iac --no-progress
         timeout-minutes: 20
 
       - name: Deploy Core Bundle
@@ -76,12 +76,12 @@ jobs:
 
       - name: Remove IAC
         if: always()
-        run: uds run -f tasks/iac.yaml destroy-iac
+        run: uds run -f tasks/iac.yaml destroy-iac --no-progress
         timeout-minutes: 10
         continue-on-error: true
 
       - name: Teardown EKS cluster
         if: always()
-        run: uds run -f tasks/iac.yaml destroy-cluster
+        run: uds run -f tasks/iac.yaml destroy-cluster --no-progress
         timeout-minutes: 30
         continue-on-error: true

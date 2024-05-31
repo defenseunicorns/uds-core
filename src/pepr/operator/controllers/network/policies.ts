@@ -75,6 +75,28 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
     policies.push(generatedPolicy);
   }
 
+  // Generate NetworkPolicies for any ServiceMonitors that are generated
+  const monitorList = pkg.spec?.monitor ?? [];
+  // Iterate over each ServiceMonitor
+  for (const monitor of monitorList) {
+    const { selector, targetPort, podSelector } = monitor;
+
+    // Create the NetworkPolicy for the ServiceMonitor
+    const policy: Allow = {
+      direction: Direction.Ingress,
+      selector: podSelector ?? selector,
+      remoteNamespace: "monitoring",
+      remoteSelector: {
+        app: "prometheus",
+      },
+      port: targetPort,
+      description: `${Object.values(selector)} Metrics`,
+    };
+    // Generate the policy
+    const generatedPolicy = generate(namespace, policy);
+    policies.push(generatedPolicy);
+  }
+
   // Iterate over each policy and apply it
   for (const [idx, policy] of policies.entries()) {
     // Add the package name and generation to the labels

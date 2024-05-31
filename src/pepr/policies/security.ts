@@ -314,7 +314,9 @@ When(a.Pod)
   .IsCreatedOrUpdated()
   .Mutate(request => {
     markExemption(Policy.DropAllCapabilities)(request);
-    if (request.HasAnnotation(`uds-core.pepr.dev/uds-core-policies.${Policy.RequireNonRootUser}`)) {
+    if (
+      request.HasAnnotation(`uds-core.pepr.dev/uds-core-policies.${Policy.DropAllCapabilities}`)
+    ) {
       return;
     }
 
