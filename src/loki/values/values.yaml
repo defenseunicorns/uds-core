@@ -127,16 +127,16 @@ lokiCanary:
 gateway:
   enabled: true
   # Remove default anti-affinity to support single node
-  affinity: {}
+  affinity: null
 
 read:
   # Remove default anti-affinity to support single node
-  affinity: {}
+  affinity: null
 
 write:
   # Remove default anti-affinity to support single node
-  affinity: {}
+  affinity: null
 
 backend:
   # Remove default anti-affinity to support single node
-  affinity: {}
+  affinity: null
