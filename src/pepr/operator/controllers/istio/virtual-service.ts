@@ -1,6 +1,6 @@
-import { UDSConfig } from "../../../config";
 import { V1OwnerReference } from "@kubernetes/client-node";
-import { Expose, Gateway, IstioVirtualService, IstioHTTP, IstioHTTPRoute } from "../../crd";
+import { UDSConfig } from "../../../config";
+import { Expose, Gateway, IstioHTTP, IstioHTTPRoute, IstioVirtualService } from "../../crd";
 import { sanitizeResourceName } from "../utils";
 
 /**
