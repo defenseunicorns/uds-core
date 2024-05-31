@@ -76,6 +76,7 @@ test:
   enabled: false
 
 # Configuration for the single binary node(s)
+deploymentMode: SingleBinary
 singleBinary:
   # -- Number of replicas for the single binary
   replicas: 0
