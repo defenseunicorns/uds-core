@@ -17,6 +17,7 @@ export async function enableInjection(pkg: UDSPackage) {
 
   const sourceNS = await K8s(kind.Namespace).Get(pkg.metadata.namespace);
   const labels = sourceNS.metadata?.labels || {};
+  const originalInjectionLabel = labels[injectionLabel];
   const annotations = sourceNS.metadata?.annotations || {};
   const pkgKey = `uds.dev/pkg-${pkg.metadata.name}`;
 
@@ -45,7 +46,10 @@ export async function enableInjection(pkg: UDSPackage) {
       { force: true },
     );
 
-    await killPods(pkg.metadata.namespace, true);
+    // Kill the pods if we changed the value of the istio-injection label
+    if (originalInjectionLabel !== labels[injectionLabel]) {
+      await killPods(pkg.metadata.namespace, true);
+    }
   }
 }
 
@@ -61,6 +65,7 @@ export async function cleanupNamespace(pkg: UDSPackage) {
 
   const sourceNS = await K8s(kind.Namespace).Get(pkg.metadata.namespace);
   const labels = sourceNS.metadata?.labels || {};
+  const originalInjectionLabel = labels[injectionLabel];
   const annotations = sourceNS.metadata?.annotations || {};
 
   // Remove the package annotation
@@ -88,7 +93,10 @@ export async function cleanupNamespace(pkg: UDSPackage) {
     { force: true },
   );
 
-  await killPods(pkg.metadata.namespace, false);
+  // Kill the pods if we changed the value of the istio-injection label
+  if (originalInjectionLabel !== labels[injectionLabel]) {
+    await killPods(pkg.metadata.namespace, false);
+  }
 }
 
 /**
