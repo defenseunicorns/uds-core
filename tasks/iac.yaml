@@ -134,7 +134,7 @@ tasks:
       - cmd: |
           cat <<EOF> .github/bundles/uds-config.yaml
           options:
-          architecture: amd64
+            architecture: amd64
           variables:
             core:
               loki_chunks_bucket: ${LOKI_S3_BUCKET}
