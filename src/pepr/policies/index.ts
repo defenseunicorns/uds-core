@@ -15,8 +15,8 @@ export type PolicyMap = Map<Policy, StoredMatcher[]>;
 export async function startExemptionWatch() {
   ExemptionStore.init();
 
-  // only run in admission controller
-  if (process.env.PEPR_WATCH_MODE === "false") {
+  // only run in admission controller or dev mode
+  if (process.env.PEPR_WATCH_MODE === "false" || process.env.PEPR_MODE === "dev") {
     const watcher = K8s(UDSExemption).Watch(async (exemption, phase) => {
       Log.debug(`Processing exemption ${exemption.metadata?.name}, watch phase: ${phase}`);
 

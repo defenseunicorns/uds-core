@@ -16,7 +16,6 @@ import { UDSExemption, UDSPackage } from "./crd";
 import { validator } from "./crd/validators/package-validator";
 
 // Reconciler imports
-import { startExemptionWatch } from "../policies";
 import { exemptValidator } from "./crd/validators/exempt-validator";
 import { packageReconciler } from "./reconcilers/package-reconciler";
 
@@ -62,6 +61,3 @@ When(UDSPackage)
 
 // Watch for Exemptions and validate
 When(UDSExemption).IsCreatedOrUpdated().Validate(exemptValidator);
-
-// KFC watch for exemptions and update in-memory map
-void startExemptionWatch();
