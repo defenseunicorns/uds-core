@@ -10,6 +10,8 @@ memberlist:
   service:
     publishNotReadyAddresses: true
 
+configStorageType: Secret
+
 loki:
   storage:
     bucketNames:
@@ -34,7 +36,7 @@ loki:
         index:
           prefix: loki_tsdb_
           period: 24h
-      - from: 2024-08-01
+      - from: 2024-06-04
         store: tsdb
         object_store: "{{ .Values.loki.storage.type }}"
         schema: v13
