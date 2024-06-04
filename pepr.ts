@@ -1,4 +1,4 @@
-import { PeprModule } from "pepr";
+import { Log, PeprModule } from "pepr";
 
 import cfg from "./package.json";
 
@@ -27,5 +27,6 @@ import { prometheus } from "./src/pepr/prometheus";
     prometheus,
   ]);
 })().catch(err => {
-  console.error(err);
+  Log.error(err);
+  process.exit(1);
 });
