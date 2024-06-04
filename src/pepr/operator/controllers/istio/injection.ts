@@ -23,11 +23,11 @@ export async function enableInjection(pkg: UDSPackage) {
 
   // Mark the original namespace injection setting for if all packages are removed
   if (!annotations[injectionAnnotation]) {
-    annotations[injectionAnnotation] = labels[injectionLabel] || "non-existent";
+    annotations[injectionAnnotation] = originalInjectionLabel || "non-existent";
   }
 
   // Ensure the namespace is configured
-  if (!annotations[pkgKey] || labels[injectionLabel] !== "enabled") {
+  if (!annotations[pkgKey] || originalInjectionLabel !== "enabled") {
     // Ensure Istio injection is enabled
     labels[injectionLabel] = "enabled";
 
