@@ -22,6 +22,7 @@ realmInitEnv:
   EMAIL_VERIFICATION_ENABLED: false
   OTP_ENABLED: false
   TERMS_AND_CONDITIONS_ENABLED: false
+  X509_OCSP_FAIL_OPEN: false
   # Other UDS Identity Config fields that will be used in the realm.json initalization of keycloak
   # GOOGLE_IDP_CLIENTID: ""
   # GOOGLE_IDP_CLIENT_SECRET: ""
