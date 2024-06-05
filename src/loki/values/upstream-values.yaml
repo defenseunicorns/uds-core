@@ -2,10 +2,16 @@ loki:
   image:
     registry: docker.io
     repository: grafana/loki
-    tag: 2.9.6
+    tag: 3.0.0
 
 gateway:
   image:
     registry: docker.io
     repository: nginxinc/nginx-unprivileged
-    tag: 1.25-alpine
+    tag: 1.26-alpine
+
+memcached:
+  image:
+    registry: docker.io
+    repository: memcached
+    tag: 1.6.27-alpine

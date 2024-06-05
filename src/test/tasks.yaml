@@ -3,9 +3,10 @@ tasks:
     description: Test app used for UDS Core validation
     actions:
       - description: Create zarf package for the test resources
-        cmd: "uds zarf package create src/test --confirm --no-progress"
+        cmd: "uds zarf package create src/test/app-admin --confirm --no-progress"
+
       - description: Apply the test resources
-        cmd: "uds zarf package deploy build/zarf-package-uds-core-test-apps-*.zst --confirm --no-progress"
+        cmd: "uds zarf package deploy build/zarf-package-uds-core-test-app-admin-*.zst --confirm --no-progress"
 
       - description: Wait for the admin app to be ready
         wait:
@@ -13,13 +14,6 @@ tasks:
             kind: Deployment
             name: httpbin
             namespace: test-admin-app
-
-      - description: Wait for the tenant app to be ready
-        wait:
-          cluster:
-            kind: Deployment
-            name: httpbin
-            namespace: test-app
 
       - description: Verify the admin app is accessible
         wait:
@@ -42,6 +36,22 @@ tasks:
             address: demo.admin.uds.dev/status/410
             code: 410
 
+      - description: Remove Test App Admin
+        cmd: "uds zarf package remove build/zarf-package-uds-core-test-app-admin-*.zst --confirm"
+
+      - description: Create zarf package for the test resources
+        cmd: "uds zarf package create src/test/app-tenant --confirm --no-progress"
+
+      - description: Apply the test resources
+        cmd: "uds zarf package deploy build/zarf-package-uds-core-test-app-tenant-*.zst --confirm --no-progress"
+
+      - description: Wait for the tenant app to be ready
+        wait:
+          cluster:
+            kind: Deployment
+            name: httpbin
+            namespace: test-app
+
       - description: Verify the tenant app is accessible
         wait:
           network:
@@ -50,4 +60,4 @@ tasks:
             code: 202
 
       - description: Remove the test resources
-        cmd: "uds zarf package remove build/zarf-package-uds-core-test-apps-*.zst --confirm"
+        cmd: "uds zarf package remove build/zarf-package-uds-core-test-app-tenant-*.zst --confirm"

@@ -10,6 +10,8 @@ memberlist:
   service:
     publishNotReadyAddresses: true
 
+configStorageType: Secret
+
 loki:
   storage:
     bucketNames:
@@ -25,6 +27,22 @@ loki:
       insecure: false
   commonConfig:
     replication_factor: 1
+  schemaConfig:
+    configs:
+      - from: 2023-04-01
+        store: tsdb
+        object_store: "{{ .Values.loki.storage.type }}"
+        schema: v12
+        index:
+          prefix: loki_tsdb_
+          period: 24h
+      - from: 2024-06-04
+        store: tsdb
+        object_store: "{{ .Values.loki.storage.type }}"
+        schema: v13
+        index:
+          prefix: loki_tsdb_
+          period: 24h
   extraMemberlistConfig:
     rejoin_interval: 120s
   # Should authentication be enabled
@@ -65,6 +83,8 @@ rbac:
 # -- Section for configuring optional Helm test
 test:
   enabled: false
+
+deploymentMode: SimpleScalable
 
 # Configuration for the single binary node(s)
 singleBinary:
@@ -107,27 +127,26 @@ sidecar:
     # -- Whether or not to create a sidecar to ingest rule from specific ConfigMaps and/or Secrets.
     enabled: false
 
-monitoring:
-  enabled: true
-  selfMonitoring:
-    enabled: false
-    grafanaAgent:
-      installOperator: false
-  lokiCanary:
-    enabled: false
+memcachedExporter:
+  # -- Whether memcached metrics should be exported
+  enabled: false
+
+lokiCanary:
+  enabled: false
+
 gateway:
   enabled: true
   # Remove default anti-affinity to support single node
-  affinity: ""
+  affinity: null
 
 read:
   # Remove default anti-affinity to support single node
-  affinity: ""
+  affinity: null
 
 write:
   # Remove default anti-affinity to support single node
-  affinity: ""
+  affinity: null
 
 backend:
   # Remove default anti-affinity to support single node
-  affinity: ""
+  affinity: null
