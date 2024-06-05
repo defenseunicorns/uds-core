@@ -15,17 +15,20 @@ domain: "###ZARF_VAR_DOMAIN###"
 # The primary Keycloak realm
 realm: uds
 
-# UDS Identity Config Environment Variables. More info here: https://github.com/defenseunicorns/uds-identity-config/blob/main/docs/CUSTOMIZE.md#templated-realm-values
-realmInitEnv:
-  GOOGLE_IDP_ENABLED: false
-  PASSWORD_POLICY: "hashAlgorithm(pbkdf2-sha256) and forceExpiredPasswordChange(90) and specialChars(2) and lowerCase(0) and upperCase(0) and passwordHistory(5) and length(12) and notUsername(undefined) and digits(0)"
-  EMAIL_VERIFICATION_ENABLED: false
-  OTP_ENABLED: false
-  TERMS_AND_CONDITIONS_ENABLED: false
-  X509_OCSP_FAIL_OPEN: false
-  # Other UDS Identity Config fields that will be used in the realm.json initalization of keycloak
-  # GOOGLE_IDP_CLIENTID: ""
-  # GOOGLE_IDP_CLIENT_SECRET: ""
+# UDS Identity Config Realm Environment Variables. More info here: https://github.com/defenseunicorns/uds-identity-config/blob/main/docs/CUSTOMIZE.md#templated-realm-values
+# realmInitEnv:
+#   GOOGLE_IDP_ENABLED: true
+#   GOOGLE_IDP_ID: ""
+#   GOOGLE_IDP_SIGNING_CERT: ""
+#   GOOGLE_IDP_NALE_ID_FORMAT: ""
+#   GOOGLE_IDP_CORE_ENTITY_ID: ""
+#   GOOGLE_IDP_ADMIN_GROUP: ""
+#   GOOGLE_IDP_AUDITOR_GROUP: ""
+#   PASSWORD_POLICY: "hashAlgorithm(pbkdf2-sha256) and forceExpiredPasswordChange(90) and specialChars(2) and lowerCase(0) and upperCase(0) and passwordHistory(5) and length(12) and notUsername(undefined) and digits(0)"
+#   EMAIL_VERIFICATION_ENABLED: true
+#   OTP_ENABLED: true
+#   TERMS_AND_CONDITIONS_ENABLED: true
+#   REALM_X509_OCSP_FAIL_OPEN: true
 
 # Generates an initial password for first admin user - only use if install is headless
 # (i.e. cannot hit keycloak UI with `zarf connect keycloak`), password should be changed after initial login
