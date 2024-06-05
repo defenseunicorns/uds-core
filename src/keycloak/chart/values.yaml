@@ -16,7 +16,7 @@ domain: "###ZARF_VAR_DOMAIN###"
 realm: uds
 
 # UDS Identity Config Realm Environment Variables. More info here: https://github.com/defenseunicorns/uds-identity-config/blob/main/docs/CUSTOMIZE.md#templated-realm-values
-# realmInitEnv:
+realmInitEnv: {}
 #   GOOGLE_IDP_ENABLED: true
 #   GOOGLE_IDP_ID: ""
 #   GOOGLE_IDP_SIGNING_CERT: ""
