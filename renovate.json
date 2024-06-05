@@ -99,6 +99,11 @@
       "commitMessageTopic": "grafana"
     },
     {
+      "matchFileNames": ["src/authservice/**"],
+      "groupName": "authservice",
+      "commitMessageTopic": "authservice"
+    },
+    {
       "matchPackageNames": ["defenseunicorns/zarf", "ghcr.io/defenseunicorns/packages/init"],
       "groupName": "zarf",
       "commitMessageTopic": "zarf"
