@@ -30,11 +30,6 @@ export async function exemptValidator(req: PeprValidateRequest<UDSExemption>) {
     }
   }
 
-  // Validate there's at least 1 exemption element
-  if (exemptions.length === 0) {
-    return req.Deny("Invalid number of exemptions: must have at least 1");
-  }
-
   // Validate exemption element policies and matcher kind are compatible
   for (const e of exemptions) {
     const policies = kindToPolicyMap.get(e.matcher.kind!)!;

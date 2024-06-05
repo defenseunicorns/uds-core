@@ -17,16 +17,17 @@ export async function enableInjection(pkg: UDSPackage) {
 
   const sourceNS = await K8s(kind.Namespace).Get(pkg.metadata.namespace);
   const labels = sourceNS.metadata?.labels || {};
+  const originalInjectionLabel = labels[injectionLabel];
   const annotations = sourceNS.metadata?.annotations || {};
   const pkgKey = `uds.dev/pkg-${pkg.metadata.name}`;
 
   // Mark the original namespace injection setting for if all packages are removed
   if (!annotations[injectionAnnotation]) {
-    annotations[injectionAnnotation] = labels[injectionLabel] || "non-existent";
+    annotations[injectionAnnotation] = originalInjectionLabel || "non-existent";
   }
 
   // Ensure the namespace is configured
-  if (!annotations[pkgKey] || labels[injectionLabel] !== "enabled") {
+  if (!annotations[pkgKey] || originalInjectionLabel !== "enabled") {
     // Ensure Istio injection is enabled
     labels[injectionLabel] = "enabled";
 
@@ -45,7 +46,10 @@ export async function enableInjection(pkg: UDSPackage) {
       { force: true },
     );
 
-    await killPods(pkg.metadata.namespace, true);
+    // Kill the pods if we changed the value of the istio-injection label
+    if (originalInjectionLabel !== labels[injectionLabel]) {
+      await killPods(pkg.metadata.namespace, true);
+    }
   }
 }
 
@@ -61,6 +65,7 @@ export async function cleanupNamespace(pkg: UDSPackage) {
 
   const sourceNS = await K8s(kind.Namespace).Get(pkg.metadata.namespace);
   const labels = sourceNS.metadata?.labels || {};
+  const originalInjectionLabel = labels[injectionLabel];
   const annotations = sourceNS.metadata?.annotations || {};
 
   // Remove the package annotation
@@ -88,7 +93,10 @@ export async function cleanupNamespace(pkg: UDSPackage) {
     { force: true },
   );
 
-  await killPods(pkg.metadata.namespace, false);
+  // Kill the pods if we changed the value of the istio-injection label
+  if (originalInjectionLabel !== labels[injectionLabel]) {
+    await killPods(pkg.metadata.namespace, false);
+  }
 }
 
 /**
@@ -129,8 +137,8 @@ async function killPods(ns: string, enableInjection: boolean) {
 
   // Delete each group of pods
   for (const group of Object.values(groups)) {
-    // If this is a daemonset, delete the pods in reverse name order
-    if (group[0].metadata?.ownerReferences?.find(ref => ref.kind === "DaemonSet")) {
+    // If this is a statefulset, delete the pods in reverse name order
+    if (group[0].metadata?.ownerReferences?.find(ref => ref.kind === "StatefulSet")) {
       group.sort((a, b) => (b.metadata?.name || "").localeCompare(a.metadata?.name || ""));
     }
 
