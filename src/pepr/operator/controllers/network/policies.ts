@@ -60,7 +60,7 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
   }
 
   // Add a network policy for each sso block with authservice enabled (if any pkg.spec.sso[*].enableAuthserviceSelector is set)
-  const ssos = pkg.spec?.sso?.filter(sso => sso.enableAuthserviceSelector)
+  const ssos = pkg.spec?.sso?.filter(sso => sso.enableAuthserviceSelector);
 
   for (const sso of ssos || []) {
     const policy: Allow = {
