@@ -64,7 +64,6 @@ spec:
       labels:
         app: httpbin
         version: v1
-        protect: keycloak
     spec:
       serviceAccountName: httpbin
       containers:
