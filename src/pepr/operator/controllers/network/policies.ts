@@ -59,11 +59,13 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
     policies.push(generatedPolicy);
   }
 
-  // Add policy if authservice enabled (if any pkg.spec.sso[*].enableAuthserviceSelector is set)
-  if (pkg.spec?.sso?.some(sso => sso.enableAuthserviceSelector)) {
+  // Add a network policy for each sso block with authservice enabled (if any pkg.spec.sso[*].enableAuthserviceSelector is set)
+  const ssos = pkg.spec?.sso?.filter(sso => sso.enableAuthserviceSelector)
+
+  for (const sso of ssos || []) {
     const policy: Allow = {
       direction: Direction.Egress,
-      selector: { protect: "keycloak" },
+      selector: sso.enableAuthserviceSelector,
       remoteNamespace: "authservice",
       remoteSelector: { "app.kubernetes.io/name": "authservice" },
       port: 10003,
