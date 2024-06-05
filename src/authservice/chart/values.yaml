@@ -45,7 +45,7 @@ global:
 
   oidc:
     # -- OpenID Connect hostname.  Assumption of Keycloak based on URL construction
-    host: sso.uds.dev
+    host: "sso.###ZARF_VAR_DOMAIN###"
     # -- Realm for OpenID Connect
     realm: uds
 
