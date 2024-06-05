@@ -137,8 +137,8 @@ async function killPods(ns: string, enableInjection: boolean) {
 
   // Delete each group of pods
   for (const group of Object.values(groups)) {
-    // If this is a daemonset, delete the pods in reverse name order
-    if (group[0].metadata?.ownerReferences?.find(ref => ref.kind === "DaemonSet")) {
+    // If this is a statefulset, delete the pods in reverse name order
+    if (group[0].metadata?.ownerReferences?.find(ref => ref.kind === "StatefulSet")) {
       group.sort((a, b) => (b.metadata?.name || "").localeCompare(a.metadata?.name || ""));
     }
 
