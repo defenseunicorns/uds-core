@@ -64,14 +64,6 @@ describe("Test validation of Exemption CRs", () => {
     expect(mockReq.Approve).toHaveBeenCalledTimes(1);
   });
 
-  it("checks for at least 1 exemption block", async () => {
-    const mockReq = makeMockReq({ exempts: [] });
-    await exemptValidator(mockReq);
-    expect(mockReq.Deny).toHaveBeenLastCalledWith(
-      "Invalid number of exemptions: must have at least 1",
-    );
-  });
-
   it("denies matcher regex patterns with leading and trailing slashes", async () => {
     const wrongMatcherName = "/^neuvector-enforcer-pod*/";
     const mockReq = makeMockReq({

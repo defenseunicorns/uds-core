@@ -1,0 +1,13 @@
+apiVersion: uds.dev/v1alpha1
+kind: Exemption
+metadata:
+  name: podinfo3
+  namespace: uds-policy-exemptions
+spec:
+  exemptions:
+    - policies:
+        - DropAllCapabilities
+      title: "podinfo3"
+      matcher:
+        namespace: podinfo
+        name: "^podinfo.*"
