@@ -12,8 +12,6 @@ export {
 } from "./generated/package-v1alpha1";
 
 export {
-  Phase as ExemptPhase,
-  Status as ExemptStatus,
   ExemptionElement,
   Matcher,
   Kind as MatcherKind,

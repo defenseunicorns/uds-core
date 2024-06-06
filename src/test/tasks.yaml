@@ -4,7 +4,8 @@ tasks:
     actions:
       - description: Create zarf package for the test resources
         cmd: "uds zarf package create src/test --confirm --no-progress"
-      - description: Apply the test resources
+
+      - description: Deploy the test resources
         cmd: "uds zarf package deploy build/zarf-package-uds-core-test-apps-*.zst --confirm --no-progress"
 
       - description: Wait for the admin app to be ready
@@ -80,6 +81,13 @@ tasks:
               exit 1
               ;;
           esac
+      - description: Verify podinfo is healthy
+        wait:
+          cluster:
+            kind: Pod
+            name: app.kubernetes.io/name=podinfo
+            namespace: podinfo
+            condition: Ready
 
       - description: Remove the test resources
-        cmd: "uds zarf package remove build/zarf-package-uds-core-test-apps-*.zst --confirm"
+        cmd: "uds zarf package remove build/zarf-package-uds-core-test-apps-*.zst --confirm --no-progress"
