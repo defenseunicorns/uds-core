@@ -1,7 +1,6 @@
-import { GenericKind } from "kubernetes-fluent-client";
 import { K8s, Log, kind } from "pepr";
 
-import { ExemptStatus, Phase, PkgStatus, UDSExemption, UDSPackage } from "../crd";
+import { Phase, PkgStatus, UDSPackage } from "../crd";
 import { Status } from "../crd/generated/package-v1alpha1";
 
 export const uidSeen = new Set<string>();
@@ -12,7 +11,7 @@ export const uidSeen = new Set<string>();
  * @param cr The custom resource to check
  * @returns true if the CRD is pending or the current generation has been processed
  */
-export function shouldSkip(cr: UDSExemption | UDSPackage) {
+export function shouldSkip(cr: UDSPackage) {
   const isPending = cr.status?.phase === Phase.Pending;
   const isCurrentGeneration = cr.metadata?.generation === cr.status?.observedGeneration;
 
@@ -40,12 +39,11 @@ export function shouldSkip(cr: UDSExemption | UDSPackage) {
  * @param cr The custom resource to update
  * @param status The new status
  */
-export async function updateStatus(cr: GenericKind, status: PkgStatus | ExemptStatus) {
-  const model = cr.kind === "Package" ? UDSPackage : UDSExemption;
+export async function updateStatus(cr: UDSPackage, status: PkgStatus) {
   Log.debug(cr.metadata, `Updating status to ${status.phase}`);
 
   // Update the status of the CRD
-  await K8s(model).PatchStatus({
+  await K8s(UDSPackage).PatchStatus({
     metadata: {
       name: cr.metadata!.name,
       namespace: cr.metadata!.namespace,
@@ -61,7 +59,7 @@ export async function updateStatus(cr: GenericKind, status: PkgStatus | ExemptSt
  * @param message A human-readable message for the event
  * @param type The type of event to write
  */
-export async function writeEvent(cr: GenericKind, event: Partial<kind.CoreEvent>) {
+export async function writeEvent(cr: UDSPackage, event: Partial<kind.CoreEvent>) {
   Log.debug(cr.metadata, `Writing event: ${event.message}`);
 
   await K8s(kind.CoreEvent).Create({
@@ -92,10 +90,7 @@ export async function writeEvent(cr: GenericKind, event: Partial<kind.CoreEvent>
  * @param err The error-like object
  * @param cr The custom resource that failed
  */
-export async function handleFailure(
-  err: { status: number; message: string },
-  cr: UDSPackage | UDSExemption,
-) {
+export async function handleFailure(err: { status: number; message: string }, cr: UDSPackage) {
   const metadata = cr.metadata!;
   const identifier = `${metadata.namespace}/${metadata.name}`;
   let status: Status;

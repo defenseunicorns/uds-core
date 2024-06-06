@@ -9,7 +9,7 @@ import {
   securityContextContainers,
   securityContextMessage,
 } from "./common";
-import { isExempt, markExemption } from "./exemptions";
+import { exemptionAnnotationPrefix, isExempt, markExemption } from "./exemptions";
 
 /**
  * This policy ensures that Pods do not allow privilege escalation.
@@ -61,7 +61,7 @@ When(a.Pod)
   .IsCreatedOrUpdated()
   .Mutate(request => {
     markExemption(Policy.RequireNonRootUser)(request);
-    if (request.HasAnnotation(`uds-core.pepr.dev/uds-core-policies.${Policy.RequireNonRootUser}`)) {
+    if (request.HasAnnotation(`${exemptionAnnotationPrefix}.${Policy.RequireNonRootUser}`)) {
       return;
     }
 
@@ -314,9 +314,7 @@ When(a.Pod)
   .IsCreatedOrUpdated()
   .Mutate(request => {
     markExemption(Policy.DropAllCapabilities)(request);
-    if (
-      request.HasAnnotation(`uds-core.pepr.dev/uds-core-policies.${Policy.DropAllCapabilities}`)
-    ) {
+    if (request.HasAnnotation(`${exemptionAnnotationPrefix}.${Policy.DropAllCapabilities}`)) {
       return;
     }
 

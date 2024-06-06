@@ -1,0 +1,13 @@
+apiVersion: uds.dev/v1alpha1
+kind: Exemption
+metadata:
+  name: podinfo2
+  namespace: uds-policy-exemptions
+spec:
+  exemptions:
+    - policies:
+        - RequireNonRootUser
+      title: "podinfo2"
+      matcher:
+        namespace: podinfo
+        name: "^podinfo.*"

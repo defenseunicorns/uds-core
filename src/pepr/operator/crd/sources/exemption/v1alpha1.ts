@@ -4,59 +4,17 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
   name: "v1alpha1",
   served: true,
   storage: true,
-  additionalPrinterColumns: [
-    {
-      name: "Status",
-      type: "string",
-      description: "The status of the exemption",
-      jsonPath: ".status.phase",
-    },
-    {
-      name: "Exemptions",
-      type: "string",
-      description: "Titles of the exemptions",
-      jsonPath: ".status.titles",
-    },
-    {
-      name: "Age",
-      type: "date",
-      description: "The age of the exemption",
-      jsonPath: ".metadata.creationTimestamp",
-    },
-  ],
-  subresources: {
-    status: {},
-  },
   schema: {
     openAPIV3Schema: {
       type: "object",
       properties: {
-        status: {
-          type: "object",
-          properties: {
-            observedGeneration: {
-              type: "integer",
-            },
-            phase: {
-              enum: ["Pending", "Ready", "Failed"],
-              type: "string",
-            },
-            titles: {
-              type: "array",
-              items: {
-                type: "string",
-              },
-            },
-            retryAttempt: {
-              type: "integer",
-            },
-          },
-        } as V1JSONSchemaProps,
         spec: {
           type: "object",
+          required: ["exemptions"],
           properties: {
             exemptions: {
               type: "array",
+              minItems: 1,
               description: "Policy exemptions",
               items: {
                 type: "object",

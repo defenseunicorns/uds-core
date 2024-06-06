@@ -13,7 +13,7 @@ export const policies = new Capability({
     "Collection of core validation policies for Pods, ConfigMaps, and other Kubernetes resources.",
 });
 
-export const { Store, When } = policies;
+export const { When } = policies;
 
 // Returns all volumes in the pod
 export function volumes(request: PeprValidateRequest<a.Pod>) {
