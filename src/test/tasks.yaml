@@ -50,7 +50,6 @@ tasks:
             address: test-app-multi-port-8080.uds.dev
             code: 200
 
-
       - description: Verify the tenant app muli port 8081 is accessible
         wait:
           network:
