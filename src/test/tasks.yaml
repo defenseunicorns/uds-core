@@ -43,12 +43,20 @@ tasks:
             address: demo.admin.uds.dev/status/410
             code: 410
 
-      - description: Verify the tenant app is accessible
+      - description: Verify the tenant app muli port 8080 is accessible
         wait:
           network:
             protocol: https
-            address: demo.uds.dev/status/202
-            code: 202
+            address: test-app-multi-port-8080.uds.dev
+            code: 200
+
+
+      - description: Verify the tenant app muli port 8081 is accessible
+        wait:
+          network:
+            protocol: https
+            address: test-app-multi-port-8081.uds.dev
+            code: 200
 
       - description: Verify podinfo is healthy
         wait:
