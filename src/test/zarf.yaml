@@ -14,9 +14,6 @@ components:
       - name: app-tenant
         files:
           - "app-tenant.yaml"
-      - name: app-tenant-multi-port
-        files:
-          - "app-tenant-multi-port.yaml"
     images:
       - docker.io/kong/httpbin:latest
       - hashicorp/http-echo:latest
