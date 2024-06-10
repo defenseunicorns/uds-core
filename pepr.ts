@@ -39,6 +39,7 @@ import { prometheus } from "./src/pepr/prometheus";
       for (const p of Object.keys(data)) {
         // if p matches a Policy key, remove it
         if (policiesList.includes(p as Policy)) {
+          Log.debug(`Removing legacy storage of ${p} policy exemptions...`);
           policies.Store.removeItem(p);
         }
       }
