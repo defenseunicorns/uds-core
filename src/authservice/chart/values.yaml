@@ -45,9 +45,9 @@ global:
 
   oidc:
     # -- OpenID Connect hostname.  Assumption of Keycloak based on URL construction
-    host: login.uds.dev
+    host: sso.uds.dev
     # -- Realm for OpenID Connect
-    realm: doug
+    realm: uds
 
   # -- JWKS, a default jwks_uri is computed if not specified. Must be formatted as an escaped JSON string.
   jwks: ""
