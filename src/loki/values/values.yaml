@@ -10,9 +10,9 @@ memberlist:
   service:
     publishNotReadyAddresses: true
 
-configStorageType: Secret
 
 loki:
+  configStorageType: Secret
   storage:
     bucketNames:
       chunks: uds

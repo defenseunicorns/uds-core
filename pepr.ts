@@ -3,6 +3,7 @@ import { PeprModule } from "pepr";
 import cfg from "./package.json";
 
 import { istio } from "./src/pepr/istio";
+import { loki } from "./src/pepr/loki";
 import { operator } from "./src/pepr/operator";
 import { policies } from "./src/pepr/policies";
 import { prometheus } from "./src/pepr/prometheus";
@@ -19,4 +20,7 @@ new PeprModule(cfg, [
 
   // Prometheus monitoring stack
   prometheus,
+
+  // Loki schemaConfig update
+  loki,
 ]);
