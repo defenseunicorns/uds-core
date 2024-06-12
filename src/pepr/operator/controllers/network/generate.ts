@@ -2,13 +2,14 @@ import { V1LabelSelector, V1NetworkPolicyPeer, V1NetworkPolicyPort } from "@kube
 import { kind } from "pepr";
 
 import { Allow, RemoteGenerated } from "../../crd";
+import { sanitizeResourceName } from "../utils";
 import { anywhere } from "./generators/anywhere";
 import { cloudMetadata } from "./generators/cloudMetadata";
 import { intraNamespace } from "./generators/intraNamespace";
 import { kubeAPI } from "./generators/kubeAPI";
 
 export function generate(namespace: string, policy: Allow): kind.NetworkPolicy {
-  // Generate a unique name for the NetworkPolicy
+  // Generate and sanitize a unique name for the NetworkPolicy
   const name = generateName(policy);
 
   // Create the NetworkPolicy
@@ -112,13 +113,13 @@ export function generate(namespace: string, policy: Allow): kind.NetworkPolicy {
 }
 
 /**
- * Generate a unique name for a NetworkPolicy based on the policy. Will use the description if it exists,
- * otherwise will use the direction, combination of remote properties and the port if it exists.
+ * Generate and sanitize unique name for a NetworkPolicy based on the policy. Will use the description if it exists,
+ * otherwise will use the direction, combination of remote properties.
  *
  * @param policy the policy to generate the name for
  */
 export function generateName(policy: Allow) {
-  const baseName =
+  const name =
     // Use the description if it exists
     policy.description ||
     // Otherwise use the direction, and combination of remote properties
@@ -133,8 +134,5 @@ export function generateName(policy: Allow) {
       .flat(1)
       .join("-");
 
-  // Add the port if it exists
-  const generatedName = policy.port ? `${policy.port}-${baseName}` : baseName;
-
-  return `${policy.direction}-${generatedName}`;
+  return sanitizeResourceName(`${policy.direction}-${name}`);
 }

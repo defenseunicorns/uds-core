@@ -1,7 +1,7 @@
 import { K8s, Log, kind } from "pepr";
 
 import { Allow, Direction, Gateway, UDSPackage } from "../../crd";
-import { getOwnerRef, sanitizeResourceName } from "../utils";
+import { getOwnerRef } from "../utils";
 import { allowEgressDNS } from "./defaults/allow-egress-dns";
 import { allowEgressIstiod } from "./defaults/allow-egress-istiod";
 import { allowIngressSidecarMonitoring } from "./defaults/allow-ingress-sidecar-monitoring";
@@ -17,6 +17,7 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
 
   Log.debug(pkg.metadata, `Generating NetworkPolicies for generation ${generation}`);
 
+  // Generate the default policies
   const policies = [
     // All traffic must be explicitly allowed
     defaultDenyAll(namespace),
@@ -29,9 +30,26 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
     allowIngressSidecarMonitoring(namespace),
   ];
 
+  // Map of originally generated policy names to watch for duplicates.
+  // Duplicates will have their ports added to their names
+  // <originalPolicyName, nameIfHitWithDuplicate>
+  const originallyGeneratedPolicyNames = new Map<string, string>();
+
   // Process custom policies
   for (const policy of customPolicies) {
     const generatedPolicy = generate(namespace, policy);
+
+    const policyPorts = policy.port
+      ? policy.port.toString()
+      : policy.ports
+        ? policy.ports.sort().join("-")
+        : "";
+    handleDuplicatePolicyNames(
+      generatedPolicy,
+      policyPorts,
+      originallyGeneratedPolicyNames,
+      policies,
+    );
     policies.push(generatedPolicy);
   }
 
@@ -56,6 +74,12 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
 
     // Generate the policy
     const generatedPolicy = generate(namespace, policy);
+    handleDuplicatePolicyNames(
+      generatedPolicy,
+      policy.port!.toString(),
+      originallyGeneratedPolicyNames,
+      policies,
+    );
     policies.push(generatedPolicy);
   }
 
@@ -78,6 +102,12 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
     };
     // Generate the policy
     const generatedPolicy = generate(namespace, policy);
+    handleDuplicatePolicyNames(
+      generatedPolicy,
+      policy.port!.toString(),
+      originallyGeneratedPolicyNames,
+      policies,
+    );
     policies.push(generatedPolicy);
   }
 
@@ -95,9 +125,6 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
     } else {
       policy.metadata.name = `allow-${pkgName}-${policy.metadata.name}`;
     }
-
-    // Ensure the name is a valid resource name
-    policy.metadata.name = sanitizeResourceName(policy.metadata.name);
 
     // Use the CR as the owner ref for each NetworkPolicy
     policy.metadata.ownerReferences = getOwnerRef(pkg);
@@ -125,4 +152,37 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
 
   // Return the list of policies
   return policies;
+}
+/**
+ * Handle duplicate policy names by adding the ports to the name to avoid unwanted duplicates
+ * @param generatedPolicy the generated policy to check for duplicates
+ * @param policyPorts the ports of the policy
+ * @param originallyGeneratedPolicyNames the map of originally generated policy names to watch for duplicates
+ * @param policies the list of policies ready to be applied
+ */
+function handleDuplicatePolicyNames(
+  generatedPolicy: kind.NetworkPolicy,
+  policyPorts: string,
+  originallyGeneratedPolicyNames: Map<string, string>,
+  policies: kind.NetworkPolicy[],
+) {
+  if (originallyGeneratedPolicyNames.has(generatedPolicy.metadata!.name!)) {
+    // take care of original policy first
+    const originalPolicy = policies.find(p => p.metadata!.name === generatedPolicy.metadata!.name);
+
+    if (originalPolicy) {
+      // replace original policy name with the name that would have been used if it was a duplicate
+      originalPolicy!.metadata!.name = originallyGeneratedPolicyNames.get(
+        generatedPolicy.metadata!.name!,
+      );
+    }
+
+    // take care of generated one now
+    // add port to the name to generated name to avoid unwanted duplicates
+    generatedPolicy.metadata!.name = `${policyPorts}-${generatedPolicy.metadata!.name}`;
+  } else {
+    // Save off potential name if original gets a hit on a duplicate check later
+    const potentialName = `${policyPorts}-${generatedPolicy.metadata!.name}`;
+    originallyGeneratedPolicyNames.set(generatedPolicy.metadata!.name!, potentialName);
+  }
 }

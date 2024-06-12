@@ -65,5 +65,5 @@ tasks:
             namespace: podinfo
             condition: Ready
 
-      - description: Remove the test resources
-        cmd: "uds zarf package remove build/zarf-package-uds-core-test-apps-*.zst --confirm --no-progress"
+      # - description: Remove the test resources
+      #   cmd: "uds zarf package remove build/zarf-package-uds-core-test-apps-*.zst --confirm --no-progress"
