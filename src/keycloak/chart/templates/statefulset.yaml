@@ -185,10 +185,13 @@ spec:
             - name: http
               containerPort: 8080
               protocol: TCP
+            - name: management
+              containerPort: 9000
+              protocol: TCP
           livenessProbe:
             httpGet:
               path: /health/live
-              port: http
+              port: management
               scheme: HTTP
             failureThreshold: 15
             timeoutSeconds: 2
@@ -197,7 +200,7 @@ spec:
           readinessProbe:
             httpGet:
               path: /health/ready
-              port: http
+              port: management
               scheme: HTTP
             failureThreshold: 15
             timeoutSeconds: 2
