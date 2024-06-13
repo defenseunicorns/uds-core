@@ -1,74 +1,93 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: test-app
+  name: test-tenant-app
 ---
 apiVersion: uds.dev/v1alpha1
 kind: Package
 metadata:
-  name: httpbin
-  namespace: test-app
+  name: test-tenant-app
+  namespace: test-tenant-app
 spec:
   network:
     expose:
-      - service: httpbin
+      - service: test-tenant-app
         selector:
-          app: httpbin
+          app: test-tenant-app
         gateway: tenant
-        host: demo
-        port: 8000
-        targetPort: 80
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: httpbin
-  namespace: test-app
+        host: demo-8080
+        port: 8080
+      - service: test-tenant-app
+        selector:
+          app: test-tenant-app
+        gateway: tenant
+        host: demo-8081
+        port: 8081
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: httpbin
-  namespace: test-app
+  name: test-tenant-app
+  namespace: test-tenant-app
   labels:
-    app: httpbin
-    service: httpbin
+    app: test-tenant-app
+    service: test-tenant-app
 spec:
   ports:
-    - name: http
-      port: 8000
-      targetPort: 80
+    - name: port8080
+      port: 8080
+      targetPort: 8080
+    - name: port8081
+      port: 8081
+      targetPort: 8081
   selector:
-    app: httpbin
+    app: test-tenant-app
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: httpbin
-  namespace: test-app
+  name: http-echo-multi-port
+  namespace: test-tenant-app
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: httpbin
-      version: v1
+      app: test-tenant-app
   template:
     metadata:
       labels:
-        app: httpbin
-        version: v1
+        app: test-tenant-app
     spec:
-      serviceAccountName: httpbin
       containers:
-        - image: docker.io/kong/httpbin
+        - name: http-echo-port-8080
+          image: hashicorp/http-echo
           imagePullPolicy: IfNotPresent
-          name: httpbin
+          args:
+            - "-text=Hello from port 8080"
+            - "-status-code=200"
+            - "-listen=:8080"
           resources:
             limits:
-              cpu: 100m
-              memory: 128Mi
+              cpu: 50m
+              memory: 64Mi
             requests:
-              cpu: 100m
-              memory: 128Mi
+              cpu: 50m
+              memory: 64Mi
           ports:
-            - containerPort: 80
+            - containerPort: 8080
+        - name: http-echo-port-8081
+          image: hashicorp/http-echo
+          imagePullPolicy: IfNotPresent
+          args:
+            - "-text=Hello from port 8081"
+            - "-status-code=200"
+            - "-listen=:8081"
+          resources:
+            limits:
+              cpu: 50m
+              memory: 64Mi
+            requests:
+              cpu: 50m
+              memory: 64Mi
+          ports:
+            - containerPort: 8081

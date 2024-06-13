@@ -19,8 +19,8 @@ tasks:
         wait:
           cluster:
             kind: Deployment
-            name: httpbin
-            namespace: test-app
+            name: http-echo-multi-port
+            namespace: test-tenant-app
 
       - description: Verify the admin app is accessible
         wait:
@@ -43,12 +43,19 @@ tasks:
             address: demo.admin.uds.dev/status/410
             code: 410
 
-      - description: Verify the tenant app is accessible
+      - description: Verify the tenant app 8080 is accessible
         wait:
           network:
             protocol: https
-            address: demo.uds.dev/status/202
-            code: 202
+            address: demo-8080.uds.dev
+            code: 200
+
+      - description: Verify the tenant app 8081 is accessible
+        wait:
+          network:
+            protocol: https
+            address: demo-8081.uds.dev
+            code: 200
 
       - description: Verify podinfo is healthy
         wait:

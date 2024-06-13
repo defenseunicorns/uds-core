@@ -14,9 +14,9 @@ components:
       - name: app-tenant
         files:
           - "app-tenant.yaml"
-
     images:
       - docker.io/kong/httpbin:latest
+      - hashicorp/http-echo:latest
 
   - name: podinfo
     required: true

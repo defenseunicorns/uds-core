@@ -17,6 +17,7 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
 
   Log.debug(pkg.metadata, `Generating NetworkPolicies for generation ${generation}`);
 
+  // Create default policies
   const policies = [
     // All traffic must be explicitly allowed
     defaultDenyAll(namespace),
@@ -41,6 +42,9 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
   for (const expose of exposeList.filter(exp => !exp.advancedHTTP?.directResponse)) {
     const { gateway = Gateway.Tenant, port, selector = {}, targetPort } = expose;
 
+    // Use the same port as the VirtualService if targetPort is not set
+    const policyPort = targetPort ?? port;
+
     // Create the NetworkPolicy for the VirtualService
     const policy: Allow = {
       direction: Direction.Ingress,
@@ -49,9 +53,9 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
       remoteSelector: {
         app: `${gateway}-ingressgateway`,
       },
-      // Use the same port as the VirtualService if targetPort is not set
-      port: targetPort ?? port,
-      description: `${Object.values(selector)} Istio ${gateway} gateway`,
+      port: policyPort,
+      // Use the port, selector, and gateway to generate a description for VirtualService derived policies
+      description: `${policyPort}-${Object.values(selector)} Istio ${gateway} gateway`,
     };
 
     // Generate the policy
@@ -74,7 +78,8 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
         app: "prometheus",
       },
       port: targetPort,
-      description: `${Object.values(selector)} Metrics`,
+      // Use the targetPort and selector to generate a description for the ServiceMonitor derived policies
+      description: `${targetPort}-${Object.values(selector)} Metrics`,
     };
     // Generate the policy
     const generatedPolicy = generate(namespace, policy);
