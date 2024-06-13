@@ -116,7 +116,7 @@ export function generate(namespace: string, policy: Allow): kind.NetworkPolicy {
  * Will use the description if it exists, otherwise it will use the
  * direction and combination of remote properties.
  *
- * @param policy
+ * @param policy The policy to generate a name for
  */
 export function generateName(policy: Allow) {
   const name =
