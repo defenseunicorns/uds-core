@@ -179,7 +179,7 @@ serviceMonitor:
   # The path at which metrics are served
   path: /metrics
   # The Service port at which metrics are served
-  port: http
+  port: management
   # added by Big Bang to support Istio mTLS
   scheme: ""
   tlsConfig: {}
