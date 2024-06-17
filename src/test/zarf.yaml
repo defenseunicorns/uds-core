@@ -18,6 +18,7 @@ components:
         files:
           - "app-authservice-tenant.yaml"
     images:
+      - docker.io/kong/httpbin:latest
       - arunvelsriram/utils
       - hashicorp/http-echo:latest
 
