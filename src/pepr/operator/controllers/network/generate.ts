@@ -8,7 +8,7 @@ import { intraNamespace } from "./generators/intraNamespace";
 import { kubeAPI } from "./generators/kubeAPI";
 
 export function generate(namespace: string, policy: Allow): kind.NetworkPolicy {
-  // Create a unique name for the NetworkPolicy based on the package name, index, direction, pod labels, and port
+  // Generate a unique name for the NetworkPolicy
   const name = generateName(policy);
 
   // Create the NetworkPolicy
@@ -112,9 +112,11 @@ export function generate(namespace: string, policy: Allow): kind.NetworkPolicy {
 }
 
 /**
- * Generates a unique name for the NetworkPolicy based on the description, direction, and combination of remote properties
+ * Generates a unique name for the NetworkPolicy based on the policy.
+ * Will use the description if it exists, otherwise it will use the
+ * direction and combination of remote properties.
  *
- * @param policy the name of the policy
+ * @param policy The policy to generate a name for
  */
 export function generateName(policy: Allow) {
   const name =

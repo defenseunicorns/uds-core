@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.22.2](https://github.com/defenseunicorns/uds-core/compare/v0.22.1...v0.22.2) (2024-06-13)
+
+
+### Bug Fixes
+
+* check if exemption exists before cleanup ([#468](https://github.com/defenseunicorns/uds-core/issues/468)) ([735288b](https://github.com/defenseunicorns/uds-core/commit/735288b87f2dff3c1bb28e9e20aac812d644aa4d))
+* pepr operator derived netpol name collisions ([#480](https://github.com/defenseunicorns/uds-core/issues/480)) ([de60e25](https://github.com/defenseunicorns/uds-core/commit/de60e252526d73e439f5665b27f84e8773c24949))
+* typo in comment ([#462](https://github.com/defenseunicorns/uds-core/issues/462)) ([582b1f4](https://github.com/defenseunicorns/uds-core/commit/582b1f4754ee3282696ea3b018322a1b3497a7d4))
+
+
+### Miscellaneous
+
+* **deps:** update checkout to v4.1.7 ([#478](https://github.com/defenseunicorns/uds-core/issues/478)) ([e91a0a3](https://github.com/defenseunicorns/uds-core/commit/e91a0a35252581554d9ed587e4ef72c2c88a3586))
+* **deps:** update githubactions to v4.1.3 ([#471](https://github.com/defenseunicorns/uds-core/issues/471)) ([2a9f44d](https://github.com/defenseunicorns/uds-core/commit/2a9f44d20dce66fa474e47ba0c93eaa7fa9ad406))
+* **deps:** update uds to v0.11.1 ([#472](https://github.com/defenseunicorns/uds-core/issues/472)) ([12fd798](https://github.com/defenseunicorns/uds-core/commit/12fd79894e71ee06181ccd6f2ac98b84d935066c))
+* **deps:** update uds to v0.11.2 ([#479](https://github.com/defenseunicorns/uds-core/issues/479)) ([f967f9a](https://github.com/defenseunicorns/uds-core/commit/f967f9a4bf8d718b9ece96d882db4d9c800f5f0f))
+* **deps:** update velero to v1.30.2 ([#476](https://github.com/defenseunicorns/uds-core/issues/476)) ([89bbda9](https://github.com/defenseunicorns/uds-core/commit/89bbda9e640014bede116c254381cab8995df12f))
+
 ## [0.22.1](https://github.com/defenseunicorns/uds-core/compare/v0.22.0...v0.22.1) (2024-06-06)
 
 
