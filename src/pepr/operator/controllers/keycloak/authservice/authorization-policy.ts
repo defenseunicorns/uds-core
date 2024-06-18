@@ -1,4 +1,5 @@
 import { K8s, Log } from "pepr";
+import { UDSConfig } from "../../../../config";
 import { Action, AuthorizationPolicy, RequestAuthentication, UDSPackage } from "../../../crd";
 import { getOwnerRef } from "../../utils";
 import { Action as AuthServiceAction, AuthServiceEvent } from "./types";
@@ -56,7 +57,7 @@ function jwtAuthZAuthorizationPolicy(
           from: [
             {
               source: {
-                requestPrincipals: ["https://sso.uds.dev/realms/uds/*"],
+                requestPrincipals: [`https://sso.${UDSConfig.domain}/realms/uds/*`],
               },
             },
           ],
@@ -81,8 +82,8 @@ function authNRequestAuthentication(
       jwtRules: [
         {
           forwardOriginalToken: true,
-          issuer: "https://sso.uds.dev/realms/uds",
-          jwksUri: "https://sso.uds.dev/realms/uds/protocol/openid-connect/certs",
+          issuer: `https://sso.${UDSConfig.domain}/realms/uds`,
+          jwksUri: `https://sso.${UDSConfig.domain}/realms/uds/protocol/openid-connect/certs`,
         },
       ],
       selector: {
