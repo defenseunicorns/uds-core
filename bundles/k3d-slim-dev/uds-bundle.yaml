@@ -29,7 +29,7 @@ packages:
 
   - name: init
     repository: ghcr.io/defenseunicorns/packages/init
-    ref: v0.34.0
+    ref: v0.35.0
 
   - name: core-slim-dev
     path: ../../build/
