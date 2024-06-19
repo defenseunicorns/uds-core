@@ -31,6 +31,12 @@ spec:
               uri:
                 # Only allow routing to /status/410
                 exact: /status/410
+  sso:
+    - name: httpbin
+      clientId: http://bin
+      redirectUris:
+        - "https://demo.uds.dev"
+      secretName: httpbin-secret
 ---
 apiVersion: v1
 kind: ServiceAccount

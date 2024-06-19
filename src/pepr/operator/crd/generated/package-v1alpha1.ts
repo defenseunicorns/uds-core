@@ -547,6 +547,7 @@ export interface Status {
 export enum Phase {
   Failed = "Failed",
   Pending = "Pending",
+  PendingRetry = "Pending Retry",
   Ready = "Ready",
 }
 

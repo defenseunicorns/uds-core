@@ -82,10 +82,17 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
   const clientIDs = new Set<string>();
 
   for (const client of ssoClients) {
-    if (clientIDs.has(client.clientId)) {
+    const sanitizedClientId = sanitizeResourceName(client.clientId);
+    if (clientIDs.has(sanitizedClientId)) {
       return req.Deny(`The client ID "${client.clientId}" is not unique`);
     }
-    clientIDs.add(client.clientId);
+    clientIDs.add(sanitizedClientId);
+    // Don't allow illegal k8s resource names for the secret name
+    if (client.secretName && client.secretName !== sanitizeResourceName(client.secretName)) {
+      return req.Deny(
+        `The client ID "${client.clientId}" uses an invalid secret name ${client.secretName}`,
+      );
+    }
   }
 
   return req.Approve();
