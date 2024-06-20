@@ -475,7 +475,7 @@ export interface Sso {
    */
   description?: string;
   /**
-   * Labels to match pods to automatically protect with authservice. Leave null to disable
+   * Labels to match pods to automatically protect with authservice. Leave empty to disable
    * authservice protection
    */
   enableAuthserviceSelector?: { [key: string]: string };
@@ -536,6 +536,7 @@ export enum Protocol {
 }
 
 export interface Status {
+  authserviceClients?: string[];
   endpoints?: string[];
   monitors?: string[];
   networkPolicyCount?: number;

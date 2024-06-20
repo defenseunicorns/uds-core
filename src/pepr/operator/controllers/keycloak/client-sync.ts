@@ -4,16 +4,16 @@ import { UDSConfig } from "../../../config";
 import { Store } from "../../common";
 import { Sso, UDSPackage } from "../../crd";
 import { getOwnerRef } from "../utils";
-import { reconcileAuthservice } from "./authservice/authservice";
-import { Action } from "./authservice/types";
 import { Client } from "./types";
 
-const apiURL =
+let apiURL =
   "http://keycloak-http.keycloak.svc.cluster.local:8080/realms/uds/clients-registrations/default";
 const samlDescriptorUrl =
   "http://keycloak-http.keycloak.svc.cluster.local:8080/realms/uds/protocol/saml/descriptor";
 
-// const apiURL = "http://localhost:8080/realms/uds/clients-registrations/default";
+if (process.env.PEPR_MODE === "dev") {
+  apiURL = "http://localhost:8080/realms/uds/clients-registrations/default";
+}
 
 // Template regex to match clientField() references, see https://regex101.com/r/e41Dsk/3 for details
 const secretTemplateRegex = new RegExp(
@@ -43,7 +43,6 @@ export async function keycloak(pkg: UDSPackage) {
   const clientReqs = pkg.spec?.sso || [];
   const refs: string[] = [];
 
-  // Pull the enableAuthserviceSelector prop as it's not part of the KC client spec
   for (const clientReq of clientReqs) {
     const ref = await syncClient(clientReq, pkg);
     refs.push(ref);
@@ -70,18 +69,6 @@ export async function purgeSSOClients(pkg: UDSPackage, refs: string[] = []) {
     if (token) {
       Store.removeItem(ref);
       await apiCall({ clientId }, "DELETE", token);
-
-      // find sso by clientId
-      const sso = pkg.spec?.sso?.find(sso => sso.clientId === clientId);
-
-      // if sso.enableAuthserviceSelector was set, remove from authservice config
-      if (sso && sso.enableAuthserviceSelector) {
-        await reconcileAuthservice(
-          { name: ref, action: Action.Remove },
-          sso.enableAuthserviceSelector,
-          pkg,
-        );
-      }
     } else {
       Log.warn(pkg.metadata, `Failed to remove client ${clientId}, token not found`);
     }
@@ -136,15 +123,6 @@ async function syncClient(
       data: generateSecretData(client, secretTemplate),
     });
 
-    if (enableAuthserviceSelector) {
-      // Add additional authservice config
-      await reconcileAuthservice(
-        { client, name, action: Action.Add },
-        enableAuthserviceSelector,
-        pkg,
-      );
-    }
-
     return name;
   } catch (err) {
     const msg =
@@ -163,7 +141,7 @@ async function syncClient(
   }
 }
 
-async function apiCall(sso: Partial<Sso>, method = "POST", authToken = "") {
+export async function apiCall(sso: Partial<Sso>, method = "POST", authToken = "") {
   // Handle single test mode
   if (UDSConfig.isSingleTest) {
     Log.warn(`Generating fake client for '${sso.clientId}' in single test mode`);
@@ -191,7 +169,7 @@ async function apiCall(sso: Partial<Sso>, method = "POST", authToken = "") {
   }
 
   // Remove the body for DELETE requests
-  if (method === "DELETE") {
+  if (method === "DELETE" || method === "GET") {
     delete req.body;
   }
 
