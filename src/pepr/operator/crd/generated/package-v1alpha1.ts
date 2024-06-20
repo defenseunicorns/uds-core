@@ -479,6 +479,10 @@ export interface Sso {
    */
   enabled?: boolean;
   /**
+   * The client sso group type
+   */
+  groups?: Groups;
+  /**
    * If true, the client will generate a new Auth Service client as well
    */
   isAuthSvcClient?: boolean;
@@ -524,6 +528,16 @@ export interface Sso {
 export enum ClientAuthenticatorType {
   ClientJwt = "client-jwt",
   ClientSecret = "client-secret",
+}
+
+/**
+ * The client sso group type
+ */
+export interface Groups {
+  /**
+   * List of group allowed to access to client
+   */
+  anyOf?: string[];
 }
 
 /**
