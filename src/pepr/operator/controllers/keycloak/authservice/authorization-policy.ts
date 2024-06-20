@@ -123,6 +123,42 @@ async function updatePolicy(
   } catch (e) {
     Log.error(e, `Failed to update auth policy for ${event.name} in ${namespace}: ${e}`);
   }
+
+  try {
+    await purgeOrphanPolicies(generation, namespace, pkg.metadata!.name!);
+  } catch (e) {
+    Log.error(e, `Failed to purge orphan auth policies ${event.name} in ${namespace}: ${e}`);
+  }
+}
+
+async function purgeOrphanPolicies(generation: string, namespace: string, pkgName: string) {
+  const authPolicies = await K8s(AuthorizationPolicy)
+    .InNamespace(namespace)
+    .WithLabel("uds/package", pkgName)
+    .Get();
+
+  const orphanPolicies = authPolicies.items.filter(
+    authPolicy => authPolicy.metadata?.labels?.["uds/generation"] !== generation,
+  );
+
+  for (const orphan of orphanPolicies) {
+    Log.debug(orphan, `Deleting orphaned AuthorizationPolicy ${orphan.metadata!.name}`);
+    await K8s(AuthorizationPolicy).Delete(orphan);
+  }
+
+  const requestAuthentications = await K8s(RequestAuthentication)
+    .InNamespace(namespace)
+    .WithLabel("uds/package", pkgName)
+    .Get();
+
+  const orphanRequestAuth = requestAuthentications.items.filter(
+    requetAuth => requetAuth.metadata?.labels?.["uds/generation"] !== generation,
+  );
+
+  for (const orphan of orphanRequestAuth) {
+    Log.debug(orphan, `Deleting orphaned RequestAuthentication ${orphan.metadata!.name}`);
+    await K8s(RequestAuthentication).Delete(orphan);
+  }
 }
 
 export { updatePolicy };

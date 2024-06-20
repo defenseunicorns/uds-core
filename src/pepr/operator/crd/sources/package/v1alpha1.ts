@@ -328,6 +328,12 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
       jsonPath: ".status.ssoClients",
     },
     {
+      name: "Authservice Clients",
+      type: "string",
+      description: "Authservice Clients created by the package",
+      jsonPath: ".status.authserviceClients",
+    },
+    {
       name: "Endpoints",
       type: "string",
       description: "Service endpoints exposed by the package",
@@ -370,6 +376,12 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
               type: "string",
             },
             ssoClients: {
+              type: "array",
+              items: {
+                type: "string",
+              },
+            },
+            authserviceClients: {
               type: "array",
               items: {
                 type: "string",

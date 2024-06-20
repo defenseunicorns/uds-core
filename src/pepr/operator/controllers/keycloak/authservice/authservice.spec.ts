@@ -105,10 +105,13 @@ describe("authservice", () => {
   test("should build an authorization policy", async () => {
     const labelSelector = { foo: "bar" };
     const pkg: UDSPackage = {
+      kind: "Package",
+      apiVersion: "uds.dev/v1alpha1",
       metadata: {
         name: "test",
         namespace: "default",
         generation: 1,
+        uid: "f50120aa-2713-4502-9496-566b102b1174",
       },
     };
     try {
