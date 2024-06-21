@@ -76,16 +76,6 @@ tasks:
     actions:
       - task: setup:k3d-test-cluster
 
-  - name: registry-login
-    description: "Authenticate and Validate registry connection"
-    actions:
-      - task: common-setup:registry-login
-        with:
-          registry: ${REGISTRY}
-          registryUsername: ${REGISTRY_USERNAME}
-          registryPassword: ${REGISTRY_PASSWORD}
-          registryRetryInterval: ${REGISTRY_RETRY_INTERVAL}
-
   - name: create-single-package
     description: "Create a single Zarf Package, must set UDS_PKG environment variable"
     actions:
