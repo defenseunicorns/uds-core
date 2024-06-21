@@ -306,6 +306,19 @@ const sso = {
           type: "string",
         },
       },
+      groups: {
+        description: "The client sso group type",
+        type: "object",
+        properties: {
+          anyOf: {
+            description: "List of group allowed to access to client",
+            type: "array",
+            items: {
+              type: "string",
+            },
+          },
+        },
+      },
     },
   } as V1JSONSchemaProps,
 } as V1JSONSchemaProps;
