@@ -488,10 +488,6 @@ export interface Sso {
    */
   groups?: Groups;
   /**
-   * If true, the client will generate a new Auth Service client as well
-   */
-  isAuthSvcClient?: boolean;
-  /**
    * Specifies display name of the client
    */
   name: string;
