@@ -73,7 +73,7 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
       remoteNamespace: "authservice",
       remoteSelector: { "app.kubernetes.io/name": "authservice" },
       port: 10003,
-      description: "Authservice Egress",
+      description: `${sanitizeResourceName(sso.clientId)} authservice egress`,
     };
 
     // Generate the policy

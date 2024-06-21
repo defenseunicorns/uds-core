@@ -5,9 +5,3 @@ including [Authentication Policy](https://istio.io/docs/tasks/security/authn-pol
 Together, they allow developers to protect their APIs and web apps without any application code required.
 
 See [IDAM.md](../../docs/IDAM.md) for guidance on using the [UDS Package](../pepr/operator/README.md) custom resource to generate Authservice chains.
-
-### Changes from the DoD Platform One Big Bang package
-
-This package differs from the [DoD Platform One Big Bang package](https://repo1.dso.mil/big-bang/product/packages/authservice) in a few key ways:
-
-* Leverages the [authservice-go](https://github.com/tetrateio/authservice-go) project which is the successor to the original [authservice](https://github.com/istio-ecosystem/authservice) project.
