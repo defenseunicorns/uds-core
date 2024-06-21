@@ -22,6 +22,7 @@ components:
     images:
       - quay.io/keycloak/keycloak:24.0.5
       - ghcr.io/defenseunicorns/uds/identity-config:0.4.5
+      - rjferguson21/uds-core-config:group-plugin-groups-attribute
 
   - name: keycloak
     required: true
@@ -38,3 +39,4 @@ components:
     images:
       - registry1.dso.mil/ironbank/opensource/keycloak/keycloak:24.0.5
       - ghcr.io/defenseunicorns/uds/identity-config:0.4.5
+      - rjferguson21/uds-core-config:group-plugin-groups-attribute

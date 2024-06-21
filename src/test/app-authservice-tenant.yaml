@@ -16,6 +16,9 @@ spec:
         - "https://protected.uds.dev/login"
       enableAuthserviceSelector:
         app: httpbin
+      groups:
+        anyOf:
+          - "httpbin"
   network:
     expose:
       - service: httpbin
