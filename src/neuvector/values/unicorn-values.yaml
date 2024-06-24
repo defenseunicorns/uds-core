@@ -1,0 +1,34 @@
+registry: cgr.dev
+tag: "5.3.3"
+# This ensures that the manager generates the necessary cert file
+autoGenerateCert: true
+manager:
+  image:
+    repository: du-uds-defenseunicorns/neuvector-manager
+enforcer:
+  image:
+    repository: du-uds-defenseunicorns/neuvector-enforcer-fips
+  internal:
+    certificate:
+      secret: neuvector-internal-cert
+
+controller:
+  image:
+    repository: du-uds-defenseunicorns/neuvector-controller-fips
+  internal:
+    certificate:
+      secret: neuvector-internal-cert
+
+cve:
+  scanner:
+    image:
+      repository: du-uds-defenseunicorns/neuvector-scanner-fips
+      tag: latest
+    internal:
+      certificate:
+        secret: neuvector-internal-cert
+  updater:
+    enabled: true
+    image:
+      repository: du-uds-defenseunicorns/neuvector-updater-fips
+      tag: 8.8.0-dev
