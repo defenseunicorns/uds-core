@@ -1,0 +1,7 @@
+pilot:
+  image: cgr.dev/du-uds-defenseunicorns/istio-pilot:1.22.1
+global:
+  proxy_init:
+    image: cgr.dev/du-uds-defenseunicorns/istio-proxy:1.22.1
+  proxy:
+    image: cgr.dev/du-uds-defenseunicorns/istio-proxy:1.22.1
