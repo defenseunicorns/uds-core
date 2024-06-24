@@ -88,7 +88,7 @@ spec:
       volumes:
         - name: {{ include "authservice.name" . }}
           secret:
-            secretName: {{ include "authservice.fullname" . }}
+            secretName: {{ include "authservice.fullname" . }}-uds
         {{- if .Values.global.certificate_authority }}
         - name: sso-tls-ca
           secret:

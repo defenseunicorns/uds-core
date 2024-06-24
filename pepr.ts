@@ -5,6 +5,7 @@ import cfg from "./package.json";
 import { DataStore } from "pepr/dist/lib/storage";
 import { istio } from "./src/pepr/istio";
 import { operator } from "./src/pepr/operator";
+import { setupAuthserviceSecret } from "./src/pepr/operator/controllers/keycloak/authservice/config";
 import { Policy } from "./src/pepr/operator/crd";
 import { registerCRDs } from "./src/pepr/operator/crd/register";
 import { policies, startExemptionWatch } from "./src/pepr/policies";
@@ -15,6 +16,7 @@ import { prometheus } from "./src/pepr/prometheus";
   await registerCRDs();
   // KFC watch for exemptions and update in-memory map
   await startExemptionWatch();
+  await setupAuthserviceSecret();
   new PeprModule(cfg, [
     // UDS Core Operator
     operator,

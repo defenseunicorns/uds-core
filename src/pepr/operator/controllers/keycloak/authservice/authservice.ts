@@ -1,17 +1,12 @@
-import { createHash } from "crypto";
-import { K8s, Log, R, kind } from "pepr";
+import { Log, R } from "pepr";
 import { UDSConfig } from "../../../../config";
 import { Store } from "../../../common";
 import { UDSPackage } from "../../../crd";
 import { apiCall } from "../client-sync";
 import { Client } from "../types";
 import { updatePolicy } from "./authorization-policy";
+import { getAuthserviceConfig, operatorConfig, updateAuthServiceSecret } from "./config";
 import { Action, AuthServiceEvent, AuthserviceConfig, Chain } from "./types";
-
-const namespace = "authservice";
-const secretName = "authservice";
-const baseDomain = `https://sso.${UDSConfig.domain}`;
-const realm = "uds";
 
 export async function authservice(pkg: UDSPackage) {
   // Get the list of clients from the package
@@ -60,10 +55,6 @@ export async function reconcileAuthservice(
   await updatePolicy(event, labelSelector, pkg);
 }
 
-async function getAuthserviceConfig() {
-  const authSvcSecret = await K8s(kind.Secret).InNamespace(namespace).Get(secretName);
-  return JSON.parse(atob(authSvcSecret!.data!["config.json"])) as AuthserviceConfig;
-}
 // write authservice config to secret
 export async function updateConfig(event: AuthServiceEvent) {
   // parse existing authservice config
@@ -107,15 +98,15 @@ export function buildChain(update: AuthServiceEvent) {
     filters: [
       {
         oidc_override: {
-          authorization_uri: `${baseDomain}/realms/${realm}/protocol/openid-connect/auth`,
-          token_uri: `${baseDomain}/realms/${realm}/protocol/openid-connect/token`,
+          authorization_uri: `https://sso.${UDSConfig.domain}/realms/${operatorConfig.realm}/protocol/openid-connect/auth`,
+          token_uri: `https://sso.${UDSConfig.domain}/realms/${operatorConfig.realm}/protocol/openid-connect/token`,
           callback_uri: update.client!.redirectUris[0],
           client_id: update.client!.clientId,
           client_secret: update.client!.secret,
           scopes: [],
           logout: {
             path: "/local",
-            redirect_uri: `${baseDomain}/realms/${realm}/protocol/openid-connect/token/logout`,
+            redirect_uri: `https://sso.${UDSConfig.domain}/realms/${operatorConfig.realm}/protocol/openid-connect/token/logout`,
           },
           skip_verify_peer_cert: true,
           id_token: {
@@ -126,46 +117,4 @@ export function buildChain(update: AuthServiceEvent) {
     ],
   };
   return chain;
-}
-
-async function updateAuthServiceSecret(authserviceConfig: AuthserviceConfig) {
-  const config = btoa(JSON.stringify(authserviceConfig));
-  const configHash = createHash("sha256").update(config).digest("hex");
-
-  try {
-    // write the authservice config to the secret
-    await K8s(kind.Secret).Apply(
-      {
-        metadata: {
-          namespace,
-          name: secretName,
-        },
-        data: {
-          "config.json": config,
-        },
-      },
-      { force: true },
-    );
-  } catch (e) {
-    Log.error(e, `Failed to write authservice secret`);
-  }
-
-  Log.info("Updated authservice secret succesfully");
-  await checksumDeployment(configHash);
-}
-
-async function checksumDeployment(checksum: string) {
-  try {
-    await K8s(kind.Deployment, { name: "authservice", namespace }).Patch([
-      {
-        op: "add",
-        path: "/spec/template/metadata/annotations/pepr.dev~1checksum",
-        value: checksum,
-      },
-    ]);
-
-    Log.info(`Successfully applied the checksum to authservice`);
-  } catch (e) {
-    Log.error(`Failed to apply the checksum to authservice: ${e.data?.message}`);
-  }
 }
