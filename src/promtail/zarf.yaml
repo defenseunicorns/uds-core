@@ -34,3 +34,18 @@ components:
     images:
       - registry1.dso.mil/ironbank/opensource/jimmidyson/configmap-reload:v0.12.0
       - registry1.dso.mil/ironbank/opensource/grafana/promtail:v2.9.6
+
+  - name: promtail
+    required: true
+    description: "Deploy Promtail"
+    only:
+      flavor: unicorn
+    import:
+      path: common
+    charts:
+      - name: promtail
+        valuesFiles:
+          - values/unicorn-values.yaml
+    images:
+      - cgr.dev/du-uds-defenseunicorns/configmap-reload-fips:0.12.0
+      - cgr.dev/du-uds-defenseunicorns/promtail:3.0.0
