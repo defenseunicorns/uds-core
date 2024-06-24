@@ -1,16 +1,20 @@
 registry: cgr.dev
 tag: "5.3.3"
-# This ensures that the manager generates the necessary cert file
-autoGenerateCert: true
 manager:
   image:
     repository: du-uds-defenseunicorns/neuvector-manager
+  certificate:
+    secret: neuvector-internal-cert
+    keyFile: tls.key
+    pemFile: tls.crt
 enforcer:
   image:
     repository: du-uds-defenseunicorns/neuvector-enforcer-fips
   internal:
     certificate:
       secret: neuvector-internal-cert
+  containerSecurityContext:
+    privileged: true
 
 controller:
   image:
