@@ -30,3 +30,16 @@ components:
           - values/registry1-values.yaml
     images:
       - registry1.dso.mil/ironbank/istio-ecosystem/authservice:0.5.3
+
+  - name: authservice
+    required: true
+    only:
+      flavor: unicorn
+    import:
+      path: common
+    charts:
+      - name: authservice
+        valuesFiles:
+          - values/unicorn-values.yaml
+    images:
+      - cgr.dev/du-uds-defenseunicorns/authservice-fips:1.0.1

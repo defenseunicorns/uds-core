@@ -1,0 +1,26 @@
+registry: cgr.dev
+tag: "5.3.3"
+manager:
+  image:
+    repository: du-uds-defenseunicorns/neuvector-manager
+
+enforcer:
+  image:
+    repository: du-uds-defenseunicorns/neuvector-enforcer-fips
+  containerSecurityContext:
+    privileged: true
+
+controller:
+  image:
+    repository: du-uds-defenseunicorns/neuvector-controller-fips
+
+cve:
+  scanner:
+    image:
+      repository: du-uds-defenseunicorns/neuvector-scanner-fips
+      tag: latest
+  updater:
+    enabled: true
+    image:
+      repository: du-uds-defenseunicorns/neuvector-updater-fips
+      tag: 8.8.0-dev

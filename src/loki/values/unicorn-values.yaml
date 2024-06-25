@@ -1,0 +1,10 @@
+loki:
+  image:
+    registry: cgr.dev
+    repository: du-uds-defenseunicorns/loki
+    tag: 2.9.8
+gateway:
+  image:
+    registry: cgr.dev
+    repository: du-uds-defenseunicorns/nginx-fips
+    tag: 1.27.0

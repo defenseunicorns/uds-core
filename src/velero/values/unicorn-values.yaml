@@ -1,0 +1,22 @@
+image:
+  repository: cgr.dev/du-uds-defenseunicorns/velero-fips
+  tag: 1.13.2-dev
+
+kubectl:
+  image:
+    repository: cgr.dev/du-uds-defenseunicorns/kubectl-fips
+    tag: 1.29.5-dev
+
+initContainers:
+  - name: velero-plugin-for-aws
+    image: cgr.dev/du-uds-defenseunicorns/velero-plugin-for-aws-fips:1.9.2
+    imagePullPolicy: IfNotPresent
+    volumeMounts:
+      - mountPath: /target
+        name: plugins
+  - name: velero-plugin-for-csi
+    image: cgr.dev/du-uds-defenseunicorns/velero-plugin-for-csi-fips:0.7.1
+    imagePullPolicy: IfNotPresent
+    volumeMounts:
+      - mountPath: /target
+        name: plugins

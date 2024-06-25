@@ -38,3 +38,17 @@ components:
     images:
       - registry1.dso.mil/ironbank/opensource/keycloak/keycloak:24.0.5
       - ghcr.io/defenseunicorns/uds/identity-config:0.4.5
+
+  - name: keycloak
+    required: true
+    only:
+      flavor: unicorn
+    import:
+      path: common
+    charts:
+      - name: keycloak
+        valuesFiles:
+          - "values/unicorn-values.yaml"
+    images:
+      - cgr.dev/du-uds-defenseunicorns/keycloak:24.0.5 # todo: switch to FIPS image
+      - ghcr.io/defenseunicorns/uds/identity-config:0.4.5

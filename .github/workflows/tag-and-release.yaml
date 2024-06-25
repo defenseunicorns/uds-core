@@ -24,6 +24,7 @@ jobs:
     permissions:
       contents: write
       packages: write
+      id-token: write
     uses: ./.github/workflows/publish.yaml
     with:
       snapshot: false
