@@ -4,8 +4,8 @@ type: docs
 weight: 1
 ---
 
-# UDS Bundle [name]
+## UDS Bundle [name]
 
-## How to upgrade this bundle
+### How to upgrade this bundle
 
 [Description and steps for upgrading this UDS bundle. Include any historic problems to watch out for]

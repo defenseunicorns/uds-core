@@ -4,7 +4,7 @@ type: docs
 weight: 1
 ---
 
-UDS Core leverages Pepr to handle setup of Prometheus scraping metrics endpoints, with the particular configuration necessary to work in a STRICT mTLS (Istio) environment. We handle this with both mutations of existing service monitors and generation of service monitors via the `Package` CR. 
+UDS Core leverages Pepr to handle setup of Prometheus scraping metrics endpoints, with the particular configuration necessary to work in a STRICT mTLS (Istio) environment. We handle this with both mutations of existing service monitors and generation of service monitors via the `Package` CR.
 
 ## Mutations
 
@@ -33,11 +33,11 @@ spec:
       path: "/mymetrics" # Add if metrics are exposed on a different path than "/metrics"
 ```
 
-This config is used to generate service monitors and corresponding network policies to setup scraping for your applications. The `ServiceMonitor`s will go through the mutation process to add `tlsConfig` and `scheme` to work in an istio environment. 
+This config is used to generate service monitors and corresponding network policies to setup scraping for your applications. The `ServiceMonitor`s will go through the mutation process to add `tlsConfig` and `scheme` to work in an istio environment.
 
 This spec intentionally does not support all options available with a `ServiceMonitor`. While we may add additional fields in the future, we do not want to simply rebuild the `ServiceMonitor` spec since mutations are already available to handle Istio specifics. The current subset of spec options is based on the bare minimum necessary to craft resources.
 
-NOTE: While this is a rather verbose spec, each of the above fields are strictly required to craft the necessary service monitor and network policy resources. 
+NOTE: While this is a rather verbose spec, each of the above fields are strictly required to craft the necessary service monitor and network policy resources.
 
 ## Notes on Alternative Approaches
 
@@ -46,6 +46,7 @@ In coming up with this feature a few alternative approaches were considered but 
 ### Generation based on service lookup
 
 An alternative spec option would use the service name instead of selectors/port name. The service name could then be used to lookup the corresponding service and get the necessary selectors/port name (based on numerical port). There are however 2 issues with this route:
+
 1. There is a timing issue if the `Package` CR is applied to the cluster before the app chart itself (which is the norm with our UDS Packages). The service would not exist at the time the `Package` is reconciled. We could lean into eventual consistency here, if we implemented a retry mechanism for the `Package`, which would mitigate this issue.
 2. We would need an "alert" mechanism (watch) to notify us when the service(s) are updated, to roll the corresponding updates to network policies and service monitors. While this is doable it feels like unnecessary complexity compared to other options.
 
