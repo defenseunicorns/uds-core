@@ -89,7 +89,10 @@ export async function getAuthserviceConfig() {
   return JSON.parse(atob(authSvcSecret!.data!["config.json"])) as AuthserviceConfig;
 }
 
-export async function updateAuthServiceSecret(authserviceConfig: AuthserviceConfig, checksum = true) {
+export async function updateAuthServiceSecret(
+  authserviceConfig: AuthserviceConfig,
+  checksum = true,
+) {
   const config = btoa(JSON.stringify(authserviceConfig));
   const configHash = createHash("sha256").update(config).digest("hex");
 
