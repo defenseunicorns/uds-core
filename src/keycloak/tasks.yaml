@@ -30,9 +30,8 @@ tasks:
     actions:
       - task: config:cacert
       - cmd: |
-          export cacert=$(cat cacert.b64)
-          yq e -i '.tls[0].cacert = env(cacert)' src/istio/values/config-tenant.yaml
-          yq e -i '.tls[0].cacert = env(cacert)' src/istio/values/config-admin.yaml
+          yq eval-all --inplace 'select(fileIndex == 0) * select(fileIndex == 1)' src/istio/values/config-tenant.yaml tls_cacert.yaml
+          yq eval-all --inplace 'select(fileIndex == 0) * select(fileIndex == 1)' src/istio/values/config-admin.yaml tls_cacert.yaml
 
   - name: debug-istio-traffic
     actions:
