@@ -72,7 +72,7 @@ jobs:
         if: ${{ always() && !inputs.snapshot }}
         uses: ./.github/actions/debug-output
 
-      # todo: publish chainguard to a private repository
+      # todo: publish chainguard to a separate private repository
       - name: Publish Standard Package
         if: ${{ !inputs.snapshot }}
         run: uds run -f tasks/publish.yaml standard-package --set FLAVOR=${{ matrix.flavor }} --no-progress
