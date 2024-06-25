@@ -48,7 +48,6 @@ components:
       - name: istiod
         valuesFiles:
           - "values/unicorn-values.yaml"
-    # todo: switch to FIPS images once updated
     images:
       - cgr.dev/du-uds-defenseunicorns/istio-pilot-fips:1.22.1
       - cgr.dev/du-uds-defenseunicorns/istio-proxy-fips:1.22.1
