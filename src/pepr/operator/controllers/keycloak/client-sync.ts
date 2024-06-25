@@ -86,14 +86,14 @@ async function syncClient(
 
     let client: Client;
 
+    handleClientGroups(clientReq);
+
     // If an existing client is found, update it
     if (token && !isRetry) {
       Log.debug(pkg.metadata, `Found existing token for ${clientReq.clientId}`);
-      handleClientGroups(clientReq);
       client = await apiCall(clientReq, "PUT", token);
     } else {
       Log.debug(pkg.metadata, `Creating new client for ${clientReq.clientId}`);
-      handleClientGroups(clientReq);
       client = await apiCall(clientReq);
     }
 
