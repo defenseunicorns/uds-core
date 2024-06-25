@@ -3,34 +3,22 @@ tag: "5.3.3"
 manager:
   image:
     repository: du-uds-defenseunicorns/neuvector-manager
-  certificate:
-    secret: neuvector-internal-cert
-    keyFile: tls.key
-    pemFile: tls.crt
+
 enforcer:
   image:
     repository: du-uds-defenseunicorns/neuvector-enforcer-fips
-  internal:
-    certificate:
-      secret: neuvector-internal-cert
   containerSecurityContext:
     privileged: true
 
 controller:
   image:
     repository: du-uds-defenseunicorns/neuvector-controller-fips
-  internal:
-    certificate:
-      secret: neuvector-internal-cert
 
 cve:
   scanner:
     image:
       repository: du-uds-defenseunicorns/neuvector-scanner-fips
       tag: latest
-    internal:
-      certificate:
-        secret: neuvector-internal-cert
   updater:
     enabled: true
     image:

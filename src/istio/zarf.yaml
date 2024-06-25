@@ -50,8 +50,8 @@ components:
           - "values/unicorn-values.yaml"
     # todo: switch to FIPS images once updated
     images:
-      - cgr.dev/du-uds-defenseunicorns/istio-pilot:1.22.1
-      - cgr.dev/du-uds-defenseunicorns/istio-proxy:1.22.1
+      - cgr.dev/du-uds-defenseunicorns/istio-pilot-fips:1.22.1
+      - cgr.dev/du-uds-defenseunicorns/istio-proxy-fips:1.22.1
 
   - name: istio-admin-gateway
     required: true

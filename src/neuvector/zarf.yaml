@@ -57,19 +57,30 @@ components:
     import:
       path: common
     charts:
-      - name: uds-neuvector-config
-        valuesFiles:
-          - values/unicorn-config-values.yaml
       - name: core
         valuesFiles:
-          - values/unicorn-values.yaml
+          - values/registry1-values.yaml
       - name: monitor
         valuesFiles:
-          - values/unicorn-monitor-values.yaml
+          - values/registry1-monitor-values.yaml
     images:
-      - cgr.dev/du-uds-defenseunicorns/neuvector-manager:5.3.3 # todo: manager is not working even with cert hacks
-      - cgr.dev/du-uds-defenseunicorns/neuvector-enforcer-fips:5.3.3
-      - cgr.dev/du-uds-defenseunicorns/neuvector-controller-fips:5.3.3
-      - cgr.dev/du-uds-defenseunicorns/neuvector-scanner-fips:latest
-      - cgr.dev/du-uds-defenseunicorns/neuvector-updater-fips:8.8.0-dev
-      - cgr.dev/du-uds-defenseunicorns/neuvector-prometheus-exporter-fips:5.3.0
+      - registry1.dso.mil/ironbank/neuvector/neuvector/controller:5.3.3
+      - registry1.dso.mil/ironbank/neuvector/neuvector/manager:5.3.3
+      - registry1.dso.mil/ironbank/redhat/ubi/ubi9-minimal:9.4
+      - registry1.dso.mil/ironbank/neuvector/neuvector/scanner:5
+      - registry1.dso.mil/ironbank/neuvector/neuvector/enforcer:5.3.3
+      - registry1.dso.mil/ironbank/neuvector/neuvector/prometheus-exporter:5.3.2
+    # charts:
+    #   - name: core
+    #     valuesFiles:
+    #       - values/unicorn-values.yaml
+    #   - name: monitor
+    #     valuesFiles:
+    #       - values/unicorn-monitor-values.yaml
+    # images:
+    #   - cgr.dev/du-uds-defenseunicorns/neuvector-manager:5.3.3
+    #   - cgr.dev/du-uds-defenseunicorns/neuvector-enforcer-fips:5.3.3
+    #   - cgr.dev/du-uds-defenseunicorns/neuvector-controller-fips:5.3.3
+    #   - cgr.dev/du-uds-defenseunicorns/neuvector-scanner-fips:latest
+    #   - cgr.dev/du-uds-defenseunicorns/neuvector-updater-fips:8.8.0-dev
+    #   - cgr.dev/du-uds-defenseunicorns/neuvector-prometheus-exporter-fips:5.3.0
