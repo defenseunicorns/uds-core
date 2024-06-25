@@ -14,23 +14,25 @@ export const operatorConfig = {
 };
 
 export async function setupAuthserviceSecret() {
-  Log.info("One-time authservice secret initialization");
-  // create namespace if it doesn't exist
-  await K8s(kind.Namespace).Apply({
-    metadata: {
-      name: operatorConfig.namespace,
-    },
-  });
+  if (process.env.PEPR_WATCH_MODE === "true" || process.env.PEPR_MODE === "dev") {
+    Log.info("One-time authservice secret initialization");
+    // create namespace if it doesn't exist
+    await K8s(kind.Namespace).Apply({
+      metadata: {
+        name: operatorConfig.namespace,
+      },
+    });
 
-  // create secret if it doesn't exist
-  try {
-    const secret = await K8s(kind.Secret)
-      .InNamespace(operatorConfig.namespace)
-      .Get(operatorConfig.secretName);
-    Log.info(`Authservice Secret exists, skipping creation - ${secret.metadata?.name}`);
-  } catch (e) {
-    Log.info("Secret does not exist, creating authservice secret");
-    await updateAuthServiceSecret(buildInitialSecret(), false);
+    // create secret if it doesn't exist
+    try {
+      const secret = await K8s(kind.Secret)
+        .InNamespace(operatorConfig.namespace)
+        .Get(operatorConfig.secretName);
+      Log.info(`Authservice Secret exists, skipping creation - ${secret.metadata?.name}`);
+    } catch (e) {
+      Log.info("Secret does not exist, creating authservice secret");
+      await updateAuthServiceSecret(buildInitialSecret(), false);
+    }
   }
 }
 // this initial secret is only a placeholder until the first chain is created
