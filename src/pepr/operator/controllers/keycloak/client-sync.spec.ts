@@ -1,6 +1,10 @@
 import { describe, expect, it } from "@jest/globals";
 import { Sso } from "../../crd";
-import { extractSamlCertificateFromXML, generateSecretData, handleClientGroups } from "./client-sync";
+import {
+  extractSamlCertificateFromXML,
+  generateSecretData,
+  handleClientGroups,
+} from "./client-sync";
 import { Client } from "./types";
 
 const mockClient: Client = {
@@ -134,36 +138,38 @@ describe("Test Secret & Template Data Generation", () => {
   });
 });
 
-describe('handleClientGroups function', () => {
+describe("handleClientGroups function", () => {
   it('should correctly transform groups into attributes["uds.core.groups"]', () => {
     // Arrange
     const ssoWithGroups: Sso = {
-      clientId: 'test-client',
-      name: 'Test Client',
-      redirectUris: ['https://example.com/callback'],
+      clientId: "test-client",
+      name: "Test Client",
+      redirectUris: ["https://example.com/callback"],
       groups: {
-        anyOf: ['group1', 'group2']
-      }
+        anyOf: ["group1", "group2"],
+      },
     };
-  
+
     // Act
     handleClientGroups(ssoWithGroups);
-  
+
     // Assert
     expect(ssoWithGroups.attributes).toBeDefined(); // Ensure attributes is defined
-    expect(typeof ssoWithGroups.attributes).toBe('object'); // Ensure attributes is an object
-    expect(ssoWithGroups.attributes!['uds.core.groups']).toEqual(JSON.stringify({
-      anyOf: ['group1', 'group2']
-    }));
+    expect(typeof ssoWithGroups.attributes).toBe("object"); // Ensure attributes is an object
+    expect(ssoWithGroups.attributes!["uds.core.groups"]).toEqual(
+      JSON.stringify({
+        anyOf: ["group1", "group2"],
+      }),
+    );
     expect(ssoWithGroups.groups).toBeUndefined(); // Ensure groups property is removed
   });
 
   it('should set attributes["uds.core.groups"] to an empty object if groups are not provided', () => {
     // Arrange
     const ssoWithoutGroups: Sso = {
-      clientId: 'test-client',
-      name: 'Test Client',
-      redirectUris: ['https://example.com/callback']
+      clientId: "test-client",
+      name: "Test Client",
+      redirectUris: ["https://example.com/callback"],
     };
 
     // Act
@@ -171,8 +177,8 @@ describe('handleClientGroups function', () => {
 
     // Assert
     expect(ssoWithoutGroups.attributes).toBeDefined(); // Ensure attributes is defined
-    expect(typeof ssoWithoutGroups.attributes).toBe('object'); // Ensure attributes is an object
-    expect(ssoWithoutGroups.attributes!['uds.core.groups']).toEqual(""); // Empty object as string
+    expect(typeof ssoWithoutGroups.attributes).toBe("object"); // Ensure attributes is an object
+    expect(ssoWithoutGroups.attributes!["uds.core.groups"]).toEqual(""); // Empty object as string
     expect(ssoWithoutGroups.groups).toBeUndefined(); // Ensure groups property is removed
   });
 });
