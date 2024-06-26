@@ -24,9 +24,18 @@ export interface Spec {
 
 export interface Monitor {
   /**
+   * Authorization settings.
+   */
+  authorization?: Authorization;
+  /**
    * A description of this monitor entry, this will become part of the ServiceMonitor name
    */
   description?: string;
+  /**
+   * The type of monitor to create; PodMonitor or ServiceMonitor. ServiceMonitor is the
+   * default.
+   */
+  kind?: string;
   /**
    * HTTP path from which to scrape for metrics, defaults to `/metrics`
    */
@@ -49,6 +58,42 @@ export interface Monitor {
    * The service targetPort. This is required so the NetworkPolicy can be generated correctly.
    */
   targetPort: number;
+}
+
+/**
+ * Authorization settings.
+ */
+export interface Authorization {
+  /**
+   * Selects a key of a Secret in the namespace that contains the credentials for
+   * authentication.
+   */
+  credentials: Credentials;
+  /**
+   * Defines the authentication type. The value is case-insensitive. "Basic" is not a
+   * supported value. Default: "Bearer"
+   */
+  type?: string;
+}
+
+/**
+ * Selects a key of a Secret in the namespace that contains the credentials for
+ * authentication.
+ */
+export interface Credentials {
+  /**
+   * The key of the secret to select from. Must be a valid secret key.
+   */
+  key: string;
+  /**
+   * Name of the referent. More info:
+   * https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+   */
+  name?: string;
+  /**
+   * Specify whether the Secret or its key must be defined
+   */
+  optional?: boolean;
 }
 
 /**
@@ -540,7 +585,6 @@ export interface Status {
   networkPolicyCount?: number;
   observedGeneration?: number;
   phase?: Phase;
-  retryAttempt?: number;
   ssoClients?: string[];
 }
 

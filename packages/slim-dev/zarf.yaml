@@ -47,3 +47,9 @@ components:
     required: true
     import:
       path: ../../src/keycloak
+
+  # Prometheus temp for testing monitors TODO @zachariahmiller remove before merge
+  - name: kube-prometheus-stack
+    required: true
+    import:
+      path: ../../src/prometheus-stack

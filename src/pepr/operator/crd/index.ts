@@ -2,8 +2,8 @@ export {
   Allow,
   Direction,
   Expose,
-  Monitor,
   Gateway,
+  Monitor,
   Phase,
   Status as PkgStatus,
   RemoteGenerated,
@@ -20,17 +20,19 @@ export {
 } from "./generated/exemption-v1alpha1";
 
 export {
-  VirtualService as IstioVirtualService,
-  HTTPRoute as IstioHTTPRoute,
   HTTP as IstioHTTP,
+  HTTPRoute as IstioHTTPRoute,
+  VirtualService as IstioVirtualService,
 } from "./generated/istio/virtualservice-v1beta1";
 
 export {
-  ServiceEntry as IstioServiceEntry,
-  Location as IstioLocation,
-  Resolution as IstioResolution,
   Endpoint as IstioEndpoint,
+  Location as IstioLocation,
   Port as IstioPort,
+  Resolution as IstioResolution,
+  ServiceEntry as IstioServiceEntry,
 } from "./generated/istio/serviceentry-v1beta1";
 
-export * as Prometheus from "./generated/prometheus/servicemonitor-v1";
+export * as PrometheusPodMonitor from "./generated/prometheus/podmonitor-v1";
+export * as PrometheusServiceMonitor from "./generated/prometheus/servicemonitor-v1";
+// export * as Prometheus from "./generated/prometheus/servicemonitor-v1";

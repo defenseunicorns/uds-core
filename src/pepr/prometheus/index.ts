@@ -1,5 +1,5 @@
 import { Capability, K8s, kind, Log } from "pepr";
-import { Prometheus } from "../operator/crd";
+import { PrometheusServiceMonitor } from "../operator/crd";
 
 export const prometheus = new Capability({
   name: "prometheus",
@@ -11,7 +11,7 @@ const { When } = prometheus;
 /**
  * Mutate a service monitor to enable mTLS metrics
  */
-When(Prometheus.ServiceMonitor)
+When(PrometheusServiceMonitor.ServiceMonitor)
   .IsCreatedOrUpdated()
   .Mutate(async sm => {
     // Provide an opt-out of mutation to handle complicated scenarios
@@ -32,9 +32,9 @@ When(Prometheus.ServiceMonitor)
         keyFile: "/etc/prom-certs/key.pem",
         insecureSkipVerify: true,
       };
-      const endpoints: Prometheus.Endpoint[] = sm.Raw.spec.endpoints;
+      const endpoints: PrometheusServiceMonitor.Endpoint[] = sm.Raw.spec.endpoints;
       endpoints.forEach(endpoint => {
-        endpoint.scheme = Prometheus.Scheme.HTTPS;
+        endpoint.scheme = PrometheusServiceMonitor.Scheme.HTTPS;
         endpoint.tlsConfig = tlsConfig;
       });
       sm.Raw.spec.endpoints = endpoints;
@@ -43,7 +43,7 @@ When(Prometheus.ServiceMonitor)
     }
   });
 
-async function isIstioInjected(sm: Prometheus.ServiceMonitor) {
+async function isIstioInjected(sm: PrometheusServiceMonitor.ServiceMonitor) {
   const namespaces = sm.Raw.spec?.namespaceSelector?.matchNames || [sm.Raw.metadata?.namespace] || [
       "default",
     ];

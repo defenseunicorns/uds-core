@@ -63,4 +63,4 @@ tasks:
           CUSTOM_PEPR_IMAGE=$( [ "${FLAVOR}" = "registry1" ] && echo "--custom-image ${REGISTRY1_PEPR_IMAGE}" ) || CUSTOM_PEPR_IMAGE=""
           rm -fr dist
           npm ci
-          npx pepr build $CUSTOM_PEPR_IMAGE
+          npx pepr build $CUSTOM_PEPR_IMAGE -z chart
