@@ -112,6 +112,7 @@ async function updatePolicy(
       authNRequestAuthentication(labelSelector, event.name, namespace),
       jwtAuthZAuthorizationPolicy(labelSelector, event.name, namespace),
     ].forEach(async p => {
+      p!.metadata!.name = p!.metadata!.name + "-" + generation;
       p!.metadata!.ownerReferences = ownerReferences;
       p!.metadata!.labels = {
         "uds/package": pkg.metadata!.name!,
@@ -132,32 +133,17 @@ async function updatePolicy(
 }
 
 async function purgeOrphanPolicies(generation: string, namespace: string, pkgName: string) {
-  const authPolicies = await K8s(AuthorizationPolicy)
-    .InNamespace(namespace)
-    .WithLabel("uds/package", pkgName)
-    .Get();
+  for (const kind of [AuthorizationPolicy, RequestAuthentication]) {
+    const policies = await K8s(kind).InNamespace(namespace).WithLabel("uds/package", pkgName).Get();
 
-  const orphanPolicies = authPolicies.items.filter(
-    authPolicy => authPolicy.metadata?.labels?.["uds/generation"] !== generation,
-  );
+    const orphanPolicies = policies.items.filter(
+      authPolicy => authPolicy.metadata?.labels?.["uds/generation"] !== generation,
+    );
 
-  for (const orphan of orphanPolicies) {
-    Log.debug(orphan, `Deleting orphaned AuthorizationPolicy ${orphan.metadata!.name}`);
-    await K8s(AuthorizationPolicy).Delete(orphan);
-  }
-
-  const requestAuthentications = await K8s(RequestAuthentication)
-    .InNamespace(namespace)
-    .WithLabel("uds/package", pkgName)
-    .Get();
-
-  const orphanRequestAuth = requestAuthentications.items.filter(
-    requetAuth => requetAuth.metadata?.labels?.["uds/generation"] !== generation,
-  );
-
-  for (const orphan of orphanRequestAuth) {
-    Log.debug(orphan, `Deleting orphaned RequestAuthentication ${orphan.metadata!.name}`);
-    await K8s(RequestAuthentication).Delete(orphan);
+    for (const orphan of orphanPolicies) {
+      Log.debug(orphan, `Deleting orphaned ${orphan.kind} ${orphan.metadata!.name}`);
+      await K8s(kind).Delete(orphan);
+    }
   }
 }
 
