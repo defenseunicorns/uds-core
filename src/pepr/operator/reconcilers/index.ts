@@ -108,6 +108,7 @@ export async function handleFailure(err: { status: number; message: string }, cr
     Log.error({ err }, `Reconciliation attempt ${currRetry} failed for ${identifier}, retrying...`);
 
     status = {
+      phase: Phase.PendingRetry,
       retryAttempt: currRetry,
     };
   } else {

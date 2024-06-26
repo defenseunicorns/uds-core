@@ -179,9 +179,7 @@ describe("handleFailure", () => {
 
     expect(PatchStatus).toHaveBeenCalledWith({
       metadata: { namespace: "default", name: "test" },
-      status: {
-        retryAttempt: 1,
-      },
+      status: { phase: Phase.PendingRetry, retryAttempt: 1 },
     });
   });
 

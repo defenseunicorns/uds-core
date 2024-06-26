@@ -78,14 +78,12 @@ async function syncClient(
   isRetry = false,
 ) {
   Log.debug(pkg.metadata, `Processing client request: ${clientReq.clientId}`);
+  // Not including the CR data in the ref because Keycloak client IDs must be unique already
+  const name = `sso-client-${clientReq.clientId}`;
+  let client: Client;
 
   try {
-    // Not including the CR data in the ref because Keycloak client IDs must be unique already
-    const name = `sso-client-${clientReq.clientId}`;
     const token = Store.getItem(name);
-
-    let client: Client;
-
     // If an existing client is found, update it
     if (token && !isRetry) {
       Log.debug(pkg.metadata, `Found existing token for ${clientReq.clientId}`);
@@ -94,52 +92,52 @@ async function syncClient(
       Log.debug(pkg.metadata, `Creating new client for ${clientReq.clientId}`);
       client = await apiCall(clientReq);
     }
-
-    // Write the new token to the store
-    await Store.setItemAndWait(name, client.registrationAccessToken!);
-
-    // Remove the registrationAccessToken from the client object to avoid problems (one-time use token)
-    delete client.registrationAccessToken;
-
-    if (clientReq.protocol === "saml") {
-      client.samlIdpCertificate = await getSamlCertificate();
-    }
-
-    // Create or update the client secret
-    await K8s(kind.Secret).Apply({
-      metadata: {
-        namespace: pkg.metadata!.namespace,
-        // Use the CR secret name if provided, otherwise use the client name
-        name: secretName || name,
-        labels: {
-          "uds/package": pkg.metadata!.name,
-        },
-        // Use the CR as the owner ref for each VirtualService
-        ownerReferences: getOwnerRef(pkg),
-      },
-      data: generateSecretData(client, secretTemplate),
-    });
-
-    if (isAuthSvcClient) {
-      // Do things here
-    }
-
-    return name;
   } catch (err) {
     const msg =
       `Failed to process client request '${clientReq.clientId}' for ` +
-      `${pkg.metadata?.namespace}/${pkg.metadata?.name}. This can occur if a client already exists with the same ID that Pepr isn't tracking.`;
+      `${pkg.metadata?.namespace}/${pkg.metadata?.name}. Error: ${err.message}`;
     Log.error({ err }, msg);
 
     if (isRetry) {
       Log.error(`${msg}, retry failed, aborting`);
-      throw new Error(`${msg}. RETRY FAILED, aborting: ${JSON.stringify(err)}`);
+      throw new Error(msg);
     }
 
     // Retry the request
     Log.warn(`${msg}, retrying`);
     return syncClient(clientReq, pkg, true);
   }
+
+  // Write the new token to the store
+  await Store.setItemAndWait(name, client.registrationAccessToken!);
+
+  // Remove the registrationAccessToken from the client object to avoid problems (one-time use token)
+  delete client.registrationAccessToken;
+
+  if (clientReq.protocol === "saml") {
+    client.samlIdpCertificate = await getSamlCertificate();
+  }
+
+  // Create or update the client secret
+  await K8s(kind.Secret).Apply({
+    metadata: {
+      namespace: pkg.metadata!.namespace,
+      // Use the CR secret name if provided, otherwise use the client name
+      name: secretName || name,
+      labels: {
+        "uds/package": pkg.metadata!.name,
+      },
+      // Use the CR as the owner ref for each VirtualService
+      ownerReferences: getOwnerRef(pkg),
+    },
+    data: generateSecretData(client, secretTemplate),
+  });
+
+  if (isAuthSvcClient) {
+    // Do things here
+  }
+
+  return name;
 }
 
 async function apiCall(sso: Partial<Sso>, method = "POST", authToken = "") {
@@ -166,7 +164,8 @@ async function apiCall(sso: Partial<Sso>, method = "POST", authToken = "") {
   // When not creating a new client, add the client ID and registrationAccessToken
   if (authToken) {
     req.headers.Authorization = `Bearer ${authToken}`;
-    url += `/${sso.clientId}`;
+    // Ensure that we URI encode the clientId in the request URL
+    url += `/${encodeURIComponent(sso.clientId!)}`;
   }
 
   // Remove the body for DELETE requests
@@ -178,7 +177,11 @@ async function apiCall(sso: Partial<Sso>, method = "POST", authToken = "") {
   const resp = await fetch<Client>(url, req);
 
   if (!resp.ok) {
-    throw new Error(`Failed to ${method} client: ${resp.statusText}`);
+    if (resp.data) {
+      throw new Error(`${JSON.stringify(resp.statusText)}, ${JSON.stringify(resp.data)}`);
+    } else {
+      throw new Error(`${JSON.stringify(resp.statusText)}`);
+    }
   }
 
   return resp.data;
