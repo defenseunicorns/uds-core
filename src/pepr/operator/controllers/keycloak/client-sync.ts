@@ -1,4 +1,5 @@
 import { K8s, Log, fetch, kind } from "pepr";
+import cfg from "../../../../../package.json";
 
 import { UDSConfig } from "../../../config";
 import { Store } from "../../common";
@@ -66,12 +67,13 @@ export async function purgeSSOClients(pkg: UDSPackage, refs: string[] = []) {
   const currentClients = pkg.status?.ssoClients || [];
   const toRemove = currentClients.filter(client => !refs.includes(client));
   for (const ref of toRemove) {
-    const sanitizedRef = sanitizeResourceName(ref);
-    const token = Store.getItem(sanitizedRef);
     const clientId = ref.replace("sso-client-", "");
+    const storeKey = sanitizeResourceName(`${ref}-${pkg.metadata?.uid}`);
+    const token = Store.getItem(storeKey);
     if (token) {
-      Store.removeItem(sanitizedRef);
       await apiCall({ clientId }, "DELETE", token);
+      // Await this removal to ensure renames of clients don't accidentally use outdated tokens
+      await Store.removeItemAndWait(storeKey);
     } else {
       Log.warn(pkg.metadata, `Failed to remove client ${clientId}, token not found`);
     }
@@ -85,15 +87,27 @@ async function syncClient(
 ) {
   Log.debug(pkg.metadata, `Processing client request: ${clientReq.clientId}`);
 
-  // Not including the CR data in the ref because Keycloak client IDs must be unique already
-  const name = `sso-client-${clientReq.clientId}`;
+  // Include the CR UID in the ref to ensure Packages maintain control over their clients
+  const name = `sso-client-${clientReq.clientId}-${pkg.metadata?.uid}`;
+  const genSecretName = `sso-client-${clientReq.clientId}`;
   const sanitizedName = sanitizeResourceName(name);
   let client: Client;
 
   try {
+    // Migrate to the new store key format
+    if (cfg.version === "0.6.0") {
+      const oldStoreKey = `sso-client-${clientReq.clientId}`;
+      const token = Store.getItem(oldStoreKey);
+      if (token) {
+        Store.removeItem(oldStoreKey);
+        Store.setItemAndWait(sanitizedName, token);
+      }
+    }
+
+    // Get the token from the store, if it exists
     const token = Store.getItem(sanitizedName);
 
-    // If an existing client is found, update it
+    // If an existing token/client is found, update it
     if (token && !isRetry) {
       Log.debug(pkg.metadata, `Found existing token for ${clientReq.clientId}`);
       client = await apiCall(clientReq, "PUT", token);
@@ -131,7 +145,7 @@ async function syncClient(
     metadata: {
       namespace: pkg.metadata!.namespace,
       // Use the CR secret name if provided, otherwise use the client name
-      name: secretName || sanitizedName,
+      name: secretName || genSecretName,
       labels: {
         "uds/package": pkg.metadata!.name,
       },
@@ -185,7 +199,11 @@ async function apiCall(sso: Partial<Sso>, method = "POST", authToken = "") {
   const resp = await fetch<Client>(url, req);
 
   if (!resp.ok) {
-    throw new Error(`${JSON.stringify(resp.statusText)}, ${JSON.stringify(resp.data)}`);
+    if (resp.data) {
+      throw new Error(`${JSON.stringify(resp.statusText)}, ${JSON.stringify(resp.data)}`);
+    } else {
+      throw new Error(`${JSON.stringify(resp.statusText)}`);
+    }
   }
 
   return resp.data;

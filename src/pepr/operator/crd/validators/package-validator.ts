@@ -13,6 +13,7 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
 
   const pkgName = pkg.metadata?.name ?? "_unknown_";
   const ns = pkg.metadata?.namespace ?? "_unknown_";
+  const uid = pkg.metadata?.uid ?? "_unknown_";
 
   if (invalidNamespaces.includes(ns)) {
     return req.Deny("invalid namespace");
@@ -43,8 +44,8 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
     if (virtualServiceNames.has(name)) {
       return req.Deny(
         `The combination of characteristics of this expose entry would create a duplicate VirtualService. ` +
-          `Verify you do not have duplicate values, or add a unique "description" field for this rule. ` +
-          `The duplicate rule would be named "${name}".`,
+        `Verify you do not have duplicate values, or add a unique "description" field for this rule. ` +
+        `The duplicate rule would be named "${name}".`,
       );
     }
 
@@ -68,8 +69,8 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
     if (networkPolicyNames.has(name)) {
       return req.Deny(
         `The combination of characteristics of this network allow rule would create a duplicate NetworkPolicy. ` +
-          `Verify you do not have duplicate allow rules, or add a unique "description" field for this rule. ` +
-          `The duplicate rule would be named "${name}".`,
+        `Verify you do not have duplicate allow rules, or add a unique "description" field for this rule. ` +
+        `The duplicate rule would be named "${name}".`,
       );
     }
     // Add the name to the set to track it
@@ -78,15 +79,7 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
 
   const ssoClients = pkg.spec?.sso ?? [];
 
-  // Ensure the client IDs are unique
-  const clientIDs = new Set<string>();
-
   for (const client of ssoClients) {
-    const sanitizedClientId = sanitizeResourceName(client.clientId);
-    if (clientIDs.has(sanitizedClientId)) {
-      return req.Deny(`The client ID "${client.clientId}" is not unique`);
-    }
-    clientIDs.add(sanitizedClientId);
     // Don't allow illegal k8s resource names for the secret name
     if (client.secretName && client.secretName !== sanitizeResourceName(client.secretName)) {
       return req.Deny(
