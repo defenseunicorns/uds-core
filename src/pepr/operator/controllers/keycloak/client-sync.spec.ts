@@ -1,5 +1,6 @@
 import { describe, expect, it } from "@jest/globals";
-import { extractSamlCertificateFromXML, generateSecretData } from "./client-sync";
+import { Sso } from "../../crd";
+import { extractSamlCertificateFromXML, generateSecretData, handleClientGroups } from "./client-sync";
 import { Client } from "./types";
 
 const mockClient: Client = {
@@ -130,5 +131,48 @@ describe("Test Secret & Template Data Generation", () => {
     expect(generateSecretData(mockClient, mockTemplate)).toEqual({
       "auth.json": Buffer.from('{"defaultScopes":"{"first":"attribute"}"}').toString("base64"),
     });
+  });
+});
+
+describe('handleClientGroups function', () => {
+  it('should correctly transform groups into attributes["uds.core.groups"]', () => {
+    // Arrange
+    const ssoWithGroups: Sso = {
+      clientId: 'test-client',
+      name: 'Test Client',
+      redirectUris: ['https://example.com/callback'],
+      groups: {
+        anyOf: ['group1', 'group2']
+      }
+    };
+  
+    // Act
+    handleClientGroups(ssoWithGroups);
+  
+    // Assert
+    expect(ssoWithGroups.attributes).toBeDefined(); // Ensure attributes is defined
+    expect(typeof ssoWithGroups.attributes).toBe('object'); // Ensure attributes is an object
+    expect(ssoWithGroups.attributes!['uds.core.groups']).toEqual(JSON.stringify({
+      anyOf: ['group1', 'group2']
+    }));
+    expect(ssoWithGroups.groups).toBeUndefined(); // Ensure groups property is removed
+  });
+
+  it('should set attributes["uds.core.groups"] to an empty object if groups are not provided', () => {
+    // Arrange
+    const ssoWithoutGroups: Sso = {
+      clientId: 'test-client',
+      name: 'Test Client',
+      redirectUris: ['https://example.com/callback']
+    };
+
+    // Act
+    handleClientGroups(ssoWithoutGroups);
+
+    // Assert
+    expect(ssoWithoutGroups.attributes).toBeDefined(); // Ensure attributes is defined
+    expect(typeof ssoWithoutGroups.attributes).toBe('object'); // Ensure attributes is an object
+    expect(ssoWithoutGroups.attributes!['uds.core.groups']).toEqual(""); // Empty object as string
+    expect(ssoWithoutGroups.groups).toBeUndefined(); // Ensure groups property is removed
   });
 });
