@@ -117,6 +117,7 @@ export async function handleFailure(err: { status: number; message: string }, cr
     status = {
       phase: Phase.Failed,
       observedGeneration: metadata.generation,
+      retryAttempt: 0, // todo: make this nullable when kfc generates the type
     };
   }
 

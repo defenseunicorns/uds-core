@@ -6,10 +6,15 @@ import { Sso, UDSPackage } from "../../crd";
 import { getOwnerRef } from "../utils";
 import { Client } from "./types";
 
-const apiURL =
+let apiURL =
   "http://keycloak-http.keycloak.svc.cluster.local:8080/realms/uds/clients-registrations/default";
 const samlDescriptorUrl =
   "http://keycloak-http.keycloak.svc.cluster.local:8080/realms/uds/protocol/saml/descriptor";
+
+// Support dev mode with port-forwarded keycloak svc
+if (process.env.PEPR_MODE === "dev") {
+  apiURL = "http://localhost:8080/realms/uds/clients-registrations/default";
+}
 
 // Template regex to match clientField() references, see https://regex101.com/r/e41Dsk/3 for details
 const secretTemplateRegex = new RegExp(
