@@ -25,7 +25,7 @@ prometheus:
     enableFeatures:
       - remote-write-receiver
     additionalConfig:
-      scrapeClasses: 
+      scrapeClasses:
         - name: istio-certs
           default: true
           tlsConfig:
