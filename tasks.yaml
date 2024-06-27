@@ -21,13 +21,6 @@ tasks:
       - description: "Build, deploy and test UDS Core"
         task: test-uds-core
 
-  - name: dev
-    actions:
-      - task: create:pepr-build
-      - description: "Full Slim Dev Deploy"
-        task: setup:create-k3d-cluster
-      - cmd: ./uds zarf dev deploy packages/slim-dev --flavor ${FLAVOR}
-
   - name: dev-setup
     actions:
       - description: "Create the dev cluster"
