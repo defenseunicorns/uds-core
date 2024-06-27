@@ -81,6 +81,7 @@ function authNRequestAuthentication(
     spec: {
       jwtRules: [
         {
+          audiences: [name],
           forwardOriginalToken: true,
           issuer: `https://sso.${UDSConfig.domain}/realms/uds`,
           jwksUri: `https://sso.${UDSConfig.domain}/realms/uds/protocol/openid-connect/certs`,
