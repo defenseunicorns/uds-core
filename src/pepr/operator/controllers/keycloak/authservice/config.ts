@@ -31,10 +31,15 @@ export async function setupAuthserviceSecret() {
       Log.info(`Authservice Secret exists, skipping creation - ${secret.metadata?.name}`);
     } catch (e) {
       Log.info("Secret does not exist, creating authservice secret");
-      await updateAuthServiceSecret(buildInitialSecret(), false);
+      try {
+        await updateAuthServiceSecret(buildInitialSecret(), false);
+      } catch (err) {
+        Log.error(err, "Failed to create UDS managed authservice secret.");
+      }
     }
   }
 }
+
 // this initial secret is only a placeholder until the first chain is created
 function buildInitialSecret(): AuthserviceConfig {
   return {
@@ -116,10 +121,10 @@ export async function updateAuthServiceSecret(
     Log.error(e, `Failed to write authservice secret`);
   }
 
-  Log.info("Updated authservice secret succesfully");
+  Log.info("Updated authservice secret successfully");
 
   if (checksum) {
-    Log.info("Adding checksum to deployment authservice secret succesfully");
+    Log.info("Adding checksum to deployment authservice secret successfully");
     await checksumDeployment(configHash);
   }
 }

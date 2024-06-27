@@ -4,6 +4,14 @@ import { Action, AuthorizationPolicy, RequestAuthentication, UDSPackage } from "
 import { getOwnerRef } from "../../utils";
 import { Action as AuthServiceAction, AuthServiceEvent } from "./types";
 
+const operationMap: {
+  [AuthServiceAction.Add]: "Apply";
+  [AuthServiceAction.Remove]: "Delete";
+} = {
+  [AuthServiceAction.Add]: "Apply",
+  [AuthServiceAction.Remove]: "Delete",
+};
+
 function authserviceAuthorizationPolicy(
   labelSelector: { [key: string]: string },
   name: string,
@@ -99,29 +107,32 @@ async function updatePolicy(
   labelSelector: { [key: string]: string },
   pkg: UDSPackage,
 ) {
-  const operation = event.action === AuthServiceAction.Add ? "Apply" : "Delete";
+  // type safe map event to operation (either Apply or Delete)
+  const operation = operationMap[event.action];
   const namespace = pkg.metadata!.namespace!;
   const generation = (pkg.metadata?.generation ?? 0).toString();
   const ownerReferences = getOwnerRef(pkg);
-  const getKind = (kind: string | undefined) => {
-    return kind && kind === "RequestAuthentication" ? RequestAuthentication : AuthorizationPolicy;
+
+  const updateMetadata = (resource: AuthorizationPolicy | RequestAuthentication) => {
+    resource!.metadata!.name = resource!.metadata!.name + "-" + generation;
+    resource!.metadata!.ownerReferences = ownerReferences;
+    resource!.metadata!.labels = {
+      "uds/package": pkg.metadata!.name!,
+      "uds/generation": generation,
+    };
+    return resource;
   };
 
   try {
-    [
-      authserviceAuthorizationPolicy(labelSelector, event.name, namespace),
-      authNRequestAuthentication(labelSelector, event.name, namespace),
-      jwtAuthZAuthorizationPolicy(labelSelector, event.name, namespace),
-    ].forEach(async p => {
-      p!.metadata!.name = p!.metadata!.name + "-" + generation;
-      p!.metadata!.ownerReferences = ownerReferences;
-      p!.metadata!.labels = {
-        "uds/package": pkg.metadata!.name!,
-        "uds/generation": generation,
-      };
-      const kind = getKind(p.kind);
-      await K8s(kind)[operation](p);
-    });
+    await K8s(AuthorizationPolicy)[operation](
+      updateMetadata(authserviceAuthorizationPolicy(labelSelector, event.name, namespace)),
+    );
+    await K8s(RequestAuthentication)[operation](
+      updateMetadata(authNRequestAuthentication(labelSelector, event.name, namespace)),
+    );
+    await K8s(AuthorizationPolicy)[operation](
+      updateMetadata(jwtAuthZAuthorizationPolicy(labelSelector, event.name, namespace)),
+    );
   } catch (e) {
     Log.error(e, `Failed to update auth policy for ${event.name} in ${namespace}: ${e}`);
   }
@@ -135,15 +146,16 @@ async function updatePolicy(
 
 async function purgeOrphanPolicies(generation: string, namespace: string, pkgName: string) {
   for (const kind of [AuthorizationPolicy, RequestAuthentication]) {
-    const policies = await K8s(kind).InNamespace(namespace).WithLabel("uds/package", pkgName).Get();
+    const resources = await K8s(kind)
+      .InNamespace(namespace)
+      .WithLabel("uds/package", pkgName)
+      .Get();
 
-    const orphanPolicies = policies.items.filter(
-      authPolicy => authPolicy.metadata?.labels?.["uds/generation"] !== generation,
-    );
-
-    for (const orphan of orphanPolicies) {
-      Log.debug(orphan, `Deleting orphaned ${orphan.kind} ${orphan.metadata!.name}`);
-      await K8s(kind).Delete(orphan);
+    for (const resource of resources.items) {
+      if (resource.metadata?.labels?.["uds/generation"] !== generation) {
+        Log.debug(resource, `Deleting orphaned ${resource.kind!} ${resource.metadata!.name}`);
+        await K8s(kind).Delete(resource);
+      }
     }
   }
 }

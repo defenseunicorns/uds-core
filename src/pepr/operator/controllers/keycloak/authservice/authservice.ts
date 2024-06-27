@@ -3,7 +3,6 @@ import { UDSConfig } from "../../../../config";
 import { Store } from "../../../common";
 import { UDSPackage } from "../../../crd";
 import { apiCall } from "../client-sync";
-import { Client } from "../types";
 import { updatePolicy } from "./authorization-policy";
 import { getAuthserviceConfig, operatorConfig, updateAuthServiceSecret } from "./config";
 import { Action, AuthServiceEvent, AuthserviceConfig, Chain } from "./types";
@@ -23,10 +22,9 @@ export async function authservice(pkg: UDSPackage) {
     }
     const keycloakClient = await apiCall(client, "GET", token);
 
-    client.secret = keycloakClient.secret;
     await reconcileAuthservice(
-      { name: client.clientId, action: Action.Add, client: client as unknown as Client },
-      client.enableAuthserviceSelector as { [key: string]: string },
+      { name: client.clientId, action: Action.Add, client: keycloakClient },
+      client.enableAuthserviceSelector!,
       pkg,
     );
   }
@@ -38,9 +36,9 @@ export async function authservice(pkg: UDSPackage) {
   return authserviceClients;
 }
 
-export async function purgeAuthserviceClients(pkg: UDSPackage, authserviceClients: string[] = []) {
+export async function purgeAuthserviceClients(pkg: UDSPackage, newAuthserviceClients: string[] = []) {
   // compute set difference of pkg.status.authserviceClients and authserviceClients using Ramda
-  R.difference(pkg.status?.authserviceClients || [], authserviceClients).forEach(async clientId => {
+  R.difference(pkg.status?.authserviceClients || [], newAuthserviceClients).forEach(async clientId => {
     Log.info(`Removing stale authservice chain for client ${clientId}`);
     await reconcileAuthservice({ name: clientId, action: Action.Remove }, {}, pkg);
   });
@@ -75,9 +73,11 @@ export function buildConfig(config: AuthserviceConfig, event: AuthServiceEvent) 
     // add the new chain to the existing authservice config
     chains = config.chains.filter(chain => chain.name !== event.name);
     chains = chains.concat(buildChain(event));
-  } else {
+  } else if (event.action == Action.Remove) {
     // search in the existing chains for the chain to remove by name
     chains = config.chains.filter(chain => chain.name !== event.name);
+  } else {
+    throw new Error(`Unhandled Action: ${event.action satisfies never}`);
   }
 
   // add the new chains to the existing authservice config
