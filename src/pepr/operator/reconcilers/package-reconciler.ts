@@ -30,6 +30,9 @@ export async function packageReconciler(pkg: UDSPackage) {
   // Migrate the package to the latest version
   migrate(pkg);
 
+  // Update to indicate this version of pepr-core has attempted to reconcile the package once
+  uidSeen.add(pkg.metadata!.uid!);
+
   // Configure the namespace and namespace-wide network policies
   try {
     await updateStatus(pkg, { phase: Phase.Pending });
@@ -64,9 +67,6 @@ export async function packageReconciler(pkg: UDSPackage) {
       observedGeneration: metadata.generation,
       retryAttempt: 0, // todo: make this nullable when kfc generates the type
     });
-
-    // Update to indicate this version of pepr-core has reconciled the package successfully once
-    uidSeen.add(pkg.metadata!.uid!);
   } catch (err) {
     void handleFailure(err, pkg);
   }
