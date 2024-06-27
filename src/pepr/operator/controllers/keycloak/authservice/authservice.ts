@@ -36,12 +36,17 @@ export async function authservice(pkg: UDSPackage) {
   return authserviceClients;
 }
 
-export async function purgeAuthserviceClients(pkg: UDSPackage, newAuthserviceClients: string[] = []) {
+export async function purgeAuthserviceClients(
+  pkg: UDSPackage,
+  newAuthserviceClients: string[] = [],
+) {
   // compute set difference of pkg.status.authserviceClients and authserviceClients using Ramda
-  R.difference(pkg.status?.authserviceClients || [], newAuthserviceClients).forEach(async clientId => {
-    Log.info(`Removing stale authservice chain for client ${clientId}`);
-    await reconcileAuthservice({ name: clientId, action: Action.Remove }, {}, pkg);
-  });
+  R.difference(pkg.status?.authserviceClients || [], newAuthserviceClients).forEach(
+    async clientId => {
+      Log.info(`Removing stale authservice chain for client ${clientId}`);
+      await reconcileAuthservice({ name: clientId, action: Action.Remove }, {}, pkg);
+    },
+  );
 }
 
 export async function reconcileAuthservice(
