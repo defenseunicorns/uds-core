@@ -16,11 +16,13 @@ When(PrometheusServiceMonitor.ServiceMonitor)
   .Mutate(async sm => {
     // Provide an opt-out of mutation to handle complicated scenarios
     if (sm.Raw.metadata?.annotations?.["uds/skip-sm-mutate"]) {
-        Log.info(`Mutating scrapeClass to exempt ServiceMonitor ${sm.Raw.metadata?.name} from default scrapeClass mTLS config`);
-        if (sm.Raw.spec === undefined) {
-            return;
-        }
-        sm.Raw.spec.scrapeClass = "exempt";    
+      Log.info(
+        `Mutating scrapeClass to exempt ServiceMonitor ${sm.Raw.metadata?.name} from default scrapeClass mTLS config`,
+      );
+      if (sm.Raw.spec === undefined) {
+        return;
+      }
+      sm.Raw.spec.scrapeClass = "exempt";
       return;
     }
 
@@ -29,10 +31,10 @@ When(PrometheusServiceMonitor.ServiceMonitor)
       if (sm.Raw.spec?.endpoints === undefined) {
         return;
       }
-       /** 
-        * Patching ServiceMonitor tlsConfig is deprecated in favor of default scrapeClass with tls config 
-        * this mutation will be removed in favor of a mutation to opt-out of the default scrapeClass in the future
-        */
+      /**
+       * Patching ServiceMonitor tlsConfig is deprecated in favor of default scrapeClass with tls config
+       * this mutation will be removed in favor of a mutation to opt-out of the default scrapeClass in the future
+       */
       Log.info(`Patching service monitor ${sm.Raw.metadata?.name} for mTLS metrics`);
       const tlsConfig = {
         caFile: "/etc/prom-certs/root-cert.pem",
@@ -47,7 +49,13 @@ When(PrometheusServiceMonitor.ServiceMonitor)
       });
       sm.Raw.spec.endpoints = endpoints;
     } else {
-      Log.info(`No mutations needed for service monitor ${sm.Raw.metadata?.name}`);
+      Log.info(
+        `Mutating scrapeClass to exempt ServiceMonitor ${sm.Raw.metadata?.name} from default scrapeClass mTLS config`,
+      );
+      if (sm.Raw.spec === undefined) {
+        return;
+      }
+      sm.Raw.spec.scrapeClass = "exempt";
     }
   });
 
