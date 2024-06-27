@@ -58,7 +58,7 @@ export async function packageReconciler(pkg: UDSPackage) {
         }
       }
     } else {
-      Log.warn(`Running in single test mode, skipping ${name} ServiceMonitors.`);
+      Log.warn(`Running in single test mode, skipping ${name} Monitors.`);
     }
 
     // Configure SSO

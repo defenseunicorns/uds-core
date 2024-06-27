@@ -1,0 +1,11 @@
+kind: ZarfPackageConfig
+metadata:
+  name: pepr-uds-core
+  description: 'Pepr Module: A collection of capabilities for UDS Core'
+  url: https://github.com/defenseunicorns/pepr
+components:
+  - name: module
+    required: true
+    import:
+      path: ../../dist
+      name: module
