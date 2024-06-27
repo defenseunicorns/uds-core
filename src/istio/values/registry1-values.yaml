@@ -4,4 +4,4 @@ global:
   proxy_init:
     image: "###ZARF_REGISTRY###/ironbank/tetrate/istio/proxyv2:1.22.1-tetratefips-v0"
   proxy:
-    image: "###ZARF_REGISTRY###ironbank/tetrate/istio/proxyv2:1.22.1-tetratefips-v0"
+    image: "###ZARF_REGISTRY###/ironbank/tetrate/istio/proxyv2:1.22.1-tetratefips-v0"
