@@ -9,7 +9,7 @@ export class Package extends GenericKind {
 
 export interface Spec {
   /**
-   * Create Service Monitor configurations
+   * Create Service or Pod Monitor configurations
    */
   monitor?: Monitor[];
   /**
@@ -585,6 +585,7 @@ export interface Status {
   networkPolicyCount?: number;
   observedGeneration?: number;
   phase?: Phase;
+  retryAttempt?: number;
   ssoClients?: string[];
 }
 

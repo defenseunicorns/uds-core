@@ -6,9 +6,9 @@ tasks:
   - name: gen-crds
     description: "Generate CRDS, requires a running kubernetes cluster"
     actions:
-      - cmd: "npx ts-node src/pepr/operator/crd/register.ts"
+      - cmd: npx ts-node -e "import { registerCRDs } from './src/pepr/operator/crd/register'; registerCRDs()"
         env:
-          - "PEPR_WATCH_MODE=true"
+          - "PEPR_MODE=dev"
 
       - cmd: "npx kubernetes-fluent-client crd packages.uds.dev src/pepr/operator/crd/generated"
 

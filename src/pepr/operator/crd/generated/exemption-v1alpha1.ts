@@ -4,14 +4,13 @@ import { GenericKind, RegisterKind } from "kubernetes-fluent-client";
 
 export class Exemption extends GenericKind {
   spec?: Spec;
-  status?: Status;
 }
 
 export interface Spec {
   /**
    * Policy exemptions
    */
-  exemptions?: ExemptionElement[];
+  exemptions: ExemptionElement[];
 }
 
 export interface ExemptionElement {
@@ -62,18 +61,6 @@ export enum Policy {
   RestrictSELinuxType = "RestrictSELinuxType",
   RestrictSeccomp = "RestrictSeccomp",
   RestrictVolumeTypes = "RestrictVolumeTypes",
-}
-
-export interface Status {
-  observedGeneration?: number;
-  phase?: Phase;
-  titles?: string[];
-}
-
-export enum Phase {
-  Failed = "Failed",
-  Pending = "Pending",
-  Ready = "Ready",
 }
 
 RegisterKind(Exemption, {
