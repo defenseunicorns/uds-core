@@ -2,6 +2,8 @@ pilot:
   image: "docker.io/istio/pilot:1.22.1-distroless"
 global:
   proxy_init:
+    # renovate: image=docker.io/istio/proxyv2
     image: "###ZARF_REGISTRY###/istio/proxyv2:1.22.1-distroless"
   proxy:
+    # renovate: image=docker.io/istio/proxyv2
     image: "###ZARF_REGISTRY###/istio/proxyv2:1.22.1-distroless"
