@@ -90,6 +90,7 @@ export async function writeEvent(cr: UDSPackage, event: Partial<kind.CoreEvent>)
  * @param err The error-like object
  * @param cr The custom resource that failed
  */
+// todo: "errors" end up here from (1) our own thrown errors, (2) thrown k8s/store failures which are http responses? (3) unknown other places
 export async function handleFailure(err: { status: number; message: string }, cr: UDSPackage) {
   const metadata = cr.metadata!;
   const identifier = `${metadata.namespace}/${metadata.name}`;

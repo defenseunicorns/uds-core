@@ -103,6 +103,7 @@ async function syncClient(
       `${pkg.metadata?.namespace}/${pkg.metadata?.name}. Error: ${err.message}`;
     Log.error({ err }, msg);
 
+    // todo: do we want to surface this error to events? Currently only retry errors show up in events
     if (isRetry) {
       Log.error(`${msg}, retry failed, aborting`);
       throw new Error(msg);
@@ -110,6 +111,8 @@ async function syncClient(
 
     // Retry the request
     Log.warn(`${msg}, retrying`);
+    // todo: there are only a few places retrying without the token makes sense
+    // we should identify specific error statuses/texts where a retry will help?
     return syncClient(clientReq, pkg, true);
   }
 

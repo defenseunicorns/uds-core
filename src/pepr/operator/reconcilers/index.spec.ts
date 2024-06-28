@@ -222,6 +222,7 @@ describe("handleFailure", () => {
       status: {
         observedGeneration: 1,
         phase: Phase.Failed,
+        retryAttempt: 0,
       },
     });
   });
