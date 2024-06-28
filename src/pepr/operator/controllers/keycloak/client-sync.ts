@@ -155,6 +155,7 @@ export function handleClientGroups(clientReq: Sso) {
     clientReq.attributes = clientReq.attributes || {};
     clientReq.attributes["uds.core.groups"] = ""; // Remove groups attribute from client
   }
+  delete clientReq.groups;
 }
 
 export async function apiCall(sso: Partial<Sso>, method = "POST", authToken = "") {
