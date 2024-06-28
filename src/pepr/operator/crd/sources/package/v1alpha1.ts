@@ -311,7 +311,7 @@ const sso = {
         type: "object",
         properties: {
           anyOf: {
-            description: "List of group allowed to access to client",
+            description: "List of groups allowed to access to client",
             type: "array",
             items: {
               type: "string",

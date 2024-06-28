@@ -148,10 +148,9 @@ async function syncClient(
  * @param clientReq - The client request object.
  */
 export function handleClientGroups(clientReq: Sso) {
-  if (clientReq.groups) {
+  if (clientReq.groups?.anyOf) {
     clientReq.attributes = clientReq.attributes || {};
     clientReq.attributes["uds.core.groups"] = JSON.stringify(clientReq.groups);
-    delete clientReq.groups;
   } else {
     clientReq.attributes = clientReq.attributes || {};
     clientReq.attributes["uds.core.groups"] = ""; // Remove groups attribute from client
