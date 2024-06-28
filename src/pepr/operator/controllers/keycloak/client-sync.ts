@@ -107,7 +107,14 @@ async function syncClient(
   }
 
   // Write the new token to the store
-  await Store.setItemAndWait(name, client.registrationAccessToken!);
+  try {
+    await Store.setItemAndWait(name, client.registrationAccessToken!);
+  } catch (err) {
+    throw Error(
+      `Failed to set token in store for client '${clientReq.clientId}', package ` +
+        `${pkg.metadata?.namespace}/${pkg.metadata?.name}`,
+    );
+  }
 
   // Remove the registrationAccessToken from the client object to avoid problems (one-time use token)
   delete client.registrationAccessToken;
