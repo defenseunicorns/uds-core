@@ -1,5 +1,5 @@
 registry: registry1.dso.mil
-tag: "5.3.2"
+tag: "5.3.3"
 manager:
   image:
     repository: ironbank/neuvector/neuvector/manager
