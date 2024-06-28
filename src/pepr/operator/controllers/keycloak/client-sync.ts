@@ -86,6 +86,8 @@ async function syncClient(
 
     let client: Client;
 
+    handleClientGroups(clientReq);
+
     // If an existing client is found, update it
     if (token && !isRetry) {
       Log.debug(pkg.metadata, `Found existing token for ${clientReq.clientId}`);
@@ -140,6 +142,21 @@ async function syncClient(
     Log.warn(`${msg}, retrying`);
     return syncClient(clientReq, pkg, true);
   }
+}
+
+/**
+ * Handles the client groups by converting the groups to attributes.
+ * @param clientReq - The client request object.
+ */
+export function handleClientGroups(clientReq: Sso) {
+  if (clientReq.groups?.anyOf) {
+    clientReq.attributes = clientReq.attributes || {};
+    clientReq.attributes["uds.core.groups"] = JSON.stringify(clientReq.groups);
+  } else {
+    clientReq.attributes = clientReq.attributes || {};
+    clientReq.attributes["uds.core.groups"] = ""; // Remove groups attribute from client
+  }
+  delete clientReq.groups;
 }
 
 async function apiCall(sso: Partial<Sso>, method = "POST", authToken = "") {
