@@ -80,7 +80,6 @@ export async function purgeSSOClients(pkg: UDSPackage, refs: string[] = []) {
 async function syncClient(
   { isAuthSvcClient, secretName, secretTemplate, ...clientReq }: Sso,
   pkg: UDSPackage,
-  isRetry = false,
 ) {
   Log.debug(pkg.metadata, `Processing client request: ${clientReq.clientId}`);
   // Not including the CR data in the ref because Keycloak client IDs must be unique already
@@ -92,7 +91,7 @@ async function syncClient(
     const token = Store.getItem(name);
 
     // If an existing client is found, update it
-    if (token && !isRetry) {
+    if (token) {
       Log.debug(pkg.metadata, `Found existing token for ${clientReq.clientId}`);
       client = await apiCall(clientReq, "PUT", token);
     } else {
@@ -104,18 +103,7 @@ async function syncClient(
       `Failed to process client request '${clientReq.clientId}' for ` +
       `${pkg.metadata?.namespace}/${pkg.metadata?.name}. Error: ${err.message}`;
     Log.error({ err }, msg);
-
-    // todo: do we want to surface this error to events? Currently only retry errors show up in events
-    if (isRetry) {
-      Log.error(`${msg}, retry failed, aborting`);
-      throw new Error(msg);
-    }
-
-    // Retry the request
-    Log.warn(`${msg}, retrying`);
-    // todo: there are only a few places retrying without the token makes sense
-    // we should identify specific error statuses/texts where a retry will help?
-    return syncClient(clientReq, pkg, true);
+    throw new Error(msg);
   }
 
   // Write the new token to the store

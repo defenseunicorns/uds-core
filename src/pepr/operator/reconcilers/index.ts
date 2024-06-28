@@ -90,12 +90,12 @@ export async function writeEvent(cr: UDSPackage, event: Partial<kind.CoreEvent>)
  * @param err The error-like object
  * @param cr The custom resource that failed
  */
-// todo: "errors" end up here from (1) our own thrown errors, (2) thrown k8s/store failures which are http responses? (3) unknown other places
 export async function handleFailure(err: { status: number; message: string }, cr: UDSPackage) {
   const metadata = cr.metadata!;
   const identifier = `${metadata.namespace}/${metadata.name}`;
   let status: Status;
 
+  // todo: "errors" end up here from (1) our own thrown errors, (2) thrown k8s/store failures which are http responses? (3) unknown other places - each of these have a different type and should be handled differently
   // todo: identify exact 404 we are targetting, possibly in `updateStatus`
   if (err.status === 404) {
     Log.warn({ err }, `Package metadata seems to have been deleted`);
