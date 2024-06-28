@@ -39,6 +39,8 @@ jobs:
         run: brew install defenseunicorns/tap/uds@0.11.2
       - name: Run Formatting Checks
         run: uds run lint-check --no-progress
+      - name: Setup Lula
+        uses: .github/actions/setup
 
   # This job checks if there are changes in specific paths source packages.
   check-paths:

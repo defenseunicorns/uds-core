@@ -95,3 +95,7 @@ tasks:
   - name: lint-fix
     actions:
       - task: lint:fix
+
+  - name: lint-oscal
+    actions:
+      - task: lint:oscal
