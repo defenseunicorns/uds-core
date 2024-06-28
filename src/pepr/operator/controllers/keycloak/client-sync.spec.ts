@@ -181,14 +181,14 @@ describe("handleClientGroups function", () => {
     expect(ssoWithoutGroups.attributes!["uds.core.groups"]).toEqual("");
     expect(ssoWithoutGroups.groups).toBeUndefined();
   });
-  
+
   it('should set attributes["uds.core.groups"] to an empty object if empty groups object is provided', () => {
     // Arrange
     const ssoWithoutGroups: Sso = {
       clientId: "test-client",
       name: "Test Client",
       redirectUris: ["https://example.com/callback"],
-      groups: {}
+      groups: {},
     };
 
     // Act
