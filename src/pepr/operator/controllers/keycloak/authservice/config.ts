@@ -62,9 +62,6 @@ function buildInitialSecret(): AuthserviceConfig {
         preamble: "Bearer",
         header: "Authorization",
       },
-      access_token: {
-        header: "JWT",
-      },
       trusted_certificate_authority: "",
       logout: {
         path: "/globallogout",
