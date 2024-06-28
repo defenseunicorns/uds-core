@@ -154,14 +154,14 @@ describe("handleClientGroups function", () => {
     handleClientGroups(ssoWithGroups);
 
     // Assert
-    expect(ssoWithGroups.attributes).toBeDefined(); // Ensure attributes is defined
-    expect(typeof ssoWithGroups.attributes).toBe("object"); // Ensure attributes is an object
+    expect(ssoWithGroups.attributes).toBeDefined();
+    expect(typeof ssoWithGroups.attributes).toBe("object");
     expect(ssoWithGroups.attributes!["uds.core.groups"]).toEqual(
       JSON.stringify({
         anyOf: ["group1", "group2"],
       }),
     );
-    expect(ssoWithGroups.groups).toBeUndefined(); // Ensure groups property is removed
+    expect(ssoWithGroups.groups).toBeUndefined();
   });
 
   it('should set attributes["uds.core.groups"] to an empty object if groups are not provided', () => {
@@ -176,9 +176,53 @@ describe("handleClientGroups function", () => {
     handleClientGroups(ssoWithoutGroups);
 
     // Assert
-    expect(ssoWithoutGroups.attributes).toBeDefined(); // Ensure attributes is defined
-    expect(typeof ssoWithoutGroups.attributes).toBe("object"); // Ensure attributes is an object
-    expect(ssoWithoutGroups.attributes!["uds.core.groups"]).toEqual(""); // Empty object as string
-    expect(ssoWithoutGroups.groups).toBeUndefined(); // Ensure groups property is removed
+    expect(ssoWithoutGroups.attributes).toBeDefined();
+    expect(typeof ssoWithoutGroups.attributes).toBe("object");
+    expect(ssoWithoutGroups.attributes!["uds.core.groups"]).toEqual("");
+    expect(ssoWithoutGroups.groups).toBeUndefined();
+  });
+  
+  it('should set attributes["uds.core.groups"] to an empty object if empty groups object is provided', () => {
+    // Arrange
+    const ssoWithoutGroups: Sso = {
+      clientId: "test-client",
+      name: "Test Client",
+      redirectUris: ["https://example.com/callback"],
+      groups: {}
+    };
+
+    // Act
+    handleClientGroups(ssoWithoutGroups);
+
+    // Assert
+    expect(ssoWithoutGroups.attributes).toBeDefined();
+    expect(typeof ssoWithoutGroups.attributes).toBe("object");
+    expect(ssoWithoutGroups.attributes!["uds.core.groups"]).toEqual("");
+    expect(ssoWithoutGroups.groups).toBeUndefined();
+  });
+
+  it('should set attributes["uds.core.groups"] to an empty array of groups if groups.anyOf is empty array', () => {
+    // Arrange
+    const ssoWithGroups: Sso = {
+      clientId: "test-client",
+      name: "Test Client",
+      redirectUris: ["https://example.com/callback"],
+      groups: {
+        anyOf: [],
+      },
+    };
+
+    // Act
+    handleClientGroups(ssoWithGroups);
+
+    // Assert
+    expect(ssoWithGroups.attributes).toBeDefined();
+    expect(typeof ssoWithGroups.attributes).toBe("object");
+    expect(ssoWithGroups.attributes!["uds.core.groups"]).toEqual(
+      JSON.stringify({
+        anyOf: [],
+      }),
+    );
+    expect(ssoWithGroups.groups).toBeUndefined();
   });
 });

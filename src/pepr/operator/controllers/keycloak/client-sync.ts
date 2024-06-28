@@ -148,16 +148,16 @@ async function syncClient(
  * Handles the client groups by converting the groups to attributes.
  * @param clientReq - The client request object.
  */
-export function handleClientGroups(clientReq: Sso) {
-  if (clientReq.groups) {
+export function handleClientGroups(clientReq: Sso) {  
+  if (clientReq.groups?.anyOf) {
     clientReq.attributes = clientReq.attributes || {};
     clientReq.attributes["uds.core.groups"] = JSON.stringify(clientReq.groups);
-    delete clientReq.groups;
   } else {
     clientReq.attributes = clientReq.attributes || {};
     clientReq.attributes["uds.core.groups"] = ""; // Remove groups attribute from client
   }
-}
+  delete clientReq.groups;
+}  
 
 async function apiCall(sso: Partial<Sso>, method = "POST", authToken = "") {
   // Handle single test mode
