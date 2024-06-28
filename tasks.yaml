@@ -80,12 +80,6 @@ tasks:
     actions:
       - task: test:single-package
 
-  - name: slim-dev
-    actions:
-      - task: create:slim-dev-package
-      - task: create:k3d-slim-dev-bundle
-      - task: deploy:k3d-slim-dev-bundle
-
   - name: test-uds-core
     actions:
       - task: test:uds-core
