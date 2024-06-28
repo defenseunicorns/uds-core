@@ -39,8 +39,6 @@ jobs:
         run: brew install defenseunicorns/tap/uds@0.11.2
       - name: Run Formatting Checks
         run: uds run lint-check --no-progress
-      - name: Setup Lula
-        uses: .github/actions/setup
 
   # This job checks if there are changes in specific paths source packages.
   check-paths:
@@ -61,7 +59,27 @@ jobs:
         with:
           filters: .github/filters.yaml
 
-  # This job triggers a separate workflow for each changed source package, if any.
+  run-lint-oscal:
+      needs: check-paths
+      if: needs.check-paths.outputs.oscal_changed == 'true'
+      runs-on: ubuntu-latest
+      steps:
+        - name: Checkout code
+          uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+
+        - name: Identify changed OSCAL files
+          id: find_changed_files
+          run: |
+            CHANGED_FILES=$(git diff --name-only HEAD^ HEAD | grep 'oscal.*\.yaml$' || true)
+            echo "Changed OSCAL files: $CHANGED_FILES"
+            echo "::set-output name=oscal_files::$CHANGED_FILES"
+
+        - name: Run lint-oscal
+          uses: ./.github/actions/lint-oscal/action.yaml
+          with:
+            OSCALFILES: ${{ steps.find_changed_files.outputs.oscal_files }}
+
+# This job triggers a separate workflow for each changed source package, if any.
   run-package-test:
     needs: check-paths
     name: Schedule

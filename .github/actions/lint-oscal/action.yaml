@@ -1,0 +1,10 @@
+# action.yml
+name: "lint-oscal"
+description: "Lula Lint OSCAL"
+
+runs:
+  using: "composite"
+  steps:
+    - name: lint-oscal
+      run: |
+        uds run lint-oscal --set OSCALFILES=${{ inputs.OSCALFILES }}
