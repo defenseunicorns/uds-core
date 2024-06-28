@@ -46,7 +46,7 @@ function buildInitialSecret(): AuthserviceConfig {
     allow_unmatched_requests: false,
     listen_address: "0.0.0.0",
     listen_port: "10003",
-    log_level: "trace",
+    log_level: "info",
     default_oidc_config: {
       skip_verify_peer_cert: false,
       authorization_uri: `https://sso.${UDSConfig.domain}/realms/${operatorConfig.realm}/protocol/openid-connect/auth`,
@@ -54,7 +54,7 @@ function buildInitialSecret(): AuthserviceConfig {
       jwks_fetcher: {
         jwks_uri: `https://sso.${UDSConfig.domain}/realms/${operatorConfig.realm}/protocol/openid-connect/certs`,
         periodic_fetch_interval_sec: 60,
-        skip_verify_peer_cert: "false",
+        skip_verify_peer_cert: false,
       },
       client_id: "global_id",
       client_secret: "global_secret",

@@ -42,7 +42,7 @@ interface OIDCConfig {
 interface JWKSFetcher {
   jwks_uri: string;
   periodic_fetch_interval_sec: number;
-  skip_verify_peer_cert: string;
+  skip_verify_peer_cert?: boolean;
 }
 
 interface Token {

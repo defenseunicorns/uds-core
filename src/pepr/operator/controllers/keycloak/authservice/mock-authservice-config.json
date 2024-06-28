@@ -10,7 +10,7 @@
     "jwks_fetcher": {
       "jwks_uri": "https://sso.uds.dev/realms/uds/protocol/openid-connect/certs",
       "periodic_fetch_interval_sec": 60,
-      "skip_verify_peer_cert": "false"
+      "skip_verify_peer_cert": false
     },
     "client_id": "global_id",
     "client_secret": "global_secret",

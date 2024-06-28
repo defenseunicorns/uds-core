@@ -113,10 +113,7 @@ export function buildChain(update: AuthServiceEvent) {
             path: "/local",
             redirect_uri: `https://sso.${UDSConfig.domain}/realms/${operatorConfig.realm}/protocol/openid-connect/token/logout`,
           },
-          skip_verify_peer_cert: true,
-          id_token: {
-            header: "Authorization",
-          },
+          cookie_name_prefix: update.client!.clientId,
         },
       },
     ],
