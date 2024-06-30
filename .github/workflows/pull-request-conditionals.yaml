@@ -47,6 +47,7 @@ jobs:
     name: Select Jobs
     outputs:
       packages: ${{ steps.path-filter.outputs.changes }}
+      oscal: ${{ steps.path-filter.outputs.oscal }}
 
     steps:
       - name: Checkout the code
@@ -61,7 +62,7 @@ jobs:
 
   run-lint-oscal:
     needs: check-paths
-    # if: ${{ needs.check-paths.outputs.oscal == 'true' }}
+    if: ${{ needs.check-paths.outputs.oscal == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: test outputs
