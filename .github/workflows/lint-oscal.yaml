@@ -6,7 +6,7 @@ on:
       - '**/*oscal*.yaml'
 
 permissions:
-    contents: read
+  contents: read
 
 jobs:
   lint:
