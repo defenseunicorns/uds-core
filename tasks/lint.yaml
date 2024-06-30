@@ -25,4 +25,3 @@ tasks:
     actions:
       - description: Lula Lint OSCAL
         task: remote:oscal
-        
