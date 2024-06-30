@@ -84,7 +84,7 @@ jobs:
           list-files: shell
 
   run-lint-oscal:
-    needs: check-paths
+    needs: check-oscal-paths
     if: ${{ needs.check-oscal-paths.outputs.oscal == 'true' }}
     runs-on: ubuntu-latest
     steps:
