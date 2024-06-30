@@ -61,7 +61,7 @@ jobs:
 
   run-lint-oscal:
     needs: check-paths
-    if: steps.check-paths.outputs.oscal == 'true'
+    if: ${{ needs.check-paths.outputs.oscal == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
