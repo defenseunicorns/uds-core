@@ -6,6 +6,5 @@ runs:
   using: "composite"
   steps:
     - name: lint-oscal
-      run: |
-        uds run lint-oscal --set OSCALFILES=${{ inputs.OSCALFILES }}
+      run: uds run lint-oscal --set OSCALFILES=${{ inputs.OSCALFILES }}
       shell: bash
