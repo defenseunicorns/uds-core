@@ -61,21 +61,25 @@ jobs:
 
   run-lint-oscal:
     needs: check-paths
-    if: needs.check-paths.outputs.oscal_changed == 'true'
+    if: needs.check-paths.outputs.oscal == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          fetch-depth: 0
 
       - name: Identify changed OSCAL files
         id: find_changed_files
         run: |
-          CHANGED_FILES=$(git diff --name-only HEAD^ HEAD | grep 'oscal.*\.yaml$' || true)
+          CHANGED_FILES=$(git diff --name-only main HEAD | grep 'oscal.*\.yaml$' | grep -v ".github*" | tr '\n' ',' | sed 's/.$//' || true)
           echo "Changed OSCAL files: $CHANGED_FILES"
-          echo "::set-output name=oscal_files::$CHANGED_FILES"
+          echo "oscal_files=$CHANGED_FILES" >> "$GITHUB_OUTPUT"
+        shell: bash
 
       - name: Run lint-oscal
-        uses: ./.github/actions/lint-oscal/action.yaml
+        if: ${{ steps.find_changed_files.outputs.oscal_files  != '' }}
+        uses: ./.github/actions/lint-oscal
         with:
           OSCALFILES: ${{ steps.find_changed_files.outputs.oscal_files }}
 
