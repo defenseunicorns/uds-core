@@ -8,3 +8,4 @@ runs:
     - name: lint-oscal
       run: |
         uds run lint-oscal --set OSCALFILES=${{ inputs.OSCALFILES }}
+      shell: bash
