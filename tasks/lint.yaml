@@ -24,4 +24,5 @@ tasks:
   - name: oscal
     actions:
       - description: Lula Lint OSCAL
-      - task: remote:oscal
+        task: remote:oscal
+        

@@ -67,9 +67,7 @@ jobs:
     if: ${{ needs.check-paths.outputs.oscal == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - name: test outputs
-        run: echo "${{ needs.check-paths.outputs.oscal_files }}"
-
+      # filter the files to remove not oscal files (such as those titles oscal-* under ./.github)
       - name: Identify changed OSCAL files
         id: find_changed_files
         run: |
@@ -77,14 +75,24 @@ jobs:
           echo "Changed OSCAL files: $CHANGED_FILES"
           echo "oscal_files=$CHANGED_FILES" >> "$GITHUB_OUTPUT"
         shell: bash
-
+      # checkout for access to the oscal files targeted for linting
       - name: Checkout the code
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
-
-      - name: Run lint-oscal
-        uses: ./.github/actions/lint-oscal
+      # setup uds-cli
+      - name: Use Node.js latest
+        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
         with:
-          OSCALFILES: ${{ steps.find_changed_files.outputs.oscal_files }}
+          node-version: 20
+      - name: Set up Homebrew
+        uses: Homebrew/actions/setup-homebrew@master
+      - name: Install UDS CLI
+        shell: bash
+        # renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
+        run: brew install defenseunicorns/tap/uds@0.11.2
+      # lint the oscal files
+      - name: lint-oscal
+        run: uds run lint-oscal --set OSCALFILES=${{ steps.find_changed_files.outputs.oscal_files }}
+        shell: bash
 
 # This job triggers a separate workflow for each changed source package, if any.
   run-package-test:
