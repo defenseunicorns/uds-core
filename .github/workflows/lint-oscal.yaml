@@ -23,6 +23,6 @@ jobs:
           echo "::set-output name=oscal_files::$CHANGED_FILES"
 
       - name: Run lint-oscal
-        uses: ./.github/actions/lint-oscal/action.yaml
+        uses: ./.github/actions/lint-oscal
         with:
           OSCALFILES: ${{ steps.find_changed_files.outputs.oscal_files }}
