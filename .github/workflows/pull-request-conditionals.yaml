@@ -48,6 +48,7 @@ jobs:
     outputs:
       packages: ${{ steps.path-filter.outputs.changes }}
       oscal: ${{ steps.path-filter.outputs.oscal }}
+      oscal_files: ${{ steps.path-filter.outputs.oscal_files }}
 
     steps:
       - name: Checkout the code
@@ -66,26 +67,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: test outputs
-        run: echo "${{ needs.check-paths.outputs.oscal }}"
-
-      - name: Checkout code
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
-        with:
-          fetch-depth: 0
-
-      - name: Identify changed OSCAL files
-        id: find_changed_files
-        run: |
-          CHANGED_FILES=$(git diff --name-only main HEAD | grep 'oscal.*\.yaml$' | grep -v ".github*" | tr '\n' ',' | sed 's/.$//' || true)
-          echo "Changed OSCAL files: $CHANGED_FILES"
-          echo "oscal_files=$CHANGED_FILES" >> "$GITHUB_OUTPUT"
-        shell: bash
+        run: echo "${{ needs.check-paths.outputs.oscal_files }}"
 
       - name: Run lint-oscal
-        if: ${{ steps.find_changed_files.outputs.oscal_files  != '' }}
         uses: ./.github/actions/lint-oscal
         with:
-          OSCALFILES: ${{ steps.find_changed_files.outputs.oscal_files }}
+          OSCALFILES: ${{ needs.check-paths.outputs.oscal_files }}
 
 # This job triggers a separate workflow for each changed source package, if any.
   run-package-test:

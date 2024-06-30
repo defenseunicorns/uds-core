@@ -26,4 +26,4 @@ tempo:
 velero:
   - "src/velero/**"
 oscal:
-  - "**/*oscal*.yaml"
+  - added|modified: "**/*oscal*.yaml"
