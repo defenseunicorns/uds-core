@@ -59,14 +59,14 @@ jobs:
         with:
           filters: .github/filters.yaml
 
-      - name: test outputs
-        run: echo "${{ steps.path-filter.outputs.oscal }}"
-
   run-lint-oscal:
     needs: check-paths
-    if: ${{ needs.check-paths.outputs.oscal == 'true' }}
+    # if: ${{ needs.check-paths.outputs.oscal == 'true' }}
     runs-on: ubuntu-latest
     steps:
+      - name: test outputs
+        run: echo "${{ needs.check-paths.outputs.oscal }}"
+
       - name: Checkout code
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
