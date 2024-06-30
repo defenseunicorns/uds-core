@@ -60,7 +60,7 @@ jobs:
         uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3
         with:
           filters: .github/filters.yaml
-          list-files: csv
+          list-files: shell
 
   run-lint-oscal:
     needs: check-paths
@@ -70,10 +70,21 @@ jobs:
       - name: test outputs
         run: echo "${{ needs.check-paths.outputs.oscal_files }}"
 
+      - name: Identify changed OSCAL files
+        id: find_changed_files
+        run: |
+          CHANGED_FILES=$(echo "${{ needs.check-paths.outputs.oscal_files }}" | tr ' ' '\n' | grep -v ".github*" | tr '\n' ',' | sed 's/.$//' || true)
+          echo "Changed OSCAL files: $CHANGED_FILES"
+          echo "oscal_files=$CHANGED_FILES" >> "$GITHUB_OUTPUT"
+        shell: bash
+
+      - name: Checkout the code
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+
       - name: Run lint-oscal
         uses: ./.github/actions/lint-oscal
         with:
-          OSCALFILES: ${{ needs.check-paths.outputs.oscal_files }}
+          OSCALFILES: ${{ steps.find_changed_files.outputs.oscal_files }}
 
 # This job triggers a separate workflow for each changed source package, if any.
   run-package-test:
