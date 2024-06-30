@@ -14,13 +14,13 @@ component-definition:
             rel: website
 
   import-component-definitions:
-    - href: 'file://../src/grafana/oscal-component.yaml'
-    - href: 'file://../src/istio/oscal-component.yaml'
-    - href: 'file://../src/loki/oscal-component.yaml'
-    - href: 'file://../src/neuvector/oscal-component.yaml'
-    - href: 'file://../src/prometheus-stack/oscal-component.yaml'
-    - href: 'file://../src/promtail/oscal-component.yaml'
-    - href: 'file://../src/velero/oscal-component.yaml'
+    - href: 'file://./../src/grafana/oscal-component.yaml'
+    - href: 'file://./../src/istio/oscal-component.yaml'
+    - href: 'file://./../src/loki/oscal-component.yaml'
+    - href: 'file://./../src/neuvector/oscal-component.yaml'
+    - href: 'file://./../src/prometheus-stack/oscal-component.yaml'
+    - href: 'file://./../src/promtail/oscal-component.yaml'
+    - href: 'file://./../src/velero/oscal-component.yaml'
 
   capabilities:
     - uuid: 857dcaf8-9080-4cf0-8029-8a03fcdde2df

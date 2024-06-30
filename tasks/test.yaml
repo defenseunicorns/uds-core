@@ -15,11 +15,6 @@ tasks:
       - description: "Validate the package"
         cmd: uds run -f src/${UDS_PKG}/tasks.yaml validate --no-progress
 
-      - task: compliance:validate
-        with:
-          oscalfile: ./compliance/oscal-component.yaml
-          assessment_results: ./compliance/oscal-assessment-results.yaml
-
   - name: validate-packages
     description: "Validated all packages"
     # loop through each src/* package and run the validate.yaml task
@@ -37,6 +32,12 @@ tasks:
       - task: create:k3d-standard-bundle
       - task: deploy:k3d-standard-bundle
       - task: validate-packages
+      - task: compliance:validate
+        with:
+          oscalfile: ./compliance/oscal-component.yaml
+          assessment_results: ./compliance/oscal-assessment-results.yaml
+      - description: copy assessment file to log location
+        cmd: cp ./compliance/oscal-assessment-results.yaml /tmp/oscal-assessment-results.yaml
 
   - name: uds-core-upgrade
     description: "Test an upgrade from the latest released UDS Core package to current branch"
