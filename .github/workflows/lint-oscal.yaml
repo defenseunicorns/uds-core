@@ -21,6 +21,7 @@ jobs:
           CHANGED_FILES=$(git diff --name-only HEAD^ HEAD | grep 'oscal.*\.yaml$' || true)
           echo "Changed OSCAL files: $CHANGED_FILES"
           echo "::set-output name=oscal_files::$CHANGED_FILES"
+        shell: bash
 
       - name: Run lint-oscal
         uses: ./.github/actions/lint-oscal
