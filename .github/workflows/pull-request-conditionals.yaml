@@ -40,7 +40,6 @@ jobs:
       - name: Run Formatting Checks
         run: uds run lint-check --no-progress
 
-
   # This job checks if there are changes in specific paths source packages.
   check-paths:
     needs: lint-check
@@ -59,7 +58,6 @@ jobs:
         uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3
         with:
           filters: .github/filters.yaml
-          list-files: shell
 
 # This job triggers a separate workflow for each changed source package, if any.
   run-package-test:
