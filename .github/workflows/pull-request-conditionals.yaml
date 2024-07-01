@@ -59,7 +59,7 @@ jobs:
         with:
           filters: .github/filters.yaml
 
-# This job triggers a separate workflow for each changed source package, if any.
+  # This job triggers a separate workflow for each changed source package, if any.
   run-package-test:
     needs: check-paths
     name: Schedule
