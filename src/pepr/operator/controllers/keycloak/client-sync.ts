@@ -41,16 +41,16 @@ const x509CertRegex = new RegExp(
 export async function keycloak(pkg: UDSPackage) {
   // Get the list of clients from the package
   const clientReqs = pkg.spec?.sso || [];
-  const refs: string[] = [];
+  const clients: Map<string, Client> = new Map();
 
   for (const clientReq of clientReqs) {
-    const ref = await syncClient(clientReq, pkg);
-    refs.push(ref);
+    const client = await syncClient(clientReq, pkg);
+    clients.set(client.clientId, client);
   }
 
-  await purgeSSOClients(pkg, refs);
+  await purgeSSOClients(pkg, [...clients.keys()]);
 
-  return refs;
+  return clients;
 }
 
 /**
@@ -59,18 +59,18 @@ export async function keycloak(pkg: UDSPackage) {
  * @param pkg the package to process
  * @param refs the list of client refs to keep
  */
-export async function purgeSSOClients(pkg: UDSPackage, refs: string[] = []) {
+export async function purgeSSOClients(pkg: UDSPackage, newClients: string[] = []) {
   // Check for any clients that are no longer in the package and remove them
   const currentClients = pkg.status?.ssoClients || [];
-  const toRemove = currentClients.filter(client => !refs.includes(client));
+  const toRemove = currentClients.filter(client => !newClients.includes(client));
   for (const ref of toRemove) {
-    const token = Store.getItem(ref);
-    const clientId = ref.replace("sso-client-", "");
+    const storeKey = `sso-client-${ref}`;
+    const token = Store.getItem(storeKey);
     if (token) {
-      Store.removeItem(ref);
-      await apiCall({ clientId }, "DELETE", token);
+      Store.removeItem(storeKey);
+      await apiCall({ clientId: ref }, "DELETE", token);
     } else {
-      Log.warn(pkg.metadata, `Failed to remove client ${clientId}, token not found`);
+      Log.warn(pkg.metadata, `Failed to remove client ${ref}, token not found`);
     }
   }
 }
@@ -125,7 +125,7 @@ async function syncClient(
       data: generateSecretData(client, secretTemplate),
     });
 
-    return name;
+    return client;
   } catch (err) {
     const msg =
       `Failed to process client request '${clientReq.clientId}' for ` +
@@ -134,7 +134,7 @@ async function syncClient(
 
     if (isRetry) {
       Log.error(`${msg}, retry failed, aborting`);
-      throw new Error(`${msg}. RETRY FAILED, aborting: ${err.message}`);
+      throw new Error(`${msg}. RETRY FAILED, aborting: ${JSON.stringify(err)}`);
     }
 
     // Retry the request

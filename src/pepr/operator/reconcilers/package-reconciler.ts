@@ -55,11 +55,11 @@ export async function packageReconciler(pkg: UDSPackage) {
 
     // Configure SSO
     const ssoClients = await keycloak(pkg);
-    const authserviceClients = await authservice(pkg);
+    const authserviceClients = await authservice(pkg, ssoClients);
 
     await updateStatus(pkg, {
       phase: Phase.Ready,
-      ssoClients,
+      ssoClients: [...ssoClients.keys()],
       authserviceClients,
       endpoints,
       monitors,

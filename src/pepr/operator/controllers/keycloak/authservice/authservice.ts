@@ -1,30 +1,27 @@
 import { Log, R } from "pepr";
 import { UDSConfig } from "../../../../config";
-import { Store } from "../../../common";
 import { UDSPackage } from "../../../crd";
-import { apiCall } from "../client-sync";
+import { Client } from "../types";
 import { updatePolicy } from "./authorization-policy";
 import { getAuthserviceConfig, operatorConfig, updateAuthServiceSecret } from "./config";
 import { Action, AuthServiceEvent, AuthserviceConfig, Chain } from "./types";
 
-export async function authservice(pkg: UDSPackage) {
+export async function authservice(pkg: UDSPackage, clients: Map<string, Client>) {
   // Get the list of clients from the package
   const authServiceClients = R.filter(
     sso => R.isNotNil(sso.enableAuthserviceSelector),
     pkg.spec?.sso || [],
   );
 
-  for (const client of authServiceClients) {
-    const name = `sso-client-${client.clientId}`;
-    const token = Store.getItem(name);
-    if (!token) {
-      throw new Error(`Failed to get token for client ${client.clientId}`);
+  for (const sso of authServiceClients) {
+    const client = clients.get(sso.clientId);
+    if (!client) {
+      throw new Error(`Failed to get client ${sso.clientId}`);
     }
-    const keycloakClient = await apiCall(client, "GET", token);
 
     await reconcileAuthservice(
-      { name: client.clientId, action: Action.Add, client: keycloakClient },
-      client.enableAuthserviceSelector!,
+      { name: sso.clientId, action: Action.Add, client },
+      sso.enableAuthserviceSelector!,
       pkg,
     );
   }
