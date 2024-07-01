@@ -54,7 +54,6 @@ function buildInitialSecret(): AuthserviceConfig {
       jwks_fetcher: {
         jwks_uri: `https://sso.${UDSConfig.domain}/realms/${operatorConfig.realm}/protocol/openid-connect/certs`,
         periodic_fetch_interval_sec: 60,
-        skip_verify_peer_cert: false,
       },
       client_id: "global_id",
       client_secret: "global_secret",
@@ -62,7 +61,7 @@ function buildInitialSecret(): AuthserviceConfig {
         preamble: "Bearer",
         header: "Authorization",
       },
-      trusted_certificate_authority: "",
+      trusted_certificate_authority: `${atob(UDSConfig.caCert)}`,
       logout: {
         path: "/globallogout",
         redirect_uri: `https://sso.${UDSConfig.domain}/realms/${operatorConfig.realm}/protocol/openid-connect/token/logout`,
