@@ -1,6 +1,6 @@
 import { Log } from "pepr";
 
-import { handleFailure, shouldSkip, uidSeen, updateStatus } from ".";
+import { handleFailure, shouldSkip, updateStatus } from ".";
 import { UDSConfig } from "../../config";
 import { enableInjection } from "../controllers/istio/injection";
 import { istioResources } from "../controllers/istio/istio-resources";
