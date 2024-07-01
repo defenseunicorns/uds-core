@@ -134,7 +134,7 @@ async function syncClient(
 
     if (isRetry) {
       Log.error(`${msg}, retry failed, aborting`);
-      throw new Error(`${msg}. RETRY FAILED, aborting: ${JSON.stringify(err)}`);
+      throw new Error(`${msg}. RETRY FAILED, aborting: ${err.message}`);
     }
 
     // Retry the request
