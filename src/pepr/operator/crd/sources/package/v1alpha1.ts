@@ -385,7 +385,7 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
               type: "integer",
             },
             phase: {
-              enum: ["Pending", "Ready", "Failed"],
+              enum: ["Pending", "Ready", "Failed", "Retrying"],
               type: "string",
             },
             ssoClients: {

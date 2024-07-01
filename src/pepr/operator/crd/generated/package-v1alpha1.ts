@@ -536,7 +536,7 @@ export enum ClientAuthenticatorType {
  */
 export interface Groups {
   /**
-   * List of group allowed to access to client
+   * List of groups allowed to access to client
    */
   anyOf?: string[];
 }
@@ -564,6 +564,7 @@ export enum Phase {
   Failed = "Failed",
   Pending = "Pending",
   Ready = "Ready",
+  Retrying = "Retrying",
 }
 
 RegisterKind(Package, {
