@@ -36,6 +36,9 @@ tasks:
         with:
           oscalfile: ./compliance/oscal-component.yaml
           assessment_results: ./compliance/oscal-assessment-results.yaml
+      - task: compliance:evaluate
+        with:
+          assessment_results: ./compliance/oscal-assessment-results.yaml
       - description: copy assessment file to log location
         cmd: cp ./compliance/oscal-assessment-results.yaml /tmp/oscal-assessment-results.yaml
 
