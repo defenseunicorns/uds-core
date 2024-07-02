@@ -30,9 +30,6 @@ export async function packageReconciler(pkg: UDSPackage) {
   // Migrate the package to the latest version
   migrate(pkg);
 
-  // Update to indicate this version of pepr-core has attempted to reconcile the package once
-  uidSeen.add(pkg.metadata!.uid!);
-
   // Configure the namespace and namespace-wide network policies
   try {
     await updateStatus(pkg, { phase: Phase.Pending });
