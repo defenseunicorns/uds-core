@@ -1,6 +1,7 @@
-import { K8s, Log, fetch, kind } from "pepr";
+import { fetch, K8s, kind } from "pepr";
 
 import { UDSConfig } from "../../../config";
+import { childLog } from "../../../logger";
 import { Store } from "../../common";
 import { Sso, UDSPackage } from "../../crd";
 import { getOwnerRef } from "../utils";
@@ -26,6 +27,9 @@ const idpSSODescriptorRegex = new RegExp(
 const x509CertRegex = new RegExp(
   /<[^>]*:X509Certificate[^>]*>((.|[\n\r])*)<\/[^>]*:X509Certificate>/,
 );
+
+// configure subproject logger
+const log = childLog("operator.controller.keycloak");
 
 /**
  * Create or update the Keycloak clients for the package
@@ -67,7 +71,7 @@ export async function purgeSSOClients(pkg: UDSPackage, refs: string[] = []) {
       Store.removeItem(ref);
       await apiCall({ clientId }, "DELETE", token);
     } else {
-      Log.warn(pkg.metadata, `Failed to remove client ${clientId}, token not found`);
+      log.warn(pkg.metadata, `Failed to remove client ${clientId}, token not found`);
     }
   }
 }
@@ -77,7 +81,7 @@ async function syncClient(
   pkg: UDSPackage,
   isRetry = false,
 ) {
-  Log.debug(pkg.metadata, `Processing client request: ${clientReq.clientId}`);
+  log.debug(pkg.metadata, `Processing client request: ${clientReq.clientId}`);
 
   try {
     // Not including the CR data in the ref because Keycloak client IDs must be unique already
@@ -90,10 +94,10 @@ async function syncClient(
 
     // If an existing client is found, update it
     if (token && !isRetry) {
-      Log.debug(pkg.metadata, `Found existing token for ${clientReq.clientId}`);
+      log.debug(pkg.metadata, `Found existing token for ${clientReq.clientId}`);
       client = await apiCall(clientReq, "PUT", token);
     } else {
-      Log.debug(pkg.metadata, `Creating new client for ${clientReq.clientId}`);
+      log.debug(pkg.metadata, `Creating new client for ${clientReq.clientId}`);
       client = await apiCall(clientReq);
     }
 
@@ -131,15 +135,15 @@ async function syncClient(
     const msg =
       `Failed to process client request '${clientReq.clientId}' for ` +
       `${pkg.metadata?.namespace}/${pkg.metadata?.name}. This can occur if a client already exists with the same ID that Pepr isn't tracking.`;
-    Log.error({ err }, msg);
+    log.error({ err }, msg);
 
     if (isRetry) {
-      Log.error(`${msg}, retry failed, aborting`);
+      log.error(`${msg}, retry failed, aborting`);
       throw new Error(`${msg}. RETRY FAILED, aborting: ${JSON.stringify(err)}`);
     }
 
     // Retry the request
-    Log.warn(`${msg}, retrying`);
+    log.warn(pkg.metadata, `Failed to process client request: ${clientReq.clientId}, retrying`);
     return syncClient(clientReq, pkg, true);
   }
 }
@@ -162,7 +166,7 @@ export function handleClientGroups(clientReq: Sso) {
 async function apiCall(sso: Partial<Sso>, method = "POST", authToken = "") {
   // Handle single test mode
   if (UDSConfig.isSingleTest) {
-    Log.warn(`Generating fake client for '${sso.clientId}' in single test mode`);
+    log.warn(`Generating fake client for '${sso.clientId}' in single test mode`);
     return {
       ...sso,
       secret: sso.secret || "fake-secret",
@@ -203,14 +207,14 @@ async function apiCall(sso: Partial<Sso>, method = "POST", authToken = "") {
 
 export function generateSecretData(client: Client, secretTemplate?: { [key: string]: string }) {
   if (secretTemplate) {
-    Log.debug(`Using secret template for client: ${client.clientId}`);
+    log.debug(`Using secret template for client: ${client.clientId}`);
     // Iterate over the secret template entry and process each value
     return templateData(secretTemplate, client);
   }
 
   const stringMap: Record<string, string> = {};
 
-  Log.debug(`Using client data for secret: ${client.clientId}`);
+  log.debug(`Using client data for secret: ${client.clientId}`);
 
   // iterate over the client object and convert all values to strings
   for (const [key, value] of Object.entries(client)) {
