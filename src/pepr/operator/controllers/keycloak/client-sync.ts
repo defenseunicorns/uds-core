@@ -3,6 +3,7 @@ import { K8s, Log, fetch, kind } from "pepr";
 import { UDSConfig } from "../../../config";
 import { Store } from "../../common";
 import { Sso, UDSPackage } from "../../crd";
+import { writeEvent } from "../../reconcilers";
 import { getOwnerRef } from "../utils";
 import { Client } from "./types";
 
@@ -103,16 +104,16 @@ async function syncClient(
     const msg =
       `Failed to process client request '${clientReq.clientId}' for ` +
       `${pkg.metadata?.namespace}/${pkg.metadata?.name}. Error: ${err.message}`;
-    Log.error({ err }, msg);
 
     if (isRetry) {
-      Log.error(`${msg}, retry failed, aborting`);
-      throw new Error(`${msg}. RETRY FAILED, aborting: ${err.message}`);
+      Log.error(`${msg}, retry failed.`);
+      throw new Error(`${msg}, RETRY FAILED.`);
+    } else {
+      // Retry the request without the token in case we have a bad token stored
+      Log.error(msg);
+      writeEvent(pkg, { message: msg })
+      return syncClient(clientReq, pkg, true);
     }
-
-    // Retry the request
-    Log.warn(pkg.metadata, `Failed to process client request: ${clientReq.clientId}, retrying`);
-    return syncClient(clientReq, pkg, true);
   }
 
   // Write the new token to the store
