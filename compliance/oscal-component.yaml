@@ -1,0 +1,39 @@
+component-definition:
+  uuid: 8ef481dd-7924-42de-b426-ac300db35ec8
+  metadata:
+    title: UDS Core
+    last-modified: "2024-06-28T12:00:00Z"
+    version: "20240628"
+    oscal-version: 1.1.2
+    parties:
+      - uuid: f3cf70f8-ba44-4e55-9ea3-389ef24847d3
+        type: organization
+        name: Defense Unicorns
+        links:
+          - href: https://github.com/defenseunicorns
+            rel: website
+
+  import-component-definitions:
+    - href: 'file://./../src/grafana/oscal-component.yaml'
+    - href: 'file://./../src/istio/oscal-component.yaml'
+    - href: 'file://./../src/loki/oscal-component.yaml'
+    - href: 'file://./../src/neuvector/oscal-component.yaml'
+    - href: 'file://./../src/prometheus-stack/oscal-component.yaml'
+    - href: 'file://./../src/promtail/oscal-component.yaml'
+    - href: 'file://./../src/velero/oscal-component.yaml'
+
+  capabilities:
+    - uuid: 857dcaf8-9080-4cf0-8029-8a03fcdde2df
+      name: UDS Core
+      description: >-
+        UDS Core is a secure runtime platform for mission-critical capabilities.
+      incorporates-components:
+        - component-uuid: 7e3269fc-fe33-49c9-be88-6c868e21aae1
+          description: Secure Istio Service Mesh
+
+  back-matter:
+    resources:
+      - rlinks:
+          - href: https://github.com/defenseunicorns/uds-core/
+        title: UDS Core
+        uuid: 8fe4806d-4aef-4cf0-b9ed-d95d224e97bc
