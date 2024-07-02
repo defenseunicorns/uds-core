@@ -5,6 +5,7 @@ metadata:
   name: envoy-stats-monitor
   namespace: istio-system
 spec:
+  scrapeClass: exempt
   selector:
     matchExpressions:
     - {key: istio-prometheus-ignore, operator: DoesNotExist}

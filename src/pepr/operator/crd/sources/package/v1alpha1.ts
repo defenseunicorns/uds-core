@@ -2,6 +2,40 @@ import { V1CustomResourceDefinitionVersion, V1JSONSchemaProps } from "@kubernete
 
 import { advancedHTTP } from "../istio/virtualservice-v1beta1";
 
+const AuthorizationSchema: V1JSONSchemaProps = {
+  description: "Authorization settings.",
+  type: "object",
+  properties: {
+    credentials: {
+      description:
+        "Selects a key of a Secret in the namespace that contains the credentials for authentication.",
+      type: "object",
+      properties: {
+        key: {
+          description: "The key of the secret to select from. Must be a valid secret key.",
+          type: "string",
+        },
+        name: {
+          description:
+            "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+          type: "string",
+        },
+        optional: {
+          description: "Specify whether the Secret or its key must be defined",
+          type: "boolean",
+        },
+      },
+      required: ["key"], // Ensure key is required in the schema
+    },
+    type: {
+      description:
+        'Defines the authentication type. The value is case-insensitive. "Basic" is not a supported value. Default: "Bearer"',
+      type: "string",
+    },
+  },
+  required: ["credentials"], // Ensure credentials is required in the schema
+};
+
 const allow = {
   description: "Allow specific traffic (namespace will have a default-deny policy)",
   type: "array",
@@ -160,7 +194,7 @@ const expose = {
 } as V1JSONSchemaProps;
 
 const monitor = {
-  description: "Create Service Monitor configurations",
+  description: "Create Service or Pod Monitor configurations",
   type: "array",
   items: {
     type: "object",
@@ -202,6 +236,12 @@ const monitor = {
         description: "HTTP path from which to scrape for metrics, defaults to `/metrics`",
         type: "string",
       },
+      kind: {
+        description:
+          "The type of monitor to create; PodMonitor or ServiceMonitor. ServiceMonitor is the default.",
+        type: "string",
+      },
+      authorization: AuthorizationSchema,
     },
   },
 };

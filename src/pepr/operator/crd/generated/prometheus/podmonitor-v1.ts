@@ -3,19 +3,17 @@
 import { GenericKind, RegisterKind } from "kubernetes-fluent-client";
 
 /**
- * ServiceMonitor defines monitoring for a set of services.
+ * PodMonitor defines monitoring for a set of pods.
  */
-export class ServiceMonitor extends GenericKind {
+export class PodMonitor extends GenericKind {
   /**
-   * Specification of desired Service selection for target discovery by
-   * Prometheus.
+   * Specification of desired Pod selection for target discovery by Prometheus.
    */
   spec?: Spec;
 }
 
 /**
- * Specification of desired Service selection for target discovery by
- * Prometheus.
+ * Specification of desired Pod selection for target discovery by Prometheus.
  */
 export interface Spec {
   /**
@@ -35,22 +33,18 @@ export interface Spec {
    */
   bodySizeLimit?: string;
   /**
-   * List of endpoints part of this ServiceMonitor.
-   */
-  endpoints?: Endpoint[];
-  /**
-   * `jobLabel` selects the label from the associated Kubernetes `Service`
+   * The label to use to retrieve the job name from.
+   * `jobLabel` selects the label from the associated Kubernetes `Pod`
    * object which will be used as the `job` label for all metrics.
    *
    *
-   * For example if `jobLabel` is set to `foo` and the Kubernetes `Service`
+   * For example if `jobLabel` is set to `foo` and the Kubernetes `Pod`
    * object is labeled with `foo: bar`, then Prometheus adds the `job="bar"`
    * label to all ingested metrics.
    *
    *
-   * If the value of this field is empty or if the label doesn't exist for
-   * the given Service, the `job` label of the metrics defaults to the name
-   * of the associated Kubernetes `Service`.
+   * If the value of this field is empty, the `job` label of the metrics
+   * defaults to the namespace and name of the PodMonitor object (e.g. `<namespace>/<name>`).
    */
   jobLabel?: string;
   /**
@@ -83,10 +77,14 @@ export interface Spec {
    */
   labelValueLengthLimit?: number;
   /**
-   * Selector to select which namespaces the Kubernetes `Endpoints` objects
+   * Selector to select which namespaces the Kubernetes `Pods` objects
    * are discovered from.
    */
   namespaceSelector?: NamespaceSelector;
+  /**
+   * List of endpoints part of this PodMonitor.
+   */
+  podMetricsEndpoints?: PodMetricsEndpoint[];
   /**
    * `podTargetLabels` defines the labels which are transferred from the
    * associated Kubernetes `Pod` object onto the ingested metrics.
@@ -115,14 +113,9 @@ export interface Spec {
    */
   scrapeProtocols?: ScrapeProtocol[];
   /**
-   * Label selector to select the Kubernetes `Endpoints` objects.
+   * Label selector to select the Kubernetes `Pod` objects.
    */
   selector: Selector;
-  /**
-   * `targetLabels` defines the labels which are transferred from the
-   * associated Kubernetes `Service` object onto the ingested metrics.
-   */
-  targetLabels?: string[];
   /**
    * `targetLimit` defines a limit on the number of scraped targets that will
    * be accepted.
@@ -146,10 +139,26 @@ export interface AttachMetadata {
 }
 
 /**
- * Endpoint defines an endpoint serving Prometheus metrics to be scraped by
+ * Selector to select which namespaces the Kubernetes `Pods` objects
+ * are discovered from.
+ */
+export interface NamespaceSelector {
+  /**
+   * Boolean describing whether all namespaces are selected in contrast to a
+   * list restricting them.
+   */
+  any?: boolean;
+  /**
+   * List of namespace names to select from.
+   */
+  matchNames?: string[];
+}
+
+/**
+ * PodMetricsEndpoint defines an endpoint serving Prometheus metrics to be scraped by
  * Prometheus.
  */
-export interface Endpoint {
+export interface PodMetricsEndpoint {
   /**
    * `authorization` configures the Authorization header credentials to use when
    * scraping the target.
@@ -167,16 +176,9 @@ export interface Endpoint {
    */
   basicAuth?: BasicAuth;
   /**
-   * File to read bearer token for scraping the target.
-   *
-   *
-   * Deprecated: use `authorization` instead.
-   */
-  bearerTokenFile?: string;
-  /**
    * `bearerTokenSecret` specifies a key of a Secret containing the bearer
    * token for scraping targets. The secret needs to be in the same namespace
-   * as the ServiceMonitor object and readable by the Prometheus Operator.
+   * as the PodMonitor object and readable by the Prometheus Operator.
    *
    *
    * Deprecated: use `authorization` instead.
@@ -235,7 +237,7 @@ export interface Endpoint {
    */
   oauth2?: Oauth2;
   /**
-   * params define optional HTTP URL parameters.
+   * `params` define optional HTTP URL parameters.
    */
   params?: { [key: string]: string[] };
   /**
@@ -246,7 +248,7 @@ export interface Endpoint {
    */
   path?: string;
   /**
-   * Name of the Service port which this endpoint refers to.
+   * Name of the Pod port which this endpoint refers to.
    *
    *
    * It takes precedence over `targetPort`.
@@ -292,8 +294,11 @@ export interface Endpoint {
    */
   scrapeTimeout?: string;
   /**
-   * Name or number of the target port of the `Pod` object behind the
-   * Service. The port must be specified with the container's port property.
+   * Name or number of the target port of the `Pod` object behind the Service, the
+   * port must be specified with container port property.
+   *
+   *
+   * Deprecated: use 'port' instead.
    */
   targetPort?: number | string;
   /**
@@ -437,7 +442,7 @@ export interface Username {
 /**
  * `bearerTokenSecret` specifies a key of a Secret containing the bearer
  * token for scraping targets. The secret needs to be in the same namespace
- * as the ServiceMonitor object and readable by the Prometheus Operator.
+ * as the PodMonitor object and readable by the Prometheus Operator.
  *
  *
  * Deprecated: use `authorization` instead.
@@ -773,25 +778,13 @@ export interface TLSConfig {
    */
   ca?: CA;
   /**
-   * Path to the CA cert in the Prometheus container to use for the targets.
-   */
-  caFile?: string;
-  /**
    * Client certificate to present when doing client-authentication.
    */
   cert?: CERT;
   /**
-   * Path to the client cert file in the Prometheus container for the targets.
-   */
-  certFile?: string;
-  /**
    * Disable target certificate validation.
    */
   insecureSkipVerify?: boolean;
-  /**
-   * Path to the client key file in the Prometheus container for the targets.
-   */
-  keyFile?: string;
   /**
    * Secret containing the client key file for the targets.
    */
@@ -956,22 +949,6 @@ export interface KeySecret {
 }
 
 /**
- * Selector to select which namespaces the Kubernetes `Endpoints` objects
- * are discovered from.
- */
-export interface NamespaceSelector {
-  /**
-   * Boolean describing whether all namespaces are selected in contrast to a
-   * list restricting them.
-   */
-  any?: boolean;
-  /**
-   * List of namespace names to select from.
-   */
-  matchNames?: string[];
-}
-
-/**
  * ScrapeProtocol represents a protocol used by Prometheus for scraping metrics.
  * Supported values are:
  * * `OpenMetricsText0.0.1`
@@ -987,7 +964,7 @@ export enum ScrapeProtocol {
 }
 
 /**
- * Label selector to select the Kubernetes `Endpoints` objects.
+ * Label selector to select the Kubernetes `Pod` objects.
  */
 export interface Selector {
   /**
@@ -1026,9 +1003,9 @@ export interface MatchExpression {
   values?: string[];
 }
 
-RegisterKind(ServiceMonitor, {
+RegisterKind(PodMonitor, {
   group: "monitoring.coreos.com",
   version: "v1",
-  kind: "ServiceMonitor",
-  plural: "servicemonitors",
+  kind: "PodMonitor",
+  plural: "podmonitors",
 });
