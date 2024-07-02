@@ -16,6 +16,7 @@ import { UDSExemption, UDSPackage } from "./crd";
 import { validator } from "./crd/validators/package-validator";
 
 // Reconciler imports
+import { purgeAuthserviceClients } from "./controllers/keycloak/authservice/authservice";
 import { exemptValidator } from "./crd/validators/exempt-validator";
 import { packageReconciler } from "./reconcilers/package-reconciler";
 
@@ -49,6 +50,7 @@ When(UDSPackage)
 
     // Remove any SSO clients
     await purgeSSOClients(pkg, []);
+    await purgeAuthserviceClients(pkg, []);
   });
 
 // Watch for changes to the UDSPackage CRD to enqueue a package for processing

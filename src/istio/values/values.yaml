@@ -6,3 +6,11 @@ meshConfig:
     holdApplicationUntilProxyStarts: true
     gatewayTopology:
       forwardClientCertDetails: SANITIZE
+  extensionProviders:
+    - name: "authservice"
+      envoyExtAuthzGrpc:
+        service: "authservice.authservice.svc.cluster.local"
+        port: "10003"
+
+pilot:
+  jwksResolverExtraRootCA: "" # todo: this needs to have the non-base64 encoded CA cert for keycloak

@@ -1,9 +1,10 @@
 import { Log } from "pepr";
 
-import { handleFailure, shouldSkip, uidSeen, updateStatus } from ".";
+import { handleFailure, shouldSkip, updateStatus } from ".";
 import { UDSConfig } from "../../config";
 import { enableInjection } from "../controllers/istio/injection";
 import { istioResources } from "../controllers/istio/istio-resources";
+import { authservice } from "../controllers/keycloak/authservice/authservice";
 import { keycloak } from "../controllers/keycloak/client-sync";
 import { serviceMonitor } from "../controllers/monitoring/service-monitor";
 import { networkPolicies } from "../controllers/network/policies";
@@ -54,19 +55,18 @@ export async function packageReconciler(pkg: UDSPackage) {
 
     // Configure SSO
     const ssoClients = await keycloak(pkg);
+    const authserviceClients = await authservice(pkg, ssoClients);
 
     await updateStatus(pkg, {
       phase: Phase.Ready,
-      ssoClients,
+      ssoClients: [...ssoClients.keys()],
+      authserviceClients,
       endpoints,
       monitors,
       networkPolicyCount: netPol.length,
       observedGeneration: metadata.generation,
       retryAttempt: 0, // todo: make this nullable when kfc generates the type
     });
-
-    // Update to indicate this version of pepr-core has reconciled the package successfully once
-    uidSeen.add(pkg.metadata!.uid!);
   } catch (err) {
     void handleFailure(err, pkg);
   }
