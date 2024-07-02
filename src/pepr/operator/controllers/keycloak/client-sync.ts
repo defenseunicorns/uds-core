@@ -111,7 +111,7 @@ async function syncClient(
     } else {
       // Retry the request without the token in case we have a bad token stored
       Log.error(msg);
-      writeEvent(pkg, { message: msg })
+      await writeEvent(pkg, { message: msg });
       return syncClient(clientReq, pkg, true);
     }
   }
@@ -122,7 +122,7 @@ async function syncClient(
   } catch (err) {
     throw Error(
       `Failed to set token in store for client '${clientReq.clientId}', package ` +
-      `${pkg.metadata?.namespace}/${pkg.metadata?.name}`,
+        `${pkg.metadata?.namespace}/${pkg.metadata?.name}`,
     );
   }
 
