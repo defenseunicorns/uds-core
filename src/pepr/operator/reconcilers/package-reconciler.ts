@@ -1,6 +1,6 @@
 import { Log } from "pepr";
 
-import { handleFailure, shouldSkip, uidSeen, updateStatus } from ".";
+import { handleFailure, shouldSkip, updateStatus } from ".";
 import { UDSConfig } from "../../config";
 import { enableInjection } from "../controllers/istio/injection";
 import { istioResources } from "../controllers/istio/istio-resources";
@@ -64,9 +64,6 @@ export async function packageReconciler(pkg: UDSPackage) {
       observedGeneration: metadata.generation,
       retryAttempt: 0, // todo: make this nullable when kfc generates the type
     });
-
-    // Update to indicate this version of pepr-core has reconciled the package successfully once
-    uidSeen.add(pkg.metadata!.uid!);
   } catch (err) {
     void handleFailure(err, pkg);
   }

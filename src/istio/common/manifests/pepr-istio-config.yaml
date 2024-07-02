@@ -1,6 +1,7 @@
 # Have to pre-create the namespace and also patch it with the istio-injection label later because
 # Helm is kind of dumb: https://github.com/helm/helm/issues/350
 kind: Namespace
+apiVersion: v1
 metadata:
   name: pepr-system
   labels:

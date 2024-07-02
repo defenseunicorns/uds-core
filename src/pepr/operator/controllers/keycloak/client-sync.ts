@@ -3,13 +3,19 @@ import { K8s, Log, fetch, kind } from "pepr";
 import { UDSConfig } from "../../../config";
 import { Store } from "../../common";
 import { Sso, UDSPackage } from "../../crd";
+import { writeEvent } from "../../reconcilers";
 import { getOwnerRef } from "../utils";
 import { Client } from "./types";
 
-const apiURL =
+let apiURL =
   "http://keycloak-http.keycloak.svc.cluster.local:8080/realms/uds/clients-registrations/default";
 const samlDescriptorUrl =
   "http://keycloak-http.keycloak.svc.cluster.local:8080/realms/uds/protocol/saml/descriptor";
+
+// Support dev mode with port-forwarded keycloak svc
+if (process.env.PEPR_MODE === "dev") {
+  apiURL = "http://localhost:8080/realms/uds/clients-registrations/default";
+}
 
 // Template regex to match clientField() references, see https://regex101.com/r/e41Dsk/3 for details
 const secretTemplateRegex = new RegExp(
@@ -78,15 +84,13 @@ async function syncClient(
   isRetry = false,
 ) {
   Log.debug(pkg.metadata, `Processing client request: ${clientReq.clientId}`);
+  // Not including the CR data in the ref because Keycloak client IDs must be unique already
+  const name = `sso-client-${clientReq.clientId}`;
+  let client: Client;
+  handleClientGroups(clientReq);
 
   try {
-    // Not including the CR data in the ref because Keycloak client IDs must be unique already
-    const name = `sso-client-${clientReq.clientId}`;
     const token = Store.getItem(name);
-
-    let client: Client;
-
-    handleClientGroups(clientReq);
 
     // If an existing client is found, update it
     if (token && !isRetry) {
@@ -96,52 +100,59 @@ async function syncClient(
       Log.debug(pkg.metadata, `Creating new client for ${clientReq.clientId}`);
       client = await apiCall(clientReq);
     }
-
-    // Write the new token to the store
-    await Store.setItemAndWait(name, client.registrationAccessToken!);
-
-    // Remove the registrationAccessToken from the client object to avoid problems (one-time use token)
-    delete client.registrationAccessToken;
-
-    if (clientReq.protocol === "saml") {
-      client.samlIdpCertificate = await getSamlCertificate();
-    }
-
-    // Create or update the client secret
-    await K8s(kind.Secret).Apply({
-      metadata: {
-        namespace: pkg.metadata!.namespace,
-        // Use the CR secret name if provided, otherwise use the client name
-        name: secretName || name,
-        labels: {
-          "uds/package": pkg.metadata!.name,
-        },
-        // Use the CR as the owner ref for each VirtualService
-        ownerReferences: getOwnerRef(pkg),
-      },
-      data: generateSecretData(client, secretTemplate),
-    });
-
-    if (isAuthSvcClient) {
-      // Do things here
-    }
-
-    return name;
   } catch (err) {
     const msg =
       `Failed to process client request '${clientReq.clientId}' for ` +
-      `${pkg.metadata?.namespace}/${pkg.metadata?.name}. This can occur if a client already exists with the same ID that Pepr isn't tracking.`;
-    Log.error({ err }, msg);
+      `${pkg.metadata?.namespace}/${pkg.metadata?.name}. Error: ${err.message}`;
 
     if (isRetry) {
-      Log.error(`${msg}, retry failed, aborting`);
-      throw new Error(`${msg}. RETRY FAILED, aborting: ${JSON.stringify(err)}`);
+      Log.error(`${msg}, retry failed.`);
+      throw new Error(`${msg}, RETRY FAILED.`);
+    } else {
+      // Retry the request without the token in case we have a bad token stored
+      Log.error(msg);
+      await writeEvent(pkg, { message: msg });
+      return syncClient(clientReq, pkg, true);
     }
-
-    // Retry the request
-    Log.warn(`${msg}, retrying`);
-    return syncClient(clientReq, pkg, true);
   }
+
+  // Write the new token to the store
+  try {
+    await Store.setItemAndWait(name, client.registrationAccessToken!);
+  } catch (err) {
+    throw Error(
+      `Failed to set token in store for client '${clientReq.clientId}', package ` +
+        `${pkg.metadata?.namespace}/${pkg.metadata?.name}`,
+    );
+  }
+
+  // Remove the registrationAccessToken from the client object to avoid problems (one-time use token)
+  delete client.registrationAccessToken;
+
+  if (clientReq.protocol === "saml") {
+    client.samlIdpCertificate = await getSamlCertificate();
+  }
+
+  // Create or update the client secret
+  await K8s(kind.Secret).Apply({
+    metadata: {
+      namespace: pkg.metadata!.namespace,
+      // Use the CR secret name if provided, otherwise use the client name
+      name: secretName || name,
+      labels: {
+        "uds/package": pkg.metadata!.name,
+      },
+      // Use the CR as the owner ref for each VirtualService
+      ownerReferences: getOwnerRef(pkg),
+    },
+    data: generateSecretData(client, secretTemplate),
+  });
+
+  if (isAuthSvcClient) {
+    // Do things here
+  }
+
+  return name;
 }
 
 /**
@@ -183,7 +194,8 @@ async function apiCall(sso: Partial<Sso>, method = "POST", authToken = "") {
   // When not creating a new client, add the client ID and registrationAccessToken
   if (authToken) {
     req.headers.Authorization = `Bearer ${authToken}`;
-    url += `/${sso.clientId}`;
+    // Ensure that we URI encode the clientId in the request URL
+    url += `/${encodeURIComponent(sso.clientId!)}`;
   }
 
   // Remove the body for DELETE requests
@@ -195,7 +207,11 @@ async function apiCall(sso: Partial<Sso>, method = "POST", authToken = "") {
   const resp = await fetch<Client>(url, req);
 
   if (!resp.ok) {
-    throw new Error(`Failed to ${method} client: ${resp.statusText}`);
+    if (resp.data) {
+      throw new Error(`${JSON.stringify(resp.statusText)}, ${JSON.stringify(resp.data)}`);
+    } else {
+      throw new Error(`${JSON.stringify(resp.statusText)}`);
+    }
   }
 
   return resp.data;
