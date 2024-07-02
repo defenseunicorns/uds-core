@@ -107,6 +107,7 @@ async function syncClient(
 
     if (isRetry) {
       Log.error(`${msg}, retry failed.`);
+      // todo: should we throw this error? if on a retry, and a POST failed without the client, then our first attempt is more likely the problem
       throw new Error(`${msg}, RETRY FAILED.`);
     } else {
       // Retry the request without the token in case we have a bad token stored
