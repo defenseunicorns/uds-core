@@ -69,7 +69,7 @@ export async function purgeSSOClients(pkg: UDSPackage, refs: string[] = []) {
     const token = Store.getItem(ref);
     const clientId = ref.replace("sso-client-", "");
     if (token) {
-      await Store.removeItemAndWait(ref);
+      Store.removeItem(ref);
       await apiCall({ clientId }, "DELETE", token);
     } else {
       Log.warn(pkg.metadata, `Failed to remove client ${clientId}, token not found`);
@@ -121,7 +121,7 @@ async function syncClient(
   } catch (err) {
     throw Error(
       `Failed to set token in store for client '${clientReq.clientId}', package ` +
-        `${pkg.metadata?.namespace}/${pkg.metadata?.name}`,
+      `${pkg.metadata?.namespace}/${pkg.metadata?.name}`,
     );
   }
 
