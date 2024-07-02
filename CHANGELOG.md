@@ -2,6 +2,36 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.23.0](https://github.com/defenseunicorns/uds-core/compare/v0.22.2...v0.23.0) (2024-07-02)
+
+
+### ⚠ BREAKING CHANGES
+
+* remove emulated gitlab endpoints from keycloak
+
+### Features
+
+* identity group auth ([#497](https://github.com/defenseunicorns/uds-core/issues/497)) ([d71d83e](https://github.com/defenseunicorns/uds-core/commit/d71d83ed4d6e6a35724e70fc5a27cb7ff6e1adaa))
+
+
+### Bug Fixes
+
+* **docs:** uds-config.yaml example in k3d-slim-dev README ([#530](https://github.com/defenseunicorns/uds-core/issues/530)) ([2e1c53e](https://github.com/defenseunicorns/uds-core/commit/2e1c53e939b99794c8e6994f20282974bd139917))
+
+
+### Miscellaneous
+
+* **deps:** update checkout action to latest sha ([c6f0137](https://github.com/defenseunicorns/uds-core/commit/c6f0137bb9a1e11f98d426cec8c98eb4005f160a))
+* **deps:** update dependency weaveworks/eksctl to v0.183.0 ([#499](https://github.com/defenseunicorns/uds-core/issues/499)) ([9cb8e4d](https://github.com/defenseunicorns/uds-core/commit/9cb8e4d7c86611918e502de0a7e7e25921523cbc))
+* **deps:** update jest to v29.1.5 ([#485](https://github.com/defenseunicorns/uds-core/issues/485)) ([9c392b9](https://github.com/defenseunicorns/uds-core/commit/9c392b9b88c84e3c3763878e6beb1800c43ded25))
+* **deps:** update neuvector to 5.3.3 ([261057d](https://github.com/defenseunicorns/uds-core/commit/261057d2bf142c3167fdf0d0bd68bc2fb47d22df))
+* **deps:** update pepr to 0.32.2 ([ab4bee9](https://github.com/defenseunicorns/uds-core/commit/ab4bee906f020d86b90c0b984789be55f8b4c08b))
+* **deps:** update pepr to 0.32.3 ([2e28897](https://github.com/defenseunicorns/uds-core/commit/2e2889784043b21463e72643eb890054645dd439))
+* **deps:** update uds-common tasks to 0.6.1 ([4aa6e33](https://github.com/defenseunicorns/uds-core/commit/4aa6e3372f6d1a5df1e2ae51a3129603a8b0b29b))
+* **deps:** update zarf to v0.35.0 ([#490](https://github.com/defenseunicorns/uds-core/issues/490)) ([86957cf](https://github.com/defenseunicorns/uds-core/commit/86957cfe19564ec8ddccec7e496af4469def322a))
+* docs linting changes ([#505](https://github.com/defenseunicorns/uds-core/issues/505)) ([0fe2015](https://github.com/defenseunicorns/uds-core/commit/0fe20151713363f572a50601016e06e60230990f))
+* remove emulated gitlab endpoints from keycloak ([495960c](https://github.com/defenseunicorns/uds-core/commit/495960ce8d40cf2ef7c0f0021b653db6fc6383bb))
+
 ## [0.22.2](https://github.com/defenseunicorns/uds-core/compare/v0.22.1...v0.22.2) (2024-06-13)
 
 
