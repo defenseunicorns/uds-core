@@ -23,7 +23,7 @@ jest.mock("pepr", () => ({
   kind: {
     CoreEvent: "CoreEvent",
   },
-  Capability: jest.fn().mockImplementation((options: any) => {
+  Capability: jest.fn().mockImplementation(() => {
     return {
       name: "uds-core-operator",
       description: "The UDS Operator is responsible for managing the lifecycle of UDS resources",
