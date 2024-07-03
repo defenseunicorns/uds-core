@@ -90,11 +90,11 @@ tasks:
 
   - name: test-compliance-validate
     actions:
-      - tasks: test:compliance-validate
+      - task: test:compliance-validate
 
   - name: test-compliance-evaluate
     actions:
-      - tasks: test:compliance-evaluate
+      - task: test:compliance-evaluate
 
   - name: lint-check
     actions:
