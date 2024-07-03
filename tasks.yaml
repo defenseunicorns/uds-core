@@ -88,6 +88,14 @@ tasks:
     actions:
       - task: test:uds-core-upgrade
 
+  - name: test-compliance-validate
+    actions:
+      - tasks: test:compliance-validate
+
+  - name: test-compliance-evaluate
+    actions:
+      - tasks: test:compliance-evaluate
+
   - name: lint-check
     actions:
       - task: lint:check

@@ -62,6 +62,14 @@ jobs:
         if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
         run: uds run test-uds-core --set FLAVOR=${{ inputs.flavor }} --no-progress
 
+      - name: Validate UDS Core Compliance
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
+        run: uds run test-compliance-validate --no-progress
+
+      - name: Evaluate UDS Core Compliance
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
+        run: uds run test-compliance-evaluate --no-progress
+
       - name: Test UDS Core Upgrade
         if: ${{ inputs.package == 'all' && inputs.test_type == 'upgrade' }}
         run: uds run test-uds-core-upgrade --set FLAVOR=${{ inputs.flavor }} --no-progress

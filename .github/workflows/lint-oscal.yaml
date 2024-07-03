@@ -1,7 +1,9 @@
 name: Lint OSCAL Files
 
 on:
-  push:
+  pull_request:
+    # milestoned is added here as a workaround for release-please not triggering PR workflows (PRs should be added to a milestone to trigger the workflow).
+    types: [milestoned, opened, reopened, synchronize]
     paths:
       - '**/*oscal*.yaml'
 
@@ -46,24 +48,9 @@ jobs:
       # checkout for access to the oscal files targeted for linting
       - name: Checkout the code
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
-      # setup uds-cli
-      - name: Use Node.js latest
-        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
-        with:
-          node-version: 20
-      - name: Set up Homebrew
-        uses: Homebrew/actions/setup-homebrew@master
-      - name: Install UDS CLI
-        shell: bash
-        # renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
-        run: brew install defenseunicorns/tap/uds@0.11.2
-      # will be pinning this when a tag is released
-      - name: Install Lula
-        uses: defenseunicorns/lula-action/setup@095636b7880051e11b05f10a582fdd911526161c
-        with:
-          # renovate: datasource=github-tags depName=defenseunicorns/lula versioning=semver-coerced
-          version: v0.4.1
+      - name: Environment setup
+        uses: ./.github/actions/setup
       # lint the oscal files
       - name: lint-oscal
-        run: uds run lint-oscal --set OSCALFILES=${{ steps.find_changed_files.outputs.oscal_files }}
+        run: uds run lint-oscal --set OSCALFILES=${{ steps.find_changed_files.outputs.oscal_files }} --no-progress
         shell: bash

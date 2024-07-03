@@ -32,15 +32,6 @@ tasks:
       - task: create:k3d-standard-bundle
       - task: deploy:k3d-standard-bundle
       - task: validate-packages
-      - task: compliance:validate
-        with:
-          oscalfile: ./compliance/oscal-component.yaml
-          assessment_results: ./compliance/oscal-assessment-results.yaml
-      - task: compliance:evaluate
-        with:
-          assessment_results: ./compliance/oscal-assessment-results.yaml
-      - description: copy assessment file to log location
-        cmd: cp ./compliance/oscal-assessment-results.yaml /tmp/oscal-assessment-results.yaml
 
   - name: uds-core-upgrade
     description: "Test an upgrade from the latest released UDS Core package to current branch"
@@ -50,3 +41,20 @@ tasks:
       - task: create:standard-package
       - task: deploy:standard-package
       - task: validate-packages
+
+  - name: validate-compliance
+    description: "validate against the required compliance"
+    actions:
+      - task: compliance:validate
+        with:
+          oscalfile: ./compliance/oscal-component.yaml
+          assessment_results: ./compliance/oscal-assessment-results.yaml
+
+  - name: evaluate-compliance
+    description: "evaluate against the required compliance"
+    actions:
+      - task: compliance:evaluate
+        with:
+          assessment_results: ./compliance/oscal-assessment-results.yaml
+      - description: copy assessment file to log location
+        cmd: cp ./compliance/oscal-assessment-results.yaml /tmp/oscal-assessment-results.yaml
