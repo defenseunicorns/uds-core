@@ -1,6 +1,6 @@
 // Various validation actions for Kubernetes resources from Big Bang
 import { K8s } from "pepr";
-import { childLog } from "../logger";
+import { setupLogger } from "../logger";
 import { ExemptionStore } from "../operator/controllers/exemptions/exemption-store";
 import { processExemptions } from "../operator/controllers/exemptions/exemptions";
 import { Matcher, Policy, UDSExemption } from "../operator/crd";
@@ -9,7 +9,7 @@ import "./security";
 import "./storage";
 
 // configure subproject logger
-const log = childLog("policies");
+const log = setupLogger("policies");
 
 export { policies } from "./common";
 

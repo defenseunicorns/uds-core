@@ -1,9 +1,9 @@
 import { Exec, KubeConfig } from "@kubernetes/client-node";
 import { Capability, a } from "pepr";
-import { childLog } from "../logger";
+import { setupLogger } from "../logger";
 
 // configure subproject logger
-const log = childLog("istio");
+const log = setupLogger("istio");
 
 export const istio = new Capability({
   name: "istio",

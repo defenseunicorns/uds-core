@@ -1,9 +1,9 @@
-import { childLog } from "../../../logger";
+import { setupLogger } from "../../../logger";
 import { StoredMatcher } from "../../../policies";
 import { Matcher, Policy, UDSExemption } from "../../crd";
 
 // configure subproject logger
-const log = childLog("operator.controllers.exemptions");
+const log = setupLogger("operator.exemptions");
 
 export type PolicyOwnerMap = Map<string, UDSExemption>;
 export type PolicyMap = Map<Policy, StoredMatcher[]>;

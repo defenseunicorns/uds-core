@@ -1,13 +1,13 @@
 import { K8s } from "pepr";
 
-import { childLog } from "../../../logger";
+import { setupLogger } from "../../../logger";
 import { IstioServiceEntry, IstioVirtualService, UDSPackage } from "../../crd";
 import { getOwnerRef } from "../utils";
 import { generateServiceEntry } from "./service-entry";
 import { generateVirtualService } from "./virtual-service";
 
 // configure subproject logger
-const log = childLog("operator.controllers.istio");
+const log = setupLogger("operator.istio");
 
 /**
  * Creates a VirtualService and ServiceEntry for each exposed service in the package

@@ -1,4 +1,4 @@
-import { childLog } from "./logger";
+import { setupLogger } from "./logger";
 
 let domain = process.env.UDS_DOMAIN;
 
@@ -17,7 +17,7 @@ export const UDSConfig = {
 };
 
 // configure subproject logger
-const log = childLog("UDS Config");
+const log = setupLogger("config");
 log.info(UDSConfig, "Loaded UDS Config");
 
 if (UDSConfig.isSingleTest) {

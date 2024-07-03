@@ -1,11 +1,11 @@
 import { KubernetesObject } from "kubernetes-fluent-client";
 import { PeprMutateRequest, PeprValidateRequest } from "pepr";
-import { childLog } from "../../logger";
+import { setupLogger } from "../../logger";
 import { ExemptionStore } from "../../operator/controllers/exemptions/exemption-store";
 import { Policy } from "../../operator/crd";
 
 // configure subproject logger
-const log = childLog("policies.exemptions");
+const log = setupLogger("policies.exemptions");
 
 /**
  * Check a resource against an exemption list for use by the validation action.

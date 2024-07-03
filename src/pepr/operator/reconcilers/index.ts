@@ -1,13 +1,13 @@
 import { K8s, kind } from "pepr";
 
-import { childLog } from "../../logger";
+import { setupLogger } from "../../logger";
 import { Phase, PkgStatus, UDSPackage } from "../crd";
 import { Status } from "../crd/generated/package-v1alpha1";
 
 export const uidSeen = new Set<string>();
 
 // configure subproject logger
-const log = childLog("operator.reconcilers");
+const log = setupLogger("operator.reconcilers");
 
 /**
  * Checks if the CRD is pending or the current generation has been processed

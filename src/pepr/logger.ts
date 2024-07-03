@@ -1,7 +1,7 @@
 import { Log } from "pepr";
 
-export function childLog(subproject: string) {
-  const childLog = Log.child({ subproject: subproject });
+export function setupLogger(component: string) {
+  const setupLogger = Log.child({ component: component });
 
   // Handle commands that do not template the env vars
   let logLevel = process.env.UDS_LOG_LEVEL;
@@ -9,7 +9,7 @@ export function childLog(subproject: string) {
     logLevel = "debug";
   }
 
-  childLog.level = logLevel;
+  setupLogger.level = logLevel;
 
-  return childLog;
+  return setupLogger;
 }

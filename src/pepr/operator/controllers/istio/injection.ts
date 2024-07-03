@@ -1,10 +1,10 @@
 import { K8s, kind } from "pepr";
 
-import { childLog } from "../../../logger";
+import { setupLogger } from "../../../logger";
 import { UDSPackage } from "../../crd";
 
 // configure subproject logger
-const log = childLog("operator.controllers.istio");
+const log = setupLogger("operator.istio");
 
 const injectionLabel = "istio-injection";
 const injectionAnnotation = "uds.dev/original-istio-injection";

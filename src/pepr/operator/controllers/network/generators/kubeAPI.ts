@@ -1,12 +1,12 @@
 import { V1NetworkPolicyPeer } from "@kubernetes/client-node";
 import { K8s, kind, R } from "pepr";
 
-import { childLog } from "../../../../logger";
+import { setupLogger } from "../../../../logger";
 import { RemoteGenerated } from "../../../crd";
 import { anywhere } from "./anywhere";
 
 // configure subproject logger
-const log = childLog("operator.controllers.network.generators");
+const log = setupLogger("operator.generators");
 
 // This is an in-memory cache of the API server CIDR
 let apiServerPeers: V1NetworkPolicyPeer[];

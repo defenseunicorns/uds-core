@@ -1,6 +1,6 @@
 import { handleFailure, shouldSkip, uidSeen, updateStatus } from ".";
 import { UDSConfig } from "../../config";
-import { childLog } from "../../logger";
+import { setupLogger } from "../../logger";
 import { enableInjection } from "../controllers/istio/injection";
 import { istioResources } from "../controllers/istio/istio-resources";
 import { keycloak } from "../controllers/keycloak/client-sync";
@@ -10,7 +10,7 @@ import { Phase, UDSPackage } from "../crd";
 import { migrate } from "../crd/migrate";
 
 // configure subproject logger
-const log = childLog("operator.reconcilers");
+const log = setupLogger("operator.reconcilers");
 
 /**
  * The reconciler is called from the queue and is responsible for reconciling the state of the package
