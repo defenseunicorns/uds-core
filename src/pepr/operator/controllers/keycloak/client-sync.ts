@@ -3,7 +3,6 @@ import { K8s, Log, fetch, kind } from "pepr";
 import { UDSConfig } from "../../../config";
 import { Store } from "../../common";
 import { Sso, UDSPackage } from "../../crd";
-import { writeEvent } from "../../reconcilers";
 import { getOwnerRef } from "../utils";
 import { Client } from "./types";
 
@@ -89,10 +88,11 @@ async function syncClient(
   let client: Client;
   handleClientGroups(clientReq);
 
-  try {
-    const token = Store.getItem(name);
+  // Get keycloak client token from the store if this is an existing client
+  const token = Store.getItem(name);
 
-    // If an existing client is found, update it
+  try {
+    // If an existing client is found, use the token to update the client
     if (token && !isRetry) {
       Log.debug(pkg.metadata, `Found existing token for ${clientReq.clientId}`);
       client = await apiCall(clientReq, "PUT", token);
@@ -102,18 +102,29 @@ async function syncClient(
     }
   } catch (err) {
     const msg =
-      `Failed to process client request '${clientReq.clientId}' for ` +
+      `Failed to process Keycloak request for client '${clientReq.clientId}', package ` +
       `${pkg.metadata?.namespace}/${pkg.metadata?.name}. Error: ${err.message}`;
 
-    if (isRetry) {
+    // Throw the error if this is the retry or was an initial client creation attempt
+    if (isRetry || !token) {
       Log.error(`${msg}, retry failed.`);
-      // todo: should we throw this error? if on a retry, and a POST failed without the client, then our first attempt is more likely the problem
-      throw new Error(`${msg}, RETRY FAILED.`);
+      // Throw the original error captured from the first attempt
+      throw new Error(msg);
     } else {
       // Retry the request without the token in case we have a bad token stored
       Log.error(msg);
-      await writeEvent(pkg, { message: msg });
-      return syncClient(clientReq, pkg, true);
+
+      try {
+        return await syncClient(clientReq, pkg, true);
+      } catch (retryErr) {
+        // If the retry fails, log the retry error and throw the original error
+        const retryMsg =
+          `Retry of Keycloak request failed for client '${clientReq.clientId}', package ` +
+          `${pkg.metadata?.namespace}/${pkg.metadata?.name}. Error: ${retryErr.message}`;
+        Log.error(retryMsg);
+        // Throw the error from the original attempt since our retry without token failed
+        throw new Error(msg);
+      }
     }
   }
 
@@ -123,7 +134,7 @@ async function syncClient(
   } catch (err) {
     throw Error(
       `Failed to set token in store for client '${clientReq.clientId}', package ` +
-        `${pkg.metadata?.namespace}/${pkg.metadata?.name}`,
+      `${pkg.metadata?.namespace}/${pkg.metadata?.name}`,
     );
   }
 
