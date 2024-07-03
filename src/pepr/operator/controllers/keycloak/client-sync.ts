@@ -87,7 +87,7 @@ async function syncClient(
   isRetry = false,
 ) {
   log.debug(pkg.metadata, `Processing client request: ${clientReq.clientId}`);
-    
+
   // Not including the CR data in the ref because Keycloak client IDs must be unique already
   const name = `sso-client-${clientReq.clientId}`;
   let client: Client;
@@ -112,12 +112,12 @@ async function syncClient(
 
     // Throw the error if this is the retry or was an initial client creation attempt
     if (isRetry || !token) {
-      Log.error(`${msg}, retry failed.`);
+      log.error(`${msg}, retry failed.`);
       // Throw the original error captured from the first attempt
       throw new Error(msg);
     } else {
       // Retry the request without the token in case we have a bad token stored
-      Log.error(msg);
+      log.error(msg);
 
       try {
         return await syncClient(clientReq, pkg, true);
@@ -126,7 +126,7 @@ async function syncClient(
         const retryMsg =
           `Retry of Keycloak request failed for client '${clientReq.clientId}', package ` +
           `${pkg.metadata?.namespace}/${pkg.metadata?.name}. Error: ${retryErr.message}`;
-        Log.error(retryMsg);
+        log.error(retryMsg);
         // Throw the error from the original attempt since our retry without token failed
         throw new Error(msg);
       }

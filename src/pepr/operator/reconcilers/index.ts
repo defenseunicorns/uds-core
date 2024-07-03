@@ -29,7 +29,7 @@ export function shouldSkip(cr: UDSPackage) {
 
   // If the CR is retrying, it should not be skipped
   if (isRetrying) {
-    Log.debug(cr, `Should skip? No, retrying`);
+    log.debug(cr, `Should skip? No, retrying`);
     return false;
   }
 
