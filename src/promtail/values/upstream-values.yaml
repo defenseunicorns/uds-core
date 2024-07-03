@@ -1,10 +1,10 @@
 image:
   registry: docker.io
   repository: grafana/promtail
-  tag: 2.9.6
+  tag: 3.1.0
 sidecar:
   configReloader:
     image:
       registry: ghcr.io
       repository: jimmidyson/configmap-reload
-      tag: v0.12.0
+      tag: v0.13.1
