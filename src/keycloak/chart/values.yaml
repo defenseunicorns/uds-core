@@ -57,6 +57,9 @@ clusterDomain: cluster.local
 # Sets development mode for Keycloak. This disables caching, Postgres and HPAs and should only be used for testing
 devMode: true
 
+# Enable debug logging for keycloak and quarkus
+debug: false
+
 # Enable SMTP networkPolicy and config
 smtp:
   enabled: false
@@ -149,16 +152,17 @@ service:
   # Session affinity config
   sessionAffinityConfig: {}
 
+# Connection information for external postgres database
 postgresql:
-  # PostgreSQL User to create
-  username: keycloak
-  # PostgreSQL Password for the new user
-  password: keycloak
-  # PostgreSQL Database to create
-  database: keycloak
-  # PostgreSQL host
-  host: postgresql
-  # PostgreSQL port
+  # The username of the database user
+  username: ""
+  # The password of the database user
+  password: ""
+  # Database name of the default JDBC URL
+  database: ""
+  # Hostname of the default JDBC URL
+  host: ""
+  # Port of the default JDBC URL 
   port: 5432
 
 serviceMonitor:

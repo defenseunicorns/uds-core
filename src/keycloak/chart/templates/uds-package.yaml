@@ -52,7 +52,7 @@ spec:
         remoteGenerated: Anywhere
       {{- end }}
 
-      {{- if not .Values.devMode }}
+      {{- if .Values.postgresql.host }}
       - description: "PostgresQL Database access"
         direction: Egress
         selector:
