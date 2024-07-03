@@ -42,7 +42,7 @@ tasks:
       - task: deploy:standard-package
       - task: validate-packages
 
-  - name: validate-compliance
+  - name: compliance-validate
     description: "validate against the required compliance"
     actions:
       - task: compliance:validate
@@ -50,7 +50,7 @@ tasks:
           oscalfile: ./compliance/oscal-component.yaml
           assessment_results: ./compliance/oscal-assessment-results.yaml
 
-  - name: evaluate-compliance
+  - name: compliance-evaluate
     description: "evaluate against the required compliance"
     actions:
       - task: compliance:evaluate
