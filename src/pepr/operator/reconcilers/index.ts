@@ -12,6 +12,7 @@ export const uidSeen = new Set<string>();
  * @returns true if the CRD is pending or the current generation has been processed
  */
 export function shouldSkip(cr: UDSPackage) {
+  const isRetrying = cr.status?.phase === Phase.Retrying;
   const isPending = cr.status?.phase === Phase.Pending;
   const isCurrentGeneration = cr.metadata?.generation === cr.status?.observedGeneration;
 
@@ -19,6 +20,12 @@ export function shouldSkip(cr: UDSPackage) {
   // This ensures that all CRs are processed at least once by this version of pepr-core
   if (!uidSeen.has(cr.metadata!.uid!)) {
     Log.debug(cr, `Should skip? No, first time processed during this pod's lifetime`);
+    return false;
+  }
+
+  // If the CR is retrying, it should not be skipped
+  if (isRetrying) {
+    Log.debug(cr, `Should skip? No, retrying`);
     return false;
   }
 
@@ -50,6 +57,9 @@ export async function updateStatus(cr: UDSPackage, status: PkgStatus) {
     },
     status,
   });
+
+  // Track the UID of the CRD to know if it has been seen before
+  uidSeen.add(cr.metadata!.uid!);
 }
 
 /**
@@ -95,7 +105,7 @@ export async function handleFailure(err: { status: number; message: string }, cr
   const identifier = `${metadata.namespace}/${metadata.name}`;
   let status: Status;
 
-  // todo: identify exact 404 we are targetting, possibly in `updateStatus`
+  // todo: identify exact 404 we are targeting, possibly in `updateStatus`
   if (err.status === 404) {
     Log.warn({ err }, `Package metadata seems to have been deleted`);
     return;
@@ -103,11 +113,14 @@ export async function handleFailure(err: { status: number; message: string }, cr
 
   const retryAttempt = cr.status?.retryAttempt || 0;
 
-  if (retryAttempt < 5) {
+  // retryAttempt starts at 0, we perform 4 retries, 5 total attempts
+  if (retryAttempt < 4) {
     const currRetry = retryAttempt + 1;
+
     Log.error({ err }, `Reconciliation attempt ${currRetry} failed for ${identifier}, retrying...`);
 
     status = {
+      phase: Phase.Retrying,
       retryAttempt: currRetry,
     };
   } else {
@@ -116,11 +129,12 @@ export async function handleFailure(err: { status: number; message: string }, cr
     status = {
       phase: Phase.Failed,
       observedGeneration: metadata.generation,
+      retryAttempt: 0, // todo: make this nullable when kfc generates the type
     };
   }
 
   // Write an event for the error
-  void writeEvent(cr, { message: err.message });
+  await writeEvent(cr, { message: err.message });
 
   // Update the status of the package with the error
   updateStatus(cr, status).catch(finalErr => {
