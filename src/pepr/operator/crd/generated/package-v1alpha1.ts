@@ -479,6 +479,10 @@ export interface Sso {
    */
   enabled?: boolean;
   /**
+   * The client sso group type
+   */
+  groups?: Groups;
+  /**
    * If true, the client will generate a new Auth Service client as well
    */
   isAuthSvcClient?: boolean;
@@ -527,6 +531,16 @@ export enum ClientAuthenticatorType {
 }
 
 /**
+ * The client sso group type
+ */
+export interface Groups {
+  /**
+   * List of groups allowed to access to client
+   */
+  anyOf?: string[];
+}
+
+/**
  * Specifies the protocol of the client, either 'openid-connect' or 'saml'
  */
 export enum Protocol {
@@ -548,6 +562,7 @@ export enum Phase {
   Failed = "Failed",
   Pending = "Pending",
   Ready = "Ready",
+  Retrying = "Retrying",
 }
 
 RegisterKind(Package, {
