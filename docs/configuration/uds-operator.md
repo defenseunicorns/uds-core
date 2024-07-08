@@ -18,6 +18,12 @@ The UDS Operator plays a pivotal role in managing the lifecycle of UDS Package C
   - The operator creates targeted network policies for remote endpoints, such as `KubeAPI` and `CloudMetadata`. This approach aims to enhance policy management by reducing redundancy (DRY) and facilitating dynamic bindings in scenarios where static definitions are impractical.
 - **Creating Istio Virtual Services and Related Ingress Gateway Network Policies:**
   - In addition, the operator is responsible for generating Istio Virtual Services and the associated network policies for the ingress gateway.
+- **SSO Group Authentication:**
+  - Group authentication determines who can access the application based on keycloak group membership.
+  - At this time `anyOf` allows defining a list of groups, a user must belong to at least one of them.
+    {{% alert-caution %}}
+  Warning: **SSO Group Authentication** is in Alpha and may not be stable. Avoid using in production. Feedback is appreciated to improve reliability.
+    {{% /alert-caution %}}
 
 ### Example UDS Package CR
 
@@ -58,7 +64,10 @@ spec:
     - name: Grafana Dashboard
       clientId: uds-core-admin-grafana
       redirectUris:
-        - "https://grafana.admin.uds.dev/login/generic_oauth"
+        - "https://grafana.admin.{{ .Values.domain }}/login/generic_oauth"
+      groups:
+        anyOf:
+          - /UDS Core/Admin
 ```
 
 ## Exemption

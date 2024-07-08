@@ -113,8 +113,10 @@ export async function handleFailure(err: { status: number; message: string }, cr
 
   const retryAttempt = cr.status?.retryAttempt || 0;
 
-  if (retryAttempt < 5) {
+  // retryAttempt starts at 0, we perform 4 retries, 5 total attempts
+  if (retryAttempt < 4) {
     const currRetry = retryAttempt + 1;
+
     Log.error({ err }, `Reconciliation attempt ${currRetry} failed for ${identifier}, retrying...`);
 
     status = {
@@ -127,11 +129,12 @@ export async function handleFailure(err: { status: number; message: string }, cr
     status = {
       phase: Phase.Failed,
       observedGeneration: metadata.generation,
+      retryAttempt: 0, // todo: make this nullable when kfc generates the type
     };
   }
 
   // Write an event for the error
-  void writeEvent(cr, { message: err.message });
+  await writeEvent(cr, { message: err.message });
 
   // Update the status of the package with the error
   updateStatus(cr, status).catch(finalErr => {

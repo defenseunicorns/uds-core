@@ -86,6 +86,12 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
       return req.Deny(`The client ID "${client.clientId}" is not unique`);
     }
     clientIDs.add(client.clientId);
+    // Don't allow illegal k8s resource names for the secret name
+    if (client.secretName && client.secretName !== sanitizeResourceName(client.secretName)) {
+      return req.Deny(
+        `The client ID "${client.clientId}" uses an invalid secret name ${client.secretName}`,
+      );
+    }
   }
 
   return req.Approve();
