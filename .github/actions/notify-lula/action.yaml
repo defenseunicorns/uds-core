@@ -1,0 +1,43 @@
+name: Notify Lula
+description: "Comment on PR to notify Lula Team"
+
+inputs:
+  state:
+    description: 'state of the comment update'
+    required: true
+    default: ''
+  flavor:
+    description: 'flavor of the comment update'
+    required: true
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    - name: Find Comment
+      uses: peter-evans/find-comment@v3
+      id: fc
+      with:
+        issue-number: ${{ github.event.pull_request.number }}
+        comment-author: 'github-actions[bot]'
+        body-includes: Compliance ${{ inputs.flavor }} Evaluation
+
+    - name: Create comment
+      if: ${{ steps.fc.outputs.comment-id == '' && inputs.state == 'failure'}}
+      uses: peter-evans/create-or-update-comment@v4
+      with:
+        issue-number: ${{ github.event.pull_request.number }}
+        body: |
+          Compliance ${{ inputs.flavor }} Evaluation: ${{ inputs.state }}
+
+          CC: @defenseunicorns/lula-dev
+
+    - name: Update comment 
+      if: ${{ steps.fc.outputs.comment-id != '' }}
+      uses: peter-evans/create-or-update-comment@v4
+      with:
+        comment-id: ${{ steps.fc.outputs.comment-id }}
+        body: |
+          Compliance ${{ inputs.flavor }} Evaluation: ${{ inputs.state }}
+
+          CC: @defenseunicorns/lula-dev

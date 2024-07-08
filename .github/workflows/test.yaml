@@ -67,8 +67,19 @@ jobs:
         run: uds run test-compliance-validate --no-progress
 
       - name: Evaluate UDS Core Compliance
+        id: compliance-evaluation
         if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
         run: uds run test-compliance-evaluate --no-progress
+        continue-on-error: true
+
+      # steps in this action only run when there has been a previous failure - will indicate success thereafter
+      # need to think about how much noise this could create - noise currently = good
+      - name: Notify Lula Team of Compliance Assessment Results
+        if: ${{ always() }}
+        uses: ./.github/actions/notify-lula
+        with:
+          state: ${{ steps.compliance-evaluation.conclusion }}
+          flavor: ${{ inputs.flavor }}
 
       - name: Store UDS Core Compliance Assessment Results
         if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
