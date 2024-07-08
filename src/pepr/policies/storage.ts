@@ -1,7 +1,7 @@
 import { a } from "pepr";
 
-import { When, containers, volumes } from "./common";
 import { Policy } from "../operator/crd";
+import { When, containers, volumes } from "./common";
 import { isExempt, markExemption } from "./exemptions";
 
 /**

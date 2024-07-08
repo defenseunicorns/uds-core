@@ -1,6 +1,9 @@
-import { Log } from "pepr";
+import { Component, setupLogger } from "../../../logger";
 import { StoredMatcher } from "../../../policies";
 import { Matcher, Policy, UDSExemption } from "../../crd";
+
+// configure subproject logger
+const log = setupLogger(Component.OPERATOR_EXEMPTIONS);
 
 export type PolicyOwnerMap = Map<string, UDSExemption>;
 export type PolicyMap = Map<Policy, StoredMatcher[]>;
@@ -34,7 +37,7 @@ function addMatcher(matcher: Matcher, p: Policy, owner: string = ""): void {
 }
 
 // Iterate through each exemption block of CR and add matchers to PolicyMap
-function add(exemption: UDSExemption, log: boolean = true) {
+function add(exemption: UDSExemption, logger: boolean = true) {
   // Remove any existing exemption for this owner, in case of WatchPhase.Modified
   remove(exemption);
   const owner = exemption.metadata?.uid || "";
@@ -45,8 +48,8 @@ function add(exemption: UDSExemption, log: boolean = true) {
     for (const p of policies) {
       // Append the matcher to the list of stored matchers for this policy
       addMatcher(e.matcher, p, owner);
-      if (log) {
-        Log.debug(`Added exemption to ${p}: ${JSON.stringify(e.matcher)}`);
+      if (logger) {
+        log.debug(`Added exemption to ${p}: ${JSON.stringify(e.matcher)}`);
       }
     }
   }
@@ -68,9 +71,9 @@ function remove(exemption: UDSExemption) {
       }
     }
     policyOwnerMap.delete(owner);
-    Log.debug(`Removed all policy exemptions for ${owner}`);
+    log.debug(`Removed all policy exemptions for ${owner}`);
   } else {
-    Log.debug(`No existing exemption for owner ${owner}`);
+    log.debug(`No existing exemption for owner ${owner}`);
   }
 }
 
