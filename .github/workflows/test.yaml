@@ -70,6 +70,10 @@ jobs:
         if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
         run: uds run test-compliance-evaluate --no-progress
 
+      - name: Store UDS Core Compliance Assessment Results
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
+        run: cp ./compliance/oscal-assessment-results.yaml /tmp/oscal-assessment-results.yaml
+
       - name: Test UDS Core Upgrade
         if: ${{ inputs.package == 'all' && inputs.test_type == 'upgrade' }}
         run: uds run test-uds-core-upgrade --set FLAVOR=${{ inputs.flavor }} --no-progress
