@@ -1,5 +1,9 @@
-import { Capability, K8s, kind, Log } from "pepr";
+import { Capability, K8s, kind } from "pepr";
+import { Component, setupLogger } from "../logger";
 import { Prometheus } from "../operator/crd";
+
+// configure subproject logger
+const log = setupLogger(Component.PROMETHEUS);
 
 export const prometheus = new Capability({
   name: "prometheus",
@@ -25,7 +29,7 @@ When(Prometheus.ServiceMonitor)
         return;
       }
 
-      Log.info(`Patching service monitor ${sm.Raw.metadata?.name} for mTLS metrics`);
+      log.info(`Patching service monitor ${sm.Raw.metadata?.name} for mTLS metrics`);
       const tlsConfig = {
         caFile: "/etc/prom-certs/root-cert.pem",
         certFile: "/etc/prom-certs/cert-chain.pem",
@@ -39,7 +43,7 @@ When(Prometheus.ServiceMonitor)
       });
       sm.Raw.spec.endpoints = endpoints;
     } else {
-      Log.info(`No mutations needed for service monitor ${sm.Raw.metadata?.name}`);
+      log.info(`No mutations needed for service monitor ${sm.Raw.metadata?.name}`);
     }
   });
 
