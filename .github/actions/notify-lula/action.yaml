@@ -15,7 +15,7 @@ runs:
   using: composite
   steps:
     - name: Find Comment
-      uses: peter-evans/find-comment@v3
+      uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e # v3.1.0
       id: fc
       with:
         issue-number: ${{ github.event.pull_request.number }}
@@ -24,7 +24,7 @@ runs:
 
     - name: Create comment
       if: ${{ steps.fc.outputs.comment-id == '' && inputs.state == 'failure'}}
-      uses: peter-evans/create-or-update-comment@v4
+      uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4.0.0
       with:
         issue-number: ${{ github.event.pull_request.number }}
         body: |
@@ -34,7 +34,7 @@ runs:
 
     - name: Update comment 
       if: ${{ steps.fc.outputs.comment-id != '' }}
-      uses: peter-evans/create-or-update-comment@v4
+      uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4.0.0
       with:
         comment-id: ${{ steps.fc.outputs.comment-id }}
         body: |
