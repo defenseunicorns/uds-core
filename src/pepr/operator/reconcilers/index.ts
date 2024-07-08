@@ -51,7 +51,7 @@ export function shouldSkip(cr: UDSPackage) {
  * @param status The new status
  */
 export async function updateStatus(cr: UDSPackage, status: PkgStatus) {
-  log.debug(cr.metadata, `Updating status to ${status.phase}`);
+  log.debug(`Updating ${cr.metadata?.name}/${cr.metadata?.namespace} status to ${status.phase}`);
 
   // Update the status of the CRD
   await K8s(UDSPackage).PatchStatus({
@@ -74,7 +74,7 @@ export async function updateStatus(cr: UDSPackage, status: PkgStatus) {
  * @param type The type of event to write
  */
 export async function writeEvent(cr: UDSPackage, event: Partial<kind.CoreEvent>) {
-  log.debug(cr.metadata, `Writing event: ${event.message}`);
+  log.debug(`Writing ${cr.metadata?.name}/${cr.metadata?.namespace} event: ${event.message}`);
 
   await K8s(kind.CoreEvent).Create({
     type: "Warning",
