@@ -16,7 +16,7 @@
     "name": "UDS Core",
     "uuid": "uds-core",
     "onError": "reject",
-    "logLevel": "debug",
+    "logLevel": "info",
     "alwaysIgnore": {
       "namespaces": [
         "uds-dev-stack",
@@ -28,7 +28,7 @@
       "UDS_DOMAIN": "###ZARF_VAR_DOMAIN###",
       "UDS_ALLOW_ALL_NS_EXEMPTIONS": "###ZARF_VAR_ALLOW_ALL_NS_EXEMPTIONS###",
       "UDS_SINGLE_TEST": "###ZARF_VAR_UDS_SINGLE_TEST###",
-      "UDS_CA_CERT": "###ZARF_VAR_CA_CERT###"
+      "UDS_LOG_LEVEL": "###ZARF_VAR_UDS_LOG_LEVEL###"
     }
   },
   "scripts": {

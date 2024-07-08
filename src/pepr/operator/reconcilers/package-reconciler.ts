@@ -1,7 +1,6 @@
-import { Log } from "pepr";
-
 import { handleFailure, shouldSkip, updateStatus } from ".";
 import { UDSConfig } from "../../config";
+import { Component, setupLogger } from "../../logger";
 import { enableInjection } from "../controllers/istio/injection";
 import { istioResources } from "../controllers/istio/istio-resources";
 import { authservice } from "../controllers/keycloak/authservice/authservice";
@@ -10,6 +9,9 @@ import { serviceMonitor } from "../controllers/monitoring/service-monitor";
 import { networkPolicies } from "../controllers/network/policies";
 import { Phase, UDSPackage } from "../crd";
 import { migrate } from "../crd/migrate";
+
+// configure subproject logger
+const log = setupLogger(Component.OPERATOR_RECONCILERS);
 
 /**
  * The reconciler is called from the queue and is responsible for reconciling the state of the package
@@ -21,10 +23,14 @@ export async function packageReconciler(pkg: UDSPackage) {
   const metadata = pkg.metadata!;
   const { namespace, name } = metadata;
 
-  Log.info(pkg, `Processing Package ${namespace}/${name}`);
+  log.info(
+    `Processing Package ${namespace}/${name}, status.phase: ${pkg.status?.phase}, observedGeneration: ${pkg.status?.observedGeneration}, retryAttempt: ${pkg.status?.retryAttempt}`,
+  );
 
   if (shouldSkip(pkg)) {
-    Log.info(pkg, `Skipping Package ${namespace}/${name}`);
+    log.info(
+      `Skipping Package ${namespace}/${name}, status.phase: ${pkg.status?.phase}, observedGeneration: ${pkg.status?.observedGeneration}, retryAttempt: ${pkg.status?.retryAttempt}`,
+    );
     return;
   }
 
@@ -50,7 +56,7 @@ export async function packageReconciler(pkg: UDSPackage) {
       // Create the ServiceMonitor for each monitored service
       monitors = await serviceMonitor(pkg, namespace!);
     } else {
-      Log.warn(`Running in single test mode, skipping ${name} ServiceMonitors.`);
+      log.warn(`Running in single test mode, skipping ${name} ServiceMonitors.`);
     }
 
     // Configure SSO
