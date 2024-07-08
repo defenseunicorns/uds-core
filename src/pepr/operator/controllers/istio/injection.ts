@@ -1,6 +1,10 @@
-import { K8s, Log, kind } from "pepr";
+import { K8s, kind } from "pepr";
 
+import { Component, setupLogger } from "../../../logger";
 import { UDSPackage } from "../../crd";
+
+// configure subproject logger
+const log = setupLogger(Component.OPERATOR_ISTIO);
 
 const injectionLabel = "istio-injection";
 const injectionAnnotation = "uds.dev/original-istio-injection";
@@ -143,7 +147,7 @@ async function killPods(ns: string, enableInjection: boolean) {
     }
 
     for (const pod of group) {
-      Log.info(`Deleting pod ${ns}/${pod.metadata?.name} to enable the istio sidecar`);
+      log.info(`Deleting pod ${ns}/${pod.metadata?.name} to enable the istio sidecar`);
       await K8s(kind.Pod).Delete(pod);
     }
   }

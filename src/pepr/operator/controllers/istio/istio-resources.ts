@@ -1,9 +1,13 @@
-import { K8s, Log } from "pepr";
+import { K8s } from "pepr";
 
-import { IstioVirtualService, IstioServiceEntry, UDSPackage } from "../../crd";
+import { Component, setupLogger } from "../../../logger";
+import { IstioServiceEntry, IstioVirtualService, UDSPackage } from "../../crd";
 import { getOwnerRef } from "../utils";
-import { generateVirtualService } from "./virtual-service";
 import { generateServiceEntry } from "./service-entry";
+import { generateVirtualService } from "./virtual-service";
+
+// configure subproject logger
+const log = setupLogger(Component.OPERATOR_ISTIO);
 
 /**
  * Creates a VirtualService and ServiceEntry for each exposed service in the package
@@ -30,7 +34,7 @@ export async function istioResources(pkg: UDSPackage, namespace: string) {
     // Generate a VirtualService for this `expose` entry
     const vsPayload = generateVirtualService(expose, namespace, pkgName, generation, ownerRefs);
 
-    Log.debug(vsPayload, `Applying VirtualService ${vsPayload.metadata?.name}`);
+    log.debug(vsPayload, `Applying VirtualService ${vsPayload.metadata?.name}`);
 
     // Apply the VirtualService and force overwrite any existing policy
     await K8s(IstioVirtualService).Apply(vsPayload, { force: true });
@@ -45,7 +49,7 @@ export async function istioResources(pkg: UDSPackage, namespace: string) {
       continue;
     }
 
-    Log.debug(sePayload, `Applying ServiceEntry ${sePayload.metadata?.name}`);
+    log.debug(sePayload, `Applying ServiceEntry ${sePayload.metadata?.name}`);
 
     // Apply the ServiceEntry and force overwrite any existing policy
     await K8s(IstioServiceEntry).Apply(sePayload, { force: true });
@@ -66,7 +70,7 @@ export async function istioResources(pkg: UDSPackage, namespace: string) {
 
   // Delete any orphaned VirtualServices
   for (const vs of orphanedVS) {
-    Log.debug(vs, `Deleting orphaned VirtualService ${vs.metadata!.name}`);
+    log.debug(vs, `Deleting orphaned VirtualService ${vs.metadata!.name}`);
     await K8s(IstioVirtualService).Delete(vs);
   }
 
@@ -83,7 +87,7 @@ export async function istioResources(pkg: UDSPackage, namespace: string) {
 
   // Delete any orphaned ServiceEntries
   for (const se of orphanedSE) {
-    Log.debug(se, `Deleting orphaned ServiceEntry ${se.metadata!.name}`);
+    log.debug(se, `Deleting orphaned ServiceEntry ${se.metadata!.name}`);
     await K8s(IstioServiceEntry).Delete(se);
   }
 
