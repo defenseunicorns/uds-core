@@ -24,7 +24,6 @@ When(a.Pod)
   .WithLabel("batch.kubernetes.io/job-name")
   .WithLabel("service.istio.io/canonical-name")
   .Watch(async pod => {
-
     if (!pod.metadata?.name || !pod.metadata.namespace) {
       log.error(pod, `Invalid Pod definition`);
       return;
