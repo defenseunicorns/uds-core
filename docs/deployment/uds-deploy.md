@@ -90,7 +90,7 @@ Below is an example of the workflow developing the [metrics-server package](http
 
 ```cli
 # Create the dev environment
-uds run dev
+uds run dev-setup
 
 # If developing the Pepr module:
 npx pepr dev

@@ -17,8 +17,8 @@ components:
         valuesFiles:
           - values/upstream-values.yaml
     images:
-      - ghcr.io/jimmidyson/configmap-reload:v0.12.0
-      - docker.io/grafana/promtail:2.9.6
+      - ghcr.io/jimmidyson/configmap-reload:v0.13.1
+      - docker.io/grafana/promtail:3.1.0
 
   - name: promtail
     required: true
@@ -32,8 +32,8 @@ components:
         valuesFiles:
           - values/registry1-values.yaml
     images:
-      - registry1.dso.mil/ironbank/opensource/jimmidyson/configmap-reload:v0.12.0
-      - registry1.dso.mil/ironbank/opensource/grafana/promtail:v2.9.6
+      - registry1.dso.mil/ironbank/opensource/jimmidyson/configmap-reload:v0.13.1
+      - registry1.dso.mil/ironbank/opensource/grafana/promtail:v3.1.0
 
   - name: promtail
     required: true
@@ -48,4 +48,4 @@ components:
           - values/unicorn-values.yaml
     images:
       - cgr.dev/du-uds-defenseunicorns/configmap-reload-fips:0.12.0
-      - cgr.dev/du-uds-defenseunicorns/promtail:3.0.0
+      - cgr.dev/du-uds-defenseunicorns/promtail:3.1.0

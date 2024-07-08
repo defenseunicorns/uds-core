@@ -303,6 +303,19 @@ const sso = {
           type: "string",
         },
       },
+      groups: {
+        description: "The client sso group type",
+        type: "object",
+        properties: {
+          anyOf: {
+            description: "List of groups allowed to access to client",
+            type: "array",
+            items: {
+              type: "string",
+            },
+          },
+        },
+      },
     },
   } as V1JSONSchemaProps,
 } as V1JSONSchemaProps;
@@ -363,7 +376,7 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
               type: "integer",
             },
             phase: {
-              enum: ["Pending", "Ready", "Failed"],
+              enum: ["Pending", "Ready", "Failed", "Retrying"],
               type: "string",
             },
             ssoClients: {
