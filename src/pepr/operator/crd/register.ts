@@ -1,11 +1,11 @@
 import { K8s, kind } from "pepr";
 
-import { setupLogger } from "../../logger";
+import { Component, setupLogger } from "../../logger";
 import { v1alpha1 as exemption } from "./sources/exemption/v1alpha1";
 import { v1alpha1 as pkg } from "./sources/package/v1alpha1";
 
 // configure subproject logger
-const log = setupLogger("operator.crd");
+const log = setupLogger(Component.OPERATOR_CRD);
 
 export async function registerCRDs() {
   // Register the Package CRD if we're in watch or dev mode

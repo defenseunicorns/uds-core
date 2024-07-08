@@ -1,6 +1,6 @@
 import { K8s, kind } from "pepr";
 
-import { setupLogger } from "../../../logger";
+import { Component, setupLogger } from "../../../logger";
 import { Allow, Direction, Gateway, UDSPackage } from "../../crd";
 import { getOwnerRef, sanitizeResourceName } from "../utils";
 import { allowEgressDNS } from "./defaults/allow-egress-dns";
@@ -10,7 +10,7 @@ import { defaultDenyAll } from "./defaults/default-deny-all";
 import { generate } from "./generate";
 
 // configure subproject logger
-const log = setupLogger("operator.network");
+const log = setupLogger(Component.OPERATOR_NETWORK);
 
 export async function networkPolicies(pkg: UDSPackage, namespace: string) {
   const customPolicies = pkg.spec?.network?.allow ?? [];

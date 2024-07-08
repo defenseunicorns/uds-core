@@ -1,9 +1,9 @@
 import { Capability, K8s, kind } from "pepr";
-import { setupLogger } from "../logger";
+import { Component, setupLogger } from "../logger";
 import { Prometheus } from "../operator/crd";
 
 // configure subproject logger
-const log = setupLogger("prometheus");
+const log = setupLogger(Component.PROMETHEUS);
 
 export const prometheus = new Capability({
   name: "prometheus",

@@ -1,7 +1,7 @@
 import { fetch, K8s, kind } from "pepr";
 
 import { UDSConfig } from "../../../config";
-import { setupLogger } from "../../../logger";
+import { Component, setupLogger } from "../../../logger";
 import { Store } from "../../common";
 import { Sso, UDSPackage } from "../../crd";
 import { getOwnerRef } from "../utils";
@@ -34,7 +34,7 @@ const x509CertRegex = new RegExp(
 );
 
 // configure subproject logger
-const log = setupLogger("operator.keycloak");
+const log = setupLogger(Component.OPERATOR_KEYCLOAK);
 
 /**
  * Create or update the Keycloak clients for the package

@@ -1,12 +1,12 @@
 import { K8s } from "pepr";
 
 import { V1OwnerReference } from "@kubernetes/client-node";
-import { setupLogger } from "../../../logger";
+import { Component, setupLogger } from "../../../logger";
 import { Monitor, Prometheus, UDSPackage } from "../../crd";
 import { getOwnerRef, sanitizeResourceName } from "../utils";
 
 // configure subproject logger
-const log = setupLogger("operator.monitoring");
+const log = setupLogger(Component.OPERATOR_MONITORING);
 
 /**
  * Generate a service monitor for a service
