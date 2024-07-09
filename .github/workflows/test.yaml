@@ -68,7 +68,7 @@ jobs:
 
       - name: Upload Assessment
         if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
-        uses: actions/upload-artifact@694cdabd8bdb0f10b2cea11669e1bf5453eed0a6 # v4.2.0
+        uses: actions/upload-artifact@v4.0.0
         with:
           name: ${{ inputs.flavor }}-assessment-results
           path: ./compliance/oscal-assessment-results.yaml
