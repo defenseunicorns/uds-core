@@ -80,9 +80,22 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
       description: `${sanitizeResourceName(sso.clientId)} authservice egress`,
     };
 
-    // Generate the policy
+    // Generate the workload to keycloak for JWKS endpoint policy
     const generatedPolicy = generate(namespace, policy);
     policies.push(generatedPolicy);
+
+    const keycloakPolicy: Allow = {
+      direction: Direction.Egress,
+      selector: sso.enableAuthserviceSelector,
+      remoteNamespace: "keycloak",
+      remoteSelector: { "app.kubernetes.io/name": "keycloak" },
+      port: 8080,
+      description: `${sanitizeResourceName(sso.clientId)} keycloak JWKS egress`,
+    };
+
+    // Generate the policy
+    const keycloakGeneratedPolicy = generate(namespace, keycloakPolicy);
+    policies.push(keycloakGeneratedPolicy);
   }
 
   // Generate NetworkPolicies for any ServiceMonitors that are generated

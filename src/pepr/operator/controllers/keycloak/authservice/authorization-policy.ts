@@ -92,7 +92,7 @@ function authNRequestAuthentication(
           audiences: [name],
           forwardOriginalToken: true,
           issuer: `https://sso.${UDSConfig.domain}/realms/uds`,
-          jwksUri: `https://sso.${UDSConfig.domain}/realms/uds/protocol/openid-connect/certs`,
+          jwksUri: `http://keycloak-http.keycloak.svc.cluster.local:8080/realms/uds/protocol/openid-connect/certs`,
         },
       ],
       selector: {
@@ -141,6 +141,7 @@ async function updatePolicy(
     await purgeOrphanPolicies(generation, namespace, pkg.metadata!.name!);
   } catch (e) {
     Log.error(e, `Failed to purge orphan auth policies ${event.name} in ${namespace}: ${e}`);
+    throw e;
   }
 }
 
