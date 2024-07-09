@@ -47,6 +47,10 @@ export async function packageReconciler(pkg: UDSPackage) {
     // Update the namespace to ensure the istio-injection label is set
     await enableInjection(pkg);
 
+    // Configure SSO
+    const ssoClients = await keycloak(pkg);
+    const authserviceClients = await authservice(pkg, ssoClients);
+
     // Create the VirtualService and ServiceEntry for each exposed service
     endpoints = await istioResources(pkg, namespace!);
 
@@ -58,10 +62,6 @@ export async function packageReconciler(pkg: UDSPackage) {
     } else {
       log.warn(`Running in single test mode, skipping ${name} ServiceMonitors.`);
     }
-
-    // Configure SSO
-    const ssoClients = await keycloak(pkg);
-    const authserviceClients = await authservice(pkg, ssoClients);
 
     await updateStatus(pkg, {
       phase: Phase.Ready,
