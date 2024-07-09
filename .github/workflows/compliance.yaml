@@ -39,6 +39,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: ${{ inputs.flavor }}-assessment-results
+          path: ./compliance/oscal-assessment-results.yaml
 
       - name: Evaluate compliance
         id: compliance-evaluation
@@ -53,3 +54,9 @@ jobs:
           state: ${{ steps.compliance-evaluation.outcome }}
           flavor: ${{ inputs.flavor }}
           ghToken: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Evaluated Assessment
+        uses: actions/upload-artifact@0b2256b8c012f0828dc542b3febcab082c67f72b # v4.3.4
+        with:
+          name: ${{ inputs.flavor }}-assessment-results
+          path: ./compliance/oscal-assessment-results.yaml
