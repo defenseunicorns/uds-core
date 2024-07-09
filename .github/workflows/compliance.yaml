@@ -35,6 +35,10 @@ jobs:
       - name: Environment setup
         uses: ./.github/actions/setup
 
+      - name: remove overlapping file
+        run: rm ./compliance/oscal-assessment-results.yaml
+        shell: bash
+
       - name: Download assessment
         uses: actions/download-artifact@v4
         with:
