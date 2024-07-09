@@ -162,7 +162,7 @@ postgresql:
   database: ""
   # Hostname of the default JDBC URL
   host: ""
-  # Port of the default JDBC URL 
+  # Port of the default JDBC URL
   port: 5432
 
 serviceMonitor:
