@@ -12,6 +12,8 @@ jest.mock("pepr", () => ({
     debug: jest.fn(),
     warn: jest.fn(),
     error: jest.fn(),
+    trace: jest.fn(),
+    child: jest.fn().mockReturnThis(),
   },
   kind: {
     CoreEvent: "CoreEvent",

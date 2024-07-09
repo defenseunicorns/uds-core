@@ -1,5 +1,6 @@
-import { K8s, Log, kind } from "pepr";
+import { K8s, kind } from "pepr";
 
+import { Component, setupLogger } from "../../../logger";
 import { Allow, Direction, Gateway, UDSPackage } from "../../crd";
 import { getOwnerRef, sanitizeResourceName } from "../utils";
 import { allowEgressDNS } from "./defaults/allow-egress-dns";
@@ -8,6 +9,9 @@ import { allowIngressSidecarMonitoring } from "./defaults/allow-ingress-sidecar-
 import { defaultDenyAll } from "./defaults/default-deny-all";
 import { generate } from "./generate";
 
+// configure subproject logger
+const log = setupLogger(Component.OPERATOR_NETWORK);
+
 export async function networkPolicies(pkg: UDSPackage, namespace: string) {
   const customPolicies = pkg.spec?.network?.allow ?? [];
   const pkgName = pkg.metadata!.name!;
@@ -15,7 +19,7 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
   // Get the current generation of the package
   const generation = (pkg.metadata?.generation ?? 0).toString();
 
-  Log.debug(pkg.metadata, `Generating NetworkPolicies for generation ${generation}`);
+  log.debug(pkg.metadata, `Generating NetworkPolicies for generation ${generation}`);
 
   // Create default policies
   const policies = [
@@ -124,7 +128,7 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
 
   // Delete any orphaned policies
   for (const netPol of orphanedNetPol) {
-    Log.debug(netPol, `Deleting orphaned NetworkPolicy ${netPol.metadata!.name}`);
+    log.debug(netPol, `Deleting orphaned NetworkPolicy ${netPol.metadata!.name}`);
     await K8s(kind.NetworkPolicy).Delete(netPol);
   }
 
