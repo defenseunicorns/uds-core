@@ -12,6 +12,8 @@ For more information on Keycloak and its capabilities, see its [documentation](h
 
 When `devMode: true` is set, the chart will deploy a single Keycloak Pod with an in-memory database and scaling turned off. Devmode also leverages PVCs by default for `data` and `themes`.
 
+Dev Mode enables debug logging for Keycloak. To configure debug logging outside of Dev Mode, set `debug: true` in your values.
+
 ### Autoscaling
 
 The example autoscaling configuration in the values file scales from three up to a maximum of ten Pods using CPU utilization as the metric. Scaling up is done as quickly as required but scaling down is done at a maximum rate of one Pod per five minutes.
