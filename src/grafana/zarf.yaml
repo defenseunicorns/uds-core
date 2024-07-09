@@ -52,7 +52,7 @@ components:
         valuesFiles:
           - values/unicorn-values.yaml
     images:
-      - cgr.dev/du-uds-defenseunicorns/grafana-fips:10.4.5 # waiting on 11.1.0
+      - cgr.dev/du-uds-defenseunicorns/grafana-fips:11.1.0
       - cgr.dev/du-uds-defenseunicorns/busybox-fips:1.36.1
       - cgr.dev/du-uds-defenseunicorns/curl-fips:8.8.0
       - cgr.dev/du-uds-defenseunicorns/k8s-sidecar-fips:1.27.4
