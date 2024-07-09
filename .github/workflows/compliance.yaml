@@ -24,6 +24,7 @@ jobs:
   evaluate:
     runs-on: ubuntu-latest
     name: Evaluate
+    continue-on-error: true
     # env:
     #   UDS_PKG: ${{ inputs.package }}
     steps:

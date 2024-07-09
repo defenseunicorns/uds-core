@@ -85,8 +85,6 @@ jobs:
   evaluate-package-compliance:
     needs: run-package-test
     name: Compliance Evaluation
-    # Allow this job to fail
-    continue-on-error: true
     strategy:
       matrix:
         flavor: [upstream, registry1]
