@@ -1,5 +1,9 @@
 import { Exec, KubeConfig } from "@kubernetes/client-node";
-import { Capability, Log, a } from "pepr";
+import { Capability, a } from "pepr";
+import { Component, setupLogger } from "../logger";
+
+// configure subproject logger
+const log = setupLogger(Component.ISTIO);
 
 export const istio = new Capability({
   name: "istio",
@@ -20,13 +24,8 @@ When(a.Pod)
   .WithLabel("batch.kubernetes.io/job-name")
   .WithLabel("service.istio.io/canonical-name")
   .Watch(async pod => {
-    Log.info(
-      pod,
-      `Processing Pod ${pod.metadata?.namespace}/${pod.metadata?.name} for istio job termination`,
-    );
-
     if (!pod.metadata?.name || !pod.metadata.namespace) {
-      Log.error(pod, `Invalid Pod definition`);
+      log.error(pod, `Invalid Pod definition`);
       return;
     }
 
@@ -42,7 +41,7 @@ When(a.Pod)
     if (pod.status?.phase == "Running") {
       // Check all container statuses
       if (!pod.status.containerStatuses) {
-        Log.error(pod, `Invalid container status in Pod`);
+        log.error(pod, `Invalid container status in Pod`);
         return;
       }
       const shouldTerminate = pod.status.containerStatuses
@@ -55,7 +54,7 @@ When(a.Pod)
         // Mark the pod as seen
         inProgress.add(key);
 
-        Log.info(`Attempting to terminate sidecar for ${key}`);
+        log.info(`Attempting to terminate sidecar for ${key}`);
         try {
           const kc = new KubeConfig();
           kc.loadFromDefault();
@@ -72,9 +71,9 @@ When(a.Pod)
             true,
           );
 
-          Log.info(`Terminated sidecar for ${key}`);
+          log.info(`Terminated sidecar for ${key}`);
         } catch (err) {
-          Log.error({ err }, `Failed to terminate the sidecar for ${key}`);
+          log.error({ err }, `Failed to terminate the sidecar for ${key}`);
 
           // Remove the pod from the seen list
           inProgress.delete(key);

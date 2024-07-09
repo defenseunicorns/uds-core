@@ -12,6 +12,8 @@ jest.mock("pepr", () => ({
     debug: jest.fn(),
     warn: jest.fn(),
     error: jest.fn(),
+    trace: jest.fn(),
+    child: jest.fn().mockReturnThis(),
   },
   kind: {
     CoreEvent: "CoreEvent",
@@ -180,6 +182,7 @@ describe("handleFailure", () => {
     expect(PatchStatus).toHaveBeenCalledWith({
       metadata: { namespace: "default", name: "test" },
       status: {
+        phase: Phase.Retrying,
         retryAttempt: 1,
       },
     });
@@ -224,6 +227,7 @@ describe("handleFailure", () => {
       status: {
         observedGeneration: 1,
         phase: Phase.Failed,
+        retryAttempt: 0,
       },
     });
   });

@@ -1,15 +1,21 @@
-import { K8s, Log, fetch, kind } from "pepr";
+import { fetch, K8s, kind } from "pepr";
 
 import { UDSConfig } from "../../../config";
+import { Component, setupLogger } from "../../../logger";
 import { Store } from "../../common";
 import { Sso, UDSPackage } from "../../crd";
 import { getOwnerRef } from "../utils";
 import { Client } from "./types";
 
-const apiURL =
+let apiURL =
   "http://keycloak-http.keycloak.svc.cluster.local:8080/realms/uds/clients-registrations/default";
 const samlDescriptorUrl =
   "http://keycloak-http.keycloak.svc.cluster.local:8080/realms/uds/protocol/saml/descriptor";
+
+// Support dev mode with port-forwarded keycloak svc
+if (process.env.PEPR_MODE === "dev") {
+  apiURL = "http://localhost:8080/realms/uds/clients-registrations/default";
+}
 
 // Template regex to match clientField() references, see https://regex101.com/r/e41Dsk/3 for details
 const secretTemplateRegex = new RegExp(
@@ -26,6 +32,9 @@ const idpSSODescriptorRegex = new RegExp(
 const x509CertRegex = new RegExp(
   /<[^>]*:X509Certificate[^>]*>((.|[\n\r])*)<\/[^>]*:X509Certificate>/,
 );
+
+// configure subproject logger
+const log = setupLogger(Component.OPERATOR_KEYCLOAK);
 
 /**
  * Create or update the Keycloak clients for the package
@@ -67,7 +76,7 @@ export async function purgeSSOClients(pkg: UDSPackage, refs: string[] = []) {
       Store.removeItem(ref);
       await apiCall({ clientId }, "DELETE", token);
     } else {
-      Log.warn(pkg.metadata, `Failed to remove client ${clientId}, token not found`);
+      log.warn(pkg.metadata, `Failed to remove client ${clientId}, token not found`);
     }
   }
 }
@@ -77,71 +86,91 @@ async function syncClient(
   pkg: UDSPackage,
   isRetry = false,
 ) {
-  Log.debug(pkg.metadata, `Processing client request: ${clientReq.clientId}`);
+  log.debug(pkg.metadata, `Processing client request: ${clientReq.clientId}`);
+
+  // Not including the CR data in the ref because Keycloak client IDs must be unique already
+  const name = `sso-client-${clientReq.clientId}`;
+  let client: Client;
+  handleClientGroups(clientReq);
+
+  // Get keycloak client token from the store if this is an existing client
+  const token = Store.getItem(name);
 
   try {
-    // Not including the CR data in the ref because Keycloak client IDs must be unique already
-    const name = `sso-client-${clientReq.clientId}`;
-    const token = Store.getItem(name);
-
-    let client: Client;
-
-    handleClientGroups(clientReq);
-
-    // If an existing client is found, update it
+    // If an existing client is found, use the token to update the client
     if (token && !isRetry) {
-      Log.debug(pkg.metadata, `Found existing token for ${clientReq.clientId}`);
+      log.debug(pkg.metadata, `Found existing token for ${clientReq.clientId}`);
       client = await apiCall(clientReq, "PUT", token);
     } else {
-      Log.debug(pkg.metadata, `Creating new client for ${clientReq.clientId}`);
+      log.debug(pkg.metadata, `Creating new client for ${clientReq.clientId}`);
       client = await apiCall(clientReq);
     }
-
-    // Write the new token to the store
-    await Store.setItemAndWait(name, client.registrationAccessToken!);
-
-    // Remove the registrationAccessToken from the client object to avoid problems (one-time use token)
-    delete client.registrationAccessToken;
-
-    if (clientReq.protocol === "saml") {
-      client.samlIdpCertificate = await getSamlCertificate();
-    }
-
-    // Create or update the client secret
-    await K8s(kind.Secret).Apply({
-      metadata: {
-        namespace: pkg.metadata!.namespace,
-        // Use the CR secret name if provided, otherwise use the client name
-        name: secretName || name,
-        labels: {
-          "uds/package": pkg.metadata!.name,
-        },
-        // Use the CR as the owner ref for each VirtualService
-        ownerReferences: getOwnerRef(pkg),
-      },
-      data: generateSecretData(client, secretTemplate),
-    });
-
-    if (isAuthSvcClient) {
-      // Do things here
-    }
-
-    return name;
   } catch (err) {
     const msg =
-      `Failed to process client request '${clientReq.clientId}' for ` +
-      `${pkg.metadata?.namespace}/${pkg.metadata?.name}. This can occur if a client already exists with the same ID that Pepr isn't tracking.`;
-    Log.error({ err }, msg);
+      `Failed to process Keycloak request for client '${clientReq.clientId}', package ` +
+      `${pkg.metadata?.namespace}/${pkg.metadata?.name}. Error: ${err.message}`;
 
-    if (isRetry) {
-      Log.error(`${msg}, retry failed, aborting`);
-      throw new Error(`${msg}. RETRY FAILED, aborting: ${JSON.stringify(err)}`);
+    // Throw the error if this is the retry or was an initial client creation attempt
+    if (isRetry || !token) {
+      log.error(`${msg}, retry failed.`);
+      // Throw the original error captured from the first attempt
+      throw new Error(msg);
+    } else {
+      // Retry the request without the token in case we have a bad token stored
+      log.error(msg);
+
+      try {
+        return await syncClient(clientReq, pkg, true);
+      } catch (retryErr) {
+        // If the retry fails, log the retry error and throw the original error
+        const retryMsg =
+          `Retry of Keycloak request failed for client '${clientReq.clientId}', package ` +
+          `${pkg.metadata?.namespace}/${pkg.metadata?.name}. Error: ${retryErr.message}`;
+        log.error(retryMsg);
+        // Throw the error from the original attempt since our retry without token failed
+        throw new Error(msg);
+      }
     }
-
-    // Retry the request
-    Log.warn(`${msg}, retrying`);
-    return syncClient(clientReq, pkg, true);
   }
+
+  // Write the new token to the store
+  try {
+    await Store.setItemAndWait(name, client.registrationAccessToken!);
+  } catch (err) {
+    throw Error(
+      `Failed to set token in store for client '${clientReq.clientId}', package ` +
+        `${pkg.metadata?.namespace}/${pkg.metadata?.name}`,
+    );
+  }
+
+  // Remove the registrationAccessToken from the client object to avoid problems (one-time use token)
+  delete client.registrationAccessToken;
+
+  if (clientReq.protocol === "saml") {
+    client.samlIdpCertificate = await getSamlCertificate();
+  }
+
+  // Create or update the client secret
+  await K8s(kind.Secret).Apply({
+    metadata: {
+      namespace: pkg.metadata!.namespace,
+      // Use the CR secret name if provided, otherwise use the client name
+      name: secretName || name,
+      labels: {
+        "uds/package": pkg.metadata!.name,
+      },
+
+      // Use the CR as the owner ref for each VirtualService
+      ownerReferences: getOwnerRef(pkg),
+    },
+    data: generateSecretData(client, secretTemplate),
+  });
+
+  if (isAuthSvcClient) {
+    // Do things here
+  }
+
+  return name;
 }
 
 /**
@@ -162,7 +191,7 @@ export function handleClientGroups(clientReq: Sso) {
 async function apiCall(sso: Partial<Sso>, method = "POST", authToken = "") {
   // Handle single test mode
   if (UDSConfig.isSingleTest) {
-    Log.warn(`Generating fake client for '${sso.clientId}' in single test mode`);
+    log.warn(`Generating fake client for '${sso.clientId}' in single test mode`);
     return {
       ...sso,
       secret: sso.secret || "fake-secret",
@@ -183,7 +212,8 @@ async function apiCall(sso: Partial<Sso>, method = "POST", authToken = "") {
   // When not creating a new client, add the client ID and registrationAccessToken
   if (authToken) {
     req.headers.Authorization = `Bearer ${authToken}`;
-    url += `/${sso.clientId}`;
+    // Ensure that we URI encode the clientId in the request URL
+    url += `/${encodeURIComponent(sso.clientId!)}`;
   }
 
   // Remove the body for DELETE requests
@@ -195,7 +225,11 @@ async function apiCall(sso: Partial<Sso>, method = "POST", authToken = "") {
   const resp = await fetch<Client>(url, req);
 
   if (!resp.ok) {
-    throw new Error(`Failed to ${method} client: ${resp.statusText}`);
+    if (resp.data) {
+      throw new Error(`${JSON.stringify(resp.statusText)}, ${JSON.stringify(resp.data)}`);
+    } else {
+      throw new Error(`${JSON.stringify(resp.statusText)}`);
+    }
   }
 
   return resp.data;
@@ -203,14 +237,14 @@ async function apiCall(sso: Partial<Sso>, method = "POST", authToken = "") {
 
 export function generateSecretData(client: Client, secretTemplate?: { [key: string]: string }) {
   if (secretTemplate) {
-    Log.debug(`Using secret template for client: ${client.clientId}`);
+    log.debug(`Using secret template for client: ${client.clientId}`);
     // Iterate over the secret template entry and process each value
     return templateData(secretTemplate, client);
   }
 
   const stringMap: Record<string, string> = {};
 
-  Log.debug(`Using client data for secret: ${client.clientId}`);
+  log.debug(`Using client data for secret: ${client.clientId}`);
 
   // iterate over the client object and convert all values to strings
   for (const [key, value] of Object.entries(client)) {

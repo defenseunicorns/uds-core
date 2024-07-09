@@ -1,7 +1,9 @@
 pilot:
-  image: registry1.dso.mil/ironbank/tetrate/istio/pilot:1.22.1-tetratefips-v0
+  image: registry1.dso.mil/ironbank/tetrate/istio/pilot:1.22.2-tetratefips-v0
 global:
   proxy_init:
-    image: registry1.dso.mil/ironbank/tetrate/istio/proxyv2:1.22.1-tetratefips-v0
+    # renovate: image=registry1.dso.mil/ironbank/tetrate/istio/proxyv2
+    image: "###ZARF_REGISTRY###/ironbank/tetrate/istio/proxyv2:1.22.2-tetratefips-v0"
   proxy:
-    image: registry1.dso.mil/ironbank/tetrate/istio/proxyv2:1.22.1-tetratefips-v0
+    # renovate: image=registry1.dso.mil/ironbank/tetrate/istio/proxyv2
+    image: "###ZARF_REGISTRY###/ironbank/tetrate/istio/proxyv2:1.22.2-tetratefips-v0"
