@@ -178,7 +178,7 @@ async function syncClient(
  * @param clientReq - The client request object.
  */
 export function handleClientGroups(clientReq: Sso) {
-  if (clientReq.groups?.anyOf) {
+  if (clientReq.groups?.anyOf || clientReq.groups?.allOf) {
     clientReq.attributes = clientReq.attributes || {};
     clientReq.attributes["uds.core.groups"] = JSON.stringify(clientReq.groups);
   } else {

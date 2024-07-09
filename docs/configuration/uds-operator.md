@@ -20,7 +20,10 @@ The UDS Operator plays a pivotal role in managing the lifecycle of UDS Package C
   - In addition, the operator is responsible for generating Istio Virtual Services and the associated network policies for the ingress gateway.
 - **SSO Group Authentication:**
   - Group authentication determines who can access the application based on keycloak group membership.
-  - At this time `anyOf` allows defining a list of groups, a user must belong to at least one of them.
+  - Group definition types:
+    - `anyOf` defines a list of groups, a user must belong to at least one of them.
+    - `allOf` defines a list of groups, a user must belong to **all** of them.
+  - These definitions can be used together to create more complicated authentication rules.
     {{% alert-caution %}}
   Warning: **SSO Group Authentication** is in Alpha and may not be stable. Avoid using in production. Feedback is appreciated to improve reliability.
     {{% /alert-caution %}}

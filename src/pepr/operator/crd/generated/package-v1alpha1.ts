@@ -538,6 +538,11 @@ export interface Groups {
    * List of groups allowed to access to client
    */
   anyOf?: string[];
+
+  /**
+   * List of groups required to access client
+   */
+  allOf?: string[];
 }
 
 /**

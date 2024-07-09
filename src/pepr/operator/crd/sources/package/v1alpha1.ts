@@ -314,6 +314,13 @@ const sso = {
               type: "string",
             },
           },
+          allOf: {
+            description: "List of groups required to access client",
+            type: "array",
+            items: {
+              type: "string",
+            },
+          },
         },
       },
     },
