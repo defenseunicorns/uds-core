@@ -121,7 +121,9 @@ spec:
               value: DEBUG
             - name: QUARKUS_LOG_CATEGORY__ORG_KEYCLOAK_SERVICES_X509__LEVEL
               value: TRACE
-          {{- else if not .Values.devMode }}
+          {{- end }}    
+          {{- if .Values.postgresql.host }}
+          {{- if .Values.devMode -}}{{fail "Cannot use devMode when an external PostgreSQL Database (postgres.host) is configured."}}{{- end -}}
             # Infinispan cache configuration
             - name: KC_CACHE
               value: ispn
