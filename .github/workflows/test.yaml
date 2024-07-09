@@ -65,7 +65,7 @@ jobs:
       - name: Validate UDS Core Compliance
         if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
         run: uds run test-compliance-validate --no-progress
-      
+
       - name: Upload Assessment
         if: ${{ inputs.package != 'all' && inputs.test_type == 'install' }}
         uses: actions/upload-artifact@0b2256b8c012f0828dc542b3febcab082c67f72b # v4.3.4
