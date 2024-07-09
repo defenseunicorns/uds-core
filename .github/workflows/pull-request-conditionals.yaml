@@ -81,3 +81,16 @@ jobs:
       flavor: ${{ matrix.flavor }}
       test_type: ${{ matrix.test_type }}
     secrets: inherit # Inherits all secrets from the parent workflow.
+
+  evaluate-package-compliance:
+    needs: run-package-test
+    name: Compliance Evaluation
+    # Allow this job to fail
+    continue-on-error: true
+    strategy:
+      matrix:
+        flavor: [upstream, registry1]
+    uses: ./.github/workflows/compliance.yaml
+    with:
+      flavor: ${{ matrix.flavor }}
+    secrets: inherit # Inherits all secrets from the parent workflow.

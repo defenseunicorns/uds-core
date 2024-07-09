@@ -34,7 +34,6 @@ on:
 
 permissions:
   contents: read
-  pull-requests: write
 
 jobs:
   test:
@@ -66,26 +65,13 @@ jobs:
       - name: Validate UDS Core Compliance
         if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
         run: uds run test-compliance-validate --no-progress
-
-      - name: Evaluate UDS Core Compliance
-        id: compliance-evaluation
-        if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
-        run: uds run test-compliance-evaluate --no-progress
-        continue-on-error: true
-
-      # steps in this action only run when there has been a previous failure - will indicate success thereafter
-      # need to think about how much noise this could create - noise currently = good
-      - name: Notify Lula Team of Compliance Assessment Results
-        if: ${{ always() }}
-        uses: ./.github/actions/notify-lula
+      
+      - name: Upload Assessment
+        if: ${{ inputs.package != 'all' && inputs.test_type == 'install' }}
+        uses: actions/upload-artifact@0b2256b8c012f0828dc542b3febcab082c67f72b # v4.3.4
         with:
-          state: ${{ steps.compliance-evaluation.outcome }}
-          flavor: ${{ inputs.flavor }}
-          ghToken: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Store UDS Core Compliance Assessment Results
-        if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
-        run: cp ./compliance/oscal-assessment-results.yaml /tmp/oscal-assessment-results.yaml
+          name: ${{ inputs.flavor }}-assessment-results
+          path: ./compliance/oscal-assessment-results.yaml
 
       - name: Test UDS Core Upgrade
         if: ${{ inputs.package == 'all' && inputs.test_type == 'upgrade' }}
