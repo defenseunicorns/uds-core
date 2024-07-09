@@ -36,7 +36,7 @@ jobs:
         uses: ./.github/actions/setup
 
       - name: Download assessment
-        uses: actions/download-artifact@65a9edc5881444af0b9093a5e628f2fe47ea3b2e # v4.1.7
+        uses: actions/download-artifact@v4
         with:
           name: ${{ inputs.flavor }}-assessment-results
           path: ./compliance/oscal-assessment-results.yaml
@@ -56,7 +56,7 @@ jobs:
           ghToken: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload Evaluated Assessment
-        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ inputs.flavor }}-assessment-results
           path: ./compliance/oscal-assessment-results.yaml
