@@ -1,6 +1,7 @@
 name: Notify Lula
 description: "Comment on PR to notify Lula Team"
 
+
 inputs:
   state:
     description: 'state of the comment update'
@@ -10,6 +11,9 @@ inputs:
     description: 'flavor of the comment update'
     required: true
     default: ''
+  ghToken:
+    description: 'GITHUB_TOKEN'
+    required: true
 
 runs:
   using: composite
@@ -21,12 +25,14 @@ runs:
         issue-number: ${{ github.event.pull_request.number }}
         comment-author: 'github-actions[bot]'
         body-includes: Compliance ${{ inputs.flavor }} Evaluation
+        token: ${{ inputs.ghToken }}
 
     - name: Create comment
       if: ${{ steps.fc.outputs.comment-id == '' && inputs.state == 'failure'}}
       uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4.0.0
       with:
         issue-number: ${{ github.event.pull_request.number }}
+        token: ${{ inputs.ghToken }}
         body: |
           Compliance ${{ inputs.flavor }} Evaluation: ${{ inputs.state }}
 
@@ -37,6 +43,8 @@ runs:
       uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4.0.0
       with:
         comment-id: ${{ steps.fc.outputs.comment-id }}
+        token: ${{ inputs.ghToken }}
+        edit-mode: replace
         body: |
           Compliance ${{ inputs.flavor }} Evaluation: ${{ inputs.state }}
 

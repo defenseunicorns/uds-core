@@ -34,6 +34,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: write
 
 jobs:
   test:
@@ -80,6 +81,7 @@ jobs:
         with:
           state: ${{ steps.compliance-evaluation.outcome }}
           flavor: ${{ inputs.flavor }}
+          ghToken: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Store UDS Core Compliance Assessment Results
         if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
