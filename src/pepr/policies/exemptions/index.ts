@@ -1,7 +1,11 @@
 import { KubernetesObject } from "kubernetes-fluent-client";
-import { Log, PeprMutateRequest, PeprValidateRequest } from "pepr";
+import { PeprMutateRequest, PeprValidateRequest } from "pepr";
+import { Component, setupLogger } from "../../logger";
 import { ExemptionStore } from "../../operator/controllers/exemptions/exemption-store";
 import { Policy } from "../../operator/crd";
+
+// configure subproject logger
+const log = setupLogger(Component.POLICIES_EXEMPTIONS);
 
 /**
  * Check a resource against an exemption list for use by the validation action.
@@ -20,7 +24,7 @@ export function isExempt<T extends KubernetesObject>(
 
   if (exemptList.length != 0) {
     // Debug log to provide current exemptions for policy
-    Log.debug(
+    log.debug(
       `Checking ${resourceName} against ${policy} exemptions: ${JSON.stringify(exemptList)}`,
     );
     for (const exempt of exemptList) {
@@ -35,7 +39,7 @@ export function isExempt<T extends KubernetesObject>(
       }
 
       // If we get here, the request is exempt
-      Log.info(`${resourceName} is exempt from ${policy}`);
+      log.info(`${resourceName} is exempt from ${policy}`);
       return true;
     }
   }
