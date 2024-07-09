@@ -32,7 +32,7 @@ runs:
 
           CC: @defenseunicorns/lula-dev
 
-    - name: Update comment 
+    - name: Update comment
       if: ${{ steps.fc.outputs.comment-id != '' }}
       uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4.0.0
       with:
