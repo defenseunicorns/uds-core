@@ -10,7 +10,9 @@ For more information on Keycloak and its capabilities, see its [documentation](h
 
 ### Dev Mode
 
-When `devMode: true` is set, the chart will deploy a single Keycloak Pod with an in-memory database and scaling turned off. Dev Mode also leverages PVCs by default for `data` and `themes`. Using an external database with Dev Mode is not supported.
+When `devMode: true` is set, the chart will deploy a single Keycloak Pod with an in-memory database and scaling turned off. Dev Mode also leverages PVCs by default for `data` and `themes`. 
+
+Using an external database with Dev Mode enabled is not supported.
 
 Dev Mode enables debug logging for Keycloak. To configure debug logging outside of Dev Mode, set `debug: true` in your values.
 
