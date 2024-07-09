@@ -4,7 +4,7 @@ type: docs
 weight: 1
 ---
 
-UDS Core leverages Pepr to handle setup of Prometheus scraping metrics endpoints, with the particular configuration necessary to work in a STRICT mTLS (Istio) environment. We handle this via a default scrapeClass in prometheus to handle the istio certs as well as with both mutations of existing service monitors and generation of service monitors via the `Package` CR when a monitor needs to be exempt from that tlsConfig.
+UDS Core leverages Pepr to handle setup of Prometheus scraping metrics endpoints, with the particular configuration necessary to work in a STRICT mTLS (Istio) environment. We handle this via a default scrapeClass in prometheus to add the istio certs. When a monitor needs to be exempt from that tlsConfig a mutation is performed to leverage a plain scrape class without istio certs.
 
 ## Mutations
 
