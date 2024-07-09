@@ -1,4 +1,4 @@
-import { Log } from "pepr";
+import { Component, setupLogger } from "./logger";
 
 let domain = process.env.UDS_DOMAIN;
 
@@ -16,10 +16,12 @@ export const UDSConfig = {
   allowAllNSExemptions: process.env.UDS_ALLOW_ALL_NS_EXEMPTIONS === "true",
 };
 
-Log.info(UDSConfig, "Loaded UDS Config");
+// configure subproject logger
+const log = setupLogger(Component.CONFIG);
+log.info(UDSConfig, "Loaded UDS Config");
 
 if (UDSConfig.isSingleTest) {
-  Log.warn(
+  log.warn(
     "Running in single test mode, this will change the behavior of the operator and should only be used for UDS Core development testing.",
   );
 }
