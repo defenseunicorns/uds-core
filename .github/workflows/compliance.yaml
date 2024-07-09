@@ -32,12 +32,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
+      - name: Environment setup
+        uses: ./.github/actions/setup
+
       - name: Download assessment
         uses: actions/download-artifact@v4
         with:
           name: ${{ inputs.flavor }}-assessment-results
 
-      - name: Evaluate Compliance
+      - name: Evaluate compliance
         id: compliance-evaluation
         run: uds run test-compliance-evaluate --no-progress
 
