@@ -78,7 +78,7 @@ jobs:
         if: ${{ always() }}
         uses: ./.github/actions/notify-lula
         with:
-          state: ${{ steps.compliance-evaluation.conclusion }}
+          state: ${{ steps.compliance-evaluation.outcome }}
           flavor: ${{ inputs.flavor }}
 
       - name: Store UDS Core Compliance Assessment Results
