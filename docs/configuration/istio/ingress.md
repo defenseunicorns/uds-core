@@ -4,8 +4,6 @@ type: docs
 weight: 1
 ---
 
-# Istio Ingress
-
 UDS Core leverages Istio for ingress into the service mesh. This document provides an overview and examples of the Istio resources that UDS Core deploys to handle ingress.
 
 ## Gateways
@@ -41,6 +39,7 @@ packages:
 By default, the UDS Core Istio Gateways are set up to use the `uds.dev` domain and have a valid TLS certificate packaged.  You will want to change the domain name for your environment and provide a valid TLS certificate for this domain.
 
 You can set the TLS certs via overrides in a [UDS Bundle](https://uds.defenseunicorns.com/bundles/) (see below).
+
 ```yaml
 kind: UDSBundle
 metadata:
@@ -72,12 +71,20 @@ packages:
               description: "The TLS key for the tenant gateway (must be base64 encoded)"
               path: tls.key
 ```
-The environment variables `ADMIN_TLS_CERT`, `ADMIN_TLS_KEY`, `TENANT_TLS_CERT`, and `TENANT_TLS_KEY` should be base64 encoded strings of the TLS certificate and key for the admin and tenant gateways respectively.
 
+You can then either use environment variables (`UDS_ADMIN_TLS_CERT`, `UDS_ADMIN_TLS_KEY`, `UDS_TENANT_TLS_CERT`, and `UDS_TENANT_TLS_KEY`) or a config file to configure the certs for each gateway. These values should be base64 encoded strings of the TLS certificate and key for the admin and tenant gateways respectively.
 
-You can then set the domain via [uds-config](https://uds.defenseunicorns.com/cli/quickstart-and-usage/#variables-and-configuration) file using shared key to override the Zarf Domain Variable (see below `uds-config.yaml`).
+Domain should be set via your [uds-config](https://uds.defenseunicorns.com/cli/quickstart-and-usage/#variables-and-configuration) file using the shared key to override the Zarf Domain Variable (see example `uds-config.yaml` below).
+
 ```yaml
 shared:
-   domain: yourawesomedomain.com # shared across all packages in a bundle
-```
+  domain: yourawesomedomain.com # shared across all packages in a bundle
 
+# TLS Certs/Keys if not provided via environment variables
+variables: 
+  core:
+    admin_tls_cert: # base64 encoded admin cert here
+    admin_tls_key: # base64 encoded admin key here
+    tenant_tls_cert: # base64 encoded tenant cert here
+    tenant_tls_key: # base64 encoded tenant key here
+```
