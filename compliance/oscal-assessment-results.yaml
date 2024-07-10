@@ -16,7 +16,7 @@ assessment-results:
             # Control Implementation Loki layers an additional RBAC layer that prohibits non-privileged users from executing privileged functions.
           target:
             status:
-              state: satisfied
+              state: not-satisfied
             target-id: ac-6.10
             type: objective-id
           title: 'Validation Result - Component:a735b5a4-aabd-482d-b335-60ddcd4b1c00 / Control Implementation: d2afb4c4-2cd8-5305-a6cc-d1bc7b388d0c / Control:  ac-6.10'
