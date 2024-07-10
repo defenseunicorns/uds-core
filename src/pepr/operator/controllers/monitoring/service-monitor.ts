@@ -1,8 +1,12 @@
-import { K8s, Log } from "pepr";
+import { K8s } from "pepr";
 
 import { V1OwnerReference } from "@kubernetes/client-node";
-import { Prometheus, UDSPackage, Monitor } from "../../crd";
+import { Component, setupLogger } from "../../../logger";
+import { Monitor, Prometheus, UDSPackage } from "../../crd";
 import { getOwnerRef, sanitizeResourceName } from "../utils";
+
+// configure subproject logger
+const log = setupLogger(Component.OPERATOR_MONITORING);
 
 /**
  * Generate a service monitor for a service
@@ -15,7 +19,7 @@ export async function serviceMonitor(pkg: UDSPackage, namespace: string) {
   const generation = (pkg.metadata?.generation ?? 0).toString();
   const ownerRefs = getOwnerRef(pkg);
 
-  Log.debug(`Reconciling ServiceMonitors for ${pkgName}`);
+  log.debug(`Reconciling ServiceMonitors for ${pkgName}`);
 
   // Get the list of monitored services
   const monitorList = pkg.spec?.monitor ?? [];
@@ -27,7 +31,7 @@ export async function serviceMonitor(pkg: UDSPackage, namespace: string) {
     for (const monitor of monitorList) {
       const payload = generateServiceMonitor(monitor, namespace, pkgName, generation, ownerRefs);
 
-      Log.debug(payload, `Applying ServiceMonitor ${payload.metadata?.name}`);
+      log.debug(payload, `Applying ServiceMonitor ${payload.metadata?.name}`);
 
       // Apply the ServiceMonitor and force overwrite any existing policy
       await K8s(Prometheus.ServiceMonitor).Apply(payload, { force: true });
@@ -48,7 +52,7 @@ export async function serviceMonitor(pkg: UDSPackage, namespace: string) {
 
     // Delete any orphaned ServiceMonitors
     for (const sm of orphanedSM) {
-      Log.debug(sm, `Deleting orphaned ServiceMonitor ${sm.metadata!.name}`);
+      log.debug(sm, `Deleting orphaned ServiceMonitor ${sm.metadata!.name}`);
       await K8s(Prometheus.ServiceMonitor).Delete(sm);
     }
   } catch (err) {

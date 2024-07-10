@@ -1,7 +1,11 @@
-import { K8s, Log, kind } from "pepr";
+import { K8s, kind } from "pepr";
 
+import { Component, setupLogger } from "../../logger";
 import { v1alpha1 as exemption } from "./sources/exemption/v1alpha1";
 import { v1alpha1 as pkg } from "./sources/package/v1alpha1";
+
+// configure subproject logger
+const log = setupLogger(Component.OPERATOR_CRD);
 
 export async function registerCRDs() {
   // Register the Package CRD if we're in watch or dev mode
@@ -29,10 +33,10 @@ export async function registerCRDs() {
         { force: true },
       )
       .then(() => {
-        Log.info("Package CRD registered");
+        log.info("Package CRD registered");
       })
       .catch(err => {
-        Log.error({ err }, "Failed to register Package CRD");
+        log.error({ err }, "Failed to register Package CRD");
 
         // Sad times, let's exit
         process.exit(1);
@@ -64,10 +68,10 @@ export async function registerCRDs() {
         { force: true },
       )
       .then(() => {
-        Log.info("Exemption CRD registered");
+        log.info("Exemption CRD registered");
       })
       .catch(err => {
-        Log.error({ err }, "Failed to register Exemption CRD");
+        log.error({ err }, "Failed to register Exemption CRD");
 
         // Sad times, let's exit
         process.exit(1);
