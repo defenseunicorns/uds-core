@@ -78,12 +78,15 @@ jobs:
         run: |
           # Publish snapshots to snapshot repository
           if [ "${{ inputs.snapshot }}" = "true" ]; then
+            echo "Publishing snapshot to ghcr.io/defenseunicorns/packages/uds/snapshots"
             echo "repo=ghcr.io/defenseunicorns/packages/uds/snapshots" >> "$GITHUB_OUTPUT"
           # Publish unicorn flavor to private repository
           elif [ "${{ matrix.flavor }}" = "unicorn" ]; then
+            echo "Publishing unicorn flavor to ghcr.io/defenseunicorns/packages/private/uds"
             echo "repo=ghcr.io/defenseunicorns/packages/private/uds" >> "$GITHUB_OUTPUT"
-          # Publish all other artifacts to uds package repository
+          # Publish all other packages/bundles to uds package repository
           else
+            echo "Publishing packages and bundles to ghcr.io/defenseunicorns/packages/uds"
             echo "repo=ghcr.io/defenseunicorns/packages/uds" >> "$GITHUB_OUTPUT"
           fi
 
