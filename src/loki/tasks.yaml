@@ -8,6 +8,12 @@ tasks:
             name: app.kubernetes.io/name=loki
             namespace: loki
             condition: Ready
+      - description: Validate uds-loki-dns
+        wait:
+          cluster:
+            kind: Service
+            name: app.kubernetes.io/component=uds-loki-dns
+            namespace: kube-system
       - description: Validate loki-gw
         wait:
           cluster:
