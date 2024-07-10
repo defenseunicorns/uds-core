@@ -1,9 +1,9 @@
 import { createHash } from "crypto";
 
-import { K8s, Log, kind } from "pepr";
+import { K8s, kind } from "pepr";
 import { UDSConfig } from "../../../../config";
 import { Client } from "../types";
-import { buildChain } from "./authservice";
+import { buildChain, log } from "./authservice";
 import { Action, AuthserviceConfig } from "./types";
 
 export const operatorConfig = {
@@ -15,7 +15,7 @@ export const operatorConfig = {
 
 export async function setupAuthserviceSecret() {
   if (process.env.PEPR_WATCH_MODE === "true" || process.env.PEPR_MODE === "dev") {
-    Log.info("One-time authservice secret initialization");
+    log.info("One-time authservice secret initialization");
     // create namespace if it doesn't exist
     await K8s(kind.Namespace).Apply({
       metadata: {
@@ -28,13 +28,13 @@ export async function setupAuthserviceSecret() {
       const secret = await K8s(kind.Secret)
         .InNamespace(operatorConfig.namespace)
         .Get(operatorConfig.secretName);
-      Log.info(`Authservice Secret exists, skipping creation - ${secret.metadata?.name}`);
+      log.info(`Authservice Secret exists, skipping creation - ${secret.metadata?.name}`);
     } catch (e) {
-      Log.info("Secret does not exist, creating authservice secret");
+      log.info("Secret does not exist, creating authservice secret");
       try {
         await updateAuthServiceSecret(buildInitialSecret(), false);
       } catch (err) {
-        Log.error(err, "Failed to create UDS managed authservice secret.");
+        log.error(err, "Failed to create UDS managed authservice secret.");
         throw new Error("Failed to create UDS managed authservice secret.", { cause: err });
       }
     }
@@ -115,14 +115,14 @@ export async function updateAuthServiceSecret(
       { force: true },
     );
   } catch (e) {
-    Log.error(e, `Failed to write authservice secret`);
+    log.error(e, `Failed to write authservice secret`);
     throw new Error("Failed to write authservice secret", { cause: e });
   }
 
-  Log.info("Updated authservice secret successfully");
+  log.info("Updated authservice secret successfully");
 
   if (checksum) {
-    Log.info("Adding checksum to deployment authservice secret successfully");
+    log.info("Adding checksum to deployment authservice secret successfully");
     await checksumDeployment(configHash);
   }
 }
@@ -137,9 +137,9 @@ async function checksumDeployment(checksum: string) {
       },
     ]);
 
-    Log.info(`Successfully applied the checksum to authservice`);
+    log.info(`Successfully applied the checksum to authservice`);
   } catch (e) {
-    Log.error(`Failed to apply the checksum to authservice: ${e.data?.message}`);
+    log.error(`Failed to apply the checksum to authservice: ${e.data?.message}`);
     throw new Error("Failed to apply the checksum to authservice", { cause: e });
   }
 }

@@ -1,10 +1,13 @@
-import { Log, R } from "pepr";
+import { R } from "pepr";
 import { UDSConfig } from "../../../../config";
+import { Component, setupLogger } from "../../../../logger";
 import { UDSPackage } from "../../../crd";
 import { Client } from "../types";
 import { updatePolicy } from "./authorization-policy";
 import { getAuthserviceConfig, operatorConfig, updateAuthServiceSecret } from "./config";
 import { Action, AuthServiceEvent, AuthserviceConfig, Chain } from "./types";
+
+export const log = setupLogger(Component.OPERATOR_AUTHSERVICE);
 
 export async function authservice(pkg: UDSPackage, clients: Map<string, Client>) {
   // Get the list of clients from the package
@@ -40,7 +43,7 @@ export async function purgeAuthserviceClients(
   // compute set difference of pkg.status.authserviceClients and authserviceClients using Ramda
   R.difference(pkg.status?.authserviceClients || [], newAuthserviceClients).forEach(
     async clientId => {
-      Log.info(`Removing stale authservice chain for client ${clientId}`);
+      log.info(`Removing stale authservice chain for client ${clientId}`);
       await reconcileAuthservice({ name: clientId, action: Action.Remove }, {}, pkg);
     },
   );

@@ -6,6 +6,7 @@ export enum Component {
   OPERATOR_EXEMPTIONS = "operator.exemptions",
   OPERATOR_ISTIO = "operator.istio",
   OPERATOR_KEYCLOAK = "operator.keycloak",
+  OPERATOR_AUTHSERVICE = "operator.authservice",
   OPERATOR_MONITORING = "operator.monitoring",
   OPERATOR_NETWORK = "operator.network",
   OPERATOR_GENERATORS = "operator.generators",

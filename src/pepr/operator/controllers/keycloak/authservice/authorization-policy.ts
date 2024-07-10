@@ -1,7 +1,8 @@
-import { K8s, Log } from "pepr";
+import { K8s } from "pepr";
 import { UDSConfig } from "../../../../config";
 import { Action, AuthorizationPolicy, RequestAuthentication, UDSPackage } from "../../../crd";
 import { getOwnerRef } from "../../utils";
+import { log } from "./authservice";
 import { Action as AuthServiceAction, AuthServiceEvent } from "./types";
 
 const operationMap: {
@@ -134,7 +135,7 @@ async function updatePolicy(
       updateMetadata(jwtAuthZAuthorizationPolicy(labelSelector, event.name, namespace)),
     );
   } catch (e) {
-    Log.error(e, `Failed to update auth policy for ${event.name} in ${namespace}: ${e}`);
+    log.error(e, `Failed to update auth policy for ${event.name} in ${namespace}: ${e}`);
     throw new Error(`Failed to update auth policy for ${event.name} in ${namespace}: ${e}`, {
       cause: e,
     });
@@ -143,7 +144,7 @@ async function updatePolicy(
   try {
     await purgeOrphanPolicies(generation, namespace, pkg.metadata!.name!);
   } catch (e) {
-    Log.error(e, `Failed to purge orphan auth policies ${event.name} in ${namespace}: ${e}`);
+    log.error(e, `Failed to purge orphan auth policies ${event.name} in ${namespace}: ${e}`);
   }
 }
 
@@ -156,7 +157,7 @@ async function purgeOrphanPolicies(generation: string, namespace: string, pkgNam
 
     for (const resource of resources.items) {
       if (resource.metadata?.labels?.["uds/generation"] !== generation) {
-        Log.debug(resource, `Deleting orphaned ${resource.kind!} ${resource.metadata!.name}`);
+        log.debug(resource, `Deleting orphaned ${resource.kind!} ${resource.metadata!.name}`);
         await K8s(kind).Delete(resource);
       }
     }
