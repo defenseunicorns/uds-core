@@ -24,6 +24,11 @@ The UDS Operator plays a pivotal role in managing the lifecycle of UDS Package C
     {{% alert-caution %}}
   Warning: **SSO Group Authentication** is in Alpha and may not be stable. Avoid using in production. Feedback is appreciated to improve reliability.
     {{% /alert-caution %}}
+- **Authservice Protection:**
+  - Authservice authentication provides application agnostic SSO for applications that opt-in.
+    {{% alert-caution %}}
+  Warning: **Authservice Protection** is in Alpha and may not be stable. Avoid using in production. Feedback is appreciated to improve reliability.
+    {{% /alert-caution %}}
 
 ### Example UDS Package CR
 
@@ -163,6 +168,7 @@ spec:
           redirect_uri: clientField(redirectUris)[0]
           bearer_only: clientField(bearerOnly)
   ```
+
 ## Protecting a UDS Package with AuthService
 To enable authentication for applications that do not have native OIDC configuration, UDS Core can utilize AuthService as an authentication layer.
 
@@ -186,9 +192,11 @@ spec:
       enableAuthserviceSelector:
         app: httpbin
 ```
-> [!IMPORTANT]
-> The UDS Operator uses the first `redirectUris` to populate the `match.prefix` hostname and `callback_uri` in the authservice chain.
->
+
+{{% alert-note %}}
+The UDS Operator uses the first `redirectUris` to populate the `match.prefix` hostname and `callback_uri` in the authservice chain.
+{{% /alert-note %}}
+
 For a complete example, see [app-authservice-tenant.yaml](https://github.com/defenseunicorns/uds-core/blob/main/src/test/app-authservice-tenant.yaml)
 
 ### Configuring UDS Core Policy Exemptions
