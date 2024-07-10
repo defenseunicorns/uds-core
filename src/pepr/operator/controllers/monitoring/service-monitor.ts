@@ -2,7 +2,7 @@ import { K8s } from "pepr";
 
 import { V1OwnerReference } from "@kubernetes/client-node";
 import { Component, setupLogger } from "../../../logger";
-import { Monitor, PrometheusServiceMonitor, UDSPackage, } from "../../crd";
+import { Monitor, PrometheusServiceMonitor, UDSPackage } from "../../crd";
 import { Kind } from "../../crd/generated/package-v1alpha1";
 import { getOwnerRef } from "../utils";
 import { generateMonitorName } from "./common";
