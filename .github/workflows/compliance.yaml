@@ -35,6 +35,10 @@ jobs:
       - name: Environment setup
         uses: ./.github/actions/setup
 
+      - name: review compliance directory
+        run: ls -al ./compliance/
+        shell: bash
+
       - name: remove overlapping file
         run: rm ./compliance/oscal-assessment-results.yaml
         shell: bash
@@ -43,7 +47,11 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: ${{ inputs.flavor }}-assessment-results
-          path: ./compliance/oscal-assessment-results.yaml
+          path: ./compliance
+      
+      - name: review compliance directory again
+        run: ls -al ./compliance/
+        shell: bash
 
       - name: Evaluate compliance
         id: compliance-evaluation
