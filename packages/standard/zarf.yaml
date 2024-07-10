@@ -31,7 +31,7 @@ components:
       path: ../../src/istio
 
   - name: istio-passthrough-gateway
-    required: true
+    required: false
     import:
       path: ../../src/istio
 
