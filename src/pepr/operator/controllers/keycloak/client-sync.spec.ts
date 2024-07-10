@@ -139,7 +139,7 @@ describe("Test Secret & Template Data Generation", () => {
 });
 
 describe("handleClientGroups function", () => {
-  it('should correctly transform groups into attributes["uds.core.groups"]', () => {
+  it('should correctly transform anyOf groups into attributes["uds.core.groups"]', () => {
     // Arrange
     const ssoWithGroups: Sso = {
       clientId: "test-client",
@@ -159,6 +159,58 @@ describe("handleClientGroups function", () => {
     expect(ssoWithGroups.attributes!["uds.core.groups"]).toEqual(
       JSON.stringify({
         anyOf: ["group1", "group2"],
+      }),
+    );
+    expect(ssoWithGroups.groups).toBeUndefined();
+  });
+
+  it('should correctly transform alllOf groups into attributes["uds.core.groups"]', () => {
+    // Arrange
+    const ssoWithGroups: Sso = {
+      clientId: "test-client",
+      name: "Test Client",
+      redirectUris: ["https://example.com/callback"],
+      groups: {
+        allOf: ["group1", "group2"],
+      },
+    };
+
+    // Act
+    handleClientGroups(ssoWithGroups);
+
+    // Assert
+    expect(ssoWithGroups.attributes).toBeDefined();
+    expect(typeof ssoWithGroups.attributes).toBe("object");
+    expect(ssoWithGroups.attributes!["uds.core.groups"]).toEqual(
+      JSON.stringify({
+        allOf: ["group1", "group2"],
+      }),
+    );
+    expect(ssoWithGroups.groups).toBeUndefined();
+  });
+
+  it('should correctly transform alllOf and anyOf groups into attributes["uds.core.groups"]', () => {
+    // Arrange
+    const ssoWithGroups: Sso = {
+      clientId: "test-client",
+      name: "Test Client",
+      redirectUris: ["https://example.com/callback"],
+      groups: {
+        anyOf: ["group1", "group2"],
+        allOf: ["group3", "group4"],
+      },
+    };
+
+    // Act
+    handleClientGroups(ssoWithGroups);
+
+    // Assert
+    expect(ssoWithGroups.attributes).toBeDefined();
+    expect(typeof ssoWithGroups.attributes).toBe("object");
+    expect(ssoWithGroups.attributes!["uds.core.groups"]).toEqual(
+      JSON.stringify({
+        anyOf: ["group1", "group2"],
+        allOf: ["group3", "group4"],
       }),
     );
     expect(ssoWithGroups.groups).toBeUndefined();
