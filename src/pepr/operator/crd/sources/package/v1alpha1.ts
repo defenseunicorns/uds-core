@@ -239,6 +239,7 @@ const monitor = {
       kind: {
         description:
           "The type of monitor to create; PodMonitor or ServiceMonitor. ServiceMonitor is the default.",
+        enum: ["PodMonitor", "ServiceMonitor"],
         type: "string",
       },
       authorization: AuthorizationSchema,

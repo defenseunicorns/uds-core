@@ -35,7 +35,7 @@ export interface Monitor {
    * The type of monitor to create; PodMonitor or ServiceMonitor. ServiceMonitor is the
    * default.
    */
-  kind?: string;
+  kind?: Kind;
   /**
    * HTTP path from which to scrape for metrics, defaults to `/metrics`
    */
@@ -94,6 +94,15 @@ export interface Credentials {
    * Specify whether the Secret or its key must be defined
    */
   optional?: boolean;
+}
+
+/**
+ * The type of monitor to create; PodMonitor or ServiceMonitor. ServiceMonitor is the
+ * default.
+ */
+export enum Kind {
+  PodMonitor = "PodMonitor",
+  ServiceMonitor = "ServiceMonitor",
 }
 
 /**

@@ -1,6 +1,10 @@
 import { Capability, K8s, kind } from "pepr";
 import { Component, setupLogger } from "../logger";
-import { PrometheusServiceMonitor } from "../operator/crd";
+import {
+  PrometheusServiceMonitor,
+  ServiceMonitorEndpoint,
+  ServiceMonitorScheme,
+} from "../operator/crd";
 
 // configure subproject logger
 const log = setupLogger(Component.PROMETHEUS);
@@ -15,7 +19,7 @@ const { When } = prometheus;
 /**
  * Mutate a service monitor to enable mTLS metrics
  */
-When(PrometheusServiceMonitor.ServiceMonitor)
+When(PrometheusServiceMonitor)
   .IsCreatedOrUpdated()
   .Mutate(async sm => {
     // Provide an opt-out of mutation to handle complicated scenarios
@@ -46,9 +50,9 @@ When(PrometheusServiceMonitor.ServiceMonitor)
         keyFile: "/etc/prom-certs/key.pem",
         insecureSkipVerify: true,
       };
-      const endpoints: PrometheusServiceMonitor.Endpoint[] = sm.Raw.spec.endpoints;
+      const endpoints: ServiceMonitorEndpoint[] = sm.Raw.spec.endpoints;
       endpoints.forEach(endpoint => {
-        endpoint.scheme = PrometheusServiceMonitor.Scheme.HTTPS;
+        endpoint.scheme = ServiceMonitorScheme.HTTPS;
         endpoint.tlsConfig = tlsConfig;
       });
       sm.Raw.spec.endpoints = endpoints;
@@ -63,7 +67,7 @@ When(PrometheusServiceMonitor.ServiceMonitor)
     }
   });
 
-async function isIstioInjected(sm: PrometheusServiceMonitor.ServiceMonitor) {
+async function isIstioInjected(sm: PrometheusServiceMonitor) {
   const namespaces = sm.Raw.spec?.namespaceSelector?.matchNames || [sm.Raw.metadata?.namespace] || [
       "default",
     ];

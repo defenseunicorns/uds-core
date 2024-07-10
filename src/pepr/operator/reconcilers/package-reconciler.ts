@@ -51,18 +51,10 @@ export async function packageReconciler(pkg: UDSPackage) {
     endpoints = await istioResources(pkg, namespace!);
 
     // Only configure the ServiceMonitors if not running in single test mode
-    let monitors: string[] = [];
+    const monitors: string[] = [];
     if (!UDSConfig.isSingleTest) {
-      if (pkg.spec?.monitor) {
-        for (const monitor of pkg.spec.monitor) {
-          const monitorKind = monitor.kind || "ServiceMonitor"; // Default to "ServiceMonitor" if kind is undefined
-          if (monitorKind === "PodMonitor") {
-            monitors = await podMonitor(pkg, namespace!);
-          } else if (monitorKind === "ServiceMonitor") {
-            monitors = await serviceMonitor(pkg, namespace!);
-          }
-        }
-      }
+      monitors.push(...(await podMonitor(pkg, namespace!)));
+      monitors.push(...(await serviceMonitor(pkg, namespace!)));
     } else {
       log.warn(`Running in single test mode, skipping ${name} Monitors.`);
     }

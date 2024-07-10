@@ -26,7 +26,7 @@ export async function serviceMonitor(pkg: UDSPackage, namespace: string) {
   const monitorList = pkg.spec?.monitor ?? [];
 
   // Create a list of generated ServiceMonitors
-  const payloads: PrometheusServiceMonitor.ServiceMonitor[] = [];
+  const payloads: PrometheusServiceMonitor[] = [];
 
   try {
     for (const monitor of monitorList) {
@@ -36,14 +36,14 @@ export async function serviceMonitor(pkg: UDSPackage, namespace: string) {
         log.debug(payload, `Applying ServiceMonitor ${payload.metadata?.name}`);
 
         // Apply the ServiceMonitor and force overwrite any existing policy
-        await K8s(PrometheusServiceMonitor.ServiceMonitor).Apply(payload, { force: true });
+        await K8s(PrometheusServiceMonitor).Apply(payload, { force: true });
 
         payloads.push(payload);
       }
     }
 
     // Get all related ServiceMonitors in the namespace
-    const serviceMonitors = await K8s(PrometheusServiceMonitor.ServiceMonitor)
+    const serviceMonitors = await K8s(PrometheusServiceMonitor)
       .InNamespace(namespace)
       .WithLabel("uds/package", pkgName)
       .Get();
@@ -56,7 +56,7 @@ export async function serviceMonitor(pkg: UDSPackage, namespace: string) {
     // Delete any orphaned ServiceMonitors
     for (const m of orphanedMonitor) {
       log.debug(m, `Deleting orphaned ServiceMonitor ${m.metadata!.name}`);
-      await K8s(PrometheusServiceMonitor.ServiceMonitor).Delete(m);
+      await K8s(PrometheusServiceMonitor).Delete(m);
     }
   } catch (err) {
     throw new Error(
@@ -77,7 +77,7 @@ export function generateServiceMonitor(
 ) {
   const { selector, portName } = monitor;
   const name = generateMonitorName(pkgName, monitor);
-  const payload: PrometheusServiceMonitor.ServiceMonitor = {
+  const payload: PrometheusServiceMonitor = {
     metadata: {
       name,
       namespace,

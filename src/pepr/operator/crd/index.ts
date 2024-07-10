@@ -33,5 +33,14 @@ export {
   ServiceEntry as IstioServiceEntry,
 } from "./generated/istio/serviceentry-v1beta1";
 
-export * as PrometheusPodMonitor from "./generated/prometheus/podmonitor-v1";
-export * as PrometheusServiceMonitor from "./generated/prometheus/servicemonitor-v1";
+// export * as PrometheusPodMonitor from "./generated/prometheus/podmonitor-v1";
+// export * as PrometheusServiceMonitor from "./generated/prometheus/servicemonitor-v1";
+export {
+  Scheme as PodMonitorScheme,
+  PodMonitor as PrometheusPodMonitor,
+} from "./generated/prometheus/podmonitor-v1";
+export {
+  ServiceMonitor as PrometheusServiceMonitor,
+  Endpoint as ServiceMonitorEndpoint,
+  Scheme as ServiceMonitorScheme,
+} from "./generated/prometheus/servicemonitor-v1";
