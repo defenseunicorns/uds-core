@@ -2,7 +2,8 @@ import { K8s } from "pepr";
 
 import { V1OwnerReference } from "@kubernetes/client-node";
 import { Component, setupLogger } from "../../../logger";
-import { Monitor, PrometheusServiceMonitor, UDSPackage } from "../../crd";
+import { Monitor, PrometheusServiceMonitor, UDSPackage, } from "../../crd";
+import { Kind } from "../../crd/generated/package-v1alpha1";
 import { getOwnerRef } from "../utils";
 import { generateMonitorName } from "./common";
 
@@ -30,7 +31,7 @@ export async function serviceMonitor(pkg: UDSPackage, namespace: string) {
 
   try {
     for (const monitor of monitorList) {
-      if (monitor.kind !== "PodMonitor") {
+      if (monitor.kind !== Kind.PodMonitor) {
         const payload = generateServiceMonitor(monitor, namespace, pkgName, generation, ownerRefs);
 
         log.debug(payload, `Applying ServiceMonitor ${payload.metadata?.name}`);

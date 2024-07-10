@@ -2,6 +2,7 @@ import { V1OwnerReference } from "@kubernetes/client-node";
 import { K8s } from "pepr";
 import { Component, setupLogger } from "../../../logger";
 import { Monitor, PrometheusPodMonitor, UDSPackage } from "../../crd";
+import { Kind } from "../../crd/generated/package-v1alpha1";
 import { getOwnerRef } from "../utils";
 import { generateMonitorName } from "./common";
 
@@ -29,7 +30,7 @@ export async function podMonitor(pkg: UDSPackage, namespace: string) {
 
   try {
     for (const monitor of monitorList) {
-      if (monitor.kind === "PodMonitor") {
+      if (monitor.kind === Kind.PodMonitor) {
         const payload = generatePodMonitor(monitor, namespace, pkgName, generation, ownerRefs);
 
         log.debug(payload, `Applying PodMonitor ${payload.metadata?.name}`);
