@@ -35,6 +35,7 @@ export async function setupAuthserviceSecret() {
         await updateAuthServiceSecret(buildInitialSecret(), false);
       } catch (err) {
         Log.error(err, "Failed to create UDS managed authservice secret.");
+        throw new Error("Failed to create UDS managed authservice secret.", { cause: err });
       }
     }
   }
@@ -115,6 +116,7 @@ export async function updateAuthServiceSecret(
     );
   } catch (e) {
     Log.error(e, `Failed to write authservice secret`);
+    throw new Error("Failed to write authservice secret", { cause: e });
   }
 
   Log.info("Updated authservice secret successfully");
@@ -138,5 +140,6 @@ async function checksumDeployment(checksum: string) {
     Log.info(`Successfully applied the checksum to authservice`);
   } catch (e) {
     Log.error(`Failed to apply the checksum to authservice: ${e.data?.message}`);
+    throw new Error("Failed to apply the checksum to authservice", { cause: e });
   }
 }

@@ -135,13 +135,13 @@ async function updatePolicy(
     );
   } catch (e) {
     Log.error(e, `Failed to update auth policy for ${event.name} in ${namespace}: ${e}`);
+    throw new Error(`Failed to update auth policy for ${event.name} in ${namespace}: ${e}`, { cause: e });
   }
 
   try {
     await purgeOrphanPolicies(generation, namespace, pkg.metadata!.name!);
   } catch (e) {
     Log.error(e, `Failed to purge orphan auth policies ${event.name} in ${namespace}: ${e}`);
-    throw e;
   }
 }
 
