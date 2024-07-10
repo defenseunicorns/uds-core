@@ -29,6 +29,14 @@
       "datasourceTemplate": "docker"
     },
     {
+      "fileMatch": ["^src/neuvector/values/unicorn-values\\.yaml$"],
+      "matchStrings": [
+        "registry: cgr.dev\\s+tag:\\s+[\"]?(?<currentValue>[^\"]*)[\"]?"
+      ],
+      "depNameTemplate": "cgr.dev/du-uds-defenseunicorns/neuvector-controller-fips",
+      "datasourceTemplate": "docker"
+    },
+    {
       "fileMatch": ["^src/neuvector/values/registry1-values\\.yaml$"],
       "matchStrings": [
         "registry: registry1.dso.mil\\s+tag:\\s+[\"]?(?<currentValue>[^\"]*)[\"]?"

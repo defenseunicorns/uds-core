@@ -12,7 +12,7 @@ jobs:
   publish-uds-core:
     strategy:
       matrix:
-        flavor: [upstream, registry1] # add unicorn here
+        flavor: [upstream, registry1, unicorn]
     runs-on: "uds-ubuntu-big-boy-8-core"
     name: Publish packages
 
@@ -72,22 +72,28 @@ jobs:
         if: ${{ always() && !inputs.snapshot }}
         uses: ./.github/actions/debug-output
 
-      # todo: publish chainguard to a separate private repository
+      # Determine repository to publish to
+      - name: Determine destination repository
+        id: repo
+        run: |
+          # Publish snapshots to snapshot repository
+          if [ "${{ inputs.snapshot }}" = "true" ]; then
+            echo "repo=ghcr.io/defenseunicorns/packages/uds/snapshots" >> "$GITHUB_OUTPUT"
+          # Publish unicorn flavor to private repository
+          elif [ "${{ matrix.flavor }}" = "unicorn" ]; then
+            echo "repo=ghcr.io/defenseunicorns/packages/private/uds" >> "$GITHUB_OUTPUT"
+          # Publish all other artifacts to uds package repository
+          else
+            echo "repo=ghcr.io/defenseunicorns/packages/uds" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Publish package and bundle to destination repository
       - name: Publish Standard Package
-        if: ${{ !inputs.snapshot }}
-        run: uds run -f tasks/publish.yaml standard-package --set FLAVOR=${{ matrix.flavor }} --no-progress
+        run: uds run -f tasks/publish.yaml standard-package --set FLAVOR=${{ matrix.flavor }} --set TARGET_REPO=${{ steps.repo.outputs.repo }} --no-progress
 
       - name: Publish Upstream Flavored Bundles
-        if: ${{ !inputs.snapshot && matrix.flavor != 'registry1' }}
-        run: uds run -f tasks/publish.yaml bundles --no-progress
-
-      - name: (Snapshot) Publish Standard Package
-        if: ${{ inputs.snapshot }}
-        run: uds run -f tasks/publish.yaml standard-package --set FLAVOR=${{ matrix.flavor }} --set TARGET_REPO="ghcr.io/defenseunicorns/packages/uds/snapshots" --set VERSION="${SNAPSHOT_VERSION}" --no-progress
-
-      - name: (Snapshot) Publish Upstream Flavored Bundles
-        if: ${{ inputs.snapshot && matrix.flavor != 'registry1' }}
-        run: uds run -f tasks/publish.yaml bundles --set TARGET_REPO="ghcr.io/defenseunicorns/packages/uds/snapshots" --set VERSION="${SNAPSHOT_VERSION}" --no-progress
+        if: ${{ matrix.flavor = 'upstream' }}
+        run: uds run -f tasks/publish.yaml bundles --set TARGET_REPO=${{ steps.repo.outputs.repo }} --no-progress
 
       - name: Save logs
         if: always()
