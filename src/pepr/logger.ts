@@ -1,6 +1,7 @@
 import { Log } from "pepr";
 
 export enum Component {
+  STARTUP = "startup",
   CONFIG = "config",
   ISTIO = "istio",
   OPERATOR_EXEMPTIONS = "operator.exemptions",

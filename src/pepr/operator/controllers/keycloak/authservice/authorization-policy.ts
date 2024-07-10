@@ -1,6 +1,11 @@
 import { K8s } from "pepr";
 import { UDSConfig } from "../../../../config";
-import { Action, AuthorizationPolicy, RequestAuthentication, UDSPackage } from "../../../crd";
+import {
+  IstioAction,
+  IstioAuthorizationPolicy,
+  IstioRequestAuthentication,
+  UDSPackage,
+} from "../../../crd";
 import { getOwnerRef } from "../../utils";
 import { log } from "./authservice";
 import { Action as AuthServiceAction, AuthServiceEvent } from "./types";
@@ -17,7 +22,7 @@ function authserviceAuthorizationPolicy(
   labelSelector: { [key: string]: string },
   name: string,
   namespace: string,
-): AuthorizationPolicy {
+): IstioAuthorizationPolicy {
   return {
     kind: "AuthorizationPolicy",
     metadata: {
@@ -25,7 +30,7 @@ function authserviceAuthorizationPolicy(
       namespace,
     },
     spec: {
-      action: Action.Custom,
+      action: IstioAction.Custom,
       provider: {
         name: "authservice",
       },
@@ -50,7 +55,7 @@ function jwtAuthZAuthorizationPolicy(
   labelSelector: { [key: string]: string },
   name: string,
   namespace: string,
-): AuthorizationPolicy {
+): IstioAuthorizationPolicy {
   return {
     kind: "AuthorizationPolicy",
     metadata: {
@@ -80,7 +85,7 @@ function authNRequestAuthentication(
   labelSelector: { [key: string]: string },
   name: string,
   namespace: string,
-): RequestAuthentication {
+): IstioRequestAuthentication {
   return {
     kind: "RequestAuthentication",
     metadata: {
@@ -114,8 +119,8 @@ async function updatePolicy(
   const generation = (pkg.metadata?.generation ?? 0).toString();
   const ownerReferences = getOwnerRef(pkg);
 
-  const updateMetadata = (resource: AuthorizationPolicy | RequestAuthentication) => {
-    resource!.metadata!.name = resource!.metadata!.name + "-" + generation;
+  const updateMetadata = (resource: IstioAuthorizationPolicy | IstioRequestAuthentication) => {
+    resource!.metadata!.name = resource!.metadata!.name;
     resource!.metadata!.ownerReferences = ownerReferences;
     resource!.metadata!.labels = {
       "uds/package": pkg.metadata!.name!,
@@ -125,18 +130,19 @@ async function updatePolicy(
   };
 
   try {
-    await K8s(AuthorizationPolicy)[operation](
+    await K8s(IstioAuthorizationPolicy)[operation](
       updateMetadata(authserviceAuthorizationPolicy(labelSelector, event.name, namespace)),
     );
-    await K8s(RequestAuthentication)[operation](
+    await K8s(IstioRequestAuthentication)[operation](
       updateMetadata(authNRequestAuthentication(labelSelector, event.name, namespace)),
     );
-    await K8s(AuthorizationPolicy)[operation](
+    await K8s(IstioAuthorizationPolicy)[operation](
       updateMetadata(jwtAuthZAuthorizationPolicy(labelSelector, event.name, namespace)),
     );
   } catch (e) {
-    log.error(e, `Failed to update auth policy for ${event.name} in ${namespace}: ${e}`);
-    throw new Error(`Failed to update auth policy for ${event.name} in ${namespace}: ${e}`, {
+    const msg = `Failed to update auth policy for ${event.name} in ${namespace}: ${e}`;
+    log.error(e, msg);
+    throw new Error(msg, {
       cause: e,
     });
   }
@@ -149,7 +155,7 @@ async function updatePolicy(
 }
 
 async function purgeOrphanPolicies(generation: string, namespace: string, pkgName: string) {
-  for (const kind of [AuthorizationPolicy, RequestAuthentication]) {
+  for (const kind of [IstioAuthorizationPolicy, IstioRequestAuthentication]) {
     const resources = await K8s(kind)
       .InNamespace(namespace)
       .WithLabel("uds/package", pkgName)

@@ -28,8 +28,3 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
-
-# -- Label to determine what workloads (pods/deployments) should be protected by authservice.
-selector:
-  key: protect
-  value: keycloak

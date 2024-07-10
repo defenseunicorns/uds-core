@@ -72,8 +72,8 @@ export async function purgeSSOClients(pkg: UDSPackage, newClients: string[] = []
     const storeKey = `sso-client-${ref}`;
     const token = Store.getItem(storeKey);
     if (token) {
-      Store.removeItem(storeKey);
       await apiCall({ clientId: ref }, "DELETE", token);
+      Store.removeItem(storeKey);
     } else {
       log.warn(pkg.metadata, `Failed to remove client ${ref}, token not found`);
     }
@@ -184,7 +184,7 @@ export function handleClientGroups(clientReq: Sso) {
   delete clientReq.groups;
 }
 
-export async function apiCall(sso: Partial<Sso>, method = "POST", authToken = "") {
+async function apiCall(sso: Partial<Sso>, method = "POST", authToken = "") {
   // Handle single test mode
   if (UDSConfig.isSingleTest) {
     log.warn(`Generating fake client for '${sso.clientId}' in single test mode`);

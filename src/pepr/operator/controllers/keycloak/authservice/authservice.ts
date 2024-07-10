@@ -70,7 +70,6 @@ export async function updateConfig(event: AuthServiceEvent) {
   await updateAuthServiceSecret(config);
 }
 
-// might be necessary to rebuild the entire config
 export function buildConfig(config: AuthserviceConfig, event: AuthServiceEvent) {
   let chains: Chain[];
 
