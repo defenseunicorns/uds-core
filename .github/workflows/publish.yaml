@@ -95,7 +95,7 @@ jobs:
         run: uds run -f tasks/publish.yaml standard-package --set FLAVOR=${{ matrix.flavor }} --set TARGET_REPO=${{ steps.repo.outputs.repo }} --no-progress
 
       - name: Publish Upstream Flavored Bundles
-        if: ${{ matrix.flavor = 'upstream' }}
+        if: ${{ matrix.flavor == 'upstream' }}
         run: uds run -f tasks/publish.yaml bundles --set TARGET_REPO=${{ steps.repo.outputs.repo }} --no-progress
 
       - name: Save logs
