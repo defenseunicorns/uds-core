@@ -48,6 +48,6 @@ import { prometheus } from "./src/pepr/prometheus";
     });
   }
 })().catch(err => {
-  Log.error(err);
+  Log.error(err, "Critical error during startup. Exiting...");
   process.exit(1);
 });

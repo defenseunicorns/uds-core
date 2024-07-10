@@ -135,7 +135,9 @@ async function updatePolicy(
     );
   } catch (e) {
     Log.error(e, `Failed to update auth policy for ${event.name} in ${namespace}: ${e}`);
-    throw new Error(`Failed to update auth policy for ${event.name} in ${namespace}: ${e}`, { cause: e });
+    throw new Error(`Failed to update auth policy for ${event.name} in ${namespace}: ${e}`, {
+      cause: e,
+    });
   }
 
   try {
