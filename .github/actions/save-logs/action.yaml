@@ -44,4 +44,3 @@ runs:
           /tmp/debug-*.log
           /tmp/uds-containerd-logs
           /tmp/k3d-uds-*.log
-          /tmp/oscal-assessment-results.yaml
