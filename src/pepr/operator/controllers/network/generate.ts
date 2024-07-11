@@ -38,28 +38,30 @@ export function generate(namespace: string, policy: Allow): kind.NetworkPolicy {
   // Create the remote (peer) to match against
   let peers: V1NetworkPolicyPeer[] = [];
 
-  // Add the remoteNamespace if they exist
-  if (policy.remoteNamespace !== undefined) {
-    const namespaceSelector: V1LabelSelector = {};
+  // Check if either remoteNamespace or remoteSelector is defined
+  if (policy.remoteNamespace !== undefined || policy.remoteSelector) {
+    // Initialize a peer object that can contain namespace and/or pod selectors
+    const peer: {
+      namespaceSelector?: V1LabelSelector;
+      podSelector?: V1LabelSelector;
+    } = {};
 
-    // Add the remoteNamespace to the namespaceSelector if it exists and is not "*", otherwise match all namespaces
+    // If remoteNamespace is defined and not a wildcard, add it to the peer's namespaceSelector
     if (policy.remoteNamespace !== "" && policy.remoteNamespace !== "*") {
-      namespaceSelector.matchLabels = {
-        "kubernetes.io/metadata.name": policy.remoteNamespace,
+      peer.namespaceSelector = {
+        matchLabels: { "kubernetes.io/metadata.name": policy.remoteNamespace || "" }
       };
     }
 
-    // Add the remoteNamespace to the peers
-    peers.push({ namespaceSelector });
-  }
+    // If remoteSelector is defined, add it to the peer's podSelector
+    if (policy.remoteSelector) {
+      peer.podSelector = {
+        matchLabels: policy.remoteSelector
+      };
+    }
 
-  // Add the remoteSelector if they exist
-  if (policy.remoteSelector) {
-    peers.push({
-      podSelector: {
-        matchLabels: policy.remoteSelector,
-      },
-    });
+    // Add the peer object to the peers array
+    peers.push(peer);
   }
 
   // Check if remoteGenerated is set
