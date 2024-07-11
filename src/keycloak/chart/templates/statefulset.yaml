@@ -113,7 +113,7 @@ spec:
             # Dumb value (not used in the nginx provider, but required by the SPI)
             - name: KC_SPI_X509CERT_LOOKUP_NGINX_SSL_CLIENT_CERT_CHAIN_PREFIX
               value: UNUSED
-          {{- if or .Values.devMode .Values.debug }}
+          {{- if or .Values.devMode .Values.debugMode }}
             # Enable debug logs
             - name: KC_LOG_LEVEL
               value: DEBUG
@@ -121,9 +121,8 @@ spec:
               value: DEBUG
             - name: QUARKUS_LOG_CATEGORY__ORG_KEYCLOAK_SERVICES_X509__LEVEL
               value: TRACE
-          {{- end }}    
-          {{- if .Values.postgresql.host }}
-          {{- if .Values.devMode -}}{{fail "Cannot use devMode when an external PostgreSQL Database (postgres.host) is configured."}}{{- end -}}
+          {{- end }}
+          {{- if eq (include "keycloak.postgresql.config" .) "true" }}
             # Infinispan cache configuration
             - name: KC_CACHE
               value: ispn
@@ -170,7 +169,7 @@ spec:
             - name: JAVA_TOOL_OPTIONS
               value: "-Dcom.redhat.fips=true"
             {{- end }}
-          {{- end }}
+           {{- end }}  
           {{- if .Values.insecureAdminPasswordGeneration.enabled }}
             - name: KEYCLOAK_ADMIN
               valueFrom:

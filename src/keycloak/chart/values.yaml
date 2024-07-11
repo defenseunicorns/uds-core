@@ -58,7 +58,7 @@ clusterDomain: cluster.local
 devMode: true
 
 # Enable debug logging for keycloak and quarkus
-debug: false
+debugMode: false
 
 # Enable SMTP networkPolicy and config
 smtp:
@@ -158,12 +158,12 @@ postgresql:
   username: ""
   # The password of the database user
   password: ""
-  # Database name of the default JDBC URL
+  # Database name 
   database: ""
-  # Hostname of the default JDBC URL
+  # URL for the database
   host: ""
-  # Port of the default JDBC URL
-  port: 5432
+  # Port the database is listening on (default 5432)
+  port: ""
 
 serviceMonitor:
   # If `true`, a ServiceMonitor resource for the prometheus-operator is created

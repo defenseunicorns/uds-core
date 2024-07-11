@@ -52,7 +52,7 @@ spec:
         remoteGenerated: Anywhere
       {{- end }}
 
-      {{- if .Values.postgresql.host }}
+      {{- if eq (include "keycloak.postgresql.config" .) "true" }}
       - description: "PostgresQL Database access"
         direction: Egress
         selector:
