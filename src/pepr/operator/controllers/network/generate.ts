@@ -49,14 +49,14 @@ export function generate(namespace: string, policy: Allow): kind.NetworkPolicy {
     // If remoteNamespace is defined and not a wildcard, add it to the peer's namespaceSelector
     if (policy.remoteNamespace !== "" && policy.remoteNamespace !== "*") {
       peer.namespaceSelector = {
-        matchLabels: { "kubernetes.io/metadata.name": policy.remoteNamespace || "" }
+        matchLabels: { "kubernetes.io/metadata.name": policy.remoteNamespace || "" },
       };
     }
 
     // If remoteSelector is defined, add it to the peer's podSelector
     if (policy.remoteSelector) {
       peer.podSelector = {
-        matchLabels: policy.remoteSelector
+        matchLabels: policy.remoteSelector,
       };
     }
 
