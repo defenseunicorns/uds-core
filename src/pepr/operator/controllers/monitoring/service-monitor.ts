@@ -44,7 +44,6 @@ export async function serviceMonitor(pkg: UDSPackage, namespace: string) {
     }
 
     await purgeOrphans(generation, namespace, pkgName, PrometheusServiceMonitor, log);
-
   } catch (err) {
     throw new Error(
       `Failed to process ServiceMonitors for ${pkgName}, cause: ${JSON.stringify(err)}`,

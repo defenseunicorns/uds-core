@@ -41,11 +41,14 @@ export function getOwnerRef(cr: GenericKind): V1OwnerReference[] {
   ];
 }
 
-export async function purgeOrphans<T extends GenericClass>(generation: string, namespace: string, pkgName: string, kind: T, log: Logger){
-  const resources = await K8s(kind)
-    .InNamespace(namespace)
-    .WithLabel("uds/package", pkgName)
-    .Get();
+export async function purgeOrphans<T extends GenericClass>(
+  generation: string,
+  namespace: string,
+  pkgName: string,
+  kind: T,
+  log: Logger,
+) {
+  const resources = await K8s(kind).InNamespace(namespace).WithLabel("uds/package", pkgName).Get();
 
   for (const resource of resources.items) {
     if (resource.metadata?.labels?.["uds/generation"] !== generation) {
