@@ -34,8 +34,18 @@ export {
 } from "./generated/istio/serviceentry-v1beta1";
 
 export {
+  Scheme as PodMonitorScheme,
+  PodMonitor as PrometheusPodMonitor,
+} from "./generated/prometheus/podmonitor-v1";
+
+export {
+  ServiceMonitor as PrometheusServiceMonitor,
+  Endpoint as ServiceMonitorEndpoint,
+  Scheme as ServiceMonitorScheme,
+} from "./generated/prometheus/servicemonitor-v1";
+
+export {
   Action as IstioAction,
   AuthorizationPolicy as IstioAuthorizationPolicy,
 } from "./generated/istio/authorizationpolicy-v1beta1";
 export { RequestAuthentication as IstioRequestAuthentication } from "./generated/istio/requestauthentication-v1";
-export * as Prometheus from "./generated/prometheus/servicemonitor-v1";
