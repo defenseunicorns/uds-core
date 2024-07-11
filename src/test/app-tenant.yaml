@@ -3,6 +3,43 @@ kind: Namespace
 metadata:
   name: test-tenant-app
 ---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: example-secret
+  namespace: test-tenant-app
+type: Opaque
+data:
+  example-key: ZXhhbXBsZS1rZXk=
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: httpbin-pod-monitor-default-scrape
+  namespace: test-tenant-app
+spec:
+  podMetricsEndpoints:
+    - path: /metrics
+      port: service
+  scrapeClass: istio-certs
+  selector:
+    matchLabels:
+      app: httpbin
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: httpbin-pod-monitor-no-tls-config
+  namespace: test-tenant-app
+spec:
+  podMetricsEndpoints:
+    - path: /metrics
+      port: service
+  scrapeClass: exempt
+  selector:
+    matchLabels:
+      app: httpbin
+---
 apiVersion: uds.dev/v1alpha1
 kind: Package
 metadata:
@@ -23,6 +60,47 @@ spec:
         gateway: tenant
         host: demo-8081
         port: 8081
+  monitor:
+    - selector:
+        app: httpbin
+      targetPort: 3000
+      portName: service
+      description: Pod Monitor
+      kind: PodMonitor
+    - selector:
+        app: httpbin
+      targetPort: 3000
+      portName: service
+      description: Service Monitor Explicit
+      kind: ServiceMonitor
+    - selector:
+        app: httpbin
+      targetPort: 3000
+      portName: service
+      description: Service Monitor Default
+    - portName: "http"
+      selector:
+        app: "example"
+      targetPort: 8080
+      kind: "PodMonitor"
+      authorization:
+        credentials:
+          key: "example-key"
+          name: "example-secret"
+          optional: false
+        type: "Bearer"
+      description: Pod Monitor with Authorization
+    - portName: "http"
+      selector:
+        app: "example"
+      targetPort: 8080
+      authorization:
+        credentials:
+          key: "example-key"
+          name: "example-secret"
+          optional: false
+        type: "Bearer"
+      description: Service Monitor with Authorization
 ---
 apiVersion: v1
 kind: Service

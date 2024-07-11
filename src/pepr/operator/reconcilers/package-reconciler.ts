@@ -5,6 +5,7 @@ import { enableInjection } from "../controllers/istio/injection";
 import { istioResources } from "../controllers/istio/istio-resources";
 import { authservice } from "../controllers/keycloak/authservice/authservice";
 import { keycloak } from "../controllers/keycloak/client-sync";
+import { podMonitor } from "../controllers/monitoring/pod-monitor";
 import { serviceMonitor } from "../controllers/monitoring/service-monitor";
 import { networkPolicies } from "../controllers/network/policies";
 import { Phase, UDSPackage } from "../crd";
@@ -55,12 +56,12 @@ export async function packageReconciler(pkg: UDSPackage) {
     endpoints = await istioResources(pkg, namespace!);
 
     // Only configure the ServiceMonitors if not running in single test mode
-    let monitors: string[] = [];
+    const monitors: string[] = [];
     if (!UDSConfig.isSingleTest) {
-      // Create the ServiceMonitor for each monitored service
-      monitors = await serviceMonitor(pkg, namespace!);
+      monitors.push(...(await podMonitor(pkg, namespace!)));
+      monitors.push(...(await serviceMonitor(pkg, namespace!)));
     } else {
-      log.warn(`Running in single test mode, skipping ${name} ServiceMonitors.`);
+      log.warn(`Running in single test mode, skipping ${name} Monitors.`);
     }
 
     await updateStatus(pkg, {
