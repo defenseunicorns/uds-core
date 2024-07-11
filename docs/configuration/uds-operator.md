@@ -72,51 +72,6 @@ spec:
           - /UDS Core/Admin
 ```
 
-## Exemption
-
-- **Exemption Scope:**
-  - Granting exemption for custom resources is restricted to the `uds-policy-exemptions` namespace by default, unless specifically configured to allow exemptions across all namespaces.
-- **Policy Updates:**
-  - Updating the policies Pepr store with registered exemptions.
-
-### Example UDS Exemption CR
-
-```yaml
-apiVersion: uds.dev/v1alpha1
-kind: Exemption
-metadata:
-  name: neuvector
-  namespace: uds-policy-exemptions
-spec:
-  exemptions:
-    - policies:
-        - DisallowHostNamespaces
-        - DisallowPrivileged
-        - RequireNonRootUser
-        - DropAllCapabilities
-        - RestrictHostPathWrite
-        - RestrictVolumeTypes
-      matcher:
-        namespace: neuvector
-        name: "^neuvector-enforcer-pod.*"
-
-    - policies:
-        - DisallowPrivileged
-        - RequireNonRootUser
-        - DropAllCapabilities
-        - RestrictHostPathWrite
-        - RestrictVolumeTypes
-      matcher:
-        namespace: neuvector
-        name: "^neuvector-controller-pod.*"
-
-    - policies:
-        - DropAllCapabilities
-      matcher:
-        namespace: neuvector
-        name: "^neuvector-prometheus-exporter-pod.*"
-```
-
 ### Example UDS Package CR with SSO Templating
 
 By default, UDS generates a secret for the Single Sign-On (SSO) client that encapsulates all client contents as an opaque secret. In this setup, each key within the secret corresponds to its own environment variable or file, based on the method used to mount the secret. If customization of the secret rendering is required, basic templating can be achieved using the `secretTemplate` property. Below are examples showing this functionality. To see how templating works, please see the [Regex website](https://regex101.com/r/e41Dsk/3).
@@ -166,7 +121,8 @@ spec:
           bearer_only: clientField(bearerOnly)
   ```
 
-## Protecting a UDS Package with Authservice
+### Protecting a UDS Package with Authservice
+
 To enable authentication for applications that do not have native OIDC configuration, UDS Core can utilize Authservice as an authentication layer.
 
 Follow these steps to protect your application with Authservice:
@@ -197,11 +153,65 @@ The UDS Operator uses the first `redirectUris` to populate the `match.prefix` ho
 For a complete example, see [app-authservice-tenant.yaml](https://github.com/defenseunicorns/uds-core/blob/main/src/test/app-authservice-tenant.yaml)
 
 #### Trusted Certificate Authority
-Authservice can be configured with additional trusted certificate bundle in cases where UDS Core ingress gateways are deployed with private PKI.   
 
-To configure, set [UDS_CA_CERT](https://github.com/defenseunicorns/uds-core/blob/main/packages/standard/zarf.yaml#L11-L13) with a Base64 encoded PEM formatted certificate bundle that can be used to verify the certificates of the tenant gateway.
+Authservice can be configured with additional trusted certificate bundle in cases where UDS Core ingress gateways are deployed with private PKI.
+
+To configure, set [UDS_CA_CERT](https://github.com/defenseunicorns/uds-core/blob/main/packages/standard/zarf.yaml#L11-L13) as an environment variable with a Base64 encoded PEM formatted certificate bundle that can be used to verify the certificates of the tenant gateway.
+
+Alternatively you can specify the `CA_CERT` variable in your `uds-config.yaml`:
+
+```yaml
+variables:
+  core:
+    CA_CERT: <base64 encoded certificate authority>
+```
 
 See [configuring Istio Ingress](https://uds.defenseunicorns.com/core/configuration/istio/ingress/#configure-domain-name-and-tls-for-istio-gateways) for the relevant documentation on configuring ingress certificates.
+
+## Exemption
+
+- **Exemption Scope:**
+  - Granting exemption for custom resources is restricted to the `uds-policy-exemptions` namespace by default, unless specifically configured to allow exemptions across all namespaces.
+- **Policy Updates:**
+  - Updating the policies Pepr store with registered exemptions.
+
+### Example UDS Exemption CR
+
+```yaml
+apiVersion: uds.dev/v1alpha1
+kind: Exemption
+metadata:
+  name: neuvector
+  namespace: uds-policy-exemptions
+spec:
+  exemptions:
+    - policies:
+        - DisallowHostNamespaces
+        - DisallowPrivileged
+        - RequireNonRootUser
+        - DropAllCapabilities
+        - RestrictHostPathWrite
+        - RestrictVolumeTypes
+      matcher:
+        namespace: neuvector
+        name: "^neuvector-enforcer-pod.*"
+
+    - policies:
+        - DisallowPrivileged
+        - RequireNonRootUser
+        - DropAllCapabilities
+        - RestrictHostPathWrite
+        - RestrictVolumeTypes
+      matcher:
+        namespace: neuvector
+        name: "^neuvector-controller-pod.*"
+
+    - policies:
+        - DropAllCapabilities
+      matcher:
+        namespace: neuvector
+        name: "^neuvector-prometheus-exporter-pod.*"
+```
 
 ### Configuring UDS Core Policy Exemptions
 

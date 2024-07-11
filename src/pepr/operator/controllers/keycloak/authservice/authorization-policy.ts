@@ -120,7 +120,6 @@ async function updatePolicy(
   const ownerReferences = getOwnerRef(pkg);
 
   const updateMetadata = (resource: IstioAuthorizationPolicy | IstioRequestAuthentication) => {
-    resource!.metadata!.name = resource!.metadata!.name;
     resource!.metadata!.ownerReferences = ownerReferences;
     resource!.metadata!.labels = {
       "uds/package": pkg.metadata!.name!,
