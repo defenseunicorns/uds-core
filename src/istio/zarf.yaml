@@ -83,7 +83,7 @@ components:
           - "values/config-tenant.yaml"
 
   - name: istio-passthrough-gateway
-    required: true
+    required: false
     charts:
       - name: gateway
         url: https://istio-release.storage.googleapis.com/charts

@@ -3,6 +3,7 @@ import { UDSConfig } from "../../config";
 import { Component, setupLogger } from "../../logger";
 import { enableInjection } from "../controllers/istio/injection";
 import { istioResources } from "../controllers/istio/istio-resources";
+import { authservice } from "../controllers/keycloak/authservice/authservice";
 import { keycloak } from "../controllers/keycloak/client-sync";
 import { serviceMonitor } from "../controllers/monitoring/service-monitor";
 import { networkPolicies } from "../controllers/network/policies";
@@ -46,6 +47,10 @@ export async function packageReconciler(pkg: UDSPackage) {
     // Update the namespace to ensure the istio-injection label is set
     await enableInjection(pkg);
 
+    // Configure SSO
+    const ssoClients = await keycloak(pkg);
+    const authserviceClients = await authservice(pkg, ssoClients);
+
     // Create the VirtualService and ServiceEntry for each exposed service
     endpoints = await istioResources(pkg, namespace!);
 
@@ -58,12 +63,10 @@ export async function packageReconciler(pkg: UDSPackage) {
       log.warn(`Running in single test mode, skipping ${name} ServiceMonitors.`);
     }
 
-    // Configure SSO
-    const ssoClients = await keycloak(pkg);
-
     await updateStatus(pkg, {
       phase: Phase.Ready,
-      ssoClients,
+      ssoClients: [...ssoClients.keys()],
+      authserviceClients,
       endpoints,
       monitors,
       networkPolicyCount: netPol.length,

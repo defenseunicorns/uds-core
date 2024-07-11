@@ -7,6 +7,11 @@ metadata:
   version: "0.23.0"
   # x-release-please-end
 
+variables:
+  - name: CA_CERT
+    description: "Base64 encoded CA cert that signed the domain wildcard certs used for Istio ingress"
+    default: ""
+
 components:
   # CRDs
   - name: prometheus-operator-crds
@@ -31,7 +36,7 @@ components:
       path: ../../src/istio
 
   - name: istio-passthrough-gateway
-    required: true
+    required: false
     import:
       path: ../../src/istio
 

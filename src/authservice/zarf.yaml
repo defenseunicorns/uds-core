@@ -16,7 +16,7 @@ components:
         valuesFiles:
           - values/upstream-values.yaml
     images:
-      - ghcr.io/istio-ecosystem/authservice/authservice:0.5.3
+      - ghcr.io/istio-ecosystem/authservice/authservice:1.0.1
 
   - name: authservice
     required: true
@@ -29,7 +29,7 @@ components:
         valuesFiles:
           - values/registry1-values.yaml
     images:
-      - registry1.dso.mil/ironbank/istio-ecosystem/authservice:0.5.3
+      - registry1.dso.mil/ironbank/istio-ecosystem/authservice:1.0.1-ubi9
 
   - name: authservice
     required: true

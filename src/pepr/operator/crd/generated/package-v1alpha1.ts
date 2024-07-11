@@ -475,6 +475,11 @@ export interface Sso {
    */
   description?: string;
   /**
+   * Labels to match pods to automatically protect with authservice. Leave empty to disable
+   * authservice protection
+   */
+  enableAuthserviceSelector?: { [key: string]: string };
+  /**
    * Whether the SSO client is enabled
    */
   enabled?: boolean;
@@ -482,10 +487,6 @@ export interface Sso {
    * The client sso group type
    */
   groups?: Groups;
-  /**
-   * If true, the client will generate a new Auth Service client as well
-   */
-  isAuthSvcClient?: boolean;
   /**
    * Specifies display name of the client
    */
@@ -549,6 +550,7 @@ export enum Protocol {
 }
 
 export interface Status {
+  authserviceClients?: string[];
   endpoints?: string[];
   monitors?: string[];
   networkPolicyCount?: number;

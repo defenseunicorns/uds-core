@@ -47,6 +47,11 @@
   ],
   "packageRules": [
     {
+      "matchFileNames": ["src/authservice/**"],
+      "groupName": "authservice",
+      "commitMessageTopic": "authservice"
+    },
+    {
       "matchFileNames": ["src/istio/**"],
       "groupName": "istio",
       "commitMessageTopic": "istio"

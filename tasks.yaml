@@ -22,6 +22,7 @@ tasks:
         task: test-uds-core
 
   - name: dev-setup
+    description: "Create k3d cluster with istio"
     actions:
       - description: "Create the dev cluster"
         task: setup:create-k3d-cluster
@@ -51,24 +52,42 @@ tasks:
       - description: "Deploy slim dev bundle"
         task: deploy:k3d-slim-dev-bundle
 
-  - name: dev-deploy
+  - name: dev-identity
+    description: "Create k3d cluster with istio, Pepr, Keycloak, and Authservice for development"
     actions:
-      - description: "Deploy the given source package with Zarf Dev"
-        cmd: "uds zarf dev deploy src/${PKG} --flavor ${FLAVOR}"
+      - task: dev-setup
+
+      - description: "Deploy Pepr"
+        cmd: "npx pepr deploy --confirm"
+
+      - description: "Deploy Keycloak"
+        cmd: "uds run dev-deploy --set PKG=keycloak"
+
+      - description: "Deploy Authservice"
+        cmd: "uds run dev-deploy --set PKG=authservice"
+
+  - name: dev-deploy
+    description: "Deploy the given source package with Zarf Dev"
+    actions:
+      - cmd: "uds zarf dev deploy src/${PKG} --flavor ${FLAVOR}"
 
   - name: setup-cluster
+    description: "Create a k3d Cluster and Initialize with Zarf"
     actions:
       - task: setup:k3d-test-cluster
 
   - name: create-single-package
+    description: "Create a single Zarf Package, must set UDS_PKG environment variable"
     actions:
       - task: create:single-package
 
   - name: create-standard-package
+    description: "Create UDS Core Zarf Package, `upstream` flavor default, use --set FLAVOR={flavor} to change"
     actions:
       - task: create:standard-package
 
   - name: deploy-single-package
+    description: "Deploy Pepr Module and a Zarf Package using UDS_PKG environment variable"
     actions:
       - task: deploy:single-package
 
@@ -77,21 +96,26 @@ tasks:
       - task: deploy:k3d-standard-bundle
 
   - name: test-single-package
+    description: "Build and test a single package, must set UDS_PKG environment variable"
     actions:
       - task: test:single-package
 
   - name: test-uds-core
+    description: "Build and test UDS Core"
     actions:
       - task: test:uds-core
 
   - name: test-uds-core-upgrade
+    description: "Test an upgrade from the latest released UDS Core package to current branch"
     actions:
       - task: test:uds-core-upgrade
 
   - name: lint-check
+    description: "Run linting checks"
     actions:
       - task: lint:check
 
   - name: lint-fix
+    description: "Fix linting issues"
     actions:
       - task: lint:fix
