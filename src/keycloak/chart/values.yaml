@@ -163,8 +163,8 @@ postgresql:
   database: ""
   # URL for the database
   host: ""
-  # Port the database is listening on (default 5432)
-  port: ""
+  # Port the database is listening on
+  port: 5432
 
 serviceMonitor:
   # If `true`, a ServiceMonitor resource for the prometheus-operator is created

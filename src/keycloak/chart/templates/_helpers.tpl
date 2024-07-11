@@ -81,7 +81,7 @@ Check external PostgreSQL connection information. Fails when required values are
 {{- define "keycloak.postgresql.config" -}}
 {{- if not .Values.devMode -}}
 {{- if .Values.postgresql -}}
-{{ $requiredKeys := list "username" "password" "database" "host" "port" }}
+{{ $requiredKeys := list "username" "password" "database" "host" }}
 {{- range $k := $requiredKeys -}}
 {{ if empty (get $.Values.postgresql $k) }}{{- fail (printf "Missing value for \"postgresql.%s\"." $k ) -}}{{- end }}
 {{- end }}
