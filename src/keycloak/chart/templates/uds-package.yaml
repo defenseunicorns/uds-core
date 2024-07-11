@@ -53,7 +53,7 @@ spec:
       {{- end }}
 
       {{- if eq (include "keycloak.postgresql.config" .) "true" }}
-      - description: "PostgresQL Database access"
+      - description: "PostgreSQL Database access"
         direction: Egress
         selector:
           app.kubernetes.io/name: keycloak
