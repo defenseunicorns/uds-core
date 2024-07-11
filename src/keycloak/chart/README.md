@@ -14,7 +14,7 @@ When `devMode: true` is set, the chart will deploy a single Keycloak Pod with an
 
 Using an external database with Dev Mode enabled is not supported.
 
-Dev Mode enables debug logging for Keycloak. To configure debug logging outside of Dev Mode, set `debug: true` in your values.
+Dev Mode enables debug logging for Keycloak. To configure debug logging outside of Dev Mode, set `debugMode: true` in your values.
 
 ### Autoscaling
 

@@ -55,6 +55,7 @@ terminationGracePeriodSeconds: 5
 clusterDomain: cluster.local
 
 # Sets development mode for Keycloak. This disables caching, Postgres and HPAs and should only be used for testing
+# Must have no values populated for `postgresql` in order to use
 devMode: true
 
 # Enable debug logging for keycloak and quarkus
