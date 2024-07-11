@@ -22,7 +22,5 @@ spec:
         podLabels:
           app.kubernetes.io/name: authservice
         remoteNamespace: "" # Any namespace could have a protected app
-        remotePodLabels:
-          {{ .Values.selector.key }}: {{ .Values.selector.value }}
         port: 10003
         description: "Protected Apps"

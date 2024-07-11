@@ -4,9 +4,11 @@ type: docs
 weight: 1
 ---
 
-UDS Core leverages Pepr to handle setup of Prometheus scraping metrics endpoints, with the particular configuration necessary to work in a STRICT mTLS (Istio) environment. We handle this with both mutations of existing service monitors and generation of service monitors via the `Package` CR.
+UDS Core leverages Pepr to handle setup of Prometheus scraping metrics endpoints, with the particular configuration necessary to work in a STRICT mTLS (Istio) environment. We handle this via a default scrapeClass in prometheus to add the istio certs. When a monitor needs to be exempt from that tlsConfig a mutation is performed to leverage a plain scrape class without istio certs.
 
 ## Mutations
+
+Note: The below implementation has been deprecated in favor of a default `scrapeClass` with the file-based `tlsConfig` required for istio mTLS in prometheus automatically, supplemented with a mutation of `scrapeClass: exempt` that exempts monitors from the `tlsConfig` required for istio if the destination namespace is not istio injected (e.g. kube-system), unless the `uds/skip-sm-mutate` annotation is specified. The mutation behavior stated in the paragraph immediately below this section will be removed in a later release.
 
 All service monitors are mutated to set the scrape scheme to HTTPS and set the TLS Config to what is required for Istio mTLS scraping (see [this doc](https://istio.io/latest/docs/ops/integrations/prometheus/#tls-settings) for details). Beyond this, no other fields are mutated. Supporting existing service monitors is useful since some charts include service monitors by default with more advanced configurations, and it is in our best interest to enable those and use them where possible.
 
@@ -16,7 +18,7 @@ Note: This mutation is the default behavior for all service monitors but can be 
 
 ## Package CR `monitor` field
 
-UDS Core also supports generating service monitors from the `monitor` list in the `Package` spec. Charts do not always support service monitors, so generating them can be useful. This also provides a simplified way for other users to create service monitors, similar to the way we handle `VirtualServices` today. A full example of this can be seen below:
+UDS Core also supports generating `ServiceMonitors` and/or `PodMonitors` from the `monitor` list in the `Package` spec. Charts do not always support monitors, so generating them can be useful. This also provides a simplified way for other users to create monitors, similar to the way we handle `VirtualServices` today. A full example of this can be seen below:
 
 ```yaml
 ...
@@ -28,9 +30,16 @@ spec:
       targetPort: 1234 # Corresponding target port on the pod/container (for network policy)
       # Optional properties depending on your application
       description: "Metrics" # Add to customize the service monitor name
+      kind: ServiceMonitor # optional, kind defaults to service monitor if not specified. PodMonitor is the other valid option.
       podSelector: # Add if pod labels are different than `selector` (for network policy)
         app: barfoo
       path: "/mymetrics" # Add if metrics are exposed on a different path than "/metrics"
+      authorization: # Add if authorization is required for the metrics endpoint
+        credentials:
+          key: "example-key"
+          name: "example-secret"
+          optional: false
+        type: "Bearer"
 ```
 
 This config is used to generate service monitors and corresponding network policies to setup scraping for your applications. The `ServiceMonitor`s will go through the mutation process to add `tlsConfig` and `scheme` to work in an istio environment.

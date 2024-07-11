@@ -1,9 +1,9 @@
 import { describe, expect, it } from "@jest/globals";
 import { Monitor } from "../../crd";
-import { generateServiceMonitor } from "./service-monitor";
+import { generatePodMonitor } from "./pod-monitor";
 
-describe("test generate service monitor", () => {
-  it("should return a valid Service Monitor object", () => {
+describe("test generate Pod monitor", () => {
+  it("should return a valid Pod Monitor object", () => {
     const ownerRefs = [
       {
         apiVersion: "uds.dev/v1alpha1",
@@ -26,15 +26,15 @@ describe("test generate service monitor", () => {
     const namespace = "test";
     const pkgName = "test";
     const generation = "1";
-    const payload = generateServiceMonitor(monitor, namespace, pkgName, generation, ownerRefs);
+    const payload = generatePodMonitor(monitor, namespace, pkgName, generation, ownerRefs);
 
     expect(payload).toBeDefined();
     expect(payload.metadata?.name).toEqual(`${pkgName}-${selectorApp}-${portName}`);
     expect(payload.metadata?.namespace).toEqual(namespace);
-    expect(payload.spec?.endpoints).toBeDefined();
-    if (payload.spec?.endpoints) {
-      expect(payload.spec.endpoints[0].port).toEqual(portName);
-      expect(payload.spec.endpoints[0].path).toEqual(metricsPath);
+    expect(payload.spec?.podMetricsEndpoints).toBeDefined();
+    if (payload.spec?.podMetricsEndpoints) {
+      expect(payload.spec.podMetricsEndpoints[0].port).toEqual(portName);
+      expect(payload.spec.podMetricsEndpoints[0].path).toEqual(metricsPath);
     }
     expect(payload.spec?.selector.matchLabels).toHaveProperty("app", "test");
   });
