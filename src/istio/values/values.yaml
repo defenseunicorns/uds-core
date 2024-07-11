@@ -6,3 +6,12 @@ meshConfig:
     holdApplicationUntilProxyStarts: true
     gatewayTopology:
       forwardClientCertDetails: SANITIZE
+  extensionProviders:
+    - name: "authservice"
+      envoyExtAuthzGrpc:
+        service: "authservice.authservice.svc.cluster.local"
+        port: "10003"
+
+pilot:
+  env:
+    PILOT_JWT_ENABLE_REMOTE_JWKS: hybrid

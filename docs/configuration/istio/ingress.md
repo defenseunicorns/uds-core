@@ -88,3 +88,7 @@ variables:
     tenant_tls_cert: # base64 encoded tenant cert here
     tenant_tls_key: # base64 encoded tenant key here
 ```
+
+{{% alert-note %}}
+If you are using Private PKI or self-signed certificates for your tenant certificates it is necessary to additionally configure `UDS_CA_CERT` with additional [trusted certificate authorities](https://uds.defenseunicorns.com/core/configuration/uds-operator/#trusted-certificate-authority).
+{{% /alert-note %}}
