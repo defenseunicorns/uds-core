@@ -21,9 +21,11 @@ The UDS Operator plays a pivotal role in managing the lifecycle of UDS Package C
 - **SSO Group Authentication:**
   - Group authentication determines who can access the application based on keycloak group membership.
   - At this time `anyOf` allows defining a list of groups, a user must belong to at least one of them.
-    {{% alert-caution %}}
-  Warning: **SSO Group Authentication** is in Alpha and may not be stable. Avoid using in production. Feedback is appreciated to improve reliability.
-    {{% /alert-caution %}}
+- **Authservice Protection:**
+  - Authservice authentication provides application agnostic SSO for applications that opt-in.
+  {{% alert-caution %}}
+  Warning: **Authservice Protection** and **SSO Group Authentication** are in Alpha and may not be stable. Avoid using in production. Feedback is appreciated to improve reliability.
+  {{% /alert-caution %}}
 
 ### Example UDS Package CR
 
@@ -68,51 +70,6 @@ spec:
       groups:
         anyOf:
           - /UDS Core/Admin
-```
-
-## Exemption
-
-- **Exemption Scope:**
-  - Granting exemption for custom resources is restricted to the `uds-policy-exemptions` namespace by default, unless specifically configured to allow exemptions across all namespaces.
-- **Policy Updates:**
-  - Updating the policies Pepr store with registered exemptions.
-
-### Example UDS Exemption CR
-
-```yaml
-apiVersion: uds.dev/v1alpha1
-kind: Exemption
-metadata:
-  name: neuvector
-  namespace: uds-policy-exemptions
-spec:
-  exemptions:
-    - policies:
-        - DisallowHostNamespaces
-        - DisallowPrivileged
-        - RequireNonRootUser
-        - DropAllCapabilities
-        - RestrictHostPathWrite
-        - RestrictVolumeTypes
-      matcher:
-        namespace: neuvector
-        name: "^neuvector-enforcer-pod.*"
-
-    - policies:
-        - DisallowPrivileged
-        - RequireNonRootUser
-        - DropAllCapabilities
-        - RestrictHostPathWrite
-        - RestrictVolumeTypes
-      matcher:
-        namespace: neuvector
-        name: "^neuvector-controller-pod.*"
-
-    - policies:
-        - DropAllCapabilities
-      matcher:
-        namespace: neuvector
-        name: "^neuvector-prometheus-exporter-pod.*"
 ```
 
 ### Example UDS Package CR with SSO Templating
@@ -163,6 +120,98 @@ spec:
           redirect_uri: clientField(redirectUris)[0]
           bearer_only: clientField(bearerOnly)
   ```
+
+### Protecting a UDS Package with Authservice
+
+To enable authentication for applications that do not have native OIDC configuration, UDS Core can utilize Authservice as an authentication layer.
+
+Follow these steps to protect your application with Authservice:
+
+* Set `enableAuthserviceSelector` with a matching label selector in the `sso` configuration of the Package.
+* Ensure that the pods of the application are labeled with the corresponding selector
+
+```yaml
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: httpbin
+  namespace: httpbin
+spec:
+  sso:
+    - name: Demo SSO httpbin
+      clientId: uds-core-httpbin
+      redirectUris:
+        - "https://httpbin.uds.dev/login"
+      enableAuthserviceSelector:
+        app: httpbin
+```
+
+{{% alert-note %}}
+The UDS Operator uses the first `redirectUris` to populate the `match.prefix` hostname and `callback_uri` in the authservice chain.
+{{% /alert-note %}}
+
+For a complete example, see [app-authservice-tenant.yaml](https://github.com/defenseunicorns/uds-core/blob/main/src/test/app-authservice-tenant.yaml)
+
+#### Trusted Certificate Authority
+
+Authservice can be configured with additional trusted certificate bundle in cases where UDS Core ingress gateways are deployed with private PKI.
+
+To configure, set [UDS_CA_CERT](https://github.com/defenseunicorns/uds-core/blob/main/packages/standard/zarf.yaml#L11-L13) as an environment variable with a Base64 encoded PEM formatted certificate bundle that can be used to verify the certificates of the tenant gateway.
+
+Alternatively you can specify the `CA_CERT` variable in your `uds-config.yaml`:
+
+```yaml
+variables:
+  core:
+    CA_CERT: <base64 encoded certificate authority>
+```
+
+See [configuring Istio Ingress](https://uds.defenseunicorns.com/core/configuration/istio/ingress/#configure-domain-name-and-tls-for-istio-gateways) for the relevant documentation on configuring ingress certificates.
+
+## Exemption
+
+- **Exemption Scope:**
+  - Granting exemption for custom resources is restricted to the `uds-policy-exemptions` namespace by default, unless specifically configured to allow exemptions across all namespaces.
+- **Policy Updates:**
+  - Updating the policies Pepr store with registered exemptions.
+
+### Example UDS Exemption CR
+
+```yaml
+apiVersion: uds.dev/v1alpha1
+kind: Exemption
+metadata:
+  name: neuvector
+  namespace: uds-policy-exemptions
+spec:
+  exemptions:
+    - policies:
+        - DisallowHostNamespaces
+        - DisallowPrivileged
+        - RequireNonRootUser
+        - DropAllCapabilities
+        - RestrictHostPathWrite
+        - RestrictVolumeTypes
+      matcher:
+        namespace: neuvector
+        name: "^neuvector-enforcer-pod.*"
+
+    - policies:
+        - DisallowPrivileged
+        - RequireNonRootUser
+        - DropAllCapabilities
+        - RestrictHostPathWrite
+        - RestrictVolumeTypes
+      matcher:
+        namespace: neuvector
+        name: "^neuvector-controller-pod.*"
+
+    - policies:
+        - DropAllCapabilities
+      matcher:
+        namespace: neuvector
+        name: "^neuvector-prometheus-exporter-pod.*"
+```
 
 ### Configuring UDS Core Policy Exemptions
 
