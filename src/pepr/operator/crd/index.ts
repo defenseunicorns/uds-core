@@ -49,4 +49,3 @@ export {
   AuthorizationPolicy as IstioAuthorizationPolicy,
 } from "./generated/istio/authorizationpolicy-v1beta1";
 export { RequestAuthentication as IstioRequestAuthentication } from "./generated/istio/requestauthentication-v1";
-
