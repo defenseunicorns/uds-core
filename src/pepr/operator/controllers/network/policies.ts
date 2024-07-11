@@ -67,6 +67,37 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
     policies.push(generatedPolicy);
   }
 
+  // Add a network policy for each sso block with authservice enabled (if any pkg.spec.sso[*].enableAuthserviceSelector is set)
+  const ssos = pkg.spec?.sso?.filter(sso => sso.enableAuthserviceSelector);
+
+  for (const sso of ssos || []) {
+    const policy: Allow = {
+      direction: Direction.Egress,
+      selector: sso.enableAuthserviceSelector,
+      remoteNamespace: "authservice",
+      remoteSelector: { "app.kubernetes.io/name": "authservice" },
+      port: 10003,
+      description: `${sanitizeResourceName(sso.clientId)} authservice egress`,
+    };
+
+    // Generate the workload to keycloak for JWKS endpoint policy
+    const generatedPolicy = generate(namespace, policy);
+    policies.push(generatedPolicy);
+
+    const keycloakPolicy: Allow = {
+      direction: Direction.Egress,
+      selector: sso.enableAuthserviceSelector,
+      remoteNamespace: "keycloak",
+      remoteSelector: { "app.kubernetes.io/name": "keycloak" },
+      port: 8080,
+      description: `${sanitizeResourceName(sso.clientId)} keycloak JWKS egress`,
+    };
+
+    // Generate the policy
+    const keycloakGeneratedPolicy = generate(namespace, keycloakPolicy);
+    policies.push(keycloakGeneratedPolicy);
+  }
+
   // Generate NetworkPolicies for any ServiceMonitors that are generated
   const monitorList = pkg.spec?.monitor ?? [];
   // Iterate over each ServiceMonitor
