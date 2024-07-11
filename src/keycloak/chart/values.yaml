@@ -158,7 +158,7 @@ postgresql:
   username: ""
   # The password of the database user
   password: ""
-  # Database name 
+  # Database name
   database: ""
   # URL for the database
   host: ""
