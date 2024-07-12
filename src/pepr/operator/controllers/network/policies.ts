@@ -98,13 +98,13 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
     policies.push(keycloakGeneratedPolicy);
   }
 
-  // Generate NetworkPolicies for any ServiceMonitors that are generated
+  // Generate NetworkPolicies for any monitors that are generated
   const monitorList = pkg.spec?.monitor ?? [];
-  // Iterate over each ServiceMonitor
+  // Iterate over each monitor
   for (const monitor of monitorList) {
     const { selector, targetPort, podSelector } = monitor;
 
-    // Create the NetworkPolicy for the ServiceMonitor
+    // Create the NetworkPolicy for the monitor
     const policy: Allow = {
       direction: Direction.Ingress,
       selector: podSelector ?? selector,
@@ -113,7 +113,7 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
         app: "prometheus",
       },
       port: targetPort,
-      // Use the targetPort and selector to generate a description for the ServiceMonitor derived policies
+      // Use the targetPort and selector to generate a description for the monitoring derived policies
       description: `${targetPort}-${Object.values(selector)} Metrics`,
     };
     // Generate the policy

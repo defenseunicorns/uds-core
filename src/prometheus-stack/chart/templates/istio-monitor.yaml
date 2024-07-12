@@ -4,8 +4,9 @@ kind: PodMonitor
 metadata:
   name: envoy-stats-monitor
   namespace: istio-system
+  annotations:
+    uds/skip-mutate: "true"
 spec:
-  scrapeClass: exempt
   selector:
     matchExpressions:
     - {key: istio-prometheus-ignore, operator: DoesNotExist}

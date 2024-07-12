@@ -1,3 +1,6 @@
+serviceMonitor:
+  enabled: true
+
 # Values set to intentionally violate pepr policies
 securityContext:
   runAsUser: 0
