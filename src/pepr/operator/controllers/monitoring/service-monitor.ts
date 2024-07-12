@@ -4,7 +4,7 @@ import { V1OwnerReference } from "@kubernetes/client-node";
 import { Component, setupLogger } from "../../../logger";
 import { Monitor, PrometheusServiceMonitor, UDSPackage } from "../../crd";
 import { Kind } from "../../crd/generated/package-v1alpha1";
-import { getOwnerRef } from "../utils";
+import { getOwnerRef, purgeOrphans } from "../utils";
 import { generateMonitorName } from "./common";
 
 // configure subproject logger
@@ -43,22 +43,7 @@ export async function serviceMonitor(pkg: UDSPackage, namespace: string) {
       }
     }
 
-    // Get all related ServiceMonitors in the namespace
-    const serviceMonitors = await K8s(PrometheusServiceMonitor)
-      .InNamespace(namespace)
-      .WithLabel("uds/package", pkgName)
-      .Get();
-
-    // Find any orphaned ServiceMonitors (not matching the current generation)
-    const orphanedMonitor = serviceMonitors.items.filter(
-      m => m.metadata?.labels?.["uds/generation"] !== generation,
-    );
-
-    // Delete any orphaned ServiceMonitors
-    for (const m of orphanedMonitor) {
-      log.debug(m, `Deleting orphaned ServiceMonitor ${m.metadata!.name}`);
-      await K8s(PrometheusServiceMonitor).Delete(m);
-    }
+    await purgeOrphans(generation, namespace, pkgName, PrometheusServiceMonitor, log);
   } catch (err) {
     throw new Error(
       `Failed to process ServiceMonitors for ${pkgName}, cause: ${JSON.stringify(err)}`,

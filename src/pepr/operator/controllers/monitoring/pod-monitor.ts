@@ -3,7 +3,7 @@ import { K8s } from "pepr";
 import { Component, setupLogger } from "../../../logger";
 import { Monitor, PrometheusPodMonitor, UDSPackage } from "../../crd";
 import { Kind } from "../../crd/generated/package-v1alpha1";
-import { getOwnerRef } from "../utils";
+import { getOwnerRef, purgeOrphans } from "../utils";
 import { generateMonitorName } from "./common";
 
 // configure subproject logger
@@ -42,22 +42,7 @@ export async function podMonitor(pkg: UDSPackage, namespace: string) {
       }
     }
 
-    // Get all related PodMonitors in the namespace
-    const podMonitors = await K8s(PrometheusPodMonitor)
-      .InNamespace(namespace)
-      .WithLabel("uds/package", pkgName)
-      .Get();
-
-    // Find any orphaned PodMonitors (not matching the current generation)
-    const orphanedMonitor = podMonitors.items.filter(
-      m => m.metadata?.labels?.["uds/generation"] !== generation,
-    );
-
-    // Delete any orphaned PodMonitors
-    for (const m of orphanedMonitor) {
-      log.debug(m, `Deleting orphaned PodMonitor ${m.metadata!.name}`);
-      await K8s(PrometheusPodMonitor).Delete(m);
-    }
+    await purgeOrphans(generation, namespace, pkgName, PrometheusPodMonitor, log);
   } catch (err) {
     throw new Error(`Failed to process PodMonitors for ${pkgName}, cause: ${JSON.stringify(err)}`);
   }
@@ -73,7 +58,7 @@ export function generatePodMonitor(
   generation: string,
   ownerRefs: V1OwnerReference[],
 ) {
-  const { selector, portName } = monitor;
+  const { selector, podSelector, portName } = monitor;
   const name = generateMonitorName(pkgName, monitor);
   const payload: PrometheusPodMonitor = {
     metadata: {
@@ -94,7 +79,7 @@ export function generatePodMonitor(
         },
       ],
       selector: {
-        matchLabels: selector,
+        matchLabels: podSelector ?? selector,
       },
     },
   };

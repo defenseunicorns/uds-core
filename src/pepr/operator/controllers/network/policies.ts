@@ -2,7 +2,7 @@ import { K8s, kind } from "pepr";
 
 import { Component, setupLogger } from "../../../logger";
 import { Allow, Direction, Gateway, UDSPackage } from "../../crd";
-import { getOwnerRef, sanitizeResourceName } from "../utils";
+import { getOwnerRef, purgeOrphans, sanitizeResourceName } from "../utils";
 import { allowEgressDNS } from "./defaults/allow-egress-dns";
 import { allowEgressIstiod } from "./defaults/allow-egress-istiod";
 import { allowIngressSidecarMonitoring } from "./defaults/allow-ingress-sidecar-monitoring";
@@ -98,13 +98,13 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
     policies.push(keycloakGeneratedPolicy);
   }
 
-  // Generate NetworkPolicies for any ServiceMonitors that are generated
+  // Generate NetworkPolicies for any monitors that are generated
   const monitorList = pkg.spec?.monitor ?? [];
-  // Iterate over each ServiceMonitor
+  // Iterate over each monitor
   for (const monitor of monitorList) {
     const { selector, targetPort, podSelector } = monitor;
 
-    // Create the NetworkPolicy for the ServiceMonitor
+    // Create the NetworkPolicy for the monitor
     const policy: Allow = {
       direction: Direction.Ingress,
       selector: podSelector ?? selector,
@@ -113,7 +113,7 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
         app: "prometheus",
       },
       port: targetPort,
-      // Use the targetPort and selector to generate a description for the ServiceMonitor derived policies
+      // Use the targetPort and selector to generate a description for the monitoring derived policies
       description: `${targetPort}-${Object.values(selector)} Metrics`,
     };
     // Generate the policy
@@ -146,22 +146,7 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
     await K8s(kind.NetworkPolicy).Apply(policy, { force: true });
   }
 
-  // Delete any policies that are no longer needed
-  const policyList = await K8s(kind.NetworkPolicy)
-    .InNamespace(namespace)
-    .WithLabel("uds/package", pkgName)
-    .Get();
-
-  // Find any orphaned polices (not matching the current generation)
-  const orphanedNetPol = policyList.items.filter(
-    netPol => netPol.metadata?.labels?.["uds/generation"] !== generation,
-  );
-
-  // Delete any orphaned policies
-  for (const netPol of orphanedNetPol) {
-    log.debug(netPol, `Deleting orphaned NetworkPolicy ${netPol.metadata!.name}`);
-    await K8s(kind.NetworkPolicy).Delete(netPol);
-  }
+  await purgeOrphans(generation, namespace, pkgName, kind.NetworkPolicy, log);
 
   // Return the list of policies
   return policies;

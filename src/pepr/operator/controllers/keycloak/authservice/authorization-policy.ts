@@ -6,7 +6,7 @@ import {
   IstioRequestAuthentication,
   UDSPackage,
 } from "../../../crd";
-import { getOwnerRef } from "../../utils";
+import { getOwnerRef, purgeOrphans } from "../../utils";
 import { log } from "./authservice";
 import { Action as AuthServiceAction, AuthServiceEvent } from "./types";
 
@@ -155,17 +155,7 @@ async function updatePolicy(
 
 async function purgeOrphanPolicies(generation: string, namespace: string, pkgName: string) {
   for (const kind of [IstioAuthorizationPolicy, IstioRequestAuthentication]) {
-    const resources = await K8s(kind)
-      .InNamespace(namespace)
-      .WithLabel("uds/package", pkgName)
-      .Get();
-
-    for (const resource of resources.items) {
-      if (resource.metadata?.labels?.["uds/generation"] !== generation) {
-        log.debug(resource, `Deleting orphaned ${resource.kind!} ${resource.metadata!.name}`);
-        await K8s(kind).Delete(resource);
-      }
-    }
+    await purgeOrphans(generation, namespace, pkgName, kind, log);
   }
 }
 
