@@ -12,6 +12,7 @@ spec:
       groups:
         anyOf:
           - /UDS Core/Admin
+          - /UDS Core/Auditor
 
   monitor:
     - selector:
