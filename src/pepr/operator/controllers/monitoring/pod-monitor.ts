@@ -1,8 +1,7 @@
-import { K8s } from "pepr";
-
 import { V1OwnerReference } from "@kubernetes/client-node";
+import { K8s } from "pepr";
 import { Component, setupLogger } from "../../../logger";
-import { Monitor, PrometheusServiceMonitor, UDSPackage } from "../../crd";
+import { Monitor, PrometheusPodMonitor, UDSPackage } from "../../crd";
 import { Kind } from "../../crd/generated/package-v1alpha1";
 import { getOwnerRef, purgeOrphans } from "../utils";
 import { generateMonitorName } from "./common";
@@ -11,50 +10,48 @@ import { generateMonitorName } from "./common";
 const log = setupLogger(Component.OPERATOR_MONITORING);
 
 /**
- * Generate a service monitor for a service
+ * Generate a pod monitor for a pod
  *
  * @param pkg UDS Package
  * @param namespace
  */
-export async function serviceMonitor(pkg: UDSPackage, namespace: string) {
+export async function podMonitor(pkg: UDSPackage, namespace: string) {
   const pkgName = pkg.metadata!.name!;
   const generation = (pkg.metadata?.generation ?? 0).toString();
   const ownerRefs = getOwnerRef(pkg);
 
-  log.debug(`Reconciling ServiceMonitors for ${pkgName}`);
+  log.debug(`Reconciling PodMonitors for ${pkgName}`);
 
   // Get the list of monitored services
   const monitorList = pkg.spec?.monitor ?? [];
 
-  // Create a list of generated ServiceMonitors
-  const payloads: PrometheusServiceMonitor[] = [];
+  // Create a list of generated PodMonitors
+  const payloads: PrometheusPodMonitor[] = [];
 
   try {
     for (const monitor of monitorList) {
-      if (monitor.kind !== Kind.PodMonitor) {
-        const payload = generateServiceMonitor(monitor, namespace, pkgName, generation, ownerRefs);
+      if (monitor.kind === Kind.PodMonitor) {
+        const payload = generatePodMonitor(monitor, namespace, pkgName, generation, ownerRefs);
 
-        log.debug(payload, `Applying ServiceMonitor ${payload.metadata?.name}`);
+        log.debug(payload, `Applying PodMonitor ${payload.metadata?.name}`);
 
-        // Apply the ServiceMonitor and force overwrite any existing policy
-        await K8s(PrometheusServiceMonitor).Apply(payload, { force: true });
+        // Apply the PodMonitor and force overwrite any existing policy
+        await K8s(PrometheusPodMonitor).Apply(payload, { force: true });
 
         payloads.push(payload);
       }
     }
 
-    await purgeOrphans(generation, namespace, pkgName, PrometheusServiceMonitor, log);
+    await purgeOrphans(generation, namespace, pkgName, PrometheusPodMonitor, log);
   } catch (err) {
-    throw new Error(
-      `Failed to process ServiceMonitors for ${pkgName}, cause: ${JSON.stringify(err)}`,
-    );
+    throw new Error(`Failed to process PodMonitors for ${pkgName}, cause: ${JSON.stringify(err)}`);
   }
 
   // Return the list of monitor names
   return [...payloads.map(m => m.metadata!.name!)];
 }
 
-export function generateServiceMonitor(
+export function generatePodMonitor(
   monitor: Monitor,
   namespace: string,
   pkgName: string,
@@ -63,7 +60,7 @@ export function generateServiceMonitor(
 ) {
   const { selector, portName } = monitor;
   const name = generateMonitorName(pkgName, monitor);
-  const payload: PrometheusServiceMonitor = {
+  const payload: PrometheusPodMonitor = {
     metadata: {
       name,
       namespace,
@@ -74,7 +71,7 @@ export function generateServiceMonitor(
       ownerReferences: ownerRefs,
     },
     spec: {
-      endpoints: [
+      podMetricsEndpoints: [
         {
           port: portName,
           path: monitor.path || "/metrics",
