@@ -1,0 +1,84 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: authservice-test-app
+---
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: httpbin-other
+  namespace: authservice-test-app
+spec:
+  sso:
+    - name: Demo SSO
+      clientId: uds-core-httpbin
+      redirectUris:
+        - "https://protected.uds.dev/login"
+      enableAuthserviceSelector:
+        app: httpbin
+      groups:
+        anyOf:
+          - "/UDS Core/Admin"
+  network:
+    expose:
+      - service: httpbin
+        selector:
+          app: httpbin
+        gateway: tenant
+        host: protected
+        port: 8000
+        targetPort: 80
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: httpbin
+  namespace: authservice-test-app
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: httpbin
+  namespace: authservice-test-app
+  labels:
+    app: httpbin
+    service: httpbin
+spec:
+  ports:
+    - name: http
+      port: 8000
+      targetPort: 80
+  selector:
+    app: httpbin
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin
+  namespace: authservice-test-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: httpbin
+        version: v1
+    spec:
+      serviceAccountName: httpbin
+      containers:
+        - image: docker.io/kong/httpbin
+          imagePullPolicy: IfNotPresent
+          name: httpbin
+          resources:
+            limits:
+              cpu: 50m
+              memory: 64Mi
+            requests:
+              cpu: 50m
+              memory: 64Mi
+          ports:
+            - containerPort: 80

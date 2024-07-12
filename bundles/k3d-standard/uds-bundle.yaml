@@ -36,6 +36,8 @@ packages:
     # x-release-please-start-version
     ref: 0.23.0
     # x-release-please-end
+    optionalComponents:
+      - istio-passthrough-gateway
     overrides:
       loki:
         loki:
