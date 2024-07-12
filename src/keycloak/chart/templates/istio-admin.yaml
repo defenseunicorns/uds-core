@@ -37,4 +37,12 @@ spec:
       from:
         - source:
             notNamespaces: ["pepr-system"]
+    - when:
+        - key: request.headers[istio-mtls-client-certificate]
+          values: ["*"]
+      from:
+        - source:
+            notNamespaces:
+            - istio-tenant-gateway
+            - istio-admin-gateway
 {{- end }}
