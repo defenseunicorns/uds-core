@@ -5,6 +5,7 @@ metadata:
   name: prometheus-pod-monitor
   namespace: monitoring
 spec:
+  scrapeClass: exempt
   selector:
     matchLabels:
       app: prometheus

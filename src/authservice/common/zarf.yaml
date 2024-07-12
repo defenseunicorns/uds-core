@@ -10,7 +10,7 @@ components:
     charts:
       - name: authservice
         localPath: ../chart
-        version: 0.5.3
+        version: 1.0.1
         namespace: authservice
     actions:
       onDeploy:

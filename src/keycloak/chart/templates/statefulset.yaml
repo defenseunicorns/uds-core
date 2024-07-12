@@ -113,15 +113,16 @@ spec:
             # Dumb value (not used in the nginx provider, but required by the SPI)
             - name: KC_SPI_X509CERT_LOOKUP_NGINX_SSL_CLIENT_CERT_CHAIN_PREFIX
               value: UNUSED
-          {{- if .Values.devMode }}
-            # Enable dubug logs in dev mode
+          {{- if or .Values.devMode .Values.debugMode }}
+            # Enable debug logs
             - name: KC_LOG_LEVEL
               value: DEBUG
             - name: QUARKUS_LOG_CATEGORY__ORG_APACHE_HTTP__LEVEL
               value: DEBUG
             - name: QUARKUS_LOG_CATEGORY__ORG_KEYCLOAK_SERVICES_X509__LEVEL
               value: TRACE
-          {{- else }}
+          {{- end }}
+          {{- if eq (include "keycloak.postgresql.config" .) "true" }}
             # Infinispan cache configuration
             - name: KC_CACHE
               value: ispn
@@ -168,7 +169,7 @@ spec:
             - name: JAVA_TOOL_OPTIONS
               value: "-Dcom.redhat.fips=true"
             {{- end }}
-          {{- end }}
+           {{- end }}  
           {{- if .Values.insecureAdminPasswordGeneration.enabled }}
             - name: KEYCLOAK_ADMIN
               valueFrom:
