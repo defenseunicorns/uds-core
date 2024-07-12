@@ -1,6 +1,9 @@
 import { Capability, K8s, kind } from "pepr";
 import { Component, setupLogger } from "../logger";
 import {
+  PodMonitorEndpoint,
+  PodMonitorScheme,
+  PrometheusPodMonitor,
   PrometheusServiceMonitor,
   ServiceMonitorEndpoint,
   ServiceMonitorScheme,
@@ -17,60 +20,81 @@ export const prometheus = new Capability({
 const { When } = prometheus;
 
 /**
- * Mutate a service monitor to enable mTLS metrics
+ * Mutate a service monitor to exclude it from mTLS metrics with `exempt` scrapeClass
  */
 When(PrometheusServiceMonitor)
   .IsCreatedOrUpdated()
   .Mutate(async sm => {
-    // Provide an opt-out of mutation to handle complicated scenarios
-    if (sm.Raw.metadata?.annotations?.["uds/skip-sm-mutate"]) {
-      log.info(
-        `Mutating scrapeClass to exempt ServiceMonitor ${sm.Raw.metadata?.name} from default scrapeClass mTLS config`,
-      );
-      if (sm.Raw.spec === undefined) {
-        return;
-      }
-      sm.Raw.spec.scrapeClass = "exempt";
+    if (sm.Raw.spec === undefined) {
       return;
     }
 
-    // This assumes istio-injection == strict mTLS due to complexity around mTLS lookup
-    if (await isIstioInjected(sm)) {
-      if (sm.Raw.spec?.endpoints === undefined) {
-        return;
-      }
-      /**
-       * Patching ServiceMonitor tlsConfig is deprecated in favor of default scrapeClass with tls config
-       * this mutation will be removed in favor of a mutation to opt-out of the default scrapeClass in the future
-       */
+    // Add an exempt scrape class if explicitly opted out via annotation OR targeting a non-istio-injected namespace
+    if (
+      sm.Raw.metadata?.annotations?.["uds/skip-mutate"] ||
+      sm.Raw.metadata?.annotations?.["uds/skip-sm-mutate"] ||
+      !(await isIstioInjected(sm))
+    ) {
+      log.info(
+        `Mutating scrapeClass to exempt ServiceMonitor ${sm.Raw.metadata?.name} from default scrapeClass mTLS config`,
+      );
+      sm.Raw.spec.scrapeClass = "exempt";
+      return;
+    } else {
       log.info(`Patching service monitor ${sm.Raw.metadata?.name} for mTLS metrics`);
+      // Note: this tlsConfig patch is deprecated in favor of a default scrape class for both service and pod monitors
       const tlsConfig = {
         caFile: "/etc/prom-certs/root-cert.pem",
         certFile: "/etc/prom-certs/cert-chain.pem",
         keyFile: "/etc/prom-certs/key.pem",
         insecureSkipVerify: true,
       };
-      const endpoints: ServiceMonitorEndpoint[] = sm.Raw.spec.endpoints;
+      const endpoints: ServiceMonitorEndpoint[] = sm.Raw.spec.endpoints || [];
       endpoints.forEach(endpoint => {
         endpoint.scheme = ServiceMonitorScheme.HTTPS;
         endpoint.tlsConfig = tlsConfig;
       });
       sm.Raw.spec.endpoints = endpoints;
-    } else {
-      log.info(
-        `Mutating scrapeClass to exempt ServiceMonitor ${sm.Raw.metadata?.name} from default scrapeClass mTLS config`,
-      );
-      if (sm.Raw.spec === undefined) {
-        return;
-      }
-      sm.Raw.spec.scrapeClass = "exempt";
     }
   });
 
-async function isIstioInjected(sm: PrometheusServiceMonitor) {
-  const namespaces = sm.Raw.spec?.namespaceSelector?.matchNames || [sm.Raw.metadata?.namespace] || [
-      "default",
-    ];
+/**
+ * Mutate a pod monitor to exclude it from mTLS metrics with `exempt` scrapeClass
+ */
+When(PrometheusPodMonitor)
+  .IsCreatedOrUpdated()
+  .Mutate(async pm => {
+    if (pm.Raw.spec === undefined) {
+      return;
+    }
+
+    // Add an exempt scrape class if explicitly opted out via annotation OR targeting a non-istio-injected namespace
+    if (pm.Raw.metadata?.annotations?.["uds/skip-mutate"] || !(await isIstioInjected(pm))) {
+      log.info(
+        `Mutating scrapeClass to exempt PodMonitor ${pm.Raw.metadata?.name} from default scrapeClass mTLS config`,
+      );
+      pm.Raw.spec.scrapeClass = "exempt";
+      return;
+    } else {
+      log.info(`Patching pod monitor ${pm.Raw.metadata?.name} for mTLS metrics`);
+      const endpoints: PodMonitorEndpoint[] = pm.Raw.spec.podMetricsEndpoints || [];
+      endpoints.forEach(endpoint => {
+        endpoint.scheme = PodMonitorScheme.HTTPS;
+      });
+      pm.Raw.spec.podMetricsEndpoints = endpoints;
+    }
+  });
+
+// This assumes istio-injection == strict mTLS due to complexity around mTLS lookup
+async function isIstioInjected(monitor: PrometheusServiceMonitor | PrometheusPodMonitor) {
+  // If monitor allows any namespace assume istio injection
+  if (monitor.Raw.spec?.namespaceSelector?.any) {
+    return true;
+  }
+
+  const namespaces = monitor.Raw.spec?.namespaceSelector?.matchNames || [
+      monitor.Raw.metadata?.namespace,
+    ] || ["default"];
 
   for (const ns of namespaces) {
     const namespace = await K8s(kind.Namespace).Get(ns);

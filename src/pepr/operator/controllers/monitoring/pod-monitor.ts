@@ -58,7 +58,7 @@ export function generatePodMonitor(
   generation: string,
   ownerRefs: V1OwnerReference[],
 ) {
-  const { selector, portName } = monitor;
+  const { selector, podSelector, portName } = monitor;
   const name = generateMonitorName(pkgName, monitor);
   const payload: PrometheusPodMonitor = {
     metadata: {
@@ -79,7 +79,7 @@ export function generatePodMonitor(
         },
       ],
       selector: {
-        matchLabels: selector,
+        matchLabels: podSelector ?? selector,
       },
     },
   };
