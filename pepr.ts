@@ -27,7 +27,6 @@ const log = setupLogger(Component.STARTUP);
     // UDS Core Policies
     policies,
 
-
     // Prometheus monitoring stack
     prometheus,
 
