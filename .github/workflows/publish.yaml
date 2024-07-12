@@ -76,24 +76,19 @@ jobs:
       - name: Determine destination repository
         id: repo
         run: |
+          repo=ghcr.io/defenseunicorns/packages
           # Publish unicorn flavor to private repository
           if [ "${{ matrix.flavor }}" = "unicorn" ]; then
-            if [ "${{ inputs.snapshot }}" = "true" ]; then
-              echo "Publishing unicorn flavor snapshot to ghcr.io/defenseunicorns/packages/private/uds/snapshots"
-              echo "repo=ghcr.io/defenseunicorns/packages/private/uds/snapshots" >> "$GITHUB_OUTPUT"
-            else
-              echo "Publishing unicorn flavor to ghcr.io/defenseunicorns/packages/private/uds"
-              echo "repo=ghcr.io/defenseunicorns/packages/private/uds" >> "$GITHUB_OUTPUT"
-            fi
-          # Publish snapshots to snapshot repository
-          elif [ "${{ inputs.snapshot }}" = "true" ]; then
-            echo "Publishing snapshot to ghcr.io/defenseunicorns/packages/uds/snapshots"
-            echo "repo=ghcr.io/defenseunicorns/packages/uds/snapshots" >> "$GITHUB_OUTPUT"
-          # Publish all other packages/bundles to uds package repository
-          else
-            echo "Publishing packages and bundles to ghcr.io/defenseunicorns/packages/uds"
-            echo "repo=ghcr.io/defenseunicorns/packages/uds" >> "$GITHUB_OUTPUT"
+            repo+=/private
           fi
+          repo+=/uds
+          # Publish snapshots to snapshot repository
+          if [ "${{ inputs.snapshot }}" = "true" ]; then
+            repo+=/snapshots
+          fi
+
+          echo "repo=${repo}" >> "$GITHUB_OUTPUT"
+          echo "Publishing packages and bundles to ${repo}"
 
       # Publish package and bundle to destination repository
       - name: Publish Standard Package
