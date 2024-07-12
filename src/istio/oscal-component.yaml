@@ -11,23 +11,18 @@ component-definition:
               create-resources: null
               resources:
               - description: ""
-                name: istioConfig
+                name: peerAuths
                 resource-rule:
-                  field:
-                    base64: false
-                    jsonpath: .data.mesh
-                    type: yaml
-                  group: ""
-                  name: istio
-                  namespaces:
-                  - istio-system
-                  resource: configmaps
-                  version: v1
+                  group: security.istio.io
+                  name: ""
+                  namespaces: []
+                  resource: peerauthentications
+                  version: v1beta1
             type: kubernetes
           lula-version: ""
           metadata:
-            name: istio-metrics-logging-configured
-            uuid: 70d99754-2918-400c-ac9a-319f874fff90
+            name: enforce-mtls-strict
+            uuid: ca49ac97-487a-446a-a0b7-92b20e2c83cb
           provider:
             opa-spec:
               output:
@@ -37,32 +32,32 @@ component-definition:
               rego: |
                 package validate
 
+                import future.keywords.every
+
                 # Default policy result
                 default validate = false
+                default all_strict = false
                 default msg = "Not evaluated"
 
-                # Validate Istio configuration for metrics logging support
                 validate {
-                  check_metrics_enabled.result
+                  result_all_strict.result
                 }
-                msg = check_metrics_enabled.msg
 
-                check_metrics_enabled = { "result": false, "msg": msg } {
-                  input.istioConfig.enablePrometheusMerge == false
-                  msg := "Metrics logging not supported."
-                } else = { "result": true, "msg": msg } {
-                  msg := "Metrics logging supported."
+                msg = concat(" ", [result_all_strict.msg])
+
+                # Rego policy logic to evaluate if all PeerAuthentications have mtls mode set to STRICT
+                result_all_strict = {"result": true, "msg": msg} {
+                    every peerAuthentication in input.peerAuths {
+                        mode := peerAuthentication.spec.mtls.mode
+                        mode == "STRICT"
+                    }
+                    msg := "All PeerAuthentications have mtls mode set to STRICT."
+                } else = {"result": false, "msg": msg} {
+                    msg := "Not all PeerAuthentications have mtls mode set to STRICT."
                 }
             type: opa
-        title: istio-metrics-logging-configured
-        uuid: 70d99754-2918-400c-ac9a-319f874fff90
-      - description: |
-          lula-version: ""
-          metadata:
-            name: istio-rbac-for-approved-personnel-PLACEHOLDER
-            uuid: 9b361d7b-4e07-40db-8b86-3854ed499a4b
-        title: istio-rbac-for-approved-personnel-PLACEHOLDER
-        uuid: 9b361d7b-4e07-40db-8b86-3854ed499a4b
+        title: enforce-mtls-strict
+        uuid: ca49ac97-487a-446a-a0b7-92b20e2c83cb
       - description: |
           domain:
             kubernetes-spec:
@@ -148,70 +143,131 @@ component-definition:
               create-resources: null
               resources:
               - description: ""
-                name: gateways
+                name: istioMeshConfig
                 resource-rule:
-                  group: networking.istio.io
-                  name: ""
-                  namespaces: []
-                  resource: gateways
-                  version: v1beta1
+                  field:
+                    base64: false
+                    jsonpath: .data.mesh
+                    type: yaml
+                  group: ""
+                  name: istio
+                  namespaces:
+                  - istio-system
+                  resource: configmaps
+                  version: v1
             type: kubernetes
           lula-version: ""
           metadata:
-            name: gateway-configuration-check
-            uuid: b0a8f21e-b12f-47ea-a967-2f4a3ec69e44
+            name: check-istio-logging-all-traffic
+            uuid: 90738c86-6315-450a-ac69-cc50eb4859cc
           provider:
             opa-spec:
               output:
                 observations:
                 - validate.msg
-                - validate.msg_existing_gateways
-                - validate.msg_allowed_gateways
+                validation: validate.validate
+              rego: |
+                package validate
+
+                # Default policy result
+                default validate = false
+                default msg = "Logging not enabled or configured"
+
+                # Check if Istio's Mesh Configuration has logging enabled
+                validate {
+                  logging_enabled.result
+                }
+
+                msg = logging_enabled.msg
+
+                logging_enabled = {"result": true, "msg": msg} {
+                  # Check for access log file output to stdout
+                  input.istioMeshConfig.accessLogFile == "/dev/stdout"
+                  msg := "Istio is logging all traffic"
+                } else = {"result": false, "msg": msg} {
+                  msg := "Istio is not logging all traffic"
+                }
+            type: opa
+        title: check-istio-logging-all-traffic
+        uuid: 90738c86-6315-450a-ac69-cc50eb4859cc
+      - description: |
+          domain:
+            kubernetes-spec:
+              create-resources: null
+              resources:
+              - description: ""
+                name: authorizationPolicy
+                resource-rule:
+                  group: security.istio.io
+                  name: keycloak-block-admin-access-from-public-gateway
+                  namespaces:
+                  - keycloak
+                  resource: authorizationpolicies
+                  version: v1beta1
+            type: kubernetes
+          lula-version: ""
+          metadata:
+            name: istio-enforces-authorized-keycloak-access
+            uuid: fbd877c8-d6b6-4d88-8685-2c4aaaab02a1
+          provider:
+            opa-spec:
+              output:
+                observations:
+                - validate.msg
                 validation: validate.validate
               rego: |
                 package validate
                 import rego.v1
 
-                # default values
+                # Default policy result
                 default validate := false
                 default msg := "Not evaluated"
 
+                # Validate both AuthorizationPolicy restricts access to Keycloak admin
                 validate if {
-                  check_expected_gw.result
-                  check_all_gw_found.result
+                  check_auth_policy_for_keycloak_admin_access.result
                 }
 
-                msg := concat(" ", [check_expected_gw.msg, check_all_gw_found.msg])
-                msg_existing_gateways := concat(", ", gateways)
-                msg_allowed_gateways := concat(", ", allowed)
+                msg = check_auth_policy_for_keycloak_admin_access.msg
 
-                # Check if only allowed gateways are in the system
-                allowed := {"admin", "tenant", "passthrough"}
-                gateways := {sprintf("%s/%s", [gw.metadata.namespace, gw.metadata.name]) | gw := input.gateways[_]}
-                allowed_gateways := {sprintf("%s/%s", [gw.metadata.namespace, gw.metadata.name]) | gw := input.gateways[_]; gw_in_list(gw, allowed)}
-                actual_allowed := {s | g := gateways[_]; s := allowed[_]; contains(g, s)}
-
-                check_expected_gw = {"result": true, "msg": msg} if {
-                  gateways == allowed_gateways
-                  msg := "Only allowed gateways found."
+                check_auth_policy_for_keycloak_admin_access = {"result": true, "msg": msg} if {
+                  input.authorizationPolicy.kind == "AuthorizationPolicy"
+                  valid_auth_policy(input.authorizationPolicy)
+                  msg := "AuthorizationPolicy restricts access to Keycloak admin."
                 } else = {"result": false, "msg": msg} if {
-                    msg := sprintf("Some disallowed gateways found: %v.", [gateways-allowed_gateways])
+                  msg := "AuthorizationPolicy does not restrict access to Keycloak admin."
                 }
 
-                gw_in_list(gw, allowed) if {
-                  contains(gw.metadata.name, allowed[_])
+                # Define the rule for denying access
+                expected_keycloak_admin_denial_rule := {
+                  "from": [
+                    {
+                      "source": {
+                        "notNamespaces": ["istio-admin-gateway"]
+                      }
+                    }
+                  ],
+                  "to": [
+                    {
+                      "operation": {
+                        "paths": ["/admin*", "/realms/master*"]
+                      }
+                    }
+                  ]
                 }
 
-                # Check if the entire set contains all required gateways
-                check_all_gw_found = {"result": true, "msg": msg} if {
-                    actual_allowed == allowed
-                    msg := "All gateway types found."
-                } else = {"result": false, "msg": msg} if {
-                    msg := sprintf("Gateway type(s) missing: %v.", [allowed - actual_allowed])
+                # Validate that the authorization policy contains the expected first rule
+                valid_auth_policy(ap) if {
+                  ap.spec.action == "DENY"
+                  rules := ap.spec.rules
+
+                  # Ensure the expected rule is present in the input policy
+                  some i
+                  rules[i] == expected_keycloak_admin_denial_rule
                 }
             type: opa
-        title: gateway-configuration-check
-        uuid: b0a8f21e-b12f-47ea-a967-2f4a3ec69e44
+        title: istio-enforces-authorized-keycloak-access
+        uuid: fbd877c8-d6b6-4d88-8685-2c4aaaab02a1
       - description: |
           domain:
             kubernetes-spec:
@@ -332,41 +388,98 @@ component-definition:
       - description: |
           lula-version: ""
           metadata:
-            name: authorized-traffic-egress-PLACEHOLDER
-            uuid: 7455f86d-b79c-4226-9ce3-f3fb7d9348c8
-        title: authorized-traffic-egress-PLACEHOLDER
-        uuid: 7455f86d-b79c-4226-9ce3-f3fb7d9348c8
+            name: istio-rbac-for-approved-personnel-PLACEHOLDER
+            uuid: 9b361d7b-4e07-40db-8b86-3854ed499a4b
+        title: istio-rbac-for-approved-personnel-PLACEHOLDER
+        uuid: 9b361d7b-4e07-40db-8b86-3854ed499a4b
       - description: |
           lula-version: ""
           metadata:
-            name: external-traffic-managed-PLACEHOLDER
-            uuid: 19faf69a-de74-4b78-a628-64a9f244ae13
+            name: egress-gateway-exists-and-configured-PLACEHOLDER
+            uuid: ecdb90c7-971a-4442-8f29-a8b0f6076bc9
+        title: egress-gateway-exists-and-configured-PLACEHOLDER
+        uuid: ecdb90c7-971a-4442-8f29-a8b0f6076bc9
+      - description: |
+          domain:
+            kubernetes-spec:
+              create-resources: null
+              resources:
+              - description: ""
+                name: networkPolicies
+                resource-rule:
+                  group: networking.k8s.io
+                  name: ""
+                  namespaces: []
+                  resource: networkpolicies
+                  version: v1
+            type: kubernetes
+          lula-version: ""
+          metadata:
+            name: secure-communication-with-istiod
+            uuid: 570e2dc7-e6c2-4ad5-8ea3-f07974f59747
+          provider:
+            opa-spec:
+              output:
+                observations:
+                - validate.msg_correct
+                - validate.msg_incorrect
+                validation: validate.validate
+              rego: |
+                package validate
+
+                # Default policy result
+                default validate = false
+                default msg_correct = "Not evaluated"
+                default msg_incorrect = "Not evaluated"
+
+                # Expected values
+                expected_istiod_port := 15012
+                expected_istiod_protocol := "TCP"
+                required_namespaces := {"authservice", "grafana", "keycloak", "loki", "metrics-server", "monitoring", "neuvector", "promtail", "velero"}
+
+                # Validate NetworkPolicy for Istiod in required namespaces
+                validate {
+                  count(required_namespaces - correct_istiod_namespaces) == 0
+                }
+
+                msg_correct = sprintf("NetworkPolicies correctly configured for istiod in namespaces: %v.", [concat(", ", correct_istiod_namespaces)])
+                msg_incorrect = msg {
+                  missing_namespace := required_namespaces - correct_istiod_namespaces
+                  count(missing_namespace) > 0
+                  msg := sprintf("NetworkPolicies not correctly configured for istiod in namespaces: %v.", [concat(", ", missing_namespace)])
+                } else = "No incorrect istiod NetworkPolicies found."
+
+                # Helper to find correct NetworkPolicies
+                correct_istiod_policies = {policy |
+                  policy := input.networkPolicies[_]
+                  policy.spec.egress[_].to[_].podSelector.matchLabels["istio"] == "pilot"
+                  policy.spec.egress[_].ports[_].port == expected_istiod_port
+                  policy.spec.egress[_].ports[_].protocol == expected_istiod_protocol
+                }
+
+                # Helper to extract namespaces of correct NetworkPolicies
+                correct_istiod_namespaces = {policy.metadata.namespace |
+                  policy := correct_istiod_policies[_]
+                }
+            type: opa
+        title: secure-communication-with-istiod
+        uuid: 570e2dc7-e6c2-4ad5-8ea3-f07974f59747
+      - description: |
+          lula-version: ""
+          metadata:
+            name: communications-terminated-after-inactivity-PLACEHOLDER
+            uuid: 663f5e92-6db4-4042-8b5a-eba3ebe5a622
           provider:
             opa-spec:
               rego: |
                 package validate
-                default validate := false
-                # This policy could check meshConfig.outboundTrafficPolicy.mode (default is ALLOW_ANY)
-                # Possibly would need a ServiceEntry(?)
-                # (https://istio.io/latest/docs/tasks/traffic-management/egress/egress-control/#envoy-passthrough-to-external-services)
+                validate := false
+
+                # Check on destination rule, outlier detection?
+                # -> Doesn't appear that UDS is configured to create destination rules.
             type: opa
-        title: external-traffic-managed-PLACEHOLDER
-        uuid: 19faf69a-de74-4b78-a628-64a9f244ae13
-      - description: |
-          lula-version: ""
-          metadata:
-            name: tls-origination-at-egress-PLACEHOLDER
-            uuid: 8be1601e-5870-4573-ab4f-c1c199944815
-          provider:
-            opa-spec:
-              rego: |
-                package validate
-                default validate := false
-                # How to prove TLS origination is configured at egress
-                # DestinationRule?
-            type: opa
-        title: tls-origination-at-egress-PLACEHOLDER
-        uuid: 8be1601e-5870-4573-ab4f-c1c199944815
+        title: communications-terminated-after-inactivity-PLACEHOLDER
+        uuid: 663f5e92-6db4-4042-8b5a-eba3ebe5a622
       - description: |
           domain:
             kubernetes-spec:
@@ -435,54 +548,140 @@ component-definition:
               create-resources: null
               resources:
               - description: ""
-                name: authorizationPolicy
+                name: gateways
                 resource-rule:
-                  group: security.istio.io
-                  name: jwt-authz
-                  namespaces:
-                  - istio-system
-                  resource: authorizationpolicies
+                  group: networking.istio.io
+                  name: ""
+                  namespaces: []
+                  resource: gateways
                   version: v1beta1
             type: kubernetes
           lula-version: ""
           metadata:
-            name: istio-authorization-policies-require-authentication
-            uuid: e38c0695-10f6-40b6-b246-fa58b26ccd25
+            name: gateway-configuration-check
+            uuid: b0a8f21e-b12f-47ea-a967-2f4a3ec69e44
           provider:
             opa-spec:
               output:
                 observations:
                 - validate.msg
+                - validate.msg_existing_gateways
+                - validate.msg_allowed_gateways
+                validation: validate.validate
+              rego: |
+                package validate
+                import rego.v1
+
+                # default values
+                default validate := false
+                default msg := "Not evaluated"
+
+                validate if {
+                  check_expected_gw.result
+                  check_all_gw_found.result
+                }
+
+                msg := concat(" ", [check_expected_gw.msg, check_all_gw_found.msg])
+                msg_existing_gateways := concat(", ", gateways)
+                msg_allowed_gateways := concat(", ", allowed)
+
+                # Check if only allowed gateways are in the system
+                allowed := {"admin", "tenant", "passthrough"}
+                gateways := {sprintf("%s/%s", [gw.metadata.namespace, gw.metadata.name]) | gw := input.gateways[_]}
+                allowed_gateways := {sprintf("%s/%s", [gw.metadata.namespace, gw.metadata.name]) | gw := input.gateways[_]; gw_in_list(gw, allowed)}
+                actual_allowed := {s | g := gateways[_]; s := allowed[_]; contains(g, s)}
+
+                check_expected_gw = {"result": true, "msg": msg} if {
+                  gateways == allowed_gateways
+                  msg := "Only allowed gateways found."
+                } else = {"result": false, "msg": msg} if {
+                    msg := sprintf("Some disallowed gateways found: %v.", [gateways-allowed_gateways])
+                }
+
+                gw_in_list(gw, allowed) if {
+                  contains(gw.metadata.name, allowed[_])
+                }
+
+                # Check if the entire set contains all required gateways
+                check_all_gw_found = {"result": true, "msg": msg} if {
+                    actual_allowed == allowed
+                    msg := "All gateway types found."
+                } else = {"result": false, "msg": msg} if {
+                    msg := sprintf("Gateway type(s) missing: %v.", [allowed - actual_allowed])
+                }
+            type: opa
+        title: gateway-configuration-check
+        uuid: b0a8f21e-b12f-47ea-a967-2f4a3ec69e44
+      - description: |
+          domain:
+            kubernetes-spec:
+              create-resources: null
+              resources:
+              - description: ""
+                name: authorizationPolicies
+                resource-rule:
+                  group: security.istio.io
+                  name: ""
+                  namespaces: []
+                  resource: authorizationpolicies
+                  version: v1beta1
+            type: kubernetes
+          lula-version: ""
+          metadata:
+            name: istio-rbac-enforcement-check
+            uuid: 7b045b2a-106f-4c8c-85d9-ae3d7a8e0e28
+          provider:
+            opa-spec:
+              output:
+                observations:
+                - validate.msg
+                - validate.msg_authPolicies
                 validation: validate.validate
               rego: |
                 package validate
 
                 # Default policy result
                 default validate = false
-                default msg = "Authorization Policies do not require authentication"
+                default msg = "Istio RBAC not enforced"
 
                 # Evaluation for Istio Authorization Policies
                 validate {
-                  result_auth_policy.result
+                  count(all_auth_policies) > 0
                 }
 
-                msg = result_auth_policy.msg
+                # Get all authorization policies
+                all_auth_policies := { sprintf("%s/%s", [authPolicy.metadata.namespace, authPolicy.metadata.name]) |
+                  authPolicy := input.authorizationPolicies[_]; authPolicy.kind == "AuthorizationPolicy" }
 
-                result_auth_policy = {"result": true, "msg": msg} {
-                  # Check that authorization policy exists and require authentication
-                  input.authorizationPolicy.kind == "AuthorizationPolicy"
-
-                  # "require authentication" is defined as having requestPrincipals defined
-                  #   and the selector.protect label is set to "keycloak"
-                  input.authorizationPolicy.spec.rules[_].from[_].source.requestPrincipals != null
-                  input.authorizationPolicy.spec.selector.matchLabels.protect == "keycloak"
-                  msg := "Authorization Policy requires authentication for keycloak"
-                } else = {"result": false, "msg": msg} {
-                  msg := "Authorization Policy does not require authentication"
+                msg = "Istio RBAC enforced" {
+                  validate
                 }
+                msg_authPolicies = sprintf("Authorization Policies: %v", [concat(", ", all_auth_policies)])
             type: opa
-        title: istio-authorization-policies-require-authentication
-        uuid: e38c0695-10f6-40b6-b246-fa58b26ccd25
+        title: istio-rbac-enforcement-check
+        uuid: 7b045b2a-106f-4c8c-85d9-ae3d7a8e0e28
+      - description: |
+          lula-version: ""
+          metadata:
+            name: authorized-traffic-egress-PLACEHOLDER
+            uuid: 7455f86d-b79c-4226-9ce3-f3fb7d9348c8
+        title: authorized-traffic-egress-PLACEHOLDER
+        uuid: 7455f86d-b79c-4226-9ce3-f3fb7d9348c8
+      - description: |
+          lula-version: ""
+          metadata:
+            name: tls-origination-at-egress-PLACEHOLDER
+            uuid: 8be1601e-5870-4573-ab4f-c1c199944815
+          provider:
+            opa-spec:
+              rego: |
+                package validate
+                default validate := false
+                # How to prove TLS origination is configured at egress
+                # DestinationRule?
+            type: opa
+        title: tls-origination-at-egress-PLACEHOLDER
+        uuid: 8be1601e-5870-4573-ab4f-c1c199944815
       - description: |
           domain:
             kubernetes-spec:
@@ -565,66 +764,6 @@ component-definition:
             type: opa
         title: check-istio-admin-gateway-and-usage
         uuid: c6c9daf1-4196-406d-8679-312c0512ab2e
-      - description: |
-          domain:
-            kubernetes-spec:
-              create-resources: null
-              resources:
-              - description: ""
-                name: istioMeshConfig
-                resource-rule:
-                  field:
-                    base64: false
-                    jsonpath: .data.mesh
-                    type: yaml
-                  group: ""
-                  name: istio
-                  namespaces:
-                  - istio-system
-                  resource: configmaps
-                  version: v1
-            type: kubernetes
-          lula-version: ""
-          metadata:
-            name: check-istio-logging-all-traffic
-            uuid: 90738c86-6315-450a-ac69-cc50eb4859cc
-          provider:
-            opa-spec:
-              output:
-                observations:
-                - validate.msg
-                validation: validate.validate
-              rego: |
-                package validate
-
-                # Default policy result
-                default validate = false
-                default msg = "Logging not enabled or configured"
-
-                # Check if Istio's Mesh Configuration has logging enabled
-                validate {
-                  logging_enabled.result
-                }
-
-                msg = logging_enabled.msg
-
-                logging_enabled = {"result": true, "msg": msg} {
-                  # Check for access log file output to stdout
-                  input.istioMeshConfig.accessLogFile == "/dev/stdout"
-                  msg := "Istio is logging all traffic"
-                } else = {"result": false, "msg": msg} {
-                  msg := "Istio is not logging all traffic"
-                }
-            type: opa
-        title: check-istio-logging-all-traffic
-        uuid: 90738c86-6315-450a-ac69-cc50eb4859cc
-      - description: |
-          lula-version: ""
-          metadata:
-            name: egress-gateway-exists-and-configured-PLACEHOLDER
-            uuid: ecdb90c7-971a-4442-8f29-a8b0f6076bc9
-        title: egress-gateway-exists-and-configured-PLACEHOLDER
-        uuid: ecdb90c7-971a-4442-8f29-a8b0f6076bc9
       - description: |
           lula-version: ""
           metadata:
@@ -709,235 +848,6 @@ component-definition:
               create-resources: null
               resources:
               - description: ""
-                name: peerAuths
-                resource-rule:
-                  group: security.istio.io
-                  name: ""
-                  namespaces: []
-                  resource: peerauthentications
-                  version: v1beta1
-            type: kubernetes
-          lula-version: ""
-          metadata:
-            name: enforce-mtls-strict
-            uuid: ca49ac97-487a-446a-a0b7-92b20e2c83cb
-          provider:
-            opa-spec:
-              output:
-                observations:
-                - validate.msg
-                validation: validate.validate
-              rego: |
-                package validate
-
-                import future.keywords.every
-
-                # Default policy result
-                default validate = false
-                default all_strict = false
-                default msg = "Not evaluated"
-
-                validate {
-                  result_all_strict.result
-                }
-
-                msg = concat(" ", [result_all_strict.msg])
-
-                # Rego policy logic to evaluate if all PeerAuthentications have mtls mode set to STRICT
-                result_all_strict = {"result": true, "msg": msg} {
-                    every peerAuthentication in input.peerAuths {
-                        mode := peerAuthentication.spec.mtls.mode
-                        mode == "STRICT"
-                    }
-                    msg := "All PeerAuthentications have mtls mode set to STRICT."
-                } else = {"result": false, "msg": msg} {
-                    msg := "Not all PeerAuthentications have mtls mode set to STRICT."
-                }
-            type: opa
-        title: enforce-mtls-strict
-        uuid: ca49ac97-487a-446a-a0b7-92b20e2c83cb
-      - description: |
-          domain:
-            kubernetes-spec:
-              create-resources: null
-              resources:
-              - description: ""
-                name: networkPolicies
-                resource-rule:
-                  group: networking.k8s.io
-                  name: ""
-                  namespaces: []
-                  resource: networkpolicies
-                  version: v1
-            type: kubernetes
-          lula-version: ""
-          metadata:
-            name: secure-communication-with-istiod
-            uuid: 570e2dc7-e6c2-4ad5-8ea3-f07974f59747
-          provider:
-            opa-spec:
-              output:
-                observations:
-                - validate.msg_correct
-                - validate.msg_incorrect
-                validation: validate.validate
-              rego: |
-                package validate
-
-                # Default policy result
-                default validate = false
-                default msg_correct = "Not evaluated"
-                default msg_incorrect = "Not evaluated"
-
-                # Expected values
-                expected_istiod_port := 15012
-                expected_istiod_protocol := "TCP"
-                required_namespaces := {"authservice", "grafana", "keycloak", "loki", "metrics-server", "monitoring", "neuvector", "promtail", "velero"}
-
-                # Validate NetworkPolicy for Istiod in required namespaces
-                validate {
-                  count(required_namespaces - correct_istiod_namespaces) == 0
-                }
-
-                msg_correct = sprintf("NetworkPolicies correctly configured for istiod in namespaces: %v.", [concat(", ", correct_istiod_namespaces)])
-                msg_incorrect = msg {
-                  missing_namespace := required_namespaces - correct_istiod_namespaces
-                  count(missing_namespace) > 0
-                  msg := sprintf("NetworkPolicies not correctly configured for istiod in namespaces: %v.", [concat(", ", missing_namespace)])
-                } else = "No incorrect istiod NetworkPolicies found."
-
-                # Helper to find correct NetworkPolicies
-                correct_istiod_policies = {policy |
-                  policy := input.networkPolicies[_]
-                  policy.spec.egress[_].to[_].podSelector.matchLabels["istio"] == "pilot"
-                  policy.spec.egress[_].ports[_].port == expected_istiod_port
-                  policy.spec.egress[_].ports[_].protocol == expected_istiod_protocol
-                }
-
-                # Helper to extract namespaces of correct NetworkPolicies
-                correct_istiod_namespaces = {policy.metadata.namespace |
-                  policy := correct_istiod_policies[_]
-                }
-            type: opa
-        title: secure-communication-with-istiod
-        uuid: 570e2dc7-e6c2-4ad5-8ea3-f07974f59747
-      - description: |
-          domain:
-            kubernetes-spec:
-              create-resources: null
-              resources:
-              - description: ""
-                name: requestAuthentication
-                resource-rule:
-                  group: security.istio.io
-                  name: ""
-                  namespaces: []
-                  resource: requestauthentications
-                  version: v1beta1
-              - description: ""
-                name: authorizationPolicy
-                resource-rule:
-                  group: security.istio.io
-                  name: ""
-                  namespaces: []
-                  resource: authorizationpolicies
-                  version: v1beta1
-            type: kubernetes
-          lula-version: ""
-          metadata:
-            name: request-authenication-and-auth-policies-configured
-            uuid: 3e217577-930e-4469-a999-1a5704b5cecb
-          provider:
-            opa-spec:
-              output:
-                observations:
-                - validate.msg
-                validation: validate.validate
-              rego: |
-                package validate
-
-                # Default policy result
-                default validate := false
-                default msg := "Not evaluated"
-
-                # Validate both RequestAuthentication and AuthorizationPolicy are configured
-                validate {
-                  authorization_policies_exist_and_configured.result
-                  request_authentications_exist_and_configured.result
-                }
-
-                msg = concat(" ", [authorization_policies_exist_and_configured.msg, request_authentications_exist_and_configured.msg])
-
-                # Check AuthorizationPolicies exist and are configured
-                bad_auth_policies := {sprintf("%s/%s", [authPolicy.metadata.namespace, authPolicy.metadata.name]) |
-                  authPolicy := input.authorizationPolicy[_]
-                  authPolicy.kind == "AuthorizationPolicy"
-                  authorization_policy_not_configured(authPolicy)
-                }
-
-                authorization_policy_not_configured(ap) {
-                  # Check for missing or improperly configured rules
-                  not ap.spec.rules
-                }
-
-                authorization_policies_exist_and_configured = {"result": true, "msg": msg} {
-                  count(input.authorizationPolicy) > 0
-                    count(bad_auth_policies) == 0
-                  msg := "All AuthorizationPolicies properly configured."
-                } else = {"result": false, "msg": msg} {
-                  count(input.authorizationPolicy) == 0
-                  msg := "No AuthorizationPolicies found."
-                } else = {"result": false, "msg": msg} {
-                  msg := sprintf("Some AuthorizationPolicies not properly configured: %v.", [concat(", ", bad_auth_policies)])
-                }
-
-                # Check RequestAuthentications exist and are configured
-                bad_request_authentications := {sprintf("%s/%s", [ra.metadata.namespace, ra.metadata.name]) |
-                  ra := input.requestAuthentication[_]
-                  ra.kind == "RequestAuthentication"
-                  request_authentication_not_configured(ra)
-                }
-
-                request_authentication_not_configured(ra) {
-                  # Check for missing or improperly configured JWT rules
-                  not ra.spec.jwtRules
-                }
-
-                request_authentications_exist_and_configured = {"result": true, "msg": msg} {
-                  count(input.requestAuthentication) > 0
-                    count(bad_request_authentications) == 0
-                  msg := "All RequestAuthentications properly configured."
-                } else = {"result": false, "msg": msg} {
-                  count(input.requestAuthentication) == 0
-                  msg := "No RequestAuthentications found."
-                } else = {"result": false, "msg": msg} {
-                  msg := sprintf("Some RequestAuthentications not properly configured: %v.", [concat(", ", bad_request_authentications)])
-                }
-            type: opa
-        title: request-authenication-and-auth-policies-configured
-        uuid: 3e217577-930e-4469-a999-1a5704b5cecb
-      - description: |
-          lula-version: ""
-          metadata:
-            name: communications-terminated-after-inactivity-PLACEHOLDER
-            uuid: 663f5e92-6db4-4042-8b5a-eba3ebe5a622
-          provider:
-            opa-spec:
-              rego: |
-                package validate
-                validate := false
-
-                # Check on destination rule, outlier detection?
-                # -> Doesn't appear that UDS is configured to create destination rules.
-            type: opa
-        title: communications-terminated-after-inactivity-PLACEHOLDER
-        uuid: 663f5e92-6db4-4042-8b5a-eba3ebe5a622
-      - description: |
-          domain:
-            kubernetes-spec:
-              create-resources: null
-              resources:
-              - description: ""
                 name: pods
                 resource-rule:
                   group: ""
@@ -1002,48 +912,67 @@ component-definition:
               create-resources: null
               resources:
               - description: ""
-                name: authorizationPolicies
+                name: istioConfig
                 resource-rule:
-                  group: security.istio.io
-                  name: ""
-                  namespaces: []
-                  resource: authorizationpolicies
-                  version: v1beta1
+                  field:
+                    base64: false
+                    jsonpath: .data.mesh
+                    type: yaml
+                  group: ""
+                  name: istio
+                  namespaces:
+                  - istio-system
+                  resource: configmaps
+                  version: v1
             type: kubernetes
           lula-version: ""
           metadata:
-            name: istio-rbac-enforcement-check
-            uuid: 7b045b2a-106f-4c8c-85d9-ae3d7a8e0e28
+            name: istio-metrics-logging-configured
+            uuid: 70d99754-2918-400c-ac9a-319f874fff90
           provider:
             opa-spec:
               output:
                 observations:
                 - validate.msg
-                - validate.msg_authPolicies
                 validation: validate.validate
               rego: |
                 package validate
 
                 # Default policy result
                 default validate = false
-                default msg = "Istio RBAC not enforced"
+                default msg = "Not evaluated"
 
-                # Evaluation for Istio Authorization Policies
+                # Validate Istio configuration for metrics logging support
                 validate {
-                  count(all_auth_policies) > 0
+                  check_metrics_enabled.result
                 }
+                msg = check_metrics_enabled.msg
 
-                # Get all authorization policies
-                all_auth_policies := { sprintf("%s/%s", [authPolicy.metadata.namespace, authPolicy.metadata.name]) |
-                  authPolicy := input.authorizationPolicies[_]; authPolicy.kind == "AuthorizationPolicy" }
-
-                msg = "Istio RBAC enforced" {
-                  validate
+                check_metrics_enabled = { "result": false, "msg": msg } {
+                  input.istioConfig.enablePrometheusMerge == false
+                  msg := "Metrics logging not supported."
+                } else = { "result": true, "msg": msg } {
+                  msg := "Metrics logging supported."
                 }
-                msg_authPolicies = sprintf("Authorization Policies: %v", [concat(", ", all_auth_policies)])
             type: opa
-        title: istio-rbac-enforcement-check
-        uuid: 7b045b2a-106f-4c8c-85d9-ae3d7a8e0e28
+        title: istio-metrics-logging-configured
+        uuid: 70d99754-2918-400c-ac9a-319f874fff90
+      - description: |
+          lula-version: ""
+          metadata:
+            name: external-traffic-managed-PLACEHOLDER
+            uuid: 19faf69a-de74-4b78-a628-64a9f244ae13
+          provider:
+            opa-spec:
+              rego: |
+                package validate
+                default validate := false
+                # This policy could check meshConfig.outboundTrafficPolicy.mode (default is ALLOW_ANY)
+                # Possibly would need a ServiceEntry(?)
+                # (https://istio.io/latest/docs/tasks/traffic-management/egress/egress-control/#envoy-passthrough-to-external-services)
+            type: opa
+        title: external-traffic-managed-PLACEHOLDER
+        uuid: 19faf69a-de74-4b78-a628-64a9f244ae13
   components:
     - control-implementations:
         - description: Controls implemented by Istio and authservice that are inherited by applications
@@ -1142,9 +1071,9 @@ component-definition:
                 - href: '#67456ae8-4505-4c93-b341-d977d90cb125'
                   rel: lula
                   text: Check that Istio is healthy
-                - href: '#e38c0695-10f6-40b6-b246-fa58b26ccd25'
+                - href: '#fbd877c8-d6b6-4d88-8685-2c4aaaab02a1'
                   rel: lula
-                  text: Authorization policy implemented that enforces authentication for Keycloak
+                  text: Validates that Istio is used to authorize access to Keycloak admin console only from admin gateway
               remarks: 'a. Identify [Assignment: organization-defined user actions] that can be performed on the system without identification or authentication consistent with organizational mission and business functions; and b. Document and provide supporting rationale in the security plan for the system, user actions not requiring identification or authentication."'
               uuid: c8c03abd-244d-4813-a966-3feece1bad6a
             - control-id: au-2
@@ -1264,9 +1193,9 @@ component-definition:
                 - href: '#570e2dc7-e6c2-4ad5-8ea3-f07974f59747'
                   rel: lula
                   text: Resources in namespaces can securely communicate with Istio control plane via network policies
-                - href: '#3e217577-930e-4469-a999-1a5704b5cecb'
+                - href: '#fbd877c8-d6b6-4d88-8685-2c4aaaab02a1'
                   rel: lula
-                  text: Validates if Istio's RequestAuthentication and AuthorizationPolicy are configured to prevent unauthorized exchange of control plane traffic.
+                  text: Validates that Istio is used to authorize access to Keycloak admin console only from admin gateway
                 - href: '#b0a8f21e-b12f-47ea-a967-2f4a3ec69e44'
                   rel: lula
                   text: Validates that Istio Gateways are available and expected VirtualServices using each Gateway.
@@ -1366,9 +1295,9 @@ component-definition:
                 - href: '#1761ac07-80dd-47d2-947e-09f67943b986'
                   rel: lula
                   text: All pods are istio injected with proxyv2 sidecar
-                - href: '#3e217577-930e-4469-a999-1a5704b5cecb'
+                - href: '#fbd877c8-d6b6-4d88-8685-2c4aaaab02a1'
                   rel: lula
-                  text: Validates if Istio's RequestAuthentication and AuthorizationPolicy are configured to ensure confidentiality of information sent/received
+                  text: Validates that Istio is used to authorize access to Keycloak admin console only from admin gateway
               remarks: 'Maintain the [Selection (one or more): confidentiality; integrity] of information during preparation for transmission and during reception.'
               uuid: c158b75a-cefc-4794-b124-f1e56ff5646d
             - control-id: sc-10
@@ -1445,7 +1374,7 @@ component-definition:
       type: software
       uuid: 81f6ec5d-9b8d-408f-8477-f8a04f493690
   metadata:
-    last-modified: 2024-07-09T03:01:34.669670714Z
+    last-modified: 2024-07-12T17:29:23.274390023Z
     oscal-version: 1.1.2
     parties:
       - links:
