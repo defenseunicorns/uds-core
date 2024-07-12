@@ -34,6 +34,7 @@ on:
 
 permissions:
   contents: read
+  id-token: write  # This is needed for OIDC federation.
 
 jobs:
   test:
@@ -53,6 +54,7 @@ jobs:
           registry1Username: ${{ secrets.IRON_BANK_ROBOT_USERNAME }}
           registry1Password: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
           ghToken: ${{ secrets.GITHUB_TOKEN }}
+          chainguardIdentity: ${{ secrets.CHAINGUARD_IDENTITY }}
 
       - name: Test a single source package
         if: ${{ inputs.package != 'all' && inputs.test_type == 'install' }}

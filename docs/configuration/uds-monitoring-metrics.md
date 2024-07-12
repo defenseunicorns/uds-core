@@ -4,44 +4,69 @@ type: docs
 weight: 1
 ---
 
-UDS Core leverages Pepr to handle setup of Prometheus scraping metrics endpoints, with the particular configuration necessary to work in a STRICT mTLS (Istio) environment. We handle this with both mutations of existing service monitors and generation of service monitors via the `Package` CR.
+UDS Core leverages Pepr to handle setup of Prometheus scraping metrics endpoints, with the particular configuration necessary to work in a STRICT mTLS (Istio) environment. We handle this via a default scrapeClass in prometheus to add the istio certs. When a monitor needs to be exempt from that tlsConfig a mutation is performed to leverage a plain scrape class without istio certs.
 
-## Mutations
+## TLS Configuration Setup
 
-All service monitors are mutated to set the scrape scheme to HTTPS and set the TLS Config to what is required for Istio mTLS scraping (see [this doc](https://istio.io/latest/docs/ops/integrations/prometheus/#tls-settings) for details). Beyond this, no other fields are mutated. Supporting existing service monitors is useful since some charts include service monitors by default with more advanced configurations, and it is in our best interest to enable those and use them where possible.
+Generally it is beneficial to use service and pod monitor resources from existing helm charts where possible as these may have more advanced configuration and options. The UDS monitoring setup ensures that all monitoring resources use a default [`scrapeClass`](https://github.com/prometheus-operator/prometheus-operator/blob/v0.75.1/Documentation/api.md#monitoring.coreos.com/v1.ScrapeClass) configured in Prometheus to handle the necessary `tlsConfig` setup for metrics to work in STRICT Istio mTLS environments (the `scheme` is also mutated to `https` on individual monitor endpoints, see [this doc](https://istio.io/latest/docs/ops/integrations/prometheus/#tls-settings) for details). This setup is the default configuration but individual monitors can opt out of this config in 3 different ways:
 
-Assumptions are made about STRICT mTLS here for simplicity, based on the `istio-injection` namespace label. Without making these assumptions we would need to query `PeerAuthentication` resources or another resource to determine the exact workload mTLS posture.
+1. If the service or pod monitor targets namespaces that are not Istio injected (ex: `kube-system`), Pepr will detect this and mutate these monitors to use an `exempt` scrape class that does not have the Istio certs. Assumptions are made about STRICT mTLS here for simplicity, based on the `istio-injection` namespace label. Without making these assumptions we would need to query `PeerAuthentication` resources or another resource to determine the exact workload mTLS posture.
+1. Individual monitors can explicitly set the `exempt` scrape class to opt out of the Istio certificate configuration. This should typically only be done if your service exposes metrics on a PERMISSIVE mTLS port.
+1. If setting a `scrapeClass` is not an option due to lack of configuration in a helm chart, or for other reasons, monitors can use the `uds/skip-mutate` annotation (with any value) to have Pepr mutate the `exempt` scrape class onto the monitor.
 
-Note: This mutation is the default behavior for all service monitors but can be skipped using the annotation key `uds/skip-sm-mutate` (with any value). Skipping this mutation should only be done if your service exposes metrics on a PERMISSIVE mTLS port.
+{{% alert-note %}}
+There is a deprecated functionality in Pepr that will mutate `tlsConfig` onto individual service monitors, rather than using the scrape class approach. This has been kept in the current code temporarily to prevent any metrics downtime during the switch to `scrapeClass`. In a future release this behavior will be removed to reduce the complexity of the setup and required mutations.
+{{% /alert-note %}}
 
 ## Package CR `monitor` field
 
-UDS Core also supports generating service monitors from the `monitor` list in the `Package` spec. Charts do not always support service monitors, so generating them can be useful. This also provides a simplified way for other users to create service monitors, similar to the way we handle `VirtualServices` today. A full example of this can be seen below:
+UDS Core also supports generating `ServiceMonitors` and/or `PodMonitors` from the `monitor` list in the `Package` spec. Charts do not always support monitors, so generating them can be useful. This also provides a simplified way for other users to create monitors, similar to the way we handle `VirtualServices` today. A full example of this can be seen below:
 
 ```yaml
 ...
 spec:
   monitor:
+    # Example Service Monitor
     - selector: # Selector for the service to monitor
         app: foobar
       portName: metrics # Name of the port to monitor
       targetPort: 1234 # Corresponding target port on the pod/container (for network policy)
       # Optional properties depending on your application
       description: "Metrics" # Add to customize the service monitor name
+      kind: ServiceMonitor # optional, kind defaults to service monitor if not specified. PodMonitor is the other valid option.
       podSelector: # Add if pod labels are different than `selector` (for network policy)
         app: barfoo
       path: "/mymetrics" # Add if metrics are exposed on a different path than "/metrics"
+      authorization: # Add if authorization is required for the metrics endpoint
+        credentials:
+          key: "example-key"
+          name: "example-secret"
+          optional: false
+        type: "Bearer"
+    # Example Pod Monitor
+    - portName: metrics # Name of the port on the pod to monitor
+      targetPort: 1234 # Corresponding target port on the pod/container (for network policy)
+      selector: # Selector for pod(s) to monitor; note: pod monitors support `podSelector` as well, both options behave the same
+        app: barfoo
+      kind: PodMonitor
+      # Optional properties depending on your application
+      description: "Metrics" # Add to customize the pod monitor name
+      path: "/mymetrics" # Add if metrics are exposed on a different path than "/metrics"
+      authorization: # Add if authorization is required for the metrics endpoint
+        credentials:
+          key: "example-key"
+          name: "example-secret"
+          optional: false
+        type: "Bearer"
 ```
 
-This config is used to generate service monitors and corresponding network policies to setup scraping for your applications. The `ServiceMonitor`s will go through the mutation process to add `tlsConfig` and `scheme` to work in an istio environment.
+This config is used to generate service or pod monitors and corresponding network policies to setup scraping for your applications. The aforementioned TLS configuration will also apply to these generated monitors, setting a default scrape class unless target namespaces are non-istio-injected.
 
-This spec intentionally does not support all options available with a `ServiceMonitor`. While we may add additional fields in the future, we do not want to simply rebuild the `ServiceMonitor` spec since mutations are already available to handle Istio specifics. The current subset of spec options is based on the bare minimum necessary to craft resources.
-
-NOTE: While this is a rather verbose spec, each of the above fields are strictly required to craft the necessary service monitor and network policy resources.
+This spec intentionally does not support all options available with a `PodMonitor` or `ServiceMonitor`. While we may add additional fields in the future, we do not want to simply rebuild these specs since we are handling the complexities of Istio mTLS metrics. The current subset of spec options is based on the common needs seen in most environments.
 
 ## Notes on Alternative Approaches
 
-In coming up with this feature a few alternative approaches were considered but not chosen due to issues with each one. The current spec provides the best balance of a simplified interface compared to the `ServiceMonitor` spec, and a faster/easier reconciliation loop.
+In coming up with this feature when targeting the `ServiceMonitor` use case a few alternative approaches were considered but not chosen due to issues with each one. The current spec provides the best balance of a simplified interface compared to the `ServiceMonitor` spec, and a faster/easier reconciliation loop.
 
 ### Generation based on service lookup
 

@@ -57,6 +57,38 @@ tasks:
             address: demo-8081.uds.dev
             code: 200
 
+      - description: Verify the authservice tenant app is accessible
+        wait:
+          network:
+            protocol: https
+            address: protected.uds.dev
+            code: 200
+
+      - description: Wait for authservice to reload configuration
+        wait:
+          cluster:
+            kind: Deployment
+            name: authservice
+            namespace: authservice
+
+      - description: Verify the authservice tenant app is protected by checking redirect
+        maxRetries: 3
+        cmd: |
+          set -e
+          SSO_REDIRECT=$(uds zarf tools kubectl run curl-test --image=cgr.dev/chainguard/curl:latest -q --restart=Never --rm -i -- -Ls -o /dev/null -w %{url_effective} "https://protected.uds.dev")
+
+          case "${SSO_REDIRECT}" in
+          "https://sso.uds.dev"*)
+              echo "Protected by authservice"
+              ;;
+          *)
+              # Fallback option if the condition is false
+              echo "App is not protected by authservice"
+              echo $SSO_REDIRECT
+              exit 1
+              ;;
+          esac
+
       - description: Verify podinfo is healthy
         wait:
           cluster:
@@ -64,6 +96,28 @@ tasks:
             name: app.kubernetes.io/name=podinfo
             namespace: podinfo
             condition: Ready
+
+      - description: Verify podinfo package CR is ready
+        wait:
+          cluster:
+            kind: Package
+            name: podinfo
+            namespace: podinfo
+            condition: "'{.status.phase}'=Ready"
+
+      - description: Verify podinfo podmonitor exists
+        wait:
+          cluster:
+            kind: PodMonitor
+            name: podinfo-podmonitor
+            namespace: podinfo
+
+      - description: Validate podinfo servicemonitor exists
+        wait:
+          cluster:
+            kind: ServiceMonitor
+            name: podinfo-svcmonitor
+            namespace: podinfo
 
       - description: Remove the test resources
         cmd: "uds zarf package remove build/zarf-package-uds-core-test-apps-*.zst --confirm --no-progress"

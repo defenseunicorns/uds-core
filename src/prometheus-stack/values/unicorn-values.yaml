@@ -1,0 +1,56 @@
+alertmanager:
+  alertmanagerSpec:
+    image:
+      registry: cgr.dev
+      repository: du-uds-defenseunicorns/prometheus-alertmanager-fips
+      tag: 0.27.0
+kube-state-metrics:
+  image:
+    registry: cgr.dev
+    repository: du-uds-defenseunicorns/kube-state-metrics-fips
+    tag: 2.12.0
+  securityContext:
+    enabled: true
+    fsGroup: 65532
+    runAsGroup: 65532
+    runAsNonRoot: true
+    runAsUser: 65532
+prometheus:
+  prometheusSpec:
+    image:
+      registry: cgr.dev
+      repository: du-uds-defenseunicorns/prometheus-fips
+      tag: 2.52.0
+prometheus-node-exporter:
+  image:
+    registry: cgr.dev
+    repository: du-uds-defenseunicorns/prometheus-node-exporter-fips
+    tag: 1.8.1
+prometheusOperator:
+  admissionWebhooks:
+    containerSecurityContext:
+      capabilities:
+        drop:
+          - ALL
+    patch:
+      enabled: true
+      image:
+        registry: cgr.dev
+        repository: du-uds-defenseunicorns/kube-webhook-certgen-fips
+        tag: 1.10.1
+      registry: cgr.dev
+      repository: du-uds-defenseunicorns/kube-webhook-certgen-fips
+      tag: 1.10.1
+      securityContext:
+        runAsGroup: 65532
+        runAsNonRoot: true
+        runAsUser: 65532
+  image:
+    registry: cgr.dev
+    repository: du-uds-defenseunicorns/prometheus-operator-fips
+    tag: 0.74.0
+  prometheusConfigReloader:
+    image:
+      registry: cgr.dev
+      repository: du-uds-defenseunicorns/prometheus-config-reloader-fips
+      tag: 0.74.0

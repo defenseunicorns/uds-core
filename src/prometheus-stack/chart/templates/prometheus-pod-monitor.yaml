@@ -4,6 +4,8 @@ kind: PodMonitor
 metadata:
   name: prometheus-pod-monitor
   namespace: monitoring
+  annotations:
+    uds/skip-mutate: "true"
 spec:
   selector:
     matchLabels:

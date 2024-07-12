@@ -4,6 +4,8 @@ kind: PodMonitor
 metadata:
   name: envoy-stats-monitor
   namespace: istio-system
+  annotations:
+    uds/skip-mutate: "true"
 spec:
   selector:
     matchExpressions:
