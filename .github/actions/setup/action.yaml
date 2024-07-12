@@ -11,6 +11,9 @@ inputs:
   registry1Password:
     description: 'IRON_BANK_ROBOT_PASSWORD'
     required: true
+  chainguardIdentity:
+    description: "ID for Chainguard Identity"
+    required: true
 
 runs:
   using: "composite"
@@ -45,6 +48,12 @@ runs:
         REGISTRY_PASSWORD: ${{ inputs.registry1Password }}
       run: echo "${{ env.REGISTRY_PASSWORD }}" | uds zarf tools registry login -u "${{ env.REGISTRY_USERNAME }}" --password-stdin registry1.dso.mil
       shell: bash
+
+    - name: Chainguard Login
+      if: ${{ inputs.chainguardIdentity != '' }}
+      uses: chainguard-dev/setup-chainctl@fc62b08dfd3179dd694b50f672bc371f878fbd1e # v0.2.1
+      with:
+        identity: ${{ inputs.chainguardIdentity }}
 
     - name: GHCR Login
       if: ${{ inputs.ghToken != '' }}

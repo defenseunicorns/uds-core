@@ -54,3 +54,23 @@ components:
       - "registry1.dso.mil/ironbank/opensource/prometheus-operator/prometheus-config-reloader:v0.74.0"
       - "registry1.dso.mil/ironbank/opensource/prometheus/prometheus:v2.52.0"
       - "registry1.dso.mil/ironbank/opensource/ingress-nginx/kube-webhook-certgen:v1.3.0"
+
+  - name: kube-prometheus-stack
+    required: true
+    description: "Install kube-prometheus-stack using the helm chart https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack"
+    only:
+      flavor: unicorn
+    import:
+      path: common
+    charts:
+      - name: kube-prometheus-stack
+        valuesFiles:
+          - "values/unicorn-values.yaml"
+    images:
+      - "cgr.dev/du-uds-defenseunicorns/prometheus-node-exporter-fips:1.8.1"
+      - "cgr.dev/du-uds-defenseunicorns/prometheus-operator-fips:0.74.0"
+      - "cgr.dev/du-uds-defenseunicorns/kube-state-metrics-fips:2.12.0"
+      - "cgr.dev/du-uds-defenseunicorns/prometheus-alertmanager-fips:0.27.0"
+      - "cgr.dev/du-uds-defenseunicorns/prometheus-config-reloader-fips:0.74.0"
+      - "cgr.dev/du-uds-defenseunicorns/prometheus-fips:2.52.0"
+      - "cgr.dev/du-uds-defenseunicorns/kube-webhook-certgen-fips:1.10.1"
