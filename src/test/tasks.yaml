@@ -50,7 +50,7 @@ tasks:
           cluster:
             kind: Deployment
             name: httpbin
-            namespace: test-app
+            namespace: authservice-test-app
 
       - description: Verify the tenant app 8080 is accessible
         wait:
@@ -106,4 +106,4 @@ tasks:
             condition: Ready
 
       - description: Remove the test resources
-        cmd: "uds zarf package remove build/zarf-package-uds-core-test-apps-*.zst --confirm --no-progress"
+        cmd: "uds zarf package remove build/zarf-package-uds-core-test-app-tenant-*.zst --confirm --no-progress"

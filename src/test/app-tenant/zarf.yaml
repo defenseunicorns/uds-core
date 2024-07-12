@@ -13,7 +13,7 @@ components:
           - "app-tenant.yaml"
       - name: app-authservice-tenant
         files:
-          - "app-authservice-tenant.yaml"
+          - "../app-authservice-tenant.yaml"
     images:
       - docker.io/kong/httpbin:latest
       - hashicorp/http-echo:latest
@@ -23,7 +23,7 @@ components:
     charts:
       - name: exempted-app
         namespace: exempted-app
-        localPath: ./chart
+        localPath: ../chart
         version: 0.1.0
       - name: podinfo
         version: 6.4.0
@@ -31,6 +31,6 @@ components:
         url: https://github.com/stefanprodan/podinfo.git
         gitPath: charts/podinfo
         valuesFiles:
-          - ./podinfo-values.yaml
+          - ../podinfo-values.yaml
     images:
       - ghcr.io/stefanprodan/podinfo:6.4.0
