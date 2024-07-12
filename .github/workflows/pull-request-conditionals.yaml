@@ -91,7 +91,7 @@ jobs:
     name: Compliance Evaluation
     strategy:
       matrix:
-        flavor: [upstream, registry1]
+        flavor: [upstream, registry1, unicorn]
     uses: ./.github/workflows/compliance.yaml
     with:
       flavor: ${{ matrix.flavor }}
