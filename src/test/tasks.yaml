@@ -88,6 +88,7 @@ tasks:
               exit 1
               ;;
           esac
+
       - description: Verify podinfo is healthy
         wait:
           cluster:
@@ -95,6 +96,21 @@ tasks:
             name: app.kubernetes.io/name=podinfo
             namespace: podinfo
             condition: Ready
+
+      - description: Verify podinfo package CR is ready
+        wait:
+          cluster:
+            kind: Package
+            name: podinfo
+            namespace: podinfo
+            condition: "'{.status.phase}'=Ready"
+
+      - description: Verify podinfo podmonitor exists
+        wait:
+          cluster:
+            kind: PodMonitor
+            name: podinfo-podinfo-http
+            namespace: podinfo
 
       - description: Remove the test resources
         cmd: "uds zarf package remove build/zarf-package-uds-core-test-apps-*.zst --confirm --no-progress"
