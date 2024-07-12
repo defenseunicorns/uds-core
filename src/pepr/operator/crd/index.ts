@@ -34,6 +34,7 @@ export {
 } from "./generated/istio/serviceentry-v1beta1";
 
 export {
+  PodMetricsEndpoint as PodMonitorEndpoint,
   Scheme as PodMonitorScheme,
   PodMonitor as PrometheusPodMonitor,
 } from "./generated/prometheus/podmonitor-v1";
