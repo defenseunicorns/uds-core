@@ -78,17 +78,18 @@ Create the service DNS name.
 {{/*
 Check external PostgreSQL connection information. Fails when required values are missing or if PostgreSQL is configured when devMode is enabled.
 */}}
+
 {{- define "keycloak.postgresql.config" -}}
 {{- if not .Values.devMode -}}
 {{- if .Values.postgresql -}}
-{{ $requiredKeys := list "username" "password" "database" "host" }}
+{{ $requiredKeys := list "username" "password" "database" "host" "port" }}
 {{- range $k := $requiredKeys -}}
 {{ if empty (get $.Values.postgresql $k) }}{{- fail (printf "Missing value for \"postgresql.%s\"." $k ) -}}{{- end }}
 {{- end }}
 {{- else -}}{{fail "You must define \"username\", \"password\", \"database\", \"host\", and \"port\" for \"postgresql\"."}}
 {{- end -}}
 {{- default "true" "" }}
-{{- else if not (empty (compact (values .Values.postgresql))) -}}
+{{- else if not (empty (compact (values (omit .Values.postgresql "port")))) -}}
 {{ fail "Cannot use an external PostgreSQL Database when devMode is enabled." -}}
 {{- else -}}
 {{ default "false" "" }}
