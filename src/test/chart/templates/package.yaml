@@ -9,7 +9,14 @@ spec:
         app.kubernetes.io/name: podinfo
       targetPort: 9898
       portName: http
+      description: "podmonitor"
       kind: PodMonitor
+    - selector:
+        app.kubernetes.io/name: podinfo
+      targetPort: 9898
+      portName: http
+      description: "svcmonitor"
+      kind: ServiceMonitor
   network:
     expose:
       - service: podinfo

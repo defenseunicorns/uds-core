@@ -109,7 +109,14 @@ tasks:
         wait:
           cluster:
             kind: PodMonitor
-            name: podinfo-podinfo-http
+            name: podinfo-podmonitor
+            namespace: podinfo
+
+      - description: Validate podinfo servicemonitor exists
+        wait:
+          cluster:
+            kind: ServiceMonitor
+            name: podinfo-svcmonitor
             namespace: podinfo
 
       - description: Remove the test resources
