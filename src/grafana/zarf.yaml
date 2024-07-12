@@ -40,3 +40,19 @@ components:
       - registry1.dso.mil/ironbank/opensource/grafana/grafana:11.1.0
       - registry1.dso.mil/ironbank/redhat/ubi/ubi9-minimal:9.4
       - registry1.dso.mil/ironbank/kiwigrid/k8s-sidecar:1.27.4
+
+  - name: grafana
+    required: true
+    only:
+      flavor: unicorn
+    import:
+      path: common
+    charts:
+      - name: grafana
+        valuesFiles:
+          - values/unicorn-values.yaml
+    images:
+      - cgr.dev/du-uds-defenseunicorns/grafana-fips:11.1.0
+      - cgr.dev/du-uds-defenseunicorns/busybox-fips:1.36.1
+      - cgr.dev/du-uds-defenseunicorns/curl-fips:8.8.0
+      - cgr.dev/du-uds-defenseunicorns/k8s-sidecar-fips:1.27.4
