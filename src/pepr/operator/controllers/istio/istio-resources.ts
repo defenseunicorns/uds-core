@@ -2,7 +2,7 @@ import { K8s } from "pepr";
 
 import { Component, setupLogger } from "../../../logger";
 import { IstioServiceEntry, IstioVirtualService, UDSPackage } from "../../crd";
-import { getOwnerRef } from "../utils";
+import { getOwnerRef, purgeOrphans } from "../utils";
 import { generateServiceEntry } from "./service-entry";
 import { generateVirtualService } from "./virtual-service";
 
@@ -57,39 +57,8 @@ export async function istioResources(pkg: UDSPackage, namespace: string) {
     serviceEntryNames.set(sePayload.metadata!.name!, true);
   }
 
-  // Get all related VirtualServices in the namespace
-  const virtualServices = await K8s(IstioVirtualService)
-    .InNamespace(namespace)
-    .WithLabel("uds/package", pkgName)
-    .Get();
-
-  // Find any orphaned VirtualServices (not matching the current generation)
-  const orphanedVS = virtualServices.items.filter(
-    vs => vs.metadata?.labels?.["uds/generation"] !== generation,
-  );
-
-  // Delete any orphaned VirtualServices
-  for (const vs of orphanedVS) {
-    log.debug(vs, `Deleting orphaned VirtualService ${vs.metadata!.name}`);
-    await K8s(IstioVirtualService).Delete(vs);
-  }
-
-  // Get all related ServiceEntries in the namespace
-  const serviceEntries = await K8s(IstioServiceEntry)
-    .InNamespace(namespace)
-    .WithLabel("uds/package", pkgName)
-    .Get();
-
-  // Find any orphaned ServiceEntries (not matching the current generation)
-  const orphanedSE = serviceEntries.items.filter(
-    se => se.metadata?.labels?.["uds/generation"] !== generation,
-  );
-
-  // Delete any orphaned ServiceEntries
-  for (const se of orphanedSE) {
-    log.debug(se, `Deleting orphaned ServiceEntry ${se.metadata!.name}`);
-    await K8s(IstioServiceEntry).Delete(se);
-  }
+  await purgeOrphans(generation, namespace, pkgName, IstioVirtualService, log);
+  await purgeOrphans(generation, namespace, pkgName, IstioServiceEntry, log);
 
   // Return the list of unique hostnames
   return [...hosts];
