@@ -20,6 +20,8 @@ controller:
         no_telemetry_report: true
         scan_config:
           auto_scan: true
+        mode_auto_d2m: true
+        mode_auto_d2m_duration: 129600
   secret:
     enabled: false
   env:
