@@ -8,12 +8,13 @@ tasks:
             name: "app.kubernetes.io/instance=grafana"
             namespace: grafana
             condition: Ready
-      - description: Validate grafana servicemonitor exists
-        wait:
-          cluster:
-            kind: ServiceMonitor
-            name: grafana-metrics
-            namespace: grafana
+      # This test is only functional on full uds-core deploys
+      # - description: Validate grafana servicemonitor exists
+      #   wait:
+      #     cluster:
+      #       kind: ServiceMonitor
+      #       name: grafana-metrics
+      #       namespace: grafana
       - description: Validate grafana virtual service
         cmd: |
           if [ "$(curl -isS https://grafana.admin.uds.dev --output /dev/null -w '%{http_code}')" = "302" ]; then
