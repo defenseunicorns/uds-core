@@ -16,7 +16,7 @@ export enum Component {
   POLICIES = "policies",
   POLICIES_EXEMPTIONS = "policies.exemptions",
   PROMETHEUS = "prometheus",
-  LOKI = "loki"
+  LOKI = "loki",
 }
 
 export function setupLogger(component: Component) {
