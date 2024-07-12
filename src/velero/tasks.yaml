@@ -54,7 +54,7 @@ tasks:
             echo "Status is '$STATUS'... waiting to see if it changes"
 
             # local testing indicates the status is "Finalizing" for a few seconds after completion
-            sleep 15
+            sleep 30
 
             # check again...
             STATUS=$(uds zarf tools kubectl get backups -n velero ${BACKUP_NAME} -o jsonpath='{.status.phase}')
