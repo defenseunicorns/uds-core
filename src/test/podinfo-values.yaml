@@ -1,0 +1,11 @@
+# Values set to intentionally violate pepr policies
+securityContext:
+  runAsUser: 0
+  runAsGroup: 0
+  runAsNonRoot: false
+
+service:
+  enabled: true
+  type: NodePort
+  nodePort: 31123
+  hostPort: 1000

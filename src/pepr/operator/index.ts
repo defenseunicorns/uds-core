@@ -3,7 +3,6 @@ import { a } from "pepr";
 import { When } from "./common";
 
 // Controller imports
-import { removeExemptions } from "./controllers/exemptions/exemptions";
 import { cleanupNamespace } from "./controllers/istio/injection";
 import { purgeSSOClients } from "./controllers/keycloak/client-sync";
 import {
@@ -14,11 +13,11 @@ import {
 
 // CRD imports
 import { UDSExemption, UDSPackage } from "./crd";
-import { exemptValidator } from "./crd/validators/exempt-validator";
 import { validator } from "./crd/validators/package-validator";
 
 // Reconciler imports
-import { exemptReconciler } from "./reconcilers/exempt-reconciler";
+import { purgeAuthserviceClients } from "./controllers/keycloak/authservice/authservice";
+import { exemptValidator } from "./crd/validators/exempt-validator";
 import { packageReconciler } from "./reconcilers/package-reconciler";
 
 // Export the operator capability for registration in the root pepr.ts
@@ -51,6 +50,7 @@ When(UDSPackage)
 
     // Remove any SSO clients
     await purgeSSOClients(pkg, []);
+    await purgeAuthserviceClients(pkg, []);
   });
 
 // Watch for changes to the UDSPackage CRD to enqueue a package for processing
@@ -61,8 +61,5 @@ When(UDSPackage)
   // Enqueue the package for processing
   .Reconcile(packageReconciler);
 
-//Watch for changes to the UDSExemption CRD and cleanup exemptions in policies Store
-When(UDSExemption).IsDeleted().Watch(removeExemptions);
-
-// Watch for changes to the UDSExemption CRD to enqueue an exemption for processing
-When(UDSExemption).IsCreatedOrUpdated().Validate(exemptValidator).Reconcile(exemptReconciler);
+// Watch for Exemptions and validate
+When(UDSExemption).IsCreatedOrUpdated().Validate(exemptValidator);

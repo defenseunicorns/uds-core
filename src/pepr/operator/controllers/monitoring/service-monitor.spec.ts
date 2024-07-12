@@ -1,6 +1,6 @@
 import { describe, expect, it } from "@jest/globals";
-import { generateServiceMonitor } from "./service-monitor";
 import { Monitor } from "../../crd";
+import { generateServiceMonitor } from "./service-monitor";
 
 describe("test generate service monitor", () => {
   it("should return a valid Service Monitor object", () => {

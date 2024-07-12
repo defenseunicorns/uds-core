@@ -14,7 +14,7 @@ components:
         localPath: ../chart
       - name: promtail
         url: https://grafana.github.io/helm-charts/
-        version: 6.15.5
+        version: 6.16.3
         namespace: promtail
         gitPath: charts/promtail
         valuesFiles:

@@ -1,5 +1,7 @@
 import { V1OwnerReference } from "@kubernetes/client-node";
-import { GenericKind } from "kubernetes-fluent-client";
+import { GenericClass, GenericKind } from "kubernetes-fluent-client";
+import { K8s } from "pepr";
+import { Logger } from "pino";
 
 /**
  * Sanitize a resource name to make it a valid Kubernetes resource name.
@@ -37,4 +39,21 @@ export function getOwnerRef(cr: GenericKind): V1OwnerReference[] {
       name: name!,
     },
   ];
+}
+
+export async function purgeOrphans<T extends GenericClass>(
+  generation: string,
+  namespace: string,
+  pkgName: string,
+  kind: T,
+  log: Logger,
+) {
+  const resources = await K8s(kind).InNamespace(namespace).WithLabel("uds/package", pkgName).Get();
+
+  for (const resource of resources.items) {
+    if (resource.metadata?.labels?.["uds/generation"] !== generation) {
+      log.debug(resource, `Deleting orphaned ${resource.kind!} ${resource.metadata!.name}`);
+      await K8s(kind).Delete(resource);
+    }
+  }
 }

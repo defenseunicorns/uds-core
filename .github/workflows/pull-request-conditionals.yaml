@@ -26,7 +26,7 @@ jobs:
   lint-check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
       - name: Use Node.js latest
         uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
         with:
@@ -36,7 +36,7 @@ jobs:
       - name: Install UDS CLI
         shell: bash
         # renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
-        run: brew install defenseunicorns/tap/uds@0.11.0
+        run: brew install defenseunicorns/tap/uds@0.12.0
       - name: Run Formatting Checks
         run: uds run lint-check --no-progress
 
@@ -50,7 +50,7 @@ jobs:
 
     steps:
       - name: Checkout the code
-        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       # Uses a custom action to filter paths for source packages.
       - name: Check src paths
