@@ -38,6 +38,20 @@ components:
       - registry1.dso.mil/ironbank/tetrate/istio/proxyv2:1.22.2-tetratefips-v0
       - registry1.dso.mil/ironbank/tetrate/istio/pilot:1.22.2-tetratefips-v0
 
+  - name: istio-controlplane
+    required: true
+    only:
+      flavor: unicorn
+    import:
+      path: common
+    charts:
+      - name: istiod
+        valuesFiles:
+          - "values/unicorn-values.yaml"
+    images:
+      - cgr.dev/du-uds-defenseunicorns/istio-pilot-fips:1.22.2
+      - cgr.dev/du-uds-defenseunicorns/istio-proxy-fips:1.22.2
+
   - name: istio-admin-gateway
     required: true
     charts:
