@@ -1,5 +1,8 @@
 import * as yaml from "js-yaml";
-import { Capability, Log, a } from "pepr";
+import { Capability, a } from "pepr";
+import { Component, setupLogger } from "../logger";
+
+const log = setupLogger(Component.LOKI);
 
 export const loki = new Capability({
   name: "loki",
@@ -50,7 +53,7 @@ When(a.Secret)
   .WithLabel("app.kubernetes.io/instance", "loki")
   .WithLabel("app.kubernetes.io/name", "loki")
   .Mutate(async secret => {
-    Log.info(
+    log.info(
       secret,
       `Processing Secret ${secret.Raw.metadata?.namespace}/${secret.Raw.metadata?.name} for loki schemaconfig date updates.`,
     );
@@ -61,7 +64,7 @@ When(a.Secret)
       try {
         lokiConfig = yaml.load(secret.Raw.data["config.yaml"]) as LokiConfig;
       } catch (e) {
-        Log.error(secret, `Failed to parse Loki config.yaml: ${e.message}`);
+        log.error(secret, `Failed to parse Loki config.yaml: ${e.message}`);
         return;
       }
 
@@ -88,17 +91,17 @@ When(a.Secret)
 
             // Update the secret with the new config.yaml content
             secret.Raw.data["config.yaml"] = yaml.dump(lokiConfig);
-            Log.info(secret.Raw.data["config.yaml"], `Secret config.yaml updated successfully.`);
+            log.info(secret.Raw.data["config.yaml"], `Secret config.yaml updated successfully.`);
           } else {
-            Log.info(secret, `v13 schema configuration date is valid and in the future.`);
+            log.info(secret, `v13 schema configuration date is valid and in the future.`);
           }
         } else {
-          Log.error(secret, `v13 schema configuration not found.`);
+          log.error(secret, `v13 schema configuration not found.`);
         }
       } else {
-        Log.error(secret, `Invalid schema_config or configs in Loki config.yaml.`);
+        log.error(secret, `Invalid schema_config or configs in Loki config.yaml.`);
       }
     } else {
-      Log.error(secret, `No data or config.yaml object found in secret data.`);
+      log.error(secret, `No data or config.yaml object found in secret data.`);
     }
   });
