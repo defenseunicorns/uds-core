@@ -4,7 +4,7 @@ import { UDSConfig } from "../../../config";
 import { Component, setupLogger } from "../../../logger";
 import { Store } from "../../common";
 import { Sso, UDSPackage } from "../../crd";
-import { getOwnerRef } from "../utils";
+import { getOwnerRef, purgeOrphans } from "../utils";
 import { Client } from "./types";
 
 let apiURL =
@@ -47,6 +47,7 @@ export async function keycloak(pkg: UDSPackage) {
   // Get the list of clients from the package
   const clientReqs = pkg.spec?.sso || [];
   const clients: Map<string, Client> = new Map();
+  const generation = (pkg.metadata?.generation ?? 0).toString();
 
   for (const clientReq of clientReqs) {
     const client = await syncClient(clientReq, pkg);
@@ -54,6 +55,12 @@ export async function keycloak(pkg: UDSPackage) {
   }
 
   await purgeSSOClients(pkg, [...clients.keys()]);
+  // Purge orphaned SSO secrets
+  try {
+    await purgeOrphans(generation, pkg.metadata!.namespace!, pkg.metadata!.name!, kind.Secret, log);
+  } catch (e) {
+    log.error(e, `Failed to purge orphaned SSO secrets in for ${pkg.metadata!.name!}: ${e}`);
+  }
 
   return clients;
 }
@@ -151,6 +158,7 @@ async function syncClient(
   }
 
   // Create or update the client secret
+  const generation = (pkg.metadata?.generation ?? 0).toString();
   await K8s(kind.Secret).Apply({
     metadata: {
       namespace: pkg.metadata!.namespace,
@@ -158,6 +166,7 @@ async function syncClient(
       name: secretName || name,
       labels: {
         "uds/package": pkg.metadata!.name,
+        "uds/generation": generation,
       },
 
       // Use the CR as the owner ref for each VirtualService
