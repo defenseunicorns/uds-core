@@ -38,7 +38,7 @@ jobs:
           SHORT_SHA=$(git rev-parse --short HEAD)
           RELEASE_DATE=$(date +'%Y-%m-%d')
           echo "SNAPSHOT_VERSION=${RELEASE_DATE}-${SHORT_SHA}" >> $GITHUB_ENV
-          echo "PUBLISH_ARGS=--set VERSION ${SNAPSHOT_VERSION}" >> $GITHUB_ENV
+          echo "PUBLISH_ARGS=--set VERSION=${RELEASE_DATE}-${SHORT_SHA}" >> $GITHUB_ENV
 
       - name: (Snapshot) Set versions to snapshot
         if: ${{ inputs.snapshot }}
