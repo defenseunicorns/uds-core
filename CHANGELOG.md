@@ -2,6 +2,39 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.24.0](https://github.com/defenseunicorns/uds-core/compare/v0.23.0...v0.24.0) (2024-07-12)
+
+
+### ⚠ BREAKING CHANGES
+
+* set istio passthrough gateway as optional component (https://github.com/defenseunicorns/uds-core/pull/547)
+
+### Features
+
+* add unicorn flavor to uds-core ([#507](https://github.com/defenseunicorns/uds-core/issues/507)) ([a412581](https://github.com/defenseunicorns/uds-core/commit/a412581c6295658cd61a8f4fc182357c0780bef6))
+* added standalone dns service for loki ([#548](https://github.com/defenseunicorns/uds-core/issues/548)) ([e2efdf9](https://github.com/defenseunicorns/uds-core/commit/e2efdf9b059f698369721412409509cc702593bc))
+* enable authservice integration ([#201](https://github.com/defenseunicorns/uds-core/issues/201)) ([1d4df64](https://github.com/defenseunicorns/uds-core/commit/1d4df64d12882b9a4ff01b5144c1edc7fc2351d2))
+* set istio passthrough gateway as optional component (https://github.com/defenseunicorns/uds-core/pull/547) ([e1cab61](https://github.com/defenseunicorns/uds-core/commit/e1cab61a170dff73fa97000f922cc373a0a70ee5))
+* update to using default scrapeclass for tls config ([#517](https://github.com/defenseunicorns/uds-core/issues/517)) ([258bb6b](https://github.com/defenseunicorns/uds-core/commit/258bb6b41a07081412393b625438c5634ae88d79))
+
+
+### Bug Fixes
+
+* decouple `devMode` and postgres egress ([#554](https://github.com/defenseunicorns/uds-core/issues/554)) ([1a98779](https://github.com/defenseunicorns/uds-core/commit/1a987796edab5929f90973944bd3888670342973))
+* grafana logout not working in some environments ([#559](https://github.com/defenseunicorns/uds-core/issues/559)) ([ccb9d9e](https://github.com/defenseunicorns/uds-core/commit/ccb9d9e0670a477cdcd87f435db85f0c76e1ccda))
+* initial creation of child logging ([#533](https://github.com/defenseunicorns/uds-core/issues/533)) ([00a5140](https://github.com/defenseunicorns/uds-core/commit/00a5140df6205143d89c15249eb28b3502a2c901))
+* podmonitor mTLS mutations ([#566](https://github.com/defenseunicorns/uds-core/issues/566)) ([eb613e1](https://github.com/defenseunicorns/uds-core/commit/eb613e1ad462681248b85778173d65d9358d427f))
+
+
+### Miscellaneous
+
+* add util function for purging orphans ([#565](https://github.com/defenseunicorns/uds-core/issues/565)) ([e84229a](https://github.com/defenseunicorns/uds-core/commit/e84229ad355b60935dc077bb23f1c91f0fa212ec))
+* allow istio proxy injection in zarf ignored namespaces (https://github.com/defenseunicorns/uds-core/pull/513) ([8921b58](https://github.com/defenseunicorns/uds-core/commit/8921b5897b7a34d9065417f66c1cc24817116ba2))
+* **deps:** update githubactions upload-artifact to v4.3.4 ([#543](https://github.com/defenseunicorns/uds-core/issues/543)) ([20889f2](https://github.com/defenseunicorns/uds-core/commit/20889f2936597360c91b067d2c0d07d6c94646a4))
+* **deps:** update grafana helm chart to v8.3.2 ([#542](https://github.com/defenseunicorns/uds-core/issues/542)) ([8ec260c](https://github.com/defenseunicorns/uds-core/commit/8ec260c7644241fb7fe8163ea8b74240320d417e))
+* **deps:** update pepr dependencies (jest, uds-common) ([#537](https://github.com/defenseunicorns/uds-core/issues/537)) ([547c0bf](https://github.com/defenseunicorns/uds-core/commit/547c0bfb5197fb129e023d2d02fa3a306790364a))
+* **deps:** update promtail helm chart to v6.16.3 ([#538](https://github.com/defenseunicorns/uds-core/issues/538)) ([48b3fea](https://github.com/defenseunicorns/uds-core/commit/48b3feac221f90316e025b57151d8241dbd455c4))
+
 ## [0.23.0](https://github.com/defenseunicorns/uds-core/compare/v0.22.2...v0.23.0) (2024-07-04)
 
 

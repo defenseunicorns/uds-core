@@ -24,8 +24,8 @@ components:
   - name: podinfo
     required: true
     charts:
-      - name: exempted-app
-        namespace: exempted-app
+      - name: uds-podinfo-config
+        namespace: podinfo
         localPath: ./chart
         version: 0.1.0
       - name: podinfo

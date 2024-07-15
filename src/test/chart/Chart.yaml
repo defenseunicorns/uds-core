@@ -1,5 +1,5 @@
 apiVersion: v2
-name: exempted-app
+name: uds-podinfo-config
 description: A Helm chart for testing an exempted-app
 type: application
 version: 0.1.0
