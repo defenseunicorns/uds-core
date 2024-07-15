@@ -39,9 +39,9 @@ tasks:
         setVariables:
           - name: LATEST_VERSION
       - description: "Deploy the latest UDS Core package release"
-        cmd: uds zarf package deploy oci://ghcr.io/defenseunicorns/packages/uds/core:${LATEST_VERSION} --confirm --no-progress
+        cmd: uds zarf package deploy oci://ghcr.io/defenseunicorns/packages/uds/core:${LATEST_VERSION} --confirm --no-progress --components '*'
 
   - name: standard-package
     actions:
       - description: "Deploy the standard UDS Core zarf package"
-        cmd: uds zarf package deploy build/zarf-package-core-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress
+        cmd: uds zarf package deploy build/zarf-package-core-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress --components '*'
