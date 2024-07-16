@@ -11,138 +11,6 @@ component-definition:
               create-resources: null
               resources:
               - description: ""
-                name: peerAuths
-                resource-rule:
-                  group: security.istio.io
-                  name: ""
-                  namespaces: []
-                  resource: peerauthentications
-                  version: v1beta1
-            type: kubernetes
-          lula-version: ""
-          metadata:
-            name: enforce-mtls-strict
-            uuid: ca49ac97-487a-446a-a0b7-92b20e2c83cb
-          provider:
-            opa-spec:
-              output:
-                observations:
-                - validate.msg
-                validation: validate.validate
-              rego: |
-                package validate
-
-                import future.keywords.every
-
-                # Default policy result
-                default validate = false
-                default all_strict = false
-                default msg = "Not evaluated"
-
-                validate {
-                  result_all_strict.result
-                }
-
-                msg = concat(" ", [result_all_strict.msg])
-
-                # Rego policy logic to evaluate if all PeerAuthentications have mtls mode set to STRICT
-                result_all_strict = {"result": true, "msg": msg} {
-                    every peerAuthentication in input.peerAuths {
-                        mode := peerAuthentication.spec.mtls.mode
-                        mode == "STRICT"
-                    }
-                    msg := "All PeerAuthentications have mtls mode set to STRICT."
-                } else = {"result": false, "msg": msg} {
-                    msg := "Not all PeerAuthentications have mtls mode set to STRICT."
-                }
-            type: opa
-        title: enforce-mtls-strict
-        uuid: ca49ac97-487a-446a-a0b7-92b20e2c83cb
-      - description: |
-          domain:
-            kubernetes-spec:
-              create-resources: null
-              resources:
-              - description: ""
-                name: gateways
-                resource-rule:
-                  group: networking.istio.io
-                  name: ""
-                  namespaces: []
-                  resource: gateways
-                  version: v1beta1
-            type: kubernetes
-          lula-version: ""
-          metadata:
-            name: ingress-traffic-encrypted
-            uuid: fd071676-6b92-4e1c-a4f0-4c8d2bd55aed
-          provider:
-            opa-spec:
-              output:
-                observations:
-                - validate.msg
-                - validate.msg_exempt
-                validation: validate.validate
-              rego: |
-                package validate
-                import future.keywords.every
-
-                default validate = false
-                default msg = "Not evaluated"
-
-                # Validation
-                validate {
-                  check_gateways_allowed.result
-                }
-                msg := check_gateways_allowed.msg
-                msg_exempt := sprintf("Exempted Gateways: %s", [concat(", ", exempt_gateways)])
-
-                # Collect gateways that do not encrypt ingress traffic
-                gateways_disallowed = {sprintf("%s/%s", [gateway.metadata.namespace, gateway.metadata.name]) |
-                  gateway := input.gateways[_];
-                  not allowed_gateway(gateway)
-                }
-
-                check_gateways_allowed = {"result": true, "msg": "All gateways encrypt ingress traffic"} {
-                  count(gateways_disallowed) == 0
-                } else = {"result": false, "msg": msg} {
-                  msg := sprintf("Some gateways do not encrypt ingress traffic: %s", [concat(", ", gateways_disallowed)])
-                }
-
-                # Check allowed gateway
-                allowed_gateway(gateway) {
-                  every server in gateway.spec.servers {
-                    allowed_server(server)
-                  }
-                }
-
-                exempt_gateways := {"istio-passthrough-gateway/passthrough-gateway"}
-                allowed_gateway(gateway) {
-                  sprintf("%s/%s", [gateway.metadata.namespace, gateway.metadata.name]) in exempt_gateways
-                  # *Unchecked condition that exempted gateway is only used by virtual services that route https traffic
-                  # Find all virtual services that use this gateway
-                  # Check that vs has https scheme
-                }
-
-                # Check allowed server spec in gateway
-                allowed_server(server) {
-                  server.port.protocol == "HTTP"
-                  server.tls.httpsRedirect == true
-                }
-
-                allowed_server(server) {
-                  server.port.protocol == "HTTPS"
-                  server.tls.mode in {"SIMPLE", "OPTIONAL_MUTUAL"}
-                }
-            type: opa
-        title: ingress-traffic-encrypted
-        uuid: fd071676-6b92-4e1c-a4f0-4c8d2bd55aed
-      - description: |
-          domain:
-            kubernetes-spec:
-              create-resources: null
-              resources:
-              - description: ""
                 name: istioMeshConfig
                 resource-rule:
                   field:
@@ -190,6 +58,313 @@ component-definition:
             type: opa
         title: check-istio-logging-all-traffic
         uuid: 90738c86-6315-450a-ac69-cc50eb4859cc
+      - description: |
+          domain:
+            kubernetes-spec:
+              create-resources: null
+              resources:
+              - description: ""
+                name: pods
+                resource-rule:
+                  group: ""
+                  name: ""
+                  namespaces: []
+                  resource: pods
+                  version: v1
+            type: kubernetes
+          lula-version: ""
+          metadata:
+            name: istio-prometheus-annotations-validation
+            uuid: f345c359-3208-46fb-9348-959bd628301e
+          provider:
+            opa-spec:
+              output:
+                observations:
+                - validate.msg
+                - validate.exempt_namespaces_msg
+                validation: validate.validate
+              rego: |
+                package validate
+                import future.keywords.in
+
+                # Default policy result
+                default validate = false
+                default msg = "Not evaluated"
+
+                # Check for required Istio and Prometheus annotations
+                validate {
+                  has_prometheus_annotation.result
+                }
+                msg = has_prometheus_annotation.msg
+
+                # Check for prometheus annotations in pod spec
+                no_annotation = [sprintf("%s/%s", [pod.metadata.namespace, pod.metadata.name]) | pod := input.pods[_]; not contains_annotation(pod); not is_exempt(pod)]
+
+                has_prometheus_annotation = {"result": true, "msg": msg} {
+                  count(no_annotation) == 0
+                    msg := "All pods have correct prometheus annotations."
+                } else = {"result": false, "msg": msg} {
+                  msg := sprintf("Prometheus annotations not found in pods: %s.", [concat(", ", no_annotation)])
+                }
+
+                contains_annotation(pod) {
+                  annotations := pod.metadata.annotations
+                  annotations["prometheus.io/scrape"] == "true"
+                  annotations["prometheus.io/path"] != ""
+                  annotations["prometheus.io/port"] == "15020"
+                }
+
+                # Exemptions
+                exempt_namespaces = {"kube-system", "istio-system", "uds-dev-stack", "zarf"}
+                exempt_namespaces_msg = sprintf("Exempted Namespaces: %s", [concat(", ", exempt_namespaces)])
+                is_exempt(pod) {
+                    pod.metadata.namespace in exempt_namespaces
+                }
+            type: opa
+        title: istio-prometheus-annotations-validation
+        uuid: f345c359-3208-46fb-9348-959bd628301e
+      - description: |
+          domain:
+            kubernetes-spec:
+              create-resources: null
+              resources:
+              - description: ""
+                name: pods
+                resource-rule:
+                  group: ""
+                  name: ""
+                  namespaces: []
+                  resource: pods
+                  version: v1
+            type: kubernetes
+          lula-version: ""
+          metadata:
+            name: all-pods-istio-injected
+            uuid: 1761ac07-80dd-47d2-947e-09f67943b986
+          provider:
+            opa-spec:
+              output:
+                observations:
+                - validate.msg
+                - validate.exempt_namespaces_msg
+                validation: validate.validate
+              rego: |
+                package validate
+                import rego.v1
+
+                # Default policy result
+                default validate := false
+                default msg := "Not evaluated"
+
+                exempt_namespaces := {"kube-system", "istio-system", "uds-dev-stack", "zarf", "istio-admin-gateway", "istio-tenant-gateway", "istio-passthrough-gateway"}
+                exempt_namespaces_msg = sprintf("Exempted Namespaces: %s", [concat(", ", exempt_namespaces)])
+
+                validate if {
+                  has_istio_sidecar.result
+                }
+                msg = has_istio_sidecar.msg
+
+                # Check for sidecar and init containers in pod spec
+                no_sidecar = [sprintf("%s/%s", [pod.metadata.namespace, pod.metadata.name]) | pod := input.pods[_]; not has_sidecar(pod); not is_exempt(pod)]
+
+                has_istio_sidecar = {"result": true, "msg": msg} if {
+                  count(no_sidecar) == 0
+                  msg := "All pods have Istio sidecar proxy."
+                } else = {"result": false, "msg": msg} if {
+                  msg := sprintf("Istio sidecar proxy not found in pods: %s.", [concat(", ", no_sidecar)])
+                }
+
+                has_sidecar(pod) if {
+                  status := pod.metadata.annotations["sidecar.istio.io/status"]
+                  containers := json.unmarshal(status).containers
+                  initContainers := json.unmarshal(status).initContainers
+
+                  has_container_name(pod.spec.containers, containers)
+                  has_container_name(pod.spec.initContainers, initContainers)
+                } else = false
+
+                has_container_name(containers, names) if {
+                  container := containers[_]
+                  container.name in names
+                }
+
+                is_exempt(pod) if {
+                  pod.metadata.namespace in exempt_namespaces
+                }
+            type: opa
+        title: all-pods-istio-injected
+        uuid: 1761ac07-80dd-47d2-947e-09f67943b986
+      - description: |
+          domain:
+            kubernetes-spec:
+              create-resources: null
+              resources:
+              - description: ""
+                name: adminGateway
+                resource-rule:
+                  group: networking.istio.io
+                  name: admin-gateway
+                  namespaces:
+                  - istio-admin-gateway
+                  resource: gateways
+                  version: v1beta1
+              - description: ""
+                name: virtualServices
+                resource-rule:
+                  group: networking.istio.io
+                  name: ""
+                  namespaces: []
+                  resource: virtualservices
+                  version: v1beta1
+            type: kubernetes
+          lula-version: ""
+          metadata:
+            name: check-istio-admin-gateway-and-usage
+            uuid: c6c9daf1-4196-406d-8679-312c0512ab2e
+          provider:
+            opa-spec:
+              output:
+                observations:
+                - validate.msg
+                validation: validate.validate
+              rego: |
+                package validate
+
+                # Expected admin gateway details
+                expected_gateway := "admin-gateway"
+                expected_gateway_namespace := "istio-admin-gateway"
+                expected_ns_name := sprintf("%s/%s", [expected_gateway_namespace, expected_gateway])
+
+                # Default policy result
+                default validate = false
+                default admin_gw_exists = false
+                default admin_vs_match = false
+                default msg = "Not evaluated"
+
+                validate {
+                  result_admin_gw_exixts.result
+                  result_admin_vs_match.result
+                }
+
+                msg = concat(" ", [result_admin_gw_exixts.msg, result_admin_vs_match.msg])
+
+                result_admin_gw_exixts = {"result": true, "msg": msg} {
+                  input.adminGateway.kind == "Gateway"
+                  input.adminGateway.metadata.name == expected_gateway
+                  input.adminGateway.metadata.namespace == expected_gateway_namespace
+                  msg := "Admin gateway exists."
+                } else = {"result": false, "msg": msg} {
+                  msg := "Admin gateway does not exist."
+                }
+
+                result_admin_vs_match = {"result": true, "msg": msg}{
+                  count(admin_vs-admin_vs_using_gateway) == 0
+                  count(all_vs_using_gateway-admin_vs_using_gateway) == 0
+                  msg := "Admin virtual services are using admin gateway."
+                } else = {"result": false, "msg": msg} {
+                  msg := sprintf("Mismatch of admin virtual services using gateway. Admin VS not using GW: %s. Non-Admin VS using gateway: %s.", [concat(", ", admin_vs-admin_vs_using_gateway), concat(", ", all_vs_using_gateway-admin_vs_using_gateway)])
+                }
+
+                # Count admin virtual services
+                admin_vs := {adminVs.metadata.name | adminVs := input.virtualServices[_]; adminVs.kind == "VirtualService"; contains(adminVs.metadata.name, "admin")}
+
+                # Count admin VirtualServices correctly using the admin gateway (given by vs name containing "admin")
+                admin_vs_using_gateway := {adminVs.metadata.name | adminVs := input.virtualServices[_]; adminVs.kind == "VirtualService"; contains(adminVs.metadata.name, "admin"); adminVs.spec.gateways[_] == expected_ns_name}
+
+                # Count all VirtualServices using the admin gateway
+                all_vs_using_gateway := {vs.metadata.name | vs := input.virtualServices[_]; vs.kind == "VirtualService"; vs.spec.gateways[_] == expected_ns_name}
+            type: opa
+        title: check-istio-admin-gateway-and-usage
+        uuid: c6c9daf1-4196-406d-8679-312c0512ab2e
+      - description: |
+          domain:
+            kubernetes-spec:
+              create-resources: null
+              resources:
+              - description: ""
+                name: istioConfig
+                resource-rule:
+                  field:
+                    base64: false
+                    jsonpath: .data.mesh
+                    type: yaml
+                  group: ""
+                  name: istio
+                  namespaces:
+                  - istio-system
+                  resource: configmaps
+                  version: v1
+            type: kubernetes
+          lula-version: ""
+          metadata:
+            name: istio-metrics-logging-configured
+            uuid: 70d99754-2918-400c-ac9a-319f874fff90
+          provider:
+            opa-spec:
+              output:
+                observations:
+                - validate.msg
+                validation: validate.validate
+              rego: |
+                package validate
+
+                # Default policy result
+                default validate = false
+                default msg = "Not evaluated"
+
+                # Validate Istio configuration for metrics logging support
+                validate {
+                  check_metrics_enabled.result
+                }
+                msg = check_metrics_enabled.msg
+
+                check_metrics_enabled = { "result": false, "msg": msg } {
+                  input.istioConfig.enablePrometheusMerge == false
+                  msg := "Metrics logging not supported."
+                } else = { "result": true, "msg": msg } {
+                  msg := "Metrics logging supported."
+                }
+            type: opa
+        title: istio-metrics-logging-configured
+        uuid: 70d99754-2918-400c-ac9a-319f874fff90
+      - description: |
+          lula-version: ""
+          metadata:
+            name: communications-terminated-after-inactivity-PLACEHOLDER
+            uuid: 663f5e92-6db4-4042-8b5a-eba3ebe5a622
+          provider:
+            opa-spec:
+              rego: |
+                package validate
+                validate := false
+
+                # Check on destination rule, outlier detection?
+                # -> Doesn't appear that UDS is configured to create destination rules.
+            type: opa
+        title: communications-terminated-after-inactivity-PLACEHOLDER
+        uuid: 663f5e92-6db4-4042-8b5a-eba3ebe5a622
+      - description: |
+          lula-version: ""
+          metadata:
+            name: tls-origination-at-egress-PLACEHOLDER
+            uuid: 8be1601e-5870-4573-ab4f-c1c199944815
+          provider:
+            opa-spec:
+              rego: |
+                package validate
+                default validate := false
+                # How to prove TLS origination is configured at egress
+                # DestinationRule?
+            type: opa
+        title: tls-origination-at-egress-PLACEHOLDER
+        uuid: 8be1601e-5870-4573-ab4f-c1c199944815
+      - description: |
+          lula-version: ""
+          metadata:
+            name: fips-evaluation-PLACEHOLDER
+            uuid: 73434890-2751-4894-b7b2-7e583b4a8977
+        title: fips-evaluation-PLACEHOLDER
+        uuid: 73434890-2751-4894-b7b2-7e583b4a8977
       - description: |
           domain:
             kubernetes-spec:
@@ -321,78 +496,6 @@ component-definition:
         title: istio-tracing-logging-support
         uuid: f346b797-be35-40a8-a93a-585db6fd56ec
       - description: |
-          domain:
-            kubernetes-spec:
-              create-resources: null
-              resources:
-              - description: ""
-                name: pods
-                resource-rule:
-                  group: ""
-                  name: ""
-                  namespaces: []
-                  resource: pods
-                  version: v1
-            type: kubernetes
-          lula-version: ""
-          metadata:
-            name: istio-prometheus-annotations-validation
-            uuid: f345c359-3208-46fb-9348-959bd628301e
-          provider:
-            opa-spec:
-              output:
-                observations:
-                - validate.msg
-                - validate.exempt_namespaces_msg
-                validation: validate.validate
-              rego: |
-                package validate
-                import future.keywords.in
-
-                # Default policy result
-                default validate = false
-                default msg = "Not evaluated"
-
-                # Check for required Istio and Prometheus annotations
-                validate {
-                  has_prometheus_annotation.result
-                }
-                msg = has_prometheus_annotation.msg
-
-                # Check for prometheus annotations in pod spec
-                no_annotation = [sprintf("%s/%s", [pod.metadata.namespace, pod.metadata.name]) | pod := input.pods[_]; not contains_annotation(pod); not is_exempt(pod)]
-
-                has_prometheus_annotation = {"result": true, "msg": msg} {
-                  count(no_annotation) == 0
-                    msg := "All pods have correct prometheus annotations."
-                } else = {"result": false, "msg": msg} {
-                  msg := sprintf("Prometheus annotations not found in pods: %s.", [concat(", ", no_annotation)])
-                }
-
-                contains_annotation(pod) {
-                  annotations := pod.metadata.annotations
-                  annotations["prometheus.io/scrape"] == "true"
-                  annotations["prometheus.io/path"] != ""
-                  annotations["prometheus.io/port"] == "15020"
-                }
-
-                # Exemptions
-                exempt_namespaces = {"kube-system", "istio-system", "uds-dev-stack", "zarf"}
-                exempt_namespaces_msg = sprintf("Exempted Namespaces: %s", [concat(", ", exempt_namespaces)])
-                is_exempt(pod) {
-                    pod.metadata.namespace in exempt_namespaces
-                }
-            type: opa
-        title: istio-prometheus-annotations-validation
-        uuid: f345c359-3208-46fb-9348-959bd628301e
-      - description: |
-          lula-version: ""
-          metadata:
-            name: istio-rbac-for-approved-personnel-PLACEHOLDER
-            uuid: 9b361d7b-4e07-40db-8b86-3854ed499a4b
-        title: istio-rbac-for-approved-personnel-PLACEHOLDER
-        uuid: 9b361d7b-4e07-40db-8b86-3854ed499a4b
-      - description: |
           lula-version: ""
           metadata:
             name: egress-gateway-exists-and-configured-PLACEHOLDER
@@ -465,21 +568,65 @@ component-definition:
         title: secure-communication-with-istiod
         uuid: 570e2dc7-e6c2-4ad5-8ea3-f07974f59747
       - description: |
+          domain:
+            kubernetes-spec:
+              create-resources: null
+              resources:
+              - description: ""
+                name: peerAuths
+                resource-rule:
+                  group: security.istio.io
+                  name: ""
+                  namespaces: []
+                  resource: peerauthentications
+                  version: v1beta1
+            type: kubernetes
           lula-version: ""
           metadata:
-            name: communications-terminated-after-inactivity-PLACEHOLDER
-            uuid: 663f5e92-6db4-4042-8b5a-eba3ebe5a622
+            name: enforce-mtls-strict
+            uuid: ca49ac97-487a-446a-a0b7-92b20e2c83cb
           provider:
             opa-spec:
+              output:
+                observations:
+                - validate.msg
+                validation: validate.validate
               rego: |
                 package validate
-                validate := false
 
-                # Check on destination rule, outlier detection?
-                # -> Doesn't appear that UDS is configured to create destination rules.
+                import future.keywords.every
+
+                # Default policy result
+                default validate = false
+                default all_strict = false
+                default msg = "Not evaluated"
+
+                validate {
+                  result_all_strict.result
+                }
+
+                msg = concat(" ", [result_all_strict.msg])
+
+                # Rego policy logic to evaluate if all PeerAuthentications have mtls mode set to STRICT
+                result_all_strict = {"result": true, "msg": msg} {
+                    every peerAuthentication in input.peerAuths {
+                        mode := peerAuthentication.spec.mtls.mode
+                        mode == "STRICT"
+                    }
+                    msg := "All PeerAuthentications have mtls mode set to STRICT."
+                } else = {"result": false, "msg": msg} {
+                    msg := "Not all PeerAuthentications have mtls mode set to STRICT."
+                }
             type: opa
-        title: communications-terminated-after-inactivity-PLACEHOLDER
-        uuid: 663f5e92-6db4-4042-8b5a-eba3ebe5a622
+        title: enforce-mtls-strict
+        uuid: ca49ac97-487a-446a-a0b7-92b20e2c83cb
+      - description: |
+          lula-version: ""
+          metadata:
+            name: authorized-traffic-egress-PLACEHOLDER
+            uuid: 7455f86d-b79c-4226-9ce3-f3fb7d9348c8
+        title: authorized-traffic-egress-PLACEHOLDER
+        uuid: 7455f86d-b79c-4226-9ce3-f3fb7d9348c8
       - description: |
           domain:
             kubernetes-spec:
@@ -663,114 +810,26 @@ component-definition:
       - description: |
           lula-version: ""
           metadata:
-            name: authorized-traffic-egress-PLACEHOLDER
-            uuid: 7455f86d-b79c-4226-9ce3-f3fb7d9348c8
-        title: authorized-traffic-egress-PLACEHOLDER
-        uuid: 7455f86d-b79c-4226-9ce3-f3fb7d9348c8
+            name: istio-rbac-for-approved-personnel-PLACEHOLDER
+            uuid: 9b361d7b-4e07-40db-8b86-3854ed499a4b
+        title: istio-rbac-for-approved-personnel-PLACEHOLDER
+        uuid: 9b361d7b-4e07-40db-8b86-3854ed499a4b
       - description: |
           lula-version: ""
           metadata:
-            name: tls-origination-at-egress-PLACEHOLDER
-            uuid: 8be1601e-5870-4573-ab4f-c1c199944815
+            name: external-traffic-managed-PLACEHOLDER
+            uuid: 19faf69a-de74-4b78-a628-64a9f244ae13
           provider:
             opa-spec:
               rego: |
                 package validate
                 default validate := false
-                # How to prove TLS origination is configured at egress
-                # DestinationRule?
+                # This policy could check meshConfig.outboundTrafficPolicy.mode (default is ALLOW_ANY)
+                # Possibly would need a ServiceEntry(?)
+                # (https://istio.io/latest/docs/tasks/traffic-management/egress/egress-control/#envoy-passthrough-to-external-services)
             type: opa
-        title: tls-origination-at-egress-PLACEHOLDER
-        uuid: 8be1601e-5870-4573-ab4f-c1c199944815
-      - description: |
-          domain:
-            kubernetes-spec:
-              create-resources: null
-              resources:
-              - description: ""
-                name: adminGateway
-                resource-rule:
-                  group: networking.istio.io
-                  name: admin-gateway
-                  namespaces:
-                  - istio-admin-gateway
-                  resource: gateways
-                  version: v1beta1
-              - description: ""
-                name: virtualServices
-                resource-rule:
-                  group: networking.istio.io
-                  name: ""
-                  namespaces: []
-                  resource: virtualservices
-                  version: v1beta1
-            type: kubernetes
-          lula-version: ""
-          metadata:
-            name: check-istio-admin-gateway-and-usage
-            uuid: c6c9daf1-4196-406d-8679-312c0512ab2e
-          provider:
-            opa-spec:
-              output:
-                observations:
-                - validate.msg
-                validation: validate.validate
-              rego: |
-                package validate
-
-                # Expected admin gateway details
-                expected_gateway := "admin-gateway"
-                expected_gateway_namespace := "istio-admin-gateway"
-                expected_ns_name := sprintf("%s/%s", [expected_gateway_namespace, expected_gateway])
-
-                # Default policy result
-                default validate = false
-                default admin_gw_exists = false
-                default admin_vs_match = false
-                default msg = "Not evaluated"
-
-                validate {
-                  result_admin_gw_exixts.result
-                  result_admin_vs_match.result
-                }
-
-                msg = concat(" ", [result_admin_gw_exixts.msg, result_admin_vs_match.msg])
-
-                result_admin_gw_exixts = {"result": true, "msg": msg} {
-                  input.adminGateway.kind == "Gateway"
-                  input.adminGateway.metadata.name == expected_gateway
-                  input.adminGateway.metadata.namespace == expected_gateway_namespace
-                  msg := "Admin gateway exists."
-                } else = {"result": false, "msg": msg} {
-                  msg := "Admin gateway does not exist."
-                }
-
-                result_admin_vs_match = {"result": true, "msg": msg}{
-                  count(admin_vs-admin_vs_using_gateway) == 0
-                  count(all_vs_using_gateway-admin_vs_using_gateway) == 0
-                  msg := "Admin virtual services are using admin gateway."
-                } else = {"result": false, "msg": msg} {
-                  msg := sprintf("Mismatch of admin virtual services using gateway. Admin VS not using GW: %s. Non-Admin VS using gateway: %s.", [concat(", ", admin_vs-admin_vs_using_gateway), concat(", ", all_vs_using_gateway-admin_vs_using_gateway)])
-                }
-
-                # Count admin virtual services
-                admin_vs := {adminVs.metadata.name | adminVs := input.virtualServices[_]; adminVs.kind == "VirtualService"; contains(adminVs.metadata.name, "admin")}
-
-                # Count admin VirtualServices correctly using the admin gateway (given by vs name containing "admin")
-                admin_vs_using_gateway := {adminVs.metadata.name | adminVs := input.virtualServices[_]; adminVs.kind == "VirtualService"; contains(adminVs.metadata.name, "admin"); adminVs.spec.gateways[_] == expected_ns_name}
-
-                # Count all VirtualServices using the admin gateway
-                all_vs_using_gateway := {vs.metadata.name | vs := input.virtualServices[_]; vs.kind == "VirtualService"; vs.spec.gateways[_] == expected_ns_name}
-            type: opa
-        title: check-istio-admin-gateway-and-usage
-        uuid: c6c9daf1-4196-406d-8679-312c0512ab2e
-      - description: |
-          lula-version: ""
-          metadata:
-            name: fips-evaluation-PLACEHOLDER
-            uuid: 73434890-2751-4894-b7b2-7e583b4a8977
-        title: fips-evaluation-PLACEHOLDER
-        uuid: 73434890-2751-4894-b7b2-7e583b4a8977
+        title: external-traffic-managed-PLACEHOLDER
+        uuid: 19faf69a-de74-4b78-a628-64a9f244ae13
       - description: |
           domain:
             kubernetes-spec:
@@ -848,131 +907,79 @@ component-definition:
               create-resources: null
               resources:
               - description: ""
-                name: pods
+                name: gateways
                 resource-rule:
-                  group: ""
+                  group: networking.istio.io
                   name: ""
                   namespaces: []
-                  resource: pods
-                  version: v1
+                  resource: gateways
+                  version: v1beta1
             type: kubernetes
           lula-version: ""
           metadata:
-            name: all-pods-istio-injected
-            uuid: 1761ac07-80dd-47d2-947e-09f67943b986
+            name: ingress-traffic-encrypted
+            uuid: fd071676-6b92-4e1c-a4f0-4c8d2bd55aed
           provider:
             opa-spec:
               output:
                 observations:
                 - validate.msg
-                - validate.exempt_namespaces_msg
+                - validate.msg_exempt
                 validation: validate.validate
               rego: |
                 package validate
-
                 import future.keywords.every
-                import future.keywords.in
 
-                # Default policy result
                 default validate = false
                 default msg = "Not evaluated"
 
-                exempt_namespaces := {"kube-system", "istio-system", "uds-dev-stack", "zarf"}
-                exempt_namespaces_msg = sprintf("Exempted Namespaces: %s", [concat(", ", exempt_namespaces)])
-
+                # Validation
                 validate {
-                  has_proxyv2_sidecar.result
+                  check_gateways_allowed.result
                 }
-                msg = has_proxyv2_sidecar.msg
+                msg := check_gateways_allowed.msg
+                msg_exempt := sprintf("Exempted Gateways: %s", [concat(", ", exempt_gateways)])
 
-                # Check for proxyv2 container in pod spec
-                no_proxyv2 = [sprintf("%s/%s", [pod.metadata.namespace, pod.metadata.name]) | pod := input.pods[_]; not contains_proxyv2(pod); not is_exempt(pod)]
+                # Collect gateways that do not encrypt ingress traffic
+                gateways_disallowed = {sprintf("%s/%s", [gateway.metadata.namespace, gateway.metadata.name]) |
+                  gateway := input.gateways[_];
+                  not allowed_gateway(gateway)
+                }
 
-                has_proxyv2_sidecar = {"result": true, "msg": msg} {
-                  count(no_proxyv2) == 0
-                  msg := "All pods have Istio sidecar proxy."
+                check_gateways_allowed = {"result": true, "msg": "All gateways encrypt ingress traffic"} {
+                  count(gateways_disallowed) == 0
                 } else = {"result": false, "msg": msg} {
-                  msg := sprintf("Istio sidecar proxy not found in pods: %s.", [concat(", ", no_proxyv2)])
+                  msg := sprintf("Some gateways do not encrypt ingress traffic: %s", [concat(", ", gateways_disallowed)])
                 }
 
-                contains_proxyv2(pod) {
-                  images := pod.spec.containers[_].image
-                  contains(images, "/proxyv2:")
+                # Check allowed gateway
+                allowed_gateway(gateway) {
+                  every server in gateway.spec.servers {
+                    allowed_server(server)
+                  }
                 }
 
-                is_exempt(pod) {
-                    pod.metadata.namespace in exempt_namespaces
+                exempt_gateways := {"istio-passthrough-gateway/passthrough-gateway"}
+                allowed_gateway(gateway) {
+                  sprintf("%s/%s", [gateway.metadata.namespace, gateway.metadata.name]) in exempt_gateways
+                  # *Unchecked condition that exempted gateway is only used by virtual services that route https traffic
+                  # Find all virtual services that use this gateway
+                  # Check that vs has https scheme
                 }
-            type: opa
-        title: all-pods-istio-injected
-        uuid: 1761ac07-80dd-47d2-947e-09f67943b986
-      - description: |
-          domain:
-            kubernetes-spec:
-              create-resources: null
-              resources:
-              - description: ""
-                name: istioConfig
-                resource-rule:
-                  field:
-                    base64: false
-                    jsonpath: .data.mesh
-                    type: yaml
-                  group: ""
-                  name: istio
-                  namespaces:
-                  - istio-system
-                  resource: configmaps
-                  version: v1
-            type: kubernetes
-          lula-version: ""
-          metadata:
-            name: istio-metrics-logging-configured
-            uuid: 70d99754-2918-400c-ac9a-319f874fff90
-          provider:
-            opa-spec:
-              output:
-                observations:
-                - validate.msg
-                validation: validate.validate
-              rego: |
-                package validate
 
-                # Default policy result
-                default validate = false
-                default msg = "Not evaluated"
-
-                # Validate Istio configuration for metrics logging support
-                validate {
-                  check_metrics_enabled.result
+                # Check allowed server spec in gateway
+                allowed_server(server) {
+                  server.port.protocol == "HTTP"
+                  server.tls.httpsRedirect == true
                 }
-                msg = check_metrics_enabled.msg
 
-                check_metrics_enabled = { "result": false, "msg": msg } {
-                  input.istioConfig.enablePrometheusMerge == false
-                  msg := "Metrics logging not supported."
-                } else = { "result": true, "msg": msg } {
-                  msg := "Metrics logging supported."
+                allowed_server(server) {
+                  server.port.protocol == "HTTPS"
+                  server.tls.mode in {"SIMPLE", "OPTIONAL_MUTUAL"}
                 }
             type: opa
-        title: istio-metrics-logging-configured
-        uuid: 70d99754-2918-400c-ac9a-319f874fff90
-      - description: |
-          lula-version: ""
-          metadata:
-            name: external-traffic-managed-PLACEHOLDER
-            uuid: 19faf69a-de74-4b78-a628-64a9f244ae13
-          provider:
-            opa-spec:
-              rego: |
-                package validate
-                default validate := false
-                # This policy could check meshConfig.outboundTrafficPolicy.mode (default is ALLOW_ANY)
-                # Possibly would need a ServiceEntry(?)
-                # (https://istio.io/latest/docs/tasks/traffic-management/egress/egress-control/#envoy-passthrough-to-external-services)
-            type: opa
-        title: external-traffic-managed-PLACEHOLDER
-        uuid: 19faf69a-de74-4b78-a628-64a9f244ae13
+        title: ingress-traffic-encrypted
+        uuid: fd071676-6b92-4e1c-a4f0-4c8d2bd55aed
   components:
     - control-implementations:
         - description: Controls implemented by Istio and authservice that are inherited by applications
@@ -1374,7 +1381,7 @@ component-definition:
       type: software
       uuid: 81f6ec5d-9b8d-408f-8477-f8a04f493690
   metadata:
-    last-modified: 2024-07-12T17:29:23.274390023Z
+    last-modified: 2024-07-16T02:47:14.949557671Z
     oscal-version: 1.1.2
     parties:
       - links:
