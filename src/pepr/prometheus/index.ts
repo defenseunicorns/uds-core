@@ -1,14 +1,13 @@
 import { Capability, K8s, kind } from "pepr";
 import { Component, setupLogger } from "../logger";
 import {
-  PodMonitorEndpoint,
-  PodMonitorScheme,
-  PrometheusPodMonitor,
-  PrometheusServiceMonitor,
-  ServiceMonitorEndpoint,
-  ServiceMonitorScheme,
+    PodMonitorEndpoint,
+    PodMonitorScheme,
+    PrometheusPodMonitor,
+    PrometheusServiceMonitor,
+    ServiceMonitorEndpoint,
+    ServiceMonitorScheme,
 } from "../operator/crd";
-
 // configure subproject logger
 const log = setupLogger(Component.PROMETHEUS);
 
@@ -35,10 +34,14 @@ When(PrometheusServiceMonitor)
       sm.Raw.metadata?.annotations?.["uds/skip-sm-mutate"] ||
       !(await isIstioInjected(sm))
     ) {
-      log.info(
-        `Mutating scrapeClass to exempt ServiceMonitor ${sm.Raw.metadata?.name} from default scrapeClass mTLS config`,
-      );
-      sm.Raw.spec.scrapeClass = "exempt";
+      // if scrapeClass is already set, don't override it
+      if (sm.Raw.spec.scrapeClass === undefined) {
+        log.info(
+          `Mutating scrapeClass to exempt ServiceMonitor ${sm.Raw.metadata?.name} from default scrapeClass mTLS config`,
+        );
+        sm.Raw.spec.scrapeClass = "exempt";
+        return;
+      }
       return;
     } else {
       log.info(`Patching service monitor ${sm.Raw.metadata?.name} for mTLS metrics`);
@@ -70,10 +73,14 @@ When(PrometheusPodMonitor)
 
     // Add an exempt scrape class if explicitly opted out via annotation OR targeting a non-istio-injected namespace
     if (pm.Raw.metadata?.annotations?.["uds/skip-mutate"] || !(await isIstioInjected(pm))) {
-      log.info(
-        `Mutating scrapeClass to exempt PodMonitor ${pm.Raw.metadata?.name} from default scrapeClass mTLS config`,
-      );
-      pm.Raw.spec.scrapeClass = "exempt";
+      // if scrapeClass is already set, don't override it
+      if (pm.Raw.spec.scrapeClass === undefined) {
+        log.info(
+          `Mutating scrapeClass to exempt PodMonitor ${pm.Raw.metadata?.name} from default scrapeClass mTLS config`,
+        );
+        pm.Raw.spec.scrapeClass = "exempt";
+        return;
+      }
       return;
     } else {
       log.info(`Patching pod monitor ${pm.Raw.metadata?.name} for mTLS metrics`);
@@ -102,5 +109,6 @@ async function isIstioInjected(monitor: PrometheusServiceMonitor | PrometheusPod
       return true;
     }
   }
+
   return false;
 }
