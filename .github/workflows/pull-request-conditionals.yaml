@@ -92,6 +92,7 @@ jobs:
     strategy:
       matrix:
         flavor: [upstream, registry1, unicorn]
+      fail-fast: false
     uses: ./.github/workflows/compliance.yaml
     with:
       flavor: ${{ matrix.flavor }}
