@@ -1,12 +1,12 @@
 import { Capability, K8s, kind } from "pepr";
 import { Component, setupLogger } from "../logger";
 import {
-    PodMonitorEndpoint,
-    PodMonitorScheme,
-    PrometheusPodMonitor,
-    PrometheusServiceMonitor,
-    ServiceMonitorEndpoint,
-    ServiceMonitorScheme,
+  PodMonitorEndpoint,
+  PodMonitorScheme,
+  PrometheusPodMonitor,
+  PrometheusServiceMonitor,
+  ServiceMonitorEndpoint,
+  ServiceMonitorScheme,
 } from "../operator/crd";
 // configure subproject logger
 const log = setupLogger(Component.PROMETHEUS);
