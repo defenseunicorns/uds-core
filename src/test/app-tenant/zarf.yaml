@@ -21,15 +21,9 @@ components:
   - name: podinfo
     required: true
     charts:
-<<<<<<< HEAD:src/test/app-tenant/zarf.yaml
-      - name: exempted-app
-        namespace: exempted-app
-        localPath: ../chart
-=======
       - name: uds-podinfo-config
         namespace: podinfo
-        localPath: ./chart
->>>>>>> main:src/test/zarf.yaml
+        localPath: ../chart
         version: 0.1.0
       - name: podinfo
         version: 6.4.0
