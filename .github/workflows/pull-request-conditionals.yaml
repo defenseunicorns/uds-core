@@ -68,6 +68,7 @@ jobs:
         package: ${{ fromJSON(needs.check-paths.outputs.packages) }}
         flavor: [upstream, registry1, unicorn]
         test_type: [install]
+        # Upgrade tests are included for all flavors, but ONLY for `all` package tests
         include:
           - package: all
             flavor: registry1
@@ -75,10 +76,9 @@ jobs:
           - package: all
             flavor: upstream
             test_type: upgrade
-          # Commented out until unicorn flavor has a published release
-          # - package: all
-          #   flavor: unicorn
-          #   test_type: upgrade
+          - package: all
+            flavor: unicorn
+            test_type: upgrade
     uses: ./.github/workflows/test.yaml
     with:
       package: ${{ matrix.package }}

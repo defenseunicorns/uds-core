@@ -1,3 +1,6 @@
+includes:
+  - utils: utils.yaml
+
 variables:
   - name: VERSION
     description: "The version of the packages to deploy"
@@ -34,12 +37,13 @@ tasks:
 
   - name: latest-package-release
     actions:
+      - task: utils:determine-repo
       - description: "Get latest tag version from OCI"
-        cmd: uds zarf tools registry ls ghcr.io/defenseunicorns/packages/uds/core | grep ${FLAVOR} | sort -V | tail -1
+        cmd: uds zarf tools registry ls ${TARGET_REPO}/core | grep ${FLAVOR} | sort -V | tail -1
         setVariables:
           - name: LATEST_VERSION
       - description: "Deploy the latest UDS Core package release"
-        cmd: uds zarf package deploy oci://ghcr.io/defenseunicorns/packages/uds/core:${LATEST_VERSION} --confirm --no-progress --components '*'
+        cmd: uds zarf package deploy oci://${TARGET_REPO}/core:${LATEST_VERSION} --confirm --no-progress --components '*'
 
   - name: standard-package
     actions:
