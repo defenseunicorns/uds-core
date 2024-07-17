@@ -24,7 +24,7 @@ const { When } = prometheus;
 When(PrometheusServiceMonitor)
   .IsCreatedOrUpdated()
   .Mutate(async sm => {
-    if (sm.Raw.spec === undefined) {
+    if (sm.Raw.spec === undefined || sm.Raw.spec.scrapeClass != undefined) {
       return;
     }
 
@@ -34,14 +34,11 @@ When(PrometheusServiceMonitor)
       sm.Raw.metadata?.annotations?.["uds/skip-sm-mutate"] ||
       !(await isIstioInjected(sm))
     ) {
-      // if scrapeClass is already set, don't override it
-      if (sm.Raw.spec.scrapeClass === undefined) {
-        log.info(
-          `Mutating scrapeClass to exempt ServiceMonitor ${sm.Raw.metadata?.name} from default scrapeClass mTLS config`,
-        );
-        sm.Raw.spec.scrapeClass = "exempt";
-        return;
-      }
+      log.info(
+        `Mutating scrapeClass to exempt ServiceMonitor ${sm.Raw.metadata?.name} from default scrapeClass mTLS config`,
+      );
+      sm.Raw.spec.scrapeClass = "exempt";
+
       return;
     } else {
       log.info(`Patching service monitor ${sm.Raw.metadata?.name} for mTLS metrics`);
@@ -67,20 +64,17 @@ When(PrometheusServiceMonitor)
 When(PrometheusPodMonitor)
   .IsCreatedOrUpdated()
   .Mutate(async pm => {
-    if (pm.Raw.spec === undefined) {
+    if (pm.Raw.spec === undefined || pm.Raw.spec.scrapeClass != undefined) {
       return;
     }
 
     // Add an exempt scrape class if explicitly opted out via annotation OR targeting a non-istio-injected namespace
     if (pm.Raw.metadata?.annotations?.["uds/skip-mutate"] || !(await isIstioInjected(pm))) {
-      // if scrapeClass is already set, don't override it
-      if (pm.Raw.spec.scrapeClass === undefined) {
-        log.info(
-          `Mutating scrapeClass to exempt PodMonitor ${pm.Raw.metadata?.name} from default scrapeClass mTLS config`,
-        );
-        pm.Raw.spec.scrapeClass = "exempt";
-        return;
-      }
+      log.info(
+        `Mutating scrapeClass to exempt PodMonitor ${pm.Raw.metadata?.name} from default scrapeClass mTLS config`,
+      );
+      pm.Raw.spec.scrapeClass = "exempt";
+
       return;
     } else {
       log.info(`Patching pod monitor ${pm.Raw.metadata?.name} for mTLS metrics`);
