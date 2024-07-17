@@ -1,4 +1,4 @@
-# ADR: Layered Architecture for UDS Core within a Monorepo
+# ADR: UDS Core Functional Layers
 
 Date: 2024-07-17
 
