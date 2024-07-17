@@ -35,3 +35,20 @@ components:
       - registry1.dso.mil/ironbank/opensource/grafana/loki:3.0.0
       - registry1.dso.mil/ironbank/opensource/nginx/nginx-alpine:1.26.0
       - registry1.dso.mil/ironbank/opensource/memcached/memcached:1.6.27
+      - registry1.dso.mil/ironbank/opensource/grafana/loki:2.9.6
+      - registry1.dso.mil/ironbank/opensource/nginx/nginx-alpine:1.25.3
+
+  - name: loki
+    required: true
+    description: "Install Loki using chainguard images"
+    only:
+      flavor: "unicorn"
+    import:
+      path: common
+    charts:
+      - name: loki
+        valuesFiles:
+          - ./values/unicorn-values.yaml
+    images:
+      - cgr.dev/du-uds-defenseunicorns/loki:3.0.0
+      - cgr.dev/du-uds-defenseunicorns/nginx-fips:1.27.0

@@ -36,3 +36,19 @@ components:
       - registry1.dso.mil/ironbank/opensource/velero/velero-plugin-for-aws:v1.9.2
       - registry1.dso.mil/ironbank/opensource/velero/velero-plugin-for-csi:v0.7.1
       - registry1.dso.mil/ironbank/big-bang/base:2.1.0
+
+  - name: velero
+    required: true
+    only:
+      flavor: unicorn
+    import:
+      path: common
+    charts:
+      - name: velero
+        valuesFiles:
+          - values/unicorn-values.yaml
+    images:
+      - cgr.dev/du-uds-defenseunicorns/velero-fips:1.13.2-dev
+      - cgr.dev/du-uds-defenseunicorns/velero-plugin-for-aws-fips:1.9.2
+      - cgr.dev/du-uds-defenseunicorns/velero-plugin-for-csi-fips:0.7.1
+      - cgr.dev/du-uds-defenseunicorns/kubectl-fips:1.29.5-dev

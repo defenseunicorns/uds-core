@@ -1,7 +1,7 @@
 ---
 title: Deploy UDS Core
 type: docs
-weight: 2
+weight: 3
 ---
 
 ## Prerequisites

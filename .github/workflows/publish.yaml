@@ -12,13 +12,14 @@ jobs:
   publish-uds-core:
     strategy:
       matrix:
-        flavor: [upstream, registry1]
+        flavor: [upstream, registry1, unicorn]
     runs-on: "uds-ubuntu-big-boy-8-core"
     name: Publish packages
 
     permissions:
       contents: read
       packages: write
+      id-token: write  # This is needed for OIDC federation.
 
     steps:
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
@@ -29,6 +30,7 @@ jobs:
           registry1Username: ${{ secrets.IRON_BANK_ROBOT_USERNAME }}
           registry1Password: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
           ghToken: ${{ secrets.GITHUB_TOKEN }}
+          chainguardIdentity: ${{ secrets.CHAINGUARD_IDENTITY }}
 
       - name: (Snapshot) Get snapshot version using git commit short sha and date
         if: ${{ inputs.snapshot }}
@@ -36,6 +38,7 @@ jobs:
           SHORT_SHA=$(git rev-parse --short HEAD)
           RELEASE_DATE=$(date +'%Y-%m-%d')
           echo "SNAPSHOT_VERSION=${RELEASE_DATE}-${SHORT_SHA}" >> $GITHUB_ENV
+          echo "PUBLISH_ARGS=--set VERSION=${RELEASE_DATE}-${SHORT_SHA}" >> $GITHUB_ENV
 
       - name: (Snapshot) Set versions to snapshot
         if: ${{ inputs.snapshot }}
@@ -59,7 +62,7 @@ jobs:
             ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-slim-dev-bundle --no-progress
           fi
 
-      # Standard Package by default tests what's in the Istio Package
+      # Standard Package by default tests full core
       - name: Test amd64 Bundle
         if: ${{ !inputs.snapshot }}
         run: |
@@ -70,21 +73,31 @@ jobs:
         if: ${{ always() && !inputs.snapshot }}
         uses: ./.github/actions/debug-output
 
+      # Determine repository to publish to
+      - name: Determine destination repository
+        id: repo
+        run: |
+          repo=ghcr.io/defenseunicorns/packages
+          # Publish unicorn flavor to private repository
+          if [ "${{ matrix.flavor }}" = "unicorn" ]; then
+            repo+=/private
+          fi
+          repo+=/uds
+          # Publish snapshots to snapshot repository
+          if [ "${{ inputs.snapshot }}" = "true" ]; then
+            repo+=/snapshots
+          fi
+
+          echo "repo=${repo}" >> "$GITHUB_OUTPUT"
+          echo "Publishing packages and bundles to ${repo}"
+
+      # Publish package and bundle to destination repository
       - name: Publish Standard Package
-        if: ${{ !inputs.snapshot }}
-        run: uds run -f tasks/publish.yaml standard-package --set FLAVOR=${{ matrix.flavor }} --no-progress
+        run: uds run -f tasks/publish.yaml standard-package --set FLAVOR=${{ matrix.flavor }} --set TARGET_REPO=${{ steps.repo.outputs.repo }} ${PUBLISH_ARGS} --no-progress
 
       - name: Publish Upstream Flavored Bundles
-        if: ${{ !inputs.snapshot && matrix.flavor != 'registry1' }}
-        run: uds run -f tasks/publish.yaml bundles --no-progress
-
-      - name: (Snapshot) Publish Standard Package
-        if: ${{ inputs.snapshot }}
-        run: uds run -f tasks/publish.yaml standard-package --set FLAVOR=${{ matrix.flavor }} --set TARGET_REPO="ghcr.io/defenseunicorns/packages/uds/snapshots" --set VERSION="${SNAPSHOT_VERSION}" --no-progress
-
-      - name: (Snapshot) Publish Upstream Flavored Bundles
-        if: ${{ inputs.snapshot && matrix.flavor != 'registry1' }}
-        run: uds run -f tasks/publish.yaml bundles --set TARGET_REPO="ghcr.io/defenseunicorns/packages/uds/snapshots" --set VERSION="${SNAPSHOT_VERSION}" --no-progress
+        if: ${{ matrix.flavor == 'upstream' }}
+        run: uds run -f tasks/publish.yaml bundles --set TARGET_REPO=${{ steps.repo.outputs.repo }} ${PUBLISH_ARGS} --no-progress
 
       - name: Save logs
         if: always()
