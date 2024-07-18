@@ -41,6 +41,17 @@ export function getOwnerRef(cr: GenericKind): V1OwnerReference[] {
   ];
 }
 
+/**
+ * Purges orphaned Kubernetes resources of a specified kind within a namespace that do not match the provided generation.
+ *
+ * @template T
+ * @param {string} generation - The generation label to retain.
+ * @param {string} namespace - The namespace to search for resources.
+ * @param {string} pkgName - The package name label to filter resources.
+ * @param {T} kind - The Kubernetes resource kind to purge.
+ * @param {Logger} log - Logger instance for logging debug messages.
+ * @returns {Promise<void>} - A promise that resolves when the operation is complete.
+ */
 export async function purgeOrphans<T extends GenericClass>(
   generation: string,
   namespace: string,
