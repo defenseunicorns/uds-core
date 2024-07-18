@@ -10,7 +10,8 @@ on:
 permissions:
   id-token: write # Needed for OIDC-related operations.
   contents: read # Allows reading the content of the repository.
-  pull-requests: write # Allows writing pull request comments.
+  pull-requests: write # Allows writing pull request metadata.
+  packages: read # Allows reading the published GHCR packages
 
 # Default settings for all run commands in the workflow jobs.
 defaults:

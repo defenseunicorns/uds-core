@@ -35,6 +35,7 @@ on:
 permissions:
   contents: read
   id-token: write  # This is needed for OIDC federation.
+  packages: read # Allows reading the published GHCR packages
 
 jobs:
   test:
