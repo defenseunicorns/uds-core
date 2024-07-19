@@ -107,6 +107,16 @@ tasks:
     actions:
       - task: test:uds-core-upgrade
 
+  - name: test-compliance-validate
+    description: "Validate Compliance of UDS Core to produce Assessment Results"
+    actions:
+      - task: test:compliance-validate
+
+  - name: test-compliance-evaluate
+    description: "Evaluate Compliance of UDS Core against an established threshold"
+    actions:
+      - task: test:compliance-evaluate
+
   - name: lint-check
     description: "Run linting checks"
     actions:
@@ -116,3 +126,7 @@ tasks:
     description: "Fix linting issues"
     actions:
       - task: lint:fix
+
+  - name: lint-oscal
+    actions:
+      - task: lint:oscal
