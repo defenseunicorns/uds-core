@@ -73,31 +73,13 @@ jobs:
         if: ${{ always() && !inputs.snapshot }}
         uses: ./.github/actions/debug-output
 
-      # Determine repository to publish to
-      - name: Determine destination repository
-        id: repo
-        run: |
-          repo=ghcr.io/defenseunicorns/packages
-          # Publish unicorn flavor to private repository
-          if [ "${{ matrix.flavor }}" = "unicorn" ]; then
-            repo+=/private
-          fi
-          repo+=/uds
-          # Publish snapshots to snapshot repository
-          if [ "${{ inputs.snapshot }}" = "true" ]; then
-            repo+=/snapshots
-          fi
-
-          echo "repo=${repo}" >> "$GITHUB_OUTPUT"
-          echo "Publishing packages and bundles to ${repo}"
-
       # Publish package and bundle to destination repository
       - name: Publish Standard Package
-        run: uds run -f tasks/publish.yaml standard-package --set FLAVOR=${{ matrix.flavor }} --set TARGET_REPO=${{ steps.repo.outputs.repo }} ${PUBLISH_ARGS} --no-progress
+        run: uds run -f tasks/publish.yaml standard-package --set FLAVOR=${{ matrix.flavor }} --set SNAPSHOT="${{ inputs.snapshot }}" ${PUBLISH_ARGS} --no-progress
 
       - name: Publish Upstream Flavored Bundles
         if: ${{ matrix.flavor == 'upstream' }}
-        run: uds run -f tasks/publish.yaml bundles --set TARGET_REPO=${{ steps.repo.outputs.repo }} ${PUBLISH_ARGS} --no-progress
+        run: uds run -f tasks/publish.yaml bundles --set SNAPSHOT="${{ inputs.snapshot }}" ${PUBLISH_ARGS} --no-progress
 
       - name: Save logs
         if: always()
