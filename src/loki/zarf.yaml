@@ -49,4 +49,4 @@ components:
           - ./values/unicorn-values.yaml
     images:
       - cgr.dev/du-uds-defenseunicorns/loki:3.0.0
-      - cgr.dev/du-uds-defenseunicorns/nginx-fips:1.27.0
+      - cgr.dev/du-uds-defenseunicorns/nginx-fips:1.25.5
