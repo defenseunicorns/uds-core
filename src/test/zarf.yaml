@@ -17,9 +17,13 @@ components:
       - name: app-authservice-tenant
         files:
           - "app-authservice-tenant.yaml"
+      - name: smtp-server
+        files:
+          - "smtp-server.yaml"
     images:
       - docker.io/kong/httpbin:latest
       - hashicorp/http-echo:latest
+      - axllent/mailpit:latest
 
   - name: podinfo
     required: true

@@ -1,0 +1,103 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: smtp-server-app
+---
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: smtp-server-app
+  namespace: smtp-server-app
+spec:
+  network:
+    expose:
+      - service: smtp-server-http-app
+        selector:
+          app: smtp-server-app
+        gateway: tenant
+        host: mailpit
+        port: 8025
+      - service: smtp-server-app
+        selector:
+          app: smtp-server-app
+        gateway: tenant
+        host: mail
+        port: 1025
+
+    allow:
+      - description: "SMTP Ingress"
+        direction: Ingress
+        selector:
+          app: smtp-server-app
+        remoteGenerated: Anywhere
+        port: 1025
+      - description: "SMTP Egress"
+        direction: Egress
+        selector:
+          app: smtp-server-app
+        remoteGenerated: Anywhere
+        port: 1025
+      - description: "HTTP SMTP Ingress"
+        direction: Ingress
+        selector:
+          app: smtp-server-http-app
+        remoteGenerated: Anywhere
+        port: 8025
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: smtp-server-app
+  namespace: smtp-server-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: smtp-server-app
+  template:
+    metadata:
+      labels:
+        app: smtp-server-app
+    spec:
+      containers:
+        - name: mailpit
+          image: axllent/mailpit:latest
+          ports:
+            - containerPort: 8025
+              name: http
+            - containerPort: 1025
+              name: smtp
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: smtp-server-app
+  namespace: smtp-server-app
+  labels:
+    app: smtp-server-app
+    service: smtp-server-app
+spec:
+  selector:
+    app: smtp-server-app
+  ports:
+    - name: tcp-smtp
+      port: 1025
+      targetPort: 1025
+      appProtocol: tcp
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: smtp-server-http-app
+  namespace: smtp-server-app
+  labels:
+    app: smtp-server-app
+    service: smtp-server-http-app
+spec:
+  selector:
+    app: smtp-server-app
+  ports:
+    - name: http-smtp
+      port: 8025
+      targetPort: 8025
+      appProtocol: http
