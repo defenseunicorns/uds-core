@@ -13,5 +13,3 @@ memcached:
     registry: docker.io
     repository: memcached
     tag: 1.6.27-alpine
-
-    ##### make sure and revert this if CI passed
