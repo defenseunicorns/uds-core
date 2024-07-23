@@ -15,7 +15,10 @@ memberlist:
     publishNotReadyAddresses: true
 
 chunksCache:
-  allocatedMemory: 1024
+  enabled: false
+
+resultsCache:
+  enabled: false
 
 loki:
   configStorageType: Secret
