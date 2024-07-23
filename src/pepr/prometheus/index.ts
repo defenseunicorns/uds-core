@@ -8,7 +8,6 @@ import {
   ServiceMonitorEndpoint,
   ServiceMonitorScheme,
 } from "../operator/crd";
-
 // configure subproject logger
 const log = setupLogger(Component.PROMETHEUS);
 
@@ -25,7 +24,7 @@ const { When } = prometheus;
 When(PrometheusServiceMonitor)
   .IsCreatedOrUpdated()
   .Mutate(async sm => {
-    if (sm.Raw.spec === undefined) {
+    if (sm.Raw.spec === undefined || sm.Raw.spec.scrapeClass != undefined) {
       return;
     }
 
@@ -39,6 +38,7 @@ When(PrometheusServiceMonitor)
         `Mutating scrapeClass to exempt ServiceMonitor ${sm.Raw.metadata?.name} from default scrapeClass mTLS config`,
       );
       sm.Raw.spec.scrapeClass = "exempt";
+
       return;
     } else {
       log.info(`Patching service monitor ${sm.Raw.metadata?.name} for mTLS metrics`);
@@ -64,7 +64,7 @@ When(PrometheusServiceMonitor)
 When(PrometheusPodMonitor)
   .IsCreatedOrUpdated()
   .Mutate(async pm => {
-    if (pm.Raw.spec === undefined) {
+    if (pm.Raw.spec === undefined || pm.Raw.spec.scrapeClass != undefined) {
       return;
     }
 
@@ -74,6 +74,7 @@ When(PrometheusPodMonitor)
         `Mutating scrapeClass to exempt PodMonitor ${pm.Raw.metadata?.name} from default scrapeClass mTLS config`,
       );
       pm.Raw.spec.scrapeClass = "exempt";
+
       return;
     } else {
       log.info(`Patching pod monitor ${pm.Raw.metadata?.name} for mTLS metrics`);
@@ -102,5 +103,6 @@ async function isIstioInjected(monitor: PrometheusServiceMonitor | PrometheusPod
       return true;
     }
   }
+
   return false;
 }

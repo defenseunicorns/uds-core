@@ -10,7 +10,8 @@ on:
 permissions:
   id-token: write # Needed for OIDC-related operations.
   contents: read # Allows reading the content of the repository.
-  pull-requests: read # Allows reading pull request metadata.
+  pull-requests: write # Allows writing pull request metadata.
+  packages: read # Allows reading the published GHCR packages
 
 # Default settings for all run commands in the workflow jobs.
 defaults:
@@ -68,6 +69,7 @@ jobs:
         package: ${{ fromJSON(needs.check-paths.outputs.packages) }}
         flavor: [upstream, registry1, unicorn]
         test_type: [install]
+        # Upgrade tests are included for all flavors, but ONLY for `all` package tests
         include:
           - package: all
             flavor: registry1
@@ -75,13 +77,24 @@ jobs:
           - package: all
             flavor: upstream
             test_type: upgrade
-          # Commented out until unicorn flavor has a published release
-          # - package: all
-          #   flavor: unicorn
-          #   test_type: upgrade
+          - package: all
+            flavor: unicorn
+            test_type: upgrade
     uses: ./.github/workflows/test.yaml
     with:
       package: ${{ matrix.package }}
       flavor: ${{ matrix.flavor }}
       test_type: ${{ matrix.test_type }}
+    secrets: inherit # Inherits all secrets from the parent workflow.
+
+  evaluate-package-compliance:
+    needs: run-package-test
+    name: Compliance Evaluation
+    strategy:
+      matrix:
+        flavor: [upstream, registry1, unicorn]
+      fail-fast: false
+    uses: ./.github/workflows/compliance.yaml
+    with:
+      flavor: ${{ matrix.flavor }}
     secrets: inherit # Inherits all secrets from the parent workflow.

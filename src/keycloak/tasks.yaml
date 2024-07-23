@@ -1,5 +1,5 @@
 includes:
-  - config: https://raw.githubusercontent.com/defenseunicorns/uds-identity-config/v0.4.5/tasks.yaml
+  - config: https://raw.githubusercontent.com/defenseunicorns/uds-identity-config/v0.5.1/tasks.yaml
 
 tasks:
   - name: validate
