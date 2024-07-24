@@ -26,7 +26,7 @@ tasks:
           metadata:
             name: ${CLUSTER_NAME}
             region: us-west-2
-            version: "1.29"
+            version: "1.30"
             tags:
               PermissionsBoundary: ${PERMISSIONS_BOUNDARY_NAME}
 
@@ -58,6 +58,13 @@ tasks:
                 PermissionsBoundary: ${PERMISSIONS_BOUNDARY_NAME}
               iam:
                 instanceRolePermissionsBoundary: ${PERMISSIONS_BOUNDARY_ARN}
+                withAddonPolicies:
+                  cloudWatch: true
+                  ebs: true
+          cloudWatch:
+            clusterLogging:
+              enableTypes: ["*"]
+              logRetentionInDays: 1
           EOF
 
       - cmd: eksctl create cluster --dry-run -f cluster-config.yaml
