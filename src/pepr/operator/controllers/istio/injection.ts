@@ -53,7 +53,9 @@ export async function enableInjection(pkg: UDSPackage) {
 
     // Kill the pods if we changed the value of the istio-injection label
     if (originalInjectionLabel !== labels[injectionLabel]) {
-      log.debug(`Attempting pod restart in ${pkg.metadata.namespace} based on istio injection label change`);
+      log.debug(
+        `Attempting pod restart in ${pkg.metadata.namespace} based on istio injection label change`,
+      );
       await killPods(pkg.metadata.namespace, true);
     }
   }
@@ -102,7 +104,9 @@ export async function cleanupNamespace(pkg: UDSPackage) {
 
   // Kill the pods if we changed the value of the istio-injection label
   if (originalInjectionLabel !== labels[injectionLabel]) {
-    log.debug(`Attempting pod restart in ${pkg.metadata.namespace} based on istio injection label change`);
+    log.debug(
+      `Attempting pod restart in ${pkg.metadata.namespace} based on istio injection label change`,
+    );
     await killPods(pkg.metadata.namespace, false);
   }
 }
