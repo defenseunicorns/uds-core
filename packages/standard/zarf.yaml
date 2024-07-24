@@ -12,6 +12,10 @@ variables:
     description: "Base64 encoded CA cert that signed the domain wildcard certs used for Istio ingress"
     default: ""
 
+  - name: AUTHSERVICE_REDIS_URI
+    description: "UDS Authservice Redis URI"
+    default: ""
+
 components:
   # CRDs
   - name: prometheus-operator-crds
