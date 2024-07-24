@@ -1,0 +1,56 @@
+name: Lint OSCAL Files
+
+on:
+  pull_request:
+    # milestoned is added here as a workaround for release-please not triggering PR workflows (PRs should be added to a milestone to trigger the workflow).
+    types: [milestoned, opened, reopened, synchronize]
+    paths:
+      - '**/*oscal*.yaml'
+
+permissions:
+  contents: read
+
+jobs:
+
+  check-oscal-paths:
+    runs-on: ubuntu-latest
+    name: OSCAL Change Detection
+    outputs:
+      oscal: ${{ steps.path-filter.outputs.oscal }}
+      oscal_files: ${{ steps.path-filter.outputs.oscal_files }}
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+
+      # Uses a custom action to filter paths for source packages.
+      - name: Check src paths
+        id: path-filter
+        uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3
+        with:
+          filters: |
+            oscal:
+              - added|modified: "**/*oscal*.yaml"
+          list-files: shell
+
+  lint-oscal:
+    needs: check-oscal-paths
+    if: ${{ needs.check-oscal-paths.outputs.oscal == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      # filter the files to remove not oscal files (such as those titles oscal-* under ./.github)
+      - name: Identify changed OSCAL files
+        id: find_changed_files
+        run: |
+          CHANGED_FILES=$(echo "${{ needs.check-oscal-paths.outputs.oscal_files }}" | tr ' ' '\n' | grep -v ".github*" | tr '\n' ',' | sed 's/.$//' || true)
+          echo "Changed OSCAL files: $CHANGED_FILES"
+          echo "oscal_files=$CHANGED_FILES" >> "$GITHUB_OUTPUT"
+        shell: bash
+      # checkout for access to the oscal files targeted for linting
+      - name: Checkout the code
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      - name: Environment setup
+        uses: ./.github/actions/setup
+      # lint the oscal files
+      - name: lint-oscal
+        run: uds run lint-oscal --set OSCALFILES=${{ steps.find_changed_files.outputs.oscal_files }} --no-progress
+        shell: bash

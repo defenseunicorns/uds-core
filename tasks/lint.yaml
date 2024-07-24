@@ -1,3 +1,6 @@
+includes:
+  - remote: https://raw.githubusercontent.com/defenseunicorns/uds-common/v0.9.0/tasks/lint.yaml
+
 tasks:
   - name: fix
     description: "Fix formatting issues in the repo"
@@ -17,3 +20,8 @@ tasks:
         cmd: CMD=pip && which $CMD || CMD=pip3 && $CMD install yamllint
       - description: yaml lint
         cmd: yamllint . -c .yamllint --no-warnings
+
+  - name: oscal
+    actions:
+      - description: Lula Lint OSCAL
+        task: remote:oscal
