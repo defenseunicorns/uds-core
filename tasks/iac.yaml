@@ -26,7 +26,7 @@ tasks:
           metadata:
             name: ${CLUSTER_NAME}
             region: us-west-2
-            version: "1.27"
+            version: "1.29"
             tags:
               PermissionsBoundary: ${PERMISSIONS_BOUNDARY_NAME}
 
@@ -36,8 +36,6 @@ tasks:
 
           addons:
             - name: aws-ebs-csi-driver
-              version: v1.25.0-eksbuild.1
-
               attachPolicyARNs:
                 - arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy
               permissionsBoundary: ${PERMISSIONS_BOUNDARY_ARN}
@@ -45,6 +43,8 @@ tasks:
                 PermissionsBoundary: ${PERMISSIONS_BOUNDARY_NAME}
 
             - name: vpc-cni
+              attachPolicyARNs:
+                - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
               permissionsBoundary: ${PERMISSIONS_BOUNDARY_ARN}
               tags:
                 PermissionsBoundary: ${PERMISSIONS_BOUNDARY_NAME}
@@ -58,11 +58,6 @@ tasks:
                 PermissionsBoundary: ${PERMISSIONS_BOUNDARY_NAME}
               iam:
                 instanceRolePermissionsBoundary: ${PERMISSIONS_BOUNDARY_ARN}
-              ami: ${AMI_ID}
-              amiFamily: AmazonLinux2
-              overrideBootstrapCommand: |
-                #!/bin/bash
-                /etc/eks/bootstrap.sh ${CLUSTER_NAME} --container-runtime containerd
           EOF
 
       - cmd: eksctl create cluster --dry-run -f cluster-config.yaml
