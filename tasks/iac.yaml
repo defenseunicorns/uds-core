@@ -70,6 +70,8 @@ tasks:
       - cmd: eksctl create cluster --dry-run -f cluster-config.yaml
       - cmd: sleep 5
       - cmd: eksctl create cluster -f cluster-config.yaml
+      - cmd: |
+          uds zarf tools kubectl patch storageclass gp2 -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
       - cmd: eksctl utils write-kubeconfig -c ${CLUSTER_NAME}
 
   - name: destroy-cluster
