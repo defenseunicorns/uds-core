@@ -1,0 +1,12 @@
+alloy:
+  mounts:
+    varlog: true
+  configMap:
+    create: false
+    name: alloy-config
+    key: config
+  # Disable telemetry that doesn't function in the airgap
+  enableReporting: false
+
+serviceMonitor:
+  enabled: true

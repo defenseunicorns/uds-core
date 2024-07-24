@@ -1,0 +1,15 @@
+image:
+  registry: docker.io
+  repository: grafana/alloy
+  tag: v1.2.1
+
+# image:
+#   registry: cgr.dev
+#   repository: du-uds-defenseunicorns/grafana-alloy-fips
+#   tag: v1.2.1
+
+configReloader:
+  image:
+    registry: cgr.dev
+    repository: du-uds-defenseunicorns/configmap-reload-fips
+    tag: "0.12.0"

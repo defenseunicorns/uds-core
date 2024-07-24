@@ -34,7 +34,7 @@ describe("test registering exemptions", () => {
     const req = {
       Raw: {
         metadata: {
-          name: "promtail",
+          name: "alloy",
           namespace: "monitoring",
         },
       },

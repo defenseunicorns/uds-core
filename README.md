@@ -17,7 +17,7 @@ UDS Core establishes a secure baseline for cloud-native systems and ships with c
 - [Neuvector](https://open-docs.neuvector.com/) - Container Security
 - [Pepr](https://pepr.dev) - UDS policy engine & operator
 - [Prometheus Stack](https://github.com/prometheus-operator/kube-prometheus) - Monitoring
-- [Promtail](https://grafana.com/docs/loki/latest/send-data/promtail/) - Log Aggregation
+- [Grafana Alloy](https://grafana.com/docs/alloy/latest/) - Log Aggregation
 - [Velero](https://velero.io/) - Backup & Restore
 
 #### Future Applications

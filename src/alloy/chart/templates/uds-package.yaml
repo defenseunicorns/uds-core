@@ -1,0 +1,28 @@
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: alloy
+  namespace: {{ .Release.Namespace }}
+spec:
+  network:
+    allow:
+      # Permit intra-namespace communication
+      - direction: Ingress
+        remoteGenerated: IntraNamespace
+
+      - direction: Egress
+        remoteGenerated: IntraNamespace
+
+      - direction: Egress
+        remoteGenerated: KubeAPI
+        selector:
+          app.kubernetes.io/name: alloy
+
+      - direction: Egress
+        selector:
+          app.kubernetes.io/name: alloy
+        remoteNamespace: loki
+        remoteSelector:
+          app.kubernetes.io/name: loki
+        port: 8080
+        description: "Write Logs to Loki"

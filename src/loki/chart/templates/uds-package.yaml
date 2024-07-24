@@ -37,12 +37,12 @@ spec:
       - direction: Ingress
         selector:
           app.kubernetes.io/name: loki
-        remoteNamespace: promtail
+        remoteNamespace: alloy
         remoteSelector:
-          app.kubernetes.io/name: promtail
+          app.kubernetes.io/name: alloy
         ports:
           - 8080
-        description: "Promtail Log Storage"
+        description: "Alloy Log Storage"
 
       # Todo: wide open for now for pushing to s3
       - direction: Egress

@@ -1,0 +1,130 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alloy-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: alloy
+    app.kubernetes.io/component: config
+data:
+  config: |-
+    loki.write "default" {
+      endpoint {
+        url = "http://loki-gateway.loki.svc.cluster.local:80/loki/api/v1/push"
+      }
+    }
+
+    // Host/Node Logs
+    discovery.relabel "node_logs" {
+      targets = [{
+        __path__    = "/var/log/*",
+        host        = env("HOSTNAME"),
+        job         = "varlogs",
+      }]
+
+      rule {
+        source_labels = ["__journal_systemd_unit"]
+        target_label  = "systemd_unit"
+      }
+
+      rule {
+        source_labels = ["__journal_hostname"]
+        target_label  = "nodename"
+      }
+
+      rule {
+        source_labels = ["__journal_syslog_identifier"]
+        target_label  = "syslog_identifier"
+      }
+    }
+    local.file_match "node_logs" {
+      path_targets = discovery.relabel.node_logs.output
+    }
+
+    // Pod Logs
+    discovery.kubernetes "pod_logs" {
+      role = "pod"
+    }
+    discovery.relabel "pod_logs" {
+      targets = discovery.kubernetes.pod_logs.targets
+      rule {
+        source_labels = ["__meta_kubernetes_pod_controller_name"]
+        regex         = "([0-9a-z-.]+?)(-[0-9a-f]{8,10})?"
+        target_label  = "__tmp_controller_name"
+      }
+      rule {
+        source_labels = ["__meta_kubernetes_pod_label_app_kubernetes_io_name", "__meta_kubernetes_pod_label_app", "__tmp_controller_name", "__meta_kubernetes_pod_name"]
+        regex         = "^;*([^;]+)(;.*)?$"
+        target_label  = "app"
+      }
+      rule {
+        source_labels = ["__meta_kubernetes_pod_label_app_kubernetes_io_instance", "__meta_kubernetes_pod_label_instance"]
+        regex         = "^;*([^;]+)(;.*)?$"
+        target_label  = "instance"
+      }
+      rule {
+        source_labels = ["__meta_kubernetes_pod_label_app_kubernetes_io_component", "__meta_kubernetes_pod_label_component"]
+        regex         = "^;*([^;]+)(;.*)?$"
+        target_label  = "component"
+      }
+      rule {
+        source_labels = ["__meta_kubernetes_pod_node_name"]
+        target_label  = "node_name"
+      }
+      rule {
+        source_labels = ["__meta_kubernetes_namespace"]
+        target_label  = "namespace"
+      }
+      rule {
+        source_labels = ["namespace", "app"]
+        separator     = "/"
+        target_label  = "job"
+      }
+      rule {
+        source_labels = ["__meta_kubernetes_pod_name"]
+        target_label  = "pod"
+      }
+      rule {
+        source_labels = ["__meta_kubernetes_pod_container_name"]
+        target_label  = "container"
+      }
+      rule {
+        source_labels = ["__meta_kubernetes_pod_uid", "__meta_kubernetes_pod_container_name"]
+        separator     = "/"
+        target_label  = "__path__"
+        replacement   = "/var/log/pods/*$1/*.log"
+      }
+      rule {
+        source_labels = ["__meta_kubernetes_pod_annotationpresent_kubernetes_io_config_hash", "__meta_kubernetes_pod_annotation_kubernetes_io_config_hash", "__meta_kubernetes_pod_container_name"]
+        separator     = "/"
+        regex         = "true/(.*)"
+        target_label  = "__path__"
+        replacement   = "/var/log/pods/*$1/*.log"
+      }
+    }
+    local.file_match "pod_logs" {
+      path_targets = discovery.relabel.pod_logs.output
+    }
+
+    // K8s Logs (ex: audit log)
+    local.file_match "k8s_logs" {
+      path_targets = [{
+        __path__  = "/var/log/kubernetes/**/*.log",
+        job       = "kubernetes-logs",
+        host = env("HOSTNAME"),
+      }]
+    }
+
+    // Forward all logs to Loki
+    loki.source.file "node_logs" {
+      targets    = local.file_match.node_logs.targets
+      forward_to = [loki.write.default.receiver]
+    }
+    loki.source.file "pod_logs" {
+      targets    = local.file_match.pod_logs.targets
+      forward_to = [loki.write.default.receiver]
+    }
+    loki.source.file "k8s_logs" {
+      targets    = local.file_match.k8s_logs.targets
+      forward_to = [loki.write.default.receiver]
+    }

@@ -57,9 +57,9 @@
       "commitMessageTopic": "istio"
     },
     {
-      "matchFileNames": ["src/promtail/**"],
-      "groupName": "promtail",
-      "commitMessageTopic": "promtail"
+      "matchFileNames": ["src/alloy/**"],
+      "groupName": "alloy",
+      "commitMessageTopic": "alloy"
     },
     {
       "matchFileNames": ["src/velero/**"],
