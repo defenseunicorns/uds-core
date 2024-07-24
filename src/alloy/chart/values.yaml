@@ -1,0 +1,55 @@
+loki:
+  # -- Batch size to send to Loki
+  batch:
+    # -- Maximum batch size of logs to accumulate before sending
+    size: 1MiB # Upstream default
+    # -- Maximum amount of time to wait before sending a batch
+    timeout: 1s # Upstream default
+
+# -- Export logs to an s3 (or s3-compatible) bucket - https://grafana.com/docs/alloy/latest/reference/components/otelcol/otelcol.exporter.awss3/
+s3Exporter:
+  enabled: true
+  region: "us-gov-west-1"
+  bucket: "uds"
+  # -- Path in the bucket to place logs under
+  path: "otlp-logs"
+  # -- The Role ARN to be assumed
+  role_arn: ""
+  # -- Modify endpoint if using non-s3 storage (ex: minio)
+  endpoint: "http://minio.uds-dev-stack.svc.cluster.local:9000"
+  s3_force_path_style: false
+  # -- Log format, acceptable values are otlp_json, otlp_proto, sumo_ic, or body
+  # See https://grafana.com/docs/alloy/latest/reference/components/otelcol/otelcol.exporter.awss3/#marshaler-block
+  format: "otlp_json"
+  # -- Configure with access/secret key - leave blank if using IRSA
+  accessKey: "uds"
+  secretKey: "uds-secret"
+  # -- Batch size to send to s3
+  batch:
+    size: 8192 # Upstream default
+    timeout: 5m # Time before sending a batch regardless of size
+  # -- Enable gzip compression, not supported with `sumo_ic` format
+  compression: false
+
+# -- List of additional `forward_to` receivers for all default scraped logs (pod, node, k8s)
+additionalForwards: []
+# Example:
+# additionalForwards:
+#   - foobar.receiver
+#   - barfoor.receiver
+
+# -- Support for extra additional config, anything supported as alloy configuration - https://grafana.com/docs/alloy/latest/reference/
+# Should be provided as a multi-line string, supports templating other helm values
+extraConfig: ""
+# Example:
+# extraConfig: |
+#   otelcol.exporter.awss3 "logs" {
+#     s3_uploader {
+#       region = "{{ .Values.s3Exporter.region }}"
+#       s3_bucket = "my-bucket"
+#       s3_prefix = "prefix"
+#     }
+#     marshaler {
+#       type = "body"
+#     }
+#   }

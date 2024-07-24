@@ -18,6 +18,5 @@ spec:
       description: |
         alloy mounts the following hostPaths:
         - `/var/log`: to tail system/pod logs
-        - `/var/lib/docker/containers`: to tail container logs
         Since logs can have sensitive information, it is better to exclude
         alloy from the policy than add the paths as allowable mounts

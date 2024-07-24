@@ -26,3 +26,11 @@ spec:
           app.kubernetes.io/name: loki
         port: 8080
         description: "Write Logs to Loki"
+
+      {{- if .Values.s3Exporter.enabled }}
+      # Todo: wide open for now for pushing to s3
+      - direction: Egress
+        selector:
+          app.kubernetes.io/name: alloy
+        remoteGenerated: Anywhere
+      {{- end }}

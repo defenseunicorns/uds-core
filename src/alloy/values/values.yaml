@@ -7,6 +7,11 @@ alloy:
     key: config
   # Disable telemetry that doesn't function in the airgap
   enableReporting: false
+  envFrom:
+    - secretRef:
+        name: uds-config-env
+  # Enables support for experimental components
+  stabilityLevel: "experimental"
 
 serviceMonitor:
   enabled: true

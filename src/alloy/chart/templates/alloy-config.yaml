@@ -11,6 +11,8 @@ data:
     loki.write "default" {
       endpoint {
         url = "http://loki-gateway.loki.svc.cluster.local:80/loki/api/v1/push"
+        batch_wait = "{{ .Values.loki.batch.timeout }}"
+        batch_size = "{{ .Values.loki.batch.size }}"
       }
     }
 
@@ -101,6 +103,11 @@ data:
         target_label  = "__path__"
         replacement   = "/var/log/pods/*$1/*.log"
       }
+      rule {
+        source_labels = ["job"]
+        regex         = "alloy/alloy" // Drop any logs from Alloy itself to prevent log loops
+        action        = "drop"
+      }
     }
     local.file_match "pod_logs" {
       path_targets = discovery.relabel.pod_logs.output
@@ -115,16 +122,89 @@ data:
       }]
     }
 
-    // Forward all logs to Loki
+    // Forward all logs to Destinations
     loki.source.file "node_logs" {
       targets    = local.file_match.node_logs.targets
-      forward_to = [loki.write.default.receiver]
+      forward_to = [
+        loki.write.default.receiver,
+        {{- if .Values.s3Exporter.enabled }}
+        otelcol.receiver.loki.s3.receiver,
+        {{- end }}
+        {{- range .Values.additionalForwards }}
+        {{ . }},
+        {{- end }}
+      ]
     }
     loki.source.file "pod_logs" {
       targets    = local.file_match.pod_logs.targets
-      forward_to = [loki.write.default.receiver]
+      forward_to = [
+        loki.write.default.receiver,
+        {{- if .Values.s3Exporter.enabled }}
+        otelcol.receiver.loki.s3.receiver,
+        {{- end }}
+        {{- range .Values.additionalForwards }}
+        {{ . }},
+        {{- end }}
+      ]
     }
     loki.source.file "k8s_logs" {
       targets    = local.file_match.k8s_logs.targets
-      forward_to = [loki.write.default.receiver]
+      forward_to = [
+        loki.write.default.receiver,
+        {{- if .Values.s3Exporter.enabled }}
+        otelcol.receiver.loki.s3.receiver,
+        {{- end }}
+        {{- range .Values.additionalForwards }}
+        {{ . }},
+        {{- end }}
+      ]
     }
+
+    {{- with .Values.s3Exporter }}
+    {{ if .enabled }}
+    {{- if not (and .region .bucket .path) }}
+    {{ fail "You must provide region, bucket, and path if enabling s3 exporting from Alloy."}}
+    {{- end }}
+    // Export to s3
+    otelcol.receiver.loki "s3" {
+      output {
+        logs = [otelcol.processor.batch.s3.input]
+      }
+    }
+
+    // Batch updates because we aren't crazy people
+    otelcol.processor.batch "s3" {
+      send_batch_size = {{ .batch.size }}
+      timeout = "{{ .batch.timeout }}"
+      output {
+        logs    = [otelcol.exporter.awss3.logs.input]
+      }
+    }
+
+    otelcol.exporter.awss3 "logs" {
+      s3_uploader {
+        region = "{{ .region }}"
+        s3_bucket = "{{ .bucket }}"
+        s3_prefix = "{{ .path }}"
+        {{- if .role_arn }}
+        role_arn  = "{{ .role_arn }}"
+        {{- end }}
+        {{- if .endpoint }}
+        endpoint  = "{{ .endpoint }}"
+        {{- end }}
+        s3_force_path_style = {{ .s3_force_path_style }}
+        {{- if .compression }}
+        compression = "gzip"
+        {{- end }}
+      }
+      marshaler {
+        type = "{{ .format }}"
+      }
+      debug_metrics {}
+    }
+    {{- end }}
+    {{- end }}
+    {{ with .Values.extraConfig }}
+    // User provided additional config
+    {{- tpl . $.Values | nindent 4 }}
+    {{- end }}
