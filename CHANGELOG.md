@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.24.1](https://github.com/defenseunicorns/uds-core/compare/v0.24.0...v0.24.1) (2024-07-22)
+
+
+### Bug Fixes
+
+* **ci:** snapshot release publish, passthrough test on upgrade ([#575](https://github.com/defenseunicorns/uds-core/issues/575)) ([d4afe00](https://github.com/defenseunicorns/uds-core/commit/d4afe0065b76ec7c44e9d00b1f95b46b189043f0))
+* **ci:** workflow permissions ([cacf1b5](https://github.com/defenseunicorns/uds-core/commit/cacf1b5d8bccd16a8c2381fbd0912715a78a22c2))
+* only allow istio gateways to set x509 client certificate header ([#572](https://github.com/defenseunicorns/uds-core/issues/572)) ([5c62279](https://github.com/defenseunicorns/uds-core/commit/5c622795b9becb7ef6f65b807486ade0fd44bea1))
+* **sso:** delete orphaned SSO secrets ([#578](https://github.com/defenseunicorns/uds-core/issues/578)) ([5a6b9ef](https://github.com/defenseunicorns/uds-core/commit/5a6b9effca83f4f19344c813cf96d474ff5fdeb4))
+* unicorn flavor proxy image reference ([#590](https://github.com/defenseunicorns/uds-core/issues/590)) ([db081fa](https://github.com/defenseunicorns/uds-core/commit/db081fa41c0db6557c3b66bbfa0b5064dc7226e3))
+* update monitor mutation to not overwrite explicitly defined scrape class ([#582](https://github.com/defenseunicorns/uds-core/issues/582)) ([7e550d3](https://github.com/defenseunicorns/uds-core/commit/7e550d3577546d73e32a62dac018e048972d46eb))
+
+
+### Miscellaneous
+
+* **deps:** update grafana chart + sidecar image ([#567](https://github.com/defenseunicorns/uds-core/issues/567)) ([85b6de4](https://github.com/defenseunicorns/uds-core/commit/85b6de4b140a2076cdc72626bce2d24aab90c26c))
+* **deps:** update pepr to v0.32.7 ([#556](https://github.com/defenseunicorns/uds-core/issues/556)) ([e594f13](https://github.com/defenseunicorns/uds-core/commit/e594f1366bb6a920a9cd7a945bc41ae39382f8b8))
+* **deps:** update uds-identity-config to v0.5.1 ([#591](https://github.com/defenseunicorns/uds-core/issues/591)) ([b9c5bd3](https://github.com/defenseunicorns/uds-core/commit/b9c5bd34c75b6fe7063d8bf4bd15496f73e87861))
+* **deps:** update uds-k3d to v0.8.0 ([#581](https://github.com/defenseunicorns/uds-core/issues/581)) ([fab8919](https://github.com/defenseunicorns/uds-core/commit/fab89198a9118f51e372b589e02fca89d6db4112))
+* **loki:** default query settings, config as secret ([#579](https://github.com/defenseunicorns/uds-core/issues/579)) ([5fa889c](https://github.com/defenseunicorns/uds-core/commit/5fa889c51a59786330fd4f7b914b532b4c56b1b3))
+* **oscal:** begin integration of composed oscal with validations ([#496](https://github.com/defenseunicorns/uds-core/issues/496)) ([047fd30](https://github.com/defenseunicorns/uds-core/commit/047fd3041a8eecc29c8f61e1f3c2c70622ec9e88))
+
 ## [0.24.0](https://github.com/defenseunicorns/uds-core/compare/v0.23.0...v0.24.0) (2024-07-12)
 
 

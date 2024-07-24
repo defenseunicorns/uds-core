@@ -1,0 +1,28 @@
+variables:
+  - name: BASE_REPO
+    default: "ghcr.io/defenseunicorns/packages"
+  - name: FLAVOR
+    default: "upstream"
+  - name: SNAPSHOT
+    description: Whether this is a snapshot release
+    default: "false"
+
+tasks:
+  - name: determine-repo
+    actions:
+      - description: "Determine repository for the given flavor/type of release"
+        cmd: |
+          repo="${BASE_REPO}"
+          # unicorn flavor = private repository
+          if [ "${FLAVOR}" = "unicorn" ]; then
+            repo="${repo}/private"
+          fi
+          repo="${repo}/uds"
+          # snapshots = snapshot repository
+          if [ "${SNAPSHOT}" = "true" ]; then
+            repo="${repo}/snapshots"
+          fi
+          echo "${repo}"
+        mute: true
+        setVariables:
+          - name: TARGET_REPO
