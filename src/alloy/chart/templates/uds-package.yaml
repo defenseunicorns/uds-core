@@ -33,4 +33,5 @@ spec:
         selector:
           app.kubernetes.io/name: alloy
         remoteGenerated: Anywhere
+        description: "Object Storage"
       {{- end }}

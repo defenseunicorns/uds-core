@@ -17,7 +17,7 @@ s3Exporter:
   role_arn: ""
   # -- Modify endpoint if using non-s3 storage (ex: minio)
   endpoint: "http://minio.uds-dev-stack.svc.cluster.local:9000"
-  s3_force_path_style: false
+  s3_force_path_style: true
   # -- Log format, acceptable values are otlp_json, otlp_proto, sumo_ic, or body
   # See https://grafana.com/docs/alloy/latest/reference/components/otelcol/otelcol.exporter.awss3/#marshaler-block
   format: "otlp_json"
