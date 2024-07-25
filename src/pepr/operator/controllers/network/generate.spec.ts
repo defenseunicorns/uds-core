@@ -71,22 +71,23 @@ describe("network policy generate", () => {
   });
 });
 
-
 describe("network policy generate", () => {
   it("should generate correct network policy for just remoteNamespace", async () => {
     const policy = generate("test", {
       description: "test",
       direction: Direction.Egress,
       selector: { app: "test" },
-      remoteNamespace: ""
+      remoteNamespace: "",
     });
 
     expect(policy.metadata?.name).toEqual("Egress-test");
     expect(policy.spec).toEqual({
-      egress: [{
-        ports: [],
-        to: [],
-      }],
+      egress: [
+        {
+          ports: [],
+          to: [{ namespaceSelector: {} }],
+        },
+      ],
       podSelector: { matchLabels: { app: "test" } },
       policyTypes: ["Egress"],
     } as kind.NetworkPolicy["spec"]);

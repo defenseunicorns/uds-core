@@ -7,7 +7,6 @@ import { cloudMetadata } from "./generators/cloudMetadata";
 import { intraNamespace } from "./generators/intraNamespace";
 import { kubeAPI } from "./generators/kubeAPI";
 
-
 function getPeers(policy: Allow): V1NetworkPolicyPeer[] {
   let peers: V1NetworkPolicyPeer[] = [];
 
@@ -36,6 +35,8 @@ function getPeers(policy: Allow): V1NetworkPolicyPeer[] {
       peer.namespaceSelector = {
         matchLabels: { "kubernetes.io/metadata.name": policy.remoteNamespace || "" },
       };
+    } else if (policy.remoteNamespace === "") {
+      peer.namespaceSelector = {};
     }
 
     if (policy.remoteSelector !== undefined) {
