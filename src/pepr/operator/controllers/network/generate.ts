@@ -38,34 +38,34 @@ export function generate(namespace: string, policy: Allow): kind.NetworkPolicy {
   // Create the remote (peer) to match against
   let peers: V1NetworkPolicyPeer[] = [];
 
-// Check if either remoteNamespace or remoteSelector is defined
+  // Check if either remoteNamespace or remoteSelector is defined
   if (policy.remoteNamespace !== undefined || policy.remoteSelector !== undefined) {
     // Initialize a peer object that can contain namespace and/or pod selectors
     const peer: {
       namespaceSelector?: V1LabelSelector;
       podSelector?: V1LabelSelector;
     } = {};
-  
+
     // If remoteNamespace is defined, add it to the peer's namespaceSelector
     if (policy.remoteNamespace !== "") {
       peer.namespaceSelector = {
-        matchLabels: { "kubernetes.io/metadata.name": policy.remoteNamespace || "" }
+        matchLabels: { "kubernetes.io/metadata.name": policy.remoteNamespace || "" },
       };
     }
-  
+
     // If remoteSelector is defined and not an empty string, add it to the peer's podSelector
     if (policy.remoteSelector) {
       peer.podSelector = {
-        matchLabels: policy.remoteSelector
+        matchLabels: policy.remoteSelector,
       };
     }
-  
+
     // Add the peer object to the peers array if it contains valid selectors
     if (peer.namespaceSelector || peer.podSelector) {
       peers.push(peer);
     }
   }
-  
+
   // Check if remoteGenerated is set
   if (policy.remoteGenerated) {
     // Add the remoteGenerated label
