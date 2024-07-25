@@ -1,9 +1,10 @@
-import { K8s, Log, fetch, kind } from "pepr";
+import { fetch, K8s, kind } from "pepr";
 
 import { UDSConfig } from "../../../config";
+import { Component, setupLogger } from "../../../logger";
 import { Store } from "../../common";
 import { Sso, UDSPackage } from "../../crd";
-import { getOwnerRef } from "../utils";
+import { getOwnerRef, purgeOrphans } from "../utils";
 import { Client } from "./types";
 
 let apiURL =
@@ -32,6 +33,9 @@ const x509CertRegex = new RegExp(
   /<[^>]*:X509Certificate[^>]*>((.|[\n\r])*)<\/[^>]*:X509Certificate>/,
 );
 
+// configure subproject logger
+const log = setupLogger(Component.OPERATOR_KEYCLOAK);
+
 /**
  * Create or update the Keycloak clients for the package
  *
@@ -42,17 +46,23 @@ const x509CertRegex = new RegExp(
 export async function keycloak(pkg: UDSPackage) {
   // Get the list of clients from the package
   const clientReqs = pkg.spec?.sso || [];
-  const refs: string[] = [];
+  const clients: Map<string, Client> = new Map();
+  const generation = (pkg.metadata?.generation ?? 0).toString();
 
-  // Pull the isAuthSvcClient prop as it's not part of the KC client spec
   for (const clientReq of clientReqs) {
-    const ref = await syncClient(clientReq, pkg);
-    refs.push(ref);
+    const client = await syncClient(clientReq, pkg);
+    clients.set(client.clientId, client);
   }
 
-  await purgeSSOClients(pkg, refs);
+  await purgeSSOClients(pkg, [...clients.keys()]);
+  // Purge orphaned SSO secrets
+  try {
+    await purgeOrphans(generation, pkg.metadata!.namespace!, pkg.metadata!.name!, kind.Secret, log);
+  } catch (e) {
+    log.error(e, `Failed to purge orphaned SSO secrets in for ${pkg.metadata!.name!}: ${e}`);
+  }
 
-  return refs;
+  return clients;
 }
 
 /**
@@ -61,28 +71,30 @@ export async function keycloak(pkg: UDSPackage) {
  * @param pkg the package to process
  * @param refs the list of client refs to keep
  */
-export async function purgeSSOClients(pkg: UDSPackage, refs: string[] = []) {
+export async function purgeSSOClients(pkg: UDSPackage, newClients: string[] = []) {
   // Check for any clients that are no longer in the package and remove them
   const currentClients = pkg.status?.ssoClients || [];
-  const toRemove = currentClients.filter(client => !refs.includes(client));
+  const toRemove = currentClients.filter(client => !newClients.includes(client));
   for (const ref of toRemove) {
-    const token = Store.getItem(ref);
-    const clientId = ref.replace("sso-client-", "");
+    const storeKey = `sso-client-${ref}`;
+    const token = Store.getItem(storeKey);
     if (token) {
-      Store.removeItem(ref);
-      await apiCall({ clientId }, "DELETE", token);
+      await apiCall({ clientId: ref }, "DELETE", token);
+      Store.removeItem(storeKey);
     } else {
-      Log.warn(pkg.metadata, `Failed to remove client ${clientId}, token not found`);
+      log.warn(pkg.metadata, `Failed to remove client ${ref}, token not found`);
     }
   }
 }
 
 async function syncClient(
-  { isAuthSvcClient, secretName, secretTemplate, ...clientReq }: Sso,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  { enableAuthserviceSelector, secretName, secretTemplate, ...clientReq }: Sso,
   pkg: UDSPackage,
   isRetry = false,
 ) {
-  Log.debug(pkg.metadata, `Processing client request: ${clientReq.clientId}`);
+  log.debug(pkg.metadata, `Processing client request: ${clientReq.clientId}`);
+
   // Not including the CR data in the ref because Keycloak client IDs must be unique already
   const name = `sso-client-${clientReq.clientId}`;
   let client: Client;
@@ -94,10 +106,10 @@ async function syncClient(
   try {
     // If an existing client is found, use the token to update the client
     if (token && !isRetry) {
-      Log.debug(pkg.metadata, `Found existing token for ${clientReq.clientId}`);
+      log.debug(pkg.metadata, `Found existing token for ${clientReq.clientId}`);
       client = await apiCall(clientReq, "PUT", token);
     } else {
-      Log.debug(pkg.metadata, `Creating new client for ${clientReq.clientId}`);
+      log.debug(pkg.metadata, `Creating new client for ${clientReq.clientId}`);
       client = await apiCall(clientReq);
     }
   } catch (err) {
@@ -107,12 +119,12 @@ async function syncClient(
 
     // Throw the error if this is the retry or was an initial client creation attempt
     if (isRetry || !token) {
-      Log.error(`${msg}, retry failed.`);
+      log.error(`${msg}, retry failed.`);
       // Throw the original error captured from the first attempt
       throw new Error(msg);
     } else {
       // Retry the request without the token in case we have a bad token stored
-      Log.error(msg);
+      log.error(msg);
 
       try {
         return await syncClient(clientReq, pkg, true);
@@ -121,7 +133,7 @@ async function syncClient(
         const retryMsg =
           `Retry of Keycloak request failed for client '${clientReq.clientId}', package ` +
           `${pkg.metadata?.namespace}/${pkg.metadata?.name}. Error: ${retryErr.message}`;
-        Log.error(retryMsg);
+        log.error(retryMsg);
         // Throw the error from the original attempt since our retry without token failed
         throw new Error(msg);
       }
@@ -146,6 +158,7 @@ async function syncClient(
   }
 
   // Create or update the client secret
+  const generation = (pkg.metadata?.generation ?? 0).toString();
   await K8s(kind.Secret).Apply({
     metadata: {
       namespace: pkg.metadata!.namespace,
@@ -153,18 +166,16 @@ async function syncClient(
       name: secretName || name,
       labels: {
         "uds/package": pkg.metadata!.name,
+        "uds/generation": generation,
       },
+
       // Use the CR as the owner ref for each VirtualService
       ownerReferences: getOwnerRef(pkg),
     },
     data: generateSecretData(client, secretTemplate),
   });
 
-  if (isAuthSvcClient) {
-    // Do things here
-  }
-
-  return name;
+  return client;
 }
 
 /**
@@ -185,7 +196,7 @@ export function handleClientGroups(clientReq: Sso) {
 async function apiCall(sso: Partial<Sso>, method = "POST", authToken = "") {
   // Handle single test mode
   if (UDSConfig.isSingleTest) {
-    Log.warn(`Generating fake client for '${sso.clientId}' in single test mode`);
+    log.warn(`Generating fake client for '${sso.clientId}' in single test mode`);
     return {
       ...sso,
       secret: sso.secret || "fake-secret",
@@ -211,7 +222,7 @@ async function apiCall(sso: Partial<Sso>, method = "POST", authToken = "") {
   }
 
   // Remove the body for DELETE requests
-  if (method === "DELETE") {
+  if (method === "DELETE" || method === "GET") {
     delete req.body;
   }
 
@@ -231,14 +242,14 @@ async function apiCall(sso: Partial<Sso>, method = "POST", authToken = "") {
 
 export function generateSecretData(client: Client, secretTemplate?: { [key: string]: string }) {
   if (secretTemplate) {
-    Log.debug(`Using secret template for client: ${client.clientId}`);
+    log.debug(`Using secret template for client: ${client.clientId}`);
     // Iterate over the secret template entry and process each value
     return templateData(secretTemplate, client);
   }
 
   const stringMap: Record<string, string> = {};
 
-  Log.debug(`Using client data for secret: ${client.clientId}`);
+  log.debug(`Using client data for secret: ${client.clientId}`);
 
   // iterate over the client object and convert all values to strings
   for (const [key, value] of Object.entries(client)) {

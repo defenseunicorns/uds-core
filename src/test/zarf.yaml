@@ -14,6 +14,9 @@ components:
       - name: app-tenant
         files:
           - "app-tenant.yaml"
+      - name: app-authservice-tenant
+        files:
+          - "app-authservice-tenant.yaml"
     images:
       - docker.io/kong/httpbin:latest
       - hashicorp/http-echo:latest
@@ -21,8 +24,8 @@ components:
   - name: podinfo
     required: true
     charts:
-      - name: exempted-app
-        namespace: exempted-app
+      - name: uds-podinfo-config
+        namespace: podinfo
         localPath: ./chart
         version: 0.1.0
       - name: podinfo

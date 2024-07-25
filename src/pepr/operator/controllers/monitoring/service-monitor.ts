@@ -1,8 +1,14 @@
-import { K8s, Log } from "pepr";
+import { K8s } from "pepr";
 
 import { V1OwnerReference } from "@kubernetes/client-node";
-import { Prometheus, UDSPackage, Monitor } from "../../crd";
-import { getOwnerRef, sanitizeResourceName } from "../utils";
+import { Component, setupLogger } from "../../../logger";
+import { Monitor, PrometheusServiceMonitor, UDSPackage } from "../../crd";
+import { Kind } from "../../crd/generated/package-v1alpha1";
+import { getOwnerRef, purgeOrphans } from "../utils";
+import { generateMonitorName } from "./common";
+
+// configure subproject logger
+const log = setupLogger(Component.OPERATOR_MONITORING);
 
 /**
  * Generate a service monitor for a service
@@ -15,42 +21,29 @@ export async function serviceMonitor(pkg: UDSPackage, namespace: string) {
   const generation = (pkg.metadata?.generation ?? 0).toString();
   const ownerRefs = getOwnerRef(pkg);
 
-  Log.debug(`Reconciling ServiceMonitors for ${pkgName}`);
+  log.debug(`Reconciling ServiceMonitors for ${pkgName}`);
 
   // Get the list of monitored services
   const monitorList = pkg.spec?.monitor ?? [];
 
   // Create a list of generated ServiceMonitors
-  const payloads: Prometheus.ServiceMonitor[] = [];
+  const payloads: PrometheusServiceMonitor[] = [];
 
   try {
     for (const monitor of monitorList) {
-      const payload = generateServiceMonitor(monitor, namespace, pkgName, generation, ownerRefs);
+      if (monitor.kind !== Kind.PodMonitor) {
+        const payload = generateServiceMonitor(monitor, namespace, pkgName, generation, ownerRefs);
 
-      Log.debug(payload, `Applying ServiceMonitor ${payload.metadata?.name}`);
+        log.debug(payload, `Applying ServiceMonitor ${payload.metadata?.name}`);
 
-      // Apply the ServiceMonitor and force overwrite any existing policy
-      await K8s(Prometheus.ServiceMonitor).Apply(payload, { force: true });
+        // Apply the ServiceMonitor and force overwrite any existing policy
+        await K8s(PrometheusServiceMonitor).Apply(payload, { force: true });
 
-      payloads.push(payload);
+        payloads.push(payload);
+      }
     }
 
-    // Get all related ServiceMonitors in the namespace
-    const serviceMonitors = await K8s(Prometheus.ServiceMonitor)
-      .InNamespace(namespace)
-      .WithLabel("uds/package", pkgName)
-      .Get();
-
-    // Find any orphaned ServiceMonitors (not matching the current generation)
-    const orphanedSM = serviceMonitors.items.filter(
-      sm => sm.metadata?.labels?.["uds/generation"] !== generation,
-    );
-
-    // Delete any orphaned ServiceMonitors
-    for (const sm of orphanedSM) {
-      Log.debug(sm, `Deleting orphaned ServiceMonitor ${sm.metadata!.name}`);
-      await K8s(Prometheus.ServiceMonitor).Delete(sm);
-    }
+    await purgeOrphans(generation, namespace, pkgName, PrometheusServiceMonitor, log);
   } catch (err) {
     throw new Error(
       `Failed to process ServiceMonitors for ${pkgName}, cause: ${JSON.stringify(err)}`,
@@ -58,17 +51,7 @@ export async function serviceMonitor(pkg: UDSPackage, namespace: string) {
   }
 
   // Return the list of monitor names
-  return [...payloads.map(sm => sm.metadata!.name!)];
-}
-
-export function generateSMName(pkgName: string, monitor: Monitor) {
-  const { selector, portName, description } = monitor;
-
-  // Ensure the resource name is valid
-  const nameSuffix = description || `${Object.values(selector)}-${portName}`;
-  const name = sanitizeResourceName(`${pkgName}-${nameSuffix}`);
-
-  return name;
+  return [...payloads.map(m => m.metadata!.name!)];
 }
 
 export function generateServiceMonitor(
@@ -79,8 +62,8 @@ export function generateServiceMonitor(
   ownerRefs: V1OwnerReference[],
 ) {
   const { selector, portName } = monitor;
-  const name = generateSMName(pkgName, monitor);
-  const payload: Prometheus.ServiceMonitor = {
+  const name = generateMonitorName(pkgName, monitor);
+  const payload: PrometheusServiceMonitor = {
     metadata: {
       name,
       namespace,
@@ -95,6 +78,7 @@ export function generateServiceMonitor(
         {
           port: portName,
           path: monitor.path || "/metrics",
+          authorization: monitor.authorization,
         },
       ],
       selector: {

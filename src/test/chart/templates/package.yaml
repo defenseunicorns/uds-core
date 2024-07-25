@@ -1,0 +1,27 @@
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: podinfo
+  namespace: podinfo
+spec:
+  monitor:
+    - selector:
+        app.kubernetes.io/name: podinfo
+      targetPort: 9898
+      portName: http
+      description: "podmonitor"
+      kind: PodMonitor
+    - selector:
+        app.kubernetes.io/name: podinfo
+      targetPort: 9898
+      portName: http
+      description: "svcmonitor"
+      kind: ServiceMonitor
+  network:
+    expose:
+      - service: podinfo
+        selector:
+          app.kubernetes.io/name: podinfo
+        gateway: tenant
+        host: podinfo
+        port: 9898

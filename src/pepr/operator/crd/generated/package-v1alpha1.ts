@@ -9,7 +9,7 @@ export class Package extends GenericKind {
 
 export interface Spec {
   /**
-   * Create Service Monitor configurations
+   * Create Service or Pod Monitor configurations
    */
   monitor?: Monitor[];
   /**
@@ -24,9 +24,18 @@ export interface Spec {
 
 export interface Monitor {
   /**
+   * Authorization settings.
+   */
+  authorization?: Authorization;
+  /**
    * A description of this monitor entry, this will become part of the ServiceMonitor name
    */
   description?: string;
+  /**
+   * The type of monitor to create; PodMonitor or ServiceMonitor. ServiceMonitor is the
+   * default.
+   */
+  kind?: Kind;
   /**
    * HTTP path from which to scrape for metrics, defaults to `/metrics`
    */
@@ -49,6 +58,51 @@ export interface Monitor {
    * The service targetPort. This is required so the NetworkPolicy can be generated correctly.
    */
   targetPort: number;
+}
+
+/**
+ * Authorization settings.
+ */
+export interface Authorization {
+  /**
+   * Selects a key of a Secret in the namespace that contains the credentials for
+   * authentication.
+   */
+  credentials: Credentials;
+  /**
+   * Defines the authentication type. The value is case-insensitive. "Basic" is not a
+   * supported value. Default: "Bearer"
+   */
+  type?: string;
+}
+
+/**
+ * Selects a key of a Secret in the namespace that contains the credentials for
+ * authentication.
+ */
+export interface Credentials {
+  /**
+   * The key of the secret to select from. Must be a valid secret key.
+   */
+  key: string;
+  /**
+   * Name of the referent. More info:
+   * https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+   */
+  name?: string;
+  /**
+   * Specify whether the Secret or its key must be defined
+   */
+  optional?: boolean;
+}
+
+/**
+ * The type of monitor to create; PodMonitor or ServiceMonitor. ServiceMonitor is the
+ * default.
+ */
+export enum Kind {
+  PodMonitor = "PodMonitor",
+  ServiceMonitor = "ServiceMonitor",
 }
 
 /**
@@ -475,6 +529,11 @@ export interface Sso {
    */
   description?: string;
   /**
+   * Labels to match pods to automatically protect with authservice. Leave empty to disable
+   * authservice protection
+   */
+  enableAuthserviceSelector?: { [key: string]: string };
+  /**
    * Whether the SSO client is enabled
    */
   enabled?: boolean;
@@ -482,10 +541,6 @@ export interface Sso {
    * The client sso group type
    */
   groups?: Groups;
-  /**
-   * If true, the client will generate a new Auth Service client as well
-   */
-  isAuthSvcClient?: boolean;
   /**
    * Specifies display name of the client
    */
@@ -549,6 +604,7 @@ export enum Protocol {
 }
 
 export interface Status {
+  authserviceClients?: string[];
   endpoints?: string[];
   monitors?: string[];
   networkPolicyCount?: number;
