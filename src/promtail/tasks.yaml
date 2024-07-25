@@ -1,7 +1,7 @@
 tasks:
   - name: validate
     actions:
-      - description: Validate promail
+      - description: Validate promtail
         wait:
           cluster:
             kind: Pod

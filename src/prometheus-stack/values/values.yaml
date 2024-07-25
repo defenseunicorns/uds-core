@@ -24,6 +24,16 @@ prometheus:
   prometheusSpec:
     enableFeatures:
       - remote-write-receiver
+    additionalConfig:
+      scrapeClasses:
+        - name: istio-certs
+          default: true
+          tlsConfig:
+            caFile: /etc/prom-certs/root-cert.pem
+            certFile: /etc/prom-certs/cert-chain.pem
+            keyFile: /etc/prom-certs/key.pem
+            insecureSkipVerify: true
+        - name: exempt
     podMetadata:
       annotations:
         proxy.istio.io/config: |

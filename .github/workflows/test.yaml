@@ -34,6 +34,8 @@ on:
 
 permissions:
   contents: read
+  id-token: write  # This is needed for OIDC federation.
+  packages: read # Allows reading the published GHCR packages
 
 jobs:
   test:
@@ -53,6 +55,7 @@ jobs:
           registry1Username: ${{ secrets.IRON_BANK_ROBOT_USERNAME }}
           registry1Password: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
           ghToken: ${{ secrets.GITHUB_TOKEN }}
+          chainguardIdentity: ${{ secrets.CHAINGUARD_IDENTITY }}
 
       - name: Test a single source package
         if: ${{ inputs.package != 'all' && inputs.test_type == 'install' }}
@@ -61,6 +64,17 @@ jobs:
       - name: Test UDS Core Install
         if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
         run: uds run test-uds-core --set FLAVOR=${{ inputs.flavor }} --no-progress
+
+      - name: Validate UDS Core Compliance
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
+        run: uds run test-compliance-validate --no-progress
+
+      - name: Upload Assessment
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
+        uses: actions/upload-artifact@0b2256b8c012f0828dc542b3febcab082c67f72b # v4.3.4
+        with:
+          name: ${{ inputs.flavor }}-assessment-results
+          path: ./compliance/oscal-assessment-results.yaml
 
       - name: Test UDS Core Upgrade
         if: ${{ inputs.package == 'all' && inputs.test_type == 'upgrade' }}

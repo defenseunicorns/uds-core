@@ -1,3 +1,7 @@
+# Sets the global DNS service to the service created in this chart
+global:
+  dnsService: "uds-loki-dns"
+
 # -- Overrides the chart's name
 nameOverride: loki
 # -- Overrides the chart's computed fullname
@@ -11,6 +15,10 @@ memberlist:
     publishNotReadyAddresses: true
 
 loki:
+  configStorageType: Secret
+  # Disable telemetry that doesn't function in the airgap
+  analytics:
+    reporting_enabled: false
   storage:
     bucketNames:
       chunks: uds
@@ -25,9 +33,12 @@ loki:
       insecure: false
   commonConfig:
     replication_factor: 1
+  limits_config:
+    split_queries_by_interval: "30m"
+  query_scheduler:
+    max_outstanding_requests_per_tenant: 32000 # This is the default in Loki 3.0
   extraMemberlistConfig:
     rejoin_interval: 120s
-  # Should authentication be enabled
   auth_enabled: false
   # -- Additional storage config
   storage_config:
@@ -53,11 +64,6 @@ loki:
 enterprise:
   # Enable enterprise features, license must be provided
   enabled: false
-  # -- Configuration for `tokengen` target
-  tokengen:
-    # -- Additional annotations for the `tokengen` Job
-    annotations:
-      sidecar.istio.io/inject: "false"
 # RBAC configuration
 rbac:
   # -- If pspEnabled true, a PodSecurityPolicy is created for K8s that use psp.

@@ -7,121 +7,178 @@ import { GenericKind, RegisterKind } from "kubernetes-fluent-client";
  */
 export class ServiceMonitor extends GenericKind {
   /**
-   * Specification of desired Service selection for target discovery by Prometheus.
+   * Specification of desired Service selection for target discovery by
+   * Prometheus.
    */
   spec?: Spec;
 }
 
 /**
- * Specification of desired Service selection for target discovery by Prometheus.
+ * Specification of desired Service selection for target discovery by
+ * Prometheus.
  */
 export interface Spec {
   /**
-   * `attachMetadata` defines additional metadata which is added to the discovered targets.
+   * `attachMetadata` defines additional metadata which is added to the
+   * discovered targets.
+   *
+   *
    * It requires Prometheus >= v2.37.0.
    */
   attachMetadata?: AttachMetadata;
+  /**
+   * When defined, bodySizeLimit specifies a job level limit on the size
+   * of uncompressed response body that will be accepted by Prometheus.
+   *
+   *
+   * It requires Prometheus >= v2.28.0.
+   */
+  bodySizeLimit?: string;
   /**
    * List of endpoints part of this ServiceMonitor.
    */
   endpoints?: Endpoint[];
   /**
-   * `jobLabel` selects the label from the associated Kubernetes `Service` object which will
-   * be used as the `job` label for all metrics.
-   * For example if `jobLabel` is set to `foo` and the Kubernetes `Service` object is labeled
-   * with `foo: bar`, then Prometheus adds the `job="bar"` label to all ingested metrics.
-   * If the value of this field is empty or if the label doesn't exist for the given Service,
-   * the `job` label of the metrics defaults to the name of the associated Kubernetes
-   * `Service`.
+   * `jobLabel` selects the label from the associated Kubernetes `Service`
+   * object which will be used as the `job` label for all metrics.
+   *
+   *
+   * For example if `jobLabel` is set to `foo` and the Kubernetes `Service`
+   * object is labeled with `foo: bar`, then Prometheus adds the `job="bar"`
+   * label to all ingested metrics.
+   *
+   *
+   * If the value of this field is empty or if the label doesn't exist for
+   * the given Service, the `job` label of the metrics defaults to the name
+   * of the associated Kubernetes `Service`.
    */
   jobLabel?: string;
   /**
-   * Per-scrape limit on the number of targets dropped by relabeling that will be kept in
-   * memory. 0 means no limit.
+   * Per-scrape limit on the number of targets dropped by relabeling
+   * that will be kept in memory. 0 means no limit.
+   *
+   *
    * It requires Prometheus >= v2.47.0.
    */
   keepDroppedTargets?: number;
   /**
    * Per-scrape limit on number of labels that will be accepted for a sample.
+   *
+   *
    * It requires Prometheus >= v2.27.0.
    */
   labelLimit?: number;
   /**
    * Per-scrape limit on length of labels name that will be accepted for a sample.
+   *
+   *
    * It requires Prometheus >= v2.27.0.
    */
   labelNameLengthLimit?: number;
   /**
    * Per-scrape limit on length of labels value that will be accepted for a sample.
+   *
+   *
    * It requires Prometheus >= v2.27.0.
    */
   labelValueLengthLimit?: number;
   /**
-   * Selector to select which namespaces the Kubernetes `Endpoints` objects are discovered
-   * from.
+   * Selector to select which namespaces the Kubernetes `Endpoints` objects
+   * are discovered from.
    */
   namespaceSelector?: NamespaceSelector;
   /**
-   * `podTargetLabels` defines the labels which are transferred from the associated Kubernetes
-   * `Pod` object onto the ingested metrics.
+   * `podTargetLabels` defines the labels which are transferred from the
+   * associated Kubernetes `Pod` object onto the ingested metrics.
    */
   podTargetLabels?: string[];
   /**
-   * `sampleLimit` defines a per-scrape limit on the number of scraped samples that will be
-   * accepted.
+   * `sampleLimit` defines a per-scrape limit on the number of scraped samples
+   * that will be accepted.
    */
   sampleLimit?: number;
+  /**
+   * The scrape class to apply.
+   */
+  scrapeClass?: string;
+  /**
+   * `scrapeProtocols` defines the protocols to negotiate during a scrape. It tells clients
+   * the
+   * protocols supported by Prometheus in order of preference (from most to least
+   * preferred).
+   *
+   *
+   * If unset, Prometheus uses its default value.
+   *
+   *
+   * It requires Prometheus >= v2.49.0.
+   */
+  scrapeProtocols?: ScrapeProtocol[];
   /**
    * Label selector to select the Kubernetes `Endpoints` objects.
    */
   selector: Selector;
   /**
-   * `targetLabels` defines the labels which are transferred from the associated Kubernetes
-   * `Service` object onto the ingested metrics.
+   * `targetLabels` defines the labels which are transferred from the
+   * associated Kubernetes `Service` object onto the ingested metrics.
    */
   targetLabels?: string[];
   /**
-   * `targetLimit` defines a limit on the number of scraped targets that will be accepted.
+   * `targetLimit` defines a limit on the number of scraped targets that will
+   * be accepted.
    */
   targetLimit?: number;
 }
 
 /**
- * `attachMetadata` defines additional metadata which is added to the discovered targets.
+ * `attachMetadata` defines additional metadata which is added to the
+ * discovered targets.
+ *
+ *
  * It requires Prometheus >= v2.37.0.
  */
 export interface AttachMetadata {
   /**
-   * When set to true, Prometheus must have the `get` permission on the `Nodes` objects.
+   * When set to true, Prometheus must have the `get` permission on the
+   * `Nodes` objects.
    */
   node?: boolean;
 }
 
 /**
- * Endpoint defines an endpoint serving Prometheus metrics to be scraped by Prometheus.
+ * Endpoint defines an endpoint serving Prometheus metrics to be scraped by
+ * Prometheus.
  */
 export interface Endpoint {
   /**
-   * `authorization` configures the Authorization header credentials to use when scraping the
-   * target.
+   * `authorization` configures the Authorization header credentials to use when
+   * scraping the target.
+   *
+   *
    * Cannot be set at the same time as `basicAuth`, or `oauth2`.
    */
   authorization?: Authorization;
   /**
-   * `basicAuth` configures the Basic Authentication credentials to use when scraping the
-   * target.
+   * `basicAuth` configures the Basic Authentication credentials to use when
+   * scraping the target.
+   *
+   *
    * Cannot be set at the same time as `authorization`, or `oauth2`.
    */
   basicAuth?: BasicAuth;
   /**
    * File to read bearer token for scraping the target.
+   *
+   *
    * Deprecated: use `authorization` instead.
    */
   bearerTokenFile?: string;
   /**
-   * `bearerTokenSecret` specifies a key of a Secret containing the bearer token for scraping
-   * targets. The secret needs to be in the same namespace as the ServiceMonitor object and
-   * readable by the Prometheus Operator.
+   * `bearerTokenSecret` specifies a key of a Secret containing the bearer
+   * token for scraping targets. The secret needs to be in the same namespace
+   * as the ServiceMonitor object and readable by the Prometheus Operator.
+   *
+   *
    * Deprecated: use `authorization` instead.
    */
   bearerTokenSecret?: BearerTokenSecret;
@@ -130,39 +187,50 @@ export interface Endpoint {
    */
   enableHttp2?: boolean;
   /**
-   * When true, the pods which are not running (e.g. either in Failed or Succeeded state) are
-   * dropped during the target discovery.
+   * When true, the pods which are not running (e.g. either in Failed or
+   * Succeeded state) are dropped during the target discovery.
+   *
+   *
    * If unset, the filtering is enabled.
+   *
+   *
    * More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-phase
    */
   filterRunning?: boolean;
   /**
-   * `followRedirects` defines whether the scrape requests should follow HTTP 3xx redirects.
+   * `followRedirects` defines whether the scrape requests should follow HTTP
+   * 3xx redirects.
    */
   followRedirects?: boolean;
   /**
-   * When true, `honorLabels` preserves the metric's labels when they collide with the
-   * target's labels.
+   * When true, `honorLabels` preserves the metric's labels when they collide
+   * with the target's labels.
    */
   honorLabels?: boolean;
   /**
-   * `honorTimestamps` controls whether Prometheus preserves the timestamps when exposed by
-   * the target.
+   * `honorTimestamps` controls whether Prometheus preserves the timestamps
+   * when exposed by the target.
    */
   honorTimestamps?: boolean;
   /**
    * Interval at which Prometheus scrapes the metrics from the target.
+   *
+   *
    * If empty, Prometheus uses the global scrape interval.
    */
   interval?: string;
   /**
-   * `metricRelabelings` configures the relabeling rules to apply to the samples before
-   * ingestion.
+   * `metricRelabelings` configures the relabeling rules to apply to the
+   * samples before ingestion.
    */
   metricRelabelings?: MetricRelabeling[];
   /**
    * `oauth2` configures the OAuth2 settings to use when scraping the target.
+   *
+   *
    * It requires Prometheus >= 2.27.0.
+   *
+   *
    * Cannot be set at the same time as `authorization`, or `basicAuth`.
    */
   oauth2?: Oauth2;
@@ -172,44 +240,60 @@ export interface Endpoint {
   params?: { [key: string]: string[] };
   /**
    * HTTP path from which to scrape for metrics.
+   *
+   *
    * If empty, Prometheus uses the default value (e.g. `/metrics`).
    */
   path?: string;
   /**
    * Name of the Service port which this endpoint refers to.
+   *
+   *
    * It takes precedence over `targetPort`.
    */
   port?: string;
   /**
-   * `proxyURL` configures the HTTP Proxy URL (e.g. "http://proxyserver:2195") to go through
-   * when scraping the target.
+   * `proxyURL` configures the HTTP Proxy URL (e.g.
+   * "http://proxyserver:2195") to go through when scraping the target.
    */
   proxyUrl?: string;
   /**
-   * `relabelings` configures the relabeling rules to apply the target's metadata labels.
+   * `relabelings` configures the relabeling rules to apply the target's
+   * metadata labels.
+   *
+   *
    * The Operator automatically adds relabelings for a few standard Kubernetes fields.
+   *
+   *
    * The original scrape job's name is available via the `__tmp_prometheus_job_name` label.
+   *
+   *
    * More info:
    * https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config
    */
   relabelings?: Relabeling[];
   /**
    * HTTP scheme to use for scraping.
-   * `http` and `https` are the expected values unless you rewrite the `__scheme__` label via
-   * relabeling.
+   *
+   *
+   * `http` and `https` are the expected values unless you rewrite the
+   * `__scheme__` label via relabeling.
+   *
+   *
    * If empty, Prometheus uses the default value `http`.
    */
   scheme?: Scheme;
   /**
    * Timeout after which Prometheus considers the scrape to be failed.
-   * If empty, Prometheus uses the global scrape timeout unless it is less than the target's
-   * scrape interval value in which the latter is used.
+   *
+   *
+   * If empty, Prometheus uses the global scrape timeout unless it is less
+   * than the target's scrape interval value in which the latter is used.
    */
   scrapeTimeout?: string;
   /**
-   * Name or number of the target port of the `Pod` object behind the Service, the port must
-   * be specified with container port property.
-   * Deprecated: use `port` instead.
+   * Name or number of the target port of the `Pod` object behind the
+   * Service. The port must be specified with the container's port property.
    */
   targetPort?: number | string;
   /**
@@ -217,17 +301,21 @@ export interface Endpoint {
    */
   tlsConfig?: TLSConfig;
   /**
-   * `trackTimestampsStaleness` defines whether Prometheus tracks staleness of the metrics
-   * that have an explicit timestamp present in scraped data. Has no effect if
-   * `honorTimestamps` is false.
+   * `trackTimestampsStaleness` defines whether Prometheus tracks staleness of
+   * the metrics that have an explicit timestamp present in scraped data.
+   * Has no effect if `honorTimestamps` is false.
+   *
+   *
    * It requires Prometheus >= v2.48.0.
    */
   trackTimestampsStaleness?: boolean;
 }
 
 /**
- * `authorization` configures the Authorization header credentials to use when scraping the
- * target.
+ * `authorization` configures the Authorization header credentials to use when
+ * scraping the target.
+ *
+ *
  * Cannot be set at the same time as `basicAuth`, or `oauth2`.
  */
 export interface Authorization {
@@ -238,7 +326,11 @@ export interface Authorization {
   credentials?: Credentials;
   /**
    * Defines the authentication type. The value is case-insensitive.
+   *
+   *
    * "Basic" is not a supported value.
+   *
+   *
    * Default: "Bearer"
    */
   type?: string;
@@ -254,9 +346,14 @@ export interface Credentials {
    */
   key: string;
   /**
-   * Name of the referent. More info:
-   * https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add
-   * other useful fields. apiVersion, kind, uid?
+   * Name of the referent.
+   * This field is effectively required, but due to backwards compatibility is
+   * allowed to be empty. Instances of this type with an empty value here are
+   * almost certainly wrong.
+   * TODO: Add other useful fields. apiVersion, kind, uid?
+   * More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+   * TODO: Drop `kubebuilder:default` when controller-gen doesn't need it
+   * https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
    */
   name?: string;
   /**
@@ -266,23 +363,28 @@ export interface Credentials {
 }
 
 /**
- * `basicAuth` configures the Basic Authentication credentials to use when scraping the
- * target.
+ * `basicAuth` configures the Basic Authentication credentials to use when
+ * scraping the target.
+ *
+ *
  * Cannot be set at the same time as `authorization`, or `oauth2`.
  */
 export interface BasicAuth {
   /**
-   * `password` specifies a key of a Secret containing the password for authentication.
+   * `password` specifies a key of a Secret containing the password for
+   * authentication.
    */
   password?: Password;
   /**
-   * `username` specifies a key of a Secret containing the username for authentication.
+   * `username` specifies a key of a Secret containing the username for
+   * authentication.
    */
   username?: Username;
 }
 
 /**
- * `password` specifies a key of a Secret containing the password for authentication.
+ * `password` specifies a key of a Secret containing the password for
+ * authentication.
  */
 export interface Password {
   /**
@@ -290,9 +392,14 @@ export interface Password {
    */
   key: string;
   /**
-   * Name of the referent. More info:
-   * https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add
-   * other useful fields. apiVersion, kind, uid?
+   * Name of the referent.
+   * This field is effectively required, but due to backwards compatibility is
+   * allowed to be empty. Instances of this type with an empty value here are
+   * almost certainly wrong.
+   * TODO: Add other useful fields. apiVersion, kind, uid?
+   * More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+   * TODO: Drop `kubebuilder:default` when controller-gen doesn't need it
+   * https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
    */
   name?: string;
   /**
@@ -302,7 +409,8 @@ export interface Password {
 }
 
 /**
- * `username` specifies a key of a Secret containing the username for authentication.
+ * `username` specifies a key of a Secret containing the username for
+ * authentication.
  */
 export interface Username {
   /**
@@ -310,9 +418,14 @@ export interface Username {
    */
   key: string;
   /**
-   * Name of the referent. More info:
-   * https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add
-   * other useful fields. apiVersion, kind, uid?
+   * Name of the referent.
+   * This field is effectively required, but due to backwards compatibility is
+   * allowed to be empty. Instances of this type with an empty value here are
+   * almost certainly wrong.
+   * TODO: Add other useful fields. apiVersion, kind, uid?
+   * More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+   * TODO: Drop `kubebuilder:default` when controller-gen doesn't need it
+   * https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
    */
   name?: string;
   /**
@@ -322,9 +435,11 @@ export interface Username {
 }
 
 /**
- * `bearerTokenSecret` specifies a key of a Secret containing the bearer token for scraping
- * targets. The secret needs to be in the same namespace as the ServiceMonitor object and
- * readable by the Prometheus Operator.
+ * `bearerTokenSecret` specifies a key of a Secret containing the bearer
+ * token for scraping targets. The secret needs to be in the same namespace
+ * as the ServiceMonitor object and readable by the Prometheus Operator.
+ *
+ *
  * Deprecated: use `authorization` instead.
  */
 export interface BearerTokenSecret {
@@ -333,9 +448,14 @@ export interface BearerTokenSecret {
    */
   key: string;
   /**
-   * Name of the referent. More info:
-   * https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add
-   * other useful fields. apiVersion, kind, uid?
+   * Name of the referent.
+   * This field is effectively required, but due to backwards compatibility is
+   * allowed to be empty. Instances of this type with an empty value here are
+   * almost certainly wrong.
+   * TODO: Add other useful fields. apiVersion, kind, uid?
+   * More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+   * TODO: Drop `kubebuilder:default` when controller-gen doesn't need it
+   * https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
    */
   name?: string;
   /**
@@ -345,21 +465,29 @@ export interface BearerTokenSecret {
 }
 
 /**
- * RelabelConfig allows dynamic rewriting of the label set for targets, alerts, scraped
- * samples and remote write samples.
+ * RelabelConfig allows dynamic rewriting of the label set for targets, alerts,
+ * scraped samples and remote write samples.
+ *
+ *
  * More info:
  * https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config
  */
 export interface MetricRelabeling {
   /**
    * Action to perform based on the regex matching.
-   * `Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0. `DropEqual` and
-   * `KeepEqual` actions require Prometheus >= v2.41.0.
+   *
+   *
+   * `Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.
+   * `DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.
+   *
+   *
    * Default: "Replace"
    */
   action?: Action;
   /**
    * Modulus to take of the hash of the source label values.
+   *
+   *
    * Only applicable when the action is `HashMod`.
    */
   modulus?: number;
@@ -368,8 +496,10 @@ export interface MetricRelabeling {
    */
   regex?: string;
   /**
-   * Replacement value against which a Replace action is performed if the regular expression
-   * matches.
+   * Replacement value against which a Replace action is performed if the
+   * regular expression matches.
+   *
+   *
    * Regex capture groups are available.
    */
   replacement?: string;
@@ -378,14 +508,19 @@ export interface MetricRelabeling {
    */
   separator?: string;
   /**
-   * The source labels select values from existing labels. Their content is concatenated using
-   * the configured Separator and matched against the configured regular expression.
+   * The source labels select values from existing labels. Their content is
+   * concatenated using the configured Separator and matched against the
+   * configured regular expression.
    */
   sourceLabels?: string[];
   /**
    * Label to which the resulting string is written in a replacement.
-   * It is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`, `KeepEqual` and
-   * `DropEqual` actions.
+   *
+   *
+   * It is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`,
+   * `KeepEqual` and `DropEqual` actions.
+   *
+   *
    * Regex capture groups are available.
    */
   targetLabel?: string;
@@ -393,8 +528,12 @@ export interface MetricRelabeling {
 
 /**
  * Action to perform based on the regex matching.
- * `Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0. `DropEqual` and
- * `KeepEqual` actions require Prometheus >= v2.41.0.
+ *
+ *
+ * `Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.
+ * `DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.
+ *
+ *
  * Default: "Replace"
  */
 export enum Action {
@@ -424,20 +563,27 @@ export enum Action {
 
 /**
  * `oauth2` configures the OAuth2 settings to use when scraping the target.
+ *
+ *
  * It requires Prometheus >= 2.27.0.
+ *
+ *
  * Cannot be set at the same time as `authorization`, or `basicAuth`.
  */
 export interface Oauth2 {
   /**
-   * `clientId` specifies a key of a Secret or ConfigMap containing the OAuth2 client's ID.
+   * `clientId` specifies a key of a Secret or ConfigMap containing the
+   * OAuth2 client's ID.
    */
   clientId: ClientID;
   /**
-   * `clientSecret` specifies a key of a Secret containing the OAuth2 client's secret.
+   * `clientSecret` specifies a key of a Secret containing the OAuth2
+   * client's secret.
    */
   clientSecret: ClientSecret;
   /**
-   * `endpointParams` configures the HTTP parameters to append to the token URL.
+   * `endpointParams` configures the HTTP parameters to append to the token
+   * URL.
    */
   endpointParams?: { [key: string]: string };
   /**
@@ -451,7 +597,8 @@ export interface Oauth2 {
 }
 
 /**
- * `clientId` specifies a key of a Secret or ConfigMap containing the OAuth2 client's ID.
+ * `clientId` specifies a key of a Secret or ConfigMap containing the
+ * OAuth2 client's ID.
  */
 export interface ClientID {
   /**
@@ -473,9 +620,14 @@ export interface ClientIDConfigMap {
    */
   key: string;
   /**
-   * Name of the referent. More info:
-   * https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add
-   * other useful fields. apiVersion, kind, uid?
+   * Name of the referent.
+   * This field is effectively required, but due to backwards compatibility is
+   * allowed to be empty. Instances of this type with an empty value here are
+   * almost certainly wrong.
+   * TODO: Add other useful fields. apiVersion, kind, uid?
+   * More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+   * TODO: Drop `kubebuilder:default` when controller-gen doesn't need it
+   * https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
    */
   name?: string;
   /**
@@ -493,9 +645,14 @@ export interface ClientIDSecret {
    */
   key: string;
   /**
-   * Name of the referent. More info:
-   * https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add
-   * other useful fields. apiVersion, kind, uid?
+   * Name of the referent.
+   * This field is effectively required, but due to backwards compatibility is
+   * allowed to be empty. Instances of this type with an empty value here are
+   * almost certainly wrong.
+   * TODO: Add other useful fields. apiVersion, kind, uid?
+   * More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+   * TODO: Drop `kubebuilder:default` when controller-gen doesn't need it
+   * https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
    */
   name?: string;
   /**
@@ -505,7 +662,8 @@ export interface ClientIDSecret {
 }
 
 /**
- * `clientSecret` specifies a key of a Secret containing the OAuth2 client's secret.
+ * `clientSecret` specifies a key of a Secret containing the OAuth2
+ * client's secret.
  */
 export interface ClientSecret {
   /**
@@ -513,9 +671,14 @@ export interface ClientSecret {
    */
   key: string;
   /**
-   * Name of the referent. More info:
-   * https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add
-   * other useful fields. apiVersion, kind, uid?
+   * Name of the referent.
+   * This field is effectively required, but due to backwards compatibility is
+   * allowed to be empty. Instances of this type with an empty value here are
+   * almost certainly wrong.
+   * TODO: Add other useful fields. apiVersion, kind, uid?
+   * More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+   * TODO: Drop `kubebuilder:default` when controller-gen doesn't need it
+   * https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
    */
   name?: string;
   /**
@@ -525,21 +688,29 @@ export interface ClientSecret {
 }
 
 /**
- * RelabelConfig allows dynamic rewriting of the label set for targets, alerts, scraped
- * samples and remote write samples.
+ * RelabelConfig allows dynamic rewriting of the label set for targets, alerts,
+ * scraped samples and remote write samples.
+ *
+ *
  * More info:
  * https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config
  */
 export interface Relabeling {
   /**
    * Action to perform based on the regex matching.
-   * `Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0. `DropEqual` and
-   * `KeepEqual` actions require Prometheus >= v2.41.0.
+   *
+   *
+   * `Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.
+   * `DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.
+   *
+   *
    * Default: "Replace"
    */
   action?: Action;
   /**
    * Modulus to take of the hash of the source label values.
+   *
+   *
    * Only applicable when the action is `HashMod`.
    */
   modulus?: number;
@@ -548,8 +719,10 @@ export interface Relabeling {
    */
   regex?: string;
   /**
-   * Replacement value against which a Replace action is performed if the regular expression
-   * matches.
+   * Replacement value against which a Replace action is performed if the
+   * regular expression matches.
+   *
+   *
    * Regex capture groups are available.
    */
   replacement?: string;
@@ -558,14 +731,19 @@ export interface Relabeling {
    */
   separator?: string;
   /**
-   * The source labels select values from existing labels. Their content is concatenated using
-   * the configured Separator and matched against the configured regular expression.
+   * The source labels select values from existing labels. Their content is
+   * concatenated using the configured Separator and matched against the
+   * configured regular expression.
    */
   sourceLabels?: string[];
   /**
    * Label to which the resulting string is written in a replacement.
-   * It is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`, `KeepEqual` and
-   * `DropEqual` actions.
+   *
+   *
+   * It is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`,
+   * `KeepEqual` and `DropEqual` actions.
+   *
+   *
    * Regex capture groups are available.
    */
   targetLabel?: string;
@@ -573,8 +751,12 @@ export interface Relabeling {
 
 /**
  * HTTP scheme to use for scraping.
- * `http` and `https` are the expected values unless you rewrite the `__scheme__` label via
- * relabeling.
+ *
+ *
+ * `http` and `https` are the expected values unless you rewrite the
+ * `__scheme__` label via relabeling.
+ *
+ *
  * If empty, Prometheus uses the default value `http`.
  */
 export enum Scheme {
@@ -643,9 +825,14 @@ export interface CAConfigMap {
    */
   key: string;
   /**
-   * Name of the referent. More info:
-   * https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add
-   * other useful fields. apiVersion, kind, uid?
+   * Name of the referent.
+   * This field is effectively required, but due to backwards compatibility is
+   * allowed to be empty. Instances of this type with an empty value here are
+   * almost certainly wrong.
+   * TODO: Add other useful fields. apiVersion, kind, uid?
+   * More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+   * TODO: Drop `kubebuilder:default` when controller-gen doesn't need it
+   * https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
    */
   name?: string;
   /**
@@ -663,9 +850,14 @@ export interface CASecret {
    */
   key: string;
   /**
-   * Name of the referent. More info:
-   * https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add
-   * other useful fields. apiVersion, kind, uid?
+   * Name of the referent.
+   * This field is effectively required, but due to backwards compatibility is
+   * allowed to be empty. Instances of this type with an empty value here are
+   * almost certainly wrong.
+   * TODO: Add other useful fields. apiVersion, kind, uid?
+   * More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+   * TODO: Drop `kubebuilder:default` when controller-gen doesn't need it
+   * https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
    */
   name?: string;
   /**
@@ -697,9 +889,14 @@ export interface CERTConfigMap {
    */
   key: string;
   /**
-   * Name of the referent. More info:
-   * https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add
-   * other useful fields. apiVersion, kind, uid?
+   * Name of the referent.
+   * This field is effectively required, but due to backwards compatibility is
+   * allowed to be empty. Instances of this type with an empty value here are
+   * almost certainly wrong.
+   * TODO: Add other useful fields. apiVersion, kind, uid?
+   * More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+   * TODO: Drop `kubebuilder:default` when controller-gen doesn't need it
+   * https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
    */
   name?: string;
   /**
@@ -717,9 +914,14 @@ export interface CERTSecret {
    */
   key: string;
   /**
-   * Name of the referent. More info:
-   * https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add
-   * other useful fields. apiVersion, kind, uid?
+   * Name of the referent.
+   * This field is effectively required, but due to backwards compatibility is
+   * allowed to be empty. Instances of this type with an empty value here are
+   * almost certainly wrong.
+   * TODO: Add other useful fields. apiVersion, kind, uid?
+   * More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+   * TODO: Drop `kubebuilder:default` when controller-gen doesn't need it
+   * https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
    */
   name?: string;
   /**
@@ -737,9 +939,14 @@ export interface KeySecret {
    */
   key: string;
   /**
-   * Name of the referent. More info:
-   * https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add
-   * other useful fields. apiVersion, kind, uid?
+   * Name of the referent.
+   * This field is effectively required, but due to backwards compatibility is
+   * allowed to be empty. Instances of this type with an empty value here are
+   * almost certainly wrong.
+   * TODO: Add other useful fields. apiVersion, kind, uid?
+   * More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+   * TODO: Drop `kubebuilder:default` when controller-gen doesn't need it
+   * https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
    */
   name?: string;
   /**
@@ -749,19 +956,34 @@ export interface KeySecret {
 }
 
 /**
- * Selector to select which namespaces the Kubernetes `Endpoints` objects are discovered
- * from.
+ * Selector to select which namespaces the Kubernetes `Endpoints` objects
+ * are discovered from.
  */
 export interface NamespaceSelector {
   /**
-   * Boolean describing whether all namespaces are selected in contrast to a list restricting
-   * them.
+   * Boolean describing whether all namespaces are selected in contrast to a
+   * list restricting them.
    */
   any?: boolean;
   /**
    * List of namespace names to select from.
    */
   matchNames?: string[];
+}
+
+/**
+ * ScrapeProtocol represents a protocol used by Prometheus for scraping metrics.
+ * Supported values are:
+ * * `OpenMetricsText0.0.1`
+ * * `OpenMetricsText1.0.0`
+ * * `PrometheusProto`
+ * * `PrometheusText0.0.4`
+ */
+export enum ScrapeProtocol {
+  OpenMetricsText001 = "OpenMetricsText0.0.1",
+  OpenMetricsText100 = "OpenMetricsText1.0.0",
+  PrometheusProto = "PrometheusProto",
+  PrometheusText004 = "PrometheusText0.0.4",
 }
 
 /**
@@ -773,16 +995,17 @@ export interface Selector {
    */
   matchExpressions?: MatchExpression[];
   /**
-   * matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is
-   * equivalent to an element of matchExpressions, whose key field is "key", the operator is
-   * "In", and the values array contains only "value". The requirements are ANDed.
+   * matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+   * map is equivalent to an element of matchExpressions, whose key field is "key", the
+   * operator is "In", and the values array contains only "value". The requirements are ANDed.
    */
   matchLabels?: { [key: string]: string };
 }
 
 /**
  * A label selector requirement is a selector that contains values, a key, and an operator
- * that relates the key and values.
+ * that
+ * relates the key and values.
  */
 export interface MatchExpression {
   /**
@@ -790,14 +1013,15 @@ export interface MatchExpression {
    */
   key: string;
   /**
-   * operator represents a key's relationship to a set of values. Valid operators are In,
-   * NotIn, Exists and DoesNotExist.
+   * operator represents a key's relationship to a set of values.
+   * Valid operators are In, NotIn, Exists and DoesNotExist.
    */
   operator: string;
   /**
-   * values is an array of string values. If the operator is In or NotIn, the values array
-   * must be non-empty. If the operator is Exists or DoesNotExist, the values array must be
-   * empty. This array is replaced during a strategic merge patch.
+   * values is an array of string values. If the operator is In or NotIn,
+   * the values array must be non-empty. If the operator is Exists or DoesNotExist,
+   * the values array must be empty. This array is replaced during a strategic
+   * merge patch.
    */
   values?: string[];
 }
@@ -806,4 +1030,5 @@ RegisterKind(ServiceMonitor, {
   group: "monitoring.coreos.com",
   version: "v1",
   kind: "ServiceMonitor",
+  plural: "servicemonitors",
 });

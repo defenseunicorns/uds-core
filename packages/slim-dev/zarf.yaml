@@ -4,8 +4,13 @@ metadata:
   description: "UDS Core (Istio, UDS Operator and Keycloak)"
   authors: "Defense Unicorns - Product"
   # x-release-please-start-version
-  version: "0.23.0"
+  version: "0.24.1"
   # x-release-please-end
+
+variables:
+  - name: CA_CERT
+    description: "Base64 encoded CA cert that signed the domain wildcard certs used for Istio ingress"
+    default: ""
 
 components:
   # CRDs
@@ -31,7 +36,7 @@ components:
       path: ../../src/istio
 
   - name: istio-passthrough-gateway
-    required: true
+    required: false
     import:
       path: ../../src/istio
 

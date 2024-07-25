@@ -1,8 +1,12 @@
 import { V1NetworkPolicyPeer } from "@kubernetes/client-node";
-import { K8s, kind, Log, R } from "pepr";
+import { K8s, kind, R } from "pepr";
 
+import { Component, setupLogger } from "../../../../logger";
 import { RemoteGenerated } from "../../../crd";
 import { anywhere } from "./anywhere";
+
+// configure subproject logger
+const log = setupLogger(Component.OPERATOR_GENERATORS);
 
 // This is an in-memory cache of the API server CIDR
 let apiServerPeers: V1NetworkPolicyPeer[];
@@ -27,7 +31,7 @@ export function kubeAPI() {
   }
 
   // Otherwise, log a warning and default to 0.0.0.0/0 until the EndpointSlice is updated
-  Log.warn("Unable to get API server CIDR, defaulting to 0.0.0.0/0");
+  log.warn("Unable to get API server CIDR, defaulting to 0.0.0.0/0");
   return [anywhere];
 }
 
@@ -37,14 +41,14 @@ export function kubeAPI() {
  */
 export async function updateAPIServerCIDRFromEndpointSlice(slice: kind.EndpointSlice) {
   try {
-    Log.debug(
+    log.debug(
       "Processing watch for endpointslices, getting k8s service for updating API server CIDR",
     );
     const svc = await K8s(kind.Service).InNamespace("default").Get("kubernetes");
     await updateAPIServerCIDR(slice, svc);
   } catch (err) {
     const msg = "Failed to update network policies from endpoint slice watch";
-    Log.error({ err }, msg);
+    log.error({ err }, msg);
   }
 }
 
@@ -54,14 +58,14 @@ export async function updateAPIServerCIDRFromEndpointSlice(slice: kind.EndpointS
  */
 export async function updateAPIServerCIDRFromService(svc: kind.Service) {
   try {
-    Log.debug(
+    log.debug(
       "Processing watch for api service, getting endpoint slices for updating API server CIDR",
     );
     const slice = await K8s(kind.EndpointSlice).InNamespace("default").Get("kubernetes");
     await updateAPIServerCIDR(slice, svc);
   } catch (err) {
     const msg = "Failed to update network policies from api service watch";
-    Log.error({ err }, msg);
+    log.error({ err }, msg);
   }
 }
 
@@ -105,7 +109,7 @@ export async function updateAPIServerCIDR(slice: kind.EndpointSlice, svc: kind.S
         // in case another EndpointSlice is updated before this one
         netPol.spec!.egress![0].to = apiServerPeers;
 
-        Log.debug(`Updating ${netPol.metadata!.namespace}/${netPol.metadata!.name}`);
+        log.debug(`Updating ${netPol.metadata!.namespace}/${netPol.metadata!.name}`);
         await K8s(kind.NetworkPolicy).Apply(netPol);
       }
     }

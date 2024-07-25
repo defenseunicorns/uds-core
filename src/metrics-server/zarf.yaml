@@ -30,3 +30,16 @@ components:
           - "values/registry1-values.yaml"
     images:
       - registry1.dso.mil/ironbank/opensource/kubernetes-sigs/metrics-server:v0.7.1
+
+  - name: metrics-server
+    required: true
+    only:
+      flavor: unicorn
+    import:
+      path: common
+    charts:
+      - name: metrics-server
+        valuesFiles:
+          - "values/unicorn-values.yaml"
+    images:
+      - cgr.dev/du-uds-defenseunicorns/metrics-server-fips:0.7.1

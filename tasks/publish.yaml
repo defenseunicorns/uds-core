@@ -1,22 +1,24 @@
-variables:
-  - name: TARGET_REPO
-    default: ghcr.io/defenseunicorns/packages/uds
+includes:
+  - utils: utils.yaml
 
+variables:
   - name: FLAVOR
     default: upstream
 
   - name: VERSION
     description: "The version of the packages to build"
     # x-release-please-start-version
-    default: "0.23.0"
+    default: "0.24.1"
     # x-release-please-end
 
 tasks:
   - name: standard-package
     description: "Publish the UDS package"
     actions:
+      - task: utils:determine-repo
       - description: "Publish amd64/arm64 packages per flavor"
         cmd: |
+          echo "Publishing package to ${TARGET_REPO}"
           uds zarf package publish build/zarf-package-core-amd64-${VERSION}.tar.zst oci://${TARGET_REPO}
 
           # dont publish arm64 for registry1 since IB images are only amd64
@@ -34,8 +36,10 @@ tasks:
   - name: bundles
     description: "Publish UDS Bundles"
     actions:
+      - task: utils:determine-repo
       - description: "Publish amd64 and arm64 bundles"
         cmd: |
+          echo "Publishing bundles to ${TARGET_REPO}"
           uds publish bundles/k3d-standard/uds-bundle-k3d-*-amd64-${VERSION}.tar.zst oci://${TARGET_REPO}/bundles --no-progress
           uds publish bundles/k3d-standard/uds-bundle-k3d-*-arm64-${VERSION}.tar.zst oci://${TARGET_REPO}/bundles --no-progress
 
