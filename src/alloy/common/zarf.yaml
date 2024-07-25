@@ -21,6 +21,11 @@ components:
           - ../values/values.yaml
     actions:
       onDeploy:
+        before:
+          - description: Remove Promtail Components if necessary
+            cmd: |
+              ./zarf package remove core --components promtail --confirm || true # Ensure this doesn't error on installs
+              ./zarf tools kubectl delete ns promtail || true # Ensure this doesn't error on installs
         after:
           - description: Validate Alloy Package
             maxTotalSeconds: 300
