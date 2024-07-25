@@ -8,22 +8,22 @@ loki:
 
 # -- Export logs to an s3 (or s3-compatible) bucket - https://grafana.com/docs/alloy/latest/reference/components/otelcol/otelcol.exporter.awss3/
 s3Exporter:
-  enabled: true
+  enabled: false
   region: "us-gov-west-1"
-  bucket: "uds"
+  bucket: ""
   # -- Path in the bucket to place logs under
-  path: "otlp-logs"
+  path: ""
   # -- The Role ARN to be assumed
   role_arn: ""
   # -- Modify endpoint if using non-s3 storage (ex: minio)
-  endpoint: "http://minio.uds-dev-stack.svc.cluster.local:9000"
-  s3_force_path_style: true
+  endpoint: ""
+  s3_force_path_style: false
   # -- Log format, acceptable values are otlp_json, otlp_proto, sumo_ic, or body
   # See https://grafana.com/docs/alloy/latest/reference/components/otelcol/otelcol.exporter.awss3/#marshaler-block
   format: "otlp_json"
   # -- Configure with access/secret key - leave blank if using IRSA
-  accessKey: "uds"
-  secretKey: "uds-secret"
+  accessKey: ""
+  secretKey: ""
   # -- Batch size to send to s3
   batch:
     size: 8192 # Upstream default
