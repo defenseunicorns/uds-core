@@ -1,4 +1,4 @@
-import { V1LabelSelector, V1NetworkPolicyPeer, V1NetworkPolicyPort } from "@kubernetes/client-node";
+import { V1NetworkPolicyPeer, V1NetworkPolicyPort } from "@kubernetes/client-node";
 import { kind } from "pepr";
 
 import { Allow, RemoteGenerated } from "../../crd";
@@ -6,6 +6,49 @@ import { anywhere } from "./generators/anywhere";
 import { cloudMetadata } from "./generators/cloudMetadata";
 import { intraNamespace } from "./generators/intraNamespace";
 import { kubeAPI } from "./generators/kubeAPI";
+
+
+function getPeers(policy: Allow): V1NetworkPolicyPeer[] {
+  let peers: V1NetworkPolicyPeer[] = [];
+
+  if (policy.remoteGenerated) {
+    switch (policy.remoteGenerated) {
+      case RemoteGenerated.KubeAPI:
+        peers = kubeAPI();
+        break;
+
+      case RemoteGenerated.CloudMetadata:
+        peers = cloudMetadata;
+        break;
+
+      case RemoteGenerated.IntraNamespace:
+        peers = [intraNamespace];
+        break;
+
+      case RemoteGenerated.Anywhere:
+        peers = [anywhere];
+        break;
+    }
+  } else if (policy.remoteNamespace !== undefined || policy.remoteSelector !== undefined) {
+    const peer: V1NetworkPolicyPeer = {};
+
+    if (policy.remoteNamespace !== "") {
+      peer.namespaceSelector = {
+        matchLabels: { "kubernetes.io/metadata.name": policy.remoteNamespace || "" },
+      };
+    }
+
+    if (policy.remoteSelector !== undefined) {
+      peer.podSelector = {
+        matchLabels: policy.remoteSelector,
+      };
+    }
+
+    peers.push(peer);
+  }
+
+  return peers;
+}
 
 export function generate(namespace: string, policy: Allow): kind.NetworkPolicy {
   // Generate a unique name for the NetworkPolicy
@@ -35,61 +78,8 @@ export function generate(namespace: string, policy: Allow): kind.NetworkPolicy {
     };
   }
 
-  // Create the remote (peer) to match against
-  let peers: V1NetworkPolicyPeer[] = [];
-
-  // Check if either remoteNamespace or remoteSelector is defined
-  if (policy.remoteNamespace !== undefined || policy.remoteSelector !== undefined) {
-    // Initialize a peer object that can contain namespace and/or pod selectors
-    const peer: {
-      namespaceSelector?: V1LabelSelector;
-      podSelector?: V1LabelSelector;
-    } = {};
-
-    // If remoteNamespace is defined, add it to the peer's namespaceSelector
-    if (policy.remoteNamespace !== "") {
-      peer.namespaceSelector = {
-        matchLabels: { "kubernetes.io/metadata.name": policy.remoteNamespace || "" },
-      };
-    }
-
-    // If remoteSelector is defined and not an empty string, add it to the peer's podSelector
-    if (policy.remoteSelector) {
-      peer.podSelector = {
-        matchLabels: policy.remoteSelector,
-      };
-    }
-
-    // Add the peer object to the peers array if it contains valid selectors
-    if (peer.namespaceSelector || peer.podSelector) {
-      peers.push(peer);
-    }
-  }
-
-  // Check if remoteGenerated is set
-  if (policy.remoteGenerated) {
-    // Add the remoteGenerated label
-    generated.metadata!.labels!["uds/generated"] = policy.remoteGenerated;
-
-    // Check if remoteGenerated is set
-    switch (policy.remoteGenerated) {
-      case RemoteGenerated.KubeAPI:
-        peers = kubeAPI();
-        break;
-
-      case RemoteGenerated.CloudMetadata:
-        peers = cloudMetadata;
-        break;
-
-      case RemoteGenerated.IntraNamespace:
-        peers.push(intraNamespace);
-        break;
-
-      case RemoteGenerated.Anywhere:
-        peers = [anywhere];
-        break;
-    }
-  }
+  // Create the network policy peers
+  const peers: V1NetworkPolicyPeer[] = getPeers(policy);
 
   // Define the ports to allow from the ports property
   const ports: V1NetworkPolicyPort[] = (policy.ports ?? []).map(port => ({ port }));
