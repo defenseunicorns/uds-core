@@ -12,6 +12,3 @@ alloy:
         name: uds-config-env
   # Enables support for experimental components
   stabilityLevel: "experimental"
-
-serviceMonitor:
-  enabled: true

@@ -4,6 +4,13 @@ metadata:
   name: alloy
   namespace: {{ .Release.Namespace }}
 spec:
+  monitor:
+    - selector:
+        app.kubernetes.io/name: alloy
+      targetPort: 12345
+      portName: http-metrics
+      description: Metrics
+
   network:
     allow:
       # Permit intra-namespace communication
