@@ -125,6 +125,7 @@ data:
     // Forward all logs to Destinations
     loki.source.file "node_logs" {
       targets    = local.file_match.node_logs.targets
+      legacy_positions_file = "/run/promtail/positions.yaml"
       forward_to = [
         loki.write.default.receiver,
         {{- if .Values.s3Exporter.enabled }}
@@ -137,6 +138,7 @@ data:
     }
     loki.source.file "pod_logs" {
       targets    = local.file_match.pod_logs.targets
+      legacy_positions_file = "/run/promtail/positions.yaml"
       forward_to = [
         loki.write.default.receiver,
         {{- if .Values.s3Exporter.enabled }}
@@ -149,6 +151,7 @@ data:
     }
     loki.source.file "k8s_logs" {
       targets    = local.file_match.k8s_logs.targets
+      legacy_positions_file = "/run/promtail/positions.yaml"
       forward_to = [
         loki.write.default.receiver,
         {{- if .Values.s3Exporter.enabled }}

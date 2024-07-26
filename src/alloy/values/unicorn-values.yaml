@@ -12,4 +12,4 @@ configReloader:
   image:
     registry: cgr.dev
     repository: du-uds-defenseunicorns/configmap-reload-fips
-    tag: "0.12.0"
+    tag: "0.13.1"

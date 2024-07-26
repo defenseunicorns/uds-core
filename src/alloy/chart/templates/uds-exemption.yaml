@@ -18,5 +18,7 @@ spec:
       description: |
         alloy mounts the following hostPaths:
         - `/var/log`: to tail system/pod logs
+        - `/run/alloy`: for Alloy persistent config/write-ahead-log
+        - `/run/promtail`: for accessing Promtail legacy persistent config/write-ahead-log
         Since logs can have sensitive information, it is better to exclude
         alloy from the policy than add the paths as allowable mounts

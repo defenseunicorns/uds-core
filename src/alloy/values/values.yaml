@@ -1,6 +1,24 @@
+controller:
+  volumes:
+    extra:
+      # Mount alloy-storage from a persistent host path
+      - hostPath:
+          path: /run/alloy
+        name: alloy-storage
+      # Mount the legacy promtail positions file so that we can track log scraping pre-alloy
+      - hostPath:
+          path: /run/promtail
+        name: promtail-legacy
+
 alloy:
   mounts:
     varlog: true
+    extra:
+      - mountPath: /run/alloy
+        name: alloy-storage
+      # Mount the legacy promtail positions file so that we can track log scraping pre-alloy
+      - mountPath: /run/promtail
+        name: promtail-legacy
   configMap:
     create: false
     name: alloy-config
@@ -12,3 +30,9 @@ alloy:
         name: uds-config-env
   # Enables support for experimental components
   stabilityLevel: "experimental"
+  # Persist write-ahead-log and other files to hostpath
+  storagePath: /run/alloy
+
+# Disable PodLogs CRD since it will hit the KubeAPI for logs, causing strain on the control plane
+crds:
+  create: false
