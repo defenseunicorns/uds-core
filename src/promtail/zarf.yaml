@@ -47,5 +47,5 @@ components:
         valuesFiles:
           - values/unicorn-values.yaml
     images:
-      - cgr.dev/du-uds-defenseunicorns/configmap-reload-fips:0.12.0
+      - cgr.dev/du-uds-defenseunicorns/configmap-reload-fips:0.13.1
       - cgr.dev/du-uds-defenseunicorns/promtail:3.1.0

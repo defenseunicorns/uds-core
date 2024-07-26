@@ -16,6 +16,9 @@ memberlist:
 
 loki:
   configStorageType: Secret
+  # Disable telemetry that doesn't function in the airgap
+  analytics:
+    reporting_enabled: false
   storage:
     bucketNames:
       chunks: uds
