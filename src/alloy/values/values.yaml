@@ -11,6 +11,10 @@ controller:
         name: promtail-legacy
 
 alloy:
+  # Alloy runs as root to allow reading log files and writing WAL to the host
+  securityContext:
+    runAsUser: 0
+    runAsGroup: 0
   mounts:
     varlog: true
     extra:
