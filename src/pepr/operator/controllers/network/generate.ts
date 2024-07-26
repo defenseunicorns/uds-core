@@ -7,6 +7,10 @@ import { cloudMetadata } from "./generators/cloudMetadata";
 import { intraNamespace } from "./generators/intraNamespace";
 import { kubeAPI } from "./generators/kubeAPI";
 
+function isWildcardNamespace(namespace: string) {
+  return namespace === "" || namespace === "*";
+}
+
 function getPeers(policy: Allow): V1NetworkPolicyPeer[] {
   let peers: V1NetworkPolicyPeer[] = [];
 
@@ -31,12 +35,14 @@ function getPeers(policy: Allow): V1NetworkPolicyPeer[] {
   } else if (policy.remoteNamespace !== undefined || policy.remoteSelector !== undefined) {
     const peer: V1NetworkPolicyPeer = {};
 
-    if (policy.remoteNamespace !== "") {
-      peer.namespaceSelector = {
-        matchLabels: { "kubernetes.io/metadata.name": policy.remoteNamespace || "" },
-      };
-    } else if (policy.remoteNamespace === "") {
-      peer.namespaceSelector = {};
+    if (policy.remoteNamespace !== undefined) {
+      if (isWildcardNamespace(policy.remoteNamespace)) {
+        peer.namespaceSelector = {};
+      } else {
+        peer.namespaceSelector = {
+          matchLabels: { "kubernetes.io/metadata.name": policy.remoteNamespace },
+        };
+      }
     }
 
     if (policy.remoteSelector !== undefined) {

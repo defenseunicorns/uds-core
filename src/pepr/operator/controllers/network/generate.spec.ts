@@ -72,7 +72,7 @@ describe("network policy generate", () => {
 });
 
 describe("network policy generate", () => {
-  it("should generate correct network policy for just remoteNamespace", async () => {
+  it("should generate correct network policy for empty string and wildcard remoteNamespace", async () => {
     const policy = generate("test", {
       description: "test",
       direction: Direction.Egress,
@@ -92,4 +92,22 @@ describe("network policy generate", () => {
       policyTypes: ["Egress"],
     } as kind.NetworkPolicy["spec"]);
   });
+
+  const policyWildcard = generate("test", {
+    description: "test",
+    direction: Direction.Egress,
+    selector: { app: "test" },
+    remoteNamespace: "*",
+  });
+
+  expect(policyWildcard.spec).toEqual({
+    egress: [
+      {
+        ports: [],
+        to: [{ namespaceSelector: {} }],
+      },
+    ],
+    podSelector: { matchLabels: { app: "test" } },
+    policyTypes: ["Egress"],
+  } as kind.NetworkPolicy["spec"]);
 });
