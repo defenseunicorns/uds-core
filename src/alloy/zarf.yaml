@@ -48,4 +48,4 @@ components:
           - values/unicorn-values.yaml
     images:
       - docker.io/grafana/alloy:v1.2.1 # no chainguard image yet
-      - cgr.dev/du-uds-defenseunicorns/configmap-reload-fips:0.12.0
+      - cgr.dev/du-uds-defenseunicorns/configmap-reload-fips:0.13.1

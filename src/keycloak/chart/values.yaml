@@ -61,6 +61,9 @@ devMode: true
 # Enable debug logging for keycloak and quarkus
 debugMode: false
 
+# Enable JSON logging format for Keycloak
+jsonLogFormat: true
+
 # Enable SMTP networkPolicy and config
 smtp:
   enabled: false
