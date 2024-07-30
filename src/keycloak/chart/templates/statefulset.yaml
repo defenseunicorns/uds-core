@@ -136,7 +136,7 @@ spec:
             # java opts for jgroups required for infinispan distributed cache when using the kubernetes stack.
             # https://www.keycloak.org/server/caching
             - name: JAVA_OPTS_APPEND
-              value: -Djgroups.dns.query={{ include "keycloak.fullname" . }}-headless
+              value: -Djgroups.dns.query={{ include "keycloak.fullname" . }}-headless.keycloak.svc.cluster.local
    
             # Postgres database configuration
             - name: KC_DB 
@@ -188,6 +188,12 @@ spec:
           ports:
             - name: http
               containerPort: 8080
+              protocol: TCP
+            - name: tcp
+              containerPort: 7800
+              protocol: TCP
+            - name: tcp-fd
+              containerPort: 57800
               protocol: TCP
           livenessProbe:
             httpGet:

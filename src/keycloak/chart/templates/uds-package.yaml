@@ -70,6 +70,18 @@ spec:
         selector:
           team: uds
         remoteGenerated: Anywhere
+      # HA for keycloak
+      - direction: Ingress
+        remoteGenerated: IntraNamespace
+        ports:
+          - 7800
+          - 57800
+
+      - direction: Egress
+        remoteGenerated: IntraNamespace
+        ports:
+          - 7800
+          - 57800
       {{- end }}
 
     expose:

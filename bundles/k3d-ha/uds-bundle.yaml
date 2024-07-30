@@ -44,7 +44,7 @@ packages:
       - name: DATABASE_USERNAME
       - name: DATABASE_PASSWORD
 
-  - name: core
+  - name: core-slim-dev
     path: ../../build/
     # x-release-please-start-version
     ref: 0.24.1
