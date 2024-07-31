@@ -5,6 +5,9 @@ name: change-me
 domain: "###ZARF_VAR_DOMAIN###"
 
 # tls:
+#   # Set to true to support TLS 1.2, false for TLS 1.3 only
+#   supportTLSV1_2: false
+
 #   # The TLS certificate for the gateway, if not in 'PASSTHROUGH' mode (base64 encoded)
 #   cert: ""
 
