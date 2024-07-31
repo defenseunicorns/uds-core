@@ -72,9 +72,12 @@ spec:
             # This will only import the realm if it does not exist
             - "--import-realm"
             - "--features=preview"
+            {{- if .Values.jsonLogFormat }}
+            - "--log-console-output=json"
+            {{- end }}
           envFrom:
             - secretRef:
-                name: {{ include "keycloak.fullname" . }}-realm-env            
+                name: {{ include "keycloak.fullname" . }}-realm-env
           env:
             # Common configuration
             - name: UDS_DOMAIN
