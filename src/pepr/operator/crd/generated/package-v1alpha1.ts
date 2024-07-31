@@ -550,6 +550,10 @@ export interface Sso {
    */
   protocol?: Protocol;
   /**
+   * Protocol Mappers to configure on the client
+   */
+  protocolMappers?: ProtocolMapper[];
+  /**
    * Valid URI pattern a browser can redirect to after a successful login. Simple wildcards
    * are allowed such as 'https://unicorns.uds.dev/*'
    */
@@ -601,6 +605,25 @@ export interface Groups {
 export enum Protocol {
   OpenidConnect = "openid-connect",
   Saml = "saml",
+}
+
+export interface ProtocolMapper {
+  /**
+   * Configuration options for the mapper.
+   */
+  config?: { [key: string]: string };
+  /**
+   * Name of the mapper
+   */
+  name?: string;
+  /**
+   * Protocol of the mapper
+   */
+  protocol?: string;
+  /**
+   * Protocol Mapper type of the mapper
+   */
+  protocolMapper?: string;
 }
 
 export interface Status {
