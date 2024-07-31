@@ -59,12 +59,6 @@ spec:
           app.kubernetes.io/name: keycloak
         port: {{ .Values.postgresql.port }}
         remoteGenerated: Anywhere
-      - description: "PostgresQL Operator Access"
-        direction: Ingress
-        selector:
-          team: uds
-        port: {{ .Values.postgresql.port }}
-        remoteGenerated: Anywhere
       - description: "PostgresQL Operator Egress"
         direction: Egress
         selector:
