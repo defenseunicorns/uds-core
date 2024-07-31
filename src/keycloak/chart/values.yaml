@@ -230,7 +230,7 @@ autoscaling:
   # Additional HorizontalPodAutoscaler labels
   labels: {}
   # The minimum and maximum number of replicas for the Keycloak StatefulSet
-  minReplicas: 1
+  minReplicas: 3
   maxReplicas: 10
   # The metrics to use for scaling
   metrics:
