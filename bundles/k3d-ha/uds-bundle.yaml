@@ -62,8 +62,10 @@ packages:
                 GOOGLE_IDP_CORE_ENTITY_ID: "https://sso.uds.dev/realms/uds"
                 GOOGLE_IDP_ADMIN_GROUP: "uds-core-dev-admin"
                 GOOGLE_IDP_AUDITOR_GROUP: "uds-core-dev-auditor"
-            - value: true
-              path: autoscaling.enabled
+            - path: autoscaling.enabled
+              value: true
+            - path: autoscaling.minReplicas
+              value: 3
             - path: "postgresql.username"
               value: ${DATABASE_USERNAME}
             - path: "postgresql.password"
