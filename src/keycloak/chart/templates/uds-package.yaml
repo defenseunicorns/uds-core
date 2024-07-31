@@ -76,7 +76,6 @@ spec:
         ports:
           - 7800
           - 57800
-
       - direction: Egress
         remoteGenerated: IntraNamespace
         ports:
