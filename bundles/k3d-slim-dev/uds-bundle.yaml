@@ -36,8 +36,6 @@ packages:
     # x-release-please-start-version
     ref: 0.24.1
     # x-release-please-end
-    optionalComponents:
-      - metrics-server
     overrides:
       istio-admin-gateway:
         uds-istio-config:
