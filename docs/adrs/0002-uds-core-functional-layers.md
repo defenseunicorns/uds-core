@@ -47,6 +47,7 @@ We will still publish the UDS Slim Dev bundle for testing UDS Packages. This wil
 - Testing needs to be expanded to cover common layer combinations
 - Need to address dependencies and configurations shared across layers
 - We will still need to publish the UDS Slim Dev bundle for testing UDS Packages and that might confuse users (UDS Slim Dev bundle will combine UDS-K3d + UDS Core Base + UDS Core Identity and Authorization)
+- UDS Package developers may need to document required layers (i.e. "UDS Package GitLab requires UDS Identity and Authorization")
 
 ## Implementation Details
 
