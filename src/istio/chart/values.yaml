@@ -24,3 +24,5 @@ domain: "###ZARF_VAR_DOMAIN###"
 #       # Hosts to add to this gateway
 #       hosts:
 #         - "*"
+#   # Whether to support TLS 1.2 (if false, only TLS 1.3 will be supported)
+#   supportTLSV1_2: true
