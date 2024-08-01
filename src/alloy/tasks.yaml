@@ -1,0 +1,10 @@
+tasks:
+  - name: validate
+    actions:
+      - description: Validate alloy
+        wait:
+          cluster:
+            kind: Pod
+            name: app.kubernetes.io/instance=alloy
+            namespace: alloy
+            condition: Ready

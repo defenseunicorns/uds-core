@@ -19,8 +19,8 @@ neuvector:
   - "src/neuvector/**"
 prometheus-stack:
   - "src/prometheus-stack/**"
-promtail:
-  - "src/promtail/**"
+alloy:
+  - "src/alloy/**"
 tempo:
   - "src/tempo/**"
 velero:

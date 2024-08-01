@@ -1,0 +1,10 @@
+image:
+  registry: docker.io
+  repository: grafana/alloy
+  tag: v1.2.1
+
+configReloader:
+  image:
+    registry: ghcr.io
+    repository: jimmidyson/configmap-reload
+    tag: v0.13.1

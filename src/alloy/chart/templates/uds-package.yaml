@@ -1,0 +1,44 @@
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: alloy
+  namespace: {{ .Release.Namespace }}
+spec:
+  monitor:
+    - selector:
+        app.kubernetes.io/name: alloy
+      targetPort: 12345
+      portName: http-metrics
+      description: Metrics
+
+  network:
+    allow:
+      # Permit intra-namespace communication
+      - direction: Ingress
+        remoteGenerated: IntraNamespace
+
+      - direction: Egress
+        remoteGenerated: IntraNamespace
+
+      - direction: Egress
+        remoteGenerated: KubeAPI
+        selector:
+          app.kubernetes.io/name: alloy
+
+      - direction: Egress
+        selector:
+          app.kubernetes.io/name: alloy
+        remoteNamespace: loki
+        remoteSelector:
+          app.kubernetes.io/name: loki
+        port: 8080
+        description: "Write Logs to Loki"
+
+      {{- if .Values.s3Exporter.enabled }}
+      # Todo: wide open for now for pushing to s3
+      - direction: Egress
+        selector:
+          app.kubernetes.io/name: alloy
+        remoteGenerated: Anywhere
+        description: "Object Storage"
+      {{- end }}

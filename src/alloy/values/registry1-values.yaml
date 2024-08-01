@@ -1,0 +1,10 @@
+image:
+  registry: registry1.dso.mil
+  repository: ironbank/opensource/grafana/alloy
+  tag: v1.2.1
+
+configReloader:
+  image:
+    registry: registry1.dso.mil
+    repository: ironbank/opensource/jimmidyson/configmap-reload
+    tag: v0.13.1

@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "additionalForwards": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "extraConfig": {
+      "type": "string"
+    },
+    "loki": {
+      "properties": {
+        "batch": {
+          "properties": {
+            "size": {
+              "type": "string"
+            },
+            "timeout": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "s3Exporter": {
+      "properties": {
+        "accessKey": {
+          "type": "string"
+        },
+        "batch": {
+          "properties": {
+            "size": {
+              "type": "integer"
+            },
+            "timeout": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "bucket": {
+          "type": "string"
+        },
+        "compression": {
+          "type": "boolean"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "endpoint": {
+          "type": "string"
+        },
+        "format": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "region": {
+          "type": "string"
+        },
+        "role_arn": {
+          "type": "string"
+        },
+        "s3_force_path_style": {
+          "type": "boolean"
+        },
+        "secretKey": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    }
+  },
+  "type": "object"
+}

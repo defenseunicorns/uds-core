@@ -1,0 +1,10 @@
+# Values for the uds-dev-stack minio
+s3Exporter:
+  enabled: true
+  region: "minio"
+  bucket: "uds"
+  path: "otlp-logs"
+  endpoint: "http://minio.uds-dev-stack.svc.cluster.local:9000"
+  s3_force_path_style: true
+  accessKey: "uds"
+  secretKey: "uds-secret"
