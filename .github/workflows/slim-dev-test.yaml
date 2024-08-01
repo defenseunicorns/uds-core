@@ -11,7 +11,7 @@ on:
       - src/istio/*
       - src/prometheus-stack/*
       - packages/slim-dev/*
-      - bundles/core-slim-dev/*
+      - bundles/k3d-slim-dev/*
       - .github/workflows/slim-dev*
 
 # Permissions for the GITHUB_TOKEN used by the workflow.
