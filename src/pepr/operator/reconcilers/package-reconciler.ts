@@ -3,7 +3,10 @@ import { UDSConfig } from "../../config";
 import { Component, setupLogger } from "../../logger";
 import { cleanupNamespace, enableInjection } from "../controllers/istio/injection";
 import { istioResources } from "../controllers/istio/istio-resources";
-import { authservice, purgeAuthserviceClients } from "../controllers/keycloak/authservice/authservice";
+import {
+  authservice,
+  purgeAuthserviceClients,
+} from "../controllers/keycloak/authservice/authservice";
 import { keycloak, purgeSSOClients } from "../controllers/keycloak/client-sync";
 import { podMonitor } from "../controllers/monitoring/pod-monitor";
 import { serviceMonitor } from "../controllers/monitoring/service-monitor";
@@ -25,15 +28,9 @@ export async function packageReconciler(pkg: UDSPackage) {
   const metadata = pkg.metadata!;
   const { namespace, name, deletionTimestamp } = metadata;
 
-  // Handle deletions of packages, these will have a deletionTimestamp since we have a finalizer
+  // Ensure this function is NOT run during a finalizer event (deletion)
   if (deletionTimestamp) {
-    if (pkg.status?.phase !== Phase.Removing) {
-      await removePackage(pkg);
-      return;
-    } else {
-      log.trace(pkg, `Deletion already in progress, skipping.`)
-      return;
-    }
+    return;
   }
 
   log.info(
@@ -91,17 +88,25 @@ export async function packageReconciler(pkg: UDSPackage) {
   }
 }
 
-async function removePackage(pkg: UDSPackage) {
-  // Update status to indicate removal in progress
-  await updateStatus(pkg, { phase: Phase.Removing });
+export async function removePackage(pkg: UDSPackage) {
+  // Ensure this function is ONLY run during a finalizer event (deletion)
+  if (!pkg.metadata?.deletionTimestamp) {
+    return;
+  }
 
-  // Cleanup the namespace
-  await cleanupNamespace(pkg);
+  // Do not trigger cleanup twice if Pepr is already removing the resource
+  if (pkg.status?.phase !== Phase.Removing) {
+    // Update status to indicate removal in progress
+    await updateStatus(pkg, { phase: Phase.Removing });
 
-  // Remove any SSO clients
-  await purgeSSOClients(pkg, []);
-  await purgeAuthserviceClients(pkg, []);
+    // Cleanup the namespace
+    await cleanupNamespace(pkg);
 
-  // Remove Finalizer
-  await handleFinalizer(pkg, FinalizerOperation.Remove);
+    // Remove any SSO clients
+    await purgeSSOClients(pkg, []);
+    await purgeAuthserviceClients(pkg, []);
+
+    // Remove Finalizer
+    await handleFinalizer(pkg, FinalizerOperation.Remove);
+  }
 }

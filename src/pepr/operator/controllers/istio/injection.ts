@@ -147,7 +147,7 @@ async function killPods(ns: string, enableInjection: boolean) {
     }
 
     for (const pod of group) {
-      const action = enableInjection ? 'enable' : 'remove';
+      const action = enableInjection ? "enable" : "remove";
       log.info(`Deleting pod ${ns}/${pod.metadata?.name} to ${action} the istio sidecar`);
       await K8s(kind.Pod).Delete(pod);
     }

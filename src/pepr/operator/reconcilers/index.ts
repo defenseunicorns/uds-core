@@ -84,7 +84,9 @@ export async function updateStatus(cr: UDSPackage, status: PkgStatus) {
  * @param status The new status
  */
 export async function handleFinalizer(cr: UDSPackage, operation: FinalizerOperation) {
-  log.debug(`Updating finalizer for ${cr.metadata?.name}/${cr.metadata?.namespace}, operation: ${operation}`);
+  log.debug(
+    `Updating finalizer for ${cr.metadata?.name}/${cr.metadata?.namespace}, operation: ${operation}`,
+  );
 
   let patch: Operation;
   if (operation === FinalizerOperation.Add) {
