@@ -1,10 +1,16 @@
 import { K8s, kind } from "pepr";
 
+import { Operation } from "fast-json-patch";
 import { Component, setupLogger } from "../../logger";
 import { Phase, PkgStatus, UDSPackage } from "../crd";
 import { Status } from "../crd/generated/package-v1alpha1";
 
 export const uidSeen = new Set<string>();
+export const finalizerId = "uds.dev/package-finalizer";
+export enum FinalizerOperation {
+  Add = "add",
+  Remove = "remove",
+}
 
 // configure subproject logger
 const log = setupLogger(Component.OPERATOR_RECONCILERS);
@@ -62,8 +68,41 @@ export async function updateStatus(cr: UDSPackage, status: PkgStatus) {
     status,
   });
 
+  // If we are starting reconciliation, add our finalizer if not present
+  if (status.phase == Phase.Pending && !cr.metadata?.finalizers) {
+    await handleFinalizer(cr, FinalizerOperation.Add);
+  }
+
   // Track the UID of the CRD to know if it has been seen before
   uidSeen.add(cr.metadata!.uid!);
+}
+
+/**
+ * Updates the status of the package
+ *
+ * @param cr The custom resource to update
+ * @param status The new status
+ */
+export async function handleFinalizer(cr: UDSPackage, operation: FinalizerOperation) {
+  log.debug(`${operation}ing finalizer for ${cr.metadata?.name}/${cr.metadata?.namespace}`);
+
+  let patch: Operation;
+  if (operation === FinalizerOperation.Add) {
+    patch = {
+      op: "add",
+      path: "/metadata/finalizers",
+      value: [finalizerId],
+    };
+  } else {
+    patch = {
+      op: "remove",
+      path: "/metadata/finalizers",
+    };
+  }
+
+  await K8s(UDSPackage, { name: cr.metadata!.name, namespace: cr.metadata!.namespace }).Patch([
+    patch,
+  ]);
 }
 
 /**
