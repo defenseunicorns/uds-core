@@ -101,6 +101,23 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
         `The client ID "${client.clientId}" must specify redirectUris if standardFlowEnabled is turned on`,
       );
     }
+    // If standardFlowEnabled is undefined (defaults to `true`) or explicitly true and there are no redirectUris set, deny the req
+    if (
+      client.publicClient &&
+      (
+        (client.standardFlowEnabled === undefined || client.standardFlowEnabled) ||
+        (client.secret) ||
+        (client.secretName) ||
+        (client.secretTemplate) ||
+        (client.enableAuthserviceSelector) ||
+        (client.protocol === "saml") ||
+        (!client.attributes || client.attributes["oauth2.device.authorization.grant.enabled"] != "true")
+      )
+    ) {
+      return req.Deny(
+        `The client ID "${client.clientId}" must _only_ configure the OAuth Device Flow as a public client`,
+      );
+    }
   }
 
   return req.Approve();
