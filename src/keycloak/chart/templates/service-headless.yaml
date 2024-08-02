@@ -14,5 +14,13 @@ spec:
       port: 80
       targetPort: http
       protocol: TCP
+    - name: tcp
+      port: 7800
+      targetPort: tcp
+      protocol: TCP
+    - name: tcp-fd
+      port: 57800
+      targetPort: tcp-fd
+      protocol: TCP
   selector:
     {{- include "keycloak.selectorLabels" . | nindent 4 }}

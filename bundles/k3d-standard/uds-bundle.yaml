@@ -38,6 +38,7 @@ packages:
     # x-release-please-end
     optionalComponents:
       - istio-passthrough-gateway
+      - metrics-server
     overrides:
       loki:
         loki:

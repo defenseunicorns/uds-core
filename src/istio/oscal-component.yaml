@@ -425,6 +425,7 @@ component-definition:
                   "to": [
                     {
                       "operation": {
+                        "ports": ["8080"],
                         "paths": ["/admin*", "/realms/master*"]
                       }
                     }
