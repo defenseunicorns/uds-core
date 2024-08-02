@@ -92,6 +92,15 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
         `The client ID "${client.clientId}" uses an invalid secret name ${client.secretName}`,
       );
     }
+    // If standardFlowEnabled is undefined (defaults to `true`) or explicitly true and there are no redirectUris set, deny the req
+    if (
+      (client.standardFlowEnabled === undefined || client.standardFlowEnabled) &&
+      !client.redirectUris
+    ) {
+      return req.Deny(
+        `The client ID "${client.clientId}" must specify redirectUris if standardFlowEnabled is turned on`,
+      );
+    }
   }
 
   return req.Approve();
