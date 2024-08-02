@@ -38,24 +38,6 @@ When(a.Service)
   .WithName("kubernetes")
   .Reconcile(updateAPIServerCIDRFromService);
 
-// We can't watch for deletions here because of our finalizer - deletions will appear as "updates",
-// with a deletionTimestamp so they end up in the normal reconcile flow
-
-// // Watch for changes to the UDSPackage CRD and cleanup the namespace mutations
-// When(UDSPackage)
-//   .IsDeleted()
-//   .Watch(async pkg => {
-//     // Cleanup the namespace
-//     await cleanupNamespace(pkg);
-
-//     // Remove any SSO clients
-//     await purgeSSOClients(pkg, []);
-//     await purgeAuthserviceClients(pkg, []);
-
-//     // Remove Finalizer
-//     await handleFinalizer(pkg, FinalizerOperation.Remove);
-//   });
-
 // Watch for changes to the UDSPackage CRD to enqueue a package for processing
 When(UDSPackage)
   .IsCreatedOrUpdated()
