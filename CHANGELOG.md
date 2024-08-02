@@ -2,6 +2,46 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.25.0](https://github.com/defenseunicorns/uds-core/compare/v0.24.1...v0.25.0) (2024-08-02)
+
+
+### ⚠ BREAKING CHANGES
+
+* change metric server to optional (https://github.com/defenseunicorns/uds-core/pull/611)
+
+### Features
+
+* add json logging for keycloak ([#610](https://github.com/defenseunicorns/uds-core/issues/610)) ([29ed934](https://github.com/defenseunicorns/uds-core/commit/29ed934859c31dd557788f182a06736c5249f384))
+* **istio:** add configurable TLS version ([#624](https://github.com/defenseunicorns/uds-core/issues/624)) ([cd2b87e](https://github.com/defenseunicorns/uds-core/commit/cd2b87e1819153df1c025afe0d3f7a3392e32217))
+
+
+### Bug Fixes
+
+* account for keycloak HA ports ([#619](https://github.com/defenseunicorns/uds-core/issues/619)) ([434f349](https://github.com/defenseunicorns/uds-core/commit/434f349fe6fda234875622a93de3939d0082eb78))
+* add google saml to slim-dev ([#613](https://github.com/defenseunicorns/uds-core/issues/613)) ([f2164e1](https://github.com/defenseunicorns/uds-core/commit/f2164e10aae0a87dbd73cfe189f1154f850895e3))
+* address network policy generation inter-namespace bug ([#564](https://github.com/defenseunicorns/uds-core/issues/564)) ([9b14c2c](https://github.com/defenseunicorns/uds-core/commit/9b14c2ca31d7c05540dcfdfff7247bb31ed6b924))
+* reference root scope ([#633](https://github.com/defenseunicorns/uds-core/issues/633)) ([5de6915](https://github.com/defenseunicorns/uds-core/commit/5de69159f1f8370fc6b5553c2b9b05af52621027))
+
+
+### Miscellaneous
+
+* change metric server to optional (https://github.com/defenseunicorns/uds-core/pull/611) ([bc2d673](https://github.com/defenseunicorns/uds-core/commit/bc2d673b81724449a6c7523b1ba6950009c0c888))
+* **deps:** update dependency defenseunicorns/uds-common to v0.9.0 ([#592](https://github.com/defenseunicorns/uds-core/issues/592)) ([44ea2d7](https://github.com/defenseunicorns/uds-core/commit/44ea2d7db07b1b91318ec5a8d6b048c3c8f3a565))
+* **deps:** update dependency weaveworks/eksctl to v0.187.0 ([#539](https://github.com/defenseunicorns/uds-core/issues/539)) ([9002a94](https://github.com/defenseunicorns/uds-core/commit/9002a945bbe7f9e9f75ca3f3909ffecedbbc995a))
+* **deps:** update githubactions ([#553](https://github.com/defenseunicorns/uds-core/issues/553)) ([2a9e29a](https://github.com/defenseunicorns/uds-core/commit/2a9e29aa506dffc1c8db5b5fc2272ffc974a0988))
+* **deps:** update grafana curl image to v8.9.0 ([#596](https://github.com/defenseunicorns/uds-core/issues/596)) ([64f9408](https://github.com/defenseunicorns/uds-core/commit/64f9408fb792b931b4eddc4669559d8f99aab7dc))
+* **deps:** update grafana helm chart to v8.3.6 ([#594](https://github.com/defenseunicorns/uds-core/issues/594)) ([1f2005b](https://github.com/defenseunicorns/uds-core/commit/1f2005bff139a1738c6cf217d79c0c6396e1a347))
+* **deps:** update istio to v1.22.3 ([#580](https://github.com/defenseunicorns/uds-core/issues/580)) ([7aba89e](https://github.com/defenseunicorns/uds-core/commit/7aba89e8951b27f26495c6b13fbe25b02808ee19))
+* **deps:** update lula to v0.4.4 ([#615](https://github.com/defenseunicorns/uds-core/issues/615)) ([b02b305](https://github.com/defenseunicorns/uds-core/commit/b02b305fdac5e415af1b78668f45fdde7be4b67a))
+* **deps:** update neuvector-updater/curl to v8.9.0 ([#597](https://github.com/defenseunicorns/uds-core/issues/597)) ([b4bd660](https://github.com/defenseunicorns/uds-core/commit/b4bd66086b217871b17cadcff7bd1617c829279d))
+* **deps:** update promtail configmap-reload to v0.13.1 ([#608](https://github.com/defenseunicorns/uds-core/issues/608)) ([d98bbae](https://github.com/defenseunicorns/uds-core/commit/d98bbae27de52b9ece2981b79d5bd6ba2b09d5e0))
+* **deps:** update promtail helm chart to v6.16.4 ([#574](https://github.com/defenseunicorns/uds-core/issues/574)) ([bf9f65c](https://github.com/defenseunicorns/uds-core/commit/bf9f65ca482da38c6cd09a6a519d545511326d43))
+* **deps:** update to identity-config 0.5.2 ([#635](https://github.com/defenseunicorns/uds-core/issues/635)) ([6474d16](https://github.com/defenseunicorns/uds-core/commit/6474d16eb0cc6f08f2d4c35e9d642add62c6ae34))
+* **deps:** update uds cli to v0.13.1 ([#569](https://github.com/defenseunicorns/uds-core/issues/569)) ([4339c89](https://github.com/defenseunicorns/uds-core/commit/4339c892c56bdcabf7809cde7c7898348c1d9132))
+* **deps:** update zarf to v0.36.1 ([#562](https://github.com/defenseunicorns/uds-core/issues/562)) ([058cfb3](https://github.com/defenseunicorns/uds-core/commit/058cfb3b45d9f944e2f2c615fef82ae1a98d2413))
+* disable telemetry/analytics for loki/grafana ([#601](https://github.com/defenseunicorns/uds-core/issues/601)) ([ad785bc](https://github.com/defenseunicorns/uds-core/commit/ad785bcac2e11ccdc4fbdb14bee9bb1fdbd536cb))
+* update zarf to new repo location, 0.37.0 ([#631](https://github.com/defenseunicorns/uds-core/issues/631)) ([29f9fd0](https://github.com/defenseunicorns/uds-core/commit/29f9fd0277bc0ab4cd6073e4c5b73123586946e1))
+
 ## [0.24.1](https://github.com/defenseunicorns/uds-core/compare/v0.24.0...v0.24.1) (2024-07-22)
 
 
