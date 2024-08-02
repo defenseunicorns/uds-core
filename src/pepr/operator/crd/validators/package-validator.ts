@@ -101,7 +101,7 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
         `The client ID "${client.clientId}" must specify redirectUris if standardFlowEnabled is turned on`,
       );
     }
-    // If standardFlowEnabled is undefined (defaults to `true`) or explicitly true and there are no redirectUris set, deny the req
+    // If this is a public client ensure that it only sets itself up as an OAuth Device Flow client
     if (
       client.publicClient &&
       (
