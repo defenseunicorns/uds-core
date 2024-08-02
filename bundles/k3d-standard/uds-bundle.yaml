@@ -28,8 +28,8 @@ packages:
               path: policies
 
   - name: init
-    repository: ghcr.io/defenseunicorns/packages/init
-    ref: v0.36.1
+    repository: ghcr.io/zarf-dev/packages/init
+    ref: v0.37.0
 
   - name: core
     path: ../../build/
