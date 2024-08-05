@@ -303,6 +303,34 @@ const sso = {
           type: "string",
         },
       },
+      protocolMappers: {
+        description: "Protocol Mappers to configure on the client",
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            name: {
+              description: "Name of the mapper",
+              type: "string",
+            },
+            protocol: {
+              description: "Protocol of the mapper",
+              type: "string",
+            },
+            protocolMapper: {
+              description: "Protocol Mapper type of the mapper",
+              type: "string",
+            },
+            config: {
+              description: "Configuration options for the mapper.",
+              type: "object",
+              additionalProperties: {
+                type: "string",
+              },
+            },
+          },
+        },
+      },
       rootUrl: {
         description: "Root URL appended to relative URLs",
         type: "string",
