@@ -33,7 +33,7 @@ runs:
     - name: Install UDS CLI
       shell: bash
       # renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
-      run: brew install defenseunicorns/tap/uds@0.13.1
+      run: brew install defenseunicorns/tap/uds@0.14.0
 
     - name: Install Lula
       uses: defenseunicorns/lula-action/setup@939e0a3d3a5f72321245a040207152dced5238f2
