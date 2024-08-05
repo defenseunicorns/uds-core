@@ -1,1 +1,5 @@
 * @defenseunicorns/uds-core
+
+# Additional privileged files
+/CODEOWNERS @jeff-mccoy @austenbryan
+/LICENSE @jeff-mccoy @austenbryan
