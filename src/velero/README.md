@@ -46,7 +46,7 @@ By overriding the velero values in the bundle as follows:
 
 #### Azure Blob Storage
 
-Bucket information and access credentials can be provided via a secret with the following format
+Bucket information and access credentials can be provided via a secret with the following format and adding the vlues to uds-config.yaml
 ```
 apiVersion: v1
 kind: Secret
