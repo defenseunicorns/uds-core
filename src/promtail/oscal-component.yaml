@@ -116,9 +116,9 @@ component-definition:
                   rel: reference
                   text: Lula Validation
           props:
-          - name: framework
-            ns: https://docs.lula.dev/ns
-            value: il4
+            - name: framework
+              ns: https://docs.lula.dev/ns
+              value: il4
   back-matter:
     resources:
       - uuid: D552C935-E40C-4A03-B5CC-4605EBD95B6D
