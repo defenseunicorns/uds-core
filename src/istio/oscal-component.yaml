@@ -1371,6 +1371,10 @@ component-definition:
               uuid: f972ef8d-1eb0-403b-8db8-e65a4f4e2aaa
           source: https://raw.githubusercontent.com/GSA/fedramp-automation/93ca0e20ff5e54fc04140613476fba80f08e3c7d/dist/content/rev5/baselines/json/FedRAMP_rev5_HIGH-baseline-resolved-profile_catalog.json
           uuid: d2afb4c4-2cd8-5305-a6cc-d1bc7b388d0c
+          props:
+          - name: framework
+            ns: https://docs.lula.dev/ns
+            value: il4
       description: |
         Istio Service Mesh
       purpose: Istio Service Mesh

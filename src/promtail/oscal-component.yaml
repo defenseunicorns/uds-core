@@ -115,7 +115,10 @@ component-definition:
                 - href: "#9bfc68e0-381a-4006-9f68-c293e3b20cee"
                   rel: reference
                   text: Lula Validation
-
+          props:
+          - name: framework
+            ns: https://docs.lula.dev/ns
+            value: il4
   back-matter:
     resources:
       - uuid: D552C935-E40C-4A03-B5CC-4605EBD95B6D

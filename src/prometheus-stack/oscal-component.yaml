@@ -233,7 +233,10 @@ component-definition:
                 of when the data was collected
 
               remarks: This control is fully implemented by this tool.
-
+          props:
+          - name: framework
+            ns: https://docs.lula.dev/ns
+            value: il4
   back-matter:
     resources:
       - uuid: ff397816-6126-4b2c-938b-e7d202003def

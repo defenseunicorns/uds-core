@@ -187,7 +187,10 @@ component-definition:
                 Provides time-series event compilation capabilities.
 
               remarks: This control is fully implemented by this tool.
-
+          props:
+          - name: framework
+            ns: https://docs.lula.dev/ns
+            value: il4
   back-matter:
     resources:
       - uuid: b989384f-54c9-4bb9-8cbd-ae993f8f6e0b

@@ -26,7 +26,7 @@ component-definition:
             - 72134592-08C2-4A77-8BAD-C880F109367A # matches parties entry for p1
       control-implementations:
         - uuid: 5108E5FC-C45F-477B-8542-9C5611A92485
-          source: https://raw.githubusercontent.com/usnistgov/oscal-content/master/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_catalog.json
+          source: https://raw.githubusercontent.com/GSA/fedramp-automation/93ca0e20ff5e54fc04140613476fba80f08e3c7d/dist/content/rev5/baselines/json/FedRAMP_rev5_HIGH-baseline-resolved-profile_catalog.json
           description:
             Controls implemented by velero for inheritance by applications
           implemented-requirements:
@@ -107,6 +107,10 @@ component-definition:
                   - User-level storage/data.
                   - Scheduled back-ups with configurable scopes.
                   - Multi-cloud and on-premise support for availability of backup.
+          props:
+          - name: framework
+            ns: https://docs.lula.dev/ns
+            value: il4
   back-matter:
     resources:
       - uuid: DDC5B579-87DE-41FE-8D87-B4422A7F0A98

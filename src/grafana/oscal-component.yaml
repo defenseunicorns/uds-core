@@ -228,7 +228,10 @@ component-definition:
                 # Control Implementation
                 Compatible metrics endpoints emitted from each application is compiled by Prometheus and displayed through Grafana with associated timestamps
                 of when the data was collected.
-
+          props:
+              - name: framework
+                ns: https://docs.lula.dev/ns
+                value: il4
   back-matter:
     resources:
       - uuid: d429396c-1dab-4712-9034-607c90a63b8a
