@@ -19,7 +19,6 @@ components:
       - velero/velero:v1.14.0
       - velero/velero-plugin-for-aws:v1.10.0
       - docker.io/bitnami/kubectl:1.30.3
-      - velero/velero-plugin-for-csi:v0.7.1
 
   - name: velero
     required: true
@@ -34,7 +33,6 @@ components:
     images:
       - registry1.dso.mil/ironbank/opensource/velero/velero:v1.14.0
       - registry1.dso.mil/ironbank/opensource/velero/velero-plugin-for-aws:v1.10.0
-      - registry1.dso.mil/ironbank/opensource/velero/velero-plugin-for-csi:v0.7.1
       - registry1.dso.mil/ironbank/big-bang/base:2.1.0
 
   - name: velero
@@ -50,5 +48,4 @@ components:
     images:
       - cgr.dev/du-uds-defenseunicorns/velero-fips:1.14.0-dev
       - cgr.dev/du-uds-defenseunicorns/velero-plugin-for-aws-fips:1.10.0
-      - cgr.dev/du-uds-defenseunicorns/velero-plugin-for-csi-fips:0.7.1
       - cgr.dev/du-uds-defenseunicorns/kubectl-fips:1.29.7-dev
