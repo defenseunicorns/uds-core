@@ -79,7 +79,7 @@ By overriding the velero values in the bundle as follows:
                   config: 
                     storageAccount=${VELERO_STORAGE_ACCOUNT}
                     resourceGroup=${VELERO_RESOURCE_GROUP}
-                    storageAccountKeyEnvVar:AZURE_STORAGE_ACCOUNT_ACCESS_KEY=${VELERO_STORAGE_ACCOUNT_ACCESS_KEY}
+                    storageAccountKeyEnvVar:${VELERO_STORAGE_ACCOUNT_ACCESS_KEY}
 ```
 
 ## Plugin Compatability
