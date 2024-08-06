@@ -8,9 +8,9 @@ https://velero.io/
 
 - k3d installed on machine
 
-#### Object Storage
+#### S3 Compatible Object Storage
 
-S3 compatible object storage must be available in order to use this package. Bucket information and access credentials can be provided via configuration values / env vars:
+Bucket information and access credentials can be provided via configuration values / env vars:
 
 - Bucket ID: `ZARF_VAR_VELERO_BUCKET`
 - Bucket Region: `ZARF_VAR_VELERO_BUCKET_REGION`
@@ -44,8 +44,46 @@ By overriding the velero values in the bundle as follows:
               value: "velero-bucket-credentials"
 ```
 
+#### Azure Blob Storage
+
+Bucket information and access credentials can be provided via a secret with the following format
+```
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ###ZARF_VAR_VELERO_BUCKET_CREDENTIALS_SECRET###
+  namespace: velero
+type: kubernetes.io/opaque
+stringData:
+  cloud: |-
+    aws_access_key_id=###ZARF_VAR_ACCESS_KEY###
+    aws_secret_access_key=###ZARF_VAR_SECRET_KEY###
+```
+
+By overriding the velero values in the bundle as follows:
+```
+  - name: core
+    overrides:
+      velero:
+        velero:
+          values:
+            - path: credentials.secretContents.cloud
+              value: |       
+                AZURE_STORAGE_ACCOUNT_ACCESS_KEY=${VELERO_STORAGE_ACCOUNT_ACCESS_KEY}
+                AZURE_CLOUD_NAME=${VELERO_CLOUD_NAME}
+            - path: configuration.backupStorageLocation
+              value:
+                - name: default
+                  provider: azure
+                  bucket: ${VERLERO_BUCKET_NAME}
+                  config: 
+                    storageAccount=${VELERO_STORAGE_ACCOUNT}
+                    resourceGroup=${VELERO_RESOURCE_GROUP}
+                    storageAccountKeyEnvVar:AZURE_STORAGE_ACCOUNT_ACCESS_KEY=${VELERO_STORAGE_ACCOUNT_ACCESS_KEY}
+```
+
 ## Plugin Compatability
-This package currently assumes the availability of S3 API compatible object storage. As such, only the AWS specific plugin image is included. More information about all available plugins [can be found in the upstream docs](https://velero.io/plugins/). Ironbank includes images for Azure and the generic CSI driver, but those are currently excluded from this package. We may revisit package defaults at some point in the future depending on usage and user requests.
+More information about all available plugins [can be found in the upstream docs](https://velero.io/plugins/). 
 
 ## Deploy
 
