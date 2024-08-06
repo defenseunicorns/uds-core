@@ -37,9 +37,9 @@ runs:
 
     - name: Install Lula
       uses: defenseunicorns/lula-action/setup@939e0a3d3a5f72321245a040207152dced5238f2
-      # with:
-      #   # renovate: datasource=github-tags depName=defenseunicorns/lula versioning=semver-coerced
-      #   version: v0.4.4
+      with:
+        # renovate: datasource=github-tags depName=defenseunicorns/lula versioning=semver-coerced
+        version: v0.4.5
 
     - name: Iron Bank Login
       if: ${{ inputs.registry1Username != '' }}
