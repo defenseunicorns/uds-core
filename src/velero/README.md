@@ -56,8 +56,8 @@ metadata:
 type: kubernetes.io/opaque
 stringData:
   cloud: |-
-    aws_access_key_id=###ZARF_VAR_ACCESS_KEY###
-    aws_secret_access_key=###ZARF_VAR_SECRET_KEY###
+    AZURE_STORAGE_ACCOUNT_ACCESS_KEY=${VELERO_STORAGE_ACCOUNT_ACCESS_KEY}
+    AZURE_CLOUD_NAME=${VELERO_CLOUD_NAME}
 ```
 
 By overriding the velero values in the bundle as follows:
