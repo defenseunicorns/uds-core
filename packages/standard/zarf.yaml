@@ -49,7 +49,7 @@ components:
 
   # Metrics Server
   - name: metrics-server
-    required: true
+    required: false
     import:
       path: ../../src/metrics-server
 

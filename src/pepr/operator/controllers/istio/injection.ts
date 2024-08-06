@@ -39,6 +39,7 @@ export async function enableInjection(pkg: UDSPackage) {
     annotations[pkgKey] = "true";
 
     // Apply the updated Namespace
+    log.debug(`Updating namespace ${pkg.metadata.namespace} with istio injection label`);
     await K8s(kind.Namespace).Apply(
       {
         metadata: {
@@ -52,6 +53,9 @@ export async function enableInjection(pkg: UDSPackage) {
 
     // Kill the pods if we changed the value of the istio-injection label
     if (originalInjectionLabel !== labels[injectionLabel]) {
+      log.debug(
+        `Attempting pod restart in ${pkg.metadata.namespace} based on istio injection label change`,
+      );
       await killPods(pkg.metadata.namespace, true);
     }
   }
@@ -86,6 +90,7 @@ export async function cleanupNamespace(pkg: UDSPackage) {
   }
 
   // Apply the updated Namespace
+  log.debug(`Updating namespace ${pkg.metadata.namespace}, removing istio injection labels.`);
   await K8s(kind.Namespace).Apply(
     {
       metadata: {
@@ -99,6 +104,9 @@ export async function cleanupNamespace(pkg: UDSPackage) {
 
   // Kill the pods if we changed the value of the istio-injection label
   if (originalInjectionLabel !== labels[injectionLabel]) {
+    log.debug(
+      `Attempting pod restart in ${pkg.metadata.namespace} based on istio injection label change`,
+    );
     await killPods(pkg.metadata.namespace, false);
   }
 }
@@ -118,6 +126,7 @@ async function killPods(ns: string, enableInjection: boolean) {
   for (const pod of pods.items) {
     // Ignore pods that already have a deletion timestamp
     if (pod.metadata?.deletionTimestamp) {
+      log.debug(`Ignoring Pod ${ns}/${pod.metadata?.name}, already being deleted`);
       continue;
     }
 
@@ -125,17 +134,20 @@ async function killPods(ns: string, enableInjection: boolean) {
 
     // If enabling injection, ignore pods that already have the istio sidecar
     if (enableInjection && foundSidecar) {
+      log.debug(`Ignoring Pod ${ns}/${pod.metadata?.name}, already has sidecar`);
       continue;
     }
 
     // If disabling injection, ignore pods that don't have the istio sidecar
     if (!enableInjection && !foundSidecar) {
+      log.debug(`Ignoring Pod ${ns}/${pod.metadata?.name}, injection disabled`);
       continue;
     }
 
     // Get the UID of the owner of the pod or default to "other" (shouldn't happen)
     const controlledBy = pod.metadata?.ownerReferences?.find(ref => ref.controller)?.uid || "other";
     groups[controlledBy] = groups[controlledBy] || [];
+    log.debug(`Adding Pod ${ns}/${pod.metadata?.name} to ${controlledBy} deletion list.`);
     groups[controlledBy].push(pod);
   }
 
