@@ -416,9 +416,9 @@ component-definition:
 
               remarks: This control is fully implemented by this tool.
           props:
-          - name: framework
-            ns: https://docs.lula.dev/ns
-            value: il4
+            - name: framework
+              ns: https://docs.lula.dev/ns
+              value: il4
   back-matter:
     resources:
       - uuid: 6ba32bca-c4e2-4f27-a99c-e5ba8251ac61
