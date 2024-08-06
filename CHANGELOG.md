@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.25.1](https://github.com/defenseunicorns/uds-core/compare/v0.25.0...v0.25.1) (2024-08-06)
+
+
+### Bug Fixes
+
+* switch metrics-server to optional everywhere ([#641](https://github.com/defenseunicorns/uds-core/issues/641)) ([43c5bd5](https://github.com/defenseunicorns/uds-core/commit/43c5bd5bff896e9fd65f5b878563672e3a22100b))
+
+
+### Miscellaneous
+
+* add debug logs for istio injection logic ([#602](https://github.com/defenseunicorns/uds-core/issues/602)) ([9075436](https://github.com/defenseunicorns/uds-core/commit/9075436c37c847bd06f7e527506ecd41e4c4db0e))
+* add support for public clients and disabling standard auth flow ([#630](https://github.com/defenseunicorns/uds-core/issues/630)) ([38151d7](https://github.com/defenseunicorns/uds-core/commit/38151d74d245d0b56ea7325a69514a832d7cf496))
+* **deps:** update dependency defenseunicorns/uds-common to v0.11.0 ([#617](https://github.com/defenseunicorns/uds-core/issues/617)) ([997cf37](https://github.com/defenseunicorns/uds-core/commit/997cf37250bd72930d053ea87bba8a56c6fe052b))
+* **deps:** update dependency weaveworks/eksctl to v0.188.0 ([#623](https://github.com/defenseunicorns/uds-core/issues/623)) ([3081044](https://github.com/defenseunicorns/uds-core/commit/3081044eddd8b2d043d7039907945b67990718ed))
+* **deps:** update uds to v0.14.0 ([#612](https://github.com/defenseunicorns/uds-core/issues/612)) ([7fe927e](https://github.com/defenseunicorns/uds-core/commit/7fe927e4e0df19acbf2975b8d9c9e3068e0f82c5))
+* update codeowners ([#637](https://github.com/defenseunicorns/uds-core/issues/637)) ([eec5017](https://github.com/defenseunicorns/uds-core/commit/eec5017bad0a06b5e2b5f023b5a2602aaf20f789))
+
 ## [0.25.0](https://github.com/defenseunicorns/uds-core/compare/v0.24.1...v0.25.0) (2024-08-02)
 
 
