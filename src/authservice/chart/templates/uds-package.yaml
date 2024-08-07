@@ -19,7 +19,7 @@ spec:
         description: "SSO Provider"
 
       - direction: Ingress
-        podLabels:
+        selector:
           app.kubernetes.io/name: authservice
         remoteNamespace: "" # Any namespace could have a protected app
         port: 10003
