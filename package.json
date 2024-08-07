@@ -36,12 +36,12 @@
     "k3d-setup": "k3d cluster delete pepr-dev && k3d cluster create pepr-dev --k3s-arg '--debug@server:0'"
   },
   "dependencies": {
-    "pepr": "0.32.7"
+    "pepr": "0.33.0"
   },
   "devDependencies": {
     "@jest/globals": "29.7.0",
     "jest": "29.7.0",
-    "ts-jest": "29.2.2"
+    "ts-jest": "29.2.4"
   },
   "jest": {
     "preset": "ts-jest",
