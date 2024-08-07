@@ -1,5 +1,5 @@
 registry: cgr.dev
-tag: "5.3.3"
+tag: "5.3.4"
 manager:
   image:
     repository: du-uds-defenseunicorns/neuvector-manager
