@@ -44,8 +44,9 @@ By overriding the velero values in the bundle as follows:
               value: "velero-bucket-credentials"
 ```
 
-## Plugin Compatability
-This package currently assumes the availability of S3 API compatible object storage. As such, only the AWS specific plugin image is included. More information about all available plugins [can be found in the upstream docs](https://velero.io/plugins/). Ironbank includes images for Azure and the generic CSI driver, but those are currently excluded from this package. We may revisit package defaults at some point in the future depending on usage and user requests.
+## Plugin Compatibility
+
+This package currently assumes the availability of S3 API compatible object storage. As such, only the AWS specific plugin image is included, in addition to the CSI plugin which is baked into Velero by default. More information about all available plugins [can be found in the upstream docs](https://velero.io/plugins/). Ironbank includes images for the Azure plugin, but it is currently excluded from this package. We may revisit package defaults at some point in the future depending on usage and user requests.
 
 ## Deploy
 
@@ -64,18 +65,23 @@ UDS_PKG=velero uds run deploy-single-package
 
 ### Test the package via UDS tasks
 Running the following will check that the velero deployment exists in the cluster and attempt to execute a backup:
+
 ```bash
 uds run -f src/velero/tasks.yaml validate
 ```
+
 > Alternatively, you can combine package creation, cluster setup, package deploy and the test command with a simple `UDS_PKG=velero uds run test-single-package`
 
 ## Manually trigger the default backup for testing purposes
-```
+
+```bash
 velero backup create --from-schedule velero-udsbackup -n velero
 ```
+
 > NOTE: requires [the velero CLI](https://velero.io/docs/v1.3.0/velero-install/)
 
 Alternatively, manually create a `backup` object with `kubectl`:
+
 ```bash
 uds zarf tools kubectl apply -f - <<-EOF
   apiVersion: velero.io/v1
@@ -99,6 +105,7 @@ EOF
 ```
 
 ## Manually restore backup
+
 ```bash
 velero restore create uds-restore-$(date +%s) \
   --from-backup <backup-name> \
