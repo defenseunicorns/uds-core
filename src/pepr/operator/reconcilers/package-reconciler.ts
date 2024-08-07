@@ -37,7 +37,7 @@ export async function packageReconciler(pkg: UDSPackage) {
 
   if (pkg.status?.retryAttempt && pkg.status?.retryAttempt > 0) {
     // calculate exponential backoff where backoff = 3s * 2^retryAttempt
-    const backOff = 3000 * (2 ** (pkg.status?.retryAttempt ?? 0));
+    const backOff = 3000 * 2 ** (pkg.status?.retryAttempt ?? 0);
 
     log.info(
       metadata,
