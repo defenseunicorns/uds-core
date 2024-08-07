@@ -12,6 +12,12 @@ configImage: ghcr.io/defenseunicorns/uds/identity-config:0.5.2
 # The public domain name of the Keycloak server
 domain: "###ZARF_VAR_DOMAIN###"
 
+# Additional Istio Gateways that expose Keycloak, to allow for client cert usage
+# A prefix of `istio-` is required for namespaces to prevent accidental misconfiguration
+additionalGatewayNamespaces: []
+# Example
+# - "istio-login-gateway"
+
 # The primary Keycloak realm
 realm: uds
 
