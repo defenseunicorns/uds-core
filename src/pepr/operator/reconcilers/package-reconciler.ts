@@ -35,6 +35,22 @@ export async function packageReconciler(pkg: UDSPackage) {
     return;
   }
 
+  if (pkg.status?.retryAttempt && pkg.status?.retryAttempt > 0) {
+    // calculate exponential backoff where backoff = 3s * 2^retryAttempt
+    const backOff = 3000 * (2 ** (pkg.status?.retryAttempt ?? 0));
+
+    log.info(
+      metadata,
+      `Waiting ${
+        backOff / 1000
+      } seconds before processing Package ${namespace}/${name}, status.phase: ${pkg.status
+        ?.phase}, observedGeneration: ${pkg.status?.observedGeneration}, retryAttempt: ${pkg.status
+        ?.retryAttempt}`,
+    );
+    // wait for backOff seconds before retrying
+    await new Promise(resolve => setTimeout(resolve, backOff));
+  }
+
   // Migrate the package to the latest version
   migrate(pkg);
 
