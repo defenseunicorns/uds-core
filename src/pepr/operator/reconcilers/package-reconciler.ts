@@ -45,7 +45,7 @@ export async function packageReconciler(pkg: UDSPackage) {
     );
 
     await writeEvent(pkg, {
-      message: `Waiting ${backOffSeconds} seconds before retrying package ${namespace}/${name}`,
+      message: `Waiting ${backOffSeconds} seconds before retrying package`,
     });
 
     // wait for backOff seconds before retrying
