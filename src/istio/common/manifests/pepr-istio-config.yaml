@@ -36,4 +36,3 @@ spec:
   portLevelMtls:
     "3000":
       mode: PERMISSIVE
-

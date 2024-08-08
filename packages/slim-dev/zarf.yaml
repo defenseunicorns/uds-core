@@ -49,7 +49,7 @@ components:
     charts:
       - name: module
         valuesFiles:
-          - ../../pepr-values.yaml
+          - ../../src/pepr/values.yaml
 
   # Keycloak
   - name: keycloak
