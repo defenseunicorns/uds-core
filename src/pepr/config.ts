@@ -2,7 +2,7 @@ import { Component, setupLogger } from "./logger";
 
 let domain = process.env.UDS_DOMAIN;
 let caCert = process.env.UDS_CA_CERT;
-let authserviceRedisUri = process.env.UDS_AUTHSERVICE_REDIS_URI;
+let authserviceRedisUri = process.env.AUTHSERVICE_REDIS_URI;
 
 // We need to handle `npx pepr <>` commands that will not template the env vars
 if (!domain || domain === "###ZARF_VAR_DOMAIN###") {
