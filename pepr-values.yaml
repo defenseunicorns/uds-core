@@ -1,0 +1,6 @@
+watcher:
+  serviceMonitor:
+    enabled: true
+admission:
+  serviceMonitor:
+    enabled: true

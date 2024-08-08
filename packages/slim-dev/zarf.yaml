@@ -46,6 +46,10 @@ components:
     import:
       path: ../../dist
       name: module
+    charts:
+      - name: module
+        valuesFiles:
+          - ../../pepr-values.yaml
 
   # Keycloak
   - name: keycloak
