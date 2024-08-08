@@ -11,7 +11,7 @@ metadata:
 spec:
   sso:
     - name: Demo SSO
-      clientId: uds-core-httpbin
+      clientId: http://bin
       redirectUris:
         - "https://protected.uds.dev/login"
       enableAuthserviceSelector:
