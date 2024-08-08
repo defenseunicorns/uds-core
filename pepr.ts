@@ -1,10 +1,10 @@
 import { PeprModule } from "pepr";
 
-import cfg from "./package.json";
-
 import { DataStore } from "pepr/dist/lib/storage";
+import cfg from "./package.json";
 import { istio } from "./src/pepr/istio";
 import { Component, setupLogger } from "./src/pepr/logger";
+import { loki } from "./src/pepr/loki";
 import { operator } from "./src/pepr/operator";
 import { setupAuthserviceSecret } from "./src/pepr/operator/controllers/keycloak/authservice/config";
 import { Policy } from "./src/pepr/operator/crd";
@@ -26,6 +26,9 @@ const log = setupLogger(Component.STARTUP);
 
     // UDS Core Policies
     policies,
+
+    // Loki schemaConfig update
+    loki,
 
     // Istio service mesh
     istio,
