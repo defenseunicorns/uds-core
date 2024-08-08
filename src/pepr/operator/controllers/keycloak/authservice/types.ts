@@ -37,6 +37,7 @@ interface OIDCConfig {
   absolute_session_timeout?: string;
   idle_session_timeout?: string;
   scopes: string[];
+  redis_session_store_config?: { server_uri: string };
 }
 
 interface JWKSFetcher {

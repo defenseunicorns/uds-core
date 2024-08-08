@@ -43,7 +43,7 @@ export async function setupAuthserviceSecret() {
 
 // this initial secret is only a placeholder until the first chain is created
 function buildInitialSecret(): AuthserviceConfig {
-  return {
+  const config: AuthserviceConfig = {
     allow_unmatched_requests: false,
     listen_address: "0.0.0.0",
     listen_port: "10003",
@@ -84,6 +84,14 @@ function buildInitialSecret(): AuthserviceConfig {
       }),
     ],
   };
+
+  if (UDSConfig.authserviceRedisUri) {
+    config.default_oidc_config.redis_session_store_config = {
+      server_uri: UDSConfig.authserviceRedisUri!,
+    };
+  }
+
+  return config;
 }
 
 export async function getAuthserviceConfig() {

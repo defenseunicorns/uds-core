@@ -1,0 +1,4 @@
+tasks:
+  - name: validate
+    actions:
+      - cmd: "echo valid"

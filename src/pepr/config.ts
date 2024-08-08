@@ -2,6 +2,7 @@ import { Component, setupLogger } from "./logger";
 
 let domain = process.env.UDS_DOMAIN;
 let caCert = process.env.UDS_CA_CERT;
+let authserviceRedisUri = process.env.AUTHSERVICE_REDIS_URI;
 
 // We need to handle `npx pepr <>` commands that will not template the env vars
 if (!domain || domain === "###ZARF_VAR_DOMAIN###") {
@@ -9,6 +10,9 @@ if (!domain || domain === "###ZARF_VAR_DOMAIN###") {
 }
 if (!caCert || caCert === "###ZARF_VAR_CA_CERT###") {
   caCert = "";
+}
+if (!authserviceRedisUri || authserviceRedisUri === "###ZARF_VAR_AUTHSERVICE_REDIS_URI###") {
+  authserviceRedisUri = "";
 }
 
 export const UDSConfig = {
@@ -20,6 +24,9 @@ export const UDSConfig = {
   isSingleTest: process.env.UDS_SINGLE_TEST === "true",
   // Allow UDS policy exemptions to be used in any namespace
   allowAllNSExemptions: process.env.UDS_ALLOW_ALL_NS_EXEMPTIONS === "true",
+
+  // Redis URI for Authservice
+  authserviceRedisUri,
 };
 
 // configure subproject logger
