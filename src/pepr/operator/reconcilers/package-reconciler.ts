@@ -1,10 +1,13 @@
-import { handleFailure, shouldSkip, updateStatus } from ".";
+import { FinalizerOperation, handleFailure, handleFinalizer, shouldSkip, updateStatus } from ".";
 import { UDSConfig } from "../../config";
 import { Component, setupLogger } from "../../logger";
-import { enableInjection } from "../controllers/istio/injection";
+import { cleanupNamespace, enableInjection } from "../controllers/istio/injection";
 import { istioResources } from "../controllers/istio/istio-resources";
-import { authservice } from "../controllers/keycloak/authservice/authservice";
-import { keycloak } from "../controllers/keycloak/client-sync";
+import {
+  authservice,
+  purgeAuthserviceClients,
+} from "../controllers/keycloak/authservice/authservice";
+import { keycloak, purgeSSOClients } from "../controllers/keycloak/client-sync";
 import { podMonitor } from "../controllers/monitoring/pod-monitor";
 import { serviceMonitor } from "../controllers/monitoring/service-monitor";
 import { networkPolicies } from "../controllers/network/policies";
@@ -16,13 +19,19 @@ const log = setupLogger(Component.OPERATOR_RECONCILERS);
 
 /**
  * The reconciler is called from the queue and is responsible for reconciling the state of the package
- * with the cluster. This includes creating the namespace, network policies and virtual services.
+ * with the cluster. This includes istio injecting the namespace, adding network policies, SSO clients,
+ * Prometheus monitors, and virtual services (and removing/undoing these for deletions).
  *
  * @param pkg the package to reconcile
  */
 export async function packageReconciler(pkg: UDSPackage) {
   const metadata = pkg.metadata!;
-  const { namespace, name } = metadata;
+  const { namespace, name, deletionTimestamp } = metadata;
+
+  // Ensure this function is NOT run during a finalizer event (deletion)
+  if (deletionTimestamp) {
+    return;
+  }
 
   log.info(
     `Processing Package ${namespace}/${name}, status.phase: ${pkg.status?.phase}, observedGeneration: ${pkg.status?.observedGeneration}, retryAttempt: ${pkg.status?.retryAttempt}`,
@@ -76,5 +85,28 @@ export async function packageReconciler(pkg: UDSPackage) {
     });
   } catch (err) {
     void handleFailure(err, pkg);
+  }
+}
+
+export async function removePackage(pkg: UDSPackage) {
+  // Ensure this function is ONLY run during a finalizer event (deletion)
+  if (!pkg.metadata?.deletionTimestamp) {
+    return;
+  }
+
+  // Do not trigger cleanup twice if Pepr is already removing the resource
+  if (pkg.status?.phase !== Phase.Removing) {
+    // Update status to indicate removal in progress
+    await updateStatus(pkg, { phase: Phase.Removing });
+
+    // Cleanup the namespace
+    await cleanupNamespace(pkg);
+
+    // Remove any SSO clients
+    await purgeSSOClients(pkg, []);
+    await purgeAuthserviceClients(pkg, []);
+
+    // Remove Finalizer
+    await handleFinalizer(pkg, FinalizerOperation.Remove);
   }
 }

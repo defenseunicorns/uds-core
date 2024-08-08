@@ -80,7 +80,7 @@ export async function purgeSSOClients(pkg: UDSPackage, newClients: string[] = []
     const token = Store.getItem(storeKey);
     if (token) {
       await apiCall({ clientId: ref }, "DELETE", token);
-      Store.removeItem(storeKey);
+      await Store.removeItemAndWait(storeKey);
     } else {
       log.warn(pkg.metadata, `Failed to remove client ${ref}, token not found`);
     }
