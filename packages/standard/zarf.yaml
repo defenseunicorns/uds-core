@@ -7,12 +7,12 @@ metadata:
   version: "0.25.1"
   # x-release-please-end
 
-variables:
-  - name: CA_CERT
-    description: "Base64 encoded CA cert that signed the domain wildcard certs used for Istio ingress"
-    default: ""
-
 components:
+  - name: uds-operator-config
+    required: true
+    import:
+      path: ../../src/uds-core-config
+
   # CRDs
   - name: prometheus-operator-crds
     required: true

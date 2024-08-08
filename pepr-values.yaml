@@ -1,6 +1,12 @@
 watcher:
   serviceMonitor:
     enabled: true
+  envFrom:
+    - secretRef:
+        name: uds-core-config
 admission:
   serviceMonitor:
     enabled: true
+  envFrom:
+    - secretRef:
+        name: uds-core-config
