@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.25.2](https://github.com/defenseunicorns/uds-core/compare/v0.25.1...v0.25.2) (2024-08-09)
+
+
+### Bug Fixes
+
+* add backoff to operator retry mechanism ([#650](https://github.com/defenseunicorns/uds-core/issues/650)) ([52c97fd](https://github.com/defenseunicorns/uds-core/commit/52c97fdc1fd9f6e37dbe2fa4082db43402ba6cc8))
+* network allows for core netpols ([#652](https://github.com/defenseunicorns/uds-core/issues/652)) ([e9b69e8](https://github.com/defenseunicorns/uds-core/commit/e9b69e809a486c8dc5777ee761530a423a47f11b))
+
+
+### Miscellaneous
+
+* allow for extra keycloak gateway usage with client certs ([#648](https://github.com/defenseunicorns/uds-core/issues/648)) ([7b1c474](https://github.com/defenseunicorns/uds-core/commit/7b1c4740d243c2b0c35a3708d36057f0e2eb9e53))
+* **deps:** update dependency defenseunicorns/uds-common to v0.11.1 ([#647](https://github.com/defenseunicorns/uds-core/issues/647)) ([768aa1c](https://github.com/defenseunicorns/uds-core/commit/768aa1c3eb836ccd4e87bb4d597758cf67478d62))
+* **deps:** update dependency defenseunicorns/uds-common to v0.11.2 ([#653](https://github.com/defenseunicorns/uds-core/issues/653)) ([f7d1ce8](https://github.com/defenseunicorns/uds-core/commit/f7d1ce8805971640b4b3eb018d64717a5bbd806a))
+* **deps:** update grafana helm chart to v8.4.3 ([#660](https://github.com/defenseunicorns/uds-core/issues/660)) ([81c7af0](https://github.com/defenseunicorns/uds-core/commit/81c7af036d126f13f003432a691623b88e0cece5))
+* **deps:** update grafana to 11.1.3 ([[#607](https://github.com/defenseunicorns/uds-core/issues/607)](https://github.com/defenseunicorns/uds-core/pull/607)) ([7b343ac](https://github.com/defenseunicorns/uds-core/commit/7b343ac301aaeab7c1928cf3b39b2c11f9c89993))
+* **deps:** update neuvector to 5.3.4 ([#606](https://github.com/defenseunicorns/uds-core/issues/606)) ([526bff4](https://github.com/defenseunicorns/uds-core/commit/526bff4674552fe257977e5e9a559d67a5ca273c))
+* **deps:** update pepr to 0.33.0 ([#588](https://github.com/defenseunicorns/uds-core/issues/588)) ([6eee8f0](https://github.com/defenseunicorns/uds-core/commit/6eee8f00e52c0831d2cf622631fc0f838a5ce374))
+* update identity config to 0.6.0 ([#661](https://github.com/defenseunicorns/uds-core/issues/661)) ([469fed8](https://github.com/defenseunicorns/uds-core/commit/469fed8fa07d7b5548eb778ee157c9c302d8a511))
+
 ## [0.25.1](https://github.com/defenseunicorns/uds-core/compare/v0.25.0...v0.25.1) (2024-08-06)
 
 
