@@ -1,7 +1,7 @@
 image:
   registry: registry1.dso.mil
   repository: ironbank/opensource/grafana/alloy
-  tag: v1.2.1
+  tag: v1.3.0
 
 configReloader:
   image:

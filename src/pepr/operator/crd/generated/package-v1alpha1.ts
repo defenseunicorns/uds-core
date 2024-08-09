@@ -550,10 +550,14 @@ export interface Sso {
    */
   protocol?: Protocol;
   /**
+   * Defines whether the client requires a client secret for authentication
+   */
+  publicClient?: boolean;
+  /**
    * Valid URI pattern a browser can redirect to after a successful login. Simple wildcards
    * are allowed such as 'https://unicorns.uds.dev/*'
    */
-  redirectUris: string[];
+  redirectUris?: string[];
   /**
    * Root URL appended to relative URLs
    */
@@ -570,6 +574,10 @@ export interface Sso {
    * A template for the generated secret
    */
   secretTemplate?: { [key: string]: string };
+  /**
+   * Enables the standard OpenID Connect redirect based authentication with authorization code.
+   */
+  standardFlowEnabled?: boolean;
   /**
    * Allowed CORS origins. To permit all origins of Valid Redirect URIs, add '+'. This does
    * not include the '*' wildcard though. To permit all origins, explicitly add '*'.

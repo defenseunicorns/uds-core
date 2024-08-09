@@ -13,11 +13,12 @@ components:
         namespace: alloy
         version: 0.1.0
         localPath: ../chart
+        # Dev-values for using s3 storage
         # valuesFiles:
         #   - ../chart/dev-values.yaml
       - name: alloy
         url: https://grafana.github.io/helm-charts
-        version: 0.5.1
+        version: 0.6.0
         namespace: alloy
         valuesFiles:
           - ../values/values.yaml

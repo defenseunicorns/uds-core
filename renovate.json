@@ -107,7 +107,7 @@
       "commitMessageTopic": "grafana"
     },
     {
-      "matchPackageNames": ["defenseunicorns/zarf", "ghcr.io/defenseunicorns/packages/init"],
+      "matchPackageNames": ["zarf-dev/zarf", "ghcr.io/zarf-dev/packages/init"],
       "groupName": "zarf",
       "commitMessageTopic": "zarf"
     },
@@ -123,7 +123,7 @@
     },
     {
       "matchFileNames": [".github/workflows/**", ".github/actions/**"],
-      "excludePackageNames": ["defenseunicorns/zarf", "defenseunicorns/uds-cli"],
+      "excludePackageNames": ["zarf-dev/zarf", "defenseunicorns/uds-cli"],
       "groupName": "githubactions",
       "commitMessageTopic": "githubactions",
       "pinDigests": true
