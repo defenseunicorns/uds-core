@@ -43,10 +43,11 @@ jobs:
       - name: Install eksctl
         run: uds run -f tasks/iac.yaml install-eksctl --no-progress
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@651471c36a6092792c552e8b1bef71e592b462d8 # v3
+      - name: Setup Tofu
+        uses: opentofu/setup-opentofu@ae80d4ecaab946d8f5ff18397fbf6d0686c6d46a # v1.0.3
         with:
-          terraform_version: "1.5.7"
+          tofu_version: 1.8.1
+          tofu_wrapper: false
 
       - name: Create UDS Core Package
         run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress
