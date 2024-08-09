@@ -9,7 +9,7 @@ provider "aws" {
 }
 
 terraform {
-  required_version = "1.5.7"
+  required_version = ">= 1.8.0"
   backend "s3" {
   }
   required_providers {
@@ -20,7 +20,7 @@ terraform {
 
     random = {
       source  = "hashicorp/random"
-      version = "3.5.1"
+      version = "3.6.2"
     }
   }
 }
@@ -67,7 +67,7 @@ resource "random_id" "unique_id" {
 
 module "generate_kms" {
   for_each = local.bucket_configurations
-  source   = "github.com/defenseunicorns/terraform-aws-uds-kms?ref=v0.0.2"
+  source   = "github.com/defenseunicorns/terraform-aws-uds-kms?ref=v0.0.3"
 
   key_owners = var.key_owner_arns
   # A list of IAM ARNs for those who will have full key permissions (`kms:*`)
@@ -91,7 +91,7 @@ module "S3" {
 
 module "irsa" {
   for_each                      = local.bucket_configurations
-  source                        = "github.com/defenseunicorns/terraform-aws-uds-irsa?ref=v0.0.2"
+  source                        = "github.com/defenseunicorns/terraform-aws-uds-irsa?ref=v0.0.3"
   name                          = each.value.name
   kubernetes_service_account    = each.value.service_account
   kubernetes_namespace          = each.value.namespace
