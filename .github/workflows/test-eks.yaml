@@ -47,6 +47,7 @@ jobs:
         uses: opentofu/setup-opentofu@ae80d4ecaab946d8f5ff18397fbf6d0686c6d46a # v1.0.3
         with:
           tofu_version: 1.8.1
+          tofu_wrapper: false
 
       - name: Create UDS Core Package
         run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress
