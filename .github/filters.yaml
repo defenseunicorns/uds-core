@@ -1,27 +1,28 @@
 all:
   - "**"
 
-authservice:
-  - "src/authservice/**"
-grafana:
-  - "src/grafana/**"
-istio:
+base:
   - "src/istio/**"
-keycloak:
+  - "src/pepr/**"
+  - "package/base/**"
+identity-authorization:
   - "src/keycloak/**"
-kiali:
-  - "src/kiali/**"
-loki:
-  - "src/loki/**"
+  - "src/authservice/**"
+  - "package/identity-authorization/**"
 metrics-server:
   - "src/metrics-server/**"
-neuvector:
-  - "src/neuvector/**"
-prometheus-stack:
+  - "package/metrics-server/**"
+monitoring:
   - "src/prometheus-stack/**"
-promtail:
+  - "src/grafana/**"
+  - "package/monitoring/**"
+logging:
   - "src/promtail/**"
-tempo:
-  - "src/tempo/**"
-velero:
+  - "src/loki/**"
+  - "package/logging/**"
+runtime-security:
+  - "src/neuvector/**"
+  - "package/runtime-security/**"
+backup-restore:
   - "src/velero/**"
+  - "package/backup-restore/**"

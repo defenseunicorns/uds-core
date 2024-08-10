@@ -1,0 +1,27 @@
+kind: ZarfPackageConfig
+metadata:
+  name: core-monitoring
+  description: "UDS Core (Monitoring)"
+  authors: "Defense Unicorns - Product"
+  # x-release-please-start-version
+  version: "0.25.2"
+  # x-release-please-end
+
+components:
+  # CRDs
+  - name: prometheus-operator-crds
+    required: true
+    import:
+      path: ../../src/prometheus-stack
+
+  # Prometheus
+  - name: kube-prometheus-stack
+    required: true
+    import:
+      path: ../../src/prometheus-stack
+
+  # Grafana
+  - name: grafana
+    required: true
+    import:
+      path: ../../src/grafana

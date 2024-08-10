@@ -6,11 +6,11 @@ on:
     inputs:
       package:
         type: string
-        description: "The name of the source package to test"
+        description: "The name of the core package to test"
         required: true
       flavor:
         type: string
-        description: "Flavor of the source package to test"
+        description: "Flavor of the core package to test"
         required: true
       test_type:
         type: string
@@ -21,11 +21,11 @@ on:
     inputs:
       package:
         type: string
-        description: "The name of the source package to test"
+        description: "The name of the core package to test"
         required: true
       flavor:
         type: string
-        description: "Flavor of the source package to test"
+        description: "Flavor of the core package to test"
         required: true
       test_type:
         type: string

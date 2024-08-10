@@ -43,17 +43,11 @@ tasks:
     actions:
       - task: pepr-build
 
-      - description: "Create the Pepr Zarf Package, if it exists"
-        cmd: "uds zarf package create dist --confirm --no-progress"
+      - description: "Create the base package"
+        cmd: "uds zarf package create packages/base --confirm --no-progress"
 
       - description: "Create the requested Zarf Package (must set UDS_PKG environment variable)"
-        cmd: "uds zarf package create src/${UDS_PKG} --confirm --no-progress --flavor ${FLAVOR}"
-
-      - description: "Create the Istio Zarf Package, if UDS_PKG != istio"
-        cmd: |
-          if [ "${UDS_PKG}" != "istio" ]; then
-            uds zarf package create src/istio --confirm --no-progress --flavor ${FLAVOR}
-          fi
+        cmd: "uds zarf package create packages/${UDS_PKG} --confirm --no-progress --flavor ${FLAVOR}"
 
   - name: pepr-build
     description: "Build the UDS Core Pepr Module"

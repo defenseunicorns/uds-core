@@ -1,0 +1,21 @@
+kind: ZarfPackageConfig
+metadata:
+  name: core-logging
+  description: "UDS Core (Logging)"
+  authors: "Defense Unicorns - Product"
+  # x-release-please-start-version
+  version: "0.25.2"
+  # x-release-please-end
+
+components:
+  # Loki
+  - name: loki
+    required: true
+    import:
+      path: ../../src/loki
+
+  # Promtail
+  - name: promtail
+    required: true
+    import:
+      path: ../../src/promtail
