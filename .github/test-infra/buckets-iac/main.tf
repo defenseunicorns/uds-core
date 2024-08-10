@@ -67,7 +67,7 @@ resource "random_id" "unique_id" {
 
 module "generate_kms" {
   for_each = local.bucket_configurations
-  source   = "github.com/defenseunicorns/terraform-aws-uds-kms?ref=v0.0.3"
+  source   = "github.com/defenseunicorns/terraform-aws-uds-kms?ref=v0.0.4"
 
   key_owners = var.key_owner_arns
   # A list of IAM ARNs for those who will have full key permissions (`kms:*`)
