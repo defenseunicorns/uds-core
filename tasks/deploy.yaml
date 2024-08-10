@@ -24,11 +24,9 @@ tasks:
   - name: single-package
     actions:
       - description: "Deploy the base package"
-        cmd: |
-          PEPR_VERSION=$(npm pkg get version | tr -d '"')
-          uds zarf package deploy build/zarf-package-uds-core-base-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress --set UDS_SINGLE_TEST=true
-      - description: "Deploy the requested Zarf Package (must set UDS_PKG environment variable)"
-        cmd: uds zarf package deploy build/zarf-package-uds-core-${UDS_PKG}-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress --components '*'
+        cmd: uds zarf package deploy build/zarf-package-core-base-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress --set UDS_SINGLE_TEST=true
+      - description: "Deploy the requested functional layer (must set UDS_PKG environment variable)"
+        cmd: uds zarf package deploy build/zarf-package-core-${UDS_PKG}-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress --components '*'
 
   - name: latest-package-release
     actions:
