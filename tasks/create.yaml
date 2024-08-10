@@ -44,7 +44,7 @@ tasks:
       - task: pepr-build
 
       - description: "Create the base package"
-        cmd: "uds zarf package create packages/base --confirm --no-progress"
+        cmd: "uds zarf package create packages/base --confirm --no-progress --flavor ${FLAVOR}"
 
       - description: "Create the requested Zarf Package (must set UDS_PKG environment variable)"
         cmd: "uds zarf package create packages/${UDS_PKG} --confirm --no-progress --flavor ${FLAVOR}"
