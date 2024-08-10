@@ -4,25 +4,25 @@ all:
 base:
   - "src/istio/**"
   - "src/pepr/**"
-  - "package/base/**"
+  - "packages/base/**"
 identity-authorization:
   - "src/keycloak/**"
   - "src/authservice/**"
-  - "package/identity-authorization/**"
+  - "packages/identity-authorization/**"
 metrics-server:
   - "src/metrics-server/**"
-  - "package/metrics-server/**"
+  - "packages/metrics-server/**"
 monitoring:
   - "src/prometheus-stack/**"
   - "src/grafana/**"
-  - "package/monitoring/**"
+  - "packages/monitoring/**"
 logging:
   - "src/promtail/**"
   - "src/loki/**"
-  - "package/logging/**"
+  - "packages/logging/**"
 runtime-security:
   - "src/neuvector/**"
-  - "package/runtime-security/**"
+  - "packages/runtime-security/**"
 backup-restore:
   - "src/velero/**"
-  - "package/backup-restore/**"
+  - "packages/backup-restore/**"
