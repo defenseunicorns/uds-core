@@ -25,17 +25,20 @@ tasks:
         cmd: "uds create bundles/k3d-standard --confirm --no-progress --architecture=${ZARF_ARCHITECTURE}"
 
   - name: slim-dev-package
-    description: "Create the UDS Core (Istio Only) Zarf Package"
+    description: "Create the UDS Core Zarf Packages for Slim Dev"
     actions:
       - task: pepr-build
 
-      - description: "Create the UDS Core Istio Zarf Package"
-        cmd: "uds zarf package create packages/slim-dev --confirm --no-progress --flavor ${FLAVOR}"
+      - description: "Create the base package"
+        cmd: "uds zarf package create packages/base --confirm --no-progress --flavor ${FLAVOR}"
+
+      - description: "Create the Identity/Authorization package"
+        cmd: "uds zarf package create packages/identity-authorization --confirm --no-progress --flavor ${FLAVOR}"
 
   - name: k3d-slim-dev-bundle
-    description: "Create the K3d-UDS Core (Istio and Keycloak Only) Bundle"
+    description: "Create the K3d-UDS Core Slim Dev Bundle"
     actions:
-      - description: "Create the UDS Core Istio and Keycloak Only Bundle"
+      - description: "Create the UDS Core Slim Dev Bundle"
         cmd: "uds create bundles/k3d-slim-dev --confirm --no-progress --architecture=${ZARF_ARCHITECTURE}"
 
   - name: single-package
