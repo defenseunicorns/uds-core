@@ -16,6 +16,7 @@ import { UDSExemption, UDSPackage } from "./crd";
 import { validator } from "./crd/validators/package-validator";
 
 // Reconciler imports
+import { UDSConfig } from "../config";
 import { purgeAuthserviceClients } from "./controllers/keycloak/authservice/authservice";
 import { exemptValidator } from "./crd/validators/exempt-validator";
 import { packageReconciler } from "./reconcilers/package-reconciler";
@@ -63,3 +64,29 @@ When(UDSPackage)
 
 // Watch for Exemptions and validate
 When(UDSExemption).IsCreatedOrUpdated().Validate(exemptValidator);
+
+// Watch for Functional Layers and update config
+When(UDSPackage)
+  .IsCreatedOrUpdated()
+  .WithName("prometheus-stack")
+  .Watch(() => {
+    UDSConfig.isMonitoringDeployed = true;
+  });
+When(UDSPackage)
+  .IsDeleted()
+  .WithName("prometheus-stack")
+  .Watch(() => {
+    UDSConfig.isMonitoringDeployed = false;
+  });
+When(UDSPackage)
+  .IsCreatedOrUpdated()
+  .WithName("keycloak")
+  .Watch(() => {
+    UDSConfig.isIdentityDeployed = true;
+  });
+When(UDSPackage)
+  .IsDeleted()
+  .WithName("keycloak")
+  .Watch(() => {
+    UDSConfig.isIdentityDeployed = false;
+  });

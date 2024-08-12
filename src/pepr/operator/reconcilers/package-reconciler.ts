@@ -5,6 +5,7 @@ import { enableInjection } from "../controllers/istio/injection";
 import { istioResources } from "../controllers/istio/istio-resources";
 import { authservice } from "../controllers/keycloak/authservice/authservice";
 import { keycloak } from "../controllers/keycloak/client-sync";
+import { Client } from "../controllers/keycloak/types";
 import { podMonitor } from "../controllers/monitoring/pod-monitor";
 import { serviceMonitor } from "../controllers/monitoring/service-monitor";
 import { networkPolicies } from "../controllers/network/policies";
@@ -66,19 +67,25 @@ export async function packageReconciler(pkg: UDSPackage) {
     await enableInjection(pkg);
 
     // Configure SSO
-    const ssoClients = await keycloak(pkg);
-    const authserviceClients = await authservice(pkg, ssoClients);
+    let ssoClients: Map<string, Client> = new Map();
+    let authserviceClients: string[] = [];
+    if (UDSConfig.isIdentityDeployed) {
+      ssoClients = await keycloak(pkg);
+      authserviceClients = await authservice(pkg, ssoClients);
+    } else if (pkg.spec?.sso) {
+      // Throw warning event
+    }
 
     // Create the VirtualService and ServiceEntry for each exposed service
     endpoints = await istioResources(pkg, namespace!);
 
-    // Only configure the ServiceMonitors if not running in single test mode
+    // Configure service and pod monitors
     const monitors: string[] = [];
-    if (!UDSConfig.isSingleTest) {
+    if (UDSConfig.isMonitoringDeployed) {
       monitors.push(...(await podMonitor(pkg, namespace!)));
       monitors.push(...(await serviceMonitor(pkg, namespace!)));
-    } else {
-      log.warn(`Running in single test mode, skipping ${name} Monitors.`);
+    } else if (pkg.spec?.monitor) {
+      // Throw warning event
     }
 
     await updateStatus(pkg, {
