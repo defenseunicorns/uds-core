@@ -1,0 +1,11 @@
+includes:
+  - keycloak: ../../src/keycloak/tasks.yaml
+  - authservice: ../../src/authservice/tasks.yaml
+
+tasks:
+  - name: validate
+    actions:
+      - description: "Validate Keycloak"
+        task: keycloak:validate
+      - description: "Validate AuthService"
+        task: authservice:validate

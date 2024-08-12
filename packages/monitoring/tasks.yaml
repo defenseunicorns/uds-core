@@ -1,0 +1,11 @@
+includes:
+  - prometheus-stack: ../../src/prometheus-stack/tasks.yaml
+  - grafana: ../../src/grafana/tasks.yaml
+
+tasks:
+  - name: validate
+    actions:
+      - description: "Validate Prometheus Stack"
+        task: prometheus-stack:validate
+      - description: "Validate Grafana Stack"
+        task: grafana:validate

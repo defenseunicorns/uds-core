@@ -1,0 +1,11 @@
+includes:
+  - promtail: ../../src/promtail/tasks.yaml
+  - loki: ../../src/loki/tasks.yaml
+
+tasks:
+  - name: validate
+    actions:
+      - description: "Validate Promtail"
+        task: promtail:validate
+      - description: "Validate Loki"
+        task: loki:validate

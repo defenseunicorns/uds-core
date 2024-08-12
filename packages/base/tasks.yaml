@@ -1,0 +1,11 @@
+includes:
+  - istio: ../../src/istio/tasks.yaml
+  - pepr: ../../src/pepr/tasks.yaml
+
+tasks:
+  - name: validate
+    actions:
+      - description: "Validate Istio"
+        task: istio:validate
+      - description: "Validate Pepr"
+        task: pepr:validate
