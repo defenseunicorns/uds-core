@@ -13,7 +13,7 @@ tasks:
       - task: deploy:single-package
 
       - description: "Validate the package"
-        cmd: uds run -f src/${UDS_PKG}/tasks.yaml validate --no-progress
+        cmd: uds run -f packages/${UDS_PKG}/tasks.yaml validate --no-progress
 
   - name: validate-packages
     description: "Validated all packages"
