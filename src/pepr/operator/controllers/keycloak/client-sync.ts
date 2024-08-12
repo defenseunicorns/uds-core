@@ -197,7 +197,7 @@ export function handleClientGroups(clientReq: Sso) {
 
 async function apiCall(sso: Partial<Sso>, method = "POST", authToken = "") {
   // Handle single test mode
-  if (UDSConfig.isSingleTest) {
+  if (!UDSConfig.isIdentityDeployed) {
     log.warn(`Generating fake client for '${sso.clientId}' in single test mode`);
     return {
       ...sso,
