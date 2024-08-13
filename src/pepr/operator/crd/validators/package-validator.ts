@@ -116,17 +116,17 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
   }
 
   const monitors = pkg.spec?.monitor ?? [];
-  
+
   // Ensure the descriptions are generating unique names
   const monitorDescriptions = new Set<string>();
 
   for (const monitor of monitors) {
     const description = sanitizeResourceName(monitor.description || "null");
-  
+
     if (monitorDescriptions.has(description)) {
       return req.Deny(`The sanitized description "${description}" is not unique`);
     }
-  
+
     monitorDescriptions.add(description);
   }
 

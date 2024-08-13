@@ -1,6 +1,16 @@
 import { afterEach, describe, expect, it, jest } from "@jest/globals";
 import { PeprValidateRequest } from "pepr";
-import { Gateway, Expose, UDSPackage, Allow, Sso, Direction, RemoteGenerated, Protocol, Monitor } from "..";
+import {
+  Gateway,
+  Expose,
+  UDSPackage,
+  Allow,
+  Sso,
+  Direction,
+  RemoteGenerated,
+  Protocol,
+  Monitor,
+} from "..";
 import { validator } from "./package-validator";
 
 const makeMockReq = (
@@ -53,7 +63,7 @@ const makeMockReq = (
       description: "Default Monitor",
       portName: "http-metrics",
       selector: {},
-      targetPort: 8080, 
+      targetPort: 8080,
     };
     defaultPkg.spec!.monitor?.push({ ...defaultMonitor, ...monitor });
   }
@@ -424,5 +434,23 @@ describe("Test validation of Exemption CRs", () => {
     );
     await validator(mockReq);
     expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+  });
+
+  it("denies monitors with undefined descriptions", async () => {
+    const mockReq = makeMockReq({}, [], [], [], [{}, {}]);
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+  });
+
+  it("denies monitors that do not have unique descriptions", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [],
+      [],
+      [{ description: "Metrics" }, { description: "Metrics" }],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
   });
 });
