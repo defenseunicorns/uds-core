@@ -124,7 +124,7 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
     const description = sanitizeResourceName(monitor.description || "null");
   
     if (monitorDescriptions.has(description)) {
-      return req.Deny(`The description "${description}" is not unique`);
+      return req.Deny(`The sanitized description "${description}" is not unique`);
     }
   
     monitorDescriptions.add(description);
