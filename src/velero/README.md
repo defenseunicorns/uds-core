@@ -102,18 +102,23 @@ UDS_PKG=velero uds run deploy-single-package
 
 ### Test the package via UDS tasks
 Running the following will check that the velero deployment exists in the cluster and attempt to execute a backup:
+
 ```bash
 uds run -f src/velero/tasks.yaml validate
 ```
+
 > Alternatively, you can combine package creation, cluster setup, package deploy and the test command with a simple `UDS_PKG=velero uds run test-single-package`
 
 ## Manually trigger the default backup for testing purposes
-```
+
+```bash
 velero backup create --from-schedule velero-udsbackup -n velero
 ```
+
 > NOTE: requires [the velero CLI](https://velero.io/docs/v1.3.0/velero-install/)
 
 Alternatively, manually create a `backup` object with `kubectl`:
+
 ```bash
 uds zarf tools kubectl apply -f - <<-EOF
   apiVersion: velero.io/v1
@@ -137,6 +142,7 @@ EOF
 ```
 
 ## Manually restore backup
+
 ```bash
 velero restore create uds-restore-$(date +%s) \
   --from-backup <backup-name> \
