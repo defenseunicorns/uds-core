@@ -83,7 +83,8 @@ By overriding the velero values in the bundle as follows and adding the vlaues t
 ```
 
 ## Plugin Compatability
-More information about all available plugins [can be found in the upstream docs](https://velero.io/plugins/). 
+
+This package currently assumes the availability of S3 API compatible object storage, Azure blob storage or use of the CSI plugin which is baked into Velero by default. More information about all available plugins can be found in the upstream docs**[can be found in the upstream docs](https://velero.io/plugins/). 
 
 ## Deploy
 
