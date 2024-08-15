@@ -46,21 +46,7 @@ By overriding the velero values in the bundle as follows:
 
 #### Azure Blob Storage
 
-Bucket information and access credentials can be provided via a secret with the following format.
-```
-apiVersion: v1
-kind: Secret
-metadata:
-  name: ###ZARF_VAR_VELERO_BUCKET_CREDENTIALS_SECRET###
-  namespace: velero
-type: kubernetes.io/opaque
-stringData:
-  cloud: |-
-    AZURE_STORAGE_ACCOUNT_ACCESS_KEY=${VELERO_STORAGE_ACCOUNT_ACCESS_KEY}
-    AZURE_CLOUD_NAME=${VELERO_CLOUD_NAME}
-```
-
-By overriding the velero values in the bundle as follows and adding the vlaues to the uds-config.yaml:
+Blob information and access credentials can be provided by overriding bundle values:
 ```
   - name: core
     overrides:
