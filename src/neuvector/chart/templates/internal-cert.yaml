@@ -1,0 +1,18 @@
+{{- if .Values.generateInternalCert -}}
+{{- $cn := "neuvector" }}
+{{- $ca := genCA "neuvector" 3650 -}}
+{{- $cert := genSignedCert $cn nil (list $cn) 3650 $ca -}}
+{{- $name := "neuvector-internal-cert" -}}
+# This secret generates a cert for internal neuvector comms since these are missing in some non-upstream images
+# While these certs are long-lived, it isn't the primary method for TLS comms since Istio is ensuring mTLS with secure, rotated certificates
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace }}
+type: Opaque
+data:
+  tls.key: {{ include "neuvector.secrets.lookup" (dict "namespace" .Release.Namespace "secret" $name "key" "tls.key" "defaultValue" $cert.Key) }}
+  tls.crt: {{ include "neuvector.secrets.lookup" (dict "namespace" .Release.Namespace "secret" $name "key" "tls.crt" "defaultValue" $cert.Cert) }}
+  ca.crt: {{ include "neuvector.secrets.lookup" (dict "namespace" .Release.Namespace "secret" $name "key" "ca.crt" "defaultValue" $ca.Cert) }}
+{{- end }}

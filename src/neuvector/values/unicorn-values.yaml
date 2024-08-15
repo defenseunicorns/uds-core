@@ -3,24 +3,38 @@ tag: "5.3.4"
 manager:
   image:
     repository: du-uds-defenseunicorns/neuvector-manager
+  certificate:
+    secret: neuvector-internal-cert
+    keyFile: tls.key
+    pemFile: tls.crt
 
 enforcer:
   image:
     repository: du-uds-defenseunicorns/neuvector-enforcer-fips
   containerSecurityContext:
     privileged: true
+  internal:
+    certificate:
+      secret: neuvector-internal-cert
 
 controller:
   image:
     repository: du-uds-defenseunicorns/neuvector-controller-fips
+  internal:
+    certificate:
+      secret: neuvector-internal-cert
 
 cve:
   scanner:
+    internal:
+      certificate:
+        secret: neuvector-internal-cert
     image:
-      repository: du-uds-defenseunicorns/neuvector-scanner-fips
+      registry: docker.io
+      repository: neuvector/scanner
       tag: latest
   updater:
     enabled: true
     image:
       repository: du-uds-defenseunicorns/neuvector-updater-fips
-      tag: 8.8.0-dev
+      tag: 8.9.1-dev
