@@ -299,8 +299,29 @@ const sso = {
       attributes: {
         description: "Specifies attributes for the client.",
         type: "object",
-        additionalProperties: {
-          type: "string",
+        properties: {
+          "oidc.ciba.grant.enabled": {
+            type: "string",
+          },
+          "backchannel.logout.session.required": {
+            type: "string",
+          },
+          "backchannel.logout.revoke.offline.tokens": {
+            type: "string",
+          },
+          "post.logout.redirect.uris": {
+            type: "string",
+          },
+          "oauth2.device.authorization.grant.enabled": {
+            type: "string",
+          },
+          "pkce.code.challenge.method": {
+            type: "string",
+            enum: ["S256", "plain"],
+          },
+          "uds.core.groups": {
+            type: "string",
+          },
         },
       },
       rootUrl: {
