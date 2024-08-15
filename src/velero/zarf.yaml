@@ -19,7 +19,7 @@ components:
       - velero/velero:v1.14.0
       - velero/velero-plugin-for-aws:v1.10.0
       - docker.io/bitnami/kubectl:1.31.0
-      - velero/velero-plugin-for-microsoft-azure:v1.1.0
+      - velero/velero-plugin-for-microsoft-azure:v1.10.0
 
   - name: velero
     required: true
