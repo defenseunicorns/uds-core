@@ -1,12 +1,11 @@
+# Generate certs missing from unicorn images
+autoGenerateCert: true
+
 registry: cgr.dev
 tag: "5.3.4"
 manager:
   image:
     repository: du-uds-defenseunicorns/neuvector-manager
-  certificate:
-    secret: neuvector-internal-cert
-    keyFile: tls.key
-    pemFile: tls.crt
 
 enforcer:
   image:

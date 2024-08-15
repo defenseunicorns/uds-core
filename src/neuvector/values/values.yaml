@@ -1,5 +1,5 @@
 leastPrivilege: true
-autoGenerateCert: true
+autoGenerateCert: false
 rbac: true
 manager:
   env:
