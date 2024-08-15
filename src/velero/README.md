@@ -63,9 +63,10 @@ Blob information and access credentials can be provided by overriding bundle val
                   provider: azure
                   bucket: ${VERLERO_BUCKET_NAME}
                   config: 
-                    storageAccount=${VELERO_STORAGE_ACCOUNT}
-                    resourceGroup=${VELERO_RESOURCE_GROUP}
-                    storageAccountKeyEnvVar=VELERO_STORAGE_ACCOUNT_ACCESS_KEY
+                    storageAccount:${VELERO_STORAGE_ACCOUNT}
+                    resourceGroup:${VELERO_RESOURCE_GROUP}
+                    storageAccountKeyEnvVar:VELERO_STORAGE_ACCOUNT_ACCESS_KEY
+                    subscriptionId:${AZ_SUBSCRIPTION_ID}
 ```
 
 ## Plugin Compatability
