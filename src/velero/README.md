@@ -65,7 +65,7 @@ Blob information and access credentials can be provided by overriding bundle val
                   config: 
                     storageAccount=${VELERO_STORAGE_ACCOUNT}
                     resourceGroup=${VELERO_RESOURCE_GROUP}
-                    storageAccountKeyEnvVar:${VELERO_STORAGE_ACCOUNT_ACCESS_KEY}
+                    storageAccountKeyEnvVar:VELERO_STORAGE_ACCOUNT_ACCESS_KEY
 ```
 
 ## Plugin Compatability
