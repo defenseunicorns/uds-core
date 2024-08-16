@@ -18,7 +18,7 @@ components:
     images:
       - velero/velero:v1.14.0
       - velero/velero-plugin-for-aws:v1.10.0
-      - docker.io/bitnami/kubectl:1.30.3
+      - docker.io/bitnami/kubectl:1.31.0
 
   - name: velero
     required: true
