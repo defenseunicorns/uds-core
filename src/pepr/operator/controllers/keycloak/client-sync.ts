@@ -103,13 +103,21 @@ export function convertSsoToClient(sso: Partial<Sso>): Client {
     }
   }
 
+  // Group auth based on sso group membership
+  client.attributes = client.attributes || {};
+
+  if (sso.groups?.anyOf) {
+    client.attributes["uds.core.groups"] = JSON.stringify(sso.groups);
+  } else {
+    client.attributes["uds.core.groups"] = "";
+  }
+
   // Assert that the result conforms to Client type
   return client as Client;
 }
 
 async function syncClient(
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  { enableAuthserviceSelector, secretName, secretTemplate, ...clientReq }: Sso,
+  { secretName, secretTemplate, ...clientReq }: Sso,
   pkg: UDSPackage,
   isRetry = false,
 ) {
@@ -118,7 +126,6 @@ async function syncClient(
   // Not including the CR data in the ref because Keycloak client IDs must be unique already
   const name = `sso-client-${clientReq.clientId}`;
   let client = convertSsoToClient(clientReq);
-  handleClientGroups(clientReq, client);
 
   // Get keycloak client token from the store if this is an existing client
   const token = Store.getItem(name);
@@ -198,21 +205,6 @@ async function syncClient(
   }
 
   return client;
-}
-
-/**
- * Handles the client groups by converting the groups to attributes.
- * @param clientReq - The client request object.
- */
-export function handleClientGroups(sso: Sso, clientReq: Client) {
-  if (sso.groups?.anyOf) {
-    clientReq.attributes = clientReq.attributes || {};
-    clientReq.attributes["uds.core.groups"] = JSON.stringify(sso.groups);
-  } else {
-    clientReq.attributes = clientReq.attributes || {};
-    clientReq.attributes["uds.core.groups"] = "";
-  }
-  delete sso.groups;
 }
 
 async function apiCall(client: Partial<Client>, method = "POST", authToken = "") {
