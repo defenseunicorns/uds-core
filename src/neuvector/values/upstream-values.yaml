@@ -1,5 +1,5 @@
 registry: docker.io
-tag: "5.3.3"
+tag: "5.3.4"
 manager:
   image:
     repository: neuvector/manager

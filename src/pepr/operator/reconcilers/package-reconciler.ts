@@ -1,4 +1,4 @@
-import { handleFailure, shouldSkip, updateStatus } from ".";
+import { handleFailure, shouldSkip, updateStatus, writeEvent } from ".";
 import { UDSConfig } from "../../config";
 import { Component, setupLogger } from "../../logger";
 import { enableInjection } from "../controllers/istio/injection";
@@ -33,6 +33,23 @@ export async function packageReconciler(pkg: UDSPackage) {
       `Skipping Package ${namespace}/${name}, status.phase: ${pkg.status?.phase}, observedGeneration: ${pkg.status?.observedGeneration}, retryAttempt: ${pkg.status?.retryAttempt}`,
     );
     return;
+  }
+
+  if (pkg.status?.retryAttempt && pkg.status?.retryAttempt > 0) {
+    // calculate exponential backoff where backoffSeconds = 3^retryAttempt
+    const backOffSeconds = 3 ** pkg.status?.retryAttempt;
+
+    log.info(
+      metadata,
+      `Waiting ${backOffSeconds} seconds before processing package ${namespace}/${name}, status.phase: ${pkg.status?.phase}, observedGeneration: ${pkg.status?.observedGeneration}, retryAttempt: ${pkg.status?.retryAttempt}`,
+    );
+
+    await writeEvent(pkg, {
+      message: `Waiting ${backOffSeconds} seconds before retrying package`,
+    });
+
+    // wait for backOff seconds before retrying
+    await new Promise(resolve => setTimeout(resolve, backOffSeconds * 1000));
   }
 
   // Migrate the package to the latest version
