@@ -591,6 +591,7 @@ export interface Sso {
 export interface Attributes {
   "backchannel.logout.revoke.offline.tokens"?: string;
   "backchannel.logout.session.required"?: string;
+  "client.session.idle.timeout"?: string;
   "oauth2.device.authorization.grant.enabled"?: string;
   "oidc.ciba.grant.enabled"?: string;
   "pkce.code.challenge.method"?: PkceCodeChallengeMethod;

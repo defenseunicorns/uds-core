@@ -322,6 +322,9 @@ const sso = {
           "uds.core.groups": {
             type: "string",
           },
+          "client.session.idle.timeout": {
+            type: "string",
+          },
         },
       },
       rootUrl: {
