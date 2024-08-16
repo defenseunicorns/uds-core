@@ -245,14 +245,14 @@ describe("handleClientGroups function", () => {
 });
 
 describe("convertSsoToClient function", () => {
-  it('should correctly convert a basic SSO object to a Client object', () => {
+  it("should correctly convert a basic SSO object to a Client object", () => {
     const sso: Sso = {
       clientId: "test-client",
-      name: "Test Client"
+      name: "Test Client",
     };
 
     const expectedClient: Partial<Client> = {
-      clientId: "test-client"
+      clientId: "test-client",
     };
 
     const convertedSso = convertSsoToClient(sso);
@@ -260,11 +260,11 @@ describe("convertSsoToClient function", () => {
     expect(convertedSso).toEqual(expectedClient);
   });
 
-  it('should correctly convert a full SSO object to a Client object', () => {
+  it("should correctly convert a full SSO object to a Client object", () => {
     const sso: Sso = {
       alwaysDisplayInConsole: true,
       attributes: {
-        "backchannel.logout.revoke.offline.tokens": "true"
+        "backchannel.logout.revoke.offline.tokens": "true",
       },
       clientId: "test-client",
       defaultClientScopes: ["scope1", "scope2"],
@@ -280,7 +280,7 @@ describe("convertSsoToClient function", () => {
       secretName: "secretName",
       secretTemplate: { templateKey: "templateValue" },
       standardFlowEnabled: true,
-      webOrigins: ["https://example.com"]
+      webOrigins: ["https://example.com"],
     };
 
     const expectedClient: Partial<Client> = {
@@ -301,18 +301,18 @@ describe("convertSsoToClient function", () => {
     expect(convertedSso).toEqual(expectedClient);
   });
 
-  it('should handle optional fields correctly', () => {
+  it("should handle optional fields correctly", () => {
     const sso: Sso = {
       clientId: "test-client",
       name: "Test Client",
       enabled: undefined,
-      protocol: undefined
+      protocol: undefined,
     };
 
     const expectedClient: Partial<Client> = {
       clientId: "test-client",
       registrationAccessToken: undefined,
-      samlIdpCertificate: undefined
+      samlIdpCertificate: undefined,
     };
 
     const convertedSso = convertSsoToClient(sso);
@@ -320,11 +320,11 @@ describe("convertSsoToClient function", () => {
     expect(convertedSso).toEqual(expectedClient);
   });
 
-  it('should handle empty fields correctly', () => {
+  it("should handle empty fields correctly", () => {
     const sso: Sso = {
       clientId: "test-client",
       name: "Test Client",
-      attributes: {}
+      attributes: {},
     };
 
     const expectedClient: Partial<Client> = {
