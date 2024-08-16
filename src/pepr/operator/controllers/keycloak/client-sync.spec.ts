@@ -179,7 +179,10 @@ describe("convertSsoToClient function", () => {
     const expectedClient: Partial<Client> = {
       clientId: "test-client",
       alwaysDisplayInConsole: true,
-      attributes: { "backchannel.logout.revoke.offline.tokens": "true", "uds.core.groups": "{\"anyOf\":[\"group1\"]}" },
+      attributes: {
+        "backchannel.logout.revoke.offline.tokens": "true",
+        "uds.core.groups": '{"anyOf":["group1"]}',
+      },
       defaultClientScopes: ["scope1", "scope2"],
       enabled: true,
       publicClient: true,
@@ -203,7 +206,7 @@ describe("convertSsoToClient function", () => {
 
     const expectedClient: Partial<Client> = {
       clientId: "test-client",
-      attributes: { "uds.core.groups": "{\"anyOf\":[]}" },
+      attributes: { "uds.core.groups": '{"anyOf":[]}' },
       registrationAccessToken: undefined,
       samlIdpCertificate: undefined,
     };
@@ -220,7 +223,7 @@ describe("convertSsoToClient function", () => {
 
     const expectedClient: Partial<Client> = {
       clientId: "test-client",
-      attributes: {"uds.core.groups": ""},
+      attributes: { "uds.core.groups": "" },
     };
 
     expect(convertSsoToClient(sso)).toEqual(expectedClient);
@@ -252,7 +255,10 @@ describe("convertSsoToClient function", () => {
     const expectedClient: Partial<Client> = {
       clientId: "test-client",
       alwaysDisplayInConsole: true,
-      attributes: { "backchannel.logout.revoke.offline.tokens": "true", "uds.core.groups": "{\"anyOf\":[\"group1\",\"group2\"]}" },
+      attributes: {
+        "backchannel.logout.revoke.offline.tokens": "true",
+        "uds.core.groups": '{"anyOf":["group1","group2"]}',
+      },
       defaultClientScopes: ["scope1", "scope2"],
       enabled: true,
       publicClient: true,
