@@ -1423,10 +1423,10 @@ assessment-results:
           uuid: d265b5b6-9306-4c22-ad35-d6f00a41920e
       props:
         - name: threshold
-          ns: https://docs.lula.dev/ns
+          ns: https://docs.lula.dev/oscal/ns
           value: "true"
         - name: target
-          ns: https://docs.lula.dev/ns
+          ns: https://docs.lula.dev/oscal/ns
           value: il4
       reviewed-controls:
         control-selections:
@@ -2701,7 +2701,7 @@ assessment-results:
           uuid: 35470a10-7ec9-4663-980b-c31ad61e08eb
       props:
         - name: threshold
-          ns: https://docs.lula.dev/ns
+          ns: https://docs.lula.dev/oscal/ns
           value: "true"
       reviewed-controls:
         control-selections:

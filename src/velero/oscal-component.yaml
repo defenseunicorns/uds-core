@@ -108,7 +108,7 @@ component-definition:
                 - Multi-cloud and on-premise support for availability of backup.
           props:
             - name: framework
-              ns: https://docs.lula.dev/ns
+              ns: https://docs.lula.dev/oscal/ns
               value: il4
   back-matter:
     resources:

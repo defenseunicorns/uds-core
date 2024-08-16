@@ -1373,7 +1373,7 @@ component-definition:
           uuid: d2afb4c4-2cd8-5305-a6cc-d1bc7b388d0c
           props:
             - name: framework
-              ns: https://docs.lula.dev/ns
+              ns: https://docs.lula.dev/oscal/ns
               value: il4
       description: |
         Istio Service Mesh

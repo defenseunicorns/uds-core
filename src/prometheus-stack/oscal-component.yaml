@@ -235,7 +235,7 @@ component-definition:
               remarks: This control is fully implemented by this tool.
           props:
             - name: framework
-              ns: https://docs.lula.dev/ns
+              ns: https://docs.lula.dev/oscal/ns
               value: il4
   back-matter:
     resources:
