@@ -19,7 +19,7 @@ variables:
 
   - name: AUTHSERVICE_REDIS_URI
     description: "UDS Authservice Redis URI"
-    default: "redis://host.k3d.internal:6379"
+    default: ""
 
 components:
   - name: uds-operator-config
