@@ -319,9 +319,6 @@ const sso = {
             type: "string",
             enum: ["S256", "plain"],
           },
-          "uds.core.groups": {
-            type: "string",
-          },
           "client.session.idle.timeout": {
             type: "string",
           },

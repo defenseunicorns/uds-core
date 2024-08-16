@@ -596,7 +596,6 @@ export interface Attributes {
   "oidc.ciba.grant.enabled"?: string;
   "pkce.code.challenge.method"?: PkceCodeChallengeMethod;
   "post.logout.redirect.uris"?: string;
-  "uds.core.groups"?: string;
 }
 
 export enum PkceCodeChallengeMethod {
