@@ -1,6 +1,6 @@
 import { PeprValidateRequest } from "pepr";
 
-import { Gateway, UDSPackage } from "..";
+import { Gateway, Protocol, UDSPackage } from "..";
 import { generateVSName } from "../../controllers/istio/virtual-service";
 import { generateName } from "../../controllers/network/generate";
 import { sanitizeResourceName } from "../../controllers/utils";
@@ -90,6 +90,27 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
     if (client.secretName && client.secretName !== sanitizeResourceName(client.secretName)) {
       return req.Deny(
         `The client ID "${client.clientId}" uses an invalid secret name ${client.secretName}`,
+      );
+    }
+    // If standardFlowEnabled is undefined (defaults to `true`) or explicitly true and there are no redirectUris set, deny the req
+    if (client.standardFlowEnabled !== false && !client.redirectUris) {
+      return req.Deny(
+        `The client ID "${client.clientId}" must specify redirectUris if standardFlowEnabled is turned on (it is enabled by default)`,
+      );
+    }
+    // If this is a public client ensure that it only sets itself up as an OAuth Device Flow client
+    if (
+      client.publicClient &&
+      (client.standardFlowEnabled !== false ||
+        client.secret !== undefined ||
+        client.secretName !== undefined ||
+        client.secretTemplate !== undefined ||
+        client.enableAuthserviceSelector !== undefined ||
+        client.protocol === Protocol.Saml ||
+        client.attributes?.["oauth2.device.authorization.grant.enabled"] !== "true")
+    ) {
+      return req.Deny(
+        `The client ID "${client.clientId}" must _only_ configure the OAuth Device Flow as a public client`,
       );
     }
   }

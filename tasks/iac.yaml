@@ -13,7 +13,7 @@ tasks:
   - name: install-eksctl
     actions:
       - cmd: |
-          curl --silent --location "https://github.com/weaveworks/eksctl/releases/download/v0.183.0/eksctl_Linux_amd64.tar.gz" | tar xz -C /tmp
+          curl --silent --location "https://github.com/weaveworks/eksctl/releases/download/v0.188.0/eksctl_Linux_amd64.tar.gz" | tar xz -C /tmp
           sudo mv /tmp/eksctl /usr/local/bin
 
   - name: create-cluster
@@ -26,7 +26,7 @@ tasks:
           metadata:
             name: ${CLUSTER_NAME}
             region: us-west-2
-            version: "1.27"
+            version: "1.30"
             tags:
               PermissionsBoundary: ${PERMISSIONS_BOUNDARY_NAME}
 
@@ -36,15 +36,18 @@ tasks:
 
           addons:
             - name: aws-ebs-csi-driver
-              version: v1.25.0-eksbuild.1
-
               attachPolicyARNs:
                 - arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy
+              configurationValues: |-
+                defaultStorageClass:
+                  enabled: true
               permissionsBoundary: ${PERMISSIONS_BOUNDARY_ARN}
               tags:
                 PermissionsBoundary: ${PERMISSIONS_BOUNDARY_NAME}
 
             - name: vpc-cni
+              attachPolicyARNs:
+                - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
               permissionsBoundary: ${PERMISSIONS_BOUNDARY_ARN}
               tags:
                 PermissionsBoundary: ${PERMISSIONS_BOUNDARY_NAME}
@@ -58,11 +61,13 @@ tasks:
                 PermissionsBoundary: ${PERMISSIONS_BOUNDARY_NAME}
               iam:
                 instanceRolePermissionsBoundary: ${PERMISSIONS_BOUNDARY_ARN}
-              ami: ${AMI_ID}
-              amiFamily: AmazonLinux2
-              overrideBootstrapCommand: |
-                #!/bin/bash
-                /etc/eks/bootstrap.sh ${CLUSTER_NAME} --container-runtime containerd
+                withAddonPolicies:
+                  cloudWatch: true
+                  ebs: true
+          cloudWatch:
+            clusterLogging:
+              enableTypes: ["*"]
+              logRetentionInDays: 1
           EOF
 
       - cmd: eksctl create cluster --dry-run -f cluster-config.yaml
@@ -76,16 +81,16 @@ tasks:
 
   - name: create-iac
     actions:
-      - task: apply-terraform
-      - task: terraform-outputs
+      - task: apply-tofu
+      - task: tofu-outputs
       - task: create-uds-config
 
   - name: destroy-iac
     actions:
-      - cmd: terraform destroy -auto-approve
+      - cmd: tofu destroy -auto-approve
         dir: .github/test-infra/buckets-iac
 
-  - name: apply-terraform
+  - name: apply-tofu
     actions:
       - cmd: echo ${STATE_KEY} | sed 's/\.tfstate/-buckets1.tfstate/g'
         setVariables:
@@ -93,38 +98,38 @@ tasks:
         dir: .github/test-infra/buckets-iac
       - cmd: echo ${BUCKETS_STATE_KEY}
       - cmd: |
-          terraform init -force-copy \
+          tofu init -force-copy \
           -backend-config="bucket=${STATE_BUCKET_NAME}" \
           -backend-config="key=${BUCKETS_STATE_KEY}" \
           -backend-config="region=${REGION}" \
           -backend-config="dynamodb_table=${STATE_DYNAMODB_TABLE_NAME}"
         dir: .github/test-infra/buckets-iac
-      - cmd: terraform apply -auto-approve
+      - cmd: tofu apply -auto-approve
         dir: .github/test-infra/buckets-iac
 
-  - name: terraform-outputs
+  - name: tofu-outputs
     actions:
-      - cmd: terraform output -raw loki_s3_bucket
+      - cmd: tofu output -raw loki_s3_bucket
         setVariables:
           - name: "LOKI_S3_BUCKET"
         dir: .github/test-infra/buckets-iac
-      - cmd: terraform output -raw aws_region
+      - cmd: tofu output -raw aws_region
         setVariables:
           - name: LOKI_S3_AWS_REGION
         dir: .github/test-infra/buckets-iac
-      - cmd: terraform output -raw loki_irsa_role_arn
+      - cmd: tofu output -raw loki_irsa_role_arn
         setVariables:
           - name: LOKI_S3_ROLE_ARN
         dir: .github/test-infra/buckets-iac
-      - cmd: terraform output -raw velero_s3_bucket
+      - cmd: tofu output -raw velero_s3_bucket
         setVariables:
           - name: VELERO_S3_BUCKET
         dir: .github/test-infra/buckets-iac
-      - cmd: terraform output -raw aws_region
+      - cmd: tofu output -raw aws_region
         setVariables:
           - name: VELERO_S3_AWS_REGION
         dir: .github/test-infra/buckets-iac
-      - cmd: terraform output -raw velero_irsa_role_arn
+      - cmd: tofu output -raw velero_irsa_role_arn
         setVariables:
           - name: VELERO_S3_ROLE_ARN
         dir: .github/test-infra/buckets-iac

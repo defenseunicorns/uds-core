@@ -17,6 +17,11 @@ extraSecretMounts:
 grafana.ini:
   server:
     root_url: https://grafana.admin.###ZARF_VAR_DOMAIN###
+  # Disable telemetry that doesn't function in the airgap
+  analytics:
+    reporting_enabled: false
+    check_for_updates: false
+    check_for_plugin_updates: false
   auth:
     # Disable the login form to force users to use SSO
     disable_login_form: true

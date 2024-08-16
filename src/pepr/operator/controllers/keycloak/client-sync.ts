@@ -158,22 +158,24 @@ async function syncClient(
   }
 
   // Create or update the client secret
-  const generation = (pkg.metadata?.generation ?? 0).toString();
-  await K8s(kind.Secret).Apply({
-    metadata: {
-      namespace: pkg.metadata!.namespace,
-      // Use the CR secret name if provided, otherwise use the client name
-      name: secretName || name,
-      labels: {
-        "uds/package": pkg.metadata!.name,
-        "uds/generation": generation,
-      },
+  if (!client.publicClient) {
+    const generation = (pkg.metadata?.generation ?? 0).toString();
+    await K8s(kind.Secret).Apply({
+      metadata: {
+        namespace: pkg.metadata!.namespace,
+        // Use the CR secret name if provided, otherwise use the client name
+        name: secretName || name,
+        labels: {
+          "uds/package": pkg.metadata!.name,
+          "uds/generation": generation,
+        },
 
-      // Use the CR as the owner ref for each VirtualService
-      ownerReferences: getOwnerRef(pkg),
-    },
-    data: generateSecretData(client, secretTemplate),
-  });
+        // Use the CR as the owner ref for each VirtualService
+        ownerReferences: getOwnerRef(pkg),
+      },
+      data: generateSecretData(client, secretTemplate),
+    });
+  }
 
   return client;
 }

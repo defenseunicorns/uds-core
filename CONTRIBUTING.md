@@ -10,6 +10,7 @@ This document describes the process and requirements for contributing to this UD
 2. [Definition of Done](#definition-of-done)
 3. [Getting Started](#getting-started)
 4. [Submitting a Pull Request](#submitting-a-pull-request)
+   - [Note for External Contributors](#note-for-external-contributors)
 5. [PR Requirements](#pr-requirements)
 6. [Contact](#contact)
 
@@ -42,10 +43,19 @@ TBD
 ## Submitting a Pull Request
 
 1. **Create an Issue**: For significant changes, please create an issue first, describing the problem or feature proposal. Trivial fixes do not require an issue.
-2. **Commit Your Changes**: Make your changes and commit them. All commits must be signed.
-3. **Run Tests**: Ensure that your changes pass all tests.
-4. **Push Your Branch**: Push your branch to your fork on GitHub.
-5. **Create a Pull Request**: Open a pull request against the `main` branch of the Bundle repository. Please make sure that your PR passes all CI checks.
+2. **Branch vs. Fork**: We prefer contributors to work on branches within the main repository when possible, as this allows full CI/CD processes to run without encountering issues with restricted secrets. If you do not have permissions, you may use a fork, but be aware of potential CI/CD limitations.
+3. **Commit Your Changes**: Make your changes and commit them. **All commits must be signed**.
+4. **Run Tests**: Ensure that your changes pass all tests.
+5. **Push Your Branch**: Push your branch to the main repository or your fork on GitHub.
+6. **Create a Pull Request**: Open a pull request against the `main` branch of the Bundle repository. Please make sure that your PR passes all CI checks.
+
+### Note for External Contributors
+
+When submitting a pull request (PR) from a forked repository, please note that our CI/CD processes may not run completely due to security restrictions. This is because certain secrets required for the full CI/CD pipeline are not accessible from forks. 
+
+**What to expect:**
+1. **CI/CD Failures**: If you notice CI/CD failures, it might be due to these limitations rather than issues with your code.
+2. **Maintainer Review**: Our maintainers will review your PR and, if necessary, check out your branch and push it to the main repository. This step allows the full CI/CD process to run with the required secrets, ensuring that all checks are performed.
 
 ### PR Requirements
 

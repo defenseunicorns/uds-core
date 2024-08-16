@@ -6,7 +6,7 @@ metadata:
 
 components:
   - name: metrics-server
-    required: true
+    required: false
     only:
       flavor: upstream
     import:
@@ -19,7 +19,7 @@ components:
       - registry.k8s.io/metrics-server/metrics-server:v0.7.1
 
   - name: metrics-server
-    required: true
+    required: false
     only:
       flavor: registry1
     import:
@@ -32,7 +32,7 @@ components:
       - registry1.dso.mil/ironbank/opensource/kubernetes-sigs/metrics-server:v0.7.1
 
   - name: metrics-server
-    required: true
+    required: false
     only:
       flavor: unicorn
     import:
