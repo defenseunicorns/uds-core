@@ -4,12 +4,10 @@ rbac: true
 manager:
   env:
     ssl: false
-    disableFipsInJava: true
   svc:
     type: ClusterIP
 
 controller:
-
   apisvc:
     type: ClusterIP
   configmap:
@@ -29,23 +27,8 @@ controller:
       value: "1"
 
 cve:
-  scanner:
-    affinity: {}
-
   updater:
     enabled: true
-
-k3s:
-  enabled: true
-  runtimePath: /run/k3s/containerd/containerd.sock
-
-bottlerocket:
-  enabled: false
-  runtimePath: /run/dockershim.sock
-
-containerd:
-  enabled: false
-  path: /var/run/containerd/containerd.sock
 
 crdwebhook:
   enabled: false

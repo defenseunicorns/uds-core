@@ -8,9 +8,9 @@ https://velero.io/
 
 - k3d installed on machine
 
-#### Object Storage
+#### S3 Compatible Object Storage
 
-S3 compatible object storage must be available in order to use this package. Bucket information and access credentials can be provided via configuration values / env vars:
+Bucket information and access credentials can be provided via configuration values / env vars:
 
 - Bucket ID: `ZARF_VAR_VELERO_BUCKET`
 - Bucket Region: `ZARF_VAR_VELERO_BUCKET_REGION`
@@ -44,9 +44,34 @@ By overriding the velero values in the bundle as follows:
               value: "velero-bucket-credentials"
 ```
 
-## Plugin Compatibility
+#### Azure Blob Storage
 
-This package currently assumes the availability of S3 API compatible object storage. As such, only the AWS specific plugin image is included, in addition to the CSI plugin which is baked into Velero by default. More information about all available plugins [can be found in the upstream docs](https://velero.io/plugins/). Ironbank includes images for the Azure plugin, but it is currently excluded from this package. We may revisit package defaults at some point in the future depending on usage and user requests.
+Blob information and access credentials can be provided by overriding bundle values:
+```
+  - name: core
+    overrides:
+      velero:
+        velero:
+          values:
+            - path: credentials.secretContents.cloud
+              value: |       
+                AZURE_STORAGE_ACCOUNT_ACCESS_KEY=${VELERO_STORAGE_ACCOUNT_ACCESS_KEY}
+                AZURE_CLOUD_NAME=${VELERO_CLOUD_NAME}
+            - path: configuration.backupStorageLocation
+              value:
+                - name: default
+                  provider: azure
+                  bucket: ${VERLERO_BUCKET_NAME}
+                  config: 
+                    storageAccount:${VELERO_STORAGE_ACCOUNT}
+                    resourceGroup:${VELERO_RESOURCE_GROUP}
+                    storageAccountKeyEnvVar:VELERO_STORAGE_ACCOUNT_ACCESS_KEY
+                    subscriptionId:${AZ_SUBSCRIPTION_ID}
+```
+
+## Plugin Compatability
+
+This package currently assumes the availability of S3 API compatible object storage, Azure blob storage or use of the CSI plugin which is baked into Velero by default. More information about all available plugins can be found in the upstream docs**[can be found in the upstream docs](https://velero.io/plugins/). 
 
 ## Deploy
 
