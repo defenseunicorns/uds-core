@@ -109,7 +109,9 @@ When(a.Secret)
             log.info(`Incoming date matches stored date (${storedDate}). No update needed.`);
           } else {
             // Log to catch potential manual changes or config drift.
-            log.warn(`Incoming date (${incomingDate}) does not match stored date (${storedDate}). No update made.`);
+            log.warn(
+              `Incoming date (${incomingDate}) does not match stored date (${storedDate}). No update made.`,
+            );
           }
         } else {
           log.error(secret, `v13 schema configuration not found.`);
