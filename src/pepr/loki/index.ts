@@ -55,12 +55,14 @@ When(a.Secret)
   .Mutate(async secret => {
     log.info(
       secret,
-      `Processing Secret ${secret.Raw.metadata?.namespace}/${secret.Raw.metadata?.name} for loki schemaconfig date updates.`,
+      `Processing Secret ${secret.Raw.metadata?.namespace}/${secret.Raw.metadata?.name} for Loki schema config date updates.`,
     );
 
+    // Check if the secret contains the "config.yaml" data
     if (secret.Raw.data && secret.Raw.data["config.yaml"]) {
-      // Parse the config.yaml content into a LokiConfig object
       let lokiConfig: LokiConfig;
+
+      // Parse the "config.yaml" content into a LokiConfig object
       try {
         lokiConfig = yaml.load(secret.Raw.data["config.yaml"]) as LokiConfig;
       } catch (e) {
@@ -68,22 +70,26 @@ When(a.Secret)
         return;
       }
 
-      // Check if schema_config and configs exist
+      // Check if the schema_config and its configs array exist
       if (lokiConfig.schema_config && Array.isArray(lokiConfig.schema_config.configs)) {
-        // Get the v13 schema configuration
+        // Find the v13 schema configuration in the array
         const v13Config = lokiConfig.schema_config.configs.find(config => config.schema === "v13");
 
         if (v13Config) {
-          const currentDate = new Date();
+          // Retrieve the previously stored date from annotations
+          const storedDate = secret.Raw.metadata?.annotations?.["loki.v13.config.date"];
+          const incomingDate = v13Config.from;
 
-          if (new Date(v13Config.from) < currentDate) {
-            // Calculate the new date 2 days in advance
+          if (!storedDate) {
+            // If no date is stored, generate a new date 2 days in the future
+            const currentDate = new Date();
             currentDate.setDate(currentDate.getDate() + 2);
+            const newDate = currentDate.toISOString().split("T")[0]; // Format as YYYY-MM-DD
 
-            // Update the v13 schema configuration date
-            v13Config.from = currentDate.toISOString().split("T")[0]; // Format as YYYY-MM-DD
+            // Update the v13 schema configuration with the new date
+            v13Config.from = newDate;
 
-            // Ensure limits_config exists and update allow_structured_metadata to false
+            // Ensure limits_config exists and set allow_structured_metadata to false
             if (!lokiConfig.limits_config) {
               lokiConfig.limits_config = {} as LimitsConfig;
             }
@@ -91,9 +97,19 @@ When(a.Secret)
 
             // Update the secret with the new config.yaml content
             secret.Raw.data["config.yaml"] = yaml.dump(lokiConfig);
-            log.info(secret.Raw.data["config.yaml"], `Secret config.yaml updated successfully.`);
+
+            // Store the generated date in an annotation for future reference
+            secret.Raw.metadata!.annotations = {
+              ...secret.Raw.metadata!.annotations,
+              "loki.v13.config.date": newDate,
+            };
+
+            log.info(`Secret config.yaml updated successfully with new date ${newDate}.`);
+          } else if (incomingDate === storedDate) {
+            log.info(`Incoming date matches stored date (${storedDate}). No update needed.`);
           } else {
-            log.info(secret, `v13 schema configuration date is valid and in the future.`);
+            // Log to catch potential manual changes or config drift.
+            log.warn(`Incoming date (${incomingDate}) does not match stored date (${storedDate}). No update made.`);
           }
         } else {
           log.error(secret, `v13 schema configuration not found.`);
