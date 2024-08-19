@@ -44,7 +44,7 @@ tasks:
       - task: pepr-build
 
       - description: "Create the Pepr Zarf Package, if it exists"
-        cmd: "uds zarf package create dist --confirm --no-progress"
+        cmd: "uds zarf package create src/pepr --confirm --no-progress"
 
       - description: "Create the requested Zarf Package (must set UDS_PKG environment variable)"
         cmd: "uds zarf package create src/${UDS_PKG} --confirm --no-progress --flavor ${FLAVOR}"
@@ -63,4 +63,4 @@ tasks:
           CUSTOM_PEPR_IMAGE=$( [ "${FLAVOR}" = "registry1" ] && echo "--custom-image ${REGISTRY1_PEPR_IMAGE}" ) || CUSTOM_PEPR_IMAGE=""
           rm -fr dist
           npm ci
-          npx pepr build $CUSTOM_PEPR_IMAGE
+          npx pepr build -z chart $CUSTOM_PEPR_IMAGE
