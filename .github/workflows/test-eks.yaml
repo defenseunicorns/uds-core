@@ -10,6 +10,9 @@ permissions:
 jobs:
   test-eks-install:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        flavor: [upstream, registry1, unicorn]
     env:
       SHA: ${{ github.sha }}
       UDS_REGION: us-west-2
@@ -37,6 +40,7 @@ jobs:
           role-session-name: ${{ github.job || github.event.client_payload.pull_request.head.sha || github.sha }}
           aws-region: ${{ env.UDS_REGION }}
           role-duration-seconds: 21600
+
       - name: Environment setup
         uses: ./.github/actions/setup
 
@@ -50,7 +54,7 @@ jobs:
           tofu_wrapper: false
 
       - name: Create UDS Core Package
-        run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress
+        run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress --set FLAVOR=${{ matrix.flavor }}
 
       - name: Create Core Bundle
         run: uds create .github/bundles --confirm
