@@ -81,6 +81,16 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
   // Ensure the client IDs are unique
   const clientIDs = new Set<string>();
 
+  const allowedClientAttributes = new Set([
+    "oidc.ciba.grant.enabled",
+    "backchannel.logout.session.required",
+    "backchannel.logout.revoke.offline.tokens",
+    "post.logout.redirect.uris",
+    "oauth2.device.authorization.grant.enabled",
+    "pkce.code.challenge.method",
+    "client.session.idle.timeout",
+  ]);
+
   for (const client of ssoClients) {
     if (clientIDs.has(client.clientId)) {
       return req.Deny(`The client ID "${client.clientId}" is not unique`);
@@ -112,6 +122,16 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
       return req.Deny(
         `The client ID "${client.clientId}" must _only_ configure the OAuth Device Flow as a public client`,
       );
+    }
+    // Check if client.attributes contain any disallowed attributes
+    if (client.attributes) {
+      for (const attr of Object.keys(client.attributes)) {
+        if (!allowedClientAttributes.has(attr)) {
+          return req.Deny(
+            `The client ID "${client.clientId}" contains an unsupported attribute "${attr}"`,
+          );
+        }
+      }
     }
   }
 

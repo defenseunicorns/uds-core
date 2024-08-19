@@ -511,7 +511,7 @@ export interface Sso {
   /**
    * Specifies attributes for the client.
    */
-  attributes?: Attributes;
+  attributes?: { [key: string]: string };
   /**
    * The client authenticator type
    */
@@ -583,24 +583,6 @@ export interface Sso {
    * not include the '*' wildcard though. To permit all origins, explicitly add '*'.
    */
   webOrigins?: string[];
-}
-
-/**
- * Specifies attributes for the client.
- */
-export interface Attributes {
-  "backchannel.logout.revoke.offline.tokens"?: string;
-  "backchannel.logout.session.required"?: string;
-  "client.session.idle.timeout"?: string;
-  "oauth2.device.authorization.grant.enabled"?: string;
-  "oidc.ciba.grant.enabled"?: string;
-  "pkce.code.challenge.method"?: PkceCodeChallengeMethod;
-  "post.logout.redirect.uris"?: string;
-}
-
-export enum PkceCodeChallengeMethod {
-  Plain = "plain",
-  S256 = "S256",
 }
 
 /**
