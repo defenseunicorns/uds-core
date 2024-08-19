@@ -4,7 +4,7 @@ component-definition:
     title: Promtail
     last-modified: "2024-01-31T16:44:35Z"
     version: "20240132"
-    oscal-version: 1.1.1
+    oscal-version: 1.1.2
     parties:
       - uuid: f3cf70f8-ba44-4e55-9ea3-389ef24847d3
         type: organization
@@ -115,7 +115,10 @@ component-definition:
                 - href: "#9bfc68e0-381a-4006-9f68-c293e3b20cee"
                   rel: reference
                   text: Lula Validation
-
+          props:
+            - name: framework
+              ns: https://docs.lula.dev/oscal/ns
+              value: il4
   back-matter:
     resources:
       - uuid: D552C935-E40C-4A03-B5CC-4605EBD95B6D
