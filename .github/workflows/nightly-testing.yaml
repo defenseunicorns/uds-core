@@ -13,10 +13,9 @@ on:
 jobs:
   nightly-testing:
     name: Test Core on EKS
-    runs-on: ubuntu-latest
+    uses: ./.github/workflows/test-eks.yaml
     strategy:
       matrix:
         flavor: [upstream, registry1, unicorn]
-      max-parallel: 1 # Ensure that only one job runs at a time
-    uses: ./.github/workflows/test-eks.yaml
+      max-parallel: 1 # Ensures that only one matrix job runs at a time
     secrets: inherit
