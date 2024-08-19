@@ -1,12 +1,12 @@
 watcher:
   serviceMonitor:
-    enabled: true
+    enabled: ###ZARF_VAR_SERVICE_MONITORS###
   envFrom:
     - secretRef:
         name: uds-core-config
 admission:
   serviceMonitor:
-    enabled: true
+    enabled: ###ZARF_VAR_SERVICE_MONITORS###
   envFrom:
     - secretRef:
         name: uds-core-config

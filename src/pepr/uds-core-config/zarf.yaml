@@ -21,6 +21,10 @@ variables:
     description: "UDS Authservice Redis URI"
     default: ""
 
+  - name: UDS_SINGLE_TEST
+    description: "UDS Single Test"
+    default: ""
+
 components:
   - name: uds-operator-config
     required: true
