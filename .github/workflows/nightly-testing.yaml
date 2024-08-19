@@ -17,5 +17,4 @@ jobs:
     strategy:
       matrix:
         flavor: [upstream, registry1, unicorn]
-      max-parallel: 1 # Ensures that only one matrix job runs at a time
     secrets: inherit
