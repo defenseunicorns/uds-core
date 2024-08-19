@@ -180,7 +180,6 @@ metadata:
   namespace: fulcio-system
 spec:
   sso:
-  sso:
     - name: Sigstore Login
       clientId: sigstore
       standardFlowEnabled: false
@@ -190,6 +189,26 @@ spec:
 ```
 
 This configuration does not create a secret in the cluster and instead tells the UDS Operator to create a public client (one that requires no auth secret) that enables the `oauth2.device.authorization.grant.enabled` flow and disables the standard redirect auth flow.  Because this creates a public client configuration that deviates from this is limited - if your application requires both the Device Authorization Grant and the standard flow this is currently not supported without creating two separate clients.
+
+### SSO Client Attribute Validation
+
+```yaml
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: fulcio
+  namespace: fulcio-system
+spec:
+  sso:
+    - name: Sigstore Login
+      clientId: sigstore
+      standardFlowEnabled: false
+      publicClient: true
+      attributes:
+        oauth2.device.authorization.grant.enabled: "true"
+```
+
+The [package-validator.ts](https://github.com/defenseunicorns/uds-core/blob/main/src/pepr/operator/crd/validators/package-validator.ts#L84) will verify that the attributes being used are allowed. If attributes are used that are not allowed the package will be denied and not installed.
 
 ## Exemption
 
