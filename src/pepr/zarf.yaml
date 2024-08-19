@@ -26,8 +26,8 @@ variables:
     description: "UDS Single package test"
     default: ""
 
-  - name: SERVICE_MONITORS
-    description: "UDS Single package test"
+  - name: PEPR_SERVICE_MONITORS
+    description: "Enables Service Monitors for Pepr services (watcher, admission)"
     default: "true"
 
 components:
