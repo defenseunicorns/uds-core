@@ -1,5 +1,5 @@
 apiVersion: v2
-name: uds-core-config
+name: uds-operator-config
 description: UDS Core configuration for UDS Operator
 
 # A chart can be either an 'application' or a 'library' chart.

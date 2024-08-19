@@ -3,10 +3,10 @@ watcher:
     enabled: ###ZARF_VAR_SERVICE_MONITORS###
   envFrom:
     - secretRef:
-        name: uds-core-config
+        name: uds-operator-config
 admission:
   serviceMonitor:
     enabled: ###ZARF_VAR_SERVICE_MONITORS###
   envFrom:
     - secretRef:
-        name: uds-core-config
+        name: uds-operator-config

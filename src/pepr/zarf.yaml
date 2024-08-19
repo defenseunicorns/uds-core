@@ -37,9 +37,9 @@ components:
       - name: uds-operator-config
         namespace: pepr-system
         version: 0.1.0
-        localPath: uds-core-config/chart
+        localPath: uds-operator-config
         valuesFiles:
-          - uds-core-config/chart/values.yaml
+          - uds-operator-config/values.yaml
 
   - name: pepr-uds-core
     required: true

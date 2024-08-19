@@ -1,7 +1,7 @@
 {{/*
 Expand the name of the chart.
 */}}
-{{- define "uds-core-config.name" -}}
+{{- define "uds-operator-config.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
@@ -10,7 +10,7 @@ Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 If release name contains chart name it will be used as a full name.
 */}}
-{{- define "uds-core-config.fullname" -}}
+{{- define "uds-operator-config.fullname" -}}
 {{- if .Values.fullnameOverride }}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
 {{- else }}
@@ -26,16 +26,16 @@ If release name contains chart name it will be used as a full name.
 {{/*
 Create chart name and version as used by the chart label.
 */}}
-{{- define "uds-core-config.chart" -}}
+{{- define "uds-operator-config.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
 Common labels
 */}}
-{{- define "uds-core-config.labels" -}}
-helm.sh/chart: {{ include "uds-core-config.chart" . }}
-{{ include "uds-core-config.selectorLabels" . }}
+{{- define "uds-operator-config.labels" -}}
+helm.sh/chart: {{ include "uds-operator-config.chart" . }}
+{{ include "uds-operator-config.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
@@ -45,17 +45,17 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{/*
 Selector labels
 */}}
-{{- define "uds-core-config.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "uds-core-config.name" . }}
+{{- define "uds-operator-config.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "uds-operator-config.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
 Create the name of the service account to use
 */}}
-{{- define "uds-core-config.serviceAccountName" -}}
+{{- define "uds-operator-config.serviceAccountName" -}}
 {{- if .Values.serviceAccount.create }}
-{{- default (include "uds-core-config.fullname" .) .Values.serviceAccount.name }}
+{{- default (include "uds-operator-config.fullname" .) .Values.serviceAccount.name }}
 {{- else }}
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
