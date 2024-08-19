@@ -49,6 +49,7 @@ tasks:
         with:
           oscalfile: ./compliance/oscal-component.yaml
           assessment_results: ./compliance/oscal-assessment-results.yaml
+          options: -t il4
 
   - name: compliance-evaluate
     description: "evaluate against the required compliance"
@@ -56,3 +57,4 @@ tasks:
       - task: compliance:evaluate
         with:
           assessment_results: ./compliance/oscal-assessment-results.yaml
+          options: -t il4
