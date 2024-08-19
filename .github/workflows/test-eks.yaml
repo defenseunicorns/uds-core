@@ -24,7 +24,7 @@ jobs:
     steps:
       - name: Set ENV
         run: |
-          echo "UDS_CLUSTER_NAME=uds-core-aws-${{ inputs.flavor }}-${SHA:0:7}" >> $GITHUB_ENV
+          echo "UDS_CLUSTER_NAME=uds-ci-${{ inputs.flavor }}-${SHA:0:7}" >> $GITHUB_ENV
           echo "UDS_STATE_KEY="tfstate/ci/install/${SHA:0:7}-core-aws.tfstate >> $GITHUB_ENV
           echo "TF_VAR_region=${UDS_REGION}" >> $GITHUB_ENV
           echo "TF_VAR_name=uds-ci-${{ inputs.flavor }}-${SHA:0:7}" >> $GITHUB_ENV
