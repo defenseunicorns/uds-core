@@ -17,6 +17,7 @@ jobs:
     strategy:
       matrix:
         flavor: [upstream, registry1, unicorn]
+      fail-fast: false
     with:
       flavor: ${{ matrix.flavor }}
     secrets: inherit
