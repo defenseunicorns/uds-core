@@ -5,3 +5,5 @@ operator:
   UDS_SINGLE_TEST: "###ZARF_VAR_UDS_SINGLE_TEST###"
   UDS_LOG_LEVEL: "###ZARF_VAR_UDS_LOG_LEVEL###"
   AUTHSERVICE_REDIS_URI: "###ZARF_VAR_AUTHSERVICE_REDIS_URI###"
+  # Tweak Pepr watch config to react to dropped connections faster
+  PEPR_LAST_SEEN_LIMIT_SECONDS: "60"
