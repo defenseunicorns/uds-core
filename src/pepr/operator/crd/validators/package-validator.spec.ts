@@ -430,3 +430,94 @@ describe("Test validation of Exemption CRs", () => {
     expect(mockReq.Approve).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("Test Allowed SSO Client Attributes", () => {
+  afterEach(() => {
+    jest.resetAllMocks();
+  });
+
+  it("denies clients with unsupported attributes", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [],
+      [
+        {
+          attributes: {
+            "unsupported.attribute": "true",
+          },
+        },
+      ],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+    expect(mockReq.Deny).toHaveBeenCalledWith(
+      'The client ID "uds-package-application" contains an unsupported attribute "unsupported.attribute"',
+    );
+  });
+
+  it("allows clients with only supported attributes", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [],
+      [
+        {
+          attributes: {
+            "oidc.ciba.grant.enabled": "true",
+            "backchannel.logout.session.required": "false",
+            "backchannel.logout.revoke.offline.tokens": "true",
+            "post.logout.redirect.uris": "https://app.uds.dev/logout",
+            "oauth2.device.authorization.grant.enabled": "true",
+            "pkce.code.challenge.method": "S256",
+            "client.session.idle.timeout": "3600",
+          },
+        },
+      ],
+    );
+    await validator(mockReq);
+    expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+  });
+
+  it("denies clients with a mix of supported and unsupported attributes", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [],
+      [
+        {
+          attributes: {
+            "oidc.ciba.grant.enabled": "true",
+            "unsupported.attribute": "true",
+          },
+        },
+      ],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+    expect(mockReq.Deny).toHaveBeenCalledWith(
+      'The client ID "uds-package-application" contains an unsupported attribute "unsupported.attribute"',
+    );
+  });
+
+  it("allows clients without attributes", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [],
+      [
+        {
+          attributes: {},
+        },
+      ],
+    );
+    await validator(mockReq);
+    expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+  });
+
+  it("allows clients with no attributes defined", async () => {
+    const mockReq = makeMockReq({}, [], [], [{}]);
+    await validator(mockReq);
+    expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+  });
+});

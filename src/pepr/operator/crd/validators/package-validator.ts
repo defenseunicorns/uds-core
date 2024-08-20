@@ -43,8 +43,8 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
     if (virtualServiceNames.has(name)) {
       return req.Deny(
         `The combination of characteristics of this expose entry would create a duplicate VirtualService. ` +
-          `Verify you do not have duplicate values, or add a unique "description" field for this rule. ` +
-          `The duplicate rule would be named "${name}".`,
+        `Verify you do not have duplicate values, or add a unique "description" field for this rule. ` +
+        `The duplicate rule would be named "${name}".`,
       );
     }
 
@@ -68,8 +68,8 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
     if (networkPolicyNames.has(name)) {
       return req.Deny(
         `The combination of characteristics of this network allow rule would create a duplicate NetworkPolicy. ` +
-          `Verify you do not have duplicate allow rules, or add a unique "description" field for this rule. ` +
-          `The duplicate rule would be named "${name}".`,
+        `Verify you do not have duplicate allow rules, or add a unique "description" field for this rule. ` +
+        `The duplicate rule would be named "${name}".`,
       );
     }
     // Add the name to the set to track it
@@ -80,6 +80,16 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
 
   // Ensure the client IDs are unique
   const clientIDs = new Set<string>();
+
+  const allowedClientAttributes = new Set([
+    "oidc.ciba.grant.enabled",
+    "backchannel.logout.session.required",
+    "backchannel.logout.revoke.offline.tokens",
+    "post.logout.redirect.uris",
+    "oauth2.device.authorization.grant.enabled",
+    "pkce.code.challenge.method",
+    "client.session.idle.timeout",
+  ]);
 
   for (const client of ssoClients) {
     if (clientIDs.has(client.clientId)) {
@@ -112,6 +122,16 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
       return req.Deny(
         `The client ID "${client.clientId}" must _only_ configure the OAuth Device Flow as a public client`,
       );
+    }
+    // Check if client.attributes contain any disallowed attributes
+    if (client.attributes) {
+      for (const attr of Object.keys(client.attributes)) {
+        if (!allowedClientAttributes.has(attr)) {
+          return req.Deny(
+            `The client ID "${client.clientId}" contains an unsupported attribute "${attr}"`,
+          );
+        }
+      }
     }
     // If this is an authservice client ensure it does not contain a `:`, see https://github.com/istio-ecosystem/authservice/issues/263
     if (client.enableAuthserviceSelector && client.clientId.includes(":")) {
