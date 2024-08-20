@@ -27,3 +27,34 @@ export interface Client {
   webOrigins: string[];
   samlIdpCertificate?: string;
 }
+
+// Define a constant array of keys
+export const clientKeys = [
+  "alwaysDisplayInConsole",
+  "attributes",
+  "authenticationFlowBindingOverrides",
+  "bearerOnly",
+  "clientAuthenticatorType",
+  "clientId",
+  "consentRequired",
+  "defaultClientScopes",
+  "defaultRoles",
+  "directAccessGrantsEnabled",
+  "enabled",
+  "frontchannelLogout",
+  "fullScopeAllowed",
+  "implicitFlowEnabled",
+  "nodeReRegistrationTimeout",
+  "notBefore",
+  "optionalClientScopes",
+  "protocol",
+  "publicClient",
+  "redirectUris",
+  "registrationAccessToken",
+  "secret",
+  "serviceAccountsEnabled",
+  "standardFlowEnabled",
+  "surrogateAuthRequired",
+  "webOrigins",
+  "samlIdpCertificate",
+] as const;
