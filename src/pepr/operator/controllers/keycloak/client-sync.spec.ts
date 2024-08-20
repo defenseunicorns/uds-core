@@ -1,9 +1,9 @@
 import { describe, expect, it } from "@jest/globals";
 import { Sso } from "../../crd";
 import {
+  convertSsoToClient,
   extractSamlCertificateFromXML,
   generateSecretData,
-  handleClientGroups,
 } from "./client-sync";
 import { Client } from "./types";
 
@@ -138,91 +138,136 @@ describe("Test Secret & Template Data Generation", () => {
   });
 });
 
-describe("handleClientGroups function", () => {
-  it('should correctly transform groups into attributes["uds.core.groups"]', () => {
-    // Arrange
-    const ssoWithGroups: Sso = {
+describe("convertSsoToClient function", () => {
+  it("should correctly convert a basic SSO object to a Client object", () => {
+    const sso: Sso = {
       clientId: "test-client",
       name: "Test Client",
-      redirectUris: ["https://example.com/callback"],
-      groups: {
-        anyOf: ["group1", "group2"],
+    };
+
+    const expectedClient: Partial<Client> = {
+      clientId: "test-client",
+      attributes: { "uds.core.groups": "" },
+    };
+
+    expect(convertSsoToClient(sso)).toEqual(expectedClient);
+  });
+
+  it("should correctly convert a full SSO object to a Client object", () => {
+    const sso: Sso = {
+      alwaysDisplayInConsole: true,
+      attributes: {
+        "backchannel.logout.revoke.offline.tokens": "true",
       },
+      clientId: "test-client",
+      defaultClientScopes: ["scope1", "scope2"],
+      description: "Test Description",
+      enableAuthserviceSelector: { key: "value" },
+      enabled: true,
+      groups: { anyOf: ["group1"] },
+      name: "Test Client",
+      publicClient: true,
+      redirectUris: ["https://example.com/callback"],
+      rootUrl: "https://example.com",
+      secret: "secret",
+      secretName: "secretName",
+      secretTemplate: { templateKey: "templateValue" },
+      standardFlowEnabled: true,
+      webOrigins: ["https://example.com"],
     };
 
-    // Act
-    handleClientGroups(ssoWithGroups);
-
-    // Assert
-    expect(ssoWithGroups.attributes).toBeDefined();
-    expect(typeof ssoWithGroups.attributes).toBe("object");
-    expect(ssoWithGroups.attributes!["uds.core.groups"]).toEqual(
-      JSON.stringify({
-        anyOf: ["group1", "group2"],
-      }),
-    );
-    expect(ssoWithGroups.groups).toBeUndefined();
-  });
-
-  it('should set attributes["uds.core.groups"] to an empty object if groups are not provided', () => {
-    // Arrange
-    const ssoWithoutGroups: Sso = {
+    const expectedClient: Partial<Client> = {
       clientId: "test-client",
-      name: "Test Client",
-      redirectUris: ["https://example.com/callback"],
-    };
-
-    // Act
-    handleClientGroups(ssoWithoutGroups);
-
-    // Assert
-    expect(ssoWithoutGroups.attributes).toBeDefined();
-    expect(typeof ssoWithoutGroups.attributes).toBe("object");
-    expect(ssoWithoutGroups.attributes!["uds.core.groups"]).toEqual("");
-    expect(ssoWithoutGroups.groups).toBeUndefined();
-  });
-
-  it('should set attributes["uds.core.groups"] to an empty object if empty groups object is provided', () => {
-    // Arrange
-    const ssoWithoutGroups: Sso = {
-      clientId: "test-client",
-      name: "Test Client",
-      redirectUris: ["https://example.com/callback"],
-      groups: {},
-    };
-
-    // Act
-    handleClientGroups(ssoWithoutGroups);
-
-    // Assert
-    expect(ssoWithoutGroups.attributes).toBeDefined();
-    expect(typeof ssoWithoutGroups.attributes).toBe("object");
-    expect(ssoWithoutGroups.attributes!["uds.core.groups"]).toEqual("");
-    expect(ssoWithoutGroups.groups).toBeUndefined();
-  });
-
-  it('should set attributes["uds.core.groups"] to an empty array of groups if groups.anyOf is empty array', () => {
-    // Arrange
-    const ssoWithGroups: Sso = {
-      clientId: "test-client",
-      name: "Test Client",
-      redirectUris: ["https://example.com/callback"],
-      groups: {
-        anyOf: [],
+      alwaysDisplayInConsole: true,
+      attributes: {
+        "backchannel.logout.revoke.offline.tokens": "true",
+        "uds.core.groups": '{"anyOf":["group1"]}',
       },
+      defaultClientScopes: ["scope1", "scope2"],
+      enabled: true,
+      publicClient: true,
+      redirectUris: ["https://example.com/callback"],
+      secret: "secret",
+      standardFlowEnabled: true,
+      webOrigins: ["https://example.com"],
     };
 
-    // Act
-    handleClientGroups(ssoWithGroups);
+    expect(convertSsoToClient(sso)).toEqual(expectedClient);
+  });
 
-    // Assert
-    expect(ssoWithGroups.attributes).toBeDefined();
-    expect(typeof ssoWithGroups.attributes).toBe("object");
-    expect(ssoWithGroups.attributes!["uds.core.groups"]).toEqual(
-      JSON.stringify({
-        anyOf: [],
-      }),
-    );
-    expect(ssoWithGroups.groups).toBeUndefined();
+  it("should handle optional fields correctly", () => {
+    const sso: Sso = {
+      clientId: "test-client",
+      name: "Test Client",
+      groups: { anyOf: [] },
+      enabled: undefined,
+      protocol: undefined,
+    };
+
+    const expectedClient: Partial<Client> = {
+      clientId: "test-client",
+      attributes: { "uds.core.groups": '{"anyOf":[]}' },
+      registrationAccessToken: undefined,
+      samlIdpCertificate: undefined,
+    };
+
+    expect(convertSsoToClient(sso)).toEqual(expectedClient);
+  });
+
+  it("should handle empty fields correctly", () => {
+    const sso: Sso = {
+      clientId: "test-client",
+      name: "Test Client",
+      attributes: {},
+    };
+
+    const expectedClient: Partial<Client> = {
+      clientId: "test-client",
+      attributes: { "uds.core.groups": "" },
+    };
+
+    expect(convertSsoToClient(sso)).toEqual(expectedClient);
+  });
+
+  it("should handle multiple groups", () => {
+    const sso: Sso = {
+      alwaysDisplayInConsole: true,
+      attributes: {
+        "backchannel.logout.revoke.offline.tokens": "true",
+      },
+      clientId: "test-client",
+      defaultClientScopes: ["scope1", "scope2"],
+      description: "Test Description",
+      enableAuthserviceSelector: { key: "value" },
+      enabled: true,
+      groups: { anyOf: ["group1", "group2"] },
+      name: "Test Client",
+      publicClient: true,
+      redirectUris: ["https://example.com/callback"],
+      rootUrl: "https://example.com",
+      secret: "secret",
+      secretName: "secretName",
+      secretTemplate: { templateKey: "templateValue" },
+      standardFlowEnabled: true,
+      webOrigins: ["https://example.com"],
+    };
+
+    const expectedClient: Partial<Client> = {
+      clientId: "test-client",
+      alwaysDisplayInConsole: true,
+      attributes: {
+        "backchannel.logout.revoke.offline.tokens": "true",
+        "uds.core.groups": '{"anyOf":["group1","group2"]}',
+      },
+      defaultClientScopes: ["scope1", "scope2"],
+      enabled: true,
+      publicClient: true,
+      redirectUris: ["https://example.com/callback"],
+      secret: "secret",
+      standardFlowEnabled: true,
+      webOrigins: ["https://example.com"],
+    };
+
+    expect(convertSsoToClient(sso)).toEqual(expectedClient);
   });
 });

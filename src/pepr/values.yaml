@@ -1,0 +1,12 @@
+watcher:
+  serviceMonitor:
+    enabled: ###ZARF_VAR_PEPR_SERVICE_MONITORS###
+  envFrom:
+    - secretRef:
+        name: uds-operator-config
+admission:
+  serviceMonitor:
+    enabled: ###ZARF_VAR_PEPR_SERVICE_MONITORS###
+  envFrom:
+    - secretRef:
+        name: uds-operator-config

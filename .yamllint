@@ -9,6 +9,7 @@ ignore:
   - '**/chart/templates**'
   - 'node_modules/**'
   - 'dist/**'
+  - 'src/pepr/uds-operator-config/templates**'
 
 rules:
   anchors: enable
