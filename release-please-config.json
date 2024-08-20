@@ -9,6 +9,7 @@
         { "type": "fix", "section": "Bug Fixes", "hidden": false },
         { "type": "chore", "section": "Miscellaneous", "hidden": false }
       ],
+      "bump-minor-pre-major": true,
       "versioning": "default",
       "extra-files": [
         ".github/bundles/uds-bundle.yaml",
