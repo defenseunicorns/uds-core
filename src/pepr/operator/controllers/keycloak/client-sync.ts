@@ -4,7 +4,7 @@ import { UDSConfig } from "../../../config";
 import { Component, setupLogger } from "../../../logger";
 import { Store } from "../../common";
 import { Sso, UDSPackage } from "../../crd";
-import { getOwnerRef, purgeOrphans } from "../utils";
+import { getOwnerRef, purgeOrphans, sanitizeResourceName } from "../utils";
 import { Client, clientKeys } from "./types";
 
 let apiURL =
@@ -187,11 +187,12 @@ async function syncClient(
   // Create or update the client secret
   if (!client.publicClient) {
     const generation = (pkg.metadata?.generation ?? 0).toString();
+    const sanitizedSecretName = sanitizeResourceName(secretName || name);
     await K8s(kind.Secret).Apply({
       metadata: {
         namespace: pkg.metadata!.namespace,
         // Use the CR secret name if provided, otherwise use the client name
-        name: secretName || name,
+        name: sanitizedSecretName,
         labels: {
           "uds/package": pkg.metadata!.name,
           "uds/generation": generation,

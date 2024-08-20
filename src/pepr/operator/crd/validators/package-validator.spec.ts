@@ -395,6 +395,40 @@ describe("Test validation of Exemption CRs", () => {
     await validator(mockReq);
     expect(mockReq.Approve).toHaveBeenCalledTimes(1);
   });
+
+  it("denies authservice clients with : in client ID", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [],
+      [
+        {
+          clientId: "http://example.com",
+          enableAuthserviceSelector: {
+            app: "foobar",
+          },
+        },
+      ],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+  });
+
+  it("allows non-authservice clients with : in client ID", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [],
+      [
+        {
+          clientId: "http://example.com",
+          enableAuthserviceSelector: undefined, // explicitly undefined
+        },
+      ],
+    );
+    await validator(mockReq);
+    expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe("Test Allowed SSO Client Attributes", () => {
