@@ -191,7 +191,6 @@ metadata:
   namespace: fulcio-system
 spec:
   sso:
-  sso:
     - name: Sigstore Login
       clientId: sigstore
       standardFlowEnabled: false
@@ -201,6 +200,17 @@ spec:
 ```
 
 This configuration does not create a secret in the cluster and instead tells the UDS Operator to create a public client (one that requires no auth secret) that enables the `oauth2.device.authorization.grant.enabled` flow and disables the standard redirect auth flow.  Because this creates a public client configuration that deviates from this is limited - if your application requires both the Device Authorization Grant and the standard flow this is currently not supported without creating two separate clients.
+
+### SSO Client Attribute Validation
+
+The SSO spec supports a subset of the Keycloak attributes for clients, but does not support all of them. The current supported attributes are:
+- oidc.ciba.grant.enabled
+- backchannel.logout.session.required
+- backchannel.logout.revoke.offline.tokens
+- post.logout.redirect.uris
+- oauth2.device.authorization.grant.enabled
+- pkce.code.challenge.method
+- client.session.idle.timeout
 
 ## Exemption
 
