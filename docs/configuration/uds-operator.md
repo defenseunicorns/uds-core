@@ -192,23 +192,14 @@ This configuration does not create a secret in the cluster and instead tells the
 
 ### SSO Client Attribute Validation
 
-```yaml
-apiVersion: uds.dev/v1alpha1
-kind: Package
-metadata:
-  name: fulcio
-  namespace: fulcio-system
-spec:
-  sso:
-    - name: Sigstore Login
-      clientId: sigstore
-      standardFlowEnabled: false
-      publicClient: true
-      attributes:
-        oauth2.device.authorization.grant.enabled: "true"
-```
-
-The [package-validator.ts](https://github.com/defenseunicorns/uds-core/blob/main/src/pepr/operator/crd/validators/package-validator.ts#L84) will verify that the attributes being used are allowed. If attributes are used that are not allowed the package will be denied and not installed.
+The SSO spec supports a subset of the Keycloak attributes for clients, but does not support all of them. The current supported attributes are:
+- oidc.ciba.grant.enabled
+- backchannel.logout.session.required
+- backchannel.logout.revoke.offline.tokens
+- post.logout.redirect.uris
+- oauth2.device.authorization.grant.enabled
+- pkce.code.challenge.method
+- client.session.idle.timeout
 
 ## Exemption
 
