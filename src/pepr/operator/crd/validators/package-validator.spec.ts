@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, jest } from "@jest/globals";
 import { PeprValidateRequest } from "pepr";
-import { Gateway, Expose, UDSPackage, Allow, Sso, Direction, RemoteGenerated, Protocol } from "..";
+import { Allow, Direction, Expose, Gateway, Protocol, RemoteGenerated, Sso, UDSPackage } from "..";
 import { validator } from "./package-validator";
 
 const makeMockReq = (
@@ -389,6 +389,40 @@ describe("Test validation of Exemption CRs", () => {
           publicClient: true,
           attributes: { "oauth2.device.authorization.grant.enabled": "true" },
           standardFlowEnabled: false,
+        },
+      ],
+    );
+    await validator(mockReq);
+    expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+  });
+
+  it("denies authservice clients with : in client ID", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [],
+      [
+        {
+          clientId: "http://example.com",
+          enableAuthserviceSelector: {
+            app: "foobar",
+          },
+        },
+      ],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+  });
+
+  it("allows non-authservice clients with : in client ID", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [],
+      [
+        {
+          clientId: "http://example.com",
+          enableAuthserviceSelector: undefined, // explicitly undefined
         },
       ],
     );

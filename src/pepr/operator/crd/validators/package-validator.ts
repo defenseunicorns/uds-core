@@ -113,6 +113,12 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
         `The client ID "${client.clientId}" must _only_ configure the OAuth Device Flow as a public client`,
       );
     }
+    // If this is an authservice client ensure it does not contain a `:`, see https://github.com/istio-ecosystem/authservice/issues/263
+    if (client.enableAuthserviceSelector && client.clientId.includes(":")) {
+      return req.Deny(
+        `The client ID "${client.clientId}" is invalid as an Authservice client - Authservice does not support client IDs with the ":" character`,
+      );
+    }
   }
 
   return req.Approve();
