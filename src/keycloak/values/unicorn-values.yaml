@@ -1,12 +1,5 @@
 podSecurityContext:
   fsGroup: 65532
-securityContext:
-  runAsUser: 65532
-  runAsGroup: 65532
-  runAsNonRoot: true
-  capabilities:
-    drop:
-      - ALL
 image:
   repository: cgr.dev/du-uds-defenseunicorns/keycloak
   tag: "24.0.5"
