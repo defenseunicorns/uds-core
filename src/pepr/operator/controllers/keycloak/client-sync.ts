@@ -173,7 +173,7 @@ async function syncClient(
   } catch (err) {
     throw Error(
       `Failed to set token in store for client '${client.clientId}', package ` +
-      `${pkg.metadata?.namespace}/${pkg.metadata?.name}`,
+        `${pkg.metadata?.namespace}/${pkg.metadata?.name}`,
     );
   }
 

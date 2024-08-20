@@ -43,8 +43,8 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
     if (virtualServiceNames.has(name)) {
       return req.Deny(
         `The combination of characteristics of this expose entry would create a duplicate VirtualService. ` +
-        `Verify you do not have duplicate values, or add a unique "description" field for this rule. ` +
-        `The duplicate rule would be named "${name}".`,
+          `Verify you do not have duplicate values, or add a unique "description" field for this rule. ` +
+          `The duplicate rule would be named "${name}".`,
       );
     }
 
@@ -68,8 +68,8 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
     if (networkPolicyNames.has(name)) {
       return req.Deny(
         `The combination of characteristics of this network allow rule would create a duplicate NetworkPolicy. ` +
-        `Verify you do not have duplicate allow rules, or add a unique "description" field for this rule. ` +
-        `The duplicate rule would be named "${name}".`,
+          `Verify you do not have duplicate allow rules, or add a unique "description" field for this rule. ` +
+          `The duplicate rule would be named "${name}".`,
       );
     }
     // Add the name to the set to track it
