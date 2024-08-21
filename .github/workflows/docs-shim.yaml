@@ -1,5 +1,6 @@
 name: CI Docs Shim
 
+# Trigger this workflow on pull requests that affect documentation or certain config files.
 on:
   pull_request:
     paths:
@@ -17,52 +18,34 @@ on:
       - CODEOWNERS
       - LICENSE
 
+# Define placeholder jobs to simulate the full workflow.
 jobs:
-  # pull-request-conditional.yaml
   lint-check:
     runs-on: ubuntu-latest
     steps:
-      - name: Shim for Linting
-        run: |
-          echo "Documentation-only change detected; marking lint-check successful."
+      - name: Lint Check (Simulated)
+        run: echo "Simulating lint-check job - Success!"
 
-  # pull-request-conditional.yaml
   check-paths:
     needs: lint-check
     runs-on: ubuntu-latest
-    name: Select Jobs
-    outputs:
-      packages: ${{ steps.path-filter.outputs.changes }}
     steps:
-      - name: Shim for check-paths
-        run: |
-          echo "Documentation-only change detected; marking check-paths successful."
+      - name: Check Paths (Simulated)
+        run: echo "Simulating check-paths job - Success!"
 
-  # pull-request-conditional.yaml
   run-package-test:
     needs: check-paths
-    name: Schedule
-    strategy:
-      matrix:
-        flavor: [upstream, registry1, unicorn]
-        test_type: [install]
+    runs-on: ubuntu-latest
     steps:
-      - name: Shim for run-package-test ${{matrix.test_type}} ${{matrix.flavor}}
-        run: |
-          echo "Documentation-only change detected; marking run-package-test ${{matrix.test_type}} ${{matrix.flavor}} successful."
+      - name: Run Package Test (Simulated)
+        run: echo "Simulating run-package-test job - Success!"
 
-  # pull-request-conditional.yaml
   evaluate-package-compliance:
     needs: run-package-test
-    name: Compliance Evaluation
-    strategy:
-      matrix:
-        flavor: [upstream, registry1, unicorn]
-      fail-fast: false
+    runs-on: ubuntu-latest
     steps:
-      - name: Shim for evaluate-package-compliance ${{matrix.flavor}}
-        run: |
-          echo "Documentation-only change detected; marking evaluate-package-compliance ${{matrix.flavor}} successful."
+      - name: Evaluate Package Compliance (Simulated)
+        run: echo "Simulating evaluate-package-compliance job - Success!"
 
   # slim-dev-test.yaml
   test:
