@@ -18,15 +18,14 @@ on:
       - CODEOWNERS
       - LICENSE
 
-# Define placeholder jobs to simulate the full workflow.
+# shims to pass ci requirements for doc changes
 jobs:
   lint-check:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Lint Check (Simulated)
-        run: echo "Simulating lint-check job - Success!"
+    name: Lint Check Shim
+    uses: ./.github/workflows/lint.yaml
 
   check-paths:
+    name: Check Paths Shim
     needs: lint-check
     runs-on: ubuntu-latest
     steps:
@@ -34,6 +33,7 @@ jobs:
         run: echo "Simulating check-paths job - Success!"
 
   run-package-test:
+    name: Package Test Shim
     needs: check-paths
     runs-on: ubuntu-latest
     steps:
@@ -41,6 +41,7 @@ jobs:
         run: echo "Simulating run-package-test job - Success!"
 
   evaluate-package-compliance:
+    name: Compliance Test Shim
     needs: run-package-test
     runs-on: ubuntu-latest
     steps:
@@ -49,7 +50,7 @@ jobs:
 
   # slim-dev-test.yaml
   test:
-    name: Test
+    name: Slim Dev Test Shim
     runs-on: ubuntu-latest
     steps:
       - name: Shim for test
