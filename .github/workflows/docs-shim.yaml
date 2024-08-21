@@ -1,4 +1,4 @@
-name: CI Docs Shim
+name: CI Docs
 
 # Trigger this workflow on pull requests that affect documentation or certain config files.
 on:
@@ -17,6 +17,11 @@ on:
       - release-please-config.json
       - CODEOWNERS
       - LICENSE
+      - '!**.ts'
+      - '!**.yaml'
+      - '!**.tpl'
+      - '!**.js'
+      - '!**.json'
 
 # shims to pass ci requirements for doc changes
 jobs:
