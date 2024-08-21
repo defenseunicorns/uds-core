@@ -1,0 +1,74 @@
+name: CI Docs Shim
+
+on:
+  pull_request:
+    paths:
+      - "**.md"
+      - "**.jpg"
+      - "**.png"
+      - "**.gif"
+      - "**.svg"
+      - docs/**
+      - .vscode/**
+      - .gitignore
+      - renovate.json
+      - .release-please-config.json
+      - release-please-config.json
+      - CODEOWNERS
+      - LICENSE
+
+jobs:
+  # pull-request-conditional.yaml
+  lint-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Shim for Linting
+        run: |
+          echo "Documentation-only change detected; marking lint-check successful."
+
+  # pull-request-conditional.yaml
+  check-paths:
+    needs: lint-check
+    runs-on: ubuntu-latest
+    name: Select Jobs
+    outputs:
+      packages: ${{ steps.path-filter.outputs.changes }}
+    steps:
+      - name: Shim for check-paths
+        run: |
+          echo "Documentation-only change detected; marking check-paths successful."
+
+  # pull-request-conditional.yaml
+  run-package-test:
+    needs: check-paths
+    name: Schedule
+    strategy:
+      matrix:
+        flavor: [upstream, registry1, unicorn]
+        test_type: [install]
+    steps:
+      - name: Shim for run-package-test ${{matrix.test_type}} ${{matrix.flavor}}
+        run: |
+          echo "Documentation-only change detected; marking run-package-test ${{matrix.test_type}} ${{matrix.flavor}} successful."
+
+  # pull-request-conditional.yaml
+  evaluate-package-compliance:
+    needs: run-package-test
+    name: Compliance Evaluation
+    strategy:
+      matrix:
+        flavor: [upstream, registry1, unicorn]
+      fail-fast: false
+    steps:
+      - name: Shim for evaluate-package-compliance ${{matrix.flavor}}
+        run: |
+          echo "Documentation-only change detected; marking evaluate-package-compliance ${{matrix.flavor}} successful."
+
+  # slim-dev-test.yaml
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Shim for test
+        run: |
+          echo "Documentation-only change detected; marking test successful."
