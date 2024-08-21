@@ -1,0 +1,63 @@
+name: CI Docs
+
+# Trigger this workflow on pull requests that affect only documentation
+on:
+  pull_request:
+    paths:
+      - "**.md"
+      - "**.jpg"
+      - "**.png"
+      - "**.gif"
+      - "**.svg"
+      - docs/**
+      - .vscode/**
+      - .gitignore
+      - renovate.json
+      - .release-please-config.json
+      - release-please-config.json
+      - CODEOWNERS
+      - LICENSE
+      - '!**.ts'
+      - '!**.yaml'
+      - '!**.tpl'
+      - '!**.js'
+      - '!**.json'
+
+# shims to pass ci requirements for doc changes
+jobs:
+  lint-check:
+    name: Lint Check(Simulated)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Lint Check
+        run: echo "Simulating lint-check job - Success!"
+
+  check-paths:
+    name: Check Paths(Simulated)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Paths
+        run: echo "Simulating check-paths job - Success!"
+
+  run-package-test:
+    name: Package Test(Simulated)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run Package Test
+        run: echo "Simulating run-package-test job - Success!"
+
+  evaluate-package-compliance:
+    name: Compliance Test(Simulated)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Evaluate Package Compliance
+        run: echo "Simulating evaluate-package-compliance job - Success!"
+
+  # slim-dev-test.yaml
+  test:
+    name: Slim Dev Test(Simulated)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Shim for Slim Dev Test
+        run: |
+          echo "Documentation-only change detected; marking test successful."
