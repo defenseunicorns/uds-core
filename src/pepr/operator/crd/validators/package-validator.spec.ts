@@ -1,6 +1,16 @@
 import { afterEach, describe, expect, it, jest } from "@jest/globals";
 import { PeprValidateRequest } from "pepr";
-import { Allow, Direction, Expose, Gateway, Monitor, Protocol, RemoteGenerated, Sso, UDSPackage } from "..";
+import {
+  Allow,
+  Direction,
+  Expose,
+  Gateway,
+  Monitor,
+  Protocol,
+  RemoteGenerated,
+  Sso,
+  UDSPackage,
+} from "..";
 import { validator } from "./package-validator";
 
 const makeMockReq = (
@@ -562,7 +572,7 @@ describe("Test proper generation of a unique name for service monitors", () => {
   afterEach(() => {
     jest.resetAllMocks();
   });
-  
+
   it("given an undefined description, a unique serviceMonitor name should be generated using the selector and portName fields", async () => {
     const mockReq = makeMockReq(
       {},
