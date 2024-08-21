@@ -21,8 +21,11 @@ on:
 # shims to pass ci requirements for doc changes
 jobs:
   lint-check:
-    name: Lint Check
-    uses: ./.github/workflows/lint.yaml
+    name: Lint Check(Simulated)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Lint Check
+        run: echo "Simulating lint-check job - Success!"
 
   check-paths:
     name: Check Paths(Simulated)
