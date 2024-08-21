@@ -21,38 +21,35 @@ on:
 # shims to pass ci requirements for doc changes
 jobs:
   lint-check:
-    name: Lint Check Shim
+    name: Lint Check
     uses: ./.github/workflows/lint.yaml
 
   check-paths:
-    name: Check Paths Shim
-    needs: lint-check
+    name: Check Paths(Simulated)
     runs-on: ubuntu-latest
     steps:
-      - name: Check Paths (Simulated)
+      - name: Check Paths
         run: echo "Simulating check-paths job - Success!"
 
   run-package-test:
-    name: Package Test Shim
-    needs: check-paths
+    name: Package Test(Simulated)
     runs-on: ubuntu-latest
     steps:
-      - name: Run Package Test (Simulated)
+      - name: Run Package Test
         run: echo "Simulating run-package-test job - Success!"
 
   evaluate-package-compliance:
-    name: Compliance Test Shim
-    needs: run-package-test
+    name: Compliance Test(Simulated)
     runs-on: ubuntu-latest
     steps:
-      - name: Evaluate Package Compliance (Simulated)
+      - name: Evaluate Package Compliance
         run: echo "Simulating evaluate-package-compliance job - Success!"
 
   # slim-dev-test.yaml
   test:
-    name: Slim Dev Test Shim
+    name: Slim Dev Test(Simulated)
     runs-on: ubuntu-latest
     steps:
-      - name: Shim for test
+      - name: Shim for Slim Dev Test
         run: |
           echo "Documentation-only change detected; marking test successful."
