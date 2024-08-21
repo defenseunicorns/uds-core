@@ -6,7 +6,7 @@ import {
   IstioRequestAuthentication,
   UDSPackage,
 } from "../../../crd";
-import { getOwnerRef, purgeOrphans } from "../../utils";
+import { getOwnerRef, purgeOrphans, sanitizeResourceName } from "../../utils";
 import { log } from "./authservice";
 import { Action as AuthServiceAction, AuthServiceEvent } from "./types";
 
@@ -26,7 +26,7 @@ function authserviceAuthorizationPolicy(
   return {
     kind: "AuthorizationPolicy",
     metadata: {
-      name: `${name}-authservice`,
+      name: sanitizeResourceName(`${name}-authservice`),
       namespace,
     },
     spec: {
@@ -59,7 +59,7 @@ function jwtAuthZAuthorizationPolicy(
   return {
     kind: "AuthorizationPolicy",
     metadata: {
-      name: `${name}-jwt-authz`,
+      name: sanitizeResourceName(`${name}-jwt-authz`),
       namespace,
     },
     spec: {
@@ -89,7 +89,7 @@ function authNRequestAuthentication(
   return {
     kind: "RequestAuthentication",
     metadata: {
-      name: `${name}-jwt-authn`,
+      name: sanitizeResourceName(`${name}-jwt-authn`),
       namespace,
     },
     spec: {

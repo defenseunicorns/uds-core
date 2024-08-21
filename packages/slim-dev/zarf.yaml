@@ -7,12 +7,12 @@ metadata:
   version: "0.25.2"
   # x-release-please-end
 
-variables:
-  - name: CA_CERT
-    description: "Base64 encoded CA cert that signed the domain wildcard certs used for Istio ingress"
-    default: ""
-
 components:
+  - name: uds-operator-config
+    required: true
+    import:
+      path: ../../src/pepr
+
   # CRDs
   - name: prometheus-operator-crds
     required: true
@@ -44,8 +44,7 @@ components:
   - name: pepr-uds-core
     required: true
     import:
-      path: ../../dist
-      name: module
+      path: ../../src/pepr
 
   # Keycloak
   - name: keycloak
