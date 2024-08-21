@@ -117,17 +117,17 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
 
   const monitors = pkg.spec?.monitor ?? [];
 
-  // Ensure the descriptions are generating unique names
-  const monitorDescriptions = new Set<string>();
+  // Ensure serviceMonitors use a unique description or selector/portName used for generating the resource name
+  const monitorNames = new Set<string>();
 
   for (const monitor of monitors) {
-    const description = sanitizeResourceName(monitor.description || "null");
+    const monitorName = sanitizeResourceName(monitor.description || `${Object.values(monitor.selector)}-${monitor.portName}`);
 
-    if (monitorDescriptions.has(description)) {
-      return req.Deny(`The sanitized description "${description}" is not unique`);
+    if (monitorNames.has(monitorName)) {
+      return req.Deny(`A serviceMonitor resource generated from the Package, ${pkg.metadata?.name} contains a duplicate name, please provide a unique description for each item in the monitor array`);
     }
 
-    monitorDescriptions.add(description);
+    monitorNames.add(monitorName);
   }
 
   return req.Approve();

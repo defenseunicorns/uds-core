@@ -1,16 +1,6 @@
 import { afterEach, describe, expect, it, jest } from "@jest/globals";
 import { PeprValidateRequest } from "pepr";
-import {
-  Gateway,
-  Expose,
-  UDSPackage,
-  Allow,
-  Sso,
-  Direction,
-  RemoteGenerated,
-  Protocol,
-  Monitor,
-} from "..";
+import { Gateway, Expose, UDSPackage, Allow, Sso, Direction, RemoteGenerated, Protocol, Monitor } from ".."
 import { validator } from "./package-validator";
 
 const makeMockReq = (
@@ -436,10 +426,19 @@ describe("Test validation of Exemption CRs", () => {
     expect(mockReq.Approve).toHaveBeenCalledTimes(1);
   });
 
-  it("denies monitors with undefined descriptions", async () => {
-    const mockReq = makeMockReq({}, [], [], [], [{}, {}]);
+  it("given an undefined description, a unique serviceMonitor name should be generated using the selector and portName fields", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [],
+      [],
+      [
+        { description: undefined, portName: "http-foo", selector: { key: "foo" } },
+        { description: undefined, portName: "http-bar", selector: { key: "bar" } },
+      ],
+    );
     await validator(mockReq);
-    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(0);
   });
 
   it("denies monitors that do not have unique descriptions", async () => {
