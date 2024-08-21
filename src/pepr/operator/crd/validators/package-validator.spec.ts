@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, jest } from "@jest/globals";
 import { PeprValidateRequest } from "pepr";
-import { Gateway, Expose, UDSPackage, Allow, Sso, Direction, RemoteGenerated, Protocol, Monitor } from ".."
+import { Allow, Direction, Expose, Gateway, Monitor, Protocol, RemoteGenerated, Sso, UDSPackage } from "..";
 import { validator } from "./package-validator";
 
 const makeMockReq = (
@@ -426,6 +426,137 @@ describe("Test validation of Exemption CRs", () => {
     expect(mockReq.Approve).toHaveBeenCalledTimes(1);
   });
 
+  it("denies authservice clients with : in client ID", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [],
+      [
+        {
+          clientId: "http://example.com",
+          enableAuthserviceSelector: {
+            app: "foobar",
+          },
+        },
+      ],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+  });
+
+  it("allows non-authservice clients with : in client ID", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [],
+      [
+        {
+          clientId: "http://example.com",
+          enableAuthserviceSelector: undefined, // explicitly undefined
+        },
+      ],
+    );
+    await validator(mockReq);
+    expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("Test Allowed SSO Client Attributes", () => {
+  afterEach(() => {
+    jest.resetAllMocks();
+  });
+
+  it("denies clients with unsupported attributes", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [],
+      [
+        {
+          attributes: {
+            "unsupported.attribute": "true",
+          },
+        },
+      ],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+    expect(mockReq.Deny).toHaveBeenCalledWith(
+      'The client ID "uds-package-application" contains an unsupported attribute "unsupported.attribute"',
+    );
+  });
+
+  it("allows clients with only supported attributes", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [],
+      [
+        {
+          attributes: {
+            "oidc.ciba.grant.enabled": "true",
+            "backchannel.logout.session.required": "false",
+            "backchannel.logout.revoke.offline.tokens": "true",
+            "post.logout.redirect.uris": "https://app.uds.dev/logout",
+            "oauth2.device.authorization.grant.enabled": "true",
+            "pkce.code.challenge.method": "S256",
+            "client.session.idle.timeout": "3600",
+          },
+        },
+      ],
+    );
+    await validator(mockReq);
+    expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+  });
+
+  it("denies clients with a mix of supported and unsupported attributes", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [],
+      [
+        {
+          attributes: {
+            "oidc.ciba.grant.enabled": "true",
+            "unsupported.attribute": "true",
+          },
+        },
+      ],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+    expect(mockReq.Deny).toHaveBeenCalledWith(
+      'The client ID "uds-package-application" contains an unsupported attribute "unsupported.attribute"',
+    );
+  });
+
+  it("allows clients without attributes", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [],
+      [
+        {
+          attributes: {},
+        },
+      ],
+    );
+    await validator(mockReq);
+    expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+  });
+
+  it("allows clients with no attributes defined", async () => {
+    const mockReq = makeMockReq({}, [], [], [{}]);
+    await validator(mockReq);
+    expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("Test proper generation of a unique name for service monitors", () => {
+  afterEach(() => {
+    jest.resetAllMocks();
+  });
+  
   it("given an undefined description, a unique serviceMonitor name should be generated using the selector and portName fields", async () => {
     const mockReq = makeMockReq(
       {},
@@ -452,4 +583,5 @@ describe("Test validation of Exemption CRs", () => {
     await validator(mockReq);
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
   });
+});
 });
