@@ -439,6 +439,7 @@ describe("Test validation of Exemption CRs", () => {
           },
         },
       ],
+      [],
     );
     await validator(mockReq);
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
@@ -455,6 +456,7 @@ describe("Test validation of Exemption CRs", () => {
           enableAuthserviceSelector: undefined, // explicitly undefined
         },
       ],
+      [],
     );
     await validator(mockReq);
     expect(mockReq.Approve).toHaveBeenCalledTimes(1);
@@ -478,6 +480,7 @@ describe("Test Allowed SSO Client Attributes", () => {
           },
         },
       ],
+      [],
     );
     await validator(mockReq);
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
@@ -504,6 +507,7 @@ describe("Test Allowed SSO Client Attributes", () => {
           },
         },
       ],
+      [],
     );
     await validator(mockReq);
     expect(mockReq.Approve).toHaveBeenCalledTimes(1);
@@ -522,6 +526,7 @@ describe("Test Allowed SSO Client Attributes", () => {
           },
         },
       ],
+      [],
     );
     await validator(mockReq);
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
@@ -540,13 +545,14 @@ describe("Test Allowed SSO Client Attributes", () => {
           attributes: {},
         },
       ],
+      [],
     );
     await validator(mockReq);
     expect(mockReq.Approve).toHaveBeenCalledTimes(1);
   });
 
   it("allows clients with no attributes defined", async () => {
-    const mockReq = makeMockReq({}, [], [], [{}]);
+    const mockReq = makeMockReq({}, [], [], [{}], []);
     await validator(mockReq);
     expect(mockReq.Approve).toHaveBeenCalledTimes(1);
   });
@@ -583,5 +589,4 @@ describe("Test proper generation of a unique name for service monitors", () => {
     await validator(mockReq);
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
   });
-});
 });
