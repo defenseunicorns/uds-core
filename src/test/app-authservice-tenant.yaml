@@ -2,8 +2,8 @@ apiVersion: v1
 kind: Namespace
 metadata:
   name: authservice-test-app
-  labels:
-    istio.io/dataplane-mode: ambient
+  # labels:
+  #   istio.io/dataplane-mode: ambient
 ---
 apiVersion: uds.dev/v1alpha1
 kind: Package

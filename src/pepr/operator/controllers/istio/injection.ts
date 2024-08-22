@@ -7,6 +7,7 @@ import { UDSPackage } from "../../crd";
 const log = setupLogger(Component.OPERATOR_ISTIO);
 
 const injectionLabel = "istio-injection";
+const ambientLabel = "istio.io/dataplane-mode";
 const injectionAnnotation = "uds.dev/original-istio-injection";
 
 /**
@@ -21,6 +22,7 @@ export async function enableInjection(pkg: UDSPackage) {
 
   const sourceNS = await K8s(kind.Namespace).Get(pkg.metadata.namespace);
   const labels = sourceNS.metadata?.labels || {};
+  const originalAmbientLabel = labels[ambientLabel];
   const originalInjectionLabel = labels[injectionLabel];
   const annotations = sourceNS.metadata?.annotations || {};
   const pkgKey = `uds.dev/pkg-${pkg.metadata.name}`;
@@ -31,18 +33,16 @@ export async function enableInjection(pkg: UDSPackage) {
   }
 
   // Ensure the namespace is configured
-  if (
-    (!annotations[pkgKey] || originalInjectionLabel !== "enabled") &&
-    labels["istio.io/dataplane-mode"] !== "ambient"
-  ) {
-    // Ensure Istio injection is enabled
-    labels[injectionLabel] = "enabled";
+  if (!annotations[pkgKey] || originalAmbientLabel !== "ambient") {
+    // Ensure Istio ambient is enabled
+    labels[ambientLabel] = "ambient";
+    delete labels[injectionLabel];
 
     // Add the package annotation
     annotations[pkgKey] = "true";
 
     // Apply the updated Namespace
-    log.debug(`Updating namespace ${pkg.metadata.namespace} with istio injection label`);
+    log.debug(`Updating namespace ${pkg.metadata.namespace} with istio ambient label`);
     await K8s(kind.Namespace).Apply(
       {
         metadata: {
@@ -54,12 +54,12 @@ export async function enableInjection(pkg: UDSPackage) {
       { force: true },
     );
 
-    // Kill the pods if we changed the value of the istio-injection label
-    if (originalInjectionLabel !== labels[injectionLabel]) {
+    // Kill the pods if we are switching from injection to ambient
+    if (originalInjectionLabel === "enabled") {
       log.debug(
         `Attempting pod restart in ${pkg.metadata.namespace} based on istio injection label change`,
       );
-      await killPods(pkg.metadata.namespace, true);
+      await killPods(pkg.metadata.namespace, false);
     }
   }
 }
@@ -93,7 +93,9 @@ export async function cleanupNamespace(pkg: UDSPackage) {
   }
 
   // Apply the updated Namespace
-  log.debug(`Updating namespace ${pkg.metadata.namespace}, removing istio injection labels.`);
+  log.debug(
+    `Updating namespace ${pkg.metadata.namespace}, applying original istio injection labels.`,
+  );
   await K8s(kind.Namespace).Apply(
     {
       metadata: {
@@ -110,7 +112,7 @@ export async function cleanupNamespace(pkg: UDSPackage) {
     log.debug(
       `Attempting pod restart in ${pkg.metadata.namespace} based on istio injection label change`,
     );
-    await killPods(pkg.metadata.namespace, false);
+    await killPods(pkg.metadata.namespace, true);
   }
 }
 
@@ -162,7 +164,9 @@ async function killPods(ns: string, enableInjection: boolean) {
     }
 
     for (const pod of group) {
-      log.info(`Deleting pod ${ns}/${pod.metadata?.name} to enable the istio sidecar`);
+      log.info(
+        `Deleting pod ${ns}/${pod.metadata?.name} to ${enableInjection ? "enable" : "disable"} the istio sidecar`,
+      );
       await K8s(kind.Pod).Delete(pod);
     }
   }
