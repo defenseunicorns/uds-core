@@ -31,7 +31,10 @@ export async function enableInjection(pkg: UDSPackage) {
   }
 
   // Ensure the namespace is configured
-  if (!annotations[pkgKey] || originalInjectionLabel !== "enabled") {
+  if (
+    (!annotations[pkgKey] || originalInjectionLabel !== "enabled") &&
+    labels["istio.io/dataplane-mode"] !== "ambient"
+  ) {
     // Ensure Istio injection is enabled
     labels[injectionLabel] = "enabled";
 
