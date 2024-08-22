@@ -9,7 +9,7 @@ weight: 4
 `UDS Core` could run in any [Kuberentes](https://kubernetes.io/) setup, but sometimes customizations are needed based on environemnts. This is an attempt to document and link to relevant information to aid in setting up your [Kuberentes](https://kubernetes.io/) environment to ensure a successful `UDS Core` installation.  
 
 ### RHEL
-
+---
 #### *ISTIO related changes*
 Solution is to create file `/etc/modules-load.d/istio-iptables.conf` with this content:
 
@@ -33,7 +33,8 @@ sudo systemctl stop firewalld
 sudo systemctl disable firewalld
 ```
 
-### RKE2 
+### RKE2
+--- 
 * [Installation requirements](https://docs.rke2.io/install/requirements)
 * [Firewalld network conflicts](https://docs.rke2.io/known_issues#firewalld-conflicts-with-default-networking)
 * [Disabling components, such as Ingress which clashes with istio](https://docs.rke2.io/advanced#disabling-server-charts)
@@ -41,11 +42,13 @@ sudo systemctl disable firewalld
 
 
 ### K3S
+---
 * [OS requirements](https://docs.k3s.io/installation/requirements#operating-systems)
 
 
 
-#### UDS Core components 
+### UDS Core components
+---
 #### UDS Operator
 #### Istio 
 * [Platform requirements](https://istio.io/latest/docs/ops/deployment/platform-requirements/)
