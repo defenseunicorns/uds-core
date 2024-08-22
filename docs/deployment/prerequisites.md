@@ -33,29 +33,40 @@ sudo systemctl stop firewalld
 sudo systemctl disable firewalld
 ```
 
-
-Other Istio documentation:
-* https://istio.io/latest/docs/ops/deployment/platform-requirements/
-
 ### RKE2 
-* https://docs.rke2.io/known_issues#firewalld-conflicts-with-default-networking
-* https://docs.rke2.io/install/requirements
-* https://github.com/defenseunicorns/uds-rke2-image-builder/blob/main/packer/scripts/os-prep.sh 
+* [Installation requirements](https://docs.rke2.io/install/requirements)
+* [Firewalld network conflicts](https://docs.rke2.io/known_issues#firewalld-conflicts-with-default-networking)
+* [Disabling components, such as Ingress which clashes with istio](https://docs.rke2.io/advanced#disabling-server-charts)
+* [Defense Unicorns os prep script for rke2](https://github.com/defenseunicorns/uds-rke2-image-builder/blob/main/packer/scripts/os-prep.sh)
 
 
 ### K3S
-* https://docs.k3s.io/installation/requirements#operating-systems
+* [OS requirements](https://docs.k3s.io/installation/requirements#operating-systems)
 
 
 
 #### UDS Core components 
-* UDS Operator
-* [Istio](https://istio.io/latest/docs/ops/deployment/platform-requirements)
-* [Keycloak](https://www.keycloak.org/keycloak-benchmark/kubernetes-guide/latest/)
-* Neuvector
-* Loki
-* Prometheus
-* Promtail
-* Grafana
-* Authservice
-* Velero
+#### UDS Operator
+#### Istio 
+* [Platform requirements](https://istio.io/latest/docs/ops/deployment/platform-requirements/)
+#### Keycloak
+* [Configuration guide](https://www.keycloak.org/keycloak-benchmark/kubernetes-guide/latest/)
+#### Neuvector
+#### Loki
+#### Prometheus
+#### Promtail
+#### Grafana
+#### Authservice
+#### Velero
+#### Metrics Server
+* Optional component and can be added if needed. Most of the provided managed clsuters will provide you a metric server.
+```yaml
+...
+- name: uds-core
+  repository: ghcr.io/defenseunicorns/packages/private/uds/core
+  ref: 0.25.2-unicorn
+  optionalComponents:
+    - metrics-server
+...
+```
+
