@@ -4,12 +4,13 @@ type: docs
 weight: 4
 ---
 
-## UDS Prerequisites (by components)
+## UDS installation prerequisites
 
-These components are what comprise `UDS Core`. Below each, you will find any prerequisites that have been discovered through different deployment scenarios across different environments.
+`UDS Core` could run in any [Kuberentes](https://kubernetes.io/) setup, but sometimes customizations are needed based on environemnts. This is an attempt to document and link to relevant information to aid in setting up your [Kuberentes](https://kubernetes.io/) environment to ensure a successful `UDS Core` installation.  
 
-#### Istio
+### RHEL
 
+#### *ISTIO related changes*
 Solution is to create file `/etc/modules-load.d/istio-iptables.conf` with this content:
 
 ```bash
@@ -32,22 +33,29 @@ sudo systemctl stop firewalld
 sudo systemctl disable firewalld
 ```
 
-#### Pepr
 
-#### Metrics Server
+Other Istio documentation:
+* https://istio.io/latest/docs/ops/deployment/platform-requirements/
 
-#### Keycloak
+### RKE2 
+* https://docs.rke2.io/known_issues#firewalld-conflicts-with-default-networking
+* https://docs.rke2.io/install/requirements
+* https://github.com/defenseunicorns/uds-rke2-image-builder/blob/main/packer/scripts/os-prep.sh 
 
-#### Neuvector
 
-#### Loki
+### K3S
+* https://docs.k3s.io/installation/requirements#operating-systems
 
-#### Prometheus
 
-#### Promtail
 
-#### Grafana
-
-#### Authservice
-
-#### Velero
+#### UDS Core components 
+* UDS Operator
+* [Istio](https://istio.io/latest/docs/ops/deployment/platform-requirements)
+* [Keycloak](https://www.keycloak.org/keycloak-benchmark/kubernetes-guide/latest/)
+* Neuvector
+* Loki
+* Prometheus
+* Promtail
+* Grafana
+* Authservice
+* Velero
