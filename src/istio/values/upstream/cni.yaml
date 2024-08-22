@@ -1,1 +1,2 @@
-image: docker.io/istio/install-cni:1.22.3-distroless
+cni:
+  image: docker.io/istio/install-cni:1.22.3-distroless
