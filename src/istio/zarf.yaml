@@ -19,10 +19,18 @@ components:
     charts:
       - name: istiod
         valuesFiles:
-          - "values/upstream-values.yaml"
+          - "values/upstream/istiod.yaml"
+      - name: cni
+        valuesFiles:
+          - "values/upstream/cni.yaml"
+      - name: ztunnel
+        valuesFiles:
+          - "values/upstream/ztunnel.yaml"
     images:
       - "docker.io/istio/pilot:1.22.3-distroless"
       - "docker.io/istio/proxyv2:1.22.3-distroless"
+      - "docker.io/istio/install-cni:1.22.3-distroless"
+      - "docker.io/istio/ztunnel:1.22.3-distroless"
 
   - name: istio-controlplane
     required: true
@@ -33,10 +41,18 @@ components:
     charts:
       - name: istiod
         valuesFiles:
-          - "values/registry1-values.yaml"
+          - "values/registry1/istiod.yaml"
+      - name: cni
+        valuesFiles:
+          - "values/registry1/cni.yaml"
+      - name: ztunnel
+        valuesFiles:
+          - "values/registry1/ztunnel.yaml"
     images:
       - registry1.dso.mil/ironbank/tetrate/istio/proxyv2:1.22.3-tetratefips-v0
       - registry1.dso.mil/ironbank/tetrate/istio/pilot:1.22.3-tetratefips-v0
+      - registry1.dso.mil/ironbank/opensource/istio/ztunnel:1.22.3
+      - registry1.dso.mil/ironbank/tetrate/istio/install-cni:1.22.3
 
   - name: istio-controlplane
     required: true
@@ -47,10 +63,18 @@ components:
     charts:
       - name: istiod
         valuesFiles:
-          - "values/unicorn-values.yaml"
+          - "values/unicorn/istiod.yaml"
+      - name: cni
+        valuesFiles:
+          - "values/unicorn/cni.yaml"
+      - name: ztunnel
+        valuesFiles:
+          - "values/upstream/ztunnel.yaml"
     images:
       - cgr.dev/du-uds-defenseunicorns/istio-pilot-fips:1.22.3
       - cgr.dev/du-uds-defenseunicorns/istio-proxy-fips:1.22.3
+      - cgr.dev/du-uds-defenseunicorns/istio-install-cni-fips:1.22.3
+      - docker.io/istio/ztunnel:1.22.3-distroless
 
   - name: istio-admin-gateway
     required: true

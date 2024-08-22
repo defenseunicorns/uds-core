@@ -1,0 +1,1 @@
+image: docker.io/istio/ztunnel:1.22.3-distroless

@@ -17,7 +17,17 @@ components:
         version: 1.22.3
         namespace: istio-system
         valuesFiles:
-          - "../values/values.yaml"
+          - "../values/base-istiod.yaml"
+      - name: cni
+        url: https://istio-release.storage.googleapis.com/charts
+        version: 1.22.3
+        namespace: istio-system
+        valuesFiles:
+          - "../values/base-cni.yaml" # values for k3s/k3d cni
+      - name: ztunnel
+        url: https://istio-release.storage.googleapis.com/charts
+        version: 1.22.3
+        namespace: istio-system
     manifests:
       - name: uds-global-istio-config
         namespace: istio-system
