@@ -56,4 +56,10 @@ spec:
             notNamespaces:
             - istio-tenant-gateway
             - istio-admin-gateway
+            {{- range .Values.additionalGatewayNamespaces }}
+            {{- if not (hasPrefix "istio-" .) }}
+              {{- fail (printf "Allowed gateway namespace '%s' must start with 'istio-'" .) }}
+            {{- end }}
+            - {{ . }}
+            {{- end }}
 {{- end }}

@@ -4,8 +4,8 @@ import { UDSConfig } from "../../../config";
 import { Component, setupLogger } from "../../../logger";
 import { Store } from "../../common";
 import { Sso, UDSPackage } from "../../crd";
-import { getOwnerRef, purgeOrphans } from "../utils";
-import { Client } from "./types";
+import { getOwnerRef, purgeOrphans, sanitizeResourceName } from "../utils";
+import { Client, clientKeys } from "./types";
 
 let apiURL =
   "http://keycloak-http.keycloak.svc.cluster.local:8080/realms/uds/clients-registrations/default";
@@ -87,9 +87,37 @@ export async function purgeSSOClients(pkg: UDSPackage, newClients: string[] = []
   }
 }
 
+/**
+ * Need to convert the SSO object into a Client Object to avoid
+ * passing groups to keycloak and attributes to the package.sso
+ * @param sso
+ * @returns
+ */
+export function convertSsoToClient(sso: Partial<Sso>): Client {
+  const client: Partial<Client> = {};
+
+  // Iterate over the properties of Client and check if they exist in sso
+  for (const key of clientKeys) {
+    if (key in sso) {
+      (client as Record<string, unknown>)[key] = sso[key as keyof Sso];
+    }
+  }
+
+  // Group auth based on sso group membership
+  client.attributes = client.attributes || {};
+
+  if (sso.groups?.anyOf) {
+    client.attributes["uds.core.groups"] = JSON.stringify(sso.groups);
+  } else {
+    client.attributes["uds.core.groups"] = "";
+  }
+
+  // Assert that the result conforms to Client type
+  return client as Client;
+}
+
 async function syncClient(
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  { enableAuthserviceSelector, secretName, secretTemplate, ...clientReq }: Sso,
+  { secretName, secretTemplate, ...clientReq }: Sso,
   pkg: UDSPackage,
   isRetry = false,
 ) {
@@ -97,8 +125,7 @@ async function syncClient(
 
   // Not including the CR data in the ref because Keycloak client IDs must be unique already
   const name = `sso-client-${clientReq.clientId}`;
-  let client: Client;
-  handleClientGroups(clientReq);
+  let client = convertSsoToClient(clientReq);
 
   // Get keycloak client token from the store if this is an existing client
   const token = Store.getItem(name);
@@ -106,15 +133,15 @@ async function syncClient(
   try {
     // If an existing client is found, use the token to update the client
     if (token && !isRetry) {
-      log.debug(pkg.metadata, `Found existing token for ${clientReq.clientId}`);
-      client = await apiCall(clientReq, "PUT", token);
+      log.debug(pkg.metadata, `Found existing token for ${client.clientId}`);
+      client = await apiCall(client, "PUT", token);
     } else {
-      log.debug(pkg.metadata, `Creating new client for ${clientReq.clientId}`);
-      client = await apiCall(clientReq);
+      log.debug(pkg.metadata, `Creating new client for ${client.clientId}`);
+      client = await apiCall(client);
     }
   } catch (err) {
     const msg =
-      `Failed to process Keycloak request for client '${clientReq.clientId}', package ` +
+      `Failed to process Keycloak request for client '${client.clientId}', package ` +
       `${pkg.metadata?.namespace}/${pkg.metadata?.name}. Error: ${err.message}`;
 
     // Throw the error if this is the retry or was an initial client creation attempt
@@ -131,7 +158,7 @@ async function syncClient(
       } catch (retryErr) {
         // If the retry fails, log the retry error and throw the original error
         const retryMsg =
-          `Retry of Keycloak request failed for client '${clientReq.clientId}', package ` +
+          `Retry of Keycloak request failed for client '${client.clientId}', package ` +
           `${pkg.metadata?.namespace}/${pkg.metadata?.name}. Error: ${retryErr.message}`;
         log.error(retryMsg);
         // Throw the error from the original attempt since our retry without token failed
@@ -145,7 +172,7 @@ async function syncClient(
     await Store.setItemAndWait(name, client.registrationAccessToken!);
   } catch (err) {
     throw Error(
-      `Failed to set token in store for client '${clientReq.clientId}', package ` +
+      `Failed to set token in store for client '${client.clientId}', package ` +
         `${pkg.metadata?.namespace}/${pkg.metadata?.name}`,
     );
   }
@@ -153,59 +180,47 @@ async function syncClient(
   // Remove the registrationAccessToken from the client object to avoid problems (one-time use token)
   delete client.registrationAccessToken;
 
-  if (clientReq.protocol === "saml") {
+  if (client.protocol === "saml") {
     client.samlIdpCertificate = await getSamlCertificate();
   }
 
   // Create or update the client secret
-  const generation = (pkg.metadata?.generation ?? 0).toString();
-  await K8s(kind.Secret).Apply({
-    metadata: {
-      namespace: pkg.metadata!.namespace,
-      // Use the CR secret name if provided, otherwise use the client name
-      name: secretName || name,
-      labels: {
-        "uds/package": pkg.metadata!.name,
-        "uds/generation": generation,
-      },
+  if (!client.publicClient) {
+    const generation = (pkg.metadata?.generation ?? 0).toString();
+    const sanitizedSecretName = sanitizeResourceName(secretName || name);
+    await K8s(kind.Secret).Apply({
+      metadata: {
+        namespace: pkg.metadata!.namespace,
+        // Use the CR secret name if provided, otherwise use the client name
+        name: sanitizedSecretName,
+        labels: {
+          "uds/package": pkg.metadata!.name,
+          "uds/generation": generation,
+        },
 
-      // Use the CR as the owner ref for each VirtualService
-      ownerReferences: getOwnerRef(pkg),
-    },
-    data: generateSecretData(client, secretTemplate),
-  });
+        // Use the CR as the owner ref for each VirtualService
+        ownerReferences: getOwnerRef(pkg),
+      },
+      data: generateSecretData(client, secretTemplate),
+    });
+  }
 
   return client;
 }
 
-/**
- * Handles the client groups by converting the groups to attributes.
- * @param clientReq - The client request object.
- */
-export function handleClientGroups(clientReq: Sso) {
-  if (clientReq.groups?.anyOf) {
-    clientReq.attributes = clientReq.attributes || {};
-    clientReq.attributes["uds.core.groups"] = JSON.stringify(clientReq.groups);
-  } else {
-    clientReq.attributes = clientReq.attributes || {};
-    clientReq.attributes["uds.core.groups"] = ""; // Remove groups attribute from client
-  }
-  delete clientReq.groups;
-}
-
-async function apiCall(sso: Partial<Sso>, method = "POST", authToken = "") {
+async function apiCall(client: Partial<Client>, method = "POST", authToken = "") {
   // Handle single test mode
   if (UDSConfig.isSingleTest) {
-    log.warn(`Generating fake client for '${sso.clientId}' in single test mode`);
+    log.warn(`Generating fake client for '${client.clientId}' in single test mode`);
     return {
-      ...sso,
-      secret: sso.secret || "fake-secret",
+      ...client,
+      secret: client.secret || "fake-secret",
       registrationAccessToken: "fake-registration-access-token",
     } as Client;
   }
 
   const req = {
-    body: JSON.stringify(sso) as string | undefined,
+    body: JSON.stringify(client) as string | undefined,
     method,
     headers: {
       "Content-Type": "application/json",
@@ -218,7 +233,7 @@ async function apiCall(sso: Partial<Sso>, method = "POST", authToken = "") {
   if (authToken) {
     req.headers.Authorization = `Bearer ${authToken}`;
     // Ensure that we URI encode the clientId in the request URL
-    url += `/${encodeURIComponent(sso.clientId!)}`;
+    url += `/${encodeURIComponent(client.clientId!)}`;
   }
 
   // Remove the body for DELETE requests

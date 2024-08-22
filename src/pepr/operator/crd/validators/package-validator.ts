@@ -1,6 +1,6 @@
 import { PeprValidateRequest } from "pepr";
 
-import { Gateway, UDSPackage } from "..";
+import { Gateway, Protocol, UDSPackage } from "..";
 import { generateVSName } from "../../controllers/istio/virtual-service";
 import { generateName } from "../../controllers/network/generate";
 import { sanitizeResourceName } from "../../controllers/utils";
@@ -81,6 +81,18 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
   // Ensure the client IDs are unique
   const clientIDs = new Set<string>();
 
+  const allowedClientAttributes = new Set([
+    "oidc.ciba.grant.enabled",
+    "backchannel.logout.session.required",
+    "backchannel.logout.revoke.offline.tokens",
+    "post.logout.redirect.uris",
+    "oauth2.device.authorization.grant.enabled",
+    "pkce.code.challenge.method",
+    "client.session.idle.timeout",
+    "saml.client.signature",
+    "saml_assertion_consumer_url_post",
+  ]);
+
   for (const client of ssoClients) {
     if (clientIDs.has(client.clientId)) {
       return req.Deny(`The client ID "${client.clientId}" is not unique`);
@@ -90,6 +102,43 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
     if (client.secretName && client.secretName !== sanitizeResourceName(client.secretName)) {
       return req.Deny(
         `The client ID "${client.clientId}" uses an invalid secret name ${client.secretName}`,
+      );
+    }
+    // If standardFlowEnabled is undefined (defaults to `true`) or explicitly true and there are no redirectUris set, deny the req
+    if (client.standardFlowEnabled !== false && !client.redirectUris) {
+      return req.Deny(
+        `The client ID "${client.clientId}" must specify redirectUris if standardFlowEnabled is turned on (it is enabled by default)`,
+      );
+    }
+    // If this is a public client ensure that it only sets itself up as an OAuth Device Flow client
+    if (
+      client.publicClient &&
+      (client.standardFlowEnabled !== false ||
+        client.secret !== undefined ||
+        client.secretName !== undefined ||
+        client.secretTemplate !== undefined ||
+        client.enableAuthserviceSelector !== undefined ||
+        client.protocol === Protocol.Saml ||
+        client.attributes?.["oauth2.device.authorization.grant.enabled"] !== "true")
+    ) {
+      return req.Deny(
+        `The client ID "${client.clientId}" must _only_ configure the OAuth Device Flow as a public client`,
+      );
+    }
+    // Check if client.attributes contain any disallowed attributes
+    if (client.attributes) {
+      for (const attr of Object.keys(client.attributes)) {
+        if (!allowedClientAttributes.has(attr)) {
+          return req.Deny(
+            `The client ID "${client.clientId}" contains an unsupported attribute "${attr}"`,
+          );
+        }
+      }
+    }
+    // If this is an authservice client ensure it does not contain a `:`, see https://github.com/istio-ecosystem/authservice/issues/263
+    if (client.enableAuthserviceSelector && client.clientId.includes(":")) {
+      return req.Deny(
+        `The client ID "${client.clientId}" is invalid as an Authservice client - Authservice does not support client IDs with the ":" character`,
       );
     }
   }

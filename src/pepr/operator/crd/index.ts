@@ -6,6 +6,7 @@ export {
   Monitor,
   Phase,
   Status as PkgStatus,
+  Protocol,
   RemoteGenerated,
   Sso,
   Package as UDSPackage,
