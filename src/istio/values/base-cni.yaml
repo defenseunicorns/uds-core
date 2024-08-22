@@ -1,3 +1,5 @@
+profile: ambient
+
 cni:
   cniConfDir: /var/lib/rancher/k3s/agent/etc/cni/net.d
   cniBinDir: /bin/
