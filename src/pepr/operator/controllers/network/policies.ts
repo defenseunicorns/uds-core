@@ -6,7 +6,7 @@ import { getOwnerRef, purgeOrphans, sanitizeResourceName } from "../utils";
 import { allowEgressDNS } from "./defaults/allow-egress-dns";
 import { allowEgressIstiod } from "./defaults/allow-egress-istiod";
 import { allowIngressSidecarMonitoring } from "./defaults/allow-ingress-sidecar-monitoring";
-import { allowIngressZtunnel } from "./defaults/allow-ingress-ztunnel";
+import { allowEgressZtunnel, allowIngressZtunnel } from "./defaults/allow-ztunnel";
 import { defaultDenyAll } from "./defaults/default-deny-all";
 import { generate } from "./generate";
 
@@ -33,6 +33,7 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
     // Istio rules
     allowEgressIstiod(namespace),
     allowIngressZtunnel(namespace),
+    allowEgressZtunnel(namespace),
     allowIngressSidecarMonitoring(namespace),
   ];
 

@@ -8,3 +8,11 @@ export const allowIngressZtunnel = (namespace: string) =>
     remoteNamespace: "*",
     port: 15008,
   });
+
+export const allowEgressZtunnel = (namespace: string) =>
+  generate(namespace, {
+    direction: Direction.Egress,
+    description: "Ztunnel",
+    remoteNamespace: "*",
+    port: 15008,
+  });
