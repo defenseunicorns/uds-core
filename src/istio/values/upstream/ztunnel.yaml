@@ -1,1 +1,1 @@
-image: docker.io/istio/ztunnel:1.22.3-distroless
+image: docker.io/istio/ztunnel:1.23.0-distroless

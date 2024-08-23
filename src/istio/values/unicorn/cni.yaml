@@ -1,2 +1,2 @@
 cni:
-  image: cgr.dev/du-uds-defenseunicorns/istio-install-cni-fips:1.22.3
+  image: cgr.dev/du-uds-defenseunicorns/istio-install-cni-fips:1.23.0
