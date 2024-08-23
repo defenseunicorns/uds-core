@@ -34,7 +34,10 @@ When(a.Pod)
     // Check if any containers defined in the pod do not have the `allowPrivilegeEscalation` field present. If not, include it and set to false.
     for (const container of containers(request)) {
       container.securityContext = container.securityContext || {};
-      if (container.securityContext.allowPrivilegeEscalation === undefined && !container.securityContext.privileged) {
+      if (
+        container.securityContext.allowPrivilegeEscalation === undefined &&
+        !container.securityContext.privileged
+      ) {
         container.securityContext.allowPrivilegeEscalation = false;
       }
     }
