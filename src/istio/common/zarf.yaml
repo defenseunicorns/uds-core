@@ -41,6 +41,7 @@ components:
       onDeploy:
         before:
           - description: "Fix helm ownership metadata on upgrade"
+            mute: true
             cmd: |
               ./zarf tools kubectl annotate envoyfilter -n istio-system misdirected-request meta.helm.sh/release-name=uds-global-istio-config --overwrite || true
               ./zarf tools kubectl annotate envoyfilter -n istio-system remove-server-header meta.helm.sh/release-name=uds-global-istio-config --overwrite || true

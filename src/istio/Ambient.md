@@ -1,15 +1,25 @@
 ## Istio Ambient
 
-Things we had to do:
-- Trusted hosts: *.pepr-uds-core-watcher.pepr-system.svc.cluster.local
+### TLDR
+
+Migrating applications to ambient was surprisingly painless and removed more complexity than it added. At least initially we were pessimistic about the pain to migrate but were impressed how much complexity fell out when many of the quirks of istio sidecars are removed.
+
+We came away more optimistic about ambient and would advocate that further engineer effort be devoted to pursuing it as viable future default.
 
 ### Benefits
 
-- sidecar job killing - not necessary for ambient apps
-- prometheus stack setup - simplified significantly with ambient on prometheus, no mutations/cert mounting required
-- able to delete a number of headless services and PERMISSIVE peer authentications
-- resources?
-- speed?
+- Our current pain points with Istio sidecars (job termination and init containers mTLS traffic) become non-issues with Ambient
+- The prometheus stack setup with mTLS metrics can be simplified significantly with Ambient on prometheus, we no longer require mutations or certificate mounting to properly scape endpoints.
+- Ambient is able to handle direct pod addressability in a way that sidecars weren't, allowing us to remove some workarounds previously required (headless services)
+- By removing the sidecars from most workloads we are able to reduce the resource footprint, especially for large scale clusters with lots of workloads on top of core
+- Speed of startup as well as pod communications is increased due to the removal of sidecars (there is no longer a bottleneck to communications and pods do not have to wait on sidecars during startup)
+
+### Interesting Notes
+
+- Traffic to keycloak from Pepr originated from a "different" host, requiring a new trusted host policy in Keycloak for `*.pepr-uds-core-watcher.pepr-system.svc.cluster.local` (better than the original 127.0.0.6)
+- A number of PERMISSIVE peer authentications we used for "Kube API" -> svc traffic (webhooks and api services) seem to be unnecessary with ambient
+- Switching to Ambient requires a few new Istio components which do not have (working) images in Ironbank or Chainguard
+- Using L7 features in Ambient mode depends on adoption of K8s Gateway API specification
 
 ### Future Work/Mysteries
 
