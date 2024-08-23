@@ -25,7 +25,21 @@ import { exemptionAnnotationPrefix, isExempt, markExemption } from "./exemptions
  */
 When(a.Pod)
   .IsCreatedOrUpdated()
-  .Mutate(markExemption(Policy.DisallowPrivileged))
+  .Mutate(request => {
+    markExemption(Policy.DisallowPrivileged)(request);
+    if (request.HasAnnotation(`${exemptionAnnotationPrefix}.${Policy.DisallowPrivileged}`)) {
+      return;
+    }
+
+    // Check if any containers defined in the pod do not have the `allowPrivilegeEscalation` field present. If not, define it and set to false.
+    for (const container of containers(request)) {
+      container.securityContext = container.securityContext || {};
+      if (container.securityContext.allowPrivilegeEscalation === undefined) {
+        container.securityContext.allowPrivilegeEscalation = false;
+      }
+    }
+    annotateMutation(request, Policy.DisallowPrivileged);
+  })
   .Validate(request => {
     if (isExempt(request, Policy.DisallowPrivileged)) {
       return request.Approve();
