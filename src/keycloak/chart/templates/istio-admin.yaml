@@ -1,69 +1,65 @@
-# {{- if .Capabilities.APIVersions.Has "security.istio.io/v1beta1" }}
-# apiVersion: security.istio.io/v1beta1
-# kind: AuthorizationPolicy
-# metadata:
-#   name: keycloak-block-admin-access-from-public-gateway
-#   namespace: {{ .Release.Namespace }}
-# spec:
-#   targetRefs:
-#     - kind: Service
-#       group: ""
-#       name: keycloak-http
-#     - kind: Service
-#       group: ""
-#       name: keycloak-headless
-#   action: DENY
-#   rules:
-#     - to:
-#         - operation:
-#             ports: 
-#               - "8080"
-#             paths:
-#               - "/admin*"
-#               - "/realms/master*"
-#       from:
-#         - source:
-#             notNamespaces:
-#               - istio-admin-gateway
-#     - to:
-#         - operation:
-#             ports: 
-#               - "8080"
-#             paths:
-#             - /metrics*
-#       from:
-#         - source:
-#             notNamespaces:
-#             - istio-admin-gateway
-#             - monitoring
-#     - to:
-#         - operation:
-#             ports: 
-#               - "8080"
-#             paths:
-#               # Never allow anonymous client registration except from the pepr-system namespace
-#               # This is another fallback protection, as the KC policy already blocks it
-#               - "/realms/{{ .Values.realm }}/clients-registrations/*"
-#       from:
-#         - source:
-#             notNamespaces: 
-#               - "pepr-system"
-#     - when:
-#         - key: request.headers[istio-mtls-client-certificate]
-#           values: ["*"]
-#       to:
-#         - operation:
-#             ports: 
-#               - "8080"
-#       from:
-#         - source:
-#             notNamespaces:
-#             - istio-tenant-gateway
-#             - istio-admin-gateway
-#             {{- range .Values.additionalGatewayNamespaces }}
-#             {{- if not (hasPrefix "istio-" .) }}
-#               {{- fail (printf "Allowed gateway namespace '%s' must start with 'istio-'" .) }}
-#             {{- end }}
-#             - {{ . }}
-#             {{- end }}
-# {{- end }}
+{{- if .Capabilities.APIVersions.Has "security.istio.io/v1beta1" }}
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: keycloak-block-admin-access-from-public-gateway
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "keycloak.selectorLabels" . | nindent 6 }}
+  action: DENY
+  rules:
+    - to:
+        - operation:
+            ports:
+              - "8080"
+            paths:
+              - "/admin*"
+              - "/realms/master*"
+      from:
+        - source:
+            notNamespaces:
+              - istio-admin-gateway
+    - to:
+        - operation:
+            ports:
+              - "8080"
+            paths:
+            - /metrics*
+      from:
+        - source:
+            notNamespaces:
+            - istio-admin-gateway
+            - monitoring
+    - to:
+        - operation:
+            ports:
+              - "8080"
+            paths:
+              # Never allow anonymous client registration except from the pepr-system namespace
+              # This is another fallback protection, as the KC policy already blocks it
+              - "/realms/{{ .Values.realm }}/clients-registrations/*"
+      from:
+        - source:
+            notNamespaces:
+              - "pepr-system"
+    - when:
+        - key: request.headers[istio-mtls-client-certificate]
+          values: ["*"]
+      to:
+        - operation:
+            ports:
+              - "8080"
+      from:
+        - source:
+            notNamespaces:
+            - istio-tenant-gateway
+            - istio-admin-gateway
+            {{- range .Values.additionalGatewayNamespaces }}
+            {{- if not (hasPrefix "istio-" .) }}
+              {{- fail (printf "Allowed gateway namespace '%s' must start with 'istio-'" .) }}
+            {{- end }}
+            - {{ . }}
+            {{- end }}
+{{- end }}

@@ -13,7 +13,7 @@ spec:
   #     portName: metrics
   #     targetPort: 8068
   #     description: "Metrics"
-
+  istioAmbient: true
   sso:
     - name: Neuvector
       clientId: uds-core-admin-neuvector

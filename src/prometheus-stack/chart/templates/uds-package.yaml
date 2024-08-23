@@ -4,6 +4,7 @@ metadata:
   name: prometheus-stack
   namespace: {{ .Release.Namespace }}
 spec:
+  istioAmbient: true
   network:
     allow:
       # Permit intra-namespace communication
