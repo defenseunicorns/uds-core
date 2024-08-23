@@ -12,6 +12,10 @@ components:
         url: https://istio-release.storage.googleapis.com/charts
         version: 1.23.0
         namespace: istio-system
+      - name: uds-global-istio-config
+        namespace: istio-system
+        version: 0.1.0
+        localPath: chart
       - name: istiod
         url: https://istio-release.storage.googleapis.com/charts
         version: 1.23.0
@@ -29,12 +33,9 @@ components:
         version: 1.23.0
         namespace: istio-system
     manifests:
-      - name: uds-global-istio-config
+      - name: gateway-api-crds
         namespace: istio-system
         files:
-          - "manifests/envoy-filters.yaml"
-          - "manifests/peer-authentication.yaml"
-          - "manifests/pepr-istio-config.yaml"
           - https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.1.0/standard-install.yaml
     actions:
       onDeploy:
