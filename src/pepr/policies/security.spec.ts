@@ -52,6 +52,7 @@ describe("security policies", () => {
                 image: "127.0.0.1/fake",
                 securityContext: {
                   privileged: true,
+                  allowPrivilegeEscalation: false
                 },
               },
             ],
