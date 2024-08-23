@@ -35,8 +35,11 @@ components:
           - "manifests/envoy-filters.yaml"
           - "manifests/peer-authentication.yaml"
           - "manifests/pepr-istio-config.yaml"
+          - https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.1.0/standard-install.yaml
     actions:
       onDeploy:
         after:
-          - description: "Ensure istio-injection is enabled for Pepr"
-            cmd: "./zarf tools kubectl label namespace pepr-system istio-injection=enabled --overwrite"
+          - description: "Ensure istio ambient is enabled for Pepr"
+            cmd: "./zarf tools kubectl label namespace pepr-system istio.io/dataplane-mode=ambient --overwrite"
+          - description: "Ensure istio-injection is disabled for Pepr"
+            cmd: "./zarf tools kubectl label namespace pepr-system istio-injection=disabled --overwrite"

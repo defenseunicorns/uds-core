@@ -4,20 +4,20 @@ tasks:
       - description: Validate the Istio Admin Gateway
         wait:
           cluster:
-            kind: Gateway
+            kind: gateways.networking.istio.io
             name: admin-gateway
             namespace: istio-admin-gateway
 
       - description: Validate the Istio Passthrough Gateway
         wait:
           cluster:
-            kind: Gateway
+            kind: gateways.networking.istio.io
             name: passthrough-gateway
             namespace: istio-passthrough-gateway
 
       - description: Validate the Istio Tenant Gateway
         wait:
           cluster:
-            kind: Gateway
+            kind: gateways.networking.istio.io
             name: tenant-gateway
             namespace: istio-tenant-gateway
