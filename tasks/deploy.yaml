@@ -23,14 +23,14 @@ tasks:
 
   - name: single-package
     actions:
+      - description: "Deploy the Pepr Module"
+        cmd: |
+          uds zarf package deploy build/zarf-package-pepr-uds-core-${UDS_ARCH}.tar.zst --confirm --no-progress --set UDS_SINGLE_TEST=true --set PEPR_SERVICE_MONITORS=false
       - description: "Deploy the Istio package, if UDS_PKG != istio"
         cmd: |
           if [ "${UDS_PKG}" != "istio" ]; then
             uds zarf package deploy build/zarf-package-uds-core-istio-${UDS_ARCH}.tar.zst --confirm --no-progress --components '*'
           fi
-      - description: "Deploy the Pepr Module"
-        cmd: |
-          uds zarf package deploy build/zarf-package-pepr-uds-core-${UDS_ARCH}.tar.zst --confirm --no-progress --set UDS_SINGLE_TEST=true --set PEPR_SERVICE_MONITORS=false
       - description: "Deploy the requested Zarf Package (must set UDS_PKG environment variable)"
         cmd: uds zarf package deploy build/zarf-package-uds-core-${UDS_PKG}-${UDS_ARCH}.tar.zst --confirm --no-progress --components '*'
 

@@ -39,6 +39,12 @@ components:
           - https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.1.0/standard-install.yaml
     actions:
       onDeploy:
+        before:
+          - description: "Fix helm ownership metadata on upgrade"
+            cmd: |
+              ./zarf tools kubectl annotate envoyfilter -n istio-system misdirected-request meta.helm.sh/release-name=uds-global-istio-config --overwrite || true
+              ./zarf tools kubectl annotate envoyfilter -n istio-system remove-server-header meta.helm.sh/release-name=uds-global-istio-config --overwrite || true
+              ./zarf tools kubectl annotate peerauthentication -n istio-system default-istio-system meta.helm.sh/release-name=uds-global-istio-config --overwrite || true
         after:
           - description: "Ensure istio ambient is enabled for Pepr"
             cmd: "./zarf tools kubectl label namespace pepr-system istio.io/dataplane-mode=ambient --overwrite"
