@@ -21,66 +21,26 @@ on:
 jobs:
   check-only-docs-changes:
     runs-on: ubuntu-latest
-    outputs:
-      only_docs_changed: ${{ steps.verify.outputs.only_docs_changed }}
     steps:
       - name: Check out code
         uses: actions/checkout@v3
 
-      - name: Get list of changed files
-        id: changed_files
+      - name: Check for non-doc changes
+        id: check_non_docs
         run: |
-          if [ "${{ github.event.before }}" = "0000000000000000000000000000000000000000" ]; then
-            # This is a new branch with no prior commit
-            echo "New branch detected; listing all files in the commit"
-            git diff --name-only HEAD > changed_files.txt
+          # Check if any non-doc/config files were changed
+          non_doc_changes=$(git diff --name-only ${{ github.base_ref }}..${{ github.head_ref }} -- \
+          ':!**.md' ':!**.jpg' ':!**.png' ':!**.gif' ':!**.svg' ':!docs/**' \
+          ':!.vscode/**' ':!.gitignore' ':!renovate.json' ':!.release-please-config.json' \
+          ':!release-please-config.json' ':!CODEOWNERS' ':!LICENSE')
+
+          if [ -n "$non_doc_changes" ]; then
+            echo "Non-doc/config files were changed:"
+            echo "$non_doc_changes"
+            exit 1
           else
-            # List changed files between the current and previous commit
-            git diff --name-only ${{ github.event.before }} ${{ github.sha }} > changed_files.txt
+            echo "Only doc/config files were changed."
           fi
-          cat changed_files.txt
-
-      - name: Verify that only documentation files were changed
-        id: verify
-        run: |
-          # Files allowed to trigger this workflow
-          allowed_paths=(
-            "**.md"
-            "**.jpg"
-            "**.png"
-            "**.gif"
-            "**.svg"
-            "docs/"
-            ".vscode/"
-            ".gitignore"
-            "renovate.json"
-            ".release-please-config.json"
-            "release-please-config.json"
-            "CODEOWNERS"
-            "LICENSE"
-          )
-
-          # Assume only docs changed initially
-          only_docs_changed=true
-
-          # Check if any non-allowed files were changed
-          while IFS= read -r file; do
-            match_found=false
-            for path in "${allowed_paths[@]}"; do
-              if [[ $file == $path ]] || [[ $file == $path* ]]; then
-                match_found=true
-                break
-              fi
-            done
-
-            if [ "$match_found" = false ]; then
-              only_docs_changed=false
-              break
-            fi
-          done < changed_files.txt
-
-          echo "only_docs_changed=$only_docs_changed"
-          echo "::set-output name=only_docs_changed::$only_docs_changed"
 
   docs:
     needs: check-only-docs-changes
