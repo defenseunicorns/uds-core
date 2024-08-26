@@ -40,7 +40,7 @@ jobs:
 
   test:
     needs: check-only-non-docs-changes
-    if: env.run_slim_dev == 'true'
+    if: env.run_slim_dev == 'false'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the code
