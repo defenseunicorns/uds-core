@@ -1,27 +1,59 @@
+docs:
+  - "**/*.md"
+  - "docs/**"
+  - "**/*.jpg"
+  - "**/*.png"
+  - "**/*.gif"
+  - "**/*.svg"
+
 all:
   - "**"
+  - "!${{ docs }}"
 
 authservice:
   - "src/authservice/**"
+  - "!${{ docs }}"
+
 grafana:
   - "src/grafana/**"
+  - "!${{ docs }}"
+
 istio:
   - "src/istio/**"
+  - "!${{ docs }}"
+
 keycloak:
   - "src/keycloak/**"
+  - "!${{ docs }}"
+
 kiali:
   - "src/kiali/**"
+  - "!${{ docs }}"
+
 loki:
   - "src/loki/**"
+  - "!${{ docs }}"
+
 metrics-server:
   - "src/metrics-server/**"
+  - "!${{ docs }}"
+
 neuvector:
   - "src/neuvector/**"
+  - "!${{ docs }}"
+
 prometheus-stack:
   - "src/prometheus-stack/**"
+  - "!${{ docs }}"
+
 promtail:
   - "src/promtail/**"
+  - "!${{ docs }}"
+
 tempo:
   - "src/tempo/**"
+  - "!${{ docs }}"
+
 velero:
   - "src/velero/**"
+  - "!${{ docs }}"
