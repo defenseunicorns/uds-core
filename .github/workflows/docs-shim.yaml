@@ -21,43 +21,46 @@ on:
 jobs:
   check-only-docs-changes:
     runs-on: ubuntu-latest
+    outputs:
+      only_docs_changed: ${{ steps.docs_check.outputs.only_docs_changed }}
     steps:
-      - name: Check out code
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Check for non-doc changes
-        id: check_non_docs
+      - name: Get list of changed files
+        id: changes
         run: |
-          # Check if any non-doc/config files were changed
-          non_doc_changes=$(git diff --name-only ${{ github.base_ref }}..${{ github.head_ref }} -- \
-          ':!**.md' ':!**.jpg' ':!**.png' ':!**.gif' ':!**.svg' ':!docs/**' \
-          ':!.vscode/**' ':!.gitignore' ':!renovate.json' ':!.release-please-config.json' \
-          ':!release-please-config.json' ':!CODEOWNERS' ':!LICENSE')
+          git fetch origin ${{ github.base_ref }}
+          git diff --name-only origin/${{ github.base_ref }} > changed_files.txt
 
-          if [ -n "$non_doc_changes" ]; then
-            echo "Non-doc/config files were changed:"
-            echo "$non_doc_changes"
-            exit 1
+      - name: Check for non-docs changes
+        id: docs_check
+        run: |
+          if grep -vqE '\.(md|jpg|png|gif|svg)$|^docs/|^.vscode/|^.gitignore$|^renovate.json$|^.release-please-config.json$|^release-please-config.json$|^CODEOWNERS$|^LICENSE$' changed_files.txt; then
+            echo "non_docs_changed=true" >> $GITHUB_ENV
+            echo "only_docs_changed=false" >> $GITHUB_ENV
           else
-            echo "Only doc/config files were changed."
-          fi
+            echo "only_docs_changed=true" >> $GITHUB_ENV
+        shell: bash
+        env:
+          non_docs_changed: false
 
   docs:
     needs: check-only-docs-changes
     if: needs.check-only-docs-changes.outputs.only_docs_changed == 'true'
     runs-on: ubuntu-latest
     steps:
-      - name: Lint Check(Simulated)
+      - name: Lint Check (Simulated)
         run: echo "Simulating lint-check job - Success!"
 
-      - name: Check Paths(Simulated)
+      - name: Check Paths (Simulated)
         run: echo "Simulating check-paths job - Success!"
 
-      - name: Package Test(Simulated)
+      - name: Package Test (Simulated)
         run: echo "Simulating run-package-test job - Success!"
 
-      - name: Compliance Test(Simulated)
+      - name: Compliance Test (Simulated)
         run: echo "Simulating evaluate-package-compliance job - Success!"
 
-      - name: Slim Dev Test(Simulated)
+      - name: Slim Dev Test (Simulated)
         run: echo "Documentation-only change detected; marking test successful."
