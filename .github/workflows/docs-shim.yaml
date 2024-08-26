@@ -22,11 +22,15 @@ jobs:
   check-only-docs-changes:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
       - name: Check for non-docs changes
         id: docs_check
         uses: ./.github/actions/check-non-docs-changes
         with:
           base_ref: ${{ github.base_ref }}
+
       - name: Set outputs
         id: set_output
         run: echo "only_docs_changed=${{ steps.docs_check.outputs.non_docs_changed == 'false' }}" >> $GITHUB_ENV
