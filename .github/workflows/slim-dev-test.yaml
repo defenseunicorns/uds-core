@@ -34,7 +34,7 @@ jobs:
   check-only-non-docs-changes:
     runs-on: ubuntu-latest
     outputs:
-      run_slim_dev: ${{ step.set_output.outputs.run_slim_dev }}
+      run_slim_dev: ${{ steps.set_output.outputs.run_slim_dev }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
