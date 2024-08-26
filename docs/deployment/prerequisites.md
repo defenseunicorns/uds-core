@@ -62,7 +62,7 @@ sudo systemctl disable firewalld
 #### Authservice
 #### Velero
 #### Metrics Server
-* Optional component and can be added if needed. Most of the provided managed clsuters will provide you a metric server.
+* Optional component and can be added if needed. Most of the provided managed clusters will provide you a metric server.
 ```yaml
 ...
 - name: uds-core
