@@ -41,6 +41,7 @@ jobs:
             echo "only_docs_changed=false" >> $GITHUB_ENV
           else
             echo "only_docs_changed=true" >> $GITHUB_ENV
+          fi
         shell: bash
         env:
           non_docs_changed: false
