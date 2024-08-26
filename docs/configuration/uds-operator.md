@@ -152,6 +152,17 @@ The UDS Operator uses the first `redirectUris` to populate the `match.prefix` ho
 
 For a complete example, see [app-authservice-tenant.yaml](https://github.com/defenseunicorns/uds-core/blob/main/src/test/app-authservice-tenant.yaml)
 
+#### External Session Store
+If you wish to scale Authservice horiztonally, Authservice supports using an [external redis session store](https://docs.tetrate.io/istio-authservice/configuration/oidc#session-store-configuration) which can be configured by setting [UDS_AUTHSERVICE_REDIS_URI](https://github.com/defenseunicorns/uds-core/blob/main/src/pepr/zarf.yaml#L20-L22).
+
+You can also specify the `AUTHSERVICE_REDIS_URI` variable in your `uds-config.yaml`:
+
+```yaml
+variables:
+  core:
+    AUTHSERVICE_REDIS_URI: redis://redis.redis.svc.cluster.local:6379
+```
+
 #### Trusted Certificate Authority
 
 Authservice can be configured with additional trusted certificate bundle in cases where UDS Core ingress gateways are deployed with private PKI.
@@ -167,6 +178,41 @@ variables:
 ```
 
 See [configuring Istio Ingress](https://uds.defenseunicorns.com/core/configuration/istio/ingress/#configure-domain-name-and-tls-for-istio-gateways) for the relevant documentation on configuring ingress certificates.
+
+### Creating a UDS Package with a Device Flow client
+
+Some applications may not have a web UI / server component to login to and may instead grant OAuth tokens to devices.  This flow is known as the [OAuth 2.0 Device Authorization Grant](https://oauth.net/2/device-flow/) and is supported in a UDS Package with the following configuration:
+
+```yaml
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: fulcio
+  namespace: fulcio-system
+spec:
+  sso:
+    - name: Sigstore Login
+      clientId: sigstore
+      standardFlowEnabled: false
+      publicClient: true
+      attributes:
+        oauth2.device.authorization.grant.enabled: "true"
+```
+
+This configuration does not create a secret in the cluster and instead tells the UDS Operator to create a public client (one that requires no auth secret) that enables the `oauth2.device.authorization.grant.enabled` flow and disables the standard redirect auth flow.  Because this creates a public client configuration that deviates from this is limited - if your application requires both the Device Authorization Grant and the standard flow this is currently not supported without creating two separate clients.
+
+### SSO Client Attribute Validation
+
+The SSO spec supports a subset of the Keycloak attributes for clients, but does not support all of them. The current supported attributes are:
+- oidc.ciba.grant.enabled
+- backchannel.logout.session.required
+- backchannel.logout.revoke.offline.tokens
+- post.logout.redirect.uris
+- oauth2.device.authorization.grant.enabled
+- pkce.code.challenge.method
+- client.session.idle.timeout
+- saml.client.signature
+- saml_assertion_consumer_url_post
 
 ## Exemption
 

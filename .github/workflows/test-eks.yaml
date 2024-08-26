@@ -2,6 +2,10 @@ name: Test Core On EKS
 
 on:
   workflow_call:
+    inputs:
+      flavor:
+        required: true
+        type: string
 
 permissions:
   id-token: write
@@ -20,10 +24,10 @@ jobs:
     steps:
       - name: Set ENV
         run: |
-          echo "UDS_CLUSTER_NAME=uds-core-aws-${SHA:0:7}" >> $GITHUB_ENV
-          echo "UDS_STATE_KEY="tfstate/ci/install/${SHA:0:7}-core-aws.tfstate >> $GITHUB_ENV
+          echo "UDS_CLUSTER_NAME=uds-ci-${{ inputs.flavor }}-${SHA:0:7}" >> $GITHUB_ENV
+          echo "UDS_STATE_KEY="tfstate/ci/install/${SHA:0:7}-core-${{ inputs.flavor }}-aws.tfstate >> $GITHUB_ENV
           echo "TF_VAR_region=${UDS_REGION}" >> $GITHUB_ENV
-          echo "TF_VAR_name=uds-core-aws-${SHA:0:7}" >> $GITHUB_ENV
+          echo "TF_VAR_name=uds-ci-${{ inputs.flavor }}-${SHA:0:7}" >> $GITHUB_ENV
           echo "TF_VAR_use_permissions_boundary=true" >> $GITHUB_ENV
           echo "TF_VAR_permissions_boundary_name=${UDS_PERMISSIONS_BOUNDARY_NAME}" >> $GITHUB_ENV
 
@@ -37,19 +41,26 @@ jobs:
           role-session-name: ${{ github.job || github.event.client_payload.pull_request.head.sha || github.sha }}
           aws-region: ${{ env.UDS_REGION }}
           role-duration-seconds: 21600
+
       - name: Environment setup
         uses: ./.github/actions/setup
+        with:
+          registry1Username: ${{ secrets.IRON_BANK_ROBOT_USERNAME }}
+          registry1Password: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
+          ghToken: ${{ secrets.GITHUB_TOKEN }}
+          chainguardIdentity: ${{ secrets.CHAINGUARD_IDENTITY }}
 
       - name: Install eksctl
         run: uds run -f tasks/iac.yaml install-eksctl --no-progress
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@651471c36a6092792c552e8b1bef71e592b462d8 # v3
+      - name: Setup Tofu
+        uses: opentofu/setup-opentofu@ae80d4ecaab946d8f5ff18397fbf6d0686c6d46a # v1.0.3
         with:
-          terraform_version: "1.5.7"
+          tofu_version: 1.8.1
+          tofu_wrapper: false
 
       - name: Create UDS Core Package
-        run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress
+        run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress --set FLAVOR=${{ inputs.flavor }}
 
       - name: Create Core Bundle
         run: uds create .github/bundles --confirm

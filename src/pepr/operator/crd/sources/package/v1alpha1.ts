@@ -252,7 +252,7 @@ const sso = {
   type: "array",
   items: {
     type: "object",
-    required: ["clientId", "name", "redirectUris"],
+    required: ["clientId", "name"],
     properties: {
       enableAuthserviceSelector: {
         description:
@@ -360,6 +360,17 @@ const sso = {
       alwaysDisplayInConsole: {
         description:
           "Always list this client in the Account UI, even if the user does not have an active session.",
+        type: "boolean",
+        default: false,
+      },
+      standardFlowEnabled: {
+        description:
+          "Enables the standard OpenID Connect redirect based authentication with authorization code.",
+        type: "boolean",
+        default: true,
+      },
+      publicClient: {
+        description: "Defines whether the client requires a client secret for authentication",
         type: "boolean",
         default: false,
       },

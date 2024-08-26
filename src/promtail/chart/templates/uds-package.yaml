@@ -14,7 +14,7 @@ spec:
   network:
     allow:
       - direction: Ingress
-        podSelector:
+        selector:
           app.kubernetes.io/name: promtail
         remoteNamespace: monitoring
         remoteSelector:
@@ -23,7 +23,7 @@ spec:
         description: "Prometheus Metrics"
 
       - direction: Egress
-        podSelector:
+        selector:
           app.kubernetes.io/name: promtail
         remoteGenerated: KubeAPI
 

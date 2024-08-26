@@ -8,9 +8,9 @@ https://velero.io/
 
 - k3d installed on machine
 
-#### Object Storage
+#### S3 Compatible Object Storage
 
-S3 compatible object storage must be available in order to use this package. Bucket information and access credentials can be provided via configuration values / env vars:
+Bucket information and access credentials can be provided via configuration values / env vars:
 
 - Bucket ID: `ZARF_VAR_VELERO_BUCKET`
 - Bucket Region: `ZARF_VAR_VELERO_BUCKET_REGION`
@@ -44,8 +44,34 @@ By overriding the velero values in the bundle as follows:
               value: "velero-bucket-credentials"
 ```
 
+#### Azure Blob Storage
+
+Blob information and access credentials can be provided by overriding bundle values:
+```
+  - name: core
+    overrides:
+      velero:
+        velero:
+          values:
+            - path: credentials.secretContents.cloud
+              value: |       
+                AZURE_STORAGE_ACCOUNT_ACCESS_KEY=${VELERO_STORAGE_ACCOUNT_ACCESS_KEY}
+                AZURE_CLOUD_NAME=${VELERO_CLOUD_NAME}
+            - path: configuration.backupStorageLocation
+              value:
+                - name: default
+                  provider: azure
+                  bucket: ${VERLERO_BUCKET_NAME}
+                  config: 
+                    storageAccount:${VELERO_STORAGE_ACCOUNT}
+                    resourceGroup:${VELERO_RESOURCE_GROUP}
+                    storageAccountKeyEnvVar:VELERO_STORAGE_ACCOUNT_ACCESS_KEY
+                    subscriptionId:${AZ_SUBSCRIPTION_ID}
+```
+
 ## Plugin Compatability
-This package currently assumes the availability of S3 API compatible object storage. As such, only the AWS specific plugin image is included. More information about all available plugins [can be found in the upstream docs](https://velero.io/plugins/). Ironbank includes images for Azure and the generic CSI driver, but those are currently excluded from this package. We may revisit package defaults at some point in the future depending on usage and user requests.
+
+This package currently assumes the availability of S3 API compatible object storage, Azure blob storage or use of the CSI plugin which is baked into Velero by default. More information about all available plugins can be found in the upstream docs**[can be found in the upstream docs](https://velero.io/plugins/). 
 
 ## Deploy
 
@@ -64,18 +90,23 @@ UDS_PKG=velero uds run deploy-single-package
 
 ### Test the package via UDS tasks
 Running the following will check that the velero deployment exists in the cluster and attempt to execute a backup:
+
 ```bash
 uds run -f src/velero/tasks.yaml validate
 ```
+
 > Alternatively, you can combine package creation, cluster setup, package deploy and the test command with a simple `UDS_PKG=velero uds run test-single-package`
 
 ## Manually trigger the default backup for testing purposes
-```
+
+```bash
 velero backup create --from-schedule velero-udsbackup -n velero
 ```
+
 > NOTE: requires [the velero CLI](https://velero.io/docs/v1.3.0/velero-install/)
 
 Alternatively, manually create a `backup` object with `kubectl`:
+
 ```bash
 uds zarf tools kubectl apply -f - <<-EOF
   apiVersion: velero.io/v1
@@ -99,6 +130,7 @@ EOF
 ```
 
 ## Manually restore backup
+
 ```bash
 velero restore create uds-restore-$(date +%s) \
   --from-backup <backup-name> \

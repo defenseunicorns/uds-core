@@ -16,10 +16,10 @@ spec:
       # Egress must be allowed to the external facing Keycloak endpoint
       - direction: Egress
         remoteGenerated: Anywhere
-        description: "SSO Provider"
+        description: "SSO Provider & Redis Session Store"
 
       - direction: Ingress
-        podLabels:
+        selector:
           app.kubernetes.io/name: authservice
         remoteNamespace: "" # Any namespace could have a protected app
         port: 10003

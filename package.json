@@ -23,25 +23,18 @@
         "zarf"
       ],
       "labels": []
-    },
-    "env": {
-      "UDS_DOMAIN": "###ZARF_VAR_DOMAIN###",
-      "UDS_CA_CERT": "###ZARF_VAR_CA_CERT###",
-      "UDS_ALLOW_ALL_NS_EXEMPTIONS": "###ZARF_VAR_ALLOW_ALL_NS_EXEMPTIONS###",
-      "UDS_SINGLE_TEST": "###ZARF_VAR_UDS_SINGLE_TEST###",
-      "UDS_LOG_LEVEL": "###ZARF_VAR_UDS_LOG_LEVEL###"
     }
   },
   "scripts": {
     "k3d-setup": "k3d cluster delete pepr-dev && k3d cluster create pepr-dev --k3s-arg '--debug@server:0'"
   },
   "dependencies": {
-    "pepr": "0.32.7"
+    "pepr": "0.34.1"
   },
   "devDependencies": {
     "@jest/globals": "29.7.0",
     "jest": "29.7.0",
-    "ts-jest": "29.2.2"
+    "ts-jest": "29.2.4"
   },
   "jest": {
     "preset": "ts-jest",

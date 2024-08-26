@@ -6,7 +6,7 @@ metadata:
 
 components:
   - name: metrics-server
-    required: true
+    required: false # This component is optional since most k8s distros provide this out of the box
     charts:
       - name: uds-metrics-server-config
         namespace: metrics-server

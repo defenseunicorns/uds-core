@@ -60,6 +60,19 @@ spec:
         port: {{ .Values.postgresql.port }}
         remoteGenerated: Anywhere
       {{- end }}
+      {{- if .Values.autoscaling.enabled }}
+      # HA for keycloak
+      - direction: Ingress
+        remoteGenerated: IntraNamespace
+        ports:
+          - 7800
+          - 57800
+      - direction: Egress
+        remoteGenerated: IntraNamespace
+        ports:
+          - 7800
+          - 57800
+      {{- end }}
 
     expose:
       - description: "remove private paths from public gateway"

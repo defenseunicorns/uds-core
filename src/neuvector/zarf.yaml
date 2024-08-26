@@ -20,11 +20,11 @@ components:
         valuesFiles:
           - values/upstream-monitor-values.yaml
     images:
-      - docker.io/neuvector/controller:5.3.3
-      - docker.io/neuvector/manager:5.3.3
+      - docker.io/neuvector/controller:5.3.4
+      - docker.io/neuvector/manager:5.3.4
       - docker.io/neuvector/updater:latest
       - docker.io/neuvector/scanner:latest
-      - docker.io/neuvector/enforcer:5.3.3
+      - docker.io/neuvector/enforcer:5.3.4
       - docker.io/neuvector/prometheus-exporter:5.3.2
 
   - name: neuvector
@@ -42,11 +42,11 @@ components:
         valuesFiles:
           - values/registry1-monitor-values.yaml
     images:
-      - registry1.dso.mil/ironbank/neuvector/neuvector/controller:5.3.3
-      - registry1.dso.mil/ironbank/neuvector/neuvector/manager:5.3.3
+      - registry1.dso.mil/ironbank/neuvector/neuvector/controller:5.3.4
+      - registry1.dso.mil/ironbank/neuvector/neuvector/manager:5.3.4
       - registry1.dso.mil/ironbank/redhat/ubi/ubi9-minimal:9.4
       - registry1.dso.mil/ironbank/neuvector/neuvector/scanner:5
-      - registry1.dso.mil/ironbank/neuvector/neuvector/enforcer:5.3.3
+      - registry1.dso.mil/ironbank/neuvector/neuvector/enforcer:5.3.4
       - registry1.dso.mil/ironbank/neuvector/neuvector/prometheus-exporter:5.3.2
 
   - name: neuvector
@@ -57,32 +57,19 @@ components:
     import:
       path: common
     charts:
+      - name: uds-neuvector-config
+        valuesFiles:
+          - values/unicorn-config-values.yaml
       - name: core
         valuesFiles:
-          - values/upstream-values.yaml
+          - values/unicorn-values.yaml
       - name: monitor
         valuesFiles:
-          - values/upstream-monitor-values.yaml
+          - values/unicorn-monitor-values.yaml
     images:
-      - docker.io/neuvector/controller:5.3.3
-      - docker.io/neuvector/manager:5.3.3
-      - docker.io/neuvector/updater:latest
+      - cgr.dev/du-uds-defenseunicorns/neuvector-manager:5.3.4
+      - cgr.dev/du-uds-defenseunicorns/neuvector-enforcer-fips:5.3.4
+      - cgr.dev/du-uds-defenseunicorns/neuvector-controller-fips:5.3.4
       - docker.io/neuvector/scanner:latest
-      - docker.io/neuvector/enforcer:5.3.3
-      - docker.io/neuvector/prometheus-exporter:5.3.2
-
-    # todo: switch to chainguard images once manager is functional
-    # charts:
-    #   - name: core
-    #     valuesFiles:
-    #       - values/unicorn-values.yaml
-    #   - name: monitor
-    #     valuesFiles:
-    #       - values/unicorn-monitor-values.yaml
-    # images:
-    #   - cgr.dev/du-uds-defenseunicorns/neuvector-manager:5.3.3
-    #   - cgr.dev/du-uds-defenseunicorns/neuvector-enforcer-fips:5.3.3
-    #   - cgr.dev/du-uds-defenseunicorns/neuvector-controller-fips:5.3.3
-    #   - cgr.dev/du-uds-defenseunicorns/neuvector-scanner-fips:latest
-    #   - cgr.dev/du-uds-defenseunicorns/neuvector-updater-fips:8.9.0-dev
-    #   - cgr.dev/du-uds-defenseunicorns/neuvector-prometheus-exporter-fips:5.3.0
+      - cgr.dev/du-uds-defenseunicorns/neuvector-updater-fips:8.9.1-dev
+      - cgr.dev/du-uds-defenseunicorns/neuvector-prometheus-exporter-fips:5.3.0

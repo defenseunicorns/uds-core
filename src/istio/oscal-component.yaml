@@ -425,6 +425,7 @@ component-definition:
                   "to": [
                     {
                       "operation": {
+                        "ports": ["8080"],
                         "paths": ["/admin*", "/realms/master*"]
                       }
                     }
@@ -989,83 +990,83 @@ component-definition:
                 # Control Implementation
                   Istio encrypts all in-mesh communication at runtime using FIPS verified mTLS in addition to ingress and egress gateways for controlling communication.
               links:
-                - href: '#67456ae8-4505-4c93-b341-d977d90cb125'
+                - href: "#67456ae8-4505-4c93-b341-d977d90cb125"
                   rel: lula
                   text: Check that Istio is healthy
-                - href: '#ca49ac97-487a-446a-a0b7-92b20e2c83cb'
+                - href: "#ca49ac97-487a-446a-a0b7-92b20e2c83cb"
                   rel: lula
                   text: Check that Istio is enforcing mtls STRICT
-                - href: '#1761ac07-80dd-47d2-947e-09f67943b986'
+                - href: "#1761ac07-80dd-47d2-947e-09f67943b986"
                   rel: lula
                   text: All pods are istio injected with proxyv2 sidecar
-                - href: '#fd071676-6b92-4e1c-a4f0-4c8d2bd55aed'
+                - href: "#fd071676-6b92-4e1c-a4f0-4c8d2bd55aed"
                   rel: lula
                   text: Check ingress traffic is encrypted
-              remarks: '# Control Description Information flow control regulates where information is allowed to travel within an information system and between information systems (as opposed to who is allowed to access the information) and without explicit regard to subsequent accesses to that information. Flow control restrictions include, for example, keeping export-controlled information from being transmitted in the clear to the Internet, blocking outside traffic that claims to be from within the organization, restricting web requests to the Internet that are not from the internal web proxy server, and limiting information transfers between organizations based on data structures and content.'
+              remarks: "# Control Description Information flow control regulates where information is allowed to travel within an information system and between information systems (as opposed to who is allowed to access the information) and without explicit regard to subsequent accesses to that information. Flow control restrictions include, for example, keeping export-controlled information from being transmitted in the clear to the Internet, blocking outside traffic that claims to be from within the organization, restricting web requests to the Internet that are not from the internal web proxy server, and limiting information transfers between organizations based on data structures and content."
               uuid: 9e158525-96bd-4d4f-a674-7e3eab9aea7a
             - control-id: ac-4.4
               description: |-
                 # Control Implementation
                   All encrypted HTTPS connections are terminated at the Istio ingress gateway.
               links:
-                - href: '#67456ae8-4505-4c93-b341-d977d90cb125'
+                - href: "#67456ae8-4505-4c93-b341-d977d90cb125"
                   rel: lula
                   text: Check that Istio is healthy
-                - href: '#ca49ac97-487a-446a-a0b7-92b20e2c83cb'
+                - href: "#ca49ac97-487a-446a-a0b7-92b20e2c83cb"
                   rel: lula
                   text: Check that Istio is enforcing mtls STRICT
-                - href: '#1761ac07-80dd-47d2-947e-09f67943b986'
+                - href: "#1761ac07-80dd-47d2-947e-09f67943b986"
                   rel: lula
                   text: All pods are istio injected with proxyv2 sidecar
-                - href: '#fd071676-6b92-4e1c-a4f0-4c8d2bd55aed'
+                - href: "#fd071676-6b92-4e1c-a4f0-4c8d2bd55aed"
                   rel: lula
                   text: Check ingress traffic is encrypted
-              remarks: '# Control Description The information system prevents encrypted information from bypassing content-checking mechanisms by decrypting the information; blocking the flow of the encrypted information; terminating communications sessions attempting to pass encrypted information; Assignment: organization-defined procedure or method.'
+              remarks: "# Control Description The information system prevents encrypted information from bypassing content-checking mechanisms by decrypting the information; blocking the flow of the encrypted information; terminating communications sessions attempting to pass encrypted information; Assignment: organization-defined procedure or method."
               uuid: c3e13abc-3c19-4f08-a2f8-40fcbef5daa7
             - control-id: ac-4.21
               description: |-
                 # Control Implementation
                   Istio is configured to use ingress and egress gateways to provide logical flow separation.
               links:
-                - href: '#67456ae8-4505-4c93-b341-d977d90cb125'
+                - href: "#67456ae8-4505-4c93-b341-d977d90cb125"
                   rel: lula
                   text: Check that Istio is healthy
-                - href: '#0da39859-a91a-4ca6-bd8b-9b117689188f'
+                - href: "#0da39859-a91a-4ca6-bd8b-9b117689188f"
                   rel: lula
                   text: Check namespaces are istio injected
-                - href: '#c6c9daf1-4196-406d-8679-312c0512ab2e'
+                - href: "#c6c9daf1-4196-406d-8679-312c0512ab2e"
                   rel: lula
                   text: Check that Istio is configured with an admin gateway and admin services use it
-                - href: '#b0a8f21e-b12f-47ea-a967-2f4a3ec69e44'
+                - href: "#b0a8f21e-b12f-47ea-a967-2f4a3ec69e44"
                   rel: lula
                   text: Validates that Istio Gateways are available and expected VirtualServices using each Gateway.
-              remarks: 'Separate information flows logically or physically using [Assignment: organization-defined mechanisms and/or techniques] to accomplish [Assignment: organization-defined required separations by types of information].'
+              remarks: "Separate information flows logically or physically using [Assignment: organization-defined mechanisms and/or techniques] to accomplish [Assignment: organization-defined required separations by types of information]."
               uuid: 6e32feb5-ce43-465f-9422-e3ef3276bf5d
             - control-id: ac-6.3
               description: |-
                 # Control Implementation
                   Configured with an "admin" gateway to restrict access to applications that only need administrative access.
               links:
-                - href: '#67456ae8-4505-4c93-b341-d977d90cb125'
+                - href: "#67456ae8-4505-4c93-b341-d977d90cb125"
                   rel: lula
                   text: Check that Istio is healthy
-                - href: '#c6c9daf1-4196-406d-8679-312c0512ab2e'
+                - href: "#c6c9daf1-4196-406d-8679-312c0512ab2e"
                   rel: lula
                   text: Check that Istio is configured with an admin gateway and admin services use it
-              remarks: 'Authorize network access to [Assignment: organization-defined privileged commands] only for [Assignment: organization-defined compelling operational needs] and document the rationale for such access in the security plan for the system.'
+              remarks: "Authorize network access to [Assignment: organization-defined privileged commands] only for [Assignment: organization-defined compelling operational needs] and document the rationale for such access in the security plan for the system."
               uuid: 0081f95a-3233-4e07-a6cd-95cb1905c318
             - control-id: ac-6.9
               description: |-
                 # Control Implementation
                   Istio produces logs for all traffic in the information system.
               links:
-                - href: '#67456ae8-4505-4c93-b341-d977d90cb125'
+                - href: "#67456ae8-4505-4c93-b341-d977d90cb125"
                   rel: lula
                   text: Check that Istio is healthy
-                - href: '#90738c86-6315-450a-ac69-cc50eb4859cc'
+                - href: "#90738c86-6315-450a-ac69-cc50eb4859cc"
                   rel: lula
                   text: Check that Istio is logging all traffic which could contain priviledged function calls
-                - href: '#1761ac07-80dd-47d2-947e-09f67943b986'
+                - href: "#1761ac07-80dd-47d2-947e-09f67943b986"
                   rel: lula
                   text: All pods are istio injected with proxyv2 sidecar
               remarks: Log the execution of privileged functions.
@@ -1075,10 +1076,10 @@ component-definition:
                 # Control Implementation
                   Istio implements with service to service and provides authorization policies that require authentication to access any non-public features.
               links:
-                - href: '#67456ae8-4505-4c93-b341-d977d90cb125'
+                - href: "#67456ae8-4505-4c93-b341-d977d90cb125"
                   rel: lula
                   text: Check that Istio is healthy
-                - href: '#fbd877c8-d6b6-4d88-8685-2c4aaaab02a1'
+                - href: "#fbd877c8-d6b6-4d88-8685-2c4aaaab02a1"
                   rel: lula
                   text: Validates that Istio is used to authorize access to Keycloak admin console only from admin gateway
               remarks: 'a. Identify [Assignment: organization-defined user actions] that can be performed on the system without identification or authentication consistent with organizational mission and business functions; and b. Document and provide supporting rationale in the security plan for the system, user actions not requiring identification or authentication."'
@@ -1088,71 +1089,71 @@ component-definition:
                 # Control Implementation
                   Istio logs all Istio event logs within the system's mesh network.
               links:
-                - href: '#67456ae8-4505-4c93-b341-d977d90cb125'
+                - href: "#67456ae8-4505-4c93-b341-d977d90cb125"
                   rel: lula
                   text: Check that Istio is healthy
-                - href: '#90738c86-6315-450a-ac69-cc50eb4859cc'
+                - href: "#90738c86-6315-450a-ac69-cc50eb4859cc"
                   rel: lula
                   text: Check that Istio is logging all traffic which could contain audit events
-              remarks: 'a. Identify the types of events that the system is capable of logging in support of the audit function: [Assignment: organization-defined event types that the system is capable of logging]; b. Coordinate the event logging function with other organizational entities requiring audit-related information to guide and inform the selection criteria for events to be logged; c. Specify the following event types for logging within the system: [Assignment: organization-defined event types (subset of the event types defined in AU-2a.) along with the frequency of (or situation requiring) logging for each identified event type]; d. Provide a rationale for why the event types selected for logging are deemed to be adequate to support after-the-fact investigations of incidents; and e. Review and update the event types selected for logging [Assignment: organization-defined frequency].'
+              remarks: "a. Identify the types of events that the system is capable of logging in support of the audit function: [Assignment: organization-defined event types that the system is capable of logging]; b. Coordinate the event logging function with other organizational entities requiring audit-related information to guide and inform the selection criteria for events to be logged; c. Specify the following event types for logging within the system: [Assignment: organization-defined event types (subset of the event types defined in AU-2a.) along with the frequency of (or situation requiring) logging for each identified event type]; d. Provide a rationale for why the event types selected for logging are deemed to be adequate to support after-the-fact investigations of incidents; and e. Review and update the event types selected for logging [Assignment: organization-defined frequency]."
               uuid: 88f300a6-aa21-41b4-919d-29ef3e4381bb
             - control-id: au-3
               description: |-
                 # Control Implementation
                   Istio logs all Istio event logs within the system's mesh network.
               links:
-                - href: '#67456ae8-4505-4c93-b341-d977d90cb125'
+                - href: "#67456ae8-4505-4c93-b341-d977d90cb125"
                   rel: lula
                   text: Check that Istio is healthy
-                - href: '#f346b797-be35-40a8-a93a-585db6fd56ec'
+                - href: "#f346b797-be35-40a8-a93a-585db6fd56ec"
                   rel: lula
                   text: Check that Istio is configured to provide tracing data
-              remarks: 'Ensure that audit records contain information that establishes the following: a. What type of event occurred; b. When the event occurred; c. Where the event occurred; d. Source of the event; e. Outcome of the event; and f. Identity of any individuals, subjects, or objects/entities associated with the event.'
+              remarks: "Ensure that audit records contain information that establishes the following: a. What type of event occurred; b. When the event occurred; c. Where the event occurred; d. Source of the event; e. Outcome of the event; and f. Identity of any individuals, subjects, or objects/entities associated with the event."
               uuid: 52756a01-6f5c-49b1-8a6b-972b74a01da4
             - control-id: au-3.1
               description: |-
                 # Control Implementation
                   Istio has been configured to implement event logging within our environment. This includes capturing metrics related to the duration of sessions, connections, transactions, or activities. Specifically, Istio's telemetry features are utilized to capture these metrics, which provide valuable data that can be used to infer the duration of sessions or connections.
               links:
-                - href: '#67456ae8-4505-4c93-b341-d977d90cb125'
+                - href: "#67456ae8-4505-4c93-b341-d977d90cb125"
                   rel: lula
                   text: Check that Istio is healthy
-                - href: '#70d99754-2918-400c-ac9a-319f874fff90'
+                - href: "#70d99754-2918-400c-ac9a-319f874fff90"
                   rel: lula
                   text: Check that Istio is configured to provide metrics data
-                - href: '#1761ac07-80dd-47d2-947e-09f67943b986'
+                - href: "#1761ac07-80dd-47d2-947e-09f67943b986"
                   rel: lula
                   text: All pods are istio injected with proxyv2 sidecar
-                - href: '#f345c359-3208-46fb-9348-959bd628301e'
+                - href: "#f345c359-3208-46fb-9348-959bd628301e"
                   rel: lula
                   text: Check that pods running sidecar have the correct annotations for prometheus metrics scrape
-              remarks: 'Generate audit records containing the following additional information: [Assignment: organization-defined additional information]. AU-3 (1) [session, connection, transaction, or activity duration; for client-server transactions, the number of bytes received and bytes sent; additional informational messages to diagnose or identify the event; characteristics that describe or identify the object or resource being acted upon; individual identities of group account users; full-text of privileged commands]'
+              remarks: "Generate audit records containing the following additional information: [Assignment: organization-defined additional information]. AU-3 (1) [session, connection, transaction, or activity duration; for client-server transactions, the number of bytes received and bytes sent; additional informational messages to diagnose or identify the event; characteristics that describe or identify the object or resource being acted upon; individual identities of group account users; full-text of privileged commands]"
               uuid: 16cc258e-d907-47bb-97d9-4e92677cf075
             - control-id: au-12
               description: |-
                 # Control Implementation
                   Istio provides audit record generation capabilities for a variety of event types, including session, connection, transaction, or activity durations, and the number of bytes received and sent.
               links:
-                - href: '#67456ae8-4505-4c93-b341-d977d90cb125'
+                - href: "#67456ae8-4505-4c93-b341-d977d90cb125"
                   rel: lula
                   text: Check that Istio is healthy
-                - href: '#90738c86-6315-450a-ac69-cc50eb4859cc'
+                - href: "#90738c86-6315-450a-ac69-cc50eb4859cc"
                   rel: lula
                   text: Check that Istio is logging all traffic which could contain audit events
-              remarks: 'a. Provide audit record generation capability for the event types the system is capable of auditing as defined in AU-2a on [Assignment: organization-defined system components]; b. Allow [Assignment: organization-defined personnel or roles] to select the event types that are to be logged by specific components of the system; and c. Generate audit records for the event types defined in AU-2c that include the audit record content defined in AU-3.'
+              remarks: "a. Provide audit record generation capability for the event types the system is capable of auditing as defined in AU-2a on [Assignment: organization-defined system components]; b. Allow [Assignment: organization-defined personnel or roles] to select the event types that are to be logged by specific components of the system; and c. Generate audit records for the event types defined in AU-2c that include the audit record content defined in AU-3."
               uuid: 8f645835-6538-4327-a7aa-453b398f5ef4
             - control-id: cm-5
               description: |-
                 # Control Implementation
                   Istio enforces logical access restrictions associated with changes to the system. Istio's Role-Based Access Control (RBAC) features are used to define and enforce access controls, ensuring that only approved personnel can make changes to the system.
               links:
-                - href: '#67456ae8-4505-4c93-b341-d977d90cb125'
+                - href: "#67456ae8-4505-4c93-b341-d977d90cb125"
                   rel: lula
                   text: Check that Istio is healthy
-                - href: '#7b045b2a-106f-4c8c-85d9-ae3d7a8e0e28'
+                - href: "#7b045b2a-106f-4c8c-85d9-ae3d7a8e0e28"
                   rel: lula
                   text: Check that Istio is enforcing RBAC
-                - href: '#9b361d7b-4e07-40db-8b86-3854ed499a4b'
+                - href: "#9b361d7b-4e07-40db-8b86-3854ed499a4b"
                   rel: lula
                   text: Check that particular RBAC is ensuring only approved personnel can make changes to the system [PLACEHOLDER]
               remarks: Define, document, approve, and enforce physical and logical access restrictions associated with changes to the system.
@@ -1162,13 +1163,13 @@ component-definition:
                 # Control Implementation
                   Namespaces, Istio gateways, and network policies collectively by providing resource isolation, secure traffic routing, and network segmentation to prevent unauthorized and unintended information transfer.
               links:
-                - href: '#67456ae8-4505-4c93-b341-d977d90cb125'
+                - href: "#67456ae8-4505-4c93-b341-d977d90cb125"
                   rel: lula
                   text: Check that Istio is healthy
-                - href: '#c6c9daf1-4196-406d-8679-312c0512ab2e'
+                - href: "#c6c9daf1-4196-406d-8679-312c0512ab2e"
                   rel: lula
                   text: Check that Istio is configured with an admin gateway and admin services use it
-                - href: '#b0a8f21e-b12f-47ea-a967-2f4a3ec69e44'
+                - href: "#b0a8f21e-b12f-47ea-a967-2f4a3ec69e44"
                   rel: lula
                   text: Validates that Istio Gateways are available and expected VirtualServices using each Gateway.
               remarks: Isolate security functions from nonsecurity functions.
@@ -1178,13 +1179,13 @@ component-definition:
                 # Control Implementation
                   Istio enforces outbound traffic goes through an Egress Gateway with a Network Policy.
               links:
-                - href: '#67456ae8-4505-4c93-b341-d977d90cb125'
+                - href: "#67456ae8-4505-4c93-b341-d977d90cb125"
                   rel: lula
                   text: Check that Istio is healthy
-                - href: '#7455f86d-b79c-4226-9ce3-f3fb7d9348c8'
+                - href: "#7455f86d-b79c-4226-9ce3-f3fb7d9348c8"
                   rel: lula
                   text: Network Policies are in place to ensure that only authorized traffic is allowed to egress the cluster [PLACEHOLDER]
-                - href: '#ecdb90c7-971a-4442-8f29-a8b0f6076bc9'
+                - href: "#ecdb90c7-971a-4442-8f29-a8b0f6076bc9"
                   rel: lula
                   text: Egress Gateway exists and is configured [PLACEHOLDER]
               remarks: Prevent unauthorized and unintended information transfer via shared system resources.
@@ -1194,150 +1195,150 @@ component-definition:
                 # Control Implementation
                   Istio is configured to provide managed interfaces for external telecommunication services, establish traffic flow policies, and protect the confidentiality and integrity of transmitted information. It also prevents unauthorized exchange of control plane traffic and filters unauthorized control plane traffic.
               links:
-                - href: '#67456ae8-4505-4c93-b341-d977d90cb125'
+                - href: "#67456ae8-4505-4c93-b341-d977d90cb125"
                   rel: lula
                   text: Check that Istio is healthy
-                - href: '#570e2dc7-e6c2-4ad5-8ea3-f07974f59747'
+                - href: "#570e2dc7-e6c2-4ad5-8ea3-f07974f59747"
                   rel: lula
                   text: Resources in namespaces can securely communicate with Istio control plane via network policies
-                - href: '#fbd877c8-d6b6-4d88-8685-2c4aaaab02a1'
+                - href: "#fbd877c8-d6b6-4d88-8685-2c4aaaab02a1"
                   rel: lula
                   text: Validates that Istio is used to authorize access to Keycloak admin console only from admin gateway
-                - href: '#b0a8f21e-b12f-47ea-a967-2f4a3ec69e44'
+                - href: "#b0a8f21e-b12f-47ea-a967-2f4a3ec69e44"
                   rel: lula
                   text: Validates that Istio Gateways are available and expected VirtualServices using each Gateway.
-              remarks: '(a) Implement a managed interface for each external telecommunication service; (b) Establish a traffic flow policy for each managed interface; (c) Protect the confidentiality and integrity of the information being transmitted across each interface; (d) Document each exception to the traffic flow policy with a supporting mission or business need and duration of that need; (e) Review exceptions to the traffic flow policy [Assignment: organization-defined frequency] and remove exceptions that are no longer supported by an explicit mission or business need; (f) Prevent unauthorized exchange of control plane traffic with external networks; (g) Publish information to enable remote networks to detect unauthorized control plane traffic from internal networks; and (h) Filter unauthorized control plane traffic from external networks.'
+              remarks: "(a) Implement a managed interface for each external telecommunication service; (b) Establish a traffic flow policy for each managed interface; (c) Protect the confidentiality and integrity of the information being transmitted across each interface; (d) Document each exception to the traffic flow policy with a supporting mission or business need and duration of that need; (e) Review exceptions to the traffic flow policy [Assignment: organization-defined frequency] and remove exceptions that are no longer supported by an explicit mission or business need; (f) Prevent unauthorized exchange of control plane traffic with external networks; (g) Publish information to enable remote networks to detect unauthorized control plane traffic from internal networks; and (h) Filter unauthorized control plane traffic from external networks."
               uuid: 85df9e6c-3d94-4c60-9a20-8c481831f1e0
             - control-id: sc-7.8
               description: |-
                 # Control Implementation
                    is configured to route internal communications traffic to external networks through authenticated proxy servers at managed interfaces, using its Egress Gateway.
               links:
-                - href: '#67456ae8-4505-4c93-b341-d977d90cb125'
+                - href: "#67456ae8-4505-4c93-b341-d977d90cb125"
                   rel: lula
                   text: Check that Istio is healthy
-                - href: '#ecdb90c7-971a-4442-8f29-a8b0f6076bc9'
+                - href: "#ecdb90c7-971a-4442-8f29-a8b0f6076bc9"
                   rel: lula
                   text: Egress Gateway exists and is configured [PLACEHOLDER]
-                - href: '#19faf69a-de74-4b78-a628-64a9f244ae13'
+                - href: "#19faf69a-de74-4b78-a628-64a9f244ae13"
                   rel: lula
                   text: Check that external traffic is managed [PLACEHOLDER]
-              remarks: 'Route [Assignment: organization-defined internal communications traffic] to [Assignment: organization-defined external networks] through authenticated proxy servers at managed interfaces.'
+              remarks: "Route [Assignment: organization-defined internal communications traffic] to [Assignment: organization-defined external networks] through authenticated proxy servers at managed interfaces."
               uuid: 4b930af3-ae84-43ff-b751-448fe1c2eec8
             - control-id: sc-7.20
               description: |-
                 # Control Implementation
                   Istio is configured to dynamically isolate certain internal system components when necessary. This is achieved through Istio's network policies, which allow us to partition or separate system components
               links:
-                - href: '#67456ae8-4505-4c93-b341-d977d90cb125'
+                - href: "#67456ae8-4505-4c93-b341-d977d90cb125"
                   rel: lula
                   text: Check that Istio is healthy
-                - href: '#ca49ac97-487a-446a-a0b7-92b20e2c83cb'
+                - href: "#ca49ac97-487a-446a-a0b7-92b20e2c83cb"
                   rel: lula
                   text: Check that Istio is enforcing mtls STRICT
-                - href: '#1761ac07-80dd-47d2-947e-09f67943b986'
+                - href: "#1761ac07-80dd-47d2-947e-09f67943b986"
                   rel: lula
                   text: All pods are istio injected with proxyv2 sidecar
-              remarks: 'Provide the capability to dynamically isolate [Assignment: organization-defined system components] from other system components.'
+              remarks: "Provide the capability to dynamically isolate [Assignment: organization-defined system components] from other system components."
               uuid: 30b49a3e-ad38-441d-8c07-5a9018848a02
             - control-id: sc-7.21
               description: |-
                 # Control Implementation
                    Istio is configured to isolate system components that perform different mission or business functions. This is achieved through Istio's network policies and mutual TLS, which allow us to control information flows and provide enhanced protection.
               links:
-                - href: '#67456ae8-4505-4c93-b341-d977d90cb125'
+                - href: "#67456ae8-4505-4c93-b341-d977d90cb125"
                   rel: lula
                   text: Check that Istio is healthy
-                - href: '#ca49ac97-487a-446a-a0b7-92b20e2c83cb'
+                - href: "#ca49ac97-487a-446a-a0b7-92b20e2c83cb"
                   rel: lula
                   text: Check that Istio is enforcing mtls STRICT
-                - href: '#1761ac07-80dd-47d2-947e-09f67943b986'
+                - href: "#1761ac07-80dd-47d2-947e-09f67943b986"
                   rel: lula
                   text: All pods are istio injected with proxyv2 sidecar
-              remarks: 'Employ boundary protection mechanisms to isolate [Assignment: organization-defined system components] supporting [Assignment: organization-defined missions and/or business functions].'
+              remarks: "Employ boundary protection mechanisms to isolate [Assignment: organization-defined system components] supporting [Assignment: organization-defined missions and/or business functions]."
               uuid: c9a1e9bc-3caa-44ce-a300-ecd722487987
             - control-id: sc-8
               description: |-
                 # Control Implementation
                   Istio is configured to protect the confidentiality and integrity of transmitted information across both internal and external networks. This is achieved through Istio's mutual TLS, which encrypts service-to-service communication, ensuring that data in transit is not exposed to the possibility of interception and modification.
               links:
-                - href: '#67456ae8-4505-4c93-b341-d977d90cb125'
+                - href: "#67456ae8-4505-4c93-b341-d977d90cb125"
                   rel: lula
                   text: Check that Istio is healthy
-                - href: '#ca49ac97-487a-446a-a0b7-92b20e2c83cb'
+                - href: "#ca49ac97-487a-446a-a0b7-92b20e2c83cb"
                   rel: lula
                   text: Check that Istio is enforcing mtls STRICT
-                - href: '#1761ac07-80dd-47d2-947e-09f67943b986'
+                - href: "#1761ac07-80dd-47d2-947e-09f67943b986"
                   rel: lula
                   text: All pods are istio injected with proxyv2 sidecar
-              remarks: 'Protect the [Selection (one or more): confidentiality; integrity] of transmitted information.'
+              remarks: "Protect the [Selection (one or more): confidentiality; integrity] of transmitted information."
               uuid: 7548b4ee-e4a3-4e3c-a34b-95eccad45f92
             - control-id: sc-8.1
               description: |-
                 # Control Implementation
                   Istio is configured to protect the confidentiality and integrity of transmitted information across both internal and external networks. This is achieved through Istio's mutual TLS, which encrypts service-to-service communication, ensuring that data in transit is not exposed to the possibility of interception and modification.
               links:
-                - href: '#67456ae8-4505-4c93-b341-d977d90cb125'
+                - href: "#67456ae8-4505-4c93-b341-d977d90cb125"
                   rel: lula
                   text: Check that Istio is healthy
-                - href: '#ca49ac97-487a-446a-a0b7-92b20e2c83cb'
+                - href: "#ca49ac97-487a-446a-a0b7-92b20e2c83cb"
                   rel: lula
                   text: Check that Istio is enforcing mtls STRICT
-                - href: '#1761ac07-80dd-47d2-947e-09f67943b986'
+                - href: "#1761ac07-80dd-47d2-947e-09f67943b986"
                   rel: lula
                   text: All pods are istio injected with proxyv2 sidecar
-              remarks: 'Implement cryptographic mechanisms to [Selection (one or more): prevent unauthorized disclosure of information; detect changes to information] during transmission.'
+              remarks: "Implement cryptographic mechanisms to [Selection (one or more): prevent unauthorized disclosure of information; detect changes to information] during transmission."
               uuid: 69415B92-0490-4A14-9E0F-E1EE61951F9C
             - control-id: sc-8.2
               description: |-
                 # Control Implementation
                   Istio implements with global configuration.
               links:
-                - href: '#67456ae8-4505-4c93-b341-d977d90cb125'
+                - href: "#67456ae8-4505-4c93-b341-d977d90cb125"
                   rel: lula
                   text: Check that Istio is healthy
-                - href: '#ca49ac97-487a-446a-a0b7-92b20e2c83cb'
+                - href: "#ca49ac97-487a-446a-a0b7-92b20e2c83cb"
                   rel: lula
                   text: Check that Istio is enforcing mtls STRICT to ensure integrity of information sent/received
-                - href: '#1761ac07-80dd-47d2-947e-09f67943b986'
+                - href: "#1761ac07-80dd-47d2-947e-09f67943b986"
                   rel: lula
                   text: All pods are istio injected with proxyv2 sidecar
-                - href: '#fbd877c8-d6b6-4d88-8685-2c4aaaab02a1'
+                - href: "#fbd877c8-d6b6-4d88-8685-2c4aaaab02a1"
                   rel: lula
                   text: Validates that Istio is used to authorize access to Keycloak admin console only from admin gateway
-              remarks: 'Maintain the [Selection (one or more): confidentiality; integrity] of information during preparation for transmission and during reception.'
+              remarks: "Maintain the [Selection (one or more): confidentiality; integrity] of information during preparation for transmission and during reception."
               uuid: c158b75a-cefc-4794-b124-f1e56ff5646d
             - control-id: sc-10
               description: |-
                 # Control Implementation
                   Istio is configured to manage network connections associated with specific communication sessions. It can be set up to automatically terminate these connections after periods of inactivity, providing an additional layer of security.
               links:
-                - href: '#67456ae8-4505-4c93-b341-d977d90cb125'
+                - href: "#67456ae8-4505-4c93-b341-d977d90cb125"
                   rel: lula
                   text: Check that Istio is healthy
-                - href: '#663f5e92-6db4-4042-8b5a-eba3ebe5a622'
+                - href: "#663f5e92-6db4-4042-8b5a-eba3ebe5a622"
                   rel: lula
                   text: Istio terminates communication sessions after inactivity [PLACEHOLDER]
-              remarks: 'Maintain the [Selection (one or more): confidentiality; integrity] of information during preparation for transmission and during reception.'
+              remarks: "Maintain the [Selection (one or more): confidentiality; integrity] of information during preparation for transmission and during reception."
               uuid: 169c9ad3-0a6c-46ee-80cd-cd8cef5eca5c
             - control-id: sc-13
               description: |-
                 # Control Implementation
                   Istio provides FIPS encryption in transit for all applications in the mesh, TLS termination at ingress, and TLS origination at egress.
               links:
-                - href: '#67456ae8-4505-4c93-b341-d977d90cb125'
+                - href: "#67456ae8-4505-4c93-b341-d977d90cb125"
                   rel: lula
                   text: Check that Istio is healthy
-                - href: '#ca49ac97-487a-446a-a0b7-92b20e2c83cb'
+                - href: "#ca49ac97-487a-446a-a0b7-92b20e2c83cb"
                   rel: lula
                   text: Check that Istio is enforcing mtls STRICT
-                - href: '#fd071676-6b92-4e1c-a4f0-4c8d2bd55aed'
+                - href: "#fd071676-6b92-4e1c-a4f0-4c8d2bd55aed"
                   rel: lula
                   text: Istio is encrypting ingress traffic
-                - href: '#8be1601e-5870-4573-ab4f-c1c199944815'
+                - href: "#8be1601e-5870-4573-ab4f-c1c199944815"
                   rel: lula
                   text: Istio is providing TLS origination at egress [PLACEHOLDER]
-                - href: '#73434890-2751-4894-b7b2-7e583b4a8977'
+                - href: "#73434890-2751-4894-b7b2-7e583b4a8977"
                   rel: lula
                   text: System is using FIPS-compliant Istio distribution [PLACEHOLDER]
               remarks: 'a. Determine the [Assignment: organization-defined cryptographic uses]; and b. Implement the following types of cryptography required for each specified cryptographic use: [Assignment: organization-defined types of cryptography for each specified cryptographic use]."'
@@ -1347,29 +1348,33 @@ component-definition:
                 # Control Implementation
                   Istio is configured to protect session authenticity, establishing confidence in the ongoing identities of other parties and the validity of transmitted information. This is achieved through Istio's mutual TLS, which ensures secure communication.
               links:
-                - href: '#67456ae8-4505-4c93-b341-d977d90cb125'
+                - href: "#67456ae8-4505-4c93-b341-d977d90cb125"
                   rel: lula
                   text: Check that Istio is healthy
-                - href: '#ca49ac97-487a-446a-a0b7-92b20e2c83cb'
+                - href: "#ca49ac97-487a-446a-a0b7-92b20e2c83cb"
                   rel: lula
                   text: Check that Istio is enforcing mtls STRICT
-              remarks: 'Protect the [Selection (one or more): confidentiality; integrity] of the following information at rest: [Assignment: organization-defined information at rest]. SC-28 Guidance: The organization supports the capability to use cryptographic mechanisms to protect information at rest. SC-28 Guidance: When leveraging encryption from underlying IaaS/PaaS: While some IaaS/PaaS services provide encryption by default, many require encryption to be configured, and enabled by the customer. The CSP has the responsibility to verify encryption is properly configured. SC-28 Guidance: Note that this enhancement requires the use of cryptography in accordance with SC-13.'
+              remarks: "Protect the [Selection (one or more): confidentiality; integrity] of the following information at rest: [Assignment: organization-defined information at rest]. SC-28 Guidance: The organization supports the capability to use cryptographic mechanisms to protect information at rest. SC-28 Guidance: When leveraging encryption from underlying IaaS/PaaS: While some IaaS/PaaS services provide encryption by default, many require encryption to be configured, and enabled by the customer. The CSP has the responsibility to verify encryption is properly configured. SC-28 Guidance: Note that this enhancement requires the use of cryptography in accordance with SC-13."
               uuid: 625bfdc1-0b20-45f3-919b-91afbac77799
             - control-id: sc-39
               description: |-
                 # Control Implementation
                   Istio is configured to maintain separate execution domains for each executing process. This is achieved through Istio's sidecar proxy design, where each service in the mesh has its own dedicated sidecar proxy to handle its inbound and outbound traffic. This ensures that communication between processes is controlled and one process cannot modify the executing code of another process.
               links:
-                - href: '#67456ae8-4505-4c93-b341-d977d90cb125'
+                - href: "#67456ae8-4505-4c93-b341-d977d90cb125"
                   rel: lula
                   text: Check that Istio is healthy
-                - href: '#1761ac07-80dd-47d2-947e-09f67943b986'
+                - href: "#1761ac07-80dd-47d2-947e-09f67943b986"
                   rel: lula
                   text: All pods are istio injected with proxyv2 sidecar
               remarks: Maintain a separate execution domain for each executing system process.
               uuid: f972ef8d-1eb0-403b-8db8-e65a4f4e2aaa
           source: https://raw.githubusercontent.com/GSA/fedramp-automation/93ca0e20ff5e54fc04140613476fba80f08e3c7d/dist/content/rev5/baselines/json/FedRAMP_rev5_HIGH-baseline-resolved-profile_catalog.json
           uuid: d2afb4c4-2cd8-5305-a6cc-d1bc7b388d0c
+          props:
+            - name: framework
+              ns: https://docs.lula.dev/oscal/ns
+              value: il4
       description: |
         Istio Service Mesh
       purpose: Istio Service Mesh
