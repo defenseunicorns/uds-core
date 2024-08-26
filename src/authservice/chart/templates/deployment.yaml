@@ -40,7 +40,7 @@ spec:
               port: 10003
           readinessProbe:
             tcpSocket:
-              port: 10003
+              port: 10004
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:
