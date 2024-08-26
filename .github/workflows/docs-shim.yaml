@@ -37,7 +37,7 @@ jobs:
 
   docs-only:
     needs: check-only-docs-changes
-    if: needs.check-only-docs-changes.outputs.run_slim_dev == 'true'
+    if: needs.check-only-docs-changes.outputs.only_docs_changed == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Lint Check (Simulated)
