@@ -1,7 +1,9 @@
 name: Slim Dev
 
+# This workflow is triggered on pull requests
 on:
   pull_request:
+    # milestoned is added here as a workaround for release-please not triggering PR workflows (PRs should be added to a milestone to trigger the workflow).
     types: [milestoned, opened, reopened, synchronize]
     paths:
       - src/pepr/*
@@ -12,15 +14,18 @@ on:
       - bundles/k3d-slim-dev/*
       - .github/workflows/slim-dev*
 
+# Permissions for the GITHUB_TOKEN used by the workflow.
 permissions:
-  id-token: write
-  contents: read
-  pull-requests: read
+  id-token: write # Needed for OIDC-related operations.
+  contents: read # Allows reading the content of the repository.
+  pull-requests: read # Allows reading pull request metadata.
 
+# Default settings for all run commands in the workflow jobs.
 defaults:
   run:
-    shell: bash -e -o pipefail {0}
+    shell: bash -e -o pipefail {0} # Ensures that scripts fail on error and pipefail is set.
 
+# Abort prior jobs in the same workflow / PR
 concurrency:
   group: test-slim-dev-${{ github.ref }}
   cancel-in-progress: true
