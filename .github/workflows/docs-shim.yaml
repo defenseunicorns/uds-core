@@ -39,7 +39,7 @@ jobs:
 
   lint-check:
     needs: check-only-docs-changes
-    if: ${{ needs.check-only-docs-changes.outputs.only_docs_changed == 'true' }}
+    if: ${{ needs.check-only-docs-changes.outputs.only_docs_changed == 'false' }}
     name: Lint Check(Simulated)
     runs-on: ubuntu-latest
     steps:
@@ -48,7 +48,7 @@ jobs:
 
   check-paths:
     needs: check-only-docs-changes
-    if: ${{ needs.check-only-docs-changes.outputs.only_docs_changed == 'true' }}
+    if: ${{ needs.check-only-docs-changes.outputs.only_docs_changed == 'false' }}
     name: Check Paths(Simulated)
     runs-on: ubuntu-latest
     steps:
@@ -57,7 +57,7 @@ jobs:
 
   run-package-test:
     needs: check-only-docs-changes
-    if: ${{ needs.check-only-docs-changes.outputs.only_docs_changed == 'true' }}
+    if: ${{ needs.check-only-docs-changes.outputs.only_docs_changed == 'false' }}
     name: Package Test(Simulated)
     runs-on: ubuntu-latest
     steps:
@@ -66,7 +66,7 @@ jobs:
 
   evaluate-package-compliance:
     needs: check-only-docs-changes
-    if: ${{ needs.check-only-docs-changes.outputs.only_docs_changed == 'true' }}
+    if: ${{ needs.check-only-docs-changes.outputs.only_docs_changed == 'false' }}
     name: Compliance Test(Simulated)
     runs-on: ubuntu-latest
     steps:
@@ -76,7 +76,7 @@ jobs:
   # slim-dev-test.yaml
   test:
     needs: check-only-docs-changes
-    if: ${{ needs.check-only-docs-changes.outputs.only_docs_changed == 'true' }}
+    if: ${{ needs.check-only-docs-changes.outputs.only_docs_changed == 'false' }}
     name: Slim Dev Test(Simulated)
     runs-on: ubuntu-latest
     steps:
