@@ -1,59 +1,69 @@
-docs:
-  - "**/*.md"
-  - "docs/**"
-  - "**/*.jpg"
-  - "**/*.png"
-  - "**/*.gif"
-  - "**/*.svg"
-
 all:
   - "**"
-  - "!${{ docs }}"
+  # Exclude common documentation file types
+  - "!**/*.md"
+  - "!**/*.jpg"
+  - "!**/*.png"
+  - "!**/*.gif"
+  - "!**/*.svg"
+  - "!docs/**"
 
 authservice:
   - "src/authservice/**"
-  - "!${{ docs }}"
-
+  - "!**/*.md"
+  - "!docs/**"
+  
 grafana:
   - "src/grafana/**"
-  - "!${{ docs }}"
-
+  - "!**/*.md"
+  - "!docs/**"
+  
 istio:
   - "src/istio/**"
-  - "!${{ docs }}"
-
+  - "!**/*.md"
+  - "!docs/**"
+  
 keycloak:
   - "src/keycloak/**"
-  - "!${{ docs }}"
-
+  - "!**/*.md"
+  - "!docs/**"
+  
 kiali:
   - "src/kiali/**"
-  - "!${{ docs }}"
-
+  - "!**/*.md"
+  - "!docs/**"
+  
 loki:
   - "src/loki/**"
-  - "!${{ docs }}"
-
+  - "!**/*.md"
+  - "!docs/**"
+  
 metrics-server:
   - "src/metrics-server/**"
-  - "!${{ docs }}"
-
+  - "!**/*.md"
+  - "!docs/**"
+  
 neuvector:
   - "src/neuvector/**"
-  - "!${{ docs }}"
-
+  - "!**/*.md"
+  - "!docs/**"
+  
 prometheus-stack:
   - "src/prometheus-stack/**"
-  - "!${{ docs }}"
-
+  - "!**/*.md"
+  - "!docs/**"
+  
 promtail:
   - "src/promtail/**"
-  - "!${{ docs }}"
-
+  - "!**/*.md"
+  - "!docs/**"
+  
 tempo:
   - "src/tempo/**"
-  - "!${{ docs }}"
-
+  - "!**/*.md"
+  - "!docs/**"
+  
 velero:
   - "src/velero/**"
-  - "!${{ docs }}"
+  - "!**/*.md"
+  - "!docs/**"
