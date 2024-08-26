@@ -1,9 +1,7 @@
 name: Slim Dev
 
-# This workflow is triggered on pull requests
 on:
   pull_request:
-    # milestoned is added here as a workaround for release-please not triggering PR workflows (PRs should be added to a milestone to trigger the workflow).
     types: [milestoned, opened, reopened, synchronize]
     paths:
       - src/pepr/*
@@ -14,18 +12,15 @@ on:
       - bundles/k3d-slim-dev/*
       - .github/workflows/slim-dev*
 
-# Permissions for the GITHUB_TOKEN used by the workflow.
 permissions:
-  id-token: write # Needed for OIDC-related operations.
-  contents: read # Allows reading the content of the repository.
-  pull-requests: read # Allows reading pull request metadata.
+  id-token: write
+  contents: read
+  pull-requests: read
 
-# Default settings for all run commands in the workflow jobs.
 defaults:
   run:
-    shell: bash -e -o pipefail {0} # Ensures that scripts fail on error and pipefail is set.
+    shell: bash -e -o pipefail {0}
 
-# Abort prior jobs in the same workflow / PR
 concurrency:
   group: test-slim-dev-${{ github.ref }}
   cancel-in-progress: true
@@ -33,38 +28,23 @@ concurrency:
 jobs:
   check-only-non-docs-changes:
     runs-on: ubuntu-latest
-    outputs:
-      run_slim_dev: ${{ steps.docs_check.outputs.run_slim_dev }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-        # Checkout the repository to access changed files
-
-      - name: Get list of changed files
-        id: changes
-        run: |
-          git fetch origin ${{ github.base_ref }}
-          git diff --name-only origin/${{ github.base_ref }} > changed_files.txt
-        # List the files changed in the pull request
-
       - name: Check for non-docs changes
         id: docs_check
-        run: |
-          if grep -qvE '\.(md|jpg|png|gif|svg)$|^.*\.md$|^.*\.(jpg|png|gif|svg)$' changed_files.txt; then
-            echo "run_slim_dev=true" >> $GITHUB_ENV
-          else
-            echo "run_slim_dev=false" >> $GITHUB_ENV
-          fi
-        shell: bash
-        # Check if any non-docs files have changed and set the `run_slim_dev` output accordingly
+        uses: ./.github/actions/check-non-docs-changes
+        with:
+          base_ref: ${{ github.base_ref }}
+      - name: Set outputs
+        id: set_output
+        run: echo "run_slim_dev=${{ steps.docs_check.outputs.non_docs_changed }}" >> $GITHUB_ENV
 
   test:
-    # This job runs the slim-dev bundle create/deploy process.
-    name: Test
+    needs: check-only-non-docs-changes
+    if: env.run_slim_dev == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the code
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@v3
       - name: Environment setup
         uses: ./.github/actions/setup
       - name: Deploy Slim Dev Bundle
