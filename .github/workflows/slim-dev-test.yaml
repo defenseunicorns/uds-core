@@ -49,7 +49,7 @@ jobs:
 
   test:
     needs: check-only-non-docs-changes
-    if: needs.check-only-non-docs-changes.outputs.run_slim_dev == 'true'
+    if: needs.check-only-non-docs-changes.outputs.run_slim_dev == 'false'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the code
