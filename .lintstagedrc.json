@@ -1,0 +1,7 @@
+{
+    "*": [
+        "npm ci",
+        "npx pepr format --validate-only",
+        "yamllint -c .yamllint --no-warnings"
+    ]
+}
