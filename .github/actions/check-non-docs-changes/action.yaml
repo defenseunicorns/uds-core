@@ -1,0 +1,31 @@
+
+name: Check Non-Docs Changes
+description: A custom action to check if non-documentation files were changed in a pull request.
+inputs:
+  base_ref:
+    description: 'The base branch to compare against.'
+    required: true
+outputs:
+  non_docs_changed:
+    value: ${{ steps.check_docs.outputs.non_docs_changed }}
+    description: 'Set to true if non-docs files are changed.'
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Get list of changed files
+      shell: bash
+      run: |
+        git fetch origin ${{ inputs.base_ref }}
+        git diff --name-only origin/${{ inputs.base_ref }} > changed_files.txt
+    - name: Check for non-docs changes
+      id: check_docs
+      shell: bash
+      run: |
+        if grep -qvE '\.(md|jpg|png|gif|svg)$|^docs/|^.vscode/|^.gitignore$|^renovate.json$|^.release-please-config.json$|^release-please-config.json$|^CODEOWNERS$|^LICENSE$' changed_files.txt; then
+          echo "non_docs_changed=true" >> $GITHUB_OUTPUT
+        else
+          echo "non_docs_changed=false" >> $GITHUB_OUTPUT
+        fi
