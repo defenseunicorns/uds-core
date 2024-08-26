@@ -48,8 +48,8 @@ jobs:
         run: echo "run_slim_dev=${{ steps.docs_check.outputs.non_docs_changed }}" >> $GITHUB_ENV
 
   test:
-    needs: check-only-non-docs-changes
-    if: env.run_slim_dev == 'true'
+    # needs: check-only-non-docs-changes
+    # if: env.run_slim_dev == 'true'
     name: Test
     runs-on: ubuntu-latest
     steps:
