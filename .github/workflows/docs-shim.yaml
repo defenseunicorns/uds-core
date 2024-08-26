@@ -1,6 +1,5 @@
 name: CI Docs
 
-# Trigger this workflow on pull requests that affect only documentation or specific config files.
 on:
   pull_request:
     types: [milestoned, opened, reopened, synchronize]
@@ -19,41 +18,80 @@ on:
       - CODEOWNERS
       - LICENSE
 
-# shims to pass ci requirements for doc changes
 jobs:
-  lint-check:
-    name: Lint Check(Simulated)
+  check-only-docs-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      only_docs_changed: ${{ steps.verify.outputs.only_docs_changed }}
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Get list of changed files
+        id: changed_files
+        run: |
+          git diff --name-only ${{ github.event.before }} ${{ github.sha }} > changed_files.txt
+          cat changed_files.txt
+
+      - name: Verify that only documentation files were changed
+        id: verify
+        run: |
+          # Files allowed to trigger this workflow
+          allowed_paths=(
+            "**.md"
+            "**.jpg"
+            "**.png"
+            "**.gif"
+            "**.svg"
+            "docs/"
+            ".vscode/"
+            ".gitignore"
+            "renovate.json"
+            ".release-please-config.json"
+            "release-please-config.json"
+            "CODEOWNERS"
+            "LICENSE"
+          )
+
+          # Assume only docs changed initially
+          only_docs_changed=true
+
+          # Check if any non-allowed files were changed
+          while IFS= read -r file; do
+            match_found=false
+            for path in "${allowed_paths[@]}"; do
+              if [[ $file == $path ]] || [[ $file == $path* ]]; then
+                match_found=true
+                break
+              fi
+            done
+
+            if [ "$match_found" = false ]; then
+              only_docs_changed=false
+              break
+            fi
+          done < changed_files.txt
+
+          echo "only_docs_changed=$only_docs_changed"
+          echo "::set-output name=only_docs_changed::$only_docs_changed"
+
+  docs:
+    needs: check-only-docs-changes
+    if: needs.check-only-docs-changes.outputs.only_docs_changed == 'true'
     runs-on: ubuntu-latest
     steps:
-      - name: Lint Check
+      # Simulated or actual jobs to run when only docs are changed
+      - name: Lint Check(Simulated)
         run: echo "Simulating lint-check job - Success!"
 
-  check-paths:
-    name: Check Paths(Simulated)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check Paths
+      - name: Check Paths(Simulated)
         run: echo "Simulating check-paths job - Success!"
 
-  run-package-test:
-    name: Package Test(Simulated)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Run Package Test
+      - name: Package Test(Simulated)
         run: echo "Simulating run-package-test job - Success!"
 
-  evaluate-package-compliance:
-    name: Compliance Test(Simulated)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Evaluate Package Compliance
+      - name: Compliance Test(Simulated)
         run: echo "Simulating evaluate-package-compliance job - Success!"
 
-  # slim-dev-test.yaml
-  test:
-    name: Slim Dev Test(Simulated)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Shim for Slim Dev Test
-        run: |
-          echo "Documentation-only change detected; marking test successful."
+      - name: Slim Dev Test(Simulated)
+        run: echo "Documentation-only change detected; marking test successful."
