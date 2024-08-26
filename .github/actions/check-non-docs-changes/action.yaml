@@ -6,6 +6,7 @@ inputs:
     required: true
 outputs:
   non_docs_changed:
+    value: ${{ steps.check_docs.outputs.non_docs_changed }}
     description: 'Set to true if non-docs files are changed.'
 runs:
   using: "composite"
