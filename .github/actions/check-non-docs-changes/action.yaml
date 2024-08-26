@@ -14,15 +14,16 @@ runs:
       uses: actions/checkout@v3
 
     - name: Get list of changed files
+      shell: bash
       run: |
         git fetch origin ${{ inputs.base_ref }}
         git diff --name-only origin/${{ inputs.base_ref }} > changed_files.txt
 
     - name: Check for non-docs changes
+      shell: bash
       run: |
         if grep -qvE '\.(md|jpg|png|gif|svg)$|^docs/|^.vscode/|^.gitignore$|^renovate.json$|^.release-please-config.json$|^release-please-config.json$|^CODEOWNERS$|^LICENSE$' changed_files.txt; then
           echo "non_docs_changed=true" >> $GITHUB_OUTPUT
         else
           echo "non_docs_changed=false" >> $GITHUB_OUTPUT
         fi
-      shell: bash
