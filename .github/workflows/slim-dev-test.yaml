@@ -43,6 +43,10 @@ jobs:
         with:
           base_ref: ${{ github.base_ref }}
 
+      # Debug Step to Verify the Output
+      - name: Debug non_docs_changed Output
+        run: echo "non_docs_changed=${{ steps.docs_check.outputs.non_docs_changed }}"
+
       - name: Set outputs
         id: set_output
         run: echo "run_slim_dev=${{ steps.docs_check.outputs.non_docs_changed }}" >> $GITHUB_OUTPUT
@@ -66,3 +70,4 @@ jobs:
         uses: ./.github/actions/save-logs
         with:
           suffix: -slim-dev
+
