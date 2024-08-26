@@ -21,6 +21,8 @@ on:
 jobs:
   check-only-docs-changes:
     runs-on: ubuntu-latest
+    outputs:
+      only_docs_changed: ${{ step.set_output.outputs.only_docs_changed }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
