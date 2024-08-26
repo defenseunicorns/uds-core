@@ -1,57 +1,38 @@
 all:
   - "**"
-  # Exclude common documentation file types
-  - "!**/*.md"
-  - "!**/*.jpg"
-  - "!**/*.png"
-  - "!**/*.gif"
-  - "!**/*.svg"
-  - "!docs/**"
 
 authservice:
   - "src/authservice/**"
-  - "!**/*.md"
 
 grafana:
-  - "src/grafana/**"
-  - "!**/*.md"
+  - "src/grafana/**/*.yaml"
 
 istio:
   - "src/istio/**"
-  - "!**/*.md"
 
 keycloak:
   - "src/keycloak/**"
-  - "!**/*.md"
 
 kiali:
   - "src/kiali/**"
-  - "!**/*.md"
 
 loki:
   - "src/loki/**"
-  - "!**/*.md"
 
 metrics-server:
   - "src/metrics-server/**"
-  - "!**/*.md"
 
 neuvector:
   - "src/neuvector/**"
-  - "!**/*.md"
 
 prometheus-stack:
   - "src/prometheus-stack/**"
-  - "!**/*.md"
 
 promtail:
   - "src/promtail/**"
-  - "!**/*.md"
 
 tempo:
   - "src/tempo/**"
-  - "!**/*.md"
 
 velero:
   - "src/velero/**"
-  - "!**/*.md"
