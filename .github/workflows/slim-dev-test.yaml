@@ -34,18 +34,22 @@ jobs:
   check-only-non-docs-changes:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
       - name: Check for non-docs changes
         id: docs_check
         uses: ./.github/actions/check-non-docs-changes
         with:
           base_ref: ${{ github.base_ref }}
+
       - name: Set outputs
         id: set_output
         run: echo "run_slim_dev=${{ steps.docs_check.outputs.non_docs_changed }}" >> $GITHUB_ENV
 
   test:
-    # needs: check-only-non-docs-changes
-    # if: env.run_slim_dev == 'true'
+    needs: check-only-non-docs-changes
+    if: env.run_slim_dev == 'true'
     name: Test
     runs-on: ubuntu-latest
     steps:
