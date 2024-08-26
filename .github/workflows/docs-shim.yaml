@@ -35,11 +35,11 @@ jobs:
 
       - name: Set outputs
         id: set_output
-        run: echo "only_docs_changed=${{ steps.docs_check.outputs.non_docs_changed == 'false' }}" >> $GITHUB_ENV
+        run: echo "only_docs_changed=${{ steps.docs_check.outputs.non_docs_changed }}" >> $GITHUB_ENV
 
   docs-only:
     needs: check-only-docs-changes
-    if: ${{ needs.check-only-docs-changes.outputs.only_docs_changed == 'true' }}
+    if: ${{ needs.check-only-docs-changes.outputs.only_docs_changed == 'false' }}
     runs-on: ubuntu-latest
     steps:
       - name: Lint Check (Simulated)
