@@ -42,4 +42,3 @@ velero:
   - "!**/*.png"
   - "!**/*.gif"
   - "!**/*.svg"
-  predicate-quantifier: every
