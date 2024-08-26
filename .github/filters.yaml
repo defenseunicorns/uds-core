@@ -1,11 +1,5 @@
 all:
   - "**"
-  - "!**/*.md"
-  - "!docs/**"
-  - "!**/*.jpg"
-  - "!**/*.png"
-  - "!**/*.gif"
-  - "!**/*.svg"
 
 authservice:
   - "src/authservice/**"
