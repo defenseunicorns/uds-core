@@ -1,5 +1,5 @@
 apiVersion: apps/v1
-kind: Deployment # some new comment
+kind: Deployment
 metadata:
   name: {{ include "authservice.fullname" . }}
   namespace: {{ .Release.Namespace }}
@@ -40,7 +40,7 @@ spec:
               port: 10003
           readinessProbe:
             tcpSocket:
-              port: 10005
+              port: 10003
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:
