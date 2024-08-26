@@ -70,4 +70,3 @@ jobs:
         uses: ./.github/actions/save-logs
         with:
           suffix: -slim-dev
-
