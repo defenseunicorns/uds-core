@@ -1,9 +1,10 @@
 name: CI Docs
 
-# Trigger this workflow on pull requests that affect documentation or certain config files.
+# Trigger this workflow on pull requests that affect only documentation or specific config files.
 on:
   pull_request:
-    paths-ignore:
+    types: [milestoned, opened, reopened, synchronize]
+    paths:
       - "**.md"
       - "**.jpg"
       - "**.png"
