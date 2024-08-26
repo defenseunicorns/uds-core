@@ -45,7 +45,7 @@ jobs:
 
       - name: Set outputs
         id: set_output
-        run: echo "run_slim_dev=${{ steps.docs_check.outputs.non_docs_changed }}" >> $GITHUB_ENV
+        run: echo "run_slim_dev=${{ steps.docs_check.outputs.non_docs_changed }}" >> $GITHUB_OUTPUT
 
   test:
     needs: check-only-non-docs-changes
