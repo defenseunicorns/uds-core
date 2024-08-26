@@ -13,11 +13,6 @@ on:
       - packages/slim-dev/*
       - bundles/k3d-slim-dev/*
       - .github/workflows/slim-dev*
-      - "!**.md"
-      - "!**.jpg"
-      - "!**.png"
-      - "!**.gif"
-      - "!**.svg"
 
 # Permissions for the GITHUB_TOKEN used by the workflow.
 permissions:
@@ -36,8 +31,35 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # This job runs the slim-dev bundle create/deploy process.
+  check-only-non-docs-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      run_slim_dev: ${{ steps.docs_check.outputs.run_slim_dev }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        # Checkout the repository to access changed files
+
+      - name: Get list of changed files
+        id: changes
+        run: |
+          git fetch origin ${{ github.base_ref }}
+          git diff --name-only origin/${{ github.base_ref }} > changed_files.txt
+        # List the files changed in the pull request
+
+      - name: Check for non-docs changes
+        id: docs_check
+        run: |
+          if grep -qvE '\.(md|jpg|png|gif|svg)$|^.*\.md$|^.*\.(jpg|png|gif|svg)$' changed_files.txt; then
+            echo "run_slim_dev=true" >> $GITHUB_ENV
+          else
+            echo "run_slim_dev=false" >> $GITHUB_ENV
+          fi
+        shell: bash
+        # Check if any non-docs files have changed and set the `run_slim_dev` output accordingly
+
   test:
+    # This job runs the slim-dev bundle create/deploy process.
     name: Test
     runs-on: ubuntu-latest
     steps:
