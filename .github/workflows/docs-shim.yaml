@@ -36,8 +36,8 @@ jobs:
         run: echo "only_docs_changed=${{ steps.docs_check.outputs.non_docs_changed == 'false' }}" >> $GITHUB_ENV
 
   docs-only:
-    needs: check-only-non-docs-changes
-    if: needs.check-only-non-docs-changes.outputs.run_slim_dev == 'true'
+    needs: check-only-docs-changes
+    if: needs.check-only-docs-changes.outputs.run_slim_dev == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Lint Check (Simulated)
