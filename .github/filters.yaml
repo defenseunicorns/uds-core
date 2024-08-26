@@ -12,12 +12,6 @@ authservice:
 
 grafana:
   - "src/grafana/**/*.yaml"
-  - "!**/*.md"
-  - "!docs/**"
-  - "!**/*.jpg"
-  - "!**/*.png"
-  - "!**/*.gif"
-  - "!**/*.svg"
 
 istio:
   - "src/istio/**"
