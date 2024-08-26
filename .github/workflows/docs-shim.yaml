@@ -4,6 +4,7 @@ on:
   pull_request:
     types: [milestoned, opened, reopened, synchronize]
     paths:
+      # Trigger the workflow on pull requests affecting documentation and related files
       - "**.md"
       - "**.jpg"
       - "**.png"
@@ -22,31 +23,39 @@ jobs:
   check-only-docs-changes:
     runs-on: ubuntu-latest
     outputs:
+      # Output variable to determine if only docs-related files were changed
       only_docs_changed: ${{ steps.docs_check.outputs.only_docs_changed }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+        # Checkout the repository code to check for file changes
 
       - name: Get list of changed files
         id: changes
         run: |
+          # Fetch the base branch to compare changes
           git fetch origin ${{ github.base_ref }}
+          # Get the list of files changed in the pull request
           git diff --name-only origin/${{ github.base_ref }} > changed_files.txt
 
       - name: Check for non-docs changes
         id: docs_check
         run: |
+          # Check if any changed files are outside the allowed documentation-related paths
           if grep -vqE '\.(md|jpg|png|gif|svg)$|^docs/|^.vscode/|^.gitignore$|^renovate.json$|^.release-please-config.json$|^release-please-config.json$|^CODEOWNERS$|^LICENSE$' changed_files.txt; then
+            # If non-docs files are changed, set `only_docs_changed` to false
             echo "non_docs_changed=true" >> $GITHUB_ENV
             echo "only_docs_changed=false" >> $GITHUB_ENV
           else
+            # If only docs files are changed, set `only_docs_changed` to true
             echo "only_docs_changed=true" >> $GITHUB_ENV
           fi
         shell: bash
         env:
+          # Initialize a variable to track non-docs changes (default is false)
           non_docs_changed: false
 
-  docs:
+  docs-only:
     needs: check-only-docs-changes
     if: needs.check-only-docs-changes.outputs.only_docs_changed == 'true'
     runs-on: ubuntu-latest
