@@ -33,6 +33,8 @@ concurrency:
 jobs:
   check-only-non-docs-changes:
     runs-on: ubuntu-latest
+    outputs:
+      run_slim_dev: ${{ steps.set_output.outputs.run_slim_dev }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -45,11 +47,11 @@ jobs:
 
       - name: Set outputs
         id: set_output
-        run: echo "run_slim_dev=${{ steps.docs_check.outputs.non_docs_changed }}" >> $GITHUB_ENV
+        run: echo "run_slim_dev=${{ steps.docs_check.outputs.non_docs_changed }}" >> $GITHUB_OUTPUT
 
   test:
     needs: check-only-non-docs-changes
-    if: needs.check-only-non-docs-changes.outputs.run_slim_dev == 'true'
+    if: ${{ needs.check-only-non-docs-changes.outputs.run_slim_dev == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the code

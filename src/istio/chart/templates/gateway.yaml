@@ -16,7 +16,7 @@ spec:
         {{- end }}
       port:
         name: "http-{{ $name }}"
-        number: 80
+        number: 8080
         protocol: HTTP
       tls:
         httpsRedirect: true
