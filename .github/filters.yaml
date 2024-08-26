@@ -37,3 +37,9 @@ tempo:
 velero:
   - "src/velero/**"
   - "!**/*.md"
+  - "!docs/**"
+  - "!**/*.jpg"
+  - "!**/*.png"
+  - "!**/*.gif"
+  - "!**/*.svg"
+  predicate-quantifier: every
