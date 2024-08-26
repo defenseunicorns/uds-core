@@ -4,13 +4,13 @@ on:
   pull_request:
     types: [milestoned, opened, reopened, synchronize]
     paths:
-      - src/pepr/*
-      - src/keycloak/*
-      - src/istio/*
-      - src/prometheus-stack/*
-      - packages/slim-dev/*
-      - bundles/k3d-slim-dev/*
-      - .github/workflows/slim-dev*
+      - src/pepr/**
+      - src/keycloak/**
+      - src/istio/**
+      - src/prometheus-stack/**
+      - packages/slim-dev/**
+      - bundles/k3d-slim-dev/**
+      - .github/workflows/slim-dev**
 
 permissions:
   id-token: write
