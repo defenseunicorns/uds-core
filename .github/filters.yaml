@@ -1,38 +1,116 @@
 all:
   - "**"
+  - "!**/*.md"
+  - "!docs/**"
+  - "!**/*.jpg"
+  - "!**/*.png"
+  - "!**/*.gif"
+  - "!**/*.svg"
 
 authservice:
   - "src/authservice/**"
+  - "!**/*.md"
+  - "!docs/**"
+  - "!**/*.jpg"
+  - "!**/*.png"
+  - "!**/*.gif"
+  - "!**/*.svg"
 
 grafana:
   - "src/grafana/**/*.yaml"
+  - "!**/*.md"
+  - "!docs/**"
+  - "!**/*.jpg"
+  - "!**/*.png"
+  - "!**/*.gif"
+  - "!**/*.svg"
 
 istio:
   - "src/istio/**"
+  - "!**/*.md"
+  - "!docs/**"
+  - "!**/*.jpg"
+  - "!**/*.png"
+  - "!**/*.gif"
+  - "!**/*.svg"
 
 keycloak:
   - "src/keycloak/**"
+  - "!**/*.md"
+  - "!docs/**"
+  - "!**/*.jpg"
+  - "!**/*.png"
+  - "!**/*.gif"
+  - "!**/*.svg"
 
 kiali:
   - "src/kiali/**"
+  - "!**/*.md"
+  - "!docs/**"
+  - "!**/*.jpg"
+  - "!**/*.png"
+  - "!**/*.gif"
+  - "!**/*.svg"
 
 loki:
   - "src/loki/**"
+  - "!**/*.md"
+  - "!docs/**"
+  - "!**/*.jpg"
+  - "!**/*.png"
+  - "!**/*.gif"
+  - "!**/*.svg"
 
 metrics-server:
   - "src/metrics-server/**"
+  - "!**/*.md"
+  - "!docs/**"
+  - "!**/*.jpg"
+  - "!**/*.png"
+  - "!**/*.gif"
+  - "!**/*.svg"
 
 neuvector:
   - "src/neuvector/**"
+  - "!**/*.md"
+  - "!docs/**"
+  - "!**/*.jpg"
+  - "!**/*.png"
+  - "!**/*.gif"
+  - "!**/*.svg"
 
 prometheus-stack:
   - "src/prometheus-stack/**"
+  - "!**/*.md"
+  - "!docs/**"
+  - "!**/*.jpg"
+  - "!**/*.png"
+  - "!**/*.gif"
+  - "!**/*.svg"
 
 promtail:
   - "src/promtail/**"
+  - "!**/*.md"
+  - "!docs/**"
+  - "!**/*.jpg"
+  - "!**/*.png"
+  - "!**/*.gif"
+  - "!**/*.svg"
 
 tempo:
   - "src/tempo/**"
+  - "!**/*.md"
+  - "!docs/**"
+  - "!**/*.jpg"
+  - "!**/*.png"
+  - "!**/*.gif"
+  - "!**/*.svg"
 
 velero:
   - "src/velero/**"
+  - "!**/*.md"
+  - "!docs/**"
+  - "!**/*.jpg"
+  - "!**/*.png"
+  - "!**/*.gif"
+  - "!**/*.svg"
