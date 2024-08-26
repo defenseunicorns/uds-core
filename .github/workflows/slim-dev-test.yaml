@@ -34,7 +34,7 @@ jobs:
   check-only-non-docs-changes:
     runs-on: ubuntu-latest
     outputs:
-      runSlimDev: ${{ step.set_output.outputs.runSlimDev }}
+      run_slim_dev: ${{ step.set_output.outputs.run_slim_dev }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -47,11 +47,11 @@ jobs:
 
       - name: Set outputs
         id: set_output
-        run: echo "runSlimDev=${{ steps.docs_check.outputs.non_docs_changed }}" >> $GITHUB_OUTPUT
+        run: echo "run_slim_dev=${{ steps.docs_check.outputs.non_docs_changed }}" >> $GITHUB_OUTPUT
 
   test:
     needs: check-only-non-docs-changes
-    if: needs.check-only-non-docs-changes.outputs.runSlimDev == 'true'
+    if: ${{ needs.check-only-non-docs-changes.outputs.run_slim_dev }} == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the code

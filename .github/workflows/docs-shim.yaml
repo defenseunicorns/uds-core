@@ -22,7 +22,7 @@ jobs:
   check-only-docs-changes:
     runs-on: ubuntu-latest
     outputs:
-      onlyDocsChanged: ${{ step.set_output.outputs.onlyDocsChanged }}
+      only_docs_changed: ${{ step.set_output.outputs.only_docs_changed }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -35,11 +35,11 @@ jobs:
 
       - name: Set outputs
         id: set_output
-        run: echo "onlyDocsChanged=${{ steps.docs_check.outputs.non_docs_changed == 'false' }}" >> $GITHUB_ENV
+        run: echo "only_docs_changed=${{ steps.docs_check.outputs.non_docs_changed == 'false' }}" >> $GITHUB_ENV
 
   docs-only:
     needs: check-only-docs-changes
-    if: needs.check-only-docs-changes.outputs.onlyDocsChanged == 'true'
+    if: ${{ needs.check-only-docs-changes.outputs.only_docs_changed }} == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Lint Check (Simulated)
