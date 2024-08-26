@@ -6,7 +6,7 @@ weight: 4
 
 ## UDS installation prerequisites
 
-`UDS Core` could run in any [Kuberentes](https://kubernetes.io/) setup, but sometimes customizations are needed based on environemnts. This is an attempt to document and link to relevant information to aid in setting up your [Kuberentes](https://kubernetes.io/) environment to ensure a successful `UDS Core` installation.  
+`UDS Core` can run in any CNCF conformant [Kubernetes](https://www.cncf.io/training/certification/software-conformance/) setup, but sometimes customizations are needed based on environments. This is an attempt to document and link to relevant information to aid in setting up your Kubernetes environment and hosts to ensure a successful `UDS Core` installation.  
 
 ### RHEL
 ---
