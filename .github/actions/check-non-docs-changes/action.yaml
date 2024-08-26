@@ -1,4 +1,3 @@
-
 name: Check Non-Docs Changes
 description: A custom action to check if non-documentation files were changed in a pull request.
 inputs:
