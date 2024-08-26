@@ -11,59 +11,47 @@ all:
 authservice:
   - "src/authservice/**"
   - "!**/*.md"
-  - "!docs/**"
-  
+
 grafana:
   - "src/grafana/**"
   - "!**/*.md"
-  - "!docs/**"
-  
+
 istio:
   - "src/istio/**"
   - "!**/*.md"
-  - "!docs/**"
-  
+
 keycloak:
   - "src/keycloak/**"
   - "!**/*.md"
-  - "!docs/**"
-  
+
 kiali:
   - "src/kiali/**"
   - "!**/*.md"
-  - "!docs/**"
-  
+
 loki:
   - "src/loki/**"
   - "!**/*.md"
-  - "!docs/**"
-  
+
 metrics-server:
   - "src/metrics-server/**"
   - "!**/*.md"
-  - "!docs/**"
-  
+
 neuvector:
   - "src/neuvector/**"
   - "!**/*.md"
-  - "!docs/**"
-  
+
 prometheus-stack:
   - "src/prometheus-stack/**"
   - "!**/*.md"
-  - "!docs/**"
-  
+
 promtail:
   - "src/promtail/**"
   - "!**/*.md"
-  - "!docs/**"
-  
+
 tempo:
   - "src/tempo/**"
   - "!**/*.md"
-  - "!docs/**"
-  
+
 velero:
   - "src/velero/**"
   - "!**/*.md"
-  - "!docs/**"
