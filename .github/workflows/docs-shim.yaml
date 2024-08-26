@@ -30,7 +30,14 @@ jobs:
       - name: Get list of changed files
         id: changed_files
         run: |
-          git diff --name-only ${{ github.event.before }} ${{ github.sha }} > changed_files.txt
+          if [ "${{ github.event.before }}" = "0000000000000000000000000000000000000000" ]; then
+            # This is a new branch with no prior commit
+            echo "New branch detected; listing all files in the commit"
+            git diff --name-only HEAD > changed_files.txt
+          else
+            # List changed files between the current and previous commit
+            git diff --name-only ${{ github.event.before }} ${{ github.sha }} > changed_files.txt
+          fi
           cat changed_files.txt
 
       - name: Verify that only documentation files were changed
@@ -80,7 +87,6 @@ jobs:
     if: needs.check-only-docs-changes.outputs.only_docs_changed == 'true'
     runs-on: ubuntu-latest
     steps:
-      # Simulated or actual jobs to run when only docs are changed
       - name: Lint Check(Simulated)
         run: echo "Simulating lint-check job - Success!"
 
