@@ -26,10 +26,15 @@ components:
       onDeploy:
         before:
           - description: Remove Promtail Components if necessary
+            mute: true
             cmd: |
               ./zarf package remove core --components promtail --confirm || true # Ensure this doesn't error on installs
               ./zarf tools kubectl delete ns promtail || true # Ensure this doesn't error on installs
         after:
+          - description: Annotate Alloy daemonset with config secret
+            cmd: |
+              CONFIG_CHECKSUM=$(./zarf tools kubectl get configmap alloy-config -o json -n alloy | sha256sum | cut -d' ' -f1)
+              ./zarf tools kubectl patch daemonset alloy -n alloy -p "{\"spec\":{\"template\":{\"metadata\":{\"annotations\":{\"checksum/uds-config\":\"$CONFIG_CHECKSUM\"}}}}}"
           - description: Validate Alloy Package
             maxTotalSeconds: 300
             wait:
