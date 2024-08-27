@@ -1,3 +1,7 @@
+import {
+  ProtocolMapper,
+} from '../../crd/generated/package-v1alpha1';
+
 export interface Client {
   alwaysDisplayInConsole: boolean;
   attributes: Record<string, string>;
@@ -60,21 +64,3 @@ export const clientKeys = [
   "webOrigins",
   "samlIdpCertificate",
 ] as const;
-
-export interface ProtocolMapperConfig {
-  "user.attribute"?: string;
-  "claim.name"?: string;
-  "jsonType.label"?: "String" | "long" | "int" | "boolean";
-  "id.token.claim"?: "true" | "false";
-  "access.token.claim"?: "true" | "false";
-  "userinfo.token.claim"?: "true" | "false";
-  "introspection.token.claim"?: "true" | "false";
-}
-
-export interface ProtocolMapper {
-  name: string;
-  protocol: "openid-connect" | "saml";
-  protocolMapper: string;
-  consentRequired?: boolean;
-  config: ProtocolMapperConfig;
-}
