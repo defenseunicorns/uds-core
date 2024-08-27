@@ -308,6 +308,7 @@ const sso = {
         type: "array",
         items: {
           type: "object",
+          required: ["name", "protocol", "protocolMapper"],
           properties: {
             name: {
               description: "Name of the mapper",
@@ -316,16 +317,47 @@ const sso = {
             protocol: {
               description: "Protocol of the mapper",
               type: "string",
+              enum: ["openid-connect", "saml"],
             },
             protocolMapper: {
               description: "Protocol Mapper type of the mapper",
               type: "string",
             },
+            consentRequired: {
+              description: "Whether user consent is required for this mapper",
+              type: "boolean",
+              default: false,
+            },
             config: {
               description: "Configuration options for the mapper.",
               type: "object",
-              additionalProperties: {
-                type: "string",
+              properties: {
+                "user.attribute": {
+                  type: "string",
+                },
+                "claim.name": {
+                  type: "string",
+                },
+                "jsonType.label": {
+                  type: "string",
+                  enum: ["String", "long", "int", "boolean"],
+                },
+                "id.token.claim": {
+                  type: "string",
+                  enum: ["true", "false"],
+                },
+                "access.token.claim": {
+                  type: "string",
+                  enum: ["true", "false"],
+                },
+                "userinfo.token.claim": {
+                  type: "string",
+                  enum: ["true", "false"],
+                },
+                "introspection.token.claim": {
+                  type: "string",
+                  enum: ["true", "false"],
+                },
               },
             },
           },
@@ -387,11 +419,11 @@ const sso = {
         },
       },
       groups: {
-        description: "The client sso group type",
+        description: "The client SSO group type",
         type: "object",
         properties: {
           anyOf: {
-            description: "List of groups allowed to access to client",
+            description: "List of groups allowed to access the client",
             type: "array",
             items: {
               type: "string",

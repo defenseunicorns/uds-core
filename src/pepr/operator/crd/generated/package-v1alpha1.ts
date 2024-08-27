@@ -538,7 +538,7 @@ export interface Sso {
    */
   enabled?: boolean;
   /**
-   * The client sso group type
+   * The client SSO group type
    */
   groups?: Groups;
   /**
@@ -598,11 +598,11 @@ export enum ClientAuthenticatorType {
 }
 
 /**
- * The client sso group type
+ * The client SSO group type
  */
 export interface Groups {
   /**
-   * List of groups allowed to access to client
+   * List of groups allowed to access the client
    */
   anyOf?: string[];
 }
@@ -619,19 +619,48 @@ export interface ProtocolMapper {
   /**
    * Configuration options for the mapper.
    */
-  config?: { [key: string]: string };
+  config?: Config;
+  /**
+   * Whether user consent is required for this mapper
+   */
+  consentRequired?: boolean;
   /**
    * Name of the mapper
    */
-  name?: string;
+  name: string;
   /**
    * Protocol of the mapper
    */
-  protocol?: string;
+  protocol: Protocol;
   /**
    * Protocol Mapper type of the mapper
    */
-  protocolMapper?: string;
+  protocolMapper: string;
+}
+
+/**
+ * Configuration options for the mapper.
+ */
+export interface Config {
+  "access.token.claim"?: TokenClaim;
+  "claim.name"?: string;
+  "id.token.claim"?: TokenClaim;
+  "introspection.token.claim"?: TokenClaim;
+  "jsonType.label"?: JSONTypeLabel;
+  "user.attribute"?: string;
+  "userinfo.token.claim"?: TokenClaim;
+}
+
+export enum TokenClaim {
+  False = "false",
+  True = "true",
+}
+
+export enum JSONTypeLabel {
+  Boolean = "boolean",
+  Int = "int",
+  Long = "long",
+  String = "String",
 }
 
 export interface Status {
