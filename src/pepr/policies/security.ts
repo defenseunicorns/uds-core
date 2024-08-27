@@ -49,7 +49,7 @@ When(a.Pod)
     }
 
     const violations = securityContextContainers(request).filter(
-      c => c.ctx.allowPrivilegeEscalation || c.ctx.privileged,
+      c => (c.ctx.allowPrivilegeEscalation ?? true) || c.ctx.privileged,
     );
 
     if (violations.length) {
