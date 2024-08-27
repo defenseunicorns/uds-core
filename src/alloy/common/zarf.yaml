@@ -18,7 +18,7 @@ components:
         #   - ../chart/dev-values.yaml
       - name: alloy
         url: https://grafana.github.io/helm-charts
-        version: 0.6.0
+        version: 0.6.1
         namespace: alloy
         valuesFiles:
           - ../values/values.yaml

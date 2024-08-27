@@ -81,6 +81,18 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
   // Ensure the client IDs are unique
   const clientIDs = new Set<string>();
 
+  const allowedClientAttributes = new Set([
+    "oidc.ciba.grant.enabled",
+    "backchannel.logout.session.required",
+    "backchannel.logout.revoke.offline.tokens",
+    "post.logout.redirect.uris",
+    "oauth2.device.authorization.grant.enabled",
+    "pkce.code.challenge.method",
+    "client.session.idle.timeout",
+    "saml.client.signature",
+    "saml_assertion_consumer_url_post",
+  ]);
+
   for (const client of ssoClients) {
     if (clientIDs.has(client.clientId)) {
       return req.Deny(`The client ID "${client.clientId}" is not unique`);
@@ -111,6 +123,22 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
     ) {
       return req.Deny(
         `The client ID "${client.clientId}" must _only_ configure the OAuth Device Flow as a public client`,
+      );
+    }
+    // Check if client.attributes contain any disallowed attributes
+    if (client.attributes) {
+      for (const attr of Object.keys(client.attributes)) {
+        if (!allowedClientAttributes.has(attr)) {
+          return req.Deny(
+            `The client ID "${client.clientId}" contains an unsupported attribute "${attr}"`,
+          );
+        }
+      }
+    }
+    // If this is an authservice client ensure it does not contain a `:`, see https://github.com/istio-ecosystem/authservice/issues/263
+    if (client.enableAuthserviceSelector && client.clientId.includes(":")) {
+      return req.Deny(
+        `The client ID "${client.clientId}" is invalid as an Authservice client - Authservice does not support client IDs with the ":" character`,
       );
     }
   }

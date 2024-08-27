@@ -17,7 +17,7 @@ components:
         valuesFiles:
           - values/upstream-values.yaml
     images:
-      - docker.io/grafana/alloy:v1.3.0
+      - docker.io/grafana/alloy:v1.3.1
       - ghcr.io/jimmidyson/configmap-reload:v0.13.1
 
   - name: alloy
@@ -32,7 +32,7 @@ components:
         valuesFiles:
           - values/registry1-values.yaml
     images:
-      - registry1.dso.mil/ironbank/opensource/grafana/alloy:v1.3.0
+      - registry1.dso.mil/ironbank/opensource/grafana/alloy:v1.3.1
       - registry1.dso.mil/ironbank/opensource/jimmidyson/configmap-reload:v0.13.1
 
   - name: alloy
@@ -47,5 +47,5 @@ components:
         valuesFiles:
           - values/unicorn-values.yaml
     images:
-      - cgr.dev/du-uds-defenseunicorns/grafana-alloy-fips:1.3.0
+      - cgr.dev/du-uds-defenseunicorns/grafana-alloy-fips:1.3.1
       - cgr.dev/du-uds-defenseunicorns/configmap-reload-fips:0.13.1

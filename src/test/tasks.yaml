@@ -15,12 +15,28 @@ tasks:
             name: httpbin
             namespace: test-admin-app
 
+      - description: Verify admin package CR is ready
+        wait:
+          cluster:
+            kind: Package
+            name: httpbin
+            namespace: test-admin-app
+            condition: "'{.status.phase}'=Ready"
+
       - description: Wait for the tenant app to be ready
         wait:
           cluster:
             kind: Deployment
             name: http-echo-multi-port
             namespace: test-tenant-app
+
+      - description: Verify tenant package CR is ready
+        wait:
+          cluster:
+            kind: Package
+            name: test-tenant-app
+            namespace: test-tenant-app
+            condition: "'{.status.phase}'=Ready"
 
       - description: Verify the admin app is accessible
         wait:
@@ -56,6 +72,14 @@ tasks:
             protocol: https
             address: demo-8081.uds.dev
             code: 200
+
+      - description: Verify authservice app package CR is ready
+        wait:
+          cluster:
+            kind: Package
+            name: httpbin-other
+            namespace: authservice-test-app
+            condition: "'{.status.phase}'=Ready"
 
       - description: Verify the authservice tenant app is accessible
         wait:
