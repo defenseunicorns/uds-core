@@ -1,6 +1,4 @@
-import {
-  ProtocolMapper,
-} from '../../crd/generated/package-v1alpha1';
+import { ProtocolMapper } from "../../crd/generated/package-v1alpha1";
 
 export interface Client {
   alwaysDisplayInConsole: boolean;
