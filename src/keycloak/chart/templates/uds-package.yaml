@@ -95,7 +95,7 @@ spec:
             - name: redirect-metrics
               uri:
                 prefix: /metrics
-          redirect:
+          rewrite:
             uri: "/realms/{{ .Values.realm }}/account"
           headers:
             request:
