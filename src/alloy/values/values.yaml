@@ -27,8 +27,9 @@ alloy:
     create: false
     name: alloy-config
     key: config
-  # Disable telemetry that doesn't function in the airgap
+  # Disable telemetry
   enableReporting: false
+  # Add env from our config chart
   envFrom:
     - secretRef:
         name: uds-config-env

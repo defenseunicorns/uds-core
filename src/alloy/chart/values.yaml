@@ -53,3 +53,9 @@ extraConfig: ""
 #       type = "body"
 #     }
 #   }
+
+# -- Add secret env vars to add to Alloy
+secretEnv: {}
+# Example:
+# secretEnv:
+#   FOO: "BAR"
