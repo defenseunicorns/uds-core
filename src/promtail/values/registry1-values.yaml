@@ -1,7 +1,7 @@
 image:
   registry: registry1.dso.mil
   repository: ironbank/opensource/grafana/promtail
-  tag: v3.1.0
+  tag: v3.1.1
 sidecar:
   configReloader:
     image:

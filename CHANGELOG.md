@@ -2,6 +2,80 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.26.1](https://github.com/defenseunicorns/uds-core/compare/v0.26.0...v0.26.1) (2024-08-23)
+
+
+### Bug Fixes
+
+* add additional supported saml attributes ([#690](https://github.com/defenseunicorns/uds-core/issues/690)) ([a7435bf](https://github.com/defenseunicorns/uds-core/commit/a7435bf9073263cd4a7155d7d385735ffb0e5cae))
+
+
+### Miscellaneous
+
+* **deps:** update dependency defenseunicorns/uds-common to v0.12.0 ([#692](https://github.com/defenseunicorns/uds-core/issues/692)) ([a5423a3](https://github.com/defenseunicorns/uds-core/commit/a5423a3fd537925f7a1c87ad04d9da352afe765a))
+* **deps:** update test-infra to v0.0.6 ([#686](https://github.com/defenseunicorns/uds-core/issues/686)) ([8341e6e](https://github.com/defenseunicorns/uds-core/commit/8341e6ed5ec00e52278995570b877d6a497c7f1b))
+* **deps:** update uds-common to v0.12.0 ([#693](https://github.com/defenseunicorns/uds-core/issues/693)) ([957f388](https://github.com/defenseunicorns/uds-core/commit/957f38898781196ffe257f2b64c0f845dddb738a))
+* **deps:** update zarf to v0.38.3 ([#694](https://github.com/defenseunicorns/uds-core/issues/694)) ([c53126f](https://github.com/defenseunicorns/uds-core/commit/c53126f2401604ab26d58a1cc567cb37f7addadf))
+
+## [0.26.0](https://github.com/defenseunicorns/uds-core/compare/v0.25.2...v0.26.0) (2024-08-21)
+
+
+### ⚠ BREAKING CHANGES
+
+* client attribute allow list ([#676](https://github.com/defenseunicorns/uds-core/issues/676))
+
+### Features
+
+* **azure:** azure blob storage support for velero ([#644](https://github.com/defenseunicorns/uds-core/issues/644)) ([eff9a82](https://github.com/defenseunicorns/uds-core/commit/eff9a82f3cc70306e045bdebd0166c1e6e4d750d))
+* support authservice with redis, switch to pepr helm chart ([#658](https://github.com/defenseunicorns/uds-core/issues/658)) ([e2fe58a](https://github.com/defenseunicorns/uds-core/commit/e2fe58a7d32e65a7001571b0eacf285a320a46b7))
+
+
+### Bug Fixes
+
+* client attribute allow list ([#676](https://github.com/defenseunicorns/uds-core/issues/676)) ([100321e](https://github.com/defenseunicorns/uds-core/commit/100321ed3f0cdf78ded5e61b15123999cdcadd71))
+* handle client id names with special characters ([#659](https://github.com/defenseunicorns/uds-core/issues/659)) ([a84769e](https://github.com/defenseunicorns/uds-core/commit/a84769e8f2f9e51f1e47f528d31902d8c2cee2d7))
+* pull lula main for threshold update ([#638](https://github.com/defenseunicorns/uds-core/issues/638)) ([5a34ce8](https://github.com/defenseunicorns/uds-core/commit/5a34ce823d68c6ed194b2b4bb965bc154cb801e5))
+* release-please config bump minor pre-major ([#680](https://github.com/defenseunicorns/uds-core/issues/680)) ([3f824c1](https://github.com/defenseunicorns/uds-core/commit/3f824c1b049df5a808c41b334bbd316e6b890a72))
+
+
+### Miscellaneous
+
+* add watch config to exemption watch ([#682](https://github.com/defenseunicorns/uds-core/issues/682)) ([7714ff8](https://github.com/defenseunicorns/uds-core/commit/7714ff88ef7f96c9805625f6708553a1e5d70a9a))
+* **deps:** update grafana helm chart to v8.4.4 ([#664](https://github.com/defenseunicorns/uds-core/issues/664)) ([77ea6f5](https://github.com/defenseunicorns/uds-core/commit/77ea6f5f7d736abcc2aba78006d16ee3dda430ef))
+* **deps:** update pepr to 0.34.1 ([#654](https://github.com/defenseunicorns/uds-core/issues/654)) ([6d4655d](https://github.com/defenseunicorns/uds-core/commit/6d4655dd44660825ccac965ac3a6cfdf956010d3))
+* **deps:** update promtail to v3.1.1 ([#657](https://github.com/defenseunicorns/uds-core/issues/657)) ([c009e5f](https://github.com/defenseunicorns/uds-core/commit/c009e5f819ca373d59375e32ad88c3f2fea61920))
+* **deps:** update test-infra ([#412](https://github.com/defenseunicorns/uds-core/issues/412)) ([a4c8fe9](https://github.com/defenseunicorns/uds-core/commit/a4c8fe9237914ad26343437fd1adc776f5473d02))
+* **deps:** update test-infra (kms) to v0.0.5 ([#667](https://github.com/defenseunicorns/uds-core/issues/667)) ([bd68637](https://github.com/defenseunicorns/uds-core/commit/bd68637b59981021c917922a613b5375226687f9))
+* **deps:** update test-infra KMS to v0.0.4 ([#663](https://github.com/defenseunicorns/uds-core/issues/663)) ([3c30b9f](https://github.com/defenseunicorns/uds-core/commit/3c30b9ffca129bc8db1477a32aeb0df66958d508))
+* **deps:** update uds to v0.14.1 ([#677](https://github.com/defenseunicorns/uds-core/issues/677)) ([12ec8a1](https://github.com/defenseunicorns/uds-core/commit/12ec8a1fea5304900495f230ae3907a5141473b4))
+* **deps:** update velero kubectl image to v1.31.0 ([#669](https://github.com/defenseunicorns/uds-core/issues/669)) ([d6b2f12](https://github.com/defenseunicorns/uds-core/commit/d6b2f120df75e662b35e0be6ce050b7b4bc4c90a))
+* **deps:** update velero to v7.1.5 ([#671](https://github.com/defenseunicorns/uds-core/issues/671)) ([10ab714](https://github.com/defenseunicorns/uds-core/commit/10ab714502f43769e65b1b8da58ddcf6ec4a41c8))
+* **deps:** update zarf to v0.38.1 ([#616](https://github.com/defenseunicorns/uds-core/issues/616)) ([e0cb85d](https://github.com/defenseunicorns/uds-core/commit/e0cb85d8a28ecbf91080e5cf8d2c3797595a80df))
+* **deps:** update zarf to v0.38.2 ([#668](https://github.com/defenseunicorns/uds-core/issues/668)) ([3328925](https://github.com/defenseunicorns/uds-core/commit/3328925a35ccbe91b23c847c8d78a18a34383aff))
+* generate a schema for keycloak helm chart ([#627](https://github.com/defenseunicorns/uds-core/issues/627)) ([cf3a9e7](https://github.com/defenseunicorns/uds-core/commit/cf3a9e7eca66779a6c13604dacfe6b979d9806c9))
+* mute pepr on deploy action for migrating to helm chart ([#683](https://github.com/defenseunicorns/uds-core/issues/683)) ([9d05ddd](https://github.com/defenseunicorns/uds-core/commit/9d05ddd5a3e009be7ef202701916d58c9e1ce0d0))
+* **neuvector:** update source for unicorn images ([#675](https://github.com/defenseunicorns/uds-core/issues/675)) ([568efa2](https://github.com/defenseunicorns/uds-core/commit/568efa2df865901e0a36429c053f02c0b4fd7419))
+
+## [0.25.2](https://github.com/defenseunicorns/uds-core/compare/v0.25.1...v0.25.2) (2024-08-09)
+
+
+### Bug Fixes
+
+* add backoff to operator retry mechanism ([#650](https://github.com/defenseunicorns/uds-core/issues/650)) ([52c97fd](https://github.com/defenseunicorns/uds-core/commit/52c97fdc1fd9f6e37dbe2fa4082db43402ba6cc8))
+* network allows for core netpols ([#652](https://github.com/defenseunicorns/uds-core/issues/652)) ([e9b69e8](https://github.com/defenseunicorns/uds-core/commit/e9b69e809a486c8dc5777ee761530a423a47f11b))
+
+
+### Miscellaneous
+
+* allow for extra keycloak gateway usage with client certs ([#648](https://github.com/defenseunicorns/uds-core/issues/648)) ([7b1c474](https://github.com/defenseunicorns/uds-core/commit/7b1c4740d243c2b0c35a3708d36057f0e2eb9e53))
+* **deps:** update dependency defenseunicorns/uds-common to v0.11.1 ([#647](https://github.com/defenseunicorns/uds-core/issues/647)) ([768aa1c](https://github.com/defenseunicorns/uds-core/commit/768aa1c3eb836ccd4e87bb4d597758cf67478d62))
+* **deps:** update dependency defenseunicorns/uds-common to v0.11.2 ([#653](https://github.com/defenseunicorns/uds-core/issues/653)) ([f7d1ce8](https://github.com/defenseunicorns/uds-core/commit/f7d1ce8805971640b4b3eb018d64717a5bbd806a))
+* **deps:** update grafana helm chart to v8.4.3 ([#660](https://github.com/defenseunicorns/uds-core/issues/660)) ([81c7af0](https://github.com/defenseunicorns/uds-core/commit/81c7af036d126f13f003432a691623b88e0cece5))
+* **deps:** update grafana to 11.1.3 ([[#607](https://github.com/defenseunicorns/uds-core/issues/607)](https://github.com/defenseunicorns/uds-core/pull/607)) ([7b343ac](https://github.com/defenseunicorns/uds-core/commit/7b343ac301aaeab7c1928cf3b39b2c11f9c89993))
+* **deps:** update neuvector to 5.3.4 ([#606](https://github.com/defenseunicorns/uds-core/issues/606)) ([526bff4](https://github.com/defenseunicorns/uds-core/commit/526bff4674552fe257977e5e9a559d67a5ca273c))
+* **deps:** update pepr to 0.33.0 ([#588](https://github.com/defenseunicorns/uds-core/issues/588)) ([6eee8f0](https://github.com/defenseunicorns/uds-core/commit/6eee8f00e52c0831d2cf622631fc0f838a5ce374))
+* update identity config to 0.6.0 ([#661](https://github.com/defenseunicorns/uds-core/issues/661)) ([469fed8](https://github.com/defenseunicorns/uds-core/commit/469fed8fa07d7b5548eb778ee157c9c302d8a511))
+
 ## [0.25.1](https://github.com/defenseunicorns/uds-core/compare/v0.25.0...v0.25.1) (2024-08-06)
 
 
