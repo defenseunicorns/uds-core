@@ -2,9 +2,4 @@ tasks:
   - name: validate
     actions:
       - description: Validate alloy
-        wait:
-          cluster:
-            kind: Pod
-            name: app.kubernetes.io/instance=alloy
-            namespace: alloy
-            condition: Ready
+        cmd: ./zarf tools kubectl rollout status daemonset alloy -n alloy --timeout 300s
