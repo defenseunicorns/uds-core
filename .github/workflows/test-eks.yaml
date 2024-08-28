@@ -12,6 +12,10 @@ permissions:
   id-token: write
   contents: read
 
+concurrency:
+  group: test-eks-dev-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test-eks-install:
     runs-on: ubuntu-latest
