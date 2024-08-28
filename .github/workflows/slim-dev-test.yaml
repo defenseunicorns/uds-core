@@ -39,7 +39,6 @@ jobs:
   # This job runs the slim-dev bundle create/deploy process.
   test:
     name: Test
-    if: ${{ needs.check-only-non-docs-changes.outputs.run_slim_dev == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the code
