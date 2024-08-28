@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.26.1](https://github.com/defenseunicorns/uds-core/compare/v0.26.0...v0.26.1) (2024-08-23)
+
+
+### Bug Fixes
+
+* add additional supported saml attributes ([#690](https://github.com/defenseunicorns/uds-core/issues/690)) ([a7435bf](https://github.com/defenseunicorns/uds-core/commit/a7435bf9073263cd4a7155d7d385735ffb0e5cae))
+
+
+### Miscellaneous
+
+* **deps:** update dependency defenseunicorns/uds-common to v0.12.0 ([#692](https://github.com/defenseunicorns/uds-core/issues/692)) ([a5423a3](https://github.com/defenseunicorns/uds-core/commit/a5423a3fd537925f7a1c87ad04d9da352afe765a))
+* **deps:** update test-infra to v0.0.6 ([#686](https://github.com/defenseunicorns/uds-core/issues/686)) ([8341e6e](https://github.com/defenseunicorns/uds-core/commit/8341e6ed5ec00e52278995570b877d6a497c7f1b))
+* **deps:** update uds-common to v0.12.0 ([#693](https://github.com/defenseunicorns/uds-core/issues/693)) ([957f388](https://github.com/defenseunicorns/uds-core/commit/957f38898781196ffe257f2b64c0f845dddb738a))
+* **deps:** update zarf to v0.38.3 ([#694](https://github.com/defenseunicorns/uds-core/issues/694)) ([c53126f](https://github.com/defenseunicorns/uds-core/commit/c53126f2401604ab26d58a1cc567cb37f7addadf))
+
 ## [0.26.0](https://github.com/defenseunicorns/uds-core/compare/v0.25.2...v0.26.0) (2024-08-21)
 
 
