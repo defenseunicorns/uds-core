@@ -64,8 +64,6 @@ spec:
             - "--spi-theme-static-max-age=-1"
             - "--spi-theme-cache-themes=false"
             - "--spi-theme-cache-templates=false"
-            - "--proxy-headers=xforwarded"
-            - "--http-enabled=true"
             - "--hostname-debug=true"
             {{- else }}
             - "start"
@@ -75,6 +73,9 @@ spec:
             # This will only import the realm if it does not exist
             - "--import-realm"
             - "--features=preview"
+            - "--proxy-headers=xforwarded"
+            - "--http-enabled=true"
+            - "--hostname-strict=false"
             {{- if .Values.jsonLogFormat }}
             - "--log-console-output=json"
             {{- end }}
