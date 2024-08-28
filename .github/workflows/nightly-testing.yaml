@@ -10,6 +10,10 @@ on:
       - .github/bundles/*
       - .github/test-infra/buckets-iac/*
 
+concurrency:
+  group: test-eks-dev-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   nightly-testing:
     name: Test Core on EKS
