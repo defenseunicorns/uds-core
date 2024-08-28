@@ -1,7 +1,7 @@
 import { handleFailure, shouldSkip, updateStatus, writeEvent } from ".";
 import { UDSConfig } from "../../config";
 import { Component, setupLogger } from "../../logger";
-import { enableInjection } from "../controllers/istio/injection";
+import { enableIstio } from "../controllers/istio/injection";
 import { istioResources } from "../controllers/istio/istio-resources";
 import { authservice } from "../controllers/keycloak/authservice/authservice";
 import { keycloak } from "../controllers/keycloak/client-sync";
@@ -62,8 +62,8 @@ export async function packageReconciler(pkg: UDSPackage) {
     const netPol = await networkPolicies(pkg, namespace!);
 
     let endpoints: string[] = [];
-    // Update the namespace to ensure the istio-injection label is set
-    await enableInjection(pkg);
+    // Update the namespace to ensure the correct istio state
+    await enableIstio(pkg);
 
     // Configure SSO
     const ssoClients = await keycloak(pkg);

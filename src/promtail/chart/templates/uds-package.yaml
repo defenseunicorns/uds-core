@@ -4,6 +4,7 @@ metadata:
   name: promtail
   namespace: {{ .Release.Namespace }}
 spec:
+  istioAmbient: true
   monitor:
     - selector:
         app.kubernetes.io/name: promtail

@@ -1,5 +1,3 @@
----
-# Source: istio/templates/bigbang/peerAuthentication.yaml
 apiVersion: security.istio.io/v1beta1
 kind: PeerAuthentication
 metadata:

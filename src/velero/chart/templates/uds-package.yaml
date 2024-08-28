@@ -4,6 +4,7 @@ metadata:
   name: velero
   namespace: {{ .Release.Namespace }}
 spec:
+  istioAmbient: true
   network:
     allow:
       # Todo: wide open for now for pushing to s3

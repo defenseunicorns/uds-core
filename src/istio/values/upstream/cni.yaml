@@ -1,0 +1,2 @@
+cni:
+  image: docker.io/istio/install-cni:1.23.0-distroless

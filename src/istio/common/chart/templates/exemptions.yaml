@@ -1,0 +1,26 @@
+apiVersion: uds.dev/v1alpha1
+kind: Exemption
+metadata:
+  name: istio
+  namespace: uds-policy-exemptions
+spec:
+  exemptions:
+    - policies:
+        - DisallowPrivileged
+        - RequireNonRootUser
+        - RestrictSELinuxType
+        - RestrictHostPathWrite
+        - RestrictVolumeTypes
+        - DisallowHostNamespaces
+        - DisallowSELinuxOptions
+        - DropAllCapabilities
+        - RestrictCapabilities
+        - RestrictHostPathWrite
+        - RestrictHostPorts
+        - RestrictProcMount
+        - RestrictSeccomp
+      matcher:
+        namespace: istio-system
+        name: "^.*"
+      title: "istio exemptions"
+      description: "Istio does some privileged things"

@@ -1,0 +1,2 @@
+cni:
+  image: registry1.dso.mil/ironbank/tetrate/istio/install-cni:1.23.0

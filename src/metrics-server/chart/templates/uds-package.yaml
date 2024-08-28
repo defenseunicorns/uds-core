@@ -4,6 +4,7 @@ metadata:
   name: metrics-server
   namespace: {{ .Release.Namespace }}
 spec:
+  istioAmbient: true
   network:
     allow:
       - direction: Egress
