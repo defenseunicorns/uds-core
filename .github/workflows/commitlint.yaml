@@ -31,3 +31,20 @@ jobs:
         env:
           pull_request_title: ${{ github.event.pull_request.title }}
         run: echo "$pull_request_title" | npx commitlint
+
+  lint-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+      - name: Use Node.js latest
+        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
+        with:
+          node-version: 20
+      - name: Set up Homebrew
+        uses: Homebrew/actions/setup-homebrew@master
+      - name: Install UDS CLI
+        shell: bash
+        # renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
+        run: brew install defenseunicorns/tap/uds@0.14.1
+      - name: Run Formatting Checks
+        run: uds run lint-check --no-progress

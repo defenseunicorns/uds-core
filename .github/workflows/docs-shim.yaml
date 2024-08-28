@@ -19,67 +19,16 @@ on:
       - LICENSE
 
 jobs:
-  check-only-docs-changes:
-    runs-on: ubuntu-latest
-    outputs:
-      only_docs_changed: ${{ steps.set_output.outputs.only_docs_changed }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Check for non-docs changes
-        id: docs_check
-        uses: ./.github/actions/check-non-docs-changes
-        with:
-          base_ref: ${{ github.base_ref }}
-
-      - name: Set outputs
-        id: set_output
-        run: echo "only_docs_changed=${{ steps.docs_check.outputs.non_docs_changed }}" >> $GITHUB_OUTPUT
-
-  lint-check:
-    needs: check-only-docs-changes
-    if: ${{ needs.check-only-docs-changes.outputs.only_docs_changed == 'false' }}
-    name: Lint Check(Simulated)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Lint Check
-        run: echo "Simulating lint-check job - Success!"
-
-  check-paths:
-    needs: check-only-docs-changes
-    if: ${{ needs.check-only-docs-changes.outputs.only_docs_changed == 'false' }}
-    name: Check Paths(Simulated)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check Paths
-        run: echo "Simulating check-paths job - Success!"
-
   run-package-test:
-    needs: check-only-docs-changes
-    if: ${{ needs.check-only-docs-changes.outputs.only_docs_changed == 'false' }}
-    name: Package Test(Simulated)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Run Package Test
-        run: echo "Simulating run-package-test job - Success!"
-
-  evaluate-package-compliance:
-    needs: check-only-docs-changes
-    if: ${{ needs.check-only-docs-changes.outputs.only_docs_changed == 'false' }}
-    name: Compliance Test(Simulated)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Evaluate Package Compliance
-        run: echo "Simulating evaluate-package-compliance job - Success!"
-
-  # slim-dev-test.yaml
-  test:
-    needs: check-only-docs-changes
-    if: ${{ needs.check-only-docs-changes.outputs.only_docs_changed == 'false' }}
-    name: Slim Dev Test(Simulated)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Shim for Slim Dev Test
-        run: |
-          echo "Documentation-only change detected; marking test successful."
+    name: Schedule
+    strategy:
+      matrix:
+        package: [all]
+        flavor: [upstream, registry1, unicorn]
+        test_type: [install, upgrade]
+    uses: ./.github/workflows/test-shim.yaml
+    with:
+      package: ${{ matrix.package }}
+      flavor: ${{ matrix.flavor }}
+      test_type: ${{ matrix.test_type }}
+    secrets: inherit # Inherits all secrets from the parent workflow.
