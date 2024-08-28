@@ -10,6 +10,7 @@ on:
       - .github/bundles/*
       - .github/test-infra/buckets-iac/*
 
+# Abort prior jobs in the same workflow / PR
 concurrency:
   group: test-eks-dev-${{ github.ref }}
   cancel-in-progress: true
