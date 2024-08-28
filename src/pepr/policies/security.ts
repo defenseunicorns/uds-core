@@ -37,7 +37,7 @@ When(a.Pod)
       if (
         container.securityContext.allowPrivilegeEscalation === undefined &&
         //Skip mutation if privileged
-        (!container.securityContext.privileged ||
+        (!container.securityContext.privileged &&
           !container.securityContext.capabilities?.add?.includes("CAP_SYS_ADMIN"))
       ) {
         container.securityContext.allowPrivilegeEscalation = false;
