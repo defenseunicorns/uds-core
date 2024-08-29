@@ -103,7 +103,7 @@ packages:
 
 ### AuthService
 
-AuthService can be configured in a highly-available mode with multiple replicas if an [external session store](https://docs.tetrate.io/istio-authservice/configuration/oidc#session-store-configuration) is provided (key value store like Redis/Valkey). For configuring an external session store you can set the `UDS_AUTHSERVICE_REDIS_URI` env when deploying or via your `uds-config.yaml`:
+AuthService can be configured in a HA setup if an [external session store](https://docs.tetrate.io/istio-authservice/configuration/oidc#session-store-configuration) is provided (key value store like Redis/Valkey). For configuring an external session store you can set the `UDS_AUTHSERVICE_REDIS_URI` env when deploying or via your `uds-config.yaml`:
 
 ```yaml
 variables:
