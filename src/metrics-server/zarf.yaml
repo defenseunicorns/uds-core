@@ -16,7 +16,7 @@ components:
         valuesFiles:
           - "values/upstream-values.yaml"
     images:
-      - registry.k8s.io/metrics-server/metrics-server:v0.7.1
+      - registry.k8s.io/metrics-server/metrics-server:v0.7.2
 
   - name: metrics-server
     required: false
@@ -29,7 +29,7 @@ components:
         valuesFiles:
           - "values/registry1-values.yaml"
     images:
-      - registry1.dso.mil/ironbank/opensource/kubernetes-sigs/metrics-server:v0.7.1
+      - registry1.dso.mil/ironbank/opensource/kubernetes-sigs/metrics-server:v0.7.2
 
   - name: metrics-server
     required: false
@@ -42,4 +42,4 @@ components:
         valuesFiles:
           - "values/unicorn-values.yaml"
     images:
-      - cgr.dev/du-uds-defenseunicorns/metrics-server-fips:0.7.1
+      - cgr.dev/du-uds-defenseunicorns/metrics-server-fips:0.7.2
