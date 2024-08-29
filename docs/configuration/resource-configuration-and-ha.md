@@ -4,7 +4,7 @@ type: docs
 weight: 3.5
 ---
 
-Depending on your environment setup and scale of your cluster and workloads you may need to modify components in UDS Core to run in a highly available manner or with modified resources. The below captures some of the common places resource overrides may be useful when deploying UDS Core.
+Depending on your environment and the scale of your cluster, you might need to adjust UDS Core components for high availability or to optimize resources. Below are common areas where resource overrides can be useful when deploying UDS Core.
 
 When modifying resources and replica counts it can be useful to observe pod resource metrics in Grafana to make an informed choice on what may be necessary for your environment. Where available HPA ([Horizontal Pod Autoscalers](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)) are beneficial to dynamically scale up/down based on usage.
 
