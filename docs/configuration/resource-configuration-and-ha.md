@@ -42,7 +42,7 @@ To scale Grafana for high availability, its database must be externalized (see [
 
 ### Promtail
 
-By default Promtail runs as a daemonset, automatically scaling across all nodes to ensure logs are captured from each host. Typically Promtail does not need any other modifications, but you can customize its resource configuration similar by overriding the `resources` helm value (using the component and chart name of `promtail`).
+By default Promtail runs as a daemonset, automatically scaling across all nodes to ensure logs are captured from each host. Typically Promtail does not need any other modifications, but you can customize its resource configuration by overriding the `resources` helm value (using the component and chart name of `promtail`).
 
 ### Loki
 
