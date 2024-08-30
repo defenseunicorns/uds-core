@@ -609,6 +609,8 @@ export interface Groups {
 
 /**
  * Specifies the protocol of the client, either 'openid-connect' or 'saml'
+ *
+ * Protocol of the mapper
  */
 export enum Protocol {
   OpenidConnect = "openid-connect",
@@ -619,7 +621,7 @@ export interface ProtocolMapper {
   /**
    * Configuration options for the mapper.
    */
-  config?: Config;
+  config?: { [key: string]: string };
   /**
    * Whether user consent is required for this mapper
    */
@@ -636,31 +638,6 @@ export interface ProtocolMapper {
    * Protocol Mapper type of the mapper
    */
   protocolMapper: string;
-}
-
-/**
- * Configuration options for the mapper.
- */
-export interface Config {
-  "access.token.claim"?: TokenClaim;
-  "claim.name"?: string;
-  "id.token.claim"?: TokenClaim;
-  "introspection.token.claim"?: TokenClaim;
-  "jsonType.label"?: JSONTypeLabel;
-  "user.attribute"?: string;
-  "userinfo.token.claim"?: TokenClaim;
-}
-
-export enum TokenClaim {
-  False = "false",
-  True = "true",
-}
-
-export enum JSONTypeLabel {
-  Boolean = "boolean",
-  Int = "int",
-  Long = "long",
-  String = "String",
 }
 
 export interface Status {

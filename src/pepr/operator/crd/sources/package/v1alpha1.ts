@@ -306,6 +306,7 @@ const sso = {
       protocolMappers: {
         description: "Protocol Mappers to configure on the client",
         type: "array",
+        default: [],
         items: {
           type: "object",
           required: ["name", "protocol", "protocolMapper"],
@@ -331,33 +332,8 @@ const sso = {
             config: {
               description: "Configuration options for the mapper.",
               type: "object",
-              properties: {
-                "user.attribute": {
-                  type: "string",
-                },
-                "claim.name": {
-                  type: "string",
-                },
-                "jsonType.label": {
-                  type: "string",
-                  enum: ["String", "long", "int", "boolean"],
-                },
-                "id.token.claim": {
-                  type: "string",
-                  enum: ["true", "false"],
-                },
-                "access.token.claim": {
-                  type: "string",
-                  enum: ["true", "false"],
-                },
-                "userinfo.token.claim": {
-                  type: "string",
-                  enum: ["true", "false"],
-                },
-                "introspection.token.claim": {
-                  type: "string",
-                  enum: ["true", "false"],
-                },
+              additionalProperties: {
+                type: "string",
               },
             },
           },
