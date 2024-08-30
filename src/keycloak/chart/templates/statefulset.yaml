@@ -75,7 +75,10 @@ spec:
             - "--features=preview"
             - "--proxy-headers=xforwarded"
             - "--http-enabled=true"
-            - "--hostname-strict=false"
+            - --hostname-strict=true
+            - --hostname-debug=true
+            - "--hostname=https://sso.{{ .Values.domain }}"
+            - "--hostname-admin=https://keycloak.admin.{{ .Values.domain }}"
             {{- if .Values.jsonLogFormat }}
             - "--log-console-output=json"
             {{- end }}
