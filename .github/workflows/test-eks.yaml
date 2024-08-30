@@ -1,6 +1,7 @@
 name: Test Core On EKS
 
 on:
+  # triggered by nightly-testing.yaml
   workflow_call:
     inputs:
       flavor:
