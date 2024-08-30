@@ -21,7 +21,7 @@ The UDS Operator plays a pivotal role in managing the lifecycle of UDS Package C
 - **SSO Group Authentication:**
   - Group authentication determines who can access the application based on keycloak group membership.
   - At this time `anyOf` allows defining a list of groups, a user must belong to at least one of them.
-  - Custom client `protocolMapper`'s that will be created alongside the client, current `protocolMapper` [config options](https://github.com/defenseunicorns/uds-core/blob/main/src/pepr/operator/controllers/keycloak/types.ts).
+  - Custom client `protocolMapper`'s that will be created alongside the client and added to the client's dedicated scope.
 - **Authservice Protection:**
   - Authservice authentication provides application agnostic SSO for applications that opt-in.
   {{% alert-caution %}}
