@@ -6,13 +6,18 @@ on:
     # milestoned is added here as a workaround for release-please not triggering PR workflows (PRs should be added to a milestone to trigger the workflow).
     types: [milestoned, opened, reopened, synchronize]
     paths:
-      - src/pepr/*
-      - src/keycloak/*
-      - src/istio/*
-      - src/prometheus-stack/*
-      - packages/slim-dev/*
-      - bundles/k3d-slim-dev/*
-      - .github/workflows/slim-dev*
+      - src/pepr/**
+      - src/keycloak/**
+      - src/istio/**
+      - src/prometheus-stack/**
+      - packages/slim-dev/**
+      - bundles/k3d-slim-dev/**
+      - .github/workflows/slim-dev**
+      - "!**/*.md"
+      - "!**.jpg"
+      - "!**.png"
+      - "!**.gif"
+      - "!**.svg"
 
 # Permissions for the GITHUB_TOKEN used by the workflow.
 permissions:
