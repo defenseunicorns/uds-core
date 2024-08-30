@@ -84,6 +84,10 @@ const allow = {
         type: "string",
         enum: ["KubeAPI", "IntraNamespace", "CloudMetadata", "Anywhere"],
       },
+      remoteCidr: {
+        description: "Custom generated policy CIDR",
+        type: "string",
+      },
       port: {
         description: "The port to allow (protocol is always TCP)",
         minimum: 1,

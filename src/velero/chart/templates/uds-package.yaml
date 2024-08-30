@@ -6,11 +6,11 @@ metadata:
 spec:
   network:
     allow:
-      # Todo: wide open for now for pushing to s3
+      # Egress for S3 connections
       - direction: Egress
         selector:
           app.kubernetes.io/name: velero
-        remoteGenerated: Anywhere
+        remoteGenerated: Anywhere # todo: restrict this overly permissive netpol
 
       - direction: Egress
         selector:

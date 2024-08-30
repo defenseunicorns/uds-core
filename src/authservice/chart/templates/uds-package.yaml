@@ -15,8 +15,15 @@ spec:
 
       # Egress must be allowed to the external facing Keycloak endpoint
       - direction: Egress
-        remoteGenerated: Anywhere
-        description: "SSO Provider & Redis Session Store"
+        remoteSelector:
+          app: tenant-ingressgateway
+        remoteNamespace: istio-tenant-gateway
+        description: "SSO Provider"
+
+      # todo: add conditional here based on the ZARF VAR `AUTHSERVICE_REDIS_URI` found in the src/pepr/uds-operator-config
+      # - direction: Egress
+      #   remoteGenerated: Anywhere # todo: lock this down, currently no redis deployment configured to point to
+      #   description: "Redis Session Store"
 
       - direction: Ingress
         selector:

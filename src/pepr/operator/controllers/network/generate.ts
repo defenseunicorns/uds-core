@@ -2,7 +2,7 @@ import { V1NetworkPolicyPeer, V1NetworkPolicyPort } from "@kubernetes/client-nod
 import { kind } from "pepr";
 
 import { Allow, RemoteGenerated } from "../../crd";
-import { anywhere } from "./generators/anywhere";
+import { anywhere, createRemoteCidr } from "./generators/anywhere";
 import { cloudMetadata } from "./generators/cloudMetadata";
 import { intraNamespace } from "./generators/intraNamespace";
 import { kubeAPI } from "./generators/kubeAPI";
@@ -52,6 +52,11 @@ function getPeers(policy: Allow): V1NetworkPolicyPeer[] {
     }
 
     peers.push(peer);
+  }
+
+  // todo: where should this go?
+  if (policy.remoteCidr) {
+    peers.push(createRemoteCidr(policy.remoteCidr));
   }
 
   return peers;

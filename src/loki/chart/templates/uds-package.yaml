@@ -44,15 +44,9 @@ spec:
           - 8080
         description: "Promtail Log Storage"
 
-      # Todo: wide open for now for pushing to s3
+      # Egress for S3 connections
       - direction: Egress
         selector:
           app.kubernetes.io/name: loki
-        remoteGenerated: Anywhere
+        remoteGenerated: Anywhere # todo: restrict this overly permissive netpol
 
-      - direction: Egress
-        remoteNamespace: tempo
-        remoteSelector:
-          app.kubernetes.io/name: tempo
-        port: 9411
-        description: "Tempo"
