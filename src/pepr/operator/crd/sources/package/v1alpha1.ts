@@ -307,6 +307,42 @@ const sso = {
           type: "string",
         },
       },
+      protocolMappers: {
+        description: "Protocol Mappers to configure on the client",
+        type: "array",
+        default: [],
+        items: {
+          type: "object",
+          required: ["name", "protocol", "protocolMapper"],
+          properties: {
+            name: {
+              description: "Name of the mapper",
+              type: "string",
+            },
+            protocol: {
+              description: "Protocol of the mapper",
+              type: "string",
+              enum: ["openid-connect", "saml"],
+            },
+            protocolMapper: {
+              description: "Protocol Mapper type of the mapper",
+              type: "string",
+            },
+            consentRequired: {
+              description: "Whether user consent is required for this mapper",
+              type: "boolean",
+              default: false,
+            },
+            config: {
+              description: "Configuration options for the mapper.",
+              type: "object",
+              additionalProperties: {
+                type: "string",
+              },
+            },
+          },
+        },
+      },
       rootUrl: {
         description: "Root URL appended to relative URLs",
         type: "string",
@@ -363,11 +399,11 @@ const sso = {
         },
       },
       groups: {
-        description: "The client sso group type",
+        description: "The client SSO group type",
         type: "object",
         properties: {
           anyOf: {
-            description: "List of groups allowed to access to client",
+            description: "List of groups allowed to access the client",
             type: "array",
             items: {
               type: "string",

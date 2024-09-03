@@ -1,6 +1,7 @@
 name: Publish UDS Core
 
 on:
+  # triggered by tag-and-release.yaml and snapshot-release.yaml
   workflow_call:
     inputs:
       snapshot:
