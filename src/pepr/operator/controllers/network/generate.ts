@@ -2,11 +2,10 @@ import { V1NetworkPolicyPeer, V1NetworkPolicyPort } from "@kubernetes/client-nod
 import { kind } from "pepr";
 
 import { Allow, RemoteGenerated } from "../../crd";
-import { anywhere } from "./generators/anywhere";
+import { anywhere, remoteCidr } from "./generators/anywhere";
 import { cloudMetadata } from "./generators/cloudMetadata";
 import { intraNamespace } from "./generators/intraNamespace";
 import { kubeAPI } from "./generators/kubeAPI";
-import { remoteCidr } from "./generators/remoteCidr";
 
 function isWildcardNamespace(namespace: string) {
   return namespace === "" || namespace === "*";
@@ -30,12 +29,10 @@ function getPeers(policy: Allow): V1NetworkPolicyPeer[] {
         break;
 
       case RemoteGenerated.Anywhere:
-        peers = [anywhere];
-        break;
-
-      case RemoteGenerated.RemoteCIDR:
-        if(policy.remoteCidr){
+        if (policy.remoteCidr) {
           peers = [remoteCidr(policy.remoteCidr)];
+        } else {
+          peers = [anywhere];
         }
         break;
     }

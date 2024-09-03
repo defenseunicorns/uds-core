@@ -9,6 +9,9 @@ image:
 
 nameOverride: "authservice"
 
+# URI for authservice redis connection
+redisUri: "###ZARF_VAR_AUTHSERVICE_REDIS_URI###"
+
 podAnnotations: {}
 
 podSecurityContext: {}

@@ -8,3 +8,13 @@ export const anywhere: V1NetworkPolicyPeer = {
     except: [META_IP],
   },
 };
+
+/** Matches a specific custom cidr EXCEPT the Cloud Meta endpoint */
+export function remoteCidr(cidr: string): V1NetworkPolicyPeer {
+  return {
+    ipBlock: {
+      cidr,
+      except: [META_IP],
+    },
+  };
+}

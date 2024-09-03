@@ -26,7 +26,7 @@ spec:
         port: 8080
 
       # Temp workaround for any cluster pod
-      # @todo: remove this once cluster pods is a remote generated target
+      # todo: remove this once cluster pods is a remote generated target
       - description: "Keycloak backchannel access"
         direction: Ingress
         selector:
