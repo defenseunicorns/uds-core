@@ -40,7 +40,7 @@ When(a.Pod)
         !container.securityContext.privileged,
         !container.securityContext.capabilities?.add?.includes("CAP_SYS_ADMIN"),
       ];
-      //We are only mutating if the conditions above are all satisifed
+      // We are only mutating if the conditions above are all satisfied
       if (mutateCriteria.every(priv => priv === true)) {
         container.securityContext.allowPrivilegeEscalation = false;
         wasMutated = true;
@@ -58,10 +58,7 @@ When(a.Pod)
     const violations = securityContextContainers(request).filter(
       // Checking if allowPrivilegeEscalation is undefined. If yes, fallback to true as the default behavior in k8s is to allow if undefined.
       // Checks the three different ways a container could escalate to admin privs
-      c =>
-        (c.ctx.allowPrivilegeEscalation ?? true) ||
-        c.ctx.privileged ||
-        c.ctx.capabilities?.add?.includes("CAP_SYS_ADMIN"),
+      c => (c.ctx.allowPrivilegeEscalation ?? true) || c.ctx.privileged,
     );
 
     if (violations.length) {
