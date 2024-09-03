@@ -1,3 +1,5 @@
+import { ProtocolMapper } from "../../crd/generated/package-v1alpha1";
+
 export interface Client {
   alwaysDisplayInConsole: boolean;
   attributes: Record<string, string>;
@@ -17,6 +19,7 @@ export interface Client {
   notBefore: number;
   optionalClientScopes: string[];
   protocol: string;
+  protocolMappers?: ProtocolMapper[];
   publicClient: boolean;
   redirectUris: string[];
   registrationAccessToken?: string;
@@ -48,6 +51,7 @@ export const clientKeys = [
   "notBefore",
   "optionalClientScopes",
   "protocol",
+  "protocolMappers",
   "publicClient",
   "redirectUris",
   "registrationAccessToken",
