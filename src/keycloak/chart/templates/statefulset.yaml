@@ -64,7 +64,6 @@ spec:
             - "--spi-theme-static-max-age=-1"
             - "--spi-theme-cache-themes=false"
             - "--spi-theme-cache-templates=false"
-            - "--hostname-debug=true"
             {{- else }}
             - "start"
             # # Needed for nginx provider
@@ -75,10 +74,7 @@ spec:
             - "--features=preview"
             - "--proxy-headers=xforwarded"
             - "--http-enabled=true"
-            - --hostname-strict=true
-            - --hostname-debug=true
-            - "--hostname=https://sso.{{ .Values.domain }}"
-            - "--hostname-admin=https://keycloak.admin.{{ .Values.domain }}"
+            - "--hostname-strict=false"
             {{- if .Values.jsonLogFormat }}
             - "--log-console-output=json"
             {{- end }}
