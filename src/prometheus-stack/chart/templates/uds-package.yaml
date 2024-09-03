@@ -48,7 +48,7 @@ spec:
 
       # Prometheus scrape targets
       - direction: Egress
-        remoteNamespace: "" # todo: lock down scrape targets
+        remoteNamespace: "" # todo: restrict this overly permissive netpol
         selector:
           app.kubernetes.io/name: prometheus
         description: "Metrics Scraping"

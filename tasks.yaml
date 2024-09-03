@@ -66,6 +66,7 @@ tasks:
   - name: dev-deploy
     description: "Deploy the given source package with Zarf Dev"
     actions:
+      - cmd: "UDS_PKG=${PKG} uds run create-single-package"
       - cmd: "uds zarf dev deploy src/${PKG} --flavor ${FLAVOR}"
 
   - name: setup-cluster
