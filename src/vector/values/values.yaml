@@ -1,0 +1,30 @@
+# Run as an agent daemonset
+role: "Agent"
+
+# todo: all this
+customConfig:
+  data_dir: /vector-data-dir
+  api:
+    enabled: true
+    address: 127.0.0.1:8686
+    playground: false
+  sources:
+    vector:
+      address: 0.0.0.0:6000
+      type: vector
+      version: "2"
+  sinks:
+    stdout:
+      type: console
+      inputs: [vector]
+      encoding:
+        codec: json
+
+persistence:
+  enabled: true
+  hostPath:
+    enabled: true
+    path: "/var/lib/vector"
+
+podMonitor:
+  enabled: true

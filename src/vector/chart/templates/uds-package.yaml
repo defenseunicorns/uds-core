@@ -1,0 +1,44 @@
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: vector
+  namespace: {{ .Release.Namespace }}
+spec:
+  monitor:
+    - selector:
+        app.kubernetes.io/name: vector
+      targetPort: 3101
+      portName: http-metrics
+      description: Metrics
+
+  network:
+    allow:
+      - direction: Ingress
+        selector:
+          app.kubernetes.io/name: vector
+        remoteNamespace: monitoring
+        remoteSelector:
+          app.kubernetes.io/name: prometheus
+        port: 3101
+        description: "Prometheus Metrics"
+
+      - direction: Egress
+        selector:
+          app.kubernetes.io/name: vector
+        remoteGenerated: KubeAPI
+
+      - direction: Egress
+        remoteNamespace: tempo
+        remoteSelector:
+          app.kubernetes.io/name: tempo
+        port: 9411
+        description: "Tempo"
+
+      - direction: Egress
+        selector:
+          app.kubernetes.io/name: vector
+        remoteNamespace: loki
+        remoteSelector:
+          app.kubernetes.io/name: loki
+        port: 8080
+        description: "Write Logs to Loki"
