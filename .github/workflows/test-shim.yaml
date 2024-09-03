@@ -1,0 +1,42 @@
+name: Test Shim
+
+on:
+  # Manual trigger
+  workflow_dispatch:
+    inputs:
+      package:
+        type: string
+        description: "The name of the source package to test"
+        required: true
+      flavor:
+        type: string
+        description: "Flavor of the source package to test"
+        required: true
+      test_type:
+        type: string
+        description: "The type of test to perform"
+        required: true
+    # Triggered by pull-request-conditionals.yaml
+  workflow_call:
+    inputs:
+      package:
+        type: string
+        description: "The name of the source package to test"
+        required: true
+      flavor:
+        type: string
+        description: "Flavor of the source package to test"
+        required: true
+      test_type:
+        type: string
+        description: "The type of test to perform"
+        required: true
+
+jobs:
+  test:
+    runs-on: 'ubuntu-latest'
+    name: Test
+    steps:
+      - name: Skipped
+        run: |
+          echo skipped

@@ -586,7 +586,7 @@ export interface Sso {
    */
   enabled?: boolean;
   /**
-   * The client sso group type
+   * The client SSO group type
    */
   groups?: Groups;
   /**
@@ -597,6 +597,10 @@ export interface Sso {
    * Specifies the protocol of the client, either 'openid-connect' or 'saml'
    */
   protocol?: Protocol;
+  /**
+   * Protocol Mappers to configure on the client
+   */
+  protocolMappers?: ProtocolMapper[];
   /**
    * Defines whether the client requires a client secret for authentication
    */
@@ -642,21 +646,46 @@ export enum ClientAuthenticatorType {
 }
 
 /**
- * The client sso group type
+ * The client SSO group type
  */
 export interface Groups {
   /**
-   * List of groups allowed to access to client
+   * List of groups allowed to access the client
    */
   anyOf?: string[];
 }
 
 /**
  * Specifies the protocol of the client, either 'openid-connect' or 'saml'
+ *
+ * Protocol of the mapper
  */
 export enum Protocol {
   OpenidConnect = "openid-connect",
   Saml = "saml",
+}
+
+export interface ProtocolMapper {
+  /**
+   * Configuration options for the mapper.
+   */
+  config?: { [key: string]: string };
+  /**
+   * Whether user consent is required for this mapper
+   */
+  consentRequired?: boolean;
+  /**
+   * Name of the mapper
+   */
+  name: string;
+  /**
+   * Protocol of the mapper
+   */
+  protocol: Protocol;
+  /**
+   * Protocol Mapper type of the mapper
+   */
+  protocolMapper: string;
 }
 
 export interface Status {

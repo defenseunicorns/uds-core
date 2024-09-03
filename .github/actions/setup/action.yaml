@@ -33,13 +33,13 @@ runs:
     - name: Install UDS CLI
       shell: bash
       # renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
-      run: brew install defenseunicorns/tap/uds@0.14.1
+      run: brew install defenseunicorns/tap/uds@0.14.2
 
     - name: Install Lula
       uses: defenseunicorns/lula-action/setup@badad8c4b1570095f57e66ffd62664847698a3b9 # v0.0.1
       with:
         # renovate: datasource=github-tags depName=defenseunicorns/lula versioning=semver-coerced
-        version: v0.5.1
+        version: v0.6.0
 
     - name: Iron Bank Login
       if: ${{ inputs.registry1Username != '' }}
