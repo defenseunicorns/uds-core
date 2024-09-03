@@ -21,6 +21,7 @@ The UDS Operator plays a pivotal role in managing the lifecycle of UDS Package C
 - **SSO Group Authentication:**
   - Group authentication determines who can access the application based on keycloak group membership.
   - At this time `anyOf` allows defining a list of groups, a user must belong to at least one of them.
+  - Custom client `protocolMapper`'s that will be created alongside the client and added to the client's dedicated scope.
 - **Authservice Protection:**
   - Authservice authentication provides application agnostic SSO for applications that opt-in.
   {{% alert-caution %}}
@@ -61,7 +62,7 @@ spec:
         port: 9411
         description: "Tempo"
 
-  # SSO allows for the creation of Keycloak clients and with automatic secret generation
+  # SSO allows for the creation of Keycloak clients and with automatic secret generation and protocolMappers
   sso:
     - name: Grafana Dashboard
       clientId: uds-core-admin-grafana
@@ -70,6 +71,22 @@ spec:
       groups:
         anyOf:
           - /UDS Core/Admin
+      # Define protocolMappers to be created as dedicated scopes for the client
+      protocolMappers:
+        - name: username
+          protocol: "openid-connect"
+          protocolMapper: "oidc-usermodel-property-mapper"
+          config:
+            user.attribute: "username"
+            claim.name: "username"
+            userinfo.token.claim: "true"
+        - name: email
+          protocol: "openid-connect"
+          protocolMapper: "oidc-usermodel-property-mapper"
+          config:
+            user.attribute: "email"
+            claim.name: "email"
+            userinfo.token.claim: "true"
 ```
 
 ### Example UDS Package CR with SSO Templating
