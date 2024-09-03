@@ -4,65 +4,88 @@ type: docs
 weight: 4
 ---
 
-## UDS installation prerequisites
+## UDS Installation Prerequisites
 
 `UDS Core` can run in any CNCF conformant [Kubernetes](https://www.cncf.io/training/certification/software-conformance/) setup, but sometimes customizations are needed based on environments. This is an attempt to document and link to relevant information to aid in setting up your Kubernetes environment and hosts to ensure a successful `UDS Core` installation.  
 
-### RHEL
----
-#### *ISTIO related changes*
-Solution is to create file `/etc/modules-load.d/istio-iptables.conf` with this content:
+When running Kubernetes on any type of host it is important to ensure you are following the upstream documentation from the Kubernetes distribution regarding prerequisites. A few links to upstream documentation are provided below for convenience.
 
-```bash
-# These modules need to be loaded on boot so that Istio (as required by
-# UDS Core) runs properly.
-#
-# See also: https://github.com/istio/istio/issues/23009
+### Cluster Requirements
 
-br_netfilter
-nf_nat
-xt_REDIRECT
-xt_owner
-iptable_nat
-iptable_mangle
-iptable_filter
-```
+#### RKE2
 
-```bash
-sudo systemctl stop firewalld
-sudo systemctl disable firewalld
-```
-
-### RKE2
---- 
-* [Installation requirements](https://docs.rke2.io/install/requirements)
-* [Firewalld network conflicts](https://docs.rke2.io/known_issues#firewalld-conflicts-with-default-networking)
-* [Disabling components, such as Ingress which clashes with istio](https://docs.rke2.io/advanced#disabling-server-charts)
-* [Defense Unicorns os prep script for rke2](https://github.com/defenseunicorns/uds-rke2-image-builder/blob/main/packer/scripts/os-prep.sh)
-
+- [General installation requirements](https://docs.rke2.io/install/requirements)
+- [Disabling Firewalld to prevent networking conflicts](https://docs.rke2.io/known_issues#firewalld-conflicts-with-default-networking)
+- [Modifying NetworkManager to prevent CNI conflicts](https://docs.rke2.io/known_issues#networkmanager)
+- [Additional Known Issues](https://docs.rke2.io/known_issues)
 
 ### K3S
----
-* [OS requirements](https://docs.k3s.io/installation/requirements#operating-systems)
 
+- [General installation requirements](https://docs.k3s.io/installation/requirements)
+- [Known Issues](https://docs.k3s.io/known-issues)
 
+### EKS
 
-### UDS Core components
----
-#### UDS Operator
-#### Istio 
-* [Platform requirements](https://istio.io/latest/docs/ops/deployment/platform-requirements/)
-#### Keycloak
-* [Configuration guide](https://www.keycloak.org/keycloak-benchmark/kubernetes-guide/latest/)
-#### Neuvector
-#### Loki
-#### Prometheus
+- [General installation requirements](https://docs.aws.amazon.com/eks/latest/userguide/create-cluster.html)
+- [Troubleshooting Guide](https://docs.aws.amazon.com/eks/latest/userguide/troubleshooting.html)
+
+### UDS Core Requirements
+
+#### Default Storage Class
+
+Several UDS Core components require persistent volumes that will be provisioned using the default storage class via dynamic volume provisioning. Ensure that your cluster includes a default storage class prior to deploying. You can validate by running the below command (see example output which includes `(default)` next to the `local-path` storage class):
+
+```console
+❯ kubectl get storageclass
+NAME                   PROVISIONER             RECLAIMPOLICY   VOLUMEBINDINGMODE      ALLOWVOLUMEEXPANSION   AGE
+local-path (default)   rancher.io/local-path   Delete          WaitForFirstConsumer   false                  55s
+```
+
+#### Network Policy Support
+
+The UDS Operator will dynamically provision network policies to secure traffic between components in UDS Core. To ensure these are effective, validate that your CNI supports enforcing network policies. In addition, UDS Core makes use of some CIDR based policies for communication with the KubeAPI server. If you are using Cilium, support for node addressability with CIDR based policies must be enabled with a [feature flag](https://docs.cilium.io/en/stable/security/policy/language/#selecting-nodes-with-cidr-ipblock).
+
+#### Istio
+
+Istio requires a number of kernel modules to be loaded for full functionality. The below is a script that will ensure these modules are loaded and persisted across reboots (see also Istio's [upstream requirements list](https://istio.io/latest/docs/ops/deployment/platform-requirements/)):
+
+```console
+modules=("br_netfilter" "xt_REDIRECT" "xt_owner" "xt_statistic" "iptable_mangle" "iptable_nat" "xt_conntrack" "xt_tcpudp")
+for module in "${modules[@]}"; do
+  modprobe "$module"
+  echo "$module" >> "/etc/modules-load.d/istio-modules.conf"
+done
+```
+
+In addition, to run Istio ingress gateways (part of Core) you will need to ensure your cluster supports dynamic load balancer provisioning when services of type LoadBalancer are created. Typically in cloud environments this is handled using a cloud provider's controller (example: [AWS LB Controller](https://github.com/kubernetes-sigs/aws-load-balancer-controller)). When deploying on-prem, this is commonly done by using a "bare metal" load balancer provisioner like [MetalLB](https://metallb.universe.tf/) or [kube-vip](https://kube-vip.io/). Certain distributions may also include ingress controllers that you will want to disable as they may conflict with Istio (example: RKE2 includes ingress-nginx).
+
+#### NeuVector
+
+NeuVector historically has functioned best when the host is using cgroup v2. Cgroup v2 is enabled by default on many modern Linux distributions, but you may need to enable it depending on your operating system. Enabling this tends to be OS specific, so you will need to evaluate this for your specific hosts. 
+
 #### Promtail
-#### Grafana
-#### Authservice
-#### Velero
+
+In order to ensure that Promtail is able to scrape the necessary logs concurrently you may need to adjust some kernel parameters for your hosts. The below is a script to adjust these parameters to suitable values and ensure they are persisted across reboots:
+
+```console
+declare -A sysctl_settings
+sysctl_settings["fs.nr_open"]=13181250
+sysctl_settings["fs.inotify.max_user_instances"]=1024
+sysctl_settings["fs.inotify.max_user_watches"]=1048576
+sysctl_settings["fs.file-max"]=13181250
+
+for key in "${!sysctl_settings[@]}"; do
+  value="${sysctl_settings[$key]}"
+  sysctl -w "$key=$value"
+  echo "$key=$value" > "/etc/sysctl.d/$key.conf"
+done
+sysctl -p
+```
+
 #### Metrics Server
-* Optional component and can be added if needed. Most of the provided managed clusters will provide you a metric server.
+
+Metrics server is provided as an optional component in UDS Core and can be enabled if needed. For distros where metrics-server is already provided, ensure that you do NOT enable metrics-server. See the below as an example for enabling metrics-server if your cluster does not include it.
+
 ```yaml
 ...
 - name: uds-core
@@ -72,4 +95,3 @@ sudo systemctl disable firewalld
     - metrics-server
 ...
 ```
-
