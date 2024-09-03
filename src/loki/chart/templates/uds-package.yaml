@@ -48,5 +48,12 @@ spec:
       - direction: Egress
         selector:
           app.kubernetes.io/name: loki
-        remoteGenerated: Anywhere # todo: restrict this overly permissive netpol
-
+        description: Storage
+        {{- if .Values.storage.internal.enabled }}
+        remoteSelector: {{ .Values.storage.internal.remoteSelector }}
+        remoteNamespace: {{ .Values.storage.internal.remoteNamespace }}
+        {{- else if .Values.storage.cidr }}
+        remoteCidr: {{ .Values.storage.cidr }}
+        {{- else }}
+        remoteGenerated: Anywhere
+        {{- end }}
