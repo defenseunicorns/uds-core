@@ -61,23 +61,29 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
     // Ensure only valid combinations of remoteGenerated, remoteNamespace, remoteSelector, and remoteCidr
     if (policy.remoteGenerated) {
       if (policy.remoteNamespace || policy.remoteSelector || policy.remoteCidr) {
-        return req.Deny("remoteGenerated cannot be combined with remoteNamespace, remoteSelector, or remoteCidr");
+        return req.Deny(
+          "remoteGenerated cannot be combined with remoteNamespace, remoteSelector, or remoteCidr",
+        );
       }
     } else if (policy.remoteNamespace && policy.remoteSelector) {
       if (policy.remoteGenerated || policy.remoteCidr) {
-        return req.Deny("remoteNamespace and remoteSelector cannot be combined with remoteGenerated or remoteCidr");
+        return req.Deny(
+          "remoteNamespace and remoteSelector cannot be combined with remoteGenerated or remoteCidr",
+        );
       }
     } else if (policy.remoteNamespace) {
-      if (policy.remoteGenerated || policy.remoteCidr ) {
+      if (policy.remoteGenerated || policy.remoteCidr) {
         return req.Deny("remoteNamespace cannot be combined with remoteGenerated or remoteCidr");
       }
     } else if (policy.remoteSelector) {
-      if (policy.remoteGenerated || policy.remoteCidr ) {
+      if (policy.remoteGenerated || policy.remoteCidr) {
         return req.Deny("remoteSelector cannot be combined with remoteGenerated or remoteCidr");
       }
     } else if (policy.remoteCidr) {
       if (policy.remoteGenerated || policy.remoteNamespace || policy.remoteSelector) {
-        return req.Deny("remoteCidr cannot be combined with remoteGenerated, remoteNamespace, or remoteSelector");
+        return req.Deny(
+          "remoteCidr cannot be combined with remoteGenerated, remoteNamespace, or remoteSelector",
+        );
       }
     }
 
