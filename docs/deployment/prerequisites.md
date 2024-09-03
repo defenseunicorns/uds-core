@@ -1,35 +1,42 @@
 ---
-title: UDS Prerequisites
+title: UDS Core Prerequisites
 type: docs
 weight: 4
 ---
 
-## UDS Installation Prerequisites
+## UDS Core Prerequisites
 
-`UDS Core` can run in any CNCF conformant [Kubernetes](https://www.cncf.io/training/certification/software-conformance/) setup, but sometimes customizations are needed based on environments. This is an attempt to document and link to relevant information to aid in setting up your Kubernetes environment and hosts to ensure a successful `UDS Core` installation.  
-
-When running Kubernetes on any type of host it is important to ensure you are following the upstream documentation from the Kubernetes distribution regarding prerequisites. A few links to upstream documentation are provided below for convenience.
+`UDS Core` can run in any [CNCF conformant Kubernetes distribution](https://www.cncf.io/training/certification/software-conformance/), but sometimes customizations are needed based on environments. This is an attempt to document and link to relevant information to aid in setting up your Kubernetes environment and hosts to ensure a successful `UDS Core` installation.  
 
 ### Cluster Requirements
+
+When running Kubernetes on any type of host it is important to ensure you are following the upstream documentation from the Kubernetes distribution regarding prerequisites. A few links to upstream documentation are provided below for convenience.
 
 #### RKE2
 
 - [General installation requirements](https://docs.rke2.io/install/requirements)
 - [Disabling Firewalld to prevent networking conflicts](https://docs.rke2.io/known_issues#firewalld-conflicts-with-default-networking)
 - [Modifying NetworkManager to prevent CNI conflicts](https://docs.rke2.io/known_issues#networkmanager)
-- [Additional Known Issues](https://docs.rke2.io/known_issues)
+- [Known Issues](https://docs.rke2.io/known_issues)
 
-### K3S
+#### K3S
 
 - [General installation requirements](https://docs.k3s.io/installation/requirements)
 - [Known Issues](https://docs.k3s.io/known-issues)
 
-### EKS
+#### EKS
 
 - [General installation requirements](https://docs.aws.amazon.com/eks/latest/userguide/create-cluster.html)
 - [Troubleshooting Guide](https://docs.aws.amazon.com/eks/latest/userguide/troubleshooting.html)
 
+#### AKS
+
+- [General installation requirements](https://learn.microsoft.com/en-us/azure/well-architected/service-guides/azure-kubernetes-service)
+- [Troubleshooting Guide](https://learn.microsoft.com/en-us/troubleshoot/azure/azure-kubernetes/welcome-azure-kubernetes)
+
 ### UDS Core Requirements
+
+The below are specific requirements for running UDS Core. Some of them are tied to the entire stack of UDS Core and some are more specific to certain components. If you encounter issues with a particular component of core, this can be a good list to check to validate you met all the prerequisite requirements for that specific application.
 
 #### Default Storage Class
 
@@ -47,7 +54,7 @@ The UDS Operator will dynamically provision network policies to secure traffic b
 
 #### Istio
 
-Istio requires a number of kernel modules to be loaded for full functionality. The below is a script that will ensure these modules are loaded and persisted across reboots (see also Istio's [upstream requirements list](https://istio.io/latest/docs/ops/deployment/platform-requirements/)):
+Istio requires a number of kernel modules to be loaded for full functionality. The below is a script that will ensure these modules are loaded and persisted across reboots (see also Istio's [upstream requirements list](https://istio.io/latest/docs/ops/deployment/platform-requirements/)). Ideally this script is used as part of an image build or cloud-init process on each node.
 
 ```console
 modules=("br_netfilter" "xt_REDIRECT" "xt_owner" "xt_statistic" "iptable_mangle" "iptable_nat" "xt_conntrack" "xt_tcpudp")
@@ -65,7 +72,7 @@ NeuVector historically has functioned best when the host is using cgroup v2. Cgr
 
 #### Promtail
 
-In order to ensure that Promtail is able to scrape the necessary logs concurrently you may need to adjust some kernel parameters for your hosts. The below is a script to adjust these parameters to suitable values and ensure they are persisted across reboots:
+In order to ensure that Promtail is able to scrape the necessary logs concurrently you may need to adjust some kernel parameters for your hosts. The below is a script that can be used to adjust these parameters to suitable values and ensure they are persisted across reboots. Ideally this script is used as part of an image build or cloud-init process on each node.
 
 ```console
 declare -A sysctl_settings
