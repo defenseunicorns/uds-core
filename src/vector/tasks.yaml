@@ -5,6 +5,6 @@ tasks:
         wait:
           cluster:
             kind: Pod
-            name: app.kubernetes.io/instance=vector
+            name: app.kubernetes.io/name=vector
             namespace: vector
             condition: Ready
