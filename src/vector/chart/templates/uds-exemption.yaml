@@ -6,7 +6,6 @@ metadata:
 spec:
   exemptions:
     - policies:
-        - DisallowPrivileged
         - RequireNonRootUser
         - RestrictSELinuxType
         - RestrictHostPathWrite
@@ -16,8 +15,7 @@ spec:
         name: "^vector-.*"
       title: "vector exemptions"
       description: "Vector mounts the following hostPaths:
-        - `/var/log/pods`: to tail pod logs
-        - `/var/lib/docker/containers`: to tail container logs
-        - `/run/vector`: for Vector's buffering and persistent state
+        - `/var/log`: to tail logs
+        - `/var/lib/vector`: for Vector's buffering and persistent state
         Since logs can have sensitive information, it is better to exclude
-        Vector from the policy than add the paths as allowable mounts
+        Vector from the policy than add the paths as allowable mounts"
