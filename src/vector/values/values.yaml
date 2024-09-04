@@ -26,6 +26,8 @@ customConfig:
         if !exists(.kubernetes.pod_labels.app) {
           if exists(.kubernetes.pod_labels."app.kubernetes.io/name") {
             .kubernetes.pod_labels.app = .kubernetes.pod_labels."app.kubernetes.io/name"
+          } else if exists(.kubernetes.pod_labels.name) {
+            .kubernetes.pod_labels.app = .kubernetes.pod_labels.name
           } else if exists(.kubernetes.pod_owner) {
             .kubernetes.pod_labels.app = .kubernetes.pod_owner
           } else {
