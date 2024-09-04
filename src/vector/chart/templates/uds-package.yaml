@@ -6,6 +6,15 @@ metadata:
 spec:
   network:
     allow:
+      - direction: Ingress
+        selector:
+          app.kubernetes.io/name: vector
+        remoteNamespace: monitoring
+        remoteSelector:
+          app.kubernetes.io/name: prometheus
+        port: 9090
+        description: "Prometheus Metrics"
+
       - direction: Egress
         selector:
           app.kubernetes.io/name: vector
