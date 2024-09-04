@@ -6,15 +6,15 @@ customConfig:
   sources:
     pod_logs:
       type: "kubernetes_logs"
-      oldest_first: true 
+      oldest_first: true
     node_logs:
       type: "file"
       include: ["/var/log/*"]
-      oldest_first: true 
+      oldest_first: true
     k8s_logs:
       type: "file"
       include: ["/var/log/kubernetes/**/*.log"]
-      oldest_first: true 
+      oldest_first: true
     internal_metrics:
       type: internal_metrics
 
