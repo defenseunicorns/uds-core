@@ -89,6 +89,7 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
     "oauth2.device.authorization.grant.enabled",
     "pkce.code.challenge.method",
     "client.session.idle.timeout",
+    "saml.assertion.signature",
     "saml.client.signature",
     "saml_assertion_consumer_url_post",
   ]);

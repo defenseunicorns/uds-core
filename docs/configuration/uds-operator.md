@@ -217,6 +217,7 @@ The SSO spec supports a subset of the Keycloak attributes for clients, but does 
 - oauth2.device.authorization.grant.enabled
 - pkce.code.challenge.method
 - client.session.idle.timeout
+- saml.assertion.signature
 - saml.client.signature
 - saml_assertion_consumer_url_post
 
