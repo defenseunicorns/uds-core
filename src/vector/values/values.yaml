@@ -7,14 +7,12 @@ customConfig:
     pod_logs:
       type: "kubernetes_logs"
       oldest_first: true
+      ignore_older_secs: 900 # Reduce duplication across initial upgrade
     node_logs:
       type: "file"
-      include: ["/var/log/*"]
+      include: ["/var/log/*", "/var/log/kubernetes/**/*.log"]
       oldest_first: true
-    k8s_logs:
-      type: "file"
-      include: ["/var/log/kubernetes/**/*.log"]
-      oldest_first: true
+      ignore_older_secs: 900 # Reduce duplication across initial upgrade
     internal_metrics:
       type: internal_metrics
 
@@ -34,9 +32,9 @@ customConfig:
             .kubernetes.pod_labels.app = .kubernetes.pod_name
           }
         }
-    host_logs_labelled:
+    node_logs_labelled:
       type: remap
-      inputs: ["node_logs", "k8s_logs"]
+      inputs: ["node_logs"]
       source: |
         .node_name = "${NODE_HOSTNAME}"
         if contains(string!(.file), "/var/log/kubernetes/") {
@@ -65,7 +63,7 @@ customConfig:
         max_size: 1073741824 # 1GiB
     loki_host:
       type: "loki"
-      inputs: ["host_logs_labelled"]
+      inputs: ["node_logs_labelled"]
       endpoint: "http://loki-gateway.loki.svc.cluster.local:80"
       path: "/loki/api/v1/push"
       encoding:
