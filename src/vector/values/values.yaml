@@ -7,12 +7,10 @@ customConfig:
     pod_logs:
       type: "kubernetes_logs"
       oldest_first: true
-      ignore_older_secs: 900 # Reduce duplication across initial upgrade
     node_logs:
       type: "file"
       include: ["/var/log/*", "/var/log/kubernetes/**/*.log"]
       oldest_first: true
-      ignore_older_secs: 900 # Reduce duplication across initial upgrade
     internal_metrics:
       type: internal_metrics
 
