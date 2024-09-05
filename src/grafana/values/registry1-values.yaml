@@ -1,7 +1,7 @@
 image:
   registry: registry1.dso.mil
   repository: ironbank/opensource/grafana/grafana
-  tag: 11.1.3
+  tag: 11.2.0
 
 initChownData:
   image:
@@ -18,4 +18,4 @@ sidecar:
   image:
     registry: registry1.dso.mil
     repository: ironbank/kiwigrid/k8s-sidecar
-    tag: 1.27.5
+    tag: 1.27.6
