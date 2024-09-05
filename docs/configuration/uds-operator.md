@@ -21,6 +21,7 @@ The UDS Operator plays a pivotal role in managing the lifecycle of UDS Package C
 - **SSO Group Authentication:**
   - Group authentication determines who can access the application based on keycloak group membership.
   - At this time `anyOf` allows defining a list of groups, a user must belong to at least one of them.
+  - Custom client `protocolMapper`'s that will be created alongside the client and added to the client's dedicated scope.
 - **Authservice Protection:**
   - Authservice authentication provides application agnostic SSO for applications that opt-in.
   {{% alert-caution %}}
@@ -61,7 +62,7 @@ spec:
         port: 9411
         description: "Tempo"
 
-  # SSO allows for the creation of Keycloak clients and with automatic secret generation
+  # SSO allows for the creation of Keycloak clients and with automatic secret generation and protocolMappers
   sso:
     - name: Grafana Dashboard
       clientId: uds-core-admin-grafana
@@ -70,6 +71,22 @@ spec:
       groups:
         anyOf:
           - /UDS Core/Admin
+      # Define protocolMappers to be created as dedicated scopes for the client
+      protocolMappers:
+        - name: username
+          protocol: "openid-connect"
+          protocolMapper: "oidc-usermodel-property-mapper"
+          config:
+            user.attribute: "username"
+            claim.name: "username"
+            userinfo.token.claim: "true"
+        - name: email
+          protocol: "openid-connect"
+          protocolMapper: "oidc-usermodel-property-mapper"
+          config:
+            user.attribute: "email"
+            claim.name: "email"
+            userinfo.token.claim: "true"
 ```
 
 ### Example UDS Package CR with SSO Templating
@@ -152,17 +169,6 @@ The UDS Operator uses the first `redirectUris` to populate the `match.prefix` ho
 
 For a complete example, see [app-authservice-tenant.yaml](https://github.com/defenseunicorns/uds-core/blob/main/src/test/app-authservice-tenant.yaml)
 
-#### External Session Store
-If you wish to scale Authservice horiztonally, Authservice supports using an [external redis session store](https://docs.tetrate.io/istio-authservice/configuration/oidc#session-store-configuration) which can be configured by setting [UDS_AUTHSERVICE_REDIS_URI](https://github.com/defenseunicorns/uds-core/blob/main/src/pepr/zarf.yaml#L20-L22).
-
-You can also specify the `AUTHSERVICE_REDIS_URI` variable in your `uds-config.yaml`:
-
-```yaml
-variables:
-  core:
-    AUTHSERVICE_REDIS_URI: redis://redis.redis.svc.cluster.local:6379
-```
-
 #### Trusted Certificate Authority
 
 Authservice can be configured with additional trusted certificate bundle in cases where UDS Core ingress gateways are deployed with private PKI.
@@ -211,6 +217,9 @@ The SSO spec supports a subset of the Keycloak attributes for clients, but does 
 - oauth2.device.authorization.grant.enabled
 - pkce.code.challenge.method
 - client.session.idle.timeout
+- saml.assertion.signature
+- saml.client.signature
+- saml_assertion_consumer_url_post
 
 ## Exemption
 

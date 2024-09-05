@@ -1,6 +1,7 @@
 name: Test Core On EKS
 
 on:
+  # triggered by nightly-testing.yaml
   workflow_call:
     inputs:
       flavor:
@@ -54,7 +55,7 @@ jobs:
         run: uds run -f tasks/iac.yaml install-eksctl --no-progress
 
       - name: Setup Tofu
-        uses: opentofu/setup-opentofu@ae80d4ecaab946d8f5ff18397fbf6d0686c6d46a # v1.0.3
+        uses: opentofu/setup-opentofu@12f4debbf681675350b6cd1f0ff8ecfbda62027b # v1.0.4
         with:
           tofu_version: 1.8.1
           tofu_wrapper: false

@@ -12,8 +12,8 @@ UDS Core is a versatile software baseline designed to operate effectively across
 
 - **Compatible:** Kubernetes distributions listed under this category may not have undergone extensive testing in UDS Core's CI environments. While UDS Core may be compatible on these distributions, users should exercise caution and be prepared for potential compatibility issues or limitations.
 
-| Distribution    | Category               | Support Level                                                                                             |
-| --------------- | ---------------------- | --------------------------------------------------------------------------------------------------------- |
-| K3d, Amazon EKS | Tested                 | Supported Kubernetes distributions undergoing testing in CI environments.                                 |
-| RKE2            | Tested                 | Supported Kubernetes distribution tested in production environments other than CI.                        |
-| Other           | Untested/Unknown state | Compatible Kubernetes distributions that are not explicitly tested, documented, or supported by UDS Core. |
+| Distribution        | Category               | Support Level                                                                                             |
+| ------------------- | ---------------------- | --------------------------------------------------------------------------------------------------------- |
+| K3d/K3s, Amazon EKS | Tested                 | Supported Kubernetes distributions undergoing testing in CI environments.                                 |
+| RKE2                | Tested                 | Supported Kubernetes distribution tested in production environments other than CI.                        |
+| Other               | Untested/Unknown state | Compatible Kubernetes distributions that are not explicitly tested, documented, or supported by UDS Core. |
