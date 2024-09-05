@@ -471,6 +471,7 @@ describe("Test Allowed SSO Client Attributes", () => {
             "oauth2.device.authorization.grant.enabled": "true",
             "pkce.code.challenge.method": "S256",
             "client.session.idle.timeout": "3600",
+            "saml.assertion.signature": "false",
             "saml.client.signature": "false",
             saml_assertion_consumer_url_post: "https://nexus.uds.dev/saml",
           },
