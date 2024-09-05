@@ -2,7 +2,7 @@ tasks:
   - name: validate
     description: Test app used for UDS Core validation
     actions:
-      - description: Create zarf package for the test resources
+      - description: Create zarf package for the Admin test resources
         cmd: "uds zarf package create src/test/app-admin --confirm --no-progress"
 
       - description: Apply the test resources
@@ -21,21 +21,6 @@ tasks:
             kind: Package
             name: httpbin
             namespace: test-admin-app
-            condition: "'{.status.phase}'=Ready"
-
-      - description: Wait for the tenant app to be ready
-        wait:
-          cluster:
-            kind: Deployment
-            name: http-echo-multi-port
-            namespace: test-tenant-app
-
-      - description: Verify tenant package CR is ready
-        wait:
-          cluster:
-            kind: Package
-            name: test-tenant-app
-            namespace: test-tenant-app
             condition: "'{.status.phase}'=Ready"
 
       - description: Verify the admin app is accessible
@@ -62,7 +47,7 @@ tasks:
       - description: Remove Test App Admin
         cmd: "uds zarf package remove build/zarf-package-uds-core-test-app-admin-*.zst --confirm"
 
-      - description: Create zarf package for the test resources
+      - description: Create zarf package for the Tenant test resources
         cmd: "uds zarf package create src/test/app-tenant --confirm --no-progress"
 
       - description: Apply the test resources
