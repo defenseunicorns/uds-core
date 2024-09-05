@@ -21,8 +21,7 @@ components:
           - "values/upstream-values.yaml"
     images:
       - quay.io/keycloak/keycloak:25.0.4
-      - ghcr.io/defenseunicorns/uds/identity-config:0.6.0
-      - rjferguson21/uds-core-config:25
+      - ghcr.io/defenseunicorns/uds/identity-config:0.6.1
 
   - name: keycloak
     required: true
@@ -38,8 +37,7 @@ components:
           - "values/registry1-values.yaml"
     images:
       - registry1.dso.mil/ironbank/opensource/keycloak/keycloak:25.0.4
-      - ghcr.io/defenseunicorns/uds/identity-config:0.6.0
-      - rjferguson21/uds-core-config:25
+      - ghcr.io/defenseunicorns/uds/identity-config:0.6.1
 
   - name: keycloak
     required: true
@@ -53,5 +51,4 @@ components:
           - "values/unicorn-values.yaml"
     images:
       - cgr.dev/du-uds-defenseunicorns/keycloak:25.0.4 # todo: switch to FIPS image
-      - ghcr.io/defenseunicorns/uds/identity-config:0.6.0
-      - rjferguson21/uds-core-config:25
+      - ghcr.io/defenseunicorns/uds/identity-config:0.6.1
