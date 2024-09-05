@@ -132,16 +132,3 @@ spec:
                 - istio-mtls-client-certificate
               add:
                 istio-mtls-client-certificate: "%DOWNSTREAM_PEER_CERT%"
-
-      - description: "Allow access to AWS S3 service"
-        service: aws-s3
-        host: "test.s3.amazonaws.com"
-        port: 443
-        location: MESH_EXTERNAL
-        advancedHTTP:
-          headers:
-            request:
-              remove:
-                - istio-mtls-client-certificate
-              add:
-                istio-mtls-client-certificate: "%DOWNSTREAM_PEER_CERT%"
