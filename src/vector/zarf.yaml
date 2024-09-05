@@ -31,7 +31,7 @@ components:
         valuesFiles:
           - values/registry1-values.yaml
     images:
-      - timberio/vector:0.40.1-distroless-static # registry1 image is WIP
+      - docker.io/mjnagel/vector-ib:0.40.1
 
   - name: vector
     required: true
