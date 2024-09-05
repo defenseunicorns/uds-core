@@ -3,7 +3,7 @@ pilot:
 global:
   proxy_init:
     # renovate: image=docker.io/istio/proxyv2
-    image: "###ZARF_REGISTRY###/istio/proxyv2:1.23.0-distroless"
+    image: "docker.io/istio/proxyv2:1.23.0-distroless"
   proxy:
     # renovate: image=docker.io/istio/proxyv2
-    image: "###ZARF_REGISTRY###/istio/proxyv2:1.23.0-distroless"
+    image: "docker.io/istio/proxyv2:1.23.0-distroless"

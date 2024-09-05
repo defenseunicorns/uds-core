@@ -204,6 +204,10 @@ export interface Expose {
    */
   host: string;
   /**
+   * Specifies whether the service is MESH_INTERNAL or MESH_EXTERNAL
+   */
+  location?: Location;
+  /**
    * Match the incoming request based on custom rules. Not permitted when using the
    * passthrough gateway.
    */
@@ -456,6 +460,14 @@ export enum Gateway {
   Admin = "admin",
   Passthrough = "passthrough",
   Tenant = "tenant",
+}
+
+/**
+ * Specifies whether the service is MESH_INTERNAL or MESH_EXTERNAL
+ */
+export enum Location {
+  MeshExternal = "MESH_EXTERNAL",
+  MeshInternal = "MESH_INTERNAL",
 }
 
 export interface ExposeMatch {
