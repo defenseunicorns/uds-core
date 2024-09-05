@@ -102,6 +102,14 @@ tasks:
     actions:
       - task: test:uds-core
 
+  - name: test-uds-core-ha
+    description: "Build and test UDS Core"
+    actions:
+      - cmd: docker stop my-postgres && docker rm my-postgres || true
+      - cmd: docker network create k3d-uds || true
+      - cmd: docker run -p 5432:5432 --network=k3d-uds --name my-postgres -e POSTGRES_DB=keycloak -e POSTGRES_USER=keycloak -e POSTGRES_PASSWORD=password -d postgres
+      - task: test:uds-core-ha
+
   - name: test-uds-core-upgrade
     description: "Test an upgrade from the latest released UDS Core package to current branch"
     actions:
