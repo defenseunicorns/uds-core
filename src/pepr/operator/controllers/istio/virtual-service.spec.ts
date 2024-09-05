@@ -1,7 +1,7 @@
 import { describe, expect, it } from "@jest/globals";
 import { UDSConfig } from "../../../config";
-import { generateVirtualService } from "./virtual-service";
 import { Expose, Gateway } from "../../crd";
+import { generateVirtualService } from "./virtual-service";
 
 describe("test generate virtual service", () => {
   const ownerRefs = [
@@ -108,5 +108,22 @@ describe("test generate virtual service", () => {
       `${service}.${namespace}.svc.cluster.local`,
     );
     expect(payload.spec!.http![0].route![0].destination?.port?.number).toEqual(port);
+  });
+
+  it.only("should create a redirect VirtualService object", () => {
+    const gateway = Gateway.Tenant;
+    const expose: Expose = {
+      gateway,
+      host,
+      port,
+      service,
+      advancedHTTP: { redirect: { uri: "https://example.com" } },
+    };
+
+    const payload = generateVirtualService(expose, namespace, pkgName, generation, ownerRefs);
+
+    expect(payload).toBeDefined();
+    expect(payload.spec!.http![0].route).toBeUndefined();
+    expect(payload.spec!.http![0].redirect?.uri).toEqual("https://example.com");
   });
 });
