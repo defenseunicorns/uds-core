@@ -1,7 +1,7 @@
 ---
 title: UDS Operator
 type: docs
-weight: 2
+weight: 1
 ---
 
 The UDS Operator plays a pivotal role in managing the lifecycle of UDS Package Custom Resources (CRs) along with their associated resources like NetworkPolicies and Istio VirtualServices. Leveraging [Pepr](https://github.com/defenseunicorns/pepr), the operator binds watch operations to the enqueue and reconciler, taking on several key responsibilities for UDS Packages and exemptions:
