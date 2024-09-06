@@ -3,14 +3,42 @@
 import { GenericKind, RegisterKind } from "kubernetes-fluent-client";
 
 /**
- * ServiceMonitor defines monitoring for a set of services.
+ * The `ServiceMonitor` custom resource definition (CRD) defines how `Prometheus` and
+ * `PrometheusAgent` can scrape metrics from a group of services.
+ * Among other things, it allows to specify:
+ * * The services to scrape via label selectors.
+ * * The container ports to scrape.
+ * * Authentication credentials to use.
+ * * Target and metric relabeling.
+ *
+ *
+ * `Prometheus` and `PrometheusAgent` objects select `ServiceMonitor` objects using label
+ * and namespace selectors.
  */
 export class ServiceMonitor extends GenericKind {
+  /**
+   * APIVersion defines the versioned schema of this representation of an object.
+   * Servers should convert recognized schemas to the latest internal value, and
+   * may reject unrecognized values.
+   * More info:
+   * https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+   */
+  apiVersion?: string;
+  /**
+   * Kind is a string value representing the REST resource this object represents.
+   * Servers may infer this from the endpoint the client submits requests to.
+   * Cannot be updated.
+   * In CamelCase.
+   * More info:
+   * https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+   */
+  kind?: string;
+  metadata?: { [key: string]: any };
   /**
    * Specification of desired Service selection for target discovery by
    * Prometheus.
    */
-  spec?: Spec;
+  spec: Spec;
 }
 
 /**
@@ -36,8 +64,14 @@ export interface Spec {
   bodySizeLimit?: string;
   /**
    * List of endpoints part of this ServiceMonitor.
+   * Defines how to scrape metrics from Kubernetes
+   * [Endpoints](https://kubernetes.io/docs/concepts/services-networking/service/#endpoints)
+   * objects.
+   * In most cases, an Endpoints object is backed by a Kubernetes
+   * [Service](https://kubernetes.io/docs/concepts/services-networking/service/) object with
+   * the same name and labels.
    */
-  endpoints?: Endpoint[];
+  endpoints: Endpoint[];
   /**
    * `jobLabel` selects the label from the associated Kubernetes `Service`
    * object which will be used as the `job` label for all metrics.
@@ -83,8 +117,10 @@ export interface Spec {
    */
   labelValueLengthLimit?: number;
   /**
-   * Selector to select which namespaces the Kubernetes `Endpoints` objects
-   * are discovered from.
+   * `namespaceSelector` defines in which namespace(s) Prometheus should discover the
+   * services.
+   * By default, the services are discovered in the same namespace as the `ServiceMonitor`
+   * object but it is possible to select pods across different/all namespaces.
    */
   namespaceSelector?: NamespaceSelector;
   /**
@@ -115,7 +151,7 @@ export interface Spec {
    */
   scrapeProtocols?: ScrapeProtocol[];
   /**
-   * Label selector to select the Kubernetes `Endpoints` objects.
+   * Label selector to select the Kubernetes `Endpoints` objects to scrape metrics from.
    */
   selector: Selector;
   /**
@@ -139,8 +175,12 @@ export interface Spec {
  */
 export interface AttachMetadata {
   /**
-   * When set to true, Prometheus must have the `get` permission on the
-   * `Nodes` objects.
+   * When set to true, Prometheus attaches node metadata to the discovered
+   * targets.
+   *
+   *
+   * The Prometheus service account must have the `list` and `watch`
+   * permissions on the `Nodes` objects.
    */
   node?: boolean;
 }
@@ -299,7 +339,7 @@ export interface Endpoint {
   /**
    * TLS configuration to use when scraping the target.
    */
-  tlsConfig?: TLSConfig;
+  tlsConfig?: EndpointTLSConfig;
   /**
    * `trackTimestampsStaleness` defines whether Prometheus tracks staleness of
    * the metrics that have an explicit timestamp present in scraped data.
@@ -587,9 +627,47 @@ export interface Oauth2 {
    */
   endpointParams?: { [key: string]: string };
   /**
+   * `noProxy` is a comma-separated string that can contain IPs, CIDR notation, domain names
+   * that should be excluded from proxying. IP and domain names can
+   * contain port numbers.
+   *
+   *
+   * It requires Prometheus >= v2.43.0.
+   */
+  noProxy?: string;
+  /**
+   * ProxyConnectHeader optionally specifies headers to send to
+   * proxies during CONNECT requests.
+   *
+   *
+   * It requires Prometheus >= v2.43.0.
+   */
+  proxyConnectHeader?: { [key: string]: ProxyConnectHeader[] };
+  /**
+   * Whether to use the proxy configuration defined by environment variables (HTTP_PROXY,
+   * HTTPS_PROXY, and NO_PROXY).
+   * If unset, Prometheus uses its default value.
+   *
+   *
+   * It requires Prometheus >= v2.43.0.
+   */
+  proxyFromEnvironment?: boolean;
+  /**
+   * `proxyURL` defines the HTTP proxy server to use.
+   *
+   *
+   * It requires Prometheus >= v2.43.0.
+   */
+  proxyUrl?: string;
+  /**
    * `scopes` defines the OAuth2 scopes used for the token request.
    */
   scopes?: string[];
+  /**
+   * TLS configuration to use when connecting to the OAuth2 server.
+   * It requires Prometheus >= v2.43.0.
+   */
+  tlsConfig?: Oauth2TLSConfig;
   /**
    * `tokenURL` configures the URL to fetch the token from.
    */
@@ -688,6 +766,243 @@ export interface ClientSecret {
 }
 
 /**
+ * SecretKeySelector selects a key of a Secret.
+ */
+export interface ProxyConnectHeader {
+  /**
+   * The key of the secret to select from.  Must be a valid secret key.
+   */
+  key: string;
+  /**
+   * Name of the referent.
+   * This field is effectively required, but due to backwards compatibility is
+   * allowed to be empty. Instances of this type with an empty value here are
+   * almost certainly wrong.
+   * TODO: Add other useful fields. apiVersion, kind, uid?
+   * More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+   * TODO: Drop `kubebuilder:default` when controller-gen doesn't need it
+   * https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
+   */
+  name?: string;
+  /**
+   * Specify whether the Secret or its key must be defined
+   */
+  optional?: boolean;
+}
+
+/**
+ * TLS configuration to use when connecting to the OAuth2 server.
+ * It requires Prometheus >= v2.43.0.
+ */
+export interface Oauth2TLSConfig {
+  /**
+   * Certificate authority used when verifying server certificates.
+   */
+  ca?: PurpleCA;
+  /**
+   * Client certificate to present when doing client-authentication.
+   */
+  cert?: PurpleCERT;
+  /**
+   * Disable target certificate validation.
+   */
+  insecureSkipVerify?: boolean;
+  /**
+   * Secret containing the client key file for the targets.
+   */
+  keySecret?: PurpleKeySecret;
+  /**
+   * Maximum acceptable TLS version.
+   *
+   *
+   * It requires Prometheus >= v2.41.0.
+   */
+  maxVersion?: Version;
+  /**
+   * Minimum acceptable TLS version.
+   *
+   *
+   * It requires Prometheus >= v2.35.0.
+   */
+  minVersion?: Version;
+  /**
+   * Used to verify the hostname for the targets.
+   */
+  serverName?: string;
+}
+
+/**
+ * Certificate authority used when verifying server certificates.
+ */
+export interface PurpleCA {
+  /**
+   * ConfigMap containing data to use for the targets.
+   */
+  configMap?: PurpleConfigMap;
+  /**
+   * Secret containing data to use for the targets.
+   */
+  secret?: PurpleSecret;
+}
+
+/**
+ * ConfigMap containing data to use for the targets.
+ */
+export interface PurpleConfigMap {
+  /**
+   * The key to select.
+   */
+  key: string;
+  /**
+   * Name of the referent.
+   * This field is effectively required, but due to backwards compatibility is
+   * allowed to be empty. Instances of this type with an empty value here are
+   * almost certainly wrong.
+   * TODO: Add other useful fields. apiVersion, kind, uid?
+   * More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+   * TODO: Drop `kubebuilder:default` when controller-gen doesn't need it
+   * https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
+   */
+  name?: string;
+  /**
+   * Specify whether the ConfigMap or its key must be defined
+   */
+  optional?: boolean;
+}
+
+/**
+ * Secret containing data to use for the targets.
+ */
+export interface PurpleSecret {
+  /**
+   * The key of the secret to select from.  Must be a valid secret key.
+   */
+  key: string;
+  /**
+   * Name of the referent.
+   * This field is effectively required, but due to backwards compatibility is
+   * allowed to be empty. Instances of this type with an empty value here are
+   * almost certainly wrong.
+   * TODO: Add other useful fields. apiVersion, kind, uid?
+   * More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+   * TODO: Drop `kubebuilder:default` when controller-gen doesn't need it
+   * https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
+   */
+  name?: string;
+  /**
+   * Specify whether the Secret or its key must be defined
+   */
+  optional?: boolean;
+}
+
+/**
+ * Client certificate to present when doing client-authentication.
+ */
+export interface PurpleCERT {
+  /**
+   * ConfigMap containing data to use for the targets.
+   */
+  configMap?: FluffyConfigMap;
+  /**
+   * Secret containing data to use for the targets.
+   */
+  secret?: FluffySecret;
+}
+
+/**
+ * ConfigMap containing data to use for the targets.
+ */
+export interface FluffyConfigMap {
+  /**
+   * The key to select.
+   */
+  key: string;
+  /**
+   * Name of the referent.
+   * This field is effectively required, but due to backwards compatibility is
+   * allowed to be empty. Instances of this type with an empty value here are
+   * almost certainly wrong.
+   * TODO: Add other useful fields. apiVersion, kind, uid?
+   * More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+   * TODO: Drop `kubebuilder:default` when controller-gen doesn't need it
+   * https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
+   */
+  name?: string;
+  /**
+   * Specify whether the ConfigMap or its key must be defined
+   */
+  optional?: boolean;
+}
+
+/**
+ * Secret containing data to use for the targets.
+ */
+export interface FluffySecret {
+  /**
+   * The key of the secret to select from.  Must be a valid secret key.
+   */
+  key: string;
+  /**
+   * Name of the referent.
+   * This field is effectively required, but due to backwards compatibility is
+   * allowed to be empty. Instances of this type with an empty value here are
+   * almost certainly wrong.
+   * TODO: Add other useful fields. apiVersion, kind, uid?
+   * More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+   * TODO: Drop `kubebuilder:default` when controller-gen doesn't need it
+   * https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
+   */
+  name?: string;
+  /**
+   * Specify whether the Secret or its key must be defined
+   */
+  optional?: boolean;
+}
+
+/**
+ * Secret containing the client key file for the targets.
+ */
+export interface PurpleKeySecret {
+  /**
+   * The key of the secret to select from.  Must be a valid secret key.
+   */
+  key: string;
+  /**
+   * Name of the referent.
+   * This field is effectively required, but due to backwards compatibility is
+   * allowed to be empty. Instances of this type with an empty value here are
+   * almost certainly wrong.
+   * TODO: Add other useful fields. apiVersion, kind, uid?
+   * More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+   * TODO: Drop `kubebuilder:default` when controller-gen doesn't need it
+   * https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
+   */
+  name?: string;
+  /**
+   * Specify whether the Secret or its key must be defined
+   */
+  optional?: boolean;
+}
+
+/**
+ * Maximum acceptable TLS version.
+ *
+ *
+ * It requires Prometheus >= v2.41.0.
+ *
+ * Minimum acceptable TLS version.
+ *
+ *
+ * It requires Prometheus >= v2.35.0.
+ */
+export enum Version {
+  Tls10 = "TLS10",
+  Tls11 = "TLS11",
+  Tls12 = "TLS12",
+  Tls13 = "TLS13",
+}
+
+/**
  * RelabelConfig allows dynamic rewriting of the label set for targets, alerts,
  * scraped samples and remote write samples.
  *
@@ -767,11 +1082,11 @@ export enum Scheme {
 /**
  * TLS configuration to use when scraping the target.
  */
-export interface TLSConfig {
+export interface EndpointTLSConfig {
   /**
    * Certificate authority used when verifying server certificates.
    */
-  ca?: CA;
+  ca?: FluffyCA;
   /**
    * Path to the CA cert in the Prometheus container to use for the targets.
    */
@@ -779,7 +1094,7 @@ export interface TLSConfig {
   /**
    * Client certificate to present when doing client-authentication.
    */
-  cert?: CERT;
+  cert?: FluffyCERT;
   /**
    * Path to the client cert file in the Prometheus container for the targets.
    */
@@ -795,7 +1110,21 @@ export interface TLSConfig {
   /**
    * Secret containing the client key file for the targets.
    */
-  keySecret?: KeySecret;
+  keySecret?: FluffyKeySecret;
+  /**
+   * Maximum acceptable TLS version.
+   *
+   *
+   * It requires Prometheus >= v2.41.0.
+   */
+  maxVersion?: Version;
+  /**
+   * Minimum acceptable TLS version.
+   *
+   *
+   * It requires Prometheus >= v2.35.0.
+   */
+  minVersion?: Version;
   /**
    * Used to verify the hostname for the targets.
    */
@@ -805,21 +1134,21 @@ export interface TLSConfig {
 /**
  * Certificate authority used when verifying server certificates.
  */
-export interface CA {
+export interface FluffyCA {
   /**
    * ConfigMap containing data to use for the targets.
    */
-  configMap?: CAConfigMap;
+  configMap?: TentacledConfigMap;
   /**
    * Secret containing data to use for the targets.
    */
-  secret?: CASecret;
+  secret?: TentacledSecret;
 }
 
 /**
  * ConfigMap containing data to use for the targets.
  */
-export interface CAConfigMap {
+export interface TentacledConfigMap {
   /**
    * The key to select.
    */
@@ -844,7 +1173,7 @@ export interface CAConfigMap {
 /**
  * Secret containing data to use for the targets.
  */
-export interface CASecret {
+export interface TentacledSecret {
   /**
    * The key of the secret to select from.  Must be a valid secret key.
    */
@@ -869,21 +1198,21 @@ export interface CASecret {
 /**
  * Client certificate to present when doing client-authentication.
  */
-export interface CERT {
+export interface FluffyCERT {
   /**
    * ConfigMap containing data to use for the targets.
    */
-  configMap?: CERTConfigMap;
+  configMap?: StickyConfigMap;
   /**
    * Secret containing data to use for the targets.
    */
-  secret?: CERTSecret;
+  secret?: StickySecret;
 }
 
 /**
  * ConfigMap containing data to use for the targets.
  */
-export interface CERTConfigMap {
+export interface StickyConfigMap {
   /**
    * The key to select.
    */
@@ -908,7 +1237,7 @@ export interface CERTConfigMap {
 /**
  * Secret containing data to use for the targets.
  */
-export interface CERTSecret {
+export interface StickySecret {
   /**
    * The key of the secret to select from.  Must be a valid secret key.
    */
@@ -933,7 +1262,7 @@ export interface CERTSecret {
 /**
  * Secret containing the client key file for the targets.
  */
-export interface KeySecret {
+export interface FluffyKeySecret {
   /**
    * The key of the secret to select from.  Must be a valid secret key.
    */
@@ -956,8 +1285,10 @@ export interface KeySecret {
 }
 
 /**
- * Selector to select which namespaces the Kubernetes `Endpoints` objects
- * are discovered from.
+ * `namespaceSelector` defines in which namespace(s) Prometheus should discover the
+ * services.
+ * By default, the services are discovered in the same namespace as the `ServiceMonitor`
+ * object but it is possible to select pods across different/all namespaces.
  */
 export interface NamespaceSelector {
   /**
@@ -987,7 +1318,7 @@ export enum ScrapeProtocol {
 }
 
 /**
- * Label selector to select the Kubernetes `Endpoints` objects.
+ * Label selector to select the Kubernetes `Endpoints` objects to scrape metrics from.
  */
 export interface Selector {
   /**
