@@ -48,7 +48,7 @@ loki:
         index:
           prefix: loki_tsdb_
           period: 24h
-      - from: 2024-06-04
+      - from: "{{ (lookup \"v1\" \"ConfigMap\" \"loki\" \"loki-schema\").data.v13schemadate }}"
         store: tsdb
         object_store: "{{ .Values.loki.storage.type }}"
         schema: v13
