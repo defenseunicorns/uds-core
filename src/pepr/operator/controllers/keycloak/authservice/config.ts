@@ -1,5 +1,4 @@
 import { createHash } from "crypto";
-
 import { K8s, kind } from "pepr";
 import { UDSConfig } from "../../../../config";
 import { Client } from "../types";
@@ -13,17 +12,25 @@ export const operatorConfig = {
   realm: "uds",
 };
 
+// Tracks if there are changes that require a batched checksum update.
+let changesPending = false;
+
+/**
+ * Initializes the authservice secret in Kubernetes if it does not exist.
+ * This function is called during setup to ensure the necessary Kubernetes objects are present.
+ */
 export async function setupAuthserviceSecret() {
   if (process.env.PEPR_WATCH_MODE === "true" || process.env.PEPR_MODE === "dev") {
     log.info("One-time authservice secret initialization");
-    // create namespace if it doesn't exist
+
+    // Ensure the namespace exists
     await K8s(kind.Namespace).Apply({
       metadata: {
         name: operatorConfig.namespace,
       },
     });
 
-    // create secret if it doesn't exist
+    // Ensure the authservice secret exists, creating it if necessary
     try {
       const secret = await K8s(kind.Secret)
         .InNamespace(operatorConfig.namespace)
@@ -32,7 +39,7 @@ export async function setupAuthserviceSecret() {
     } catch (e) {
       log.info("Secret does not exist, creating authservice secret");
       try {
-        await updateAuthServiceSecret(buildInitialSecret(), false);
+        await updateAuthServiceSecret(buildInitialSecret(), false); // Skip immediate checksum
       } catch (err) {
         log.error(err, "Failed to create UDS managed authservice secret.");
         throw new Error("Failed to create UDS managed authservice secret.", { cause: err });
@@ -41,9 +48,12 @@ export async function setupAuthserviceSecret() {
   }
 }
 
-// this initial secret is only a placeholder until the first chain is created
+/**
+ * Builds an initial placeholder secret for the authservice. This is used until the first real chain is created.
+ */
 function buildInitialSecret(): AuthserviceConfig {
   const config: AuthserviceConfig = {
+    // Basic authservice configuration
     allow_unmatched_requests: false,
     listen_address: "0.0.0.0",
     listen_port: "10003",
@@ -85,6 +95,7 @@ function buildInitialSecret(): AuthserviceConfig {
     ],
   };
 
+  // Add Redis configuration if available
   if (UDSConfig.authserviceRedisUri) {
     config.default_oidc_config.redis_session_store_config = {
       server_uri: UDSConfig.authserviceRedisUri!,
@@ -94,6 +105,9 @@ function buildInitialSecret(): AuthserviceConfig {
   return config;
 }
 
+/**
+ * Retrieves the current authservice configuration from the Kubernetes secret.
+ */
 export async function getAuthserviceConfig() {
   const authSvcSecret = await K8s(kind.Secret)
     .InNamespace(operatorConfig.namespace)
@@ -101,15 +115,19 @@ export async function getAuthserviceConfig() {
   return JSON.parse(atob(authSvcSecret!.data!["config.json"])) as AuthserviceConfig;
 }
 
+/**
+ * Updates the authservice secret in Kubernetes with the new configuration.
+ * Optionally, applies a checksum to the deployment immediately or defers it.
+ */
 export async function updateAuthServiceSecret(
   authserviceConfig: AuthserviceConfig,
-  checksum = true,
+  applyChecksum = false,
 ) {
   const config = btoa(JSON.stringify(authserviceConfig));
   const configHash = createHash("sha256").update(config).digest("hex");
 
   try {
-    // write the authservice config to the secret
+    // Write the updated config to the Kubernetes secret
     await K8s(kind.Secret).Apply(
       {
         metadata: {
@@ -129,13 +147,19 @@ export async function updateAuthServiceSecret(
 
   log.info("Updated authservice secret successfully");
 
-  if (checksum) {
-    log.info("Adding checksum to deployment authservice secret successfully");
-    await checksumDeployment(configHash);
+  if (applyChecksum) {
+    // Apply the checksum immediately
+    await applyChecksumToDeployment(configHash);
+  } else {
+    // Mark a pending change for a batched checksum update
+    changesPending = true;
   }
 }
 
-async function checksumDeployment(checksum: string) {
+/**
+ * Applies a checksum annotation to the authservice deployment to trigger a restart.
+ */
+async function applyChecksumToDeployment(checksum: string) {
   try {
     await K8s(kind.Deployment, { name: "authservice", namespace: operatorConfig.namespace }).Patch([
       {
@@ -149,5 +173,25 @@ async function checksumDeployment(checksum: string) {
   } catch (e) {
     log.error(`Failed to apply the checksum to authservice: ${e.data?.message}`);
     throw new Error("Failed to apply the checksum to authservice", { cause: e });
+  }
+}
+
+/**
+ * Applies the checksum to the deployment if there are pending changes.
+ * This function is called at the end of processing a batch of changes.
+ */
+export async function applyBatchedChecksumIfNeeded() {
+  if (changesPending) {
+    try {
+      const config = await getAuthserviceConfig();
+      const configStr = JSON.stringify(config);
+      const configHash = createHash("sha256").update(configStr).digest("hex");
+
+      await applyChecksumToDeployment(configHash); // Apply the checksum
+      changesPending = false; // Reset the flag after applying
+      log.info("Batched checksum applied successfully.");
+    } catch (e) {
+      log.error(`Failed to batch apply checksum: ${e}`);
+    }
   }
 }
