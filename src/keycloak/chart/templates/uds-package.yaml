@@ -34,7 +34,7 @@ spec:
         remoteGenerated: Anywhere
         port: 8080
 
-      # Keycloak OCSP to check certs cannot gurantee a static IP
+      # Keycloak OCSP to check certs cannot guarantee a static IP
       - description: "OCSP Lookup"
         direction: Egress
         selector:
@@ -59,8 +59,16 @@ spec:
         selector:
           app.kubernetes.io/name: keycloak
         port: {{ .Values.postgresql.port }}
+        {{- if .Values.postgresql.internal.enabled }}
+        remoteSelector: {{ .Values.postgresql.internal.remoteSelector }}
+        remoteNamespace: {{ .Values.postgresql.internal.remoteNamespace }}
+        {{- else if .Values.postgresql.cidr }}
+        remoteCidr: {{ .Values.postgresql.cidr }}
+        {{- else }}
         remoteGenerated: Anywhere
+        {{- end }}
       {{- end }}
+
       {{- if .Values.autoscaling.enabled }}
       # HA for keycloak
       - direction: Ingress

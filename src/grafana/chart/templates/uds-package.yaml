@@ -35,7 +35,8 @@ spec:
         remoteNamespace: loki
         remoteSelector:
           app.kubernetes.io/name: loki
-        description: "for loki"
+        description: "Loki Datasource"
+        port: 8080
 
       # Egress allowed to Prometheus
       - direction: Egress
@@ -44,4 +45,14 @@ spec:
         remoteNamespace: monitoring
         remoteSelector:
           app.kubernetes.io/name: prometheus
-        description: "for monitoring"
+        description: "Prometheus Datasource"
+        port: 9090
+
+      # Egress allowed to Keyclaok
+      - direction: Egress
+        selector:
+          app.kubernetes.io/name: grafana
+        remoteNamespace: keycloak
+        remoteSelector:
+          app.kubernetes.io/name: keycloak
+        description: "Keycloak Datasource"

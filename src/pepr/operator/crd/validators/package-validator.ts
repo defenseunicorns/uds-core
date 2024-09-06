@@ -65,19 +65,11 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
           "remoteGenerated cannot be combined with remoteNamespace, remoteSelector, or remoteCidr",
         );
       }
-    } else if (policy.remoteNamespace && policy.remoteSelector) {
+    } else if (policy.remoteNamespace || policy.remoteSelector) {
       if (policy.remoteGenerated || policy.remoteCidr) {
         return req.Deny(
           "remoteNamespace and remoteSelector cannot be combined with remoteGenerated or remoteCidr",
         );
-      }
-    } else if (policy.remoteNamespace) {
-      if (policy.remoteGenerated || policy.remoteCidr) {
-        return req.Deny("remoteNamespace cannot be combined with remoteGenerated or remoteCidr");
-      }
-    } else if (policy.remoteSelector) {
-      if (policy.remoteGenerated || policy.remoteCidr) {
-        return req.Deny("remoteSelector cannot be combined with remoteGenerated or remoteCidr");
       }
     } else if (policy.remoteCidr) {
       if (policy.remoteGenerated || policy.remoteNamespace || policy.remoteSelector) {

@@ -20,10 +20,17 @@ spec:
         remoteNamespace: istio-tenant-gateway
         description: "SSO Provider"
 
-      {{- if .Values.redisUri }}
+      {{- if .Values.redis.uri }}
       - direction: Egress
+        description: Redis Session Store
+        {{- if .Values.redis.internal.enabled }}
+        remoteSelector: {{ .Values.redis.internal.remoteSelector }}
+        remoteNamespace: {{ .Values.redis.internal.remoteNamespace }}
+        {{- else if .Values.redis.cidr }}
+        remoteCidr: {{ .Values.redis.cidr }}
+        {{- else }}
         remoteGenerated: Anywhere
-        description: "Redis Session Store"
+        {{- end }}
       {{- end }}
 
       - direction: Ingress
