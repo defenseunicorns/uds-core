@@ -40,7 +40,7 @@ export function generateVirtualService(
     },
   ];
 
-  if (!advancedHTTP.directResponse) {
+  if (!advancedHTTP.directResponse && !advancedHTTP.redirect) {
     // Create the route to the service if not using advancedHTTP.directResponse
     http.route = route;
   }

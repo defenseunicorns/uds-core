@@ -228,6 +228,65 @@ export const advancedHTTP: V1JSONSchemaProps = {
       },
       type: "object",
     },
+    redirect: {
+      description:
+        "A HTTP rule can either return a direct_response, redirect or forward (default) traffic.",
+      oneOf: [
+        {
+          not: {
+            anyOf: [
+              {
+                required: ["port"],
+              },
+              {
+                required: ["derivePort"],
+              },
+            ],
+          },
+        },
+        {
+          required: ["port"],
+        },
+        {
+          required: ["derivePort"],
+        },
+      ],
+      properties: {
+        authority: {
+          description:
+            "On a redirect, overwrite the Authority/Host portion of the URL with this value.",
+          type: "string",
+        },
+        port: {
+          description: "On a redirect, overwrite the port portion of the URL with this value.",
+          maximum: 4294967295,
+          minimum: 0,
+          type: "integer",
+        },
+        derivePort: {
+          description:
+            "On a redirect, dynamically set the port: * FROM_PROTOCOL_DEFAULT: automatically set to 80 for HTTP and 443 for HTTPS.\n\nValid Options: FROM_PROTOCOL_DEFAULT, FROM_REQUEST_PORT",
+          enum: ["FROM_PROTOCOL_DEFAULT", "FROM_REQUEST_PORT"],
+          type: "string",
+        },
+        redirectCode: {
+          description:
+            "On a redirect, Specifies the HTTP status code to use in the redirect response.",
+          maximum: 4294967295,
+          minimum: 0,
+          type: "integer",
+        },
+        scheme: {
+          description: "On a redirect, overwrite the scheme portion of the URL with this value.",
+          type: "string",
+        },
+        uri: {
+          description: "On a redirect, overwrite the Path portion of the URL with this value.",
+          type: "string",
+        },
+      },
+      type: "object",
+    },
     retries: {
       description: "Retry policy for HTTP requests.",
       properties: {
@@ -265,4 +324,4 @@ export const advancedHTTP: V1JSONSchemaProps = {
     },
   },
   type: "object",
-};
+} as V1JSONSchemaProps;
