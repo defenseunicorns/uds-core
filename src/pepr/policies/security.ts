@@ -25,14 +25,40 @@ import { exemptionAnnotationPrefix, isExempt, markExemption } from "./exemptions
  */
 When(a.Pod)
   .IsCreatedOrUpdated()
-  .Mutate(markExemption(Policy.DisallowPrivileged))
+  .Mutate(request => {
+    markExemption(Policy.DisallowPrivileged)(request);
+    if (request.HasAnnotation(`${exemptionAnnotationPrefix}.${Policy.DisallowPrivileged}`)) {
+      return;
+    }
+    let wasMutated = false;
+
+    // Check if any containers defined in the pod do not have the `allowPrivilegeEscalation` field present. If not, include it and set to false.
+    for (const container of containers(request)) {
+      container.securityContext = container.securityContext || {};
+      const mutateCriteria = [
+        container.securityContext.allowPrivilegeEscalation === undefined,
+        !container.securityContext.privileged,
+        !container.securityContext.capabilities?.add?.includes("CAP_SYS_ADMIN"),
+      ];
+      // We are only mutating if the conditions above are all satisfied
+      if (mutateCriteria.every(priv => priv === true)) {
+        container.securityContext.allowPrivilegeEscalation = false;
+        wasMutated = true;
+      }
+    }
+    if (wasMutated) {
+      annotateMutation(request, Policy.DisallowPrivileged);
+    }
+  })
   .Validate(request => {
     if (isExempt(request, Policy.DisallowPrivileged)) {
       return request.Approve();
     }
 
     const violations = securityContextContainers(request).filter(
-      c => c.ctx.allowPrivilegeEscalation || c.ctx.privileged,
+      // Checking if allowPrivilegeEscalation is undefined. If yes, fallback to true as the default behavior in k8s is to allow if undefined.
+      // Checks the three different ways a container could escalate to admin privs
+      c => (c.ctx.allowPrivilegeEscalation ?? true) || c.ctx.privileged,
     );
 
     if (violations.length) {

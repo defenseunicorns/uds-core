@@ -72,6 +72,9 @@ spec:
             # This will only import the realm if it does not exist
             - "--import-realm"
             - "--features=preview"
+            - "--proxy-headers=xforwarded"
+            - "--http-enabled=true"
+            - "--hostname-strict=false"
             {{- if .Values.jsonLogFormat }}
             - "--log-console-output=json"
             {{- end }}
@@ -91,18 +94,8 @@ spec:
 
             # Enable access log
             - name: QUARKUS_HTTP_ACCESS_LOG_ENABLED
-              value: "true"          
-            
-            # Hostname strict is not needed when used with Istio
-            - name: KC_HOSTNAME_STRICT
-              value: "false"
-            - name: KC_HOSTNAME_STRICT_HTTPS
-              value: "false"
-            
-            # Set the proxy type to edge to avoid weird Keycloak behavior
-            - name: KC_PROXY
-              value: edge
-            
+              value: "true"
+
             # X509 configuration
             - name: KC_HTTPS_CLIENT_AUTH
               value: request
@@ -195,10 +188,13 @@ spec:
             - name: tcp-fd
               containerPort: 57800
               protocol: TCP
+            - name: metrics
+              containerPort: 9000
+              protocol: TCP
           livenessProbe:
             httpGet:
               path: /health/live
-              port: http
+              port: metrics
               scheme: HTTP
             failureThreshold: 15
             timeoutSeconds: 2
@@ -207,7 +203,7 @@ spec:
           readinessProbe:
             httpGet:
               path: /health/ready
-              port: http
+              port: metrics
               scheme: HTTP
             failureThreshold: 15
             timeoutSeconds: 2

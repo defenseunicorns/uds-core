@@ -255,6 +255,10 @@ export interface AdvancedHTTP {
    */
   match?: AdvancedHTTPMatch[];
   /**
+   * A HTTP rule can either return a direct_response, redirect or forward (default) traffic.
+   */
+  redirect?: Redirect;
+  /**
    * Retry policy for HTTP requests.
    */
   retries?: Retries;
@@ -397,6 +401,50 @@ export interface PurpleURI {
    * RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax).
    */
   regex?: string;
+}
+
+/**
+ * A HTTP rule can either return a direct_response, redirect or forward (default) traffic.
+ */
+export interface Redirect {
+  /**
+   * On a redirect, overwrite the Authority/Host portion of the URL with this value.
+   */
+  authority?: string;
+  /**
+   * On a redirect, dynamically set the port: * FROM_PROTOCOL_DEFAULT: automatically set to 80
+   * for HTTP and 443 for HTTPS.
+   *
+   * Valid Options: FROM_PROTOCOL_DEFAULT, FROM_REQUEST_PORT
+   */
+  derivePort?: DerivePort;
+  /**
+   * On a redirect, overwrite the port portion of the URL with this value.
+   */
+  port?: number;
+  /**
+   * On a redirect, Specifies the HTTP status code to use in the redirect response.
+   */
+  redirectCode?: number;
+  /**
+   * On a redirect, overwrite the scheme portion of the URL with this value.
+   */
+  scheme?: string;
+  /**
+   * On a redirect, overwrite the Path portion of the URL with this value.
+   */
+  uri?: string;
+}
+
+/**
+ * On a redirect, dynamically set the port: * FROM_PROTOCOL_DEFAULT: automatically set to 80
+ * for HTTP and 443 for HTTPS.
+ *
+ * Valid Options: FROM_PROTOCOL_DEFAULT, FROM_REQUEST_PORT
+ */
+export enum DerivePort {
+  FromProtocolDefault = "FROM_PROTOCOL_DEFAULT",
+  FromRequestPort = "FROM_REQUEST_PORT",
 }
 
 /**
