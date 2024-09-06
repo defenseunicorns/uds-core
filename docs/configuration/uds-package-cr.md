@@ -175,4 +175,52 @@ The `spec.sso` field in the UDS Package custom resource allows configuring SSO c
 
 - `standardFlowEnabled` (boolean, optional): Enables the standard OpenID Connect redirect-based authentication
 
-Citations:
+Certainly! Here's the documentation for the `spec.monitor` field in the UDS Package CR, which describes the different fields for configuring Service or Pod Monitors:
+
+# Monitor Configuration
+
+The `spec.monitor` field in the UDS Package custom resource allows configuring Service or Pod Monitors for the package. It is an array of objects, where each object represents a monitor configuration. The following fields are available for each monitor:
+
+## Required Fields
+
+- `portName` (string, required): The port name for the ServiceMonitor.
+
+- `selector` (object, required): Labels to match pods in the namespace to apply the monitor to. Leave empty to apply to all pods in the namespace.
+
+- `targetPort` (number, required): The service targetPort. This is required so the NetworkPolicy can be generated correctly.
+
+## Optional Fields
+
+- `description` (string, optional): A description of this monitor entry. This will become part of the ServiceMonitor name.
+
+- `podSelector` (object, optional): Labels to match pods in the namespace to apply the monitor to. Leave empty to apply to all pods in the namespace.
+
+- `path` (string, optional): HTTP path from which to scrape for metrics. Defaults to `/metrics`.
+
+- `kind` (string, optional): The type of monitor to create; either "PodMonitor" or "ServiceMonitor". Defaults to "ServiceMonitor".
+
+- `authorization` (object, optional): Authorization configuration for the monitor. Has the following sub-fields:
+  - `type` (string, optional): The type of authorization. Allowed values are "basic" and "bearer".
+  - `credentials` (object, optional): Credentials for the authorization. Has the following sub-fields:
+    - `username` (string, optional): The username for basic authorization.
+    - `password` (string, optional): The password for basic authorization.
+    - `token` (string, optional): The token for bearer authorization.
+
+## Example
+
+```yaml
+spec:
+  monitor:
+    - portName: metrics
+      targetPort: 8080
+      selector:
+        app: example
+      path: /prometheus
+      kind: PodMonitor
+      authorization:
+        type: bearer
+        credentials:
+          token: abc123
+```
+
+This example configures a PodMonitor named "metrics" that scrapes metrics from the `/prometheus` path on port 8080 of pods with the label `app: example`. It uses bearer authorization with the token "abc123".
