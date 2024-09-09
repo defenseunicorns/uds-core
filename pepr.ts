@@ -1,7 +1,8 @@
 import { PeprModule } from "pepr";
 
-import { DataStore } from "pepr/dist/lib/storage";
 import cfg from "./package.json";
+
+import { DataStore } from "pepr/dist/lib/storage";
 import { istio } from "./src/pepr/istio";
 import { Component, setupLogger } from "./src/pepr/logger";
 import { operator } from "./src/pepr/operator";
