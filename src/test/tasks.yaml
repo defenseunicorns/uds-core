@@ -2,11 +2,11 @@ tasks:
   - name: validate
     description: Test app used for UDS Core validation
     actions:
-      - description: Create zarf package for the Admin test resources
-        cmd: "uds zarf package create src/test/app-admin --confirm --no-progress"
+      - description: Create zarf package for the test resources
+        cmd: "uds zarf package create src/test --confirm --no-progress"
 
-      - description: Apply the test resources
-        cmd: "uds zarf package deploy build/zarf-package-uds-core-test-app-admin-*.zst --confirm --no-progress"
+      - description: Deploy the test resources
+        cmd: "uds zarf package deploy build/zarf-package-uds-core-test-apps-*.zst --confirm --no-progress"
 
       - description: Wait for the admin app to be ready
         wait:
@@ -21,6 +21,21 @@ tasks:
             kind: Package
             name: httpbin
             namespace: test-admin-app
+            condition: "'{.status.phase}'=Ready"
+
+      - description: Wait for the tenant app to be ready
+        wait:
+          cluster:
+            kind: Deployment
+            name: http-echo-multi-port
+            namespace: test-tenant-app
+
+      - description: Verify tenant package CR is ready
+        wait:
+          cluster:
+            kind: Package
+            name: test-tenant-app
+            namespace: test-tenant-app
             condition: "'{.status.phase}'=Ready"
 
       - description: Verify the admin app is accessible
@@ -43,22 +58,6 @@ tasks:
             protocol: https
             address: demo.admin.uds.dev/status/410
             code: 410
-
-      - description: Remove Test App Admin
-        cmd: "uds zarf package remove build/zarf-package-uds-core-test-app-admin-*.zst --confirm"
-
-      - description: Create zarf package for the Tenant test resources
-        cmd: "uds zarf package create src/test/app-tenant --confirm --no-progress"
-
-      - description: Apply the test resources
-        cmd: "uds zarf package deploy build/zarf-package-uds-core-test-app-tenant-*.zst --confirm --no-progress"
-
-      - description: Wait for the tenant app to be ready
-        wait:
-          cluster:
-            kind: Deployment
-            name: httpbin
-            namespace: authservice-test-app
 
       - description: Verify the tenant app 8080 is accessible
         wait:
@@ -145,4 +144,4 @@ tasks:
             namespace: podinfo
 
       - description: Remove the test resources
-        cmd: "uds zarf package remove build/zarf-package-uds-core-test-app-tenant-*.zst --confirm --no-progress"
+        cmd: "uds zarf package remove build/zarf-package-uds-core-test-apps-*.zst --confirm --no-progress"
