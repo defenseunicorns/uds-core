@@ -75,8 +75,8 @@ export async function reconcileAuthservice(
   labelSelector: { [key: string]: string },
   pkg: UDSPackage,
 ) {
-  await updateConfig(event);  // Update the authservice configuration
-  await updatePolicy(event, labelSelector, pkg);  // Update the authorization policy
+  await updateConfig(event); // Update the authservice configuration
+  await updatePolicy(event, labelSelector, pkg); // Update the authorization policy
 }
 
 /**
