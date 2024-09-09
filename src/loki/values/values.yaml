@@ -48,15 +48,9 @@ loki:
         index:
           prefix: loki_tsdb_
           period: 24h
-      - from: 2024-06-04
-        store: tsdb
-        object_store: "{{ .Values.loki.storage.type }}"
-        schema: v13
-        index:
-          prefix: loki_tsdb_
-          period: 24h
   limits_config:
     split_queries_by_interval: "30m"
+    allow_structured_metadata: false
   query_scheduler:
     max_outstanding_requests_per_tenant: 32000 # This is the default in Loki 3.0
   extraMemberlistConfig:
