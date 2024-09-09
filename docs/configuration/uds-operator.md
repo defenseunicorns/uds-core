@@ -153,7 +153,7 @@ The UDS Operator uses the first `redirectUris` to populate the `match.prefix` ho
 For a complete example, see [app-authservice-tenant.yaml](https://github.com/defenseunicorns/uds-core/blob/main/src/test/app-authservice-tenant.yaml)
 
 #### External Session Store
-If you wish to scale Authservice horiztonally, Authservice supports using an [external redis session store](https://docs.tetrate.io/istio-authservice/configuration/oidc#session-store-configuration) which can be configured by setting [UDS_AUTHSERVICE_REDIS_URI](https://github.com/defenseunicorns/uds-core/blob/main/src/pepr/zarf.yaml#L20-L22).
+If you wish to scale Authservice horizontally, Authservice supports using an [external redis session store](https://docs.tetrate.io/istio-authservice/configuration/oidc#session-store-configuration) which can be configured by setting [UDS_AUTHSERVICE_REDIS_URI](https://github.com/defenseunicorns/uds-core/blob/main/src/pepr/zarf.yaml#L20-L22).
 
 You can also specify the `AUTHSERVICE_REDIS_URI` variable in your `uds-config.yaml`:
 

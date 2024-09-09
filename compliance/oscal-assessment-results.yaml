@@ -693,7 +693,7 @@ assessment-results:
           uuid: c7c56dc6-9189-48e6-8153-541f8e7f129e
         - description: |
             Control Implementation: 5108E5FC-C45F-477B-8542-9C5611A92485 / Implemented Requirement: 0AE59B43-50A7-4420-881B-E0635CCB8424
-            Velero supports back-ups to multiple cloud environments (including geo-separated locations for high availibility) and on-premise environments in the event of an accessibility disruptions.
+            Velero supports back-ups to multiple cloud environments (including geo-separated locations for high availability) and on-premise environments in the event of an accessibility disruptions.
           target:
             status:
               state: not-satisfied
@@ -713,7 +713,7 @@ assessment-results:
           uuid: 6cf300c3-516b-4864-8049-a5d423c5bddc
         - description: |
             Control Implementation: 5108E5FC-C45F-477B-8542-9C5611A92485 / Implemented Requirement: D74C3A8C-E5B0-4F81-895D-FB2A318D723B
-            Velero supports back-ups to  and restores from multiple cloud environments (including geo-separated locations for high availibility) and on-premise environments in the event of an accessibility disruptions.
+            Velero supports back-ups to  and restores from multiple cloud environments (including geo-separated locations for high availability) and on-premise environments in the event of an accessibility disruptions.
           target:
             status:
               state: not-satisfied
@@ -723,7 +723,7 @@ assessment-results:
           uuid: 003c98fa-877a-4571-9bb7-f8ad72b88768
         - description: |
             Control Implementation: 5108E5FC-C45F-477B-8542-9C5611A92485 / Implemented Requirement: 72D7145F-7A3F-47AF-835F-7E3D6EFAE1CC
-            Velero supports back-ups to  and restores from multiple cloud environments (including geo-separated locations for high availibility) and on-premise environments in the event of an accessibility disruptions.
+            Velero supports back-ups to  and restores from multiple cloud environments (including geo-separated locations for high availability) and on-premise environments in the event of an accessibility disruptions.
           target:
             status:
               state: not-satisfied
@@ -768,7 +768,7 @@ assessment-results:
           uuid: f4c55319-50b5-4219-bf6f-22c66421f441
         - description: |
             Control Implementation: 5108E5FC-C45F-477B-8542-9C5611A92485 / Implemented Requirement: C650411C-33FD-4B59-8899-AC34B43C860F
-            Velero supports back-ups to multiple cloud environments (including geo-separated locations for high availibility) and on-premise environments.
+            Velero supports back-ups to multiple cloud environments (including geo-separated locations for high availability) and on-premise environments.
           target:
             status:
               state: not-satisfied
@@ -2014,7 +2014,7 @@ assessment-results:
             type: objective-id
           title: 'Validation Result - Component:3127D34A-517B-473B-83B0-6536179ABE38 / Control Implementation: 5108E5FC-C45F-477B-8542-9C5611A92485 / Control:  cp-6.2'
           uuid: fde3d548-4c98-451e-8ad1-08ebf918ec1f
-        - description: Velero supports back-ups to multiple cloud environments (including geo-separated locations for high availibility) and on-premise environments in the event of an accessibility disruptions.
+        - description: Velero supports back-ups to multiple cloud environments (including geo-separated locations for high availability) and on-premise environments in the event of an accessibility disruptions.
           target:
             status:
               state: not-satisfied
@@ -2030,7 +2030,7 @@ assessment-results:
             type: objective-id
           title: 'Validation Result - Component:3127D34A-517B-473B-83B0-6536179ABE38 / Control Implementation: 5108E5FC-C45F-477B-8542-9C5611A92485 / Control:  cp-7'
           uuid: 30788898-87df-4185-ab1c-9becdee50f6c
-        - description: Velero supports back-ups to  and restores from multiple cloud environments (including geo-separated locations for high availibility) and on-premise environments in the event of an accessibility disruptions.
+        - description: Velero supports back-ups to  and restores from multiple cloud environments (including geo-separated locations for high availability) and on-premise environments in the event of an accessibility disruptions.
           target:
             status:
               state: not-satisfied
@@ -2038,7 +2038,7 @@ assessment-results:
             type: objective-id
           title: 'Validation Result - Component:3127D34A-517B-473B-83B0-6536179ABE38 / Control Implementation: 5108E5FC-C45F-477B-8542-9C5611A92485 / Control:  cp-7.1'
           uuid: a718a683-1df0-4cac-9b9e-f61792134683
-        - description: Velero supports back-ups to  and restores from multiple cloud environments (including geo-separated locations for high availibility) and on-premise environments in the event of an accessibility disruptions.
+        - description: Velero supports back-ups to  and restores from multiple cloud environments (including geo-separated locations for high availability) and on-premise environments in the event of an accessibility disruptions.
           target:
             status:
               state: not-satisfied
@@ -2076,7 +2076,7 @@ assessment-results:
             type: objective-id
           title: 'Validation Result - Component:3127D34A-517B-473B-83B0-6536179ABE38 / Control Implementation: 5108E5FC-C45F-477B-8542-9C5611A92485 / Control:  cp-9.2'
           uuid: 2134ba61-df24-4258-80fc-a406ee86e4df
-        - description: Velero supports back-ups to multiple cloud environments (including geo-separated locations for high availibility) and on-premise environments.
+        - description: Velero supports back-ups to multiple cloud environments (including geo-separated locations for high availability) and on-premise environments.
           target:
             status:
               state: not-satisfied

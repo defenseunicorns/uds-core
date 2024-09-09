@@ -6,13 +6,15 @@ This document describes the process and requirements for contributing to this UD
 
 ## Table of Contents
 
-1. [Developer Experience](#developer-experience)
-2. [Definition of Done](#definition-of-done)
-3. [Getting Started](#getting-started)
-4. [Submitting a Pull Request](#submitting-a-pull-request)
-   - [Note for External Contributors](#note-for-external-contributors)
-5. [PR Requirements](#pr-requirements)
-6. [Contact](#contact)
+- [Welcome to UDS Core](#welcome-to-uds-core)
+  - [Table of Contents](#table-of-contents)
+  - [Developer Experience](#developer-experience)
+  - [Definition of Done](#definition-of-done)
+  - [Getting Started](#getting-started)
+  - [Submitting a Pull Request](#submitting-a-pull-request)
+    - [Note for External Contributors](#note-for-external-contributors)
+    - [PR Requirements](#pr-requirements)
+  - [Contact](#contact)
 
 ## Developer Experience
 
@@ -25,6 +27,16 @@ Specifically:
 * We perform automated testing on all changes before they get merged to main
 * Continuous integration (CI) pipeline tests are definitive
 * We create immutable release artifacts
+
+Commits:
+
+We use [codespell](https://github.com/codespell-project/codespell) and [yamllint](https://yamllint.readthedocs.io/en/stable/) for our precommit checking. It is recommended to have these installed before attempting to commit to the a branch otherwise your commit will not finalize and you will be shown an error.
+
+To install both of these tools you can run `uds run lint-check` to install them or utilize `pip` to install them manually.
+
+```bash
+pip install yamllint codespell
+```
 
 ## Definition of Done
 

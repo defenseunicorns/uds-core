@@ -8,7 +8,7 @@ This bundle is a trimmed-down version of [UDS Core](../k3d-standard/README.md) b
 
 The k3d uds-dev-stack provides:
 
-- [K3d](https://k3d.io/) - Containerized K3s Kubernetes Enviroment
+- [K3d](https://k3d.io/) - Containerized K3s Kubernetes Environment
 - [Minio](https://min.io/) - In-cluster S3 Object Storage (See below for more details)
 - [Local Path Provisioner](https://github.com/rancher/local-path-provisioner/) - Local Storage with RWX
 - [MetalLB](https://metallb.universe.tf/) - Provides type: LoadBalancer for cluster resources and Istio Gateways

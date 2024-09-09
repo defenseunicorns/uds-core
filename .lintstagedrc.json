@@ -1,7 +1,11 @@
 {
     "*": [
-        "npm ci",
-        "npx pepr format --validate-only",
+        "bash -c 'codespell'"
+    ],
+    "*.yaml": [
         "yamllint -c .yamllint --no-warnings"
+    ],
+    "*.ts": [
+        "npx pepr format --validate-only"
     ]
 }
