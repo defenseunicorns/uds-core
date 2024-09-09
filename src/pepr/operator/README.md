@@ -12,7 +12,7 @@ The UDS Operator manages the lifecycle of UDS Package CRs and their correspondin
 
 #### Exemption
 
-- allowing exemption custom resources only in the `uds-policy-exemptions` namespace unless configured to allow in all namespaces (see [configuring policy exemptions](../../../docs/CONFIGURE_POLICY_EXEMPTIONS.md))
+- allowing exemption custom resources only in the `uds-policy-exemptions` namespace unless configured to allow in all namespaces (see [configuring policy exemptions](../../../docs/configuration/uds-configure-policy-exemptions.md))
 - updating the policies Pepr store with registered exemptions
 
 ### Example UDS Package CR

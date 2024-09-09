@@ -27,5 +27,9 @@ spec:
       port: 8080
       targetPort: http
       protocol: TCP
+    - name: http-metrics
+      port: 9000
+      targetPort: metrics
+      protocol: TCP
   selector:
     {{- include "keycloak.selectorLabels" . | nindent 4 }}
