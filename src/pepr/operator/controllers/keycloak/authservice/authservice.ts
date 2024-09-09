@@ -58,7 +58,7 @@ export async function purgeAuthserviceClients(
   pkg: UDSPackage,
   newAuthserviceClients: string[] = [],
 ) {
-  // Compute the difference of pkg.status.authserviceClients and authserviceClients
+  // Compute the difference of pkg.status.authserviceClients and authserviceClients using Ramda
   R.difference(pkg.status?.authserviceClients || [], newAuthserviceClients).forEach(
     async clientId => {
       log.info(`Removing stale authservice chain for client ${clientId}`);
@@ -104,13 +104,13 @@ export function buildConfig(config: AuthserviceConfig, event: AuthServiceEvent) 
     chains = config.chains.filter(chain => chain.name !== event.name);
     chains = chains.concat(buildChain(event));
   } else if (event.action == Action.Remove) {
-    // Remove the chain from the existing authservice config
+    // Search in the existing chains for the chain to remove by name
     chains = config.chains.filter(chain => chain.name !== event.name);
   } else {
     throw new Error(`Unhandled Action: ${event.action satisfies never}`);
   }
 
-  // Return the updated authservice configuration
+  // Add the new chains to the existing authservice config
   return { ...config, chains } as AuthserviceConfig;
 }
 
@@ -118,6 +118,7 @@ export function buildConfig(config: AuthserviceConfig, event: AuthServiceEvent) 
  * Builds a chain configuration object for a client to be added to the authservice configuration.
  */
 export function buildChain(update: AuthServiceEvent) {
+  // TODO: get this from the package
   // Parse the hostname from the first client redirect URI
   const hostname = new URL(update.client!.redirectUris[0]).hostname;
 

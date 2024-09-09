@@ -23,14 +23,14 @@ export async function setupAuthserviceSecret() {
   if (process.env.PEPR_WATCH_MODE === "true" || process.env.PEPR_MODE === "dev") {
     log.info("One-time authservice secret initialization");
 
-    // Ensure the namespace exists
+    // Create namespace if it doesn't exist
     await K8s(kind.Namespace).Apply({
       metadata: {
         name: operatorConfig.namespace,
       },
     });
 
-    // Ensure the authservice secret exists, creating it if necessary
+    // Create secret if it doesn't exist
     try {
       const secret = await K8s(kind.Secret)
         .InNamespace(operatorConfig.namespace)
