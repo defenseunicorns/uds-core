@@ -58,7 +58,7 @@ component-definition:
 
                 # Control Implementation
                   Logging daemons are present on each node that BigBang is installed on.  Out of the box, the following events are captured:
-                  * all containers emitting to STDOUT or STDERR (captured  by container runtime translating container logs to /var/log/containers).
+                  * all containers emitting to STDOUT or STDERR (captured by container runtime creating containers logs under /var/log/pods).
                   * all kubernetes api server requests.
                   * all events emitted by the kubelet.
               remarks: This control is fully implemented by this tool.
@@ -78,9 +78,7 @@ component-definition:
                   Event outcomes can include indicators of event success or failure and event-specific results (e.g., the security state of the information system after the event occurred).
 
                 # Control Implementation
-                  Logs are captured by vector from the node. The node logs will contain the necessary log data from all pods/applications inside the selected nodes.
-                  Validating `logfmt` as the config.logFormat would be the goal. This is currently a secret mounted to /etc/vector/vector.yaml in the vector container. We will ensure the vector.yaml file is at a minimum the target config.
-                https://grafana.com/docs/loki/latest/send-data/vector/stages/logfmt/
+                  Logs are captured by vector from the node. The node logs will contain the necessary log data from all pods/applications inside the selected nodes as well as Kubernetes audit logs.
               remarks: This control is fully implemented by this tool.
               links:
                 - href: "#98b97ec9-a9ce-4444-83d8-71066270a424"
@@ -105,8 +103,6 @@ component-definition:
                   * time of the event (UTC).
                   * source of event (pod, namespace, container id).
                   Applications are responsible for providing all other information.
-                  Validating `logfmt` as the config.logFormat would be the goal. This is currently a secret mounted to /etc/vector/vector.yaml in the vector container. We will ensure the vector.yaml file is at a minimum the target config.
-                  https://grafana.com/docs/loki/latest/send-data/vector/stages/logfmt/
               remarks: This control is fully implemented by this tool.
               links:
                 - href: "#98b97ec9-a9ce-4444-83d8-71066270a424"
@@ -124,11 +120,7 @@ component-definition:
       - uuid: D552C935-E40C-4A03-B5CC-4605EBD95B6D
         title: Vector
         rlinks:
-          - href: https://grafana.com/docs/loki/latest/clients/vector/
-      - uuid: 211C474B-E11A-4DD2-8075-50CDAC507CDC
-        title: Big Bang Vector package
-        rlinks:
-          - href: https://repo1.dso.mil/platform-one/big-bang/apps/sandbox/vector
+          - href: https://vector.dev/
       - uuid: 98b97ec9-a9ce-4444-83d8-71066270a424
         title: Lula Validation
         rlinks:
@@ -263,6 +255,7 @@ component-definition:
                     some container in containers
                     container.name == "vector"
                     some i
-                    container.args[i] == "-config.file=/etc/vector/vector.yaml"
+                    container.args[i] == "--config-dir"
+                    container.args[i] == "/etc/vector/"
                   }
                 }
