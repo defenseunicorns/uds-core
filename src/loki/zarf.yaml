@@ -16,8 +16,8 @@ components:
         valuesFiles:
           - ./values/upstream-values.yaml
     images:
-      - docker.io/grafana/loki:2.9.6
-      - docker.io/nginxinc/nginx-unprivileged:1.25-alpine
+      - docker.io/grafana/loki:3.1.1
+      - docker.io/nginxinc/nginx-unprivileged:1.27-alpine
 
   - name: loki
     required: true
@@ -31,8 +31,8 @@ components:
         valuesFiles:
           - ./values/registry1-values.yaml
     images:
-      - registry1.dso.mil/ironbank/opensource/grafana/loki:2.9.6
-      - registry1.dso.mil/ironbank/opensource/nginx/nginx-alpine:1.25.3
+      - registry1.dso.mil/ironbank/opensource/grafana/loki:3.1.1
+      - registry1.dso.mil/ironbank/opensource/nginx/nginx-alpine:1.26.2
 
   - name: loki
     required: true
@@ -46,5 +46,5 @@ components:
         valuesFiles:
           - ./values/unicorn-values.yaml
     images:
-      - cgr.dev/du-uds-defenseunicorns/loki:2.9.8
-      - cgr.dev/du-uds-defenseunicorns/nginx-fips:1.27.0
+      - cgr.dev/du-uds-defenseunicorns/loki:3.1.1
+      - cgr.dev/du-uds-defenseunicorns/nginx-fips:1.27.1
