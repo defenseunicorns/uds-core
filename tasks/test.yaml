@@ -33,6 +33,14 @@ tasks:
       - task: deploy:k3d-standard-bundle
       - task: validate-packages
 
+  - name: uds-core-ha
+    description: "Build and test UDS Core"
+    actions:
+      - task: create:standard-package
+      - task: create:k3d-standard-bundle
+      - task: deploy:k3d-standard-bundle-ha
+      - task: validate-packages
+
   - name: uds-core-upgrade
     description: "Test an upgrade from the latest released UDS Core package to current branch"
     actions:
