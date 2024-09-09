@@ -1,0 +1,8 @@
+variables:
+  core:
+    keycloak_ha: true
+    keycloak_pg_username: keycloak
+    keycloak_pg_password: password
+    keycloak_pg_database: keycloak
+    keycloak_pg_host: host.k3d.internal
+    keycloak_devmode: false

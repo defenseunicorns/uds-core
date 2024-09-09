@@ -50,5 +50,5 @@ components:
     images:
       - cgr.dev/du-uds-defenseunicorns/velero-fips:1.14.1-dev
       - cgr.dev/du-uds-defenseunicorns/velero-plugin-for-aws-fips:1.10.1
-      - cgr.dev/du-uds-defenseunicorns/kubectl-fips:1.29.8-dev
+      - cgr.dev/du-uds-defenseunicorns/kubectl-fips:1.31.0-dev
       - velero/velero-plugin-for-microsoft-azure:v1.10.1

@@ -10,8 +10,8 @@ spec:
         app.kubernetes.io/component: http
       podSelector:
         app.kubernetes.io/name: keycloak
-      targetPort: 8080
-      portName: http
+      targetPort: 9000
+      portName: http-metrics
       description: Metrics
 
   network:
@@ -95,7 +95,7 @@ spec:
             - name: redirect-metrics
               uri:
                 prefix: /metrics
-          rewrite:
+          redirect:
             uri: "/realms/{{ .Values.realm }}/account"
           headers:
             request:
