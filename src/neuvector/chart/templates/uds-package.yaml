@@ -58,9 +58,12 @@ spec:
 
       # Access to SSO for OIDC
       - direction: Egress
-        remoteGenerated: Anywhere
         selector:
           app: neuvector-controller-pod
+        remoteSelector:
+          app: tenant-ingressgateway
+        remoteNamespace: istio-tenant-gateway
+        description: "SSO Provider"
 
       - direction: Egress
         remoteGenerated: KubeAPI
@@ -79,10 +82,3 @@ spec:
           app: neuvector-controller-pod
         port: 30443
         description: "Webhook"
-
-      - direction: Egress
-        remoteNamespace: tempo
-        remoteSelector:
-          app.kubernetes.io/name: tempo
-        port: 9411
-        description: "Tempo"

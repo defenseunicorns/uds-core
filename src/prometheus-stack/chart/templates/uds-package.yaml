@@ -46,9 +46,9 @@ spec:
         port: 10250
         description: "Webhook"
 
-      # todo: lockdown egress to scrape targets
+      # Prometheus scrape targets
       - direction: Egress
-        remoteNamespace: ""
+        remoteNamespace: "" # todo: restrict this overly permissive netpol
         selector:
           app.kubernetes.io/name: prometheus
         description: "Metrics Scraping"
@@ -62,9 +62,3 @@ spec:
         port: 9090
         description: "Grafana Metrics Queries"
 
-      - direction: Egress
-        remoteNamespace: tempo
-        remoteSelector:
-          app.kubernetes.io/name: tempo
-        port: 9411
-        description: "Tempo"
