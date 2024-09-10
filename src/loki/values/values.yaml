@@ -135,6 +135,10 @@ memcachedExporter:
   # -- Whether memcached metrics should be exported
   enabled: false
 
+monitoring:
+  serviceMonitor:
+    enabled: true
+
 lokiCanary:
   enabled: false
 
@@ -142,6 +146,11 @@ gateway:
   enabled: true
   # Remove default anti-affinity to support single node
   affinity: null
+
+  # Gateway has no metrics https://github.com/grafana/loki/issues/13201
+  service:
+    labels:
+      prometheus.io/service-monitor: "false"
 
 read:
   # Remove default anti-affinity to support single node
