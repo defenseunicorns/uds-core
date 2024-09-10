@@ -6,15 +6,15 @@ This document describes the process and requirements for contributing to this UD
 
 ## Table of Contents
 
-1. [Welcome to UDS Core](#welcome-to-uds-core)
-2. [Table of Contents](#table-of-contents)
-3. [Developer Experience](#developer-experience)
-4. [Definition of Done](#definition-of-done)
-5. [Getting Started](#getting-started)
-6. [Submitting a Pull Request](#submitting-a-pull-request)
-   1. [Note for External Contributors](#note-for-external-contributors)
-   2. [PR Requirements](#pr-requirements)
-7. [Contact](#contact)
+- [Welcome to UDS Core](#welcome-to-uds-core)
+  - [Table of Contents](#table-of-contents)
+  - [Developer Experience](#developer-experience)
+  - [Definition of Done](#definition-of-done)
+  - [Getting Started](#getting-started)
+  - [Submitting a Pull Request](#submitting-a-pull-request)
+    - [Note for External Contributors](#note-for-external-contributors)
+    - [PR Requirements](#pr-requirements)
+  - [Contact](#contact)
 
 ## Developer Experience
 
