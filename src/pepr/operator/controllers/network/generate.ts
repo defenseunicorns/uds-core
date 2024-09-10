@@ -6,6 +6,7 @@ import { anywhere } from "./generators/anywhere";
 import { cloudMetadata } from "./generators/cloudMetadata";
 import { intraNamespace } from "./generators/intraNamespace";
 import { kubeAPI } from "./generators/kubeAPI";
+import { remoteCidr } from "./generators/remoteCidr";
 
 function isWildcardNamespace(namespace: string) {
   return namespace === "" || namespace === "*";
@@ -52,6 +53,8 @@ function getPeers(policy: Allow): V1NetworkPolicyPeer[] {
     }
 
     peers.push(peer);
+  } else if (policy.remoteCidr !== undefined) {
+    peers = [remoteCidr(policy.remoteCidr)];
   }
 
   return peers;

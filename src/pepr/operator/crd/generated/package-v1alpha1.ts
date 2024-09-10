@@ -145,6 +145,10 @@ export interface Allow {
    */
   ports?: number[];
   /**
+   * Custom generated policy CIDR
+   */
+  remoteCidr?: string;
+  /**
    * Custom generated remote selector for the policy
    */
   remoteGenerated?: RemoteGenerated;
