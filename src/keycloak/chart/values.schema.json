@@ -9,17 +9,7 @@
     "additionalGatewayNamespaces": {
       "type": "array",
       "items": {
-        "type": "object",
-        "properties": {
-          "resource": {
-            "type": "object",
-            "properties": {
-              "name": {
-                "type": "string"
-              }
-            }
-          }
-        }
+        "type": "string"
       }
     },
     "autoscaling": {
