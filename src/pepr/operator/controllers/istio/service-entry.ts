@@ -7,7 +7,7 @@ import {
   IstioLocation,
   IstioPort,
   IstioResolution,
-  IstioServiceEntry
+  IstioServiceEntry,
 } from "../../crd";
 import { sanitizeResourceName } from "../utils";
 
@@ -54,7 +54,10 @@ export function generateServiceEntry(
   // If the service is external (MESH_EXTERNAL), no specific endpoint is needed (DNS-based resolution)
   // If internal, map the gateway (admin, passthrough, or tenant) to the ServiceEntry using the gateway-specific address
   const serviceEntryEndpoint: IstioEndpoint = {
-    address: location === "MESH_EXTERNAL" ? undefined : `${gateway}-ingressgateway.istio-${gateway}-gateway.svc.cluster.local`,
+    address:
+      location === "MESH_EXTERNAL"
+        ? undefined
+        : `${gateway}-ingressgateway.istio-${gateway}-gateway.svc.cluster.local`,
   };
 
   // Construct the ServiceEntry payload object
