@@ -1,0 +1,43 @@
+name: CI Docs
+
+on:
+  pull_request:
+    types: [milestoned, opened, reopened, synchronize]
+    paths:
+      - "**.md"
+      - "**.jpg"
+      - "**.png"
+      - "**.gif"
+      - "**.svg"
+      - docs/**
+      - .vscode/**
+      - .gitignore
+      - renovate.json
+      - .release-please-config.json
+      - release-please-config.json
+      - CODEOWNERS
+      - LICENSE
+
+jobs:
+  lint-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      - name: lint-check
+        uses: ./.github/actions/lint-check
+
+  run-package-test:
+    needs: lint-check
+    name: Schedule
+    strategy:
+      matrix:
+        package: [all]
+        flavor: [upstream, registry1, unicorn]
+        test_type: [install, upgrade]
+    uses: ./.github/workflows/test-shim.yaml
+    with:
+      package: ${{ matrix.package }}
+      flavor: ${{ matrix.flavor }}
+      test_type: ${{ matrix.test_type }}
+    secrets: inherit # Inherits all secrets from the parent workflow.

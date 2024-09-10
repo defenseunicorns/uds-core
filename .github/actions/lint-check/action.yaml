@@ -1,0 +1,19 @@
+name: lint-check
+description: "Check Project for Linting Errors"
+
+runs:
+  using: composite
+  steps:
+    - name: Use Node.js latest
+      uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
+      with:
+        node-version: 20
+    - name: Set up Homebrew
+      uses: Homebrew/actions/setup-homebrew@master
+    - name: Install UDS CLI
+      # renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
+      run: brew install defenseunicorns/tap/uds@0.15.0
+      shell: bash
+    - name: Run Formatting Checks
+      run: uds run lint-check --no-progress
+      shell: bash

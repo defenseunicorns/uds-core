@@ -13,6 +13,11 @@ spec:
   podMetricsEndpoints:
     - port: http-web
     - port: reloader-web
+      # Ensure we filter out the init containers
+      relabelings:
+        - sourceLabels: [__meta_kubernetes_pod_container_init]
+          regex: "true"
+          action: drop
   namespaceSelector:
     matchNames:
       - monitoring
