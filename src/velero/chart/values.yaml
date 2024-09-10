@@ -3,4 +3,4 @@ storage:
     enabled: false
     remoteSelector: {}
     remoteNamespace: ""
-  cidr: ""
+  egressCidr: ""

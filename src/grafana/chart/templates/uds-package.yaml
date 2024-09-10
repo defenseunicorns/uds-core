@@ -55,4 +55,4 @@ spec:
         remoteNamespace: keycloak
         remoteSelector:
           app.kubernetes.io/name: keycloak
-        description: "Keycloak Datasource"
+        description: "SSO Provider"

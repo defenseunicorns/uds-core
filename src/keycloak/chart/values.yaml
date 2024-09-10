@@ -174,7 +174,7 @@ postgresql:
   host: ""
   # Port the database is listening on
   port: 5432
-  cidr: ""
+  egressCidr: ""
   # Configure internal postgresql deployment, requires keycloak not be deployed in dev-mode
   internal:
     enabled: false

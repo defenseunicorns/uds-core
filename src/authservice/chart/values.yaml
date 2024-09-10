@@ -11,7 +11,7 @@ nameOverride: "authservice"
 
 redis:
   uri: "###ZARF_VAR_AUTHSERVICE_REDIS_URI###"
-  cidr: ""
+  egressCidr: ""
   internal:
     enabled: false
     remoteSelector: {}

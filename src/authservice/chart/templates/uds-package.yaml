@@ -26,8 +26,8 @@ spec:
         {{- if .Values.redis.internal.enabled }}
         remoteSelector: {{ .Values.redis.internal.remoteSelector }}
         remoteNamespace: {{ .Values.redis.internal.remoteNamespace }}
-        {{- else if .Values.redis.cidr }}
-        remoteCidr: {{ .Values.redis.cidr }}
+        {{- else if .Values.redis.egressCidr }}
+        remoteCidr: {{ .Values.redis.egressCidr }}
         {{- else }}
         remoteGenerated: Anywhere
         {{- end }}

@@ -62,8 +62,8 @@ spec:
         {{- if .Values.postgresql.internal.enabled }}
         remoteSelector: {{ .Values.postgresql.internal.remoteSelector }}
         remoteNamespace: {{ .Values.postgresql.internal.remoteNamespace }}
-        {{- else if .Values.postgresql.cidr }}
-        remoteCidr: {{ .Values.postgresql.cidr }}
+        {{- else if .Values.postgresql.egressCidr }}
+        remoteCidr: {{ .Values.postgresql.egressCidr }}
         {{- else }}
         remoteGenerated: Anywhere
         {{- end }}
