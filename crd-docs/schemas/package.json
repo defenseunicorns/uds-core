@@ -64,7 +64,7 @@
                     "additionalProperties": {
                         "type": "string"
                     },
-                    "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
+                    "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nA template for the generated secret"
                 },
                 "portName": {
                     "type": "string",
@@ -75,7 +75,7 @@
                     "additionalProperties": {
                         "type": "string"
                     },
-                    "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
+                    "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nA template for the generated secret"
                 },
                 "targetPort": {
                     "type": "number",
@@ -167,14 +167,14 @@
                     "additionalProperties": {
                         "type": "string"
                     },
-                    "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
+                    "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nA template for the generated secret"
                 },
                 "podLabels": {
                     "type": "object",
                     "additionalProperties": {
                         "type": "string"
                     },
-                    "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
+                    "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nA template for the generated secret"
                 },
                 "port": {
                     "type": "number",
@@ -200,21 +200,21 @@
                     "additionalProperties": {
                         "type": "string"
                     },
-                    "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
+                    "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nA template for the generated secret"
                 },
                 "remoteSelector": {
                     "type": "object",
                     "additionalProperties": {
                         "type": "string"
                     },
-                    "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
+                    "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nA template for the generated secret"
                 },
                 "selector": {
                     "type": "object",
                     "additionalProperties": {
                         "type": "string"
                     },
-                    "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
+                    "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nA template for the generated secret"
                 }
             },
             "required": [
@@ -253,7 +253,7 @@
                     "additionalProperties": {
                         "type": "string"
                     },
-                    "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
+                    "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nA template for the generated secret"
                 },
                 "port": {
                     "type": "number",
@@ -264,7 +264,7 @@
                     "additionalProperties": {
                         "type": "string"
                     },
-                    "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
+                    "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nA template for the generated secret"
                 },
                 "service": {
                     "type": "string",
@@ -300,10 +300,6 @@
                         "$ref": "#/definitions/AdvancedHTTPMatch"
                     },
                     "description": "Match the incoming request based on custom rules. Not permitted when using the\npassthrough gateway."
-                },
-                "redirect": {
-                    "$ref": "#/definitions/Redirect",
-                    "description": "A HTTP rule can either return a direct_response, redirect or forward (default) traffic."
                 },
                 "retries": {
                     "$ref": "#/definitions/Retries",
@@ -447,7 +443,7 @@
                     "additionalProperties": {
                         "type": "string"
                     },
-                    "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
+                    "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nA template for the generated secret"
                 },
                 "remove": {
                     "type": "array",
@@ -460,7 +456,7 @@
                     "additionalProperties": {
                         "type": "string"
                     },
-                    "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
+                    "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nA template for the generated secret"
                 }
             },
             "required": [],
@@ -474,7 +470,7 @@
                     "additionalProperties": {
                         "type": "string"
                     },
-                    "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
+                    "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nA template for the generated secret"
                 },
                 "remove": {
                     "type": "array",
@@ -487,7 +483,7 @@
                     "additionalProperties": {
                         "type": "string"
                     },
-                    "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
+                    "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nA template for the generated secret"
                 }
             },
             "required": [],
@@ -573,38 +569,6 @@
             },
             "required": [],
             "title": "PurpleURI"
-        },
-        "Redirect": {
-            "type": "object",
-            "properties": {
-                "authority": {
-                    "type": "string",
-                    "description": "On a redirect, overwrite the Authority/Host portion of the URL with this value."
-                },
-                "derivePort": {
-                    "$ref": "#/definitions/DerivePort",
-                    "description": "On a redirect, dynamically set the port: * FROM_PROTOCOL_DEFAULT: automatically set to 80\nfor HTTP and 443 for HTTPS.\n\nValid Options: FROM_PROTOCOL_DEFAULT, FROM_REQUEST_PORT"
-                },
-                "port": {
-                    "type": "integer",
-                    "description": "On a redirect, overwrite the port portion of the URL with this value."
-                },
-                "redirectCode": {
-                    "type": "integer",
-                    "description": "On a redirect, Specifies the HTTP status code to use in the redirect response."
-                },
-                "scheme": {
-                    "type": "string",
-                    "description": "On a redirect, overwrite the scheme portion of the URL with this value."
-                },
-                "uri": {
-                    "type": "string",
-                    "description": "On a redirect, overwrite the Path portion of the URL with this value."
-                }
-            },
-            "required": [],
-            "title": "Redirect",
-            "description": "A HTTP rule can either return a direct_response, redirect or forward (default) traffic."
         },
         "Retries": {
             "type": "object",
@@ -759,7 +723,7 @@
                     "additionalProperties": {
                         "type": "string"
                     },
-                    "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
+                    "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nA template for the generated secret"
                 },
                 "clientAuthenticatorType": {
                     "$ref": "#/definitions/ClientAuthenticatorType",
@@ -785,7 +749,7 @@
                     "additionalProperties": {
                         "type": "string"
                     },
-                    "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
+                    "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nA template for the generated secret"
                 },
                 "enabled": {
                     "type": "boolean",
@@ -793,7 +757,7 @@
                 },
                 "groups": {
                     "$ref": "#/definitions/Groups",
-                    "description": "The client SSO group type"
+                    "description": "The client sso group type"
                 },
                 "name": {
                     "type": "string",
@@ -802,13 +766,6 @@
                 "protocol": {
                     "$ref": "#/definitions/Protocol",
                     "description": "Specifies the protocol of the client, either 'openid-connect' or 'saml'"
-                },
-                "protocolMappers": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/ProtocolMapper"
-                    },
-                    "description": "Protocol Mappers to configure on the client"
                 },
                 "publicClient": {
                     "type": "boolean",
@@ -838,7 +795,7 @@
                     "additionalProperties": {
                         "type": "string"
                     },
-                    "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
+                    "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nA template for the generated secret"
                 },
                 "standardFlowEnabled": {
                     "type": "boolean",
@@ -866,46 +823,12 @@
                     "items": {
                         "type": "string"
                     },
-                    "description": "List of groups allowed to access the client"
+                    "description": "List of groups allowed to access to client"
                 }
             },
             "required": [],
             "title": "Groups",
-            "description": "The client SSO group type"
-        },
-        "ProtocolMapper": {
-            "type": "object",
-            "properties": {
-                "config": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "string"
-                    },
-                    "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
-                },
-                "consentRequired": {
-                    "type": "boolean",
-                    "description": "Whether user consent is required for this mapper"
-                },
-                "name": {
-                    "type": "string",
-                    "description": "Name of the mapper"
-                },
-                "protocol": {
-                    "$ref": "#/definitions/Protocol",
-                    "description": "Protocol of the mapper"
-                },
-                "protocolMapper": {
-                    "type": "string",
-                    "description": "Protocol Mapper type of the mapper"
-                }
-            },
-            "required": [
-                "name",
-                "protocol",
-                "protocolMapper"
-            ],
-            "title": "ProtocolMapper"
+            "description": "The client sso group type"
         },
         "Status": {
             "type": "object",
@@ -979,15 +902,6 @@
             "title": "RemoteGenerated",
             "description": "Custom generated remote selector for the policy"
         },
-        "DerivePort": {
-            "type": "string",
-            "enum": [
-                "FROM_PROTOCOL_DEFAULT",
-                "FROM_REQUEST_PORT"
-            ],
-            "title": "DerivePort",
-            "description": "On a redirect, dynamically set the port: * FROM_PROTOCOL_DEFAULT: automatically set to 80 for HTTP and 443 for HTTPS.\n\nValid Options: FROM_PROTOCOL_DEFAULT, FROM_REQUEST_PORT"
-        },
         "Gateway": {
             "type": "string",
             "enum": [
@@ -1014,7 +928,7 @@
                 "saml"
             ],
             "title": "Protocol",
-            "description": "Specifies the protocol of the client, either 'openid-connect' or 'saml'\nProtocol of the mapper"
+            "description": "Specifies the protocol of the client, either 'openid-connect' or 'saml'"
         },
         "Phase": {
             "type": "string",

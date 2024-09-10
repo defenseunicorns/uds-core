@@ -1,0 +1,6 @@
+custom_template_path: crd-docs/js/base.html
+show_toc: false
+template_md_options:
+  show_heading_numbers: false
+  show_array_restrictions: false
+examples_as_yaml: true

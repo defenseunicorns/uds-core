@@ -1,0 +1,9 @@
+template_name: md
+show_toc: false
+template_md_options:
+  show_heading_numbers: false
+  show_array_restrictions: false
+  properties_table_columns: ['Property','Title/Description']
+with_footer: false
+show_breadcrumbs: false
+recursive_detection_depth: 0
