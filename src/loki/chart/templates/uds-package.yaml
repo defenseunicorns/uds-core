@@ -31,7 +31,6 @@ spec:
           app.kubernetes.io/name: prometheus
         ports:
           - 3100
-          - 8080
         description: "Prometheus Metrics"
 
       - direction: Ingress
