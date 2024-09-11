@@ -58,9 +58,34 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
   const networkPolicyNames = new Set<string>();
 
   for (const policy of networkPolicy) {
-    // remoteGenerated cannot be combined with remoteNamespace or remoteSelector
-    if (policy.remoteGenerated && (policy.remoteNamespace || policy.remoteSelector)) {
-      return req.Deny("remoteGenerated cannot be combined with remoteNamespace or remoteSelector");
+    // If 'remoteGenerated' is set, it cannot be combined with 'remoteNamespace', 'remoteSelector', or 'remoteCidr'.
+    if (
+      policy.remoteGenerated &&
+      (policy.remoteNamespace || policy.remoteSelector || policy.remoteCidr)
+    ) {
+      return req.Deny(
+        "remoteGenerated cannot be combined with remoteNamespace, remoteSelector, or remoteCidr",
+      );
+    }
+
+    // If either 'remoteNamespace' or 'remoteSelector' is set, they cannot be combined with 'remoteGenerated' or 'remoteCidr'.
+    if (
+      (policy.remoteNamespace || policy.remoteSelector) &&
+      (policy.remoteGenerated || policy.remoteCidr)
+    ) {
+      return req.Deny(
+        "remoteNamespace and remoteSelector cannot be combined with remoteGenerated or remoteCidr",
+      );
+    }
+
+    // If 'remoteCidr' is set, it cannot be combined with 'remoteGenerated', 'remoteNamespace', or 'remoteSelector'.
+    if (
+      policy.remoteCidr &&
+      (policy.remoteGenerated || policy.remoteNamespace || policy.remoteSelector)
+    ) {
+      return req.Deny(
+        "remoteCidr cannot be combined with remoteGenerated, remoteNamespace, or remoteSelector",
+      );
     }
 
     // Ensure the policy name is unique
