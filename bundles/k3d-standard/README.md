@@ -2,7 +2,7 @@
 
 This bundle is used for demonstration, development, and testing of UDS Core. In addition to the [UDS Core applications](../../README.md#core-applications), the included k3d uds-dev-stack provides:
 
-- [K3d](https://k3d.io/) - Containerized K3s Kubernetes Enviroment
+- [K3d](https://k3d.io/) - Containerized K3s Kubernetes Environment
 - [Minio](<https://min.io/>) - In-cluster S3 Object Storage (See below for more details)
 - [Local Path Provisioner](<https://github.com/rancher/local-path-provisioner>) - Storage Provider with RWX configured
 - [MetalLB](https://metallb.universe.tf/) - Provides type: LoadBalancer for cluster resources and Istio Gateways

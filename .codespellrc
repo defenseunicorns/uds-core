@@ -1,0 +1,5 @@
+# Lint Codespell configurations
+[codespell]
+skip = .codespellrc,.git,node_modules,build,dist,*.zst,CHANGELOG.md
+ignore-words-list = NotIn,AKS
+enable-colors =
