@@ -33,7 +33,9 @@
   },
   "devDependencies": {
     "@jest/globals": "29.7.0",
+    "husky": "9.1.5",
     "jest": "29.7.0",
+    "lint-staged": "15.2.10",
     "ts-jest": "29.2.4"
   },
   "jest": {

@@ -26,6 +26,16 @@ Specifically:
 * Continuous integration (CI) pipeline tests are definitive
 * We create immutable release artifacts
 
+Commits:
+
+We use [codespell](https://github.com/codespell-project/codespell) and [yamllint](https://yamllint.readthedocs.io/en/stable/) for our precommit checking. It is recommended to have these installed before attempting to commit to the a branch otherwise your commit will not finalize and you will be shown an error.
+
+To install both of these tools you can run `uds run lint-check` to install them or utilize `pip` to install them manually.
+
+```bash
+pip install yamllint codespell
+```
+
 ## Definition of Done
 
 We apply these general principles to all User Stories and activities contributing to the UDS.

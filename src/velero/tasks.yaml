@@ -20,7 +20,7 @@ tasks:
         mute: true
         setVariables:
           - name: BACKUP_NAME
-      - description: "creates a velero backup object (equivilent of `velero backup create --from-schedule ...`)"
+      - description: "creates a velero backup object (equivalent of `velero backup create --from-schedule ...`)"
         cmd: |-
           uds zarf tools kubectl apply -f - <<-EOF
             apiVersion: velero.io/v1
