@@ -56,3 +56,10 @@ spec:
         remoteSelector:
           app.kubernetes.io/name: keycloak
         description: "SSO Provider"
+
+      # Egress allowed to KubeAPI
+      - direction: Egress
+        selector:
+          app.kubernetes.io/name: grafana
+        remoteGenerated: KubeAPI
+        description: "Datasources Watcher"
