@@ -14,4 +14,4 @@ memcached:
   image:
     registry: docker.io
     repository: memcached
-    tag: 1.6.27-alpine
+    tag: 1.6.31-alpine
