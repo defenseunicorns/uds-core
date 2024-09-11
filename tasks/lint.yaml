@@ -9,10 +9,10 @@ tasks:
         cmd: CMD=pip && which $CMD || CMD=pip3 && $CMD install codespell
       - description: "Pepr Format"
         cmd: npx pepr format
-      - description: Show codespell lint issues
-        cmd: codespell
       - description: Fix codespell lint issues
-        cmd: codespell -w
+        cmd: |
+          codespell || true
+          codespell -w
 
   - name: check
     description: "Run linting checks"

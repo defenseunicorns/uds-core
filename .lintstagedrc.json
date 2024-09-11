@@ -1,6 +1,6 @@
 {
     "*": [
-        "bash -c 'codespell'"
+        "codespell"
     ],
     "*.yaml": [
         "yamllint -c .yamllint --no-warnings"
