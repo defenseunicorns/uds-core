@@ -31,7 +31,6 @@ spec:
           app.kubernetes.io/name: prometheus
         ports:
           - 3100
-          - 8080
         description: "Prometheus Metrics"
 
       - direction: Ingress
@@ -44,15 +43,16 @@ spec:
           - 8080
         description: "Promtail Log Storage"
 
-      # Todo: wide open for now for pushing to s3
+      # Egress for S3 connections
       - direction: Egress
         selector:
           app.kubernetes.io/name: loki
+        description: Storage
+        {{- if .Values.storage.internal.enabled }}
+        remoteSelector: {{ .Values.storage.internal.remoteSelector }}
+        remoteNamespace: {{ .Values.storage.internal.remoteNamespace }}
+        {{- else if .Values.storage.egressCidr }}
+        remoteCidr: {{ .Values.storage.egressCidr }}
+        {{- else }}
         remoteGenerated: Anywhere
-
-      - direction: Egress
-        remoteNamespace: tempo
-        remoteSelector:
-          app.kubernetes.io/name: tempo
-        port: 9411
-        description: "Tempo"
+        {{- end }}
