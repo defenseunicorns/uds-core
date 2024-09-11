@@ -11,4 +11,4 @@ gateway:
 memcached:
   image:
     repository: cgr.dev/du-uds-defenseunicorns/memcached
-    tag: 1.6.27
+    tag: 1.6.31
