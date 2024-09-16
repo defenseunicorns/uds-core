@@ -56,7 +56,9 @@ The k3d uds-dev-stack provides:
 | `KEYCLOAK_DEVMODE`         | Enables Keycloak dev mode                  | `devMode`                       |
 
 
-### Minio
+## Override Examples:
+
+### Minio Customization
 
 You can customize the Minio setup at deploy time via your ```uds-config.yaml```.
 
