@@ -1,4 +1,5 @@
 registry: registry1.dso.mil
+# renovate: datasource=docker depName=registry1.dso.mil/ironbank/neuvector/neuvector/controller versioning=docker
 tag: "5.3.4"
 manager:
   image:
@@ -30,6 +31,7 @@ cve:
   scanner:
     image:
       repository: ironbank/neuvector/neuvector/scanner
+      # renovate: datasource=docker depName=registry1.dso.mil/ironbank/neuvector/neuvector/scanner versioning=docker
       tag: "5"
     containerSecurityContext:
       capabilities:
@@ -41,6 +43,7 @@ cve:
     enabled: true
     image:
       repository: ironbank/redhat/ubi/ubi9-minimal
+      # renovate: datasource=docker depName=registry1.dso.mil/ironbank/redhat/ubi/ubi9-minimal versioning=docker
       tag: "9.4"
     containerSecurityContext:
       capabilities:

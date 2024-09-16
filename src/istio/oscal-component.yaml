@@ -1065,7 +1065,7 @@ component-definition:
                   text: Check that Istio is healthy
                 - href: "#90738c86-6315-450a-ac69-cc50eb4859cc"
                   rel: lula
-                  text: Check that Istio is logging all traffic which could contain priviledged function calls
+                  text: Check that Istio is logging all traffic which could contain privileged function calls
                 - href: "#1761ac07-80dd-47d2-947e-09f67943b986"
                   rel: lula
                   text: All pods are istio injected with proxyv2 sidecar

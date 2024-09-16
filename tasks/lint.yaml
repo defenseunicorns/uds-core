@@ -5,9 +5,14 @@ tasks:
   - name: fix
     description: "Fix formatting issues in the repo"
     actions:
+      - description: install codespell deps
+        cmd: CMD=pip && which $CMD || CMD=pip3 && $CMD install codespell
       - description: "Pepr Format"
         cmd: npx pepr format
-
+      - description: Fix codespell lint issues
+        cmd: |
+          codespell || true
+          codespell -w
 
   - name: check
     description: "Run linting checks"
@@ -16,10 +21,12 @@ tasks:
         cmd: npm ci
       - description: "Pepr Format check"
         cmd: npx pepr format --validate-only
-      - description: install yamllint deps
-        cmd: CMD=pip && which $CMD || CMD=pip3 && $CMD install yamllint
+      - description: install yamllint and codespell deps
+        cmd: CMD=pip && which $CMD || CMD=pip3 && $CMD install yamllint codespell
       - description: yaml lint
         cmd: yamllint . -c .yamllint --no-warnings
+      - description: codespell lint
+        cmd: codespell
 
   - name: oscal
     actions:

@@ -1,0 +1,12 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+OUTPUT=$(npx lint-staged > /dev/null && echo $? || echo $?)
+
+if [ $OUTPUT -eq 0 ]; then
+    echo "\n\n✅ Lint Check Passed. ✅\n\n"
+    exit 0
+else
+    echo "\n\n❌ Lint Check failed... Run \`uds run lint-fix\` to resolve issues and re-commit. ❌\n\n"
+    exit 1
+fi
