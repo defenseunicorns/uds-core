@@ -67,7 +67,8 @@ customConfig:
         container: '{{`{{ kubernetes.container_name }}`}}'
         component: '{{`{{ kubernetes.pod_labels.component }}`}}'
         host: '{{`{{ kubernetes.pod_node_name }}`}}'
-        file: '{{`{{ file }}`}}'
+        filename: '{{`{{ file }}`}}'
+        collector: "vector"
       buffer:
         type: disk
         max_size: 1073741824 # 1GiB
@@ -81,7 +82,8 @@ customConfig:
       labels:
         job: '{{`{{ job }}`}}'
         host: '{{`{{ node_name }}`}}'
-        file: '{{`{{ file }}`}}'
+        filename: '{{`{{ file }}`}}'
+        collector: "vector"
       buffer:
         type: disk
         max_size: 1073741824 # 1GiB

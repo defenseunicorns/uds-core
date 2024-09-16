@@ -37,4 +37,6 @@ As with any decisions of tooling in core this can always be reevaluated in the f
 
 ### Upgrade Considerations
 
-During the upgrade there may be some duplication/overlap of log lines shipped to Loki due to the transition from Promtail's "position" file to Vector's "checkpoint" file (both used for tracking the last log line scraped/shipped). Grafana provides a built in feature to de-duplicate log entries when querying Loki.
+During the upgrade there may be some duplication/overlap of log lines shipped to Loki due to the transition from Promtail's "position" file to Vector's "checkpoint" file (both used for tracking the last log line scraped/shipped). Grafana provides a built in feature to de-duplicate log entries when querying Loki, but this does not consistently work with all log lines due to the approach used for de-duplication.
+
+To ensure easy querying of logs across the upgrade, all logs shipped by Vector also have a `collector` label (with the value of `vector`). This can be used to filter down any logs to either what was collected by Vector or what was not collected by Vector (using the `=` and `!=` operators). In general you can use these filters to filter so that any log timestamps from before your upgrade are not collected by Vector and vice-verse post-upgrade.
