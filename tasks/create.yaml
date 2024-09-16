@@ -60,13 +60,11 @@ tasks:
     actions:
       - description: "Build the UDS Core Pepr Module"
         cmd: |
-          if [ "${FLAVOR}" = "registry1" ] ; then
-            PEPR_OVERRIDE_IMAGE="--custom-image ${REGISTRY1_PEPR_IMAGE}"
-
           if [ -n "${PEPR_CUSTOM_IMAGE}" ] ; then
             # e.g. PEPR_CUSTOM_IMAGE="pepr:dev uds run slim-dev"
             PEPR_OVERRIDE_IMAGE="--custom-image ${PEPR_CUSTOM_IMAGE}"
-
+          elif [ "${FLAVOR}" = "registry1" ] ; then
+            PEPR_OVERRIDE_IMAGE="--custom-image ${REGISTRY1_PEPR_IMAGE}"
           else
             PEPR_OVERRIDE_IMAGE=""
           fi
