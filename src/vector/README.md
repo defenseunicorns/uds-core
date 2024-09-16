@@ -34,3 +34,7 @@ Vector has been chosen as our replacement for Promtail. Primary motivations incl
 1. Vector is [significantly more performant](https://github.com/vectordotdev/vector?tab=readme-ov-file#performance) than other tooling in the space on most categories of metrics.
 
 As with any decisions of tooling in core this can always be reevaluated in the future as different tools or factors affect how we look at our logging stack.
+
+### Upgrade Considerations
+
+During the upgrade there may be some duplication/overlap of log lines shipped to Loki due to the transition from Promtail's "position" file to Vector's "checkpoint" file (both used for tracking the last log line scraped/shipped). Grafana provides a built in feature to de-duplicate log entries when querying Loki.

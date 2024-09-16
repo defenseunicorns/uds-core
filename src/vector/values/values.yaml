@@ -3,6 +3,9 @@ role: "Agent"
 
 customConfig:
   data_dir: /var/lib/vector
+  # Ensure e2e delivery of events
+  acknowledgements:
+    enabled: true
   sources:
     pod_logs:
       type: "kubernetes_logs"
@@ -30,6 +33,14 @@ customConfig:
             .kubernetes.pod_labels.app = .kubernetes.pod_name
           }
         }
+        if !exists(.kubernetes.pod_labels.component) {
+          if exists(.kubernetes.pod_labels."app.kubernetes.io/component") {
+            .kubernetes.pod_labels.component = .kubernetes.pod_labels."app.kubernetes.io/component"
+          } else {
+            .kubernetes.pod_labels.component = ""
+          }
+        }
+
     node_logs_labelled:
       type: remap
       inputs: ["node_logs"]
@@ -54,6 +65,7 @@ customConfig:
         app: '{{`{{ kubernetes.pod_labels.app }}`}}'
         job: '{{`{{ kubernetes.pod_namespace }}`}}/{{`{{ kubernetes.pod_labels.app }}`}}'
         container: '{{`{{ kubernetes.container_name }}`}}'
+        component: '{{`{{ kubernetes.pod_labels.component }}`}}'
         host: '{{`{{ kubernetes.pod_node_name }}`}}'
         file: '{{`{{ file }}`}}'
       buffer:

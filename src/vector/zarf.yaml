@@ -17,7 +17,7 @@ components:
         valuesFiles:
           - values/upstream-values.yaml
     images:
-      - timberio/vector:0.40.2-distroless-static
+      - timberio/vector:0.41.1-distroless-static
 
   - name: vector
     required: true
@@ -31,7 +31,7 @@ components:
         valuesFiles:
           - values/registry1-values.yaml
     images:
-      - registry1.dso.mil/ironbank/opensource/timberio/vector:0.40.2
+      - registry1.dso.mil/ironbank/opensource/timberio/vector:0.41.1
 
   - name: vector
     required: true
@@ -45,4 +45,4 @@ components:
         valuesFiles:
           - values/unicorn-values.yaml
     images:
-      - cgr.dev/du-uds-defenseunicorns/vector:0.40.1 # todo: patch 0.40.2 update
+      - cgr.dev/du-uds-defenseunicorns/vector:0.41.1
