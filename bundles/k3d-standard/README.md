@@ -43,6 +43,9 @@ This bundle is used for demonstration, development, and testing of UDS Core. In 
 | `TENANT_TLS_CERT` | The TLS cert for the tenant gateway (must be base64 encoded) | tls.cert |
 | `TENANT_TLS_KEY` | The TLS key for the tenant gateway (must be base64 encoded) | tls.key |
 
+##### istio-tenant-gateway (gateway)
+| `TENANT_SERVICE_PORTS` | The ports that are exposed from the tenant gateway LoadBalancer (useful for non-HTTP(S) traffic) | service.ports |
+
 
 ## Override Examples:
 
