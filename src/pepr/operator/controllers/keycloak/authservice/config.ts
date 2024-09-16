@@ -5,6 +5,7 @@ import { Client } from "../types";
 import { buildChain, log } from "./authservice";
 import { Action, AuthserviceConfig } from "./types";
 
+// Operator configuration containing key settings for the namespace and secret management.
 export const operatorConfig = {
   namespace: "authservice",
   secretName: "authservice-uds",
@@ -12,34 +13,36 @@ export const operatorConfig = {
   realm: "uds",
 };
 
-// Tracks if there are changes that require a batched checksum update.
-let changesPending = false;
+// Variables to track debounce state
+let isDebounceScheduled = false;
+const DEBOUNCE_INTERVAL = 3000;
 
 /**
- * Initializes the authservice secret in Kubernetes if it does not exist.
- * This function is called during setup to ensure the necessary Kubernetes objects are present.
+ * Function to set up the Authservice secret if it does not exist.
+ * This function creates the necessary Kubernetes namespace and secret.
  */
 export async function setupAuthserviceSecret() {
   if (process.env.PEPR_WATCH_MODE === "true" || process.env.PEPR_MODE === "dev") {
     log.info("One-time authservice secret initialization");
 
-    // Create namespace if it doesn't exist
+    // Create namespace if it doesn't exist. Assumes this will not throw an error if the namespace already exists.
     await K8s(kind.Namespace).Apply({
       metadata: {
         name: operatorConfig.namespace,
       },
     });
 
-    // Create secret if it doesn't exist
+    // Attempt to retrieve the secret; if it doesn't exist, create it.
     try {
       const secret = await K8s(kind.Secret)
         .InNamespace(operatorConfig.namespace)
         .Get(operatorConfig.secretName);
       log.info(`Authservice Secret exists, skipping creation - ${secret.metadata?.name}`);
     } catch (e) {
+      // Secret does not exist; create it using the initial secret configuration.
       log.info("Secret does not exist, creating authservice secret");
       try {
-        await updateAuthServiceSecret(buildInitialSecret(), false); // Skip immediate checksum
+        updateAuthServiceSecret(buildInitialSecret(), false); // False to skip checksum on initial creation.
       } catch (err) {
         log.error(err, "Failed to create UDS managed authservice secret.");
         throw new Error("Failed to create UDS managed authservice secret.", { cause: err });
@@ -49,9 +52,11 @@ export async function setupAuthserviceSecret() {
 }
 
 /**
- * Builds an initial placeholder secret for the authservice. This is used until the first real chain is created.
+ * Builds the initial Authservice secret configuration.
+ * This configuration is a placeholder until the first chain is created.
+ * @returns {AuthserviceConfig} - The initial Authservice configuration.
  */
-function buildInitialSecret(): AuthserviceConfig {
+export function buildInitialSecret(): AuthserviceConfig {
   const config: AuthserviceConfig = {
     // Basic authservice configuration
     allow_unmatched_requests: false,
@@ -106,7 +111,8 @@ function buildInitialSecret(): AuthserviceConfig {
 }
 
 /**
- * Retrieves the current authservice configuration from the Kubernetes secret.
+ * Retrieves the current Authservice configuration from the Kubernetes secret.
+ * @returns {Promise<AuthserviceConfig>} - The current Authservice configuration.
  */
 export async function getAuthserviceConfig() {
   const authSvcSecret = await K8s(kind.Secret)
@@ -116,18 +122,75 @@ export async function getAuthserviceConfig() {
 }
 
 /**
- * Updates the authservice secret in Kubernetes with the new configuration.
- * Optionally, applies a checksum to the deployment immediately or defers it.
+ * High-level function to handle Authservice secret update with debounce.
+ * This prevents frequent updates within a short time span.
+ * @param authserviceConfig {AuthserviceConfig} - The Authservice configuration to update.
+ * @param checksum {boolean} - Whether to apply a checksum to the deployment after updating.
  */
-export async function updateAuthServiceSecret(
+export function updateAuthServiceSecret(authserviceConfig: AuthserviceConfig, checksum = true) {
+  debounceUpdate(() => performAuthServiceSecretUpdate(authserviceConfig, checksum));
+}
+
+/**
+ * Function to apply a checksum to the deployment to force a restart when configuration changes.
+ * @param checksum {string} - The checksum to apply to the deployment.
+ */
+export async function checksumDeployment(checksum: string) {
+  try {
+    await K8s(kind.Deployment, { name: "authservice", namespace: operatorConfig.namespace }).Patch([
+      {
+        op: "add",
+        path: "/spec/template/metadata/annotations/pepr.dev~1checksum",
+        value: checksum,
+      },
+    ]);
+    log.info(`Successfully applied the checksum to authservice`);
+  } catch (e) {
+    log.error(`Failed to apply the checksum to authservice: ${e.data?.message}`);
+    throw new Error("Failed to apply the checksum to authservice", { cause: e });
+  }
+}
+
+/**
+ * Pure function to execute an update with debouncing.
+ * Debouncing helps prevent multiple updates being triggered in a short period.
+ * @param updateFn {() => Promise<void>} - The function to debounce.
+ * @param interval {number} - The debounce interval in milliseconds.
+ */
+export function debounceUpdate(
+  updateFn: () => Promise<void>,
+  interval: number = DEBOUNCE_INTERVAL,
+): void {
+  if (!isDebounceScheduled) {
+    isDebounceScheduled = true;
+
+    setTimeout(async () => {
+      try {
+        await updateFn();
+      } catch (error) {
+        log.error("Error during update:", error);
+      }
+
+      // Reset the debounce flag after the update
+      isDebounceScheduled = false;
+    }, interval);
+  }
+}
+
+/**
+ * Function that contains only the logic of updating the Authservice secret.
+ * @param authserviceConfig {AuthserviceConfig} - The configuration to apply.
+ * @param checksum {boolean} - Whether to apply a checksum after updating.
+ */
+export async function performAuthServiceSecretUpdate(
   authserviceConfig: AuthserviceConfig,
-  applyChecksum = false,
+  checksum: boolean = true,
 ) {
   const config = btoa(JSON.stringify(authserviceConfig));
   const configHash = createHash("sha256").update(config).digest("hex");
 
   try {
-    // Write the updated config to the Kubernetes secret
+    // Write the authservice config to the secret
     await K8s(kind.Secret).Apply(
       {
         metadata: {
@@ -140,58 +203,14 @@ export async function updateAuthServiceSecret(
       },
       { force: true },
     );
+    log.info("Updated authservice secret successfully");
   } catch (e) {
-    log.error(e, `Failed to write authservice secret`);
+    log.error(e, "Failed to write authservice secret");
     throw new Error("Failed to write authservice secret", { cause: e });
   }
 
-  log.info("Updated authservice secret successfully");
-
-  if (applyChecksum) {
-    // Apply the checksum immediately
-    await applyChecksumToDeployment(configHash);
-  } else {
-    // Mark a pending change for a batched checksum update
-    changesPending = true;
-  }
-}
-
-/**
- * Applies a checksum annotation to the authservice deployment to trigger a restart.
- */
-async function applyChecksumToDeployment(checksum: string) {
-  try {
-    await K8s(kind.Deployment, { name: "authservice", namespace: operatorConfig.namespace }).Patch([
-      {
-        op: "add",
-        path: "/spec/template/metadata/annotations/pepr.dev~1checksum",
-        value: checksum,
-      },
-    ]);
-
-    log.info(`Successfully applied the checksum to authservice`);
-  } catch (e) {
-    log.error(`Failed to apply the checksum to authservice: ${e.data?.message}`);
-    throw new Error("Failed to apply the checksum to authservice", { cause: e });
-  }
-}
-
-/**
- * Applies the checksum to the deployment if there are pending changes.
- * This function is called at the end of processing a batch of changes.
- */
-export async function applyBatchedChecksumIfNeeded() {
-  if (changesPending) {
-    try {
-      const config = await getAuthserviceConfig();
-      const configStr = JSON.stringify(config);
-      const configHash = createHash("sha256").update(configStr).digest("hex");
-
-      await applyChecksumToDeployment(configHash); // Apply the checksum
-      changesPending = false; // Reset the flag after applying
-      log.info("Batched checksum applied successfully.");
-    } catch (e) {
-      log.error(`Failed to batch apply checksum: ${e}`);
-    }
+  if (checksum) {
+    log.info("Adding checksum to deployment authservice secret successfully");
+    await checksumDeployment(configHash);
   }
 }

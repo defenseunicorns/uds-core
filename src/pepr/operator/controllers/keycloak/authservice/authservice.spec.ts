@@ -1,22 +1,13 @@
-import { afterEach, beforeEach, describe, expect, jest, test } from "@jest/globals";
-import { Protocol, UDSPackage } from "../../../crd";
+import { beforeEach, describe, expect, jest, test } from "@jest/globals";
+import { UDSPackage } from "../../../crd";
 import { Client } from "../types";
 import { updatePolicy } from "./authorization-policy";
-import { authservice, buildChain, buildConfig } from "./authservice";
-import * as ConfigModule from "./config"; // Import the module where getAuthserviceConfig is defined
-import {
-  applyBatchedChecksumIfNeeded,
-  getAuthserviceConfig,
-  updateAuthServiceSecret,
-} from "./config";
+import { buildChain, buildConfig } from "./authservice";
 import * as mockConfig from "./mock-authservice-config.json";
 import { Action, AuthServiceEvent, AuthserviceConfig } from "./types";
 
-jest.mock("./config");
-
 describe("authservice", () => {
   let mockClient: Client;
-  let mockApplyBatchedChecksumIfNeeded: jest.Mock;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -48,45 +39,6 @@ describe("authservice", () => {
       surrogateAuthRequired: false,
       webOrigins: [],
     };
-
-    // Mock the applyBatchedChecksumIfNeeded function to prevent actual execution
-    mockApplyBatchedChecksumIfNeeded = applyBatchedChecksumIfNeeded as jest.Mock;
-
-    // Mock getAuthserviceConfig to return a valid configuration
-    const validConfig: AuthserviceConfig = {
-      allow_unmatched_requests: false,
-      listen_address: "0.0.0.0",
-      listen_port: "10003",
-      log_level: "info",
-      default_oidc_config: {
-        skip_verify_peer_cert: false,
-        authorization_uri: "https://sso.example.com/realms/uds/protocol/openid-connect/auth",
-        token_uri: "https://sso.example.com/realms/uds/protocol/openid-connect/token",
-        jwks_fetcher: {
-          jwks_uri: "https://sso.example.com/realms/uds/protocol/openid-connect/certs",
-          periodic_fetch_interval_sec: 60,
-        },
-        client_id: "global_id",
-        client_secret: "global_secret",
-        id_token: {
-          preamble: "Bearer",
-          header: "Authorization",
-        },
-        trusted_certificate_authority: "some-cert",
-        logout: {
-          path: "/globallogout",
-          redirect_uri: "https://sso.example.com/realms/uds/protocol/openid-connect/token/logout",
-        },
-        absolute_session_timeout: "0",
-        idle_session_timeout: "0",
-        scopes: [],
-      },
-      threads: 8,
-      chains: [], // Ensure chains is initialized as an empty array
-    };
-
-    // Mock module method to return valid config
-    jest.spyOn(ConfigModule, "getAuthserviceConfig").mockResolvedValue(validConfig);
   });
 
   test("should test authservice chain build", async () => {
@@ -104,7 +56,9 @@ describe("authservice", () => {
     );
 
     expect(chain.filters[0].oidc_override.client_id).toEqual(mockClient.clientId);
+
     expect(chain.filters[0].oidc_override.client_secret).toEqual(mockClient.secret);
+
     expect(chain.filters[0].oidc_override.callback_uri).toEqual(mockClient.redirectUris[0]);
   });
 
@@ -166,59 +120,5 @@ describe("authservice", () => {
     } catch (e) {
       expect(e).toBeUndefined();
     }
-  });
-
-  test("should update config without applying checksum immediately", async () => {
-    const mockUpdateAuthServiceSecret = updateAuthServiceSecret as jest.MockedFunction<
-      typeof updateAuthServiceSecret
-    >;
-    mockUpdateAuthServiceSecret.mockResolvedValueOnce();
-
-    const config = await getAuthserviceConfig();
-    jest.spyOn(ConfigModule, "getAuthserviceConfig").mockResolvedValue(config);
-
-    await updateAuthServiceSecret(config, false);
-
-    expect(mockUpdateAuthServiceSecret).toHaveBeenCalledWith(config, false);
-    expect(mockApplyBatchedChecksumIfNeeded).not.toHaveBeenCalled();
-  });
-
-  test("should apply batched checksum after processing all changes", async () => {
-    const pkg: UDSPackage = {
-      kind: "Package",
-      apiVersion: "uds.dev/v1alpha1",
-      metadata: {
-        name: "test",
-        namespace: "default",
-        generation: 1,
-        uid: "f50120aa-2713-4502-9496-566b102b1174",
-      },
-      spec: {
-        sso: [
-          {
-            clientId: "test-client",
-            enableAuthserviceSelector: { someKey: "someValue" },
-            name: "Test SSO Client",
-            protocol: Protocol.OpenidConnect,
-            enabled: true,
-          },
-        ],
-      },
-      status: {
-        authserviceClients: ["test-client"],
-      },
-    };
-
-    const clients = new Map<string, Client>();
-    clients.set(mockClient.clientId, mockClient);
-
-    await authservice(pkg, clients);
-
-    // Ensure that batched checksum is applied after processing changes
-    expect(mockApplyBatchedChecksumIfNeeded).toHaveBeenCalled();
-  });
-
-  afterEach(() => {
-    jest.clearAllMocks();
   });
 });
