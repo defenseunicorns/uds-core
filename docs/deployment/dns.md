@@ -25,7 +25,7 @@ istio-tenant-gateway   tenant-gateway   1h
 
 ### Bundle Configuration
 {{% alert-note %}}
-UDS Core does not include any cloud provider specific configuration by default. Additional overrides are required to deploy UDS Core on a given provider. This section will refer to AWS, but values can be subsituted as needed for other providers.
+UDS Core does not include any cloud provider specific configuration by default. Additional overrides are required to deploy UDS Core on a given provider. This section will refer to AWS, but values can be substituted as needed for other providers.
 {{% /alert-note %}}
 
 The Admin and Tenant Gateways will be each be bound to an external LoadBalancer that is exposed on TCP ports 80 and 443 by default. The Admin Gateway should be configured to use an internal facing LoadBalancer and the Tenant Gateway should be configured to use an external facing LoadBalancer. Below is an example of overrides that would accomplish this:
@@ -62,7 +62,7 @@ overrides:
         value: "load_balancing.cross_zone.enabled=true"        
 ```
 {{% alert-note %}}
-These service annotaions and their values are subject to change. Please reference documentation from your cloud provider to ensure their validity.
+These service annotations and their values are subject to change. Please reference documentation from your cloud provider to ensure their validity.
 {{% /alert-note %}}
 
 From here, you may create DNS records to associate each LoadBalancer with its appropriate domain name.
