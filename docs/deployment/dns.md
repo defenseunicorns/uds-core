@@ -6,22 +6,14 @@ weight: 2
 
 UDS Core deploys two Gateways by default - a Tenant Gateway for end-user applications and an Admin Gateway for administrative applications. You can read more about Istio configuration in UDS Core [here](https://uds.defenseunicorns.com/core/configuration/istio/ingress/). This section covers how to configure DNS for these Gateways.
 
-### Host Name Configuration
+### Domain Configuration
 Each Gateway is associated to a wildcard DNS entry that is derived from the `DOMAIN` [variable](https://github.com/defenseunicorns/uds-core/blob/e624d73f79bd6739b6808fbdbf5ca75ebb7c1d3c/src/istio/zarf.yaml#L8) in the UDS Core Istio package. When deploying UDS Core, you can expect two Gateways to be created that match the following domain names:
 - *.<DOMAIN> / Tenant Gateway
 - *.admin.<DOMAIN> / Admin Gateway
 
 {{% alert-note %}}
-The default value for `DOMAIN` is `uds.dev`, which is intended for development purposes only. For non-development purposes, you should override this value by specifying a value for `domain` in your `uds-config.yaml`. You can read more about overriding variables [here](https://uds.defenseunicorns.com/cli/quickstart-and-usage/#variables-and-configuration). 
+The default value for `DOMAIN` is `uds.dev`, which is intended for development purposes only. For non-development purposes, you should override this value by specifying a value for `domain` in your `uds-config.yaml`. You can find instructions on how to do so [here](https://uds.defenseunicorns.com/core/configuration/istio/ingress/#configure-domain-name-and-tls-for-istio-gateways). 
 {{% /alert-note %}}
-
-You can find each Gateway resource in a dedicated namespace:
-```cli
-$ kubectl get gateway -A
-NAMESPACE              NAME             AGE
-istio-admin-gateway    admin-gateway    1h
-istio-tenant-gateway   tenant-gateway   1h
-```
 
 ### Bundle Configuration
 {{% alert-note %}}
@@ -65,4 +57,23 @@ overrides:
 These service annotations and their values are subject to change. Please reference documentation from your cloud provider to ensure their validity.
 {{% /alert-note %}}
 
-From here, you may create DNS records to associate each LoadBalancer with its appropriate domain name.
+### Istio Gateways
+Once UDS Core is deployed, there will be Istio Gateway resources in your cluster. You can find each Gateway in a dedicated namespace:
+```cli
+$ kubectl get gateway -A
+NAMESPACE              NAME             AGE
+istio-admin-gateway    admin-gateway    1h
+istio-tenant-gateway   tenant-gateway   1h
+```
+
+Each Gateway will have a Kubernetes Service of type LoadBalancer:
+```cli
+$ kubectl get svc -A | grep LoadBalancer
+NAMESPACE                   NAME                                             TYPE           CLUSTER-IP      EXTERNAL-IP                                        PORT(S)                                     AGE
+istio-admin-gateway         admin-ingressgateway                             LoadBalancer   10.43.82.84     k8s-istioadm-admin...elb.us-east-1.amazonaws.com   15021:30842/TCP,80:31304/TCP,443:31518/TCP  1h
+istio-tenant-gateway        tenant-ingressgateway                            LoadBalancer   10.43.47.182    k8s-istioten-tenant...elb.us-east-1.amazonaws.com  15021:31222/TCP,80:30456/TCP,443:32508/TCP  1h
+```
+
+From here, you can use AWS Hosted Zones to register your domain name and/or create DNS records for environment that point to the appropriate Istio Gateways. See the [AWS Documentation](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/routing-to-elb-load-balancer.html) for more information. 
+
+If you are using a DNS provider other than AWS, you may want to consider using CNAME records to point to the DNS records of the Elastic IPs of your Load Balancers.
