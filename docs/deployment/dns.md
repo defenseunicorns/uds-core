@@ -36,9 +36,6 @@ metadata:
   description: A UDS example bundle for deploying UDS Core with external Load Balancer configuration
   version: "0.0.1"
   
-shared:
-  domain: yourawesomedomain.com #overrides default value of uds.dev
-
 packages:
   - name: core
     repository: oci://ghcr.io/defenseunicorns/packages/uds/core
