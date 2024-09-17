@@ -4,10 +4,10 @@ type: docs
 weight: 2
 ---
 
-UDS Core deploys two Gateways by default - a Tenant Gateway for end-user applications and an Admin Gateway for administrative applications. Our istio configuration is covered in a different section, you can read more [here](https://uds.defenseunicorns.com/core/configuration/istio/ingress/).
+UDS Core deploys two Gateways by default - a Tenant Gateway for end-user applications and an Admin Gateway for administrative applications. You can read more about Istio configuration in UDS Core [here](https://uds.defenseunicorns.com/core/configuration/istio/ingress/). This section covers how to configure DNS for these Gateways.
 
 ### Host Name Configuration
-By default, each Gateway assumes a wildcard DNS entry that is dervived from the `DOMAIN` [variable](https://github.com/defenseunicorns/uds-core/blob/e624d73f79bd6739b6808fbdbf5ca75ebb7c1d3c/src/istio/zarf.yaml#L8) in the UDS Core Istio package. When deploying UDS Core, you can expect two Gateways to be created that match the following hosts:
+Each Gateway is associated to a wildcard DNS entry that is derived from the `DOMAIN` [variable](https://github.com/defenseunicorns/uds-core/blob/e624d73f79bd6739b6808fbdbf5ca75ebb7c1d3c/src/istio/zarf.yaml#L8) in the UDS Core Istio package. When deploying UDS Core, you can expect two Gateways to be created that match the following domain names:
 - *.<DOMAIN> / Tenant Gateway
 - *.admin.<DOMAIN> / Admin Gateway
 
@@ -15,7 +15,7 @@ By default, each Gateway assumes a wildcard DNS entry that is dervived from the 
 The default value for `DOMAIN` is `uds.dev`, which is intended for development purposes only. For non-development purposes, you should override this value by specifying a value for `domain` in your `uds-config.yaml`. You can read more about overriding variables [here](https://uds.defenseunicorns.com/cli/quickstart-and-usage/#variables-and-configuration). 
 {{% /alert-note %}}
 
-Upon deployment of UDS Core, you can find each Gateway in a dedicated namespace:
+You can find each Gateway resource in a dedicated namespace:
 ```cli
 $ kubectl get gateway -A
 NAMESPACE              NAME             AGE
@@ -28,7 +28,7 @@ istio-tenant-gateway   tenant-gateway   1h
 UDS Core does not include any cloud provider specific configuration by default. Additional overrides are required to deploy UDS Core on a given provider. This section will refer to AWS, but values can be subsituted as needed for other providers.
 {{% /alert-note %}}
 
-The Admin and Tenant Gateways will be each be bound to an external LoadBalancer that is exposed on TCP ports 80 and 443 by default. These Gateways should be configured to use an internal facing LoadBalancer for the Admin Gateway and an external facing LoadBalancer for the Tenant Gateway. Below is an example of overrides that would accomplish this:
+The Admin and Tenant Gateways will be each be bound to an external LoadBalancer that is exposed on TCP ports 80 and 443 by default. The Admin Gateway should be configured to use an internal facing LoadBalancer and the Tenant Gateway should be configured to use an external facing LoadBalancer. Below is an example of overrides that would accomplish this:
 ```yaml
 kind: UDSBundle
 metadata:
@@ -43,6 +43,7 @@ packages:
   - name: core
     repository: oci://ghcr.io/defenseunicorns/packages/uds/core
     ref: 0.27.0-upstream
+
 overrides:
  istio-admin-gateway:
    gateway:
@@ -67,4 +68,4 @@ overrides:
 These service annotaions and their values are subject to change. Please reference documentation from your cloud provider to ensure their validity.
 {{% /alert-note %}}
 
-From here, you may configure your DNS provider to point at the IP addresses of these LoadBalancers.
+From here, you may create DNS records to associate each LoadBalancer with its appropriate domain name.
