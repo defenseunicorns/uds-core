@@ -22,23 +22,22 @@ customConfig:
       type: remap
       inputs: ["pod_logs"]
       source: |
-        if !exists(.kubernetes.pod_labels.app) {
-          if exists(.kubernetes.pod_labels."app.kubernetes.io/name") {
-            .kubernetes.pod_labels.app = .kubernetes.pod_labels."app.kubernetes.io/name"
-          } else if exists(.kubernetes.pod_labels.name) {
-            .kubernetes.pod_labels.app = .kubernetes.pod_labels.name
-          } else if exists(.kubernetes.pod_owner) {
-            .kubernetes.pod_labels.app = .kubernetes.pod_owner
-          } else {
-            .kubernetes.pod_labels.app = .kubernetes.pod_name
-          }
+        if exists(.kubernetes.pod_labels."app.kubernetes.io/name") {
+          .app = .kubernetes.pod_labels."app.kubernetes.io/name"
+        } else if exists(.kubernetes.pod_labels.app) {
+          .app = .kubernetes.pod_labels.app
+        } else if exists(.kubernetes.pod_owner) {
+          .app = replace!(.kubernetes.pod_owner, r'^([^/]+/)', "")
+        } else {
+          .app = .kubernetes.pod_name
         }
-        if !exists(.kubernetes.pod_labels.component) {
-          if exists(.kubernetes.pod_labels."app.kubernetes.io/component") {
-            .kubernetes.pod_labels.component = .kubernetes.pod_labels."app.kubernetes.io/component"
-          } else {
-            .kubernetes.pod_labels.component = ""
-          }
+
+        if exists(.kubernetes.pod_labels."app.kubernetes.io/component") {
+          .component = .kubernetes.pod_labels."app.kubernetes.io/component"
+        } else if !exists(.kubernetes.pod_labels.component) {
+          .component = .kubernetes.pod_labels.component
+        } else {
+          .component = ""
         }
 
     node_logs_labelled:
@@ -62,10 +61,10 @@ customConfig:
         codec: "raw_message"
       labels:
         namespace: '{{`{{ kubernetes.pod_namespace }}`}}'
-        app: '{{`{{ kubernetes.pod_labels.app }}`}}'
-        job: '{{`{{ kubernetes.pod_namespace }}`}}/{{`{{ kubernetes.pod_labels.app }}`}}'
+        app: '{{`{{ app }}`}}'
+        job: '{{`{{ kubernetes.pod_namespace }}`}}/{{`{{ app }}`}}'
         container: '{{`{{ kubernetes.container_name }}`}}'
-        component: '{{`{{ kubernetes.pod_labels.component }}`}}'
+        component: '{{`{{ component }}`}}'
         host: '{{`{{ kubernetes.pod_node_name }}`}}'
         filename: '{{`{{ file }}`}}'
         collector: "vector"

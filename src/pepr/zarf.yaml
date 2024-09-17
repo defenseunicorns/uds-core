@@ -52,7 +52,9 @@ components:
     actions:
       onDeploy:
         before:
-          - cmd: |
+          - mute: true
+            description: "Update helm ownership for Pepr resources if necessary during the upgrade"
+            cmd: |
               ./zarf tools kubectl annotate secret -n pepr-system pepr-uds-core-api-token meta.helm.sh/release-name=module --overwrite || true
               ./zarf tools kubectl annotate secret -n pepr-system pepr-uds-core-module meta.helm.sh/release-name=module --overwrite || true
               ./zarf tools kubectl annotate secret -n pepr-system pepr-uds-core-tls meta.helm.sh/release-name=module --overwrite || true

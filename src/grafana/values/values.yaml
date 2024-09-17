@@ -22,6 +22,9 @@ grafana.ini:
     reporting_enabled: false
     check_for_updates: false
     check_for_plugin_updates: false
+    feedback_links_enabled: false
+  plugins:
+    public_key_retrieval_disabled: true
   auth:
     # Disable the login form to force users to use SSO
     disable_login_form: true
