@@ -6,7 +6,7 @@ This bundle is used for demonstration, development, and testing of UDS Core. In 
 - [Minio](<https://min.io/>) - In-cluster S3 Object Storage (See below for more details)
 - [Local Path Provisioner](<https://github.com/rancher/local-path-provisioner>) - Storage Provider with RWX configured
 - [MetalLB](https://metallb.universe.tf/) - Provides type: LoadBalancer for cluster resources and Istio Gateways
-- [HAProxy](https://www.haproxy.org/) - Utilizes k3d host port mapping to bind ports 80 and 443, facilitating local FQDN-based routing through ACLs to MetalLB load balancer backends for Istio Gateways serving *.uds.dev, keycloak.uds.dev, and *.admin.uds.dev.
+- [NGINX](https://nginx.org/) - Utilizes k3d host port mapping to bind ports 80 and 443, facilitating local FQDN-based routing through ACLs to MetalLB load balancer backends for Istio Gateways serving *.uds.dev, keycloak.uds.dev, and *.admin.uds.dev.
 
 ## Available Overrides
 ### Package: uds-k3d
