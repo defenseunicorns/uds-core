@@ -76,4 +76,4 @@ istio-tenant-gateway        tenant-ingressgateway                            Loa
 
 From here, you can use AWS Hosted Zones to register your domain name and/or create DNS records for environment that point to the appropriate Istio Gateways. See the [AWS Documentation](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/routing-to-elb-load-balancer.html) for more information. 
 
-If you are using a DNS provider other than AWS, you may want to consider using CNAME records to point to the DNS records for the Elastic IPs of your Load Balancers.
+For DNS providers outside of AWS, you can create A records that point to the Public IP address(es) of your Load Balancers.
