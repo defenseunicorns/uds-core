@@ -25,13 +25,13 @@ components:
         gitPath: charts/core
         valuesFiles:
           - ../values/values.yaml
-      - name: monitor
-        url: https://neuvector.github.io/neuvector-helm/
-        version: 2.7.9
-        namespace: neuvector
-        gitPath: charts/monitor
-        valuesFiles:
-          - ../values/monitor-values.yaml
+      # - name: monitor
+      #   url: https://neuvector.github.io/neuvector-helm/
+      #   version: 2.7.9
+      #   namespace: neuvector
+      #   gitPath: charts/monitor
+      #   valuesFiles:
+      #     - ../values/monitor-values.yaml
     actions:
       onDeploy:
         after:
