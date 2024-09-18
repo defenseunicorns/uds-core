@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.27.2](https://github.com/defenseunicorns/uds-core/compare/v0.27.1...v0.27.2) (2024-09-18)
+
+
+### Bug Fixes
+
+* use boltdb-shipper store by default for loki ([#779](https://github.com/defenseunicorns/uds-core/issues/779)) ([e438e12](https://github.com/defenseunicorns/uds-core/commit/e438e12bef407587c67e2abf41ad26e3310cefd5))
+
 ## [0.27.1](https://github.com/defenseunicorns/uds-core/compare/v0.27.0...v0.27.1) (2024-09-18)
 
 
