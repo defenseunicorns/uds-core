@@ -20,7 +20,7 @@ The default value for `DOMAIN` is `uds.dev`, which is intended for development p
 UDS Core does not include any cloud provider specific configuration by default. Additional overrides are required to deploy UDS Core on a given provider. This section will refer to AWS, but values can be substituted as needed for other providers.
 {{% /alert-note %}}
 
-The Admin and Tenant Gateways will be each be bound to an external LoadBalancer that is exposed on TCP ports 80 and 443 by default. The Admin Gateway should be configured to use an internal facing LoadBalancer and the Tenant Gateway should be configured to use an external facing LoadBalancer. Below is an example of overrides that would accomplish this:
+The Admin and Tenant Gateways will be each be bound to an external Load Balancer that is exposed on TCP ports 80 and 443 by default. The Admin Gateway should be configured to use an internal facing Load Balancer and the Tenant Gateway should be configured to use an external facing Load Balancer. Below is an example of overrides that would accomplish this:
 ```yaml
 kind: UDSBundle
 metadata:
@@ -66,7 +66,7 @@ istio-admin-gateway    admin-gateway    1h
 istio-tenant-gateway   tenant-gateway   1h
 ```
 
-Each Gateway will have a Kubernetes Service of type LoadBalancer:
+Each Gateway will have a Kubernetes Service of type Load Balancer:
 ```cli
 $ kubectl get svc -A | grep LoadBalancer
 NAMESPACE                   NAME                                             TYPE           CLUSTER-IP      EXTERNAL-IP                                        PORT(S)                                     AGE
@@ -74,6 +74,4 @@ istio-admin-gateway         admin-ingressgateway                             Loa
 istio-tenant-gateway        tenant-ingressgateway                            LoadBalancer   10.43.47.182    k8s-istioten-tenant...elb.us-east-1.amazonaws.com  15021:31222/TCP,80:30456/TCP,443:32508/TCP  1h
 ```
 
-From here, you can use AWS Hosted Zones to register your domain name and/or create DNS records for environment that point to the appropriate Istio Gateways. See the [AWS Documentation](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/routing-to-elb-load-balancer.html) for more information. 
-
-For DNS providers outside of AWS, you can create A records that point to the Public IP address(es) of your Load Balancers.
+From here, DNS records can be created for the environment. You can create A records that associate your top-level domain to the Public IP Addresses of your Load Balancers. For subdomains, CNAME records can be used. For more information on how to configure DNS in AWS, see this [documentation](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/routing-to-elb-load-balancer.html).
