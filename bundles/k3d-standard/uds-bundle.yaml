@@ -94,6 +94,11 @@ packages:
             - name: TENANT_TLS_KEY
               description: "The TLS key for the tenant gateway (must be base64 encoded)"
               path: tls.key
+        gateway:
+          variables:
+            - name: TENANT_SERVICE_PORTS
+              description: "The ports that are exposed from the tenant gateway LoadBalancer (useful for non-HTTP(S) traffic)"
+              path: "service.ports"
       keycloak:
         keycloak:
           variables:
