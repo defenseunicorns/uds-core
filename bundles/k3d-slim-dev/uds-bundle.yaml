@@ -3,13 +3,13 @@ metadata:
   name: k3d-core-slim-dev
   description: A UDS bundle for deploying Istio from UDS Core on a development cluster
   # x-release-please-start-version
-  version: "0.27.0"
+  version: "0.27.1"
   # x-release-please-end
 
 packages:
   - name: uds-k3d-dev
     repository: ghcr.io/defenseunicorns/packages/uds-k3d
-    ref: 0.8.0
+    ref: 0.9.0
     overrides:
       uds-dev-stack:
         minio:
@@ -34,7 +34,7 @@ packages:
   - name: core-slim-dev
     path: ../../build/
     # x-release-please-start-version
-    ref: 0.27.0
+    ref: 0.27.1
     # x-release-please-end
     overrides:
       istio-admin-gateway:
@@ -55,6 +55,11 @@ packages:
             - name: TENANT_TLS_KEY
               description: "The TLS key for the tenant gateway (must be base64 encoded)"
               path: tls.key
+        gateway:
+          variables:
+            - name: TENANT_SERVICE_PORTS
+              description: "The ports that are exposed from the tenant gateway LoadBalancer (useful for non-HTTP(S) traffic)"
+              path: "service.ports"
       keycloak:
         keycloak:
           variables:

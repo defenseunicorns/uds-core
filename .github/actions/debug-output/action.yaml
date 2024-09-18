@@ -7,18 +7,18 @@ runs:
     - name: Print basic debug info for a k8s cluster
       run: |
         echo "::group::kubectl get all"
-        uds zarf tools kubectl get all -A | tee /tmp/debug-k-get-all.log
+        uds zarf tools kubectl get all -A | tee /tmp/debug-k-get-all.log || true
         echo "::endgroup::"
         echo "::group::kubectl get pv,pvc"
-        uds zarf tools kubectl get pv,pvc -A | tee /tmp/debug-k-get-pv-pvc.log
+        uds zarf tools kubectl get pv,pvc -A | tee /tmp/debug-k-get-pv-pvc.log || true
         echo "::endgroup::"
         echo "::group::kubectl get package"
-        uds zarf tools kubectl get package -A | tee /tmp/debug-k-get-package.log
+        uds zarf tools kubectl get package -A | tee /tmp/debug-k-get-package.log || true
         echo "::endgroup::"
         echo "::group::kubectl get events"
-        uds zarf tools kubectl get events -A --sort-by='.lastTimestamp' | tee /tmp/debug-k-get-events.log
+        uds zarf tools kubectl get events -A --sort-by='.lastTimestamp' | tee /tmp/debug-k-get-events.log || true
         echo "::endgroup::"
         echo "::group::kubectl describe nodes"
-        uds zarf tools kubectl describe nodes k3d-uds-server-0 | tee /tmp/debug-k-describe-node.log
+        uds zarf tools kubectl describe nodes k3d-uds-server-0 | tee /tmp/debug-k-describe-node.log || true
         echo "::endgroup::"
       shell: bash
