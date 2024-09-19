@@ -94,6 +94,12 @@ components:
     import:
       path: ../../src/authservice
 
+  # UDS Runtime
+  - name: uds-runtime
+    required: false
+    import:
+      path: ../../src/runtime
+
   # Velero
   - name: velero
     required: true
