@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.27.3](https://github.com/defenseunicorns/uds-core/compare/v0.27.2...v0.27.3) (2024-09-19)
+
+
+### Miscellaneous
+
+* add uds-runtime as an optional component in core ([#788](https://github.com/defenseunicorns/uds-core/issues/788)) ([a2dfede](https://github.com/defenseunicorns/uds-core/commit/a2dfede9eedb5a99265676437e40eab9eead5208))
+
 ## [0.27.2](https://github.com/defenseunicorns/uds-core/compare/v0.27.1...v0.27.2) (2024-09-18)
 
 
