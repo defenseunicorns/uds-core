@@ -1,0 +1,16 @@
+tasks:
+  - name: validate
+    actions:
+      - description: Validate Runtime Pod
+        wait:
+          cluster:
+            kind: Pod
+            name: app=uds-runtime
+            condition: Ready
+            namespace: uds-runtime
+      - description: Validate Runtime Interface
+        wait:
+          network:
+            protocol: https
+            address: runtime.admin.uds.dev
+            code: 200
