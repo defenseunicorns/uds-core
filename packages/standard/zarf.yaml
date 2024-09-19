@@ -96,7 +96,7 @@ components:
 
   # UDS Runtime
   - name: uds-runtime
-    required: true
+    required: false
     import:
       path: ../../src/runtime
 
