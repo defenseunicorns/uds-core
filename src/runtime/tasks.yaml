@@ -1,0 +1,32 @@
+tasks:
+  - name: validate
+    actions:
+      - description: Validate Runtime Pod
+        wait:
+          cluster:
+            kind: Pod
+            name: app=uds-runtime
+            condition: Ready
+            namespace: uds-runtime
+      - description: Validate Runtime Interface
+        wait:
+          network:
+            protocol: https
+            address: runtime.admin.uds.dev
+            code: 200
+      - description: Verify Runtime is protected by checking redirect
+        maxRetries: 3
+        cmd: |
+          set -e
+          SSO_REDIRECT=$(uds zarf tools kubectl run curl-test --image=cgr.dev/chainguard/curl:latest -q --restart=Never --rm -i -- -Ls -o /dev/null -w %{url_effective} "https://runtime.admin.uds.dev")
+          case "${SSO_REDIRECT}" in
+          "https://sso.uds.dev"*)
+              echo "Protected by authservice"
+              ;;
+          *)
+              # Fallback option if the condition is false
+              echo "Runtime is not protected by authservice"
+              echo $SSO_REDIRECT
+              exit 1
+              ;;
+          esac
