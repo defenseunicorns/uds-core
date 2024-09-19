@@ -8,11 +8,11 @@ components:
   - name: uds-runtime
     required: true
     images:
-      - ghcr.io/defenseunicorns/uds-runtime:nightly-unstable # 0.4.0
+      - ghcr.io/defenseunicorns/uds-runtime:nightly-unstable
     charts:
       - name: uds-runtime
         namespace: uds-runtime
-        version: nightly-unstable # v0.4.0
+        version: "nightly-unstable"
         url: https://github.com/defenseunicorns/uds-runtime.git
         gitPath: chart
         valuesFiles:
