@@ -2,7 +2,7 @@ includes:
   - create: ./create.yaml
   - setup: ./setup.yaml
   - deploy: ./deploy.yaml
-  - compliance: https://raw.githubusercontent.com/defenseunicorns/uds-common/v0.12.0/tasks/compliance.yaml
+  - compliance: https://raw.githubusercontent.com/defenseunicorns/uds-common/v0.13.0/tasks/compliance.yaml
 
 tasks:
   - name: single-package
