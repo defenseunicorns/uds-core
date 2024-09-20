@@ -48,7 +48,17 @@ We apply these general principles to all User Stories and activities contributin
 
 ## Getting Started
 
-TBD
+For development of the UDS Operator, a development cluster is required. You can
+run one w/ the `dev-setup` UDS Task. Note that this will create a k3d cluster
+on your local machine. Ensure you have an up-to-date version of k3d installed,
+as older versions can cause failure of the UDS Core development environment.
+
+```bash
+uds run dev-setup
+```
+
+This will create a cluster and then print instructions for further development
+of the UDS Operator Pepr module.
 
 ## Submitting a Pull Request
 
