@@ -7,3 +7,4 @@ operator:
   AUTHSERVICE_REDIS_URI: "###ZARF_VAR_AUTHSERVICE_REDIS_URI###"
   # Allow Pepr watch to be configurable to react to dropped connections faster
   PEPR_LAST_SEEN_LIMIT_SECONDS: "300"
+  PEPR_RECONCILE_STRATEGY: "kindNsName"

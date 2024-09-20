@@ -5,7 +5,21 @@ import { Client } from "../types";
 import { buildChain, log } from "./authservice";
 import { Action, AuthserviceConfig } from "./types";
 
-// Operator configuration containing key settings for the namespace and secret management.
+// Cache for in-memory secret to avoid unnecessary Kubernetes secret lookups
+let inMemorySecret: AuthserviceConfig | null = null;
+
+// Track pending package updates and their resolve functions
+const pendingPackages: Map<AuthserviceConfig, () => void> = new Map();
+
+// Backup for the last known successful state of the secret
+let lastSuccessfulSecret: AuthserviceConfig | null = null;
+
+// Timer for debouncing updates to the secret
+let debounceTimer: NodeJS.Timeout | null = null;
+
+// Debounce duration (12 seconds) to reduce excessive updates, configurable via environment variable
+const DEBOUNCE_DURATION = parseInt(process.env.DEBONCE_DURATION || "12000", 10);
+
 export const operatorConfig = {
   namespace: "authservice",
   secretName: "authservice-uds",
@@ -13,36 +27,32 @@ export const operatorConfig = {
   realm: "uds",
 };
 
-// Variables to track debounce state
-let isDebounceScheduled = false;
-const DEBOUNCE_INTERVAL = 3000;
-
 /**
- * Function to set up the Authservice secret if it does not exist.
- * This function creates the necessary Kubernetes namespace and secret.
+ * Sets up the initial authservice secret in the Kubernetes cluster.
+ * If in dev mode, it ensures the namespace exists and initializes
+ * the secret if it does not already exist.
  */
 export async function setupAuthserviceSecret() {
   if (process.env.PEPR_WATCH_MODE === "true" || process.env.PEPR_MODE === "dev") {
     log.info("One-time authservice secret initialization");
-
-    // Create namespace if it doesn't exist. Assumes this will not throw an error if the namespace already exists.
+    // Ensure the namespace exists in the Kubernetes cluster
     await K8s(kind.Namespace).Apply({
       metadata: {
         name: operatorConfig.namespace,
       },
     });
 
-    // Attempt to retrieve the secret; if it doesn't exist, create it.
+    // Create the secret if it doesn't exist
     try {
       const secret = await K8s(kind.Secret)
         .InNamespace(operatorConfig.namespace)
         .Get(operatorConfig.secretName);
       log.info(`Authservice Secret exists, skipping creation - ${secret.metadata?.name}`);
     } catch (e) {
-      // Secret does not exist; create it using the initial secret configuration.
       log.info("Secret does not exist, creating authservice secret");
       try {
-        updateAuthServiceSecret(buildInitialSecret(), false); // False to skip checksum on initial creation.
+        // Build and create the initial secret configuration
+        await updateAuthServiceSecret(buildInitialSecret(), false); // False to skip checksum on initial creation.
       } catch (err) {
         log.error(err, "Failed to create UDS managed authservice secret.");
         throw new Error("Failed to create UDS managed authservice secret.", { cause: err });
@@ -52,13 +62,13 @@ export async function setupAuthserviceSecret() {
 }
 
 /**
- * Builds the initial Authservice secret configuration.
- * This configuration is a placeholder until the first chain is created.
- * @returns {AuthserviceConfig} - The initial Authservice configuration.
+ * Builds the initial authservice configuration to be stored in the secret.
+ * This config acts as a placeholder until the first chain is created.
+ *
+ * @returns {AuthserviceConfig} - The initial configuration for the authservice.
  */
 export function buildInitialSecret(): AuthserviceConfig {
   const config: AuthserviceConfig = {
-    // Basic authservice configuration
     allow_unmatched_requests: false,
     listen_address: "0.0.0.0",
     listen_port: "10003",
@@ -100,7 +110,7 @@ export function buildInitialSecret(): AuthserviceConfig {
     ],
   };
 
-  // Add Redis configuration if available
+  // Optionally add Redis session store configuration if provided
   if (UDSConfig.authserviceRedisUri) {
     config.default_oidc_config.redis_session_store_config = {
       server_uri: UDSConfig.authserviceRedisUri!,
@@ -111,31 +121,122 @@ export function buildInitialSecret(): AuthserviceConfig {
 }
 
 /**
- * Retrieves the current Authservice configuration from the Kubernetes secret.
- * @returns {Promise<AuthserviceConfig>} - The current Authservice configuration.
+ * Retrieves the authservice configuration, either from the in-memory cache
+ * or from the Kubernetes secret if not already cached.
+ *
+ * @returns {Promise<AuthserviceConfig>} - The authservice configuration.
  */
-export async function getAuthserviceConfig() {
+export async function getAuthserviceConfig(): Promise<AuthserviceConfig> {
+  if (inMemorySecret) {
+    log.info("Returning in-memory authservice secret");
+    return inMemorySecret;
+  }
+
+  // Fetch the authservice secret from Kubernetes if not in cache
   const authSvcSecret = await K8s(kind.Secret)
     .InNamespace(operatorConfig.namespace)
     .Get(operatorConfig.secretName);
-  return JSON.parse(atob(authSvcSecret!.data!["config.json"])) as AuthserviceConfig;
+
+  // Decode and parse the secret from base64
+  const authServiceConfig = JSON.parse(
+    atob(authSvcSecret!.data!["config.json"]),
+  ) as AuthserviceConfig;
+
+  // Cache the secret in memory and store the last successful state
+  inMemorySecret = authServiceConfig;
+  lastSuccessfulSecret = authServiceConfig;
+  return authServiceConfig;
 }
 
 /**
- * High-level function to handle Authservice secret update with debounce.
- * This prevents frequent updates within a short time span.
- * @param authserviceConfig {AuthserviceConfig} - The Authservice configuration to update.
- * @param checksum {boolean} - Whether to apply a checksum to the deployment after updating.
+ * Update the authservice secret in memory and debounce the write to the Kubernetes cluster.
+ * The in-memory secret is updated immediately, while the actual write to Kubernetes is debounced
+ * to prevent excessive writes. Rollback is handled if the update fails.
+ *
+ * @param {AuthserviceConfig} authserviceConfig - The updated authservice configuration.
+ * @param {boolean} [checksum=true] - Whether to add a checksum to the deployment after the update.
  */
-export function updateAuthServiceSecret(authserviceConfig: AuthserviceConfig, checksum = true) {
-  debounceUpdate(() => performAuthServiceSecretUpdate(authserviceConfig, checksum));
+export async function updateAuthServiceSecret(
+  authserviceConfig: AuthserviceConfig,
+  checksum = true,
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    // Update the in-memory secret immediately
+    inMemorySecret = authserviceConfig;
+
+    // Add the package config and its resolve function to the pending packages map
+    pendingPackages.set(authserviceConfig, resolve);
+
+    // Clear the previous debounce timer, if it exists
+    if (debounceTimer) {
+      clearTimeout(debounceTimer);
+    }
+
+    // Set a new debounce timer to apply the update after the delay
+    debounceTimer = setTimeout(async () => {
+      try {
+        log.info(
+          `Applying debounced secret update for packages: ${Array.from(pendingPackages.keys()).length} pending packages`,
+        );
+
+        // Prepare the config to be written (assumes that all packages share the same secret)
+        const config = btoa(JSON.stringify(inMemorySecret));
+        const configHash = createHash("sha256").update(config).digest("hex");
+
+        // Write the in-memory authservice config to the Kubernetes secret
+        await K8s(kind.Secret).Apply(
+          {
+            metadata: {
+              namespace: operatorConfig.namespace,
+              name: operatorConfig.secretName,
+            },
+            data: {
+              "config.json": config,
+            },
+          },
+          { force: true },
+        );
+
+        log.info(`Updated authservice secret successfully for all pending packages.`);
+
+        // Apply the checksum if required
+        if (checksum) {
+          log.info(`Adding checksum to deployment for authservice secret`);
+          await checksumDeployment(configHash);
+        }
+
+        // Resolve the promises for all pending packages after the secret update
+        pendingPackages.forEach(resolveFunc => {
+          resolveFunc();
+        });
+      } catch (e) {
+        log.error(e, `Failed to write authservice secret`);
+
+        // Rollback to the last known successful state if the update fails
+        inMemorySecret = lastSuccessfulSecret;
+        log.info("Reverted to last successful secret state.");
+
+        // Reject all promises for the pending packages on error
+        pendingPackages.forEach(() => {
+          reject(new Error(`Failed to write authservice secret for config`, { cause: e }));
+        });
+      } finally {
+        // Clear pending packages on error
+        pendingPackages.clear();
+
+        // Reset debounce timer
+        debounceTimer = null;
+      }
+    }, DEBOUNCE_DURATION);
+  });
 }
 
 /**
- * Function to apply a checksum to the deployment to force a restart when configuration changes.
- * @param checksum {string} - The checksum to apply to the deployment.
+ * Applies a checksum to the Kubernetes authservice deployment to force a rollout.
+ *
+ * @param {string} checksum - The checksum value to apply to the deployment.
  */
-export async function checksumDeployment(checksum: string) {
+async function checksumDeployment(checksum: string) {
   try {
     await K8s(kind.Deployment, { name: "authservice", namespace: operatorConfig.namespace }).Patch([
       {
@@ -144,73 +245,10 @@ export async function checksumDeployment(checksum: string) {
         value: checksum,
       },
     ]);
+
     log.info(`Successfully applied the checksum to authservice`);
   } catch (e) {
     log.error(`Failed to apply the checksum to authservice: ${e.data?.message}`);
     throw new Error("Failed to apply the checksum to authservice", { cause: e });
-  }
-}
-
-/**
- * Pure function to execute an update with debouncing.
- * Debouncing helps prevent multiple updates being triggered in a short period.
- * @param updateFn {() => Promise<void>} - The function to debounce.
- * @param interval {number} - The debounce interval in milliseconds.
- */
-export function debounceUpdate(
-  updateFn: () => Promise<void>,
-  interval: number = DEBOUNCE_INTERVAL,
-): void {
-  if (!isDebounceScheduled) {
-    isDebounceScheduled = true;
-
-    setTimeout(async () => {
-      try {
-        await updateFn();
-      } catch (error) {
-        log.error("Error during update:", error);
-      }
-
-      // Reset the debounce flag after the update
-      isDebounceScheduled = false;
-    }, interval);
-  }
-}
-
-/**
- * Function that contains only the logic of updating the Authservice secret.
- * @param authserviceConfig {AuthserviceConfig} - The configuration to apply.
- * @param checksum {boolean} - Whether to apply a checksum after updating.
- */
-export async function performAuthServiceSecretUpdate(
-  authserviceConfig: AuthserviceConfig,
-  checksum: boolean = true,
-) {
-  const config = btoa(JSON.stringify(authserviceConfig));
-  const configHash = createHash("sha256").update(config).digest("hex");
-
-  try {
-    // Write the authservice config to the secret
-    await K8s(kind.Secret).Apply(
-      {
-        metadata: {
-          namespace: operatorConfig.namespace,
-          name: operatorConfig.secretName,
-        },
-        data: {
-          "config.json": config,
-        },
-      },
-      { force: true },
-    );
-    log.info("Updated authservice secret successfully");
-  } catch (e) {
-    log.error(e, "Failed to write authservice secret");
-    throw new Error("Failed to write authservice secret", { cause: e });
-  }
-
-  if (checksum) {
-    log.info("Adding checksum to deployment authservice secret successfully");
-    await checksumDeployment(configHash);
   }
 }

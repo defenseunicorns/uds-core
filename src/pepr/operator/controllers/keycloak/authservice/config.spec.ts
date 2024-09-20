@@ -1,83 +1,183 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from "@jest/globals";
-import { UDSConfig } from "../../../../config";
-import { buildInitialSecret, debounceUpdate, operatorConfig } from "./config";
+import { K8s, kind } from "pepr";
+import { buildInitialSecret, setupAuthserviceSecret, updateAuthServiceSecret } from "./config";
 import { AuthserviceConfig } from "./types";
 
-describe("Debounce Functionality Tests", () => {
+// Mock the necessary Kubernetes functions
+jest.mock("pepr", () => ({
+  K8s: jest.fn(),
+  Log: {
+    child: jest.fn(() => ({
+      info: jest.fn(),
+      error: jest.fn(),
+      warn: jest.fn(),
+      level: "info",
+    })),
+  },
+  kind: {
+    Secret: "Secret",
+    Namespace: "Namespace",
+    Deployment: "Deployment",
+  },
+}));
+
+interface SecretMetadata {
+  metadata: {
+    name: string;
+  };
+}
+
+describe("AuthService Config Tests", () => {
   beforeEach(() => {
-    jest.clearAllTimers();
+    process.env.PEPR_WATCH_MODE = "true";
     jest.useFakeTimers();
   });
 
   afterEach(() => {
+    jest.runOnlyPendingTimers();
     jest.useRealTimers();
+    jest.clearAllMocks();
   });
 
-  it("should only call the debounced function once within the interval", async () => {
-    const mockUpdateFn = jest.fn<() => Promise<void>>().mockResolvedValue(undefined);
-
-    // Call debounceUpdate multiple times within a short period
-    debounceUpdate(mockUpdateFn, 3000);
-    debounceUpdate(mockUpdateFn, 3000);
-    debounceUpdate(mockUpdateFn, 3000);
-
-    jest.runAllTimers();
-    await Promise.resolve();
-
-    // Ensure the mock function was called only once
-    expect(mockUpdateFn).toHaveBeenCalledTimes(1);
+  it("buildInitialSecret should return the correct initial secret", () => {
+    const secret = buildInitialSecret();
+    expect(secret).toEqual({
+      allow_unmatched_requests: false,
+      listen_address: "0.0.0.0",
+      listen_port: "10003",
+      log_level: "info",
+      default_oidc_config: expect.objectContaining({
+        authorization_uri: expect.stringContaining("sso."),
+        client_id: "global_id",
+        client_secret: "global_secret",
+        jwks_fetcher: expect.any(Object),
+        trusted_certificate_authority: expect.any(String),
+      }),
+      threads: 8,
+      chains: expect.any(Array),
+    });
   });
 
-  it("should reset the debounce state after the interval", async () => {
-    const mockUpdateFn = jest.fn<() => Promise<void>>().mockResolvedValue(undefined);
+  it("setupAuthserviceSecret should skip creation if secret exists", async () => {
+    const applyMock = jest.fn();
+    const getMock = jest.fn<() => Promise<SecretMetadata>>().mockResolvedValue({
+      metadata: { name: "authservice-uds" },
+    });
 
-    // Call debounceUpdate once
-    debounceUpdate(mockUpdateFn, 3000);
+    (K8s as jest.Mock).mockReturnValue({
+      Apply: applyMock,
+      InNamespace: jest.fn().mockReturnThis(),
+      Get: getMock,
+    });
 
-    jest.runAllTimers();
-    await Promise.resolve();
+    await setupAuthserviceSecret();
 
-    // Ensure the mock function was called
-    expect(mockUpdateFn).toHaveBeenCalledTimes(1);
-
-    // Call debounceUpdate again after the interval
-    debounceUpdate(mockUpdateFn, 3000);
-    jest.runAllTimers();
-    await Promise.resolve();
-
-    // Ensure the mock function was called a second time
-    expect(mockUpdateFn).toHaveBeenCalledTimes(2);
+    expect(applyMock).toHaveBeenCalledTimes(1); // Apply should be called once
+    expect(getMock).toHaveBeenCalledTimes(1); // Get should be called once
   });
 
-  it("should handle errors and reset debounce state correctly", async () => {
-    const mockUpdateFn = jest
-      .fn<() => Promise<void>>()
-      .mockRejectedValue(new Error("Update failed"));
+  it("updateAuthServiceSecret should debounce and update the Kubernetes secret", async () => {
+    jest.useFakeTimers();
 
-    // Call debounceUpdate once
-    debounceUpdate(mockUpdateFn, 3000);
+    const applyMock = jest.fn<() => Promise<SecretMetadata>>().mockResolvedValue({
+      metadata: { name: "authservice-uds" },
+    });
 
-    jest.runAllTimers();
-    await Promise.resolve();
+    const patchMock = jest.fn(); // Mock the Patch method
 
-    // Ensure the mock function was called
-    expect(mockUpdateFn).toHaveBeenCalledTimes(1);
+    (K8s as jest.Mock).mockImplementation(kindType => {
+      if (kindType === kind.Secret) {
+        return {
+          Apply: applyMock,
+        };
+      }
+      if (kindType === kind.Deployment) {
+        return {
+          Patch: patchMock, // Mock the Patch function for Deployment
+        };
+      }
+    });
+
+    const newConfig: AuthserviceConfig = {
+      allow_unmatched_requests: true,
+      listen_address: "127.0.0.1",
+      listen_port: "8080",
+      log_level: "debug",
+      default_oidc_config: {
+        client_id: "new-client",
+        client_secret: "new-secret",
+        authorization_uri: "",
+        token_uri: "",
+        logout: {
+          path: "/logout",
+          redirect_uri: "/logout-redirect",
+        },
+        scopes: [],
+      },
+      threads: 4,
+      chains: [],
+    };
+
+    const updatePromise = updateAuthServiceSecret(newConfig);
+
+    jest.advanceTimersByTime(12000);
+
+    await updatePromise;
+
+    expect(applyMock).toHaveBeenCalledTimes(1); // Ensure Apply is called once
+    expect(patchMock).toHaveBeenCalledTimes(1); // Ensure Patch is called once for the checksum
   });
-});
 
-describe("Build Initial Secret Functionality Tests", () => {
-  it("should build the initial authservice secret correctly", () => {
-    const secret: AuthserviceConfig = buildInitialSecret();
+  it("updateAuthServiceSecret should only apply changes after debounce delay", async () => {
+    jest.useFakeTimers();
 
-    // Validate the structure of the initial secret
-    expect(secret.allow_unmatched_requests).toBe(false);
-    expect(secret.listen_address).toBe("0.0.0.0");
-    expect(secret.listen_port).toBe("10003");
-    expect(secret.log_level).toBe("info");
+    const applyMock = jest.fn<() => Promise<SecretMetadata>>().mockResolvedValue({
+      metadata: { name: "authservice-uds" },
+    });
 
-    // Validate default_oidc_config structure
-    expect(secret.default_oidc_config.authorization_uri).toBe(
-      `https://sso.${UDSConfig.domain}/realms/${operatorConfig.realm}/protocol/openid-connect/auth`,
-    );
+    const patchMock = jest.fn(); // Mock Patch for Deployment
+
+    // Mock K8s functionality for Secret and Deployment
+    (K8s as jest.Mock).mockImplementation(kindType => {
+      if (kindType === "Secret") {
+        return {
+          Apply: applyMock,
+        };
+      }
+      if (kindType === "Deployment") {
+        return {
+          Patch: patchMock, // Mock Patch for Deployment
+        };
+      }
+    });
+
+    const newConfig: AuthserviceConfig = {
+      allow_unmatched_requests: true,
+      listen_address: "127.0.0.1",
+      listen_port: "8080",
+      log_level: "debug",
+      default_oidc_config: {
+        client_id: "new-client",
+        client_secret: "new-secret",
+        authorization_uri: "",
+        token_uri: "",
+        logout: {
+          path: "/logout",
+          redirect_uri: "/logout-redirect",
+        },
+        scopes: [],
+      },
+      threads: 4,
+      chains: [],
+    };
+
+    const updatePromise = updateAuthServiceSecret(newConfig); // Capture the promise to ensure it's awaited later
+
+    jest.advanceTimersByTime(12000); // Fast-forward time
+
+    await updatePromise; // Ensure the promise is awaited after the debounce
+
+    expect(applyMock).toHaveBeenCalledTimes(1); // Ensure Apply is called once
+    expect(patchMock).toHaveBeenCalledTimes(1); // Ensure Patch is called for the deployment
   });
 });
