@@ -73,6 +73,11 @@
       "commitMessageTopic": "grafana"
     },
     {
+      "matchFileNames": ["src/runtime/**"],
+      "groupName": "runtime",
+      "commitMessageTopic": "runtime"
+    },
+    {
       "matchPackageNames": ["zarf-dev/zarf", "ghcr.io/zarf-dev/packages/init"],
       "groupName": "zarf",
       "commitMessageTopic": "zarf"
