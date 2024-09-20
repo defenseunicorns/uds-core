@@ -1,5 +1,5 @@
 includes:
-  - common: https://raw.githubusercontent.com/defenseunicorns/uds-common/v0.12.0/tasks/create.yaml
+  - common: https://raw.githubusercontent.com/defenseunicorns/uds-common/v0.13.0/tasks/create.yaml
 
 variables:
   - name: FLAVOR
@@ -60,7 +60,14 @@ tasks:
     actions:
       - description: "Build the UDS Core Pepr Module"
         cmd: |
-          CUSTOM_PEPR_IMAGE=$( [ "${FLAVOR}" = "registry1" ] && echo "--custom-image ${REGISTRY1_PEPR_IMAGE}" ) || CUSTOM_PEPR_IMAGE=""
+          if [ -n "${PEPR_CUSTOM_IMAGE}" ] ; then
+            # e.g. PEPR_CUSTOM_IMAGE="pepr:dev uds run slim-dev"
+            PEPR_OVERRIDE_IMAGE="--custom-image ${PEPR_CUSTOM_IMAGE}"
+          elif [ "${FLAVOR}" = "registry1" ] ; then
+            PEPR_OVERRIDE_IMAGE="--custom-image ${REGISTRY1_PEPR_IMAGE}"
+          else
+            PEPR_OVERRIDE_IMAGE=""
+          fi
           rm -fr dist
           npm ci
-          npx pepr build -z chart $CUSTOM_PEPR_IMAGE
+          npx pepr build -z chart $PEPR_OVERRIDE_IMAGE

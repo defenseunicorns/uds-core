@@ -12,7 +12,7 @@ Please ensure that the following prerequisites are on your machine prior to depl
   - If using Colima, please declare the following resources after installing:
 
 ```git
-colima start --cpu 6 --memory 14 --disk 50
+colima start --cpu 7 --memory 14 --disk 50
 ```
 
 - [K3d](https://formulae.brew.sh/formula/k3d#default) for development and test environments or a [CNCF Certified Kubernetes Cluster](https://www.cncf.io/training/certification/software-conformance/#logos) if deploying to production environments.

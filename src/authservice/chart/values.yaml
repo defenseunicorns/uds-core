@@ -9,6 +9,14 @@ image:
 
 nameOverride: "authservice"
 
+redis:
+  uri: "###ZARF_VAR_AUTHSERVICE_REDIS_URI###"
+  egressCidr: ""
+  internal:
+    enabled: false
+    remoteSelector: {}
+    remoteNamespace: ""
+
 podAnnotations: {}
 
 podSecurityContext: {}

@@ -2,7 +2,7 @@
 
 This bundle is used for demonstration, development, and testing of UDS Core. In addition to the [UDS Core applications](../../README.md#core-applications), the included k3d uds-dev-stack provides:
 
-- [K3d](https://k3d.io/) - Containerized K3s Kubernetes Enviroment
+- [K3d](https://k3d.io/) - Containerized K3s Kubernetes Environment
 - [Minio](<https://min.io/>) - In-cluster S3 Object Storage (See below for more details)
 - [Local Path Provisioner](<https://github.com/rancher/local-path-provisioner>) - Storage Provider with RWX configured
 - [MetalLB](https://metallb.universe.tf/) - Provides type: LoadBalancer for cluster resources and Istio Gateways
@@ -42,6 +42,22 @@ This bundle is used for demonstration, development, and testing of UDS Core. In 
 |----------|-------------|------|
 | `TENANT_TLS_CERT` | The TLS cert for the tenant gateway (must be base64 encoded) | tls.cert |
 | `TENANT_TLS_KEY` | The TLS key for the tenant gateway (must be base64 encoded) | tls.key |
+
+##### istio-tenant-gateway (gateway)
+| Variable | Description | Path |
+|----------|-------------|------|
+| `TENANT_SERVICE_PORTS` | The ports that are exposed from the tenant gateway LoadBalancer (useful for non-HTTP(S) traffic) | service.ports |
+
+##### keycloak (keycloak)
+| Variable | Description | Path |
+|----------|-------------|------|
+| `INSECURE_ADMIN_PASSWORD_GENERATION` | Generate an insecure admin password for dev/test | `insecureAdminPasswordGeneration.enabled` |
+| `KEYCLOAK_HA`              | Enable Keycloak HA                         | `autoscaling.enabled`           |
+| `KEYCLOAK_PG_USERNAME`     | Keycloak Postgres username                 | `postgresql.username`           |
+| `KEYCLOAK_PG_PASSWORD`     | Keycloak Postgres password                 | `postgresql.password`           |
+| `KEYCLOAK_PG_DATABASE`     | Keycloak Postgres database                 | `postgresql.database`           |
+| `KEYCLOAK_PG_HOST`         | Keycloak Postgres host                     | `postgresql.host`               |
+| `KEYCLOAK_DEVMODE`         | Enables Keycloak dev mode                  | `devMode`                       |
 
 
 ## Override Examples:

@@ -8,7 +8,7 @@ kube-state-metrics:
   image:
     registry: cgr.dev
     repository: du-uds-defenseunicorns/kube-state-metrics-fips
-    tag: 2.12.0
+    tag: 2.13.0
   securityContext:
     enabled: true
     fsGroup: 65532
@@ -20,12 +20,12 @@ prometheus:
     image:
       registry: cgr.dev
       repository: du-uds-defenseunicorns/prometheus-fips
-      tag: 2.52.0
+      tag: 2.54.1
 prometheus-node-exporter:
   image:
     registry: cgr.dev
     repository: du-uds-defenseunicorns/prometheus-node-exporter-fips
-    tag: 1.8.1
+    tag: 1.8.2
 prometheusOperator:
   admissionWebhooks:
     containerSecurityContext:
@@ -37,7 +37,7 @@ prometheusOperator:
       image:
         registry: cgr.dev
         repository: du-uds-defenseunicorns/kube-webhook-certgen-fips
-        tag: 1.10.1
+        tag: 1.11.2
       registry: cgr.dev
       repository: du-uds-defenseunicorns/kube-webhook-certgen-fips
       tag: 1.10.1
@@ -48,9 +48,9 @@ prometheusOperator:
   image:
     registry: cgr.dev
     repository: du-uds-defenseunicorns/prometheus-operator-fips
-    tag: 0.74.0
+    tag: 0.77.0
   prometheusConfigReloader:
     image:
       registry: cgr.dev
       repository: du-uds-defenseunicorns/prometheus-config-reloader-fips
-      tag: 0.74.0
+      tag: 0.77.0

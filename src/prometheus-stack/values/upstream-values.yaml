@@ -8,7 +8,7 @@ kube-state-metrics:
   image:
     registry: registry.k8s.io
     repository: kube-state-metrics/kube-state-metrics
-    tag: v2.12.0
+    tag: v2.13.0
   securityContext:
     enabled: true
     fsGroup: 65534
@@ -20,19 +20,19 @@ prometheus:
     image:
       registry: quay.io
       repository: prometheus/prometheus
-      tag: v2.52.0
+      tag: v2.54.1
 prometheus-node-exporter:
   image:
     registry: quay.io
     repository: prometheus/node-exporter
-    tag: v1.8.1
+    tag: v1.8.2
 prometheusOperator:
   admissionWebhooks:
     patch:
       image:
         registry: registry.k8s.io
         repository: ingress-nginx/kube-webhook-certgen
-        tag: v20221220-controller-v1.5.1-58-g787ea74b6
+        tag: v1.4.3
       securityContext:
         runAsGroup: 2000
         runAsNonRoot: true
@@ -40,9 +40,9 @@ prometheusOperator:
   image:
     registry: quay.io
     repository: prometheus-operator/prometheus-operator
-    tag: v0.74.0
+    tag: v0.77.0
   prometheusConfigReloader:
     image:
       registry: quay.io
       repository: prometheus-operator/prometheus-config-reloader
-      tag: v0.74.0
+      tag: v0.77.0

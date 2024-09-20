@@ -1,0 +1,6 @@
+storage:
+  internal:
+    enabled: false
+    remoteSelector: {}
+    remoteNamespace: ""
+  egressCidr: ""

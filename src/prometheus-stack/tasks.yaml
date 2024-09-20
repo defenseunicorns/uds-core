@@ -29,3 +29,12 @@ tasks:
             name: app.kubernetes.io/name=prometheus-node-exporter
             namespace: monitoring
             condition: Ready
+  # Below task can be used to generate CRD types, but is commented out pending resolution of https://github.com/defenseunicorns/kubernetes-fluent-client/issues/374
+  # - name: gen-crds
+  #   actions:
+  #     - description: Generate servicemonitor types
+  #       cmd: "npx kubernetes-fluent-client crd https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.77.0/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml src/pepr/operator/crd/generated/prometheus"
+  #     - description: Generate podmonitor types
+  #       cmd: "npx kubernetes-fluent-client crd https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.77.0/example/prometheus-operator-crd/monitoring.coreos.com_podmonitors.yaml src/pepr/operator/crd/generated/prometheus"
+  #     - description: Pepr Format
+  #       cmd: "npx pepr format"

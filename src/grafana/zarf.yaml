@@ -22,7 +22,7 @@ components:
           - values/upstream-values.yaml
     images:
       - docker.io/grafana/grafana:11.2.0
-      - docker.io/curlimages/curl:8.9.1
+      - docker.io/curlimages/curl:8.10.1
       - docker.io/library/busybox:1.36.1
       - ghcr.io/kiwigrid/k8s-sidecar:1.27.6
 
@@ -54,5 +54,5 @@ components:
     images:
       - cgr.dev/du-uds-defenseunicorns/grafana-fips:11.2.0
       - cgr.dev/du-uds-defenseunicorns/busybox-fips:1.36.1
-      - cgr.dev/du-uds-defenseunicorns/curl-fips:8.9.1
+      - cgr.dev/du-uds-defenseunicorns/curl-fips:8.10.1
       - cgr.dev/du-uds-defenseunicorns/k8s-sidecar-fips:1.27.6

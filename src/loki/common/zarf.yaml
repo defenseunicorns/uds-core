@@ -13,7 +13,7 @@ components:
         localPath: ../chart
       - name: loki
         url: https://grafana.github.io/helm-charts/
-        version: 5.47.1
+        version: 6.12.0
         namespace: loki
         valuesFiles:
           - ../values/values.yaml
@@ -24,7 +24,7 @@ components:
             maxTotalSeconds: 300
             wait:
               cluster:
-                kind: Packages
+                kind: packages.uds.dev
                 name: loki
                 namespace: loki
                 condition: "'{.status.phase}'=Ready"
