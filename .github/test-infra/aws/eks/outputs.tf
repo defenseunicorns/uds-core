@@ -1,4 +1,4 @@
-output "region" {
+output "aws_region" {
   value = var.region
 }
 
