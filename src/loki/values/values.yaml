@@ -41,12 +41,12 @@ loki:
     replication_factor: 1
   schemaConfig:
     configs:
-      - from: 2023-04-01
-        store: tsdb
+      - from: 2022-01-11
+        store: boltdb-shipper
         object_store: "{{ .Values.loki.storage.type }}"
         schema: v12
         index:
-          prefix: loki_tsdb_
+          prefix: loki_index_
           period: 24h
   limits_config:
     split_queries_by_interval: "30m"
