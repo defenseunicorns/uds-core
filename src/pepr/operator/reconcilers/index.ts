@@ -1,7 +1,8 @@
 import { K8s, kind } from "pepr";
 
 import { Component, setupLogger } from "../../logger";
-import { Phase, PkgStatus, UDSPackage } from "../crd";
+import { deleteChildren } from "../controllers/utils";
+import { IstioServiceEntry, IstioVirtualService, Phase, PkgStatus, UDSPackage } from "../crd";
 import { Status } from "../crd/generated/package-v1alpha1";
 
 export const uidSeen = new Set<string>();
@@ -139,10 +140,26 @@ export async function handleFailure(err: { status: number; message: string }, cr
   // Write an event for the error
   await writeEvent(cr, { message: err.message });
 
+  // encountered a failure, turtle the package
+  if (metadata.namespace) {
+    await turtle(cr);
+  }
+
   // Update the status of the package with the error
   updateStatus(cr, status).catch(finalErr => {
     // If the status update fails, write log the error and and try to write an event
     log.error({ err: finalErr }, `Error updating status for ${identifier} failed`);
     void writeEvent(cr, { message: finalErr.message });
   });
+}
+
+export async function turtle(pkg: UDSPackage) {
+  const namespace = pkg.metadata!.namespace!;
+  const name = pkg.metadata!.name!;
+  const generation = (pkg.metadata?.generation ?? 0).toString();
+
+  log.warn(pkg.metadata, `Temporarily deleting VirtualService and ServiceEntry resources`);
+  for (const kind of [IstioVirtualService, IstioServiceEntry]) {
+    await deleteChildren(generation, namespace, name, kind, log);
+  }
 }

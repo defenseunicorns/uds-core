@@ -4,6 +4,7 @@ import { K8s, Log, kind } from "pepr";
 
 import { Mock } from "jest-mock";
 import { handleFailure, shouldSkip, uidSeen, updateStatus, writeEvent } from ".";
+import * as utils from "../controllers/utils";
 import { Phase, PkgStatus, UDSPackage } from "../crd";
 
 jest.mock("pepr", () => ({
@@ -136,6 +137,9 @@ describe("handleFailure", () => {
       Create,
       PatchStatus,
     }));
+
+    // mock utils.deleteChildren
+    jest.spyOn(utils, "deleteChildren").mockImplementation(() => Promise.resolve());
   });
 
   it("should handle a 404 error", async () => {
