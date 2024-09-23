@@ -1,6 +1,5 @@
 # Terraform Module for provisioning s3 buckets with optional support for IRSA, tailored specifically for loki and velero atop uds-core
 locals {
-  kms_key_arns = module.generate_kms
   bucket_configurations = {
     for instance in var.ci_bucket_configurations :
     instance.name => {
@@ -30,11 +29,25 @@ module "s3" {
   for_each                = local.bucket_configurations
   source                  = "github.com/defenseunicorns/terraform-aws-uds-s3?ref=v0.0.6"
   name_prefix             = "${each.value.name}-"
-  kms_key_arn             = local.kms_key_arns[each.key].kms_key_arn
+  kms_key_arn             = module.generate_kms[each.key].kms_key_arn
   force_destroy           = "true"
   create_bucket_lifecycle = true
 
   depends_on = [
     module.generate_kms
+  ]
+}
+
+# IRSA can be used to grant in-cluster applications access to s3, as opposed to access keys
+module "irsa" {
+  count                     = var.support_irsa ? 1 : 0
+  source                    = "./irsa"
+  cluster_name              = var.cluster_name
+  use_permissions_boundary  = var.use_permissions_boundary
+  permissions_boundary_name = var.permissions_boundary_name
+  bucket_configurations     = merge(local.bucket_configurations, module.generate_kms)
+
+  depends_on = [
+    module.s3
   ]
 }
