@@ -7,8 +7,8 @@ on:
     paths:
       - tasks/iac.yaml
       - .github/workflows/test-eks.yaml
-      - .github/bundles/*
-      - .github/test-infra/buckets-iac/*
+      - .github/bundles/eks/*
+      - .github/test-infra/aws/eks/*
 
 # Abort prior jobs in the same workflow / PR
 concurrency:
