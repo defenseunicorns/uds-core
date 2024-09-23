@@ -100,3 +100,9 @@ When(UDSPackage)
     log.info("Identity and Authorization layer removed, operator will NOT handle SSO.");
     UDSConfig.isIdentityDeployed = false;
   });
+
+// Watch for secrets w/ the UDS secret label and copy as necessary
+When(a.Secret)
+  .IsCreatedOrUpdated()
+  .WithLabel(labelCopySecret)
+  .Mutate(request => copySecret(request));
