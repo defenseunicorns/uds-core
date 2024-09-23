@@ -24,7 +24,8 @@ export const UDSConfig = {
   isSingleTest: process.env.UDS_SINGLE_TEST === "true",
   // Allow UDS policy exemptions to be used in any namespace
   allowAllNSExemptions: process.env.UDS_ALLOW_ALL_NS_EXEMPTIONS === "true",
-
+  // Package VirtualServices and ServiceEntries exist during reconcilation retries
+  exposeDuringRetry: process.env.UDS_EXPOSE_DURING_RETRY === "true",
   // Redis URI for Authservice
   authserviceRedisUri,
 };
