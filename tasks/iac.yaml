@@ -88,14 +88,14 @@ tasks:
   - name: destroy-iac
     actions:
       - cmd: tofu destroy -auto-approve
-        dir: .github/test-infra/buckets-iac
+        dir: .github/test-infra/aws/eks
 
   - name: apply-tofu
     actions:
       - cmd: echo ${STATE_KEY} | sed 's/\.tfstate/-buckets1.tfstate/g'
         setVariables:
           - name: BUCKETS_STATE_KEY
-        dir: .github/test-infra/buckets-iac
+        dir: .github/test-infra/aws/eks
       - cmd: echo ${BUCKETS_STATE_KEY}
       - cmd: |
           tofu init -force-copy \
@@ -103,36 +103,36 @@ tasks:
           -backend-config="key=${BUCKETS_STATE_KEY}" \
           -backend-config="region=${REGION}" \
           -backend-config="dynamodb_table=${STATE_DYNAMODB_TABLE_NAME}"
-        dir: .github/test-infra/buckets-iac
+        dir: .github/test-infra/aws/eks
       - cmd: tofu apply -auto-approve
-        dir: .github/test-infra/buckets-iac
+        dir: .github/test-infra/aws/eks
 
   - name: tofu-outputs
     actions:
-      - cmd: tofu output -raw loki_s3_bucket
+      - cmd: tofu output -raw storage.loki_s3_bucket
         setVariables:
           - name: "LOKI_S3_BUCKET"
-        dir: .github/test-infra/buckets-iac
+        dir: .github/test-infra/aws/eks
       - cmd: tofu output -raw aws_region
         setVariables:
           - name: LOKI_S3_AWS_REGION
-        dir: .github/test-infra/buckets-iac
-      - cmd: tofu output -raw loki_irsa_role_arn
+        dir: .github/test-infra/aws/eks
+      - cmd: tofu output -raw storage.loki_irsa_role_arn
         setVariables:
           - name: LOKI_S3_ROLE_ARN
-        dir: .github/test-infra/buckets-iac
-      - cmd: tofu output -raw velero_s3_bucket
+        dir: .github/test-infra/aws/eks
+      - cmd: tofu output -raw storage.velero_s3_bucket
         setVariables:
           - name: VELERO_S3_BUCKET
-        dir: .github/test-infra/buckets-iac
+        dir: .github/test-infra/aws/eks
       - cmd: tofu output -raw aws_region
         setVariables:
           - name: VELERO_S3_AWS_REGION
-        dir: .github/test-infra/buckets-iac
-      - cmd: tofu output -raw velero_irsa_role_arn
+        dir: .github/test-infra/aws/eks
+      - cmd: tofu output -raw storage.velero_irsa_role_arn
         setVariables:
           - name: VELERO_S3_ROLE_ARN
-        dir: .github/test-infra/buckets-iac
+        dir: .github/test-infra/aws/eks
 
   - name: create-uds-config
     actions:
