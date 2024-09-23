@@ -1,7 +1,7 @@
 image:
   registry: docker.io
   repository: grafana/promtail
-  tag: 3.1.1
+  tag: 3.2.0
 sidecar:
   configReloader:
     image:
