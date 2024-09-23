@@ -220,6 +220,9 @@ The SSO spec supports a subset of the Keycloak attributes for clients, but does 
 - saml.assertion.signature
 - saml.client.signature
 - saml_assertion_consumer_url_post
+- saml_assertion_consumer_url_redirect
+- saml_single_logout_service_url_post
+- saml_single_logout_service_url_redirect
 
 ## Exemption
 
