@@ -48,6 +48,8 @@ We apply these general principles to all User Stories and activities contributin
 
 ## Getting Started
 
+### Development of UDS Operator / Pepr capabilities
+
 For development of the UDS Operator, a development cluster is required. You can
 run one w/ the `dev-setup` UDS Task. Note that this will create a k3d cluster
 on your local machine. Ensure you have an up-to-date version of k3d installed,
@@ -59,6 +61,22 @@ uds run dev-setup
 
 This will create a cluster and then print instructions for further development
 of the UDS Operator Pepr module.
+
+### Development of UDS Core Zarf sub-packages
+
+For development of individual components within the UDS Core Zarf package, the
+`test-uds-core` UDS Task can be used to build and run the tests for the UDS Core
+Zarf package. This will run the tests for the UDS Core Zarf package in a local
+environment.
+
+```bash
+uds run test-uds-core
+```
+
+If iterating on Helm values or templates (and not modifying upstream images), 
+running `dev-deploy` can be used _after_ the initial `test-uds-core` because the
+images are already loaded, so this will essentially just do a quick Helm upgrade
+for rapid iteration.
 
 ## Submitting a Pull Request
 
