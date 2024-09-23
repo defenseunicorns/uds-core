@@ -23,7 +23,7 @@ tasks:
     actions:
       - description: "Create the dev cluster"
         task: setup:create-k3d-cluster
-      
+
       # Workaround for https://github.com/zarf-dev/zarf/issues/2713
       - description: "Modify Istio values w/ upstream registry"
         cmd: "uds zarf tools yq -i '.global.proxy_init.image |= sub(\"###ZARF_REGISTRY###\", \"docker.io\") | .global.proxy.image |= sub(\"###ZARF_REGISTRY###\", \"docker.io\")' src/istio/values/upstream-values.yaml"

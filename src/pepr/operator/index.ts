@@ -20,6 +20,9 @@ import { purgeAuthserviceClients } from "./controllers/keycloak/authservice/auth
 import { exemptValidator } from "./crd/validators/exempt-validator";
 import { packageReconciler } from "./reconcilers/package-reconciler";
 
+// Mutator imports
+import { copySecret, labelCopySecret } from "./secrets";
+
 // Export the operator capability for registration in the root pepr.ts
 export { operator } from "./common";
 
@@ -63,3 +66,9 @@ When(UDSPackage)
 
 // Watch for Exemptions and validate
 When(UDSExemption).IsCreatedOrUpdated().Validate(exemptValidator);
+
+// Watch for secrets w/ the UDS secret label and copy as necessary
+When(a.Secret)
+  .IsCreatedOrUpdated()
+  .WithLabel(labelCopySecret)
+  .Mutate(request => copySecret(request));
