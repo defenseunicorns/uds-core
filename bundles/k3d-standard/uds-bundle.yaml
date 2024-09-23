@@ -3,13 +3,13 @@ metadata:
   name: k3d-core-demo
   description: A UDS bundle for deploying the standard UDS Core package on a development cluster
   # x-release-please-start-version
-  version: "0.27.0"
+  version: "0.27.3"
   # x-release-please-end
 
 packages:
   - name: uds-k3d-dev
     repository: ghcr.io/defenseunicorns/packages/uds-k3d
-    ref: 0.8.0
+    ref: 0.9.0
     overrides:
       uds-dev-stack:
         minio:
@@ -29,16 +29,17 @@ packages:
 
   - name: init
     repository: ghcr.io/zarf-dev/packages/init
-    ref: v0.39.0
+    ref: v0.40.1
 
   - name: core
     path: ../../build/
     # x-release-please-start-version
-    ref: 0.27.0
+    ref: 0.27.3
     # x-release-please-end
     optionalComponents:
       - istio-passthrough-gateway
       - metrics-server
+      - uds-runtime
     overrides:
       loki:
         loki:
@@ -85,6 +86,9 @@ packages:
             - name: ADMIN_TLS_KEY
               description: "The TLS key for the admin gateway (must be base64 encoded)"
               path: tls.key
+            - name: ADMIN_TLS1_2_SUPPORT
+              description: "Add support for TLS 1.2 on this gateway"
+              path: tls.supportTLSV1_2
       istio-tenant-gateway:
         uds-istio-config:
           variables:
@@ -94,6 +98,14 @@ packages:
             - name: TENANT_TLS_KEY
               description: "The TLS key for the tenant gateway (must be base64 encoded)"
               path: tls.key
+            - name: TENANT_TLS1_2_SUPPORT
+              description: "Add support for TLS 1.2 on this gateway"
+              path: tls.supportTLSV1_2
+        gateway:
+          variables:
+            - name: TENANT_SERVICE_PORTS
+              description: "The ports that are exposed from the tenant gateway LoadBalancer (useful for non-HTTP(S) traffic)"
+              path: "service.ports"
       keycloak:
         keycloak:
           variables:

@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it } from "@jest/globals";
+import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 import { MatcherKind, Policy } from "../../crd";
 import { Exemption } from "../../crd/generated/exemption-v1alpha1";
 import { ExemptionStore } from "./exemption-store";
-import { WatchPhase, processExemptions } from "./exemptions";
+import { processExemptions } from "./exemptions";
 
 const enforcerMatcher = {
   namespace: "neuvector",

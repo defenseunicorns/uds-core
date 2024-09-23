@@ -1,13 +1,6 @@
+import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 import { UDSExemption } from "../../crd";
 import { ExemptionStore } from "./exemption-store";
-
-export enum WatchPhase {
-  Added = "ADDED",
-  Modified = "MODIFIED",
-  Deleted = "DELETED",
-  Bookmark = "BOOKMARK",
-  Error = "ERROR",
-}
 
 // Handle adding, updating, and deleting exemptions from Policymap
 export function processExemptions(exemption: UDSExemption, phase: WatchPhase) {
