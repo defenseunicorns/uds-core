@@ -23,4 +23,5 @@ variable "permissions_boundary_name" {
 variable "use_permissions_boundary" {
   description = "Whether to use IAM permissions boundary for resources."
   type        = bool
+  default     = true
 }

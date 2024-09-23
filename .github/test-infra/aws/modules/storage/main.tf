@@ -45,7 +45,7 @@ module "irsa" {
   cluster_name              = var.cluster_name
   use_permissions_boundary  = var.use_permissions_boundary
   permissions_boundary_name = var.permissions_boundary_name
-  bucket_configurations     = merge(local.bucket_configurations, module.generate_kms)
+  bucket_configurations     = {for k, v in local.bucket_configurations: k => merge(v, module.generate_kms[k])}
 
   depends_on = [
     module.s3
