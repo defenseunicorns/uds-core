@@ -25,6 +25,11 @@ tasks:
     actions:
       - description: "Create the dev cluster"
         task: setup:create-k3d-cluster
+      
+      # Workaround for https://github.com/zarf-dev/zarf/issues/2713
+      - description: "Modify Istio values w/ upstream registry"
+        cmd: "uds zarf tools yq -i '.global.proxy_init.image |= sub(\"###ZARF_REGISTRY###\", \"docker.io\") | .global.proxy.image |= sub(\"###ZARF_REGISTRY###\", \"docker.io\")' src/istio/values/upstream-values.yaml"
+        # cmd: "sed -i '4,$s/###ZARF_REGISTRY###/docker.io/g' src/istio/values/upstream-values.yaml"
 
 <<<<<<< HEAD
       # Workaround for https://github.com/zarf-dev/zarf/issues/2713
@@ -40,6 +45,10 @@ tasks:
 
       - description: "Restore Istio registry values"
         cmd: "uds zarf tools yq -i '.global.proxy_init.image |= sub(\"docker.io\", \"###ZARF_REGISTRY###\") | .global.proxy.image |= sub(\"docker.io\", \"###ZARF_REGISTRY###\")' src/istio/values/upstream-values.yaml"
+<<<<<<< HEAD
+=======
+        #cmd: "sed -i '4,$s/docker.io/###ZARF_REGISTRY###/g' src/istio/values/upstream-values.yaml"
+>>>>>>> 550aac5 (Added image workaround for dev-setup, getting started notes)
 
       # Note, this abuses the --flavor flag to only install the CRDs from this package - the "crds-only" flavor is not an explicit flavor of the package
       - description: "Deploy the Prometheus-Stack source package with Zarf Dev to only install the CRDs"
