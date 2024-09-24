@@ -15,3 +15,6 @@ tmp-tasks.yaml
 cacert.b64
 run/
 extract-terraform.sh
+**/.terraform*
+cluster-config.yaml
+**.tfstate
