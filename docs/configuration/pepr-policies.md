@@ -7,7 +7,7 @@ weight: 3
 ## Common Pepr Policies for UDS Core
 
 ### Pepr Policy Exemptions {#pepr-policy-exemptions}
-These policies are based on the [Big Bang](https://p1.dso.mil/services/big-bang) policies created with Kyverno. You can find the source policies [here](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies).
+These policies are based on the [Big Bang](https://p1.dso.mil/services/big-bang) policies created with Kyverno. You can find the source policies [here](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies), Policy Names below also have links to the referenced Big Bang policy.
 
 Exemptions can be specified by a [UDS Exemption CR](../operator/README.md). These take the place of Kyverno Exceptions.
 
@@ -16,7 +16,7 @@ If a resource is exempted, it will be annotated as `uds-core.pepr.dev/uds-core-p
 ### Pepr Policy Validations
 
 | Policy Name🔗 | Exemption Reference🔗 | Policy Description |
-| ----------------- | :--------------------: | ------------------ |
+| ------------- | :-------------------: | ------------------ |
 | [Disallow Host Namespaces](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/disallow-host-namespaces.yaml) | [`DisallowHostNamespaces`](https://github.com/defenseunicorns/uds-core/blob/v0.27.0/src/pepr/policies/networking.ts#L7-L35) | Subject: **Pod** <br> Severity: **high** <br><br> Host namespaces (Process ID namespace, Inter-Process Communication namespace, and network namespace) allow access to shared information and can be used to elevate privileges. Pods should not be allowed access to host namespaces. This policy ensures fields which make use of these host namespaces are set to `false`. |
 |[Disallow NodePort Services](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/disallow-nodeport-services.yaml) | [`DisallowNodePortServices`](https://github.com/defenseunicorns/uds-core/blob/v0.27.0/src/pepr/policies/networking.ts#L88-L110) | Subject: **Service** <br> Severity: **medium** <br><br> A Kubernetes Service of type NodePort uses a host port to receive traffic from any source. A NetworkPolicy cannot be used to control traffic to host ports. Although NodePort Services can be useful, their use must be limited to Services with additional upstream security checks. This policy validates that any new Services do not use the `NodePort` type. |
 |Disallow Privileged [Escalation](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/disallow-privilege-escalation.yaml) and [Pods](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/disallow-privileged-containers.yaml) | [`DisallowPrivileged`](https://github.com/defenseunicorns/uds-core/blob/v0.27.0/src/pepr/policies/security.ts#L14-L75) | Subject: **Pod** <br> Severity: **high** <br><br> Privilege escalation, such as via set-user-ID or set-group-ID file mode, should not be allowed. Privileged mode also disables most security mechanisms and must not be allowed. This policy ensures the `allowPrivilegeEscalation` field is set to false and `privileged` is set to false or undefined. |
