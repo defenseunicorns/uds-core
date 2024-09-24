@@ -1,5 +1,5 @@
 includes:
-  - remote: https://raw.githubusercontent.com/defenseunicorns/uds-common/v0.13.0/tasks/lint.yaml
+  - remote: https://raw.githubusercontent.com/defenseunicorns/uds-common/v0.13.1/tasks/lint.yaml
 
 tasks:
   - name: fix
