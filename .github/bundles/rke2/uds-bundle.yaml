@@ -51,7 +51,7 @@ packages:
               path: credentials.useSecret
             - name: VELERO_IRSA_ROLE_ARN
               description: "IRSA ARN annotation to use for Velero"
-              path: serviceAccount.server.annotations.irsa/role-arn
+              path: serviceAccount.server.annotations.eks\.amazonaws\.com/role-arn
       loki:
         loki:
           values:
@@ -78,4 +78,4 @@ packages:
               path: loki.storage.s3.region
             - name: LOKI_IRSA_ROLE_ARN
               description: "The irsa role annotation"
-              path: serviceAccount.annotations.irsa/role-arn
+              path: serviceAccount.annotations.eks\.amazonaws\.com/role-arn
