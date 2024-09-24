@@ -136,16 +136,16 @@ persistence:
   storageClassName: ""
   providers:
     enabled: false
-    size: "1Gi"
+    size: "512Mi"
   conf:
     enabled: false
-    size: "1Gi"
+    size: "512Mi"
   data:
     enabled: false
-    size: "1Gi"
+    size: "512Mi"
   themes:
     enabled: false
-    size: "1Gi"
+    size: "512Mi"
 
 # Pod disruption budget
 podDisruptionBudget: {}

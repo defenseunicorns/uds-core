@@ -45,8 +45,10 @@ Several UDS Core components require persistent volumes that will be provisioned 
 ```console
 ❯ kubectl get storageclass
 NAME                   PROVISIONER             RECLAIMPOLICY   VOLUMEBINDINGMODE      ALLOWVOLUMEEXPANSION   AGE
-local-path (default)   rancher.io/local-path   Delete          WaitForFirstConsumer   false                  55s
+local-path (default)   rancher.io/local-path   Delete          WaitForFirstConsumer   true                   55s
 ```
+
+It’s generally beneficial if your storage class supports volume expansion (set `allowVolumeExpansion: true`, provided your provisioner allows it). This enables you to resize volumes when needed. Additionally, be mindful of any size restrictions imposed by your provisioner. For instance, EBS volumes have a minimum size of 1Gi, which could lead to unexpected behavior, especially during Velero’s CSI backup and restore process. These constraints may also necessitate adjustments to default PVC sizes, such as Keycloak’s PVCs, which default to 512Mi in `devMode`.
 
 #### Network Policy Support
 
