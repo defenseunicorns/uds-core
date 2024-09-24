@@ -25,7 +25,7 @@ tasks:
 
           metadata:
             name: ${CLUSTER_NAME}
-            region: us-west-2
+            region: ${REGION}
             version: "1.30"
             tags:
               PermissionsBoundary: ${PERMISSIONS_BOUNDARY_NAME}
@@ -148,7 +148,7 @@ tasks:
               loki_s3_region: ${LOKI_S3_AWS_REGION}
               loki_irsa_annotation: "${LOKI_S3_ROLE_ARN}"
               velero_use_secret: false
-              velero_irsa_annotation: ${VELERO_S3_ROLE_ARN}"
+              velero_irsa_annotation: "${VELERO_S3_ROLE_ARN}"
               velero_bucket: ${VELERO_S3_BUCKET}
               velero_bucket_region: ${VELERO_S3_AWS_REGION}
               velero_bucket_provider_url: ""
