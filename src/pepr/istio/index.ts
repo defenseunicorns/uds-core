@@ -47,8 +47,8 @@ When(a.Pod)
       const shouldTerminate = pod.status.containerStatuses
         // Ignore the istio-proxy container
         .filter(c => c.name != "istio-proxy")
-        // and if ALL are terminated AND have exit code 0, then shouldTerminate is true
-        .every(c => c.state?.terminated && c.state.terminated.exitCode == 0);
+        // and if ALL are terminated then shouldTerminate is true
+        .every(c => c.state?.terminated);
 
       if (shouldTerminate) {
         // Mark the pod as seen
