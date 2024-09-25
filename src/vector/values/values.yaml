@@ -1,0 +1,118 @@
+# Run as an agent daemonset
+role: "Agent"
+
+customConfig:
+  data_dir: /var/lib/vector
+  # Ensure e2e delivery of events
+  acknowledgements:
+    enabled: true
+  sources:
+    pod_logs:
+      type: "kubernetes_logs"
+      oldest_first: true
+    node_logs:
+      type: "file"
+      include: ["/var/log/*", "/var/log/kubernetes/**/*.log"]
+      oldest_first: true
+    internal_metrics:
+      type: internal_metrics
+
+  transforms:
+    pod_logs_labelled:
+      type: remap
+      inputs: ["pod_logs"]
+      source: |
+        if exists(.kubernetes.pod_labels."app.kubernetes.io/name") {
+          .app = .kubernetes.pod_labels."app.kubernetes.io/name"
+        } else if exists(.kubernetes.pod_labels.app) {
+          .app = .kubernetes.pod_labels.app
+        } else if exists(.kubernetes.pod_owner) {
+          .app = replace!(.kubernetes.pod_owner, r'^([^/]+/)', "")
+        } else {
+          .app = .kubernetes.pod_name
+        }
+
+        if exists(.kubernetes.pod_labels."app.kubernetes.io/component") {
+          .component = .kubernetes.pod_labels."app.kubernetes.io/component"
+        } else if !exists(.kubernetes.pod_labels.component) {
+          .component = .kubernetes.pod_labels.component
+        } else {
+          .component = ""
+        }
+
+    node_logs_labelled:
+      type: remap
+      inputs: ["node_logs"]
+      source: |
+        .node_name = "${NODE_HOSTNAME}"
+        if contains(string!(.file), "/var/log/kubernetes/") {
+          .job = "kubernetes-logs"
+        } else {
+          .job = "varlogs"
+        }
+
+  sinks:
+    loki_pod:
+      type: "loki"
+      inputs: ["pod_logs_labelled"]
+      endpoint: "http://loki-gateway.loki.svc.cluster.local:80"
+      path: "/loki/api/v1/push"
+      encoding:
+        codec: "raw_message"
+      labels:
+        namespace: '{{`{{ kubernetes.pod_namespace }}`}}'
+        app: '{{`{{ app }}`}}'
+        job: '{{`{{ kubernetes.pod_namespace }}`}}/{{`{{ app }}`}}'
+        container: '{{`{{ kubernetes.container_name }}`}}'
+        component: '{{`{{ component }}`}}'
+        host: '{{`{{ kubernetes.pod_node_name }}`}}'
+        filename: '{{`{{ file }}`}}'
+        collector: "vector"
+      buffer:
+        type: disk
+        max_size: 1073741824 # 1GiB
+    loki_host:
+      type: "loki"
+      inputs: ["node_logs_labelled"]
+      endpoint: "http://loki-gateway.loki.svc.cluster.local:80"
+      path: "/loki/api/v1/push"
+      encoding:
+        codec: "raw_message"
+      labels:
+        job: '{{`{{ job }}`}}'
+        host: '{{`{{ node_name }}`}}'
+        filename: '{{`{{ file }}`}}'
+        collector: "vector"
+      buffer:
+        type: disk
+        max_size: 1073741824 # 1GiB
+    prom_exporter:
+      type: prometheus_exporter
+      inputs: [internal_metrics]
+      address: 0.0.0.0:9090
+
+persistence:
+  enabled: true
+  hostPath:
+    enabled: true
+    path: "/var/lib/vector"
+
+podMonitor:
+  enabled: true
+service:
+  ports:
+    - name: prom-exporter
+      port: 9090
+      protocol: TCP
+
+securityContext:
+  readOnlyRootFilesystem: true
+  runAsUser: 0
+  seLinuxOptions:
+    type: spc_t
+
+env:
+  - name: NODE_HOSTNAME
+    valueFrom:
+      fieldRef:
+        fieldPath: spec.nodeName
