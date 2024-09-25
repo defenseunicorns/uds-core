@@ -1,0 +1,83 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/defenseunicorns/zarf/main/zarf.schema.json
+
+kind: ZarfPackageConfig
+metadata:
+  name: core-frozen-dev
+  description: "Rehydratable UDS K3d + UDS Core Slim (Istio, UDS Operator and Keycloak)"
+  authors: "Defense Unicorns - Product"
+  # x-release-please-start-version
+  version: "0.27.3"
+  # x-release-please-end
+
+variables:
+  - name: CLUSTER_NAME
+    description: "Name of the cluster"
+    default: "uds"
+
+  - name: K3D_EXTRA_ARGS
+    description: "Optionally pass k3d arguments to the default"
+    default: ""
+
+  - name: NGINX_EXTRA_PORTS
+    description: "Optionally allow more ports through Nginx (combine with K3D_EXTRA_ARGS '-p <port>:<port>@server:*')"
+    default: "[]"
+
+components:
+  - name: destroy-cluster
+    required: true
+    description: "Optionally destroy the cluster before creating it"
+    actions:
+      onDeploy:
+        before:
+          - cmd: |
+              echo "This package requires elevated permissions to create - requesting sudo (if paused enter password)"
+              sudo echo "got sudo! success!"
+          - cmd: k3d cluster delete ${ZARF_VAR_CLUSTER_NAME}
+            description: "Destroy the cluster"
+          - cmd: |
+              sudo rm -rf data
+
+  - name: create-cluster
+    required: true
+    description: "Create the K3d cluster w/UDS Core pre-installed"
+    files:
+      - source: uds-frozen.tar
+        target: uds-frozen.tar
+    actions:
+      onCreate:
+        before:
+          - cmd: ./freeze.sh
+        onSuccess:
+          - cmd: |
+              sudo rm -rf data uds-frozen.tar
+      onDeploy:
+        after:
+          - cmd: |
+              sudo tar -xpvf uds-frozen.tar data
+              K8S_TOKEN="$(sudo cat $(pwd)/data/k3s_data/server/token)"
+              
+              docker load -i data/uds-k3d-frozen-latest.tar
+
+              k3d cluster create \
+                -p "80:80@server:*" \
+                -p "443:443@server:*" \
+                --api-port 6550 \
+                --k3s-arg "--disable=traefik@server:*" \
+                --k3s-arg "--disable=metrics-server@server:*" \
+                --k3s-arg "--disable=servicelb@server:*" \
+                --k3s-arg "--disable=local-storage@server:*" \
+                --k3s-arg "--token=${K8S_TOKEN}@server:*" \
+                -v "$(pwd)/data/kubelet_data:/var/lib/kubelet@server:*" \
+                -v "$(pwd)/data/k3s_data:/var/lib/rancher/k3s@server:*" \
+                --image ghcr.io/defenseunicorns/uds-core/frozen:latest ${ZARF_VAR_K3D_EXTRA_ARGS} \
+                ${ZARF_VAR_CLUSTER_NAME}
+            description: "Create the cluster"
+          - description: Keycloak to be Healthy
+            wait:
+              cluster:
+                kind: Pod
+                name: app.kubernetes.io/name=keycloak
+                namespace: keycloak
+                condition: Ready
+        onSuccess:
+          - cmd: rm -f uds-frozen.tar
