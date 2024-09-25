@@ -55,7 +55,7 @@ components:
           - cmd: |
               sudo tar -xpvf uds-frozen.tar data
               K8S_TOKEN="$(sudo cat $(pwd)/data/k3s_data/server/token)"
-              
+
               docker load -i data/uds-k3d-frozen-latest.tar
 
               k3d cluster create \
