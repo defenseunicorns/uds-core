@@ -1,0 +1,48 @@
+kind: ZarfPackageConfig
+metadata:
+  name: uds-core-vector
+  description: "UDS Core Vector"
+  url: "https://vector.dev/"
+
+components:
+  - name: vector
+    required: true
+    description: "Deploy Vector"
+    only:
+      flavor: upstream
+    import:
+      path: common
+    charts:
+      - name: vector
+        valuesFiles:
+          - values/upstream-values.yaml
+    images:
+      - timberio/vector:0.41.1-distroless-static
+
+  - name: vector
+    required: true
+    description: "Deploy Vector"
+    only:
+      flavor: registry1
+    import:
+      path: common
+    charts:
+      - name: vector
+        valuesFiles:
+          - values/registry1-values.yaml
+    images:
+      - registry1.dso.mil/ironbank/opensource/timberio/vector:0.41.1
+
+  - name: vector
+    required: true
+    description: "Deploy Vector"
+    only:
+      flavor: unicorn
+    import:
+      path: common
+    charts:
+      - name: vector
+        valuesFiles:
+          - values/unicorn-values.yaml
+    images:
+      - cgr.dev/du-uds-defenseunicorns/vector:0.41.1
