@@ -1,0 +1,14 @@
+metadata:
+  name: istio-rbac-for-approved-personnel-PLACEHOLDER
+  uuid: 9b361d7b-4e07-40db-8b86-3854ed499a4b
+domain:
+  type: kubernetes
+  kubernetes-spec:  
+    resources: []
+provider:
+  type: opa
+  opa-spec: 
+    rego: |
+      package validate
+
+      default validate := false
