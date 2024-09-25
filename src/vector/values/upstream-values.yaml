@@ -1,6 +1,9 @@
+<<<<<<< HEAD
 # Copyright 2024 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
+=======
+>>>>>>> 2f6ed02 (feat!: switch from promtail to vector (#724))
 image:
   repository: timberio/vector
   tag: 0.41.1-distroless-static

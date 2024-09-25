@@ -83,7 +83,11 @@ components:
   - name: vector
     required: true
     import:
+<<<<<<< HEAD
       path: ../logging
+=======
+      path: ../../src/vector
+>>>>>>> 2f6ed02 (feat!: switch from promtail to vector (#724))
 
   # Grafana
   - name: grafana

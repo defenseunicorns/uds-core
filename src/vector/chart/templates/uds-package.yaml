@@ -1,6 +1,9 @@
+<<<<<<< HEAD
 # Copyright 2024 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
+=======
+>>>>>>> 2f6ed02 (feat!: switch from promtail to vector (#724))
 apiVersion: uds.dev/v1alpha1
 kind: Package
 metadata:

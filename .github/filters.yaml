@@ -38,4 +38,36 @@ metrics-server:
 monitoring:
   - "packages/monitoring/**"
   - "src/prometheus-stack/**"
+<<<<<<< HEAD
   - "src/grafana/**"
+=======
+  - "!**/*.md"
+  - "!**/*.jpg"
+  - "!**/*.png"
+  - "!**/*.gif"
+  - "!**/*.svg"
+
+vector:
+  - "src/vector/**"
+  - "!**/*.md"
+  - "!**/*.jpg"
+  - "!**/*.png"
+  - "!**/*.gif"
+  - "!**/*.svg"
+
+tempo:
+  - "src/tempo/**"
+  - "!**/*.md"
+  - "!**/*.jpg"
+  - "!**/*.png"
+  - "!**/*.gif"
+  - "!**/*.svg"
+
+velero:
+  - "src/velero/**"
+  - "!**/*.md"
+  - "!**/*.jpg"
+  - "!**/*.png"
+  - "!**/*.gif"
+  - "!**/*.svg"
+>>>>>>> 2f6ed02 (feat!: switch from promtail to vector (#724))
