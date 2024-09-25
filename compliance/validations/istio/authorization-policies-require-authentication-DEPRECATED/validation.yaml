@@ -1,6 +1,6 @@
 metadata:
   name: istio-authorization-policies-require-authentication
-  uuid: e38c0695-10f6-40b6-b246-fa58b26ccd25 
+  uuid: e38c0695-10f6-40b6-b246-fa58b26ccd25
 domain:
   type: kubernetes
   kubernetes-spec:
@@ -30,7 +30,7 @@ provider:
       validate {
         result_auth_policy.result
       }
-      
+
       msg = result_auth_policy.msg
 
       result_auth_policy = {"result": true, "msg": msg} {
@@ -45,4 +45,3 @@ provider:
       } else = {"result": false, "msg": msg} {
         msg := "Authorization Policy does not require authentication"
       }
-      

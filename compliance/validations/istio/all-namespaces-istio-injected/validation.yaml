@@ -51,5 +51,5 @@ provider:
     output:
       validation: validate.validate
       observations:
-      - validate.msg
-      - validate.msg_exempt_namespaces
+        - validate.msg
+        - validate.msg_exempt_namespaces

@@ -8,4 +8,3 @@ pass:
     resources: resources.json
     permutation: '.namespaces |= map(if .metadata.name == "grafana" then del(.metadata.labels["istio-injection"]) else . end)'
     expected-validation: false
-    
