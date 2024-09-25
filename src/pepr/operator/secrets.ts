@@ -114,5 +114,5 @@ export async function copySecret(request: PeprMutateRequest<a.Secret>) {
     } catch (error) {
         Log.error("Error copying secret %s from %s to %s: %s", fromName, fromNS, toNS, error);
     }
-};
+}
 
