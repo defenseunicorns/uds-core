@@ -11,5 +11,5 @@ pass:
   - test: add_new_gateway
     validation: validation.yaml
     resources: resources.json
-    permutation: ".gateways += [{\"apiVersion\": \"networking.istio.io/v1beta1\", \"kind\": \"Gateway\", \"metadata\": {\"name\": \"new-gateway\", \"namespace\": \"new-namespace\"}}]"
+    permutation: '.gateways += [{"apiVersion": "networking.istio.io/v1beta1", "kind": "Gateway", "metadata": {"name": "new-gateway", "namespace": "new-namespace"}}]'
     expected-validation: false

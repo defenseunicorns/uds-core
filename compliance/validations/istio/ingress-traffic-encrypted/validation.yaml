@@ -28,7 +28,7 @@ provider:
       }
       msg = check_gateways_allowed.msg
       msg_exempted_gateways = concat(", ", exempt_gateways)
-      
+
       # Collect gateways that do not encrypt ingress traffic
       gateways_disallowed = {sprintf("%s/%s", [gateway.metadata.namespace, gateway.metadata.name]) |
         gateway := input.gateways[_];

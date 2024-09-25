@@ -6,7 +6,7 @@ pass:
   - test: no-gateway
     validation: validation.yaml
     resources: resources.json
-    permutation: 'del(.adminGateway)'
+    permutation: "del(.adminGateway)"
     expected-validation: false
   - test: admin-vs-not-using-admin-gw
     validation: validation.yaml

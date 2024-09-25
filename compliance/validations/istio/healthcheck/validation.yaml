@@ -5,22 +5,22 @@ domain:
   type: kubernetes
   kubernetes-spec:
     resources:
-    - name: istioddeployment
-      resource-rule:
-        group: apps
-        name: istiod
-        namespaces:
-        - istio-system
-        resource: deployments
-        version: v1
-    - name: istiodhpa
-      resource-rule:
-        group: autoscaling
-        name: istiod
-        namespaces:
-        - istio-system
-        resource: horizontalpodautoscalers
-        version: v2
+      - name: istioddeployment
+        resource-rule:
+          group: apps
+          name: istiod
+          namespaces:
+            - istio-system
+          resource: deployments
+          version: v1
+      - name: istiodhpa
+        resource-rule:
+          group: autoscaling
+          name: istiod
+          namespaces:
+            - istio-system
+          resource: horizontalpodautoscalers
+          version: v2
 provider:
   type: opa
   opa-spec:

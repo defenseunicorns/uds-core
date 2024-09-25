@@ -6,7 +6,7 @@ pass:
   - test: change-accessLogFile-to-different-dir
     validation: validation.yaml
     resources: resources.json
-    permutation: ".istioMeshConfig.accessLogFile = \"/log/test\""
+    permutation: '.istioMeshConfig.accessLogFile = "/log/test"'
     expected-validation: false
   - test: remove-accessLogFile
     validation: validation.yaml

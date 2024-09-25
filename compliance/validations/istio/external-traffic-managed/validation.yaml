@@ -3,7 +3,7 @@ metadata:
   uuid: 19faf69a-de74-4b78-a628-64a9f244ae13
 domain:
   type: kubernetes
-  kubernetes-spec:  
+  kubernetes-spec:
     resources: []
 provider:
   type: opa
@@ -12,7 +12,7 @@ provider:
       package validate
 
       default validate := false
-      
+
       # This policy could check meshConfig.outboundTrafficPolicy.mode (default is ALLOW_ANY)
       # Possibly would need a ServiceEntry(?)
       # (https://istio.io/latest/docs/tasks/traffic-management/egress/egress-control/#envoy-passthrough-to-external-services)

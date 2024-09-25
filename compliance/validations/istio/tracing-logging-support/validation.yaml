@@ -5,16 +5,16 @@ domain:
   type: kubernetes
   kubernetes-spec:
     resources:
-    - name: istioConfig
-      resource-rule:
-        resource: configmaps
-        namespaces:
-        - istio-system
-        version: v1
-        name: istio
-        field:
-          jsonpath: .data.mesh
-          type: yaml
+      - name: istioConfig
+        resource-rule:
+          resource: configmaps
+          namespaces:
+            - istio-system
+          version: v1
+          name: istio
+          field:
+            jsonpath: .data.mesh
+            type: yaml
 provider:
   type: opa
   opa-spec:
@@ -42,4 +42,4 @@ provider:
     output:
       validation: validate.validate
       observations:
-      - validate.msg
+        - validate.msg

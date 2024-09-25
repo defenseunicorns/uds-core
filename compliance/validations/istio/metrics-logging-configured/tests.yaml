@@ -6,10 +6,10 @@ pass:
   - test: change_enablePrometheusMerge_to_false
     validation: validation.yaml
     resources: resources.json
-    permutation: '.istioConfig.enablePrometheusMerge = false'
+    permutation: ".istioConfig.enablePrometheusMerge = false"
     expected-validation: false
   - test: change_enablePrometheusMerge_to_false
     validation: validation.yaml
     resources: resources.json
-    permutation: 'del(.istioConfig.enablePrometheusMerge)'
+    permutation: "del(.istioConfig.enablePrometheusMerge)"
     expected-validation: true

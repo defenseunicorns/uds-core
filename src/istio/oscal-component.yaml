@@ -228,22 +228,6 @@ component-definition:
                 ASSESSMENT-OBJECTIVE:
                 a separate execution domain is maintained for each executing system process.
               uuid: 0e72ca49-e9cb-4a74-8701-6f81091197b6
-            - control-id: sc-4
-              description: Istio enforces outbound traffic goes through an Egress Gateway with a Network Policy.
-              links:
-                - href: file:../../compliance/validations/istio/healthcheck/validation.yaml
-                  rel: lula
-                  text: Check that Istio is healthy
-                - href: file:../../compliance/validations/istio/authorized-traffic-egress/validation.yaml
-                  rel: lula
-                  text: Network Policies are in place to ensure that only authorized traffic is allowed to egress the cluster [PLACEHOLDER]
-                - href: file:../../compliance/validations/istio/egress-gateway-exists-and-configured/validation.yaml
-                  rel: lula
-                  text: Egress Gateway exists and is configured [PLACEHOLDER]
-              remarks: |-
-                STATEMENT:
-                Prevent unauthorized and unintended information transfer via shared system resources.
-              uuid: 47723981-3b73-49f1-8240-d2764aafd8da
             - control-id: sc-7.4
               description: Istio is configured to provide managed interfaces for external telecommunication services, establish traffic flow policies, and protect the confidentiality and integrity of transmitted information. It also prevents unauthorized exchange of control plane traffic and filters unauthorized control plane traffic.
               links:
@@ -325,11 +309,11 @@ component-definition:
           props:
             - name: generation
               ns: https://docs.lula.dev/oscal/ns
-              value: lula generate component --catalog-source https://raw.githubusercontent.com/GSA/fedramp-automation/master/dist/content/rev5/baselines/json/FedRAMP_rev5_MODERATE-baseline-resolved-profile_catalog.json --component 'Istio' --requirements ac-4,ac-4.21,ac-6.9,ac-14,au-2,au-3,au-3.1,au-12,cm-5,sc-7.4,sc-7.8,sc-8,sc-8.1,sc-10,sc-13,sc-23,sc-39 --remarks assessment-objective --framework il4
+              value: lula generate component --catalog-source https://raw.githubusercontent.com/GSA/fedramp-automation/refs/tags/fedramp-2.0.0-oscal-1.0.4/dist/content/rev5/baselines/json/FedRAMP_rev5_MODERATE-baseline-resolved-profile_catalog.json --component 'Istio' --requirements ac-4,ac-4.21,ac-6.9,ac-14,au-2,au-3,au-3.1,au-12,cm-5,sc-7.4,sc-7.8,sc-8,sc-8.1,sc-10,sc-13,sc-23,sc-39 --remarks assessment-objective --framework il4
             - name: framework
               ns: https://docs.lula.dev/oscal/ns
               value: il4
-          source: https://raw.githubusercontent.com/GSA/fedramp-automation/master/dist/content/rev5/baselines/json/FedRAMP_rev5_MODERATE-baseline-resolved-profile_catalog.json
+          source: https://raw.githubusercontent.com/GSA/fedramp-automation/refs/tags/fedramp-2.0.0-oscal-1.0.4/dist/content/rev5/baselines/json/FedRAMP_rev5_MODERATE-baseline-resolved-profile_catalog.json
           uuid: d2afb4c4-2cd8-5305-a6cc-d1bc7b388d0c
       description: Component Description
       title: Istio

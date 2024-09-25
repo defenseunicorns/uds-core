@@ -3,14 +3,14 @@ metadata:
   uuid: 663f5e92-6db4-4042-8b5a-eba3ebe5a622
 domain:
   type: kubernetes
-  kubernetes-spec:  
+  kubernetes-spec:
     resources: []
 provider:
   type: opa
   opa-spec:
     rego: |
       package validate
-      
+
       validate := false
 
       # Check on destination rule, outlier detection?

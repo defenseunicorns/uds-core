@@ -6,10 +6,10 @@ pass:
   - test: hpa_zero_replicas
     validation: validation.yaml
     resources: resources.json
-    permutation: '.istiodhpa.status.currentReplicas = 0'
+    permutation: ".istiodhpa.status.currentReplicas = 0"
     expected-validation: false
   - test: deployment_condition_false
     validation: validation.yaml
     resources: resources.json
-    permutation: '.istioddeployment.status.availableReplicas = 0'
+    permutation: ".istioddeployment.status.availableReplicas = 0"
     expected-validation: false

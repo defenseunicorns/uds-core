@@ -6,7 +6,7 @@ pass:
   - test: remove-auth-rules
     validation: validation.yaml
     resources: resources.json
-    permutation: 'del(.authorizationPolicy.spec.rules)'
+    permutation: "del(.authorizationPolicy.spec.rules)"
     expected-validation: false
   - test: add-not-namespaces
     validation: validation.yaml

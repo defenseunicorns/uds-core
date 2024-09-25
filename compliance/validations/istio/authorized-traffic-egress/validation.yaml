@@ -3,11 +3,11 @@ metadata:
   uuid: 7455f86d-b79c-4226-9ce3-f3fb7d9348c8
 domain:
   type: kubernetes
-  kubernetes-spec: 
+  kubernetes-spec:
     resources: []
 provider:
   type: opa
-  opa-spec: 
+  opa-spec:
     rego: |
       package validate
 
