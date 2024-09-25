@@ -19,7 +19,7 @@ component-definition:
     - href: 'file://./../src/loki/oscal-component.yaml'
     - href: 'file://./../src/neuvector/oscal-component.yaml'
     - href: 'file://./../src/prometheus-stack/oscal-component.yaml'
-    - href: 'file://./../src/promtail/oscal-component.yaml'
+    - href: 'file://./../src/vector/oscal-component.yaml'
     - href: 'file://./../src/velero/oscal-component.yaml'
 
   capabilities:
