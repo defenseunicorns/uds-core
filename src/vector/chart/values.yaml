@@ -1,0 +1,16 @@
+additionalNetworkAllow: []
+# Examples:
+# - direction: Egress
+#   selector:
+#     app.kubernetes.io/name: vector
+#   remoteNamespace: elastic
+#   remoteSelector:
+#     app.kubernetes.io/name: elastic
+#   port: 9090
+#   description: "Elastic Storage"
+# - direction: Egress
+#   selector:
+#     app.kubernetes.io/name: vector
+#   remoteGenerated: Anywhere
+#   port: 80
+#   description: "S3 Storage"
