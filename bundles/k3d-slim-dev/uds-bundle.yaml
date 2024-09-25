@@ -46,6 +46,9 @@ packages:
             - name: ADMIN_TLS_KEY
               description: "The TLS key for the admin gateway (must be base64 encoded)"
               path: tls.key
+            - name: ADMIN_TLS1_2_SUPPORT
+              description: "Add support for TLS 1.2 on this gateway"
+              path: tls.supportTLSV1_2
       istio-tenant-gateway:
         uds-istio-config:
           variables:
@@ -55,6 +58,9 @@ packages:
             - name: TENANT_TLS_KEY
               description: "The TLS key for the tenant gateway (must be base64 encoded)"
               path: tls.key
+            - name: TENANT_TLS1_2_SUPPORT
+              description: "Add support for TLS 1.2 on this gateway"
+              path: tls.supportTLSV1_2
         gateway:
           variables:
             - name: TENANT_SERVICE_PORTS

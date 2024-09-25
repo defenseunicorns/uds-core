@@ -1,0 +1,21 @@
+apiVersion: uds.dev/v1alpha1
+kind: Exemption
+metadata:
+  name: vector
+  namespace: uds-policy-exemptions
+spec:
+  exemptions:
+    - policies:
+        - RequireNonRootUser
+        - RestrictSELinuxType
+        - RestrictHostPathWrite
+        - RestrictVolumeTypes
+      matcher:
+        namespace: vector
+        name: "^vector-.*"
+      title: "vector exemptions"
+      description: "Vector mounts the following hostPaths:
+        - `/var/log`: to tail logs
+        - `/var/lib/vector`: for Vector's buffering and persistent state
+        Since logs can have sensitive information, it is better to exclude
+        Vector from the policy than add the paths as allowable mounts"
