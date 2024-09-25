@@ -1,6 +1,6 @@
 apiVersion: v2
-name: uds-promtail-config
-description: Promtail configuration for UDS
+name: uds-vector-config
+description: Vector configuration for UDS
 
 # A chart can be either an 'application' or a 'library' chart.
 #

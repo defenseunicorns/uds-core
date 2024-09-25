@@ -23,9 +23,9 @@
       "commitMessageTopic": "istio"
     },
     {
-      "matchFileNames": ["src/promtail/**"],
-      "groupName": "promtail",
-      "commitMessageTopic": "promtail"
+      "matchFileNames": ["src/vector/**"],
+      "groupName": "vector",
+      "commitMessageTopic": "vector"
     },
     {
       "matchFileNames": ["src/velero/**"],
@@ -73,6 +73,11 @@
       "commitMessageTopic": "grafana"
     },
     {
+      "matchFileNames": ["src/runtime/**"],
+      "groupName": "runtime",
+      "commitMessageTopic": "runtime"
+    },
+    {
       "matchPackageNames": ["zarf-dev/zarf", "ghcr.io/zarf-dev/packages/init"],
       "groupName": "zarf",
       "commitMessageTopic": "zarf"
@@ -89,7 +94,7 @@
     },
     {
       "matchFileNames": [".github/workflows/**", ".github/actions/**"],
-      "excludePackageNames": ["zarf-dev/zarf", "defenseunicorns/uds-cli"],
+      "matchPackageNames": ["*", "!zarf-dev/zarf", "!defenseunicorns/uds-cli", "!defenseunicorns/lula", "!k3d-io/k3d"],
       "groupName": "githubactions",
       "commitMessageTopic": "githubactions",
       "pinDigests": true

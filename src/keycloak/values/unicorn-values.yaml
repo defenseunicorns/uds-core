@@ -2,4 +2,4 @@ podSecurityContext:
   fsGroup: 65532
 image:
   repository: cgr.dev/du-uds-defenseunicorns/keycloak
-  tag: "25.0.5"
+  tag: "25.0.6"

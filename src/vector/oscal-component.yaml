@@ -1,7 +1,7 @@
 component-definition:
   uuid: ff959bdb-7be9-49b3-9dc2-c41b34e7017d
   metadata:
-    title: Promtail
+    title: Vector
     last-modified: "2024-01-31T16:44:35Z"
     version: "20240132"
     oscal-version: 1.1.2
@@ -15,7 +15,7 @@ component-definition:
   components:
     - uuid: 3ca1e9a3-a566-48d1-93af-200abd1245e3
       type: software
-      title: Promtail
+      title: Vector
       description: |
         Log collector
       purpose: Collects logs from the cluster
@@ -26,7 +26,7 @@ component-definition:
       control-implementations:
         - uuid: d2afb4c4-2cd8-5305-a6cc-d1bc7b388d0c
           source: https://raw.githubusercontent.com/GSA/fedramp-automation/93ca0e20ff5e54fc04140613476fba80f08e3c7d/dist/content/rev5/baselines/json/FedRAMP_rev5_HIGH-baseline-resolved-profile_catalog.json
-          description: Controls implemented by Promtail for inheritance by applications
+          description: Controls implemented by Vector for inheritance by applications
           implemented-requirements:
             - uuid: 954ba9c8-452c-4503-a43f-c880a01b828d
               control-id: ac-6.9
@@ -36,7 +36,7 @@ component-definition:
                   Auditing the use of privileged functions is one way to detect such misuse, and in doing so, help mitigate the risk from insider threats and the advanced persistent threat (APT).
 
                 # Control Implementation
-                  Promtail can be configured to collect all logs from Kubernetes and underlying operating systems, allowing the aggregation of privileged function calls.
+                  Vector can be configured to collect all logs from Kubernetes and underlying operating systems, allowing the aggregation of privileged function calls.
               remarks: This control is fully implemented by this tool.
               links:
                 - href: "#98b97ec9-a9ce-4444-83d8-71066270a424"
@@ -58,7 +58,7 @@ component-definition:
 
                 # Control Implementation
                   Logging daemons are present on each node that BigBang is installed on.  Out of the box, the following events are captured:
-                  * all containers emitting to STDOUT or STDERR (captured  by container runtime translating container logs to /var/log/containers).
+                  * all containers emitting to STDOUT or STDERR (captured by container runtime creating containers logs under /var/log/pods).
                   * all kubernetes api server requests.
                   * all events emitted by the kubelet.
               remarks: This control is fully implemented by this tool.
@@ -78,9 +78,7 @@ component-definition:
                   Event outcomes can include indicators of event success or failure and event-specific results (e.g., the security state of the information system after the event occurred).
 
                 # Control Implementation
-                  Logs are captured by promtail from the node. The node logs will contain the necessary log data from all pods/applications inside the selected nodes.
-                  Validating `logfmt` as the config.logFormat would be the goal. This is currently a secret mounted to /etc/promtail/promtail.yaml in the promtail container. We will ensure the promtail.yaml file is at a minimum the target config.
-                https://grafana.com/docs/loki/latest/send-data/promtail/stages/logfmt/
+                  Logs are captured by vector from the node. The node logs will contain the necessary log data from all pods/applications inside the selected nodes as well as Kubernetes audit logs.
               remarks: This control is fully implemented by this tool.
               links:
                 - href: "#98b97ec9-a9ce-4444-83d8-71066270a424"
@@ -105,8 +103,6 @@ component-definition:
                   * time of the event (UTC).
                   * source of event (pod, namespace, container id).
                   Applications are responsible for providing all other information.
-                  Validating `logfmt` as the config.logFormat would be the goal. This is currently a secret mounted to /etc/promtail/promtail.yaml in the promtail container. We will ensure the promtail.yaml file is at a minimum the target config.
-                  https://grafana.com/docs/loki/latest/send-data/promtail/stages/logfmt/
               remarks: This control is fully implemented by this tool.
               links:
                 - href: "#98b97ec9-a9ce-4444-83d8-71066270a424"
@@ -122,13 +118,9 @@ component-definition:
   back-matter:
     resources:
       - uuid: D552C935-E40C-4A03-B5CC-4605EBD95B6D
-        title: Promtail
+        title: Vector
         rlinks:
-          - href: https://grafana.com/docs/loki/latest/clients/promtail/
-      - uuid: 211C474B-E11A-4DD2-8075-50CDAC507CDC
-        title: Big Bang Promtail package
-        rlinks:
-          - href: https://repo1.dso.mil/platform-one/big-bang/apps/sandbox/promtail
+          - href: https://vector.dev/
       - uuid: 98b97ec9-a9ce-4444-83d8-71066270a424
         title: Lula Validation
         rlinks:
@@ -145,7 +137,7 @@ component-definition:
                     Group: apps
                     Version: v1
                     Resource: daemonsets
-                    Namespaces: [promtail]
+                    Namespaces: [vector]
               rego: |
                 package validate
 
@@ -177,7 +169,7 @@ component-definition:
                     Group:
                     Version: v1
                     Resource: pods
-                    Namespaces: [promtail]
+                    Namespaces: [vector]
               rego: |
                 package validate
 
@@ -213,7 +205,7 @@ component-definition:
                     Group:
                     Version: v1
                     Resource: pods
-                    Namespaces: [promtail]
+                    Namespaces: [vector]
               rego: |
                 package validate
 
@@ -250,7 +242,7 @@ component-definition:
                     Group:
                     Version: v1
                     Resource: pods
-                    Namespaces: [promtail]
+                    Namespaces: [vector]
               rego: |
                 package validate
 
@@ -261,8 +253,9 @@ component-definition:
                     containers := pod.spec.containers
 
                     some container in containers
-                    container.name == "promtail"
+                    container.name == "vector"
                     some i
-                    container.args[i] == "-config.file=/etc/promtail/promtail.yaml"
+                    container.args[i] == "--config-dir"
+                    container.args[i] == "/etc/vector/"
                   }
                 }

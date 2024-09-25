@@ -1,7 +1,7 @@
 ---
 title: Configuring Policy Exemptions
 type: docs
-weight: 3
+weight: 4
 ---
 
 By default policy exemptions ([UDSExemptions](https://github.com/defenseunicorns/uds-core/blob/uds-docs/src/pepr/operator/crd/generated/exemption-v1alpha1.ts)) are only allowed in a single namespace -- `uds-policy-exemptions`. We recognize this is not a conventional pattern in K8s, but believe it is ideal for UDS for the following reasons:
