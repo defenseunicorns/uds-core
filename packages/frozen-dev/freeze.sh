@@ -57,8 +57,13 @@ docker commit -p "$CONTAINER_ID" "$IMAGE_NAME"
 echo "Saving image to data/uds-k3d-frozen-latest.tar..."
 docker save -o data/uds-k3d-frozen-latest.tar "$IMAGE_NAME"
 
-echo "Container image data/uds-k3d-frozen-latest.tar"
+echo "Container image saved to data/uds-k3d-frozen-latest.tar"
 
 # Step 6: Create a tarball from the data contents
-sudo tar -cpvf uds-frozen.tar data
+echo "Creating a final tarball to include in the package"
+sudo tar --blocking-factor=64 -cpf uds-frozen.tar data
 sudo chown -R $(whoami):$(whoami) "$(pwd)/uds-frozen.tar"
+
+echo "Successfully froze the cluster!"
+
+exit 0
