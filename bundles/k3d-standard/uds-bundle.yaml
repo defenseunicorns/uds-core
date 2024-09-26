@@ -86,9 +86,6 @@ packages:
             - name: ADMIN_TLS_KEY
               description: "The TLS key for the admin gateway (must be base64 encoded)"
               path: tls.key
-            - name: ADMIN_TLS1_2_SUPPORT
-              description: "Add support for TLS 1.2 on this gateway"
-              path: tls.supportTLSV1_2
       istio-tenant-gateway:
         uds-istio-config:
           variables:
@@ -98,9 +95,6 @@ packages:
             - name: TENANT_TLS_KEY
               description: "The TLS key for the tenant gateway (must be base64 encoded)"
               path: tls.key
-            - name: TENANT_TLS1_2_SUPPORT
-              description: "Add support for TLS 1.2 on this gateway"
-              path: tls.supportTLSV1_2
         gateway:
           variables:
             - name: TENANT_SERVICE_PORTS
@@ -140,3 +134,26 @@ packages:
                 GOOGLE_IDP_CORE_ENTITY_ID: "https://sso.uds.dev/realms/uds"
                 GOOGLE_IDP_ADMIN_GROUP: "uds-core-dev-admin"
                 GOOGLE_IDP_AUDITOR_GROUP: "uds-core-dev-auditor"
+      grafana:
+        grafana:
+          variables:
+            - name: GRAFANA_HA
+              description: Enable HA Grafana
+              path: autoscaling.enabled
+        uds-grafana-config:
+          variables:
+            - name: GRAFANA_PG_TYPE
+              description: Grafana database type
+              path: postgresql.type
+            - name: GRAFANA_PG_HOST
+              description: Grafana postgresql host
+              path: postgresql.host
+            - name: GRAFANA_PG_NAME
+              description: Grafana postgresql database
+              path: postgresql.name
+            - name: GRAFANA_PG_PASSWORD
+              description: Grafana postgresql password
+              path: postgresql.password
+            - name: GRAFANA_PG_USER
+              description: Grafana postgresql username
+              path: postgresql.user

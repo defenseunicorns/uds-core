@@ -1,1 +1,23 @@
 domain: "###ZARF_VAR_DOMAIN###"
+
+# Stores Grafana's metadata, including dashboards, data sources, organizations, alerts, and other configurations. Required for HA mode.
+postgresql:
+  # Type of database being used (e.g., "postgres" for PostgreSQL).
+  type: ""
+  # The hostname and port of the external postgresql server
+  host: ""
+  # The name of the postgresql Grafana will connect to.
+  name: ""
+  # The username used for authenticating to the external postgresql.
+  user: ""
+  # The password used for authenticating to the external postgresql.
+  password: ""
+  # SSL mode for the postgresql connection. Set to 'disable' if SSL is not required.
+  ssl_mode: disable
+  # Port the postgresql is listening on
+  port: 5432
+  # Configure internal postgresql deployment
+  internal:
+    enabled: false
+    remoteSelector: {}
+    remoteNamespace: ""

@@ -60,3 +60,27 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{/*
+Check external PostgreSQL connection information for Grafana. Returns "true" if all required values are present.
+*/}}
+{{- define "grafana.postgresql.config" -}}
+{{- if .Values.postgresql -}}
+{{ $requiredKeys := list "type" "host" "name" "user" "password" "port" }}
+{{- range $k := $requiredKeys -}}
+{{- if empty (get $.Values.postgresql $k) -}}
+{{- fail (printf "Missing value for \"postgresql.%s\"." $k) -}}
+{{- end -}}
+{{- end }}
+{{- if .Values.postgresql.internal.enabled }}
+{{- if or (empty .Values.postgresql.internal.remoteSelector) (empty .Values.postgresql.internal.remoteNamespace) -}}
+{{- fail "Missing remoteSelector or remoteNamespace for internal PostgreSQL." -}}
+{{- end }}
+{{- end }}
+{{- default "true" "" }}
+{{- else if not (empty (compact (values (omit .Values.postgresql "port" "internal")))) -}}
+{{ fail "Cannot use an external PostgreSQL Database without required values." -}}
+{{- else -}}
+{{ default "false" "" }}
+{{- end }}
+{{- end }}
