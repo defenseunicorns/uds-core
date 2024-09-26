@@ -16,3 +16,9 @@ variables:
     velero_bucket_provider_url: ""
     velero_bucket_credential_name: ""
     velero_bucket_credential_key: ""
+    grafana_ha: true
+    grafana_rds_type: rds
+    grafana_rds_host: ${ZARF_VAR_GRAFANA_RDS_HOST}
+    grafana_rds_name: ${ZARF_VAR_GRAFANA_RDS_NAME}
+    grafana_rds_password: ${ZARF_VAR_GRAFANA_RDS_PASSWORD}
+    grafana_rds_user: ${ZARF_VAR_GRAFANA_RDS_USER}

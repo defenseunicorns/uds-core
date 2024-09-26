@@ -106,6 +106,20 @@ tasks:
         dir: .github/test-infra/buckets-iac
       - cmd: tofu apply -auto-approve
         dir: .github/test-infra/buckets-iac
+      - cmd: echo ${STATE_KEY} | sed 's/\.tfstate/-rds.tfstate/g'
+        setVariables:
+          - name: RDS_STATE_KEY
+        dir: .github/test-infra/rds-iac
+      - cmd: echo ${RDS_STATE_KEY}
+      - cmd: |
+          tofu init -force-copy \
+          -backend-config="bucket=${STATE_BUCKET_NAME}" \
+          -backend-config="key=${RDS_STATE_KEY}" \
+          -backend-config="region=${REGION}" \
+          -backend-config="dynamodb_table=${STATE_DYNAMODB_TABLE_NAME}"
+        dir: .github/test-infra/rds-iac
+      - cmd: tofu apply -auto-approve
+        dir: .github/test-infra/rds-iac
 
   - name: tofu-outputs
     actions:
@@ -133,6 +147,22 @@ tasks:
         setVariables:
           - name: VELERO_S3_ROLE_ARN
         dir: .github/test-infra/buckets-iac
+      - cmd: tofu output -raw grafana_rds_host
+        setVariables:
+          - name: GRAFANA_RDS_HOST
+        dir: .github/test-infra/rds-iac
+      - cmd: tofu output -raw grafana_rds_name
+        setVariables:
+          - name: GRAFANA_RDS_NAME
+        dir: .github/test-infra/rds-iac
+      - cmd: tofu output -raw grafana_rds_user
+        setVariables:
+          - name: GRAFANA_RDS_USER
+        dir: .github/test-infra/rds-iac
+      - cmd: tofu output -raw grafana_rds_password
+        setVariables:
+          - name: GRAFANA_RDS_PASSWORD
+        dir: .github/test-infra/rds-iac
 
   - name: create-uds-config
     actions:
@@ -154,4 +184,10 @@ tasks:
               velero_bucket_provider_url: ""
               velero_bucket_credential_name: ""
               velero_bucket_credential_key: ""
+              grafana_ha: true
+              grafana_rds_type: rds
+              grafana_rds_host: ${GRAFANA_RDS_HOST}
+              grafana_rds_name: ${GRAFANA_RDS_NAME}
+              grafana_rds_password: ${GRAFANA_RDS_PASSWORD}
+              grafana_rds_user: ${GRAFANA_RDS_USER}
           EOF
