@@ -49,7 +49,7 @@ grafana.ini:
     auto_login: true
 
 # Upstream Grafana environment values from secret
-envFromSecret: uds-grafana-config-postgresql
+envFromSecret: "uds-grafana-config-postgresql"
 
 service:
   appProtocol: "http"

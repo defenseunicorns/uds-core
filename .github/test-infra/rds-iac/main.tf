@@ -4,7 +4,7 @@ resource "random_password" "db_password" {
 }
 
 resource "aws_secretsmanager_secret" "db_secret" {
-  name                    = "${var.db_name}-db-secret"
+  name                    = "${var.db_name}-db-secret-${random_id.unique_id.hex}"
   description             = "DB authentication token for ${var.db_name}"
   recovery_window_in_days = var.recovery_window
 }

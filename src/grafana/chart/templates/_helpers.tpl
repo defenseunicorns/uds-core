@@ -62,25 +62,41 @@ Create the name of the service account to use
 {{- end }}
 
 {{/*
-Check external PostgreSQL connection information for Grafana. Returns "true" if all required values are present.
+    This template validates the PostgreSQL configuration for Grafana.
+    It ensures either:
+    1. An internal PostgreSQL is enabled with both `remoteSelector` and `remoteNamespace` provided.
+    2. Or, an external PostgreSQL is properly configured with all required values (`type`, `host`, `name`, `user`, `password`, and `port`).
+
+    If internal PostgreSQL is enabled but `remoteSelector` or `remoteNamespace` are missing, an error is thrown.
+
+    For external PostgreSQL:
+    - If any external settings are partially filled (excluding `port`, `internal`, and `ssl_mode`), an error is thrown.
+    - If no external settings are provided, returns `"false"`.
+    - If all required external settings are provided, returns `"true"`.
+
+    Returns `"true"` if a valid configuration is detected, otherwise `"false"` if no configuration is set, or an error if the configuration is incomplete.
 */}}
 {{- define "grafana.postgresql.config" -}}
-{{- if .Values.postgresql -}}
-{{ $requiredKeys := list "type" "host" "name" "user" "password" "port" }}
-{{- range $k := $requiredKeys -}}
-{{- if empty (get $.Values.postgresql $k) -}}
-{{- fail (printf "Missing value for \"postgresql.%s\"." $k) -}}
-{{- end -}}
-{{- end }}
 {{- if .Values.postgresql.internal.enabled }}
 {{- if or (empty .Values.postgresql.internal.remoteSelector) (empty .Values.postgresql.internal.remoteNamespace) -}}
 {{- fail "Missing remoteSelector or remoteNamespace for internal PostgreSQL." -}}
 {{- end }}
+{{- default "true" "" }}
+{{- else }}
+{{- if not (empty (compact (values (omit .Values.postgresql "port" "internal" "ssl_mode")))) -}}
+{{- fail "Cannot use an external PostgreSQL Database without required values." -}}
+{{- else }}
+{{- if (empty (compact (values (omit .Values.postgresql "port" "internal" "ssl_mode")))) -}}
+{{- default "false" "" }}
+{{- else }}
+{{- $requiredKeys := list "type" "host" "name" "user" "password" "port" }}
+{{- range $k := $requiredKeys -}}
+{{- if empty (get $.Values.postgresql $k) -}}
+{{- fail (printf "Missing value for \"postgresql.%s\"." $k) -}}
+{{- end }}
 {{- end }}
 {{- default "true" "" }}
-{{- else if not (empty (compact (values (omit .Values.postgresql "port" "internal")))) -}}
-{{ fail "Cannot use an external PostgreSQL Database without required values." -}}
-{{- else -}}
-{{ default "false" "" }}
+{{- end }}
+{{- end }}
 {{- end }}
 {{- end }}
