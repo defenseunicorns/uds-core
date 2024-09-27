@@ -4,7 +4,7 @@ resource "random_password" "db_password" {
 }
 
 resource "aws_secretsmanager_secret" "db_secret" {
-  name                    = "${local.resource_prefix}${var.db_name}-db-secret"
+  name                    = "${var.db_name}-db-secret"
   description             = "DB authentication token for ${var.db_name}"
   recovery_window_in_days = var.recovery_window
 }
@@ -38,7 +38,7 @@ module "db" {
   port     = "5432"
 
   subnet_ids                  = local.subnet_ids
-  db_subnet_group_name        = "uds-${var.environment}"
+  db_subnet_group_name        = "${var.name}"
   manage_master_user_password = false
   password                    = random_password.db_password.result
 
@@ -71,7 +71,6 @@ resource "aws_vpc_security_group_ingress_rule" "rds_ingress" {
 }
 
 locals {
-  resource_prefix = "${var.name}"
   vpc_id          = data.aws_vpc.vpc.id
   subnet_ids      = data.aws_subnets.subnets.ids
 }
@@ -79,7 +78,7 @@ locals {
 data "aws_vpc" "vpc" {
   filter {
     name   = "tag:Name"
-    values = ["uds-${var.environment}"]
+    values = ["eksctl-${var.name}-cluster/VPC"]
   }
 }
 

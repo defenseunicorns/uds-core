@@ -16,4 +16,5 @@ output "grafana_rds_user" {
 output "grafana_rds_password" {
   description = "RDS Password for Grafana"
   value       = random_password.db_password.result
+  sensitive   = true
 }

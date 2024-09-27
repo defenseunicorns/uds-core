@@ -14,13 +14,6 @@ variable "recovery_window" {
   default     = 30
 }
 
-variable "environment" {
-  description = "Deployment environment (e.g. 'prod' or 'staging' or 'dev')"
-  type        = string
-  default     = "dev"
-}
-
-
 variable "db_name" {
   description = "The name to give the database"
   type        = string
