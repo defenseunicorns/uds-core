@@ -1,10 +1,10 @@
 import { a, K8s, kind, Log, PeprMutateRequest } from "pepr";
 
-export const labelCopySecret = "uds.dev/secrets/copy";
+export const labelCopySecret = "secrets.uds.dev/copy";
 
-const annotationFromNS = "uds.dev/secrets/fromNamespace";
-const annotationFromName = "uds.dev/secrets/fromName";
-const annotationOnFailure = "uds.dev/secrets/onMissingSource";
+const annotationFromNS = "secrets.uds.dev/fromNamespace";
+const annotationFromName = "secrets.uds.dev/fromName";
+const annotationOnFailure = "secrets.uds.dev/onMissingSource";
 
 /**
  * Enum for handling what to do when the source secret is missing
@@ -18,6 +18,23 @@ enum OnFailure {
   IGNORE,
   ERROR,
   LEAVEEMPTY,
+}
+
+/**
+ * Filter unwanted labels based on a list of keys to strip out.
+ *
+ * @returns Record<string, string> - The filtered labels
+ */
+function filterLabels(labels: Record<string, string>, keysToRemove: string[]) {
+  const filteredLabels: Record<string, string> = {};
+
+  for (const key in labels) {
+    if (!keysToRemove.includes(key)) {
+      filteredLabels[key] = labels[key];
+    }
+  }
+
+  return filteredLabels;
 }
 
 /**
@@ -75,6 +92,10 @@ export async function copySecret(request: PeprMutateRequest<a.Secret>) {
 
   Log.info("Attempting to copy secret %s from namespace %s to %s", fromName, fromNS, toNS);
 
+  // filter out the original copy label, then add a "copied" label
+  let filteredLabels = filterLabels(request.Raw.metadata?.labels || {}, [labelCopySecret]);
+  filteredLabels = { ...filteredLabels, "secrets.uds.dev/copied": "true" };
+
   try {
     const sourceSecret = await K8s(kind.Secret).InNamespace(fromNS).Get(fromName);
 
@@ -89,8 +110,10 @@ export async function copySecret(request: PeprMutateRequest<a.Secret>) {
             apiVersion: "v1",
             kind: "Secret",
             metadata: {
-              namespace: toNS,
               name: toName,
+              namespace: toNS,
+              labels: filteredLabels,
+              annotations: request.Raw.metadata?.annotations,
             },
           });
           return;
@@ -104,8 +127,10 @@ export async function copySecret(request: PeprMutateRequest<a.Secret>) {
         apiVersion: "v1",
         kind: "Secret",
         metadata: {
-          namespace: toNS,
           name: toName,
+          namespace: toNS,
+          labels: filteredLabels,
+          annotations: request.Raw.metadata?.annotations,
         },
         data: sourceSecret.data,
       });
