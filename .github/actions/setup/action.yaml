@@ -28,13 +28,14 @@ runs:
       # renovate: datasource=github-tags depName=k3d-io/k3d versioning=semver
       run: curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | TAG=v5.7.4 bash
 
-    - name: Set up Homebrew
-      uses: Homebrew/actions/setup-homebrew@master
+    - name: Set UDS CLI Arch
+      id: setUdsCliArch
+      shell: bash
+      run: INPUT=${{ runner.arch == 'X64' && 'amd64' || runner.arch }}; echo "ARCH=${INPUT,,}" >> "$GITHUB_OUTPUT"
 
     - name: Install UDS CLI
       shell: bash
-      # renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
-      run: brew install defenseunicorns/tap/uds@0.16.0
+      run: curl -o /usr/local/bin/uds -L https://github.com/defenseunicorns/uds-cli/releases/download/v0.16.0/uds-cli_v0.16.0_Linux_${{steps.setUdsCliArch.outputs.ARCH}} && chmod +x /usr/local/bin/uds
 
     - name: Install Lula
       uses: defenseunicorns/lula-action/setup@badad8c4b1570095f57e66ffd62664847698a3b9 # v0.0.1
