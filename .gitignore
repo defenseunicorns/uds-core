@@ -19,5 +19,5 @@ extract-terraform.sh
 cluster-config.yaml
 **.tfstate
 
-packages/frozen-dev/data
-packages/frozen-dev/uds-frozen.tar
+packages/checkpoint-dev/data
+packages/checkpoint-dev/uds-frozen.tar

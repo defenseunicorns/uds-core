@@ -50,20 +50,20 @@ for row in $(echo "$VOLUMES" | jq -r '.[] | @base64'); do
 done
 
 # Step 5: Commit and save the current container as a new image
-IMAGE_NAME="ghcr.io/defenseunicorns/uds-core/frozen:latest"
+IMAGE_NAME="ghcr.io/defenseunicorns/uds-core/checkpoint:latest"
 echo "Committing container $CONTAINER_ID to image $IMAGE_NAME:latest..."
 docker commit -p "$CONTAINER_ID" "$IMAGE_NAME"
 
-echo "Saving image to data/uds-k3d-frozen-latest.tar..."
-docker save -o data/uds-k3d-frozen-latest.tar "$IMAGE_NAME"
+echo "Saving image to data/uds-k3d-checkpoint-latest.tar..."
+docker save -o data/uds-k3d-checkpoint-latest.tar "$IMAGE_NAME"
 
-echo "Container image saved to data/uds-k3d-frozen-latest.tar"
+echo "Container image saved to data/uds-k3d-checkpoint-latest.tar"
 
 # Step 6: Create a tarball from the data contents
 echo "Creating a final tarball to include in the package"
-sudo tar --blocking-factor=64 -cpf uds-frozen.tar data
-sudo chown -R $(whoami):$(whoami) "$(pwd)/uds-frozen.tar"
+sudo tar --blocking-factor=64 -cpf uds-checkpoint.tar data
+sudo chown -R $(whoami):$(whoami) "$(pwd)/uds-checkpoint.tar"
 
-echo "Successfully froze the cluster!"
+echo "Successfully checkpointed the cluster!"
 
 exit 0

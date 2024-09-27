@@ -2,8 +2,8 @@
 
 kind: ZarfPackageConfig
 metadata:
-  name: core-frozen-dev
-  description: "Rehydratable UDS K3d + UDS Core Slim (Istio, UDS Operator and Keycloak)"
+  name: k3d-core-slim-dev
+  description: "Rehydratable UDS K3d + UDS Core Slim (Istio, UDS Operator and Keycloak) Checkpoint"
   authors: "Defense Unicorns - Product"
   # x-release-please-start-version
   version: "0.27.3"
@@ -41,22 +41,22 @@ components:
     required: true
     description: "Create the K3d cluster w/UDS Core pre-installed"
     files:
-      - source: uds-frozen.tar
-        target: uds-frozen.tar
+      - source: uds-checkpoint.tar
+        target: uds-checkpoint.tar
     actions:
       onCreate:
         before:
-          - cmd: ./freeze.sh
+          - cmd: ./checkpoint.sh
         onSuccess:
           - cmd: |
-              sudo rm -rf data uds-frozen.tar
+              sudo rm -rf data uds-checkpoint.tar
       onDeploy:
         after:
           - cmd: |
-              sudo tar --blocking-factor=64 -xpf uds-frozen.tar data
+              sudo tar --blocking-factor=64 -xpf uds-checkpoint.tar data
               K8S_TOKEN="$(sudo cat $(pwd)/data/k3s_data/server/token)"
 
-              docker load -i data/uds-k3d-frozen-latest.tar
+              docker load -i data/uds-k3d-checkpoint-latest.tar
 
               k3d cluster create \
                 -p "80:80@server:*" \
@@ -69,7 +69,7 @@ components:
                 --k3s-arg "--token=${K8S_TOKEN}@server:*" \
                 -v "$(pwd)/data/kubelet_data:/var/lib/kubelet@server:*" \
                 -v "$(pwd)/data/k3s_data:/var/lib/rancher/k3s@server:*" \
-                --image ghcr.io/defenseunicorns/uds-core/frozen:latest ${ZARF_VAR_K3D_EXTRA_ARGS} \
+                --image ghcr.io/defenseunicorns/uds-core/checkpoint:latest ${ZARF_VAR_K3D_EXTRA_ARGS} \
                 ${ZARF_VAR_CLUSTER_NAME}
             description: "Create the cluster"
           - description: Keycloak to be Healthy
@@ -80,4 +80,4 @@ components:
                 namespace: keycloak
                 condition: Ready
         onSuccess:
-          - cmd: rm -f uds-frozen.tar
+          - cmd: rm -f uds-checkpoint.tar
