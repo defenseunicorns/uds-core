@@ -35,5 +35,6 @@ jobs:
     permissions:
       contents: read
       packages: write
+      id-token: write
     uses: ./.github/workflows/checkpoint.yaml
     secrets: inherit
