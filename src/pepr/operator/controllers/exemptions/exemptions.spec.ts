@@ -20,13 +20,13 @@ const prometheusMatcher = {
   name: "^neuvector-prometheus-exporter-pod.*",
   kind: MatcherKind.Pod,
 };
-const promtailMatcher = { namespace: "promtail", name: "^promtail-.*", kind: MatcherKind.Pod };
+const vectorMatcher = { namespace: "vector", name: "^vector-.*", kind: MatcherKind.Pod };
 const exemption1UID = "exemption-1-uid";
 const exemption2UID = "exemption-2-uid";
 const storedEnforcerMatcher = { ...enforcerMatcher, owner: exemption1UID };
 const storedControllerMatcher = { ...controllerMatcher, owner: exemption1UID };
 const storedPrometheusMatcher = { ...prometheusMatcher, owner: exemption1UID };
-const storedPromtailMatcher = { ...promtailMatcher, owner: exemption2UID };
+const storedVectorMatcher = { ...vectorMatcher, owner: exemption2UID };
 const neuvectorMockExemption = {
   metadata: {
     uid: exemption1UID,
@@ -90,7 +90,7 @@ describe("Test processExemptions() no duplicate matchers in same CR", () => {
     // remove RequireNonRootUser from enforcerMatcher
     // remove prometheusMatcher
     // add DisallowHostNamespaces to controllerMatcher
-    // add promtailMatcher with RequireNonRootUser
+    // add vectorMatcher with RequireNonRootUser
     const updatedNeuvectorExemption = {
       metadata: {
         uid: exemption1UID,
@@ -110,7 +110,7 @@ describe("Test processExemptions() no duplicate matchers in same CR", () => {
             ],
           },
           {
-            matcher: promtailMatcher,
+            matcher: vectorMatcher,
             policies: [Policy.RequireNonRootUser],
           },
         ],
@@ -120,7 +120,7 @@ describe("Test processExemptions() no duplicate matchers in same CR", () => {
     processExemptions(neuvectorMockExemption, WatchPhase.Added);
     processExemptions(updatedNeuvectorExemption, WatchPhase.Modified);
     expect(ExemptionStore.getByPolicy(Policy.RequireNonRootUser)).toEqual([
-      { ...storedPromtailMatcher, owner: exemption1UID },
+      { ...storedVectorMatcher, owner: exemption1UID },
     ]);
     expect(ExemptionStore.getByPolicy(Policy.DisallowPrivileged)).toEqual([
       storedEnforcerMatcher,
@@ -360,14 +360,14 @@ describe("Test processExemptions(); phase DELETED", () => {
   });
 
   it("Does not remove exemptions set by separate CR from the one being deleted", async () => {
-    const promtailMockExemption = {
+    const vectorMockExemption = {
       metadata: {
         uid: exemption2UID,
       },
       spec: {
         exemptions: [
           {
-            matcher: promtailMatcher,
+            matcher: vectorMatcher,
             policies: [
               Policy.DisallowPrivileged,
               Policy.DropAllCapabilities,
@@ -379,12 +379,12 @@ describe("Test processExemptions(); phase DELETED", () => {
     } as Exemption;
 
     processExemptions(neuvectorMockExemption, WatchPhase.Added);
-    processExemptions(promtailMockExemption, WatchPhase.Added);
+    processExemptions(vectorMockExemption, WatchPhase.Added);
     processExemptions(neuvectorMockExemption, WatchPhase.Deleted);
 
-    expect(ExemptionStore.getByPolicy(Policy.DisallowPrivileged)).toEqual([storedPromtailMatcher]);
-    expect(ExemptionStore.getByPolicy(Policy.DropAllCapabilities)).toEqual([storedPromtailMatcher]);
-    expect(ExemptionStore.getByPolicy(Policy.RequireNonRootUser)).toEqual([storedPromtailMatcher]);
+    expect(ExemptionStore.getByPolicy(Policy.DisallowPrivileged)).toEqual([storedVectorMatcher]);
+    expect(ExemptionStore.getByPolicy(Policy.DropAllCapabilities)).toEqual([storedVectorMatcher]);
+    expect(ExemptionStore.getByPolicy(Policy.RequireNonRootUser)).toEqual([storedVectorMatcher]);
   });
 
   it("Does not delete duplicate exemptions if set by separate CRs", async () => {
@@ -448,28 +448,28 @@ describe("Test processExemptions(); phase DELETED", () => {
       },
     } as Exemption;
 
-    const promtailMockExemption = {
+    const vectorMockExemption = {
       metadata: {
         uid: exemption2UID,
       },
       spec: {
         exemptions: [
           {
-            matcher: promtailMatcher,
+            matcher: vectorMatcher,
             policies: [Policy.DisallowPrivileged],
           },
         ],
       },
     } as Exemption;
 
-    const promtailUpdatedMockExemption = {
+    const vectorUpdatedMockExemption = {
       metadata: {
         uid: exemption2UID,
       },
       spec: {
         exemptions: [
           {
-            matcher: promtailMatcher,
+            matcher: vectorMatcher,
             policies: [Policy.DisallowPrivileged, Policy.RequireNonRootUser],
           },
         ],
@@ -477,14 +477,14 @@ describe("Test processExemptions(); phase DELETED", () => {
     } as Exemption;
 
     processExemptions(neuvectorMockExemption, WatchPhase.Added);
-    processExemptions(promtailMockExemption, WatchPhase.Added);
-    processExemptions(promtailUpdatedMockExemption, WatchPhase.Modified);
+    processExemptions(vectorMockExemption, WatchPhase.Added);
+    processExemptions(vectorUpdatedMockExemption, WatchPhase.Modified);
 
     expect(ExemptionStore.getByPolicy(Policy.RequireNonRootUser)).toEqual([
       storedEnforcerMatcher,
-      storedPromtailMatcher,
+      storedVectorMatcher,
     ]);
     expect(ExemptionStore.getByPolicy(Policy.DropAllCapabilities)).toEqual([storedEnforcerMatcher]);
-    expect(ExemptionStore.getByPolicy(Policy.DisallowPrivileged)).toEqual([storedPromtailMatcher]);
+    expect(ExemptionStore.getByPolicy(Policy.DisallowPrivileged)).toEqual([storedVectorMatcher]);
   });
 });

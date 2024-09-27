@@ -73,8 +73,8 @@ prometheus-stack:
   - "!**/*.gif"
   - "!**/*.svg"
 
-promtail:
-  - "src/promtail/**"
+vector:
+  - "src/vector/**"
   - "!**/*.md"
   - "!**/*.jpg"
   - "!**/*.png"
