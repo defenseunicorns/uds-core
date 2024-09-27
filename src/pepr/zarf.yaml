@@ -25,10 +25,6 @@ variables:
     description: "UDS Single package test"
     default: ""
 
-  - name: EXPOSE_DURING_RETRY
-    description: "During a retry, expose the "
-    default: "true"
-
   - name: PEPR_SERVICE_MONITORS
     description: "Enables Service Monitors for Pepr services (watcher, admission)"
     default: "true"

@@ -6,7 +6,7 @@ export enum Action {
 }
 
 export interface AuthServiceEvent {
-  name: string;
+  clientId: string;
   action: Action;
   client?: Client;
 }

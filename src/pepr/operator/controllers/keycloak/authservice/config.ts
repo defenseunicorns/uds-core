@@ -74,7 +74,7 @@ function buildInitialSecret(): AuthserviceConfig {
     threads: 8,
     chains: [
       buildChain({
-        name: "placeholder",
+        clientId: "placeholder",
         action: Action.Add,
         client: {
           clientId: "placeholder",

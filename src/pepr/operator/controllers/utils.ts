@@ -1,7 +1,8 @@
 import { V1OwnerReference } from "@kubernetes/client-node";
 import { GenericClass, GenericKind } from "kubernetes-fluent-client";
-import { K8s } from "pepr";
+import { K8s, R } from "pepr";
 import { Logger } from "pino";
+import { Sso, UDSPackage } from "../crd";
 
 /**
  * Sanitize a resource name to make it a valid Kubernetes resource name.
@@ -96,4 +97,8 @@ export async function deleteChildren<T extends GenericClass>(
       await K8s(kind).Delete(resource);
     }
   }
+}
+
+export function getAuthserviceClients(pkg: UDSPackage): Sso[] {
+  return R.filter(sso => R.isNotNil(sso.enableAuthserviceSelector), pkg.spec?.sso || []);
 }
