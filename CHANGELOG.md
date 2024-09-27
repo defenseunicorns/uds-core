@@ -2,6 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
+<<<<<<< HEAD
 ## [0.29.0](https://github.com/defenseunicorns/uds-core/compare/v0.28.0...v0.29.0) (2024-10-11)
 
 
@@ -55,6 +56,8 @@ All notable changes to this project will be documented in this file.
 * regroup 'support dependencies' in renovate config ([#885](https://github.com/defenseunicorns/uds-core/issues/885)) ([640d859](https://github.com/defenseunicorns/uds-core/commit/640d859a50de6c7d49afec3283fac2a249d04dd7))
 * update license ([#878](https://github.com/defenseunicorns/uds-core/issues/878)) ([b086170](https://github.com/defenseunicorns/uds-core/commit/b086170f415c82916a6e493517ac5bc62b2b7aea))
 
+=======
+>>>>>>> 62baad3 (chore(main): release 0.28.0 (#795))
 ## [0.28.0](https://github.com/defenseunicorns/uds-core/compare/v0.27.3...v0.28.0) (2024-09-27)
 
 

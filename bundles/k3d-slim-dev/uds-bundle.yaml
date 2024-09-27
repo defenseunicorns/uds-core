@@ -6,7 +6,11 @@ metadata:
   name: k3d-core-slim-dev
   description: A UDS bundle for deploying Istio from UDS Core on a development cluster
   # x-release-please-start-version
+<<<<<<< HEAD
   version: "0.29.0"
+=======
+  version: "0.28.0"
+>>>>>>> 62baad3 (chore(main): release 0.28.0 (#795))
   # x-release-please-end
 
 packages:
@@ -37,7 +41,11 @@ packages:
   - name: core-base
     path: ../../build/
     # x-release-please-start-version
+<<<<<<< HEAD
     ref: 0.29.0
+=======
+    ref: 0.28.0
+>>>>>>> 62baad3 (chore(main): release 0.28.0 (#795))
     # x-release-please-end
     overrides:
       istio-admin-gateway:
