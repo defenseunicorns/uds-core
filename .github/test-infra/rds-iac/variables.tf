@@ -1,3 +1,13 @@
+variable "region" {
+  description = "AWS region"
+  type        = string
+}
+
+variable "name" {
+  description = "Name for cluster"
+  type        = string
+}
+
 variable "recovery_window" {
   description = "Number of days to retain secret before permanent deletion"
   type        = number
@@ -5,8 +15,9 @@ variable "recovery_window" {
 }
 
 variable "environment" {
-  description = "Deployment environment (e.g. 'prod' or 'staging')"
+  description = "Deployment environment (e.g. 'prod' or 'staging' or 'dev')"
   type        = string
+  default     = dev
 }
 
 variable "resource_prefix" {
@@ -17,11 +28,13 @@ variable "resource_prefix" {
 variable "db_name" {
   description = "The name to give the database"
   type        = string
+  default     = grafana
 }
 
 variable "username" {
   description = "The username to use to login to the DB"
   type        = string
+  default     = grafana
 }
 
 variable "db_engine_version" {

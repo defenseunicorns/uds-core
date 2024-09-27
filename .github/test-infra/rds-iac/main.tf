@@ -4,7 +4,7 @@ resource "random_password" "db_password" {
 }
 
 resource "aws_secretsmanager_secret" "db_secret" {
-  name                    = "${var.resource_prefix}${var.db_name}-db-secret"
+  name                    = "${local.resource_prefix}${var.db_name}-db-secret"
   description             = "DB authentication token for ${var.db_name}"
   recovery_window_in_days = var.recovery_window
 }
@@ -37,7 +37,7 @@ module "db" {
   username = var.username
   port     = "5432"
 
-  subnet_ids                  = var.subnet_ids
+  subnet_ids                  = local.subnet_ids
   db_subnet_group_name        = "uds-${var.environment}"
   manage_master_user_password = false
   password                    = random_password.db_password.result
@@ -50,7 +50,7 @@ module "db" {
 }
 
 resource "aws_security_group" "rds_sg" {
-  vpc_id = var.vpc_id
+  vpc_id = local.vpc_id
 
   egress {
     from_port        = 0
@@ -68,4 +68,43 @@ resource "aws_vpc_security_group_ingress_rule" "rds_ingress" {
   ip_protocol = "tcp"
   from_port   = 0
   to_port     = 5432
+}
+
+locals {
+  resource_prefix = "${var.name}"
+  vpc_id          = data.aws_vpc.vpc.id
+  subnet_ids      = data.aws_subnets.subnets.ids
+}
+
+data "aws_vpc" "vpc" {
+  filter {
+    name   = "tag:Name"
+    values = ["uds-${var.environment}"]
+  }
+}
+
+data "aws_subnets" "subnets" {
+  filter {
+    name   = "vpc-id"
+    values = [data.aws_vpc.vpc.id]
+  }
+}
+
+terraform {
+  required_version = ">= 1.8.0"
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = ">= 4.0"
+    }
+
+    random = {
+      source  = "hashicorp/random"
+      version = "3.6.3"
+    }
+  }
+}
+
+resource "random_id" "unique_id" {
+  byte_length = 4
 }

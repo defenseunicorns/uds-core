@@ -1,5 +1,5 @@
 resource "aws_iam_policy" "grafana_rds_policy" {
-  name        = "${var.resource_prefix}${var.environment}-grafana-rds-access"
+  name        = "${local.resource_prefix}${var.environment}-grafana-rds-access-${random_id.unique_id.hex}"
   path        = "/"
   description = "IAM policy for Grafana to access RDS and Secrets Manager."
 
