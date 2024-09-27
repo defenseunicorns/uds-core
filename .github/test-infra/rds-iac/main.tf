@@ -38,7 +38,7 @@ module "db" {
   port     = "5432"
 
   subnet_ids                  = local.subnet_ids
-  db_subnet_group_name        = "${var.name}"
+  create_db_subnet_group      = true
   manage_master_user_password = false
   password                    = random_password.db_password.result
 
@@ -83,6 +83,7 @@ data "aws_vpc" "vpc" {
 }
 
 data "aws_subnets" "subnets" {
+  availability_zone = var.region
   filter {
     name   = "vpc-id"
     values = [data.aws_vpc.vpc.id]
