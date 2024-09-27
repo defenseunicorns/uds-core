@@ -83,7 +83,6 @@ data "aws_vpc" "vpc" {
 }
 
 data "aws_subnets" "subnets" {
-  availability_zone = ${var.region}a
   filter {
     name   = "vpc-id"
     values = [data.aws_vpc.vpc.id]
