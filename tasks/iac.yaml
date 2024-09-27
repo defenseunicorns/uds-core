@@ -89,6 +89,8 @@ tasks:
     actions:
       - cmd: tofu destroy -auto-approve
         dir: .github/test-infra/buckets-iac
+      - cmd: tofu destroy -auto-approve
+        dir: .github/test-infra/rds-iac
 
   - name: apply-tofu
     actions:

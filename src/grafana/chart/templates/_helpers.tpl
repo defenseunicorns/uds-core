@@ -83,20 +83,15 @@ Create the name of the service account to use
 {{- end }}
 {{- default "true" "" }}
 {{- else }}
-{{- if not (empty (compact (values (omit .Values.postgresql "port" "internal" "ssl_mode")))) -}}
-{{- fail "Cannot use an external PostgreSQL Database without required values." -}}
-{{- else }}
 {{- if (empty (compact (values (omit .Values.postgresql "port" "internal" "ssl_mode")))) -}}
-{{- default "false" "" }}
+{{ default "false" "" }}
 {{- else }}
-{{- $requiredKeys := list "type" "host" "name" "user" "password" "port" }}
-{{- range $k := $requiredKeys -}}
+{{- range $k := list "type" "host" "name" "user" "password" "port" -}}
 {{- if empty (get $.Values.postgresql $k) -}}
 {{- fail (printf "Missing value for \"postgresql.%s\"." $k) -}}
 {{- end }}
 {{- end }}
 {{- default "true" "" }}
-{{- end }}
 {{- end }}
 {{- end }}
 {{- end }}
