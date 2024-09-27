@@ -1,9 +1,9 @@
 pilot:
-  image: "cgr.dev/du-uds-defenseunicorns/istio-pilot-fips:1.23.1"
+  image: "cgr.dev/du-uds-defenseunicorns/istio-pilot-fips:1.23.2"
 global:
   proxy_init:
     # renovate: image=cgr.dev/du-uds-defenseunicorns/istio-proxy-fips
-    image: "###ZARF_REGISTRY###/du-uds-defenseunicorns/istio-proxy-fips:1.23.1"
+    image: "###ZARF_REGISTRY###/du-uds-defenseunicorns/istio-proxy-fips:1.23.2"
   proxy:
     # renovate: image=cgr.dev/du-uds-defenseunicorns/istio-proxy-fips
-    image: "###ZARF_REGISTRY###/du-uds-defenseunicorns/istio-proxy-fips:1.23.1"
+    image: "###ZARF_REGISTRY###/du-uds-defenseunicorns/istio-proxy-fips:1.23.2"

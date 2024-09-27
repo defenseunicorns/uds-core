@@ -12,7 +12,6 @@
     "https://raw.githubusercontent.com/defenseunicorns/uds-cli/v0.16.0/uds.schema.json": [
       "uds-bundle.yaml"
     ],
-
     // renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
     "https://raw.githubusercontent.com/defenseunicorns/uds-cli/v0.16.0/tasks.schema.json": [
       "tasks.yaml",
@@ -37,7 +36,6 @@
     "MITM",
     "neuvector",
     "opensource",
-    "promtail",
     "Quarkus",
     "Quickstart",
     "seccomp",
@@ -47,7 +45,7 @@
   "cSpell.enabled": true,
   "[typescript]": {
     "editor.codeActionsOnSave": {
-        "source.organizeImports": "always"
+      "source.organizeImports": "always"
     }
   },
 }
