@@ -1,0 +1,49 @@
+name: Checkpoint UDS Core
+
+on:
+  # triggered by tag-and-release.yaml
+  workflow_call:
+
+jobs:
+  publish-uds-core:
+    strategy:
+      matrix:
+        architecture: [amd64, arm64]
+    runs-on: ${{ matrix.architecture == 'arm64' && 'uds-ubuntu-arm64-4-core' || 'uds-ubuntu-big-boy-4-core' }}
+    name: Publish checkpoint
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+
+      - name: Environment setup
+        uses: ./.github/actions/setup
+        with:
+          registry1Username: ${{ secrets.IRON_BANK_ROBOT_USERNAME }}
+          registry1Password: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
+          ghToken: ${{ secrets.GITHUB_TOKEN }}
+          chainguardIdentity: ${{ secrets.CHAINGUARD_IDENTITY }}
+
+      - name: Deploy K3d + UDS Core Slim Bundle
+        run: |
+          uds run deploy:latest-slim-bundle-release --no-progress
+
+      - name: Create Checkpoint Package
+        run: |
+          uds run -f tasks/create.yaml checkpoint-dev-package --no-progress
+
+      - name: Debug Output
+        if: always()
+        uses: ./.github/actions/debug-output
+
+      - name: Publish Checkpoint Package
+        run: uds run -f tasks/publish.yaml checkpoint-package --no-progress
+
+      - name: Save logs
+        if: always()
+        uses: ./.github/actions/save-logs
+        with:
+          suffix: -${{ matrix.flavor }}

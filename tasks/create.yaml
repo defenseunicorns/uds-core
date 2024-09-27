@@ -38,6 +38,12 @@ tasks:
       - description: "Create the UDS Core Istio and Keycloak Only Bundle"
         cmd: "uds create bundles/k3d-slim-dev --confirm --no-progress --architecture=${ZARF_ARCHITECTURE}"
 
+  - name: checkpoint-dev-package
+    description: "Create the K3d + UDS Core Checkpoint Zarf Package"
+    actions:
+      - description: "Create the UDS Core Checkpoint Zarf Package"
+        cmd: "uds zarf package create packages/checkpoint-dev --confirm --no-progress"
+
   - name: single-package
     description: "Create a single Zarf Package, must set UDS_PKG environment variable"
     actions:
