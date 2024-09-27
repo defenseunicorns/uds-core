@@ -48,7 +48,7 @@ jobs:
 
       - name: Deploy K3d + UDS Core Slim Bundle
         run: |
-          uds run deploy:latest-slim-bundle-release --no-progress
+          uds run -f tasks/deploy.yaml latest-slim-bundle-release --no-progress
 
       - name: Create Checkpoint Package
         run: |
@@ -56,7 +56,7 @@ jobs:
 
       - name: Test Checkpoint Package
         run: |
-          uds run deploy:checkpoint-package --no-progress
+          uds run -f tasks/deploy.yaml checkpoint-package --no-progress
           uds run -f src/istio/tasks.yaml validate --no-progress
           uds run -f src/keycloak/tasks.yaml validate --no-progress
           uds run -f src/pepr/tasks.yaml validate --no-progress

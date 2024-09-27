@@ -42,7 +42,7 @@ tasks:
     description: "Create the K3d + UDS Core Checkpoint Zarf Package"
     actions:
       - description: "Create the UDS Core Checkpoint Zarf Package"
-        cmd: "uds zarf package create packages/checkpoint-dev --confirm --no-progress"
+        cmd: "uds zarf package create packages/checkpoint-dev --confirm --no-progress --skip-sbom"
 
   - name: single-package
     description: "Create a single Zarf Package, must set UDS_PKG environment variable"
