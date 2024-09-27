@@ -20,10 +20,6 @@ variable "environment" {
   default     = "dev"
 }
 
-variable "resource_prefix" {
-  description = "Prefix for resources created"
-  type        = string
-}
 
 variable "db_name" {
   description = "The name to give the database"
@@ -41,16 +37,6 @@ variable "db_engine_version" {
   description = "The Postgres engine version to use for the DB"
   type        = string
   default     = "15.7"
-}
-
-variable "subnet_ids" {
-  description = "List of subnets for the RDS instance"
-  type        = list(string)
-}
-
-variable "vpc_id" {
-  description = "The VPC ID where the RDS instance will be deployed"
-  type        = string
 }
 
 variable "db_allocated_storage" {
