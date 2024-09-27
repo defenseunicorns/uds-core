@@ -17,7 +17,7 @@ variable "recovery_window" {
 variable "environment" {
   description = "Deployment environment (e.g. 'prod' or 'staging' or 'dev')"
   type        = string
-  default     = dev
+  default     = "dev"
 }
 
 variable "resource_prefix" {
@@ -28,13 +28,13 @@ variable "resource_prefix" {
 variable "db_name" {
   description = "The name to give the database"
   type        = string
-  default     = grafana
+  default     = "grafana"
 }
 
 variable "username" {
   description = "The username to use to login to the DB"
   type        = string
-  default     = grafana
+  default     = "grafana"
 }
 
 variable "db_engine_version" {
