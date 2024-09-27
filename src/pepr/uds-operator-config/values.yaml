@@ -11,5 +11,8 @@ operator:
   PEPR_LAST_SEEN_LIMIT_SECONDS: "60"
   # Allow Pepr to re-list resources more frequently to avoid missing resources
   PEPR_RELIST_INTERVAL_SECONDS: "60"
+<<<<<<< HEAD
   # Use HTTP2 for Pepr watches and exemption watch
   PEPR_HTTP2_WATCH: false
+=======
+>>>>>>> 29e4d5e (chore: updated pepr watch limit to 60s (#840))
