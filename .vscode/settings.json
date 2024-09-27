@@ -48,5 +48,4 @@
       "source.organizeImports": "always"
     }
   },
-  "sarif-viewer.connectToGithubCodeScanning": "off",
 }
