@@ -64,3 +64,8 @@ tasks:
     actions:
       - description: "Deploy the standard UDS Core zarf package"
         cmd: uds zarf package deploy build/zarf-package-core-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress --components '*'
+
+  - name: checkpoint-package
+    actions:
+      - description: "Deploy the checkpoint K3d + UDS Core Slim zarf package"
+        cmd: uds zarf package deploy build/zarf-package-k3d-core-slim-dev-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress
