@@ -14,6 +14,10 @@ inputs:
   chainguardIdentity:
     description: "ID for Chainguard Identity"
     required: true
+  udsCliVersion:
+    description: The uds-cli version to install
+    # renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
+    default: 0.16.0
 
 runs:
   using: "composite"
@@ -35,7 +39,7 @@ runs:
 
     - name: Install UDS CLI
       shell: bash
-      run: curl -o /usr/local/bin/uds -L https://github.com/defenseunicorns/uds-cli/releases/download/v0.16.0/uds-cli_v0.16.0_Linux_${{steps.setUdsCliArch.outputs.ARCH}} && chmod +x /usr/local/bin/uds
+      run: curl -o /usr/local/bin/uds -L https://github.com/defenseunicorns/uds-cli/releases/download/v${{ inputs.udsCliVersion }}/uds-cli_v${{ inputs.udsCliVersion }}_Linux_${{steps.setUdsCliArch.outputs.ARCH}} && chmod +x /usr/local/bin/uds
 
     - name: Install Lula
       uses: defenseunicorns/lula-action/setup@badad8c4b1570095f57e66ffd62664847698a3b9 # v0.0.1
