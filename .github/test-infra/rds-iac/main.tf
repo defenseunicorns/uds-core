@@ -90,6 +90,10 @@ data "aws_subnets" "subnets" {
   }
 }
 
+data "aws_partition" "current" {}
+
+data "aws_caller_identity" "current" {}
+
 terraform {
   required_version = ">= 1.8.0"
   required_providers {
