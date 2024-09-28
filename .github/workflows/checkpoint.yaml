@@ -71,4 +71,4 @@ jobs:
         if: always()
         uses: ./.github/actions/save-logs
         with:
-          suffix: -${{ matrix.flavor }}
+          suffix: -${{ matrix.architecture }}
