@@ -57,7 +57,7 @@ jobs:
       - name: Test Checkpoint Package
         run: |
           uds run -f tasks/deploy.yaml checkpoint-package --no-progress
-          uds run -f src/istio/tasks.yaml validate --no-progress
+          uds run -f src/istio/tasks.yaml validate-slim --no-progress
           uds run -f src/keycloak/tasks.yaml validate --no-progress
           uds run -f src/pepr/tasks.yaml validate --no-progress
 

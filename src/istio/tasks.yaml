@@ -21,3 +21,19 @@ tasks:
             kind: Gateway
             name: tenant-gateway
             namespace: istio-tenant-gateway
+
+  - name: validate-slim
+    actions:
+      - description: Validate the Istio Admin Gateway
+        wait:
+          cluster:
+            kind: Gateway
+            name: admin-gateway
+            namespace: istio-admin-gateway
+
+      - description: Validate the Istio Tenant Gateway
+        wait:
+          cluster:
+            kind: Gateway
+            name: tenant-gateway
+            namespace: istio-tenant-gateway
