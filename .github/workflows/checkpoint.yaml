@@ -3,24 +3,6 @@ name: Checkpoint UDS Core
 on:
   # triggered by tag-and-release.yaml
   workflow_call:
-  # TODO: (@WSTARR) TEMP TESTING!
-  pull_request:
-    # milestoned is added here as a workaround for release-please not triggering PR workflows (PRs should be added to a milestone to trigger the workflow).
-    types: [milestoned, opened, reopened, synchronize]
-    paths-ignore:
-      - "**.md"
-      - "**.jpg"
-      - "**.png"
-      - "**.gif"
-      - "**.svg"
-      - docs/**
-      - .vscode/**
-      - .gitignore
-      - renovate.json
-      - .release-please-config.json
-      - release-please-config.json
-      - CODEOWNERS
-      - LICENSE
 
 jobs:
   publish-uds-core:
@@ -64,8 +46,8 @@ jobs:
         if: always()
         uses: ./.github/actions/debug-output
 
-      # - name: Publish Checkpoint Package
-      #   run: uds run -f tasks/publish.yaml checkpoint-package --no-progress
+      - name: Publish Checkpoint Package
+        run: uds run -f tasks/publish.yaml checkpoint-package --no-progress
 
       - name: Save logs
         if: always()
