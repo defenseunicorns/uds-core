@@ -124,6 +124,14 @@ tasks:
     description: "Evaluate Compliance of UDS Core against an established threshold"
     actions:
       - task: test:compliance-evaluate
+  
+  - name: test-slim-dev
+    description: "Run validate for the components contained in the slim dev bundle"
+    actions:
+      - cmd: |
+          uds run -f src/istio/tasks.yaml validate-slim --no-progress
+          uds run -f src/keycloak/tasks.yaml validate --no-progress
+          uds run -f src/pepr/tasks.yaml validate --no-progress
 
   - name: lint-check
     description: "Run linting checks"
