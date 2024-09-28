@@ -114,11 +114,7 @@ tasks:
         dir: .github/test-infra/rds-iac
       - cmd: echo ${RDS_STATE_KEY}
       - cmd: |
-          tofu init -force-copy \
-          -backend-config="bucket=${STATE_BUCKET_NAME}" \
-          -backend-config="key=${RDS_STATE_KEY}" \
-          -backend-config="region=${REGION}" \
-          -backend-config="dynamodb_table=${STATE_DYNAMODB_TABLE_NAME}"
+          tofu init -force-copy
         dir: .github/test-infra/rds-iac
       - cmd: tofu apply -auto-approve
         dir: .github/test-infra/rds-iac
@@ -187,7 +183,7 @@ tasks:
               velero_bucket_credential_name: ""
               velero_bucket_credential_key: ""
               grafana_ha: true
-              grafana_rds_type: rds
+              grafana_rds_type: ${GRAFANA_RDS_TYPE}
               grafana_rds_host: ${GRAFANA_RDS_HOST}
               grafana_rds_name: ${GRAFANA_RDS_NAME}
               grafana_rds_password: ${GRAFANA_RDS_PASSWORD}
