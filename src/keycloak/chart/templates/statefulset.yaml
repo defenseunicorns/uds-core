@@ -166,7 +166,7 @@ spec:
               value: "-Dcom.redhat.fips=true"
             {{- end }}
           {{- end }}
-          {{- if (eq (.Values.insecureAdminPasswordGeneration.enabled | toString) "true") }}
+          {{- if .Values.insecureAdminPasswordGeneration.enabled }}
             - name: KEYCLOAK_ADMIN
               valueFrom:
                 secretKeyRef:

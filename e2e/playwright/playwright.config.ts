@@ -10,7 +10,7 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI, // fail CI if you accidentally leave `test.only` in source
   retries: process.env.CI ? 1 : 0,
-  workers: 1,
+  workers: 5,
   reporter: [
     // Reporter to use. See https://playwright.dev/docs/test-reporters
     ['html', { outputFolder: `${playwrightDir}/reports`, open: 'never' }],
