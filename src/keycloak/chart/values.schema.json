@@ -154,7 +154,7 @@
       "type": "object",
       "properties": {
         "enabled": {
-          "type": "boolean"
+          "type": ["boolean", "string"]
         },
         "username": {
           "type": "string"
