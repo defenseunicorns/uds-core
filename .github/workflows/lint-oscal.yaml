@@ -6,6 +6,7 @@ on:
     types: [milestoned, opened, reopened, synchronize]
     paths:
       - '**/*oscal*.yaml'
+      - '!.github/workflows/lint-oscal.yaml'
 
 permissions:
   contents: read
