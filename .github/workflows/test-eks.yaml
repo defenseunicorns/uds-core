@@ -64,7 +64,7 @@ jobs:
         run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress --set FLAVOR=${{ inputs.flavor }}
 
       - name: Create Core Bundle
-        run: uds create .github/bundles --confirm
+        run: uds create .github/bundles/eks --confirm
 
       - name: Create Cluster
         run: uds run -f tasks/iac.yaml create-cluster --no-progress
@@ -76,13 +76,13 @@ jobs:
 
       - name: Deploy Core Bundle
         env:
-          UDS_CONFIG: .github/bundles/uds-config.yaml
+          UDS_CONFIG: .github/bundles/eks/uds-config.yaml
         run: uds deploy .github/bundles/uds-bundle-uds-core-eks-nightly-*.tar.zst --confirm
         timeout-minutes: 20
 
       - name: Remove UDS Core
         if: always()
-        run: uds remove .github/bundles/uds-bundle-uds-core-eks-*.tar.zst --confirm
+        run: uds remove .github/bundles/eks/uds-bundle-uds-core-eks-*.tar.zst --confirm
         timeout-minutes: 10
         continue-on-error: true
 
