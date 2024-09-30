@@ -14,6 +14,18 @@ variable "recovery_window" {
   default     = 30
 }
 
+variable "permissions_boundary_name" {
+  description = "The name of the permissions boundary for IAM resources.  This will be used for tagging and to build out the ARN."
+  type        = string
+  default     = null
+}
+
+variable "use_permissions_boundary" {
+  description = "Whether to use IAM permissions boundary for resources."
+  type        = bool
+  default     = true
+}
+
 variable "db_name" {
   description = "The name to give the database"
   type        = string

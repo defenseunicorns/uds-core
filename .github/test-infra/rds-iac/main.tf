@@ -70,11 +70,6 @@ resource "aws_vpc_security_group_ingress_rule" "rds_ingress" {
   to_port     = 5432
 }
 
-locals {
-  vpc_id          = data.aws_vpc.vpc.id
-  subnet_ids      = data.aws_subnets.subnets.ids
-}
-
 data "aws_vpc" "vpc" {
   filter {
     name   = "tag:Name"
@@ -89,9 +84,27 @@ data "aws_subnets" "subnets" {
   }
 }
 
+data "aws_eks_cluster" "existing" {
+  name = var.name
+}
+
 data "aws_partition" "current" {}
 
 data "aws_caller_identity" "current" {}
+
+locals {
+  vpc_id                  = data.aws_vpc.vpc.id
+  subnet_ids              = data.aws_subnets.subnets.ids
+  oidc_url_without_protocol = substr(data.aws_eks_cluster.existing.identity[0].oidc[0].issuer, 8, -1)
+  oidc_arn                = "arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/${local.oidc_url_without_protocol}"
+  iam_role_permissions_boundary = var.use_permissions_boundary ? "arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:policy/${var.permissions_boundary_name}" : null
+
+  grafana_irsa_config = {
+    name            = "grafana"
+    service_account = "grafana"
+    namespace       = "grafana"
+  }
+}
 
 terraform {
   required_version = ">= 1.8.0"
