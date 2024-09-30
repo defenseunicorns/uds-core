@@ -14,7 +14,7 @@ tasks:
   - name: k3d-standard-bundle
     actions:
       - description: "Deploy the UDS Core Standard Bundle"
-        cmd: uds deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress
+        cmd: uds deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --set INSECURE_ADMIN_PASSWORD_GENERATION=true --confirm --no-progress
 
   - name: k3d-standard-bundle-ha
     actions:
@@ -49,9 +49,9 @@ tasks:
         setVariables:
           - name: LATEST_VERSION
       - description: "Deploy the latest UDS Core package release"
-        cmd: uds zarf package deploy oci://${TARGET_REPO}/core:${LATEST_VERSION} --confirm --no-progress --components '*'
+        cmd: uds zarf package deploy oci://${TARGET_REPO}/core:${LATEST_VERSION} --set INSECURE_ADMIN_PASSWORD=true --confirm --no-progress --components '*'
 
   - name: standard-package
     actions:
       - description: "Deploy the standard UDS Core zarf package"
-        cmd: uds zarf package deploy build/zarf-package-core-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress --components '*'
+        cmd: uds zarf package deploy build/zarf-package-core-${UDS_ARCH}-${VERSION}.tar.zst --set INSECURE_ADMIN_PASSWORD=true --confirm --no-progress --components '*'

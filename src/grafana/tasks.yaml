@@ -23,3 +23,11 @@ tasks:
             echo "ERROR: Grafana is redirecting to $(curl -L -isS https://grafana.admin.uds.dev --output /dev/null -w '%{url_effective}')."
             exit 1
           fi
+
+  - name: e2e-test
+    actions:
+      - description: E2E Test for Grafana
+        cmd: |
+          npm ci
+          npx playwright test grafana.test.ts
+        dir: e2e/playwright

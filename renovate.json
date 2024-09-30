@@ -105,6 +105,11 @@
       "commitMessageTopic": "test-infra"
     },
     {
+      "matchFileNames": ["e2e/**"],
+      "groupName": "e2e-tests",
+      "commitMessageTopic": "e2e tests"
+    },
+    {
       "matchFileNames": ["package.json", "package-lock.json", "tasks/create.yaml"],
       "groupName": "pepr",
       "commitMessageTopic": "pepr"

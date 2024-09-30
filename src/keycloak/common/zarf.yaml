@@ -12,6 +12,10 @@ components:
         # renovate: datasource=docker depName=quay.io/keycloak/keycloak versioning=semver
         version: 25.0.6
         localPath: ../chart
+        variables:
+          - name: INSECURE_ADMIN_PASSWORD
+            path: insecureAdminPasswordGeneration
+            description: "Enable an insecure admin password for headless bootstrapping or dev/test scenarios"
     actions:
       onDeploy:
         after:
