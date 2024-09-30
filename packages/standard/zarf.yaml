@@ -46,11 +46,11 @@ components:
     import:
       path: ../../src/pepr
 
-  # # Metrics Server
-  # - name: metrics-server
-  #   required: false
-  #   import:
-  #     path: ../../src/metrics-server
+  # Metrics Server
+  - name: metrics-server
+    required: false
+    import:
+      path: ../../src/metrics-server
 
   # Keycloak
   - name: keycloak
@@ -58,29 +58,29 @@ components:
     import:
       path: ../../src/keycloak
 
-  # # Neuvector
-  # - name: neuvector
-  #   required: true
-  #   import:
-  #     path: ../../src/neuvector
+  # Neuvector
+  - name: neuvector
+    required: true
+    import:
+      path: ../../src/neuvector
 
-  # # Loki
-  # - name: loki
-  #   required: true
-  #   import:
-  #     path: ../../src/loki
+  # Loki
+  - name: loki
+    required: true
+    import:
+      path: ../../src/loki
 
-  # # Prometheus
-  # - name: kube-prometheus-stack
-  #   required: true
-  #   import:
-  #     path: ../../src/prometheus-stack
+  # Prometheus
+  - name: kube-prometheus-stack
+    required: true
+    import:
+      path: ../../src/prometheus-stack
 
-  # # Vector
-  # - name: vector
-  #   required: true
-  #   import:
-  #     path: ../../src/vector
+  # Vector
+  - name: vector
+    required: true
+    import:
+      path: ../../src/vector
 
   # Grafana
   - name: grafana
@@ -94,14 +94,14 @@ components:
     import:
       path: ../../src/authservice
 
-  # # UDS Runtime
-  # - name: uds-runtime
-  #   required: false
-  #   import:
-  #     path: ../../src/runtime
+  # UDS Runtime
+  - name: uds-runtime
+    required: false
+    import:
+      path: ../../src/runtime
 
-  # # Velero
-  # - name: velero
-  #   required: true
-  #   import:
-  #     path: ../../src/velero
+  # Velero
+  - name: velero
+    required: true
+    import:
+      path: ../../src/velero
