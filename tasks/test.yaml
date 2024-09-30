@@ -72,6 +72,7 @@ tasks:
       - task: create:standard-package
       - task: deploy:standard-package
       - task: validate-packages
+      - task: e2e-tests
 
   - name: compliance-validate
     description: "validate against the required compliance"
