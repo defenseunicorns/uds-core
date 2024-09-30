@@ -84,20 +84,20 @@ jobs:
         if: ${{ always() }}
         uses: ./.github/actions/debug-output
 
-      # - name: Remove UDS Core
-      #   if: always()
-      #   run: uds remove .github/bundles/uds-bundle-uds-core-eks-*.tar.zst --confirm
-      #   timeout-minutes: 10
-      #   continue-on-error: true
+      - name: Remove UDS Core
+        if: always()
+        run: uds remove .github/bundles/uds-bundle-uds-core-eks-*.tar.zst --confirm
+        timeout-minutes: 10
+        continue-on-error: true
 
-      # - name: Remove IAC
-      #   if: always()
-      #   run: uds run -f tasks/iac.yaml destroy-iac --no-progress
-      #   timeout-minutes: 10
-      #   continue-on-error: true
+      - name: Remove IAC
+        if: always()
+        run: uds run -f tasks/iac.yaml destroy-iac --no-progress
+        timeout-minutes: 10
+        continue-on-error: true
 
-      # - name: Teardown EKS cluster
-      #   if: always()
-      #   run: uds run -f tasks/iac.yaml destroy-cluster --no-progress
-      #   timeout-minutes: 30
-      #   continue-on-error: true
+      - name: Teardown EKS cluster
+        if: always()
+        run: uds run -f tasks/iac.yaml destroy-cluster --no-progress
+        timeout-minutes: 30
+        continue-on-error: true
