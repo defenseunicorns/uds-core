@@ -35,20 +35,20 @@ variable "kms_key_deletion_window" {
 
 variable "bucket_configurations" {
   type = map(object({
-    name           = string
+    name            = string
     service_account = string
-    namespace = string
+    namespace       = string
   }))
   default = {
     loki = {
-      name           = "loki"
+      name            = "loki"
       service_account = "loki"
-      namespace = "loki"
+      namespace       = "loki"
     }
     velero = {
-      name           = "velero"
+      name            = "velero"
       service_account = "velero-server"
-      namespace = "velero"
+      namespace       = "velero"
     }
   }
 }
