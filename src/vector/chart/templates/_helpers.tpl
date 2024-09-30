@@ -1,7 +1,7 @@
 {{/*
 Expand the name of the chart.
 */}}
-{{- define "uds-promtail-config.name" -}}
+{{- define "uds-vector-config.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
@@ -10,7 +10,7 @@ Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 If release name contains chart name it will be used as a full name.
 */}}
-{{- define "uds-promtail-config.fullname" -}}
+{{- define "uds-vector-config.fullname" -}}
 {{- if .Values.fullnameOverride }}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
 {{- else }}
@@ -26,16 +26,16 @@ If release name contains chart name it will be used as a full name.
 {{/*
 Create chart name and version as used by the chart label.
 */}}
-{{- define "uds-promtail-config.chart" -}}
+{{- define "uds-vector-config.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
 Common labels
 */}}
-{{- define "uds-promtail-config.labels" -}}
-helm.sh/chart: {{ include "uds-promtail-config.chart" . }}
-{{ include "uds-promtail-config.selectorLabels" . }}
+{{- define "uds-vector-config.labels" -}}
+helm.sh/chart: {{ include "uds-vector-config.chart" . }}
+{{ include "uds-vector-config.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
@@ -45,17 +45,17 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{/*
 Selector labels
 */}}
-{{- define "uds-promtail-config.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "uds-promtail-config.name" . }}
+{{- define "uds-vector-config.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "uds-vector-config.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
 Create the name of the service account to use
 */}}
-{{- define "uds-promtail-config.serviceAccountName" -}}
+{{- define "uds-vector-config.serviceAccountName" -}}
 {{- if .Values.serviceAccount.create }}
-{{- default (include "uds-promtail-config.fullname" .) .Values.serviceAccount.name }}
+{{- default (include "uds-vector-config.fullname" .) .Values.serviceAccount.name }}
 {{- else }}
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}

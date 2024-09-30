@@ -3,7 +3,7 @@ metadata:
   name: uds-core-eks-nightly
   description: A UDS bundle for deploying EKS and UDS Core
   # x-release-please-start-version
-  version: "0.27.3"
+  version: "0.28.0"
   # x-release-please-end
 
 packages:
@@ -14,7 +14,7 @@ packages:
   - name: core
     path: ../../build/
     # x-release-please-start-version
-    ref: 0.27.3
+    ref: 0.28.0
     # x-release-please-end
     optionalComponents:
       - metrics-server
@@ -27,7 +27,7 @@ packages:
               path: credentials.useSecret
             - name: VELERO_IRSA_ANNOTATION
               description: "IRSA ARN annotation to use for Velero"
-              path: serviceAccount.server.annotations.irsa/role-arn
+              path: serviceAccount.server.annotations.eks\.amazonaws\.com/role-arn
       loki:
         loki:
           values:
@@ -52,4 +52,4 @@ packages:
               path: loki.storage.s3.region
             - name: LOKI_IRSA_ANNOTATION
               description: "The irsa role annotation"
-              path: serviceAccount.annotations.irsa/role-arn
+              path: serviceAccount.annotations.eks\.amazonaws\.com/role-arn

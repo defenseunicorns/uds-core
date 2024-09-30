@@ -539,7 +539,7 @@ component-definition:
                 # Expected values
                 expected_istiod_port := 15012
                 expected_istiod_protocol := "TCP"
-                required_namespaces := {"authservice", "grafana", "keycloak", "loki", "metrics-server", "monitoring", "neuvector", "promtail", "velero"}
+                required_namespaces := {"authservice", "grafana", "keycloak", "loki", "metrics-server", "monitoring", "neuvector", "vector", "velero"}
 
                 # Validate NetworkPolicy for Istiod in required namespaces
                 validate {
