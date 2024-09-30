@@ -149,6 +149,10 @@ tasks:
         setVariables:
           - name: GRAFANA_PG_HOST
         dir: .github/test-infra/rds-iac
+      - cmd: tofu output -raw grafana_pg_port
+        setVariables:
+          - name: GRAFANA_PG_PORT
+        dir: .github/test-infra/rds-iac
       - cmd: tofu output -raw grafana_pg_name
         setVariables:
           - name: GRAFANA_PG_NAME
@@ -185,6 +189,7 @@ tasks:
               grafana_ha: true
               grafana_pg_type: postgres
               grafana_pg_host: ${GRAFANA_PG_HOST}
+              grafana_pg_port: ${GRAFANA_PG_PORT}
               grafana_pg_name: ${GRAFANA_PG_NAME}
               grafana_pg_password: ${GRAFANA_PG_PASSWORD}
               grafana_pg_user: ${GRAFANA_PG_USER}

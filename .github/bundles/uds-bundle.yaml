@@ -67,6 +67,9 @@ packages:
             - name: GRAFANA_PG_HOST
               description: Grafana postgresql host
               path: postgresql.host
+            - name: GRAFANA_PG_PORT
+              description: Grafana postgresql port
+              path: postgresql.port
             - name: GRAFANA_PG_NAME
               description: Grafana postgresql database
               path: postgresql.name

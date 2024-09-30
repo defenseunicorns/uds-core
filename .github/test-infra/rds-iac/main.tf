@@ -35,14 +35,14 @@ module "db" {
 
   db_name  = var.db_name
   username = var.username
-  port     = "5432"
+  port     = var.db_port
 
-  subnet_ids                  = local.subnet_ids
+  subnet_ids                  = data.aws_subnets.subnets.ids
   create_db_subnet_group      = true
   manage_master_user_password = false
   password                    = random_password.db_password.result
 
-  vpc_security_group_ids = var.db_security_group_ids
+  vpc_security_group_ids = [aws_security_group.rds_sg.id]
 
   depends_on = [
     aws_security_group.rds_sg
@@ -84,26 +84,12 @@ data "aws_subnets" "subnets" {
   }
 }
 
-data "aws_eks_cluster" "existing" {
-  name = var.name
-}
-
 data "aws_partition" "current" {}
 
 data "aws_caller_identity" "current" {}
 
 locals {
-  vpc_id                  = data.aws_vpc.vpc.id
-  subnet_ids              = data.aws_subnets.subnets.ids
-  oidc_url_without_protocol = substr(data.aws_eks_cluster.existing.identity[0].oidc[0].issuer, 8, -1)
-  oidc_arn                = "arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/${local.oidc_url_without_protocol}"
-  iam_role_permissions_boundary = var.use_permissions_boundary ? "arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:policy/${var.permissions_boundary_name}" : null
-
-  grafana_irsa_config = {
-    name            = "grafana"
-    service_account = "grafana"
-    namespace       = "grafana"
-  }
+  vpc_id = data.aws_vpc.vpc.id
 }
 
 terraform {

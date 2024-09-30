@@ -4,7 +4,7 @@ domain: "###ZARF_VAR_DOMAIN###"
 postgresql:
   # Type of database being used (e.g., "postgres" for PostgreSQL).
   type: ""
-  # The hostname and port of the external postgresql server
+  # The hostname of the external postgresql server ( does not include the port )
   host: ""
   # The name of the postgresql Grafana will connect to.
   name: ""
@@ -13,7 +13,7 @@ postgresql:
   # The password used for authenticating to the external postgresql.
   password: ""
   # SSL mode for the postgresql connection. Set to 'disable' if SSL is not required.
-  ssl_mode: disable
+  ssl_mode: require
   # Port the postgresql is listening on
   port: 5432
   # Configure internal postgresql deployment

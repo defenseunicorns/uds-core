@@ -14,22 +14,16 @@ variable "recovery_window" {
   default     = 30
 }
 
-variable "permissions_boundary_name" {
-  description = "The name of the permissions boundary for IAM resources.  This will be used for tagging and to build out the ARN."
-  type        = string
-  default     = null
-}
-
-variable "use_permissions_boundary" {
-  description = "Whether to use IAM permissions boundary for resources."
-  type        = bool
-  default     = true
-}
-
 variable "db_name" {
   description = "The name to give the database"
   type        = string
   default     = "grafana"
+}
+
+variable "db_port" {
+  description = "The database port"
+  type        = number
+  default     = 5432
 }
 
 variable "username" {
@@ -60,10 +54,4 @@ variable "db_instance_class" {
   description = "The class of RDS instance (e.g., db.t4g.large)"
   type        = string
   default     = "db.t4g.large"
-}
-
-variable "db_security_group_ids" {
-  description = "The list of security group IDs to assign to the RDS instance"
-  type        = list(string)
-  default     = []
 }

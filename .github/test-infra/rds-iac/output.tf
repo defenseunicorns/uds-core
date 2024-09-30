@@ -1,6 +1,11 @@
 output "grafana_pg_host" {
   description = "RDS Endpoint for Grafana"
-  value       = module.db.db_instance_endpoint
+  value       = element(split(":", module.db.db_instance_endpoint), 0)
+}
+
+output "grafana_pg_port" {
+  description = "RDS Port for Grafana"
+  value       = var.db_port
 }
 
 output "grafana_pg_name" {
@@ -17,9 +22,4 @@ output "grafana_pg_password" {
   description = "RDS Password for Grafana"
   value       = random_password.db_password.result
   sensitive   = true
-}
-
-output "grafana_irsa_role_arn" {
-  description = "IAM Role ARN for Grafana IRSA."
-  value       = module.grafana_irsa.role_arn
 }
