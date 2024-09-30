@@ -10,6 +10,23 @@ packages:
   - name: init
     repository: ghcr.io/zarf-dev/packages/init
     ref: v0.39.0
+    overrides:
+      zarf-registry:
+        docker-registry:
+          variables:
+          - path: affinity.custom
+            name: REGISTRY_AFFINITY_CUSTOM_UDS
+          - path: persistence.accessMode
+            name: REGISTRY_PVC_ACCESS_MODE
+            default: ReadWriteMany
+      zarf-seed-registry:
+        docker-registry:
+          variables:
+          - path: affinity.custom
+            name: REGISTRY_AFFINITY_CUSTOM_UDS
+          - path: persistence.accessMode
+            name: REGISTRY_PVC_ACCESS_MODE
+            default: ReadWriteMany
 
   - name: core
     path: ../../build/
@@ -25,7 +42,7 @@ packages:
             - name: VELERO_USE_SECRET
               description: "Toggle use secret off to use IRSA."
               path: credentials.useSecret
-            - name: VELERO_IRSA_ANNOTATION
+            - name: VELERO_IRSA_ROLE_ARN
               description: "IRSA ARN annotation to use for Velero"
               path: serviceAccount.server.annotations.irsa/role-arn
       loki:
@@ -37,6 +54,8 @@ packages:
               value: ""
             - path: loki.storage.s3.accessKeyId
               value: ""
+            - path: global.dnsService
+              value: rke2-coredns-rke2-coredns              
           variables:
             - name: LOKI_CHUNKS_BUCKET
               description: "The object storage bucket for Loki chunks"
@@ -50,6 +69,6 @@ packages:
             - name: LOKI_S3_REGION
               description: "The S3 region"
               path: loki.storage.s3.region
-            - name: LOKI_IRSA_ANNOTATION
+            - name: LOKI_IRSA_ROLE_ARN
               description: "The irsa role annotation"
               path: serviceAccount.annotations.irsa/role-arn
