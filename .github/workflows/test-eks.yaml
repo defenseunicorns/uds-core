@@ -26,9 +26,9 @@ jobs:
       - name: Set ENV
         run: |
           echo "UDS_CLUSTER_NAME=uds-ci-${{ inputs.flavor }}-${SHA:0:7}" >> $GITHUB_ENV
-          echo "UDS_STATE_KEY="tfstate/ci/install/${SHA:0:7}-core-${{ inputs.flavor }}-aws.tfstate >> $GITHUB_ENV
+          echo "UDS_STATE_KEY="tfstate/ci/install/${SHA:0:7}-eks-core-${{ inputs.flavor }}-aws.tfstate >> $GITHUB_ENV
           echo "TF_VAR_region=${UDS_REGION}" >> $GITHUB_ENV
-          echo "TF_VAR_name=uds-ci-${{ inputs.flavor }}-${SHA:0:7}" >> $GITHUB_ENV
+          echo "TF_VAR_name=uds-eks-ci-${{ inputs.flavor }}-${SHA:0:7}" >> $GITHUB_ENV
           echo "TF_VAR_use_permissions_boundary=true" >> $GITHUB_ENV
           echo "TF_VAR_permissions_boundary_name=${UDS_PERMISSIONS_BOUNDARY_NAME}" >> $GITHUB_ENV
 
@@ -71,7 +71,7 @@ jobs:
         timeout-minutes: 60
 
       - name: Create IAC
-        run: uds run -f tasks/iac.yaml create-iac --no-progress
+        run: uds run -f tasks/iac.yaml create-iac --no-progress --set K8S_DISTRO=eks
         timeout-minutes: 20
 
       - name: Deploy Core Bundle
@@ -88,12 +88,12 @@ jobs:
 
       - name: Remove IAC
         if: always()
-        run: uds run -f tasks/iac.yaml destroy-iac --no-progress
+        run: uds run -f tasks/iac.yaml destroy-iac --no-progress --set K8S_DISTRO=eks
         timeout-minutes: 10
         continue-on-error: true
 
       - name: Teardown EKS cluster
         if: always()
-        run: uds run -f tasks/iac.yaml destroy-cluster --no-progress
+        run: uds run -f tasks/iac.yaml destroy-cluster --no-progress --set K8S_DISTRO=eks
         timeout-minutes: 30
         continue-on-error: true
