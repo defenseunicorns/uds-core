@@ -3,6 +3,10 @@ variable "name" {
   type        = string
 }
 
+variable "environment" {
+  default = "ci"
+}
+
 variable "region" {
   description = "AWS region"
   type        = string

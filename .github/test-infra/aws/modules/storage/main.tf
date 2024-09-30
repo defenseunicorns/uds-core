@@ -1,5 +1,6 @@
 # Terraform Module for provisioning s3 buckets with optional support for IRSA, tailored specifically for loki and velero atop uds-core
 locals {
+  permissions_boundary_name = split("/", var.permissions_boundary)[1]
   bucket_configurations = {
     for instance in var.ci_bucket_configurations :
     instance.name => {
@@ -38,14 +39,19 @@ module "s3" {
   ]
 }
 
-# IRSA can be used to grant in-cluster applications access to s3, as opposed to access keys
 module "irsa" {
-  count                     = var.support_irsa ? 1 : 0
-  source                    = "./irsa"
-  cluster_name              = var.cluster_name
-  use_permissions_boundary  = var.use_permissions_boundary
-  permissions_boundary_name = var.permissions_boundary_name
-  bucket_configurations     = {for k, v in local.bucket_configurations: k => merge(v, module.generate_kms[k])}
+  #merge the keys from module.generate_kms into `bucket_configurations`
+  for_each                 = { for k, v in local.bucket_configurations : k => merge(v, module.generate_kms[k]) }
+  source                   = "./irsa"
+  cluster_name             = var.cluster_name
+  environment              = var.environment
+  resource_prefix          = "${each.value.name}-"
+  use_permissions_boundary = var.use_permissions_boundary
+  permissions_boundary     = var.permissions_boundary
+  serviceaccount_name      = each.value.service_account
+  namespace                = each.value.namespace
+  bucket_configuration     = { (each.key) = (each.value) } #pass this bucket_configuration as a map
+  oidc_bucket_attributes   = var.oidc_bucket_attributes
 
   depends_on = [
     module.s3

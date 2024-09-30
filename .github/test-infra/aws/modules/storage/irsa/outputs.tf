@@ -1,5 +1,3 @@
-output "role_arn" {
-  value = {
-    for configuration, arn in module.irsa : configuration => arn.role_arn
-  }
+output "bucket_role" {
+  value = aws_iam_role.s3_bucket_role
 }

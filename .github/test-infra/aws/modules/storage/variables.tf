@@ -9,18 +9,6 @@ variable "ci_bucket_configurations" {
     service_account = string
     namespace       = string
   }))
-  default = {
-    loki = {
-      name            = "loki"
-      service_account = "loki"
-      namespace       = "loki"
-    }
-    velero = {
-      name            = "velero"
-      service_account = "velero-server"
-      namespace       = "velero"
-    }
-  }
 }
 
 variable "key_owner_arns" {
@@ -48,8 +36,8 @@ variable "use_permissions_boundary" {
   default     = true
 }
 
-variable "permissions_boundary_name" {
-  description = "The name of the permissions boundary for IAM resources.  This will be used for tagging and to build out the ARN."
+variable "permissions_boundary" {
+  description = "The ARN of the Permissions Boundary"
   type        = string
   default     = null
 }
@@ -58,4 +46,13 @@ variable "tags" {
   description = "A map of tags to apply to resoruces."
   default     = {}
   type        = map(string)
+}
+
+variable "environment" {
+  type = string
+}
+
+variable "oidc_bucket_attributes" {
+  description = "All attributes of the cluster OIDC bucket"
+  default     = {}
 }
