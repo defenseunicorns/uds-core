@@ -1,5 +1,5 @@
 terraform {
-  backend "local" {
+  backend "s3" {
   }
   required_providers {
     aws = {
