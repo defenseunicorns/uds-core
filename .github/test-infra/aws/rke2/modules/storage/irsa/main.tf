@@ -20,7 +20,7 @@ resource "aws_iam_role" "s3_bucket_role" {
 }
 
 resource "aws_iam_role_policy_attachment" "s3_policy_attach" {
-  role       = "${var.resource_prefix}${var.serviceaccount_name}-s3-role"
+  role       = aws_iam_role.s3_bucket_role.name
   policy_arn = aws_iam_policy.s3_bucket_policy.arn
 }
 

@@ -1,6 +1,6 @@
 # sourced from https://github.com/defenseunicorns/uds-rke2-image-builder/tree/2fecc1c9a10180579ada75a9ec92dcb224e82a74/.github/test-infra/rke2-cluster
 locals {
-  cluster_name              = "rke2-nightly-ci"
+  cluster_name = "rke2-nightly-ci"
   tags = {
     cluster_name        = local.cluster_name
     environment         = "ci"
