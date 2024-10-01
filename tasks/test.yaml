@@ -3,6 +3,7 @@ includes:
   - setup: ./setup.yaml
   - deploy: ./deploy.yaml
   - compliance: https://raw.githubusercontent.com/defenseunicorns/uds-common/v0.13.1/tasks/compliance.yaml
+  - base-layer: ../packages/base/tasks.yaml
 
 tasks:
   - name: single-package
@@ -14,6 +15,24 @@ tasks:
 
       - description: "Validate the package"
         cmd: uds run -f src/${UDS_PKG}/tasks.yaml validate --no-progress
+
+  - name: base
+    description: "Build and test the base layer"
+    actions:
+      - task: create:core-base
+      - task: setup:k3d-test-cluster
+      - task: deploy:core-base
+      - task: base-layer:validate
+
+  - name: single-layer
+    description: "Build and test a single layer, must set UDS_LAYER environment variable"
+    actions:
+      - task: create:single-layer
+      - task: base
+      - task: deploy:single-layer
+
+      - description: "Validate the package"
+        cmd: uds run -f packages/${UDS_LAYER}/tasks.yaml validate --no-progress
 
   - name: validate-packages
     description: "Validated all packages"

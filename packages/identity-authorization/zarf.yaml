@@ -1,0 +1,21 @@
+kind: ZarfPackageConfig
+metadata:
+  name: core-identity-authorization
+  description: "UDS Core (Identity & Authorization)"
+  authors: "Defense Unicorns - Product"
+  # x-release-please-start-version
+  version: "0.28.0"
+  # x-release-please-end
+
+components:
+  # Keycloak
+  - name: keycloak
+    required: true
+    import:
+      path: ../../src/keycloak
+
+  # Authservice
+  - name: authservice
+    required: true
+    import:
+      path: ../../src/authservice

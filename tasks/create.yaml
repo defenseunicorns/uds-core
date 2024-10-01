@@ -24,7 +24,7 @@ tasks:
       - task: pepr-build
 
       - description: "Create the UDS Core Standard Zarf Package"
-        cmd: "uds zarf package create packages/base --confirm --no-progress --flavor ${FLAVOR}"
+        cmd: "UDS_LAYER=base uds run create:single-layer --set FLAVOR=${FLAVOR}"
 
   - name: k3d-standard-bundle
     description: "Create the K3d-UDS Core Bundle"
@@ -62,6 +62,12 @@ tasks:
           if [ "${UDS_PKG}" != "istio" ]; then
             uds zarf package create src/istio --confirm --no-progress --flavor ${FLAVOR}
           fi
+
+  - name: single-layer
+    description: "Create a single Zarf Package, must set UDS_LAYER environment variable"
+    actions:
+      - description: "Create the requested Zarf Package (must set UDS_LAYER environment variable)"
+        cmd: "uds zarf package create packages/${UDS_LAYER} --confirm --no-progress --flavor ${FLAVOR}"
 
   - name: pepr-build
     description: "Build the UDS Core Pepr Module"

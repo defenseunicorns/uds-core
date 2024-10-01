@@ -76,6 +76,7 @@ export async function packageReconciler(pkg: UDSPackage) {
     } else if (pkg.spec?.sso) {
       // TODO: Create event for Package? Or maybe fail
       log.error("SSO is not deployed, but the package has SSO configuration");
+      // throw new Error("SSO is not deployed, but the package has SSO configuration");
     }
 
     // Create the VirtualService and ServiceEntry for each exposed service

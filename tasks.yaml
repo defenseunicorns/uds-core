@@ -10,15 +10,8 @@ includes:
   - deploy: ./tasks/deploy.yaml
   - test: ./tasks/test.yaml
   - lint: ./tasks/lint.yaml
-  - base: ./packages/base/tasks.yaml
 
 tasks:
-  - name: deploy-base
-    actions:
-      - task: create:core-base
-      - task: setup:k3d-test-cluster
-      - task: deploy:core-base
-      - task: base:validate
   - name: default
     actions:
       - description: "Build, deploy and test UDS Core"
