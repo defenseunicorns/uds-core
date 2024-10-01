@@ -10,9 +10,8 @@ variables:
 
     # Grafana variables
     grafana_ha: true
-    grafana_pg_type: postgres
     grafana_pg_host: host.k3d.internal
     grafana_pg_port: 5432
-    grafana_pg_name: grafana
+    grafana_pg_database: grafana
     grafana_pg_password: password
     grafana_pg_user: postgres

@@ -53,9 +53,6 @@ packages:
               path: autoscaling.enabled
         uds-grafana-config:
           variables:
-            - name: GRAFANA_PG_TYPE
-              description: Grafana database type
-              path: postgresql.type
             - name: GRAFANA_PG_HOST
               description: Grafana postgresql host
               path: postgresql.host
@@ -65,9 +62,9 @@ packages:
             - name: GRAFANA_PG_PORT
               description: Grafana postgresql port
               path: postgresql.port
-            - name: GRAFANA_PG_NAME
+            - name: GRAFANA_PG_DATABASE
               description: Grafana postgresql database
-              path: postgresql.name
+              path: postgresql.database
             - name: GRAFANA_PG_PASSWORD
               description: Grafana postgresql password
               path: postgresql.password

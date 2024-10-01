@@ -67,11 +67,10 @@ This bundle is used for demonstration, development, and testing of UDS Core. In 
 ##### grafana (uds-grafana-config)
 | Variable | Description | Path |
 |----------|-------------|------|
-| `GRAFANA_PG_TYPE`      | Grafana database type        | `postgresql.type`      |
 | `GRAFANA_PG_HOST`      | Grafana postgresql host      | `postgresql.host`      |
 | `GRAFANA_PG_PORT`      | Grafana postgresql port      | `postgresql.port`      |
-| `GRAFANA_PG_NAME`      | Grafana Postgres password    | `postgresql.password`  |
-| `GRAFANA_PG_PASSWORD`  | Grafana postgresql database  | `postgresql.name`      |
+| `GRAFANA_PG_PASSWORD`  | Grafana postgresql password  | `postgresql.password`  |
+| `GRAFANA_PG_DATABASE`  | Grafana postgresql database  | `postgresql.database`  |
 | `GRAFANA_PG_USER`      | Grafana postgresql username  | `postgresql.user`      |
 
 ## Override Examples:

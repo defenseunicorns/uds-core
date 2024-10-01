@@ -8,7 +8,7 @@ output "grafana_pg_port" {
   value       = var.db_port
 }
 
-output "grafana_pg_name" {
+output "grafana_pg_database" {
   description = "Database name for Grafana"
   value       = var.db_name
 }
