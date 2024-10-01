@@ -112,9 +112,10 @@ tasks:
   - name: test-uds-core-ha
     description: "Build and test UDS Core"
     actions:
-      - cmd: docker stop my-postgres && docker rm my-postgres || true
+      - cmd: docker stop postgres && docker rm postgres || true
       - cmd: docker network create k3d-uds || true
-      - cmd: docker run -p 5432:5432 --network=k3d-uds --name my-postgres -e POSTGRES_DB=keycloak -e POSTGRES_USER=keycloak -e POSTGRES_PASSWORD=password -d postgres
+      - cmd: docker run -p 5432:5432 --network=k3d-uds --name postgres -e POSTGRES_DB=keycloak -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=password -d postgres
+      - cmd: sleep 3 && docker exec postgres psql -U postgres -c "CREATE DATABASE grafana;"
       - task: test:uds-core-ha
 
   - name: test-uds-core-upgrade

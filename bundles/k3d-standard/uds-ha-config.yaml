@@ -1,8 +1,18 @@
 variables:
   core:
+    # Keycloak variables
     keycloak_ha: true
-    keycloak_pg_username: keycloak
+    keycloak_pg_username: postgres
     keycloak_pg_password: password
     keycloak_pg_database: keycloak
     keycloak_pg_host: host.k3d.internal
     keycloak_devmode: false
+
+    # Grafana variables
+    grafana_ha: true
+    grafana_pg_host: host.k3d.internal
+    grafana_pg_port: 5432
+    grafana_pg_database: grafana
+    grafana_pg_password: password
+    grafana_pg_user: postgres
+    grafana_pg_ssl_mode: disable

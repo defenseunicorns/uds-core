@@ -89,23 +89,37 @@ tasks:
     actions:
       - cmd: tofu destroy -auto-approve
         dir: .github/test-infra/buckets-iac
+      - cmd: tofu destroy -auto-approve
+        dir: .github/test-infra/rds-iac
 
   - name: apply-tofu
     actions:
-      - cmd: echo ${STATE_KEY} | sed 's/\.tfstate/-buckets1.tfstate/g'
+      - cmd: echo ${STATE_KEY} | sed 's/\.tfstate/-buckets.tfstate/g'
         setVariables:
           - name: BUCKETS_STATE_KEY
         dir: .github/test-infra/buckets-iac
-      - cmd: echo ${BUCKETS_STATE_KEY}
       - cmd: |
           tofu init -force-copy \
-          -backend-config="bucket=${STATE_BUCKET_NAME}" \
-          -backend-config="key=${BUCKETS_STATE_KEY}" \
-          -backend-config="region=${REGION}" \
-          -backend-config="dynamodb_table=${STATE_DYNAMODB_TABLE_NAME}"
+            -backend-config="bucket=${STATE_BUCKET_NAME}" \
+            -backend-config="key=${BUCKETS_STATE_KEY}" \
+            -backend-config="region=${REGION}" \
+            -backend-config="dynamodb_table=${STATE_DYNAMODB_TABLE_NAME}"
         dir: .github/test-infra/buckets-iac
       - cmd: tofu apply -auto-approve
         dir: .github/test-infra/buckets-iac
+      - cmd: echo ${STATE_KEY} | sed 's/\.tfstate/-rds.tfstate/g'
+        setVariables:
+          - name: RDS_STATE_KEY
+        dir: .github/test-infra/rds-iac
+      - cmd: |
+          tofu init -force-copy \
+            -backend-config="bucket=${STATE_BUCKET_NAME}" \
+            -backend-config="key=${RDS_STATE_KEY}" \
+            -backend-config="region=${REGION}" \
+            -backend-config="dynamodb_table=${STATE_DYNAMODB_TABLE_NAME}"
+        dir: .github/test-infra/rds-iac
+      - cmd: tofu apply -auto-approve
+        dir: .github/test-infra/rds-iac
 
   - name: tofu-outputs
     actions:
@@ -133,6 +147,27 @@ tasks:
         setVariables:
           - name: VELERO_S3_ROLE_ARN
         dir: .github/test-infra/buckets-iac
+      - cmd: tofu output -raw grafana_pg_host
+        setVariables:
+          - name: GRAFANA_PG_HOST
+        dir: .github/test-infra/rds-iac
+      - cmd: tofu output -raw grafana_pg_port
+        setVariables:
+          - name: GRAFANA_PG_PORT
+        dir: .github/test-infra/rds-iac
+      - cmd: tofu output -raw grafana_pg_database
+        setVariables:
+          - name: GRAFANA_PG_DATABASE
+        dir: .github/test-infra/rds-iac
+      - cmd: tofu output -raw grafana_pg_user
+        setVariables:
+          - name: GRAFANA_PG_USER
+        dir: .github/test-infra/rds-iac
+      - cmd: tofu output -raw grafana_pg_password
+        setVariables:
+          - name: GRAFANA_PG_PASSWORD
+        mute: true # Muted to hide sensitive password
+        dir: .github/test-infra/rds-iac
 
   - name: create-uds-config
     actions:
@@ -154,4 +189,10 @@ tasks:
               velero_bucket_provider_url: ""
               velero_bucket_credential_name: ""
               velero_bucket_credential_key: ""
+              grafana_ha: true
+              grafana_pg_host: ${GRAFANA_PG_HOST}
+              grafana_pg_port: ${GRAFANA_PG_PORT}
+              grafana_pg_database: ${GRAFANA_PG_DATABASE}
+              grafana_pg_password: ${GRAFANA_PG_PASSWORD}
+              grafana_pg_user: ${GRAFANA_PG_USER}
           EOF
