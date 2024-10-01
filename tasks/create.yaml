@@ -18,6 +18,14 @@ tasks:
       - description: "Create the UDS Core Standard Zarf Package"
         cmd: "uds zarf package create packages/standard --confirm --no-progress --flavor ${FLAVOR}"
 
+  - name: core-base
+    description: "Create the UDS Core Base Package"
+    actions:
+      - task: pepr-build
+
+      - description: "Create the UDS Core Standard Zarf Package"
+        cmd: "uds zarf package create packages/base --confirm --no-progress --flavor ${FLAVOR}"
+
   - name: k3d-standard-bundle
     description: "Create the K3d-UDS Core Bundle"
     actions:

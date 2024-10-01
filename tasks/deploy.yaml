@@ -55,3 +55,8 @@ tasks:
     actions:
       - description: "Deploy the standard UDS Core zarf package"
         cmd: uds zarf package deploy build/zarf-package-core-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress --components '*'
+
+  - name: core-base
+    actions:
+      - description: "Deploy the standard UDS Core (Base) zarf package"
+        cmd: uds zarf package deploy build/zarf-package-core-base-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress --components '*'
