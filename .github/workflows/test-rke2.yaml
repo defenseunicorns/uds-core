@@ -71,7 +71,7 @@ jobs:
         timeout-minutes: 20
 
       - name: Get Kubeconfig
-        run: uds run -f tasks/iac.yaml rke2-get-kubeconfig --no-progress 
+        run: uds run -f tasks/iac.yaml rke2-get-kubeconfig --no-progress -l debug
         timeout-minutes: 20
 
       - name: Wait for RKE2 Cluster
