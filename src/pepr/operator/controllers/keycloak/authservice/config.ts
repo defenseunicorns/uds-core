@@ -131,16 +131,16 @@ export function buildInitialSecret(): AuthserviceConfig {
 export async function getAuthserviceConfig(): Promise<AuthserviceConfig> {
   if (inMemorySecret) {
     log.info("Returning in-memory authservice secret");
-    return inMemorySecret;
+    return Promise.resolve(inMemorySecret);
   }
 
   // Fetch the authservice secret from Kubernetes if not in cache
   pendingSecretFetch = K8s(kind.Secret)
     .InNamespace(operatorConfig.namespace)
     .Get(operatorConfig.secretName)
-    .then(secret => secret.data!["config.json"])
-    .then(config => JSON.parse(atob(config)) as AuthserviceConfig)
-    .then(config => {
+    .then(secret => {
+      const config = JSON.parse(atob(secret.data!["config.json"])) as AuthserviceConfig;
+      
       inMemorySecret = config;
       lastSuccessfulSecret = config;
       return config;
