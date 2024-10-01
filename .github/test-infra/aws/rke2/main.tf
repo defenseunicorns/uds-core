@@ -47,7 +47,7 @@ resource "tls_private_key" "control_plane_private_key" {
 
 # AWS resource for Control Plane Public Key
 resource "aws_key_pair" "control_plane_key_pair" {
-  key_name   = "${var.ssh_key_name}-${var.rke2_version}"
+  key_name   = "${var.ssh_key_name}-${var.rke2_version}-${random_string.ssm.result}"
   public_key = tls_private_key.control_plane_private_key.public_key_openssh
 }
 
@@ -123,7 +123,7 @@ resource "aws_instance" "rke2_ci_agent_node" {
 # Networking
 #######################################
 resource "aws_security_group" "rke2_ci_node_sg" {
-  name        = "${var.os_distro}-${var.rke2_version}-rke2-ci-sg"
+  name        = "${var.os_distro}-${var.rke2_version}-rke2-ci-sg-${random_string.ssm.result}"
   description = "SG providing settings for RKE2"
   vpc_id      = data.aws_vpc.vpc.id
 

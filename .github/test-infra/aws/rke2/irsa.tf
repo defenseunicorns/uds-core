@@ -35,7 +35,7 @@ module "oidc_bucket" {
   source  = "terraform-aws-modules/s3-bucket/aws"
   version = "4.1.2"
 
-  bucket        = "${var.environment}-oidc"
+  bucket        = "${var.environment}-oidc-${random_string.ssm.result}"
   force_destroy = var.force_destroy
 
   # Allow our objects to be public
