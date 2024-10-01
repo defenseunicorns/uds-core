@@ -28,10 +28,10 @@ components:
           - "values/upstream-values.yaml"
     images:
       - "quay.io/prometheus/node-exporter:v1.8.2"
-      - "quay.io/prometheus-operator/prometheus-operator:v0.77.0"
+      - "quay.io/prometheus-operator/prometheus-operator:v0.77.1"
       - "registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.13.0"
       - "quay.io/prometheus/alertmanager:v0.27.0"
-      - "quay.io/prometheus-operator/prometheus-config-reloader:v0.77.0"
+      - "quay.io/prometheus-operator/prometheus-config-reloader:v0.77.1"
       - "quay.io/prometheus/prometheus:v2.54.1"
       - "registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.4.3"
 
@@ -48,10 +48,10 @@ components:
           - "values/registry1-values.yaml"
     images:
       - "registry1.dso.mil/ironbank/opensource/prometheus/node-exporter:v1.8.2"
-      - "registry1.dso.mil/ironbank/opensource/prometheus-operator/prometheus-operator:v0.77.0"
+      - "registry1.dso.mil/ironbank/opensource/prometheus-operator/prometheus-operator:v0.77.1"
       - "registry1.dso.mil/ironbank/opensource/kubernetes/kube-state-metrics:v2.13.0"
       - "registry1.dso.mil/ironbank/opensource/prometheus/alertmanager:v0.27.0"
-      - "registry1.dso.mil/ironbank/opensource/prometheus-operator/prometheus-config-reloader:v0.77.0"
+      - "registry1.dso.mil/ironbank/opensource/prometheus-operator/prometheus-config-reloader:v0.77.1"
       - "registry1.dso.mil/ironbank/opensource/prometheus/prometheus:v2.54.1"
       - "registry1.dso.mil/ironbank/opensource/ingress-nginx/kube-webhook-certgen:v1.4.3"
 
@@ -68,9 +68,9 @@ components:
           - "values/unicorn-values.yaml"
     images:
       - "cgr.dev/du-uds-defenseunicorns/prometheus-node-exporter-fips:1.8.2"
-      - "cgr.dev/du-uds-defenseunicorns/prometheus-operator-fips:0.77.0"
+      - "cgr.dev/du-uds-defenseunicorns/prometheus-operator-fips:0.77.1"
       - "cgr.dev/du-uds-defenseunicorns/kube-state-metrics-fips:2.13.0"
       - "cgr.dev/du-uds-defenseunicorns/prometheus-alertmanager-fips:0.27.0"
-      - "cgr.dev/du-uds-defenseunicorns/prometheus-config-reloader-fips:0.77.0"
+      - "cgr.dev/du-uds-defenseunicorns/prometheus-config-reloader-fips:0.77.1"
       - "cgr.dev/du-uds-defenseunicorns/prometheus-fips:2.54.1"
       - "cgr.dev/du-uds-defenseunicorns/kube-webhook-certgen-fips:1.11.2"
