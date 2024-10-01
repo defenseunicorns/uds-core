@@ -94,7 +94,7 @@ tasks:
   - name: rke2-cluster-ready
     actions:
       - task: rke2-nodes-ready
-      - cmd: until [[ $(kubectl get po -A --no-headers=true | egrep -v "Running|Completed") == "" ]]; do sleep 5; done
+      - cmd: until [[ $(uds zarf tools kubectl get po -A --no-headers=true | egrep -v "Running|Completed") == "" ]]; do sleep 5; done
       - cmd: kubectl apply -f ./metallb.yaml
         dir: .github/test-infra/aws/rke2/
         maxTotalSeconds: 600
