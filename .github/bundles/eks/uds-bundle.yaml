@@ -12,7 +12,7 @@ packages:
     ref: v0.39.0
 
   - name: core
-    path: ../../build/
+    path: ../../build/eks
     # x-release-please-start-version
     ref: 0.28.0
     # x-release-please-end
