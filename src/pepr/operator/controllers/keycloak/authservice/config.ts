@@ -184,39 +184,23 @@ export async function updateAuthServiceSecret(
         );
 
         // Prepare the config to be written (assumes that all packages share the same secret)
-        const config = btoa(JSON.stringify(inMemorySecret));
-        const configHash = createHash("sha256").update(config).digest("hex");
+        const { base64EncodedConfig, hash } = encodeConfig(inMemorySecret!);
 
-        // Write the in-memory authservice config to the Kubernetes secret
-        const appliedSecret = await K8s(kind.Secret).Apply(
-          {
-            metadata: {
-              namespace: operatorConfig.namespace,
-              name: operatorConfig.secretName,
-            },
-            data: {
-              "config.json": config,
-            },
-          },
-          { force: true },
-        );
+        // Apply the authservice config secret
+        lastSuccessfulSecret = await applySecret(base64EncodedConfig);
 
         log.info(`Updated authservice secret successfully for all pending packages.`);
 
         // Apply the checksum if required
         if (checksum) {
           log.info(`Adding checksum to deployment for authservice secret`);
-          await checksumDeployment(configHash);
+          await checksumDeployment(hash);
         }
 
         // Resolve the promises for all pending packages after the secret update
         pendingPackages.forEach(resolveFunc => {
           resolveFunc();
         });
-
-        lastSuccessfulSecret = JSON.parse(
-          atob(appliedSecret.data!["config.json"]),
-        ) as AuthserviceConfig;
       } catch (e) {
         log.error(e, `Failed to write authservice secret`);
 
@@ -259,4 +243,38 @@ async function checksumDeployment(checksum: string) {
     log.error(`Failed to apply the checksum to authservice: ${e.data?.message}`);
     throw new Error("Failed to apply the checksum to authservice", { cause: e });
   }
+}
+
+/**
+ * Applies a checksum to the Kubernetes authservice deployment to force a rollout.
+ *
+ * @param {string} base64EncodedConfig - The base64 encoded AuthserviceConfig to apply.
+ */
+async function applySecret(base64EncodedConfig: string) {
+  try {
+    return await K8s(kind.Secret)
+      .Apply(
+        {
+          metadata: {
+            namespace: operatorConfig.namespace,
+            name: operatorConfig.secretName,
+          },
+          data: {
+            "config.json": base64EncodedConfig,
+          },
+        },
+        { force: true },
+      )
+      .then(secret => JSON.parse(atob(secret.data!["config.json"])) as AuthserviceConfig);
+  } catch (e) {
+    log.error(`Failed to apply the authservice config secret: ${e.data?.message}`);
+    throw new Error("Failed to apply the authservice secret", { cause: e });
+  }
+}
+
+function encodeConfig(c: AuthserviceConfig): { base64EncodedConfig: string; hash: string } {
+  const config = btoa(JSON.stringify(c));
+  const hash = createHash("sha256").update(config).digest("hex");
+
+  return { base64EncodedConfig: config, hash };
 }
