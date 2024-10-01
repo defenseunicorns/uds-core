@@ -9,34 +9,41 @@ output "private_key" {
 }
 
 output "bootstrap_ip" {
+  sensitive = true
   value       = aws_instance.rke2_ci_bootstrap_node.public_ip
   description = "Public IP address of the bootstrap control plane node."
 }
 
 output "node_user" {
+  sensitive = true
   value       = var.default_user
   description = "User to use when connecting to a cluster node."
 }
 
 output "cluster_hostname" {
+  sensitive = true
   value       = var.cluster_hostname
   description = "Hostname used to connect to cluster."
 }
 
 # ZARF_VAR_LOKI_S3_BUCKET
 output "loki_s3_bucket" {
+  sensitive = true
   value = module.storage.s3_buckets["loki"].bucket_name
 }
 
 #ZARF_VAR_VELERO_S3_BUCKET
 output "velero_s3_bucket" {
+  sensitive = true
   value = module.storage.s3_buckets["velero"].bucket_name
 }
 
 output "loki_irsa_role_arn" {
+  sensitive = true
   value = module.storage.irsa["loki"].bucket_role.arn
 }
 
 output "velero_irsa_role_arn" {
+  sensitive = true
   value = module.storage.irsa["velero"].bucket_role.arn
 }
