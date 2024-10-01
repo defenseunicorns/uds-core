@@ -65,7 +65,6 @@ When(UDSPackage)
 // Watch for Exemptions and validate
 When(UDSExemption).IsCreatedOrUpdated().Validate(exemptValidator);
 
-
 // Watch for Functional Layers and update config
 When(UDSPackage)
   .IsCreatedOrUpdated()
