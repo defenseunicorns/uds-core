@@ -96,9 +96,8 @@ tasks:
     actions:
       - task: rke2-nodes-ready
       - cmd: |
-          while true; do if [ $(uds zarf tools kubectl get po -A --no-headers=true | egrep -v 'Running|Completed' | wc -l) -gt 0 ]
-          do sleep 5
-          fi
+          while true; do if [ $(uds zarf tools kubectl get po -A --no-headers=true | egrep -v 'Running|Completed' | wc -l) -gt 0 ]; then
+          sleep 5
           else; echo "Cluster is ready"; break
           done
       - cmd: uds zarf tools kubectl apply -f ./metallb.yaml
