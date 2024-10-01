@@ -24,7 +24,7 @@ resource "aws_iam_role" "rke2_server" {
 }
 
 resource "aws_iam_instance_profile" "rke2_server" {
-  name = "${var.environment}-rke2-server"
+  name = "${local.cluster_name}-server"
   role = aws_iam_role.rke2_server.name
 }
 
@@ -68,20 +68,20 @@ data "aws_iam_policy_document" "aws_ccm" {
 }
 
 resource "aws_iam_role_policy" "s3_token" {
-  name   = "${var.environment}-rke2-server-token"
+  name   = "${local.cluster_name}-server-token"
   role   = aws_iam_role.rke2_server.id
   policy = data.aws_iam_policy_document.s3_token.json
 }
 
 
 resource "aws_iam_role_policy" "oidc_secrets" {
-  name   = "${var.environment}-rke2-server-oidc"
+  name   = "${local.cluster_name}-server-oidc"
   role   = aws_iam_role.rke2_server.id
   policy = data.aws_iam_policy_document.oidc_secrets.json
 }
 
 resource "aws_iam_role_policy" "server_ccm" {
-  name   = "${var.environment}-rke2-server-ccm"
+  name   = "${local.cluster_name}-server-ccm"
   role   = aws_iam_role.rke2_server.id
   policy = data.aws_iam_policy_document.aws_ccm.json
 }
@@ -89,7 +89,7 @@ resource "aws_iam_role_policy" "server_ccm" {
 module "rke2_kms_key" {
   source = "github.com/defenseunicorns/terraform-aws-uds-kms?ref=v0.0.5"
 
-  kms_key_alias_name_prefix         = "rke2-${var.environment}"
+  kms_key_alias_name_prefix         = "rke2-${local.cluster_name}-server"
   kms_key_deletion_window           = 7
   kms_key_description               = "RKE2 Key"
   kms_key_policy_default_identities = [aws_iam_role.rke2_server.arn]
@@ -103,7 +103,7 @@ resource "random_string" "ssm" {
 }
 
 resource "aws_secretsmanager_secret" "rke2_kms_key_arn" {
-  name                    = "rke2/${var.environment}-${random_string.ssm.result}/kms-key-arn"
+  name                    = "rke2/${local.cluster_name}-server/kms-key-arn"
   description             = "Stores the ARN of the KMS key for RKE2 in the ${var.environment} environment"
   recovery_window_in_days = var.recovery_window
 }
