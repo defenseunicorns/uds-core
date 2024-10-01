@@ -23,11 +23,11 @@ done
 mkdir -p ~/.kube
 
 # Copy kubectl from cluster node
-ssh -o StrictHostKeyChecking=no -i key.pem ${node_user}@${bootstrap_ip} "mkdir -p /home/${node_user}/.kube && sudo cp /etc/rancher/rke2/rke2.yaml /home/${node_user}/.kube/config && sudo chown ${node_user} /home/${node_user}/.kube/config"
-scp -o StrictHostKeyChecking=no -i key.pem ${node_user}@${bootstrap_ip}:/home/${node_user}/.kube/config ~/.kube/rke2-config
+ssh -o StrictHostKeyChecking=no -i key.pem ${node_user}@${bootstrap_ip} "mkdir -p /home/${node_user}/.kube && sudo cp /etc/rancher/rke2/rke2.yaml /home/${node_user}/.kube/config && sudo chown ${node_user} /home/${node_user}/.kube/config"  > /dev/null
+scp -o StrictHostKeyChecking=no -i key.pem ${node_user}@${bootstrap_ip}:/home/${node_user}/.kube/config ~/.kube/rke2-config  > /dev/null
 
 # Replace the loopback address with the cluster hostname
-sed -i "s/127.0.0.1/${bootstrap_ip}/g" ~/.kube/rke2-config
+sed -i "s/127.0.0.1/${bootstrap_ip}/g" ~/.kube/rke2-config  > /dev/null
 export KUBECONFIG=~/.kube/rke2-config
 
 # find existing host record in the host file and save the line numbers
@@ -41,9 +41,9 @@ then
     # iterate over the line numbers on which matches were found
     while read -r line_number; do
         # replace the text of each line with the desired host entry
-        sudo sed -i "${line_number}s/.*/${host_entry} /" /etc/hosts
+        sudo sed -i "${line_number}s/.*/${host_entry} /" /etc/hosts  > /dev/null
     done <<< "$matches_in_hosts"
 else
     echo "Adding new hosts entry."
-    echo "$host_entry" | sudo tee -a /etc/hosts
+    echo "$host_entry" | sudo tee -a /etc/hosts  > /dev/null
 fi

@@ -26,13 +26,11 @@ output "cluster_hostname" {
   description = "Hostname used to connect to cluster."
 }
 
-# ZARF_VAR_LOKI_S3_BUCKET
 output "loki_s3_bucket" {
   sensitive = true
   value = module.storage.s3_buckets["loki"].bucket_name
 }
 
-#ZARF_VAR_VELERO_S3_BUCKET
 output "velero_s3_bucket" {
   sensitive = true
   value = module.storage.s3_buckets["velero"].bucket_name
