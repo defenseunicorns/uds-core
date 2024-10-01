@@ -16,7 +16,7 @@ resource "aws_iam_role" "rke2_server" {
   name = "${local.cluster_name}-server"
 
   assume_role_policy   = data.aws_iam_policy_document.ec2_access.json
-  permissions_boundary = var.permissions_boundary_arn
+  permissions_boundary = local.iam_role_permissions_boundary
 
   tags = {
     PermissionsBoundary = var.permissions_boundary_name

@@ -11,7 +11,7 @@ locals {
     job_id              = ""
     PermissionsBoundary = var.permissions_boundary_name
   }
-
+  iam_role_permissions_boundary = var.use_permissions_boundary ? "arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:policy/${var.permissions_boundary_name}" : null
   userdata = {
     BOOTSTRAP_IP                = ""
     AGENT_NODE                  = false,
@@ -26,6 +26,9 @@ locals {
     token_object                = module.statestore.token_object
   }
 }
+
+data "aws_caller_identity" "current" {}
+data "aws_region" "current" {}
 
 #######################################
 # Prerequisites

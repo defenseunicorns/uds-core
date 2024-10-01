@@ -1,5 +1,5 @@
 output "aws_region" {
-  value = var.region
+  value = data.aws_region.current.name
 }
 
 output "private_key" {
