@@ -1,12 +1,12 @@
 # K3d + UDS Core Slim Dev Checkpoint
 
-This is a special Zarf package that takes a running K3d cluster (named `uds`) and wraps it's committed container and volumes into a zarf package.
+This is a special Zarf package that takes a running K3d cluster (named `uds`) and wraps its committed container and volumes into a zarf package.
 
 ## Creating this package
 
 In order to create this package you must follow the following:
 
-1. Setup a K3d cluster (named `uds`) with the contents you'd like to checkpoint
+1. Setup a K3d cluster (named `uds`) containing the contents you'd like to checkpoint
 
 > [!NOTE]
 > The intent for this package is that those contents are the `uds dev stack`, `zarf init` and `uds core slim`
