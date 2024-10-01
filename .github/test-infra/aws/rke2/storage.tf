@@ -24,7 +24,7 @@ resource "random_id" "unique_id" {
 module "storage" {
   # this module assumes by default that you are only setting up external storage for velero and loki. creates s3 buckets and irsa roles
   source                   = "./modules/storage"
-  cluster_name             = local.cluster_name
+  cluster_name             = "${local.cluster_name}-${random_string.ssm.result}"
   permissions_boundary     = local.iam_role_permissions_boundary
   use_permissions_boundary = var.use_permissions_boundary
   environment              = var.environment
