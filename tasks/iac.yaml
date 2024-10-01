@@ -84,7 +84,6 @@ tasks:
 
   - name: rke2-nodes-ready
     actions:
-      #- task: rke2-get-kubeconfig
       - cmd: sleep 30; uds zarf tools kubectl get nodes --show-labels
       - wait:
           cluster:
@@ -97,7 +96,7 @@ tasks:
     actions:
       - task: rke2-nodes-ready
       - cmd: |
-          until [[ $(uds zarf tools kubectl get po -A --no-headers=true | egrep -v "Running|Completed") == "" ]]
+          until [ $(uds zarf tools kubectl get po -A --no-headers=true | egrep -v "Running|Completed") == "" ]
           do sleep 5
           done
       - cmd: kubectl apply -f ./metallb.yaml
