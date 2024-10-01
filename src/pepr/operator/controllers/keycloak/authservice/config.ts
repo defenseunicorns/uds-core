@@ -140,7 +140,7 @@ export async function getAuthserviceConfig(): Promise<AuthserviceConfig> {
     .Get(operatorConfig.secretName)
     .then(secret => {
       const config = JSON.parse(atob(secret.data!["config.json"])) as AuthserviceConfig;
-      
+
       inMemorySecret = config;
       lastSuccessfulSecret = config;
       return config;

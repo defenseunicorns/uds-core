@@ -95,13 +95,14 @@ jest.mock("pepr", () => ({
   },
 }));
 
-interface SecretMetadata {
-  metadata: {
-    name: string;
-  };
-}
-
 describe("AuthService Config Tests", () => {
+  const applyMock = jest.fn<() => Promise<kind.Secret>>().mockResolvedValue({
+    metadata: { name: "authservice-uds" },
+    data: {
+      "config.json": "e30K",
+    },
+  });
+
   beforeEach(() => {
     process.env.PEPR_WATCH_MODE = "true";
     jest.useFakeTimers();
@@ -133,8 +134,7 @@ describe("AuthService Config Tests", () => {
   });
 
   it("setupAuthserviceSecret should skip creation if secret exists", async () => {
-    const applyMock = jest.fn();
-    const getMock = jest.fn<() => Promise<SecretMetadata>>().mockResolvedValue({
+    const getMock = jest.fn<() => Promise<kind.Secret>>().mockResolvedValue({
       metadata: { name: "authservice-uds" },
     });
 
@@ -152,10 +152,6 @@ describe("AuthService Config Tests", () => {
 
   it("updateAuthServiceSecret should debounce and update the Kubernetes secret", async () => {
     jest.useFakeTimers();
-
-    const applyMock = jest.fn<() => Promise<SecretMetadata>>().mockResolvedValue({
-      metadata: { name: "authservice-uds" },
-    });
 
     const patchMock = jest.fn(); // Mock the Patch method
 
@@ -187,10 +183,6 @@ describe("AuthService Config Tests", () => {
   it("updateAuthServiceSecret should only apply changes after debounce delay", async () => {
     jest.useFakeTimers();
 
-    const applyMock = jest.fn<() => Promise<SecretMetadata>>().mockResolvedValue({
-      metadata: { name: "authservice-uds" },
-    });
-
     const patchMock = jest.fn(); // Mock Patch for Deployment
 
     // Mock K8s functionality for Secret and Deployment
@@ -211,7 +203,7 @@ describe("AuthService Config Tests", () => {
 
     const updatePromise = updateAuthServiceSecret(newConfig); // Capture the promise to ensure it's awaited later
 
-    jest.advanceTimersByTime(12000); // Fast-forward time
+    jest.advanceTimersByTime(2000); // Fast-forward time
 
     await updatePromise; // Ensure the promise is awaited after the debounce
 
@@ -222,10 +214,6 @@ describe("AuthService Config Tests", () => {
   it("updateAuthServiceSecret should only applied if called once between debounce delay", async () => {
     jest.useFakeTimers();
 
-    const applyMock = jest.fn<() => Promise<SecretMetadata>>().mockResolvedValue({
-      metadata: { name: "authservice-uds" },
-    });
-
     const patchMock = jest.fn(); // Mock Patch for Deployment
 
     // Mock K8s functionality for Secret and Deployment
@@ -242,13 +230,14 @@ describe("AuthService Config Tests", () => {
       }
     });
 
-    const newConfig: AuthserviceConfig = getConfig();
+    // add a client simulating a new Package named cow
+    const baseConfig: AuthserviceConfig = getConfig();
     const cowChain = getChain("cow");
-    newConfig.chains.push(cowChain);
+    baseConfig.chains.push(cowChain);
 
-    const updatePromise = updateAuthServiceSecret(newConfig); // Capture the promise to ensure it's awaited later
+    const updatePromise = updateAuthServiceSecret(baseConfig); // Capture the promise to ensure it's awaited later
 
-    // add a client simulating a new Package
+    // add a client simulating a new Package being added within debounce delay
     const updatedConfig = getConfig();
     const bearChain = getChain("bear");
     updatedConfig.chains.push(bearChain);
