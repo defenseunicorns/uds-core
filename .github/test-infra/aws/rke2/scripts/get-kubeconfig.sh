@@ -29,6 +29,7 @@ scp -o StrictHostKeyChecking=no -i key.pem ${node_user}@${bootstrap_ip}:/home/${
 # Replace the loopback address with the cluster hostname
 sed -i "s/127.0.0.1/${bootstrap_ip}/g" ./rke2-config > /dev/null
 export KUBECONFIG=$(pwd)/rke2-config
+echo $KUBECONFIG >> $GITHUB_ENV
 
 # find existing host record in the host file and save the line numbers
 matches_in_hosts="$(grep -n $cluster_hostname /etc/hosts | cut -f1 -d:)"
