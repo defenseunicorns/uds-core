@@ -96,7 +96,7 @@ tasks:
     actions:
       - task: rke2-nodes-ready
       - cmd: |
-          until [ "$(uds zarf tools kubectl get po -A --no-headers=true | egrep -v 'Running|Completed')" == "" ]
+          until [[ "$(uds zarf tools kubectl get po -A --no-headers=true | egrep -v 'Running|Completed')" == "" ]]
           do sleep 5
           done
       - cmd: uds zarf tools kubectl apply -f ./metallb.yaml
