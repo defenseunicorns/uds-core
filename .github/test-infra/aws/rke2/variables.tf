@@ -18,7 +18,6 @@ variable "subnet_name" {
 variable "region" {
   type        = string
   description = "Region to use for deployment"
-  default     = "us-west-2"
 }
 
 variable "agent_instance_type" {
@@ -87,7 +86,11 @@ variable "use_permissions_boundary" {
   type        = bool
 }
 
-variable "permissions_boundary" {
+variable "permissions_boundary_name" {
+  description = "The name of the permissions boundary for IAM resources.  This will be used for tagging and to build out the ARN."
+}
+
+variable "permissions_boundary_arn" {
   description = "The ARN of the Permissions Boundary"
   type        = string
   default     = null
