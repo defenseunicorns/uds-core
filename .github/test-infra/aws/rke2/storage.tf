@@ -25,7 +25,7 @@ module "storage" {
   # this module assumes by default that you are only setting up external storage for velero and loki. creates s3 buckets and irsa roles
   source                   = "./modules/storage"
   cluster_name             = local.cluster_name
-  permissions_boundary     = var.permissions_boundary
+  permissions_boundary     = var.permissions_boundary_arn
   use_permissions_boundary = var.use_permissions_boundary
   environment              = var.environment
   ci_bucket_configurations = local.irsa_buckets
