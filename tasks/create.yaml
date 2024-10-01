@@ -4,6 +4,7 @@ includes:
 variables:
   - name: FLAVOR
     default: upstream
+  - name: K8S_DISTRO  
 
   - name: REGISTRY1_PEPR_IMAGE
     # renovate: datasource=docker depName=registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller versioning=semver
@@ -22,7 +23,7 @@ tasks:
     description: "Create the K3d-UDS Core Bundle"
     actions:
       - description: "Create the UDS Core Standard Bundle"
-        cmd: "uds create bundles/k3d-standard --confirm --no-progress --architecture=${ZARF_ARCHITECTURE}"
+        cmd: "uds create bundles/k3d-standard --confirm --output ./build/${K8S_DISTRO} --no-progress --architecture=${ZARF_ARCHITECTURE}"
 
   - name: slim-dev-package
     description: "Create the UDS Core (Istio Only) Zarf Package"
