@@ -3,6 +3,80 @@ import { K8s, kind } from "pepr";
 import { buildInitialSecret, setupAuthserviceSecret, updateAuthServiceSecret } from "./config";
 import { AuthserviceConfig } from "./types";
 
+const getChain = (name: string) => {
+  return {
+    name: name,
+    match: {
+      header: ":authority",
+      prefix: "cow.uds.dev",
+    },
+    filters: [
+      {
+        oidc_override: {
+          authorization_uri: "https://sso.uds.dev/realms/uds/protocol/openid-connect/auth",
+          token_uri: "https://sso.uds.dev/realms/uds/protocol/openid-connect/token",
+          callback_uri: `https://${name}.uds.dev/login`,
+          client_id: name,
+          client_secret: "notsecret",
+          scopes: [],
+          logout: {
+            path: "/local",
+            redirect_uri: "https://sso.uds.dev/realms/uds/protocol/openid-connect/token/logout",
+          },
+          cookie_name_prefix: name,
+        },
+      },
+    ],
+  };
+};
+
+const getConfig = () => {
+  return {
+    allow_unmatched_requests: true,
+    listen_address: "127.0.0.1",
+    listen_port: "8080",
+    log_level: "debug",
+    default_oidc_config: {
+      client_id: "new-client",
+      client_secret: "new-secret",
+      authorization_uri: "",
+      token_uri: "",
+      logout: {
+        path: "/logout",
+        redirect_uri: "/logout-redirect",
+      },
+      scopes: [],
+    },
+    threads: 4,
+    chains: [
+      {
+        name: "cow",
+        match: {
+          header: ":authority",
+          prefix: "cow.uds.dev",
+        },
+        filters: [
+          {
+            oidc_override: {
+              authorization_uri: "https://sso.uds.dev/realms/uds/protocol/openid-connect/auth",
+              token_uri: "https://sso.uds.dev/realms/uds/protocol/openid-connect/token",
+              callback_uri: "https://cow.uds.dev/login",
+              client_id: "bear",
+              client_secret: "notsecret",
+              scopes: [],
+              logout: {
+                path: "/local",
+                redirect_uri: "https://sso.uds.dev/realms/uds/protocol/openid-connect/token/logout",
+              },
+              cookie_name_prefix: "cow",
+            },
+          },
+        ],
+      },
+    ],
+  } as AuthserviceConfig;
+};
+
 // Mock the necessary Kubernetes functions
 jest.mock("pepr", () => ({
   K8s: jest.fn(),
@@ -98,25 +172,7 @@ describe("AuthService Config Tests", () => {
       }
     });
 
-    const newConfig: AuthserviceConfig = {
-      allow_unmatched_requests: true,
-      listen_address: "127.0.0.1",
-      listen_port: "8080",
-      log_level: "debug",
-      default_oidc_config: {
-        client_id: "new-client",
-        client_secret: "new-secret",
-        authorization_uri: "",
-        token_uri: "",
-        logout: {
-          path: "/logout",
-          redirect_uri: "/logout-redirect",
-        },
-        scopes: [],
-      },
-      threads: 4,
-      chains: [],
-    };
+    const newConfig: AuthserviceConfig = getConfig();
 
     const updatePromise = updateAuthServiceSecret(newConfig);
 
@@ -151,25 +207,7 @@ describe("AuthService Config Tests", () => {
       }
     });
 
-    const newConfig: AuthserviceConfig = {
-      allow_unmatched_requests: true,
-      listen_address: "127.0.0.1",
-      listen_port: "8080",
-      log_level: "debug",
-      default_oidc_config: {
-        client_id: "new-client",
-        client_secret: "new-secret",
-        authorization_uri: "",
-        token_uri: "",
-        logout: {
-          path: "/logout",
-          redirect_uri: "/logout-redirect",
-        },
-        scopes: [],
-      },
-      threads: 4,
-      chains: [],
-    };
+    const newConfig: AuthserviceConfig = getConfig();
 
     const updatePromise = updateAuthServiceSecret(newConfig); // Capture the promise to ensure it's awaited later
 
@@ -178,6 +216,61 @@ describe("AuthService Config Tests", () => {
     await updatePromise; // Ensure the promise is awaited after the debounce
 
     expect(applyMock).toHaveBeenCalledTimes(1); // Ensure Apply is called once
+    expect(patchMock).toHaveBeenCalledTimes(1); // Ensure Patch is called for the deployment
+  });
+
+  it("updateAuthServiceSecret should only applied if called once between debounce delay", async () => {
+    jest.useFakeTimers();
+
+    const applyMock = jest.fn<() => Promise<SecretMetadata>>().mockResolvedValue({
+      metadata: { name: "authservice-uds" },
+    });
+
+    const patchMock = jest.fn(); // Mock Patch for Deployment
+
+    // Mock K8s functionality for Secret and Deployment
+    (K8s as jest.Mock).mockImplementation(kindType => {
+      if (kindType === "Secret") {
+        return {
+          Apply: applyMock,
+        };
+      }
+      if (kindType === "Deployment") {
+        return {
+          Patch: patchMock, // Mock Patch for Deployment
+        };
+      }
+    });
+
+    const newConfig: AuthserviceConfig = getConfig();
+    const cowChain = getChain("cow");
+    newConfig.chains.push(cowChain);
+
+    const updatePromise = updateAuthServiceSecret(newConfig); // Capture the promise to ensure it's awaited later
+
+    // add a client simulating a new Package
+    const updatedConfig = getConfig();
+    const bearChain = getChain("bear");
+    updatedConfig.chains.push(bearChain);
+
+    const otherPromise = updateAuthServiceSecret(updatedConfig); // Capture the promise to ensure it's awaited later
+
+    jest.advanceTimersByTime(2000); // Fast-forward time
+
+    await updatePromise;
+    await otherPromise;
+
+    // ensure applyMock has been called with particular config
+    applyMock.mock.calls.forEach(call => {
+      if (call.length > 0) {
+        const config = call.at(0) as unknown as { data: { "config.json": string } };
+        const configDecoded = JSON.parse(
+          atob(config!.data["config.json"]),
+        ) as unknown as AuthserviceConfig;
+        expect(configDecoded.chains.length).toEqual(2);
+      }
+    });
+    expect(applyMock).toHaveBeenCalledTimes(1);
     expect(patchMock).toHaveBeenCalledTimes(1); // Ensure Patch is called for the deployment
   });
 });

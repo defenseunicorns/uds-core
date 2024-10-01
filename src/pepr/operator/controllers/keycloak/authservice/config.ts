@@ -5,6 +5,8 @@ import { Client } from "../types";
 import { buildChain, log } from "./authservice";
 import { Action, AuthserviceConfig } from "./types";
 
+let pendingSecretFetch: Promise<AuthserviceConfig> | null;
+
 // Cache for in-memory secret to avoid unnecessary Kubernetes secret lookups
 let inMemorySecret: AuthserviceConfig | null = null;
 
@@ -18,7 +20,7 @@ let lastSuccessfulSecret: AuthserviceConfig | null = null;
 let debounceTimer: NodeJS.Timeout | null = null;
 
 // Debounce duration (12 seconds) to reduce excessive updates, configurable via environment variable
-const DEBOUNCE_DURATION = parseInt(process.env.DEBONCE_DURATION || "12000", 10);
+const DEBOUNCE_DURATION = parseInt(process.env.DEBONCE_DURATION || "1000", 10);
 
 export const operatorConfig = {
   namespace: "authservice",
@@ -133,19 +135,21 @@ export async function getAuthserviceConfig(): Promise<AuthserviceConfig> {
   }
 
   // Fetch the authservice secret from Kubernetes if not in cache
-  const authSvcSecret = await K8s(kind.Secret)
+  pendingSecretFetch = K8s(kind.Secret)
     .InNamespace(operatorConfig.namespace)
-    .Get(operatorConfig.secretName);
+    .Get(operatorConfig.secretName)
+    .then(secret => secret.data!["config.json"])
+    .then(config => JSON.parse(atob(config)) as AuthserviceConfig)
+    .then(config => {
+      inMemorySecret = config;
+      lastSuccessfulSecret = config;
+      return config;
+    })
+    .finally(() => {
+      pendingSecretFetch = null;
+    });
 
-  // Decode and parse the secret from base64
-  const authServiceConfig = JSON.parse(
-    atob(authSvcSecret!.data!["config.json"]),
-  ) as AuthserviceConfig;
-
-  // Cache the secret in memory and store the last successful state
-  inMemorySecret = authServiceConfig;
-  lastSuccessfulSecret = authServiceConfig;
-  return authServiceConfig;
+  return pendingSecretFetch;
 }
 
 /**
@@ -184,7 +188,7 @@ export async function updateAuthServiceSecret(
         const configHash = createHash("sha256").update(config).digest("hex");
 
         // Write the in-memory authservice config to the Kubernetes secret
-        await K8s(kind.Secret).Apply(
+        const appliedSecret = await K8s(kind.Secret).Apply(
           {
             metadata: {
               namespace: operatorConfig.namespace,
@@ -209,6 +213,10 @@ export async function updateAuthServiceSecret(
         pendingPackages.forEach(resolveFunc => {
           resolveFunc();
         });
+
+        lastSuccessfulSecret = JSON.parse(
+          atob(appliedSecret.data!["config.json"]),
+        ) as AuthserviceConfig;
       } catch (e) {
         log.error(e, `Failed to write authservice secret`);
 
