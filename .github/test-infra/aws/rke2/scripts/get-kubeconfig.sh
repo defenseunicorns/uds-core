@@ -9,13 +9,8 @@ tofu output -raw private_key > key.pem
 chmod 600 key.pem
 
 bootstrap_ip=$(tofu output -raw bootstrap_ip)
-echo "bootstrap_ip: ${bootstrap_ip}"
-
 node_user=$(tofu output -raw node_user)
-echo "node_user: ${node_user}"
-
 cluster_hostname=$(tofu output -raw cluster_hostname)
-echo "cluster_hostname: ${cluster_hostname}"
 
 # Try ssh up to 20 times waiting 15 seconds between tries
 for i in $(seq 1 20); do

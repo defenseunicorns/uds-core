@@ -89,6 +89,7 @@ tasks:
             kind: nodes
             condition: Ready
             name: kubernetes.io/os=linux
+        maxTotalSeconds: 900
   
   - name: rke2-cluster-ready
     actions:
