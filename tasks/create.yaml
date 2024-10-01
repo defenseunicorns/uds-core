@@ -17,13 +17,13 @@ tasks:
       - task: pepr-build
 
       - description: "Create the UDS Core Standard Zarf Package"
-        cmd: "uds zarf package create packages/standard --confirm ./build/${K8S_DISTRO} --no-progress --flavor ${FLAVOR}"
+        cmd: "uds zarf package create packages/standard --confirm --output ./build/${K8S_DISTRO} --no-progress --flavor ${FLAVOR}"
 
   - name: k3d-standard-bundle
     description: "Create the K3d-UDS Core Bundle"
     actions:
       - description: "Create the UDS Core Standard Bundle"
-        cmd: "uds create bundles/k3d-standard --confirm --output --no-progress --architecture=${ZARF_ARCHITECTURE}"
+        cmd: "uds create bundles/k3d-standard --confirm --no-progress --architecture=${ZARF_ARCHITECTURE}"
 
   - name: slim-dev-package
     description: "Create the UDS Core (Istio Only) Zarf Package"
