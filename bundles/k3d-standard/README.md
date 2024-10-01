@@ -59,6 +59,19 @@ This bundle is used for demonstration, development, and testing of UDS Core. In 
 | `KEYCLOAK_PG_HOST`         | Keycloak Postgres host                     | `postgresql.host`               |
 | `KEYCLOAK_DEVMODE`         | Enables Keycloak dev mode                  | `devMode`                       |
 
+##### grafana (grafana)
+| Variable | Description | Path |
+|----------|-------------|------|
+| `GRAFANA_HA` | Enable HA Grafana  | `autoscaling.enabled`  |
+
+##### grafana (uds-grafana-config)
+| Variable | Description | Path |
+|----------|-------------|------|
+| `GRAFANA_PG_HOST`      | Grafana postgresql host      | `postgresql.host`      |
+| `GRAFANA_PG_PORT`      | Grafana postgresql port      | `postgresql.port`      |
+| `GRAFANA_PG_PASSWORD`  | Grafana postgresql password  | `postgresql.password`  |
+| `GRAFANA_PG_DATABASE`  | Grafana postgresql database  | `postgresql.database`  |
+| `GRAFANA_PG_USER`      | Grafana postgresql username  | `postgresql.user`      |
 
 ## Override Examples:
 

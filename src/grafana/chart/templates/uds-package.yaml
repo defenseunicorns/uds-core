@@ -63,3 +63,30 @@ spec:
           app.kubernetes.io/name: grafana
         remoteGenerated: KubeAPI
         description: "Datasources Watcher"
+
+      {{- if eq (include "grafana.postgresql.config" .) "true" }}
+      - description: "Postgresql access"
+        direction: Egress
+        selector:
+          app.kubernetes.io/name: grafana
+        port: {{ .Values.postgresql.port }}
+        {{- if .Values.postgresql.internal.enabled }}
+        remoteSelector:
+          {{- .Values.postgresql.internal.remoteSelector | toYaml | nindent 10 }}
+        remoteNamespace: {{ .Values.postgresql.internal.remoteNamespace }}
+        {{- else if .Values.postgresql.egressCidr }}
+        remoteCidr: {{ .Values.postgresql.egressCidr }}
+        {{- else }}
+        remoteGenerated: Anywhere
+        {{- end }}
+      {{- end }}
+
+      # HA for Grafana
+      - direction: Ingress
+        remoteGenerated: IntraNamespace
+        ports:
+          - 3000
+      - direction: Egress
+        remoteGenerated: IntraNamespace
+        ports:
+          - 3000

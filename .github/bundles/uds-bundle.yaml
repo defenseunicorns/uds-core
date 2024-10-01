@@ -53,3 +53,26 @@ packages:
             - name: LOKI_IRSA_ANNOTATION
               description: "The irsa role annotation"
               path: serviceAccount.annotations.eks\.amazonaws\.com/role-arn
+      grafana:
+        grafana:
+          variables:
+            - name: GRAFANA_HA
+              description: Enable HA Grafana
+              path: autoscaling.enabled
+        uds-grafana-config:
+          variables:
+            - name: GRAFANA_PG_HOST
+              description: Grafana postgresql host
+              path: postgresql.host
+            - name: GRAFANA_PG_PORT
+              description: Grafana postgresql port
+              path: postgresql.port
+            - name: GRAFANA_PG_DATABASE
+              description: Grafana postgresql database
+              path: postgresql.database
+            - name: GRAFANA_PG_PASSWORD
+              description: Grafana postgresql password
+              path: postgresql.password
+            - name: GRAFANA_PG_USER
+              description: Grafana postgresql username
+              path: postgresql.user

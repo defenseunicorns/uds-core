@@ -140,3 +140,29 @@ packages:
                 GOOGLE_IDP_CORE_ENTITY_ID: "https://sso.uds.dev/realms/uds"
                 GOOGLE_IDP_ADMIN_GROUP: "uds-core-dev-admin"
                 GOOGLE_IDP_AUDITOR_GROUP: "uds-core-dev-auditor"
+      grafana:
+        grafana:
+          variables:
+            - name: GRAFANA_HA
+              description: Enable HA Grafana
+              path: autoscaling.enabled
+        uds-grafana-config:
+          variables:
+            - name: GRAFANA_PG_HOST
+              description: Grafana postgresql host
+              path: postgresql.host
+            - name: GRAFANA_PG_PORT
+              description: Grafana postgresql port
+              path: postgresql.port
+            - name: GRAFANA_PG_DATABASE
+              description: Grafana postgresql database
+              path: postgresql.database
+            - name: GRAFANA_PG_PASSWORD
+              description: Grafana postgresql password
+              path: postgresql.password
+            - name: GRAFANA_PG_USER
+              description: Grafana postgresql username
+              path: postgresql.user
+            - name: GRAFANA_PG_SSL_MODE
+              description: Grafana postgresql SSL mode
+              path: postgresql.ssl_mode
