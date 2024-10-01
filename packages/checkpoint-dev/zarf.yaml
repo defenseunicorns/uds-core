@@ -49,14 +49,25 @@ components:
           - cmd: ./checkpoint.sh
         onSuccess:
           - cmd: |
-              sudo rm -rf data uds-checkpoint.tar
+              if [ -z "$TMPDIR" ]; then
+                #  macOS sets TMPDIR to a user temp directory - this also provides more options to linux
+                TMPDIR="/tmp"
+              fi
+              DATA_DIR=${TMPDIR}/uds-checkpoint-data"
+              sudo rm -rf "$DATA_DIR" uds-checkpoint.tar
       onDeploy:
         after:
           - cmd: |
-              sudo tar --blocking-factor=64 -xpf uds-checkpoint.tar data
-              K8S_TOKEN="$(sudo cat $(pwd)/data/k3s_data/server/token)"
+              if [ -z "$TMPDIR" ]; then
+                #  macOS sets TMPDIR to a user temp directory - this also provides more options to linux
+                TMPDIR="/tmp"
+              fi
+              DATA_DIR="${TMPDIR}/uds-checkpoint-data"
 
-              docker load -i data/uds-k3d-checkpoint-latest.tar
+              sudo tar --blocking-factor=64 -xpf uds-checkpoint.tar "$DATA_DIR"
+              K8S_TOKEN="$(sudo cat ${DATA_DIR}/k3s_data/server/token)"
+
+              docker load -i "${DATA_DIR}/uds-k3d-checkpoint-latest.tar"
 
               k3d cluster create \
                 -p "80:80@server:*" \
@@ -67,8 +78,8 @@ components:
                 --k3s-arg "--disable=servicelb@server:*" \
                 --k3s-arg "--disable=local-storage@server:*" \
                 --k3s-arg "--token=${K8S_TOKEN}@server:*" \
-                -v "$(pwd)/data/kubelet_data:/var/lib/kubelet@server:*" \
-                -v "$(pwd)/data/k3s_data:/var/lib/rancher/k3s@server:*" \
+                -v "${DATA_DIR}/kubelet_data:/var/lib/kubelet@server:*" \
+                -v "${DATA_DIR}/k3s_data:/var/lib/rancher/k3s@server:*" \
                 --image ghcr.io/defenseunicorns/uds-core/checkpoint:latest ${ZARF_VAR_K3D_EXTRA_ARGS} \
                 ${ZARF_VAR_CLUSTER_NAME}
             description: "Create the cluster"

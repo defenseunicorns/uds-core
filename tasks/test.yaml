@@ -3,6 +3,9 @@ includes:
   - setup: ./setup.yaml
   - deploy: ./deploy.yaml
   - compliance: https://raw.githubusercontent.com/defenseunicorns/uds-common/v0.13.1/tasks/compliance.yaml
+  - istio: ../src/istio/tasks.yaml
+  - keycloak: ../src/keycloak/tasks.yaml
+  - pepr: ../src/pepr/tasks.yaml
 
 tasks:
   - name: single-package
@@ -66,3 +69,10 @@ tasks:
         with:
           assessment_results: ./compliance/oscal-assessment-results.yaml
           options: -t il4
+
+  - name: slim-dev
+    description: "Run validate for the components contained in the slim dev bundle"
+    actions:
+      - task: istio:validate-slim
+      - task: keycloak:validate
+      - task: pepr:validate

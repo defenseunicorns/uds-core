@@ -48,7 +48,7 @@ jobs:
       - name: Deploy Slim Dev Bundle
         run: uds run slim-dev --no-progress
       - name: Test Slim Dev Bundle
-        run: uds run test-slim-dev --no-progress
+        run: uds run test:slim-dev --no-progress
       - name: Debug Output
         if: ${{ always() }}
         uses: ./.github/actions/debug-output

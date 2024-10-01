@@ -40,7 +40,7 @@ jobs:
         run: |
           uds run -f tasks/deploy.yaml checkpoint-package --no-progress
           npm ci
-          uds run test-slim-dev --no-progress
+          uds run test:slim-dev --no-progress
 
       - name: Debug Output
         if: always()
