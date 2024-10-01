@@ -163,3 +163,6 @@ packages:
             - name: GRAFANA_PG_USER
               description: Grafana postgresql username
               path: postgresql.user
+            - name: GRAFANA_PG_SSL_MODE
+              description: Grafana postgresql SSL mode
+              path: postgresql.ssl_mode

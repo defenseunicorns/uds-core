@@ -15,3 +15,4 @@ variables:
     grafana_pg_database: grafana
     grafana_pg_password: password
     grafana_pg_user: postgres
+    grafana_pg_ssl_mode: disable

@@ -48,7 +48,7 @@ grafana.ini:
     # Automatically redirect to the SSO login page
     auto_login: true
 
-# Upstream Grafana environment values from secret
+# Add environment variables for PostgresQL connection from uds-config chart
 envFromSecret: "uds-grafana-config-postgresql"
 
 service:
