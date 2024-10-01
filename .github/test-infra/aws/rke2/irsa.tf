@@ -137,7 +137,7 @@ resource "random_password" "token" {
 
 module "statestore" {
   source = "./modules/statestore"
-  name   = "${local.cluster_name}-${random_string.ssm.result}"
+  name   = "${local.cluster_name}"
   token  = random_password.token.result
   tags   = local.tags
 }
