@@ -84,6 +84,7 @@ tasks:
   - name: rke2-nodes-ready
     actions:
       #- task: rke2-get-kubeconfig
+      - cmd: sleep 30; uds zarf tools kubectl get nodes --show-labels
       - wait:
           cluster:
             kind: nodes
