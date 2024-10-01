@@ -80,6 +80,7 @@ tasks:
     actions:
       - cmd: chmod +x ./scripts/get-kubeconfig.sh && ./scripts/get-kubeconfig.sh
         dir: .github/test-infra/aws/rke2/
+      - cmd: echo $KUBECONFIG  
 
   - name: rke2-nodes-ready
     actions:
