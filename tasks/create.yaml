@@ -17,7 +17,7 @@ tasks:
       - task: pepr-build
 
       - description: "Create the UDS Core Standard Zarf Package"
-        cmd: "uds zarf package create packages/standard --confirm --output ./build/${K8S_DISTRO} --no-progress --flavor ${FLAVOR}"
+        cmd: "uds zarf package create packages/standard --confirm --output .github/build/${K8S_DISTRO} --no-progress --flavor ${FLAVOR}"
 
   - name: k3d-standard-bundle
     description: "Create the K3d-UDS Core Bundle"
