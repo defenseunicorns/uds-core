@@ -8,93 +8,99 @@ on:
         description: 'true - for snapshot release'
         required: true
         type: boolean
+  pull_request: # TODO: TEMP
+    types: [milestoned, opened, reopened, synchronize]
 
 jobs:
-  publish-uds-core:
-    strategy:
-      matrix:
-        flavor: [upstream, registry1, unicorn]
-    runs-on: "uds-ubuntu-big-boy-8-core"
-    name: Publish packages
+  # publish-uds-core:
+  #   strategy:
+  #     matrix:
+  #       flavor: [upstream, registry1, unicorn]
+  #   runs-on: "uds-ubuntu-big-boy-8-core"
+  #   name: Publish packages
 
-    permissions:
-      contents: read
-      packages: write
-      id-token: write  # This is needed for OIDC federation.
+  #   permissions:
+  #     contents: read
+  #     packages: write
+  #     id-token: write  # This is needed for OIDC federation.
 
-    steps:
-      - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
+  #   steps:
+  #     - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
 
-      - name: Environment setup
-        uses: ./.github/actions/setup
-        with:
-          registry1Username: ${{ secrets.IRON_BANK_ROBOT_USERNAME }}
-          registry1Password: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
-          ghToken: ${{ secrets.GITHUB_TOKEN }}
-          chainguardIdentity: ${{ secrets.CHAINGUARD_IDENTITY }}
+  #     - name: Environment setup
+  #       uses: ./.github/actions/setup
+  #       with:
+  #         registry1Username: ${{ secrets.IRON_BANK_ROBOT_USERNAME }}
+  #         registry1Password: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
+  #         ghToken: ${{ secrets.GITHUB_TOKEN }}
+  #         chainguardIdentity: ${{ secrets.CHAINGUARD_IDENTITY }}
 
-      - name: (Snapshot) Get snapshot version using git commit short sha and date
-        if: ${{ inputs.snapshot }}
-        run: |
-          SHORT_SHA=$(git rev-parse --short HEAD)
-          RELEASE_DATE=$(date +'%Y-%m-%d')
-          echo "SNAPSHOT_VERSION=${RELEASE_DATE}-${SHORT_SHA}" >> $GITHUB_ENV
-          echo "PUBLISH_ARGS=--set VERSION=${RELEASE_DATE}-${SHORT_SHA}" >> $GITHUB_ENV
+  #     - name: (Snapshot) Get snapshot version using git commit short sha and date
+  #       if: ${{ inputs.snapshot }}
+  #       run: |
+  #         SHORT_SHA=$(git rev-parse --short HEAD)
+  #         RELEASE_DATE=$(date +'%Y-%m-%d')
+  #         echo "SNAPSHOT_VERSION=${RELEASE_DATE}-${SHORT_SHA}" >> $GITHUB_ENV
+  #         echo "PUBLISH_ARGS=--set VERSION=${RELEASE_DATE}-${SHORT_SHA}" >> $GITHUB_ENV
 
-      - name: (Snapshot) Set versions to snapshot
-        if: ${{ inputs.snapshot }}
-        run: |
-          yq -ei '.metadata.version=env(SNAPSHOT_VERSION), (.packages[]|select(has("ref"))|select(.name=="core")).ref=env(SNAPSHOT_VERSION)' bundles/k3d-standard/uds-bundle.yaml
-          yq -ei '.metadata.version=env(SNAPSHOT_VERSION), (.packages[]|select(has("ref"))|select(.name=="core-slim-dev")).ref=env(SNAPSHOT_VERSION)' bundles/k3d-slim-dev/uds-bundle.yaml
-          yq -ei '.metadata.version=env(SNAPSHOT_VERSION)' packages/standard/zarf.yaml
-          yq -ei '.metadata.version=env(SNAPSHOT_VERSION)' packages/slim-dev/zarf.yaml
+  #     - name: (Snapshot) Set versions to snapshot
+  #       if: ${{ inputs.snapshot }}
+  #       run: |
+  #         yq -ei '.metadata.version=env(SNAPSHOT_VERSION), (.packages[]|select(has("ref"))|select(.name=="core")).ref=env(SNAPSHOT_VERSION)' bundles/k3d-standard/uds-bundle.yaml
+  #         yq -ei '.metadata.version=env(SNAPSHOT_VERSION), (.packages[]|select(has("ref"))|select(.name=="core-slim-dev")).ref=env(SNAPSHOT_VERSION)' bundles/k3d-slim-dev/uds-bundle.yaml
+  #         yq -ei '.metadata.version=env(SNAPSHOT_VERSION)' packages/standard/zarf.yaml
+  #         yq -ei '.metadata.version=env(SNAPSHOT_VERSION)' packages/slim-dev/zarf.yaml
 
-      - name: Create Packages and Bundles
-        run: |
-          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress --set FLAVOR=${{ matrix.flavor }}
-          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml k3d-standard-bundle --no-progress
-          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml slim-dev-package --no-progress --set FLAVOR=${{ matrix.flavor }}
-          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml k3d-slim-dev-bundle --no-progress
+  #     - name: Create Packages and Bundles
+  #       run: |
+  #         ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress --set FLAVOR=${{ matrix.flavor }}
+  #         ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml k3d-standard-bundle --no-progress
+  #         ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml slim-dev-package --no-progress --set FLAVOR=${{ matrix.flavor }}
+  #         ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml k3d-slim-dev-bundle --no-progress
 
-          if [ "${{ matrix.flavor }}" != "registry1" ]; then
-            ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml standard-package --no-progress --set FLAVOR=${{ matrix.flavor }}
-            ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-standard-bundle --no-progress
-            ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml slim-dev-package --no-progress --set FLAVOR=${{ matrix.flavor }}
-            ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-slim-dev-bundle --no-progress
-          fi
+  #         if [ "${{ matrix.flavor }}" != "registry1" ]; then
+  #           ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml standard-package --no-progress --set FLAVOR=${{ matrix.flavor }}
+  #           ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-standard-bundle --no-progress
+  #           ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml slim-dev-package --no-progress --set FLAVOR=${{ matrix.flavor }}
+  #           ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-slim-dev-bundle --no-progress
+  #         fi
 
-      # Standard Package by default tests full core
-      - name: Test amd64 Bundle
-        if: ${{ !inputs.snapshot }}
-        run: |
-          uds run deploy-standard-bundle --no-progress
-          uds run -f tasks/test.yaml validate-packages --no-progress
+  #     # Standard Package by default tests full core
+  #     - name: Test amd64 Bundle
+  #       if: ${{ !inputs.snapshot }}
+  #       run: |
+  #         uds run deploy-standard-bundle --no-progress
+  #         uds run -f tasks/test.yaml validate-packages --no-progress
 
-      - name: Debug Output
-        if: ${{ always() && !inputs.snapshot }}
-        uses: ./.github/actions/debug-output
+  #     - name: Debug Output
+  #       if: ${{ always() && !inputs.snapshot }}
+  #       uses: ./.github/actions/debug-output
 
-      # Publish package and bundle to destination repository
-      - name: Publish Standard Package
-        run: uds run -f tasks/publish.yaml standard-package --set FLAVOR=${{ matrix.flavor }} --set SNAPSHOT="${{ inputs.snapshot }}" ${PUBLISH_ARGS} --no-progress
+  #     # Publish package and bundle to destination repository
+  #     - name: Publish Standard Package
+  #       run: uds run -f tasks/publish.yaml standard-package --set FLAVOR=${{ matrix.flavor }} --set SNAPSHOT="${{ inputs.snapshot }}" ${PUBLISH_ARGS} --no-progress
 
-      - name: Publish Upstream Flavored Bundles
-        if: ${{ matrix.flavor == 'upstream' }}
-        run: uds run -f tasks/publish.yaml bundles --set SNAPSHOT="${{ inputs.snapshot }}" ${PUBLISH_ARGS} --no-progress
+  #     - name: Publish Upstream Flavored Bundles
+  #       if: ${{ matrix.flavor == 'upstream' }}
+  #       run: uds run -f tasks/publish.yaml bundles --set SNAPSHOT="${{ inputs.snapshot }}" ${PUBLISH_ARGS} --no-progress
 
-      - name: Save logs
-        if: always()
-        uses: ./.github/actions/save-logs
-        with:
-          suffix: -${{ matrix.flavor }}
+  #     - name: Save logs
+  #       if: always()
+  #       uses: ./.github/actions/save-logs
+  #       with:
+  #         suffix: -${{ matrix.flavor }}
+
   publish-uds-core-layers:
     if: ${{ !inputs.snapshot }}
     strategy:
       matrix:
         flavor: [upstream, registry1, unicorn]
-        # maybe handle base as a special case to avoid duplicate building the layer
         layer: [base, identity-authorization]
-    runs-on: "ubuntu-latest"
+        arch: [amd64, arm64]
+        exclude:
+          - flavor: registry1
+            arch: arm64
+    runs-on: ${{ matrix.arch == 'arm64' && 'uds-ubuntu-arm64-4-core' || 'uds-ubuntu-big-boy-4-core' }}
     name: Publish package layers
 
     permissions:
@@ -113,32 +119,15 @@ jobs:
           ghToken: ${{ secrets.GITHUB_TOKEN }}
           chainguardIdentity: ${{ secrets.CHAINGUARD_IDENTITY }}
 
-      - name: Create Package Layers
-        env:
-          UDS_LAYER: ${{ matrix.layer }}
-        run: |
-          ZARF_ARCHITECTURE=amd64 uds run create:single-layer-callable --no-progress --set FLAVOR=${{ matrix.flavor }} --set LAYER=${{ matrix.layer }}
-
-          if [ "${{ matrix.flavor }}" != "registry1" ]; then
-            ZARF_ARCHITECTURE=arm64 uds run create:single-layer-callable --no-progress --set FLAVOR=${{ matrix.flavor }} --set LAYER=${{ matrix.layer }}
-          fi
-
-      # Core package layer test
-      - name: Test amd64 Bundle
-        run: |
-          uds run test:base --set FLAVOR=${{ matrix.flavor }}
-          uds run deploy:single-layer-callable --set LAYER=${{ matrix.layer }}
-          uds run -f packages/${{ matrix.layer }}/tasks.yaml validate --no-progress
+      - name: Test and Publish Core Package Layer
+        run: uds run -f tasks/publish.yaml single-layer --set FLAVOR=${{ matrix.flavor }} --set LAYER=${{ matrix.layer }} --no-progress
 
       - name: Debug Output
         if: ${{ always() && !inputs.snapshot }}
         uses: ./.github/actions/debug-output
 
-      - name: Publish Core Package Layer
-        run: uds run -f tasks/publish.yaml single-layer --set FLAVOR=${{ matrix.flavor }} --set LAYER=${{ matrix.layer }} --no-progress
-
       - name: Save logs
         if: always()
         uses: ./.github/actions/save-logs
         with:
-          suffix: -${{ matrix.layer }}
+          suffix: -${{ matrix.flavor }}-${{ matrix.layer }}
