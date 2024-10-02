@@ -99,7 +99,7 @@ tasks:
           export KUBECONFIG=./rke2-config
           # wait for at least 3 nodes
           while true; do if [ $(uds zarf tools kubectl get nodes -o jsonpath='{range .items[*]}{.status.conditions[-1].type}={.status.conditions[-1].status}{"\n"}{end}' | egrep -i '^ready.*true' | wc -l) -lt 3 ]; then
-            echo "Waiting for at least 3 nodes to be ready..." ; sleep 5; else; break; fi; done
+            echo "Waiting for at least 3 nodes to be ready..."; sleep 5; else; break; fi; done
           # wait for cluster components
           while true; do if [ $(uds zarf tools kubectl get po -A --no-headers=true | egrep -v 'Running|Completed' | wc -l) -gt 0 ]; then
             echo "Waiting for cluster components to be ready..."; sleep 5; else; echo "Cluster is ready"
