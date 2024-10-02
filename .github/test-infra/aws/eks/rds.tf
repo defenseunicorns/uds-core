@@ -17,7 +17,7 @@ resource "aws_secretsmanager_secret_version" "db_secret_value" {
 
 module "db" {
   source  = "terraform-aws-modules/rds/aws"
-  version = "6.1.1"
+  version = "6.9.0"
 
   identifier                     = "${var.db_name}-db"
   instance_use_identifier_prefix = true
