@@ -177,7 +177,7 @@ tasks:
       - cmd: tofu output -raw velero_irsa_role_arn
         setVariables:
           - name: VELERO_S3_ROLE_ARN
-        dir: .github/test-infra/buckets-iac
+        dir: .github/test-infra/aws/${K8S_DISTRO}
       # - cmd: tofu output -raw grafana_pg_host
       #   setVariables:
       #     - name: GRAFANA_PG_HOST
