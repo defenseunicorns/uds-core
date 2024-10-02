@@ -75,7 +75,9 @@ export async function packageReconciler(pkg: UDSPackage) {
       authserviceClients = await authservice(pkg, ssoClients);
     } else if (pkg.spec?.sso) {
       log.error("SSO is not deployed, but the package has SSO configuration");
-      throw new Error("Identity & Authorization is not deployed, but the package has SSO configuration");
+      throw new Error(
+        "Identity & Authorization is not deployed, but the package has SSO configuration",
+      );
     }
 
     // Create the VirtualService and ServiceEntry for each exposed service
