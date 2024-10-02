@@ -20,16 +20,16 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # nightly-testing-eks:
-  #   name: Test Core on EKS
-  #   uses: ./.github/workflows/test-eks.yaml
-  #   strategy:
-  #     matrix:
-  #       flavor: [upstream, registry1, unicorn]
-  #     fail-fast: false
-  #   with:
-  #     flavor: ${{ matrix.flavor }}
-  #   secrets: inherit
+  nightly-testing-eks:
+    name: Test Core on EKS
+    uses: ./.github/workflows/test-eks.yaml
+    strategy:
+      matrix:
+        flavor: [upstream, registry1, unicorn]
+      fail-fast: false
+    with:
+      flavor: ${{ matrix.flavor }}
+    secrets: inherit
   nightly-testing-rke2:  
     name: Test Core on RKE2
     uses: ./.github/workflows/test-rke2.yaml

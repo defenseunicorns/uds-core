@@ -84,14 +84,6 @@ data "aws_subnets" "subnets" {
   }
 }
 
-data "aws_partition" "current" {}
-
-data "aws_caller_identity" "current" {}
-
 locals {
   vpc_id = data.aws_vpc.vpc.id
-}
-
-resource "random_id" "unique_id" {
-  byte_length = 4
 }
