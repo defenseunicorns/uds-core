@@ -14,19 +14,19 @@ packages:
       zarf-registry:
         docker-registry:
           variables:
-          - path: affinity.custom
-            name: REGISTRY_AFFINITY_CUSTOM_UDS
-          - path: persistence.accessMode
-            name: REGISTRY_PVC_ACCESS_MODE
-            default: ReadWriteMany
+            - path: affinity.custom
+              name: REGISTRY_AFFINITY_CUSTOM_UDS
+            - path: persistence.accessMode
+              name: REGISTRY_PVC_ACCESS_MODE
+              default: ReadWriteMany
       zarf-seed-registry:
         docker-registry:
           variables:
-          - path: affinity.custom
-            name: REGISTRY_AFFINITY_CUSTOM_UDS
-          - path: persistence.accessMode
-            name: REGISTRY_PVC_ACCESS_MODE
-            default: ReadWriteMany
+            - path: affinity.custom
+              name: REGISTRY_AFFINITY_CUSTOM_UDS
+            - path: persistence.accessMode
+              name: REGISTRY_PVC_ACCESS_MODE
+              default: ReadWriteMany
 
   - name: core
     path: ../../build/rke2
@@ -55,7 +55,7 @@ packages:
             - path: loki.storage.s3.accessKeyId
               value: ""
             - path: global.dnsService
-              value: rke2-coredns-rke2-coredns              
+              value: rke2-coredns-rke2-coredns
           variables:
             - name: LOKI_CHUNKS_BUCKET
               description: "The object storage bucket for Loki chunks"

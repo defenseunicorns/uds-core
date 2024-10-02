@@ -12,4 +12,3 @@ kind: L2Advertisement
 metadata:
   name: empty
   namespace: kube-system
-

@@ -7,9 +7,9 @@ on:
     paths:
       - tasks/iac.yaml
       - .github/workflows/test-eks.yaml
-      - .github/workflows/test-rke2.yaml      
+      - .github/workflows/test-rke2.yaml
       - .github/bundles/eks/*
-      - .github/bundles/rke2/*      
+      - .github/bundles/rke2/*
       - .github/test-infra/aws/eks/*
       - .github/test-infra/aws/rke2/*
 
@@ -29,7 +29,7 @@ jobs:
     with:
       flavor: ${{ matrix.flavor }}
     secrets: inherit
-  nightly-testing-rke2:  
+  nightly-testing-rke2:
     name: Test Core on RKE2
     uses: ./.github/workflows/test-rke2.yaml
     strategy:

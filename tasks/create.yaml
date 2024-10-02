@@ -4,7 +4,7 @@ includes:
 variables:
   - name: FLAVOR
     default: upstream
-  - name: K8S_DISTRO  
+  - name: K8S_DISTRO
 
   - name: REGISTRY1_PEPR_IMAGE
     # renovate: datasource=docker depName=registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller versioning=semver
