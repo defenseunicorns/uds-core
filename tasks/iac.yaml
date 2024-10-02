@@ -102,7 +102,7 @@ tasks:
             echo "Cluster is ready"
           break; fi
           done
-      - cmd: uds zarf tools kubectl apply -f ./metallb.yaml
+      - cmd: uds zarf tools kubectl --kubeconfig=$KUBECONFIG apply ---f ./metallb.yaml
         dir: .github/test-infra/aws/rke2/
         maxTotalSeconds: 600
 
