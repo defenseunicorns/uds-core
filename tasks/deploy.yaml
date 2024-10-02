@@ -53,12 +53,8 @@ tasks:
 
   - name: latest-slim-bundle-release
     actions:
-      - description: "Get latest tag version from OCI"
-        cmd: uds zarf tools registry ls ghcr.io/defenseunicorns/packages/uds/bundles/k3d-core-slim-dev | sort -V | tail -1
-        setVariables:
-          - name: LATEST_VERSION
       - description: "Deploy the latest UDS Core package release"
-        cmd: uds deploy oci://ghcr.io/defenseunicorns/packages/uds/bundles/k3d-core-slim-dev:${LATEST_VERSION} --set INSECURE_ADMIN_PASSWORD_GENERATION=true --confirm --no-progress
+        cmd: uds deploy oci://ghcr.io/defenseunicorns/packages/uds/bundles/k3d-core-slim-dev:latest --set INSECURE_ADMIN_PASSWORD_GENERATION=true --confirm --no-progress
 
   - name: standard-package
     actions:

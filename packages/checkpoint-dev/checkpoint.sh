@@ -61,14 +61,13 @@ echo "Committing container $CONTAINER_ID to image $IMAGE_NAME:latest..."
 docker commit -p "$CONTAINER_ID" "$IMAGE_NAME"
 
 echo "Saving image to ${DATA_DIR}/uds-k3d-checkpoint-latest.tar..."
-docker save -o "${DATA_DIR}/uds-k3d-checkpoint-latest.tar" "$IMAGE_NAME"
+sudo docker save -o "${DATA_DIR}/uds-k3d-checkpoint-latest.tar" "$IMAGE_NAME"
 
 echo "Container image saved to ${DATA_DIR}/uds-k3d-checkpoint-latest.tar"
 
 # Step 6: Create a tarball from the data contents
 echo "Creating a final tarball to include in the package"
 sudo tar --blocking-factor=64 -cpf uds-checkpoint.tar -C "$DATA_DIR" .
-sudo chown -R $(id -u):$(id -g) "$(pwd)/uds-checkpoint.tar"
 
 echo "Successfully checkpointed the cluster!"
 
