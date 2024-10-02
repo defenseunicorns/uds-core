@@ -12,7 +12,6 @@ on:
       - .github/bundles/rke2/*      
       - .github/test-infra/aws/eks/*
       - .github/test-infra/aws/rke2/*
-      - .github/test-infra/rds-iac/*
 
 # Abort prior jobs in the same workflow / PR
 concurrency:

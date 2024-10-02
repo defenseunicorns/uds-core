@@ -134,8 +134,6 @@ tasks:
     actions:
       - cmd: tofu destroy -auto-approve
         dir: .github/test-infra/aws/${K8S_DISTRO}
-      # - cmd: tofu destroy -auto-approve
-      #   dir: .github/test-infra/rds-iac
 
   - name: apply-tofu
     actions:
@@ -152,19 +150,6 @@ tasks:
         dir: .github/test-infra/aws/${K8S_DISTRO}
       - cmd: tofu apply -auto-approve
         dir: .github/test-infra/aws/${K8S_DISTRO}
-      # - cmd: echo ${STATE_KEY} | sed 's/\.tfstate/-rds.tfstate/g'
-      #   setVariables:
-      #     - name: RDS_STATE_KEY
-      #   dir: .github/test-infra/rds-iac
-      # - cmd: |
-      #     tofu init -force-copy \
-      #       -backend-config="bucket=${STATE_BUCKET_NAME}" \
-      #       -backend-config="key=${RDS_STATE_KEY}" \
-      #       -backend-config="region=${REGION}" \
-      #       -backend-config="dynamodb_table=${STATE_DYNAMODB_TABLE_NAME}"
-      #   dir: .github/test-infra/rds-iac
-      # - cmd: tofu apply -auto-approve
-      #   dir: .github/test-infra/rds-iac
 
   - name: tofu-outputs
     actions:
