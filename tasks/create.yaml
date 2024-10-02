@@ -20,14 +20,6 @@ tasks:
       - description: "Create the UDS Core Standard Zarf Package"
         cmd: "uds zarf package create packages/standard --confirm --no-progress --flavor ${FLAVOR}"
 
-  - name: core-base
-    description: "Create the UDS Core Base Package"
-    actions:
-      - task: pepr-build
-
-      - description: "Create the UDS Core Standard Zarf Package"
-        cmd: "uds run create:single-layer --set FLAVOR=${FLAVOR} --set=layer=base"
-
   - name: k3d-standard-bundle
     description: "Create the K3d-UDS Core Bundle"
     actions:
@@ -53,6 +45,8 @@ tasks:
         default: base
         description: The UDS Core layer to build
     actions:
+      - task: pepr-build
+        if: ${{ eq .inputs.layer "base"}}
       - cmd: uds zarf package create packages/${{ index .inputs "layer" }} --confirm --no-progress --flavor ${FLAVOR}
 
   - name: pepr-build

@@ -27,7 +27,7 @@ tasks:
     description: "Build and test a single layer, must set UDS_LAYER environment variable"
     actions:
       - task: create:single-layer
-        with: 
+        with:
           layer: ${LAYER}
       - task: deploy:single-layer
         with:

@@ -130,4 +130,4 @@ jobs:
         if: always()
         uses: ./.github/actions/save-logs
         with:
-          suffix: -${{ matrix.flavor }}-${{ matrix.layer }}
+          suffix: -${{ matrix.flavor }}-${{ matrix.layer }}-${{ matrix.arch }}
