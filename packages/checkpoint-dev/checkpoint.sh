@@ -67,7 +67,7 @@ echo "Container image saved to ${DATA_DIR}/uds-k3d-checkpoint-latest.tar"
 
 # Step 6: Create a tarball from the data contents
 echo "Creating a final tarball to include in the package"
-sudo tar --blocking-factor=64 -cpf uds-checkpoint.tar "$DATA_DIR"
+sudo tar --blocking-factor=64 -cpf uds-checkpoint.tar -C "$DATA_DIR" .
 sudo chown -R $(id -u):$(id -g) "$(pwd)/uds-checkpoint.tar"
 
 echo "Successfully checkpointed the cluster!"
