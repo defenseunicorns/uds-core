@@ -136,8 +136,8 @@ tasks:
             -backend-config="region=${REGION}" \
             -backend-config="dynamodb_table=${STATE_DYNAMODB_TABLE_NAME}"
         dir: .github/test-infra/aws/${K8S_DISTRO}
-      # - cmd: tofu apply -auto-approve
-      #   dir: .github/test-infra/buckets-iac
+      - cmd: tofu apply -auto-approve
+        dir: .github/test-infra/aws/${K8S_DISTRO}
       # - cmd: echo ${STATE_KEY} | sed 's/\.tfstate/-rds.tfstate/g'
       #   setVariables:
       #     - name: RDS_STATE_KEY
