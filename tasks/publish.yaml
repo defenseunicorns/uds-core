@@ -64,4 +64,4 @@ tasks:
         if: ${{ ne .variables.LAYER "base" }}
       - task: utils:determine-repo
       - description: "Publish build of layer"
-        cmd: echo "uds zarf package publish build/zarf-package-core-${LAYER}-${UDS_ARCH}-${VERSION}.tar.zst oci://${TARGET_REPO}"
+        cmd: uds zarf package publish build/zarf-package-core-${LAYER}-${UDS_ARCH}-${VERSION}.tar.zst oci://${TARGET_REPO}

@@ -6,16 +6,6 @@ includes:
   - base-layer: ../packages/base/tasks.yaml
 
 tasks:
-  - name: single-package
-    description: "Build and test a single package, must set UDS_PKG environment variable"
-    actions:
-      - task: create:single-package
-      - task: setup:k3d-test-cluster
-      - task: deploy:single-package
-
-      - description: "Validate the package"
-        cmd: uds run -f src/${UDS_PKG}/tasks.yaml validate --no-progress
-
   - name: base
     description: "Build and test the base layer"
     actions:
