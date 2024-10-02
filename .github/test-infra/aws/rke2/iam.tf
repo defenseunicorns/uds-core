@@ -61,6 +61,7 @@ data "aws_iam_policy_document" "aws_ccm" {
     resources = ["*"]
     actions = [
       "ec2:DescribeInstances",
+      "ec2:DescribeSubnets",
       "iam:CreateServiceLinkedRole",
       "kms:DescribeKey",
     ]
