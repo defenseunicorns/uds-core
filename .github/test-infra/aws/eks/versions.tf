@@ -9,7 +9,7 @@ provider "aws" {
 }
 terraform {
   required_version = ">= 1.8.0"
-  backend "local" {
+  backend "s3" {
   }
   required_providers {
     aws = {

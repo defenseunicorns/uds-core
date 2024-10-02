@@ -44,14 +44,17 @@ module "irsa" {
   for_each                 = { for k, v in local.bucket_configurations : k => merge(v, module.generate_kms[k]) }
   source                   = "./irsa"
   cluster_name             = var.cluster_name
+  name                     = each.value.name
   environment              = var.environment
   resource_prefix          = "${each.value.name}-"
   use_permissions_boundary = var.use_permissions_boundary
   permissions_boundary     = var.permissions_boundary
-  serviceaccount_name      = each.value.service_account
+  bucket_service_account   = each.value.service_account
+  bucket_name              = each.value.bucket_name
   namespace                = each.value.namespace
-  bucket_configuration     = { (each.key) = (each.value) } #pass this bucket_configuration as a map
-  oidc_bucket_attributes   = var.oidc_bucket_attributes
+  kms_key_arn              = each.value.kms_key_arn
+
+  oidc_bucket_attributes = var.oidc_bucket_attributes
 
   depends_on = [
     module.s3

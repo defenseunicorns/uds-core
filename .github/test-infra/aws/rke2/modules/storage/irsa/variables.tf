@@ -3,15 +3,25 @@ variable "cluster_name" {
   type        = string
 }
 
-variable "bucket_configuration" {
-  description = "A map of objects that determines necessary mappings for k8s resources to IRSA roles"
-  type = map(object({
-    name            = string
-    bucket_name     = string
-    service_account = string
-    namespace       = string
-    kms_key_arn     = string
-  }))
+variable "bucket_service_account" {
+  description = "Service account used by the workload"
+  type        = string
+}
+
+variable "name" {
+  description = "Name of the configuration"
+}
+
+variable "bucket_name" {
+  description = "Name of the s3 bucket"
+}
+
+variable "namespace" {
+  description = "Namespace that the service account is deployed to"
+}
+
+variable "kms_key_arn" {
+  description = "ARN of the encryption key used for the s3 bucket"
 }
 
 variable "permissions_boundary" {
@@ -25,16 +35,6 @@ variable "use_permissions_boundary" {
 
 variable "environment" {
   type = string
-}
-
-variable "namespace" {
-  description = "Namespace for the IAM S3 Bucket Role"
-  type        = string
-}
-
-variable "serviceaccount_name" {
-  description = "List of service accounts"
-  type        = string
 }
 
 variable "resource_prefix" {
