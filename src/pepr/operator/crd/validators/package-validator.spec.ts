@@ -273,6 +273,38 @@ describe("Test validation of Exemption CRs", () => {
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
   });
 
+  it("denies public clients using the service accounts roles", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [],
+      [
+        {
+          publicClient: true,
+          serviceAccountsEnabled: true,
+        },
+      ],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+  });
+
+  it("denies using standard flow with service accounts roles", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [],
+      [
+        {
+          standardFlowEnabled: true,
+          serviceAccountsEnabled: true,
+        },
+      ],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+  });
+
   it("denies public device flow clients using a secret", async () => {
     const mockReq = makeMockReq(
       {},

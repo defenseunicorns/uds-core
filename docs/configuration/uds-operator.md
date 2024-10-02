@@ -207,6 +207,25 @@ spec:
 
 This configuration does not create a secret in the cluster and instead tells the UDS Operator to create a public client (one that requires no auth secret) that enables the `oauth2.device.authorization.grant.enabled` flow and disables the standard redirect auth flow.  Because this creates a public client configuration that deviates from this is limited - if your application requires both the Device Authorization Grant and the standard flow this is currently not supported without creating two separate clients.
 
+### Creating a UDS Package with a Service Account Roles client
+
+Some applications may need to access resources / obtain OAuth tokens on behalf of *themselves* vice users.  This is commonly used in machine-to-machine authentication for automated processes.  This type of grant in OAuth 2.0 is known as the [Client Credentials Grant](https://oauth.net/2/grant-types/client-credentials/) and is supported in a UDS Package with the following configuration:
+
+```yaml
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: client-cred
+  namespace: argo
+spec:
+  sso:
+    - name: api-client-test
+      clientId: test
+      standardFlowEnabled: false
+      serviceAccountsEnabled: true
+```
+Setting `serviceAccountsEnabled` will require `publicClient` to be set to `false` and disables standard flow for this client.  Setting a client that requires standard flow and service account roles is not currently supported without creating two separate clients.
+
 ### SSO Client Attribute Validation
 
 The SSO spec supports a subset of the Keycloak attributes for clients, but does not support all of them. The current supported attributes are:

@@ -139,6 +139,12 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
         `The client ID "${client.clientId}" must specify redirectUris if standardFlowEnabled is turned on (it is enabled by default)`,
       );
     }
+    // If serviceAccountsEnabled is true, do not allow standard flow
+    if (client.serviceAccountsEnabled && client.standardFlowEnabled) {
+      return req.Deny(
+        `The client ID "${client.clientId}" cannot support standard flow or authservice if using service accounts`,
+      );
+    }
     // If this is a public client ensure that it only sets itself up as an OAuth Device Flow client
     if (
       client.publicClient &&

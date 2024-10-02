@@ -635,6 +635,10 @@ export interface Sso {
    */
   standardFlowEnabled?: boolean;
   /**
+   * Enables the client credentials grant based authentication via OpenID Connect protocol.
+   */
+  serviceAccountsEnabled?: boolean;
+  /**
    * Allowed CORS origins. To permit all origins of Valid Redirect URIs, add '+'. This does
    * not include the '*' wildcard though. To permit all origins, explicitly add '*'.
    */
