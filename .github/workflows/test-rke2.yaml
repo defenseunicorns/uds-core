@@ -71,7 +71,7 @@ jobs:
         timeout-minutes: 20
 
       - name: Get Kubeconfig
-        run: uds run -f tasks/iac.yaml rke2-get-kubeconfig --no-progress -l debug
+        run: uds run -f tasks/iac.yaml rke2-get-kubeconfig --no-progress
         timeout-minutes: 20
 
       - name: Wait for RKE2 Cluster
@@ -84,7 +84,7 @@ jobs:
         env:
           KUBECONFIG: ".github/test-infra/aws/rke2/rke2-config" 
           UDS_CONFIG: .github/bundles/rke2/uds-config.yaml
-        run: uds deploy .github/bundles/uds-bundle-uds-core-rke2-nightly-*.tar.zst --confirm
+        run: uds deploy .github/bundles/rke2/uds-bundle-uds-core-rke2-nightly-*.tar.zst --confirm
         timeout-minutes: 20
 
       - name: Remove UDS Core
