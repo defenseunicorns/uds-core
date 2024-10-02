@@ -411,7 +411,7 @@ describe("Test validation of Exemption CRs", () => {
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
   });
 
-  it("allows public clients that have the device flow attribute with standard flow disabled", async () => {
+  it("allows public clients that have the device flow attribute with standard flow disabled and not a service account", async () => {
     const mockReq = makeMockReq(
       {},
       [],
@@ -421,6 +421,7 @@ describe("Test validation of Exemption CRs", () => {
           publicClient: true,
           attributes: { "oauth2.device.authorization.grant.enabled": "true" },
           standardFlowEnabled: false,
+          serviceAccountsEnabled: false,
         },
       ],
     );
