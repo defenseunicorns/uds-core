@@ -18,3 +18,4 @@ extract-terraform.sh
 **/.terraform*
 cluster-config.yaml
 **.tfstate
+**.backup

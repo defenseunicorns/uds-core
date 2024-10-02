@@ -36,7 +36,42 @@ packages:
 
 ### Grafana
 
-To scale Grafana for high availability, its database must be externalized (see [Grafana's database configuration docs](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#database)). UDS Core has not yet done extensive testing on this setup. You can also override the `resources` helm value to customize Grafana pods' resource limits and requests (using the component and chart name of `grafana`).
+Grafana can be configured in a high availability (HA) setup by utilizing an external PostgreSQL database. See the example values below for configuring Grafana in HA mode:
+
+```yaml
+# Example HA Bundle Configuration
+packages:
+  - name: core
+    repository: oci://ghcr.io/defenseunicorns/packages/uds/core
+    ref: x.x.x
+    overrides:
+      grafana:
+        grafana:
+          variables:
+            - name: GRAFANA_HA
+              description: Enable HA Grafana
+              path: autoscaling.enabled
+        uds-grafana-config:
+          variables:
+            - name: GRAFANA_PG_HOST
+              description: Grafana postgresql host
+              path: postgresql.host
+            - name: GRAFANA_PG_PORT
+              description: Grafana postgresql port
+              path: postgresql.port
+            - name: GRAFANA_PG_PORT
+              description: Grafana postgresql port
+              path: postgresql.port
+            - name: GRAFANA_PG_DATABASE
+              description: Grafana postgresql database
+              path: postgresql.database
+            - name: GRAFANA_PG_PASSWORD
+              description: Grafana postgresql password
+              path: postgresql.password
+            - name: GRAFANA_PG_USER
+              description: Grafana postgresql username
+              path: postgresql.user
+```
 
 ## Logging
 
