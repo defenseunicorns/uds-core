@@ -117,19 +117,17 @@ jobs:
         env:
           UDS_LAYER: ${{ matrix.layer }}
         run: |
-          ZARF_ARCHITECTURE=amd64 uds run create:single-layer --no-progress --set FLAVOR=${{ matrix.flavor }}
+          ZARF_ARCHITECTURE=amd64 uds run create:single-layer-callable --no-progress --set FLAVOR=${{ matrix.flavor }} --set LAYER=${{ matrix.layer }}
 
           if [ "${{ matrix.flavor }}" != "registry1" ]; then
-            ZARF_ARCHITECTURE=arm64 uds run create:single-layer --no-progress --set FLAVOR=${{ matrix.flavor }}
+            ZARF_ARCHITECTURE=arm64 uds run create:single-layer-callable --no-progress --set FLAVOR=${{ matrix.flavor }} --set LAYER=${{ matrix.layer }}
           fi
 
       # Core package layer test
       - name: Test amd64 Bundle
-        env:
-          UDS_LAYER: ${{ matrix.layer }}
         run: |
           uds run test:base --set FLAVOR=${{ matrix.flavor }}
-          uds run deploy:single-layer
+          uds run deploy:single-layer-callable --set LAYER=${{ matrix.layer }}
           uds run -f packages/${{ matrix.layer }}/tasks.yaml validate --no-progress
 
       - name: Debug Output
@@ -137,9 +135,7 @@ jobs:
         uses: ./.github/actions/debug-output
 
       - name: Publish Core Package Layer
-        env:
-          UDS_LAYER: ${{ matrix.layer }}
-        run: uds run -f tasks/publish.yaml single-layer --set FLAVOR=${{ matrix.flavor }} --no-progress
+        run: uds run -f tasks/publish.yaml single-layer --set FLAVOR=${{ matrix.flavor }} --set LAYER=${{ matrix.layer }} --no-progress
 
       - name: Save logs
         if: always()

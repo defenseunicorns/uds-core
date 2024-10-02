@@ -40,22 +40,12 @@ tasks:
       - description: "Create the slim dev bundle (Base and Identity)"
         cmd: "uds create bundles/k3d-slim-dev --confirm --no-progress --architecture=${ZARF_ARCHITECTURE}"
 
-  - name: single-package
-    description: "Create a single Zarf Package, must set UDS_PKG environment variable"
+  # This task is a wrapper to support --set LAYER=identity-authorization
+  - name: single-layer-callable
     actions:
-      - task: pepr-build
-
-      - description: "Create the Pepr Zarf Package, if it exists"
-        cmd: "uds zarf package create src/pepr --confirm --no-progress"
-
-      - description: "Create the requested Zarf Package (must set UDS_PKG environment variable)"
-        cmd: "uds zarf package create src/${UDS_PKG} --confirm --no-progress --flavor ${FLAVOR}"
-
-      - description: "Create the Istio Zarf Package, if UDS_PKG != istio"
-        cmd: |
-          if [ "${UDS_PKG}" != "istio" ]; then
-            uds zarf package create src/istio --confirm --no-progress --flavor ${FLAVOR}
-          fi
+      - task: single-layer
+        with:
+          layer: $LAYER
 
   - name: single-layer
     inputs:
