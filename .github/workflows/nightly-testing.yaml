@@ -9,6 +9,7 @@ on:
       - .github/workflows/test-eks.yaml
       - .github/bundles/*
       - .github/test-infra/buckets-iac/*
+      - .github/test-infra/rds-iac/*
 
 # Abort prior jobs in the same workflow / PR
 concurrency:

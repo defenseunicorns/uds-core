@@ -16,3 +16,9 @@ variables:
     velero_bucket_provider_url: ""
     velero_bucket_credential_name: ""
     velero_bucket_credential_key: ""
+    grafana_ha: true
+    grafana_pg_host: ${ZARF_VAR_GRAFANA_PG_HOST}
+    grafana_pg_port: ${ZARF_VAR_GRAFANA_PG_PORT}
+    grafana_pg_database: ${ZARF_VAR_GRAFANA_PG_DATABASE}
+    grafana_pg_password: ${ZARF_VAR_GRAFANA_PG_PASSWORD}
+    grafana_pg_user: ${ZARF_VAR_GRAFANA_PG_USER}
