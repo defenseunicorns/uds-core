@@ -106,7 +106,7 @@ resource "random_string" "ssm" {
   length  = 4
   special = false
   upper   = false
-  numeric  = false
+  numeric = false
 }
 
 resource "aws_secretsmanager_secret" "rke2_kms_key_arn" {

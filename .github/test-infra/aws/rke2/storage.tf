@@ -20,7 +20,7 @@ locals {
 module "storage" {
   # this module assumes by default that you are only setting up external storage for velero and loki. modify the the irsa_buckets local above to add more. creates s3 buckets and irsa roles
   source                   = "./modules/storage"
-  cluster_name             = "${local.cluster_name}"
+  cluster_name             = local.cluster_name
   permissions_boundary     = local.iam_role_permissions_boundary
   use_permissions_boundary = var.use_permissions_boundary
   environment              = var.environment

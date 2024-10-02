@@ -9,41 +9,41 @@ output "private_key" {
 }
 
 output "bootstrap_ip" {
-  sensitive = true
+  sensitive   = true
   value       = aws_instance.rke2_ci_bootstrap_node.public_ip
   description = "Public IP address of the bootstrap control plane node."
 }
 
 output "node_user" {
-  sensitive = true
+  sensitive   = true
   value       = var.default_user
   description = "User to use when connecting to a cluster node."
 }
 
 output "cluster_hostname" {
-  sensitive = true
+  sensitive   = true
   value       = var.cluster_hostname
   description = "Hostname used to connect to cluster."
 }
 
 output "loki_s3_bucket" {
   sensitive = true
-  value = module.storage.s3_buckets["loki"].bucket_name
+  value     = module.storage.s3_buckets["loki"].bucket_name
 }
 
 output "velero_s3_bucket" {
   sensitive = true
-  value = module.storage.s3_buckets["velero"].bucket_name
+  value     = module.storage.s3_buckets["velero"].bucket_name
 }
 
 output "loki_irsa_role_arn" {
   sensitive = true
-  value = module.storage.irsa["loki"].bucket_role.arn
+  value     = module.storage.irsa["loki"].bucket_role.arn
 }
 
 output "velero_irsa_role_arn" {
   sensitive = true
-  value = module.storage.irsa["velero"].bucket_role.arn
+  value     = module.storage.irsa["velero"].bucket_role.arn
 }
 
 output "grafana_ha" {

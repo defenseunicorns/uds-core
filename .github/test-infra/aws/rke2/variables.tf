@@ -90,7 +90,6 @@ variable "permissions_boundary_name" {
   description = "The name of the permissions boundary for IAM resources.  This will be used for tagging and to build out the ARN."
 }
 
-
 variable "recovery_window" {
   default = 7
   type    = number
