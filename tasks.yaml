@@ -2,8 +2,6 @@ variables:
   - name: FLAVOR
     default: upstream
 
-  - name: PKG
-
   - name: LAYER
 
 includes:
@@ -24,9 +22,8 @@ tasks:
     actions:
       - description: "Create the dev cluster"
         task: setup:create-k3d-cluster
-
       - description: "Deploy the Istio source package with Zarf Dev"
-        cmd: "uds zarf dev deploy src/istio --flavor ${FLAVOR} --no-progress"
+        cmd: "uds zarf dev deploy src/istio --flavor upstream --no-progress --deploy-set ISTIO_ZARF_REGISTRY=docker.io"
 
       # Note, this abuses the --flavor flag to only install the CRDs from this package - the "crds-only" flavor is not an explicit flavor of the package
       - description: "Deploy the Prometheus-Stack source package with Zarf Dev to only install the CRDs"
@@ -65,16 +62,13 @@ tasks:
       - description: "Deploy Pepr"
         cmd: "npx pepr deploy --confirm"
 
-      - description: "Deploy Keycloak"
-        cmd: "uds run dev-deploy --set PKG=keycloak"
-
-      - description: "Deploy Authservice"
-        cmd: "uds run dev-deploy --set PKG=authservice"
+      - description: "Deploy Keycloak + Authservice"
+        cmd: "uds run dev-deploy --set LAYER=identity-authorization --no-progress"
 
   - name: dev-deploy
-    description: "Deploy the given source package with Zarf Dev"
+    description: "Deploy the given core layer with Zarf Dev"
     actions:
-      - cmd: "uds zarf dev deploy src/${PKG} --flavor ${FLAVOR}"
+      - cmd: "uds zarf dev deploy packages/${LAYER} --flavor ${FLAVOR} --no-progress"
 
   - name: setup-cluster
     description: "Create a k3d Cluster and Initialize with Zarf"
@@ -87,7 +81,7 @@ tasks:
       - task: create:standard-package
 
   - name: test-single-layer
-    description: "Deploy Pepr Module and a Zarf Package using UDS_PKG environment variable"
+    description: "Deploy Pepr Module and a Zarf Package using LAYER variable"
     actions:
       - task: test:base
       - task: test:single-layer

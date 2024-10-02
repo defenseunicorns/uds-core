@@ -4,6 +4,11 @@ metadata:
   description: "UDS Core Istio Common"
   url: https://istio.io/latest/
 
+variables:
+  - name: ISTIO_ZARF_REGISTRY
+    description: Allow registry override for dev deploy, workaround for https://github.com/zarf-dev/zarf/issues/2713
+    default: "###ZARF_REGISTRY###"
+
 components:
   - name: istio-controlplane
     required: true
