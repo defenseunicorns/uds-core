@@ -1,6 +1,9 @@
 name: Checkpoint UDS Core
 
 on:
+  pull_request: # TODO: TEMP @WSTARR
+    # milestoned is added here as a workaround for release-please not triggering PR workflows (PRs should be added to a milestone to trigger the workflow).
+    types: [milestoned, opened, reopened, synchronize]
   # triggered by tag-and-release.yaml
   workflow_call:
 
@@ -46,11 +49,17 @@ jobs:
         if: always()
         uses: ./.github/actions/debug-output
 
-      - name: Publish Checkpoint Package
-        run: uds run -f tasks/publish.yaml checkpoint-package --no-progress
+      # - name: Publish Checkpoint Package
+      #   run: uds run -f tasks/publish.yaml checkpoint-package --no-progress
 
       - name: Save logs
         if: always()
         uses: ./.github/actions/save-logs
         with:
           suffix: -${{ matrix.architecture }}
+
+      - uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
+        with:
+          name: checkpoint-pkg-${{ matrix.architecture }}
+          path: |
+            build/zarf-package-k3d-core-slim-dev-${{ matrix.architecture }}-0.28.0.tar.zst
