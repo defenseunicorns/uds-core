@@ -31,7 +31,7 @@ packages:
     repository: ghcr.io/zarf-dev/packages/init
     ref: v0.40.1
 
-  - name: core-slim-dev
+  - name: core-base
     path: ../../build/
     # x-release-please-start-version
     ref: 0.28.0
@@ -66,6 +66,13 @@ packages:
             - name: TENANT_SERVICE_PORTS
               description: "The ports that are exposed from the tenant gateway LoadBalancer (useful for non-HTTP(S) traffic)"
               path: "service.ports"
+
+  - name: core-identity-authorization
+    path: ../../build/
+    # x-release-please-start-version
+    ref: 0.28.0
+    # x-release-please-end
+    overrides:
       keycloak:
         keycloak:
           variables:
