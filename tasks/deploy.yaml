@@ -41,6 +41,12 @@ tasks:
       - description: "Deploy the requested Zarf Package (must set UDS_PKG environment variable)"
         cmd: uds zarf package deploy build/zarf-package-uds-core-${UDS_PKG}-${UDS_ARCH}.tar.zst --confirm --no-progress --components '*'
 
+  - name: single-layer
+    description: "Deploy a single UDS Core layer, must set UDS_LAYER environment variable"
+    actions:
+      - description: "Deploy a single UDS Core Layer (must set UDS_LAYER environment variable)"
+        cmd: uds zarf package deploy build/zarf-package-core-${UDS_LAYER}-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress --components '*'
+
   - name: latest-package-release
     actions:
       - task: utils:determine-repo
@@ -55,3 +61,8 @@ tasks:
     actions:
       - description: "Deploy the standard UDS Core zarf package"
         cmd: uds zarf package deploy build/zarf-package-core-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress --components '*'
+
+  - name: core-backup-restore
+    actions:
+      - description: "Deploy the standard UDS Core (Backup and Restore) zarf package"
+        cmd: uds zarf package deploy build/zarf-package-core-backup-restore-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress --components '*'

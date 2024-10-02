@@ -18,6 +18,13 @@ tasks:
       - description: "Create the UDS Core Standard Zarf Package"
         cmd: "uds zarf package create packages/standard --confirm --no-progress --flavor ${FLAVOR}"
 
+  - name: core-backup-restore
+    description: "Create the UDS Core Backup and Restore Package"
+    actions:
+      - task: pepr-build
+      - description: "Create the UDS Core Backup and Restore Package"
+        cmd: "UDS_LAYER=core-backup-restore uds run create:single-layer --set FLAVOR=${FLAVOR}"
+
   - name: k3d-standard-bundle
     description: "Create the K3d-UDS Core Bundle"
     actions:
@@ -54,6 +61,12 @@ tasks:
           if [ "${UDS_PKG}" != "istio" ]; then
             uds zarf package create src/istio --confirm --no-progress --flavor ${FLAVOR}
           fi
+
+  - name: single-layer
+    description: "Create a single Zarf Package, must set UDS_LAYER environment variable"
+    actions:
+      - description: "Create the requested Zarf Package (must set UDS_LAYER environment variable)"
+        cmd: "uds zarf package create packages/${UDS_LAYER} --confirm --no-progress --flavor ${FLAVOR}"
 
   - name: pepr-build
     description: "Build the UDS Core Pepr Module"

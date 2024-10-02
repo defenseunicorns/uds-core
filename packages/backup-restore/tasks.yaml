@@ -1,0 +1,7 @@
+includes:
+  - velero: ../../src/velero/tasks.yaml
+
+tasks:
+  - name: validate
+    actions:
+      - task: velero:validate

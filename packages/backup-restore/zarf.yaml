@@ -1,0 +1,15 @@
+kind: ZarfPackageConfig
+metadata:
+  name: core-backup-restore
+  description: "UDS Core (Backup and Restore)"
+  authors: "Defense Unicorns - Product"
+  # x-release-please-start-version
+  version: "0.28.0"
+  # x-release-please-end
+
+components:
+  # Velero
+  - name: velero
+    required: true
+    import:
+      path: ../../src/velero

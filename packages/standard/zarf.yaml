@@ -100,8 +100,8 @@ components:
     import:
       path: ../../src/runtime
 
-  # Velero
-  - name: velero
+  # Backup and Restore Layer
+  - name: backup-restore
     required: true
     import:
-      path: ../../src/velero
+      path: ../backup-restore
