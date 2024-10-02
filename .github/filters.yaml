@@ -2,19 +2,11 @@ all:
   - "**"
 
 base:
+  - "packages/base/**"
   - "src/istio/**"
   - "src/pepr/**"
-  - "!**/*.md"
-  - "!**/*.jpg"
-  - "!**/*.png"
-  - "!**/*.gif"
-  - "!**/*.svg"
 
 identity-authorization:
+  - "packages/identity-authorization/**"
   - "src/keycloak/**"
   - "src/authservice/**"
-  - "!**/*.md"
-  - "!**/*.jpg"
-  - "!**/*.png"
-  - "!**/*.gif"
-  - "!**/*.svg"
