@@ -149,6 +149,7 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
     if (
       client.publicClient &&
       (client.standardFlowEnabled !== false ||
+        client.serviceAccountsEnabled !== false ||
         client.secret !== undefined ||
         client.secretName !== undefined ||
         client.secretTemplate !== undefined ||
