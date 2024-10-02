@@ -92,7 +92,7 @@ jobs:
         run: uds remove .github/bundles/rke2/uds-bundle-uds-core-rke2-*.tar.zst --confirm
         env:
           KUBECONFIG: ".github/test-infra/aws/rke2/rke2-config" 
-        timeout-minutes: 10
+        timeout-minutes: 20
         continue-on-error: true
 
       - name: Remove IAC
