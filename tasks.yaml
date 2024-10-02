@@ -4,6 +4,8 @@ variables:
 
   - name: PKG
 
+  - name: LAYER
+
 includes:
   - create: ./tasks/create.yaml
   - setup: ./tasks/setup.yaml
@@ -39,8 +41,15 @@ tasks:
 
   - name: slim-dev
     actions:
-      - description: "Create slim dev package"
-        task: create:slim-dev-package
+      - description: "Create base package"
+        task: create:single-layer
+        with:
+          layer: base
+
+      - description: "Create identity-authorization package"
+        task: create:single-layer
+        with:
+          layer: identity-authorization
 
       - description: "Build slim dev bundle"
         task: create:k3d-slim-dev-bundle
@@ -82,10 +91,12 @@ tasks:
     actions:
       - task: create:standard-package
 
-  - name: deploy-single-package
+  - name: test-single-layer
     description: "Deploy Pepr Module and a Zarf Package using UDS_PKG environment variable"
     actions:
-      - task: deploy:single-package
+      - task: test:base
+      - task: test:single-layer
+        if: ${{ ne .variables.LAYER "base" }}
 
   - name: deploy-standard-bundle
     actions:
