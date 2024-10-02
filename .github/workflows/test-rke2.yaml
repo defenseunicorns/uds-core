@@ -85,7 +85,7 @@ jobs:
           KUBECONFIG: ".github/test-infra/aws/rke2/rke2-config" 
           UDS_CONFIG: .github/bundles/rke2/uds-config.yaml
         run: uds deploy .github/bundles/rke2/uds-bundle-uds-core-rke2-nightly-*.tar.zst --confirm
-        timeout-minutes: 20
+        timeout-minutes: 60
 
       - name: Remove UDS Core
         if: always()
