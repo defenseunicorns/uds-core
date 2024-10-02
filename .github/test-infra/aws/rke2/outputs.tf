@@ -45,3 +45,7 @@ output "velero_irsa_role_arn" {
   sensitive = true
   value = module.storage.irsa["velero"].bucket_role.arn
 }
+
+output "grafana_ha" {
+  value = false
+}

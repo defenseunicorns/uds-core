@@ -51,3 +51,7 @@ output "grafana_pg_password" {
   value       = random_password.db_password.result
   sensitive   = true
 }
+
+output "grafana_ha" {
+  value = true
+}
