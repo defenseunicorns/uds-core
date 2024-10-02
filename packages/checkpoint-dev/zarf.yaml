@@ -53,7 +53,7 @@ components:
                 #  macOS sets TMPDIR to a user temp directory - this also provides more options to linux
                 TMPDIR="/tmp"
               fi
-              DATA_DIR=${TMPDIR}/uds-checkpoint-data"
+              DATA_DIR="${TMPDIR}/uds-checkpoint-data"
               sudo rm -rf "$DATA_DIR" uds-checkpoint.tar
       onDeploy:
         after:
