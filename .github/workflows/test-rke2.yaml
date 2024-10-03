@@ -100,9 +100,3 @@ jobs:
         run: uds run -f tasks/iac.yaml destroy-iac --no-progress --set K8S_DISTRO=rke2
         timeout-minutes: 10
         continue-on-error: true
-
-      # - name: Teardown RKE2 cluster
-      #   if: always()
-      #   run: uds run -f tasks/iac.yaml destroy-cluster --no-progress --set K8S_DISTRO=rke2
-      #   timeout-minutes: 30
-      #   continue-on-error: true
