@@ -29,7 +29,7 @@ packages:
               default: ReadWriteMany
 
   - name: core
-    path: ../../../build/rke2
+    path: ../../../build
     # x-release-please-start-version
     ref: 0.28.0
     # x-release-please-end
