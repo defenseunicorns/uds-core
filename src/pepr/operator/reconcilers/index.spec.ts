@@ -13,6 +13,7 @@ jest.mock("pepr", () => ({
     warn: jest.fn(),
     error: jest.fn(),
     trace: jest.fn(),
+    info: jest.fn(),
     child: jest.fn().mockReturnThis(),
   },
   kind: {

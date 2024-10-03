@@ -2,6 +2,7 @@ import { R } from "pepr";
 import { UDSConfig } from "../../../../config";
 import { Component, setupLogger } from "../../../../logger";
 import { UDSPackage } from "../../../crd";
+import { getAuthserviceClients } from "../../utils";
 import { Client } from "../types";
 import { updatePolicy } from "./authorization-policy";
 import { getAuthserviceConfig, operatorConfig, updateAuthServiceSecret } from "./config";
@@ -11,10 +12,7 @@ export const log = setupLogger(Component.OPERATOR_AUTHSERVICE);
 
 export async function authservice(pkg: UDSPackage, clients: Map<string, Client>) {
   // Get the list of clients from the package
-  const authServiceClients = R.filter(
-    sso => R.isNotNil(sso.enableAuthserviceSelector),
-    pkg.spec?.sso || [],
-  );
+  const authServiceClients = getAuthserviceClients(pkg);
 
   for (const sso of authServiceClients) {
     const client = clients.get(sso.clientId);
@@ -23,17 +21,17 @@ export async function authservice(pkg: UDSPackage, clients: Map<string, Client>)
     }
 
     await reconcileAuthservice(
-      { name: sso.clientId, action: Action.Add, client },
+      { clientId: sso.clientId, action: Action.Add, client },
       sso.enableAuthserviceSelector!,
       pkg,
     );
   }
 
-  const authserviceClients = authServiceClients.map(client => client.clientId);
+  const authserviceClientIds = authServiceClients.map(client => client.clientId);
 
-  await purgeAuthserviceClients(pkg, authserviceClients);
+  await purgeAuthserviceClients(pkg, authserviceClientIds);
 
-  return authserviceClients;
+  return authserviceClientIds;
 }
 
 export async function purgeAuthserviceClients(
@@ -44,7 +42,7 @@ export async function purgeAuthserviceClients(
   R.difference(pkg.status?.authserviceClients || [], newAuthserviceClients).forEach(
     async clientId => {
       log.info(`Removing stale authservice chain for client ${clientId}`);
-      await reconcileAuthservice({ name: clientId, action: Action.Remove }, {}, pkg);
+      await reconcileAuthservice({ clientId, action: Action.Remove }, {}, pkg);
     },
   );
 }
@@ -75,11 +73,11 @@ export function buildConfig(config: AuthserviceConfig, event: AuthServiceEvent) 
 
   if (event.action == Action.Add) {
     // add the new chain to the existing authservice config
-    chains = config.chains.filter(chain => chain.name !== event.name);
+    chains = config.chains.filter(chain => chain.name !== event.clientId);
     chains = chains.concat(buildChain(event));
   } else if (event.action == Action.Remove) {
     // search in the existing chains for the chain to remove by name
-    chains = config.chains.filter(chain => chain.name !== event.name);
+    chains = config.chains.filter(chain => chain.name !== event.clientId);
   } else {
     throw new Error(`Unhandled Action: ${event.action satisfies never}`);
   }
@@ -94,7 +92,7 @@ export function buildChain(update: AuthServiceEvent) {
   const hostname = new URL(update.client!.redirectUris[0]).hostname;
 
   const chain: Chain = {
-    name: update.name,
+    name: update.clientId,
     match: {
       header: ":authority",
       prefix: hostname,

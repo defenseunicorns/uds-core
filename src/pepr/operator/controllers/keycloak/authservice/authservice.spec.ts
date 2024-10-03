@@ -44,7 +44,7 @@ describe("authservice", () => {
   test("should test authservice chain build", async () => {
     const chain = buildChain({
       client: mockClient,
-      name: "sso-client-test",
+      clientId: "sso-client-test",
       action: Action.Add,
     } as AuthServiceEvent);
     expect(chain.name).toEqual("sso-client-test");
@@ -65,7 +65,7 @@ describe("authservice", () => {
   test("should test authservice chain removal", async () => {
     const config = buildConfig(mockConfig as AuthserviceConfig, {
       client: mockClient,
-      name: "local",
+      clientId: "local",
       action: Action.Remove,
     });
 
@@ -76,12 +76,20 @@ describe("authservice", () => {
   test("should test authservice chain addition", async () => {
     let config = buildConfig(mockConfig as AuthserviceConfig, {
       client: mockClient,
-      name: "local",
+      clientId: "local",
       action: Action.Remove,
     });
 
-    config = buildConfig(config, { client: mockClient, name: "sso-client-a", action: Action.Add });
-    config = buildConfig(config, { client: mockClient, name: "sso-client-b", action: Action.Add });
+    config = buildConfig(config, {
+      client: mockClient,
+      clientId: "sso-client-a",
+      action: Action.Add,
+    });
+    config = buildConfig(config, {
+      client: mockClient,
+      clientId: "sso-client-b",
+      action: Action.Add,
+    });
 
     expect(config.chains.length).toEqual(2);
   });
@@ -89,14 +97,14 @@ describe("authservice", () => {
   test("should test chain removal by name", async () => {
     let config = buildConfig(mockConfig as AuthserviceConfig, {
       client: mockClient,
-      name: "nothere",
+      clientId: "nothere",
       action: Action.Remove,
     });
     expect(config.chains.length).toEqual(1);
 
     config = buildConfig(mockConfig as AuthserviceConfig, {
       client: mockClient,
-      name: "local",
+      clientId: "local",
       action: Action.Remove,
     });
     expect(config.chains.length).toEqual(0);
@@ -115,8 +123,8 @@ describe("authservice", () => {
       },
     };
     try {
-      await updatePolicy({ name: "auth-test", action: Action.Add }, labelSelector, pkg);
-      await updatePolicy({ name: "auth-test", action: Action.Remove }, labelSelector, pkg);
+      await updatePolicy({ clientId: "auth-test", action: Action.Add }, labelSelector, pkg);
+      await updatePolicy({ clientId: "auth-test", action: Action.Remove }, labelSelector, pkg);
     } catch (e) {
       expect(e).toBeUndefined();
     }

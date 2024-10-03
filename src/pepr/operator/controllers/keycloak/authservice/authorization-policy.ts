@@ -1,13 +1,13 @@
 import { K8s } from "pepr";
-import { UDSConfig } from "../../../../config";
-import {
-  IstioAction,
-  IstioAuthorizationPolicy,
-  IstioRequestAuthentication,
-  UDSPackage,
-} from "../../../crd";
-import { getOwnerRef, purgeOrphans, sanitizeResourceName } from "../../utils";
+import { IstioAuthorizationPolicy, IstioRequestAuthentication, UDSPackage } from "../../../crd";
+import { getOwnerRef, purgeOrphans } from "../../utils";
 import { log } from "./authservice";
+import {
+  authNRequestAuthentication,
+  authserviceAuthorizationPolicy,
+  defaultDenyAuthorizationPolicy,
+  jwtAuthZAuthorizationPolicy,
+} from "./policy-builder";
 import { Action as AuthServiceAction, AuthServiceEvent } from "./types";
 
 const operationMap: {
@@ -18,93 +18,34 @@ const operationMap: {
   [AuthServiceAction.Remove]: "Delete",
 };
 
-function authserviceAuthorizationPolicy(
+async function preApplyDefaultDeny(
   labelSelector: { [key: string]: string },
-  name: string,
-  namespace: string,
-): IstioAuthorizationPolicy {
-  return {
-    kind: "AuthorizationPolicy",
-    metadata: {
-      name: sanitizeResourceName(`${name}-authservice`),
-      namespace,
-    },
-    spec: {
-      action: IstioAction.Custom,
-      provider: {
-        name: "authservice",
-      },
-      rules: [
-        {
-          when: [
-            {
-              key: "request.headers[authorization]",
-              notValues: ["*"],
-            },
-          ],
-        },
-      ],
-      selector: {
-        matchLabels: labelSelector,
-      },
-    },
-  };
+  pkg: UDSPackage,
+  clientId: string,
+) {
+  const namespace = pkg.metadata!.namespace!;
+  try {
+    await K8s(IstioAuthorizationPolicy).Apply(
+      buildResourceMetadataFn(pkg)(defaultDenyAuthorizationPolicy(labelSelector, clientId)),
+    );
+  } catch (e) {
+    const msg = `Failed to create default deny policy for ${clientId} in ${namespace}: ${e}`;
+    log.error(e, msg);
+    throw new Error(msg, {
+      cause: e,
+    });
+  }
 }
 
-function jwtAuthZAuthorizationPolicy(
-  labelSelector: { [key: string]: string },
-  name: string,
-  namespace: string,
-): IstioAuthorizationPolicy {
-  return {
-    kind: "AuthorizationPolicy",
-    metadata: {
-      name: sanitizeResourceName(`${name}-jwt-authz`),
-      namespace,
-    },
-    spec: {
-      selector: {
-        matchLabels: labelSelector,
-      },
-      rules: [
-        {
-          from: [
-            {
-              source: {
-                requestPrincipals: [`https://sso.${UDSConfig.domain}/realms/uds/*`],
-              },
-            },
-          ],
-        },
-      ],
-    },
-  };
-}
-
-function authNRequestAuthentication(
-  labelSelector: { [key: string]: string },
-  name: string,
-  namespace: string,
-): IstioRequestAuthentication {
-  return {
-    kind: "RequestAuthentication",
-    metadata: {
-      name: sanitizeResourceName(`${name}-jwt-authn`),
-      namespace,
-    },
-    spec: {
-      jwtRules: [
-        {
-          audiences: [name],
-          forwardOriginalToken: true,
-          issuer: `https://sso.${UDSConfig.domain}/realms/uds`,
-          jwksUri: `http://keycloak-http.keycloak.svc.cluster.local:8080/realms/uds/protocol/openid-connect/certs`,
-        },
-      ],
-      selector: {
-        matchLabels: labelSelector,
-      },
-    },
+function buildResourceMetadataFn(pkg: UDSPackage) {
+  return (resource: IstioAuthorizationPolicy | IstioRequestAuthentication) => {
+    resource!.metadata!.namespace = pkg.metadata!.namespace!;
+    resource!.metadata!.ownerReferences = getOwnerRef(pkg);
+    resource!.metadata!.labels = {
+      "uds/package": pkg.metadata!.name!,
+      "uds/generation": (pkg.metadata?.generation ?? 0).toString(),
+    };
+    return resource;
   };
 }
 
@@ -115,31 +56,22 @@ async function updatePolicy(
 ) {
   // type safe map event to operation (either Apply or Delete)
   const operation = operationMap[event.action];
-  const namespace = pkg.metadata!.namespace!;
   const generation = (pkg.metadata?.generation ?? 0).toString();
-  const ownerReferences = getOwnerRef(pkg);
 
-  const updateMetadata = (resource: IstioAuthorizationPolicy | IstioRequestAuthentication) => {
-    resource!.metadata!.ownerReferences = ownerReferences;
-    resource!.metadata!.labels = {
-      "uds/package": pkg.metadata!.name!,
-      "uds/generation": generation,
-    };
-    return resource;
-  };
+  const updateMetadataFn = buildResourceMetadataFn(pkg);
 
   try {
     await K8s(IstioAuthorizationPolicy)[operation](
-      updateMetadata(authserviceAuthorizationPolicy(labelSelector, event.name, namespace)),
+      updateMetadataFn(authserviceAuthorizationPolicy(labelSelector, event.clientId)),
     );
     await K8s(IstioRequestAuthentication)[operation](
-      updateMetadata(authNRequestAuthentication(labelSelector, event.name, namespace)),
+      updateMetadataFn(authNRequestAuthentication(labelSelector, event.clientId)),
     );
     await K8s(IstioAuthorizationPolicy)[operation](
-      updateMetadata(jwtAuthZAuthorizationPolicy(labelSelector, event.name, namespace)),
+      updateMetadataFn(jwtAuthZAuthorizationPolicy(labelSelector, event.clientId)),
     );
   } catch (e) {
-    const msg = `Failed to update auth policy for ${event.name} in ${namespace}: ${e}`;
+    const msg = `Failed to update auth policy for ${event.clientId} in ${pkg.metadata!.namespace}: ${e}`;
     log.error(e, msg);
     throw new Error(msg, {
       cause: e,
@@ -147,9 +79,12 @@ async function updatePolicy(
   }
 
   try {
-    await purgeOrphanPolicies(generation, namespace, pkg.metadata!.name!);
+    await purgeOrphanPolicies(generation, pkg.metadata!.namespace!, pkg.metadata!.name!);
   } catch (e) {
-    log.error(e, `Failed to purge orphan auth policies ${event.name} in ${namespace}: ${e}`);
+    log.error(
+      e,
+      `Failed to purge orphan auth policies ${event.clientId} in ${pkg.metadata!.namespace!}: ${e}`,
+    );
   }
 }
 
@@ -159,4 +94,4 @@ async function purgeOrphanPolicies(generation: string, namespace: string, pkgNam
   }
 }
 
-export { updatePolicy };
+export { preApplyDefaultDeny, updatePolicy };
