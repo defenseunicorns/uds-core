@@ -105,3 +105,7 @@ variable "client_id_list" {
   type        = list(string)
   default     = ["irsa"]
 }
+
+variable "run_id" {
+  description = "Github Actions Run ID. Used to tag AWS resources that are created by this workspace."
+}

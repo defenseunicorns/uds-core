@@ -7,8 +7,7 @@ locals {
     job_type            = "nightly"
     distribution        = "rke2"
     version             = var.rke2_version
-    uds_version         = "" #TODO: pass this in from env during deploy
-    job_id              = "" #TODO: pass this in from env during deploy
+    run_id              = var.run_id
     PermissionsBoundary = var.permissions_boundary_name
   }
   iam_role_permissions_boundary = var.use_permissions_boundary ? "arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:policy/${var.permissions_boundary_name}" : null
