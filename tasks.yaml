@@ -2,7 +2,7 @@ variables:
   - name: FLAVOR
     default: upstream
 
-  - name: PKG
+  - name: LAYER
 
 includes:
   - create: ./tasks/create.yaml
@@ -12,7 +12,6 @@ includes:
   - lint: ./tasks/lint.yaml
 
 tasks:
-
   - name: default
     actions:
       - description: "Build, deploy and test UDS Core"
@@ -23,9 +22,8 @@ tasks:
     actions:
       - description: "Create the dev cluster"
         task: setup:create-k3d-cluster
-
       - description: "Deploy the Istio source package with Zarf Dev"
-        cmd: "uds zarf dev deploy src/istio --flavor ${FLAVOR} --no-progress"
+        cmd: "uds zarf dev deploy src/istio --flavor upstream --no-progress --deploy-set ISTIO_ZARF_REGISTRY=docker.io"
 
       # Note, this abuses the --flavor flag to only install the CRDs from this package - the "crds-only" flavor is not an explicit flavor of the package
       - description: "Deploy the Prometheus-Stack source package with Zarf Dev to only install the CRDs"
@@ -40,8 +38,15 @@ tasks:
 
   - name: slim-dev
     actions:
-      - description: "Create slim dev package"
-        task: create:slim-dev-package
+      - description: "Create base package"
+        task: create:single-layer
+        with:
+          layer: base
+
+      - description: "Create identity-authorization package"
+        task: create:single-layer
+        with:
+          layer: identity-authorization
 
       - description: "Build slim dev bundle"
         task: create:k3d-slim-dev-bundle
@@ -57,45 +62,34 @@ tasks:
       - description: "Deploy Pepr"
         cmd: "npx pepr deploy --confirm"
 
-      - description: "Deploy Keycloak"
-        cmd: "uds run dev-deploy --set PKG=keycloak"
-
-      - description: "Deploy Authservice"
-        cmd: "uds run dev-deploy --set PKG=authservice"
+      - description: "Deploy Keycloak + Authservice"
+        cmd: "uds run dev-deploy --set LAYER=identity-authorization --no-progress"
 
   - name: dev-deploy
-    description: "Deploy the given source package with Zarf Dev"
+    description: "Deploy the given core layer with Zarf Dev"
     actions:
-      - cmd: "uds zarf dev deploy src/${PKG} --flavor ${FLAVOR}"
+      - cmd: "uds zarf dev deploy packages/${LAYER} --flavor ${FLAVOR} --no-progress"
 
   - name: setup-cluster
     description: "Create a k3d Cluster and Initialize with Zarf"
     actions:
       - task: setup:k3d-test-cluster
 
-  - name: create-single-package
-    description: "Create a single Zarf Package, must set UDS_PKG environment variable"
-    actions:
-      - task: create:single-package
-
   - name: create-standard-package
     description: "Create UDS Core Zarf Package, `upstream` flavor default, use --set FLAVOR={flavor} to change"
     actions:
       - task: create:standard-package
 
-  - name: deploy-single-package
-    description: "Deploy Pepr Module and a Zarf Package using UDS_PKG environment variable"
+  - name: test-single-layer
+    description: "Deploy Pepr Module and a Zarf Package using LAYER variable"
     actions:
-      - task: deploy:single-package
+      - task: test:base
+      - task: test:single-layer
+        if: ${{ ne .variables.LAYER "base" }}
 
   - name: deploy-standard-bundle
     actions:
       - task: deploy:k3d-standard-bundle
-
-  - name: test-single-package
-    description: "Build and test a single package, must set UDS_PKG environment variable"
-    actions:
-      - task: test:single-package
 
   - name: test-uds-core
     description: "Build and test UDS Core"

@@ -110,12 +110,10 @@ You can perform a complete test of UDS Core by running the following command:
 uds run test-uds-core
 ```
 
-This command initiates the creation of a local k3d cluster, installs UDS Core, and executes a set of tests identical to those performed in CI. If you wish to run tests targeting a specific package, you can utilize the `PKG` environment variable.
-
-The example below runs tests against the metrics-server package:
+This will create a local k3d cluster, install UDS Core, and run a series of tests against it, the same tests that are run in CI. If you want to run the tests against a specific core layer, you can use the `LAYER` task variable. The following example runs the tests against the identity-authorization layer:
 
 ```cli
-UDS_PKG=metrics-server uds run test-single-package
+uds run test-single-layer --set LAYER=identity-authorization
 ```
 
 {{% alert-note %}}

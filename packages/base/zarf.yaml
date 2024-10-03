@@ -1,7 +1,7 @@
 kind: ZarfPackageConfig
 metadata:
-  name: core-slim-dev
-  description: "UDS Core (Istio, UDS Operator and Keycloak)"
+  name: core-base
+  description: "UDS Core (Base)"
   authors: "Defense Unicorns - Product"
   # x-release-please-start-version
   version: "0.28.0"
@@ -45,9 +45,3 @@ components:
     required: true
     import:
       path: ../../src/pepr
-
-  # Keycloak
-  - name: keycloak
-    required: true
-    import:
-      path: ../../src/keycloak

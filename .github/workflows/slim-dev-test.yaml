@@ -8,9 +8,11 @@ on:
     paths:
       - src/pepr/**
       - src/keycloak/**
+      - src/authservice/**
       - src/istio/**
       - src/prometheus-stack/**
-      - packages/slim-dev/**
+      - packages/base/**
+      - packages/backup-restore/**
       - bundles/k3d-slim-dev/**
       - .github/workflows/slim-dev**
       - "!**/*.md"

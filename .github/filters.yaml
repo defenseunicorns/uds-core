@@ -2,18 +2,13 @@ all:
   - "**"
 
 base:
+  - "packages/base/**"
   - "src/istio/**"
   - "src/pepr/**"
-  - "!**/*.md"
-  - "!**/*.jpg"
-  - "!**/*.png"
-  - "!**/*.gif"
-  - "!**/*.svg"
+
+identity-authorization:
+  - "packages/identity-authorization/**"
+  - "src/keycloak/**"
 
 backup-restore:
   - "src/velero/**"
-  - "!**/*.md"
-  - "!**/*.jpg"
-  - "!**/*.png"
-  - "!**/*.gif"
-  - "!**/*.svg"

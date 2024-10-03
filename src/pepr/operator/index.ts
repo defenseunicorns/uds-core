@@ -16,12 +16,16 @@ import { UDSExemption, UDSPackage } from "./crd";
 import { validator } from "./crd/validators/package-validator";
 
 // Reconciler imports
+import { UDSConfig } from "../config";
+import { Component, setupLogger } from "../logger";
 import { purgeAuthserviceClients } from "./controllers/keycloak/authservice/authservice";
 import { exemptValidator } from "./crd/validators/exempt-validator";
 import { packageReconciler } from "./reconcilers/package-reconciler";
 
 // Export the operator capability for registration in the root pepr.ts
 export { operator } from "./common";
+
+const log = setupLogger(Component.OPERATOR);
 
 // Pre-populate the API server CIDR since we are not persisting the EndpointSlice
 // Note ignore any errors since the watch will still be running hereafter
@@ -63,3 +67,21 @@ When(UDSPackage)
 
 // Watch for Exemptions and validate
 When(UDSExemption).IsCreatedOrUpdated().Validate(exemptValidator);
+
+// Watch for Functional Layers and update config
+When(UDSPackage)
+  .IsCreatedOrUpdated()
+  .InNamespace("keycloak")
+  .WithName("keycloak")
+  .Watch(() => {
+    // todo: wait for keycloak and authservice to be running?
+    log.info("Identity and Authorization layer deployed, operator configured to handle SSO.");
+    UDSConfig.isIdentityDeployed = true;
+  });
+When(UDSPackage)
+  .IsDeleted()
+  .WithName("keycloak")
+  .Watch(() => {
+    log.info("Identity and Authorization layer removed, operator will NOT handle SSO.");
+    UDSConfig.isIdentityDeployed = false;
+  });

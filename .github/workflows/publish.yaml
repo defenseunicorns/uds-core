@@ -93,9 +93,12 @@ jobs:
     strategy:
       matrix:
         flavor: [upstream, registry1, unicorn]
-        # maybe handle base as a special case to avoid duplicate building the layer
-        layer: [base, backup-restore]
-    runs-on: "ubuntu-latest"
+        layer: [base, identity-authorization]
+        arch: [amd64, arm64]
+        exclude:
+          - flavor: registry1
+            arch: arm64
+    runs-on: ${{ matrix.arch == 'arm64' && 'uds-ubuntu-arm64-4-core' || 'uds-ubuntu-big-boy-4-core' }}
     name: Publish package layers
 
     permissions:
@@ -114,35 +117,15 @@ jobs:
           ghToken: ${{ secrets.GITHUB_TOKEN }}
           chainguardIdentity: ${{ secrets.CHAINGUARD_IDENTITY }}
 
-      - name: Create Package Layers
-        env:
-          UDS_LAYER: ${{ matrix.layer }}
-        run: |
-          ZARF_ARCHITECTURE=amd64 uds run create:single-layer --no-progress --set FLAVOR=${{ matrix.flavor }}
-          if [ "${{ matrix.flavor }}" != "registry1" ]; then
-            ZARF_ARCHITECTURE=arm64 uds run create:single-layer --no-progress --set FLAVOR=${{ matrix.flavor }}
-          fi
-
-      # Core package layer test
-      - name: Test amd64 Bundle
-        env:
-          UDS_LAYER: ${{ matrix.layer }}
-        run: |
-          uds run test:base --set FLAVOR=${{ matrix.flavor }}
-          uds run deploy:single-layer
-          uds run -f packages/${{ matrix.layer }}/tasks.yaml validate --no-progress
+      - name: Test and Publish Core Package Layer
+        run: uds run -f tasks/publish.yaml single-layer --set FLAVOR=${{ matrix.flavor }} --set LAYER=${{ matrix.layer }} --no-progress
 
       - name: Debug Output
         if: ${{ always() && !inputs.snapshot }}
         uses: ./.github/actions/debug-output
 
-      - name: Publish Core Package Layer
-        env:
-          UDS_LAYER: ${{ matrix.layer }}
-        run: uds run -f tasks/publish.yaml single-layer --set FLAVOR=${{ matrix.flavor }} --no-progress
-
       - name: Save logs
         if: always()
         uses: ./.github/actions/save-logs
         with:
-          suffix: -${{ matrix.layer }}
+          suffix: -${{ matrix.flavor }}-${{ matrix.layer }}-${{ matrix.arch }}
