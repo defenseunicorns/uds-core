@@ -181,27 +181,27 @@ tasks:
           - name: VELERO_S3_ROLE_ARN
         dir: .github/test-infra/aws/${K8S_DISTRO}
         mute: true
-      - cmd: tofu output -raw grafana_pg_host 2>/dev/null || echo -n '""'
+      - cmd: tofu output -raw grafana_pg_host 2>/dev/null || echo '""'
         setVariables:
           - name: GRAFANA_PG_HOST
         dir: .github/test-infra/aws/${K8S_DISTRO}
         mute: true
-      - cmd: tofu output -raw grafana_pg_port 2>/dev/null || echo -n '""'
+      - cmd: tofu output -raw grafana_pg_port 2>/dev/null || echo '""'
         setVariables:
           - name: GRAFANA_PG_PORT
         dir: .github/test-infra/aws/${K8S_DISTRO}
         mute: true
-      - cmd: tofu output -raw grafana_pg_database 2>/dev/null || echo -n '""'
+      - cmd: tofu output -raw grafana_pg_database 2>/dev/null || echo '""'
         setVariables:
           - name: GRAFANA_PG_DATABASE
         dir: .github/test-infra/aws/${K8S_DISTRO}
         mute: true
-      - cmd: tofu output -raw grafana_pg_user 2>/dev/null || echo -n '""'
+      - cmd: tofu output -raw grafana_pg_user 2>/dev/null || echo '""'
         setVariables:
           - name: GRAFANA_PG_USER
         dir: .github/test-infra/aws/${K8S_DISTRO}
         mute: true
-      - cmd: tofu output -raw grafana_pg_password 2>/dev/null || echo -n '""'
+      - cmd: tofu output -raw grafana_pg_password 2>/dev/null || echo '""'
         setVariables:
           - name: GRAFANA_PG_PASSWORD
         mute: true # Muted to hide sensitive password
