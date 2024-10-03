@@ -60,7 +60,7 @@ resource "aws_kms_key" "s3_encryption_key" {
 # Compute Resources
 #######################################
 resource "aws_instance" "rke2_ci_bootstrap_node" {
-  ami                         = data.aws_ami.rhel_rke2
+  ami                         = data.aws_ami.rhel_rke2.image_id
   instance_type               = var.control_plane_instance_type
   key_name                    = aws_key_pair.control_plane_key_pair.key_name
   user_data                   = templatefile("${path.module}/scripts/user_data.sh", local.userdata)
@@ -81,7 +81,7 @@ resource "aws_instance" "rke2_ci_bootstrap_node" {
 resource "aws_instance" "rke2_ci_control_plane_node" {
   count = var.control_plane_node_count
 
-  ami                         = data.aws_ami.rhel_rke2
+  ami                         = data.aws_ami.rhel_rke2.image_id
   instance_type               = var.control_plane_instance_type
   key_name                    = aws_key_pair.control_plane_key_pair.key_name
   user_data                   = templatefile("${path.module}/scripts/user_data.sh", merge(local.userdata, { BOOTSTRAP_IP = aws_instance.rke2_ci_bootstrap_node.private_ip }))
@@ -101,7 +101,7 @@ resource "aws_instance" "rke2_ci_control_plane_node" {
 resource "aws_instance" "rke2_ci_agent_node" {
   count = var.agent_node_count
 
-  ami                         = data.aws_ami.rhel_rke2
+  ami                         = data.aws_ami.rhel_rke2.image_id
   instance_type               = var.agent_instance_type
   key_name                    = aws_key_pair.control_plane_key_pair.key_name
   user_data                   = templatefile("${path.module}/scripts/user_data.sh", merge(local.userdata, { BOOTSTRAP_IP = aws_instance.rke2_ci_bootstrap_node.private_ip }))
