@@ -3,6 +3,7 @@ variable "environment" {
   description = "Environment/account that this is deployed to"
   default     = "ci"
 }
+
 variable "vpc_name" {
   type        = string
   description = "VPC ID to deploy into"
@@ -54,11 +55,6 @@ variable "cluster_hostname" {
   type        = string
   description = "Hostname to use for connecting to cluster API. cluster.foo.bar default used by CI tests"
   default     = "cluster.foo.bar"
-}
-
-variable "ami_id" {
-  type        = string
-  description = "AMI to use for deployment, must have RKE2 pre-installed"
 }
 
 variable "os_distro" {
