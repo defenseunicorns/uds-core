@@ -61,7 +61,7 @@ jobs:
           tofu_wrapper: false
 
       - name: Create UDS Core Package
-        run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress --set FLAVOR=${{ inputs.flavor }} --set K8S_DISTRO=eks
+        run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress --set FLAVOR=${{ inputs.flavor }}
 
       - name: Create Core Bundle
         run: uds create .github/bundles/eks --confirm
