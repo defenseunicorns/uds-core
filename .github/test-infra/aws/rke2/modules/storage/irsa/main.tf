@@ -10,7 +10,7 @@ resource "aws_iam_policy" "s3_bucket_policy" {
 
 ## Create service account role
 resource "aws_iam_role" "s3_bucket_role" {
-  name                 = "${var.resource_prefix}${var.serviceaccount_name}-s3-role"
+  name                 = "${var.resource_prefix}${var.bucket_service_account}-s3-role"
   assume_role_policy   = data.aws_iam_policy_document.s3_bucket_role_policy.json
   permissions_boundary = var.permissions_boundary
 
