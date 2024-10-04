@@ -30,7 +30,7 @@ components:
       onDeploy:
         before:
           - cmd: |
-              echo "This package requires elevated permissions to create - requesting sudo (if paused enter password)"
+              echo "This package requires elevated permissions to deploy - requesting sudo (if paused enter password)"
               sudo echo "got sudo! success!"
           - cmd: k3d cluster delete ${ZARF_VAR_CLUSTER_NAME}
             description: "Destroy the cluster"
