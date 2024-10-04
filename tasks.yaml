@@ -84,11 +84,10 @@ tasks:
       - task: create:standard-package
 
   - name: test-single-layer
-    description: "Deploy Pepr Module and a Zarf Package using LAYER variable"
+    description: "Deploys k3d cluster, layer dependencies and the provided layer (based on LAYER variable)"
     actions:
-      - task: test:base
+      - task: test:layer-dependencies
       - task: test:single-layer
-        if: ${{ ne .variables.LAYER "base" }}
 
   - name: deploy-standard-bundle
     actions:
