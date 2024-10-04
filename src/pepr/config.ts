@@ -20,7 +20,6 @@ export const UDSConfig = {
   domain,
   // Base64 Encoded Trusted CA cert for Istio certificates (i.e. for `sso.domain`)
   caCert,
-
   // Allow UDS policy exemptions to be used in any namespace
   allowAllNSExemptions: process.env.UDS_ALLOW_ALL_NS_EXEMPTIONS === "true",
 

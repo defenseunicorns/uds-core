@@ -77,7 +77,7 @@ This package currently assumes the availability of S3 API compatible object stor
 
 ### Build Deploy, and Test locally via UDS tasks
 
-Velero is included in the backup-restore functional layer. This layer can be created, deployed, and tested with a single UDS run command:
+Velero is included in the backup-restore functional layer (WIP). This layer can be created, deployed, and tested with a single UDS run command:
 
 ```bash
 uds run test-single-layer --set LAYER=backup-restore
