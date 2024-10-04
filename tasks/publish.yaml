@@ -1,6 +1,7 @@
 includes:
   - utils: utils.yaml
   - test: test.yaml
+  - setup: setup.yaml
 
 variables:
   - name: FLAVOR
@@ -59,9 +60,8 @@ tasks:
   - name: single-layer
     description: "Test and Publish UDS Core layer"
     actions:
-      - task: test:base
+      - task: test:layer-dependencies
       - task: test:single-layer
-        if: ${{ ne .variables.LAYER "base" }}
       - task: utils:determine-repo
       - description: "Publish build of layer"
         cmd: uds zarf package publish build/zarf-package-core-${LAYER}-${UDS_ARCH}-${VERSION}.tar.zst oci://${TARGET_REPO}

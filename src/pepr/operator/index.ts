@@ -80,6 +80,7 @@ When(UDSPackage)
   });
 When(UDSPackage)
   .IsDeleted()
+  .InNamespace("keycloak")
   .WithName("keycloak")
   .Watch(() => {
     log.info("Identity and Authorization layer removed, operator will NOT handle SSO.");

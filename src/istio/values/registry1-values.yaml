@@ -3,7 +3,7 @@ pilot:
 global:
   proxy_init:
     # renovate: image=registry1.dso.mil/ironbank/tetrate/istio/proxyv2
-    image: "###ZARF_VAR_ISTIO_ZARF_REGISTRY###/ironbank/tetrate/istio/proxyv2:1.23.2-tetratefips-v0"
+    image: "###ZARF_REGISTRY###/ironbank/tetrate/istio/proxyv2:1.23.2-tetratefips-v0"
   proxy:
     # renovate: image=registry1.dso.mil/ironbank/tetrate/istio/proxyv2
-    image: "###ZARF_VAR_ISTIO_ZARF_REGISTRY###/ironbank/tetrate/istio/proxyv2:1.23.2-tetratefips-v0"
+    image: "###ZARF_REGISTRY###/ironbank/tetrate/istio/proxyv2:1.23.2-tetratefips-v0"

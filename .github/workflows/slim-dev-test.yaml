@@ -12,7 +12,7 @@ on:
       - src/istio/**
       - src/prometheus-stack/**
       - packages/base/**
-      - packages/backup-restore/**
+      - package/identity-authorization/**
       - bundles/k3d-slim-dev/**
       - .github/workflows/slim-dev**
       - "!**/*.md"

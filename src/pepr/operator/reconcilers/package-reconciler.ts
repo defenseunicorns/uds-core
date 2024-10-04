@@ -74,7 +74,7 @@ export async function packageReconciler(pkg: UDSPackage) {
       ssoClients = await keycloak(pkg);
       authserviceClients = await authservice(pkg, ssoClients);
     } else if (pkg.spec?.sso) {
-      log.error("SSO is not deployed, but the package has SSO configuration");
+      log.error("Identity & Authorization is not deployed, but the package has SSO configuration");
       throw new Error(
         "Identity & Authorization is not deployed, but the package has SSO configuration",
       );
@@ -85,12 +85,8 @@ export async function packageReconciler(pkg: UDSPackage) {
 
     // Only configure the ServiceMonitors if not running in single test mode
     const monitors: string[] = [];
-    if (!UDSConfig.isSingleTest) {
-      monitors.push(...(await podMonitor(pkg, namespace!)));
-      monitors.push(...(await serviceMonitor(pkg, namespace!)));
-    } else {
-      log.warn(`Running in single test mode, skipping ${name} Monitors.`);
-    }
+    monitors.push(...(await podMonitor(pkg, namespace!)));
+    monitors.push(...(await serviceMonitor(pkg, namespace!)));
 
     await updateStatus(pkg, {
       phase: Phase.Ready,

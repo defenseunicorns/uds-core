@@ -62,7 +62,7 @@ components:
   - name: neuvector
     required: true
     import:
-      path: ../../src/neuvector
+      path: ../runtime-security
 
   # Loki
   - name: loki
@@ -98,10 +98,10 @@ components:
   - name: uds-runtime
     required: false
     import:
-      path: ../../src/runtime
+      path: ../ui
 
-  # Backup and Restore Layer
-  - name: backup-restore
+  # Velero
+  - name: velero
     required: true
     import:
       path: ../backup-restore

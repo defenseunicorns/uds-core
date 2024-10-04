@@ -59,8 +59,3 @@ tasks:
     actions:
       - description: "Deploy the standard UDS Core zarf package"
         cmd: uds zarf package deploy build/zarf-package-core-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress --components '*'
-
-  - name: core-backup-restore
-    actions:
-      - description: "Deploy the standard UDS Core (Backup and Restore) zarf package"
-        cmd: uds zarf package deploy build/zarf-package-core-backup-restore-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress --components '*'

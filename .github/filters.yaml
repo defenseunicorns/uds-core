@@ -10,5 +10,11 @@ identity-authorization:
   - "packages/identity-authorization/**"
   - "src/keycloak/**"
 
+ui:
+  - "src/runtime/**"
+
+runtime-security:
+  - "src/neuvector/**"
+
 backup-restore:
   - "src/velero/**"
