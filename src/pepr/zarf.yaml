@@ -21,10 +21,6 @@ variables:
     description: "UDS Authservice Redis URI"
     default: ""
 
-  - name: UDS_SINGLE_TEST
-    description: "UDS Single package test"
-    default: ""
-
   - name: PEPR_SERVICE_MONITORS
     description: "Enables Service Monitors for Pepr services (watcher, admission)"
     default: "true"
