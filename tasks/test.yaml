@@ -35,7 +35,7 @@ tasks:
           - name: LAYER_DEPS
       - cmd: |
           for dep in $LAYER_DEPS; do
-            uds run single-layer --set LAYER=$dep --set FLAVOR=$FLAVOR --no-progress
+            uds run -f tasks/test.yaml single-layer --set LAYER=$dep --set FLAVOR=${FLAVOR} --no-progress
           done
 
   - name: validate-packages
