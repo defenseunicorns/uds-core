@@ -2,7 +2,7 @@ variables:
   - name: FLAVOR
     default: upstream
 
-  - name: PKG
+  - name: LAYER
 
 includes:
   - create: ./tasks/create.yaml
@@ -12,7 +12,6 @@ includes:
   - lint: ./tasks/lint.yaml
 
 tasks:
-
   - name: default
     actions:
       - description: "Build, deploy and test UDS Core"
@@ -24,12 +23,17 @@ tasks:
       - description: "Create the dev cluster"
         task: setup:create-k3d-cluster
 
+<<<<<<< HEAD
       # Workaround for https://github.com/zarf-dev/zarf/issues/2713
       - description: "Modify Istio values w/ upstream registry"
         cmd: "uds zarf tools yq -i '.global.proxy_init.image |= sub(\"###ZARF_REGISTRY###\", \"docker.io\") | .global.proxy.image |= sub(\"###ZARF_REGISTRY###\", \"docker.io\")' src/istio/values/upstream-values.yaml"
 
+=======
+      # Note: This currently is broken until https://github.com/zarf-dev/zarf/issues/2713 is resolved
+      # As a workaround you can edit the `src/istio/values/upstream-values.yaml` file to change ###ZARF_REGISTRY### to docker.io before running
+>>>>>>> b3f532a (feat: add base and identity layers (#853))
       - description: "Deploy the Istio source package with Zarf Dev"
-        cmd: "uds zarf dev deploy src/istio --flavor ${FLAVOR} --no-progress"
+        cmd: "uds zarf dev deploy src/istio --flavor upstream --no-progress"
 
       - description: "Restore Istio registry values"
         cmd: "uds zarf tools yq -i '.global.proxy_init.image |= sub(\"docker.io\", \"###ZARF_REGISTRY###\") | .global.proxy.image |= sub(\"docker.io\", \"###ZARF_REGISTRY###\")' src/istio/values/upstream-values.yaml"
@@ -47,8 +51,15 @@ tasks:
 
   - name: slim-dev
     actions:
-      - description: "Create slim dev package"
-        task: create:slim-dev-package
+      - description: "Create base package"
+        task: create:single-layer
+        with:
+          layer: base
+
+      - description: "Create identity-authorization package"
+        task: create:single-layer
+        with:
+          layer: identity-authorization
 
       - description: "Build slim dev bundle"
         task: create:k3d-slim-dev-bundle
@@ -64,45 +75,33 @@ tasks:
       - description: "Deploy Pepr"
         cmd: "npx pepr deploy --confirm"
 
-      - description: "Deploy Keycloak"
-        cmd: "uds run dev-deploy --set PKG=keycloak"
-
-      - description: "Deploy Authservice"
-        cmd: "uds run dev-deploy --set PKG=authservice"
+      - description: "Deploy Keycloak + Authservice"
+        cmd: "uds run dev-deploy --set LAYER=identity-authorization --no-progress"
 
   - name: dev-deploy
-    description: "Deploy the given source package with Zarf Dev"
+    description: "Deploy the given core layer with Zarf Dev"
     actions:
-      - cmd: "uds zarf dev deploy src/${PKG} --flavor ${FLAVOR}"
+      - cmd: "uds zarf dev deploy packages/${LAYER} --flavor ${FLAVOR} --no-progress"
 
   - name: setup-cluster
     description: "Create a k3d Cluster and Initialize with Zarf"
     actions:
       - task: setup:k3d-test-cluster
 
-  - name: create-single-package
-    description: "Create a single Zarf Package, must set UDS_PKG environment variable"
-    actions:
-      - task: create:single-package
-
   - name: create-standard-package
     description: "Create UDS Core Zarf Package, `upstream` flavor default, use --set FLAVOR={flavor} to change"
     actions:
       - task: create:standard-package
 
-  - name: deploy-single-package
-    description: "Deploy Pepr Module and a Zarf Package using UDS_PKG environment variable"
+  - name: test-single-layer
+    description: "Deploys k3d cluster, layer dependencies and the provided layer (based on LAYER variable)"
     actions:
-      - task: deploy:single-package
+      - task: test:layer-dependencies
+      - task: test:single-layer
 
   - name: deploy-standard-bundle
     actions:
       - task: deploy:k3d-standard-bundle
-
-  - name: test-single-package
-    description: "Build and test a single package, must set UDS_PKG environment variable"
-    actions:
-      - task: test:single-package
 
   - name: test-uds-core
     description: "Build and test UDS Core"
