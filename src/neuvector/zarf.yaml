@@ -4,6 +4,11 @@ metadata:
   description: "UDS Core Neuvector"
   url: https://open-docs.neuvector.com/
 
+variables:
+  - name: DOMAIN
+    description: "Cluster domain"
+    default: "uds.dev"
+
 components:
   - name: neuvector
     description: "Deploy Neuvector"
