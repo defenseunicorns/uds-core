@@ -1,5 +1,7 @@
 includes:
   - utils: utils.yaml
+  - test: test.yaml
+  - setup: setup.yaml
 
 variables:
   - name: FLAVOR
@@ -10,6 +12,8 @@ variables:
     # x-release-please-start-version
     default: "0.28.0"
     # x-release-please-end
+
+  - name: LAYER
 
 tasks:
   - name: standard-package
@@ -59,3 +63,12 @@ tasks:
           uds zarf tools registry copy ${pkgPath}:${VERSION} ${pkgPath}:latest
           pkgPath="${TARGET_REPO}/bundles/k3d-core-slim-dev"
           uds zarf tools registry copy ${pkgPath}:${VERSION} ${pkgPath}:latest
+
+  - name: single-layer
+    description: "Test and Publish UDS Core layer"
+    actions:
+      - task: test:layer-dependencies
+      - task: test:single-layer
+      - task: utils:determine-repo
+      - description: "Publish build of layer"
+        cmd: uds zarf package publish build/zarf-package-core-${LAYER}-${UDS_ARCH}-${VERSION}.tar.zst oci://${TARGET_REPO}
