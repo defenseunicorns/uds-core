@@ -9,12 +9,16 @@ base:
 identity-authorization:
   - "packages/identity-authorization/**"
   - "src/keycloak/**"
+  - "src/authservice/**"
 
 ui:
+  - "packages/ui/**"
   - "src/runtime/**"
 
 runtime-security:
+  - "packages/runtime-security/**"
   - "src/neuvector/**"
 
 backup-restore:
+  - "packages/backup-restore/**"
   - "src/velero/**"

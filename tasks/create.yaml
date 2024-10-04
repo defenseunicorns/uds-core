@@ -11,8 +11,6 @@ variables:
 
   - name: LAYER
 
-  - name: LAYER
-
 tasks:
   - name: standard-package
     description: "Create the UDS Core Zarf Package"
