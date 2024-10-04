@@ -10,3 +10,8 @@ identity-authorization:
   - "packages/identity-authorization/**"
   - "src/keycloak/**"
   - "src/authservice/**"
+
+logging:
+  - "packages/logging/**"
+  - "src/loki/**"
+  - "src/vector/**"
