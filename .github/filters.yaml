@@ -10,3 +10,7 @@ identity-authorization:
   - "packages/identity-authorization/**"
   - "src/keycloak/**"
   - "src/authservice/**"
+
+runtime-security:
+  - "packages/runtime-security/**"
+  - "src/neuvector/**"

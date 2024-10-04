@@ -62,7 +62,7 @@ components:
   - name: neuvector
     required: true
     import:
-      path: ../../src/neuvector
+      path: ../runtime-security
 
   # Loki
   - name: loki
