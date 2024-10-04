@@ -15,3 +15,15 @@ logging:
   - "packages/logging/**"
   - "src/loki/**"
   - "src/vector/**"
+
+ui:
+  - "packages/ui/**"
+  - "src/runtime/**"
+
+runtime-security:
+  - "packages/runtime-security/**"
+  - "src/neuvector/**"
+
+backup-restore:
+  - "packages/backup-restore/**"
+  - "src/velero/**"

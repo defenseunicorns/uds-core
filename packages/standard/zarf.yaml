@@ -62,13 +62,13 @@ components:
   - name: neuvector
     required: true
     import:
-      path: ../../src/neuvector
+      path: ../runtime-security
 
   # Loki
   - name: loki
     required: true
     import:
-      path: ../../src/loki
+      path: ../logging
 
   # Prometheus
   - name: kube-prometheus-stack
@@ -80,7 +80,7 @@ components:
   - name: vector
     required: true
     import:
-      path: ../../src/vector
+      path: ../logging
 
   # Grafana
   - name: grafana
@@ -98,10 +98,10 @@ components:
   - name: uds-runtime
     required: false
     import:
-      path: ../../src/runtime
+      path: ../ui
 
   # Velero
   - name: velero
     required: true
     import:
-      path: ../../src/velero
+      path: ../backup-restore
