@@ -4,6 +4,11 @@ metadata:
   description: "UDS Core Runtime"
   url: "https://github.com/defenseunicorns/uds-runtime"
 
+variables:
+  - name: DOMAIN
+    description: "Cluster domain"
+    default: "uds.dev"
+
 components:
   - name: uds-runtime
     required: false
