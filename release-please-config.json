@@ -16,6 +16,7 @@
         "README.md",
         "packages/base/zarf.yaml",
         "packages/identity-authorization/zarf.yaml",
+        "packages/logging/zarf.yaml",
         "packages/backup-restore/zarf.yaml",
         "packages/runtime-security/zarf.yaml",
         "packages/ui/zarf.yaml",

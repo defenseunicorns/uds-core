@@ -68,7 +68,7 @@ components:
   - name: loki
     required: true
     import:
-      path: ../../src/loki
+      path: ../logging
 
   # Prometheus
   - name: kube-prometheus-stack
@@ -80,7 +80,7 @@ components:
   - name: vector
     required: true
     import:
-      path: ../../src/vector
+      path: ../logging
 
   # Grafana
   - name: grafana
