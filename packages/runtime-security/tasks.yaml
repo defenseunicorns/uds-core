@@ -1,0 +1,7 @@
+includes:
+  - neuvector: ../../src/neuvector/tasks.yaml
+
+tasks:
+  - name: validate
+    actions:
+      - task: neuvector:validate
