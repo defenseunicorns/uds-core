@@ -1,0 +1,8 @@
+includes:
+  - metrics-server: ../../src/metrics-server/tasks.yaml
+
+tasks:
+  - name: validate
+    actions:
+      - description: "Validate Metrics Server"
+        task: metrics-server:validate
