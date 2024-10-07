@@ -93,7 +93,7 @@ jobs:
     strategy:
       matrix:
         flavor: [upstream, registry1, unicorn]
-        layer: [base, identity-authorization, ui, runtime-security, backup-restore, logging]
+        layer: [base, identity-authorization, ui, runtime-security, backup-restore, logging, metrics-server]
         arch: [amd64, arm64]
         exclude:
           - flavor: registry1

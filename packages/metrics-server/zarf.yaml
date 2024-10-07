@@ -1,0 +1,16 @@
+kind: ZarfPackageConfig
+metadata:
+  name: core-metrics-server
+  description: "UDS Core (Metrics Server)"
+  authors: "Defense Unicorns - Product"
+  # x-release-please-start-version
+  version: "0.28.0"
+  # x-release-please-end
+  x-uds-dependencies: ["base"]
+
+components:
+  # Metrics Server
+  - name: metrics-server
+    required: true
+    import:
+      path: ../../src/metrics-server
