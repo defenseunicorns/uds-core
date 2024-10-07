@@ -6,7 +6,7 @@ metadata:
   # x-release-please-start-version
   version: "0.28.0"
   # x-release-please-end
-  x-uds-dependencies: ["base"]
+  x-uds-dependencies: ["base", "identity-authorization"]
 
 components:
   # Prometheus
