@@ -2,7 +2,7 @@ loki:
   image:
     registry: docker.io
     repository: grafana/loki
-    tag: 3.1.1
+    tag: 3.2.0
 
 gateway:
   image:

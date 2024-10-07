@@ -113,6 +113,11 @@
       "matchFileNames": ["package.json", "package-lock.json", "tasks/create.yaml"],
       "groupName": "pepr",
       "commitMessageTopic": "pepr"
+    },
+    {
+      "matchPackageNames": ["mcr.microsoft.com/playwright"],
+      "groupName": "playwright",
+      "commitMessageTopic": "playwright"
     }
   ]
 }

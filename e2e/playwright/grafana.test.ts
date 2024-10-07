@@ -3,14 +3,16 @@ import { domain } from "./uds.config";
 
 test.use({ baseURL: `https://grafana.admin.${domain}` });
 
-test("validate datasources", async ({ page }) => {
+test("validate loki datasource", async ({ page }) => {
   await test.step("check loki", async () => {
     await page.goto(`/connections/datasources`);
     await page.click('text=Loki');
     await page.click('text=Save & test');
     await expect(page.locator('[data-testid="data-testid Alert success"]')).toBeVisible();
   });
+});
 
+test("validate prometheus datasource", async ({ page }) => {
   await test.step("check prometheus", async () => {
     await page.goto(`/connections/datasources`);
     await page.click('text=Prometheus');

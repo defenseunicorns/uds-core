@@ -28,18 +28,22 @@ tasks:
       - description: "Deploy the UDS Core Slim Dev Only Bundle"
         cmd: uds deploy bundles/k3d-slim-dev/uds-bundle-k3d-core-slim-dev-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress
 
-  - name: single-package
+  # This task is a wrapper to support --set LAYER=identity-authorization
+  - name: single-layer-callable
     actions:
-      - description: "Deploy the Istio package, if UDS_PKG != istio"
-        cmd: |
-          if [ "${UDS_PKG}" != "istio" ]; then
-            uds zarf package deploy build/zarf-package-uds-core-istio-${UDS_ARCH}.tar.zst --confirm --no-progress --components '*'
-          fi
-      - description: "Deploy the Pepr Module"
-        cmd: |
-          uds zarf package deploy build/zarf-package-pepr-uds-core-${UDS_ARCH}.tar.zst --confirm --no-progress --set UDS_SINGLE_TEST=true --set PEPR_SERVICE_MONITORS=false
-      - description: "Deploy the requested Zarf Package (must set UDS_PKG environment variable)"
-        cmd: uds zarf package deploy build/zarf-package-uds-core-${UDS_PKG}-${UDS_ARCH}.tar.zst --confirm --no-progress --components '*'
+      - task: single-layer
+        with:
+          layer: $LAYER
+
+  - name: single-layer
+    description: "Deploy a single UDS Core layer, must set UDS_LAYER environment variable"
+    inputs:
+      layer:
+        default: base
+        description: The UDS Core layer to deploy
+    actions:
+      - description: "Deploy a single UDS Core Layer (must set UDS_LAYER environment variable)"
+        cmd: uds zarf package deploy build/zarf-package-core-${{ index .inputs "layer" }}-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress --components '*'
 
   - name: latest-package-release
     actions:

@@ -21,7 +21,7 @@ on:
     inputs:
       package:
         type: string
-        description: "The name of the source package to test"
+        description: "The name of the core package layer to test"
         required: true
       flavor:
         type: string
@@ -43,7 +43,7 @@ jobs:
     timeout-minutes: 30
     name: Test
     env:
-      UDS_PKG: ${{ inputs.package }}
+      UDS_LAYER: ${{ inputs.package }}
 
     steps:
       - name: Checkout repository
@@ -57,9 +57,9 @@ jobs:
           ghToken: ${{ secrets.GITHUB_TOKEN }}
           chainguardIdentity: ${{ secrets.CHAINGUARD_IDENTITY }}
 
-      - name: Test a single source package
+      - name: Test a single layer package
         if: ${{ inputs.package != 'all' && inputs.test_type == 'install' }}
-        run: uds run test-single-package --set FLAVOR=${{ inputs.flavor }} --no-progress
+        run: uds run test-single-layer --set FLAVOR=${{ inputs.flavor }} --set LAYER=${{ inputs.package }} --no-progress
 
       - name: Test UDS Core Install
         if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
