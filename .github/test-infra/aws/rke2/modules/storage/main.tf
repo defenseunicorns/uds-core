@@ -4,10 +4,10 @@ locals {
   bucket_configurations = {
     for instance in var.ci_bucket_configurations :
     instance.name => {
-      name            = "${var.cluster_name}-${instance.name}"
-      bucket_name     = instance.name
-      service_account = instance.service_account
-      namespace       = instance.namespace
+      name              = "${var.cluster_name}-${instance.name}"
+      bucket_prefix     = instance.name
+      service_account   = instance.service_account
+      namespace         = instance.namespace
     }
   }
 }
@@ -29,7 +29,7 @@ module "generate_kms" {
 module "s3" {
   for_each                = local.bucket_configurations
   source                  = "github.com/defenseunicorns/terraform-aws-uds-s3?ref=v0.0.6"
-  name_prefix             = "${each.value.name}-"
+  name_prefix             = "${each.value.name}-${each.value.bucket_prefix}-"
   kms_key_arn             = module.generate_kms[each.key].kms_key_arn
   force_destroy           = "true"
   create_bucket_lifecycle = true
@@ -41,7 +41,7 @@ module "s3" {
 
 module "irsa" {
   #merge the keys from module.generate_kms into `bucket_configurations`
-  for_each                 = { for k, v in local.bucket_configurations : k => merge(v, module.generate_kms[k]) }
+  for_each                 = { for k, v in local.bucket_configurations : k => merge(v, module.generate_kms[k], module.s3[k]) }
   source                   = "./irsa"
   cluster_name             = var.cluster_name
   name                     = each.value.name

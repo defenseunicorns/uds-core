@@ -10,7 +10,7 @@ data "aws_iam_policy_document" "s3_bucket_policy" {
       "s3:ListBucketMultipartUploads"
     ]
     resources = [
-      "arn:${data.aws_partition.current.partition}:s3:::uds-${var.name}-${var.environment}"
+      "arn:${data.aws_partition.current.partition}:s3:::${var.bucket_name}"
     ]
   }
   statement {
@@ -23,7 +23,7 @@ data "aws_iam_policy_document" "s3_bucket_policy" {
       "s3:AbortMultipartUpload"
     ]
     resources = [
-      "arn:${data.aws_partition.current.partition}:s3:::uds-${var.name}-${var.environment}/*"
+      "arn:${data.aws_partition.current.partition}:s3:::${var.bucket_name}/*"
     ]
   }
   statement {
@@ -59,7 +59,7 @@ data "aws_iam_policy_document" "s3_bucket_role_policy" {
     condition {
       test     = "StringEquals"
       variable = "${var.oidc_bucket_attributes.bucket_regional_domain_name}:sub"
-      values   = ["system:serviceaccount:${var.namespace}:${var.name}"]
+      values   = ["system:serviceaccount:${var.namespace}:${var.bucket_service_account}"]
     }
   }
 }
