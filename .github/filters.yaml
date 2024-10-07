@@ -27,3 +27,7 @@ runtime-security:
 backup-restore:
   - "packages/backup-restore/**"
   - "src/velero/**"
+
+metrics-server:
+  - "packages/metrics-server/**"
+  - "src/metrics-server/**"

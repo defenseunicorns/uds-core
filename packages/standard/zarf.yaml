@@ -50,7 +50,7 @@ components:
   - name: metrics-server
     required: false
     import:
-      path: ../../src/metrics-server
+      path: ../metrics-server
 
   # Keycloak
   - name: keycloak
