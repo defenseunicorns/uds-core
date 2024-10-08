@@ -239,7 +239,7 @@ spec:
             lightweight.claim: "false"
             userinfo.token.claim: "false"
 
-      # Optionally, store the client secret a Kubernetes secret
+      # Optionally, store the client secret as a Kubernetes secret
       secretName: httpbin-api-client
       secretTemplate:
         clientId: "clientField(clientId)"
@@ -247,7 +247,7 @@ spec:
 ```
 Setting `serviceAccountsEnabled: true` requires `standardFlowEnabled: false` and is incompatible with `publicClient: true`.
 
-If needed, multiple clients can be added to the same application: an authservice client, an device flow client and as many service account clients as required.
+If needed, multiple clients can be added to the same application: an AuthService client, a device flow client, and as many service account clients as required.
 
 ### SSO Client Attribute Validation
 
