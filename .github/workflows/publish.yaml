@@ -23,7 +23,7 @@ jobs:
       id-token: write  # This is needed for OIDC federation.
 
     steps:
-      - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
+      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
 
       - name: Environment setup
         uses: ./.github/actions/setup
@@ -93,7 +93,7 @@ jobs:
     strategy:
       matrix:
         flavor: [upstream, registry1, unicorn]
-        layer: [base, identity-authorization, ui, runtime-security, backup-restore, logging]
+        layer: [base, identity-authorization, ui, runtime-security, backup-restore, logging, metrics-server, monitoring]
         arch: [amd64, arm64]
         exclude:
           - flavor: registry1
@@ -107,7 +107,7 @@ jobs:
       id-token: write  # This is needed for OIDC federation.
 
     steps:
-      - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
+      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
 
       - name: Environment setup
         uses: ./.github/actions/setup

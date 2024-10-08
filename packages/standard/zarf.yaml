@@ -50,7 +50,7 @@ components:
   - name: metrics-server
     required: false
     import:
-      path: ../../src/metrics-server
+      path: ../metrics-server
 
   # Keycloak
   - name: keycloak
@@ -74,7 +74,7 @@ components:
   - name: kube-prometheus-stack
     required: true
     import:
-      path: ../../src/prometheus-stack
+      path: ../monitoring
 
   # Vector
   - name: vector
@@ -86,7 +86,7 @@ components:
   - name: grafana
     required: true
     import:
-      path: ../../src/grafana
+      path: ../monitoring
 
   # Authservice
   - name: authservice
