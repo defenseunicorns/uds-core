@@ -10,7 +10,7 @@ packages:
   - name: pod-identity-webhook
     repository: ghcr.io/defenseunicorns/packages/uds/pod-identity-webhook
     ref: 0.3.1-upstream
-    
+
   - name: init
     repository: ghcr.io/zarf-dev/packages/init
     ref: v0.40.1
