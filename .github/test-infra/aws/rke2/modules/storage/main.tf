@@ -4,10 +4,10 @@ locals {
   bucket_configurations = {
     for instance in var.ci_bucket_configurations :
     instance.name => {
-      name              = "${var.cluster_name}-${instance.name}"
-      bucket_prefix     = instance.name
-      service_account   = instance.service_account
-      namespace         = instance.namespace
+      name            = "${var.cluster_name}-${instance.name}"
+      bucket_prefix   = instance.name
+      service_account = instance.service_account
+      namespace       = instance.namespace
     }
   }
 }
