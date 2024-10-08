@@ -50,7 +50,7 @@ components:
   - name: metrics-server
     required: false
     import:
-      path: ../../src/metrics-server
+      path: ../metrics-server
 
   # Keycloak
   - name: keycloak
@@ -62,31 +62,31 @@ components:
   - name: neuvector
     required: true
     import:
-      path: ../../src/neuvector
+      path: ../runtime-security
 
   # Loki
   - name: loki
     required: true
     import:
-      path: ../../src/loki
+      path: ../logging
 
   # Prometheus
   - name: kube-prometheus-stack
     required: true
     import:
-      path: ../../src/prometheus-stack
+      path: ../monitoring
 
   # Vector
   - name: vector
     required: true
     import:
-      path: ../../src/vector
+      path: ../logging
 
   # Grafana
   - name: grafana
     required: true
     import:
-      path: ../../src/grafana
+      path: ../monitoring
 
   # Authservice
   - name: authservice
@@ -98,10 +98,10 @@ components:
   - name: uds-runtime
     required: false
     import:
-      path: ../../src/runtime
+      path: ../ui
 
   # Velero
   - name: velero
     required: true
     import:
-      path: ../../src/velero
+      path: ../backup-restore

@@ -12,7 +12,7 @@ runs:
       uses: Homebrew/actions/setup-homebrew@master
     - name: Install UDS CLI
       # renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
-      run: brew install defenseunicorns/tap/uds@0.16.0
+      run: brew install defenseunicorns/tap/uds@0.17.0
       shell: bash
     - name: Run Formatting Checks
       run: uds run lint-check --no-progress
