@@ -1,0 +1,7 @@
+includes:
+  - runtime: ../../src/runtime/tasks.yaml
+
+tasks:
+  - name: validate
+    actions:
+      - task: runtime:validate

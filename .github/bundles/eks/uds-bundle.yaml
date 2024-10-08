@@ -9,7 +9,7 @@ metadata:
 packages:
   - name: init
     repository: ghcr.io/zarf-dev/packages/init
-    ref: v0.40.1
+    ref: v0.41.0
 
   - name: core
     path: ../../../build
