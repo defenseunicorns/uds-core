@@ -43,7 +43,7 @@ tasks:
         description: The UDS Core layer to deploy
     actions:
       - description: "Deploy a single UDS Core Layer (must set UDS_LAYER environment variable)"
-        cmd: uds zarf package deploy build/zarf-package-core-${{ index .inputs "layer" }}-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress --components '*'
+        cmd: uds zarf package deploy build/zarf-package-core-${{ index .inputs "layer" }}-${UDS_ARCH}-${VERSION}.tar.zst --set INSECURE_ADMIN_PASSWORD_GENERATION="true" --confirm --no-progress --components '*'
 
   - name: latest-package-release
     actions:
