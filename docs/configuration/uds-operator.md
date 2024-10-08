@@ -238,12 +238,6 @@ spec:
             id.token.claim: "false"
             lightweight.claim: "false"
             userinfo.token.claim: "false"
-
-      # Optionally, store the client secret as a Kubernetes secret
-      secretName: httpbin-api-client
-      secretTemplate:
-        clientId: "clientField(clientId)"
-        clientSecret: "clientField(secret)"
 ```
 Setting `serviceAccountsEnabled: true` requires `standardFlowEnabled: false` and is incompatible with `publicClient: true`.
 
