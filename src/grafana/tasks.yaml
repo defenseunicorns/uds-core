@@ -29,14 +29,12 @@ tasks:
       - description: "Setup the Doug User for testing"
         # Self-reference this task file to avoid https://github.com/defenseunicorns/maru-runner/issues/144
         cmd: uds run -f tasks/test.yaml common-setup:create-doug-user --set KEYCLOAK_GROUP="/UDS Core/Admin" # Adds the test doug user
-      - description: E2E Test for Grafana
+      - description: E2E Test for Grafana, optionally set FULL_CORE=true to test integrations with Loki
         cmd: |
           # renovate: datasource=docker depName=mcr.microsoft.com/playwright versioning=docker
-          docker run --rm --ipc=host --net=host --mount type=bind,source="$(pwd)",target=/app mcr.microsoft.com/playwright:v1.47.2-noble sh -c " \
+          docker run --rm --ipc=host -e FULL_CORE="${FULL_CORE}" --net=host --mount type=bind,source="$(pwd)",target=/app mcr.microsoft.com/playwright:v1.47.2-noble sh -c " \
             cd app && \
             npm ci && \
             npx playwright test grafana.test.ts \
             "
-          npm ci
-          npx playwright test grafana.test.ts
         dir: e2e/playwright

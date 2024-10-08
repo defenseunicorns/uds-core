@@ -115,6 +115,11 @@
       "commitMessageTopic": "pepr"
     },
     {
+      "matchPackageNames": ["defenseunicorns/uds-common"],
+      "groupName": "uds-common",
+      "commitMessageTopic": "uds-common"
+    },
+    {
       "matchPackageNames": ["mcr.microsoft.com/playwright"],
       "groupName": "playwright",
       "commitMessageTopic": "playwright"
