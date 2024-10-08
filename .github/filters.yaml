@@ -31,3 +31,8 @@ backup-restore:
 metrics-server:
   - "packages/metrics-server/**"
   - "src/metrics-server/**"
+
+monitoring:
+  - "packages/monitoring/**"
+  - "src/prometheus-stack/**"
+  - "src/grafana/**"

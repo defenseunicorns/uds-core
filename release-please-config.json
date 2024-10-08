@@ -20,6 +20,7 @@
         "packages/backup-restore/zarf.yaml",
         "packages/runtime-security/zarf.yaml",
         "packages/ui/zarf.yaml",
+        "packages/monitoring/zarf.yaml",
         "packages/metrics-server/zarf.yaml",
         "packages/standard/zarf.yaml",
         "bundles/k3d-slim-dev/uds-bundle.yaml",
