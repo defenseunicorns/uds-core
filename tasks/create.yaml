@@ -30,12 +30,12 @@ tasks:
     description: "Create the slim dev bundle (Base and Identity)"
     actions:
       - description: "Create base package"
-        task: create:single-layer
+        task: single-layer
         with:
           layer: base
 
       - description: "Create identity-authorization package"
-        task: create:single-layer
+        task: single-layer
         with:
           layer: identity-authorization
 
