@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial
 {{- if .Values.podDisruptionBudget -}}
 apiVersion: policy/v1
 kind: PodDisruptionBudget

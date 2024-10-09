@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial
 import { describe, expect, it } from "@jest/globals";
 import { Monitor } from "../../crd";
 import { generatePodMonitor } from "./pod-monitor";

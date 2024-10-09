@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial
+
 includes:
   - create: ./create.yaml
   - setup: ./setup.yaml
