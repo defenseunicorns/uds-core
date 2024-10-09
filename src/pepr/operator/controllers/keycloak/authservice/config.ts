@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial
 import { createHash } from "crypto";
 
 import { K8s, kind } from "pepr";

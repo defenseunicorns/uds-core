@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial
 import { Component, setupLogger } from "../../../logger";
 import { StoredMatcher } from "../../../policies";
 import { Matcher, Policy, UDSExemption } from "../../crd";
