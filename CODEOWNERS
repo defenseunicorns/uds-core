@@ -2,4 +2,6 @@
 
 # Additional privileged files
 /CODEOWNERS @jeff-mccoy @daveworth
-/LICENSE @jeff-mccoy @daveworth
+/LICENSE.md @jeff-mccoy @daveworth
+/LICENSE-agpl-v3.md @jeff-mccoy @daveworth
+/LICENSE-commercial.md @jeff-mccoy @daveworth
