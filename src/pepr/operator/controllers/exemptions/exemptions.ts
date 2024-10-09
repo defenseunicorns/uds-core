@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial
 import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 import { UDSExemption } from "../../crd";
 import { ExemptionStore } from "./exemption-store";

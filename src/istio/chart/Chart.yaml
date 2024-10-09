@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial
 apiVersion: v2
 name: uds-istio-config
 description: Istio configuration for UDS

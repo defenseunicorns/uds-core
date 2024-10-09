@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial
 {{- if .Capabilities.APIVersions.Has "monitoring.coreos.com/v1" }}
 # The serviceMonitor for metrics-server is unique due to permissive mTLS on its port, so it is created outside of the Package spec
 apiVersion: monitoring.coreos.com/v1

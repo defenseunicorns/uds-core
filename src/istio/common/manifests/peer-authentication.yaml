@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial
 ---
 # Source: istio/templates/bigbang/peerAuthentication.yaml
 apiVersion: security.istio.io/v1beta1
