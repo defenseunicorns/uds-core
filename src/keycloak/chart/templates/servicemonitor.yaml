@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial
 {{- range $key, $serviceMonitor := dict "metrics" .Values.serviceMonitor "extra" .Values.extraServiceMonitor }}
 {{- with $serviceMonitor }}
 {{- if .enabled }}

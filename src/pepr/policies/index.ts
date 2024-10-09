@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial
 // Various validation actions for Kubernetes resources from Big Bang
 import { WatchCfg } from "kubernetes-fluent-client";
 import { K8s } from "pepr";

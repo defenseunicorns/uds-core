@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial
 image:
   repository: cgr.dev/du-uds-defenseunicorns/velero-fips
   tag: 1.14.1-dev

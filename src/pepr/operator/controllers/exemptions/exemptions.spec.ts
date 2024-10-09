@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial
 import { beforeEach, describe, expect, it } from "@jest/globals";
 import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 import { MatcherKind, Policy } from "../../crd";
