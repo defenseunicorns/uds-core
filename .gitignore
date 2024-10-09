@@ -18,4 +18,7 @@ extract-terraform.sh
 **/.terraform*
 cluster-config.yaml
 **.tfstate
+
+packages/checkpoint-dev/uds-checkpoint.tar
+
 **.backup
