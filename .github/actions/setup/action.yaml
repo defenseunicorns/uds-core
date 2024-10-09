@@ -20,6 +20,7 @@ runs:
   using: "composite"
   steps:
     - name: Free GH runner space
+      shell: bash
       run: |
         df -h
         sudo rm -rf /usr/share/dotnet
