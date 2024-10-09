@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial
 image:
   repository: cgr.dev/du-uds-defenseunicorns/metrics-server-fips
   tag: "0.7.2"

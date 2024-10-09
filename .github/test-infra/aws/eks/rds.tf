@@ -1,24 +1,3 @@
-provider "aws" {
-  region = var.region
-}
-
-terraform {
-  required_version = ">= 1.8.0"
-  backend "s3" {
-  }
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = ">= 4.0"
-    }
-
-    random = {
-      source  = "hashicorp/random"
-      version = "3.6.3"
-    }
-  }
-}
-
 resource "random_password" "db_password" {
   length  = 16
   special = false
@@ -105,14 +84,6 @@ data "aws_subnets" "subnets" {
   }
 }
 
-data "aws_partition" "current" {}
-
-data "aws_caller_identity" "current" {}
-
 locals {
   vpc_id = data.aws_vpc.vpc.id
-}
-
-resource "random_id" "unique_id" {
-  byte_length = 4
 }

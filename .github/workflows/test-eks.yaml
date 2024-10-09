@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial
 name: Test Core On EKS
 
 on:
@@ -26,7 +27,7 @@ jobs:
       - name: Set ENV
         run: |
           echo "UDS_CLUSTER_NAME=uds-ci-${{ inputs.flavor }}-${SHA:0:7}" >> $GITHUB_ENV
-          echo "UDS_STATE_KEY="tfstate/ci/install/${SHA:0:7}-core-${{ inputs.flavor }}-aws.tfstate >> $GITHUB_ENV
+          echo "UDS_STATE_KEY="tfstate/ci/install/${SHA:0:7}-eks-core-${{ inputs.flavor }}-aws.tfstate >> $GITHUB_ENV
           echo "TF_VAR_region=${UDS_REGION}" >> $GITHUB_ENV
           echo "TF_VAR_name=uds-ci-${{ inputs.flavor }}-${SHA:0:7}" >> $GITHUB_ENV
           echo "TF_VAR_use_permissions_boundary=true" >> $GITHUB_ENV
@@ -57,43 +58,43 @@ jobs:
       - name: Setup Tofu
         uses: opentofu/setup-opentofu@12f4debbf681675350b6cd1f0ff8ecfbda62027b # v1.0.4
         with:
-          tofu_version: 1.8.1
+          tofu_version: 1.8.2
           tofu_wrapper: false
 
       - name: Create UDS Core Package
         run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress --set FLAVOR=${{ inputs.flavor }}
 
       - name: Create Core Bundle
-        run: uds create .github/bundles --confirm
+        run: uds create .github/bundles/eks --confirm
 
       - name: Create Cluster
         run: uds run -f tasks/iac.yaml create-cluster --no-progress
         timeout-minutes: 60
 
       - name: Create IAC
-        run: uds run -f tasks/iac.yaml create-iac --no-progress
+        run: uds run -f tasks/iac.yaml create-iac --no-progress --set K8S_DISTRO=eks
         timeout-minutes: 20
 
       - name: Deploy Core Bundle
         env:
-          UDS_CONFIG: .github/bundles/uds-config.yaml
-        run: uds deploy .github/bundles/uds-bundle-uds-core-eks-nightly-*.tar.zst --confirm
+          UDS_CONFIG: .github/bundles/eks/uds-config.yaml
+        run: uds deploy .github/bundles/eks/uds-bundle-uds-core-eks-nightly-*.tar.zst --confirm
         timeout-minutes: 20
 
       - name: Remove UDS Core
         if: always()
-        run: uds remove .github/bundles/uds-bundle-uds-core-eks-*.tar.zst --confirm
+        run: uds remove .github/bundles/eks/uds-bundle-uds-core-eks-*.tar.zst --confirm
         timeout-minutes: 10
         continue-on-error: true
 
       - name: Remove IAC
         if: always()
-        run: uds run -f tasks/iac.yaml destroy-iac --no-progress
+        run: uds run -f tasks/iac.yaml destroy-iac --no-progress --set K8S_DISTRO=eks
         timeout-minutes: 10
         continue-on-error: true
 
       - name: Teardown EKS cluster
         if: always()
-        run: uds run -f tasks/iac.yaml destroy-cluster --no-progress
+        run: uds run -f tasks/iac.yaml destroy-cluster --no-progress --set K8S_DISTRO=eks
         timeout-minutes: 30
         continue-on-error: true
