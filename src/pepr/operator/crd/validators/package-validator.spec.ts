@@ -1,7 +1,17 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial
 import { afterEach, describe, expect, it, jest } from "@jest/globals";
 import { PeprValidateRequest } from "pepr";
-import { Allow, Direction, Expose, Gateway, Protocol, RemoteGenerated, Sso, UDSPackage } from "..";
+import {
+  Allow,
+  Direction,
+  Expose,
+  Gateway,
+  Monitor,
+  Protocol,
+  RemoteGenerated,
+  Sso,
+  UDSPackage,
+} from "..";
 import { validator } from "./package-validator";
 
 const makeMockReq = (
@@ -9,6 +19,7 @@ const makeMockReq = (
   exposeList: Partial<Expose>[],
   allowList: Partial<Allow>[],
   ssoClients: Partial<Sso>[],
+  monitorList: Partial<Monitor>[],
 ) => {
   const defaultPkg: UDSPackage = {
     metadata: {
@@ -21,6 +32,7 @@ const makeMockReq = (
         allow: [],
       },
       sso: [],
+      monitor: [],
     },
   };
 
@@ -47,6 +59,16 @@ const makeMockReq = (
     defaultPkg.spec!.sso?.push({ ...defaultClient, ...client });
   }
 
+  for (const monitor of monitorList) {
+    const defaultMonitor: Monitor = {
+      description: "Default Monitor",
+      portName: "http-metrics",
+      selector: {},
+      targetPort: 8080,
+    };
+    defaultPkg.spec!.monitor?.push({ ...defaultMonitor, ...monitor });
+  }
+
   return {
     Raw: { ...defaultPkg, ...pkg },
     Approve: jest.fn(),
@@ -60,13 +82,13 @@ describe("Test validation of Exemption CRs", () => {
   });
 
   it("allows packages that have no issues", async () => {
-    const mockReq = makeMockReq({}, [{}], [{}], [{}]);
+    const mockReq = makeMockReq({}, [{}], [{}], [{}], [{}]);
     await validator(mockReq);
     expect(mockReq.Approve).toHaveBeenCalledTimes(1);
   });
 
   it("denies system namespaces", async () => {
-    const mockReq = makeMockReq({ metadata: { namespace: "kube-system" } }, [], [], []);
+    const mockReq = makeMockReq({ metadata: { namespace: "kube-system" } }, [], [], [], []);
     await validator(mockReq);
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
   });
@@ -82,6 +104,7 @@ describe("Test validation of Exemption CRs", () => {
           },
         },
       ],
+      [],
       [],
       [],
     );
@@ -102,6 +125,7 @@ describe("Test validation of Exemption CRs", () => {
       ],
       [],
       [],
+      [],
     );
     await validator(mockReq);
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
@@ -118,6 +142,7 @@ describe("Test validation of Exemption CRs", () => {
           service: "app-service",
         },
       ],
+      [],
       [],
       [],
     );
@@ -138,6 +163,7 @@ describe("Test validation of Exemption CRs", () => {
       ],
       [],
       [],
+      [],
     );
     await validator(mockReq);
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
@@ -156,13 +182,14 @@ describe("Test validation of Exemption CRs", () => {
       ],
       [],
       [],
+      [],
     );
     await validator(mockReq);
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
   });
 
   it("denies virtual services that are the same name", async () => {
-    const mockReq = makeMockReq({}, [{}, {}], [], []);
+    const mockReq = makeMockReq({}, [{}, {}], [], [], []);
     await validator(mockReq);
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
   });
@@ -177,6 +204,7 @@ describe("Test validation of Exemption CRs", () => {
           remoteNamespace: "other-system",
         },
       ],
+      [],
       [],
     );
     await validator(mockReq);
@@ -194,19 +222,20 @@ describe("Test validation of Exemption CRs", () => {
         },
       ],
       [],
+      [],
     );
     await validator(mockReq);
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
   });
 
   it("denies network policies that are the same name", async () => {
-    const mockReq = makeMockReq({}, [], [{}, {}], []);
+    const mockReq = makeMockReq({}, [], [{}, {}], [], []);
     await validator(mockReq);
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
   });
 
   it("denies clients with clientIDs that are not unique", async () => {
-    const mockReq = makeMockReq({}, [], [], [{}, {}]);
+    const mockReq = makeMockReq({}, [], [], [{}, {}], []);
     await validator(mockReq);
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
   });
@@ -221,6 +250,7 @@ describe("Test validation of Exemption CRs", () => {
           secretName: "HELLO_KITTEH",
         },
       ],
+      [],
     );
     await validator(mockReq);
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
@@ -236,6 +266,7 @@ describe("Test validation of Exemption CRs", () => {
           redirectUris: undefined,
         },
       ],
+      [],
     );
     await validator(mockReq);
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
@@ -252,6 +283,7 @@ describe("Test validation of Exemption CRs", () => {
           redirectUris: undefined,
         },
       ],
+      [],
     );
     await validator(mockReq);
     expect(mockReq.Approve).toHaveBeenCalledTimes(1);
@@ -269,6 +301,7 @@ describe("Test validation of Exemption CRs", () => {
           standardFlowEnabled: true,
         },
       ],
+      [],
     );
     await validator(mockReq);
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
@@ -319,6 +352,7 @@ describe("Test validation of Exemption CRs", () => {
           secret: "app-client-secret",
         },
       ],
+      [],
     );
     await validator(mockReq);
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
@@ -337,6 +371,7 @@ describe("Test validation of Exemption CRs", () => {
           secretName: "app-k8s-secret",
         },
       ],
+      [],
     );
     await validator(mockReq);
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
@@ -355,6 +390,7 @@ describe("Test validation of Exemption CRs", () => {
           secretTemplate: {},
         },
       ],
+      [],
     );
     await validator(mockReq);
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
@@ -373,6 +409,7 @@ describe("Test validation of Exemption CRs", () => {
           enableAuthserviceSelector: {},
         },
       ],
+      [],
     );
     await validator(mockReq);
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
@@ -391,6 +428,7 @@ describe("Test validation of Exemption CRs", () => {
           protocol: Protocol.Saml,
         },
       ],
+      [],
     );
     await validator(mockReq);
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
@@ -407,6 +445,7 @@ describe("Test validation of Exemption CRs", () => {
           standardFlowEnabled: false,
         },
       ],
+      [],
     );
     await validator(mockReq);
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
@@ -424,6 +463,7 @@ describe("Test validation of Exemption CRs", () => {
           standardFlowEnabled: false,
         },
       ],
+      [],
     );
     await validator(mockReq);
     expect(mockReq.Approve).toHaveBeenCalledTimes(1);
@@ -458,6 +498,7 @@ describe("Test validation of Exemption CRs", () => {
           },
         },
       ],
+      [],
     );
     await validator(mockReq);
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
@@ -474,6 +515,7 @@ describe("Test validation of Exemption CRs", () => {
           enableAuthserviceSelector: undefined, // explicitly undefined
         },
       ],
+      [],
     );
     await validator(mockReq);
     expect(mockReq.Approve).toHaveBeenCalledTimes(1);
@@ -497,6 +539,7 @@ describe("Test Allowed SSO Client Attributes", () => {
           },
         },
       ],
+      [],
     );
     await validator(mockReq);
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
@@ -529,6 +572,7 @@ describe("Test Allowed SSO Client Attributes", () => {
           },
         },
       ],
+      [],
     );
     await validator(mockReq);
     expect(mockReq.Approve).toHaveBeenCalledTimes(1);
@@ -547,6 +591,7 @@ describe("Test Allowed SSO Client Attributes", () => {
           },
         },
       ],
+      [],
     );
     await validator(mockReq);
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
@@ -565,14 +610,48 @@ describe("Test Allowed SSO Client Attributes", () => {
           attributes: {},
         },
       ],
+      [],
     );
     await validator(mockReq);
     expect(mockReq.Approve).toHaveBeenCalledTimes(1);
   });
 
   it("allows clients with no attributes defined", async () => {
-    const mockReq = makeMockReq({}, [], [], [{}]);
+    const mockReq = makeMockReq({}, [], [], [{}], []);
     await validator(mockReq);
     expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("Test proper generation of a unique name for service monitors", () => {
+  afterEach(() => {
+    jest.resetAllMocks();
+  });
+
+  it("given an undefined description, a unique serviceMonitor name should be generated using the selector and portName fields", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [],
+      [],
+      [
+        { description: undefined, portName: "http-foo", selector: { key: "foo" } },
+        { description: undefined, portName: "http-bar", selector: { key: "bar" } },
+      ],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(0);
+  });
+
+  it("denies monitors that do not have unique descriptions", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [],
+      [],
+      [{ description: "Metrics" }, { description: "Metrics" }],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
   });
 });
