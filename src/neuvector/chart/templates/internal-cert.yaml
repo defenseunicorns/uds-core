@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial
 {{- if .Values.generateInternalCert -}}
 {{- $cn := "neuvector" }}
 {{- $ca := genCA "neuvector" 3650 -}}

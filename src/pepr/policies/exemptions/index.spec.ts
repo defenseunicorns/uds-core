@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial
 import { beforeAll, describe, expect, it, jest } from "@jest/globals";
 import { PeprValidateRequest, kind } from "pepr";
 import { isExempt } from ".";

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial
 {{- if not .Values.devMode }}
 apiVersion: networking.istio.io/v1alpha3
 kind: DestinationRule
