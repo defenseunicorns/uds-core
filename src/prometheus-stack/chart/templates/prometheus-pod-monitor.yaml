@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial
 # This pod monitor is used instead of a service monitor to handle mTLS with self-monitoring
 apiVersion: monitoring.coreos.com/v1
 kind: PodMonitor
