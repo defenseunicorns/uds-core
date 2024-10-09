@@ -244,6 +244,7 @@ Setting `serviceAccountsEnabled: true` requires `standardFlowEnabled: false` and
 If needed, multiple clients can be added to the same application: an AuthService client, a device flow client, and as many service account clients as required.
 
 A keycloak service account JWT can be distinguished by a username prefix of `service-account-` and a new claim called `client_id`.  Note that the `aud` field is not set by default, hence the mapper in the example.
+
 ### SSO Client Attribute Validation
 
 The SSO spec supports a subset of the Keycloak attributes for clients, but does not support all of them. The current supported attributes are:
