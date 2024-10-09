@@ -102,4 +102,3 @@ tasks:
         description: for setting additional flags
     actions:
       - cmd: lula tools compose -f ${{ .inputs.oscalfile }} ${{ .inputs.options }}
-
