@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial
 pilot:
   image: "cgr.dev/du-uds-defenseunicorns/istio-pilot-fips:1.23.2"
 global:

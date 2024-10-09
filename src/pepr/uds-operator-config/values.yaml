@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial
 operator:
   UDS_DOMAIN: "###ZARF_VAR_DOMAIN###"
   UDS_CA_CERT: "###ZARF_VAR_CA_CERT###"

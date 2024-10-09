@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial
 name: debug-output
 description: "Print out basic debug info for a k8s cluster"
 
