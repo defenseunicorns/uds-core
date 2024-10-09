@@ -40,7 +40,8 @@ permissions:
 
 jobs:
   test:
-    runs-on: "${{ inputs.package == 'all' && 'uds-ubuntu-big-boy-8-core' || 'ubuntu-latest'}}"
+    # Use the 8 core runner for full-core or 4 core runner (with larger disk) for func layers tests
+    runs-on: "${{ inputs.package == 'all' && 'uds-ubuntu-big-boy-8-core' || 'uds-ubuntu-big-boy-4-core'}}"
     timeout-minutes: 30
     name: Test
     env:
