@@ -46,22 +46,22 @@ jobs:
         if: ${{ inputs.snapshot }}
         run: |
           yq -ei '.metadata.version=env(SNAPSHOT_VERSION), (.packages[]|select(has("ref"))|select(.name=="core")).ref=env(SNAPSHOT_VERSION)' bundles/k3d-standard/uds-bundle.yaml
-          yq -ei '.metadata.version=env(SNAPSHOT_VERSION), (.packages[]|select(has("ref"))|select(.name=="core-slim-dev")).ref=env(SNAPSHOT_VERSION)' bundles/k3d-slim-dev/uds-bundle.yaml
+          yq -ei '.metadata.version=env(SNAPSHOT_VERSION), (.packages[]|select(has("ref"))|select(.name=="core-base")).ref=env(SNAPSHOT_VERSION)' bundles/k3d-slim-dev/uds-bundle.yaml
+          yq -ei '.metadata.version=env(SNAPSHOT_VERSION), (.packages[]|select(has("ref"))|select(.name=="core-identity-authorization")).ref=env(SNAPSHOT_VERSION)' bundles/k3d-slim-dev/uds-bundle.yaml
           yq -ei '.metadata.version=env(SNAPSHOT_VERSION)' packages/standard/zarf.yaml
-          yq -ei '.metadata.version=env(SNAPSHOT_VERSION)' packages/slim-dev/zarf.yaml
+          yq -ei '.metadata.version=env(SNAPSHOT_VERSION)' packages/base/zarf.yaml
+          yq -ei '.metadata.version=env(SNAPSHOT_VERSION)' packages/identity-authorization/zarf.yaml
 
       - name: Create Packages and Bundles
         run: |
           ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress --set FLAVOR=${{ matrix.flavor }}
           ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml k3d-standard-bundle --no-progress
-          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml slim-dev-package --no-progress --set FLAVOR=${{ matrix.flavor }}
-          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml k3d-slim-dev-bundle --no-progress
+          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml k3d-slim-dev-bundle --no-progress --set FLAVOR=${{ matrix.flavor }}
 
           if [ "${{ matrix.flavor }}" != "registry1" ]; then
             ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml standard-package --no-progress --set FLAVOR=${{ matrix.flavor }}
             ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-standard-bundle --no-progress
-            ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml slim-dev-package --no-progress --set FLAVOR=${{ matrix.flavor }}
-            ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-slim-dev-bundle --no-progress
+            ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-slim-dev-bundle --no-progress --set FLAVOR=${{ matrix.flavor }}
           fi
 
       # Standard Package by default tests full core
