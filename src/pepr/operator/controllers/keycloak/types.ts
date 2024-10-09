@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial
 import { ProtocolMapper } from "../../crd/generated/package-v1alpha1";
 
 export interface Client {

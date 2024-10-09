@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial
 import { V1NetworkPolicyPeer } from "@kubernetes/client-node";
 import { META_IP } from "./cloudMetadata";
 

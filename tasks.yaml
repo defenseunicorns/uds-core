@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial
 variables:
   - name: FLAVOR
     default: upstream
@@ -41,16 +42,6 @@ tasks:
 
   - name: slim-dev
     actions:
-      - description: "Create base package"
-        task: create:single-layer
-        with:
-          layer: base
-
-      - description: "Create identity-authorization package"
-        task: create:single-layer
-        with:
-          layer: identity-authorization
-
       - description: "Build slim dev bundle"
         task: create:k3d-slim-dev-bundle
 
