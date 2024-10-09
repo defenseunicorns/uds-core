@@ -105,9 +105,24 @@
       "commitMessageTopic": "test-infra"
     },
     {
+      "matchFileNames": ["e2e/**"],
+      "groupName": "e2e-tests",
+      "commitMessageTopic": "e2e tests"
+    },
+    {
       "matchFileNames": ["package.json", "package-lock.json", "tasks/create.yaml"],
       "groupName": "pepr",
       "commitMessageTopic": "pepr"
+    },
+    {
+      "matchPackageNames": ["defenseunicorns/uds-common"],
+      "groupName": "uds-common",
+      "commitMessageTopic": "uds-common"
+    },
+    {
+      "matchPackageNames": ["mcr.microsoft.com/playwright"],
+      "groupName": "playwright",
+      "commitMessageTopic": "playwright"
     }
   ]
 }

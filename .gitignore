@@ -19,3 +19,4 @@ extract-terraform.sh
 cluster-config.yaml
 **.tfstate
 **.backup
+.playwright
