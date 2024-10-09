@@ -15,4 +15,37 @@ tasks:
 
       - cmd: "npx kubernetes-fluent-client crd exemptions.uds.dev src/pepr/operator/crd/generated"
 
+      - task: gen-docs
+
       - cmd: "npx pepr format"
+
+  - name: gen-docs
+    description: "Generate Docs for generated CRDS, requires a running kubernetes cluster"
+    actions:
+      - cmd: |
+          # Define CRD list as a space-separated string
+          CRD_LIST="exemptions.uds.dev packages.uds.dev"
+
+          # For each CRD retrieve the CRD and create a Go struct file to then create a markdown file
+          for CRD in $CRD_LIST; do
+
+              # Retrieve CRD Schema from Cluster (may return multiple files)
+              npx kubernetes-fluent-client crd "$CRD" -l schema . >/dev/null 2>&1
+
+              # Loop through each schema file returned by the previous command
+              for schema_file in *.schema; do
+                  # remove `additionalProperties` fields from schema
+                  sed '/"additionalProperties": {}/d' "$schema_file" > temp_file && mv temp_file "$schema_file"
+
+                  # Extract the version (e.g., v1alpha1)
+                  version=$(echo "$schema_file" | sed -E 's/.*-(v[0-9]+.*)\.schema/\1/')
+
+                  # Typescript format markdown
+                  ts-node src/pepr/docs-gen/main.ts "$schema_file" "$version"
+
+                  echo "$go_file $schema_file"
+
+                  # Remove the schema and go files
+                  rm -f "$schema_file"
+              done
+          done
