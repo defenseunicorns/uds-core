@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial
 pilot:
   image: "docker.io/istio/pilot:1.23.2-distroless"
 global:

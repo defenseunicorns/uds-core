@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial
 {{- with .Values.prometheusRule -}}
 {{- if .enabled }}
 apiVersion: monitoring.coreos.com/v1

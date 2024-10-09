@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial
 import { V1OwnerReference } from "@kubernetes/client-node";
 import { K8s } from "pepr";
 import { Component, setupLogger } from "../../../logger";

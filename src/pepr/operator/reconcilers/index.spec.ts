@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { GenericKind } from "kubernetes-fluent-client";
 import { K8s, Log, kind } from "pepr";

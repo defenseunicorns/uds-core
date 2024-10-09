@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial
 import { PeprValidateRequest } from "pepr";
 import { MatcherKind, Policy, UDSExemption } from "..";
 import { UDSConfig } from "../../../config";
