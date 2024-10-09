@@ -94,7 +94,7 @@ resource "aws_iam_role_policy" "server_ccm" {
 }
 
 module "rke2_kms_key" {
-  source = "github.com/defenseunicorns/terraform-aws-uds-kms?ref=v0.0.5"
+  source = "github.com/defenseunicorns/terraform-aws-uds-kms?ref=v0.0.6"
 
   kms_key_alias_name_prefix         = "rke2-${local.cluster_name}-server"
   kms_key_deletion_window           = 7
