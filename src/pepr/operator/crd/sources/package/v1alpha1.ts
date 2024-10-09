@@ -382,6 +382,12 @@ const sso = {
         type: "boolean",
         default: true,
       },
+      serviceAccountsEnabled: {
+        description:
+          "Enables the client credentials grant based authentication via OpenID Connect protocol.",
+        type: "boolean",
+        default: false,
+      },
       publicClient: {
         description: "Defines whether the client requires a client secret for authentication",
         type: "boolean",
