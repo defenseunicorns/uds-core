@@ -26,13 +26,12 @@ spec:
           app: pepr-uds-core-watcher
         port: 8080
 
-      # Temp workaround for any cluster pod
-      # todo: remove this once cluster pods is a remote generated target
       - description: "Keycloak backchannel access"
         direction: Ingress
         selector:
           app.kubernetes.io/name: keycloak
-        remoteGenerated: Anywhere
+        # Allow access from anything in cluster using an empty namespace selector
+        remoteNamespace: "*"
         port: 8080
 
       # Keycloak OCSP to check certs cannot guarantee a static IP
