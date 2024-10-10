@@ -6,7 +6,7 @@ weight: 9
 
 ## Background
 
-Context on the inclusion of "functional layers" can be viewed in our [ADR](https://github.com/defenseunicorns/uds-core/blob/main/docs/adrs/0002-uds-core-functional-layers.md). In short, UDS Core publishes smaller zarf packages that contain subsets of core's capabilities, grouped by their function (such as monitoring, logging, backup/restore, etc) to allow more flexibility in deployment. This helps to support resource constrained environments (edge deployments) and other situations where an environment has different needs than the default core stack.
+Context on the inclusion of "functional layers" can be viewed in our [ADR](https://github.com/defenseunicorns/uds-core/blob/main/docs/adrs/0002-uds-core-functional-layers.md). In short, UDS Core publishes smaller Zarf packages that contain subsets of core's capabilities, grouped by their function (such as monitoring, logging, backup/restore, etc) to allow more flexibility in deployment. This helps to support resource constrained environments (edge deployments) and other situations where an environment has different needs than the default core stack.
 
 Each layer is published as an individual OCI Zarf package. Package sources can be viewed under the [`packages` directory](https://github.com/defenseunicorns/uds-core/tree/main/packages), with each folder containing a readme detailing the contents and any dependencies. All layers assume the requirement of the base layer which provides Istio, the UDS Operator, and UDS Policy Engine.
 
