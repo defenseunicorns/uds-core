@@ -3,7 +3,7 @@ import { V1NetworkPolicyPeer, V1NetworkPolicyPort } from "@kubernetes/client-nod
 import { kind } from "pepr";
 
 import { Allow, RemoteGenerated } from "../../crd";
-import { anywhere } from "./generators/anywhere";
+import { anywhere, anywhereInCluster } from "./generators/anywhere";
 import { cloudMetadata } from "./generators/cloudMetadata";
 import { intraNamespace } from "./generators/intraNamespace";
 import { kubeAPI } from "./generators/kubeAPI";
@@ -31,7 +31,7 @@ function getPeers(policy: Allow): V1NetworkPolicyPeer[] {
         break;
 
       case RemoteGenerated.Anywhere:
-        peers = [anywhere];
+        peers = [anywhere, anywhereInCluster];
         break;
     }
   } else if (policy.remoteNamespace !== undefined || policy.remoteSelector !== undefined) {
