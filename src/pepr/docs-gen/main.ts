@@ -2,7 +2,7 @@ import * as fs from "fs/promises";
 import * as path from "path";
 
 // Constants for styling and configuration
-const INDENT_SIZE = 10;
+const INDENT_SIZE = 20;
 const MAX_HEADER_LEVEL = 6;
 const MAX_DEPTH = 10;
 const OUTPUT_DIR = "./docs/generated/";
@@ -20,17 +20,18 @@ const formatRow = (field: string, type: string, description: string): string =>
 const getHeaderLevel = (depth: number): string => "#".repeat(Math.min(depth, MAX_HEADER_LEVEL));
 
 /**
- * Generates a Markdown table with collapsible sections and indentation
+ * Generates a Markdown table with sections and indentation (non-collapsible)
  */
 function generateTable(title: string, rows: string[], currentDepth: number): string {
+  const capitalizedTitle = capitalizeFirstLetter(title);
   const headerLevel = getHeaderLevel(currentDepth);
-  const indentStyle = `style="margin-left: ${currentDepth * INDENT_SIZE}px;"`;
+  const indentStyle = `style="margin-left: ${currentDepth * INDENT_SIZE}px; padding-top: 30px;"`;
 
   return `
-<details ${indentStyle}><summary>${capitalizeFirstLetter(title)}</summary>
+<a id="${capitalizedTitle}"></a>
+<div ${indentStyle}>
 
-<a id="${capitalizeFirstLetter(title)}"></a>
-${headerLevel} ${capitalizeFirstLetter(title)}
+${headerLevel} ${capitalizedTitle}
 <table ${TABLE_STYLE}>
   <thead>
     <tr>
@@ -43,7 +44,7 @@ ${headerLevel} ${capitalizeFirstLetter(title)}
     ${rows.join("")}
   </tbody>
 </table>
-</details>
+</div>
 `;
 }
 
@@ -59,7 +60,8 @@ function handleArray(
   if (schema.items?.enum) {
     type = `Policy[] (enum):<ul>${schema.items.enum.map((value: string) => `<li><code>${value}</code></li>`).join("")}</ul>`;
   } else if (schema.items?.properties) {
-    type = `<a href="#${capitalizeFirstLetter(field)}">${capitalizeFirstLetter(field)}[]</a>`;
+    const capitalizedField = capitalizeFirstLetter(field);
+    type = `<a href="#${capitalizedField}">${capitalizedField}[]</a>`;
     markdown = generateMarkdownFromSchema(schema.items.properties, field, currentDepth + 1);
   } else if (schema.items?.type) {
     type = `${schema.items.type}[]`;
@@ -78,26 +80,29 @@ function handleObject(
   let markdown = "";
 
   if (schema.properties) {
-    type = `<a href="#${capitalizeFirstLetter(field)}">${capitalizeFirstLetter(field)}</a>`;
+    const capitalizedField = capitalizeFirstLetter(field);
+    type = `<a href="#${capitalizedField}">${capitalizedField}</a>`;
     markdown = generateMarkdownFromSchema(schema.properties, field, currentDepth + 1);
   }
 
   return { type, markdown };
 }
 
-// Recursive function to walk through the schema and generate tables with collapsible sections
+// Recursive function to walk through the schema and generate tables with nested indentation
 function generateMarkdownFromSchema(
   properties: Record<string, SchemaProperty>,
   title: string,
   currentDepth: number,
 ): string {
-  if (currentDepth > MAX_DEPTH) return ""; // Stop recursion if depth exceeds max
-
-  const rows: string[] = [];
   let markdown = "";
+  const rows: string[] = [];
+
+  // Stop recursion if the current depth exceeds the max depth
+  if (currentDepth > MAX_DEPTH) return "";
 
   for (const [field, schema] of Object.entries(properties)) {
-    if (field.toLowerCase() === "status") continue; // Skip 'status' object
+    // Skip the 'status' object
+    if (field.toLowerCase() === "status") continue;
 
     let type = schema.type || "object";
     const description = schema.description || "";
@@ -123,13 +128,16 @@ function generateMarkdownFromSchema(
     markdown += childMarkdown;
   }
 
-  return generateTable(title, rows, currentDepth) + markdown;
+  // Generate the table for this level, and add a new line at the end for proper formatting
+  markdown = generateTable(title, rows, currentDepth) + markdown;
+  return markdown;
 }
 
 // Function to start the Markdown generation process
 async function generateMarkdown(jsonSchema: JsonSchema, version: string, schemaFile: string) {
   const title = extractTitleFromFilename(schemaFile);
 
+  // Start generating markdown from the root `properties`
   if (!jsonSchema.properties) throw new Error("The schema does not contain a 'properties' object.");
 
   const markdownContent = `---
@@ -139,9 +147,11 @@ tableOfContents:
   maxHeadingLevel: 6
 ---
 
-${generateMarkdownFromSchema(jsonSchema.properties, title, 1).trim()}`;
+${generateMarkdownFromSchema(jsonSchema.properties, `${title}`, 1).trim()}`;
 
   const outputFilename = path.join(OUTPUT_DIR, generateOutputFilename(schemaFile, version));
+
+  // Ensure output directory exists and write markdown file
   await fs.mkdir(path.dirname(outputFilename), { recursive: true });
   await fs.writeFile(outputFilename, markdownContent);
 
@@ -151,13 +161,15 @@ ${generateMarkdownFromSchema(jsonSchema.properties, title, 1).trim()}`;
 // Utility to extract title from filename
 function extractTitleFromFilename(filename: string): string {
   const baseName = path.basename(filename, path.extname(filename));
-  return capitalizeFirstLetter(baseName.split(".")[0]); // Take first part before the dot
+  const titlePart = baseName.split(".")[0]; // Split at the first dot and take the first part
+  return capitalizeFirstLetter(titlePart);
 }
 
 // Utility to generate output filename
 function generateOutputFilename(schemaFile: string, version: string): string {
   const baseName = path.basename(schemaFile, path.extname(schemaFile));
-  return `${baseName.split(".")[0]}-${version}-cr.md`;
+  const titlePart = baseName.split(".")[0]; // Use only the first part before the dot
+  return `${titlePart}-${version}-cr.md`;
 }
 
 // Main execution
@@ -180,7 +192,7 @@ async function main() {
 
 main().catch(console.error);
 
-// TypeScript interfaces for JSON Schema properties
+// TypeScript interface for JSON Schema properties
 interface SchemaProperty {
   type?: string;
   description?: string;
