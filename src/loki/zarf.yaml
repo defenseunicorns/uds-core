@@ -50,5 +50,5 @@ components:
           - ./values/unicorn-values.yaml
     images:
       - cgr.dev/du-uds-defenseunicorns/loki:3.2.0
-      - cgr.dev/du-uds-defenseunicorns/nginx-fips:1.27.1
+      - cgr.dev/du-uds-defenseunicorns/nginx-fips:1.27.2
       - cgr.dev/du-uds-defenseunicorns/memcached:1.6.31
