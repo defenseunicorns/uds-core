@@ -29,23 +29,15 @@ tasks:
           # For each CRD retrieve the CRD and create a Go struct file to then create a markdown file
           for CRD in $CRD_LIST; do
 
-              # Retrieve CRD Schema from Cluster (may return multiple files)
-              npx kubernetes-fluent-client crd "$CRD" -l schema . >/dev/null 2>&1
+              # Retrieve CRD Json from Cluster
+              kubectl get crd $CRD -o json | jq '.spec.versions[] | select(.name == "v1alpha1").schema.openAPIV3Schema' >> $CRD-crd.json
 
-              # Loop through each schema file returned by the previous command
-              for schema_file in *.schema; do
-                  # remove `additionalProperties` fields from schema
-                  sed '/"additionalProperties": {}/d' "$schema_file" > temp_file && mv temp_file "$schema_file"
+              # Extract the version (e.g., v1alpha1)
+              version=$(kubectl get crd $CRD -o json | jq -r '.status.storedVersions[0]')
 
-                  # Extract the version (e.g., v1alpha1)
-                  version=$(echo "$schema_file" | sed -E 's/.*-(v[0-9]+.*)\.schema/\1/')
+              # Typescript format markdown
+              npx ts-node src/pepr/docs-gen/main.ts "$CRD-crd.json" "$version"
 
-                  # Typescript format markdown
-                  ts-node src/pepr/docs-gen/main.ts "$schema_file" "$version"
-
-                  echo "$go_file $schema_file"
-
-                  # Remove the schema and go files
-                  rm -f "$schema_file"
-              done
+              # Remove the json and go files
+              rm -f "$CRD-crd.json"
           done
