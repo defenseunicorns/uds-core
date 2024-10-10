@@ -36,7 +36,7 @@ packages:
 
 By default, the UDS Core Istio Gateways are set up to use the `uds.dev` domain and have a valid TLS certificate packaged.  You will want to change the domain name for your environment and provide a valid TLS certificate for this domain.
 
-You can set the TLS certs via overrides in a [UDS Bundle](https://uds.defenseunicorns.com/bundles/) (see below).
+You can set the TLS certs via overrides in a [UDS Bundle](https://uds.defenseunicorns.com/bundles/) (see below). UDS Core Istio Gateways default to only supporting TLS v1.3, but this can also be overridden per gateway if clients use TLS 1.2 (as seen in the tenant gateway example `value` below).
 
 ```yaml
 kind: UDSBundle
@@ -44,7 +44,7 @@ metadata:
   name: core-with-cert-override
   description: A UDS example bundle for packaging UDS core with a custom TLS certificate
   version: "0.0.1"
-  
+
 packages:
   - name: core
     repository: oci://ghcr.io/defenseunicorns/packages/uds/core
@@ -79,7 +79,7 @@ shared:
   domain: yourawesomedomain.com # shared across all packages in a bundle
 
 # TLS Certs/Keys if not provided via environment variables
-variables: 
+variables:
   core:
     admin_tls_cert: # base64 encoded admin cert here
     admin_tls_key: # base64 encoded admin key here
