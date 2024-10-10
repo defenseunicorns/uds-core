@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 import { domain, fullCore } from "./uds.config";
 
 test.use({ baseURL: `https://grafana.admin.${domain}` });
+test.describe.configure({ mode: 'serial' });
 
 test("validate loki datasource", async ({ page }) => {
   test.skip(!fullCore, "Loki is only present on full core deploys");

@@ -1,4 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial
+includes:
+  - utils: ../../tasks/utils.yaml
+
+
 tasks:
   - name: validate
     actions:
@@ -27,6 +31,8 @@ tasks:
 
   - name: e2e-test
     actions:
+      - description: "Setup the Keycloak admin user if needed"
+        task: utils:keycloak-admin-user
       - description: "Setup the Doug User for testing"
         # Self-reference this task file to avoid https://github.com/defenseunicorns/maru-runner/issues/144
         cmd: uds run -f tasks/test.yaml common-setup:create-doug-user --set KEYCLOAK_GROUP="/UDS Core/Admin" # Adds the test doug user

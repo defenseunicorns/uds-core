@@ -1,2 +1,0 @@
-insecureAdminPasswordGeneration:
-  enabled: ###ZARF_VAR_INSECURE_ADMIN_PASSWORD_GENERATION###

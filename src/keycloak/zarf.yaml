@@ -8,9 +8,6 @@ variables:
   - name: DOMAIN
     description: "Cluster domain"
     default: "uds.dev"
-  - name: INSECURE_ADMIN_PASSWORD_GENERATION
-    description: "Generate an insecure admin password for dev/test"
-    default: "false"
 
 components:
   - name: keycloak
