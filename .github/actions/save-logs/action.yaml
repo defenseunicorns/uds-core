@@ -45,3 +45,5 @@ runs:
           /tmp/debug-*.log
           /tmp/uds-containerd-logs
           /tmp/k3d-uds-*.log
+          e2e/playwright/.playwright/output
+          e2e/playwright/.playwright/reports
