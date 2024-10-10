@@ -40,7 +40,7 @@ tasks:
             PF_PID=$!
 
             # Wait a bit to ensure port-forward is ready
-            sleep 3
+            sleep 5
 
             # Create admin user with curl
             PASSWORD=$(openssl rand -base64 12)
