@@ -1,0 +1,4751 @@
+{
+  "networkPolicies": [
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "annotations": {
+          "uds/description": "DNS lookup via CoreDNS"
+        },
+        "creationTimestamp": "2024-06-07T14:36:34Z",
+        "generation": 1,
+        "labels": {
+          "uds/generation": "1",
+          "uds/package": "metrics-server"
+        },
+        "name": "allow-metrics-server-egress-dns-lookup-via-coredns",
+        "namespace": "metrics-server",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "metrics-server",
+            "uid": "be44af9c-845b-41b4-9b4b-3aa9899d3076"
+          }
+        ],
+        "resourceVersion": "1525",
+        "uid": "9b55a9ee-3344-4c53-86f5-99d89fc02d6e"
+      },
+      "spec": {
+        "egress": [
+          {
+            "ports": [
+              {
+                "port": 53,
+                "protocol": "UDP"
+              }
+            ],
+            "to": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "kube-system"
+                  }
+                }
+              },
+              {
+                "podSelector": {
+                  "matchLabels": {
+                    "k8s-app": "kube-dns"
+                  }
+                }
+              }
+            ]
+          }
+        ],
+        "podSelector": {},
+        "policyTypes": [
+          "Egress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "annotations": {
+          "uds/description": "Istiod communication"
+        },
+        "creationTimestamp": "2024-06-07T14:36:34Z",
+        "generation": 1,
+        "labels": {
+          "uds/generation": "1",
+          "uds/package": "metrics-server"
+        },
+        "name": "allow-metrics-server-egress-istiod-communication",
+        "namespace": "metrics-server",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "metrics-server",
+            "uid": "be44af9c-845b-41b4-9b4b-3aa9899d3076"
+          }
+        ],
+        "resourceVersion": "1526",
+        "uid": "9103ec43-cfb8-4d13-b30f-43f8b35c4169"
+      },
+      "spec": {
+        "egress": [
+          {
+            "ports": [
+              {
+                "port": 15012,
+                "protocol": "TCP"
+              }
+            ],
+            "to": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "istio-system"
+                  }
+                }
+              },
+              {
+                "podSelector": {
+                  "matchLabels": {
+                    "istio": "pilot"
+                  }
+                }
+              }
+            ]
+          }
+        ],
+        "podSelector": {},
+        "policyTypes": [
+          "Egress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "annotations": {
+          "uds/description": "Sidecar monitoring"
+        },
+        "creationTimestamp": "2024-06-07T14:36:35Z",
+        "generation": 1,
+        "labels": {
+          "uds/generation": "1",
+          "uds/package": "metrics-server"
+        },
+        "name": "allow-metrics-server-ingress-sidecar-monitoring",
+        "namespace": "metrics-server",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "metrics-server",
+            "uid": "be44af9c-845b-41b4-9b4b-3aa9899d3076"
+          }
+        ],
+        "resourceVersion": "1527",
+        "uid": "a266a52b-fd6a-4578-8a04-6bd9d4aa8f1e"
+      },
+      "spec": {
+        "ingress": [
+          {
+            "from": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "monitoring"
+                  }
+                }
+              },
+              {
+                "podSelector": {
+                  "matchLabels": {
+                    "app": "prometheus"
+                  }
+                }
+              }
+            ],
+            "ports": [
+              {
+                "port": 15020,
+                "protocol": "TCP"
+              }
+            ]
+          }
+        ],
+        "podSelector": {},
+        "policyTypes": [
+          "Ingress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "creationTimestamp": "2024-06-07T14:36:35Z",
+        "generation": 1,
+        "labels": {
+          "uds/generated": "Anywhere",
+          "uds/generation": "1",
+          "uds/package": "metrics-server"
+        },
+        "name": "allow-metrics-server-egress-metrics-server-anywhere",
+        "namespace": "metrics-server",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "metrics-server",
+            "uid": "be44af9c-845b-41b4-9b4b-3aa9899d3076"
+          }
+        ],
+        "resourceVersion": "1528",
+        "uid": "046927d4-7346-454d-9c54-94b92977a398"
+      },
+      "spec": {
+        "egress": [
+          {
+            "ports": [
+              {
+                "port": 10250,
+                "protocol": "TCP"
+              }
+            ],
+            "to": [
+              {
+                "ipBlock": {
+                  "cidr": "0.0.0.0/0",
+                  "except": [
+                    "169.254.169.254/32"
+                  ]
+                }
+              }
+            ]
+          }
+        ],
+        "podSelector": {
+          "matchLabels": {
+            "app.kubernetes.io/name": "metrics-server"
+          }
+        },
+        "policyTypes": [
+          "Egress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "creationTimestamp": "2024-06-07T14:36:35Z",
+        "generation": 1,
+        "labels": {
+          "uds/generated": "Anywhere",
+          "uds/generation": "1",
+          "uds/package": "metrics-server"
+        },
+        "name": "allow-metrics-server-ingress-metrics-server-anywhere",
+        "namespace": "metrics-server",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "metrics-server",
+            "uid": "be44af9c-845b-41b4-9b4b-3aa9899d3076"
+          }
+        ],
+        "resourceVersion": "1530",
+        "uid": "84aaea33-0b7a-4e1f-9aa3-93a893c51e11"
+      },
+      "spec": {
+        "ingress": [
+          {
+            "from": [
+              {
+                "ipBlock": {
+                  "cidr": "0.0.0.0/0",
+                  "except": [
+                    "169.254.169.254/32"
+                  ]
+                }
+              }
+            ],
+            "ports": [
+              {
+                "port": 10250,
+                "protocol": "TCP"
+              }
+            ]
+          }
+        ],
+        "podSelector": {
+          "matchLabels": {
+            "app.kubernetes.io/name": "metrics-server"
+          }
+        },
+        "policyTypes": [
+          "Ingress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "annotations": {
+          "uds/description": "DNS lookup via CoreDNS"
+        },
+        "creationTimestamp": "2024-06-07T14:37:03Z",
+        "generation": 1,
+        "labels": {
+          "uds/generation": "1",
+          "uds/package": "keycloak"
+        },
+        "name": "allow-keycloak-egress-dns-lookup-via-coredns",
+        "namespace": "keycloak",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "keycloak",
+            "uid": "828c2d2a-07e2-4976-a1c3-318e7161d9c2"
+          }
+        ],
+        "resourceVersion": "1671",
+        "uid": "946dd3b8-bc7c-4acf-87de-353322dcb705"
+      },
+      "spec": {
+        "egress": [
+          {
+            "ports": [
+              {
+                "port": 53,
+                "protocol": "UDP"
+              }
+            ],
+            "to": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "kube-system"
+                  }
+                }
+              },
+              {
+                "podSelector": {
+                  "matchLabels": {
+                    "k8s-app": "kube-dns"
+                  }
+                }
+              }
+            ]
+          }
+        ],
+        "podSelector": {},
+        "policyTypes": [
+          "Egress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "annotations": {
+          "uds/description": "Istiod communication"
+        },
+        "creationTimestamp": "2024-06-07T14:37:03Z",
+        "generation": 1,
+        "labels": {
+          "uds/generation": "1",
+          "uds/package": "keycloak"
+        },
+        "name": "allow-keycloak-egress-istiod-communication",
+        "namespace": "keycloak",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "keycloak",
+            "uid": "828c2d2a-07e2-4976-a1c3-318e7161d9c2"
+          }
+        ],
+        "resourceVersion": "1678",
+        "uid": "df03af54-f57b-4cbc-898f-03dbc2dc3890"
+      },
+      "spec": {
+        "egress": [
+          {
+            "ports": [
+              {
+                "port": 15012,
+                "protocol": "TCP"
+              }
+            ],
+            "to": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "istio-system"
+                  }
+                }
+              },
+              {
+                "podSelector": {
+                  "matchLabels": {
+                    "istio": "pilot"
+                  }
+                }
+              }
+            ]
+          }
+        ],
+        "podSelector": {},
+        "policyTypes": [
+          "Egress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "annotations": {
+          "uds/description": "Sidecar monitoring"
+        },
+        "creationTimestamp": "2024-06-07T14:37:03Z",
+        "generation": 1,
+        "labels": {
+          "uds/generation": "1",
+          "uds/package": "keycloak"
+        },
+        "name": "allow-keycloak-ingress-sidecar-monitoring",
+        "namespace": "keycloak",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "keycloak",
+            "uid": "828c2d2a-07e2-4976-a1c3-318e7161d9c2"
+          }
+        ],
+        "resourceVersion": "1682",
+        "uid": "bb3b9dcc-a1df-441f-ab8c-53de750d30c2"
+      },
+      "spec": {
+        "ingress": [
+          {
+            "from": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "monitoring"
+                  }
+                }
+              },
+              {
+                "podSelector": {
+                  "matchLabels": {
+                    "app": "prometheus"
+                  }
+                }
+              }
+            ],
+            "ports": [
+              {
+                "port": 15020,
+                "protocol": "TCP"
+              }
+            ]
+          }
+        ],
+        "podSelector": {},
+        "policyTypes": [
+          "Ingress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "annotations": {
+          "uds/description": "UDS Operator"
+        },
+        "creationTimestamp": "2024-06-07T14:37:03Z",
+        "generation": 1,
+        "labels": {
+          "uds/generation": "1",
+          "uds/package": "keycloak"
+        },
+        "name": "allow-keycloak-ingress-uds-operator",
+        "namespace": "keycloak",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "keycloak",
+            "uid": "828c2d2a-07e2-4976-a1c3-318e7161d9c2"
+          }
+        ],
+        "resourceVersion": "1683",
+        "uid": "58948be1-896c-4177-bbad-5e02b89ee0b4"
+      },
+      "spec": {
+        "ingress": [
+          {
+            "from": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "pepr-system"
+                  }
+                }
+              },
+              {
+                "podSelector": {
+                  "matchLabels": {
+                    "app": "pepr-uds-core-watcher"
+                  }
+                }
+              }
+            ],
+            "ports": [
+              {
+                "port": 8080,
+                "protocol": "TCP"
+              }
+            ]
+          }
+        ],
+        "podSelector": {
+          "matchLabels": {
+            "app.kubernetes.io/name": "keycloak"
+          }
+        },
+        "policyTypes": [
+          "Ingress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "annotations": {
+          "uds/description": "Keycloak backchannel access"
+        },
+        "creationTimestamp": "2024-06-07T14:37:03Z",
+        "generation": 1,
+        "labels": {
+          "uds/generated": "Anywhere",
+          "uds/generation": "1",
+          "uds/package": "keycloak"
+        },
+        "name": "allow-keycloak-ingress-keycloak-backchannel-access",
+        "namespace": "keycloak",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "keycloak",
+            "uid": "828c2d2a-07e2-4976-a1c3-318e7161d9c2"
+          }
+        ],
+        "resourceVersion": "1684",
+        "uid": "1789f83a-6b30-49f3-9b6c-e20858481dd7"
+      },
+      "spec": {
+        "ingress": [
+          {
+            "from": [
+              {
+                "ipBlock": {
+                  "cidr": "0.0.0.0/0",
+                  "except": [
+                    "169.254.169.254/32"
+                  ]
+                }
+              }
+            ],
+            "ports": [
+              {
+                "port": 8080,
+                "protocol": "TCP"
+              }
+            ]
+          }
+        ],
+        "podSelector": {
+          "matchLabels": {
+            "app.kubernetes.io/name": "keycloak"
+          }
+        },
+        "policyTypes": [
+          "Ingress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "annotations": {
+          "uds/description": "OCSP Lookup"
+        },
+        "creationTimestamp": "2024-06-07T14:37:03Z",
+        "generation": 1,
+        "labels": {
+          "uds/generated": "Anywhere",
+          "uds/generation": "1",
+          "uds/package": "keycloak"
+        },
+        "name": "allow-keycloak-egress-ocsp-lookup",
+        "namespace": "keycloak",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "keycloak",
+            "uid": "828c2d2a-07e2-4976-a1c3-318e7161d9c2"
+          }
+        ],
+        "resourceVersion": "1685",
+        "uid": "fba85bc8-5dfe-41c2-8436-fadf59f59dda"
+      },
+      "spec": {
+        "egress": [
+          {
+            "ports": [
+              {
+                "port": 443,
+                "protocol": "TCP"
+              },
+              {
+                "port": 80,
+                "protocol": "TCP"
+              }
+            ],
+            "to": [
+              {
+                "ipBlock": {
+                  "cidr": "0.0.0.0/0",
+                  "except": [
+                    "169.254.169.254/32"
+                  ]
+                }
+              }
+            ]
+          }
+        ],
+        "podSelector": {
+          "matchLabels": {
+            "app.kubernetes.io/name": "keycloak"
+          }
+        },
+        "policyTypes": [
+          "Egress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "annotations": {
+          "uds/description": "keycloak Istio tenant gateway"
+        },
+        "creationTimestamp": "2024-06-07T14:37:03Z",
+        "generation": 1,
+        "labels": {
+          "uds/generation": "1",
+          "uds/package": "keycloak"
+        },
+        "name": "allow-keycloak-ingress-keycloak-istio-tenant-gateway",
+        "namespace": "keycloak",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "keycloak",
+            "uid": "828c2d2a-07e2-4976-a1c3-318e7161d9c2"
+          }
+        ],
+        "resourceVersion": "1686",
+        "uid": "10aed744-db64-4daa-868e-b1a44bfcb66a"
+      },
+      "spec": {
+        "ingress": [
+          {
+            "from": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "istio-tenant-gateway"
+                  }
+                }
+              },
+              {
+                "podSelector": {
+                  "matchLabels": {
+                    "app": "tenant-ingressgateway"
+                  }
+                }
+              }
+            ],
+            "ports": [
+              {
+                "port": 8080,
+                "protocol": "TCP"
+              }
+            ]
+          }
+        ],
+        "podSelector": {
+          "matchLabels": {
+            "app.kubernetes.io/name": "keycloak"
+          }
+        },
+        "policyTypes": [
+          "Ingress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "annotations": {
+          "uds/description": "keycloak Istio admin gateway"
+        },
+        "creationTimestamp": "2024-06-07T14:37:03Z",
+        "generation": 1,
+        "labels": {
+          "uds/generation": "1",
+          "uds/package": "keycloak"
+        },
+        "name": "allow-keycloak-ingress-keycloak-istio-admin-gateway",
+        "namespace": "keycloak",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "keycloak",
+            "uid": "828c2d2a-07e2-4976-a1c3-318e7161d9c2"
+          }
+        ],
+        "resourceVersion": "1687",
+        "uid": "f414ac16-c301-4472-8b6c-60e3382fd6f3"
+      },
+      "spec": {
+        "ingress": [
+          {
+            "from": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "istio-admin-gateway"
+                  }
+                }
+              },
+              {
+                "podSelector": {
+                  "matchLabels": {
+                    "app": "admin-ingressgateway"
+                  }
+                }
+              }
+            ],
+            "ports": [
+              {
+                "port": 8080,
+                "protocol": "TCP"
+              }
+            ]
+          }
+        ],
+        "podSelector": {
+          "matchLabels": {
+            "app.kubernetes.io/name": "keycloak"
+          }
+        },
+        "policyTypes": [
+          "Ingress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "annotations": {
+          "uds/description": "http,keycloak Metrics"
+        },
+        "creationTimestamp": "2024-06-07T14:37:03Z",
+        "generation": 1,
+        "labels": {
+          "uds/generation": "1",
+          "uds/package": "keycloak"
+        },
+        "name": "allow-keycloak-ingress-http-keycloak-metrics",
+        "namespace": "keycloak",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "keycloak",
+            "uid": "828c2d2a-07e2-4976-a1c3-318e7161d9c2"
+          }
+        ],
+        "resourceVersion": "1688",
+        "uid": "a165fcc5-7b63-4f67-a0f5-f214493a3387"
+      },
+      "spec": {
+        "ingress": [
+          {
+            "from": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "monitoring"
+                  }
+                }
+              },
+              {
+                "podSelector": {
+                  "matchLabels": {
+                    "app": "prometheus"
+                  }
+                }
+              }
+            ],
+            "ports": [
+              {
+                "port": 8080,
+                "protocol": "TCP"
+              }
+            ]
+          }
+        ],
+        "podSelector": {
+          "matchLabels": {
+            "app.kubernetes.io/name": "keycloak"
+          }
+        },
+        "policyTypes": [
+          "Ingress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "annotations": {
+          "uds/description": "DNS lookup via CoreDNS"
+        },
+        "creationTimestamp": "2024-06-07T14:38:19Z",
+        "generation": 1,
+        "labels": {
+          "uds/generation": "1",
+          "uds/package": "neuvector"
+        },
+        "name": "allow-neuvector-egress-dns-lookup-via-coredns",
+        "namespace": "neuvector",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "neuvector",
+            "uid": "91b75744-bd1b-497b-8875-2a258d8b23cc"
+          }
+        ],
+        "resourceVersion": "1916",
+        "uid": "004eea79-71b9-45d5-9ceb-ea57acfb6e27"
+      },
+      "spec": {
+        "egress": [
+          {
+            "ports": [
+              {
+                "port": 53,
+                "protocol": "UDP"
+              }
+            ],
+            "to": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "kube-system"
+                  }
+                }
+              },
+              {
+                "podSelector": {
+                  "matchLabels": {
+                    "k8s-app": "kube-dns"
+                  }
+                }
+              }
+            ]
+          }
+        ],
+        "podSelector": {},
+        "policyTypes": [
+          "Egress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "annotations": {
+          "uds/description": "Istiod communication"
+        },
+        "creationTimestamp": "2024-06-07T14:38:19Z",
+        "generation": 1,
+        "labels": {
+          "uds/generation": "1",
+          "uds/package": "neuvector"
+        },
+        "name": "allow-neuvector-egress-istiod-communication",
+        "namespace": "neuvector",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "neuvector",
+            "uid": "91b75744-bd1b-497b-8875-2a258d8b23cc"
+          }
+        ],
+        "resourceVersion": "1917",
+        "uid": "e7bfd8ab-f0a9-405f-8bbc-a3745c108e93"
+      },
+      "spec": {
+        "egress": [
+          {
+            "ports": [
+              {
+                "port": 15012,
+                "protocol": "TCP"
+              }
+            ],
+            "to": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "istio-system"
+                  }
+                }
+              },
+              {
+                "podSelector": {
+                  "matchLabels": {
+                    "istio": "pilot"
+                  }
+                }
+              }
+            ]
+          }
+        ],
+        "podSelector": {},
+        "policyTypes": [
+          "Egress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "annotations": {
+          "uds/description": "Sidecar monitoring"
+        },
+        "creationTimestamp": "2024-06-07T14:38:19Z",
+        "generation": 1,
+        "labels": {
+          "uds/generation": "1",
+          "uds/package": "neuvector"
+        },
+        "name": "allow-neuvector-ingress-sidecar-monitoring",
+        "namespace": "neuvector",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "neuvector",
+            "uid": "91b75744-bd1b-497b-8875-2a258d8b23cc"
+          }
+        ],
+        "resourceVersion": "1918",
+        "uid": "ba445407-9e39-4d6e-b29f-93403e58b867"
+      },
+      "spec": {
+        "ingress": [
+          {
+            "from": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "monitoring"
+                  }
+                }
+              },
+              {
+                "podSelector": {
+                  "matchLabels": {
+                    "app": "prometheus"
+                  }
+                }
+              }
+            ],
+            "ports": [
+              {
+                "port": 15020,
+                "protocol": "TCP"
+              }
+            ]
+          }
+        ],
+        "podSelector": {},
+        "policyTypes": [
+          "Ingress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "annotations": {
+          "uds/description": "Webhook"
+        },
+        "creationTimestamp": "2024-06-07T14:38:19Z",
+        "generation": 1,
+        "labels": {
+          "uds/generated": "Anywhere",
+          "uds/generation": "1",
+          "uds/package": "neuvector"
+        },
+        "name": "allow-neuvector-ingress-webhook",
+        "namespace": "neuvector",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "neuvector",
+            "uid": "91b75744-bd1b-497b-8875-2a258d8b23cc"
+          }
+        ],
+        "resourceVersion": "1925",
+        "uid": "bb131aa5-77bd-4298-92ae-07bada798e1e"
+      },
+      "spec": {
+        "ingress": [
+          {
+            "from": [
+              {
+                "ipBlock": {
+                  "cidr": "0.0.0.0/0",
+                  "except": [
+                    "169.254.169.254/32"
+                  ]
+                }
+              }
+            ],
+            "ports": [
+              {
+                "port": 30443,
+                "protocol": "TCP"
+              }
+            ]
+          }
+        ],
+        "podSelector": {
+          "matchLabels": {
+            "app": "neuvector-controller-pod"
+          }
+        },
+        "policyTypes": [
+          "Ingress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "annotations": {
+          "uds/description": "Tempo"
+        },
+        "creationTimestamp": "2024-06-07T14:38:19Z",
+        "generation": 1,
+        "labels": {
+          "uds/generation": "1",
+          "uds/package": "neuvector"
+        },
+        "name": "allow-neuvector-egress-tempo",
+        "namespace": "neuvector",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "neuvector",
+            "uid": "91b75744-bd1b-497b-8875-2a258d8b23cc"
+          }
+        ],
+        "resourceVersion": "1926",
+        "uid": "f7dbab02-de2d-4cf2-8396-e1b1a83df964"
+      },
+      "spec": {
+        "egress": [
+          {
+            "ports": [
+              {
+                "port": 9411,
+                "protocol": "TCP"
+              }
+            ],
+            "to": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "tempo"
+                  }
+                }
+              },
+              {
+                "podSelector": {
+                  "matchLabels": {
+                    "app.kubernetes.io/name": "tempo"
+                  }
+                }
+              }
+            ]
+          }
+        ],
+        "podSelector": {},
+        "policyTypes": [
+          "Egress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "annotations": {
+          "uds/description": "neuvector-manager-pod Istio admin gateway"
+        },
+        "creationTimestamp": "2024-06-07T14:38:19Z",
+        "generation": 1,
+        "labels": {
+          "uds/generation": "1",
+          "uds/package": "neuvector"
+        },
+        "name": "allow-neuvector-ingress-neuvector-manager-pod-istio-admin-gateway",
+        "namespace": "neuvector",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "neuvector",
+            "uid": "91b75744-bd1b-497b-8875-2a258d8b23cc"
+          }
+        ],
+        "resourceVersion": "1927",
+        "uid": "39be918e-aff5-4ab4-845a-2c091eda94ce"
+      },
+      "spec": {
+        "ingress": [
+          {
+            "from": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "istio-admin-gateway"
+                  }
+                }
+              },
+              {
+                "podSelector": {
+                  "matchLabels": {
+                    "app": "admin-ingressgateway"
+                  }
+                }
+              }
+            ],
+            "ports": [
+              {
+                "port": 8443,
+                "protocol": "TCP"
+              }
+            ]
+          }
+        ],
+        "podSelector": {
+          "matchLabels": {
+            "app": "neuvector-manager-pod"
+          }
+        },
+        "policyTypes": [
+          "Ingress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "annotations": {
+          "uds/description": "DNS lookup via CoreDNS"
+        },
+        "creationTimestamp": "2024-06-07T14:38:49Z",
+        "generation": 1,
+        "labels": {
+          "uds/generation": "1",
+          "uds/package": "loki"
+        },
+        "name": "allow-loki-egress-dns-lookup-via-coredns",
+        "namespace": "loki",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "loki",
+            "uid": "e7e59ebe-6388-4233-872e-94065e29b3c4"
+          }
+        ],
+        "resourceVersion": "2386",
+        "uid": "d901089d-7fd0-43f2-86d5-a70e5ddb6e4d"
+      },
+      "spec": {
+        "egress": [
+          {
+            "ports": [
+              {
+                "port": 53,
+                "protocol": "UDP"
+              }
+            ],
+            "to": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "kube-system"
+                  }
+                }
+              },
+              {
+                "podSelector": {
+                  "matchLabels": {
+                    "k8s-app": "kube-dns"
+                  }
+                }
+              }
+            ]
+          }
+        ],
+        "podSelector": {},
+        "policyTypes": [
+          "Egress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "annotations": {
+          "uds/description": "Istiod communication"
+        },
+        "creationTimestamp": "2024-06-07T14:38:49Z",
+        "generation": 1,
+        "labels": {
+          "uds/generation": "1",
+          "uds/package": "loki"
+        },
+        "name": "allow-loki-egress-istiod-communication",
+        "namespace": "loki",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "loki",
+            "uid": "e7e59ebe-6388-4233-872e-94065e29b3c4"
+          }
+        ],
+        "resourceVersion": "2387",
+        "uid": "88590deb-8725-479a-ac63-145ee3b783d6"
+      },
+      "spec": {
+        "egress": [
+          {
+            "ports": [
+              {
+                "port": 15012,
+                "protocol": "TCP"
+              }
+            ],
+            "to": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "istio-system"
+                  }
+                }
+              },
+              {
+                "podSelector": {
+                  "matchLabels": {
+                    "istio": "pilot"
+                  }
+                }
+              }
+            ]
+          }
+        ],
+        "podSelector": {},
+        "policyTypes": [
+          "Egress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "annotations": {
+          "uds/description": "Sidecar monitoring"
+        },
+        "creationTimestamp": "2024-06-07T14:38:49Z",
+        "generation": 1,
+        "labels": {
+          "uds/generation": "1",
+          "uds/package": "loki"
+        },
+        "name": "allow-loki-ingress-sidecar-monitoring",
+        "namespace": "loki",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "loki",
+            "uid": "e7e59ebe-6388-4233-872e-94065e29b3c4"
+          }
+        ],
+        "resourceVersion": "2388",
+        "uid": "2bbd00b4-fbae-4686-ba70-8e75ca8b6136"
+      },
+      "spec": {
+        "ingress": [
+          {
+            "from": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "monitoring"
+                  }
+                }
+              },
+              {
+                "podSelector": {
+                  "matchLabels": {
+                    "app": "prometheus"
+                  }
+                }
+              }
+            ],
+            "ports": [
+              {
+                "port": 15020,
+                "protocol": "TCP"
+              }
+            ]
+          }
+        ],
+        "podSelector": {},
+        "policyTypes": [
+          "Ingress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "annotations": {
+          "uds/description": "Grafana Log Queries"
+        },
+        "creationTimestamp": "2024-06-07T14:38:49Z",
+        "generation": 1,
+        "labels": {
+          "uds/generation": "1",
+          "uds/package": "loki"
+        },
+        "name": "allow-loki-ingress-grafana-log-queries",
+        "namespace": "loki",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "loki",
+            "uid": "e7e59ebe-6388-4233-872e-94065e29b3c4"
+          }
+        ],
+        "resourceVersion": "2391",
+        "uid": "7af2c554-1698-4f34-a9a0-1017a65d2e82"
+      },
+      "spec": {
+        "ingress": [
+          {
+            "from": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "grafana"
+                  }
+                }
+              },
+              {
+                "podSelector": {
+                  "matchLabels": {
+                    "app.kubernetes.io/name": "grafana"
+                  }
+                }
+              }
+            ],
+            "ports": [
+              {
+                "port": 8080,
+                "protocol": "TCP"
+              }
+            ]
+          }
+        ],
+        "podSelector": {
+          "matchLabels": {
+            "app.kubernetes.io/name": "loki"
+          }
+        },
+        "policyTypes": [
+          "Ingress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "annotations": {
+          "uds/description": "Prometheus Metrics"
+        },
+        "creationTimestamp": "2024-06-07T14:38:49Z",
+        "generation": 1,
+        "labels": {
+          "uds/generation": "1",
+          "uds/package": "loki"
+        },
+        "name": "allow-loki-ingress-prometheus-metrics",
+        "namespace": "loki",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "loki",
+            "uid": "e7e59ebe-6388-4233-872e-94065e29b3c4"
+          }
+        ],
+        "resourceVersion": "2392",
+        "uid": "b40f0657-bc46-4d03-941c-45b7e2458b47"
+      },
+      "spec": {
+        "ingress": [
+          {
+            "from": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "monitoring"
+                  }
+                }
+              },
+              {
+                "podSelector": {
+                  "matchLabels": {
+                    "app.kubernetes.io/name": "prometheus"
+                  }
+                }
+              }
+            ],
+            "ports": [
+              {
+                "port": 3100,
+                "protocol": "TCP"
+              },
+              {
+                "port": 8080,
+                "protocol": "TCP"
+              }
+            ]
+          }
+        ],
+        "podSelector": {
+          "matchLabels": {
+            "app.kubernetes.io/name": "loki"
+          }
+        },
+        "policyTypes": [
+          "Ingress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "annotations": {
+          "uds/description": "Promtail Log Storage"
+        },
+        "creationTimestamp": "2024-06-07T14:38:49Z",
+        "generation": 1,
+        "labels": {
+          "uds/generation": "1",
+          "uds/package": "loki"
+        },
+        "name": "allow-loki-ingress-promtail-log-storage",
+        "namespace": "loki",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "loki",
+            "uid": "e7e59ebe-6388-4233-872e-94065e29b3c4"
+          }
+        ],
+        "resourceVersion": "2394",
+        "uid": "c035b1ed-16c1-4a53-81a6-df94e2ac3248"
+      },
+      "spec": {
+        "ingress": [
+          {
+            "from": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "promtail"
+                  }
+                }
+              },
+              {
+                "podSelector": {
+                  "matchLabels": {
+                    "app.kubernetes.io/name": "promtail"
+                  }
+                }
+              }
+            ],
+            "ports": [
+              {
+                "port": 8080,
+                "protocol": "TCP"
+              }
+            ]
+          }
+        ],
+        "podSelector": {
+          "matchLabels": {
+            "app.kubernetes.io/name": "loki"
+          }
+        },
+        "policyTypes": [
+          "Ingress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "annotations": {
+          "uds/description": "Tempo"
+        },
+        "creationTimestamp": "2024-06-07T14:38:49Z",
+        "generation": 1,
+        "labels": {
+          "uds/generation": "1",
+          "uds/package": "loki"
+        },
+        "name": "allow-loki-egress-tempo",
+        "namespace": "loki",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "loki",
+            "uid": "e7e59ebe-6388-4233-872e-94065e29b3c4"
+          }
+        ],
+        "resourceVersion": "2396",
+        "uid": "55eb91b4-d223-4051-8ee0-1120bc0f10b3"
+      },
+      "spec": {
+        "egress": [
+          {
+            "ports": [
+              {
+                "port": 9411,
+                "protocol": "TCP"
+              }
+            ],
+            "to": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "tempo"
+                  }
+                }
+              },
+              {
+                "podSelector": {
+                  "matchLabels": {
+                    "app.kubernetes.io/name": "tempo"
+                  }
+                }
+              }
+            ]
+          }
+        ],
+        "podSelector": {},
+        "policyTypes": [
+          "Egress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "annotations": {
+          "uds/description": "DNS lookup via CoreDNS"
+        },
+        "creationTimestamp": "2024-06-07T14:40:25Z",
+        "generation": 1,
+        "labels": {
+          "uds/generation": "1",
+          "uds/package": "prometheus-stack"
+        },
+        "name": "allow-prometheus-stack-egress-dns-lookup-via-coredns",
+        "namespace": "monitoring",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "prometheus-stack",
+            "uid": "ff51ba04-5590-4945-8ec5-1965bdbcdb76"
+          }
+        ],
+        "resourceVersion": "2868",
+        "uid": "43efd06f-7785-4053-987d-95452545e42c"
+      },
+      "spec": {
+        "egress": [
+          {
+            "ports": [
+              {
+                "port": 53,
+                "protocol": "UDP"
+              }
+            ],
+            "to": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "kube-system"
+                  }
+                }
+              },
+              {
+                "podSelector": {
+                  "matchLabels": {
+                    "k8s-app": "kube-dns"
+                  }
+                }
+              }
+            ]
+          }
+        ],
+        "podSelector": {},
+        "policyTypes": [
+          "Egress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "annotations": {
+          "uds/description": "Istiod communication"
+        },
+        "creationTimestamp": "2024-06-07T14:40:25Z",
+        "generation": 1,
+        "labels": {
+          "uds/generation": "1",
+          "uds/package": "prometheus-stack"
+        },
+        "name": "allow-prometheus-stack-egress-istiod-communication",
+        "namespace": "monitoring",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "prometheus-stack",
+            "uid": "ff51ba04-5590-4945-8ec5-1965bdbcdb76"
+          }
+        ],
+        "resourceVersion": "2869",
+        "uid": "ac0cc2fa-39c4-4c6e-8c1a-b0caa96ec828"
+      },
+      "spec": {
+        "egress": [
+          {
+            "ports": [
+              {
+                "port": 15012,
+                "protocol": "TCP"
+              }
+            ],
+            "to": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "istio-system"
+                  }
+                }
+              },
+              {
+                "podSelector": {
+                  "matchLabels": {
+                    "istio": "pilot"
+                  }
+                }
+              }
+            ]
+          }
+        ],
+        "podSelector": {},
+        "policyTypes": [
+          "Egress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "annotations": {
+          "uds/description": "Sidecar monitoring"
+        },
+        "creationTimestamp": "2024-06-07T14:40:25Z",
+        "generation": 1,
+        "labels": {
+          "uds/generation": "1",
+          "uds/package": "prometheus-stack"
+        },
+        "name": "allow-prometheus-stack-ingress-sidecar-monitoring",
+        "namespace": "monitoring",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "prometheus-stack",
+            "uid": "ff51ba04-5590-4945-8ec5-1965bdbcdb76"
+          }
+        ],
+        "resourceVersion": "2870",
+        "uid": "96c427b0-8b40-447c-ab8e-e0a3f9f71923"
+      },
+      "spec": {
+        "ingress": [
+          {
+            "from": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "monitoring"
+                  }
+                }
+              },
+              {
+                "podSelector": {
+                  "matchLabels": {
+                    "app": "prometheus"
+                  }
+                }
+              }
+            ],
+            "ports": [
+              {
+                "port": 15020,
+                "protocol": "TCP"
+              }
+            ]
+          }
+        ],
+        "podSelector": {},
+        "policyTypes": [
+          "Ingress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "annotations": {
+          "uds/description": "Webhook"
+        },
+        "creationTimestamp": "2024-06-07T14:40:25Z",
+        "generation": 1,
+        "labels": {
+          "uds/generated": "Anywhere",
+          "uds/generation": "1",
+          "uds/package": "prometheus-stack"
+        },
+        "name": "allow-prometheus-stack-ingress-webhook",
+        "namespace": "monitoring",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "prometheus-stack",
+            "uid": "ff51ba04-5590-4945-8ec5-1965bdbcdb76"
+          }
+        ],
+        "resourceVersion": "2879",
+        "uid": "0f1fcef1-99d8-4fcf-ab3b-3319fd613463"
+      },
+      "spec": {
+        "ingress": [
+          {
+            "from": [
+              {
+                "ipBlock": {
+                  "cidr": "0.0.0.0/0",
+                  "except": [
+                    "169.254.169.254/32"
+                  ]
+                }
+              }
+            ],
+            "ports": [
+              {
+                "port": 10250,
+                "protocol": "TCP"
+              }
+            ]
+          }
+        ],
+        "podSelector": {
+          "matchLabels": {
+            "app": "kube-prometheus-stack-operator"
+          }
+        },
+        "policyTypes": [
+          "Ingress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "annotations": {
+          "uds/description": "Grafana Metrics Queries"
+        },
+        "creationTimestamp": "2024-06-07T14:40:25Z",
+        "generation": 1,
+        "labels": {
+          "uds/generation": "1",
+          "uds/package": "prometheus-stack"
+        },
+        "name": "allow-prometheus-stack-ingress-grafana-metrics-queries",
+        "namespace": "monitoring",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "prometheus-stack",
+            "uid": "ff51ba04-5590-4945-8ec5-1965bdbcdb76"
+          }
+        ],
+        "resourceVersion": "2881",
+        "uid": "5b2b669b-42ab-4a0d-aa89-254a545d7bd9"
+      },
+      "spec": {
+        "ingress": [
+          {
+            "from": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "grafana"
+                  }
+                }
+              },
+              {
+                "podSelector": {
+                  "matchLabels": {
+                    "app.kubernetes.io/name": "grafana"
+                  }
+                }
+              }
+            ],
+            "ports": [
+              {
+                "port": 9090,
+                "protocol": "TCP"
+              }
+            ]
+          }
+        ],
+        "podSelector": {
+          "matchLabels": {
+            "app.kubernetes.io/name": "prometheus"
+          }
+        },
+        "policyTypes": [
+          "Ingress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "annotations": {
+          "uds/description": "Tempo"
+        },
+        "creationTimestamp": "2024-06-07T14:40:25Z",
+        "generation": 1,
+        "labels": {
+          "uds/generation": "1",
+          "uds/package": "prometheus-stack"
+        },
+        "name": "allow-prometheus-stack-egress-tempo",
+        "namespace": "monitoring",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "prometheus-stack",
+            "uid": "ff51ba04-5590-4945-8ec5-1965bdbcdb76"
+          }
+        ],
+        "resourceVersion": "2882",
+        "uid": "f56b6b6d-cbf3-446c-b9fd-d03aa2e27bf0"
+      },
+      "spec": {
+        "egress": [
+          {
+            "ports": [
+              {
+                "port": 9411,
+                "protocol": "TCP"
+              }
+            ],
+            "to": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "tempo"
+                  }
+                }
+              },
+              {
+                "podSelector": {
+                  "matchLabels": {
+                    "app.kubernetes.io/name": "tempo"
+                  }
+                }
+              }
+            ]
+          }
+        ],
+        "podSelector": {},
+        "policyTypes": [
+          "Egress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "annotations": {
+          "uds/description": "DNS lookup via CoreDNS"
+        },
+        "creationTimestamp": "2024-06-07T14:41:05Z",
+        "generation": 1,
+        "labels": {
+          "uds/generation": "1",
+          "uds/package": "promtail"
+        },
+        "name": "allow-promtail-egress-dns-lookup-via-coredns",
+        "namespace": "promtail",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "promtail",
+            "uid": "1e35a512-9c9c-47a8-877e-272d87932866"
+          }
+        ],
+        "resourceVersion": "3427",
+        "uid": "ae38b310-a500-4199-b5e8-eaa05e50af83"
+      },
+      "spec": {
+        "egress": [
+          {
+            "ports": [
+              {
+                "port": 53,
+                "protocol": "UDP"
+              }
+            ],
+            "to": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "kube-system"
+                  }
+                }
+              },
+              {
+                "podSelector": {
+                  "matchLabels": {
+                    "k8s-app": "kube-dns"
+                  }
+                }
+              }
+            ]
+          }
+        ],
+        "podSelector": {},
+        "policyTypes": [
+          "Egress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "annotations": {
+          "uds/description": "Istiod communication"
+        },
+        "creationTimestamp": "2024-06-07T14:41:05Z",
+        "generation": 1,
+        "labels": {
+          "uds/generation": "1",
+          "uds/package": "promtail"
+        },
+        "name": "allow-promtail-egress-istiod-communication",
+        "namespace": "promtail",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "promtail",
+            "uid": "1e35a512-9c9c-47a8-877e-272d87932866"
+          }
+        ],
+        "resourceVersion": "3428",
+        "uid": "2f64b3ec-29db-4ccc-ae2b-da45c01b31bb"
+      },
+      "spec": {
+        "egress": [
+          {
+            "ports": [
+              {
+                "port": 15012,
+                "protocol": "TCP"
+              }
+            ],
+            "to": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "istio-system"
+                  }
+                }
+              },
+              {
+                "podSelector": {
+                  "matchLabels": {
+                    "istio": "pilot"
+                  }
+                }
+              }
+            ]
+          }
+        ],
+        "podSelector": {},
+        "policyTypes": [
+          "Egress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "annotations": {
+          "uds/description": "Sidecar monitoring"
+        },
+        "creationTimestamp": "2024-06-07T14:41:05Z",
+        "generation": 1,
+        "labels": {
+          "uds/generation": "1",
+          "uds/package": "promtail"
+        },
+        "name": "allow-promtail-ingress-sidecar-monitoring",
+        "namespace": "promtail",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "promtail",
+            "uid": "1e35a512-9c9c-47a8-877e-272d87932866"
+          }
+        ],
+        "resourceVersion": "3429",
+        "uid": "b3101049-323d-45e9-91b4-a542f645821b"
+      },
+      "spec": {
+        "ingress": [
+          {
+            "from": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "monitoring"
+                  }
+                }
+              },
+              {
+                "podSelector": {
+                  "matchLabels": {
+                    "app": "prometheus"
+                  }
+                }
+              }
+            ],
+            "ports": [
+              {
+                "port": 15020,
+                "protocol": "TCP"
+              }
+            ]
+          }
+        ],
+        "podSelector": {},
+        "policyTypes": [
+          "Ingress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "annotations": {
+          "uds/description": "Prometheus Metrics"
+        },
+        "creationTimestamp": "2024-06-07T14:41:05Z",
+        "generation": 1,
+        "labels": {
+          "uds/generation": "1",
+          "uds/package": "promtail"
+        },
+        "name": "allow-promtail-ingress-prometheus-metrics",
+        "namespace": "promtail",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "promtail",
+            "uid": "1e35a512-9c9c-47a8-877e-272d87932866"
+          }
+        ],
+        "resourceVersion": "3430",
+        "uid": "52c0d085-bc1d-4577-a861-97a9727c790b"
+      },
+      "spec": {
+        "ingress": [
+          {
+            "from": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "monitoring"
+                  }
+                }
+              },
+              {
+                "podSelector": {
+                  "matchLabels": {
+                    "app.kubernetes.io/name": "prometheus"
+                  }
+                }
+              }
+            ],
+            "ports": [
+              {
+                "port": 3101,
+                "protocol": "TCP"
+              }
+            ]
+          }
+        ],
+        "podSelector": {},
+        "policyTypes": [
+          "Ingress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "annotations": {
+          "uds/description": "Tempo"
+        },
+        "creationTimestamp": "2024-06-07T14:41:05Z",
+        "generation": 1,
+        "labels": {
+          "uds/generation": "1",
+          "uds/package": "promtail"
+        },
+        "name": "allow-promtail-egress-tempo",
+        "namespace": "promtail",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "promtail",
+            "uid": "1e35a512-9c9c-47a8-877e-272d87932866"
+          }
+        ],
+        "resourceVersion": "3432",
+        "uid": "f9704a6a-2a83-4c90-86b8-f543e38839dd"
+      },
+      "spec": {
+        "egress": [
+          {
+            "ports": [
+              {
+                "port": 9411,
+                "protocol": "TCP"
+              }
+            ],
+            "to": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "tempo"
+                  }
+                }
+              },
+              {
+                "podSelector": {
+                  "matchLabels": {
+                    "app.kubernetes.io/name": "tempo"
+                  }
+                }
+              }
+            ]
+          }
+        ],
+        "podSelector": {},
+        "policyTypes": [
+          "Egress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "annotations": {
+          "uds/description": "Write Logs to Loki"
+        },
+        "creationTimestamp": "2024-06-07T14:41:05Z",
+        "generation": 1,
+        "labels": {
+          "uds/generation": "1",
+          "uds/package": "promtail"
+        },
+        "name": "allow-promtail-egress-write-logs-to-loki",
+        "namespace": "promtail",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "promtail",
+            "uid": "1e35a512-9c9c-47a8-877e-272d87932866"
+          }
+        ],
+        "resourceVersion": "3433",
+        "uid": "e5ecbbc4-7e90-4819-ab97-f078244785ce"
+      },
+      "spec": {
+        "egress": [
+          {
+            "ports": [
+              {
+                "port": 8080,
+                "protocol": "TCP"
+              }
+            ],
+            "to": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "loki"
+                  }
+                }
+              },
+              {
+                "podSelector": {
+                  "matchLabels": {
+                    "app.kubernetes.io/name": "loki"
+                  }
+                }
+              }
+            ]
+          }
+        ],
+        "podSelector": {
+          "matchLabels": {
+            "app.kubernetes.io/name": "promtail"
+          }
+        },
+        "policyTypes": [
+          "Egress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "annotations": {
+          "uds/description": "promtail Metrics"
+        },
+        "creationTimestamp": "2024-06-07T14:41:05Z",
+        "generation": 1,
+        "labels": {
+          "uds/generation": "1",
+          "uds/package": "promtail"
+        },
+        "name": "allow-promtail-ingress-promtail-metrics",
+        "namespace": "promtail",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "promtail",
+            "uid": "1e35a512-9c9c-47a8-877e-272d87932866"
+          }
+        ],
+        "resourceVersion": "3434",
+        "uid": "757f4a86-51b9-4057-b7c6-c5e1fbd8d32a"
+      },
+      "spec": {
+        "ingress": [
+          {
+            "from": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "monitoring"
+                  }
+                }
+              },
+              {
+                "podSelector": {
+                  "matchLabels": {
+                    "app": "prometheus"
+                  }
+                }
+              }
+            ],
+            "ports": [
+              {
+                "port": 3101,
+                "protocol": "TCP"
+              }
+            ]
+          }
+        ],
+        "podSelector": {
+          "matchLabels": {
+            "app.kubernetes.io/name": "promtail"
+          }
+        },
+        "policyTypes": [
+          "Ingress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "annotations": {
+          "uds/description": "DNS lookup via CoreDNS"
+        },
+        "creationTimestamp": "2024-06-07T14:41:43Z",
+        "generation": 1,
+        "labels": {
+          "uds/generation": "1",
+          "uds/package": "grafana"
+        },
+        "name": "allow-grafana-egress-dns-lookup-via-coredns",
+        "namespace": "grafana",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "grafana",
+            "uid": "eb4ad385-6506-4881-99b3-b133f70c83ec"
+          }
+        ],
+        "resourceVersion": "3601",
+        "uid": "5be3c893-cf9d-4e2e-9fc3-c5d10933908f"
+      },
+      "spec": {
+        "egress": [
+          {
+            "ports": [
+              {
+                "port": 53,
+                "protocol": "UDP"
+              }
+            ],
+            "to": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "kube-system"
+                  }
+                }
+              },
+              {
+                "podSelector": {
+                  "matchLabels": {
+                    "k8s-app": "kube-dns"
+                  }
+                }
+              }
+            ]
+          }
+        ],
+        "podSelector": {},
+        "policyTypes": [
+          "Egress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "annotations": {
+          "uds/description": "Istiod communication"
+        },
+        "creationTimestamp": "2024-06-07T14:41:43Z",
+        "generation": 1,
+        "labels": {
+          "uds/generation": "1",
+          "uds/package": "grafana"
+        },
+        "name": "allow-grafana-egress-istiod-communication",
+        "namespace": "grafana",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "grafana",
+            "uid": "eb4ad385-6506-4881-99b3-b133f70c83ec"
+          }
+        ],
+        "resourceVersion": "3602",
+        "uid": "07968bea-ab81-4e17-a9cd-bbde317776c6"
+      },
+      "spec": {
+        "egress": [
+          {
+            "ports": [
+              {
+                "port": 15012,
+                "protocol": "TCP"
+              }
+            ],
+            "to": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "istio-system"
+                  }
+                }
+              },
+              {
+                "podSelector": {
+                  "matchLabels": {
+                    "istio": "pilot"
+                  }
+                }
+              }
+            ]
+          }
+        ],
+        "podSelector": {},
+        "policyTypes": [
+          "Egress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "annotations": {
+          "uds/description": "Sidecar monitoring"
+        },
+        "creationTimestamp": "2024-06-07T14:41:43Z",
+        "generation": 1,
+        "labels": {
+          "uds/generation": "1",
+          "uds/package": "grafana"
+        },
+        "name": "allow-grafana-ingress-sidecar-monitoring",
+        "namespace": "grafana",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "grafana",
+            "uid": "eb4ad385-6506-4881-99b3-b133f70c83ec"
+          }
+        ],
+        "resourceVersion": "3603",
+        "uid": "dd2336fa-2119-4a58-a3b4-4f9c0dfe71b8"
+      },
+      "spec": {
+        "ingress": [
+          {
+            "from": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "monitoring"
+                  }
+                }
+              },
+              {
+                "podSelector": {
+                  "matchLabels": {
+                    "app": "prometheus"
+                  }
+                }
+              }
+            ],
+            "ports": [
+              {
+                "port": 15020,
+                "protocol": "TCP"
+              }
+            ]
+          }
+        ],
+        "podSelector": {},
+        "policyTypes": [
+          "Ingress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "annotations": {
+          "uds/description": "Tempo Datasource"
+        },
+        "creationTimestamp": "2024-06-07T14:41:43Z",
+        "generation": 1,
+        "labels": {
+          "uds/generation": "1",
+          "uds/package": "grafana"
+        },
+        "name": "allow-grafana-ingress-tempo-datasource",
+        "namespace": "grafana",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "grafana",
+            "uid": "eb4ad385-6506-4881-99b3-b133f70c83ec"
+          }
+        ],
+        "resourceVersion": "3604",
+        "uid": "f4f5a07e-01cd-4d77-8ec2-3338bb5c4590"
+      },
+      "spec": {
+        "ingress": [
+          {
+            "from": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "tempo"
+                  }
+                }
+              },
+              {
+                "podSelector": {
+                  "matchLabels": {
+                    "app.kubernetes.io/name": "tempo"
+                  }
+                }
+              }
+            ],
+            "ports": [
+              {
+                "port": 9090,
+                "protocol": "TCP"
+              }
+            ]
+          }
+        ],
+        "podSelector": {
+          "matchLabels": {
+            "app.kubernetes.io/name": "grafana"
+          }
+        },
+        "policyTypes": [
+          "Ingress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "annotations": {
+          "uds/description": "Tempo"
+        },
+        "creationTimestamp": "2024-06-07T14:41:44Z",
+        "generation": 1,
+        "labels": {
+          "uds/generation": "1",
+          "uds/package": "grafana"
+        },
+        "name": "allow-grafana-egress-tempo",
+        "namespace": "grafana",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "grafana",
+            "uid": "eb4ad385-6506-4881-99b3-b133f70c83ec"
+          }
+        ],
+        "resourceVersion": "3606",
+        "uid": "79d52a98-23a9-4b19-8270-e1e7679d0275"
+      },
+      "spec": {
+        "egress": [
+          {
+            "ports": [
+              {
+                "port": 9411,
+                "protocol": "TCP"
+              }
+            ],
+            "to": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "tempo"
+                  }
+                }
+              },
+              {
+                "podSelector": {
+                  "matchLabels": {
+                    "app.kubernetes.io/name": "tempo"
+                  }
+                }
+              }
+            ]
+          }
+        ],
+        "podSelector": {},
+        "policyTypes": [
+          "Egress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "annotations": {
+          "uds/description": "grafana Istio admin gateway"
+        },
+        "creationTimestamp": "2024-06-07T14:41:44Z",
+        "generation": 1,
+        "labels": {
+          "uds/generation": "1",
+          "uds/package": "grafana"
+        },
+        "name": "allow-grafana-ingress-grafana-istio-admin-gateway",
+        "namespace": "grafana",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "grafana",
+            "uid": "eb4ad385-6506-4881-99b3-b133f70c83ec"
+          }
+        ],
+        "resourceVersion": "3608",
+        "uid": "f5b474c3-d943-4bae-a77a-72b225fe7f61"
+      },
+      "spec": {
+        "ingress": [
+          {
+            "from": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "istio-admin-gateway"
+                  }
+                }
+              },
+              {
+                "podSelector": {
+                  "matchLabels": {
+                    "app": "admin-ingressgateway"
+                  }
+                }
+              }
+            ],
+            "ports": [
+              {
+                "port": 3000,
+                "protocol": "TCP"
+              }
+            ]
+          }
+        ],
+        "podSelector": {
+          "matchLabels": {
+            "app.kubernetes.io/name": "grafana"
+          }
+        },
+        "policyTypes": [
+          "Ingress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "annotations": {
+          "uds/description": "grafana Metrics"
+        },
+        "creationTimestamp": "2024-06-07T14:41:44Z",
+        "generation": 1,
+        "labels": {
+          "uds/generation": "1",
+          "uds/package": "grafana"
+        },
+        "name": "allow-grafana-ingress-grafana-metrics",
+        "namespace": "grafana",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "grafana",
+            "uid": "eb4ad385-6506-4881-99b3-b133f70c83ec"
+          }
+        ],
+        "resourceVersion": "3615",
+        "uid": "24a89a49-4261-4df3-ada8-1f70511b7a9b"
+      },
+      "spec": {
+        "ingress": [
+          {
+            "from": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "monitoring"
+                  }
+                }
+              },
+              {
+                "podSelector": {
+                  "matchLabels": {
+                    "app": "prometheus"
+                  }
+                }
+              }
+            ],
+            "ports": [
+              {
+                "port": 3000,
+                "protocol": "TCP"
+              }
+            ]
+          }
+        ],
+        "podSelector": {
+          "matchLabels": {
+            "app.kubernetes.io/name": "grafana"
+          }
+        },
+        "policyTypes": [
+          "Ingress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "annotations": {
+          "uds/description": "DNS lookup via CoreDNS"
+        },
+        "creationTimestamp": "2024-06-07T14:42:14Z",
+        "generation": 1,
+        "labels": {
+          "uds/generation": "1",
+          "uds/package": "authservice"
+        },
+        "name": "allow-authservice-egress-dns-lookup-via-coredns",
+        "namespace": "authservice",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "authservice",
+            "uid": "046a178c-e731-44d8-a487-e424f8034789"
+          }
+        ],
+        "resourceVersion": "3779",
+        "uid": "18a6dadf-f1e3-4466-add1-0d852b8ff529"
+      },
+      "spec": {
+        "egress": [
+          {
+            "ports": [
+              {
+                "port": 53,
+                "protocol": "UDP"
+              }
+            ],
+            "to": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "kube-system"
+                  }
+                }
+              },
+              {
+                "podSelector": {
+                  "matchLabels": {
+                    "k8s-app": "kube-dns"
+                  }
+                }
+              }
+            ]
+          }
+        ],
+        "podSelector": {},
+        "policyTypes": [
+          "Egress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "annotations": {
+          "uds/description": "Istiod communication"
+        },
+        "creationTimestamp": "2024-06-07T14:42:14Z",
+        "generation": 1,
+        "labels": {
+          "uds/generation": "1",
+          "uds/package": "authservice"
+        },
+        "name": "allow-authservice-egress-istiod-communication",
+        "namespace": "authservice",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "authservice",
+            "uid": "046a178c-e731-44d8-a487-e424f8034789"
+          }
+        ],
+        "resourceVersion": "3782",
+        "uid": "e922febc-a442-415c-83e8-ce53b653ba44"
+      },
+      "spec": {
+        "egress": [
+          {
+            "ports": [
+              {
+                "port": 15012,
+                "protocol": "TCP"
+              }
+            ],
+            "to": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "istio-system"
+                  }
+                }
+              },
+              {
+                "podSelector": {
+                  "matchLabels": {
+                    "istio": "pilot"
+                  }
+                }
+              }
+            ]
+          }
+        ],
+        "podSelector": {},
+        "policyTypes": [
+          "Egress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "annotations": {
+          "uds/description": "Sidecar monitoring"
+        },
+        "creationTimestamp": "2024-06-07T14:42:14Z",
+        "generation": 1,
+        "labels": {
+          "uds/generation": "1",
+          "uds/package": "authservice"
+        },
+        "name": "allow-authservice-ingress-sidecar-monitoring",
+        "namespace": "authservice",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "authservice",
+            "uid": "046a178c-e731-44d8-a487-e424f8034789"
+          }
+        ],
+        "resourceVersion": "3783",
+        "uid": "1f7a1385-b33c-4cdb-b165-912471696796"
+      },
+      "spec": {
+        "ingress": [
+          {
+            "from": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "monitoring"
+                  }
+                }
+              },
+              {
+                "podSelector": {
+                  "matchLabels": {
+                    "app": "prometheus"
+                  }
+                }
+              }
+            ],
+            "ports": [
+              {
+                "port": 15020,
+                "protocol": "TCP"
+              }
+            ]
+          }
+        ],
+        "podSelector": {},
+        "policyTypes": [
+          "Ingress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "annotations": {
+          "uds/description": "Protected Apps"
+        },
+        "creationTimestamp": "2024-06-07T14:42:14Z",
+        "generation": 1,
+        "labels": {
+          "uds/generation": "1",
+          "uds/package": "authservice"
+        },
+        "name": "allow-authservice-ingress-protected-apps",
+        "namespace": "authservice",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "authservice",
+            "uid": "046a178c-e731-44d8-a487-e424f8034789"
+          }
+        ],
+        "resourceVersion": "3787",
+        "uid": "7334e55f-45b2-47f4-bdec-2b7a53177f97"
+      },
+      "spec": {
+        "ingress": [
+          {
+            "from": [
+              {
+                "namespaceSelector": {}
+              },
+              {
+                "podSelector": {
+                  "matchLabels": {
+                    "protect": "keycloak"
+                  }
+                }
+              }
+            ],
+            "ports": [
+              {
+                "port": 10003,
+                "protocol": "TCP"
+              }
+            ]
+          }
+        ],
+        "podSelector": {
+          "matchLabels": {
+            "app.kubernetes.io/name": "authservice"
+          }
+        },
+        "policyTypes": [
+          "Ingress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "annotations": {
+          "uds/description": "DNS lookup via CoreDNS"
+        },
+        "creationTimestamp": "2024-06-07T14:42:39Z",
+        "generation": 1,
+        "labels": {
+          "uds/generation": "1",
+          "uds/package": "velero"
+        },
+        "name": "allow-velero-egress-dns-lookup-via-coredns",
+        "namespace": "velero",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "velero",
+            "uid": "acf82b1d-57d0-47ce-8880-e54543180a04"
+          }
+        ],
+        "resourceVersion": "3897",
+        "uid": "3a9fda9e-59ca-432d-9f2a-3775443cf964"
+      },
+      "spec": {
+        "egress": [
+          {
+            "ports": [
+              {
+                "port": 53,
+                "protocol": "UDP"
+              }
+            ],
+            "to": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "kube-system"
+                  }
+                }
+              },
+              {
+                "podSelector": {
+                  "matchLabels": {
+                    "k8s-app": "kube-dns"
+                  }
+                }
+              }
+            ]
+          }
+        ],
+        "podSelector": {},
+        "policyTypes": [
+          "Egress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "annotations": {
+          "uds/description": "Istiod communication"
+        },
+        "creationTimestamp": "2024-06-07T14:42:39Z",
+        "generation": 1,
+        "labels": {
+          "uds/generation": "1",
+          "uds/package": "velero"
+        },
+        "name": "allow-velero-egress-istiod-communication",
+        "namespace": "velero",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "velero",
+            "uid": "acf82b1d-57d0-47ce-8880-e54543180a04"
+          }
+        ],
+        "resourceVersion": "3898",
+        "uid": "7315782c-a390-42ea-9c52-7e4f28e3c15c"
+      },
+      "spec": {
+        "egress": [
+          {
+            "ports": [
+              {
+                "port": 15012,
+                "protocol": "TCP"
+              }
+            ],
+            "to": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "istio-system"
+                  }
+                }
+              },
+              {
+                "podSelector": {
+                  "matchLabels": {
+                    "istio": "pilot"
+                  }
+                }
+              }
+            ]
+          }
+        ],
+        "podSelector": {},
+        "policyTypes": [
+          "Egress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "annotations": {
+          "uds/description": "Sidecar monitoring"
+        },
+        "creationTimestamp": "2024-06-07T14:42:39Z",
+        "generation": 1,
+        "labels": {
+          "uds/generation": "1",
+          "uds/package": "velero"
+        },
+        "name": "allow-velero-ingress-sidecar-monitoring",
+        "namespace": "velero",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "velero",
+            "uid": "acf82b1d-57d0-47ce-8880-e54543180a04"
+          }
+        ],
+        "resourceVersion": "3899",
+        "uid": "1a5f853e-518d-4b4f-bd79-89e7fa52332b"
+      },
+      "spec": {
+        "ingress": [
+          {
+            "from": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "monitoring"
+                  }
+                }
+              },
+              {
+                "podSelector": {
+                  "matchLabels": {
+                    "app": "prometheus"
+                  }
+                }
+              }
+            ],
+            "ports": [
+              {
+                "port": 15020,
+                "protocol": "TCP"
+              }
+            ]
+          }
+        ],
+        "podSelector": {},
+        "policyTypes": [
+          "Ingress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "annotations": {
+          "uds/description": "Prometheus Metrics"
+        },
+        "creationTimestamp": "2024-06-07T14:42:39Z",
+        "generation": 1,
+        "labels": {
+          "uds/generation": "1",
+          "uds/package": "velero"
+        },
+        "name": "allow-velero-ingress-prometheus-metrics",
+        "namespace": "velero",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "velero",
+            "uid": "acf82b1d-57d0-47ce-8880-e54543180a04"
+          }
+        ],
+        "resourceVersion": "3905",
+        "uid": "642b650d-daee-46c9-98b3-0732e1cfb2b7"
+      },
+      "spec": {
+        "ingress": [
+          {
+            "from": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "monitoring"
+                  }
+                }
+              },
+              {
+                "podSelector": {
+                  "matchLabels": {
+                    "app": "prometheus"
+                  }
+                }
+              }
+            ],
+            "ports": [
+              {
+                "port": 8085,
+                "protocol": "TCP"
+              }
+            ]
+          }
+        ],
+        "podSelector": {
+          "matchLabels": {
+            "app.kubernetes.io/name": "velero"
+          }
+        },
+        "policyTypes": [
+          "Ingress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "creationTimestamp": "2024-06-07T14:36:34Z",
+        "generation": 2,
+        "labels": {
+          "uds/generation": "1",
+          "uds/package": "metrics-server"
+        },
+        "name": "deny-metrics-server-default",
+        "namespace": "metrics-server",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "metrics-server",
+            "uid": "be44af9c-845b-41b4-9b4b-3aa9899d3076"
+          }
+        ],
+        "resourceVersion": "174925",
+        "uid": "ddd12bef-6fdc-4a5f-a14a-f2241377233e"
+      },
+      "spec": {
+        "podSelector": {},
+        "policyTypes": [
+          "Ingress",
+          "Egress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "creationTimestamp": "2024-06-07T14:36:35Z",
+        "generation": 2,
+        "labels": {
+          "uds/generated": "KubeAPI",
+          "uds/generation": "1",
+          "uds/package": "metrics-server"
+        },
+        "name": "allow-metrics-server-egress-metrics-server-kubeapi",
+        "namespace": "metrics-server",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "metrics-server",
+            "uid": "be44af9c-845b-41b4-9b4b-3aa9899d3076"
+          }
+        ],
+        "resourceVersion": "174926",
+        "uid": "9acffae9-2899-45c7-9845-ec14d72661c9"
+      },
+      "spec": {
+        "egress": [
+          {
+            "to": [
+              {
+                "ipBlock": {
+                  "cidr": "172.19.0.3/32"
+                }
+              },
+              {
+                "ipBlock": {
+                  "cidr": "10.43.0.1/32"
+                }
+              }
+            ]
+          }
+        ],
+        "podSelector": {
+          "matchLabels": {
+            "app.kubernetes.io/name": "metrics-server"
+          }
+        },
+        "policyTypes": [
+          "Egress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "creationTimestamp": "2024-06-07T14:37:03Z",
+        "generation": 2,
+        "labels": {
+          "uds/generation": "1",
+          "uds/package": "keycloak"
+        },
+        "name": "deny-keycloak-default",
+        "namespace": "keycloak",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "keycloak",
+            "uid": "828c2d2a-07e2-4976-a1c3-318e7161d9c2"
+          }
+        ],
+        "resourceVersion": "174929",
+        "uid": "59140c79-d6b1-41f7-8539-e470a94caa25"
+      },
+      "spec": {
+        "podSelector": {},
+        "policyTypes": [
+          "Ingress",
+          "Egress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "creationTimestamp": "2024-06-07T14:38:49Z",
+        "generation": 2,
+        "labels": {
+          "uds/generation": "1",
+          "uds/package": "loki"
+        },
+        "name": "deny-loki-default",
+        "namespace": "loki",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "loki",
+            "uid": "e7e59ebe-6388-4233-872e-94065e29b3c4"
+          }
+        ],
+        "resourceVersion": "174956",
+        "uid": "eb6a63fe-cd8b-4720-9dba-e3ae07e91c93"
+      },
+      "spec": {
+        "podSelector": {},
+        "policyTypes": [
+          "Ingress",
+          "Egress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "creationTimestamp": "2024-06-07T14:38:49Z",
+        "generation": 2,
+        "labels": {
+          "uds/generated": "IntraNamespace",
+          "uds/generation": "1",
+          "uds/package": "loki"
+        },
+        "name": "allow-loki-ingress-all-pods-intranamespace",
+        "namespace": "loki",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "loki",
+            "uid": "e7e59ebe-6388-4233-872e-94065e29b3c4"
+          }
+        ],
+        "resourceVersion": "174957",
+        "uid": "cdcbaf50-75d3-4991-b739-c7bc07fe8b9b"
+      },
+      "spec": {
+        "ingress": [
+          {
+            "from": [
+              {
+                "podSelector": {}
+              }
+            ]
+          }
+        ],
+        "podSelector": {},
+        "policyTypes": [
+          "Ingress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "creationTimestamp": "2024-06-07T14:38:49Z",
+        "generation": 2,
+        "labels": {
+          "uds/generated": "IntraNamespace",
+          "uds/generation": "1",
+          "uds/package": "loki"
+        },
+        "name": "allow-loki-egress-all-pods-intranamespace",
+        "namespace": "loki",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "loki",
+            "uid": "e7e59ebe-6388-4233-872e-94065e29b3c4"
+          }
+        ],
+        "resourceVersion": "174959",
+        "uid": "36077323-34b7-4a3c-9f15-907acfb3a22e"
+      },
+      "spec": {
+        "egress": [
+          {
+            "to": [
+              {
+                "podSelector": {}
+              }
+            ]
+          }
+        ],
+        "podSelector": {},
+        "policyTypes": [
+          "Egress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "creationTimestamp": "2024-06-07T14:38:49Z",
+        "generation": 2,
+        "labels": {
+          "uds/generated": "Anywhere",
+          "uds/generation": "1",
+          "uds/package": "loki"
+        },
+        "name": "allow-loki-egress-loki-anywhere",
+        "namespace": "loki",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "loki",
+            "uid": "e7e59ebe-6388-4233-872e-94065e29b3c4"
+          }
+        ],
+        "resourceVersion": "174960",
+        "uid": "aa29c669-9f41-4ead-9d04-ef643a4dfc65"
+      },
+      "spec": {
+        "egress": [
+          {
+            "to": [
+              {
+                "ipBlock": {
+                  "cidr": "0.0.0.0/0",
+                  "except": [
+                    "169.254.169.254/32"
+                  ]
+                }
+              }
+            ]
+          }
+        ],
+        "podSelector": {
+          "matchLabels": {
+            "app.kubernetes.io/name": "loki"
+          }
+        },
+        "policyTypes": [
+          "Egress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "creationTimestamp": "2024-06-07T14:40:25Z",
+        "generation": 2,
+        "labels": {
+          "uds/generation": "1",
+          "uds/package": "prometheus-stack"
+        },
+        "name": "deny-prometheus-stack-default",
+        "namespace": "monitoring",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "prometheus-stack",
+            "uid": "ff51ba04-5590-4945-8ec5-1965bdbcdb76"
+          }
+        ],
+        "resourceVersion": "174963",
+        "uid": "347b1bee-7524-4837-9fa6-dba07cfe586d"
+      },
+      "spec": {
+        "podSelector": {},
+        "policyTypes": [
+          "Ingress",
+          "Egress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "creationTimestamp": "2024-06-07T14:40:25Z",
+        "generation": 2,
+        "labels": {
+          "uds/generated": "IntraNamespace",
+          "uds/generation": "1",
+          "uds/package": "prometheus-stack"
+        },
+        "name": "allow-prometheus-stack-ingress-all-pods-intranamespace",
+        "namespace": "monitoring",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "prometheus-stack",
+            "uid": "ff51ba04-5590-4945-8ec5-1965bdbcdb76"
+          }
+        ],
+        "resourceVersion": "174964",
+        "uid": "7777a5fa-8aad-4a8d-ad6c-0ecb4c75e83d"
+      },
+      "spec": {
+        "ingress": [
+          {
+            "from": [
+              {
+                "podSelector": {}
+              }
+            ]
+          }
+        ],
+        "podSelector": {},
+        "policyTypes": [
+          "Ingress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "creationTimestamp": "2024-06-07T14:40:25Z",
+        "generation": 2,
+        "labels": {
+          "uds/generated": "IntraNamespace",
+          "uds/generation": "1",
+          "uds/package": "prometheus-stack"
+        },
+        "name": "allow-prometheus-stack-egress-all-pods-intranamespace",
+        "namespace": "monitoring",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "prometheus-stack",
+            "uid": "ff51ba04-5590-4945-8ec5-1965bdbcdb76"
+          }
+        ],
+        "resourceVersion": "174965",
+        "uid": "fb903f70-76fc-436b-9e93-43e7608fee4e"
+      },
+      "spec": {
+        "egress": [
+          {
+            "to": [
+              {
+                "podSelector": {}
+              }
+            ]
+          }
+        ],
+        "podSelector": {},
+        "policyTypes": [
+          "Egress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "creationTimestamp": "2024-06-07T14:40:25Z",
+        "generation": 2,
+        "labels": {
+          "uds/generated": "KubeAPI",
+          "uds/generation": "1",
+          "uds/package": "prometheus-stack"
+        },
+        "name": "allow-prometheus-stack-egress-kube-prometheus-stack-operator-kubeapi",
+        "namespace": "monitoring",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "prometheus-stack",
+            "uid": "ff51ba04-5590-4945-8ec5-1965bdbcdb76"
+          }
+        ],
+        "resourceVersion": "174966",
+        "uid": "671f5b00-ac45-4814-a922-0390dcaaaedf"
+      },
+      "spec": {
+        "egress": [
+          {
+            "to": [
+              {
+                "ipBlock": {
+                  "cidr": "172.19.0.3/32"
+                }
+              },
+              {
+                "ipBlock": {
+                  "cidr": "10.43.0.1/32"
+                }
+              }
+            ]
+          }
+        ],
+        "podSelector": {
+          "matchLabels": {
+            "app": "kube-prometheus-stack-operator"
+          }
+        },
+        "policyTypes": [
+          "Egress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "creationTimestamp": "2024-06-07T14:40:25Z",
+        "generation": 2,
+        "labels": {
+          "uds/generated": "KubeAPI",
+          "uds/generation": "1",
+          "uds/package": "prometheus-stack"
+        },
+        "name": "allow-prometheus-stack-egress-prometheus-kubeapi",
+        "namespace": "monitoring",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "prometheus-stack",
+            "uid": "ff51ba04-5590-4945-8ec5-1965bdbcdb76"
+          }
+        ],
+        "resourceVersion": "174967",
+        "uid": "3cb1b9bd-6ba0-4c2b-ab71-2aafa3292366"
+      },
+      "spec": {
+        "egress": [
+          {
+            "to": [
+              {
+                "ipBlock": {
+                  "cidr": "172.19.0.3/32"
+                }
+              },
+              {
+                "ipBlock": {
+                  "cidr": "10.43.0.1/32"
+                }
+              }
+            ]
+          }
+        ],
+        "podSelector": {
+          "matchLabels": {
+            "app": "prometheus"
+          }
+        },
+        "policyTypes": [
+          "Egress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "creationTimestamp": "2024-06-07T14:40:25Z",
+        "generation": 2,
+        "labels": {
+          "uds/generated": "KubeAPI",
+          "uds/generation": "1",
+          "uds/package": "prometheus-stack"
+        },
+        "name": "allow-prometheus-stack-egress-kube-state-metrics-kubeapi",
+        "namespace": "monitoring",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "prometheus-stack",
+            "uid": "ff51ba04-5590-4945-8ec5-1965bdbcdb76"
+          }
+        ],
+        "resourceVersion": "174968",
+        "uid": "e2b32f01-9cf0-42ab-8682-531e3832a14f"
+      },
+      "spec": {
+        "egress": [
+          {
+            "to": [
+              {
+                "ipBlock": {
+                  "cidr": "172.19.0.3/32"
+                }
+              },
+              {
+                "ipBlock": {
+                  "cidr": "10.43.0.1/32"
+                }
+              }
+            ]
+          }
+        ],
+        "podSelector": {
+          "matchLabels": {
+            "app.kubernetes.io/name": "kube-state-metrics"
+          }
+        },
+        "policyTypes": [
+          "Egress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "creationTimestamp": "2024-06-07T14:40:25Z",
+        "generation": 2,
+        "labels": {
+          "uds/generated": "KubeAPI",
+          "uds/generation": "1",
+          "uds/package": "prometheus-stack"
+        },
+        "name": "allow-prometheus-stack-egress-kube-prometheus-stack-admission-create-kubeapi",
+        "namespace": "monitoring",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "prometheus-stack",
+            "uid": "ff51ba04-5590-4945-8ec5-1965bdbcdb76"
+          }
+        ],
+        "resourceVersion": "174969",
+        "uid": "5aa261c9-7e7f-4635-8c2f-6bd5e4c146f3"
+      },
+      "spec": {
+        "egress": [
+          {
+            "to": [
+              {
+                "ipBlock": {
+                  "cidr": "172.19.0.3/32"
+                }
+              },
+              {
+                "ipBlock": {
+                  "cidr": "10.43.0.1/32"
+                }
+              }
+            ]
+          }
+        ],
+        "podSelector": {
+          "matchLabels": {
+            "app": "kube-prometheus-stack-admission-create"
+          }
+        },
+        "policyTypes": [
+          "Egress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "creationTimestamp": "2024-06-07T14:40:25Z",
+        "generation": 2,
+        "labels": {
+          "uds/generated": "KubeAPI",
+          "uds/generation": "1",
+          "uds/package": "prometheus-stack"
+        },
+        "name": "allow-prometheus-stack-egress-kube-prometheus-stack-admission-patch-kubeapi",
+        "namespace": "monitoring",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "prometheus-stack",
+            "uid": "ff51ba04-5590-4945-8ec5-1965bdbcdb76"
+          }
+        ],
+        "resourceVersion": "174970",
+        "uid": "ef7e2fc4-ce21-424a-bfab-0c5f6f73005e"
+      },
+      "spec": {
+        "egress": [
+          {
+            "to": [
+              {
+                "ipBlock": {
+                  "cidr": "172.19.0.3/32"
+                }
+              },
+              {
+                "ipBlock": {
+                  "cidr": "10.43.0.1/32"
+                }
+              }
+            ]
+          }
+        ],
+        "podSelector": {
+          "matchLabels": {
+            "app": "kube-prometheus-stack-admission-patch"
+          }
+        },
+        "policyTypes": [
+          "Egress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "annotations": {
+          "uds/description": "Metrics Scraping"
+        },
+        "creationTimestamp": "2024-06-07T14:40:25Z",
+        "generation": 2,
+        "labels": {
+          "uds/generation": "1",
+          "uds/package": "prometheus-stack"
+        },
+        "name": "allow-prometheus-stack-egress-metrics-scraping",
+        "namespace": "monitoring",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "prometheus-stack",
+            "uid": "ff51ba04-5590-4945-8ec5-1965bdbcdb76"
+          }
+        ],
+        "resourceVersion": "174971",
+        "uid": "8cd1ad66-b953-4656-8f28-ccd27505424a"
+      },
+      "spec": {
+        "egress": [
+          {
+            "to": [
+              {
+                "namespaceSelector": {}
+              }
+            ]
+          }
+        ],
+        "podSelector": {
+          "matchLabels": {
+            "app.kubernetes.io/name": "prometheus"
+          }
+        },
+        "policyTypes": [
+          "Egress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "creationTimestamp": "2024-06-07T14:41:05Z",
+        "generation": 2,
+        "labels": {
+          "uds/generation": "1",
+          "uds/package": "promtail"
+        },
+        "name": "deny-promtail-default",
+        "namespace": "promtail",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "promtail",
+            "uid": "1e35a512-9c9c-47a8-877e-272d87932866"
+          }
+        ],
+        "resourceVersion": "174975",
+        "uid": "8574f041-8228-4288-a54c-e577703e7130"
+      },
+      "spec": {
+        "podSelector": {},
+        "policyTypes": [
+          "Ingress",
+          "Egress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "creationTimestamp": "2024-06-07T14:41:05Z",
+        "generation": 2,
+        "labels": {
+          "uds/generated": "KubeAPI",
+          "uds/generation": "1",
+          "uds/package": "promtail"
+        },
+        "name": "allow-promtail-egress-all-pods-kubeapi",
+        "namespace": "promtail",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "promtail",
+            "uid": "1e35a512-9c9c-47a8-877e-272d87932866"
+          }
+        ],
+        "resourceVersion": "174976",
+        "uid": "2887cd8d-acdf-4c98-b5c3-c7759d2cf770"
+      },
+      "spec": {
+        "egress": [
+          {
+            "to": [
+              {
+                "ipBlock": {
+                  "cidr": "172.19.0.3/32"
+                }
+              },
+              {
+                "ipBlock": {
+                  "cidr": "10.43.0.1/32"
+                }
+              }
+            ]
+          }
+        ],
+        "podSelector": {},
+        "policyTypes": [
+          "Egress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "creationTimestamp": "2024-06-07T14:42:14Z",
+        "generation": 2,
+        "labels": {
+          "uds/generation": "1",
+          "uds/package": "authservice"
+        },
+        "name": "deny-authservice-default",
+        "namespace": "authservice",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "authservice",
+            "uid": "046a178c-e731-44d8-a487-e424f8034789"
+          }
+        ],
+        "resourceVersion": "174989",
+        "uid": "df70aa97-b5a9-47c8-bb9e-4280549525ac"
+      },
+      "spec": {
+        "podSelector": {},
+        "policyTypes": [
+          "Ingress",
+          "Egress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "creationTimestamp": "2024-06-07T14:42:14Z",
+        "generation": 2,
+        "labels": {
+          "uds/generated": "IntraNamespace",
+          "uds/generation": "1",
+          "uds/package": "authservice"
+        },
+        "name": "allow-authservice-ingress-all-pods-intranamespace",
+        "namespace": "authservice",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "authservice",
+            "uid": "046a178c-e731-44d8-a487-e424f8034789"
+          }
+        ],
+        "resourceVersion": "174990",
+        "uid": "28d4089f-be25-4c88-bb45-f45f39d44382"
+      },
+      "spec": {
+        "ingress": [
+          {
+            "from": [
+              {
+                "podSelector": {}
+              }
+            ]
+          }
+        ],
+        "podSelector": {},
+        "policyTypes": [
+          "Ingress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "creationTimestamp": "2024-06-07T14:42:14Z",
+        "generation": 2,
+        "labels": {
+          "uds/generated": "IntraNamespace",
+          "uds/generation": "1",
+          "uds/package": "authservice"
+        },
+        "name": "allow-authservice-egress-all-pods-intranamespace",
+        "namespace": "authservice",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "authservice",
+            "uid": "046a178c-e731-44d8-a487-e424f8034789"
+          }
+        ],
+        "resourceVersion": "174991",
+        "uid": "df4fcfe9-6685-424e-9e26-cc82c6a87b06"
+      },
+      "spec": {
+        "egress": [
+          {
+            "to": [
+              {
+                "podSelector": {}
+              }
+            ]
+          }
+        ],
+        "podSelector": {},
+        "policyTypes": [
+          "Egress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "annotations": {
+          "uds/description": "SSO Provider"
+        },
+        "creationTimestamp": "2024-06-07T14:42:14Z",
+        "generation": 2,
+        "labels": {
+          "uds/generated": "Anywhere",
+          "uds/generation": "1",
+          "uds/package": "authservice"
+        },
+        "name": "allow-authservice-egress-sso-provider",
+        "namespace": "authservice",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "authservice",
+            "uid": "046a178c-e731-44d8-a487-e424f8034789"
+          }
+        ],
+        "resourceVersion": "174992",
+        "uid": "4afdf83f-9eef-489c-81b1-7757e0e50f5d"
+      },
+      "spec": {
+        "egress": [
+          {
+            "to": [
+              {
+                "ipBlock": {
+                  "cidr": "0.0.0.0/0",
+                  "except": [
+                    "169.254.169.254/32"
+                  ]
+                }
+              }
+            ]
+          }
+        ],
+        "podSelector": {},
+        "policyTypes": [
+          "Egress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "creationTimestamp": "2024-06-07T14:42:39Z",
+        "generation": 2,
+        "labels": {
+          "uds/generation": "1",
+          "uds/package": "velero"
+        },
+        "name": "deny-velero-default",
+        "namespace": "velero",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "velero",
+            "uid": "acf82b1d-57d0-47ce-8880-e54543180a04"
+          }
+        ],
+        "resourceVersion": "174995",
+        "uid": "54a38b70-38b9-41f1-b6c4-1d12a2c9723d"
+      },
+      "spec": {
+        "podSelector": {},
+        "policyTypes": [
+          "Ingress",
+          "Egress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "creationTimestamp": "2024-06-07T14:42:39Z",
+        "generation": 2,
+        "labels": {
+          "uds/generated": "Anywhere",
+          "uds/generation": "1",
+          "uds/package": "velero"
+        },
+        "name": "allow-velero-egress-velero-anywhere",
+        "namespace": "velero",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "velero",
+            "uid": "acf82b1d-57d0-47ce-8880-e54543180a04"
+          }
+        ],
+        "resourceVersion": "174996",
+        "uid": "0cfec493-e5a0-4cd1-b7b1-89bb302a9d9b"
+      },
+      "spec": {
+        "egress": [
+          {
+            "to": [
+              {
+                "ipBlock": {
+                  "cidr": "0.0.0.0/0",
+                  "except": [
+                    "169.254.169.254/32"
+                  ]
+                }
+              }
+            ]
+          }
+        ],
+        "podSelector": {
+          "matchLabels": {
+            "app.kubernetes.io/name": "velero"
+          }
+        },
+        "policyTypes": [
+          "Egress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "creationTimestamp": "2024-06-07T14:42:39Z",
+        "generation": 2,
+        "labels": {
+          "uds/generated": "KubeAPI",
+          "uds/generation": "1",
+          "uds/package": "velero"
+        },
+        "name": "allow-velero-egress-velero-upgrade-crds-kubeapi",
+        "namespace": "velero",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "velero",
+            "uid": "acf82b1d-57d0-47ce-8880-e54543180a04"
+          }
+        ],
+        "resourceVersion": "174997",
+        "uid": "ac8647b6-053b-428b-a131-e091c3fc4af5"
+      },
+      "spec": {
+        "egress": [
+          {
+            "to": [
+              {
+                "ipBlock": {
+                  "cidr": "172.19.0.3/32"
+                }
+              },
+              {
+                "ipBlock": {
+                  "cidr": "10.43.0.1/32"
+                }
+              }
+            ]
+          }
+        ],
+        "podSelector": {
+          "matchLabels": {
+            "batch.kubernetes.io/job-name": "velero-upgrade-crds"
+          }
+        },
+        "policyTypes": [
+          "Egress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "creationTimestamp": "2024-06-07T14:38:19Z",
+        "generation": 74,
+        "labels": {
+          "uds/generation": "1",
+          "uds/package": "neuvector"
+        },
+        "name": "deny-neuvector-default",
+        "namespace": "neuvector",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "neuvector",
+            "uid": "91b75744-bd1b-497b-8875-2a258d8b23cc"
+          }
+        ],
+        "resourceVersion": "176365",
+        "uid": "e76d1965-d0c9-41df-8e13-b662157680cc"
+      },
+      "spec": {
+        "podSelector": {},
+        "policyTypes": [
+          "Ingress",
+          "Egress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "creationTimestamp": "2024-06-07T14:38:19Z",
+        "generation": 74,
+        "labels": {
+          "uds/generated": "IntraNamespace",
+          "uds/generation": "1",
+          "uds/package": "neuvector"
+        },
+        "name": "allow-neuvector-ingress-all-pods-intranamespace",
+        "namespace": "neuvector",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "neuvector",
+            "uid": "91b75744-bd1b-497b-8875-2a258d8b23cc"
+          }
+        ],
+        "resourceVersion": "176366",
+        "uid": "1a5a1afd-d18c-4bdf-aaa1-71000047dfc7"
+      },
+      "spec": {
+        "ingress": [
+          {
+            "from": [
+              {
+                "podSelector": {}
+              }
+            ]
+          }
+        ],
+        "podSelector": {},
+        "policyTypes": [
+          "Ingress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "creationTimestamp": "2024-06-07T14:38:19Z",
+        "generation": 74,
+        "labels": {
+          "uds/generated": "IntraNamespace",
+          "uds/generation": "1",
+          "uds/package": "neuvector"
+        },
+        "name": "allow-neuvector-egress-all-pods-intranamespace",
+        "namespace": "neuvector",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "neuvector",
+            "uid": "91b75744-bd1b-497b-8875-2a258d8b23cc"
+          }
+        ],
+        "resourceVersion": "176367",
+        "uid": "810c1d2e-76a7-4313-9694-983eee61aaae"
+      },
+      "spec": {
+        "egress": [
+          {
+            "to": [
+              {
+                "podSelector": {}
+              }
+            ]
+          }
+        ],
+        "podSelector": {},
+        "policyTypes": [
+          "Egress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "creationTimestamp": "2024-06-07T14:38:19Z",
+        "generation": 74,
+        "labels": {
+          "uds/generated": "KubeAPI",
+          "uds/generation": "1",
+          "uds/package": "neuvector"
+        },
+        "name": "allow-neuvector-egress-neuvector-controller-pod-kubeapi",
+        "namespace": "neuvector",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "neuvector",
+            "uid": "91b75744-bd1b-497b-8875-2a258d8b23cc"
+          }
+        ],
+        "resourceVersion": "176368",
+        "uid": "0c813cba-4a96-475b-8034-5b98078de1b2"
+      },
+      "spec": {
+        "egress": [
+          {
+            "to": [
+              {
+                "ipBlock": {
+                  "cidr": "172.19.0.3/32"
+                }
+              },
+              {
+                "ipBlock": {
+                  "cidr": "10.43.0.1/32"
+                }
+              }
+            ]
+          }
+        ],
+        "podSelector": {
+          "matchLabels": {
+            "app": "neuvector-controller-pod"
+          }
+        },
+        "policyTypes": [
+          "Egress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "creationTimestamp": "2024-06-07T14:38:19Z",
+        "generation": 74,
+        "labels": {
+          "uds/generated": "Anywhere",
+          "uds/generation": "1",
+          "uds/package": "neuvector"
+        },
+        "name": "allow-neuvector-egress-neuvector-controller-pod-anywhere",
+        "namespace": "neuvector",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "neuvector",
+            "uid": "91b75744-bd1b-497b-8875-2a258d8b23cc"
+          }
+        ],
+        "resourceVersion": "176369",
+        "uid": "e5155b3d-542d-4093-8eba-cfa7ab19421b"
+      },
+      "spec": {
+        "egress": [
+          {
+            "to": [
+              {
+                "ipBlock": {
+                  "cidr": "0.0.0.0/0",
+                  "except": [
+                    "169.254.169.254/32"
+                  ]
+                }
+              }
+            ]
+          }
+        ],
+        "podSelector": {
+          "matchLabels": {
+            "app": "neuvector-controller-pod"
+          }
+        },
+        "policyTypes": [
+          "Egress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "creationTimestamp": "2024-06-07T14:38:19Z",
+        "generation": 74,
+        "labels": {
+          "uds/generated": "KubeAPI",
+          "uds/generation": "1",
+          "uds/package": "neuvector"
+        },
+        "name": "allow-neuvector-egress-neuvector-updater-pod-kubeapi",
+        "namespace": "neuvector",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "neuvector",
+            "uid": "91b75744-bd1b-497b-8875-2a258d8b23cc"
+          }
+        ],
+        "resourceVersion": "176370",
+        "uid": "7b5cc5bf-f7c5-4116-927b-69abb95da536"
+      },
+      "spec": {
+        "egress": [
+          {
+            "to": [
+              {
+                "ipBlock": {
+                  "cidr": "172.19.0.3/32"
+                }
+              },
+              {
+                "ipBlock": {
+                  "cidr": "10.43.0.1/32"
+                }
+              }
+            ]
+          }
+        ],
+        "podSelector": {
+          "matchLabels": {
+            "app": "neuvector-updater-pod"
+          }
+        },
+        "policyTypes": [
+          "Egress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "creationTimestamp": "2024-06-07T14:38:19Z",
+        "generation": 74,
+        "labels": {
+          "uds/generated": "KubeAPI",
+          "uds/generation": "1",
+          "uds/package": "neuvector"
+        },
+        "name": "allow-neuvector-egress-neuvector-enforcer-pod-kubeapi",
+        "namespace": "neuvector",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "neuvector",
+            "uid": "91b75744-bd1b-497b-8875-2a258d8b23cc"
+          }
+        ],
+        "resourceVersion": "176371",
+        "uid": "6e0b20e1-921a-491e-a2df-ceae75737076"
+      },
+      "spec": {
+        "egress": [
+          {
+            "to": [
+              {
+                "ipBlock": {
+                  "cidr": "172.19.0.3/32"
+                }
+              },
+              {
+                "ipBlock": {
+                  "cidr": "10.43.0.1/32"
+                }
+              }
+            ]
+          }
+        ],
+        "podSelector": {
+          "matchLabels": {
+            "app": "neuvector-enforcer-pod"
+          }
+        },
+        "policyTypes": [
+          "Egress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "creationTimestamp": "2024-06-07T14:41:43Z",
+        "generation": 71,
+        "labels": {
+          "uds/generation": "1",
+          "uds/package": "grafana"
+        },
+        "name": "deny-grafana-default",
+        "namespace": "grafana",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "grafana",
+            "uid": "eb4ad385-6506-4881-99b3-b133f70c83ec"
+          }
+        ],
+        "resourceVersion": "176431",
+        "uid": "fc4c1fb4-9469-4c34-bd5e-23ba883a50e8"
+      },
+      "spec": {
+        "podSelector": {},
+        "policyTypes": [
+          "Ingress",
+          "Egress"
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "creationTimestamp": "2024-06-07T14:41:43Z",
+        "generation": 71,
+        "labels": {
+          "uds/generated": "Anywhere",
+          "uds/generation": "1",
+          "uds/package": "grafana"
+        },
+        "name": "allow-grafana-egress-grafana-anywhere",
+        "namespace": "grafana",
+        "ownerReferences": [
+          {
+            "apiVersion": "uds.dev/v1alpha1",
+            "kind": "Package",
+            "name": "grafana",
+            "uid": "eb4ad385-6506-4881-99b3-b133f70c83ec"
+          }
+        ],
+        "resourceVersion": "176432",
+        "uid": "2dc9ff63-bd48-4121-839c-bf221476f59b"
+      },
+      "spec": {
+        "egress": [
+          {
+            "to": [
+              {
+                "ipBlock": {
+                  "cidr": "0.0.0.0/0",
+                  "except": [
+                    "169.254.169.254/32"
+                  ]
+                }
+              }
+            ]
+          }
+        ],
+        "podSelector": {
+          "matchLabels": {
+            "app.kubernetes.io/name": "grafana"
+          }
+        },
+        "policyTypes": [
+          "Egress"
+        ]
+      }
+    }
+  ]
+}

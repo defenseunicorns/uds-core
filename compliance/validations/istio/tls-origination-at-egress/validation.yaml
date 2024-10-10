@@ -1,0 +1,17 @@
+metadata:
+  name: tls-origination-at-egress-PLACEHOLDER
+  uuid: 8be1601e-5870-4573-ab4f-c1c199944815
+domain:
+  type: kubernetes
+  kubernetes-spec:
+    resources: []
+provider:
+  type: opa
+  opa-spec:
+    rego: |
+      package validate
+
+      default validate := false
+
+      # How to prove TLS origination is configured at egress
+      # DestinationRule?

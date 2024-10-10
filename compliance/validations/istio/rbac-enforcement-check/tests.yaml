@@ -1,0 +1,10 @@
+pass:
+  - test: default
+    validation: validation.yaml
+    resources: resources.json
+    expected-validation: true
+  - test: remove-authorization-policies
+    validation: validation.yaml
+    resources: resources.json
+    permutation: ".authorizationPolicies = []"
+    expected-validation: false
