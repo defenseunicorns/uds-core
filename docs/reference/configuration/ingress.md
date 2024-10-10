@@ -61,6 +61,9 @@ packages:
               path: tls.key
       istio-tenant-gateway:
         uds-istio-config:
+          values:
+            - path: tls.supportTLSV1_2
+              value: true # Add support for TLS 1.2 on this gateway, can be specified via variables if needed at deploy time
           variables:
             - name: TENANT_TLS_CERT
               description: "The TLS cert for the tenant gateway (must be base64 encoded)"
