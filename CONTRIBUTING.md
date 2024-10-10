@@ -102,10 +102,10 @@ uds run test:uds-core-e2e
 
 Each of these tasks will create a local k3d cluster, install UDS Core, and run a series of tests against it, the same tests that are run in CI.
 
-If you want to run a subset of core for faster iterations against a specific package, you can use the `PKG` env variable with the below task (example for metrics-server):
+If you want to run a subset of core for faster iterations against a specific package, you can use the `LAYER` variable with the below task (example for metrics-server):
 
 ```console
-UDS_PKG=metrics-server uds run test-single-package
+uds run test-single-layer --set LAYER=metrics-server
 ```
 
 Note you can also specify the `--set FLAVOR=<registry1/unicorn>` flag to test using with either the Iron Bank or Unicorn sourced images instead of the upstream ones.
