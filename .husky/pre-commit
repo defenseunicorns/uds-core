@@ -2,7 +2,7 @@
 . "$(dirname -- "$0")/_/husky.sh"
 
 # Run yamllint globally, which will respect the .yamllint config, including ignores
-yamllint -c .yamllint .
+yamllint -c .yamllint . --no-warnings
 
 # Capture yamllint exit code
 YAMLLINT_EXIT=$?
