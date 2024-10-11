@@ -1,7 +1,5 @@
 ---
 title: Flavor Specific Development Notes
-type: docs
-weight: 5
 ---
 
 Specific flavors of UDS Core have access and architecture restrictions when used for development work. The `upstream` flavor is generally recommended for development as it does not have any restrictions or requirements.

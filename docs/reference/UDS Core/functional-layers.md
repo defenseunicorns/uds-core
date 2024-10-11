@@ -1,7 +1,5 @@
 ---
-title: UDS Core Functional Layers
-type: docs
-weight: 9
+title: Functional Layers
 ---
 
 ## Background
@@ -10,13 +8,13 @@ Context on the inclusion of "functional layers" can be viewed in our [ADR](https
 
 Each layer is published as an individual OCI Zarf package. Package sources can be viewed under the [`packages` directory](https://github.com/defenseunicorns/uds-core/tree/main/packages), with each folder containing a readme detailing the contents and any dependencies. All layers assume the requirement of the base layer which provides Istio, the UDS Operator, and UDS Policy Engine.
 
-{{% alert-caution %}}
+:::caution
 By removing pieces of core from your deployment you may affect your security and compliance posture as well as reduce functionality of the stack. Deploying core using these layers should be the exception in most cases and only done after carefully weighing needs for your environment.
-{{% /alert-caution %}}
+:::
 
 ## Example Usage
 
-Functional layers are designed to be composed in a UDS bundle for deployment. The below example includes all layers in a working order. Note that base must be the first layer, and any other layers must come in order of dependencies where applicable. When constructing your bundle with layers you are able to leave out any layers that do not suite your deployment environment, and add any overrides (per layer) that you may need.
+Functional layers are designed to be combined into a UDS bundle for deployment. The example below shows all layers in the correct order. Keep in mind that 'base' must always be the first layer, and any other layers should follow based on their dependency order. When building your bundle, you can skip layers that don't fit your deployment needs and apply overrides to individual layers as needed. Ensure all layers are using the same version for compatibility.
 
 ```yaml
 kind: UDSBundle
