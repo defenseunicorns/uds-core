@@ -181,7 +181,7 @@ variables:
     CA_CERT: <base64 encoded certificate authority>
 ```
 
-See [configuring Istio Ingress](https://uds.defenseunicorns.com/core/configuration/istio/ingress/#configure-domain-name-and-tls-for-istio-gateways) for the relevant documentation on configuring ingress certificates.
+See [configuring Istio Ingress](https://uds.defenseunicorns.com/reference/configuration/ingress/#configure-domain-name-and-tls-for-istio-gateways) for the relevant documentation on configuring ingress certificates.
 
 ### Creating a UDS Package with a Device Flow client
 
