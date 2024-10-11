@@ -1,18 +1,40 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial
 kind: UDSBundle
 metadata:
-  name: uds-core-eks-nightly
-  description: A UDS bundle for deploying EKS and UDS Core
+  name: uds-core-rke2-nightly
+  description: A UDS bundle for deploying RKE2 and UDS Core
   # x-release-please-start-version
   version: "0.28.0"
   # x-release-please-end
 
 packages:
+  - name: pod-identity-webhook
+    repository: ghcr.io/defenseunicorns/packages/uds/pod-identity-webhook
+    ref: 0.3.1-upstream
+
   - name: init
     repository: ghcr.io/zarf-dev/packages/init
     ref: v0.41.0
+    overrides:
+      zarf-registry:
+        docker-registry:
+          variables:
+            - path: affinity.custom
+              name: REGISTRY_AFFINITY_CUSTOM_UDS
+            - path: persistence.accessMode
+              name: REGISTRY_PVC_ACCESS_MODE
+              default: ReadWriteMany
+      zarf-seed-registry:
+        docker-registry:
+          variables:
+            - path: affinity.custom
+              name: REGISTRY_AFFINITY_CUSTOM_UDS
+            - path: persistence.accessMode
+              name: REGISTRY_PVC_ACCESS_MODE
+              default: ReadWriteMany
 
   - name: core
-    path: ../../build/
+    path: ../../../build
     # x-release-please-start-version
     ref: 0.28.0
     # x-release-please-end
@@ -25,9 +47,9 @@ packages:
             - name: VELERO_USE_SECRET
               description: "Toggle use secret off to use IRSA."
               path: credentials.useSecret
-            - name: VELERO_IRSA_ANNOTATION
+            - name: VELERO_IRSA_ROLE_ARN
               description: "IRSA ARN annotation to use for Velero"
-              path: serviceAccount.server.annotations.eks\.amazonaws\.com/role-arn
+              path: serviceAccount.server.annotations.irsa/role-arn
       loki:
         loki:
           values:
@@ -37,6 +59,8 @@ packages:
               value: ""
             - path: loki.storage.s3.accessKeyId
               value: ""
+            - path: global.dnsService
+              value: rke2-coredns-rke2-coredns
           variables:
             - name: LOKI_CHUNKS_BUCKET
               description: "The object storage bucket for Loki chunks"
@@ -50,29 +74,6 @@ packages:
             - name: LOKI_S3_REGION
               description: "The S3 region"
               path: loki.storage.s3.region
-            - name: LOKI_IRSA_ANNOTATION
+            - name: LOKI_IRSA_ROLE_ARN
               description: "The irsa role annotation"
-              path: serviceAccount.annotations.eks\.amazonaws\.com/role-arn
-      grafana:
-        grafana:
-          variables:
-            - name: GRAFANA_HA
-              description: Enable HA Grafana
-              path: autoscaling.enabled
-        uds-grafana-config:
-          variables:
-            - name: GRAFANA_PG_HOST
-              description: Grafana postgresql host
-              path: postgresql.host
-            - name: GRAFANA_PG_PORT
-              description: Grafana postgresql port
-              path: postgresql.port
-            - name: GRAFANA_PG_DATABASE
-              description: Grafana postgresql database
-              path: postgresql.database
-            - name: GRAFANA_PG_PASSWORD
-              description: Grafana postgresql password
-              path: postgresql.password
-            - name: GRAFANA_PG_USER
-              description: Grafana postgresql username
-              path: postgresql.user
+              path: serviceAccount.annotations.irsa/role-arn

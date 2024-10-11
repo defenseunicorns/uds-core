@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial
 import { Monitor } from "../../crd";
 import { sanitizeResourceName } from "../utils";
 

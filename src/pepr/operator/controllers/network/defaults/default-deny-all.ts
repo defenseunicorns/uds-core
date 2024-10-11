@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial
 import { kind } from "pepr";
 
 export function defaultDenyAll(namespace: string): kind.NetworkPolicy {

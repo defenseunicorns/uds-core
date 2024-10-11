@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial
 image:
   repository: timberio/vector
   tag: 0.41.1-distroless-static

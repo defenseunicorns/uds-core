@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial
 import { R } from "pepr";
 import { UDSConfig } from "../../../../config";
 import { Component, setupLogger } from "../../../../logger";
