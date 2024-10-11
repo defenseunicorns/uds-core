@@ -5,7 +5,7 @@ import * as path from "path";
 const INDENT_SIZE = 20;
 const MAX_HEADER_LEVEL = 6;
 const MAX_DEPTH = 10;
-const OUTPUT_DIR = "./docs/generated/";
+const OUTPUT_DIR = "./docs/reference/UDS Core/custom-resources/";
 const TABLE_STYLE = 'style="width: 100%; table-layout: fixed;"';
 
 // Utility to capitalize the first letter of a string
@@ -142,7 +142,6 @@ async function generateMarkdown(jsonSchema: JsonSchema, version: string, schemaF
 
   const markdownContent = `---
 title: ${title} CR (${version})
-weight: 6
 tableOfContents:
   maxHeadingLevel: 6
 ---

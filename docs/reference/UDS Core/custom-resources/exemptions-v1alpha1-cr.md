@@ -1,6 +1,5 @@
 ---
 title: Exemptions CR (v1alpha1)
-weight: 6
 tableOfContents:
   maxHeadingLevel: 6
 ---
