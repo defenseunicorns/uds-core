@@ -78,7 +78,7 @@ uds deploy k3d-core-slim-dev:0.28.0
 
 #### Developing UDS Core
 
-UDS Core development leverages the `uds zarf dev deploy` command. For convenience, a UDS Task is provided to setup the environment. You'll need to have [NodeJS](https://nodejs.org/en/download/) 20 or later installed to continue. Here's an example of a flow developing the [identity-authorization layer](./package/identity-authorization/README.md):
+UDS Core development leverages the `uds zarf dev deploy` command. For convenience, a UDS Task is provided to setup the environment. You'll need to have [NodeJS](https://nodejs.org/en/download/) 20 or later installed to continue. Here's an example of a flow developing the [identity-authorization layer](./packages/identity-authorization/README.md):
 
 ```bash
 # Create the dev environment
