@@ -5,6 +5,7 @@ tableOfContents:
 ---
 <a id="Exemptions"></a>
 <div style="margin-left: 20px; padding-top: 30px;">
+
 # Exemptions
 <table style="width: 100%; table-layout: fixed;">
   <thead>
@@ -22,6 +23,7 @@ tableOfContents:
 
 <a id="Spec"></a>
 <div style="margin-left: 40px; padding-top: 30px;">
+
 ## Spec
 <table style="width: 100%; table-layout: fixed;">
   <thead>
@@ -39,6 +41,7 @@ tableOfContents:
 
 <a id="Exemptions"></a>
 <div style="margin-left: 60px; padding-top: 30px;">
+
 ### Exemptions
 <table style="width: 100%; table-layout: fixed;">
   <thead>
@@ -56,6 +59,7 @@ tableOfContents:
 
 <a id="Matcher"></a>
 <div style="margin-left: 80px; padding-top: 30px;">
+
 #### Matcher
 <table style="width: 100%; table-layout: fixed;">
   <thead>
