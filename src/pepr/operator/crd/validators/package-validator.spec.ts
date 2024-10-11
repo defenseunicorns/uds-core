@@ -1,5 +1,8 @@
-// Copyright 2024 Defense Unicorns
-// SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+/**
+ * Copyright 2024 Defense Unicorns
+ * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+ */
+
 import { afterEach, describe, expect, it, jest } from "@jest/globals";
 import { PeprValidateRequest } from "pepr";
 import { Allow, Direction, Expose, Gateway, Protocol, RemoteGenerated, Sso, UDSPackage } from "..";

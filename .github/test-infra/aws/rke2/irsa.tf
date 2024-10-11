@@ -1,5 +1,6 @@
 # Copyright 2024 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 # setting up irsa for the rke2 cluster
 # Keypair for signing, added as secrets in AWS Secrets Manager
 resource "tls_private_key" "keypair" {

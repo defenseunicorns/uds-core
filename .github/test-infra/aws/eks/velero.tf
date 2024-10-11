@@ -1,3 +1,6 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 resource "aws_iam_policy" "velero_policy" {
   name        = "${local.bucket_configurations.velero.name}-irsa-${random_id.unique_id.hex}"
   path        = "/"
