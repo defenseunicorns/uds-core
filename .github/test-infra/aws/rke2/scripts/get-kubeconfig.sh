@@ -1,4 +1,8 @@
 #!/bin/bash
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+
 
 # Utility script that can be called from a uds task after tofu has deployed the e2e test module
 

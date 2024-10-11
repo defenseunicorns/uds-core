@@ -1,4 +1,8 @@
-// SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial
+/**
+ * Copyright 2024 Defense Unicorns
+ * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+ */
+
 import { V1NetworkPolicyPeer, V1NetworkPolicyPort } from "@kubernetes/client-node";
 import { kind } from "pepr";
 

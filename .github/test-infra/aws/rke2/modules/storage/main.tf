@@ -1,3 +1,6 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 # Terraform Module for provisioning s3 buckets with optional support for IRSA, tailored specifically for loki and velero atop uds-core
 locals {
   permissions_boundary_name = split("/", var.permissions_boundary)[1]
