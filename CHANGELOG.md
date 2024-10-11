@@ -2,6 +2,59 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.29.0](https://github.com/defenseunicorns/uds-core/compare/v0.28.0...v0.29.0) (2024-10-11)
+
+
+### Features
+
+* add base and identity layers ([#853](https://github.com/defenseunicorns/uds-core/issues/853)) ([b3f532a](https://github.com/defenseunicorns/uds-core/commit/b3f532a4fe49e00b2cbcfb8bd4555a807355e8dd))
+* add logging functional layer ([#861](https://github.com/defenseunicorns/uds-core/issues/861)) ([c1a67b9](https://github.com/defenseunicorns/uds-core/commit/c1a67b968116570f81c570f51145d3183c386d14))
+* add metrics-server functional layer ([#865](https://github.com/defenseunicorns/uds-core/issues/865)) ([290367a](https://github.com/defenseunicorns/uds-core/commit/290367af2251c45fdc2ebb0b8f394b2c1ac2f0d8))
+* add monitoring layer ([#872](https://github.com/defenseunicorns/uds-core/issues/872)) ([5ecb040](https://github.com/defenseunicorns/uds-core/commit/5ecb040bb27d8fed2a15617830cc6805df9c6ec7))
+* add nightly testing for rke2 ([#808](https://github.com/defenseunicorns/uds-core/issues/808)) ([c401419](https://github.com/defenseunicorns/uds-core/commit/c4014197b19483657ccc1951d062263433e8b4af))
+* add service accounts options to sso ([#852](https://github.com/defenseunicorns/uds-core/issues/852)) ([1029162](https://github.com/defenseunicorns/uds-core/commit/102916223bbfe4f6d555f72fd8d3a9593853d160))
+* backup and restore layer, ui layer, runtime security layer ([#862](https://github.com/defenseunicorns/uds-core/issues/862)) ([b1d8015](https://github.com/defenseunicorns/uds-core/commit/b1d8015f61b984441578a860d29043d52013082a))
+* grafana-ha ([#838](https://github.com/defenseunicorns/uds-core/issues/838)) ([d532d76](https://github.com/defenseunicorns/uds-core/commit/d532d76f8242a68cf39b5aac7c3b4a8c241d56b3))
+
+
+### Bug Fixes
+
+* broken readme link ([#899](https://github.com/defenseunicorns/uds-core/issues/899)) ([6e47b11](https://github.com/defenseunicorns/uds-core/commit/6e47b11f85075c3942c1ca193d5e9d90747b6109))
+* **ci:** switch to larger runners to resolve ci disk space issues ([#882](https://github.com/defenseunicorns/uds-core/issues/882)) ([1af0401](https://github.com/defenseunicorns/uds-core/commit/1af040142babd141441a87ae74fd3c3a530f4fae))
+* snapshot ci version modification and tasks for publish ([#877](https://github.com/defenseunicorns/uds-core/issues/877)) ([f01e5bd](https://github.com/defenseunicorns/uds-core/commit/f01e5bdd65edbdfe2088cdc1bb9d62fb8e5c1b04))
+* support for anywhere network policies in cilium ([#884](https://github.com/defenseunicorns/uds-core/issues/884)) ([5df0737](https://github.com/defenseunicorns/uds-core/commit/5df073768eb9f8c8f00433413039918bdb85d362))
+
+
+### Miscellaneous
+
+* cleanup license parsing for github ([#881](https://github.com/defenseunicorns/uds-core/issues/881)) ([43c98ce](https://github.com/defenseunicorns/uds-core/commit/43c98cee6957a3ca155f7fb7e9d3b604c8c5caa7))
+* **deps:** update chainctl action to v0.2.3 ([#864](https://github.com/defenseunicorns/uds-core/issues/864)) ([d782b59](https://github.com/defenseunicorns/uds-core/commit/d782b59363184de07c7546c04ad7edb6fa9e6449))
+* **deps:** update checkout action to v4.2.0 ([#825](https://github.com/defenseunicorns/uds-core/issues/825)) ([29d1c98](https://github.com/defenseunicorns/uds-core/commit/29d1c98069c73869951878372f7ca1ac842bb87d))
+* **deps:** update dependency defenseunicorns/lula to v0.8.0 ([#841](https://github.com/defenseunicorns/uds-core/issues/841)) ([fe36150](https://github.com/defenseunicorns/uds-core/commit/fe36150bceb69155d4aec8d7298fcc19dbca8c36))
+* **deps:** update githubactions ([#866](https://github.com/defenseunicorns/uds-core/issues/866)) ([44f8ea5](https://github.com/defenseunicorns/uds-core/commit/44f8ea5f12b9d0bda9d9231564b95c6a49fd8e83))
+* **deps:** update grafana to 11.2.1 ([#836](https://github.com/defenseunicorns/uds-core/issues/836)) ([11383c1](https://github.com/defenseunicorns/uds-core/commit/11383c188e4f799b5e8e09dc67e5b6f6ebfdca3e))
+* **deps:** update grafana to v11.2.2 ([#867](https://github.com/defenseunicorns/uds-core/issues/867)) ([06ed2c3](https://github.com/defenseunicorns/uds-core/commit/06ed2c323a3f1e895d6f3f87e5388f7a06197b1c))
+* **deps:** update loki nginx image to v1.27.2 ([#894](https://github.com/defenseunicorns/uds-core/issues/894)) ([df7d427](https://github.com/defenseunicorns/uds-core/commit/df7d427cf8f830d7590a144ff9e902245433460b))
+* **deps:** update loki to v3.2.0 ([#791](https://github.com/defenseunicorns/uds-core/issues/791)) ([d3c60b5](https://github.com/defenseunicorns/uds-core/commit/d3c60b5678982d774a721838cf75e06c20087c73))
+* **deps:** update metrics-server chart to v3.12.2 ([#873](https://github.com/defenseunicorns/uds-core/issues/873)) ([e2e61ce](https://github.com/defenseunicorns/uds-core/commit/e2e61ce3319aa9ac48762afe097d72f97175bbce))
+* **deps:** update pepr to v0.37.1 ([#843](https://github.com/defenseunicorns/uds-core/issues/843)) ([68abcb2](https://github.com/defenseunicorns/uds-core/commit/68abcb2df5b7e2097a56e949624790445bc02b41))
+* **deps:** update pepr to v0.37.2 ([#850](https://github.com/defenseunicorns/uds-core/issues/850)) ([b51f659](https://github.com/defenseunicorns/uds-core/commit/b51f659ffbb3880a5da74aa90b62c5ef4a7a05cc))
+* **deps:** update prometheus operator to 0.77.1 ([#819](https://github.com/defenseunicorns/uds-core/issues/819)) ([0864b33](https://github.com/defenseunicorns/uds-core/commit/0864b33b2ecde7f73d28c3bad6dab10275969346))
+* **deps:** update prometheus-stack ([#855](https://github.com/defenseunicorns/uds-core/issues/855)) ([c791c24](https://github.com/defenseunicorns/uds-core/commit/c791c24de4d27678778225f8487629e6353a2d64))
+* **deps:** update prometheus-stack helm-charts to v64.0.0 ([#849](https://github.com/defenseunicorns/uds-core/issues/849)) ([50a2588](https://github.com/defenseunicorns/uds-core/commit/50a258860f79bb291450afbe48a6f61a6650bb9c))
+* **deps:** update runtime to v0.6.0 ([#897](https://github.com/defenseunicorns/uds-core/issues/897)) ([89ae6e2](https://github.com/defenseunicorns/uds-core/commit/89ae6e255f32eadf871096bafe0cc1958b1c6e34))
+* **deps:** update support-deps ([#890](https://github.com/defenseunicorns/uds-core/issues/890)) ([26ea612](https://github.com/defenseunicorns/uds-core/commit/26ea612bec9ece132509b5ef0d4d1807debbbb62))
+* **deps:** update test-infra ([#875](https://github.com/defenseunicorns/uds-core/issues/875)) ([583f07c](https://github.com/defenseunicorns/uds-core/commit/583f07cbf57c2c839b8f6d00bbd098cafe4198a8))
+* **deps:** update test-infra to v6.9.0 ([#848](https://github.com/defenseunicorns/uds-core/issues/848)) ([ef9d317](https://github.com/defenseunicorns/uds-core/commit/ef9d317198acedc2007d683b5d169e1f333be433))
+* **deps:** update uds to v0.17.0 ([#859](https://github.com/defenseunicorns/uds-core/issues/859)) ([1489fef](https://github.com/defenseunicorns/uds-core/commit/1489fef6d666c54f122373dcdaabda37c3cfafe5))
+* **deps:** update zarf to v0.41.0 ([#857](https://github.com/defenseunicorns/uds-core/issues/857)) ([a390c3d](https://github.com/defenseunicorns/uds-core/commit/a390c3d4744ac8cccd4079928844f3568d3caf9f))
+* **docs:** update doc structure for site refresh ([#895](https://github.com/defenseunicorns/uds-core/issues/895)) ([1946a9a](https://github.com/defenseunicorns/uds-core/commit/1946a9a8144a0cd383c3af29c33bb828283ef81d))
+* fix broken link in docs ([#845](https://github.com/defenseunicorns/uds-core/issues/845)) ([3078a5b](https://github.com/defenseunicorns/uds-core/commit/3078a5b48506a4acb7660f9929279690bcb00984))
+* fix license header references ([#901](https://github.com/defenseunicorns/uds-core/issues/901)) ([cf38b82](https://github.com/defenseunicorns/uds-core/commit/cf38b827da351af5b610a064eb0d8fe885b66d89))
+* handle upgrade path for functional layers, add doc for usage ([#896](https://github.com/defenseunicorns/uds-core/issues/896)) ([70d6b1b](https://github.com/defenseunicorns/uds-core/commit/70d6b1b943e0e9fc3a36fc7a7600afa0e3f2b511))
+* regroup 'support dependencies' in renovate config ([#885](https://github.com/defenseunicorns/uds-core/issues/885)) ([640d859](https://github.com/defenseunicorns/uds-core/commit/640d859a50de6c7d49afec3283fac2a249d04dd7))
+* update license ([#878](https://github.com/defenseunicorns/uds-core/issues/878)) ([b086170](https://github.com/defenseunicorns/uds-core/commit/b086170f415c82916a6e493517ac5bc62b2b7aea))
+
 ## [0.28.0](https://github.com/defenseunicorns/uds-core/compare/v0.27.3...v0.28.0) (2024-09-27)
 
 
