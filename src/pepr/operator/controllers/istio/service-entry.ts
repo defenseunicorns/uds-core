@@ -1,14 +1,18 @@
-// SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial
-import { UDSConfig } from "../../../config";
+/**
+ * Copyright 2024 Defense Unicorns
+ * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+ */
+
 import { V1OwnerReference } from "@kubernetes/client-node";
+import { UDSConfig } from "../../../config";
 import {
   Expose,
   Gateway,
-  IstioServiceEntry,
-  IstioLocation,
-  IstioResolution,
-  IstioPort,
   IstioEndpoint,
+  IstioLocation,
+  IstioPort,
+  IstioResolution,
+  IstioServiceEntry,
 } from "../../crd";
 import { sanitizeResourceName } from "../utils";
 
