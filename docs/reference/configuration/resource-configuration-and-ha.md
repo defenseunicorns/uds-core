@@ -1,7 +1,5 @@
 ---
 title: Resource Configuration and High Availability
-type: docs
-weight: 3.5
 ---
 
 Depending on your environment and the scale of your cluster, you might need to adjust UDS Core components for high availability or to optimize resources. Below are common areas where resource overrides can be useful when deploying UDS Core.

@@ -1,10 +1,7 @@
 ---
-title: UDS Core
-linkTitle: UDS Core
-type: docs
-menu:
-  main:
-    weight: 30
+title: Overview
+sidebar:
+    order: 1
 ---
 
 ## What is UDS Core?
