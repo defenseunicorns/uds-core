@@ -1,7 +1,5 @@
 ---
 title: Pepr Policies
-type: docs
-weight: 3
 ---
 
 ## Common Pepr Policies for UDS Core

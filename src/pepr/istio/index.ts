@@ -1,3 +1,8 @@
+/**
+ * Copyright 2024 Defense Unicorns
+ * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+ */
+
 import { Exec, KubeConfig } from "@kubernetes/client-node";
 import { Capability, a } from "pepr";
 import { Component, setupLogger } from "../logger";

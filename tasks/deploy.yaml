@@ -1,3 +1,7 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+
 includes:
   - utils: utils.yaml
 
@@ -5,7 +9,7 @@ variables:
   - name: VERSION
     description: "The version of the packages to deploy"
     # x-release-please-start-version
-    default: "0.28.0"
+    default: "0.29.0"
     # x-release-please-end
   - name: FLAVOR
     default: upstream

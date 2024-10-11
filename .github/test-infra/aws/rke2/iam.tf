@@ -1,3 +1,6 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 # required iam roles for irsa
 data "aws_partition" "current" {}
 
@@ -94,7 +97,7 @@ resource "aws_iam_role_policy" "server_ccm" {
 }
 
 module "rke2_kms_key" {
-  source = "github.com/defenseunicorns/terraform-aws-uds-kms?ref=v0.0.5"
+  source = "github.com/defenseunicorns/terraform-aws-uds-kms?ref=v0.0.6"
 
   kms_key_alias_name_prefix         = "rke2-${local.cluster_name}-server"
   kms_key_deletion_window           = 7

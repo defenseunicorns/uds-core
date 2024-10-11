@@ -1,3 +1,6 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 kind: ZarfPackageConfig
 metadata:
   name: uds-core-runtime
@@ -13,11 +16,11 @@ components:
   - name: uds-runtime
     required: false
     images:
-      - ghcr.io/defenseunicorns/uds-runtime:0.5.0
+      - ghcr.io/defenseunicorns/uds-runtime:0.6.0
     charts:
       - name: uds-runtime
         namespace: uds-runtime
-        version: "v0.5.0"
+        version: "v0.6.0"
         url: https://github.com/defenseunicorns/uds-runtime.git
         gitPath: chart
     actions:

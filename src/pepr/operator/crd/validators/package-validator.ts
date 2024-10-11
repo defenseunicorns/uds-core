@@ -1,3 +1,8 @@
+/**
+ * Copyright 2024 Defense Unicorns
+ * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+ */
+
 import { PeprValidateRequest } from "pepr";
 
 import { Gateway, Protocol, UDSPackage } from "..";
@@ -139,10 +144,17 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
         `The client ID "${client.clientId}" must specify redirectUris if standardFlowEnabled is turned on (it is enabled by default)`,
       );
     }
+    // If serviceAccountsEnabled is true, do not allow standard flow
+    if (client.serviceAccountsEnabled && client.standardFlowEnabled) {
+      return req.Deny(
+        `The client ID "${client.clientId}" serviceAccountsEnabled is disallowed with standardFlowEnabled`,
+      );
+    }
     // If this is a public client ensure that it only sets itself up as an OAuth Device Flow client
     if (
       client.publicClient &&
-      (client.standardFlowEnabled !== false ||
+      (client.standardFlowEnabled !== false /* default true */ ||
+        client.serviceAccountsEnabled /* default false */ ||
         client.secret !== undefined ||
         client.secretName !== undefined ||
         client.secretTemplate !== undefined ||
@@ -151,7 +163,7 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
         client.attributes?.["oauth2.device.authorization.grant.enabled"] !== "true")
     ) {
       return req.Deny(
-        `The client ID "${client.clientId}" must _only_ configure the OAuth Device Flow as a public client`,
+        `The client ID "${client.clientId}" sets options incompatible with publicClient`,
       );
     }
     // Check if client.attributes contain any disallowed attributes
