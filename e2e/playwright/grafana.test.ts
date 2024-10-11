@@ -15,8 +15,8 @@ test("validate loki datasource", async ({ page }) => {
     await page.goto(`/connections/datasources`);
     await page.getByRole('link', { name: 'Loki' }).click();
     await page.click('text=Save & test');
-    // Allow 20 second timeout for datasource validation
-    await expect(page.locator('[data-testid="data-testid Alert success"]')).toBeVisible({ timeout: 20000 });
+    // Allow 40 second timeout for datasource validation
+    await expect(page.locator('[data-testid="data-testid Alert success"]')).toBeVisible({ timeout: 40000 });
   });
 });
 

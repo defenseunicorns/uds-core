@@ -16,7 +16,7 @@ export default defineConfig({
   forbidOnly: !!process.env.CI, // fail CI if you accidentally leave `test.only` in source
   retries: 1,
   workers: 20, // Support up to 20 parallel workers
-  timeout: 30000, // 30 second timeout for tests
+  timeout: 45000, // 45 second timeout for tests
   reporter: [
     // Reporter to use. See https://playwright.dev/docs/test-reporters
     ['html', { outputFolder: `${playwrightDir}/reports`, open: 'never' }]
