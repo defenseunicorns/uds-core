@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 includes:
   - remote: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.0.0/tasks/lint.yaml

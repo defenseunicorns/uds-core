@@ -1,6 +1,18 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
+# Run yamllint globally, which will respect the .yamllint config, including ignores
+yamllint -c .yamllint .
+
+# Capture yamllint exit code
+YAMLLINT_EXIT=$?
+
+if [ $YAMLLINT_EXIT -ne 0 ]; then
+    echo "\n\n❌ YAMLLint failed. Please fix the YAML issues before committing. ❌\n\n"
+    exit 1
+fi
+
+# Run lint-staged for other linting tasks
 OUTPUT=$(npx lint-staged > /dev/null && echo $? || echo $?)
 
 if [ $OUTPUT -eq 0 ]; then
