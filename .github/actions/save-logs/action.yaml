@@ -35,6 +35,12 @@ runs:
         sudo chown $USER /tmp/uds-*.log || echo ""
       shell: bash
 
+    - name: Move Playwright Artifacts
+      run: |
+        mkdir -p /tmp/playwright
+        mv e2e/playwright/.playwright/* /tmp/playwright || true
+      shell: bash
+
     - uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
       with:
         name: debug-log${{ inputs.suffix }}
@@ -45,5 +51,5 @@ runs:
           /tmp/debug-*.log
           /tmp/uds-containerd-logs
           /tmp/k3d-uds-*.log
-          e2e/playwright/.playwright/output
-          e2e/playwright/.playwright/reports
+          /tmp/playwright/output
+          /tmp/playwright/reports
