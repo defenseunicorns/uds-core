@@ -1,4 +1,8 @@
-// SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial
+/**
+ * Copyright 2024 Defense Unicorns
+ * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+ */
+
 import { V1OwnerReference } from "@kubernetes/client-node";
 import { GenericClass, GenericKind } from "kubernetes-fluent-client";
 import { K8s } from "pepr";
