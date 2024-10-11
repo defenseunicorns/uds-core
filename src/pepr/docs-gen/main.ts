@@ -1,3 +1,5 @@
+// Copyright 2024 Defense Unicorns
+// SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 import * as fs from "fs/promises";
 import * as path from "path";
 
@@ -5,7 +7,7 @@ import * as path from "path";
 const INDENT_SIZE = 20;
 const MAX_HEADER_LEVEL = 6;
 const MAX_DEPTH = 10;
-const OUTPUT_DIR = "./docs/reference/UDS Core/custom-resources/";
+const OUTPUT_DIR = "./docs/reference/configuration/custom-resources/";
 const TABLE_STYLE = 'style="width: 100%; table-layout: fixed;"';
 
 // Utility to capitalize the first letter of a string
