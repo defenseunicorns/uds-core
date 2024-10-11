@@ -32,6 +32,7 @@ function generateTable(title: string, rows: string[], currentDepth: number): str
   return `
 <a id="${capitalizedTitle}"></a>
 <div ${indentStyle}>
+
 ${headerLevel} ${capitalizedTitle}
 <table ${TABLE_STYLE}>
   <thead>
