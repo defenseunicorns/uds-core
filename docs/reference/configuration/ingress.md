@@ -1,7 +1,5 @@
 ---
-title: Configuring Istio Ingress
-type: docs
-weight: 1
+title: Istio Ingress
 ---
 
 UDS Core leverages Istio for ingress into the service mesh. This document provides an overview and examples of the Istio resources that UDS Core deploys to handle ingress.
@@ -46,7 +44,7 @@ metadata:
   name: core-with-cert-override
   description: A UDS example bundle for packaging UDS core with a custom TLS certificate
   version: "0.0.1"
-  
+
 packages:
   - name: core
     repository: oci://ghcr.io/defenseunicorns/packages/uds/core
@@ -63,9 +61,6 @@ packages:
               path: tls.key
       istio-tenant-gateway:
         uds-istio-config:
-          values:
-            - path: tls.supportTLSV1_2
-              value: true # Add support for TLS 1.2 on this gateway, can be specified via variables if needed at deploy time
           variables:
             - name: TENANT_TLS_CERT
               description: "The TLS cert for the tenant gateway (must be base64 encoded)"
@@ -84,7 +79,7 @@ shared:
   domain: yourawesomedomain.com # shared across all packages in a bundle
 
 # TLS Certs/Keys if not provided via environment variables
-variables: 
+variables:
   core:
     admin_tls_cert: # base64 encoded admin cert here
     admin_tls_key: # base64 encoded admin key here
@@ -92,6 +87,6 @@ variables:
     tenant_tls_key: # base64 encoded tenant key here
 ```
 
-{{% alert-note %}}
+:::note
 If you are using Private PKI or self-signed certificates for your tenant certificates it is necessary to additionally configure `UDS_CA_CERT` with additional [trusted certificate authorities](https://uds.defenseunicorns.com/core/configuration/uds-operator/#trusted-certificate-authority).
-{{% /alert-note %}}
+:::
