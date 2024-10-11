@@ -1,24 +1,23 @@
 ---
 title: DNS Configuration
-type: docs
-weight: 2
 ---
 
-UDS Core deploys two Gateways by default - a Tenant Gateway for end-user applications and an Admin Gateway for administrative applications. You can read more about Istio configuration in UDS Core [here](https://uds.defenseunicorns.com/core/configuration/istio/ingress/). This section covers how to configure DNS for these Gateways.
+UDS Core deploys two Gateways by default - a Tenant Gateway for end-user applications and an Admin Gateway for administrative applications. You can read more about Istio configuration in UDS Core [here](https://uds.defenseunicorns.com/reference/configuration/ingress/). This section covers how to configure DNS for these Gateways.
 
 ### Domain Configuration
 Each Gateway is associated to a wildcard DNS entry that is derived from the `DOMAIN` [variable](https://github.com/defenseunicorns/uds-core/blob/e624d73f79bd6739b6808fbdbf5ca75ebb7c1d3c/src/istio/zarf.yaml#L8) in the UDS Core Istio package. When deploying UDS Core, you can expect two Gateways to be created that match the following domain names:
 - `*.<DOMAIN>` / Tenant Gateway
 - `*.admin.<DOMAIN>` / Admin Gateway
 
-{{% alert-note %}}
-The default value for `DOMAIN` is `uds.dev`, which is intended for development purposes only. For non-development purposes, you should override this value by specifying a value for `domain` in your `uds-config.yaml`. You can find instructions on how to do so [here](https://uds.defenseunicorns.com/core/configuration/istio/ingress/#configure-domain-name-and-tls-for-istio-gateways). 
-{{% /alert-note %}}
+:::note
+The default value for `DOMAIN` is `uds.dev`, which is intended for development purposes only. For non-development purposes, you should override this value by specifying a value for `domain` in your `uds-config.yaml`. You can find instructions on how to do so [here](https://uds.defenseunicorns.com/reference/configuration/ingress/#configure-domain-name-and-tls-for-istio-gateways). 
+:::
 
 ### Bundle Configuration
-{{% alert-note %}}
+
+:::note
 UDS Core does not include any cloud provider specific configuration by default. Additional overrides are required to deploy UDS Core on a given provider. This section will refer to AWS, but values can be substituted as needed for other providers.
-{{% /alert-note %}}
+:::
 
 The Admin and Tenant Gateways will be each be bound to an external Load Balancer that is exposed on TCP ports 80 and 443 by default. The Admin Gateway should be configured to use an internal facing Load Balancer and the Tenant Gateway should be configured to use an external facing Load Balancer. Below is an example of overrides that would accomplish this:
 ```yaml
