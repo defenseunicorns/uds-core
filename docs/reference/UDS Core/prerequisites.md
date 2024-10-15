@@ -1,10 +1,8 @@
 ---
-title: UDS Core Prerequisites
-type: docs
-weight: 4
+title: Prerequisites
+sidebar:
+    order: 2
 ---
-
-## UDS Core Prerequisites
 
 `UDS Core` can run in any [CNCF conformant Kubernetes distribution](https://www.cncf.io/training/certification/software-conformance/), but sometimes customizations are needed based on environments. This is an attempt to document and link to relevant information to aid in setting up your Kubernetes environment and hosts to ensure a successful `UDS Core` installation.  
 

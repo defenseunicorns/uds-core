@@ -1,3 +1,6 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 # setting up irsa for the rke2 cluster
 # Keypair for signing, added as secrets in AWS Secrets Manager
 resource "tls_private_key" "keypair" {
@@ -33,7 +36,7 @@ resource "aws_secretsmanager_secret_version" "private_key" {
 # Public bucket to host OIDC files
 module "oidc_bucket" {
   source  = "terraform-aws-modules/s3-bucket/aws"
-  version = "4.2.0"
+  version = "4.2.1"
 
   bucket        = "${var.environment}-oidc-${random_string.ssm.result}"
   force_destroy = var.force_destroy

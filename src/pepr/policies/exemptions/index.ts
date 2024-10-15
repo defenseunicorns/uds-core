@@ -1,4 +1,8 @@
-// SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial
+/**
+ * Copyright 2024 Defense Unicorns
+ * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+ */
+
 import { KubernetesObject } from "kubernetes-fluent-client";
 import { PeprMutateRequest, PeprValidateRequest } from "pepr";
 import { Component, setupLogger } from "../../logger";
