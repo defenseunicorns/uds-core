@@ -28,8 +28,3 @@ resource "local_sensitive_file" "uds_config" {
     }
   })
 }
-
-resource "local_sensitive_file" "kubeconfig" {
-  filename = "/home/runner/.kube/config"
-  content = azurerm_kubernetes_cluster.aks_cluster.kube_admin_config_raw
-}
