@@ -29,6 +29,7 @@ tasks:
         mute: true
         setVariables:
           - name: TARGET_REPO
+
   - name: keycloak-admin-user
     actions:
       - description: Sets up the Keycloak admin user for dev/testing if not already created

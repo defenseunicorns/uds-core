@@ -5,6 +5,7 @@ includes:
   - create: ./create.yaml
   - setup: ./setup.yaml
   - deploy: ./deploy.yaml
+  - utils: ./utils.yaml
   - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/refs/tags/v0.13.1/tasks/setup.yaml
   - compliance: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.1.0/tasks/compliance.yaml
 
@@ -55,6 +56,8 @@ tasks:
     description: "E2E Test all packages"
     # Run each e2e test type from the e2e folder
     actions:
+      - description: "Setup the Keycloak admin user if needed"
+        task: utils:keycloak-admin-user
       - description: "Setup the Doug User for testing"
         # Self-reference this task file to avoid https://github.com/defenseunicorns/maru-runner/issues/144
         cmd: uds run -f tasks/test.yaml common-setup:create-doug-user --set KEYCLOAK_GROUP="/UDS Core/Admin" # Adds the test doug user
@@ -96,8 +99,7 @@ tasks:
       - task: setup:k3d-test-cluster
       - task: deploy:latest-package-release
       - task: create:standard-package
-      - task: create:k3d-standard-bundle
-      - task: deploy:standard-package # Deploys the core package from the standard bundle
+      - task: deploy:standard-package
       - task: validate-packages
       - task: e2e-tests
 

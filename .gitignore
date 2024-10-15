@@ -6,8 +6,8 @@ build/
 zarf-sbom
 tmp/
 env.ts
-node_modules/**
-dist
+**/node_modules/**
+dist/**
 insecure*
 .env
 zarf
@@ -19,4 +19,4 @@ extract-terraform.sh
 cluster-config.yaml
 **.tfstate
 **.backup
-.playwright
+**/.playwright/**

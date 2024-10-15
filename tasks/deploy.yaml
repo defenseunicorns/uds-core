@@ -61,5 +61,5 @@ tasks:
 
   - name: standard-package
     actions:
-      - description: "Deploy the standard UDS Core zarf package, from the standard bundle"
-        cmd: uds deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --set INSECURE_ADMIN_PASSWORD_GENERATION=true --packages core --confirm --no-progress
+      - description: "Deploy the standard UDS Core zarf package"
+        cmd: uds zarf package deploy build/zarf-package-core-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress --components '*'
