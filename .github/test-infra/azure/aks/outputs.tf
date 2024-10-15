@@ -1,3 +1,6 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 output "storage_account_name" {
   description = "Specifies the name of the storage account"
   value       = azurerm_storage_account.cluster_storage.name

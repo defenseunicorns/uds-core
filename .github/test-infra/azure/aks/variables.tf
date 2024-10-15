@@ -1,3 +1,6 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 variable "cluster_name" {
   description = "(Required) Specifies the name of the AKS cluster."
   type        = string

@@ -1,3 +1,6 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 resource "azurerm_storage_account" "cluster_storage" {
   name                            = "sa${replace(local.cluster_name, "-", "")}"
   resource_group_name             = azurerm_resource_group.this.name
