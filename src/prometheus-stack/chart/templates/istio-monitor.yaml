@@ -1,3 +1,6 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 # This podmonitor will pick up envoy stats for all Istio sidecars across the cluster
 apiVersion: monitoring.coreos.com/v1
 kind: PodMonitor

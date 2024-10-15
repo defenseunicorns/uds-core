@@ -1,3 +1,8 @@
+/**
+ * Copyright 2024 Defense Unicorns
+ * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+ */
+
 import { Component, setupLogger } from "./logger";
 
 let domain = process.env.UDS_DOMAIN;
@@ -20,21 +25,16 @@ export const UDSConfig = {
   domain,
   // Base64 Encoded Trusted CA cert for Istio certificates (i.e. for `sso.domain`)
   caCert,
-  // Track if we are running a single test mode
-  isSingleTest: process.env.UDS_SINGLE_TEST === "true",
   // Allow UDS policy exemptions to be used in any namespace
   allowAllNSExemptions: process.env.UDS_ALLOW_ALL_NS_EXEMPTIONS === "true",
 
   // Redis URI for Authservice
   authserviceRedisUri,
+
+  // Track if UDS Core identity-authorization layer is deployed
+  isIdentityDeployed: false,
 };
 
 // configure subproject logger
 const log = setupLogger(Component.CONFIG);
 log.info(UDSConfig, "Loaded UDS Config");
-
-if (UDSConfig.isSingleTest) {
-  log.warn(
-    "Running in single test mode, this will change the behavior of the operator and should only be used for UDS Core development testing.",
-  );
-}

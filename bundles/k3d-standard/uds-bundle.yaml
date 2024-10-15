@@ -1,9 +1,12 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 kind: UDSBundle
 metadata:
   name: k3d-core-demo
   description: A UDS bundle for deploying the standard UDS Core package on a development cluster
   # x-release-please-start-version
-  version: "0.28.0"
+  version: "0.29.0"
   # x-release-please-end
 
 packages:
@@ -29,12 +32,12 @@ packages:
 
   - name: init
     repository: ghcr.io/zarf-dev/packages/init
-    ref: v0.40.1
+    ref: v0.41.0
 
   - name: core
     path: ../../build/
     # x-release-please-start-version
-    ref: 0.28.0
+    ref: 0.29.0
     # x-release-please-end
     optionalComponents:
       - istio-passthrough-gateway
@@ -140,3 +143,29 @@ packages:
                 GOOGLE_IDP_CORE_ENTITY_ID: "https://sso.uds.dev/realms/uds"
                 GOOGLE_IDP_ADMIN_GROUP: "uds-core-dev-admin"
                 GOOGLE_IDP_AUDITOR_GROUP: "uds-core-dev-auditor"
+      grafana:
+        grafana:
+          variables:
+            - name: GRAFANA_HA
+              description: Enable HA Grafana
+              path: autoscaling.enabled
+        uds-grafana-config:
+          variables:
+            - name: GRAFANA_PG_HOST
+              description: Grafana postgresql host
+              path: postgresql.host
+            - name: GRAFANA_PG_PORT
+              description: Grafana postgresql port
+              path: postgresql.port
+            - name: GRAFANA_PG_DATABASE
+              description: Grafana postgresql database
+              path: postgresql.database
+            - name: GRAFANA_PG_PASSWORD
+              description: Grafana postgresql password
+              path: postgresql.password
+            - name: GRAFANA_PG_USER
+              description: Grafana postgresql username
+              path: postgresql.user
+            - name: GRAFANA_PG_SSL_MODE
+              description: Grafana postgresql SSL mode
+              path: postgresql.ssl_mode

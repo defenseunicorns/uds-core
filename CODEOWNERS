@@ -2,4 +2,5 @@
 
 # Additional privileged files
 /CODEOWNERS @jeff-mccoy @daveworth
-/LICENSE @jeff-mccoy @daveworth
+# NOTE: No E to catch LICENSE and LICENSING
+/LICENS* @jeff-mccoy @austenbryan
