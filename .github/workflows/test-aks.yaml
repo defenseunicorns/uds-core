@@ -17,7 +17,7 @@ permissions:
   contents: read
 
 jobs:
-  build-and-deploy:
+  test-aks-install:
     strategy:
       matrix:
         flavor: [upstream, registry1, unicorn]

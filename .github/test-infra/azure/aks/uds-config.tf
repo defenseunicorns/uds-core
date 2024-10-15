@@ -5,8 +5,7 @@ resource "local_sensitive_file" "uds_config" {
   filename = "../../../bundles/aks/uds-config.yaml"
   content = yamlencode({
     "options" : {
-      "architecture" : "amd64",
-      "no_progress" : true
+      "architecture" : "amd64"
     },
     "variables" : {
       "core" : {

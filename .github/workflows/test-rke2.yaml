@@ -4,12 +4,13 @@
 name: Test Core On RKE2
 
 on:
-  # triggered by nightly-testing.yaml
-  workflow_call:
-    inputs:
-      flavor:
-        required: true
-        type: string
+  schedule:
+    - cron: '0 6 * * *' # Runs at midnight Mountain every day
+  pull_request:
+    paths:
+      - tasks/iac.yaml
+      - .github/bundles/rke2/*
+      - .github/test-infra/aws/rke2/*
 
 permissions:
   id-token: write
@@ -17,6 +18,9 @@ permissions:
 
 jobs:
   test-rke2-install:
+    strategy:
+      matrix:
+        flavor: [upstream, registry1, unicorn]    
     runs-on: ubuntu-latest
     env:
       SHA: ${{ github.sha }}
@@ -28,8 +32,8 @@ jobs:
     steps:
       - name: Set ENV
         run: |
-          echo "UDS_CLUSTER_NAME=uds-ci-${{ inputs.flavor }}-${SHA:0:7}" >> $GITHUB_ENV
-          echo "UDS_STATE_KEY="tfstate/ci/install/${SHA:0:7}-rke2-core-${{ inputs.flavor }}-aws.tfstate >> $GITHUB_ENV
+          echo "UDS_CLUSTER_NAME=uds-ci-${{ matrix.flavor }}-${SHA:0:7}" >> $GITHUB_ENV
+          echo "UDS_STATE_KEY="tfstate/ci/install/${SHA:0:7}-rke2-core-${{ matrix.flavor }}-aws.tfstate >> $GITHUB_ENV
           echo "TF_VAR_region=${UDS_REGION}" >> $GITHUB_ENV
           echo "TF_VAR_run_id=$GITHUB_RUN_ID" >> $GITHUB_ENV
           echo "TF_VAR_use_permissions_boundary=true" >> $GITHUB_ENV
@@ -64,7 +68,7 @@ jobs:
           tofu_wrapper: false
 
       - name: Create UDS Core Package
-        run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress --set FLAVOR=${{ inputs.flavor }}
+        run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress --set FLAVOR=${{ matrix.flavor }}
 
       - name: Create Core Bundle
         run: uds create .github/bundles/rke2 --confirm
