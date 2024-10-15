@@ -3,10 +3,13 @@
 build/
 .DS_Store
 *.tar.zst
+zarf-sbom
 zarf-sbom/**
 tmp/
 env.ts
+**/node_modules
 **/node_modules/**
+dist
 dist/**
 insecure*
 .env
@@ -20,3 +23,4 @@ cluster-config.yaml
 **.tfstate
 **.backup
 **/.playwright/**
+**/.playwright
