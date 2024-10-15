@@ -74,7 +74,7 @@ jobs:
         run: uds create .github/bundles/rke2 --confirm
 
       - name: Create IAC
-        run: uds run -f tasks/iac.yaml create-iac --no-progress --set K8S_DISTRO=rke2
+        run: uds run -f tasks/iac.yaml create-iac --no-progress --set K8S_DISTRO=rke2 --set CLOUD=aws
         timeout-minutes: 20
 
       - name: Get Kubeconfig

@@ -73,7 +73,7 @@ jobs:
       - name: Create Core Bundle
         run: uds create .github/bundles/aks --confirm
 
-      - name: Test IAC
+      - name: Create IAC
         run: uds run -f tasks/iac.yaml apply-tofu --no-progress --set K8S_DISTRO=aks --set CLOUD=azure
 
       - name: Deploy Core Bundle

@@ -78,7 +78,7 @@ jobs:
         timeout-minutes: 60
 
       - name: Create IAC
-        run: uds run -f tasks/iac.yaml create-iac --no-progress --set K8S_DISTRO=eks
+        run: uds run -f tasks/iac.yaml create-iac --no-progress --set K8S_DISTRO=eks --set CLOUD=aws
         timeout-minutes: 20
 
       - name: Deploy Core Bundle
