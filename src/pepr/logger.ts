@@ -1,9 +1,15 @@
+/**
+ * Copyright 2024 Defense Unicorns
+ * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+ */
+
 import { Log } from "pepr";
 
 export enum Component {
   STARTUP = "startup",
   CONFIG = "config",
   ISTIO = "istio",
+  OPERATOR = "operator",
   OPERATOR_EXEMPTIONS = "operator.exemptions",
   OPERATOR_ISTIO = "operator.istio",
   OPERATOR_KEYCLOAK = "operator.keycloak",

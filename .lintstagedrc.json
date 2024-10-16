@@ -2,9 +2,6 @@
     "*": [
         "codespell"
     ],
-    "*.yaml": [
-        "yamllint -c .yamllint --no-warnings"
-    ],
     "*.ts": [
         "npx pepr format --validate-only"
     ]

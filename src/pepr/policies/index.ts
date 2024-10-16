@@ -1,3 +1,8 @@
+/**
+ * Copyright 2024 Defense Unicorns
+ * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+ */
+
 // Various validation actions for Kubernetes resources from Big Bang
 import { WatchCfg } from "kubernetes-fluent-client";
 import { K8s } from "pepr";
@@ -35,6 +40,7 @@ export async function startExemptionWatch() {
       relistIntervalSec: process.env.PEPR_RELIST_INTERVAL_SECONDS
         ? parseInt(process.env.PEPR_RELIST_INTERVAL_SECONDS, 10)
         : 1800,
+      useHTTP2: process.env.PEPR_HTTP2_WATCH === "true",
     };
     const watcher = K8s(UDSExemption).Watch(async (exemption, phase) => {
       log.debug(`Processing exemption ${exemption.metadata?.name}, watch phase: ${phase}`);

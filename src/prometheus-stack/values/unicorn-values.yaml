@@ -1,3 +1,6 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 alertmanager:
   alertmanagerSpec:
     image:
@@ -37,7 +40,7 @@ prometheusOperator:
       image:
         registry: cgr.dev
         repository: du-uds-defenseunicorns/kube-webhook-certgen-fips
-        tag: 1.11.2
+        tag: 1.11.3
       registry: cgr.dev
       repository: du-uds-defenseunicorns/kube-webhook-certgen-fips
       tag: 1.10.1
@@ -48,9 +51,9 @@ prometheusOperator:
   image:
     registry: cgr.dev
     repository: du-uds-defenseunicorns/prometheus-operator-fips
-    tag: 0.77.0
+    tag: 0.77.1
   prometheusConfigReloader:
     image:
       registry: cgr.dev
       repository: du-uds-defenseunicorns/prometheus-config-reloader-fips
-      tag: 0.77.0
+      tag: 0.77.1

@@ -1,19 +1,46 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+
 includes:
   - create: ./create.yaml
   - setup: ./setup.yaml
   - deploy: ./deploy.yaml
-  - compliance: https://raw.githubusercontent.com/defenseunicorns/uds-common/v0.13.1/tasks/compliance.yaml
+  - compliance: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.1.0/tasks/compliance.yaml
+  - base-layer: ../packages/base/tasks.yaml
 
 tasks:
-  - name: single-package
-    description: "Build and test a single package, must set UDS_PKG environment variable"
+  - name: base
+    description: "Build and test the base layer"
     actions:
-      - task: create:single-package
+      - task: create:pepr-build
       - task: setup:k3d-test-cluster
-      - task: deploy:single-package
+      - cmd: uds run -f tasks/test.yaml single-layer --set FLAVOR=${FLAVOR} --set=layer=base
 
+  - name: single-layer
+    description: "Build and test a single layer, must set UDS_LAYER environment variable"
+    actions:
+      - task: create:single-layer
+        with:
+          layer: ${LAYER}
+      - task: deploy:single-layer
+        with:
+          layer: ${LAYER}
       - description: "Validate the package"
-        cmd: uds run -f src/${UDS_PKG}/tasks.yaml validate --no-progress
+        cmd: uds run -f packages/${LAYER}/tasks.yaml validate --no-progress
+
+  - name: layer-dependencies
+    description: "Sets up a k3d cluster and deploys dependencies for the given layer"
+    actions:
+      - task: setup:k3d-test-cluster
+      - cmd: uds zarf tools yq '.metadata.x-uds-dependencies.[]' packages/${LAYER}/zarf.yaml 2>/dev/null
+        mute: true
+        setVariables:
+          - name: LAYER_DEPS
+      - cmd: |
+          for dep in $LAYER_DEPS; do
+            uds run -f tasks/test.yaml single-layer --set LAYER=$dep --set FLAVOR=${FLAVOR} --no-progress
+          done
 
   - name: validate-packages
     description: "Validated all packages"

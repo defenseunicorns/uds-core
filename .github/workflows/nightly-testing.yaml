@@ -1,3 +1,6 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 name: Nightly Testing
 
 on:
@@ -7,8 +10,11 @@ on:
     paths:
       - tasks/iac.yaml
       - .github/workflows/test-eks.yaml
-      - .github/bundles/*
-      - .github/test-infra/buckets-iac/*
+      - .github/workflows/test-rke2.yaml
+      - .github/bundles/eks/*
+      - .github/bundles/rke2/*
+      - .github/test-infra/aws/eks/*
+      - .github/test-infra/aws/rke2/*
 
 # Abort prior jobs in the same workflow / PR
 concurrency:
@@ -16,9 +22,19 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  nightly-testing:
+  nightly-testing-eks:
     name: Test Core on EKS
     uses: ./.github/workflows/test-eks.yaml
+    strategy:
+      matrix:
+        flavor: [upstream, registry1, unicorn]
+      fail-fast: false
+    with:
+      flavor: ${{ matrix.flavor }}
+    secrets: inherit
+  nightly-testing-rke2:
+    name: Test Core on RKE2
+    uses: ./.github/workflows/test-rke2.yaml
     strategy:
       matrix:
         flavor: [upstream, registry1, unicorn]
