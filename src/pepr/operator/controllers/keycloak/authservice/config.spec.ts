@@ -1,6 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { K8s, kind } from "pepr";
-import { buildInitialSecret, setupAuthserviceSecret, updateAuthServiceSecret } from "./config";
+import {
+  buildInitialSecret,
+  getAuthserviceConfig,
+  setupAuthserviceSecret,
+  updateAuthServiceSecret,
+} from "./config";
 import { AuthserviceConfig } from "./types";
 
 const getChain = (name: string) => {
@@ -96,12 +101,16 @@ jest.mock("pepr", () => ({
 }));
 
 describe("AuthService Config Tests", () => {
-  const applyMock = jest.fn<() => Promise<kind.Secret>>().mockResolvedValue({
-    metadata: { name: "authservice-uds" },
-    data: {
-      "config.json": "e30K",
-    },
-  });
+  const applyMock = jest
+    .fn<(s: kind.Secret) => Promise<kind.Secret>>()
+    .mockImplementation((s: kind.Secret) =>
+      Promise.resolve({
+        metadata: { name: "authservice-uds" },
+        data: {
+          "config.json": s.data!["config.json"],
+        },
+      }),
+    );
 
   beforeEach(() => {
     process.env.PEPR_WATCH_MODE = "true";
@@ -136,17 +145,28 @@ describe("AuthService Config Tests", () => {
   it("setupAuthserviceSecret should skip creation if secret exists", async () => {
     const getMock = jest.fn<() => Promise<kind.Secret>>().mockResolvedValue({
       metadata: { name: "authservice-uds" },
+      data: {
+        "config.json": btoa(JSON.stringify(getConfig())),
+      },
     });
 
-    (K8s as jest.Mock).mockReturnValue({
-      Apply: applyMock,
-      InNamespace: jest.fn().mockReturnThis(),
-      Get: getMock,
+    (K8s as jest.Mock).mockImplementation(kindType => {
+      if (kindType === kind.Secret) {
+        return {
+          Apply: applyMock,
+          InNamespace: jest.fn().mockReturnThis(),
+          Get: getMock,
+        };
+      } else {
+        return {
+          Apply: jest.fn(),
+        };
+      }
     });
 
     await setupAuthserviceSecret();
 
-    expect(applyMock).toHaveBeenCalledTimes(1); // Apply should be called once
+    expect(applyMock).toHaveBeenCalledTimes(0); // Apply should be called once
     expect(getMock).toHaveBeenCalledTimes(1); // Get should be called once
   });
 
@@ -261,5 +281,72 @@ describe("AuthService Config Tests", () => {
     });
     expect(applyMock).toHaveBeenCalledTimes(1);
     expect(patchMock).toHaveBeenCalledTimes(1); // Ensure Patch is called for the deployment
+  });
+
+  it("updateAuthServiceSecret should reset secret on failure", async () => {
+    jest.useFakeTimers();
+
+    const patchMock = jest.fn(); // Mock Patch for Deployment
+
+    (K8s as jest.Mock).mockImplementation(kindType => {
+      if (kindType === kind.Secret) {
+        return {
+          Apply: applyMock,
+        };
+      }
+      if (kindType === kind.Deployment) {
+        return {
+          Patch: patchMock, // Mock the Patch function for Deployment
+        };
+      }
+    });
+
+    // add a client simulating a new Package named cow
+    const baseConfig: AuthserviceConfig = getConfig();
+    const bearChain = getChain("bear");
+    baseConfig.chains.push(bearChain);
+
+    const updatePromise = updateAuthServiceSecret(baseConfig); // Capture the promise to ensure it's awaited later
+
+    jest.advanceTimersByTime(2000); // Fast-forward time
+    await updatePromise;
+
+    // ensure applyMock has been called with particular config
+    applyMock.mock.calls.forEach(call => {
+      if (call.length > 0) {
+        const config = call.at(0) as unknown as { data: { "config.json": string } };
+        const configDecoded = JSON.parse(
+          atob(config!.data["config.json"]),
+        ) as unknown as AuthserviceConfig;
+        expect(configDecoded.chains.length).toEqual(2);
+      }
+    });
+    expect(applyMock).toHaveBeenCalledTimes(1);
+    expect(patchMock).toHaveBeenCalledTimes(1); // Ensure Patch is called for the deployment
+
+    (K8s as jest.Mock).mockImplementationOnce(kindType => {
+      if (kindType === kind.Secret) {
+        return {
+          Apply: () => Promise.reject(new Error("Failed to apply secret")),
+        };
+      }
+    });
+
+    // add a client simulating a new Package named cow
+    const frogChain = getChain("frog");
+    baseConfig.chains.push(frogChain);
+
+    const failedUpdate = updateAuthServiceSecret(baseConfig); // Capture the promise to ensure it's awaited later
+
+    jest.advanceTimersByTime(2000); // Fast-forward time
+
+    failedUpdate
+      .then(config => {
+        expect(config).toEqual(false);
+      })
+      .catch(async () => {
+        const fallbackConfig = await getAuthserviceConfig();
+        expect(fallbackConfig.chains.length).toEqual(2);
+      });
   });
 });

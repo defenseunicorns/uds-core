@@ -277,6 +277,12 @@ async function applySecret(base64EncodedConfig: string) {
   }
 }
 
+/**
+ * Encodes the authservice configuration and generates a hash for the configuration.
+ *
+ * @param {AuthserviceConfig} c - The authservice configuration to encode.
+ * @returns {{ base64EncodedConfig: string, hash: string }} - The base64 encoded configuration and hash.
+ */
 function encodeConfig(c: AuthserviceConfig): { base64EncodedConfig: string; hash: string } {
   const config = btoa(JSON.stringify(c));
   const hash = createHash("sha256").update(config).digest("hex");
