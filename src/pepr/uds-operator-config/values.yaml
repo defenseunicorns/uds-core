@@ -13,3 +13,5 @@ operator:
   PEPR_RELIST_INTERVAL_SECONDS: "60"
   # Configure Pepr reconcile strategy to have separate queues for faster reconciliation
   PEPR_RECONCILE_STRATEGY: "kindNsName"
+  # Use HTTP2 for Pepr watches and exemption watch
+  PEPR_HTTP2_WATCH: false
