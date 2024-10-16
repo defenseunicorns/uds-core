@@ -112,6 +112,8 @@ export function annotateMutation<T extends KubernetesObject>(
   const annotations = request.Raw.metadata?.annotations ?? {};
   const valStr = annotations[key];
   const arr = JSON.parse(valStr || "[]");
-  arr.push(transform(policy));
+  if (!arr.includes(transform(policy))) {
+    arr.push(transform(policy));
+  }
   request.SetAnnotation(key, JSON.stringify(arr));
 }
