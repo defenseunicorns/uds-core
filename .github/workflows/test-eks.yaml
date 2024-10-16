@@ -95,7 +95,7 @@ jobs:
 
       - name: Remove IAC
         if: always()
-        run: uds run -f tasks/iac.yaml destroy-iac --no-progress --set K8S_DISTRO=eks
+        run: uds run -f tasks/iac.yaml destroy-iac --no-progress --set K8S_DISTRO=eks --set CLOUD=aws
         timeout-minutes: 10
         continue-on-error: true
 
