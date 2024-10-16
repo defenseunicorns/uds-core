@@ -1,7 +1,5 @@
 ---
 title: Monitoring and Metrics
-type: docs
-weight: 1
 ---
 
 UDS Core leverages Pepr to handle setup of Prometheus scraping metrics endpoints, with the particular configuration necessary to work in a STRICT mTLS (Istio) environment. We handle this via a default scrapeClass in prometheus to add the istio certs. When a monitor needs to be exempt from that tlsConfig a mutation is performed to leverage a plain scrape class without istio certs.
@@ -14,9 +12,9 @@ Generally it is beneficial to use service and pod monitor resources from existin
 1. Individual monitors can explicitly set the `exempt` scrape class to opt out of the Istio certificate configuration. This should typically only be done if your service exposes metrics on a PERMISSIVE mTLS port.
 1. If setting a `scrapeClass` is not an option due to lack of configuration in a helm chart, or for other reasons, monitors can use the `uds/skip-mutate` annotation (with any value) to have Pepr mutate the `exempt` scrape class onto the monitor.
 
-{{% alert-note %}}
+:::note
 There is a deprecated functionality in Pepr that will mutate `tlsConfig` onto individual service monitors, rather than using the scrape class approach. This has been kept in the current code temporarily to prevent any metrics downtime during the switch to `scrapeClass`. In a future release this behavior will be removed to reduce the complexity of the setup and required mutations.
-{{% /alert-note %}}
+:::
 
 ## Package CR `monitor` field
 

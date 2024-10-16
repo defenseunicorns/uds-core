@@ -1,9 +1,12 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 terraform {
   backend "s3" {
   }
   required_providers {
     aws = {
-      version = "~> 5.70.0"
+      version = "~> 5.71.0"
     }
     random = {
       version = "~> 3.6.0"

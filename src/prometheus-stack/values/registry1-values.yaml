@@ -1,4 +1,6 @@
-# SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 alertmanager:
   alertmanagerSpec:
     image:
@@ -38,7 +40,7 @@ prometheusOperator:
       image:
         registry: registry1.dso.mil
         repository: ironbank/opensource/ingress-nginx/kube-webhook-certgen
-        tag: v1.4.3
+        tag: v1.4.4
       registry: registry1.dso.mil
       repository: ironbank/opensource/ingress-nginx/kube-webhook-certgen
       tag: v1.3.0

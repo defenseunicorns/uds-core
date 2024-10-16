@@ -1,10 +1,12 @@
-# SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 kind: UDSBundle
 metadata:
   name: k3d-core-demo
   description: A UDS bundle for deploying the standard UDS Core package on a development cluster
   # x-release-please-start-version
-  version: "0.28.0"
+  version: "0.29.0"
   # x-release-please-end
 
 packages:
@@ -35,7 +37,7 @@ packages:
   - name: core
     path: ../../build/
     # x-release-please-start-version
-    ref: 0.28.0
+    ref: 0.29.0
     # x-release-please-end
     optionalComponents:
       - istio-passthrough-gateway

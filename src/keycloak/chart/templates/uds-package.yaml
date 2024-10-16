@@ -1,4 +1,6 @@
-# SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 apiVersion: uds.dev/v1alpha1
 kind: Package
 metadata:
@@ -26,13 +28,12 @@ spec:
           app: pepr-uds-core-watcher
         port: 8080
 
-      # Temp workaround for any cluster pod
-      # todo: remove this once cluster pods is a remote generated target
       - description: "Keycloak backchannel access"
         direction: Ingress
         selector:
           app.kubernetes.io/name: keycloak
-        remoteGenerated: Anywhere
+        # Allow access from anything in cluster using an empty namespace selector
+        remoteNamespace: "*"
         port: 8080
 
       # Keycloak OCSP to check certs cannot guarantee a static IP

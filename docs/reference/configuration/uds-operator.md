@@ -1,7 +1,5 @@
 ---
 title: UDS Operator
-type: docs
-weight: 2
 ---
 
 The UDS Operator plays a pivotal role in managing the lifecycle of UDS Package Custom Resources (CRs) along with their associated resources like NetworkPolicies and Istio VirtualServices. Leveraging [Pepr](https://github.com/defenseunicorns/pepr), the operator binds watch operations to the enqueue and reconciler, taking on several key responsibilities for UDS Packages and exemptions:
@@ -163,9 +161,9 @@ spec:
         app: httpbin
 ```
 
-{{% alert-note %}}
+:::note
 The UDS Operator uses the first `redirectUris` to populate the `match.prefix` hostname and `callback_uri` in the authservice chain.
-{{% /alert-note %}}
+:::
 
 For a complete example, see [app-authservice-tenant.yaml](https://github.com/defenseunicorns/uds-core/blob/main/src/test/app-authservice-tenant.yaml)
 
@@ -183,7 +181,7 @@ variables:
     CA_CERT: <base64 encoded certificate authority>
 ```
 
-See [configuring Istio Ingress](https://uds.defenseunicorns.com/core/configuration/istio/ingress/#configure-domain-name-and-tls-for-istio-gateways) for the relevant documentation on configuring ingress certificates.
+See [configuring Istio Ingress](https://uds.defenseunicorns.com/reference/configuration/ingress/#configure-domain-name-and-tls-for-istio-gateways) for the relevant documentation on configuring ingress certificates.
 
 ### Creating a UDS Package with a Device Flow client
 

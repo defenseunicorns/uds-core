@@ -1,4 +1,6 @@
-# SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 
 variables:
   - name: CLUSTER_NAME
@@ -16,7 +18,7 @@ tasks:
   - name: install-eksctl
     actions:
       - cmd: |
-          curl --silent --location "https://github.com/weaveworks/eksctl/releases/download/v0.191.0/eksctl_Linux_amd64.tar.gz" | tar xz -C /tmp
+          curl --silent --location "https://github.com/weaveworks/eksctl/releases/download/v0.192.0/eksctl_Linux_amd64.tar.gz" | tar xz -C /tmp
           sudo mv /tmp/eksctl /usr/local/bin
 
   - name: create-cluster

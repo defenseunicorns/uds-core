@@ -1,3 +1,6 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 # sourced from https://github.com/defenseunicorns/uds-rke2-image-builder/tree/2fecc1c9a10180579ada75a9ec92dcb224e82a74/.github/test-infra/rke2-cluster
 locals {
   cluster_name = "rke2-nightly-ci-${random_string.ssm.result}"
