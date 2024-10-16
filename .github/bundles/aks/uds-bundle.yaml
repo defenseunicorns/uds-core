@@ -141,11 +141,4 @@ packages:
                   cloud: |
                     AZURE_STORAGE_ACCOUNT_ACCESS_KEY=${AZURE_VELERO_STORAGE_ACCOUNT_ACCESS_KEY}
                     AZURE_CLOUD_NAME=AzurePublicCloud
-            - path: initContainers
-              value:
-                - name: velero-plugin-for-azure
-                  image: velero/velero-plugin-for-microsoft-azure:v1.10.1
-                  imagePullPolicy: IfNotPresent
-                  volumeMounts:
-                    - mountPath: /target
-                      name: plugins
+
