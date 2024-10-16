@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 resource "azurerm_storage_account" "cluster_storage" {
-  name                            = "sa${replace(local.cluster_name, "-", "")}"
+  name                            = substr("sa${replace(local.cluster_name, "-", "")}", 0, 24)
   resource_group_name             = azurerm_resource_group.this.name
   location                        = azurerm_resource_group.this.location
   allow_nested_items_to_be_public = false
