@@ -20,7 +20,7 @@ jobs:
   test-eks-install:
     strategy:
       matrix:
-        flavor: [upstream, registry1, unicorn]  
+        flavor: [upstream, registry1, unicorn]
     runs-on: ubuntu-latest
     env:
       SHA: ${{ github.sha }}
