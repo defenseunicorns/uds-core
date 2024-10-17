@@ -1,3 +1,6 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 metadata:
   name: secure-communication-with-istiod
   uuid: 570e2dc7-e6c2-4ad5-8ea3-f07974f59747

@@ -1,3 +1,6 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 metadata:
   name: ingress-traffic-encrypted
   uuid: fd071676-6b92-4e1c-a4f0-4c8d2bd55aed
