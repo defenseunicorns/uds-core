@@ -31,6 +31,8 @@ tasks:
         cmd: yamllint . -c .yamllint --no-warnings
       - description: codespell lint
         cmd: codespell
+      - description: license lint
+        task: license
 
   - name: oscal
     actions:
