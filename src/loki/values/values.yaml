@@ -12,11 +12,6 @@ fullnameOverride: loki
 # -- Overrides the chart's cluster label
 clusterLabelOverride: null
 
-# Prevent startup issues with service existence/resolution
-memberlist:
-  service:
-    publishNotReadyAddresses: true
-
 chunksCache:
   enabled: false
 
