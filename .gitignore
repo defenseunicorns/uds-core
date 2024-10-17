@@ -7,7 +7,7 @@ zarf-sbom
 tmp/
 env.ts
 node_modules/**
-dist
+dist/**
 insecure*
 .env
 zarf
