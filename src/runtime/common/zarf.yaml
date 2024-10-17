@@ -4,7 +4,6 @@ metadata:
   description: "UDS Core Runtime"
   url: "https://github.com/defenseunicorns/uds-runtime"
 
-
 components:
   - name: uds-runtime
     required: true

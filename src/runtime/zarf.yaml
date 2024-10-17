@@ -16,6 +16,15 @@ components:
   - name: uds-runtime
     required: true
     only:
+      flavor: upstream
+    import:
+      path: common    
+    images:
+      - ghcr.io/defenseunicorns/uds-runtime:0.6.1
+
+  - name: uds-runtime
+    required: true
+    only:
       flavor: unicorn
     import:
       path: common    
