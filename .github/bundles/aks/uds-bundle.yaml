@@ -86,11 +86,7 @@ packages:
       neuvector:
         core:
           values:
-            - path: k3s.enabled
-              value: false
-            - path: containerd.enabled
-              value: true
-            - path: containerd.path
+            - path: runtimePath
               value: /run/containerd/containerd.sock
             - path: enforcer.tolerations
               value:
