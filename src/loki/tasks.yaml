@@ -25,11 +25,11 @@ tasks:
             namespace: loki
             condition: Ready
 
-  - name: e2e-test
+  - name: e2e-k8s-tests
     actions:
       - description: "Apply Configmap and jobs for Loki e2e tests."
         cmd: |
-          kubectl apply -f e2e/k8s/loki/e2e-configmap.yaml && kubectl apply -f e2e/k8s/loki/e2e-jobs.yaml
+          kubectl apply -f e2e/k8s/loki/configmap.yaml -f e2e/k8s/loki/jobs.yaml
       - description: Loki E2E - Retention Test
         wait:
           cluster:
@@ -58,3 +58,6 @@ tasks:
             name: job-name=validate-vector-logs-job
             namespace: loki
             condition: Complete
+      - description: Loki E2E - Cleanup Tests
+        cmd: |
+          kubectl delete -f e2e/k8s/loki/configmap.yaml -f e2e/k8s/loki/jobs.yaml

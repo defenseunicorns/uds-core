@@ -52,6 +52,20 @@ tasks:
           done
           set +e
 
+  - name: e2e-tests
+    description: "E2E Test all packages"
+    # Run each e2e test type from the e2e folder
+    actions:
+      # Requires task named e2e-k8s-tests in package task file
+      - description: "Run K8s E2E Tests"
+        cmd: |
+          for package in src/*; do
+            if grep -q '\- name: e2e-k8s-test' "${package}/tasks.yaml"; then
+              uds run -f "${package}/tasks.yaml" e2e-k8s-tests --no-progress
+            fi
+          done
+          set +e
+
   - name: uds-core
     description: "Build and test UDS Core"
     actions:
