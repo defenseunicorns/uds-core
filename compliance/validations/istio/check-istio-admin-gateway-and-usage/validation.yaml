@@ -1,3 +1,6 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 metadata:
   name: check-istio-admin-gateway-and-usage
   uuid: c6c9daf1-4196-406d-8679-312c0512ab2e

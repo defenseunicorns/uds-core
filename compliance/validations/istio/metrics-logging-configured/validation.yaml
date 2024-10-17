@@ -1,3 +1,6 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 metadata:
   name: istio-metrics-logging-configured
   uuid: 70d99754-2918-400c-ac9a-319f874fff90
