@@ -48,10 +48,8 @@ packages:
               description: "The destination container in the Storage Account where logs will be saved"
               path: "loki.storage_config.azure.container_name"
           values:
-            - path: loki
-              value:
-                storage:
-                  type: azure
+            - path: loki.storage.type
+              value: "azure"
 
       kube-prometheus-stack:
         kube-prometheus-stack:
