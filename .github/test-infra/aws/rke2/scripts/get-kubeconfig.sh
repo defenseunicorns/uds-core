@@ -33,7 +33,7 @@ scp -o StrictHostKeyChecking=no -i key.pem ${node_user}@${bootstrap_ip}:/home/${
 # Replace the loopback address with the cluster hostname
 sed -i "s/127.0.0.1/${bootstrap_ip}/g" ./rke2-config > /dev/null
 mkdir -p /home/runner/.kube
-mv ./rke2-config /home/runnner/.kube/config
+mv ./rke2-config /home/runner/.kube/config
 #export KUBECONFIG=$(pwd)/rke2-config
 
 # find existing host record in the host file and save the line numbers
