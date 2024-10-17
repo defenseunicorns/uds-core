@@ -79,7 +79,7 @@ packages:
             - name: LOKI_BACKEND_REPLICAS
               path: backend.replicas
               description: "Loki backend replicas"
-              default: "2"
+              default: "3"
       istio-admin-gateway:
         uds-istio-config:
           variables:
