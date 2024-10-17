@@ -1,0 +1,3 @@
+image:
+  repository: registry1.dso.mil/ironbank/opensource/defenseunicorns/uds/runtime
+  tag: v0.6.1
