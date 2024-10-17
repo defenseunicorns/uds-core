@@ -1,0 +1,13 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+pass:
+  - test: default
+    validation: validation.yaml
+    resources: resources.json
+    expected-validation: true
+  - test: not_all_strict
+    validation: validation.yaml
+    resources: resources.json
+    permutation: '.peerAuths[0].spec.mtls.mode = "PERMISSIVE"'
+    expected-validation: false
