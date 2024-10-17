@@ -1,0 +1,220 @@
+{
+  "gateways": [
+    {
+      "apiVersion": "networking.istio.io/v1beta1",
+      "kind": "Gateway",
+      "metadata": {
+        "annotations": {
+          "meta.helm.sh/release-name": "uds-istio-config",
+          "meta.helm.sh/release-namespace": "istio-admin-gateway"
+        },
+        "creationTimestamp": "2024-06-07T14:36:07Z",
+        "generation": 1,
+        "labels": {
+          "app.kubernetes.io/managed-by": "Helm"
+        },
+        "name": "admin-gateway",
+        "namespace": "istio-admin-gateway",
+        "resourceVersion": "1216",
+        "uid": "07ede0ee-0ffc-42d0-ae22-15fa69dfb45a"
+      },
+      "spec": {
+        "selector": {
+          "app": "admin-ingressgateway"
+        },
+        "servers": [
+          {
+            "hosts": [
+              "*.admin.uds.dev"
+            ],
+            "port": {
+              "name": "http-admin",
+              "number": 80,
+              "protocol": "HTTP"
+            },
+            "tls": {
+              "httpsRedirect": true
+            }
+          },
+          {
+            "hosts": [
+              "*.admin.uds.dev"
+            ],
+            "port": {
+              "name": "https-admin",
+              "number": 443,
+              "protocol": "HTTPS"
+            },
+            "tls": {
+              "credentialName": "gateway-tls",
+              "minProtocolVersion": "TLSV1_3",
+              "mode": "SIMPLE"
+            }
+          },
+          {
+            "hosts": [
+              "keycloak.admin.uds.dev"
+            ],
+            "port": {
+              "name": "http-keycloak",
+              "number": 80,
+              "protocol": "HTTP"
+            },
+            "tls": {
+              "httpsRedirect": true
+            }
+          },
+          {
+            "hosts": [
+              "keycloak.admin.uds.dev"
+            ],
+            "port": {
+              "name": "https-keycloak",
+              "number": 443,
+              "protocol": "HTTPS"
+            },
+            "tls": {
+              "credentialName": "gateway-tls",
+              "minProtocolVersion": "TLSV1_3",
+              "mode": "OPTIONAL_MUTUAL"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.istio.io/v1beta1",
+      "kind": "Gateway",
+      "metadata": {
+        "annotations": {
+          "meta.helm.sh/release-name": "uds-istio-config",
+          "meta.helm.sh/release-namespace": "istio-tenant-gateway"
+        },
+        "creationTimestamp": "2024-06-07T14:36:11Z",
+        "generation": 1,
+        "labels": {
+          "app.kubernetes.io/managed-by": "Helm"
+        },
+        "name": "tenant-gateway",
+        "namespace": "istio-tenant-gateway",
+        "resourceVersion": "1273",
+        "uid": "fb672c84-0a55-4ccc-84c7-7448868598f3"
+      },
+      "spec": {
+        "selector": {
+          "app": "tenant-ingressgateway"
+        },
+        "servers": [
+          {
+            "hosts": [
+              "sso.uds.dev"
+            ],
+            "port": {
+              "name": "http-keycloak",
+              "number": 80,
+              "protocol": "HTTP"
+            },
+            "tls": {
+              "httpsRedirect": true
+            }
+          },
+          {
+            "hosts": [
+              "sso.uds.dev"
+            ],
+            "port": {
+              "name": "https-keycloak",
+              "number": 443,
+              "protocol": "HTTPS"
+            },
+            "tls": {
+              "credentialName": "gateway-tls",
+              "minProtocolVersion": "TLSV1_3",
+              "mode": "OPTIONAL_MUTUAL"
+            }
+          },
+          {
+            "hosts": [
+              "*.uds.dev"
+            ],
+            "port": {
+              "name": "http-tenant",
+              "number": 80,
+              "protocol": "HTTP"
+            },
+            "tls": {
+              "httpsRedirect": true
+            }
+          },
+          {
+            "hosts": [
+              "*.uds.dev"
+            ],
+            "port": {
+              "name": "https-tenant",
+              "number": 443,
+              "protocol": "HTTPS"
+            },
+            "tls": {
+              "credentialName": "gateway-tls",
+              "minProtocolVersion": "TLSV1_3",
+              "mode": "SIMPLE"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.istio.io/v1beta1",
+      "kind": "Gateway",
+      "metadata": {
+        "annotations": {
+          "meta.helm.sh/release-name": "uds-istio-config",
+          "meta.helm.sh/release-namespace": "istio-passthrough-gateway"
+        },
+        "creationTimestamp": "2024-06-07T14:36:15Z",
+        "generation": 1,
+        "labels": {
+          "app.kubernetes.io/managed-by": "Helm"
+        },
+        "name": "passthrough-gateway",
+        "namespace": "istio-passthrough-gateway",
+        "resourceVersion": "1330",
+        "uid": "501528ef-4199-4804-994d-a1392d6f249e"
+      },
+      "spec": {
+        "selector": {
+          "app": "passthrough-ingressgateway"
+        },
+        "servers": [
+          {
+            "hosts": [
+              "*.uds.dev"
+            ],
+            "port": {
+              "name": "http-passthrough",
+              "number": 80,
+              "protocol": "HTTP"
+            },
+            "tls": {
+              "httpsRedirect": true
+            }
+          },
+          {
+            "hosts": [
+              "*.uds.dev"
+            ],
+            "port": {
+              "name": "https-passthrough",
+              "number": 443,
+              "protocol": "HTTPS"
+            },
+            "tls": {
+              "mode": "PASSTHROUGH"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "istioConfig": {
+    "accessLogFile": "/dev/stdout",
+    "defaultConfig": {
+      "discoveryAddress": "istiod.istio-system.svc:15012",
+      "gatewayTopology": {
+        "forwardClientCertDetails": "SANITIZE"
+      },
+      "holdApplicationUntilProxyStarts": true
+    },
+    "defaultProviders": {
+      "metrics": [
+        "prometheus"
+      ]
+    },
+    "enablePrometheusMerge": true,
+    "pathNormalization": {
+      "normalization": "MERGE_SLASHES"
+    },
+    "rootNamespace": "istio-system",
+    "trustDomain": "cluster.local"
+  }
+}
