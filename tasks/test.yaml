@@ -1,13 +1,13 @@
 # Copyright 2024 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
-
 includes:
   - create: ./create.yaml
   - setup: ./setup.yaml
   - deploy: ./deploy.yaml
+  - util: ./utils.yaml
+  - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/refs/tags/v0.13.1/tasks/setup.yaml
   - compliance: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.1.0/tasks/compliance.yaml
-  - base-layer: ../packages/base/tasks.yaml
 
 tasks:
   - name: base
@@ -43,7 +43,7 @@ tasks:
           done
 
   - name: validate-packages
-    description: "Validated all packages"
+    description: "Validate all packages"
     # loop through each src/* package and run the validate.yaml task
     actions:
       - cmd: |
@@ -52,6 +52,25 @@ tasks:
           done
           set +e
 
+  - name: e2e-tests
+    description: "E2E Test all packages"
+    # Run each e2e test type from the e2e folder
+    actions:
+      - description: "Setup the Keycloak admin user if needed"
+        task: util:keycloak-admin-user
+      - description: "Setup the Doug User for testing"
+        # Self-reference this task file to avoid https://github.com/defenseunicorns/maru-runner/issues/144
+        cmd: uds run -f tasks/test.yaml common-setup:create-doug-user --set KEYCLOAK_GROUP="/UDS Core/Admin" # Adds the test doug user
+      - description: "Run Playwright E2E tests for all packages"
+        dir: e2e/playwright
+        cmd: |
+          # renovate: datasource=docker depName=mcr.microsoft.com/playwright versioning=docker
+          docker run --rm --ipc=host --net=host -e FULL_CORE="true" --mount type=bind,source="$(pwd)",target=/app mcr.microsoft.com/playwright:v1.48.1-noble sh -c " \
+            cd app && \
+            npm ci && \
+            npx playwright test \
+            "
+
   - name: uds-core
     description: "Build and test UDS Core"
     actions:
@@ -59,6 +78,12 @@ tasks:
       - task: create:k3d-standard-bundle
       - task: deploy:k3d-standard-bundle
       - task: validate-packages
+
+  - name: uds-core-e2e
+    description: "Build and test UDS Core e2e"
+    actions:
+      - task: uds-core
+      - task: e2e-tests
 
   - name: uds-core-ha
     description: "Build and test UDS Core"
@@ -76,6 +101,7 @@ tasks:
       - task: create:standard-package
       - task: deploy:standard-package
       - task: validate-packages
+      - task: e2e-tests
 
   - name: compliance-validate
     description: "validate against the required compliance"
