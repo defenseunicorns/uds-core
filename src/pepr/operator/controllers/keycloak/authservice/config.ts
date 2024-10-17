@@ -27,8 +27,8 @@ let lastSuccessfulSecret: AuthserviceConfig | null = null;
 // Timer for debouncing updates to the secret
 let debounceTimer: NodeJS.Timeout | null = null;
 
-// Debounce duration (12 seconds) to reduce excessive updates, configurable via environment variable
-const DEBOUNCE_DURATION = parseInt(process.env.DEBONCE_DURATION || "1000", 10);
+// Debounce duration (1 seconds) to reduce excessive updates, configurable via environment variable
+const DEBOUNCE_DURATION = parseInt(process.env.DEBOUNCE_DURATION || "1000", 10);
 
 export const operatorConfig = {
   namespace: "authservice",
@@ -143,19 +143,22 @@ export async function getAuthserviceConfig(): Promise<AuthserviceConfig> {
   }
 
   // Fetch the authservice secret from Kubernetes if not in cache
-  pendingSecretFetch = K8s(kind.Secret)
-    .InNamespace(operatorConfig.namespace)
-    .Get(operatorConfig.secretName)
-    .then(secret => {
-      const config = JSON.parse(atob(secret.data!["config.json"])) as AuthserviceConfig;
+  // Null check is to prevent multiple concurrent fetches
+  if (pendingSecretFetch === null) {
+    pendingSecretFetch = K8s(kind.Secret)
+      .InNamespace(operatorConfig.namespace)
+      .Get(operatorConfig.secretName)
+      .then(secret => {
+        const config = JSON.parse(atob(secret.data!["config.json"])) as AuthserviceConfig;
 
-      inMemorySecret = config;
-      lastSuccessfulSecret = config;
-      return config;
-    })
-    .finally(() => {
-      pendingSecretFetch = null;
-    });
+        inMemorySecret = config;
+        lastSuccessfulSecret = config;
+        return config;
+      })
+      .finally(() => {
+        pendingSecretFetch = null;
+      });
+  }
 
   return pendingSecretFetch;
 }
@@ -248,7 +251,7 @@ async function checksumDeployment(checksum: string) {
 
     log.info(`Successfully applied the checksum to authservice`);
   } catch (e) {
-    log.error(`Failed to apply the checksum to authservice: ${e.data?.message}`);
+    log.error(e, `Failed to apply the checksum to authservice`);
     throw new Error("Failed to apply the checksum to authservice", { cause: e });
   }
 }
@@ -275,7 +278,7 @@ async function applySecret(base64EncodedConfig: string) {
       )
       .then(secret => JSON.parse(atob(secret.data!["config.json"])) as AuthserviceConfig);
   } catch (e) {
-    log.error(`Failed to apply the authservice config secret: ${e.data?.message}`);
+    log.error(e, `Failed to apply the authservice config secret`);
     throw new Error("Failed to apply the authservice secret", { cause: e });
   }
 }
