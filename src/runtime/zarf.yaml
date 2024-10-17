@@ -18,7 +18,7 @@ components:
     only:
       flavor: upstream
     import:
-      path: common    
+      path: common
     images:
       - ghcr.io/defenseunicorns/uds-runtime:0.6.1
 
@@ -27,10 +27,10 @@ components:
     only:
       flavor: unicorn
     import:
-      path: common    
+      path: common
     images:
       - ghcr.io/defenseunicorns/uds-runtime:0.6.1
-  
+
   - name: uds-runtime
     required: true
     only:
