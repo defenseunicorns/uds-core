@@ -1,3 +1,6 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 metadata:
   name: istio-rbac-enforcement-check
   uuid: 7b045b2a-106f-4c8c-85d9-ae3d7a8e0e28
