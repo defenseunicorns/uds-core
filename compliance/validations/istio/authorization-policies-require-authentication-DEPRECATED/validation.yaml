@@ -1,3 +1,6 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 metadata:
   name: istio-authorization-policies-require-authentication
   uuid: e38c0695-10f6-40b6-b246-fa58b26ccd25
