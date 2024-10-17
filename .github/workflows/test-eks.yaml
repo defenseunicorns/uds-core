@@ -87,6 +87,10 @@ jobs:
         run: uds deploy .github/bundles/eks/uds-bundle-uds-core-eks-nightly-*.tar.zst --confirm
         timeout-minutes: 20
 
+      - name: Debug Output
+        if: ${{ always() }}
+        uses: ./.github/actions/debug-output
+
       - name: Remove UDS Core
         if: always()
         run: uds remove .github/bundles/eks/uds-bundle-uds-core-eks-*.tar.zst --confirm

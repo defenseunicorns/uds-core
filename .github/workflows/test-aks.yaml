@@ -82,6 +82,10 @@ jobs:
         run: uds deploy .github/bundles/aks/uds-bundle-uds-core-aks-nightly-*.tar.zst --confirm
         timeout-minutes: 30
 
+      - name: Debug Output
+        if: ${{ always() }}
+        uses: ./.github/actions/debug-output
+
       - name: Remove UDS Core
         if: always()
         run: uds remove .github/bundles/aks/uds-bundle-uds-core-aks-nightly-*.tar.zst --confirm

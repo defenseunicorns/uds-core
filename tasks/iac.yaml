@@ -103,7 +103,6 @@ tasks:
     actions:
       - task: rke2-nodes-ready
       - cmd: |
-          export KUBECONFIG=./rke2-config
           # wait for at least 3 nodes
           while true; do
             if [ $(uds zarf tools kubectl get nodes -o jsonpath='{range .items[*]}{.status.conditions[-1].type}={.status.conditions[-1].status}{"\n"}{end}' | egrep -i '^ready.*true' | wc -l) -lt 3 ]; then
