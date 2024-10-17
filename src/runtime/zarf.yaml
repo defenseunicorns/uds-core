@@ -20,7 +20,7 @@ components:
     import:
       path: common
     images:
-      - ghcr.io/defenseunicorns/uds-runtime:0.6.1
+      - ghcr.io/defenseunicorns/uds-runtime:0.7.0
 
   - name: uds-runtime
     required: true
@@ -29,7 +29,7 @@ components:
     import:
       path: common
     images:
-      - ghcr.io/defenseunicorns/uds-runtime:0.6.1
+      - ghcr.io/defenseunicorns/uds-runtime:0.7.0
 
   - name: uds-runtime
     required: true
