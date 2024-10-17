@@ -46,6 +46,12 @@ tasks:
       - description: "Create the slim dev bundle (Base and Identity)"
         cmd: "uds create bundles/k3d-slim-dev --confirm --no-progress --architecture=${ZARF_ARCHITECTURE}"
 
+  - name: checkpoint-dev-package
+    description: "Create the K3d + UDS Core Checkpoint Zarf Package"
+    actions:
+      - description: "Create the UDS Core Checkpoint Zarf Package"
+        cmd: "uds zarf package create packages/checkpoint-dev --confirm --no-progress --skip-sbom"
+
   # This task is a wrapper to support --set LAYER=identity-authorization
   - name: single-layer-callable
     actions:
