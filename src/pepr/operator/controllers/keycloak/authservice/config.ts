@@ -16,7 +16,10 @@ let pendingSecretFetch: Promise<AuthserviceConfig> | null;
 let inMemorySecret: AuthserviceConfig | null = null;
 
 // Track pending package updates and their resolve functions
-const pendingPackages: Map<AuthserviceConfig, () => void> = new Map();
+const pendingPackages: Map<
+  AuthserviceConfig,
+  { resolve: () => void; reject: (reason?: Error) => void }
+> = new Map();
 
 // Backup for the last known successful state of the secret
 let lastSuccessfulSecret: AuthserviceConfig | null = null;
@@ -174,7 +177,7 @@ export async function updateAuthServiceSecret(
     inMemorySecret = authserviceConfig;
 
     // Add the package config and its resolve function to the pending packages map
-    pendingPackages.set(authserviceConfig, resolve);
+    pendingPackages.set(authserviceConfig, { resolve, reject });
 
     // Clear the previous debounce timer, if it exists
     if (debounceTimer) {
@@ -203,8 +206,8 @@ export async function updateAuthServiceSecret(
         }
 
         // Resolve the promises for all pending packages after the secret update
-        pendingPackages.forEach(resolveFunc => {
-          resolveFunc();
+        pendingPackages.forEach(p => {
+          p.resolve();
         });
       } catch (e) {
         log.error(e, `Failed to write authservice secret`);
@@ -214,8 +217,8 @@ export async function updateAuthServiceSecret(
         log.info("Reverted to last successful secret state.");
 
         // Reject all promises for the pending packages on error
-        pendingPackages.forEach(() => {
-          reject(new Error(`Failed to write authservice secret for config`, { cause: e }));
+        pendingPackages.forEach(p => {
+          p.reject(new Error(`Failed to write authservice secret for config`, { cause: e }));
         });
       } finally {
         // Clear pending packages on error
