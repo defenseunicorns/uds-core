@@ -15,7 +15,7 @@ packages:
   - name: core
     path: ../../../build
     # x-release-please-start-version
-    ref: 0.29.0
+    ref: 0.29.1
     # x-release-please-end
     overrides:
       istio-admin-gateway:
