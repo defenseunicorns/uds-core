@@ -50,7 +50,6 @@ module "oidc_bucket" {
   restrict_public_buckets  = false
 }
 
-
 # OIDC file creation
 resource "local_file" "oidc_config" {
   content  = <<EOF
