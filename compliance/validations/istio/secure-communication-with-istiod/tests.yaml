@@ -1,0 +1,28 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+pass:
+  - test: default
+    validation: validation.yaml
+    resources: resources.json
+    expected-validation: true
+  - test: remove-istio-egress-on-metrics-server
+    validation: validation.yaml
+    resources: resources.json
+    permutation: '(.networkPolicies[] | select(.metadata.name == "allow-metrics-server-egress-istiod-communication") | .spec.egress) |= map(select(.to | any(.podSelector | select(.matchLabels.istio != "pilot"))))'
+    expected-validation: false
+  - test: change-egress-port-on-metrics-server
+    validation: validation.yaml
+    resources: resources.json
+    permutation: '(.networkPolicies[] | select(.metadata.name == "allow-metrics-server-egress-istiod-communication") | .spec.egress[].ports[] | select(.port == 15012) | .port) |= 1000'
+    expected-validation: false
+  - test: change-egress-protocol-on-metrics-server
+    validation: validation.yaml
+    resources: resources.json
+    permutation: '(.networkPolicies[] | select(.metadata.name == "allow-metrics-server-egress-istiod-communication") | .spec.egress[].ports[] | select(.port == 15012) | .protocol) |= "HTTP"'
+    expected-validation: false
+  - test: add-disallowed-egress-to-istiod
+    validation: validation.yaml
+    resources: resources.json
+    permutation: '.networkPolicies += [{"kind": "NetworkPolicy", "metadata": {"name": "istiod-egress", "namespace": "not-allowed-netpol"}, "spec": {"egress": [{"ports": [{"port": 15012, "protocol": "TCP"}], "to": [{"podSelector": {"matchLabels": {"istio": "pilot"}}}]}]}}]'
+    expected-validation: false

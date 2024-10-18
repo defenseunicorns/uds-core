@@ -1,0 +1,45 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+metadata:
+  name: istio-rbac-enforcement-check
+  uuid: 7b045b2a-106f-4c8c-85d9-ae3d7a8e0e28
+domain:
+  type: kubernetes
+  kubernetes-spec:
+    resources:
+      - name: authorizationPolicies
+        resource-rule:
+          group: security.istio.io
+          resource: authorizationpolicies
+          version: v1beta1
+          namespaces: []
+provider:
+  type: opa
+  opa-spec:
+    rego: |
+      package validate
+      import rego.v1
+
+      # Default values
+      default validate := false
+      default msg := "Istio RBAC not enforced: No authorization policies found."
+
+      # Evaluation for Istio Authorization Policies
+      validate if {
+        count(all_auth_policies) > 0
+      }
+
+      # Get all authorization policies
+      all_auth_policies := { sprintf("%s/%s", [authPolicy.metadata.namespace, authPolicy.metadata.name]) |
+        authPolicy := input.authorizationPolicies[_]; authPolicy.kind == "AuthorizationPolicy" }
+
+      msg = "Istio RBAC enforced" if {
+        validate
+      }
+      msg_all_auth_policies = concat(", ", all_auth_policies)
+    output:
+      validation: validate.validate
+      observations:
+        - validate.msg
+        - validate.msg_all_auth_policies
