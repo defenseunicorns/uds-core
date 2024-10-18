@@ -1,6 +1,6 @@
 .cache/
 .idea/
-build/
+build/**
 .DS_Store
 *.tar.zst
 zarf-sbom

@@ -165,7 +165,7 @@ variable "cluster_managed_identity_type" {
 }
 
 variable "cluster_kubelet_identity_type" {
-  description = "Type of Managed Identity to be used for Kubelet. If UserAssigned, defaults to Azure automically creating Managaged Identity for Kubelet."
+  description = "Type of Managed Identity to be used for Kubelet. If UserAssigned, defaults to Azure automatically creating Managaged Identity for Kubelet."
   default     = "SystemAssigned"
 }
 
