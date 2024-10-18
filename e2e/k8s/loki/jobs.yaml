@@ -1,0 +1,210 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: validate-vector-logs-job
+  namespace: loki
+spec:
+  template:
+    spec:
+      containers:
+        - name: validate-vector-logs
+          image: docker.io/curlimages/curl:8.10.1
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              export QUERY='{collector="vector"}'
+              export LOG_MESSAGE="Vector logs"
+              /scripts/check_logs.sh
+          volumeMounts:
+            - name: shared-scripts
+              mountPath: /scripts
+      volumes:
+        - name: shared-scripts
+          configMap:
+            name: loki-shared-scripts
+            defaultMode: 0755
+      restartPolicy: Never
+  backoffLimit: 0
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: validate-stored-log-job
+  namespace: loki
+spec:
+  template:
+    spec:
+      containers:
+        - name: validate-stored-log-job
+          image: docker.io/curlimages/curl:8.10.1
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              now_time=$(($(date +%s) * 1000000000))
+              export LOG_JOB="test-log"
+              export LOG_MESSAGE="Test log"
+
+              # Send log to Loki write endpoint
+              /scripts/send_log.sh "$now_time" "This is a test log message"
+
+              # Sleep before querying to give Loki time to process the log
+              sleep 5
+
+              # Validate that the log was stored
+              export QUERY='{collector="vector", job="test-log"}'
+              /scripts/check_logs.sh
+          volumeMounts:
+            - name: shared-scripts
+              mountPath: /scripts
+      volumes:
+        - name: shared-scripts
+          configMap:
+            name: loki-shared-scripts
+            defaultMode: 0755
+      restartPolicy: Never
+  backoffLimit: 0
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: validate-label-querying-job
+  namespace: loki
+spec:
+  template:
+    spec:
+      containers:
+        - name: validate-label-querying
+          image: docker.io/curlimages/curl:8.10.1
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              now_time=$(($(date +%s) * 1000000000))
+              curl -sX POST http://loki-write.loki.svc.cluster.local:3100/loki/api/v1/push \
+                -H "Content-Type: application/json" \
+                --data-raw '{
+                  "streams": [
+                    {
+                      "stream": {
+                        "job": "test-label-query",
+                        "collector": "vector",
+                        "level": "info"
+                      },
+                      "values": [
+                        ["'"$now_time"'", "This is a label-query test log message"]
+                      ]
+                    }
+                  ]
+                }'
+              sleep 5
+              export QUERY='{job="test-label-query", collector="vector", level="info"}'
+              export LOG_MESSAGE="Label-query log"
+              /scripts/check_logs.sh
+          volumeMounts:
+            - name: shared-scripts
+              mountPath: /scripts
+      volumes:
+        - name: shared-scripts
+          configMap:
+            name: loki-shared-scripts
+            defaultMode: 0755
+      restartPolicy: Never
+  backoffLimit: 0
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: validate-loki-services-job
+  namespace: loki
+spec:
+  template:
+    spec:
+      containers:
+        - name: validate-loki-services
+          image: docker.io/curlimages/curl:8.10.1
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              services_check() {
+                local component=$1
+                local expected_services=$2
+
+                response=$(curl -sG http://$component.loki.svc.cluster.local:3100/services)
+
+                for service in $expected_services; do
+                  if ! echo "$response" | grep -q "$service => Running"; then
+                    echo "$service not running for $component"
+                    exit 1
+                  fi
+                done
+                echo "All services for $component are running."
+              }
+
+              # Define expected services
+              services_check "loki-read" "querier server runtime-config ring query-scheduler-ring memberlist-kv cache-generation-loader ingester-querier"
+              services_check "loki-write" "ring store ingester distributor runtime-config server memberlist-kv"
+              services_check "loki-backend" "compactor index-gateway ring query-scheduler-ring index-gateway-ring ingester-querier store server memberlist-kv runtime-config query-scheduler ruler"
+          volumeMounts:
+            - name: shared-scripts
+              mountPath: /scripts
+      volumes:
+        - name: shared-scripts
+          configMap:
+            name: loki-shared-scripts
+            defaultMode: 0755
+      restartPolicy: Never
+  backoffLimit: 0
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: retention-test-combined
+  namespace: loki
+spec:
+  template:
+    spec:
+      containers:
+        - name: retention-log-test
+          image: docker.io/curlimages/curl:8.10.1
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              send_log() {
+                local timestamp=$1
+                local log_message=$2
+                local expect_reject=$3
+
+                response=$(curl -s -o /dev/stderr -w "%{http_code}" -X POST http://loki-write.loki.svc.cluster.local:3100/loki/api/v1/push \
+                  -H "Content-Type: application/json" \
+                  --data-raw '{
+                    "streams": [
+                      {
+                        "stream": {
+                          "job": "retention-test",
+                          "level": "info"
+                        },
+                        "values": [
+                          ["'"$timestamp"'", "'"$log_message"'"]
+                        ]
+                      }
+                    ]
+                  }')
+
+                if [ "$response" -ne 204 ]; then
+                  [ "$expect_reject" = true ] && echo "Log rejection expected: $log_message." || { echo "Unexpected log ingestion failure: $log_message."; exit 1; }
+                else
+                  [ "$expect_reject" = true ] && { echo "Unexpected log acceptance: $log_message."; exit 1; } || echo "Log ingested successfully: $log_message."
+                fi
+              }
+
+              # Ingest an old log that should be rejected
+              old_time=$(($(date +%s) - 8 * 24 * 3600))000000000
+              send_log "$old_time" "This is a backdated log older than the retention period" true
+
+              # Ingest a valid log within the retention period
+              current_time=$(date +%s)000000000
+              send_log "$current_time" "This is a valid log within the retention period" false
+      restartPolicy: Never
+  backoffLimit: 0

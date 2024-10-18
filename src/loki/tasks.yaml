@@ -24,3 +24,40 @@ tasks:
             name: app.kubernetes.io/component=gateway
             namespace: loki
             condition: Ready
+
+  - name: e2e-k8s-tests
+    actions:
+      - description: "Apply Configmap and jobs for Loki e2e tests."
+        cmd: |
+          kubectl apply -f e2e/k8s/loki/configmap.yaml -f e2e/k8s/loki/jobs.yaml
+      - description: Loki E2E - Retention Test
+        wait:
+          cluster:
+            kind: Job
+            name: job-name=retention-test
+            namespace: loki
+            condition: Complete
+      - description: Loki E2E - Label Querying
+        wait:
+          cluster:
+            kind: Job
+            name: job-name=validate-label-querying-job
+            namespace: loki
+            condition: Complete
+      - description: Loki E2E - Stored Logs
+        wait:
+          cluster:
+            kind: Job
+            name: job-name=validate-stored-log-job
+            namespace: loki
+            condition: Complete
+      - description: Loki E2E - Vector Logs
+        wait:
+          cluster:
+            kind: Job
+            name: job-name=validate-vector-logs-job
+            namespace: loki
+            condition: Complete
+      - description: Loki E2E - Cleanup Tests
+        cmd: |
+          kubectl delete -f e2e/k8s/loki/configmap.yaml -f e2e/k8s/loki/jobs.yaml
