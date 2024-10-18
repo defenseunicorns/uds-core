@@ -29,35 +29,43 @@ tasks:
     actions:
       - description: "Apply Configmap and jobs for Loki e2e tests."
         cmd: |
-          kubectl apply -f e2e/k8s/loki/configmap.yaml -f e2e/k8s/loki/jobs.yaml
+          uds zarf package create e2e/k8s/loki --confirm
+          uds zarf package deploy build/zarf-package-uds-core-e2e-loki*.zst --confirm
       - description: Loki E2E - Retention Test
         wait:
           cluster:
             kind: Job
-            name: job-name=retention-test
+            name: retention-test
+            namespace: loki
+            condition: Complete
+      - description: Loki E2E - Services Running Test
+        wait:
+          cluster:
+            kind: Job
+            name: validate-loki-services-job
             namespace: loki
             condition: Complete
       - description: Loki E2E - Label Querying
         wait:
           cluster:
             kind: Job
-            name: job-name=validate-label-querying-job
+            name: validate-label-querying-job
             namespace: loki
             condition: Complete
       - description: Loki E2E - Stored Logs
         wait:
           cluster:
             kind: Job
-            name: job-name=validate-stored-log-job
+            name: validate-stored-log-job
             namespace: loki
             condition: Complete
       - description: Loki E2E - Vector Logs
         wait:
           cluster:
             kind: Job
-            name: job-name=validate-vector-logs-job
+            name: validate-vector-logs-job
             namespace: loki
             condition: Complete
       - description: Loki E2E - Cleanup Tests
         cmd: |
-          kubectl delete -f e2e/k8s/loki/configmap.yaml -f e2e/k8s/loki/jobs.yaml
+          zarf package remove build/zarf-package-uds-core-e2e-loki-*.zst --confirm

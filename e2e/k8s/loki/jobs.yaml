@@ -160,7 +160,7 @@ spec:
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: retention-test-combined
+  name: retention-test
   namespace: loki
 spec:
   template:
