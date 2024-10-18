@@ -27,23 +27,6 @@ enum OnFailure {
 }
 
 /**
- * Filter unwanted labels based on a list of keys to strip out.
- *
- * @returns Record<string, string> - The filtered labels
- */
-// function filterLabels(labels: Record<string, string>, keysToRemove: string[]) {
-//   const filteredLabels: Record<string, string> = {};
-
-//   for (const key in labels) {
-//     if (!keysToRemove.includes(key)) {
-//       filteredLabels[key] = labels[key];
-//     }
-//   }
-
-//   return filteredLabels;
-// }
-
-/**
  * Copy a secret from one namespace to another
  *
  * @remarks
@@ -97,10 +80,6 @@ export async function copySecret(request: PeprMutateRequest<a.Secret>) {
 
   Log.info("Attempting to copy secret %s from namespace %s to %s", fromName, fromNS, toNS);
 
-  // filter out the original copy label, then add a "copied" label
-  // let filteredLabels = filterLabels(request.Raw.metadata?.labels || {}, [labelCopySecret]);
-  // filteredLabels = { ...filteredLabels, "secrets.uds.dev/copied": "true" };
-
   try {
     const sourceSecret = await K8s(kind.Secret).InNamespace(fromNS).Get(fromName);
 
@@ -115,16 +94,6 @@ export async function copySecret(request: PeprMutateRequest<a.Secret>) {
           request.SetLabel(labelCopiedSecret, "true");
           request.Raw.data = {};
 
-          // await K8s(kind.Secret).Apply({
-          //   apiVersion: "v1",
-          //   kind: "Secret",
-          //   metadata: {
-          //     name: toName,
-          //     namespace: toNS,
-          //     labels: filteredLabels,
-          //     annotations: request.Raw.metadata?.annotations,
-          //   },
-          // });
           return;
         case OnFailure.ERROR:
           throw `Source secret ${fromName} not found in namespace ${fromNS}`;
@@ -134,18 +103,6 @@ export async function copySecret(request: PeprMutateRequest<a.Secret>) {
       request.RemoveLabel(labelCopySecret);
       request.SetLabel(labelCopiedSecret, "true");
       request.Raw.data = sourceSecret.data;
-
-      // await K8s(kind.Secret).Apply({
-      //   apiVersion: "v1",
-      //   kind: "Secret",
-      //   metadata: {
-      //     name: toName,
-      //     namespace: toNS,
-      //     labels: filteredLabels,
-      //     annotations: request.Raw.metadata?.annotations,
-      //   },
-      //   data: sourceSecret.data,
-      // });
     }
   } catch (error) {
     throw `Error copying secret ${fromName} from ${fromNS} to ${toNS}: ${error}`;

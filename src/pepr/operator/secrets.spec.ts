@@ -21,6 +21,7 @@ describe("test secret copy", () => {
     // Setup test namespaces
     await K8s(kind.Namespace).Apply({ metadata: { name: "source-namespace" } });
     await K8s(kind.Namespace).Apply({ metadata: { name: "destination-namespace" } });
+    await K8s(kind.Namespace).Apply({ metadata: { name: "destination-namespace2" } });
 
     // Create source secret
     await K8s(kind.Secret).Apply(sourceSecret);
@@ -30,6 +31,7 @@ describe("test secret copy", () => {
     // Cleanup test namespaces
     await K8s(kind.Namespace).Delete("source-namespace");
     await K8s(kind.Namespace).Delete("destination-namespace");
+    await K8s(kind.Namespace).Delete("destination-namespace2");
   });
 
   it("should copy a secret with the secrets.uds.dev/copy label", async () => {
@@ -46,18 +48,13 @@ describe("test secret copy", () => {
       },
     };
 
-    await K8s(kind.Secret).Apply(destinationSecret);
-
     // Check if destination secret has the same data as the source secret
-    const destSecret = await K8s(kind.Secret)
-      .InNamespace("destination-namespace")
-      .Get("destination-secret");
+    const destSecret = await K8s(kind.Secret).Apply(destinationSecret);
 
-    // output destSecret
     console.log("Destination Secret:");
     console.log(destSecret);
 
-    expect(destSecret.data).toEqual(sourceSecret.data);
+    expect(destSecret.data).toEqual({"key": "VEVTVENBU0U="}); // base64 encoded "TESTCASE"
 
     // Confirm that label has changed from copy to copied
     expect(destSecret.metadata?.labels).toEqual({ "secrets.uds.dev/copied": "true" });
@@ -67,8 +64,8 @@ describe("test secret copy", () => {
     // Apply destination secret
     const destinationSecret1 = {
       metadata: {
-        name: "destination-secret",
-        namespace: "destination-namespace",
+        name: "destination-secret-tc2a",
+        namespace: "destination-namespace2",
         labels: { "secrets.uds.dev/copy": "false" },
         annotations: {
           "secrets.uds.dev/fromNamespace": "source-namespace",
@@ -79,8 +76,8 @@ describe("test secret copy", () => {
 
     const destinationSecret2 = {
       metadata: {
-        name: "destination-secret",
-        namespace: "destination-namespace",
+        name: "destination-secret-tc2b",
+        namespace: "destination-namespace2",
         labels: {},
         annotations: {
           "secrets.uds.dev/fromNamespace": "source-namespace",
@@ -89,19 +86,13 @@ describe("test secret copy", () => {
       },
     };
 
-    await K8s(kind.Secret).Apply(destinationSecret1);
-    await K8s(kind.Secret).Apply(destinationSecret2);
+    const destSecret1 = await K8s(kind.Secret).Apply(destinationSecret1);
+    const destSecret2 = await K8s(kind.Secret).Apply(destinationSecret2);
 
     // Confirm destination secrets are created "as is"
-    const destSecret1 = await K8s(kind.Secret)
-      .InNamespace("destination-namespace")
-      .Get("destination-secret");
     expect(destSecret1.data).toEqual({});
     expect(destSecret1.metadata?.labels).toEqual({ "secrets.uds.dev/copy": "false" });
 
-    const destSecret2 = await K8s(kind.Secret)
-      .InNamespace("destination-namespace")
-      .Get("destination-secret");
     expect(destSecret2.data).toEqual({});
     expect(destSecret2.metadata?.labels).toEqual({});
   });
@@ -116,7 +107,7 @@ describe("test secret copy", () => {
     };
 
     const expected = (e: Error) => {
-      expect(e).toMatchObject({
+      expect(e).rejects.toMatchObject({
         ok: false,
         data: {
           message: expect.stringContaining("Missing required annotations for secret copy"),
@@ -142,7 +133,7 @@ describe("test secret copy", () => {
     };
 
     const expected = (e: Error) => {
-      expect(e).toMatchObject({
+      expect(e).rejects.toMatchObject({
         ok: false,
         data: {
           message: expect.stringContaining("not found in namespace"),
@@ -167,11 +158,8 @@ describe("test secret copy", () => {
       },
     };
 
-    await K8s(kind.Secret).Apply(destinationSecret);
+    const destSecret = await K8s(kind.Secret).Apply(destinationSecret);
 
-    const destSecret = await K8s(kind.Secret)
-      .InNamespace("destination-namespace")
-      .Get("destination-secret");
     expect(destSecret.data).toEqual({});
   });
 
@@ -189,11 +177,7 @@ describe("test secret copy", () => {
       },
     };
 
-    await K8s(kind.Secret).Apply(destinationSecret);
-
-    const destSecret = await K8s(kind.Secret)
-      .InNamespace("destination-namespace")
-      .Get("destination-secret");
+    const destSecret = await K8s(kind.Secret).Apply(destinationSecret);
     expect(destSecret).toBe(undefined);
   });
 });
