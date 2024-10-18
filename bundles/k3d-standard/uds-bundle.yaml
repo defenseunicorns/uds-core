@@ -42,7 +42,6 @@ packages:
     optionalComponents:
       - istio-passthrough-gateway
       - metrics-server
-      - uds-runtime
     overrides:
       loki:
         loki:

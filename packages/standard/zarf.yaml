@@ -99,7 +99,7 @@ components:
 
   # UDS Runtime
   - name: uds-runtime
-    required: false
+    required: true
     import:
       path: ../ui
 
