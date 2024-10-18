@@ -59,10 +59,10 @@ function handleArray(
   let type = "";
   let markdown = "";
 
+  const capitalizedField = capitalizeFirstLetter(field);
   if (schema.items?.enum) {
-    type = `Policy[] (enum):<ul>${schema.items.enum.map((value: string) => `<li><code>${value}</code></li>`).join("")}</ul>`;
+    type = `${capitalizedField}[] (enum):<ul>${schema.items.enum.map((value: string) => `<li><code>${value}</code></li>`).join("")}</ul>`;
   } else if (schema.items?.properties) {
-    const capitalizedField = capitalizeFirstLetter(field);
     type = `<a href="#${capitalizedField}">${capitalizedField}[]</a>`;
     markdown = generateMarkdownFromSchema(schema.items.properties, field, currentDepth + 1);
   } else if (schema.items?.type) {
