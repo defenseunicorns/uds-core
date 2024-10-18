@@ -3,10 +3,10 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { beforeAll, describe, expect, it } from "@jest/globals";
+import { afterAll, beforeAll, describe, expect, it } from "@jest/globals";
 import { K8s, kind } from "pepr";
 
-// const failIfReached = () => expect(true).toBe(false);
+const failIfReached = () => expect(true).toBe(false);
 
 describe("test secret copy", () => {
   const sourceSecret = {
@@ -26,11 +26,11 @@ describe("test secret copy", () => {
     await K8s(kind.Secret).Apply(sourceSecret);
   });
 
-  // afterAll(async () => {
-  //   // Cleanup test namespaces
-  //   await K8s(kind.Namespace).Delete("source-namespace");
-  //   await K8s(kind.Namespace).Delete("destination-namespace");
-  // });
+  afterAll(async () => {
+    // Cleanup test namespaces
+    await K8s(kind.Namespace).Delete("source-namespace");
+    await K8s(kind.Namespace).Delete("destination-namespace");
+  });
 
   it("should copy a secret with the secrets.uds.dev/copy label", async () => {
     // Apply destination secret
