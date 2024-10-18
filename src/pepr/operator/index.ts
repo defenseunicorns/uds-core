@@ -27,6 +27,9 @@ import { purgeAuthserviceClients } from "./controllers/keycloak/authservice/auth
 import { exemptValidator } from "./crd/validators/exempt-validator";
 import { packageReconciler } from "./reconcilers/package-reconciler";
 
+// Secret imports
+import { copySecret, labelCopySecret } from "./secrets";
+
 // Export the operator capability for registration in the root pepr.ts
 export { operator } from "./common";
 
@@ -91,3 +94,9 @@ When(UDSPackage)
     log.info("Identity and Authorization layer removed, operator will NOT handle SSO.");
     UDSConfig.isIdentityDeployed = false;
   });
+
+// Watch for secrets w/ the UDS secret label and copy as necessary
+When(a.Secret)
+  .IsCreatedOrUpdated()
+  .WithLabel(labelCopySecret)
+  .Mutate(request => copySecret(request));
