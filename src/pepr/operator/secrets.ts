@@ -6,6 +6,7 @@
 import { a, K8s, kind, Log, PeprMutateRequest } from "pepr";
 
 export const labelCopySecret = "secrets.uds.dev/copy";
+const labelCopiedSecret = "secrets.uds.dev/copied";
 
 const annotationFromNS = "secrets.uds.dev/fromNamespace";
 const annotationFromName = "secrets.uds.dev/fromName";
@@ -30,17 +31,17 @@ enum OnFailure {
  *
  * @returns Record<string, string> - The filtered labels
  */
-function filterLabels(labels: Record<string, string>, keysToRemove: string[]) {
-  const filteredLabels: Record<string, string> = {};
+// function filterLabels(labels: Record<string, string>, keysToRemove: string[]) {
+//   const filteredLabels: Record<string, string> = {};
 
-  for (const key in labels) {
-    if (!keysToRemove.includes(key)) {
-      filteredLabels[key] = labels[key];
-    }
-  }
+//   for (const key in labels) {
+//     if (!keysToRemove.includes(key)) {
+//       filteredLabels[key] = labels[key];
+//     }
+//   }
 
-  return filteredLabels;
-}
+//   return filteredLabels;
+// }
 
 /**
  * Copy a secret from one namespace to another
@@ -60,15 +61,14 @@ function filterLabels(labels: Record<string, string>, keysToRemove: string[]) {
  *
  * @param request The PeprMutateRequest on a Secret. This should have been
  *  triggered by a secret with the appropriate label.
- * @returns void
+ * @returns Promise<void>
  *
  **/
 export async function copySecret(request: PeprMutateRequest<a.Secret>) {
   const annotations = request.Raw.metadata?.annotations;
 
   if (!annotations) {
-    Log.error("No annotations present for secret copy %s", request.Raw.metadata?.name);
-    return;
+    throw `No annotations present for secret copy ${request.Raw.metadata?.name}`;
   }
 
   const fromNS = annotations[annotationFromNS];
@@ -92,14 +92,14 @@ export async function copySecret(request: PeprMutateRequest<a.Secret>) {
   }
 
   if (!fromNS || !fromName || !toNS || !toName) {
-    Log.error("Missing required annotations for secret copy %s", request.Raw.metadata?.name);
+    throw `Missing required annotations for secret copy ${request.Raw.metadata?.name}`;
   }
 
   Log.info("Attempting to copy secret %s from namespace %s to %s", fromName, fromNS, toNS);
 
   // filter out the original copy label, then add a "copied" label
-  let filteredLabels = filterLabels(request.Raw.metadata?.labels || {}, [labelCopySecret]);
-  filteredLabels = { ...filteredLabels, "secrets.uds.dev/copied": "true" };
+  // let filteredLabels = filterLabels(request.Raw.metadata?.labels || {}, [labelCopySecret]);
+  // filteredLabels = { ...filteredLabels, "secrets.uds.dev/copied": "true" };
 
   try {
     const sourceSecret = await K8s(kind.Secret).InNamespace(fromNS).Get(fromName);
@@ -111,36 +111,43 @@ export async function copySecret(request: PeprMutateRequest<a.Secret>) {
           return;
         case OnFailure.LEAVEEMPTY:
           // Create an empty secret in the destination namespace
-          await K8s(kind.Secret).Apply({
-            apiVersion: "v1",
-            kind: "Secret",
-            metadata: {
-              name: toName,
-              namespace: toNS,
-              labels: filteredLabels,
-              annotations: request.Raw.metadata?.annotations,
-            },
-          });
+          request.RemoveLabel(labelCopySecret);
+          request.SetLabel(labelCopiedSecret, "true");
+          request.Raw.data = {};
+
+          // await K8s(kind.Secret).Apply({
+          //   apiVersion: "v1",
+          //   kind: "Secret",
+          //   metadata: {
+          //     name: toName,
+          //     namespace: toNS,
+          //     labels: filteredLabels,
+          //     annotations: request.Raw.metadata?.annotations,
+          //   },
+          // });
           return;
         case OnFailure.ERROR:
-          Log.error("Source secret %s not found in namespace %s", fromName, fromNS);
-          return;
+          throw `Source secret ${fromName} not found in namespace ${fromNS}`;
       }
     } else {
       // fill in destination secret with source data
-      await K8s(kind.Secret).Apply({
-        apiVersion: "v1",
-        kind: "Secret",
-        metadata: {
-          name: toName,
-          namespace: toNS,
-          labels: filteredLabels,
-          annotations: request.Raw.metadata?.annotations,
-        },
-        data: sourceSecret.data,
-      });
+      request.RemoveLabel(labelCopySecret);
+      request.SetLabel(labelCopiedSecret, "true");
+      request.Raw.data = sourceSecret.data;
+
+      // await K8s(kind.Secret).Apply({
+      //   apiVersion: "v1",
+      //   kind: "Secret",
+      //   metadata: {
+      //     name: toName,
+      //     namespace: toNS,
+      //     labels: filteredLabels,
+      //     annotations: request.Raw.metadata?.annotations,
+      //   },
+      //   data: sourceSecret.data,
+      // });
     }
   } catch (error) {
-    Log.error("Error copying secret %s from %s to %s: %s", fromName, fromNS, toNS, error);
+    throw `Error copying secret ${fromName} from ${fromNS} to ${toNS}: ${error}`;
   }
 }

@@ -98,5 +98,5 @@ When(UDSPackage)
 // Watch for secrets w/ the UDS secret label and copy as necessary
 When(a.Secret)
   .IsCreatedOrUpdated()
-  .WithLabel(labelCopySecret)
+  .WithLabel(labelCopySecret, "true")
   .Mutate(request => copySecret(request));
