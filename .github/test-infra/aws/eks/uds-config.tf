@@ -1,3 +1,6 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 resource "local_sensitive_file" "uds_config" {
   filename = "../../../bundles/eks/uds-config.yaml"
   content = yamlencode({
