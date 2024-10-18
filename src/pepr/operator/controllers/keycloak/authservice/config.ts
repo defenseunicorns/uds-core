@@ -10,7 +10,7 @@ import { Client } from "../types";
 import { buildChain, log } from "./authservice";
 import { Action, AuthserviceConfig } from "./types";
 
-let pendingSecretFetch: Promise<AuthserviceConfig> | null;
+let pendingSecretFetch: Promise<AuthserviceConfig> | null = null;
 
 // Cache for in-memory secret to avoid unnecessary Kubernetes secret lookups
 let inMemorySecret: AuthserviceConfig | null = null;
