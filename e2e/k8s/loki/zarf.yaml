@@ -1,0 +1,19 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+kind: ZarfPackageConfig
+metadata:
+  name: uds-core-e2e-loki
+  description: "UDS Core E2E Loki"
+
+components:
+  - name: loki
+    required: true
+    description: "Install Curl Image for E2E Loki Tests"
+    images:
+      - docker.io/curlimages/curl:8.10.1
+    manifests:
+      - name: e2e-tests
+        files:
+          - "jobs.yaml"
+          - "configmap.yaml"
