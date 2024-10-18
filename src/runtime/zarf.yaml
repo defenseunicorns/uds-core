@@ -40,7 +40,7 @@ components:
     import:
       path: common
     images:
-      - registry1.dso.mil/ironbank/opensource/defenseunicorns/uds/runtime:v0.6.1
+      - registry1.dso.mil/ironbank/opensource/defenseunicorns/uds/runtime:0.7.0
     charts:
       - name: uds-runtime
         valuesFiles:
