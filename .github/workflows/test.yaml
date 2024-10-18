@@ -69,6 +69,10 @@ jobs:
         if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
         run: uds run test:uds-core-e2e --set FLAVOR=${{ inputs.flavor }} --no-progress
 
+      - name: Compose UDS Core Component Definitions
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
+        run: uds run test-compliance-compose --no-progress
+
       - name: Validate UDS Core Compliance
         if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
         run: uds run test-compliance-validate --no-progress

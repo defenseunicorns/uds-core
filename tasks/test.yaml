@@ -108,7 +108,7 @@ tasks:
     actions:
       - task: compliance:validate
         with:
-          oscalfile: ./compliance/oscal-component.yaml
+          oscalfile: ./compliance/oscal-component-composed.yaml
           assessment_results: ./compliance/oscal-assessment-results.yaml
           options: -t il4
 
@@ -119,3 +119,14 @@ tasks:
         with:
           assessment_results: ./compliance/oscal-assessment-results.yaml
           options: -t il4
+
+  - name: local-compliance-compose
+    description: "compose oscal component definitions"
+    inputs:
+      oscalfile:
+        description: oscal file to compose
+        default: ./compliance/oscal-component.yaml
+      options:
+        description: for setting additional flags
+    actions:
+      - cmd: lula tools compose -f ${{ .inputs.oscalfile }} ${{ .inputs.options }}
