@@ -63,15 +63,15 @@ export async function reconcileAuthservice(
   await updatePolicy(event, labelSelector, pkg);
 }
 
-// write authservice config to secret
+// Write authservice config to secret (ensure the new function name is referenced)
 export async function updateConfig(event: AuthServiceEvent) {
-  // parse existing authservice config
+  // Parse existing authservice config
   let config = await getAuthserviceConfig();
 
-  // update config based on event
+  // Update config based on event
   config = buildConfig(config, event);
 
-  // update the authservice secret
+  // Update the authservice secret using the new function
   await updateAuthServiceSecret(config);
 }
 
@@ -79,23 +79,23 @@ export function buildConfig(config: AuthserviceConfig, event: AuthServiceEvent) 
   let chains: Chain[];
 
   if (event.action == Action.Add) {
-    // add the new chain to the existing authservice config
+    // Add the new chain to the existing authservice config
     chains = config.chains.filter(chain => chain.name !== event.name);
     chains = chains.concat(buildChain(event));
   } else if (event.action == Action.Remove) {
-    // search in the existing chains for the chain to remove by name
+    // Search in the existing chains for the chain to remove by name
     chains = config.chains.filter(chain => chain.name !== event.name);
   } else {
     throw new Error(`Unhandled Action: ${event.action satisfies never}`);
   }
 
-  // add the new chains to the existing authservice config
+  // Add the new chains to the existing authservice config
   return { ...config, chains } as AuthserviceConfig;
 }
 
 export function buildChain(update: AuthServiceEvent) {
   // TODO: get this from the package
-  // parse the hostname from the first client redirect uri
+  // Parse the hostname from the first client redirect URI
   const hostname = new URL(update.client!.redirectUris[0]).hostname;
 
   const chain: Chain = {
