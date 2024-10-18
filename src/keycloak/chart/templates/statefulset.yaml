@@ -168,7 +168,7 @@ spec:
             - name: JAVA_TOOL_OPTIONS
               value: "-Dcom.redhat.fips=true"
             {{- end }}
-           {{- end }}  
+          {{- end }}
           {{- if .Values.insecureAdminPasswordGeneration.enabled }}
             - name: KEYCLOAK_ADMIN
               valueFrom:
