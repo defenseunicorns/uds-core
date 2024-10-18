@@ -83,7 +83,7 @@
       "commitMessageTopic": "pepr"
     },
     {
-      "matchFileNames": [".github/**", "bundles/**", "tasks/iac.yaml", "tasks/setup.yaml"],
+      "matchFileNames": [".github/**", "bundles/**", "tasks/iac.yaml", "tasks/setup.yaml", ".vscode/settings.json"],
       "groupName": "support-deps",
       "commitMessageTopic": "support dependencies"
     },
