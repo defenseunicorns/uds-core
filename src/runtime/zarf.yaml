@@ -14,23 +14,34 @@ variables:
 
 components:
   - name: uds-runtime
-    required: false
+    required: true
+    only:
+      flavor: upstream
+    import:
+      path: common
     images:
-      - ghcr.io/defenseunicorns/uds-runtime:0.6.1
+      - ghcr.io/defenseunicorns/uds-runtime:0.7.0
+
+  - name: uds-runtime
+    required: true
+    only:
+      flavor: unicorn
+    import:
+      path: common
+    images:
+      - ghcr.io/defenseunicorns/uds-runtime:0.7.0
+
+  - name: uds-runtime
+    required: true
+    only:
+      flavor: registry1
+      cluster:
+        architecture: amd64
+    import:
+      path: common
+    images:
+      - registry1.dso.mil/ironbank/opensource/defenseunicorns/uds/runtime:0.7.0
     charts:
       - name: uds-runtime
-        namespace: uds-runtime
-        version: "v0.6.1"
-        url: https://github.com/defenseunicorns/uds-runtime.git
-        gitPath: chart
-    actions:
-      onDeploy:
-        after:
-          - description: Validate Runtime Package
-            maxTotalSeconds: 300
-            wait:
-              cluster:
-                kind: packages.uds.dev
-                name: uds-runtime
-                namespace: uds-runtime
-                condition: "'{.status.phase}'=Ready"
+        valuesFiles:
+          - values/registry1-values.yaml
