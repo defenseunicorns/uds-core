@@ -28,7 +28,7 @@ import { exemptValidator } from "./crd/validators/exempt-validator";
 import { packageReconciler } from "./reconcilers/package-reconciler";
 
 // Secret imports
-import { copySecret, labelCopySecret } from "./secrets";
+import { copySecret, labelCopySecret, validateSecret } from "./secrets";
 
 // Export the operator capability for registration in the root pepr.ts
 export { operator } from "./common";
@@ -99,4 +99,5 @@ When(UDSPackage)
 When(a.Secret)
   .IsCreatedOrUpdated()
   .WithLabel(labelCopySecret, "true")
-  .Mutate(request => copySecret(request));
+  .Mutate(request => copySecret(request))
+  .Validate(request => validateSecret(request));

@@ -3,7 +3,8 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { a, K8s, kind, Log, PeprMutateRequest } from "pepr";
+import { a, K8s, kind, Log, PeprMutateRequest, PeprValidateRequest } from "pepr";
+import { ValidateActionResponse } from "pepr/dist/lib/types";
 
 export const labelCopySecret = "secrets.uds.dev/copy";
 const labelCopiedSecret = "secrets.uds.dev/copied";
@@ -16,13 +17,11 @@ const annotationOnFailure = "secrets.uds.dev/onMissingSource";
  * Enum for handling what to do when the source secret is missing
  *
  * This can be one of the following:
- * - Ignore: Do nothing
- * - Error: Log an error and return
+ * - Deny: Fail to create the destination secret
  * - LeaveEmpty: Create the destination secret with no data
  */
 enum OnFailure {
-  IGNORE,
-  ERROR,
+  DENY,
   LEAVEEMPTY,
 }
 
@@ -37,10 +36,18 @@ enum OnFailure {
  *
  * If the source secret does not exist, the behavior is determined by the
  * `uds.dev/secrets/onMissingSource` annotation. If this annotation is not
- * present, the default behavior is "Error", which will log an error and return
- * without creating a destination secret. Other options are "Ignore" which will
- * silently do nothing, and "LeaveEmpty" which will create the destination
- * secret with desired name in the desired namespace, but with no data.
+ * present, the default behavior is "Deny", which will log an error and return
+ * without creating a destination secret. The other option is "LeaveEmpty" which
+ * will create the destination secret with desired name in the desired
+ * namespace, but with no data. This may be useful if a secret is expected to
+ * exist, but is not critical to the operation of the application.
+ *
+ * This function will remove the `secrets.uds.dev/copy` label from the secret
+ * and replace it with `secrets.uds.dev/copied` with the value "true" if the
+ * secret was successfully copied, or "empty" if the secret was created with no
+ * data. If the source secret was not found and the behavior is "Deny", the
+ * label will be set to "deny", and the secret will be denied in the validation
+ * step after this.
  *
  * @param request The PeprMutateRequest on a Secret. This should have been
  *  triggered by a secret with the appropriate label.
@@ -51,7 +58,12 @@ export async function copySecret(request: PeprMutateRequest<a.Secret>) {
   const annotations = request.Raw.metadata?.annotations;
 
   if (!annotations) {
-    throw `No annotations present for secret copy ${request.Raw.metadata?.name}`;
+    // if there are no annotations, we can't do anything, we'll deny.
+    // in the validation step, the missing annotations will be noticed and an
+    // appropriate error message generated.
+    request.RemoveLabel(labelCopySecret);
+    request.SetLabel(labelCopiedSecret, "deny");
+    return;
   }
 
   const fromNS = annotations[annotationFromNS];
@@ -61,50 +73,91 @@ export async function copySecret(request: PeprMutateRequest<a.Secret>) {
 
   let failBehavior: OnFailure;
 
-  switch (annotations[annotationOnFailure]) {
-    case "Ignore":
-      failBehavior = OnFailure.IGNORE;
-      break;
-    case "LeaveEmpty":
-      failBehavior = OnFailure.LEAVEEMPTY;
-      break;
-    case "Error":
-    default:
-      failBehavior = OnFailure.ERROR;
-      break;
+  if (!annotations[annotationOnFailure]) {
+    failBehavior = OnFailure.DENY;
+  } else {
+    switch (annotations[annotationOnFailure].toUpperCase()) {
+      case "LEAVEEMPTY":
+        failBehavior = OnFailure.LEAVEEMPTY;
+        break;
+      case "DENY":
+      default:
+        failBehavior = OnFailure.DENY;
+        break;
+    }
   }
 
   if (!fromNS || !fromName || !toNS || !toName) {
-    throw `Missing required annotations for secret copy ${request.Raw.metadata?.name}`;
+    // if any of the required annotations or metadata are missing, deny.
+    request.RemoveLabel(labelCopySecret);
+    request.SetLabel(labelCopiedSecret, "deny");
+    return;
   }
 
   Log.info("Attempting to copy secret %s from namespace %s to %s", fromName, fromNS, toNS);
 
+  let sourceSecret = null;
+
   try {
-    const sourceSecret = await K8s(kind.Secret).InNamespace(fromNS).Get(fromName);
-
-    if (!sourceSecret) {
-      // if the source secret does not exist, handle according to the failure behavior
-      switch (failBehavior) {
-        case OnFailure.IGNORE:
-          return;
-        case OnFailure.LEAVEEMPTY:
-          // Create an empty secret in the destination namespace
-          request.RemoveLabel(labelCopySecret);
-          request.SetLabel(labelCopiedSecret, "true");
-          request.Raw.data = {};
-
-          return;
-        case OnFailure.ERROR:
-          throw `Source secret ${fromName} not found in namespace ${fromNS}`;
-      }
-    } else {
-      // fill in destination secret with source data
-      request.RemoveLabel(labelCopySecret);
-      request.SetLabel(labelCopiedSecret, "true");
-      request.Raw.data = sourceSecret.data;
-    }
+    sourceSecret = await K8s(kind.Secret).InNamespace(fromNS).Get(fromName);
   } catch (error) {
-    throw `Error copying secret ${fromName} from ${fromNS} to ${toNS}: ${error}`;
+    sourceSecret = null;
+    Log.info(
+      "Source secret %s/%s not found when copy to %s/%s: %s",
+      fromNS,
+      fromName,
+      toNS,
+      toName,
+      error.message,
+    );
   }
+
+  if (!sourceSecret) {
+    // if the source secret does not exist, handle according to the failure behavior
+    switch (failBehavior) {
+      case OnFailure.LEAVEEMPTY:
+        Log.info("Creating empty secret %s/%s", toNS, toName);
+
+        request.RemoveLabel(labelCopySecret);
+        request.SetLabel(labelCopiedSecret, "empty");
+        request.Raw.data = {};
+        return;
+      case OnFailure.DENY:
+        request.SetLabel(labelCopiedSecret, "deny");
+    }
+  } else {
+    // fill in destination secret with source data
+    request.RemoveLabel(labelCopySecret);
+    request.SetLabel(labelCopiedSecret, "true");
+    request.Raw.data = sourceSecret.data;
+  }
+}
+
+/**
+ * Provide final validation for a secret copy request. In some cases we don't
+ * want to copy secrets, so we can deny the request here.
+ *
+ * @param request
+ * @returns Approve, or Deny w/ message
+ */
+export function validateSecret(request: PeprValidateRequest<a.Secret>): ValidateActionResponse {
+  const annotations = request.Raw.metadata?.annotations;
+
+  if (!annotations) {
+    return request.Deny(
+      "Missing secrets.uds.dev/fromNamespace and/or secrets.uds.dev/fromName annotations",
+    );
+  }
+
+  if (!annotations[annotationFromNS] || !annotations[annotationFromName]) {
+    return request.Deny(
+      "Missing secrets.uds.dev/fromNamespace and/or secrets.uds.dev/fromName annotations",
+    );
+  }
+
+  if (annotations[labelCopiedSecret] === "deny") {
+    return request.Deny("Source secret not found, denying the request");
+  }
+
+  return request.Approve();
 }

@@ -54,7 +54,7 @@ describe("test secret copy", () => {
     console.log("Destination Secret:");
     console.log(destSecret);
 
-    expect(destSecret.data).toEqual({"key": "VEVTVENBU0U="}); // base64 encoded "TESTCASE"
+    expect(destSecret.data).toEqual({ key: "VEVTVENBU0U=" }); // base64 encoded "TESTCASE"
 
     // Confirm that label has changed from copy to copied
     expect(destSecret.metadata?.labels).toEqual({ "secrets.uds.dev/copied": "true" });
@@ -78,7 +78,7 @@ describe("test secret copy", () => {
       metadata: {
         name: "destination-secret-tc2b",
         namespace: "destination-namespace2",
-        labels: {},
+        labels: { asdf: "true" },
         annotations: {
           "secrets.uds.dev/fromNamespace": "source-namespace",
           "secrets.uds.dev/fromName": "source-secret",
@@ -90,11 +90,11 @@ describe("test secret copy", () => {
     const destSecret2 = await K8s(kind.Secret).Apply(destinationSecret2);
 
     // Confirm destination secrets are created "as is"
-    expect(destSecret1.data).toEqual({});
+    expect(destSecret1.data).toEqual(undefined);
     expect(destSecret1.metadata?.labels).toEqual({ "secrets.uds.dev/copy": "false" });
 
-    expect(destSecret2.data).toEqual({});
-    expect(destSecret2.metadata?.labels).toEqual({});
+    expect(destSecret2.data).toEqual(undefined);
+    expect(destSecret2.metadata?.labels).toEqual({ asdf: "true" });
   });
 
   it("should error by default when copy label is present but missing annotations", async () => {
@@ -107,10 +107,10 @@ describe("test secret copy", () => {
     };
 
     const expected = (e: Error) => {
-      expect(e).rejects.toMatchObject({
+      expect(e).toMatchObject({
         ok: false,
         data: {
-          message: expect.stringContaining("Missing required annotations for secret copy"),
+          message: expect.stringContaining("denied the request"),
         },
       });
     };
@@ -118,7 +118,7 @@ describe("test secret copy", () => {
     return K8s(kind.Secret).Apply(destinationSecret).then(failIfReached).catch(expected);
   });
 
-  it("should error when missing source secret and onMissingSource=Error", async () => {
+  it("should error when missing source secret and onMissingSource=Deny", async () => {
     const destinationSecret = {
       metadata: {
         name: "destination-secret",
@@ -127,16 +127,16 @@ describe("test secret copy", () => {
         annotations: {
           "secrets.uds.dev/fromNamespace": "missing-namespace",
           "secrets.uds.dev/fromName": "missing-secret",
-          "secrets.uds.dev/onMissingSource": "Error",
+          "secrets.uds.dev/onMissingSource": "Deny",
         },
       },
     };
 
     const expected = (e: Error) => {
-      expect(e).rejects.toMatchObject({
+      expect(e).toMatchObject({
         ok: false,
         data: {
-          message: expect.stringContaining("not found in namespace"),
+          message: expect.stringContaining("denied the request"),
         },
       });
     };
@@ -147,11 +147,11 @@ describe("test secret copy", () => {
   it("should create empty secret when missing source secret and onMissingSource=LeaveEmpty", async () => {
     const destinationSecret = {
       metadata: {
-        name: "destination-secret",
+        name: "destination-secret-tc4a",
         namespace: "destination-namespace",
         labels: { "secrets.uds.dev/copy": "true" },
         annotations: {
-          "secrets.uds.dev/fromNamespace": "missing-namespace",
+          "secrets.uds.dev/fromNamespace": "source-namespace",
           "secrets.uds.dev/fromName": "missing-secret",
           "secrets.uds.dev/onMissingSource": "LeaveEmpty",
         },
@@ -161,23 +161,5 @@ describe("test secret copy", () => {
     const destSecret = await K8s(kind.Secret).Apply(destinationSecret);
 
     expect(destSecret.data).toEqual({});
-  });
-
-  it("should do nothing when missing source secret and onMissingSource=Ignore", async () => {
-    const destinationSecret = {
-      metadata: {
-        name: "destination-secret",
-        namespace: "destination-namespace",
-        labels: { "secrets.uds.dev/copy": "true" },
-        annotations: {
-          "secrets.uds.dev/fromNamespace": "missing-namespace",
-          "secrets.uds.dev/fromName": "missing-secret",
-          "secrets.uds.dev/onMissingSource": "Ignore",
-        },
-      },
-    };
-
-    const destSecret = await K8s(kind.Secret).Apply(destinationSecret);
-    expect(destSecret).toBe(undefined);
   });
 });
