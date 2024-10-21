@@ -10,7 +10,7 @@ data:
   check_logs.sh: |
     #!/bin/sh
     retries=${RETRIES:-5}
-    delay=${DELAY:-5}
+    delay=${DELAY:-10}
     start_time=$(($(date +%s) - 300))000000000
     end_time=$(date +%s%N)
 
