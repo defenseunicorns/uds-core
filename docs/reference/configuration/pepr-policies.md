@@ -13,9 +13,9 @@ If a resource is exempted, it will be annotated as `uds-core.pepr.dev/uds-core-p
 
 ### Pepr Policy Mutations
 
-{{% alert-note %}}
+:::note
 Mutations can be exempted using the same [Pepr Policy Exemptions](#pepr-policy-exemptions) references as the validations.
-{{% /alert-note %}}
+:::
 
 | Pepr Mutation🔗 | Mutated Fields | Mutation Logic |
 | --------------- | -------------- | -------------- |
