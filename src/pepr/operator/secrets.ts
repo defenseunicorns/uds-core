@@ -89,7 +89,7 @@ export function checkAnnotationsAndMetadata(data: a.Secret): FailReason {
 export async function copySecret(request: PeprMutateRequest<a.Secret>) {
   const annotations = request.Raw.metadata?.annotations;
 
-  if (checkAnnotationsAndMetadata(request.Raw) !== FailReason.OK) {
+  if (!annotations) {
     // if there are no annotations, we can't do anything, we'll deny.
     // in the validation step, the missing annotations will be noticed and an
     // appropriate error message generated.
