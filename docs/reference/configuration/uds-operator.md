@@ -21,10 +21,11 @@ The UDS Operator plays a pivotal role in managing the lifecycle of UDS Package C
   - At this time `anyOf` allows defining a list of groups, a user must belong to at least one of them.
   - Custom client `protocolMapper`'s that will be created alongside the client and added to the client's dedicated scope.
 - **Authservice Protection:**
-  - Authservice authentication provides application agnostic SSO for applications that opt-in.
-  {{% alert-caution %}}
-  Warning: **Authservice Protection** and **SSO Group Authentication** are in Alpha and may not be stable. Avoid using in production. Feedback is appreciated to improve reliability.
-  {{% /alert-caution %}}
+- Authservice authentication provides application agnostic SSO for applications that opt-in.
+
+:::caution
+Warning: **Authservice Protection** and **SSO Group Authentication** are in Alpha and may not be stable. Avoid using in production. Feedback is appreciated to improve reliability.
+:::
 
 ### Example UDS Package CR
 
