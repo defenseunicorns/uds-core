@@ -78,36 +78,19 @@
       "commitMessageTopic": "runtime"
     },
     {
-      "matchPackageNames": ["zarf-dev/zarf", "ghcr.io/zarf-dev/packages/init"],
-      "groupName": "zarf",
-      "commitMessageTopic": "zarf"
-    },
-    {
-      "matchPackageNames": ["defenseunicorns/uds-cli"],
-      "groupName": "uds",
-      "commitMessageTopic": "uds"
-    },
-    {
-      "matchPackageNames": ["defenseunicorns/uds-k3d", "ghcr.io/defenseunicorns/packages/uds-k3d"],
-      "groupName": "uds-k3d",
-      "commitMessageTopic": "uds-k3d"
-    },
-    {
-      "matchFileNames": [".github/workflows/**", ".github/actions/**"],
-      "matchPackageNames": ["*", "!zarf-dev/zarf", "!defenseunicorns/uds-cli", "!defenseunicorns/lula", "!k3d-io/k3d"],
-      "groupName": "githubactions",
-      "commitMessageTopic": "githubactions",
-      "pinDigests": true
-    },
-    {
-      "matchFileNames": [".github/test-infra/**"],
-      "groupName": "test-infra",
-      "commitMessageTopic": "test-infra"
-    },
-    {
       "matchFileNames": ["package.json", "package-lock.json", "tasks/create.yaml"],
       "groupName": "pepr",
       "commitMessageTopic": "pepr"
+    },
+    {
+      "matchFileNames": ["e2e/playwright/**", ".github/**", "bundles/**", "tasks/iac.yaml", "tasks/setup.yaml", ".vscode/settings.json"],
+      "groupName": "support-deps",
+      "commitMessageTopic": "support dependencies"
+    },
+    {
+      "matchPackageNames": ["defenseunicorns/uds-common"],
+      "groupName": "support-deps",
+      "commitMessageTopic": "support-deps"
     }
   ]
 }

@@ -1,98 +1,41 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 all:
   - "**"
 
-authservice:
-  - "src/authservice/**"
-  - "!**/*.md"
-  - "!**/*.jpg"
-  - "!**/*.png"
-  - "!**/*.gif"
-  - "!**/*.svg"
-
-grafana:
-  - "src/grafana/**"
-  - "!**/*.md"
-  - "!**/*.jpg"
-  - "!**/*.png"
-  - "!**/*.gif"
-  - "!**/*.svg"
-
-istio:
+base:
+  - "packages/base/**"
   - "src/istio/**"
-  - "!**/*.md"
-  - "!**/*.jpg"
-  - "!**/*.png"
-  - "!**/*.gif"
-  - "!**/*.svg"
+  - "src/pepr/**"
 
-keycloak:
+identity-authorization:
+  - "packages/identity-authorization/**"
   - "src/keycloak/**"
-  - "!**/*.md"
-  - "!**/*.jpg"
-  - "!**/*.png"
-  - "!**/*.gif"
-  - "!**/*.svg"
+  - "src/authservice/**"
 
-kiali:
-  - "src/kiali/**"
-  - "!**/*.md"
-  - "!**/*.jpg"
-  - "!**/*.png"
-  - "!**/*.gif"
-  - "!**/*.svg"
-
-loki:
+logging:
+  - "packages/logging/**"
   - "src/loki/**"
-  - "!**/*.md"
-  - "!**/*.jpg"
-  - "!**/*.png"
-  - "!**/*.gif"
-  - "!**/*.svg"
+  - "src/vector/**"
+
+ui:
+  - "packages/ui/**"
+  - "src/runtime/**"
+
+runtime-security:
+  - "packages/runtime-security/**"
+  - "src/neuvector/**"
+
+backup-restore:
+  - "packages/backup-restore/**"
+  - "src/velero/**"
 
 metrics-server:
+  - "packages/metrics-server/**"
   - "src/metrics-server/**"
-  - "!**/*.md"
-  - "!**/*.jpg"
-  - "!**/*.png"
-  - "!**/*.gif"
-  - "!**/*.svg"
 
-neuvector:
-  - "src/neuvector/**"
-  - "!**/*.md"
-  - "!**/*.jpg"
-  - "!**/*.png"
-  - "!**/*.gif"
-  - "!**/*.svg"
-
-prometheus-stack:
+monitoring:
+  - "packages/monitoring/**"
   - "src/prometheus-stack/**"
-  - "!**/*.md"
-  - "!**/*.jpg"
-  - "!**/*.png"
-  - "!**/*.gif"
-  - "!**/*.svg"
-
-vector:
-  - "src/vector/**"
-  - "!**/*.md"
-  - "!**/*.jpg"
-  - "!**/*.png"
-  - "!**/*.gif"
-  - "!**/*.svg"
-
-tempo:
-  - "src/tempo/**"
-  - "!**/*.md"
-  - "!**/*.jpg"
-  - "!**/*.png"
-  - "!**/*.gif"
-  - "!**/*.svg"
-
-velero:
-  - "src/velero/**"
-  - "!**/*.md"
-  - "!**/*.jpg"
-  - "!**/*.png"
-  - "!**/*.gif"
-  - "!**/*.svg"
+  - "src/grafana/**"

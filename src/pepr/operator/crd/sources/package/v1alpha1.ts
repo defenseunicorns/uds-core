@@ -1,3 +1,8 @@
+/**
+ * Copyright 2024 Defense Unicorns
+ * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+ */
+
 import { V1CustomResourceDefinitionVersion, V1JSONSchemaProps } from "@kubernetes/client-node";
 
 import { advancedHTTP } from "../istio/virtualservice-v1beta1";
@@ -380,6 +385,12 @@ const sso = {
           "Enables the standard OpenID Connect redirect based authentication with authorization code.",
         type: "boolean",
         default: true,
+      },
+      serviceAccountsEnabled: {
+        description:
+          "Enables the client credentials grant based authentication via OpenID Connect protocol.",
+        type: "boolean",
+        default: false,
       },
       publicClient: {
         description: "Defines whether the client requires a client secret for authentication",

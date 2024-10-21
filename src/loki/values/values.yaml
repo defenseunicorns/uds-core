@@ -1,3 +1,6 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 # Sets the global DNS service to the service created in this chart
 global:
   dnsService: "uds-loki-dns"
@@ -8,11 +11,6 @@ nameOverride: loki
 fullnameOverride: loki
 # -- Overrides the chart's cluster label
 clusterLabelOverride: null
-
-# Prevent startup issues with service existence/resolution
-memberlist:
-  service:
-    publishNotReadyAddresses: true
 
 chunksCache:
   enabled: false
@@ -163,3 +161,7 @@ write:
 backend:
   # Remove default anti-affinity to support single node
   affinity: null
+  # Temporary label to trigger mutation for istio service patch
+  service:
+    labels:
+      uds/istio-patch: "true"

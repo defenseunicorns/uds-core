@@ -1,0 +1,75 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+metadata:
+  name: istio-enforces-authorized-keycloak-access
+  uuid: fbd877c8-d6b6-4d88-8685-2c4aaaab02a1
+domain:
+  type: kubernetes
+  kubernetes-spec:
+    resources:
+      - name: authorizationPolicy
+        resource-rule:
+          name: keycloak-block-admin-access-from-public-gateway
+          group: security.istio.io
+          resource: authorizationpolicies
+          namespaces: [keycloak]
+          version: v1beta1
+provider:
+  type: opa
+  opa-spec:
+    rego: |
+      package validate
+      import rego.v1
+
+      # Default policy result
+      default validate := false
+      default msg := "Not evaluated"
+
+      # Validate both AuthorizationPolicy restricts access to Keycloak admin
+      validate if {
+        check_auth_policy_for_keycloak_admin_access.result
+      }
+
+      msg = check_auth_policy_for_keycloak_admin_access.msg
+
+      check_auth_policy_for_keycloak_admin_access = {"result": true, "msg": msg} if {
+        input.authorizationPolicy.kind == "AuthorizationPolicy"
+        valid_auth_policy(input.authorizationPolicy)
+        msg := "AuthorizationPolicy restricts access to Keycloak admin."
+      } else = {"result": false, "msg": msg} if {
+        msg := "AuthorizationPolicy does not restrict access to Keycloak admin."
+      }
+
+      # Define the rule for denying access
+      expected_keycloak_admin_denial_rule := {
+        "from": [
+          {
+            "source": {
+              "notNamespaces": ["istio-admin-gateway"]
+            }
+          }
+        ],
+        "to": [
+          {
+            "operation": {
+              "ports": ["8080"],
+              "paths": ["/admin*", "/realms/master*"]
+            }
+          }
+        ]
+      }
+
+      # Validate that the authorization policy contains the expected first rule
+      valid_auth_policy(ap) if {
+        ap.spec.action == "DENY"
+        rules := ap.spec.rules
+
+        # Ensure the expected rule is present in the input policy
+        some i
+        rules[i] == expected_keycloak_admin_denial_rule
+      }
+    output:
+      validation: validate.validate
+      observations:
+        - validate.msg

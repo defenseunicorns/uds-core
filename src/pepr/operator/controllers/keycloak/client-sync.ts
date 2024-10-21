@@ -1,6 +1,10 @@
+/**
+ * Copyright 2024 Defense Unicorns
+ * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+ */
+
 import { fetch, K8s, kind } from "pepr";
 
-import { UDSConfig } from "../../../config";
 import { Component, setupLogger } from "../../../logger";
 import { Store } from "../../common";
 import { Sso, UDSPackage } from "../../crd";
@@ -209,16 +213,6 @@ async function syncClient(
 }
 
 async function apiCall(client: Partial<Client>, method = "POST", authToken = "") {
-  // Handle single test mode
-  if (UDSConfig.isSingleTest) {
-    log.warn(`Generating fake client for '${client.clientId}' in single test mode`);
-    return {
-      ...client,
-      secret: client.secret || "fake-secret",
-      registrationAccessToken: "fake-registration-access-token",
-    } as Client;
-  }
-
   const req = {
     body: JSON.stringify(client) as string | undefined,
     method,

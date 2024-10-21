@@ -1,7 +1,10 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 image:
   registry: registry1.dso.mil
   repository: ironbank/opensource/grafana/grafana
-  tag: 11.2.0
+  tag: 11.2.2
 
 initChownData:
   image:
@@ -18,4 +21,4 @@ sidecar:
   image:
     registry: registry1.dso.mil
     repository: ironbank/kiwigrid/k8s-sidecar
-    tag: 1.27.6
+    tag: 1.28.0

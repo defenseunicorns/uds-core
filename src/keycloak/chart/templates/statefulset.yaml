@@ -1,3 +1,6 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -165,7 +168,7 @@ spec:
             - name: JAVA_TOOL_OPTIONS
               value: "-Dcom.redhat.fips=true"
             {{- end }}
-           {{- end }}  
+          {{- end }}
           {{- if .Values.insecureAdminPasswordGeneration.enabled }}
             - name: KEYCLOAK_ADMIN
               valueFrom:
