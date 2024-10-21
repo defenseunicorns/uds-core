@@ -6,10 +6,13 @@
 import { handleFailure, shouldSkip, updateStatus, writeEvent } from ".";
 import { UDSConfig } from "../../config";
 import { Component, setupLogger } from "../../logger";
-import { enableInjection } from "../controllers/istio/injection";
+import { cleanupNamespace, enableInjection } from "../controllers/istio/injection";
 import { istioResources } from "../controllers/istio/istio-resources";
-import { authservice } from "../controllers/keycloak/authservice/authservice";
-import { keycloak } from "../controllers/keycloak/client-sync";
+import {
+  authservice,
+  purgeAuthserviceClients,
+} from "../controllers/keycloak/authservice/authservice";
+import { keycloak, purgeSSOClients } from "../controllers/keycloak/client-sync";
 import { Client } from "../controllers/keycloak/types";
 import { podMonitor } from "../controllers/monitoring/pod-monitor";
 import { serviceMonitor } from "../controllers/monitoring/service-monitor";
@@ -106,4 +109,16 @@ export async function packageReconciler(pkg: UDSPackage) {
   } catch (err) {
     void handleFailure(err, pkg);
   }
+}
+
+export async function packageFinalizer(pkg: UDSPackage) {
+  // Update status to indicate removal in progress
+  await updateStatus(pkg, { phase: Phase.Removing });
+
+  // Cleanup the namespace
+  await cleanupNamespace(pkg);
+
+  // Remove any SSO clients
+  await purgeSSOClients(pkg, []);
+  await purgeAuthserviceClients(pkg, []);
 }
