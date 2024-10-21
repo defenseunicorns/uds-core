@@ -41,7 +41,7 @@ describe("test secret copy", () => {
     await K8s(kind.Namespace).Delete("source-namespace");
     await K8s(kind.Namespace).Delete("destination-namespace");
     await K8s(kind.Namespace).Delete("destination-namespace2");
-    // await K8s(kind.Namespace).Delete("destination-namespace3");
+    await K8s(kind.Namespace).Delete("destination-namespace3");
   });
 
   it("should copy a secret with the secrets.uds.dev/copy label", async () => {
