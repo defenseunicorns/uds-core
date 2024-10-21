@@ -19,9 +19,14 @@
   },
   "include": [
     "**/*.ts"
+<<<<<<< HEAD
   ],
   "exclude": [
     "e2e",
     "dist"
   ]
 }
+=======
+  ]
+}
+>>>>>>> 606e0f6 (Tests passing)
