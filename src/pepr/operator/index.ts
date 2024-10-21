@@ -27,6 +27,9 @@ import { purgeAuthserviceClients } from "./controllers/keycloak/authservice/auth
 import { exemptValidator } from "./crd/validators/exempt-validator";
 import { packageReconciler } from "./reconcilers/package-reconciler";
 
+// Secret imports
+import { copySecret, labelCopySecret, validateSecret } from "./secrets";
+
 // Export the operator capability for registration in the root pepr.ts
 export { operator } from "./common";
 
@@ -80,7 +83,9 @@ When(UDSPackage)
   .WithName("keycloak")
   .Watch(() => {
     // todo: wait for keycloak and authservice to be running?
-    log.info("Identity and Authorization layer deployed, operator configured to handle SSO.");
+    log.info(
+      "Identity and Authorization layer deployed, operator configured to handle SSO.",
+    );
     UDSConfig.isIdentityDeployed = true;
   });
 When(UDSPackage)
@@ -88,6 +93,15 @@ When(UDSPackage)
   .InNamespace("keycloak")
   .WithName("keycloak")
   .Watch(() => {
-    log.info("Identity and Authorization layer removed, operator will NOT handle SSO.");
+    log.info(
+      "Identity and Authorization layer removed, operator will NOT handle SSO.",
+    );
     UDSConfig.isIdentityDeployed = false;
   });
+
+// Watch for secrets w/ the UDS secret label and copy as necessary
+When(a.Secret)
+  .IsCreatedOrUpdated()
+  .WithLabel(labelCopySecret, "true")
+  .Mutate(request => copySecret(request))
+  .Validate(request => validateSecret(request));
