@@ -125,10 +125,7 @@ describe("test secret copy", () => {
       });
     };
 
-    return K8s(kind.Secret)
-      .Apply(destinationSecret)
-      .then(failIfReached)
-      .catch(expected);
+    return K8s(kind.Secret).Apply(destinationSecret).then(failIfReached).catch(expected);
   });
 
   it("should error when missing source secret and onMissingSource=Deny", async () => {
@@ -154,10 +151,7 @@ describe("test secret copy", () => {
       });
     };
 
-    return K8s(kind.Secret)
-      .Apply(destinationSecret)
-      .then(failIfReached)
-      .catch(expected);
+    return K8s(kind.Secret).Apply(destinationSecret).then(failIfReached).catch(expected);
   });
 
   it("should create empty secret when missing source secret and onMissingSource=LeaveEmpty", async () => {

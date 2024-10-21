@@ -83,9 +83,7 @@ When(UDSPackage)
   .WithName("keycloak")
   .Watch(() => {
     // todo: wait for keycloak and authservice to be running?
-    log.info(
-      "Identity and Authorization layer deployed, operator configured to handle SSO.",
-    );
+    log.info("Identity and Authorization layer deployed, operator configured to handle SSO.");
     UDSConfig.isIdentityDeployed = true;
   });
 When(UDSPackage)
@@ -93,9 +91,7 @@ When(UDSPackage)
   .InNamespace("keycloak")
   .WithName("keycloak")
   .Watch(() => {
-    log.info(
-      "Identity and Authorization layer removed, operator will NOT handle SSO.",
-    );
+    log.info("Identity and Authorization layer removed, operator will NOT handle SSO.");
     UDSConfig.isIdentityDeployed = false;
   });
 

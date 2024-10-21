@@ -3,14 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import {
-  a,
-  K8s,
-  kind,
-  Log,
-  PeprMutateRequest,
-  PeprValidateRequest,
-} from "pepr";
+import { a, K8s, kind, Log, PeprMutateRequest, PeprValidateRequest } from "pepr";
 import { ValidateActionResponse } from "pepr/dist/lib/types";
 
 export const labelCopySecret = "secrets.uds.dev/copy";
@@ -134,12 +127,7 @@ export async function copySecret(request: PeprMutateRequest<a.Secret>) {
     return;
   }
 
-  Log.info(
-    "Attempting to copy secret %s from namespace %s to %s",
-    fromName,
-    fromNS,
-    toNS,
-  );
+  Log.info("Attempting to copy secret %s from namespace %s to %s", fromName, fromNS, toNS);
 
   let sourceSecret = null;
 
@@ -186,9 +174,7 @@ export async function copySecret(request: PeprMutateRequest<a.Secret>) {
  * @param request
  * @returns Approve, or Deny w/ message
  */
-export function validateSecret(
-  request: PeprValidateRequest<a.Secret>,
-): ValidateActionResponse {
+export function validateSecret(request: PeprValidateRequest<a.Secret>): ValidateActionResponse {
   const result = checkAnnotationsAndMetadata(request.Raw);
 
   console.log("**** VALIDATE REQUEST *****: ", JSON.stringify(request.Raw));
@@ -205,9 +191,7 @@ export function validateSecret(
     );
   }
 
-  if (
-    checkAnnotationsAndMetadata(request.Raw) === FailReason.MISSING_METADATA
-  ) {
+  if (checkAnnotationsAndMetadata(request.Raw) === FailReason.MISSING_METADATA) {
     return request.Deny("Source secret not found, denying the request");
   }
 
