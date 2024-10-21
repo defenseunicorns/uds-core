@@ -60,11 +60,17 @@ describe("authservice", () => {
       "https://sso.uds.dev/realms/uds/protocol/openid-connect/auth",
     );
 
-    expect(chain.filters[0].oidc_override.client_id).toEqual(mockClient.clientId);
+    expect(chain.filters[0].oidc_override.client_id).toEqual(
+      mockClient.clientId,
+    );
 
-    expect(chain.filters[0].oidc_override.client_secret).toEqual(mockClient.secret);
+    expect(chain.filters[0].oidc_override.client_secret).toEqual(
+      mockClient.secret,
+    );
 
-    expect(chain.filters[0].oidc_override.callback_uri).toEqual(mockClient.redirectUris[0]);
+    expect(chain.filters[0].oidc_override.callback_uri).toEqual(
+      mockClient.redirectUris[0],
+    );
   });
 
   test("should test authservice chain removal", async () => {
@@ -85,8 +91,16 @@ describe("authservice", () => {
       action: Action.Remove,
     });
 
-    config = buildConfig(config, { client: mockClient, name: "sso-client-a", action: Action.Add });
-    config = buildConfig(config, { client: mockClient, name: "sso-client-b", action: Action.Add });
+    config = buildConfig(config, {
+      client: mockClient,
+      name: "sso-client-a",
+      action: Action.Add,
+    });
+    config = buildConfig(config, {
+      client: mockClient,
+      name: "sso-client-b",
+      action: Action.Add,
+    });
 
     expect(config.chains.length).toEqual(2);
   });
@@ -120,8 +134,16 @@ describe("authservice", () => {
       },
     };
     try {
-      await updatePolicy({ name: "auth-test", action: Action.Add }, labelSelector, pkg);
-      await updatePolicy({ name: "auth-test", action: Action.Remove }, labelSelector, pkg);
+      await updatePolicy(
+        { name: "auth-test", action: Action.Add },
+        labelSelector,
+        pkg,
+      );
+      await updatePolicy(
+        { name: "auth-test", action: Action.Remove },
+        labelSelector,
+        pkg,
+      );
     } catch (e) {
       expect(e).toBeUndefined();
     }

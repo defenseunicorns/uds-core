@@ -19,9 +19,18 @@ describe("test secret copy", () => {
 
   beforeAll(async () => {
     // Setup test namespaces
-    await K8s(kind.Namespace).Apply({ metadata: { name: "source-namespace" } });
-    await K8s(kind.Namespace).Apply({ metadata: { name: "destination-namespace" } });
-    await K8s(kind.Namespace).Apply({ metadata: { name: "destination-namespace2" } });
+    await K8s(kind.Namespace).Apply({
+      metadata: { name: "source-namespace" },
+    });
+    await K8s(kind.Namespace).Apply({
+      metadata: { name: "destination-namespace" },
+    });
+    await K8s(kind.Namespace).Apply({
+      metadata: { name: "destination-namespace2" },
+    });
+    await K8s(kind.Namespace).Apply({
+      metadata: { name: "destination-namespace3" },
+    });
 
     // Create source secret
     await K8s(kind.Secret).Apply(sourceSecret);
@@ -32,6 +41,7 @@ describe("test secret copy", () => {
     await K8s(kind.Namespace).Delete("source-namespace");
     await K8s(kind.Namespace).Delete("destination-namespace");
     await K8s(kind.Namespace).Delete("destination-namespace2");
+    // await K8s(kind.Namespace).Delete("destination-namespace3");
   });
 
   it("should copy a secret with the secrets.uds.dev/copy label", async () => {
@@ -50,14 +60,12 @@ describe("test secret copy", () => {
 
     // Check if destination secret has the same data as the source secret
     const destSecret = await K8s(kind.Secret).Apply(destinationSecret);
-
-    console.log("Destination Secret:");
-    console.log(destSecret);
-
     expect(destSecret.data).toEqual({ key: "VEVTVENBU0U=" }); // base64 encoded "TESTCASE"
 
     // Confirm that label has changed from copy to copied
-    expect(destSecret.metadata?.labels).toEqual({ "secrets.uds.dev/copied": "true" });
+    expect(destSecret.metadata?.labels).toEqual({
+      "secrets.uds.dev/copied": "true",
+    });
   });
 
   it("should not copy a secret without the secrets.uds.dev/copy=true label", async () => {
@@ -91,17 +99,19 @@ describe("test secret copy", () => {
 
     // Confirm destination secrets are created "as is"
     expect(destSecret1.data).toEqual(undefined);
-    expect(destSecret1.metadata?.labels).toEqual({ "secrets.uds.dev/copy": "false" });
+    expect(destSecret1.metadata?.labels).toEqual({
+      "secrets.uds.dev/copy": "false",
+    });
 
     expect(destSecret2.data).toEqual(undefined);
     expect(destSecret2.metadata?.labels).toEqual({ asdf: "true" });
   });
 
-  it("should error by default when copy label is present but missing annotations", async () => {
+  it("should error when copy label is present but missing annotations", async () => {
     const destinationSecret = {
       metadata: {
-        name: "destination-secret",
-        namespace: "destination-namespace",
+        name: "destination-secret-tc3",
+        namespace: "destination-namespace3",
         labels: { "secrets.uds.dev/copy": "true" },
       },
     };
@@ -115,7 +125,10 @@ describe("test secret copy", () => {
       });
     };
 
-    return K8s(kind.Secret).Apply(destinationSecret).then(failIfReached).catch(expected);
+    return K8s(kind.Secret)
+      .Apply(destinationSecret)
+      .then(failIfReached)
+      .catch(expected);
   });
 
   it("should error when missing source secret and onMissingSource=Deny", async () => {
@@ -141,7 +154,10 @@ describe("test secret copy", () => {
       });
     };
 
-    return K8s(kind.Secret).Apply(destinationSecret).then(failIfReached).catch(expected);
+    return K8s(kind.Secret)
+      .Apply(destinationSecret)
+      .then(failIfReached)
+      .catch(expected);
   });
 
   it("should create empty secret when missing source secret and onMissingSource=LeaveEmpty", async () => {
@@ -160,6 +176,6 @@ describe("test secret copy", () => {
 
     const destSecret = await K8s(kind.Secret).Apply(destinationSecret);
 
-    expect(destSecret.data).toEqual({});
+    expect(destSecret.data).toEqual(undefined);
   });
 });

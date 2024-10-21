@@ -37,7 +37,13 @@ export async function istioResources(pkg: UDSPackage, namespace: string) {
   // Iterate over each exposed service
   for (const expose of exposeList) {
     // Generate a VirtualService for this `expose` entry
-    const vsPayload = generateVirtualService(expose, namespace, pkgName, generation, ownerRefs);
+    const vsPayload = generateVirtualService(
+      expose,
+      namespace,
+      pkgName,
+      generation,
+      ownerRefs,
+    );
 
     log.debug(vsPayload, `Applying VirtualService ${vsPayload.metadata?.name}`);
 
@@ -47,7 +53,13 @@ export async function istioResources(pkg: UDSPackage, namespace: string) {
     vsPayload.spec!.hosts!.forEach(h => hosts.add(h));
 
     // Generate a ServiceEntry for this `expose` entry
-    const sePayload = generateServiceEntry(expose, namespace, pkgName, generation, ownerRefs);
+    const sePayload = generateServiceEntry(
+      expose,
+      namespace,
+      pkgName,
+      generation,
+      ownerRefs,
+    );
 
     // If we have already made a ServiceEntry with this name, skip (i.e. if advancedHTTP was used)
     if (serviceEntryNames.get(sePayload.metadata!.name!)) {

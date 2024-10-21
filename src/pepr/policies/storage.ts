@@ -42,7 +42,8 @@ When(a.Pod)
     // Check all volumes in the pod spec, if any
     for (const volume of volumes(request)) {
       // Get the volume type, which will be the only key in the volume object other than "name"
-      const volumeType = Object.keys(volume).find(key => key !== "name") || "unknown";
+      const volumeType =
+        Object.keys(volume).find(key => key !== "name") || "unknown";
 
       // If the volume type is not in the allowed list, deny the request
       if (!allowedVolumeTypes.includes(volumeType)) {
@@ -87,7 +88,9 @@ When(a.Pod)
 
         // If any mount is not readOnly, deny the request
         if (hasRWMount) {
-          return request.Deny(`hostPath volume '${volume.name}' must be mounted as readOnly.`);
+          return request.Deny(
+            `hostPath volume '${volume.name}' must be mounted as readOnly.`,
+          );
         }
       }
     }

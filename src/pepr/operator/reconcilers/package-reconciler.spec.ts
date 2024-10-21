@@ -31,7 +31,8 @@ jest.mock("pepr", () => ({
   Capability: jest.fn().mockImplementation(() => {
     return {
       name: "uds-core-operator",
-      description: "The UDS Operator is responsible for managing the lifecycle of UDS resources",
+      description:
+        "The UDS Operator is responsible for managing the lifecycle of UDS resources",
     };
   }),
 }));
@@ -43,7 +44,11 @@ describe("reconciler", () => {
     jest.clearAllMocks();
 
     mockPackage = {
-      metadata: { name: "test-package", namespace: "test-namespace", generation: 1 },
+      metadata: {
+        name: "test-package",
+        namespace: "test-namespace",
+        generation: 1,
+      },
       status: { phase: Phase.Pending, observedGeneration: 0 },
     };
 

@@ -33,7 +33,13 @@ describe("test generate virtual service", () => {
       service,
     };
 
-    const payload = generateVirtualService(expose, namespace, pkgName, generation, ownerRefs);
+    const payload = generateVirtualService(
+      expose,
+      namespace,
+      pkgName,
+      generation,
+      ownerRefs,
+    );
 
     expect(payload).toBeDefined();
     expect(payload.metadata?.name).toEqual(
@@ -49,7 +55,9 @@ describe("test generate virtual service", () => {
     expect(payload.spec!.http![0].route![0].destination?.host).toEqual(
       `${service}.${namespace}.svc.cluster.local`,
     );
-    expect(payload.spec!.http![0].route![0].destination?.port?.number).toEqual(port);
+    expect(payload.spec!.http![0].route![0].destination?.port?.number).toEqual(
+      port,
+    );
 
     expect(payload.spec?.gateways).toBeDefined();
     expect(payload.spec!.gateways![0]).toEqual(
@@ -66,11 +74,19 @@ describe("test generate virtual service", () => {
       service,
     };
 
-    const payload = generateVirtualService(expose, namespace, pkgName, generation, ownerRefs);
+    const payload = generateVirtualService(
+      expose,
+      namespace,
+      pkgName,
+      generation,
+      ownerRefs,
+    );
 
     expect(payload).toBeDefined();
     expect(payload.spec?.hosts).toBeDefined();
-    expect(payload.spec!.hosts![0]).toEqual(`${host}.admin.${UDSConfig.domain}`);
+    expect(payload.spec!.hosts![0]).toEqual(
+      `${host}.admin.${UDSConfig.domain}`,
+    );
   });
 
   it("should create an advancedHttp VirtualService object", () => {
@@ -84,7 +100,13 @@ describe("test generate virtual service", () => {
       advancedHTTP,
     };
 
-    const payload = generateVirtualService(expose, namespace, pkgName, generation, ownerRefs);
+    const payload = generateVirtualService(
+      expose,
+      namespace,
+      pkgName,
+      generation,
+      ownerRefs,
+    );
 
     expect(payload).toBeDefined();
     expect(payload.spec?.http).toBeDefined();
@@ -101,18 +123,28 @@ describe("test generate virtual service", () => {
       service,
     };
 
-    const payload = generateVirtualService(expose, namespace, pkgName, generation, ownerRefs);
+    const payload = generateVirtualService(
+      expose,
+      namespace,
+      pkgName,
+      generation,
+      ownerRefs,
+    );
 
     expect(payload).toBeDefined();
     expect(payload.spec?.tls).toBeDefined();
     expect(payload.spec!.tls![0].match).toBeDefined();
     expect(payload.spec!.tls![0].match![0].port).toEqual(443);
-    expect(payload.spec!.tls![0].match![0].sniHosts![0]).toEqual(`${host}.${UDSConfig.domain}`);
+    expect(payload.spec!.tls![0].match![0].sniHosts![0]).toEqual(
+      `${host}.${UDSConfig.domain}`,
+    );
     expect(payload.spec!.tls![0].route).toBeDefined();
     expect(payload.spec!.http![0].route![0].destination?.host).toEqual(
       `${service}.${namespace}.svc.cluster.local`,
     );
-    expect(payload.spec!.http![0].route![0].destination?.port?.number).toEqual(port);
+    expect(payload.spec!.http![0].route![0].destination?.port?.number).toEqual(
+      port,
+    );
   });
 
   it.only("should create a redirect VirtualService object", () => {
@@ -125,7 +157,13 @@ describe("test generate virtual service", () => {
       advancedHTTP: { redirect: { uri: "https://example.com" } },
     };
 
-    const payload = generateVirtualService(expose, namespace, pkgName, generation, ownerRefs);
+    const payload = generateVirtualService(
+      expose,
+      namespace,
+      pkgName,
+      generation,
+      ownerRefs,
+    );
 
     expect(payload).toBeDefined();
     expect(payload.spec!.http![0].route).toBeUndefined();

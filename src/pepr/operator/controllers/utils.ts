@@ -64,11 +64,17 @@ export async function purgeOrphans<T extends GenericClass>(
   kind: T,
   log: Logger,
 ) {
-  const resources = await K8s(kind).InNamespace(namespace).WithLabel("uds/package", pkgName).Get();
+  const resources = await K8s(kind)
+    .InNamespace(namespace)
+    .WithLabel("uds/package", pkgName)
+    .Get();
 
   for (const resource of resources.items) {
     if (resource.metadata?.labels?.["uds/generation"] !== generation) {
-      log.debug(resource, `Deleting orphaned ${resource.kind!} ${resource.metadata!.name}`);
+      log.debug(
+        resource,
+        `Deleting orphaned ${resource.kind!} ${resource.metadata!.name}`,
+      );
       await K8s(kind).Delete(resource);
     }
   }

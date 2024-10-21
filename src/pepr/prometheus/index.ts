@@ -46,7 +46,9 @@ When(PrometheusServiceMonitor)
 
       return;
     } else {
-      log.info(`Patching service monitor ${sm.Raw.metadata?.name} for mTLS metrics`);
+      log.info(
+        `Patching service monitor ${sm.Raw.metadata?.name} for mTLS metrics`,
+      );
       // Note: this tlsConfig patch is deprecated in favor of a default scrape class for both service and pod monitors
       const tlsConfig = {
         caFile: "/etc/prom-certs/root-cert.pem",
@@ -74,7 +76,10 @@ When(PrometheusPodMonitor)
     }
 
     // Add an exempt scrape class if explicitly opted out via annotation OR targeting a non-istio-injected namespace
-    if (pm.Raw.metadata?.annotations?.["uds/skip-mutate"] || !(await isIstioInjected(pm))) {
+    if (
+      pm.Raw.metadata?.annotations?.["uds/skip-mutate"] ||
+      !(await isIstioInjected(pm))
+    ) {
       log.info(
         `Mutating scrapeClass to exempt PodMonitor ${pm.Raw.metadata?.name} from default scrapeClass mTLS config`,
       );
@@ -82,8 +87,11 @@ When(PrometheusPodMonitor)
 
       return;
     } else {
-      log.info(`Patching pod monitor ${pm.Raw.metadata?.name} for mTLS metrics`);
-      const endpoints: PodMonitorEndpoint[] = pm.Raw.spec.podMetricsEndpoints || [];
+      log.info(
+        `Patching pod monitor ${pm.Raw.metadata?.name} for mTLS metrics`,
+      );
+      const endpoints: PodMonitorEndpoint[] =
+        pm.Raw.spec.podMetricsEndpoints || [];
       endpoints.forEach(endpoint => {
         endpoint.scheme = PodMonitorScheme.HTTPS;
       });
@@ -92,7 +100,9 @@ When(PrometheusPodMonitor)
   });
 
 // This assumes istio-injection == strict mTLS due to complexity around mTLS lookup
-async function isIstioInjected(monitor: PrometheusServiceMonitor | PrometheusPodMonitor) {
+async function isIstioInjected(
+  monitor: PrometheusServiceMonitor | PrometheusPodMonitor,
+) {
   // If monitor allows any namespace assume istio injection
   if (monitor.Raw.spec?.namespaceSelector?.any) {
     return true;
@@ -104,7 +114,10 @@ async function isIstioInjected(monitor: PrometheusServiceMonitor | PrometheusPod
 
   for (const ns of namespaces) {
     const namespace = await K8s(kind.Namespace).Get(ns);
-    if (namespace.metadata?.labels && namespace.metadata.labels["istio-injection"] === "enabled") {
+    if (
+      namespace.metadata?.labels &&
+      namespace.metadata.labels["istio-injection"] === "enabled"
+    ) {
       return true;
     }
   }

@@ -36,7 +36,13 @@ export async function podMonitor(pkg: UDSPackage, namespace: string) {
   try {
     for (const monitor of monitorList) {
       if (monitor.kind === Kind.PodMonitor) {
-        const payload = generatePodMonitor(monitor, namespace, pkgName, generation, ownerRefs);
+        const payload = generatePodMonitor(
+          monitor,
+          namespace,
+          pkgName,
+          generation,
+          ownerRefs,
+        );
 
         log.debug(payload, `Applying PodMonitor ${payload.metadata?.name}`);
 
@@ -47,9 +53,17 @@ export async function podMonitor(pkg: UDSPackage, namespace: string) {
       }
     }
 
-    await purgeOrphans(generation, namespace, pkgName, PrometheusPodMonitor, log);
+    await purgeOrphans(
+      generation,
+      namespace,
+      pkgName,
+      PrometheusPodMonitor,
+      log,
+    );
   } catch (err) {
-    throw new Error(`Failed to process PodMonitors for ${pkgName}, cause: ${JSON.stringify(err)}`);
+    throw new Error(
+      `Failed to process PodMonitors for ${pkgName}, cause: ${JSON.stringify(err)}`,
+    );
   }
 
   // Return the list of monitor names

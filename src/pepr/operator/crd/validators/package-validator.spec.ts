@@ -5,7 +5,16 @@
 
 import { afterEach, describe, expect, it, jest } from "@jest/globals";
 import { PeprValidateRequest } from "pepr";
-import { Allow, Direction, Expose, Gateway, Protocol, RemoteGenerated, Sso, UDSPackage } from "..";
+import {
+  Allow,
+  Direction,
+  Expose,
+  Gateway,
+  Protocol,
+  RemoteGenerated,
+  Sso,
+  UDSPackage,
+} from "..";
 import { validator } from "./package-validator";
 
 const makeMockReq = (
@@ -70,7 +79,12 @@ describe("Test validation of Exemption CRs", () => {
   });
 
   it("denies system namespaces", async () => {
-    const mockReq = makeMockReq({ metadata: { namespace: "kube-system" } }, [], [], []);
+    const mockReq = makeMockReq(
+      { metadata: { namespace: "kube-system" } },
+      [],
+      [],
+      [],
+    );
     await validator(mockReq);
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
   });
@@ -528,8 +542,10 @@ describe("Test Allowed SSO Client Attributes", () => {
             "saml.client.signature": "false",
             saml_assertion_consumer_url_post: "https://nexus.uds.dev/saml",
             saml_assertion_consumer_url_redirect: "https://nexus.uds.dev/saml",
-            saml_single_logout_service_url_post: "https://nexus.uds.dev/saml/single-logout",
-            saml_single_logout_service_url_redirect: "https://nexus.uds.dev/saml/single-logout",
+            saml_single_logout_service_url_post:
+              "https://nexus.uds.dev/saml/single-logout",
+            saml_single_logout_service_url_redirect:
+              "https://nexus.uds.dev/saml/single-logout",
           },
         },
       ],

@@ -6,46 +6,5 @@
       "node_modules/kubernetes-fluent-client/**",
       "node_modules/pepr/**"
     ]
-  },
-  "yaml.schemas": {
-    // renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
-    "https://raw.githubusercontent.com/defenseunicorns/uds-cli/v0.17.0/uds.schema.json": [
-      "uds-bundle.yaml"
-    ],
-    // renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
-    "https://raw.githubusercontent.com/defenseunicorns/uds-cli/v0.17.0/tasks.schema.json": [
-      "tasks.yaml",
-      "tasks/**/*.yaml",
-      "src/**/validate.yaml"
-    ],
-    // renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
-    "https://raw.githubusercontent.com/defenseunicorns/uds-cli/v0.17.0/zarf.schema.json": [
-      "zarf.yaml"
-    ]
-  },
-  "cSpell.words": [
-    "alertmanager",
-    "Authservice",
-    "automount",
-    "controlplane",
-    "crds",
-    "distros",
-    "ironbank",
-    "Kiali",
-    "Kyverno",
-    "MITM",
-    "neuvector",
-    "opensource",
-    "Quarkus",
-    "Quickstart",
-    "seccomp",
-    "Sysctls",
-    "Velero"
-  ],
-  "cSpell.enabled": true,
-  "[typescript]": {
-    "editor.codeActionsOnSave": {
-      "source.organizeImports": "always"
-    }
-  },
+  }
 }

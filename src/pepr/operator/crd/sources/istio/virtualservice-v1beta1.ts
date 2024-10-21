@@ -5,7 +5,11 @@
 
 import { V1JSONSchemaProps } from "@kubernetes/client-node";
 
-const matchRequired = [{ required: ["exact"] }, { required: ["prefix"] }, { required: ["regex"] }];
+const matchRequired = [
+  { required: ["exact"] },
+  { required: ["prefix"] },
+  { required: ["regex"] },
+];
 const matchTemplate = {
   oneOf: [
     {
@@ -23,7 +27,8 @@ const matchTemplate = {
       type: "string",
     },
     regex: {
-      description: "RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax).",
+      description:
+        "RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax).",
       type: "string",
     },
   },
@@ -43,7 +48,8 @@ export const advancedHTTP: V1JSONSchemaProps = {
           type: "boolean",
         },
         allowHeaders: {
-          description: "List of HTTP headers that can be used when requesting the resource.",
+          description:
+            "List of HTTP headers that can be used when requesting the resource.",
           items: {
             type: "string",
           },
@@ -68,14 +74,16 @@ export const advancedHTTP: V1JSONSchemaProps = {
           type: "array",
         },
         exposeHeaders: {
-          description: "A list of HTTP headers that the browsers are allowed to access.",
+          description:
+            "A list of HTTP headers that the browsers are allowed to access.",
           items: {
             type: "string",
           },
           type: "array",
         },
         maxAge: {
-          description: "Specifies how long the results of a preflight request can be cached.",
+          description:
+            "Specifies how long the results of a preflight request can be cached.",
           type: "string",
         },
       },
@@ -184,7 +192,8 @@ export const advancedHTTP: V1JSONSchemaProps = {
       items: {
         properties: {
           ignoreUriCase: {
-            description: "Flag to specify whether the URI matching should be case-insensitive.",
+            description:
+              "Flag to specify whether the URI matching should be case-insensitive.",
             type: "boolean",
           },
           method: matchTemplate,
@@ -212,11 +221,13 @@ export const advancedHTTP: V1JSONSchemaProps = {
           type: "string",
         },
         uri: {
-          description: "rewrite the path (or the prefix) portion of the URI with this value.",
+          description:
+            "rewrite the path (or the prefix) portion of the URI with this value.",
           type: "string",
         },
         uriRegexRewrite: {
-          description: "rewrite the path portion of the URI with the specified regex.",
+          description:
+            "rewrite the path portion of the URI with the specified regex.",
           properties: {
             match: {
               description:
@@ -224,7 +235,8 @@ export const advancedHTTP: V1JSONSchemaProps = {
               type: "string",
             },
             rewrite: {
-              description: "The string that should replace into matching portions of original URI.",
+              description:
+                "The string that should replace into matching portions of original URI.",
               type: "string",
             },
           },
@@ -263,7 +275,8 @@ export const advancedHTTP: V1JSONSchemaProps = {
           type: "string",
         },
         port: {
-          description: "On a redirect, overwrite the port portion of the URL with this value.",
+          description:
+            "On a redirect, overwrite the port portion of the URL with this value.",
           maximum: 4294967295,
           minimum: 0,
           type: "integer",
@@ -282,11 +295,13 @@ export const advancedHTTP: V1JSONSchemaProps = {
           type: "integer",
         },
         scheme: {
-          description: "On a redirect, overwrite the scheme portion of the URL with this value.",
+          description:
+            "On a redirect, overwrite the scheme portion of the URL with this value.",
           type: "string",
         },
         uri: {
-          description: "On a redirect, overwrite the Path portion of the URL with this value.",
+          description:
+            "On a redirect, overwrite the Path portion of the URL with this value.",
           type: "string",
         },
       },
@@ -306,11 +321,13 @@ export const advancedHTTP: V1JSONSchemaProps = {
           type: "string",
         },
         retryOn: {
-          description: "Specifies the conditions under which retry takes place.",
+          description:
+            "Specifies the conditions under which retry takes place.",
           type: "string",
         },
         retryRemoteLocalities: {
-          description: "Flag to specify whether the retries should retry to other localities.",
+          description:
+            "Flag to specify whether the retries should retry to other localities.",
           nullable: true,
           type: "boolean",
         },

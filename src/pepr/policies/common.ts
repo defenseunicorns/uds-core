@@ -3,7 +3,11 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { KubernetesObject, V1Container, V1SecurityContext } from "@kubernetes/client-node";
+import {
+  KubernetesObject,
+  V1Container,
+  V1SecurityContext,
+} from "@kubernetes/client-node";
 import { Capability, PeprMutateRequest, PeprValidateRequest, a } from "pepr";
 import { Policy } from "../operator/crd";
 
@@ -26,7 +30,9 @@ export function volumes(request: PeprValidateRequest<a.Pod>) {
 }
 
 // Returns all containers in the pod
-export function containers(request: PeprValidateRequest<a.Pod> | PeprMutateRequest<a.Pod>) {
+export function containers(
+  request: PeprValidateRequest<a.Pod> | PeprMutateRequest<a.Pod>,
+) {
   return [
     ...(request.Raw.spec?.containers || []),
     ...(request.Raw.spec?.initContainers || []),
@@ -88,7 +94,8 @@ export function isIstioInitContainer(
 
   // Check for what looks like an istio init container
   const possibleInitContainer =
-    container?.name === "istio-init" && container.args?.includes("istio-iptables");
+    container?.name === "istio-init" &&
+    container.args?.includes("istio-iptables");
   if (!possibleInitContainer) {
     return false;
   }

@@ -5,7 +5,13 @@
 
 import { V1OwnerReference } from "@kubernetes/client-node";
 import { UDSConfig } from "../../../config";
-import { Expose, Gateway, IstioHTTP, IstioHTTPRoute, IstioVirtualService } from "../../crd";
+import {
+  Expose,
+  Gateway,
+  IstioHTTP,
+  IstioHTTPRoute,
+  IstioVirtualService,
+} from "../../crd";
 import { sanitizeResourceName } from "../utils";
 
 /**
@@ -21,7 +27,13 @@ export function generateVirtualService(
   generation: string,
   ownerRefs: V1OwnerReference[],
 ) {
-  const { gateway = Gateway.Tenant, host, port, service, advancedHTTP = {} } = expose;
+  const {
+    gateway = Gateway.Tenant,
+    host,
+    port,
+    service,
+    advancedHTTP = {},
+  } = expose;
 
   const name = generateVSName(pkgName, expose);
 
@@ -84,7 +96,14 @@ export function generateVirtualService(
 }
 
 export function generateVSName(pkgName: string, expose: Expose) {
-  const { gateway = Gateway.Tenant, host, port, service, description, advancedHTTP } = expose;
+  const {
+    gateway = Gateway.Tenant,
+    host,
+    port,
+    service,
+    description,
+    advancedHTTP,
+  } = expose;
 
   // Ensure the resource name is valid
   const matchHash = advancedHTTP?.match?.flatMap(m => m.name).join("-") || "";

@@ -11,7 +11,12 @@ import { generateName } from "../../controllers/network/generate";
 import { sanitizeResourceName } from "../../controllers/utils";
 import { migrate } from "../migrate";
 
-const invalidNamespaces = ["kube-system", "kube-public", "_unknown_", "pepr-system"];
+const invalidNamespaces = [
+  "kube-system",
+  "kube-public",
+  "_unknown_",
+  "pepr-system",
+];
 
 export async function validator(req: PeprValidateRequest<UDSPackage>) {
   const pkg = migrate(req.Raw);
@@ -40,7 +45,9 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
       expose.advancedHTTP?.directResponse &&
       (expose.service || expose.selector || expose.port || expose.targetPort)
     ) {
-      return req.Deny("directResponse cannot be combined with service, port, selector, targetPort");
+      return req.Deny(
+        "directResponse cannot be combined with service, port, selector, targetPort",
+      );
     }
 
     // Ensure the service name is unique
@@ -86,7 +93,9 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
     // If 'remoteCidr' is set, it cannot be combined with 'remoteGenerated', 'remoteNamespace', or 'remoteSelector'.
     if (
       policy.remoteCidr &&
-      (policy.remoteGenerated || policy.remoteNamespace || policy.remoteSelector)
+      (policy.remoteGenerated ||
+        policy.remoteNamespace ||
+        policy.remoteSelector)
     ) {
       return req.Deny(
         "remoteCidr cannot be combined with remoteGenerated, remoteNamespace, or remoteSelector",
@@ -94,7 +103,9 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
     }
 
     // Ensure the policy name is unique
-    const name = sanitizeResourceName(`allow-${pkg.metadata?.name}-${generateName(policy)}`);
+    const name = sanitizeResourceName(
+      `allow-${pkg.metadata?.name}-${generateName(policy)}`,
+    );
     if (networkPolicyNames.has(name)) {
       return req.Deny(
         `The combination of characteristics of this network allow rule would create a duplicate NetworkPolicy. ` +
@@ -133,7 +144,10 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
     }
     clientIDs.add(client.clientId);
     // Don't allow illegal k8s resource names for the secret name
-    if (client.secretName && client.secretName !== sanitizeResourceName(client.secretName)) {
+    if (
+      client.secretName &&
+      client.secretName !== sanitizeResourceName(client.secretName)
+    ) {
       return req.Deny(
         `The client ID "${client.clientId}" uses an invalid secret name ${client.secretName}`,
       );
@@ -160,7 +174,8 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
         client.secretTemplate !== undefined ||
         client.enableAuthserviceSelector !== undefined ||
         client.protocol === Protocol.Saml ||
-        client.attributes?.["oauth2.device.authorization.grant.enabled"] !== "true")
+        client.attributes?.["oauth2.device.authorization.grant.enabled"] !==
+          "true")
     ) {
       return req.Deny(
         `The client ID "${client.clientId}" sets options incompatible with publicClient`,

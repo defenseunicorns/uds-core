@@ -79,7 +79,9 @@ export async function packageReconciler(pkg: UDSPackage) {
       ssoClients = await keycloak(pkg);
       authserviceClients = await authservice(pkg, ssoClients);
     } else if (pkg.spec?.sso) {
-      log.error("Identity & Authorization is not deployed, but the package has SSO configuration");
+      log.error(
+        "Identity & Authorization is not deployed, but the package has SSO configuration",
+      );
       throw new Error(
         "Identity & Authorization is not deployed, but the package has SSO configuration",
       );

@@ -14,7 +14,11 @@ import {
   securityContextContainers,
   securityContextMessage,
 } from "./common";
-import { exemptionAnnotationPrefix, isExempt, markExemption } from "./exemptions";
+import {
+  exemptionAnnotationPrefix,
+  isExempt,
+  markExemption,
+} from "./exemptions";
 
 /**
  * This policy ensures that Pods do not allow privilege escalation.
@@ -32,7 +36,11 @@ When(a.Pod)
   .IsCreatedOrUpdated()
   .Mutate(request => {
     markExemption(Policy.DisallowPrivileged)(request);
-    if (request.HasAnnotation(`${exemptionAnnotationPrefix}.${Policy.DisallowPrivileged}`)) {
+    if (
+      request.HasAnnotation(
+        `${exemptionAnnotationPrefix}.${Policy.DisallowPrivileged}`,
+      )
+    ) {
       return;
     }
     let wasMutated = false;
@@ -92,7 +100,11 @@ When(a.Pod)
   .IsCreatedOrUpdated()
   .Mutate(request => {
     markExemption(Policy.RequireNonRootUser)(request);
-    if (request.HasAnnotation(`${exemptionAnnotationPrefix}.${Policy.RequireNonRootUser}`)) {
+    if (
+      request.HasAnnotation(
+        `${exemptionAnnotationPrefix}.${Policy.RequireNonRootUser}`,
+      )
+    ) {
       return;
     }
 
@@ -152,11 +164,15 @@ When(a.Pod)
     // Check pod securityContext
     const podCtx = request.Raw.spec?.securityContext || {};
     if (isRoot(podCtx)) {
-      return request.Deny("Pod level securityContext does not meet the non-root user requirement.");
+      return request.Deny(
+        "Pod level securityContext does not meet the non-root user requirement.",
+      );
     }
 
     // Check container securityContext
-    const violations = securityContextContainers(request).filter(c => isRoot(c.ctx));
+    const violations = securityContextContainers(request).filter(c =>
+      isRoot(c.ctx),
+    );
 
     if (violations.length) {
       return request.Deny(
@@ -195,7 +211,11 @@ When(a.Pod)
 
     if (violations.length) {
       return request.Deny(
-        securityContextMessage("Unauthorized procMount type", authorized, violations),
+        securityContextMessage(
+          "Unauthorized procMount type",
+          authorized,
+          violations,
+        ),
       );
     }
 
@@ -225,7 +245,11 @@ When(a.Pod)
     const ctx = request.Raw.spec?.securityContext || {};
     if (!authorized.includes(ctx.seccompProfile?.type)) {
       return request.Deny(
-        securityContextMessage("Unauthorized pod seccomp profile type", authorized, [{ ctx }]),
+        securityContextMessage(
+          "Unauthorized pod seccomp profile type",
+          authorized,
+          [{ ctx }],
+        ),
       );
     }
 
@@ -282,7 +306,11 @@ When(a.Pod)
 
     if (violations.length) {
       return request.Deny(
-        securityContextMessage("Unauthorized container SELinux Options", authorized, violations),
+        securityContextMessage(
+          "Unauthorized container SELinux Options",
+          authorized,
+          violations,
+        ),
       );
     }
 
@@ -306,10 +334,16 @@ When(a.Pod)
       return request.Approve();
     }
 
-    const authorized = [undefined, "container_t", "container_init_t", "container_kvm_t"];
+    const authorized = [
+      undefined,
+      "container_t",
+      "container_init_t",
+      "container_kvm_t",
+    ];
 
     // Check Pod level security context
-    const podSeLinuxType = request.Raw.spec?.securityContext?.seLinuxOptions?.type;
+    const podSeLinuxType =
+      request.Raw.spec?.securityContext?.seLinuxOptions?.type;
     if (!authorized.includes(podSeLinuxType)) {
       return request.Deny(
         securityContextMessage("Unauthorized pod SELinux type", authorized, [
@@ -324,7 +358,11 @@ When(a.Pod)
 
     if (violations.length) {
       return request.Deny(
-        securityContextMessage("Unauthorized container SELinux type", authorized, violations),
+        securityContextMessage(
+          "Unauthorized container SELinux type",
+          authorized,
+          violations,
+        ),
       );
     }
 
@@ -345,14 +383,19 @@ When(a.Pod)
   .IsCreatedOrUpdated()
   .Mutate(request => {
     markExemption(Policy.DropAllCapabilities)(request);
-    if (request.HasAnnotation(`${exemptionAnnotationPrefix}.${Policy.DropAllCapabilities}`)) {
+    if (
+      request.HasAnnotation(
+        `${exemptionAnnotationPrefix}.${Policy.DropAllCapabilities}`,
+      )
+    ) {
       return;
     }
 
     // Always set drop: ["ALL"] for all containers
     for (const container of containers(request)) {
       container.securityContext = container.securityContext || {};
-      container.securityContext.capabilities = container.securityContext.capabilities || {};
+      container.securityContext.capabilities =
+        container.securityContext.capabilities || {};
       container.securityContext.capabilities.drop = ["ALL"];
     }
     annotateMutation(request, Policy.DropAllCapabilities);
@@ -401,7 +444,9 @@ When(a.Pod)
     const authorized = ["NET_BIND_SERVICE"];
 
     const violations = securityContextContainers(request).filter(
-      c => c.ctx?.capabilities?.add && !c.ctx?.capabilities.add.includes(authorized[0]),
+      c =>
+        c.ctx?.capabilities?.add &&
+        !c.ctx?.capabilities.add.includes(authorized[0]),
     );
 
     if (violations.length) {

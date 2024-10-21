@@ -33,10 +33,18 @@ describe("test generate service entry", () => {
       service,
     };
 
-    const payload = generateServiceEntry(expose, namespace, pkgName, generation, ownerRefs);
+    const payload = generateServiceEntry(
+      expose,
+      namespace,
+      pkgName,
+      generation,
+      ownerRefs,
+    );
 
     expect(payload).toBeDefined();
-    expect(payload.metadata?.name).toEqual(`${pkgName}-${Gateway.Tenant}-${host}`);
+    expect(payload.metadata?.name).toEqual(
+      `${pkgName}-${Gateway.Tenant}-${host}`,
+    );
     expect(payload.metadata?.namespace).toEqual(namespace);
 
     expect(payload.spec?.hosts).toBeDefined();

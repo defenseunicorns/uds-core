@@ -16,7 +16,10 @@ if (!domain || domain === "###ZARF_VAR_DOMAIN###") {
 if (!caCert || caCert === "###ZARF_VAR_CA_CERT###") {
   caCert = "";
 }
-if (!authserviceRedisUri || authserviceRedisUri === "###ZARF_VAR_AUTHSERVICE_REDIS_URI###") {
+if (
+  !authserviceRedisUri ||
+  authserviceRedisUri === "###ZARF_VAR_AUTHSERVICE_REDIS_URI###"
+) {
   authserviceRedisUri = "";
 }
 

@@ -8,7 +8,13 @@ import { GenericKind } from "kubernetes-fluent-client";
 import { K8s, Log, kind } from "pepr";
 
 import { Mock } from "jest-mock";
-import { handleFailure, shouldSkip, uidSeen, updateStatus, writeEvent } from ".";
+import {
+  handleFailure,
+  shouldSkip,
+  uidSeen,
+  updateStatus,
+  writeEvent,
+} from ".";
 import { Phase, PkgStatus, UDSPackage } from "../crd";
 
 jest.mock("pepr", () => ({
@@ -35,13 +41,19 @@ describe("isPendingOrCurrent", () => {
   });
 
   it("should return false for a new CR", () => {
-    const cr = { metadata: { uid: "1" }, status: { phase: Phase.Pending } } as UDSPackage;
+    const cr = {
+      metadata: { uid: "1" },
+      status: { phase: Phase.Pending },
+    } as UDSPackage;
     expect(shouldSkip(cr)).toBe(false);
   });
 
   it("should return true for a pending CR on subsequent calls", () => {
     uidSeen.add("1");
-    const cr = { metadata: { uid: "1" }, status: { phase: Phase.Pending } } as UDSPackage;
+    const cr = {
+      metadata: { uid: "1" },
+      status: { phase: Phase.Pending },
+    } as UDSPackage;
     expect(shouldSkip(cr)).toBe(true);
   });
 
@@ -76,7 +88,10 @@ describe("updateStatus", () => {
   });
 
   it("should update the status of a package", async () => {
-    const cr = { kind: "Package", metadata: { name: "test", namespace: "default" } };
+    const cr = {
+      kind: "Package",
+      metadata: { name: "test", namespace: "default" },
+    };
     const status = { phase: Phase.Ready };
     await updateStatus(cr as GenericKind, status as PkgStatus);
     expect(K8s).toHaveBeenCalledWith(UDSPackage);
@@ -147,7 +162,10 @@ describe("handleFailure", () => {
     const err = { status: 404, message: "Not found" };
     const cr = { metadata: { namespace: "default", name: "test" } };
     await handleFailure(err, cr as UDSPackage);
-    expect(Log.warn).toHaveBeenCalledWith({ err }, "Package metadata seems to have been deleted");
+    expect(Log.warn).toHaveBeenCalledWith(
+      { err },
+      "Package metadata seems to have been deleted",
+    );
     expect(Create).not.toHaveBeenCalled();
   });
 

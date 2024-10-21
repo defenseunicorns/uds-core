@@ -24,7 +24,10 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
   // Get the current generation of the package
   const generation = (pkg.metadata?.generation ?? 0).toString();
 
-  log.debug(pkg.metadata, `Generating NetworkPolicies for generation ${generation}`);
+  log.debug(
+    pkg.metadata,
+    `Generating NetworkPolicies for generation ${generation}`,
+  );
 
   // Create default policies
   const policies = [
@@ -48,8 +51,15 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
   // Generate NetworkPolicies for any VirtualServices that are generated
   const exposeList = pkg.spec?.network?.expose ?? [];
   // Iterate over each exposed service, excluding directResponse services
-  for (const expose of exposeList.filter(exp => !exp.advancedHTTP?.directResponse)) {
-    const { gateway = Gateway.Tenant, port, selector = {}, targetPort } = expose;
+  for (const expose of exposeList.filter(
+    exp => !exp.advancedHTTP?.directResponse,
+  )) {
+    const {
+      gateway = Gateway.Tenant,
+      port,
+      selector = {},
+      targetPort,
+    } = expose;
 
     // Use the same port as the VirtualService if targetPort is not set
     const policyPort = targetPort ?? port;

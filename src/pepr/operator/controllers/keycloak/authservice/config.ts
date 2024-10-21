@@ -19,7 +19,10 @@ export const operatorConfig = {
 };
 
 export async function setupAuthserviceSecret() {
-  if (process.env.PEPR_WATCH_MODE === "true" || process.env.PEPR_MODE === "dev") {
+  if (
+    process.env.PEPR_WATCH_MODE === "true" ||
+    process.env.PEPR_MODE === "dev"
+  ) {
     log.info("One-time authservice secret initialization");
     // create namespace if it doesn't exist
     await K8s(kind.Namespace).Apply({
@@ -33,14 +36,18 @@ export async function setupAuthserviceSecret() {
       const secret = await K8s(kind.Secret)
         .InNamespace(operatorConfig.namespace)
         .Get(operatorConfig.secretName);
-      log.info(`Authservice Secret exists, skipping creation - ${secret.metadata?.name}`);
+      log.info(
+        `Authservice Secret exists, skipping creation - ${secret.metadata?.name}`,
+      );
     } catch (e) {
       log.info("Secret does not exist, creating authservice secret");
       try {
         await updateAuthServiceSecret(buildInitialSecret(), false);
       } catch (err) {
         log.error(err, "Failed to create UDS managed authservice secret.");
-        throw new Error("Failed to create UDS managed authservice secret.", { cause: err });
+        throw new Error("Failed to create UDS managed authservice secret.", {
+          cause: err,
+        });
       }
     }
   }
@@ -103,7 +110,9 @@ export async function getAuthserviceConfig() {
   const authSvcSecret = await K8s(kind.Secret)
     .InNamespace(operatorConfig.namespace)
     .Get(operatorConfig.secretName);
-  return JSON.parse(atob(authSvcSecret!.data!["config.json"])) as AuthserviceConfig;
+  return JSON.parse(
+    atob(authSvcSecret!.data!["config.json"]),
+  ) as AuthserviceConfig;
 }
 
 export async function updateAuthServiceSecret(
@@ -142,7 +151,10 @@ export async function updateAuthServiceSecret(
 
 async function checksumDeployment(checksum: string) {
   try {
-    await K8s(kind.Deployment, { name: "authservice", namespace: operatorConfig.namespace }).Patch([
+    await K8s(kind.Deployment, {
+      name: "authservice",
+      namespace: operatorConfig.namespace,
+    }).Patch([
       {
         op: "add",
         path: "/spec/template/metadata/annotations/pepr.dev~1checksum",
@@ -152,7 +164,11 @@ async function checksumDeployment(checksum: string) {
 
     log.info(`Successfully applied the checksum to authservice`);
   } catch (e) {
-    log.error(`Failed to apply the checksum to authservice: ${e.data?.message}`);
-    throw new Error("Failed to apply the checksum to authservice", { cause: e });
+    log.error(
+      `Failed to apply the checksum to authservice: ${e.data?.message}`,
+    );
+    throw new Error("Failed to apply the checksum to authservice", {
+      cause: e,
+    });
   }
 }

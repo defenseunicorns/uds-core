@@ -3,7 +3,14 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { a, K8s, kind, Log, PeprMutateRequest, PeprValidateRequest } from "pepr";
+import {
+  a,
+  K8s,
+  kind,
+  Log,
+  PeprMutateRequest,
+  PeprValidateRequest,
+} from "pepr";
 import { ValidateActionResponse } from "pepr/dist/lib/types";
 
 export const labelCopySecret = "secrets.uds.dev/copy";
@@ -23,6 +30,38 @@ const annotationOnFailure = "secrets.uds.dev/onMissingSource";
 enum OnFailure {
   DENY,
   LEAVEEMPTY,
+}
+
+/**
+ * Enum for reasons a secret copy may fail
+ */
+enum FailReason {
+  NO_ANNOTATIONS,
+  MISSING_ANNOTATIONS,
+  MISSING_METADATA,
+  SOURCE_NOT_FOUND,
+  OK,
+}
+
+/**
+ * Check required annotations and metadata for a secret copy
+ */
+export function checkAnnotationsAndMetadata(data: a.Secret): FailReason {
+  const annotations = data.metadata?.annotations;
+
+  if (!annotations) {
+    return FailReason.NO_ANNOTATIONS;
+  }
+
+  if (!annotations[annotationFromNS] || !annotations[annotationFromName]) {
+    return FailReason.MISSING_ANNOTATIONS;
+  }
+
+  if (!data.metadata?.namespace || !data.metadata?.name) {
+    return FailReason.MISSING_METADATA;
+  }
+
+  return FailReason.OK;
 }
 
 /**
@@ -57,13 +96,13 @@ enum OnFailure {
 export async function copySecret(request: PeprMutateRequest<a.Secret>) {
   const annotations = request.Raw.metadata?.annotations;
 
-  if (!annotations) {
+  if (checkAnnotationsAndMetadata(request.Raw) !== FailReason.OK) {
     // if there are no annotations, we can't do anything, we'll deny.
     // in the validation step, the missing annotations will be noticed and an
     // appropriate error message generated.
     request.RemoveLabel(labelCopySecret);
     request.SetLabel(labelCopiedSecret, "deny");
-    return;
+    throw "Missing annotations";
   }
 
   const fromNS = annotations[annotationFromNS];
@@ -88,13 +127,19 @@ export async function copySecret(request: PeprMutateRequest<a.Secret>) {
   }
 
   if (!fromNS || !fromName || !toNS || !toName) {
-    // if any of the required annotations or metadata are missing, deny.
+    // if any of the required annotations or metadata are blank, deny.
     request.RemoveLabel(labelCopySecret);
     request.SetLabel(labelCopiedSecret, "deny");
+    throw "Missing annotations";
     return;
   }
 
-  Log.info("Attempting to copy secret %s from namespace %s to %s", fromName, fromNS, toNS);
+  Log.info(
+    "Attempting to copy secret %s from namespace %s to %s",
+    fromName,
+    fromNS,
+    toNS,
+  );
 
   let sourceSecret = null;
 
@@ -124,6 +169,7 @@ export async function copySecret(request: PeprMutateRequest<a.Secret>) {
         return;
       case OnFailure.DENY:
         request.SetLabel(labelCopiedSecret, "deny");
+        throw `Source secret ${fromNS}/${fromName} not found`;
     }
   } else {
     // fill in destination secret with source data
@@ -140,22 +186,28 @@ export async function copySecret(request: PeprMutateRequest<a.Secret>) {
  * @param request
  * @returns Approve, or Deny w/ message
  */
-export function validateSecret(request: PeprValidateRequest<a.Secret>): ValidateActionResponse {
-  const annotations = request.Raw.metadata?.annotations;
+export function validateSecret(
+  request: PeprValidateRequest<a.Secret>,
+): ValidateActionResponse {
+  const result = checkAnnotationsAndMetadata(request.Raw);
 
-  if (!annotations) {
+  console.log("**** VALIDATE REQUEST *****: ", JSON.stringify(request.Raw));
+
+  if (result === FailReason.NO_ANNOTATIONS) {
+    return request.Deny(
+      "Missing all annotations (requires secrets.uds.dev/fromNamespace and fromName)",
+    );
+  }
+
+  if (result === FailReason.MISSING_ANNOTATIONS) {
     return request.Deny(
       "Missing secrets.uds.dev/fromNamespace and/or secrets.uds.dev/fromName annotations",
     );
   }
 
-  if (!annotations[annotationFromNS] || !annotations[annotationFromName]) {
-    return request.Deny(
-      "Missing secrets.uds.dev/fromNamespace and/or secrets.uds.dev/fromName annotations",
-    );
-  }
-
-  if (annotations[labelCopiedSecret] === "deny") {
+  if (
+    checkAnnotationsAndMetadata(request.Raw) === FailReason.MISSING_METADATA
+  ) {
     return request.Deny("Source secret not found, denying the request");
   }
 

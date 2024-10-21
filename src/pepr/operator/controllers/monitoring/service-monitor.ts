@@ -37,7 +37,13 @@ export async function serviceMonitor(pkg: UDSPackage, namespace: string) {
   try {
     for (const monitor of monitorList) {
       if (monitor.kind !== Kind.PodMonitor) {
-        const payload = generateServiceMonitor(monitor, namespace, pkgName, generation, ownerRefs);
+        const payload = generateServiceMonitor(
+          monitor,
+          namespace,
+          pkgName,
+          generation,
+          ownerRefs,
+        );
 
         log.debug(payload, `Applying ServiceMonitor ${payload.metadata?.name}`);
 
@@ -48,7 +54,13 @@ export async function serviceMonitor(pkg: UDSPackage, namespace: string) {
       }
     }
 
-    await purgeOrphans(generation, namespace, pkgName, PrometheusServiceMonitor, log);
+    await purgeOrphans(
+      generation,
+      namespace,
+      pkgName,
+      PrometheusServiceMonitor,
+      log,
+    );
   } catch (err) {
     throw new Error(
       `Failed to process ServiceMonitors for ${pkgName}, cause: ${JSON.stringify(err)}`,

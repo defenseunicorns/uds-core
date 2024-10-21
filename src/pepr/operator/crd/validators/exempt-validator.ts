@@ -16,10 +16,15 @@ const kindToPolicyMap = new Map<MatcherKind, Policy[]>([
   [
     MatcherKind.Pod,
     Object.values(Policy).filter(
-      p => p != Policy.DisallowNodePortServices && p != Policy.RestrictExternalNames,
+      p =>
+        p != Policy.DisallowNodePortServices &&
+        p != Policy.RestrictExternalNames,
     ),
   ],
-  [MatcherKind.Service, [Policy.RestrictExternalNames, Policy.DisallowNodePortServices]],
+  [
+    MatcherKind.Service,
+    [Policy.RestrictExternalNames, Policy.DisallowNodePortServices],
+  ],
 ]);
 
 export async function exemptValidator(req: PeprValidateRequest<UDSExemption>) {
@@ -41,7 +46,9 @@ export async function exemptValidator(req: PeprValidateRequest<UDSExemption>) {
     for (const p of e.policies) {
       if (!policies.includes(p)) {
         const validKind =
-          e.matcher.kind === MatcherKind.Pod ? MatcherKind.Service : MatcherKind.Pod;
+          e.matcher.kind === MatcherKind.Pod
+            ? MatcherKind.Service
+            : MatcherKind.Pod;
         return req.Deny(
           `Invalid kind "${e.matcher.kind}" for matcher "${e.matcher.name}" with policy "${p}": "${p}" can only be exempted for kind "${validKind}"`,
         );
@@ -60,7 +67,9 @@ export async function exemptValidator(req: PeprValidateRequest<UDSExemption>) {
     try {
       new RegExp(e.matcher.name);
     } catch (err) {
-      return req.Deny(`Invalid regular expression pattern ${e.matcher.name}: ${err}`);
+      return req.Deny(
+        `Invalid regular expression pattern ${e.matcher.name}: ${err}`,
+      );
     }
   }
 

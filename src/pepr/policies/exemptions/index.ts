@@ -24,7 +24,8 @@ export function isExempt<T extends KubernetesObject>(
   policy: Policy,
 ) {
   const exemptList = ExemptionStore.getByPolicy(policy);
-  const resourceName = request.Raw.metadata?.name || request.Raw.metadata?.generateName;
+  const resourceName =
+    request.Raw.metadata?.name || request.Raw.metadata?.generateName;
   const resourceNamespace = request.Raw.metadata?.namespace;
 
   if (exemptList.length != 0) {
@@ -63,7 +64,10 @@ export const exemptionAnnotationPrefix = "uds-core.pepr.dev/uds-core-policies";
 export function markExemption<T extends KubernetesObject>(policy: Policy) {
   return (request: PeprMutateRequest<T>) => {
     if (isExempt(request, policy)) {
-      request.SetAnnotation(`${exemptionAnnotationPrefix}.${policy}`, "exempted");
+      request.SetAnnotation(
+        `${exemptionAnnotationPrefix}.${policy}`,
+        "exempted",
+      );
       return;
     }
   };

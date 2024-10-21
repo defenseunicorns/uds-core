@@ -116,7 +116,9 @@ describe("network policies", () => {
       expect(e).toMatchObject({
         ok: false,
         data: {
-          message: expect.stringContaining("ExternalName services are not allowed."),
+          message: expect.stringContaining(
+            "ExternalName services are not allowed.",
+          ),
         },
       });
 
@@ -140,7 +142,9 @@ describe("network policies", () => {
       expect(e).toMatchObject({
         ok: false,
         data: {
-          message: expect.stringContaining("NodePort services are not allowed."),
+          message: expect.stringContaining(
+            "NodePort services are not allowed.",
+          ),
         },
       });
 

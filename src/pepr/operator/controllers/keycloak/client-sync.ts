@@ -61,9 +61,18 @@ export async function keycloak(pkg: UDSPackage) {
   await purgeSSOClients(pkg, [...clients.keys()]);
   // Purge orphaned SSO secrets
   try {
-    await purgeOrphans(generation, pkg.metadata!.namespace!, pkg.metadata!.name!, kind.Secret, log);
+    await purgeOrphans(
+      generation,
+      pkg.metadata!.namespace!,
+      pkg.metadata!.name!,
+      kind.Secret,
+      log,
+    );
   } catch (e) {
-    log.error(e, `Failed to purge orphaned SSO secrets in for ${pkg.metadata!.name!}: ${e}`);
+    log.error(
+      e,
+      `Failed to purge orphaned SSO secrets in for ${pkg.metadata!.name!}: ${e}`,
+    );
   }
 
   return clients;
@@ -75,10 +84,15 @@ export async function keycloak(pkg: UDSPackage) {
  * @param pkg the package to process
  * @param refs the list of client refs to keep
  */
-export async function purgeSSOClients(pkg: UDSPackage, newClients: string[] = []) {
+export async function purgeSSOClients(
+  pkg: UDSPackage,
+  newClients: string[] = [],
+) {
   // Check for any clients that are no longer in the package and remove them
   const currentClients = pkg.status?.ssoClients || [];
-  const toRemove = currentClients.filter(client => !newClients.includes(client));
+  const toRemove = currentClients.filter(
+    client => !newClients.includes(client),
+  );
   for (const ref of toRemove) {
     const storeKey = `sso-client-${ref}`;
     const token = Store.getItem(storeKey);
@@ -212,7 +226,11 @@ async function syncClient(
   return client;
 }
 
-async function apiCall(client: Partial<Client>, method = "POST", authToken = "") {
+async function apiCall(
+  client: Partial<Client>,
+  method = "POST",
+  authToken = "",
+) {
   const req = {
     body: JSON.stringify(client) as string | undefined,
     method,
@@ -240,7 +258,9 @@ async function apiCall(client: Partial<Client>, method = "POST", authToken = "")
 
   if (!resp.ok) {
     if (resp.data) {
-      throw new Error(`${JSON.stringify(resp.statusText)}, ${JSON.stringify(resp.data)}`);
+      throw new Error(
+        `${JSON.stringify(resp.statusText)}, ${JSON.stringify(resp.data)}`,
+      );
     } else {
       throw new Error(`${JSON.stringify(resp.statusText)}`);
     }
@@ -249,7 +269,10 @@ async function apiCall(client: Partial<Client>, method = "POST", authToken = "")
   return resp.data;
 }
 
-export function generateSecretData(client: Client, secretTemplate?: { [key: string]: string }) {
+export function generateSecretData(
+  client: Client,
+  secretTemplate?: { [key: string]: string },
+) {
   if (secretTemplate) {
     log.debug(`Using secret template for client: ${client.clientId}`);
     // Iterate over the secret template entry and process each value
@@ -263,7 +286,8 @@ export function generateSecretData(client: Client, secretTemplate?: { [key: stri
   // iterate over the client object and convert all values to strings
   for (const [key, value] of Object.entries(client)) {
     // For objects and arrays, convert to a JSON string
-    const processed = typeof value === "object" ? JSON.stringify(value) : String(value);
+    const processed =
+      typeof value === "object" ? JSON.stringify(value) : String(value);
 
     // Convert the value to a base64 encoded string
     stringMap[key] = Buffer.from(processed).toString("base64");
@@ -283,7 +307,8 @@ export async function getSamlCertificate() {
 }
 
 export function extractSamlCertificateFromXML(xmlString: string) {
-  const extractedIDPSSODescriptor = xmlString.match(idpSSODescriptorRegex)?.[1] || "";
+  const extractedIDPSSODescriptor =
+    xmlString.match(idpSSODescriptorRegex)?.[1] || "";
   return extractedIDPSSODescriptor.match(x509CertRegex)?.[1] || "";
 }
 
@@ -294,7 +319,10 @@ export function extractSamlCertificateFromXML(xmlString: string) {
  * @param client
  * @returns
  */
-function templateData(secretTemplate: { [key: string]: string }, client: Client) {
+function templateData(
+  secretTemplate: { [key: string]: string },
+  client: Client,
+) {
   const stringMap: Record<string, string> = {};
 
   // Iterate over the secret template and process each entry
@@ -304,7 +332,9 @@ function templateData(secretTemplate: { [key: string]: string }, client: Client)
       secretTemplateRegex,
       (_match, fieldName: keyof Client, key, json) => {
         // Make typescript happy with a more generic type
-        const value = client[fieldName] as Record<string | number, string> | string;
+        const value = client[fieldName] as
+          | Record<string | number, string>
+          | string;
 
         // If a key is provided, use it to get the value
         if (key) {

@@ -3,7 +3,10 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { V1CustomResourceDefinitionVersion, V1JSONSchemaProps } from "@kubernetes/client-node";
+import {
+  V1CustomResourceDefinitionVersion,
+  V1JSONSchemaProps,
+} from "@kubernetes/client-node";
 
 export const v1alpha1: V1CustomResourceDefinitionVersion = {
   name: "v1alpha1",
@@ -27,7 +30,8 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
                 properties: {
                   title: {
                     type: "string",
-                    description: "title to give the exemption for reporting purposes",
+                    description:
+                      "title to give the exemption for reporting purposes",
                   },
                   description: {
                     type: "string",

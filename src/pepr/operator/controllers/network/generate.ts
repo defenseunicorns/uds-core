@@ -3,7 +3,10 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { V1NetworkPolicyPeer, V1NetworkPolicyPort } from "@kubernetes/client-node";
+import {
+  V1NetworkPolicyPeer,
+  V1NetworkPolicyPort,
+} from "@kubernetes/client-node";
 import { kind } from "pepr";
 
 import { Allow, RemoteGenerated } from "../../crd";
@@ -38,7 +41,10 @@ function getPeers(policy: Allow): V1NetworkPolicyPeer[] {
         peers = [anywhere, anywhereInCluster];
         break;
     }
-  } else if (policy.remoteNamespace !== undefined || policy.remoteSelector !== undefined) {
+  } else if (
+    policy.remoteNamespace !== undefined ||
+    policy.remoteSelector !== undefined
+  ) {
     const peer: V1NetworkPolicyPeer = {};
 
     if (policy.remoteNamespace !== undefined) {
@@ -46,7 +52,9 @@ function getPeers(policy: Allow): V1NetworkPolicyPeer[] {
         peer.namespaceSelector = {};
       } else {
         peer.namespaceSelector = {
-          matchLabels: { "kubernetes.io/metadata.name": policy.remoteNamespace },
+          matchLabels: {
+            "kubernetes.io/metadata.name": policy.remoteNamespace,
+          },
         };
       }
     }
@@ -97,7 +105,9 @@ export function generate(namespace: string, policy: Allow): kind.NetworkPolicy {
   const peers: V1NetworkPolicyPeer[] = getPeers(policy);
 
   // Define the ports to allow from the ports property
-  const ports: V1NetworkPolicyPort[] = (policy.ports ?? []).map(port => ({ port }));
+  const ports: V1NetworkPolicyPort[] = (policy.ports ?? []).map(port => ({
+    port,
+  }));
 
   // Add the individual port if it exists
   if (policy.port) {

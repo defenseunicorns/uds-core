@@ -57,7 +57,8 @@ When(a.Pod)
           c =>
             c.state?.terminated &&
             (pod.spec?.restartPolicy == "Never" ||
-              (pod.spec?.restartPolicy == "OnFailure" && c.state.terminated.exitCode == 0)),
+              (pod.spec?.restartPolicy == "OnFailure" &&
+                c.state.terminated.exitCode == 0)),
         );
 
       if (shouldTerminate) {

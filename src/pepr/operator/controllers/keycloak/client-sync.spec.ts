@@ -110,7 +110,9 @@ describe("Test Secret & Template Data Generation", () => {
     const expected: Record<string, string> = {};
 
     for (const key in mockClientStringified) {
-      expected[key] = Buffer.from(mockClientStringified[key]).toString("base64");
+      expected[key] = Buffer.from(mockClientStringified[key]).toString(
+        "base64",
+      );
     }
     expect(generateSecretData(mockClient)).toEqual(expected);
   });
@@ -126,19 +128,27 @@ describe("Test Secret & Template Data Generation", () => {
 
   it("generates data from template: has key", () => {
     const mockTemplate = {
-      "auth.json": JSON.stringify({ redirect_uri: "clientField(redirectUris)[0]" }),
+      "auth.json": JSON.stringify({
+        redirect_uri: "clientField(redirectUris)[0]",
+      }),
     };
     expect(generateSecretData(mockClient, mockTemplate)).toEqual({
-      "auth.json": Buffer.from('{"redirect_uri":"https://demo.uds.dev/login"}').toString("base64"),
+      "auth.json": Buffer.from(
+        '{"redirect_uri":"https://demo.uds.dev/login"}',
+      ).toString("base64"),
     });
   });
 
   it("generates data from template: has .json()", () => {
     const mockTemplate = {
-      "auth.json": JSON.stringify({ defaultScopes: "clientField(attributes).json()" }),
+      "auth.json": JSON.stringify({
+        defaultScopes: "clientField(attributes).json()",
+      }),
     };
     expect(generateSecretData(mockClient, mockTemplate)).toEqual({
-      "auth.json": Buffer.from('{"defaultScopes":"{"first":"attribute"}"}').toString("base64"),
+      "auth.json": Buffer.from(
+        '{"defaultScopes":"{"first":"attribute"}"}',
+      ).toString("base64"),
     });
   });
 });

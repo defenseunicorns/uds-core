@@ -9,12 +9,19 @@ import { Component, setupLogger } from "../../../../logger";
 import { UDSPackage } from "../../../crd";
 import { Client } from "../types";
 import { updatePolicy } from "./authorization-policy";
-import { getAuthserviceConfig, operatorConfig, updateAuthServiceSecret } from "./config";
+import {
+  getAuthserviceConfig,
+  operatorConfig,
+  updateAuthServiceSecret,
+} from "./config";
 import { Action, AuthServiceEvent, AuthserviceConfig, Chain } from "./types";
 
 export const log = setupLogger(Component.OPERATOR_AUTHSERVICE);
 
-export async function authservice(pkg: UDSPackage, clients: Map<string, Client>) {
+export async function authservice(
+  pkg: UDSPackage,
+  clients: Map<string, Client>,
+) {
   // Get the list of clients from the package
   const authServiceClients = R.filter(
     sso => R.isNotNil(sso.enableAuthserviceSelector),
@@ -46,12 +53,17 @@ export async function purgeAuthserviceClients(
   newAuthserviceClients: string[] = [],
 ) {
   // compute set difference of pkg.status.authserviceClients and authserviceClients using Ramda
-  R.difference(pkg.status?.authserviceClients || [], newAuthserviceClients).forEach(
-    async clientId => {
-      log.info(`Removing stale authservice chain for client ${clientId}`);
-      await reconcileAuthservice({ name: clientId, action: Action.Remove }, {}, pkg);
-    },
-  );
+  R.difference(
+    pkg.status?.authserviceClients || [],
+    newAuthserviceClients,
+  ).forEach(async clientId => {
+    log.info(`Removing stale authservice chain for client ${clientId}`);
+    await reconcileAuthservice(
+      { name: clientId, action: Action.Remove },
+      {},
+      pkg,
+    );
+  });
 }
 
 export async function reconcileAuthservice(
@@ -75,7 +87,10 @@ export async function updateConfig(event: AuthServiceEvent) {
   await updateAuthServiceSecret(config);
 }
 
-export function buildConfig(config: AuthserviceConfig, event: AuthServiceEvent) {
+export function buildConfig(
+  config: AuthserviceConfig,
+  event: AuthServiceEvent,
+) {
   let chains: Chain[];
 
   if (event.action == Action.Add) {

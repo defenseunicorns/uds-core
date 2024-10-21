@@ -31,10 +31,18 @@ describe("test generate service monitor", () => {
     const namespace = "test";
     const pkgName = "test";
     const generation = "1";
-    const payload = generateServiceMonitor(monitor, namespace, pkgName, generation, ownerRefs);
+    const payload = generateServiceMonitor(
+      monitor,
+      namespace,
+      pkgName,
+      generation,
+      ownerRefs,
+    );
 
     expect(payload).toBeDefined();
-    expect(payload.metadata?.name).toEqual(`${pkgName}-${selectorApp}-${portName}`);
+    expect(payload.metadata?.name).toEqual(
+      `${pkgName}-${selectorApp}-${portName}`,
+    );
     expect(payload.metadata?.namespace).toEqual(namespace);
     expect(payload.spec?.endpoints).toBeDefined();
     if (payload.spec?.endpoints) {

@@ -60,13 +60,17 @@ describe("Exemption Store", () => {
   });
 
   it("Update exemption", async () => {
-    const enforcerException = getExemption("uid", enforcerMatcher, [Policy.DisallowPrivileged]);
+    const enforcerException = getExemption("uid", enforcerMatcher, [
+      Policy.DisallowPrivileged,
+    ]);
     ExemptionStore.add(enforcerException);
 
     let matchers = ExemptionStore.getByPolicy(Policy.DisallowPrivileged);
     expect(matchers).toHaveLength(1);
 
-    const controllerExemption = getExemption("uid", controllerMatcher, [Policy.RequireNonRootUser]);
+    const controllerExemption = getExemption("uid", controllerMatcher, [
+      Policy.RequireNonRootUser,
+    ]);
     ExemptionStore.add(controllerExemption);
 
     matchers = ExemptionStore.getByPolicy(Policy.DisallowPrivileged);
@@ -74,13 +78,17 @@ describe("Exemption Store", () => {
   });
 
   it("Add multiple policies", async () => {
-    const enforcerException = getExemption("foo", enforcerMatcher, [Policy.DisallowPrivileged]);
+    const enforcerException = getExemption("foo", enforcerMatcher, [
+      Policy.DisallowPrivileged,
+    ]);
     ExemptionStore.add(enforcerException);
 
     let matchers = ExemptionStore.getByPolicy(Policy.DisallowPrivileged);
     expect(matchers).toHaveLength(1);
 
-    const controllerExemption = getExemption("bar", controllerMatcher, [Policy.RequireNonRootUser]);
+    const controllerExemption = getExemption("bar", controllerMatcher, [
+      Policy.RequireNonRootUser,
+    ]);
     ExemptionStore.add(controllerExemption);
 
     matchers = ExemptionStore.getByPolicy(Policy.DisallowPrivileged);
@@ -91,7 +99,9 @@ describe("Exemption Store", () => {
   });
 
   it("Add duplicate exemptions owned by different owners", async () => {
-    const enforcerException = getExemption("foo", enforcerMatcher, [Policy.DisallowPrivileged]);
+    const enforcerException = getExemption("foo", enforcerMatcher, [
+      Policy.DisallowPrivileged,
+    ]);
     const otherEnforcerException = getExemption("bar", enforcerMatcher, [
       Policy.DisallowPrivileged,
     ]);

@@ -26,7 +26,10 @@ export async function startExemptionWatch() {
   ExemptionStore.init();
 
   // only run in admission controller or dev mode
-  if (process.env.PEPR_WATCH_MODE === "false" || process.env.PEPR_MODE === "dev") {
+  if (
+    process.env.PEPR_WATCH_MODE === "false" ||
+    process.env.PEPR_MODE === "dev"
+  ) {
     const watchCfg: WatchCfg = {
       resyncFailureMax: process.env.PEPR_RESYNC_FAILURE_MAX
         ? parseInt(process.env.PEPR_RESYNC_FAILURE_MAX, 10)
@@ -42,7 +45,9 @@ export async function startExemptionWatch() {
         : 1800,
     };
     const watcher = K8s(UDSExemption).Watch(async (exemption, phase) => {
-      log.debug(`Processing exemption ${exemption.metadata?.name}, watch phase: ${phase}`);
+      log.debug(
+        `Processing exemption ${exemption.metadata?.name}, watch phase: ${phase}`,
+      );
 
       processExemptions(exemption, phase);
     }, watchCfg);

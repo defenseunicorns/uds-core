@@ -31,10 +31,18 @@ describe("test generate Pod monitor", () => {
     const namespace = "test";
     const pkgName = "test";
     const generation = "1";
-    const payload = generatePodMonitor(monitor, namespace, pkgName, generation, ownerRefs);
+    const payload = generatePodMonitor(
+      monitor,
+      namespace,
+      pkgName,
+      generation,
+      ownerRefs,
+    );
 
     expect(payload).toBeDefined();
-    expect(payload.metadata?.name).toEqual(`${pkgName}-${selectorApp}-${portName}`);
+    expect(payload.metadata?.name).toEqual(
+      `${pkgName}-${selectorApp}-${portName}`,
+    );
     expect(payload.metadata?.namespace).toEqual(namespace);
     expect(payload.spec?.podMetricsEndpoints).toBeDefined();
     if (payload.spec?.podMetricsEndpoints) {

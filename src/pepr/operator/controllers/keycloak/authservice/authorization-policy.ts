@@ -76,7 +76,9 @@ function jwtAuthZAuthorizationPolicy(
           from: [
             {
               source: {
-                requestPrincipals: [`https://sso.${UDSConfig.domain}/realms/uds/*`],
+                requestPrincipals: [
+                  `https://sso.${UDSConfig.domain}/realms/uds/*`,
+                ],
               },
             },
           ],
@@ -124,7 +126,9 @@ async function updatePolicy(
   const generation = (pkg.metadata?.generation ?? 0).toString();
   const ownerReferences = getOwnerRef(pkg);
 
-  const updateMetadata = (resource: IstioAuthorizationPolicy | IstioRequestAuthentication) => {
+  const updateMetadata = (
+    resource: IstioAuthorizationPolicy | IstioRequestAuthentication,
+  ) => {
     resource!.metadata!.ownerReferences = ownerReferences;
     resource!.metadata!.labels = {
       "uds/package": pkg.metadata!.name!,
@@ -135,13 +139,19 @@ async function updatePolicy(
 
   try {
     await K8s(IstioAuthorizationPolicy)[operation](
-      updateMetadata(authserviceAuthorizationPolicy(labelSelector, event.name, namespace)),
+      updateMetadata(
+        authserviceAuthorizationPolicy(labelSelector, event.name, namespace),
+      ),
     );
     await K8s(IstioRequestAuthentication)[operation](
-      updateMetadata(authNRequestAuthentication(labelSelector, event.name, namespace)),
+      updateMetadata(
+        authNRequestAuthentication(labelSelector, event.name, namespace),
+      ),
     );
     await K8s(IstioAuthorizationPolicy)[operation](
-      updateMetadata(jwtAuthZAuthorizationPolicy(labelSelector, event.name, namespace)),
+      updateMetadata(
+        jwtAuthZAuthorizationPolicy(labelSelector, event.name, namespace),
+      ),
     );
   } catch (e) {
     const msg = `Failed to update auth policy for ${event.name} in ${namespace}: ${e}`;
@@ -154,11 +164,18 @@ async function updatePolicy(
   try {
     await purgeOrphanPolicies(generation, namespace, pkg.metadata!.name!);
   } catch (e) {
-    log.error(e, `Failed to purge orphan auth policies ${event.name} in ${namespace}: ${e}`);
+    log.error(
+      e,
+      `Failed to purge orphan auth policies ${event.name} in ${namespace}: ${e}`,
+    );
   }
 }
 
-async function purgeOrphanPolicies(generation: string, namespace: string, pkgName: string) {
+async function purgeOrphanPolicies(
+  generation: string,
+  namespace: string,
+  pkgName: string,
+) {
   for (const kind of [IstioAuthorizationPolicy, IstioRequestAuthentication]) {
     await purgeOrphans(generation, namespace, pkgName, kind, log);
   }

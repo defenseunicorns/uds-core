@@ -3,7 +3,10 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { V1CustomResourceDefinitionVersion, V1JSONSchemaProps } from "@kubernetes/client-node";
+import {
+  V1CustomResourceDefinitionVersion,
+  V1JSONSchemaProps,
+} from "@kubernetes/client-node";
 
 import { advancedHTTP } from "../istio/virtualservice-v1beta1";
 
@@ -17,7 +20,8 @@ const AuthorizationSchema: V1JSONSchemaProps = {
       type: "object",
       properties: {
         key: {
-          description: "The key of the secret to select from. Must be a valid secret key.",
+          description:
+            "The key of the secret to select from. Must be a valid secret key.",
           type: "string",
         },
         name: {
@@ -42,7 +46,8 @@ const AuthorizationSchema: V1JSONSchemaProps = {
 };
 
 const allow = {
-  description: "Allow specific traffic (namespace will have a default-deny policy)",
+  description:
+    "Allow specific traffic (namespace will have a default-deny policy)",
   type: "array",
   items: {
     type: "object",
@@ -57,7 +62,8 @@ const allow = {
       },
       description: {
         type: "string",
-        description: "A description of the policy, this will become part of the policy name",
+        description:
+          "A description of the policy, this will become part of the policy name",
       },
       direction: {
         description: "The direction of the traffic",
@@ -155,7 +161,8 @@ const expose = {
         type: "string",
       },
       gateway: {
-        description: "The name of the gateway to expose the service on (default: tenant)",
+        description:
+          "The name of the gateway to expose the service on (default: tenant)",
         enum: ["admin", "tenant", "passthrough"],
         type: "string",
         default: "tenant",
@@ -242,7 +249,8 @@ const monitor = {
         },
       },
       path: {
-        description: "HTTP path from which to scrape for metrics, defaults to `/metrics`",
+        description:
+          "HTTP path from which to scrape for metrics, defaults to `/metrics`",
         type: "string",
       },
       kind: {
@@ -284,11 +292,13 @@ const sso = {
         },
       },
       clientId: {
-        description: "The client identifier registered with the identity provider.",
+        description:
+          "The client identifier registered with the identity provider.",
         type: "string",
       },
       secret: {
-        description: "The client secret. Typically left blank and auto-generated.",
+        description:
+          "The client secret. Typically left blank and auto-generated.",
         type: "string",
       },
       name: {
@@ -301,7 +311,8 @@ const sso = {
         type: "string",
       },
       protocol: {
-        description: "Specifies the protocol of the client, either 'openid-connect' or 'saml'",
+        description:
+          "Specifies the protocol of the client, either 'openid-connect' or 'saml'",
         type: "string",
         enum: ["openid-connect", "saml"],
       },
@@ -393,7 +404,8 @@ const sso = {
         default: false,
       },
       publicClient: {
-        description: "Defines whether the client requires a client secret for authentication",
+        description:
+          "Defines whether the client requires a client secret for authentication",
         type: "boolean",
         default: false,
       },

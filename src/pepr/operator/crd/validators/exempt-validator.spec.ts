@@ -26,7 +26,10 @@ const mockExemptions = [
   },
 ];
 
-const makeMockReq = ({ ns = "uds-policy-exemptions", exempts = mockExemptions }: mockReqArgs) => {
+const makeMockReq = ({
+  ns = "uds-policy-exemptions",
+  exempts = mockExemptions,
+}: mockReqArgs) => {
   return {
     Raw: {
       metadata: {
@@ -90,7 +93,10 @@ describe("Test validation of Exemption CRs", () => {
       exempts: [
         {
           ...mockExemptions[0],
-          matcher: { ...mockExemptions[0].matcher, name: ")^neuvector-enforcer-pod*" },
+          matcher: {
+            ...mockExemptions[0].matcher,
+            name: ")^neuvector-enforcer-pod*",
+          },
         },
       ],
     });
