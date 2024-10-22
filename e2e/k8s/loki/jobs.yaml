@@ -54,7 +54,7 @@ spec:
               sleep 5
 
               # Validate that the log was stored
-              export QUERY='{collector="vector", job="test-log"}'
+              export QUERY='{job="test-log"}'
               /scripts/check_logs.sh
           volumeMounts:
             - name: shared-scripts
@@ -89,7 +89,6 @@ spec:
                     {
                       "stream": {
                         "job": "test-label-query",
-                        "collector": "vector",
                         "level": "info"
                       },
                       "values": [
@@ -99,7 +98,7 @@ spec:
                   ]
                 }'
               sleep 5
-              export QUERY='{job="test-label-query", collector="vector", level="info"}'
+              export QUERY='{job="test-label-query", level="info"}'
               export LOG_MESSAGE="Label-query log"
               /scripts/check_logs.sh
           volumeMounts:
