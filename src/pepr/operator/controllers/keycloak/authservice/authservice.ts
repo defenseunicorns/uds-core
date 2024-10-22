@@ -114,8 +114,8 @@ export function buildChain(update: AuthServiceEvent) {
           client_secret: update.client!.secret,
           scopes: [],
           logout: {
-            path: "/local",
-            redirect_uri: `https://sso.${UDSConfig.domain}/realms/${operatorConfig.realm}/protocol/openid-connect/token/logout`,
+            path: "/logout",
+            redirect_uri: `https://sso.${UDSConfig.domain}/realms/${operatorConfig.realm}/protocol/openid-connect/logout`,
           },
           cookie_name_prefix: update.client!.clientId,
         },
