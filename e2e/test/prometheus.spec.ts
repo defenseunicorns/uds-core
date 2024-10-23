@@ -14,8 +14,8 @@ describe('Prometheus and Alertmanager', () => {
   let alertmanagerProxy: { server: net.Server, url: string };
 
   beforeAll(async () => {
-    prometheusProxy = await getForward('prometheus-kube-prometheus-stack-prometheus-0', 'monitoring', 9090);
-    alertmanagerProxy  = await getForward('alertmanager-kube-prometheus-stack-alertmanager-0', 'monitoring', 9093);
+    prometheusProxy = await getForward('kube-prometheus-stack-prometheus', 'monitoring', 9090);
+    alertmanagerProxy  = await getForward('kube-prometheus-stack-alertmanager', 'monitoring', 9093);
   })
 
   afterAll(async () => {
