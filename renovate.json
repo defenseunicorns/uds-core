@@ -73,11 +73,6 @@
       "commitMessageTopic": "grafana"
     },
     {
-      "matchFileNames": ["src/runtime/**"],
-      "groupName": "runtime",
-      "commitMessageTopic": "runtime"
-    },
-    {
       "matchFileNames": ["package.json", "package-lock.json", "tasks/create.yaml"],
       "groupName": "pepr",
       "commitMessageTopic": "pepr"
