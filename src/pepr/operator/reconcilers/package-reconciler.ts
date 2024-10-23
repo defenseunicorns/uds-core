@@ -135,7 +135,7 @@ export async function packageFinalizer(pkg: UDSPackage) {
     await cleanupNamespace(pkg);
   } catch (e) {
     await writeEvent(pkg, {
-      message: `Restoration of istio injection status failed, ${e.message}`,
+      message: `Restoration of istio injection status failed: ${e.message}`,
       reason: "RemovalFailed",
     });
   }
@@ -151,7 +151,7 @@ export async function packageFinalizer(pkg: UDSPackage) {
     await purgeAuthserviceClients(pkg, []);
   } catch (e) {
     await writeEvent(pkg, {
-      message: `Removal of SSO / AuthService clients failed, ${e.message}`,
+      message: `Removal of SSO / AuthService clients failed: ${e.message}`,
       reason: "RemovalFailed",
     });
   }
