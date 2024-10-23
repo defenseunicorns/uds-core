@@ -54,7 +54,7 @@ When(UDSPackage)
   .Validate(validator)
   // Enqueue the package for processing
   .Reconcile(packageReconciler)
-  // Handle finalizer (deletions) of the package
+  // Handle finalizer (deletions) for the package
   .Finalize(packageFinalizer);
 
 // Watch for Exemptions and validate
