@@ -23,7 +23,8 @@ const log = setupLogger(Component.OPERATOR_RECONCILERS);
 export function shouldSkip(cr: UDSPackage) {
   const isRetrying = cr.status?.phase === Phase.Retrying;
   const isPending = cr.status?.phase === Phase.Pending;
-  const isRemoving = cr.status?.phase === Phase.Removing;
+  // Check for status removing OR a deletion timestamp present
+  const isRemoving = cr.status?.phase === Phase.Removing || cr.metadata?.deletionTimestamp;
   const isCurrentGeneration = cr.metadata?.generation === cr.status?.observedGeneration;
 
   // First check if the CR has been seen before and return false if it has not
