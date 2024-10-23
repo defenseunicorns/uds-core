@@ -9,7 +9,7 @@ metadata:
 spec:
   podSelector:
     matchLabels:
-    app: test
+      app: test
   policyTypes:
     - Egress
   egress:
