@@ -1,0 +1,18 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+kind: ZarfPackageConfig
+metadata:
+  name: core-test
+  version: dev
+
+constants:
+  - name: IMAGE
+    description: "Image name and tag (MUST BE PROVIDED -- no default)"
+    value: '###ZARF_PKG_TMPL_IMAGE###'
+
+components:
+  - name: test-component
+    required: true
+    images:
+      - rjferguson21:###ZARF_PKG_TMPL_IMAGE###

@@ -1,0 +1,16 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-egress-for-app-test
+  namespace: monitoring
+spec:
+  podSelector:
+    matchLabels:
+    app: test
+  policyTypes:
+    - Egress
+  egress:
+    - {}  # This allows egress to anywhere
