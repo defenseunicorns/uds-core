@@ -134,6 +134,9 @@ export async function packageFinalizer(pkg: UDSPackage) {
     // Cleanup the namespace
     await cleanupNamespace(pkg);
   } catch (e) {
+    log.debug(
+      `Restoration of istio injection status during finalizer failed for ${pkg.metadata?.namespace}/${pkg.metadata?.name}: ${e.message}`,
+    );
     await writeEvent(pkg, {
       message: `Restoration of istio injection status failed: ${e.message}`,
       reason: "RemovalFailed",
@@ -150,11 +153,14 @@ export async function packageFinalizer(pkg: UDSPackage) {
     await purgeSSOClients(pkg, []);
     await purgeAuthserviceClients(pkg, []);
   } catch (e) {
+    log.debug(
+      `Removal of SSO / AuthService clients during finalizer failed for ${pkg.metadata?.namespace}/${pkg.metadata?.name}: ${e.message}`,
+    );
     await writeEvent(pkg, {
       message: `Removal of SSO / AuthService clients failed: ${e.message}`,
       reason: "RemovalFailed",
     });
   }
 
-  log.debug(`Package ${pkg.metadata?.namespace}/${pkg.metadata?.name} removed`);
+  log.debug(`Package ${pkg.metadata?.namespace}/${pkg.metadata?.name} removed successfully`);
 }
