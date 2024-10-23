@@ -37,7 +37,7 @@ customConfig:
 
         if exists(.kubernetes.pod_labels."app.kubernetes.io/component") {
           .component = .kubernetes.pod_labels."app.kubernetes.io/component"
-        } else if !exists(.kubernetes.pod_labels.component) {
+        } else if exists(.kubernetes.pod_labels.component) {
           .component = .kubernetes.pod_labels.component
         } else {
           .component = ""
