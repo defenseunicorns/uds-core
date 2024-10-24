@@ -1,6 +1,6 @@
 {
-  "name": "package-e2e-tests",
-  "description": "Package E2E tests",
+  "name": "e2e-jest-tests",
+  "description": "Jest E2E tests",
   "scripts": {
     "test": "jest"
   },
@@ -11,5 +11,13 @@
     "kubernetes-fluent-client": "^3.2.0",
     "ts-jest": "^29.2.5",
     "typescript": "^5.6.2"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "testMatch": [
+      "**/*.spec.ts",
+      "**/*.test.ts"
+    ]
   }
 }

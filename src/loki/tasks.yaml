@@ -25,7 +25,9 @@ tasks:
             namespace: loki
             condition: Ready
 
-  - name: e2e-tests
+  - name: e2e-test
     actions:
-      - description: Run Loki E2E Tests
-        cmd: uds run -f e2e/tests/tasks.yaml e2e-tests --set NAMESPACE="loki" --set TEST_NAME="Loki Tests"
+      - description: "Run Jest integration tests"
+        cmd: |
+            npm ci && npx jest loki.test.ts
+        dir: e2e/test
