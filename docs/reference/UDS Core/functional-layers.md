@@ -42,9 +42,6 @@ packages:
   - name: core-monitoring
     repository: ghcr.io/defenseunicorns/packages/uds/core-monitoring
     ref: 0.29.0-upstream
-  - name: core-ui
-    repository: ghcr.io/defenseunicorns/packages/uds/core-ui
-    ref: 0.29.0-upstream
   - name: core-backup-restore
     repository: ghcr.io/defenseunicorns/packages/uds/core-backup-restore
     ref: 0.29.0-upstream
