@@ -10,7 +10,7 @@ metadata:
 variables:
   - name: VECTOR_API_ENABLED
     description: "Whether or not the vector GraphQL API is enabled."
-    default: true
+    default: false
 
 components:
   - name: vector
