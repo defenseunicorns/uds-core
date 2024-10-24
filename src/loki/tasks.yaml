@@ -27,7 +27,7 @@ tasks:
 
   - name: e2e-test
     actions:
-      - description: "Run Jest integration tests"
+      - description: "Run Loki E2E tests"
         cmd: |
             npm ci && npx jest --testPathPattern loki*
         dir: e2e/test
