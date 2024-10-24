@@ -17,4 +17,4 @@ tasks:
       - description: "Run Vector integration tests"
         cmd: |
             npm ci && npx jest --testPathPattern vector*
-        dir: e2e/tests
+        dir: e2e/test
