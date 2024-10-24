@@ -70,7 +70,7 @@ tasks:
             npm ci && \
             npx playwright test \
             "
-      - description: "Run Loki E2E Tests"
+      - description: "Run E2E Tests"
       - cmd: |
           for package in src/*; do
             uds run -f ${package}/tasks.yaml e2e-test --no-progress
