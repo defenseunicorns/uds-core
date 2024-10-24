@@ -11,3 +11,9 @@ tasks:
             name: app.kubernetes.io/name=vector
             namespace: vector
             condition: Ready
+  - name: e2e-test
+    actions:
+      - description: "Run Jest integration tests"
+        cmd: |
+            npm ci && npx jest --testPathPattern vector*
+        dir: e2e/tests

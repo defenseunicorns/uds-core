@@ -10,4 +10,5 @@ tasks:
     actions:
       - task: loki:validate
       - task: vector:validate
-      - task: loki:e2e-k8s-tests
+      - task: loki:e2e-test
+      - task: vector:e2e-test
