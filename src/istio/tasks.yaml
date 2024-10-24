@@ -24,3 +24,7 @@ tasks:
             kind: Gateway
             name: tenant-gateway
             namespace: istio-tenant-gateway
+
+  - name: e2e-test
+    actions:
+      - description: "Run Istio E2E tests"

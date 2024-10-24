@@ -11,3 +11,4 @@ tasks:
       - task: prometheus:validate
       - task: grafana:validate
       - task: grafana:e2e-test
+      - task: prometheus:e2e-test

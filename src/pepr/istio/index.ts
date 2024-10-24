@@ -84,7 +84,7 @@ When(a.Pod)
           log.info(`Terminated sidecar for ${key}`);
         } catch (err) {
           log.error({ err }, `Failed to terminate the sidecar for ${key}`);
-
+        } finally {
           // Remove the pod from the seen list
           inProgress.delete(key);
         }

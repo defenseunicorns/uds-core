@@ -8,3 +8,7 @@ tasks:
         cmd: "echo Replace Me"
         # wait:
         #   cluster:
+
+  - name: e2e-test
+    actions:
+      - description: "Run Kiali E2E tests"
