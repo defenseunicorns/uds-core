@@ -6,7 +6,7 @@ role: "Agent"
 
 customConfig:
   api:
-    enabled: ###ZARF_VAR_VECTOR_API_ENABLED###
+    enabled: true
     address: 0.0.0.0:8686
     playground: false
   data_dir: /var/lib/vector

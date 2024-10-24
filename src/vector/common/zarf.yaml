@@ -7,11 +7,6 @@ metadata:
   description: "UDS Core Vector Common"
   url: "https://vector.dev/"
 
-variables:
-  - name: VECTOR_API_ENABLED
-    description: "Whether or not the vector GraphQL API is enabled."
-    default: false
-
 components:
   - name: vector
     required: true
