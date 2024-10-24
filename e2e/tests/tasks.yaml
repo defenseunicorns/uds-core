@@ -1,0 +1,16 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+variables:
+  - name: NAMESPACE
+    default: all
+
+  - name: TEST_NAME
+    default: all
+
+tasks:
+  - name: e2e-tests
+    actions:
+      - cmd: docker build -t e2e-tests e2e/tests/ --no-cache
+      - cmd: uds zarf dev deploy --no-yolo e2e/tests/
+      - cmd: kubectl run e2e-tests --namespace=${NAMESPACE} --image=e2e-tests --labels="batch.kubernetes.io/job-name=e2e-tests" -q --restart=Never --rm -i --command -- sh -c "npm test -- --testNamePattern='${TEST_NAME}'"
