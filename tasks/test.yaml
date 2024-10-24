@@ -71,7 +71,11 @@ tasks:
             npx playwright test \
             "
       - description: "Run Loki E2E Tests"
-        cmd: uds run -f src/loki/tasks.yaml e2e-tests
+      - cmd: |
+          for package in src/*; do
+            uds run -f ${package}/tasks.yaml e2e-test --no-progress
+          done
+          set +e
 
   - name: uds-core
     description: "Build and test UDS Core"

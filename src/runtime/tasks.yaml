@@ -33,3 +33,7 @@ tasks:
               exit 1
               ;;
           esac
+
+  - name: e2e-test
+    actions:
+      - description: "Run Runtime E2E tests"

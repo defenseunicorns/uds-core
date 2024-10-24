@@ -9,66 +9,106 @@ import * as net from 'net';
 
 const kc = new k8s.KubeConfig();
 const forward = new k8s.PortForward(kc);
-
 kc.loadFromDefault();
+
+interface ForwardResult {
+  server: net.Server;
+  url: string;
+}
 
 // Utility function to get an available random port within a range
 async function getAvailablePort(min = 1024, max = 65535): Promise<number> {
-  return new Promise((resolve, reject) => {
-    const port = Math.floor(Math.random() * (max - min + 1)) + min;
-    const server = net.createServer();
+  let port: number;
+  let isAvailable = false;
 
-    server.listen(port, '127.0.0.1', () => {
-      server.close(() => resolve(port)); // If port is available, close and return it
-    });
+  while (!isAvailable) {
+    port = Math.floor(Math.random() * (max - min + 1)) + min;
+    isAvailable = await new Promise<boolean>((resolve) => {
+      const server = net.createServer();
 
-    server.on('error', () => {
-      resolve(getAvailablePort(min, max)); // Retry with another port if this one is in use
+      server.once('error', () => resolve(false)); // Port is in use
+      server.once('listening', () => {
+        server.close(() => resolve(true)); // Port is available
+      });
+
+      server.listen(port, '127.0.0.1');
     });
-  });
+  }
+
+  return port!;
 }
 
 export async function getPodFromService(svc: string, namespace: string): Promise<string> {
-  const service = await K8s(kind.Service).InNamespace(namespace).Get(svc);
-  const labelSelector = service.spec!.selector;
+  try {
+    const service = await K8s(kind.Service).InNamespace(namespace).Get(svc);
+    const labelSelector = service.spec?.selector;
 
-  let podsQuery = K8s(kind.Pod).InNamespace(namespace);
-  for (const key in labelSelector) {
-    podsQuery = podsQuery.WithLabel(key, labelSelector[key]);
+    if (!labelSelector) {
+      throw new Error(`No label selectors found for service: ${svc}`);
+    }
+
+    let podsQuery = K8s(kind.Pod).InNamespace(namespace);
+    for (const key in labelSelector) {
+      podsQuery = podsQuery.WithLabel(key, labelSelector[key]);
+    }
+
+    const pods = await podsQuery.Get();
+    if (pods.items.length === 0) {
+      throw new Error(`No pods found for service: ${svc}`);
+    }
+
+    return pods.items[0].metadata!.name!;
+  } catch (err) {
+    // Type guard to check if `err` is an instance of `Error`
+    if (err instanceof Error) {
+      throw new Error(`Failed to get pod from service ${svc}: ${err.message}`);
+    } else {
+      throw new Error(`Unknown error occurred while fetching pod from service ${svc}`);
+    }
   }
-
-  const pods = await podsQuery.Get();
-  if (pods.items.length === 0) {
-    throw new Error('No pods found for service');
-  }
-
-  return pods.items[0].metadata!.name!;
 }
 
-export async function getForward(service: string, namespace: string, port: number) {
-  const podname = await getPodFromService(service, namespace);
-  const randomPort = await getAvailablePort(3000, 65535); // Get an available port
+export async function getForward(service: string, namespace: string, port: number): Promise<ForwardResult> {
+  try {
+    const podName = await getPodFromService(service, namespace);
+    const randomPort = await getAvailablePort(3000, 65535);
 
-  return new Promise<{ server: net.Server, url: string }>((resolve, reject) => {
-    const server = net.createServer((socket) => {
-      forward.portForward(namespace, podname, [port], socket, null, socket);
-    });
+    return await new Promise<ForwardResult>((resolve, reject) => {
+      const server = net.createServer((socket) => {
+        forward.portForward(namespace, podName, [port], socket, null, socket);
+      });
 
-    server.listen(randomPort, '127.0.0.1', () => {
-      resolve({ server, url: `http://localhost:${randomPort}` });
-    });
+      server.listen(randomPort, '127.0.0.1', () => {
+        resolve({ server, url: `http://localhost:${randomPort}` });
+      });
 
-    server.on('error', (err) => {
-      reject(`Error binding to port ${randomPort}: ${err.message}`);
+      server.on('error', (err) => {
+        // Type guard to check if `err` is an instance of `Error`
+        if (err instanceof Error) {
+          reject(new Error(`Error binding to port ${randomPort}: ${err.message}`));
+        } else {
+          reject(new Error(`Unknown error occurred while binding to port ${randomPort}`));
+        }
+      });
     });
-  });
+  } catch (err) {
+    // Type guard to check if `err` is an instance of `Error`
+    if (err instanceof Error) {
+      throw new Error(`Failed to setup port forwarding for service ${service}: ${err.message}`);
+    } else {
+      throw new Error(`Unknown error occurred while setting up port forwarding for service ${service}`);
+    }
+  }
 }
 
 export function closeForward(server: net.Server): Promise<void> {
   return new Promise((resolve, reject) => {
     server.close((err) => {
-      if (err) {
-        reject(err);
+      // Type guard to check if `err` is an instance of `Error`
+      if (err instanceof Error) {
+        reject(new Error(`Failed to close server: ${err.message}`));
+      } else if (err) {
+        reject(new Error('Unknown error occurred while closing the server'));
       } else {
         resolve();
       }
