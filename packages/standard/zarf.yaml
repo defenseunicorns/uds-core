@@ -97,12 +97,6 @@ components:
     import:
       path: ../identity-authorization
 
-  # UDS Runtime
-  - name: uds-runtime
-    required: true
-    import:
-      path: ../ui
-
   # Velero
   - name: velero
     required: true
