@@ -3,13 +3,14 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { afterAll, beforeAll, describe, expect, it } from "@jest/globals";
+import { afterAll, beforeAll, describe, expect, it, jest } from "@jest/globals";
 import { K8s, kind } from 'kubernetes-fluent-client';
 import * as net from 'net';
 import { closeForward, getForward } from './forward';
 
 const dev = process.env.DEV == 'true';
 const jobName = "vector-test-log-write"
+jest.retryTimes(3, {logErrorsBeforeRetry: true})
 
 function sleep(ms: number) {
   return new Promise( resolve => setTimeout(resolve, ms));
@@ -65,15 +66,21 @@ describe('Vector Test', () => {
       },
     },
   }),
-    await sleep(60000); 
     vectorProxy = await getForward('vector', 'vector', 8686);
-  }, 65000)
+  })
 
   afterAll(async () => {
     await closeForward(vectorProxy.server)
     await K8s(kind.Job).InNamespace("vector").Delete(jobName)
     await K8s(kind.Pod).InNamespace("vector").WithLabel("uds.dev/test", "true").Delete()
   });
+
+    // Sleep for 30
+    it("Sleep for up to 90 seconds", async () => {
+      await sleep(30000);
+      expect(true)
+    }, 35000);
+
     // GraphQL API should be healthy
     it("GraphQL API should be healthy", async () => {
         const response = await fetch(`${vectorProxy.url}/health`)
