@@ -4,20 +4,70 @@
  */
 
 import { afterAll, beforeAll, describe, expect, it } from "@jest/globals";
+import { K8s, kind } from 'kubernetes-fluent-client';
 import * as net from 'net';
 import { closeForward, getForward } from './forward';
 
 const dev = process.env.DEV == 'true';
+const jobName = "vector-test-log-write"
 
 describe('Vector Test', () => {
   let vectorProxy: { server: net.Server, url: string };
 
   beforeAll(async () => {
+    K8s(kind.Job).Apply({
+      metadata: {
+        name: jobName,
+        namespace: "vector",
+      },
+      spec: {
+        template: {
+          metadata: {
+            name: "vector-test-log-write",
+            labels: {
+              "zarf.dev/agent": "ignore",
+              "uds.dev/test": "true"
+            },  
+            annotations: {
+              "sidecar.istio.io/inject": "false",
+            }
+          },
+          spec: {
+            containers: [
+            {
+              name: "log-writer",
+              image: "busybox:latest",
+              command: ["sh", "-c"],
+              args: ["for i in $(seq 1 20); do echo \"$(date) log entry\" >> /var/log/test.foo; done"],
+              volumeMounts: [
+                {
+                  name: 'var-log',
+                  mountPath: '/var/log'
+                }
+              ]
+            }
+          ],
+          volumes: [
+            {
+              name: 'var-log',
+              hostPath: {
+                path: '/var/log',
+                type: 'Directory'
+              }
+            }
+          ],
+          restartPolicy: "Never"
+        },
+      },
+    },
+  }),
     vectorProxy = await getForward('vector', 'vector', 8686);
   })
 
   afterAll(async () => {
     await closeForward(vectorProxy.server)
+    await K8s(kind.Job).InNamespace("vector").Delete(jobName)
+    await K8s(kind.Pod).InNamespace("vector").WithLabel("uds.dev/test", "true").Delete()
   });
     // GraphQL API should be healthy
     it("GraphQL API should be healthy", async () => {
