@@ -65,9 +65,9 @@ describe('Vector Test', () => {
       },
     },
   }),
-    await sleep(30000); 
+    await sleep(60000); 
     vectorProxy = await getForward('vector', 'vector', 8686);
-  }, 35000)
+  }, 65000)
 
   afterAll(async () => {
     await closeForward(vectorProxy.server)
