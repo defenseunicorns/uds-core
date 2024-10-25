@@ -12,6 +12,6 @@ UDS Core is a versatile software baseline designed to operate effectively across
 
 | Distribution    | Category               | Support Level                                                                                             |
 | --------------- | ---------------------- | --------------------------------------------------------------------------------------------------------- |
-| K3d/K3s, Amazon EKS, Azure AKS | Tested                 | Supported Kubernetes distributions undergoing testing in CI environments.                                 |
+| K3d/K3s, Amazon EKS, Azure AKS, RKE2 on AWS | Tested                 | Supported Kubernetes distributions undergoing testing in CI environments.                                 |
 | RKE2            | Tested                 | Supported Kubernetes distribution tested in production environments other than CI.                        |
 | Other           | Untested/Unknown state | Compatible Kubernetes distributions that are not explicitly tested, documented, or supported by UDS Core. |
