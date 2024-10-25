@@ -11,6 +11,10 @@ import { closeForward, getForward } from './forward';
 const dev = process.env.DEV == 'true';
 const jobName = "vector-test-log-write"
 
+function sleep(ms: number) {
+  return new Promise( resolve => setTimeout(resolve, ms));
+}
+
 describe('Vector Test', () => {
   let vectorProxy: { server: net.Server, url: string };
 
@@ -61,8 +65,9 @@ describe('Vector Test', () => {
       },
     },
   }),
+    await sleep(30000); 
     vectorProxy = await getForward('vector', 'vector', 8686);
-  })
+  }, 35000)
 
   afterAll(async () => {
     await closeForward(vectorProxy.server)
@@ -92,8 +97,8 @@ describe('Vector Test', () => {
     });
 
     // Vector should be collecting pod logs
-    it("Vector should be collecting pod logs", async () => {
-        const requestBody = JSON.stringify({ "query":"{sources(filter: {componentId:{contains:\"pod_logs\"}}){nodes{metrics{receivedBytesTotal{receivedBytesTotal}}}}}"});
+    it("Vector should be collecting pod logs", async () => { 
+      const requestBody = JSON.stringify({ "query":"{sources(filter: {componentId:{contains:\"pod_logs\"}}){nodes{metrics{receivedBytesTotal{receivedBytesTotal}}}}}"});
         const headers = {
             'Content-Type': 'application/json'
         };
