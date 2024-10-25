@@ -73,12 +73,12 @@ export async function reconcileAuthservice(
 export async function updateConfig(event: AuthServiceEvent) {
   // Lock to prevent concurrent updates
   if (lock) {
-    log.info("Lock is set for config update, retrying...");
+    log.debug("Lock is set for config update, retrying...");
     setTimeout(() => updateConfig(event), 0);
     return;
   }
 
-  log.info("Locking config for update");
+  log.debug("Locking config for update");
   lock = true;
 
   // Parse existing authservice config
@@ -91,10 +91,10 @@ export async function updateConfig(event: AuthServiceEvent) {
   setAuthserviceConfig(config);
 
   // unlock config
-  log.info("Unlocking config for update");
+  log.debug("Unlocking config for update");
   lock = false;
 
-  log.info("Applying authservice secret");
+  log.debug("Applying authservice secret");
   // apply the authservice secret
   await updateAuthServiceSecret(config);
 }
