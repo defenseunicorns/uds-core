@@ -38,7 +38,7 @@ describe('Vector Test', () => {
               name: "log-writer",
               image: "busybox:latest",
               command: ["sh", "-c"],
-              args: ["for i in $(seq 1 20); do echo \"$(date) log entry\" >> /var/log/test.foo; done"],
+              args: ["for i in $(seq 1 20); do echo \"vector-e2e-test: Generating fake node logs...\"; echo \"$(date) log entry\" >> /var/log/test.foo; done"],
               volumeMounts: [
                 {
                   name: 'var-log',
