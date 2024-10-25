@@ -78,24 +78,30 @@ export async function updateConfig(event: AuthServiceEvent) {
     return;
   }
 
-  log.debug("Locking config for update");
-  lock = true;
+  let config: AuthserviceConfig;
 
-  // Parse existing authservice config
-  let config = await getAuthserviceConfig();
+  try {
+    log.debug("Locking config for update");
+    lock = true;
 
-  // Update config based on event
-  config = buildConfig(config, event);
+    // build updated config based on event
+    config = await getAuthserviceConfig().then(config => {
+      return buildConfig(config, event);
+    });
 
-  // Update the in-memory secret immediately
-  setAuthserviceConfig(config);
+    // Update the in-memory config immediately
+    setAuthserviceConfig(config);
+  } catch (e) {
+    log.error("Failed to build in memory authservice secret for event", event, e);
+    throw e;
+  } finally {
+    // unlock config
+    log.debug("Unlocking config for update");
+    lock = false;
+  }
 
-  // unlock config
-  log.debug("Unlocking config for update");
-  lock = false;
-
-  log.debug("Applying authservice secret");
   // apply the authservice secret
+  log.debug("Applying authservice secret");
   await updateAuthServiceSecret(config);
 }
 
