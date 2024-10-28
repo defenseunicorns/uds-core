@@ -112,8 +112,20 @@ export function buildConfig(config: AuthserviceConfig, event: AuthServiceEvent) 
     // Add the new chain to the existing authservice config
     chains = config.chains.filter(chain => chain.name !== event.name);
     chains = chains.concat(buildChain(event));
+    chains.sort((n1, n2) => {
+      if (n1.name > n2.name) {
+        return 1;
+      }
+
+      if (n1.name < n2.name) {
+        return -1;
+      }
+
+      return 0;
+    });
   } else if (event.action == Action.Remove) {
-    // Search in the existing chains for the chain to remove by name
+    // Search in the existing chains for the chain to remove by name.
+    // Filtering here should preserve the order, so there is no need to re-sort.
     chains = config.chains.filter(chain => chain.name !== event.name);
   } else {
     throw new Error(`Unhandled Action: ${event.action satisfies never}`);
