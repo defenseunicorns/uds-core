@@ -105,6 +105,11 @@ tasks:
     actions:
       - task: test:uds-core-upgrade
 
+  - name: test-compliance-compose
+    description: "Compose OSCAL Component Definition"
+    actions:
+      - task: test:local-compliance-compose
+
   - name: test-compliance-validate
     description: "Validate Compliance of UDS Core to produce Assessment Results"
     actions:

@@ -3,4 +3,4 @@
 
 image:
   repository: timberio/vector
-  tag: 0.41.1-distroless-static
+  tag: 0.42.0-distroless-static

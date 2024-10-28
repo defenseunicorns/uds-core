@@ -23,7 +23,6 @@ UDS Core establishes a secure baseline for cloud-native systems and ships with c
 - [Prometheus Stack](https://github.com/prometheus-operator/kube-prometheus) - Monitoring
 - [Vector](https://vector.dev/) - Log Aggregation
 - [Velero](https://velero.io/) - Backup & Restore
-- [UDS Runtime](https://github.com/defenseunicorns/uds-runtime) - Frontend Views & Insights
 
 #### Future Applications
 
@@ -60,7 +59,7 @@ If you want to try out UDS Core, you can use the [k3d-core-demo bundle](./bundle
 <!-- x-release-please-start-version -->
 
 ```bash
-uds deploy k3d-core-demo:0.29.0
+uds deploy k3d-core-demo:0.29.1
 ```
 
 <!-- x-release-please-end -->
@@ -74,7 +73,7 @@ Deploy Istio, Keycloak and Pepr:
 <!-- x-release-please-start-version -->
 
 ```bash
-uds deploy k3d-core-slim-dev:0.29.0
+uds deploy k3d-core-slim-dev:0.29.1
 ```
 
 <!-- x-release-please-end -->

@@ -73,17 +73,12 @@
       "commitMessageTopic": "grafana"
     },
     {
-      "matchFileNames": ["src/runtime/**"],
-      "groupName": "runtime",
-      "commitMessageTopic": "runtime"
-    },
-    {
       "matchFileNames": ["package.json", "package-lock.json", "tasks/create.yaml"],
       "groupName": "pepr",
       "commitMessageTopic": "pepr"
     },
     {
-      "matchFileNames": [".github/**", "bundles/**", "tasks/iac.yaml"],
+      "matchFileNames": ["e2e/playwright/**", ".github/**", "bundles/**", "tasks/iac.yaml", "tasks/setup.yaml", ".vscode/settings.json"],
       "groupName": "support-deps",
       "commitMessageTopic": "support dependencies"
     },

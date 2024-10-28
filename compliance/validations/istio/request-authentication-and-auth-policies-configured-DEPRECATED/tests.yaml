@@ -1,0 +1,28 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+pass:
+  - test: default
+    validation: validation.yaml
+    resources: resources.json
+    expected-validation: true
+  - test: remove-jwt-rules
+    validation: validation.yaml
+    resources: resources.json
+    permutation: "del(.requestAuthentication[0].spec.jwtRules)"
+    expected-validation: false
+  - test: remove-auth-rules
+    validation: validation.yaml
+    resources: resources.json
+    permutation: "del(.authorizationPolicy[0].spec.rules)"
+    expected-validation: false
+  - test: remove-authorization-policies
+    validation: validation.yaml
+    resources: resources.json
+    permutation: ".authorizationPolicy = []"
+    expected-validation: false
+  - test: remove-request-authentications
+    validation: validation.yaml
+    resources: resources.json
+    permutation: ".requestAuthentication = []"
+    expected-validation: false

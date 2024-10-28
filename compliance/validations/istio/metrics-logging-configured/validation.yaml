@@ -1,0 +1,47 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+metadata:
+  name: istio-metrics-logging-configured
+  uuid: 70d99754-2918-400c-ac9a-319f874fff90
+domain:
+  type: kubernetes
+  kubernetes-spec:
+    resources:
+      - name: istioConfig
+        resource-rule:
+          resource: configmaps
+          namespaces:
+            - istio-system
+          version: v1
+          name: istio
+          field:
+            jsonpath: .data.mesh
+            type: yaml
+provider:
+  type: opa
+  opa-spec:
+    rego: |
+      package validate
+      import rego.v1
+
+      # Default values
+      default validate := false
+      default msg := "Not evaluated"
+
+      # Validate Istio configuration for metrics logging support
+      validate if {
+        check_metrics_enabled.result
+      }
+      msg = check_metrics_enabled.msg
+
+      check_metrics_enabled = { "result": false, "msg": msg } if {
+        input.istioConfig.enablePrometheusMerge == false
+        msg := "Metrics logging not supported."
+      } else = { "result": true, "msg": msg } if {
+        msg := "Metrics logging supported."
+      }
+    output:
+      validation: validate.validate
+      observations:
+        - validate.msg
