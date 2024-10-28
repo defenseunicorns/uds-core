@@ -110,6 +110,19 @@ describe('Loki Tests', () => {
         expect(Array.isArray(data.data.result)).toBe(true);
     });
 
+    test('Validate node logs from vector are present in Loki', async () => {
+        const data = await queryLogs('{service_name="varlogs", collector="vector"}');
+        expect(data).toHaveProperty('status', 'success');
+        expect(Array.isArray(data.data.result)).toBe(true);
+    });
+    
+
+    test('Validate pod logs from vector are present in Loki', async () => {
+        const data = await queryLogs('{service_name="pepr-uds-core", collector="vector"}');
+        expect(data).toHaveProperty('status', 'success');
+        expect(Array.isArray(data.data.result)).toBe(true);
+    });
+
     test('Send log to Loki-write and validate in Loki-read', async () => {
         const logMessage = 'Test log from jest';
         await sendLog(logMessage, { job: 'test-job', level: 'info' });
