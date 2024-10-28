@@ -7,3 +7,5 @@ grafana:
   enabled: false
 
 generateInternalCert: false
+
+denyLocalAuth: true
