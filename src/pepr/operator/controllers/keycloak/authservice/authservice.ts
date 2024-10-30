@@ -114,7 +114,7 @@ export function buildConfig(config: AuthserviceConfig, event: AuthServiceEvent) 
     chains = chains.concat(buildChain(event));
     // Sort the chains by their name before returning. Note that the accuracy of
     // sorting here is not relevant, only the consistency.
-    const sortByName = R.sortBy(R.prop('name'));
+    const sortByName = R.sortBy(R.prop("name"));
     chains = sortByName(chains);
   } else if (event.action == Action.Remove) {
     // Search in the existing chains for the chain to remove by name.

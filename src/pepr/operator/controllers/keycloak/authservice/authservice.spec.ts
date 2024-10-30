@@ -265,7 +265,6 @@ describe("authservice", () => {
     expect(config1.chains[0].name).toEqual("1-something");
     expect(config1.chains[1].name).toEqual("10-something");
     expect(config1.chains[2].name).toEqual("2-something");
-
   });
 });
 
