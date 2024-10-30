@@ -5,6 +5,7 @@
 
 import { Exec, KubeConfig } from "@kubernetes/client-node";
 import { Capability, a } from "pepr";
+import { Readable } from "stream";
 import { Component, setupLogger } from "../logger";
 
 // configure subproject logger
@@ -70,6 +71,12 @@ When(a.Pod)
           kc.loadFromDefault();
           const exec = new Exec(kc);
 
+          // Trying to avoid passing in process.stdin (this stream read is a no-op)
+          // The exec call fails with null stdin stream
+          const dummyStream = new Readable({
+            read() {},
+          });
+
           await exec.exec(
             namespace,
             name,
@@ -77,14 +84,14 @@ When(a.Pod)
             ["pilot-agent", "request", "POST", "/quitquitquit"],
             null, // Could capture exec stdout here
             null, // Could capture exec stderr here
-            process.stdin,
-            true,
+            dummyStream,
+            false,
           );
 
           log.info(`Terminated sidecar for ${key}`);
         } catch (err) {
           log.error({ err }, `Failed to terminate the sidecar for ${key}`);
-
+        } finally {
           // Remove the pod from the seen list
           inProgress.delete(key);
         }
