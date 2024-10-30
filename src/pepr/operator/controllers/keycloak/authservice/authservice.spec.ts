@@ -235,6 +235,37 @@ describe("authservice", () => {
     expect(config1.chains.length).toEqual(3);
     expect(config1.chains[0].name).toEqual("first-name");
     expect(config1.chains[2].name).toEqual("some-second-name");
+
+    config1 = buildConfig(config1, {
+      client: mockClient,
+      name: "aaaa-final",
+      action: Action.Add,
+    });
+    expect(config1.chains.length).toEqual(4);
+    expect(config1.chains[0].name).toEqual("aaaa-final");
+
+    config1 = buildConfig(config1, {
+      client: mockClient,
+      name: "1-something",
+      action: Action.Add,
+    });
+
+    config1 = buildConfig(config1, {
+      client: mockClient,
+      name: "10-something",
+      action: Action.Add,
+    });
+
+    config1 = buildConfig(config1, {
+      client: mockClient,
+      name: "2-something",
+      action: Action.Add,
+    });
+    expect(config1.chains.length).toEqual(7);
+    expect(config1.chains[0].name).toEqual("1-something");
+    expect(config1.chains[1].name).toEqual("10-something");
+    expect(config1.chains[2].name).toEqual("2-something");
+
   });
 });
 

@@ -112,17 +112,10 @@ export function buildConfig(config: AuthserviceConfig, event: AuthServiceEvent) 
     // Add the new chain to the existing authservice config
     chains = config.chains.filter(chain => chain.name !== event.name);
     chains = chains.concat(buildChain(event));
-    chains.sort((n1, n2) => {
-      if (n1.name > n2.name) {
-        return 1;
-      }
-
-      if (n1.name < n2.name) {
-        return -1;
-      }
-
-      return 0;
-    });
+    // Sort the chains by their name before returning. Note that the accuracy of
+    // sorting here is not relevant, only the consistency.
+    const sortByName = R.sortBy(R.prop('name'));
+    chains = sortByName(chains);
   } else if (event.action == Action.Remove) {
     // Search in the existing chains for the chain to remove by name.
     // Filtering here should preserve the order, so there is no need to re-sort.
