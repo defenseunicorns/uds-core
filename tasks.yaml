@@ -124,7 +124,7 @@ tasks:
     description: "Evaluate Compliance of UDS Core against an established threshold"
     actions:
       - task: test:compliance-evaluate
-    
+
   - name: test-compliance-diagnose
     description: "Diagnose failed Compliance of UDS Core against an established threshold"
     actions:

@@ -39,7 +39,7 @@ jobs:
 
       - name: Environment setup
         uses: ./.github/actions/setup
-      
+
       - name: Install gptscript
         id: install-gptscript
         uses: cpanato/gptscript-installer@main
@@ -85,7 +85,7 @@ jobs:
             exit 1
           fi
           echo "diagnose=false" >> "$GITHUB_OUTPUT"
-      
+
       - name: Run TLDR for Compliance Evaluation
         id: tldr
         if: ${{ always() }}
@@ -102,19 +102,19 @@ jobs:
                 original_observation=$(echo "$item" | jq -r '.original_observation')
                 component_defn="./compliance/oscal-component-composed.yaml"
                 assessment_results="./compliance/oscal-assessment-results.yaml"
-                
+
                 echo "## Observation Pair" >> $GITHUB_STEP_SUMMARY
                 echo "New Observation: $new_observation" >> $GITHUB_STEP_SUMMARY
                 echo "Original Observation: $original_observation" >> $GITHUB_STEP_SUMMARY
-                
+
                 # Construct JSON input for the uds command
                 json_string=$(jq -n --arg new_obs "$new_observation" --arg orig_obs "$original_observation" --arg cd "$component_defn" --arg ar "$assessment_results"\
                   '{latest_observation_uuid: $new_obs, compared_observation_uuid: $orig_obs, component_defn: $cd, assessment_results: $ar}' | jq -c .)
                 echo "GPT Script Inputs: $json_string"
-                
+
                 # Run uds command, capturing output in a variable
                 out=$(uds run diagnose-lula-failure --set gptinputs="$json_string" --set openai_api_key=${{ secrets.TLDR_OPENAI_TOKEN }} 2>&1)
-                
+
                 # Append the output to step summary
                 echo "$out" >> $GITHUB_STEP_SUMMARY
               done
