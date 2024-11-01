@@ -28,6 +28,10 @@ jobs:
     runs-on: ubuntu-latest
     name: Evaluate
     continue-on-error: true
+    outputs:
+      eval_results: ${{ steps.compliance-evaluation-upgrade.outputs.eval_results }}
+      diagnose: ${{ steps.compliance-evaluation-upgrade.outputs.diagnose }}
+
     steps:
       # Used to execute the uds run command
       - name: Checkout repository
@@ -35,6 +39,10 @@ jobs:
 
       - name: Environment setup
         uses: ./.github/actions/setup
+      
+      - name: Install gptscript
+        id: install-gptscript
+        uses: cpanato/gptscript-installer@main
 
       - name: review compliance directory
         run: ls -al ./compliance/
@@ -56,7 +64,65 @@ jobs:
 
       - name: Evaluate compliance
         id: compliance-evaluation
-        run: uds run test-compliance-evaluate --no-progress
+        run: |
+          set +e
+          uds run test-compliance-evaluate --no-progress
+          if [[ $? -ne 0 ]]; then
+            echo "Error running Compliance Evaluation"
+            eval_results=$(uds run test-compliance-evaluate --no-progress 2>&1)
+            echo ${eval_results} | \
+              awk '{gsub(/\x1b\[[0-9;]*[A-Za-z]/, "")} NF' |\
+              sed 's/\r//g' > clean.txt
+            clean_eval_results=$(perl -0777 -ne 'print "$1\n" if /\{ *"SATISFIED_TO_NOT_SATISFIED": (.*\[.*?\]) *\}/s' clean.txt)
+            echo "Cleaned eval results:"
+            echo "$clean_eval_results"
+
+            # Set the output for the next step
+            echo "eval_results=\"$(echo "$clean_eval_results" | jq @json)\"" >> "$GITHUB_OUTPUT"
+            echo "diagnose=true" >> "$GITHUB_OUTPUT"
+            echo "eval_results=\"$(echo "$clean_eval_results" | jq @json)\""
+            rm clean.txt
+            exit 1
+          fi
+          echo "diagnose=false" >> "$GITHUB_OUTPUT"
+      
+      - name: Run TLDR for Compliance Evaluation
+        id: tldr
+        if: ${{ always() }}
+        run: |
+          if ${{ steps.compliance-evaluation-upgrade.outputs.diagnose == 'true' }}; then
+            echo "# Diagnoses of Lula Failure" >> $GITHUB_STEP_SUMMARY
+            escaped_eval_results=${{ steps.compliance-evaluation-upgrade.outputs.eval_results }}
+
+            # Ensure that the compliance evaluation result is valid JSON before proceeding
+            if echo $escaped_eval_results | jq . >/dev/null 2>&1; then
+              # Process each item if the JSON is valid
+              echo $escaped_eval_results | jq -c '.[]' | while read -r item; do
+                new_observation=$(echo "$item" | jq -r '.new_observation')
+                original_observation=$(echo "$item" | jq -r '.original_observation')
+                component_defn="./compliance/oscal-component-composed.yaml"
+                assessment_results="./compliance/oscal-assessment-results.yaml"
+                
+                echo "## Observation Pair" >> $GITHUB_STEP_SUMMARY
+                echo "New Observation: $new_observation" >> $GITHUB_STEP_SUMMARY
+                echo "Original Observation: $original_observation" >> $GITHUB_STEP_SUMMARY
+                
+                # Construct JSON input for the uds command
+                json_string=$(jq -n --arg new_obs "$new_observation" --arg orig_obs "$original_observation" --arg cd "$component_defn" --arg ar "$assessment_results"\
+                  '{latest_observation_uuid: $new_obs, compared_observation_uuid: $orig_obs, component_defn: $cd, assessment_results: $ar}' | jq -c .)
+                echo "GPT Script Inputs: $json_string"
+                
+                # Run uds command, capturing output in a variable
+                out=$(uds run diagnose-lula-failure --set gptinputs="$json_string" --set openai_api_key=${{ secrets.TLDR_OPENAI_TOKEN }} 2>&1)
+                
+                # Append the output to step summary
+                echo "$out" >> $GITHUB_STEP_SUMMARY
+              done
+            else
+              echo "Invalid JSON input: ensure that needs.test.outputs.eval_results is a valid JSON array:" >> $GITHUB_STEP_SUMMARY
+              echo "$escaped_eval_results" >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
 
       # steps in this action only run when there has been a previous failure - will indicate success thereafter
       # need to think about how much noise this could create - noise currently = good

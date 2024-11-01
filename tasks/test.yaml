@@ -130,3 +130,19 @@ tasks:
         description: for setting additional flags
     actions:
       - cmd: lula tools compose -f ${{ .inputs.oscalfile }} ${{ .inputs.options }}
+
+  - name: compliance-diagnose
+    description: "diagnose compliance observation failures"
+    inputs:
+      gptinputs:
+        description: The inputs to the gptscript
+      base_path:
+        description: The base path for the tldr repo
+      openai_api_key:
+        description: The OpenAI API key
+    actions:
+      - description: Get TLDR of the evaluation results
+        cmd: |
+          gptscript -q ${INPUT_BASE_PATH}/scenarios/lula/diagnose_lula_failure.gpt ${INPUT_GPTINPUTS}
+        env:
+          - OPENAI_API_KEY=${openai_api_key}

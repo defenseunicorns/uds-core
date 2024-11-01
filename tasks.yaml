@@ -7,6 +7,11 @@ variables:
 
   - name: LAYER
 
+  - name: OPENAI_API_KEY
+    description: The OpenAI API key
+  - name: GPTINPUTS
+    description: Inputs to the gptscript
+
 includes:
   - create: ./tasks/create.yaml
   - setup: ./tasks/setup.yaml
@@ -119,6 +124,15 @@ tasks:
     description: "Evaluate Compliance of UDS Core against an established threshold"
     actions:
       - task: test:compliance-evaluate
+    
+  - name: test-compliance-diagnose
+    description: "Diagnose failed Compliance of UDS Core against an established threshold"
+    actions:
+      - task: test:compliance-diagnose
+        with:
+          base_path: ./tldr
+          openai_api_key: ${OPENAI_API_KEY}
+          gptinputs: ${GPTINPUTS}
 
   - name: lint-check
     description: "Run linting checks"

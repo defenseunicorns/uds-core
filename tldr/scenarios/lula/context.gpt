@@ -1,0 +1,12 @@
+Name: learn-lula
+
+#!/usr/bin/env bash
+
+echo "The following are Markdown documentation files for Lula and the JSON Schema for Lula validations. Use these to understand a Lula validation."
+
+curl -s "https://raw.githubusercontent.com/defenseunicorns/lula/main/docs/reference/domains/kubernetes-domain.md"
+curl -s "https://raw.githubusercontent.com/defenseunicorns/lula/main/docs/reference/providers/opa-provider.md"
+curl -s "https://raw.githubusercontent.com/defenseunicorns/lula/main/src/pkg/common/schemas/validation.json"
+
+echo "The following are relevant help commands for the Lula CLI:"
+lula --help

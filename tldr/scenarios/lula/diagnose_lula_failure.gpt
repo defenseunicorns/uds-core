@@ -1,0 +1,36 @@
+Description: Diagnose why a Lula validation is failing.
+
+Parameter: latest_observation_uuid: (required) the uuid of the failing Lula validation.
+Parameter: compared_observation_uuid: (required) the uuid for the resources that are inputs to the failing Lula validation.
+Parameter: component_defn: (required) file path to the component definition file.
+Parameter: assessment_results: (required) file path to the assessment results file.
+Context: sys.exec, sys.find, sys.read, sys.write, ./context.gpt
+
+You are tasked with diagnosing why a particular Lula validation is failing. You are provided with the following information:
+- The path to the component definition file
+- The path to the assessment results file
+- The uuid of the failing Lula validation (latest_observation_uuid)
+- The uuid of the previously passing Lula validation (compared_observation_uuid)
+
+The system tools you need to execute for this task are:
+- lula
+- diff
+
+Perform each of the below steps to gather information to help provide a diagnosis on why the Lula Validation is failing.
+
+As you walk through the following steps, please re-state the command executed and the results from the command.
+Please format this all as markdown, with each step as a level-3 header.
+
+1) Run the following command:
+```bash
+lula dev print --validation -c $component_defn -a $assessment_results -u $latest_observation_uuid
+```
+The output of this is the Lula Validation that is failing. Print this validation in a markdown formatted yaml block.
+
+2) Run the following command:
+```bash
+diff <(echo "$(lula dev print --resources -a $assessment_results -u $latest_observation_uuid 2>&1)") <(echo "$(lula dev print --resources -a $assessment_results -u $compared_observation_uuid 2>&1)")
+```
+The output of this is the differences in resources between the two observations. Print this output in a markdown formatted code block.
+
+3) With the information gathered in step 1 and 2, along with your knowledge of Lula Validations, provide a diagnosis of why the validation is now failing.

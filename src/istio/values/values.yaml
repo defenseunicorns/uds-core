@@ -14,6 +14,7 @@ meshConfig:
       envoyExtAuthzGrpc:
         service: "authservice.authservice.svc.cluster.local"
         port: "10003"
+  enablePrometheusMerge: false # test to break compliance
 
 pilot:
   env:
