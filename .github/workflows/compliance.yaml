@@ -29,8 +29,8 @@ jobs:
     name: Evaluate
     continue-on-error: true
     outputs:
-      eval_results: ${{ steps.compliance-evaluation-upgrade.outputs.eval_results }}
-      diagnose: ${{ steps.compliance-evaluation-upgrade.outputs.diagnose }}
+      eval_results: ${{ steps.compliance-evaluation.outputs.eval_results }}
+      diagnose: ${{ steps.compliance-evaluation.outputs.diagnose }}
 
     steps:
       # Used to execute the uds run command
