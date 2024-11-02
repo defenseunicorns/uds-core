@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 meshConfig:
-  accessLogFile: /dev/stdout
+  accessLogFile: /dev/stderr # test to break compliance
   pathNormalization:
     normalization: MERGE_SLASHES
   defaultConfig:
@@ -14,8 +14,6 @@ meshConfig:
       envoyExtAuthzGrpc:
         service: "authservice.authservice.svc.cluster.local"
         port: "10003"
-  enablePrometheusMerge: false # test to break compliance
-
 pilot:
   env:
     PILOT_JWT_ENABLE_REMOTE_JWKS: hybrid
