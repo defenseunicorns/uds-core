@@ -1,2 +1,15 @@
 # Copyright 2024 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+domain: "###ZARF_VAR_DOMAIN###"
+
+sso:
+  enabled: true
+
+custom: []
+#   - direction: Egress
+#     selector:
+#       app.kubernetes.io/name: alertmanager
+#     remoteGenerated: Anywhere
+#     description: "Egress from alertmanager to anywhere"
+#     port: 443
