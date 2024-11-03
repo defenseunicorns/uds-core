@@ -7,19 +7,6 @@ metadata:
   name: prometheus-stack
   namespace: {{ .Release.Namespace }}
 spec:
-  {{- if .Values.sso.enabled }}
-  sso:
-    - name: uds-alertmanager
-      clientId: uds-alertmanager
-      redirectUris:
-        - "https://alerts.admin.{{ .Values.domain }}/auth"
-      enableAuthserviceSelector:
-        app.kubernetes.io/name: alertmanager
-      groups:
-        anyOf:
-          - /UDS Core/Admin
-          - /UDS Core/Auditor
-  {{- end }}
   network:
     expose:
       - service: alertmanager-operated
