@@ -2,6 +2,34 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.30.0](https://github.com/defenseunicorns/uds-core/compare/v0.29.1...v0.30.0) (2024-10-28)
+
+
+### ⚠ BREAKING CHANGES
+
+* remove uds-runtime from core ([#955](https://github.com/defenseunicorns/uds-core/issues/955))
+
+### Features
+
+* add finalizer for UDS Package CRs ([#953](https://github.com/defenseunicorns/uds-core/issues/953)) ([fa42714](https://github.com/defenseunicorns/uds-core/commit/fa427142b8a7391504eb2133614cf7504e0259ab))
+* adds registry1 flavor of uds runtime ([#925](https://github.com/defenseunicorns/uds-core/issues/925)) ([0011852](https://github.com/defenseunicorns/uds-core/commit/0011852dd6c8f1305e2fa0c837db45f3c1801c31))
+
+
+### Bug Fixes
+
+* batch authservice checksum updates ([#735](https://github.com/defenseunicorns/uds-core/issues/735)) ([100d35b](https://github.com/defenseunicorns/uds-core/commit/100d35bfb05545b2a6adb75c918e6e93eda0a312))
+* logout redirect uri ([#945](https://github.com/defenseunicorns/uds-core/issues/945)) ([8e2b5d8](https://github.com/defenseunicorns/uds-core/commit/8e2b5d840bcddc7af299ff8845836c08a54a35c8))
+* resolve lingering note formatting ([#938](https://github.com/defenseunicorns/uds-core/issues/938)) ([455a530](https://github.com/defenseunicorns/uds-core/commit/455a53020cee8fe9edf629366401c70fd47ef355))
+* vector remap language logic typo ([#959](https://github.com/defenseunicorns/uds-core/issues/959)) ([89af729](https://github.com/defenseunicorns/uds-core/commit/89af7292b11ac9a9d100ba1e6a81c81441472f14))
+
+
+### Miscellaneous
+
+* add proper version update to aks nightly bundle ([#942](https://github.com/defenseunicorns/uds-core/issues/942)) ([2f51c75](https://github.com/defenseunicorns/uds-core/commit/2f51c75d761e3385a3ae46cb62d6375210620c37))
+* block local auth for neuvector ([#965](https://github.com/defenseunicorns/uds-core/issues/965)) ([8f25b41](https://github.com/defenseunicorns/uds-core/commit/8f25b41e4c187680e8353e31cdd4f37e19063338))
+* **deps:** update vector to 0.42.0 ([#946](https://github.com/defenseunicorns/uds-core/issues/946)) ([2f63db2](https://github.com/defenseunicorns/uds-core/commit/2f63db2f26cb30c056f376b1823f758cd403aefe))
+* remove uds-runtime from core ([#955](https://github.com/defenseunicorns/uds-core/issues/955)) ([c6f6664](https://github.com/defenseunicorns/uds-core/commit/c6f66649bef5fef8e14eeb157a1ba76d2e96c78b))
+
 ## [0.29.1](https://github.com/defenseunicorns/uds-core/compare/v0.29.0...v0.29.1) (2024-10-18)
 
 

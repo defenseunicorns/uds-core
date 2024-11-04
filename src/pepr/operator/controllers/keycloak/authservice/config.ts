@@ -131,6 +131,15 @@ export function buildInitialSecret(): AuthserviceConfig {
 }
 
 /**
+ * Sets the in memory configuration for Authservce.
+ *
+ * @param config - The configuration object for Authservice.
+ */
+export function setAuthserviceConfig(config: AuthserviceConfig) {
+  inMemorySecret = config;
+}
+
+/**
  * Retrieves the authservice configuration, either from the in-memory cache
  * or from the Kubernetes secret if not already cached.
  *
@@ -176,9 +185,6 @@ export async function updateAuthServiceSecret(
   checksum = true,
 ): Promise<void> {
   return new Promise((resolve, reject) => {
-    // Update the in-memory secret immediately
-    inMemorySecret = authserviceConfig;
-
     // Add the package config and its resolve function to the pending packages map
     pendingPackages.set(authserviceConfig, { resolve, reject });
 
@@ -195,7 +201,7 @@ export async function updateAuthServiceSecret(
         );
 
         // Prepare the config to be written (assumes that all packages share the same secret)
-        const { base64EncodedConfig, hash } = encodeConfig(inMemorySecret!);
+        const { base64EncodedConfig, hash } = encodeConfig(authserviceConfig!);
 
         // Apply the authservice config secret
         lastSuccessfulSecret = await applySecret(base64EncodedConfig);
