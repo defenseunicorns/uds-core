@@ -113,7 +113,7 @@ jobs:
                 echo "GPT Script Inputs: $json_string"
 
                 # Run uds command, capturing output in a variable
-                out=$(uds run diagnose-lula-failure --set gptinputs="$json_string" --set openai_api_key=${{ secrets.TLDR_OPENAI_TOKEN }} 2>&1)
+                out=$(uds run test-compliance-diagnose --set gptinputs="$json_string" --set openai_api_key=${{ secrets.TLDR_OPENAI_TOKEN }} 2>&1)
 
                 # Append the output to step summary
                 echo "$out" >> $GITHUB_STEP_SUMMARY
