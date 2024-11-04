@@ -34,7 +34,7 @@ All groups are under the Uds Core parent group. Frequently a group will be refer
 
 ### Identity Providers ( IDP )
 
-UDS Core ships with a [templated](https://github.com/defenseunicorns/uds-identity-config/blob/main/src/realm.json#L1712-L1813) Google SAML IDP, more documentation to configure the `realmInitEnv` values in [uds-identity-config](https://github.com/defenseunicorns/uds-identity-config/blob/main/docs/CUSTOMIZE.md#customizing-realm).
+UDS Core ships with a [templated](https://github.com/defenseunicorns/uds-identity-config/blob/main/src/realm.json#L1712-L1813) Google SAML IDP, more documentation to configure the `realmInitEnv` values in [uds-identity-config](https://uds.defenseunicorns.com/reference/uds-core/idam/customization/#customizing-realm).
 
 Alternatively, the `realmInitEnv` can be configured via bundle overrides like in the [k3d-standard-bundle](https://github.com/defenseunicorns/uds-core/blob/main/bundles/k3d-standard/uds-bundle.yaml#L96).
 
