@@ -78,7 +78,7 @@
       "commitMessageTopic": "pepr"
     },
     {
-      "matchFileNames": ["e2e/playwright/**", ".github/**", "bundles/**", "tasks/iac.yaml", "tasks/setup.yaml", ".vscode/settings.json"],
+      "matchFileNames": ["e2e/**", "src/test/**", ".github/**", "bundles/**", "tasks/iac.yaml", "tasks/setup.yaml", ".vscode/settings.json"],
       "groupName": "support-deps",
       "commitMessageTopic": "support dependencies"
     },
