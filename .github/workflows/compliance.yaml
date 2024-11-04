@@ -90,9 +90,9 @@ jobs:
         id: tldr
         if: ${{ always() }}
         run: |
-          if ${{ steps.compliance-evaluation-upgrade.outputs.diagnose == 'true' }}; then
+          if ${{ steps.compliance-evaluation.outputs.diagnose == 'true' }}; then
             echo "# Diagnoses of Lula Failure" >> $GITHUB_STEP_SUMMARY
-            escaped_eval_results=${{ steps.compliance-evaluation-upgrade.outputs.eval_results }}
+            escaped_eval_results=${{ steps.compliance-evaluation.outputs.eval_results }}
 
             # Ensure that the compliance evaluation result is valid JSON before proceeding
             if echo $escaped_eval_results | jq . >/dev/null 2>&1; then
