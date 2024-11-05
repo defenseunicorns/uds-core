@@ -62,7 +62,7 @@ tasks:
         # Self-reference this task file to avoid https://github.com/defenseunicorns/maru-runner/issues/144
         cmd: uds run -f tasks/test.yaml common-setup:create-doug-user --set KEYCLOAK_GROUP="/UDS Core/Admin" # Adds the test doug user
       - description: "Run Playwright E2E tests for all packages"
-        dir: e2e/playwright
+        dir: test/playwright
         cmd: |
           # renovate: datasource=docker depName=mcr.microsoft.com/playwright versioning=docker
           docker run --rm --ipc=host --net=host -e FULL_CORE="true" --mount type=bind,source="$(pwd)",target=/app mcr.microsoft.com/playwright:v1.48.2-noble sh -c " \
@@ -70,6 +70,10 @@ tasks:
             npm ci && \
             npx playwright test \
             "
+      - description: "Run E2E Tests"
+        cmd: |
+          npm ci
+          npx jest test/jest/
 
   - name: uds-core
     description: "Build and test UDS Core"
