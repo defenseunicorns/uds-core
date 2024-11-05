@@ -22,6 +22,12 @@ components:
     import:
       path: ../base
 
+  # Pepr the world
+  - name: pepr-uds-core
+    required: true
+    import:
+      path: ../base
+
   # Istio
   - name: istio-controlplane
     required: true
@@ -40,12 +46,6 @@ components:
 
   - name: istio-passthrough-gateway
     required: false
-    import:
-      path: ../base
-
-  # Pepr the world
-  - name: pepr-uds-core
-    required: true
     import:
       path: ../base
 
