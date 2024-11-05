@@ -51,6 +51,7 @@ describe("Prometheus and Alertmanager", () => {
     const body = (await response.json()) as {
       data: {
         activeTargets: Array<{
+          scrapePool: string;
           health: string;
         }>;
       };
@@ -58,10 +59,14 @@ describe("Prometheus and Alertmanager", () => {
     expect(body.data).toBeDefined();
     expect(body.data.activeTargets.length).toBeGreaterThan(0);
 
-    // filter out unknown because test runner pod is unknown, probably can filter out specific pod
-    const failedTargets = body.data.activeTargets.filter(
-      target => target.health !== "up" && target.health !== "unknown",
-    );
+    const failedTargets = body.data.activeTargets.filter(target => target.health === "down");
+    const unknownTargets = body.data.activeTargets.filter(target => target.health === "unknown");
+
+    if (unknownTargets.length > 0) {
+      for (const target of unknownTargets) {
+        console.warn(`Target health is currently unknown: ${target.scrapePool}`);
+      }
+    }
 
     expect(failedTargets).toEqual([]);
   });
