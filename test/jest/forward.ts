@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import * as k8s from '@kubernetes/client-node';
-import { K8s, kind } from 'kubernetes-fluent-client';
-import * as net from 'net';
+import * as k8s from "@kubernetes/client-node";
+import { K8s, kind } from "kubernetes-fluent-client";
+import * as net from "net";
 
 const kc = new k8s.KubeConfig();
 const forward = new k8s.PortForward(kc);
@@ -23,15 +23,15 @@ async function getAvailablePort(min = 1024, max = 65535): Promise<number> {
 
   while (!isAvailable) {
     port = Math.floor(Math.random() * (max - min + 1)) + min;
-    isAvailable = await new Promise<boolean>((resolve) => {
+    isAvailable = await new Promise<boolean>(resolve => {
       const server = net.createServer();
 
-      server.once('error', () => resolve(false)); // Port is in use
-      server.once('listening', () => {
+      server.once("error", () => resolve(false)); // Port is in use
+      server.once("listening", () => {
         server.close(() => resolve(true)); // Port is available
       });
 
-      server.listen(port, '127.0.0.1');
+      server.listen(port, "127.0.0.1");
     });
   }
 
@@ -68,22 +68,26 @@ export async function getPodFromService(svc: string, namespace: string): Promise
   }
 }
 
-export async function getForward(service: string, namespace: string, port: number): Promise<ForwardResult> {
+export async function getForward(
+  service: string,
+  namespace: string,
+  port: number,
+): Promise<ForwardResult> {
   try {
     const podName = await getPodFromService(service, namespace);
     const randomPort = await getAvailablePort(3000, 65535);
 
     return await new Promise<ForwardResult>((resolve, reject) => {
-      const server = net.createServer((socket) => {
-        forward.portForward(namespace, podName, [port], socket, null, socket);
+      const server = net.createServer(socket => {
+        // Explicitly ignore the promise with `void` to avoid eslint no-floating-promises error
+        void forward.portForward(namespace, podName, [port], socket, null, socket);
       });
 
-      server.listen(randomPort, '127.0.0.1', () => {
+      server.listen(randomPort, "127.0.0.1", () => {
         resolve({ server, url: `http://localhost:${randomPort}` });
       });
 
-      server.on('error', (err) => {
-        // Type guard to check if `err` is an instance of `Error`
+      server.on("error", err => {
         if (err instanceof Error) {
           reject(new Error(`Error binding to port ${randomPort}: ${err.message}`));
         } else {
@@ -92,23 +96,24 @@ export async function getForward(service: string, namespace: string, port: numbe
       });
     });
   } catch (err) {
-    // Type guard to check if `err` is an instance of `Error`
     if (err instanceof Error) {
       throw new Error(`Failed to setup port forwarding for service ${service}: ${err.message}`);
     } else {
-      throw new Error(`Unknown error occurred while setting up port forwarding for service ${service}`);
+      throw new Error(
+        `Unknown error occurred while setting up port forwarding for service ${service}`,
+      );
     }
   }
 }
 
 export function closeForward(server: net.Server): Promise<void> {
   return new Promise((resolve, reject) => {
-    server.close((err) => {
+    server.close(err => {
       // Type guard to check if `err` is an instance of `Error`
       if (err instanceof Error) {
         reject(new Error(`Failed to close server: ${err.message}`));
       } else if (err) {
-        reject(new Error('Unknown error occurred while closing the server'));
+        reject(new Error("Unknown error occurred while closing the server"));
       } else {
         resolve();
       }

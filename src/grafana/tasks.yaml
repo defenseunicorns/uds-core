@@ -45,4 +45,4 @@ tasks:
             npm ci && \
             npx playwright test grafana.test.ts \
             "
-        dir: e2e/playwright
+        dir: test/playwright

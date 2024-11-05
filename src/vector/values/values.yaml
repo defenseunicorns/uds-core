@@ -6,7 +6,7 @@ role: "Agent"
 
 customConfig:
   api:
-    enabled: true
+    enabled: false
     address: 0.0.0.0:8686
     playground: false
   data_dir: /var/lib/vector

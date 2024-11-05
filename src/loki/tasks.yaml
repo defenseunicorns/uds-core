@@ -30,4 +30,4 @@ tasks:
       - description: "Run Loki E2E tests"
         cmd: |
             npm ci && npx jest --testPathPattern loki*
-        dir: e2e/test
+        dir: test/jest

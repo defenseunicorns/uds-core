@@ -47,4 +47,4 @@ tasks:
       - description: "Run Prometheus-Stack E2E tests"
         cmd: |
             npm ci && npx jest --testPathPattern prometheus*
-        dir: e2e/test
+        dir: test/jest
