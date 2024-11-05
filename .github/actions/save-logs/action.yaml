@@ -40,7 +40,7 @@ runs:
     - name: Move Playwright Artifacts
       run: |
         sudo mkdir -p /tmp/playwright
-        sudo mv e2e/playwright/.playwright/* /tmp/playwright || true
+        sudo mv test/playwright/.playwright/* /tmp/playwright || true
       shell: bash
 
     - uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3

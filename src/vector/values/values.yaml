@@ -5,6 +5,10 @@
 role: "Agent"
 
 customConfig:
+  api:
+    enabled: false
+    address: 0.0.0.0:8686
+    playground: false
   data_dir: /var/lib/vector
   # Ensure e2e delivery of events
   acknowledgements:

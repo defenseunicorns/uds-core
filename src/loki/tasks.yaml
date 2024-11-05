@@ -24,3 +24,10 @@ tasks:
             name: app.kubernetes.io/component=gateway
             namespace: loki
             condition: Ready
+
+  - name: e2e-test
+    actions:
+      - description: "Run Loki E2E tests"
+        cmd: |
+            npm ci && npx jest --testPathPattern loki*
+        dir: test/jest

@@ -148,3 +148,7 @@ tasks:
 
       - description: Remove the test resources
         cmd: "uds zarf package remove build/zarf-package-uds-core-test-apps-*.zst --confirm --no-progress"
+
+  - name: e2e-test
+    actions:
+      - description: "Run Test Apps E2E tests"

@@ -44,3 +44,7 @@ tasks:
   - name: regenerate-test-pki
     actions:
       - task: config:regenerate-test-pki
+
+  - name: e2e-test
+    actions:
+      - description: "Run Keycloak E2E tests"
