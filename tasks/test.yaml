@@ -71,7 +71,7 @@ tasks:
             npx playwright test \
             "
       - description: "Run E2E Tests"
-      - cmd: |
+        cmd: |
           for package in src/*; do
             uds run -f ${package}/tasks.yaml e2e-test --no-progress
           done
