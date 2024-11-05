@@ -10,3 +10,4 @@ tasks:
     actions:
       - task: loki:validate
       - task: vector:validate
+      - task: loki:e2e-test

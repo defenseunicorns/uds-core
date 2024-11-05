@@ -1,5 +1,6 @@
 # Copyright 2024 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+{{- $neuvectorAdminPass := join "" (list (randAlphaNum 12) (randAlpha 2 | upper) (randAlpha 2 | lower) (randNumeric 2))}}
 
 apiVersion: uds.dev/v1alpha1
 kind: Package
@@ -24,6 +25,13 @@ spec:
         - "https://neuvector.admin.{{ .Values.domain }}/openId_auth"
       secretName: neuvector-secret
       secretTemplate:
+        userinitcfg.yaml: |-
+          always_reload: true
+          users:
+            - username: admin
+              fullname: admin
+              password: {{ $neuvectorAdminPass }}
+              role: admin
         oidcinitcfg.yaml: |-
           always_reload: true
           client_id: clientField(clientId)

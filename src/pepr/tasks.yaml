@@ -15,6 +15,20 @@ tasks:
 
       - cmd: "npx kubernetes-fluent-client crd exemptions.uds.dev src/pepr/operator/crd/generated"
 
+      - description: "Add license headers to generated CRD files"
+        shell:
+          darwin: bash
+          linux: bash
+        cmd: |
+          # check for addlicense bin
+          if [ -x "$HOME/go/bin/addlicense" ]; then
+            echo "addlicense installed in $HOME/go/bin"
+          else
+            echo "Error: addlicense is not installed in $HOME/go/bin" >&2
+            exit 1
+          fi
+          $HOME/go/bin/addlicense -l "AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial" -s=only -v -c "Defense Unicorns" src/pepr/operator/crd/generated
+
       - task: gen-docs
 
       - cmd: "npx pepr format"
@@ -36,3 +50,7 @@ tasks:
               # Remove the json and go files
               rm -f "$CRD-crd.json"
           done
+
+  - name: e2e-test
+    actions:
+      - description: "Run Pepr E2E tests"

@@ -40,7 +40,7 @@ jobs:
           echo "TF_VAR_permissions_boundary_name=${UDS_PERMISSIONS_BOUNDARY_NAME}" >> $GITHUB_ENV
 
       - name: Checkout repository
-        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4
