@@ -16,3 +16,7 @@ tasks:
             kind: APIService
             name: v1beta1.metrics.k8s.io
             condition: available
+
+  - name: e2e-test
+    actions:
+      - description: "Run Metrics-Server E2E tests"
