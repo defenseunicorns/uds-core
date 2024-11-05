@@ -16,7 +16,6 @@ import { Policy } from "./src/pepr/operator/crd";
 import { registerCRDs } from "./src/pepr/operator/crd/register";
 import { patches } from "./src/pepr/patches";
 import { policies, startExemptionWatch } from "./src/pepr/policies";
-import { prometheus } from "./src/pepr/prometheus";
 
 const log = setupLogger(Component.STARTUP);
 
@@ -35,9 +34,6 @@ const log = setupLogger(Component.STARTUP);
 
     // Istio service mesh
     istio,
-
-    // Prometheus monitoring stack
-    prometheus,
 
     // Patches for specific components
     patches,
