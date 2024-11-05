@@ -1,13 +1,24 @@
+/**
+ * Copyright 2024 Defense Unicorns
+ * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+ */
+
 import { R } from "pepr";
 import { UDSConfig } from "../../../../config";
 import { Component, setupLogger } from "../../../../logger";
 import { UDSPackage } from "../../../crd";
 import { Client } from "../types";
 import { updatePolicy } from "./authorization-policy";
-import { getAuthserviceConfig, operatorConfig, updateAuthServiceSecret } from "./config";
+import {
+  getAuthserviceConfig,
+  operatorConfig,
+  setAuthserviceConfig,
+  updateAuthServiceSecret,
+} from "./config";
 import { Action, AuthServiceEvent, AuthserviceConfig, Chain } from "./types";
 
 export const log = setupLogger(Component.OPERATOR_AUTHSERVICE);
+let lock = false;
 
 export async function authservice(pkg: UDSPackage, clients: Map<string, Client>) {
   // Get the list of clients from the package
@@ -58,15 +69,39 @@ export async function reconcileAuthservice(
   await updatePolicy(event, labelSelector, pkg);
 }
 
-// write authservice config to secret
+// Write authservice config to secret (ensure the new function name is referenced)
 export async function updateConfig(event: AuthServiceEvent) {
-  // parse existing authservice config
-  let config = await getAuthserviceConfig();
+  // Lock to prevent concurrent updates
+  if (lock) {
+    log.debug("Lock is set for config update, retrying...");
+    setTimeout(() => updateConfig(event), 0);
+    return;
+  }
 
-  // update config based on event
-  config = buildConfig(config, event);
+  let config: AuthserviceConfig;
 
-  // update the authservice secret
+  try {
+    log.debug("Locking config for update");
+    lock = true;
+
+    // build updated config based on event
+    config = await getAuthserviceConfig().then(config => {
+      return buildConfig(config, event);
+    });
+
+    // Update the in-memory config immediately
+    setAuthserviceConfig(config);
+  } catch (e) {
+    log.error("Failed to build in memory authservice secret for event", event, e);
+    throw e;
+  } finally {
+    // unlock config
+    log.debug("Unlocking config for update");
+    lock = false;
+  }
+
+  // apply the authservice secret
+  log.debug("Applying authservice secret");
   await updateAuthServiceSecret(config);
 }
 
@@ -74,23 +109,28 @@ export function buildConfig(config: AuthserviceConfig, event: AuthServiceEvent) 
   let chains: Chain[];
 
   if (event.action == Action.Add) {
-    // add the new chain to the existing authservice config
+    // Add the new chain to the existing authservice config
     chains = config.chains.filter(chain => chain.name !== event.name);
     chains = chains.concat(buildChain(event));
+    // Sort the chains by their name before returning. Note that the accuracy of
+    // sorting here is not relevant, only the consistency.
+    const sortByName = R.sortBy(R.prop("name"));
+    chains = sortByName(chains);
   } else if (event.action == Action.Remove) {
-    // search in the existing chains for the chain to remove by name
+    // Search in the existing chains for the chain to remove by name.
+    // Filtering here should preserve the order, so there is no need to re-sort.
     chains = config.chains.filter(chain => chain.name !== event.name);
   } else {
     throw new Error(`Unhandled Action: ${event.action satisfies never}`);
   }
 
-  // add the new chains to the existing authservice config
+  // Add the new chains to the existing authservice config
   return { ...config, chains } as AuthserviceConfig;
 }
 
 export function buildChain(update: AuthServiceEvent) {
   // TODO: get this from the package
-  // parse the hostname from the first client redirect uri
+  // Parse the hostname from the first client redirect URI
   const hostname = new URL(update.client!.redirectUris[0]).hostname;
 
   const chain: Chain = {
@@ -109,8 +149,8 @@ export function buildChain(update: AuthServiceEvent) {
           client_secret: update.client!.secret,
           scopes: [],
           logout: {
-            path: "/local",
-            redirect_uri: `https://sso.${UDSConfig.domain}/realms/${operatorConfig.realm}/protocol/openid-connect/token/logout`,
+            path: "/logout",
+            redirect_uri: `https://sso.${UDSConfig.domain}/realms/${operatorConfig.realm}/protocol/openid-connect/logout`,
           },
           cookie_name_prefix: update.client!.clientId,
         },

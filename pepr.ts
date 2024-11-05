@@ -1,3 +1,8 @@
+/**
+ * Copyright 2024 Defense Unicorns
+ * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+ */
+
 import { PeprModule } from "pepr";
 
 import cfg from "./package.json";
@@ -9,7 +14,9 @@ import { operator } from "./src/pepr/operator";
 import { setupAuthserviceSecret } from "./src/pepr/operator/controllers/keycloak/authservice/config";
 import { Policy } from "./src/pepr/operator/crd";
 import { registerCRDs } from "./src/pepr/operator/crd/register";
+import { patches } from "./src/pepr/patches";
 import { policies, startExemptionWatch } from "./src/pepr/policies";
+import { prometheus } from "./src/pepr/prometheus";
 
 const log = setupLogger(Component.STARTUP);
 
@@ -28,6 +35,12 @@ const log = setupLogger(Component.STARTUP);
 
     // Istio service mesh
     istio,
+
+    // Prometheus monitoring stack
+    prometheus,
+
+    // Patches for specific components
+    patches,
   ]);
   // Remove legacy policy entries from the pepr store for the 0.5.0 upgrade
   if (

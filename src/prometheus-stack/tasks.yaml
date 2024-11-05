@@ -1,3 +1,6 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 tasks:
   - name: validate
     actions:
@@ -29,3 +32,12 @@ tasks:
             name: app.kubernetes.io/name=prometheus-node-exporter
             namespace: monitoring
             condition: Ready
+  # Below task can be used to generate CRD types, but is commented out pending resolution of https://github.com/defenseunicorns/kubernetes-fluent-client/issues/374
+  # - name: gen-crds
+  #   actions:
+  #     - description: Generate servicemonitor types
+  #       cmd: "npx kubernetes-fluent-client crd https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.77.1/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml src/pepr/operator/crd/generated/prometheus"
+  #     - description: Generate podmonitor types
+  #       cmd: "npx kubernetes-fluent-client crd https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.77.1/example/prometheus-operator-crd/monitoring.coreos.com_podmonitors.yaml src/pepr/operator/crd/generated/prometheus"
+  #     - description: Pepr Format
+  #       cmd: "npx pepr format"

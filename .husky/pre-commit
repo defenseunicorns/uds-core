@@ -1,0 +1,35 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "\nRunning YAML Lint Check"
+
+# Run yamllint globally, which will respect the .yamllint config, including ignores
+yamllint -c .yamllint . --no-warnings
+
+# Capture yamllint
+YAMLLINT_EXIT=$?
+
+if [ $YAMLLINT_EXIT -ne 0 ]; then
+    echo "\n❌ YAMLLint failed. Please fix the YAML issues before committing. ❌\n"
+    exit 1
+fi
+
+echo "YAML Lint Check Passed - ✅\n"
+
+echo "\nRunning License Lint Check. Use \`uds run -f tasks/lint.yaml fix-license\` to resolve any issues.\n"
+
+# Run license linting
+uds run -f tasks/lint.yaml license
+
+echo "\nRunning Pepr Format and Codespell Lint Checks\n"
+
+# Run lint-staged for other linting tasks
+OUTPUT=$(npx lint-staged > /dev/null && echo $? || echo $?)
+
+if [ $OUTPUT -eq 0 ]; then
+    echo "\nAll Lints Check Passed - ✅\n"
+    exit 0
+else
+    echo "❌ Pepr Format and Codespell Lint Check failed... Run \`uds run lint-fix\` to resolve issues and re-commit. ❌\n"
+    exit 1
+fi

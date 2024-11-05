@@ -1,6 +1,7 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial
 apiVersion: v2
 name: uds-global-istio-config
-description: Istio configuration for UDS
+description: Global Istio configuration for UDS
 
 # A chart can be either an 'application' or a 'library' chart.
 #

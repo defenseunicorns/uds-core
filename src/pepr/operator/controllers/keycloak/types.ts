@@ -1,3 +1,10 @@
+/**
+ * Copyright 2024 Defense Unicorns
+ * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+ */
+
+import { ProtocolMapper } from "../../crd/generated/package-v1alpha1";
+
 export interface Client {
   alwaysDisplayInConsole: boolean;
   attributes: Record<string, string>;
@@ -17,6 +24,7 @@ export interface Client {
   notBefore: number;
   optionalClientScopes: string[];
   protocol: string;
+  protocolMappers?: ProtocolMapper[];
   publicClient: boolean;
   redirectUris: string[];
   registrationAccessToken?: string;
@@ -48,6 +56,7 @@ export const clientKeys = [
   "notBefore",
   "optionalClientScopes",
   "protocol",
+  "protocolMappers",
   "publicClient",
   "redirectUris",
   "registrationAccessToken",

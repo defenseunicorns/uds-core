@@ -1,3 +1,6 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 kind: ZarfPackageConfig
 metadata:
   name: uds-core-istio-common
@@ -10,7 +13,7 @@ components:
     charts:
       - name: base
         url: https://istio-release.storage.googleapis.com/charts
-        version: 1.23.0
+        version: 1.23.2
         namespace: istio-system
       - name: uds-global-istio-config
         namespace: istio-system
@@ -18,25 +21,20 @@ components:
         localPath: chart
       - name: istiod
         url: https://istio-release.storage.googleapis.com/charts
-        version: 1.23.0
+        version: 1.23.2
         namespace: istio-system
         valuesFiles:
           - "../values/base-istiod.yaml"
       - name: cni
         url: https://istio-release.storage.googleapis.com/charts
-        version: 1.23.0
+        version: 1.23.2
         namespace: istio-system
         valuesFiles:
           - "../values/base-cni.yaml" # values for k3s/k3d cni
       - name: ztunnel
         url: https://istio-release.storage.googleapis.com/charts
-        version: 1.23.0
+        version: 1.23.2
         namespace: istio-system
-    manifests:
-      - name: gateway-api-crds
-        namespace: istio-system
-        files:
-          - https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.1.0/standard-install.yaml
     actions:
       onDeploy:
         before:

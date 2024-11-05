@@ -1,3 +1,6 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 component-definition:
   uuid: D73CF4E6-D893-4BDE-A195-C4DE782DF63B
   metadata:
@@ -44,7 +47,7 @@ component-definition:
             - uuid: 0AE59B43-50A7-4420-881B-E0635CCB8424
               control-id: cp-6.3
               description: >-
-                Velero supports back-ups to multiple cloud environments (including geo-separated locations for high availibility) and on-premise environments in the event of an accessibility disruptions.
+                Velero supports back-ups to multiple cloud environments (including geo-separated locations for high availability) and on-premise environments in the event of an accessibility disruptions.
             - uuid: B11B38B8-8744-4DFD-8C1A-4A4EDD7F9574
               control-id: cp-7
               description: >-
@@ -52,11 +55,11 @@ component-definition:
             - uuid: D74C3A8C-E5B0-4F81-895D-FB2A318D723B
               control-id: cp-7.1
               description: >-
-                Velero supports back-ups to  and restores from multiple cloud environments (including geo-separated locations for high availibility) and on-premise environments in the event of an accessibility disruptions.
+                Velero supports back-ups to  and restores from multiple cloud environments (including geo-separated locations for high availability) and on-premise environments in the event of an accessibility disruptions.
             - uuid: 72D7145F-7A3F-47AF-835F-7E3D6EFAE1CC
               control-id: cp-7.2
               description: >-
-                Velero supports back-ups to  and restores from multiple cloud environments (including geo-separated locations for high availibility) and on-premise environments in the event of an accessibility disruptions.
+                Velero supports back-ups to  and restores from multiple cloud environments (including geo-separated locations for high availability) and on-premise environments in the event of an accessibility disruptions.
             - uuid: 5B0AA4CB-9C49-4D32-8242-5631788BD941
               control-id: cp-9
               description: >-
@@ -78,7 +81,7 @@ component-definition:
             - uuid: C650411C-33FD-4B59-8899-AC34B43C860F
               control-id: cp-9.3
               description: >-
-                Velero supports back-ups to multiple cloud environments (including geo-separated locations for high availibility) and on-premise environments.
+                Velero supports back-ups to multiple cloud environments (including geo-separated locations for high availability) and on-premise environments.
             - uuid: 8AB09B17-301B-4836-835B-9CE22A9E2300
               control-id: cp-9.5
               description: >-

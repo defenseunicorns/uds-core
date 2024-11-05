@@ -1,0 +1,66 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+metadata:
+  name: gateway-configuration-check
+  uuid: b0a8f21e-b12f-47ea-a967-2f4a3ec69e44
+domain:
+  type: kubernetes
+  kubernetes-spec:
+    resources:
+      - name: gateways
+        resource-rule:
+          group: networking.istio.io
+          resource: gateways
+          namespaces: []
+          version: v1beta1
+provider:
+  type: opa
+  opa-spec:
+    rego: |
+      package validate
+      import rego.v1
+
+      # default values
+      default validate := false
+      default msg := "Not evaluated"
+
+      validate if {
+        check_expected_gw.result
+        check_all_gw_found.result
+      }
+
+      msg := concat(" ", [check_expected_gw.msg, check_all_gw_found.msg])
+      msg_existing_gateways := concat(", ", gateways)
+      msg_allowed_gateways := concat(", ", allowed)
+
+      # Check if only allowed gateways are in the system
+      allowed := {"admin", "tenant", "passthrough"}
+      gateways := {sprintf("%s/%s", [gw.metadata.namespace, gw.metadata.name]) | gw := input.gateways[_]}
+      allowed_gateways := {sprintf("%s/%s", [gw.metadata.namespace, gw.metadata.name]) | gw := input.gateways[_]; gw_in_list(gw, allowed)}
+      actual_allowed := {s | g := gateways[_]; s := allowed[_]; contains(g, s)}
+
+      check_expected_gw = {"result": true, "msg": msg} if {
+        gateways == allowed_gateways
+        msg := "Only allowed gateways found."
+      } else = {"result": false, "msg": msg} if {
+          msg := sprintf("Some disallowed gateways found: %v.", [gateways-allowed_gateways])
+      }
+
+      gw_in_list(gw, allowed) if {
+        contains(gw.metadata.name, allowed[_])
+      }
+
+      # Check if the entire set contains all required gateways
+      check_all_gw_found = {"result": true, "msg": msg} if {
+          actual_allowed == allowed
+          msg := "All gateway types found."
+      } else = {"result": false, "msg": msg} if {
+          msg := sprintf("Gateway type(s) missing: %v.", [allowed - actual_allowed])
+      }
+    output:
+      validation: validate.validate
+      observations:
+        - validate.msg
+        - validate.msg_existing_gateways
+        - validate.msg_allowed_gateways

@@ -1,3 +1,8 @@
+/**
+ * Copyright 2024 Defense Unicorns
+ * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+ */
+
 import { beforeEach, describe, expect, jest, test } from "@jest/globals";
 import { UDSPackage } from "../../../crd";
 import { Client } from "../types";
@@ -121,4 +126,157 @@ describe("authservice", () => {
       expect(e).toBeUndefined();
     }
   });
+
+  test("should add multiple chains to authservice", async () => {
+    let config = buildConfig(mockConfig as AuthserviceConfig, {
+      client: mockClient,
+      name: "local",
+      action: Action.Add,
+    });
+
+    config = buildConfig(config, {
+      client: mockClient,
+      name: "some-other-name",
+      action: Action.Add,
+    });
+    config = buildConfig(config, {
+      client: mockClient,
+      name: "some-second-name",
+      action: Action.Add,
+    });
+    config = buildConfig(config, {
+      client: mockClient,
+      name: "some-third-name",
+      action: Action.Add,
+    });
+
+    expect(config.chains.length).toEqual(4);
+  });
+
+  test("should add multiple chains to authservice and be sorted", async () => {
+    let config1 = buildConfig(mockConfig as AuthserviceConfig, {
+      client: mockClient,
+      name: "local",
+      action: Action.Remove,
+    });
+
+    // after sorting, the order should be like so:
+    // const unsortedNames = [
+    //   "first-name"
+    //   "some-fifth-name",
+    //   "some-other-name",
+    //   "some-second-name",
+    //   "some-third-name",
+    // ]
+
+    const unsortedNames = [
+      "some-other-name",
+      "first-name",
+      "some-third-name",
+      "some-second-name",
+      "some-fifth-name",
+    ];
+    shuffleArray(unsortedNames);
+    unsortedNames.map(val => {
+      config1 = buildConfig(config1, {
+        client: mockClient,
+        name: val,
+        action: Action.Add,
+      });
+    });
+
+    expect(config1.chains.length).toEqual(5);
+    expect(config1.chains[0].name).toEqual("first-name");
+  });
+
+  test("should add multiple chains to authservice and be sorted, with removals", async () => {
+    let config1 = buildConfig(mockConfig as AuthserviceConfig, {
+      client: mockClient,
+      name: "local",
+      action: Action.Remove,
+    });
+
+    const unsortedNames = [
+      "some-other-name",
+      "first-name",
+      "some-second-name",
+      "some-third-name",
+      "some-fifth-name",
+    ];
+    shuffleArray(unsortedNames);
+    unsortedNames.map(val => {
+      config1 = buildConfig(config1, {
+        client: mockClient,
+        name: val,
+        action: Action.Add,
+      });
+    });
+
+    expect(config1.chains.length).toEqual(5);
+    expect(config1.chains[0].name).toEqual("first-name");
+    expect(config1.chains[4].name).toEqual("some-third-name");
+
+    config1 = buildConfig(config1, {
+      client: mockClient,
+      name: "some-third-name",
+      action: Action.Remove,
+    });
+
+    expect(config1.chains.length).toEqual(4);
+    expect(config1.chains[0].name).toEqual("first-name");
+    expect(config1.chains[3].name).toEqual("some-second-name");
+
+    config1 = buildConfig(config1, {
+      client: mockClient,
+      name: "some-fifth-name",
+      action: Action.Remove,
+    });
+
+    expect(config1.chains.length).toEqual(3);
+    expect(config1.chains[0].name).toEqual("first-name");
+    expect(config1.chains[2].name).toEqual("some-second-name");
+
+    config1 = buildConfig(config1, {
+      client: mockClient,
+      name: "aaaa-final",
+      action: Action.Add,
+    });
+    expect(config1.chains.length).toEqual(4);
+    expect(config1.chains[0].name).toEqual("aaaa-final");
+
+    config1 = buildConfig(config1, {
+      client: mockClient,
+      name: "1-something",
+      action: Action.Add,
+    });
+
+    config1 = buildConfig(config1, {
+      client: mockClient,
+      name: "10-something",
+      action: Action.Add,
+    });
+
+    config1 = buildConfig(config1, {
+      client: mockClient,
+      name: "2-something",
+      action: Action.Add,
+    });
+    expect(config1.chains.length).toEqual(7);
+    expect(config1.chains[0].name).toEqual("1-something");
+    expect(config1.chains[1].name).toEqual("10-something");
+    expect(config1.chains[2].name).toEqual("2-something");
+  });
 });
+
+/**
+ * Randomize array in-place using Durstenfeld shuffle algorithm
+ * ripped this from some source on the internet
+ * */
+function shuffleArray(array: string[]) {
+  for (let i = array.length - 1; i >= 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const temp = array[i];
+    array[i] = array[j];
+    array[j] = temp;
+  }
+}

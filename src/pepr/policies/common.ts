@@ -1,3 +1,8 @@
+/**
+ * Copyright 2024 Defense Unicorns
+ * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+ */
+
 import { KubernetesObject, V1Container, V1SecurityContext } from "@kubernetes/client-node";
 import { Capability, PeprMutateRequest, PeprValidateRequest, a } from "pepr";
 import { Policy } from "../operator/crd";
@@ -107,6 +112,9 @@ export function annotateMutation<T extends KubernetesObject>(
   const annotations = request.Raw.metadata?.annotations ?? {};
   const valStr = annotations[key];
   const arr = JSON.parse(valStr || "[]");
-  arr.push(transform(policy));
+  const safePolicyName = transform(policy);
+  if (!arr.includes(safePolicyName)) {
+    arr.push(safePolicyName);
+  }
   request.SetAnnotation(key, JSON.stringify(arr));
 }

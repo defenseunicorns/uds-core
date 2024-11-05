@@ -1,8 +1,6 @@
 # Welcome to UDS Core
 
-Thank you for your interest in Defense Unicorns UDS Core!
-
-This document describes the process and requirements for contributing to this UDS Core repo.
+Thank you for your interest in contributing to Defense Unicorns UDS Core! This document will guide you through the contribution process.
 
 ## Table of Contents
 
@@ -20,25 +18,97 @@ Continuous Delivery is core to our development philosophy. Check out [https://mi
 
 Specifically:
 
-* We do trunk-based development (main) with short-lived feature branches that originate from the trunk, get merged into the trunk, and are deleted after the merge
-* We don't merge code into main that isn't releasable
-* We perform automated testing on all changes before they get merged to main
-* Continuous integration (CI) pipeline tests are definitive
-* We create immutable release artifacts
+- We practice trunk-based development (main) with short-lived feature branches that are merged and deleted after the merge.
+- We don't merge code into main that isn't releasable.
+- All changes are tested automatically before being merged into main.
+- Continuous integration (CI) pipeline tests are the source of truth.
+- We produce immutable release artifacts.
+
+### Pre-Commit Checks
+
+We use [codespell](https://github.com/codespell-project/codespell) and [yamllint](https://yamllint.readthedocs.io/en/stable/) for pre-commit checks. Please install these before committing, or your commit may fail.
+
+To install these tools, run:
+
+```console
+uds run lint-check
+```
+
+Alternatively, you can install them with `pip`:
+
+```console
+pip install yamllint codespell
+```
 
 ## Definition of Done
 
-We apply these general principles to all User Stories and activities contributing to the UDS.
+We apply these principles to all User Stories and contributions:
 
-* Automated continuous integration (CI) pipeline tests pass
-* CI pipeline tests have been updated to meet system changes
-* Changes are peer reviewed
-* Acceptance criteria is met
-* Documentation is updated to reflect what changed
+- Automated continuous integration (CI) pipeline tests pass
+- CI tests are updated to cover new system changes
+- Changes are peer-reviewed
+- Acceptance criteria is met
+- Documentation is updated to reflect changes
+
+### Testing
+
+Each individual component of UDS Core contains lightweight validations in its own `src/<component>/tasks.yaml` file. These validations focus on the bare minimum functionality, typically covering pod health and endpoint accessibility.
+
+We also place end-to-end tests under the `e2e` folder. In particular we use [Playwright](https://playwright.dev/) for browser based testing and have authentication setup to login to applications with a shared SSO session. Playwright provides a [test recorder](https://playwright.dev/docs/codegen#generate-tests-with-the-playwright-inspector) which can be beneficial to get a quickstart on new tests.
+
+In general our testing focuses on the unique configuration and setup provided by UDS Core, rather than exhaustive functionality testing. We take this approach since each of the opensource applications we package and configure also have extensive end-to-end testing in their upstream repositories.
 
 ## Getting Started
 
-TBD
+This section will help you get set up and ready to contribute to UDS Core.
+
+### 1. Prerequisites
+
+Before starting, ensure that you have the following installed:
+
+- **Git**: [Install Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
+- **K3d**: [Install K3d](https://k3d.io/#installation)
+- **Node.js** (for building and running Pepr): [Install Node.js](https://nodejs.org/en/download/)
+- **UDS CLI** (for running tasks and deploying): [Install UDS](https://uds.defenseunicorns.com/cli/quickstart-and-usage/)
+
+### 2. Clone the Repository and Make a Branch
+
+Clone the UDS Core repository to your local machine using Git (note that you may want to [fork](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo) this repository):
+
+```console
+git clone https://github.com/DefenseUnicorns/uds-core.git
+cd uds-core
+```
+
+Then make a branch for your changes:
+
+```console
+git checkout -b my-feature-branch
+```
+
+### 3. Make Changes and Test Locally
+
+Make the changes to add the new feature, bug fix, or other change necessary. Keep in mind any documentation or testing changes that are relevant while making code changes.
+
+When you are ready to test locally you can run the same tests as CI using the below UDS commands:
+
+```console
+# Lightweight validations
+uds run test-uds-core
+
+# Full e2e tests (run in CI)
+uds run test:uds-core-e2e
+```
+
+Each of these tasks will create a local k3d cluster, install UDS Core, and run a series of tests against it, the same tests that are run in CI.
+
+If you want to run a subset of core for faster iterations against a specific package, you can use the `LAYER` variable with the below task (example for metrics-server):
+
+```console
+uds run test-single-layer --set LAYER=metrics-server
+```
+
+Note you can also specify the `--set FLAVOR=<registry1/unicorn>` flag to test using with either the Iron Bank or Unicorn sourced images instead of the upstream ones.
 
 ## Submitting a Pull Request
 

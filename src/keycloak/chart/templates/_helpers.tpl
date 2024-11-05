@@ -89,7 +89,7 @@ Check external PostgreSQL connection information. Fails when required values are
 {{- else -}}{{fail "You must define \"username\", \"password\", \"database\", \"host\", and \"port\" for \"postgresql\"."}}
 {{- end -}}
 {{- default "true" "" }}
-{{- else if not (empty (compact (values (omit .Values.postgresql "port")))) -}}
+{{- else if not (empty (compact (values (omit .Values.postgresql "port" "internal")))) -}}
 {{ fail "Cannot use an external PostgreSQL Database when devMode is enabled." -}}
 {{- else -}}
 {{ default "false" "" }}

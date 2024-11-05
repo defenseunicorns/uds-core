@@ -1,27 +1,37 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 all:
   - "**"
 
-authservice:
-  - "src/authservice/**"
-grafana:
-  - "src/grafana/**"
-istio:
+base:
+  - "packages/base/**"
   - "src/istio/**"
-keycloak:
+  - "src/pepr/**"
+
+identity-authorization:
+  - "packages/identity-authorization/**"
   - "src/keycloak/**"
-kiali:
-  - "src/kiali/**"
-loki:
+  - "src/authservice/**"
+
+logging:
+  - "packages/logging/**"
   - "src/loki/**"
-metrics-server:
-  - "src/metrics-server/**"
-neuvector:
+  - "src/vector/**"
+
+runtime-security:
+  - "packages/runtime-security/**"
   - "src/neuvector/**"
-prometheus-stack:
-  - "src/prometheus-stack/**"
-promtail:
-  - "src/promtail/**"
-tempo:
-  - "src/tempo/**"
-velero:
+
+backup-restore:
+  - "packages/backup-restore/**"
   - "src/velero/**"
+
+metrics-server:
+  - "packages/metrics-server/**"
+  - "src/metrics-server/**"
+
+monitoring:
+  - "packages/monitoring/**"
+  - "src/prometheus-stack/**"
+  - "src/grafana/**"

@@ -1,3 +1,6 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 kind: ZarfPackageConfig
 metadata:
   name: uds-core-neuvector-common
@@ -11,7 +14,7 @@ components:
     charts:
       - name: crd
         url: https://neuvector.github.io/neuvector-helm/
-        version: 2.7.8
+        version: 2.7.9
         namespace: neuvector
         gitPath: charts/crd
       - name: uds-neuvector-config
@@ -20,18 +23,18 @@ components:
         localPath: ../chart
       - name: core
         url: https://neuvector.github.io/neuvector-helm/
-        version: 2.7.8
+        version: 2.7.9
         namespace: neuvector
         gitPath: charts/core
         valuesFiles:
           - ../values/values.yaml
-      - name: monitor
-        url: https://neuvector.github.io/neuvector-helm/
-        version: 2.7.8
-        namespace: neuvector
-        gitPath: charts/monitor
-        valuesFiles:
-          - ../values/monitor-values.yaml
+      # - name: monitor
+      #   url: https://neuvector.github.io/neuvector-helm/
+      #   version: 2.7.9
+      #   namespace: neuvector
+      #   gitPath: charts/monitor
+      #   valuesFiles:
+      #     - ../values/monitor-values.yaml
     actions:
       onDeploy:
         after:
@@ -39,7 +42,7 @@ components:
             maxTotalSeconds: 300
             wait:
               cluster:
-                kind: Packages
+                kind: packages.uds.dev
                 name: neuvector
                 namespace: neuvector
                 condition: "'{.status.phase}'=Ready"

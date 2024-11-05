@@ -1,3 +1,8 @@
+/**
+ * Copyright 2024 Defense Unicorns
+ * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+ */
+
 import { K8s, kind } from "pepr";
 
 import { Component, setupLogger } from "../../logger";
@@ -13,11 +18,13 @@ const log = setupLogger(Component.OPERATOR_RECONCILERS);
  * Checks if the CRD is pending or the current generation has been processed
  *
  * @param cr The custom resource to check
- * @returns true if the CRD is pending or the current generation has been processed
+ * @returns true if the CRD is removing, pending, or the current generation has already been processed
  */
 export function shouldSkip(cr: UDSPackage) {
   const isRetrying = cr.status?.phase === Phase.Retrying;
   const isPending = cr.status?.phase === Phase.Pending;
+  // Check for status removing OR a deletion timestamp present
+  const isRemoving = cr.status?.phase === Phase.Removing || cr.metadata?.deletionTimestamp;
   const isCurrentGeneration = cr.metadata?.generation === cr.status?.observedGeneration;
 
   // First check if the CR has been seen before and return false if it has not
@@ -31,6 +38,12 @@ export function shouldSkip(cr: UDSPackage) {
   if (isRetrying) {
     log.debug(cr, `Should skip? No, retrying`);
     return false;
+  }
+
+  // If the CR is removing, it should be skipped
+  if (isRemoving) {
+    log.debug(cr, `Should skip? Yes, removing`);
+    return true;
   }
 
   // This is the second time the CR has been seen, so check if it is pending or the current generation

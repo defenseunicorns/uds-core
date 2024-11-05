@@ -1,3 +1,6 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 image:
   repository: registry.k8s.io/metrics-server/metrics-server
-  tag: "v0.7.1"
+  tag: "v0.7.2"

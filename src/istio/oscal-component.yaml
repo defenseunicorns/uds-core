@@ -1,1392 +1,329 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 component-definition:
-  back-matter:
-    resources:
-      - rlinks:
-          - href: https://github.com/istio/istio/
-        title: Istio Operator
-        uuid: 60826461-D279-468C-9E4B-614FAC44A306
-      - description: |
-          domain:
-            kubernetes-spec:
-              create-resources: null
-              resources:
-              - description: ""
-                name: istioMeshConfig
-                resource-rule:
-                  field:
-                    base64: false
-                    jsonpath: .data.mesh
-                    type: yaml
-                  group: ""
-                  name: istio
-                  namespaces:
-                  - istio-system
-                  resource: configmaps
-                  version: v1
-            type: kubernetes
-          lula-version: ""
-          metadata:
-            name: check-istio-logging-all-traffic
-            uuid: 90738c86-6315-450a-ac69-cc50eb4859cc
-          provider:
-            opa-spec:
-              output:
-                observations:
-                - validate.msg
-                validation: validate.validate
-              rego: |
-                package validate
-
-                # Default policy result
-                default validate = false
-                default msg = "Logging not enabled or configured"
-
-                # Check if Istio's Mesh Configuration has logging enabled
-                validate {
-                  logging_enabled.result
-                }
-
-                msg = logging_enabled.msg
-
-                logging_enabled = {"result": true, "msg": msg} {
-                  # Check for access log file output to stdout
-                  input.istioMeshConfig.accessLogFile == "/dev/stdout"
-                  msg := "Istio is logging all traffic"
-                } else = {"result": false, "msg": msg} {
-                  msg := "Istio is not logging all traffic"
-                }
-            type: opa
-        title: check-istio-logging-all-traffic
-        uuid: 90738c86-6315-450a-ac69-cc50eb4859cc
-      - description: |
-          domain:
-            kubernetes-spec:
-              create-resources: null
-              resources:
-              - description: ""
-                name: pods
-                resource-rule:
-                  group: ""
-                  name: ""
-                  namespaces: []
-                  resource: pods
-                  version: v1
-            type: kubernetes
-          lula-version: ""
-          metadata:
-            name: istio-prometheus-annotations-validation
-            uuid: f345c359-3208-46fb-9348-959bd628301e
-          provider:
-            opa-spec:
-              output:
-                observations:
-                - validate.msg
-                - validate.exempt_namespaces_msg
-                validation: validate.validate
-              rego: |
-                package validate
-                import future.keywords.in
-
-                # Default policy result
-                default validate = false
-                default msg = "Not evaluated"
-
-                # Check for required Istio and Prometheus annotations
-                validate {
-                  has_prometheus_annotation.result
-                }
-                msg = has_prometheus_annotation.msg
-
-                # Check for prometheus annotations in pod spec
-                no_annotation = [sprintf("%s/%s", [pod.metadata.namespace, pod.metadata.name]) | pod := input.pods[_]; not contains_annotation(pod); not is_exempt(pod)]
-
-                has_prometheus_annotation = {"result": true, "msg": msg} {
-                  count(no_annotation) == 0
-                    msg := "All pods have correct prometheus annotations."
-                } else = {"result": false, "msg": msg} {
-                  msg := sprintf("Prometheus annotations not found in pods: %s.", [concat(", ", no_annotation)])
-                }
-
-                contains_annotation(pod) {
-                  annotations := pod.metadata.annotations
-                  annotations["prometheus.io/scrape"] == "true"
-                  annotations["prometheus.io/path"] != ""
-                  annotations["prometheus.io/port"] == "15020"
-                }
-
-                # Exemptions
-                exempt_namespaces = {"kube-system", "istio-system", "uds-dev-stack", "zarf"}
-                exempt_namespaces_msg = sprintf("Exempted Namespaces: %s", [concat(", ", exempt_namespaces)])
-                is_exempt(pod) {
-                    pod.metadata.namespace in exempt_namespaces
-                }
-            type: opa
-        title: istio-prometheus-annotations-validation
-        uuid: f345c359-3208-46fb-9348-959bd628301e
-      - description: |
-          domain:
-            kubernetes-spec:
-              create-resources: null
-              resources:
-              - description: ""
-                name: pods
-                resource-rule:
-                  group: ""
-                  name: ""
-                  namespaces: []
-                  resource: pods
-                  version: v1
-            type: kubernetes
-          lula-version: ""
-          metadata:
-            name: all-pods-istio-injected
-            uuid: 1761ac07-80dd-47d2-947e-09f67943b986
-          provider:
-            opa-spec:
-              output:
-                observations:
-                - validate.msg
-                - validate.exempt_namespaces_msg
-                validation: validate.validate
-              rego: |
-                package validate
-                import rego.v1
-
-                # Default policy result
-                default validate := false
-                default msg := "Not evaluated"
-
-                exempt_namespaces := {"kube-system", "istio-system", "uds-dev-stack", "zarf", "istio-admin-gateway", "istio-tenant-gateway", "istio-passthrough-gateway"}
-                exempt_namespaces_msg = sprintf("Exempted Namespaces: %s", [concat(", ", exempt_namespaces)])
-
-                validate if {
-                  has_istio_sidecar.result
-                }
-                msg = has_istio_sidecar.msg
-
-                # Check for sidecar and init containers in pod spec
-                no_sidecar = [sprintf("%s/%s", [pod.metadata.namespace, pod.metadata.name]) | pod := input.pods[_]; not has_sidecar(pod); not is_exempt(pod)]
-
-                has_istio_sidecar = {"result": true, "msg": msg} if {
-                  count(no_sidecar) == 0
-                  msg := "All pods have Istio sidecar proxy."
-                } else = {"result": false, "msg": msg} if {
-                  msg := sprintf("Istio sidecar proxy not found in pods: %s.", [concat(", ", no_sidecar)])
-                }
-
-                has_sidecar(pod) if {
-                  status := pod.metadata.annotations["sidecar.istio.io/status"]
-                  containers := json.unmarshal(status).containers
-                  initContainers := json.unmarshal(status).initContainers
-
-                  has_container_name(pod.spec.containers, containers)
-                  has_container_name(pod.spec.initContainers, initContainers)
-                } else = false
-
-                has_container_name(containers, names) if {
-                  container := containers[_]
-                  container.name in names
-                }
-
-                is_exempt(pod) if {
-                  pod.metadata.namespace in exempt_namespaces
-                }
-            type: opa
-        title: all-pods-istio-injected
-        uuid: 1761ac07-80dd-47d2-947e-09f67943b986
-      - description: |
-          domain:
-            kubernetes-spec:
-              create-resources: null
-              resources:
-              - description: ""
-                name: adminGateway
-                resource-rule:
-                  group: networking.istio.io
-                  name: admin-gateway
-                  namespaces:
-                  - istio-admin-gateway
-                  resource: gateways
-                  version: v1beta1
-              - description: ""
-                name: virtualServices
-                resource-rule:
-                  group: networking.istio.io
-                  name: ""
-                  namespaces: []
-                  resource: virtualservices
-                  version: v1beta1
-            type: kubernetes
-          lula-version: ""
-          metadata:
-            name: check-istio-admin-gateway-and-usage
-            uuid: c6c9daf1-4196-406d-8679-312c0512ab2e
-          provider:
-            opa-spec:
-              output:
-                observations:
-                - validate.msg
-                validation: validate.validate
-              rego: |
-                package validate
-
-                # Expected admin gateway details
-                expected_gateway := "admin-gateway"
-                expected_gateway_namespace := "istio-admin-gateway"
-                expected_ns_name := sprintf("%s/%s", [expected_gateway_namespace, expected_gateway])
-
-                # Default policy result
-                default validate = false
-                default admin_gw_exists = false
-                default admin_vs_match = false
-                default msg = "Not evaluated"
-
-                validate {
-                  result_admin_gw_exixts.result
-                  result_admin_vs_match.result
-                }
-
-                msg = concat(" ", [result_admin_gw_exixts.msg, result_admin_vs_match.msg])
-
-                result_admin_gw_exixts = {"result": true, "msg": msg} {
-                  input.adminGateway.kind == "Gateway"
-                  input.adminGateway.metadata.name == expected_gateway
-                  input.adminGateway.metadata.namespace == expected_gateway_namespace
-                  msg := "Admin gateway exists."
-                } else = {"result": false, "msg": msg} {
-                  msg := "Admin gateway does not exist."
-                }
-
-                result_admin_vs_match = {"result": true, "msg": msg}{
-                  count(admin_vs-admin_vs_using_gateway) == 0
-                  count(all_vs_using_gateway-admin_vs_using_gateway) == 0
-                  msg := "Admin virtual services are using admin gateway."
-                } else = {"result": false, "msg": msg} {
-                  msg := sprintf("Mismatch of admin virtual services using gateway. Admin VS not using GW: %s. Non-Admin VS using gateway: %s.", [concat(", ", admin_vs-admin_vs_using_gateway), concat(", ", all_vs_using_gateway-admin_vs_using_gateway)])
-                }
-
-                # Count admin virtual services
-                admin_vs := {adminVs.metadata.name | adminVs := input.virtualServices[_]; adminVs.kind == "VirtualService"; contains(adminVs.metadata.name, "admin")}
-
-                # Count admin VirtualServices correctly using the admin gateway (given by vs name containing "admin")
-                admin_vs_using_gateway := {adminVs.metadata.name | adminVs := input.virtualServices[_]; adminVs.kind == "VirtualService"; contains(adminVs.metadata.name, "admin"); adminVs.spec.gateways[_] == expected_ns_name}
-
-                # Count all VirtualServices using the admin gateway
-                all_vs_using_gateway := {vs.metadata.name | vs := input.virtualServices[_]; vs.kind == "VirtualService"; vs.spec.gateways[_] == expected_ns_name}
-            type: opa
-        title: check-istio-admin-gateway-and-usage
-        uuid: c6c9daf1-4196-406d-8679-312c0512ab2e
-      - description: |
-          domain:
-            kubernetes-spec:
-              create-resources: null
-              resources:
-              - description: ""
-                name: istioConfig
-                resource-rule:
-                  field:
-                    base64: false
-                    jsonpath: .data.mesh
-                    type: yaml
-                  group: ""
-                  name: istio
-                  namespaces:
-                  - istio-system
-                  resource: configmaps
-                  version: v1
-            type: kubernetes
-          lula-version: ""
-          metadata:
-            name: istio-metrics-logging-configured
-            uuid: 70d99754-2918-400c-ac9a-319f874fff90
-          provider:
-            opa-spec:
-              output:
-                observations:
-                - validate.msg
-                validation: validate.validate
-              rego: |
-                package validate
-
-                # Default policy result
-                default validate = false
-                default msg = "Not evaluated"
-
-                # Validate Istio configuration for metrics logging support
-                validate {
-                  check_metrics_enabled.result
-                }
-                msg = check_metrics_enabled.msg
-
-                check_metrics_enabled = { "result": false, "msg": msg } {
-                  input.istioConfig.enablePrometheusMerge == false
-                  msg := "Metrics logging not supported."
-                } else = { "result": true, "msg": msg } {
-                  msg := "Metrics logging supported."
-                }
-            type: opa
-        title: istio-metrics-logging-configured
-        uuid: 70d99754-2918-400c-ac9a-319f874fff90
-      - description: |
-          lula-version: ""
-          metadata:
-            name: communications-terminated-after-inactivity-PLACEHOLDER
-            uuid: 663f5e92-6db4-4042-8b5a-eba3ebe5a622
-          provider:
-            opa-spec:
-              rego: |
-                package validate
-                validate := false
-
-                # Check on destination rule, outlier detection?
-                # -> Doesn't appear that UDS is configured to create destination rules.
-            type: opa
-        title: communications-terminated-after-inactivity-PLACEHOLDER
-        uuid: 663f5e92-6db4-4042-8b5a-eba3ebe5a622
-      - description: |
-          lula-version: ""
-          metadata:
-            name: tls-origination-at-egress-PLACEHOLDER
-            uuid: 8be1601e-5870-4573-ab4f-c1c199944815
-          provider:
-            opa-spec:
-              rego: |
-                package validate
-                default validate := false
-                # How to prove TLS origination is configured at egress
-                # DestinationRule?
-            type: opa
-        title: tls-origination-at-egress-PLACEHOLDER
-        uuid: 8be1601e-5870-4573-ab4f-c1c199944815
-      - description: |
-          lula-version: ""
-          metadata:
-            name: fips-evaluation-PLACEHOLDER
-            uuid: 73434890-2751-4894-b7b2-7e583b4a8977
-        title: fips-evaluation-PLACEHOLDER
-        uuid: 73434890-2751-4894-b7b2-7e583b4a8977
-      - description: |
-          domain:
-            kubernetes-spec:
-              create-resources: null
-              resources:
-              - description: ""
-                name: authorizationPolicy
-                resource-rule:
-                  group: security.istio.io
-                  name: keycloak-block-admin-access-from-public-gateway
-                  namespaces:
-                  - keycloak
-                  resource: authorizationpolicies
-                  version: v1beta1
-            type: kubernetes
-          lula-version: ""
-          metadata:
-            name: istio-enforces-authorized-keycloak-access
-            uuid: fbd877c8-d6b6-4d88-8685-2c4aaaab02a1
-          provider:
-            opa-spec:
-              output:
-                observations:
-                - validate.msg
-                validation: validate.validate
-              rego: |
-                package validate
-                import rego.v1
-
-                # Default policy result
-                default validate := false
-                default msg := "Not evaluated"
-
-                # Validate both AuthorizationPolicy restricts access to Keycloak admin
-                validate if {
-                  check_auth_policy_for_keycloak_admin_access.result
-                }
-
-                msg = check_auth_policy_for_keycloak_admin_access.msg
-
-                check_auth_policy_for_keycloak_admin_access = {"result": true, "msg": msg} if {
-                  input.authorizationPolicy.kind == "AuthorizationPolicy"
-                  valid_auth_policy(input.authorizationPolicy)
-                  msg := "AuthorizationPolicy restricts access to Keycloak admin."
-                } else = {"result": false, "msg": msg} if {
-                  msg := "AuthorizationPolicy does not restrict access to Keycloak admin."
-                }
-
-                # Define the rule for denying access
-                expected_keycloak_admin_denial_rule := {
-                  "from": [
-                    {
-                      "source": {
-                        "notNamespaces": ["istio-admin-gateway"]
-                      }
-                    }
-                  ],
-                  "to": [
-                    {
-                      "operation": {
-                        "ports": ["8080"],
-                        "paths": ["/admin*", "/realms/master*"]
-                      }
-                    }
-                  ]
-                }
-
-                # Validate that the authorization policy contains the expected first rule
-                valid_auth_policy(ap) if {
-                  ap.spec.action == "DENY"
-                  rules := ap.spec.rules
-
-                  # Ensure the expected rule is present in the input policy
-                  some i
-                  rules[i] == expected_keycloak_admin_denial_rule
-                }
-            type: opa
-        title: istio-enforces-authorized-keycloak-access
-        uuid: fbd877c8-d6b6-4d88-8685-2c4aaaab02a1
-      - description: |
-          domain:
-            kubernetes-spec:
-              create-resources: null
-              resources:
-              - description: ""
-                name: istioConfig
-                resource-rule:
-                  field:
-                    base64: false
-                    jsonpath: .data.mesh
-                    type: yaml
-                  group: ""
-                  name: istio
-                  namespaces:
-                  - istio-system
-                  resource: configmaps
-                  version: v1
-            type: kubernetes
-          lula-version: ""
-          metadata:
-            name: istio-tracing-logging-support
-            uuid: f346b797-be35-40a8-a93a-585db6fd56ec
-          provider:
-            opa-spec:
-              output:
-                observations:
-                - validate.msg
-                validation: validate.validate
-              rego: |
-                package validate
-
-                # Default policy result
-                default validate = false
-                default msg = "Not evaluated"
-
-                # Validate Istio configuration for event logging support
-                validate {
-                  check_tracing_enabled.result
-                }
-                msg = check_tracing_enabled.msg
-
-                check_tracing_enabled = { "result": true, "msg": msg } {
-                  input.istioConfig.defaultConfig.tracing != null
-                  input.istioConfig.defaultConfig.tracing.zipkin.address != ""
-                  msg := "Tracing logging supported."
-                } else = { "result": false, "msg": msg } {
-                  msg := "Tracing logging not supported."
-                }
-            type: opa
-        title: istio-tracing-logging-support
-        uuid: f346b797-be35-40a8-a93a-585db6fd56ec
-      - description: |
-          lula-version: ""
-          metadata:
-            name: egress-gateway-exists-and-configured-PLACEHOLDER
-            uuid: ecdb90c7-971a-4442-8f29-a8b0f6076bc9
-        title: egress-gateway-exists-and-configured-PLACEHOLDER
-        uuid: ecdb90c7-971a-4442-8f29-a8b0f6076bc9
-      - description: |
-          domain:
-            kubernetes-spec:
-              create-resources: null
-              resources:
-              - description: ""
-                name: networkPolicies
-                resource-rule:
-                  group: networking.k8s.io
-                  name: ""
-                  namespaces: []
-                  resource: networkpolicies
-                  version: v1
-            type: kubernetes
-          lula-version: ""
-          metadata:
-            name: secure-communication-with-istiod
-            uuid: 570e2dc7-e6c2-4ad5-8ea3-f07974f59747
-          provider:
-            opa-spec:
-              output:
-                observations:
-                - validate.msg_correct
-                - validate.msg_incorrect
-                validation: validate.validate
-              rego: |
-                package validate
-
-                # Default policy result
-                default validate = false
-                default msg_correct = "Not evaluated"
-                default msg_incorrect = "Not evaluated"
-
-                # Expected values
-                expected_istiod_port := 15012
-                expected_istiod_protocol := "TCP"
-                required_namespaces := {"authservice", "grafana", "keycloak", "loki", "metrics-server", "monitoring", "neuvector", "promtail", "velero"}
-
-                # Validate NetworkPolicy for Istiod in required namespaces
-                validate {
-                  count(required_namespaces - correct_istiod_namespaces) == 0
-                }
-
-                msg_correct = sprintf("NetworkPolicies correctly configured for istiod in namespaces: %v.", [concat(", ", correct_istiod_namespaces)])
-                msg_incorrect = msg {
-                  missing_namespace := required_namespaces - correct_istiod_namespaces
-                  count(missing_namespace) > 0
-                  msg := sprintf("NetworkPolicies not correctly configured for istiod in namespaces: %v.", [concat(", ", missing_namespace)])
-                } else = "No incorrect istiod NetworkPolicies found."
-
-                # Helper to find correct NetworkPolicies
-                correct_istiod_policies = {policy |
-                  policy := input.networkPolicies[_]
-                  policy.spec.egress[_].to[_].podSelector.matchLabels["istio"] == "pilot"
-                  policy.spec.egress[_].ports[_].port == expected_istiod_port
-                  policy.spec.egress[_].ports[_].protocol == expected_istiod_protocol
-                }
-
-                # Helper to extract namespaces of correct NetworkPolicies
-                correct_istiod_namespaces = {policy.metadata.namespace |
-                  policy := correct_istiod_policies[_]
-                }
-            type: opa
-        title: secure-communication-with-istiod
-        uuid: 570e2dc7-e6c2-4ad5-8ea3-f07974f59747
-      - description: |
-          domain:
-            kubernetes-spec:
-              create-resources: null
-              resources:
-              - description: ""
-                name: peerAuths
-                resource-rule:
-                  group: security.istio.io
-                  name: ""
-                  namespaces: []
-                  resource: peerauthentications
-                  version: v1beta1
-            type: kubernetes
-          lula-version: ""
-          metadata:
-            name: enforce-mtls-strict
-            uuid: ca49ac97-487a-446a-a0b7-92b20e2c83cb
-          provider:
-            opa-spec:
-              output:
-                observations:
-                - validate.msg
-                validation: validate.validate
-              rego: |
-                package validate
-
-                import future.keywords.every
-
-                # Default policy result
-                default validate = false
-                default all_strict = false
-                default msg = "Not evaluated"
-
-                validate {
-                  result_all_strict.result
-                }
-
-                msg = concat(" ", [result_all_strict.msg])
-
-                # Rego policy logic to evaluate if all PeerAuthentications have mtls mode set to STRICT
-                result_all_strict = {"result": true, "msg": msg} {
-                    every peerAuthentication in input.peerAuths {
-                        mode := peerAuthentication.spec.mtls.mode
-                        mode == "STRICT"
-                    }
-                    msg := "All PeerAuthentications have mtls mode set to STRICT."
-                } else = {"result": false, "msg": msg} {
-                    msg := "Not all PeerAuthentications have mtls mode set to STRICT."
-                }
-            type: opa
-        title: enforce-mtls-strict
-        uuid: ca49ac97-487a-446a-a0b7-92b20e2c83cb
-      - description: |
-          lula-version: ""
-          metadata:
-            name: authorized-traffic-egress-PLACEHOLDER
-            uuid: 7455f86d-b79c-4226-9ce3-f3fb7d9348c8
-        title: authorized-traffic-egress-PLACEHOLDER
-        uuid: 7455f86d-b79c-4226-9ce3-f3fb7d9348c8
-      - description: |
-          domain:
-            kubernetes-spec:
-              create-resources: null
-              resources:
-              - description: ""
-                name: namespaces
-                resource-rule:
-                  group: ""
-                  name: ""
-                  namespaces: []
-                  resource: namespaces
-                  version: v1
-            type: kubernetes
-          lula-version: ""
-          metadata:
-            name: all-namespaces-istio-injected
-            uuid: 0da39859-a91a-4ca6-bd8b-9b117689188f
-          provider:
-            opa-spec:
-              output:
-                observations:
-                - validate.msg
-                - validate.exempted_namespaces_msg
-                validation: validate.validate
-              rego: |
-                package validate
-                import future.keywords.every
-                import future.keywords.in
-
-                default validate = false
-                default msg = "Not evaluated"
-
-                # Validation
-                validate {
-                  check_non_istio_injected_namespaces.result
-                }
-                msg = check_non_istio_injected_namespaces.msg
-                exempted_namespaces_msg = sprintf("Exempted Namespaces: %s", [concat(", ", exempted_namespaces)])
-
-                # List of exempted namespaces
-                exempted_namespaces := {"istio-system", "kube-system", "default", "istio-admin-gateway",
-                "istio-passthrough-gateway", "istio-tenant-gateway", "kube-node-lease", "kube-public", "uds-crds",
-                 "uds-dev-stack", "uds-policy-exemptions", "zarf"}
-
-                # Collect non-Istio-injected namespaces
-                non_istio_injected_namespaces := {ns.metadata.name |
-                  ns := input.namespaces[_]
-                  ns.kind == "Namespace"
-                  not ns.metadata.labels["istio-injection"] == "enabled"
-                  not ns.metadata.name in exempted_namespaces
-                }
-
-                # Check no non-Istio-injected namespaces
-                check_non_istio_injected_namespaces = { "result": true, "msg": "All namespaces are Istio-injected" } {
-                  count(non_istio_injected_namespaces) == 0
-                } else = { "result": false, "msg": msg } {
-                  msg := sprintf("Non-Istio-injected namespaces: %v", [non_istio_injected_namespaces])
-                }
-            type: opa
-        title: all-namespaces-istio-injected
-        uuid: 0da39859-a91a-4ca6-bd8b-9b117689188f
-      - description: |
-          domain:
-            kubernetes-spec:
-              create-resources: null
-              resources:
-              - description: ""
-                name: gateways
-                resource-rule:
-                  group: networking.istio.io
-                  name: ""
-                  namespaces: []
-                  resource: gateways
-                  version: v1beta1
-            type: kubernetes
-          lula-version: ""
-          metadata:
-            name: gateway-configuration-check
-            uuid: b0a8f21e-b12f-47ea-a967-2f4a3ec69e44
-          provider:
-            opa-spec:
-              output:
-                observations:
-                - validate.msg
-                - validate.msg_existing_gateways
-                - validate.msg_allowed_gateways
-                validation: validate.validate
-              rego: |
-                package validate
-                import rego.v1
-
-                # default values
-                default validate := false
-                default msg := "Not evaluated"
-
-                validate if {
-                  check_expected_gw.result
-                  check_all_gw_found.result
-                }
-
-                msg := concat(" ", [check_expected_gw.msg, check_all_gw_found.msg])
-                msg_existing_gateways := concat(", ", gateways)
-                msg_allowed_gateways := concat(", ", allowed)
-
-                # Check if only allowed gateways are in the system
-                allowed := {"admin", "tenant", "passthrough"}
-                gateways := {sprintf("%s/%s", [gw.metadata.namespace, gw.metadata.name]) | gw := input.gateways[_]}
-                allowed_gateways := {sprintf("%s/%s", [gw.metadata.namespace, gw.metadata.name]) | gw := input.gateways[_]; gw_in_list(gw, allowed)}
-                actual_allowed := {s | g := gateways[_]; s := allowed[_]; contains(g, s)}
-
-                check_expected_gw = {"result": true, "msg": msg} if {
-                  gateways == allowed_gateways
-                  msg := "Only allowed gateways found."
-                } else = {"result": false, "msg": msg} if {
-                    msg := sprintf("Some disallowed gateways found: %v.", [gateways-allowed_gateways])
-                }
-
-                gw_in_list(gw, allowed) if {
-                  contains(gw.metadata.name, allowed[_])
-                }
-
-                # Check if the entire set contains all required gateways
-                check_all_gw_found = {"result": true, "msg": msg} if {
-                    actual_allowed == allowed
-                    msg := "All gateway types found."
-                } else = {"result": false, "msg": msg} if {
-                    msg := sprintf("Gateway type(s) missing: %v.", [allowed - actual_allowed])
-                }
-            type: opa
-        title: gateway-configuration-check
-        uuid: b0a8f21e-b12f-47ea-a967-2f4a3ec69e44
-      - description: |
-          domain:
-            kubernetes-spec:
-              create-resources: null
-              resources:
-              - description: ""
-                name: authorizationPolicies
-                resource-rule:
-                  group: security.istio.io
-                  name: ""
-                  namespaces: []
-                  resource: authorizationpolicies
-                  version: v1beta1
-            type: kubernetes
-          lula-version: ""
-          metadata:
-            name: istio-rbac-enforcement-check
-            uuid: 7b045b2a-106f-4c8c-85d9-ae3d7a8e0e28
-          provider:
-            opa-spec:
-              output:
-                observations:
-                - validate.msg
-                - validate.msg_authPolicies
-                validation: validate.validate
-              rego: |
-                package validate
-
-                # Default policy result
-                default validate = false
-                default msg = "Istio RBAC not enforced"
-
-                # Evaluation for Istio Authorization Policies
-                validate {
-                  count(all_auth_policies) > 0
-                }
-
-                # Get all authorization policies
-                all_auth_policies := { sprintf("%s/%s", [authPolicy.metadata.namespace, authPolicy.metadata.name]) |
-                  authPolicy := input.authorizationPolicies[_]; authPolicy.kind == "AuthorizationPolicy" }
-
-                msg = "Istio RBAC enforced" {
-                  validate
-                }
-                msg_authPolicies = sprintf("Authorization Policies: %v", [concat(", ", all_auth_policies)])
-            type: opa
-        title: istio-rbac-enforcement-check
-        uuid: 7b045b2a-106f-4c8c-85d9-ae3d7a8e0e28
-      - description: |
-          lula-version: ""
-          metadata:
-            name: istio-rbac-for-approved-personnel-PLACEHOLDER
-            uuid: 9b361d7b-4e07-40db-8b86-3854ed499a4b
-        title: istio-rbac-for-approved-personnel-PLACEHOLDER
-        uuid: 9b361d7b-4e07-40db-8b86-3854ed499a4b
-      - description: |
-          lula-version: ""
-          metadata:
-            name: external-traffic-managed-PLACEHOLDER
-            uuid: 19faf69a-de74-4b78-a628-64a9f244ae13
-          provider:
-            opa-spec:
-              rego: |
-                package validate
-                default validate := false
-                # This policy could check meshConfig.outboundTrafficPolicy.mode (default is ALLOW_ANY)
-                # Possibly would need a ServiceEntry(?)
-                # (https://istio.io/latest/docs/tasks/traffic-management/egress/egress-control/#envoy-passthrough-to-external-services)
-            type: opa
-        title: external-traffic-managed-PLACEHOLDER
-        uuid: 19faf69a-de74-4b78-a628-64a9f244ae13
-      - description: |
-          domain:
-            kubernetes-spec:
-              create-resources: null
-              resources:
-              - description: ""
-                name: istioddeployment
-                resource-rule:
-                  group: apps
-                  name: istiod
-                  namespaces:
-                  - istio-system
-                  resource: deployments
-                  version: v1
-              - description: ""
-                name: istiodhpa
-                resource-rule:
-                  group: autoscaling
-                  name: istiod
-                  namespaces:
-                  - istio-system
-                  resource: horizontalpodautoscalers
-                  version: v2
-            type: kubernetes
-          lula-version: ""
-          metadata:
-            name: istio-health-check
-            uuid: 67456ae8-4505-4c93-b341-d977d90cb125
-          provider:
-            opa-spec:
-              output:
-                observations:
-                - istiohealth.deployment_message
-                - istiohealth.hpa_message
-                validation: istiohealth.is_istio_healthy
-              rego: |
-                package istiohealth
-
-                default is_istio_healthy = false
-                default deployment_message = "Deployment status not evaluated"
-                default hpa_message = "HPA status not evaluated"
-
-                # Check if the Istio Deployment is healthy
-                is_istio_healthy {
-                    count(input.istioddeployment.status.conditions) > 0
-                    all_deployment_conditions_are_true
-                    input.istiodhpa.status.currentReplicas >= input.istiodhpa.spec.minReplicas
-                }
-
-                all_deployment_conditions_are_true {
-                  # Ensure every condition in the array has a status that is not "False"
-                  all_true = {c | c := input.istioddeployment.status.conditions[_]; c.status != "False"}
-                  count(all_true) == count(input.istioddeployment.status.conditions)
-                }
-
-                deployment_message = msg {
-                  all_deployment_conditions_are_true
-                  msg := "All deployment conditions are true."
-                } else = msg {
-                  msg := "One or more deployment conditions are false."
-                }
-
-                hpa_message = msg {
-                  input.istiodhpa.status.currentReplicas >= input.istiodhpa.spec.minReplicas
-                  msg := "HPA has sufficient replicas."
-                } else = msg {
-                  msg := "HPA does not have sufficient replicas."
-                }
-            type: opa
-        title: istio-health-check
-        uuid: 67456ae8-4505-4c93-b341-d977d90cb125
-      - description: |
-          domain:
-            kubernetes-spec:
-              create-resources: null
-              resources:
-              - description: ""
-                name: gateways
-                resource-rule:
-                  group: networking.istio.io
-                  name: ""
-                  namespaces: []
-                  resource: gateways
-                  version: v1beta1
-            type: kubernetes
-          lula-version: ""
-          metadata:
-            name: ingress-traffic-encrypted
-            uuid: fd071676-6b92-4e1c-a4f0-4c8d2bd55aed
-          provider:
-            opa-spec:
-              output:
-                observations:
-                - validate.msg
-                - validate.msg_exempt
-                validation: validate.validate
-              rego: |
-                package validate
-                import future.keywords.every
-
-                default validate = false
-                default msg = "Not evaluated"
-
-                # Validation
-                validate {
-                  check_gateways_allowed.result
-                }
-                msg := check_gateways_allowed.msg
-                msg_exempt := sprintf("Exempted Gateways: %s", [concat(", ", exempt_gateways)])
-
-                # Collect gateways that do not encrypt ingress traffic
-                gateways_disallowed = {sprintf("%s/%s", [gateway.metadata.namespace, gateway.metadata.name]) |
-                  gateway := input.gateways[_];
-                  not allowed_gateway(gateway)
-                }
-
-                check_gateways_allowed = {"result": true, "msg": "All gateways encrypt ingress traffic"} {
-                  count(gateways_disallowed) == 0
-                } else = {"result": false, "msg": msg} {
-                  msg := sprintf("Some gateways do not encrypt ingress traffic: %s", [concat(", ", gateways_disallowed)])
-                }
-
-                # Check allowed gateway
-                allowed_gateway(gateway) {
-                  every server in gateway.spec.servers {
-                    allowed_server(server)
-                  }
-                }
-
-                exempt_gateways := {"istio-passthrough-gateway/passthrough-gateway"}
-                allowed_gateway(gateway) {
-                  sprintf("%s/%s", [gateway.metadata.namespace, gateway.metadata.name]) in exempt_gateways
-                  # *Unchecked condition that exempted gateway is only used by virtual services that route https traffic
-                  # Find all virtual services that use this gateway
-                  # Check that vs has https scheme
-                }
-
-                # Check allowed server spec in gateway
-                allowed_server(server) {
-                  server.port.protocol == "HTTP"
-                  server.tls.httpsRedirect == true
-                }
-
-                allowed_server(server) {
-                  server.port.protocol == "HTTPS"
-                  server.tls.mode in {"SIMPLE", "OPTIONAL_MUTUAL"}
-                }
-            type: opa
-        title: ingress-traffic-encrypted
-        uuid: fd071676-6b92-4e1c-a4f0-4c8d2bd55aed
   components:
     - control-implementations:
-        - description: Controls implemented by Istio and authservice that are inherited by applications
+        - description: Control Implementation Description
           implemented-requirements:
+            - control-id: ac-14
+              description: Istio implements with service to service and provides authorization policies that require authentication to access any non-public features.
+              links:
+                - href: file:../../compliance/validations/istio/healthcheck/validation.yaml
+                  rel: lula
+                  text: Check that Istio is healthy
+                - href: file:../../compliance/validations/istio/authorized-keycloak-access/validation.yaml
+                  rel: lula
+                  text: Validates that Istio is used to authorize access to Keycloak admin console only from admin gateway
+              remarks: |
+                ASSESSMENT-OBJECTIVE:
+                AC-14a.  [Assignment: organization-defined user actions] that can be performed on the system without identification or authentication consistent with organizational mission and business functions are identified;
+                AC-14b.
+                	AC-14b.[01] user actions not requiring identification or authentication are documented in the security plan for the system;
+                	AC-14b.[02] a rationale for user actions not requiring identification or authentication is provided in the security plan for the system.
+              uuid: 41c51dc3-7db1-4717-b071-83e57897f478
             - control-id: ac-4
-              description: |-
-                # Control Implementation
-                  Istio encrypts all in-mesh communication at runtime using FIPS verified mTLS in addition to ingress and egress gateways for controlling communication.
+              description: Istio encrypts all in-mesh communication at runtime using FIPS verified mTLS in addition to ingress and egress gateways for controlling communication.
               links:
-                - href: "#67456ae8-4505-4c93-b341-d977d90cb125"
+                - href: file:../../compliance/validations/istio/healthcheck/validation.yaml
                   rel: lula
                   text: Check that Istio is healthy
-                - href: "#ca49ac97-487a-446a-a0b7-92b20e2c83cb"
+                - href: file:../../compliance/validations/istio/enforce-mtls-strict/validation.yaml
                   rel: lula
                   text: Check that Istio is enforcing mtls STRICT
-                - href: "#1761ac07-80dd-47d2-947e-09f67943b986"
+                - href: file:../../compliance/validations/istio/all-pods-istio-injected/validation.yaml
                   rel: lula
                   text: All pods are istio injected with proxyv2 sidecar
-                - href: "#fd071676-6b92-4e1c-a4f0-4c8d2bd55aed"
+                - href: file:../../compliance/validations/istio/ingress-traffic-encrypted/validation.yaml
                   rel: lula
                   text: Check ingress traffic is encrypted
-              remarks: "# Control Description Information flow control regulates where information is allowed to travel within an information system and between information systems (as opposed to who is allowed to access the information) and without explicit regard to subsequent accesses to that information. Flow control restrictions include, for example, keeping export-controlled information from being transmitted in the clear to the Internet, blocking outside traffic that claims to be from within the organization, restricting web requests to the Internet that are not from the internal web proxy server, and limiting information transfers between organizations based on data structures and content."
-              uuid: 9e158525-96bd-4d4f-a674-7e3eab9aea7a
-            - control-id: ac-4.4
-              description: |-
-                # Control Implementation
-                  All encrypted HTTPS connections are terminated at the Istio ingress gateway.
-              links:
-                - href: "#67456ae8-4505-4c93-b341-d977d90cb125"
-                  rel: lula
-                  text: Check that Istio is healthy
-                - href: "#ca49ac97-487a-446a-a0b7-92b20e2c83cb"
-                  rel: lula
-                  text: Check that Istio is enforcing mtls STRICT
-                - href: "#1761ac07-80dd-47d2-947e-09f67943b986"
-                  rel: lula
-                  text: All pods are istio injected with proxyv2 sidecar
-                - href: "#fd071676-6b92-4e1c-a4f0-4c8d2bd55aed"
-                  rel: lula
-                  text: Check ingress traffic is encrypted
-              remarks: "# Control Description The information system prevents encrypted information from bypassing content-checking mechanisms by decrypting the information; blocking the flow of the encrypted information; terminating communications sessions attempting to pass encrypted information; Assignment: organization-defined procedure or method."
-              uuid: c3e13abc-3c19-4f08-a2f8-40fcbef5daa7
+              remarks: |-
+                ASSESSMENT-OBJECTIVE:
+                approved authorizations are enforced for controlling the flow of information within the system and between connected systems based on [Assignment: organization-defined information flow control policies].
+              uuid: 210f730b-7fed-42dd-99b4-42466951b080
             - control-id: ac-4.21
-              description: |-
-                # Control Implementation
-                  Istio is configured to use ingress and egress gateways to provide logical flow separation.
+              description: Istio is configured to use ingress and egress gateways to provide logical flow separation.
               links:
-                - href: "#67456ae8-4505-4c93-b341-d977d90cb125"
+                - href: file:../../compliance/validations/istio/healthcheck/validation.yaml
                   rel: lula
                   text: Check that Istio is healthy
-                - href: "#0da39859-a91a-4ca6-bd8b-9b117689188f"
+                - href: file:../../compliance/validations/istio/all-namespaces-istio-injected/validation.yaml
                   rel: lula
                   text: Check namespaces are istio injected
-                - href: "#c6c9daf1-4196-406d-8679-312c0512ab2e"
+                - href: file:../../compliance/validations/istio/check-istio-admin-gateway-and-usage/validation.yaml
                   rel: lula
                   text: Check that Istio is configured with an admin gateway and admin services use it
-                - href: "#b0a8f21e-b12f-47ea-a967-2f4a3ec69e44"
+                - href: file:../../compliance/validations/istio/gateway-configuration-check/validation.yaml
                   rel: lula
                   text: Validates that Istio Gateways are available and expected VirtualServices using each Gateway.
-              remarks: "Separate information flows logically or physically using [Assignment: organization-defined mechanisms and/or techniques] to accomplish [Assignment: organization-defined required separations by types of information]."
-              uuid: 6e32feb5-ce43-465f-9422-e3ef3276bf5d
-            - control-id: ac-6.3
-              description: |-
-                # Control Implementation
-                  Configured with an "admin" gateway to restrict access to applications that only need administrative access.
-              links:
-                - href: "#67456ae8-4505-4c93-b341-d977d90cb125"
-                  rel: lula
-                  text: Check that Istio is healthy
-                - href: "#c6c9daf1-4196-406d-8679-312c0512ab2e"
-                  rel: lula
-                  text: Check that Istio is configured with an admin gateway and admin services use it
-              remarks: "Authorize network access to [Assignment: organization-defined privileged commands] only for [Assignment: organization-defined compelling operational needs] and document the rationale for such access in the security plan for the system."
-              uuid: 0081f95a-3233-4e07-a6cd-95cb1905c318
+              remarks: |
+                ASSESSMENT-OBJECTIVE:
+                AC-04(21)[01] information flows are separated logically using [Assignment: organization-defined mechanisms and/or techniques] to accomplish [Assignment: organization-defined required separations];
+                AC-04(21)[02] information flows are separated physically using [Assignment: organization-defined mechanisms and/or techniques] to accomplish [Assignment: organization-defined required separations].
+              uuid: ee9e5fae-1c95-46c7-9265-dc0035e2bb05
             - control-id: ac-6.9
-              description: |-
-                # Control Implementation
-                  Istio produces logs for all traffic in the information system.
+              description: Istio produces logs for all traffic in the information system.
               links:
-                - href: "#67456ae8-4505-4c93-b341-d977d90cb125"
+                - href: file:../../compliance/validations/istio/healthcheck/validation.yaml
                   rel: lula
                   text: Check that Istio is healthy
-                - href: "#90738c86-6315-450a-ac69-cc50eb4859cc"
+                - href: file:../../compliance/validations/istio/check-istio-logging-all-traffic/validation.yaml
                   rel: lula
-                  text: Check that Istio is logging all traffic which could contain priviledged function calls
-                - href: "#1761ac07-80dd-47d2-947e-09f67943b986"
+                  text: Check that Istio is logging all traffic which could contain privileged function calls
+                - href: file:../../compliance/validations/istio/all-pods-istio-injected/validation.yaml
                   rel: lula
                   text: All pods are istio injected with proxyv2 sidecar
-              remarks: Log the execution of privileged functions.
-              uuid: 6d8a6c80-2844-4bfd-bc9d-0f5a71e5c979
-            - control-id: ac-14
-              description: |-
-                # Control Implementation
-                  Istio implements with service to service and provides authorization policies that require authentication to access any non-public features.
+              remarks: |-
+                ASSESSMENT-OBJECTIVE:
+                the execution of privileged functions is logged.
+              uuid: c6d9abd2-0136-468a-908d-181d9bd51962
+            - control-id: au-12
+              description: Istio provides audit record generation capabilities for a variety of event types, including session, connection, transaction, or activity durations, and the number of bytes received and sent.
               links:
-                - href: "#67456ae8-4505-4c93-b341-d977d90cb125"
+                - href: file:../../compliance/validations/istio/healthcheck/validation.yaml
                   rel: lula
                   text: Check that Istio is healthy
-                - href: "#fbd877c8-d6b6-4d88-8685-2c4aaaab02a1"
-                  rel: lula
-                  text: Validates that Istio is used to authorize access to Keycloak admin console only from admin gateway
-              remarks: 'a. Identify [Assignment: organization-defined user actions] that can be performed on the system without identification or authentication consistent with organizational mission and business functions; and b. Document and provide supporting rationale in the security plan for the system, user actions not requiring identification or authentication."'
-              uuid: c8c03abd-244d-4813-a966-3feece1bad6a
-            - control-id: au-2
-              description: |-
-                # Control Implementation
-                  Istio logs all Istio event logs within the system's mesh network.
-              links:
-                - href: "#67456ae8-4505-4c93-b341-d977d90cb125"
-                  rel: lula
-                  text: Check that Istio is healthy
-                - href: "#90738c86-6315-450a-ac69-cc50eb4859cc"
+                - href: file:../../compliance/validations/istio/check-istio-logging-all-traffic/validation.yaml
                   rel: lula
                   text: Check that Istio is logging all traffic which could contain audit events
-              remarks: "a. Identify the types of events that the system is capable of logging in support of the audit function: [Assignment: organization-defined event types that the system is capable of logging]; b. Coordinate the event logging function with other organizational entities requiring audit-related information to guide and inform the selection criteria for events to be logged; c. Specify the following event types for logging within the system: [Assignment: organization-defined event types (subset of the event types defined in AU-2a.) along with the frequency of (or situation requiring) logging for each identified event type]; d. Provide a rationale for why the event types selected for logging are deemed to be adequate to support after-the-fact investigations of incidents; and e. Review and update the event types selected for logging [Assignment: organization-defined frequency]."
-              uuid: 88f300a6-aa21-41b4-919d-29ef3e4381bb
-            - control-id: au-3
-              description: |-
-                # Control Implementation
-                  Istio logs all Istio event logs within the system's mesh network.
+              remarks: |
+                ASSESSMENT-OBJECTIVE:
+                AU-12a. audit record generation capability for the event types the system is capable of auditing (defined in AU-02_ODP[01]) is provided by [Assignment: organization-defined system components];
+                AU-12b.  [Assignment: organization-defined personnel or roles] is/are allowed to select the event types that are to be logged by specific components of the system;
+                AU-12c. audit records for the event types defined in AU-02_ODP[02] that include the audit record content defined in AU-03 are generated.
+              uuid: 87f99f34-6980-49e1-91cf-c0264fa3407c
+            - control-id: au-2
+              description: Istio logs all Istio event logs within the system's mesh network.
               links:
-                - href: "#67456ae8-4505-4c93-b341-d977d90cb125"
+                - href: file:../../compliance/validations/istio/healthcheck/validation.yaml
                   rel: lula
                   text: Check that Istio is healthy
-                - href: "#f346b797-be35-40a8-a93a-585db6fd56ec"
+                - href: file:../../compliance/validations/istio/check-istio-logging-all-traffic/validation.yaml
+                  rel: lula
+                  text: Check that Istio is logging all traffic which could contain audit events
+              remarks: |
+                ASSESSMENT-OBJECTIVE:
+                AU-02a.  [Assignment: organization-defined event types] that the system is capable of logging are identified in support of the audit logging function;
+                AU-02b. the event logging function is coordinated with other organizational entities requiring audit-related information to guide and inform the selection criteria for events to be logged;
+                AU-02c.
+                	AU-02c.[01]  [Assignment: organization-defined event types (subset of AU-02_ODP[01])] are specified for logging within the system;
+                	AU-02c.[02] the specified event types are logged within the system [Assignment: organization-defined frequency or situation];
+                AU-02d. a rationale is provided for why the event types selected for logging are deemed to be adequate to support after-the-fact investigations of incidents;
+                AU-02e. the event types selected for logging are reviewed and updated [Assignment: organization-defined frequency].
+              uuid: b3ed3dba-3164-4785-98db-ef22c96c7c62
+            - control-id: au-3
+              description: Istio logs all Istio event logs within the system's mesh network.
+              links:
+                - href: file:../../compliance/validations/istio/healthcheck/validation.yaml
+                  rel: lula
+                  text: Check that Istio is healthy
+                - href: file:../../compliance/validations/istio/tracing-logging-support/validation.yaml
                   rel: lula
                   text: Check that Istio is configured to provide tracing data
-              remarks: "Ensure that audit records contain information that establishes the following: a. What type of event occurred; b. When the event occurred; c. Where the event occurred; d. Source of the event; e. Outcome of the event; and f. Identity of any individuals, subjects, or objects/entities associated with the event."
-              uuid: 52756a01-6f5c-49b1-8a6b-972b74a01da4
+              remarks: |
+                ASSESSMENT-OBJECTIVE:
+                AU-03a. audit records contain information that establishes what type of event occurred;
+                AU-03b. audit records contain information that establishes when the event occurred;
+                AU-03c. audit records contain information that establishes where the event occurred;
+                AU-03d. audit records contain information that establishes the source of the event;
+                AU-03e. audit records contain information that establishes the outcome of the event;
+                AU-03f. audit records contain information that establishes the identity of any individuals, subjects, or objects/entities associated with the event.
+              uuid: 79dee0b0-5848-4b1e-826b-a2e4ec567b90
             - control-id: au-3.1
-              description: |-
-                # Control Implementation
-                  Istio has been configured to implement event logging within our environment. This includes capturing metrics related to the duration of sessions, connections, transactions, or activities. Specifically, Istio's telemetry features are utilized to capture these metrics, which provide valuable data that can be used to infer the duration of sessions or connections.
+              description: Istio has been configured to implement event logging within our environment. This includes capturing metrics related to the duration of sessions, connections, transactions, or activities. Specifically, Istio's telemetry features are utilized to capture these metrics, which provide valuable data that can be used to infer the duration of sessions or connections.
               links:
-                - href: "#67456ae8-4505-4c93-b341-d977d90cb125"
+                - href: file:../../compliance/validations/istio/healthcheck/validation.yaml
                   rel: lula
                   text: Check that Istio is healthy
-                - href: "#70d99754-2918-400c-ac9a-319f874fff90"
+                - href: file:../../compliance/validations/istio/metrics-logging-configured/validation.yaml
                   rel: lula
                   text: Check that Istio is configured to provide metrics data
-                - href: "#1761ac07-80dd-47d2-947e-09f67943b986"
+                - href: file:../../compliance/validations/istio/all-pods-istio-injected/validation.yaml
                   rel: lula
                   text: All pods are istio injected with proxyv2 sidecar
-                - href: "#f345c359-3208-46fb-9348-959bd628301e"
+                - href: file:../../compliance/validations/istio/prometheus-annotations-validation/validation.yaml
                   rel: lula
                   text: Check that pods running sidecar have the correct annotations for prometheus metrics scrape
-              remarks: "Generate audit records containing the following additional information: [Assignment: organization-defined additional information]. AU-3 (1) [session, connection, transaction, or activity duration; for client-server transactions, the number of bytes received and bytes sent; additional informational messages to diagnose or identify the event; characteristics that describe or identify the object or resource being acted upon; individual identities of group account users; full-text of privileged commands]"
-              uuid: 16cc258e-d907-47bb-97d9-4e92677cf075
-            - control-id: au-12
-              description: |-
-                # Control Implementation
-                  Istio provides audit record generation capabilities for a variety of event types, including session, connection, transaction, or activity durations, and the number of bytes received and sent.
-              links:
-                - href: "#67456ae8-4505-4c93-b341-d977d90cb125"
-                  rel: lula
-                  text: Check that Istio is healthy
-                - href: "#90738c86-6315-450a-ac69-cc50eb4859cc"
-                  rel: lula
-                  text: Check that Istio is logging all traffic which could contain audit events
-              remarks: "a. Provide audit record generation capability for the event types the system is capable of auditing as defined in AU-2a on [Assignment: organization-defined system components]; b. Allow [Assignment: organization-defined personnel or roles] to select the event types that are to be logged by specific components of the system; and c. Generate audit records for the event types defined in AU-2c that include the audit record content defined in AU-3."
-              uuid: 8f645835-6538-4327-a7aa-453b398f5ef4
+              remarks: |-
+                ASSESSMENT-OBJECTIVE:
+                generated audit records contain the following [Assignment: organization-defined additional information].
+              uuid: b855fff0-5f57-4ea0-b9a7-52973e81784d
             - control-id: cm-5
-              description: |-
-                # Control Implementation
-                  Istio enforces logical access restrictions associated with changes to the system. Istio's Role-Based Access Control (RBAC) features are used to define and enforce access controls, ensuring that only approved personnel can make changes to the system.
+              description: Istio enforces logical access restrictions associated with changes to the system. Istio's Role-Based Access Control (RBAC) features are used to define and enforce access controls, ensuring that only approved personnel can make changes to the system.
               links:
-                - href: "#67456ae8-4505-4c93-b341-d977d90cb125"
+                - href: file:../../compliance/validations/istio/healthcheck/validation.yaml
                   rel: lula
                   text: Check that Istio is healthy
-                - href: "#7b045b2a-106f-4c8c-85d9-ae3d7a8e0e28"
+                - href: file:../../compliance/validations/istio/rbac-enforcement-check/validation.yaml
                   rel: lula
                   text: Check that Istio is enforcing RBAC
-                - href: "#9b361d7b-4e07-40db-8b86-3854ed499a4b"
+                - href: file:../../compliance/validations/istio/rbac-for-approved-personnel/validation.yaml
                   rel: lula
                   text: Check that particular RBAC is ensuring only approved personnel can make changes to the system [PLACEHOLDER]
-              remarks: Define, document, approve, and enforce physical and logical access restrictions associated with changes to the system.
-              uuid: 32e53a18-4b64-4a24-935c-11cbac2c62be
-            - control-id: sc-3
-              description: |-
-                # Control Implementation
-                  Namespaces, Istio gateways, and network policies collectively by providing resource isolation, secure traffic routing, and network segmentation to prevent unauthorized and unintended information transfer.
-              links:
-                - href: "#67456ae8-4505-4c93-b341-d977d90cb125"
-                  rel: lula
-                  text: Check that Istio is healthy
-                - href: "#c6c9daf1-4196-406d-8679-312c0512ab2e"
-                  rel: lula
-                  text: Check that Istio is configured with an admin gateway and admin services use it
-                - href: "#b0a8f21e-b12f-47ea-a967-2f4a3ec69e44"
-                  rel: lula
-                  text: Validates that Istio Gateways are available and expected VirtualServices using each Gateway.
-              remarks: Isolate security functions from nonsecurity functions.
-              uuid: 9e2894a3-2452-4f7a-b8a5-f72b89b23c87
-            - control-id: sc-4
-              description: |-
-                # Control Implementation
-                  Istio enforces outbound traffic goes through an Egress Gateway with a Network Policy.
-              links:
-                - href: "#67456ae8-4505-4c93-b341-d977d90cb125"
-                  rel: lula
-                  text: Check that Istio is healthy
-                - href: "#7455f86d-b79c-4226-9ce3-f3fb7d9348c8"
-                  rel: lula
-                  text: Network Policies are in place to ensure that only authorized traffic is allowed to egress the cluster [PLACEHOLDER]
-                - href: "#ecdb90c7-971a-4442-8f29-a8b0f6076bc9"
-                  rel: lula
-                  text: Egress Gateway exists and is configured [PLACEHOLDER]
-              remarks: Prevent unauthorized and unintended information transfer via shared system resources.
-              uuid: 86bc4fb7-f91b-4f2c-b914-65427951018c
-            - control-id: sc-7.4
-              description: |-
-                # Control Implementation
-                  Istio is configured to provide managed interfaces for external telecommunication services, establish traffic flow policies, and protect the confidentiality and integrity of transmitted information. It also prevents unauthorized exchange of control plane traffic and filters unauthorized control plane traffic.
-              links:
-                - href: "#67456ae8-4505-4c93-b341-d977d90cb125"
-                  rel: lula
-                  text: Check that Istio is healthy
-                - href: "#570e2dc7-e6c2-4ad5-8ea3-f07974f59747"
-                  rel: lula
-                  text: Resources in namespaces can securely communicate with Istio control plane via network policies
-                - href: "#fbd877c8-d6b6-4d88-8685-2c4aaaab02a1"
-                  rel: lula
-                  text: Validates that Istio is used to authorize access to Keycloak admin console only from admin gateway
-                - href: "#b0a8f21e-b12f-47ea-a967-2f4a3ec69e44"
-                  rel: lula
-                  text: Validates that Istio Gateways are available and expected VirtualServices using each Gateway.
-              remarks: "(a) Implement a managed interface for each external telecommunication service; (b) Establish a traffic flow policy for each managed interface; (c) Protect the confidentiality and integrity of the information being transmitted across each interface; (d) Document each exception to the traffic flow policy with a supporting mission or business need and duration of that need; (e) Review exceptions to the traffic flow policy [Assignment: organization-defined frequency] and remove exceptions that are no longer supported by an explicit mission or business need; (f) Prevent unauthorized exchange of control plane traffic with external networks; (g) Publish information to enable remote networks to detect unauthorized control plane traffic from internal networks; and (h) Filter unauthorized control plane traffic from external networks."
-              uuid: 85df9e6c-3d94-4c60-9a20-8c481831f1e0
-            - control-id: sc-7.8
-              description: |-
-                # Control Implementation
-                   is configured to route internal communications traffic to external networks through authenticated proxy servers at managed interfaces, using its Egress Gateway.
-              links:
-                - href: "#67456ae8-4505-4c93-b341-d977d90cb125"
-                  rel: lula
-                  text: Check that Istio is healthy
-                - href: "#ecdb90c7-971a-4442-8f29-a8b0f6076bc9"
-                  rel: lula
-                  text: Egress Gateway exists and is configured [PLACEHOLDER]
-                - href: "#19faf69a-de74-4b78-a628-64a9f244ae13"
-                  rel: lula
-                  text: Check that external traffic is managed [PLACEHOLDER]
-              remarks: "Route [Assignment: organization-defined internal communications traffic] to [Assignment: organization-defined external networks] through authenticated proxy servers at managed interfaces."
-              uuid: 4b930af3-ae84-43ff-b751-448fe1c2eec8
-            - control-id: sc-7.20
-              description: |-
-                # Control Implementation
-                  Istio is configured to dynamically isolate certain internal system components when necessary. This is achieved through Istio's network policies, which allow us to partition or separate system components
-              links:
-                - href: "#67456ae8-4505-4c93-b341-d977d90cb125"
-                  rel: lula
-                  text: Check that Istio is healthy
-                - href: "#ca49ac97-487a-446a-a0b7-92b20e2c83cb"
-                  rel: lula
-                  text: Check that Istio is enforcing mtls STRICT
-                - href: "#1761ac07-80dd-47d2-947e-09f67943b986"
-                  rel: lula
-                  text: All pods are istio injected with proxyv2 sidecar
-              remarks: "Provide the capability to dynamically isolate [Assignment: organization-defined system components] from other system components."
-              uuid: 30b49a3e-ad38-441d-8c07-5a9018848a02
-            - control-id: sc-7.21
-              description: |-
-                # Control Implementation
-                   Istio is configured to isolate system components that perform different mission or business functions. This is achieved through Istio's network policies and mutual TLS, which allow us to control information flows and provide enhanced protection.
-              links:
-                - href: "#67456ae8-4505-4c93-b341-d977d90cb125"
-                  rel: lula
-                  text: Check that Istio is healthy
-                - href: "#ca49ac97-487a-446a-a0b7-92b20e2c83cb"
-                  rel: lula
-                  text: Check that Istio is enforcing mtls STRICT
-                - href: "#1761ac07-80dd-47d2-947e-09f67943b986"
-                  rel: lula
-                  text: All pods are istio injected with proxyv2 sidecar
-              remarks: "Employ boundary protection mechanisms to isolate [Assignment: organization-defined system components] supporting [Assignment: organization-defined missions and/or business functions]."
-              uuid: c9a1e9bc-3caa-44ce-a300-ecd722487987
-            - control-id: sc-8
-              description: |-
-                # Control Implementation
-                  Istio is configured to protect the confidentiality and integrity of transmitted information across both internal and external networks. This is achieved through Istio's mutual TLS, which encrypts service-to-service communication, ensuring that data in transit is not exposed to the possibility of interception and modification.
-              links:
-                - href: "#67456ae8-4505-4c93-b341-d977d90cb125"
-                  rel: lula
-                  text: Check that Istio is healthy
-                - href: "#ca49ac97-487a-446a-a0b7-92b20e2c83cb"
-                  rel: lula
-                  text: Check that Istio is enforcing mtls STRICT
-                - href: "#1761ac07-80dd-47d2-947e-09f67943b986"
-                  rel: lula
-                  text: All pods are istio injected with proxyv2 sidecar
-              remarks: "Protect the [Selection (one or more): confidentiality; integrity] of transmitted information."
-              uuid: 7548b4ee-e4a3-4e3c-a34b-95eccad45f92
-            - control-id: sc-8.1
-              description: |-
-                # Control Implementation
-                  Istio is configured to protect the confidentiality and integrity of transmitted information across both internal and external networks. This is achieved through Istio's mutual TLS, which encrypts service-to-service communication, ensuring that data in transit is not exposed to the possibility of interception and modification.
-              links:
-                - href: "#67456ae8-4505-4c93-b341-d977d90cb125"
-                  rel: lula
-                  text: Check that Istio is healthy
-                - href: "#ca49ac97-487a-446a-a0b7-92b20e2c83cb"
-                  rel: lula
-                  text: Check that Istio is enforcing mtls STRICT
-                - href: "#1761ac07-80dd-47d2-947e-09f67943b986"
-                  rel: lula
-                  text: All pods are istio injected with proxyv2 sidecar
-              remarks: "Implement cryptographic mechanisms to [Selection (one or more): prevent unauthorized disclosure of information; detect changes to information] during transmission."
-              uuid: 69415B92-0490-4A14-9E0F-E1EE61951F9C
-            - control-id: sc-8.2
-              description: |-
-                # Control Implementation
-                  Istio implements with global configuration.
-              links:
-                - href: "#67456ae8-4505-4c93-b341-d977d90cb125"
-                  rel: lula
-                  text: Check that Istio is healthy
-                - href: "#ca49ac97-487a-446a-a0b7-92b20e2c83cb"
-                  rel: lula
-                  text: Check that Istio is enforcing mtls STRICT to ensure integrity of information sent/received
-                - href: "#1761ac07-80dd-47d2-947e-09f67943b986"
-                  rel: lula
-                  text: All pods are istio injected with proxyv2 sidecar
-                - href: "#fbd877c8-d6b6-4d88-8685-2c4aaaab02a1"
-                  rel: lula
-                  text: Validates that Istio is used to authorize access to Keycloak admin console only from admin gateway
-              remarks: "Maintain the [Selection (one or more): confidentiality; integrity] of information during preparation for transmission and during reception."
-              uuid: c158b75a-cefc-4794-b124-f1e56ff5646d
+              remarks: |
+                ASSESSMENT-OBJECTIVE:
+                CM-05[01] physical access restrictions associated with changes to the system are defined and documented;
+                CM-05[02] physical access restrictions associated with changes to the system are approved;
+                CM-05[03] physical access restrictions associated with changes to the system are enforced;
+                CM-05[04] logical access restrictions associated with changes to the system are defined and documented;
+                CM-05[05] logical access restrictions associated with changes to the system are approved;
+                CM-05[06] logical access restrictions associated with changes to the system are enforced.
+              uuid: 80a456cf-c642-4b02-a0fb-18b416e90481
             - control-id: sc-10
-              description: |-
-                # Control Implementation
-                  Istio is configured to manage network connections associated with specific communication sessions. It can be set up to automatically terminate these connections after periods of inactivity, providing an additional layer of security.
+              description: Istio is configured to manage network connections associated with specific communication sessions. It can be set up to automatically terminate these connections after periods of inactivity, providing an additional layer of security.
               links:
-                - href: "#67456ae8-4505-4c93-b341-d977d90cb125"
+                - href: file:../../compliance/validations/istio/healthcheck/validation.yaml
                   rel: lula
                   text: Check that Istio is healthy
-                - href: "#663f5e92-6db4-4042-8b5a-eba3ebe5a622"
+                - href: file:../../compliance/validations/istio/communications-terminated-after-inactivity/validation.yaml
                   rel: lula
                   text: Istio terminates communication sessions after inactivity [PLACEHOLDER]
-              remarks: "Maintain the [Selection (one or more): confidentiality; integrity] of information during preparation for transmission and during reception."
-              uuid: 169c9ad3-0a6c-46ee-80cd-cd8cef5eca5c
+              remarks: |-
+                ASSESSMENT-OBJECTIVE:
+                the network connection associated with a communication session is terminated at the end of the session or after [Assignment: organization-defined time period] of inactivity.
+              uuid: ad919a09-d186-4edd-9234-ead04f959fff
             - control-id: sc-13
-              description: |-
-                # Control Implementation
-                  Istio provides FIPS encryption in transit for all applications in the mesh, TLS termination at ingress, and TLS origination at egress.
+              description: Istio provides FIPS encryption in transit for all applications in the mesh, TLS termination at ingress, and TLS origination at egress.
               links:
-                - href: "#67456ae8-4505-4c93-b341-d977d90cb125"
+                - href: file:../../compliance/validations/istio/healthcheck/validation.yaml
                   rel: lula
                   text: Check that Istio is healthy
-                - href: "#ca49ac97-487a-446a-a0b7-92b20e2c83cb"
+                - href: file:../../compliance/validations/istio/enforce-mtls-strict/validation.yaml
                   rel: lula
                   text: Check that Istio is enforcing mtls STRICT
-                - href: "#fd071676-6b92-4e1c-a4f0-4c8d2bd55aed"
+                - href: file:../../compliance/validations/istio/ingress-traffic-encrypted/validation.yaml
                   rel: lula
                   text: Istio is encrypting ingress traffic
-                - href: "#8be1601e-5870-4573-ab4f-c1c199944815"
+                - href: file:../../compliance/validations/istio/tls-origination-at-egress/validation.yaml
                   rel: lula
                   text: Istio is providing TLS origination at egress [PLACEHOLDER]
-                - href: "#73434890-2751-4894-b7b2-7e583b4a8977"
+                - href: file:../../compliance/validations/istio/fips-evaluation/validation.yaml
                   rel: lula
                   text: System is using FIPS-compliant Istio distribution [PLACEHOLDER]
-              remarks: 'a. Determine the [Assignment: organization-defined cryptographic uses]; and b. Implement the following types of cryptography required for each specified cryptographic use: [Assignment: organization-defined types of cryptography for each specified cryptographic use]."'
-              uuid: 2bf5c525-af5f-4b8b-8349-3f6a91e0aab9
+              remarks: |
+                ASSESSMENT-OBJECTIVE:
+                SC-13a.  [Assignment: organization-defined cryptographic uses] are identified;
+                SC-13b.  [Assignment: organization-defined types of cryptography] for each specified cryptographic use (defined in SC-13_ODP[01]) are implemented.
+              uuid: 675c0823-8e94-4910-9f61-5266d7e7b38c
             - control-id: sc-23
-              description: |-
-                # Control Implementation
-                  Istio is configured to protect session authenticity, establishing confidence in the ongoing identities of other parties and the validity of transmitted information. This is achieved through Istio's mutual TLS, which ensures secure communication.
+              description: Istio is configured to protect session authenticity, establishing confidence in the ongoing identities of other parties and the validity of transmitted information. This is achieved through Istio's mutual TLS, which ensures secure communication.
               links:
-                - href: "#67456ae8-4505-4c93-b341-d977d90cb125"
+                - href: file:../../compliance/validations/istio/healthcheck/validation.yaml
                   rel: lula
                   text: Check that Istio is healthy
-                - href: "#ca49ac97-487a-446a-a0b7-92b20e2c83cb"
+                - href: file:../../compliance/validations/istio/enforce-mtls-strict/validation.yaml
                   rel: lula
                   text: Check that Istio is enforcing mtls STRICT
-              remarks: "Protect the [Selection (one or more): confidentiality; integrity] of the following information at rest: [Assignment: organization-defined information at rest]. SC-28 Guidance: The organization supports the capability to use cryptographic mechanisms to protect information at rest. SC-28 Guidance: When leveraging encryption from underlying IaaS/PaaS: While some IaaS/PaaS services provide encryption by default, many require encryption to be configured, and enabled by the customer. The CSP has the responsibility to verify encryption is properly configured. SC-28 Guidance: Note that this enhancement requires the use of cryptography in accordance with SC-13."
-              uuid: 625bfdc1-0b20-45f3-919b-91afbac77799
+              remarks: |-
+                ASSESSMENT-OBJECTIVE:
+                the authenticity of communication sessions is protected.
+              uuid: dac01dde-3bdf-4e70-9d4d-4081c88de380
             - control-id: sc-39
-              description: |-
-                # Control Implementation
-                  Istio is configured to maintain separate execution domains for each executing process. This is achieved through Istio's sidecar proxy design, where each service in the mesh has its own dedicated sidecar proxy to handle its inbound and outbound traffic. This ensures that communication between processes is controlled and one process cannot modify the executing code of another process.
+              description: Istio is configured to maintain separate execution domains for each executing process. This is achieved through Istio's sidecar proxy design, where each service in the mesh has its own dedicated sidecar proxy to handle its inbound and outbound traffic. This ensures that communication between processes is controlled and one process cannot modify the executing code of another process.
               links:
-                - href: "#67456ae8-4505-4c93-b341-d977d90cb125"
+                - href: file:../../compliance/validations/istio/healthcheck/validation.yaml
                   rel: lula
                   text: Check that Istio is healthy
-                - href: "#1761ac07-80dd-47d2-947e-09f67943b986"
+                - href: file:../../compliance/validations/istio/all-pods-istio-injected/validation.yaml
                   rel: lula
                   text: All pods are istio injected with proxyv2 sidecar
-              remarks: Maintain a separate execution domain for each executing system process.
-              uuid: f972ef8d-1eb0-403b-8db8-e65a4f4e2aaa
-          source: https://raw.githubusercontent.com/GSA/fedramp-automation/93ca0e20ff5e54fc04140613476fba80f08e3c7d/dist/content/rev5/baselines/json/FedRAMP_rev5_HIGH-baseline-resolved-profile_catalog.json
-          uuid: d2afb4c4-2cd8-5305-a6cc-d1bc7b388d0c
+              remarks: |-
+                ASSESSMENT-OBJECTIVE:
+                a separate execution domain is maintained for each executing system process.
+              uuid: 0e72ca49-e9cb-4a74-8701-6f81091197b6
+            - control-id: sc-7.4
+              description: Istio is configured to provide managed interfaces for external telecommunication services, establish traffic flow policies, and protect the confidentiality and integrity of transmitted information. It also prevents unauthorized exchange of control plane traffic and filters unauthorized control plane traffic.
+              links:
+                - href: file:../../compliance/validations/istio/healthcheck/validation.yaml
+                  rel: lula
+                  text: Check that Istio is healthy
+                - href: file:../../compliance/validations/istio/secure-communication-with-istiod/validation.yaml
+                  rel: lula
+                  text: Resources in namespaces can securely communicate with Istio control plane via network policies
+                - href: file:../../compliance/validations/istio/authorized-keycloak-access/validation.yaml
+                  rel: lula
+                  text: Validates that Istio is used to authorize access to Keycloak admin console only from admin gateway
+                - href: file:../../compliance/validations/istio/gateway-configuration-check/validation.yaml
+                  rel: lula
+                  text: Validates that Istio Gateways are available and expected VirtualServices using each Gateway.
+              remarks: |
+                ASSESSMENT-OBJECTIVE:
+                SC-07(04)(a) a managed interface is implemented for each external telecommunication service;
+                SC-07(04)(b) a traffic flow policy is established for each managed interface;
+                SC-07(04)(c)
+                	SC-07(04)(c)[01] the confidentiality of the information being transmitted across each interface is protected;
+                	SC-07(04)(c)[02] the integrity of the information being transmitted across each interface is protected;
+                SC-07(04)(d) each exception to the traffic flow policy is documented with a supporting mission or business need and duration of that need;
+                SC-07(04)(e)
+                	SC-07(04)(e)[01] exceptions to the traffic flow policy are reviewed [Assignment: organization-defined frequency];
+                	SC-07(04)(e)[02] exceptions to the traffic flow policy that are no longer supported by an explicit mission or business need are removed;
+                SC-07(04)(f) unauthorized exchanges of control plan traffic with external networks are prevented;
+                SC-07(04)(g) information is published to enable remote networks to detect unauthorized control plane traffic from internal networks;
+                SC-07(04)(h) unauthorized control plane traffic is filtered from external networks.
+              uuid: a5bac410-d674-431d-b5fc-2f904842c29c
+            - control-id: sc-7.8
+              description: Istio is configured to route internal communications traffic to external networks through authenticated proxy servers at managed interfaces, using its Egress Gateway.
+              links:
+                - href: file:../../compliance/validations/istio/healthcheck/validation.yaml
+                  rel: lula
+                  text: Check that Istio is healthy
+                - href: file:../../compliance/validations/istio/egress-gateway-exists-and-configured/validation.yaml
+                  rel: lula
+                  text: Egress Gateway exists and is configured [PLACEHOLDER]
+                - href: file:../../compliance/validations/istio/external-traffic-managed/validation.yaml
+                  rel: lula
+                  text: Check that external traffic is managed [PLACEHOLDER]
+              remarks: |-
+                ASSESSMENT-OBJECTIVE:
+                 [Assignment: organization-defined internal communications traffic] is routed to [Assignment: organization-defined external networks] through authenticated proxy servers at managed interfaces.
+              uuid: 3f409103-880e-4180-81e7-54f85a6143ae
+            - control-id: sc-8
+              description: Istio is configured to protect the confidentiality and integrity of transmitted information across both internal and external networks. This is achieved through Istio's mutual TLS, which encrypts service-to-service communication, ensuring that data in transit is not exposed to the possibility of interception and modification.
+              links:
+                - href: file:../../compliance/validations/istio/healthcheck/validation.yaml
+                  rel: lula
+                  text: Check that Istio is healthy
+                - href: file:../../compliance/validations/istio/enforce-mtls-strict/validation.yaml
+                  rel: lula
+                  text: Check that Istio is enforcing mtls STRICT
+                - href: file:../../compliance/validations/istio/all-pods-istio-injected/validation.yaml
+                  rel: lula
+                  text: All pods are istio injected with proxyv2 sidecar
+              remarks: |-
+                ASSESSMENT-OBJECTIVE:
+                the [Selection: (one-or-more) organization-defined confidentiality; integrity] of transmitted information is/are protected.
+              uuid: e97a451e-44c7-4240-a7a7-adaadd26f01c
+            - control-id: sc-8.1
+              description: Istio is configured to protect the confidentiality and integrity of transmitted information across both internal and external networks. This is achieved through Istio's mutual TLS, which encrypts service-to-service communication, ensuring that data in transit is not exposed to the possibility of interception and modification.
+              links:
+                - href: file:../../compliance/validations/istio/healthcheck/validation.yaml
+                  rel: lula
+                  text: Check that Istio is healthy
+                - href: file:../../compliance/validations/istio/enforce-mtls-strict/validation.yaml
+                  rel: lula
+                  text: Check that Istio is enforcing mtls STRICT
+                - href: file:../../compliance/validations/istio/all-pods-istio-injected/validation.yaml
+                  rel: lula
+                  text: All pods are istio injected with proxyv2 sidecar
+              remarks: |-
+                ASSESSMENT-OBJECTIVE:
+                cryptographic mechanisms are implemented to [Selection: (one-or-more) organization-defined prevent unauthorized disclosure of information; detect changes to information] during transmission.
+              uuid: f3b38f79-9bf7-4024-a1b2-00befd67fda7
           props:
+            - name: generation
+              ns: https://docs.lula.dev/oscal/ns
+              value: lula generate component --catalog-source https://raw.githubusercontent.com/GSA/fedramp-automation/refs/tags/fedramp-2.0.0-oscal-1.0.4/dist/content/rev5/baselines/json/FedRAMP_rev5_MODERATE-baseline-resolved-profile_catalog.json --component 'Istio' --requirements ac-4,ac-4.21,ac-6.9,ac-14,au-2,au-3,au-3.1,au-12,cm-5,sc-7.4,sc-7.8,sc-8,sc-8.1,sc-10,sc-13,sc-23,sc-39 --remarks assessment-objective --framework il4
             - name: framework
               ns: https://docs.lula.dev/oscal/ns
               value: il4
-      description: |
-        Istio Service Mesh
-      purpose: Istio Service Mesh
-      responsible-roles:
-        - party-uuids:
-            - f3cf70f8-ba44-4e55-9ea3-389ef24847d3
-          role-id: provider
-      title: Istio Controlplane
+          source: https://raw.githubusercontent.com/GSA/fedramp-automation/refs/tags/fedramp-2.0.0-oscal-1.0.4/dist/content/rev5/baselines/json/FedRAMP_rev5_MODERATE-baseline-resolved-profile_catalog.json
+          uuid: d2afb4c4-2cd8-5305-a6cc-d1bc7b388d0c
+      description: Component Description
+      title: Istio
       type: software
-      uuid: 81f6ec5d-9b8d-408f-8477-f8a04f493690
+      uuid: 3fad668e-7751-44e6-b1be-4fe773971370
   metadata:
-    last-modified: 2024-07-16T02:47:14.949557671Z
+    last-modified: 2024-09-17T20:24:07.548382887Z
     oscal-version: 1.1.2
     parties:
       - links:
@@ -1394,7 +331,9 @@ component-definition:
             rel: website
         name: Unicorn Delivery Service
         type: organization
-        uuid: f3cf70f8-ba44-4e55-9ea3-389ef24847d3
-    title: Istio Controlplane
-    version: "20240614"
-  uuid: 7e3269fc-fe33-49c9-be88-6c868e21aae1
+        uuid: bf31d461-82af-529a-8bdf-09aa488e5b7e
+    published: 2024-09-03T21:02:56.440962532Z
+    remarks: Lula Generated Component Definition
+    title: Istio
+    version: 0.0.1
+  uuid: b0395313-5d50-4c64-b0e7-43014a47ead9

@@ -1,3 +1,6 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 kind: ZarfPackageConfig
 metadata:
   name: uds-core-keycloak
@@ -20,7 +23,7 @@ components:
         valuesFiles:
           - "values/upstream-values.yaml"
     images:
-      - quay.io/keycloak/keycloak:24.0.5
+      - quay.io/keycloak/keycloak:25.0.6
       - rjferguson21/uds-core-config:ambient
 
   - name: keycloak
@@ -36,7 +39,7 @@ components:
         valuesFiles:
           - "values/registry1-values.yaml"
     images:
-      - registry1.dso.mil/ironbank/opensource/keycloak/keycloak:24.0.5
+      - registry1.dso.mil/ironbank/opensource/keycloak/keycloak:25.0.6
       - rjferguson21/uds-core-config:ambient
 
   - name: keycloak
@@ -50,5 +53,5 @@ components:
         valuesFiles:
           - "values/unicorn-values.yaml"
     images:
-      - cgr.dev/du-uds-defenseunicorns/keycloak:24.0.5 # todo: switch to FIPS image
+      - cgr.dev/du-uds-defenseunicorns/keycloak:25.0.6 # todo: switch to FIPS image
       - rjferguson21/uds-core-config:ambient

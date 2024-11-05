@@ -1,7 +1,11 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 # Generate certs missing from unicorn images
 autoGenerateCert: true
 
 registry: cgr.dev
+# renovate: datasource=docker depName=cgr.dev/du-uds-defenseunicorns/neuvector-controller-fips versioning=docker
 tag: "5.3.4"
 manager:
   image:
@@ -36,4 +40,5 @@ cve:
     enabled: true
     image:
       repository: du-uds-defenseunicorns/neuvector-updater-fips
-      tag: 8.9.1-dev
+      # renovate: datasource=docker depName=cgr.dev/du-uds-defenseunicorns/neuvector-updater-fips versioning=docker
+      tag: 8.10.1-dev

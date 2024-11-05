@@ -1,8 +1,11 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 image:
   # The Keycloak image repository
   repository: quay.io/keycloak/keycloak
   # Overrides the Keycloak image tag whose default is the chart appVersion
-  tag: "24.0.5"
+  tag: "25.0.6"
   # The Keycloak image pull policy
   pullPolicy: IfNotPresent
 
@@ -174,6 +177,12 @@ postgresql:
   host: ""
   # Port the database is listening on
   port: 5432
+  egressCidr: ""
+  # Configure internal postgresql deployment, requires keycloak not be deployed in dev-mode
+  internal:
+    enabled: false
+    remoteSelector: {}
+    remoteNamespace: ""
 
 serviceMonitor:
   # If `true`, a ServiceMonitor resource for the prometheus-operator is created
@@ -193,7 +202,7 @@ serviceMonitor:
   # The path at which metrics are served
   path: /metrics
   # The Service port at which metrics are served
-  port: http
+  port: metrics
   # added by Big Bang to support Istio mTLS
   scheme: ""
   tlsConfig: {}
