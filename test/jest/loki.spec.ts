@@ -62,7 +62,10 @@ const queryLogs = async (
       },
     );
     if (!response.ok) throw new Error("Error in querying logs");
-    return response.json();
+    return (await response.json()) as unknown as {
+      status: string;
+      data: { result: Array<{ values: string[][] }> };
+    };
   } catch (error: unknown) {
     if (error instanceof Error) {
       console.error("Error in querying logs", error.message);

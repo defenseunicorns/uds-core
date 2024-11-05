@@ -21,6 +21,7 @@
     "**/*.ts"
   ],
   "exclude": [
-    "dist"
+    "dist",
+    "test/playwright"
   ]
 }
