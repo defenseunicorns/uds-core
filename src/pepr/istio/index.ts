@@ -74,7 +74,9 @@ When(a.Pod)
           // Trying to avoid passing in process.stdin (this stream read is a no-op)
           // The exec call fails with null stdin stream
           const dummyStream = new Readable({
-            read() {},
+            read() {
+              this.push(null);
+            },
           });
 
           await exec.exec(
