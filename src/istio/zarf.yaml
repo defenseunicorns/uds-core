@@ -63,6 +63,8 @@ components:
         version: 1.23.2
         releaseName: admin-ingressgateway
         namespace: istio-admin-gateway
+        valuesFiles:
+          - "values/gateway-values.yaml"
       - name: uds-istio-config
         version: 0.2.0
         localPath: chart
@@ -78,6 +80,8 @@ components:
         version: 1.23.2
         releaseName: tenant-ingressgateway
         namespace: istio-tenant-gateway
+        valuesFiles:
+          - "values/gateway-values.yaml"
       - name: uds-istio-config
         version: 0.2.0
         localPath: chart
@@ -93,6 +97,8 @@ components:
         version: 1.23.2
         releaseName: passthrough-ingressgateway
         namespace: istio-passthrough-gateway
+        valuesFiles:
+          - "values/gateway-values.yaml"
       - name: uds-istio-config
         version: 0.2.0
         localPath: chart
