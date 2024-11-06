@@ -50,3 +50,7 @@ tasks:
               # Remove the json and go files
               rm -f "$CRD-crd.json"
           done
+
+  - name: e2e-test
+    actions:
+      - description: "Run Pepr E2E tests"
