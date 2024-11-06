@@ -47,19 +47,17 @@ components:
           - "values/registry1/istiod.yaml"
       - name: cni
         valuesFiles:
-          # - "values/registry1/cni.yaml"
-          - "values/upstream/cni.yaml"
+          - "values/registry1/cni.yaml"
       - name: ztunnel
         valuesFiles:
-          # - "values/registry1/ztunnel.yaml"
-          - "values/upstream/ztunnel.yaml"
+          - "values/registry1/ztunnel.yaml"
     images:
       - registry1.dso.mil/ironbank/tetrate/istio/proxyv2:1.23.2-tetratefips-v0
       - registry1.dso.mil/ironbank/tetrate/istio/pilot:1.23.2-tetratefips-v0
-      # - registry1.dso.mil/ironbank/opensource/istio/ztunnel:1.23.2
-      # - registry1.dso.mil/ironbank/tetrate/istio/install-cni:1.23.2
-      - docker.io/istio/install-cni:1.23.2-distroless
-      - docker.io/istio/ztunnel:1.23.2-distroless
+      - registry1.dso.mil/ironbank/tetrate/istio/ztunnel:1.23.2-tetratefips-v0
+      # Tetrate's install-cni image is out of date currently in Ironbank but could be swapped in when updated
+      - registry1.dso.mil/ironbank/opensource/istio/install-cni:1.23.3
+      # - registry1.dso.mil/ironbank/tetrate/istio/install-cni:1.22.6-tetratefips-v0
 
   - name: istio-controlplane
     required: true
