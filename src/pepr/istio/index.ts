@@ -50,16 +50,22 @@ When(a.Pod)
         log.error(pod, `Invalid container status in Pod`);
         return;
       }
-      const shouldTerminate = pod.status.containerStatuses
-        // Ignore the istio-proxy container
-        .filter(c => c.name != "istio-proxy")
-        // and if ALL are terminated AND restartPolicy is Never or is OnFailure with a 0 exit code then shouldTerminate is true
-        .every(
-          c =>
-            c.state?.terminated &&
-            (pod.spec?.restartPolicy == "Never" ||
-              (pod.spec?.restartPolicy == "OnFailure" && c.state.terminated.exitCode == 0)),
+
+      // if ALL (non istio-proxy) are terminated AND restartPolicy is Never
+      // or is OnFailure with a 0 exit code
+      // and istio-proxy is not already terminated then shouldTerminate is true
+      const shouldTerminate = pod.status.containerStatuses.every(c => {
+        // handle scenario where proxy was already terminated
+        if (c.name == "istio-proxy") {
+          return c.state?.terminated == undefined;
+        }
+
+        return (
+          c.state?.terminated &&
+          (pod.spec?.restartPolicy == "Never" ||
+            (pod.spec?.restartPolicy == "OnFailure" && c.state.terminated.exitCode == 0))
         );
+      });
 
       if (shouldTerminate) {
         // Mark the pod as seen

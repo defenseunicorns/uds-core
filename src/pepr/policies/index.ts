@@ -40,7 +40,6 @@ export async function startExemptionWatch() {
       relistIntervalSec: process.env.PEPR_RELIST_INTERVAL_SECONDS
         ? parseInt(process.env.PEPR_RELIST_INTERVAL_SECONDS, 10)
         : 1800,
-      useHTTP2: process.env.PEPR_HTTP2_WATCH === "true",
     };
     const watcher = K8s(UDSExemption).Watch(async (exemption, phase) => {
       log.debug(`Processing exemption ${exemption.metadata?.name}, watch phase: ${phase}`);
