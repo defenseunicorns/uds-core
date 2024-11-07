@@ -9,10 +9,16 @@ import { Component, setupLogger } from "../../../../logger";
 import { UDSPackage } from "../../../crd";
 import { Client } from "../types";
 import { updatePolicy } from "./authorization-policy";
-import { getAuthserviceConfig, operatorConfig, updateAuthServiceSecret } from "./config";
+import {
+  getAuthserviceConfig,
+  operatorConfig,
+  setAuthserviceConfig,
+  updateAuthServiceSecret,
+} from "./config";
 import { Action, AuthServiceEvent, AuthserviceConfig, Chain } from "./types";
 
 export const log = setupLogger(Component.OPERATOR_AUTHSERVICE);
+let lock = false;
 
 export async function authservice(pkg: UDSPackage, clients: Map<string, Client>) {
   // Get the list of clients from the package
@@ -65,13 +71,37 @@ export async function reconcileAuthservice(
 
 // Write authservice config to secret (ensure the new function name is referenced)
 export async function updateConfig(event: AuthServiceEvent) {
-  // Parse existing authservice config
-  let config = await getAuthserviceConfig();
+  // Lock to prevent concurrent updates
+  if (lock) {
+    log.debug("Lock is set for config update, retrying...");
+    setTimeout(() => updateConfig(event), 0);
+    return;
+  }
 
-  // Update config based on event
-  config = buildConfig(config, event);
+  let config: AuthserviceConfig;
 
-  // Update the authservice secret using the new function
+  try {
+    log.debug("Locking config for update");
+    lock = true;
+
+    // build updated config based on event
+    config = await getAuthserviceConfig().then(config => {
+      return buildConfig(config, event);
+    });
+
+    // Update the in-memory config immediately
+    setAuthserviceConfig(config);
+  } catch (e) {
+    log.error("Failed to build in memory authservice secret for event", event, e);
+    throw e;
+  } finally {
+    // unlock config
+    log.debug("Unlocking config for update");
+    lock = false;
+  }
+
+  // apply the authservice secret
+  log.debug("Applying authservice secret");
   await updateAuthServiceSecret(config);
 }
 
@@ -82,8 +112,13 @@ export function buildConfig(config: AuthserviceConfig, event: AuthServiceEvent) 
     // Add the new chain to the existing authservice config
     chains = config.chains.filter(chain => chain.name !== event.name);
     chains = chains.concat(buildChain(event));
+    // Sort the chains by their name before returning. Note that the accuracy of
+    // sorting here is not relevant, only the consistency.
+    const sortByName = R.sortBy(R.prop("name"));
+    chains = sortByName(chains);
   } else if (event.action == Action.Remove) {
-    // Search in the existing chains for the chain to remove by name
+    // Search in the existing chains for the chain to remove by name.
+    // Filtering here should preserve the order, so there is no need to re-sort.
     chains = config.chains.filter(chain => chain.name !== event.name);
   } else {
     throw new Error(`Unhandled Action: ${event.action satisfies never}`);
