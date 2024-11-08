@@ -9,7 +9,7 @@ includes:
 tasks:
   - name: validate
     actions:
-      - task: istio:validate-slim
+      - task: istio:validate
         with:
           validate_passthrough: "false"
       - task: pepr:validate
