@@ -15,7 +15,7 @@ initChownData:
 downloadDashboardsImage:
   registry: cgr.dev
   repository: du-uds-defenseunicorns/curl-fips
-  tag: 8.10.1
+  tag: 8.11.0
 
 sidecar:
   image:
