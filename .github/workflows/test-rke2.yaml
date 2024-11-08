@@ -19,6 +19,7 @@ permissions:
 jobs:
   test-rke2-install:
     strategy:
+      fail-fast: false    
       matrix:
         flavor: [upstream, registry1, unicorn]
     runs-on: ubuntu-latest

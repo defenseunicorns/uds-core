@@ -15,6 +15,7 @@ on:
 jobs:
   publish-uds-core:
     strategy:
+      fail-fast: false    
       matrix:
         flavor: [upstream, registry1, unicorn]
     runs-on: "uds-ubuntu-big-boy-8-core"
