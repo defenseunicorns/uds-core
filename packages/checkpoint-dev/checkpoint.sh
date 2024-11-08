@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 # Name of the running k3d container
 K3S_CONTAINER="k3d-uds-server-0"
 

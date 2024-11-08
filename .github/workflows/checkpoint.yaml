@@ -1,3 +1,6 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 name: Checkpoint UDS Core
 
 on:
@@ -49,7 +52,9 @@ jobs:
         if: always()
         uses: ./.github/actions/debug-output
 
-      # - name: Publish Checkpoint Package
+      - name: Publish Checkpoint Package
+        if: ${{ github.event_name == 'workflow_call' }}
+        run: echo Publish!
       #   run: uds run -f tasks/publish.yaml checkpoint-package --no-progress
 
       - name: Save logs
