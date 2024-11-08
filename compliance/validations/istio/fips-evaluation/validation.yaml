@@ -1,0 +1,17 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+metadata:
+  name: fips-evaluation-PLACEHOLDER
+  uuid: 73434890-2751-4894-b7b2-7e583b4a8977
+domain:
+  type: kubernetes
+  kubernetes-spec:
+    resources: []
+provider:
+  type: opa
+  opa-spec:
+    rego: |
+      package validate
+
+      default validate := false

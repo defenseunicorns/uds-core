@@ -51,7 +51,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Environment setup
         uses: ./.github/actions/setup
@@ -67,7 +67,11 @@ jobs:
 
       - name: Test UDS Core Install
         if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
-        run: uds run test-uds-core --set FLAVOR=${{ inputs.flavor }} --no-progress
+        run: uds run test:uds-core-e2e --set FLAVOR=${{ inputs.flavor }} --no-progress
+
+      - name: Compose UDS Core Component Definitions
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
+        run: uds run test-compliance-compose --no-progress
 
       - name: Validate UDS Core Compliance
         if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}

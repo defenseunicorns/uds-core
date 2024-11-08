@@ -38,3 +38,7 @@ tasks:
             protocol: https
             address: neuvector.admin.uds.dev
             code: 200
+
+  - name: e2e-test
+    actions:
+      - description: "Run Neuvector E2E tests"

@@ -1,9 +1,8 @@
 # Copyright 2024 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
-
 includes:
-  - remote: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.1.0/tasks/lint.yaml
+  - remote: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.2.2/tasks/lint.yaml
 
 tasks:
   - name: fix
@@ -31,6 +30,11 @@ tasks:
         cmd: yamllint . -c .yamllint --no-warnings
       - description: codespell lint
         cmd: codespell
+      - description: Install addlicense dep
+        # renovate: datasource=github-tags depName=google/addlicense versioning=semver
+        cmd: GOPATH="$HOME/go" go install github.com/google/addlicense@v1.1.1
+      - description: license lint
+        task: license
 
   - name: oscal
     actions:

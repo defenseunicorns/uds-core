@@ -36,7 +36,7 @@ resource "aws_secretsmanager_secret_version" "private_key" {
 # Public bucket to host OIDC files
 module "oidc_bucket" {
   source  = "terraform-aws-modules/s3-bucket/aws"
-  version = "4.2.0"
+  version = "4.2.1"
 
   bucket        = "${var.environment}-oidc-${random_string.ssm.result}"
   force_destroy = var.force_destroy
@@ -49,7 +49,6 @@ module "oidc_bucket" {
   ignore_public_acls       = false
   restrict_public_buckets  = false
 }
-
 
 # OIDC file creation
 resource "local_file" "oidc_config" {

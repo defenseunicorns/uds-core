@@ -1,0 +1,17 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+metadata:
+  name: istio-rbac-for-approved-personnel-PLACEHOLDER
+  uuid: 9b361d7b-4e07-40db-8b86-3854ed499a4b
+domain:
+  type: kubernetes
+  kubernetes-spec:
+    resources: []
+provider:
+  type: opa
+  opa-spec:
+    rego: |
+      package validate
+
+      default validate := false

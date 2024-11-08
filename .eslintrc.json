@@ -3,21 +3,38 @@
     "browser": false,
     "es2021": true
   },
-  "extends": ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended"
+  ],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
-    "project": ["./tsconfig.json"],
+    "project": [
+      "./tsconfig.json"
+    ],
     "ecmaVersion": 2022
   },
-  "plugins": ["@typescript-eslint"],
-  "ignorePatterns": ["node_modules", "dist", "jest.*.js"],
+  "plugins": [
+    "@typescript-eslint"
+  ],
+  "ignorePatterns": [
+    "node_modules",
+    "dist",
+    "jest.*.js",
+    "test/playwright/"
+  ],
   "root": true,
   "rules": {
-    "@typescript-eslint/no-floating-promises": ["error"]
+    "@typescript-eslint/no-floating-promises": [
+      "error"
+    ]
   },
   "overrides": [
     {
-      "files": [ "src/pepr/operator/crd/generated/**/*.ts", "src/pepr/operator/crd/generated/*.ts" ],
+      "files": [
+        "src/pepr/operator/crd/generated/**/*.ts",
+        "src/pepr/operator/crd/generated/*.ts"
+      ],
       "rules": {
         "@typescript-eslint/no-explicit-any": "off"
       }

@@ -1,0 +1,70 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+metadata:
+  name: secure-communication-with-istiod
+  uuid: 570e2dc7-e6c2-4ad5-8ea3-f07974f59747
+domain:
+  type: kubernetes
+  kubernetes-spec:
+    resources:
+      - name: networkPolicies
+        resource-rule:
+          group: networking.k8s.io
+          resource: networkpolicies
+          namespaces: []
+          version: v1
+provider:
+  type: opa
+  opa-spec:
+    rego: |
+      package validate
+      import rego.v1
+
+      # Default values
+      default validate := false
+      default msg := "Not evaluated"
+
+      # Expected values
+      expected_istiod_port := 15012
+      expected_istiod_protocol := "TCP"
+      required_namespaces := {"authservice", "grafana", "keycloak", "loki", "metrics-server", "monitoring", "neuvector", "vector", "velero"}
+
+      # Validate NetworkPolicy for Istiod in required namespaces
+      validate if {
+        check_netpol_config_correct.result
+      }
+
+      msg = check_netpol_config_correct.msg
+      msg_expected_istiod = sprintf("Expected Istiod port: %v, protocol: %v.", [expected_istiod_port, expected_istiod_protocol])
+      msg_required_namespaces = concat(", ", required_namespaces)
+
+      check_netpol_config_correct = {"result": true, "msg": msg} if {
+        required_namespaces == correct_istiod_namespaces
+        msg := "NetworkPolicies correctly configured for istiod in required namespaces."
+      } else = {"result": false, "msg": msg} if {
+        count(required_namespaces-correct_istiod_namespaces) > 0
+        msg := sprintf("NetworkPolicies not correctly configured for istiod egress in namespaces: %v.", [concat(", ", (required_namespaces-correct_istiod_namespaces))])
+      } else = {"result": false, "msg": msg} if {
+        count(correct_istiod_namespaces-required_namespaces) > 0
+        msg := sprintf("NetworkPolicies configured for istiod egress in improper namespaces: %v.", [concat(", ", (correct_istiod_namespaces-required_namespaces))])
+      }
+
+      # Helper to find correct NetworkPolicies
+      correct_istiod_policies = {policy |
+        policy := input.networkPolicies[_]
+        policy.spec.egress[_].to[_].podSelector.matchLabels["istio"] == "pilot"
+        policy.spec.egress[_].ports[_].port == expected_istiod_port
+        policy.spec.egress[_].ports[_].protocol == expected_istiod_protocol
+      }
+
+      # Helper to extract namespaces of correct NetworkPolicies
+      correct_istiod_namespaces = {policy.metadata.namespace |
+        policy := correct_istiod_policies[_]
+      }
+    output:
+      validation: validate.validate
+      observations:
+        - validate.msg
+        - validate.msg_expected_istiod
+        - validate.msg_required_namespaces

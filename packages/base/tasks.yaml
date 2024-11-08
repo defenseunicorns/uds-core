@@ -4,9 +4,13 @@
 includes:
   - istio: ../../src/istio/tasks.yaml
   - pepr: ../../src/pepr/tasks.yaml
+  - keycloak: ../../src/keycloak/tasks.yaml
 
 tasks:
   - name: validate
     actions:
-      - task: istio:validate
+      - task: istio:validate-slim
+        with:
+          validate_passthrough: "false"
       - task: pepr:validate
+      - task: keycloak:validate

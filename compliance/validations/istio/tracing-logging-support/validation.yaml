@@ -1,0 +1,48 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+metadata:
+  name: istio-tracing-logging-support
+  uuid: f346b797-be35-40a8-a93a-585db6fd56ec
+domain:
+  type: kubernetes
+  kubernetes-spec:
+    resources:
+      - name: istioConfig
+        resource-rule:
+          resource: configmaps
+          namespaces:
+            - istio-system
+          version: v1
+          name: istio
+          field:
+            jsonpath: .data.mesh
+            type: yaml
+provider:
+  type: opa
+  opa-spec:
+    rego: |
+      package validate
+      import rego.v1
+
+      # Default policy result
+      default validate := false
+      default msg := "Not evaluated"
+
+      # Validate Istio configuration for event logging support
+      validate if {
+        check_tracing_enabled.result
+      }
+      msg = check_tracing_enabled.msg
+
+      check_tracing_enabled = { "result": true, "msg": msg } if {
+        input.istioConfig.defaultConfig.tracing != null
+        input.istioConfig.defaultConfig.tracing.zipkin.address != ""
+        msg := "Tracing logging supported."
+      } else = { "result": false, "msg": msg } if {
+        msg := "Tracing logging not supported."
+      }
+    output:
+      validation: validate.validate
+      observations:
+        - validate.msg

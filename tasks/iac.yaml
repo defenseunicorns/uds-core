@@ -5,12 +5,16 @@
 variables:
   - name: CLUSTER_NAME
   - name: K8S_DISTRO
+  - name: CLOUD
   - name: REGION
   - name: PERMISSIONS_BOUNDARY_NAME
   - name: PERMISSIONS_BOUNDARY_ARN
   - name: STATE_BUCKET_NAME
   - name: STATE_DYNAMODB_TABLE_NAME
   - name: STATE_KEY
+  - name: RESOURCE_GROUP_NAME
+  - name: STORAGE_ACCOUNT_NAME
+  - name: CONTAINER_NAME
   - name: AMI_ID
     default: ami-068ab6ac1cec494e0
 
@@ -18,7 +22,7 @@ tasks:
   - name: install-eksctl
     actions:
       - cmd: |
-          curl --silent --location "https://github.com/weaveworks/eksctl/releases/download/v0.191.0/eksctl_Linux_amd64.tar.gz" | tar xz -C /tmp
+          curl --silent --location "https://github.com/weaveworks/eksctl/releases/download/v0.194.0/eksctl_Linux_amd64.tar.gz" | tar xz -C /tmp
           sudo mv /tmp/eksctl /usr/local/bin
 
   - name: create-cluster
@@ -99,7 +103,6 @@ tasks:
     actions:
       - task: rke2-nodes-ready
       - cmd: |
-          export KUBECONFIG=./rke2-config
           # wait for at least 3 nodes
           while true; do
             if [ $(uds zarf tools kubectl get nodes -o jsonpath='{range .items[*]}{.status.conditions[-1].type}={.status.conditions[-1].status}{"\n"}{end}' | egrep -i '^ready.*true' | wc -l) -lt 3 ]; then
@@ -131,115 +134,30 @@ tasks:
   - name: create-iac
     actions:
       - task: apply-tofu
-      - task: tofu-outputs
-      - task: create-uds-config
 
   - name: destroy-iac
     actions:
       - cmd: tofu destroy -auto-approve
-        dir: .github/test-infra/aws/${K8S_DISTRO}
+        dir: .github/test-infra/${CLOUD}/${K8S_DISTRO}
 
   - name: apply-tofu
     actions:
-      - cmd: echo ${STATE_KEY} | sed 's/\.tfstate/-buckets.tfstate/g'
-        setVariables:
-          - name: BUCKETS_STATE_KEY
-        dir: .github/test-infra/aws/${K8S_DISTRO}
       - cmd: |
-          tofu init -force-copy \
-            -backend-config="bucket=${STATE_BUCKET_NAME}" \
-            -backend-config="key=${BUCKETS_STATE_KEY}" \
-            -backend-config="region=${REGION}" \
-            -backend-config="dynamodb_table=${STATE_DYNAMODB_TABLE_NAME}"
-        dir: .github/test-infra/aws/${K8S_DISTRO}
+          if [ ${CLOUD} = "aws" ]; then
+            tofu init -force-copy \
+              -backend-config="bucket=${STATE_BUCKET_NAME}" \
+              -backend-config="key=${STATE_KEY}" \
+              -backend-config="region=${REGION}" \
+              -backend-config="dynamodb_table=${STATE_DYNAMODB_TABLE_NAME}"
+          elif [ ${CLOUD} = "azure" ]; then
+            tofu init -force-copy \
+              -backend=true \
+              -backend-config="resource_group_name=$RESOURCE_GROUP_NAME" \
+              -backend-config="storage_account_name=$STORAGE_ACCOUNT_NAME" \
+              -backend-config="container_name=$CONTAINER_NAME" \
+              -backend-config="key=${STATE_KEY}"
+          else
+            echo "Invalid cloud provider specified."; return 1; fi
+        dir: .github/test-infra/${CLOUD}/${K8S_DISTRO}
       - cmd: tofu apply -auto-approve
-        dir: .github/test-infra/aws/${K8S_DISTRO}
-
-  - name: tofu-outputs
-    actions:
-      - cmd: tofu output -raw loki_s3_bucket
-        setVariables:
-          - name: "LOKI_S3_BUCKET"
-        dir: .github/test-infra/aws/${K8S_DISTRO}
-        mute: true
-      - cmd: tofu output -raw aws_region
-        setVariables:
-          - name: LOKI_S3_AWS_REGION
-        dir: .github/test-infra/aws/${K8S_DISTRO}
-      - cmd: tofu output -raw loki_irsa_role_arn
-        setVariables:
-          - name: LOKI_S3_ROLE_ARN
-        dir: .github/test-infra/aws/${K8S_DISTRO}
-        mute: true
-      - cmd: tofu output -raw velero_s3_bucket
-        setVariables:
-          - name: VELERO_S3_BUCKET
-        dir: .github/test-infra/aws/${K8S_DISTRO}
-        mute: true
-      - cmd: tofu output -raw aws_region
-        setVariables:
-          - name: VELERO_S3_AWS_REGION
-        dir: .github/test-infra/aws/${K8S_DISTRO}
-      - cmd: tofu output -raw velero_irsa_role_arn
-        setVariables:
-          - name: VELERO_S3_ROLE_ARN
-        dir: .github/test-infra/aws/${K8S_DISTRO}
-        mute: true
-      - cmd: tofu output -raw grafana_pg_host 2>/dev/null || echo '""'
-        setVariables:
-          - name: GRAFANA_PG_HOST
-        dir: .github/test-infra/aws/${K8S_DISTRO}
-        mute: true
-      - cmd: tofu output -raw grafana_pg_port 2>/dev/null || echo '""'
-        setVariables:
-          - name: GRAFANA_PG_PORT
-        dir: .github/test-infra/aws/${K8S_DISTRO}
-        mute: true
-      - cmd: tofu output -raw grafana_pg_database 2>/dev/null || echo '""'
-        setVariables:
-          - name: GRAFANA_PG_DATABASE
-        dir: .github/test-infra/aws/${K8S_DISTRO}
-        mute: true
-      - cmd: tofu output -raw grafana_pg_user 2>/dev/null || echo '""'
-        setVariables:
-          - name: GRAFANA_PG_USER
-        dir: .github/test-infra/aws/${K8S_DISTRO}
-        mute: true
-      - cmd: tofu output -raw grafana_pg_password 2>/dev/null || echo '""'
-        setVariables:
-          - name: GRAFANA_PG_PASSWORD
-        mute: true # Muted to hide sensitive password
-        dir: .github/test-infra/aws/${K8S_DISTRO}
-      - cmd: tofu output -raw grafana_ha
-        setVariables:
-          - name: GRAFANA_HA
-        dir: .github/test-infra/aws/${K8S_DISTRO}
-
-  - name: create-uds-config
-    actions:
-      - task: tofu-outputs
-      - cmd: |
-          cat <<EOF> .github/bundles/${K8S_DISTRO}/uds-config.yaml
-          options:
-            architecture: amd64
-          variables:
-            core:
-              loki_chunks_bucket: ${LOKI_S3_BUCKET}
-              loki_ruler_bucket: ${LOKI_S3_BUCKET}
-              loki_admin_bucket: ${LOKI_S3_BUCKET}
-              loki_s3_region: ${LOKI_S3_AWS_REGION}
-              loki_irsa_role_arn: ${LOKI_S3_ROLE_ARN}
-              velero_use_secret: false
-              velero_irsa_role_arn: ${VELERO_S3_ROLE_ARN}
-              velero_bucket: ${VELERO_S3_BUCKET}
-              velero_bucket_region: ${VELERO_S3_AWS_REGION}
-              velero_bucket_provider_url: ""
-              velero_bucket_credential_name: ""
-              velero_bucket_credential_key: ""
-              grafana_ha: ${GRAFANA_HA}
-              grafana_pg_host: ${GRAFANA_PG_HOST}
-              grafana_pg_port: ${GRAFANA_PG_PORT}
-              grafana_pg_database: ${GRAFANA_PG_DATABASE}
-              grafana_pg_password: ${GRAFANA_PG_PASSWORD}
-              grafana_pg_user: ${GRAFANA_PG_USER}
-          EOF
+        dir: .github/test-infra/${CLOUD}/${K8S_DISTRO}

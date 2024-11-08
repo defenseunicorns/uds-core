@@ -1,15 +1,16 @@
 # Copyright 2024 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
-name: Test Core On RKE2
+name: RKE2 Nightly Test
 
 on:
-  # triggered by nightly-testing.yaml
-  workflow_call:
-    inputs:
-      flavor:
-        required: true
-        type: string
+  schedule:
+    - cron: '0 6 * * *' # Runs at midnight Mountain every day
+  pull_request:
+    paths:
+      - tasks/iac.yaml
+      - .github/bundles/rke2/*
+      - .github/test-infra/aws/rke2/*
 
 permissions:
   id-token: write
@@ -17,6 +18,9 @@ permissions:
 
 jobs:
   test-rke2-install:
+    strategy:
+      matrix:
+        flavor: [upstream, registry1, unicorn]
     runs-on: ubuntu-latest
     env:
       SHA: ${{ github.sha }}
@@ -28,15 +32,15 @@ jobs:
     steps:
       - name: Set ENV
         run: |
-          echo "UDS_CLUSTER_NAME=uds-ci-${{ inputs.flavor }}-${SHA:0:7}" >> $GITHUB_ENV
-          echo "UDS_STATE_KEY="tfstate/ci/install/${SHA:0:7}-rke2-core-${{ inputs.flavor }}-aws.tfstate >> $GITHUB_ENV
+          echo "UDS_CLUSTER_NAME=uds-ci-${{ matrix.flavor }}-${SHA:0:7}" >> $GITHUB_ENV
+          echo "UDS_STATE_KEY="tfstate/ci/install/${SHA:0:7}-rke2-core-${{ matrix.flavor }}-aws.tfstate >> $GITHUB_ENV
           echo "TF_VAR_region=${UDS_REGION}" >> $GITHUB_ENV
           echo "TF_VAR_run_id=$GITHUB_RUN_ID" >> $GITHUB_ENV
           echo "TF_VAR_use_permissions_boundary=true" >> $GITHUB_ENV
           echo "TF_VAR_permissions_boundary_name=${UDS_PERMISSIONS_BOUNDARY_NAME}" >> $GITHUB_ENV
 
       - name: Checkout repository
-        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4
@@ -64,13 +68,13 @@ jobs:
           tofu_wrapper: false
 
       - name: Create UDS Core Package
-        run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress --set FLAVOR=${{ inputs.flavor }}
+        run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress --set FLAVOR=${{ matrix.flavor }}
 
       - name: Create Core Bundle
         run: uds create .github/bundles/rke2 --confirm
 
       - name: Create IAC
-        run: uds run -f tasks/iac.yaml create-iac --no-progress --set K8S_DISTRO=rke2
+        run: uds run -f tasks/iac.yaml create-iac --no-progress --set K8S_DISTRO=rke2 --set CLOUD=aws
         timeout-minutes: 20
 
       - name: Get Kubeconfig
@@ -79,16 +83,17 @@ jobs:
 
       - name: Wait for RKE2 Cluster
         run: uds run -f tasks/iac.yaml rke2-cluster-ready --no-progress
-        env:
-          KUBECONFIG: ".github/test-infra/aws/rke2/rke2-config"
         timeout-minutes: 20
 
       - name: Deploy Core Bundle
         env:
-          KUBECONFIG: ".github/test-infra/aws/rke2/rke2-config"
           UDS_CONFIG: .github/bundles/rke2/uds-config.yaml
         run: uds deploy .github/bundles/rke2/uds-bundle-uds-core-rke2-nightly-*.tar.zst --confirm
         timeout-minutes: 60
+
+      - name: Debug Output
+        if: ${{ always() }}
+        uses: ./.github/actions/debug-output
 
       - name: Remove UDS Core
         if: always()
@@ -100,6 +105,6 @@ jobs:
 
       - name: Remove IAC
         if: always()
-        run: uds run -f tasks/iac.yaml destroy-iac --no-progress --set K8S_DISTRO=rke2
+        run: uds run -f tasks/iac.yaml destroy-iac --no-progress --set K8S_DISTRO=rke2 --set CLOUD=aws
         timeout-minutes: 10
         continue-on-error: true
