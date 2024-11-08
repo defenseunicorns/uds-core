@@ -57,5 +57,5 @@ components:
     images:
       - cgr.dev/du-uds-defenseunicorns/grafana-fips:11.3.0
       - cgr.dev/du-uds-defenseunicorns/busybox-fips:1.37.0
-      - cgr.dev/du-uds-defenseunicorns/curl-fips:8.10.1
+      - cgr.dev/du-uds-defenseunicorns/curl-fips:8.11.0
       - cgr.dev/du-uds-defenseunicorns/k8s-sidecar-fips:1.28.0
