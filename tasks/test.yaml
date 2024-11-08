@@ -7,6 +7,7 @@ includes:
   - deploy: ./deploy.yaml
   - util: ./utils.yaml
   - base-layer: ../packages/base/tasks.yaml
+  - idam-layer: ../packages/identity-authorization/tasks.yaml
   - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/refs/tags/v0.13.1/tasks/setup.yaml
   - compliance: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.2.2/tasks/compliance.yaml
 
@@ -129,6 +130,9 @@ tasks:
     description: "Run validate for the components contained in the slim dev bundle"
     actions:
       - task: base-layer:validate
+        with:
+          validate_passthrough: "false"
+      - task: idam-layer:validate
 
   - name: local-compliance-compose
     description: "compose oscal component definitions"

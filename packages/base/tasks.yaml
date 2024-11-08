@@ -4,13 +4,15 @@
 includes:
   - istio: ../../src/istio/tasks.yaml
   - pepr: ../../src/pepr/tasks.yaml
-  - keycloak: ../../src/keycloak/tasks.yaml
 
 tasks:
   - name: validate
+    inputs:
+      validate_passthrough:
+        description: Whether to validate the passthrough gateway
+        default: "true"
     actions:
       - task: istio:validate
         with:
-          validate_passthrough: "false"
+          validate_passthrough: ${{ .inputs.validate_passthrough }}
       - task: pepr:validate
-      - task: keycloak:validate

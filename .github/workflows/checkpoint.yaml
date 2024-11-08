@@ -4,7 +4,7 @@
 name: Checkpoint UDS Core
 
 on:
-  pull_request: # TODO: TEMP @WSTARR
+  pull_request:
     # milestoned is added here as a workaround for release-please not triggering PR workflows (PRs should be added to a milestone to trigger the workflow).
     types: [milestoned, opened, reopened, synchronize]
   # triggered by tag-and-release.yaml
@@ -54,8 +54,7 @@ jobs:
 
       - name: Publish Checkpoint Package
         if: ${{ github.event_name == 'workflow_call' }}
-        run: echo Publish!
-      #   run: uds run -f tasks/publish.yaml checkpoint-package --no-progress
+        run: uds run -f tasks/publish.yaml checkpoint-package --no-progress
 
       - name: Save logs
         if: always()
