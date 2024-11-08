@@ -7,16 +7,25 @@ on:
   pull_request:
     # milestoned is added here as a workaround for release-please not triggering PR workflows (PRs should be added to a milestone to trigger the workflow).
     types: [milestoned, opened, reopened, synchronize]
+    paths:
+      - packages/checkpoint-dev/**
+      - .github/workflows/checkpoint**
+      - tasks/test.yaml
+      - "!**/*.md"
+      - "!**.jpg"
+      - "!**.png"
+      - "!**.gif"
+      - "!**.svg"
   # triggered by tag-and-release.yaml
   workflow_call:
 
 jobs:
-  publish-uds-core:
+  checkpoint:
     strategy:
       matrix:
         architecture: [amd64, arm64]
     runs-on: ${{ matrix.architecture == 'arm64' && 'uds-ubuntu-arm64-4-core' || 'uds-ubuntu-big-boy-4-core' }}
-    name: Publish checkpoint
+    name: UDS Core Checkpoint
 
     permissions:
       contents: read

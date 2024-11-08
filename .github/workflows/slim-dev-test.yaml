@@ -18,6 +18,7 @@ on:
       - packages/identity-authorization/**
       - bundles/k3d-slim-dev/**
       - .github/workflows/slim-dev**
+      - tasks/test.yaml
       - "!**/*.md"
       - "!**.jpg"
       - "!**.png"

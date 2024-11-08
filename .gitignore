@@ -22,7 +22,7 @@ extract-terraform.sh
 cluster-config.yaml
 **.tfstate
 
-packages/checkpoint-dev/uds-checkpoint.tar
+*.tar
 
 **.backup
 **/.playwright/**
