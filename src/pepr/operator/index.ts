@@ -24,6 +24,9 @@ import { Component, setupLogger } from "../logger";
 import { exemptValidator } from "./crd/validators/exempt-validator";
 import { packageFinalizer, packageReconciler } from "./reconcilers/package-reconciler";
 
+// Secret imports
+import { copySecret, labelCopySecret, validateSecret } from "./secrets";
+
 // Export the operator capability for registration in the root pepr.ts
 export { operator } from "./common";
 
@@ -78,3 +81,10 @@ When(UDSPackage)
     log.info("Identity and Authorization layer removed, operator will NOT handle SSO.");
     UDSConfig.isIdentityDeployed = false;
   });
+
+// Watch for secrets w/ the UDS secret label and copy as necessary
+When(a.Secret)
+  .IsCreatedOrUpdated()
+  .WithLabel(labelCopySecret, "true")
+  .Mutate(request => copySecret(request))
+  .Validate(request => validateSecret(request));
