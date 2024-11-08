@@ -15,7 +15,7 @@ on:
 jobs:
   publish-uds-core:
     strategy:
-      fail-fast: false    
+      fail-fast: false
       matrix:
         flavor: [upstream, registry1, unicorn]
     runs-on: "uds-ubuntu-big-boy-8-core"
@@ -95,6 +95,7 @@ jobs:
   publish-uds-core-layers:
     if: ${{ !inputs.snapshot }}
     strategy:
+      fail-fast: false
       matrix:
         flavor: [upstream, registry1, unicorn]
         layer: [base, identity-authorization, runtime-security, backup-restore, logging, metrics-server, monitoring]
