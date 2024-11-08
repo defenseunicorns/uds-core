@@ -2,6 +2,9 @@
 
 This is a special Zarf package that takes a running K3d cluster (named `uds`) and wraps its committed container and volumes into a zarf package.
 
+> [!CAUTION]
+> This package does not currently work on macOS due to some limitations with filesystem permissions.
+
 ## Creating this package
 
 In order to create this package you must follow the following:
