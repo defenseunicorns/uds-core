@@ -12,7 +12,7 @@ In order to create this package you must follow the following:
 1. Setup a K3d cluster (named `uds`) containing the contents you'd like to checkpoint
 
 > [!NOTE]
-> The intent for this package is that those contents are the `uds dev stack`, `zarf init` and `uds core slim`
+> The intent for this package is that those contents are the `uds dev stack`, `zarf init` and the `core-slim-dev` package (`core-base` and `core-identity-authorization`).
 
 2. Run `uds zarf package create <path-to-zarf-yaml> --confirm` on the Zarf Package in this directory
 
