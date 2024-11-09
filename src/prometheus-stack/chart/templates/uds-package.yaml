@@ -7,18 +7,41 @@ metadata:
   name: prometheus-stack
   namespace: {{ .Release.Namespace }}
 spec:
+  {{- if .Values.sso.enabled }}
+  sso:
+    - name: uds-prometheus
+      clientId: uds-prometheus
+      redirectUris:
+        - "https://prometheus.admin.{{ .Values.domain }}/auth"
+      enableAuthserviceSelector:
+        app.kubernetes.io/name: prometheus
+      groups:
+        anyOf:
+          - /UDS Core/Admin
+          - /UDS Core/Auditor
+    - name: uds-alertmanager
+      clientId: uds-alertmanager
+      redirectUris:
+        - "https://alertmanager.admin.{{ .Values.domain }}/auth"
+      enableAuthserviceSelector:
+        app.kubernetes.io/name: alertmanager
+      groups:
+        anyOf:
+          - /UDS Core/Admin
+          - /UDS Core/Auditor
+  {{- end }}
   network:
     expose:
       - service: alertmanager-operated
         selector:
           app.kubernetes.io/name: alertmanager
-        host: alerts
+        host: alertmanager
         gateway: admin
         port: 9093
       - service: prometheus-operated
         selector:
           app: prometheus
-        host: prom
+        host: prometheus
         gateway: admin
         port: 9090
     allow:

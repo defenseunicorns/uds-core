@@ -3,6 +3,9 @@
 
 domain: "###ZARF_VAR_DOMAIN###"
 
+sso:
+  enabled: true
+
 custom: []
 #   - direction: Egress
 #     selector:
