@@ -5,6 +5,8 @@ apiVersion: v1
 kind: Namespace
 metadata:
   name: test-tenant-app
+  labels:
+    istio.io/dataplane-mode: ambient
 ---
 apiVersion: uds.dev/v1alpha1
 kind: Package
@@ -12,6 +14,7 @@ metadata:
   name: test-tenant-app
   namespace: test-tenant-app
 spec:
+  istioAmbient: true
   network:
     expose:
       - service: test-tenant-app

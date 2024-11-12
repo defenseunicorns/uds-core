@@ -6,13 +6,13 @@ name: "Setup Environment"
 description: "UDS Environment Setup"
 inputs:
   ghToken:
-    description: 'GITHUB_TOKEN'
+    description: "GITHUB_TOKEN"
     required: true
   registry1Username:
-    description: 'IRON_BANK_ROBOT_USERNAME'
+    description: "IRON_BANK_ROBOT_USERNAME"
     required: true
   registry1Password:
-    description: 'IRON_BANK_ROBOT_PASSWORD'
+    description: "IRON_BANK_ROBOT_PASSWORD"
     required: true
   chainguardIdentity:
     description: "ID for Chainguard Identity"

@@ -531,6 +531,11 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
             },
             monitor,
             sso,
+            istioAmbient: {
+              type: "boolean",
+              description:
+                "Whether or not to enable Istio Ambient mode, defaults to non-ambient (injected)",
+            },
           },
         } as V1JSONSchemaProps,
       },

@@ -15,7 +15,7 @@ spec:
   rules:
     - to:
         - operation:
-            ports: 
+            ports:
               - "8080"
             paths:
               - "/admin*"
@@ -26,7 +26,7 @@ spec:
               - istio-admin-gateway
     - to:
         - operation:
-            ports: 
+            ports:
               - "8080"
             paths:
             - /metrics*
@@ -37,7 +37,7 @@ spec:
             - monitoring
     - to:
         - operation:
-            ports: 
+            ports:
               - "8080"
             paths:
               # Never allow anonymous client registration except from the pepr-system namespace
@@ -45,14 +45,14 @@ spec:
               - "/realms/{{ .Values.realm }}/clients-registrations/*"
       from:
         - source:
-            notNamespaces: 
+            notNamespaces:
               - "pepr-system"
     - when:
         - key: request.headers[istio-mtls-client-certificate]
           values: ["*"]
       to:
         - operation:
-            ports: 
+            ports:
               - "8080"
       from:
         - source:
