@@ -141,22 +141,28 @@ When(a.Pod)
     if (isExempt(request, Policy.RequireNonRootUser)) {
       return request.Approve();
     }
-    // Check if running as root by checking if runAsNonRoot is false or runAsUser is 0
-    const isRoot = (ctx: Partial<V1SecurityContext>) => {
+
+    // Helper function to check if a container requires root privileges
+    const isRoot = (ctx: Partial<V1SecurityContext>, containerName: string) => {
+      // Skip the root check for `istio-init`
+      if (containerName === "istio-init") {
+        return false;
+      }
+
       const isRunAsRoot = ctx.runAsNonRoot === false;
       const isRunAsRootUser = ctx.runAsUser === 0;
 
       return isRunAsRoot || isRunAsRootUser;
     };
 
-    // Check pod securityContext
+    // Define podCtx explicitly to reference the pod-level security context
     const podCtx = request.Raw.spec?.securityContext || {};
-    if (isRoot(podCtx)) {
+    if (isRoot(podCtx, "")) {
       return request.Deny("Pod level securityContext does not meet the non-root user requirement.");
     }
 
-    // Check container securityContext
-    const violations = securityContextContainers(request).filter(c => isRoot(c.ctx));
+    // Check each container's securityContext, passing the container name explicitly
+    const violations = securityContextContainers(request).filter(c => isRoot(c.ctx, c.name || ""));
 
     if (violations.length) {
       return request.Deny(
@@ -399,10 +405,18 @@ When(a.Pod)
       return request.Approve();
     }
     const authorized = ["NET_BIND_SERVICE"];
+    const istioInitAuthorized = ["NET_ADMIN", "NET_RAW"];
 
-    const violations = securityContextContainers(request).filter(
-      c => c.ctx?.capabilities?.add && !c.ctx?.capabilities.add.includes(authorized[0]),
-    );
+    const violations = securityContextContainers(request).filter(c => {
+      const containerCapabilities = c.ctx?.capabilities?.add || [];
+      // Separate handling for `istio-init` container
+      if (c.name === "istio-init") {
+        return !containerCapabilities.every(cap => istioInitAuthorized.includes(cap));
+      }
+
+      // General case for other containers
+      return containerCapabilities.some(cap => !authorized.includes(cap));
+    });
 
     if (violations.length) {
       return request.Deny(
