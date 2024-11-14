@@ -4,14 +4,12 @@
  */
 
 import { V1NetworkPolicyPeer } from "@kubernetes/client-node";
-import { META_IP } from "./cloudMetadata";
 
-/** Matches a specific custom cidr EXCEPT the Cloud Meta endpoint */
+/** Matches a specific custom cidr without any exclusions */
 export function remoteCidr(cidr: string): V1NetworkPolicyPeer {
   return {
     ipBlock: {
       cidr,
-      except: [META_IP],
     },
   };
 }
