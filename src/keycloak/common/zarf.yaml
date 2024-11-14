@@ -17,6 +17,11 @@ components:
         localPath: ../chart
     actions:
       onDeploy:
+        before:
+          - description: Scale down previous Keycloak pods if in HA Mode
+            mute: true
+            cmd: |
+              zarf tools kubectl get hpa keycloak -n keycloak > /dev/null 2>&1 && zarf tools kubectl scale statefulsets keycloak -n keycloak --replicas=0 || echo "HPA not found, not scaling."      
         after:
           - description: Validate Keycloak Pods
             wait:
