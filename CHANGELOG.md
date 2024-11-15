@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.31.2](https://github.com/defenseunicorns/uds-core/compare/v0.31.1...v0.31.2) (2024-11-15)
+
+
+### Bug Fixes
+
+* scale keycloak sts to zero if deployed in ha mode ([#1010](https://github.com/defenseunicorns/uds-core/issues/1010)) ([9bae9b3](https://github.com/defenseunicorns/uds-core/commit/9bae9b305f5638bca00205f919a8f6fb90d67b79))
+
+
+### Miscellaneous
+
+* update `*.uds.dev` and `*.admin.uds.dev` certs ([#1012](https://github.com/defenseunicorns/uds-core/issues/1012)) ([fe31263](https://github.com/defenseunicorns/uds-core/commit/fe312632fa59cab511755778e52e0ce200481ac4))
+
 ## [0.31.1](https://github.com/defenseunicorns/uds-core/compare/v0.31.0...v0.31.1) (2024-11-13)
 
 
