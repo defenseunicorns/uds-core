@@ -1,0 +1,19 @@
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: prometheus-internal
+  namespace: monitoring
+spec:
+  hosts:
+    - kube-prometheus-stack-prometheus.monitoring.svc.cluster.local
+  http:
+    - route:
+      - destination:
+          host: kube-prometheus-stack-prometheus.monitoring.svc.cluster.local
+          port:
+            number: 9090
+      headers:
+        request:
+          set:
+            authorization: "internal-traffic"
+

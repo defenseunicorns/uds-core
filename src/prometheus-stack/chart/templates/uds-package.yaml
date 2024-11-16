@@ -12,9 +12,10 @@ spec:
     - name: uds-prometheus
       clientId: uds-prometheus
       redirectUris:
-        - "https://prometheus.admin.{{ .Values.domain }}/auth"
+        - "https://metrics.admin.{{ .Values.domain }}/auth"
       enableAuthserviceSelector:
         app.kubernetes.io/name: prometheus
+        operator.prometheus.io/name: kube-prometheus-stack-prometheus
       groups:
         anyOf:
           - /UDS Core/Admin
@@ -22,7 +23,7 @@ spec:
     - name: uds-alertmanager
       clientId: uds-alertmanager
       redirectUris:
-        - "https://alertmanager.admin.{{ .Values.domain }}/auth"
+        - "https://alerts.admin.{{ .Values.domain }}/auth"
       enableAuthserviceSelector:
         app.kubernetes.io/name: alertmanager
       groups:
@@ -32,16 +33,16 @@ spec:
   {{- end }}
   network:
     expose:
-      - service: alertmanager-operated
+      - service: kube-prometheus-stack-alertmanager
         selector:
           app.kubernetes.io/name: alertmanager
-        host: alertmanager
+        host: alerts
         gateway: admin
         port: 9093
-      - service: prometheus-operated
+      - service: kube-prometheus-stack-prometheus
         selector:
           app: prometheus
-        host: prometheus
+        host: metrics
         gateway: admin
         port: 9090
     allow:
