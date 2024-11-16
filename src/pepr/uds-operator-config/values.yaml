@@ -8,10 +8,8 @@ operator:
   UDS_LOG_LEVEL: "###ZARF_VAR_UDS_LOG_LEVEL###"
   AUTHSERVICE_REDIS_URI: "###ZARF_VAR_AUTHSERVICE_REDIS_URI###"
   # Allow Pepr watch to be configurable to react to dropped connections faster
-  PEPR_LAST_SEEN_LIMIT_SECONDS: "60"
+  PEPR_LAST_SEEN_LIMIT_SECONDS: "300"
   # Allow Pepr to re-list resources more frequently to avoid missing resources
-  PEPR_RELIST_INTERVAL_SECONDS: "60"
+  PEPR_RELIST_INTERVAL_SECONDS: "600"
   # Configure Pepr reconcile strategy to have separate queues for faster reconciliation
   PEPR_RECONCILE_STRATEGY: "kindNsName"
-  # Use HTTP2 for Pepr watches and exemption watch
-  PEPR_HTTP2_WATCH: false

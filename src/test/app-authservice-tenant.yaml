@@ -73,7 +73,7 @@ spec:
     spec:
       serviceAccountName: httpbin
       containers:
-        - image: docker.io/kong/httpbin:0.1.0
+        - image: docker.io/kong/httpbin:0.2.1
           imagePullPolicy: IfNotPresent
           name: httpbin
           resources:
