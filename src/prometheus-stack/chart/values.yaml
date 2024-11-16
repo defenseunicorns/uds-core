@@ -5,11 +5,3 @@ domain: "###ZARF_VAR_DOMAIN###"
 
 sso:
   enabled: true
-
-custom: []
-#   - direction: Egress
-#     selector:
-#       app.kubernetes.io/name: alertmanager
-#     remoteGenerated: Anywhere
-#     description: "Egress from alertmanager to anywhere"
-#     port: 443
