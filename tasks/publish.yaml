@@ -46,7 +46,7 @@ tasks:
     actions:
       - description: "Publish the checkpoint package for the current UDS_ARCH"
         cmd: |
-          uds zarf package publish build/zarf-package-k3d-core-slim-dev-${UDS_ARCH}-${VERSION}.tar.zst oci://ghcr.io/defenseunicorns/dev/uds/checkpoints/k3d-core-slim-dev
+          uds zarf package publish build/zarf-package-k3d-core-slim-dev-${UDS_ARCH}-${VERSION}.tar.zst oci://ghcr.io/defenseunicorns/dev/uds/checkpoints
 
   - name: bundles
     description: "Publish UDS Bundles"
