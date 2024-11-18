@@ -7,7 +7,44 @@ metadata:
   name: prometheus-stack
   namespace: {{ .Release.Namespace }}
 spec:
+  {{- if .Values.sso.enabled }}
+  sso:
+    - name: uds-prometheus
+      clientId: uds-prometheus
+      redirectUris:
+        - "https://metrics.admin.{{ .Values.domain }}/auth"
+      enableAuthserviceSelector:
+        app.kubernetes.io/name: prometheus
+        operator.prometheus.io/name: kube-prometheus-stack-prometheus
+      groups:
+        anyOf:
+          - /UDS Core/Admin
+          - /UDS Core/Auditor
+    - name: uds-alertmanager
+      clientId: uds-alertmanager
+      redirectUris:
+        - "https://alerts.admin.{{ .Values.domain }}/auth"
+      enableAuthserviceSelector:
+        app.kubernetes.io/name: alertmanager
+      groups:
+        anyOf:
+          - /UDS Core/Admin
+          - /UDS Core/Auditor
+  {{- end }}
   network:
+    expose:
+      - service: kube-prometheus-stack-alertmanager
+        selector:
+          app.kubernetes.io/name: alertmanager
+        host: alerts
+        gateway: admin
+        port: 9093
+      - service: kube-prometheus-stack-prometheus
+        selector:
+          app: prometheus
+        host: metrics
+        gateway: admin
+        port: 9090
     allow:
       # Permit intra-namespace communication
       - direction: Ingress
@@ -65,3 +102,18 @@ spec:
         port: 9090
         description: "Grafana Metrics Queries"
 
+      # Custom rules for unanticipated scenarios
+      {{- range .Values.custom }}
+      - direction: {{ .direction }}
+        selector:
+          {{ .selector | toYaml | nindent 10 }}
+        {{- if not .remoteGenerated }}
+        remoteNamespace: {{ .remoteNamespace }}
+        remoteSelector:
+          {{ .remoteSelector | toYaml | nindent 10 }}
+        port: {{ .port }}
+        {{- else }}
+        remoteGenerated: {{ .remoteGenerated }}
+        {{- end }}
+        description: {{ .description }}
+      {{- end }}

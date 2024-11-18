@@ -1,0 +1,25 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: monitoring-alertmanager-authz-policy
+  namespace: monitoring
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: alertmanager
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        namespaces:
+        - monitoring
+    to:
+    - operation:
+        methods:
+        - GET
+        - POST
+        paths:
+        - /*
