@@ -3,6 +3,7 @@
 
 # Support for custom `network.allow` entries on the Package CR
 additionalNetworkAllow: []
+# ref: https://uds.defenseunicorns.com/reference/configuration/custom-resources/packages-v1alpha1-cr/#allow
 #   - direction: Egress
 #     selector:
 #       app.kubernetes.io/name: alertmanager

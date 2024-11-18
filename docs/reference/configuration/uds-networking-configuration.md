@@ -35,6 +35,8 @@ packages:
 
 The example above allows Alertmanager to send alerts to any external destination. Alternatively, you could use the remoteNamespace key to specify another namespace within the Kubernetes cluster.
 
+Referencing the following spec for [Allow](https://uds.defenseunicorns.com/reference/configuration/custom-resources/packages-v1alpha1-cr/#allow) for all available fields.
+
 ### Vector
 
 It may also be desired to allow Vector to send logs to an external service. To facilitate this, you can provide a bundle override as follows:
@@ -67,3 +69,5 @@ packages:
 ```
 
 The example above allows Vector to send logs to an Elastic instance in the elastic namespace and to an S3 storage service.
+
+Referencing the following spec for [Allow](https://uds.defenseunicorns.com/reference/configuration/custom-resources/packages-v1alpha1-cr/#allow) for all available fields.
