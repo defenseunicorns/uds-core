@@ -32,3 +32,12 @@ jobs:
     with:
       snapshot: false
     secrets: inherit
+
+  checkpoint-uds-core-release:
+    needs: publish-uds-core-release
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    uses: ./.github/workflows/checkpoint.yaml
+    secrets: inherit
