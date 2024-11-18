@@ -13,7 +13,6 @@ const log = setupLogger(Component.OPERATOR_ISTIO);
 
 const injectionLabel = "istio-injection";
 const injectionAnnotation = "uds.dev/original-istio-injection";
-const nativeSidecarAnnotation = "uds.dev/native-sidecar-migrated";
 
 /**
  * Syncs the package namespace istio-injection label and adds a label for the package name
@@ -27,8 +26,8 @@ export async function enableInjection(pkg: UDSPackage) {
 
   const sourceNS = await K8s(kind.Namespace).Get(pkg.metadata.namespace);
   const labels = sourceNS.metadata?.labels || {};
-  const annotations = sourceNS.metadata?.annotations || {};
   const originalInjectionLabel = labels[injectionLabel];
+  const annotations = sourceNS.metadata?.annotations || {};
   const pkgKey = `uds.dev/pkg-${pkg.metadata.name}`;
 
   // Mark the original namespace injection setting for if all packages are removed
@@ -36,15 +35,12 @@ export async function enableInjection(pkg: UDSPackage) {
     annotations[injectionAnnotation] = originalInjectionLabel || "non-existent";
   }
 
-  // If this namespace is already marked as migrated, skip migration
-  if (annotations[nativeSidecarAnnotation] === "true") {
-    log.debug(`Namespace ${pkg.metadata.namespace} already migrated to native sidecars. Skipping.`);
-    return;
-  }
-
-  // Ensure the namespace is configured for injection
+  // Ensure the namespace is configured
   if (!annotations[pkgKey] || originalInjectionLabel !== "enabled") {
+    // Ensure Istio injection is enabled
     labels[injectionLabel] = "enabled";
+
+    // Add the package annotation
     annotations[pkgKey] = "true";
 
     // Apply the updated Namespace
@@ -60,28 +56,12 @@ export async function enableInjection(pkg: UDSPackage) {
       { force: true },
     );
 
-    // Only restart pods if the injection label has changed or migration is incomplete
-    if (
-      originalInjectionLabel !== labels[injectionLabel] ||
-      annotations[nativeSidecarAnnotation] !== "true"
-    ) {
+    // Kill the pods if we changed the value of the istio-injection label
+    if (originalInjectionLabel !== labels[injectionLabel]) {
       log.debug(
-        `Attempting pod restart in ${pkg.metadata.namespace} based on istio injection label or native sidecar migration`,
+        `Attempting pod restart in ${pkg.metadata.namespace} based on istio injection label change`,
       );
       await killPods(pkg.metadata.namespace, true);
-
-      // Set the annotation to mark migration as complete
-      annotations[nativeSidecarAnnotation] = "true";
-      await K8s(kind.Namespace).Apply(
-        {
-          metadata: {
-            name: pkg.metadata.namespace,
-            annotations,
-          },
-        },
-        { force: true },
-      );
-      log.info(`Namespace ${pkg.metadata.namespace} marked as migrated to native sidecars.`);
     }
   }
 }
@@ -147,6 +127,7 @@ async function killPods(ns: string, enableInjection: boolean) {
   const pods = await K8s(kind.Pod).InNamespace(ns).Get();
   const groups: Record<string, kind.Pod[]> = {};
 
+  // Group the pods by owner UID
   for (const pod of pods.items) {
     // Ignore pods that already have a deletion timestamp
     if (pod.metadata?.deletionTimestamp) {
@@ -154,40 +135,30 @@ async function killPods(ns: string, enableInjection: boolean) {
       continue;
     }
 
-    // Check for old sidecar (`istio-proxy` container) and native sidecar (`istio-init` init container)
-    const hasOldSidecar = pod.spec?.containers?.some(c => c.name === "istio-proxy");
-    const hasNativeSidecar = pod.spec?.initContainers?.some(c => c.name === "istio-init");
+    const foundSidecar = pod.spec?.containers?.find(c => c.name === "istio-proxy");
 
-    // Determine if pod needs to be deleted based on the injection state
-    let needsDeletion = false;
-
-    if (enableInjection) {
-      // Delete pod if it has `istio-proxy` but not `istio-init`, indicating it's outdated
-      if (hasOldSidecar && !hasNativeSidecar) {
-        needsDeletion = true;
-      } else {
-        log.debug(
-          `Skipping Pod ${ns}/${pod.metadata?.name}, already has native sidecar or correct config`,
-        );
-      }
-    } else {
-      // Delete pod if it still has `istio-proxy` when injection is disabled
-      if (hasOldSidecar) {
-        needsDeletion = true;
-      }
+    // If enabling injection, ignore pods that already have the istio sidecar
+    if (enableInjection && foundSidecar) {
+      log.debug(`Ignoring Pod ${ns}/${pod.metadata?.name}, already has sidecar`);
+      continue;
     }
 
-    if (needsDeletion) {
-      const controlledBy =
-        pod.metadata?.ownerReferences?.find(ref => ref.controller)?.uid || "other";
-      groups[controlledBy] = groups[controlledBy] || [];
-      log.debug(`Adding Pod ${ns}/${pod.metadata?.name} to ${controlledBy} deletion list.`);
-      groups[controlledBy].push(pod);
+    // If disabling injection, ignore pods that don't have the istio sidecar
+    if (!enableInjection && !foundSidecar) {
+      log.debug(`Ignoring Pod ${ns}/${pod.metadata?.name}, injection disabled`);
+      continue;
     }
+
+    // Get the UID of the owner of the pod or default to "other" (shouldn't happen)
+    const controlledBy = pod.metadata?.ownerReferences?.find(ref => ref.controller)?.uid || "other";
+    groups[controlledBy] = groups[controlledBy] || [];
+    log.debug(`Adding Pod ${ns}/${pod.metadata?.name} to ${controlledBy} deletion list.`);
+    groups[controlledBy].push(pod);
   }
 
   // Delete each group of pods
   for (const group of Object.values(groups)) {
+    // If this is a statefulset, delete the pods in reverse name order
     if (group[0].metadata?.ownerReferences?.find(ref => ref.kind === "StatefulSet")) {
       group.sort((a, b) => (b.metadata?.name || "").localeCompare(a.metadata?.name || ""));
     }
