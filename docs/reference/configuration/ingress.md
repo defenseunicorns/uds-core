@@ -75,6 +75,10 @@ packages:
 
 You can then either use environment variables (`UDS_ADMIN_TLS_CERT`, `UDS_ADMIN_TLS_KEY`, `UDS_TENANT_TLS_CERT`, and `UDS_TENANT_TLS_KEY`) or a config file to configure the certs for each gateway. These values should be base64 encoded strings of the TLS certificate and key for the admin and tenant gateways respectively.
 
+:::note
+The values you provide for `TLS_CERT` configuration should include both your specific domain cert (i.e. `*.uds.dev`) as well as the full chain of certs back to a trusted root CA (concatenated together). If you do not provide the full chain you may experience unexpected behavior with certain applications as not all container images will trust intermediate certificates by default.
+:::
+
 Domain should be set via your [uds-config](https://uds.defenseunicorns.com/reference/cli/quickstart-and-usage/#variables-and-configuration) file using the shared key to override the Zarf Domain Variable (see example `uds-config.yaml` below).
 
 ```yaml
