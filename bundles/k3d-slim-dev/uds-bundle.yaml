@@ -40,6 +40,17 @@ packages:
     ref: 0.31.2
     # x-release-please-end
     overrides:
+      pepr-uds-core:
+        module:
+          variables:
+            - name: PEPR_WATCHER_MEMORY_REQUEST
+              description: "Memory requests for the pepr watcher pod"
+              path: "watcher.resources.requests.memory"
+              default: "64Mi"
+            - name: PEPR_ADMISSION_MEMORY_REQUEST
+              description: "Memory requests for the pepr admission pods"
+              path: "admission.resources.requests.memory"
+              default: "64Mi"
       istio-admin-gateway:
         uds-istio-config:
           variables:
