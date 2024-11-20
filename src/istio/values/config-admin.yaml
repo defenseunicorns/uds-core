@@ -4,6 +4,7 @@
 name: admin
 domain: "admin.###ZARF_VAR_DOMAIN###"
 tls:
+  enabled: true
   servers:
     keycloak:
       mode: OPTIONAL_MUTUAL
