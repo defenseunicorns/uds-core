@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 leastPrivilege: true
-autoGenerateCert: false
+autoGenerateCert: true
 rbac: true
 manager:
   env:
@@ -11,6 +11,7 @@ manager:
     type: ClusterIP
 
 internal:
+  autoGenerateCert: true
   autoRotateCert: true
 
 controller:
