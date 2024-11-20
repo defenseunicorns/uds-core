@@ -4,6 +4,8 @@ title: Istio Ingress
 
 UDS Core leverages Istio for ingress into the service mesh. This document provides an overview and examples of the Istio resources that UDS Core deploys to handle ingress.
 
+![UDS Core Ingress / Egress](https://github.com/defenseunicorns/uds-core/blob/main/docs/.images/uds-core-arch-ports-protocols.svg?raw=true)
+
 ## Gateways
 
 UDS Core provides a few Istio [Gateway](https://istio.io/latest/docs/reference/config/networking/gateway/) resources to allow ingress into the service mesh. Each one serves a different purpose and can be used to route traffic to different services.
@@ -74,6 +76,10 @@ packages:
 ```
 
 You can then either use environment variables (`UDS_ADMIN_TLS_CERT`, `UDS_ADMIN_TLS_KEY`, `UDS_TENANT_TLS_CERT`, and `UDS_TENANT_TLS_KEY`) or a config file to configure the certs for each gateway. These values should be base64 encoded strings of the TLS certificate and key for the admin and tenant gateways respectively.
+
+:::note
+The `TLS_CERT` configuration values must include your specific domain certificate (e.g., `*.uds.dev`) **and** the full certificate chain leading up to a trusted root Certificate Authority (CA), concatenated together. Failing to include the full chain can result in unexpected behavior with certain applications, as some container images may not inherently trust intermediate certificates.
+:::
 
 Domain should be set via your [uds-config](https://uds.defenseunicorns.com/reference/cli/quickstart-and-usage/#variables-and-configuration) file using the shared key to override the Zarf Domain Variable (see example `uds-config.yaml` below).
 
