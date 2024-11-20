@@ -40,6 +40,7 @@ components:
                   echo "Keycloak is installed and not on the latest version. Scaling down..."
                   zarf tools kubectl delete hpa keycloak -n keycloak
                   zarf tools kubectl scale statefulsets keycloak -n keycloak --replicas=1
+                  zarf tools kubectl wait --for=jsonpath='{.status.replicas}'=1 statefulset/my-statefulset --timeout=60s
                   export KEYCLOAK_IS_HA=true
                 else
                   echo "Keycloak is not deployed in HA mode, skipping scale down."
