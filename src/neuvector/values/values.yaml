@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 leastPrivilege: true
-autoGenerateCert: true
+autoGenerateCert: false
 rbac: true
 manager:
   env:
@@ -11,8 +11,13 @@ manager:
     type: ClusterIP
 
 internal:
-  autoGenerateCert: true
-  autoRotateCert: true
+  autoGenerateCert: false
+  autoRotateCert: false
+
+enforcer:
+  internal:
+    certificate:
+      secret: neuvector-internal-cert
 
 controller:
   apisvc:
@@ -32,10 +37,17 @@ controller:
   env:
     - name: NO_DEFAULT_ADMIN
       value: "1"
+  internal:
+    certificate:
+      secret: neuvector-internal-cert
 
 cve:
   updater:
     enabled: true
+  scanner:
+    internal:
+      certificate:
+        secret: neuvector-internal-cert
 
 crdwebhook:
   enabled: false

@@ -6,6 +6,6 @@ domain: "###ZARF_VAR_DOMAIN###"
 grafana:
   enabled: false
 
-generateInternalCert: false
+generateInternalCert: true
 
 denyLocalAuth: true
