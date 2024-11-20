@@ -25,11 +25,11 @@ components:
         valuesFiles:
           - values/upstream-values.yaml
     images:
-      - docker.io/neuvector/controller:5.4.1
-      - docker.io/neuvector/manager:5.4.1
+      - docker.io/neuvector/controller:5.4.0
+      - docker.io/neuvector/manager:5.4.0
       - docker.io/neuvector/updater:latest
       - docker.io/neuvector/scanner:latest
-      - docker.io/neuvector/enforcer:5.4.1
+      - docker.io/neuvector/enforcer:5.4.0
 
   - name: neuvector
     description: "Deploy Neuvector"
