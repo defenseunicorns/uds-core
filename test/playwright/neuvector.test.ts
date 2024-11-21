@@ -6,7 +6,8 @@
 import { expect, test } from "@playwright/test";
 import { domain } from "./uds.config";
 
-test.use({ baseURL: `https://neuvector.admin.${domain}` });
+const url = `https://neuvector.admin.${domain}`
+test.use({ baseURL: url });
 
 test("validate system health", async ({ page }) => {
   await test.step("check sso", async () => {
@@ -30,24 +31,49 @@ test("validate system health", async ({ page }) => {
 
     // Ensure at least three scanners are connected and at least one scan complete
     await page.getByRole('tab', { name: 'Scanners' }).click();
-    await expect(page.locator('app-scanners-grid')).toHaveText(/[3-9]/, { timeout: 20000 });
-    await expect(page.getByRole('gridcell').first()).toHaveText(/[1-9]*/, { timeout: 20000 });
+    await page.waitForLoadState("domcontentloaded");
+    const scannerPromise = page.waitForResponse(`${url}/scanner`);
+    await page.getByLabel('Scanners').getByRole('button', { name: 'refresh Refresh' }).click();
+    const scannerResponse = await scannerPromise;
+    const scannerData = await scannerResponse.json();
 
-    // Ensure at least one controller exists and all are connected
+    expect(scannerData).toHaveProperty('scanners');
+    expect(Array.isArray(scannerData.scanners)).toBe(true);
+    expect(scannerData.scanners.length).toBeGreaterThanOrEqual(3);
+    const hasScannedContainers = scannerData.scanners.some(
+      (scanner: { scanned_containers: number }) => scanner.scanned_containers > 0
+    );
+    expect(hasScannedContainers).toBe(true);
+
+    // Ensure at least three controller exists and all are connected
     await page.getByRole('tab', { name: 'Controllers' }).click();
-    const controllers = await page.locator('div[role="row"] > div[col-id="connection_state"] > app-controllers-grid-status-cell > span');
-    await expect(await controllers.count()).toBeGreaterThanOrEqual(3);
-    for (const controller of await controllers.all()) {
-      await expect(controller).toHaveText("Connected");
-    }
+    await page.waitForLoadState("domcontentloaded");
+    const controllerPromise = page.waitForResponse(`${url}/controller`);
+    await page.getByLabel('Controllers').getByRole('button', { name: 'refresh Refresh' }).click();
+    const controllerResponse = await controllerPromise;
+    const controllerData = await controllerResponse.json();
+
+    expect(controllerData).toHaveProperty('controllers');
+    expect(Array.isArray(controllerData.controllers)).toBe(true);
+    expect(controllerData.controllers.length).toBeGreaterThanOrEqual(3);
+    controllerData.controllers.forEach((controller: { connection_state: string }) => {
+      expect(controller.connection_state).toBe('connected');
+    });
 
     // Ensure at least one enforcer exists and all are connected
     await page.getByRole('tab', { name: 'Enforcers' }).click();
-    const enforcers = await page.locator('div[role="row"] > div[col-id="connection_state"] > app-enforcers-grid-status-cell > span');
-    await expect(await enforcers.count()).toBeGreaterThanOrEqual(1);
-    for (const enforcer of await enforcers.all()) {
-      await expect(enforcer).toHaveText("Connected");
-    }
+    await page.waitForLoadState("domcontentloaded");
+    const enforcerPromise = page.waitForResponse(`${url}/enforcer`);
+    await page.getByLabel('Enforcers').getByRole('button', { name: 'refresh Refresh' }).click();
+    const enforcerResponse = await enforcerPromise;
+    const enforcerData = await enforcerResponse.json();
+
+    expect(enforcerData).toHaveProperty('enforcers');
+    expect(Array.isArray(enforcerData.enforcers)).toBe(true);
+    expect(enforcerData.enforcers.length).toBeGreaterThanOrEqual(1);
+    enforcerData.enforcers.forEach((enforcer: { connection_state: string }) => {
+      expect(enforcer.connection_state).toBe('connected');
+    });
   });
 });
 
