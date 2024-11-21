@@ -18,20 +18,20 @@ enforcer:
     privileged: true
   internal:
     certificate:
-      secret: neuvector-internal-cert    
+      secret: neuvector-internal-cert
 
 controller:
   image:
     repository: du-uds-defenseunicorns/neuvector-controller-fips
   internal:
     certificate:
-      secret: neuvector-internal-cert    
+      secret: neuvector-internal-cert
 
 cve:
   scanner:
     internal:
       certificate:
-        secret: neuvector-internal-cert  
+        secret: neuvector-internal-cert
     image:
       registry: docker.io
       repository: neuvector/scanner
