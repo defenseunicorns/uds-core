@@ -11,10 +11,14 @@ test.use({ baseURL: `https://neuvector.admin.${domain}` });
 test("validate system health", async ({ page }) => {
   await test.step("check sso", async () => {
     await page.goto('/#/login');
-    await page.locator('.mat-checkbox-inner-container').click();
+    await page.waitForLoadState("domcontentloaded");
+    const termsCheckbox = await page.locator('.mat-checkbox-inner-container');
+    if (await termsCheckbox.isVisible()) {
+      await termsCheckbox.click();
+    }
     await page.getByRole('button', { name: 'Login with OpenID' }).click();
-    await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
     await expect(page).toHaveURL('/#/dashboard');
+    await expect(page.locator('.navbar-header')).toBeVisible();
   });
 
   // Expect counts for scanner, controller, enforcer are based on chart defaults
