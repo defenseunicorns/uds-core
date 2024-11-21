@@ -40,3 +40,28 @@ When(a.Service)
       grpcPort.appProtocol = "tcp";
     }
   });
+
+/**
+ * Mutate the Neuvector Enforcer DaemonSet to add a livenessProbe
+ * Temporary until fixed upstream
+ */
+
+When(a.DaemonSet)
+  .IsCreatedOrUpdated()
+  .InNamespace("neuvector")
+  .WithName("neuvector-enforcer-pod")
+  .Mutate(async ds => {
+    const enforcerContainer = ds.Raw.spec?.template.spec?.containers.find(
+      container => container.name === "neuvector-enforcer-pod",
+    );
+
+    if (enforcerContainer && enforcerContainer.livenessProbe === undefined) {
+      log.debug("Patching NeuVector Enforcer Daemonset to add livenessProbe");
+      const livenessProbe = {
+        exec: { command: ["curl", "127.0.0.1:8500"] },
+        periodSeconds: 20,
+        failureThreshold: 1,
+      };
+      enforcerContainer.livenessProbe = livenessProbe;
+    }
+  });
