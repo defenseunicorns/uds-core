@@ -59,7 +59,7 @@ components:
     charts:
       - name: uds-neuvector-config
         valuesFiles:
-          - values/unicorn-config-values.yaml    
+          - values/unicorn-config-values.yaml
       - name: core
         valuesFiles:
           - values/unicorn-values.yaml
