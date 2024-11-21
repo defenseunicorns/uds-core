@@ -1,6 +1,9 @@
 # Copyright 2024 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
+# Generate certs missing from unicorn images
+autoGenerateCert: true
+
 registry: cgr.dev
 # renovate: datasource=docker depName=cgr.dev/du-uds-defenseunicorns/neuvector-controller-fips versioning=docker
 tag: "5.4.0"
@@ -13,13 +16,22 @@ enforcer:
     repository: du-uds-defenseunicorns/neuvector-enforcer-fips
   containerSecurityContext:
     privileged: true
+  internal:
+    certificate:
+      secret: neuvector-internal-cert    
 
 controller:
   image:
     repository: du-uds-defenseunicorns/neuvector-controller-fips
+  internal:
+    certificate:
+      secret: neuvector-internal-cert    
 
 cve:
   scanner:
+    internal:
+      certificate:
+        secret: neuvector-internal-cert  
     image:
       registry: docker.io
       repository: neuvector/scanner

@@ -10,15 +10,6 @@ manager:
   svc:
     type: ClusterIP
 
-internal:
-  autoGenerateCert: false
-  autoRotateCert: false
-
-enforcer:
-  internal:
-    certificate:
-      secret: neuvector-internal-cert
-
 controller:
   apisvc:
     type: ClusterIP
@@ -37,17 +28,10 @@ controller:
   env:
     - name: NO_DEFAULT_ADMIN
       value: "1"
-  internal:
-    certificate:
-      secret: neuvector-internal-cert
 
 cve:
   updater:
     enabled: true
-  scanner:
-    internal:
-      certificate:
-        secret: neuvector-internal-cert
 
 crdwebhook:
   enabled: false
