@@ -33,9 +33,9 @@ packages:
                   port: 443
 ```
 
-The example above allows Alertmanager to send alerts to any external destination. Alternatively, you could use the remoteNamespace key to specify another namespace within the Kubernetes cluster.
+The example above allows Alertmanager to send alerts to any external destination. Alternatively, you could use the remoteNamespace key to specify another namespace within the Kubernetes cluster (i.e. Mattermost).
 
-Referencing the following spec for [Allow](https://uds.defenseunicorns.com/reference/configuration/custom-resources/packages-v1alpha1-cr/#allow) for all available fields.
+Reference the [spec for allow](https://uds.defenseunicorns.com/reference/configuration/custom-resources/packages-v1alpha1-cr/#allow) for all available fields.
 
 ### Vector
 
@@ -70,4 +70,60 @@ packages:
 
 The example above allows Vector to send logs to an Elastic instance in the elastic namespace and to an S3 storage service.
 
-Referencing the following spec for [Allow](https://uds.defenseunicorns.com/reference/configuration/custom-resources/packages-v1alpha1-cr/#allow) for all available fields.
+Reference the [spec for allow](https://uds.defenseunicorns.com/reference/configuration/custom-resources/packages-v1alpha1-cr/#allow) for all available fields.
+
+### Grafana
+
+It may be desired to connect Grafana to additional datasources in or outside of the cluster. To facilitate this, you can provide a bundle override as follows:
+
+```yaml
+packages:
+  - name: uds-core
+    repository: ghcr.io/defenseunicorns/packages/uds/core-monitoring
+    ref: 0.31.1-upstream
+    overrides:
+      grafana:
+        uds-grafana-config:
+          values:
+            - path: additionalNetworkAllow
+              value:
+                - direction: Egress
+                  selector:
+                    app.kubernetes.io/name: grafana
+                  remoteNamespace: thanos
+                  remoteSelector:
+                    app.kubernetes.io/name: thanos
+                  port: 9090
+                  description: "Thanos Query"
+```
+
+The example above allows Grafana to query a remote Thanos instance in your cluster.
+
+Reference the [spec for allow](https://uds.defenseunicorns.com/reference/configuration/custom-resources/packages-v1alpha1-cr/#allow) for all available fields.
+
+### NeuVector
+
+It may be desired to connect Grafana to additional datasources in or outside of the cluster. To facilitate this, you can provide a bundle override as follows:
+
+```yaml
+packages:
+  - name: uds-core
+    repository: ghcr.io/defenseunicorns/packages/uds/core-monitoring
+    ref: 0.31.1-upstream
+    overrides:
+      neuvector:
+        uds-neuvector-config:
+          values:
+            - path: additionalNetworkAllow
+              value:
+                - direction: Egress
+                  selector:
+                    app: neuvector-manager-pod
+                  remoteGenerated: Anywhere
+                  description: "from neuvector to anywhere"
+                  port: 443
+```
+
+The example above allows NeuVector to send alerts to any external destination. Alternatively, you could use the remoteNamespace key to specify another namespace within the Kubernetes cluster (i.e. Mattermost).
+
+Reference the [spec for allow](https://uds.defenseunicorns.com/reference/configuration/custom-resources/packages-v1alpha1-cr/#allow) for all available fields.
