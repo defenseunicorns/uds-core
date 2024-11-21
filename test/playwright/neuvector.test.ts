@@ -12,6 +12,8 @@ test("validate system health", async ({ page }) => {
   await test.step("check sso", async () => {
     await page.goto('/#/login');
     await page.waitForLoadState("domcontentloaded");
+
+    await expect(page.getByRole('button', { name: 'Login with OpenID' })).toBeVisible();
     const termsCheckbox = await page.locator('.mat-checkbox-inner-container');
     if (await termsCheckbox.isVisible()) {
       await termsCheckbox.click();
