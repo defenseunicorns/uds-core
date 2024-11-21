@@ -69,6 +69,8 @@ components:
         namespace: istio-admin-gateway
         valuesFiles:
           - "values/config-admin.yaml"
+    images:
+      - bitnami/kubectl:1.31.3
 
   - name: istio-tenant-gateway
     required: true
@@ -84,6 +86,8 @@ components:
         namespace: istio-tenant-gateway
         valuesFiles:
           - "values/config-tenant.yaml"
+    images:
+      - bitnami/kubectl:1.31.3
 
   - name: istio-passthrough-gateway
     required: false
@@ -99,3 +103,5 @@ components:
         namespace: istio-passthrough-gateway
         valuesFiles:
           - "values/config-passthrough.yaml"
+    images:
+      - bitnami/kubectl:1.31.3
