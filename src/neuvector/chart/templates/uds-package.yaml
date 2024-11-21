@@ -84,6 +84,16 @@ spec:
       - direction: Egress
         remoteGenerated: KubeAPI
         selector:
+          app: neuvector-cert-upgrader-pod
+
+      - direction: Egress
+        remoteGenerated: KubeAPI
+        selector:
+          app: neuvector-scanner-pod
+
+      - direction: Egress
+        remoteGenerated: KubeAPI
+        selector:
           app: neuvector-enforcer-pod
 
       - direction: Ingress
