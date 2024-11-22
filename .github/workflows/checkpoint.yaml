@@ -63,8 +63,7 @@ jobs:
 
       - name: Publish Checkpoint Package
         if: ${{ github.event_name != 'pull_request' }}
-        run: echo hi!
-        # run: uds run -f tasks/publish.yaml checkpoint-package --no-progress
+        run: uds run -f tasks/publish.yaml checkpoint-package --no-progress
 
       - name: Save logs
         if: always()
