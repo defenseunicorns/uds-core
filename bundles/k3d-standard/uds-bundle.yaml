@@ -54,6 +54,14 @@ packages:
               description: "Memory requests for the pepr admission pods"
               path: "admission.resources.requests.memory"
               default: "256Mi"
+            - name: PEPR_WATCHER_CPU_REQUEST
+              description: "CPU requests for the pepr watcher pod"
+              path: "watcher.resources.requests.memory"
+              default: "200m"
+            - name: PEPR_ADMISSION_CPU_REQUEST
+              description: "CPU requests for the pepr admission pods"
+              path: "admission.resources.requests.memory"
+              default: "200m"
       loki:
         loki:
           variables:
