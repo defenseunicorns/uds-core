@@ -103,7 +103,7 @@ Reference the [spec for allow](https://uds.defenseunicorns.com/reference/configu
 
 ### NeuVector
 
-It may be desired to connect Grafana to additional datasources in or outside of the cluster. To facilitate this, you can provide a bundle override as follows:
+It may be desired send alerts from NeuVector to locations in or outside of the cluster. To facilitate this, you can provide a bundle override as follows:
 
 ```yaml
 packages:
