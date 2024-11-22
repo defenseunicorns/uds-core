@@ -62,8 +62,9 @@ jobs:
         uses: ./.github/actions/debug-output
 
       - name: Publish Checkpoint Package
-        if: ${{ github.event_name == 'workflow_call' }}
-        run: uds run -f tasks/publish.yaml checkpoint-package --no-progress
+        if: ${{ github.event_name != 'pull_request' }}
+        run: echo hi!
+        # run: uds run -f tasks/publish.yaml checkpoint-package --no-progress
 
       - name: Save logs
         if: always()
