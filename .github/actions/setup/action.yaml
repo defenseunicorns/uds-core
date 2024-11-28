@@ -29,7 +29,7 @@ runs:
     - name: Install k3d
       shell: bash
       # renovate: datasource=github-tags depName=k3d-io/k3d versioning=semver
-      run: curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | TAG=v5.7.4 bash
+      run: curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | TAG=v5.7.5 bash
 
     - name: Install UDS CLI
       uses: defenseunicorns/setup-uds@b987a32bac3baeb67bfb08f5e1544e2f9076ee8a # v1.0.0
