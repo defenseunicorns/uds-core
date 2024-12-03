@@ -14,7 +14,7 @@ components:
     charts:
       - name: crd
         url: https://neuvector.github.io/neuvector-helm/
-        version: 2.8.2
+        version: 2.8.3
         namespace: neuvector
         gitPath: charts/crd
       - name: uds-neuvector-config
@@ -23,14 +23,14 @@ components:
         localPath: ../chart
       - name: core
         url: https://neuvector.github.io/neuvector-helm/
-        version: 2.8.2
+        version: 2.8.3
         namespace: neuvector
         gitPath: charts/core
         valuesFiles:
           - ../values/values.yaml
       # - name: monitor
       #   url: https://neuvector.github.io/neuvector-helm/
-      #   version: 2.8.2
+      #   version: 2.8.3
       #   namespace: neuvector
       #   gitPath: charts/monitor
       #   valuesFiles:
