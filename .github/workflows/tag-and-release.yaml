@@ -11,7 +11,8 @@ on:
 jobs:
   tag-new-version:
     permissions: write-all
-    runs-on: ubuntu-latest
+    #runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       release_created: ${{ steps.release-flag.outputs.release_created }}
     steps:

@@ -11,7 +11,8 @@ on:
 
 jobs:
   title_check:
-    runs-on: ubuntu-latest
+    #runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     name: Validate PR Title
     permissions:
       pull-requests: read

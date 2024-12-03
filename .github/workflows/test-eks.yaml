@@ -22,7 +22,8 @@ jobs:
       fail-fast: false
       matrix:
         flavor: [upstream, registry1, unicorn]
-    runs-on: ubuntu-latest
+    #runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       SHA: ${{ github.sha }}
       UDS_REGION: us-west-2

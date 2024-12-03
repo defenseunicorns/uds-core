@@ -17,7 +17,8 @@ permissions:
 jobs:
 
   check-oscal-paths:
-    runs-on: ubuntu-latest
+    #runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     name: OSCAL Change Detection
     outputs:
       oscal: ${{ steps.path-filter.outputs.oscal }}
@@ -39,7 +40,8 @@ jobs:
   lint-oscal:
     needs: check-oscal-paths
     if: ${{ needs.check-oscal-paths.outputs.oscal == 'true' }}
-    runs-on: ubuntu-latest
+    #runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       # filter the files to remove not oscal files (such as those titles oscal-* under ./.github)
       - name: Identify changed OSCAL files
