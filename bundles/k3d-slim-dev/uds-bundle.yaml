@@ -53,11 +53,11 @@ packages:
               default: "64Mi"
             - name: PEPR_WATCHER_CPU_REQUEST
               description: "CPU requests for the pepr watcher pod"
-              path: "watcher.resources.requests.memory"
+              path: "watcher.resources.requests.cpu"
               default: "100m"
             - name: PEPR_ADMISSION_CPU_REQUEST
               description: "CPU requests for the pepr admission pods"
-              path: "admission.resources.requests.memory"
+              path: "admission.resources.requests.cpu"
               default: "100m"
       istio-admin-gateway:
         uds-istio-config:

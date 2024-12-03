@@ -3,7 +3,7 @@
 
 registry: registry1.dso.mil
 # renovate: datasource=docker depName=registry1.dso.mil/ironbank/neuvector/neuvector/controller versioning=docker
-tag: "5.4.0"
+tag: "5.4.1"
 manager:
   image:
     repository: ironbank/neuvector/neuvector/manager
