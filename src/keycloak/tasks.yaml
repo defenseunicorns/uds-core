@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 includes:
-  - config: https://raw.githubusercontent.com/defenseunicorns/uds-identity-config/v0.7.0/tasks.yaml
+  - config: https://raw.githubusercontent.com/defenseunicorns/uds-identity-config/v0.8.0/tasks.yaml
 
 tasks:
   - name: validate
