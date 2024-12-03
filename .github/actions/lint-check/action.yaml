@@ -11,8 +11,6 @@ runs:
       uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
       with:
         node-version: 20
-    - name: Set up Homebrew
-      uses: Homebrew/actions/setup-homebrew@master
     - name: Install UDS CLI
       uses: defenseunicorns/setup-uds@b987a32bac3baeb67bfb08f5e1544e2f9076ee8a # v1.0.0
       with:
