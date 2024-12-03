@@ -90,7 +90,7 @@ jobs:
         env:
           UDS_CONFIG: .github/bundles/rke2/uds-config.yaml
         run: uds deploy .github/bundles/rke2/uds-bundle-uds-core-rke2-nightly-*.tar.zst --confirm
-        timeout-minutes: 60
+        timeout-minutes: 30
 
       - name: Debug Output
         if: ${{ always() }}

@@ -86,7 +86,7 @@ jobs:
         env:
           UDS_CONFIG: .github/bundles/eks/uds-config.yaml
         run: uds deploy .github/bundles/eks/uds-bundle-uds-core-eks-nightly-*.tar.zst --confirm
-        timeout-minutes: 20
+        timeout-minutes: 30
 
       - name: Debug Output
         if: ${{ always() }}
