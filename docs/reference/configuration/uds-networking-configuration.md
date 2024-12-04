@@ -4,7 +4,7 @@ title: Networking Configuration
 
 ## KubeAPI Egress
 
-The UDS operator is responsible for dynamically updating network policies that use `remoteGenerated: KubeAPI` network policies, in response to changes in the Kubernetes API server’s IP address. This ensures that policies remain accurate as cluster configurations evolve. However, in environments where the API server IP(s) frequently change, this behavior can lead to unnecessary overhead or instability.
+The UDS operator is responsible for dynamically updating network policies that use the `remoteGenerated: KubeAPI` custom selector, in response to changes in the Kubernetes API server’s IP address. This ensures that policies remain accurate as cluster configurations evolve. However, in environments where the API server IP(s) frequently change, this behavior can lead to unnecessary overhead or instability.
 
 To address this, the UDS operator provides an option to configure a static CIDR range. This approach eliminates the need for continuous updates by using a predefined range of IP addresses for network policies. To configure a specific CIDR range, set an override to `operator.KUBEAPI_CIDR` in your bundle as a value or variable. For example:
 

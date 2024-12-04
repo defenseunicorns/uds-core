@@ -126,12 +126,12 @@ export async function updateAPIServerCIDR(svc: kind.Service, slice: kind.Endpoin
   if (peers.length) {
     apiServerPeers = peers.flatMap(cidr => ({
       ipBlock: {
-        cidr,
+        cidr: cidr,
       },
     }));
 
     // Update NetworkPolicies
-    await updateNetworkPolicies(apiServerPeers);
+    await updateKubeAPINetworkPolicies(apiServerPeers);
   } else {
     log.warn("No peers found for the API server CIDR update.");
   }
@@ -142,7 +142,7 @@ export async function updateAPIServerCIDR(svc: kind.Service, slice: kind.Endpoin
  *
  * @param {V1NetworkPolicyPeer[]} newPeers - The updated list of peers to apply to the NetworkPolicies.
  */
-async function updateNetworkPolicies(newPeers: V1NetworkPolicyPeer[]) {
+export async function updateKubeAPINetworkPolicies(newPeers: V1NetworkPolicyPeer[]) {
   const netPols = await K8s(kind.NetworkPolicy)
     .WithLabel("uds.dev/generated", RemoteGenerated.KubeAPI)
     .Get();
