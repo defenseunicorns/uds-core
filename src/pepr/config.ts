@@ -31,6 +31,9 @@ export const UDSConfig = {
   // Redis URI for Authservice
   authserviceRedisUri,
 
+  // Static CIDR range to use for KubeAPI instead of k8s watch
+  kubeApiCidr: process.env.KUBEAPI_CIDR,
+
   // Track if UDS Core identity-authorization layer is deployed
   isIdentityDeployed: false,
 };

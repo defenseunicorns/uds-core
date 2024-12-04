@@ -6,6 +6,7 @@
 import { V1NetworkPolicyPeer } from "@kubernetes/client-node";
 import { K8s, kind, R } from "pepr";
 
+import { UDSConfig } from "../../../../config";
 import { Component, setupLogger } from "../../../../logger";
 import { RemoteGenerated } from "../../../crd";
 import { anywhere } from "./anywhere";
@@ -17,19 +18,33 @@ const log = setupLogger(Component.OPERATOR_GENERATORS);
 let apiServerPeers: V1NetworkPolicyPeer[];
 
 /**
- * Initialize the API server CIDR by getting the EndpointSlice and Service for the API server
+ * Initialize the API server CIDR.
+ *
+ * This function checks if a static CIDR is defined in the configuration.
+ * If a static CIDR exists, it skips the EndpointSlice lookup and uses the static value.
+ * Otherwise, it fetches the EndpointSlice and updates the CIDR dynamically.
  */
 export async function initAPIServerCIDR() {
-  const slice = await K8s(kind.EndpointSlice).InNamespace("default").Get("kubernetes");
   const svc = await K8s(kind.Service).InNamespace("default").Get("kubernetes");
-  await updateAPIServerCIDR(slice, svc);
+
+  // If static CIDR is defined, pass it directly
+  if (UDSConfig.kubeApiCidr) {
+    log.info(
+      `Static CIDR (${UDSConfig.kubeApiCidr}) is defined for KubeAPI, skipping EndpointSlice lookup.`,
+    );
+    await updateAPIServerCIDR(svc, UDSConfig.kubeApiCidr); // Pass static CIDR
+  } else {
+    const slice = await K8s(kind.EndpointSlice).InNamespace("default").Get("kubernetes");
+    await updateAPIServerCIDR(svc, slice);
+  }
 }
 
 /**
- * Get the API server CIDR
- * @returns The API server CIDR
+ * Get the API server CIDR.
+ *
+ * @returns {V1NetworkPolicyPeer[]} The cached API server CIDR if available; otherwise, defaults to `0.0.0.0/0`.
  */
-export function kubeAPI() {
+export function kubeAPI(): V1NetworkPolicyPeer[] {
   // If the API server peers are already cached, return them
   if (apiServerPeers) {
     return apiServerPeers;
@@ -41,8 +56,9 @@ export function kubeAPI() {
 }
 
 /**
- * When the kubernetes EndpointSlice is created or updated, update the API server CIDR
- * @param slice The EndpointSlice for the API server
+ * When the Kubernetes EndpointSlice is created or updated, update the API server CIDR.
+ *
+ * @param {kind.EndpointSlice} slice - The EndpointSlice object for the API server.
  */
 export async function updateAPIServerCIDRFromEndpointSlice(slice: kind.EndpointSlice) {
   try {
@@ -50,7 +66,7 @@ export async function updateAPIServerCIDRFromEndpointSlice(slice: kind.EndpointS
       "Processing watch for endpointslices, getting k8s service for updating API server CIDR",
     );
     const svc = await K8s(kind.Service).InNamespace("default").Get("kubernetes");
-    await updateAPIServerCIDR(slice, svc);
+    await updateAPIServerCIDR(svc, slice);
   } catch (err) {
     const msg = "Failed to update network policies from endpoint slice watch";
     log.error({ err }, msg);
@@ -58,65 +74,89 @@ export async function updateAPIServerCIDRFromEndpointSlice(slice: kind.EndpointS
 }
 
 /**
- * When the kubernetes Service is created or updated, update the API server CIDR
- * @param svc The Service for the API server
+ * When the Kubernetes Service is created or updated, update the API server CIDR.
+ *
+ * If a static CIDR is defined, it skips fetching the EndpointSlice and uses the static value.
+ *
+ * @param {kind.Service} svc - The Service object for the API server.
  */
 export async function updateAPIServerCIDRFromService(svc: kind.Service) {
   try {
-    log.debug(
-      "Processing watch for api service, getting endpoint slices for updating API server CIDR",
-    );
-    const slice = await K8s(kind.EndpointSlice).InNamespace("default").Get("kubernetes");
-    await updateAPIServerCIDR(slice, svc);
+    if (UDSConfig.kubeApiCidr) {
+      log.debug("Processing watch for api service, using configured API CIDR for endpoints");
+      await updateAPIServerCIDR(svc, UDSConfig.kubeApiCidr);
+    } else {
+      log.debug(
+        "Processing watch for api service, getting endpoint slices for updating API server CIDR",
+      );
+      const slice = await K8s(kind.EndpointSlice).InNamespace("default").Get("kubernetes");
+      await updateAPIServerCIDR(svc, slice);
+    }
   } catch (err) {
-    const msg = "Failed to update network policies from api service watch";
+    const msg = "Failed to update network policies from API service watch";
     log.error({ err }, msg);
   }
 }
 
 /**
- * Update the API server CIDR and update the NetworkPolicies
+ * Update the API server CIDR and apply it to the NetworkPolicies.
  *
- * @param slice The EndpointSlice for the API server
- * @param svc The Service for the API server
+ * @param {kind.Service} svc - The Service object representing the Kubernetes API server.
+ * @param {kind.EndpointSlice | string} slice - Either the EndpointSlice for dynamic CIDR generation or a static CIDR string.
  */
-export async function updateAPIServerCIDR(slice: kind.EndpointSlice, svc: kind.Service) {
-  const { endpoints } = slice;
+export async function updateAPIServerCIDR(svc: kind.Service, slice: kind.EndpointSlice | string) {
   const k8sApiIP = svc.spec?.clusterIP;
 
-  // Flatten the endpoints into a list of IPs
-  const peers = endpoints?.flatMap(e => e.addresses);
+  let peers: string[] = [];
 
-  if (k8sApiIP) {
-    peers?.push(k8sApiIP);
+  // Handle static CIDR or dynamic EndpointSlice
+  if (typeof slice === "string") {
+    peers.push(slice);
+  } else {
+    const { endpoints } = slice;
+    peers = endpoints?.flatMap(e => `${e.addresses}/32`) || [];
   }
 
-  // If the peers are found, cache and process them
-  if (peers?.length) {
-    apiServerPeers = peers.flatMap(ip => ({
+  // Add the clusterIP from the service
+  if (k8sApiIP) {
+    peers.push(`${k8sApiIP}/32`);
+  }
+
+  // Convert peers into NetworkPolicyPeer objects
+  if (peers.length) {
+    apiServerPeers = peers.flatMap(cidr => ({
       ipBlock: {
-        cidr: `${ip}/32`,
+        cidr,
       },
     }));
 
-    // Get all the KubeAPI NetworkPolicies
-    const netPols = await K8s(kind.NetworkPolicy)
-      .WithLabel("uds.dev/generated", RemoteGenerated.KubeAPI)
-      .Get();
+    // Update NetworkPolicies
+    await updateNetworkPolicies(apiServerPeers);
+  } else {
+    log.warn("No peers found for the API server CIDR update.");
+  }
+}
 
-    for (const netPol of netPols.items) {
-      // Get the old peers
-      const oldPeers = netPol.spec?.egress?.[0].to;
+/**
+ * Update NetworkPolicies with new API server peers.
+ *
+ * @param {V1NetworkPolicyPeer[]} newPeers - The updated list of peers to apply to the NetworkPolicies.
+ */
+async function updateNetworkPolicies(newPeers: V1NetworkPolicyPeer[]) {
+  const netPols = await K8s(kind.NetworkPolicy)
+    .WithLabel("uds.dev/generated", RemoteGenerated.KubeAPI)
+    .Get();
 
-      // Update the NetworkPolicy if the peers have changed
-      if (!R.equals(oldPeers, apiServerPeers)) {
-        // Note using the apiServerPeers variable here instead of the oldPeers variable
-        // in case another EndpointSlice is updated before this one
-        netPol.spec!.egress![0].to = apiServerPeers;
+  for (const netPol of netPols.items) {
+    const oldPeers = netPol.spec?.egress?.[0].to;
 
-        log.debug(`Updating ${netPol.metadata!.namespace}/${netPol.metadata!.name}`);
-        await K8s(kind.NetworkPolicy).Apply(netPol);
-      }
+    if (!R.equals(oldPeers, newPeers)) {
+      netPol.spec!.egress![0].to = newPeers;
+
+      log.debug(
+        `Updating KubeAPI NetworkPolicy ${netPol.metadata!.namespace}/${netPol.metadata!.name} with new CIDRs.`,
+      );
+      await K8s(kind.NetworkPolicy).Apply(netPol);
     }
   }
 }
