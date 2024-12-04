@@ -4,7 +4,7 @@ title: Pepr Policies
 
 ## Common Pepr Policies for UDS Core
 
-### Pepr Policy Exemptions {#pepr-policy-exemptions}
+### Pepr Policy Exemptions
 These policies are based on the [Big Bang](https://p1.dso.mil/services/big-bang) policies created with Kyverno. You can find the source policies [here](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies), Policy Names below also have links to the referenced Big Bang policy.
 
 Exemptions can be specified by a [UDS Exemption CR](../uds-operator#exemption). These take the place of Kyverno Exceptions.
