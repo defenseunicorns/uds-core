@@ -4,6 +4,12 @@
 name: debug-output
 description: "Print out basic debug info for a k8s cluster"
 
+inputs:
+  suffix:
+    description: 'Suffix to append to the debug log'
+    required: false
+    default: ''
+
 runs:
   using: composite
   steps:
@@ -37,8 +43,9 @@ runs:
         echo "::endgroup::"
         echo "::group::Describe Failed Packages"
         FAILED_PACKAGES=(`uds zarf tools kubectl get package -A -o jsonpath="{range .items[?(@.status.phase!='Ready')]}{.metadata.name}{','}{.metadata.namespace}{'\n'}{end}"`); for PACKAGE in $FAILED_PACKAGES[@]; do PACKAGE_NAME=`echo $PACKAGE | awk -F "," '{print $1}'`; PACKAGE_NAMESPACE=`echo $PACKAGE | awk -F "," '{print $2}'`; uds zarf tools kubectl describe $PACKAGE_NAME -n $PACKAGE_NAMESPACE; done
+      shell: bash
     - uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
       with:
-        name: pepr-debug-logs
-        path: |
+        name: pepr-debug-logs${{ inputs.suffix }}
+        path: | 
           /tmp/pepr-*.log
