@@ -3,20 +3,38 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { describe, expect, it, jest } from "@jest/globals";
+import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { kind } from "pepr";
-import * as kubeAPI from "./kubeAPI";
+import { updateAPIServerCIDR } from "./kubeAPI";
 
-jest.mock("./kubeAPI", () => {
-  const actual = jest.requireActual("./kubeAPI") as typeof kubeAPI;
-  const mockNetPol = jest.fn(); // Create the mock function
+jest.mock("pepr", () => {
+  const originalModule = jest.requireActual("pepr") as object;
   return {
-    ...actual,
-    updateKubeAPINetworkPolicies: mockNetPol, // Use the mock function directly
+    ...originalModule,
+    K8s: jest.fn(),
   };
 });
 
+import { K8s } from "pepr";
+
+type KubernetesList<T> = {
+  items: T[];
+};
+
 describe("updateAPIServerCIDR", () => {
+  const mockApply = jest.fn();
+  const mockGet = jest.fn<() => Promise<KubernetesList<kind.NetworkPolicy>>>();
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    (K8s as jest.Mock).mockImplementation(() => ({
+      WithLabel: jest.fn(() => ({
+        Get: mockGet,
+      })),
+      Apply: mockApply,
+    }));
+  });
+
   it("handles a static CIDR string", async () => {
     const mockService = {
       spec: {
@@ -26,12 +44,43 @@ describe("updateAPIServerCIDR", () => {
 
     const staticCIDR = "192.168.1.0/24";
 
-    await kubeAPI.updateAPIServerCIDR(mockService, staticCIDR);
+    // Mock the return of `Get` method
+    mockGet.mockResolvedValue({
+      items: [
+        {
+          metadata: {
+            name: "mock-netpol",
+            namespace: "default",
+          },
+          spec: {
+            egress: [
+              {
+                to: [{ ipBlock: { cidr: "0.0.0.0/0" } }],
+              },
+            ],
+          },
+        },
+      ],
+    } as KubernetesList<kind.NetworkPolicy>);
 
-    expect(kubeAPI.updateKubeAPINetworkPolicies).toHaveBeenCalledWith([
-      { ipBlock: { cidr: staticCIDR } },
-      { ipBlock: { cidr: "10.0.0.1/32" } },
-    ]);
+    await updateAPIServerCIDR(mockService, staticCIDR);
+
+    expect(mockGet).toHaveBeenCalledWith();
+    expect(mockApply).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: {
+          name: "mock-netpol",
+          namespace: "default",
+        },
+        spec: {
+          egress: [
+            {
+              to: [{ ipBlock: { cidr: staticCIDR } }, { ipBlock: { cidr: "10.0.0.1/32" } }],
+            },
+          ],
+        },
+      }),
+    );
   });
 
   it("handles an EndpointSlice with multiple endpoints", async () => {
@@ -45,12 +94,46 @@ describe("updateAPIServerCIDR", () => {
       endpoints: [{ addresses: ["192.168.1.2"] }, { addresses: ["192.168.1.3"] }],
     } as kind.EndpointSlice;
 
-    await kubeAPI.updateAPIServerCIDR(mockService, mockSlice);
+    // Mock the return of `Get` method
+    mockGet.mockResolvedValue({
+      items: [
+        {
+          metadata: {
+            name: "mock-netpol",
+            namespace: "default",
+          },
+          spec: {
+            egress: [
+              {
+                to: [{ ipBlock: { cidr: "0.0.0.0/0" } }],
+              },
+            ],
+          },
+        },
+      ],
+    } as KubernetesList<kind.NetworkPolicy>);
 
-    expect(kubeAPI.updateKubeAPINetworkPolicies).toHaveBeenCalledWith([
-      { ipBlock: { cidr: "192.168.1.2/32" } },
-      { ipBlock: { cidr: "192.168.1.3/32" } },
-      { ipBlock: { cidr: "10.0.0.1/32" } },
-    ]);
+    await updateAPIServerCIDR(mockService, mockSlice);
+
+    expect(mockGet).toHaveBeenCalledWith();
+    expect(mockApply).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: {
+          name: "mock-netpol",
+          namespace: "default",
+        },
+        spec: {
+          egress: [
+            {
+              to: [
+                { ipBlock: { cidr: "192.168.1.2/32" } },
+                { ipBlock: { cidr: "192.168.1.3/32" } },
+                { ipBlock: { cidr: "10.0.0.1/32" } },
+              ],
+            },
+          ],
+        },
+      }),
+    );
   });
 });
