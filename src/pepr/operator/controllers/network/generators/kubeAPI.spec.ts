@@ -4,8 +4,12 @@
  */
 
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
-import { kind } from "pepr";
+import { K8s, kind } from "pepr";
 import { updateAPIServerCIDR } from "./kubeAPI";
+
+type KubernetesList<T> = {
+  items: T[];
+};
 
 jest.mock("pepr", () => {
   const originalModule = jest.requireActual("pepr") as object;
@@ -14,12 +18,6 @@ jest.mock("pepr", () => {
     K8s: jest.fn(),
   };
 });
-
-import { K8s } from "pepr";
-
-type KubernetesList<T> = {
-  items: T[];
-};
 
 describe("updateAPIServerCIDR", () => {
   const mockApply = jest.fn();
