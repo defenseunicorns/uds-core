@@ -93,3 +93,8 @@ spec:
         remoteGenerated: IntraNamespace
         ports:
           - 3000
+
+      # Custom rules for additional networking access
+      {{- with .Values.additionalNetworkAllow }}
+      {{ toYaml . | nindent 6 }}
+      {{- end }}

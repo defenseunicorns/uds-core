@@ -65,3 +65,7 @@ spec:
         port: 9090
         description: "Grafana Metrics Queries"
 
+      # Custom rules for additional networking access
+      {{- with .Values.additionalNetworkAllow }}
+      {{ toYaml . | nindent 6 }}
+      {{- end }}

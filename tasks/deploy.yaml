@@ -9,7 +9,7 @@ variables:
   - name: VERSION
     description: "The version of the packages to deploy"
     # x-release-please-start-version
-    default: "0.31.1"
+    default: "0.32.0"
     # x-release-please-end
   - name: FLAVOR
     default: upstream
@@ -59,7 +59,17 @@ tasks:
       - description: "Deploy the latest UDS Core package release"
         cmd: uds zarf package deploy oci://${TARGET_REPO}/core:${LATEST_VERSION} --confirm --no-progress --components '*'
 
+  - name: latest-slim-bundle-release
+    actions:
+      - description: "Deploy the latest UDS Core package release"
+        cmd: uds deploy oci://ghcr.io/defenseunicorns/packages/uds/bundles/k3d-core-slim-dev:latest --set INSECURE_ADMIN_PASSWORD_GENERATION=true --confirm --no-progress
+
   - name: standard-package
     actions:
       - description: "Deploy the standard UDS Core zarf package"
         cmd: uds zarf package deploy build/zarf-package-core-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress --components '*'
+
+  - name: checkpoint-package
+    actions:
+      - description: "Deploy the checkpoint K3d + UDS Core Slim zarf package"
+        cmd: uds zarf package deploy build/zarf-package-k3d-core-slim-dev-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress

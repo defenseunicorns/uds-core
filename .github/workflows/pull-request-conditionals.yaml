@@ -19,6 +19,7 @@ on:
       - .gitignore
       - renovate.json
       - .release-please-config.json
+      - .codespellrc
       - release-please-config.json
       - CODEOWNERS
       - LICENSE

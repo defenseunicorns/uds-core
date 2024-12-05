@@ -18,6 +18,7 @@ on:
       - packages/identity-authorization/**
       - bundles/k3d-slim-dev/**
       - .github/workflows/slim-dev**
+      - tasks/test.yaml
       - "!**/*.md"
       - "!**.jpg"
       - "!**.png"
@@ -52,6 +53,8 @@ jobs:
         uses: ./.github/actions/setup
       - name: Deploy Slim Dev Bundle
         run: uds run slim-dev --no-progress
+      - name: Test Slim Dev Bundle
+        run: uds run test:slim-dev --no-progress
       - name: Debug Output
         if: ${{ always() }}
         uses: ./.github/actions/debug-output

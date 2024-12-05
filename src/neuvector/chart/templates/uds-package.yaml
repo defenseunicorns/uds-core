@@ -84,6 +84,16 @@ spec:
       - direction: Egress
         remoteGenerated: KubeAPI
         selector:
+          app: neuvector-cert-upgrader-pod
+
+      - direction: Egress
+        remoteGenerated: KubeAPI
+        selector:
+          app: neuvector-scanner-pod
+
+      - direction: Egress
+        remoteGenerated: KubeAPI
+        selector:
           app: neuvector-enforcer-pod
 
       - direction: Ingress
@@ -93,3 +103,8 @@ spec:
           app: neuvector-controller-pod
         port: 30443
         description: "Webhook"
+
+      # Custom rules for additional networking access
+      {{- with .Values.additionalNetworkAllow }}
+      {{ toYaml . | nindent 6 }}
+      {{- end }}

@@ -16,6 +16,7 @@ on:
       - .vscode/**
       - .gitignore
       - renovate.json
+      - .codespellrc
       - .release-please-config.json
       - release-please-config.json
       - CODEOWNERS

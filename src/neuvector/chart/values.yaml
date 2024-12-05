@@ -9,3 +9,13 @@ grafana:
 generateInternalCert: false
 
 denyLocalAuth: true
+
+# Support for custom `network.allow` entries on the Package CR, useful for sending NeuVector alerts
+additionalNetworkAllow: []
+# ref: https://uds.defenseunicorns.com/reference/configuration/custom-resources/packages-v1alpha1-cr/#allow
+#   - direction: Egress
+#     selector:
+#       app: neuvector-manager-pod
+#     remoteGenerated: Anywhere
+#     description: "from neuvector to anywhere"
+#     port: 443

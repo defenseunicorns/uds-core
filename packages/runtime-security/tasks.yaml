@@ -8,3 +8,4 @@ tasks:
   - name: validate
     actions:
       - task: neuvector:validate
+      - task: neuvector:e2e-test
