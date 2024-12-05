@@ -78,6 +78,7 @@ describe("updateAPIServerCIDR", () => {
           ],
         },
       }),
+      { force: true }, // Include the second argument in the call
     );
   });
 
@@ -132,6 +133,7 @@ describe("updateAPIServerCIDR", () => {
           ],
         },
       }),
+      { force: true }, // Include the second argument in the call
     );
   });
 
@@ -182,6 +184,7 @@ describe("updateAPIServerCIDR", () => {
           ],
         },
       }),
+      { force: true }, // Include the second argument in the call
     );
   });
 
@@ -230,6 +233,7 @@ describe("updateAPIServerCIDR", () => {
           ],
         },
       }),
+      { force: true }, // Include the second argument in the call
     );
   });
 
