@@ -134,4 +134,124 @@ describe("updateAPIServerCIDR", () => {
       }),
     );
   });
+
+  it("handles an empty EndpointSlice", async () => {
+    const mockService = {
+      spec: {
+        clusterIP: "10.0.0.1",
+      },
+    } as kind.Service;
+
+    const mockSlice = {
+      endpoints: [{}],
+    } as kind.EndpointSlice;
+
+    // Mock the return of `Get` method
+    mockGet.mockResolvedValue({
+      items: [
+        {
+          metadata: {
+            name: "mock-netpol",
+            namespace: "default",
+          },
+          spec: {
+            egress: [
+              {
+                to: [{ ipBlock: { cidr: "0.0.0.0/0" } }],
+              },
+            ],
+          },
+        },
+      ],
+    } as KubernetesList<kind.NetworkPolicy>);
+
+    await updateAPIServerCIDR(mockService, mockSlice);
+
+    expect(mockGet).toHaveBeenCalledWith();
+    expect(mockApply).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: {
+          name: "mock-netpol",
+          namespace: "default",
+        },
+        spec: {
+          egress: [
+            {
+              to: [{ ipBlock: { cidr: "10.0.0.1/32" } }],
+            },
+          ],
+        },
+      }),
+    );
+  });
+
+  it("handles a Service with missing clusterIP", async () => {
+    const mockService = {
+      spec: {},
+    } as kind.Service;
+
+    const mockSlice = {
+      endpoints: [{ addresses: ["192.168.1.2"] }],
+    } as kind.EndpointSlice;
+
+    // Mock the return of `Get` method
+    mockGet.mockResolvedValue({
+      items: [
+        {
+          metadata: {
+            name: "mock-netpol",
+            namespace: "default",
+          },
+          spec: {
+            egress: [
+              {
+                to: [{ ipBlock: { cidr: "0.0.0.0/0" } }],
+              },
+            ],
+          },
+        },
+      ],
+    } as KubernetesList<kind.NetworkPolicy>);
+
+    await updateAPIServerCIDR(mockService, mockSlice);
+
+    expect(mockGet).toHaveBeenCalledWith();
+    expect(mockApply).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: {
+          name: "mock-netpol",
+          namespace: "default",
+        },
+        spec: {
+          egress: [
+            {
+              to: [{ ipBlock: { cidr: "192.168.1.2/32" } }],
+            },
+          ],
+        },
+      }),
+    );
+  });
+
+  it("handles no matching NetworkPolicies", async () => {
+    const mockService = {
+      spec: {
+        clusterIP: "10.0.0.1",
+      },
+    } as kind.Service;
+
+    const mockSlice = {
+      endpoints: [{ addresses: ["192.168.1.2"] }],
+    } as kind.EndpointSlice;
+
+    // Mock the return of `Get` method to return no items
+    mockGet.mockResolvedValue({
+      items: [],
+    } as KubernetesList<kind.NetworkPolicy>);
+
+    await updateAPIServerCIDR(mockService, mockSlice);
+
+    expect(mockGet).toHaveBeenCalledWith();
+    expect(mockApply).not.toHaveBeenCalled();
+  });
 });

@@ -114,7 +114,14 @@ export async function updateAPIServerCIDR(svc: kind.Service, slice: kind.Endpoin
     peers.push(slice);
   } else {
     const { endpoints } = slice;
-    peers = endpoints?.flatMap(e => `${e.addresses}/32`) || [];
+    peers = Array.isArray(endpoints)
+      ? endpoints.flatMap(e => {
+          if (!Array.isArray(e?.addresses) || e.addresses.length === 0) {
+            return []; // No addresses, skip this endpoint
+          }
+          return e.addresses.map(addr => `${addr}/32`); // Add /32 to each address
+        })
+      : [];
   }
 
   // Add the clusterIP from the service
@@ -144,7 +151,7 @@ export async function updateAPIServerCIDR(svc: kind.Service, slice: kind.Endpoin
  */
 export async function updateKubeAPINetworkPolicies(newPeers: V1NetworkPolicyPeer[]) {
   const netPols = await K8s(kind.NetworkPolicy)
-    .WithLabel("uds.dev/generated", RemoteGenerated.KubeAPI)
+    .WithLabel("uds/generated", RemoteGenerated.KubeAPI)
     .Get();
 
   for (const netPol of netPols.items) {
@@ -152,11 +159,24 @@ export async function updateKubeAPINetworkPolicies(newPeers: V1NetworkPolicyPeer
 
     if (!R.equals(oldPeers, newPeers)) {
       netPol.spec!.egress![0].to = newPeers;
+      if (netPol.metadata) {
+        // Remove managed fields to prevent errors on server side apply
+        netPol.metadata.managedFields = undefined;
+      }
 
       log.debug(
         `Updating KubeAPI NetworkPolicy ${netPol.metadata!.namespace}/${netPol.metadata!.name} with new CIDRs.`,
       );
-      await K8s(kind.NetworkPolicy).Apply(netPol);
+      try {
+        await K8s(kind.NetworkPolicy).Apply(netPol, { force: true });
+      } catch (err) {
+        let message = err.data?.message || "Unknown error while applying KubeAPI network policies";
+        if (UDSConfig.kubeApiCidr) {
+          message +=
+            ", ensure that the KUBEAPI_CIDR override configured for the operator is correct.";
+        }
+        throw new Error(message);
+      }
     }
   }
 }
