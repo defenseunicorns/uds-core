@@ -99,9 +99,7 @@ export async function retryWithDelay<T>(
       if (attempt >= retries) {
         throw err; // Exceeded retries, rethrow the error.
       }
-      log.warn(`Attempt ${attempt} of ${fn.name} failed, retrying in ${delayMs}ms...`, {
-        error: (err as Error).message,
-      });
+      log.warn(`Attempt ${attempt} of ${fn.name} failed, retrying in ${delayMs}ms. Error: ${err}`);
       await new Promise(resolve => setTimeout(resolve, delayMs));
     }
   }
