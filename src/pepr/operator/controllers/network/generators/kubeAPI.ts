@@ -9,6 +9,7 @@ import { K8s, kind, R } from "pepr";
 import { UDSConfig } from "../../../../config";
 import { Component, setupLogger } from "../../../../logger";
 import { RemoteGenerated } from "../../../crd";
+import { retryWithDelay } from "../../utils";
 import { anywhere } from "./anywhere";
 
 // configure subproject logger
@@ -25,7 +26,7 @@ let apiServerPeers: V1NetworkPolicyPeer[];
  * Otherwise, it fetches the EndpointSlice and updates the CIDR dynamically.
  */
 export async function initAPIServerCIDR() {
-  const svc = await K8s(kind.Service).InNamespace("default").Get("kubernetes");
+  const svc = await retryWithDelay(fetchKubernetesService, log);
 
   // If static CIDR is defined, pass it directly
   if (UDSConfig.kubeApiCidr) {
@@ -34,7 +35,7 @@ export async function initAPIServerCIDR() {
     );
     await updateAPIServerCIDR(svc, UDSConfig.kubeApiCidr); // Pass static CIDR
   } else {
-    const slice = await K8s(kind.EndpointSlice).InNamespace("default").Get("kubernetes");
+    const slice = await retryWithDelay(fetchKubernetesEndpointSlice, log);
     await updateAPIServerCIDR(svc, slice);
   }
 }
@@ -65,7 +66,7 @@ export async function updateAPIServerCIDRFromEndpointSlice(slice: kind.EndpointS
     log.debug(
       "Processing watch for endpointslices, getting k8s service for updating API server CIDR",
     );
-    const svc = await K8s(kind.Service).InNamespace("default").Get("kubernetes");
+    const svc = await retryWithDelay(fetchKubernetesService, log);
     await updateAPIServerCIDR(svc, slice);
   } catch (err) {
     const msg = "Failed to update network policies from endpoint slice watch";
@@ -89,7 +90,7 @@ export async function updateAPIServerCIDRFromService(svc: kind.Service) {
       log.debug(
         "Processing watch for api service, getting endpoint slices for updating API server CIDR",
       );
-      const slice = await K8s(kind.EndpointSlice).InNamespace("default").Get("kubernetes");
+      const slice = await retryWithDelay(fetchKubernetesEndpointSlice, log);
       await updateAPIServerCIDR(svc, slice);
     }
   } catch (err) {
@@ -179,4 +180,22 @@ export async function updateKubeAPINetworkPolicies(newPeers: V1NetworkPolicyPeer
       }
     }
   }
+}
+
+/**
+ * Fetches the Kubernetes Service object for the API server.
+ *
+ * @returns {Promise<kind.Service>} - The Service object.
+ */
+async function fetchKubernetesService(): Promise<kind.Service> {
+  return K8s(kind.Service).InNamespace("default").Get("kubernetes");
+}
+
+/**
+ * Fetches the Kubernetes EndpointSlice object for the API server.
+ *
+ * @returns {Promise<kind.EndpointSlice>} - The EndpointSlice object.
+ */
+async function fetchKubernetesEndpointSlice(): Promise<kind.EndpointSlice> {
+  return K8s(kind.EndpointSlice).InNamespace("default").Get("kubernetes");
 }
