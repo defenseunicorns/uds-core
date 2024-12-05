@@ -99,7 +99,7 @@ export async function retryWithDelay<T>(
       if (attempt >= retries) {
         throw err; // Exceeded retries, rethrow the error.
       }
-      let message = `Attempt ${attempt} of ${fn.name} failed, retrying in ${delayMs}ms.`;
+      let message = `Attempt ${attempt} of ${fn.name} failed, retrying in ${delayMs}ms. `;
       // Standard errors should have a message
       if (err.message) {
         message += `Error: ${err.message}`;
