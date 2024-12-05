@@ -100,12 +100,12 @@ export async function retryWithDelay<T>(
         throw err; // Exceeded retries, rethrow the error.
       }
       let message = `Attempt ${attempt} of ${fn.name} failed, retrying in ${delayMs}ms. `;
-      // Standard errors should have a message
-      if (err.message) {
-        message += `Error: ${err.message}`;
-        // Error responses from network calls (i.e. K8s().Get() will be this shape)
-      } else if (err.data?.message) {
+      // Error responses from network calls (i.e. K8s().Get() will be this shape)
+      if (err.data?.message) {
         message += `Error: ${err.data.message}`;
+        // Other error types have a message
+      } else if (err.message) {
+        message += `Error: ${err.message}`;
         // If we don't find one of these error messages, log the full error as JSON
       } else {
         message += `Error: ${JSON.stringify(err)}`;
