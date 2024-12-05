@@ -99,18 +99,15 @@ export async function retryWithDelay<T>(
       if (attempt >= retries) {
         throw err; // Exceeded retries, rethrow the error.
       }
-      let message = `Attempt ${attempt} of ${fn.name} failed, retrying in ${delayMs}ms. `;
+      let error = `${JSON.stringify(err)}`;
       // Error responses from network calls (i.e. K8s().Get() will be this shape)
       if (err.data?.message) {
-        message += `Error: ${err.data.message}`;
+        error = err.data.message;
         // Other error types have a message
       } else if (err.message) {
-        message += `Error: ${err.message}`;
-        // If we don't find one of these error messages, log the full error as JSON
-      } else {
-        message += `Error: ${JSON.stringify(err)}`;
+        error = err.message;
       }
-      log.warn(message);
+      log.warn(`Attempt ${attempt} of ${fn.name} failed, retrying in ${delayMs}ms.`, { error });
       await new Promise(resolve => setTimeout(resolve, delayMs));
     }
   }
