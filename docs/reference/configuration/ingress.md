@@ -96,7 +96,7 @@ If you are using Private PKI or self-signed certificates for your tenant certifi
 
 #### Configuring TLS from a Secret
 
-As an alternative to specifying individual certificate, key, and CA certificate values, you can set `tls.credentialName` in the gateway configuration. This field specifies the name of a Kubernetes secret containing the TLS certificate, key, and optional CA certificate for the gateway. When `tls.credentialName` is set, it will override `tls.cert`, `tls.key`, and `tls.cacert` values, simplifying the configuration by allowing a direct reference to a Kubernetes TLS secret.
+As an alternative to specifying individual certificate, key, and CA certificate values, you can set `tls.credentialName` in the gateway configuration. This field specifies the name of a Kubernetes secret containing the TLS certificate, key, and optional CA certificate for the gateway. When `tls.credentialName` is set, it will override `tls.cert`, `tls.key`, and `tls.cacert` values, simplifying the configuration by allowing a direct reference to a Kubernetes TLS secret. This secret should be placed in the same namespace as the gateway resource. See [Gateway ServerTLSSettings](https://istio.io/latest/docs/reference/config/networking/gateway/#ServerTLSSettings) for all requried and available secret keys.
 
 This approach is useful if you already have a Kubernetes secret that holds the necessary TLS data and want to use it directly.
 
