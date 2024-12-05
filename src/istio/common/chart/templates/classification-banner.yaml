@@ -1,0 +1,60 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+{{- if .Values.classificationBanner.enabled }}
+apiVersion: networking.istio.io/v1alpha3
+kind: EnvoyFilter
+metadata:
+  name: classification-banner
+  namespace: istio-system
+spec:
+  configPatches:
+  - applyTo: HTTP_FILTER
+    match:
+      context: GATEWAY
+      listener:
+        filterChain:
+          filter:
+            name: "envoy.filters.network.http_connection_manager"
+            subFilter:
+              name: "envoy.filters.http.router"
+    patch:
+      operation: INSERT_BEFORE
+      value: # Lua script configuration 
+        name: envoy.lua
+        typed_config:
+          "@type": "type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua"
+          inlineCode: |-
+            local classification = "{{ .Values.classificationBanner.classification }}"
+            local textColor = "{{ .Values.classificationBanner.textColor }}"
+            local backgroundColor = "{{ .Values.classificationBanner.backgroundColor }}"
+            local style = "background-color: " .. backgroundColor .. "; color: ".. textColor .. "; height: 16px; line-height: 16px; border: 1px solid transparent; border-radius: 0; position: fixed; left: 0; width: 100vw; text-align: center; margin: 0; z-index: 10000;"
+
+            local header = "<div style=\"" .. style .. " top: 0;\">" .. classification .. "</div>"
+            local footer = "<div style=\"" .. style .. " bottom: 0;\">" .. classification .. "</div>"
+
+            local bodyPaddingScript = [[
+            <script>
+              document.addEventListener('DOMContentLoaded', function () {
+                document.body.style.paddingTop = '16px';
+                document.body.style.paddingBottom = '16px';
+              });
+            </script>
+            ]]
+
+            function envoy_on_response(response_handle)
+              local content_type = response_handle:headers():get("Content-Type") or ""
+
+              if string.find(content_type, "text/html") then
+                local iterator = response_handle:bodyChunks()
+                for chunk in iterator do
+                  local body_size = chunk:length()
+                  local body_bytes = chunk:getBytes(0, body_size)
+                  local raw_text = tostring(body_bytes)
+
+                  chunk:setBytes(header .. footer .. bodyPaddingScript .. raw_text)
+                  break
+                end
+              end
+            end
+{{- end }}
