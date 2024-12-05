@@ -34,11 +34,14 @@ const log = setupLogger(Component.OPERATOR);
 void initAPIServerCIDR();
 
 // Watch for changes to the API server EndpointSlice and update the API server CIDR
-When(a.EndpointSlice)
-  .IsCreatedOrUpdated()
-  .InNamespace("default")
-  .WithName("kubernetes")
-  .Reconcile(updateAPIServerCIDRFromEndpointSlice);
+// Skip if a CIDR is defined in the UDS Config
+if (!UDSConfig.kubeApiCidr) {
+  When(a.EndpointSlice)
+    .IsCreatedOrUpdated()
+    .InNamespace("default")
+    .WithName("kubernetes")
+    .Reconcile(updateAPIServerCIDRFromEndpointSlice);
+}
 
 // Watch for changes to the API server Service and update the API server CIDR
 When(a.Service)
