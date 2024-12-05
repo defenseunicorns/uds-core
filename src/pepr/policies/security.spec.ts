@@ -413,7 +413,7 @@ describe("security policies", () => {
     );
   });
 
-  it("should restrict capabilities.add", async () => {
+  it("should restrict capabilities.add for non-istio-init containers", async () => {
     const expected = (e: Error) =>
       expect(e).toMatchObject({
         ok: false,
@@ -425,7 +425,7 @@ describe("security policies", () => {
       });
 
     return Promise.all([
-      // Check for capabilities.add
+      // Check for capabilities.add with a regular container, which should fail
       K8s(kind.Pod)
         .Apply({
           metadata: {
@@ -439,7 +439,7 @@ describe("security policies", () => {
                 image: "127.0.0.1/fake",
                 securityContext: {
                   capabilities: {
-                    add: ["NET_ADMIN"],
+                    add: ["NET_ADMIN"], // This should trigger a failure since `NET_ADMIN` is not authorized for non-istio-init
                   },
                 },
               },
