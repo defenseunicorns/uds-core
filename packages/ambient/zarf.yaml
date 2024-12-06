@@ -1,0 +1,104 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+kind: ZarfPackageConfig
+metadata:
+  name: core-ambient
+  description: "UDS Core (Ambient)"
+  authors: "Defense Unicorns - Product"
+  # x-release-please-start-version
+  version: "0.32.1"
+  # x-release-please-end
+
+components:
+  - name: uds-operator-config
+    required: true
+    import:
+      path: ../base-ambient
+
+  # CRDs
+  - name: prometheus-operator-crds
+    required: true
+    import:
+      path: ../base-ambient
+      
+  # Pepr the world
+  - name: pepr-uds-core
+    required: true
+    import:
+      path: ../base-ambient
+
+  # Istio
+  - name: istio-controlplane
+    required: true
+    import:
+      path: ../base-ambient
+
+  - name: istio-admin-gateway
+    required: true
+    import:
+      path: ../base-ambient
+
+  - name: istio-tenant-gateway
+    required: true
+    import:
+      path: ../base-ambient
+
+  - name: istio-passthrough-gateway
+    required: false
+    import:
+      path: ../base-ambient
+
+  # Metrics Server
+  - name: metrics-server
+    required: false
+    import:
+      path: ../metrics-server
+
+  # Keycloak
+  - name: keycloak
+    required: true
+    import:
+      path: ../identity-authorization
+
+  # Neuvector
+  - name: neuvector
+    required: true
+    import:
+      path: ../runtime-security
+
+  # Loki
+  - name: loki
+    required: true
+    import:
+      path: ../logging
+
+  # Prometheus
+  - name: kube-prometheus-stack
+    required: true
+    import:
+      path: ../monitoring
+
+  # Vector
+  - name: vector
+    required: true
+    import:
+      path: ../logging
+
+  # Grafana
+  - name: grafana
+    required: true
+    import:
+      path: ../monitoring
+
+  # Authservice
+  - name: authservice
+    required: true
+    import:
+      path: ../identity-authorization
+
+  # Velero
+  - name: velero
+    required: true
+    import:
+      path: ../backup-restore

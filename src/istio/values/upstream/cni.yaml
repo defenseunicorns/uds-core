@@ -1,0 +1,7 @@
+#Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+cni:
+ image: docker.io/istio/install-cni:1.24.1-distroless
+ cniConfDir: /var/lib/rancher/k3s/agent/etc/cni/net.d
+ cniBinDir: /var/lib/rancher/k3s/data/current/bin

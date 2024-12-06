@@ -1,0 +1,139 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+kind: ZarfPackageConfig
+metadata:
+  name: uds-core-istio
+  description: "UDS Core Istio package deploys Istio with admin, tenant and passthrough gateways."
+  url: https://istio.io/latest/
+
+variables:
+  - name: DOMAIN
+    description: "Cluster domain"
+    default: "uds.dev"
+  - name: CNI_CONF_DIR
+    description: "CNI network configuration directory. This can changed based on platform"
+    default: "/var/lib/rancher/k3s/agent/etc/cni/net.d"
+  - name: CNI_BIN_DIR
+    description: "CNI binary directory"
+    default: "/bin"
+
+components:
+  - name: istio-controlplane
+    required: true
+    only:
+      flavor: upstream
+    import:
+      path: common
+    charts:
+      - name: istiod
+        valuesFiles:
+          - "values/upstream/istiod.yaml"
+      - name: cni
+        variables:
+          - name: CNI_CONF_DIR
+            description: "CNI network configuration directory"
+            path: cni.cniConfDir
+          - name: CNI_BIN_DIR
+            description: "CNI binary directory"
+            path: cni.cniBinDir
+        valuesFiles:
+          - "values/upstream/cni.yaml"
+      - name: ztunnel
+        valuesFiles:
+          - "values/upstream/ztunnel.yaml"
+    images:
+      - "docker.io/istio/pilot:1.24.1-distroless"
+      - "docker.io/istio/proxyv2:1.24.1-distroless"
+      - "docker.io/istio/install-cni:1.24.1-distroless"
+      - "docker.io/istio/ztunnel:1.24.1-distroless"
+
+  # - name: istio-controlplane
+  #   required: true
+  #   only:
+  #     flavor: registry1
+  #   import:
+  #     path: common
+  #   charts:
+  #     - name: istiod
+  #       valuesFiles:
+  #         - "values/registry1/istiod.yaml"
+  #     - name: cni
+  #       valuesFiles:
+  #         - "values/registry1/cni.yaml"
+  #     - name: ztunnel
+  #       valuesFiles:
+  #         - "values/registry1/ztunnel.yaml"
+  #   images:
+  #     - registry1.dso.mil/ironbank/tetrate/istio/proxyv2:1.24.1-tetratefips-v0
+  #     - registry1.dso.mil/ironbank/tetrate/istio/pilot:1.24.1-tetratefips-v0
+  #     # TODO: Get correct images
+  #     - registry1.dso.mil/ironbank/opensource/istio/install-cni:1.24.1
+
+  # - name: istio-controlplane
+  #   required: true
+  #   only:
+  #     flavor: unicorn
+  #   import:
+  #     path: common
+  #   charts:
+  #     - name: istiod
+  #       valuesFiles:
+  #         - "values/unicorn/istiod.yaml"
+  #     - name: cni
+  #       valuesFiles:
+  #         - "values/unicorn/cni.yaml"
+  #     - name: ztunnel
+  #       valuesFiles:
+  #         - "values/unicorn/ztunnel.yaml"
+  #   images:
+  #     - cgr.dev/du-uds-defenseunicorns/istio-pilot-fips:1.24.1
+  #     - cgr.dev/du-uds-defenseunicorns/istio-proxy-fips:1.24.1
+  #     # TODO: Get correct images
+  #     - cgr.dev/du-uds-defenseunicorns/istio-install-cni:1.24.1
+  #     - docker.io/istio/ztunnel:1.24.1-distroless
+
+  - name: istio-admin-gateway
+    required: true
+    charts:
+      - name: gateway
+        url: https://istio-release.storage.googleapis.com/charts
+        version: 1.24.1
+        releaseName: admin-ingressgateway
+        namespace: istio-admin-gateway
+      - name: uds-istio-config
+        version: 0.2.0
+        localPath: chart
+        namespace: istio-admin-gateway
+        valuesFiles:
+          - "values/config-admin.yaml"
+
+  - name: istio-tenant-gateway
+    required: true
+    charts:
+      - name: gateway
+        url: https://istio-release.storage.googleapis.com/charts
+        version: 1.24.1
+        releaseName: tenant-ingressgateway
+        namespace: istio-tenant-gateway
+      - name: uds-istio-config
+        version: 0.2.0
+        localPath: chart
+        namespace: istio-tenant-gateway
+        valuesFiles:
+          - "values/config-tenant.yaml"
+
+  - name: istio-passthrough-gateway
+    required: false
+    charts:
+      - name: gateway
+        url: https://istio-release.storage.googleapis.com/charts
+        version: 1.24.1
+        releaseName: passthrough-ingressgateway
+        namespace: istio-passthrough-gateway
+      - name: uds-istio-config
+        version: 0.2.0
+        localPath: chart
+        namespace: istio-passthrough-gateway
+        valuesFiles:
+          - "values/config-passthrough.yaml"

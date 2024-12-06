@@ -1,0 +1,52 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+kind: ZarfPackageConfig
+metadata:
+  name: core-base-ambient
+  description: "UDS Core (Base) Ambient"
+  authors: "Defense Unicorns - Product"
+  # x-release-please-start-version
+  version: "0.32.1"
+  # x-release-please-end
+  x-uds-dependencies: []
+
+components:
+  - name: uds-operator-config
+    required: true
+    import:
+      path: ../../src/pepr
+
+  # CRDs
+  - name: prometheus-operator-crds
+    required: true
+    import:
+      path: ../../src/prometheus-stack
+
+  # Pepr the world
+  - name: pepr-uds-core
+    required: true
+    import:
+      path: ../../src/pepr
+      
+  # Istio
+  - name: istio-controlplane
+    required: true
+    import:
+      path: ../../src/istio-ambient
+
+  - name: istio-admin-gateway
+    required: true
+    import:
+      path: ../../src/istio-ambient
+
+  - name: istio-tenant-gateway
+    required: true
+    import:
+      path: ../../src/istio-ambient
+
+  - name: istio-passthrough-gateway
+    required: false
+    import:
+      path: ../../src/istio-ambient
+
