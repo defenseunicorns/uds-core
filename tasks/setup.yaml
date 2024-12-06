@@ -8,6 +8,11 @@ tasks:
       - description: "Create the K3d cluster"
         # renovate: datasource=github-tags depName=defenseunicorns/uds-k3d versioning=semver
         cmd: "uds zarf package deploy oci://defenseunicorns/uds-k3d:0.10.1 --confirm --no-progress"
+        
+  - name: destroy-k3d-cluster
+    actions:
+      - description: "Destroy the K3d cluster"
+        cmd: "k3d cluster delete uds"
 
   - name: k3d-test-cluster
     actions:

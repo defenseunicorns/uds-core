@@ -15,28 +15,41 @@ components:
         url: https://istio-release.storage.googleapis.com/charts
         version: 1.23.2
         namespace: istio-system
+      - name: uds-global-istio-config
+        namespace: istio-system
+        version: 0.1.0
+        localPath: chart
       - name: istiod
         url: https://istio-release.storage.googleapis.com/charts
         version: 1.23.2
         namespace: istio-system
         valuesFiles:
-          - "../values/values.yaml"
-      - name: uds-global-istio-config
+          - "../values/base-istiod.yaml"
+      - name: cni
+        url: https://istio-release.storage.googleapis.com/charts
+        version: 1.23.2
         namespace: istio-system
-        version: 0.1.0
-        localPath: chart
+        valuesFiles:
+          - "../values/base-cni.yaml"
+      - name: ztunnel
+        url: https://istio-release.storage.googleapis.com/charts
+        version: 1.23.2
+        namespace: istio-system 
     actions:
       onDeploy:
         before:
-          - description: "Fix helm ownership if necessary for clean helm upgrade"
+          - description: "Fix helm ownership on upgrade"
             mute: true
             cmd: |
-              ./zarf tools kubectl annotate EnvoyFilter misdirected-request -n istio-system meta.helm.sh/release-name=uds-global-istio-config --overwrite || true
-              ./zarf tools kubectl annotate EnvoyFilter remove-server-header -n istio-system meta.helm.sh/release-name=uds-global-istio-config --overwrite || true
-              ./zarf tools kubectl annotate PeerAuthentication default-istio-system -n istio-system meta.helm.sh/release-name=uds-global-istio-config --overwrite || true
-              ./zarf tools kubectl annotate PeerAuthentication permissive-pepr-webhook -n pepr-system meta.helm.sh/release-name=uds-global-istio-config --overwrite || true
-              ./zarf tools kubectl annotate PeerAuthentication permissive-pepr-webhook-watcher -n pepr-system meta.helm.sh/release-name=uds-global-istio-config --overwrite || true
+              ./zarf tools kubectl annotate envoyfilter misdirected-request -n istio-system meta.helm.sh/release-name=uds-global-istio-config --overwrite || true
+              ./zarf tools kubectl annotate envoyfilter remove-server-header -n istio-system meta.helm.sh/release-name=uds-global-istio-config --overwrite || true
+              ./zarf tools kubectl annotate peerauthentication default-istio-system -n istio-system meta.helm.sh/release-name=uds-global-istio-config --overwrite || true
         after:
-          - description: "Ensure istio-injection is enabled for Pepr"
-            mute: true
-            cmd: "./zarf tools kubectl label namespace pepr-system istio-injection=enabled --overwrite"
+           - description: "Ensure istio ambient is enabled for Pepr"
+             cmd: "./zarf tools kubectl label namespace pepr-system istio.io/dataplane-mode=ambient --overwrite"
+           - description: "Ensure istio-injection is disabled for Pepr"
+             cmd: "./zarf tools kubectl label namespace pepr-system istio-injection=disabled --overwrite"
+           - description: "Cycle Pepr to refresh connections post-ambient"
+             cmd: |
+               ./zarf tools kubectl rollout restart -n pepr-system deploy/pepr-uds-core-watcher
+               ./zarf tools kubectl rollout restart -n pepr-system deploy/pepr-uds-core
