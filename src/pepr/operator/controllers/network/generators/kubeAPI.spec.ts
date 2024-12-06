@@ -19,10 +19,10 @@ jest.mock("pepr", () => {
   };
 });
 
-describe("updateAPIServerCIDR", () => {
-  const mockApply = jest.fn();
-  const mockGet = jest.fn<() => Promise<KubernetesList<kind.NetworkPolicy>>>();
+const mockApply = jest.fn();
+const mockGet = jest.fn<() => Promise<KubernetesList<kind.NetworkPolicy>>>();
 
+describe("updateAPIServerCIDR", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (K8s as jest.Mock).mockImplementation(() => ({
@@ -261,9 +261,6 @@ describe("updateAPIServerCIDR", () => {
 });
 
 describe("updateKubeAPINetworkPolicies", () => {
-  const mockApply = jest.fn();
-  const mockGet = jest.fn<() => Promise<KubernetesList<kind.NetworkPolicy>>>();
-
   beforeEach(() => {
     jest.clearAllMocks();
     (K8s as jest.Mock).mockImplementation(() => ({
