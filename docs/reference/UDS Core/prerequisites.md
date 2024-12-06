@@ -70,6 +70,26 @@ In addition, to run Istio ingress gateways (part of Core) you will need to ensur
 
 NeuVector historically has functioned best when the host is using cgroup v2. Cgroup v2 is enabled by default on many modern Linux distributions, but you may need to enable it depending on your operating system. Enabling this tends to be OS specific, so you will need to evaluate this for your specific hosts. 
 
+
+#### Vector
+
+In order to ensure that Vector is able to scrape the necessary logs concurrently you may need to adjust some kernel parameters for your hosts. The below is a script that can be used to adjust these parameters to suitable values and ensure they are persisted across reboots. Ideally this script is used as part of an image build or cloud-init process on each node.
+
+```console
+declare -A sysctl_settings
+sysctl_settings["fs.nr_open"]=13181250
+sysctl_settings["fs.inotify.max_user_instances"]=1024
+sysctl_settings["fs.inotify.max_user_watches"]=1048576
+sysctl_settings["fs.file-max"]=13181250
+
+for key in "${!sysctl_settings[@]}"; do
+  value="${sysctl_settings[$key]}"
+  sysctl -w "$key=$value"
+  echo "$key=$value" > "/etc/sysctl.d/$key.conf"
+done
+sysctl -p
+```
+
 #### Metrics Server
 
 Metrics server is provided as an optional component in UDS Core and can be enabled if needed. For distros where metrics-server is already provided, ensure that you do NOT enable metrics-server. See the below as an example for enabling metrics-server if your cluster does not include it.
