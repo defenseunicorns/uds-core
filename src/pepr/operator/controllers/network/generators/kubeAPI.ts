@@ -26,17 +26,23 @@ let apiServerPeers: V1NetworkPolicyPeer[];
  * Otherwise, it fetches the EndpointSlice and updates the CIDR dynamically.
  */
 export async function initAPIServerCIDR() {
-  const svc = await retryWithDelay(fetchKubernetesService, log);
+  try {
+    const svc = await retryWithDelay(fetchKubernetesService, log);
 
-  // If static CIDR is defined, pass it directly
-  if (UDSConfig.kubeApiCidr) {
-    log.info(
-      `Static CIDR (${UDSConfig.kubeApiCidr}) is defined for KubeAPI, skipping EndpointSlice lookup.`,
-    );
-    await updateAPIServerCIDR(svc, UDSConfig.kubeApiCidr); // Pass static CIDR
-  } else {
-    const slice = await retryWithDelay(fetchKubernetesEndpointSlice, log);
-    await updateAPIServerCIDR(svc, slice);
+    // If static CIDR is defined, pass it directly
+    if (UDSConfig.kubeApiCidr) {
+      log.info(
+        `Static CIDR (${UDSConfig.kubeApiCidr}) is defined for KubeAPI, skipping EndpointSlice lookup.`,
+      );
+      await updateAPIServerCIDR(svc, UDSConfig.kubeApiCidr); // Pass static CIDR
+    } else {
+      const slice = await retryWithDelay(fetchKubernetesEndpointSlice, log);
+      await updateAPIServerCIDR(svc, slice);
+    }
+  } catch (error) {
+    log.error("Failed to initialize API Server CIDR for KubeAPI generated network policies", {
+      err: JSON.stringify(error),
+    });
   }
 }
 
@@ -156,27 +162,37 @@ export async function updateKubeAPINetworkPolicies(newPeers: V1NetworkPolicyPeer
     .Get();
 
   for (const netPol of netPols.items) {
-    const oldPeers = netPol.spec?.egress?.[0].to;
-
-    if (!R.equals(oldPeers, newPeers)) {
-      netPol.spec!.egress![0].to = newPeers;
-      if (netPol.metadata) {
-        // Remove managed fields to prevent errors on server side apply
-        netPol.metadata.managedFields = undefined;
+    if (netPol.spec) {
+      if (!netPol.spec.egress) {
+        netPol.spec.egress = [{ to: [] }];
       }
 
-      log.debug(
-        `Updating KubeAPI NetworkPolicy ${netPol.metadata!.namespace}/${netPol.metadata!.name} with new CIDRs.`,
-      );
-      try {
-        await K8s(kind.NetworkPolicy).Apply(netPol, { force: true });
-      } catch (err) {
-        let message = err.data?.message || "Unknown error while applying KubeAPI network policies";
-        if (UDSConfig.kubeApiCidr) {
-          message +=
-            ", ensure that the KUBEAPI_CIDR override configured for the operator is correct.";
+      const oldPeers = netPol.spec.egress[0]?.to;
+
+      if (!R.equals(oldPeers, newPeers)) {
+        if (!netPol.spec.egress[0]) {
+          netPol.spec.egress[0] = { to: [] };
         }
-        throw new Error(message);
+        netPol.spec.egress[0].to = newPeers;
+        if (netPol.metadata) {
+          // Remove managed fields to prevent errors on server side apply
+          netPol.metadata.managedFields = undefined;
+        }
+
+        log.debug(
+          `Updating KubeAPI NetworkPolicy ${netPol.metadata!.namespace}/${netPol.metadata!.name} with new CIDRs.`,
+        );
+        try {
+          await K8s(kind.NetworkPolicy).Apply(netPol, { force: true });
+        } catch (err) {
+          let message =
+            err.data?.message || "Unknown error while applying KubeAPI network policies";
+          if (UDSConfig.kubeApiCidr) {
+            message +=
+              ", ensure that the KUBEAPI_CIDR override configured for the operator is correct.";
+          }
+          throw new Error(message);
+        }
       }
     }
   }

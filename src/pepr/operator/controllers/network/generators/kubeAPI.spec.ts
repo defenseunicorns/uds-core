@@ -5,7 +5,7 @@
 
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { K8s, kind } from "pepr";
-import { updateAPIServerCIDR } from "./kubeAPI";
+import { updateAPIServerCIDR, updateKubeAPINetworkPolicies } from "./kubeAPI";
 
 type KubernetesList<T> = {
   items: T[];
@@ -257,5 +257,176 @@ describe("updateAPIServerCIDR", () => {
 
     expect(mockGet).toHaveBeenCalledWith();
     expect(mockApply).not.toHaveBeenCalled();
+  });
+});
+
+describe("updateKubeAPINetworkPolicies", () => {
+  const mockApply = jest.fn();
+  const mockGet = jest.fn<() => Promise<KubernetesList<kind.NetworkPolicy>>>();
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    (K8s as jest.Mock).mockImplementation(() => ({
+      WithLabel: jest.fn(() => ({
+        Get: mockGet,
+      })),
+      Apply: mockApply,
+    }));
+  });
+
+  it("does not update a NetworkPolicy if the peers are already correct", async () => {
+    const newPeers = [{ ipBlock: { cidr: "10.0.0.1/32" } }];
+    mockGet.mockResolvedValue({
+      items: [
+        {
+          metadata: {
+            name: "mock-netpol",
+            namespace: "default",
+          },
+          spec: {
+            egress: [
+              {
+                to: newPeers,
+              },
+            ],
+          },
+        },
+      ],
+    } as KubernetesList<kind.NetworkPolicy>);
+
+    await updateKubeAPINetworkPolicies(newPeers);
+
+    expect(mockGet).toHaveBeenCalled();
+    expect(mockApply).not.toHaveBeenCalled(); // No update needed
+  });
+
+  it("updates a NetworkPolicy with different peers", async () => {
+    const newPeers = [{ ipBlock: { cidr: "10.0.0.1/32" } }];
+    const oldPeers = [{ ipBlock: { cidr: "192.168.1.0/32" } }];
+    mockGet.mockResolvedValue({
+      items: [
+        {
+          metadata: {
+            name: "mock-netpol",
+            namespace: "default",
+          },
+          spec: {
+            egress: [
+              {
+                to: oldPeers,
+              },
+            ],
+          },
+        },
+      ],
+    } as KubernetesList<kind.NetworkPolicy>);
+
+    await updateKubeAPINetworkPolicies(newPeers);
+
+    expect(mockGet).toHaveBeenCalled();
+    expect(mockApply).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: {
+          name: "mock-netpol",
+          namespace: "default",
+        },
+        spec: {
+          egress: [
+            {
+              to: newPeers,
+            },
+          ],
+        },
+      }),
+      { force: true },
+    );
+  });
+
+  it("updates a NetworkPolicy with no peers", async () => {
+    const newPeers = [{ ipBlock: { cidr: "10.0.0.1/32" } }];
+    mockGet.mockResolvedValue({
+      items: [
+        {
+          metadata: {
+            name: "mock-netpol",
+            namespace: "default",
+          },
+          spec: {
+            egress: [
+              {
+                to: undefined,
+              },
+            ],
+          },
+        },
+      ],
+    } as KubernetesList<kind.NetworkPolicy>);
+
+    await updateKubeAPINetworkPolicies(newPeers);
+
+    expect(mockGet).toHaveBeenCalled();
+    expect(mockApply).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: {
+          name: "mock-netpol",
+          namespace: "default",
+        },
+        spec: {
+          egress: [
+            {
+              to: newPeers,
+            },
+          ],
+        },
+      }),
+      { force: true },
+    );
+  });
+
+  it("initializes missing egress rules", async () => {
+    const newPeers = [{ ipBlock: { cidr: "10.0.0.1/32" } }];
+    mockGet.mockResolvedValue({
+      items: [
+        {
+          metadata: {
+            name: "mock-netpol",
+            namespace: "default",
+          },
+          spec: {}, // No egress at all
+        },
+      ],
+    } as KubernetesList<kind.NetworkPolicy>);
+
+    await updateKubeAPINetworkPolicies(newPeers);
+
+    expect(mockGet).toHaveBeenCalled();
+    expect(mockApply).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: {
+          name: "mock-netpol",
+          namespace: "default",
+        },
+        spec: {
+          egress: [
+            {
+              to: newPeers,
+            },
+          ],
+        },
+      }),
+      { force: true },
+    );
+  });
+
+  it("handles no matching NetworkPolicies", async () => {
+    const newPeers = [{ ipBlock: { cidr: "10.0.0.1/32" } }];
+    mockGet.mockResolvedValue({
+      items: [], // No NetworkPolicies found
+    } as KubernetesList<kind.NetworkPolicy>);
+
+    await updateKubeAPINetworkPolicies(newPeers);
+
+    expect(mockGet).toHaveBeenCalled();
+    expect(mockApply).not.toHaveBeenCalled(); // No policies to update
   });
 });
