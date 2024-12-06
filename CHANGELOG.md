@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.33.0](https://github.com/defenseunicorns/uds-core/compare/v0.32.1...v0.33.0) (2024-12-06)
+
+
+### Features
+
+* set Istio gateway TLS from Kubernetes secret ([#982](https://github.com/defenseunicorns/uds-core/issues/982)) ([2711209](https://github.com/defenseunicorns/uds-core/commit/27112092e08f67ae4d414c94beaa86e163e307bd))
+
+
+### Miscellaneous
+
+* **deps:** update support-deps ([#1076](https://github.com/defenseunicorns/uds-core/issues/1076)) ([2fa010f](https://github.com/defenseunicorns/uds-core/commit/2fa010fc58fdb95280c431511e92315ccd9a86ff))
+* **docs:** replace promtail reference with vector in prerequisites ([#1098](https://github.com/defenseunicorns/uds-core/issues/1098)) ([33cee59](https://github.com/defenseunicorns/uds-core/commit/33cee59c8a007252a3e6964c8fe341934033443a))
+
 ## [0.32.1](https://github.com/defenseunicorns/uds-core/compare/v0.32.0...v0.32.1) (2024-12-05)
 
 
