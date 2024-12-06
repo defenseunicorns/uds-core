@@ -162,37 +162,56 @@ export async function updateKubeAPINetworkPolicies(newPeers: V1NetworkPolicyPeer
     .Get();
 
   for (const netPol of netPols.items) {
-    if (netPol.spec) {
-      if (!netPol.spec.egress) {
-        netPol.spec.egress = [{ to: [] }];
+    // Safety check for network policy spec existence
+    if (!netPol.spec) {
+      log.warn(
+        `KubeAPI NetworkPolicy ${netPol.metadata!.namespace}/${netPol.metadata!.name} is missing spec.`,
+      );
+      continue;
+    }
+
+    let updateRequired = false;
+    // Handle egress policies
+    if (netPol.spec.egress) {
+      if (!netPol.spec.egress[0]) {
+        netPol.spec.egress[0] = { to: [] };
+      }
+      const oldPeers = netPol.spec.egress[0].to;
+      if (!R.equals(oldPeers, newPeers)) {
+        updateRequired = true;
+        netPol.spec.egress[0].to = newPeers;
+      }
+      // Handle ingress policies
+    } else if (netPol.spec.ingress) {
+      if (!netPol.spec.ingress[0]) {
+        netPol.spec.ingress[0] = { from: [] };
+      }
+      const oldPeers = netPol.spec.ingress[0].from;
+      if (!R.equals(oldPeers, newPeers)) {
+        updateRequired = true;
+        netPol.spec.ingress[0].from = newPeers;
+      }
+    }
+
+    // If the policy required a change, apply the new policy
+    if (updateRequired) {
+      if (netPol.metadata) {
+        // Remove managed fields to prevent errors on server side apply
+        netPol.metadata.managedFields = undefined;
       }
 
-      const oldPeers = netPol.spec.egress[0]?.to;
-
-      if (!R.equals(oldPeers, newPeers)) {
-        if (!netPol.spec.egress[0]) {
-          netPol.spec.egress[0] = { to: [] };
+      log.debug(
+        `Updating KubeAPI NetworkPolicy ${netPol.metadata!.namespace}/${netPol.metadata!.name} with new CIDRs.`,
+      );
+      try {
+        await K8s(kind.NetworkPolicy).Apply(netPol, { force: true });
+      } catch (err) {
+        let message = err.data?.message || "Unknown error while applying KubeAPI network policies";
+        if (UDSConfig.kubeApiCidr) {
+          message +=
+            ", ensure that the KUBEAPI_CIDR override configured for the operator is correct.";
         }
-        netPol.spec.egress[0].to = newPeers;
-        if (netPol.metadata) {
-          // Remove managed fields to prevent errors on server side apply
-          netPol.metadata.managedFields = undefined;
-        }
-
-        log.debug(
-          `Updating KubeAPI NetworkPolicy ${netPol.metadata!.namespace}/${netPol.metadata!.name} with new CIDRs.`,
-        );
-        try {
-          await K8s(kind.NetworkPolicy).Apply(netPol, { force: true });
-        } catch (err) {
-          let message =
-            err.data?.message || "Unknown error while applying KubeAPI network policies";
-          if (UDSConfig.kubeApiCidr) {
-            message +=
-              ", ensure that the KUBEAPI_CIDR override configured for the operator is correct.";
-          }
-          throw new Error(message);
-        }
+        throw new Error(message);
       }
     }
   }

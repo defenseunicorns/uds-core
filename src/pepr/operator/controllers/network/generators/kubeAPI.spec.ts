@@ -271,7 +271,7 @@ describe("updateKubeAPINetworkPolicies", () => {
     }));
   });
 
-  it("does not update a NetworkPolicy if the peers are already correct", async () => {
+  it("does not update an egress NetworkPolicy if the peers are already correct", async () => {
     const newPeers = [{ ipBlock: { cidr: "10.0.0.1/32" } }];
     mockGet.mockResolvedValue({
       items: [
@@ -297,7 +297,33 @@ describe("updateKubeAPINetworkPolicies", () => {
     expect(mockApply).not.toHaveBeenCalled(); // No update needed
   });
 
-  it("updates a NetworkPolicy with different peers", async () => {
+  it("does not update an ingress NetworkPolicy if the peers are already correct", async () => {
+    const newPeers = [{ ipBlock: { cidr: "10.0.0.1/32" } }];
+    mockGet.mockResolvedValue({
+      items: [
+        {
+          metadata: {
+            name: "mock-netpol",
+            namespace: "default",
+          },
+          spec: {
+            ingress: [
+              {
+                from: newPeers,
+              },
+            ],
+          },
+        },
+      ],
+    } as KubernetesList<kind.NetworkPolicy>);
+
+    await updateKubeAPINetworkPolicies(newPeers);
+
+    expect(mockGet).toHaveBeenCalled();
+    expect(mockApply).not.toHaveBeenCalled(); // No update needed
+  });
+
+  it("updates an egress NetworkPolicy with different peers", async () => {
     const newPeers = [{ ipBlock: { cidr: "10.0.0.1/32" } }];
     const oldPeers = [{ ipBlock: { cidr: "192.168.1.0/32" } }];
     mockGet.mockResolvedValue({
@@ -339,7 +365,49 @@ describe("updateKubeAPINetworkPolicies", () => {
     );
   });
 
-  it("updates a NetworkPolicy with no peers", async () => {
+  it("updates an ingress NetworkPolicy with different peers", async () => {
+    const newPeers = [{ ipBlock: { cidr: "10.0.0.1/32" } }];
+    const oldPeers = [{ ipBlock: { cidr: "192.168.1.0/32" } }];
+    mockGet.mockResolvedValue({
+      items: [
+        {
+          metadata: {
+            name: "mock-netpol",
+            namespace: "default",
+          },
+          spec: {
+            ingress: [
+              {
+                from: oldPeers,
+              },
+            ],
+          },
+        },
+      ],
+    } as KubernetesList<kind.NetworkPolicy>);
+
+    await updateKubeAPINetworkPolicies(newPeers);
+
+    expect(mockGet).toHaveBeenCalled();
+    expect(mockApply).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: {
+          name: "mock-netpol",
+          namespace: "default",
+        },
+        spec: {
+          ingress: [
+            {
+              from: newPeers,
+            },
+          ],
+        },
+      }),
+      { force: true },
+    );
+  });
+
+  it("updates an egress NetworkPolicy with no peers", async () => {
     const newPeers = [{ ipBlock: { cidr: "10.0.0.1/32" } }];
     mockGet.mockResolvedValue({
       items: [
@@ -380,6 +448,47 @@ describe("updateKubeAPINetworkPolicies", () => {
     );
   });
 
+  it("updates an ingress NetworkPolicy with no peers", async () => {
+    const newPeers = [{ ipBlock: { cidr: "10.0.0.1/32" } }];
+    mockGet.mockResolvedValue({
+      items: [
+        {
+          metadata: {
+            name: "mock-netpol",
+            namespace: "default",
+          },
+          spec: {
+            ingress: [
+              {
+                from: undefined,
+              },
+            ],
+          },
+        },
+      ],
+    } as KubernetesList<kind.NetworkPolicy>);
+
+    await updateKubeAPINetworkPolicies(newPeers);
+
+    expect(mockGet).toHaveBeenCalled();
+    expect(mockApply).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: {
+          name: "mock-netpol",
+          namespace: "default",
+        },
+        spec: {
+          ingress: [
+            {
+              from: newPeers,
+            },
+          ],
+        },
+      }),
+      { force: true },
+    );
+  });
+
   it("initializes missing egress rules", async () => {
     const newPeers = [{ ipBlock: { cidr: "10.0.0.1/32" } }];
     mockGet.mockResolvedValue({
@@ -389,7 +498,9 @@ describe("updateKubeAPINetworkPolicies", () => {
             name: "mock-netpol",
             namespace: "default",
           },
-          spec: {}, // No egress at all
+          spec: {
+            egress: [{}],
+          }, // No egress at all
         },
       ],
     } as KubernetesList<kind.NetworkPolicy>);
@@ -407,6 +518,43 @@ describe("updateKubeAPINetworkPolicies", () => {
           egress: [
             {
               to: newPeers,
+            },
+          ],
+        },
+      }),
+      { force: true },
+    );
+  });
+
+  it("initializes missing ingress rules", async () => {
+    const newPeers = [{ ipBlock: { cidr: "10.0.0.1/32" } }];
+    mockGet.mockResolvedValue({
+      items: [
+        {
+          metadata: {
+            name: "mock-netpol",
+            namespace: "default",
+          },
+          spec: {
+            ingress: [{}],
+          }, // No egress at all
+        },
+      ],
+    } as KubernetesList<kind.NetworkPolicy>);
+
+    await updateKubeAPINetworkPolicies(newPeers);
+
+    expect(mockGet).toHaveBeenCalled();
+    expect(mockApply).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: {
+          name: "mock-netpol",
+          namespace: "default",
+        },
+        spec: {
+          ingress: [
+            {
+              from: newPeers,
             },
           ],
         },
