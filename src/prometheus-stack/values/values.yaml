@@ -27,23 +27,7 @@ prometheus:
   prometheusSpec:
     enableFeatures:
       - remote-write-receiver
-    additionalConfig:
-      scrapeClasses:
-        - name: istio-certs
-          default: true
-          tlsConfig:
-            caFile: /etc/prom-certs/root-cert.pem
-            certFile: /etc/prom-certs/cert-chain.pem
-            keyFile: /etc/prom-certs/key.pem
-            insecureSkipVerify: true
-        - name: exempt
     podMetadata:
-      annotations:
-        proxy.istio.io/config: |
-          proxyMetadata:
-            OUTPUT_CERTS: /etc/istio-output-certs
-        sidecar.istio.io/userVolumeMount: '[{"name": "istio-certs", "mountPath": "/etc/istio-output-certs"}]'
-        traffic.sidecar.istio.io/includeOutboundIPRanges: ""
       labels:
         app: prometheus
     podMonitorSelectorNilUsesHelmValues: false
@@ -107,12 +91,3 @@ prometheusOperator:
     requests:
       cpu: 100m
       memory: 512Mi
-
-alertmanager:
-  alertmanagerSpec:
-    scheme: "https"
-    tlsConfig:
-      caFile: /etc/prom-certs/root-cert.pem
-      certFile: /etc/prom-certs/cert-chain.pem
-      insecureSkipVerify: true
-      keyFile: /etc/prom-certs/key.pem

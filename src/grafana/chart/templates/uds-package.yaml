@@ -7,6 +7,7 @@ metadata:
   name: grafana
   namespace: {{ .Release.Namespace }}
 spec:
+  istioAmbient: true
   sso:
     - name: Grafana Dashboard
       clientId: uds-core-admin-grafana

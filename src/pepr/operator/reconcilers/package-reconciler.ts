@@ -6,7 +6,7 @@
 import { handleFailure, shouldSkip, updateStatus, writeEvent } from ".";
 import { UDSConfig } from "../../config";
 import { Component, setupLogger } from "../../logger";
-import { cleanupNamespace, enableInjection } from "../controllers/istio/injection";
+import { cleanupNamespace, enableIstio } from "../controllers/istio/injection";
 import { istioResources } from "../controllers/istio/istio-resources";
 import {
   authservice,
@@ -69,10 +69,11 @@ export async function packageReconciler(pkg: UDSPackage) {
     await updateStatus(pkg, { phase: Phase.Pending });
 
     const netPol = await networkPolicies(pkg, namespace!);
+    log.info(metadata, `Created ${netPol.length} network policies`);
 
     let endpoints: string[] = [];
     // Update the namespace to ensure the istio-injection label is set
-    await enableInjection(pkg);
+    await enableIstio(pkg);
 
     let ssoClients = new Map<string, Client>();
     let authserviceClients: string[] = [];

@@ -7,6 +7,7 @@ metadata:
   name: velero
   namespace: {{ .Release.Namespace }}
 spec:
+  istioAmbient: true
   network:
     allow:
       # Egress for S3 connections

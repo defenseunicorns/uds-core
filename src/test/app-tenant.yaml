@@ -12,6 +12,7 @@ metadata:
   name: test-tenant-app
   namespace: test-tenant-app
 spec:
+  istioAmbient: true
   network:
     expose:
       - service: test-tenant-app

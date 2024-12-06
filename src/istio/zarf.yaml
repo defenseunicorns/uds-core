@@ -25,10 +25,18 @@ components:
     charts:
       - name: istiod
         valuesFiles:
-          - "values/upstream-values.yaml"
+          - "values/upstream/istiod.yaml"
+      - name: cni
+        valuesFiles:
+          - "values/upstream/cni.yaml"
+      - name: ztunnel
+        valuesFiles:
+          - "values/upstream/ztunnel.yaml"
     images:
-      - "docker.io/istio/pilot:1.24.1-distroless"
-      - "docker.io/istio/proxyv2:1.24.1-distroless"
+      - "docker.io/istio/pilot:1.24.2-distroless"
+      - "docker.io/istio/proxyv2:1.24.2-distroless"
+      - "docker.io/istio/install-cni:1.24.2-distroless"
+      - "docker.io/istio/ztunnel:1.24.2-distroless"
 
   - name: istio-controlplane
     required: true
@@ -39,10 +47,20 @@ components:
     charts:
       - name: istiod
         valuesFiles:
-          - "values/registry1-values.yaml"
+          - "values/registry1/istiod.yaml"
+      - name: cni
+        valuesFiles:
+          - "values/registry1/cni.yaml"
+      - name: ztunnel
+        valuesFiles:
+          - "values/registry1/ztunnel.yaml"
     images:
-      - registry1.dso.mil/ironbank/tetrate/istio/proxyv2:1.24.1-tetratefips-v0
-      - registry1.dso.mil/ironbank/tetrate/istio/pilot:1.24.1-tetratefips-v0
+      - registry1.dso.mil/ironbank/tetrate/istio/proxyv2:1.24.2-tetratefips-v0
+      - registry1.dso.mil/ironbank/tetrate/istio/pilot:1.24.2-tetratefips-v0
+      - registry1.dso.mil/ironbank/tetrate/istio/ztunnel:1.24.2-tetratefips-v0
+      # Tetrate's install-cni image is out of date currently in Ironbank but could be swapped in when updated
+      - registry1.dso.mil/ironbank/opensource/istio/install-cni:1.24.2
+      # - registry1.dso.mil/ironbank/tetrate/istio/install-cni:1.22.6-tetratefips-v0
 
   - name: istio-controlplane
     required: true
@@ -53,17 +71,28 @@ components:
     charts:
       - name: istiod
         valuesFiles:
-          - "values/unicorn-values.yaml"
+          - "values/unicorn/istiod.yaml"
+      - name: cni
+        valuesFiles:
+          - "values/unicorn/cni.yaml"
+      - name: ztunnel
+        valuesFiles:
+          - "values/upstream/ztunnel.yaml"
     images:
-      - cgr.dev/du-uds-defenseunicorns/istio-pilot-fips:1.24.1
-      - cgr.dev/du-uds-defenseunicorns/istio-proxy-fips:1.24.1
+      - cgr.dev/du-uds-defenseunicorns/istio-pilot-fips:1.24.2
+      - cgr.dev/du-uds-defenseunicorns/istio-proxy-fips:1.24.2
+      # Chainguard's install-cni-fips is not working right now, issue submitted
+      - cgr.dev/du-uds-defenseunicorns/istio-install-cni:1.24.2
+      # Chainguard does not have the ztunnel image currently, but upstream is 0 CVE
+      # It is not currently FIPS though, and the IB TID FIPS image is amd64 only
+      - docker.io/istio/ztunnel:1.24.2-distroless
 
   - name: istio-admin-gateway
     required: true
     charts:
       - name: gateway
         url: https://istio-release.storage.googleapis.com/charts
-        version: 1.24.1
+        version: 1.24.2
         releaseName: admin-ingressgateway
         namespace: istio-admin-gateway
       - name: uds-istio-config
@@ -78,7 +107,7 @@ components:
     charts:
       - name: gateway
         url: https://istio-release.storage.googleapis.com/charts
-        version: 1.24.1
+        version: 1.24.2
         releaseName: tenant-ingressgateway
         namespace: istio-tenant-gateway
       - name: uds-istio-config
@@ -93,7 +122,7 @@ components:
     charts:
       - name: gateway
         url: https://istio-release.storage.googleapis.com/charts
-        version: 1.24.1
+        version: 1.24.2
         releaseName: passthrough-ingressgateway
         namespace: istio-passthrough-gateway
       - name: uds-istio-config

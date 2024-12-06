@@ -7,6 +7,7 @@ metadata:
   name: authservice
   namespace: {{ .Release.Namespace }}
 spec:
+  istioAmbient: true
   network:
     allow:
       # Permit intra-namespace communication for multi-replica setup

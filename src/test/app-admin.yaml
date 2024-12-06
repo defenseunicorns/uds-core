@@ -12,6 +12,7 @@ metadata:
   name: httpbin
   namespace: test-admin-app
 spec:
+  istioAmbient: true
   network:
     expose:
       - service: httpbin

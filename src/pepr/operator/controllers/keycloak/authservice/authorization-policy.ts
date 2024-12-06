@@ -27,6 +27,7 @@ function authserviceAuthorizationPolicy(
   labelSelector: { [key: string]: string },
   name: string,
   namespace: string,
+  ambient: boolean,
 ): IstioAuthorizationPolicy {
   return {
     kind: "AuthorizationPolicy",
@@ -49,9 +50,21 @@ function authserviceAuthorizationPolicy(
           ],
         },
       ],
-      selector: {
-        matchLabels: labelSelector,
-      },
+      ...(ambient
+        ? {
+            targetRefs: [
+              {
+                group: "gateway.networking.k8s.io",
+                kind: "Gateway",
+                name: "waypoint",
+              },
+            ],
+          }
+        : {
+            selector: {
+              matchLabels: labelSelector,
+            },
+          }),
     },
   };
 }
@@ -60,6 +73,7 @@ function jwtAuthZAuthorizationPolicy(
   labelSelector: { [key: string]: string },
   name: string,
   namespace: string,
+  ambient: boolean,
 ): IstioAuthorizationPolicy {
   return {
     kind: "AuthorizationPolicy",
@@ -68,9 +82,21 @@ function jwtAuthZAuthorizationPolicy(
       namespace,
     },
     spec: {
-      selector: {
-        matchLabels: labelSelector,
-      },
+      ...(ambient
+        ? {
+            targetRefs: [
+              {
+                group: "gateway.networking.k8s.io",
+                kind: "Gateway",
+                name: "waypoint",
+              },
+            ],
+          }
+        : {
+            selector: {
+              matchLabels: labelSelector,
+            },
+          }),
       rules: [
         {
           from: [
@@ -90,6 +116,7 @@ function authNRequestAuthentication(
   labelSelector: { [key: string]: string },
   name: string,
   namespace: string,
+  ambient: boolean,
 ): IstioRequestAuthentication {
   return {
     kind: "RequestAuthentication",
@@ -106,9 +133,21 @@ function authNRequestAuthentication(
           jwksUri: `http://keycloak-http.keycloak.svc.cluster.local:8080/realms/uds/protocol/openid-connect/certs`,
         },
       ],
-      selector: {
-        matchLabels: labelSelector,
-      },
+      ...(ambient
+        ? {
+            targetRefs: [
+              {
+                group: "gateway.networking.k8s.io",
+                kind: "Gateway",
+                name: "waypoint",
+              },
+            ],
+          }
+        : {
+            selector: {
+              matchLabels: labelSelector,
+            },
+          }),
     },
   };
 }
@@ -132,16 +171,16 @@ async function updatePolicy(
     };
     return resource;
   };
-
+  const istioAmbient = pkg.spec?.istioAmbient || false;
   try {
     await K8s(IstioAuthorizationPolicy)[operation](
-      updateMetadata(authserviceAuthorizationPolicy(labelSelector, event.name, namespace)),
+      updateMetadata(authserviceAuthorizationPolicy(labelSelector, event.name, namespace, istioAmbient)),
     );
     await K8s(IstioRequestAuthentication)[operation](
-      updateMetadata(authNRequestAuthentication(labelSelector, event.name, namespace)),
+      updateMetadata(authNRequestAuthentication(labelSelector, event.name, namespace, istioAmbient)),
     );
     await K8s(IstioAuthorizationPolicy)[operation](
-      updateMetadata(jwtAuthZAuthorizationPolicy(labelSelector, event.name, namespace)),
+      updateMetadata(jwtAuthZAuthorizationPolicy(labelSelector, event.name, namespace, istioAmbient)),
     );
   } catch (e) {
     const msg = `Failed to update auth policy for ${event.name} in ${namespace}: ${e}`;

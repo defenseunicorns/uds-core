@@ -55,4 +55,9 @@ export {
   Action as IstioAction,
   AuthorizationPolicy as IstioAuthorizationPolicy,
 } from "./generated/istio/authorizationpolicy-v1beta1";
+
+export {
+  Gateway as KubernetesGateway,
+}from "./generated/kubernetes/gateway-v1";
+
 export { RequestAuthentication as IstioRequestAuthentication } from "./generated/istio/requestauthentication-v1";
