@@ -20,7 +20,42 @@ spec:
               name: "envoy.filters.http.router"
     patch:
       operation: INSERT_BEFORE
-      value: # Lua script configuration 
+      value:
+        name: envoy.filters.http.compressor
+        typed_config:
+          "@type": type.googleapis.com/envoy.extensions.filters.http.compressor.v3.Compressor
+          response_direction_config:
+            common_config:
+              min_content_length: 100
+              content_type:
+                - text/html
+                - application/json
+            disable_on_etag_header: true
+          request_direction_config:
+            common_config:
+              enabled:
+                default_value: false
+                runtime_key: request_compressor_enabled
+          compressor_library:
+            name: text_optimized
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.compression.gzip.compressor.v3.Gzip
+              memory_level: 3
+              window_bits: 10
+              compression_level: BEST_COMPRESSION
+              compression_strategy: DEFAULT_STRATEGY
+  - applyTo: HTTP_FILTER
+    match:
+      context: GATEWAY
+      listener:
+        filterChain:
+          filter:
+            name: "envoy.filters.network.http_connection_manager"
+            subFilter:
+              name: "envoy.filters.http.router"
+    patch:
+      operation: INSERT_BEFORE
+      value: # Lua script configuration
         name: envoy.lua
         typed_config:
           "@type": "type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua"
@@ -71,4 +106,29 @@ spec:
                 end
               end
             end
+  - applyTo: HTTP_FILTER
+    match:
+      context: GATEWAY
+      listener:
+        filterChain:
+          filter:
+            name: "envoy.filters.network.http_connection_manager"
+            subFilter:
+              name: "envoy.filters.http.router"
+    patch:
+      operation: INSERT_BEFORE
+      value: # Lua script configuration 
+        name: envoy.filters.http.decompressor
+        typed_config:
+          "@type": type.googleapis.com/envoy.extensions.filters.http.decompressor.v3.Decompressor
+          decompressor_library:
+            name: small
+            typed_config:
+              "@type": "type.googleapis.com/envoy.extensions.compression.gzip.decompressor.v3.Gzip"
+              chunk_size: 65536
+          request_direction_config:
+            common_config:
+              enabled:
+                default_value: false
+                runtime_key: request_decompressor_enabled
 {{- end }}
