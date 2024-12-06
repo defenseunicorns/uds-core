@@ -99,3 +99,50 @@ variables:
 :::note
 If you are using Private PKI or self-signed certificates for your tenant certificates it is necessary to additionally configure `UDS_CA_CERT` with additional [trusted certificate authorities](https://uds.defenseunicorns.com/reference/configuration/uds-operator/#trusted-certificate-authority).
 :::
+
+### Using AWS Certificate Manager (ACM) Certificates
+
+When deploying UDS Core to Amazon EKS, you can leverage AWS Certificate Manager (ACM) to manage TLS certificates at the Load Balancer level instead of managing them through Istio. This approach requires:
+
+1. Disabling TLS termination in Istio (`tls.enabled: false`)
+2. Configuring the appropriate AWS Load Balancer annotations to use ACM certificates
+
+Here's an example configuration in your UDS Bundle:
+
+```yaml
+kind: UDSBundle
+metadata:
+  name: core-with-acm-certs
+  description: A UDS example bundle for using ACM certificates with UDS Core
+  version: "0.0.1"
+
+packages:
+  - name: core
+    repository: oci://ghcr.io/defenseunicorns/packages/uds/core
+    ref: 0.23.0-upstream
+    overrides:
+      istio-tenant-gateway:
+        gateway:
+          values:
+            - path: service.annotations
+              value:
+                service.beta.kubernetes.io/aws-load-balancer-backend-protocol: "http"
+                service.beta.kubernetes.io/aws-load-balancer-ssl-cert: "arn:aws:acm:<region>:<account>:certificate/<certificate-id>"
+                service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "https"
+        uds-istio-config:
+          values:
+            - path: tls.enabled
+              value: false
+```
+
+The required annotations are:
+
+- `service.beta.kubernetes.io/aws-load-balancer-backend-protocol: "http"` - Indicates that the backend protocol is HTTP
+- `service.beta.kubernetes.io/aws-load-balancer-ssl-cert` - The ARN of your ACM certificate
+- `service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "https"` - Specifies which ports should use SSL/TLS
+
+This configuration will terminate TLS at the AWS Load Balancer using your ACM certificate instead of at the Istio Gateway level. This can be particularly useful when you want to leverage AWS-native certificate management capabilities.
+
+:::note
+If `tls.enabled` is set to `false` the above annotations must be set, otherwise the chart installation will fail.
+:::

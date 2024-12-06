@@ -3,6 +3,7 @@
 
 name: tenant
 tls:
+  enabled: true
   servers:
     keycloak:
       mode: OPTIONAL_MUTUAL

@@ -5,7 +5,9 @@
 
 import { a } from "pepr";
 
+import { K8s } from "pepr";
 import { Policy } from "../operator/crd";
+import { Gateway } from "../operator/crd/generated/istio/gateway-v1";
 import { When, containers } from "./common";
 import { isExempt, markExemption } from "./exemptions";
 
@@ -112,4 +114,54 @@ When(a.Service)
     }
 
     return request.Approve();
+  });
+
+/**
+ * This policy enforces secure traffic handling for Istio Gateways.
+ *
+ * Istio Gateway servers must either have TLS configuration or their associated services must have
+ * required AWS load balancer annotations for SSL termination. This policy ensures that network
+ * traffic is properly secured through one of these mechanisms.
+ *
+ * @related https://istio.io/latest/docs/reference/config/networking/gateway/
+ */
+When(Gateway)
+  .IsCreatedOrUpdated()
+  .InNamespaceRegex(/istio-(.*)-gateway/)
+  .WithNameRegex(/(.*)-gateway/)
+  .Validate(async g => {
+    const serversWithTLS = g.Raw.spec?.servers?.reduce(
+      (count, server) => (server.tls ? count + 1 : count),
+      0,
+    );
+
+    if (serversWithTLS && serversWithTLS > 0) {
+      return g.Approve();
+    } else if (!serversWithTLS || serversWithTLS === 0) {
+      const services = await K8s(a.Service)
+        .InNamespace(g.Request.namespace ?? "default")
+        .WithLabel("app", g.Raw.spec?.selector?.app)
+        .Get();
+
+      const requiredAnnotations = [
+        "service.beta.kubernetes.io/aws-load-balancer-backend-protocol",
+        "service.beta.kubernetes.io/aws-load-balancer-ssl-cert",
+        "service.beta.kubernetes.io/aws-load-balancer-ssl-ports",
+      ];
+
+      // Check if any service has all required annotations
+      const hasRequiredAnnotations = services.items.some(svc => {
+        const annotations = svc.metadata?.annotations || {};
+        return requiredAnnotations.every(annotation => annotation in annotations);
+      });
+
+      if (!hasRequiredAnnotations) {
+        return g.Deny(
+          "Gateway servers must either have TLS configuration or associated services must have required AWS Load Balancer annotations: " +
+            requiredAnnotations.join(", "),
+        );
+      }
+    }
+
+    return g.Approve();
   });

@@ -4,6 +4,7 @@
 name: passthrough
 
 tls:
+  enabled: true
   servers:
     passthrough:
       mode: PASSTHROUGH
