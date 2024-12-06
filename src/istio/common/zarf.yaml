@@ -47,11 +47,6 @@ components:
               ./zarf tools kubectl annotate PeerAuthentication permissive-pepr-webhook -n pepr-system meta.helm.sh/release-name=uds-global-istio-config --overwrite || true
               ./zarf tools kubectl annotate PeerAuthentication permissive-pepr-webhook-watcher -n pepr-system meta.helm.sh/release-name=uds-global-istio-config --overwrite || true
         after:
-          #  - description: "Ensure istio ambient is enabled for Pepr"
-          #    cmd: "./zarf tools kubectl label namespace pepr-system istio.io/dataplane-mode=ambient --overwrite"
-           - description: "Ensure istio-injection is disabled for Pepr"
-             cmd: "./zarf tools kubectl label namespace pepr-system istio-injection=enabled --overwrite"
-          #  - description: "Cycle Pepr to refresh connections post-ambient"
-          #    cmd: |
-          #      ./zarf tools kubectl rollout restart -n pepr-system deploy/pepr-uds-core-watcher
-          #      ./zarf tools kubectl rollout restart -n pepr-system deploy/pepr-uds-core
+          - description: "Ensure istio-injection is enabled for Pepr"
+            mute: true
+            cmd: "./zarf tools kubectl label namespace pepr-system istio-injection=enabled --overwrite"
