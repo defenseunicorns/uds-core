@@ -40,7 +40,7 @@ tasks:
           echo "Next steps:"
           echo "  - To test & develop the Pepr module, run 'npx pepr dev' from a Javascript debug terminal"
           echo "  - Otherwise run 'npx pepr deploy' to deploy the Pepr module to the cluster"
-          echo "  - Additional source packages can be deployed with 'zarf dev deploy src/<package>'"
+          echo "  - Additional source packages can be deployed with 'zarf dev deploy src/<package> --flavor upstream'"
 
   - name: slim-dev
     actions:
