@@ -14,6 +14,13 @@ import {
   updateAPIServerCIDRFromService,
 } from "./controllers/network/generators/kubeAPI";
 
+// Controller imports
+import {
+  initAllNodesTarget,
+  updateKubeNodesFromCreateUpdate,
+  updateKubeNodesFromDelete,
+} from "./controllers/network/generators/kubeNodes";
+
 // CRD imports
 import { UDSExemption, UDSPackage } from "./crd";
 import { validator } from "./crd/validators/package-validator";
@@ -34,6 +41,8 @@ const log = setupLogger(Component.OPERATOR);
 if (process.env.PEPR_WATCH_MODE === "true" || process.env.PEPR_MODE === "dev") {
   void initAPIServerCIDR();
 }
+
+void initAllNodesTarget();
 
 // Watch for changes to the API server EndpointSlice and update the API server CIDR
 // Skip if a CIDR is defined in the UDS Config
@@ -83,3 +92,9 @@ When(UDSPackage)
     log.info("Identity and Authorization layer removed, operator will NOT handle SSO.");
     UDSConfig.isIdentityDeployed = false;
   });
+
+// Watch for changes to the API server EndpointSlice and update the API server CIDR
+When(a.Node).IsCreatedOrUpdated().Reconcile(updateKubeNodesFromCreateUpdate);
+
+// Watch for changes to the API server EndpointSlice and update the API server CIDR
+When(a.Node).IsDeleted().Reconcile(updateKubeNodesFromDelete);
