@@ -87,7 +87,7 @@ const allow = {
       remoteGenerated: {
         description: "Custom generated remote selector for the policy",
         type: "string",
-        enum: ["KubeAPI", "IntraNamespace", "CloudMetadata", "Anywhere"],
+        enum: ["KubeAPI", "KubeNodes", "IntraNamespace", "CloudMetadata", "Anywhere"],
       },
       remoteCidr: {
         description: "Custom generated policy CIDR",
