@@ -26,17 +26,23 @@ let apiServerPeers: V1NetworkPolicyPeer[];
  * Otherwise, it fetches the EndpointSlice and updates the CIDR dynamically.
  */
 export async function initAPIServerCIDR() {
-  const svc = await retryWithDelay(fetchKubernetesService, log);
+  try {
+    const svc = await retryWithDelay(fetchKubernetesService, log);
 
-  // If static CIDR is defined, pass it directly
-  if (UDSConfig.kubeApiCidr) {
-    log.info(
-      `Static CIDR (${UDSConfig.kubeApiCidr}) is defined for KubeAPI, skipping EndpointSlice lookup.`,
-    );
-    await updateAPIServerCIDR(svc, UDSConfig.kubeApiCidr); // Pass static CIDR
-  } else {
-    const slice = await retryWithDelay(fetchKubernetesEndpointSlice, log);
-    await updateAPIServerCIDR(svc, slice);
+    // If static CIDR is defined, pass it directly
+    if (UDSConfig.kubeApiCidr) {
+      log.info(
+        `Static CIDR (${UDSConfig.kubeApiCidr}) is defined for KubeAPI, skipping EndpointSlice lookup.`,
+      );
+      await updateAPIServerCIDR(svc, UDSConfig.kubeApiCidr); // Pass static CIDR
+    } else {
+      const slice = await retryWithDelay(fetchKubernetesEndpointSlice, log);
+      await updateAPIServerCIDR(svc, slice);
+    }
+  } catch (error) {
+    log.error("Failed to initialize API Server CIDR for KubeAPI generated network policies", {
+      err: JSON.stringify(error),
+    });
   }
 }
 
@@ -156,10 +162,39 @@ export async function updateKubeAPINetworkPolicies(newPeers: V1NetworkPolicyPeer
     .Get();
 
   for (const netPol of netPols.items) {
-    const oldPeers = netPol.spec?.egress?.[0].to;
+    // Safety check for network policy spec existence
+    if (!netPol.spec) {
+      log.warn(
+        `KubeAPI NetworkPolicy ${netPol.metadata!.namespace}/${netPol.metadata!.name} is missing spec.`,
+      );
+      continue;
+    }
 
-    if (!R.equals(oldPeers, newPeers)) {
-      netPol.spec!.egress![0].to = newPeers;
+    let updateRequired = false;
+    // Handle egress policies
+    if (netPol.spec.egress) {
+      if (!netPol.spec.egress[0]) {
+        netPol.spec.egress[0] = { to: [] };
+      }
+      const oldPeers = netPol.spec.egress[0].to;
+      if (!R.equals(oldPeers, newPeers)) {
+        updateRequired = true;
+        netPol.spec.egress[0].to = newPeers;
+      }
+      // Handle ingress policies
+    } else if (netPol.spec.ingress) {
+      if (!netPol.spec.ingress[0]) {
+        netPol.spec.ingress[0] = { from: [] };
+      }
+      const oldPeers = netPol.spec.ingress[0].from;
+      if (!R.equals(oldPeers, newPeers)) {
+        updateRequired = true;
+        netPol.spec.ingress[0].from = newPeers;
+      }
+    }
+
+    // If the policy required a change, apply the new policy
+    if (updateRequired) {
       if (netPol.metadata) {
         // Remove managed fields to prevent errors on server side apply
         netPol.metadata.managedFields = undefined;
