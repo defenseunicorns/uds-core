@@ -11,40 +11,77 @@ import { UDSPackage } from "../../crd";
 // configure subproject logger
 const log = setupLogger(Component.OPERATOR_ISTIO);
 
-const injectionLabel = "istio-injection";
-const injectionAnnotation = "uds.dev/original-istio-injection";
+const INJECTION_LABEL = "istio-injection";
+const AMBIENT_LABEL = "istio.io/dataplane-mode";
+const originalStateAnnotation = "uds.dev/original-istio-state";
+
+enum IstioState {
+  Injected = "injected",
+  Ambient = "ambient",
+  None = "none",
+}
+
+function getOriginalIstioState(ns: kind.Namespace): IstioState {
+  // Extract labels from the namespace
+  const labels = ns.metadata?.labels || {};
+
+  // Extract the relevant label values
+  const originalInjectionLabelValue = labels[INJECTION_LABEL];
+  const originalAmbientLabelValue = labels[AMBIENT_LABEL];
+
+  // Determine the original Istio state based on specific label values
+  let istioState: IstioState;
+
+  if (originalInjectionLabelValue === "enabled") {
+    istioState = IstioState.Injected;
+  } else if (originalAmbientLabelValue === "ambient") {
+    istioState = IstioState.Ambient;
+  } else {
+    istioState = IstioState.None;
+  }
+
+  return istioState;
+}
+
+function needsKill(originalIstioState: IstioState, desiredIstioState: IstioState): boolean {
+  return (
+    (originalIstioState !== desiredIstioState && originalIstioState === IstioState.Injected) ||
+    desiredIstioState === IstioState.Injected
+  );
+}
 
 /**
- * Syncs the package namespace istio-injection label and adds a label for the package name
+ * Syncs the package namespace istio state and adds a label for the package name
  *
  * @param pkg
  */
-export async function enableInjection(pkg: UDSPackage) {
+export async function enableIstio(pkg: UDSPackage) {
   if (!pkg.metadata?.namespace || !pkg.metadata.name) {
     throw new Error(`Invalid Package definition, missing namespace or name`);
   }
 
   const sourceNS = await K8s(kind.Namespace).Get(pkg.metadata.namespace);
   const labels = sourceNS.metadata?.labels || {};
-  const originalInjectionLabel = labels[injectionLabel];
   const annotations = sourceNS.metadata?.annotations || {};
   const pkgKey = `uds.dev/pkg-${pkg.metadata.name}`;
+  const desiredIstioState = pkg.spec!.istioAmbient ? IstioState.Ambient : IstioState.Injected;
 
   // Mark the original namespace injection setting for if all packages are removed
-  if (!annotations[injectionAnnotation]) {
-    annotations[injectionAnnotation] = originalInjectionLabel || "non-existent";
+  const originalIstioState = getOriginalIstioState(sourceNS);
+  if (!annotations[originalStateAnnotation]) {
+    annotations[originalStateAnnotation] = originalIstioState;
   }
 
   // Ensure the namespace is configured
-  if (!annotations[pkgKey] || originalInjectionLabel !== "enabled") {
-    // Ensure Istio injection is enabled
-    labels[injectionLabel] = "enabled";
-
+  if (!annotations[pkgKey] || originalIstioState !== desiredIstioState) {
     // Add the package annotation
     annotations[pkgKey] = "true";
 
+    labels[AMBIENT_LABEL] = desiredIstioState === IstioState.Ambient ? "ambient" : "none";
+    labels[INJECTION_LABEL] = desiredIstioState === IstioState.Ambient ? "disabled" : "enabled";
+
     // Apply the updated Namespace
-    log.debug(`Updating namespace ${pkg.metadata.namespace} with istio injection label`);
+    log.debug(`Updating namespace ${pkg.metadata.namespace} with istio labels`);
     await K8s(kind.Namespace).Apply(
       {
         metadata: {
@@ -56,12 +93,10 @@ export async function enableInjection(pkg: UDSPackage) {
       { force: true },
     );
 
-    // Kill the pods if we changed the value of the istio-injection label
-    if (originalInjectionLabel !== labels[injectionLabel]) {
-      log.debug(
-        `Attempting pod restart in ${pkg.metadata.namespace} based on istio injection label change`,
-      );
-      await killPods(pkg.metadata.namespace, true);
+    // Kill the pods if we are switching istio modes
+    if (needsKill(originalIstioState, desiredIstioState)) {
+      log.debug(`Attempting pod restart in ${pkg.metadata.namespace} based on istio state change`);
+      await killPods(pkg.metadata.namespace, desiredIstioState);
     }
   }
 }
@@ -78,24 +113,34 @@ export async function cleanupNamespace(pkg: UDSPackage) {
 
   const sourceNS = await K8s(kind.Namespace).Get(pkg.metadata.namespace);
   const labels = sourceNS.metadata?.labels || {};
-  const originalInjectionLabel = labels[injectionLabel];
   const annotations = sourceNS.metadata?.annotations || {};
+  const originalIstioState = getOriginalIstioState(sourceNS);
 
   // Remove the package annotation
   delete annotations[`uds.dev/pkg-${pkg.metadata.name}`];
 
   // If there are no more UDS Package annotations, restore the original value of the istio-injection label
+  const desiredIstioState = annotations[originalStateAnnotation] as IstioState;
   if (!Object.keys(annotations).find(key => key.startsWith("uds.dev/pkg-"))) {
-    labels[injectionLabel] = annotations[injectionAnnotation];
-    // If the original value was non-existent, remove the label
-    if (labels[injectionLabel] === "non-existent") {
-      delete labels[injectionLabel];
+    switch (desiredIstioState) {
+      case IstioState.Ambient:
+        labels[AMBIENT_LABEL] = "ambient";
+        labels[INJECTION_LABEL] = "disabled";
+        break;
+      case IstioState.Injected:
+        labels[AMBIENT_LABEL] = "none";
+        labels[INJECTION_LABEL] = "enabled";
+        break;
+      case IstioState.None:
+        labels[AMBIENT_LABEL] = "none";
+        labels[INJECTION_LABEL] = "disabled";
+        break;
     }
-    delete annotations[injectionAnnotation];
+    delete annotations[originalStateAnnotation];
   }
 
   // Apply the updated Namespace
-  log.debug(`Updating namespace ${pkg.metadata.namespace}, removing istio injection labels.`);
+  log.debug(`Updating namespace ${pkg.metadata.namespace}, applying original istio state labels.`);
   await K8s(kind.Namespace).Apply(
     {
       metadata: {
@@ -107,12 +152,10 @@ export async function cleanupNamespace(pkg: UDSPackage) {
     { force: true },
   );
 
-  // Kill the pods if we changed the value of the istio-injection label
-  if (originalInjectionLabel !== labels[injectionLabel]) {
-    log.debug(
-      `Attempting pod restart in ${pkg.metadata.namespace} based on istio injection label change`,
-    );
-    await killPods(pkg.metadata.namespace, false);
+  // Kill the pods if we changed the istio state
+  if (needsKill(originalIstioState, desiredIstioState)) {
+    log.debug(`Attempting pod restart in ${pkg.metadata.namespace} based on istio state change`);
+    await killPods(pkg.metadata.namespace, desiredIstioState);
   }
 }
 
@@ -122,7 +165,7 @@ export async function cleanupNamespace(pkg: UDSPackage) {
  * @param ns
  * @param enableInjection
  */
-async function killPods(ns: string, enableInjection: boolean) {
+async function killPods(ns: string, desiredIstioState: string) {
   // Get all pods in the namespace
   const pods = await K8s(kind.Pod).InNamespace(ns).Get();
   const groups: Record<string, kind.Pod[]> = {};
@@ -138,13 +181,13 @@ async function killPods(ns: string, enableInjection: boolean) {
     const foundSidecar = pod.spec?.containers?.find(c => c.name === "istio-proxy");
 
     // If enabling injection, ignore pods that already have the istio sidecar
-    if (enableInjection && foundSidecar) {
+    if (desiredIstioState === IstioState.Injected && foundSidecar) {
       log.debug(`Ignoring Pod ${ns}/${pod.metadata?.name}, already has sidecar`);
       continue;
     }
 
     // If disabling injection, ignore pods that don't have the istio sidecar
-    if (!enableInjection && !foundSidecar) {
+    if (desiredIstioState !== IstioState.Injected && !foundSidecar) {
       log.debug(`Ignoring Pod ${ns}/${pod.metadata?.name}, injection disabled`);
       continue;
     }
@@ -164,8 +207,7 @@ async function killPods(ns: string, enableInjection: boolean) {
     }
 
     for (const pod of group) {
-      const action = enableInjection ? "enable" : "remove";
-      log.info(`Deleting pod ${ns}/${pod.metadata?.name} to ${action} the istio sidecar`);
+      log.info(`Deleting pod ${ns}/${pod.metadata?.name} to switch to ${desiredIstioState} mode`);
       await K8s(kind.Pod).Delete(pod);
     }
   }

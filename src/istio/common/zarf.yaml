@@ -30,23 +30,26 @@ components:
         version: 1.23.2
         namespace: istio-system
         valuesFiles:
-          - "../values/base-cni.yaml"
+          - "../values/base-cni.yaml" # values for k3s/k3d cni
       - name: ztunnel
         url: https://istio-release.storage.googleapis.com/charts
         version: 1.23.2
-        namespace: istio-system 
+        namespace: istio-system
     actions:
       onDeploy:
         before:
-          - description: "Fix helm ownership on upgrade"
+          - description: "Fix helm ownership metadata on upgrade"
             mute: true
             cmd: |
-              ./zarf tools kubectl annotate EnvoyFilter misdirected-request -n istio-system meta.helm.sh/release-name=uds-global-istio-config --overwrite || true
-              ./zarf tools kubectl annotate EnvoyFilter remove-server-header -n istio-system meta.helm.sh/release-name=uds-global-istio-config --overwrite || true
-              ./zarf tools kubectl annotate PeerAuthentication default-istio-system -n istio-system meta.helm.sh/release-name=uds-global-istio-config --overwrite || true
-              ./zarf tools kubectl annotate PeerAuthentication permissive-pepr-webhook -n pepr-system meta.helm.sh/release-name=uds-global-istio-config --overwrite || true
-              ./zarf tools kubectl annotate PeerAuthentication permissive-pepr-webhook-watcher -n pepr-system meta.helm.sh/release-name=uds-global-istio-config --overwrite || true
+              ./zarf tools kubectl annotate envoyfilter -n istio-system misdirected-request meta.helm.sh/release-name=uds-global-istio-config --overwrite || true
+              ./zarf tools kubectl annotate envoyfilter -n istio-system remove-server-header meta.helm.sh/release-name=uds-global-istio-config --overwrite || true
+              ./zarf tools kubectl annotate peerauthentication -n istio-system default-istio-system meta.helm.sh/release-name=uds-global-istio-config --overwrite || true
         after:
-          - description: "Ensure istio-injection is enabled for Pepr"
-            mute: true
-            cmd: "./zarf tools kubectl label namespace pepr-system istio-injection=enabled --overwrite"
+          - description: "Ensure istio ambient is enabled for Pepr"
+            cmd: "./zarf tools kubectl label namespace pepr-system istio.io/dataplane-mode=ambient --overwrite"
+          - description: "Ensure istio-injection is disabled for Pepr"
+            cmd: "./zarf tools kubectl label namespace pepr-system istio-injection=disabled --overwrite"
+          - description: "Cycle Pepr to refresh connections post-ambient"
+            cmd: |
+              ./zarf tools kubectl rollout restart -n pepr-system deploy/pepr-uds-core-watcher
+              ./zarf tools kubectl rollout restart -n pepr-system deploy/pepr-uds-core
