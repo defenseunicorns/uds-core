@@ -13,11 +13,11 @@ components:
     charts:
       - name: base
         url: https://istio-release.storage.googleapis.com/charts
-        version: 1.23.2
+        version: 1.24.1
         namespace: istio-system
       - name: istiod
         url: https://istio-release.storage.googleapis.com/charts
-        version: 1.23.2
+        version: 1.24.1
         namespace: istio-system
         valuesFiles:
           - "../values/values.yaml"
@@ -28,14 +28,13 @@ components:
     actions:
       onDeploy:
         before:
-          - description: "Fix helm ownership if necessary for clean helm upgrade"
+          - description: "Add helm ownership if necessary for clean helm upgrade"
             mute: true
             cmd: |
-              ./zarf tools kubectl annotate EnvoyFilter misdirected-request -n istio-system meta.helm.sh/release-name=uds-global-istio-config --overwrite || true
-              ./zarf tools kubectl annotate EnvoyFilter remove-server-header -n istio-system meta.helm.sh/release-name=uds-global-istio-config --overwrite || true
-              ./zarf tools kubectl annotate PeerAuthentication default-istio-system -n istio-system meta.helm.sh/release-name=uds-global-istio-config --overwrite || true
-              ./zarf tools kubectl annotate PeerAuthentication permissive-pepr-webhook -n pepr-system meta.helm.sh/release-name=uds-global-istio-config --overwrite || true
-              ./zarf tools kubectl annotate PeerAuthentication permissive-pepr-webhook-watcher -n pepr-system meta.helm.sh/release-name=uds-global-istio-config --overwrite || true
+              # Commands pulled from https://istio.io/latest/news/releases/1.24.x/announcing-1.24/upgrade-notes/#istio-crds-are-templated-by-default-and-can-be-installed-and-upgraded-via-helm-install-istio-base
+              ./zarf tools kubectl label $(./zarf tools kubectl get crds -l chart=istio -o name && ./zarf tools kubectl get crds -l app.kubernetes.io/part-of=istio -o name) "app.kubernetes.io/managed-by=Helm" --overwrite || true
+              ./zarf tools kubectl annotate $(./zarf tools kubectl get crds -l chart=istio -o name && ./zarf tools kubectl get crds -l app.kubernetes.io/part-of=istio -o name) "meta.helm.sh/release-name=base" --overwrite || true
+              ./zarf tools kubectl annotate $(./zarf tools kubectl get crds -l chart=istio -o name && ./zarf tools kubectl get crds -l app.kubernetes.io/part-of=istio -o name) "meta.helm.sh/release-namespace=istio-system" --overwrite || true
         after:
           - description: "Ensure istio-injection is enabled for Pepr"
             mute: true
