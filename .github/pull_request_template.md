@@ -15,7 +15,7 @@ Relates to #
 - [ ] Other (security config, docs update, etc)
 
 ## Steps to Validate
-- If this PR introduces new functionality to UDS Core, please document the steps to test the changes.
+- If this PR introduces new functionality to UDS Core or addresses a bug, please document the steps to test the changes.
 
 ## Checklist before merging
 
