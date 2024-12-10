@@ -17,7 +17,8 @@ import {
 // Controller imports
 import {
   initAllNodesTarget,
-  updateAllNodesTargetFromEvent,
+  updateNodeTarget,
+  updateAllNodesTargetFromDelete,
 } from "./controllers/network/generators/allNodes";
 
 // CRD imports
@@ -93,7 +94,7 @@ When(UDSPackage)
   });
 
 // Watch for changes to the API server EndpointSlice and update the API server CIDR
-When(a.Node).IsCreatedOrUpdated().Reconcile(updateAllNodesTargetFromEvent);
+When(a.Node).IsCreatedOrUpdated().Reconcile(updateNodeTarget);
 
 // Watch for changes to the API server EndpointSlice and update the API server CIDR
-When(a.Node).IsDeleted().Reconcile(updateAllNodesTargetFromEvent);
+When(a.Node).IsDeleted().Reconcile(updateAllNodesTargetFromDelete);
