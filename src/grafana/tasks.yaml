@@ -40,7 +40,7 @@ tasks:
       - description: E2E Test for Grafana, optionally set FULL_CORE=true to test integrations with Loki
         cmd: |
           # renovate: datasource=docker depName=mcr.microsoft.com/playwright versioning=docker
-          docker run --rm --ipc=host -e FULL_CORE="${FULL_CORE}" --net=host --mount type=bind,source="$(pwd)",target=/app mcr.microsoft.com/playwright:v1.49.0-noble sh -c " \
+          docker run --rm --ipc=host -e FULL_CORE="${FULL_CORE}" --net=host --mount type=bind,source="$(pwd)",target=/app mcr.microsoft.com/playwright:v1.49.1-noble sh -c " \
             cd app && \
             npm ci && \
             npx playwright test grafana.test.ts \
