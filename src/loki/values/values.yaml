@@ -23,6 +23,8 @@ loki:
   # Disable telemetry that doesn't function in the airgap
   analytics:
     reporting_enabled: false
+  server:
+    log_level: debug
   storage:
     bucketNames:
       chunks: uds
