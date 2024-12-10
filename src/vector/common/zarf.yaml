@@ -24,12 +24,6 @@ components:
           - ../values/values.yaml
     actions:
       onDeploy:
-        before:
-          - description: Remove Promtail Components if necessary
-            mute: true
-            cmd: |
-              ./zarf package remove core --components promtail --confirm || true # Ensure this doesn't error on installs and upgrades when Promtail no longer exists
-              ./zarf tools kubectl delete ns promtail || true # Ensure this doesn't error on installs and upgrades when Promtail no longer exists
         after:
           - description: Validate Vector Package
             maxTotalSeconds: 300
