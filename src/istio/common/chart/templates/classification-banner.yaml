@@ -29,7 +29,6 @@ spec:
               min_content_length: 100
               content_type:
                 - text/html
-                - application/json
             disable_on_etag_header: true
           request_direction_config:
             common_config:
@@ -73,18 +72,15 @@ spec:
               document.addEventListener('DOMContentLoaded', function () {
                 var headerBanner = document.getElementById('classification-banner-top');
                 var footerBanner = document.getElementById('classification-banner-bottom');
-
                 if (headerBanner) {
-                  document.body.style.paddingTop = headerBanner.offsetHeight + 'px';
+                  document.body.style.paddingTop = '16px';
                 }
                 if (footerBanner) {
-                  var footerHeight = footerBanner.offsetHeight;
-                  document.body.style.paddingBottom = footerHeight + 'px';
-
-                  // Check for existing footers and push them up
+                  var footerHeight = '16px';
+                  document.body.style.paddingBottom = footerHeight;
                   var existingFooter = document.querySelector('footer');
                   if (existingFooter) {
-                    existingFooter.style.marginBottom = footerHeight + 'px';
+                    existingFooter.style.marginBottom = footerHeight;
                   }
                 }
               });
@@ -93,17 +89,17 @@ spec:
 
             function envoy_on_response(response_handle)
               local content_type = response_handle:headers():get("Content-Type") or ""
-
               if string.find(content_type, "text/html") then
-                local iterator = response_handle:bodyChunks()
-                for chunk in iterator do
-                  local body_size = chunk:length()
-                  local body_bytes = chunk:getBytes(0, body_size)
-                  local raw_text = tostring(body_bytes)
+                local body = response_handle:body():getBytes(0, response_handle:body():length())
+                local body_text = tostring(body)
 
-                  chunk:setBytes(header .. footer .. bodyPaddingScript .. raw_text)
-                  break
-                end
+                -- Insert banners into <body>
+                body_text = body_text:gsub("<body([^>]*)>", "<body%1>" .. header .. footer)
+
+                -- Insert script into <head>
+                body_text = body_text:gsub("<head>", "<head>" .. bodyPaddingScript)
+
+                response_handle:body():setBytes(body_text)
               end
             end
   - applyTo: HTTP_FILTER
