@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.33.0](https://github.com/defenseunicorns/uds-core/compare/v0.32.1...v0.33.0) (2024-12-11)
+
+
+### Features
+
+* set Istio gateway TLS from Kubernetes secret ([#982](https://github.com/defenseunicorns/uds-core/issues/982)) ([2711209](https://github.com/defenseunicorns/uds-core/commit/27112092e08f67ae4d414c94beaa86e163e307bd))
+
+
+### Bug Fixes
+
+* kubeapi netpol initialization / support for ingress policies ([#1097](https://github.com/defenseunicorns/uds-core/issues/1097)) ([620e6b2](https://github.com/defenseunicorns/uds-core/commit/620e6b2c98a1a810995f4431578b6c2a71479db9))
+
+
+### Miscellaneous
+
+* add additional step to pr request template ([#1104](https://github.com/defenseunicorns/uds-core/issues/1104)) ([7370ab1](https://github.com/defenseunicorns/uds-core/commit/7370ab1289095d8d718c6c7517c82642dbf4db56))
+* **deps:** update loki to 3.3.1 ([#1022](https://github.com/defenseunicorns/uds-core/issues/1022)) ([42d5bda](https://github.com/defenseunicorns/uds-core/commit/42d5bdaec68515a2e204bef33b6b86acc962910e))
+* **deps:** update playwright to v1.49.1 ([#1103](https://github.com/defenseunicorns/uds-core/issues/1103)) ([658ad0d](https://github.com/defenseunicorns/uds-core/commit/658ad0d0f360855f8e187a192114c1999dd56dbc))
+* **deps:** update support-deps ([#1076](https://github.com/defenseunicorns/uds-core/issues/1076)) ([2fa010f](https://github.com/defenseunicorns/uds-core/commit/2fa010fc58fdb95280c431511e92315ccd9a86ff))
+* **deps:** update support-deps ([#1100](https://github.com/defenseunicorns/uds-core/issues/1100)) ([777387b](https://github.com/defenseunicorns/uds-core/commit/777387b01be6307d5f888ba0ce7c0ae078f52e42))
+* **deps:** update velero kubectl to v1.31.4 ([#1108](https://github.com/defenseunicorns/uds-core/issues/1108)) ([bd8ee0e](https://github.com/defenseunicorns/uds-core/commit/bd8ee0e8312e73961b06ad76ebc86ef471f8790d))
+* **docs:** replace promtail reference with vector in prerequisites ([#1098](https://github.com/defenseunicorns/uds-core/issues/1098)) ([33cee59](https://github.com/defenseunicorns/uds-core/commit/33cee59c8a007252a3e6964c8fe341934033443a))
+* remove loki peerauth exception ([#1106](https://github.com/defenseunicorns/uds-core/issues/1106)) ([f87a96d](https://github.com/defenseunicorns/uds-core/commit/f87a96dfb785352e3b610eb4cec91d7e591bd55b))
+
 ## [0.32.1](https://github.com/defenseunicorns/uds-core/compare/v0.32.0...v0.32.1) (2024-12-05)
 
 

@@ -6,7 +6,7 @@ metadata:
   name: uds-core-eks-nightly
   description: A UDS bundle for deploying EKS and UDS Core
   # x-release-please-start-version
-  version: "0.32.1"
+  version: "0.33.0"
   # x-release-please-end
 
 packages:
@@ -17,7 +17,7 @@ packages:
   - name: core
     path: ../../../build
     # x-release-please-start-version
-    ref: 0.32.1
+    ref: 0.33.0
     # x-release-please-end
     optionalComponents:
       - metrics-server
