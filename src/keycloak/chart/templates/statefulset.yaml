@@ -29,6 +29,7 @@ spec:
        {{- if not .Values.devMode }}
       annotations:
         postgres-hash: {{ include (print $.Template.BasePath "/secret-postgresql.yaml") . | sha256sum }}
+        kc-realm-hash: {{ include (print $.Template.BasePath "/secret-kc-realm.yaml") . | sha256sum }}
       {{- end }}
     spec:
       securityContext:
