@@ -49,6 +49,8 @@ jobs:
 
       - name: Create Checkpoint Package
         run: |
+          id
+          cat /etc/passwd
           uds run -f tasks/create.yaml checkpoint-dev-package --no-progress
 
       - name: Test Checkpoint Package
