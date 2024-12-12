@@ -70,3 +70,8 @@ jobs:
         uses: ./.github/actions/save-logs
         with:
           suffix: -${{ matrix.architecture }}
+
+      - uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
+        with:
+          name: checkpoint-${{ matrix.architecture }}
+          path: build/zarf-package-k3d-core-slim-dev-${{ matrix.architecture }}-0.32.1.tar.zst
