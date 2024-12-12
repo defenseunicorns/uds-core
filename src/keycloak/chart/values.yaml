@@ -27,6 +27,9 @@ realm: uds
 # UDS Identity Config Realm Environment Variables. More info here: https://github.com/defenseunicorns/uds-identity-config/blob/main/docs/CUSTOMIZE.md#templated-realm-values
 realmInitEnv:
   GOOGLE_IDP_ENABLED: false
+  USERNAME_PASSWORD_AUTH_ENABLED: true
+  X509_AUTH_ENABLED: true
+  SOCIAL_AUTH_ENABLED: true
   # GOOGLE_IDP_ID: ""
   # GOOGLE_IDP_SIGNING_CERT: ""
   # GOOGLE_IDP_NAME_ID_FORMAT: ""
@@ -38,15 +41,7 @@ realmInitEnv:
   # OTP_ENABLED: true
   # TERMS_AND_CONDITIONS_ENABLED: true
   # X509_OCSP_FAIL_OPEN: true
-  # ENABLE_SOCIAL_LOGIN: false
-  # ENABLE_X509_LOGIN: false
-  # ENABLE_USERNAME_PASSWORD_AUTH: false
-  # ENABLE_REGISTER_BUTTON: false
-  # ENABLE_REGISTRATION_FIELDS: false
-  # deny_username_password: "DISABLED"
-  # reset_credential_flow: "REQUIRED"
-  # registration_form: "REQUIRED"
-  # otp_enabled: true
+  # DISABLE_REGISTRATION_FIELDS: false
 
 # Generates an initial password for first admin user - only use if install is headless
 # (i.e. cannot hit keycloak UI with `zarf connect keycloak`), password should be changed after initial login
