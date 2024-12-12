@@ -14,7 +14,6 @@ Multiple Mission Heroes have expressed a desire to deploy UDS Core with Istio in
 
 ## Decision
 
-The change that we're proposing or have agreed to implement.
 We will produce a new functional layer for UDS Core that includes Istio in Ambient mode. This layer will be called UDS Core Base Ambient. The existing UDS Core Base will continue to include Istio in Sidecar Injection mode. The UDS Core Base Ambient layer will be a drop-in replacement for UDS Core Base, with the only difference being the Istio configuration.
 We will also update the UDS Operator to support deploying UDS Core with Istio in Ambient mode. The same operator will be used for both UDS Core Base and UDS Core Base Ambient deployments.
 We will update the rest of the UDS Core components to support being deployed on top of either UDS Core Base or UDS Core Base Ambient. This change should have no effect on the components themselves, as they should be able to run on top of either Istio configuration.
@@ -41,14 +40,14 @@ We will publish the UDS Core Standard Ambient bundle in addition to the existing
 
 - UDS Core Base Ambient will be implemented as a separate Zarf package
 - UDS Operator will be updated to determine Istio mode and deploy the appropriate configuration
-- UDS Core components will be updated to support both Istio configurations
+- UDS Core components will be updated to support both Istio configurations if required
 - Testing will be expanded to cover both Istio configurations as well as upgrading existing UDS Core Base to UDS Core Base Ambient
 - Documentation will be updated to include information on deploying UDS Core with Istio in Ambient mode
 
 ## Alternatives Considered
 
-- Creating a single UDS Core Base package that can be deployed with either Istio configuration
-- Migrating UDS Core Base to Ambient mode and deprecating Sidecar Injection mode
+- Creating a single UDS Core Base package that can be deployed with either Istio configuration. Rejected due to the complexity of maintaining a single package that can be deployed with two different Istio configurations. Also Istio Ambient requires CNI configurations depending on the environment that are not relevant for Sidecar Injection leading to a confusing configuration.
+- Migrating UDS Core Base to Ambient mode and deprecating Sidecar Injection mode. Rejected due to the impact on existing deployments and uncertainty around the impact on FIPS compliance. This can be revisited in the future once Istio Ambient has had more time to "bake".
 
 ## Open Questions
 
