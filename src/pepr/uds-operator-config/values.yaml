@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 operator:
+  # Domain configuration (admin defaults to `admin.UDS_DOMAIN`)
   UDS_DOMAIN: "###ZARF_VAR_DOMAIN###"
+  UDS_ADMIN_DOMAIN: "###ZARF_VAR_ADMIN_DOMAIN###"
   UDS_CA_CERT: "###ZARF_VAR_CA_CERT###"
   UDS_ALLOW_ALL_NS_EXEMPTIONS: "###ZARF_VAR_ALLOW_ALL_NS_EXEMPTIONS###"
   UDS_LOG_LEVEL: "###ZARF_VAR_UDS_LOG_LEVEL###"

@@ -1,7 +1,7 @@
 # Copyright 2024 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
-{{- $domain := .Values.domain }}
+{{- $domain := tpl .Values.domain . }}
 {{- if .Values.tls }}
 apiVersion: networking.istio.io/v1beta1
 kind: Gateway

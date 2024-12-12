@@ -17,9 +17,13 @@ extraSecretMounts:
     mountPath: /etc/secrets/auth_generic_oauth
     readOnly: true
 
+# These values are used to template the grafana.ini server value below
+domain: "###ZARF_VAR_DOMAIN###"
+adminDomain: "###ZARF_VAR_ADMIN_DOMAIN###"
+
 grafana.ini:
   server:
-    root_url: https://grafana.admin.###ZARF_VAR_DOMAIN###
+    root_url: https://grafana.{{ $.Values.adminDomain | default (printf "admin.%s" $.Values.domain) }}
   # Disable telemetry that doesn't function in the airgap
   analytics:
     reporting_enabled: false

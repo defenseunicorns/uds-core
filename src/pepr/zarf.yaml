@@ -4,13 +4,16 @@
 kind: ZarfPackageConfig
 metadata:
   name: pepr-uds-core
-  description: 'Pepr Module: A collection of capabilities for UDS Core'
+  description: "Pepr Module: A collection of capabilities for UDS Core"
   url: https://github.com/defenseunicorns/pepr
 
 variables:
   - name: DOMAIN
     description: "Cluster domain"
     default: "uds.dev"
+
+  - name: ADMIN_DOMAIN
+    description: "Domain for admin services, defaults to `admin.DOMAIN`"
 
   - name: CA_CERT
     description: "Base64 encoded CA cert that signed the domain wildcard certs used for Istio ingress"

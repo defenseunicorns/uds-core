@@ -22,7 +22,11 @@ spec:
     - name: Neuvector
       clientId: uds-core-admin-neuvector
       redirectUris:
+        {{- if .Values.adminDomain }}
+        - "https://neuvector.{{ .Values.adminDomain }}/openId_auth"
+        {{- else }}
         - "https://neuvector.admin.{{ .Values.domain }}/openId_auth"
+        {{- end }}
       secretName: neuvector-secret
       secretTemplate:
         userinitcfg.yaml: |-
