@@ -130,6 +130,9 @@
     "domain": {
       "type": "string"
     },
+    "adminDomain": {
+      "type": "string"
+    },
     "enableServiceLinks": {
       "type": "boolean"
     },
