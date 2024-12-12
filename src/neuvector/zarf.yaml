@@ -68,4 +68,4 @@ components:
       - cgr.dev/du-uds-defenseunicorns/neuvector-enforcer-fips:5.4.1
       - cgr.dev/du-uds-defenseunicorns/neuvector-controller-fips:5.4.1
       - docker.io/neuvector/scanner:latest
-      - cgr.dev/du-uds-defenseunicorns/neuvector-updater-fips:8.11.0-dev
+      - cgr.dev/du-uds-defenseunicorns/neuvector-updater-fips:8.11.1-dev
