@@ -24,7 +24,7 @@ variable "dns_prefix" {
 }
 
 variable "sku_tier" {
-  description = "(Optional) The SKU Tier that should be used for this Kubernetes Cluster. Possible values are Free and Paid (which includes the Uptime SLA). Defaults to Free."
+  description = "(Optional) The SKU Tier that should be used for this Kubernetes Cluster. Possible values are Free and Standard (which includes the Uptime SLA), and Premium. Defaults to Free."
   default     = "Standard"
   type        = string
 
