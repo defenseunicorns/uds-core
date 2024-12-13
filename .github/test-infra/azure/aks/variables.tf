@@ -29,7 +29,7 @@ variable "sku_tier" {
   type        = string
 
   validation {
-    condition     = contains(["Free", "Paid"], var.sku_tier)
+    condition     = contains(["Free", "Standard", "Premium"], var.sku_tier)
     error_message = "The sku tier is invalid."
   }
 }
