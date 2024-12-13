@@ -41,10 +41,10 @@ realmInitEnv:
 
 # UDS Identity Config Authentication Flows Environment Variables. More info here: https://github.com/defenseunicorns/uds-identity-config/blob/main/docs/CUSTOMIZE.md#templated-realm-values
 realmAuthFlows:
-  USERNAME_PASSWORD_AUTH_ENABLED: false
+  USERNAME_PASSWORD_AUTH_ENABLED: true
   X509_AUTH_ENABLED: true
   SOCIAL_AUTH_ENABLED: true
-  OTP_ENABLED: false
+  OTP_ENABLED: true
 
 # Generates an initial password for first admin user - only use if install is headless
 # (i.e. cannot hit keycloak UI with `zarf connect keycloak`), password should be changed after initial login
