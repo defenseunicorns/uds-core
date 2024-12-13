@@ -107,6 +107,9 @@ export async function updateKubeNodesNetworkPolicies() {
     if (netPol.spec.egress) {
       netPol.spec.egress[0] = netPol.spec.egress[0] || { to: [] };
       netPol.spec.egress[0].to = newNodes;
+    } else if (netPol.spec.ingress) {
+      netPol.spec.ingress[0] = netPol.spec.ingress[0] || { from: [] };
+      netPol.spec.ingress[0].from = newNodes;
     }
 
     if (netPol.metadata) {
