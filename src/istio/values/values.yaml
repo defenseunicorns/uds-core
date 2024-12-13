@@ -18,3 +18,4 @@ meshConfig:
 pilot:
   env:
     PILOT_JWT_ENABLE_REMOTE_JWKS: hybrid
+    ENABLE_NATIVE_SIDECARS: true
