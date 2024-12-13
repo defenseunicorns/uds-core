@@ -292,6 +292,23 @@
         }
       }
     },
+    "realmAuthFlows": {
+      "type": "object",
+      "properties": {
+        "USERNAME_PASSWORD_AUTH_ENABLED": {
+          "type": "boolean"
+        },
+        "X509_AUTH_ENABLED": {
+          "type": "boolean"
+        },
+        "SOCIAL_AUTH_ENABLED": {
+          "type": "boolean"
+        },
+        "OTP_ENABLED": {
+          "type": "boolean"
+        }
+      }
+    },
     "resources": {
       "type": "object",
       "properties": {
