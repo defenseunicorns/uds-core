@@ -68,6 +68,7 @@ spec:
             - "--spi-theme-cache-themes=false"
             - "--spi-theme-cache-templates=false"
             {{- else }}
+            - "import --file=/opt/keycloak/data/import/custom-master-realm.json --override=true --optimized"
             - "start"
             # # Needed for nginx provider
             # - "--auto-build"
@@ -223,6 +224,8 @@ spec:
             - name: conf
               mountPath: /opt/keycloak/conf
               readOnly: true
+            - name: custom-master-realm
+              mountPath: /opt/keycloak/data/import/
       enableServiceLinks: {{ .Values.enableServiceLinks }}
       restartPolicy: {{ .Values.restartPolicy }}
       {{- with .Values.nodeSelector }}
@@ -276,3 +279,6 @@ spec:
           {{- else }}
           emptyDir: {}
           {{- end }}
+        - name: custom-master-realm
+          configMap:
+            name: custom-master-realm
