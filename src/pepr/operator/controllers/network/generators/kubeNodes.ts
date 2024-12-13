@@ -22,6 +22,15 @@ const nodeSet = new Set<string>();
  * and populating the nodeSet with their Internal IPs.
  */
 export async function initAllNodesTarget() {
+  // if a list of CIDRs is defined, use those
+  if (UDSConfig.kubeNodeCidrs) {
+    const nodeCidrs = UDSConfig.kubeNodeCidrs.split(",");
+    for (const nodeCidr of nodeCidrs) {
+      nodeSet.add(nodeCidr);
+    }
+    return;
+  }
+
   try {
     const nodes = await retryWithDelay(fetchKubernetesNodes, log);
     nodeSet.clear();
@@ -125,9 +134,9 @@ export async function updateKubeNodesNetworkPolicies() {
       await K8s(kind.NetworkPolicy).Apply(netPol, { force: true });
     } catch (err) {
       let message = err.data?.message || "Unknown error while applying KubeNode network policies";
-      if (UDSConfig.kubeApiCidr) {
+      if (UDSConfig.kubeNodeCidrs) {
         message +=
-          ", ensure that the KUBEAPI_CIDR override configured for the operator is correct.";
+          ", ensure that the KUBENODE_CIDRS override configured for the operator is correct.";
       }
       throw new Error(message);
     }
@@ -140,9 +149,21 @@ export async function updateKubeNodesNetworkPolicies() {
 function buildNodePolicies(nodeIPs: string[]): V1NetworkPolicyPeer[] {
   return nodeIPs.map(ip => ({
     ipBlock: {
-      cidr: `${ip}/32`,
+      cidr: format32cidr(ip),
     },
   }));
+}
+
+/**
+ * Utility function conditionally format an IP as a 32-bit CIDR.
+ */
+function format32cidr(ip: string): string {
+  // Check if the input already appears to have CIDR notation
+  if (ip.includes("/")) {
+    return ip;
+  }
+  // If not, append "/32"
+  return `${ip}/32`;
 }
 
 /**

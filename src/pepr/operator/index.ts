@@ -94,7 +94,11 @@ When(UDSPackage)
   });
 
 // Watch for changes to the API server EndpointSlice and update the API server CIDR
-When(a.Node).IsCreatedOrUpdated().Reconcile(updateKubeNodesFromCreateUpdate);
+if (!UDSConfig.kubeNodeCidrs) {
+  When(a.Node).IsCreatedOrUpdated().Reconcile(updateKubeNodesFromCreateUpdate);
+}
 
 // Watch for changes to the API server EndpointSlice and update the API server CIDR
-When(a.Node).IsDeleted().Reconcile(updateKubeNodesFromDelete);
+if (!UDSConfig.kubeNodeCidrs) {
+  When(a.Node).IsDeleted().Reconcile(updateKubeNodesFromDelete);
+}

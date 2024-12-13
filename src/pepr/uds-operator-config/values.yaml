@@ -10,6 +10,7 @@ operator:
   UDS_LOG_LEVEL: "###ZARF_VAR_UDS_LOG_LEVEL###"
   AUTHSERVICE_REDIS_URI: "###ZARF_VAR_AUTHSERVICE_REDIS_URI###"
   KUBEAPI_CIDR: ""
+  KUBENODE_CIDRS: ""
   # Allow Pepr watch to be configurable to react to dropped connections faster
   PEPR_LAST_SEEN_LIMIT_SECONDS: "300"
   # Allow Pepr to re-list resources more frequently to avoid missing resources
