@@ -40,7 +40,6 @@ spec:
                 end
               end
 ---
-# Source: istio/templates/envoyfilter.yaml
 apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:

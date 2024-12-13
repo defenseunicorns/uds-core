@@ -12,6 +12,10 @@ export class Package extends GenericKind {
 
 export interface Spec {
   /**
+   * Whether or not to enable Istio Ambient mode, defaults to non-ambient (injected)
+   */
+  istioAmbient?: boolean;
+  /**
    * Create Service or Pod Monitor configurations
    */
   monitor?: Monitor[];
