@@ -8,6 +8,7 @@ metadata:
   name: neuvector
   namespace: {{ .Release.Namespace }}
 spec:
+  istioAmbient: true
   # This is disabled pending further discussion/upstream changes to handle metrics with SSO setup
   # monitor:
   #   - selector:

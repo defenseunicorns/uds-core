@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 {{- $tls := .Values.tls }}
-{{ if and $tls.cert (not $tls.credentialName) }}
+{{ if $tls.cert }}
 apiVersion: v1
 kind: Secret
 metadata:
