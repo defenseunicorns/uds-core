@@ -93,6 +93,11 @@ export function generate(namespace: string, policy: Allow): kind.NetworkPolicy {
     };
   }
 
+  // Add the generated policy label (used to track KubeAPI policies)
+  if (policy.remoteGenerated) {
+    generated.metadata!.labels!["uds/generated"] = policy.remoteGenerated;
+  }
+
   // Create the network policy peers
   const peers: V1NetworkPolicyPeer[] = getPeers(policy);
 

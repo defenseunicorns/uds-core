@@ -8,7 +8,7 @@ import { fetch, K8s, kind } from "pepr";
 import { Component, setupLogger } from "../../../logger";
 import { Store } from "../../common";
 import { Sso, UDSPackage } from "../../crd";
-import { getOwnerRef, purgeOrphans, sanitizeResourceName } from "../utils";
+import { getOwnerRef, purgeOrphans, retryWithDelay, sanitizeResourceName } from "../utils";
 import { Client, clientKeys } from "./types";
 
 let apiURL =
@@ -173,7 +173,9 @@ async function syncClient(
 
   // Write the new token to the store
   try {
-    await Store.setItemAndWait(name, client.registrationAccessToken!);
+    await retryWithDelay(async function setStoreToken() {
+      return Store.setItemAndWait(name, client.registrationAccessToken!);
+    }, log);
   } catch (err) {
     throw Error(
       `Failed to set token in store for client '${client.clientId}', package ` +

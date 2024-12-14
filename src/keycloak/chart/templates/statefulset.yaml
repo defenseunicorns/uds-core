@@ -28,7 +28,8 @@ spec:
         {{- end }}
        {{- if not .Values.devMode }}
       annotations:
-        postgres-hash: {{ include (print $.Template.BasePath "/secret-postgresql.yaml") . | sha256sum }}        
+        postgres-hash: {{ include (print $.Template.BasePath "/secret-postgresql.yaml") . | sha256sum }}
+        kc-realm-hash: {{ include (print $.Template.BasePath "/secret-kc-realm.yaml") . | sha256sum }}
       {{- end }}
     spec:
       securityContext:
@@ -52,13 +53,16 @@ spec:
               mountPath: /opt/keycloak/themes
             - name: conf
               mountPath: /opt/keycloak/conf
+          envFrom:
+            - secretRef:
+                name: {{ include "keycloak.fullname" . }}-realm-env
       containers:
         - name: keycloak
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           securityContext:
           {{- toYaml .Values.securityContext | nindent 12 }}
-          command: 
+          command:
             - "/opt/keycloak/bin/kc.sh"
           args:
             {{- if .Values.devMode }}
@@ -128,14 +132,13 @@ spec:
             - name: KC_CACHE_STACK
               value: kubernetes
             - name: KC_SPI_STICKY_SESSION_ENCODER_INFINISPAN_SHOULD_ATTACH_ROUTE
-              value: "false"               
+              value: "false"
             # java opts for jgroups required for infinispan distributed cache when using the kubernetes stack.
             # https://www.keycloak.org/server/caching
             - name: JAVA_OPTS_APPEND
               value: -Djgroups.dns.query={{ include "keycloak.fullname" . }}-headless.keycloak.svc.cluster.local
-   
             # Postgres database configuration
-            - name: KC_DB 
+            - name: KC_DB
               value: postgres
             - name: KC_DB_URL_HOST
               valueFrom:

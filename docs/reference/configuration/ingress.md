@@ -99,3 +99,32 @@ variables:
 :::note
 If you are using Private PKI or self-signed certificates for your tenant certificates it is necessary to additionally configure `UDS_CA_CERT` with additional [trusted certificate authorities](https://uds.defenseunicorns.com/reference/configuration/uds-operator/#trusted-certificate-authority).
 :::
+
+#### Configuring TLS from a Secret
+
+As an alternative to specifying individual certificate, key, and CA certificate values, you can set `tls.credentialName` in the gateway configuration. This field specifies the name of a Kubernetes secret containing the TLS certificate, key, and optional CA certificate for the gateway. When `tls.credentialName` is set, it will override `tls.cert`, `tls.key`, and `tls.cacert` values, simplifying the configuration by allowing a direct reference to a Kubernetes TLS secret. This secret should be placed in the same namespace as the gateway resource. See [Gateway ServerTLSSettings](https://istio.io/latest/docs/reference/config/networking/gateway/#ServerTLSSettings) for all required and available secret keys.
+
+This approach is useful if you already have a Kubernetes secret that holds the necessary TLS data and want to use it directly.
+
+```yaml
+kind: UDSBundle
+metadata:
+  name: core-with-credentialName
+  description: A UDS example bundle for packaging UDS core with a custom TLS credentialName
+  version: "0.0.1"
+
+packages:
+  - name: core
+    repository: oci://ghcr.io/defenseunicorns/packages/uds/core
+    ref: 0.23.0-upstream
+    overrides:
+      istio-admin-gateway:
+        uds-istio-config:
+          values:
+            - path: tls.credentialName
+              value: admin-gateway-tls-secret # Reference to the Kubernetes secret for the admin gateway's TLS certificate
+      istio-tenant-gateway:
+        uds-istio-config:
+          values:
+            - path: tls.credentialName
+              value: tenant-gateway-tls-secret # Reference to the Kubernetes secret for the tenant gateway's TLS certificate
