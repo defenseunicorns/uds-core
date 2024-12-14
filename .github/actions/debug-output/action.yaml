@@ -4,12 +4,6 @@
 name: debug-output
 description: "Print out basic debug info for a k8s cluster"
 
-inputs:
-  suffix:
-    description: 'Suffix to append to the debug log'
-    required: false
-    default: ''
-
 runs:
   using: composite
   steps:
@@ -31,22 +25,3 @@ runs:
         uds zarf tools kubectl describe nodes | tee /tmp/debug-k-describe-node.log || true
         echo "::endgroup::"
       shell: bash
-    - name: Pepr Debug
-      run: |
-        echo "::group::Pepr Pod Status and Metrics"
-        uds zarf tools kubectl top pods -n pepr-system
-        uds zarf tools kubectl get pods -n pepr-system
-        echo "::endgroup::"
-        echo "::group::Fetch pepr logs"
-        uds zarf tools kubectl logs -n pepr-system -l app=pepr-uds-core > /tmp/pepr-logs.log
-        uds zarf tools kubectl logs -n pepr-system -l app=pepr-uds-core-watcher > /tmp/pepr-watcher-logs.log
-        echo "::endgroup::"
-        echo "::group::Describe Failed Packages"
-        FAILED_PACKAGES=($(uds zarf tools kubectl get package -A -o jsonpath="{range .items[?(@.status.phase!='Ready')]}{.metadata.name}{','}{.metadata.namespace}{'\n'}{end}")); for PACKAGE in "${FAILED_PACKAGES[@]}"; do PACKAGE_NAME=$(echo "$PACKAGE" | awk -F "," '{print $1}'); PACKAGE_NAMESPACE=$(echo "$PACKAGE" | awk -F "," '{print $2}'); uds zarf tools kubectl describe "$PACKAGE_NAME" -n "$PACKAGE_NAMESPACE"; echo; done
-        echo "::endgroup::"
-      shell: bash
-    - uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
-      with:
-        name: pepr-debug-logs${{ inputs.suffix }}
-        path: |
-          /tmp/pepr-*.log

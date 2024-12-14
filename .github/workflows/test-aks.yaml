@@ -5,7 +5,7 @@ name: AKS Nightly Test
 
 on:
   schedule:
-    - cron: '0 6 * * *' # Runs at midnight Mountain every day
+    - cron: "0 6 * * *" # Runs at midnight Mountain every day
   pull_request:
     paths:
       - tasks/iac.yaml
@@ -86,8 +86,13 @@ jobs:
       - name: Debug Output
         if: ${{ always() }}
         uses: ./.github/actions/debug-output
+
+      - name: Save logs
+        if: always()
+        uses: ./.github/actions/save-logs
         with:
-          suffix: -${{ matrix.flavor }}
+          suffix: -aks-${{ matrix.flavor }}
+          distro: "aks"
 
       - name: Remove UDS Core
         if: always()
