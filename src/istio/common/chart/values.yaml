@@ -10,4 +10,5 @@ classificationBanner:
   # - grafana.admin.uds.dev
 
 domain: "###ZARF_VAR_DOMAIN###"
-adminDomain: '{{ "###ZARF_VAR_ADMIN_DOMAIN###" | default "admin.###ZARF_VAR_DOMAIN###" }}'
+# Note: This does not handle an empty admin domain zarf var
+adminDomain: "###ZARF_VAR_ADMIN_DOMAIN###"
