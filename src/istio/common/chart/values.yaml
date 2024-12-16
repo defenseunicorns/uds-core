@@ -1,7 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial
 classificationBanner:
   enabled: true
-  # Really should all be conditionals in the filter?
-  classification: "UNCLASSIFIED"
-  textColor: "white"
-  backgroundColor: "#007a33"
+  text: "UNCLASSIFIED"
+  addFooter: true

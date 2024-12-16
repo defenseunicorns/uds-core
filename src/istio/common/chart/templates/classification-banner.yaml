@@ -59,24 +59,36 @@ spec:
         typed_config:
           "@type": "type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua"
           inlineCode: |-
-            local classification = "{{ .Values.classificationBanner.classification }}"
-            local textColor = "{{ .Values.classificationBanner.textColor }}"
-            local backgroundColor = "{{ .Values.classificationBanner.backgroundColor }}"
-            local style = "background-color: " .. backgroundColor .. "; color: " .. textColor .. "; height: 16px; line-height: 16px; border: 1px solid transparent; border-radius: 0; position: fixed; left: 0; width: 100vw; text-align: center; margin: 0; z-index: 10000;"
+            local classColorMap = {
+              UNCLASSIFIED = { backgroundColor = "#007a33", textColor = "#ffffff" },
+              CUI = { backgroundColor = "#502b85", textColor = "#ffffff" },
+              CONFIDENTIAL = { backgroundColor = "#0033a0", textColor = "#ffffff" },
+              SECRET = { backgroundColor = "#c8102e", textColor = "#ffffff" },
+              ["TOP SECRET"] = { backgroundColor = "#ff8c00", textColor = "#000000" },
+              ["TOP SECRET//SCI"] = { backgroundColor = "#fce83a", textColor = "#000000" },
+              UNKNOWN = { backgroundColor = "#000000", textColor = "#ffffff" },
+            }
+
+            local classification = "{{ .Values.classificationBanner.text }}"
+            local colors = classColorMap[classification] or classColorMap["UNKNOWN"]
+
+            local backgroundColor = colors.backgroundColor
+            local textColor = colors.textColor
+            local style = "background-color: " .. backgroundColor .. "; color: " .. textColor .. "; height: 24px; line-height: 24px; border: 1px solid transparent; border-radius: 0; position: fixed; left: 0; width: 100vw; text-align: center; margin: 0; z-index: 10000;"
 
             local header = "<div id=\"classification-banner-top\" style=\"" .. style .. " top: 0;\">" .. classification .. "</div>"
             local footer = "<div id=\"classification-banner-bottom\" style=\"" .. style .. " bottom: 0;\">" .. classification .. "</div>"
 
             local bodyPaddingScript = [[
             <script>
-              document.addEventListener('DOMContentLoaded', function () {
+              window.addEventListener('DOMContentLoaded', function () {
                 var headerBanner = document.getElementById('classification-banner-top');
                 var footerBanner = document.getElementById('classification-banner-bottom');
                 if (headerBanner) {
-                  document.body.style.paddingTop = '16px';
+                  document.body.style.paddingTop = '24px';
                 }
                 if (footerBanner) {
-                  var footerHeight = '16px';
+                  var footerHeight = '24px';
                   document.body.style.paddingBottom = footerHeight;
                   var existingFooter = document.querySelector('footer');
                   if (existingFooter) {
@@ -94,7 +106,11 @@ spec:
                 local body_text = tostring(body)
 
                 -- Insert banners into <body>
+                {{- if .Values.classificationBanner.addFooter }}
                 body_text = body_text:gsub("<body([^>]*)>", "<body%1>" .. header .. footer)
+                {{- else }}
+                body_text = body_text:gsub("<body([^>]*)>", "<body%1>" .. header)
+                {{- end }}
 
                 -- Insert script into <head>
                 body_text = body_text:gsub("<head>", "<head>" .. bodyPaddingScript)
