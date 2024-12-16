@@ -33,6 +33,7 @@ UDS Core establishes a secure baseline for cloud-native systems and ships with c
 
 ### Prerequisites
 
+- A running container environment for K3D to interact with for dev & test environments
 - [K3D](https://k3d.io/) for dev & test environments or any [CNCF Certified Kubernetes Cluster](https://www.cncf.io/training/certification/software-conformance/#logos) for production environments.
 <!-- renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver -->
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli?tab=readme-ov-file#install) v0.8.1 or later
@@ -112,3 +113,8 @@ uds run test-single-layer --set LAYER=identity-authorization
 ```
 
 Note you can specify the `--set FLAVOR=registry1` flag to test using Iron Bank images instead of the upstream images.
+
+## UDS Core Architecture Overview
+![UDS Core Architecture Diagram](https://github.com/defenseunicorns/uds-core/blob/main/docs/.images/uds-core-arch-overview.svg?raw=true)
+
+Diagrams are located in `/docs/.images`. See the [diagram README](./docs/.images/README.md) for an explanation and help customizing.
