@@ -12,6 +12,9 @@ variables:
     description: "Cluster domain"
     default: "uds.dev"
 
+  - name: ADMIN_DOMAIN
+    description: "Domain for admin services, defaults to `admin.DOMAIN`"
+
 components:
   - name: neuvector
     description: "Deploy Neuvector"

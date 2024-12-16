@@ -92,6 +92,8 @@ spec:
             # Common configuration
             - name: UDS_DOMAIN
               value: "{{ .Values.domain }}"
+            - name: UDS_ADMIN_DOMAIN
+              value: "{{ tpl .Values.adminDomain . }}"
 
             # Enable health and metrics endpoints
             - name: KC_HEALTH_ENABLED
