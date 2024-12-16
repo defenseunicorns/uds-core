@@ -1,7 +1,7 @@
 # Copyright 2024 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
-{{- if .Values.classificationBanner.enabled }}
+{{- if .Values.classificationBanner.enabledHosts }}
 apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
@@ -101,7 +101,7 @@ spec:
             -- List of enabled hosts as a table for quick lookup, injected via Helm
             local enabled_hosts = {
               {{- range .Values.classificationBanner.enabledHosts }}
-              ["{{ tpl . $.Values }}"] = true,
+              ["{{ tpl . $ }}"] = true,
               {{- end }}
             }
 
