@@ -99,15 +99,22 @@ export async function retryWithDelay<T>(
       if (attempt >= retries) {
         throw err; // Exceeded retries, rethrow the error.
       }
-      let error = `${JSON.stringify(err)}`;
-      // Error responses from network calls (i.e. K8s().Get() will be this shape)
-      if (err.data?.message) {
-        error = err.data.message;
-        // Other error types have a message
-      } else if (err.message) {
-        error = err.message;
+      // We need to account for cases where we are receiving a rejected promise with undefined error
+      let error = "Unknown Error";
+      if (err) {
+        error = `${JSON.stringify(err)}`;
+        // Error responses from network calls (i.e. K8s().Get() will be this shape)
+        if (err.data?.message) {
+          error = err.data.message;
+          // Other error types have a message
+        } else if (err.message) {
+          error = err.message;
+        }
       }
-      log.warn(`Attempt ${attempt} of ${fn.name} failed, retrying in ${delayMs}ms.`, { error });
+      log.warn(
+        `Attempt ${attempt} of ${fn.name || "anonymous function"} failed, retrying in ${delayMs}ms.`,
+        { error },
+      );
       await new Promise(resolve => setTimeout(resolve, delayMs));
     }
   }

@@ -17,7 +17,7 @@ components:
         localPath: ../chart
       - name: grafana
         url: https://grafana.github.io/helm-charts/
-        version: 8.6.1
+        version: 8.7.0
         namespace: grafana
         valuesFiles:
           - ../values/values.yaml
