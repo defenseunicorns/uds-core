@@ -23,6 +23,12 @@ components:
     import:
       path: ../../src/prometheus-stack
 
+  # Pepr the world
+  - name: pepr-uds-core
+    required: true
+    import:
+      path: ../../src/pepr
+      
   # Istio
   - name: istio-controlplane
     required: true
@@ -44,8 +50,3 @@ components:
     import:
       path: ../../src/istio
 
-  # Pepr the world
-  - name: pepr-uds-core
-    required: true
-    import:
-      path: ../../src/pepr
