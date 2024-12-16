@@ -3,3 +3,7 @@ classificationBanner:
   enabled: true
   text: "UNCLASSIFIED"
   addFooter: true
+  enabledHosts:
+    - keycloak.{{ "###ZARF_VAR_ADMIN_DOMAIN###" | default "admin.###ZARF_VAR_DOMAIN###" }}
+    - grafana.{{ "###ZARF_VAR_ADMIN_DOMAIN###" | default "admin.###ZARF_VAR_DOMAIN###" }}
+    - sso.###ZARF_VAR_DOMAIN###

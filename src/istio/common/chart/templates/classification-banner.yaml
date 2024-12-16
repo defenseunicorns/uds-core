@@ -59,6 +59,7 @@ spec:
         typed_config:
           "@type": "type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua"
           inlineCode: |-
+            -- Setup colors, text and banner div(s)
             local classColorMap = {
               UNCLASSIFIED = { backgroundColor = "#007a33", textColor = "#ffffff" },
               CUI = { backgroundColor = "#502b85", textColor = "#ffffff" },
@@ -68,17 +69,15 @@ spec:
               ["TOP SECRET//SCI"] = { backgroundColor = "#fce83a", textColor = "#000000" },
               UNKNOWN = { backgroundColor = "#000000", textColor = "#ffffff" },
             }
-
             local classification = "{{ .Values.classificationBanner.text }}"
             local colors = classColorMap[classification] or classColorMap["UNKNOWN"]
-
             local backgroundColor = colors.backgroundColor
             local textColor = colors.textColor
             local style = "background-color: " .. backgroundColor .. "; color: " .. textColor .. "; height: 24px; line-height: 24px; border: 1px solid transparent; border-radius: 0; position: fixed; left: 0; width: 100vw; text-align: center; margin: 0; z-index: 10000;"
-
             local header = "<div id=\"classification-banner-top\" style=\"" .. style .. " top: 0;\">" .. classification .. "</div>"
             local footer = "<div id=\"classification-banner-bottom\" style=\"" .. style .. " bottom: 0;\">" .. classification .. "</div>"
 
+            -- Add script to manage padding around the body of the response
             local bodyPaddingScript = [[
             <script>
               window.addEventListener('DOMContentLoaded', function () {
@@ -99,9 +98,25 @@ spec:
             </script>
             ]]
 
+            -- List of enabled hosts as a table for quick lookup, injected via Helm
+            local enabled_hosts = {
+              {{- range .Values.classificationBanner.enabledHosts }}
+              ["{{ tpl . $.Values }}"] = true,
+              {{- end }}
+            }
+
+            -- Handle request: Extract `:authority` and store it as metadata
+            function envoy_on_request(request_handle)
+              local host = request_handle:headers():get(":authority")
+              request_handle:streamInfo():dynamicMetadata():set("envoy.lua", "host", tostring(host))
+            end
+
+            -- Inject the banner for any hosts where it is enabled
             function envoy_on_response(response_handle)
               local content_type = response_handle:headers():get("Content-Type") or ""
-              if string.find(content_type, "text/html") then
+              local host = response_handle:streamInfo():dynamicMetadata():get("envoy.lua")["host"]
+
+              if string.find(content_type, "text/html") and enabled_hosts[host] then
                 local body = response_handle:body():getBytes(0, response_handle:body():length())
                 local body_text = tostring(body)
 
