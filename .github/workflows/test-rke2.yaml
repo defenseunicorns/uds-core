@@ -1,12 +1,13 @@
 # Copyright 2024 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
-name: RKE2 Nightly Test
+name: RKE2 Test
 
 on:
   schedule:
-    - cron: '0 6 * * *' # Runs at midnight Mountain every day
+    - cron: '0 0 * * 0' # Every Sunday Midnight (UTC) / Saturday 5pm MT
   pull_request:
+    types: [milestoned, opened, reopened, synchronize]
     paths:
       - tasks/iac.yaml
       - .github/bundles/rke2/*
