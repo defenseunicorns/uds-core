@@ -8,10 +8,18 @@ resource "keycloak_authentication_flow" "cac_passkey_flow" {
   realm_id    = data.keycloak_realm.uds_realm.id 
 }
 
+resource "keycloak_authentication_subflow" "auth" {
+  realm_id          = data.keycloak_realm.uds_realm.id
+  alias             = "auth"
+  parent_flow_alias = keycloak_authentication_flow.cac_passkey_flow.alias
+  provider_id       = "basic-flow"
+  requirement       = "REQUIRED"
+}
+
 resource "keycloak_authentication_subflow" "authentication" {
   realm_id          = data.keycloak_realm.uds_realm.id
   alias             = "CAC and passkey"
-  parent_flow_alias = keycloak_authentication_flow.cac_passkey_flow.alias
+  parent_flow_alias = keycloak_authentication_subflow.auth.alias
   provider_id       = "basic-flow"
   requirement       = "ALTERNATIVE"
 
@@ -22,9 +30,20 @@ resource "keycloak_authentication_subflow" "authentication" {
 
 resource "keycloak_authentication_execution" "cookie" {
   realm_id          = data.keycloak_realm.uds_realm.id
-  parent_flow_alias = keycloak_authentication_flow.cac_passkey_flow.alias
+  parent_flow_alias = keycloak_authentication_subflow.auth.alias
   authenticator     = "auth-cookie"
   requirement       = "ALTERNATIVE"
+}
+
+resource "keycloak_authentication_execution" "group_authz" {
+  realm_id          = data.keycloak_realm.uds_realm.id
+  parent_flow_alias = keycloak_authentication_flow.cac_passkey_flow.alias
+  authenticator     = "uds-group-restriction"
+  requirement       = "REQUIRED"
+
+  depends_on = [
+    keycloak_authentication_subflow.auth
+  ]
 }
 
 resource "keycloak_authentication_execution" "dod_cac" {
@@ -65,11 +84,42 @@ resource "keycloak_authentication_execution" "passkey-second-factor" {
   ]
 }
 
+resource "keycloak_authentication_subflow" "form" {
+  realm_id          = data.keycloak_realm.uds_realm.id
+  alias             = "registration-only"
+  parent_flow_alias = keycloak_authentication_subflow.auth.alias
+  provider_id       = "basic-flow"
+  requirement       = "ALTERNATIVE"
+
+  depends_on = [
+    keycloak_authentication_execution.dod_cac
+  ]
+}
+
+resource "keycloak_authentication_execution" "username_form" {
+  realm_id     = data.keycloak_realm.uds_realm.id
+  authenticator     = "auth-username-password-form"
+  parent_flow_alias = keycloak_authentication_subflow.form.alias
+  requirement       = "REQUIRED"
+}
+
+resource "keycloak_authentication_execution" "deny_access" {
+  realm_id     = data.keycloak_realm.uds_realm.id
+  authenticator     = "deny-access-authenticator"
+  parent_flow_alias = keycloak_authentication_subflow.form.alias
+  requirement       = "REQUIRED"
+
+  depends_on = [
+    keycloak_authentication_execution.username_form
+  ]
+}
+
 resource "keycloak_required_action" "required_action" {
   realm_id = data.keycloak_realm.uds_realm.id
   alias    = "webauthn-register"
   enabled  = true
   name     = "Webauthn Register"
+  default_action = true
 }
 
 resource "keycloak_authentication_bindings" "browser_authentication_binding" {
