@@ -1,0 +1,161 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+{{- if .Values.classificationBanner.enabledHosts }}
+apiVersion: networking.istio.io/v1alpha3
+kind: EnvoyFilter
+metadata:
+  name: classification-banner
+  namespace: istio-system
+spec:
+  configPatches:
+  - applyTo: HTTP_FILTER
+    match:
+      context: GATEWAY
+      listener:
+        filterChain:
+          filter:
+            name: "envoy.filters.network.http_connection_manager"
+            subFilter:
+              name: "envoy.filters.http.router"
+    patch:
+      operation: INSERT_BEFORE
+      value:
+        name: envoy.filters.http.compressor
+        typed_config:
+          "@type": type.googleapis.com/envoy.extensions.filters.http.compressor.v3.Compressor
+          response_direction_config:
+            common_config:
+              min_content_length: 100
+              content_type:
+                - text/html
+            disable_on_etag_header: true
+          request_direction_config:
+            common_config:
+              enabled:
+                default_value: false
+                runtime_key: request_compressor_enabled
+          compressor_library:
+            name: text_optimized
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.compression.gzip.compressor.v3.Gzip
+              memory_level: 3
+              window_bits: 10
+              compression_level: BEST_COMPRESSION
+              compression_strategy: DEFAULT_STRATEGY
+  - applyTo: HTTP_FILTER
+    match:
+      context: GATEWAY
+      listener:
+        filterChain:
+          filter:
+            name: "envoy.filters.network.http_connection_manager"
+            subFilter:
+              name: "envoy.filters.http.router"
+    patch:
+      operation: INSERT_BEFORE
+      value: # Lua script configuration
+        name: envoy.lua
+        typed_config:
+          "@type": "type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua"
+          inlineCode: |-
+            -- Setup colors, text and banner div(s)
+            local classColorMap = {
+              UNCLASSIFIED = { backgroundColor = "#007a33", textColor = "#ffffff" },
+              CUI = { backgroundColor = "#502b85", textColor = "#ffffff" },
+              CONFIDENTIAL = { backgroundColor = "#0033a0", textColor = "#ffffff" },
+              SECRET = { backgroundColor = "#c8102e", textColor = "#ffffff" },
+              ["TOP SECRET"] = { backgroundColor = "#ff8c00", textColor = "#000000" },
+              ["TOP SECRET//SCI"] = { backgroundColor = "#fce83a", textColor = "#000000" },
+              UNKNOWN = { backgroundColor = "#000000", textColor = "#ffffff" },
+            }
+            local classification = "{{ .Values.classificationBanner.text }}"
+            local colors = classColorMap[classification] or classColorMap["UNKNOWN"]
+            local backgroundColor = colors.backgroundColor
+            local textColor = colors.textColor
+            local style = "background-color: " .. backgroundColor .. "; color: " .. textColor .. "; height: 24px; line-height: 24px; border: 1px solid transparent; border-radius: 0; position: fixed; left: 0; width: 100vw; text-align: center; margin: 0; z-index: 10000;"
+            local header = "<div id=\"classification-banner-top\" style=\"" .. style .. " top: 0;\">" .. classification .. "</div>"
+            local footer = "<div id=\"classification-banner-bottom\" style=\"" .. style .. " bottom: 0;\">" .. classification .. "</div>"
+
+            -- Add script to manage padding around the body of the response
+            local bodyPaddingScript = [[
+            <script>
+              window.addEventListener('DOMContentLoaded', function () {
+                var headerBanner = document.getElementById('classification-banner-top');
+                var footerBanner = document.getElementById('classification-banner-bottom');
+                if (headerBanner) {
+                  document.body.style.paddingTop = '24px';
+                }
+                if (footerBanner) {
+                  var footerHeight = '24px';
+                  document.body.style.paddingBottom = footerHeight;
+                  var existingFooter = document.querySelector('footer');
+                  if (existingFooter) {
+                    existingFooter.style.marginBottom = footerHeight;
+                  }
+                }
+              });
+            </script>
+            ]]
+
+            -- List of enabled hosts as a table for quick lookup, injected via Helm
+            local enabled_hosts = {
+              {{- range .Values.classificationBanner.enabledHosts }}
+              ["{{ tpl . $ }}"] = true,
+              {{- end }}
+            }
+
+            -- Handle request: Extract `:authority` and store it as metadata
+            function envoy_on_request(request_handle)
+              local host = request_handle:headers():get(":authority")
+              request_handle:streamInfo():dynamicMetadata():set("envoy.lua", "host", tostring(host))
+            end
+
+            -- Inject the banner for any hosts where it is enabled
+            function envoy_on_response(response_handle)
+              local content_type = response_handle:headers():get("Content-Type") or ""
+              local host = response_handle:streamInfo():dynamicMetadata():get("envoy.lua")["host"]
+
+              if string.find(content_type, "text/html") and enabled_hosts[host] then
+                local body = response_handle:body():getBytes(0, response_handle:body():length())
+                local body_text = tostring(body)
+
+                -- Insert banners into <body>
+                {{- if .Values.classificationBanner.addFooter }}
+                body_text = body_text:gsub("<body([^>]*)>", "<body%1>" .. header .. footer)
+                {{- else }}
+                body_text = body_text:gsub("<body([^>]*)>", "<body%1>" .. header)
+                {{- end }}
+
+                -- Insert script into <head>
+                body_text = body_text:gsub("<head>", "<head>" .. bodyPaddingScript)
+
+                response_handle:body():setBytes(body_text)
+              end
+            end
+  - applyTo: HTTP_FILTER
+    match:
+      context: GATEWAY
+      listener:
+        filterChain:
+          filter:
+            name: "envoy.filters.network.http_connection_manager"
+            subFilter:
+              name: "envoy.filters.http.router"
+    patch:
+      operation: INSERT_BEFORE
+      value: # Lua script configuration 
+        name: envoy.filters.http.decompressor
+        typed_config:
+          "@type": type.googleapis.com/envoy.extensions.filters.http.decompressor.v3.Decompressor
+          decompressor_library:
+            name: small
+            typed_config:
+              "@type": "type.googleapis.com/envoy.extensions.compression.gzip.decompressor.v3.Gzip"
+              chunk_size: 65536
+          request_direction_config:
+            common_config:
+              enabled:
+                default_value: false
+                runtime_key: request_decompressor_enabled
+{{- end }}

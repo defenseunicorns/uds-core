@@ -1,1 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial
+classificationBanner:
+  text: "UNKNOWN"
+  addFooter: true
+  # Hosts to enable the banner on
+  enabledHosts: []
+  # Examples (supports helm templating)
+  # - keycloak.{{ .Values.adminDomain }}
+  # - sso.{{ .Values.domain }}
+  # - grafana.admin.uds.dev
+
+domain: "###ZARF_VAR_DOMAIN###"
+# Note: This does not handle an empty admin domain zarf var
+adminDomain: "###ZARF_VAR_ADMIN_DOMAIN###"

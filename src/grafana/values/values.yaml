@@ -19,7 +19,7 @@ extraSecretMounts:
 
 grafana.ini:
   server:
-    root_url: https://grafana.admin.###ZARF_VAR_DOMAIN###
+    root_url: https://grafana.{{ "###ZARF_VAR_ADMIN_DOMAIN###" | default "admin.###ZARF_VAR_DOMAIN###" }}
   # Disable telemetry that doesn't function in the airgap
   analytics:
     reporting_enabled: false

@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 domain: "###ZARF_VAR_DOMAIN###"
+adminDomain: "###ZARF_VAR_ADMIN_DOMAIN###"
 
 # Stores Grafana's metadata, including dashboards, data sources, organizations, alerts, and other configurations. Required for HA mode.
 postgresql:
