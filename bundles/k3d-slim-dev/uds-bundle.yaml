@@ -6,7 +6,7 @@ metadata:
   name: k3d-core-slim-dev
   description: A UDS bundle for deploying Istio from UDS Core on a development cluster
   # x-release-please-start-version
-  version: "0.32.0"
+  version: "0.32.1"
   # x-release-please-end
 
 packages:
@@ -32,12 +32,12 @@ packages:
 
   - name: init
     repository: ghcr.io/zarf-dev/packages/init
-    ref: v0.43.1
+    ref: v0.45.0
 
   - name: core-base
     path: ../../build/
     # x-release-please-start-version
-    ref: 0.32.0
+    ref: 0.32.1
     # x-release-please-end
     overrides:
       pepr-uds-core:
@@ -51,6 +51,14 @@ packages:
               description: "Memory requests for the pepr admission pods"
               path: "admission.resources.requests.memory"
               default: "64Mi"
+            - name: PEPR_WATCHER_CPU_REQUEST
+              description: "CPU requests for the pepr watcher pod"
+              path: "watcher.resources.requests.cpu"
+              default: "100m"
+            - name: PEPR_ADMISSION_CPU_REQUEST
+              description: "CPU requests for the pepr admission pods"
+              path: "admission.resources.requests.cpu"
+              default: "100m"
       istio-admin-gateway:
         uds-istio-config:
           variables:
@@ -84,7 +92,7 @@ packages:
   - name: core-identity-authorization
     path: ../../build/
     # x-release-please-start-version
-    ref: 0.32.0
+    ref: 0.32.1
     # x-release-please-end
     overrides:
       keycloak:

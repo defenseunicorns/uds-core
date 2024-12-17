@@ -73,3 +73,52 @@ export async function purgeOrphans<T extends GenericClass>(
     }
   }
 }
+
+/**
+ * Lightweight retry helper with a delay between attempts.
+ *
+ * @param {() => Promise<T>} fn - The async function to retry.
+ * @param {Logger} log - Logger instance for logging debug messages.
+ * @param {number} retries - Number of retry attempts.
+ * @param {number} delayMs - Delay in milliseconds between attempts.
+ * @returns {Promise<T>} - The result of the function if successful.
+ * @throws {Error} - Throws an error after exhausting retries.
+ */
+export async function retryWithDelay<T>(
+  fn: () => Promise<T>,
+  log: Logger,
+  retries = 5,
+  delayMs = 2000,
+): Promise<T> {
+  let attempt = 0;
+  while (attempt < retries) {
+    try {
+      return await fn();
+    } catch (err) {
+      attempt++;
+      if (attempt >= retries) {
+        throw err; // Exceeded retries, rethrow the error.
+      }
+      // We need to account for cases where we are receiving a rejected promise with undefined error
+      let error = "Unknown Error";
+      if (err) {
+        error = `${JSON.stringify(err)}`;
+        // Error responses from network calls (i.e. K8s().Get() will be this shape)
+        if (err.data?.message) {
+          error = err.data.message;
+          // Other error types have a message
+        } else if (err.message) {
+          error = err.message;
+        }
+      }
+      log.warn(
+        `Attempt ${attempt} of ${fn.name || "anonymous function"} failed, retrying in ${delayMs}ms.`,
+        { error },
+      );
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+    }
+  }
+
+  // This line should never be reached, but TypeScript wants it for safety.
+  throw new Error("Retry loop exited unexpectedly without returning.");
+}

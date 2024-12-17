@@ -6,7 +6,7 @@ autoGenerateCert: true
 
 registry: cgr.dev
 # renovate: datasource=docker depName=cgr.dev/du-uds-defenseunicorns/neuvector-controller-fips versioning=docker
-tag: "5.4.0"
+tag: "5.4.1"
 manager:
   image:
     repository: du-uds-defenseunicorns/neuvector-manager
@@ -41,4 +41,4 @@ cve:
     image:
       repository: du-uds-defenseunicorns/neuvector-updater-fips
       # renovate: datasource=docker depName=cgr.dev/du-uds-defenseunicorns/neuvector-updater-fips versioning=docker
-      tag: 8.11.0-dev
+      tag: 8.11.1-dev

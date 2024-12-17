@@ -31,14 +31,19 @@ const log = setupLogger(Component.OPERATOR);
 
 // Pre-populate the API server CIDR since we are not persisting the EndpointSlice
 // Note ignore any errors since the watch will still be running hereafter
-void initAPIServerCIDR();
+if (process.env.PEPR_WATCH_MODE === "true" || process.env.PEPR_MODE === "dev") {
+  void initAPIServerCIDR();
+}
 
 // Watch for changes to the API server EndpointSlice and update the API server CIDR
-When(a.EndpointSlice)
-  .IsCreatedOrUpdated()
-  .InNamespace("default")
-  .WithName("kubernetes")
-  .Reconcile(updateAPIServerCIDRFromEndpointSlice);
+// Skip if a CIDR is defined in the UDS Config
+if (!UDSConfig.kubeApiCidr) {
+  When(a.EndpointSlice)
+    .IsCreatedOrUpdated()
+    .InNamespace("default")
+    .WithName("kubernetes")
+    .Reconcile(updateAPIServerCIDRFromEndpointSlice);
+}
 
 // Watch for changes to the API server Service and update the API server CIDR
 When(a.Service)

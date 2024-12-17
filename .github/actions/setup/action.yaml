@@ -29,19 +29,19 @@ runs:
     - name: Install k3d
       shell: bash
       # renovate: datasource=github-tags depName=k3d-io/k3d versioning=semver
-      run: curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | TAG=v5.7.4 bash
+      run: curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | TAG=v5.7.5 bash
 
     - name: Install UDS CLI
       uses: defenseunicorns/setup-uds@b987a32bac3baeb67bfb08f5e1544e2f9076ee8a # v1.0.0
       with:
         # renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
-        version: v0.19.0
+        version: v0.19.2
 
     - name: Install Lula
       uses: defenseunicorns/lula-action/setup@badad8c4b1570095f57e66ffd62664847698a3b9 # v0.0.1
       with:
         # renovate: datasource=github-tags depName=defenseunicorns/lula versioning=semver-coerced
-        version: v0.11.0
+        version: v0.13.0
 
     - name: Iron Bank Login
       if: ${{ inputs.registry1Username != '' }}

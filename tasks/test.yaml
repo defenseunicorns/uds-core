@@ -9,7 +9,7 @@ includes:
   - base-layer: ../packages/base/tasks.yaml
   - idam-layer: ../packages/identity-authorization/tasks.yaml
   - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/refs/tags/v0.13.1/tasks/setup.yaml
-  - compliance: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.3.0/tasks/compliance.yaml
+  - compliance: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.6.0/tasks/compliance.yaml
 
 tasks:
   - name: base
@@ -67,7 +67,7 @@ tasks:
         dir: test/playwright
         cmd: |
           # renovate: datasource=docker depName=mcr.microsoft.com/playwright versioning=docker
-          docker run --rm --ipc=host --net=host -e FULL_CORE="true" --mount type=bind,source="$(pwd)",target=/app mcr.microsoft.com/playwright:v1.49.0-noble sh -c " \
+          docker run --rm --ipc=host --net=host -e FULL_CORE="true" --mount type=bind,source="$(pwd)",target=/app mcr.microsoft.com/playwright:v1.49.1-noble sh -c " \
             cd app && \
             npm ci && \
             npx playwright test \

@@ -26,12 +26,11 @@ tasks:
       - description: "Create the dev cluster"
         task: setup:create-k3d-cluster
 
-      # Note: This currently is broken until https://github.com/zarf-dev/zarf/issues/2713 is resolved
-      # As a workaround you can edit the `src/istio/values/upstream-values.yaml` file to change ###ZARF_REGISTRY### to docker.io before running
+      # Note: the `registry-url` flag used here requires uds 0.19.2+
       - description: "Deploy the Istio source package with Zarf Dev"
-        cmd: "uds zarf dev deploy src/istio --flavor upstream --no-progress"
+        cmd: "uds zarf dev deploy src/istio --flavor upstream --registry-url docker.io --no-progress"
 
-      # Note, this abuses the --flavor flag to only install the CRDs from this package - the "crds-only" flavor is not an explicit flavor of the package
+      # Note: this abuses the --flavor flag to only install the CRDs from this package - the "crds-only" flavor is not an explicit flavor of the package
       - description: "Deploy the Prometheus-Stack source package with Zarf Dev to only install the CRDs"
         cmd: "uds zarf dev deploy src/prometheus-stack --flavor crds-only --no-progress"
 
@@ -40,7 +39,7 @@ tasks:
           echo "Next steps:"
           echo "  - To test & develop the Pepr module, run 'npx pepr dev' from a Javascript debug terminal"
           echo "  - Otherwise run 'npx pepr deploy' to deploy the Pepr module to the cluster"
-          echo "  - Additional source packages can be deployed with 'zarf dev deploy src/<package>'"
+          echo "  - Additional source packages can be deployed with 'zarf dev deploy src/<package> --flavor upstream'"
 
   - name: slim-dev
     actions:

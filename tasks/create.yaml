@@ -3,7 +3,7 @@
 
 
 includes:
-  - common: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.3.0/tasks/create.yaml
+  - common: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.6.0/tasks/create.yaml
 
 variables:
   - name: FLAVOR
@@ -11,7 +11,7 @@ variables:
 
   - name: REGISTRY1_PEPR_IMAGE
     # renovate: datasource=docker depName=registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller versioning=semver
-    default: registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller:v0.40.1
+    default: registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller:v0.42.0
 
   - name: LAYER
 
