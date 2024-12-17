@@ -6,12 +6,16 @@
 import { Component, setupLogger } from "./logger";
 
 let domain = process.env.UDS_DOMAIN;
+let adminDomain = process.env.UDS_ADMIN_DOMAIN;
 let caCert = process.env.UDS_CA_CERT;
 let authserviceRedisUri = process.env.AUTHSERVICE_REDIS_URI;
 
 // We need to handle `npx pepr <>` commands that will not template the env vars
 if (!domain || domain === "###ZARF_VAR_DOMAIN###") {
   domain = "uds.dev";
+}
+if (!adminDomain || adminDomain === "###ZARF_VAR_ADMIN_DOMAIN###") {
+  adminDomain = `admin.${domain}`;
 }
 if (!caCert || caCert === "###ZARF_VAR_CA_CERT###") {
   caCert = "";
@@ -21,8 +25,9 @@ if (!authserviceRedisUri || authserviceRedisUri === "###ZARF_VAR_AUTHSERVICE_RED
 }
 
 export const UDSConfig = {
-  // Ignore the UDS_DOMAIN if not deployed by Zarf
+  // Set the base domain (tenant) and admin domain
   domain,
+  adminDomain,
   // Base64 Encoded Trusted CA cert for Istio certificates (i.e. for `sso.domain`)
   caCert,
   // Allow UDS policy exemptions to be used in any namespace
