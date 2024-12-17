@@ -133,3 +133,7 @@ tasks:
   - name: lint-oscal
     actions:
       - task: lint:oscal
+
+  - name: realm-setup
+    actions:
+      - cmd: cd tofu && tofu init && tofu plan && tofu apply -auto-approve
