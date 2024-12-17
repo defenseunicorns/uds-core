@@ -15,7 +15,7 @@ runs:
       uses: defenseunicorns/setup-uds@b987a32bac3baeb67bfb08f5e1544e2f9076ee8a # v1.0.0
       with:
         # renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
-        version: v0.19.2
+        version: v0.20.0
     - name: Run Formatting Checks
       run: uds run lint-check --no-progress
       shell: bash
