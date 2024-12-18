@@ -191,6 +191,7 @@ export enum RemoteGenerated {
   CloudMetadata = "CloudMetadata",
   IntraNamespace = "IntraNamespace",
   KubeAPI = "KubeAPI",
+  KubeNodes = "KubeNodes",
 }
 
 export interface Expose {

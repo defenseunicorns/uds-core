@@ -56,6 +56,12 @@ spec:
           app.kubernetes.io/name: prometheus
         description: "Metrics Scraping"
 
+      - direction: Egress
+        remoteGenerated: KubeNodes
+        selector:
+          app.kubernetes.io/name: prometheus
+        description: "Metrics Scraping of Kube Nodes"
+
       - direction: Ingress
         remoteNamespace: grafana
         remoteSelector:
