@@ -12,7 +12,10 @@ metadata:
 spec:
   selector:
     matchExpressions:
-    - {key: istio-prometheus-ignore, operator: DoesNotExist}
+    - key: istio-prometheus-ignore
+      # Workaround for bug in Operator 0.79.1, https://github.com/prometheus-operator/prometheus-operator/issues/7214
+      # Once on 0.79.2+ this should be switched back to DoesNotExist
+      operator: '!'
   namespaceSelector:
     any: true
   jobLabel: envoy-stats
