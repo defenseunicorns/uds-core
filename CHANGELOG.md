@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.33.1](https://github.com/defenseunicorns/uds-core/compare/v0.33.0...v0.33.1) (2024-12-18)
+
+
+### Miscellaneous
+
+* **deps:** update support-deps ([#1131](https://github.com/defenseunicorns/uds-core/issues/1131)) ([4853969](https://github.com/defenseunicorns/uds-core/commit/48539691a9ed5863896b47e461fa1b32d50d4659))
+
 ## [0.33.0](https://github.com/defenseunicorns/uds-core/compare/v0.32.1...v0.33.0) (2024-12-17)
 
 
