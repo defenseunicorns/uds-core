@@ -160,6 +160,13 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
         message +=
           ", ensure that the KUBEAPI_CIDR override configured for the operator is correct.";
       }
+      if (
+        UDSConfig.kubeNodeCidrs &&
+        policy.metadata.labels["uds/generated"] === RemoteGenerated.KubeNodes
+      ) {
+        message +=
+          ", ensure that the KUBENODE_CIDRS override configured for the operator is correct.";
+      }
       throw new Error(message);
     }
   }
