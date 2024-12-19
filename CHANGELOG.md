@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.33.1](https://github.com/defenseunicorns/uds-core/compare/v0.33.0...v0.33.1) (2024-12-19)
+
+
+### Miscellaneous
+
+* **deps:** update k8s-sidecar to v1.28.4 ([#1132](https://github.com/defenseunicorns/uds-core/issues/1132)) ([b4f15ff](https://github.com/defenseunicorns/uds-core/commit/b4f15ff6e4931059c0724f5937c8b6e7b8c9b3ba))
+* **deps:** update loki ([#1134](https://github.com/defenseunicorns/uds-core/issues/1134)) ([56d0e39](https://github.com/defenseunicorns/uds-core/commit/56d0e3935f4f0e5a76998640c42df634f1840ab3))
+* **deps:** update prometheus-stack (prometheus 3.0.1, operator 0.79.2) ([#949](https://github.com/defenseunicorns/uds-core/issues/949)) ([5a35fc6](https://github.com/defenseunicorns/uds-core/commit/5a35fc61dc8a1f2b05913e387576358da728d614))
+* **deps:** update support-deps ([#1131](https://github.com/defenseunicorns/uds-core/issues/1131)) ([4853969](https://github.com/defenseunicorns/uds-core/commit/48539691a9ed5863896b47e461fa1b32d50d4659))
+
 ## [0.33.0](https://github.com/defenseunicorns/uds-core/compare/v0.32.1...v0.33.0) (2024-12-17)
 
 
