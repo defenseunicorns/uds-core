@@ -41,7 +41,7 @@ packages:
         uds-operator-config:
           values:
             - path: operator.KUBENODE_CIDRS
-              value: "172.28.0.2/32,172.28.0.3/32,172.28.0./32"
+              value: "172.28.0.2/32,172.28.0.3/32,172.28.0.4/32"
 ```
 
 ## Additional Network Allowances
