@@ -7,7 +7,7 @@ import { beforeEach, beforeAll, describe, expect, it, jest } from "@jest/globals
 
 import {
   initAllNodesTarget,
-  nodeCIDRs,
+  kubeNodes,
   updateKubeNodesFromCreateUpdate,
   updateKubeNodesFromDelete,
 } from "./kubeNodes";
@@ -97,7 +97,7 @@ describe("kubeNodes module", () => {
     it("should initialize nodeSet with internal IPs from nodes", async () => {
       mockK8sGetNodes.mockResolvedValue(mockNodeList);
       await initAllNodesTarget();
-      const cidrs = nodeCIDRs();
+      const cidrs = kubeNodes();
       // Should have two IPs from mockNodeList
       expect(cidrs).toHaveLength(2);
       expect(cidrs).toEqual(
@@ -113,7 +113,7 @@ describe("kubeNodes module", () => {
     it("should return anywhere if no nodes known", async () => {
       mockK8sGetNodes.mockResolvedValue({ items: [] });
       await initAllNodesTarget();
-      const cidrs = nodeCIDRs();
+      const cidrs = kubeNodes();
       // expect it to match "anywhere"
       expect(cidrs).toEqual([anywhere]);
     });
@@ -125,13 +125,13 @@ describe("kubeNodes module", () => {
       mockGetNetworkPolicies.mockResolvedValue(mockNetworkPolicyList);
       await initAllNodesTarget(); // start empty
       await updateKubeNodesFromCreateUpdate(mockNodeList.items[0]);
-      let cidrs = nodeCIDRs();
+      let cidrs = kubeNodes();
       expect(cidrs).toHaveLength(1);
       expect(cidrs[0].ipBlock?.cidr).toBe("10.0.0.1/32");
       expect(mockApply).toHaveBeenCalled();
 
       await updateKubeNodesFromCreateUpdate(mockNodeList.items[1]);
-      cidrs = nodeCIDRs();
+      cidrs = kubeNodes();
       expect(cidrs).toHaveLength(2);
       expect(cidrs[1].ipBlock?.cidr).toBe("10.0.0.2/32");
       expect(mockApply).toHaveBeenCalled();
@@ -148,15 +148,15 @@ describe("kubeNodes module", () => {
       mockK8sGetNodes.mockResolvedValueOnce({ items: [] });
       await initAllNodesTarget(); // start empty
       await updateKubeNodesFromCreateUpdate(notReadyNode);
-      const cidrs = nodeCIDRs();
+      const cidrs = kubeNodes();
       expect(cidrs).toEqual([anywhere]);
       expect(mockApply).toHaveBeenCalled(); // Still called to update polices even if empty
     });
 
-    it("should remove a node that's no longer ready", async () => {
+    it("should not remove a node that's no longer ready", async () => {
       mockK8sGetNodes.mockResolvedValue(mockNodeList);
       await initAllNodesTarget();
-      let cidrs = nodeCIDRs();
+      let cidrs = kubeNodes();
       // Should have two IPs from mockNodeList
       expect(cidrs).toHaveLength(2);
       expect(cidrs).toEqual(
@@ -174,9 +174,14 @@ describe("kubeNodes module", () => {
         },
       };
       await updateKubeNodesFromCreateUpdate(notReadyNode);
-      cidrs = nodeCIDRs();
-      expect(cidrs).toHaveLength(1);
-      expect(cidrs).toEqual(expect.arrayContaining([{ ipBlock: { cidr: "10.0.0.2/32" } }]));
+      cidrs = kubeNodes();
+      expect(cidrs).toHaveLength(2);
+      expect(cidrs).toEqual(
+        expect.arrayContaining([
+          { ipBlock: { cidr: "10.0.0.1/32" } },
+          { ipBlock: { cidr: "10.0.0.2/32" } },
+        ]),
+      );
       expect(mockApply).toHaveBeenCalled(); // Still called to update polices even if empty
     });
   });
@@ -185,11 +190,11 @@ describe("kubeNodes module", () => {
     it("should remove the node IP from nodeSet", async () => {
       mockK8sGetNodes.mockResolvedValueOnce(mockNodeList);
       await initAllNodesTarget();
-      const cidrsBeforeDelete = nodeCIDRs();
+      const cidrsBeforeDelete = kubeNodes();
       expect(cidrsBeforeDelete).toHaveLength(2);
 
       await updateKubeNodesFromDelete(mockNodeList.items[0]);
-      const cidrsAfterDelete = nodeCIDRs();
+      const cidrsAfterDelete = kubeNodes();
       expect(cidrsAfterDelete).toHaveLength(1);
       expect(cidrsAfterDelete[0].ipBlock?.cidr).toBe("10.0.0.2/32");
       expect(mockApply).toHaveBeenCalled();

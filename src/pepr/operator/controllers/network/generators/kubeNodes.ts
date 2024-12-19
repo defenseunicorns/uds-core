@@ -48,7 +48,7 @@ export async function initAllNodesTarget() {
  * Returns the egress CIDRs of all known nodes as network policy peers.
  * If none are known, defaults to 0.0.0.0/0 and logs a warning.
  */
-export function nodeCIDRs(): V1NetworkPolicyPeer[] {
+export function kubeNodes(): V1NetworkPolicyPeer[] {
   const policies = buildNodePolicies([...nodeSet]);
   if (policies.length > 0) return policies;
 
@@ -66,12 +66,12 @@ export async function updateKubeNodesFromCreateUpdate(node: kind.Node) {
   );
 
   const ip = getNodeInternalIP(node);
+  // in order to be added to the node set, the node must be ready. Additional
+  // status conditions will not cause the node to be removed however, e.g. disck
+  // pressure, memory pressure, etc. Nodes are only removed from the node set
+  // when they are deleted, and done so in the updateKubeNodesFromDelete function.
   if (isReady) {
     if (ip) nodeSet.add(ip);
-  } else {
-    // it's possible that the node is not ready, but it has an IP, so we remove
-    // it for now
-    if (ip) nodeSet.delete(ip);
   }
 
   await updateKubeNodesNetworkPolicies();

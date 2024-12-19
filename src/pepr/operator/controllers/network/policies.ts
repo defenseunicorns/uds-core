@@ -162,7 +162,7 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
       }
       if (
         UDSConfig.kubeNodeCidrs &&
-        policy.metadata.labels["uds/generated"] === RemoteGenerated.KubeAPI
+        policy.metadata.labels["uds/generated"] === RemoteGenerated.KubeNodes
       ) {
         message +=
           ", ensure that the KUBENODE_CIDRS override configured for the operator is correct.";

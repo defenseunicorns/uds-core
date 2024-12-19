@@ -11,7 +11,7 @@ import { anywhere, anywhereInCluster } from "./generators/anywhere";
 import { cloudMetadata } from "./generators/cloudMetadata";
 import { intraNamespace } from "./generators/intraNamespace";
 import { kubeAPI } from "./generators/kubeAPI";
-import { nodeCIDRs } from "./generators/kubeNodes";
+import { kubeNodes } from "./generators/kubeNodes";
 import { remoteCidr } from "./generators/remoteCidr";
 
 function isWildcardNamespace(namespace: string) {
@@ -28,7 +28,7 @@ function getPeers(policy: Allow): V1NetworkPolicyPeer[] {
         break;
 
       case RemoteGenerated.KubeNodes:
-        peers = nodeCIDRs();
+        peers = kubeNodes();
         break;
 
       case RemoteGenerated.CloudMetadata:
