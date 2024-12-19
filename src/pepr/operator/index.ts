@@ -42,7 +42,11 @@ if (process.env.PEPR_WATCH_MODE === "true" || process.env.PEPR_MODE === "dev") {
   void initAPIServerCIDR();
 }
 
-void initAllNodesTarget();
+// Pre-populate the Node CIDR list since we are not persisting it
+// Note ignore any errors since the watch will still be running hereafter
+if (process.env.PEPR_WATCH_MODE === "true" || process.env.PEPR_MODE === "dev") {
+  void initAllNodesTarget();
+}
 
 // Watch for changes to the API server EndpointSlice and update the API server CIDR
 // Skip if a CIDR is defined in the UDS Config
