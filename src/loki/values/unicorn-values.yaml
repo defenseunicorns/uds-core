@@ -5,7 +5,7 @@ loki:
   image:
     registry: cgr.dev
     repository: du-uds-defenseunicorns/loki
-    tag: 3.3.1
+    tag: 3.3.2
 gateway:
   image:
     registry: cgr.dev
