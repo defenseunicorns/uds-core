@@ -31,6 +31,10 @@ When(PrometheusServiceMonitor)
   .IsCreatedOrUpdated()
   .Mutate(async sm => {
     if (sm.Raw.spec === undefined || sm.Raw.spec.scrapeClass != undefined) {
+      // Support the legacy (Prometheus 2.x fallback) until upstream applications properly handle protocol
+      if (sm.Raw.spec && !sm.Raw.spec.fallbackScrapeProtocol) {
+        sm.Raw.spec.fallbackScrapeProtocol = FallbackScrapeProtocol.PrometheusText004;
+      }
       return;
     }
 
@@ -79,6 +83,10 @@ When(PrometheusPodMonitor)
   .IsCreatedOrUpdated()
   .Mutate(async pm => {
     if (pm.Raw.spec === undefined || pm.Raw.spec.scrapeClass != undefined) {
+      // Support the legacy (Prometheus 2.x fallback) until upstream applications properly handle protocol
+      if (pm.Raw.spec && !pm.Raw.spec.fallbackScrapeProtocol) {
+        pm.Raw.spec.fallbackScrapeProtocol = FallbackScrapeProtocol.PrometheusText004;
+      }
       return;
     }
 
