@@ -32,19 +32,32 @@ tasks:
             name: app.kubernetes.io/name=prometheus-node-exporter
             namespace: monitoring
             condition: Ready
-  # Below task can be used to generate CRD types, but is commented out pending resolution of https://github.com/defenseunicorns/kubernetes-fluent-client/issues/374
-  # - name: gen-crds
-  #   actions:
-  #     - description: Generate servicemonitor types
-  #       cmd: "npx kubernetes-fluent-client crd https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.77.1/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml src/pepr/operator/crd/generated/prometheus"
-  #     - description: Generate podmonitor types
-  #       cmd: "npx kubernetes-fluent-client crd https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.77.1/example/prometheus-operator-crd/monitoring.coreos.com_podmonitors.yaml src/pepr/operator/crd/generated/prometheus"
-  #     - description: Pepr Format
-  #       cmd: "npx pepr format"
+
+  - name: gen-crds
+    actions:
+      - description: Generate servicemonitor types
+        cmd: "npx kubernetes-fluent-client crd https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.79.2/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml src/pepr/operator/crd/generated/prometheus"
+      - description: Generate podmonitor types
+        cmd: "npx kubernetes-fluent-client crd https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.79.2/example/prometheus-operator-crd/monitoring.coreos.com_podmonitors.yaml src/pepr/operator/crd/generated/prometheus"
+      - description: "Add license headers to generated CRD files"
+        shell:
+          darwin: bash
+          linux: bash
+        cmd: |
+          # check for addlicense bin
+          if [ -x "$HOME/go/bin/addlicense" ]; then
+            echo "addlicense installed in $HOME/go/bin"
+          else
+            echo "Error: addlicense is not installed in $HOME/go/bin" >&2
+            exit 1
+          fi
+          $HOME/go/bin/addlicense -l "AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial" -s=only -v -c "Defense Unicorns" src/pepr/operator/crd/generated
+      - description: Pepr Format
+        cmd: "npx pepr format"
 
   - name: e2e-test
     actions:
       - description: "Run Prometheus-Stack E2E tests"
         cmd: |
-            npm ci && npx jest --testPathPattern prometheus*
+          npm ci && npx jest --testPathPattern prometheus*
         dir: test/jest

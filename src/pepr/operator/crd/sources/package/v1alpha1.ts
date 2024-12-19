@@ -251,6 +251,19 @@ const monitor = {
         enum: ["PodMonitor", "ServiceMonitor"],
         type: "string",
       },
+      fallbackScrapeProtocol: {
+        description:
+          "The protocol for Prometheus to use if a scrape returns a blank, unparsable, or otherwise invalid Content-Type",
+        // Enum copied from upstream Prometheus supported values
+        enum: [
+          "OpenMetricsText0.0.1",
+          "OpenMetricsText1.0.0",
+          "PrometheusProto",
+          "PrometheusText0.0.4",
+          "PrometheusText1.0.0",
+        ],
+        type: "string",
+      },
       authorization: AuthorizationSchema,
     },
   },
