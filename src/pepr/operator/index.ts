@@ -93,12 +93,12 @@ When(UDSPackage)
     UDSConfig.isIdentityDeployed = false;
   });
 
-// Watch for changes to the API server EndpointSlice and update the API server CIDR
+// Watch for changes to the Nodes and update the Node CIDR list
 if (!UDSConfig.kubeNodeCidrs) {
   When(a.Node).IsCreatedOrUpdated().Reconcile(updateKubeNodesFromCreateUpdate);
 }
 
-// Watch for changes to the API server EndpointSlice and update the API server CIDR
+// Watch for Node deletions and update the Node CIDR list
 if (!UDSConfig.kubeNodeCidrs) {
   When(a.Node).IsDeleted().Reconcile(updateKubeNodesFromDelete);
 }
