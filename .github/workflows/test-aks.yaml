@@ -48,6 +48,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
+      - name: Check renovate readiness
+        if: github.actor == 'renovate[bot]' # Only call for Renovate PRs
+        uses: ./.github/actions/renovate-readiness
+
       - name: Azure login
         uses: azure/login@a65d910e8af852a8061c627c456678983e180302 # v2
         with:

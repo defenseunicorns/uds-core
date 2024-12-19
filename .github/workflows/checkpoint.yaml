@@ -35,6 +35,10 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
+      - name: Check renovate readiness
+        if: github.actor == 'renovate[bot]' # Only call for Renovate PRs
+        uses: ./.github/actions/renovate-readiness
+
       - name: Environment setup
         uses: ./.github/actions/setup
         with:

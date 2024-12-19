@@ -64,7 +64,7 @@ jobs:
 
       - name: Check renovate readiness
         if: github.actor == 'renovate[bot]' # Only call for Renovate PRs
-        uses: ./.github/actions/renovate-check
+        uses: ./.github/actions/renovate-readiness
 
       # Uses a custom action to filter paths for source packages.
       - name: Check src paths
