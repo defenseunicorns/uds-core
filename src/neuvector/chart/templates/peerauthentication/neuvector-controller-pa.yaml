@@ -12,7 +12,7 @@ spec:
     matchLabels:
       app: neuvector-controller-pod
   mtls:
-    mode: STRICT
+    mode: PERMISSIVE
   portLevelMtls:
     "18300":
       mode: PERMISSIVE

@@ -80,7 +80,10 @@ test("validate system health", async ({ page }) => {
 test("validate local login is blocked", async ({ page }) => {
   await test.step("check local login", async () => {
     await page.goto('/#/login');
-    await page.locator('.mat-checkbox-inner-container').click();
+    const termsCheckbox = await page.locator('.mat-checkbox-inner-container');
+    if (await termsCheckbox.isVisible()) {
+      await termsCheckbox.click();
+    }
     await page.locator('#Email1').fill('admin');
     await page.locator('#password1').fill('admin');
     await page.getByRole('button', { name: 'Login', exact: true }).click();

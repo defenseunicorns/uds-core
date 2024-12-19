@@ -6,13 +6,14 @@
 import { K8s, kind } from "pepr";
 
 import { Component, setupLogger } from "../../../logger";
-import { UDSPackage } from "../../crd";
+import { KubernetesGateway, UDSPackage } from "../../crd";
 
 // configure subproject logger
 const log = setupLogger(Component.OPERATOR_ISTIO);
 
 const INJECTION_LABEL = "istio-injection";
 const AMBIENT_LABEL = "istio.io/dataplane-mode";
+const WAYPOINT_LABEL = "istio.io/use-waypoint";
 const originalStateAnnotation = "uds.dev/original-istio-state";
 
 enum IstioState {
@@ -56,6 +57,7 @@ function needsKill(originalIstioState: IstioState, desiredIstioState: IstioState
  * @param pkg
  */
 export async function enableIstio(pkg: UDSPackage) {
+  log.info(`Enabling Istio for package`);
   if (!pkg.metadata?.namespace || !pkg.metadata.name) {
     throw new Error(`Invalid Package definition, missing namespace or name`);
   }
@@ -79,6 +81,10 @@ export async function enableIstio(pkg: UDSPackage) {
 
     labels[AMBIENT_LABEL] = desiredIstioState === IstioState.Ambient ? "ambient" : "none";
     labels[INJECTION_LABEL] = desiredIstioState === IstioState.Ambient ? "disabled" : "enabled";
+    if (desiredIstioState === IstioState.Ambient) {
+      labels[WAYPOINT_LABEL] = "waypoint";
+      await createWaypoint(pkg.metadata.namespace);
+    }
 
     // Apply the updated Namespace
     log.debug(`Updating namespace ${pkg.metadata.namespace} with istio labels`);
@@ -211,4 +217,33 @@ async function killPods(ns: string, desiredIstioState: string) {
       await K8s(kind.Pod).Delete(pod);
     }
   }
+}
+
+/*
+* Create the Waypoint Gateway for ambient mode
+*
+* @param ns
+*/
+async function createWaypoint(ns: string) {
+  log.info(`Creating Waypoint Gateway`);
+  const gateway: KubernetesGateway = {
+    apiVersion: "gateway.networking.k8s.io/v1",
+    kind: "Gateway",
+    metadata: {
+      name: "waypoint",
+      namespace: ns,
+    },
+    spec: {
+      gatewayClassName: "istio-waypoint",
+      listeners: [
+        {
+          name: "mesh",
+          port: 15008,
+          protocol: "HBONE",
+        }
+      ]
+    }
+  };
+  await K8s(KubernetesGateway).Apply(gateway, { force: true });
+  log.info(`Waypoint Gateway created`);
 }

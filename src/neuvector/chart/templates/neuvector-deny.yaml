@@ -9,9 +9,10 @@ metadata:
   namespace: {{ .Release.Namespace }}
 spec:
   action: DENY
-  selector:
-    matchLabels:
-      app: neuvector-manager-pod
+  targetRefs:
+  - name: waypoint
+    kind: Gateway
+    group: gateway.networking.k8s.io
   rules:
   - to:
     - operation:

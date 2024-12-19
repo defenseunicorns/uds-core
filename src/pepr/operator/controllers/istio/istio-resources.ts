@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { K8s } from "pepr";
+import { K8s, kind } from "pepr";
 
 import { Component, setupLogger } from "../../../logger";
 import { IstioServiceEntry, IstioVirtualService, UDSPackage } from "../../crd";
@@ -60,6 +60,22 @@ export async function istioResources(pkg: UDSPackage, namespace: string) {
     await K8s(IstioServiceEntry).Apply(sePayload, { force: true });
 
     serviceEntryNames.set(sePayload.metadata!.name!, true);
+
+    // If in ambient mode then label the service with istio.io/ingress-use-waypoint: "true"
+    if (pkg.spec?.istioAmbient) {
+      await K8s(kind.Service).Apply(
+        {
+          metadata: {
+            namespace,
+            labels: {
+              "istio.io/ingress-use-waypoint": "true",
+            },
+            name: expose.service,
+          },
+        },
+        { force: true },
+      )
+    }
   }
 
   await purgeOrphans(generation, namespace, pkgName, IstioVirtualService, log);

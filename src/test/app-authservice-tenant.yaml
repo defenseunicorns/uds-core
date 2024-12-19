@@ -12,6 +12,7 @@ metadata:
   name: httpbin-other
   namespace: authservice-test-app
 spec:
+  istioAmbient: true
   sso:
     - name: Demo SSO
       clientId: uds-core-httpbin

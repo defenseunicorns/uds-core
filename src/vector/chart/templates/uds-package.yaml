@@ -7,6 +7,7 @@ metadata:
   name: vector
   namespace: {{ .Release.Namespace }}
 spec:
+  istioAmbient: true
   network:
     allow:
       - direction: Ingress

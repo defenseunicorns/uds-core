@@ -9,7 +9,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
 spec:
   mtls:
-    mode: STRICT
+    mode: PERMISSIVE 
   selector:
     matchLabels:
       app.kubernetes.io/name: metrics-server
