@@ -137,22 +137,6 @@ describe("kubeNodes module", () => {
       expect(mockApply).toHaveBeenCalled();
     });
 
-    it("should not add a node IP if node not ready", async () => {
-      const notReadyNode = {
-        metadata: { name: "node3" },
-        status: {
-          addresses: [{ type: "InternalIP", address: "10.0.0.3" }],
-          conditions: [{ type: "Ready", status: "False" }],
-        },
-      };
-      mockK8sGetNodes.mockResolvedValueOnce({ items: [] });
-      await initAllNodesTarget(); // start empty
-      await updateKubeNodesFromCreateUpdate(notReadyNode);
-      const cidrs = kubeNodes();
-      expect(cidrs).toEqual([anywhere]);
-      expect(mockApply).toHaveBeenCalled(); // Still called to update polices even if empty
-    });
-
     it("should not remove a node that's no longer ready", async () => {
       mockK8sGetNodes.mockResolvedValue(mockNodeList);
       await initAllNodesTarget();
@@ -182,7 +166,38 @@ describe("kubeNodes module", () => {
           { ipBlock: { cidr: "10.0.0.2/32" } },
         ]),
       );
-      expect(mockApply).toHaveBeenCalled(); // Still called to update polices even if empty
+    });
+
+    it("should not apply netpol policy changes if a node is already included", async () => {
+      // setup 1 node in the set and expect 1 application to a policy
+      mockK8sGetNodes.mockResolvedValueOnce({ items: [] });
+      mockGetNetworkPolicies.mockResolvedValue(mockNetworkPolicyList);
+      await initAllNodesTarget(); // start empty
+      // add a node even if it's not ready
+      const initialNode = {
+        metadata: { name: "node1" },
+        status: {
+          addresses: [{ type: "InternalIP", address: "10.0.0.9" }],
+          conditions: [{ type: "Ready", status: "False" }],
+        },
+      };
+      await updateKubeNodesFromCreateUpdate(initialNode);
+      let cidrs = kubeNodes();
+      expect(cidrs).toHaveLength(1);
+      expect(cidrs[0].ipBlock?.cidr).toBe("10.0.0.9/32");
+      expect(mockApply).toHaveBeenCalled();
+
+      // clear out the apply from the setup
+      mockApply.mockClear();
+      // change initialNode to set the status to ready
+      initialNode.status.conditions[0].status = "True";
+      await updateKubeNodesFromCreateUpdate(initialNode);
+      cidrs = kubeNodes();
+      expect(cidrs).toHaveLength(1);
+      expect(cidrs[0].ipBlock?.cidr).toBe("10.0.0.9/32");
+
+      // the apply should not have been called
+      expect(mockApply).not.toHaveBeenCalled();
     });
   });
 

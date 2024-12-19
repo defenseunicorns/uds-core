@@ -4,8 +4,9 @@
  */
 
 import { KubernetesListObject } from "@kubernetes/client-node";
-import { V1NetworkPolicyPeer, V1NodeCondition, V1NodeAddress } from "@kubernetes/client-node";
-import { K8s, kind } from "pepr";
+import { V1NetworkPolicyPeer, V1NodeAddress } from "@kubernetes/client-node";
+import { K8s, kind, R } from "pepr";
+
 import { Component, setupLogger } from "../../../../logger";
 import { RemoteGenerated } from "../../../crd";
 import { anywhere } from "./anywhere";
@@ -61,18 +62,8 @@ export function kubeNodes(): V1NetworkPolicyPeer[] {
  * rebuild the policies, and update the NetworkPolicies.
  */
 export async function updateKubeNodesFromCreateUpdate(node: kind.Node) {
-  const isReady = node.status?.conditions?.some(
-    (condition: V1NodeCondition) => condition.type === "Ready" && condition.status === "True",
-  );
-
   const ip = getNodeInternalIP(node);
-  // in order to be added to the node set, the node must be ready. Additional
-  // status conditions will not cause the node to be removed however, e.g. disck
-  // pressure, memory pressure, etc. Nodes are only removed from the node set
-  // when they are deleted, and done so in the updateKubeNodesFromDelete function.
-  if (isReady) {
-    if (ip) nodeSet.add(ip);
-  }
+  if (ip) nodeSet.add(ip);
 
   await updateKubeNodesNetworkPolicies();
 }
@@ -113,32 +104,44 @@ export async function updateKubeNodesNetworkPolicies() {
       continue;
     }
 
+    let updateRequired = false;
     if (netPol.spec.egress) {
       netPol.spec.egress[0] = netPol.spec.egress[0] || { to: [] };
-      netPol.spec.egress[0].to = newNodes;
+      const oldNodes = netPol.spec.egress[0].to;
+      if (!R.equals(oldNodes, newNodes)) {
+        updateRequired = true;
+        netPol.spec.egress[0].to = newNodes;
+      }
     } else if (netPol.spec.ingress) {
       netPol.spec.ingress[0] = netPol.spec.ingress[0] || { from: [] };
-      netPol.spec.ingress[0].from = newNodes;
-    }
-
-    if (netPol.metadata) {
-      // Remove managed fields to prevent server-side apply errors
-      netPol.metadata.managedFields = undefined;
-    }
-
-    log.debug(
-      `Updating KubeNodes NetworkPolicy ${netPol.metadata?.namespace}/${netPol.metadata?.name} with new CIDRs.`,
-    );
-
-    try {
-      await K8s(kind.NetworkPolicy).Apply(netPol, { force: true });
-    } catch (err) {
-      let message = err.data?.message || "Unknown error while applying KubeNode network policies";
-      if (UDSConfig.kubeNodeCidrs) {
-        message +=
-          ", ensure that the KUBENODE_CIDRS override configured for the operator is correct.";
+      const oldNodes = netPol.spec.ingress[0].from;
+      if (!R.equals(oldNodes, newNodes)) {
+        updateRequired = true;
+        netPol.spec.ingress[0].from = newNodes;
       }
-      throw new Error(message);
+    }
+
+    // If the policy required a change, apply the new policy
+    if (updateRequired) {
+      if (netPol.metadata) {
+        // Remove managed fields to prevent server-side apply errors
+        netPol.metadata.managedFields = undefined;
+      }
+
+      log.debug(
+        `Updating KubeNodes NetworkPolicy ${netPol.metadata?.namespace}/${netPol.metadata?.name} with new CIDRs.`,
+      );
+
+      try {
+        await K8s(kind.NetworkPolicy).Apply(netPol, { force: true });
+      } catch (err) {
+        let message = err.data?.message || "Unknown error while applying KubeNode network policies";
+        if (UDSConfig.kubeNodeCidrs) {
+          message +=
+            ", ensure that the KUBENODE_CIDRS override configured for the operator is correct.";
+        }
+        throw new Error(message);
+      }
     }
   }
 }
