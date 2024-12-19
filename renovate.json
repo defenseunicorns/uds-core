@@ -12,6 +12,7 @@
   "helm-values": {
     "ignorePaths": ["src/neuvector/values"]
   },
+  "draftPR": true,
   "packageRules": [
     {
       "matchFileNames": ["src/authservice/**"],

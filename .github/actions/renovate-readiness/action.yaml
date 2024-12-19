@@ -1,0 +1,21 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+name: renovate-readiness
+description: "Check if Renovate PRs are ready for testing"
+
+runs:
+  using: composite
+  steps:
+    # This is current a stub for future logic that would auto-detect readiness
+    # In lieu of that, we require an engineer to review changes and manually switch a renovate PR out of draft mode
+    - name: Check if PR is in draft
+      run: |
+        echo "Checking if this PR is in draft..."
+        if [[ "${{ github.event.pull_request.draft }}" == "true" ]]; then
+          echo "This PR is still in draft. Failing job."
+          exit 1
+        else
+          echo "PR is not in draft. Continuing..."
+        fi
+      shell: bash
