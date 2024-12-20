@@ -21,7 +21,7 @@ In this section, we will configure Application Registrations for each Keycloak r
 1. Click "New registration". 
 1. Input a name for the application. 
 1. Under "Supported Account Types", select "Accounts in this organizational directory (<Your tenant name> only - Single tenant)". 
-1. Under "Redirect URI", select "Web" from the drop down menu and then input the following as the URL: `https://keycloak.admin.<YOUR_DOMAIN>/realms/master/broker/azure-saml/endpoint`. 
+1. Under "Redirect URI", select "Web" from the drop down menu and then input the following as the URL: `https://keycloak.admin.<domain>/realms/master/broker/azure-saml/endpoint`. 
 1. Click "Register" when done.
 
 [Creating Master Realm App Registration](https://github.com/defenseunicorns/uds-core/blob/main/docs/.images/create-app-master.jpg)
@@ -50,11 +50,11 @@ Once created, you will be directed to your application's configuration page in E
 
 #### Create App Registration - UDS Realm
 Repeat the steps above to create a new App Registration for the UDS Realm. Note the following caveats below:
-1. When you get to step 3, ensure that you provide the Application Registration a unique name.
-1. When asked to provide a "Redirect URI", provide the following: `https://sso.<YOUR_DOMAIN>/realms/uds/broker/azure-saml/endpoint`
+1. When you get to step 3, ensure that you provide the Application Registration a uni   que name.
+1. When asked to provide a "Redirect URI", provide the following: `https://sso.<domain>/realms/uds/broker/azure-saml/endpoint`
 1. Continue with next steps.
 
-Proceed to the next page for setting up a SAML Identity Provider in Keycloak.
+Proceed to the next page for setting up a [SAML Identity Provider in Keycloak](./entra-keycloak-integration.md).
 
 #### References
 - [Quickstart: Register an application with the Microsoft identity platform](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app?tabs=certificate)
