@@ -1,0 +1,17 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+name: renovate-readiness
+description: "Check if Renovate PRs are ready for testing"
+
+runs:
+  using: composite
+  steps:
+    # This is current a stub for future logic that would auto-detect readiness
+    # In lieu of that, we require an engineer to review changes and manually add the `renovate-ready` label
+    - name: Check if PR has the ready label
+      if: ${{ ! contains(github.event.pull_request.labels.*.name, 'renovate-ready') }}
+      run: |
+        echo "This PR is not ready to run CI. Failing job."
+        exit 1
+      shell: bash

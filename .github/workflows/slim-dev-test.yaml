@@ -7,7 +7,8 @@ name: Slim Dev
 on:
   pull_request:
     # milestoned is added here as a workaround for release-please not triggering PR workflows (PRs should be added to a milestone to trigger the workflow).
-    types: [milestoned, opened, reopened, synchronize]
+    # labeled is added here to allow for "manual" triggering of CI on renovate PRs
+    types: [milestoned, opened, reopened, synchronize, labeled]
     paths:
       - src/pepr/**
       - src/keycloak/**
@@ -49,6 +50,9 @@ jobs:
     steps:
       - name: Checkout the code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Check renovate readiness
+        if: startsWith(github.event.pull_request.head.ref, 'renovate/') # Only call for Renovate PRs
+        uses: ./.github/actions/renovate-readiness
       - name: Environment setup
         uses: ./.github/actions/setup
       - name: Deploy Slim Dev Bundle
