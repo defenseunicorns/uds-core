@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.33.1](https://github.com/defenseunicorns/uds-core/compare/v0.33.0...v0.33.1) (2024-12-20)
+
+
+### Bug Fixes
+
+* add generated target for all node IPs ([#1119](https://github.com/defenseunicorns/uds-core/issues/1119)) ([033338b](https://github.com/defenseunicorns/uds-core/commit/033338b21b9fa336f44aebd2271188d330c2c75a))
+
+
+### Miscellaneous
+
+* add action to check readiness on renovate PRs before running CI ([#1144](https://github.com/defenseunicorns/uds-core/issues/1144)) ([83d81c6](https://github.com/defenseunicorns/uds-core/commit/83d81c68209aa6ca51ff02ce8d2ba127df24aac5))
+* **deps:** update codeql action to v3.28.0 ([#1146](https://github.com/defenseunicorns/uds-core/issues/1146)) ([fe9bccf](https://github.com/defenseunicorns/uds-core/commit/fe9bccfacce0faa5d384fa151347fbd354c28008))
+* **deps:** update k8s-sidecar to v1.28.4 ([#1132](https://github.com/defenseunicorns/uds-core/issues/1132)) ([b4f15ff](https://github.com/defenseunicorns/uds-core/commit/b4f15ff6e4931059c0724f5937c8b6e7b8c9b3ba))
+* **deps:** update loki ([#1134](https://github.com/defenseunicorns/uds-core/issues/1134)) ([56d0e39](https://github.com/defenseunicorns/uds-core/commit/56d0e3935f4f0e5a76998640c42df634f1840ab3))
+* **deps:** update prometheus-stack (prometheus 3.0.1, operator 0.79.2) ([#949](https://github.com/defenseunicorns/uds-core/issues/949)) ([5a35fc6](https://github.com/defenseunicorns/uds-core/commit/5a35fc61dc8a1f2b05913e387576358da728d614))
+* **deps:** update support-deps ([#1131](https://github.com/defenseunicorns/uds-core/issues/1131)) ([4853969](https://github.com/defenseunicorns/uds-core/commit/48539691a9ed5863896b47e461fa1b32d50d4659))
+* **deps:** update support-deps ([#1138](https://github.com/defenseunicorns/uds-core/issues/1138)) ([2764d03](https://github.com/defenseunicorns/uds-core/commit/2764d03d8c2bae1ac1d292aa3ac31f8c3e2cbe94))
+
 ## [0.33.0](https://github.com/defenseunicorns/uds-core/compare/v0.32.1...v0.33.0) (2024-12-17)
 
 
