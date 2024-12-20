@@ -36,6 +36,8 @@ Once created, you will be directed to your application's configuration page in E
     | `ipaddr` | ID |
     | `upn` | SAML |
 
+> When adding these claims, a dialogue box will appear that says "Some of these claims (email, upn) require OpenID Connect scopes to be configured through the API permissions page or by checking the box below.". Select the chechbox that says "Turn on the Microsoft Graph email, profile permission (required for claims to appear in token). Click "Add".
+
 1. You will also need to add a "Groups claim" as follows: 
    1. Select "All groups" under "Select group types to include in Access, ID, and SAML tokens." Accept the default values for the rest.
    1. Click "Add" when done.
