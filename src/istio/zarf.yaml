@@ -27,8 +27,8 @@ components:
         valuesFiles:
           - "values/upstream-values.yaml"
     images:
-      - "docker.io/istio/pilot:1.24.1-distroless"
-      - "docker.io/istio/proxyv2:1.24.1-distroless"
+      - "docker.io/istio/pilot:1.24.2-distroless"
+      - "docker.io/istio/proxyv2:1.24.2-distroless"
 
   - name: istio-controlplane
     required: true
@@ -55,7 +55,7 @@ components:
         valuesFiles:
           - "values/unicorn-values.yaml"
     images:
-      - cgr.dev/du-uds-defenseunicorns/istio-pilot-fips:1.24.1
+      - cgr.dev/du-uds-defenseunicorns/istio-pilot-fips:1.24.2
       - cgr.dev/du-uds-defenseunicorns/istio-proxy-fips:1.24.1
 
   - name: istio-admin-gateway
@@ -63,7 +63,7 @@ components:
     charts:
       - name: gateway
         url: https://istio-release.storage.googleapis.com/charts
-        version: 1.24.1
+        version: 1.24.2
         releaseName: admin-ingressgateway
         namespace: istio-admin-gateway
       - name: uds-istio-config
@@ -78,7 +78,7 @@ components:
     charts:
       - name: gateway
         url: https://istio-release.storage.googleapis.com/charts
-        version: 1.24.1
+        version: 1.24.2
         releaseName: tenant-ingressgateway
         namespace: istio-tenant-gateway
       - name: uds-istio-config
@@ -93,7 +93,7 @@ components:
     charts:
       - name: gateway
         url: https://istio-release.storage.googleapis.com/charts
-        version: 1.24.1
+        version: 1.24.2
         releaseName: passthrough-ingressgateway
         namespace: istio-passthrough-gateway
       - name: uds-istio-config
