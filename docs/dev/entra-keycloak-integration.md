@@ -95,7 +95,7 @@
             2. Change `Sync mode override` field to `Force`
             3. Change `Mapper type` field to `Advanced Attribute to Group`
             4. Select `Add Attributes` from *middle of page*
-            5. Enter key `http://schemas.microsoft.com/ws/2008/06/identity/claims/groups` and value `03dd22d4-ff8e-44e4-aa7f-effc2f303be2` ( this is the id from the group created in Entra for admin users only )
+            5. Enter key `http://schemas.microsoft.com/ws/2008/06/identity/claims/groups` and value is in the Entra `Manage Groups`, Pick the admin group and copy the Group ID into the value field
             6. Select `Select group` button
             7. Select `admin-group` from the pop up window and click `Select`
             8. Select `Save` and navigate back to `Provider details` via the breadcrumbs at *top of page*
@@ -219,7 +219,7 @@
             2. Change `Sync mode override` field to `Force`
             3. Change `Mapper type` field to `Advanced Attribute to Group`
             4. Select `Add Attributes` from *middle of page*
-            5. Enter key `http://schemas.microsoft.com/ws/2008/06/identity/claims/groups` and value `03dd22d4-ff8e-44e4-aa7f-effc2f303be2` ( this is the id from the group created in Entra for admin users only )
+            5. Enter key `http://schemas.microsoft.com/ws/2008/06/identity/claims/groups` and value is in the Entra `Manage Groups`, Pick the admin group and copy the Group ID into the value field
             6. Select `Select group` button
             7. Select `/UDS Core/Admin` from the pop up window and click `Select`
             8. Select `Save` and navigate back to `Provider details` via the breadcrumbs at *top of page*
@@ -228,7 +228,7 @@
             2. Change `Sync mode override` field to `Force`
             3. Change `Mapper type` field to `Advanced Attribute to Group`
             4. Select `Add Attributes` from *middle of page*
-            5. Enter key `http://schemas.microsoft.com/ws/2008/06/identity/claims/groups` and value `03dd22d4-ff8e-44e4-aa7f-effc2f303be2` ( this is the id from the group created in Entra for admin users only )
+            5. Enter key `http://schemas.microsoft.com/ws/2008/06/identity/claims/groups` and value is in the Entra `Manage Groups`, Pick the admin group and copy the Group ID into the value field
             6. Select `Select group` button
             7. Select `/UDS Core/Auditor` from the pop up window and click `Select`
             8. Select `Save` and navigate back to `Provider details` via the breadcrumbs at *top of page*
