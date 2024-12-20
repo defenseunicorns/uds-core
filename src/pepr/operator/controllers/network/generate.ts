@@ -11,6 +11,7 @@ import { anywhere, anywhereInCluster } from "./generators/anywhere";
 import { cloudMetadata } from "./generators/cloudMetadata";
 import { intraNamespace } from "./generators/intraNamespace";
 import { kubeAPI } from "./generators/kubeAPI";
+import { kubeNodes } from "./generators/kubeNodes";
 import { remoteCidr } from "./generators/remoteCidr";
 
 function isWildcardNamespace(namespace: string) {
@@ -24,6 +25,10 @@ function getPeers(policy: Allow): V1NetworkPolicyPeer[] {
     switch (policy.remoteGenerated) {
       case RemoteGenerated.KubeAPI:
         peers = kubeAPI();
+        break;
+
+      case RemoteGenerated.KubeNodes:
+        peers = kubeNodes();
         break;
 
       case RemoteGenerated.CloudMetadata:
@@ -93,7 +98,7 @@ export function generate(namespace: string, policy: Allow): kind.NetworkPolicy {
     };
   }
 
-  // Add the generated policy label (used to track KubeAPI policies)
+  // Add the generated policy label (used to track KubeAPI and KubeNodes policies)
   if (policy.remoteGenerated) {
     generated.metadata!.labels!["uds/generated"] = policy.remoteGenerated;
   }
