@@ -29,6 +29,7 @@ components:
     images:
       - "docker.io/istio/pilot:1.24.1-distroless"
       - "docker.io/istio/proxyv2:1.24.1-distroless"
+      - "docker.io/istio/proxyv2:1.24.2-distroless"
 
   - name: istio-controlplane
     required: true
