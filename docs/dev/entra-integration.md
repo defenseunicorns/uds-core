@@ -1,7 +1,7 @@
 # Integrating Azure Entra ID as a SAML Identity Provider within Keycloak
 
 
-UDS Core deploys KeyCloak for Identity and Access Management (IAM). Keycloak provides centralized authentication, enabling single sign-on (SSO) and role-based access control (RBAC) to restrict access to authorized users. You may wish to integrate another identity provider with Keycloak so that your existing user base can access applications within UDS Core. This guide will walk you through the steps required to configure Azure Entra ID as a SAML identity provider in Keycloak.
+UDS Core deploys Keycloak for Identity and Access Management (IAM). Keycloak provides centralized authentication, enabling single sign-on (SSO) and role-based access control (RBAC) to restrict access to authorized users. You may wish to integrate another identity provider with Keycloak so that your existing user base can access applications within UDS Core. This guide will walk you through the steps required to configure Azure Entra ID as a SAML identity provider in Keycloak.
 
 ## Prerequisites
 
