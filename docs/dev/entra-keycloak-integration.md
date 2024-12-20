@@ -9,7 +9,7 @@
 ## Manual Configuration Steps:
 ### Getting Started
 * Log into Keycloak Admin UI
-    * `keycloak.admin.< domain >`
+    * `keycloak.< admin_domain >`
     * The Keycloak admin username and password varies based on how UDS Core is deployed
         * If deploying with the bundle override `INSECURE_ADMIN_PASSWORD_GENERATION`
             * The username will be `admin` and the password will be in a Kubernetes secret called `keycloak-admin-password`

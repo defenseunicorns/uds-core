@@ -20,7 +20,7 @@ In this section, we will configure Application Registrations for each Keycloak r
 1. Click "New registration". 
 1. Input a name for the application. 
 1. Under "Supported Account Types", select "Accounts in this organizational directory (<Your tenant name> only - Single tenant)". 
-1. Under "Redirect URI", select "Web" from the drop down menu and then input the following as the URL: `https://keycloak.admin.<domain>/realms/master/broker/azure-saml/endpoint`. 
+1. Under "Redirect URI", select "Web" from the drop down menu and then input the following as the URL: `https://keycloak.<admin_domain>/realms/master/broker/azure-saml/endpoint`. 
 1. Click "Register" when done.
 
 ![Creating Master Realm App Registration](../.images/dev/create-app-master.jpg)
