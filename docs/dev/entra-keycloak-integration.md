@@ -5,6 +5,7 @@
 * Entra Identity Provider Configured [(docs here)](./entra-integration.md)
 * Kubernetes Cluster deployed
 * UDS Core Deployed and Keycloak Admin Console accessible
+* **VERY IMPORTANT** Users configured in Entra are **REQUIRED** to have an email address defined, without this Keycloak will fail to create the user.
 
 ## Manual Configuration Steps:
 ### Getting Started
@@ -114,13 +115,8 @@
         7. Change `Alias` to `Browser IDP`
         8. Change `Default Identity Provider` to `azure-saml`
     3. Select the `Authentication` breacrumb at the *top of the page*
-    4. Should be on `Authentication` page
-    5. Find the newly created `browser-idp-redirect` Authentication Flow
-    6. Select the three dots at the *far right of the row*
-    7. Select the `Bind flow` option
-    8. Select the `Browser flow` from the dropdown and click `Save`
 
-    * We have created an Identity Provider and we have disabled the use of username passwords for admin users. So we need to disable the final route for admin users to utilize those passwords. Since we are shifting authentication to Entra, we setup an Authentication flow that automatically redirects users to Entra when they need to login or register. This mitigates both confusion and misconfigurations.
+    * We have created an Identity Provider and we have disabled the use of username passwords for admin users. So we need to disable the final route for admin users to utilize those passwords.
 
 5. OPTIONAL but recommended - Configure a Client for service account authentication
     1. Select `Clients` from *left side nav bar* under *manage*
@@ -132,7 +128,7 @@
     7. Toggle `Client authentication` to `On`
     8. Toggle `Standard flow` to `Off`
     9. Toggle `Direct access grants` to `Off`
-    10. Toggle `Direct access grants` to `Off`
+    10. Toggle `Service account roles` to `On`
     11. Select `Next` button from *bottom of page*
     12. Select `Save` button from *bottom of page*
     13. Should be on the `service-client` client details page now
@@ -150,18 +146,33 @@
     1. We would recommend testing all of these changes at this point to verify functionality of Authentication flows
     2. Select the `Admin` user drop down from *top right corner of screen*
     3. Select `sign out`
-    4. Should experience some redirects and land on Entra Login page
-    5. Enter Entra Users information
-    6. Should be redirected to the Admin UI again with full permissions
+    4. Should be redirected to a Keycloak login screen where Username/Password is enabled and an `Azure SSO` option is present
 
-7. FINALLY - Remove Temporary Admin User
-    1. When configuration of Keycloak is complete it's recommended to remove the admin user that was initial created
-    2. Select `Users` tab from *left side nav bar* under *Manage*
-    3. This next step will remove you from Keycloak if you're still using the temp admin user
-    4. Select the three dots from the *far right of admin row*
-    5. Select `Delete`
+    * We will disable the Username/Password Authentication Flow after we've tested that everything is working otherwise if anything is misconfigured, you won't be able to get back in and will have to start this process over again.
 
-    * This user is a requirement for keycloak to be accessed and configured the very first time. So by default this user is a super user and should be removed so that a user cannot assume the admin users creds.
+    5. Select the `Azure SSO` option
+    6. Should experience some redirects and land on Entra Login page
+    7. Enter Entra Users information
+    8. Should be redirected to the Admin UI again with full permissions
+
+7. FINALLY
+    1. When configuration of Keycloak is complete and everything is working, do these final steps:
+    2. Disable Username Password Auth
+        1. Select `Authentication` from *left side nav bar* under *Configure*
+        2. Find the newly created `browser-idp-redirect` Authentication Flow
+        3. Select the three dots at the *far right of the row*
+        4. Select the `Bind flow` option
+        5. Select the `Browser flow` from the dropdown and click `Save`
+
+        * Since we are shifting authentication to Entra, we setup an Authentication flow that automatically redirects users to Entra when they need to login or register. This mitigates both confusion and misconfigurations.
+
+    1. Remove the admin user that was initial created
+        1. Select `Users` tab from *left side nav bar* under *Manage*
+        2. This next step will remove you from Keycloak if you're still using the temp admin user
+        3. Select the three dots from the *far right of admin row*
+        4. Select `Delete`
+
+        * This user is a requirement for keycloak to be accessed and configured the very first time. So by default this user is a super user and should be removed so that a user cannot assume the admin users creds.
 
 ### UDS Realm
 1. Configure the SAML Identity Provider for Azure
@@ -228,7 +239,7 @@
             2. Change `Sync mode override` field to `Force`
             3. Change `Mapper type` field to `Advanced Attribute to Group`
             4. Select `Add Attributes` from *middle of page*
-            5. Enter key `http://schemas.microsoft.com/ws/2008/06/identity/claims/groups` and value is in the Entra `Manage Groups`, Pick the admin group and copy the Group ID into the value field
+            5. Enter key `http://schemas.microsoft.com/ws/2008/06/identity/claims/groups` and value is in the Entra `Manage Groups`, Pick the auditor group and copy the Group ID into the value field
             6. Select `Select group` button
             7. Select `/UDS Core/Auditor` from the pop up window and click `Select`
             8. Select `Save` and navigate back to `Provider details` via the breadcrumbs at *top of page*

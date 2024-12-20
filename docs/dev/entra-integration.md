@@ -7,7 +7,7 @@ UDS Core deploys Keycloak for Identity and Access Management (IAM). Keycloak pro
 
 - Access to your Azure Entra ID Tenant, with at least [Cloud Application Administrator](https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/permissions-reference#cloud-application-administrator) Privileges.
 - Existing Entra ID Groups that are designated for Administrators and Auditors of UDS Core Applications (see note below).
-
+- **VERY IMPORTANT** Users configured in Entra are **REQUIRED** to have an email address defined, without this Keycloak will fail to create the user.
 
 > UDS Core comes with two preconfigured user groups in Keycloak: `Admin` and `Auditor`. These groups are assigned roles to the various applications deployed by UDS Core, outlined [here](https://uds.defenseunicorns.com/reference/configuration/uds-user-groups/). Using [Identity Provider Mappers](https://www.keycloak.org/docs/latest/server_admin/#_mappers) in Keycloak, we can map your existing Administrator and Auditor groups in Azure Entra ID to the `Admin` and `Auditor` groups in Keycloak.
 
@@ -36,7 +36,7 @@ Once created, you will be directed to your application's configuration page in E
     | `ipaddr` | ID |
     | `upn` | SAML |
 
-> When adding these claims, a dialogue box will appear that says "Some of these claims (email, upn) require OpenID Connect scopes to be configured through the API permissions page or by checking the box below.". Select the chechbox that says "Turn on the Microsoft Graph email, profile permission (required for claims to appear in token). Click "Add".
+> When adding these claims, a dialogue box will appear that says "Some of these claims (email, upn) require OpenID Connect scopes to be configured through the API permissions page or by checking the box below.". Select the checkbox that says "Turn on the Microsoft Graph email, profile permission (required for claims to appear in token). Click "Add".
 
 1. You will also need to add a "Groups claim" as follows: 
    1. Select "All groups" under "Select group types to include in Access, ID, and SAML tokens." Accept the default values for the rest.
