@@ -41,6 +41,7 @@ export async function initAllNodesTarget() {
       const ip = getNodeInternalIP(node);
       if (ip) nodeSet.add(ip);
     }
+    await updateKubeNodesNetworkPolicies();
   } catch (err) {
     log.error("error fetching node IPs:", err);
   }
