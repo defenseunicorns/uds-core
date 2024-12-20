@@ -17,6 +17,9 @@ domain: "###ZARF_VAR_DOMAIN###"
 #   # The CA certificate for the gateway when using `MUTUAL' or 'OPTIONAL_MUTUAL' (base64 encoded)
 #   cacert: ""
 
+#   # The name of the secret containing the TLS certificate to use for this gateway, this will override cert, key and cacert
+#   credentialName: ""
+
 #   # Map of gateway server entries
 #   servers:
 #     # Name of the gateway port to use for TLS, this is effectively a "list" in map form
