@@ -29,6 +29,7 @@ export async function initAllNodesTarget() {
     for (const nodeCidr of nodeCidrs) {
       nodeSet.add(nodeCidr);
     }
+    await updateKubeNodesNetworkPolicies();
     return;
   }
 
