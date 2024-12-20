@@ -49,7 +49,7 @@ Once created, you will be directed to your application's configuration page in E
 
 #### Create App Registration - UDS Realm
 Repeat the steps above to create a new App Registration for the UDS Realm. Note the following caveats below:
-1. When you get to step 3, ensure that you provide the Application Registration a uni   que name.
+1. When you get to step 3, ensure that you provide the Application Registration a unique name.
 1. When asked to provide a "Redirect URI", provide the following: `https://sso.<domain>/realms/uds/broker/azure-saml/endpoint`
 1. Continue with next steps.
 
