@@ -49,12 +49,12 @@
         4. Get the `Service provider entity ID` from the Entra portal:
             1. Entra - App Registrations
             2. Select Application from list for master realm
-            3. Copy the `Application ID URI` (pictured below) and copy that the `Service provider entity ID` in the Keycloak Identity Provider creation
+            3. Copy the `Application ID URI and copy that the `Service provider entity ID` in the Keycloak Identity Provider creation
         5. Get the `SAML entity descriptor` from the Entra portal:
             1. Entra - App Registrataions
             2. Select Application from list for master realm
             3. Select the `Endpoints` tab from *top nav bar*
-            4. Copy the `Federation metadata document` (pictured below) endpoint over to the `SAML entity descriptor` in the Keycloak Identity Provider creation, make sure that it gets the green checkmark
+            4. Copy the `Federation metadata document` endpoint over to the `SAML entity descriptor` in the Keycloak Identity Provider creation, make sure that it gets the green checkmark
         6. Select `Add` button, should now see an Azure SSO page that has been auto populated
         7. Toggle `Backchannel logout` to `On` under `SAML Settings`
         8. Toggle `Trust Email` to `On` under `Advanced settings`
@@ -173,12 +173,12 @@
         4. Get the `Service provider entity ID` from the Entra portal:
             1. Entra - App Registrations
             2. Select Application from list for master realm
-            3. Copy the `Application ID URI` (pictured below) and copy that the `Service provider entity ID` in the Keycloak Identity Provider creation
+            3. Copy the `Application ID URI` and copy that the `Service provider entity ID` in the Keycloak Identity Provider creation
         5. Get the `SAML entity descriptor` from the Entra portal:
             1. Entra - App Registrataions
             2. Select Application from list for master realm
             3. Select the `Endpoints` tab from *top nav bar*
-            4. Copy the `Federation metadata document` (pictured below) endpoint over to the `SAML entity descriptor` in the Keycloak Identity Provider creation, make sure that it gets the green checkmark
+            4. Copy the `Federation metadata document` endpoint over to the `SAML entity descriptor` in the Keycloak Identity Provider creation, make sure that it gets the green checkmark
         6. Select `Add` button, should now see an Azure SSO page that has been auto populated
         7. Toggle `Backchannel logout` to `On` under `SAML Settings`
         8. Toggle `Trust Email` to `On` under `Advanced settings`
