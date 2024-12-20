@@ -39,6 +39,9 @@ export const UDSConfig = {
   // Static CIDR range to use for KubeAPI instead of k8s watch
   kubeApiCidr: process.env.KUBEAPI_CIDR,
 
+  // Static CIDRs to use for KubeNodes instead of k8s watch. Comma separated list of CIDRs.
+  kubeNodeCidrs: process.env.KUBENODE_CIDRS,
+
   // Track if UDS Core identity-authorization layer is deployed
   isIdentityDeployed: false,
 };
