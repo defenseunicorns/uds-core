@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.33.2](https://github.com/defenseunicorns/uds-core/compare/v0.33.1...v0.33.2) (2024-12-25)
+
+
+### Miscellaneous
+
+* **deps:** update loki memcached to v1.6.34 ([#1148](https://github.com/defenseunicorns/uds-core/issues/1148)) ([8bbf6b3](https://github.com/defenseunicorns/uds-core/commit/8bbf6b3d973b28d5d2edd044baf2ae8ae2d0cd20))
+
 ## [0.33.1](https://github.com/defenseunicorns/uds-core/compare/v0.33.0...v0.33.1) (2024-12-20)
 
 
