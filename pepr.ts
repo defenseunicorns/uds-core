@@ -7,7 +7,6 @@ import { PeprModule } from "pepr";
 
 import cfg from "./package.json";
 
-import { DataStore } from "pepr/dist/lib/storage";
 import { Component, setupLogger } from "./src/pepr/logger";
 import { operator } from "./src/pepr/operator";
 import { setupAuthserviceSecret } from "./src/pepr/operator/controllers/keycloak/authservice/config";
