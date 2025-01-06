@@ -1,0 +1,20 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "classificationBanner": {
+      "type": "object",
+      "properties": {
+        "addFooter": {
+          "type": "boolean",
+          "description": "Indicates whether to add a footer to the classification banner."
+        },
+        "text": {
+          "type": ["string", "null"],
+          "pattern": "^(?i)(UNCLASSIFIED|CUI|CONFIDENTIAL|SECRET|TOP SECRET|TOP SECRET//SCI|UNKNOWN|)$",
+          "description": "The classification banner text must match one of the allowed values (case-insensitive): UNCLASSIFIED, CONTROLLED, CONFIDENTIAL, SECRET, TOP SECRET, TOP SECRET//SCI, UNKNOWN, or it can be an empty string or null."
+        }
+      }
+    }
+  }
+}

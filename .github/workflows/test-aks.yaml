@@ -1,12 +1,15 @@
 # Copyright 2024 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
-name: AKS Nightly Test
+name: AKS Test
 
 on:
   schedule:
-    - cron: '0 6 * * *' # Runs at midnight Mountain every day
+    - cron: '0 0 * * 0' # Every Sunday Midnight (UTC) / Saturday 5pm MT
   pull_request:
+    # milestoned is added here as a workaround for release-please not triggering PR workflows (PRs should be added to a milestone to trigger the workflow).
+    # labeled is added here to allow for "manual" triggering of CI on renovate PRs
+    types: [milestoned, opened, reopened, synchronize, labeled]
     paths:
       - tasks/iac.yaml
       - .github/bundles/aks/*
@@ -47,6 +50,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
+      - name: Check renovate readiness
+        if: startsWith(github.event.pull_request.head.ref, 'renovate/') # Only call for Renovate PRs
+        uses: ./.github/actions/renovate-readiness
+
       - name: Azure login
         uses: azure/login@a65d910e8af852a8061c627c456678983e180302 # v2
         with:
@@ -63,7 +70,7 @@ jobs:
           chainguardIdentity: ${{ secrets.CHAINGUARD_IDENTITY }}
 
       - name: Setup Tofu
-        uses: opentofu/setup-opentofu@12f4debbf681675350b6cd1f0ff8ecfbda62027b # v1.0.4
+        uses: opentofu/setup-opentofu@592200bd4b9bbf4772ace78f887668b1aee8f716 # v1.0.5
         with:
           tofu_version: 1.8.2
           tofu_wrapper: false
@@ -86,6 +93,13 @@ jobs:
       - name: Debug Output
         if: ${{ always() }}
         uses: ./.github/actions/debug-output
+
+      - name: Save logs
+        if: always()
+        uses: ./.github/actions/save-logs
+        with:
+          suffix: -aks-${{ matrix.flavor }}
+          distro: "aks"
 
       - name: Remove UDS Core
         if: always()

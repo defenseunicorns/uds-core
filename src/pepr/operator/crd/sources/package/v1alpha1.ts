@@ -87,7 +87,7 @@ const allow = {
       remoteGenerated: {
         description: "Custom generated remote selector for the policy",
         type: "string",
-        enum: ["KubeAPI", "IntraNamespace", "CloudMetadata", "Anywhere"],
+        enum: ["KubeAPI", "KubeNodes", "IntraNamespace", "CloudMetadata", "Anywhere"],
       },
       remoteCidr: {
         description: "Custom generated policy CIDR",
@@ -249,6 +249,19 @@ const monitor = {
         description:
           "The type of monitor to create; PodMonitor or ServiceMonitor. ServiceMonitor is the default.",
         enum: ["PodMonitor", "ServiceMonitor"],
+        type: "string",
+      },
+      fallbackScrapeProtocol: {
+        description:
+          "The protocol for Prometheus to use if a scrape returns a blank, unparsable, or otherwise invalid Content-Type",
+        // Enum copied from upstream Prometheus supported values
+        enum: [
+          "OpenMetricsText0.0.1",
+          "OpenMetricsText1.0.0",
+          "PrometheusProto",
+          "PrometheusText0.0.4",
+          "PrometheusText1.0.0",
+        ],
         type: "string",
       },
       authorization: AuthorizationSchema,

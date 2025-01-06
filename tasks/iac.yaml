@@ -22,7 +22,7 @@ tasks:
   - name: install-eksctl
     actions:
       - cmd: |
-          curl --silent --location "https://github.com/weaveworks/eksctl/releases/download/v0.196.0/eksctl_Linux_amd64.tar.gz" | tar xz -C /tmp
+          curl --silent --location "https://github.com/weaveworks/eksctl/releases/download/v0.199.0/eksctl_Linux_amd64.tar.gz" | tar xz -C /tmp
           sudo mv /tmp/eksctl /usr/local/bin
 
   - name: create-cluster
@@ -115,7 +115,7 @@ tasks:
 
           # wait for cluster components
           while true; do
-            if [ $(uds zarf tools kubectl get po -A --no-headers=true | egrep -v 'Running|Completed' | wc -l) -gt 0 ]; then
+            if [ $(uds zarf tools kubectl get po,job -A --no-headers=true | egrep -v 'Running|Complete' | wc -l) -gt 0 ]; then
               echo "Waiting for cluster components to be ready...";
               sleep 5;
             else

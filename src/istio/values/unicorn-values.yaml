@@ -2,11 +2,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 pilot:
-  image: "cgr.dev/du-uds-defenseunicorns/istio-pilot-fips:1.23.2"
+  image: "cgr.dev/du-uds-defenseunicorns/istio-pilot-fips:1.24.1"
 global:
   proxy_init:
     # renovate: image=cgr.dev/du-uds-defenseunicorns/istio-proxy-fips
-    image: "###ZARF_REGISTRY###/du-uds-defenseunicorns/istio-proxy-fips:1.23.2"
+    image: "###ZARF_REGISTRY###/du-uds-defenseunicorns/istio-proxy-fips:1.24.1"
   proxy:
     # renovate: image=cgr.dev/du-uds-defenseunicorns/istio-proxy-fips
-    image: "###ZARF_REGISTRY###/du-uds-defenseunicorns/istio-proxy-fips:1.23.2"
+    image: "###ZARF_REGISTRY###/du-uds-defenseunicorns/istio-proxy-fips:1.24.1"

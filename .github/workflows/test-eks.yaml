@@ -1,12 +1,15 @@
 # Copyright 2024 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
-name: EKS Nightly Test
+name: EKS Test
 
 on:
   schedule:
-    - cron: '0 6 * * *' # Runs at midnight Mountain every day
+    - cron: '0 0 * * 0' # Every Sunday Midnight (UTC) / Saturday 5pm MT
   pull_request:
+    # milestoned is added here as a workaround for release-please not triggering PR workflows (PRs should be added to a milestone to trigger the workflow).
+    # labeled is added here to allow for "manual" triggering of CI on renovate PRs
+    types: [milestoned, opened, reopened, synchronize, labeled]
     paths:
       - tasks/iac.yaml
       - .github/bundles/eks/*
@@ -43,6 +46,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
+      - name: Check renovate readiness
+        if: startsWith(github.event.pull_request.head.ref, 'renovate/') # Only call for Renovate PRs
+        uses: ./.github/actions/renovate-readiness
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4
         with:
@@ -63,7 +70,7 @@ jobs:
         run: uds run -f tasks/iac.yaml install-eksctl --no-progress
 
       - name: Setup Tofu
-        uses: opentofu/setup-opentofu@12f4debbf681675350b6cd1f0ff8ecfbda62027b # v1.0.4
+        uses: opentofu/setup-opentofu@592200bd4b9bbf4772ace78f887668b1aee8f716 # v1.0.5
         with:
           tofu_version: 1.8.2
           tofu_wrapper: false
@@ -86,11 +93,18 @@ jobs:
         env:
           UDS_CONFIG: .github/bundles/eks/uds-config.yaml
         run: uds deploy .github/bundles/eks/uds-bundle-uds-core-eks-nightly-*.tar.zst --confirm
-        timeout-minutes: 20
+        timeout-minutes: 30
 
       - name: Debug Output
         if: ${{ always() }}
         uses: ./.github/actions/debug-output
+
+      - name: Save logs
+        if: always()
+        uses: ./.github/actions/save-logs
+        with:
+          suffix: -eks-${{ matrix.flavor }}
+          distro: "eks"
 
       - name: Remove UDS Core
         if: always()

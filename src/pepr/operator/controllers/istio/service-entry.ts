@@ -33,8 +33,8 @@ export function generateServiceEntry(
 
   const name = generateSEName(pkgName, expose);
 
-  // For the admin gateway, we need to add the path prefix
-  const domain = (gateway === Gateway.Admin ? "admin." : "") + UDSConfig.domain;
+  // Get the correct domain based on gateway
+  const domain = gateway === Gateway.Admin ? UDSConfig.adminDomain : UDSConfig.domain;
 
   // Append the domain to the host
   const fqdn = `${host}.${domain}`;

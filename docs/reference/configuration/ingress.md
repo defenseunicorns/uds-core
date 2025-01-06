@@ -4,7 +4,7 @@ title: Istio Ingress
 
 UDS Core leverages Istio for ingress into the service mesh. This document provides an overview and examples of the Istio resources that UDS Core deploys to handle ingress.
 
-![UDS Core Ingress / Egress](https://github.com/defenseunicorns/uds-core/blob/main/docs/.images/uds-core-arch-ports-protocols.svg?raw=true)
+![UDS Core Ingress / Egress](https://github.com/defenseunicorns/uds-core/blob/main/docs/.images/diagrams/uds-core-arch-ports-protocols.svg?raw=true)
 
 ## Gateways
 
@@ -36,7 +36,7 @@ packages:
 
 ### Configure Domain Name and TLS for Istio Gateways
 
-By default, the UDS Core Istio Gateways are set up to use the `uds.dev` domain and have a valid TLS certificate packaged.  You will want to change the domain name for your environment and provide a valid TLS certificate for this domain.
+By default, the UDS Core Istio Gateways are set up to use the `uds.dev` (tenant/passthrough) and `admin.uds.dev` (admin) domains with valid TLS certificates.  You will need to change the domain name for your environment and provide a valid TLS certificate for your domain(s).
 
 You can set the TLS certs via overrides in a [UDS Bundle](https://uds.defenseunicorns.com/structure/bundles/) (see below). UDS Core Istio Gateways default to only supporting TLS v1.3, but this can also be overridden per gateway if clients use TLS 1.2 (as seen in the tenant gateway example `value` below).
 
@@ -81,11 +81,12 @@ You can then either use environment variables (`UDS_ADMIN_TLS_CERT`, `UDS_ADMIN_
 The `TLS_CERT` configuration values must include your specific domain certificate (e.g., `*.uds.dev`) **and** the full certificate chain leading up to a trusted root Certificate Authority (CA), concatenated together. Failing to include the full chain can result in unexpected behavior with certain applications, as some container images may not inherently trust intermediate certificates.
 :::
 
-Domain should be set via your [uds-config](https://uds.defenseunicorns.com/reference/cli/quickstart-and-usage/#variables-and-configuration) file using the shared key to override the Zarf Domain Variable (see example `uds-config.yaml` below).
+Domain should be set via your [uds-config](https://uds.defenseunicorns.com/reference/cli/quickstart-and-usage/#variables-and-configuration) file using the shared key to override the Zarf Domain Variable (see example `uds-config.yaml` below). By default the `admin_domain` will be set to `admin.<DOMAIN>` but can be overridden to host admin services on a different domain.
 
 ```yaml
 shared:
   domain: yourawesomedomain.com # shared across all packages in a bundle
+  admin_domain: youradmindomain.com # optional, defaults to admin.yourawesomedomain.com
 
 # TLS Certs/Keys if not provided via environment variables
 variables:
@@ -99,3 +100,32 @@ variables:
 :::note
 If you are using Private PKI or self-signed certificates for your tenant certificates it is necessary to additionally configure `UDS_CA_CERT` with additional [trusted certificate authorities](https://uds.defenseunicorns.com/reference/configuration/uds-operator/#trusted-certificate-authority).
 :::
+
+#### Configuring TLS from a Secret
+
+As an alternative to specifying individual certificate, key, and CA certificate values, you can set `tls.credentialName` in the gateway configuration. This field specifies the name of a Kubernetes secret containing the TLS certificate, key, and optional CA certificate for the gateway. When `tls.credentialName` is set, it will override `tls.cert`, `tls.key`, and `tls.cacert` values, simplifying the configuration by allowing a direct reference to a Kubernetes TLS secret. This secret should be placed in the same namespace as the gateway resource. See [Gateway ServerTLSSettings](https://istio.io/latest/docs/reference/config/networking/gateway/#ServerTLSSettings) for all required and available secret keys.
+
+This approach is useful if you already have a Kubernetes secret that holds the necessary TLS data and want to use it directly.
+
+```yaml
+kind: UDSBundle
+metadata:
+  name: core-with-credentialName
+  description: A UDS example bundle for packaging UDS core with a custom TLS credentialName
+  version: "0.0.1"
+
+packages:
+  - name: core
+    repository: oci://ghcr.io/defenseunicorns/packages/uds/core
+    ref: 0.23.0-upstream
+    overrides:
+      istio-admin-gateway:
+        uds-istio-config:
+          values:
+            - path: tls.credentialName
+              value: admin-gateway-tls-secret # Reference to the Kubernetes secret for the admin gateway's TLS certificate
+      istio-tenant-gateway:
+        uds-istio-config:
+          values:
+            - path: tls.credentialName
+              value: tenant-gateway-tls-secret # Reference to the Kubernetes secret for the tenant gateway's TLS certificate
