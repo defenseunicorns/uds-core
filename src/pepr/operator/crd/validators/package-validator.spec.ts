@@ -322,6 +322,7 @@ describe("Test validation of Exemption CRs", () => {
           serviceAccountsEnabled: true,
         },
       ],
+      [],
     );
     await validator(mockReq);
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
@@ -338,6 +339,7 @@ describe("Test validation of Exemption CRs", () => {
           serviceAccountsEnabled: true,
         },
       ],
+      [],
     );
     await validator(mockReq);
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
@@ -484,6 +486,7 @@ describe("Test validation of Exemption CRs", () => {
           standardFlowEnabled: false,
         },
       ],
+      [],
     );
     await validator(mockReq);
     expect(mockReq.Approve).toHaveBeenCalledTimes(1);
