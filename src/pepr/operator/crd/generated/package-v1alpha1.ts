@@ -35,6 +35,11 @@ export interface Monitor {
    */
   description?: string;
   /**
+   * The protocol for Prometheus to use if a scrape returns a blank, unparsable, or otherwise
+   * invalid Content-Type
+   */
+  fallbackScrapeProtocol?: FallbackScrapeProtocol;
+  /**
    * The type of monitor to create; PodMonitor or ServiceMonitor. ServiceMonitor is the
    * default.
    */
@@ -97,6 +102,18 @@ export interface Credentials {
    * Specify whether the Secret or its key must be defined
    */
   optional?: boolean;
+}
+
+/**
+ * The protocol for Prometheus to use if a scrape returns a blank, unparsable, or otherwise
+ * invalid Content-Type
+ */
+export enum FallbackScrapeProtocol {
+  OpenMetricsText001 = "OpenMetricsText0.0.1",
+  OpenMetricsText100 = "OpenMetricsText1.0.0",
+  PrometheusProto = "PrometheusProto",
+  PrometheusText004 = "PrometheusText0.0.4",
+  PrometheusText100 = "PrometheusText1.0.0",
 }
 
 /**
@@ -191,6 +208,7 @@ export enum RemoteGenerated {
   CloudMetadata = "CloudMetadata",
   IntraNamespace = "IntraNamespace",
   KubeAPI = "KubeAPI",
+  KubeNodes = "KubeNodes",
 }
 
 export interface Expose {

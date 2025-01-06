@@ -7,7 +7,9 @@ on:
   schedule:
     - cron: '0 0 * * 0' # Every Sunday Midnight (UTC) / Saturday 5pm MT
   pull_request:
-    types: [milestoned, opened, reopened, synchronize]
+    # milestoned is added here as a workaround for release-please not triggering PR workflows (PRs should be added to a milestone to trigger the workflow).
+    # labeled is added here to allow for "manual" triggering of CI on renovate PRs
+    types: [milestoned, opened, reopened, synchronize, labeled]
     paths:
       - tasks/iac.yaml
       - .github/bundles/eks/*
@@ -43,6 +45,10 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+
+      - name: Check renovate readiness
+        if: startsWith(github.event.pull_request.head.ref, 'renovate/') # Only call for Renovate PRs
+        uses: ./.github/actions/renovate-readiness
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4

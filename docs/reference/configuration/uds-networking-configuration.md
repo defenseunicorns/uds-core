@@ -25,6 +25,25 @@ This configuration directs the operator to use the specified CIDR range (`172.0.
 
 When configuring a static CIDR range, it is important to make the range as restrictive as possible to limit the potential for unexpected networking access. An overly broad range could inadvertently allow egress traffic to destinations beyond the intended scope. Additionally, careful alignment with the actual IP addresses used by the Kubernetes API server is essential. A mismatch between the specified CIDR range and the cluster's configuration can result in network policy enforcement issues or disrupted connectivity.
 
+## KubeNodes CIDRs
+
+The UDS operator is responsible for dynamically updating network policies that use the `remoteGenerated: KubeNodes` custom selector, in response to changes to nodes in the Kubernetes cluster. As nodes are added, updated, or removed from a cluster, the operator will ensure that policies remain accurate and include all the nodes in the cluster. 
+
+UDS operator provides an option to configure a set of static CIDR ranges in place of offering a dynamically updated list by setting an override to `operator.KUBENODE_CIDRS` in your bundle as a value or variable. The value should be a single string of comma (`,`) separated values for the individual IP addresses, using `/32` notation. For example:
+
+```yaml
+packages:
+  - name: uds-core
+    repository: ghcr.io/defenseunicorns/packages/uds/core
+    ref: x.x.x
+    overrides:
+      uds-operator-config:
+        uds-operator-config:
+          values:
+            - path: operator.KUBENODE_CIDRS
+              value: "172.28.0.2/32,172.28.0.3/32,172.28.0.4/32"
+```
+
 ## Additional Network Allowances
 
 Applications deployed in UDS Core utilize [Network Policies](https://kubernetes.io/docs/concepts/services-networking/network-policies/) with a "Deny by Default" configuration to ensure network traffic is restricted to only what is necessary. Some applications in UDS Core allow for overrides to accommodate environment-specific requirements.
