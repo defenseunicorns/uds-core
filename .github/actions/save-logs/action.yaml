@@ -6,14 +6,19 @@ description: "Save debug logs"
 
 inputs:
   suffix:
-    description: 'Suffix to append to the debug log'
+    description: "Suffix to append to the debug log"
     required: false
-    default: ''
+    default: ""
+  distro:
+    description: "Kubernetes distribution used in this CI run"
+    required: false
+    default: "k3d"
 
 runs:
   using: composite
   steps:
     - name: Pull logs from containerd
+      if: ${{ inputs.distro == 'k3d' }}
       run: |
         CONTAINER_NAME="k3d-uds-server-0"
         if docker ps | grep -q "$CONTAINER_NAME"; then
@@ -25,6 +30,7 @@ runs:
       shell: bash
 
     - name: Dump Node Logs
+      if: ${{ inputs.distro == 'k3d' }}
       run: |
         docker ps --filter "name=k3d" --format "{{.Names}}" | while read line; do
           docker logs "$line" 2> /tmp/$line.log
@@ -38,14 +44,35 @@ runs:
       shell: bash
 
     - name: Move Playwright Artifacts
+      if: ${{ inputs.distro == 'k3d' }} # Currently only run on k3d
       run: |
         sudo mkdir -p /tmp/playwright
         sudo mv test/playwright/.playwright/* /tmp/playwright || true
       shell: bash
 
+    # Additional/specific debug for non-k3d clusters
+    - name: Pepr Debug
+      if: ${{ inputs.distro != 'k3d' }}
+      run: |
+        echo "::group::Pepr Pod Status and Metrics"
+        uds zarf tools kubectl top pods -n pepr-system
+        uds zarf tools kubectl get pods -n pepr-system
+        echo "::endgroup::"
+        echo "::group::Fetch pepr logs"
+        uds zarf tools kubectl logs -n pepr-system -l app=pepr-uds-core --tail -1 > /tmp/pepr-logs.log
+        uds zarf tools kubectl logs -n pepr-system -l app=pepr-uds-core --tail -1 --previous > /tmp/pepr-previous-logs.log || true
+        uds zarf tools kubectl logs -n pepr-system -l app=pepr-uds-core-watcher --tail -1 > /tmp/pepr-watcher-logs.log
+        uds zarf tools kubectl logs -n pepr-system -l app=pepr-uds-core-watcher --tail -1 --previous > /tmp/pepr-watcher-previous-logs.log || true
+        echo "::endgroup::"
+        echo "::group::Describe Failed Packages"
+        FAILED_PACKAGES=($(uds zarf tools kubectl get package -A -o jsonpath="{range .items[?(@.status.phase!='Ready')]}{.metadata.name}{','}{.metadata.namespace}{'\n'}{end}")); for PACKAGE in "${FAILED_PACKAGES[@]}"; do PACKAGE_NAME=$(echo "$PACKAGE" | awk -F "," '{print $1}'); PACKAGE_NAMESPACE=$(echo "$PACKAGE" | awk -F "," '{print $2}'); uds zarf tools kubectl describe "$PACKAGE_NAME" -n "$PACKAGE_NAMESPACE"; echo; done
+        echo "::endgroup::"
+      shell: bash
+
     - uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b # v4.5.0
       with:
         name: debug-log${{ inputs.suffix }}
+        retention-days: 7
         path: |
           /tmp/zarf-*.log
           /tmp/uds-*.log
@@ -55,3 +82,4 @@ runs:
           /tmp/k3d-uds-*.log
           /tmp/playwright/output
           /tmp/playwright/reports
+          /tmp/pepr-*.log

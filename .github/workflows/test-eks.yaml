@@ -99,6 +99,13 @@ jobs:
         if: ${{ always() }}
         uses: ./.github/actions/debug-output
 
+      - name: Save logs
+        if: always()
+        uses: ./.github/actions/save-logs
+        with:
+          suffix: -eks-${{ matrix.flavor }}
+          distro: "eks"
+
       - name: Remove UDS Core
         if: always()
         run: uds remove .github/bundles/eks/uds-bundle-uds-core-eks-*.tar.zst --confirm
