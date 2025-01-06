@@ -1,10 +1,16 @@
 # Copyright 2024 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
+# provider "keycloak" {
+#   client_id     = "tofu-provider"
+#   client_secret = "XRqav459WyC2qp7ShxbR1Nxu52cSPG8J"
+#   url           = "https://keycloak.admin.uds.dev"
+# }
+
 provider "keycloak" {
   client_id     = "admin-cli"
   username      = "admin"
-  password      = "hDJe2nan3pMn7rmo1bGzNcc3zodMBDnQ"
+  password      = "admin"
   url           = "https://keycloak.admin.uds.dev"
 }
 

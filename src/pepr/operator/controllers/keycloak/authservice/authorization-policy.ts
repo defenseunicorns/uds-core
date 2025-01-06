@@ -60,8 +60,9 @@ function jwtAuthZAuthorizationPolicy(
   labelSelector: { [key: string]: string },
   name: string,
   namespace: string,
+  pkg: UDSPackage,
 ): IstioAuthorizationPolicy {
-  return {
+  const policy = {
     kind: "AuthorizationPolicy",
     metadata: {
       name: sanitizeResourceName(`${name}-jwt-authz`),
@@ -83,7 +84,22 @@ function jwtAuthZAuthorizationPolicy(
         },
       ],
     },
-  };
+  } as IstioAuthorizationPolicy;
+
+  // loop through pkg.spec.sso array and check if there an item that contains sso.groups and also sso.enableAuthserviceSelector
+  // if there is, then add the group to the policy
+  for (const sso of pkg.spec?.sso || []) {
+    if (sso.groups && sso.groups.anyOf && sso.enableAuthserviceSelector) {
+      policy.spec!.rules![0].when = [
+        {
+          key: "request.auth.claims[groups]",
+          values: [sso.groups.anyOf[0]],
+        },
+      ];
+    }
+  }
+
+  return policy;
 }
 
 function authNRequestAuthentication(
@@ -141,7 +157,7 @@ async function updatePolicy(
       updateMetadata(authNRequestAuthentication(labelSelector, event.name, namespace)),
     );
     await K8s(IstioAuthorizationPolicy)[operation](
-      updateMetadata(jwtAuthZAuthorizationPolicy(labelSelector, event.name, namespace)),
+      updateMetadata(jwtAuthZAuthorizationPolicy(labelSelector, event.name, namespace, pkg)),
     );
   } catch (e) {
     const msg = `Failed to update auth policy for ${event.name} in ${namespace}: ${e}`;
