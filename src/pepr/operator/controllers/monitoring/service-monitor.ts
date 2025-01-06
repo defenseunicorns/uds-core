@@ -9,6 +9,7 @@ import { V1OwnerReference } from "@kubernetes/client-node";
 import { Component, setupLogger } from "../../../logger";
 import { Monitor, PrometheusServiceMonitor, UDSPackage } from "../../crd";
 import { Kind } from "../../crd/generated/package-v1alpha1";
+import { FallbackScrapeProtocol } from "../../crd/generated/prometheus/servicemonitor-v1";
 import { getOwnerRef, purgeOrphans } from "../utils";
 import { generateMonitorName } from "./common";
 
@@ -89,6 +90,9 @@ export function generateServiceMonitor(
       selector: {
         matchLabels: selector,
       },
+      // Fallback to the Prometheus 2.x default if not defined
+      fallbackScrapeProtocol:
+        monitor.fallbackScrapeProtocol || FallbackScrapeProtocol.PrometheusText004,
     },
   };
 

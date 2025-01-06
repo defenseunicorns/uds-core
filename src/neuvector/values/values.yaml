@@ -10,6 +10,9 @@ manager:
   svc:
     type: ClusterIP
 
+internal:
+  autoRotateCert: true
+
 controller:
   apisvc:
     type: ClusterIP

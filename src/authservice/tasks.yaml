@@ -11,3 +11,7 @@ tasks:
             name: "app.kubernetes.io/name=authservice"
             namespace: authservice
             condition: Ready
+
+  - name: e2e-test
+    actions:
+      - description: "Run Authservice E2E tests"

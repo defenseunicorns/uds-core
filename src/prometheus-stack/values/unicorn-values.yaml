@@ -11,7 +11,7 @@ kube-state-metrics:
   image:
     registry: cgr.dev
     repository: du-uds-defenseunicorns/kube-state-metrics-fips
-    tag: 2.13.0
+    tag: 2.14.0
   securityContext:
     enabled: true
     fsGroup: 65532
@@ -23,7 +23,7 @@ prometheus:
     image:
       registry: cgr.dev
       repository: du-uds-defenseunicorns/prometheus-fips
-      tag: 2.54.1
+      tag: 3.0.1
 prometheus-node-exporter:
   image:
     registry: cgr.dev
@@ -51,9 +51,9 @@ prometheusOperator:
   image:
     registry: cgr.dev
     repository: du-uds-defenseunicorns/prometheus-operator-fips
-    tag: 0.77.1
+    tag: 0.79.2
   prometheusConfigReloader:
     image:
       registry: cgr.dev
       repository: du-uds-defenseunicorns/prometheus-config-reloader-fips
-      tag: 0.77.1
+      tag: 0.79.2

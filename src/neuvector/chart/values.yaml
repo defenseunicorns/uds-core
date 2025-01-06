@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 domain: "###ZARF_VAR_DOMAIN###"
+adminDomain: "###ZARF_VAR_ADMIN_DOMAIN###"
 
 grafana:
   enabled: false
@@ -9,3 +10,13 @@ grafana:
 generateInternalCert: false
 
 denyLocalAuth: true
+
+# Support for custom `network.allow` entries on the Package CR, useful for sending NeuVector alerts
+additionalNetworkAllow: []
+# ref: https://uds.defenseunicorns.com/reference/configuration/custom-resources/packages-v1alpha1-cr/#allow
+#   - direction: Egress
+#     selector:
+#       app: neuvector-manager-pod
+#     remoteGenerated: Anywhere
+#     description: "from neuvector to anywhere"
+#     port: 443

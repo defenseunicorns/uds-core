@@ -21,7 +21,7 @@
     "node_modules",
     "dist",
     "jest.*.js",
-    "e2e/"
+    "test/playwright/"
   ],
   "root": true,
   "rules": {

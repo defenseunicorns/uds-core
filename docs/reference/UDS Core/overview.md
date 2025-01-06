@@ -14,6 +14,8 @@ UDS Core enables your team to:
 - Leverage specific functional applications to deliver a versatile platform that caters to diverse mission objectives.
 - Enhance the efficiency, security, and success of software delivery and operations process.
 
+![UDS Core Architecture Diagram](https://github.com/defenseunicorns/uds-core/blob/main/docs/.images/diagrams/uds-core-arch-overview.svg?raw=true)
+
 ### Accomplishing Mission Objectives with Functional Applications
 
 UDS leverages functional applications that are well-suited to perform the specific tasks required. These tools are carefully selected to ensure optimal performance and compatibility within the UDS landscape. By integrating functional tools into the platform, UDS ensures that Mission Heroes have access to cutting-edge technologies and best-in-class solutions for their missions.

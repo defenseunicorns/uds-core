@@ -11,3 +11,6 @@ tasks:
             name: app.kubernetes.io/name=vector
             namespace: vector
             condition: Ready
+  - name: e2e-test
+    actions:
+      - description: "Run Vector E2E tests"

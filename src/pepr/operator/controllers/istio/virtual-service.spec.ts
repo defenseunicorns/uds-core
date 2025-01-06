@@ -70,7 +70,7 @@ describe("test generate virtual service", () => {
 
     expect(payload).toBeDefined();
     expect(payload.spec?.hosts).toBeDefined();
-    expect(payload.spec!.hosts![0]).toEqual(`${host}.admin.${UDSConfig.domain}`);
+    expect(payload.spec!.hosts![0]).toEqual(`${host}.${UDSConfig.adminDomain}`);
   });
 
   it("should create an advancedHttp VirtualService object", () => {

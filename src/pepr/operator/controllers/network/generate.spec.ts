@@ -134,7 +134,6 @@ describe("network policy generate with remoteCidr", () => {
             {
               ipBlock: {
                 cidr: "192.168.0.0/16",
-                except: ["169.254.169.254/32"], // Include the except field here
               },
             },
           ],
@@ -162,7 +161,6 @@ describe("network policy generate with remoteCidr", () => {
             {
               ipBlock: {
                 cidr: "10.0.0.0/8",
-                except: ["169.254.169.254/32"], // Include the except field here
               },
             },
           ],

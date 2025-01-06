@@ -14,6 +14,13 @@ import {
   updateAPIServerCIDRFromService,
 } from "./controllers/network/generators/kubeAPI";
 
+// Controller imports
+import {
+  initAllNodesTarget,
+  updateKubeNodesFromCreateUpdate,
+  updateKubeNodesFromDelete,
+} from "./controllers/network/generators/kubeNodes";
+
 // CRD imports
 import { UDSExemption, UDSPackage } from "./crd";
 import { validator } from "./crd/validators/package-validator";
@@ -31,14 +38,25 @@ const log = setupLogger(Component.OPERATOR);
 
 // Pre-populate the API server CIDR since we are not persisting the EndpointSlice
 // Note ignore any errors since the watch will still be running hereafter
-void initAPIServerCIDR();
+if (process.env.PEPR_WATCH_MODE === "true" || process.env.PEPR_MODE === "dev") {
+  void initAPIServerCIDR();
+}
+
+// Pre-populate the Node CIDR list since we are not persisting it
+// Note ignore any errors since the watch will still be running hereafter
+if (process.env.PEPR_WATCH_MODE === "true" || process.env.PEPR_MODE === "dev") {
+  void initAllNodesTarget();
+}
 
 // Watch for changes to the API server EndpointSlice and update the API server CIDR
-When(a.EndpointSlice)
-  .IsCreatedOrUpdated()
-  .InNamespace("default")
-  .WithName("kubernetes")
-  .Reconcile(updateAPIServerCIDRFromEndpointSlice);
+// Skip if a CIDR is defined in the UDS Config
+if (!UDSConfig.kubeApiCidr) {
+  When(a.EndpointSlice)
+    .IsCreatedOrUpdated()
+    .InNamespace("default")
+    .WithName("kubernetes")
+    .Reconcile(updateAPIServerCIDRFromEndpointSlice);
+}
 
 // Watch for changes to the API server Service and update the API server CIDR
 When(a.Service)
@@ -78,3 +96,13 @@ When(UDSPackage)
     log.info("Identity and Authorization layer removed, operator will NOT handle SSO.");
     UDSConfig.isIdentityDeployed = false;
   });
+
+// Watch for changes to the Nodes and update the Node CIDR list
+if (!UDSConfig.kubeNodeCidrs) {
+  When(a.Node).IsCreatedOrUpdated().Reconcile(updateKubeNodesFromCreateUpdate);
+}
+
+// Watch for Node deletions and update the Node CIDR list
+if (!UDSConfig.kubeNodeCidrs) {
+  When(a.Node).IsDeleted().Reconcile(updateKubeNodesFromDelete);
+}

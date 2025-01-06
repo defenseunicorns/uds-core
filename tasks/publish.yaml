@@ -14,7 +14,7 @@ variables:
   - name: VERSION
     description: "The version of the packages to build"
     # x-release-please-start-version
-    default: "0.30.0"
+    default: "0.33.1"
     # x-release-please-end
 
   - name: LAYER
@@ -40,6 +40,13 @@ tasks:
              pkgPath="${TARGET_REPO}/core"
              uds zarf tools registry copy ${pkgPath}:${VERSION}-${FLAVOR} ${pkgPath}:latest-${FLAVOR}
           fi
+
+  - name: checkpoint-package
+    description: "Publish the UDS checkpoint package"
+    actions:
+      - description: "Publish the checkpoint package for the current UDS_ARCH"
+        cmd: |
+          uds zarf package publish build/zarf-package-k3d-core-slim-dev-${UDS_ARCH}-${VERSION}.tar.zst oci://ghcr.io/defenseunicorns/dev/uds/checkpoints
 
   - name: bundles
     description: "Publish UDS Bundles"

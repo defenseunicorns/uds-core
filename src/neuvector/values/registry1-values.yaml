@@ -3,7 +3,7 @@
 
 registry: registry1.dso.mil
 # renovate: datasource=docker depName=registry1.dso.mil/ironbank/neuvector/neuvector/controller versioning=docker
-tag: "5.3.4"
+tag: "5.4.1"
 manager:
   image:
     repository: ironbank/neuvector/neuvector/manager
@@ -47,7 +47,7 @@ cve:
     image:
       repository: ironbank/redhat/ubi/ubi9-minimal
       # renovate: datasource=docker depName=registry1.dso.mil/ironbank/redhat/ubi/ubi9-minimal versioning=docker
-      tag: "9.4"
+      tag: "9.5"
     containerSecurityContext:
       capabilities:
         drop:

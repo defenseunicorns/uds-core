@@ -4,6 +4,7 @@
     ":semanticCommits",
     ":semanticCommitTypeAll(chore)"
   ],
+  "ignorePresets": [":ignoreModulesAndTests"],
   "branchConcurrentLimit": 0,
   "prConcurrentLimit": 0,
   "prHourlyLimit": 0,
@@ -73,17 +74,17 @@
       "commitMessageTopic": "grafana"
     },
     {
+      "matchFileNames": ["test/**", ".github/**", "bundles/**", "tasks/*.yaml", ".vscode/settings.json", "src/test/**"],
+      "groupName": "support-deps",
+      "commitMessageTopic": "support dependencies"
+    },
+    {
       "matchFileNames": ["package.json", "package-lock.json", "tasks/create.yaml"],
       "groupName": "pepr",
       "commitMessageTopic": "pepr"
     },
     {
-      "matchFileNames": ["e2e/playwright/**", ".github/**", "bundles/**", "tasks/iac.yaml", "tasks/setup.yaml", ".vscode/settings.json"],
-      "groupName": "support-deps",
-      "commitMessageTopic": "support dependencies"
-    },
-    {
-      "matchPackageNames": ["defenseunicorns/uds-common"],
+      "matchPackageNames": ["defenseunicorns/uds-common", "mcr.microsoft.com/playwright"],
       "groupName": "support-deps",
       "commitMessageTopic": "support-deps"
     }

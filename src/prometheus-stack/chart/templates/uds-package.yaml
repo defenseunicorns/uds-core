@@ -56,6 +56,12 @@ spec:
           app.kubernetes.io/name: prometheus
         description: "Metrics Scraping"
 
+      - direction: Egress
+        remoteGenerated: KubeNodes
+        selector:
+          app.kubernetes.io/name: prometheus
+        description: "Metrics Scraping of Kube Nodes"
+
       - direction: Ingress
         remoteNamespace: grafana
         remoteSelector:
@@ -65,3 +71,7 @@ spec:
         port: 9090
         description: "Grafana Metrics Queries"
 
+      # Custom rules for additional networking access
+      {{- with .Values.additionalNetworkAllow }}
+      {{ toYaml . | nindent 6 }}
+      {{- end }}

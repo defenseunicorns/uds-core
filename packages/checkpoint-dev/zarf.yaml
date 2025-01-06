@@ -1,0 +1,97 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+kind: ZarfPackageConfig
+metadata:
+  name: k3d-core-slim-dev
+  description: "Rehydratable UDS K3d + UDS Core Slim (Istio, UDS Operator and Keycloak) Checkpoint"
+  authors: "Defense Unicorns - Product"
+  # x-release-please-start-version
+  version: "0.33.1"
+  # x-release-please-end
+
+variables:
+  - name: CLUSTER_NAME
+    description: "Name of the cluster"
+    default: "uds"
+
+  - name: K3D_EXTRA_ARGS
+    description: "Optionally pass k3d arguments to the default"
+    default: ""
+
+  - name: NGINX_EXTRA_PORTS
+    description: "Optionally allow more ports through Nginx (combine with K3D_EXTRA_ARGS '-p <port>:<port>@server:*')"
+    default: "[]"
+
+components:
+  - name: destroy-cluster
+    required: true
+    description: "Optionally destroy the cluster before creating it"
+    actions:
+      onDeploy:
+        before:
+          - cmd: |
+              echo "This package requires elevated permissions to deploy - requesting sudo (if paused enter password)"
+              sudo echo "got sudo! success!"
+          - cmd: k3d cluster delete ${ZARF_VAR_CLUSTER_NAME}
+            description: "Destroy the cluster"
+          - cmd: |
+              sudo rm -rf data
+
+  - name: create-cluster
+    required: true
+    description: "Create the K3d cluster w/UDS Core pre-installed"
+    files:
+      - source: uds-checkpoint.tar
+        target: uds-checkpoint.tar
+    actions:
+      onCreate:
+        before:
+          - cmd: ./checkpoint.sh
+        onSuccess:
+          - cmd: |
+              if [ -z "$TMPDIR" ]; then
+                #  macOS sets TMPDIR to a user temp directory - this also provides more options to linux
+                TMPDIR="/tmp"
+              fi
+              DATA_DIR="${TMPDIR}/uds-checkpoint-data"
+              sudo rm -rf "$DATA_DIR" uds-checkpoint.tar
+      onDeploy:
+        after:
+          - cmd: |
+              if [ -z "$TMPDIR" ]; then
+                #  macOS sets TMPDIR to a user temp directory - this also provides more options to linux
+                TMPDIR="/tmp"
+              fi
+              DATA_DIR="${TMPDIR}/uds-checkpoint-data"
+              mkdir -p "$DATA_DIR"
+
+              sudo tar --blocking-factor=64 -xpf uds-checkpoint.tar -C "$DATA_DIR"
+              K8S_TOKEN="$(sudo cat ${DATA_DIR}/k3s_data/server/token)"
+              echo $K8S_TOKEN
+              sudo docker load -i "${DATA_DIR}/uds-k3d-checkpoint-latest.tar"
+
+              k3d cluster create \
+                -p "80:80@server:*" \
+                -p "443:443@server:*" \
+                --api-port 6550 \
+                --k3s-arg "--disable=traefik@server:*" \
+                --k3s-arg "--disable=metrics-server@server:*" \
+                --k3s-arg "--disable=servicelb@server:*" \
+                --k3s-arg "--disable=local-storage@server:*" \
+                --k3s-arg "--token=${K8S_TOKEN}@server:*" \
+                -v "${DATA_DIR}/kubelet_data:/var/lib/kubelet@server:*" \
+                -v "${DATA_DIR}/k3s_data:/var/lib/rancher/k3s@server:*" \
+                --image ghcr.io/defenseunicorns/uds-core/checkpoint:latest ${ZARF_VAR_K3D_EXTRA_ARGS} \
+                ${ZARF_VAR_CLUSTER_NAME}
+            description: "Create the cluster"
+          # This action waits on Keycloak since it is the slowest pod to start after cluster creation. By waiting on it, we guarantee the cluster is healthy and usable after deployment.
+          - description: Keycloak to be Healthy
+            wait:
+              cluster:
+                kind: Pod
+                name: app.kubernetes.io/name=keycloak
+                namespace: keycloak
+                condition: Ready
+        onSuccess:
+          - cmd: rm -f uds-checkpoint.tar

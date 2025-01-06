@@ -8,15 +8,14 @@ runs:
   using: composite
   steps:
     - name: Use Node.js latest
-      uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6 # v4.0.4
+      uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
       with:
         node-version: 20
-    - name: Set up Homebrew
-      uses: Homebrew/actions/setup-homebrew@master
     - name: Install UDS CLI
-      # renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
-      run: brew install defenseunicorns/tap/uds@0.17.0
-      shell: bash
+      uses: defenseunicorns/setup-uds@ab842abcad1f7a3305c2538e3dd1950d0daacfa5 # v1.0.1
+      with:
+        # renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
+        version: v0.20.0
     - name: Run Formatting Checks
       run: uds run lint-check --no-progress
       shell: bash

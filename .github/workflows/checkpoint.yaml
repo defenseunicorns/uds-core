@@ -1,0 +1,77 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+name: Checkpoint UDS Core
+
+on:
+  pull_request:
+    # milestoned is added here as a workaround for release-please not triggering PR workflows (PRs should be added to a milestone to trigger the workflow).
+    # labeled is added here to allow for "manual" triggering of CI on renovate PRs
+    types: [milestoned, opened, reopened, synchronize, labeled]
+    paths:
+      - packages/checkpoint-dev/**
+      - .github/workflows/checkpoint**
+      - tasks/test.yaml
+      - "!**/*.md"
+      - "!**.jpg"
+      - "!**.png"
+      - "!**.gif"
+      - "!**.svg"
+  # triggered by tag-and-release.yaml
+  workflow_call:
+
+jobs:
+  checkpoint:
+    strategy:
+      matrix:
+        architecture: [amd64, arm64]
+    runs-on: ${{ matrix.architecture == 'arm64' && 'uds-ubuntu-arm64-4-core' || 'uds-ubuntu-big-boy-4-core' }}
+    name: UDS Core Checkpoint
+
+    permissions:
+      contents: read
+      packages: write
+      id-token: write  # This is needed for OIDC federation.
+
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Check renovate readiness
+        if: startsWith(github.event.pull_request.head.ref, 'renovate/') # Only call for Renovate PRs
+        uses: ./.github/actions/renovate-readiness
+
+      - name: Environment setup
+        uses: ./.github/actions/setup
+        with:
+          registry1Username: ${{ secrets.IRON_BANK_ROBOT_USERNAME }}
+          registry1Password: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
+          ghToken: ${{ secrets.GITHUB_TOKEN }}
+          chainguardIdentity: ${{ secrets.CHAINGUARD_IDENTITY }}
+
+      - name: Deploy K3d + UDS Core Slim Bundle
+        run: |
+          uds run -f tasks/deploy.yaml latest-slim-bundle-release --no-progress
+
+      - name: Create Checkpoint Package
+        run: |
+          uds run -f tasks/create.yaml checkpoint-dev-package --no-progress
+
+      - name: Test Checkpoint Package
+        run: |
+          uds run -f tasks/deploy.yaml checkpoint-package --no-progress
+          npm ci
+          uds run test:slim-dev --no-progress
+
+      - name: Debug Output
+        if: always()
+        uses: ./.github/actions/debug-output
+
+      - name: Publish Checkpoint Package
+        if: ${{ github.event_name != 'pull_request' }}
+        run: uds run -f tasks/publish.yaml checkpoint-package --no-progress
+
+      - name: Save logs
+        if: always()
+        uses: ./.github/actions/save-logs
+        with:
+          suffix: -${{ matrix.architecture }}

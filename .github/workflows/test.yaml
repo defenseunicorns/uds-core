@@ -37,21 +37,22 @@ on:
 
 permissions:
   contents: read
-  id-token: write  # This is needed for OIDC federation.
+  id-token: write # This is needed for OIDC federation.
   packages: read # Allows reading the published GHCR packages
 
 jobs:
   test:
     # Use the 8 core runner for full-core or 4 core runner (with larger disk) for func layers tests
     runs-on: "${{ inputs.package == 'all' && 'uds-ubuntu-big-boy-8-core' || 'uds-ubuntu-big-boy-4-core'}}"
-    timeout-minutes: 30
+    # Increase the timeout for longer upgrades
+    timeout-minutes: ${{ inputs.test_type == 'upgrade' && 40 || 30 }}
     name: Test
     env:
       UDS_LAYER: ${{ inputs.package }}
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Environment setup
         uses: ./.github/actions/setup
@@ -79,7 +80,7 @@ jobs:
 
       - name: Upload Assessment
         if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
-        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
+        uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b # v4.5.0
         with:
           name: ${{ inputs.flavor }}-assessment-results
           path: ./compliance/oscal-assessment-results.yaml

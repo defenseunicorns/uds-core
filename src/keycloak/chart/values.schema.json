@@ -130,6 +130,9 @@
     "domain": {
       "type": "string"
     },
+    "adminDomain": {
+      "type": "string"
+    },
     "enableServiceLinks": {
       "type": "boolean"
     },
@@ -288,6 +291,23 @@
       "type": "object",
       "properties": {
         "GOOGLE_IDP_ENABLED": {
+          "type": "boolean"
+        }
+      }
+    },
+    "realmAuthFlows": {
+      "type": "object",
+      "properties": {
+        "USERNAME_PASSWORD_AUTH_ENABLED": {
+          "type": "boolean"
+        },
+        "X509_AUTH_ENABLED": {
+          "type": "boolean"
+        },
+        "SOCIAL_AUTH_ENABLED": {
+          "type": "boolean"
+        },
+        "OTP_ENABLED": {
           "type": "boolean"
         }
       }
