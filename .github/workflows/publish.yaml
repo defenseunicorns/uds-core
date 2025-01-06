@@ -3,6 +3,12 @@
 
 name: Publish UDS Core
 
+# Permissions for the GITHUB_TOKEN used by the workflow.
+permissions:
+  contents: read # Allows reading the content of the repository.
+  packages: read # Allows reading the content of the repository's packages.
+  id-token: write
+
 on:
   # triggered by tag-and-release.yaml and snapshot-release.yaml
   workflow_call:
