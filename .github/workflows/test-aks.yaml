@@ -94,6 +94,13 @@ jobs:
         if: ${{ always() }}
         uses: ./.github/actions/debug-output
 
+      - name: Save logs
+        if: always()
+        uses: ./.github/actions/save-logs
+        with:
+          suffix: -aks-${{ matrix.flavor }}
+          distro: "aks"
+
       - name: Remove UDS Core
         if: always()
         run: uds remove .github/bundles/aks/uds-bundle-uds-core-aks-nightly-*.tar.zst --confirm
