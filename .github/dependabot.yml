@@ -1,0 +1,16 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: daily
+
+  - package-ecosystem: npm
+    directory: /test/jest
+    schedule:
+      interval: daily
+
+  - package-ecosystem: npm
+    directory: /test/playwright
+    schedule:
+      interval: daily
