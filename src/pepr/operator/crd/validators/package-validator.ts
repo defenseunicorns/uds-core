@@ -7,8 +7,10 @@ import { PeprValidateRequest } from "pepr";
 
 import { Gateway, Protocol, UDSPackage } from "..";
 import { generateVSName } from "../../controllers/istio/virtual-service";
+import { generateMonitorName } from "../../controllers/monitoring/common";
 import { generateName } from "../../controllers/network/generate";
 import { sanitizeResourceName } from "../../controllers/utils";
+import { Kind } from "../../crd/generated/package-v1alpha1";
 import { migrate } from "../migrate";
 
 const invalidNamespaces = ["kube-system", "kube-public", "_unknown_", "pepr-system"];
@@ -188,21 +190,31 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
 
   const monitors = pkg.spec?.monitor ?? [];
 
-  // Ensure serviceMonitors use a unique description or selector/portName used for generating the resource name
-  const monitorNames = new Set<string>();
+  // Ensure service and pod monitors use a unique description or selector/portName used for generating the resource name
+  const podMonitorNames = new Set<string>();
+  const svcMonitorNames = new Set<string>();
 
   for (const monitor of monitors) {
-    const monitorName = sanitizeResourceName(
-      monitor.description || `${Object.values(monitor.selector)}-${monitor.portName}`,
-    );
-
-    if (monitorNames.has(monitorName)) {
-      return req.Deny(
-        `A serviceMonitor resource generated from the Package, ${pkg.metadata?.name} contains a duplicate name, please provide a unique description for each item in the monitor array`,
-      );
+    const monitorName = generateMonitorName(pkgName, monitor);
+    if (monitor.kind === Kind.PodMonitor) {
+      if (podMonitorNames.has(monitorName)) {
+        return req.Deny(
+          `The combination of characteristics of this monitor entry would create a duplicate PodMonitor. ` +
+            `Verify you do not have duplicate values, or add a unique "description" field for this monitor. ` +
+            `The duplicate rule would be named "${monitorName}".`,
+        );
+      }
+      podMonitorNames.add(monitorName);
+    } else {
+      if (svcMonitorNames.has(monitorName)) {
+        return req.Deny(
+          `The combination of characteristics of this monitor entry would create a duplicate ServiceMonitor. ` +
+            `Verify you do not have duplicate values, or add a unique "description" field for this monitor. ` +
+            `The duplicate rule would be named "${monitorName}".`,
+        );
+      }
+      svcMonitorNames.add(monitorName);
     }
-
-    monitorNames.add(monitorName);
   }
 
   return req.Approve();
