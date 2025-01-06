@@ -1,22 +1,51 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 includes:
   - create: ./create.yaml
   - setup: ./setup.yaml
   - deploy: ./deploy.yaml
-  - compliance: https://raw.githubusercontent.com/defenseunicorns/uds-common/v0.11.2/tasks/compliance.yaml
+  - util: ./utils.yaml
+  - base-layer: ../packages/base/tasks.yaml
+  - idam-layer: ../packages/identity-authorization/tasks.yaml
+  - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/refs/tags/v0.13.1/tasks/setup.yaml
+  - compliance: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.6.1/tasks/compliance.yaml
 
 tasks:
-  - name: single-package
-    description: "Build and test a single package, must set UDS_PKG environment variable"
+  - name: base
+    description: "Build and test the base layer"
     actions:
-      - task: create:single-package
+      - task: create:pepr-build
       - task: setup:k3d-test-cluster
-      - task: deploy:single-package
+      - cmd: uds run -f tasks/test.yaml single-layer --set FLAVOR=${FLAVOR} --set=layer=base
 
+  - name: single-layer
+    description: "Build and test a single layer, must set UDS_LAYER environment variable"
+    actions:
+      - task: create:single-layer
+        with:
+          layer: ${LAYER}
+      - task: deploy:single-layer
+        with:
+          layer: ${LAYER}
       - description: "Validate the package"
-        cmd: uds run -f src/${UDS_PKG}/tasks.yaml validate --no-progress
+        cmd: uds run -f packages/${LAYER}/tasks.yaml validate --no-progress
+
+  - name: layer-dependencies
+    description: "Sets up a k3d cluster and deploys dependencies for the given layer"
+    actions:
+      - task: setup:k3d-test-cluster
+      - cmd: uds zarf tools yq '.metadata.x-uds-dependencies.[]' packages/${LAYER}/zarf.yaml 2>/dev/null
+        mute: true
+        setVariables:
+          - name: LAYER_DEPS
+      - cmd: |
+          for dep in $LAYER_DEPS; do
+            uds run -f tasks/test.yaml single-layer --set LAYER=$dep --set FLAVOR=${FLAVOR} --no-progress
+          done
 
   - name: validate-packages
-    description: "Validated all packages"
+    description: "Validate all packages"
     # loop through each src/* package and run the validate.yaml task
     actions:
       - cmd: |
@@ -25,12 +54,49 @@ tasks:
           done
           set +e
 
+  - name: e2e-tests
+    description: "E2E Test all packages"
+    # Run each e2e test type from the e2e folder
+    actions:
+      - description: "Setup the Keycloak admin user if needed"
+        task: util:keycloak-admin-user
+      - description: "Setup the Doug User for testing"
+        # Self-reference this task file to avoid https://github.com/defenseunicorns/maru-runner/issues/144
+        cmd: uds run -f tasks/test.yaml common-setup:create-doug-user --set KEYCLOAK_GROUP="/UDS Core/Admin" # Adds the test doug user
+      - description: "Run Playwright E2E tests for all packages"
+        dir: test/playwright
+        cmd: |
+          # renovate: datasource=docker depName=mcr.microsoft.com/playwright versioning=docker
+          docker run --rm --ipc=host --net=host -e FULL_CORE="true" --mount type=bind,source="$(pwd)",target=/app mcr.microsoft.com/playwright:v1.49.1-noble sh -c " \
+            cd app && \
+            npm ci && \
+            npx playwright test \
+            "
+      - description: "Run E2E Tests"
+        cmd: |
+          npm ci
+          npx jest test/jest/
+
   - name: uds-core
     description: "Build and test UDS Core"
     actions:
       - task: create:standard-package
       - task: create:k3d-standard-bundle
       - task: deploy:k3d-standard-bundle
+      - task: validate-packages
+
+  - name: uds-core-e2e
+    description: "Build and test UDS Core e2e"
+    actions:
+      - task: uds-core
+      - task: e2e-tests
+
+  - name: uds-core-ha
+    description: "Build and test UDS Core"
+    actions:
+      - task: create:standard-package
+      - task: create:k3d-standard-bundle
+      - task: deploy:k3d-standard-bundle-ha
       - task: validate-packages
 
   - name: uds-core-upgrade
@@ -41,13 +107,14 @@ tasks:
       - task: create:standard-package
       - task: deploy:standard-package
       - task: validate-packages
+      - task: e2e-tests
 
   - name: compliance-validate
     description: "validate against the required compliance"
     actions:
       - task: compliance:validate
         with:
-          oscalfile: ./compliance/oscal-component.yaml
+          oscalfile: ./compliance/oscal-component-composed.yaml
           assessment_results: ./compliance/oscal-assessment-results.yaml
           options: -t il4
 
@@ -58,3 +125,22 @@ tasks:
         with:
           assessment_results: ./compliance/oscal-assessment-results.yaml
           options: -t il4
+
+  - name: slim-dev
+    description: "Run validate for the components contained in the slim dev bundle"
+    actions:
+      - task: base-layer:validate
+        with:
+          validate_passthrough: "false"
+      - task: idam-layer:validate
+
+  - name: local-compliance-compose
+    description: "compose oscal component definitions"
+    inputs:
+      oscalfile:
+        description: oscal file to compose
+        default: ./compliance/oscal-component.yaml
+      options:
+        description: for setting additional flags
+    actions:
+      - cmd: lula tools compose -f ${{ .inputs.oscalfile }} ${{ .inputs.options }}

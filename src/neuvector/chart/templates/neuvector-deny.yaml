@@ -1,0 +1,20 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+{{- if .Values.denyLocalAuth }}
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: neuvector-deny-local-login
+  namespace: {{ .Release.Namespace }}
+spec:
+  action: DENY
+  selector:
+    matchLabels:
+      app: neuvector-manager-pod
+  rules:
+  - to:
+    - operation:
+        paths: ["/auth"]
+        ports: ["8443"]
+{{- end }}

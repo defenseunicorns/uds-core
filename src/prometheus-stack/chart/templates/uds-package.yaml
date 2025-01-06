@@ -1,3 +1,6 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 apiVersion: uds.dev/v1alpha1
 kind: Package
 metadata:
@@ -46,12 +49,18 @@ spec:
         port: 10250
         description: "Webhook"
 
-      # todo: lockdown egress to scrape targets
+      # Prometheus scrape targets
       - direction: Egress
-        remoteNamespace: ""
+        remoteNamespace: "" # todo: restrict this overly permissive netpol
         selector:
           app.kubernetes.io/name: prometheus
         description: "Metrics Scraping"
+
+      - direction: Egress
+        remoteGenerated: KubeNodes
+        selector:
+          app.kubernetes.io/name: prometheus
+        description: "Metrics Scraping of Kube Nodes"
 
       - direction: Ingress
         remoteNamespace: grafana
@@ -62,9 +71,7 @@ spec:
         port: 9090
         description: "Grafana Metrics Queries"
 
-      - direction: Egress
-        remoteNamespace: tempo
-        remoteSelector:
-          app.kubernetes.io/name: tempo
-        port: 9411
-        description: "Tempo"
+      # Custom rules for additional networking access
+      {{- with .Values.additionalNetworkAllow }}
+      {{ toYaml . | nindent 6 }}
+      {{- end }}

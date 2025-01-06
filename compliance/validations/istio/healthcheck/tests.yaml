@@ -1,0 +1,18 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+pass:
+  - test: default
+    validation: validation.yaml
+    resources: resources.json
+    expected-validation: true
+  - test: hpa_zero_replicas
+    validation: validation.yaml
+    resources: resources.json
+    permutation: ".istiodhpa.status.currentReplicas = 0"
+    expected-validation: false
+  - test: deployment_condition_false
+    validation: validation.yaml
+    resources: resources.json
+    permutation: ".istioddeployment.status.availableReplicas = 0"
+    expected-validation: false

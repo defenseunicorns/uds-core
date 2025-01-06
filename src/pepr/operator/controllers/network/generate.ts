@@ -1,11 +1,18 @@
+/**
+ * Copyright 2024 Defense Unicorns
+ * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+ */
+
 import { V1NetworkPolicyPeer, V1NetworkPolicyPort } from "@kubernetes/client-node";
 import { kind } from "pepr";
 
 import { Allow, RemoteGenerated } from "../../crd";
-import { anywhere } from "./generators/anywhere";
+import { anywhere, anywhereInCluster } from "./generators/anywhere";
 import { cloudMetadata } from "./generators/cloudMetadata";
 import { intraNamespace } from "./generators/intraNamespace";
 import { kubeAPI } from "./generators/kubeAPI";
+import { kubeNodes } from "./generators/kubeNodes";
+import { remoteCidr } from "./generators/remoteCidr";
 
 function isWildcardNamespace(namespace: string) {
   return namespace === "" || namespace === "*";
@@ -20,6 +27,10 @@ function getPeers(policy: Allow): V1NetworkPolicyPeer[] {
         peers = kubeAPI();
         break;
 
+      case RemoteGenerated.KubeNodes:
+        peers = kubeNodes();
+        break;
+
       case RemoteGenerated.CloudMetadata:
         peers = cloudMetadata;
         break;
@@ -29,7 +40,7 @@ function getPeers(policy: Allow): V1NetworkPolicyPeer[] {
         break;
 
       case RemoteGenerated.Anywhere:
-        peers = [anywhere];
+        peers = [anywhere, anywhereInCluster];
         break;
     }
   } else if (policy.remoteNamespace !== undefined || policy.remoteSelector !== undefined) {
@@ -52,6 +63,8 @@ function getPeers(policy: Allow): V1NetworkPolicyPeer[] {
     }
 
     peers.push(peer);
+  } else if (policy.remoteCidr !== undefined) {
+    peers = [remoteCidr(policy.remoteCidr)];
   }
 
   return peers;
@@ -83,6 +96,11 @@ export function generate(namespace: string, policy: Allow): kind.NetworkPolicy {
     generated.metadata!.annotations = {
       "uds/description": policy.description,
     };
+  }
+
+  // Add the generated policy label (used to track KubeAPI and KubeNodes policies)
+  if (policy.remoteGenerated) {
+    generated.metadata!.labels!["uds/generated"] = policy.remoteGenerated;
   }
 
   // Create the network policy peers

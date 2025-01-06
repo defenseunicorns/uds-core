@@ -1,3 +1,9 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+includes:
+  - utils: ../../tasks/utils.yaml
+
 tasks:
   - name: validate
     actions:
@@ -23,3 +29,20 @@ tasks:
             echo "ERROR: Grafana is redirecting to $(curl -L -isS https://grafana.admin.uds.dev --output /dev/null -w '%{url_effective}')."
             exit 1
           fi
+
+  - name: e2e-test
+    actions:
+      - description: "Setup the Keycloak admin user if needed"
+        task: utils:keycloak-admin-user
+      - description: "Setup the Doug User for testing"
+        # Self-reference this task file to avoid https://github.com/defenseunicorns/maru-runner/issues/144
+        cmd: uds run -f tasks/test.yaml common-setup:create-doug-user --set KEYCLOAK_GROUP="/UDS Core/Admin" # Adds the test doug user
+      - description: E2E Test for Grafana, optionally set FULL_CORE=true to test integrations with Loki
+        cmd: |
+          # renovate: datasource=docker depName=mcr.microsoft.com/playwright versioning=docker
+          docker run --rm --ipc=host -e FULL_CORE="${FULL_CORE}" --net=host --mount type=bind,source="$(pwd)",target=/app mcr.microsoft.com/playwright:v1.49.1-noble sh -c " \
+            cd app && \
+            npm ci && \
+            npx playwright test grafana.test.ts \
+            "
+        dir: test/playwright

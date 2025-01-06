@@ -1,3 +1,8 @@
+/**
+ * Copyright 2024 Defense Unicorns
+ * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+ */
+
 import { beforeAll, describe, expect, it, jest } from "@jest/globals";
 import { PeprValidateRequest, kind } from "pepr";
 import { isExempt } from ".";
@@ -34,7 +39,7 @@ describe("test registering exemptions", () => {
     const req = {
       Raw: {
         metadata: {
-          name: "promtail",
+          name: "vector",
           namespace: "monitoring",
         },
       },

@@ -1,0 +1,89 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+metadata:
+  name: request-authenication-and-auth-policies-configured
+  uuid: 3e217577-930e-4469-a999-1a5704b5cecb
+domain:
+  type: kubernetes
+  kubernetes-spec:
+    resources:
+      - name: requestAuthentication
+        resource-rule:
+          group: security.istio.io
+          resource: requestauthentications
+          namespaces: []
+          version: v1beta1
+      - name: authorizationPolicy
+        resource-rule:
+          group: security.istio.io
+          resource: authorizationpolicies
+          namespaces: []
+          version: v1beta1
+provider:
+  type: opa
+  opa-spec:
+    rego: |
+      package validate
+
+      # Default policy result
+      default validate := false
+      default msg := "Not evaluated"
+
+      # Validate both RequestAuthentication and AuthorizationPolicy are configured
+      validate {
+        authorization_policies_exist_and_configured.result
+        request_authentications_exist_and_configured.result
+      }
+
+      msg = concat(" ", [authorization_policies_exist_and_configured.msg, request_authentications_exist_and_configured.msg])
+
+      # Check AuthorizationPolicies exist and are configured
+      bad_auth_policies := {sprintf("%s/%s", [authPolicy.metadata.namespace, authPolicy.metadata.name]) |
+        authPolicy := input.authorizationPolicy[_]
+        authPolicy.kind == "AuthorizationPolicy"
+        authorization_policy_not_configured(authPolicy)
+      }
+
+      authorization_policy_not_configured(ap) {
+        # Check for missing or improperly configured rules
+        not ap.spec.rules
+      }
+
+      authorization_policies_exist_and_configured = {"result": true, "msg": msg} {
+        count(input.authorizationPolicy) > 0
+          count(bad_auth_policies) == 0
+        msg := "All AuthorizationPolicies properly configured."
+      } else = {"result": false, "msg": msg} {
+        count(input.authorizationPolicy) == 0
+        msg := "No AuthorizationPolicies found."
+      } else = {"result": false, "msg": msg} {
+        msg := sprintf("Some AuthorizationPolicies not properly configured: %v.", [concat(", ", bad_auth_policies)])
+      }
+
+      # Check RequestAuthentications exist and are configured
+      bad_request_authentications := {sprintf("%s/%s", [ra.metadata.namespace, ra.metadata.name]) |
+        ra := input.requestAuthentication[_]
+        ra.kind == "RequestAuthentication"
+        request_authentication_not_configured(ra)
+      }
+
+      request_authentication_not_configured(ra) {
+        # Check for missing or improperly configured JWT rules
+        not ra.spec.jwtRules
+      }
+
+      request_authentications_exist_and_configured = {"result": true, "msg": msg} {
+        count(input.requestAuthentication) > 0
+          count(bad_request_authentications) == 0
+        msg := "All RequestAuthentications properly configured."
+      } else = {"result": false, "msg": msg} {
+        count(input.requestAuthentication) == 0
+        msg := "No RequestAuthentications found."
+      } else = {"result": false, "msg": msg} {
+        msg := sprintf("Some RequestAuthentications not properly configured: %v.", [concat(", ", bad_request_authentications)])
+      }
+    output:
+      validation: validate.validate
+      observations:
+        - validate.msg

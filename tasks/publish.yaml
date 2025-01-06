@@ -1,5 +1,11 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+
 includes:
   - utils: utils.yaml
+  - test: test.yaml
+  - setup: setup.yaml
 
 variables:
   - name: FLAVOR
@@ -8,8 +14,10 @@ variables:
   - name: VERSION
     description: "The version of the packages to build"
     # x-release-please-start-version
-    default: "0.25.2"
+    default: "0.33.1"
     # x-release-please-end
+
+  - name: LAYER
 
 tasks:
   - name: standard-package
@@ -33,6 +41,13 @@ tasks:
              uds zarf tools registry copy ${pkgPath}:${VERSION}-${FLAVOR} ${pkgPath}:latest-${FLAVOR}
           fi
 
+  - name: checkpoint-package
+    description: "Publish the UDS checkpoint package"
+    actions:
+      - description: "Publish the checkpoint package for the current UDS_ARCH"
+        cmd: |
+          uds zarf package publish build/zarf-package-k3d-core-slim-dev-${UDS_ARCH}-${VERSION}.tar.zst oci://ghcr.io/defenseunicorns/dev/uds/checkpoints
+
   - name: bundles
     description: "Publish UDS Bundles"
     actions:
@@ -52,3 +67,12 @@ tasks:
           uds zarf tools registry copy ${pkgPath}:${VERSION} ${pkgPath}:latest
           pkgPath="${TARGET_REPO}/bundles/k3d-core-slim-dev"
           uds zarf tools registry copy ${pkgPath}:${VERSION} ${pkgPath}:latest
+
+  - name: single-layer
+    description: "Test and Publish UDS Core layer"
+    actions:
+      - task: test:layer-dependencies
+      - task: test:single-layer
+      - task: utils:determine-repo
+      - description: "Publish build of layer"
+        cmd: uds zarf package publish build/zarf-package-core-${LAYER}-${UDS_ARCH}-${VERSION}.tar.zst oci://${TARGET_REPO}

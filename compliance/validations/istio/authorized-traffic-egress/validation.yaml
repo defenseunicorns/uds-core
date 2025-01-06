@@ -1,0 +1,17 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+metadata:
+  name: authorized-traffic-egress-PLACEHOLDER
+  uuid: 7455f86d-b79c-4226-9ce3-f3fb7d9348c8
+domain:
+  type: kubernetes
+  kubernetes-spec:
+    resources: []
+provider:
+  type: opa
+  opa-spec:
+    rego: |
+      package validate
+
+      default validate := false

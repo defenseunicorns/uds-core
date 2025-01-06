@@ -1,3 +1,6 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 tasks:
   - name: validate
     actions:
@@ -21,3 +24,10 @@ tasks:
             name: app.kubernetes.io/component=gateway
             namespace: loki
             condition: Ready
+
+  - name: e2e-test
+    actions:
+      - description: "Run Loki E2E tests"
+        cmd: |
+            npm ci && npx jest --testPathPattern loki*
+        dir: test/jest

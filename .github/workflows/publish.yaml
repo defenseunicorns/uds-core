@@ -1,6 +1,10 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 name: Publish UDS Core
 
 on:
+  # triggered by tag-and-release.yaml and snapshot-release.yaml
   workflow_call:
     inputs:
       snapshot:
@@ -11,6 +15,7 @@ on:
 jobs:
   publish-uds-core:
     strategy:
+      fail-fast: false
       matrix:
         flavor: [upstream, registry1, unicorn]
     runs-on: "uds-ubuntu-big-boy-8-core"
@@ -22,7 +27,7 @@ jobs:
       id-token: write  # This is needed for OIDC federation.
 
     steps:
-      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Environment setup
         uses: ./.github/actions/setup
@@ -44,22 +49,22 @@ jobs:
         if: ${{ inputs.snapshot }}
         run: |
           yq -ei '.metadata.version=env(SNAPSHOT_VERSION), (.packages[]|select(has("ref"))|select(.name=="core")).ref=env(SNAPSHOT_VERSION)' bundles/k3d-standard/uds-bundle.yaml
-          yq -ei '.metadata.version=env(SNAPSHOT_VERSION), (.packages[]|select(has("ref"))|select(.name=="core-slim-dev")).ref=env(SNAPSHOT_VERSION)' bundles/k3d-slim-dev/uds-bundle.yaml
+          yq -ei '.metadata.version=env(SNAPSHOT_VERSION), (.packages[]|select(has("ref"))|select(.name=="core-base")).ref=env(SNAPSHOT_VERSION)' bundles/k3d-slim-dev/uds-bundle.yaml
+          yq -ei '.metadata.version=env(SNAPSHOT_VERSION), (.packages[]|select(has("ref"))|select(.name=="core-identity-authorization")).ref=env(SNAPSHOT_VERSION)' bundles/k3d-slim-dev/uds-bundle.yaml
           yq -ei '.metadata.version=env(SNAPSHOT_VERSION)' packages/standard/zarf.yaml
-          yq -ei '.metadata.version=env(SNAPSHOT_VERSION)' packages/slim-dev/zarf.yaml
+          yq -ei '.metadata.version=env(SNAPSHOT_VERSION)' packages/base/zarf.yaml
+          yq -ei '.metadata.version=env(SNAPSHOT_VERSION)' packages/identity-authorization/zarf.yaml
 
       - name: Create Packages and Bundles
         run: |
           ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress --set FLAVOR=${{ matrix.flavor }}
           ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml k3d-standard-bundle --no-progress
-          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml slim-dev-package --no-progress --set FLAVOR=${{ matrix.flavor }}
-          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml k3d-slim-dev-bundle --no-progress
+          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml k3d-slim-dev-bundle --no-progress --set FLAVOR=${{ matrix.flavor }}
 
           if [ "${{ matrix.flavor }}" != "registry1" ]; then
             ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml standard-package --no-progress --set FLAVOR=${{ matrix.flavor }}
             ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-standard-bundle --no-progress
-            ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml slim-dev-package --no-progress --set FLAVOR=${{ matrix.flavor }}
-            ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-slim-dev-bundle --no-progress
+            ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-slim-dev-bundle --no-progress --set FLAVOR=${{ matrix.flavor }}
           fi
 
       # Standard Package by default tests full core
@@ -86,3 +91,46 @@ jobs:
         uses: ./.github/actions/save-logs
         with:
           suffix: -${{ matrix.flavor }}
+
+  publish-uds-core-layers:
+    if: ${{ !inputs.snapshot }}
+    strategy:
+      fail-fast: false
+      matrix:
+        flavor: [upstream, registry1, unicorn]
+        layer: [base, identity-authorization, runtime-security, backup-restore, logging, metrics-server, monitoring]
+        arch: [amd64, arm64]
+        exclude:
+          - flavor: registry1
+            arch: arm64
+    runs-on: ${{ matrix.arch == 'arm64' && 'uds-ubuntu-arm64-4-core' || 'uds-ubuntu-big-boy-4-core' }}
+    name: Publish package layers
+
+    permissions:
+      contents: read
+      packages: write
+      id-token: write  # This is needed for OIDC federation.
+
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Environment setup
+        uses: ./.github/actions/setup
+        with:
+          registry1Username: ${{ secrets.IRON_BANK_ROBOT_USERNAME }}
+          registry1Password: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
+          ghToken: ${{ secrets.GITHUB_TOKEN }}
+          chainguardIdentity: ${{ secrets.CHAINGUARD_IDENTITY }}
+
+      - name: Test and Publish Core Package Layer
+        run: uds run -f tasks/publish.yaml single-layer --set FLAVOR=${{ matrix.flavor }} --set LAYER=${{ matrix.layer }} --no-progress
+
+      - name: Debug Output
+        if: ${{ always() && !inputs.snapshot }}
+        uses: ./.github/actions/debug-output
+
+      - name: Save logs
+        if: always()
+        uses: ./.github/actions/save-logs
+        with:
+          suffix: -${{ matrix.flavor }}-${{ matrix.layer }}-${{ matrix.arch }}

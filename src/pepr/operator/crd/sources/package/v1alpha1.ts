@@ -1,3 +1,8 @@
+/**
+ * Copyright 2024 Defense Unicorns
+ * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+ */
+
 import { V1CustomResourceDefinitionVersion, V1JSONSchemaProps } from "@kubernetes/client-node";
 
 import { advancedHTTP } from "../istio/virtualservice-v1beta1";
@@ -82,7 +87,11 @@ const allow = {
       remoteGenerated: {
         description: "Custom generated remote selector for the policy",
         type: "string",
-        enum: ["KubeAPI", "IntraNamespace", "CloudMetadata", "Anywhere"],
+        enum: ["KubeAPI", "KubeNodes", "IntraNamespace", "CloudMetadata", "Anywhere"],
+      },
+      remoteCidr: {
+        description: "Custom generated policy CIDR",
+        type: "string",
       },
       port: {
         description: "The port to allow (protocol is always TCP)",
@@ -242,6 +251,19 @@ const monitor = {
         enum: ["PodMonitor", "ServiceMonitor"],
         type: "string",
       },
+      fallbackScrapeProtocol: {
+        description:
+          "The protocol for Prometheus to use if a scrape returns a blank, unparsable, or otherwise invalid Content-Type",
+        // Enum copied from upstream Prometheus supported values
+        enum: [
+          "OpenMetricsText0.0.1",
+          "OpenMetricsText1.0.0",
+          "PrometheusProto",
+          "PrometheusText0.0.4",
+          "PrometheusText1.0.0",
+        ],
+        type: "string",
+      },
       authorization: AuthorizationSchema,
     },
   },
@@ -303,6 +325,42 @@ const sso = {
           type: "string",
         },
       },
+      protocolMappers: {
+        description: "Protocol Mappers to configure on the client",
+        type: "array",
+        default: [],
+        items: {
+          type: "object",
+          required: ["name", "protocol", "protocolMapper"],
+          properties: {
+            name: {
+              description: "Name of the mapper",
+              type: "string",
+            },
+            protocol: {
+              description: "Protocol of the mapper",
+              type: "string",
+              enum: ["openid-connect", "saml"],
+            },
+            protocolMapper: {
+              description: "Protocol Mapper type of the mapper",
+              type: "string",
+            },
+            consentRequired: {
+              description: "Whether user consent is required for this mapper",
+              type: "boolean",
+              default: false,
+            },
+            config: {
+              description: "Configuration options for the mapper.",
+              type: "object",
+              additionalProperties: {
+                type: "string",
+              },
+            },
+          },
+        },
+      },
       rootUrl: {
         description: "Root URL appended to relative URLs",
         type: "string",
@@ -341,6 +399,12 @@ const sso = {
         type: "boolean",
         default: true,
       },
+      serviceAccountsEnabled: {
+        description:
+          "Enables the client credentials grant based authentication via OpenID Connect protocol.",
+        type: "boolean",
+        default: false,
+      },
       publicClient: {
         description: "Defines whether the client requires a client secret for authentication",
         type: "boolean",
@@ -359,11 +423,11 @@ const sso = {
         },
       },
       groups: {
-        description: "The client sso group type",
+        description: "The client SSO group type",
         type: "object",
         properties: {
           anyOf: {
-            description: "List of groups allowed to access to client",
+            description: "List of groups allowed to access the client",
             type: "array",
             items: {
               type: "string",
@@ -431,7 +495,7 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
               type: "integer",
             },
             phase: {
-              enum: ["Pending", "Ready", "Failed", "Retrying"],
+              enum: ["Pending", "Ready", "Failed", "Retrying", "Removing"],
               type: "string",
             },
             ssoClients: {

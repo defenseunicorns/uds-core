@@ -1,11 +1,20 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 loki:
   image:
     registry: docker.io
     repository: grafana/loki
-    tag: 2.9.6
+    tag: 3.3.2
 
 gateway:
   image:
     registry: docker.io
     repository: nginxinc/nginx-unprivileged
-    tag: 1.25-alpine
+    tag: 1.27-alpine
+
+memcached:
+  image:
+    registry: docker.io
+    repository: memcached
+    tag: 1.6.34-alpine

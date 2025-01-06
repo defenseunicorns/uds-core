@@ -1,3 +1,6 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 # The gateway name prefix
 name: change-me
 
@@ -13,6 +16,9 @@ domain: "###ZARF_VAR_DOMAIN###"
 
 #   # The CA certificate for the gateway when using `MUTUAL' or 'OPTIONAL_MUTUAL' (base64 encoded)
 #   cacert: ""
+
+#   # The name of the secret containing the TLS certificate to use for this gateway, this will override cert, key and cacert
+#   credentialName: ""
 
 #   # Map of gateway server entries
 #   servers:

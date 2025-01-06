@@ -1,0 +1,8 @@
+{
+    "*": [
+        "codespell"
+    ],
+    "*.ts": [
+        "npx pepr format --validate-only"
+    ]
+}

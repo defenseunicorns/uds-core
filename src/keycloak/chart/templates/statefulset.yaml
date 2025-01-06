@@ -1,3 +1,6 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -25,7 +28,8 @@ spec:
         {{- end }}
        {{- if not .Values.devMode }}
       annotations:
-        postgres-hash: {{ include (print $.Template.BasePath "/secret-postgresql.yaml") . | sha256sum }}        
+        postgres-hash: {{ include (print $.Template.BasePath "/secret-postgresql.yaml") . | sha256sum }}
+        kc-realm-hash: {{ include (print $.Template.BasePath "/secret-kc-realm.yaml") . | sha256sum }}
       {{- end }}
     spec:
       securityContext:
@@ -49,13 +53,16 @@ spec:
               mountPath: /opt/keycloak/themes
             - name: conf
               mountPath: /opt/keycloak/conf
+          envFrom:
+            - secretRef:
+                name: {{ include "keycloak.fullname" . }}-realm-env
       containers:
         - name: keycloak
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           securityContext:
           {{- toYaml .Values.securityContext | nindent 12 }}
-          command: 
+          command:
             - "/opt/keycloak/bin/kc.sh"
           args:
             {{- if .Values.devMode }}
@@ -72,6 +79,9 @@ spec:
             # This will only import the realm if it does not exist
             - "--import-realm"
             - "--features=preview"
+            - "--proxy-headers=xforwarded"
+            - "--http-enabled=true"
+            - "--hostname-strict=false"
             {{- if .Values.jsonLogFormat }}
             - "--log-console-output=json"
             {{- end }}
@@ -82,6 +92,8 @@ spec:
             # Common configuration
             - name: UDS_DOMAIN
               value: "{{ .Values.domain }}"
+            - name: UDS_ADMIN_DOMAIN
+              value: "{{ tpl .Values.adminDomain . }}"
 
             # Enable health and metrics endpoints
             - name: KC_HEALTH_ENABLED
@@ -91,18 +103,8 @@ spec:
 
             # Enable access log
             - name: QUARKUS_HTTP_ACCESS_LOG_ENABLED
-              value: "true"          
-            
-            # Hostname strict is not needed when used with Istio
-            - name: KC_HOSTNAME_STRICT
-              value: "false"
-            - name: KC_HOSTNAME_STRICT_HTTPS
-              value: "false"
-            
-            # Set the proxy type to edge to avoid weird Keycloak behavior
-            - name: KC_PROXY
-              value: edge
-            
+              value: "true"
+
             # X509 configuration
             - name: KC_HTTPS_CLIENT_AUTH
               value: request
@@ -132,14 +134,13 @@ spec:
             - name: KC_CACHE_STACK
               value: kubernetes
             - name: KC_SPI_STICKY_SESSION_ENCODER_INFINISPAN_SHOULD_ATTACH_ROUTE
-              value: "false"               
+              value: "false"
             # java opts for jgroups required for infinispan distributed cache when using the kubernetes stack.
             # https://www.keycloak.org/server/caching
             - name: JAVA_OPTS_APPEND
               value: -Djgroups.dns.query={{ include "keycloak.fullname" . }}-headless.keycloak.svc.cluster.local
-   
             # Postgres database configuration
-            - name: KC_DB 
+            - name: KC_DB
               value: postgres
             - name: KC_DB_URL_HOST
               valueFrom:
@@ -172,7 +173,7 @@ spec:
             - name: JAVA_TOOL_OPTIONS
               value: "-Dcom.redhat.fips=true"
             {{- end }}
-           {{- end }}  
+          {{- end }}
           {{- if .Values.insecureAdminPasswordGeneration.enabled }}
             - name: KEYCLOAK_ADMIN
               valueFrom:
@@ -195,10 +196,13 @@ spec:
             - name: tcp-fd
               containerPort: 57800
               protocol: TCP
+            - name: metrics
+              containerPort: 9000
+              protocol: TCP
           livenessProbe:
             httpGet:
               path: /health/live
-              port: http
+              port: metrics
               scheme: HTTP
             failureThreshold: 15
             timeoutSeconds: 2
@@ -207,7 +211,7 @@ spec:
           readinessProbe:
             httpGet:
               path: /health/ready
-              port: http
+              port: metrics
               scheme: HTTP
             failureThreshold: 15
             timeoutSeconds: 2

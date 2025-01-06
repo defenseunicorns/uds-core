@@ -1,9 +1,13 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+
 tasks:
   - name: create-k3d-cluster
     actions:
       - description: "Create the K3d cluster"
         # renovate: datasource=github-tags depName=defenseunicorns/uds-k3d versioning=semver
-        cmd: "uds zarf package deploy oci://defenseunicorns/uds-k3d:0.8.0 --confirm --no-progress"
+        cmd: "uds zarf package deploy oci://defenseunicorns/uds-k3d:0.11.0 --confirm --no-progress"
 
   - name: k3d-test-cluster
     actions:
@@ -11,4 +15,4 @@ tasks:
 
       - description: "Initialize the cluster with Zarf"
         # renovate: datasource=github-tags depName=zarf-dev/zarf versioning=semver
-        cmd: "uds zarf package deploy oci://ghcr.io/zarf-dev/packages/init:v0.38.2 --confirm --no-progress"
+        cmd: "uds zarf package deploy oci://ghcr.io/zarf-dev/packages/init:v0.45.0 --confirm --no-progress"

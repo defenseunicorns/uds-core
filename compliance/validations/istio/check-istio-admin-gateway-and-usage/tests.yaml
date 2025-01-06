@@ -1,0 +1,23 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+pass:
+  - test: default
+    validation: validation.yaml
+    resources: resources.json
+    expected-validation: true
+  - test: no-gateway
+    validation: validation.yaml
+    resources: resources.json
+    permutation: "del(.adminGateway)"
+    expected-validation: false
+  - test: admin-vs-not-using-admin-gw
+    validation: validation.yaml
+    resources: resources.json
+    permutation: '.virtualServices |= map(if .metadata.name == "keycloak-admin-admin-access-with-optional-client-certificate" then .spec.gateways = ["new-gateway/new-gateway-name"] else . end)'
+    expected-validation: false
+  - test: not-admin-vs-using-admin-gw
+    validation: validation.yaml
+    resources: resources.json
+    permutation: '.virtualServices |= map(if .metadata.name == "keycloak-tenant-public-auth-access-with-optional-client-certificate" then .spec.gateways = ["istio-admin-gateway/admin-gateway"] else . end)'
+    expected-validation: false

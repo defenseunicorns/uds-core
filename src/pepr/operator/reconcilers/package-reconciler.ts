@@ -1,10 +1,19 @@
+/**
+ * Copyright 2024 Defense Unicorns
+ * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+ */
+
 import { handleFailure, shouldSkip, updateStatus, writeEvent } from ".";
 import { UDSConfig } from "../../config";
 import { Component, setupLogger } from "../../logger";
-import { enableInjection } from "../controllers/istio/injection";
+import { cleanupNamespace, enableInjection } from "../controllers/istio/injection";
 import { istioResources } from "../controllers/istio/istio-resources";
-import { authservice } from "../controllers/keycloak/authservice/authservice";
-import { keycloak } from "../controllers/keycloak/client-sync";
+import {
+  authservice,
+  purgeAuthserviceClients,
+} from "../controllers/keycloak/authservice/authservice";
+import { keycloak, purgeSSOClients } from "../controllers/keycloak/client-sync";
+import { Client } from "../controllers/keycloak/types";
 import { podMonitor } from "../controllers/monitoring/pod-monitor";
 import { serviceMonitor } from "../controllers/monitoring/service-monitor";
 import { networkPolicies } from "../controllers/network/policies";
@@ -65,21 +74,27 @@ export async function packageReconciler(pkg: UDSPackage) {
     // Update the namespace to ensure the istio-injection label is set
     await enableInjection(pkg);
 
-    // Configure SSO
-    const ssoClients = await keycloak(pkg);
-    const authserviceClients = await authservice(pkg, ssoClients);
+    let ssoClients = new Map<string, Client>();
+    let authserviceClients: string[] = [];
+
+    if (UDSConfig.isIdentityDeployed) {
+      // Configure SSO
+      ssoClients = await keycloak(pkg);
+      authserviceClients = await authservice(pkg, ssoClients);
+    } else if (pkg.spec?.sso) {
+      log.error("Identity & Authorization is not deployed, but the package has SSO configuration");
+      throw new Error(
+        "Identity & Authorization is not deployed, but the package has SSO configuration",
+      );
+    }
 
     // Create the VirtualService and ServiceEntry for each exposed service
     endpoints = await istioResources(pkg, namespace!);
 
     // Only configure the ServiceMonitors if not running in single test mode
     const monitors: string[] = [];
-    if (!UDSConfig.isSingleTest) {
-      monitors.push(...(await podMonitor(pkg, namespace!)));
-      monitors.push(...(await serviceMonitor(pkg, namespace!)));
-    } else {
-      log.warn(`Running in single test mode, skipping ${name} Monitors.`);
-    }
+    monitors.push(...(await podMonitor(pkg, namespace!)));
+    monitors.push(...(await serviceMonitor(pkg, namespace!)));
 
     await updateStatus(pkg, {
       phase: Phase.Ready,
@@ -94,4 +109,58 @@ export async function packageReconciler(pkg: UDSPackage) {
   } catch (err) {
     void handleFailure(err, pkg);
   }
+}
+
+/**
+ * The finalizer is called when an update with a deletion timestamp happens.
+ * On completion the finalizer is removed from the Package CR.
+ * This function removes any SSO/Authservice clients and ensures that Istio Injection is restored to the original state.
+ *
+ * @param pkg the package to finalize
+ */
+export async function packageFinalizer(pkg: UDSPackage) {
+  log.debug(`Processing removal of package ${pkg.metadata?.namespace}/${pkg.metadata?.name}`);
+
+  // In order to avoid triggering a second call of this finalizer, we just write events for each removal piece
+  // This could be switched to updateStatus once https://github.com/defenseunicorns/pepr/issues/1316 is resolved
+  // await updateStatus(pkg, { phase: Phase.Removing });
+
+  try {
+    await writeEvent(pkg, {
+      message: `Restoring original istio injection status on namespace`,
+      reason: "RemovalInProgress",
+      type: "Normal",
+    });
+    // Cleanup the namespace
+    await cleanupNamespace(pkg);
+  } catch (e) {
+    log.debug(
+      `Restoration of istio injection status during finalizer failed for ${pkg.metadata?.namespace}/${pkg.metadata?.name}: ${e.message}`,
+    );
+    await writeEvent(pkg, {
+      message: `Restoration of istio injection status failed: ${e.message}`,
+      reason: "RemovalFailed",
+    });
+  }
+
+  try {
+    await writeEvent(pkg, {
+      message: `Removing SSO / AuthService clients for package`,
+      reason: "RemovalInProgress",
+      type: "Normal",
+    });
+    // Remove any SSO clients
+    await purgeSSOClients(pkg, []);
+    await purgeAuthserviceClients(pkg, []);
+  } catch (e) {
+    log.debug(
+      `Removal of SSO / AuthService clients during finalizer failed for ${pkg.metadata?.namespace}/${pkg.metadata?.name}: ${e.message}`,
+    );
+    await writeEvent(pkg, {
+      message: `Removal of SSO / AuthService clients failed: ${e.message}`,
+      reason: "RemovalFailed",
+    });
+  }
+
+  log.debug(`Package ${pkg.metadata?.namespace}/${pkg.metadata?.name} removed successfully`);
 }

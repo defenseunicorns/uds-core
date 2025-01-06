@@ -1,6 +1,9 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 image:
   repository: registry1.dso.mil/ironbank/opensource/velero/velero
-  tag: v1.14.0
+  tag: v1.15.0
 
 kubectl:
   image:
@@ -9,13 +12,13 @@ kubectl:
 
 initContainers:
   - name: velero-plugin-for-aws
-    image: registry1.dso.mil/ironbank/opensource/velero/velero-plugin-for-aws:v1.10.0
+    image: registry1.dso.mil/ironbank/opensource/velero/velero-plugin-for-aws:v1.11.0
     imagePullPolicy: IfNotPresent
     volumeMounts:
       - mountPath: /target
         name: plugins
   - name: velero-plugin-for-azure
-    image: registry1.dso.mil/ironbank/opensource/velero/velero-plugin-for-microsoft-azure:v1.10.0
+    image: registry1.dso.mil/ironbank/opensource/velero/velero-plugin-for-microsoft-azure:v1.11.0
     imagePullPolicy: IfNotPresent
     volumeMounts:
       - mountPath: /target

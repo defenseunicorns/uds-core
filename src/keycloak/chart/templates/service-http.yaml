@@ -1,3 +1,6 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 apiVersion: v1
 kind: Service
 metadata:
@@ -26,6 +29,10 @@ spec:
     - name: http
       port: 8080
       targetPort: http
+      protocol: TCP
+    - name: http-metrics
+      port: 9000
+      targetPort: metrics
       protocol: TCP
   selector:
     {{- include "keycloak.selectorLabels" . | nindent 4 }}

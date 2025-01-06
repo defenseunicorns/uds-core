@@ -1,22 +1,25 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 sidecar:
   image:
     # -- The Docker registry
     registry: ghcr.io
     repository: kiwigrid/k8s-sidecar
-    tag: 1.27.5
+    tag: 1.28.4
 
 image:
   registry: docker.io
   repository: grafana/grafana
-  tag: 11.1.3
+  tag: 11.4.0
 
 initChownData:
   image:
     registry: docker.io
     repository: library/busybox
-    tag: 1.36.1
+    tag: 1.37.0
 
 downloadDashboardsImage:
   registry: docker.io
   repository: curlimages/curl
-  tag: 8.9.1
+  tag: 8.11.1

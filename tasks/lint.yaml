@@ -1,13 +1,21 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 includes:
-  - remote: https://raw.githubusercontent.com/defenseunicorns/uds-common/v0.11.2/tasks/lint.yaml
+  - remote: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.6.1/tasks/lint.yaml
 
 tasks:
   - name: fix
     description: "Fix formatting issues in the repo"
     actions:
+      - description: install codespell deps
+        cmd: CMD=pip && which $CMD || CMD=pip3 && $CMD install codespell
       - description: "Pepr Format"
         cmd: npx pepr format
-
+      - description: Fix codespell lint issues
+        cmd: |
+          codespell || true
+          codespell -w
 
   - name: check
     description: "Run linting checks"
@@ -16,12 +24,29 @@ tasks:
         cmd: npm ci
       - description: "Pepr Format check"
         cmd: npx pepr format --validate-only
-      - description: install yamllint deps
-        cmd: CMD=pip && which $CMD || CMD=pip3 && $CMD install yamllint
+      - description: install yamllint and codespell deps
+        cmd: CMD=pip && which $CMD || CMD=pip3 && $CMD install yamllint codespell
       - description: yaml lint
         cmd: yamllint . -c .yamllint --no-warnings
+      - description: codespell lint
+        cmd: codespell
+      - description: Install addlicense dep
+        # renovate: datasource=github-tags depName=google/addlicense versioning=semver
+        cmd: GOPATH="$HOME/go" go install github.com/google/addlicense@v1.1.1
+      - description: license lint
+        task: license
 
   - name: oscal
     actions:
       - description: Lula Lint OSCAL
         task: remote:oscal
+
+  - name: license
+    actions:
+      - description: Lint for the SPDX license identifier being in source files
+        task: remote:license
+
+  - name: fix-license
+    actions:
+      - description: Add the SPDX license identifier to source files
+        task: remote:fix-license

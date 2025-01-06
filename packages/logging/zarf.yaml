@@ -1,0 +1,25 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+kind: ZarfPackageConfig
+metadata:
+  name: core-logging
+  description: "UDS Core (Logging)"
+  authors: "Defense Unicorns - Product"
+  # x-release-please-start-version
+  version: "0.33.1"
+  # x-release-please-end
+  x-uds-dependencies: ["base"]
+
+components:
+  # Loki
+  - name: loki
+    required: true
+    import:
+      path: ../../src/loki
+
+  # Vector
+  - name: vector
+    required: true
+    import:
+      path: ../../src/vector

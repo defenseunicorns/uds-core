@@ -1,3 +1,6 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 apiVersion: uds.dev/v1alpha1
 kind: Package
 metadata:
@@ -10,8 +13,8 @@ spec:
         app.kubernetes.io/component: http
       podSelector:
         app.kubernetes.io/name: keycloak
-      targetPort: 8080
-      portName: http
+      targetPort: 9000
+      portName: http-metrics
       description: Metrics
 
   network:
@@ -25,15 +28,15 @@ spec:
           app: pepr-uds-core-watcher
         port: 8080
 
-      # Temp workaround for any cluster pod
-      # @todo: remove this once cluster pods is a remote generated target
       - description: "Keycloak backchannel access"
         direction: Ingress
         selector:
           app.kubernetes.io/name: keycloak
-        remoteGenerated: Anywhere
+        # Allow access from anything in cluster using an empty namespace selector
+        remoteNamespace: "*"
         port: 8080
 
+      # Keycloak OCSP to check certs cannot guarantee a static IP
       - description: "OCSP Lookup"
         direction: Egress
         selector:
@@ -58,8 +61,16 @@ spec:
         selector:
           app.kubernetes.io/name: keycloak
         port: {{ .Values.postgresql.port }}
+        {{- if .Values.postgresql.internal.enabled }}
+        remoteSelector: {{ .Values.postgresql.internal.remoteSelector }}
+        remoteNamespace: {{ .Values.postgresql.internal.remoteNamespace }}
+        {{- else if .Values.postgresql.egressCidr }}
+        remoteCidr: {{ .Values.postgresql.egressCidr }}
+        {{- else }}
         remoteGenerated: Anywhere
+        {{- end }}
       {{- end }}
+
       {{- if .Values.autoscaling.enabled }}
       # HA for keycloak
       - direction: Ingress
@@ -95,7 +106,7 @@ spec:
             - name: redirect-metrics
               uri:
                 prefix: /metrics
-          rewrite:
+          redirect:
             uri: "/realms/{{ .Values.realm }}/account"
           headers:
             request:

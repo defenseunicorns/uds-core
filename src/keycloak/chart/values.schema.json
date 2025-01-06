@@ -9,17 +9,7 @@
     "additionalGatewayNamespaces": {
       "type": "array",
       "items": {
-        "type": "object",
-        "properties": {
-          "resource": {
-            "type": "object",
-            "properties": {
-              "name": {
-                "type": "string"
-              }
-            }
-          }
-        }
+        "type": "string"
       }
     },
     "autoscaling": {
@@ -138,6 +128,9 @@
       "type": "boolean"
     },
     "domain": {
+      "type": "string"
+    },
+    "adminDomain": {
       "type": "string"
     },
     "enableServiceLinks": {
@@ -298,6 +291,23 @@
       "type": "object",
       "properties": {
         "GOOGLE_IDP_ENABLED": {
+          "type": "boolean"
+        }
+      }
+    },
+    "realmAuthFlows": {
+      "type": "object",
+      "properties": {
+        "USERNAME_PASSWORD_AUTH_ENABLED": {
+          "type": "boolean"
+        },
+        "X509_AUTH_ENABLED": {
+          "type": "boolean"
+        },
+        "SOCIAL_AUTH_ENABLED": {
+          "type": "boolean"
+        },
+        "OTP_ENABLED": {
           "type": "boolean"
         }
       }

@@ -6,10 +6,12 @@ yaml-files:
 ignore:
   - 'k3d/local/manifests/metallb/metallb-native.yaml'
   - '**/.terraform/**'
-  - '**/chart/templates**'
-  - 'node_modules/**'
+  - '**/chart/templates/**'
+  - '**/node_modules/**'
   - 'dist/**'
-  - 'src/pepr/uds-operator-config/templates**'
+  - 'src/pepr/uds-operator-config/templates/**'
+  - '.codespellrc'
+  - '.lintstagedrc.json'
 
 rules:
   anchors: enable

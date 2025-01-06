@@ -1,101 +1,104 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 kind: ZarfPackageConfig
 metadata:
   name: core
   description: "UDS Core"
   authors: "Defense Unicorns - Product"
   # x-release-please-start-version
-  version: "0.25.2"
+  version: "0.33.1"
   # x-release-please-end
 
 components:
   - name: uds-operator-config
     required: true
     import:
-      path: ../../src/pepr
+      path: ../base
 
   # CRDs
   - name: prometheus-operator-crds
     required: true
     import:
-      path: ../../src/prometheus-stack
+      path: ../base
 
   # Istio
   - name: istio-controlplane
     required: true
     import:
-      path: ../../src/istio
+      path: ../base
 
   - name: istio-admin-gateway
     required: true
     import:
-      path: ../../src/istio
+      path: ../base
 
   - name: istio-tenant-gateway
     required: true
     import:
-      path: ../../src/istio
+      path: ../base
 
   - name: istio-passthrough-gateway
     required: false
     import:
-      path: ../../src/istio
+      path: ../base
 
   # Pepr the world
   - name: pepr-uds-core
     required: true
     import:
-      path: ../../src/pepr
+      path: ../base
 
   # Metrics Server
   - name: metrics-server
     required: false
     import:
-      path: ../../src/metrics-server
+      path: ../metrics-server
 
   # Keycloak
   - name: keycloak
     required: true
     import:
-      path: ../../src/keycloak
+      path: ../identity-authorization
 
   # Neuvector
   - name: neuvector
     required: true
     import:
-      path: ../../src/neuvector
+      path: ../runtime-security
 
   # Loki
   - name: loki
     required: true
     import:
-      path: ../../src/loki
+      path: ../logging
 
   # Prometheus
   - name: kube-prometheus-stack
     required: true
     import:
-      path: ../../src/prometheus-stack
+      path: ../monitoring
 
-  # Promtail
-  - name: promtail
+  # Vector
+  - name: vector
     required: true
     import:
-      path: ../../src/promtail
+      path: ../logging
 
   # Grafana
   - name: grafana
     required: true
     import:
-      path: ../../src/grafana
+      path: ../monitoring
 
   # Authservice
   - name: authservice
     required: true
     import:
-      path: ../../src/authservice
+      path: ../identity-authorization
 
   # Velero
   - name: velero
     required: true
     import:
-      path: ../../src/velero
+      path: ../backup-restore

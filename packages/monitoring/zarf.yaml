@@ -1,0 +1,24 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+kind: ZarfPackageConfig
+metadata:
+  name: core-monitoring
+  description: "UDS Core Monitoring (Prometheus and Grafana)"
+  authors: "Defense Unicorns - Product"
+  # x-release-please-start-version
+  version: "0.33.1"
+  # x-release-please-end
+  x-uds-dependencies: ["base", "identity-authorization"]
+
+components:
+  # Prometheus
+  - name: kube-prometheus-stack
+    required: true
+    import:
+      path: ../../src/prometheus-stack
+  # Grafana
+  - name: grafana
+    required: true
+    import:
+      path: ../../src/grafana

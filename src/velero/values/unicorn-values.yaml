@@ -1,21 +1,24 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 image:
   repository: cgr.dev/du-uds-defenseunicorns/velero-fips
-  tag: 1.14.0-dev
+  tag: 1.15.0-dev
 
 kubectl:
   image:
     repository: cgr.dev/du-uds-defenseunicorns/kubectl-fips
-    tag: 1.29.7-dev
+    tag: 1.32.0-dev
 
 initContainers:
   - name: velero-plugin-for-aws
-    image: cgr.dev/du-uds-defenseunicorns/velero-plugin-for-aws-fips:1.10.0
+    image: cgr.dev/du-uds-defenseunicorns/velero-plugin-for-aws-fips:1.11.0
     imagePullPolicy: IfNotPresent
     volumeMounts:
       - mountPath: /target
         name: plugins
   - name: velero-plugin-for-azure
-    image: velero/velero-plugin-for-microsoft-azure:v1.10.0
+    image: velero/velero-plugin-for-microsoft-azure:v1.11.0
     imagePullPolicy: IfNotPresent
     volumeMounts:
       - mountPath: /target

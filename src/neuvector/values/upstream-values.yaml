@@ -1,5 +1,9 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 registry: docker.io
-tag: "5.3.4"
+# renovate: datasource=docker depName=docker.io/neuvector/controller versioning=docker
+tag: "5.4.1"
 manager:
   image:
     repository: neuvector/manager

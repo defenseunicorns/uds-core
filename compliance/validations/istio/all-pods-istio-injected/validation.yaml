@@ -1,0 +1,69 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+metadata:
+  name: all-pods-istio-injected
+  uuid: 1761ac07-80dd-47d2-947e-09f67943b986
+domain:
+  type: kubernetes
+  kubernetes-spec:
+    resources:
+      - name: pods
+        resource-rule:
+          version: v1
+          resource: pods
+          namespaces: []
+provider:
+  type: opa
+  opa-spec:
+    rego: |
+      package validate
+      import rego.v1
+
+      # Default policy result
+      default validate := false
+      default msg := "Not evaluated"
+
+      exempt_namespaces := {"kube-system", "istio-system", "uds-dev-stack", "zarf", "istio-admin-gateway", "istio-tenant-gateway", "istio-passthrough-gateway"}
+      msg_exempt_namespaces = concat(", ", exempt_namespaces)
+
+      validate if {
+        has_istio_sidecar.result
+      }
+      msg = has_istio_sidecar.msg
+
+      # Check for sidecar and init containers in pod spec
+      no_sidecar = [sprintf("%s/%s", [pod.metadata.namespace, pod.metadata.name]) | pod := input.pods[_]; not has_sidecar(pod); not is_exempt(pod)]
+
+      has_istio_sidecar = {"result": true, "msg": msg} if {
+        count(no_sidecar) == 0
+        msg := "All pods have Istio sidecar proxy."
+      } else = {"result": false, "msg": msg} if {
+        msg := sprintf("Istio sidecar proxy not found in pods: %s.", [concat(", ", no_sidecar)])
+      }
+
+      has_sidecar(pod) if {
+        status := pod.metadata.annotations["sidecar.istio.io/status"]
+        containers := json.unmarshal(status).containers
+        initContainers := json.unmarshal(status).initContainers
+
+        has_container_name(pod.spec.containers, containers)
+        has_container_name(pod.spec.initContainers, initContainers)
+      } else = false
+
+      has_container_name(containers, names) if {
+        every name in names {
+          containers[_].name == name
+        }
+      } else = true if {
+        names == null
+      } else = false
+
+      is_exempt(pod) if {
+        pod.metadata.namespace in exempt_namespaces
+      }
+    output:
+      validation: validate.validate
+      observations:
+        - validate.msg
+        - validate.msg_exempt_namespaces

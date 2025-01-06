@@ -1,0 +1,14 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+includes:
+  - prometheus: ../../src/prometheus-stack/tasks.yaml
+  - grafana: ../../src/grafana/tasks.yaml
+
+tasks:
+  - name: validate
+    actions:
+      - task: prometheus:validate
+      - task: grafana:validate
+      - task: grafana:e2e-test
+      - task: prometheus:e2e-test

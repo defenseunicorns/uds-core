@@ -1,0 +1,14 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# Overwritten in ci by uds-config.tf in test-infra/azure/aks
+variables:
+  core:
+    azure_loki_storage_account: ${ZARF_VAR_AZURE_LOKI_STORAGE_ACCOUNT}
+    azure_loki_storage_account_access_key: ${ZARF_VAR_AZURE_LOKI_STORAGE_ACCOUNT_ACCESS_KEY}
+    azure_loki_storage_account_container: ${ZARF_VAR_AZURE_LOKI_STORAGE_ACCOUNT_CONTAINER}
+    azure_velero_storage_account: ${ZARF_VAR_AZURE_VELERO_STORAGE_ACCOUNT}
+    azure_velero_storage_account_acces_key: ${ZARF_VAR_AZURE_VELERO_STORAGE_ACCOUNT_ACCESS_KEY}
+    azure_velero_storage_account_container: ${ZARF_VAR_AZURE_VELERO_STORAGE_ACCOUNT_CONTAINER}
+    azure_subscription_id: ${ZARF_VAR_AZURE_SUBSCRIPTION_ID}
+    azure_resource_group: ${ZARF_VAR_AZURE_RESOURCE_GROUP}

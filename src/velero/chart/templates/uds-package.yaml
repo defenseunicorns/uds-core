@@ -1,3 +1,6 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 apiVersion: uds.dev/v1alpha1
 kind: Package
 metadata:
@@ -6,11 +9,19 @@ metadata:
 spec:
   network:
     allow:
-      # Todo: wide open for now for pushing to s3
+      # Egress for S3 connections
       - direction: Egress
         selector:
           app.kubernetes.io/name: velero
+        description: Storage
+        {{- if .Values.storage.internal.enabled }}
+        remoteSelector: {{ .Values.storage.internal.remoteSelector }}
+        remoteNamespace: {{ .Values.storage.internal.remoteNamespace }}
+        {{- else if .Values.storage.egressCidr }}
+        remoteCidr: {{ .Values.storage.egressCidr }}
+        {{- else }}
         remoteGenerated: Anywhere
+        {{- end }}
 
       - direction: Egress
         selector:

@@ -1,0 +1,12 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# Support for custom `network.allow` entries on the Package CR
+additionalNetworkAllow: []
+# ref: https://uds.defenseunicorns.com/reference/configuration/custom-resources/packages-v1alpha1-cr/#allow
+#   - direction: Egress
+#     selector:
+#       app.kubernetes.io/name: alertmanager
+#     remoteGenerated: Anywhere
+#     description: "from alertmanager to anywhere"
+#     port: 443

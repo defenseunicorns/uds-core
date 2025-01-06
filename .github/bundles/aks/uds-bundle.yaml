@@ -1,0 +1,139 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+kind: UDSBundle
+metadata:
+  name: uds-core-aks-nightly
+  description: A UDS bundle for deploying UDS Core on AKS
+  # x-release-please-start-version
+  version: "0.33.1"
+  # x-release-please-end
+
+packages:
+  - name: init
+    repository: ghcr.io/zarf-dev/packages/init
+    ref: v0.45.0
+
+  - name: core
+    path: ../../../build
+    # x-release-please-start-version
+    ref: 0.33.1
+    # x-release-please-end
+    overrides:
+      istio-admin-gateway:
+        gateway:
+          values:
+            - path: service.annotations
+              value:
+                service.beta.kubernetes.io/azure-load-balancer-internal: "false"
+                service.beta.kubernetes.io/azure-load-balancer-sku: "Standard"
+                service.beta.kubernetes.io/azure-load-balancer-resource-group: "${NODE_RESOURCE_GROUP_NAME}"
+
+      istio-tenant-gateway:
+        gateway:
+          values:
+            - path: service.annotations
+              value:
+                service.beta.kubernetes.io/azure-load-balancer-internal: "false"
+                service.beta.kubernetes.io/azure-load-balancer-sku: "Standard"
+                service.beta.kubernetes.io/azure-load-balancer-resource-group: "${NODE_RESOURCE_GROUP_NAME}"
+      loki:
+        loki:
+          variables:
+            - name: AZURE_LOKI_STORAGE_ACCOUNT
+              description: "Name of the Storage Account to use for storing logs"
+              path: "loki.storage_config.azure.account_name"
+            - name: AZURE_LOKI_STORAGE_ACCOUNT_ACCESS_KEY
+              description: "Primary access Key for the Storage Account"
+              path: "loki.storage_config.azure.account_key"
+            - name: AZURE_LOKI_STORAGE_ACCOUNT_CONTAINER
+              description: "The destination container in the Storage Account where logs will be saved"
+              path: "loki.storage_config.azure.container_name"
+          values:
+            - path: loki.storage.type
+              value: "azure"
+
+      kube-prometheus-stack:
+        kube-prometheus-stack:
+          values:
+            - path: kube-state-metrics
+              value:
+                resources:
+                  limits:
+                    memory: 512Mi
+      grafana:
+        grafana:
+          variables:
+            - name: GRAFANA_HA
+              description: Enable HA Grafana
+              path: autoscaling.enabled
+        uds-grafana-config:
+          variables:
+            - name: GRAFANA_PG_HOST
+              description: Grafana postgresql host
+              path: postgresql.host
+            - name: GRAFANA_PG_PORT
+              description: Grafana postgresql port
+              path: postgresql.port
+            - name: GRAFANA_PG_DATABASE
+              description: Grafana postgresql database
+              path: postgresql.database
+            - name: GRAFANA_PG_PASSWORD
+              description: Grafana postgresql password
+              path: postgresql.password
+            - name: GRAFANA_PG_USER
+              description: Grafana postgresql username
+              path: postgresql.user
+
+      neuvector:
+        core:
+          values:
+            - path: runtimePath
+              value: /run/containerd/containerd.sock
+            - path: enforcer.tolerations
+              value:
+                - effect: NoSchedule
+                  key: node-role.kubernetes.io/master
+                - effect: NoSchedule
+                  key: node-role.kubernetes.io/control-plane
+                - effect: NoSchedule
+                  key: dedicated
+                  operator: Exists
+      velero:
+        velero:
+          variables:
+            - name: AZURE_VELERO_STORAGE_ACCOUNT
+              description: "Name of the Storage Account to use for storing backups"
+              path: "configuration.backupStorageLocation[0].config.storageAccount"
+            - name: AZURE_VELERO_STORAGE_ACCOUNT_ACCESS_KEY
+              description: "Primary access Key for the Storage Account"
+              path: "configuration.backupStorageLocation[0].config.storageAccountKeyEnvVar"
+            - name: AZURE_VELERO_STORAGE_ACCOUNT_CONTAINER
+              description: "The destination container in the Storage Account where backups will be saved"
+              path: "configuration.backupStorageLocation[0].bucket"
+            - name: AZURE_RESOURCE_GROUP
+              description: "The name of the resource group that the Storage Account is in"
+              path: "configuration.backupStorageLocation[0].config.resourceGroup"
+            - name: AZURE_SUBSCRIPTION_ID
+              description: "The resource ID of the Azure Subscription that is being used"
+              path: "configuration.backupStorageLocation[0].config.subscriptionId"
+            - name: VELERO_CLIENT_SECRET_ENV_VAR
+              description: "Name of the env variable that velero will use to read Azure config"
+              path: "configuration.backupStorageLocation[0].config.storageAccountKeyEnvVar"
+              default: "AZURE_STORAGE_ACCOUNT_ACCESS_KEY"
+            - name: VELERO_BACKUP_STORAGE_CONFIG_NAME
+              description: "Name of the Backup Storage Location"
+              path: "configuration.backupStorageLocation[0].name"
+              default: "default"
+            - name: VELERO_STORAGE_PROVIDER
+              description: "Type of storage provider that will be used"
+              path: "configuration.backupStorageLocation[0].provider"
+              default: "azure"
+          values:
+            - path: credentials
+              value:
+                useSecret: true
+                secretContents:
+                  cloud: |
+                    AZURE_STORAGE_ACCOUNT_ACCESS_KEY=${AZURE_VELERO_STORAGE_ACCOUNT_ACCESS_KEY}
+                    AZURE_CLOUD_NAME=AzurePublicCloud

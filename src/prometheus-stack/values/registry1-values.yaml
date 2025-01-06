@@ -1,3 +1,6 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 alertmanager:
   alertmanagerSpec:
     image:
@@ -8,7 +11,7 @@ kube-state-metrics:
   image:
     registry: registry1.dso.mil
     repository: ironbank/opensource/kubernetes/kube-state-metrics
-    tag: v2.12.0
+    tag: v2.14.0
   securityContext:
     enabled: true
     fsGroup: 65532
@@ -20,12 +23,12 @@ prometheus:
     image:
       registry: registry1.dso.mil
       repository: ironbank/opensource/prometheus/prometheus
-      tag: v2.52.0
+      tag: v3.0.1
 prometheus-node-exporter:
   image:
     registry: registry1.dso.mil
     repository: ironbank/opensource/prometheus/node-exporter
-    tag: v1.8.1
+    tag: v1.8.2
 prometheusOperator:
   admissionWebhooks:
     containerSecurityContext:
@@ -37,7 +40,7 @@ prometheusOperator:
       image:
         registry: registry1.dso.mil
         repository: ironbank/opensource/ingress-nginx/kube-webhook-certgen
-        tag: v1.3.0
+        tag: v1.4.4
       registry: registry1.dso.mil
       repository: ironbank/opensource/ingress-nginx/kube-webhook-certgen
       tag: v1.3.0
@@ -48,9 +51,9 @@ prometheusOperator:
   image:
     registry: registry1.dso.mil
     repository: ironbank/opensource/prometheus-operator/prometheus-operator
-    tag: v0.74.0
+    tag: v0.79.2
   prometheusConfigReloader:
     image:
       registry: registry1.dso.mil
       repository: ironbank/opensource/prometheus-operator/prometheus-config-reloader
-      tag: v0.74.0
+      tag: v0.79.2

@@ -1,0 +1,28 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+pass:
+  - test: default
+    validation: validation.yaml
+    resources: resources.json
+    expected-validation: true
+  - test: grafana-pods-no-istio-proxy
+    validation: validation.yaml
+    resources: resources.json
+    permutation: '.pods |= map(if .metadata.namespace == "grafana" then .spec.containers |= map(select(.name != "istio-proxy")) else . end)'
+    expected-validation: false
+  - test: grafana-pods-istio-proxy-incorrect-name
+    validation: validation.yaml
+    resources: resources.json
+    permutation: '.pods |= map(if .metadata.namespace == "grafana" then .spec.containers |= map(if .name == "istio-proxy" then .name = "different-name" else . end) else . end)'
+    expected-validation: false
+  - test: grafana-pods-istio-init-incorrect-name
+    validation: validation.yaml
+    resources: resources.json
+    permutation: '.pods |= map(if .metadata.namespace == "grafana" then .spec.initContainers |= map(if .name == "istio-init" then .name = "different-name" else . end) else . end)'
+    expected-validation: false
+  - test: grafana-pods-no-annotation
+    validation: validation.yaml
+    resources: resources.json
+    permutation: '.pods |= map(if .metadata.namespace == "grafana" then .metadata.annotations = {} else . end)'
+    expected-validation: false

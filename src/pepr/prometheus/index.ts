@@ -1,3 +1,8 @@
+/**
+ * Copyright 2024 Defense Unicorns
+ * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+ */
+
 import { Capability, K8s, kind } from "pepr";
 import { Component, setupLogger } from "../logger";
 import {
@@ -8,6 +13,7 @@ import {
   ServiceMonitorEndpoint,
   ServiceMonitorScheme,
 } from "../operator/crd";
+import { FallbackScrapeProtocol } from "../operator/crd/generated/prometheus/servicemonitor-v1";
 // configure subproject logger
 const log = setupLogger(Component.PROMETHEUS);
 
@@ -25,6 +31,10 @@ When(PrometheusServiceMonitor)
   .IsCreatedOrUpdated()
   .Mutate(async sm => {
     if (sm.Raw.spec === undefined || sm.Raw.spec.scrapeClass != undefined) {
+      // Support the legacy (Prometheus 2.x fallback) until upstream applications properly handle protocol
+      if (sm.Raw.spec && !sm.Raw.spec.fallbackScrapeProtocol) {
+        sm.Raw.spec.fallbackScrapeProtocol = FallbackScrapeProtocol.PrometheusText004;
+      }
       return;
     }
 
@@ -38,6 +48,10 @@ When(PrometheusServiceMonitor)
         `Mutating scrapeClass to exempt ServiceMonitor ${sm.Raw.metadata?.name} from default scrapeClass mTLS config`,
       );
       sm.Raw.spec.scrapeClass = "exempt";
+      // Support the legacy (Prometheus 2.x fallback) until upstream applications properly handle protocol
+      if (!sm.Raw.spec.fallbackScrapeProtocol) {
+        sm.Raw.spec.fallbackScrapeProtocol = FallbackScrapeProtocol.PrometheusText004;
+      }
 
       return;
     } else {
@@ -55,6 +69,10 @@ When(PrometheusServiceMonitor)
         endpoint.tlsConfig = tlsConfig;
       });
       sm.Raw.spec.endpoints = endpoints;
+      // Support the legacy (Prometheus 2.x fallback) until upstream applications properly handle protocol
+      if (!sm.Raw.spec.fallbackScrapeProtocol) {
+        sm.Raw.spec.fallbackScrapeProtocol = FallbackScrapeProtocol.PrometheusText004;
+      }
     }
   });
 
@@ -65,6 +83,10 @@ When(PrometheusPodMonitor)
   .IsCreatedOrUpdated()
   .Mutate(async pm => {
     if (pm.Raw.spec === undefined || pm.Raw.spec.scrapeClass != undefined) {
+      // Support the legacy (Prometheus 2.x fallback) until upstream applications properly handle protocol
+      if (pm.Raw.spec && !pm.Raw.spec.fallbackScrapeProtocol) {
+        pm.Raw.spec.fallbackScrapeProtocol = FallbackScrapeProtocol.PrometheusText004;
+      }
       return;
     }
 
@@ -74,6 +96,10 @@ When(PrometheusPodMonitor)
         `Mutating scrapeClass to exempt PodMonitor ${pm.Raw.metadata?.name} from default scrapeClass mTLS config`,
       );
       pm.Raw.spec.scrapeClass = "exempt";
+      // Support the legacy (Prometheus 2.x fallback) until upstream applications properly handle protocol
+      if (!pm.Raw.spec.fallbackScrapeProtocol) {
+        pm.Raw.spec.fallbackScrapeProtocol = FallbackScrapeProtocol.PrometheusText004;
+      }
 
       return;
     } else {
@@ -83,6 +109,10 @@ When(PrometheusPodMonitor)
         endpoint.scheme = PodMonitorScheme.HTTPS;
       });
       pm.Raw.spec.podMetricsEndpoints = endpoints;
+      // Support the legacy (Prometheus 2.x fallback) until upstream applications properly handle protocol
+      if (!pm.Raw.spec.fallbackScrapeProtocol) {
+        pm.Raw.spec.fallbackScrapeProtocol = FallbackScrapeProtocol.PrometheusText004;
+      }
     }
   });
 

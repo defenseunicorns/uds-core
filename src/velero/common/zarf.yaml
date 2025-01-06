@@ -1,3 +1,6 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 kind: ZarfPackageConfig
 metadata:
   name: uds-core-velero-common
@@ -37,7 +40,7 @@ components:
       - name: velero
         namespace: velero
         url: https://vmware-tanzu.github.io/helm-charts
-        version: 7.1.5
+        version: 8.1.0
         repoName: velero
         releaseName: velero
         valuesFiles:

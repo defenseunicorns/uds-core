@@ -1,3 +1,8 @@
+/**
+ * Copyright 2024 Defense Unicorns
+ * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+ */
+
 // Various validation actions for Kubernetes resources from Big Bang
 import { WatchCfg } from "kubernetes-fluent-client";
 import { K8s } from "pepr";

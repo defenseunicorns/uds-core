@@ -1,3 +1,6 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 kind: ZarfPackageConfig
 metadata:
   name: uds-core-prometheus-stack-common
@@ -15,7 +18,7 @@ components:
       - name: kube-prometheus-stack
         namespace: monitoring
         url: https://prometheus-community.github.io/helm-charts
-        version: 58.7.2
+        version: 67.3.1
         valuesFiles:
           - "../values/values.yaml"
     actions:
@@ -25,7 +28,12 @@ components:
             maxTotalSeconds: 300
             wait:
               cluster:
-                kind: Packages
+                kind: packages.uds.dev
                 name: prometheus-stack
                 namespace: monitoring
                 condition: "'{.status.phase}'=Ready"
+          - description: Annotate all service and pod monitors to ensure they are mutated with the 3.x fallbackScrapeProtocol
+            cmd: |
+              # This ensures that all monitors go through the latest Pepr mutation code to have fallbackScrapeProtocol added
+              ./zarf tools kubectl annotate servicemonitors -A --all uds.dev/prometheus-fallback=true
+              ./zarf tools kubectl annotate podmonitors -A --all uds.dev/prometheus-fallback=true

@@ -1,3 +1,6 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -70,7 +73,7 @@ spec:
     spec:
       serviceAccountName: httpbin
       containers:
-        - image: docker.io/kong/httpbin
+        - image: docker.io/kong/httpbin:0.2.1
           imagePullPolicy: IfNotPresent
           name: httpbin
           resources:

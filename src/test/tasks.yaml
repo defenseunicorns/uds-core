@@ -1,3 +1,6 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 tasks:
   - name: validate
     description: Test app used for UDS Core validation
@@ -145,3 +148,7 @@ tasks:
 
       - description: Remove the test resources
         cmd: "uds zarf package remove build/zarf-package-uds-core-test-apps-*.zst --confirm --no-progress"
+
+  - name: e2e-test
+    actions:
+      - description: "Run Test Apps E2E tests"

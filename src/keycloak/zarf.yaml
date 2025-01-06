@@ -1,3 +1,6 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 kind: ZarfPackageConfig
 metadata:
   name: uds-core-keycloak
@@ -7,6 +10,9 @@ variables:
   - name: DOMAIN
     description: "Cluster domain"
     default: "uds.dev"
+
+  - name: ADMIN_DOMAIN
+    description: "Domain for admin services, defaults to `admin.DOMAIN`"
 
 components:
   - name: keycloak
@@ -20,8 +26,8 @@ components:
         valuesFiles:
           - "values/upstream-values.yaml"
     images:
-      - quay.io/keycloak/keycloak:24.0.5
-      - ghcr.io/defenseunicorns/uds/identity-config:0.6.0
+      - quay.io/keycloak/keycloak:26.0.7
+      - ghcr.io/defenseunicorns/uds/identity-config:0.9.0
 
   - name: keycloak
     required: true
@@ -36,8 +42,8 @@ components:
         valuesFiles:
           - "values/registry1-values.yaml"
     images:
-      - registry1.dso.mil/ironbank/opensource/keycloak/keycloak:24.0.5
-      - ghcr.io/defenseunicorns/uds/identity-config:0.6.0
+      - registry1.dso.mil/ironbank/opensource/keycloak/keycloak:26.0.7
+      - ghcr.io/defenseunicorns/uds/identity-config:0.9.0
 
   - name: keycloak
     required: true
@@ -50,5 +56,5 @@ components:
         valuesFiles:
           - "values/unicorn-values.yaml"
     images:
-      - cgr.dev/du-uds-defenseunicorns/keycloak:24.0.5 # todo: switch to FIPS image
-      - ghcr.io/defenseunicorns/uds/identity-config:0.6.0
+      - cgr.dev/du-uds-defenseunicorns/keycloak:26.0.7 # todo: switch to FIPS image
+      - ghcr.io/defenseunicorns/uds/identity-config:0.9.0

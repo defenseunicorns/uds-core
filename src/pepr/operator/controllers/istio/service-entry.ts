@@ -1,13 +1,18 @@
-import { UDSConfig } from "../../../config";
+/**
+ * Copyright 2024 Defense Unicorns
+ * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+ */
+
 import { V1OwnerReference } from "@kubernetes/client-node";
+import { UDSConfig } from "../../../config";
 import {
   Expose,
   Gateway,
-  IstioServiceEntry,
-  IstioLocation,
-  IstioResolution,
-  IstioPort,
   IstioEndpoint,
+  IstioLocation,
+  IstioPort,
+  IstioResolution,
+  IstioServiceEntry,
 } from "../../crd";
 import { sanitizeResourceName } from "../utils";
 
@@ -28,8 +33,8 @@ export function generateServiceEntry(
 
   const name = generateSEName(pkgName, expose);
 
-  // For the admin gateway, we need to add the path prefix
-  const domain = (gateway === Gateway.Admin ? "admin." : "") + UDSConfig.domain;
+  // Get the correct domain based on gateway
+  const domain = gateway === Gateway.Admin ? UDSConfig.adminDomain : UDSConfig.domain;
 
   // Append the domain to the host
   const fqdn = `${host}.${domain}`;

@@ -1,3 +1,6 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 # -- When setting this above 1, a redis configuration is required.
 replicaCount: 1
 
@@ -8,6 +11,14 @@ image:
   tag: ""
 
 nameOverride: "authservice"
+
+redis:
+  uri: "###ZARF_VAR_AUTHSERVICE_REDIS_URI###"
+  egressCidr: ""
+  internal:
+    enabled: false
+    remoteSelector: {}
+    remoteNamespace: ""
 
 podAnnotations: {}
 

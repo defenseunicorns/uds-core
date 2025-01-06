@@ -1,0 +1,49 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+metadata:
+  name: check-istio-logging-all-traffic
+  uuid: 90738c86-6315-450a-ac69-cc50eb4859cc
+domain:
+  type: kubernetes
+  kubernetes-spec:
+    resources:
+      - name: istioMeshConfig
+        resource-rule:
+          field:
+            jsonpath: .data.mesh
+            type: yaml
+          namespaces:
+            - istio-system
+          resource: configmaps
+          version: v1
+          name: istio
+provider:
+  type: opa
+  opa-spec:
+    output:
+      observations:
+        - validate.msg
+      validation: validate.validate
+    rego: |
+      package validate
+      import rego.v1
+
+      # Default values
+      default validate := false
+      default msg := "Not evaluated"
+
+      # Check if Istio's Mesh Configuration has logging enabled
+      validate if {
+        logging_enabled.result
+      }
+
+      msg = logging_enabled.msg
+
+      logging_enabled = {"result": true, "msg": msg} if {
+        # Check for access log file output to stdout
+        input.istioMeshConfig.accessLogFile == "/dev/stdout"
+        msg := "Istio is logging all traffic."
+      } else = {"result": false, "msg": msg} if {
+        msg := "Istio is not logging all traffic."
+      }

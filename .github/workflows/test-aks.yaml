@@ -1,0 +1,112 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+name: AKS Test
+
+on:
+  schedule:
+    - cron: '0 0 * * 0' # Every Sunday Midnight (UTC) / Saturday 5pm MT
+  pull_request:
+    # milestoned is added here as a workaround for release-please not triggering PR workflows (PRs should be added to a milestone to trigger the workflow).
+    # labeled is added here to allow for "manual" triggering of CI on renovate PRs
+    types: [milestoned, opened, reopened, synchronize, labeled]
+    paths:
+      - tasks/iac.yaml
+      - .github/bundles/aks/*
+      - .github/test-infra/azure/aks/*
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  test-aks-install:
+    strategy:
+      fail-fast: false
+      matrix:
+        flavor: [upstream, registry1, unicorn]
+    runs-on: ubuntu-latest
+    env:
+      SHA: ${{ github.sha }}
+      UDS_REGION: centralus
+      UDS_RESOURCE_GROUP_NAME: ${{ secrets.AZURE_RESOURCE_GROUP }}
+      UDS_STORAGE_ACCOUNT_NAME: ${{ secrets.AZURE_STORAGE_ACCOUNT_NAME }}
+      UDS_CONTAINER_NAME: ${{ secrets.AZURE_STORAGE_CONTAINER_NAME }}
+
+    steps:
+      - name: Set ENV
+        run: |
+          echo "UDS_CLUSTER_NAME=uds-ci-${{ matrix.flavor }}-${SHA:0:7}" >> $GITHUB_ENV
+          echo "UDS_STATE_KEY="uds-core/${SHA:0:7}-nightly-aks-core-${{ matrix.flavor }}.tfstate >> $GITHUB_ENV
+          echo "TF_VAR_location=${UDS_REGION}" >> $GITHUB_ENV
+          echo "TF_VAR_cluster_name=uds-ci-${{ matrix.flavor }}-${SHA:0:7}" >> $GITHUB_ENV
+          echo "TF_VAR_resource_group_name=uds-ci-${{ matrix.flavor }}" >> $GITHUB_ENV
+          echo "ARM_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}" >> $GITHUB_ENV
+          echo "ARM_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}" >> $GITHUB_ENV
+          echo "ARM_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}" >> $GITHUB_ENV
+          echo "ARM_USE_OIDC=true" >> $GITHUB_ENV
+          echo "ARM_STORAGE_USE_AZUREAD=true" >> $GITHUB_ENV
+
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+
+      - name: Check renovate readiness
+        if: startsWith(github.event.pull_request.head.ref, 'renovate/') # Only call for Renovate PRs
+        uses: ./.github/actions/renovate-readiness
+
+      - name: Azure login
+        uses: azure/login@a65d910e8af852a8061c627c456678983e180302 # v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Environment setup
+        uses: ./.github/actions/setup
+        with:
+          registry1Username: ${{ secrets.IRON_BANK_ROBOT_USERNAME }}
+          registry1Password: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
+          ghToken: ${{ secrets.GITHUB_TOKEN }}
+          chainguardIdentity: ${{ secrets.CHAINGUARD_IDENTITY }}
+
+      - name: Setup Tofu
+        uses: opentofu/setup-opentofu@592200bd4b9bbf4772ace78f887668b1aee8f716 # v1.0.5
+        with:
+          tofu_version: 1.8.2
+          tofu_wrapper: false
+
+      - name: Create UDS Core Package
+        run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress --set FLAVOR=${{ matrix.flavor }}
+
+      - name: Create Core Bundle
+        run: uds create .github/bundles/aks --confirm
+
+      - name: Create IAC
+        run: uds run -f tasks/iac.yaml apply-tofu --no-progress --set K8S_DISTRO=aks --set CLOUD=azure
+
+      - name: Deploy Core Bundle
+        env:
+          UDS_CONFIG: .github/bundles/aks/uds-config.yaml
+        run: uds deploy .github/bundles/aks/uds-bundle-uds-core-aks-nightly-*.tar.zst --confirm
+        timeout-minutes: 30
+
+      - name: Debug Output
+        if: ${{ always() }}
+        uses: ./.github/actions/debug-output
+
+      - name: Save logs
+        if: always()
+        uses: ./.github/actions/save-logs
+        with:
+          suffix: -aks-${{ matrix.flavor }}
+          distro: "aks"
+
+      - name: Remove UDS Core
+        if: always()
+        run: uds remove .github/bundles/aks/uds-bundle-uds-core-aks-nightly-*.tar.zst --confirm
+        timeout-minutes: 10
+        continue-on-error: true
+
+      - name: Remove IAC
+        if: always()
+        run: uds run -f tasks/iac.yaml destroy-iac --no-progress --set K8S_DISTRO=aks --set CLOUD=azure

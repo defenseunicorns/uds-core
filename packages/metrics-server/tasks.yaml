@@ -1,0 +1,11 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+includes:
+  - metrics-server: ../../src/metrics-server/tasks.yaml
+
+tasks:
+  - name: validate
+    actions:
+      - description: "Validate Metrics Server"
+        task: metrics-server:validate

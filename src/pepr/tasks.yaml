@@ -1,17 +1,56 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 tasks:
   - name: validate
     actions:
       - cmd: "npx jest src/pepr/**/"
-
   - name: gen-crds
     description: "Generate CRDS, requires a running kubernetes cluster"
     actions:
       - cmd: npx ts-node -e "import { registerCRDs } from './src/pepr/operator/crd/register'; registerCRDs()"
         env:
           - "PEPR_MODE=dev"
-
       - cmd: "npx kubernetes-fluent-client crd packages.uds.dev src/pepr/operator/crd/generated"
 
       - cmd: "npx kubernetes-fluent-client crd exemptions.uds.dev src/pepr/operator/crd/generated"
 
+      - description: "Add license headers to generated CRD files"
+        shell:
+          darwin: bash
+          linux: bash
+        cmd: |
+          # check for addlicense bin
+          if [ -x "$HOME/go/bin/addlicense" ]; then
+            echo "addlicense installed in $HOME/go/bin"
+          else
+            echo "Error: addlicense is not installed in $HOME/go/bin" >&2
+            exit 1
+          fi
+          $HOME/go/bin/addlicense -l "AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial" -s=only -v -c "Defense Unicorns" src/pepr/operator/crd/generated
+
+      - task: gen-docs
+
       - cmd: "npx pepr format"
+
+  - name: gen-docs
+    description: "Generate Docs for generated CRDS, requires a running kubernetes cluster"
+    actions:
+      - cmd: |
+          # Define CRD list as a space-separated string
+          CRD_LIST="exemptions.uds.dev packages.uds.dev"
+          # For each CRD retrieve the CRD and create a Go struct file to then create a markdown file
+          for CRD in $CRD_LIST; do
+              # Retrieve CRD Json from Cluster
+              kubectl get crd $CRD -o json | jq '.spec.versions[] | select(.name == "v1alpha1").schema.openAPIV3Schema' >> $CRD-crd.json
+              # Extract the version (e.g., v1alpha1)
+              version=$(kubectl get crd $CRD -o json | jq -r '.status.storedVersions[0]')
+              # Typescript format markdown
+              npx ts-node src/pepr/docs-gen/main.ts "$CRD-crd.json" "$version"
+              # Remove the json and go files
+              rm -f "$CRD-crd.json"
+          done
+
+  - name: e2e-test
+    actions:
+      - description: "Run Pepr E2E tests"

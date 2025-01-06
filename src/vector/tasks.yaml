@@ -1,0 +1,16 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+tasks:
+  - name: validate
+    actions:
+      - description: Validate vector
+        wait:
+          cluster:
+            kind: Pod
+            name: app.kubernetes.io/name=vector
+            namespace: vector
+            condition: Ready
+  - name: e2e-test
+    actions:
+      - description: "Run Vector E2E tests"

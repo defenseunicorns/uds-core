@@ -1,11 +1,20 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+
 variables:
   - name: CLUSTER_NAME
+  - name: K8S_DISTRO
+  - name: CLOUD
   - name: REGION
   - name: PERMISSIONS_BOUNDARY_NAME
   - name: PERMISSIONS_BOUNDARY_ARN
   - name: STATE_BUCKET_NAME
   - name: STATE_DYNAMODB_TABLE_NAME
   - name: STATE_KEY
+  - name: RESOURCE_GROUP_NAME
+  - name: STORAGE_ACCOUNT_NAME
+  - name: CONTAINER_NAME
   - name: AMI_ID
     default: ami-068ab6ac1cec494e0
 
@@ -13,7 +22,7 @@ tasks:
   - name: install-eksctl
     actions:
       - cmd: |
-          curl --silent --location "https://github.com/weaveworks/eksctl/releases/download/v0.189.0/eksctl_Linux_amd64.tar.gz" | tar xz -C /tmp
+          curl --silent --location "https://github.com/weaveworks/eksctl/releases/download/v0.199.0/eksctl_Linux_amd64.tar.gz" | tar xz -C /tmp
           sudo mv /tmp/eksctl /usr/local/bin
 
   - name: create-cluster
@@ -25,7 +34,7 @@ tasks:
 
           metadata:
             name: ${CLUSTER_NAME}
-            region: us-west-2
+            region: ${REGION}
             version: "1.30"
             tags:
               PermissionsBoundary: ${PERMISSIONS_BOUNDARY_NAME}
@@ -75,6 +84,49 @@ tasks:
       - cmd: eksctl create cluster -f cluster-config.yaml
       - cmd: eksctl utils write-kubeconfig -c ${CLUSTER_NAME}
 
+  - name: rke2-get-kubeconfig
+    actions:
+      - cmd: chmod +x ./scripts/get-kubeconfig.sh && ./scripts/get-kubeconfig.sh
+        dir: .github/test-infra/aws/rke2/
+
+  - name: rke2-nodes-ready
+    actions:
+      - cmd: sleep 30
+      - wait:
+          cluster:
+            kind: nodes
+            condition: Ready
+            name: kubernetes.io/os=linux
+        maxTotalSeconds: 900
+
+  - name: rke2-cluster-ready
+    actions:
+      - task: rke2-nodes-ready
+      - cmd: |
+          # wait for at least 3 nodes
+          while true; do
+            if [ $(uds zarf tools kubectl get nodes -o jsonpath='{range .items[*]}{.status.conditions[-1].type}={.status.conditions[-1].status}{"\n"}{end}' | egrep -i '^ready.*true' | wc -l) -lt 3 ]; then
+              echo "Waiting for at least 3 nodes to be ready...";
+              sleep 5;
+            else
+              break
+            fi
+          done
+
+          # wait for cluster components
+          while true; do
+            if [ $(uds zarf tools kubectl get po,job -A --no-headers=true | egrep -v 'Running|Complete' | wc -l) -gt 0 ]; then
+              echo "Waiting for cluster components to be ready...";
+              sleep 5;
+            else
+              echo "Cluster is ready"
+              break
+            fi
+          done
+          uds zarf tools kubectl apply -f ./metallb.yaml
+        dir: .github/test-infra/aws/rke2/
+        maxTotalSeconds: 600
+
   - name: destroy-cluster
     actions:
       - cmd: eksctl delete cluster -f cluster-config.yaml --disable-nodegroup-eviction --wait
@@ -82,76 +134,30 @@ tasks:
   - name: create-iac
     actions:
       - task: apply-tofu
-      - task: tofu-outputs
-      - task: create-uds-config
 
   - name: destroy-iac
     actions:
       - cmd: tofu destroy -auto-approve
-        dir: .github/test-infra/buckets-iac
+        dir: .github/test-infra/${CLOUD}/${K8S_DISTRO}
 
   - name: apply-tofu
     actions:
-      - cmd: echo ${STATE_KEY} | sed 's/\.tfstate/-buckets1.tfstate/g'
-        setVariables:
-          - name: BUCKETS_STATE_KEY
-        dir: .github/test-infra/buckets-iac
-      - cmd: echo ${BUCKETS_STATE_KEY}
       - cmd: |
-          tofu init -force-copy \
-          -backend-config="bucket=${STATE_BUCKET_NAME}" \
-          -backend-config="key=${BUCKETS_STATE_KEY}" \
-          -backend-config="region=${REGION}" \
-          -backend-config="dynamodb_table=${STATE_DYNAMODB_TABLE_NAME}"
-        dir: .github/test-infra/buckets-iac
+          if [ ${CLOUD} = "aws" ]; then
+            tofu init -force-copy \
+              -backend-config="bucket=${STATE_BUCKET_NAME}" \
+              -backend-config="key=${STATE_KEY}" \
+              -backend-config="region=${REGION}" \
+              -backend-config="dynamodb_table=${STATE_DYNAMODB_TABLE_NAME}"
+          elif [ ${CLOUD} = "azure" ]; then
+            tofu init -force-copy \
+              -backend=true \
+              -backend-config="resource_group_name=$RESOURCE_GROUP_NAME" \
+              -backend-config="storage_account_name=$STORAGE_ACCOUNT_NAME" \
+              -backend-config="container_name=$CONTAINER_NAME" \
+              -backend-config="key=${STATE_KEY}"
+          else
+            echo "Invalid cloud provider specified."; return 1; fi
+        dir: .github/test-infra/${CLOUD}/${K8S_DISTRO}
       - cmd: tofu apply -auto-approve
-        dir: .github/test-infra/buckets-iac
-
-  - name: tofu-outputs
-    actions:
-      - cmd: tofu output -raw loki_s3_bucket
-        setVariables:
-          - name: "LOKI_S3_BUCKET"
-        dir: .github/test-infra/buckets-iac
-      - cmd: tofu output -raw aws_region
-        setVariables:
-          - name: LOKI_S3_AWS_REGION
-        dir: .github/test-infra/buckets-iac
-      - cmd: tofu output -raw loki_irsa_role_arn
-        setVariables:
-          - name: LOKI_S3_ROLE_ARN
-        dir: .github/test-infra/buckets-iac
-      - cmd: tofu output -raw velero_s3_bucket
-        setVariables:
-          - name: VELERO_S3_BUCKET
-        dir: .github/test-infra/buckets-iac
-      - cmd: tofu output -raw aws_region
-        setVariables:
-          - name: VELERO_S3_AWS_REGION
-        dir: .github/test-infra/buckets-iac
-      - cmd: tofu output -raw velero_irsa_role_arn
-        setVariables:
-          - name: VELERO_S3_ROLE_ARN
-        dir: .github/test-infra/buckets-iac
-
-  - name: create-uds-config
-    actions:
-      - cmd: |
-          cat <<EOF> .github/bundles/uds-config.yaml
-          options:
-            architecture: amd64
-          variables:
-            core:
-              loki_chunks_bucket: ${LOKI_S3_BUCKET}
-              loki_ruler_bucket: ${LOKI_S3_BUCKET}
-              loki_admin_bucket: ${LOKI_S3_BUCKET}
-              loki_s3_region: ${LOKI_S3_AWS_REGION}
-              loki_irsa_annotation: "${LOKI_S3_ROLE_ARN}"
-              velero_use_secret: false
-              velero_irsa_annotation: ${VELERO_S3_ROLE_ARN}"
-              velero_bucket: ${VELERO_S3_BUCKET}
-              velero_bucket_region: ${VELERO_S3_AWS_REGION}
-              velero_bucket_provider_url: ""
-              velero_bucket_credential_name: ""
-              velero_bucket_credential_key: ""
-          EOF
+        dir: .github/test-infra/${CLOUD}/${K8S_DISTRO}

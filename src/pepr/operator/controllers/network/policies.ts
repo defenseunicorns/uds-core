@@ -1,7 +1,13 @@
+/**
+ * Copyright 2024 Defense Unicorns
+ * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+ */
+
 import { K8s, kind } from "pepr";
 
+import { UDSConfig } from "../../../config";
 import { Component, setupLogger } from "../../../logger";
-import { Allow, Direction, Gateway, UDSPackage } from "../../crd";
+import { Allow, Direction, Gateway, RemoteGenerated, UDSPackage } from "../../crd";
 import { getOwnerRef, purgeOrphans, sanitizeResourceName } from "../utils";
 import { allowEgressDNS } from "./defaults/allow-egress-dns";
 import { allowEgressIstiod } from "./defaults/allow-egress-istiod";
@@ -143,7 +149,26 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
     policy.metadata.ownerReferences = getOwnerRef(pkg);
 
     // Apply the NetworkPolicy and force overwrite any existing policy
-    await K8s(kind.NetworkPolicy).Apply(policy, { force: true });
+    try {
+      await K8s(kind.NetworkPolicy).Apply(policy, { force: true });
+    } catch (err) {
+      let message = err.data?.message || "Unknown error while applying network policies";
+      if (
+        UDSConfig.kubeApiCidr &&
+        policy.metadata.labels["uds/generated"] === RemoteGenerated.KubeAPI
+      ) {
+        message +=
+          ", ensure that the KUBEAPI_CIDR override configured for the operator is correct.";
+      }
+      if (
+        UDSConfig.kubeNodeCidrs &&
+        policy.metadata.labels["uds/generated"] === RemoteGenerated.KubeNodes
+      ) {
+        message +=
+          ", ensure that the KUBENODE_CIDRS override configured for the operator is correct.";
+      }
+      throw new Error(message);
+    }
   }
 
   await purgeOrphans(generation, namespace, pkgName, kind.NetworkPolicy, log);

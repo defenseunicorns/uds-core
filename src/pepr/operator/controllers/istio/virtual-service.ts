@@ -1,3 +1,8 @@
+/**
+ * Copyright 2024 Defense Unicorns
+ * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+ */
+
 import { V1OwnerReference } from "@kubernetes/client-node";
 import { UDSConfig } from "../../../config";
 import { Expose, Gateway, IstioHTTP, IstioHTTPRoute, IstioVirtualService } from "../../crd";
@@ -20,8 +25,8 @@ export function generateVirtualService(
 
   const name = generateVSName(pkgName, expose);
 
-  // For the admin gateway, we need to add the path prefix
-  const domain = (gateway === Gateway.Admin ? "admin." : "") + UDSConfig.domain;
+  // Get the correct domain based on gateway
+  const domain = gateway === Gateway.Admin ? UDSConfig.adminDomain : UDSConfig.domain;
 
   // Append the domain to the host
   const fqdn = `${host}.${domain}`;
@@ -40,7 +45,7 @@ export function generateVirtualService(
     },
   ];
 
-  if (!advancedHTTP.directResponse) {
+  if (!advancedHTTP.directResponse && !advancedHTTP.redirect) {
     // Create the route to the service if not using advancedHTTP.directResponse
     http.route = route;
   }

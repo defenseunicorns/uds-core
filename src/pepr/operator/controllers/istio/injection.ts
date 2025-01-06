@@ -1,3 +1,8 @@
+/**
+ * Copyright 2024 Defense Unicorns
+ * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+ */
+
 import { K8s, kind } from "pepr";
 
 import { Component, setupLogger } from "../../../logger";
@@ -159,7 +164,8 @@ async function killPods(ns: string, enableInjection: boolean) {
     }
 
     for (const pod of group) {
-      log.info(`Deleting pod ${ns}/${pod.metadata?.name} to enable the istio sidecar`);
+      const action = enableInjection ? "enable" : "remove";
+      log.info(`Deleting pod ${ns}/${pod.metadata?.name} to ${action} the istio sidecar`);
       await K8s(kind.Pod).Delete(pod);
     }
   }

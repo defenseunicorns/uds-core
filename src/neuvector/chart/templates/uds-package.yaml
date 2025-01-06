@@ -1,3 +1,7 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+{{- $neuvectorAdminPass := join "" (list (randAlphaNum 12) (randAlpha 2 | upper) (randAlpha 2 | lower) (randNumeric 2))}}
+
 apiVersion: uds.dev/v1alpha1
 kind: Package
 metadata:
@@ -18,9 +22,20 @@ spec:
     - name: Neuvector
       clientId: uds-core-admin-neuvector
       redirectUris:
+        {{- if .Values.adminDomain }}
+        - "https://neuvector.{{ .Values.adminDomain }}/openId_auth"
+        {{- else }}
         - "https://neuvector.admin.{{ .Values.domain }}/openId_auth"
+        {{- end }}
       secretName: neuvector-secret
       secretTemplate:
+        userinitcfg.yaml: |-
+          always_reload: true
+          users:
+            - username: admin
+              fullname: admin
+              password: {{ $neuvectorAdminPass }}
+              role: admin
         oidcinitcfg.yaml: |-
           always_reload: true
           client_id: clientField(clientId)
@@ -58,14 +73,27 @@ spec:
 
       # Access to SSO for OIDC
       - direction: Egress
-        remoteGenerated: Anywhere
         selector:
           app: neuvector-controller-pod
+        remoteSelector:
+          app: tenant-ingressgateway
+        remoteNamespace: istio-tenant-gateway
+        description: "SSO Provider"
 
       - direction: Egress
         remoteGenerated: KubeAPI
         selector:
           app: neuvector-updater-pod
+
+      - direction: Egress
+        remoteGenerated: KubeAPI
+        selector:
+          app: neuvector-cert-upgrader-pod
+
+      - direction: Egress
+        remoteGenerated: KubeAPI
+        selector:
+          app: neuvector-scanner-pod
 
       - direction: Egress
         remoteGenerated: KubeAPI
@@ -80,9 +108,7 @@ spec:
         port: 30443
         description: "Webhook"
 
-      - direction: Egress
-        remoteNamespace: tempo
-        remoteSelector:
-          app.kubernetes.io/name: tempo
-        port: 9411
-        description: "Tempo"
+      # Custom rules for additional networking access
+      {{- with .Values.additionalNetworkAllow }}
+      {{ toYaml . | nindent 6 }}
+      {{- end }}

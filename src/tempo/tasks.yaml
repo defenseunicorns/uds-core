@@ -1,3 +1,6 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 tasks:
   - name: validate
     actions:
@@ -5,3 +8,7 @@ tasks:
         cmd: "echo Replace Me"
         # wait:
         #   cluster:
+
+  - name: e2e-test
+    actions:
+      - description: "Run Tempo E2E tests"

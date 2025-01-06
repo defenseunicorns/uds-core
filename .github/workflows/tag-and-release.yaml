@@ -1,3 +1,6 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 name: Release UDS Core
 
 on:
@@ -28,4 +31,13 @@ jobs:
     uses: ./.github/workflows/publish.yaml
     with:
       snapshot: false
+    secrets: inherit
+
+  checkpoint-uds-core-release:
+    needs: publish-uds-core-release
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    uses: ./.github/workflows/checkpoint.yaml
     secrets: inherit

@@ -1,0 +1,58 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+metadata:
+  name: all-namespaces-istio-injected
+  uuid: 0da39859-a91a-4ca6-bd8b-9b117689188f
+domain:
+  type: kubernetes
+  kubernetes-spec:
+    resources:
+      - name: namespaces
+        resource-rule:
+          group: ""
+          version: v1
+          resource: namespaces
+          namespaces: []
+provider:
+  type: opa
+  opa-spec:
+    rego: |
+      package validate
+      import rego.v1
+
+      # Default values
+      default validate := false
+      default msg := "Not evaluated"
+
+      # Validation
+      validate if {
+        check_non_istio_injected_namespaces.result
+      }
+      msg = check_non_istio_injected_namespaces.msg
+      msg_exempt_namespaces = concat(", ", exempted_namespaces)
+
+      # List of exempted namespaces
+      exempted_namespaces := {"istio-system", "kube-system", "default", "istio-admin-gateway",
+      "istio-passthrough-gateway", "istio-tenant-gateway", "kube-node-lease", "kube-public", "uds-crds",
+      "uds-dev-stack", "uds-policy-exemptions", "zarf"}
+
+      # Collect non-Istio-injected namespaces
+      non_istio_injected_namespaces := {ns.metadata.name |
+        ns := input.namespaces[_]
+        ns.kind == "Namespace"
+        not ns.metadata.labels["istio-injection"] == "enabled"
+        not ns.metadata.name in exempted_namespaces
+      }
+
+      # Check no non-Istio-injected namespaces
+      check_non_istio_injected_namespaces = { "result": true, "msg": "All namespaces are Istio-injected" } if {
+        count(non_istio_injected_namespaces) == 0
+      } else = { "result": false, "msg": msg } if {
+        msg := sprintf("Non-Istio-injected namespaces: %v", [non_istio_injected_namespaces])
+      }
+    output:
+      validation: validate.validate
+      observations:
+        - validate.msg
+        - validate.msg_exempt_namespaces

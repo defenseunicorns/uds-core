@@ -1,0 +1,13 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+includes:
+  - loki: ../../src/loki/tasks.yaml
+  - vector: ../../src/vector/tasks.yaml
+
+tasks:
+  - name: validate
+    actions:
+      - task: loki:validate
+      - task: vector:validate
+      - task: loki:e2e-test

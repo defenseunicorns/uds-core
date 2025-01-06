@@ -69,33 +69,19 @@ Blob information and access credentials can be provided by overriding bundle val
                     subscriptionId:${AZ_SUBSCRIPTION_ID}
 ```
 
-## Plugin Compatability
+## Plugin Compatibility
 
 This package currently assumes the availability of S3 API compatible object storage, Azure blob storage or use of the CSI plugin which is baked into Velero by default. More information about all available plugins can be found in the upstream docs**[can be found in the upstream docs](https://velero.io/plugins/). 
 
 ## Deploy
 
-### Build and Deploy Everything locally via UDS tasks
+### Build Deploy, and Test locally via UDS tasks
+
+Velero is included in the backup-restore functional layer (WIP). This layer can be created, deployed, and tested with a single UDS run command:
 
 ```bash
-# build the bundle for testing
-UDS_PKG=velero uds run create-single-package
-
-# setup a k3d test env
-uds run setup-test-cluster
-
-# deploy the bundle
-UDS_PKG=velero uds run deploy-single-package
+uds run test-single-layer --set LAYER=backup-restore
 ```
-
-### Test the package via UDS tasks
-Running the following will check that the velero deployment exists in the cluster and attempt to execute a backup:
-
-```bash
-uds run -f src/velero/tasks.yaml validate
-```
-
-> Alternatively, you can combine package creation, cluster setup, package deploy and the test command with a simple `UDS_PKG=velero uds run test-single-package`
 
 ## Manually trigger the default backup for testing purposes
 

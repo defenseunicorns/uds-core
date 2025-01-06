@@ -1,3 +1,6 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 apiVersion: uds.dev/v1alpha1
 kind: Package
 metadata:
@@ -15,8 +18,23 @@ spec:
 
       # Egress must be allowed to the external facing Keycloak endpoint
       - direction: Egress
+        remoteSelector:
+          app: tenant-ingressgateway
+        remoteNamespace: istio-tenant-gateway
+        description: "SSO Provider"
+
+      {{- if .Values.redis.uri }}
+      - direction: Egress
+        description: Redis Session Store
+        {{- if .Values.redis.internal.enabled }}
+        remoteSelector: {{ .Values.redis.internal.remoteSelector }}
+        remoteNamespace: {{ .Values.redis.internal.remoteNamespace }}
+        {{- else if .Values.redis.egressCidr }}
+        remoteCidr: {{ .Values.redis.egressCidr }}
+        {{- else }}
         remoteGenerated: Anywhere
-        description: "SSO Provider & Redis Session Store"
+        {{- end }}
+      {{- end }}
 
       - direction: Ingress
         selector:

@@ -1,13 +1,19 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 kind: ZarfPackageConfig
 metadata:
   name: pepr-uds-core
-  description: 'Pepr Module: A collection of capabilities for UDS Core'
+  description: "Pepr Module: A collection of capabilities for UDS Core"
   url: https://github.com/defenseunicorns/pepr
 
 variables:
   - name: DOMAIN
     description: "Cluster domain"
     default: "uds.dev"
+
+  - name: ADMIN_DOMAIN
+    description: "Domain for admin services, defaults to `admin.DOMAIN`"
 
   - name: CA_CERT
     description: "Base64 encoded CA cert that signed the domain wildcard certs used for Istio ingress"
@@ -19,10 +25,6 @@ variables:
 
   - name: AUTHSERVICE_REDIS_URI
     description: "UDS Authservice Redis URI"
-    default: ""
-
-  - name: UDS_SINGLE_TEST
-    description: "UDS Single package test"
     default: ""
 
   - name: PEPR_SERVICE_MONITORS
@@ -49,34 +51,3 @@ components:
       - name: module
         valuesFiles:
           - values.yaml
-    actions:
-      onDeploy:
-        before:
-          - cmd: ./zarf tools kubectl annotate secret -n pepr-system pepr-uds-core-api-token meta.helm.sh/release-name=module --overwrite || true
-            mute: true
-          - cmd: ./zarf tools kubectl annotate secret -n pepr-system pepr-uds-core-module meta.helm.sh/release-name=module --overwrite || true
-            mute: true
-          - cmd: ./zarf tools kubectl annotate secret -n pepr-system pepr-uds-core-tls meta.helm.sh/release-name=module --overwrite || true
-            mute: true
-          - cmd: ./zarf tools kubectl annotate serviceaccount -n pepr-system pepr-uds-core meta.helm.sh/release-name=module --overwrite || true
-            mute: true
-          - cmd: ./zarf tools kubectl annotate clusterrolebinding pepr-uds-core meta.helm.sh/release-name=module --overwrite || true
-            mute: true
-          - cmd: ./zarf tools kubectl annotate clusterrole pepr-uds-core meta.helm.sh/release-name=module --overwrite || true
-            mute: true
-          - cmd: ./zarf tools kubectl annotate role -n pepr-system pepr-uds-core-store meta.helm.sh/release-name=module --overwrite || true
-            mute: true
-          - cmd: ./zarf tools kubectl annotate rolebinding -n pepr-system pepr-uds-core-store meta.helm.sh/release-name=module --overwrite || true
-            mute: true
-          - cmd: ./zarf tools kubectl annotate service -n pepr-system pepr-uds-core meta.helm.sh/release-name=module --overwrite || true
-            mute: true
-          - cmd: ./zarf tools kubectl annotate service -n pepr-system pepr-uds-core-watcher meta.helm.sh/release-name=module --overwrite || true
-            mute: true
-          - cmd: ./zarf tools kubectl annotate deployment -n pepr-system pepr-uds-core meta.helm.sh/release-name=module --overwrite || true
-            mute: true
-          - cmd: ./zarf tools kubectl annotate deployment -n pepr-system pepr-uds-core-watcher meta.helm.sh/release-name=module --overwrite || true
-            mute: true
-          - cmd: ./zarf tools kubectl annotate mutatingwebhookconfiguration -n pepr-system pepr-uds-core meta.helm.sh/release-name=module --overwrite || true
-            mute: true
-          - cmd: ./zarf tools kubectl annotate validatingwebhookconfiguration -n pepr-system pepr-uds-core meta.helm.sh/release-name=module --overwrite || true
-            mute: true

@@ -1,8 +1,14 @@
+/**
+ * Copyright 2024 Defense Unicorns
+ * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+ */
+
 import { V1OwnerReference } from "@kubernetes/client-node";
 import { K8s } from "pepr";
 import { Component, setupLogger } from "../../../logger";
 import { Monitor, PrometheusPodMonitor, UDSPackage } from "../../crd";
 import { Kind } from "../../crd/generated/package-v1alpha1";
+import { FallbackScrapeProtocol } from "../../crd/generated/prometheus/podmonitor-v1";
 import { getOwnerRef, purgeOrphans } from "../utils";
 import { generateMonitorName } from "./common";
 
@@ -81,6 +87,9 @@ export function generatePodMonitor(
       selector: {
         matchLabels: podSelector ?? selector,
       },
+      // Fallback to the Prometheus 2.x default if not defined
+      fallbackScrapeProtocol:
+        monitor.fallbackScrapeProtocol || FallbackScrapeProtocol.PrometheusText004,
     },
   };
 

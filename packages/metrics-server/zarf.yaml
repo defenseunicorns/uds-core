@@ -1,0 +1,19 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+kind: ZarfPackageConfig
+metadata:
+  name: core-metrics-server
+  description: "UDS Core (Metrics Server)"
+  authors: "Defense Unicorns - Product"
+  # x-release-please-start-version
+  version: "0.33.1"
+  # x-release-please-end
+  x-uds-dependencies: ["base"]
+
+components:
+  # Metrics Server
+  - name: metrics-server
+    required: true
+    import:
+      path: ../../src/metrics-server

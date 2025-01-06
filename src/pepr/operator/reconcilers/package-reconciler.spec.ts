@@ -1,3 +1,8 @@
+/**
+ * Copyright 2024 Defense Unicorns
+ * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+ */
+
 import { beforeEach, describe, expect, jest, test } from "@jest/globals";
 
 import { K8s, Log } from "pepr";

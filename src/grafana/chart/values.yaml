@@ -1,1 +1,39 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 domain: "###ZARF_VAR_DOMAIN###"
+adminDomain: "###ZARF_VAR_ADMIN_DOMAIN###"
+
+# Stores Grafana's metadata, including dashboards, data sources, organizations, alerts, and other configurations. Required for HA mode.
+postgresql:
+  # The hostname of the external postgresql server ( does not include the port )
+  host: ""
+  # The name of the postgresql database Grafana will connect to.
+  database: ""
+  # The username used for authenticating to the external postgresql.
+  user: ""
+  # The password used for authenticating to the external postgresql.
+  password: ""
+  # SSL mode for the postgresql connection. Set to 'disable' if SSL is not required.
+  ssl_mode: require
+  # Port the postgresql is listening on
+  port: 5432
+  # Egress CIDR for external Postgres
+  egressCidr: ""
+  # Configure internal postgresql deployment
+  internal:
+    enabled: false
+    remoteSelector: {}
+    remoteNamespace: ""
+
+# Support for custom `network.allow` entries on the Package CR, useful for extra datasources
+additionalNetworkAllow: []
+# ref: https://uds.defenseunicorns.com/reference/configuration/custom-resources/packages-v1alpha1-cr/#allow
+#   - direction: Egress
+#     selector:
+#       app.kubernetes.io/name: grafana
+#     remoteNamespace: thanos
+#     remoteSelector:
+#       app: thanos
+#     description: "Thanos Query"
+#     port: 9090

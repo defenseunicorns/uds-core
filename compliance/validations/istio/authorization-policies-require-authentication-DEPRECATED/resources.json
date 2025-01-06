@@ -1,0 +1,41 @@
+{
+  "authorizationPolicy": {
+    "apiVersion": "security.istio.io/v1beta1",
+    "kind": "AuthorizationPolicy",
+    "metadata": {
+      "annotations": {
+        "meta.helm.sh/release-name": "authservice",
+        "meta.helm.sh/release-namespace": "authservice"
+      },
+      "creationTimestamp": "2024-04-22T14:10:05Z",
+      "generation": 1,
+      "labels": {
+        "app.kubernetes.io/managed-by": "Helm"
+      },
+      "name": "jwt-authz",
+      "namespace": "istio-system",
+      "resourceVersion": "3753",
+      "uid": "be533399-3b67-4dbd-a6c3-97d21cae7360"
+    },
+    "spec": {
+      "rules": [
+        {
+          "from": [
+            {
+              "source": {
+                "requestPrincipals": [
+                  "https://login.uds.dev/auth/realms/doug/*"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "selector": {
+        "matchLabels": {
+          "protect": "keycloak"
+        }
+      }
+    }
+  }
+}

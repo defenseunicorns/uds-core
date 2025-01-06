@@ -1,3 +1,6 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 sidecar:
   dashboards:
     enabled: true
@@ -16,12 +19,16 @@ extraSecretMounts:
 
 grafana.ini:
   server:
-    root_url: https://grafana.admin.###ZARF_VAR_DOMAIN###
+    root_url: https://grafana.{{ "###ZARF_VAR_ADMIN_DOMAIN###" | default "admin.###ZARF_VAR_DOMAIN###" }}
   # Disable telemetry that doesn't function in the airgap
   analytics:
     reporting_enabled: false
     check_for_updates: false
     check_for_plugin_updates: false
+    feedback_links_enabled: false
+  plugins:
+    public_key_retrieval_disabled: true
+    preinstall_disabled: true # Ensure we don't try to install plugins from grafana.com which would fail in the airgap
   auth:
     # Disable the login form to force users to use SSO
     disable_login_form: true
@@ -45,5 +52,39 @@ grafana.ini:
     # Automatically redirect to the SSO login page
     auto_login: true
 
+# Add environment variables for PostgresQL connection from uds-config chart
+envFromSecret: "uds-grafana-config-postgresql"
+
 service:
   appProtocol: "http"
+
+autoscaling:
+  # Enable HorizontalPodAutoscaler for Grafana
+  enabled: false
+  # Additional labels for the HorizontalPodAutoscaler
+  labels: {}
+  # Minimum and maximum number of replicas for the Grafana deployment
+  minReplicas: 2
+  maxReplicas: 5
+  # Metrics to use for scaling (CPU, memory, or custom metrics)
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70 # Adjust based on expected load
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 75 # Optional, based on memory usage patterns
+  # Scaling behavior (optional): Controls how fast to scale up or down
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300 # Prevent rapid scaling down
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 300 # Scale down one pod every 5 minutes

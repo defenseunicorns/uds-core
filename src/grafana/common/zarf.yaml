@@ -1,3 +1,6 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 kind: ZarfPackageConfig
 metadata:
   name: uds-core-grafana-common
@@ -12,9 +15,11 @@ components:
         namespace: grafana
         version: 0.1.0
         localPath: ../chart
+        valuesFiles:
+          - ../chart/values.yaml
       - name: grafana
         url: https://grafana.github.io/helm-charts/
-        version: 8.4.4
+        version: 8.8.2
         namespace: grafana
         valuesFiles:
           - ../values/values.yaml
@@ -25,7 +30,7 @@ components:
             maxTotalSeconds: 300
             wait:
               cluster:
-                kind: Packages
+                kind: packages.uds.dev
                 name: grafana
                 namespace: grafana
                 condition: "'{.status.phase}'=Ready"

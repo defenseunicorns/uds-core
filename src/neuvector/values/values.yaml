@@ -1,3 +1,6 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 leastPrivilege: true
 autoGenerateCert: false
 rbac: true
@@ -6,6 +9,9 @@ manager:
     ssl: false
   svc:
     type: ClusterIP
+
+internal:
+  autoRotateCert: true
 
 controller:
   apisvc:

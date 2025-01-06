@@ -1,0 +1,77 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+metadata:
+  name: check-istio-admin-gateway-and-usage
+  uuid: c6c9daf1-4196-406d-8679-312c0512ab2e
+domain:
+  type: kubernetes
+  kubernetes-spec:
+    resources:
+      - name: adminGateway
+        resource-rule:
+          name: admin-gateway
+          group: networking.istio.io
+          version: v1beta1
+          resource: gateways
+          namespaces: ["istio-admin-gateway"]
+      - name: virtualServices
+        resource-rule:
+          group: networking.istio.io
+          version: v1beta1
+          resource: virtualservices
+          namespaces: []
+provider:
+  type: opa
+  opa-spec:
+    rego: |
+      package validate
+      import rego.v1
+
+      # Default values
+      default validate := false
+      default admin_gw_exists := false
+      default admin_vs_match := false
+      default msg := "Not evaluated"
+
+      # Expected admin gateway details
+      expected_gateway := "admin-gateway"
+      expected_gateway_namespace := "istio-admin-gateway"
+      expected_ns_name := sprintf("%s/%s", [expected_gateway_namespace, expected_gateway])
+
+      validate if {
+        result_admin_gw_exixts.result
+        result_admin_vs_match.result
+      }
+
+      msg = concat(" ", [result_admin_gw_exixts.msg, result_admin_vs_match.msg])
+
+      result_admin_gw_exixts = {"result": true, "msg": msg} if {
+        input.adminGateway.kind == "Gateway"
+        input.adminGateway.metadata.name == expected_gateway
+        input.adminGateway.metadata.namespace == expected_gateway_namespace
+        msg := sprintf("Admin gateway exists: %s.", [expected_ns_name])
+      } else = {"result": false, "msg": msg} if {
+        msg := sprintf("Admin gateway does not exist, looking for: %s.", [expected_ns_name])
+      }
+
+      result_admin_vs_match = {"result": true, "msg": msg} if {
+        count(admin_vs-admin_vs_using_gateway) == 0
+        count(all_vs_using_gateway-admin_vs_using_gateway) == 0
+        msg := "Admin virtual services are using admin gateway."
+      } else = {"result": false, "msg": msg} if {
+        msg := sprintf("Mismatch of admin virtual services using gateway. Admin VS not using GW: %s. Non-Admin VS using gateway: %s.", [concat(", ", admin_vs-admin_vs_using_gateway), concat(", ", all_vs_using_gateway-admin_vs_using_gateway)])
+      }
+
+      # Count admin virtual services
+      admin_vs := {adminVs.metadata.name | adminVs := input.virtualServices[_]; adminVs.kind == "VirtualService"; contains(adminVs.metadata.name, "admin")}
+
+      # Count admin VirtualServices correctly using the admin gateway (given by vs name containing "admin")
+      admin_vs_using_gateway := {adminVs.metadata.name | adminVs := input.virtualServices[_]; adminVs.kind == "VirtualService"; contains(adminVs.metadata.name, "admin"); adminVs.spec.gateways[_] == expected_ns_name}
+
+      # Count all VirtualServices using the admin gateway
+      all_vs_using_gateway := {vs.metadata.name | vs := input.virtualServices[_]; vs.kind == "VirtualService"; vs.spec.gateways[_] == expected_ns_name}
+    output:
+      validation: validate.validate
+      observations:
+        - validate.msg

@@ -1,3 +1,6 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 apiVersion: uds.dev/v1alpha1
 kind: Package
 metadata:
@@ -31,28 +34,28 @@ spec:
           app.kubernetes.io/name: prometheus
         ports:
           - 3100
-          - 8080
         description: "Prometheus Metrics"
 
       - direction: Ingress
         selector:
           app.kubernetes.io/name: loki
-        remoteNamespace: promtail
+        remoteNamespace: vector
         remoteSelector:
-          app.kubernetes.io/name: promtail
+          app.kubernetes.io/name: vector
         ports:
           - 8080
-        description: "Promtail Log Storage"
+        description: "Vector Log Storage"
 
-      # Todo: wide open for now for pushing to s3
+      # Egress for S3 connections
       - direction: Egress
         selector:
           app.kubernetes.io/name: loki
+        description: Storage
+        {{- if .Values.storage.internal.enabled }}
+        remoteSelector: {{ .Values.storage.internal.remoteSelector }}
+        remoteNamespace: {{ .Values.storage.internal.remoteNamespace }}
+        {{- else if .Values.storage.egressCidr }}
+        remoteCidr: {{ .Values.storage.egressCidr }}
+        {{- else }}
         remoteGenerated: Anywhere
-
-      - direction: Egress
-        remoteNamespace: tempo
-        remoteSelector:
-          app.kubernetes.io/name: tempo
-        port: 9411
-        description: "Tempo"
+        {{- end }}

@@ -1,3 +1,8 @@
+/**
+ * Copyright 2024 Defense Unicorns
+ * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+ */
+
 import { afterEach, describe, expect, it, jest } from "@jest/globals";
 import { PeprValidateRequest } from "pepr";
 import {
@@ -306,6 +311,38 @@ describe("Test validation of Exemption CRs", () => {
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
   });
 
+  it("denies public clients using the service accounts roles", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [],
+      [
+        {
+          publicClient: true,
+          serviceAccountsEnabled: true,
+        },
+      ],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+  });
+
+  it("denies using standard flow with service accounts roles", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [],
+      [
+        {
+          standardFlowEnabled: true,
+          serviceAccountsEnabled: true,
+        },
+      ],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+  });
+
   it("denies public device flow clients using a secret", async () => {
     const mockReq = makeMockReq(
       {},
@@ -436,6 +473,22 @@ describe("Test validation of Exemption CRs", () => {
     expect(mockReq.Approve).toHaveBeenCalledTimes(1);
   });
 
+  it("allows service account clients with standard flow disabled ", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [],
+      [
+        {
+          serviceAccountsEnabled: true,
+          standardFlowEnabled: false,
+        },
+      ],
+    );
+    await validator(mockReq);
+    expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+  });
+
   it("denies authservice clients with : in client ID", async () => {
     const mockReq = makeMockReq(
       {},
@@ -514,6 +567,14 @@ describe("Test Allowed SSO Client Attributes", () => {
             "oauth2.device.authorization.grant.enabled": "true",
             "pkce.code.challenge.method": "S256",
             "client.session.idle.timeout": "3600",
+            "client.session.max.lifespan": "36000",
+            "access.token.lifespan": "60",
+            "saml.assertion.signature": "false",
+            "saml.client.signature": "false",
+            saml_assertion_consumer_url_post: "https://nexus.uds.dev/saml",
+            saml_assertion_consumer_url_redirect: "https://nexus.uds.dev/saml",
+            saml_single_logout_service_url_post: "https://nexus.uds.dev/saml/single-logout",
+            saml_single_logout_service_url_redirect: "https://nexus.uds.dev/saml/single-logout",
           },
         },
       ],

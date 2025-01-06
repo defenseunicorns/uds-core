@@ -1,5 +1,9 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 registry: registry1.dso.mil
-tag: "5.3.4"
+# renovate: datasource=docker depName=registry1.dso.mil/ironbank/neuvector/neuvector/controller versioning=docker
+tag: "5.4.1"
 manager:
   image:
     repository: ironbank/neuvector/neuvector/manager
@@ -30,6 +34,7 @@ cve:
   scanner:
     image:
       repository: ironbank/neuvector/neuvector/scanner
+      # renovate: datasource=docker depName=registry1.dso.mil/ironbank/neuvector/neuvector/scanner versioning=docker
       tag: "5"
     containerSecurityContext:
       capabilities:
@@ -41,7 +46,8 @@ cve:
     enabled: true
     image:
       repository: ironbank/redhat/ubi/ubi9-minimal
-      tag: "9.4"
+      # renovate: datasource=docker depName=registry1.dso.mil/ironbank/redhat/ubi/ubi9-minimal versioning=docker
+      tag: "9.5"
     containerSecurityContext:
       capabilities:
         drop:

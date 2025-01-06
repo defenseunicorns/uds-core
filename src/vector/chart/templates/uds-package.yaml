@@ -1,0 +1,38 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: vector
+  namespace: {{ .Release.Namespace }}
+spec:
+  network:
+    allow:
+      - direction: Ingress
+        selector:
+          app.kubernetes.io/name: vector
+        remoteNamespace: monitoring
+        remoteSelector:
+          app.kubernetes.io/name: prometheus
+        port: 9090
+        description: "Prometheus Metrics"
+
+      - direction: Egress
+        selector:
+          app.kubernetes.io/name: vector
+        remoteGenerated: KubeAPI
+
+      - direction: Egress
+        selector:
+          app.kubernetes.io/name: vector
+        remoteNamespace: loki
+        remoteSelector:
+          app.kubernetes.io/name: loki
+        port: 8080
+        description: "Write Logs to Loki"
+
+      # Custom rules for additional networking access
+      {{- with .Values.additionalNetworkAllow }}
+      {{ toYaml . | nindent 6 }}
+      {{- end }}

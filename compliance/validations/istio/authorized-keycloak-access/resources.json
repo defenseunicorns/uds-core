@@ -1,0 +1,132 @@
+{
+  "authorizationPolicy": {
+    "apiVersion": "security.istio.io/v1beta1",
+    "kind": "AuthorizationPolicy",
+    "metadata": {
+      "annotations": {
+        "meta.helm.sh/release-name": "keycloak",
+        "meta.helm.sh/release-namespace": "keycloak"
+      },
+      "creationTimestamp": "2024-08-05T13:42:55Z",
+      "generation": 1,
+      "labels": {
+        "app.kubernetes.io/managed-by": "Helm"
+      },
+      "name": "keycloak-block-admin-access-from-public-gateway",
+      "namespace": "keycloak",
+      "resourceVersion": "1683",
+      "uid": "d479e061-abbd-4a05-8450-90939bc7497f"
+    },
+    "spec": {
+      "action": "DENY",
+      "rules": [
+        {
+          "from": [
+            {
+              "source": {
+                "notNamespaces": [
+                  "istio-admin-gateway"
+                ]
+              }
+            }
+          ],
+          "to": [
+            {
+              "operation": {
+                "paths": [
+                  "/admin*",
+                  "/realms/master*"
+                ],
+                "ports": [
+                  "8080"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "from": [
+            {
+              "source": {
+                "notNamespaces": [
+                  "istio-admin-gateway",
+                  "monitoring"
+                ]
+              }
+            }
+          ],
+          "to": [
+            {
+              "operation": {
+                "paths": [
+                  "/metrics*"
+                ],
+                "ports": [
+                  "8080"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "from": [
+            {
+              "source": {
+                "notNamespaces": [
+                  "pepr-system"
+                ]
+              }
+            }
+          ],
+          "to": [
+            {
+              "operation": {
+                "paths": [
+                  "/realms/uds/clients-registrations/*"
+                ],
+                "ports": [
+                  "8080"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "from": [
+            {
+              "source": {
+                "notNamespaces": [
+                  "istio-tenant-gateway",
+                  "istio-admin-gateway"
+                ]
+              }
+            }
+          ],
+          "to": [
+            {
+              "operation": {
+                "ports": [
+                  "8080"
+                ]
+              }
+            }
+          ],
+          "when": [
+            {
+              "key": "request.headers[istio-mtls-client-certificate]",
+              "values": [
+                "*"
+              ]
+            }
+          ]
+        }
+      ],
+      "selector": {
+        "matchLabels": {
+          "app.kubernetes.io/instance": "keycloak",
+          "app.kubernetes.io/name": "keycloak"
+        }
+      }
+    }
+  }
+}

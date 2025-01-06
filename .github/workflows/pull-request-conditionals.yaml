@@ -1,10 +1,29 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 name: Filter
 
 # This workflow is triggered on pull requests
 on:
   pull_request:
     # milestoned is added here as a workaround for release-please not triggering PR workflows (PRs should be added to a milestone to trigger the workflow).
-    types: [milestoned, opened, reopened, synchronize]
+    # labeled is added here to allow for "manual" triggering of CI on renovate PRs
+    types: [milestoned, opened, reopened, synchronize, labeled]
+    paths-ignore:
+      - "**.md"
+      - "**.jpg"
+      - "**.png"
+      - "**.gif"
+      - "**.svg"
+      - docs/**
+      - .vscode/**
+      - .gitignore
+      - renovate.json
+      - .release-please-config.json
+      - .codespellrc
+      - release-please-config.json
+      - CODEOWNERS
+      - LICENSE
 
 # Permissions for the GITHUB_TOKEN used by the workflow.
 permissions:
@@ -27,19 +46,10 @@ jobs:
   lint-check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
-      - name: Use Node.js latest
-        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
-        with:
-          node-version: 20
-      - name: Set up Homebrew
-        uses: Homebrew/actions/setup-homebrew@master
-      - name: Install UDS CLI
-        shell: bash
-        # renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
-        run: brew install defenseunicorns/tap/uds@0.14.1
-      - name: Run Formatting Checks
-        run: uds run lint-check --no-progress
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: lint-check
+        uses: ./.github/actions/lint-check
 
   # This job checks if there are changes in specific paths source packages.
   check-paths:
@@ -51,7 +61,11 @@ jobs:
 
     steps:
       - name: Checkout the code
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Check renovate readiness
+        if: startsWith(github.event.pull_request.head.ref, 'renovate/') # Only call for Renovate PRs
+        uses: ./.github/actions/renovate-readiness
 
       # Uses a custom action to filter paths for source packages.
       - name: Check src paths

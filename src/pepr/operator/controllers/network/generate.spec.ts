@@ -1,3 +1,8 @@
+/**
+ * Copyright 2024 Defense Unicorns
+ * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+ */
+
 import { describe, expect, it } from "@jest/globals";
 import { kind } from "pepr";
 import { Direction } from "../../crd";
@@ -110,4 +115,60 @@ describe("network policy generate", () => {
     podSelector: { matchLabels: { app: "test" } },
     policyTypes: ["Egress"],
   } as kind.NetworkPolicy["spec"]);
+});
+
+describe("network policy generate with remoteCidr", () => {
+  it("should generate correct network policy with remoteCidr for Egress", async () => {
+    const policy = generate("test", {
+      description: "test",
+      direction: Direction.Egress,
+      selector: { app: "test" },
+      remoteCidr: "192.168.0.0/16",
+    });
+
+    expect(policy.metadata?.name).toEqual("Egress-test");
+    expect(policy.spec).toEqual({
+      egress: [
+        {
+          to: [
+            {
+              ipBlock: {
+                cidr: "192.168.0.0/16",
+              },
+            },
+          ],
+          ports: [],
+        },
+      ],
+      podSelector: { matchLabels: { app: "test" } },
+      policyTypes: ["Egress"],
+    } as kind.NetworkPolicy["spec"]);
+  });
+
+  it("should generate correct network policy with remoteCidr for Ingress", async () => {
+    const policy = generate("test", {
+      description: "test",
+      direction: Direction.Ingress,
+      selector: { app: "test" },
+      remoteCidr: "10.0.0.0/8",
+    });
+
+    expect(policy.metadata?.name).toEqual("Ingress-test");
+    expect(policy.spec).toEqual({
+      ingress: [
+        {
+          from: [
+            {
+              ipBlock: {
+                cidr: "10.0.0.0/8",
+              },
+            },
+          ],
+          ports: [],
+        },
+      ],
+      podSelector: { matchLabels: { app: "test" } },
+      policyTypes: ["Ingress"],
+    } as kind.NetworkPolicy["spec"]);
+  });
 });

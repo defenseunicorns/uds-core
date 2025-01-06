@@ -1,21 +1,24 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 image:
   registry: cgr.dev
   repository: du-uds-defenseunicorns/grafana-fips
-  tag: 11.1.3
+  tag: 11.4.0
 
 initChownData:
   image:
     registry: cgr.dev
     repository: du-uds-defenseunicorns/busybox-fips
-    tag: 1.36.1
+    tag: 1.37.0
 
 downloadDashboardsImage:
   registry: cgr.dev
   repository: du-uds-defenseunicorns/curl-fips
-  tag: 8.9.1
+  tag: 8.11.1
 
 sidecar:
   image:
     registry: cgr.dev
     repository: du-uds-defenseunicorns/k8s-sidecar-fips
-    tag: 1.27.5
+    tag: 1.28.4

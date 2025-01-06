@@ -1,0 +1,54 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+name: CI Docs
+
+on:
+  pull_request:
+    # milestoned is added here as a workaround for release-please not triggering PR workflows (PRs should be added to a milestone to trigger the workflow).
+    # labeled is added here to allow for "manual" triggering of CI on renovate PRs
+    types: [milestoned, opened, reopened, synchronize, labeled]
+    paths:
+      - "**.md"
+      - "**.jpg"
+      - "**.png"
+      - "**.gif"
+      - "**.svg"
+      - docs/**
+      - .vscode/**
+      - .gitignore
+      - renovate.json
+      - .codespellrc
+      - .release-please-config.json
+      - release-please-config.json
+      - CODEOWNERS
+      - LICENSE
+
+jobs:
+  lint-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Check renovate readiness
+        if: startsWith(github.event.pull_request.head.ref, 'renovate/') # Only call for Renovate PRs
+        uses: ./.github/actions/renovate-readiness
+
+      - name: lint-check
+        uses: ./.github/actions/lint-check
+
+  run-package-test:
+    needs: lint-check
+    name: Schedule
+    strategy:
+      matrix:
+        package: [all]
+        flavor: [upstream, registry1, unicorn]
+        test_type: [install, upgrade]
+    uses: ./.github/workflows/test-shim.yaml
+    with:
+      package: ${{ matrix.package }}
+      flavor: ${{ matrix.flavor }}
+      test_type: ${{ matrix.test_type }}
+    secrets: inherit # Inherits all secrets from the parent workflow.

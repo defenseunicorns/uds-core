@@ -1,3 +1,8 @@
+/**
+ * Copyright 2024 Defense Unicorns
+ * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+ */
+
 import { PeprValidateRequest } from "pepr";
 
 import { Gateway, Protocol, UDSPackage } from "..";
@@ -58,9 +63,34 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
   const networkPolicyNames = new Set<string>();
 
   for (const policy of networkPolicy) {
-    // remoteGenerated cannot be combined with remoteNamespace or remoteSelector
-    if (policy.remoteGenerated && (policy.remoteNamespace || policy.remoteSelector)) {
-      return req.Deny("remoteGenerated cannot be combined with remoteNamespace or remoteSelector");
+    // If 'remoteGenerated' is set, it cannot be combined with 'remoteNamespace', 'remoteSelector', or 'remoteCidr'.
+    if (
+      policy.remoteGenerated &&
+      (policy.remoteNamespace || policy.remoteSelector || policy.remoteCidr)
+    ) {
+      return req.Deny(
+        "remoteGenerated cannot be combined with remoteNamespace, remoteSelector, or remoteCidr",
+      );
+    }
+
+    // If either 'remoteNamespace' or 'remoteSelector' is set, they cannot be combined with 'remoteGenerated' or 'remoteCidr'.
+    if (
+      (policy.remoteNamespace || policy.remoteSelector) &&
+      (policy.remoteGenerated || policy.remoteCidr)
+    ) {
+      return req.Deny(
+        "remoteNamespace and remoteSelector cannot be combined with remoteGenerated or remoteCidr",
+      );
+    }
+
+    // If 'remoteCidr' is set, it cannot be combined with 'remoteGenerated', 'remoteNamespace', or 'remoteSelector'.
+    if (
+      policy.remoteCidr &&
+      (policy.remoteGenerated || policy.remoteNamespace || policy.remoteSelector)
+    ) {
+      return req.Deny(
+        "remoteCidr cannot be combined with remoteGenerated, remoteNamespace, or remoteSelector",
+      );
     }
 
     // Ensure the policy name is unique
@@ -89,6 +119,14 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
     "oauth2.device.authorization.grant.enabled",
     "pkce.code.challenge.method",
     "client.session.idle.timeout",
+    "client.session.max.lifespan",
+    "access.token.lifespan",
+    "saml.assertion.signature",
+    "saml.client.signature",
+    "saml_assertion_consumer_url_post",
+    "saml_assertion_consumer_url_redirect",
+    "saml_single_logout_service_url_post",
+    "saml_single_logout_service_url_redirect",
   ]);
 
   for (const client of ssoClients) {
@@ -108,10 +146,17 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
         `The client ID "${client.clientId}" must specify redirectUris if standardFlowEnabled is turned on (it is enabled by default)`,
       );
     }
+    // If serviceAccountsEnabled is true, do not allow standard flow
+    if (client.serviceAccountsEnabled && client.standardFlowEnabled) {
+      return req.Deny(
+        `The client ID "${client.clientId}" serviceAccountsEnabled is disallowed with standardFlowEnabled`,
+      );
+    }
     // If this is a public client ensure that it only sets itself up as an OAuth Device Flow client
     if (
       client.publicClient &&
-      (client.standardFlowEnabled !== false ||
+      (client.standardFlowEnabled !== false /* default true */ ||
+        client.serviceAccountsEnabled /* default false */ ||
         client.secret !== undefined ||
         client.secretName !== undefined ||
         client.secretTemplate !== undefined ||
@@ -120,7 +165,7 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
         client.attributes?.["oauth2.device.authorization.grant.enabled"] !== "true")
     ) {
       return req.Deny(
-        `The client ID "${client.clientId}" must _only_ configure the OAuth Device Flow as a public client`,
+        `The client ID "${client.clientId}" sets options incompatible with publicClient`,
       );
     }
     // Check if client.attributes contain any disallowed attributes

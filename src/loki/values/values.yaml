@@ -1,3 +1,6 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 # Sets the global DNS service to the service created in this chart
 global:
   dnsService: "uds-loki-dns"
@@ -9,10 +12,11 @@ fullnameOverride: loki
 # -- Overrides the chart's cluster label
 clusterLabelOverride: null
 
-# Prevent startup issues with service existence/resolution
-memberlist:
-  service:
-    publishNotReadyAddresses: true
+chunksCache:
+  enabled: false
+
+resultsCache:
+  enabled: false
 
 loki:
   configStorageType: Secret
@@ -33,8 +37,18 @@ loki:
       insecure: false
   commonConfig:
     replication_factor: 1
+  schemaConfig:
+    configs:
+      - from: 2022-01-11
+        store: boltdb-shipper
+        object_store: "{{ .Values.loki.storage.type }}"
+        schema: v12
+        index:
+          prefix: loki_index_
+          period: 24h
   limits_config:
     split_queries_by_interval: "30m"
+    allow_structured_metadata: false
   query_scheduler:
     max_outstanding_requests_per_tenant: 32000 # This is the default in Loki 3.0
   extraMemberlistConfig:
@@ -71,6 +85,8 @@ rbac:
 # -- Section for configuring optional Helm test
 test:
   enabled: false
+
+deploymentMode: SimpleScalable
 
 # Configuration for the single binary node(s)
 singleBinary:
@@ -113,27 +129,39 @@ sidecar:
     # -- Whether or not to create a sidecar to ingest rule from specific ConfigMaps and/or Secrets.
     enabled: false
 
+memcachedExporter:
+  # -- Whether memcached metrics should be exported
+  enabled: false
+
 monitoring:
-  enabled: true
-  selfMonitoring:
-    enabled: false
-    grafanaAgent:
-      installOperator: false
-  lokiCanary:
-    enabled: false
+  serviceMonitor:
+    enabled: true
+
+lokiCanary:
+  enabled: false
+
 gateway:
   enabled: true
   # Remove default anti-affinity to support single node
-  affinity: ""
+  affinity: null
+
+  # Gateway has no metrics https://github.com/grafana/loki/issues/13201
+  service:
+    labels:
+      prometheus.io/service-monitor: "false"
 
 read:
   # Remove default anti-affinity to support single node
-  affinity: ""
+  affinity: null
 
 write:
   # Remove default anti-affinity to support single node
-  affinity: ""
+  affinity: null
 
 backend:
   # Remove default anti-affinity to support single node
-  affinity: ""
+  affinity: null
+  # Temporary label to trigger mutation for istio service patch
+  service:
+    labels:
+      uds/istio-patch: "true"

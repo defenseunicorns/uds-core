@@ -1,0 +1,25 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+kind: ZarfPackageConfig
+metadata:
+  name: core-identity-authorization
+  description: "UDS Core (Identity & Authorization)"
+  authors: "Defense Unicorns - Product"
+  # x-release-please-start-version
+  version: "0.33.1"
+  # x-release-please-end
+  x-uds-dependencies: ["base"]
+
+components:
+  # Keycloak
+  - name: keycloak
+    required: true
+    import:
+      path: ../../src/keycloak
+
+  # Authservice
+  - name: authservice
+    required: true
+    import:
+      path: ../../src/authservice
