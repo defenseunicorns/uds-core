@@ -5,7 +5,7 @@ name: Metadata
 
 # Permissions for the GITHUB_TOKEN used by the workflow.
 permissions:
-  pull-request: read # Allows reading the content of the repository.
+  contents: read # Allows reading the content of the repository.
 
 on:
   pull_request:
