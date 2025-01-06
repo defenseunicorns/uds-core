@@ -103,6 +103,13 @@ jobs:
         if: ${{ always() }}
         uses: ./.github/actions/debug-output
 
+      - name: Save logs
+        if: always()
+        uses: ./.github/actions/save-logs
+        with:
+          suffix: -rke2-${{ matrix.flavor }}
+          distro: "rke2"
+
       - name: Remove UDS Core
         if: always()
         run: uds remove .github/bundles/rke2/uds-bundle-uds-core-rke2-*.tar.zst --confirm
