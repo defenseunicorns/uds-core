@@ -399,18 +399,10 @@ When(a.Pod)
       return request.Approve();
     }
     const authorized = ["NET_BIND_SERVICE"];
-    const istioInitAuthorized = ["NET_ADMIN", "NET_RAW"];
 
-    const violations = securityContextContainers(request).filter(c => {
-      const containerCapabilities = c.ctx?.capabilities?.add || [];
-      // Separate handling for `istio-init` container
-      if (c.name === "istio-init") {
-        return !containerCapabilities.every(cap => istioInitAuthorized.includes(cap));
-      }
-
-      // General case for other containers
-      return containerCapabilities.some(cap => !authorized.includes(cap));
-    });
+    const violations = securityContextContainers(request).filter(
+      c => c.ctx?.capabilities?.add && !c.ctx?.capabilities.add.includes(authorized[0]),
+    );
 
     if (violations.length) {
       return request.Deny(
