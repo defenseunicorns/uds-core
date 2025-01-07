@@ -74,9 +74,10 @@ export function isIstioInitContainer(
     return false;
   }
 
-  // Check for an Istio proxy in initContainers
+  // Check only initContainers for an Istio proxy presence and validate the image
   const hasInitContainerSidecar = request.Raw.spec?.initContainers?.some(
-    c => c.name === "istio-proxy" && c.args?.includes("proxy"),
+    c =>
+      c.name === "istio-proxy" && c.args?.includes("proxy") && c.image?.includes("istio/proxyv2"),
   );
 
   // Exit if no Istio proxy is found in initContainers
