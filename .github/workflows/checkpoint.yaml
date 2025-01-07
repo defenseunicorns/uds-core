@@ -3,6 +3,12 @@
 
 name: Checkpoint UDS Core
 
+# Permissions for the GITHUB_TOKEN used by the workflow.
+permissions:
+  contents: read # Allows reading the content of the repository.
+  packages: read # Allows reading the content of the repository's packages.
+  id-token: write
+
 on:
   pull_request:
     # milestoned is added here as a workaround for release-please not triggering PR workflows (PRs should be added to a milestone to trigger the workflow).
