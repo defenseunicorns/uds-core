@@ -74,21 +74,13 @@ export function isIstioInitContainer(
     return false;
   }
 
-  // Check for an Istio proxy in containers
-  const hasContainerSidecar = request.Raw.spec?.containers?.some(
-    c =>
-      c.name === "istio-proxy" &&
-      c.ports?.some(p => p.name === "http-envoy-prom") &&
-      c.args?.includes("proxy"),
-  );
-
   // Check for an Istio proxy in initContainers
   const hasInitContainerSidecar = request.Raw.spec?.initContainers?.some(
     c => c.name === "istio-proxy" && c.args?.includes("proxy"),
   );
 
-  // Exit if no Istio proxy is found in either container or initContainer
-  if (!hasContainerSidecar && !hasInitContainerSidecar) {
+  // Exit if no Istio proxy is found in initContainers
+  if (!hasInitContainerSidecar) {
     return false;
   }
 
