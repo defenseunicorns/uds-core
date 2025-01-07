@@ -141,28 +141,22 @@ When(a.Pod)
     if (isExempt(request, Policy.RequireNonRootUser)) {
       return request.Approve();
     }
-
-    // Helper function to check if a container requires root privileges
-    const isRoot = (ctx: Partial<V1SecurityContext>, containerName: string) => {
-      // Skip the root check for `istio-init`
-      if (containerName === "istio-init") {
-        return false;
-      }
-
+    // Check if running as root by checking if runAsNonRoot is false or runAsUser is 0
+    const isRoot = (ctx: Partial<V1SecurityContext>) => {
       const isRunAsRoot = ctx.runAsNonRoot === false;
       const isRunAsRootUser = ctx.runAsUser === 0;
 
       return isRunAsRoot || isRunAsRootUser;
     };
 
-    // Define podCtx explicitly to reference the pod-level security context
+    // Check pod securityContext
     const podCtx = request.Raw.spec?.securityContext || {};
-    if (isRoot(podCtx, "")) {
+    if (isRoot(podCtx)) {
       return request.Deny("Pod level securityContext does not meet the non-root user requirement.");
     }
 
-    // Check each container's securityContext, passing the container name explicitly
-    const violations = securityContextContainers(request).filter(c => isRoot(c.ctx, c.name || ""));
+    // Check container securityContext
+    const violations = securityContextContainers(request).filter(c => isRoot(c.ctx));
 
     if (violations.length) {
       return request.Deny(

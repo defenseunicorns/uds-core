@@ -156,23 +156,13 @@ async function killPods(ns: string, enableInjection: boolean) {
       continue;
     }
 
-    // Detect Istio sidecars using container names
-    const foundSidecar =
-      pod.spec?.containers?.some(c => c.name === "istio-proxy") ||
-      pod.spec?.initContainers?.some(c => c.name === "istio-init");
+    // note that this is `initContainers` now because that is how native sidecar works
+    const foundSidecar = pod.spec?.initContainers?.find(c => c.name === "istio-proxy");
 
-    log.debug(
-      `Pod ${ns}/${pod.metadata?.name} - enableInjection: ${enableInjection}, hasIstioProxy: ${!!foundSidecar}`,
-    );
-
-    if (enableInjection) {
-      if (foundSidecar) {
-        log.info(
-          `Marking Pod ${ns}/${pod.metadata?.name} for deletion to reconcile Istio sidecars.`,
-        );
-      } else {
-        log.info(`Marking Pod ${ns}/${pod.metadata?.name} for deletion to inject Istio sidecars.`);
-      }
+    // If enabling injection, ignore pods that already have the istio sidecar
+    if (enableInjection && foundSidecar) {
+      log.debug(`Ignoring Pod ${ns}/${pod.metadata?.name}, already has sidecar`);
+      continue;
     }
 
     // If disabling injection, ignore pods that don't have the istio sidecar
