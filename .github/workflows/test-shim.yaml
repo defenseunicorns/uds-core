@@ -3,6 +3,10 @@
 
 name: Test Shim
 
+# Permissions for the GITHUB_TOKEN used by the workflow.
+permissions:
+  contents: read # Allows reading the content of the repository.
+
 on:
   # Manual trigger
   workflow_dispatch:

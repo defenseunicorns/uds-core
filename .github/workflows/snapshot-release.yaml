@@ -3,6 +3,12 @@
 
 name: Release UDS Core Snapshot
 
+# Permissions for the GITHUB_TOKEN used by the workflow.
+permissions:
+  contents: read # Allows reading the content of the repository.
+  packages: read # Allows reading the content of the repository's packages.
+  id-token: write
+
 on:
   schedule:
     - cron: "0 10 * * *"

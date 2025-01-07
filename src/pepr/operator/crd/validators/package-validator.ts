@@ -7,8 +7,10 @@ import { PeprValidateRequest } from "pepr";
 
 import { Gateway, Protocol, UDSPackage } from "..";
 import { generateVSName } from "../../controllers/istio/virtual-service";
+import { generateMonitorName } from "../../controllers/monitoring/common";
 import { generateName } from "../../controllers/network/generate";
 import { sanitizeResourceName } from "../../controllers/utils";
+import { Kind } from "../../crd/generated/package-v1alpha1";
 import { migrate } from "../migrate";
 
 const invalidNamespaces = ["kube-system", "kube-public", "_unknown_", "pepr-system"];
@@ -183,6 +185,35 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
       return req.Deny(
         `The client ID "${client.clientId}" is invalid as an Authservice client - Authservice does not support client IDs with the ":" character`,
       );
+    }
+  }
+
+  const monitors = pkg.spec?.monitor ?? [];
+
+  // Ensure service and pod monitors use a unique description or selector/portName used for generating the resource name
+  const podMonitorNames = new Set<string>();
+  const svcMonitorNames = new Set<string>();
+
+  for (const monitor of monitors) {
+    const monitorName = generateMonitorName(pkgName, monitor);
+    if (monitor.kind === Kind.PodMonitor) {
+      if (podMonitorNames.has(monitorName)) {
+        return req.Deny(
+          `The combination of characteristics of this monitor entry would create a duplicate PodMonitor. ` +
+            `Verify you do not have duplicate values, or add a unique "description" field for this monitor. ` +
+            `The duplicate rule would be named "${monitorName}".`,
+        );
+      }
+      podMonitorNames.add(monitorName);
+    } else {
+      if (svcMonitorNames.has(monitorName)) {
+        return req.Deny(
+          `The combination of characteristics of this monitor entry would create a duplicate ServiceMonitor. ` +
+            `Verify you do not have duplicate values, or add a unique "description" field for this monitor. ` +
+            `The duplicate rule would be named "${monitorName}".`,
+        );
+      }
+      svcMonitorNames.add(monitorName);
     }
   }
 
