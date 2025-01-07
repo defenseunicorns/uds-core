@@ -13,7 +13,7 @@ const log = setupLogger(Component.OPERATOR_ISTIO);
 
 const injectionLabel = "istio-injection";
 const injectionAnnotation = "uds.dev/original-istio-injection";
-const nativeIstioAnnotation = "uds.dev/native-istio-migrated";
+const nativeIstioAnnotation = "uds.dev/native-istio-sidecars";
 
 /**
  * Syncs the package namespace istio-injection label and adds a label for the package name
@@ -59,7 +59,6 @@ export async function enableInjection(pkg: UDSPackage) {
     log.info(
       `Updating package-specific annotation for ${pkg.metadata.name} in namespace ${pkg.metadata.namespace}.`,
     );
-    shouldRestartPods = true; // Pods need restarting due to package change
   }
 
   // Apply namespace updates if there are changes
