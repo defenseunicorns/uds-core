@@ -46,6 +46,13 @@ loki:
         index:
           prefix: loki_index_
           period: 24h
+      - from: "2099-12-31" # Static placeholder, updated dynamically by Pepr
+        store: tsdb
+        object_store: "{{ .Values.loki.storage.type }}"
+        schema: v13
+        index:
+          prefix: loki_index_
+          period: 24h
   limits_config:
     split_queries_by_interval: "30m"
     allow_structured_metadata: false
