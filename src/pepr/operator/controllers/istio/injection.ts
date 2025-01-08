@@ -113,6 +113,7 @@ export async function cleanupNamespace(pkg: UDSPackage) {
       delete labels[injectionLabel];
     }
     delete annotations[injectionAnnotation];
+    delete annotations[nativeIstioAnnotation];
   }
 
   // Apply the updated Namespace
