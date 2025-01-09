@@ -41,8 +41,8 @@ components:
         valuesFiles:
           - "values/registry1-values.yaml"
     images:
-      - registry1.dso.mil/ironbank/tetrate/istio/proxyv2:1.24.1-tetratefips0
-      - registry1.dso.mil/ironbank/tetrate/istio/pilot:1.24.1-tetratefips0
+      - registry1.dso.mil/ironbank/tetrate/istio/proxyv2:1.24.2-tetratefips0
+      - registry1.dso.mil/ironbank/tetrate/istio/pilot:1.24.2-tetratefips0
 
   - name: istio-controlplane
     required: true
