@@ -13,7 +13,6 @@ const log = setupLogger(Component.OPERATOR_ISTIO);
 
 const injectionLabel = "istio-injection";
 const injectionAnnotation = "uds.dev/original-istio-injection";
-const nativeIstioAnnotation = "uds.dev/native-istio-sidecars";
 
 /**
  * Syncs the package namespace istio-injection label and adds a label for the package name
@@ -30,7 +29,6 @@ export async function enableInjection(pkg: UDSPackage) {
   const originalInjectionLabel = labels[injectionLabel];
   const annotations = sourceNS.metadata?.annotations || {};
   const pkgKey = `uds.dev/pkg-${pkg.metadata.name}`;
-  const hasMigrationAnnotation = annotations[nativeIstioAnnotation] === "true";
 
   // Mark the original namespace injection setting for if all packages are removed
   if (!annotations[injectionAnnotation]) {
@@ -38,13 +36,6 @@ export async function enableInjection(pkg: UDSPackage) {
   }
 
   let shouldRestartPods = false;
-
-  // Ensure native Istio migration annotation is present
-  if (!hasMigrationAnnotation) {
-    annotations[nativeIstioAnnotation] = "true";
-    log.info(`Adding native Istio migration annotation to namespace ${pkg.metadata.namespace}.`);
-    shouldRestartPods = true; // Pods need restarting for migration
-  }
 
   // Ensure Istio injection is enabled
   if (originalInjectionLabel !== "enabled") {
@@ -113,7 +104,6 @@ export async function cleanupNamespace(pkg: UDSPackage) {
       delete labels[injectionLabel];
     }
     delete annotations[injectionAnnotation];
-    delete annotations[nativeIstioAnnotation];
   }
 
   // Apply the updated Namespace
