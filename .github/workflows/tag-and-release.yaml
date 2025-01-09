@@ -9,10 +9,14 @@ permissions:
   packages: read # Allows reading the content of the repository's packages.
   id-token: write
 
+# Permissions for WORKFLOW_TOKEN: workflow/repo
+
 on:
   push:
     branches:
       - main
+  release:
+    types: [published]
 
 jobs:
   tag-new-version:
@@ -47,3 +51,17 @@ jobs:
       id-token: write
     uses: ./.github/workflows/checkpoint.yaml
     secrets: inherit
+
+  notify-uds-security-hub:
+      runs-on: ubuntu-latest
+      steps:
+        - name: Kick off scan in UDS Security Hub
+          run: |
+            curl -X POST \
+              -H "Authorization: Bearer ${{ secrets.WORKFLOW_TOKEN }}" \ 
+              -H "Accept: application/vnd.github+json" \
+              -d '{
+                "ref": "main"
+              }' \
+              https://api.github.com/repos/defenseunicorns/uds-security-hub/actions/workflows/scan.yaml/dispatches
+  
