@@ -1,4 +1,10 @@
-import { Capability, K8s, kind } from "pepr";
+/**
+ * Copyright 2024 Defense Unicorns
+ * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+ */
+
+import yaml from "js-yaml";
+import { Capability, kind } from "pepr";
 import { Component, setupLogger } from "../logger";
 
 const log = setupLogger(Component.LOKI);
@@ -10,62 +16,76 @@ export const loki = new Capability({
 
 const { When } = loki;
 
-When(kind.ConfigMap)
+interface LokiConfig {
+  schema_config?: {
+    configs: {
+      from: string;
+      store: string;
+      object_store?: string;
+      schema?: string;
+      index?: {
+        prefix?: string;
+        period?: string;
+      };
+    }[];
+  };
+}
+
+When(kind.Secret)
   .IsCreatedOrUpdated()
   .InNamespace("loki")
-  .WithName("loki-schema-config")
-  .Mutate(async cm => {
+  .WithName("loki")
+  .Mutate(async secret => {
+    const updatedAnnotationKey = "loki.tsdb.mutated";
+
+    // Exit early if the date has already been updated
+    if (secret.Raw.metadata?.annotations?.[updatedAnnotationKey]) {
+      log.info(`Secret ${secret.Raw.metadata?.name} already has the date updated annotation.`);
+      return;
+    }
+
     const now = new Date();
     const futureDate = new Date(now.setDate(now.getDate() + 2)).toISOString().split("T")[0];
 
-    // Update schemaChangeDate in ConfigMap
-    cm.Raw.data = cm.Raw.data || {};
-    if (!cm.Raw.data.schemaChangeDate || new Date(cm.Raw.data.schemaChangeDate) < now) {
-      cm.Raw.data.schemaChangeDate = futureDate;
-      log.info(`Set schemaChangeDate to ${futureDate} in ConfigMap ${cm.Raw.metadata?.name}`);
-    } else {
-      log.info(
-        `schemaChangeDate ${cm.Raw.data.schemaChangeDate} is already up-to-date in ConfigMap ${cm.Raw.metadata?.name}`,
-      );
-    }
+    // Check if the secret contains the "config.yaml" data
+    if (secret.Raw.data && secret.Raw.data["config.yaml"]) {
+      let lokiConfig: LokiConfig;
 
-    // Update the Secret with the new schemaChangeDate
-    const secretName = "loki-config-secret";
-    const namespace = "loki";
-
-    try {
-      // Fetch the existing Secret
-      const secret = await K8s(kind.Secret).InNamespace(namespace).Get(secretName);
-
-      if (secret) {
-        // Check if 'data' exists in the Secret
-        if (!secret.data || !secret.data["config.yaml"]) {
-          throw new Error(`Secret ${secretName} is missing the 'data' field or 'config.yaml' key.`);
-        }
-
-        // Decode and parse the config.yaml from the Secret
-        const config = JSON.parse(
-          Buffer.from(secret.data["config.yaml"], "base64").toString("utf8"),
-        );
-
-        // Update the schemaChangeDate in the config
-        const schemaConfigs = config.schema_config.configs;
-        const tsdbConfig = schemaConfigs.find((c: { store: string }) => c.store === "tsdb");
-        if (tsdbConfig) {
-          tsdbConfig.from = cm.Raw.data.schemaChangeDate;
-          log.info(`Updated TSDB schema "from" date to ${tsdbConfig.from} in Secret ${secretName}`);
-        }
-
-        // Encode the updated config back into the Secret
-        secret.data["config.yaml"] = Buffer.from(JSON.stringify(config)).toString("base64");
-
-        // Apply the updated Secret
-        await K8s(kind.Secret).Apply(secret);
-        log.info(`Updated Secret ${secretName} in namespace ${namespace}`);
-      } else {
-        log.error(`Secret ${secretName} not found in namespace ${namespace}`);
+      // Parse the "config.yaml" content into a LokiConfig object
+      try {
+        lokiConfig = yaml.load(secret.Raw.data["config.yaml"]) as LokiConfig;
+      } catch (e) {
+        log.error(`Failed to parse Loki config.yaml: ${(e as Error).message}`);
+        return;
       }
-    } catch (error) {
-      log.error(`Error updating Secret ${secretName}: ${error.message}`);
+
+      // Validate and update the schema_config
+      const schemaConfigs = lokiConfig.schema_config?.configs;
+      if (!Array.isArray(schemaConfigs)) {
+        log.error("Missing or invalid schema_config.configs in config.yaml");
+      }
+
+      const tsdbConfig = schemaConfigs?.find(c => c.store === "tsdb");
+      if (tsdbConfig) {
+        tsdbConfig.from = futureDate;
+      } else {
+        log.warn(`No TSDB config found in schema_config of Secret ${secret.Raw.metadata?.name}`);
+        return; // Exit early if TSDB config is missing
+      }
+
+      // Serialize the updated configuration back to YAML and store it in the Secret
+      secret.Raw.data["config.yaml"] = yaml.dump(lokiConfig);
+
+      // Add TSDB mutated annotation to secret
+      secret.Raw.metadata!.annotations = {
+        ...(secret.Raw.metadata!.annotations || {}),
+        [updatedAnnotationKey]: "true",
+      };
+
+      log.info(`Updated and encoded config.yaml back into Secret ${secret.Raw.metadata?.name}`);
+    } else {
+      log.error(
+        `Secret ${secret.Raw.metadata?.name} is missing the 'data' field or 'config.yaml' key.`,
+      );
     }
   });
