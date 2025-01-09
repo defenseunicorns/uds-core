@@ -15,8 +15,6 @@ on:
   push:
     branches:
       - main
-  release:
-    types: [published]
 
 jobs:
   tag-new-version:
@@ -53,6 +51,7 @@ jobs:
     secrets: inherit
 
   notify-uds-security-hub:
+    needs: publish-uds-core-release
     runs-on: ubuntu-latest
     steps:
       - name: Kick off scan in UDS Security Hub
