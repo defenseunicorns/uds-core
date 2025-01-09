@@ -6,14 +6,22 @@
 import { Client } from "../types";
 
 export enum Action {
-  Add = "Add",
-  Remove = "Remove",
+  AddClient = "AddClient",
+  RemoveClient = "RemoveClient",
+  UpdateRedis = "UpdateRedis",
+  UpdateCA = "UpdateCA",
 }
+
+export type AddOrRemoveClientEvent = AuthServiceEvent & {
+  action: Action.AddClient | Action.RemoveClient;
+};
 
 export interface AuthServiceEvent {
   name: string;
   action: Action;
   client?: Client;
+  redisUri?: string;
+  trustedCA?: string;
 }
 
 export interface AuthserviceConfig {
