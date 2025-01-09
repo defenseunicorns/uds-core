@@ -1,9 +1,9 @@
 ---
 name: "📄 Documentation Update"
 about: Suggest updates or improvements to the documentation
-title: "[Docs] <Brief description of the update>"
+title: ""
 labels: ["documentation"]
-assignees: []
+assignees: ""
 ---
 
 ## Affected Documentation Section
