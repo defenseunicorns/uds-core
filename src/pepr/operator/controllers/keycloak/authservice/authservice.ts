@@ -71,12 +71,15 @@ function isAddOrRemoveClientEvent(event: AuthServiceEvent): event is AddOrRemove
 }
 export async function reconcileAuthservice(
   event: AuthServiceEvent,
-  labelSelector: { [key: string]: string },
-  pkg: UDSPackage,
+  labelSelector?: { [key: string]: string },
+  pkg?: UDSPackage,
 ) {
   await updateConfig(event);
   if (isAddOrRemoveClientEvent(event)) {
-    await updatePolicy(event, labelSelector, pkg);
+    if (!pkg) {
+      throw new Error("Package must be provided for AddClient or RemoveClient events");
+    }
+    await updatePolicy(event, labelSelector || {}, pkg);
   }
 }
 
@@ -131,7 +134,8 @@ export function buildConfig(config: AuthserviceConfig, event: AuthServiceEvent) 
     // Search in the existing chains for the chain to remove by name.
     // Filtering here should preserve the order, so there is no need to re-sort.
     chains = config.chains.filter(chain => chain.name !== event.name);
-  } else if (event.action == Action.UpdateRedis) {
+    // Handle global config updates
+  } else if (event.action == Action.UpdateGlobalConfig) {
     if (event.redisUri === undefined) {
       // Remove the redis session store config if a URI is not provided
       delete config.default_oidc_config.redis_session_store_config;
@@ -139,8 +143,6 @@ export function buildConfig(config: AuthserviceConfig, event: AuthServiceEvent) 
       // Update the redis session store config if a URI is provided
       config.default_oidc_config.redis_session_store_config!.server_uri = event.redisUri;
     }
-    chains = config.chains;
-  } else if (event.action == Action.UpdateCA) {
     if (event.trustedCA === undefined) {
       // Remove the trusted certificate authority if a CA is not provided
       delete config.default_oidc_config.trusted_certificate_authority;

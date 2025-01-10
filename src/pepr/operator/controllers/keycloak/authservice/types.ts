@@ -8,8 +8,7 @@ import { Client } from "../types";
 export enum Action {
   AddClient = "AddClient",
   RemoveClient = "RemoveClient",
-  UpdateRedis = "UpdateRedis",
-  UpdateCA = "UpdateCA",
+  UpdateGlobalConfig = "UpdateGlobalConfig",
 }
 
 export type AddOrRemoveClientEvent = AuthServiceEvent & {
