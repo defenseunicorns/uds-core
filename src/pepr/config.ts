@@ -85,13 +85,13 @@ async function updateUDSConfig(config: kind.Secret) {
   // Handle changes to the kubeApiCidr
   if (decodedConfigData.KUBEAPI_CIDR !== UDSConfig.kubeApiCidr) {
     UDSConfig.kubeApiCidr = decodedConfigData.KUBEAPI_CIDR;
-    // Add logic to reconcile kubeapi netpols
+    // todo: Add logic to reconcile kubeapi netpols
   }
 
   // Handle changes to the kubeNodeCidrs
   if (decodedConfigData.KUBENODE_CIDRS !== UDSConfig.kubeNodeCidrs) {
     UDSConfig.kubeNodeCidrs = decodedConfigData.KUBENODE_CIDRS;
-    // Add logic to reconcile kubenode netpols
+    // todo: Add logic to reconcile kubenode netpols
   }
 
   // Handle changes to the domain or adminDomain
@@ -101,13 +101,13 @@ async function updateUDSConfig(config: kind.Secret) {
   ) {
     UDSConfig.domain = decodedConfigData.UDS_DOMAIN;
     UDSConfig.adminDomain = decodedConfigData.UDS_ADMIN_DOMAIN;
-    // Add logic to reconcile the domain in the system
+    // todo: Add logic to reconcile the domain in the system
   }
 
   // Update other config values (no need for special handling)
   UDSConfig.allowAllNSExemptions = decodedConfigData.UDS_ALLOW_ALL_NS_EXEMPTIONS === "true";
 
-  log.info(UDSConfig, "Updated UDS Config");
+  log.info(UDSConfig, "Updated UDS Config based on uds-operator-config secret changes");
 }
 
 // Watch the UDS Operator Config Secret and handle changes
