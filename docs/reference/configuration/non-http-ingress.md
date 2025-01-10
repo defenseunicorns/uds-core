@@ -42,7 +42,7 @@ Note that you _MUST_ include the default list of ports (as shown above) to ensur
 
 ## Gateway Custom Resource
 
-In order to allow exposing services through the newly opened loadbalancer port you must also create an Istio Gateway custom resource that specifies the hosts and port that you want to configure the gateway to accept requests for. The below example shows how to do this for `example.uds.dev` on our SSH port of 22:
+In order to allow exposing services through the newly opened loadbalancer port you must also create an [Istio Gateway](https://istio.io/latest/docs/reference/config/networking/gateway/) custom resource that specifies the hosts and port that you want to configure the gateway to accept requests for. The below example shows how to do this for `example.uds.dev` on our SSH port of 22:
 
 ```yaml
 apiVersion: networking.istio.io/v1beta1
