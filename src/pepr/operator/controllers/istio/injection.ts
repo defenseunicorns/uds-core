@@ -25,9 +25,9 @@ export async function enableInjection(pkg: UDSPackage) {
   }
 
   const sourceNS = await K8s(kind.Namespace).Get(pkg.metadata.namespace);
-  const labels = sourceNS.metadata?.labels || {};
+  const labels = { ...(sourceNS.metadata?.labels || {}) };
   const originalInjectionLabel = labels[injectionLabel];
-  const annotations = sourceNS.metadata?.annotations || {};
+  const annotations = { ...(sourceNS.metadata?.annotations || {}) };
   const pkgKey = `uds.dev/pkg-${pkg.metadata.name}`;
 
   // Mark the original namespace injection setting for if all packages are removed
@@ -147,8 +147,10 @@ async function killPods(ns: string, enableInjection: boolean) {
       continue;
     }
 
-    // note that this is `initContainers` now because that is how native sidecar works
-    const foundSidecar = pod.spec?.initContainers?.find(c => c.name === "istio-proxy");
+    // Checks both container (haven't switched to native sidecars yet) and initContainers for native sidecars
+    const foundSidecar =
+      pod.spec?.containers?.some(c => c.name === "istio-proxy") ||
+      pod.spec?.initContainers?.some(c => c.name === "istio-proxy");
 
     // If enabling injection, ignore pods that already have the istio sidecar
     if (enableInjection && foundSidecar) {
