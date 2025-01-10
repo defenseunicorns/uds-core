@@ -1,5 +1,5 @@
 ---
-title: Non-HTTP(s) Ingress
+title: Non-HTTP(s) Istio Ingress
 ---
 
 As noted in the [Istio Ingress document](https://uds.defenseunicorns.com/reference/configuration/ingress/), UDS Core by default provides gateway configuration to handle HTTP(s) ingress traffic only. This document provides example configuration and resources to setup ingress for a non-http service (using SSH for the example below). Note that while this example uses port 22 and the SSH protocol this same process should work for an TCP port/protocol that your service is listening on.
