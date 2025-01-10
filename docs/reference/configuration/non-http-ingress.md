@@ -67,7 +67,7 @@ spec:
 
 ## VirtualService Custom Resource
 
-Now that the loadbalancer and Istio gateway are configured for the right ports and host, you will just need to add a route (`VirtualService`) to ensure traffic is directed to the right cluster service when requests come to your host and port. The example below does this for our `example.uds.dev` host:
+Now that the loadbalancer and Istio Gateway are configured for the right ports and host, you will just need to add a route (`VirtualService`) to ensure traffic is directed to the right cluster service when requests come to your host and port. The example below does this for our `example.uds.dev` host:
 
 ```yaml
 apiVersion: networking.istio.io/v1beta1
