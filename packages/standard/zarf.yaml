@@ -21,6 +21,12 @@ components:
     required: true
     import:
       path: ../base
+      
+  # Pepr the world
+  - name: pepr-uds-core
+    required: true
+    import:
+      path: ../base
 
   # Istio
   - name: istio-controlplane
