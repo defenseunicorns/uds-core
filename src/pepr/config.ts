@@ -54,6 +54,13 @@ export const UDSConfig = {
 const log = setupLogger(Component.CONFIG);
 log.info(UDSConfig, "Loaded UDS Config");
 
+// Watch the UDS Operator Config Secret and handle changes
+When(a.Secret)
+  .IsUpdated()
+  .InNamespace("pepr-system")
+  .WithName("uds-operator-config")
+  .Reconcile(updateUDSConfig);
+
 async function updateUDSConfig(config: kind.Secret) {
   log.info("Updating UDS Config from uds-operator-config secret change");
 
@@ -94,25 +101,10 @@ async function updateUDSConfig(config: kind.Secret) {
     // todo: Add logic to reconcile kubenode netpols
   }
 
-  // Handle changes to the domain or adminDomain
-  if (
-    decodedConfigData.UDS_DOMAIN !== UDSConfig.domain ||
-    decodedConfigData.UDS_ADMIN_DOMAIN !== UDSConfig.adminDomain
-  ) {
-    UDSConfig.domain = decodedConfigData.UDS_DOMAIN;
-    UDSConfig.adminDomain = decodedConfigData.UDS_ADMIN_DOMAIN;
-    // todo: Add logic to reconcile the domain in the system
-  }
+  // todo: Add logic to handle domain changes and update across virtualservices, authservice config, etc
 
   // Update other config values (no need for special handling)
   UDSConfig.allowAllNSExemptions = decodedConfigData.UDS_ALLOW_ALL_NS_EXEMPTIONS === "true";
 
   log.info(UDSConfig, "Updated UDS Config based on uds-operator-config secret changes");
 }
-
-// Watch the UDS Operator Config Secret and handle changes
-When(a.Secret)
-  .IsUpdated()
-  .InNamespace("pepr-system")
-  .WithName("uds-operator-config")
-  .Reconcile(updateUDSConfig);
