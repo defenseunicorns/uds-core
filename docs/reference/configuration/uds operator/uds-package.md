@@ -1,8 +1,10 @@
 ---
-title: UDS Operator Package
+title: UDS Package
+sidebar:
+    order: 2
 ---
 
-![UDS Operator Package Flowchart](https://github.com/defenseunicorns/uds-core/blob/diagram-operator-flow/docs/.images/diagrams/uds-core-pepr-operator-flow-uds-package.svg)
+![UDS Operator Package Flowchart](https://github.com/defenseunicorns/uds-core/blob/diagram-operator-flow/docs/.images/diagrams/uds-core-pepr-operator-flow-uds-package.svg?raw=true)
 
 ## Package
 
