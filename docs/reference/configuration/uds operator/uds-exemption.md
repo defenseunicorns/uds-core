@@ -2,7 +2,7 @@
 title: UDS Operator Exemption
 ---
 
-![UDS Operator Exemption Flowchart](../../../.images/diagrams/uds-core-operator-uds-exemption.svg)
+![UDS Operator Exemption Flowchart](https://github.com/defenseunicorns/uds-core/blob/diagram-operator-flow/docs/.images/diagrams/uds-core-pepr-operator-flow-uds-exemption.svg)
 
 ## Exemption
 

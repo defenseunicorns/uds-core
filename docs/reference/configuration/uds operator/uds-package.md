@@ -2,7 +2,7 @@
 title: UDS Operator Package
 ---
 
-![UDS Operator Package Flowchart](../../../.images/diagrams/uds-core-operator-uds-package.svg)
+![UDS Operator Package Flowchart](https://github.com/defenseunicorns/uds-core/blob/diagram-operator-flow/docs/.images/diagrams/uds-core-pepr-operator-flow-uds-package.svg)
 
 ## Package
 
