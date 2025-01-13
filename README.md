@@ -34,7 +34,7 @@ UDS Core establishes a secure baseline for cloud-native systems and ships with c
 ### Prerequisites
 
 - A running container environment for K3D to interact with for dev & test environments
-- [K3D](https://k3d.io/) for dev & test environments or any [CNCF Certified Kubernetes Cluster](https://www.cncf.io/training/certification/software-conformance/#logos) for production environments.
+- [K3D](https://k3d.io/) version 5.7.1 or higher for dev & test environments or any [CNCF Certified Kubernetes Cluster](https://www.cncf.io/training/certification/software-conformance/#logos) for production environments.
 <!-- renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver -->
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli?tab=readme-ov-file#install) v0.8.1 or later
 
@@ -48,7 +48,7 @@ While the UDS Bundles published by this repo can be used for dev and test enviro
 
 ### Quickstart, Dev & Test Environments
 
-UDS Core publishes bundles you can use for trying out UDS Core or for UDS Package development where you only need part of UDS Core. These bundles leverage [UDS K3d](https://github.com/defenseunicorns/uds-k3d) to create a local k3d cluster with tools installed to emulate a cloud environment. You must have `k3d` version 5.7.1 or higher to be able to deploy these bundles (check your version with `k3d version`).
+UDS Core publishes bundles you can use for trying out UDS Core or for UDS Package development where you only need part of UDS Core. These bundles leverage [UDS K3d](https://github.com/defenseunicorns/uds-k3d) to create a local k3d cluster with tools installed to emulate a cloud environment.
 
 > [!NOTE]
 > These UDS Bundles are intended for dev and test environments and should not be used for production. They also serve as examples to create custom bundles.
