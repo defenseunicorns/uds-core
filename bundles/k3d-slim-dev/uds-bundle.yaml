@@ -6,7 +6,7 @@ metadata:
   name: k3d-core-slim-dev
   description: A UDS bundle for deploying Istio from UDS Core on a development cluster
   # x-release-please-start-version
-  version: "0.33.1"
+  version: "0.34.0"
   # x-release-please-end
 
 packages:
@@ -37,7 +37,7 @@ packages:
   - name: core-base
     path: ../../build/
     # x-release-please-start-version
-    ref: 0.33.1
+    ref: 0.34.0
     # x-release-please-end
     overrides:
       pepr-uds-core:
@@ -92,7 +92,7 @@ packages:
   - name: core-identity-authorization
     path: ../../build/
     # x-release-please-start-version
-    ref: 0.33.1
+    ref: 0.34.0
     # x-release-please-end
     overrides:
       keycloak:
