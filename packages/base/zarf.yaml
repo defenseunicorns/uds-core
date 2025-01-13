@@ -35,6 +35,11 @@ components:
     import:
       path: ../../src/istio
 
+  - name: istio-ambient
+    required: true
+    import:
+      path: ../../src/istio
+      
   - name: istio-admin-gateway
     required: true
     import:

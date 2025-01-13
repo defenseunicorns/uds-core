@@ -29,6 +29,23 @@ components:
     images:
       - "docker.io/istio/pilot:1.24.2-distroless"
       - "docker.io/istio/proxyv2:1.24.2-distroless"
+ 
+  - name: istio-ambient
+    required: true
+    only:
+      flavor: upstream
+    import:
+      path: ambient
+    charts:
+      - name: cni
+        valuesFiles:
+          - "values/upstream/cni.yaml"
+      - name: ztunnel
+        valuesFiles:
+          - "values/upstream/ztunnel.yaml"
+    images:
+      - "docker.io/istio/install-cni:1.24.2-distroless"
+      - "docker.io/istio/ztunnel:1.24.2-distroless"
 
   - name: istio-controlplane
     required: true
