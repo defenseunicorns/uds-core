@@ -49,12 +49,6 @@ components:
     import:
       path: ../base
 
-  # Pepr the world
-  - name: pepr-uds-core
-    required: true
-    import:
-      path: ../base
-
   # Metrics Server
   - name: metrics-server
     required: false

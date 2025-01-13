@@ -25,7 +25,7 @@ components:
     charts:
       - name: istiod
         valuesFiles:
-          - "values/upstream-values.yaml"
+          - "values/upstream/istiod.yaml"
     images:
       - "docker.io/istio/pilot:1.24.2-distroless"
       - "docker.io/istio/proxyv2:1.24.2-distroless"
@@ -39,7 +39,7 @@ components:
     charts:
       - name: istiod
         valuesFiles:
-          - "values/registry1-values.yaml"
+          - "values/registry1/istiod.yaml"
     images:
       - registry1.dso.mil/ironbank/tetrate/istio/proxyv2:1.24.2-tetratefips0
       - registry1.dso.mil/ironbank/tetrate/istio/pilot:1.24.2-tetratefips0
@@ -53,7 +53,7 @@ components:
     charts:
       - name: istiod
         valuesFiles:
-          - "values/unicorn-values.yaml"
+          - "values/unicorn/istiod.yaml"
     images:
       - cgr.dev/du-uds-defenseunicorns/istio-pilot-fips:1.24.2
       - cgr.dev/du-uds-defenseunicorns/istio-proxy-fips:1.24.2
