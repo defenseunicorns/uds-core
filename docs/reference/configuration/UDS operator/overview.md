@@ -4,7 +4,7 @@ sidebar:
     order: 1
 ---
 
-![UDS Operator Overview Flows](https://github.com/defenseunicorns/uds-core/blob/diagram-operator-flow/docs/.images/diagrams/uds-core-pepr-operator-flow-overview.svg?raw=true)
+![UDS Operator Overview Flows](https://github.com/defenseunicorns/uds-core/blob/main/docs/.images/diagrams/uds-core-operator-custom-resources.svg?raw=true)
 
 The UDS Operator plays a pivotal role in managing the lifecycle of UDS Package Custom Resources (CRs) along with their associated resources like NetworkPolicies and Istio VirtualServices. Leveraging [Pepr](https://github.com/defenseunicorns/pepr), the operator binds watch operations to the enqueue and reconciler, taking on several key responsibilities for UDS Packages and exemptions:
 
@@ -29,3 +29,5 @@ src/pepr/operator/
 ├── index.ts                # Entrypoint for the UDS Operator
 └── reconcilers             # Reconciles Custom Resources via the controllers
 ```
+
+### For additional information there are additional [dev diagrams here](https://github.com/defenseunicorns/uds-core/tree/main/docs/.images/dev)
