@@ -1,17 +1,18 @@
 yaml-files:
-  - '**/*.y*ml'
-  - '.yamllint'
+  - "**/*.y*ml"
+  - ".yamllint"
 
 # Ignore files from upstream
 ignore:
-  - 'k3d/local/manifests/metallb/metallb-native.yaml'
-  - '**/.terraform/**'
-  - '**/chart/templates/**'
-  - '**/node_modules/**'
-  - 'dist/**'
-  - 'src/pepr/uds-operator-config/templates/**'
-  - '.codespellrc'
-  - '.lintstagedrc.json'
+  - "k3d/local/manifests/metallb/metallb-native.yaml"
+  - "**/.terraform/**"
+  - "**/chart/templates/**"
+  - "**/node_modules/**"
+  - "dist/**"
+  - "src/pepr/uds-operator-config/templates/**"
+  - ".codespellrc"
+  - ".lintstagedrc.json"
+  - "uds-docs/**"
 
 rules:
   anchors: enable

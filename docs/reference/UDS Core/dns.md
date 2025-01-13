@@ -57,7 +57,7 @@ overrides:
 
 ### Istio Gateways
 Once UDS Core is deployed, there will be Istio Gateway resources in your cluster. You can find each Gateway in a dedicated namespace:
-```cli
+```console
 $ kubectl get gateway -A
 NAMESPACE              NAME             AGE
 istio-admin-gateway    admin-gateway    1h
@@ -65,7 +65,7 @@ istio-tenant-gateway   tenant-gateway   1h
 ```
 
 Each Gateway will have a Kubernetes Service of type Load Balancer:
-```cli
+```console
 $ kubectl get svc -A | grep LoadBalancer
 NAMESPACE                   NAME                                             TYPE           CLUSTER-IP      EXTERNAL-IP                                        PORT(S)                                     AGE
 istio-admin-gateway         admin-ingressgateway                             LoadBalancer   10.43.82.84     k8s-istioadm-admin...elb.us-east-1.amazonaws.com   15021:30842/TCP,80:31304/TCP,443:31518/TCP  1h
