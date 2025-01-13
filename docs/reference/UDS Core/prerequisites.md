@@ -4,7 +4,7 @@ sidebar:
     order: 2
 ---
 
-`UDS Core` can run in any [CNCF conformant Kubernetes distribution](https://www.cncf.io/training/certification/software-conformance/), but sometimes customizations are needed based on environments. This is an attempt to document and link to relevant information to aid in setting up your Kubernetes environment and hosts to ensure a successful `UDS Core` installation.  
+`UDS Core` can run in any [CNCF conformant Kubernetes distribution](https://www.cncf.io/training/certification/software-conformance/) that has not reached [End-of-Life (EOL)](https://kubernetes.io/releases/#release-history). This documentation aims to provide guidance and links to relevant information to help configure your Kubernetes environment and hosts for a successful installation of `UDS Core`. Note that customizations may be required depending on the specific environment.
 
 ### Cluster Requirements
 
