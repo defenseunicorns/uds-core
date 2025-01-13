@@ -25,9 +25,9 @@ export async function enableInjection(pkg: UDSPackage) {
   }
 
   const sourceNS = await K8s(kind.Namespace).Get(pkg.metadata.namespace);
-  const labels = sourceNS.metadata?.labels || {};
+  const labels = { ...(sourceNS.metadata?.labels || {}) };
   const originalInjectionLabel = labels[injectionLabel];
-  const annotations = sourceNS.metadata?.annotations || {};
+  const annotations = { ...(sourceNS.metadata?.annotations || {}) };
   const pkgKey = `uds.dev/pkg-${pkg.metadata.name}`;
 
   // Mark the original namespace injection setting for if all packages are removed
@@ -35,34 +35,46 @@ export async function enableInjection(pkg: UDSPackage) {
     annotations[injectionAnnotation] = originalInjectionLabel || "non-existent";
   }
 
-  // Ensure the namespace is configured
-  if (!annotations[pkgKey] || originalInjectionLabel !== "enabled") {
-    // Ensure Istio injection is enabled
+  let shouldRestartPods = false;
+
+  // Ensure Istio injection is enabled
+  if (originalInjectionLabel !== "enabled") {
     labels[injectionLabel] = "enabled";
+    log.info(`Enabling Istio injection for namespace ${pkg.metadata.namespace}.`);
+    shouldRestartPods = true; // Pods need restarting due to label change
+  }
 
-    // Add the package annotation
+  // Ensure package-specific annotation is updated
+  if (annotations[pkgKey] !== "true") {
     annotations[pkgKey] = "true";
-
-    // Apply the updated Namespace
-    log.debug(`Updating namespace ${pkg.metadata.namespace} with istio injection label`);
-    await K8s(kind.Namespace).Apply(
-      {
-        metadata: {
-          name: pkg.metadata.namespace,
-          labels,
-          annotations,
-        },
-      },
-      { force: true },
+    log.info(
+      `Updating package-specific annotation for ${pkg.metadata.name} in namespace ${pkg.metadata.namespace}.`,
     );
+  }
 
-    // Kill the pods if we changed the value of the istio-injection label
-    if (originalInjectionLabel !== labels[injectionLabel]) {
-      log.debug(
-        `Attempting pod restart in ${pkg.metadata.namespace} based on istio injection label change`,
-      );
-      await killPods(pkg.metadata.namespace, true);
-    }
+  // Apply namespace updates if there are changes
+  const updatedNamespace = {
+    metadata: {
+      name: pkg.metadata.namespace,
+      labels,
+      annotations,
+    },
+  };
+
+  if (
+    JSON.stringify(sourceNS.metadata?.labels) !== JSON.stringify(labels) ||
+    JSON.stringify(sourceNS.metadata?.annotations) !== JSON.stringify(annotations)
+  ) {
+    log.debug(`Applying updates to namespace ${pkg.metadata.namespace}.`);
+    await K8s(kind.Namespace).Apply(updatedNamespace, { force: true });
+  } else {
+    log.debug(`No namespace updates needed for ${pkg.metadata.namespace}.`);
+  }
+
+  // Restart pods if required
+  if (shouldRestartPods) {
+    log.debug(`Restarting pods in ${pkg.metadata.namespace} due to configuration changes.`);
+    await killPods(pkg.metadata.namespace, true);
   }
 }
 
@@ -119,8 +131,8 @@ export async function cleanupNamespace(pkg: UDSPackage) {
 /**
  * Forces deletion of pods with the incorrect istio sidecar state
  *
- * @param ns
- * @param enableInjection
+ * @param ns The namespace to target
+ * @param enableInjection Whether injection is being enabled
  */
 async function killPods(ns: string, enableInjection: boolean) {
   // Get all pods in the namespace
@@ -135,7 +147,10 @@ async function killPods(ns: string, enableInjection: boolean) {
       continue;
     }
 
-    const foundSidecar = pod.spec?.containers?.find(c => c.name === "istio-proxy");
+    // Checks both container (haven't switched to native sidecars yet) and initContainers for native sidecars
+    const foundSidecar =
+      pod.spec?.containers?.some(c => c.name === "istio-proxy") ||
+      pod.spec?.initContainers?.some(c => c.name === "istio-proxy");
 
     // If enabling injection, ignore pods that already have the istio sidecar
     if (enableInjection && foundSidecar) {

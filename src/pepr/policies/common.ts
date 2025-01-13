@@ -70,19 +70,20 @@ export function isIstioInitContainer(
   container?: V1Container,
 ) {
   // Check for the sidecar.istio.io/status annotation
-  const hasAnnotation = request.HasAnnotation("sidecar.istio.io/status");
-  if (!hasAnnotation) {
+  if (!request.HasAnnotation("sidecar.istio.io/status")) {
     return false;
   }
 
-  // Check for what looks like an istio sidecar
-  const possibleSidecar = request.Raw.spec?.containers?.find(
+  // Check for an Istio proxy in initContainers
+  const hasInitContainerSidecar = request.Raw.spec?.initContainers?.some(
     c =>
       c.name === "istio-proxy" &&
       c.ports?.find(p => p.name === "http-envoy-prom") &&
       c.args?.includes("proxy"),
   );
-  if (!possibleSidecar) {
+
+  // Exit if no Istio proxy is found in initContainers
+  if (!hasInitContainerSidecar) {
     return false;
   }
 
