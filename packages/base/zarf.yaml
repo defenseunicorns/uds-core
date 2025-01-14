@@ -36,7 +36,7 @@ components:
       path: ../../src/istio
 
   - name: istio-ambient
-    required: true
+    required: false
     import:
       path: ../../src/istio
       
