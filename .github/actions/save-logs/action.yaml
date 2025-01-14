@@ -65,7 +65,7 @@ runs:
         uds zarf tools kubectl logs -n pepr-system -l app=pepr-uds-core-watcher --tail -1 --previous > /tmp/pepr-watcher-previous-logs.log || true
         echo "::endgroup::"
         echo "::group::Describe Failed Packages"
-        FAILED_PACKAGES=($(uds zarf tools kubectl get package -A -o jsonpath="{range .items[?(@.status.phase!='Ready')]}{.metadata.name}{','}{.metadata.namespace}{'\n'}{end}")); for PACKAGE in "${FAILED_PACKAGES[@]}"; do PACKAGE_NAME=$(echo "$PACKAGE" | awk -F "," '{print $1}'); PACKAGE_NAMESPACE=$(echo "$PACKAGE" | awk -F "," '{print $2}'); uds zarf tools kubectl describe "$PACKAGE_NAME" -n "$PACKAGE_NAMESPACE"; echo; done
+        FAILED_PACKAGES=($(uds zarf tools kubectl get package -A -o jsonpath="{range .items[?(@.status.phase!='Ready')]}{.metadata.name}{','}{.metadata.namespace}{'\n'}{end}")); for PACKAGE in "${FAILED_PACKAGES[@]}"; do PACKAGE_NAME=$(echo "$PACKAGE" | awk -F "," '{print $1}'); PACKAGE_NAMESPACE=$(echo "$PACKAGE" | awk -F "," '{print $2}'); uds zarf tools kubectl describe package "$PACKAGE_NAME" -n "$PACKAGE_NAMESPACE"; echo; done
         echo "::endgroup::"
       shell: bash
 
