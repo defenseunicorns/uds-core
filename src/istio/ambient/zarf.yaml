@@ -32,14 +32,15 @@ components:
         url: https://istio-release.storage.googleapis.com/charts
         version: 1.24.2
         namespace: istio-system
-    actions:
-      onDeploy:
-        after:
-          - description: "Ensure istio ambient is enabled for Pepr"
-            cmd: "./zarf tools kubectl label namespace pepr-system istio.io/dataplane-mode=ambient --overwrite"
-          - description: "Ensure istio-injection is disabled for Pepr"
-            cmd: "./zarf tools kubectl label namespace pepr-system istio-injection=disabled --overwrite"
-          - description: "Cycle Pepr to refresh connections post-ambient"
-            cmd: |
-              ./zarf tools kubectl rollout restart -n pepr-system deploy/pepr-uds-core-watcher
-              ./zarf tools kubectl rollout restart -n pepr-system deploy/pepr-uds-core
+    # Enable this when ready to switch Core components to use ambient
+    # actions:
+    #   onDeploy:
+    #     after:
+    #       - description: "Ensure istio ambient is enabled for Pepr"
+    #         cmd: "./zarf tools kubectl label namespace pepr-system istio.io/dataplane-mode=ambient --overwrite"
+    #       - description: "Ensure istio-injection is disabled for Pepr"
+    #         cmd: "./zarf tools kubectl label namespace pepr-system istio-injection=disabled --overwrite"
+    #       - description: "Cycle Pepr to refresh connections post-ambient"
+    #         cmd: |
+    #           ./zarf tools kubectl rollout restart -n pepr-system deploy/pepr-uds-core-watcher
+    #           ./zarf tools kubectl rollout restart -n pepr-system deploy/pepr-uds-core
