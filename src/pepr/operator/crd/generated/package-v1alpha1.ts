@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2025 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -585,6 +585,10 @@ export interface Sso {
    * Specifies attributes for the client.
    */
   attributes?: { [key: string]: string };
+  /**
+   * Default URL to use when the auth server needs to redirect or link back to the client.
+   */
+  baseUrl?: string;
   /**
    * The client authenticator type
    */
