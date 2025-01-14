@@ -41,6 +41,7 @@ export const clientKeys = [
   "alwaysDisplayInConsole",
   "attributes",
   "authenticationFlowBindingOverrides",
+  "baseUrl",
   "bearerOnly",
   "clientAuthenticatorType",
   "clientId",
