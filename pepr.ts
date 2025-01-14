@@ -7,7 +7,6 @@ import { PeprModule } from "pepr";
 
 import cfg from "./package.json";
 
-import { istio } from "./src/pepr/istio";
 import { Component, setupLogger } from "./src/pepr/logger";
 import { operator } from "./src/pepr/operator";
 import { setupAuthserviceSecret } from "./src/pepr/operator/controllers/keycloak/authservice/config";
@@ -30,9 +29,6 @@ const log = setupLogger(Component.STARTUP);
 
     // UDS Core Policies
     policies,
-
-    // Istio service mesh
-    istio,
 
     // Prometheus monitoring stack
     prometheus,
