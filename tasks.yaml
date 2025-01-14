@@ -141,7 +141,6 @@ tasks:
       - description: "Cleanup previous runs"
         cmd: |
           rm -rf uds-docs
-          docker stop uds-docs &>/dev/null && docker rm uds-docs &>/dev/null || true
       - description: "Clone the docs repo and symlink the reference docs"
         cmd: |
           git clone https://github.com/defenseunicorns/uds-docs.git uds-docs
