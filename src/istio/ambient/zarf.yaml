@@ -39,9 +39,7 @@ components:
             cmd: |
               if [ \"${ZARF_VAR_CNI_CONF_DIR}\" == \"\" ]; then
                 if ./zarf tools kubectl version -o json 2>/dev/null | ./zarf tools yq '.serverVersion.gitVersion' 2>/dev/null | grep -q "k3s"; then
-                  if ./zarf tools kubectl get nodes -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}' 2>/dev/null | grep -q "k3d"; then
-                    echo "/var/lib/rancher/k3s/agent/etc/cni/net.d"
-                  fi
+                  echo "/var/lib/rancher/k3s/agent/etc/cni/net.d"
                 else
                   echo "/etc/cni/net.d"
                 fi
