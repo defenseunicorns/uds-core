@@ -90,7 +90,7 @@ spec:
             privileged: false
             runAsGroup: 10001
             runAsNonRoot: true
-            runAsUser: 10001            
+            runAsUser: 10001
             capabilities:
               drop:
                 - ALL
