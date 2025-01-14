@@ -45,16 +45,3 @@ components:
             cmd: |
               ./zarf tools kubectl rollout restart -n pepr-system deploy/pepr-uds-core-watcher
               ./zarf tools kubectl rollout restart -n pepr-system deploy/pepr-uds-core
-  # - name: istio-ambient
-  #   required: false
-  #   charts:
-  #     - name: cni
-  #       url: https://istio-release.storage.googleapis.com/charts
-  #       version: 1.24.2
-  #       namespace: istio-system
-  #       valuesFiles:
-  #         - "../values/cni-values.yaml"
-  #     - name: ztunnel
-  #       url: https://istio-release.storage.googleapis.com/charts
-  #       version: 1.24.2
-  #       namespace: istio-system

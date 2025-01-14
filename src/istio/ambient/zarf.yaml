@@ -9,10 +9,10 @@ metadata:
 variables:
   - name: CNI_CONF_DIR
     description: "CNI configuration directory"
-    default: "/var/lib/rancher/k3s/agent/etc/cni/net.d"
+    default: ""
   - name: CNI_BIN_DIR
     description: "CNI binary directory"
-    default: "/bin/"
+    default: ""
     
 components:
   - name: istio-ambient
@@ -32,9 +32,41 @@ components:
         url: https://istio-release.storage.googleapis.com/charts
         version: 1.24.2
         namespace: istio-system
+    actions:
+      onDeploy:
+        before:
+          - description: "Ensure CNI_CONF_DIR is set"
+            cmd: |
+              if [ \"${ZARF_VAR_CNI_CONF_DIR}\" == \"\" ]; then
+                if ./zarf tools kubectl version -o json 2>/dev/null | ./zarf tools yq '.serverVersion.gitVersion' 2>/dev/null | grep -q "k3s"; then
+                  if ./zarf tools kubectl get nodes -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}' 2>/dev/null | grep -q "k3d"; then
+                    echo "/var/lib/rancher/k3s/agent/etc/cni/net.d"
+                  fi
+                else
+                  echo "Auto-detection is not supported, set CNI_CONF_DIR and try again"
+                  exit 1
+                fi
+              fi
+            setVariables: 
+              - name: CNI_CONF_DIR
+          - description: "Ensure CNI_BIN_DIR is set"
+            cmd: |
+              if [ \"${ZARF_VAR_CNI_BIN_DIR}\" == \"\" ]; then
+                if ./zarf tools kubectl version -o json 2>/dev/null | ./zarf tools yq '.serverVersion.gitVersion' 2>/dev/null | grep -q "k3s"; then
+                  if ./zarf tools kubectl get nodes -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}' 2>/dev/null | grep -q "k3d"; then
+                    echo "/bin/"
+                  else
+                    echo "/var/lib/rancher/k3s/data/cni"
+                  fi
+                else
+                  echo "Auto-detection is not supported, set CNI_BIN_DIR and try again"
+                  exit 1
+                fi
+              fi
+            setVariables:
+              - name: CNI_BIN_DIR
+              
     # Enable this when ready to switch Core components to use ambient
-    # actions:
-    #   onDeploy:
     #     after:
     #       - description: "Ensure istio ambient is enabled for Pepr"
     #         cmd: "./zarf tools kubectl label namespace pepr-system istio.io/dataplane-mode=ambient --overwrite"

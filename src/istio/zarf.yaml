@@ -31,7 +31,7 @@ components:
       - "docker.io/istio/proxyv2:1.24.2-distroless"
  
   - name: istio-ambient
-    required: true
+    required: false
     only:
       flavor: upstream
     import:
@@ -61,6 +61,25 @@ components:
       - registry1.dso.mil/ironbank/tetrate/istio/proxyv2:1.24.2-tetratefips0
       - registry1.dso.mil/ironbank/tetrate/istio/pilot:1.24.2-tetratefips0
 
+  - name: istio-ambient
+    required: false
+    only:
+      flavor: registry1
+    import:
+      path: ambient
+    charts:
+      - name: cni
+        valuesFiles:
+          - "values/registry1/cni.yaml"
+      - name: ztunnel
+        valuesFiles:
+          - "values/registry1/ztunnel.yaml"
+    images:
+      - registry1.dso.mil/ironbank/tetrate/istio/ztunnel:1.24.2-tetratefips-v0
+      # Tetrate's install-cni image is out of date currently in Ironbank but could be swapped in when updated
+      - registry1.dso.mil/ironbank/opensource/istio/install-cni:1.24.2
+      # - registry1.dso.mil/ironbank/tetrate/istio/install-cni:1.22.6-tetratefips-v0
+
   - name: istio-controlplane
     required: true
     only:
@@ -74,6 +93,28 @@ components:
     images:
       - cgr.dev/du-uds-defenseunicorns/istio-pilot-fips:1.24.2
       - cgr.dev/du-uds-defenseunicorns/istio-proxy-fips:1.24.2
+
+  - name: istio-ambient
+    required: false
+    only:
+      flavor: registry1
+    import:
+      path: ambient
+    charts:
+      - name: cni
+        valuesFiles:
+          - "values/unicorn/cni.yaml"
+      - name: ztunnel
+        valuesFiles:
+          # Update once Chainguard has a ztunnel image
+          # - "values/unicorn/ztunnel.yaml"
+          - "values/upstream/ztunnel.yaml"
+    images:
+      # Chainguard's install-cni-fips is not working right now, issue submitted
+      - cgr.dev/du-uds-defenseunicorns/istio-install-cni:1.24.2
+      # Chainguard does not have the ztunnel image currently, but upstream is 0 CVE
+      # It is not currently FIPS though, and the IB TID FIPS image is amd64 only
+      - docker.io/istio/ztunnel:1.24.2-distroless
 
   - name: istio-admin-gateway
     required: true
