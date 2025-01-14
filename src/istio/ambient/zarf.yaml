@@ -43,8 +43,7 @@ components:
                     echo "/var/lib/rancher/k3s/agent/etc/cni/net.d"
                   fi
                 else
-                  echo "Auto-detection is not supported, set CNI_CONF_DIR and try again"
-                  exit 1
+                  echo "/etc/cni/net.d"
                 fi
               fi
             setVariables: 
@@ -59,8 +58,7 @@ components:
                     echo "/var/lib/rancher/k3s/data/cni"
                   fi
                 else
-                  echo "Auto-detection is not supported, set CNI_BIN_DIR and try again"
-                  exit 1
+                  echo "/opt/cni/bin"
                 fi
               fi
             setVariables:
