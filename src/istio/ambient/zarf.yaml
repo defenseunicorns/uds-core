@@ -13,7 +13,7 @@ variables:
   - name: CNI_BIN_DIR
     description: "CNI binary directory"
     default: ""
-    
+
 components:
   - name: istio-ambient
     required: true
@@ -44,7 +44,7 @@ components:
                   echo "/etc/cni/net.d"
                 fi
               fi
-            setVariables: 
+            setVariables:
               - name: CNI_CONF_DIR
           - description: "Ensure CNI_BIN_DIR is set"
             cmd: |
@@ -61,7 +61,7 @@ components:
               fi
             setVariables:
               - name: CNI_BIN_DIR
-              
+        
     # Enable this when ready to switch Core components to use ambient
     #     after:
     #       - description: "Ensure istio ambient is enabled for Pepr"

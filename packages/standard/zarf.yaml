@@ -21,7 +21,7 @@ components:
     required: true
     import:
       path: ../base
-      
+ 
   # Pepr the world
   - name: pepr-uds-core
     required: true

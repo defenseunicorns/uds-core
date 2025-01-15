@@ -29,7 +29,7 @@ components:
     images:
       - "docker.io/istio/pilot:1.24.2-distroless"
       - "docker.io/istio/proxyv2:1.24.2-distroless"
- 
+
   - name: istio-ambient
     required: false
     only:
