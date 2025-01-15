@@ -9,12 +9,12 @@ metadata:
 spec:
  exemptions:
    - policies:
-       - DisallowPrivileged # CNI plugin requries NET_ADMIN, NET_RAW, SYS_PTRACE, SYS_ADMIN, and DAC_OVERRIDE capabilities
+       - DisallowPrivileged # CNI plugin requires NET_ADMIN, NET_RAW, SYS_PTRACE, SYS_ADMIN, and DAC_OVERRIDE capabilities
        - RequireNonRootUser # CNI plugin requires root
        - RestrictVolumeTypes # CNI plugin uses 'hostPath' volume type
        - DisallowHostNamespaces # CNI plugin requires host namespace access for networking
-       - DropAllCapabilities # CNI plugin requries NET_ADMIN, NET_RAW, SYS_PTRACE, SYS_ADMIN, and DAC_OVERRIDE capabilities
-       - RestrictCapabilities # CNI plugin requries NET_ADMIN, NET_RAW, SYS_PTRACE, SYS_ADMIN, and DAC_OVERRIDE capabilities
+       - DropAllCapabilities # CNI plugin requires NET_ADMIN, NET_RAW, SYS_PTRACE, SYS_ADMIN, and DAC_OVERRIDE capabilities
+       - RestrictCapabilities # CNI plugin requires NET_ADMIN, NET_RAW, SYS_PTRACE, SYS_ADMIN, and DAC_OVERRIDE capabilities
        - RestrictHostPathWrite # CNI plugin requires access to write to CNI
        - RestrictHostPorts # CNI plugin requires access to host ports
      matcher:
@@ -24,12 +24,12 @@ spec:
      title: "Istio CNI exemptions"
      description: "Exemptions necessary for Istio CNI to manage network configurations and ensure proper traffic routing"
    - policies:
-       - DisallowPrivileged # ztunnel requries NET_ADMIN, NET_RAW, ane SYS_ADMIN capabilities
+       - DisallowPrivileged # ztunnel requires NET_ADMIN, NET_RAW, and SYS_ADMIN capabilities
        - RequireNonRootUser # ztunnel requires root
        - RestrictVolumeTypes # ztunnel uses 'hostPath' volume type
        - DisallowHostNamespaces # ztunnel requires host namespace access for networking
-       - DropAllCapabilities # ztunnel requries NET_ADMIN, NET_RAW, SYS_PTRACE, SYS_ADMIN, and DAC_OVERRIDE capabilities
-       - RestrictCapabilities # ztunnel requries NET_ADMIN, NET_RAW, SYS_PTRACE, SYS_ADMIN, and DAC_OVERRIDE capabilities
+       - DropAllCapabilities # ztunnel requires NET_ADMIN, NET_RAW, SYS_PTRACE, SYS_ADMIN, and DAC_OVERRIDE capabilities
+       - RestrictCapabilities # ztunnel requires NET_ADMIN, NET_RAW, SYS_PTRACE, SYS_ADMIN, and DAC_OVERRIDE capabilities
        - RestrictHostPathWrite # ztunnel requires access to write to CNI
      matcher:
        namespace: istio-system
