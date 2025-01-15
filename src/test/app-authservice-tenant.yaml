@@ -73,7 +73,7 @@ spec:
     spec:
       serviceAccountName: httpbin
       containers:
-        - image: docker.io/kong/httpbin:0.2.1
+        - image: docker.io/kong/httpbin:0.2.3
           imagePullPolicy: IfNotPresent
           name: httpbin
           resources:
@@ -85,3 +85,14 @@ spec:
               memory: 64Mi
           ports:
             - containerPort: 80
+          securityContext:
+            allowPrivilegeEscalation: false
+            privileged: false
+            runAsGroup: 10001
+            runAsNonRoot: true
+            runAsUser: 10001
+            capabilities:
+              drop:
+                - ALL
+              add:
+                - NET_BIND_SERVICE

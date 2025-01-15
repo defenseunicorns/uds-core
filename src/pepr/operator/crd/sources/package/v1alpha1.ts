@@ -313,6 +313,11 @@ const sso = {
           "A description for the client, can be a URL to an image to replace the login logo",
         type: "string",
       },
+      baseUrl: {
+        description:
+          "Default URL to use when the auth server needs to redirect or link back to the client.",
+        type: "string",
+      },
       protocol: {
         description: "Specifies the protocol of the client, either 'openid-connect' or 'saml'",
         type: "string",
