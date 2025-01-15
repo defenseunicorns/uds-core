@@ -97,7 +97,7 @@ components:
   - name: istio-ambient
     required: false
     only:
-      flavor: registry1
+      flavor: unicorn
     import:
       path: ambient
     charts:
