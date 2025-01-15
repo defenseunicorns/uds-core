@@ -61,7 +61,7 @@ components:
               fi
             setVariables:
               - name: CNI_BIN_DIR
-        
+
     # Enable this when ready to switch Core components to use ambient
     #     after:
     #       - description: "Ensure istio ambient is enabled for Pepr"

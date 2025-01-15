@@ -39,7 +39,7 @@ components:
     required: false
     import:
       path: ../../src/istio
-  
+
   - name: istio-admin-gateway
     required: true
     import:
