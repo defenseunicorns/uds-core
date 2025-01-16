@@ -51,6 +51,7 @@ jobs:
   notify-uds-security-hub:
     needs: publish-uds-core-release
     runs-on: ubuntu-latest
+    environment: uds-security-hub
     steps:
       - name: Generate a token
         id: generate-token
@@ -58,6 +59,8 @@ jobs:
         with:
           app-id: ${{ vars.UDS_SECURITY_HUB_TRIGGER_APP_ID }}
           private-key: ${{ secrets.UDS_SECURITY_HUB_TRIGGER_APP_PRIVATE_KEY }}
+          owner: defenseunicorns
+          repositories: uds-security-hub
 
       - name: Kick off scan in UDS Security Hub
         run: |
