@@ -21,7 +21,8 @@
     "node_modules",
     "dist",
     "jest.*.js",
-    "test/playwright/"
+    "test/playwright/",
+    "uds-docs/"
   ],
   "root": true,
   "rules": {
