@@ -70,13 +70,21 @@ components:
     charts:
       - name: cni
         valuesFiles:
-          - "values/registry1/cni.yaml"
+          # Update once Registry1 has working cni image
+          #- "values/registry1/cni.yaml"
+          - "values/upstream/cni.yaml"
       - name: ztunnel
         valuesFiles:
-          - "values/registry1/ztunnel.yaml"
+          # Update once Registry1 has working ztunnel image
+          #- "values/registry1/ztunnel.yaml"
+          - "values/upstream/ztunnel.yaml"
     images:
-      - registry1.dso.mil/ironbank/tetrate/istio/ztunnel:1.24.2-tetratefips0
-      - registry1.dso.mil/ironbank/opensource/istio/install-cni:1.24.2
+      # Registry1 ztunnel image is not working right now
+      #- registry1.dso.mil/ironbank/tetrate/istio/ztunnel:1.24.2-tetratefips0
+      - docker.io/istio/ztunnel:1.24.2-distroless
+      # Registry1s install-cni-fips is not working right now
+      #- registry1.dso.mil/ironbank/opensource/istio/install-cni:1.24.2
+      - docker.io/istio/install-cni:1.24.2-distroless
 
   - name: istio-controlplane
     required: true
