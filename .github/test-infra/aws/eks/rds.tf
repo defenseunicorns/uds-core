@@ -29,6 +29,7 @@ module "db" {
   backup_retention_period = 1
   backup_window           = "03:00-06:00"
   maintenance_window      = "Mon:00:00-Mon:03:00"
+  skip_final_snapshot     = true
 
   engine               = "postgres"
   engine_version       = var.db_engine_version
