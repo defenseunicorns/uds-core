@@ -340,7 +340,7 @@ variables:
 
 ## Key Files and Folders
 
-```dir
+```txt
 src/pepr/operator/
 ├── controllers             # Core business logic called by the reconciler
 │   ├── exemptions          # Manages updating Pepr store with exemptions from UDS Exemption

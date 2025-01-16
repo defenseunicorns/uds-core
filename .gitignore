@@ -22,6 +22,9 @@ extract-terraform.sh
 cluster-config.yaml
 **.tfstate
 
+uds-docs/
+uds-docs/**
+
 *.tar
 
 **.backup

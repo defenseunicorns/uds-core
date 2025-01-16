@@ -7,7 +7,6 @@ import { PeprModule } from "pepr";
 
 import cfg from "./package.json";
 
-import { istio } from "./src/pepr/istio";
 import { Component, setupLogger } from "./src/pepr/logger";
 import { loki } from "./src/pepr/loki";
 import { operator } from "./src/pepr/operator";
@@ -31,9 +30,6 @@ const log = setupLogger(Component.STARTUP);
 
     // UDS Core Policies
     policies,
-
-    // Istio service mesh
-    istio,
 
     // Prometheus monitoring stack
     prometheus,
