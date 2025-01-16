@@ -3,12 +3,12 @@
 
 image:
   repository: cgr.dev/du-uds-defenseunicorns/velero-fips
-  tag: 1.15.1-dev
+  tag: 1.15.2-dev
 
 kubectl:
   image:
     repository: cgr.dev/du-uds-defenseunicorns/kubectl-fips
-    tag: 1.32.0-dev
+    tag: 1.32.1-dev
 
 initContainers:
   - name: velero-plugin-for-aws
