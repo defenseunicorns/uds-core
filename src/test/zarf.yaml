@@ -21,7 +21,7 @@ components:
         files:
           - "app-authservice-tenant.yaml"
     images:
-      - docker.io/kong/httpbin:0.2.1
+      - docker.io/kong/httpbin:0.2.3
       - hashicorp/http-echo:latest
 
   - name: podinfo
