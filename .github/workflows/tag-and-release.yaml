@@ -9,8 +9,6 @@ permissions:
   packages: read # Allows reading the content of the repository's packages.
   id-token: write
 
-# Permissions for WORKFLOW_TOKEN: workflow/repo
-
 on:
   push:
     branches:
@@ -54,10 +52,17 @@ jobs:
     needs: publish-uds-core-release
     runs-on: ubuntu-latest
     steps:
+      - name: Generate a token
+        id: generate-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ vars.UDS_SECURITY_HUB_TRIGGER_APP_ID }}
+          private-key: ${{ secrets.UDS_SECURITY_HUB_TRIGGER_APP_PRIVATE_KEY }}
+
       - name: Kick off scan in UDS Security Hub
         run: |
           curl -X POST \
-            -H "Authorization: Bearer ${{ secrets.WORKFLOW_TOKEN }}" \
+            -H "Authorization: Bearer ${{ steps.generate-token.outputs.token }}" \
             -H "Accept: application/vnd.github+json" \
             -d '{
               "ref": "main"
