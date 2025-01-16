@@ -14,6 +14,9 @@ import {
   updateSecretAnnotations,
 } from "./utils";
 
+/**
+ * Mocks the logger module to prevent real logging during tests and ensure control over logger behavior.
+ */
 jest.mock("../logger", () => ({
   setupLogger: jest.fn().mockReturnValue({
     warn: jest.fn(),
@@ -30,6 +33,9 @@ jest.mock("../logger", () => ({
 
 const logger = setupLogger(Component.LOKI);
 
+/**
+ * Tests the calculateFutureDate function to ensure it correctly computes a future date based on a specified number of days.
+ */
 describe("calculateFutureDate", () => {
   beforeAll(() => {
     jest.spyOn(Date, "now").mockImplementation(() => new Date("2023-01-01T00:00:00Z").getTime());
@@ -49,6 +55,9 @@ describe("calculateFutureDate", () => {
   });
 });
 
+/**
+ * Tests the parseLokiConfig function to ensure it correctly parses a valid YAML string into a LokiConfig object.
+ */
 describe("parseLokiConfig", () => {
   it("should parse valid YAML string into an object", () => {
     const yamlString = `
@@ -83,6 +92,9 @@ describe("parseLokiConfig", () => {
   });
 });
 
+/**
+ * Tests the updateConfigDate function to ensure it correctly updates the 'from' date in the specified configuration entry.
+ */
 describe("updateConfigDate", () => {
   it("should update the from date in the TSDB config", () => {
     const configs = [
@@ -102,6 +114,9 @@ describe("updateConfigDate", () => {
   });
 });
 
+/**
+ * Tests the encodeConfig function to ensure it correctly encodes a LokiConfig object into a YAML string.
+ */
 describe("encodeConfig", () => {
   it("should encode a config object to a YAML string", () => {
     const config = {
@@ -124,6 +139,9 @@ describe("encodeConfig", () => {
   });
 });
 
+/**
+ * Tests the updateSecretAnnotations function to ensure it correctly handles adding annotations to a secret and handles missing metadata appropriately.
+ */
 describe("updateSecretAnnotations", () => {
   it("should add annotations when metadata is present", () => {
     const secret: Secret = {

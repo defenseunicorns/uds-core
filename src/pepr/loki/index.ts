@@ -29,19 +29,27 @@ When(kind.Secret)
   .WithName("loki")
   .Mutate(async secret => {
     const updatedAnnotationKey = "loki.tsdb.mutated";
+
+    // Check if the secret already has the processed annotation, log if it does, and skip further processing.
     if (secret.Raw.metadata?.annotations?.[updatedAnnotationKey]) {
       log.info(`Annotation already updated for ${secret.Raw.metadata?.name}`);
       return;
     }
 
     const futureDate = calculateFutureDate(2);
+
+    // Ensure the secret contains 'config.yaml' data before proceeding.
     if (secret.Raw.data && secret.Raw.data["config.yaml"]) {
       const lokiConfig = parseLokiConfig(secret.Raw.data["config.yaml"]);
+
+      // If parsing fails or updating the configuration date fails, stop processing.
       if (!lokiConfig || !updateConfigDate(lokiConfig.schema_config?.configs || [], futureDate)) {
         return;
       }
 
+      // Encode the updated configuration back to YAML and save it back to the secret.
       secret.Raw.data["config.yaml"] = encodeConfig(lokiConfig);
+
       updateSecretAnnotations(secret, updatedAnnotationKey);
       log.info(`Config and annotations updated for ${secret.Raw.metadata?.name}`);
     } else {
