@@ -141,7 +141,9 @@ export function buildConfig(config: AuthserviceConfig, event: AuthServiceEvent) 
       delete config.default_oidc_config.redis_session_store_config;
     } else {
       // Update the redis session store config if a URI is provided
-      config.default_oidc_config.redis_session_store_config!.server_uri = event.redisUri;
+      config.default_oidc_config.redis_session_store_config = {
+        server_uri: event.redisUri,
+      };
     }
     if (event.trustedCA === undefined) {
       // Remove the trusted certificate authority if a CA is not provided
