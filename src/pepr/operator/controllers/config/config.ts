@@ -36,9 +36,11 @@ export async function updateUDSConfig(config: kind.Secret) {
     const authserviceUpdate: AuthServiceEvent = {
       name: "global-config-update",
       action: Action.UpdateGlobalConfig,
-      trustedCA: UDSConfig.caCert,
+      // Base64 decode the CA cert before passing to the update function
+      trustedCA: atob(UDSConfig.caCert),
       redisUri: UDSConfig.authserviceRedisUri,
     };
+    log.debug("Updating Authservice secret based on change to CA Cert or Redis URI");
     await reconcileAuthservice(authserviceUpdate);
   }
 
@@ -46,6 +48,7 @@ export async function updateUDSConfig(config: kind.Secret) {
   if (decodedConfigData.KUBEAPI_CIDR !== UDSConfig.kubeApiCidr) {
     UDSConfig.kubeApiCidr = decodedConfigData.KUBEAPI_CIDR;
     // This re-runs the "init" function to update netpols if necessary
+    log.debug("Updating KubeAPI network policies based on change to kubeApiCidr");
     await initAPIServerCIDR();
   }
 
@@ -53,6 +56,7 @@ export async function updateUDSConfig(config: kind.Secret) {
   if (decodedConfigData.KUBENODE_CIDRS !== UDSConfig.kubeNodeCidrs) {
     UDSConfig.kubeNodeCidrs = decodedConfigData.KUBENODE_CIDRS;
     // This re-runs the "init" function to update netpols if necessary
+    log.debug("Updating KubeNodes network policies based on change to kubeNodeCidrs");
     await initAllNodesTarget();
   }
 
@@ -74,5 +78,5 @@ export async function updateUDSConfig(config: kind.Secret) {
   // Update other config values (no need for special handling)
   UDSConfig.allowAllNSExemptions = decodedConfigData.UDS_ALLOW_ALL_NS_EXEMPTIONS === "true";
 
-  log.info(UDSConfig, "Updated UDS Config based on uds-operator-config secret changes");
+  log.info("Updated UDS Config based on uds-operator-config secret changes");
 }
