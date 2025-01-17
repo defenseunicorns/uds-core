@@ -43,7 +43,7 @@ Kubernetes Watch is a mechanism used to monitor resource changes in real-time. F
 1. **Identify the Controller Pod**:
    - Check the logs of the controller managing Exemptions using the following command:
      ```bash
-     kubectl logs -n pepr-system -l app -f | egrep "Processing exemption"
+     kubectl logs -n pepr-system deploy/pepr-uds-core | grep "Processing exemption"
      ```
 
    - If the logs **do not show entries similar to the following**, it may indicate that the Watch missed the event:
@@ -54,7 +54,7 @@ Kubernetes Watch is a mechanism used to monitor resource changes in real-time. F
 2. **Verify Package Processing**:
    - Use the following command to check logs for Package processing:
      ```bash
-     kubectl logs -n pepr-system -l app -f | egrep "Processing Package"
+     kubectl logs -n pepr-system deploy/pepr-uds-core-watcher -f | egrep "Processing Package"
      ```
 
    - If the logs **do not show entries similar to the following**, it may indicate an issue with the Watch:
