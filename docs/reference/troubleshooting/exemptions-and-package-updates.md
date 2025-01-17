@@ -26,7 +26,7 @@ Before diving into detailed debugging, ensure the following:
      - [Exemptions Specification](/reference/configuration/custom%20resources/exemptions-v1alpha1-cr)
 
 - **Namespace for Exemptions**:
-   - Ensure Exemptions are applied in the `uds-policy-exemptions` namespace.
+   - Ensure Exemptions are applied in the `uds-policy-exemptions` namespace, unless you are using an [override](/reference/configuration/uds-configure-policy-exemptions).
 
 - **Cluster and Deployment Status**:
    - Confirm the cluster and relevant controller deployments are running without errors: 
