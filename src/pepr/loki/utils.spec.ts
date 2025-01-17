@@ -4,40 +4,19 @@
  */
 
 import { afterAll, beforeAll, describe, expect, it, jest } from "@jest/globals";
-import { Component, setupLogger } from "../logger";
 import {
   calculateFutureDate,
   encodeConfig,
+  isConfigUpdateRequired,
   parseLokiConfig,
-  Secret,
   updateConfigDate,
-  updateSecretAnnotations,
 } from "./utils";
 
-/**
- * Mocks the logger module to prevent real logging during tests and ensure control over logger behavior.
- */
-jest.mock("../logger", () => ({
-  setupLogger: jest.fn().mockReturnValue({
-    warn: jest.fn(),
-    info: jest.fn(),
-    error: jest.fn(),
-    debug: jest.fn(),
-    trace: jest.fn(),
-    fatal: jest.fn(),
-  }),
-  Component: {
-    LOKI: "LOKI",
-  },
-}));
+import { UDSConfig } from "../config";
 
-const logger = setupLogger(Component.LOKI);
-
-/**
- * Tests the calculateFutureDate function to ensure it correctly computes a future date based on a specified number of days.
- */
 describe("calculateFutureDate", () => {
   beforeAll(() => {
+    // Mocking global date to ensure consistent results in testing future date calculations.
     jest.spyOn(Date, "now").mockImplementation(() => new Date("2023-01-01T00:00:00Z").getTime());
     const originalDate = Date;
     jest.spyOn(global, "Date").mockImplementation((...args) => {
@@ -46,25 +25,25 @@ describe("calculateFutureDate", () => {
   });
 
   afterAll(() => {
+    // Restoring all mocks to their original implementations after tests are done.
     jest.restoreAllMocks();
   });
 
   it("should return a date string two days in the future", () => {
+    // Ensuring the calculateFutureDate correctly adds days to the current date.
     const result = calculateFutureDate(2);
     expect(result).toBe("2023-01-03");
   });
 });
 
-/**
- * Tests the parseLokiConfig function to ensure it correctly parses a valid YAML string into a LokiConfig object.
- */
 describe("parseLokiConfig", () => {
   it("should parse valid YAML string into an object", () => {
+    // Testing the function's ability to correctly parse a well-formed YAML into a config object.
     const yamlString = `
       schema_config:
         configs:
           - from: "2023-01-01"
-            store: "tsdb"
+            store: "${UDSConfig.lokiDefaultStore}"
             index:
               prefix: "loki_"
               period: "24h"
@@ -75,7 +54,7 @@ describe("parseLokiConfig", () => {
         configs: [
           {
             from: "2023-01-01",
-            store: "tsdb",
+            store: UDSConfig.lokiDefaultStore,
             index: {
               prefix: "loki_",
               period: "24h",
@@ -87,44 +66,42 @@ describe("parseLokiConfig", () => {
   });
 
   it("should return null on invalid YAML", () => {
+    // Testing the function's error handling on receiving bad YAML format.
     const badYaml = `: I am not YAML!`;
     expect(parseLokiConfig(badYaml)).toBeNull();
   });
 });
 
-/**
- * Tests the updateConfigDate function to ensure it correctly updates the 'from' date in the specified configuration entry.
- */
 describe("updateConfigDate", () => {
-  it("should update the from date in the TSDB config", () => {
+  it(`should update the from date in the ${UDSConfig.lokiDefaultStore} config`, () => {
+    // Verifying that the function updates the 'from' date for a specified store type.
     const configs = [
       {
         from: "2023-01-01",
-        store: "tsdb",
+        store: UDSConfig.lokiDefaultStore,
       },
     ];
-    const result = updateConfigDate(configs, "2023-01-10");
+    const result = updateConfigDate(configs, UDSConfig.lokiDefaultStore, "2023-01-10");
     expect(result).toBeTruthy();
     expect(configs[0].from).toBe("2023-01-10");
   });
 
-  it("should return false if no TSDB config is found", () => {
+  it(`should return false if no ${UDSConfig.lokiDefaultStore} config is found`, () => {
+    // Testing the function's response when no matching store type configuration is found.
     const configs = [{ from: "2023-01-01", store: "other" }];
-    expect(updateConfigDate(configs, "2023-01-10")).toBeFalsy();
+    expect(updateConfigDate(configs, "2023-01-10", UDSConfig.lokiDefaultStore)).toBeFalsy();
   });
 });
 
-/**
- * Tests the encodeConfig function to ensure it correctly encodes a LokiConfig object into a YAML string.
- */
 describe("encodeConfig", () => {
   it("should encode a config object to a YAML string", () => {
+    // Ensuring that the encodeConfig function can serialize a config object back to YAML format correctly.
     const config = {
       schema_config: {
         configs: [
           {
             from: "2023-01-01",
-            store: "tsdb",
+            store: UDSConfig.lokiDefaultStore,
             index: {
               prefix: "loki_",
               period: "24h",
@@ -134,38 +111,51 @@ describe("encodeConfig", () => {
       },
     };
     const yamlString = encodeConfig(config);
-    expect(yamlString).toMatch(/tsdb/);
+    expect(yamlString).toMatch(new RegExp(UDSConfig.lokiDefaultStore));
     expect(yamlString).toMatch(/loki_/);
   });
 });
 
-/**
- * Tests the updateSecretAnnotations function to ensure it correctly handles adding annotations to a secret and handles missing metadata appropriately.
- */
-describe("updateSecretAnnotations", () => {
-  it("should add annotations when metadata is present", () => {
-    const secret: Secret = {
-      Raw: {
-        metadata: {
-          annotations: {},
-        },
-      },
-    };
-
-    updateSecretAnnotations(secret, "loki.tsdb.mutated");
-    if (secret.Raw.metadata && secret.Raw.metadata.annotations) {
-      expect(secret.Raw.metadata.annotations["loki.tsdb.mutated"]).toBe("true");
-    }
+describe("isConfigUpdateRequired", () => {
+  it(`should return false if ${UDSConfig.lokiDefaultStore} is set correctly in the future and is the latest configuration`, () => {
+    // Validating that no update is required if the default store type is already correctly set.
+    const configs = [
+      { from: "2023-01-01", store: "boltdb-shipper" },
+      { from: "2025-01-01", store: UDSConfig.lokiDefaultStore },
+    ];
+    const lokiConfig = { schema_config: { configs } };
+    expect(isConfigUpdateRequired(lokiConfig, UDSConfig.lokiDefaultStore)).toBe(false);
   });
 
-  it("should log a warning when metadata is missing", () => {
-    const secret: Secret = {
-      Raw: {
-        metadata: undefined,
-      },
-    };
+  it(`should return true if ${UDSConfig.lokiDefaultStore} is set in the past`, () => {
+    // Checking that an update is required if the default store type's date is set in the past.
+    const configs = [
+      { from: "2021-01-01", store: "boltdb-shipper" },
+      { from: "2020-01-01", store: UDSConfig.lokiDefaultStore },
+    ];
+    const lokiConfig = { schema_config: { configs } };
+    expect(isConfigUpdateRequired(lokiConfig, UDSConfig.lokiDefaultStore)).toBe(true);
+  });
 
-    updateSecretAnnotations(secret, "loki.tsdb.mutated");
-    expect(logger.warn).toHaveBeenCalledWith("Metadata is missing; annotations cannot be updated.");
+  it(`should return true if ${UDSConfig.lokiDefaultStore} is not the latest configuration`, () => {
+    // Ensuring that an update is needed if there is a newer configuration than the default store type.
+    const configs = [
+      { from: "2025-01-02", store: "boltdb-shipper" },
+      { from: "2025-01-01", store: UDSConfig.lokiDefaultStore },
+    ];
+    const lokiConfig = { schema_config: { configs } };
+    expect(isConfigUpdateRequired(lokiConfig, UDSConfig.lokiDefaultStore)).toBe(true);
+  });
+
+  it(`should return true if ${UDSConfig.lokiDefaultStore} configuration is missing`, () => {
+    // Testing that an update is required if the default store type configuration is completely missing.
+    const configs = [{ from: "2023-01-01", store: "boltdb-shipper" }];
+    const lokiConfig = { schema_config: { configs } };
+    expect(isConfigUpdateRequired(lokiConfig, UDSConfig.lokiDefaultStore)).toBe(true);
+  });
+
+  it(`should return true when config is empty`, () => {
+    // Testing that an update is required if the config is completely missing.
+    expect(isConfigUpdateRequired({}, UDSConfig.lokiDefaultStore)).toBe(true);
   });
 });

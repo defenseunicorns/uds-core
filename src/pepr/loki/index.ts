@@ -4,14 +4,14 @@
  */
 
 import { Capability, kind } from "pepr";
+import { UDSConfig } from "../config";
 import { Component, setupLogger } from "../logger";
 import {
   calculateFutureDate,
   encodeConfig,
-  handleError,
+  isConfigUpdateRequired,
   parseLokiConfig,
   updateConfigDate,
-  updateSecretAnnotations,
 } from "./utils";
 
 const log = setupLogger(Component.LOKI);
@@ -28,31 +28,38 @@ When(kind.Secret)
   .InNamespace("loki")
   .WithName("loki")
   .Mutate(async secret => {
-    const updatedAnnotationKey = "loki.tsdb.mutated";
-
-    // Check if the secret already has the processed annotation, log if it does, and skip further processing.
-    if (secret.Raw.metadata?.annotations?.[updatedAnnotationKey]) {
-      log.info(`Annotation already updated for ${secret.Raw.metadata?.name}`);
+    if (!secret.Raw.data || !secret.Raw.data["config.yaml"]) {
+      log.error(`Missing 'data' field or 'config.yaml' key in ${secret.Raw.metadata?.name}`);
       return;
     }
 
-    const futureDate = calculateFutureDate(2);
+    const lokiConfig = parseLokiConfig(secret.Raw.data["config.yaml"]);
+    if (!lokiConfig) {
+      log.error("Failed to parse Loki configuration.");
+      return;
+    }
 
-    // Ensure the secret contains 'config.yaml' data before proceeding.
-    if (secret.Raw.data && secret.Raw.data["config.yaml"]) {
-      const lokiConfig = parseLokiConfig(secret.Raw.data["config.yaml"]);
-
-      // If parsing fails or updating the configuration date fails, stop processing.
-      if (!lokiConfig || !updateConfigDate(lokiConfig.schema_config?.configs || [], futureDate)) {
-        return;
+    if (isConfigUpdateRequired(lokiConfig, UDSConfig.lokiDefaultStore)) {
+      const futureDate = calculateFutureDate(2);
+      if (
+        updateConfigDate(
+          lokiConfig.schema_config?.configs || [],
+          UDSConfig.lokiDefaultStore,
+          futureDate,
+        )
+      ) {
+        secret.Raw.data["config.yaml"] = encodeConfig(lokiConfig);
+        log.info(
+          `Loki schemaConfig configuration updated and saved for ${secret.Raw.metadata?.name}`,
+        );
+      } else {
+        log.error(
+          `Failed to update Loki schemaConfig configuration for ${secret.Raw.metadata?.name}`,
+        );
       }
-
-      // Encode the updated configuration back to YAML and save it back to the secret.
-      secret.Raw.data["config.yaml"] = encodeConfig(lokiConfig);
-
-      updateSecretAnnotations(secret, updatedAnnotationKey);
-      log.info(`Config and annotations updated for ${secret.Raw.metadata?.name}`);
     } else {
-      handleError(`Missing 'data' field or 'config.yaml' key in ${secret.Raw.metadata?.name}`);
+      log.info(
+        `No update required for Loki schemaConfig configuration for ${secret.Raw.metadata?.name}`,
+      );
     }
   });

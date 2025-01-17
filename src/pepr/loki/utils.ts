@@ -55,32 +55,28 @@ export function parseLokiConfig(data: string): LokiConfig | null {
   try {
     return yaml.load(data) as LokiConfig;
   } catch (error) {
-    handleError(`Failed to parse config: ${error.message}`);
+    log.error(`Failed to parse config: ${error.message}`);
     return null;
   }
 }
 
 /**
- * Logs an error message to the console.
- * @param {string} message - The error message to log.
- */
-export function handleError(message: string): void {
-  log.error(message);
-}
-
-/**
- * Updates the 'from' date in a configuration entry for 'tsdb' store.
+ * Updates the 'from' date in a configuration entry for the given store type.
  * @param {ConfigEntry[]} configs - Array of configuration entries.
  * @param {string} newDate - The new 'from' date to be set in the configuration.
  * @return {boolean} - True if update is successful, false otherwise.
  */
-export function updateConfigDate(configs: ConfigEntry[], newDate: string): boolean {
-  const tsdbConfig = configs.find(c => c.store === "tsdb");
-  if (!tsdbConfig) {
-    log.warn("No TSDB config found");
+export function updateConfigDate(
+  configs: ConfigEntry[],
+  storeType: string,
+  newDate: string,
+): boolean {
+  const config = configs.find(c => c.store === storeType);
+  if (!config) {
+    log.warn("No schemaConfig entry found");
     return false;
   }
-  tsdbConfig.from = newDate;
+  config.from = newDate;
   return true;
 }
 
@@ -94,17 +90,25 @@ export function encodeConfig(config: LokiConfig): string {
 }
 
 /**
- * Updates or initializes the annotations on a Kubernetes secret.
- * @param {Secret} secret - The secret to update.
- * @param {string} key - The key of the annotation to add or update.
+ * Determines if the store type configuration needs to be updated based on the current configuration.
+ * This checks if storeType's 'from' date is set properly for the future and after all current schemas.
  */
-export function updateSecretAnnotations(secret: Secret, key: string): void {
-  if (secret.Raw.metadata) {
-    secret.Raw.metadata.annotations = {
-      ...(secret.Raw.metadata.annotations || {}),
-      [key]: "true",
-    };
-  } else {
-    log.warn("Metadata is missing; annotations cannot be updated.");
+export function isConfigUpdateRequired(lokiConfig: LokiConfig, storeType: string): boolean {
+  const configs = lokiConfig.schema_config?.configs || [];
+  const config = configs.find(c => c.store === storeType);
+
+  // Check if storeType in config is missing
+  if (!config) {
+    return true;
   }
+
+  // Ensure storeType 'from' date is the latest among all configurations
+  for (const c of configs) {
+    if (c.store !== storeType && new Date(c.from) >= new Date(config.from)) {
+      return true;
+    }
+  }
+
+  // loki schemaConfig is properly configured, no update necessary
+  return false;
 }

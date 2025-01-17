@@ -46,7 +46,7 @@ loki:
         index:
           prefix: loki_index_
           period: 24h
-      - from: "2099-12-31" # Static placeholder, updated dynamically by Pepr
+      - from: "2020-01-11" # Updated dynamically by Pepr to be default retention store
         store: tsdb
         object_store: "{{ .Values.loki.storage.type }}"
         schema: v13

@@ -44,6 +44,9 @@ export const UDSConfig = {
 
   // Track if UDS Core identity-authorization layer is deployed
   isIdentityDeployed: false,
+
+  //Loki Default Store Type
+  lokiDefaultStore: "tsdb",
 };
 
 // configure subproject logger
