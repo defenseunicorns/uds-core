@@ -54,7 +54,7 @@ packages:
           variables:
             - name: LOKI_IRSA_ROLE_ARN
               description: "ARN of Loki IAM Role to annotate Loki ServiceAccount with."
-              # Maps to Loki's helm values for SerivceAccount annotations:
+              # Maps to Loki's helm values for ServiceAccount annotations:
               # See https://github.com/grafana/loki/blob/main/production/helm/loki/values.yaml#L733
               path: serviceAccount.annotations.eks\.amazonaws\.com/role-arn              
 ```
