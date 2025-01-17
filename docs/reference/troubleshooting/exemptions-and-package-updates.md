@@ -31,7 +31,7 @@ Before diving into detailed debugging, ensure the following:
 - **Cluster and Deployment Status**:
    - Confirm the cluster and relevant controller deployments are running without errors: 
       ```bash
-        kubectl get pods -n pepr-system
+      kubectl get pods -n pepr-system
       ```
 
 ## Troubleshooting Kubernetes Watch
