@@ -46,6 +46,66 @@ describe("authservice", () => {
     };
   });
 
+  test("should update redis session store config", async () => {
+    // Create mock for updatePolicy function
+    const updatePolicy = jest.fn();
+
+    let config1 = buildConfig(mockConfig as AuthserviceConfig, {
+      client: mockClient,
+      name: "local",
+      action: Action.AddClient,
+    });
+
+    const redisUri = "redis://localhost:6379";
+    config1 = buildConfig(config1, {
+      name: "redis-update",
+      action: Action.UpdateGlobalConfig,
+      redisUri: redisUri,
+    });
+
+    expect(config1.default_oidc_config.redis_session_store_config).toBeDefined();
+    expect(config1.default_oidc_config.redis_session_store_config?.server_uri).toEqual(redisUri);
+    expect(updatePolicy).not.toHaveBeenCalled();
+
+    config1 = buildConfig(config1, {
+      name: "redis-update",
+      action: Action.UpdateGlobalConfig,
+    });
+
+    expect(config1.default_oidc_config.redis_session_store_config).toBeUndefined();
+    expect(updatePolicy).not.toHaveBeenCalled();
+  });
+
+  test("should update trusted certificate authority", async () => {
+    // Create mock for updatePolicy function
+    const updatePolicy = jest.fn();
+
+    let config1 = buildConfig(mockConfig as AuthserviceConfig, {
+      client: mockClient,
+      name: "local",
+      action: Action.AddClient,
+    });
+
+    const trustedCA = "some-trusted-ca";
+    config1 = buildConfig(config1, {
+      name: "trusted-ca-update",
+      action: Action.UpdateGlobalConfig,
+      trustedCA: trustedCA,
+    });
+
+    expect(config1.default_oidc_config.trusted_certificate_authority).toBeDefined();
+    expect(config1.default_oidc_config.trusted_certificate_authority).toEqual(trustedCA);
+    expect(updatePolicy).not.toHaveBeenCalled();
+
+    config1 = buildConfig(config1, {
+      name: "trusted-ca-update",
+      action: Action.UpdateGlobalConfig,
+    });
+
+    expect(config1.default_oidc_config.trusted_certificate_authority).toBeUndefined();
+    expect(updatePolicy).not.toHaveBeenCalled();
+  });
+
   test("should test authservice chain build", async () => {
     const chain = buildChain({
       client: mockClient,
