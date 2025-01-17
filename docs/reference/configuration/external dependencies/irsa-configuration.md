@@ -86,7 +86,7 @@ packages:
           variables:
             - name: VELERO_IRSA_ROLE_ARN
               description: "IRSA ARN annotation to use for Velero"
-              # Maps to Velero's helm values for SerivceAccount annotations:
+              # Maps to Velero's helm values for ServiceAccount annotations:
               # See https://github.com/vmware-tanzu/helm-charts/blob/main/charts/velero/values.yaml#L491
               path: serviceAccount.server.annotations.irsa/role-arn
 ```
