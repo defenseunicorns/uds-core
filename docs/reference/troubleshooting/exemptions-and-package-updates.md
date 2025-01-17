@@ -22,8 +22,8 @@ Before diving into detailed debugging, ensure the following:
 - **Verify Configuration**:
    - Ensure that Exemptions and Packages are defined correctly in your manifests.
    - Refer to the specification documents for correct schema and examples:
-     - [Packages Specification](https://github.com/defenseunicorns/uds-core/blob/main/docs/reference/configuration/custom%20resources/packages-v1alpha1-cr.md)
-     - [Exemptions Specification](https://github.com/defenseunicorns/uds-core/blob/main/docs/reference/configuration/custom%20resources/exemptions-v1alpha1-cr.md)
+     - [Packages Specification](/reference/configuration/custom%20resources/packages-v1alpha1-cr)
+     - [Exemptions Specification](/reference/configuration/custom%20resources/exemptions-v1alpha1-cr)
 
 - **Namespace for Exemptions**:
    - Ensure Exemptions are applied in the `uds-policy-exemptions` namespace.
