@@ -15,7 +15,7 @@ There may be additional applications in UDS Core that are not mentioned in this 
 This guide will cover how to configure IRSA for each application. 
 
 ## Prerequisites
-Configuring IRSA requires that you have confifgured an IAM OIDC provider for your cluster. Refer to the IRSA [documentation](https://docs.aws.amazon.com/eks/latest/userguide/enable-iam-roles-for-service-accounts.html) for more information.
+Configuring IRSA requires that you have configured an IAM OIDC provider for your cluster. Refer to the IRSA [documentation](https://docs.aws.amazon.com/eks/latest/userguide/enable-iam-roles-for-service-accounts.html) for more information.
 
 You must also create IAM Roles and Policies for each application. Refer to the IRSA [documentation](https://docs.aws.amazon.com/eks/latest/userguide/associate-service-account-role.html) for more information.
 
