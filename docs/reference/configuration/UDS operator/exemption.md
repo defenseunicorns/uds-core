@@ -53,7 +53,7 @@ spec:
 
 ### Configuring UDS Core Policy Exemptions
 
-Default [policy exemptions](https://github.com/defenseunicorns/uds-core/blob/main/src/pepr/operator/crd/generated/exemption-v1alpha1.ts) are confined to a singular namespace: `uds-policy-exemptions`. We find this to be an optimal approach for UDS due to the following reasons:
+Default [policy exemptions](https://uds.defenseunicorns.com/reference/configuration/custom-resources/exemptions-v1alpha1-cr/) and [namespace restriction/config](https://uds.defenseunicorns.com/reference/configuration/uds-configure-policy-exemptions/) are confined to a singular namespace: `uds-policy-exemptions`. We find this to be an optimal approach for UDS due to the following reasons:
 
 - **Emphasis on Security Impact:**
   - An exemption has the potential to diminish the overall security stance of the cluster. By isolating these exemptions within a designated namespace, administrators can readily recognize and assess the security implications associated with each exemption.
