@@ -22,8 +22,8 @@ Before diving into detailed debugging, ensure the following:
 - **Verify Configuration**:
    - Ensure that Exemptions and Packages are defined correctly in your manifests.
    - Refer to the specification documents for correct schema and examples:
-     - [Packages Specification](/reference/configuration/custom%20resources/packages-v1alpha1-cr)
-     - [Exemptions Specification](/reference/configuration/custom%20resources/exemptions-v1alpha1-cr)
+     - [Packages Specification](/reference/configuration/custom-resources/packages-v1alpha1-cr)
+     - [Exemptions Specification](/reference/configuration/custom-resources/exemptions-v1alpha1-cr)
 
 - **Namespace for Exemptions**:
    - Ensure Exemptions are applied in the `uds-policy-exemptions` namespace, unless you are using an [override](/reference/configuration/uds-configure-policy-exemptions).
