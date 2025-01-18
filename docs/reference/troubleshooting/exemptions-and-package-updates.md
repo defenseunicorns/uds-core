@@ -92,6 +92,6 @@ If you are experiencing issues with the watch functionality, please provide the 
 
 ## Related Links
 
-- [Packages Specification](https://github.com/defenseunicorns/uds-core/blob/main/docs/reference/configuration/custom%20resources/packages-v1alpha1-cr.md)
-- [Exemptions Specification](https://github.com/defenseunicorns/uds-core/blob/main/docs/reference/configuration/custom%20resources/exemptions-v1alpha1-cr.md)
+- [Packages Specification](/reference/configuration/custom-resources/packages-v1alpha1-cr)
+- [Exemptions Specification](/reference/configuration/custom-resources/exemptions-v1alpha1-cr)
 - [Kubernetes Watch](https://kubernetes.io/docs/reference/using-api/api-concepts/#efficient-detection-of-changes)
