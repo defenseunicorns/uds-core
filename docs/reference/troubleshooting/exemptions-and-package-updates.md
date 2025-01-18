@@ -1,5 +1,5 @@
 ---
-title: Exemption and Package Updates (5m)
+title: Exemption and Package Updates
 
 sidebar:
   order: 1
