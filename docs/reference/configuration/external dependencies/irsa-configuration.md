@@ -1,5 +1,5 @@
 ---
-title: Configure UDS Core to Use IAM Roles for Service Accounts (IRSA) 
+title: IRSA Support
 ---
 
 Several applications within UDS Core can be configured to utilize resources that are external to your Kubernetes cluster, such as object storage and databases. If you are running in AWS, you can leverage [IRSA](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html) to provide applications within UDS Core with a secure means of accessing external resources.
@@ -24,9 +24,7 @@ Configuring applications within UDS Core to use IRSA requires that you declare o
 
 :::note
 The examples below are not exhaustive representations of all of the values you will need to supply to configure external storage.
-:::
 
-:::note
 The examples below declare new `variables` for IRSA Role ARN annotations, allowing for these values to be passed in dynamically via `uds-config.yaml` as opposed to being hardcoded as `overrides`.
 :::
 
@@ -55,7 +53,7 @@ packages:
             - name: LOKI_IRSA_ROLE_ARN
               description: "ARN of Loki IAM Role to annotate Loki ServiceAccount with."
               # Maps to Loki's helm values for ServiceAccount annotations:
-              # See https://github.com/grafana/loki/blob/main/production/helm/loki/values.yaml#L733
+              # See https://github.com/grafana/loki/blob/0dc9d677b6ed5c4440346ab54e9776185900be38/production/helm/loki/values.yaml#L733
               path: serviceAccount.annotations.eks\.amazonaws\.com/role-arn              
 ```
 
@@ -87,7 +85,7 @@ packages:
             - name: VELERO_IRSA_ROLE_ARN
               description: "IRSA ARN annotation to use for Velero"
               # Maps to Velero's helm values for ServiceAccount annotations:
-              # See https://github.com/vmware-tanzu/helm-charts/blob/main/charts/velero/values.yaml#L491
+              # See https://github.com/vmware-tanzu/helm-charts/blob/fcc60b0ca3886eb760151c69c166108a807efdef/charts/velero/values.yaml#L491
               path: serviceAccount.server.annotations.irsa/role-arn
 ```
 
