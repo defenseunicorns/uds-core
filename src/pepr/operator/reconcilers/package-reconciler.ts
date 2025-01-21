@@ -91,7 +91,7 @@ export async function packageReconciler(pkg: UDSPackage) {
     // Create the VirtualService and ServiceEntry for each exposed service
     endpoints = await istioResources(pkg, namespace!);
 
-    // Only configure the ServiceMonitors if not running in single test mode
+    // Configure the ServiceMonitors
     const monitors: string[] = [];
     monitors.push(...(await podMonitor(pkg, namespace!)));
     monitors.push(...(await serviceMonitor(pkg, namespace!)));
