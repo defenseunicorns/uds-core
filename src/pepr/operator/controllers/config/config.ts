@@ -20,13 +20,15 @@ export async function updateUDSConfig(config: kind.Secret) {
   // Base64 decode the secret data
   const decodedConfigData: { [key: string]: string } = {};
   for (const key in config.data) {
-    if (config.data[key]) {
-      try {
-        const decodedValue = atob(config.data[key]);
+    try {
+      const decodedValue = atob(config.data[key]);
+      if (decodedValue) {
         decodedConfigData[key] = decodedValue;
-      } catch (e) {
-        log.error(`Failed to decode secret key: ${key}, error: ${e.message}`);
+      } else {
+        decodedConfigData[key] = "";
       }
+    } catch (e) {
+      log.error(`Failed to decode secret key: ${key}, error: ${e.message}`);
     }
   }
 

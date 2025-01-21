@@ -154,6 +154,25 @@ describe("updateUDSConfig", () => {
     expect(initAllNodesTarget).not.toHaveBeenCalled();
   });
 
+  it("should not call netpol updates if no values change", async () => {
+    // Set mockSecret to match UDSConfig data
+    mockSecret = {
+      data: {
+        UDS_CA_CERT: btoa(btoa("mock-ca-cert")),
+        AUTHSERVICE_REDIS_URI: btoa("mock-redis-uri"),
+        KUBEAPI_CIDR: "",
+        KUBENODE_CIDRS: "",
+        UDS_DOMAIN: btoa("mock-domain"),
+        UDS_ADMIN_DOMAIN: btoa("mock-admin-domain"),
+        UDS_ALLOW_ALL_NS_EXEMPTIONS: btoa("true"),
+      },
+    };
+    await updateUDSConfig(mockSecret);
+
+    expect(initAPIServerCIDR).not.toHaveBeenCalled();
+    expect(initAllNodesTarget).not.toHaveBeenCalled();
+  });
+
   it("should set caCert to an empty string if the value is a placeholder", async () => {
     if (mockSecret.data) {
       mockSecret.data.UDS_CA_CERT = btoa("###ZARF_VAR_CA_CERT###");
