@@ -17,12 +17,16 @@ const log = setupLogger(Component.OPERATOR_CONFIG);
 export async function updateUDSConfig(config: kind.Secret) {
   log.info("Updating UDS Config from uds-operator-config secret change");
 
-  // Base64 decode the secret data TODO: Make sure this actually works
+  // Base64 decode the secret data
   const decodedConfigData: { [key: string]: string } = {};
   for (const key in config.data) {
     if (config.data[key]) {
-      const decodedValue = atob(config.data[key]);
-      decodedConfigData[key] = decodedValue;
+      try {
+        const decodedValue = atob(config.data[key]);
+        decodedConfigData[key] = decodedValue;
+      } catch (e) {
+        log.error(`Failed to decode secret key: ${key}, error: ${e.message}`);
+      }
     }
   }
 
@@ -33,6 +37,22 @@ export async function updateUDSConfig(config: kind.Secret) {
   ) {
     UDSConfig.caCert = decodedConfigData.UDS_CA_CERT;
     UDSConfig.authserviceRedisUri = decodedConfigData.AUTHSERVICE_REDIS_URI;
+    // Account for undefined or placeholder values (dev mode)
+    if (!UDSConfig.caCert || UDSConfig.caCert === "###ZARF_VAR_CA_CERT###") {
+      UDSConfig.caCert = "";
+    }
+    // Validate that the cacert is base64 encoded (it should be)
+    if (UDSConfig.caCert) {
+      try {
+        atob(UDSConfig.caCert);
+      } catch (e) {
+        log.error(
+          "Invalid CA Cert provided in uds-operator-config secret, falling back to no CA Cert",
+        );
+        UDSConfig.caCert = "";
+      }
+    }
+
     const authserviceUpdate: AuthServiceEvent = {
       name: "global-config-update",
       action: Action.UpdateGlobalConfig,

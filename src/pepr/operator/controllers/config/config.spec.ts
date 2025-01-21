@@ -36,6 +36,24 @@ jest.mock("../network/generators/kubeNodes", () => ({
   initAllNodesTarget: jest.fn(),
 }));
 
+jest.mock("../../../logger", () => {
+  const mockLogger = {
+    warn: jest.fn(),
+    level: jest.fn(),
+    fatal: jest.fn(),
+    error: jest.fn(),
+    info: jest.fn(),
+    debug: jest.fn(),
+    trace: jest.fn(),
+  };
+  return {
+    Component: {
+      OPERATOR_CONFIG: "operator-config",
+    },
+    setupLogger: jest.fn(() => mockLogger),
+  };
+});
+
 describe("updateUDSConfig", () => {
   let mockSecret: kind.Secret;
 
@@ -134,5 +152,27 @@ describe("updateUDSConfig", () => {
     expect(reconcileAuthservice).not.toHaveBeenCalled();
     expect(initAPIServerCIDR).not.toHaveBeenCalled();
     expect(initAllNodesTarget).not.toHaveBeenCalled();
+  });
+
+  it("should set caCert to an empty string if the value is a placeholder", async () => {
+    if (mockSecret.data) {
+      mockSecret.data.UDS_CA_CERT = btoa("###ZARF_VAR_CA_CERT###");
+    }
+    await updateUDSConfig(mockSecret);
+    expect(UDSConfig.caCert).toBe("");
+  });
+
+  it("should log an error and set caCert to an empty string if the value is not valid base64", async () => {
+    if (mockSecret.data) {
+      mockSecret.data.UDS_CA_CERT = btoa("invalid-base64");
+    }
+    const { setupLogger } = require("../../../logger");
+    const mockLogger = setupLogger();
+
+    await updateUDSConfig(mockSecret);
+    expect(mockLogger.error).toHaveBeenCalledWith(
+      expect.stringContaining("Invalid CA Cert provided in uds-operator-config secret"),
+    );
+    expect(UDSConfig.caCert).toBe("");
   });
 });
