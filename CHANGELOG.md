@@ -2,6 +2,32 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.34.1](https://github.com/defenseunicorns/uds-core/compare/v0.34.0...v0.34.1) (2025-01-21)
+
+
+### Bug Fixes
+
+* broken links ([#1210](https://github.com/defenseunicorns/uds-core/issues/1210)) ([9cc00e6](https://github.com/defenseunicorns/uds-core/commit/9cc00e60e08aaf9dd07bd3cd13d470b8029b2394))
+* disable snapshot before deletion of rds instances in eks ci ([#1190](https://github.com/defenseunicorns/uds-core/issues/1190)) ([3cbd51c](https://github.com/defenseunicorns/uds-core/commit/3cbd51c7b8564e72402b30c6b823769f90a959b2))
+
+
+### Miscellaneous
+
+* **deps:** update grafana to v8.8.3 ([#1195](https://github.com/defenseunicorns/uds-core/issues/1195)) ([cd22e06](https://github.com/defenseunicorns/uds-core/commit/cd22e064a2436026c7ff38757025e21f2923f078))
+* **deps:** update grafana to v8.8.4 ([#1206](https://github.com/defenseunicorns/uds-core/issues/1206)) ([00e89ff](https://github.com/defenseunicorns/uds-core/commit/00e89fff586f1eb007d5c75b38d090f52b4410ef))
+* **deps:** update neuvector ([#1196](https://github.com/defenseunicorns/uds-core/issues/1196)) ([5e7091e](https://github.com/defenseunicorns/uds-core/commit/5e7091ef21732de83902b233c5f6574aafa949ed))
+* **deps:** update support-deps ([#1192](https://github.com/defenseunicorns/uds-core/issues/1192)) ([5731713](https://github.com/defenseunicorns/uds-core/commit/5731713c53c846796c0153193ffc49d295b6d110))
+* **deps:** update velero to 1.15.2 (https://github.com/defenseunicorns/uds-core/pull/1183) ([d1bbc46](https://github.com/defenseunicorns/uds-core/commit/d1bbc46d7a8508ddc3ad3cee5ae09472352b5d78))
+* **docs:** uds operator diagrams ([#1179](https://github.com/defenseunicorns/uds-core/issues/1179)) ([9b418a8](https://github.com/defenseunicorns/uds-core/commit/9b418a87783b1f7b194f113b61955787e22ad6a7))
+* **docs:** update existing diagrams ([#1187](https://github.com/defenseunicorns/uds-core/issues/1187)) ([6f0fda2](https://github.com/defenseunicorns/uds-core/commit/6f0fda2360df80f1de27d56c7c656d64c9dca419))
+* ignore uds-docs on commit linting ([#1194](https://github.com/defenseunicorns/uds-core/issues/1194)) ([789f101](https://github.com/defenseunicorns/uds-core/commit/789f101e079783f07c4027953f6d699b1c4fa584))
+* troubleshooting docs ([#1205](https://github.com/defenseunicorns/uds-core/issues/1205)) ([3688bc7](https://github.com/defenseunicorns/uds-core/commit/3688bc7be6f2345d34c1bf4d014c0261836c364a))
+
+
+### Documentation
+
+* add irsa config ([#1203](https://github.com/defenseunicorns/uds-core/issues/1203)) ([3567056](https://github.com/defenseunicorns/uds-core/commit/3567056c24f84f25551e46aaae791faa1cf404e3))
+
 ## [0.34.0](https://github.com/defenseunicorns/uds-core/compare/v0.33.1...v0.34.0) (2025-01-15)
 
 
