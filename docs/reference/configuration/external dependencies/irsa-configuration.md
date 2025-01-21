@@ -9,7 +9,7 @@ The following applications in UDS Core that support IRSA are:
 - [Velero](#velero)
 
 :::note
-There may be additional applications in UDS Core that are not mentioned in this list that support IRSA. Only the applications listed above have been validated to work within UDS Core.
+There may be additional applications in UDS Core that are not mentioned in this list that support IRSA. Only the applications listed above have been validated for IRSA support within UDS Core.
 :::
 
 This guide will cover how to configure IRSA for each application. 
