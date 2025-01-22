@@ -4,6 +4,7 @@
  */
 
 import yaml from "js-yaml";
+import { UDSConfig } from "../config";
 import { Component, setupLogger } from "../logger";
 const log = setupLogger(Component.LOKI);
 
@@ -37,8 +38,9 @@ export interface Secret {
 
 /**
  * Calculates a future date by adding a specified number of days to the current date.
+ * Useful for setting expiration dates or scheduling future events.
  * @param {number} days - The number of days to add to the current date.
- * @return {string} - The ISO string representation of the future date.
+ * @return {string} - The ISO string representation of the future date in 'YYYY-MM-DD' format.
  */
 export function calculateFutureDate(days: number): string {
   const now = new Date();
@@ -47,9 +49,11 @@ export function calculateFutureDate(days: number): string {
 }
 
 /**
- * Parses a YAML string into a LokiConfig object.
+ * Parses a YAML string into a LokiConfig object. This function is essential for initializing
+ * configuration from YAML files which is typical in environments where Loki is used.
  * @param {string} data - The YAML string to be parsed.
- * @return {LokiConfig | null} - The parsed configuration object or null if parsing fails.
+ * @return {LokiConfig | null} - The parsed configuration object or null if parsing fails,
+ * indicating invalid or corrupt configuration data.
  */
 export function parseLokiConfig(data: string): LokiConfig | null {
   try {
@@ -61,23 +65,22 @@ export function parseLokiConfig(data: string): LokiConfig | null {
 }
 
 /**
- * Updates the 'from' date in a configuration entry for the given store type.
+ * Retrieves a configuration entry from a list of configurations based on specified store and schema.
+ * This is particularly useful for accessing specific Loki configurations that need to be updated or validated.
  * @param {ConfigEntry[]} configs - Array of configuration entries.
- * @param {string} newDate - The new 'from' date to be set in the configuration.
- * @return {boolean} - True if update is successful, false otherwise.
+ * @return {ConfigEntry | null} - The found configuration entry or null if not found, which may trigger a fallback or default configuration setup.
  */
-export function updateConfigDate(
-  configs: ConfigEntry[],
-  storeType: string,
-  newDate: string,
-): boolean {
-  const config = configs.find(c => c.store === storeType);
+export function getConfigEntry(configs: ConfigEntry[]): ConfigEntry | null {
+  const config = configs.find(
+    c => c.store === UDSConfig.lokiDefaultStore && c.schema === UDSConfig.lokiDefaultStoreVersion,
+  );
   if (!config) {
-    log.warn("No schemaConfig entry found");
-    return false;
+    log.warn(
+      `No configuration entry found for store type: ${UDSConfig.lokiDefaultStore} and schema version: ${UDSConfig.lokiDefaultStoreVersion}`,
+    );
+    return null;
   }
-  config.from = newDate;
-  return true;
+  return config;
 }
 
 /**
@@ -90,25 +93,32 @@ export function encodeConfig(config: LokiConfig): string {
 }
 
 /**
- * Determines if the store type configuration needs to be updated based on the current configuration.
- * This checks if storeType's 'from' date is set properly for the future and after all current schemas.
+ * Determines if a configuration update is necessary by comparing the 'from' date of a specified
+ * store type and version against other configurations. This helps maintain the most current
+ * configuration active and avoids using outdated settings.
+ * @param {LokiConfig} lokiConfig - The Loki configuration object to check.
+ * @return {boolean} - True if an update is needed (no matching config found or a newer 'from' date exists),
+ * false otherwise.
  */
-export function isConfigUpdateRequired(lokiConfig: LokiConfig, storeType: string): boolean {
+export function isConfigUpdateRequired(lokiConfig: LokiConfig): boolean {
   const configs = lokiConfig.schema_config?.configs || [];
-  const config = configs.find(c => c.store === storeType);
+  const targetConfig = configs.find(
+    c => c.store === UDSConfig.lokiDefaultStore && c.schema === UDSConfig.lokiDefaultStoreVersion,
+  );
 
-  // Check if storeType in config is missing
-  if (!config) {
-    return true;
+  // Check for config containing latest storeType and schemaVersion
+  if (!targetConfig) {
+    return true; // No matching config, update is required
   }
 
-  // Ensure storeType 'from' date is the latest among all configurations
+  // Check 'from' date is the latest of all configs
+  const targetFromDate = new Date(targetConfig.from);
   for (const c of configs) {
-    if (c.store !== storeType && new Date(c.from) >= new Date(config.from)) {
-      return true;
+    if (new Date(c.from) > targetFromDate) {
+      return true; // Found a configuration with a newer date, update required
     }
   }
 
-  // loki schemaConfig is properly configured, no update necessary
+  // No more recent 'from' date found, no update required
   return false;
 }

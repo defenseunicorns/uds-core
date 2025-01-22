@@ -7,9 +7,9 @@ import { afterAll, beforeAll, describe, expect, it, jest } from "@jest/globals";
 import {
   calculateFutureDate,
   encodeConfig,
+  getConfigEntry,
   isConfigUpdateRequired,
   parseLokiConfig,
-  updateConfigDate,
 } from "./utils";
 
 import { UDSConfig } from "../config";
@@ -72,24 +72,42 @@ describe("parseLokiConfig", () => {
   });
 });
 
-describe("updateConfigDate", () => {
-  it(`should update the from date in the ${UDSConfig.lokiDefaultStore} config`, () => {
-    // Verifying that the function updates the 'from' date for a specified store type.
-    const configs = [
-      {
-        from: "2023-01-01",
-        store: UDSConfig.lokiDefaultStore,
-      },
-    ];
-    const result = updateConfigDate(configs, UDSConfig.lokiDefaultStore, "2023-01-10");
-    expect(result).toBeTruthy();
-    expect(configs[0].from).toBe("2023-01-10");
+describe("getConfigEntry", () => {
+  const configs = [
+    { from: "2025-01-01", store: "boltdb-shipper", schema: "v1" },
+    {
+      from: "2025-01-02",
+      store: UDSConfig.lokiDefaultStore,
+      schema: UDSConfig.lokiDefaultStoreVersion,
+    },
+    { from: "2025-01-03", store: "another-store", schema: "another-version" },
+  ];
+
+  it("should return the correct config when the specified store and schema version are found", () => {
+    const result = getConfigEntry(configs);
+    expect(result).toEqual({
+      from: "2025-01-02",
+      store: UDSConfig.lokiDefaultStore,
+      schema: UDSConfig.lokiDefaultStoreVersion,
+    });
   });
 
-  it(`should return false if no ${UDSConfig.lokiDefaultStore} config is found`, () => {
-    // Testing the function's response when no matching store type configuration is found.
-    const configs = [{ from: "2023-01-01", store: "other" }];
-    expect(updateConfigDate(configs, "2023-01-10", UDSConfig.lokiDefaultStore)).toBeFalsy();
+  it("should return null when no config matches the specified store and schema version", () => {
+    const alteredConfigs = configs.map(config => ({
+      ...config,
+      store: config.store === UDSConfig.lokiDefaultStore ? "non-existent-store" : config.store,
+      schema:
+        config.schema === UDSConfig.lokiDefaultStoreVersion
+          ? "non-existent-version"
+          : config.schema,
+    }));
+    const result = getConfigEntry(alteredConfigs);
+    expect(result).toBeNull();
+  });
+
+  it("should return null when the configurations array is empty", () => {
+    const result = getConfigEntry([]);
+    expect(result).toBeNull();
   });
 });
 
@@ -117,45 +135,105 @@ describe("encodeConfig", () => {
 });
 
 describe("isConfigUpdateRequired", () => {
-  it(`should return false if ${UDSConfig.lokiDefaultStore} is set correctly in the future and is the latest configuration`, () => {
-    // Validating that no update is required if the default store type is already correctly set.
+  // Ensures that no update is required if the configuration for the default store type and version is set with the latest 'from' date.
+  it(`should return false if ${UDSConfig.lokiDefaultStore} with the correct version is set correctly in the future and is the latest configuration`, () => {
     const configs = [
-      { from: "2023-01-01", store: "boltdb-shipper" },
-      { from: "2025-01-01", store: UDSConfig.lokiDefaultStore },
+      { from: "2023-01-01", store: "boltdb-shipper", schema: "v1" },
+      {
+        from: "2025-01-01",
+        store: UDSConfig.lokiDefaultStore,
+        schema: UDSConfig.lokiDefaultStoreVersion,
+      },
     ];
     const lokiConfig = { schema_config: { configs } };
-    expect(isConfigUpdateRequired(lokiConfig, UDSConfig.lokiDefaultStore)).toBe(false);
+    expect(isConfigUpdateRequired(lokiConfig)).toBe(false);
   });
 
-  it(`should return true if ${UDSConfig.lokiDefaultStore} is set in the past`, () => {
-    // Checking that an update is required if the default store type's date is set in the past.
+  // Verifies that an update is required if the 'from' date for the default store type and version is set in the past.
+  it(`should return true if ${UDSConfig.lokiDefaultStore} with the correct version is set in the past`, () => {
     const configs = [
-      { from: "2021-01-01", store: "boltdb-shipper" },
-      { from: "2020-01-01", store: UDSConfig.lokiDefaultStore },
+      { from: "2021-01-01", store: "boltdb-shipper", schema: "v1" },
+      {
+        from: "2020-01-01",
+        store: UDSConfig.lokiDefaultStore,
+        schema: UDSConfig.lokiDefaultStoreVersion,
+      },
     ];
     const lokiConfig = { schema_config: { configs } };
-    expect(isConfigUpdateRequired(lokiConfig, UDSConfig.lokiDefaultStore)).toBe(true);
+    expect(isConfigUpdateRequired(lokiConfig)).toBe(true);
   });
 
-  it(`should return true if ${UDSConfig.lokiDefaultStore} is not the latest configuration`, () => {
-    // Ensuring that an update is needed if there is a newer configuration than the default store type.
+  // Confirms that an update is needed if there is another configuration with a 'from' date newer than that of the default store type and version.
+  it(`should return true if ${UDSConfig.lokiDefaultStore} with the correct version is not the latest configuration`, () => {
     const configs = [
-      { from: "2025-01-02", store: "boltdb-shipper" },
-      { from: "2025-01-01", store: UDSConfig.lokiDefaultStore },
+      { from: "2025-01-02", store: "boltdb-shipper", schema: "v1" },
+      {
+        from: "2025-01-01",
+        store: UDSConfig.lokiDefaultStore,
+        schema: UDSConfig.lokiDefaultStoreVersion,
+      },
     ];
     const lokiConfig = { schema_config: { configs } };
-    expect(isConfigUpdateRequired(lokiConfig, UDSConfig.lokiDefaultStore)).toBe(true);
+    expect(isConfigUpdateRequired(lokiConfig)).toBe(true);
   });
 
-  it(`should return true if ${UDSConfig.lokiDefaultStore} configuration is missing`, () => {
-    // Testing that an update is required if the default store type configuration is completely missing.
-    const configs = [{ from: "2023-01-01", store: "boltdb-shipper" }];
+  // Tests that an update is necessary if there is no configuration entry for the default store type and version.
+  it(`should return true if configuration for ${UDSConfig.lokiDefaultStore} with the correct version is missing`, () => {
+    const configs = [{ from: "2023-01-01", store: "boltdb-shipper", schema: "v1" }];
     const lokiConfig = { schema_config: { configs } };
-    expect(isConfigUpdateRequired(lokiConfig, UDSConfig.lokiDefaultStore)).toBe(true);
+    expect(isConfigUpdateRequired(lokiConfig)).toBe(true);
   });
 
-  it(`should return true when config is empty`, () => {
-    // Testing that an update is required if the config is completely missing.
-    expect(isConfigUpdateRequired({}, UDSConfig.lokiDefaultStore)).toBe(true);
+  // Checks that an update is required if the configuration data is completely missing.
+  it(`should return true when the entire configuration is empty`, () => {
+    expect(isConfigUpdateRequired({})).toBe(true);
+  });
+
+  // Verifies that an update is required if the default store type is correct but the version is outdated.
+  it(`should return true if ${UDSConfig.lokiDefaultStore} matches but the version is outdated`, () => {
+    const configs = [
+      { from: "2023-01-01", store: "boltdb-shipper", schema: "v1" },
+      { from: "2025-01-01", store: UDSConfig.lokiDefaultStore, schema: "old-version" },
+    ];
+    const lokiConfig = { schema_config: { configs } };
+    expect(isConfigUpdateRequired(lokiConfig)).toBe(true);
+  });
+
+  // Confirms the need for an update if there exists a configuration with a 'from' date newer than that of the correct store type and version.
+  it(`should return true if the correct ${UDSConfig.lokiDefaultStore} and version are set but there is a newer 'from' date in another configuration`, () => {
+    const configs = [
+      { from: "2025-01-02", store: "boltdb-shipper", schema: "v1" },
+      {
+        from: "2025-01-01",
+        store: UDSConfig.lokiDefaultStore,
+        schema: UDSConfig.lokiDefaultStoreVersion,
+      },
+    ];
+    const lokiConfig = { schema_config: { configs } };
+    expect(isConfigUpdateRequired(lokiConfig)).toBe(true);
+  });
+
+  // Tests that an update is necessary if no existing configuration matches both the store type and version, regardless of other entries.
+  it(`should return true if there is no configuration matching both ${UDSConfig.lokiDefaultStore} and ${UDSConfig.lokiDefaultStoreVersion} even if other configurations are present`, () => {
+    const configs = [
+      { from: "2025-01-01", store: "boltdb-shipper", schema: "v1" },
+      { from: "2025-01-01", store: "another-store", schema: "another-version" },
+    ];
+    const lokiConfig = { schema_config: { configs } };
+    expect(isConfigUpdateRequired(lokiConfig)).toBe(true);
+  });
+
+  // Determines the need for an update if another configuration has a 'from' date that is newer than the correct store type and version.
+  it(`should return true if the correct ${UDSConfig.lokiDefaultStore} and version exist but the 'from' date is older than another configuration`, () => {
+    const configs = [
+      { from: "2025-01-03", store: "another-store", schema: "another-version" },
+      {
+        from: "2025-01-01",
+        store: UDSConfig.lokiDefaultStore,
+        schema: UDSConfig.lokiDefaultStoreVersion,
+      },
+    ];
+    const lokiConfig = { schema_config: { configs } };
+    expect(isConfigUpdateRequired(lokiConfig)).toBe(true);
   });
 });

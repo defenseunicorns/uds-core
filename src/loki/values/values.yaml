@@ -46,7 +46,7 @@ loki:
         index:
           prefix: loki_index_
           period: 24h
-      - from: "2020-01-11" # Updated dynamically by Pepr to be default retention store
+      - from: "{{- $secret := lookup \"v1\" \"Secret\" \"loki\" \"loki\" -}}{{- if $secret -}}{{ index $secret.metadata.annotations \"uds.dev/schemaConfigDate\" }}{{- else -}}2020-01-11{{- end }}"
         store: tsdb
         object_store: "{{ .Values.loki.storage.type }}"
         schema: v13
