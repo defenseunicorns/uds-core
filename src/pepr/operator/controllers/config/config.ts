@@ -45,7 +45,7 @@ export async function updateUDSConfig(config: kind.Secret) {
       !UDSConfig.authserviceRedisUri ||
       UDSConfig.authserviceRedisUri === "###ZARF_VAR_AUTHSERVICE_REDIS_URI###"
     ) {
-      UDSConfig.caCert = "";
+      UDSConfig.authserviceRedisUri = "";
     }
     if (!UDSConfig.caCert || UDSConfig.caCert === "###ZARF_VAR_CA_CERT###") {
       UDSConfig.caCert = "";

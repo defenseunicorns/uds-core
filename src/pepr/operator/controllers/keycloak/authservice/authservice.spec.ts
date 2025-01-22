@@ -46,10 +46,7 @@ describe("authservice", () => {
     };
   });
 
-  test("should update redis session store config", async () => {
-    // Create mock for updatePolicy function
-    const updatePolicy = jest.fn();
-
+  test("should update redis session store config to add value", async () => {
     let config1 = buildConfig(mockConfig as AuthserviceConfig, {
       client: mockClient,
       name: "local",
@@ -65,21 +62,35 @@ describe("authservice", () => {
 
     expect(config1.default_oidc_config.redis_session_store_config).toBeDefined();
     expect(config1.default_oidc_config.redis_session_store_config?.server_uri).toEqual(redisUri);
-    expect(updatePolicy).not.toHaveBeenCalled();
+  });
 
-    config1 = buildConfig(config1, {
+  test("should update redis session store config to remove redis uri", async () => {
+    const redisUri = "redis://localhost:6379";
+    const config1 = buildConfig(mockConfig as AuthserviceConfig, {
+      name: "redis-update",
+      action: Action.UpdateGlobalConfig,
+      redisUri: redisUri,
+    });
+
+    // Test removal with an undefined redis uri
+    const config2 = buildConfig(config1, {
       name: "redis-update",
       action: Action.UpdateGlobalConfig,
     });
 
-    expect(config1.default_oidc_config.redis_session_store_config).toBeUndefined();
-    expect(updatePolicy).not.toHaveBeenCalled();
+    expect(config2.default_oidc_config.redis_session_store_config).toBeUndefined();
+
+    // Test removal with an empty redis uri
+    const config3 = buildConfig(config1, {
+      name: "redis-update",
+      action: Action.UpdateGlobalConfig,
+      redisUri: "",
+    });
+
+    expect(config3.default_oidc_config.redis_session_store_config).toBeUndefined();
   });
 
-  test("should update trusted certificate authority", async () => {
-    // Create mock for updatePolicy function
-    const updatePolicy = jest.fn();
-
+  test("should update trusted certificate authority to add value", async () => {
     let config1 = buildConfig(mockConfig as AuthserviceConfig, {
       client: mockClient,
       name: "local",
@@ -95,15 +106,32 @@ describe("authservice", () => {
 
     expect(config1.default_oidc_config.trusted_certificate_authority).toBeDefined();
     expect(config1.default_oidc_config.trusted_certificate_authority).toEqual(trustedCA);
-    expect(updatePolicy).not.toHaveBeenCalled();
+  });
 
-    config1 = buildConfig(config1, {
+  test("should update trusted certificate authority to remove value", async () => {
+    const trustedCA = "some-trusted-ca";
+    const config1 = buildConfig(mockConfig as AuthserviceConfig, {
+      name: "trusted-ca-update",
+      action: Action.UpdateGlobalConfig,
+      trustedCA: trustedCA,
+    });
+
+    // Test removal with an undefined ca
+    const config2 = buildConfig(config1, {
       name: "trusted-ca-update",
       action: Action.UpdateGlobalConfig,
     });
 
-    expect(config1.default_oidc_config.trusted_certificate_authority).toBeUndefined();
-    expect(updatePolicy).not.toHaveBeenCalled();
+    expect(config2.default_oidc_config.trusted_certificate_authority).toBeUndefined();
+
+    // Test removal with an undefined ca
+    const config3 = buildConfig(config1, {
+      name: "trusted-ca-update",
+      action: Action.UpdateGlobalConfig,
+      trustedCA: "",
+    });
+
+    expect(config3.default_oidc_config.trusted_certificate_authority).toBeUndefined();
   });
 
   test("should test authservice chain build", async () => {

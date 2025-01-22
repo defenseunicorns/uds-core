@@ -136,7 +136,7 @@ export function buildConfig(config: AuthserviceConfig, event: AuthServiceEvent) 
     chains = config.chains.filter(chain => chain.name !== event.name);
     // Handle global config updates
   } else if (event.action == Action.UpdateGlobalConfig) {
-    if (event.redisUri === undefined) {
+    if (!event.redisUri) {
       // Remove the redis session store config if a URI is not provided
       delete config.default_oidc_config.redis_session_store_config;
     } else {
@@ -145,7 +145,7 @@ export function buildConfig(config: AuthserviceConfig, event: AuthServiceEvent) 
         server_uri: event.redisUri,
       };
     }
-    if (event.trustedCA === undefined) {
+    if (!event.trustedCA) {
       // Remove the trusted certificate authority if a CA is not provided
       delete config.default_oidc_config.trusted_certificate_authority;
     } else {
