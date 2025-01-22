@@ -46,3 +46,13 @@ packages:
     repository: ghcr.io/defenseunicorns/packages/uds/core-backup-restore
     ref: 0.29.0-upstream
 ```
+
+## Layer Selection
+
+Layer selection will always be deployment-specific but below are guidelines for what layers should be considered _required_ and when you may wish to select other layers for your deployment.  This guidance follows other DoD guidance such as the [Big Bang Conformant Stack](https://repo1.dso.mil/big-bang/product/bbtoc/-/blob/master/policy/conformance.md?ref_type=heads) though you may need to tweak it for your needs.
+
+![UDS Core Layer Selection](../../.images/diagrams/uds-core-layers.drawio.png)
+
+:::note
+You may need to deploy pre-requisite packages that are not a part of UDS Core's layers if you are on prem or in an edge scenario as mentioned in the diagram above.
+:::
