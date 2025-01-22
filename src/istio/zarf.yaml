@@ -114,15 +114,11 @@ components:
           - "values/unicorn/cni.yaml"
       - name: ztunnel
         valuesFiles:
-          # Update once Chainguard has a ztunnel image
           - "values/unicorn/ztunnel.yaml"
     images:
       # Chainguard's install-cni-fips is not working right now, issue submitted
       - cgr.dev/du-uds-defenseunicorns/istio-install-cni:1.24.2
       - cgr.dev/du-uds-defenseunicorns/ztunnel:1.24.1
-      # # Chainguard does not have the ztunnel image currently, but upstream is 0 CVE
-      # # It is not currently FIPS though, and the IB TID FIPS image is amd64 only
-      # - docker.io/istio/ztunnel:1.24.2-distroless
 
   - name: istio-admin-gateway
     required: true
