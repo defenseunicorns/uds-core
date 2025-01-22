@@ -6,6 +6,7 @@
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { kind } from "pepr";
 import { UDSConfig } from "../../../config";
+import { Component, setupLogger } from "../../../logger";
 import { reconcileAuthservice } from "../keycloak/authservice/authservice";
 import { initAPIServerCIDR } from "../network/generators/kubeAPI";
 import { initAllNodesTarget } from "../network/generators/kubeNodes";
@@ -185,8 +186,7 @@ describe("updateUDSConfig", () => {
     if (mockSecret.data) {
       mockSecret.data.UDS_CA_CERT = btoa("invalid-base64");
     }
-    const { setupLogger } = require("../../../logger");
-    const mockLogger = setupLogger();
+    const mockLogger = setupLogger(Component.OPERATOR_CONFIG);
 
     await updateUDSConfig(mockSecret);
     expect(mockLogger.error).toHaveBeenCalledWith(

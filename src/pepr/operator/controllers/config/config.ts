@@ -39,7 +39,14 @@ export async function updateUDSConfig(config: kind.Secret) {
   ) {
     UDSConfig.caCert = decodedConfigData.UDS_CA_CERT;
     UDSConfig.authserviceRedisUri = decodedConfigData.AUTHSERVICE_REDIS_URI;
+
     // Account for undefined or placeholder values (dev mode)
+    if (
+      !UDSConfig.authserviceRedisUri ||
+      UDSConfig.authserviceRedisUri === "###ZARF_VAR_AUTHSERVICE_REDIS_URI###"
+    ) {
+      UDSConfig.caCert = "";
+    }
     if (!UDSConfig.caCert || UDSConfig.caCert === "###ZARF_VAR_CA_CERT###") {
       UDSConfig.caCert = "";
     }
