@@ -2,23 +2,11 @@
 title: Monitoring and Metrics
 ---
 
-UDS Core leverages Pepr to handle setup of Prometheus scraping metrics endpoints, with the particular configuration necessary to work in a STRICT mTLS (Istio) environment. We handle this via a default scrapeClass in prometheus to add the istio certs. When a monitor needs to be exempt from that tlsConfig a mutation is performed to leverage a plain scrape class without istio certs.
+UDS Core deploys Prometheus and Grafana to provide metrics collection and dashboarding. Out of the box all applications in UDS Core will have their metrics collected by Prometheus, with some default dashboards present in Grafana for viewing this data. This document primarily focuses on the integrations and options provided for extending this to monitor any additional applications you would like to deploy.
 
-## TLS Configuration Setup
+## Capturing Metrics
 
-Generally it is beneficial to use service and pod monitor resources from existing helm charts where possible as these may have more advanced configuration and options. The UDS monitoring setup ensures that all monitoring resources use a default [`scrapeClass`](https://github.com/prometheus-operator/prometheus-operator/blob/v0.75.1/Documentation/api.md#monitoring.coreos.com/v1.ScrapeClass) configured in Prometheus to handle the necessary `tlsConfig` setup for metrics to work in STRICT Istio mTLS environments (the `scheme` is also mutated to `https` on individual monitor endpoints, see [this doc](https://istio.io/latest/docs/ops/integrations/prometheus/#tls-settings) for details). This setup is the default configuration but individual monitors can opt out of this config in 3 different ways:
-
-1. If the service or pod monitor targets namespaces that are not Istio injected (ex: `kube-system`), Pepr will detect this and mutate these monitors to use an `exempt` scrape class that does not have the Istio certs. Assumptions are made about STRICT mTLS here for simplicity, based on the `istio-injection` namespace label. Without making these assumptions we would need to query `PeerAuthentication` resources or another resource to determine the exact workload mTLS posture.
-1. Individual monitors can explicitly set the `exempt` scrape class to opt out of the Istio certificate configuration. This should typically only be done if your service exposes metrics on a PERMISSIVE mTLS port.
-1. If setting a `scrapeClass` is not an option due to lack of configuration in a helm chart, or for other reasons, monitors can use the `uds/skip-mutate` annotation (with any value) to have Pepr mutate the `exempt` scrape class onto the monitor.
-
-:::note
-There is a deprecated functionality in Pepr that will mutate `tlsConfig` onto individual service monitors, rather than using the scrape class approach. This has been kept in the current code temporarily to prevent any metrics downtime during the switch to `scrapeClass`. In a future release this behavior will be removed to reduce the complexity of the setup and required mutations.
-:::
-
-## Package CR `monitor` field
-
-UDS Core also supports generating `ServiceMonitors` and/or `PodMonitors` from the `monitor` list in the `Package` spec. Charts do not always support monitors, so generating them can be useful. This also provides a simplified way for other users to create monitors, similar to the way we handle `VirtualServices` today. A full example of this can be seen below:
+There are a few options within UDS Core to collect metrics from your application. Since the prometheus operator is deployed we recommend using the `ServiceMonitor` and/or `PodMonitor` custom resources to capture metrics. These resources are commonly supported in application helm charts and should be used if available. UDS Core also supports generating these resources from the `monitor` list in the `Package` spec, since charts do not always support monitors. This also provides a simplified way for other users to create monitors, similar to the way `VirtualServices` are generated with the `Package` CR. A full example of this can be seen below:
 
 ```yaml
 ...
@@ -58,21 +46,72 @@ spec:
         type: "Bearer"
 ```
 
-This config is used to generate service or pod monitors and corresponding network policies to setup scraping for your applications. The aforementioned TLS configuration will also apply to these generated monitors, setting a default scrape class unless target namespaces are non-istio-injected.
+Due to UDS Core using STRICT Istio mTLS across the cluster, Prometheus is also configured by default to manage properly scraping metrics with STRICT mTLS. This is done primarily by leveraging a default [`scrapeClass`](https://github.com/prometheus-operator/prometheus-operator/blob/v0.75.1/Documentation/api.md#monitoring.coreos.com/v1.ScrapeClass) which provides the correct TLS configuration and certificates to make mTLS connections. The default configuration works in most scenarios since the operator will attempt to auto-detect needs based istio-injection status in each namespace. If this configuration does not work (the main place this may be an issue is metrics being exposed on a PERMISSIVE mTLS port) there are two options for manually opt-ing out of the Istio TLS configuration:
+1. Individual monitors can explicitly set the `exempt` scrape class to opt out of the Istio certificate configuration.
+1. If setting a `scrapeClass` is not an option due to lack of configuration in a helm chart, or for other reasons, monitors can set the `uds/skip-mutate` annotation (with any value) to have Pepr mutate the `exempt` scrape class onto the monitor.
 
-This spec intentionally does not support all options available with a `PodMonitor` or `ServiceMonitor`. While we may add additional fields in the future, we do not want to simply rebuild these specs since we are handling the complexities of Istio mTLS metrics. The current subset of spec options is based on the common needs seen in most environments.
+## Adding Dashboards
 
-## Notes on Alternative Approaches
+Grafana within UDS Core is configured with [a sidecar](https://github.com/grafana/helm-charts/blob/6eecb003569dc41a494d21893b8ecb3e8a9741a0/charts/grafana/values.yaml#L926-L928) that will watch for new dashboards added via configmaps or secrets and load them into Grafana dynamically. In order to have your dashboard added the configmap or secret must be labelled with `grafana_dashboard: "1"`, which is used by the sidecar to watch and collect new dashboards.
 
-In coming up with this feature when targeting the `ServiceMonitor` use case a few alternative approaches were considered but not chosen due to issues with each one. The current spec provides the best balance of a simplified interface compared to the `ServiceMonitor` spec, and a faster/easier reconciliation loop.
+Your configmap/secret must have a data key named `<dashboard_file_name>.json`, with a multi-line string of the dashboard json as the value. See the below example for a basic dashboard created this way:
 
-### Generation based on service lookup
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: my-app-dashboards
+  namespace: my-app
+  labels:
+    grafana_dashboard: "1"
+data:
+  # The value for this key should be your full JSON dashboard
+  my-app.json: |
+    {
+      "annotations": {
+        "list": [
+          {
+            "builtIn": 1,
+...
+```
 
-An alternative spec option would use the service name instead of selectors/port name. The service name could then be used to lookup the corresponding service and get the necessary selectors/port name (based on numerical port). There are however 2 issues with this route:
+Grafana provides helpful documentation on [how to build dashboards](https://grafana.com/docs/grafana/latest/getting-started/build-first-dashboard/) via the UI, which can then be [exported as JSON](https://grafana.com/docs/grafana/latest/dashboards/share-dashboards-panels/#export-a-dashboard-as-json) so that they can be captured in code and loaded as shown above.
 
-1. There is a timing issue if the `Package` CR is applied to the cluster before the app chart itself (which is the norm with our UDS Packages). The service would not exist at the time the `Package` is reconciled. We could lean into eventual consistency here, if we implemented a retry mechanism for the `Package`, which would mitigate this issue.
-2. We would need an "alert" mechanism (watch) to notify us when the service(s) are updated, to roll the corresponding updates to network policies and service monitors. While this is doable it feels like unnecessary complexity compared to other options.
+### Grouping Dashboards
 
-### Generation of service + monitor
+Grafana supports creation of folders for dashboards to provide better organization. UDS Core does not utilize folders by default but the sidecar supports simple values configuration to dynamically create and populate folders. The example overrides below show how to set this up and place the UDS Core default dashboards into a uds-core folder:
 
-Another alternative approach would be to use a pod selector and port only. We would then generate both a service and servicemonitor, giving us full control of the port names and selectors. This seems like a viable path, but does add an extra resource for us to generate and manage. There could be unknown side effects of generating services that could clash with other services (particularly with istio endpoints). This would otherwise be a relative straightforward approach and is worth evaluating again if we want to simplify the spec later on.
+```yaml
+  - name: core
+    repository: ghcr.io/defenseunicorns/packages/uds/core
+    ref: x.x.x
+    overrides:
+      grafana:
+        grafana:
+          values:
+            # This value allows us to specify a grafana_folder annotation to indicate the file folder to place a given dashboard into
+            - path: sidecar.dashboards.folderAnnotation
+              value: grafana_folder
+
+            # This value configures the sidecar to build out folders based upon where dashboard files are
+            - path: sidecar.dashboards.provider.foldersFromFilesStructure
+              value: true
+      kube-prometheus-stack:
+        kube-prometheus-stack:
+          values:
+            # This value adds an annotation to the defaults dashboards to specify that they should be grouped under a `uds-core` folder
+            - path: grafana.sidecar.dashboards.annotations
+              value:
+                grafana_folder: "uds-core"
+      loki:
+        uds-loki-config:
+          values:
+            # This value adds an annotation to the loki dashboards to specify that they should be grouped under a `uds-core` folder
+            - path: dashboardAnnotations
+              value:
+                grafana_folder: "uds-core"
+```
+
+:::note
+If using this configuration, any dashboards without a `grafana_folder` annotation will still be loaded in Grafana, but will not be grouped (they will appear at the top level outside of any folders). Also note that new dashboards in UDS Core may also need to be overridden to add the folder annotation, this example represents the current set of dashboards deployed by default.
+:::
