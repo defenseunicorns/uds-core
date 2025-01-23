@@ -174,6 +174,10 @@ spec:
               value: "-Dcom.redhat.fips=true"
             {{- end }}
           {{- end }}
+          {{- if or .Values.workarounds.kernel6_12 }}
+            - name: JAVA_OPTS_KC_HEAP
+              value: "-XX:MaxRAMPercentage=70 -XX:MinRAMPercentage=70 -XX:InitialRAMPercentage=50 -XX:MaxRAM=1G"
+          {{- end }}
           {{- if .Values.insecureAdminPasswordGeneration.enabled }}
             - name: KEYCLOAK_ADMIN
               valueFrom:

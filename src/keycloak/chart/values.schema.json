@@ -431,6 +431,14 @@
     },
     "updateStrategy": {
       "type": "string"
+    },
+    "workarounds": {
+      "type": "object",
+      "properties": {
+        "kernel6_12": {
+          "type": "boolean"
+        }
+      }
     }
   }
 }
