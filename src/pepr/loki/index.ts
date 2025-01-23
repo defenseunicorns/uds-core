@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { Capability, kind } from "pepr";
+import { a, Capability } from "pepr";
 import { UDSConfig } from "../config";
 import { Component, setupLogger } from "../logger";
 import {
@@ -23,7 +23,7 @@ export const loki = new Capability({
 
 const { When } = loki;
 
-When(kind.Secret)
+When(a.Secret)
   .IsCreatedOrUpdated()
   .InNamespace("loki")
   .WithName("loki")

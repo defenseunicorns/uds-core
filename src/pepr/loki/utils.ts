@@ -105,7 +105,7 @@ export function isConfigUpdateRequired(lokiConfig: LokiConfig): boolean {
   const targetConfig = configs.find(
     c => c.store === UDSConfig.lokiDefaultStore && c.schema === UDSConfig.lokiDefaultStoreVersion,
   );
-
+  log.info(`TargetConfig: ${JSON.stringify(targetConfig)}`);
   // Check for config containing latest storeType and schemaVersion
   if (!targetConfig) {
     return true; // No matching config, update is required

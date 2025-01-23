@@ -46,7 +46,7 @@ loki:
         index:
           prefix: loki_index_
           period: 24h
-      - from: "{{- $secret := lookup \"v1\" \"Secret\" \"loki\" \"loki\" -}}{{- if $secret -}}{{ index $secret.metadata.annotations \"uds.dev/schemaConfigDate\" }}{{- else -}}2020-01-11{{- end }}"
+      - from: "{{- $secret := lookup \"v1\" \"Secret\" \"loki\" \"loki\" -}}{{- if and $secret (index $secret.metadata.annotations \"uds.dev/schemaConfigDate\") -}}{{ index $secret.metadata.annotations \"uds.dev/schemaConfigDate\" }}{{- else -}}2020-01-11{{- end }}"
         store: tsdb
         object_store: "{{ .Values.loki.storage.type }}"
         schema: v13
