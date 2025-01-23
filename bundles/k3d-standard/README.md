@@ -49,15 +49,16 @@ This bundle is used for demonstration, development, and testing of UDS Core. In 
 | `TENANT_SERVICE_PORTS` | The ports that are exposed from the tenant gateway LoadBalancer (useful for non-HTTP(S) traffic) | service.ports |
 
 ##### keycloak (keycloak)
-| Variable | Description | Path |
-|----------|-------------|------|
-| `INSECURE_ADMIN_PASSWORD_GENERATION` | Generate an insecure admin password for dev/test | `insecureAdminPasswordGeneration.enabled` |
-| `KEYCLOAK_HA`              | Enable Keycloak HA                         | `autoscaling.enabled`           |
-| `KEYCLOAK_PG_USERNAME`     | Keycloak Postgres username                 | `postgresql.username`           |
-| `KEYCLOAK_PG_PASSWORD`     | Keycloak Postgres password                 | `postgresql.password`           |
-| `KEYCLOAK_PG_DATABASE`     | Keycloak Postgres database                 | `postgresql.database`           |
-| `KEYCLOAK_PG_HOST`         | Keycloak Postgres host                     | `postgresql.host`               |
-| `KEYCLOAK_DEVMODE`         | Enables Keycloak dev mode                  | `devMode`                       |
+| Variable                             | Description                                                 | Path                                      |
+|--------------------------------------|-------------------------------------------------------------|-------------------------------------------|
+| `INSECURE_ADMIN_PASSWORD_GENERATION` | Generate an insecure admin password for dev/test            | `insecureAdminPasswordGeneration.enabled` |
+| `KEYCLOAK_HA`                        | Enable Keycloak HA                                          | `autoscaling.enabled`                     |
+| `KEYCLOAK_PG_USERNAME`               | Keycloak Postgres username                                  | `postgresql.username`                     |
+| `KEYCLOAK_PG_PASSWORD`               | Keycloak Postgres password                                  | `postgresql.password`                     |
+| `KEYCLOAK_PG_DATABASE`               | Keycloak Postgres database                                  | `postgresql.database`                     |
+| `KEYCLOAK_PG_HOST`                   | Keycloak Postgres host                                      | `postgresql.host`                         |
+| `KEYCLOAK_DEVMODE`                   | Enables Keycloak dev mode                                   | `devMode`                                 |
+| `KEYCLOAK_KERNEL_6_12_MODE`          | Enables Keycloak compatibility mode for Linux Kernels 6.12+ | `workarounds.kernel6_12`                  |
 
 ##### grafana (grafana)
 | Variable | Description | Path |

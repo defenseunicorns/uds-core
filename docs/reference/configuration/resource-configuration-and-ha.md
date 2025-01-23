@@ -144,6 +144,8 @@ packages:
               path: postgresql.password
 ```
 
+When running Keycloak on new Kernels 6.12+, it is also necessary to specify the `KEYCLOAK_KERNEL_6_12_MODE` setting and set it `true`. This is a temporary workaround for [this](https://github.com/keycloak/keycloak/issues/36609) Keycloak issue. Once addressed, this setting will be removed.
+
 ### AuthService
 
 AuthService can be configured in a HA setup if an [external session store](https://docs.tetrate.io/istio-authservice/configuration/oidc#session-store-configuration) is provided (key value store like Redis/Valkey). For configuring an external session store you can set the `UDS_AUTHSERVICE_REDIS_URI` env when deploying or via your `uds-config.yaml`:

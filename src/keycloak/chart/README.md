@@ -44,3 +44,9 @@ We would have to truncate the chart's fullname to six characters because pods ge
 Using a StatefulSet allows us to truncate to 20 characters leaving room for up to 99 replicas, which is much better.
 Additionally, we get stable values for `jboss.node.name` which can be advantageous for cluster discovery.
 The headless service that governs the StatefulSet is used for DNS discovery via DNS_PING.
+
+## Workarounds
+
+### Kernel 6.12+
+
+When running Keycloak on new Kernels 6.12+, it is also necessary to specify the `KEYCLOAK_KERNEL_6_12_MODE` setting and set it `true`. This is a temporary workaround for [this](https://github.com/keycloak/keycloak/issues/36609) Keycloak issue. Once addressed, this setting will be removed.s
