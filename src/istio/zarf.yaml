@@ -116,7 +116,6 @@ components:
         valuesFiles:
           - "values/unicorn/ztunnel.yaml"
     images:
-      # Chainguard's install-cni-fips is not working right now, issue submitted
       - cgr.dev/du-uds-defenseunicorns/istio-install-cni:1.24.2
       - cgr.dev/du-uds-defenseunicorns/ztunnel:1.24.1
 

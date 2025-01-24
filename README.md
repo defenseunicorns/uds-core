@@ -113,12 +113,6 @@ uds run test-single-layer --set LAYER=identity-authorization
 
 Note you can specify the `--set FLAVOR=registry1` flag to test using Iron Bank images instead of the upstream images.
 
-## Istio Ambient
-
-UDS Core now supports deploying Istio in Ambient mode. This feature is still in alpha and is not recommended for production use. To deploy Istio in Ambient mode deploy the optional `istio-ambient` component in the UDS Core Base layer. This will deploy the Istio CNI and ztunnel components but does not yet configure `Core` components to utilize Ambient mesh. This feature is under active development and will be updated in future releases.
-
-**Istio Ambient component is not yet FIPS compliant and should not be deployed into environments requiring FIPS compliance**
-
 ## UDS Core Architecture Overview
 
 ![UDS Core Architecture Diagram](https://github.com/defenseunicorns/uds-core/blob/main/docs/.images/diagrams/uds-core-arch-overview.svg?raw=true)
