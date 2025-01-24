@@ -43,8 +43,8 @@ tasks:
             code: 200
       - description: Wait for NeuVector Job Completion
         cmd: |
-          if kubectl get jobs -n neuvector --no-headers 2>/dev/null | grep -q .; then
-            kubectl wait --for=condition=complete job --all -n neuvector --timeout=5m
+          if uds zarf tools kubectl get jobs -n neuvector --no-headers 2>/dev/null | grep -q .; then
+            uds zarf tools kubectl wait --for=condition=complete job --all -n neuvector --timeout=5m
           fi
 
   - name: e2e-test
