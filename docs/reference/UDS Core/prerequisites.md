@@ -86,6 +86,21 @@ cniBinDir: /opt/cni/bin/
 
 These values can be overwritten when installing core by setting the `cniConfDir` and `cniBinDir` values in the `istio-ambient` component.
 
+To set these values add the following to the `uds-config.yaml` file:
+
+```yaml
+variables:
+  core:
+    cniConfDir: /etc/cni/net.d
+    cniBinDir: /opt/cni/bin
+```
+
+or via `--set` if deploying the package via `zarf`:
+
+```console
+uds zarf package deploy uds-core --set CNI_CONF_DIR=/etc/cni/net.d --set CNI_BIN_DIR=/opt/cni/bin
+```
+
 #### NeuVector
 
 NeuVector historically has functioned best when the host is using cgroup v2. Cgroup v2 is enabled by default on many modern Linux distributions, but you may need to enable it depending on your operating system. Enabling this tends to be OS specific, so you will need to evaluate this for your specific hosts.

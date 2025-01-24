@@ -43,6 +43,8 @@ components:
                 else
                   echo "/etc/cni/net.d"
                 fi
+              else
+                echo "${ZARF_VAR_CNI_CONF_DIR}"  
               fi
             setVariables:
               - name: CNI_CONF_DIR
@@ -58,6 +60,8 @@ components:
                 else
                   echo "/opt/cni/bin"
                 fi
+              else
+                echo "${ZARF_VAR_CNI_BIN_DIR}"
               fi
             setVariables:
               - name: CNI_BIN_DIR
