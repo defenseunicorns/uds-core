@@ -44,7 +44,7 @@ components:
                   echo "/etc/cni/net.d"
                 fi
               else
-                echo "${ZARF_VAR_CNI_CONF_DIR}"  
+                echo "${ZARF_VAR_CNI_CONF_DIR}"
               fi
             setVariables:
               - name: CNI_CONF_DIR
