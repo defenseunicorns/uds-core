@@ -41,6 +41,11 @@ tasks:
             protocol: https
             address: neuvector.admin.uds.dev
             code: 200
+      - description: Wait for NeuVector Job Completion
+        cmd: |
+          if kubectl get jobs -n neuvector --no-headers 2>/dev/null | grep -q .; then
+            kubectl wait --for=condition=complete job --all -n neuvector --timeout=5m
+          fi
 
   - name: e2e-test
     actions:

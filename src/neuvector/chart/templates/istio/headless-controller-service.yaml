@@ -28,4 +28,8 @@ spec:
     port: 10443
     protocol: TCP
     targetPort: 10443
-
+  # Upgrade jobs contact the healthz port externally
+  - name: tcp-healthz
+    port: 18500
+    protocol: TCP
+    targetPort: 18500
