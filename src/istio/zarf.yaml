@@ -79,6 +79,7 @@ components:
           #- "values/registry1/ztunnel.yaml"
           - "values/upstream/ztunnel.yaml"
     images:
+      # https://github.com/defenseunicorns/uds-core/issues/1225
       # Registry1 ztunnel image is not working right now
       # https://repo1.dso.mil/dsop/tetrate/istio/1.24/ztunnel/-/issues/9
       #- registry1.dso.mil/ironbank/tetrate/istio/ztunnel:1.24.2-tetratefips0

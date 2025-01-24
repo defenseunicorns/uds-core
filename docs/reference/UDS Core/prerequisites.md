@@ -90,9 +90,9 @@ To set these values add the following to the `uds-config.yaml` file:
 
 ```yaml
 variables:
-  core:
-    cniConfDir: /etc/cni/net.d
-    cniBinDir: /opt/cni/bin
+  core-base:
+    cni_conf_dir: "foo"
+    cni_bin_dir: "bar"
 ```
 
 or via `--set` if deploying the package via `zarf`:
