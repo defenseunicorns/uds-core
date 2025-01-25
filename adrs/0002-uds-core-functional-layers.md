@@ -6,6 +6,8 @@ Date: 2024-07-17
 
 Accepted
 
+Amended by [3. Base Ambient Functional Layer](0003-base-ambient-functional-layer.md)
+
 ## Context
 
 Historically, UDS Core intentionally only published a single official Zarf Package to ensure a standard baseline across all UDS environments. We learned from the complex buffet menu-style of Big Bang that it is better to form opinions and test them than to allow unlimited configuration possibilities. We have also found the monorepo structure of UDS Core to be be much simpler for developing UDS Core. However, through user feedback, we have seen cases where more optionality is warranted, but having to modify UDS CLI to accommodate disabling portions of UDS Core is not ideal. We also have a need for an edge-compatible version of UDS Core that is more lightweight and does not include all the components of the full UDS Core package.
