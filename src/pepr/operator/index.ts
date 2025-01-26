@@ -28,6 +28,7 @@ import { validator } from "./crd/validators/package-validator";
 // Reconciler imports
 import { UDSConfig } from "../config";
 import { Component, setupLogger } from "../logger";
+import { updateUDSConfig } from "./controllers/config/config";
 import { exemptValidator } from "./crd/validators/exempt-validator";
 import { packageFinalizer, packageReconciler } from "./reconcilers/package-reconciler";
 
@@ -106,3 +107,10 @@ if (!UDSConfig.kubeNodeCidrs) {
 if (!UDSConfig.kubeNodeCidrs) {
   When(a.Node).IsDeleted().Reconcile(updateKubeNodesFromDelete);
 }
+
+// Watch the UDS Operator Config Secret and handle changes
+When(a.Secret)
+  .IsUpdated()
+  .InNamespace("pepr-system")
+  .WithName("uds-operator-config")
+  .Reconcile(updateUDSConfig);

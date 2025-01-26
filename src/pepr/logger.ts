@@ -10,6 +10,7 @@ export enum Component {
   CONFIG = "config",
   ISTIO = "istio",
   OPERATOR = "operator",
+  OPERATOR_CONFIG = "operator.config",
   OPERATOR_EXEMPTIONS = "operator.exemptions",
   OPERATOR_ISTIO = "operator.istio",
   OPERATOR_KEYCLOAK = "operator.keycloak",

@@ -13,14 +13,14 @@ import {
 } from "../../../crd";
 import { getOwnerRef, purgeOrphans, sanitizeResourceName } from "../../utils";
 import { log } from "./authservice";
-import { Action as AuthServiceAction, AuthServiceEvent } from "./types";
+import { AddOrRemoveClientEvent, Action as AuthServiceAction } from "./types";
 
 const operationMap: {
-  [AuthServiceAction.Add]: "Apply";
-  [AuthServiceAction.Remove]: "Delete";
+  [AuthServiceAction.AddClient]: "Apply";
+  [AuthServiceAction.RemoveClient]: "Delete";
 } = {
-  [AuthServiceAction.Add]: "Apply",
-  [AuthServiceAction.Remove]: "Delete",
+  [AuthServiceAction.AddClient]: "Apply",
+  [AuthServiceAction.RemoveClient]: "Delete",
 };
 
 function authserviceAuthorizationPolicy(
@@ -114,7 +114,7 @@ function authNRequestAuthentication(
 }
 
 async function updatePolicy(
-  event: AuthServiceEvent,
+  event: AddOrRemoveClientEvent,
   labelSelector: { [key: string]: string },
   pkg: UDSPackage,
 ) {
