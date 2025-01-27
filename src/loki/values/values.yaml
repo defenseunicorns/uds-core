@@ -47,7 +47,7 @@ loki:
           prefix: loki_index_
           period: 24h
       - from: "{{- $secret := lookup \"v1\" \"Secret\" \"loki\" \"loki\" -}}
-          {{- $defaultDate := now | dateModify \"+48h\" | date \"2006-01-02\" -}}
+          {{- $defaultDate := now | dateModify \"-24h\" | date \"2006-01-02\" -}}
           {{- $result := $defaultDate -}}
           {{- if and $secret (index $secret.data \"config.yaml\") -}}
             {{- $configYAML := (index $secret.data \"config.yaml\" | b64dec | fromYaml) -}}
