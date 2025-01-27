@@ -8,6 +8,7 @@ import { PeprModule } from "pepr";
 import cfg from "./package.json";
 
 import { Component, setupLogger } from "./src/pepr/logger";
+import { loki } from "./src/pepr/loki";
 import { operator } from "./src/pepr/operator";
 import { setupAuthserviceSecret } from "./src/pepr/operator/controllers/keycloak/authservice/config";
 import { registerCRDs } from "./src/pepr/operator/crd/register";
@@ -32,6 +33,9 @@ const log = setupLogger(Component.STARTUP);
 
     // Prometheus monitoring stack
     prometheus,
+
+    // Loki logging stack
+    loki,
 
     // Patches for specific components
     patches,

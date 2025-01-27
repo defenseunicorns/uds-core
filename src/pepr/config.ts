@@ -44,6 +44,11 @@ export const UDSConfig = {
 
   // Track if UDS Core identity-authorization layer is deployed
   isIdentityDeployed: false,
+
+  // Pepr Managed Loki Schema Configuration
+  managedLokiSchema: true,
+  lokiDefaultStore: "tsdb",
+  lokiDefaultStoreVersion: "v13",
 };
 
 // configure subproject logger
