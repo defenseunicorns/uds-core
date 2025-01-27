@@ -16,3 +16,8 @@ spec:
     port: 18402
     protocol: TCP
     targetPort: 18402
+  # Upgrade jobs contact the healthz port externally
+  - name: tcp-healthz
+    port: 18500
+    protocol: TCP
+    targetPort: 18500
