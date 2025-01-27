@@ -1,0 +1,112 @@
+---
+title: Clusterconfig CR (v1alpha1)
+tableOfContents:
+  maxHeadingLevel: 6
+---
+<a id="Clusterconfig"></a>
+<div style="margin-left: 20px; padding-top: 30px;">
+
+# Clusterconfig
+<table style="width: 100%; table-layout: fixed;">
+  <thead>
+    <tr>
+      <th style="width: 20%; white-space: nowrap;">Field</th>
+      <th style="width: 25%; white-space: nowrap;">Type</th>
+      <th style="width: 55%; white-space: nowrap;">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td style="white-space: nowrap;">spec</td><td style="white-space: nowrap;"><a href="#Spec">Spec</a></td><td></td></tr>
+  </tbody>
+</table>
+</div>
+
+<a id="Spec"></a>
+<div style="margin-left: 40px; padding-top: 30px;">
+
+## Spec
+<table style="width: 100%; table-layout: fixed;">
+  <thead>
+    <tr>
+      <th style="width: 20%; white-space: nowrap;">Field</th>
+      <th style="width: 25%; white-space: nowrap;">Type</th>
+      <th style="width: 55%; white-space: nowrap;">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td style="white-space: nowrap;">attributes</td><td style="white-space: nowrap;"><a href="#Attributes">Attributes</a></td><td></td></tr><tr><td style="white-space: nowrap;">expose</td><td style="white-space: nowrap;"><a href="#Expose">Expose</a></td><td></td></tr><tr><td style="white-space: nowrap;">logLevel</td><td style="white-space: nowrap;">string (enum):<ul><li><code>debug</code></li><li><code>info</code></li><li><code>warn</code></li><li><code>error</code></li></ul></td><td></td></tr><tr><td style="white-space: nowrap;">networking</td><td style="white-space: nowrap;"><a href="#Networking">Networking</a></td><td></td></tr><tr><td style="white-space: nowrap;">policy</td><td style="white-space: nowrap;"><a href="#Policy">Policy</a></td><td></td></tr>
+  </tbody>
+</table>
+</div>
+
+<a id="Attributes"></a>
+<div style="margin-left: 60px; padding-top: 30px;">
+
+### Attributes
+<table style="width: 100%; table-layout: fixed;">
+  <thead>
+    <tr>
+      <th style="width: 20%; white-space: nowrap;">Field</th>
+      <th style="width: 25%; white-space: nowrap;">Type</th>
+      <th style="width: 55%; white-space: nowrap;">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td style="white-space: nowrap;">clusterName</td><td style="white-space: nowrap;">string</td><td>Friendly name to associate with your UDS cluster</td></tr><tr><td style="white-space: nowrap;">tags</td><td style="white-space: nowrap;">string[]</td><td>Tags to apply to your UDS cluster</td></tr>
+  </tbody>
+</table>
+</div>
+
+<a id="Expose"></a>
+<div style="margin-left: 60px; padding-top: 30px;">
+
+### Expose
+<table style="width: 100%; table-layout: fixed;">
+  <thead>
+    <tr>
+      <th style="width: 20%; white-space: nowrap;">Field</th>
+      <th style="width: 25%; white-space: nowrap;">Type</th>
+      <th style="width: 55%; white-space: nowrap;">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td style="white-space: nowrap;">adminDomain</td><td style="white-space: nowrap;">string</td><td>Domain all cluster services on the admin gateawy will be exposed on</td></tr><tr><td style="white-space: nowrap;">caCert</td><td style="white-space: nowrap;">string</td><td>MICAH HALP</td></tr><tr><td style="white-space: nowrap;">domain</td><td style="white-space: nowrap;">string</td><td>Domain all cluster services will be exposed on</td></tr>
+  </tbody>
+</table>
+</div>
+
+<a id="Networking"></a>
+<div style="margin-left: 60px; padding-top: 30px;">
+
+### Networking
+<table style="width: 100%; table-layout: fixed;">
+  <thead>
+    <tr>
+      <th style="width: 20%; white-space: nowrap;">Field</th>
+      <th style="width: 25%; white-space: nowrap;">Type</th>
+      <th style="width: 55%; white-space: nowrap;">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td style="white-space: nowrap;">kubeapiCIDR</td><td style="white-space: nowrap;">string</td><td>MICAH HALP</td></tr><tr><td style="white-space: nowrap;">kubenodeCIDRS</td><td style="white-space: nowrap;">string[]</td><td>MICAH HALP</td></tr>
+  </tbody>
+</table>
+</div>
+
+<a id="Policy"></a>
+<div style="margin-left: 60px; padding-top: 30px;">
+
+### Policy
+<table style="width: 100%; table-layout: fixed;">
+  <thead>
+    <tr>
+      <th style="width: 20%; white-space: nowrap;">Field</th>
+      <th style="width: 25%; white-space: nowrap;">Type</th>
+      <th style="width: 55%; white-space: nowrap;">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td style="white-space: nowrap;">allowAllNsExemptions</td><td style="white-space: nowrap;">boolean</td><td>Allow exemptions to live in any namespace</td></tr>
+  </tbody>
+</table>
+</div>

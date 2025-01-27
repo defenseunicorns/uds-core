@@ -16,6 +16,8 @@ tasks:
 
       - cmd: "npx kubernetes-fluent-client crd exemptions.uds.dev src/pepr/operator/crd/generated"
 
+      - cmd: "npx kubernetes-fluent-client crd clusterconfig.uds.dev src/pepr/operator/crd/generated"
+
       - task: gen-manifests
 
       - description: "Add license headers to generated CRD files"
@@ -41,7 +43,7 @@ tasks:
     description: "Generate CRD manifests"
     actions:
       - cmd: |
-          CRD_LIST="exemptions.uds.dev packages.uds.dev"
+          CRD_LIST="exemptions.uds.dev packages.uds.dev clusterconfig.uds.dev"
           for CRD in $CRD_LIST; do
              FILE="src/pepr/operator/crd/manifests/$CRD.yaml"
              kubectl get crd $CRD -o yaml > $FILE
@@ -53,7 +55,7 @@ tasks:
     actions:
       - cmd: |
           # Define CRD list as a space-separated string
-          CRD_LIST="exemptions.uds.dev packages.uds.dev"
+          CRD_LIST="exemptions.uds.dev packages.uds.dev clusterconfig.uds.dev"
           # For each CRD retrieve the CRD and create a Go struct file to then create a markdown file
           for CRD in $CRD_LIST; do
               # Retrieve CRD Json from Cluster
