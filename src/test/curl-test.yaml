@@ -1,0 +1,27 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: curl-test
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: curl
+  namespace: curl-test
+  labels:
+    app: curl
+spec:
+  containers:
+    - name: curl
+      image: curlimages/curl:latest
+      command: [ "sleep", "3600" ]
+      resources:
+        limits:
+          cpu: 50m
+          memory: 64Mi
+        requests:
+          cpu: 10m
+          memory: 16Mi

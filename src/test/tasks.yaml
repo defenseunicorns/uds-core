@@ -152,3 +152,51 @@ tasks:
   - name: e2e-test
     actions:
       - description: "Run Test Apps E2E tests"
+
+  - name: network-test
+    actions:
+      # - description: "Build and deploy test apps"
+      #   cmd: "uds zarf package create src/test --confirm --no-progress"
+
+      - description: "Deploy test apps"
+        cmd: "uds zarf package deploy build/zarf-package-uds-core-test-apps-*.zst --confirm --no-progress"
+
+      - description: "Run network test"
+        cmd: |
+          set -e
+
+          # Pre-test: Verify that connections work as expected initially
+          HTTP_STATUS=$(uds zarf tools kubectl exec curl -n curl-test -- curl -s -o /dev/null -w '%{http_code}' https://demo-8080.uds.dev/)
+          if [ "$HTTP_STATUS" -ne 200 ]; then
+            exit 1
+          fi
+
+          # Modify the test-tenant-app Package to enforce a deny-all network policy
+          uds zarf tools kubectl patch package test-tenant-app -n test-tenant-app --type=json -p='[
+            {
+              "op": "replace",
+              "path": "/spec/network",
+              "value": {
+                "allow": [],
+                "deny": [
+                  {
+                    "description": "Deny all traffic",
+                    "direction": "Ingress",
+                    "selector": { "app": "test-tenant-app" }
+                  }
+                ]
+              }
+            }
+          ]'
+
+          # Allow the operator to process changes
+          sleep 2
+
+          # Post-test: Verify that connections fail after applying the deny-all policy
+          HTTP_STATUS=$(uds zarf tools kubectl exec curl -n curl-test -- curl -s -o /dev/null -w '%{http_code}' https://demo-8080.uds.dev/)
+          if [ "$HTTP_STATUS" -eq 200 ]; then
+            exit 1
+          fi
+
+      - description: "Remove test apps"
+        cmd: "uds zarf package remove build/zarf-package-uds-core-test-apps-*.zst --confirm --no-progress"
