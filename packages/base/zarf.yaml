@@ -12,6 +12,11 @@ metadata:
   x-uds-dependencies: []
 
 components:
+  - name: uds-crds
+    required: true
+    import:
+      path: ../../src/pepr
+
   - name: uds-operator-config
     required: true
     import:
