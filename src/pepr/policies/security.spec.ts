@@ -73,7 +73,7 @@ describe("security policies", () => {
         ok: false,
         data: {
           message: expect.stringContaining(
-            "Unauthorized container securityContext. Containers must not run as root. Authorized: [runAsNonRoot = false | runAsUser > 0]",
+            "Unauthorized container securityContext. Containers must not run as root. Authorized: [runAsNonRoot = true | runAsUser > 0]",
           ),
         },
       });
