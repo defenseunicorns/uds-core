@@ -37,8 +37,8 @@ components:
     manifests:
       - name: uds-crds
         files:
-          - ./operator/crd/manifets/exemption.uds.dev.yaml
-          - ./operator/crd/manifets/package.uds.dev.yaml
+          - operator/crd/manifests/exemptions.uds.dev.yaml
+          - operator/crd/manifests/packages.uds.dev.yaml
 
   - name: uds-operator-config
     required: true
