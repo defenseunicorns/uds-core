@@ -13,14 +13,14 @@ components:
     charts:
       - name: base
         url: https://istio-release.storage.googleapis.com/charts
-        version: 1.24.1
+        version: 1.24.2
         namespace: istio-system
       - name: istiod
         url: https://istio-release.storage.googleapis.com/charts
-        version: 1.24.1
+        version: 1.24.2
         namespace: istio-system
         valuesFiles:
-          - "../values/values.yaml"
+          - "../values/base-istiod.yaml"
       - name: uds-global-istio-config
         namespace: istio-system
         version: 0.1.0
@@ -41,3 +41,9 @@ components:
           - description: "Ensure istio-injection is enabled for Pepr"
             mute: true
             cmd: "./zarf tools kubectl label namespace pepr-system istio-injection=enabled --overwrite"
+          - description: "Cycle Pepr to ensure enrollment in Istio"
+            cmd: |
+              if ! ./zarf tools kubectl get pods -n pepr-system -o jsonpath="{range .items[*]}{.metadata.name}:{range .spec.initContainers[*]}{.name} {end}{range .spec.containers[*]}{.name} {end}{'\n'}{end}" | grep -q 'istio-proxy'; then
+                ./zarf tools kubectl rollout restart -n pepr-system deploy/pepr-uds-core-watcher
+                ./zarf tools kubectl rollout restart -n pepr-system deploy/pepr-uds-core
+              fi

@@ -14,6 +14,10 @@ UDS Core provides a few Istio [Gateway](https://istio.io/latest/docs/reference/c
 2. **(Required)** Admin Gateway - This gateway provides ingress to admin-related applications that are not for use by the default end user. By default, UDS Core deploys a few services on this gateway, such as the Admin Keycloak interface. This gateway is typically accessible to admins of the applications deployed on top of UDS Core. *Since the Admin and Tenant Gateways are logically separated, it is possible to have different security controls on each gateway.*
 3. **(Optional)** Passthrough Gateway - This gateway allows mesh ingress without TLS termination performed by Istio. This could be useful for applications that need to (or currently) handle their own TLS termination. This gateway used to be a default component of UDS Core but is no longer deployed by default. To deploy this gateway, you must specify `istio-passthrough-gateway` as an `optionalComponent` in your UDS Bundle configuration.
 
+:::note
+The default gateways provided with UDS Core only support HTTP/HTTPS ingress. If you need other TCP ingress for a service (ex: SSH ingress) this can be done by adding additional resources/configuration to UDS Core (see [this document](https://uds.defenseunicorns.com/reference/configuration/non-http-ingress/) for a guide). UDP Ingress is [not currently supported with Istio](https://github.com/istio/istio/issues/1430) and would need to be managed via a separate ingress path.
+:::
+
 ### Enable Passthrough Gateway
 
 In order to enable the Passthrough Gateway, you must specify `istio-passthrough-gateway` as an `optionalComponent` in your UDS Bundle configuration. Here is an example of how to do this:
@@ -98,7 +102,7 @@ variables:
 ```
 
 :::note
-If you are using Private PKI or self-signed certificates for your tenant certificates it is necessary to additionally configure `UDS_CA_CERT` with additional [trusted certificate authorities](https://uds.defenseunicorns.com/reference/configuration/uds-operator/#trusted-certificate-authority).
+If you are using Private PKI or self-signed certificates for your tenant certificates it is necessary to additionally configure `UDS_CA_CERT` with additional [trusted certificate authorities](/reference/configuration/uds-operator/package/#trusted-certificate-authority).
 :::
 
 #### Configuring TLS from a Secret
@@ -129,3 +133,4 @@ packages:
           values:
             - path: tls.credentialName
               value: tenant-gateway-tls-secret # Reference to the Kubernetes secret for the tenant gateway's TLS certificate
+```

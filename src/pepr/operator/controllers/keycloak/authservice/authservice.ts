@@ -15,7 +15,13 @@ import {
   setAuthserviceConfig,
   updateAuthServiceSecret,
 } from "./config";
-import { Action, AuthServiceEvent, AuthserviceConfig, Chain } from "./types";
+import {
+  Action,
+  AddOrRemoveClientEvent,
+  AuthServiceEvent,
+  AuthserviceConfig,
+  Chain,
+} from "./types";
 
 export const log = setupLogger(Component.OPERATOR_AUTHSERVICE);
 let lock = false;
@@ -34,7 +40,7 @@ export async function authservice(pkg: UDSPackage, clients: Map<string, Client>)
     }
 
     await reconcileAuthservice(
-      { name: sso.clientId, action: Action.Add, client },
+      { name: sso.clientId, action: Action.AddClient, client },
       sso.enableAuthserviceSelector!,
       pkg,
     );
@@ -55,18 +61,26 @@ export async function purgeAuthserviceClients(
   R.difference(pkg.status?.authserviceClients || [], newAuthserviceClients).forEach(
     async clientId => {
       log.info(`Removing stale authservice chain for client ${clientId}`);
-      await reconcileAuthservice({ name: clientId, action: Action.Remove }, {}, pkg);
+      await reconcileAuthservice({ name: clientId, action: Action.RemoveClient }, {}, pkg);
     },
   );
 }
 
+function isAddOrRemoveClientEvent(event: AuthServiceEvent): event is AddOrRemoveClientEvent {
+  return event.action === Action.AddClient || event.action === Action.RemoveClient;
+}
 export async function reconcileAuthservice(
   event: AuthServiceEvent,
-  labelSelector: { [key: string]: string },
-  pkg: UDSPackage,
+  labelSelector?: { [key: string]: string },
+  pkg?: UDSPackage,
 ) {
   await updateConfig(event);
-  await updatePolicy(event, labelSelector, pkg);
+  if (isAddOrRemoveClientEvent(event)) {
+    if (!pkg) {
+      throw new Error("Package must be provided for AddClient or RemoveClient events");
+    }
+    await updatePolicy(event, labelSelector || {}, pkg);
+  }
 }
 
 // Write authservice config to secret (ensure the new function name is referenced)
@@ -108,7 +122,7 @@ export async function updateConfig(event: AuthServiceEvent) {
 export function buildConfig(config: AuthserviceConfig, event: AuthServiceEvent) {
   let chains: Chain[];
 
-  if (event.action == Action.Add) {
+  if (event.action == Action.AddClient) {
     // Add the new chain to the existing authservice config
     chains = config.chains.filter(chain => chain.name !== event.name);
     chains = chains.concat(buildChain(event));
@@ -116,10 +130,29 @@ export function buildConfig(config: AuthserviceConfig, event: AuthServiceEvent) 
     // sorting here is not relevant, only the consistency.
     const sortByName = R.sortBy(R.prop("name"));
     chains = sortByName(chains);
-  } else if (event.action == Action.Remove) {
+  } else if (event.action == Action.RemoveClient) {
     // Search in the existing chains for the chain to remove by name.
     // Filtering here should preserve the order, so there is no need to re-sort.
     chains = config.chains.filter(chain => chain.name !== event.name);
+    // Handle global config updates
+  } else if (event.action == Action.UpdateGlobalConfig) {
+    if (!event.redisUri) {
+      // Remove the redis session store config if a URI is not provided
+      delete config.default_oidc_config.redis_session_store_config;
+    } else {
+      // Update the redis session store config if a URI is provided
+      config.default_oidc_config.redis_session_store_config = {
+        server_uri: event.redisUri,
+      };
+    }
+    if (!event.trustedCA) {
+      // Remove the trusted certificate authority if a CA is not provided
+      delete config.default_oidc_config.trusted_certificate_authority;
+    } else {
+      // Update the trusted certificate authority if a CA is provided
+      config.default_oidc_config.trusted_certificate_authority = event.trustedCA;
+    }
+    chains = config.chains;
   } else {
     throw new Error(`Unhandled Action: ${event.action satisfies never}`);
   }

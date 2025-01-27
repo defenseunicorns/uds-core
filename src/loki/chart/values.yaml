@@ -7,3 +7,5 @@ storage:
     remoteSelector: {}
     remoteNamespace: ""
   egressCidr: ""
+
+dashboardAnnotations: {}

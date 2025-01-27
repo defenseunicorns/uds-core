@@ -46,11 +46,99 @@ describe("authservice", () => {
     };
   });
 
+  test("should update redis session store config to add value", async () => {
+    let config1 = buildConfig(mockConfig as AuthserviceConfig, {
+      client: mockClient,
+      name: "local",
+      action: Action.AddClient,
+    });
+
+    const redisUri = "redis://localhost:6379";
+    config1 = buildConfig(config1, {
+      name: "redis-update",
+      action: Action.UpdateGlobalConfig,
+      redisUri: redisUri,
+    });
+
+    expect(config1.default_oidc_config.redis_session_store_config).toBeDefined();
+    expect(config1.default_oidc_config.redis_session_store_config?.server_uri).toEqual(redisUri);
+  });
+
+  test("should update redis session store config to remove redis uri", async () => {
+    const redisUri = "redis://localhost:6379";
+    const config1 = buildConfig(mockConfig as AuthserviceConfig, {
+      name: "redis-update",
+      action: Action.UpdateGlobalConfig,
+      redisUri: redisUri,
+    });
+
+    // Test removal with an undefined redis uri
+    const config2 = buildConfig(config1, {
+      name: "redis-update",
+      action: Action.UpdateGlobalConfig,
+    });
+
+    expect(config2.default_oidc_config.redis_session_store_config).toBeUndefined();
+
+    // Test removal with an empty redis uri
+    const config3 = buildConfig(config1, {
+      name: "redis-update",
+      action: Action.UpdateGlobalConfig,
+      redisUri: "",
+    });
+
+    expect(config3.default_oidc_config.redis_session_store_config).toBeUndefined();
+  });
+
+  test("should update trusted certificate authority to add value", async () => {
+    let config1 = buildConfig(mockConfig as AuthserviceConfig, {
+      client: mockClient,
+      name: "local",
+      action: Action.AddClient,
+    });
+
+    const trustedCA = "some-trusted-ca";
+    config1 = buildConfig(config1, {
+      name: "trusted-ca-update",
+      action: Action.UpdateGlobalConfig,
+      trustedCA: trustedCA,
+    });
+
+    expect(config1.default_oidc_config.trusted_certificate_authority).toBeDefined();
+    expect(config1.default_oidc_config.trusted_certificate_authority).toEqual(trustedCA);
+  });
+
+  test("should update trusted certificate authority to remove value", async () => {
+    const trustedCA = "some-trusted-ca";
+    const config1 = buildConfig(mockConfig as AuthserviceConfig, {
+      name: "trusted-ca-update",
+      action: Action.UpdateGlobalConfig,
+      trustedCA: trustedCA,
+    });
+
+    // Test removal with an undefined ca
+    const config2 = buildConfig(config1, {
+      name: "trusted-ca-update",
+      action: Action.UpdateGlobalConfig,
+    });
+
+    expect(config2.default_oidc_config.trusted_certificate_authority).toBeUndefined();
+
+    // Test removal with an undefined ca
+    const config3 = buildConfig(config1, {
+      name: "trusted-ca-update",
+      action: Action.UpdateGlobalConfig,
+      trustedCA: "",
+    });
+
+    expect(config3.default_oidc_config.trusted_certificate_authority).toBeUndefined();
+  });
+
   test("should test authservice chain build", async () => {
     const chain = buildChain({
       client: mockClient,
       name: "sso-client-test",
-      action: Action.Add,
+      action: Action.AddClient,
     } as AuthServiceEvent);
     expect(chain.name).toEqual("sso-client-test");
     expect(chain.match.prefix).toEqual("foo.uds.dev");
@@ -71,7 +159,7 @@ describe("authservice", () => {
     const config = buildConfig(mockConfig as AuthserviceConfig, {
       client: mockClient,
       name: "local",
-      action: Action.Remove,
+      action: Action.RemoveClient,
     });
 
     expect(config.chains.length).toEqual(0);
@@ -82,11 +170,19 @@ describe("authservice", () => {
     let config = buildConfig(mockConfig as AuthserviceConfig, {
       client: mockClient,
       name: "local",
-      action: Action.Remove,
+      action: Action.RemoveClient,
     });
 
-    config = buildConfig(config, { client: mockClient, name: "sso-client-a", action: Action.Add });
-    config = buildConfig(config, { client: mockClient, name: "sso-client-b", action: Action.Add });
+    config = buildConfig(config, {
+      client: mockClient,
+      name: "sso-client-a",
+      action: Action.AddClient,
+    });
+    config = buildConfig(config, {
+      client: mockClient,
+      name: "sso-client-b",
+      action: Action.AddClient,
+    });
 
     expect(config.chains.length).toEqual(2);
   });
@@ -95,14 +191,14 @@ describe("authservice", () => {
     let config = buildConfig(mockConfig as AuthserviceConfig, {
       client: mockClient,
       name: "nothere",
-      action: Action.Remove,
+      action: Action.RemoveClient,
     });
     expect(config.chains.length).toEqual(1);
 
     config = buildConfig(mockConfig as AuthserviceConfig, {
       client: mockClient,
       name: "local",
-      action: Action.Remove,
+      action: Action.RemoveClient,
     });
     expect(config.chains.length).toEqual(0);
   });
@@ -120,8 +216,8 @@ describe("authservice", () => {
       },
     };
     try {
-      await updatePolicy({ name: "auth-test", action: Action.Add }, labelSelector, pkg);
-      await updatePolicy({ name: "auth-test", action: Action.Remove }, labelSelector, pkg);
+      await updatePolicy({ name: "auth-test", action: Action.AddClient }, labelSelector, pkg);
+      await updatePolicy({ name: "auth-test", action: Action.RemoveClient }, labelSelector, pkg);
     } catch (e) {
       expect(e).toBeUndefined();
     }
@@ -131,23 +227,23 @@ describe("authservice", () => {
     let config = buildConfig(mockConfig as AuthserviceConfig, {
       client: mockClient,
       name: "local",
-      action: Action.Add,
+      action: Action.AddClient,
     });
 
     config = buildConfig(config, {
       client: mockClient,
       name: "some-other-name",
-      action: Action.Add,
+      action: Action.AddClient,
     });
     config = buildConfig(config, {
       client: mockClient,
       name: "some-second-name",
-      action: Action.Add,
+      action: Action.AddClient,
     });
     config = buildConfig(config, {
       client: mockClient,
       name: "some-third-name",
-      action: Action.Add,
+      action: Action.AddClient,
     });
 
     expect(config.chains.length).toEqual(4);
@@ -157,7 +253,7 @@ describe("authservice", () => {
     let config1 = buildConfig(mockConfig as AuthserviceConfig, {
       client: mockClient,
       name: "local",
-      action: Action.Remove,
+      action: Action.RemoveClient,
     });
 
     // after sorting, the order should be like so:
@@ -181,7 +277,7 @@ describe("authservice", () => {
       config1 = buildConfig(config1, {
         client: mockClient,
         name: val,
-        action: Action.Add,
+        action: Action.AddClient,
       });
     });
 
@@ -193,7 +289,7 @@ describe("authservice", () => {
     let config1 = buildConfig(mockConfig as AuthserviceConfig, {
       client: mockClient,
       name: "local",
-      action: Action.Remove,
+      action: Action.RemoveClient,
     });
 
     const unsortedNames = [
@@ -208,7 +304,7 @@ describe("authservice", () => {
       config1 = buildConfig(config1, {
         client: mockClient,
         name: val,
-        action: Action.Add,
+        action: Action.AddClient,
       });
     });
 
@@ -219,7 +315,7 @@ describe("authservice", () => {
     config1 = buildConfig(config1, {
       client: mockClient,
       name: "some-third-name",
-      action: Action.Remove,
+      action: Action.RemoveClient,
     });
 
     expect(config1.chains.length).toEqual(4);
@@ -229,7 +325,7 @@ describe("authservice", () => {
     config1 = buildConfig(config1, {
       client: mockClient,
       name: "some-fifth-name",
-      action: Action.Remove,
+      action: Action.RemoveClient,
     });
 
     expect(config1.chains.length).toEqual(3);
@@ -239,7 +335,7 @@ describe("authservice", () => {
     config1 = buildConfig(config1, {
       client: mockClient,
       name: "aaaa-final",
-      action: Action.Add,
+      action: Action.AddClient,
     });
     expect(config1.chains.length).toEqual(4);
     expect(config1.chains[0].name).toEqual("aaaa-final");
@@ -247,19 +343,19 @@ describe("authservice", () => {
     config1 = buildConfig(config1, {
       client: mockClient,
       name: "1-something",
-      action: Action.Add,
+      action: Action.AddClient,
     });
 
     config1 = buildConfig(config1, {
       client: mockClient,
       name: "10-something",
-      action: Action.Add,
+      action: Action.AddClient,
     });
 
     config1 = buildConfig(config1, {
       client: mockClient,
       name: "2-something",
-      action: Action.Add,
+      action: Action.AddClient,
     });
     expect(config1.chains.length).toEqual(7);
     expect(config1.chains[0].name).toEqual("1-something");
