@@ -54,9 +54,15 @@ jobs:
           ghToken: ${{ secrets.GITHUB_TOKEN }}
           chainguardIdentity: ${{ secrets.CHAINGUARD_IDENTITY }}
 
-      - name: Deploy K3d + UDS Core Slim Bundle
+      - name: Deploy K3d + Latest UDS Core Slim Bundle
+        if: ${{ github.event_name != 'pull_request' }}
         run: |
           uds run -f tasks/deploy.yaml latest-slim-bundle-release --no-progress
+
+      - name: Deploy K3d + Source UDS Core Slim Bundle
+        if: ${{ github.event_name == 'pull_request' }}
+        run: |
+          uds run slim-dev --no-progress
 
       - name: Create Checkpoint Package
         run: |
