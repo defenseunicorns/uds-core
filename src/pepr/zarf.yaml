@@ -32,6 +32,14 @@ variables:
     default: "true"
 
 components:
+  - name: uds-crds
+    required: true
+    manifests:
+      - name: uds-crds
+        files:
+          - ./operator/crd/manifets/exemption.uds.dev.yaml
+          - ./operator/crd/manifets/package.uds.dev.yaml
+
   - name: uds-operator-config
     required: true
     charts:

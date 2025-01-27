@@ -5,6 +5,7 @@ tasks:
   - name: validate
     actions:
       - cmd: "npx jest src/pepr/**/"
+
   - name: gen-crds
     description: "Generate CRDS, requires a running kubernetes cluster"
     actions:
@@ -14,6 +15,8 @@ tasks:
       - cmd: "npx kubernetes-fluent-client crd packages.uds.dev src/pepr/operator/crd/generated"
 
       - cmd: "npx kubernetes-fluent-client crd exemptions.uds.dev src/pepr/operator/crd/generated"
+
+      - task: gen-manifests
 
       - description: "Add license headers to generated CRD files"
         shell:
@@ -28,10 +31,22 @@ tasks:
             exit 1
           fi
           $HOME/go/bin/addlicense -l "AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial" -s=only -v -c "Defense Unicorns" src/pepr/operator/crd/generated
+          $HOME/go/bin/addlicense -l "AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial" -s=only -v -c "Defense Unicorns" src/pepr/operator/crd/manifests
 
       - task: gen-docs
 
       - cmd: "npx pepr format"
+
+  - name: gen-manifests
+    description: "Generate CRD manifests"
+    actions:
+      - cmd: |
+          CRD_LIST="exemptions.uds.dev packages.uds.dev"
+          for CRD in $CRD_LIST; do
+             FILE="src/pepr/operator/crd/manifests/$CRD.yaml"
+             kubectl get crd $CRD -o yaml > $FILE
+             yq -i 'del(.metadata.creationTimestamp,.metadata.generation,.metadata.resourceVersion,.metadata.uid,.status)' $FILE
+          done
 
   - name: gen-docs
     description: "Generate Docs for generated CRDS, requires a running kubernetes cluster"
