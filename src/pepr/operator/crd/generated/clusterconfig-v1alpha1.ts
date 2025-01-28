@@ -10,37 +10,37 @@ export class ClusterConfig extends GenericKind {
 }
 
 export interface Spec {
-  attributes: Attributes;
-  expose: Expose;
-  logLevel: LogLevel;
-  networking: Networking;
-  policy: Policy;
+  attributes?: Attributes;
+  expose?: Expose;
+  logLevel?: LogLevel;
+  networking?: Networking;
+  policy?: Policy;
 }
 
 export interface Attributes {
   /**
    * Friendly name to associate with your UDS cluster
    */
-  clusterName: string;
+  clusterName?: string;
   /**
    * Tags to apply to your UDS cluster
    */
-  tags: string[];
+  tags?: string[];
 }
 
 export interface Expose {
   /**
    * Domain all cluster services on the admin gateawy will be exposed on
    */
-  adminDomain: string;
+  adminDomain?: string;
   /**
    * MICAH HALP
    */
-  caCert: string;
+  caCert?: string;
   /**
    * Domain all cluster services will be exposed on
    */
-  domain: string;
+  domain?: string;
 }
 
 export enum LogLevel {
@@ -54,18 +54,18 @@ export interface Networking {
   /**
    * MICAH HALP
    */
-  kubeapiCIDR: string;
+  kubeapiCIDR?: string;
   /**
    * MICAH HALP
    */
-  kubenodeCIDRS: string[];
+  kubenodeCIDRS?: string[];
 }
 
 export interface Policy {
   /**
-   * Allow exemptions to live in any namespace
+   * Allow UDS Exemption custom resources to live in any namespace (default false)
    */
-  allowAllNsExemptions: boolean;
+  allowAllNsExemptions?: boolean;
 }
 
 RegisterKind(ClusterConfig, {

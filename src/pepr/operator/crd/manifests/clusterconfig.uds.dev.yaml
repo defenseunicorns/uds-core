@@ -34,9 +34,6 @@ spec:
                       items:
                         type: string
                       type: array
-                  required:
-                    - clusterName
-                    - tags
                   type: object
                 expose:
                   properties:
@@ -49,10 +46,6 @@ spec:
                     domain:
                       description: Domain all cluster services will be exposed on
                       type: string
-                  required:
-                    - domain
-                    - adminDomain
-                    - caCert
                   type: object
                 logLevel:
                   enum:
@@ -72,24 +65,14 @@ spec:
                         pattern: ^(([0-9]{1,3}\.){3}[0-9]{1,3}\/[0-9]+)|(([a-fA-F0-9:]+:+)+[a-fA-F0-9:]+(/[0-9]+)?)$
                         type: string
                       type: array
-                  required:
-                    - kubeapiCIDR
-                    - kubenodeCIDRS
                   type: object
                 policy:
                   properties:
                     allowAllNsExemptions:
-                      description: Allow exemptions to live in any namespace
+                      default: false
+                      description: Allow UDS Exemption custom resources to live in any namespace (default false)
                       type: boolean
-                  required:
-                    - allowAllNsExemptions
                   type: object
-              required:
-                - attributes
-                - networking
-                - expose
-                - policy
-                - logLevel
               type: object
           required:
             - spec

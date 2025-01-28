@@ -39,6 +39,7 @@ components:
         files:
           - operator/crd/manifests/exemptions.uds.dev.yaml
           - operator/crd/manifests/packages.uds.dev.yaml
+          - operator/crd/manifests/clusterconfig.uds.dev.yaml
 
   - name: uds-operator-config
     required: true

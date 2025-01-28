@@ -26,7 +26,6 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
                   },
                 },
               },
-              required: ["clusterName", "tags"],
             },
             networking: {
               type: "object",
@@ -45,7 +44,6 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
                   },
                 },
               },
-              required: ["kubeapiCIDR", "kubenodeCIDRS"],
             },
             expose: {
               type: "object",
@@ -64,24 +62,23 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
                   description: "MICAH HALP",
                 },
               },
-              required: ["domain", "adminDomain", "caCert"],
             },
             policy: {
               type: "object",
               properties: {
                 allowAllNsExemptions: {
                   type: "boolean",
-                  description: "Allow exemptions to live in any namespace",
+                  description:
+                    "Allow UDS Exemption custom resources to live in any namespace (default false)",
+                  default: false,
                 },
               },
-              required: ["allowAllNsExemptions"],
             },
             logLevel: {
               type: "string",
               enum: ["debug", "info", "warn", "error"],
             },
           },
-          required: ["attributes", "networking", "expose", "policy", "logLevel"],
         } as V1JSONSchemaProps,
       },
       required: ["spec"],

@@ -106,7 +106,7 @@ tableOfContents:
     </tr>
   </thead>
   <tbody>
-    <tr><td style="white-space: nowrap;">allowAllNsExemptions</td><td style="white-space: nowrap;">boolean</td><td>Allow exemptions to live in any namespace</td></tr>
+    <tr><td style="white-space: nowrap;">allowAllNsExemptions</td><td style="white-space: nowrap;">boolean</td><td>Allow UDS Exemption custom resources to live in any namespace (default false)</td></tr>
   </tbody>
 </table>
 </div>
