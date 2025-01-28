@@ -51,7 +51,7 @@ tasks:
         cmd: uds zarf package deploy build/zarf-package-core-${{ index .inputs "layer" }}-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress --components '-istio-ambient,*'
       - description: "Deploy a single UDS Core Layer (must set UDS_LAYER environment variable)"
         if: ${{ ne .inputs.layer "base"}}
-        cmd: uds zarf package deploy build/zarf-package-core-${{ index .inputs "layer" }}-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress --components '*'        
+        cmd: uds zarf package deploy build/zarf-package-core-${{ index .inputs "layer" }}-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress --components '*'
 
   - name: latest-package-release
     actions:
