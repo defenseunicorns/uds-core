@@ -154,7 +154,6 @@ packages:
             - name: KEYCLOAK_KERNEL_6_12_MODE
               description: "Enables Keycloak configuration suitable for Linux kernel 6.12 onwards. This setting is a temporary workaround is will be removed in the future."
               path: workarounds.kernel6_12
-              default: true
           values:
             - path: realmInitEnv
               value:
