@@ -9,7 +9,7 @@ spec:
   attributes:
     clusterName: {{ .Values.cluster.config.attributes.UDS_CLUSTER_NAME | quote }}
     tags:
-{{- if .Values.cluster.config.attributes.UDS_CLUSTER_TAGS && not (eq (typeOf .Values.cluster.config.attributes.UDS_CLUSTER_TAGS) "string") }}
+{{- if not (eq (typeOf .Values.cluster.config.attributes.UDS_CLUSTER_TAGS) "string") }}
 {{ toYaml .Values.cluster.config.attributes.UDS_CLUSTER_TAGS | nindent 6 }}
 {{- end }}
   networking:
