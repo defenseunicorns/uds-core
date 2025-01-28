@@ -152,3 +152,19 @@ tasks:
   - name: e2e-test
     actions:
       - description: "Run Test Apps E2E tests"
+
+  - name: network-test
+    actions:
+      - description: "Build and deploy test apps"
+        cmd: "uds zarf package create src/test --confirm --no-progress"
+
+      - description: "Deploy test apps"
+        cmd: "uds zarf package deploy build/zarf-package-uds-core-test-apps-*.zst --confirm --no-progress"
+
+      - description: "Run Tests"
+        cmd: |
+          npm ci && npx jest --testPathPattern network*
+        dir: test/jest
+
+      - description: "Remove test apps"
+        cmd: "uds zarf package remove build/zarf-package-uds-core-test-apps-*.zst --confirm --no-progress"
