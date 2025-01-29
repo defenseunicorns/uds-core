@@ -25,7 +25,7 @@ variable "dns_prefix" {
 
 variable "sku_tier" {
   description = "(Optional) The SKU Tier that should be used for this Kubernetes Cluster. Possible values are Free and Standard (which includes the Uptime SLA), and Premium. Defaults to Free."
-  default     = "Standard"
+  default     = "Free"
   type        = string
 
   validation {
@@ -43,19 +43,19 @@ variable "kubernetes_version" {
 variable "enable_autoscaling" {
   description = "(Optional) Enable cluster-autoscaler on all nodepools. Defaults to true."
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "autoscaling_max_node_count" {
   description = "The maximum number of nodes to allow the default (system) node pool to scale up to."
   type        = number
-  default     = 6
+  default     = 3
 }
 
 variable "autoscaling_max_node_count_worker" {
   description = "The maximum number of nodes to allow the worker (user) node pool to scale up to."
   type        = number
-  default     = 6
+  default     = 3
 }
 
 variable "autoscaling_min_node_count" {
