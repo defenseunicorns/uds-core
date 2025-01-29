@@ -58,14 +58,14 @@ Layer selection will always be deployment-specific but below are guidelines for 
 | UDS Security Hub | Tracks CVE / vulnerability postures across UDS deployments <br/> *(install if you would like to more easily track vulnerabilities to meet compliance requirements)* |
 | UDS Remote Agent | Allows for more advanced remote cluster management / deployment <br/> *(install if you would like to manage UDS deployments from more advanced clients than UDS CLI)* |
 | **UDS Core Layers** |
-| Runtime Security           | Provides more advanced security with runtime inspection <br/> *(install if resources allow and more advanced security is desired)* |
-| Monitoring                 | Provides monitoring and alerting of application/cluster statuses <br/> *(install if resources allow and more advanced debugging is desired)* |
+| Runtime Security†           | Provides more advanced security with runtime inspection <br/> *(install if resources allow and more advanced security is desired)* |
+| Monitoring†                 | Provides frontend log / metrics monitoring and alerting <br/> *(install if resources allow and more advanced debugging is desired)* |
 | Backup and Restore         | Allows volumes and k8s objects to be backed up and restored <br/> *(install if deployment provides critical data or must maintain state)* |
 | Identity and Authorization | Provides authentication and authorization functionality <br/>*(install if deployment requires an auth mechanism (i.e. direct user login))*  |
-| Logging                    | Provides log storage and log shipping capabilities <br/> *(required for all "UDS" deployments)* |
-| Metrics Server**           | Provides metrics collection capabilities (req of UDS Runtime) <br/> *(required for all "UDS" deployments)* |
+| Logging                    | Provides backend log storage and log shipping capabilities <br/> *(required for all "UDS" deployments)* |
+| Metrics Server††           | Provides metrics collection capabilities (req of UDS Runtime) <br/> *(required for all "UDS" deployments)* |
 | Base                       | Provides the base for all other functional layers <br/> *(required for all "UDS" deployments and all other functional layers)* |
-| **UDS Core Pre-Requisites***** |
+| **UDS Core Pre-Requisites**‡ |
 | UDS Package Minio Operator | Provides storage for Loki (Logging) and Velero (Backup and Restore) <br/> *(install after core base but before logging/backup and restore if selected)* |
 | UDS Package MetalLB        | Provides a simple LoadBalancer implementation <br/> *(install after Zarf init and before UDS Core Base)* |
 
@@ -74,9 +74,13 @@ Layer selection will always be deployment-specific but below are guidelines for 
 :::
 
 :::note
-**The Metrics Server layer provides a metrics server if your cluster does not deploy metrics server itself.  If your cluster does provide its own metrics server deployment ensure that you do NOT enable this layer.
+†The Monitoring and Runtime Security layers provide user login and therefore require the Identity and Authorization layer
 :::
 
 :::note
-***You may need to deploy pre-requisite packages that are not a part of UDS Core's layers if you are on prem or in an edge scenario - usually cloud deployments will have their own offerings to provide these services.
+††The Metrics Server layer provides a metrics server if your cluster does not deploy metrics server itself.  If your cluster does provide its own metrics server deployment ensure that you do NOT enable this layer.
+:::
+
+:::note
+‡You may need to deploy pre-requisite packages that are not a part of UDS Core's layers if you are on prem or in an edge scenario - usually cloud deployments will have their own offerings to provide these services.
 :::
