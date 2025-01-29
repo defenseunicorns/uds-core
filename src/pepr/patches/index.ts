@@ -70,7 +70,7 @@ When(a.DaemonSet)
       const readinessProbe = {
         exec: { command: ["curl", "--no-progress-meter", "127.0.0.1:8500"] },
         initialDelaySeconds: 10,
-        periodSeconds: 5
+        periodSeconds: 5,
       };
       enforcerContainer.readinessProbe = readinessProbe;
     }
