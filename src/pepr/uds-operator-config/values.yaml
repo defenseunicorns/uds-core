@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 operator:
+  UDS_LOG_LEVEL: "###ZARF_VAR_UDS_LOG_LEVEL###"
   AUTHSERVICE_REDIS_URI: "###ZARF_VAR_AUTHSERVICE_REDIS_URI###"
   # Allow Pepr watch to be configurable to react to dropped connections faster
   PEPR_LAST_SEEN_LIMIT_SECONDS: "300"
@@ -17,7 +18,6 @@ operator:
 
 cluster:
   config:
-    UDS_LOG_LEVEL: "###ZARF_VAR_UDS_LOG_LEVEL###"
     attributes:
       UDS_CLUSTER_NAME: "###ZARF_VAR_CLUSTER_NAME###"
       UDS_CLUSTER_TAGS: "###ZARF_VAR_CLUSTER_TAGS###"

@@ -32,11 +32,13 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
               properties: {
                 kubeapiCIDR: {
                   type: "string",
-                  description: "MICAH HALP",
+                  description:
+                    "cidr range for your Kubernetes control plane nodes. This is a manual override that can be used instead of relying on Pepr to automatically watch and update the values",
                 },
                 kubenodeCIDRS: {
                   type: "array",
-                  description: "MICAH HALP",
+                  description:
+                    "cidr(s) for all Kubernetes nodes (not just control plane). Similar reason to above,annual override instead of relying on watch",
                   items: {
                     type: "string",
                     pattern:
@@ -59,7 +61,8 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
                 },
                 caCert: {
                   type: "string",
-                  description: "MICAH HALP",
+                  description:
+                    "The trusted CA that signed your domain certificates if using Private PKI ",
                 },
               },
             },
@@ -73,10 +76,6 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
                   default: false,
                 },
               },
-            },
-            logLevel: {
-              type: "string",
-              enum: ["debug", "info", "warn", "error"],
             },
           },
         } as V1JSONSchemaProps,

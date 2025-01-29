@@ -28,4 +28,3 @@ spec:
     caCert: {{ .Values.cluster.config.expose.UDS_CA_CERT | quote }}
   policy:
     allowAllNsExemptions: {{ .Values.cluster.config.policy.UDS_ALLOW_ALL_NS_EXEMPTIONS }}
-  logLevel: {{ .Values.cluster.config.UDS_LOG_LEVEL | quote }}
