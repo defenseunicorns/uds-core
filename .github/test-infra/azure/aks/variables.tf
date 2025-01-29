@@ -61,7 +61,7 @@ variable "autoscaling_max_node_count_worker" {
 variable "autoscaling_min_node_count" {
   description = "The minimum number of nodes that should always be present in the default (system) node pool."
   type        = number
-  default     = 2
+  default     = 1
 }
 
 variable "autoscaling_min_node_count_worker" {
@@ -156,7 +156,7 @@ variable "default_node_pool_os_disk_type" {
 variable "default_node_pool_node_count" {
   description = "(Optional) The initial number of nodes which should exist within this Node Pool. Valid values are between 0 and 1000 and must be a value in the range min_count - max_count."
   type        = number
-  default     = 4
+  default     = 2
 }
 
 variable "tags" {
