@@ -106,6 +106,7 @@ jobs:
         run: uds remove .github/bundles/aks/uds-bundle-uds-core-aks-nightly-*.tar.zst --confirm
         timeout-minutes: 10
         continue-on-error: true
+        reties: 3
 
       - name: Remove IAC
         if: always()
