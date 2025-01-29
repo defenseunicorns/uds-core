@@ -106,3 +106,12 @@ resource "azurerm_kubernetes_cluster" "aks_cluster" {
     azurerm_resource_group.this
   ]
 }
+
+resource "azurerm_kubernetes_cluster_node_pool" "worker" {
+  name                  = "${local.cluster_name}-worker"
+  mode                  = "User"
+  kubernetes_cluster_id = azurerm_kubernetes_cluster.aks_cluster.id
+  vm_size               = var.worker_pool_vm_size
+  auto_scaling_enabled  = true
+  min_count             = var.autoscaling_min_node_count_worker
+}

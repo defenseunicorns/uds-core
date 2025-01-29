@@ -55,11 +55,23 @@ variable "autoscaling_max_node_count" {
 variable "autoscaling_min_node_count" {
   description = "The minimum number of nodes that should always be present in the default (system) node pool."
   type        = number
-  default     = 4
+  default     = 2
+}
+
+variable "autoscaling_min_node_count_worker" {
+  description = "The minimum number of nodes that should always be present in the worker (user) node pool."
+  type        = number
+  default     = 3
 }
 
 variable "default_node_pool_vm_size" {
   description = "Specifies the vm size of the default node pool"
+  default     = "Standard_F8s_v2"
+  type        = string
+}
+
+variable "worker_pool_vm_size" {
+  description = "Specifies the vm size of the worker node pool"
   default     = "Standard_F8s_v2"
   type        = string
 }
