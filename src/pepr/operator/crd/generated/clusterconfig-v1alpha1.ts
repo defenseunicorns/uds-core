@@ -12,7 +12,6 @@ export class ClusterConfig extends GenericKind {
 export interface Spec {
   attributes?: Attributes;
   expose?: Expose;
-  logLevel?: LogLevel;
   networking?: Networking;
   policy?: Policy;
 }
@@ -34,7 +33,7 @@ export interface Expose {
    */
   adminDomain?: string;
   /**
-   * MICAH HALP
+   * The trusted CA that signed your domain certificates if using Private PKI
    */
   caCert?: string;
   /**
@@ -43,20 +42,15 @@ export interface Expose {
   domain?: string;
 }
 
-export enum LogLevel {
-  Debug = "debug",
-  Error = "error",
-  Info = "info",
-  Warn = "warn",
-}
-
 export interface Networking {
   /**
-   * MICAH HALP
+   * cidr range for your Kubernetes control plane nodes. This is a manual override that can be
+   * used instead of relying on Pepr to automatically watch and update the values
    */
   kubeapiCIDR?: string;
   /**
-   * MICAH HALP
+   * cidr(s) for all Kubernetes nodes (not just control plane). Similar reason to above,annual
+   * override instead of relying on watch
    */
   kubenodeCIDRS?: string[];
 }

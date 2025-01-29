@@ -26,6 +26,14 @@ export {
 } from "./generated/exemption-v1alpha1";
 
 export {
+  Attributes,
+  ClusterConfig,
+  Expose as ConfigExpose,
+  Policy as ConfigPolicy,
+  Networking,
+} from "./generated/clusterconfig-v1alpha1";
+
+export {
   HTTP as IstioHTTP,
   HTTPRoute as IstioHTTPRoute,
   VirtualService as IstioVirtualService,

@@ -34,7 +34,7 @@ tableOfContents:
     </tr>
   </thead>
   <tbody>
-    <tr><td style="white-space: nowrap;">attributes</td><td style="white-space: nowrap;"><a href="#Attributes">Attributes</a></td><td></td></tr><tr><td style="white-space: nowrap;">expose</td><td style="white-space: nowrap;"><a href="#Expose">Expose</a></td><td></td></tr><tr><td style="white-space: nowrap;">logLevel</td><td style="white-space: nowrap;">string (enum):<ul><li><code>debug</code></li><li><code>info</code></li><li><code>warn</code></li><li><code>error</code></li></ul></td><td></td></tr><tr><td style="white-space: nowrap;">networking</td><td style="white-space: nowrap;"><a href="#Networking">Networking</a></td><td></td></tr><tr><td style="white-space: nowrap;">policy</td><td style="white-space: nowrap;"><a href="#Policy">Policy</a></td><td></td></tr>
+    <tr><td style="white-space: nowrap;">attributes</td><td style="white-space: nowrap;"><a href="#Attributes">Attributes</a></td><td></td></tr><tr><td style="white-space: nowrap;">expose</td><td style="white-space: nowrap;"><a href="#Expose">Expose</a></td><td></td></tr><tr><td style="white-space: nowrap;">networking</td><td style="white-space: nowrap;"><a href="#Networking">Networking</a></td><td></td></tr><tr><td style="white-space: nowrap;">policy</td><td style="white-space: nowrap;"><a href="#Policy">Policy</a></td><td></td></tr>
   </tbody>
 </table>
 </div>
@@ -70,7 +70,7 @@ tableOfContents:
     </tr>
   </thead>
   <tbody>
-    <tr><td style="white-space: nowrap;">adminDomain</td><td style="white-space: nowrap;">string</td><td>Domain all cluster services on the admin gateawy will be exposed on</td></tr><tr><td style="white-space: nowrap;">caCert</td><td style="white-space: nowrap;">string</td><td>MICAH HALP</td></tr><tr><td style="white-space: nowrap;">domain</td><td style="white-space: nowrap;">string</td><td>Domain all cluster services will be exposed on</td></tr>
+    <tr><td style="white-space: nowrap;">adminDomain</td><td style="white-space: nowrap;">string</td><td>Domain all cluster services on the admin gateawy will be exposed on</td></tr><tr><td style="white-space: nowrap;">caCert</td><td style="white-space: nowrap;">string</td><td>The trusted CA that signed your domain certificates if using Private PKI </td></tr><tr><td style="white-space: nowrap;">domain</td><td style="white-space: nowrap;">string</td><td>Domain all cluster services will be exposed on</td></tr>
   </tbody>
 </table>
 </div>
@@ -88,7 +88,7 @@ tableOfContents:
     </tr>
   </thead>
   <tbody>
-    <tr><td style="white-space: nowrap;">kubeapiCIDR</td><td style="white-space: nowrap;">string</td><td>MICAH HALP</td></tr><tr><td style="white-space: nowrap;">kubenodeCIDRS</td><td style="white-space: nowrap;">string[]</td><td>MICAH HALP</td></tr>
+    <tr><td style="white-space: nowrap;">kubeapiCIDR</td><td style="white-space: nowrap;">string</td><td>cidr range for your Kubernetes control plane nodes. This is a manual override that can be used instead of relying on Pepr to automatically watch and update the values</td></tr><tr><td style="white-space: nowrap;">kubenodeCIDRS</td><td style="white-space: nowrap;">string[]</td><td>cidr(s) for all Kubernetes nodes (not just control plane). Similar reason to above,annual override instead of relying on watch</td></tr>
   </tbody>
 </table>
 </div>

@@ -41,26 +41,19 @@ spec:
                       description: Domain all cluster services on the admin gateawy will be exposed on
                       type: string
                     caCert:
-                      description: MICAH HALP
+                      description: 'The trusted CA that signed your domain certificates if using Private PKI '
                       type: string
                     domain:
                       description: Domain all cluster services will be exposed on
                       type: string
                   type: object
-                logLevel:
-                  enum:
-                    - debug
-                    - info
-                    - warn
-                    - error
-                  type: string
                 networking:
                   properties:
                     kubeapiCIDR:
-                      description: MICAH HALP
+                      description: cidr range for your Kubernetes control plane nodes. This is a manual override that can be used instead of relying on Pepr to automatically watch and update the values
                       type: string
                     kubenodeCIDRS:
-                      description: MICAH HALP
+                      description: cidr(s) for all Kubernetes nodes (not just control plane). Similar reason to above,annual override instead of relying on watch
                       items:
                         pattern: ^(([0-9]{1,3}\.){3}[0-9]{1,3}\/[0-9]+)|(([a-fA-F0-9:]+:+)+[a-fA-F0-9:]+(/[0-9]+)?)$
                         type: string
