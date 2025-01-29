@@ -76,6 +76,12 @@ variable "default_node_pool_vm_size" {
   type        = string
 }
 
+variable "worker_node_pool_count" {
+  description = "Number of nodes to add to the worker nodepool"
+  default     = 3
+  type        = number
+}
+
 variable "worker_pool_vm_size" {
   description = "Specifies the vm size of the worker node pool"
   default     = "Standard_F8s_v2"

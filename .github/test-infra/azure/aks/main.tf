@@ -115,4 +115,5 @@ resource "azurerm_kubernetes_cluster_node_pool" "worker" {
   auto_scaling_enabled  = var.enable_autoscaling
   min_count             = var.enable_autoscaling ? var.autoscaling_min_node_count_worker : null
   max_count             = var.enable_autoscaling ? var.autoscaling_max_node_count_worker : null
+  node_count            = var.worker_node_pool_count
 }
