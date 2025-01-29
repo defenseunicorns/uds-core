@@ -114,4 +114,5 @@ resource "azurerm_kubernetes_cluster_node_pool" "worker" {
   vm_size               = var.worker_pool_vm_size
   auto_scaling_enabled  = true
   min_count             = var.autoscaling_min_node_count_worker
+  max_count             = var.autoscaling_max_node_count_worker
 }

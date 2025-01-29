@@ -52,6 +52,12 @@ variable "autoscaling_max_node_count" {
   default     = 6
 }
 
+variable "autoscaling_max_node_count_worker" {
+  description = "The maximum number of nodes to allow the worker (user) node pool to scale up to."
+  type        = number
+  default     = 6
+}
+
 variable "autoscaling_min_node_count" {
   description = "The minimum number of nodes that should always be present in the default (system) node pool."
   type        = number
