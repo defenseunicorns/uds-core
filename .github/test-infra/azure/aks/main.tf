@@ -55,8 +55,8 @@ resource "azurerm_kubernetes_cluster" "aks_cluster" {
     name                 = var.default_node_pool_name
     auto_scaling_enabled = var.enable_autoscaling
     vnet_subnet_id       = azurerm_subnet.cluster_node_subnet.id
-    max_count            = var.autoscaling_max_node_count
-    min_count            = var.autoscaling_min_node_count
+    max_count            = var.enable_autoscaling ? var.autoscaling_max_node_count : null
+    min_count            = var.enable_autoscaling ? var.autoscaling_max_node_count : null
     vm_size              = var.default_node_pool_vm_size
     zones                = var.default_node_pool_availability_zones
     node_labels          = var.default_node_pool_node_labels
@@ -112,7 +112,7 @@ resource "azurerm_kubernetes_cluster_node_pool" "worker" {
   mode                  = "User"
   kubernetes_cluster_id = azurerm_kubernetes_cluster.aks_cluster.id
   vm_size               = var.worker_pool_vm_size
-  auto_scaling_enabled  = true
-  min_count             = var.autoscaling_min_node_count_worker
-  max_count             = var.autoscaling_max_node_count_worker
+  auto_scaling_enabled  = var.enable_autoscaling
+  min_count             = var.enable_autoscaling ? var.autoscaling_min_node_count_worker : null
+  max_count             = var.enable_autoscaling ? var.autoscaling_max_node_count_worker : null
 }
