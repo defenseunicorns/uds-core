@@ -134,6 +134,7 @@ resource "kubernetes_horizontal_pod_autoscaler_v2" "konnectivity-hpa" {
     }
     behavior {
       scale_down {
+        select_policy = "Max"
         policy {
           period_seconds = 1800
           type = "Pods"
