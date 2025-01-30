@@ -1,0 +1,74 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: clusterconfig.uds.dev
+spec:
+  conversion:
+    strategy: None
+  group: uds.dev
+  names:
+    kind: ClusterConfig
+    listKind: ClusterConfigList
+    plural: clusterconfig
+    shortNames:
+      - clusterconfig
+    singular: clusterconfig
+  scope: Namespaced
+  versions:
+    - name: v1alpha1
+      schema:
+        openAPIV3Schema:
+          properties:
+            spec:
+              properties:
+                attributes:
+                  properties:
+                    clusterName:
+                      description: Friendly name to associate with your UDS cluster
+                      type: string
+                    tags:
+                      description: Tags to apply to your UDS cluster
+                      items:
+                        type: string
+                      type: array
+                  type: object
+                expose:
+                  properties:
+                    adminDomain:
+                      description: Domain all cluster services on the admin gateawy will be exposed on
+                      type: string
+                    caCert:
+                      description: 'The trusted CA that signed your domain certificates if using Private PKI '
+                      type: string
+                    domain:
+                      description: Domain all cluster services will be exposed on
+                      type: string
+                  type: object
+                networking:
+                  properties:
+                    kubeapiCIDR:
+                      description: cidr range for your Kubernetes control plane nodes. This is a manual override that can be used instead of relying on Pepr to automatically watch and update the values
+                      type: string
+                    kubenodeCIDRS:
+                      description: cidr(s) for all Kubernetes nodes (not just control plane). Similar reason to above,annual override instead of relying on watch
+                      items:
+                        pattern: ^(([0-9]{1,3}\.){3}[0-9]{1,3}\/[0-9]+)|(([a-fA-F0-9:]+:+)+[a-fA-F0-9:]+(/[0-9]+)?)$
+                        type: string
+                      type: array
+                  type: object
+                policy:
+                  properties:
+                    allowAllNsExemptions:
+                      default: false
+                      description: Allow UDS Exemption custom resources to live in any namespace (default false)
+                      type: boolean
+                  type: object
+              type: object
+          required:
+            - spec
+          type: object
+      served: true
+      storage: true

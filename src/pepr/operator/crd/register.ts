@@ -6,6 +6,7 @@
 import { K8s, kind } from "pepr";
 
 import { Component, setupLogger } from "../../logger";
+import { v1alpha1 as clusterConfig } from "./sources/cluster-config/v1alpha1";
 import { v1alpha1 as exemption } from "./sources/exemption/v1alpha1";
 import { v1alpha1 as pkg } from "./sources/package/v1alpha1";
 
@@ -77,6 +78,41 @@ export async function registerCRDs() {
       })
       .catch(err => {
         log.error({ err }, "Failed to register Exemption CRD");
+
+        // Sad times, let's exit
+        process.exit(1);
+      });
+  }
+
+  // Register the Exemption CRD if we're in "admission" or dev mode (Exemptions are watched by the admission controllers)
+  if (process.env.PEPR_WATCH_MODE === "false" || process.env.PEPR_MODE === "dev") {
+    await K8s(kind.CustomResourceDefinition)
+      .Apply(
+        {
+          apiVersion: "apiextensions.k8s.io/v1",
+          kind: "CustomResourceDefinition",
+          metadata: {
+            name: "clusterconfig.uds.dev",
+          },
+          spec: {
+            group: "uds.dev",
+            versions: [clusterConfig],
+            scope: "Namespaced",
+            names: {
+              plural: "clusterconfig",
+              singular: "clusterconfig",
+              kind: "ClusterConfig",
+              shortNames: ["clusterconfig"],
+            },
+          },
+        },
+        { force: true },
+      )
+      .then(() => {
+        log.info("ClusterConfig CRD registered");
+      })
+      .catch(err => {
+        log.error({ err }, "Failed to register ClusterConfig CRD");
 
         // Sad times, let's exit
         process.exit(1);
