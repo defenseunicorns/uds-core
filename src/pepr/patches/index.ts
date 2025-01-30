@@ -64,4 +64,14 @@ When(a.DaemonSet)
       };
       enforcerContainer.livenessProbe = livenessProbe;
     }
+
+    if (enforcerContainer && enforcerContainer.readinessProbe === undefined) {
+      log.debug("Patching NeuVector Enforcer Daemonset to add readinessProbe");
+      const readinessProbe = {
+        exec: { command: ["curl", "--no-progress-meter", "127.0.0.1:8500"] },
+        initialDelaySeconds: 10,
+        periodSeconds: 5,
+      };
+      enforcerContainer.readinessProbe = readinessProbe;
+    }
   });
