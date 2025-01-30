@@ -117,3 +117,21 @@ resource "azurerm_kubernetes_cluster_node_pool" "worker" {
   max_count             = var.enable_autoscaling ? var.autoscaling_max_node_count_worker : null
   node_count            = var.worker_node_pool_count
 }
+
+resource "kubernetes_horizontal_pod_autoscaler_v2" "konnectivity-hpa" {
+  metadata {
+    name = "konnectivity-hpa"
+    namespace = "kube-system"
+  }
+  spec {
+    max_replicas = 5
+    min_replicas = 3
+    target_cpu_utilization_percentage = 75
+    scale_target_ref {
+      api_version = "apps/v1"
+      kind = "Deployment"
+      name = "konnectivity-agent"
+    }
+  }
+  depends_on = [ azurerm_kubernetes_cluster.aks_cluster ]
+}

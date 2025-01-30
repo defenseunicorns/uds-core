@@ -103,7 +103,7 @@ jobs:
 
       - name: Remove UDS Core
         if: always()
-        run: set +e; for i in $(seq 0 2); do uds remove .github/bundles/aks/uds-bundle-uds-core-aks-nightly-*.tar.zst --confirm; if [ $? -eq 0 ]; then break; fi; done 
+        run: set +e; for i in $(seq 0 2); do uds remove .github/bundles/aks/uds-bundle-uds-core-aks-nightly-*.tar.zst --confirm; if [ $? -eq 0 ]; then break; fi; done
         timeout-minutes: 10
         continue-on-error: true
 
