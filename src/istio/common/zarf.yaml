@@ -43,7 +43,19 @@ components:
             cmd: "./zarf tools kubectl label namespace pepr-system istio-injection=enabled --overwrite"
           - description: "Cycle Pepr to ensure enrollment in Istio"
             cmd: |
+              # Check if Istio is enabled. The pepr-system namespace should exist because that is added when istio is configured
               if ! ./zarf tools kubectl get pods -n pepr-system -o jsonpath="{range .items[*]}{.metadata.name}:{range .spec.initContainers[*]}{.name} {end}{range .spec.containers[*]}{.name} {end}{'\n'}{end}" | grep -q 'istio-proxy'; then
-                ./zarf tools kubectl rollout restart -n pepr-system deploy/pepr-uds-core-watcher
-                ./zarf tools kubectl rollout restart -n pepr-system deploy/pepr-uds-core
+                  # Check if the "pepr-uds-core-watcher" deployment exists before restarting
+                  if ./zarf tools kubectl get deploy -n pepr-system pepr-uds-core-watcher > /dev/null 2>&1; then
+                      ./zarf tools kubectl rollout restart -n pepr-system deploy/pepr-uds-core-watcher
+                  else
+                      echo "Deployment 'pepr-uds-core-watcher' does not exist. Skipping restart."
+                  fi
+
+                  # Check if the "pepr-uds-core" deployment exists before restarting
+                  if ./zarf tools kubectl get deploy -n pepr-system pepr-uds-core > /dev/null 2>&1; then
+                      ./zarf tools kubectl rollout restart -n pepr-system deploy/pepr-uds-core
+                  else
+                      echo "Deployment 'pepr-uds-core' does not exist. Skipping restart."
+                  fi
               fi
