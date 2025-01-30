@@ -153,18 +153,54 @@ tasks:
     actions:
       - description: "Run Test Apps E2E tests"
 
-  - name: network-test
+  - name: deploy-test-apps-package
     actions:
-      - description: "Build and deploy test apps"
+      - description: "Create the Test Apps Package"
         cmd: "uds zarf package create src/test --confirm --no-progress"
 
-      - description: "Deploy test apps"
+      - description: "Deploy the Test Apps Package"
         cmd: "uds zarf package deploy build/zarf-package-uds-core-test-apps-*.zst --confirm --no-progress"
 
-      - description: "Run Tests"
+  - name: reapply-testing-apps
+    actions:
+      - description: Delete the Test Curl App and Test Tenant App
+        cmd: kubectl delete -f src/test/app-curl.yaml && kubectl delete -f src/test/app-tenant.yaml
+
+      - description: Apply the Test Curl App and Test Tenant App
         cmd: |
-          npm ci && npx jest --testPathPattern network*
+          kubectl apply -f src/test/app-curl.yaml
+          kubectl apply -f src/test/app-tenant.yaml
+          sleep 5
+
+  - name: remove-test-apps-package
+    actions:
+      - description: "Remove the Test Apps Package"
+        cmd: "uds zarf package remove build/zarf-package-uds-core-test-apps-*.zst --confirm --no-progress"
+
+  - name: network-tests
+    actions:
+      - task: deploy-test-apps-package
+
+      - cmd: |
+          npx jest test/jest/network.spec.ts -t "Egress Anywhere Restrictions"
         dir: test/jest
 
-      - description: "Remove test apps"
-        cmd: "uds zarf package remove build/zarf-package-uds-core-test-apps-*.zst --confirm --no-progress"
+      - task: reapply-testing-apps
+
+      - cmd: |
+          npx jest test/jest/network.spec.ts -t "Internal Network Restrictions"
+        dir: test/jest
+
+      - task: reapply-testing-apps
+
+      - cmd: |
+          npx jest test/jest/network.spec.ts -t "RemoteCIDR Network Restrictions"
+        dir: test/jest
+
+      - task: reapply-testing-apps
+
+      - cmd: |
+          npx jest test/jest/network.spec.ts -t "KubeAPI Network Policy Restrictions"
+        dir: test/jest
+
+      - task: remove-test-apps-package
