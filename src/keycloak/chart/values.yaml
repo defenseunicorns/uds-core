@@ -273,3 +273,7 @@ autoscaling:
         - type: Pods
           value: 1
           periodSeconds: 300
+
+workarounds:
+  # Enables Keycloak configuration suitable for Linux kernel 6.12 onwards. This setting is a temporary workaround is will be removed in the future.
+  kernel6_12: false
