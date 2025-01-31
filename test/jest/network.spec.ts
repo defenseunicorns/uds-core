@@ -125,7 +125,10 @@ beforeAll(async () => {
   curlPodName = await getPodName(NAMESPACE_CURL, "app=curl");
 });
 
-// Egress Anywhere Restrictions
+/*
+  Ensures requests are blocked to exposed Endpoints without Egress Policy
+  Applies Egress Policy, confirms request succeeds
+*/
 describe("Egress Anywhere Restrictions", () => {
   test("Baseline: No netpols defined, all curls should fail", async () => {
     const response = await execInPod(NAMESPACE_CURL, curlPodName, "curl", CURL_EXTERNAL);
@@ -153,7 +156,11 @@ describe("Egress Anywhere Restrictions", () => {
   });
 });
 
-// Internal Network Restrictions
+/*
+  Ensures requests are blocked without Internal Ingress and Egress Policies
+  Applies Egress Policy, confirms request fails due to no Ingress Policy
+  Applies Ingress Policy, confirms request succeeds
+*/
 describe("Internal Network Restrictions", () => {
   test("Baseline: No Ingress Netpol, should fail", async () => {
     const response = await execInPod(NAMESPACE_CURL, curlPodName, "curl", CURL_INTERNAL);
@@ -195,7 +202,10 @@ describe("Internal Network Restrictions", () => {
   });
 });
 
-// RemoteCIDR Network Policies
+/*
+  Ensures requests are blocked without RemoteCidr Policy
+  Applies RemoteCidr Policy ( 0.0.0.0/0 => allow all traffic ) and confirms connectivity
+*/
 describe("RemoteCIDR Network Restrictions", () => {
   test("Baseline: No RemoteCIDR policy, curl should fail", async () => {
     const response = await execInPod(NAMESPACE_CURL, curlPodName, "curl", CURL_INTERNAL);
@@ -236,7 +246,12 @@ describe("RemoteCIDR Network Restrictions", () => {
   });
 });
 
-describe("KubeAPI Network Policy Restrictions", () => {
+/*
+  Ensures requests are blocked without KubeAPI Policy
+  Applies KubeAPI Policy, confirms request is successful with an expected 401 Unauthorized response
+  Revokes API Access and confirms the request fails again
+*/
+describe("KubeAPI Network Restrictions", () => {
   const curlCommand = [
     "curl",
     "-s",

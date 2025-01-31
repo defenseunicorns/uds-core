@@ -146,12 +146,42 @@ tasks:
             name: podinfo-svcmonitor
             namespace: podinfo
 
+      - description: Run Test Apps E2E Tests
+        task: e2e-test
+
       - description: Remove the test resources
         cmd: "uds zarf package remove build/zarf-package-uds-core-test-apps-*.zst --confirm --no-progress"
 
   - name: e2e-test
     actions:
-      - description: "Run Test Apps E2E tests"
+      - description: "Run Egress Anywhere Restrictions tests"
+        cmd: |
+          npx jest test/jest/network.spec.ts -t "Egress Anywhere Restrictions"
+        dir: test/jest
+
+      - description: "Fresh apply of Curl and Test Tenant Apps"
+        task: reapply-testing-apps
+
+      - description: "Run Internal Network Restrictions tests"
+        cmd: |
+          npx jest test/jest/network.spec.ts -t "Internal Network Restrictions"
+        dir: test/jest
+
+      - description: "Fresh Apply of Curl and Test Tenant Apps"
+        task: reapply-testing-apps
+
+      - description: "Run RemoteCidr Network Restrictions tests"
+        cmd: |
+          npx jest test/jest/network.spec.ts -t "RemoteCIDR Network Restrictions"
+        dir: test/jest
+
+      - description: "Frest apply of Curl and Test Tenant Apps"
+        task: reapply-testing-apps
+
+      - description: "Run KubeAPI Network Restrictions tests"
+        cmd: |
+          npx jest test/jest/network.spec.ts -t "KubeAPI Network Restrictions"
+        dir: test/jest
 
   - name: deploy-test-apps-package
     actions:
@@ -176,31 +206,3 @@ tasks:
     actions:
       - description: "Remove the Test Apps Package"
         cmd: "uds zarf package remove build/zarf-package-uds-core-test-apps-*.zst --confirm --no-progress"
-
-  - name: network-tests
-    actions:
-      - task: deploy-test-apps-package
-
-      - cmd: |
-          npx jest test/jest/network.spec.ts -t "Egress Anywhere Restrictions"
-        dir: test/jest
-
-      - task: reapply-testing-apps
-
-      - cmd: |
-          npx jest test/jest/network.spec.ts -t "Internal Network Restrictions"
-        dir: test/jest
-
-      - task: reapply-testing-apps
-
-      - cmd: |
-          npx jest test/jest/network.spec.ts -t "RemoteCIDR Network Restrictions"
-        dir: test/jest
-
-      - task: reapply-testing-apps
-
-      - cmd: |
-          npx jest test/jest/network.spec.ts -t "KubeAPI Network Policy Restrictions"
-        dir: test/jest
-
-      - task: remove-test-apps-package
