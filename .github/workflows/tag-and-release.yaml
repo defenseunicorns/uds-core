@@ -47,3 +47,27 @@ jobs:
       id-token: write
     uses: ./.github/workflows/checkpoint.yaml
     secrets: inherit
+
+  notify-uds-security-hub:
+    needs: publish-uds-core-release
+    runs-on: ubuntu-latest
+    environment: uds-security-hub
+    steps:
+      - name: Generate a token
+        id: generate-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ vars.UDS_SECURITY_HUB_TRIGGER_APP_ID }}
+          private-key: ${{ secrets.UDS_SECURITY_HUB_TRIGGER_APP_PRIVATE_KEY }}
+          owner: defenseunicorns
+          repositories: uds-security-hub
+
+      - name: Kick off scan in UDS Security Hub
+        run: |
+          curl -X POST \
+            -H "Authorization: Bearer ${{ steps.generate-token.outputs.token }}" \
+            -H "Accept: application/vnd.github+json" \
+            -d '{
+              "ref": "main"
+            }' \
+            https://api.github.com/repos/defenseunicorns/uds-security-hub/actions/workflows/scan.yaml/dispatches
