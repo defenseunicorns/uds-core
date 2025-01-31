@@ -1,6 +1,7 @@
 # Copyright 2024 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
-image:
-  repository: registry1.dso.mil/ironbank/istio-ecosystem/authservice
-  tag: "1.0.4-ubi9"
+profile: ambient
+
+cniConfDir: ###ZARF_VAR_CNI_CONF_DIR###
+cniBinDir: ###ZARF_VAR_CNI_BIN_DIR###
