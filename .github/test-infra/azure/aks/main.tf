@@ -49,7 +49,7 @@ resource "azurerm_user_assigned_identity" "cluster_identity" {
 }
 
 #Create cluster via API call because API server VNET integration will not be added to the azurerm provider until it is GA
-#Tracking GA availablility: https://github.com/Azure/AKS/issues/2729
+#Tracking GA availability: https://github.com/Azure/AKS/issues/2729
 resource "azapi_resource" "aks_cluster" {
   type      = "Microsoft.ContainerService/ManagedClusters@2024-09-02-preview"
   name      = local.cluster_name
