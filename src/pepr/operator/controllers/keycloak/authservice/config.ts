@@ -110,7 +110,7 @@ export function buildInitialSecret(): AuthserviceConfig {
     chains: [
       buildChain({
         name: "placeholder",
-        action: Action.Add,
+        action: Action.AddClient,
         client: {
           clientId: "placeholder",
           secret: "placeholder",

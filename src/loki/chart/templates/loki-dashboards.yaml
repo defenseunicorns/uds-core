@@ -8,7 +8,8 @@ metadata:
   namespace: grafana
   labels:
     grafana_dashboard: "1"
+  annotations:
+    {{- toYaml .Values.dashboardAnnotations | nindent 4 }}
 data:
   grafana-loki-general.json: |
     {{ .Files.Get "dashboards/loki-dashboard-quick-search.json" | nindent 4 }}
-
