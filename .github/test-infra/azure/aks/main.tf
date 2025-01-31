@@ -176,7 +176,7 @@ resource "azapi_resource" "aks_cluster" {
     }
     sku = {
       name = "Base"
-      tier = "Free"
+      tier = var.sku_tier
     }
   }
 }
