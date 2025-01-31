@@ -176,29 +176,6 @@ variable "enable_key_vault_csi_driver" {
   default     = false
 }
 
-variable "workload_identity_enabled" {
-  description = "(Optional) Specifies whether Microsoft Entra ID Workload Identity should be enabled for the Cluster. Defaults to false."
-  type        = bool
-  default     = true
-}
-
-variable "cluster_managed_identity_type" {
-  description = "Type of Managed Identity to be used for the cluster. Valid types are SystemAssigned or UserAssigned."
-  type        = string
-  default     = "SystemAssigned"
-}
-
-variable "cluster_kubelet_identity_type" {
-  description = "Type of Managed Identity to be used for Kubelet. If UserAssigned, defaults to Azure automatically creating Managaged Identity for Kubelet."
-  default     = "SystemAssigned"
-}
-
-variable "oidc_issuer_enabled" {
-  description = "(Optional) Enable or Disable the OIDC issuer URL."
-  type        = bool
-  default     = true
-}
-
 variable "username" {
   description = "The username to use to login to the DB"
   type        = string

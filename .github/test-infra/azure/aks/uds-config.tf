@@ -17,7 +17,7 @@ resource "local_sensitive_file" "uds_config" {
         "azure_velero_storage_account_container" : azurerm_storage_container.velero_container.name,
         "azure_subscription_id" : data.azurerm_client_config.current.subscription_id,
         "azure_resource_group" : azurerm_resource_group.this.name,
-        "node_resource_group_name" : azurerm_kubernetes_cluster.aks_cluster.node_resource_group
+        "node_resource_group_name" : "${local.cluster_name}-managed-rg"
         "grafana_pg_host" : azurerm_postgresql_flexible_server.grafana_psql_server.fqdn,
         "grafana_pg_port" : var.db_port,
         "grafana_pg_database" : var.db_name,
@@ -28,7 +28,13 @@ resource "local_sensitive_file" "uds_config" {
   })
 }
 
+data "azurerm_kubernetes_cluster" "aks_cluster" {
+  name                = local.cluster_name
+  resource_group_name = azurerm_resource_group.this.name
+  depends_on          = [azapi_resource.aks_cluster]
+}
+
 resource "local_sensitive_file" "kubeconfig" {
   filename = "/home/runner/.kube/config"
-  content  = azurerm_kubernetes_cluster.aks_cluster.kube_admin_config_raw
+  content  = data.azurerm_kubernetes_cluster.aks_cluster.kube_admin_config_raw
 }
