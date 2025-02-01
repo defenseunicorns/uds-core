@@ -61,7 +61,7 @@ variable "autoscaling_max_node_count_worker" {
 variable "autoscaling_min_node_count" {
   description = "The minimum number of nodes that should always be present in the default (system) node pool."
   type        = number
-  default     = 2
+  default     = 1
 }
 
 variable "autoscaling_min_node_count_worker" {
@@ -74,6 +74,12 @@ variable "default_node_pool_vm_size" {
   description = "Specifies the vm size of the default node pool"
   default     = "Standard_F8s_v2"
   type        = string
+}
+
+variable "worker_node_pool_count" {
+  description = "Number of nodes to add to the worker nodepool"
+  default     = 3
+  type        = number
 }
 
 variable "worker_pool_vm_size" {
@@ -150,7 +156,7 @@ variable "default_node_pool_os_disk_type" {
 variable "default_node_pool_node_count" {
   description = "(Optional) The initial number of nodes which should exist within this Node Pool. Valid values are between 0 and 1000 and must be a value in the range min_count - max_count."
   type        = number
-  default     = 4
+  default     = 2
 }
 
 variable "tags" {
@@ -168,29 +174,6 @@ variable "enable_key_vault_csi_driver" {
   description = "(Optional) Whether or not to deploy the Azure Key Vault CSI driver managed add-on. Defaults to false."
   type        = bool
   default     = false
-}
-
-variable "workload_identity_enabled" {
-  description = "(Optional) Specifies whether Microsoft Entra ID Workload Identity should be enabled for the Cluster. Defaults to false."
-  type        = bool
-  default     = true
-}
-
-variable "cluster_managed_identity_type" {
-  description = "Type of Managed Identity to be used for the cluster. Valid types are SystemAssigned or UserAssigned."
-  type        = string
-  default     = "SystemAssigned"
-}
-
-variable "cluster_kubelet_identity_type" {
-  description = "Type of Managed Identity to be used for Kubelet. If UserAssigned, defaults to Azure automatically creating Managaged Identity for Kubelet."
-  default     = "SystemAssigned"
-}
-
-variable "oidc_issuer_enabled" {
-  description = "(Optional) Enable or Disable the OIDC issuer URL."
-  type        = bool
-  default     = true
 }
 
 variable "username" {
