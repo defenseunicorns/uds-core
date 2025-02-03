@@ -43,6 +43,7 @@ module "db" {
 
   subnet_ids                  = data.aws_subnets.subnets.ids
   create_db_subnet_group      = true
+  create_db_parameter_group   = false
   manage_master_user_password = false
   password                    = random_password.db_password.result
 
