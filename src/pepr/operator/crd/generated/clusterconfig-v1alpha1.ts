@@ -39,7 +39,7 @@ export interface Expose {
   /**
    * Domain all cluster services will be exposed on
    */
-  domain?: string;
+  domain: string;
 }
 
 export interface Networking {
@@ -59,7 +59,7 @@ export interface Policy {
   /**
    * Allow UDS Exemption custom resources to live in any namespace (default false)
    */
-  allowAllNsExemptions?: boolean;
+  allowAllNsExemptions: boolean;
 }
 
 RegisterKind(ClusterConfig, {

@@ -65,6 +65,7 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
                     "The trusted CA that signed your domain certificates if using Private PKI ",
                 },
               },
+              required: ["domain"],
             },
             policy: {
               type: "object",
@@ -76,6 +77,7 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
                   default: false,
                 },
               },
+              required: ["allowAllNsExemptions"],
             },
           },
         } as V1JSONSchemaProps,

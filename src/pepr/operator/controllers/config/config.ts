@@ -3,13 +3,17 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { kind } from "pepr";
+import { K8s, kind } from "pepr";
 import { UDSConfig } from "../../../config";
 import { Component, setupLogger } from "../../../logger";
+import { ClusterConfig } from "../../crd";
+import { validateConfigCreate } from "../../crd/validators/clusterconfig-validator";
 import { reconcileAuthservice } from "../keycloak/authservice/authservice";
 import { Action, AuthServiceEvent } from "../keycloak/authservice/types";
 import { initAPIServerCIDR } from "../network/generators/kubeAPI";
 import { initAllNodesTarget } from "../network/generators/kubeNodes";
+
+export const configLog = setupLogger(Component.CONFIG);
 
 // configure subproject logger
 const log = setupLogger(Component.OPERATOR_CONFIG);
@@ -108,4 +112,17 @@ export async function updateUDSConfig(config: kind.Secret) {
   UDSConfig.allowAllNSExemptions = decodedConfigData.UDS_ALLOW_ALL_NS_EXEMPTIONS === "true";
 
   log.info("Updated UDS Config based on uds-operator-config secret changes");
+}
+
+export async function loadUDSConfig() {
+  if (process.env.PEPR_WATCH_MODE === "false" || process.env.PEPR_MODE === "dev") {
+    const cfgList = await K8s(ClusterConfig).InNamespace("pepr-system").Get();
+
+    try {
+      await validateConfigCreate(cfgList);
+    } catch (e) {
+      configLog.error(e);
+      throw e;
+    }
+  }
 }

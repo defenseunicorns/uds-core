@@ -46,6 +46,8 @@ spec:
                     domain:
                       description: Domain all cluster services will be exposed on
                       type: string
+                  required:
+                    - domain
                   type: object
                 networking:
                   properties:
@@ -65,6 +67,8 @@ spec:
                       default: false
                       description: Allow UDS Exemption custom resources to live in any namespace (default false)
                       type: boolean
+                  required:
+                    - allowAllNsExemptions
                   type: object
               type: object
           required:
