@@ -20,9 +20,13 @@ components:
       - name: app-authservice-tenant
         files:
           - "app-authservice-tenant.yaml"
+      - name: curl-test
+        files:
+          - "app-curl.yaml"
     images:
       - docker.io/kong/httpbin:0.2.3
       - hashicorp/http-echo:latest
+      - curlimages/curl:latest
 
   - name: podinfo
     required: true

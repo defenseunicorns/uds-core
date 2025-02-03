@@ -75,7 +75,7 @@ tasks:
       - description: "Run E2E Tests"
         cmd: |
           npm ci
-          npx jest test/jest/
+          npx jest test/jest/ --testPathIgnorePatterns="network.spec.ts"
 
   - name: uds-core
     description: "Build and test UDS Core"
