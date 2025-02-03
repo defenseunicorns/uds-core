@@ -118,7 +118,7 @@ components:
           - "values/unicorn/ztunnel.yaml"
     images:
       - cgr.dev/du-uds-defenseunicorns/istio-install-cni:1.24.2
-      - cgr.dev/du-uds-defenseunicorns/ztunnel:1.24.1
+      - cgr.dev/du-uds-defenseunicorns/ztunnel-fips:1.24.2
 
   - name: istio-admin-gateway
     required: true
