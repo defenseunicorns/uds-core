@@ -70,6 +70,7 @@ components:
     charts:
       - name: cni
         valuesFiles:
+          # https://repo1.dso.mil/dsop/tetrate/istio/1.24/install-cni/-/issues/12
           # - "values/registry1/cni.yaml"
           - "values/upstream/cni.yaml"
       - name: ztunnel
@@ -77,6 +78,7 @@ components:
           - "values/registry1/ztunnel.yaml"
     images:
       - docker.io/istio/install-cni:1.24.2-distroless
+      # https://repo1.dso.mil/dsop/tetrate/istio/1.24/install-cni/-/issues/12
       # - registry1.dso.mil/ironbank/tetrate/istio/install-cni:1.24.2-tetratefips-v0
       - registry1.dso.mil/ironbank/tetrate/istio/ztunnel:1.24.2-tetratefips0
 
