@@ -57,7 +57,7 @@ The UDS Operator will dynamically provision network policies to secure traffic b
 Istio requires a number of kernel modules to be loaded for full functionality. The below is a script that will ensure these modules are loaded and persisted across reboots (see also Istio's [upstream requirements list](https://istio.io/latest/docs/ops/deployment/platform-requirements/)). Ideally this script is used as part of an image build or cloud-init process on each node.
 
 ```console
-modules=("br_netfilter" "xt_REDIRECT" "xt_owner" "xt_statistic" "iptable_mangle" "iptable_nat" "xt_conntrack" "xt_tcpudp")
+modules=("br_netfilter" "xt_REDIRECT" "xt_owner" "xt_statistic" "iptable_mangle" "iptable_nat" "xt_conntrack" "xt_tcpudp" "xt_connmark" "xt_mark" "ip_set")
 for module in "${modules[@]}"; do
   modprobe "$module"
   echo "$module" >> "/etc/modules-load.d/istio-modules.conf"
