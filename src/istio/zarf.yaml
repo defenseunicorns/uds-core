@@ -70,24 +70,13 @@ components:
     charts:
       - name: cni
         valuesFiles:
-          # Update once Registry1 has working cni image
-          #- "values/registry1/cni.yaml"
-          - "values/upstream/cni.yaml"
+          - "values/registry1/cni.yaml"
       - name: ztunnel
         valuesFiles:
-          # Update once Registry1 has working ztunnel image
-          #- "values/registry1/ztunnel.yaml"
-          - "values/upstream/ztunnel.yaml"
+          - "values/registry1/ztunnel.yaml"
     images:
-      # https://github.com/defenseunicorns/uds-core/issues/1225
-      # Registry1 ztunnel image is not working right now
-      # https://repo1.dso.mil/dsop/tetrate/istio/1.24/ztunnel/-/issues/9
-      #- registry1.dso.mil/ironbank/tetrate/istio/ztunnel:1.24.2-tetratefips0
-      - docker.io/istio/ztunnel:1.24.2-distroless
-      # Registry1s install-cni-fips is not working right now
-      # https://repo1.dso.mil/dsop/tetrate/istio/1.24/install-cni/-/issues/11
-      #- registry1.dso.mil/ironbank/opensource/istio/install-cni:1.24.2
-      - docker.io/istio/install-cni:1.24.2-distroless
+      - registry1.dso.mil/ironbank/tetrate/istio/ztunnel:1.24.2-tetratefips0
+      - registry1.dso.mil/ironbank/tetrate/istio/install-cni:1.24.2-tetratefips-v0
 
   - name: istio-controlplane
     required: true
