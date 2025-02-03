@@ -183,14 +183,6 @@ tasks:
           npx jest test/jest/network.spec.ts -t "KubeAPI Network Restrictions"
         dir: test/jest
 
-  - name: deploy-test-apps-package
-    actions:
-      - description: "Create the Test Apps Package"
-        cmd: "uds zarf package create src/test --confirm --no-progress"
-
-      - description: "Deploy the Test Apps Package"
-        cmd: "uds zarf package deploy build/zarf-package-uds-core-test-apps-*.zst --confirm --no-progress"
-
   - name: reapply-testing-apps
     actions:
       - description: Delete the Test Curl App and Test Tenant App

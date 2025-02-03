@@ -126,6 +126,44 @@ beforeAll(async () => {
 });
 
 /*
+  Ensure the standard Egress + Ingress combined (end-to-end communication)
+*/
+describe("Standard Ingress Egress Flow", () => {
+  test("Allow both Ingress and Egress to enable communication", async () => {
+    await patchResource(NAMESPACE_CURL, "curl", [
+      {
+        op: "add",
+        path: "/spec/network/allow",
+        value: [{ direction: "Egress", selector: { app: "curl" } }],
+      },
+    ]);
+    await patchResource(NAMESPACE_TENANT_APP, "test-tenant-app", [
+      {
+        op: "add",
+        path: "/spec/network/allow",
+        value: [{ direction: "Ingress", selector: { app: "test-tenant-app" } }],
+      },
+    ]);
+
+    const response = await execInPod(NAMESPACE_CURL, curlPodName, "curl", CURL_INTERNAL);
+    expect(response.stdout).toBe("200");
+  });
+});
+
+/*
+  Validate Default-Deny-All (No Policies Applied)
+*/
+describe("Default Deny-All Enforcement", () => {
+  test("Default state should block ALL traffic", async () => {
+    const response = await execInPod(NAMESPACE_CURL, curlPodName, "curl", CURL_EXTERNAL);
+    expect(response.stdout).toBe("000");
+
+    const responseInternal = await execInPod(NAMESPACE_CURL, curlPodName, "curl", CURL_INTERNAL);
+    expect(responseInternal.stdout).toBe("503");
+  });
+});
+
+/*
   Ensures requests are blocked to exposed Endpoints without Egress Policy
   Applies Egress Policy, confirms request succeeds
 */
@@ -157,6 +195,49 @@ describe("Egress Anywhere Restrictions", () => {
 });
 
 /*
+  Ensures Egress requests are only allowed to a specific namespaces
+*/
+describe("Egress to Specific Namespace", () => {
+  test("Ingress Policy without Egress Policy, should fail", async () => {
+    await patchResource(NAMESPACE_TENANT_APP, "test-tenant-app", [
+      {
+        op: "add",
+        path: "/spec/network/allow",
+        value: [
+          {
+            direction: "Ingress",
+            remoteNamespace: "curl-test",
+            remoteSelector: { app: "curl" },
+            selector: { app: "test-tenant-app" },
+            ports: [443, 8080, 80],
+          },
+        ],
+      },
+    ]);
+    const response = await execInPod(NAMESPACE_CURL, curlPodName, "curl", CURL_INTERNAL);
+    expect(response.stdout).toBe("503");
+  });
+
+  test("Egress to test-tenant-app namespace with Ingress Policy, should succeed", async () => {
+    await patchResource(NAMESPACE_CURL, "curl", [
+      {
+        op: "add",
+        path: "/spec/network/allow",
+        value: [
+          {
+            direction: "Egress",
+            remoteNamespace: NAMESPACE_TENANT_APP,
+            selector: { app: "curl" },
+          },
+        ],
+      },
+    ]);
+    const response = await execInPod(NAMESPACE_CURL, curlPodName, "curl", CURL_INTERNAL);
+    expect(response.stdout).toBe("200");
+  });
+});
+
+/*
   Ensures requests are blocked without Internal Ingress and Egress Policies
   Applies Egress Policy, confirms request fails due to no Ingress Policy
   Applies Ingress Policy, confirms request succeeds
@@ -183,7 +264,7 @@ describe("Internal Network Restrictions", () => {
   test("Add Ingress Netpol: Should succeed now", async () => {
     await patchResource(NAMESPACE_TENANT_APP, "test-tenant-app", [
       {
-        op: "add",
+        op: "remove",
         path: "/spec/network/allow",
         value: [
           {
@@ -199,6 +280,40 @@ describe("Internal Network Restrictions", () => {
 
     const response = await execInPod(NAMESPACE_CURL, curlPodName, "curl", CURL_INTERNAL);
     expect(response.stdout).toBe("200");
+  });
+});
+
+/*
+  Negative test: Allow wrong port, request should fail
+*/
+describe("Incorrect Port Should Fail", () => {
+  test("Egress is allowed only on wrong port, should fail", async () => {
+    await patchResource(NAMESPACE_CURL, "curl", [
+      {
+        op: "add",
+        path: "/spec/network/allow",
+        value: [{ direction: "Egress", selector: { app: "curl" }, ports: [9999] }],
+      },
+    ]);
+    const response = await execInPod(NAMESPACE_CURL, curlPodName, "curl", CURL_INTERNAL);
+    expect(response.stdout).toBe("503");
+  });
+});
+
+/*
+  Negative test: Wrong pod labels should fail
+*/
+describe("Wrong Pod Labels Should Fail", () => {
+  test("Egress policy does not match pod label, should fail", async () => {
+    await patchResource(NAMESPACE_CURL, "curl", [
+      {
+        op: "add",
+        path: "/spec/network/allow",
+        value: [{ direction: "Egress", selector: { app: "nonexistent-app" } }],
+      },
+    ]);
+    const response = await execInPod(NAMESPACE_CURL, curlPodName, "curl", CURL_INTERNAL);
+    expect(response.stdout).toBe("503");
   });
 });
 
