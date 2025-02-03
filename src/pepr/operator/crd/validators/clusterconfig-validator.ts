@@ -1,3 +1,8 @@
+/**
+ * Copyright 2024 Defense Unicorns
+ * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+ */
+
 import { KubernetesListObject } from "kubernetes-fluent-client";
 import { PeprValidateRequest } from "pepr";
 import { ClusterConfig } from "../generated/clusterconfig-v1alpha1";
