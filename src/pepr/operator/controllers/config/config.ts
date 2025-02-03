@@ -117,7 +117,7 @@ export async function updateUDSConfig(config: kind.Secret) {
 export async function loadUDSConfig() {
   if (process.env.PEPR_WATCH_MODE === "false" || process.env.PEPR_MODE === "dev") {
     const cfgList = await K8s(ClusterConfig).InNamespace("pepr-system").Get();
-
+    configLog.info({}, "validating ClusterConfig");
     try {
       await validateConfigCreate(cfgList);
     } catch (e) {
