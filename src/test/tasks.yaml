@@ -154,9 +154,33 @@ tasks:
 
   - name: e2e-test
     actions:
+      - description: "Run Standard Ingress Egress Flow tests"
+        cmd: |
+          npx jest test/jest/network.spec.ts -t "Standard Ingress Egress Flow"
+        dir: test/jest
+
+      - description: "Fresh apply of Curl and Test Tenant Apps"
+        task: reapply-testing-apps
+
+      - description: "Run Default Deny-All Enforcement tests"
+        cmd: |
+          npx jest test/jest/network.spec.ts -t "Default Deny-All Enforcement"
+        dir: test/jest
+
+      - description: "Fresh apply of Curl and Test Tenant Apps"
+        task: reapply-testing-apps
+
       - description: "Run Egress Anywhere Restrictions tests"
         cmd: |
           npx jest test/jest/network.spec.ts -t "Egress Anywhere Restrictions"
+        dir: test/jest
+
+      - description: "Fresh apply of Curl and Test Tenant Apps"
+        task: reapply-testing-apps
+
+      - description: "Run Egress to Specific Namespace tests"
+        cmd: |
+          npx jest test/jest/network.spec.ts -t "Egress to Specific Namespace"
         dir: test/jest
 
       - description: "Fresh apply of Curl and Test Tenant Apps"
@@ -167,6 +191,22 @@ tasks:
           npx jest test/jest/network.spec.ts -t "Internal Network Restrictions"
         dir: test/jest
 
+      - description: "Fresh apply of Curl and Test Tenant Apps"
+        task: reapply-testing-apps
+
+      - description: "Run Incorrect Port Should Fail tests"
+        cmd: |
+          npx jest test/jest/network.spec.ts -t "Incorrect Port Should Fail"
+        dir: test/jest
+
+      - description: "Fresh apply of Curl and Test Tenant Apps"
+        task: reapply-testing-apps
+
+      - description: "Run Wrong Pod Labels Should Fail tests"
+        cmd: |
+          npx jest test/jest/network.spec.ts -t "Wrong Pod Labels Should Fail"
+        dir: test/jest
+
       - description: "Fresh Apply of Curl and Test Tenant Apps"
         task: reapply-testing-apps
 
@@ -175,7 +215,7 @@ tasks:
           npx jest test/jest/network.spec.ts -t "RemoteCIDR Network Restrictions"
         dir: test/jest
 
-      - description: "Frest apply of Curl and Test Tenant Apps"
+      - description: "Fresh apply of Curl and Test Tenant Apps"
         task: reapply-testing-apps
 
       - description: "Run KubeAPI Network Restrictions tests"
@@ -192,7 +232,7 @@ tasks:
         cmd: |
           kubectl apply -f src/test/app-curl.yaml
           kubectl apply -f src/test/app-tenant.yaml
-          sleep 5
+          sleep 4
 
   - name: remove-test-apps-package
     actions:

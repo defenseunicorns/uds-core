@@ -264,7 +264,7 @@ describe("Internal Network Restrictions", () => {
   test("Add Ingress Netpol: Should succeed now", async () => {
     await patchResource(NAMESPACE_TENANT_APP, "test-tenant-app", [
       {
-        op: "remove",
+        op: "add",
         path: "/spec/network/allow",
         value: [
           {
