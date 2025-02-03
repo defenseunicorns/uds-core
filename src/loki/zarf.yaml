@@ -37,7 +37,7 @@ components:
     images:
       - registry1.dso.mil/ironbank/opensource/grafana/loki:3.3.2
       - registry1.dso.mil/ironbank/opensource/nginx/nginx-alpine:1.26.2
-      - registry1.dso.mil/ironbank/opensource/memcached/memcached:1.6.34
+      - registry1.dso.mil/ironbank/opensource/memcached/memcached:1.6.35
 
   - name: loki
     required: true
@@ -53,4 +53,4 @@ components:
     images:
       - cgr.dev/du-uds-defenseunicorns/loki:3.3.2
       - cgr.dev/du-uds-defenseunicorns/nginx-fips:1.27.3
-      - cgr.dev/du-uds-defenseunicorns/memcached:1.6.34
+      - cgr.dev/du-uds-defenseunicorns/memcached:1.6.35
