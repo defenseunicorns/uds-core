@@ -10,24 +10,24 @@ metadata:
     {{- include "uds-operator-config.labels" . | nindent 4 }}
 spec:
   attributes:
-    clusterName: {{ .Values.cluster.config.attributes.UDS_CLUSTER_NAME | quote }}
+    clusterName: {{ .Values.cluster.attributes.UDS_CLUSTER_NAME | quote }}
     tags:
-{{- if not (eq (typeOf .Values.cluster.config.attributes.UDS_CLUSTER_TAGS) "string") }}
-{{ toYaml .Values.cluster.config.attributes.UDS_CLUSTER_TAGS | nindent 6 }}
+{{- if not (eq (typeOf .Values.cluster.attributes.UDS_CLUSTER_TAGS) "string") }}
+{{ toYaml .Values.cluster.attributes.UDS_CLUSTER_TAGS | nindent 6 }}
 {{- end }}
   networking:
-    kubeapiCIDR: {{ .Values.cluster.config.networking.KUBEAPI_CIDR | default .Values.operator.KUBEAPI_CIDR | quote }}
+    kubeapiCIDR: {{ .Values.cluster.networking.KUBEAPI_CIDR | default .Values.operator.KUBEAPI_CIDR | quote }}
     kubenodeCIDRS:
-{{- if .Values.cluster.config.networking.KUBENODE_CIDRS }}
-{{ toYaml .Values.cluster.config.networking.KUBENODE_CIDRS | indent 6 }}
+{{- if .Values.cluster.networking.KUBENODE_CIDRS }}
+{{ toYaml .Values.cluster.networking.KUBENODE_CIDRS | indent 6 }}
 {{- else if .Values.operator.KUBENODE_CIDRS }}
 {{- range $index, $cidr := .Values.operator.KUBENODE_CIDRS }}
       - {{ $cidr | quote }}
 {{- end }}
 {{- end }}
   expose:
-    domain: {{ .Values.cluster.config.expose.UDS_DOMAIN | quote }}
-    adminDomain: {{ .Values.cluster.config.expose.UDS_ADMIN_DOMAIN | quote }}
-    caCert: {{ .Values.cluster.config.expose.UDS_CA_CERT | quote }}
+    domain: {{ .Values.cluster.expose.UDS_DOMAIN | quote }}
+    adminDomain: {{ .Values.cluster.expose.UDS_ADMIN_DOMAIN | quote }}
+    caCert: {{ .Values.cluster.expose.UDS_CA_CERT | quote }}
   policy:
-    allowAllNsExemptions: {{ .Values.cluster.config.policy.UDS_ALLOW_ALL_NS_EXEMPTIONS }}
+    allowAllNsExemptions: {{ .Values.cluster.policy.UDS_ALLOW_ALL_NS_EXEMPTIONS }}

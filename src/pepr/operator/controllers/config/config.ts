@@ -124,6 +124,7 @@ export async function updateUDSConfig(config: kind.Secret) {
 }
 
 export async function loadUDSConfig() {
+  // Run in Admission and Watcher pods
   if (process.env.PEPR_WATCH_MODE || process.env.PEPR_MODE === "dev") {
     const cfgList = await K8s(ClusterConfig).InNamespace("pepr-system").Get();
     if (cfgList.items.length === 0) {
