@@ -23,6 +23,7 @@
   "exclude": [
     "dist",
     "test/playwright",
+    "test/jest",
     "uds-docs"
   ]
 }

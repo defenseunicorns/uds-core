@@ -154,87 +154,79 @@ tasks:
 
   - name: e2e-test
     actions:
-      - description: "Run Standard Ingress Egress Flow tests"
+      - description: "Wait for Packages to be Ready"
+        wait:
+          cluster:
+            kind: Pod
+            name: app=curl-1
+            namespace: curl-test
+            condition: Ready
+
+      - description: "Wait for Packages to be Ready"
+        wait:
+          cluster:
+            kind: Pod
+            name: app=curl-2
+            namespace: curl-test
+            condition: Ready
+
+      - description: "Wait for Packages to be Ready"
+        wait:
+          cluster:
+            kind: Pod
+            name: app=curl-3
+            namespace: curl-test
+            condition: Ready
+
+      - description: "Wait for Packages to be Ready"
+        wait:
+          cluster:
+            kind: Pod
+            name: app=curl-4
+            namespace: curl-test
+            condition: Ready
+
+      - description: "Wait for Packages to be Ready"
+        wait:
+          cluster:
+            kind: Pod
+            name: app=curl-5
+            namespace: curl-test
+            condition: Ready
+
+      - description: "Wait for Packages to be Ready"
+        wait:
+          cluster:
+            kind: Pod
+            name: app=curl-6
+            namespace: curl-test
+            condition: Ready
+
+      - description: "Wait for Packages to be Ready"
+        wait:
+          cluster:
+            kind: Pod
+            name: app=curl-7
+            namespace: curl-test
+            condition: Ready
+
+      - description: "Wait for Packages to be Ready"
+        wait:
+          cluster:
+            kind: Pod
+            name: app=curl-8
+            namespace: curl-test
+            condition: Ready
+
+      - description: "Wait for Packages to be Ready"
+        wait:
+          cluster:
+            kind: Pod
+            name: app=curl-9
+            namespace: curl-test
+            condition: Ready
+
+      - description: "Run Network Tests"
         cmd: |
-          npx jest test/jest/network.spec.ts -t "Standard Ingress Egress Flow"
+          npx jest test/jest/network.spec.ts
         dir: test/jest
-
-      - description: "Fresh apply of Curl and Test Tenant Apps"
-        task: reapply-testing-apps
-
-      - description: "Run Default Deny-All Enforcement tests"
-        cmd: |
-          npx jest test/jest/network.spec.ts -t "Default Deny-All Enforcement"
-        dir: test/jest
-
-      - description: "Fresh apply of Curl and Test Tenant Apps"
-        task: reapply-testing-apps
-
-      - description: "Run Egress Anywhere Restrictions tests"
-        cmd: |
-          npx jest test/jest/network.spec.ts -t "Egress Anywhere Restrictions"
-        dir: test/jest
-
-      - description: "Fresh apply of Curl and Test Tenant Apps"
-        task: reapply-testing-apps
-
-      - description: "Run Egress to Specific Namespace tests"
-        cmd: |
-          npx jest test/jest/network.spec.ts -t "Egress to Specific Namespace"
-        dir: test/jest
-
-      - description: "Fresh apply of Curl and Test Tenant Apps"
-        task: reapply-testing-apps
-
-      - description: "Run Internal Network Restrictions tests"
-        cmd: |
-          npx jest test/jest/network.spec.ts -t "Internal Network Restrictions"
-        dir: test/jest
-
-      - description: "Fresh apply of Curl and Test Tenant Apps"
-        task: reapply-testing-apps
-
-      - description: "Run Incorrect Port Should Fail tests"
-        cmd: |
-          npx jest test/jest/network.spec.ts -t "Incorrect Port Should Fail"
-        dir: test/jest
-
-      - description: "Fresh apply of Curl and Test Tenant Apps"
-        task: reapply-testing-apps
-
-      - description: "Run Wrong Pod Labels Should Fail tests"
-        cmd: |
-          npx jest test/jest/network.spec.ts -t "Wrong Pod Labels Should Fail"
-        dir: test/jest
-
-      - description: "Fresh Apply of Curl and Test Tenant Apps"
-        task: reapply-testing-apps
-
-      - description: "Run RemoteCidr Network Restrictions tests"
-        cmd: |
-          npx jest test/jest/network.spec.ts -t "RemoteCIDR Network Restrictions"
-        dir: test/jest
-
-      - description: "Fresh apply of Curl and Test Tenant Apps"
-        task: reapply-testing-apps
-
-      - description: "Run KubeAPI Network Restrictions tests"
-        cmd: |
-          npx jest test/jest/network.spec.ts -t "KubeAPI Network Restrictions"
-        dir: test/jest
-
-  - name: reapply-testing-apps
-    actions:
-      - description: Delete the Test Curl App and Test Tenant App
-        cmd: kubectl delete -f src/test/app-curl.yaml && kubectl delete -f src/test/app-tenant.yaml
-
-      - description: Apply the Test Curl App and Test Tenant App
-        cmd: |
-          kubectl apply -f src/test/app-curl.yaml
-          kubectl apply -f src/test/app-tenant.yaml
-          sleep 4
-
-  - name: remove-test-apps-package
-    actions:
-      - description: "Remove the Test Apps Package"
-        cmd: "uds zarf package remove build/zarf-package-uds-core-test-apps-*.zst --confirm --no-progress"
