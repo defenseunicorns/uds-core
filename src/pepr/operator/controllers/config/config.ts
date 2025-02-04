@@ -124,9 +124,12 @@ export async function updateUDSConfig(config: kind.Secret) {
 }
 
 export async function loadUDSConfig() {
-  if (process.env.PEPR_WATCH_MODE === "false" || process.env.PEPR_MODE === "dev") {
+  if (process.env.PEPR_WATCH_MODE || process.env.PEPR_MODE === "dev") {
     const cfgList = await K8s(ClusterConfig).InNamespace("pepr-system").Get();
-    configLog.info({}, "validating ClusterConfig");
+    if (cfgList.items.length === 0) {
+      throw new Error("No ClusterConfig found");
+    }
+
     try {
       await validateCfgCreate(cfgList);
       setConfig(cfgList.items[0]);

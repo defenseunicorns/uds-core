@@ -40,6 +40,8 @@ export function initializeOperatorConfig() {
     baseDomain: `https://sso.${UDSConfig.domain}`,
     realm: "uds",
   };
+
+  log.info(operatorConfig, `Operator config initialized`);
 }
 /**
  * Sets up the initial authservice secret in the Kubernetes cluster.
@@ -48,7 +50,6 @@ export function initializeOperatorConfig() {
  */
 export async function setupAuthserviceSecret() {
   if (process.env.PEPR_WATCH_MODE === "true" || process.env.PEPR_MODE === "dev") {
-    // Initialize the operator config
     initializeOperatorConfig();
 
     log.info("One-time authservice secret initialization");
