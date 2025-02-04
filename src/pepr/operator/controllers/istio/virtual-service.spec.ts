@@ -116,7 +116,7 @@ describe("test generate virtual service", () => {
     expect(payload.spec!.http![0].route![0].destination?.port?.number).toEqual(port);
   });
 
-  it.only("should create a redirect VirtualService object", () => {
+  it("should create a redirect VirtualService object", () => {
     const gateway = Gateway.Tenant;
     const expose: Expose = {
       gateway,
