@@ -55,6 +55,11 @@ jobs:
         uses: ./.github/actions/renovate-readiness
       - name: Environment setup
         uses: ./.github/actions/setup
+        with:
+          registry1Username: ${{ secrets.IRON_BANK_ROBOT_USERNAME }}
+          registry1Password: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
+          ghToken: ${{ secrets.GITHUB_TOKEN }}
+          chainguardIdentity: ${{ secrets.CHAINGUARD_IDENTITY }}
       - name: Deploy Slim Dev Bundle
         # Temp: test the registry1 flavor
         run: uds run slim-dev --set flavor=registry1 --no-progress
