@@ -7,10 +7,11 @@ import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { kind } from "pepr";
 
 import { Component, setupLogger } from "../../../logger";
+import { ClusterConfig } from "../../crd";
 import { reconcileAuthservice } from "../keycloak/authservice/authservice";
 import { initAPIServerCIDR } from "../network/generators/kubeAPI";
 import { initAllNodesTarget } from "../network/generators/kubeNodes";
-import { UDSConfig, updateUDSConfig } from "./config";
+import { UDSConfig, updateCfg, updateCfgSecrets } from "./config";
 
 // Mock dependencies
 
@@ -46,6 +47,7 @@ jest.mock("../../../logger", () => {
 
 describe("updateUDSConfig", () => {
   let mockSecret: kind.Secret;
+  let mockCfg: ClusterConfig;
 
   beforeEach(() => {
     mockSecret = {
@@ -62,6 +64,27 @@ describe("updateUDSConfig", () => {
       },
     };
 
+    mockCfg = {
+      metadata: {
+        name: "uds-cluster-config",
+        namespace: "pepr-system",
+      },
+      spec: {
+        expose: {
+          domain: "mock-domain",
+          adminDomain: "mock-admin-domain",
+          caCert: btoa("mock-ca-cert"),
+        },
+        networking: {
+          kubeapiCIDR: "mock-cidr",
+          kubenodeCIDRS: ["mock-node-cidrs"],
+        },
+        policy: {
+          allowAllNsExemptions: true,
+        },
+      },
+    };
+
     // Reset mocks
     jest.clearAllMocks();
     UDSConfig.caCert = "";
@@ -73,11 +96,16 @@ describe("updateUDSConfig", () => {
     UDSConfig.allowAllNSExemptions = false;
   });
 
-  it("should decode the secret data and update UDSConfig", async () => {
-    await updateUDSConfig(mockSecret);
+  it("handles update to operator-config secret and updates UDSConfig secret values", async () => {
+    await updateCfgSecrets(mockSecret);
+
+    expect(UDSConfig.authserviceRedisUri).toBe("mock-redis-uri");
+  });
+
+  it("handles updates to ClusterConfig and updates UDSConfig", async () => {
+    await updateCfg(mockCfg);
 
     expect(UDSConfig.caCert).toBe(btoa("mock-ca-cert"));
-    expect(UDSConfig.authserviceRedisUri).toBe("mock-redis-uri");
     expect(UDSConfig.kubeApiCidr).toBe("mock-cidr");
     expect(UDSConfig.kubeNodeCidrs).toStrictEqual(["mock-node-cidrs"]);
     expect(UDSConfig.domain).toBe("mock-domain");
@@ -85,16 +113,30 @@ describe("updateUDSConfig", () => {
     expect(UDSConfig.allowAllNSExemptions).toBe(true);
   });
 
-  it("should call reconcileAuthservice if CA Cert or Redis URI changes", async () => {
+  it("calls reconcileAuthservice if CA Cert changes", async () => {
     UDSConfig.caCert = "old-ca-cert";
     UDSConfig.authserviceRedisUri = "old-redis-uri";
 
-    await updateUDSConfig(mockSecret);
+    await updateCfg(mockCfg);
 
     expect(reconcileAuthservice).toHaveBeenCalledWith({
       name: "global-config-update",
       action: expect.any(String),
       trustedCA: "mock-ca-cert",
+      redisUri: UDSConfig.authserviceRedisUri,
+    });
+  });
+
+  it("calls reconcileAuthservice if Redis URI changes", async () => {
+    UDSConfig.caCert = btoa("old-ca-cert");
+    UDSConfig.authserviceRedisUri = "old-redis-uri";
+
+    await updateCfgSecrets(mockSecret);
+
+    expect(reconcileAuthservice).toHaveBeenCalledWith({
+      name: "global-config-update",
+      action: expect.any(String),
+      trustedCA: "old-ca-cert",
       redisUri: "mock-redis-uri",
     });
   });
@@ -102,7 +144,7 @@ describe("updateUDSConfig", () => {
   it("should call initAPIServerCIDR if KUBEAPI_CIDR changes", async () => {
     UDSConfig.kubeApiCidr = "old-cidr";
 
-    await updateUDSConfig(mockSecret);
+    await updateCfg(mockCfg);
 
     expect(initAPIServerCIDR).toHaveBeenCalled();
   });
@@ -110,76 +152,63 @@ describe("updateUDSConfig", () => {
   it("should call initAllNodesTarget if KUBENODE_CIDRS changes", async () => {
     UDSConfig.kubeNodeCidrs = ["old-node-cidrs"];
 
-    await updateUDSConfig(mockSecret);
+    await updateCfg(mockCfg);
 
     expect(initAllNodesTarget).toHaveBeenCalled();
   });
 
-  it("should update domain and adminDomain with fallback values if unset", async () => {
-    if (mockSecret.data) {
-      mockSecret.data.UDS_DOMAIN = btoa("###ZARF_VAR_DOMAIN###");
-      mockSecret.data.UDS_ADMIN_DOMAIN = btoa("###ZARF_VAR_ADMIN_DOMAIN###");
-    }
+  it("updates domain and adminDomain with fallback values if unset", async () => {
+    mockCfg.spec!.expose.domain = "###ZARF_VAR_DOMAIN###";
+    mockCfg.spec!.expose.adminDomain = "###ZARF_VAR_ADMIN_DOMAIN###";
 
-    await updateUDSConfig(mockSecret);
+    await updateCfg(mockCfg);
 
     expect(UDSConfig.domain).toBe("uds.dev");
     expect(UDSConfig.adminDomain).toBe("admin.uds.dev");
   });
 
-  it("should not call unnecessary updates if no values change", async () => {
-    // Set UDSConfig to match mockSecret data
+  it("does not call unnecessary updates if no values change", async () => {
+    // Set UDSConfig to match mockCfg
     UDSConfig.caCert = btoa("mock-ca-cert");
-    UDSConfig.authserviceRedisUri = "mock-redis-uri";
     UDSConfig.kubeApiCidr = "mock-cidr";
     UDSConfig.kubeNodeCidrs = ["mock-node-cidrs"];
     UDSConfig.domain = "mock-domain";
     UDSConfig.adminDomain = "mock-admin-domain";
     UDSConfig.allowAllNSExemptions = true;
 
-    await updateUDSConfig(mockSecret);
+    await updateCfg(mockCfg);
 
     expect(reconcileAuthservice).not.toHaveBeenCalled();
     expect(initAPIServerCIDR).not.toHaveBeenCalled();
     expect(initAllNodesTarget).not.toHaveBeenCalled();
   });
 
-  it("should not call netpol updates if no values change", async () => {
+  it("does not call netpol updates if no values change", async () => {
     // Set mockSecret to match UDSConfig data
-    mockSecret = {
-      data: {
-        UDS_CA_CERT: btoa(btoa("mock-ca-cert")),
-        AUTHSERVICE_REDIS_URI: btoa("mock-redis-uri"),
-        KUBEAPI_CIDR: "",
-        KUBENODE_CIDRS: "",
-        UDS_DOMAIN: btoa("mock-domain"),
-        UDS_ADMIN_DOMAIN: btoa("mock-admin-domain"),
-        UDS_ALLOW_ALL_NS_EXEMPTIONS: btoa("true"),
-      },
-    };
-    await updateUDSConfig(mockSecret);
+    mockCfg.spec!.networking!.kubeapiCIDR = "";
+    mockCfg.spec!.networking!.kubenodeCIDRS = [];
+
+    await updateCfg(mockCfg);
 
     expect(initAPIServerCIDR).not.toHaveBeenCalled();
     expect(initAllNodesTarget).not.toHaveBeenCalled();
   });
 
-  it("should set caCert to an empty string if the value is a placeholder", async () => {
-    if (mockSecret.data) {
-      mockSecret.data.UDS_CA_CERT = btoa("###ZARF_VAR_CA_CERT###");
-    }
-    await updateUDSConfig(mockSecret);
+  it("sets caCert to an empty string if the value is a placeholder", async () => {
+    mockCfg.spec!.expose.caCert = "###ZARF_VAR_CA_CERT###";
+
+    await updateCfg(mockCfg);
     expect(UDSConfig.caCert).toBe("");
   });
 
-  it("should log an error and set caCert to an empty string if the value is not valid base64", async () => {
-    if (mockSecret.data) {
-      mockSecret.data.UDS_CA_CERT = btoa("invalid-base64");
-    }
+  it("logs an error and set caCert to an empty string if the value is not valid base64", async () => {
+    mockCfg.spec!.expose.caCert = "invalid-base64";
+
     const mockLogger = setupLogger(Component.OPERATOR_CONFIG);
 
-    await updateUDSConfig(mockSecret);
+    await updateCfg(mockCfg);
     expect(mockLogger.error).toHaveBeenCalledWith(
-      expect.stringContaining("Invalid CA Cert provided in uds-operator-config secret"),
+      expect.stringContaining("Invalid CA Cert provided in uds-operator-config ClusterConfig"),
     );
     expect(UDSConfig.caCert).toBe("");
   });

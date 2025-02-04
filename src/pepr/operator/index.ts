@@ -22,13 +22,13 @@ import {
 } from "./controllers/network/generators/kubeNodes";
 
 // CRD imports
-import { UDSExemption, UDSPackage } from "./crd";
+import { ClusterConfig, UDSExemption, UDSPackage } from "./crd";
 import { validator } from "./crd/validators/package-validator";
 
 // Reconciler imports
 
 import { Component, setupLogger } from "../logger";
-import { UDSConfig, updateUDSConfig } from "./controllers/config/config";
+import { UDSConfig, updateCfg, updateCfgSecrets } from "./controllers/config/config";
 import { exemptValidator } from "./crd/validators/exempt-validator";
 import { packageFinalizer, packageReconciler } from "./reconcilers/package-reconciler";
 
@@ -113,4 +113,10 @@ When(a.Secret)
   .IsUpdated()
   .InNamespace("pepr-system")
   .WithName("uds-operator-config")
-  .Reconcile(updateUDSConfig);
+  .Reconcile(updateCfgSecrets);
+// Watch UDS ClusterConfig and handle changes
+When(ClusterConfig)
+  .IsUpdated()
+  .InNamespace("pepr-system")
+  .WithName("uds-cluster-config")
+  .Reconcile(updateCfg);
