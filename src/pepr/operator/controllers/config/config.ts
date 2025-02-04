@@ -6,7 +6,7 @@
 import { K8s, kind } from "pepr";
 import { Component, setupLogger } from "../../../logger";
 import { ClusterConfig } from "../../crd";
-import { validateCfgCreate } from "../../crd/validators/clusterconfig-validator";
+import { validateCfg } from "../../crd/validators/clusterconfig-validator";
 import { reconcileAuthservice } from "../keycloak/authservice/authservice";
 import { Action, AuthServiceEvent } from "../keycloak/authservice/types";
 import { initAPIServerCIDR } from "../network/generators/kubeAPI";
@@ -148,8 +148,14 @@ export async function loadUDSConfig() {
       throw new Error("No ClusterConfig found");
     }
 
+    if (cfgList.items.length > 1) {
+      throw new Error(
+        `ClusterConfig Processing: only one ClusterConfig is allowed -- found: ${cfgList.items.length}`,
+      );
+    }
+
     try {
-      await validateCfgCreate(cfgList);
+      await validateCfg(cfgList);
       setConfig(cfgList.items[0]);
     } catch (e) {
       configLog.error(e);

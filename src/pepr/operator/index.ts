@@ -29,6 +29,7 @@ import { validator } from "./crd/validators/package-validator";
 
 import { Component, setupLogger } from "../logger";
 import { UDSConfig, updateCfg, updateCfgSecrets } from "./controllers/config/config";
+import { validateCfgUpdate } from "./crd/validators/clusterconfig-validator";
 import { exemptValidator } from "./crd/validators/exempt-validator";
 import { packageFinalizer, packageReconciler } from "./reconcilers/package-reconciler";
 
@@ -119,4 +120,5 @@ When(ClusterConfig)
   .IsUpdated()
   .InNamespace("pepr-system")
   .WithName("uds-cluster-config")
+  .Validate(validateCfgUpdate)
   .Reconcile(updateCfg);

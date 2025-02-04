@@ -3,29 +3,32 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { KubernetesListObject } from "kubernetes-fluent-client";
 import { PeprValidateRequest } from "pepr";
 import { ClusterConfig } from "../generated/clusterconfig-v1alpha1";
 
 export async function validateCfgUpdate(req: PeprValidateRequest<ClusterConfig>) {
-  // check helm annotations ?
-  // check no other clusterconfig exists ?
+  try {
+    validateCfg(req.Raw);
+  } catch (e) {
+    return req.Deny(`Failed to validate UDSConfig update: ${e}`);
+  }
 
   return req.Approve();
 }
 
-export async function validateCfgCreate(config: KubernetesListObject<ClusterConfig>) {
-  if (config.items.length > 1) {
-    throw new Error(
-      `ClusterConfig Processing: only one ClusterConfig is allowed -- found: ${config.items.length}`,
-    );
-  }
-
-  const cfg = config.items[0];
-
+export async function validateCfg(cfg: ClusterConfig) {
   if (cfg.metadata?.namespace !== "pepr-system" && cfg.metadata?.name !== "uds-cluster-config") {
-    throw new Error("ClusterConfig Processing: namespace or name is invalid");
+    throw new Error("ClusterConfig Validation: namespace or name is invalid");
   }
 
-  return true;
+  // Validate that the cacert is base64 encoded
+  if (cfg.spec?.expose.caCert) {
+    try {
+      atob(cfg.spec?.expose.caCert);
+    } catch (e) {
+      throw new Error(
+        "ClusterConfig Validation: caCert must be base64 encoded -- found invalid value",
+      );
+    }
+  }
 }
