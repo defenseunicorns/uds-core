@@ -5,9 +5,11 @@
 
 import { beforeEach, describe, expect, jest, test } from "@jest/globals";
 import { UDSPackage } from "../../../crd";
+import { setConfig } from "../../config/config";
 import { Client } from "../types";
 import { updatePolicy } from "./authorization-policy";
 import { buildChain, buildConfig } from "./authservice";
+import { initializeOperatorConfig } from "./config";
 import * as mockConfig from "./mock-authservice-config.json";
 import { Action, AuthServiceEvent, AuthserviceConfig } from "./types";
 
@@ -44,6 +46,9 @@ describe("authservice", () => {
       surrogateAuthRequired: false,
       webOrigins: [],
     };
+
+    setConfig({ domain: "uds.dev" });
+    initializeOperatorConfig();
   });
 
   test("should update redis session store config to add value", async () => {

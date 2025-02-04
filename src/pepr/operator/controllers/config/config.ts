@@ -11,10 +11,10 @@ import { reconcileAuthservice } from "../keycloak/authservice/authservice";
 import { Action, AuthServiceEvent } from "../keycloak/authservice/types";
 import { initAPIServerCIDR } from "../network/generators/kubeAPI";
 import { initAllNodesTarget } from "../network/generators/kubeNodes";
+import { Config } from "./types";
 
-export const configLog = setupLogger(Component.CONFIG);
-
-export let UDSConfig: UDSConfig = {
+// Set default UDSConfig for build time compiling
+export let UDSConfig: Config = {
   domain: "",
   adminDomain: "",
   caCert: "",
@@ -25,22 +25,10 @@ export let UDSConfig: UDSConfig = {
   isIdentityDeployed: false,
 };
 
-type UDSConfig = {
-  domain: string;
-  adminDomain: string;
-  caCert: string;
-  authserviceRedisUri: string | undefined;
-  allowAllNSExemptions: boolean;
-  kubeApiCidr: string | undefined;
-  kubeNodeCidrs: string[];
-  isIdentityDeployed: boolean;
-};
-
-// configure subproject logger
-const log = setupLogger(Component.OPERATOR_CONFIG);
+export const configLog = setupLogger(Component.CONFIG);
 
 export async function updateUDSConfig(config: kind.Secret) {
-  log.info("Updating UDS Config from uds-operator-config secret change");
+  configLog.info("Updating UDS Config from uds-operator-config secret change");
 
   // Base64 decode the secret data
   const decodedConfigData: { [key: string]: string } = {};
@@ -53,7 +41,7 @@ export async function updateUDSConfig(config: kind.Secret) {
         decodedConfigData[key] = "";
       }
     } catch (e) {
-      log.error(`Failed to decode secret key: ${key}, error: ${e.message}`);
+      configLog.error(`Failed to decode secret key: ${key}, error: ${e.message}`);
     }
   }
 
@@ -80,7 +68,7 @@ export async function updateUDSConfig(config: kind.Secret) {
       try {
         atob(UDSConfig.caCert);
       } catch (e) {
-        log.error(
+        configLog.error(
           "Invalid CA Cert provided in uds-operator-config secret, falling back to no CA Cert",
         );
         UDSConfig.caCert = "";
@@ -94,7 +82,7 @@ export async function updateUDSConfig(config: kind.Secret) {
       trustedCA: atob(UDSConfig.caCert),
       redisUri: UDSConfig.authserviceRedisUri,
     };
-    log.debug("Updating Authservice secret based on change to CA Cert or Redis URI");
+    configLog.debug("Updating Authservice secret based on change to CA Cert or Redis URI");
     await reconcileAuthservice(authserviceUpdate);
   }
 
@@ -102,7 +90,7 @@ export async function updateUDSConfig(config: kind.Secret) {
   if (decodedConfigData.KUBEAPI_CIDR !== UDSConfig.kubeApiCidr) {
     UDSConfig.kubeApiCidr = decodedConfigData.KUBEAPI_CIDR;
     // This re-runs the "init" function to update netpols if necessary
-    log.debug("Updating KubeAPI network policies based on change to kubeApiCidr");
+    configLog.debug("Updating KubeAPI network policies based on change to kubeApiCidr");
     await initAPIServerCIDR();
   }
 
@@ -110,7 +98,7 @@ export async function updateUDSConfig(config: kind.Secret) {
   if (decodedConfigData.KUBENODE_CIDRS !== UDSConfig.kubeNodeCidrs.join(",")) {
     UDSConfig.kubeNodeCidrs = decodedConfigData.KUBENODE_CIDRS.split(",");
     // This re-runs the "init" function to update netpols if necessary
-    log.debug("Updating KubeNodes network policies based on change to kubeNodeCidrs");
+    configLog.debug("Updating KubeNodes network policies based on change to kubeNodeCidrs");
     await initAllNodesTarget();
   }
 
@@ -132,7 +120,7 @@ export async function updateUDSConfig(config: kind.Secret) {
   // Update other config values (no need for special handling)
   UDSConfig.allowAllNSExemptions = decodedConfigData.UDS_ALLOW_ALL_NS_EXEMPTIONS === "true";
 
-  log.info("Updated UDS Config based on uds-operator-config secret changes");
+  configLog.info("Updated UDS Config based on uds-operator-config secret changes");
 }
 
 export async function loadUDSConfig() {
@@ -149,10 +137,10 @@ export async function loadUDSConfig() {
   }
 }
 
-function setConfig(cfg: ClusterConfig) {
-  let domain = cfg.spec?.expose?.domain;
-  let adminDomain = cfg.spec?.expose?.adminDomain;
-  let caCert = cfg.spec?.expose?.caCert;
+export function setConfig(cfg: ClusterConfig) {
+  let domain = cfg.spec?.expose.domain;
+  let adminDomain = cfg.spec?.expose.adminDomain;
+  let caCert = cfg.spec?.expose.caCert;
   let authserviceRedisUri = process.env.AUTHSERVICE_REDIS_URI;
 
   // We need to handle `npx pepr <>` commands that will not template the env vars

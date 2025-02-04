@@ -13,17 +13,6 @@ import { initAllNodesTarget } from "../network/generators/kubeNodes";
 import { UDSConfig, updateUDSConfig } from "./config";
 
 // Mock dependencies
-jest.mock("../../../config", () => ({
-  UDSConfig: {
-    caCert: "",
-    authserviceRedisUri: "",
-    kubeApiCidr: "",
-    kubeNodeCidrs: "",
-    domain: "",
-    adminDomain: "",
-    allowAllNSExemptions: false,
-  },
-}));
 
 jest.mock("../keycloak/authservice/authservice", () => ({
   reconcileAuthservice: jest.fn(),
@@ -90,7 +79,7 @@ describe("updateUDSConfig", () => {
     expect(UDSConfig.caCert).toBe(btoa("mock-ca-cert"));
     expect(UDSConfig.authserviceRedisUri).toBe("mock-redis-uri");
     expect(UDSConfig.kubeApiCidr).toBe("mock-cidr");
-    expect(UDSConfig.kubeNodeCidrs).toBe("mock-node-cidrs");
+    expect(UDSConfig.kubeNodeCidrs).toStrictEqual(["mock-node-cidrs"]);
     expect(UDSConfig.domain).toBe("mock-domain");
     expect(UDSConfig.adminDomain).toBe("mock-admin-domain");
     expect(UDSConfig.allowAllNSExemptions).toBe(true);
