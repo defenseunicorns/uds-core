@@ -4,8 +4,6 @@ title: Istio Ingress
 
 UDS Core leverages Istio for ingress into the service mesh. This document provides an overview and examples of the Istio resources that UDS Core deploys to handle ingress.
 
-![UDS Core Ingress / Egress](https://github.com/defenseunicorns/uds-core/blob/main/docs/.images/diagrams/uds-core-arch-ports-protocols.svg?raw=true)
-
 ## Gateways
 
 UDS Core provides a few Istio [Gateway](https://istio.io/latest/docs/reference/config/networking/gateway/) resources to allow ingress into the service mesh. Each one serves a different purpose and can be used to route traffic to different services.

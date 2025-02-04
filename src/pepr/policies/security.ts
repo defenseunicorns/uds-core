@@ -162,7 +162,7 @@ When(a.Pod)
       return request.Deny(
         securityContextMessage(
           "Unauthorized container securityContext. Containers must not run as root",
-          ["runAsNonRoot = false", "runAsUser > 0"],
+          ["runAsNonRoot = true", "runAsUser > 0"],
           violations,
         ),
       );

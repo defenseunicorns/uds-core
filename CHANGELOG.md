@@ -2,6 +2,45 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.35.0](https://github.com/defenseunicorns/uds-core/compare/v0.34.1...v0.35.0) (2025-02-03)
+
+
+### Features
+
+* add logic to handle updates to operator config ([#1186](https://github.com/defenseunicorns/uds-core/issues/1186)) ([004e8b4](https://github.com/defenseunicorns/uds-core/commit/004e8b4114a46869488e7412d6f2d7201f83acd3))
+* optional istio cni ztunnel component ([#1175](https://github.com/defenseunicorns/uds-core/issues/1175)) ([e003924](https://github.com/defenseunicorns/uds-core/commit/e00392484e9d43ee2d33be531ed11e8836b5b545))
+
+
+### Bug Fixes
+
+* add healthz port to neuvector services ([#1223](https://github.com/defenseunicorns/uds-core/issues/1223)) ([ec55729](https://github.com/defenseunicorns/uds-core/commit/ec55729692c753f1ec983d3ea38fb627ca9557e1))
+* add patch for adding nv enforcer readiness probe ([#1239](https://github.com/defenseunicorns/uds-core/issues/1239)) ([098ef3d](https://github.com/defenseunicorns/uds-core/commit/098ef3df502bbebf3ec3c57d6f3fede825877540))
+* address AKS ci flakiness ([#1238](https://github.com/defenseunicorns/uds-core/issues/1238)) ([262ba3e](https://github.com/defenseunicorns/uds-core/commit/262ba3edc07dfd398b11838dc167786378bcab36))
+* checkpoint ci issue ([#1234](https://github.com/defenseunicorns/uds-core/issues/1234)) ([548ff6a](https://github.com/defenseunicorns/uds-core/commit/548ff6af3eec1a2c03438bfdf9e2f9301997aefb))
+* denied user permissions policy messaging ([#1227](https://github.com/defenseunicorns/uds-core/issues/1227)) ([1ccf4f7](https://github.com/defenseunicorns/uds-core/commit/1ccf4f7bce2cc09a74a2bb5e28a894900440d4a7))
+* istio package no longer assumes pepr deployments exist ([#1232](https://github.com/defenseunicorns/uds-core/issues/1232)) ([ab11592](https://github.com/defenseunicorns/uds-core/commit/ab115926cf07a5c0bfe52d25df0791cd99d9d78e))
+
+
+### Miscellaneous
+
+* **ci:** disable rds parameter group creation ([#1230](https://github.com/defenseunicorns/uds-core/issues/1230)) ([b4cb499](https://github.com/defenseunicorns/uds-core/commit/b4cb49946096acacda544a953960740494664dd1))
+* **deps:** update authservice to v1.0.4 ([#1211](https://github.com/defenseunicorns/uds-core/issues/1211)) ([da4d043](https://github.com/defenseunicorns/uds-core/commit/da4d043b56cd7aa746838f432da8e7501469f1d7))
+* **deps:** update grafana ([#1213](https://github.com/defenseunicorns/uds-core/issues/1213)) ([54ddd23](https://github.com/defenseunicorns/uds-core/commit/54ddd2329ee3812f797588d644b9f099186a0357))
+* **deps:** update pepr ([#1197](https://github.com/defenseunicorns/uds-core/issues/1197)) ([652c925](https://github.com/defenseunicorns/uds-core/commit/652c925629a89408fd69f46b9933a8bc4bc15bc9))
+* **deps:** update prometheus-stack ([#1189](https://github.com/defenseunicorns/uds-core/issues/1189)) ([e02c14c](https://github.com/defenseunicorns/uds-core/commit/e02c14c5a77260021510873b318bca4b1bf9ad3c))
+* **deps:** update support-deps ([#1204](https://github.com/defenseunicorns/uds-core/issues/1204)) ([d477f6a](https://github.com/defenseunicorns/uds-core/commit/d477f6a0cccaaa15939e59df20cf1f7abc888f08))
+* **deps:** update support-deps ([#1243](https://github.com/defenseunicorns/uds-core/issues/1243)) ([d4179ae](https://github.com/defenseunicorns/uds-core/commit/d4179ae3dd8555b08c6866f7e1aedacf47811246))
+* **deps:** update support-deps to v1.50.1 ([#1241](https://github.com/defenseunicorns/uds-core/issues/1241)) ([6c14208](https://github.com/defenseunicorns/uds-core/commit/6c1420875d3e91d665e6f375c0c712fcf896bc55))
+* **docs:** cleanup diagrams ([#1246](https://github.com/defenseunicorns/uds-core/issues/1246)) ([f6bffb9](https://github.com/defenseunicorns/uds-core/commit/f6bffb9aae7d5439d57b85ec9c96af0d1c7b0caf))
+* **main:** release 0.35.0 ([#1219](https://github.com/defenseunicorns/uds-core/issues/1219)) ([c31c608](https://github.com/defenseunicorns/uds-core/commit/c31c60881f8f00c08aadf12fb8f6a0d2373ea8ad))
+* switch registry1 ztunnel to proper source ([#1249](https://github.com/defenseunicorns/uds-core/issues/1249)) ([defa586](https://github.com/defenseunicorns/uds-core/commit/defa586defac4b18fb2e9f09f18c50258322e12f))
+* switch unicorn ztunnel to fips image ([#1240](https://github.com/defenseunicorns/uds-core/issues/1240)) ([dd63ac6](https://github.com/defenseunicorns/uds-core/commit/dd63ac6457e525e1f3794e7539a272780f8ae561))
+
+
+### Documentation
+
+* add documentation on metrics/dashboards for apps ([#1221](https://github.com/defenseunicorns/uds-core/issues/1221)) ([d9062da](https://github.com/defenseunicorns/uds-core/commit/d9062da0e653a9148c60c8be9a30a88095038737))
+
 ## [0.34.1](https://github.com/defenseunicorns/uds-core/compare/v0.34.0...v0.34.1) (2025-01-21)
 
 
