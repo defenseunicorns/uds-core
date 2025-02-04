@@ -6,7 +6,8 @@
 import { afterEach, describe, expect, it, jest } from "@jest/globals";
 import { PeprValidateRequest } from "pepr";
 import { MatcherKind, UDSExemption } from "..";
-import { UDSConfig } from "../../../config";
+
+import { UDSConfig } from "../../controllers/config/config";
 import { ExemptionElement, Policy } from "../generated/exemption-v1alpha1";
 import { exemptValidator } from "./exempt-validator";
 

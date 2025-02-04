@@ -3,15 +3,14 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { KubernetesListObject } from "@kubernetes/client-node";
-import { V1NetworkPolicyPeer, V1NodeAddress } from "@kubernetes/client-node";
+import { KubernetesListObject, V1NetworkPolicyPeer, V1NodeAddress } from "@kubernetes/client-node";
 import { K8s, kind, R } from "pepr";
 
 import { Component, setupLogger } from "../../../../logger";
 import { RemoteGenerated } from "../../../crd";
-import { anywhere } from "./anywhere";
-import { UDSConfig } from "../../../../config";
+import { UDSConfig } from "../../config/config";
 import { retryWithDelay } from "../../utils";
+import { anywhere } from "./anywhere";
 
 const log = setupLogger(Component.OPERATOR_GENERATORS);
 
@@ -24,9 +23,8 @@ const nodeSet = new Set<string>();
  */
 export async function initAllNodesTarget() {
   // if a list of CIDRs is defined, use those
-  if (UDSConfig.kubeNodeCidrs) {
-    const nodeCidrs = UDSConfig.kubeNodeCidrs.split(",");
-    for (const nodeCidr of nodeCidrs) {
+  if (UDSConfig.kubeNodeCidrs.length > 0) {
+    for (const nodeCidr of UDSConfig.kubeNodeCidrs) {
       nodeSet.add(nodeCidr);
     }
     await updateKubeNodesNetworkPolicies();
@@ -138,7 +136,7 @@ export async function updateKubeNodesNetworkPolicies() {
         await K8s(kind.NetworkPolicy).Apply(netPol, { force: true });
       } catch (err) {
         let message = err.data?.message || "Unknown error while applying KubeNode network policies";
-        if (UDSConfig.kubeNodeCidrs) {
+        if (UDSConfig.kubeNodeCidrs.length > 0) {
           message +=
             ", ensure that the KUBENODE_CIDRS override configured for the operator is correct.";
         }

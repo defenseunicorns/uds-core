@@ -5,7 +5,8 @@
 
 import { createHash } from "crypto";
 import { K8s, kind } from "pepr";
-import { UDSConfig } from "../../../../config";
+
+import { UDSConfig } from "../../config/config";
 import { Client } from "../types";
 import { buildChain, log } from "./authservice";
 import { Action, AuthserviceConfig } from "./types";
@@ -30,13 +31,16 @@ let debounceTimer: NodeJS.Timeout | null = null;
 // Debounce duration (1 seconds) to reduce excessive updates, configurable via environment variable
 const DEBOUNCE_DURATION = parseInt(process.env.DEBOUNCE_DURATION || "1000", 10);
 
-export const operatorConfig = {
-  namespace: "authservice",
-  secretName: "authservice-uds",
-  baseDomain: `https://sso.${UDSConfig.domain}`,
-  realm: "uds",
-};
+export let operatorConfig: Record<string, string> = {};
 
+export function initializeOperatorConfig() {
+  operatorConfig = {
+    namespace: "authservice",
+    secretName: "authservice-uds",
+    baseDomain: `https://sso.${UDSConfig.domain}`,
+    realm: "uds",
+  };
+}
 /**
  * Sets up the initial authservice secret in the Kubernetes cluster.
  * If in dev mode, it ensures the namespace exists and initializes
@@ -44,6 +48,9 @@ export const operatorConfig = {
  */
 export async function setupAuthserviceSecret() {
   if (process.env.PEPR_WATCH_MODE === "true" || process.env.PEPR_MODE === "dev") {
+    // Initialize the operator config
+    initializeOperatorConfig();
+
     log.info("One-time authservice secret initialization");
     // Ensure the namespace exists in the Kubernetes cluster
     await K8s(kind.Namespace).Apply({
@@ -197,7 +204,9 @@ export async function updateAuthServiceSecret(
     debounceTimer = setTimeout(async () => {
       try {
         log.info(
-          `Applying debounced secret update for packages: ${Array.from(pendingPackages.keys()).length} pending packages`,
+          `Applying debounced secret update for packages: ${
+            Array.from(pendingPackages.keys()).length
+          } pending packages`,
         );
 
         // Prepare the config to be written (assumes that all packages share the same secret)

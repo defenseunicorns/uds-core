@@ -5,12 +5,12 @@
 
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { kind } from "pepr";
-import { UDSConfig } from "../../../config";
+
 import { Component, setupLogger } from "../../../logger";
 import { reconcileAuthservice } from "../keycloak/authservice/authservice";
 import { initAPIServerCIDR } from "../network/generators/kubeAPI";
 import { initAllNodesTarget } from "../network/generators/kubeNodes";
-import { updateUDSConfig } from "./config";
+import { UDSConfig, updateUDSConfig } from "./config";
 
 // Mock dependencies
 jest.mock("../../../config", () => ({
@@ -78,7 +78,7 @@ describe("updateUDSConfig", () => {
     UDSConfig.caCert = "";
     UDSConfig.authserviceRedisUri = "";
     UDSConfig.kubeApiCidr = "";
-    UDSConfig.kubeNodeCidrs = "";
+    UDSConfig.kubeNodeCidrs = [];
     UDSConfig.domain = "";
     UDSConfig.adminDomain = "";
     UDSConfig.allowAllNSExemptions = false;
@@ -119,7 +119,7 @@ describe("updateUDSConfig", () => {
   });
 
   it("should call initAllNodesTarget if KUBENODE_CIDRS changes", async () => {
-    UDSConfig.kubeNodeCidrs = "old-node-cidrs";
+    UDSConfig.kubeNodeCidrs = ["old-node-cidrs"];
 
     await updateUDSConfig(mockSecret);
 
@@ -143,7 +143,7 @@ describe("updateUDSConfig", () => {
     UDSConfig.caCert = btoa("mock-ca-cert");
     UDSConfig.authserviceRedisUri = "mock-redis-uri";
     UDSConfig.kubeApiCidr = "mock-cidr";
-    UDSConfig.kubeNodeCidrs = "mock-node-cidrs";
+    UDSConfig.kubeNodeCidrs = ["mock-node-cidrs"];
     UDSConfig.domain = "mock-domain";
     UDSConfig.adminDomain = "mock-admin-domain";
     UDSConfig.allowAllNSExemptions = true;

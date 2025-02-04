@@ -4,16 +4,37 @@
  */
 
 import { K8s, kind } from "pepr";
-import { UDSConfig } from "../../../config";
 import { Component, setupLogger } from "../../../logger";
 import { ClusterConfig } from "../../crd";
-import { validateConfigCreate } from "../../crd/validators/clusterconfig-validator";
+import { validateCfgCreate } from "../../crd/validators/clusterconfig-validator";
 import { reconcileAuthservice } from "../keycloak/authservice/authservice";
 import { Action, AuthServiceEvent } from "../keycloak/authservice/types";
 import { initAPIServerCIDR } from "../network/generators/kubeAPI";
 import { initAllNodesTarget } from "../network/generators/kubeNodes";
 
 export const configLog = setupLogger(Component.CONFIG);
+
+export let UDSConfig: UDSConfig = {
+  domain: "",
+  adminDomain: "",
+  caCert: "",
+  authserviceRedisUri: "",
+  allowAllNSExemptions: false,
+  kubeApiCidr: "",
+  kubeNodeCidrs: [],
+  isIdentityDeployed: false,
+};
+
+type UDSConfig = {
+  domain: string;
+  adminDomain: string;
+  caCert: string;
+  authserviceRedisUri: string | undefined;
+  allowAllNSExemptions: boolean;
+  kubeApiCidr: string | undefined;
+  kubeNodeCidrs: string[];
+  isIdentityDeployed: boolean;
+};
 
 // configure subproject logger
 const log = setupLogger(Component.OPERATOR_CONFIG);
@@ -86,8 +107,8 @@ export async function updateUDSConfig(config: kind.Secret) {
   }
 
   // Handle changes to the kubeNodeCidrs
-  if (decodedConfigData.KUBENODE_CIDRS !== UDSConfig.kubeNodeCidrs) {
-    UDSConfig.kubeNodeCidrs = decodedConfigData.KUBENODE_CIDRS;
+  if (decodedConfigData.KUBENODE_CIDRS !== UDSConfig.kubeNodeCidrs.join(",")) {
+    UDSConfig.kubeNodeCidrs = decodedConfigData.KUBENODE_CIDRS.split(",");
     // This re-runs the "init" function to update netpols if necessary
     log.debug("Updating KubeNodes network policies based on change to kubeNodeCidrs");
     await initAllNodesTarget();
@@ -119,10 +140,57 @@ export async function loadUDSConfig() {
     const cfgList = await K8s(ClusterConfig).InNamespace("pepr-system").Get();
     configLog.info({}, "validating ClusterConfig");
     try {
-      await validateConfigCreate(cfgList);
+      await validateCfgCreate(cfgList);
+      setConfig(cfgList.items[0]);
     } catch (e) {
       configLog.error(e);
       throw e;
     }
   }
+}
+
+function setConfig(cfg: ClusterConfig) {
+  let domain = cfg.spec?.expose?.domain;
+  let adminDomain = cfg.spec?.expose?.adminDomain;
+  let caCert = cfg.spec?.expose?.caCert;
+  let authserviceRedisUri = process.env.AUTHSERVICE_REDIS_URI;
+
+  // We need to handle `npx pepr <>` commands that will not template the env vars
+  if (!domain || domain === "###ZARF_VAR_DOMAIN###") {
+    domain = "uds.dev";
+  }
+  if (!adminDomain || adminDomain === "###ZARF_VAR_ADMIN_DOMAIN###") {
+    adminDomain = `admin.${domain}`;
+  }
+  if (!caCert || caCert === "###ZARF_VAR_CA_CERT###") {
+    caCert = "";
+  }
+  if (!authserviceRedisUri || authserviceRedisUri === "###ZARF_VAR_AUTHSERVICE_REDIS_URI###") {
+    authserviceRedisUri = "";
+  }
+
+  UDSConfig = {
+    // Set the base domain (tenant) and admin domain
+    domain,
+    adminDomain,
+    // Base64 Encoded Trusted CA cert for Istio certificates (i.e. for `sso.domain`)
+    caCert,
+
+    // Allow UDS policy exemptions to be used in any namespace
+    allowAllNSExemptions: cfg.spec?.policy.allowAllNsExemptions === true,
+
+    // Redis URI for Authservice
+    authserviceRedisUri,
+
+    // Static CIDR range to use for KubeAPI instead of k8s watch
+    kubeApiCidr: cfg.spec?.networking?.kubeapiCIDR || "",
+
+    // Static CIDRs to use for KubeNodes instead of k8s watch. Comma separated list of CIDRs.
+    kubeNodeCidrs: cfg.spec?.networking?.kubenodeCIDRS || [],
+
+    // Track if UDS Core identity-authorization layer is deployed
+    isIdentityDeployed: false,
+  };
+
+  configLog.info(UDSConfig, "Loaded UDS Config");
 }

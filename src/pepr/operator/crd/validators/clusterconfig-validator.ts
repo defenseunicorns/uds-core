@@ -7,14 +7,14 @@ import { KubernetesListObject } from "kubernetes-fluent-client";
 import { PeprValidateRequest } from "pepr";
 import { ClusterConfig } from "../generated/clusterconfig-v1alpha1";
 
-export async function validateConfigUpdate(req: PeprValidateRequest<ClusterConfig>) {
+export async function validateCfgUpdate(req: PeprValidateRequest<ClusterConfig>) {
   // check helm annotations ?
   // check no other clusterconfig exists ?
 
   return req.Approve();
 }
 
-export async function validateConfigCreate(config: KubernetesListObject<ClusterConfig>) {
+export async function validateCfgCreate(config: KubernetesListObject<ClusterConfig>) {
   if (config.items.length > 1) {
     throw new Error(
       `ClusterConfig Processing: only one ClusterConfig is allowed -- found: ${config.items.length}`,

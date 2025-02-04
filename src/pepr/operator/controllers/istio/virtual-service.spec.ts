@@ -4,8 +4,9 @@
  */
 
 import { describe, expect, it } from "@jest/globals";
-import { UDSConfig } from "../../../config";
+
 import { Expose, Gateway } from "../../crd";
+import { UDSConfig } from "../config/config";
 import { generateVirtualService } from "./virtual-service";
 
 describe("test generate virtual service", () => {

@@ -26,9 +26,9 @@ import { UDSExemption, UDSPackage } from "./crd";
 import { validator } from "./crd/validators/package-validator";
 
 // Reconciler imports
-import { UDSConfig } from "../config";
+
 import { Component, setupLogger } from "../logger";
-import { updateUDSConfig } from "./controllers/config/config";
+import { UDSConfig, updateUDSConfig } from "./controllers/config/config";
 import { exemptValidator } from "./crd/validators/exempt-validator";
 import { packageFinalizer, packageReconciler } from "./reconcilers/package-reconciler";
 
@@ -99,12 +99,12 @@ When(UDSPackage)
   });
 
 // Watch for changes to the Nodes and update the Node CIDR list
-if (!UDSConfig.kubeNodeCidrs) {
+if (UDSConfig.kubeNodeCidrs.length === 0) {
   When(a.Node).IsCreatedOrUpdated().Reconcile(updateKubeNodesFromCreateUpdate);
 }
 
 // Watch for Node deletions and update the Node CIDR list
-if (!UDSConfig.kubeNodeCidrs) {
+if (UDSConfig.kubeNodeCidrs.length === 0) {
   When(a.Node).IsDeleted().Reconcile(updateKubeNodesFromDelete);
 }
 

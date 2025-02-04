@@ -4,8 +4,9 @@
  */
 
 import { handleFailure, shouldSkip, updateStatus, writeEvent } from ".";
-import { UDSConfig } from "../../config";
+
 import { Component, setupLogger } from "../../logger";
+import { UDSConfig } from "../controllers/config/config";
 import { cleanupNamespace, enableInjection } from "../controllers/istio/injection";
 import { istioResources } from "../controllers/istio/istio-resources";
 import {

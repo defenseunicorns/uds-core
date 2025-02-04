@@ -4,13 +4,14 @@
  */
 
 import { K8s } from "pepr";
-import { UDSConfig } from "../../../../config";
+
 import {
   IstioAction,
   IstioAuthorizationPolicy,
   IstioRequestAuthentication,
   UDSPackage,
 } from "../../../crd";
+import { UDSConfig } from "../../config/config";
 import { getOwnerRef, purgeOrphans, sanitizeResourceName } from "../../utils";
 import { log } from "./authservice";
 import { AddOrRemoveClientEvent, Action as AuthServiceAction } from "./types";
