@@ -73,6 +73,7 @@ function getPeers(policy: Allow): V1NetworkPolicyPeer[] {
 export function generate(namespace: string, policy: Allow): kind.NetworkPolicy {
   // Generate a unique name for the NetworkPolicy
   const name = generateName(policy);
+  const ambientMode = true;
 
   // Create the NetworkPolicy
   const generated: kind.NetworkPolicy = {
@@ -114,6 +115,12 @@ export function generate(namespace: string, policy: Allow): kind.NetworkPolicy {
     ports.push({
       port: policy.port,
     });
+    // Check if ambient is enabled, if so traffic will be on the ztunnel port
+    if (ambientMode) {
+      ports.push({
+        port: 15008,
+      })
+    }
   }
 
   // Add the ingress or egress rule

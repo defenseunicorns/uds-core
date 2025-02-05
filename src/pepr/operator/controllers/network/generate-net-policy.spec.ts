@@ -6,7 +6,7 @@
 import { describe, expect, it } from "@jest/globals";
 import { kind } from "pepr";
 import { Direction } from "../../crd";
-import { generate } from "./generate";
+import { generate } from "./generate-net-policy";
 
 describe("network policy generate", () => {
   it("should generate correct network policy", async () => {

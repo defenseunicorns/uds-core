@@ -8,7 +8,7 @@ import { PeprValidateRequest } from "pepr";
 import { Gateway, Protocol, UDSPackage } from "..";
 import { generateVSName } from "../../controllers/istio/virtual-service";
 import { generateMonitorName } from "../../controllers/monitoring/common";
-import { generateName } from "../../controllers/network/generate";
+import { generateName } from "../../controllers/network/generate-net-policy";
 import { sanitizeResourceName } from "../../controllers/utils";
 import { Kind } from "../../crd/generated/package-v1alpha1";
 import { migrate } from "../migrate";

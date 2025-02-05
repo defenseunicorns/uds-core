@@ -13,7 +13,7 @@ import { allowEgressDNS } from "./defaults/allow-egress-dns";
 import { allowEgressIstiod } from "./defaults/allow-egress-istiod";
 import { allowIngressSidecarMonitoring } from "./defaults/allow-ingress-sidecar-monitoring";
 import { defaultDenyAll } from "./defaults/default-deny-all";
-import { generate } from "./generate";
+import { generate } from "./generate-net-policy";
 
 // configure subproject logger
 const log = setupLogger(Component.OPERATOR_NETWORK);

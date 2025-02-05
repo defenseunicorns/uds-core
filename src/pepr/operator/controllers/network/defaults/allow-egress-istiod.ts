@@ -4,7 +4,7 @@
  */
 
 import { Direction } from "../../../crd";
-import { generate } from "../generate";
+import { generate } from "../generate-net-policy";
 
 export const allowEgressIstiod = (namespace: string) =>
   generate(namespace, {
