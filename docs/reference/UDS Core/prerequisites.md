@@ -1,7 +1,7 @@
 ---
 title: Prerequisites
 sidebar:
-    order: 2
+  order: 2
 ---
 
 `UDS Core` can run in any [CNCF conformant Kubernetes distribution](https://www.cncf.io/training/certification/software-conformance/) that has not reached [End-of-Life (EOL)](https://kubernetes.io/releases/#release-history). This documentation aims to provide guidance and links to relevant information to help configure your Kubernetes environment and hosts for a successful installation of `UDS Core`. Note that customizations may be required depending on the specific environment.
@@ -57,7 +57,7 @@ The UDS Operator will dynamically provision network policies to secure traffic b
 Istio requires a number of kernel modules to be loaded for full functionality. The below is a script that will ensure these modules are loaded and persisted across reboots (see also Istio's [upstream requirements list](https://istio.io/latest/docs/ops/deployment/platform-requirements/)). Ideally this script is used as part of an image build or cloud-init process on each node.
 
 ```console
-modules=("br_netfilter" "xt_REDIRECT" "xt_owner" "xt_statistic" "iptable_mangle" "iptable_nat" "xt_conntrack" "xt_tcpudp")
+modules=("br_netfilter" "xt_REDIRECT" "xt_owner" "xt_statistic" "iptable_mangle" "iptable_nat" "xt_conntrack" "xt_tcpudp" "xt_connmark" "xt_mark" "ip_set")
 for module in "${modules[@]}"; do
   modprobe "$module"
   echo "$module" >> "/etc/modules-load.d/istio-modules.conf"
@@ -66,10 +66,44 @@ done
 
 In addition, to run Istio ingress gateways (part of Core) you will need to ensure your cluster supports dynamic load balancer provisioning when services of type LoadBalancer are created. Typically in cloud environments this is handled using a cloud provider's controller (example: [AWS LB Controller](https://github.com/kubernetes-sigs/aws-load-balancer-controller)). When deploying on-prem, this is commonly done by using a "bare metal" load balancer provisioner like [MetalLB](https://metallb.universe.tf/) or [kube-vip](https://kube-vip.io/). Certain distributions may also include ingress controllers that you will want to disable as they may conflict with Istio (example: RKE2 includes ingress-nginx).
 
+##### Ambient Mode
+
+Istio can be deployed in [Ambient Mode](https://istio.io/latest/docs/ambient/overview/) by deploying the optional `istio-ambient` component. This mode is still in alpha release and is not recommended for production use or for clusters requiring `FIPS` compliance. The `istio-ambient` component installs the Istio CNI plugin which requires specifying the `CNI_CONF_DIR` and `CNI_BIN_DIR` variables. These values can change based on the environment Istio is being deployed into. By default the package will attempt to auto-detect these values and will use the following values if not specified:
+
+```yaml
+# K3d cluster
+cniConfDir: /var/lib/rancher/k3s/agent/etc/cni/net.d
+cniBinDir: /bin/
+
+# K3s cluster
+cniConfDir: /var/lib/rancher/k3s/agent/etc/cni/net.d
+cniBinDir: /opt/cni/bin/
+
+# All other clusters
+cniConfDir: /etc/cni/net.d
+cniBinDir: /opt/cni/bin/
+```
+
+These values can be overwritten when installing core by setting the `cniConfDir` and `cniBinDir` values in the `istio-ambient` component.
+
+To set these values add the following to the `uds-config.yaml` file:
+
+```yaml
+variables:
+  core-base:
+    cni_conf_dir: "foo"
+    cni_bin_dir: "bar"
+```
+
+or via `--set` if deploying the package via `zarf`:
+
+```console
+uds zarf package deploy uds-core --set CNI_CONF_DIR=/etc/cni/net.d --set CNI_BIN_DIR=/opt/cni/bin
+```
+
 #### NeuVector
 
-NeuVector historically has functioned best when the host is using cgroup v2. Cgroup v2 is enabled by default on many modern Linux distributions, but you may need to enable it depending on your operating system. Enabling this tends to be OS specific, so you will need to evaluate this for your specific hosts. 
-
+NeuVector historically has functioned best when the host is using cgroup v2. Cgroup v2 is enabled by default on many modern Linux distributions, but you may need to enable it depending on your operating system. Enabling this tends to be OS specific, so you will need to evaluate this for your specific hosts.
 
 #### Vector
 
@@ -95,11 +129,10 @@ sysctl -p
 Metrics server is provided as an optional component in UDS Core and can be enabled if needed. For distros where metrics-server is already provided, ensure that you do NOT enable metrics-server. See the below as an example for enabling metrics-server if your cluster does not include it.
 
 ```yaml
-...
+---
 - name: uds-core
   repository: ghcr.io/defenseunicorns/packages/private/uds/core
   ref: 0.25.2-unicorn
   optionalComponents:
     - metrics-server
-...
 ```
