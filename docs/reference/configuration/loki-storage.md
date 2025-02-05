@@ -37,33 +37,37 @@ When upgrading Loki with an existing deployment, follow these best practices to 
    - If you want to opt out of automatic upgrades, you will need to manually override the configuration and maintain separate values from the default settings.
 
 ## Overriding the Default Behavior
-In some cases, you may want to **disable a specific storage type** or manually override the schema configuration. To do so, remove the automated upgrade portion of the values.yaml:
+In some cases, you may want to **disable a specific storage type** or manually override the schema configuration. To do so, use bundle overrides to do this:
 
 ```yaml
-      - from: "{{- $secret := lookup \"v1\" \"Secret\" \"loki\" \"loki\" -}}
-          {{- $pastDate := now | dateModify \"-48h\" | date \"2006-01-02\" -}}
-          {{- $futureDate := now | dateModify \"+48h\" | date \"2006-01-02\" -}}
-          {{- $result := $pastDate -}}
-          {{- if $secret -}}
-            {{- $result = $futureDate -}}
-            {{- if (index $secret.data \"config.yaml\") -}}
-              {{- $configYAML := (index $secret.data \"config.yaml\" | b64dec | fromYaml) -}}
-              {{- range $configYAML.schema_config.configs -}}
-                {{- if and (eq .store \"tsdb\") (eq .schema \"v13\") -}}
-                  {{- $result = .from -}}
-                  {{- break -}}
-                {{- end -}}
-              {{- end -}}
-            {{- end -}}
-          {{- end -}}
-          {{- $result -}}"
-        store: tsdb
-        object_store: "{{ .Values.loki.storage.type }}"
-        schema: v13
-        index:
-          prefix: loki_index_
-          period: 24h
+  - name: core
+    repository: ghcr.io/defenseunicorns/packages/uds/core
+    ref: x.x.x
+    overrides:
+      loki:
+        loki:
+          values:
+            # Setting this value will override the default auto-lookup behavior
+            - path: loki.schemaConfig.configs
+              value:
+                # Self-manage configs here, making sure to include any previous dates you used
+                - from: 2022-01-11
+                  store: boltdb-shipper
+                  object_store: "{{ .Values.loki.storage.type }}"
+                  schema: v12
+                  index:
+                    prefix: loki_index_
+                    period: 24h
+                # Example: Explicitly set a date for TSDB and the v13 schema, making sure this is in the future
+                - from: 2025-03-25
+                  store: tsdb
+                  object_store: "{{ .Values.loki.storage.type }}"
+                  schema: v13
+                  index:
+                    prefix: loki_index_
+                    period: 24h
 ```
 
-### Forcing an Upgrade with Immediate Schema Change
-If you want to transition immediately to a new storage type without waiting for the automatic 48-hour logic, modify the Helm chart values by explicitly setting the schema configuration in `values.yaml`.
+It is important to ensure that the from date is set in the future, accounting for time zones, to avoid potential indexing issues. Additionally, schema configurations must be listed in sequential order, with the latest configuration appearing last to ensure proper data indexing.
+
+For more details on changing the schema, refer to the official Loki documentation: [Changing the Schema](https://grafana.com/docs/loki/latest/operations/storage/schema/#changing-the-schema)..
