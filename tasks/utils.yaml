@@ -78,5 +78,6 @@ tasks:
         setVariables:
           - name: TENANT_GW_IP
       - description: Adds Cluster LoadBalancer IP Addresses to match appropriate hosts names in /etc/hosts
+        mute: true
         cmd: |
           echo "$ADMIN_GW_IP keycloak.admin.uds.dev neuvector.admin.uds.dev grafana.admin.uds.dev\n$TENANT_GW_IP sso.uds.dev" | sudo tee --append /etc/hosts
