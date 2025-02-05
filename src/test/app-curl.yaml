@@ -4,13 +4,15 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: curl-test
+  labels:
+    uds: curl-testing-namespace
+  name: curl-test-1
 ---
 apiVersion: uds.dev/v1alpha1
 kind: Package
 metadata:
   name: curl-1
-  namespace: curl-test
+  namespace: curl-test-1
 spec:
   network:
     allow: []
@@ -20,10 +22,10 @@ apiVersion: v1
 kind: Service
 metadata:
   name: curl-1
-  namespace: curl-test
+  namespace: curl-test-1
   labels:
     name: curl-1
-    namespace: curl-test
+    namespace: curl-test-1
 spec:
   ports:
     - name: port8080
@@ -36,7 +38,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: curl-1
-  namespace: curl-test
+  namespace: curl-test-1
 spec:
   replicas: 1
   selector:
@@ -66,7 +68,7 @@ apiVersion: uds.dev/v1alpha1
 kind: Package
 metadata:
   name: curl-2
-  namespace: curl-test
+  namespace: curl-test-1
 spec:
   network:
     allow: []
@@ -76,18 +78,15 @@ apiVersion: v1
 kind: Service
 metadata:
   name: curl-2
-  namespace: curl-test
+  namespace: curl-test-1
   labels:
     name: curl-2
-    namespace: curl-test
+    namespace: curl-test-1
 spec:
   ports:
     - name: port8080
       port: 8080
       targetPort: 8080
-    - name: port8081
-      port: 8081
-      targetPort: 8081
   selector:
     app: curl-2
 ---
@@ -95,7 +94,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: curl-2
-  namespace: curl-test
+  namespace: curl-test-1
 spec:
   replicas: 1
   selector:
@@ -108,42 +107,46 @@ spec:
     spec:
       containers:
         - name: curl-2
-          image: hashicorp/http-echo
+          image: curlimages/curl
           imagePullPolicy: IfNotPresent
-          args:
-            - "-text=Hello from curl-2 on port 8080"
-            - "-status-code=200"
-            - "-listen=:8080"
+          command: ["sleep", "3600"]
+          resources:
+            limits:
+              cpu: 50m
+              memory: 64Mi
+            requests:
+              cpu: 10m
+              memory: 16Mi
           ports:
             - containerPort: 8080
-        - name: curl-2-8081
-          image: hashicorp/http-echo
-          imagePullPolicy: IfNotPresent
-          args:
-            - "-text=Hello from curl-2 on port 8081"
-            - "-status-code=200"
-            - "-listen=:8081"
-          ports:
-            - containerPort: 8081
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    uds: curl-testing-namespace
+  name: curl-test-2
 ---
 apiVersion: uds.dev/v1alpha1
 kind: Package
 metadata:
   name: curl-3
-  namespace: curl-test
+  namespace: curl-test-2
 spec:
   network:
-    allow: []
-    expose: []
+    allow:
+      - direction: Egress
+        selector:
+          app: curl-3
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: curl-3
-  namespace: curl-test
+  namespace: curl-test-2
   labels:
     name: curl-3
-    namespace: curl-test
+    namespace: curl-test-2
 spec:
   ports:
     - name: port8080
@@ -156,7 +159,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: curl-3
-  namespace: curl-test
+  namespace: curl-test-2
 spec:
   replicas: 1
   selector:
@@ -186,25 +189,32 @@ apiVersion: uds.dev/v1alpha1
 kind: Package
 metadata:
   name: curl-4
-  namespace: curl-test
+  namespace: curl-test-2
 spec:
   network:
-    allow: []
-    expose: []
+    allow:
+      - direction: Ingress
+        selector:
+          app: curl-4
+        ports:
+          - 8080
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: curl-4
-  namespace: curl-test
+  namespace: curl-test-2
   labels:
     name: curl-4
-    namespace: curl-test
+    namespace: curl-test-2
 spec:
   ports:
     - name: port8080
       port: 8080
       targetPort: 8080
+    - name: port8081
+      port: 8081
+      targetPort: 8081
   selector:
     app: curl-4
 ---
@@ -212,7 +222,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: curl-4
-  namespace: curl-test
+  namespace: curl-test-2
 spec:
   replicas: 1
   selector:
@@ -225,6 +235,81 @@ spec:
     spec:
       containers:
         - name: curl-4
+          image: hashicorp/http-echo
+          imagePullPolicy: IfNotPresent
+          args:
+            - "-text=Hello from curl-4 on port 8080"
+            - "-status-code=200"
+            - "-listen=:8080"
+          ports:
+            - containerPort: 8080
+        - name: curl-4-8081
+          image: hashicorp/http-echo
+          imagePullPolicy: IfNotPresent
+          args:
+            - "-text=Hello from curl-4 on port 8081"
+            - "-status-code=200"
+            - "-listen=:8081"
+          ports:
+            - containerPort: 8081
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    uds: curl-testing-namespace
+  name: curl-test-3
+---
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: curl-5
+  namespace: curl-test-3
+spec:
+  network:
+    allow:
+      - direction: Egress
+        selector:
+          app: curl-5
+        remoteGenerated: Anywhere
+        ports:
+          - 443
+          - 8080
+          - 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: curl-5
+  namespace: curl-test-3
+  labels:
+    name: curl-5
+    namespace: curl-test-3
+spec:
+  ports:
+    - name: port8080
+      port: 8080
+      targetPort: 8080
+  selector:
+    app: curl-5
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: curl-5
+  namespace: curl-test-3
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: curl-5
+  template:
+    metadata:
+      labels:
+        app: curl-5
+    spec:
+      containers:
+        - name: curl-5
           image: curlimages/curl
           imagePullPolicy: IfNotPresent
           command: ["sleep", "3600"]
@@ -238,88 +323,58 @@ spec:
           ports:
             - containerPort: 8080
 ---
-apiVersion: uds.dev/v1alpha1
-kind: Package
-metadata:
-  name: curl-5
-  namespace: curl-test
-spec:
-  network:
-    allow: []
-    expose: []
----
 apiVersion: v1
-kind: Service
+kind: Namespace
 metadata:
-  name: curl-5
-  namespace: curl-test
   labels:
-    name: curl-5
-    namespace: curl-test
-spec:
-  ports:
-    - name: port8080
-      port: 8080
-      targetPort: 8080
-    - name: port8081
-      port: 8081
-      targetPort: 8081
-  selector:
-    app: curl-5
+    uds: curl-testing-namespace
+  name: curl-test-3
 ---
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: uds.dev/v1alpha1
+kind: Package
 metadata:
   name: curl-5
-  namespace: curl-test
+  namespace: curl-test-3
 spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: curl-5
-  template:
-    metadata:
-      labels:
-        app: curl-5
-    spec:
-      containers:
-        - name: curl-5
-          image: hashicorp/http-echo
-          imagePullPolicy: IfNotPresent
-          args:
-            - "-text=Hello from curl-5 on port 8080"
-            - "-status-code=200"
-            - "-listen=:8080"
-          ports:
-            - containerPort: 8080
-        - name: curl-5-8081
-          image: hashicorp/http-echo
-          imagePullPolicy: IfNotPresent
-          args:
-            - "-text=Hello from curl-5 on port 8081"
-            - "-status-code=200"
-            - "-listen=:8081"
-          ports:
-            - containerPort: 8081
+  network:
+    allow:
+      - direction: Egress
+        selector:
+          app: curl-5
+        remoteGenerated: Anywhere
+        ports:
+          - 443
+          - 8080
+          - 80
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    uds: curl-testing-namespace
+  name: curl-test-4
 ---
 apiVersion: uds.dev/v1alpha1
 kind: Package
 metadata:
   name: curl-6
-  namespace: curl-test
+  namespace: curl-test-4
 spec:
   network:
-    allow: []
-    expose: []
+    allow:
+      - direction: Egress
+        remoteNamespace: curl-test-5
+        selector:
+          app: curl-6
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: curl-6
-  namespace: curl-test
+  namespace: curl-test-4
   labels:
     name: curl-6
-    namespace: curl-test
+    namespace: curl-test-4
 spec:
   ports:
     - name: port8080
@@ -332,7 +387,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: curl-6
-  namespace: curl-test
+  namespace: curl-test-4
 spec:
   replicas: 1
   selector:
@@ -358,32 +413,45 @@ spec:
           ports:
             - containerPort: 8080
 ---
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    uds: curl-testing-namespace
+  name: curl-test-5
+---
 apiVersion: uds.dev/v1alpha1
 kind: Package
 metadata:
   name: curl-7
-  namespace: curl-test
+  namespace: curl-test-5
 spec:
   network:
-    allow: []
-    expose: []
+    allow:
+      - direction: Ingress
+        remoteNamespace: "curl-test-4"
+        remoteSelector:
+          app: curl-6
+        selector:
+          app: curl-7
+        ports:
+          - 443
+          - 8080
+          - 80
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: curl-7
-  namespace: curl-test
+  namespace: curl-test-5
   labels:
     name: curl-7
-    namespace: curl-test
+    namespace: curl-test-5
 spec:
   ports:
     - name: port8080
       port: 8080
       targetPort: 8080
-    - name: port8081
-      port: 8081
-      targetPort: 8081
   selector:
     app: curl-7
 ---
@@ -391,7 +459,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: curl-7
-  namespace: curl-test
+  namespace: curl-test-5
 spec:
   replicas: 1
   selector:
@@ -412,34 +480,35 @@ spec:
             - "-listen=:8080"
           ports:
             - containerPort: 8080
-        - name: curl-7-8081
-          image: hashicorp/http-echo
-          imagePullPolicy: IfNotPresent
-          args:
-            - "-text=Hello from curl-7 on port 8081"
-            - "-status-code=200"
-            - "-listen=:8081"
-          ports:
-            - containerPort: 8081
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    uds: curl-testing-namespace
+  name: curl-test-6
 ---
 apiVersion: uds.dev/v1alpha1
 kind: Package
 metadata:
   name: curl-8
-  namespace: curl-test
+  namespace: curl-test-6
 spec:
   network:
-    allow: []
-    expose: []
+    allow:
+      - direction: Egress
+        remoteGenerated: KubeAPI
+        selector:
+          app: curl-8
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: curl-8
-  namespace: curl-test
+  namespace: curl-test-6
   labels:
     name: curl-8
-    namespace: curl-test
+    namespace: curl-test-6
 spec:
   ports:
     - name: port8080
@@ -452,7 +521,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: curl-8
-  namespace: curl-test
+  namespace: curl-test-6
 spec:
   replicas: 1
   selector:
@@ -478,32 +547,38 @@ spec:
           ports:
             - containerPort: 8080
 ---
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    uds: curl-testing-namespace
+  name: curl-test-7
+---
 apiVersion: uds.dev/v1alpha1
 kind: Package
 metadata:
   name: curl-9
-  namespace: curl-test
+  namespace: curl-test-7
 spec:
   network:
-    allow: []
-    expose: []
+    allow:
+      - direction: Egress
+        selector:
+          app: curl-9
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: curl-9
-  namespace: curl-test
+  namespace: curl-test-7
   labels:
     name: curl-9
-    namespace: curl-test
+    namespace: curl-test-7
 spec:
   ports:
     - name: port8080
       port: 8080
       targetPort: 8080
-    - name: port8081
-      port: 8081
-      targetPort: 8081
   selector:
     app: curl-9
 ---
@@ -511,7 +586,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: curl-9
-  namespace: curl-test
+  namespace: curl-test-7
 spec:
   replicas: 1
   selector:
@@ -524,20 +599,70 @@ spec:
     spec:
       containers:
         - name: curl-9
+          image: curlimages/curl
+          imagePullPolicy: IfNotPresent
+          command: ["sleep", "3600"]
+          resources:
+            limits:
+              cpu: 50m
+              memory: 64Mi
+            requests:
+              cpu: 10m
+              memory: 16Mi
+          ports:
+            - containerPort: 8080
+---
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: curl-10
+  namespace: curl-test-7
+spec:
+  network:
+    allow:
+      - direction: Ingress
+        remoteCidr: 0.0.0.0/0
+        selector:
+          app: curl-10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: curl-10
+  namespace: curl-test-7
+  labels:
+    name: curl-10
+    namespace: curl-test-7
+spec:
+  ports:
+    - name: port8080
+      port: 8080
+      targetPort: 8080
+  selector:
+    app: curl-10
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: curl-10
+  namespace: curl-test-7
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: curl-10
+  template:
+    metadata:
+      labels:
+        app: curl-10
+    spec:
+      containers:
+        - name: curl-10
           image: hashicorp/http-echo
           imagePullPolicy: IfNotPresent
           args:
-            - "-text=Hello from curl-9 on port 8080"
+            - "-text=Hello from curl-10 on port 8080"
             - "-status-code=200"
             - "-listen=:8080"
           ports:
             - containerPort: 8080
-        - name: curl-9-8081
-          image: hashicorp/http-echo
-          imagePullPolicy: IfNotPresent
-          args:
-            - "-text=Hello from curl-9 on port 8081"
-            - "-status-code=200"
-            - "-listen=:8081"
-          ports:
-            - containerPort: 8081

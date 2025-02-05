@@ -2,17 +2,13 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { beforeAll, describe, expect, jest, test } from "@jest/globals";
+import { beforeAll, describe, expect, test } from "@jest/globals";
 import { exec } from "child_process";
 import { promisify } from "util";
 
 const execAsync = promisify(exec);
 
 jest.setTimeout(30000);
-
-// Namespace Constants
-const NAMESPACE_CURL = "curl-test";
-const KUBE_API_URL = "https://kubernetes.default.svc.cluster.local";
 
 // Curl Commands
 const CURL_EXTERNAL = [
@@ -25,7 +21,7 @@ const CURL_EXTERNAL = [
   "https://demo-8080.uds.dev",
 ];
 
-function getCurlCommand(serviceName: string, port = 8080) {
+function getCurlCommand(serviceName: string, namespaceName: string, port = 8080) {
   return [
     "curl",
     "-s",
@@ -33,7 +29,7 @@ function getCurlCommand(serviceName: string, port = 8080) {
     "/dev/null",
     "-w",
     "%{http_code}",
-    `http://${serviceName}.${NAMESPACE_CURL}.svc.cluster.local:${port}`,
+    `http://${serviceName}.${namespaceName}.svc.cluster.local:${port}`,
   ];
 }
 
@@ -65,112 +61,71 @@ async function execInPod(namespace: string, podName: string, containerName: stri
   }
 }
 
-// Patch a resource with an optional wait time
-async function patchResource(
-  namespace: string,
-  name: string,
-  patchPayload: object[],
-  waitTime = 3000,
-): Promise<void> {
-  const patchJson = JSON.stringify(patchPayload);
-  const command = `kubectl patch package ${name} -n ${namespace} --type=json -p='${patchJson}'`;
-  await execAsync(command);
-  await new Promise(resolve => setTimeout(resolve, waitTime)); // Allow changes to propagate
-}
-
 let curlPodName1 = "";
 let curlPodName3 = "";
-let curlPodName4 = "";
+let curlPodName5 = "";
 let curlPodName6 = "";
 let curlPodName8 = "";
+let curlPodName9 = "";
 
 beforeAll(async () => {
-  curlPodName1 = await getPodName(NAMESPACE_CURL, "app=curl-1");
-  curlPodName3 = await getPodName(NAMESPACE_CURL, "app=curl-3");
-  curlPodName4 = await getPodName(NAMESPACE_CURL, "app=curl-4");
-  curlPodName6 = await getPodName(NAMESPACE_CURL, "app=curl-6");
-  curlPodName8 = await getPodName(NAMESPACE_CURL, "app=curl-8");
+  [
+    curlPodName1,
+    curlPodName3,
+    curlPodName5,
+    curlPodName6,
+    curlPodName8,
+    curlPodName9,
+  ] = await Promise.all([
+    getPodName("curl-test-1", "app=curl-1"),
+    getPodName("curl-test-2", "app=curl-3"),
+    getPodName("curl-test-3", "app=curl-5"),
+    getPodName("curl-test-4", "app=curl-6"),
+    getPodName("curl-test-6", "app=curl-8"),
+    getPodName("curl-test-7", "app=curl-9"),
+  ]);
 });
 
 describe("Network Policy Validation", () => {
-  const CURL_INTERNAL2 = getCurlCommand("curl-2");
-  const CURL_INTERNAL5 = getCurlCommand("curl-5");
-  const CURL_INTERNAL7 = getCurlCommand("curl-7");
-  const CURL_INTERNAL9 = getCurlCommand("curl-9");
+  const INTERNAL_CURL_COMMAND_1 = getCurlCommand("curl-2", "curl-test-1");
+  const INTERNAL_CURL_COMMAND_2 = getCurlCommand("curl-4", "curl-test-2");
+  const INTERNAL_CURL_COMMAND_5 = getCurlCommand("curl-7", "curl-test-5");
+  const INTERNAL_CURL_COMMAND_7 = getCurlCommand("curl-10", "curl-test-7");
 
-  const kubeApi_curl = [
+  const GOOGLE_CURL = [
     "curl",
     "-s",
     "-o",
     "/dev/null",
     "-w",
     "%{http_code}",
-    "-k",
-    "-H",
-    "Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)",
-    `${KUBE_API_URL}/api/v1/namespaces`,
+    "https://www.google.com",
   ];
 
-  test("Block all traffic by default", async () => {
-    const response = await execInPod(NAMESPACE_CURL, curlPodName1, "curl-1", CURL_EXTERNAL);
-    expect(response.stdout).toBe("000");
+  test.concurrent("Denied Requests by Default and Incorrect Ports and Labels", async () => {
+    // Default Deny when no Ingress or Egress defined or Exposed Endpoints
+    const denied_external_response = await execInPod("curl-test-1", curlPodName1, "curl-1", CURL_EXTERNAL);
+    expect(denied_external_response.stdout).toBe("000");
 
-    const responseInternal = await execInPod(NAMESPACE_CURL, curlPodName1, "curl-1", CURL_INTERNAL2);
-    expect(responseInternal.stdout).toBe("503");
+    // Default deny when no Ingress or Egress for internal curl command
+    const denied_internal_response = await execInPod("curl-test-1", curlPodName1, "curl-1", INTERNAL_CURL_COMMAND_1);
+    expect(denied_internal_response.stdout).toBe("503");
+
+    // Default Deny for Google Curl when no Egress defined
+    const denied_google_response = await execInPod("curl-test-1", curlPodName1, "curl-1", GOOGLE_CURL);
+    expect(denied_google_response.stdout).toBe("000");
+
+    // Default Deny for Blocked Port
+    const blocked_port_curl = getCurlCommand("curl-2", "curl-test-1", 9999);
+    const denied_port_response = await execInPod("curl-test-1", curlPodName1, "curl-1", blocked_port_curl);
+    expect(denied_port_response.stdout).toBe("503");
   });
 
-  test("Deny egress traffic when using an incorrect port", async () => {
-    await patchResource(NAMESPACE_CURL, "curl-1", [
-      {
-        op: "add",
-        path: "/spec/network/allow",
-        value: [{ direction: "Egress", selector: { app: "curl-1" }, ports: [9999] }],
-      },
-    ]);
-    const response = await execInPod(NAMESPACE_CURL, curlPodName1, "curl-1", CURL_INTERNAL2);
-    expect(response.stdout).toBe("503");
-  });
+  test.concurrent("Basic Wide Open Ingress and Wide Open Egress", async () => {
+    // Validate Curl between two pods is successful
+    const success_response = await execInPod("curl-test-2", curlPodName3, "curl-3", INTERNAL_CURL_COMMAND_2);
+    expect(success_response.stdout).toBe("200");
 
-  test("Deny egress traffic when label does not match", async () => {
-    await patchResource(NAMESPACE_CURL, "curl-1", [
-      {
-        op: "add",
-        path: "/spec/network/allow",
-        value: [{ direction: "Egress", selector: { app: "nonexistent-app" } }],
-      },
-    ]);
-    const response = await execInPod(NAMESPACE_CURL, curlPodName1, "curl-1", CURL_INTERNAL2);
-    expect(response.stdout).toBe("503");
-  });
-
-  test("Allow ingress but no egress: Should fail", async () => {
-
-    await patchResource(NAMESPACE_CURL, "curl-2", [
-      {
-        op: "add",
-        path: "/spec/network/allow",
-        value: [{ direction: "Ingress", selector: { app: "curl-2" }, ports: [8080], }],
-      },
-    ]);
-
-    const response = await execInPod(NAMESPACE_CURL, curlPodName1, "curl-1", CURL_INTERNAL2);
-    expect(response.stdout).toBe("503");
-  });
-
-  test("Enable egress policy: Should succeed", async () => {
-    await patchResource(NAMESPACE_CURL, "curl-1", [
-      {
-        op: "add",
-        path: "/spec/network/allow",
-        value: [{ direction: "Egress", selector: { app: "curl-1" } }],
-      },
-    ]);
-
-    const response = await execInPod(NAMESPACE_CURL, curlPodName1, "curl-1", CURL_INTERNAL2);
-    expect(response.stdout).toBe("200");
-  });
-
-  test("Deny egress when port is explicitly restricted", async () => {
     const CURL_INTERNAL_8081 = [
       "curl",
       "-s",
@@ -178,179 +133,83 @@ describe("Network Policy Validation", () => {
       "/dev/null",
       "-w",
       "%{http_code}",
-      "http://curl-2.curl-test.svc.cluster.local:8081",
+      "http://curl-4.curl-test-2.svc.cluster.local:8081",
     ];
 
-    const response = await execInPod(NAMESPACE_CURL, curlPodName1, "curl-1", CURL_INTERNAL_8081);
-    expect(response.stdout).toBe("503");
+    // Deny request when port is not allowed on ingress
+    const denied_incorrect_port_response = await execInPod("curl-test-2", curlPodName3, "curl-3", CURL_INTERNAL_8081);
+    expect(denied_incorrect_port_response.stdout).toBe("503");
+
+    // Default Deny for undefined Ingress port
+    const blocked_port_curl = getCurlCommand("curl-4", "curl-test-2", 9999);
+    const denied_port_response = await execInPod("curl-test-2", curlPodName3, "curl-3", blocked_port_curl);
+    expect(denied_port_response.stdout).toBe("503");
+
+    // Wide open Egress means successful google curl
+    const successful_google_response = await execInPod("curl-test-2", curlPodName3, "curl-3", GOOGLE_CURL);
+    expect(successful_google_response.stdout).toBe("200");
   });
 
-  test("Deny all traffic when no network policies are defined", async () => {
-    const response = await execInPod(NAMESPACE_CURL, curlPodName3, "curl-3", CURL_EXTERNAL);
-    expect(response.stdout).toBe("000");
+  test.concurrent("Anywhere Egress", async () => {
+    // Validate that request is successful when Egress Anywhere is used
+    const success_response = await execInPod("curl-test-3", curlPodName5, "curl-5", CURL_EXTERNAL);
+    expect(success_response.stdout).toBe("200");
+
+    // Validate Egress to Google is successful
+    const successful_google_response = await execInPod("curl-test-3", curlPodName5, "curl-5", GOOGLE_CURL);
+    expect(successful_google_response.stdout).toBe("200");
   });
 
-  test("Allow egress to any destination when explicitly permitted", async () => {
-    await patchResource(NAMESPACE_CURL, "curl-3", [
-      {
-        op: "add",
-        path: "/spec/network/allow",
-        value: [
-          {
-            direction: "Egress",
-            remoteGenerated: "Anywhere",
-            selector: { app: "curl-3" },
-            ports: [443, 8080, 80],
-          },
-        ],
-      },
-    ]);
+  test.concurrent("RemoteNamespace Ingress and Egress", async () => {
+    // Validate that request is successful when using RemoteNamespace
+    const success_response = await execInPod("curl-test-4", curlPodName6, "curl-6", INTERNAL_CURL_COMMAND_5);
+    expect(success_response.stdout).toBe("200");
 
-    const response = await execInPod(NAMESPACE_CURL, curlPodName3, "curl-3", CURL_EXTERNAL);
-    expect(response.stdout).toBe("200");
+    // Default Deny for Google Curl when no Egress defined
+    const denied_google_response = await execInPod("curl-test-4", curlPodName6, "curl-6", GOOGLE_CURL);
+    expect(denied_google_response.stdout).toBe("000");
+
+    // Default Deny for Blocked Port
+    const blocked_port_curl = getCurlCommand("curl-7", "curl-test-5", 9999);
+    const denied_port_response = await execInPod("curl-test-4", curlPodName6, "curl-6", blocked_port_curl);
+    expect(denied_port_response.stdout).toBe("503");
   });
 
-  test("Deny ingress when egress policy is not defined", async () => {
-    await patchResource(NAMESPACE_CURL, "curl-5", [
-      {
-        op: "add",
-        path: "/spec/network/allow",
-        value: [
-          {
-            direction: "Ingress",
-            remoteNamespace: "curl-test",
-            remoteSelector: { app: "curl-4" },
-            selector: { app: "curl-5" },
-            ports: [443, 8080, 80],
-          },
-        ],
-      },
-    ], 5000);
-    const response = await execInPod(NAMESPACE_CURL, curlPodName4, "curl-4", CURL_INTERNAL5);
-    expect(response.stdout).toBe("503");
+  test.concurrent("Kube API Restrictions", async () => {
+    const kubeApi_curl = [
+      "curl",
+      "-s",
+      "-o",
+      "/dev/null",
+      "-w",
+      "%{http_code}",
+      "-k",
+      "-H",
+      "Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)",
+      `https://kubernetes.default.svc.cluster.local/api/v1/namespaces`,
+    ];
+
+    // Validate unauthorized response when using Kube API ( because of missing authorization token )
+    const success_unauthorized_response = await execInPod("curl-test-6", curlPodName8, "curl-8", kubeApi_curl);
+    expect(success_unauthorized_response.stdout).toContain("401");
+
+    // Default Deny for Google Curl when no Egress defined
+    const denied_google_response = await execInPod("curl-test-6", curlPodName8, "curl-8", GOOGLE_CURL);
+    expect(denied_google_response.stdout).toBe("000");
+
+    // Default Deny for Blocked Port
+    const blocked_port_curl = getCurlCommand("curl-2", "curl-test-1", 9999);
+    const denied_port_response = await execInPod("curl-test-6", curlPodName8, "curl-8", blocked_port_curl);
+    expect(denied_port_response.stdout).toBe("503");
   });
 
-  test("Allow egress to a specific namespace when ingress is allowed", async () => {
-    await patchResource(NAMESPACE_CURL, "curl-4", [
-      {
-        op: "add",
-        path: "/spec/network/allow",
-        value: [
-          {
-            direction: "Egress",
-            remoteNamespace: NAMESPACE_CURL,
-            selector: { app: "curl-4" },
-          },
-        ],
-      },
-    ], 5000);
-    const response = await execInPod(NAMESPACE_CURL, curlPodName4, "curl-4", CURL_INTERNAL5);
-    expect(response.stdout).toBe("200");
-  });
+  test.concurrent("RemoteCidr Restrictions", async () => {
+    // Validate successful request when using RemoteCidr
+    const success_response = await execInPod("curl-test-7", curlPodName9, "curl-9", INTERNAL_CURL_COMMAND_7);
+    expect(success_response.stdout).toBe("200");
 
-  test("Deny ingress by default when no ingress policy is applied", async () => {
-    const response = await execInPod(NAMESPACE_CURL, curlPodName6, "curl-6", CURL_INTERNAL7);
-    expect(response.stdout).toBe("503");
-  });
-
-  test("Deny egress when no matching ingress policy exists", async () => {
-    await patchResource(NAMESPACE_CURL, "curl-6", [
-      {
-        op: "add",
-        path: "/spec/network/allow",
-        value: [{ direction: "Egress", selector: { app: "curl-6" }, ports: [443, 8080, 80] }],
-      },
-    ]);
-
-    const response = await execInPod(NAMESPACE_CURL, curlPodName6, "curl-6", CURL_INTERNAL7);
-    expect(response.stdout).toBe("503");
-  });
-
-  test("Allow ingress when both ingress and egress policies are correctly applied", async () => {
-    await patchResource(NAMESPACE_CURL, "curl-7", [
-      {
-        op: "add",
-        path: "/spec/network/allow",
-        value: [
-          {
-            direction: "Ingress",
-            remoteNamespace: "curl-test",
-            remoteSelector: { app: "curl-6" },
-            selector: { app: "curl-7" },
-            ports: [443, 8080, 80],
-          },
-        ],
-      },
-    ]);
-
-    const response = await execInPod(NAMESPACE_CURL, curlPodName6, "curl-6", CURL_INTERNAL7);
-    expect(response.stdout).toBe("200");
-  });
-
-  test("Block access to Kube API by default", async () => {
-    const response = await execInPod(NAMESPACE_CURL, curlPodName8, "curl-8", kubeApi_curl);
-    expect(response.stdout).toBe("000");
-  });
-
-  test("Allow egress to Kube API but expect 401 Unauthorized", async () => {
-    await patchResource(NAMESPACE_CURL, "curl-8", [
-      {
-        op: "add",
-        path: "/spec/network/allow",
-        value: [
-          {
-            direction: "Egress",
-            remoteGenerated: "KubeAPI",
-            selector: { app: "curl-8" },
-          },
-        ],
-      },
-    ]);
-    const response = await execInPod(NAMESPACE_CURL, curlPodName8, "curl-8", kubeApi_curl);
-    expect(response.stdout).toContain("401");
-  });
-
-  test("Revoke API Access: Should fail again", async () => {
-    await patchResource(NAMESPACE_CURL, "curl-8", [{ op: "remove", path: "/spec/network/allow" }]);
-    const response = await execInPod(NAMESPACE_CURL, curlPodName8, "curl-8", kubeApi_curl);
-    expect(response.stdout).toBe("000");
-  });
-
-  test("Block access to RemoteCIDR by default", async () => {
-    const response = await execInPod(NAMESPACE_CURL, curlPodName8, "curl-8", CURL_INTERNAL9);
-    expect(response.stdout).toBe("503");
-  });
-
-  test("Add Egress Netpol: Should still fail (No Ingress)", async () => {
-    await patchResource(NAMESPACE_CURL, "curl-8", [
-      {
-        op: "add",
-        path: "/spec/network/allow",
-        value: [{ direction: "Egress", selector: { app: "curl-8" }, ports: [443, 8080, 80] }],
-      },
-    ]);
-
-    const response = await execInPod(NAMESPACE_CURL, curlPodName8, "curl-8", CURL_INTERNAL9);
-    expect(response.stdout).toBe("503");
-  });
-
-  test("Enable RemoteCIDR policy: Should allow all traffic", async () => {
-    await patchResource(NAMESPACE_CURL, "curl-9", [
-      {
-        op: "add",
-        path: "/spec/network/allow",
-        value: [
-          {
-            direction: "Ingress",
-            remoteCidr: "0.0.0.0/0", // Allow all traffic
-            selector: { app: "curl-9" },
-            ports: [443, 8080, 80],
-          },
-        ],
-      },
-    ]);
-
-    const response = await execInPod(NAMESPACE_CURL, curlPodName8, "curl-8", CURL_INTERNAL9);
-    expect(response.stdout).toBe("200");
+    // Validate successful request to Google because of wide open remoteCidr
+    const denied_google_response = await execInPod("curl-test-7", curlPodName9, "curl-9", GOOGLE_CURL);
+    expect(denied_google_response.stdout).toBe("200");
   });
 });
