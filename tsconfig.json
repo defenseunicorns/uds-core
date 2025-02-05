@@ -15,7 +15,8 @@
     "rootDir": ".",
     "strict": true,
     "target": "ES2022",
-    "useUnknownInCatchVariables": false
+    "useUnknownInCatchVariables": false,
+    "types": ["jest"]
   },
   "include": [
     "**/*.ts"
