@@ -61,8 +61,7 @@ jobs:
           ghToken: ${{ secrets.GITHUB_TOKEN }}
           chainguardIdentity: ${{ secrets.CHAINGUARD_IDENTITY }}
       - name: Deploy Slim Dev Bundle
-        # Temp: test the registry1 flavor
-        run: uds run slim-dev --set flavor=registry1 --no-progress
+        run: uds run slim-dev --no-progress
       - name: Test Slim Dev Bundle
         run: uds run test:slim-dev --no-progress
       - name: Debug Output
