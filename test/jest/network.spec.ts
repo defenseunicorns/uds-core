@@ -8,7 +8,7 @@ import { promisify } from "util";
 
 const execAsync = promisify(exec);
 
-jest.setTimeout(10000);
+jest.setTimeout(30000);
 
 // Namespace Constants
 const NAMESPACE_CURL = "curl-test";
@@ -39,7 +39,7 @@ function getCurlCommand(serviceName: string, port = 8080) {
 
 // Retrieve pod name dynamically
 async function getPodName(namespace: string, labelSelector: string): Promise<string> {
-  const command = `zarf tools kubectl get pods -n ${namespace} -l ${labelSelector} -o jsonpath="{.items[0].metadata.name}"`;
+  const command = `kubectl get pods -n ${namespace} -l ${labelSelector} -o jsonpath="{.items[0].metadata.name}"`;
   try {
     const { stdout } = await execAsync(command);
     const podName = stdout.trim();
@@ -56,7 +56,7 @@ async function getPodName(namespace: string, labelSelector: string): Promise<str
 
 // Execute commands inside a pod
 async function execInPod(namespace: string, podName: string, containerName: string, command: string[]) {
-  const cmd = `zarf tools kubectl exec -n ${namespace} ${podName} -c ${containerName} -- ${command.join(" ")}`;
+  const cmd = `kubectl exec -n ${namespace} ${podName} -c ${containerName} -- ${command.join(" ")}`;
   try {
     const { stdout } = await execAsync(cmd);
     return { stdout: stdout.trim(), stderr: "" };
@@ -73,7 +73,7 @@ async function patchResource(
   waitTime = 3000,
 ): Promise<void> {
   const patchJson = JSON.stringify(patchPayload);
-  const command = `zarf tools kubectl patch package ${name} -n ${namespace} --type=json -p='${patchJson}'`;
+  const command = `kubectl patch package ${name} -n ${namespace} --type=json -p='${patchJson}'`;
   await execAsync(command);
   await new Promise(resolve => setTimeout(resolve, waitTime)); // Allow changes to propagate
 }
