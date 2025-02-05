@@ -60,7 +60,7 @@ If you want to try out UDS Core, you can use the [k3d-core-demo bundle](./bundle
 <!-- x-release-please-start-version -->
 
 ```bash
-uds deploy k3d-core-demo:0.34.1
+uds deploy k3d-core-demo:0.35.0
 ```
 
 <!-- x-release-please-end -->
@@ -74,11 +74,10 @@ Deploy Istio, Keycloak and Pepr:
 <!-- x-release-please-start-version -->
 
 ```bash
-uds deploy k3d-core-slim-dev:0.34.1
+uds deploy k3d-core-slim-dev:0.35.0
 ```
 
 <!-- x-release-please-end -->
-
 
 #### Developing UDS Core
 
@@ -115,6 +114,7 @@ uds run test-single-layer --set LAYER=identity-authorization
 Note you can specify the `--set FLAVOR=registry1` flag to test using Iron Bank images instead of the upstream images.
 
 ## UDS Core Architecture Overview
+
 ![UDS Core Architecture Diagram](https://github.com/defenseunicorns/uds-core/blob/main/docs/.images/diagrams/uds-core-arch-overview.svg?raw=true)
 
 Diagrams are located in `/docs/.images`. See the [diagram README](./docs/.images/diagrams/README.md) for an explanation and help customizing.

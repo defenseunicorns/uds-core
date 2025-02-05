@@ -41,6 +41,11 @@ tasks:
             protocol: https
             address: neuvector.admin.uds.dev
             code: 200
+      - description: Wait for NeuVector Job Completion
+        cmd: |
+          if ./uds zarf tools kubectl get jobs -n neuvector --no-headers 2>/dev/null | grep -q .; then
+            ./uds zarf tools kubectl wait --for=condition=complete job --all -n neuvector --timeout=5m
+          fi
 
   - name: e2e-test
     actions:
@@ -52,7 +57,7 @@ tasks:
       - description: E2E Test for NeuVector
         cmd: |
           # renovate: datasource=docker depName=mcr.microsoft.com/playwright versioning=docker
-          docker run --rm --ipc=host -e FULL_CORE="${FULL_CORE}" --net=host --mount type=bind,source="$(pwd)",target=/app mcr.microsoft.com/playwright:v1.49.1-noble sh -c " \
+          docker run --rm --ipc=host -e FULL_CORE="${FULL_CORE}" --net=host --mount type=bind,source="$(pwd)",target=/app mcr.microsoft.com/playwright:v1.50.1-noble sh -c " \
             cd app && \
             npm ci && \
             npx playwright test neuvector.test.ts \
