@@ -47,14 +47,18 @@ loki:
           prefix: loki_index_
           period: 24h
       - from: "{{- $secret := lookup \"v1\" \"Secret\" \"loki\" \"loki\" -}}
-          {{- $defaultDate := now | dateModify \"-24h\" | date \"2006-01-02\" -}}
-          {{- $result := $defaultDate -}}
-          {{- if and $secret (index $secret.data \"config.yaml\") -}}
-            {{- $configYAML := (index $secret.data \"config.yaml\" | b64dec | fromYaml) -}}
-            {{- range $configYAML.schema_config.configs -}}
-              {{- if and (eq .store \"tsdb\") (eq .schema \"v13\") -}}
-                {{- $result = .from -}}
-                {{- break -}}
+          {{- $pastDate := now | dateModify \"-48h\" | date \"2006-01-02\" -}}
+          {{- $futureDate := now | dateModify \"+48h\" | date \"2006-01-02\" -}}
+          {{- $result := $pastDate -}}
+          {{- if $secret -}}
+            {{- $result = $futureDate -}}
+            {{- if (index $secret.data \"config.yaml\") -}}
+              {{- $configYAML := (index $secret.data \"config.yaml\" | b64dec | fromYaml) -}}
+              {{- range $configYAML.schema_config.configs -}}
+                {{- if and (eq .store \"tsdb\") (eq .schema \"v13\") -}}
+                  {{- $result = .from -}}
+                  {{- break -}}
+                {{- end -}}
               {{- end -}}
             {{- end -}}
           {{- end -}}
