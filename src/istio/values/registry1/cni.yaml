@@ -3,7 +3,3 @@
 
 cni:
   image: registry1.dso.mil/ironbank/tetrate/istio/install-cni:1.24.2-tetratefips-v0
-
-# For testing registry1 image
-logging:
-  level: "debug"
