@@ -39,7 +39,7 @@ function getCurlCommand(serviceName: string, port = 8080) {
 
 // Retrieve pod name dynamically
 async function getPodName(namespace: string, labelSelector: string): Promise<string> {
-  const command = `kubectl get pods -n ${namespace} -l ${labelSelector} -o jsonpath="{.items[0].metadata.name}"`;
+  const command = `zarf tools kubectl get pods -n ${namespace} -l ${labelSelector} -o jsonpath="{.items[0].metadata.name}"`;
   try {
     const { stdout } = await execAsync(command);
     const podName = stdout.trim();
@@ -56,7 +56,7 @@ async function getPodName(namespace: string, labelSelector: string): Promise<str
 
 // Execute commands inside a pod
 async function execInPod(namespace: string, podName: string, containerName: string, command: string[]) {
-  const cmd = `kubectl exec -n ${namespace} ${podName} -c ${containerName} -- ${command.join(" ")}`;
+  const cmd = `zarf tools kubectl exec -n ${namespace} ${podName} -c ${containerName} -- ${command.join(" ")}`;
   try {
     const { stdout } = await execAsync(cmd);
     return { stdout: stdout.trim(), stderr: "" };
@@ -73,26 +73,26 @@ async function patchResource(
   waitTime = 3000,
 ): Promise<void> {
   const patchJson = JSON.stringify(patchPayload);
-  const command = `kubectl patch package ${name} -n ${namespace} --type=json -p='${patchJson}'`;
+  const command = `zarf tools kubectl patch package ${name} -n ${namespace} --type=json -p='${patchJson}'`;
   await execAsync(command);
   await new Promise(resolve => setTimeout(resolve, waitTime)); // Allow changes to propagate
 }
 
+let curlPodName1 = "";
+let curlPodName3 = "";
+let curlPodName4 = "";
+let curlPodName6 = "";
+let curlPodName8 = "";
+
+beforeAll(async () => {
+  curlPodName1 = await getPodName(NAMESPACE_CURL, "app=curl-1");
+  curlPodName3 = await getPodName(NAMESPACE_CURL, "app=curl-3");
+  curlPodName4 = await getPodName(NAMESPACE_CURL, "app=curl-4");
+  curlPodName6 = await getPodName(NAMESPACE_CURL, "app=curl-6");
+  curlPodName8 = await getPodName(NAMESPACE_CURL, "app=curl-8");
+});
+
 describe("Network Policy Validation", () => {
-  let curlPodName1 = "";
-  let curlPodName3 = "";
-  let curlPodName4 = "";
-  let curlPodName6 = "";
-  let curlPodName8 = "";
-
-  beforeAll(async () => {
-    curlPodName1 = await getPodName(NAMESPACE_CURL, "app=curl-1");
-    curlPodName3 = await getPodName(NAMESPACE_CURL, "app=curl-3");
-    curlPodName4 = await getPodName(NAMESPACE_CURL, "app=curl-4");
-    curlPodName6 = await getPodName(NAMESPACE_CURL, "app=curl-6");
-    curlPodName8 = await getPodName(NAMESPACE_CURL, "app=curl-8");
-  });
-
   const CURL_INTERNAL2 = getCurlCommand("curl-2");
   const CURL_INTERNAL5 = getCurlCommand("curl-5");
   const CURL_INTERNAL7 = getCurlCommand("curl-7");
