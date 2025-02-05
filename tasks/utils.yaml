@@ -64,3 +64,19 @@ tasks:
               --from-literal=password=${PASSWORD} \
               -n keycloak
           fi
+
+  - name: setup-hosts
+    actions:
+      - description: Fetch Admin Gateway IP Address
+        cmd: uds zarf tools kubectl get service -n istio-admin-gateway admin-ingressgateway -o=jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null
+        mute: true
+        setVariables:
+          - name: ADMIN_GW_IP
+      - description: Fetch Tenant Gateway IP Address
+        cmd: uds zarf tools kubectl get service -n istio-tenant-gateway tenant-ingressgateway -o=jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null
+        mute: true
+        setVariables:
+          - name: TENANT_GW_IP 
+      - description: Adds Cluster LoadBalancer IP Addresses to match appropriate hosts names in /etc/hosts
+        cmd: |
+          echo "$ADMIN_GW_IP keycloak.admin.uds.dev neuvector.admin.uds.dev grafana.admin.uds.dev\n$TENANT_GW_IP sso.uds.dev" | sudo tee --append /etc/hosts
