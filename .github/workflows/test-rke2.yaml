@@ -14,6 +14,7 @@ on:
       - tasks/iac.yaml
       - .github/bundles/rke2/*
       - .github/test-infra/aws/rke2/*
+      - .github/workflows/test-rke2.yaml      
 
 permissions:
   id-token: write
