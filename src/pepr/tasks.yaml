@@ -33,7 +33,7 @@ tasks:
             exit 1
           fi
           $HOME/go/bin/addlicense -l "AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial" -s=only -v -c "Defense Unicorns" src/pepr/operator/crd/generated
-          $HOME/go/bin/addlicense -l "AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial" -s=only -v -c "Defense Unicorns" src/pepr/operator/crd/manifests
+          $HOME/go/bin/addlicense -l "AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial" -s=only -v -c "Defense Unicorns" src/pepr/uds-cluster-crds/templates
 
       - task: gen-docs
 
@@ -45,7 +45,7 @@ tasks:
       - cmd: |
           CRD_LIST="exemptions.uds.dev packages.uds.dev clusterconfig.uds.dev"
           for CRD in $CRD_LIST; do
-             FILE="src/pepr/operator/crd/manifests/$CRD.yaml"
+             FILE="src/pepr/uds-cluster-crds/templates/$CRD.yaml"
              kubectl get crd $CRD -o yaml > $FILE
              yq -i 'del(.metadata.creationTimestamp,.metadata.generation,.metadata.resourceVersion,.metadata.uid,.status)' $FILE
           done
