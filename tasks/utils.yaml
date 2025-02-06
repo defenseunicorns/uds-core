@@ -80,4 +80,4 @@ tasks:
       - description: Adds Cluster LoadBalancer IP Addresses to match appropriate hosts names in /etc/hosts
         mute: true
         cmd: |
-          echo "$ADMIN_GW_IP keycloak.admin.uds.dev neuvector.admin.uds.dev grafana.admin.uds.dev\n$TENANT_GW_IP sso.uds.dev" | sudo tee --append /etc/hosts
+          echo "$ADMIN_GW_IP keycloak.admin.uds.dev neuvector.admin.uds.dev grafana.admin.uds.dev demo.admin.uds.dev\n$TENANT_GW_IP sso.uds.dev demo-8080.uds.dev demo-8081.uds.dev protected.uds.dev" | sudo tee --append /etc/hosts
