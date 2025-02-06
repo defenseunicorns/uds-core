@@ -432,12 +432,19 @@
     "updateStrategy": {
       "type": "string"
     },
-    "workarounds": {
-      "type": "object",
-      "properties": {
-        "kernel6_12": {
-          "type": "boolean"
-        }
+    "env": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "required": [ "name", "value" ]
       }
     }
   }
