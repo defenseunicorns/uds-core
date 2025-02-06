@@ -144,7 +144,26 @@ packages:
               path: postgresql.password
 ```
 
-When running Keycloak on new Kernels 6.12+, it is also necessary to specify the `KEYCLOAK_KERNEL_6_12_MODE` setting and set it `true`. This is a temporary workaround for [this](https://github.com/keycloak/keycloak/issues/36609) Keycloak issue. Once addressed, this setting will be removed.
+When running Keycloak on new Kernels 6.12+, it may be necessary to override Keycloak Environment Variables and set `JAVA_OPTS_KC_HEAP` to `-XX:MaxRAMPercentage=70 -XX:MinRAMPercentage=70 -XX:InitialRAMPercentage=50 -XX:MaxRAM=1G`. This happens due to a fact that Java doesn't properly recognize the amount of memory allocated by the CGroups. By specifying `-XX:MaxRAM` equal to the memory limits, this setting gets overridden. Here's an example:
+
+```yaml
+packages:
+  - name: core
+    repository: oci://ghcr.io/defenseunicorns/packages/uds/core
+    ref: x.x.x
+    overrides:
+      keycloak:
+        keycloak:
+          values:
+            # Override Java memory settings
+            - path: env
+              value:
+                - name: JAVA_OPTS_KC_HEAP
+                  value: "-XX:MaxRAMPercentage=70 -XX:MinRAMPercentage=70 -XX:InitialRAMPercentage=50 -XX:MaxRAM=2G"
+            # Override limits - both figures need to match!
+            - path: resources.limits.memory
+              value: "2Gi"
+```
 
 ### AuthService
 
