@@ -182,24 +182,8 @@ tasks:
         wait:
           cluster:
             kind: Pod
-            name: app=curl-3
-            namespace: curl-test-2
-            condition: Ready
-
-      - description: "Wait for Packages to be Ready"
-        wait:
-          cluster:
-            kind: Pod
             name: app=curl-4
             namespace: curl-test-2
-            condition: Ready
-
-      - description: "Wait for Packages to be Ready"
-        wait:
-          cluster:
-            kind: Pod
-            name: app=curl-5
-            namespace: curl-test-3
             condition: Ready
 
       - description: "Wait for Packages to be Ready"
@@ -224,14 +208,6 @@ tasks:
             kind: Pod
             name: app=curl-8
             namespace: curl-test-6
-            condition: Ready
-
-      - description: "Wait for Packages to be Ready"
-        wait:
-          cluster:
-            kind: Pod
-            name: app=curl-9
-            namespace: curl-test-7
             condition: Ready
 
       - description: "Wait for Packages to be Ready"

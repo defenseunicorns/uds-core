@@ -62,27 +62,21 @@ async function execInPod(namespace: string, podName: string, containerName: stri
 }
 
 let curlPodName1 = "";
-let curlPodName3 = "";
-let curlPodName5 = "";
+let testAdminApp = "";
 let curlPodName6 = "";
 let curlPodName8 = "";
-let curlPodName9 = "";
 
 beforeAll(async () => {
   [
     curlPodName1,
-    curlPodName3,
-    curlPodName5,
+    testAdminApp,
     curlPodName6,
     curlPodName8,
-    curlPodName9,
   ] = await Promise.all([
     getPodName("curl-test-1", "app=curl-1"),
-    getPodName("curl-test-2", "app=curl-3"),
-    getPodName("curl-test-3", "app=curl-5"),
+    getPodName("test-admin-app", "app=httpbin"),
     getPodName("curl-test-4", "app=curl-6"),
     getPodName("curl-test-6", "app=curl-8"),
-    getPodName("curl-test-7", "app=curl-9"),
   ]);
 });
 
@@ -123,7 +117,7 @@ describe("Network Policy Validation", () => {
 
   test.concurrent("Basic Wide Open Ingress and Wide Open Egress", async () => {
     // Validate Curl between two pods is successful
-    const success_response = await execInPod("curl-test-2", curlPodName3, "curl-3", INTERNAL_CURL_COMMAND_2);
+    const success_response = await execInPod("test-admin-app", testAdminApp, "curl", INTERNAL_CURL_COMMAND_2);
     expect(success_response.stdout).toBe("200");
 
     const CURL_INTERNAL_8081 = [
@@ -137,26 +131,26 @@ describe("Network Policy Validation", () => {
     ];
 
     // Deny request when port is not allowed on ingress
-    const denied_incorrect_port_response = await execInPod("curl-test-2", curlPodName3, "curl-3", CURL_INTERNAL_8081);
+    const denied_incorrect_port_response = await execInPod("test-admin-app", testAdminApp, "curl", CURL_INTERNAL_8081);
     expect(denied_incorrect_port_response.stdout).toBe("503");
 
     // Default Deny for undefined Ingress port
     const blocked_port_curl = getCurlCommand("curl-4", "curl-test-2", 9999);
-    const denied_port_response = await execInPod("curl-test-2", curlPodName3, "curl-3", blocked_port_curl);
+    const denied_port_response = await execInPod("test-admin-app", testAdminApp, "curl", blocked_port_curl);
     expect(denied_port_response.stdout).toBe("503");
 
     // Wide open Egress means successful google curl
-    const successful_google_response = await execInPod("curl-test-2", curlPodName3, "curl-3", GOOGLE_CURL);
+    const successful_google_response = await execInPod("test-admin-app", testAdminApp, "curl", GOOGLE_CURL);
     expect(successful_google_response.stdout).toBe("200");
   });
 
   test.concurrent("Anywhere Egress", async () => {
     // Validate that request is successful when Egress Anywhere is used
-    const success_response = await execInPod("curl-test-3", curlPodName5, "curl-5", CURL_EXTERNAL);
+    const success_response = await execInPod("test-admin-app", testAdminApp, "curl", CURL_EXTERNAL);
     expect(success_response.stdout).toBe("200");
 
     // Validate Egress to Google is successful
-    const successful_google_response = await execInPod("curl-test-3", curlPodName5, "curl-5", GOOGLE_CURL);
+    const successful_google_response = await execInPod("test-admin-app", testAdminApp, "curl", GOOGLE_CURL);
     expect(successful_google_response.stdout).toBe("200");
   });
 
@@ -205,11 +199,11 @@ describe("Network Policy Validation", () => {
 
   test.concurrent("RemoteCidr Restrictions", async () => {
     // Validate successful request when using RemoteCidr
-    const success_response = await execInPod("curl-test-7", curlPodName9, "curl-9", INTERNAL_CURL_COMMAND_7);
+    const success_response = await execInPod("test-admin-app", testAdminApp, "curl", INTERNAL_CURL_COMMAND_7);
     expect(success_response.stdout).toBe("200");
 
     // Validate successful request to Google because of wide open remoteCidr
-    const denied_google_response = await execInPod("curl-test-7", curlPodName9, "curl-9", GOOGLE_CURL);
+    const denied_google_response = await execInPod("test-admin-app", testAdminApp, "curl", GOOGLE_CURL);
     expect(denied_google_response.stdout).toBe("200");
   });
 });
