@@ -48,6 +48,9 @@ spec:
     metadata:
       labels:
         app: curl-1
+      annotations:
+        sidecar.istio.io/proxyCPU: "10m"
+        sidecar.istio.io/proxyMemory: "16Mi"
     spec:
       containers:
         - name: curl-1
@@ -104,6 +107,9 @@ spec:
     metadata:
       labels:
         app: curl-2
+      annotations:
+        sidecar.istio.io/proxyCPU: "10m"
+        sidecar.istio.io/proxyMemory: "16Mi"
     spec:
       containers:
         - name: curl-2
@@ -169,6 +175,9 @@ spec:
     metadata:
       labels:
         app: curl-3
+      annotations:
+        sidecar.istio.io/proxyCPU: "10m"
+        sidecar.istio.io/proxyMemory: "16Mi"
     spec:
       containers:
         - name: curl-3
@@ -232,6 +241,9 @@ spec:
     metadata:
       labels:
         app: curl-4
+      annotations:
+        sidecar.istio.io/proxyCPU: "10m"
+        sidecar.istio.io/proxyMemory: "16Mi"
     spec:
       containers:
         - name: curl-4
@@ -307,6 +319,9 @@ spec:
     metadata:
       labels:
         app: curl-5
+      annotations:
+        sidecar.istio.io/proxyCPU: "10m"
+        sidecar.istio.io/proxyMemory: "16Mi"
     spec:
       containers:
         - name: curl-5
@@ -322,30 +337,6 @@ spec:
               memory: 16Mi
           ports:
             - containerPort: 8080
----
-apiVersion: v1
-kind: Namespace
-metadata:
-  labels:
-    uds: curl-testing-namespace
-  name: curl-test-3
----
-apiVersion: uds.dev/v1alpha1
-kind: Package
-metadata:
-  name: curl-5
-  namespace: curl-test-3
-spec:
-  network:
-    allow:
-      - direction: Egress
-        selector:
-          app: curl-5
-        remoteGenerated: Anywhere
-        ports:
-          - 443
-          - 8080
-          - 80
 ---
 apiVersion: v1
 kind: Namespace
@@ -397,6 +388,9 @@ spec:
     metadata:
       labels:
         app: curl-6
+      annotations:
+        sidecar.istio.io/proxyCPU: "10m"
+        sidecar.istio.io/proxyMemory: "16Mi"
     spec:
       containers:
         - name: curl-6
@@ -469,6 +463,9 @@ spec:
     metadata:
       labels:
         app: curl-7
+      annotations:
+        sidecar.istio.io/proxyCPU: "10m"
+        sidecar.istio.io/proxyMemory: "16Mi"
     spec:
       containers:
         - name: curl-7
@@ -531,6 +528,9 @@ spec:
     metadata:
       labels:
         app: curl-8
+      annotations:
+        sidecar.istio.io/proxyCPU: "10m"
+        sidecar.istio.io/proxyMemory: "16Mi"
     spec:
       containers:
         - name: curl-8
@@ -596,6 +596,9 @@ spec:
     metadata:
       labels:
         app: curl-9
+      annotations:
+        sidecar.istio.io/proxyCPU: "10m"
+        sidecar.istio.io/proxyMemory: "16Mi"
     spec:
       containers:
         - name: curl-9
@@ -655,6 +658,9 @@ spec:
     metadata:
       labels:
         app: curl-10
+      annotations:
+        sidecar.istio.io/proxyCPU: "10m"
+        sidecar.istio.io/proxyMemory: "16Mi"
     spec:
       containers:
         - name: curl-10
