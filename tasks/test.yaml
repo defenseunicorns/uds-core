@@ -55,7 +55,7 @@ tasks:
     actions:
       - cmd: |
           for package in $(ls src); do
-            if [[ ! $EXCLUDED_PACKAGES =~ ${package} ]]; then
+            if [ ! ${EXCLUDED_PACKAGES} =~ ${package} ]; then
             uds run -f src/${package}/tasks.yaml validate --no-progress
             fi
           done
