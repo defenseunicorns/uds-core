@@ -80,7 +80,7 @@ tasks:
           npm ci
           npx jest test/jest/
       - description: remove test resources
-        task: test-resources:remove-deploy-test-resources
+        task: test-resources:remove-test-resources
 
   - name: uds-core
     description: "Build and test UDS Core"
