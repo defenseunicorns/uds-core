@@ -155,7 +155,7 @@ export async function loadUDSConfig() {
     }
 
     try {
-      await validateCfg(cfgList);
+      validateCfg(cfgList.items[0]);
       setConfig(cfgList.items[0]);
     } catch (e) {
       configLog.error(e);

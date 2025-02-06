@@ -16,7 +16,7 @@ export async function validateCfgUpdate(req: PeprValidateRequest<ClusterConfig>)
   return req.Approve();
 }
 
-export async function validateCfg(cfg: ClusterConfig) {
+export function validateCfg(cfg: ClusterConfig) {
   if (cfg.metadata?.namespace !== "pepr-system" && cfg.metadata?.name !== "uds-cluster-config") {
     throw new Error("ClusterConfig Validation: namespace or name is invalid");
   }
