@@ -52,15 +52,7 @@ describe("updateUDSConfig", () => {
   beforeEach(() => {
     mockSecret = {
       data: {
-        // This is "double base64 encoded" because the user will provide
-        // a base64 encoded CA cert, which is then base64 encoded again for the k8s secret
-        UDS_CA_CERT: btoa(btoa("mock-ca-cert")),
         AUTHSERVICE_REDIS_URI: btoa("mock-redis-uri"),
-        KUBEAPI_CIDR: btoa("mock-cidr"),
-        KUBENODE_CIDRS: btoa("mock-node-cidrs"),
-        UDS_DOMAIN: btoa("mock-domain"),
-        UDS_ADMIN_DOMAIN: btoa("mock-admin-domain"),
-        UDS_ALLOW_ALL_NS_EXEMPTIONS: btoa("true"),
       },
     };
 
