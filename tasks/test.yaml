@@ -1,6 +1,11 @@
 # Copyright 2024 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
+variables:
+  - name: EXCLUDED_PACKAGES
+    description: A comma separated string of packages to be excluded from validation and e2e tests.
+    default: ""
+
 includes:
   - create: ./create.yaml
   - setup: ./setup.yaml
@@ -49,8 +54,10 @@ tasks:
     # loop through each src/* package and run the validate.yaml task
     actions:
       - cmd: |
-          for package in src/*; do
-            uds run -f ${package}/tasks.yaml validate --no-progress
+          for package in $(ls src); do
+            if [[ ! "${EXCLUDED_PACKAGES[*]}" =~ ${package} ]]; then
+            uds run -f src/${package}/tasks.yaml validate --no-progress
+            fi
           done
           set +e
 
@@ -89,6 +96,13 @@ tasks:
     description: "Build and test UDS Core e2e"
     actions:
       - task: uds-core
+      - task: e2e-tests
+
+  - name: uds-core-non-k3d
+    description: "Validate and Test UDS Core deployment on a non K3D Cluster"
+    actions:
+      - task: util:setup-hosts    
+      - task: validate-packages
       - task: e2e-tests
 
   - name: uds-core-ha

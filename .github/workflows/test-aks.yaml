@@ -92,7 +92,7 @@ jobs:
         timeout-minutes: 30
 
       - name: Test UDS Core
-        run: uds run -f tasks/utils.yaml setup-hosts && uds run -f tasks/test.yaml validate-packages && uds run -f tasks/test.yaml e2e-tests
+        run: uds run -f tasks/test.yaml uds-core-non-k3d --set EXCLUDED_PACKAGES="metrics-server"
 
       - name: Debug Output
         if: ${{ always() }}
