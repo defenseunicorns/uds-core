@@ -12,6 +12,9 @@ runs:
         echo "::group::kubectl get all"
         uds zarf tools kubectl get all -A | tee /tmp/debug-k-get-all.log || true
         echo "::endgroup::"
+        echo "::group::kubectl get pods -A -o yaml"
+        uds zarf tools kubectl get pods -A -o yaml | tee /tmp/debug-k-get-pods.log || true
+        echo "::endgroup::"
         echo "::group::kubectl get pv,pvc"
         uds zarf tools kubectl get pv,pvc -A | tee /tmp/debug-k-get-pv-pvc.log || true
         echo "::endgroup::"
