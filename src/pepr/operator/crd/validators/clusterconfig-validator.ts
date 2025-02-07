@@ -4,6 +4,7 @@
  */
 
 import { PeprValidateRequest } from "pepr";
+import { isBase64 } from "../../controllers/utils";
 import { ClusterConfig } from "../generated/clusterconfig-v1alpha1";
 
 export async function validateCfgUpdate(req: PeprValidateRequest<ClusterConfig>) {
@@ -22,9 +23,7 @@ export function validateCfg(cfg: ClusterConfig) {
 
   // Validate that the cacert is base64 encoded
   if (cfg.spec?.expose.caCert) {
-    const is64encoded =
-      Buffer.from(cfg.spec?.expose.caCert, "base64").toString("base64") === cfg.spec?.expose.caCert;
-    if (!is64encoded) {
+    if (!isBase64(cfg.spec.expose.caCert)) {
       throw new Error(
         "ClusterConfig Validation: caCert must be base64 encoded -- found invalid value",
       );

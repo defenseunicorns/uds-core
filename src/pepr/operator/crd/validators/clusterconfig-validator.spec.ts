@@ -1,3 +1,8 @@
+/**
+ * Copyright 2025 Defense Unicorns
+ * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+ */
+
 import { describe, expect, it, jest } from "@jest/globals";
 import { PeprValidateRequest } from "pepr";
 import { ClusterConfig } from "../generated/clusterconfig-v1alpha1";
