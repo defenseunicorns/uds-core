@@ -199,6 +199,28 @@ describe("Network Policy Validation", () => {
     expect(successful_google_response.stdout).toBe("200");
   });
 
+  test.concurrent("Ingress Gateway Bypass", async () => {
+    const authserivce_curl_header = [
+      "sh",
+      "-c",
+      `curl -s -o /dev/null -w "%{http_code}" -k -H "Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/serviceaccount/token 2>/dev/null || echo '')" http://httpbin.authservice-test-app.svc.cluster.local:80`
+    ];
+
+    const authserivce_curl = [
+      "sh",
+      "-c",
+      `curl -s -o /dev/null -w "%{http_code}" http://httpbin.authservice-test-app.svc.cluster.local:80`
+    ];
+
+    // Validate that request is successful when using Ingress Gateway Bypass
+    const success_response = await execInPod("test-admin-app", testAdminApp, "curl", authserivce_curl);
+    expect(success_response.stdout).toBe("503");
+
+    // Validate that request is successful when using Ingress Gateway Bypass
+    const success_response2 = await execInPod("test-admin-app", testAdminApp, "curl", authserivce_curl_header);
+    expect(success_response2.stdout).toBe("503");
+  });
+
   test.concurrent("RemoteNamespace Ingress and Egress", async () => {
     // Validate that request is successful when using RemoteNamespace
     const success_response = await execInPod("curl-ns-remote-ns-1", curlPodName6, "curl-pkg-remote-ns-egress", INTERNAL_CURL_COMMAND_5);
