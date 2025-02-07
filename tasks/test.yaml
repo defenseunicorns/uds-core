@@ -65,7 +65,7 @@ tasks:
         # Self-reference this task file to avoid https://github.com/defenseunicorns/maru-runner/issues/144
         cmd: uds run -f tasks/test.yaml common-setup:create-doug-user --set KEYCLOAK_GROUP="/UDS Core/Admin" # Adds the test doug user
       - description: "Create and Deploy Test App Package"
-        task: test-resources:create-deploy-test-resources
+        task: test-resources:create-deploy
       - description: "Run Playwright E2E tests for all packages"
         dir: test/playwright
         cmd: |
@@ -80,7 +80,7 @@ tasks:
           npm ci
           npx jest test/jest/
       - description: remove test resources
-        task: test-resources:remove-test-resources
+        task: test-resources:remove
 
   - name: uds-core
     description: "Build and test UDS Core"

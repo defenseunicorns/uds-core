@@ -10,15 +10,15 @@ tasks:
   - name: e2e-test
     actions:
       - description: "Run Test Apps E2E tests"
-        task: create-deploy-test-resources
+        task: create-deploy
       - description: "Run Network Tests"
         cmd: |
           npx jest test/jest/network.spec.ts
         dir: test/jest
       - description: "Remove Test Apps resources"
-        task: remove-test-resources
+        task: remove
 
-  - name: create-deploy-test-resources
+  - name: create-deploy
     description: Test app used for UDS Core validation
     actions:
       - description: Create zarf package for the test resources
@@ -162,63 +162,63 @@ tasks:
             name: podinfo-svcmonitor
             namespace: podinfo
 
-      - description: "Wait for Packages to be Ready"
+      - description: "Wait for Deny All Package 1 to be Ready"
         wait:
           cluster:
             kind: Pod
-            name: app=curl-1
-            namespace: curl-test-1
+            name: app=curl-pkg-deny-all-1
+            namespace: curl-ns-deny-all
             condition: Ready
 
-      - description: "Wait for Packages to be Ready"
+      - description: "Wait for Deny All Package 2 to be Ready"
         wait:
           cluster:
             kind: Pod
-            name: app=curl-2
-            namespace: curl-test-1
+            name: app=curl-pkg-deny-all-2
+            namespace: curl-ns-deny-all
             condition: Ready
 
-      - description: "Wait for Packages to be Ready"
+      - description: "Wait for Allow All Package to be Ready"
         wait:
           cluster:
             kind: Pod
-            name: app=curl-4
-            namespace: curl-test-2
+            name: app=curl-pkg-allow-all
+            namespace: curl-ns-allow-all
             condition: Ready
 
-      - description: "Wait for Packages to be Ready"
+      - description: "Wait for Remote Namespace Egress Package to be Ready"
         wait:
           cluster:
             kind: Pod
-            name: app=curl-6
-            namespace: curl-test-4
+            name: app=curl-pkg-remote-ns-egress
+            namespace: curl-ns-remote-ns-1
             condition: Ready
 
-      - description: "Wait for Packages to be Ready"
+      - description: "Wait for Remote Namespace Ingress Package to be Ready"
         wait:
           cluster:
             kind: Pod
-            name: app=curl-7
-            namespace: curl-test-5
+            name: app=curl-pkg-remote-ns-ingress
+            namespace: curl-ns-remote-ns-2
             condition: Ready
 
-      - description: "Wait for Packages to be Ready"
+      - description: "Wait for Kube Api Package to be Ready"
         wait:
           cluster:
             kind: Pod
-            name: app=curl-8
-            namespace: curl-test-6
+            name: app=curl-pkg-kube-api
+            namespace: curl-ns-kube-api
             condition: Ready
 
-      - description: "Wait for Packages to be Ready"
+      - description: "Wait for Remote Cidr Package to be Ready"
         wait:
           cluster:
             kind: Pod
-            name: app=curl-10
-            namespace: curl-test-7
+            name: app=curl-pkg-remote-cidr
+            namespace: curl-ns-remote-cidr
             condition: Ready
 
-  - name: remove-test-resources
+  - name: remove
     actions:
       - description:
         cmd: "uds zarf package remove build/zarf-package-uds-core-test-apps-*.zst --confirm --no-progress"

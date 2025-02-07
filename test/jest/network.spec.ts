@@ -3,15 +3,13 @@
  */
 
 import { beforeAll, describe, expect, test } from "@jest/globals";
-import { exec } from "child_process";
-import { promisify } from "util";
-
-const execAsync = promisify(exec);
+import { Exec, KubeConfig } from "@kubernetes/client-node";
+import { K8s, kind } from "pepr";
+import { Writable } from "stream";
 
 jest.setTimeout(30000);
 
-// Curl Commands
-const CURL_EXTERNAL = [
+const CURL_GATEWAY = [
   "curl",
   "-s",
   "-o",
@@ -35,10 +33,9 @@ function getCurlCommand(serviceName: string, namespaceName: string, port = 8080)
 
 // Retrieve pod name dynamically
 async function getPodName(namespace: string, labelSelector: string): Promise<string> {
-  const command = `kubectl get pods -n ${namespace} -l ${labelSelector} -o jsonpath="{.items[0].metadata.name}"`;
+  const pod = await K8s(kind.Pod).InNamespace(namespace).WithLabel(labelSelector).Get();
   try {
-    const { stdout } = await execAsync(command);
-    const podName = stdout.trim();
+    const podName = pod.items[0].metadata?.name?.trim();
     if (!podName) {
       throw new Error(`No pods found in namespace '${namespace}' with label '${labelSelector}'`);
     }
@@ -51,14 +48,62 @@ async function getPodName(namespace: string, labelSelector: string): Promise<str
 }
 
 // Execute commands inside a pod
-async function execInPod(namespace: string, podName: string, containerName: string, command: string[]) {
-  const cmd = `kubectl exec -n ${namespace} ${podName} -c ${containerName} -- ${command.join(" ")}`;
-  try {
-    const { stdout } = await execAsync(cmd);
-    return { stdout: stdout.trim(), stderr: "" };
-  } catch (error) {
-    return { stdout: "000", stderr: "Curl failed" };
-  }
+async function execInPod(
+  namespace: string,
+  podName: string,
+  containerName: string,
+  command: string[]
+): Promise<{ stdout: string; stderr: string; exitCode: number }> {
+  const kc = new KubeConfig();
+  kc.loadFromDefault();
+  const exec = new Exec(kc);
+
+  let stdoutBuffer = "";
+  let stderrBuffer = "";
+
+  return new Promise((resolve) => {
+    exec.exec(
+      namespace,
+      podName,
+      containerName,
+      command,
+      new Writable({
+        write(chunk, encoding, callback) {
+          stdoutBuffer += chunk.toString();
+          callback();
+        },
+      }),
+      new Writable({
+        write(chunk, encoding, callback) {
+          stderrBuffer += chunk.toString();
+          callback();
+        },
+      }),
+      null,
+      false,
+      (exitResponse: any) => {
+        let exitCode = 0; // Default to success
+
+        if (exitResponse && typeof exitResponse === "object") {
+          if (exitResponse.status === "Failure") {
+            // Extract exit code from `details.causes` array if available
+            exitCode =
+              parseInt(exitResponse.details?.causes?.find((cause: { reason: string; }) => cause.reason === "ExitCode")?.message || "1", 10);
+          }
+        } else if (typeof exitResponse === "number") {
+          exitCode = exitResponse;
+        } else {
+          exitCode = 1; // Default to failure
+        }
+
+        resolve({
+          stdout: exitCode !== 0 ? "000" : stdoutBuffer.trim(),
+          stderr: stderrBuffer.trim(),
+          exitCode,
+        });
+      }
+    );
+  });
 }
 
 let curlPodName1 = "";
@@ -73,18 +118,18 @@ beforeAll(async () => {
     curlPodName6,
     curlPodName8,
   ] = await Promise.all([
-    getPodName("curl-test-1", "app=curl-1"),
+    getPodName("curl-ns-deny-all", "app=curl-pkg-deny-all-1"),
     getPodName("test-admin-app", "app=httpbin"),
-    getPodName("curl-test-4", "app=curl-6"),
-    getPodName("curl-test-6", "app=curl-8"),
+    getPodName("curl-ns-remote-ns-1", "app=curl-pkg-remote-ns-egress"),
+    getPodName("curl-ns-kube-api", "app=curl-pkg-kube-api"),
   ]);
 });
 
 describe("Network Policy Validation", () => {
-  const INTERNAL_CURL_COMMAND_1 = getCurlCommand("curl-2", "curl-test-1");
-  const INTERNAL_CURL_COMMAND_2 = getCurlCommand("curl-4", "curl-test-2");
-  const INTERNAL_CURL_COMMAND_5 = getCurlCommand("curl-7", "curl-test-5");
-  const INTERNAL_CURL_COMMAND_7 = getCurlCommand("curl-10", "curl-test-7");
+  const INTERNAL_CURL_COMMAND_1 = getCurlCommand("curl-pkg-deny-all-2", "curl-ns-deny-all");
+  const INTERNAL_CURL_COMMAND_2 = getCurlCommand("curl-pkg-allow-all", "curl-ns-allow-all");
+  const INTERNAL_CURL_COMMAND_5 = getCurlCommand("curl-pkg-remote-ns-ingress", "curl-ns-remote-ns-2");
+  const INTERNAL_CURL_COMMAND_7 = getCurlCommand("curl-pkg-remote-cidr", "curl-ns-remote-cidr");
 
   const GOOGLE_CURL = [
     "curl",
@@ -98,20 +143,20 @@ describe("Network Policy Validation", () => {
 
   test.concurrent("Denied Requests by Default and Incorrect Ports and Labels", async () => {
     // Default Deny when no Ingress or Egress defined or Exposed Endpoints
-    const denied_external_response = await execInPod("curl-test-1", curlPodName1, "curl-1", CURL_EXTERNAL);
+    const denied_external_response = await execInPod("curl-ns-deny-all", curlPodName1, "curl-pkg-deny-all-1", CURL_GATEWAY);
     expect(denied_external_response.stdout).toBe("000");
 
     // Default deny when no Ingress or Egress for internal curl command
-    const denied_internal_response = await execInPod("curl-test-1", curlPodName1, "curl-1", INTERNAL_CURL_COMMAND_1);
+    const denied_internal_response = await execInPod("curl-ns-deny-all", curlPodName1, "curl-pkg-deny-all-1", INTERNAL_CURL_COMMAND_1);
     expect(denied_internal_response.stdout).toBe("503");
 
     // Default Deny for Google Curl when no Egress defined
-    const denied_google_response = await execInPod("curl-test-1", curlPodName1, "curl-1", GOOGLE_CURL);
+    const denied_google_response = await execInPod("curl-ns-deny-all", curlPodName1, "curl-pkg-deny-all-1", GOOGLE_CURL);
     expect(denied_google_response.stdout).toBe("000");
 
     // Default Deny for Blocked Port
-    const blocked_port_curl = getCurlCommand("curl-2", "curl-test-1", 9999);
-    const denied_port_response = await execInPod("curl-test-1", curlPodName1, "curl-1", blocked_port_curl);
+    const blocked_port_curl = getCurlCommand("curl-pkg-deny-all-2", "curl-ns-deny-all", 9999);
+    const denied_port_response = await execInPod("curl-ns-deny-all", curlPodName1, "curl-pkg-deny-all-1", blocked_port_curl);
     expect(denied_port_response.stdout).toBe("503");
   });
 
@@ -127,7 +172,7 @@ describe("Network Policy Validation", () => {
       "/dev/null",
       "-w",
       "%{http_code}",
-      "http://curl-4.curl-test-2.svc.cluster.local:8081",
+      "http://curl-pkg-allow-all.curl-ns-allow-all.svc.cluster.local:8081",
     ];
 
     // Deny request when port is not allowed on ingress
@@ -135,7 +180,7 @@ describe("Network Policy Validation", () => {
     expect(denied_incorrect_port_response.stdout).toBe("503");
 
     // Default Deny for undefined Ingress port
-    const blocked_port_curl = getCurlCommand("curl-4", "curl-test-2", 9999);
+    const blocked_port_curl = getCurlCommand("curl-pkg-allow-all", "curl-ns-allow-all", 9999);
     const denied_port_response = await execInPod("test-admin-app", testAdminApp, "curl", blocked_port_curl);
     expect(denied_port_response.stdout).toBe("503");
 
@@ -146,7 +191,7 @@ describe("Network Policy Validation", () => {
 
   test.concurrent("Anywhere Egress", async () => {
     // Validate that request is successful when Egress Anywhere is used
-    const success_response = await execInPod("test-admin-app", testAdminApp, "curl", CURL_EXTERNAL);
+    const success_response = await execInPod("test-admin-app", testAdminApp, "curl", CURL_GATEWAY);
     expect(success_response.stdout).toBe("200");
 
     // Validate Egress to Google is successful
@@ -156,44 +201,37 @@ describe("Network Policy Validation", () => {
 
   test.concurrent("RemoteNamespace Ingress and Egress", async () => {
     // Validate that request is successful when using RemoteNamespace
-    const success_response = await execInPod("curl-test-4", curlPodName6, "curl-6", INTERNAL_CURL_COMMAND_5);
+    const success_response = await execInPod("curl-ns-remote-ns-1", curlPodName6, "curl-pkg-remote-ns-egress", INTERNAL_CURL_COMMAND_5);
     expect(success_response.stdout).toBe("200");
 
     // Default Deny for Google Curl when no Egress defined
-    const denied_google_response = await execInPod("curl-test-4", curlPodName6, "curl-6", GOOGLE_CURL);
+    const denied_google_response = await execInPod("curl-ns-remote-ns-1", curlPodName6, "curl-pkg-remote-ns-egress", GOOGLE_CURL);
     expect(denied_google_response.stdout).toBe("000");
 
     // Default Deny for Blocked Port
-    const blocked_port_curl = getCurlCommand("curl-7", "curl-test-5", 9999);
-    const denied_port_response = await execInPod("curl-test-4", curlPodName6, "curl-6", blocked_port_curl);
+    const blocked_port_curl = getCurlCommand("curl-pkg-remote-ns-ingress", "curl-ns-remote-ns-2", 9999);
+    const denied_port_response = await execInPod("curl-ns-remote-ns-1", curlPodName6, "curl-pkg-remote-ns-egress", blocked_port_curl);
     expect(denied_port_response.stdout).toBe("503");
   });
 
   test.concurrent("Kube API Restrictions", async () => {
     const kubeApi_curl = [
-      "curl",
-      "-s",
-      "-o",
-      "/dev/null",
-      "-w",
-      "%{http_code}",
-      "-k",
-      "-H",
-      "Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)",
-      `https://kubernetes.default.svc.cluster.local/api/v1/namespaces`,
+      "sh",
+      "-c",
+      `curl -s -o /dev/null -w "%{http_code}" -k -H "Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/serviceaccount/token 2>/dev/null || echo '')" https://kubernetes.default.svc.cluster.local/api`
     ];
 
-    // Validate unauthorized response when using Kube API ( because of missing authorization token )
-    const success_unauthorized_response = await execInPod("curl-test-6", curlPodName8, "curl-8", kubeApi_curl);
-    expect(success_unauthorized_response.stdout).toContain("401");
+    // Validate successful kubeApi request with token
+    const success_unauthorized_response = await execInPod("curl-ns-kube-api", curlPodName8, "curl-pkg-kube-api", kubeApi_curl);
+    expect(success_unauthorized_response.stdout).toContain("200");
 
     // Default Deny for Google Curl when no Egress defined
-    const denied_google_response = await execInPod("curl-test-6", curlPodName8, "curl-8", GOOGLE_CURL);
+    const denied_google_response = await execInPod("curl-ns-kube-api", curlPodName8, "curl-pkg-kube-api", GOOGLE_CURL);
     expect(denied_google_response.stdout).toBe("000");
 
     // Default Deny for Blocked Port
-    const blocked_port_curl = getCurlCommand("curl-2", "curl-test-1", 9999);
-    const denied_port_response = await execInPod("curl-test-6", curlPodName8, "curl-8", blocked_port_curl);
+    const blocked_port_curl = getCurlCommand("curl-pkg-deny-all-2", "curl-ns-deny-all", 9999);
+    const denied_port_response = await execInPod("curl-ns-kube-api", curlPodName8, "curl-pkg-kube-api", blocked_port_curl);
     expect(denied_port_response.stdout).toBe("503");
   });
 
@@ -203,7 +241,7 @@ describe("Network Policy Validation", () => {
     expect(success_response.stdout).toBe("200");
 
     // Validate successful request to Google because of wide open remoteCidr
-    const denied_google_response = await execInPod("test-admin-app", testAdminApp, "curl", GOOGLE_CURL);
-    expect(denied_google_response.stdout).toBe("200");
+    const success_google_response = await execInPod("test-admin-app", testAdminApp, "curl", GOOGLE_CURL);
+    expect(success_google_response.stdout).toBe("200");
   });
 });
