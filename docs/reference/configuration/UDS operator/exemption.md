@@ -51,6 +51,10 @@ spec:
         name: "^neuvector-prometheus-exporter-pod.*"
 ```
 
+:::note
+This example may not contain all fields, the full specification for the Package CR is documented [here](/reference/configuration/custom-resources/exemption-v1alpha1-cr). In addition, there is a JSON schema published here for use in your IDE.
+:::
+
 ### Configuring UDS Core Policy Exemptions
 
 Default [policy exemptions](https://uds.defenseunicorns.com/reference/configuration/custom-resources/exemptions-v1alpha1-cr/) and [namespace restriction/config](https://uds.defenseunicorns.com/reference/configuration/uds-configure-policy-exemptions/) are confined to a singular namespace: `uds-policy-exemptions`. We find this to be an optimal approach for UDS due to the following reasons:

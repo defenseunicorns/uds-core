@@ -9,11 +9,24 @@ tasks:
     description: "Generate CRDS, requires a running kubernetes cluster"
     actions:
       - cmd: npx ts-node -e "import { registerCRDs } from './src/pepr/operator/crd/register'; registerCRDs()"
+        description: "Register CRDs in cluster"
         env:
           - "PEPR_MODE=dev"
       - cmd: "npx kubernetes-fluent-client crd packages.uds.dev src/pepr/operator/crd/generated"
+        description: "Generate TS types for packages.uds.dev"
+
+      - cmd: |
+          npx kubernetes-fluent-client crd packages.uds.dev -l json-schema schemas
+          mv schemas/package-v1alpha1.json-schema schemas/package-v1alpha1.schema.json
+        description: "Generate JSON schema for packages.uds.dev"
 
       - cmd: "npx kubernetes-fluent-client crd exemptions.uds.dev src/pepr/operator/crd/generated"
+        description: "Generate TS types for exemptions.uds.dev"
+
+      - cmd: |
+          npx kubernetes-fluent-client crd exemptions.uds.dev -l json-schema schemas
+          mv schemas/exemption-v1alpha1.json-schema schemas/exemption-v1alpha1.schema.json
+        description: "Generate JSON schema for exemptions.uds.dev"
 
       - description: "Add license headers to generated CRD files"
         shell:
