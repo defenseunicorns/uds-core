@@ -42,4 +42,3 @@ spec:
         remoteNamespace: "" # Any namespace could have a protected app
         port: 10003
         description: "Protected Apps"
-        tes: thrfjkr
