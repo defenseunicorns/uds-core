@@ -21,7 +21,16 @@
     // renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
     "https://raw.githubusercontent.com/defenseunicorns/uds-cli/v0.20.0/zarf.schema.json": [
       "zarf.yaml"
-    ]
+    ],
+    "https://raw.githubusercontent.com/defenseunicorns/uds-core/refs/heads/main/schemas/package-v1alpha1.schema.json": [
+      "**/uds-package.yaml",
+      "**/package.yaml"
+    ],
+    "https://raw.githubusercontent.com/defenseunicorns/uds-core/refs/heads/main/schemas/exemption-v1alpha1.schema.json": [
+      "**/uds-exemption.yaml",
+      "**/exemptions.yaml",
+      "**/exemption.yaml"
+    ],
   },
   "cSpell.words": [
     "alertmanager",
