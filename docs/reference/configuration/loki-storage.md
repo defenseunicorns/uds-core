@@ -31,6 +31,7 @@ When upgrading Loki with an existing deployment, follow these best practices to 
      kubectl get secret loki -n loki -o yaml
      ```
    - Check if `config.yaml` exists and whether `schema_config.configs` contains an entry for the intended storage type.
+   - We recommend saving a copy of the the current schema config list, in the case of problems this can be used with overrides.
 
 2. Automatic Upgrade Handling
    - The upgrade logic will automatically update the schema configuration to include the latest storage type and version.
@@ -70,4 +71,4 @@ In some cases, you may want to **disable a specific storage type** or manually o
 
 It is important to ensure that the from date is set in the future, accounting for time zones, to avoid potential indexing issues. Additionally, schema configurations must be listed in sequential order, with the latest configuration appearing last to ensure proper data indexing.
 
-For more details on changing the schema, refer to the official Loki documentation: [Changing the Schema](https://grafana.com/docs/loki/latest/operations/storage/schema/#changing-the-schema)..
+For more details on changing the schema, refer to the official Loki documentation: [Changing the Schema](https://grafana.com/docs/loki/latest/operations/storage/schema/#changing-the-schema)
