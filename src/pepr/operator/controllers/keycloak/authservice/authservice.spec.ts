@@ -47,7 +47,10 @@ describe("authservice", () => {
       webOrigins: [],
     };
 
-    setConfig({ domain: "uds.dev" });
+    setConfig(
+      { spec: { expose: { domain: "uds.dev" }, policy: { allowAllNsExemptions: false } } },
+      { data: { AUTHSERVICE_REDIS_URI: btoa("redis://localhost:6379") } },
+    );
     initializeOperatorConfig();
   });
 
