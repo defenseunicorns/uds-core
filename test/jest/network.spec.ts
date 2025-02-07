@@ -200,25 +200,25 @@ describe("Network Policy Validation", () => {
   });
 
   test.concurrent("Ingress Gateway Bypass", async () => {
-    const authserivce_curl_header = [
+    const authservice_curl_header = [
       "sh",
       "-c",
-      `curl -s -o /dev/null -w "%{http_code}" -k -H "Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/serviceaccount/token 2>/dev/null || echo '')" http://httpbin.authservice-test-app.svc.cluster.local:80`
+      `curl -s -o /dev/null -w "%{http_code}" -k -H "Authorization: foobar" http://httpbin.authservice-test-app.svc.cluster.local:8000`
     ];
 
-    const authserivce_curl = [
+    const authservice_curl = [
       "sh",
       "-c",
-      `curl -s -o /dev/null -w "%{http_code}" http://httpbin.authservice-test-app.svc.cluster.local:80`
+      `curl -s -o /dev/null -w "%{http_code}" http://httpbin.authservice-test-app.svc.cluster.local:8000`
     ];
 
-    // Validate that request is successful when using Ingress Gateway Bypass
-    const success_response = await execInPod("test-admin-app", testAdminApp, "curl", authserivce_curl);
-    expect(success_response.stdout).toBe("503");
+    // Validate that request is not success when using Ingress Gateway Bypass
+    const failed_response = await execInPod("test-admin-app", testAdminApp, "curl", authservice_curl);
+    expect(failed_response.stdout).toBe("403");
 
-    // Validate that request is successful when using Ingress Gateway Bypass
-    const success_response2 = await execInPod("test-admin-app", testAdminApp, "curl", authserivce_curl_header);
-    expect(success_response2.stdout).toBe("503");
+    // Validate that request is not successful when using Ingress Gateway Bypass
+    const failed_response2 = await execInPod("test-admin-app", testAdminApp, "curl", authservice_curl_header);
+    expect(failed_response2.stdout).toBe("403");
   });
 
   test.concurrent("RemoteNamespace Ingress and Egress", async () => {
