@@ -33,4 +33,4 @@ cluster:
     UDS_ALLOW_ALL_NS_EXEMPTIONS: "###ZARF_VAR_ALLOW_ALL_NS_EXEMPTIONS###"
   networking:
     KUBEAPI_CIDR: ""
-    KUBENODE_CIDRS: ""
+    KUBENODE_CIDRS: []

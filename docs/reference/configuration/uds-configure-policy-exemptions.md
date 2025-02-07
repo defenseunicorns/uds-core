@@ -23,9 +23,23 @@ options:
   # options here
 
 shared:
-   ALLOW_ALL_NS_EXEMPTIONS: "true"
+  ALLOW_ALL_NS_EXEMPTIONS: "true"
 
 variables:
- # package specific variables here
+  # package specific variables here
+```
 
+or via bundle overrides:
+
+```yaml
+packages:
+  - name: core
+    repository: ghcr.io/defenseunicorns/packages/uds/core
+    ref: x.x.x
+    overrides:
+      uds-operator-config:
+        uds-operator-config:
+          values:
+            - path: cluster.policy.UDS_ALLOW_ALL_NS_EXEMPTIONS
+              value: true
 ```
