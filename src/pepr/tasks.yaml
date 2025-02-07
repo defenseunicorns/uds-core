@@ -18,7 +18,7 @@ tasks:
       - cmd: |
           npx kubernetes-fluent-client crd packages.uds.dev -l json-schema schemas
           mv schemas/package-v1alpha1.json-schema schemas/package-v1alpha1.schema.json
-          uds zarf tools yq -i '(.. | select(has("additionalProperties"))) |= del(.additionalProperties)' schemas/package-v1alpha1.schema.json
+          uds zarf tools yq -i '(.. | select(has("additionalProperties"))) |= .additionalProperties = false' schemas/package-v1alpha1.schema.json
         description: "Generate JSON schema for packages.uds.dev"
 
       - cmd: "npx kubernetes-fluent-client crd exemptions.uds.dev src/pepr/operator/crd/generated"
@@ -27,7 +27,7 @@ tasks:
       - cmd: |
           npx kubernetes-fluent-client crd exemptions.uds.dev -l json-schema schemas
           mv schemas/exemption-v1alpha1.json-schema schemas/exemption-v1alpha1.schema.json
-          uds zarf tools yq -i '(.. | select(has("additionalProperties"))) |= del(.additionalProperties)' schemas/exemption-v1alpha1.schema.json
+          uds zarf tools yq -i '(.. | select(has("additionalProperties"))) |= .additionalProperties = false' schemas/exemption-v1alpha1.schema.json
         description: "Generate JSON schema for exemptions.uds.dev"
 
       - description: "Add license headers to generated CRD files"

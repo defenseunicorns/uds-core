@@ -4,6 +4,7 @@
   "definitions": {
     "Package": {
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "spec": {
           "$ref": "#/definitions/Spec"
@@ -17,6 +18,7 @@
     },
     "Spec": {
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "monitor": {
           "type": "array",
@@ -42,6 +44,7 @@
     },
     "Monitor": {
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "authorization": {
           "$ref": "#/definitions/Authorization",
@@ -65,6 +68,7 @@
         },
         "podSelector": {
           "type": "object",
+          "additionalProperties": false,
           "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
         },
         "portName": {
@@ -73,6 +77,7 @@
         },
         "selector": {
           "type": "object",
+          "additionalProperties": false,
           "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
         },
         "targetPort": {
@@ -89,6 +94,7 @@
     },
     "Authorization": {
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "credentials": {
           "$ref": "#/definitions/Credentials",
@@ -107,6 +113,7 @@
     },
     "Credentials": {
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "key": {
           "type": "string",
@@ -129,6 +136,7 @@
     },
     "Network": {
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "allow": {
           "type": "array",
@@ -151,6 +159,7 @@
     },
     "Allow": {
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "description": {
           "type": "string",
@@ -162,10 +171,12 @@
         },
         "labels": {
           "type": "object",
+          "additionalProperties": false,
           "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
         },
         "podLabels": {
           "type": "object",
+          "additionalProperties": false,
           "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
         },
         "port": {
@@ -193,14 +204,17 @@
         },
         "remotePodLabels": {
           "type": "object",
+          "additionalProperties": false,
           "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
         },
         "remoteSelector": {
           "type": "object",
+          "additionalProperties": false,
           "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
         },
         "selector": {
           "type": "object",
+          "additionalProperties": false,
           "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
         }
       },
@@ -211,6 +225,7 @@
     },
     "Expose": {
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "advancedHTTP": {
           "$ref": "#/definitions/AdvancedHTTP",
@@ -237,6 +252,7 @@
         },
         "podLabels": {
           "type": "object",
+          "additionalProperties": false,
           "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
         },
         "port": {
@@ -245,6 +261,7 @@
         },
         "selector": {
           "type": "object",
+          "additionalProperties": false,
           "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
         },
         "service": {
@@ -263,6 +280,7 @@
     },
     "AdvancedHTTP": {
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "corsPolicy": {
           "$ref": "#/definitions/CorsPolicy",
@@ -309,6 +327,7 @@
     },
     "CorsPolicy": {
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "allowCredentials": {
           "type": "boolean",
@@ -359,6 +378,7 @@
     },
     "AllowOrigin": {
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "exact": {
           "type": "string"
@@ -376,6 +396,7 @@
     },
     "DirectResponse": {
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "body": {
           "$ref": "#/definitions/Body",
@@ -394,6 +415,7 @@
     },
     "Body": {
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "bytes": {
           "type": "string",
@@ -409,6 +431,7 @@
     },
     "Headers": {
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "request": {
           "$ref": "#/definitions/Request"
@@ -422,9 +445,11 @@
     },
     "Request": {
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "add": {
           "type": "object",
+          "additionalProperties": false,
           "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
         },
         "remove": {
@@ -435,6 +460,7 @@
         },
         "set": {
           "type": "object",
+          "additionalProperties": false,
           "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
         }
       },
@@ -443,9 +469,11 @@
     },
     "Response": {
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "add": {
           "type": "object",
+          "additionalProperties": false,
           "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
         },
         "remove": {
@@ -456,6 +484,7 @@
         },
         "set": {
           "type": "object",
+          "additionalProperties": false,
           "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
         }
       },
@@ -464,6 +493,7 @@
     },
     "AdvancedHTTPMatch": {
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "ignoreUriCase": {
           "type": "boolean",
@@ -478,6 +508,7 @@
         },
         "queryParams": {
           "type": "object",
+          "additionalProperties": false,
           "description": "Query parameters for matching."
         },
         "uri": {
@@ -491,6 +522,7 @@
     },
     "PurpleMethod": {
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "exact": {
           "type": "string"
@@ -508,6 +540,7 @@
     },
     "PurpleQueryParam": {
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "exact": {
           "type": "string"
@@ -525,6 +558,7 @@
     },
     "PurpleURI": {
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "exact": {
           "type": "string"
@@ -542,6 +576,7 @@
     },
     "Redirect": {
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "authority": {
           "type": "string",
@@ -574,6 +609,7 @@
     },
     "Retries": {
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "attempts": {
           "type": "integer",
@@ -598,6 +634,7 @@
     },
     "Rewrite": {
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "authority": {
           "type": "string",
@@ -618,6 +655,7 @@
     },
     "URIRegexRewrite": {
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "match": {
           "type": "string",
@@ -634,6 +672,7 @@
     },
     "ExposeMatch": {
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "ignoreUriCase": {
           "type": "boolean",
@@ -648,6 +687,7 @@
         },
         "queryParams": {
           "type": "object",
+          "additionalProperties": false,
           "description": "Query parameters for matching."
         },
         "uri": {
@@ -661,6 +701,7 @@
     },
     "FluffyMethod": {
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "exact": {
           "type": "string"
@@ -678,6 +719,7 @@
     },
     "FluffyQueryParam": {
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "exact": {
           "type": "string"
@@ -695,6 +737,7 @@
     },
     "FluffyURI": {
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "exact": {
           "type": "string"
@@ -712,6 +755,7 @@
     },
     "Sso": {
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "alwaysDisplayInConsole": {
           "type": "boolean",
@@ -719,6 +763,7 @@
         },
         "attributes": {
           "type": "object",
+          "additionalProperties": false,
           "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
         },
         "baseUrl": {
@@ -746,6 +791,7 @@
         },
         "enableAuthserviceSelector": {
           "type": "object",
+          "additionalProperties": false,
           "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
         },
         "enabled": {
@@ -796,6 +842,7 @@
         },
         "secretTemplate": {
           "type": "object",
+          "additionalProperties": false,
           "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
         },
         "serviceAccountsEnabled": {
@@ -822,6 +869,7 @@
     },
     "Groups": {
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "anyOf": {
           "type": "array",
@@ -837,9 +885,11 @@
     },
     "ProtocolMapper": {
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "config": {
           "type": "object",
+          "additionalProperties": false,
           "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
         },
         "consentRequired": {
@@ -868,6 +918,7 @@
     },
     "Status": {
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "authserviceClients": {
           "type": "array",
