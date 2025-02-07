@@ -6,12 +6,13 @@
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { kind } from "pepr";
 
+import { KubernetesListObject } from "kubernetes-fluent-client";
 import { Component, setupLogger } from "../../../logger";
 import { ClusterConfig } from "../../crd";
 import { reconcileAuthservice } from "../keycloak/authservice/authservice";
 import { initAPIServerCIDR } from "../network/generators/kubeAPI";
 import { initAllNodesTarget } from "../network/generators/kubeNodes";
-import { UDSConfig, updateCfg, updateCfgSecrets } from "./config";
+import { loadUDSConfig, UDSConfig, updateCfg, updateCfgSecrets } from "./config";
 
 // Mock dependencies
 
@@ -43,6 +44,129 @@ jest.mock("../../../logger", () => {
     },
     setupLogger: jest.fn(() => mockLogger),
   };
+});
+
+jest.mock("pepr", () => {
+  const mockCfg = {
+    metadata: {
+      name: "uds-cluster-config",
+      namespace: "pepr-system",
+    },
+    spec: {
+      expose: {
+        domain: "mock-domain",
+        adminDomain: "mock-admin-domain",
+        caCert: btoa("mock-ca-cert"),
+      },
+      networking: {
+        kubeapiCIDR: "mock-cidr",
+        kubenodeCIDRS: ["mock-node-cidrs"],
+      },
+      policy: {
+        allowAllNsExemptions: true,
+      },
+    },
+  } as ClusterConfig;
+
+  const mockSecret = {
+    metadata: {
+      name: "uds-operator-config",
+      namespace: "pepr-system",
+    },
+    data: {
+      AUTHSERVICE_REDIS_URI: btoa("mock-redis-uri"),
+    },
+  } as kind.Secret;
+
+  return {
+    K8s: jest
+      .fn()
+      // valid ClusterConfig and config secret
+      .mockReturnValueOnce({
+        InNamespace: jest.fn().mockReturnValue({
+          Get: jest
+            .fn<() => Promise<KubernetesListObject<ClusterConfig>>>()
+            .mockResolvedValue({ items: [mockCfg] }),
+        }),
+      })
+      .mockReturnValueOnce({
+        InNamespace: jest.fn().mockReturnValue({
+          Get: jest
+            .fn<() => Promise<KubernetesListObject<kind.Secret>>>()
+            .mockResolvedValue({ items: [mockSecret] }),
+        }),
+      })
+      // too many ClusterConfigs (ERROR)
+      .mockReturnValueOnce({
+        InNamespace: jest.fn().mockReturnValue({
+          Get: jest
+            .fn<() => Promise<KubernetesListObject<ClusterConfig>>>()
+            .mockResolvedValue({ items: [mockCfg, mockCfg] }),
+        }),
+      })
+      .mockReturnValueOnce({
+        InNamespace: jest.fn().mockReturnValue({
+          Get: jest
+            .fn<() => Promise<KubernetesListObject<kind.Secret>>>()
+            .mockResolvedValue({ items: [mockSecret] }),
+        }),
+      })
+      // no ClusterConfig (ERROR)
+      .mockReturnValueOnce({
+        InNamespace: jest.fn().mockReturnValue({
+          Get: jest
+            .fn<() => Promise<KubernetesListObject<ClusterConfig>>>()
+            .mockResolvedValue({ items: [] }),
+        }),
+      })
+      .mockReturnValueOnce({
+        InNamespace: jest.fn().mockReturnValue({
+          Get: jest
+            .fn<() => Promise<KubernetesListObject<kind.Secret>>>()
+            .mockResolvedValue({ items: [mockSecret] }),
+        }),
+      }),
+    kind: {
+      Secret: "Secret",
+    },
+  };
+});
+
+describe("initial config load", () => {
+  beforeEach(() => {
+    process.env.PEPR_WATCH_MODE = "true";
+    process.env.PEPR_MODE = "dev";
+  });
+
+  it("loads initial config", async () => {
+    await loadUDSConfig();
+
+    expect(UDSConfig.caCert).toBe(btoa("mock-ca-cert"));
+    expect(UDSConfig.kubeApiCidr).toBe("mock-cidr");
+    expect(UDSConfig.kubeNodeCidrs).toStrictEqual(["mock-node-cidrs"]);
+    expect(UDSConfig.domain).toBe("mock-domain");
+    expect(UDSConfig.adminDomain).toBe("mock-admin-domain");
+    expect(UDSConfig.allowAllNSExemptions).toBe(true);
+    expect(UDSConfig.authserviceRedisUri).toBe("mock-redis-uri");
+  });
+
+  it("throws error because too many configs", async () => {
+    try {
+      await loadUDSConfig();
+    } catch (e) {
+      expect(e.message).toBe(
+        "ClusterConfig Processing: only one ClusterConfig is allowed -- found: 2",
+      );
+    }
+  });
+
+  it("throws error because no config", async () => {
+    try {
+      await loadUDSConfig();
+    } catch (e) {
+      expect(e.message).toBe("No ClusterConfig found");
+    }
+  });
 });
 
 describe("updateUDSConfig", () => {

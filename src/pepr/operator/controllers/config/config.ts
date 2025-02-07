@@ -27,23 +27,29 @@ export let UDSConfig: Config = {
 
 export const configLog = setupLogger(Component.CONFIG);
 
-export async function updateCfgSecrets(cfg: kind.Secret) {
-  configLog.info("Updating UDS Config from uds-operator-config secret change");
-
+function decodeSecret(secret: kind.Secret) {
   // Base64 decode the secret data
-  const decodedCfgData: { [key: string]: string } = {};
-  for (const key in cfg.data) {
+  const decodedData: { [key: string]: string } = {};
+  for (const key in secret.data) {
     try {
-      const decodedValue = atob(cfg.data[key]);
+      const decodedValue = atob(secret.data[key]);
       if (decodedValue) {
-        decodedCfgData[key] = decodedValue;
+        decodedData[key] = decodedValue;
       } else {
-        decodedCfgData[key] = "";
+        decodedData[key] = "";
       }
     } catch (e) {
       configLog.error(`Failed to decode secret key: ${key}, error: ${e.message}`);
     }
   }
+
+  return decodedData;
+}
+
+export async function updateCfgSecrets(cfg: kind.Secret) {
+  configLog.info("Updating UDS Config from uds-operator-config secret change");
+
+  const decodedCfgData = decodeSecret(cfg);
 
   // Handle changes to the Authservice configuration
   if (decodedCfgData.AUTHSERVICE_REDIS_URI !== UDSConfig.authserviceRedisUri) {
@@ -144,6 +150,10 @@ export async function loadUDSConfig() {
   // Run in Admission and Watcher pods
   if (process.env.PEPR_WATCH_MODE || process.env.PEPR_MODE === "dev") {
     const cfgList = await K8s(ClusterConfig).InNamespace("pepr-system").Get();
+    const cfgSecretList = await K8s(kind.Secret).InNamespace("pepr-system").Get();
+
+    const cfgSecret = cfgSecretList.items.find(s => s.metadata?.name === "uds-operator-config");
+
     if (cfgList.items.length === 0) {
       throw new Error("No ClusterConfig found");
     }
@@ -156,7 +166,7 @@ export async function loadUDSConfig() {
 
     try {
       validateCfg(cfgList.items[0]);
-      setConfig(cfgList.items[0]);
+      setConfig(cfgList.items[0], cfgSecret);
     } catch (e) {
       configLog.error(e);
       throw e;
@@ -164,11 +174,13 @@ export async function loadUDSConfig() {
   }
 }
 
-export function setConfig(cfg: ClusterConfig) {
+export function setConfig(cfg: ClusterConfig, cfgSecret: kind.Secret | undefined) {
+  const secretData = cfgSecret ? decodeSecret(cfgSecret) : {};
+
   let domain = cfg.spec?.expose.domain;
   let adminDomain = cfg.spec?.expose.adminDomain;
   let caCert = cfg.spec?.expose.caCert;
-  let authserviceRedisUri = process.env.AUTHSERVICE_REDIS_URI;
+  let authserviceRedisUri = secretData.AUTHSERVICE_REDIS_URI;
 
   // We need to handle `npx pepr <>` commands that will not template the env vars
   if (!domain || domain === "###ZARF_VAR_DOMAIN###") {
