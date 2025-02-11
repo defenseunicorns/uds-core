@@ -26,6 +26,7 @@ tasks:
       - task: create:single-layer
         with:
           layer: ${LAYER}
+          create_options: "--skip-sbom"
       - task: deploy:single-layer
         with:
           layer: ${LAYER}
@@ -86,6 +87,8 @@ tasks:
     description: "Build and test UDS Core"
     actions:
       - task: create:standard-package
+        with:
+          create_options: "--skip-sbom"
       - task: create:k3d-standard-bundle
       - task: deploy:k3d-standard-bundle
       - task: validate-packages
@@ -100,6 +103,8 @@ tasks:
     description: "Build and test UDS Core"
     actions:
       - task: create:standard-package
+        with:
+          create_options: "--skip-sbom"
       - task: create:k3d-standard-bundle
       - task: deploy:k3d-standard-bundle-ha
       - task: validate-packages
@@ -110,6 +115,8 @@ tasks:
       - task: setup:k3d-test-cluster
       - task: deploy:latest-package-release
       - task: create:standard-package
+        with:
+          create_options: "--skip-sbom"
       - task: deploy:standard-package
       - task: validate-packages
       - task: e2e-tests
