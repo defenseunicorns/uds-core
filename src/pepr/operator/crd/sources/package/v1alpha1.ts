@@ -552,6 +552,7 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
                     ambient: {
                       description: "Enable ambient authentication for the service mesh",
                       type: "boolean",
+                      default: false,
                     },
                   },
                 },
