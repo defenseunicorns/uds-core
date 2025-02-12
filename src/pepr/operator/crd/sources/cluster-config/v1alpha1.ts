@@ -46,8 +46,6 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
                     "cidr(s) for all Kubernetes nodes (not just control plane). Similar reason to above,annual override instead of relying on watch",
                   items: {
                     type: "string",
-                    pattern:
-                      "^(([0-9]{1,3}\\.){3}[0-9]{1,3}\\/[0-9]+)|(([a-fA-F0-9:]+:+)+[a-fA-F0-9:]+(/[0-9]+)?)$", // Matches IPv4 and IPv6 CIDR
                   },
                 },
               },
@@ -62,7 +60,7 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
                 adminDomain: {
                   type: "string",
                   description:
-                    "Domain all cluster services on the admin gateawy will be exposed on",
+                    "Domain all cluster services on the admin gateway will be exposed on",
                 },
                 caCert: {
                   type: "string",

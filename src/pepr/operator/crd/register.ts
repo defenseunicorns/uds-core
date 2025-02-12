@@ -84,8 +84,8 @@ export async function registerCRDs() {
       });
   }
 
-  // Register the Exemption CRD if we're in "admission" or dev mode (Exemptions are watched by the admission controllers)
-  if (process.env.PEPR_WATCH_MODE === "false" || process.env.PEPR_MODE === "dev") {
+  // Register the ClusterConfig CRD
+  if (process.env.PEPR_WATCH_MODE || process.env.PEPR_MODE === "dev") {
     await K8s(kind.CustomResourceDefinition)
       .Apply(
         {

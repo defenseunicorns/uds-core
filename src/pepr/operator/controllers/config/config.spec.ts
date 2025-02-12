@@ -91,9 +91,7 @@ jest.mock("pepr", () => {
       })
       .mockReturnValueOnce({
         InNamespace: jest.fn().mockReturnValue({
-          Get: jest
-            .fn<() => Promise<KubernetesListObject<kind.Secret>>>()
-            .mockResolvedValue({ items: [mockSecret] }),
+          Get: jest.fn<() => Promise<kind.Secret>>().mockResolvedValue(mockSecret),
         }),
       })
       // too many ClusterConfigs (ERROR)
@@ -106,9 +104,7 @@ jest.mock("pepr", () => {
       })
       .mockReturnValueOnce({
         InNamespace: jest.fn().mockReturnValue({
-          Get: jest
-            .fn<() => Promise<KubernetesListObject<kind.Secret>>>()
-            .mockResolvedValue({ items: [mockSecret] }),
+          Get: jest.fn<() => Promise<kind.Secret>>().mockResolvedValue(mockSecret),
         }),
       })
       // no ClusterConfig (ERROR)
@@ -121,9 +117,7 @@ jest.mock("pepr", () => {
       })
       .mockReturnValueOnce({
         InNamespace: jest.fn().mockReturnValue({
-          Get: jest
-            .fn<() => Promise<KubernetesListObject<kind.Secret>>>()
-            .mockResolvedValue({ items: [mockSecret] }),
+          Get: jest.fn<() => Promise<kind.Secret>>().mockResolvedValue(mockSecret),
         }),
       }),
     kind: {

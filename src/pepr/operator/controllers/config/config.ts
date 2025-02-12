@@ -149,9 +149,7 @@ export async function loadUDSConfig() {
   // Run in Admission and Watcher pods
   if (process.env.PEPR_WATCH_MODE || process.env.PEPR_MODE === "dev") {
     const cfgList = await K8s(ClusterConfig).InNamespace("pepr-system").Get();
-    const cfgSecretList = await K8s(kind.Secret).InNamespace("pepr-system").Get();
-
-    const cfgSecret = cfgSecretList.items.find(s => s.metadata?.name === "uds-operator-config");
+    const cfgSecret = await K8s(kind.Secret).InNamespace("pepr-system").Get("uds-operator-config");
 
     if (cfgList.items.length === 0) {
       throw new Error("No ClusterConfig found");
