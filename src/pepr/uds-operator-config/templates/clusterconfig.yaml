@@ -18,9 +18,9 @@ spec:
     kubenodeCIDRS:
 {{- if .Values.cluster.networking.kubeNodeCidrs }}
 {{ toYaml .Values.cluster.networking.kubeNodeCidrs | indent 6 }}
-{{- else if .Values.operator.kubeNodeCidrs }}
-{{- range $index, $cidr := .Values.operator.kubeNodeCidrs }}
-      - {{ $cidr | quote }}
+{{- else if .Values.operator.KUBENODE_CIDRS }}
+{{- range ( split "," .Values.operator.KUBENODE_CIDRS ) }}
+      - {{ . | quote }}
 {{- end }}
 {{- end }}
   expose:
