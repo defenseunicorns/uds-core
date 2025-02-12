@@ -40,6 +40,6 @@ packages:
       uds-operator-config:
         uds-operator-config:
           values:
-            - path: cluster.policy.UDS_ALLOW_ALL_NS_EXEMPTIONS
+            - path: cluster.policy.allowAllNsExemptions
               value: true
 ```
