@@ -13,7 +13,6 @@
         "UDS_CA_CERT": { "type": "string", "description": "Deprecated: CA certificate." },
         "UDS_ALLOW_ALL_NS_EXEMPTIONS": {
           "type": "string",
-          "enum": ["true", "false"],
           "description": "Deprecated: Allow all namespace exemptions."
         },
         "UDS_LOG_LEVEL": {
