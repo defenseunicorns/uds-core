@@ -15,11 +15,16 @@ variables:
 
   - name: LAYER
 
+  - name: CREATE_OPTIONS
+    description: "Additional options passed in when creating Zarf packages. For example: --skip-sbom"
+    default: ""
+
 tasks:
   - name: standard-package
     description: "Create the UDS Core Zarf Package"
     inputs:
       create_options:
+        default: ${CREATE_OPTIONS}
         description: "Additional options passed in when creating Zarf packages. For example: --skip-sbom"
     actions:
       - task: single-layer
@@ -57,7 +62,7 @@ tasks:
         with:
           path: packages/checkpoint-dev
           config: ./zarf-config.yaml
-          options: "--skip-sbom"
+          options: "${CREATE_OPTIONS} --skip-sbom"
           architecture: ${ZARF_ARCHITECTURE}
 
   # This task is a wrapper to support --set LAYER=identity-authorization
@@ -73,6 +78,7 @@ tasks:
         default: base
         description: The UDS Core layer to build
       create_options:
+        default: ${CREATE_OPTIONS}
         description: "Additional options passed in when creating Zarf packages. For example: --skip-sbom"
     actions:
       - task: pepr-build
