@@ -33,8 +33,6 @@ components:
     required: true
     only:
       flavor: registry1
-      cluster:
-        architecture: amd64
     import:
       path: common
     charts:
