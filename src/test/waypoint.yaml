@@ -1,0 +1,244 @@
+### Create two test apps in different namespaces ###
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: app-b
+  labels:
+    istio.io/dataplane-mode: ambient
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: client
+  namespace: app-b
+  labels:
+    app: client
+spec:
+  containers:
+  - name: client
+    image: curlimages/curl:latest
+    command: ["sleep", "infinity"]
+---
+### app-b Default Deny All NetPol ###
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-all
+  namespace: app-b
+spec:
+  podSelector: {}
+  ingress: []
+  egress: []
+  policyTypes:
+    - Ingress
+    - Egress
+---
+### app-b DNS Netpol ###
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns-app-b
+  namespace: app-b
+spec:
+  egress:
+    - ports:
+        - port: 53
+          protocol: UDP
+      to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+  podSelector: {}
+  policyTypes:
+    - Egress
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: app-a
+  labels:
+    istio.io/dataplane-mode: ambient
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: server
+  namespace: app-a
+  labels:
+    app: server
+spec:
+  containers:
+  - name: server
+    image: hashicorp/http-echo:latest
+    args: ["-text", "Hello from Server"]
+    ports:
+    - containerPort: 5678
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: server
+  namespace: app-a
+  labels:
+    istio.io/use-waypoint: app-a-waypoint
+spec:
+  selector:
+    app: server
+  ports:
+  - port: 80
+    targetPort: 5678
+---
+### app-a Default Deny All NetPol ###
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-all
+  namespace: app-a
+spec:
+  podSelector: {}
+  ingress: []
+  egress: []
+  policyTypes:
+    - Ingress
+    - Egress
+---
+### app-a DNS Netpol ###
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns-app-a
+  namespace: app-a
+spec:
+  egress:
+    - ports:
+        - port: 53
+          protocol: UDP
+      to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+  podSelector: {}
+  policyTypes:
+    - Egress
+---
+### Deploy a Waypoint Proxy ###
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  labels:
+    istio.io/waypoint-for: service
+  name: app-a-waypoint
+  namespace: app-a
+spec:
+  gatewayClassName: istio-waypoint
+  listeners:
+  - name: mesh
+    port: 15008
+    protocol: HBONE
+---
+### Egress NetPol for client to server ###
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-egress-to-waypoint-and-ztunnel
+  namespace: app-b
+spec:
+  podSelector:
+    matchLabels:
+      app: client
+  egress:
+  - to:
+      - namespaceSelector:
+          matchLabels:
+            kubernetes.io/metadata.name: app-a
+        podSelector:
+          matchLabels:
+            gateway.networking.k8s.io/gateway-name: app-a-waypoint
+    ports:
+    - protocol: TCP
+      port: 15008
+  policyTypes:
+  - Egress
+---
+### Ingress Netpol for server to client ###
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress-from-client-ztunnel-and-waypoint
+  namespace: app-a
+spec:
+  podSelector:
+    matchLabels:
+      app: server
+  ingress:
+  - from:
+      # Allow traffic from the waypoint
+      - namespaceSelector:
+          matchLabels:
+            kubernetes.io/metadata.name: app-a
+        podSelector:
+          matchLabels:
+            gateway.networking.k8s.io/gateway-name: app-a-waypoint
+    ports:
+    - protocol: TCP
+      port: 80         # Server listens on port 80
+    - protocol: TCP
+      port: 15008      # Also allow traffic on 15008 if the ztunnel or waypoint uses that port directly
+  policyTypes:
+  - Ingress
+---
+### Waypoint Ingress Netpol from app-b ###
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress-to-waypoint
+  namespace: app-a
+spec:
+  podSelector:
+    matchLabels:
+      gateway.networking.k8s.io/gateway-name: app-a-waypoint
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: app-b
+      podSelector:
+        matchLabels:
+          app: client
+    ports:
+    - protocol: TCP
+      port: 15008   # HBONE / Ztunnel port used by the waypoint
+  policyTypes:
+  - Ingress
+---
+### Waypoint Egress Netpol to app-a ###
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-egress-from-waypoint
+  namespace: app-a
+spec:
+  podSelector:
+    matchLabels:
+      gateway.networking.k8s.io/gateway-name: app-a-waypoint
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: app-a
+      podSelector:
+        matchLabels:
+          app: server
+    ports:
+    - protocol: TCP
+      port: 80         # Server listens on port 80
+    - protocol: TCP
+      port: 15008      # Also allow traffic on 15008 if the ztunnel or waypoint uses that port directly
+  policyTypes:
+  - Egress
