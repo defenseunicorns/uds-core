@@ -27,7 +27,7 @@
         },
         "KUBENODE_CIDRS": {
           "type": "string",
-          "description": "Deprecated: Comman separated list of CIDRs for Kubernetes nodes."
+          "description": "Deprecated: Comma separated list of CIDRs for Kubernetes nodes."
         },
         "AUTHSERVICE_REDIS_URI": {
           "type": "string",
@@ -80,7 +80,6 @@
           "properties": {
             "allowAllNsExemptions": {
               "type": "string",
-              "enum": ["true", "false"],
               "description": "Allow all namespace exemptions."
             }
           }

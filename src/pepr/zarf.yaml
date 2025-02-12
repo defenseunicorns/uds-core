@@ -46,13 +46,11 @@ components:
             mute: true
             cmd: |
               # Label the specific CRDs
-              ./zarf tools kubectl label $(./zarf tools kubectl get crds | awk '/exemptions.uds.dev|packages.uds.dev/ {print "crd/" $1}') "app.kubernetes.io/managed-by=Helm" --overwrite || true
-
+              ./zarf tools kubectl label crd exemptions.uds.dev packages.uds.dev "app.kubernetes.io/managed-by=Helm" --overwrite || true
               # Annotate with release name
-              ./zarf tools kubectl annotate $(./zarf tools kubectl get crds | awk '/exemptions.uds.dev|packages.uds.dev/ {print "crd/" $1}') "meta.helm.sh/release-name=uds-cluster-crds" --overwrite || true
-
+              ./zarf tools kubectl annotate crd exemptions.uds.dev packages.uds.dev "meta.helm.sh/release-name=uds-cluster-crds" --overwrite || true
               # Annotate with release namespace
-              ./zarf tools kubectl annotate $(./zarf tools kubectl get crds | awk '/exemptions.uds.dev|packages.uds.dev/ {print "crd/" $1}') "meta.helm.sh/release-namespace=pepr-system" --overwrite || true
+              ./zarf tools kubectl annotate crd exemptions.uds.dev packages.uds.dev "meta.helm.sh/release-namespace=pepr-system" --overwrite || true
 
   - name: uds-operator-config
     required: true
