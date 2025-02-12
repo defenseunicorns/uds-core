@@ -22,6 +22,7 @@
     "dist",
     "jest.*.js",
     "test/playwright/",
+    "test/jest/",
     "uds-docs/"
   ],
   "root": true,

@@ -90,6 +90,10 @@ spec:
             userinfo.token.claim: "true"
 ```
 
+:::note
+This example may not contain all fields, the full specification for the Package CR is documented [here](/reference/configuration/custom-resources/packages-v1alpha1-cr). In addition, there is a JSON schema published [here](https://raw.githubusercontent.com/defenseunicorns/uds-core/refs/heads/main/schemas/package-v1alpha1.schema.json) for use in your IDE.
+:::
+
 ### Example UDS Package CR with SSO Templating
 
 By default, UDS generates a secret for the Single Sign-On (SSO) client that encapsulates all client contents as an opaque secret. In this setup, each key within the secret corresponds to its own environment variable or file, based on the method used to mount the secret. If customization of the secret rendering is required, basic templating can be achieved using the `secretTemplate` property. Below are examples showing this functionality. To see how templating works, please see the [Regex website](https://regex101.com/r/e41Dsk/3).

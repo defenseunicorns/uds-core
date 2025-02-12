@@ -6,10 +6,11 @@ includes:
   - setup: ./setup.yaml
   - deploy: ./deploy.yaml
   - util: ./utils.yaml
+  - test-resources: ../src/test/tasks.yaml
   - base-layer: ../packages/base/tasks.yaml
   - idam-layer: ../packages/identity-authorization/tasks.yaml
   - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/refs/tags/v0.13.1/tasks/setup.yaml
-  - compliance: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.7.3/tasks/compliance.yaml
+  - compliance: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.7.4/tasks/compliance.yaml
 
 tasks:
   - name: base
@@ -63,6 +64,8 @@ tasks:
       - description: "Setup the Doug User for testing"
         # Self-reference this task file to avoid https://github.com/defenseunicorns/maru-runner/issues/144
         cmd: uds run -f tasks/test.yaml common-setup:create-doug-user --set KEYCLOAK_GROUP="/UDS Core/Admin" # Adds the test doug user
+      - description: "Create and Deploy Test App Package"
+        task: test-resources:create-deploy
       - description: "Run Playwright E2E tests for all packages"
         dir: test/playwright
         cmd: |
@@ -76,6 +79,8 @@ tasks:
         cmd: |
           npm ci
           npx jest test/jest/
+      - description: remove test resources
+        task: test-resources:remove
 
   - name: uds-core
     description: "Build and test UDS Core"

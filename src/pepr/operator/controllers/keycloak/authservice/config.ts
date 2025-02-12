@@ -66,7 +66,7 @@ export async function setupAuthserviceSecret() {
         .InNamespace(operatorConfig.namespace)
         .Get(operatorConfig.secretName);
       log.info(`Authservice Secret exists, skipping creation - ${secret.metadata?.name}`);
-    } catch (e) {
+    } catch {
       log.info("Secret does not exist, creating authservice secret");
       try {
         // Build and create the initial secret configuration

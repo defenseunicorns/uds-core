@@ -89,6 +89,9 @@ spec:
             - secretRef:
                 name: {{ include "keycloak.fullname" . }}-realm-env
           env:
+          {{- if .Values.env }}
+            {{- tpl (toYaml .Values.env) . | nindent 12 }}
+          {{- end }}
             # Common configuration
             - name: UDS_DOMAIN
               value: "{{ .Values.domain }}"
