@@ -70,7 +70,7 @@ tableOfContents:
     </tr>
   </thead>
   <tbody>
-    <tr><td style="white-space: nowrap;">adminDomain</td><td style="white-space: nowrap;">string</td><td>Domain all cluster services on the admin gateawy will be exposed on</td></tr><tr><td style="white-space: nowrap;">caCert</td><td style="white-space: nowrap;">string</td><td>The trusted CA that signed your domain certificates if using Private PKI </td></tr><tr><td style="white-space: nowrap;">domain</td><td style="white-space: nowrap;">string</td><td>Domain all cluster services will be exposed on</td></tr>
+    <tr><td style="white-space: nowrap;">adminDomain</td><td style="white-space: nowrap;">string</td><td>Domain all cluster services on the admin gateway will be exposed on</td></tr><tr><td style="white-space: nowrap;">caCert</td><td style="white-space: nowrap;">string</td><td>The trusted CA that signed your domain certificates if using Private PKI</td></tr><tr><td style="white-space: nowrap;">domain</td><td style="white-space: nowrap;">string</td><td>Domain all cluster services will be exposed on</td></tr>
   </tbody>
 </table>
 </div>

@@ -65,7 +65,7 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
                 caCert: {
                   type: "string",
                   description:
-                    "The trusted CA that signed your domain certificates if using Private PKI ",
+                    "The trusted CA that signed your domain certificates if using Private PKI",
                 },
               },
               required: ["domain"],

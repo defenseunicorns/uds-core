@@ -29,7 +29,7 @@ export interface Attributes {
 
 export interface Expose {
   /**
-   * Domain all cluster services on the admin gateawy will be exposed on
+   * Domain all cluster services on the admin gateway will be exposed on
    */
   adminDomain?: string;
   /**

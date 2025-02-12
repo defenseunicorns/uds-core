@@ -4,11 +4,6 @@
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
-  annotations:
-    meta.helm.sh/release-name: zarf-1480d00ca85972047319d79d2ea7253325be2d4c
-    meta.helm.sh/release-namespace: default
-  labels:
-    app.kubernetes.io/managed-by: Helm
   name: clusterconfig.uds.dev
 spec:
   conversion:
@@ -43,10 +38,10 @@ spec:
                 expose:
                   properties:
                     adminDomain:
-                      description: Domain all cluster services on the admin gateawy will be exposed on
+                      description: Domain all cluster services on the admin gateway will be exposed on
                       type: string
                     caCert:
-                      description: 'The trusted CA that signed your domain certificates if using Private PKI '
+                      description: The trusted CA that signed your domain certificates if using Private PKI
                       type: string
                     domain:
                       description: Domain all cluster services will be exposed on
@@ -62,7 +57,6 @@ spec:
                     kubenodeCIDRS:
                       description: cidr(s) for all Kubernetes nodes (not just control plane). Similar reason to above,annual override instead of relying on watch
                       items:
-                        pattern: ^(([0-9]{1,3}\.){3}[0-9]{1,3}\/[0-9]+)|(([a-fA-F0-9:]+:+)+[a-fA-F0-9:]+(/[0-9]+)?)$
                         type: string
                       type: array
                   type: object

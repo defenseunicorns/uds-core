@@ -4,11 +4,6 @@
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
-  annotations:
-    meta.helm.sh/release-name: zarf-1480d00ca85972047319d79d2ea7253325be2d4c
-    meta.helm.sh/release-namespace: default
-  labels:
-    app.kubernetes.io/managed-by: Helm
   name: exemptions.uds.dev
 spec:
   conversion:

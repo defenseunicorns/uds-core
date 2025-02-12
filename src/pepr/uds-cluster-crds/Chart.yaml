@@ -3,7 +3,7 @@
 
 apiVersion: v2
 name: uds-cluster-crds
-description: UDS Core cluster level configurations
+description: UDS Core CRDs
 
 # A chart can be either an 'application' or a 'library' chart.
 #
