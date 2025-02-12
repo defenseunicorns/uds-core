@@ -24,13 +24,13 @@ components:
         localPath: chart
       - name: cni
         url: https://istio-release.storage.googleapis.com/charts
-        version: 1.24.2
+        version: 1.24.3
         namespace: istio-system
         valuesFiles:
           - "../values/base-cni.yaml"
       - name: ztunnel
         url: https://istio-release.storage.googleapis.com/charts
-        version: 1.24.2
+        version: 1.24.3
         namespace: istio-system
     actions:
       onDeploy:
