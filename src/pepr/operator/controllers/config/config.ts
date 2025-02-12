@@ -155,6 +155,7 @@ export async function loadUDSConfig() {
       throw new Error("No ClusterConfig found");
     }
 
+    // Important check in case additional configs are created in window between uds-operator-config chart and pepr module chart
     if (cfgList.items.length > 1) {
       throw new Error(
         `ClusterConfig Processing: only one ClusterConfig is allowed -- found: ${cfgList.items.length}`,
