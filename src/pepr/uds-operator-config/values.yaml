@@ -22,15 +22,15 @@ operator:
 
 cluster:
   attributes:
-    UDS_CLUSTER_NAME: "###ZARF_VAR_CLUSTER_NAME###"
-    UDS_CLUSTER_TAGS: "###ZARF_VAR_CLUSTER_TAGS###"
+    clusterName: ""
+    clusterTags: []
   expose:
     # Domain configuration (admin defaults to `admin.UDS_DOMAIN`)
-    UDS_DOMAIN: "###ZARF_VAR_DOMAIN###"
-    UDS_ADMIN_DOMAIN: "###ZARF_VAR_ADMIN_DOMAIN###"
-    UDS_CA_CERT: "###ZARF_VAR_CA_CERT###"
+    domain: "###ZARF_VAR_DOMAIN###"
+    adminDomain: "###ZARF_VAR_ADMIN_DOMAIN###"
+    caCert: "###ZARF_VAR_CA_CERT###"
   policy:
-    UDS_ALLOW_ALL_NS_EXEMPTIONS: "###ZARF_VAR_ALLOW_ALL_NS_EXEMPTIONS###"
+    allowAllNsExemptions: "###ZARF_VAR_ALLOW_ALL_NS_EXEMPTIONS###"
   networking:
-    KUBEAPI_CIDR: ""
-    KUBENODE_CIDRS: []
+    kubeApiCidr: ""
+    kubeNodeCidrs: []

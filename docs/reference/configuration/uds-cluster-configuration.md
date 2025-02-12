@@ -28,18 +28,18 @@ operator:
 
 cluster:
   attributes:
-    UDS_CLUSTER_NAME: "###ZARF_VAR_CLUSTER_NAME###" # Friendly alias for associating cluster
-    UDS_CLUSTER_TAGS: "###ZARF_VAR_CLUSTER_TAGS###" # tags for helpful grouping of clusters
+    clusterName: ""
+    clusterTags: []
   expose:
     # Domain configuration (admin defaults to `admin.UDS_DOMAIN`)
-    UDS_DOMAIN: "###ZARF_VAR_DOMAIN###"
-    UDS_ADMIN_DOMAIN: "###ZARF_VAR_ADMIN_DOMAIN###"
-    UDS_CA_CERT: "###ZARF_VAR_CA_CERT###"
+    domain: "###ZARF_VAR_DOMAIN###"
+    adminDomain: "###ZARF_VAR_ADMIN_DOMAIN###"
+    caCert: "###ZARF_VAR_CA_CERT###"
   policy:
-    UDS_ALLOW_ALL_NS_EXEMPTIONS: "###ZARF_VAR_ALLOW_ALL_NS_EXEMPTIONS###"
+    allowAllNsExemptions: "###ZARF_VAR_ALLOW_ALL_NS_EXEMPTIONS###"
   networking:
-    KUBEAPI_CIDR: ""
-    KUBENODE_CIDRS: []
+    kubeApiCidr: ""
+    kubeNodeCidrs: []
 ```
 
 > Note
@@ -47,7 +47,7 @@ cluster:
 
 ## Setting Values
 
-Some configurations can only be set by bundle overrides, namely `networking.KUBEAPI_CIDR` and `networking.KUBENODE_CIDRS`. All other values can be set either by bundle overrides or by setting the corresponding Zarf variable.
+Some configurations, like `clusterName`, `clusterTags`, `kubeApiCidr`, and `kubeNodeCidrs`, can only be set by bundle overrides. All other values can be set either by bundle overrides or by setting the corresponding Zarf variable.
 
 ## Examples
 
@@ -80,7 +80,7 @@ packages:
       uds-operator-config:
         uds-operator-config:
           values:
-            - path: cluster.networking.KUBENODE_CIDRS
+            - path: cluster.networking.kubeNodeCidrs
               value: |
                 172.28.0.2/32
                 172.28.0.3/32

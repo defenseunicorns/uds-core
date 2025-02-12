@@ -1,0 +1,105 @@
+{
+  "$schema": "http://json-schema.org/schema#",
+  "type": "object",
+  "properties": {
+    "operator": {
+      "type": "object",
+      "properties": {
+        "UDS_DOMAIN": { "type": "string", "description": "Deprecated: Domain configuration." },
+        "UDS_ADMIN_DOMAIN": {
+          "type": "string",
+          "description": "Deprecated: Admin domain configuration."
+        },
+        "UDS_CA_CERT": { "type": "string", "description": "Deprecated: CA certificate." },
+        "UDS_ALLOW_ALL_NS_EXEMPTIONS": {
+          "type": "string",
+          "enum": ["true", "false"],
+          "description": "Deprecated: Allow all namespace exemptions."
+        },
+        "UDS_LOG_LEVEL": {
+          "type": "string",
+          "enum": ["debug", "info", "warn", "error", "fatal"],
+          "description": "Deprecated: Log level configuration."
+        },
+        "KUBEAPI_CIDR": {
+          "type": "string",
+          "description": "Deprecated: CIDR for the Kubernetes API server."
+        },
+        "KUBENODE_CIDRS": {
+          "type": "string",
+          "description": "Deprecated: Comman separated list of CIDRs for Kubernetes nodes."
+        },
+        "AUTHSERVICE_REDIS_URI": {
+          "type": "string",
+          "description": "Redis URI for the auth service."
+        },
+        "PEPR_LAST_SEEN_LIMIT_SECONDS": {
+          "type": "string",
+          "pattern": "^[0-9]+$",
+          "description": "Limit in seconds for Pepr last seen tracking."
+        },
+        "PEPR_RELIST_INTERVAL_SECONDS": {
+          "type": "string",
+          "pattern": "^[0-9]+$",
+          "description": "Interval in seconds for Pepr to relist resources."
+        },
+        "PEPR_RECONCILE_STRATEGY": {
+          "type": "string",
+          "enum": ["kindNsName", "namespace", "kind"],
+          "description": "Strategy for Pepr reconciliation."
+        }
+      }
+    },
+    "cluster": {
+      "type": "object",
+      "properties": {
+        "attributes": {
+          "type": "object",
+          "properties": {
+            "clusterName": { "type": "string", "description": "Name of the cluster." },
+            "clusterTags": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Tags for the cluster."
+            }
+          }
+        },
+        "expose": {
+          "type": "object",
+          "properties": {
+            "domain": { "type": "string", "description": "Domain for cluster exposure." },
+            "adminDomain": {
+              "type": "string",
+              "description": "Admin domain for cluster exposure."
+            },
+            "caCert": { "type": "string", "description": "CA certificate for cluster exposure." }
+          }
+        },
+        "policy": {
+          "type": "object",
+          "properties": {
+            "allowAllNsExemptions": {
+              "type": "string",
+              "enum": ["true", "false"],
+              "description": "Allow all namespace exemptions."
+            }
+          }
+        },
+        "networking": {
+          "type": "object",
+          "properties": {
+            "kubeApiCidr": {
+              "type": "string",
+              "description": "CIDR for Kubernetes API server."
+            },
+            "kubeNodeCidrs": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "List of CIDRs for Kubernetes nodes."
+            }
+          }
+        }
+      }
+    }
+  }
+}
