@@ -13,6 +13,43 @@ import { v1alpha1 as pkg } from "./sources/package/v1alpha1";
 // configure subproject logger
 const log = setupLogger(Component.OPERATOR_CRD);
 
+export async function registerClusterConfig() {
+  // Register the ClusterConfig CRD
+  if (process.env.PEPR_WATCH_MODE || process.env.PEPR_MODE === "dev") {
+    await K8s(kind.CustomResourceDefinition)
+      .Apply(
+        {
+          apiVersion: "apiextensions.k8s.io/v1",
+          kind: "CustomResourceDefinition",
+          metadata: {
+            name: "clusterconfig.uds.dev",
+          },
+          spec: {
+            group: "uds.dev",
+            versions: [clusterConfig],
+            scope: "Namespaced",
+            names: {
+              plural: "clusterconfig",
+              singular: "clusterconfig",
+              kind: "ClusterConfig",
+              shortNames: ["clusterconfig"],
+            },
+          },
+        },
+        { force: true },
+      )
+      .then(() => {
+        log.info("ClusterConfig CRD registered");
+      })
+      .catch(err => {
+        log.error({ err }, "Failed to register ClusterConfig CRD");
+
+        // Sad times, let's exit
+        process.exit(1);
+      });
+  }
+}
+
 export async function registerCRDs() {
   // Register the Package CRD if we're in watch or dev mode
   if (process.env.PEPR_WATCH_MODE === "true" || process.env.PEPR_MODE === "dev") {
@@ -78,41 +115,6 @@ export async function registerCRDs() {
       })
       .catch(err => {
         log.error({ err }, "Failed to register Exemption CRD");
-
-        // Sad times, let's exit
-        process.exit(1);
-      });
-  }
-
-  // Register the ClusterConfig CRD
-  if (process.env.PEPR_WATCH_MODE || process.env.PEPR_MODE === "dev") {
-    await K8s(kind.CustomResourceDefinition)
-      .Apply(
-        {
-          apiVersion: "apiextensions.k8s.io/v1",
-          kind: "CustomResourceDefinition",
-          metadata: {
-            name: "clusterconfig.uds.dev",
-          },
-          spec: {
-            group: "uds.dev",
-            versions: [clusterConfig],
-            scope: "Namespaced",
-            names: {
-              plural: "clusterconfig",
-              singular: "clusterconfig",
-              kind: "ClusterConfig",
-              shortNames: ["clusterconfig"],
-            },
-          },
-        },
-        { force: true },
-      )
-      .then(() => {
-        log.info("ClusterConfig CRD registered");
-      })
-      .catch(err => {
-        log.error({ err }, "Failed to register ClusterConfig CRD");
 
         // Sad times, let's exit
         process.exit(1);

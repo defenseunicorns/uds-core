@@ -115,10 +115,6 @@ When(a.Secret)
   .InNamespace("pepr-system")
   .WithName("uds-operator-config")
   .Reconcile(updateCfgSecrets);
+
 // Watch UDS ClusterConfig and handle changes
-When(ClusterConfig)
-  .IsUpdated()
-  .InNamespace("pepr-system")
-  .WithName("uds-cluster-config")
-  .Validate(validateCfgUpdate)
-  .Reconcile(updateCfg);
+When(ClusterConfig).IsCreatedOrUpdated().Validate(validateCfgUpdate).Reconcile(updateCfg);

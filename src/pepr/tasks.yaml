@@ -9,7 +9,7 @@ tasks:
   - name: gen-crds
     description: "Generate CRDS, requires a running kubernetes cluster"
     actions:
-      - cmd: npx ts-node -e "import { registerCRDs } from './src/pepr/operator/crd/register'; registerCRDs()"
+      - cmd: npx ts-node -e "import { registerCRDs, registerClusterConfig } from './src/pepr/operator/crd/register'; registerCRDs(); registerClusterConfig();"
         description: "Register CRDs in cluster"
         env:
           - "PEPR_MODE=dev"
@@ -56,7 +56,7 @@ tasks:
           $HOME/go/bin/addlicense -l "AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial" -s=only -v -c "Defense Unicorns" src/pepr/operator/crd/generated
           $HOME/go/bin/addlicense -l "AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial" -s=only -v -c "Defense Unicorns" src/pepr/uds-cluster-crds/templates
 
-      - task: gen-docs
+      # - task: gen-docs
 
       - cmd: "npx pepr format"
 
@@ -64,7 +64,7 @@ tasks:
     description: "Generate CRD manifests"
     actions:
       - cmd: |
-          CRD_LIST="exemptions.uds.dev packages.uds.dev clusterconfig.uds.dev"
+          CRD_LIST="clusterconfig.uds.dev"
           for CRD in $CRD_LIST; do
              FILE="src/pepr/uds-cluster-crds/templates/$CRD.yaml"
              uds zarf tools kubectl get crd $CRD -o yaml > $FILE
