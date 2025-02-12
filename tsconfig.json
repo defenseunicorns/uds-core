@@ -16,7 +16,7 @@
     "strict": true,
     "target": "ES2022",
     "useUnknownInCatchVariables": false,
-    "types": ["jest"]
+    "types": ["node", "jest"]
   },
   "include": [
     "**/*.ts"
