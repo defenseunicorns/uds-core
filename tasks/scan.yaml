@@ -1,0 +1,156 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+includes:
+  - utils: utils.yaml
+
+variables:
+  - name: VERSION
+    description: "The version of the packages to scan, or 'latest' for the latest version"
+    default: "latest"
+  - name: FLAVOR
+    description: "The flavor of the package to scan"
+    default: unicorn
+  - name: PACKAGE
+    description: "The name of the package to scan from the registry/repository"
+    default: core
+  - name: MIN_SEVERITY
+    description: "The minimum severity level for CVEs to report"
+    default: "High"
+
+tasks:
+  - name: default
+    actions:
+      - task: pull-sbom
+      - task: scan-sbom
+      - task: aggregate-results
+
+  - name: pull-sbom
+    description: "Pull the SBOMs for the specified package"
+    actions:
+      - task: utils:determine-repo
+      - description: "Append flavor to version"
+        if: ${{ ne .variables.VERSION "latest" }}
+        cmd: echo ${VERSION}-${FLAVOR}
+        setVariables:
+          - name: VERSION
+      - description: "Get latest tag version from OCI"
+        if: ${{ eq .variables.VERSION "latest" }}
+        cmd: uds zarf tools registry ls ${TARGET_REPO}/${PACKAGE} | grep ${FLAVOR} | sort -V | tail -1
+        setVariables:
+          - name: VERSION
+      - description: "Pull the SBOMs from the package"
+        cmd: |
+          rm -rf cve/sboms/${PACKAGE}
+          mkdir -p cve/sboms
+          uds zarf package inspect sbom oci://${TARGET_REPO}/${PACKAGE}:${VERSION} --output cve/sboms
+
+  # Note: This task assumes local SBOMs already available for the specified package
+  - name: scan-sbom
+    description: "Scan the local SBOMs for vulnerabilities"
+    actions:
+      - description: "Scan the SBOMs for vulnerabilities"
+        shell:
+          darwin: bash
+          linux: bash
+        cmd: |
+          rm -rf cve/scans/${PACKAGE}
+          mkdir -p cve/scans/${PACKAGE}
+
+          # Generate a temporary Grype template with the severity injected
+          sed "s/{{- \$min_severity := .* -}}/{{- \$min_severity := \"$MIN_SEVERITY\" -}}/" tasks/grype-markdown.tmpl > tasks/grype-markdown-severity.tmpl
+
+          for image in cve/sboms/${PACKAGE}/*.json; do
+            imagename=$(basename "$image" .json)
+            grype "sbom:$image" -o template -t tasks/grype-markdown-severity.tmpl > cve/scans/${PACKAGE}/$imagename.md
+          done
+
+          rm -rf tasks/grype-markdown-severity.tmpl
+
+  # Note: This task assumes proper variables passed in for PACKAGE, VERSION, and MIN_SEVERITY to generate an accurate report
+  - name: aggregate-results
+    description: "Aggregate the scan results into a markdown report"
+    actions:
+      - description: "Aggregate the scan results"
+        shell:
+          darwin: bash
+          linux: bash
+        cmd: |
+          output_file="cve/scans/${PACKAGE}-vulnerability-report.md"
+          echo "## Vulnerability Report for ${PACKAGE} ${VERSION}" > "$output_file"
+          echo "" >> "$output_file"
+
+          # Get timestamp in UTC (ISO format)
+          TIMESTAMP=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
+
+          echo "This report includes vulnerabilities detected by Grype with a minimum severity of **${MIN_SEVERITY}**." >> "$output_file"
+          echo "" >> "$output_file"
+          echo "**Last scanned at:** ${TIMESTAMP}" >> "$output_file"
+          echo "" >> "$output_file"
+
+          if [[ "$MIN_SEVERITY" == "Critical" ]]; then
+            echo "**Total Critical CVE counts:**" >> "$output_file"
+            echo "- Critical: {{TOTAL_CRITICAL}}" >> "$output_file"
+          else
+            echo "**Total Critical/High CVE counts:**" >> "$output_file"
+            echo "- Critical: {{TOTAL_CRITICAL}}" >> "$output_file"
+            echo "- High: {{TOTAL_HIGH}}" >> "$output_file"
+          fi
+          echo "" >> "$output_file"
+
+          any_vulnerabilities_found=false
+
+          for scan in cve/scans/${PACKAGE}/*.md; do
+            [ -e "$scan" ] || continue  # Skip if no matching files
+
+            # Extract image name and format properly
+            image_name=$(basename "$scan" .md)
+            image_name=${image_name//_/\/}    # Replace all `_` with `/`
+            image_name=${image_name/%\//:}    # Replace the LAST `/` with `:`
+
+            # Check if the scan file contains any vulnerabilities (ignoring headers)
+            vuln_count=$(tail -n +3 "$scan")
+
+            if [[ ! "$vuln_count" ]]; then
+              continue
+            fi
+
+            any_vulnerabilities_found=true
+
+            # Append the results to the report
+            echo "### $image_name" >> "$output_file"
+            echo "" >> "$output_file"
+            cat "$scan" >> "$output_file"
+            echo "" >> "$output_file"
+          done
+
+          # If no vulnerabilities were found in any image, indicate that in the report
+          if [[ "$any_vulnerabilities_found" == "false" ]]; then
+            echo "### No vulnerabilities found 🎉" >> "$output_file"
+            echo "" >> "$output_file"
+            echo "No vulnerabilities of severity **${MIN_SEVERITY}** or greater were found in ${PACKAGE} ${VERSION}." >> "$output_file"
+          fi
+
+          # Extract Critical CVE counts
+          critical_cve=$(grep -hE '\|.*\|.*\|.*\|.*\|.*\| Critical \|' "$output_file" | cut -d'|' -f6)
+          if [[ -n "$critical_cve" ]]; then
+            total_critical_cve=$(echo "$critical_cve" | wc -l | tr -d ' ')
+            unique_critical_cve=$(echo "$critical_cve" | sort -u | wc -l | tr -d ' ')
+          else
+            total_critical_cve=0
+            unique_critical_cve=0
+          fi
+
+          # Extract High CVE counts
+          high_cve=$(grep -hE '\|.*\|.*\|.*\|.*\|.*\| High \|' "$output_file" | cut -d'|' -f6)
+          if [[ -n "$high_cve" ]]; then
+            total_high_cve=$(echo "$high_cve" | wc -l | tr -d ' ')
+            unique_high_cve=$(echo "$high_cve" | sort -u | wc -l | tr -d ' ')
+          else
+            total_high_cve=0
+            unique_high_cve=0
+          fi
+
+          # Replace placeholders with actual totals
+          sed -i "s/{{TOTAL_CRITICAL}}/${total_critical_cve} (${unique_critical_cve} unique)/g" "$output_file"
+          sed -i "s/{{TOTAL_HIGH}}/${total_high_cve} (${unique_high_cve} unique)/g" "$output_file"
