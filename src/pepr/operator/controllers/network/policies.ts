@@ -7,7 +7,15 @@ import { K8s, kind } from "pepr";
 
 import { UDSConfig } from "../../../config";
 import { Component, setupLogger } from "../../../logger";
-import { Allow, Direction, Gateway, RemoteGenerated, UDSPackage } from "../../crd";
+import {
+  Allow,
+  Direction,
+  Gateway,
+  IstioAuthorizationPolicy,
+  RemoteGenerated,
+  UDSPackage,
+} from "../../crd";
+import { Action } from "../../crd/generated/istio/authorizationpolicy-v1beta1";
 import { getOwnerRef, purgeOrphans, sanitizeResourceName } from "../utils";
 import { allowEgressDNS } from "./defaults/allow-egress-dns";
 import { allowEgressIstiod } from "./defaults/allow-egress-istiod";
@@ -174,5 +182,78 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
   await purgeOrphans(generation, namespace, pkgName, kind.NetworkPolicy, log);
 
   // Return the list of policies
+  return policies;
+}
+
+export async function authorizationPolicies(pkg: UDSPackage, namespace: string) {
+  if (!pkg.spec?.network?.allow) {
+    log.info(
+      `No explicit network rules found for package ${pkg.metadata!.name}, skipping AuthorizationPolicy creation.`,
+    );
+    return [];
+  }
+
+  const rules = pkg.spec.network.allow;
+  const policies: IstioAuthorizationPolicy[] = [];
+
+  for (const rule of rules) {
+    const { remoteNamespace, remoteServiceAccount, port } = rule;
+
+    // Create a DENY policy that blocks traffic from non-allowed namespaces and service accounts
+    const denyPolicy = new IstioAuthorizationPolicy();
+    denyPolicy.apiVersion = "security.istio.io/v1beta1";
+    denyPolicy.kind = "AuthorizationPolicy";
+    denyPolicy.metadata = {
+      name: sanitizeResourceName(`deny-${pkg.metadata!.name}-${port ?? "any"}`),
+      namespace,
+      labels: {
+        "uds/package": pkg.metadata!.name!,
+        "uds/generation": pkg.metadata!.generation!.toString(),
+      },
+      ownerReferences: getOwnerRef(pkg),
+    };
+
+    denyPolicy.spec = {
+      action: Action.Deny,
+      rules: [
+        {
+          from: [
+            {
+              source: {
+                ...(remoteNamespace ? { notNamespaces: [remoteNamespace] } : {}),
+                ...(remoteServiceAccount
+                  ? {
+                      notPrincipals: [
+                        `cluster.local/ns/${remoteNamespace}/sa/${remoteServiceAccount}`,
+                      ],
+                    }
+                  : {}),
+              },
+            },
+          ],
+          to: [{ operation: { ports: port ? [port.toString()] : [] } }],
+        },
+      ],
+    };
+
+    policies.push(denyPolicy);
+
+    // Apply the AuthorizationPolicy using the registered CRD
+    try {
+      await K8s(IstioAuthorizationPolicy).Apply(denyPolicy, { force: true });
+    } catch (err) {
+      log.error(`Failed to apply AuthorizationPolicy for package ${pkg.metadata!.name}:`, err);
+      throw err;
+    }
+  }
+
+  await purgeOrphans(
+    pkg.metadata!.generation!.toString(),
+    namespace,
+    pkg.metadata!.name!,
+    IstioAuthorizationPolicy,
+    log,
+  );
+
   return policies;
 }

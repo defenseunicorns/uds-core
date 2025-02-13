@@ -190,6 +190,10 @@ export interface Allow {
    */
   remoteSelector?: { [key: string]: string };
   /**
+   * The remote service account to restrict access to/from within the remote namespace
+   */
+  remoteServiceAccount?: string;
+  /**
    * Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all
    * pods in the namespace
    */
@@ -736,6 +740,7 @@ export interface ProtocolMapper {
 }
 
 export interface Status {
+  authorizationPolicyCount?: number;
   authserviceClients?: string[];
   endpoints?: string[];
   monitors?: string[];

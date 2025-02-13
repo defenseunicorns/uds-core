@@ -108,6 +108,11 @@ const allow = {
           type: "number",
         },
       },
+      remoteServiceAccount: {
+        description:
+          "The remote service account to restrict access to/from within the remote namespace",
+        type: "string",
+      },
       // Deprecated fields
       podLabels: {
         description: "Deprecated: use selector",
@@ -480,6 +485,12 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
       jsonPath: ".status.networkPolicyCount",
     },
     {
+      name: "Authorization Policies",
+      type: "integer",
+      description: "The number of authorization policies created by the package",
+      jsonPath: ".status.authorizationPolicyCount",
+    },
+    {
       name: "Age",
       type: "date",
       description: "The age of the package",
@@ -528,6 +539,9 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
               },
             },
             networkPolicyCount: {
+              type: "integer",
+            },
+            authorizationPolicyCount: {
               type: "integer",
             },
             retryAttempt: {

@@ -16,7 +16,7 @@ import { keycloak, purgeSSOClients } from "../controllers/keycloak/client-sync";
 import { Client } from "../controllers/keycloak/types";
 import { podMonitor } from "../controllers/monitoring/pod-monitor";
 import { serviceMonitor } from "../controllers/monitoring/service-monitor";
-import { networkPolicies } from "../controllers/network/policies";
+import { authorizationPolicies, networkPolicies } from "../controllers/network/policies";
 import { Phase, UDSPackage } from "../crd";
 import { migrate } from "../crd/migrate";
 
@@ -45,7 +45,6 @@ export async function packageReconciler(pkg: UDSPackage) {
   }
 
   if (pkg.status?.retryAttempt && pkg.status?.retryAttempt > 0) {
-    // calculate exponential backoff where backoffSeconds = 3^retryAttempt
     const backOffSeconds = 3 ** pkg.status?.retryAttempt;
 
     log.info(
@@ -57,28 +56,29 @@ export async function packageReconciler(pkg: UDSPackage) {
       message: `Waiting ${backOffSeconds} seconds before retrying package`,
     });
 
-    // wait for backOff seconds before retrying
     await new Promise(resolve => setTimeout(resolve, backOffSeconds * 1000));
   }
 
-  // Migrate the package to the latest version
   migrate(pkg);
 
-  // Configure the namespace and namespace-wide network policies
   try {
     await updateStatus(pkg, { phase: Phase.Pending });
 
     const netPol = await networkPolicies(pkg, namespace!);
 
+    // New Authorization Policy logic
+    let authPol = [];
+    if (pkg.spec?.network?.serviceMesh?.ambient) {
+      authPol = await authorizationPolicies(pkg, namespace!);
+    }
+
     let endpoints: string[] = [];
-    // Update the namespace to ensure the istio-injection label is set
     await enableInjection(pkg);
 
     let ssoClients = new Map<string, Client>();
     let authserviceClients: string[] = [];
 
     if (UDSConfig.isIdentityDeployed) {
-      // Configure SSO
       ssoClients = await keycloak(pkg);
       authserviceClients = await authservice(pkg, ssoClients);
     } else if (pkg.spec?.sso) {
@@ -88,10 +88,8 @@ export async function packageReconciler(pkg: UDSPackage) {
       );
     }
 
-    // Create the VirtualService and ServiceEntry for each exposed service
     endpoints = await istioResources(pkg, namespace!);
 
-    // Configure the ServiceMonitors
     const monitors: string[] = [];
     monitors.push(...(await podMonitor(pkg, namespace!)));
     monitors.push(...(await serviceMonitor(pkg, namespace!)));
@@ -103,8 +101,9 @@ export async function packageReconciler(pkg: UDSPackage) {
       endpoints,
       monitors,
       networkPolicyCount: netPol.length,
+      authorizationPolicyCount: authPol.length,
       observedGeneration: metadata.generation,
-      retryAttempt: 0, // todo: make this nullable when kfc generates the type
+      retryAttempt: 0,
     });
   } catch (err) {
     void handleFailure(err, pkg);
