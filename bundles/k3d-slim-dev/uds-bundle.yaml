@@ -141,7 +141,7 @@ packages:
             - name: KEYCLOAK_CPU_LIMIT
               description: "CPU limit for the Keycloak pod"
               path: "resources.limits.cpu"
-              default: "1"
+              default: "1000m"
             - name: INSECURE_ADMIN_PASSWORD_GENERATION
               description: "Generate an insecure admin password for dev/test"
               path: insecureAdminPasswordGeneration.enabled
