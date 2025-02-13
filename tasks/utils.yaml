@@ -68,12 +68,12 @@ tasks:
   - name: setup-hosts
     actions:
       - description: Fetch Admin Gateway IP Address
-        cmd: uds zarf tools kubectl get service -n istio-admin-gateway admin-ingressgateway -o=jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null
+        cmd: uds zarf tools kubectl get service -n istio-admin-gateway admin-ingressgateway -o=jsonpath='{.status.loadBalancer.ingress[0].ip}{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null
         mute: true
         setVariables:
           - name: ADMIN_GW_IP
       - description: Fetch Tenant Gateway IP Address
-        cmd: uds zarf tools kubectl get service -n istio-tenant-gateway tenant-ingressgateway -o=jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null
+        cmd: uds zarf tools kubectl get service -n istio-tenant-gateway tenant-ingressgateway -o=jsonpath='{.status.loadBalancer.ingress[0].ip}{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null
         mute: true
         setVariables:
           - name: TENANT_GW_IP
