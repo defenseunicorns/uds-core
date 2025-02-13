@@ -5,6 +5,8 @@ build/**
 *.tar.zst
 zarf-sbom
 zarf-sbom/**
+cve
+cve/**
 tmp/
 env.ts
 **/node_modules
