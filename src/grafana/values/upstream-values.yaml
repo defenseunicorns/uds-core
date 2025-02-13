@@ -22,4 +22,4 @@ initChownData:
 downloadDashboardsImage:
   registry: docker.io
   repository: curlimages/curl
-  tag: 8.12.0
+  tag: 8.12.1
