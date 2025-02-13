@@ -97,6 +97,8 @@ tasks:
             echo "- High: {{TOTAL_HIGH}}" >> "$output_file"
           fi
           echo "" >> "$output_file"
+          echo "### Detailed Image Vulnerabilities" >> "$output_file"
+          echo "" >> "$output_file"
 
           any_vulnerabilities_found=false
 
@@ -118,17 +120,17 @@ tasks:
             any_vulnerabilities_found=true
 
             # Append the results to the report
-            echo "### $image_name" >> "$output_file"
+            echo "<details><summary><code>$image_name</code></summary>" >> "$output_file"
             echo "" >> "$output_file"
             cat "$scan" >> "$output_file"
+            echo "" >> "$output_file"
+            echo "</details>" >> "$output_file"
             echo "" >> "$output_file"
           done
 
           # If no vulnerabilities were found in any image, indicate that in the report
           if [[ "$any_vulnerabilities_found" == "false" ]]; then
-            echo "### No vulnerabilities found 🎉" >> "$output_file"
-            echo "" >> "$output_file"
-            echo "No vulnerabilities of severity **${MIN_SEVERITY}** or greater were found in ${PACKAGE} ${VERSION}." >> "$output_file"
+            echo "No vulnerabilities of severity **${MIN_SEVERITY}** or greater found." >> "$output_file"
           fi
 
           # Extract Critical CVE counts

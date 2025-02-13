@@ -39,6 +39,18 @@ jobs:
       snapshot: false
     secrets: inherit
 
+  scan-release:
+    needs: publish-uds-core-release
+    permissions:
+      contents: read
+      packages: read
+      id-token: write
+      issues: write
+    uses: ./.github/workflows/cve-scan.yaml
+    with:
+      release: true
+    secrets: inherit
+
   checkpoint-uds-core-release:
     needs: publish-uds-core-release
     permissions:
