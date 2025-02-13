@@ -31,6 +31,12 @@ spec:
         host: protected
         port: 8000
         targetPort: 80
+    allow:
+      - direction: Ingress
+        selector:
+          app: httpbin
+        ports:
+          - 80
 ---
 apiVersion: v1
 kind: ServiceAccount

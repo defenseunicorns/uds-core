@@ -1,6 +1,7 @@
 # Copyright 2024 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
+# yaml-language-server: $schema=https://raw.githubusercontent.com/defenseunicorns/uds-cli/refs/heads/main/uds.schema.json
 kind: UDSBundle
 metadata:
   name: k3d-core-slim-dev
@@ -32,7 +33,7 @@ packages:
 
   - name: init
     repository: ghcr.io/zarf-dev/packages/init
-    ref: v0.48.0
+    ref: v0.48.1
 
   - name: core-base
     path: ../../build/
@@ -59,6 +60,25 @@ packages:
               description: "CPU requests for the pepr admission pods"
               path: "admission.resources.requests.cpu"
               default: "100m"
+      istio-controlplane:
+        istiod:
+          variables:
+            - name: PROXY_MEMORY_REQUEST
+              description: "Memory request for the Istio Proxy Sidecar"
+              path: "global.proxy.resources.requests.memory"
+              default: "40Mi"
+            - name: PROXY_MEMORY_LIMIT
+              description: "Memory limit for the Istio Proxy Sidecar"
+              path: "global.proxy.resources.limits.memory"
+              default: "1024Mi"
+            - name: PROXY_CPU_REQUEST
+              description: "CPU request for the Istio Proxy Sidecar"
+              path: "global.proxy.resources.requests.cpu"
+              default: "10m"
+            - name: PROXY_CPU_LIMIT
+              description: "CPU limit for the Istio Proxy Sidecar"
+              path: "global.proxy.resources.limits.cpu"
+              default: "2000m"
       istio-admin-gateway:
         uds-istio-config:
           variables:
@@ -129,3 +149,9 @@ packages:
                 GOOGLE_IDP_CORE_ENTITY_ID: "https://sso.uds.dev/realms/uds"
                 GOOGLE_IDP_ADMIN_GROUP: "uds-core-dev-admin"
                 GOOGLE_IDP_AUDITOR_GROUP: "uds-core-dev-auditor"
+            # This is a workaround for Keycloak and Kernel 6.12+ memory issue. It will be removed once
+            # https://github.com/defenseunicorns/uds-core/issues/1212 is sorted
+            - path: env
+              value:
+                - name: JAVA_OPTS_KC_HEAP
+                  value: "-XX:MaxRAMPercentage=70 -XX:MinRAMPercentage=70 -XX:InitialRAMPercentage=50 -XX:MaxRAM=1G"

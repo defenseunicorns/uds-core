@@ -3,7 +3,7 @@
 
 
 includes:
-  - common: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.7.4/tasks/create.yaml
+  - common: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.8.0/tasks/create.yaml
 
 variables:
   - name: FLAVOR
@@ -11,18 +11,26 @@ variables:
 
   - name: REGISTRY1_PEPR_IMAGE
     # renovate: datasource=docker depName=registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller versioning=semver
-    default: registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller:v0.44.0
+    default: registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller:v0.45.0
 
   - name: LAYER
+
+  - name: CREATE_OPTIONS
+    description: "Additional options passed in when creating Zarf packages. For example: --skip-sbom"
+    default: ""
 
 tasks:
   - name: standard-package
     description: "Create the UDS Core Zarf Package"
+    inputs:
+      create_options:
+        default: ${CREATE_OPTIONS}
+        description: "Additional options passed in when creating Zarf packages. For example: --skip-sbom"
     actions:
-      - task: pepr-build
-
-      - description: "Create the UDS Core Standard Zarf Package"
-        cmd: "uds zarf package create packages/standard --confirm --no-progress --flavor ${FLAVOR}"
+      - task: single-layer
+        with:
+          layer: standard
+          create_options: ${{ .inputs.create_options }}
 
   - name: k3d-standard-bundle
     description: "Create the K3d-UDS Core Bundle"
@@ -50,7 +58,12 @@ tasks:
     description: "Create the K3d + UDS Core Checkpoint Zarf Package"
     actions:
       - description: "Create the UDS Core Checkpoint Zarf Package"
-        cmd: "uds zarf package create packages/checkpoint-dev --confirm --no-progress --skip-sbom"
+        task: common:package
+        with:
+          path: packages/checkpoint-dev
+          config: ./zarf-config.yaml
+          options: "${CREATE_OPTIONS} --skip-sbom"
+          architecture: ${ZARF_ARCHITECTURE}
 
   # This task is a wrapper to support --set LAYER=identity-authorization
   - name: single-layer-callable
@@ -64,10 +77,19 @@ tasks:
       layer:
         default: base
         description: The UDS Core layer to build
+      create_options:
+        default: ${CREATE_OPTIONS}
+        description: "Additional options passed in when creating Zarf packages. For example: --skip-sbom"
     actions:
       - task: pepr-build
-        if: ${{ eq .inputs.layer "base"}}
-      - cmd: uds zarf package create packages/${{ index .inputs "layer" }} --confirm --no-progress --flavor ${FLAVOR}
+        if: ${{ eq .inputs.layer "base" or eq .inputs.layer "standard" }}
+      - description: "Create the UDS Core Zarf Package"
+        task: common:package
+        with:
+          path: packages/${{ index .inputs "layer" }}
+          config: ./zarf-config.yaml
+          options: ${{ .inputs.create_options }}
+          architecture: ${ZARF_ARCHITECTURE}
 
   - name: pepr-build
     description: "Build the UDS Core Pepr Module"
