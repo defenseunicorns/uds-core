@@ -269,6 +269,7 @@ const monitor = {
   },
 };
 
+
 const sso = {
   description: "Create SSO client configurations",
   type: "array",
