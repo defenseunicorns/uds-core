@@ -22,7 +22,7 @@ export function validateCfg(cfg: ClusterConfig) {
   }
 
   // Validate that the cacert is base64 encoded
-  if (cfg.spec?.expose.caCert) {
+  if (cfg.spec?.expose.caCert && cfg.spec.expose.caCert !== "###ZARF_VAR_CA_CERT###") {
     if (!isBase64(cfg.spec.expose.caCert)) {
       throw new Error(
         "ClusterConfig Validation: caCert must be base64 encoded -- found invalid value",

@@ -11,7 +11,6 @@ import { reconcileAuthservice } from "../keycloak/authservice/authservice";
 import { Action, AuthServiceEvent } from "../keycloak/authservice/types";
 import { initAPIServerCIDR } from "../network/generators/kubeAPI";
 import { initAllNodesTarget } from "../network/generators/kubeNodes";
-import { isBase64 } from "../utils";
 import { Config } from "./types";
 
 // Set default UDSConfig for build time compiling
@@ -87,16 +86,6 @@ export async function updateCfg(cfg: ClusterConfig) {
       UDSConfig.caCert = expose.caCert;
     } else {
       UDSConfig.caCert = "";
-    }
-
-    // Validate that the cacert is base64 encoded (it should be)
-    if (UDSConfig.caCert) {
-      if (!isBase64(UDSConfig.caCert)) {
-        configLog.error(
-          "Invalid CA Cert provided in uds-operator-config ClusterConfig, falling back to no CA Cert",
-        );
-        UDSConfig.caCert = "";
-      }
     }
 
     const authserviceUpdate: AuthServiceEvent = {

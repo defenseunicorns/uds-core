@@ -60,6 +60,20 @@ describe("ClusterConfigValidator", () => {
       "ClusterConfig Validation: caCert must be base64 encoded -- found invalid value",
     );
   });
+
+  it("does not throw error if caCert is set to ###ZARF_VAR_CA_CERT###", () => {
+    const defaulCaCert = {
+      ...mockCfg,
+      spec: {
+        ...mockCfg.spec!,
+        expose: {
+          ...mockCfg.spec!.expose,
+          caCert: "###ZARF_VAR_CA_CERT###",
+        },
+      },
+    };
+    expect(() => validateCfg(defaulCaCert)).not.toThrowError();
+  });
 });
 
 describe("ClusterConfig Update validation", () => {

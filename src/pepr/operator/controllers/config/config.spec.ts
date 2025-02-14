@@ -7,7 +7,6 @@ import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { kind } from "pepr";
 
 import { KubernetesListObject } from "kubernetes-fluent-client";
-import { Component, setupLogger } from "../../../logger";
 import { ClusterConfig } from "../../crd";
 import { reconcileAuthservice } from "../keycloak/authservice/authservice";
 import { initAPIServerCIDR } from "../network/generators/kubeAPI";
@@ -308,18 +307,6 @@ describe("updateUDSConfig", () => {
     mockCfg.spec!.expose.caCert = "###ZARF_VAR_CA_CERT###";
 
     await updateCfg(mockCfg);
-    expect(UDSConfig.caCert).toBe("");
-  });
-
-  it("logs an error and set caCert to an empty string if the value is not valid base64", async () => {
-    mockCfg.spec!.expose.caCert = "invalid-base64";
-
-    const mockLogger = setupLogger(Component.OPERATOR_CONFIG);
-
-    await updateCfg(mockCfg);
-    expect(mockLogger.error).toHaveBeenCalledWith(
-      expect.stringContaining("Invalid CA Cert provided in uds-operator-config ClusterConfig"),
-    );
     expect(UDSConfig.caCert).toBe("");
   });
 });
