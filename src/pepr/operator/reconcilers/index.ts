@@ -7,7 +7,7 @@ import { K8s, kind } from "pepr";
 
 import { Component, setupLogger } from "../../logger";
 import { Phase, PkgStatus, UDSPackage } from "../crd";
-import { Status } from "../crd/generated/package-v1alpha1";
+import { StatusObject as Status} from "../crd/generated/package-v1alpha1";
 
 export const uidSeen = new Set<string>();
 
