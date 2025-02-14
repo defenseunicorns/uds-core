@@ -186,9 +186,53 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
 }
 
 export async function authorizationPolicies(pkg: UDSPackage, namespace: string) {
-  if (!pkg.spec?.network?.allow) {
+  const isAmbient = await isNamespaceAmbient(namespace);
+
+  if (!isAmbient) {
     log.info(
-      `No explicit network rules found for package ${pkg.metadata!.name}, skipping AuthorizationPolicy creation.`,
+      `Namespace ${namespace} contains non-ambient packages. Defaulting to Network Policies.`,
+    );
+    return []; // Default to NetPols instead of Authorization Policies
+  }
+
+  const policies = generateAuthorizationPolicies(pkg, namespace);
+
+  // Don't apply a DENY policy if no explicit ALLOW rules exist
+  if (policies.length === 0) {
+    log.info(
+      `No explicit allow rules for package ${pkg.metadata!.name}, skipping AuthorizationPolicy creation.`,
+    );
+    return [];
+  }
+
+  for (const policy of policies) {
+    try {
+      await K8s(IstioAuthorizationPolicy).Apply(policy, { force: true });
+    } catch (err) {
+      log.error(`Failed to apply AuthorizationPolicy ${policy.metadata?.name}:`, err);
+      throw err;
+    }
+  }
+
+  return policies;
+}
+
+/**
+ * Check if all packages in the namespace are in Ambient Mode.
+ * If any package is NOT in Ambient Mode, default to Network Policies.
+ */
+export async function isNamespaceAmbient(namespace: string): Promise<boolean> {
+  const packages = await K8s(UDSPackage).InNamespace(namespace).Get();
+  return packages.items.every(pkg => pkg.spec?.network?.serviceMesh?.ambient === true);
+}
+
+export function generateAuthorizationPolicies(
+  pkg: UDSPackage,
+  namespace: string,
+): IstioAuthorizationPolicy[] {
+  if (!pkg.spec?.network?.allow || pkg.spec.network.allow.length === 0) {
+    log.info(
+      `No explicit network allow rules found for package ${pkg.metadata!.name}, skipping AuthorizationPolicy creation.`,
     );
     return [];
   }
@@ -196,64 +240,106 @@ export async function authorizationPolicies(pkg: UDSPackage, namespace: string) 
   const rules = pkg.spec.network.allow;
   const policies: IstioAuthorizationPolicy[] = [];
 
+  // Collect deny rules per port and track global namespaces
+  const denyNamespacesByPort = new Map<string, Set<string>>();
+  const denyPrincipalsByPort = new Map<string, Set<string>>();
+  const globalDenyNamespaces = new Set<string>();
+
   for (const rule of rules) {
     const { remoteNamespace, remoteServiceAccount, port } = rule;
+    const portKey = port ? port.toString() : "ALL";
 
-    // Create a DENY policy that blocks traffic from non-allowed namespaces and service accounts
-    const denyPolicy = new IstioAuthorizationPolicy();
-    denyPolicy.apiVersion = "security.istio.io/v1beta1";
-    denyPolicy.kind = "AuthorizationPolicy";
-    denyPolicy.metadata = {
-      name: sanitizeResourceName(`deny-${pkg.metadata!.name}-${port ?? "any"}`),
-      namespace,
-      labels: {
-        "uds/package": pkg.metadata!.name!,
-        "uds/generation": pkg.metadata!.generation!.toString(),
-      },
-      ownerReferences: getOwnerRef(pkg),
-    };
+    if (remoteNamespace) {
+      if (!port) {
+        globalDenyNamespaces.add(remoteNamespace); // This means allow all ports.
+      } else {
+        if (!denyNamespacesByPort.has(portKey)) {
+          denyNamespacesByPort.set(portKey, new Set());
+        }
+        denyNamespacesByPort.get(portKey)!.add(remoteNamespace);
+      }
+    }
 
-    denyPolicy.spec = {
-      action: Action.Deny,
-      rules: [
-        {
-          from: [
-            {
-              source: {
-                ...(remoteNamespace ? { notNamespaces: [remoteNamespace] } : {}),
-                ...(remoteServiceAccount
-                  ? {
-                      notPrincipals: [
-                        `cluster.local/ns/${remoteNamespace}/sa/${remoteServiceAccount}`,
-                      ],
-                    }
-                  : {}),
-              },
-            },
-          ],
-          to: [{ operation: { ports: port ? [port.toString()] : [] } }],
-        },
-      ],
-    };
-
-    policies.push(denyPolicy);
-
-    // Apply the AuthorizationPolicy using the registered CRD
-    try {
-      await K8s(IstioAuthorizationPolicy).Apply(denyPolicy, { force: true });
-    } catch (err) {
-      log.error(`Failed to apply AuthorizationPolicy for package ${pkg.metadata!.name}:`, err);
-      throw err;
+    if (remoteServiceAccount && remoteNamespace) {
+      const principal = `cluster.local/ns/${remoteNamespace}/sa/${remoteServiceAccount}`;
+      if (!denyPrincipalsByPort.has(portKey)) {
+        denyPrincipalsByPort.set(portKey, new Set());
+      }
+      denyPrincipalsByPort.get(portKey)!.add(principal);
     }
   }
 
-  await purgeOrphans(
-    pkg.metadata!.generation!.toString(),
-    namespace,
-    pkg.metadata!.name!,
-    IstioAuthorizationPolicy,
-    log,
-  );
+  // If no per-port denies exist and only "allow all" namespaces are present, we don't need an AuthorizationPolicy
+  if (denyNamespacesByPort.size === 0 && globalDenyNamespaces.size > 0) {
+    log.info(
+      `Only allow-all namespaces found for package ${pkg.metadata!.name}, skipping AuthorizationPolicy.`,
+    );
+    return [];
+  }
 
+  // Ensure global allow-all namespaces are added to every existing per-port deny rule
+  for (const denySet of denyNamespacesByPort.values()) {
+    globalDenyNamespaces.forEach(ns => denySet.add(ns));
+  }
+
+  // Construct deny rules per port
+  const denyRules = [];
+
+  for (const [port, namespaces] of denyNamespacesByPort.entries()) {
+    const principals = denyPrincipalsByPort.get(port) ?? new Set();
+
+    denyRules.push({
+      from: [
+        {
+          source: {
+            notNamespaces: Array.from(namespaces),
+            ...(principals.size > 0 ? { notPrincipals: Array.from(principals) } : {}),
+          },
+        },
+      ],
+      to: [{ operation: { ports: [port] } }],
+    });
+  }
+
+  // 🔹 NEW SECTION: Final wildcard deny rule for namespaces that block ALL ports
+  if (globalDenyNamespaces.size > 0) {
+    const allDeniedPorts = Array.from(denyNamespacesByPort.keys());
+
+    // Apply `notPorts` rule only if there are per-port denies
+    if (allDeniedPorts.length > 0) {
+      denyRules.push({
+        from: [{ source: { notNamespaces: Array.from(globalDenyNamespaces) } }],
+        to: [{ operation: { notPorts: allDeniedPorts } }],
+      });
+    }
+  }
+
+  // Only create a policy if there are deny rules
+  if (denyRules.length === 0) {
+    log.info(
+      `No valid deny rules generated for package ${pkg.metadata!.name}, skipping AuthorizationPolicy.`,
+    );
+    return [];
+  }
+
+  const denyPolicy = new IstioAuthorizationPolicy();
+  denyPolicy.apiVersion = "security.istio.io/v1beta1";
+  denyPolicy.kind = "AuthorizationPolicy";
+  denyPolicy.metadata = {
+    name: sanitizeResourceName(`deny-${pkg.metadata!.name}`),
+    namespace,
+    labels: {
+      "uds/package": pkg.metadata!.name!,
+      "uds/generation": pkg.metadata!.generation!.toString(),
+    },
+    ownerReferences: getOwnerRef(pkg),
+  };
+
+  denyPolicy.spec = {
+    action: Action.Deny,
+    rules: denyRules,
+  };
+
+  policies.push(denyPolicy);
   return policies;
 }
