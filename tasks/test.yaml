@@ -10,7 +10,7 @@ includes:
   - base-layer: ../packages/base/tasks.yaml
   - idam-layer: ../packages/identity-authorization/tasks.yaml
   - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/refs/tags/v0.13.1/tasks/setup.yaml
-  - compliance: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.7.4/tasks/compliance.yaml
+  - compliance: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.8.0/tasks/compliance.yaml
 
 tasks:
   - name: base
@@ -22,15 +22,21 @@ tasks:
 
   - name: single-layer
     description: "Build and test a single layer, must set UDS_LAYER environment variable"
+    inputs:
+      create_options:
+        default: "--skip-sbom"
+        description: "Additional options passed in when creating Zarf packages. Defaults to: --skip-sbom"
     actions:
       - task: create:single-layer
         with:
           layer: ${LAYER}
+          create_options: ${{ .inputs.create_options }}
       - task: deploy:single-layer
         with:
           layer: ${LAYER}
-      - description: "Validate the package"
-        cmd: uds run -f packages/${LAYER}/tasks.yaml validate --no-progress
+      - task: validate-package
+        with:
+          layer: ${LAYER}
 
   - name: layer-dependencies
     description: "Sets up a k3d cluster and deploys dependencies for the given layer"
@@ -54,6 +60,16 @@ tasks:
             uds run -f ${package}/tasks.yaml validate --no-progress
           done
           set +e
+
+  - name: validate-package
+    description: "Validate a single package"
+    inputs:
+      layer:
+        description: The UDS Core layer to validate
+        required: true
+    actions:
+      - cmd: |
+          uds run -f packages/${{ index .inputs "layer" }}/tasks.yaml validate --no-progress
 
   - name: e2e-tests
     description: "E2E Test all packages"
@@ -86,6 +102,8 @@ tasks:
     description: "Build and test UDS Core"
     actions:
       - task: create:standard-package
+        with:
+          create_options: "--skip-sbom"
       - task: create:k3d-standard-bundle
       - task: deploy:k3d-standard-bundle
       - task: validate-packages
@@ -100,6 +118,8 @@ tasks:
     description: "Build and test UDS Core"
     actions:
       - task: create:standard-package
+        with:
+          create_options: "--skip-sbom"
       - task: create:k3d-standard-bundle
       - task: deploy:k3d-standard-bundle-ha
       - task: validate-packages
@@ -110,6 +130,8 @@ tasks:
       - task: setup:k3d-test-cluster
       - task: deploy:latest-package-release
       - task: create:standard-package
+        with:
+          create_options: "--skip-sbom"
       - task: deploy:standard-package
       - task: validate-packages
       - task: e2e-tests
