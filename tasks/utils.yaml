@@ -64,3 +64,30 @@ tasks:
               --from-literal=password=${PASSWORD} \
               -n keycloak
           fi
+
+  - name: setup-hosts
+    actions:
+      - description: Fetch Admin Gateway IP Address
+        cmd: |
+          IP_ADDR=$(uds zarf tools kubectl get service -n istio-admin-gateway admin-ingressgateway -o=jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null)
+          if [ -z $IP_ADDR ]; then
+            HOSTNAME=$(uds zarf tools kubectl get service -n istio-admin-gateway admin-ingressgateway -o=jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null)
+            IP_ADDR=$(curl -isS $HOSTNAME --output /dev/null -w '%{remote_ip}')
+          fi; echo $IP_ADDR
+        mute: true
+        setVariables:
+          - name: ADMIN_GW_IP
+      - description: Fetch Tenant Gateway IP Address
+        cmd: |
+          IP_ADDR=$(uds zarf tools kubectl get service -n istio-tenant-gateway tenant-ingressgateway -o=jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null)
+          if [ -z $IP_ADDR ]; then
+            HOSTNAME=$(uds zarf tools kubectl get service -n istio-tenant-gateway tenant-ingressgateway -o=jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null)
+            IP_ADDR=$(curl -isS $HOSTNAME --output /dev/null -w '%{remote_ip}')
+          fi; echo $IP_ADDR
+        mute: true
+        setVariables:
+          - name: TENANT_GW_IP
+      - description: Adds Cluster LoadBalancer IP Addresses to match appropriate hosts names in /etc/hosts
+        mute: true
+        cmd: |
+          echo "$ADMIN_GW_IP keycloak.admin.uds.dev neuvector.admin.uds.dev grafana.admin.uds.dev demo.admin.uds.dev\n$TENANT_GW_IP sso.uds.dev demo-8080.uds.dev demo-8081.uds.dev protected.uds.dev" | sudo tee --append /etc/hosts
