@@ -34,6 +34,15 @@ spec:
               uri:
                 # Only allow routing to /status/410
                 exact: /status/410
+    allow:
+      - direction: Egress
+        selector:
+          app: httpbin
+        remoteGenerated: Anywhere
+        ports:
+          - 443
+          - 8080
+          - 80
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -51,6 +60,9 @@ spec:
     - name: http
       port: 8000
       targetPort: 80
+    - name: port8080
+      port: 8080
+      targetPort: 8080
   selector:
     app: httpbin
 ---
@@ -96,3 +108,16 @@ spec:
                 - ALL
               add:
                 - NET_BIND_SERVICE
+        - name: curl
+          image: curlimages/curl
+          imagePullPolicy: IfNotPresent
+          command: ["sleep", "3600"]
+          resources:
+            limits:
+              cpu: 50m
+              memory: 64Mi
+            requests:
+              cpu: 10m
+              memory: 16Mi
+          ports:
+            - containerPort: 8080

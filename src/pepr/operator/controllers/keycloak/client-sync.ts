@@ -176,7 +176,7 @@ async function syncClient(
     await retryWithDelay(async function setStoreToken() {
       return Store.setItemAndWait(name, client.registrationAccessToken!);
     }, log);
-  } catch (err) {
+  } catch {
     throw Error(
       `Failed to set token in store for client '${client.clientId}', package ` +
         `${pkg.metadata?.namespace}/${pkg.metadata?.name}`,

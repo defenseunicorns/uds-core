@@ -4,7 +4,7 @@
 image:
   registry: cgr.dev
   repository: du-uds-defenseunicorns/grafana-fips
-  tag: 11.4.1
+  tag: 11.5.1
 
 initChownData:
   image:
@@ -15,10 +15,10 @@ initChownData:
 downloadDashboardsImage:
   registry: cgr.dev
   repository: du-uds-defenseunicorns/curl-fips
-  tag: 8.11.1
+  tag: 8.12.1
 
 sidecar:
   image:
     registry: cgr.dev
     repository: du-uds-defenseunicorns/k8s-sidecar-fips
-    tag: 1.29.1
+    tag: 1.30.0

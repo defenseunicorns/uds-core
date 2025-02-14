@@ -54,9 +54,9 @@ export async function updateUDSConfig(config: kind.Secret) {
     if (UDSConfig.caCert) {
       try {
         atob(UDSConfig.caCert);
-      } catch (e) {
+      } catch {
         log.error(
-          "Invalid CA Cert provided in uds-operator-config secret, falling back to no CA Cert",
+          "Invalid CA Cert provided in uds-operator-config secret, CA Cert value must be base64 encoded. Falling back to no CA Cert.",
         );
         UDSConfig.caCert = "";
       }
