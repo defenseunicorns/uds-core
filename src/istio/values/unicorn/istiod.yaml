@@ -6,7 +6,7 @@ pilot:
 global:
   proxy_init:
     # renovate: image=cgr.dev/du-uds-defenseunicorns/istio-proxy-fips
-    image: "###ZARF_REGISTRY###/du-uds-defenseunicorns/istio-proxy-fips:1.24.2"
+    image: "###ZARF_REGISTRY###/du-uds-defenseunicorns/istio-proxy-fips:1.24.3"
   proxy:
     # renovate: image=cgr.dev/du-uds-defenseunicorns/istio-proxy-fips
-    image: "###ZARF_REGISTRY###/du-uds-defenseunicorns/istio-proxy-fips:1.24.2"
+    image: "###ZARF_REGISTRY###/du-uds-defenseunicorns/istio-proxy-fips:1.24.3"
