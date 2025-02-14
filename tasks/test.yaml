@@ -124,7 +124,7 @@ tasks:
   - name: uds-core-non-k3d
     description: "Validate and Test UDS Core deployment on a non K3D Cluster"
     actions:
-      - task: util:setup-hosts    
+      - task: util:setup-hosts
       - task: validate-packages
       - task: e2e-tests
 
