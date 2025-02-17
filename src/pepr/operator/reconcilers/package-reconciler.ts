@@ -3,15 +3,12 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { handleFailure, shouldSkip, updateStatus, writeEvent } from ".";
+import { getReadinessConditions, handleFailure, shouldSkip, updateStatus, writeEvent } from ".";
 import { UDSConfig } from "../../config";
 import { Component, setupLogger } from "../../logger";
 import { cleanupNamespace, enableInjection } from "../controllers/istio/injection";
 import { istioResources } from "../controllers/istio/istio-resources";
-import {
-  authservice,
-  purgeAuthserviceClients,
-} from "../controllers/keycloak/authservice/authservice";
+import { authservice, purgeAuthserviceClients } from "../controllers/keycloak/authservice/authservice";
 import { keycloak, purgeSSOClients } from "../controllers/keycloak/client-sync";
 import { Client } from "../controllers/keycloak/types";
 import { podMonitor } from "../controllers/monitoring/pod-monitor";
@@ -19,6 +16,7 @@ import { serviceMonitor } from "../controllers/monitoring/service-monitor";
 import { networkPolicies } from "../controllers/network/policies";
 import { Phase, UDSPackage } from "../crd";
 import { migrate } from "../crd/migrate";
+import { StatusEnum } from "../crd/generated/package-v1alpha1";
 
 // configure subproject logger
 const log = setupLogger(Component.OPERATOR_RECONCILERS);
@@ -66,7 +64,7 @@ export async function packageReconciler(pkg: UDSPackage) {
 
   // Configure the namespace and namespace-wide network policies
   try {
-    await updateStatus(pkg, { phase: Phase.Pending });
+    await updateStatus(pkg, { phase: Phase.Pending, conditions: getReadinessConditions(false) });
 
     const netPol = await networkPolicies(pkg, namespace!);
 
@@ -98,6 +96,7 @@ export async function packageReconciler(pkg: UDSPackage) {
 
     await updateStatus(pkg, {
       phase: Phase.Ready,
+      conditions: getReadinessConditions(true),
       ssoClients: [...ssoClients.keys()],
       authserviceClients,
       endpoints,
