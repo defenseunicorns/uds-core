@@ -40,7 +40,7 @@ export interface ExemptionElement {
  */
 export interface Matcher {
   kind?: Kind;
-  name:      string;
+  name: string;
   namespace: string;
 }
 

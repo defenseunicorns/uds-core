@@ -8,7 +8,10 @@ import { UDSConfig } from "../../config";
 import { Component, setupLogger } from "../../logger";
 import { cleanupNamespace, enableInjection } from "../controllers/istio/injection";
 import { istioResources } from "../controllers/istio/istio-resources";
-import { authservice, purgeAuthserviceClients } from "../controllers/keycloak/authservice/authservice";
+import {
+  authservice,
+  purgeAuthserviceClients,
+} from "../controllers/keycloak/authservice/authservice";
 import { keycloak, purgeSSOClients } from "../controllers/keycloak/client-sync";
 import { Client } from "../controllers/keycloak/types";
 import { podMonitor } from "../controllers/monitoring/pod-monitor";
@@ -16,7 +19,6 @@ import { serviceMonitor } from "../controllers/monitoring/service-monitor";
 import { networkPolicies } from "../controllers/network/policies";
 import { Phase, UDSPackage } from "../crd";
 import { migrate } from "../crd/migrate";
-import { StatusEnum } from "../crd/generated/package-v1alpha1";
 
 // configure subproject logger
 const log = setupLogger(Component.OPERATOR_RECONCILERS);

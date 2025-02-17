@@ -86,8 +86,8 @@ describe("updateStatus", () => {
           status: StatusEnum.True,
           lastTransitionTime: new Date(),
           message: "The package is ready for use.",
-          reason: "ReconciliationComplete"
-        }
+          reason: "ReconciliationComplete",
+        },
       ],
     };
     await updateStatus(cr as GenericKind, status as PkgStatus);
@@ -206,8 +206,8 @@ describe("handleFailure", () => {
             status: StatusEnum.False,
             lastTransitionTime: expect.any(Date),
             message: "The package is not ready for use.",
-            reason: "ReconciliationComplete"
-          }
+            reason: "ReconciliationComplete",
+          },
         ],
         retryAttempt: 1,
       },
@@ -228,10 +228,10 @@ describe("handleFailure", () => {
             status: StatusEnum.False,
             lastTransitionTime: new Date(),
             message: "The package is not ready for use.",
-            reason: "ReconciliationComplete"
-          }
+            reason: "ReconciliationComplete",
+          },
         ],
-        retryAttempt: 5
+        retryAttempt: 5,
       },
     };
     await handleFailure(err, cr as UDSPackage);
@@ -271,8 +271,8 @@ describe("handleFailure", () => {
             status: StatusEnum.False,
             lastTransitionTime: expect.any(Date),
             message: "The package is not ready for use.",
-            reason: "ReconciliationComplete"
-          }
+            reason: "ReconciliationComplete",
+          },
         ],
         retryAttempt: 0,
       },
