@@ -91,7 +91,7 @@ jobs:
 
       # This test requires a running k3d cluster. It needs to go the last.
       - name: Test Pepr
-        if: ${{ inputs.package == 'all' || inputs.package == 'base' }}
+        if: ${{ (inputs.package == 'all' || inputs.package == 'base') && inputs.test_type == 'install' }}
         run: |
           npm ci
           uds -f ./src/pepr/tasks.yaml run validate
