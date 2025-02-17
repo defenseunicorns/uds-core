@@ -62,6 +62,10 @@ jobs:
           ghToken: ${{ secrets.GITHUB_TOKEN }}
           chainguardIdentity: ${{ secrets.CHAINGUARD_IDENTITY }}
 
+      - name: Test Pepr
+        if: ${{ inputs.package == 'all' || inputs.package == 'base' }}
+        run: uds -f ./src/pepr/tasks.yaml run validate
+
       - name: Test a single layer package
         if: ${{ inputs.package != 'all' && inputs.test_type == 'install' }}
         run: uds run test-single-layer --set FLAVOR=${{ inputs.flavor }} --set LAYER=${{ inputs.package }} --no-progress
