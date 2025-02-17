@@ -64,7 +64,9 @@ jobs:
 
       - name: Test Pepr
         if: ${{ inputs.package == 'all' || inputs.package == 'base' }}
-        run: uds -f ./src/pepr/tasks.yaml run validate
+        run: |
+          npm ci
+          uds -f ./src/pepr/tasks.yaml run validate
 
       - name: Test a single layer package
         if: ${{ inputs.package != 'all' && inputs.test_type == 'install' }}
