@@ -89,8 +89,8 @@ jobs:
         if: ${{ inputs.package == 'all' && inputs.test_type == 'upgrade' }}
         run: uds run test-uds-core-upgrade --set FLAVOR=${{ inputs.flavor }} --no-progress
 
+      # This test requires a running k3d cluster. It needs to go the last.
       - name: Test Pepr
-        description: This test requires a runnigng k3d cluster. It needs to go the last.
         if: ${{ inputs.package == 'all' || inputs.package == 'base' }}
         run: |
           npm ci
