@@ -5,6 +5,8 @@
 includes:
   - utils: utils.yaml
   - test: test.yaml
+  - create: create.yaml
+  - deploy: deploy.yaml
   - setup: setup.yaml
 
 variables:
@@ -72,7 +74,15 @@ tasks:
     description: "Test and Publish UDS Core layer"
     actions:
       - task: test:layer-dependencies
-      - task: test:single-layer
+      - task: create:single-layer
+        with:
+          layer: ${LAYER}
+      - task: deploy:single-layer
+        with:
+          layer: ${LAYER}
+      - task: test:validate-package
+        with:
+          layer: ${LAYER}
       - task: utils:determine-repo
       - description: "Publish build of layer"
         cmd: uds zarf package publish build/zarf-package-core-${LAYER}-${UDS_ARCH}-${VERSION}.tar.zst oci://${TARGET_REPO}

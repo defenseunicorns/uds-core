@@ -35,7 +35,7 @@ cve:
     image:
       repository: ironbank/neuvector/neuvector/scanner
       # renovate: datasource=docker depName=registry1.dso.mil/ironbank/neuvector/neuvector/scanner versioning=docker
-      tag: "5"
+      tag: "6"
     containerSecurityContext:
       capabilities:
         drop:
