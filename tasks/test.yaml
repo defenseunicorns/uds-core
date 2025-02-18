@@ -135,7 +135,7 @@ tasks:
       - task: validate-packages
       - task: e2e-tests
         with:
-          architecture: "arm64"
+          architecture: "amd64"
 
   - name: uds-core-ha
     description: "Build and test UDS Core"
