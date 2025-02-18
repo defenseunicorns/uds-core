@@ -10,7 +10,7 @@ export {
   Gateway,
   Monitor,
   Phase,
-  Status as PkgStatus,
+  StatusObject as PkgStatus,
   Protocol,
   RemoteGenerated,
   Sso,

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { handleFailure, shouldSkip, updateStatus, writeEvent } from ".";
+import { getReadinessConditions, handleFailure, shouldSkip, updateStatus, writeEvent } from ".";
 import { UDSConfig } from "../../config";
 import { Component, setupLogger } from "../../logger";
 import { cleanupNamespace, enableInjection } from "../controllers/istio/injection";
@@ -66,7 +66,7 @@ export async function packageReconciler(pkg: UDSPackage) {
 
   // Configure the namespace and namespace-wide network policies
   try {
-    await updateStatus(pkg, { phase: Phase.Pending });
+    await updateStatus(pkg, { phase: Phase.Pending, conditions: getReadinessConditions(false) });
 
     const netPol = await networkPolicies(pkg, namespace!);
 
@@ -98,6 +98,7 @@ export async function packageReconciler(pkg: UDSPackage) {
 
     await updateStatus(pkg, {
       phase: Phase.Ready,
+      conditions: getReadinessConditions(true),
       ssoClients: [...ssoClients.keys()],
       authserviceClients,
       endpoints,

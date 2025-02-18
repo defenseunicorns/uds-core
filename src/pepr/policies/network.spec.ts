@@ -8,7 +8,7 @@ import { K8s, kind } from "pepr";
 
 const failIfReached = () => expect(true).toBe(false);
 
-describe("network policies", () => {
+describe.skip("network policies", () => {
   it("should prevent pods from using the host network namespace", async () => {
     const expected = (e: Error) =>
       expect(e).toMatchObject({

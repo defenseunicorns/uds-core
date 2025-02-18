@@ -7,7 +7,7 @@ import { K8s, kind } from "pepr";
 
 import { Component, setupLogger } from "../../logger";
 import { Phase, PkgStatus, UDSPackage } from "../crd";
-import { Status } from "../crd/generated/package-v1alpha1";
+import { StatusEnum, StatusObject as Status } from "../crd/generated/package-v1alpha1";
 
 export const uidSeen = new Set<string>();
 
@@ -137,6 +137,7 @@ export async function handleFailure(err: { status: number; message: string }, cr
 
     status = {
       phase: Phase.Retrying,
+      conditions: getReadinessConditions(false),
       retryAttempt: currRetry,
     };
   } else {
@@ -144,6 +145,7 @@ export async function handleFailure(err: { status: number; message: string }, cr
 
     status = {
       phase: Phase.Failed,
+      conditions: getReadinessConditions(false),
       observedGeneration: metadata.generation,
       retryAttempt: 0, // todo: make this nullable when kfc generates the type
     };
@@ -158,4 +160,17 @@ export async function handleFailure(err: { status: number; message: string }, cr
     log.error({ err: finalErr }, `Error updating status for ${identifier} failed`);
     void writeEvent(cr, { message: finalErr.message });
   });
+}
+
+export function getReadinessConditions(ready: boolean = true) {
+  return [
+    {
+      type: "Ready",
+      status: ready == true ? StatusEnum.True : StatusEnum.False,
+      lastTransitionTime: new Date(),
+      message:
+        ready == true ? "The package is ready for use." : "The package is not ready for use.",
+      reason: "ReconciliationComplete",
+    },
+  ];
 }

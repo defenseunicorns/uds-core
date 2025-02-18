@@ -10,6 +10,7 @@ import { K8s, Log, kind } from "pepr";
 import { Mock } from "jest-mock";
 import { handleFailure, shouldSkip, uidSeen, updateStatus, writeEvent } from ".";
 import { Phase, PkgStatus, UDSPackage } from "../crd";
+import { StatusEnum } from "../crd/generated/package-v1alpha1";
 
 jest.mock("pepr", () => ({
   K8s: jest.fn(),
@@ -77,7 +78,18 @@ describe("updateStatus", () => {
 
   it("should update the status of a package", async () => {
     const cr = { kind: "Package", metadata: { name: "test", namespace: "default" } };
-    const status = { phase: Phase.Ready };
+    const status = {
+      phase: Phase.Ready,
+      conditions: [
+        {
+          type: "Ready",
+          status: StatusEnum.True,
+          lastTransitionTime: new Date(),
+          message: "The package is ready for use.",
+          reason: "ReconciliationComplete",
+        },
+      ],
+    };
     await updateStatus(cr as GenericKind, status as PkgStatus);
     expect(K8s).toHaveBeenCalledWith(UDSPackage);
     expect(PatchStatus).toHaveBeenCalledWith({
@@ -188,6 +200,15 @@ describe("handleFailure", () => {
       metadata: { namespace: "default", name: "test" },
       status: {
         phase: Phase.Retrying,
+        conditions: [
+          {
+            type: "Ready",
+            status: StatusEnum.False,
+            lastTransitionTime: expect.any(Date),
+            message: "The package is not ready for use.",
+            reason: "ReconciliationComplete",
+          },
+        ],
         retryAttempt: 1,
       },
     });
@@ -199,7 +220,19 @@ describe("handleFailure", () => {
       kind: "Package",
       apiVersion: "v1",
       metadata: { namespace: "default", name: "test", generation: 1, uid: "1" },
-      status: { phase: Phase.Pending, retryAttempt: 5 },
+      status: {
+        phase: Phase.Pending,
+        conditions: [
+          {
+            type: "Ready",
+            status: StatusEnum.False,
+            lastTransitionTime: new Date(),
+            message: "The package is not ready for use.",
+            reason: "ReconciliationComplete",
+          },
+        ],
+        retryAttempt: 5,
+      },
     };
     await handleFailure(err, cr as UDSPackage);
     expect(Log.error).toHaveBeenCalledWith(
@@ -232,6 +265,15 @@ describe("handleFailure", () => {
       status: {
         observedGeneration: 1,
         phase: Phase.Failed,
+        conditions: [
+          {
+            type: "Ready",
+            status: StatusEnum.False,
+            lastTransitionTime: expect.any(Date),
+            message: "The package is not ready for use.",
+            reason: "ReconciliationComplete",
+          },
+        ],
         retryAttempt: 0,
       },
     });
