@@ -6,7 +6,7 @@ metadata:
   name: uds-core-aks-nightly
   description: A UDS bundle for deploying UDS Core on AKS
   # x-release-please-start-version
-  version: "0.35.0"
+  version: "0.36.0"
   # x-release-please-end
 
 packages:
@@ -17,7 +17,7 @@ packages:
   - name: core
     path: ../../../build
     # x-release-please-start-version
-    ref: 0.35.0
+    ref: 0.36.0
     # x-release-please-end
     # https://github.com/defenseunicorns/uds-core/issues/1222
     # optionalComponents:
