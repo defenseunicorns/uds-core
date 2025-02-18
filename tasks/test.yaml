@@ -84,7 +84,7 @@ tasks:
       architecture:
         description: "System architecture that the test-apps package should be built for."
         required: true
-        default: "amd64"
+        default: "arm64"
     # Run each e2e test type from the e2e folder
     actions:
       - description: "Setup the Keycloak admin user if needed"
