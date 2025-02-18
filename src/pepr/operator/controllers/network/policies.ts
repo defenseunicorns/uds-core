@@ -260,12 +260,18 @@ export function generateAuthorizationPolicies(
       }
     }
 
-    if (remoteServiceAccount && remoteNamespace) {
-      const principal = `cluster.local/ns/${remoteNamespace}/sa/${remoteServiceAccount}`;
-      if (!denyPrincipalsByPort.has(portKey)) {
-        denyPrincipalsByPort.set(portKey, new Set());
+    if (remoteServiceAccount) {
+      if (remoteNamespace) {
+        const principal = `cluster.local/ns/${remoteNamespace}/sa/${remoteServiceAccount}`;
+        if (!denyPrincipalsByPort.has(portKey)) {
+          denyPrincipalsByPort.set(portKey, new Set());
+        }
+        denyPrincipalsByPort.get(portKey)!.add(principal);
+      } else {
+        log.warn(
+          `Ignoring remoteServiceAccount '${remoteServiceAccount}' because remoteNamespace is missing.`,
+        );
       }
-      denyPrincipalsByPort.get(portKey)!.add(principal);
     }
   }
 
@@ -301,7 +307,7 @@ export function generateAuthorizationPolicies(
     });
   }
 
-  // 🔹 NEW SECTION: Final wildcard deny rule for namespaces that block ALL ports
+  // Final wildcard deny rule for namespaces that block ALL ports
   if (globalDenyNamespaces.size > 0) {
     const allDeniedPorts = Array.from(denyNamespacesByPort.keys());
 
