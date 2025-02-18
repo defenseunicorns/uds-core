@@ -1,0 +1,11 @@
+{{- $severity_order := dict "Negligible" 0 "Unknown" 1 "Low" 2 "Medium" 3 "High" 4 "Critical" 5 -}}
+{{- $min_severity := "High" -}}  {{- /* This will be replaced dynamically */ -}}
+{{- $min_severity_rank := index $severity_order $min_severity -}}
+| Name | Installed | Fixed-In | Type | Vulnerability | Severity |
+|------|-----------|----------|------|--------------|----------|
+{{- range .Matches }}
+  {{- $cve_severity := index $severity_order .Vulnerability.Severity }}
+  {{- if ge $cve_severity $min_severity_rank }}
+| {{ .Artifact.Name }} | {{ .Artifact.Version }} | {{ if .Vulnerability.Fix.Versions }}{{ .Vulnerability.Fix.Versions | join ", " }}{{ else }}(not fixed){{ end }} | {{ .Artifact.Type }} | {{ .Vulnerability.ID }} | {{ .Vulnerability.Severity }} |
+  {{- end }}
+{{- end }}
