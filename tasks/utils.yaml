@@ -65,7 +65,7 @@ tasks:
               -n keycloak
           fi
 
-  - name: setup-hosts
+  - name: admin-gw-ip
     actions:
       - description: Fetch Admin Gateway IP Address
         cmd: |
@@ -77,6 +77,8 @@ tasks:
         mute: true
         setVariables:
           - name: ADMIN_GW_IP
+  - name: tenant-gw-ip
+    actions:
       - description: Fetch Tenant Gateway IP Address
         cmd: |
           IP_ADDR=$(uds zarf tools kubectl get service -n istio-tenant-gateway tenant-ingressgateway -o=jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null)
@@ -87,6 +89,10 @@ tasks:
         mute: true
         setVariables:
           - name: TENANT_GW_IP
+  - name: setup-hosts
+    actions:
+      - task: admin-gw-ip
+      - task: tenant-gw-ip
       - description: Adds Cluster LoadBalancer IP Addresses to match appropriate hosts names in /etc/hosts
         mute: true
         cmd: |

@@ -80,6 +80,11 @@ tasks:
 
   - name: e2e-tests
     description: "E2E Test all packages"
+    inputs:
+      architecture:
+        description: "System architecture that the test-apps package should be built for."
+        required: true
+        default: "amd64"
     # Run each e2e test type from the e2e folder
     actions:
       - description: "Setup the Keycloak admin user if needed"
@@ -89,6 +94,8 @@ tasks:
         cmd: uds run -f tasks/test.yaml common-setup:create-doug-user --set KEYCLOAK_GROUP="/UDS Core/Admin" # Adds the test doug user
       - description: "Create and Deploy Test App Package"
         task: test-resources:create-deploy
+        with:
+          architecture: ${{ .inputs.architecture }}
       - description: "Run Playwright E2E tests for all packages"
         dir: test/playwright
         cmd: |
@@ -122,11 +129,13 @@ tasks:
       - task: e2e-tests
 
   - name: uds-core-non-k3d
-    description: "Validate and Test UDS Core deployment on a non K3D Cluster"
+    description: "Validate and Test UDS Core deployment on a non K3d Cluster"
     actions:
       - task: util:setup-hosts
       - task: validate-packages
       - task: e2e-tests
+        with:
+          architecture: "arm64"
 
   - name: uds-core-ha
     description: "Build and test UDS Core"
