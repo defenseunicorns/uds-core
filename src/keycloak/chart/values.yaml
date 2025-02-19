@@ -23,6 +23,10 @@ additionalGatewayNamespaces: []
 # Example
 # - "istio-login-gateway"
 
+# Enables an EnvoyFilter to block path-parameter bypasses of AuthorizationPolicy rules
+# Should only be disabled if this is incorrectly blocking paths you expect to be allowed
+pathParameterProtection: true
+
 # The primary Keycloak realm
 realm: uds
 
