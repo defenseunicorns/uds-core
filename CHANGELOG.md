@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.36.1](https://github.com/defenseunicorns/uds-core/compare/v0.36.0...v0.36.1) (2025-02-19)
+
+
+### Bug Fixes
+
+* add `package: read` permissions for nightly ci workflows ([#1306](https://github.com/defenseunicorns/uds-core/issues/1306)) ([7b62133](https://github.com/defenseunicorns/uds-core/commit/7b6213398f0c18e02a4e6e4646b09998ded5064f))
+* checkpoint package creation ([#1303](https://github.com/defenseunicorns/uds-core/issues/1303)) ([fabd56b](https://github.com/defenseunicorns/uds-core/commit/fabd56bb6e5dd14f0d5719d7b087a9ba77b1678e))
+
+
+### Miscellaneous
+
+* **deps:** update pepr to v0.45.1 ([#1297](https://github.com/defenseunicorns/uds-core/issues/1297)) ([4ddc821](https://github.com/defenseunicorns/uds-core/commit/4ddc821d949d85577d4b18a5679379fc50d7a3c7))
+* **docs:** docs update ([#1300](https://github.com/defenseunicorns/uds-core/issues/1300)) ([f266d36](https://github.com/defenseunicorns/uds-core/commit/f266d3630d4d14701414627f66287c8ef2dea3e5))
+
 ## [0.36.0](https://github.com/defenseunicorns/uds-core/compare/v0.35.0...v0.36.0) (2025-02-18)
 
 
