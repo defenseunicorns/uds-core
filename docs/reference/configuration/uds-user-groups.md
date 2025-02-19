@@ -34,7 +34,7 @@ All groups are under the Uds Core parent group. Frequently a group will be refer
 
 ### Identity Providers ( IDP )
 
-UDS Core ships with a templated Google SAML IDP:
+UDS Core ships with a templated Google SAML IDP in our [realm.json](https://github.com/defenseunicorns/uds-identity-config/blob/main/src/realm.json):
 ```yaml
     "identityProviders": [
         {
