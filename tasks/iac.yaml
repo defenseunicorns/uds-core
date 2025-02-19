@@ -83,8 +83,6 @@ tasks:
       - cmd: sleep 5
       - cmd: eksctl create cluster -f cluster-config.yaml
       - cmd: eksctl utils write-kubeconfig -c ${CLUSTER_NAME}
-      # temp workaround
-      - cmd: sudo mkdir -p /var/run/secrets/kubernetes.io/serviceaccount/ && aws-iam-authenticator token -i ${CLUSTER_NAME} --token-only | sudo tee /var/run/secrets/kubernetes.io/serviceaccount/token > /dev/null
 
   - name: rke2-get-kubeconfig
     actions:
@@ -132,7 +130,6 @@ tasks:
   - name: destroy-cluster
     actions:
       - cmd: eksctl delete cluster -f cluster-config.yaml --disable-nodegroup-eviction --wait
-      - cmd: sudo rm -rf /var/run/secrets/kubernetes.io
 
   - name: create-iac
     actions:
