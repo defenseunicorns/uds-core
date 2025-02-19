@@ -62,12 +62,7 @@ tasks:
     description: "Create the K3d + UDS Core Checkpoint Zarf Package"
     actions:
       - description: "Create the UDS Core Checkpoint Zarf Package"
-        task: common:package
-        with:
-          path: packages/checkpoint-dev
-          config: ./zarf-config.yaml
-          options: "${CREATE_OPTIONS} --skip-sbom"
-          architecture: ${ZARF_ARCHITECTURE}
+        cmd: "uds zarf package create packages/checkpoint-dev --confirm --no-progress --skip-sbom"
 
   # This task is a wrapper to support --set LAYER=identity-authorization
   - name: single-layer-callable
