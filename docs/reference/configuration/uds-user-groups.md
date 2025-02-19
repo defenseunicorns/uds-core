@@ -160,10 +160,6 @@ Alternatively, the `realmInitEnv` can be configured via bundle overrides like in
                 GOOGLE_IDP_CORE_ENTITY_ID: "https://sso.uds.dev/realms/uds"
                 GOOGLE_IDP_ADMIN_GROUP: "uds-core-dev-admin"
                 GOOGLE_IDP_AUDITOR_GROUP: "uds-core-dev-auditor"
-            - path: env
-              value:
-                - name: JAVA_OPTS_KC_HEAP
-                  value: "-XX:MaxRAMPercentage=70 -XX:MinRAMPercentage=70 -XX:InitialRAMPercentage=50 -XX:MaxRAM=1G"
 ```
 
 Configuring your own IDP can be achieved via:
