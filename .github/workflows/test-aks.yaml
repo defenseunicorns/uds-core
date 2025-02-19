@@ -14,10 +14,12 @@ on:
       - tasks/iac.yaml
       - .github/bundles/aks/*
       - .github/test-infra/azure/aks/*
+      - .github/workflows/test-aks.yaml
 
 permissions:
   id-token: write
   contents: read
+  packages: read
 
 jobs:
   test-aks-install:
