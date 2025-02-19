@@ -1,0 +1,31 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: uds.dev/v1alpha1
+kind: ClusterConfig
+metadata:
+  name: uds-cluster-config
+  namespace: pepr-system
+  labels:
+    {{- include "uds-operator-config.labels" . | nindent 4 }}
+spec:
+  attributes:
+    clusterName: {{ .Values.cluster.attributes.clusterName | quote }}
+    tags:
+{{ toYaml .Values.cluster.attributes.clusterTags | nindent 6 }}
+  networking:
+    kubeapiCIDR: {{ .Values.cluster.networking.kubeApiCidr | default .Values.operator.kubeApiCidr | quote }}
+    kubenodeCIDRS:
+{{- if .Values.cluster.networking.kubeNodeCidrs }}
+{{ toYaml .Values.cluster.networking.kubeNodeCidrs | indent 6 }}
+{{- else if .Values.operator.KUBENODE_CIDRS }}
+{{- range ( split "," .Values.operator.KUBENODE_CIDRS ) }}
+      - {{ . | quote }}
+{{- end }}
+{{- end }}
+  expose:
+    domain: {{ .Values.cluster.expose.domain | quote }}
+    adminDomain: {{ .Values.cluster.expose.adminDomain | quote }}
+    caCert: {{ .Values.cluster.expose.caCert | quote }}
+  policy:
+    allowAllNsExemptions: {{ .Values.cluster.policy.allowAllNsExemptions }}

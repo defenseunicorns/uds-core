@@ -11,6 +11,11 @@ metadata:
   # x-release-please-end
 
 components:
+  - name: uds-crds
+    required: true
+    import:
+      path: ../base
+
   - name: uds-operator-config
     required: true
     import:

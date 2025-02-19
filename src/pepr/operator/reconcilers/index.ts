@@ -5,6 +5,7 @@
 
 import { K8s, kind } from "pepr";
 
+import { GenericKind } from "kubernetes-fluent-client";
 import { Component, setupLogger } from "../../logger";
 import { Phase, PkgStatus, UDSPackage } from "../crd";
 import { Status } from "../crd/generated/package-v1alpha1";
@@ -86,7 +87,7 @@ export async function updateStatus(cr: UDSPackage, status: PkgStatus) {
  * @param message A human-readable message for the event
  * @param type The type of event to write
  */
-export async function writeEvent(cr: UDSPackage, event: Partial<kind.CoreEvent>) {
+export async function writeEvent(cr: GenericKind, event: Partial<kind.CoreEvent>) {
   log.debug(`Writing ${cr.metadata?.name}/${cr.metadata?.namespace} event: ${event.message}`);
 
   await K8s(kind.CoreEvent).Create({
