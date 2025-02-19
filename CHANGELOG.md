@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.36.1](https://github.com/defenseunicorns/uds-core/compare/v0.36.0...v0.36.1) (2025-02-19)
+
+
+### Miscellaneous
+
+* **docs:** docs update ([#1300](https://github.com/defenseunicorns/uds-core/issues/1300)) ([f266d36](https://github.com/defenseunicorns/uds-core/commit/f266d3630d4d14701414627f66287c8ef2dea3e5))
+
 ## [0.36.0](https://github.com/defenseunicorns/uds-core/compare/v0.35.0...v0.36.0) (2025-02-18)
 
 
