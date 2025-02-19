@@ -11,7 +11,7 @@ sidecar:
 image:
   registry: docker.io
   repository: grafana/grafana
-  tag: 11.5.1
+  tag: 11.5.2
 
 initChownData:
   image:
