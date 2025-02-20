@@ -83,9 +83,6 @@ spec:
     - from:
         - source:
             notNamespaces: ["external-app"]
-      to:
-        - operation:
-            ports: ["80"]
 ```
 
 ### **Example 3: No Policies Created for Egress-Only Rules**
