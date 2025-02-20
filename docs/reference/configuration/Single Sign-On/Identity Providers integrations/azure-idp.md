@@ -14,7 +14,7 @@ This guide will walk you through the steps required to configure Azure Entra ID 
 ## Creating Application Registrations in Azure Entra ID
 In this section, we will configure Application Registrations for each Keycloak realm deployed with UDS Core - the default `master` realm and the `uds` realm. The two App Registrations should be nearly identical, with the main difference being their `Redirect URI`.
 
-## Create App Registration - Master Realm
+### Create App Registration - Master Realm
 1. In Azure Entra ID, navigate to the "App registrations" page under "Manage".
 1. Click "New registration".
 1. Input a name for the application.
@@ -47,15 +47,13 @@ Once created, you will be directed to your application's configuration page in E
 1. The window that appears should automatically populate with `api://<Application (Client ID)>`. Note this value. You will need it for configuring the Azure SAML Identity Provider in Keycloak later.
 1. Click "Save".
 
-## Create App Registration - UDS Realm
+### Create App Registration - UDS Realm
 Repeat the steps above to create a new App Registration for the UDS Realm. Note the following caveats below:
 1. When you get to step 3, ensure that you provide the Application Registration a unique name.
 1. When asked to provide a "Redirect URI", provide the following: `https://sso.<domain>/realms/uds/broker/azure-saml/endpoint`
 1. Continue with next steps.
 
-# Keycloak Azure Entra Identity Provider Setup
-## Manual Configuration Steps:
-### Getting Started
+## Keycloak Azure Entra Identity Provider Setup
 * Log into Keycloak Admin UI
     * `keycloak.< admin_domain >`
     * The Keycloak admin username and password varies based on how UDS Core is deployed
@@ -297,6 +295,6 @@ Repeat the steps above to create a new App Registration for the UDS Realm. Note 
 3. Go through Entra Login
 4. Should be able to access Keycloak Account UI
 
-# References
+## References
 - [Quickstart: Register an application with the Microsoft identity platform](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app?tabs=certificate)
 - [Enable single sign-on for an enterprise application](https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/add-application-portal-setup-sso)

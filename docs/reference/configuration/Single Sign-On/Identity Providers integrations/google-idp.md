@@ -137,5 +137,5 @@ Configuring your own IDP can be achieved via:
 * Keycloak Admin UI and click ops
 * Custom realm.json for direct import in Keycloak
 
-# References
+## References
 - [Google Cloud's Keycloak integration documentation](https://cloud.google.com/architecture/identity/keycloak-single-sign-on)
