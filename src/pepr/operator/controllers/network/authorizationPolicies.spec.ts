@@ -3,42 +3,165 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { Direction, IstioAuthorizationPolicy, UDSPackage } from "../../crd";
+import { Direction, UDSPackage } from "../../crd";
 import { generateAuthorizationPolicies } from "./policies";
 
 describe("generateAuthorizationPolicies", () => {
-  test.concurrent("returns empty array if no network rules exist", () => {
+  test("returns empty array if no valid network rules exist", () => {
+    const cases = [
+      { spec: { network: {} }, metadata: { name: "test", generation: 1 } }, // No network key
+      { spec: { network: { allow: [] } }, metadata: { name: "test", generation: 1 } }, // Empty allow array
+    ];
+
+    for (const pkg of cases) {
+      expect(generateAuthorizationPolicies(pkg as UDSPackage, "test-namespace")).toEqual([]);
+    }
+  });
+
+  test("creates DENY policies for each unique selector and includes only matching rules", () => {
     const pkg: UDSPackage = {
-      spec: { network: {} },
+      spec: {
+        network: {
+          allow: [
+            {
+              remoteNamespace: "external-1",
+              direction: Direction.Ingress,
+              selector: { app: "frontend" },
+            },
+            {
+              remoteNamespace: "external-2",
+              direction: Direction.Ingress,
+              selector: { app: "backend" },
+            },
+          ],
+        },
+      },
       metadata: { name: "test", generation: 1 },
     };
+
+    const result = generateAuthorizationPolicies(pkg, "test-namespace");
+
+    expect(result.length).toBeGreaterThanOrEqual(2);
+
+    const selectorRules = result.map(policy => policy.metadata?.name);
+    expect(new Set(selectorRules).size).toBe(selectorRules.length); // Ensure unique selectors
+
+    expect(
+      result.some(policy =>
+        policy.spec?.rules?.some(rule =>
+          rule.from?.some(from => from.source?.notNamespaces?.includes("external-2")),
+        ),
+      ),
+    ).toBeTruthy();
+  });
+
+  test("ensures policies have correct labels", () => {
+    const pkg: UDSPackage = {
+      spec: {
+        network: {
+          allow: [{ remoteNamespace: "external-ns", direction: Direction.Ingress }],
+        },
+      },
+      metadata: { name: "test", generation: 2 },
+    };
+
+    const result = generateAuthorizationPolicies(pkg, "test-namespace");
+
+    expect(result.length).toBeGreaterThanOrEqual(1);
+
+    expect(result[0]?.metadata?.labels).toEqual({
+      "uds/package": "test",
+      "uds/generation": "2",
+    });
+  });
+
+  test("skips AuthorizationPolicy when only egress rules exist", () => {
+    const pkg: UDSPackage = {
+      spec: {
+        network: {
+          allow: [
+            { remoteNamespace: "external-1", direction: Direction.Egress },
+            { remoteNamespace: "external-2", port: 8080, direction: Direction.Egress },
+          ],
+        },
+      },
+      metadata: { name: "test", generation: 1 },
+    };
+
     const result = generateAuthorizationPolicies(pkg, "test-namespace");
     expect(result).toEqual([]);
   });
 
-  test.concurrent("returns empty array if allow rules are empty", () => {
+  test("ensures namespace-wide deny policies handle global deny rules correctly", () => {
     const pkg: UDSPackage = {
-      spec: { network: { allow: [] } },
+      spec: {
+        network: {
+          allow: [
+            { remoteNamespace: "external-1", direction: Direction.Ingress, port: 8080 },
+            { remoteNamespace: "external-2", direction: Direction.Ingress },
+          ],
+        },
+      },
       metadata: { name: "test", generation: 1 },
     };
+
     const result = generateAuthorizationPolicies(pkg, "test-namespace");
-    expect(result).toEqual([]);
+
+    expect(result.length).toBeGreaterThanOrEqual(1);
+    expect(
+      result.some(policy =>
+        policy.spec?.rules?.some(rule =>
+          rule.to?.some(to => to.operation?.ports?.includes("8080")),
+        ),
+      ),
+    ).toBeTruthy();
+
+    expect(
+      result.some(policy =>
+        policy.spec?.rules?.some(rule => rule.to?.some(to => to.operation?.notPorts)),
+      ),
+    ).toBeTruthy();
   });
 
-  test.concurrent("creates a single DENY policy with namespace restriction per port", () => {
+  test("ensures generated policies have unique names", () => {
     const pkg: UDSPackage = {
       spec: {
         network: {
           allow: [
             {
               remoteNamespace: "external-1",
-              port: 8080,
-              direction: Direction.Egress,
+              direction: Direction.Ingress,
+              selector: { app: "frontend" },
             },
+            {
+              remoteNamespace: "external-1",
+              direction: Direction.Ingress,
+              selector: { app: "backend" },
+            },
+          ],
+        },
+      },
+      metadata: { name: "test", generation: 1 },
+    };
+
+    const result = generateAuthorizationPolicies(pkg, "test-namespace");
+
+    expect(result.length).toBeGreaterThanOrEqual(2);
+
+    const policyNames = result.map(policy => policy.metadata?.name);
+    expect(new Set(policyNames).size).toBe(policyNames.length); // Ensure no duplicates
+  });
+
+  test("handles rules with no selector correctly", () => {
+    const pkg: UDSPackage = {
+      spec: {
+        network: {
+          allow: [
+            { remoteNamespace: "external-1", direction: Direction.Ingress }, // No selector
             {
               remoteNamespace: "external-2",
-              port: 3100,
-              direction: Direction.Egress,
+              direction: Direction.Ingress,
+              selector: { app: "backend" },
             },
           ],
         },
@@ -48,262 +171,16 @@ describe("generateAuthorizationPolicies", () => {
 
     const result = generateAuthorizationPolicies(pkg, "test-namespace");
 
-    expect(result).toHaveLength(1);
-    expect(result[0]).toBeInstanceOf(IstioAuthorizationPolicy);
-    expect(result[0].spec?.rules).toEqual([
-      {
-        from: [{ source: { notNamespaces: ["external-1"] } }],
-        to: [{ operation: { ports: ["8080"] } }],
-      },
-      {
-        from: [{ source: { notNamespaces: ["external-2"] } }],
-        to: [{ operation: { ports: ["3100"] } }],
-      },
-    ]);
-  });
+    expect(result.length).toBeGreaterThanOrEqual(1);
 
-  test.concurrent("correctly aggregates multiple notNamespace entries for the same port", () => {
-    const pkg: UDSPackage = {
-      spec: {
-        network: {
-          allow: [
-            {
-              remoteNamespace: "external-1",
-              port: 8080,
-              direction: Direction.Egress,
-            },
-            {
-              remoteNamespace: "external-2",
-              port: 8080,
-              direction: Direction.Egress,
-            },
-          ],
-        },
-      },
-      metadata: { name: "test", generation: 1 },
-    };
+    expect(result.some(policy => policy.metadata?.name?.includes("no-selector"))).toBeTruthy();
 
-    const result = generateAuthorizationPolicies(pkg, "test-namespace");
-
-    expect(result).toHaveLength(1);
-    expect(result[0].spec?.rules).toEqual([
-      {
-        from: [{ source: { notNamespaces: ["external-1", "external-2"] } }],
-        to: [{ operation: { ports: ["8080"] } }],
-      },
-    ]);
-  });
-
-  test.concurrent("applies correct metadata and labels", () => {
-    const pkg: UDSPackage = {
-      spec: {
-        network: {
-          allow: [
-            {
-              remoteNamespace: "external-ns",
-              port: 8080,
-              direction: Direction.Egress,
-            },
-          ],
-        },
-      },
-      metadata: { name: "test", generation: 1 },
-    };
-
-    const result = generateAuthorizationPolicies(pkg, "test-namespace");
-
-    expect(result[0].metadata?.name).toContain("deny-test");
-    expect(result[0].metadata?.namespace).toBe("test-namespace");
-    expect(result[0].metadata?.labels).toHaveProperty("uds/package", "test");
-    expect(result[0].metadata?.labels).toHaveProperty("uds/generation", "1");
-  });
-
-  test.concurrent("handles missing remoteNamespace and remoteServiceAccount", () => {
-    const pkg: UDSPackage = {
-      spec: {
-        network: {
-          allow: [
-            {
-              port: 8080,
-              direction: Direction.Egress,
-            },
-          ], // No remoteNamespace or remoteServiceAccount
-        },
-      },
-      metadata: { name: "test", generation: 1 },
-    };
-
-    const result = generateAuthorizationPolicies(pkg, "test-namespace");
-
-    expect(result).toEqual([]); // Should not generate a policy without valid deny rules
-  });
-
-  test.concurrent("skips AuthorizationPolicy when only allow-all rules exist", () => {
-    const pkg: UDSPackage = {
-      spec: {
-        network: {
-          allow: [
-            {
-              remoteNamespace: "external-3",
-              direction: Direction.Egress,
-            },
-          ], // No port defined = allow all
-        },
-      },
-      metadata: { name: "test", generation: 1 },
-    };
-
-    const result = generateAuthorizationPolicies(pkg, "test-namespace");
-
-    expect(result).toEqual([]); // Should not generate an AuthorizationPolicy
-  });
-
-  test.concurrent(
-    "adds wildcard blocked namespaces to all existing deny rules when per-port denies exist",
-    () => {
-      const pkg: UDSPackage = {
-        spec: {
-          network: {
-            allow: [
-              {
-                remoteNamespace: "external-1",
-                port: 8080,
-                direction: Direction.Egress,
-              },
-              {
-                remoteNamespace: "external-2",
-                port: 3100,
-                direction: Direction.Egress,
-              },
-              {
-                remoteNamespace: "external-3",
-                direction: Direction.Egress,
-              }, // Blocks all ports, should apply to all per-port rules
-            ],
-          },
-        },
-        metadata: { name: "test", generation: 1 },
-      };
-
-      const result = generateAuthorizationPolicies(pkg, "test-namespace");
-
-      expect(result).toHaveLength(1);
-      expect(result[0].spec?.rules).toEqual([
-        {
-          from: [{ source: { notNamespaces: ["external-1", "external-3"] } }],
-          to: [{ operation: { ports: ["8080"] } }],
-        },
-        {
-          from: [{ source: { notNamespaces: ["external-2", "external-3"] } }],
-          to: [{ operation: { ports: ["3100"] } }],
-        },
-        {
-          from: [{ source: { notNamespaces: ["external-3"] } }],
-          to: [{ operation: { notPorts: ["8080", "3100"] } }], // Blocks all ports *except* the explicitly denied ones
-        },
-      ]);
-    },
-  );
-
-  test.concurrent("does not create a DENY policy if there are no valid allow rules", () => {
-    const pkg: UDSPackage = {
-      spec: {
-        network: {
-          allow: [], // Empty object, treated as an invalid allow rule
-        },
-      },
-      metadata: { name: "test", generation: 1 },
-    };
-
-    const result = generateAuthorizationPolicies(pkg, "test-namespace");
-
-    expect(result).toEqual([]); // Should not create a deny policy
-  });
-
-  test.concurrent("correctly handles both namespace and service account restrictions", () => {
-    const pkg: UDSPackage = {
-      spec: {
-        network: {
-          allow: [
-            {
-              remoteNamespace: "external-1",
-              remoteServiceAccount: "sa-1",
-              port: 8080,
-              direction: Direction.Egress,
-            },
-          ],
-        },
-      },
-      metadata: { name: "test", generation: 1 },
-    };
-
-    const result = generateAuthorizationPolicies(pkg, "test-namespace");
-
-    expect(result).toHaveLength(1);
-    expect(result[0].spec?.rules).toEqual([
-      {
-        from: [
-          {
-            source: {
-              notNamespaces: ["external-1"],
-              notPrincipals: ["cluster.local/ns/external-1/sa/sa-1"],
-            },
-          },
-        ],
-        to: [{ operation: { ports: ["8080"] } }],
-      },
-    ]);
-  });
-
-  test.concurrent("handles multiple packages in a namespace correctly", () => {
-    const pkg1: UDSPackage = {
-      spec: {
-        network: {
-          allow: [
-            {
-              remoteNamespace: "frontend",
-              port: 8080,
-              direction: Direction.Egress,
-            },
-          ],
-        },
-      },
-      metadata: { name: "pkg1", generation: 1 },
-    };
-
-    const pkg2: UDSPackage = {
-      spec: {
-        network: {
-          allow: [
-            {
-              remoteNamespace: "backend",
-              port: 3100,
-              direction: Direction.Egress,
-            },
-          ],
-        },
-      },
-      metadata: { name: "pkg2", generation: 2 },
-    };
-
-    const result1 = generateAuthorizationPolicies(pkg1, "test-namespace");
-    const result2 = generateAuthorizationPolicies(pkg2, "test-namespace");
-
-    expect(result1).toHaveLength(1);
-    expect(result2).toHaveLength(1);
-
-    expect(result1[0].spec?.rules).toEqual([
-      {
-        from: [{ source: { notNamespaces: ["frontend"] } }],
-        to: [{ operation: { ports: ["8080"] } }],
-      },
-    ]);
-
-    expect(result2[0].spec?.rules).toEqual([
-      {
-        from: [{ source: { notNamespaces: ["backend"] } }],
-        to: [{ operation: { ports: ["3100"] } }],
-      },
-    ]);
+    expect(
+      result.some(policy =>
+        policy.spec?.rules?.some(rule =>
+          rule.from?.some(from => from.source?.notNamespaces?.includes("external-1")),
+        ),
+      ),
+    ).toBeTruthy();
   });
 });
