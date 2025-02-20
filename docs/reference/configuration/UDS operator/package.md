@@ -93,5 +93,5 @@ spec:
 This example may not contain all fields, the full specification for the Package CR is documented [here](/reference/configuration/custom-resources/packages-v1alpha1-cr). In addition, there is a JSON schema published [here](https://raw.githubusercontent.com/defenseunicorns/uds-core/refs/heads/main/schemas/package-v1alpha1.schema.json) for use in your IDE.
 
 :::note
-More SSO Package examples might be found [here](/reference/configuration/sso/).
+More SSO Package examples might be found 
 :::
