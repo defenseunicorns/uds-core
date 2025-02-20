@@ -14,10 +14,12 @@ on:
       - tasks/iac.yaml
       - .github/bundles/eks/*
       - .github/test-infra/aws/eks/*
+      - .github/workflows/test-eks.yaml
 
 permissions:
   id-token: write
   contents: read
+  packages: read
 
 jobs:
   test-eks-install:
