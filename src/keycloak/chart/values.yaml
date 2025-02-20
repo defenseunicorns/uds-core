@@ -5,12 +5,12 @@ image:
   # The Keycloak image repository
   repository: quay.io/keycloak/keycloak
   # Overrides the Keycloak image tag whose default is the chart appVersion
-  tag: "26.1.1"
+  tag: "26.1.2"
   # The Keycloak image pull policy
   pullPolicy: IfNotPresent
 
 # renovate: datasource=github-tags depName=defenseunicorns/uds-identity-config versioning=semver
-configImage: ghcr.io/defenseunicorns/uds/identity-config:0.10.0
+configImage: ghcr.io/defenseunicorns/uds/identity-config:0.10.1
 
 # The public domain name of the Keycloak server
 domain: "###ZARF_VAR_DOMAIN###"
@@ -22,6 +22,10 @@ adminDomain: '{{ "###ZARF_VAR_ADMIN_DOMAIN###" | default "admin.###ZARF_VAR_DOMA
 additionalGatewayNamespaces: []
 # Example
 # - "istio-login-gateway"
+
+# Enables an EnvoyFilter to block path-parameter bypasses of AuthorizationPolicy rules
+# Should only be disabled if this is incorrectly blocking paths you expect to be allowed
+pathParameterProtection: true
 
 # The primary Keycloak realm
 realm: uds
