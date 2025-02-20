@@ -2,7 +2,8 @@
 title: SSO Client Attribute Validation
 ---
 
-The SSO spec supports a subset of the Keycloak attributes for clients, but does not support all of them. The current supported attributes are:
+The `sso.attributes` part of the [UDS Package CR](/reference/configuration/custom-resources/packages-v1alpha1-cr/#sso) supports a subset of the Keycloak attributes for clients (but not support all of them). The currently supported attributes are:
+
 - oidc.ciba.grant.enabled
 - backchannel.logout.session.required
 - backchannel.logout.revoke.offline.tokens
