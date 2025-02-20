@@ -5,7 +5,6 @@ title: Using Azure Entra ID as IdP
 This guide will walk you through the steps required to configure Azure Entra ID as a SAML identity provider in Keycloak.
 
 # Prerequisites
-
 - Access to your Azure Entra ID Tenant, with at least [Cloud Application Administrator](https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/permissions-reference#cloud-application-administrator) Privileges.
 - Existing Entra ID Groups that are designated for Administrators and Auditors of UDS Core Applications (see note below).
 - **VERY IMPORTANT** Users configured in Entra are **REQUIRED** to have an email address defined, without this Keycloak will fail to create the user.
@@ -55,7 +54,6 @@ Repeat the steps above to create a new App Registration for the UDS Realm. Note 
 1. Continue with next steps.
 
 # Keycloak Azure Entra Identity Provider Setup
-
 ## Manual Configuration Steps:
 ### Getting Started
 * Log into Keycloak Admin UI
@@ -294,13 +292,11 @@ Repeat the steps above to create a new App Registration for the UDS Realm. Note 
             8. Select `Save` and navigate back to `Provider details` via the breadcrumbs at *top of page*
 
 ## Testing
-
 1. Navigate to `sso.< domain >`
 2. Select the `Azure SSO`
 3. Go through Entra Login
 4. Should be able to access Keycloak Account UI
 
 # References
-
 - [Quickstart: Register an application with the Microsoft identity platform](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app?tabs=certificate)
 - [Enable single sign-on for an enterprise application](https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/add-application-portal-setup-sso)

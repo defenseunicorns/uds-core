@@ -3,6 +3,7 @@ title: Using Google IdP
 ---
 
 UDS Core ships with a templated Google SAML IDP in our [realm.json](https://github.com/defenseunicorns/uds-identity-config/blob/main/src/realm.json):
+
 ```yaml
     "identityProviders": [
         {
@@ -137,5 +138,4 @@ Configuring your own IDP can be achieved via:
 * Custom realm.json for direct import in Keycloak
 
 # References
-
 - [Google Cloud's Keycloak integration documentation](https://cloud.google.com/architecture/identity/keycloak-single-sign-on)
