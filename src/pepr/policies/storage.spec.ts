@@ -8,7 +8,7 @@ import { K8s, kind } from "pepr";
 
 const failIfReached = () => expect(true).toBe(false);
 
-describe.skip("storage policies", () => {
+describe("storage policies", () => {
   it("should restrict volume types to the allowed list", async () => {
     const expected = (e: Error) =>
       expect(e).toMatchObject({
