@@ -26,6 +26,7 @@ locals {
     ccm_external                = true,
     token_bucket                = module.statestore.bucket,
     token_object                = module.statestore.token_object
+    cluster_name                = local.tags.cluster_name
   }
 }
 
@@ -107,7 +108,7 @@ resource "aws_instance" "rke2_ci_agent_node" {
   ami                         = data.aws_ami.rhel_rke2.image_id
   instance_type               = var.agent_instance_type
   key_name                    = aws_key_pair.control_plane_key_pair.key_name
-  user_data                   = templatefile("${path.module}/scripts/user_data.sh", merge(local.userdata, { BOOTSTRAP_IP = aws_instance.rke2_ci_bootstrap_node.private_ip }))
+  user_data                   = templatefile("${path.module}/scripts/user_data.sh", merge(local.userdata, { BOOTSTRAP_IP = aws_instance.rke2_ci_bootstrap_node.private_ip, AGENT_NODE = true }))
   subnet_id                   = data.aws_subnet.rke2_ci_subnet.id
   user_data_replace_on_change = true
   iam_instance_profile        = aws_iam_instance_profile.rke2_server.name
