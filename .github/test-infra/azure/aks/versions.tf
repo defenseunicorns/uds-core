@@ -3,6 +3,7 @@
 
 terraform {
   backend "azurerm" {
+    environment = "usgovernment"
   }
   required_providers {
     azapi = {
