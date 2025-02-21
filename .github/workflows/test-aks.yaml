@@ -31,9 +31,9 @@ jobs:
     env:
       SHA: ${{ github.sha }}
       UDS_REGION: centralus
-      UDS_RESOURCE_GROUP_NAME: ${{ secrets.AZURE_RESOURCE_GROUP }}
-      UDS_STORAGE_ACCOUNT_NAME: ${{ secrets.AZURE_STORAGE_ACCOUNT_NAME }}
-      UDS_CONTAINER_NAME: ${{ secrets.AZURE_STORAGE_CONTAINER_NAME }}
+      UDS_RESOURCE_GROUP_NAME: ${{ secrets.AZURE_GOV_RESOURCE_GROUP }}
+      UDS_STORAGE_ACCOUNT_NAME: ${{ secrets.AZURE_GOV_STORAGE_ACCOUNT_NAME }}
+      UDS_CONTAINER_NAME: ${{ secrets.AZURE_GOV_STORAGE_CONTAINER_NAME }}
 
     steps:
       - name: Set ENV
@@ -43,9 +43,9 @@ jobs:
           echo "TF_VAR_location=${UDS_REGION}" >> $GITHUB_ENV
           echo "TF_VAR_cluster_name=uds-ci-${{ matrix.flavor }}-${SHA:0:7}" >> $GITHUB_ENV
           echo "TF_VAR_resource_group_name=uds-ci-${{ matrix.flavor }}" >> $GITHUB_ENV
-          echo "ARM_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}" >> $GITHUB_ENV
-          echo "ARM_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}" >> $GITHUB_ENV
-          echo "ARM_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}" >> $GITHUB_ENV
+          echo "ARM_SUBSCRIPTION_ID=${{ secrets.AZURE_GOV_SUBSCRIPTION_ID }}" >> $GITHUB_ENV
+          echo "ARM_CLIENT_ID=${{ secrets.AZURE_GOV_CLIENT_ID }}" >> $GITHUB_ENV
+          echo "ARM_TENANT_ID=${{ secrets.AZURE_GOV_TENANT_ID }}" >> $GITHUB_ENV
           echo "ARM_USE_OIDC=true" >> $GITHUB_ENV
           echo "ARM_STORAGE_USE_AZUREAD=true" >> $GITHUB_ENV
 
@@ -59,9 +59,9 @@ jobs:
       - name: Azure login
         uses: azure/login@a65d910e8af852a8061c627c456678983e180302 # v2
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          client-id: ${{ secrets.AZURE_GOV_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_GOV_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_GOV_SUBSCRIPTION_ID }}
 
       - name: Environment setup
         uses: ./.github/actions/setup
