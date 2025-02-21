@@ -4,9 +4,10 @@
  */
 
 import { R } from "pepr";
-import { UDSConfig } from "../../../../config";
+
 import { Component, setupLogger } from "../../../../logger";
 import { UDSPackage } from "../../../crd";
+import { UDSConfig } from "../../config/config";
 import { Client } from "../types";
 import { updatePolicy } from "./authorization-policy";
 import {

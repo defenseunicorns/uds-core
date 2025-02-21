@@ -4,8 +4,9 @@
  */
 
 import { describe, expect, it } from "@jest/globals";
-import { UDSConfig } from "../../../config";
+
 import { Expose, Gateway, IstioLocation, IstioResolution } from "../../crd";
+import { UDSConfig } from "../config/config";
 import { generateServiceEntry } from "./service-entry";
 
 describe("test generate service entry", () => {
