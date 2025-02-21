@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.36.2](https://github.com/defenseunicorns/uds-core/compare/v0.36.1...v0.36.2) (2025-02-21)
+
+
+### Miscellaneous
+
+* **deps:** update keycloak to v0.10.2 ([#1311](https://github.com/defenseunicorns/uds-core/issues/1311)) ([6c1b5b7](https://github.com/defenseunicorns/uds-core/commit/6c1b5b74894feaa5b1c0f3a8c7dfa87a59eb9a77))
+* **deps:** update pepr to v0.46.0 ([#1304](https://github.com/defenseunicorns/uds-core/issues/1304)) ([4d0b9d0](https://github.com/defenseunicorns/uds-core/commit/4d0b9d0497e76793ff7de18a4ab7fe2bdfbfc747))
+
 ## [0.36.1](https://github.com/defenseunicorns/uds-core/compare/v0.36.0...v0.36.1) (2025-02-19)
 
 
