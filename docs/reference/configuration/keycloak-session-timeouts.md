@@ -4,32 +4,11 @@ title: Keycloak Session Timeout
 
 ## Understanding Keycloak Session Idle Timeouts
 
-Keycloak has two main session idle timeouts: the **realm session idle timeout** and the **client session idle timeout**. These settings control session expiration behavior differently, and their interaction determines how long a user remains authenticated across different clients.
+Keycloak has two main session idle timeouts: the **realm session idle timeout** and the **client session idle timeout**. These settings control session expiration differently, and their interaction determines how long a user remains authenticated across different clients.
 
 ---
 
-## Scenario 1: Client Session Idle Timeout is Longer than Realm Session Idle Timeout
-
-- **Realm Session Idle Timeout** = **1 hour** (Controls the overall user session expiration)
-- **Client Session Idle Timeout** = **10 minutes**
-- **User signs into Client.**
-- **User is inactive for 11 minutes**, then reactivates Client.
-
-### What Happens?
-1. **At 10 minutes of inactivity** → **Client's token expires**
-   - The access token is now **invalid**, meaning it can no longer be used for authentication.
-   - The **realm session is still active** (since 1 hour hasn't passed).
-   - If Client makes an API request, it will get a **401 Unauthorized** error.
-
-2. **At 11 minutes**, the user **reactivates Client** (e.g., clicks a button or makes a request).
-   - Since **Client's session is expired**, it **cannot use its existing access token**.
-   - However, if the user still has a **valid refresh token**, Client **can attempt a token refresh**.
-   - If refresh tokens are **still valid**, Client gets a new access token **without prompting the user to log in again**.
-   - If refresh tokens have expired, the user is **forced to log in again**.
-
----
-
-## Scenario 2: Client Session Idle Timeout is Shorter than Realm Session Idle Timeout
+## Scenario 1: Client Session Idle Timeout is Shorter than Realm Session Idle Timeout
 
 - **Realm Session Idle Timeout** = **1 hour**
 - **Client Session Idle Timeout** = **5 minutes**
@@ -45,6 +24,25 @@ Keycloak has two main session idle timeouts: the **realm session idle timeout** 
 2. **At 6 minutes**, the user **reactivates Client**.
    - If the refresh token is still valid, Client can obtain a new access token.
    - If the refresh token has expired, the user must **reauthenticate**.
+
+---
+
+## Scenario 2: Realm Session Idle Timeout is Shorter than Client Session Idle Timeout
+
+- **Realm Session Idle Timeout** = **10 minutes**
+- **Client Session Idle Timeout** = **30 minutes**
+- **User signs into Client.**
+- **User is inactive for 15 minutes**, then reactivates Client.
+
+### What Happens?
+1. **At 10 minutes of inactivity** → **Realm session expires**
+   - The user's **overall session ends**, meaning they are logged out of all clients.
+   - Any refresh tokens issued for the session become **invalid**.
+   - If Client makes an API request, it will get a **401 Unauthorized** error.
+
+2. **At 15 minutes**, the user **reactivates Client**.
+   - Since the **realm session expired at 10 minutes**, the user must **reauthenticate**.
+   - Even though the client session idle timeout was longer, it does not override the **realm session expiration**, which takes precedence.
 
 ---
 
