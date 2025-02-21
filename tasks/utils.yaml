@@ -72,7 +72,7 @@ tasks:
           IP_ADDR=$(uds zarf tools kubectl get service -n istio-admin-gateway admin-ingressgateway -o=jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null)
           if [ -z $IP_ADDR ]; then
             HOSTNAME=$(uds zarf tools kubectl get service -n istio-admin-gateway admin-ingressgateway -o=jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null)
-            IP_ADDR=$(curl -isS $HOSTNAME --output /dev/null -w '%{remote_ip}')
+            IP_ADDR=$(dig +short $HOSTNAME)
           fi; echo $IP_ADDR
         mute: false
         setVariables:
@@ -84,7 +84,7 @@ tasks:
           IP_ADDR=$(uds zarf tools kubectl get service -n istio-tenant-gateway tenant-ingressgateway -o=jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null)
           if [ -z $IP_ADDR ]; then
             HOSTNAME=$(uds zarf tools kubectl get service -n istio-tenant-gateway tenant-ingressgateway -o=jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null)
-            IP_ADDR=$(curl -isS $HOSTNAME --output /dev/null -w '%{remote_ip}')
+            IP_ADDR=$(dig +short $HOSTNAME)
           fi; echo $IP_ADDR
         mute: false
         setVariables:
