@@ -62,6 +62,7 @@ jobs:
           client-id: ${{ secrets.AZURE_GOV_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_GOV_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_GOV_SUBSCRIPTION_ID }}
+          environment: 'AzureUSGovernment'
 
       - name: Environment setup
         uses: ./.github/actions/setup
