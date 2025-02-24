@@ -30,7 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       SHA: ${{ github.sha }}
-      UDS_REGION: centralus
+      UDS_REGION: usgovvirginia
       UDS_RESOURCE_GROUP_NAME: ${{ secrets.AZURE_GOV_RESOURCE_GROUP }}
       UDS_STORAGE_ACCOUNT_NAME: ${{ secrets.AZURE_GOV_STORAGE_ACCOUNT_NAME }}
       UDS_CONTAINER_NAME: ${{ secrets.AZURE_GOV_STORAGE_CONTAINER_NAME }}
