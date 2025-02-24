@@ -90,12 +90,6 @@ components:
     import:
       path: ../logging
 
-  # Grafana
-  - name: grafana
-    required: true
-    import:
-      path: ../monitoring
-
   # Authservice
   - name: authservice
     required: true
