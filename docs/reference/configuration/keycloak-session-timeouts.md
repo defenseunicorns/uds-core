@@ -4,7 +4,7 @@ title: Keycloak Session Timeout
 
 ## Understanding Keycloak Session Idle Timeouts
 
-Keycloak has two main session idle timeouts: the **realm session idle timeout** and the **client session idle timeout**. These settings control session expiration differently, and their interaction determines how long a user remains authenticated across different clients.
+Keycloak has two session idle timeouts: the **realm session idle timeout** and the **client session idle timeout**. These settings control session expiration differently, and their interaction determines how long a user remains authenticated across different clients.
 
 ---
 
