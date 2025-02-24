@@ -101,9 +101,3 @@ components:
     required: true
     import:
       path: ../identity-authorization
-
-  # Velero
-  - name: velero
-    required: true
-    import:
-      path: ../backup-restore
