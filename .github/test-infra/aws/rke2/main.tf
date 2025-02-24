@@ -96,7 +96,7 @@ resource "aws_instance" "rke2_ci_control_plane_node" {
   associate_public_ip_address = true
 
   root_block_device {
-    volume_size = 100
+    volume_size = 150
   }
 
   tags = merge(local.tags, { "kubernetes.io/cluster/${local.cluster_name}" = "owned" })
@@ -117,7 +117,7 @@ resource "aws_instance" "rke2_ci_agent_node" {
   availability_zone           = "${var.region}a"
 
   root_block_device {
-    volume_size = 100
+    volume_size = 150
   }
 
   tags = merge(local.tags, { "kubernetes.io/cluster/${local.cluster_name}" = "owned" })
