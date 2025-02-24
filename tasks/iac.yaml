@@ -142,7 +142,6 @@ tasks:
 
   - name: apply-tofu
     actions:
-      - cmd: if [ ${CLOUD} = "azure" ]; then ACCOUNT_KEY=$(az storage account keys list --resource-group $RESOURCE_GROUP_NAME --account-name $STORAGE_ACCOUNT_NAME --query '[0].value' --output tsv); fi
       - cmd: |
           if [ ${CLOUD} = "aws" ]; then
             tofu init -force-copy \
@@ -151,14 +150,12 @@ tasks:
               -backend-config="region=${REGION}" \
               -backend-config="dynamodb_table=${STATE_DYNAMODB_TABLE_NAME}"
           elif [ ${CLOUD} = "azure" ]; then
-          ACCOUNT_KEY=$(az storage account keys list --resource-group $RESOURCE_GROUP_NAME --account-name $STORAGE_ACCOUNT_NAME --query '[0].value' --output tsv)
             tofu init -force-copy \
               -backend=true \
               -backend-config="resource_group_name=$RESOURCE_GROUP_NAME" \
               -backend-config="storage_account_name=$STORAGE_ACCOUNT_NAME" \
               -backend-config="container_name=$CONTAINER_NAME" \
               -backend-config="key=${STATE_KEY}"
-              -backend-config="access_key=${ACCOUNT_KEY}"
           else
             echo "Invalid cloud provider specified."; return 1; fi
         dir: .github/test-infra/${CLOUD}/${K8S_DISTRO}
