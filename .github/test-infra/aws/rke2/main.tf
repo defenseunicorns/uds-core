@@ -114,7 +114,7 @@ resource "aws_instance" "rke2_ci_agent_node" {
   iam_instance_profile        = aws_iam_instance_profile.rke2_server.name
   vpc_security_group_ids      = [aws_security_group.rke2_ci_node_sg.id]
   associate_public_ip_address = true
-  availability_zone           = "${var.region}c"
+  availability_zone           = "${var.region}a"
 
   root_block_device {
     volume_size = 100
