@@ -66,12 +66,6 @@ components:
     import:
       path: ../identity-authorization
 
-  # Neuvector
-  - name: neuvector
-    required: true
-    import:
-      path: ../runtime-security
-
   # Loki
   - name: loki
     required: true
