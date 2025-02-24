@@ -18,23 +18,23 @@ jobs:
   tag-new-version:
     permissions: write-all
     runs-on: ubuntu-latest
-    steps:;
+    steps:
       - run: echo "tag UDS Core release..."
 
   publish-uds-core-release:
     needs: tag-new-version
     runs-on: ubuntu-latest
-    steps:;
+    steps:
       - run: echo "publish UDS Core release..."
 
   scan-release:
     needs: publish-uds-core-release
     runs-on: ubuntu-latest
-    steps:;
+    steps:
       - run: echo "scan UDS Core release..."
 
   checkpoint-uds-core-release:
     needs: publish-uds-core-release
     runs-on: ubuntu-latest
-    steps:;
+    steps:
       - run: echo "Checkpointing UDS Core release..."
