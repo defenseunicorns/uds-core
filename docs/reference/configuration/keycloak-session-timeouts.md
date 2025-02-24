@@ -22,8 +22,8 @@ Keycloak has two session idle timeouts: the **realm session idle timeout** and t
    - If Client makes an API request, it will get a **401 Unauthorized** error.
 
 2. **At 6 minutes**, the user **reactivates Client**.
-   - If the refresh token is still valid, Client can obtain a new access token.
-   - If the refresh token has expired, the user must **reauthenticate**.
+   - Since the **client session timeout** controls the refresh token expiration, the refresh token has also expired.
+   - However, since the **realm session is still active**, the client/application can initiate a new authentication request to obtain fresh tokens. This process does not prompt the user for credentials again as long as the realm session remains valid.
 
 ---
 
