@@ -72,12 +72,6 @@ components:
     import:
       path: ../runtime-security
 
-  # Loki
-  - name: loki
-    required: true
-    import:
-      path: ../logging
-
   # Prometheus
   - name: kube-prometheus-stack
     required: true
