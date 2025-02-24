@@ -142,6 +142,7 @@ tasks:
 
   - name: apply-tofu
     actions:
+      - cmd: if [ ${CLOUD} = "azure" ]; then ACCOUNT_KEY=$(az storage account keys list --resource-group $RESOURCE_GROUP_NAME --account-name $STORAGE_ACCOUNT_NAME --query '[0].value' --output tsv); fi
       - cmd: |
           if [ ${CLOUD} = "aws" ]; then
             tofu init -force-copy \
@@ -150,7 +151,6 @@ tasks:
               -backend-config="region=${REGION}" \
               -backend-config="dynamodb_table=${STATE_DYNAMODB_TABLE_NAME}"
           elif [ ${CLOUD} = "azure" ]; then
-          curl -L https://aka.ms/InstallAzureCli | bash
           ACCOUNT_KEY=$(az storage account keys list --resource-group $RESOURCE_GROUP_NAME --account-name $STORAGE_ACCOUNT_NAME --query '[0].value' --output tsv)
             tofu init -force-copy \
               -backend=true \
