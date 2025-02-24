@@ -54,12 +54,6 @@ components:
     import:
       path: ../base
 
-  # Metrics Server
-  - name: metrics-server
-    required: false
-    import:
-      path: ../metrics-server
-
   # Keycloak
   - name: keycloak
     required: true
