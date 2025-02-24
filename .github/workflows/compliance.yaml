@@ -28,4 +28,4 @@ jobs:
     runs-on: ubuntu-latest
     name: Evaluate
     steps:
-      run: echo "Running compliance evaluation..."
+      - run: echo "Running compliance evaluation..."
