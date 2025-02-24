@@ -1,382 +1,90 @@
 {
-  "enabled": true,
-  "forkProcessing": "enabled",
-  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    ":dependencyDashboard",
-    "config:base",
-    "helpers:pinGitHubActionDigests",
+    "github>defenseunicorns/uds-common//config/renovate.json5",
     ":semanticCommits",
     ":semanticCommitTypeAll(chore)"
   ],
-  "ignorePresets": [
-    ":ignoreModulesAndTests"
-  ],
-  "reviewersFromCodeOwners": false,
-  "timezone": "America/New_York",
-  "dependencyDashboard": true,
-  "dependencyDashboardTitle": "Renovate Dashboard 🤖",
-  "rebaseWhen": "conflicted",
-  "rebaseStalePrs": false,
-  "commitBodyTable": true,
-  "suppressNotifications": [
-    "prIgnoreNotification"
-  ],
-  "pre-commit": {
-    "enabled": true
-  },
-  "helm-values": {
-    "fileMatch": [
-      ".*\\.ya?ml$"
-    ],
-    "ignorePaths": [
-      "src/neuvector/values"
-    ]
-  },
-  "kubernetes": {
-    "fileMatch": [
-      ".*\\.ya?ml$"
-    ],
-    "ignorePaths": [
-      ".github"
-    ]
-  },
-  "hostRules": [
-    {
-      "matchHost": "registry1.dso.mil",
-      "hostType": "docker",
-      "description": "Encrypted creds for registry1, scoped to this Github org using: https://docs.renovatebot.com/getting-started/migrating-secrets/#migrate-your-secrets-in-encrypted-form",
-      "username": "{{ secrets.IRONBANK_USERNAME }}",
-      "password": "{{ secrets.IRONBANK_PASSWORD }}"
-    },
-    {
-      "matchHost": "cgr.dev",
-      "description": "Encrypted creds for cgr.dev, scoped to this Github org using: https://docs.renovatebot.com/getting-started/migrating-secrets/#migrate-your-secrets-in-encrypted-form",
-      "username": "{{ secrets.CHAINGUARD_USERNAME }}",
-      "password": "{{ secrets.CHAINGUARD_PASSWORD }}"
-    },
-    {
-      "matchHost": "ghcr.io",
-      "hostType": "docker",
-      "description": "Encrypted creds for ghcr.io, scoped to this Github org using: https://docs.renovatebot.com/getting-started/migrating-secrets/#migrate-your-secrets-in-encrypted-form",
-      "username": "renovate",
-      "password": "{{ secrets.DEFENSEUNICORNS_PACKAGE_READ_PAT }}"
-    }
-  ],
-  "regexManagers": [
-    {
-      "fileMatch": [
-        ".*(\\.ya?ml|\\.json)$"
-      ],
-      "matchStrings": [
-        "https:\\/\\/raw\\.githubusercontent\\.com\\/(?<depName>[^\\/]+\\/[^\\/]+)\\/(?<currentValue>[^\\/]+)"
-      ],
-      "versioningTemplate": "semver-coerced",
-      "datasourceTemplate": "github-tags"
-    },
-    {
-      "fileMatch": [
-        ".*(\\.ya?ml|\\.json)$"
-      ],
-      "matchStrings": [
-        "https:\\/\\/github\\.com\\/(?<depName>[^\\/]+\\/[^\\/]+)\\/raw\\/(?<currentValue>[^\\/]+)"
-      ],
-      "versioningTemplate": "semver-coerced",
-      "datasourceTemplate": "github-tags"
-    },
-    {
-      "fileMatch": [
-        ".*(\\.ya?ml|\\.json)$"
-      ],
-      "matchStrings": [
-        "https:\\/\\/github\\.com\\/(?<depName>[^\\/]+\\/[^\\/]+)\\/releases\\/download\\/(?<currentValue>[^\\/]+)"
-      ],
-      "versioningTemplate": "semver-coerced",
-      "datasourceTemplate": "github-tags"
-    },
-    {
-      "fileMatch": [
-        ".*(\\.ya?ml|\\.json)$"
-      ],
-      "matchStrings": [
-        "npm install ([\\w\\- ]+ )?(?<depName>@?[^\\s]*?)@(?<currentValue>[^\\s]+)"
-      ],
-      "datasourceTemplate": "npm"
-    },
-    {
-      "fileMatch": [
-        ".*\\.ya?ml$"
-      ],
-      "matchStringsStrategy": "recursive",
-      "matchStrings": [
-        "# renovate-uds: datasource=(?<datasource>.*?) depName=(?<depName>.*?)( versioning=(?<versioning>.*?))?( extractVersion=(?<extractVersion>.*?))?( registryUrl=(?<registryUrl>.*?))?\\s.*:\\s*['\"]?[v0-9].*?['\"]?(\\s|$)",
-        ":\\s*['\"]?[v0-9].*?['\"]?(\\s|$)",
-        "(?<currentValue>[v0-9][^\\n\\\"\\s]*)-uds\\.\\d+"
-      ],
-      "autoReplaceStringTemplate": "{{{newValue}}}-uds.0",
-      "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver-coerced{{/if}}",
-      "extractVersionTemplate": "{{#if extractVersion}}{{{extractVersion}}}{{else}}^(?<version>.*)${{/if}}"
-    },
-    {
-      "fileMatch": [
-        ".*\\.ya?ml$"
-      ],
-      "matchStrings": [
-        "# renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)( versioning=(?<versioning>.*?))?( extractVersion=(?<extractVersion>.*?))?( registryUrl=(?<registryUrl>.*?))?\\s.*:\\s*['\"]?(?<currentValue>[v0-9].*?)['\"]?(\\s|$)",
-        "<!-- renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)( versioning=(?<versioning>.*?))?( extractVersion=(?<extractVersion>.*?))?( registryUrl=(?<registryUrl>.*?))? -->\\s.*:\\s*['\"]?(?<currentValue>[v0-9].*?)['\"]?(\\s|$)"
-      ],
-      "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver-coerced{{/if}}",
-      "extractVersionTemplate": "{{#if extractVersion}}{{{extractVersion}}}{{else}}^(?<version>.*)${{/if}}"
-    },
-    {
-      "fileMatch": [
-        ".*\\.ya?ml$",
-        ".*\\.sh$",
-        ".*\\.?Dockerfile$"
-      ],
-      "matchStrings": [
-        "# renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)( versioning=(?<versioning>.*?))?( extractVersion=(?<extractVersion>.*?))?( registryUrl=(?<registryUrl>.*?))?\\s.*[A-Z]+=['\"]?(?<currentValue>[v0-9].*?)['\"]?(\\s|$)",
-        "<!-- renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)( versioning=(?<versioning>.*?))?( extractVersion=(?<extractVersion>.*?))?( registryUrl=(?<registryUrl>.*?))? -->\\s.*[A-Z]+=['\"]?(?<currentValue>[v0-9].*?)['\"]?(\\s|$)"
-      ],
-      "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver-coerced{{/if}}",
-      "extractVersionTemplate": "{{#if extractVersion}}{{{extractVersion}}}{{else}}^(?<version>.*)${{/if}}"
-    },
-    {
-      "fileMatch": [
-        ".*\\.ya?ml$"
-      ],
-      "matchStrings": [
-        "# renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)( versioning=(?<versioning>.*?))?\\s.*brew.*@\\s*['\"]?(?<currentValue>[v0-9].*?)['\"]?(\\s|$)",
-        "<!-- renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)( versioning=(?<versioning>.*?))? -->\\s.*brew.*@\\s*['\"]?(?<currentValue>[v0-9].*?)['\"]?(\\s|$)"
-      ],
-      "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver-coerced{{/if}}",
-      "extractVersionTemplate": "^v(?<version>.*)$"
-    },
-    {
-      "fileMatch": [
-        ".*\\.ya?ml$"
-      ],
-      "matchStrings": [
-        "# renovate: image=(?<depName>.*?)\\s*image:\\s.*:(?<currentValue>[^\\s\"]*)"
-      ],
-      "datasourceTemplate": "docker"
-    },
-    {
-      "fileMatch": [
-        "(^|/)zarf\\.yaml$"
-      ],
-      "matchStrings": [
-        "- ['\"]?(?<depName>[^\"'\\s]+):(?<currentValue>[^\"'\\s]+)['\"]?( # renovate:( versioning=(?<versioning>.*?))?( extractVersion=(?<extractVersion>.*?))?)?(\\s|$)"
-      ],
-      "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}docker{{/if}}",
-      "extractVersionTemplate": "{{#if extractVersion}}{{{extractVersion}}}{{else}}^(?<version>.*)${{/if}}",
-      "datasourceTemplate": "docker"
-    },
-    {
-      "fileMatch": [
-        "(^|/)zarf\\.yaml$"
-      ],
-      "matchStringsStrategy": "recursive",
-      "matchStrings": [
-        "(?m)charts:(.|\\n)*?(^\\s{4}[\\w:]+|\\n$|^\\s{2}-)",
-        "(?m)name:(.|\\n)+?(^\\s{4}[\\w\\-:]+|\\n$|^\\s{2}-|^\\s{6}-)",
-        "(?m)name: [\"']?(?<name>.+?)[\"']?$(.|\\n)*?version: [\"']?(?<currentValue>.+?)[\"']?$(.|\\n)*?url: [\"']?(?:(?<gitUrl>(https|http|file):\\/\\/.+?\\.git)|(?<registryUrl>(https|http|file):\\/\\/.+?))[\"']?$"
-      ],
-      "datasourceTemplate": "{{#if gitUrl}}git-tags{{else}}helm{{/if}}",
-      "depNameTemplate": "{{#if gitUrl}}{{{gitUrl}}}{{else}}{{{name}}}{{/if}}"
-    },
-    {
-      "fileMatch": [
-        "(^|/)zarf\\.yaml$"
-      ],
-      "matchStringsStrategy": "recursive",
-      "matchStrings": [
-        "(?m)charts:(.|\\n)*?(^\\s{4}[\\w:]+|\\n$|^\\s{2}-)",
-        "(?m)name:(.|\\n)+?(^\\s{4}[\\w\\-:]+|\\n$|^\\s{2}-|^\\s{6}-)",
-        "(?m)name: [\"']?(?<name>.+?)[\"']?$(.|\\n)*?url: [\"']?(?:(?<gitUrl>(https|http|file):\\/\\/.+?\\.git)|(?<registryUrl>(https|http|file):\\/\\/.+?))[\"']?$(.|\\n)*?version: [\"']?(?<currentValue>.+?)[\"']?$"
-      ],
-      "datasourceTemplate": "{{#if gitUrl}}git-tags{{else}}helm{{/if}}",
-      "depNameTemplate": "{{#if gitUrl}}{{{gitUrl}}}{{else}}{{{name}}}{{/if}}"
-    },
-    {
-      "fileMatch": [
-        "(^|/)zarf\\.yaml$"
-      ],
-      "matchStringsStrategy": "recursive",
-      "matchStrings": [
-        "(?m)charts:(.|\\n)*?(^\\s{4}[\\w:]+|\\n$|^\\s{2}-)",
-        "(?m)name:(.|\\n)+?(^\\s{4}[\\w\\-:]+|\\n$|^\\s{2}-|^\\s{6}-)",
-        "(?m)name:(.|\\n)*?version: [\"']?(?<currentValue>.+?)[\"']?$(.|\\n)*?url: [\"']?oci:\\/\\/(?<depName>.+?)[\"']?$"
-      ],
-      "datasourceTemplate": "docker"
-    },
-    {
-      "fileMatch": [
-        "(^|/)zarf\\.yaml$"
-      ],
-      "matchStringsStrategy": "recursive",
-      "matchStrings": [
-        "(?m)charts:(.|\\n)*?(^\\s{4}[\\w:]+|\\n$|^\\s{2}-)",
-        "(?m)name:(.|\\n)+?(^\\s{4}[\\w\\-:]+|\\n$|^\\s{2}-|^\\s{6}-)",
-        "(?m)name:(.|\\n)*?url: [\"']?oci:\\/\\/(?<depName>.+?)[\"']?$(.|\\n)*?version: [\"']?(?<currentValue>.+?)[\"']?$"
-      ],
-      "datasourceTemplate": "docker"
-    },
-    {
-      "fileMatch": [
-        "(^|/)zarf\\.yaml$"
-      ],
-      "matchStringsStrategy": "recursive",
-      "matchStrings": [
-        "(?m)manifests:(.|\\n)*?(^\\s{4}[\\w:]+|\\n$|^\\s{2}-)",
-        "(?m)name:(.|\\n)+?(^\\s{4}[\\w\\-:]+|\\n$|^\\s{2}-|^\\s{6}-)",
-        "(?m)name:(.|\\n)*?kustomizations:(.|\n)*?- [\"']?github.com\\/(?<depName>.+?)\\/\\/.*\\?ref=(?<currentValue>.+?)[\"']?$"
-      ],
-      "versioningTemplate": "semver-coerced",
-      "datasourceTemplate": "github-tags"
-    },
-    {
-      "fileMatch": [
-        "(^|/)uds-bundle\\.yaml$"
-      ],
-      "matchStringsStrategy": "recursive",
-      "matchStrings": [
-        "(?m)repository: [\"']?(?<depName>.+?)[\"']?$(.)*(\n.*){0,2}ref: [\"']?(?<currentValue>.+?)[\"']?$"
-      ],
-      "datasourceTemplate": "docker",
-      "versioningTemplate": "regex:^v?(?<major>\\d+)(\\.(?<minor>\\d+))?(\\.(?<patch>\\d+))?(-uds\\.(?<build>\\d))?(-(?<compatibility>\\w+)?)?(.*?)?$"
-    }
-  ],
+  "ignorePresets": [":ignoreModulesAndTests"],
   "branchConcurrentLimit": 0,
   "prConcurrentLimit": 0,
   "prHourlyLimit": 0,
   "separateMajorMinor": false,
+  "helm-values": {
+    "ignorePaths": ["src/neuvector/values"]
+  },
   "packageRules": [
     {
-      "matchPackageNames": [
-        "registry1.dso.mil/ironbank/big-bang/base"
-      ],
-      "allowedVersions": "!/8.4/"
-    },
-    {
-      "matchDatasources": [
-        "terraform-provider"
-      ],
-      "registryUrls": [
-        "https://registry.opentofu.org"
-      ]
-    },
-    {
-      "matchFileNames": [
-        "src/authservice/**"
-      ],
+      "matchFileNames": ["src/authservice/**"],
       "groupName": "authservice",
       "commitMessageTopic": "authservice"
     },
     {
-      "matchFileNames": [
-        "src/istio/**"
-      ],
+      "matchFileNames": ["src/istio/**"],
       "groupName": "istio",
       "commitMessageTopic": "istio"
     },
     {
-      "matchFileNames": [
-        "src/vector/**"
-      ],
+      "matchFileNames": ["src/vector/**"],
       "groupName": "vector",
       "commitMessageTopic": "vector"
     },
     {
-      "matchFileNames": [
-        "src/velero/**"
-      ],
+      "matchFileNames": ["src/velero/**"],
       "groupName": "velero",
       "commitMessageTopic": "velero"
     },
     {
-      "matchFileNames": [
-        "src/tempo/**"
-      ],
+      "matchFileNames": ["src/tempo/**"],
       "groupName": "tempo",
       "commitMessageTopic": "tempo"
     },
     {
-      "matchFileNames": [
-        "src/prometheus-stack/**"
-      ],
+      "matchFileNames": ["src/prometheus-stack/**"],
       "groupName": "prometheus-stack",
       "commitMessageTopic": "prometheus-stack"
     },
     {
-      "matchFileNames": [
-        "src/neuvector/**"
-      ],
+      "matchFileNames": ["src/neuvector/**"],
       "groupName": "neuvector",
       "commitMessageTopic": "neuvector"
     },
     {
-      "matchFileNames": [
-        "src/metrics-server/**"
-      ],
+      "matchFileNames": ["src/metrics-server/**"],
       "groupName": "metrics-server",
       "commitMessageTopic": "metrics-server"
     },
     {
-      "matchFileNames": [
-        "src/loki/**"
-      ],
+      "matchFileNames": ["src/loki/**"],
       "groupName": "loki",
       "commitMessageTopic": "loki"
     },
     {
-      "matchFileNames": [
-        "src/kiali/**"
-      ],
+      "matchFileNames": ["src/kiali/**"],
       "groupName": "kiali",
       "commitMessageTopic": "kiali"
     },
     {
-      "matchFileNames": [
-        "src/keycloak/**"
-      ],
+      "matchFileNames": ["src/keycloak/**"],
       "groupName": "keycloak",
       "commitMessageTopic": "keycloak"
     },
     {
-      "matchFileNames": [
-        "src/grafana/**"
-      ],
+      "matchFileNames": ["src/grafana/**"],
       "groupName": "grafana",
       "commitMessageTopic": "grafana"
     },
     {
-      "matchFileNames": [
-        "test/**",
-        ".github/**",
-        "bundles/**",
-        "tasks/*.yaml",
-        ".vscode/settings.json",
-        "src/test/**",
-        "README.md"
-      ],
+      "matchFileNames": ["test/**", ".github/**", "bundles/**", "tasks/*.yaml", ".vscode/settings.json", "src/test/**", "README.md"],
       "groupName": "support-deps",
       "commitMessageTopic": "support dependencies"
     },
     {
-      "matchFileNames": [
-        "package.json",
-        "package-lock.json",
-        "tasks/create.yaml"
-      ],
+      "matchFileNames": ["package.json", "package-lock.json", "tasks/create.yaml"],
       "groupName": "pepr",
       "commitMessageTopic": "pepr"
     },
     {
-      "matchPackageNames": [
-        "defenseunicorns/uds-common",
-        "mcr.microsoft.com/playwright"
-      ],
+      "matchPackageNames": ["defenseunicorns/uds-common", "mcr.microsoft.com/playwright"],
       "groupName": "support-deps",
       "commitMessageTopic": "support-deps"
     }
