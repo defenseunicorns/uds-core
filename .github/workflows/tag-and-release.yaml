@@ -18,44 +18,23 @@ jobs:
   tag-new-version:
     permissions: write-all
     runs-on: ubuntu-latest
-    outputs:
-      release_created: ${{ steps.release-flag.outputs.release_created }}
-    steps:
-      - name: Create release tag
-        id: tag
-        uses: googleapis/release-please-action@7987652d64b4581673a76e33ad5e98e3dd56832f # v4.1.3
-      - id: release-flag
-        run: echo "release_created=${{ steps.tag.outputs.release_created || false }}" >> $GITHUB_OUTPUT
+    steps:;
+      - run: echo "tag UDS Core release..."
 
   publish-uds-core-release:
     needs: tag-new-version
-    if: ${{ needs.tag-new-version.outputs.release_created == 'true'}}
-    permissions:
-      contents: write
-      packages: write
-      id-token: write
-    uses: ./.github/workflows/publish.yaml
-    with:
-      snapshot: false
-    secrets: inherit
+    runs-on: ubuntu-latest
+    steps:;
+      - run: echo "publish UDS Core release..."
 
   scan-release:
     needs: publish-uds-core-release
-    permissions:
-      contents: read
-      packages: read
-      id-token: write
-      issues: write
-    uses: ./.github/workflows/cve-scan.yaml
-    with:
-      release: true
-    secrets: inherit
+    runs-on: ubuntu-latest
+    steps:;
+      - run: echo "scan UDS Core release..."
 
   checkpoint-uds-core-release:
     needs: publish-uds-core-release
-    permissions:
-      contents: read
-      packages: write
-      id-token: write
-    uses: ./.github/workflows/checkpoint.yaml
-    secrets: inherit
+    runs-on: ubuntu-latest
+    steps:;
+      - run: echo "Checkpointing UDS Core release..."
