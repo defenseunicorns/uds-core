@@ -72,7 +72,7 @@ variable "autoscaling_min_node_count_worker" {
 
 variable "default_node_pool_vm_size" {
   description = "Specifies the vm size of the default node pool"
-  default     = "Standard_F8s_v2"
+  default     = "Standard_A8_v2"
   type        = string
 }
 
@@ -84,7 +84,7 @@ variable "worker_node_pool_count" {
 
 variable "worker_pool_vm_size" {
   description = "Specifies the vm size of the worker node pool"
-  default     = "Standard_F8s_v2"
+  default     = "Standard_A8_v2"
   type        = string
 }
 
