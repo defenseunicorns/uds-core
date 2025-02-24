@@ -74,7 +74,7 @@ tasks:
             HOSTNAME=$(uds zarf tools kubectl get service -n istio-admin-gateway admin-ingressgateway -o=jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null)
             IP_ADDR=$(dig +short $HOSTNAME)
           fi; echo $IP_ADDR
-        mute: false
+        mute: true
         setVariables:
           - name: ADMIN_GW_IP
   - name: tenant-gw-ip
@@ -86,7 +86,7 @@ tasks:
             HOSTNAME=$(uds zarf tools kubectl get service -n istio-tenant-gateway tenant-ingressgateway -o=jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null)
             IP_ADDR=$(dig +short $HOSTNAME)
           fi; echo $IP_ADDR
-        mute: false
+        mute: true
         setVariables:
           - name: TENANT_GW_IP
   - name: setup-hosts
