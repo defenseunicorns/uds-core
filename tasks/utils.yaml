@@ -67,7 +67,6 @@ tasks:
 
   - name: coredns-setup
     actions:
-      - task: tenant-gw-ip
       - description: Setup Custom ConfigMap for Core DNS
         cmd: |
           uds zarf tools kubectl apply -f - <<EOF
