@@ -17,7 +17,7 @@ components:
         localPath: ../chart
       - name: vector
         url: https://helm.vector.dev
-        version: 0.40.0
+        version: 0.41.0
         namespace: vector
         gitPath: charts/vector
         valuesFiles:
