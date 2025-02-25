@@ -91,6 +91,9 @@ jobs:
         run: uds run -f tasks/iac.yaml create-iac --no-progress --set K8S_DISTRO=eks --set CLOUD=aws
         timeout-minutes: 20
 
+      - name: Configure Cluster DNS
+        run: uds run -f tasks/utils.yaml coredns-setup --no-progress
+
       - name: Deploy Core Bundle
         env:
           UDS_CONFIG: .github/bundles/eks/uds-config.yaml
