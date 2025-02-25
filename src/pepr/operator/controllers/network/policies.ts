@@ -8,6 +8,7 @@ import { K8s, kind } from "pepr";
 import { UDSConfig } from "../../../config";
 import { Component, setupLogger } from "../../../logger";
 import { Allow, Direction, Gateway, RemoteGenerated, UDSPackage } from "../../crd";
+import { IstioState } from "../istio/namespace";
 import { getOwnerRef, purgeOrphans, sanitizeResourceName } from "../utils";
 import { allowEgressDNS } from "./defaults/allow-egress-dns";
 import { allowEgressIstiod } from "./defaults/allow-egress-istiod";
@@ -18,7 +19,7 @@ import { generate } from "./generate";
 // configure subproject logger
 const log = setupLogger(Component.OPERATOR_NETWORK);
 
-export async function networkPolicies(pkg: UDSPackage, namespace: string) {
+export async function networkPolicies(pkg: UDSPackage, namespace: string, istioMode: string) {
   const customPolicies = pkg.spec?.network?.allow ?? [];
   const pkgName = pkg.metadata!.name!;
 
@@ -34,11 +35,13 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
 
     // Allow DNS lookups
     allowEgressDNS(namespace),
-
-    // Istio rules
-    allowEgressIstiod(namespace),
-    allowIngressSidecarMonitoring(namespace),
   ];
+
+  // Istio rules for sidecars
+  if (istioMode === IstioState.Sidecar) {
+    policies.push(allowEgressIstiod(namespace));
+    policies.push(allowIngressSidecarMonitoring(namespace));
+  }
 
   // Process custom policies
   for (const policy of customPolicies) {

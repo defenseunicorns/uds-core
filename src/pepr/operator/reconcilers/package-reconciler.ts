@@ -6,9 +6,8 @@
 import { getReadinessConditions, handleFailure, shouldSkip, updateStatus, writeEvent } from ".";
 import { UDSConfig } from "../../config";
 import { Component, setupLogger } from "../../logger";
-import { cleanupNamespace } from "../controllers/istio/injection";
 import { istioResources } from "../controllers/istio/istio-resources";
-import { enableIstio } from "../controllers/istio/namespace";
+import { cleanupNamespace, enableIstio, IstioState } from "../controllers/istio/namespace";
 import {
   authservice,
   purgeAuthserviceClients,
@@ -69,11 +68,11 @@ export async function packageReconciler(pkg: UDSPackage) {
   try {
     await updateStatus(pkg, { phase: Phase.Pending, conditions: getReadinessConditions(false) });
 
-    const netPol = await networkPolicies(pkg, namespace!);
+    const netPol = await networkPolicies(pkg, namespace!, IstioState.Sidecar);
 
     let endpoints: string[] = [];
     // Update the namespace to enable the expected Istio mode (sidecar or ambient)
-    await enableIstio(pkg); // todo: return the ambient/sidecar mode for netpol eval?
+    await enableIstio(pkg); // todo: return value for effective istio mode for netpols?
 
     let ssoClients = new Map<string, Client>();
     let authserviceClients: string[] = [];

@@ -186,6 +186,13 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
         `The client ID "${client.clientId}" is invalid as an Authservice client - Authservice does not support client IDs with the ":" character`,
       );
     }
+    // If this is an authservice client ensure the package is not in ambient mode,
+    // See https://github.com/defenseunicorns/uds-core/issues/1029 and https://github.com/defenseunicorns/uds-core/issues/1200
+    if (client.enableAuthserviceSelector && pkg.spec?.network?.serviceMesh?.ambient) {
+      return req.Deny(
+        `The package contains an invalid configuration combination - Authservice clients are not currently supported in ambient mode`,
+      );
+    }
   }
 
   const monitors = pkg.spec?.monitor ?? [];
