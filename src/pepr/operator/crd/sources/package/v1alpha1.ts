@@ -499,6 +499,46 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
             observedGeneration: {
               type: "integer",
             },
+            conditions: {
+              description: "Status conditions following Kubernetes-style conventions",
+              type: "array",
+              items: {
+                type: "object",
+                required: ["type", "status", "lastTransitionTime", "reason", "message"],
+                properties: {
+                  type: {
+                    description:
+                      "Type of condition in CamelCase or in foo.example.com/CamelCase format",
+                    type: "string",
+                  },
+                  status: {
+                    description: "Status of the condition, one of True, False, Unknown",
+                    type: "string",
+                    enum: ["True", "False", "Unknown"],
+                  },
+                  observedGeneration: {
+                    description:
+                      "Represents the .metadata.generation that the condition was set based upon",
+                    type: "integer",
+                  },
+                  lastTransitionTime: {
+                    description:
+                      "The last time the condition transitioned from one status to another",
+                    type: "string",
+                    format: "date-time",
+                  },
+                  reason: {
+                    description:
+                      "A programmatic identifier indicating the reason for the condition's last transition",
+                    type: "string",
+                  },
+                  message: {
+                    description: "A human-readable message indicating details about the transition",
+                    type: "string",
+                  },
+                },
+              },
+            },
             phase: {
               enum: ["Pending", "Ready", "Failed", "Retrying", "Removing"],
               type: "string",
