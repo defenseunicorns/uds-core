@@ -11,7 +11,7 @@ import { packageReconciler } from "./package-reconciler";
 
 jest.mock("kubernetes-fluent-client");
 jest.mock("../../config");
-jest.mock("../controllers/istio/injection");
+jest.mock("../controllers/istio/namespace");
 jest.mock("../controllers/istio/virtual-service");
 jest.mock("../controllers/network/policies");
 
