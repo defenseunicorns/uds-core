@@ -9,7 +9,7 @@ Group-based authorization allows to control access to a specific application bas
 | `Admin`        | `/UDS Core/Admin`   | Defined for Administrators |
 | `Auditor`      | `/UDS Core/Auditor` | Defined for regular Users  |
 
-Below is an example for to configure authorization based on `Admin` (`/UDS Core/Admin`) Group:
+Below is an example to configure authorization based on the `Admin` (`/UDS Core/Admin`) Group:
 
 ```yaml
 apiVersion: uds.dev/v1alpha1
