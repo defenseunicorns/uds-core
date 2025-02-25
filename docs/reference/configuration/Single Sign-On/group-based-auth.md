@@ -2,7 +2,7 @@
 title: Group-based authorization for applications
 ---
 
-Group-based authorization allows to control access to a specific application based on User Group membership. The UDS Core is configured to support the following Groups (see [User Groups](/reference/configuration/uds-user-groups/#keycloak) for more details):
+Group-based authorization allows to control access to a specific application based on User Group membership. UDS Core is configured to support the following Groups (see [User Groups](/reference/configuration/uds-user-groups/#keycloak) for more details):
 
 | Keycloak Group | UDS Group Name      | Purpose                    |
 |----------------|---------------------|----------------------------|
