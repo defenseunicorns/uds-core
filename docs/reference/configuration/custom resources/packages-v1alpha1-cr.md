@@ -106,7 +106,7 @@ tableOfContents:
     </tr>
   </thead>
   <tbody>
-    <tr><td style="white-space: nowrap;">allow</td><td style="white-space: nowrap;"><a href="#Allow">Allow[]</a></td><td>Allow specific traffic (namespace will have a default-deny policy)</td></tr><tr><td style="white-space: nowrap;">expose</td><td style="white-space: nowrap;"><a href="#Expose">Expose[]</a></td><td>Expose a service on an Istio Gateway</td></tr>
+    <tr><td style="white-space: nowrap;">allow</td><td style="white-space: nowrap;"><a href="#Allow">Allow[]</a></td><td>Allow specific traffic (namespace will have a default-deny policy)</td></tr><tr><td style="white-space: nowrap;">expose</td><td style="white-space: nowrap;"><a href="#Expose">Expose[]</a></td><td>Expose a service on an Istio Gateway</td></tr><tr><td style="white-space: nowrap;">serviceMesh</td><td style="white-space: nowrap;"><a href="#ServiceMesh">ServiceMesh</a></td><td>Service Mesh configuration for the package</td></tr>
   </tbody>
 </table>
 </div>
@@ -469,6 +469,24 @@ Valid Options: FROM_PROTOCOL_DEFAULT, FROM_REQUEST_PORT</td></tr><tr><td style="
   </thead>
   <tbody>
     <tr><td style="white-space: nowrap;">exact</td><td style="white-space: nowrap;">string</td><td></td></tr><tr><td style="white-space: nowrap;">prefix</td><td style="white-space: nowrap;">string</td><td></td></tr><tr><td style="white-space: nowrap;">regex</td><td style="white-space: nowrap;">string</td><td>RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax).</td></tr>
+  </tbody>
+</table>
+</div>
+
+<a id="ServiceMesh"></a>
+<div style="margin-left: 80px; padding-top: 30px;">
+
+#### ServiceMesh
+<table style="width: 100%; table-layout: fixed;">
+  <thead>
+    <tr>
+      <th style="width: 20%; white-space: nowrap;">Field</th>
+      <th style="width: 25%; white-space: nowrap;">Type</th>
+      <th style="width: 55%; white-space: nowrap;">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td style="white-space: nowrap;">ambient</td><td style="white-space: nowrap;">boolean</td><td>Enable ambient service mesh (disable sidecar injection)</td></tr>
   </tbody>
 </table>
 </div>

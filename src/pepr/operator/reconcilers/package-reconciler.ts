@@ -6,8 +6,9 @@
 import { getReadinessConditions, handleFailure, shouldSkip, updateStatus, writeEvent } from ".";
 import { UDSConfig } from "../../config";
 import { Component, setupLogger } from "../../logger";
-import { cleanupNamespace, enableInjection } from "../controllers/istio/injection";
+import { cleanupNamespace } from "../controllers/istio/injection";
 import { istioResources } from "../controllers/istio/istio-resources";
+import { enableIstio } from "../controllers/istio/namespace";
 import {
   authservice,
   purgeAuthserviceClients,
@@ -71,8 +72,8 @@ export async function packageReconciler(pkg: UDSPackage) {
     const netPol = await networkPolicies(pkg, namespace!);
 
     let endpoints: string[] = [];
-    // Update the namespace to ensure the istio-injection label is set
-    await enableInjection(pkg);
+    // Update the namespace to enable the expected Istio mode (sidecar or ambient)
+    await enableIstio(pkg); // todo: return the ambient/sidecar mode for netpol eval?
 
     let ssoClients = new Map<string, Client>();
     let authserviceClients: string[] = [];

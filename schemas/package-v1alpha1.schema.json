@@ -155,6 +155,10 @@
             "$ref": "#/definitions/Expose"
           },
           "description": "Expose a service on an Istio Gateway"
+        },
+        "serviceMesh": {
+          "$ref": "#/definitions/ServiceMesh",
+          "description": "Service Mesh configuration for the package"
         }
       },
       "required": [],
@@ -782,6 +786,19 @@
       },
       "required": [],
       "title": "FluffyURI"
+    },
+    "ServiceMesh": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "ambient": {
+          "type": "boolean",
+          "description": "Enable ambient service mesh (disable sidecar injection)"
+        }
+      },
+      "required": [],
+      "title": "ServiceMesh",
+      "description": "Service Mesh configuration for the package"
     },
     "Sso": {
       "type": "object",

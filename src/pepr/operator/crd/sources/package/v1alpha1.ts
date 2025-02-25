@@ -202,6 +202,18 @@ const expose = {
   } as V1JSONSchemaProps,
 } as V1JSONSchemaProps;
 
+const serviceMesh = {
+  description: "Service Mesh configuration for the package",
+  type: "object",
+  properties: {
+    ambient: {
+      type: "boolean",
+      default: false,
+      description: "Enable ambient service mesh (disable sidecar injection)",
+    },
+  },
+} as V1JSONSchemaProps;
+
 const monitor = {
   description: "Create Service or Pod Monitor configurations",
   type: "array",
@@ -585,6 +597,7 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
               properties: {
                 expose,
                 allow,
+                serviceMesh,
               },
             },
             monitor,
