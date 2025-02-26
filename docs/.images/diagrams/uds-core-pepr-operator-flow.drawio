@@ -1,6 +1,6 @@
 <mxfile host="Electron" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/26.0.9 Chrome/128.0.6613.186 Electron/32.2.5 Safari/537.36" version="26.0.9">
   <diagram id="C5RBs43oDa-KdzZeNtuy" name="Page-1">
-    <mxGraphModel dx="-3436" dy="1899" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="827" pageHeight="1169" background="light-dark(#FFFFFF,#111827)" math="0" shadow="0">
+    <mxGraphModel dx="-5145" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="827" pageHeight="1169" background="light-dark(#FFFFFF,#111827)" math="0" shadow="0">
       <root>
         <mxCell id="WIyWlLk6GJQsqaUBKTNV-0" />
         <mxCell id="TcZdfQVddSxc03SvThpF-0" value="Pepr Authservice Keycloak" style="" parent="WIyWlLk6GJQsqaUBKTNV-0" />
@@ -58,9 +58,6 @@
         <mxCell id="GS5HuyrBidpbd6GrIrcP-3" value="Is&amp;nbsp;&lt;br&gt;enableAuthserviceSelector present" style="rhombus;whiteSpace=wrap;html=1;rounded=1;arcSize=14;strokeWidth=2;fillColor=light-dark(#FFFFFF,#FFFFFF);strokeColor=light-dark(#000000,#000000);fontColor=light-dark(#000000,#000000);fontSize=14;container=0;fontFamily=Poppins;fontSource=https://fonts.googleapis.com/css?family=Poppins;" vertex="1" parent="TcZdfQVddSxc03SvThpF-0">
           <mxGeometry x="6240" y="428" width="220" height="180" as="geometry" />
         </mxCell>
-        <mxCell id="GS5HuyrBidpbd6GrIrcP-11" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="TcZdfQVddSxc03SvThpF-0" source="GS5HuyrBidpbd6GrIrcP-4" target="TcZdfQVddSxc03SvThpF-99">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
         <mxCell id="GS5HuyrBidpbd6GrIrcP-4" value="Is&amp;nbsp;spec.sso present" style="rhombus;whiteSpace=wrap;html=1;rounded=1;arcSize=14;strokeWidth=2;fillColor=light-dark(#FFFFFF,#FFFFFF);strokeColor=light-dark(#000000,#000000);fontColor=light-dark(#000000,#000000);fontSize=14;container=0;fontFamily=Poppins;fontSource=https://fonts.googleapis.com/css?family=Poppins;" vertex="1" parent="TcZdfQVddSxc03SvThpF-0">
           <mxGeometry x="6240" y="168" width="220" height="180" as="geometry" />
         </mxCell>
@@ -113,6 +110,12 @@
           <mxGeometry relative="1" as="geometry">
             <mxPoint x="6845" y="528" as="sourcePoint" />
             <mxPoint x="6520" y="520" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="GS5HuyrBidpbd6GrIrcP-38" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="TcZdfQVddSxc03SvThpF-0" source="GS5HuyrBidpbd6GrIrcP-4" target="TcZdfQVddSxc03SvThpF-99">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="6470" y="528" as="sourcePoint" />
+            <mxPoint x="6535" y="528" as="targetPoint" />
           </mxGeometry>
         </mxCell>
         <mxCell id="EmsiOr3HLBwYRn2PYn47-3" value="Service CreatedOrUpdated" style="locked=1;" parent="WIyWlLk6GJQsqaUBKTNV-0" visible="0" />
