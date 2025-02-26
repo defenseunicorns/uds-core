@@ -1,5 +1,5 @@
 ---
-title: Creating a UDS Package with a Service Account Roles client
+title: Service Account Roles Clients
 ---
 
 Some applications may need to access resources / obtain OAuth tokens on behalf of *themselves* vice users. This may be needed to allow API access to Authservice protected applications (outside of a web browser). This is commonly used in machine-to-machine authentication for automated processes. This type of grant in OAuth 2.0 is known as the [Client Credentials Grant](https://oauth.net/2/grant-types/client-credentials/) and is supported in a UDS Package with the following configuration:

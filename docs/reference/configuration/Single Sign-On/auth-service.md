@@ -1,5 +1,5 @@
 ---
-title: Protecting a UDS Package with Authservice
+title: Authservice Protection
 ---
 
 To enable authentication for applications that do not have native OIDC configuration, UDS Core can utilize Authservice as an authentication layer.

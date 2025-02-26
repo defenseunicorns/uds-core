@@ -1,5 +1,5 @@
 ---
-title: Creating a UDS Package with a Device Flow client
+title: Device Flow Clients
 ---
 
 Some applications may not have a web UI / server component to login to and may instead grant OAuth tokens to devices.  This flow is known as the [OAuth 2.0 Device Authorization Grant](https://oauth.net/2/device-flow/) and is supported in a UDS Package with the following configuration:

@@ -1,5 +1,5 @@
 ---
-title: SSO Client Attribute Validation
+title: Client Attribute Validation
 ---
 
 The `sso.attributes` part of the [UDS Package CR](/reference/configuration/custom-resources/packages-v1alpha1-cr/#sso) supports a subset of the Keycloak attributes for clients (but not support all of them). The currently supported attributes are:
