@@ -15,6 +15,7 @@ import { allowEgressIstiod } from "./defaults/allow-egress-istiod";
 import { allowIngressSidecarMonitoring } from "./defaults/allow-ingress-sidecar-monitoring";
 import { defaultDenyAll } from "./defaults/default-deny-all";
 import { generate } from "./generate";
+import { allowAmbientHealthprobes } from "./generators/ambientHealthprobes";
 
 // configure subproject logger
 const log = setupLogger(Component.OPERATOR_NETWORK);
@@ -41,6 +42,11 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
   if (istioMode === IstioState.Sidecar) {
     policies.push(allowEgressIstiod(namespace));
     policies.push(allowIngressSidecarMonitoring(namespace));
+  }
+
+  // Istio rules for ambient mode
+  if (istioMode === IstioState.Ambient) {
+    policies.push(allowAmbientHealthprobes(namespace));
   }
 
   // Process custom policies
