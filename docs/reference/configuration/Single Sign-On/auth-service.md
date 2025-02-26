@@ -7,7 +7,7 @@ To enable authentication for applications that do not have native OIDC configura
 Follow these steps to protect your application with Authservice:
 
 * Set `enableAuthserviceSelector` with a matching label selector in the `sso` configuration of the Package.
-* Ensure that the pods of the application are labeled with the corresponding selector
+* Ensure that the pods of the application are labeled with the corresponding selector or use an empty selector to protect all of them
 
 ```yaml
 apiVersion: uds.dev/v1alpha1
