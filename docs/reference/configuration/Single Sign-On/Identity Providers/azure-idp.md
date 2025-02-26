@@ -1,5 +1,5 @@
 ---
-title: Using Azure Entra ID
+title: Azure Entra ID
 ---
 
 This guide will walk you through the steps required to configure Azure Entra ID as a SAML identity provider in Keycloak.

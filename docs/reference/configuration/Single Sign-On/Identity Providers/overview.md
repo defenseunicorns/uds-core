@@ -12,3 +12,8 @@ This functionality allows users to authenticate using their existing credentials
 The identity brokering process by automating provider configuration, managing
 dependencies, and supporting advanced customization options. For more details, refer to
 the [Identity Brokering documentation](https://www.keycloak.org/docs/latest/server_admin/index.html#_identity_broker).
+
+## Identity Providers Contents
+
+1. [Azure Entra ID](/reference/configuration/single-sign-on/identity-providers-integrations/azure-idp/)
+2. [Google IdP](/reference/configuration/single-sign-on/identity-providers-integrations/google-idp/)

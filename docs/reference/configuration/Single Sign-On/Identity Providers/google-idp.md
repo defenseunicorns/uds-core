@@ -1,5 +1,5 @@
 ---
-title: Using Google IdP
+title: Google IdP
 ---
 
 UDS Core ships with a templated Google SAML IDP in our [realm.json](https://github.com/defenseunicorns/uds-identity-config/blob/main/src/realm.json):
