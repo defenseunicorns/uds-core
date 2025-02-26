@@ -18,6 +18,11 @@ components:
     import:
       path: ../../src/keycloak
 
+  - name: keycloak-tofu
+    required: true
+    import:
+      path: ../../src/keycloak
+
   # Authservice
   - name: authservice
     required: true

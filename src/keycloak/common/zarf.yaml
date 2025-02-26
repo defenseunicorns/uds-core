@@ -8,6 +8,25 @@ metadata:
   url: https://github.com/keycloak/keycloak
 
 components:
+  - name: keycloak-tofu
+    description: Runs OpenTofu migrations for Keycloak Realm
+#TODO: How to wire this up?
+#    files:
+#      - source: ../tofu/main.tf
+#        target: /tofu/main.tf
+    actions:
+      onDeploy:
+        before:
+          - description: Initialize OpenTofu configuration
+            cmd: |
+              # TODO: This directory is obviously wrong! How to do it better?
+              tofu -chdir=../../src/keycloak/tofu init -backend=false
+        after:
+          - description: Apply OpenTofu configuration
+            cmd: |
+              tofu -chdir=../../src/keycloak/tofu plan -out tfplan
+              tofu -chdir=../../src/keycloak/tofu apply -auto-approve tfplan
+
   - name: keycloak
     charts:
       - name: keycloak

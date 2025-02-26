@@ -29,6 +29,13 @@ components:
       - quay.io/keycloak/keycloak:26.1.2
       - ghcr.io/defenseunicorns/uds/identity-config:0.10.2
 
+  - name: keycloak-tofu
+    required: true
+    only:
+      flavor: upstream
+    import:
+      path: common
+
   - name: keycloak
     required: true
     only:
