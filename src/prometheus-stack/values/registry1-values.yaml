@@ -23,12 +23,12 @@ prometheus:
     image:
       registry: registry1.dso.mil
       repository: ironbank/opensource/prometheus/prometheus
-      tag: v3.1.0
+      tag: v3.2.0
 prometheus-node-exporter:
   image:
     registry: registry1.dso.mil
     repository: ironbank/opensource/prometheus/node-exporter
-    tag: v1.8.2
+    tag: v1.9.0
 prometheusOperator:
   admissionWebhooks:
     containerSecurityContext:
@@ -51,9 +51,9 @@ prometheusOperator:
   image:
     registry: registry1.dso.mil
     repository: ironbank/opensource/prometheus-operator/prometheus-operator
-    tag: v0.80.0
+    tag: v0.80.1
   prometheusConfigReloader:
     image:
       registry: registry1.dso.mil
       repository: ironbank/opensource/prometheus-operator/prometheus-config-reloader
-      tag: v0.80.0
+      tag: v0.80.1
