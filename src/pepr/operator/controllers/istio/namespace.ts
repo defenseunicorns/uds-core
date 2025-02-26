@@ -76,7 +76,7 @@ export async function enableIstio(pkg: UDSPackage) {
     } else if (originalAmbientLabel !== IstioState.Ambient) {
       // Ensure ambient mode is enabled and injection is disabled
       labels[AMBIENT_LABEL] = IstioState.Ambient;
-      labels[INJECTION_LABEL] = "disabled"; // Explicitly disable in case original was enabled
+      delete labels[INJECTION_LABEL]; // Explicitly remove injection label if it exists
       log.debug(`Enabling ambient mode for namespace ${pkg.metadata.namespace}.`);
       if (originalInjectionLabel === "enabled") {
         shouldRestartPods = true; // Pods need restarting to remove sidecar
@@ -95,7 +95,7 @@ export async function enableIstio(pkg: UDSPackage) {
       // Find any packages that are in ambient mode and add warning events
       const ambientPackages = pkgKeys.filter(key => annotations[key] === IstioState.Ambient);
       for (const ambientPkg of ambientPackages) {
-        const warnPkg = K8s(UDSPackage)
+        const warnPkg = await K8s(UDSPackage)
           .InNamespace(pkg.metadata.namespace)
           .Get(ambientPkg.replace("uds.dev/pkg-", ""));
         await writeEvent(warnPkg, {
