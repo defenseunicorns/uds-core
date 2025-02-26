@@ -131,10 +131,6 @@ export async function enableIstio(pkg: UDSPackage) {
       await killPods(pkg.metadata.namespace, true);
     } else if (istioState === IstioState.Ambient) {
       await killPods(pkg.metadata.namespace, false);
-    } else {
-      log.warn(
-        `Unknown Istio state for namespace ${pkg.metadata.namespace}, skipping pod restart.`,
-      );
     }
   }
 }
@@ -225,10 +221,6 @@ export async function cleanupNamespace(pkg: UDSPackage) {
       await killPods(pkg.metadata.namespace, true);
     } else if (desiredIstioState === IstioState.Ambient) {
       await killPods(pkg.metadata.namespace, false);
-    } else {
-      log.warn(
-        `Unknown Istio state for namespace ${pkg.metadata.namespace}, skipping pod restart.`,
-      );
     }
   }
 }
@@ -239,7 +231,7 @@ export async function cleanupNamespace(pkg: UDSPackage) {
  * @param ns The namespace to target
  * @param wantSidecar Whether injection is being enabled
  */
-async function killPods(ns: string, wantSidecar: boolean) {
+export async function killPods(ns: string, wantSidecar: boolean) {
   // Get all pods in the namespace
   const pods = await K8s(kind.Pod).InNamespace(ns).Get();
   const groups: Record<string, kind.Pod[]> = {};
