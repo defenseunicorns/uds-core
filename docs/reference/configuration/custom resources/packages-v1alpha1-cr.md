@@ -2,6 +2,8 @@
 title: Packages CR (v1alpha1)
 tableOfContents:
   maxHeadingLevel: 6
+sidebar:
+  order: 10
 ---
 <a id="Packages"></a>
 <div style="margin-left: 20px; padding-top: 30px;">
