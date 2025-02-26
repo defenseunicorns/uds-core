@@ -163,6 +163,14 @@ packages:
             - name: KEYCLOAK_DEVMODE
               description: "Enables Keycloak dev mode"
               path: devMode
+            # This is a workaround for Keycloak and Kernel 6.12+ memory issue. It will be removed once
+            # https://github.com/defenseunicorns/uds-core/issues/1212 is sorted
+            - name: KEYCLOAK_HEAP_OPTIONS
+              description: "Sets the JAVA_OPTS_KC_HEAP environment variable in Keycloak"
+              path: env
+              default:
+                - name: JAVA_OPTS_KC_HEAP
+                  value: "-XX:MaxRAMPercentage=70 -XX:MinRAMPercentage=70 -XX:InitialRAMPercentage=50 -XX:MaxRAM=1G"
           values:
             - path: realmInitEnv
               value:
@@ -173,9 +181,3 @@ packages:
                 GOOGLE_IDP_CORE_ENTITY_ID: "https://sso.uds.dev/realms/uds"
                 GOOGLE_IDP_ADMIN_GROUP: "uds-core-dev-admin"
                 GOOGLE_IDP_AUDITOR_GROUP: "uds-core-dev-auditor"
-            # This is a workaround for Keycloak and Kernel 6.12+ memory issue. It will be removed once
-            # https://github.com/defenseunicorns/uds-core/issues/1212 is sorted
-            - path: env
-              value:
-                - name: JAVA_OPTS_KC_HEAP
-                  value: "-XX:MaxRAMPercentage=70 -XX:MinRAMPercentage=70 -XX:InitialRAMPercentage=50 -XX:MaxRAM=1G"
