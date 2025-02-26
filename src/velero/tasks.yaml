@@ -47,12 +47,12 @@ tasks:
       - description: wait for the backup object
         wait:
           cluster:
-            kind: Backup
+            kind: backup.velero.io
             name: ${BACKUP_NAME}
             namespace: velero
       - description: check the status of the backup object
         cmd: |-
-          STATUS=$(uds zarf tools kubectl get backups -n velero ${BACKUP_NAME} -o jsonpath='{.status.phase}')
+          STATUS=$(uds zarf tools kubectl get backup.velero.io -n velero ${BACKUP_NAME} -o jsonpath='{.status.phase}')
           if [ ${STATUS} != "Completed" ]; then
             echo "Status is '$STATUS'... waiting to see if it changes"
 
@@ -60,13 +60,13 @@ tasks:
             sleep 30
 
             # check again...
-            STATUS=$(uds zarf tools kubectl get backups -n velero ${BACKUP_NAME} -o jsonpath='{.status.phase}')
+            STATUS=$(uds zarf tools kubectl get backup.velero.io -n velero ${BACKUP_NAME} -o jsonpath='{.status.phase}')
             if [ ${STATUS} != "Completed" ]; then
               echo "Status is $STATUS... something isn't right.."
 
               # get backup object
-              uds zarf tools kubectl get backups -n velero ${BACKUP_NAME} -o yaml
-              uds zarf tools kubectl get backups -A -o yaml
+              uds zarf tools kubectl get backup.velero.io -n velero ${BACKUP_NAME} -o yaml
+              uds zarf tools kubectl get backup.velero.io -A -o yaml
               echo "::endgroup::"
 
               # get backupstoragelocations

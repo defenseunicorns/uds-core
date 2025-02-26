@@ -123,7 +123,7 @@ tasks:
               break
             fi
           done
-          uds zarf tools kubectl apply -f ./metallb.yaml
+          #uds zarf tools kubectl apply -f ./metallb.yaml
         dir: .github/test-infra/aws/rke2/
         maxTotalSeconds: 600
 
