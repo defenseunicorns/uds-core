@@ -76,7 +76,7 @@ export async function packageReconciler(pkg: UDSPackage) {
 
     let endpoints: string[] = [];
     // Update the namespace to enable the expected Istio mode (sidecar or ambient)
-    await enableIstio(pkg); // todo: return value for effective istio mode for netpols?
+    await enableIstio(pkg);
 
     let ssoClients = new Map<string, Client>();
     let authserviceClients: string[] = [];

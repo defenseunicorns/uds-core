@@ -151,6 +151,7 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
       policy.metadata.name = `allow-${pkgName}-${policy.metadata.name}`;
     }
 
+    // todo: validate if this is needed for out of mesh locations???
     // Loop through all ports in ingress/egress policies and add port 15008 for ztunnel
     if (policy.spec?.ingress) {
       for (const ingress of policy.spec.ingress) {
