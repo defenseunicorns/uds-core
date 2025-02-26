@@ -1,7 +1,7 @@
 ---
 title: Overview
 sidebar:
-    order: 5
+    order: 100
 ---
 
 UDS Core leverages [Keycloak](https://www.keycloak.org/) and [Authservice](https://github.com/istio-ecosystem/authservice) to implify authentication and authorization for applications. These tools enable seamless user authentication experiences while supporting various OAuth 2.0 and OpenID Connect (OIDC) flows.
