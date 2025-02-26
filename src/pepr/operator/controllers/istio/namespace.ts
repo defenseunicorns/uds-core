@@ -6,7 +6,6 @@
 import { K8s, kind } from "pepr";
 import { Component, setupLogger } from "../../../logger";
 import { UDSPackage } from "../../crd";
-import { writeEvent } from "../../reconcilers";
 
 // configure subproject logger
 const log = setupLogger(Component.OPERATOR_ISTIO);
@@ -55,25 +54,10 @@ export async function enableIstio(pkg: UDSPackage) {
   let shouldRestartPods = false;
   let istioState = IstioState.None;
 
-  // Get existing package keys to determine current package modes
-  const pkgKeys = Object.keys(annotations).filter(key => key.startsWith("uds.dev/pkg-"));
-
   // Handle labels based on ambient opt-in or sidecar default
   if (pkg.spec?.network?.serviceMesh?.ambient) {
-    annotations[pkgKey] = IstioState.Ambient;
-    const sidecarRequired = pkgKeys.some(key => annotations[key] === IstioState.Sidecar);
-
-    // Create warning event if sidecar mode packages exist in the same namespace
-    if (sidecarRequired) {
-      // Write a warning event to the package, no need to change istio labels
-      await writeEvent(pkg, {
-        message: `Existing package(s) in the namespace are running in sidecar mode, ambient mode will not be enabled`,
-      });
-      log.warn(
-        `Sidecar mode required for namespace ${pkg.metadata.namespace}, ignoring ambient mode from ${pkg.metadata.name}.`,
-      );
-      istioState = IstioState.Sidecar;
-    } else if (originalAmbientLabel !== IstioState.Ambient) {
+    annotations[pkgKey] = "true";
+    if (originalAmbientLabel !== IstioState.Ambient) {
       // Ensure ambient mode is enabled and injection is disabled
       labels[AMBIENT_LABEL] = IstioState.Ambient;
       delete labels[INJECTION_LABEL]; // Explicitly remove injection label if it exists
@@ -84,24 +68,13 @@ export async function enableIstio(pkg: UDSPackage) {
       istioState = IstioState.Ambient;
     }
   } else {
-    annotations[pkgKey] = IstioState.Sidecar;
+    annotations[pkgKey] = "true";
     // Ensure injection is enabled and ambient mode is disabled
     if (originalInjectionLabel !== "enabled") {
       labels[INJECTION_LABEL] = "enabled";
       delete labels[AMBIENT_LABEL]; // Explicitly remove ambient label if it exists
       shouldRestartPods = true; // Pods need restarting due to label change
       log.debug(`Enabling Istio injection for namespace ${pkg.metadata.namespace}.`);
-
-      // Find any packages that are in ambient mode and add warning events
-      const ambientPackages = pkgKeys.filter(key => annotations[key] === IstioState.Ambient);
-      for (const ambientPkg of ambientPackages) {
-        const warnPkg = await K8s(UDSPackage)
-          .InNamespace(pkg.metadata.namespace)
-          .Get(ambientPkg.replace("uds.dev/pkg-", ""));
-        await writeEvent(warnPkg, {
-          message: `Existing package(s) in the namespace are running in sidecar mode, ambient mode will not be enabled`,
-        });
-      }
     }
     istioState = IstioState.Sidecar;
   }
@@ -151,7 +124,7 @@ export async function cleanupNamespace(pkg: UDSPackage) {
   const annotations = sourceNS.metadata?.annotations || {};
   const currentInjectionLabel = labels[INJECTION_LABEL];
   const currentAmbientLabel = labels[AMBIENT_LABEL];
-  let desiredIstioState = annotations[ISTIO_STATE_ANNOTATION];
+  const originalIstioState = annotations[ISTIO_STATE_ANNOTATION];
   const currentState =
     currentInjectionLabel === "enabled"
       ? IstioState.Sidecar
@@ -163,43 +136,30 @@ export async function cleanupNamespace(pkg: UDSPackage) {
   // Remove the package annotation
   delete annotations[`uds.dev/pkg-${pkg.metadata.name}`];
 
-  // If there are no more UDS Package annotations, restore the original value of the istio-injection label
-  if (!Object.keys(annotations).find(key => key.startsWith("uds.dev/pkg-"))) {
-    if (desiredIstioState === IstioState.Sidecar) {
-      labels[INJECTION_LABEL] = "enabled";
-      delete labels[AMBIENT_LABEL];
-      // Add sidecar if not present
-      if (currentState === IstioState.Ambient) {
-        shouldRestartPods = true;
-      }
-    } else if (desiredIstioState === IstioState.Ambient) {
-      labels[AMBIENT_LABEL] = "ambient";
-      delete labels[INJECTION_LABEL];
-      // Remove sidecar if present
-      if (currentState === IstioState.Sidecar) {
-        shouldRestartPods = true;
-      }
-    } else {
-      delete labels[INJECTION_LABEL];
-      delete labels[AMBIENT_LABEL];
-      // Remove sidecar if present
-      if (currentState === IstioState.Sidecar) {
-        shouldRestartPods = true;
-      }
-    }
-    delete annotations[ISTIO_STATE_ANNOTATION];
-  } else {
-    // If there are still packages, reevaluate the Istio mode
-    const pkgKeys = Object.keys(annotations).filter(key => key.startsWith("uds.dev/pkg-"));
-    const sidecarRequired = pkgKeys.some(key => annotations[key] === IstioState.Sidecar);
-    // Switch to ambient mode if no sidecar packages exist
-    if (!sidecarRequired && currentState === IstioState.Sidecar) {
-      labels[AMBIENT_LABEL] = "ambient";
-      delete labels[INJECTION_LABEL];
+  // Since we only allow one Package per namespace, restore the original value of the istio-injection label
+  if (originalIstioState === IstioState.Sidecar) {
+    labels[INJECTION_LABEL] = "enabled";
+    delete labels[AMBIENT_LABEL];
+    // Add sidecar if not present
+    if (currentState === IstioState.Ambient) {
       shouldRestartPods = true;
-      desiredIstioState = IstioState.Ambient;
+    }
+  } else if (originalIstioState === IstioState.Ambient) {
+    labels[AMBIENT_LABEL] = "ambient";
+    delete labels[INJECTION_LABEL];
+    // Remove sidecar if present
+    if (currentState === IstioState.Sidecar) {
+      shouldRestartPods = true;
+    }
+  } else {
+    delete labels[INJECTION_LABEL];
+    delete labels[AMBIENT_LABEL];
+    // Remove sidecar if present
+    if (currentState === IstioState.Sidecar) {
+      shouldRestartPods = true;
     }
   }
+  delete annotations[ISTIO_STATE_ANNOTATION];
 
   // Apply the updated Namespace
   log.debug(`Updating namespace ${pkg.metadata.namespace}, removing ${pkg.metadata.name} state.`);
@@ -217,9 +177,9 @@ export async function cleanupNamespace(pkg: UDSPackage) {
   // Kill the pods if we changed the effective Istio state
   if (shouldRestartPods) {
     log.debug(`Attempting pod restart in ${pkg.metadata.namespace} based on istio label change`);
-    if (desiredIstioState === IstioState.Sidecar) {
+    if (originalIstioState === IstioState.Sidecar) {
       await killPods(pkg.metadata.namespace, true);
-    } else if (desiredIstioState === IstioState.Ambient) {
+    } else if (originalIstioState === IstioState.Ambient) {
       await killPods(pkg.metadata.namespace, false);
     }
   }

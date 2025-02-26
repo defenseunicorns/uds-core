@@ -68,7 +68,11 @@ export async function packageReconciler(pkg: UDSPackage) {
   try {
     await updateStatus(pkg, { phase: Phase.Pending, conditions: getReadinessConditions(false) });
 
-    const netPol = await networkPolicies(pkg, namespace!, IstioState.Sidecar);
+    // Pass the Istio mode to the networkPolicies function
+    const istioMode = pkg.spec?.network?.serviceMesh?.ambient
+      ? IstioState.Ambient
+      : IstioState.Sidecar;
+    const netPol = await networkPolicies(pkg, namespace!, istioMode);
 
     let endpoints: string[] = [];
     // Update the namespace to enable the expected Istio mode (sidecar or ambient)

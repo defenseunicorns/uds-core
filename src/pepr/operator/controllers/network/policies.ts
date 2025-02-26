@@ -145,6 +145,23 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
       policy.metadata.name = `allow-${pkgName}-${policy.metadata.name}`;
     }
 
+    // Loop through all ports in ingress/egress policies and add port 15008 for ztunnel
+    if (policy.spec?.ingress) {
+      for (const ingress of policy.spec.ingress) {
+        // Only add the port if there is a port restriction
+        if (ingress.ports && ingress.ports.some(port => port.protocol !== "UDP")) {
+          ingress.ports.push({ port: 15008 });
+        }
+      }
+    } else if (policy.spec?.egress) {
+      for (const egress of policy.spec.egress) {
+        // Only add the port if there is a port restriction
+        if (egress.ports && egress.ports.some(port => port.protocol !== "UDP")) {
+          egress.ports.push({ port: 15008 });
+        }
+      }
+    }
+
     // Ensure the name is a valid resource name
     policy.metadata.name = sanitizeResourceName(policy.metadata.name);
 
