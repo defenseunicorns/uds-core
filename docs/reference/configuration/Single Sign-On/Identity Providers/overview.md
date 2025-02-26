@@ -15,5 +15,5 @@ the [Identity Brokering documentation](https://www.keycloak.org/docs/latest/serv
 
 ## Identity Providers Contents
 
-1. [Azure Entra ID](/reference/configuration/single-sign-on/identity-providers-integrations/azure-idp/)
-2. [Google IdP](/reference/configuration/single-sign-on/identity-providers-integrations/google-idp/)
+1. [Azure Entra ID](/reference/configuration/single-sign-on/identity-providers/azure-idp/)
+2. [Google IdP](/reference/configuration/single-sign-on/identity-providers/google-idp/)
