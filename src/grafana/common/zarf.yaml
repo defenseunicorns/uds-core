@@ -19,18 +19,7 @@ components:
           - ../chart/values.yaml
       - name: grafana
         url: https://grafana.github.io/helm-charts/
-        version: 8.9.0
+        version: 8.10.1
         namespace: grafana
         valuesFiles:
           - ../values/values.yaml
-    actions:
-      onDeploy:
-        after:
-          - description: Validate Grafana Package
-            maxTotalSeconds: 300
-            wait:
-              cluster:
-                kind: packages.uds.dev
-                name: grafana
-                namespace: grafana
-                condition: "'{.status.phase}'=Ready"

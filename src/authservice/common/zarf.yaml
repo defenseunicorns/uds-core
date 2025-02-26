@@ -15,14 +15,3 @@ components:
         localPath: ../chart
         version: 1.0.1
         namespace: authservice
-    actions:
-      onDeploy:
-        after:
-          - description: Validate Authservice Package
-            maxTotalSeconds: 300
-            wait:
-              cluster:
-                kind: packages.uds.dev
-                name: authservice
-                namespace: authservice
-                condition: "'{.status.phase}'=Ready"
