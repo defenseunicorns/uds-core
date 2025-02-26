@@ -14,7 +14,7 @@ When a new UDS Package CR with the `sso` configuration gets deployed, the UDS Op
 
 ## User Groups
 
-UDS Core deploys Keycloak which has some preconfigured groups that applications inherit from SSO and IDP configurations.
+UDS Core deploys Keycloak which has some preconfigured groups that applications inherit from SSO and IDP configurations. More details might be found in the [Package CR](http://localhost:4321/reference/configuration/custom-resources/packages-v1alpha1-cr/#groups) spec.
 
 ### Applications
 
@@ -40,10 +40,7 @@ Neuvector [maps the groups](https://github.com/defenseunicorns/uds-core/blob/mai
 
 #### Keycloak
 
-:::note
 All groups are under the Uds Core parent group. Frequently a group will be referred to as Uds Core/Admin or Uds Core/Auditor. In the Keycloak UI this requires an additional click to get down to the sub groups.
-:::
-
 
 ## Single Sign-On Contents
 
