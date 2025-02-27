@@ -19,9 +19,8 @@ packages:
     # x-release-please-start-version
     ref: 0.36.2
     # x-release-please-end
-    # https://github.com/defenseunicorns/uds-core/issues/1222
-    # optionalComponents:
-    #   - istio-ambient
+    optionalComponents:
+      - istio-ambient
     overrides:
       istio-admin-gateway:
         gateway:
