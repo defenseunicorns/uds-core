@@ -121,15 +121,17 @@ spec:
             # Dumb value (not used in the nginx provider, but required by the SPI)
             - name: KC_SPI_X509CERT_LOOKUP_NGINX_SSL_CLIENT_CERT_CHAIN_PREFIX
               value: UNUSED
-{{/*          {{- if or .Values.devMode .Values.debugMode }}*/}}
-{{/*            # Enable debug logs*/}}
-{{/*            - name: KC_LOG_LEVEL*/}}
-{{/*              value: DEBUG*/}}
-{{/*            - name: QUARKUS_LOG_CATEGORY__ORG_APACHE_HTTP__LEVEL*/}}
-{{/*              value: DEBUG*/}}
-{{/*            - name: QUARKUS_LOG_CATEGORY__ORG_KEYCLOAK_SERVICES_X509__LEVEL*/}}
-{{/*              value: TRACE*/}}
-{{/*          {{- end }}*/}}
+          {{- if or .Values.devMode .Values.debugMode }}
+            # Enable debug logs
+            - name: KC_LOG_LEVEL
+              value: DEBUG
+            - name: QUARKUS_LOG_CATEGORY__ORG_APACHE_HTTP__LEVEL
+              value: TRACE
+            - name: QUARKUS_LOG_CATEGORY__ORG_KEYCLOAK_SERVICES_X509__LEVEL
+              value: TRACE
+            - name: QUARKUS_HTTP_ACCESS_LOG_PATTERN
+              value: long
+          {{- end }}
           {{- if eq (include "keycloak.postgresql.config" .) "true" }}
             # Infinispan cache configuration
             - name: KC_CACHE

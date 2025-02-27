@@ -33,18 +33,3 @@ resource "keycloak_user" "user" {
   first_name = "Testy"
   last_name  = "Tester"
 }
-
-# resource "keycloak_openid_client" "test_client" {
-#   client_id   = "test-openid-client"
-#   name        = "test-openid-client"
-#   realm_id    = keycloak_realm.master.id
-#   description = "a test openid client"
-#
-#   access_type = "CONFIDENTIAL"
-#
-#   extra_config = {
-#     # This is an internal Keycloak value that is ignored by Clients PUT request.
-#     "realm_client" = "invalid value!"
-#   }
-# }
-
