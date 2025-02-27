@@ -198,6 +198,12 @@ const expose = {
           type: "string",
         },
       },
+      location: {
+        description: "Specifies whether the service is MESH_INTERNAL or MESH_EXTERNAL",
+        enum: ["MESH_INTERNAL", "MESH_EXTERNAL"],
+        type: "string",
+        default: "MESH_INTERNAL",
+      },
     },
   } as V1JSONSchemaProps,
 } as V1JSONSchemaProps;
