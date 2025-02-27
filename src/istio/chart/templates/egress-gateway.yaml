@@ -1,0 +1,15 @@
+{{- if .Values.egress.servers }}
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: {{ .Values.name }}-egressgateway
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: istio-egressgateway
+    release: {{ .Release.Name }}
+spec:
+  selector:
+    app: istio-egressgateway
+  servers:
+    {{- toYaml .Values.egress.servers | nindent 4 }}
+{{- end }}
