@@ -41,8 +41,7 @@ packages:
     ref: 0.36.2
     # x-release-please-end
     optionalComponents:
-      # https://github.com/defenseunicorns/uds-core/issues/1222
-      # - istio-ambient
+      - istio-ambient
       - metrics-server
     overrides:
       velero:
