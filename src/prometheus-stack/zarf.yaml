@@ -35,7 +35,7 @@ components:
       - "registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.15.0"
       - "quay.io/prometheus/alertmanager:v0.28.0"
       - "quay.io/prometheus-operator/prometheus-config-reloader:v0.80.1"
-      - "quay.io/prometheus/prometheus:v3.2.0"
+      - "quay.io/prometheus/prometheus:v3.2.1"
       - "registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.5.1"
 
   - name: kube-prometheus-stack
@@ -55,7 +55,7 @@ components:
       - "registry1.dso.mil/ironbank/opensource/kubernetes/kube-state-metrics:v2.15.0"
       - "registry1.dso.mil/ironbank/opensource/prometheus/alertmanager:v0.28.0"
       - "registry1.dso.mil/ironbank/opensource/prometheus-operator/prometheus-config-reloader:v0.80.1"
-      - "registry1.dso.mil/ironbank/opensource/prometheus/prometheus:v3.2.0"
+      - "registry1.dso.mil/ironbank/opensource/prometheus/prometheus:v3.2.1"
       - "registry1.dso.mil/ironbank/opensource/ingress-nginx/kube-webhook-certgen:v1.5.1"
 
   - name: kube-prometheus-stack
@@ -75,5 +75,5 @@ components:
       - "cgr.dev/du-uds-defenseunicorns/kube-state-metrics-fips:2.15.0"
       - "cgr.dev/du-uds-defenseunicorns/prometheus-alertmanager-fips:0.28.0"
       - "cgr.dev/du-uds-defenseunicorns/prometheus-config-reloader-fips:0.80.1"
-      - "cgr.dev/du-uds-defenseunicorns/prometheus-fips:3.2.0"
+      - "cgr.dev/du-uds-defenseunicorns/prometheus-fips:3.2.1"
       - "cgr.dev/du-uds-defenseunicorns/kube-webhook-certgen-fips:1.12.0"
