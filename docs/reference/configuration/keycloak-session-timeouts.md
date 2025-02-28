@@ -6,14 +6,20 @@ title: Keycloak Session Timeout
 
 Keycloak has two session idle timeouts: the **realm session idle timeout** and the **client session idle timeout**. These settings control session expiration differently, and their interaction determines how long a user remains authenticated across different clients.
 
+### Setting Session Timeouts from UI
+Realm Session Timeouts can be configured from the `Realm Settings` -> `Sessions` tab.
+
+Client Session Timeouts can be configured universally from the `Realm Settings` -> `Sessions` tab. Or individual clients can be configured from `Clients` -> **client-name** -> `Advanced` -> `Advanced Settings`.
+
 ---
 
 ## Scenario 1: Client Session Idle Timeout is Shorter than Realm Session Idle Timeout
 
-- **Realm Session Idle Timeout** = **1 hour**
-- **Client Session Idle Timeout** = **5 minutes**
+- **SSO Session Idle** (Realm Session Idle Timeout) = **1 hour**
+- **Client Session Idle** = **5 minutes**
 - **User signs into Client.**
-- **User is inactive for 6 minutes**, then reactivates Client.
+- **User is inactive for 7 minutes**, then reactivates Client.
+   - For idle timeouts, a two-minute window of time exists that the session is active. For example, when you have the timeout set to 30 minutes, it will be 32 minutes before the session expires. [See docs](https://www.keycloak.org/docs/latest/server_admin/index.html#:~:text=The%20following%20logic%20is%20only%20applied%20if%20persistent%20user%20sessions%20are%20not%20active%3A).
 
 ### What Happens?
 1. **At 5 minutes of inactivity** → **Client's token expires**
@@ -23,11 +29,17 @@ Keycloak has two session idle timeouts: the **realm session idle timeout** and t
 
 2. **At 6 minutes**, the user **reactivates Client**.
    - Since the **client session timeout** controls the refresh token expiration, the refresh token has also expired.
-   - However, since the **realm session is still active**, the client/application can initiate a new authentication request to obtain fresh tokens. This process does not prompt the user for credentials again as long as the realm session remains valid.
+   - However, since the realm session is still active, the client/application can initiate a new authentication request to obtain fresh tokens.
+      - For browser-based applications that maintain an HTTP session and Keycloak session cookies, this process occurs silently without prompting the user.
+      - However, for applications using only bearer tokens, once the refresh token expires, a new authentication flow is required, meaning the user must actively reauthenticate to obtain new tokens.
 
 ---
 
 ## Scenario 2: Realm Session Idle Timeout is Shorter than Client Session Idle Timeout
+
+:::caution
+This is not a recommended configuration. The `Client Session Idle` timeout should be shorter than the `SSO Session Idle`(the realm setting). See [Official Docs](https://www.keycloak.org/docs/latest/server_admin/index.html#:~:text=This%20value%20should%20specify%20a%20shorter%20idle%20timeout%20than%20the%20SSO%20Session%20Idle.).
+:::
 
 - **Realm Session Idle Timeout** = **10 minutes**
 - **Client Session Idle Timeout** = **30 minutes**
@@ -60,8 +72,8 @@ Keycloak has two session idle timeouts: the **realm session idle timeout** and t
 - **Client session idle timeout only affects token expiration**, not the realm session itself.
 - If multiple clients are accessed under the same session, different client timeouts can cause token expiration at different intervals.
 - A realm session timeout takes **precedence**, meaning once the realm session expires, all client sessions are forcibly logged out.
+- Realm settings only take priority if the Clients set `Inherits from Realm settings` in the `Advanced settings`. Otherwise, the Client settings will take priority.
 - **Offline sessions** allow longer session persistence beyond normal idle timeouts if configured properly.
-- To prevent unwanted logouts, applications can implement **silent authentication** via refresh tokens or use offline tokens when necessary.
 
 ---
 
