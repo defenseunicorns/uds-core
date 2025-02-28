@@ -40,6 +40,8 @@ packages:
     # x-release-please-start-version
     ref: 0.35.0
     # x-release-please-end
+    optionalComponents:
+      - istio-ambient
     overrides:
       pepr-uds-core:
         module:

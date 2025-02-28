@@ -190,7 +190,8 @@ export interface Allow {
    */
   remoteSelector?: { [key: string]: string };
   /**
-   * The remote service account to restrict access to/from within the remote namespace
+   * The remote service account to restrict incoming traffic from within the remote
+   * namespace.           Only valid for Ingress rules.
    */
   remoteServiceAccount?: string;
   /**

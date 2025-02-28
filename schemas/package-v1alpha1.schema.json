@@ -230,7 +230,7 @@
         },
         "remoteServiceAccount": {
           "type": "string",
-          "description": "The remote service account to restrict access to/from within the remote namespace"
+          "description": "The remote service account to restrict incoming traffic from within the remote\nnamespace.           Only valid for Ingress rules."
         },
         "selector": {
           "type": "object",

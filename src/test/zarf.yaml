@@ -11,36 +11,39 @@ components:
   - name: test-apps
     required: true
     manifests:
-      - name: app-admin
+      # - name: app-admin
+      #   files:
+      #     - "app-admin.yaml"
+      # - name: app-tenant
+      #   files:
+      #     - "app-tenant.yaml"
+      # - name: app-authservice-tenant
+      #   files:
+      #     - "app-authservice-tenant.yaml"
+      # - name: curl-test
+      #   files:
+      #     - "app-curl.yaml"
+      - name: authpol-test
         files:
-          - "app-admin.yaml"
-      - name: app-tenant
-        files:
-          - "app-tenant.yaml"
-      - name: app-authservice-tenant
-        files:
-          - "app-authservice-tenant.yaml"
-      - name: curl-test
-        files:
-          - "app-curl.yaml"
+          - "authpol-test.yaml"
     images:
       - docker.io/kong/httpbin:0.2.3
       - hashicorp/http-echo:latest
       - curlimages/curl:latest
 
-  - name: podinfo
-    required: true
-    charts:
-      - name: uds-podinfo-config
-        namespace: podinfo
-        localPath: ./chart
-        version: 0.1.0
-      - name: podinfo
-        version: 6.7.1
-        namespace: podinfo
-        url: https://github.com/stefanprodan/podinfo.git
-        gitPath: charts/podinfo
-        valuesFiles:
-          - ./podinfo-values.yaml
-    images:
-      - ghcr.io/stefanprodan/podinfo:6.7.1
+  # - name: podinfo
+  #   required: true
+  #   charts:
+  #     - name: uds-podinfo-config
+  #       namespace: podinfo
+  #       localPath: ./chart
+  #       version: 0.1.0
+  #     - name: podinfo
+  #       version: 6.7.1
+  #       namespace: podinfo
+  #       url: https://github.com/stefanprodan/podinfo.git
+  #       gitPath: charts/podinfo
+  #       valuesFiles:
+  #         - ./podinfo-values.yaml
+  #   images:
+  #     - ghcr.io/stefanprodan/podinfo:6.7.1

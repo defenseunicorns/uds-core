@@ -16,7 +16,8 @@ import { keycloak, purgeSSOClients } from "../controllers/keycloak/client-sync";
 import { Client } from "../controllers/keycloak/types";
 import { podMonitor } from "../controllers/monitoring/pod-monitor";
 import { serviceMonitor } from "../controllers/monitoring/service-monitor";
-import { authorizationPolicies, networkPolicies } from "../controllers/network/policies";
+import { generateAuthorizationPolicies } from "../controllers/network/authorizationPolicies";
+import { networkPolicies } from "../controllers/network/networkPolicies";
 import { Phase, UDSPackage } from "../crd";
 import { migrate } from "../crd/migrate";
 
@@ -67,10 +68,7 @@ export async function packageReconciler(pkg: UDSPackage) {
     const netPol = await networkPolicies(pkg, namespace!);
 
     // New Authorization Policy logic
-    let authPol = [];
-    if (pkg.spec?.network?.serviceMesh?.ambient) {
-      authPol = await authorizationPolicies(pkg, namespace!);
-    }
+    const authPol = await generateAuthorizationPolicies(pkg, namespace!);
 
     let endpoints: string[] = [];
     await enableInjection(pkg);
