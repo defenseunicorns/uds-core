@@ -167,10 +167,7 @@ packages:
             # https://github.com/defenseunicorns/uds-core/issues/1212 is sorted
             - name: KEYCLOAK_HEAP_OPTIONS
               description: "Sets the JAVA_OPTS_KC_HEAP environment variable in Keycloak"
-              path: env
-              default:
-                - name: JAVA_OPTS_KC_HEAP
-                  value: "-XX:MaxRAMPercentage=70 -XX:MinRAMPercentage=70 -XX:InitialRAMPercentage=50 -XX:MaxRAM=1G"
+              path: env[0].value
           values:
             - path: realmInitEnv
               value:
@@ -180,4 +177,8 @@ packages:
                 GOOGLE_IDP_NAME_ID_FORMAT: "urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified"
                 GOOGLE_IDP_CORE_ENTITY_ID: "https://sso.uds.dev/realms/uds"
                 GOOGLE_IDP_ADMIN_GROUP: "uds-core-dev-admin"
-                GOOGLE_IDP_AUDITOR_GROUP: "uds-core-dev-auditor"
+                GOOGLE_IDP_AUDITOR_GROUP: "uds-core-dev-auditor
+            - path: env[0]
+              value:
+                name: JAVA_OPTS_KC_HEAP
+                value: "-XX:MaxRAMPercentage=70 -XX:MinRAMPercentage=70 -XX:InitialRAMPercentage=50 -XX:MaxRAM=1G"
