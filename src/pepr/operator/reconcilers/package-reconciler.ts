@@ -161,6 +161,7 @@ export async function packageFinalizer(pkg: UDSPackage) {
     await writeEvent(pkg, {
       message: `Restoration of Istio injection status failed: ${e.message}. Istio status must be manually restored, by updating or deleting the istio-injection label and cycling pods.`,
       reason: "RemovalFailed",
+      type: "Warning",
     });
     await updateStatus(pkg, { phase: Phase.RemovalFailed });
     return false;
@@ -184,6 +185,7 @@ export async function packageFinalizer(pkg: UDSPackage) {
     await writeEvent(pkg, {
       message: `Removal of AuthService configuration failed: ${e.message}. AuthService configuration secret should be reviewed and cleaned up as needed.`,
       reason: "RemovalFailed",
+      type: "Warning",
     });
     await updateStatus(pkg, { phase: Phase.RemovalFailed });
     return false;
@@ -207,6 +209,7 @@ export async function packageFinalizer(pkg: UDSPackage) {
     await writeEvent(pkg, {
       message: `Removal of SSO clients failed: ${e.message}. Clients must be manually removed from Keycloak.`,
       reason: "RemovalFailed",
+      type: "Warning",
     });
     await updateStatus(pkg, { phase: Phase.RemovalFailed });
     return false;
