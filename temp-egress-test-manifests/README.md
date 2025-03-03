@@ -80,3 +80,23 @@ Now with both the previous packages running, try to access wikipedia from curl1 
     /home/curl_user $ curl -o /dev/null -s -w "%{http_code}\n" https://en.wikipedia.org/wiki/Main_Page
     000
     ```
+
+## Test with different subdomains in the same namespace
+
+Egress test case with different subdomains, "en.wikipedia.org" and "de.wikipedia.org"
+
+1. From curl1 pod (should just have access to en.wikipedia.org)
+```
+/home/curl_user $ curl -o /dev/null -s -w "%{http_code}\n" https://en.wikipedia.org/wiki/Main_Page
+200
+```
+
+## Test with different subdomains in different namespaces
+
+Egress test case with different subdomains, "en.wikipedia.org" and "de.wikipedia.org"
+
+1. From curl1 pod (should just have access to en.wikipedia.org)
+```
+/home/curl_user $ curl -o /dev/null -s -w "%{http_code}\n" https://en.wikipedia.org/wiki/Main_Page
+200
+```
