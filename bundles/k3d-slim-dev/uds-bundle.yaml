@@ -177,7 +177,7 @@ packages:
                 GOOGLE_IDP_NAME_ID_FORMAT: "urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified"
                 GOOGLE_IDP_CORE_ENTITY_ID: "https://sso.uds.dev/realms/uds"
                 GOOGLE_IDP_ADMIN_GROUP: "uds-core-dev-admin"
-                GOOGLE_IDP_AUDITOR_GROUP: "uds-core-dev-auditor
+                GOOGLE_IDP_AUDITOR_GROUP: "uds-core-dev-auditor"
             - path: env[0]
               value:
                 name: JAVA_OPTS_KC_HEAP
