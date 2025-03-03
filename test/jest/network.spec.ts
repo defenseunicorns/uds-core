@@ -122,6 +122,7 @@ beforeAll(async () => {
     getPodName("test-admin-app", "app=httpbin"),
     getPodName("curl-ns-remote-ns-1", "app=curl-pkg-remote-ns-egress"),
     getPodName("curl-ns-kube-api", "app=curl-pkg-kube-api"),
+    getPodName("curl-ns-egress-gw", "app=curl-pkg-egress-gw"),
   ]);
 });
 
@@ -265,5 +266,21 @@ describe("Network Policy Validation", () => {
     // Validate successful request to Google because of wide open remoteCidr
     const success_google_response = await execInPod("test-admin-app", testAdminApp, "curl", GOOGLE_CURL);
     expect(success_google_response.stdout).toBe("200");
+  });
+
+  test.concurrent("Egress Gateway", async () => {
+    const egress_gateway_curl = [
+      "sh",
+      "-c",
+      `curl -s -o /dev/null -w "%{http_code}" http://httpbin.org/headers`
+    ];
+
+    // Validate successful request when using Egress Gateway
+    const success_response = await execInPod("curl-ns-egress-gw", curlPodName1, "curl-pkg-egress-gw", egress_gateway_curl);
+    expect(success_response.stdout).toBe("200");
+
+    // Validate unsuccessful request to Google because not in remoteHost
+    const success_google_response = await execInPod("curl-ns-egress-gw", curlPodName1, "curl-pkg-egress-gw", GOOGLE_CURL);
+    expect(success_google_response.stdout).toBe("503");
   });
 });

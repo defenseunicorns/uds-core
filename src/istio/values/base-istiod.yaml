@@ -15,7 +15,10 @@ meshConfig:
       envoyExtAuthzGrpc:
         service: "authservice.authservice.svc.cluster.local"
         port: "10003"
-
+  outboundTrafficPolicy:
+    mode: "REGISTRY_ONLY" # Test only
+    # mode: "ALLOW_ANY" # Zarf var or just set in the UDS package config?
+    
 pilot:
   env:
     PILOT_JWT_ENABLE_REMOTE_JWKS: hybrid

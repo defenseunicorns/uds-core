@@ -93,6 +93,15 @@ const allow = {
         description: "Custom generated policy CIDR",
         type: "string",
       },
+      remoteHost: {
+        description: "Remote host to allow traffic out to",
+        type: "string",
+      },
+      remoteProtocol: {
+        description: "Protocol used for external connection",
+        type: "string",
+        enum: ["tls", "http"],
+      },
       port: {
         description: "The port to allow (protocol is always TCP)",
         minimum: 1,
@@ -197,12 +206,6 @@ const expose = {
         additionalProperties: {
           type: "string",
         },
-      },
-      location: {
-        description: "Specifies whether the service is MESH_INTERNAL or MESH_EXTERNAL",
-        enum: ["MESH_INTERNAL", "MESH_EXTERNAL"],
-        type: "string",
-        default: "MESH_INTERNAL",
       },
     },
   } as V1JSONSchemaProps,

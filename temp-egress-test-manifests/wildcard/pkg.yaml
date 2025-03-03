@@ -1,0 +1,67 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: wildcard-test
+  labels:
+    istio-injection: enabled
+---
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: wildcard-pkg
+  namespace: wildcard-test
+spec:
+  network: {}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: curl
+  namespace: wildcard-test
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: curl
+  namespace: wildcard-test
+  labels:
+    app: curl
+    service: curl
+spec:
+  ports:
+  - port: 80
+    name: http
+  selector:
+    app: curl
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: curl
+  namespace: wildcard-test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: curl
+  template:
+    metadata:
+      labels:
+        app: curl
+    spec:
+      terminationGracePeriodSeconds: 0
+      serviceAccountName: curl
+      containers:
+      - name: curl
+        image: curlimages/curl
+        command: ["/bin/sleep", "infinity"]
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+        - mountPath: /etc/curl/tls
+          name: secret-volume
+      volumes:
+      - name: secret-volume
+        secret:
+          secretName: curl-secret
+          optional: true
+---

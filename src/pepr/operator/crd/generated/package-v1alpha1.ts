@@ -173,6 +173,10 @@ export interface Allow {
    */
   remoteGenerated?: RemoteGenerated;
   /**
+   * Remote host to allow traffic out to
+   */
+  remoteHost?: string;
+  /**
    * The remote namespace to allow traffic to/from. Use * or empty string to allow all
    * namespaces
    */
@@ -181,6 +185,10 @@ export interface Allow {
    * Deprecated: use remoteSelector
    */
   remotePodLabels?: { [key: string]: string };
+  /**
+   * Protocol used for external connection
+   */
+  remoteProtocol?: RemoteProtocol;
   /**
    * The remote pod selector labels to allow traffic to/from
    */
@@ -211,6 +219,14 @@ export enum RemoteGenerated {
   KubeNodes = "KubeNodes",
 }
 
+/**
+ * Protocol used for external connection
+ */
+export enum RemoteProtocol {
+  HTTP = "http",
+  TLS = "tls",
+}
+
 export interface Expose {
   /**
    * Advanced HTTP settings for the route.
@@ -228,10 +244,6 @@ export interface Expose {
    * The hostname to expose the service on
    */
   host: string;
-  /**
-   * Specifies whether the service is MESH_INTERNAL or MESH_EXTERNAL
-   */
-  location?: Location;
   /**
    * Match the incoming request based on custom rules. Not permitted when using the
    * passthrough gateway.
@@ -533,14 +545,6 @@ export enum Gateway {
   Admin = "admin",
   Passthrough = "passthrough",
   Tenant = "tenant",
-}
-
-/**
- * Specifies whether the service is MESH_INTERNAL or MESH_EXTERNAL
- */
-export enum Location {
-  MeshExternal = "MESH_EXTERNAL",
-  MeshInternal = "MESH_INTERNAL",
 }
 
 export interface ExposeMatch {
