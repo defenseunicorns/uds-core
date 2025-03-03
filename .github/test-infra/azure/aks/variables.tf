@@ -15,6 +15,7 @@ variable "resource_group_name" {
 variable "location" {
   description = "(Required) Specifies the location where the AKS cluster will be deployed."
   type        = string
+  default     = "usgovvirginia"
 }
 
 variable "dns_prefix" {
@@ -72,7 +73,7 @@ variable "autoscaling_min_node_count_worker" {
 
 variable "default_node_pool_vm_size" {
   description = "Specifies the vm size of the default node pool"
-  default     = "Standard_F8s_v2"
+  default     = "Standard_A8_v2"
   type        = string
 }
 
@@ -84,7 +85,7 @@ variable "worker_node_pool_count" {
 
 variable "worker_pool_vm_size" {
   description = "Specifies the vm size of the worker node pool"
-  default     = "Standard_F8s_v2"
+  default     = "Standard_A8_v2"
   type        = string
 }
 
@@ -150,7 +151,7 @@ variable "default_node_pool_node_labels" {
 variable "default_node_pool_os_disk_type" {
   description = "(Optional) The type of disk which should be used for the Operating System. Possible values are Ephemeral and Managed. Defaults to Managed. Changing this forces a new resource to be created."
   type        = string
-  default     = "Ephemeral"
+  default     = "Managed"
 }
 
 variable "default_node_pool_node_count" {

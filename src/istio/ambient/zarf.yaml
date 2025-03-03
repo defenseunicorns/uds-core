@@ -32,6 +32,8 @@ components:
         url: https://istio-release.storage.googleapis.com/charts
         version: 1.24.3
         namespace: istio-system
+        valuesFiles:
+          - "../values/base-ztunnel.yaml"
     actions:
       onDeploy:
         before:
