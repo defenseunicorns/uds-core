@@ -17,6 +17,7 @@ import { Client } from "../controllers/keycloak/types";
 import { podMonitor } from "../controllers/monitoring/pod-monitor";
 import { serviceMonitor } from "../controllers/monitoring/service-monitor";
 import { networkPolicies } from "../controllers/network/policies";
+import { retryWithDelay } from "../controllers/utils";
 import { Phase, UDSPackage } from "../crd";
 import { migrate } from "../crd/migrate";
 
@@ -114,18 +115,34 @@ export async function packageReconciler(pkg: UDSPackage) {
 
 /**
  * The finalizer is called when an update with a deletion timestamp happens.
- * On completion the finalizer is removed from the Package CR.
  * This function removes any SSO/Authservice clients and ensures that Istio Injection is restored to the original state.
+ * Return values indicate whether the finalizer should be removed from the CR based on failure or success of cleanup.
  *
  * @param pkg the package to finalize
  */
 export async function packageFinalizer(pkg: UDSPackage) {
   log.debug(`Processing removal of package ${pkg.metadata?.namespace}/${pkg.metadata?.name}`);
 
-  // In order to avoid triggering a second call of this finalizer, we just write events for each removal piece
-  // This could be switched to updateStatus once https://github.com/defenseunicorns/pepr/issues/1316 is resolved
-  // await updateStatus(pkg, { phase: Phase.Removing });
+  // Skip running the finalizer if it is already running
+  if (pkg.status?.phase === Phase.Removing || pkg.status?.phase === Phase.RemovalFailed) {
+    log.debug(
+      `Skipping finalizer for ${pkg.metadata?.namespace}/${pkg.metadata?.name}, removal already in progress or failed.`,
+    );
+    return false;
+  }
 
+  // Skip running the finalizer if the CR has not completed initial reconciliation - running this during reconciliation can lead to orphaned resources and failed cleanup
+  if (pkg.status?.phase !== Phase.Ready && pkg.status?.phase !== Phase.Failed) {
+    log.debug(
+      `Waiting to finalize package ${pkg.metadata?.namespace}/${pkg.metadata?.name}, package has not completed initial reconciliation.`,
+    );
+    return false;
+  }
+
+  // Update Package to indicate removal in progress
+  await updateStatus(pkg, { phase: Phase.Removing });
+
+  // Cleanup Istio status on namespace
   try {
     await writeEvent(pkg, {
       message: `Restoring original istio injection status on namespace`,
@@ -133,17 +150,20 @@ export async function packageFinalizer(pkg: UDSPackage) {
       type: "Normal",
     });
     // Cleanup the namespace
-    await cleanupNamespace(pkg);
+    await retryWithDelay(() => cleanupNamespace(pkg), log);
   } catch (e) {
     log.debug(
       `Restoration of istio injection status during finalizer failed for ${pkg.metadata?.namespace}/${pkg.metadata?.name}: ${e.message}`,
     );
     await writeEvent(pkg, {
-      message: `Restoration of istio injection status failed: ${e.message}`,
+      message: `Restoration of istio injection status failed: ${e.message}. Istio status must be manually restored, by updating or deleting the istio-injection label and cycling pods.`,
       reason: "RemovalFailed",
     });
+    await updateStatus(pkg, { phase: Phase.RemovalFailed });
+    return false;
   }
 
+  // Cleanup SSO/AuthService Clients
   try {
     await writeEvent(pkg, {
       message: `Removing SSO / AuthService clients for package`,
@@ -151,8 +171,8 @@ export async function packageFinalizer(pkg: UDSPackage) {
       type: "Normal",
     });
     // Remove any SSO clients
-    await purgeSSOClients(pkg, []);
-    await purgeAuthserviceClients(pkg, []);
+    await retryWithDelay(() => purgeSSOClients(pkg, []), log);
+    await retryWithDelay(() => purgeAuthserviceClients(pkg, []), log);
   } catch (e) {
     log.debug(
       `Removal of SSO / AuthService clients during finalizer failed for ${pkg.metadata?.namespace}/${pkg.metadata?.name}: ${e.message}`,
@@ -161,7 +181,12 @@ export async function packageFinalizer(pkg: UDSPackage) {
       message: `Removal of SSO / AuthService clients failed: ${e.message}`,
       reason: "RemovalFailed",
     });
+    await updateStatus(pkg, { phase: Phase.RemovalFailed });
+    return false;
   }
 
+  // Indicate success - all other resources (network policies, virtual services, etc) are cleaned up through owner references
+  // See https://kubernetes.io/docs/concepts/overview/working-with-objects/owners-dependents/#ownership-and-finalizers
   log.debug(`Package ${pkg.metadata?.namespace}/${pkg.metadata?.name} removed successfully`);
+  return true;
 }
