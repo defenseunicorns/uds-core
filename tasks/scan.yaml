@@ -108,7 +108,7 @@ tasks:
             # Extract image name and format properly
             image_name=$(basename "$scan" .md)
             image_name=${image_name//_/\/}    # Replace all `_` with `/`
-            image_name=${image_name/%\//:}    # Replace the LAST `/` with `:`
+            image_name=${image_name%/*}:${image_name##*/}  # Replace last `/` with `:`
 
             # Check if the scan file contains any vulnerabilities (ignoring headers)
             vuln_count=$(tail -n +3 "$scan")
