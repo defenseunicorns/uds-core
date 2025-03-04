@@ -7,7 +7,7 @@ import { K8s, kind } from "pepr";
 
 import { Component, setupLogger } from "../../logger";
 import { Phase, PkgStatus, UDSPackage } from "../crd";
-import { StatusEnum, StatusObject as Status } from "../crd/generated/package-v1alpha1";
+import { StatusObject as Status, StatusEnum } from "../crd/generated/package-v1alpha1";
 
 export const uidSeen = new Set<string>();
 
@@ -24,7 +24,10 @@ export function shouldSkip(cr: UDSPackage) {
   const isRetrying = cr.status?.phase === Phase.Retrying;
   const isPending = cr.status?.phase === Phase.Pending;
   // Check for status removing OR a deletion timestamp present
-  const isRemoving = cr.status?.phase === Phase.Removing || cr.metadata?.deletionTimestamp;
+  const isRemoving =
+    cr.metadata?.deletionTimestamp ||
+    cr.status?.phase === Phase.Removing ||
+    cr.status?.phase === Phase.RemovalFailed;
   const isCurrentGeneration = cr.metadata?.generation === cr.status?.observedGeneration;
 
   // First check if the CR has been seen before and return false if it has not
