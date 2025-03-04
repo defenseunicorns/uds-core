@@ -4,7 +4,7 @@ sidebar:
     order: 2
 ---
 
-![UDS Operator Package Flowchart](https://raw.githubusercontent.com/defenseunicorns/uds-core/07821124994d626d805b896a19e64ec7b6e9db41/docs/.images/diagrams/uds-core-operator-uds-package.svg)
+![UDS Operator Package Flowchart](https://raw.githubusercontent.com/defenseunicorns/uds-core/34861100f609339ed39f63840edd0176b2fafce3/docs/.images/diagrams/uds-core-operator-uds-package.svg)
 
 ## Package
 
