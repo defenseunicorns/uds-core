@@ -1062,7 +1062,7 @@
           <mxGeometry x="2575" y="1160" width="120" height="35" as="geometry" />
         </mxCell>
         <object label="UDS Package CreatedOrUpdated" id="G6NHiv4yU3Q8GBfmJWzk-166">
-          <mxCell style="" parent="WIyWlLk6GJQsqaUBKTNV-0" />
+          <mxCell style="locked=1;" parent="WIyWlLk6GJQsqaUBKTNV-0" />
         </object>
         <mxCell id="ALniYcZCjree9EDMam5--12" value="" style="rounded=1;whiteSpace=wrap;html=1;fontSize=12;glass=0;strokeWidth=1;shadow=0;fillColor=light-dark(#24B0FF,#24B0FF);strokeColor=light-dark(#000000,#000000);fontFamily=Poppins;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DPoppins;" parent="G6NHiv4yU3Q8GBfmJWzk-166" vertex="1">
           <mxGeometry x="1209" y="-331" width="1393" height="1488" as="geometry" />
