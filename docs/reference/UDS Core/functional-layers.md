@@ -54,8 +54,8 @@ Layer selection will always be deployment-specific but below are guidelines for 
 | Layer | Selection Criteria |
 |-------|--------------------|
 | **UDS Add-ons*** |
-| UDS Runtime      | Provides a common operating picture for a Kubernetes cluster and UDS deployments <br/> *(install if you would like to have an easy-to-use window into your cluster/deployments)* |
-| UDS Security Hub | Tracks CVE / vulnerability postures across UDS deployments <br/> *(install if you would like to more easily track vulnerabilities to meet compliance requirements)* |
+| UDS UI           | Provides a common operating picture for a Kubernetes cluster and UDS deployments <br/> *(install if you would like to have an easy-to-use window into your cluster/deployments)* |
+| UDS Registry     | Provides a storage location for UDS components and mission applications <br/> *(install if you would like to be able to easily store and view the software available in your environment)* |
 | UDS Remote Agent | Allows for more advanced remote cluster management / deployment <br/> *(install if you would like to manage UDS deployments from more advanced clients than UDS CLI)* |
 | **UDS Core Layers** |
 | Runtime Security†           | Provides more advanced security with runtime inspection <br/> *(install if resources allow and more advanced security is desired)* |
@@ -70,7 +70,7 @@ Layer selection will always be deployment-specific but below are guidelines for 
 | UDS Package MetalLB        | Provides a simple LoadBalancer implementation <br/> *(install after Zarf init and before UDS Core Base)* |
 
 :::note
-*UDS Add-ons are not part of the open-source platform but are also not required to maintain / operate a UDS deployment.  They provide additional functionality to streamline the deployment, monitoring, and compliance of the deployment for the given organization.
+*UDS Add-ons are not part of the open-source platform but are also not required to maintain / operate a UDS deployment.  They provide additional functionality to streamline the deployment, monitoring, and management of the deployment for the given organization.
 :::
 
 :::note
