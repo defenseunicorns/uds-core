@@ -49,7 +49,7 @@ packages:
 
 ## Layer Selection
 
-Layer selection will always be deployment-specific but below are guidelines for what layers to consider for your deployment.  The *required* layer guidance follows the [Big Bang Conformant Stack](https://repo1.dso.mil/big-bang/product/bbtoc/-/blob/master/policy/conformance.md?ref_type=heads) though if you are not bound by that document you may need to tweak them for your needs - UDS Core Base is the only *technical* layer required to install most UDS Packages.
+Layer selection will always be deployment-specific but below are guidelines for what layers to consider for your deployment.  The layers marked with a four pointed star (🟄) are those needed to follow the [Big Bang Conformant Stack](https://repo1.dso.mil/big-bang/product/bbtoc/-/blob/master/policy/conformance.md?ref_type=heads) though if you are not bound by that document, UDS Core Base is the only *technical* layer required to install most UDS Packages.
 
 | Layer | Selection Criteria |
 |-------|--------------------|
@@ -58,13 +58,13 @@ Layer selection will always be deployment-specific but below are guidelines for 
 | UDS Registry     | Provides a storage location for UDS components and mission applications <br/> *(install if you would like to be able to easily store and view the software available in your environment)* |
 | UDS Remote Agent | Allows for more advanced remote cluster management / deployment <br/> *(install if you would like to manage UDS deployments from more advanced clients than UDS CLI)* |
 | **UDS Core Layers** |
-| Runtime Security†           | Provides more advanced security with runtime inspection <br/> *(install if resources allow and more advanced security is desired)* |
-| Monitoring†                 | Provides frontend log / metrics monitoring and alerting <br/> *(install if resources allow and more advanced debugging is desired)* |
+| Runtime Security†🟄         | Provides more advanced security with runtime inspection <br/> *(install if resources allow and more advanced security is desired)* |
+| Monitoring†                | Provides frontend log / metrics monitoring and alerting <br/> *(install if resources allow and more advanced debugging is desired)* |
 | Backup and Restore         | Allows volumes and k8s objects to be backed up and restored <br/> *(install if deployment provides critical data or must maintain state)* |
 | Identity and Authorization | Provides authentication and authorization functionality <br/>*(install if deployment requires an auth mechanism (i.e. direct user login))*  |
-| Logging                    | Provides backend log storage and log shipping capabilities <br/> *(required for all "UDS" deployments)* |
-| Metrics Server††           | Provides metrics collection capabilities (req of UDS Runtime) <br/> *(required for all "UDS" deployments)* |
-| Base                       | Provides the base for all other functional layers <br/> *(required for all "UDS" deployments and all other functional layers)* |
+| Logging🟄                   | Provides backend log storage and log shipping capabilities <br/> *(install if the deployment requires log aggregation and shipping)* |
+| Metrics Server††🟄          | Provides metrics collection capabilities (req of UDS Runtime) <br/> *(install if the cluster does not provide its own metrics server)* |
+| Base🟄                      | Provides the base for all other functional layers <br/> *(required for all "UDS" deployments and all other functional layers)* |
 | **UDS Core Pre-Requisites**‡ |
 | UDS Package Minio Operator | Provides storage for Loki (Logging) and Velero (Backup and Restore) <br/> *(install after core base but before logging/backup and restore if selected)* |
 | UDS Package MetalLB        | Provides a simple LoadBalancer implementation <br/> *(install after Zarf init and before UDS Core Base)* |
