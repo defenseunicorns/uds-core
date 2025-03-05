@@ -43,7 +43,7 @@ spec:
     - hosts:
         - "{{ $domain }}"
       port:
-        name: "http-root-{{ $name }}"
+        name: "http-root-domain"
         number: 80
         protocol: HTTP
       tls:
@@ -51,7 +51,7 @@ spec:
     - hosts:
         - "{{ $domain }}"
       port:
-        name: "https-root-{{ $name }}"
+        name: "https-root-domain"
         number: 443
         protocol: HTTPS
       tls:
