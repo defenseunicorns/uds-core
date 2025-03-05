@@ -15,7 +15,7 @@ variable "vpc_name" {
 variable "subnet_name" {
   type        = string
   description = "Name of subnet tobrew install libtool use for testing. Can use a wildcard as long as it only matches one subnet per az."
-  default     = "uds-ci-commercial-*-public*"
+  default     = "uds-vpc-public*"
 }
 
 variable "region" {
