@@ -39,4 +39,27 @@ spec:
         minProtocolVersion: {{ if $.Values.tls.supportTLSV1_2 }}TLSV1_2{{ else }}TLSV1_3{{ end }}
         {{- end }}
     {{ end }}
+    {{- if .Values.enableRootDomain }}
+    - hosts:
+        - "{{ $domain }}"
+      port:
+        name: "http-root-{{ $name }}"
+        number: 80
+        protocol: HTTP
+      tls:
+        httpsRedirect: true
+    - hosts:
+        - "{{ $domain }}"
+      port:
+        name: "https-root-{{ $name }}"
+        number: 443
+        protocol: HTTPS
+      tls:
+        mode: {{ .Values.rootDomainTLS.mode | default "SIMPLE" }}
+        {{- if ne (.Values.rootDomainTLS.mode | default "SIMPLE") "PASSTHROUGH" }}
+        credentialName: {{ .Values.rootDomainTLS.credentialName | default "root-domain-tls" | quote }}
+        # if supportTLSV1_2 is both defined and true, use TLSV1_2, otherwise use TLSV1_3
+        minProtocolVersion: {{ if .Values.rootDomainTLS.supportTLSV1_2 }}TLSV1_2{{ else }}TLSV1_3{{ end }}
+        {{- end }}
+    {{- end }}
 {{ end }}
