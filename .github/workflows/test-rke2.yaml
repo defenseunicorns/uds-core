@@ -35,6 +35,7 @@ jobs:
       UDS_PERMISSIONS_BOUNDARY_NAME: ${{ secrets.PERMISSIONS_BOUNDARY_NAME }}
       UDS_STATE_BUCKET_NAME: uds-tf-state-20250305185900362500000001
       UDS_STATE_DYNAMODB_TABLE_NAME: uds-tf-state-lock
+      UDS_IMAGES_AWS_ACCOUNT_ID: ${{ secrets.UDS_IMAGES_AWS_ACCOUNT_ID }}
     steps:
       - name: Set ENV
         run: |
@@ -44,6 +45,7 @@ jobs:
           echo "TF_VAR_run_id=$GITHUB_RUN_ID" >> $GITHUB_ENV
           echo "TF_VAR_use_permissions_boundary=true" >> $GITHUB_ENV
           echo "TF_VAR_permissions_boundary_name=${UDS_PERMISSIONS_BOUNDARY_NAME}" >> $GITHUB_ENV
+          echo "TF_VAR_uds_images_aws_account_id=${UDS_IMAGES_AWS_ACCOUNT_ID}" >> $GITHUB_ENV
 
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4

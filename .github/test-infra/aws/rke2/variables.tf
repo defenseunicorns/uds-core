@@ -9,7 +9,7 @@ variable "environment" {
 variable "vpc_name" {
   type        = string
   description = "VPC ID to deploy into"
-  default     = "uds-ci-commercial-*"
+  default     = "uds-vpc"
 }
 
 variable "subnet_name" {
@@ -106,4 +106,9 @@ variable "client_id_list" {
 
 variable "run_id" {
   description = "Github Actions Run ID. Used to tag AWS resources that are created by this workspace."
+}
+
+variable "uds_images_aws_account_id" {
+  description = "The AWS Account ID for uds-images that the RKE2 amis are published to"
+  type        = string
 }
