@@ -103,6 +103,14 @@ uds zarf package deploy uds-core --set CNI_CONF_DIR=/etc/cni/net.d --set CNI_BIN
 
 If you are using Cilium you will also need to make some additional configuration changes and add a cluster wide network policy to prevent Cilium's CNI from interfering with the Istio CNI plugin (part of the ambient stack). See the [upstream documentation](https://istio.io/latest/docs/ambient/install/platform-prerequisites/#cilium) for these required changes.
 
+#### Keycloak
+
+It has been reported that some version of Keycloak crash on Apple M4 Macbooks (the issue is tracked by [#1309](https://github.com/defenseunicorns/uds-core/issues/1309)). In order to apply a workaround, you have to override the `KEYCLOAK_HEAP_OPTIONS` variable and apply the `-XX:UseSVE=0 -XX:MaxRAMPercentage=70 -XX:MinRAMPercentage=70 -XX:InitialRAMPercentage=50 -XX:MaxRAM=1G` value, for example:
+
+```bash
+uds deploy k3d-core-slim-dev:0.37.0 --set KEYCLOAK_HEAP_OPTIONS="-XX:UseSVE=0 -XX:MaxRAMPercentage=70 -XX:MinRAMPercentage=70 -XX:InitialRAMPercentage=50 -XX:MaxRAM=1G" --confirm
+```
+
 #### NeuVector
 
 NeuVector historically has functioned best when the host is using cgroup v2. Cgroup v2 is enabled by default on many modern Linux distributions, but you may need to enable it depending on your operating system. Enabling this tends to be OS specific, so you will need to evaluate this for your specific hosts.
