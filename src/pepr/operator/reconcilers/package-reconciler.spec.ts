@@ -10,6 +10,7 @@ import { writeEvent } from ".";
 import { cleanupNamespace } from "../controllers/istio/injection";
 import { purgeAuthserviceClients } from "../controllers/keycloak/authservice/authservice";
 import { purgeSSOClients } from "../controllers/keycloak/client-sync";
+import { retryWithDelay } from "../controllers/utils";
 import { Phase, UDSPackage } from "../crd";
 import { packageFinalizer, packageReconciler } from "./package-reconciler";
 
@@ -112,18 +113,36 @@ describe("finalizer", () => {
   test("should not remove the finalizer for pending packages", async () => {
     mockPackage.status = { phase: Phase.Pending };
     const finalizerRemoved = await packageFinalizer(mockPackage);
+    // Assert that we didn't try to cleanup anything
+    expect(retryWithDelay).not.toHaveBeenCalled();
+    expect(mockCleanupNamespace).not.toHaveBeenCalled();
+    expect(mockPurgeSSO).not.toHaveBeenCalled();
+    expect(mockPurgeAuthservice).not.toHaveBeenCalled();
+    // Assert that the finalizer was not removed
     expect(finalizerRemoved).toEqual(false);
   });
 
   test("should not remove the finalizer for removing packages", async () => {
     mockPackage.status = { phase: Phase.Removing };
     const finalizerRemoved = await packageFinalizer(mockPackage);
+    // Assert that we didn't try to cleanup anything
+    expect(retryWithDelay).not.toHaveBeenCalled();
+    expect(mockCleanupNamespace).not.toHaveBeenCalled();
+    expect(mockPurgeSSO).not.toHaveBeenCalled();
+    expect(mockPurgeAuthservice).not.toHaveBeenCalled();
+    // Assert that the finalizer was not removed
     expect(finalizerRemoved).toEqual(false);
   });
 
   test("should not remove the finalizer for removalfailed packages", async () => {
     mockPackage.status = { phase: Phase.RemovalFailed };
     const finalizerRemoved = await packageFinalizer(mockPackage);
+    // Assert that we didn't try to cleanup anything
+    expect(retryWithDelay).not.toHaveBeenCalled();
+    expect(mockCleanupNamespace).not.toHaveBeenCalled();
+    expect(mockPurgeSSO).not.toHaveBeenCalled();
+    expect(mockPurgeAuthservice).not.toHaveBeenCalled();
+    // Assert that the finalizer was not removed
     expect(finalizerRemoved).toEqual(false);
   });
 
@@ -131,6 +150,7 @@ describe("finalizer", () => {
     mockPackage.status = { phase: Phase.Ready };
     const finalizerRemoved = await packageFinalizer(mockPackage);
     expect(finalizerRemoved).toEqual(true);
+    expect(retryWithDelay).toHaveBeenCalled();
     expect(mockCleanupNamespace).toHaveBeenCalled();
     expect(mockPurgeSSO).toHaveBeenCalled();
     expect(mockPurgeAuthservice).toHaveBeenCalled();
@@ -145,6 +165,7 @@ describe("finalizer", () => {
     const finalizerRemoved = await packageFinalizer(mockPackage);
 
     expect(finalizerRemoved).toEqual(false);
+    expect(retryWithDelay).toHaveBeenCalled();
     expect(mockCleanupNamespace).toHaveBeenCalled();
     expect(mockPatchStatus).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -170,6 +191,7 @@ describe("finalizer", () => {
     const finalizerRemoved = await packageFinalizer(mockPackage);
 
     expect(finalizerRemoved).toEqual(false);
+    expect(retryWithDelay).toHaveBeenCalled();
     expect(mockCleanupNamespace).toHaveBeenCalled();
     expect(mockPurgeAuthservice).toHaveBeenCalled();
     expect(mockPatchStatus).toHaveBeenCalledWith(
@@ -196,6 +218,7 @@ describe("finalizer", () => {
     const finalizerRemoved = await packageFinalizer(mockPackage);
 
     expect(finalizerRemoved).toEqual(false);
+    expect(retryWithDelay).toHaveBeenCalled();
     expect(mockCleanupNamespace).toHaveBeenCalled();
     expect(mockPurgeAuthservice).toHaveBeenCalled();
     expect(mockPurgeSSO).toHaveBeenCalled();
