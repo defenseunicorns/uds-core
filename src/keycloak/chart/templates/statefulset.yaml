@@ -256,7 +256,7 @@ spec:
       {{- end }}
       terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
       volumes:
-        - name: providers-secret
+        - name: client-secrets
           secret:
             secretName: {{ include "keycloak.fullname" . }}-client-secrets
         - name: providers
