@@ -26,6 +26,7 @@ tasks:
     inputs:
       architecture:
         description: "System architecture that the test-apps package should be built for."
+        default: ${UDS_ARCH}
 
     actions:
       - description: Create zarf package for the test resources
