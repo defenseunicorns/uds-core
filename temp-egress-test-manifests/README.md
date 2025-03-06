@@ -16,87 +16,53 @@ npx pepr deploy
 uds run dev-deploy --set LAYER=identity-authorization
 ```
 
-## Basic Egress Gateway
+## Add everything to the egress gateway namespace - same hosts allowed
 
-Simple egress gateway that allows traffic to httpbin.org, but only via https, from curl1 app.
+This sets up the resources (Gateway, VirtualService, and DestinationRule) in the egress gateway namespace, but the ServiceEntry in the package's namespace. This is to validate behavior when these resources are in a common namespace.
 
-1. Deploy curl workloads: `kubectl apply -f ./basic-egress-gateway/pkg.yaml`
-    * Test access to httpbin.org is blocked from the curl pod
-    ```
-    /home/curl_user $ curl -o /dev/null -s -w "%{http_code}\n" https://httpbin.org/headers
-    000
-    ```
-    * egress-resources contains the egress-related Istio resources, include netpol
+1. Deploy pkgs and egress resources in `global-ns-same-host`
+  * Test curl1 can access example.com
+  ```
+  curl https://example.com
+  ```
+  * Test curl2 can access example.com
+  ```
+  curl https://example.com
+  ```
 
-2. Deploy egress-resources (egress gateway, service entry, virtual service, destination rule and network policy): `kubectl apply -f ./basic-egress-gateway/egress-resources.yaml`
-    * Test access to httpbin.org is allowed from the curl pod
-    ```
-    /home/curl_user $ curl -o /dev/null -s -w "%{http_code}\n" https://httpbin.org/headers
-    200
-    ```
+2. Deploy the test auth policy (`test-ap.yaml`) to show that authorization policy will not match
+  * From curl1, curl https://example.com -> Error
+  * Gateway logs -> `rbac_access_denied_matched_policy[none]`
+    * The policy is not matching here due to the `from.source.namespaces` field - no tls identity provided by the source due to tls passthrough
 
-    * Test accesss to httpbin.org from http protocol - should fail as protocol not supported
-    ```
-    /home/curl_user $ curl -o /dev/null -s -w "%{http_code}\n" http://httpbin.org/headers
-    502
-    ```
+## Global Namespace, Different hosts allowed
 
-    * Test access to google - should not work, no host found
-    ```
-    /home/curl_user $ curl -o /dev/null -s -w "%{http_code}\n" https://google.com
-    000
-    ```
+This is the same example as previous, but with httpbin.org for curl2. This demonstrates that the service entry `exportTo` restriction limits the hosts that can be accessed, cross-namespace.
 
-3. From curl2 pod, test access to httpbin.org - should not work
-    ```
-    /home/curl_user $ curl -o /dev/null -s -w "%{http_code}\n" https://httpbin.org/headers
-    000
-    ```
+1. Deploy pkgs and egress resources in `global-ns-different-host`
+  * Test curl1 can access example.com
+  ```
+  curl https://example.com
+  ```
+  * Test curl1 cannot access httpbin.org
+  ```
+  curl https://httpbin.org/headers
+  ```
+  * Test vice versa is true for curl2
 
-## Test with wildcards
+## Low budget service entry registry name only - sidecar restrict egress
 
-Egress test case with wildcard sub-domain matching, "*.wikipedia.org"
+This is a "low budget" approach that essentially blocks egress via the sidecar proxy. Essentially, we use the built-in netpol generation (egress, to anywhere) but with the combination of the meshConfig settings (outboundTrafficPolicy.mode=REGISTRY_ONLY) and the service entry, this will restrict egress traffic.
 
--> Some Wildcard rules
-* Can use "*" for Gateway hosts, not VirtualService or ServiceEntry hosts
-* Can use "*.host.com" for VirtualService, not ServiceEntry hosts
-    * Need to use a valid matching host for ServiceEntry hosts, e.g., www.host.com
-
-Probably will omit wildcard usage in the egress configuration, as this gets complicated when moving to ServiceEntry.
-
-1. Deploy pkg and egress-resources: `kubectl apply -f ./wildcard/pkg.yaml && kubectl apply -f ./wildcard/egress-resources.yaml`
-    * Test access to wikipedia.org is blocked from the curl pod
-    ```
-    /home/curl_user $ curl -o /dev/null -s -w "%{http_code}\n" https://en.wikipedia.org/wiki/Main_Page
-    200
-    ```
-
-## Test blocking across namespaces
-
-Now with both the previous packages running, try to access wikipedia from curl1 pod.
-
-1. From curl1 pod, test access to wikipedia.org - should not work
-    ```
-    /home/curl_user $ curl -o /dev/null -s -w "%{http_code}\n" https://en.wikipedia.org/wiki/Main_Page
-    000
-    ```
-
-## Test with different subdomains in the same namespace
-
-Egress test case with different subdomains, "en.wikipedia.org" and "de.wikipedia.org"
-
-1. From curl1 pod (should just have access to en.wikipedia.org)
-```
-/home/curl_user $ curl -o /dev/null -s -w "%{http_code}\n" https://en.wikipedia.org/wiki/Main_Page
-200
-```
-
-## Test with different subdomains in different namespaces
-
-Egress test case with different subdomains, "en.wikipedia.org" and "de.wikipedia.org"
-
-1. From curl1 pod (should just have access to en.wikipedia.org)
-```
-/home/curl_user $ curl -o /dev/null -s -w "%{http_code}\n" https://en.wikipedia.org/wiki/Main_Page
-200
-```
+1. Deploy `low-budget/pkg-1.yaml`
+  * Test that curl1 cannot access example.com
+  ```
+  /home/curl_user $ curl https://example.com
+  curl: (35) TLS connect error: error:00000000:lib(0)::reason(0)
+  ```
+2. Deploy `low-budget/service-entry.yaml`
+  * Test that curl1 can now access example.com
+  ```
+  /home/curl_user $ curl https://example.com
+  <response>
+  ```

@@ -1,9 +1,29 @@
-# Add the gateway, service entry, destination rule, and virtual service
+apiVersion: networking.istio.io/v1
+kind: ServiceEntry
+metadata:
+  name: service-entry-1
+  namespace: ns-1
+spec:
+  location: MESH_EXTERNAL
+  hosts:
+  - example.com
+  ports: 
+  - number: 443
+    name: tls
+    protocol: TLS
+  resolution: DNS
+  exportTo:
+    - "."
+    - "istio-egress-gateway"
+---
+# Global gateway, destination rule, virtual service
 apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
-  name: different-subdomain-gateway-1
-  namespace: different-subdomain-test
+  name: example-com-443-tls-gateway
+  namespace: istio-egress-gateway
+  annotations:
+    uds-core.pepr.dev/egress: '{"pkgs":["pkg-1"], "route": {"host": "example.com", "port": 443, "protcol": "tls"}}' 
 spec:
   selector:
     app: egressgateway
@@ -13,45 +33,34 @@ spec:
       name: tls
       protocol: TLS
     hosts:
-      - en.wikipedia.org
+      - example.com
     tls:
       mode: PASSTHROUGH
 ---
 apiVersion: networking.istio.io/v1
-kind: ServiceEntry
-metadata:
-  name: different-subdomain-service-entry-1
-  namespace: different-subdomain-test
-spec:
-  location: MESH_EXTERNAL
-  hosts:
-  - en.wikipedia.org
-  ports: 
-  - number: 443
-    name: tls
-    protocol: TLS
-  resolution: DNS
----
-apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
-  name: egressgateway-for-different-subdomain-1
-  namespace: different-subdomain-test
+  name: egressgateway-for-example-com-443-tls
+  namespace: istio-egress-gateway
+  annotations:
+    uds-core.pepr.dev/egress: '{"pkgs":["pkg-1"], "route": {"host": "example.com", "port": 443, "protcol": "tls"}}' 
 spec:
   host: egressgateway.istio-egress-gateway.svc.cluster.local
   subsets:
-    - name: different-subdomain-1
+    - name: egress-to-example-com-443-tls
 ---
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
-  name: different-subdomain-through-egress-gateway-1
-  namespace: different-subdomain-test
+  name: through-egress-gateway-1
+  namespace: istio-egress-gateway
+  annotations:
+    uds-core.pepr.dev/egress: '{"pkgs":["pkg-1"], "route": {"host": "example.com", "port": 443, "protcol": "tls"}}' 
 spec:
   hosts:
-  - en.wikipedia.org
+  - example.com
   gateways:
-  - different-subdomain-gateway-1
+  - example-com-443-tls-gateway
   - mesh
   tls:
   - match:
@@ -59,22 +68,22 @@ spec:
       - mesh
       port: 443
       sniHosts:
-      - en.wikipedia.org
+      - example.com
     route:
     - destination:
         host: egressgateway.istio-egress-gateway.svc.cluster.local
-        subset: different-subdomain-1
+        subset: egress-to-example-com-443-tls
         port:
           number: 443
   - match:
     - gateways:
-      - different-subdomain-gateway-1
+      - example-com-443-tls-gateway
       port: 443
       sniHosts:
-      - en.wikipedia.org
+      - example.com
     route:
     - destination:
-        host: en.wikipedia.org
+        host: example.com
         port:
           number: 443
 ---
@@ -82,7 +91,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: allow-egress-gateway-access-1
-  namespace: different-subdomain-test
+  namespace: ns-1
 spec:
   podSelector: 
     matchLabels:

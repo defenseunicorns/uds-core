@@ -2,8 +2,8 @@
 apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
-  name: different-subdomain-gateway-2
-  namespace: different-subdomain-test
+  name: gateway-2
+  namespace: ns-2
 spec:
   selector:
     app: egressgateway
@@ -13,19 +13,19 @@ spec:
       name: tls
       protocol: TLS
     hosts:
-      - de.wikipedia.org
+      - example.com
     tls:
       mode: PASSTHROUGH
 ---
 apiVersion: networking.istio.io/v1
 kind: ServiceEntry
 metadata:
-  name: different-subdomain-service-entry-2
-  namespace: different-subdomain-test
+  name: service-entry-2
+  namespace: ns-2
 spec:
   location: MESH_EXTERNAL
   hosts:
-  - de.wikipedia.org
+  - example.com
   ports: 
   - number: 443
     name: tls
@@ -35,23 +35,23 @@ spec:
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
-  name: egressgateway-for-different-subdomain-2
-  namespace: different-subdomain-test
+  name: egressgateway-for-2
+  namespace: ns-2
 spec:
   host: egressgateway.istio-egress-gateway.svc.cluster.local
   subsets:
-    - name: different-subdomain-2
+    - name: curl-2
 ---
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
-  name: different-subdomain-through-egress-gateway-2
-  namespace: different-subdomain-test
+  name: through-egress-gateway-2
+  namespace: istio-egress-gateway
 spec:
   hosts:
-  - de.wikipedia.org
+  - example.com
   gateways:
-  - different-subdomain-gateway-2
+  - ns-2/gateway-2
   - mesh
   tls:
   - match:
@@ -59,22 +59,22 @@ spec:
       - mesh
       port: 443
       sniHosts:
-      - de.wikipedia.org
+      - example.com
     route:
     - destination:
         host: egressgateway.istio-egress-gateway.svc.cluster.local
-        subset: different-subdomain-2
+        subset: curl-2
         port:
           number: 443
   - match:
     - gateways:
-      - different-subdomain-gateway-2
+      - ns-2/gateway-2
       port: 443
       sniHosts:
-      - de.wikipedia.org
+      - example.com
     route:
     - destination:
-        host: de.wikipedia.org
+        host: example.com
         port:
           number: 443
 ---
@@ -82,7 +82,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: allow-egress-gateway-access-2
-  namespace: different-subdomain-test
+  namespace: ns-2
 spec:
   podSelector: 
     matchLabels:

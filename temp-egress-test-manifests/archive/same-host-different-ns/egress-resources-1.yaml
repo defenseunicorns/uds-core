@@ -3,7 +3,7 @@ apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
   name: different-subdomain-gateway-1
-  namespace: ns-1
+  namespace: ns-a
 spec:
   selector:
     app: egressgateway
@@ -13,7 +13,7 @@ spec:
       name: tls
       protocol: TLS
     hosts:
-      - en.wikipedia.org
+      - example.com
     tls:
       mode: PASSTHROUGH
 ---
@@ -21,11 +21,11 @@ apiVersion: networking.istio.io/v1
 kind: ServiceEntry
 metadata:
   name: different-subdomain-service-entry-1
-  namespace: ns-1
+  namespace: ns-a
 spec:
   location: MESH_EXTERNAL
   hosts:
-  - en.wikipedia.org
+  - example.com
   ports: 
   - number: 443
     name: tls
@@ -36,20 +36,20 @@ apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: egressgateway-for-different-subdomain-1
-  namespace: ns-1
+  namespace: ns-a
 spec:
   host: egressgateway.istio-egress-gateway.svc.cluster.local
   subsets:
-    - name: different-subdomain-1
+    - name: different-subdomain-a
 ---
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: different-subdomain-through-egress-gateway-1
-  namespace: ns-1
+  namespace: ns-a
 spec:
   hosts:
-  - en.wikipedia.org
+  - example.com
   gateways:
   - different-subdomain-gateway-1
   - mesh
@@ -59,11 +59,11 @@ spec:
       - mesh
       port: 443
       sniHosts:
-      - en.wikipedia.org
+      - example.com
     route:
     - destination:
         host: egressgateway.istio-egress-gateway.svc.cluster.local
-        subset: different-subdomain-1
+        subset: different-subdomain-a
         port:
           number: 443
   - match:
@@ -71,10 +71,10 @@ spec:
       - different-subdomain-gateway-1
       port: 443
       sniHosts:
-      - en.wikipedia.org
+      - example.com
     route:
     - destination:
-        host: en.wikipedia.org
+        host: example.com
         port:
           number: 443
 ---
@@ -82,7 +82,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: allow-egress-gateway-access-1
-  namespace: ns-1
+  namespace: ns-a
 spec:
   podSelector: 
     matchLabels:
