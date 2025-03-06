@@ -15,6 +15,7 @@ spec:
        - RestrictCapabilities # CNI plugin requires NET_ADMIN, NET_RAW, SYS_PTRACE, SYS_ADMIN, and DAC_OVERRIDE capabilities
        - RestrictHostPathWrite # CNI plugin requires access to write to CNI
        - RestrictHostPorts # CNI plugin requires access to host ports
+       - RestrictSELinuxType # CNI plugin requires spc_t SELinux type when running in SELinux-enforcing environments
      matcher:
        namespace: istio-system
        kind: pod
@@ -27,6 +28,7 @@ spec:
        - RestrictVolumeTypes # ztunnel uses 'hostPath' volume type
        - RestrictCapabilities # ztunnel requires NET_ADMIN, NET_RAW, and SYS_ADMIN capabilities
        - RestrictHostPathWrite # ztunnel requires access to write to CNI
+       - RestrictSELinuxType # ztunnel requires spc_t SELinux type when running in SELinux-enforcing environments
      matcher:
        namespace: istio-system
        kind: pod
