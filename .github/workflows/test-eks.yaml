@@ -33,8 +33,8 @@ jobs:
       UDS_REGION: us-west-2
       UDS_PERMISSIONS_BOUNDARY_ARN: ${{ secrets.PERMISSIONS_BOUNDARY_ARN }}
       UDS_PERMISSIONS_BOUNDARY_NAME: ${{ secrets.PERMISSIONS_BOUNDARY_NAME }}
-      UDS_STATE_BUCKET_NAME: uds-aws-ci-commercial-us-west-2-5246-tfstate
-      UDS_STATE_DYNAMODB_TABLE_NAME: uds-aws-ci-commercial-org-us-west-2-5246-tfstate-lock
+      UDS_STATE_BUCKET_NAME: uds-tf-state-20250305185900362500000001
+      UDS_STATE_DYNAMODB_TABLE_NAME: uds-tf-state-lock
     steps:
       - name: Set ENV
         run: |
@@ -58,7 +58,7 @@ jobs:
           role-to-assume: ${{ secrets.AWS_COMMERCIAL_ROLE_TO_ASSUME }}
           role-session-name: ${{ github.job || github.event.client_payload.pull_request.head.sha || github.sha }}
           aws-region: ${{ env.UDS_REGION }}
-          role-duration-seconds: 21600
+          role-duration-seconds: 7200
 
       - name: Environment setup
         uses: ./.github/actions/setup
