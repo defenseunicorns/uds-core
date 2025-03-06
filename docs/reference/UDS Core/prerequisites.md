@@ -105,10 +105,9 @@ If you are using Cilium you will also need to make some additional configuration
 
 #### Keycloak
 
-
 It has been reported that some versions of Keycloak crash on Apple M4 Macbooks (the issue is tracked by [#1309](https://github.com/defenseunicorns/uds-core/issues/1309)). In order to apply a workaround for both [`K3d Slim Dev`](https://github.com/defenseunicorns/uds-core/tree/main/bundles/k3d-slim-dev) and [`k3d Core`](https://github.com/defenseunicorns/uds-core/tree/main/bundles/k3d-standard) bundles, you have to override the `KEYCLOAK_HEAP_OPTIONS` variable and apply the `-XX:UseSVE=0 -XX:MaxRAMPercentage=70 -XX:MinRAMPercentage=70 -XX:InitialRAMPercentage=50 -XX:MaxRAM=1G` value, for example:
 
-```bash
+```console
 uds deploy k3d-core-slim-dev:0.37.0 --set KEYCLOAK_HEAP_OPTIONS="-XX:UseSVE=0 -XX:MaxRAMPercentage=70 -XX:MinRAMPercentage=70 -XX:InitialRAMPercentage=50 -XX:MaxRAM=1G" --confirm
 ```
 
