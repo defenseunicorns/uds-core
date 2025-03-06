@@ -22,7 +22,7 @@ In this section, we will configure Application Registrations for each Keycloak r
 1. Under "Redirect URI", select "Web" from the drop down menu and then input the following as the URL: `https://keycloak.<admin_domain>/realms/master/broker/azure-saml/endpoint`.
 1. Click "Register" when done.
 
-![Creating Master Realm App Registration](https://github.com/defenseunicorns/uds-core/blob/1282-SSO_docs_refactoring/docs/.images/sso/azure-idp-create-app-master.jpg?raw=true)
+![Creating Master Realm App Registration](https://github.com/defenseunicorns/uds-core/blob/main/docs/.images/sso/azure-idp-create-app-master.jpg?raw=true)
 
 Once created, you will be directed to your application's configuration page in Entra ID. Follow the steps below to configure the App Registration:
 1. On the left-hand side, navigate to "Manage" > "Token configuration". Here you will need to add the following as "Optional claims":
@@ -40,7 +40,7 @@ Once created, you will be directed to your application's configuration page in E
     1. Select "All groups" under "Select group types to include in Access, ID, and SAML tokens." Accept the default values for the rest.
     1. Click "Add" when done.
 
-![Token Configuration](https://github.com/defenseunicorns/uds-core/blob/1282-SSO_docs_refactoring/docs/.images/sso/azure-idp-token-configuration.jpg?raw=true)
+![Token Configuration](https://github.com/defenseunicorns/uds-core/blob/main/docs/.images/sso/azure-idp-token-configuration.jpg?raw=true)
 
 1. Next, Navigate to "Expose an API" under "Manage"
 1. On the top of the page, you will see "Application ID URI". Click "Add".
