@@ -31,11 +31,12 @@ jobs:
     env:
       SHA: ${{ github.sha }}
       UDS_REGION: us-gov-west-1
-      UDS_PERMISSIONS_BOUNDARY_ARN: ${{ secrets.PERMISSIONS_BOUNDARY_ARN }}
+      UDS_PERMISSIONS_BOUNDARY_ARN: ${{ secrets.GOV_PERMISSIONS_BOUNDARY_ARN }}
       UDS_PERMISSIONS_BOUNDARY_NAME: ${{ secrets.PERMISSIONS_BOUNDARY_NAME }}
-      UDS_STATE_BUCKET_NAME: uds-tf-state-20250305185903808500000001
+      # UDS_STATE_BUCKET_NAME: uds-tf-state-20250305185900362500000001 # commercial
+      UDS_STATE_BUCKET_NAME: uds-tf-state-20250305185903808500000001 # govcloud
       UDS_STATE_DYNAMODB_TABLE_NAME: uds-tf-state-lock
-      UDS_IMAGES_AWS_ACCOUNT_ID: ${{ secrets.UDS_IMAGES_AWS_ACCOUNT_ID }}
+      UDS_IMAGES_AWS_ACCOUNT_ID: ${{ secrets.GOV_UDS_IMAGES_AWS_ACCOUNT_ID }}
     steps:
       - name: Set ENV
         run: |
