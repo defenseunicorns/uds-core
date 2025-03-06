@@ -1,0 +1,40 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-egress-gateway-access-2
+  namespace: ns-2
+spec:
+  podSelector: 
+    matchLabels:
+      app: curl2
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: istio-egress-gateway
+      podSelector:
+        matchLabels:
+          app: egressgateway
+    ports:
+    - protocol: TCP
+      port: 443
+---
+apiVersion: networking.istio.io/v1
+kind: ServiceEntry
+metadata:
+  name: service-entry-2
+  namespace: ns-2
+spec:
+  location: MESH_EXTERNAL
+  hosts:
+  - example.com
+  ports: 
+  - number: 443
+    name: tls
+    protocol: TLS
+  resolution: DNS
+  exportTo:
+    - "."
+    - "istio-egress-gateway"
