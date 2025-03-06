@@ -21,5 +21,6 @@ data "aws_subnet" "rke2_ci_subnet" {
 data "aws_ami" "rhel_rke2" {
   most_recent = true
   name_regex  = "^uds-rhel-rke2-v${var.rke2_version}"
-  owners      = ["self"]
+  owners      = [var.uds_images_aws_account_id]
 }
+

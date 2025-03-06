@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.37.0](https://github.com/defenseunicorns/uds-core/compare/v0.36.2...v0.37.0) (2025-03-03)
+
+
+### Features
+
+* kstatus for Pepr ([#1288](https://github.com/defenseunicorns/uds-core/issues/1288)) ([c1b78d2](https://github.com/defenseunicorns/uds-core/commit/c1b78d2ac9f8415526b9289fec4e578d01b17298))
+* new bundle variable - KEYCLOAK_HEAP_OPTIONS ([#1314](https://github.com/defenseunicorns/uds-core/issues/1314)) ([f7e0ebb](https://github.com/defenseunicorns/uds-core/commit/f7e0ebb476ef524ba3773d1c5f2bde8c28b7d8ea))
+
+
+### Miscellaneous
+
+* **deps:** update grafana ([#1285](https://github.com/defenseunicorns/uds-core/issues/1285)) ([ffda059](https://github.com/defenseunicorns/uds-core/commit/ffda05948b772601b22d6cffd1f379f681320629))
+* **deps:** update jest to v29.2.6 ([#1313](https://github.com/defenseunicorns/uds-core/issues/1313)) ([d30c6c7](https://github.com/defenseunicorns/uds-core/commit/d30c6c79b183bf2a9696780431d2e0ff27792b91))
+* **deps:** update keycloak to v26.1.3 ([#1326](https://github.com/defenseunicorns/uds-core/issues/1326)) ([691eebe](https://github.com/defenseunicorns/uds-core/commit/691eebe3eeb448c40a5065f2570585ddb0a2a213))
+* **deps:** update loki ([#1272](https://github.com/defenseunicorns/uds-core/issues/1272)) ([54b2cfc](https://github.com/defenseunicorns/uds-core/commit/54b2cfc44d5649c407de11f20f59ef9efd276302))
+* **deps:** update prometheus to 3.2.0, prometheus-operator to 0.80.1 ([#1262](https://github.com/defenseunicorns/uds-core/issues/1262)) ([d1c6c3c](https://github.com/defenseunicorns/uds-core/commit/d1c6c3c8d7f8659b20d21653782fda0ed9be4c31))
+* **deps:** update prometheus to v3.2.1 ([#1321](https://github.com/defenseunicorns/uds-core/issues/1321)) ([e1ee576](https://github.com/defenseunicorns/uds-core/commit/e1ee576bf465c19d67848759ba7cdeddcc0be0eb))
+* **deps:** update support-deps ([#1289](https://github.com/defenseunicorns/uds-core/issues/1289)) ([73f5de2](https://github.com/defenseunicorns/uds-core/commit/73f5de28c3cde2b65dfcba58b7f167c9d941aacc))
+* **deps:** update support-deps ([#1323](https://github.com/defenseunicorns/uds-core/issues/1323)) ([2822097](https://github.com/defenseunicorns/uds-core/commit/28220972fba6d27158d468239a2859b7cadadf50))
+* **deps:** update vector to 0.45.0 ([#1316](https://github.com/defenseunicorns/uds-core/issues/1316)) ([c66e807](https://github.com/defenseunicorns/uds-core/commit/c66e807eeb6b9c1bbe683a18cd647fb1f195a364))
+* enable ambient component for rke2/aks ci ([#1322](https://github.com/defenseunicorns/uds-core/issues/1322)) ([c280b03](https://github.com/defenseunicorns/uds-core/commit/c280b03fa9153b0345d00e74c2385e57db21df57))
+* switch to azure gov account ([#1318](https://github.com/defenseunicorns/uds-core/issues/1318)) ([31ec997](https://github.com/defenseunicorns/uds-core/commit/31ec997156305db90538169093a77bcf69e64a89))
+
 ## [0.36.2](https://github.com/defenseunicorns/uds-core/compare/v0.36.1...v0.36.2) (2025-02-21)
 
 

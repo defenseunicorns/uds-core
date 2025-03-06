@@ -1,0 +1,6 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# SELinux enforcing environments require the spc_t SELinux type
+seLinuxOptions:
+  type: spc_t
