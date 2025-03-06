@@ -69,7 +69,7 @@ tasks:
   #   actions:
   #     - description: Update Core DNS Helm Release to use Custom ConfigMap
   #       cmd: |
-          
+
   - name: coredns-setup
     actions:
       - description: Setup Custom ConfigMap for Core DNS
