@@ -30,7 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       SHA: ${{ github.sha }}
-      UDS_REGION: us-west-2
+      UDS_REGION: us-gov-west-1
       UDS_PERMISSIONS_BOUNDARY_ARN: ${{ secrets.PERMISSIONS_BOUNDARY_ARN }}
       UDS_PERMISSIONS_BOUNDARY_NAME: ${{ secrets.PERMISSIONS_BOUNDARY_NAME }}
       UDS_STATE_BUCKET_NAME: uds-tf-state-20250305185900362500000001

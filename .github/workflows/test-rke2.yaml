@@ -30,7 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       SHA: ${{ github.sha }}
-      UDS_REGION: us-west-2
+      UDS_REGION: us-gov-west-1
       UDS_PERMISSIONS_BOUNDARY_ARN: ${{ secrets.PERMISSIONS_BOUNDARY_ARN }}
       UDS_PERMISSIONS_BOUNDARY_NAME: ${{ secrets.PERMISSIONS_BOUNDARY_NAME }}
       UDS_STATE_BUCKET_NAME: uds-tf-state-20250305185900362500000001
@@ -69,9 +69,6 @@ jobs:
           registry1Password: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
           ghToken: ${{ secrets.GITHUB_TOKEN }}
           chainguardIdentity: ${{ secrets.CHAINGUARD_IDENTITY }}
-
-      # - name: Install eksctl
-      #   run: uds run -f tasks/iac.yaml install-eksctl --no-progress
 
       - name: Setup Tofu
         uses: opentofu/setup-opentofu@592200bd4b9bbf4772ace78f887668b1aee8f716 # v1.0.5
