@@ -105,10 +105,31 @@ If you are using Cilium you will also need to make some additional configuration
 
 #### Keycloak
 
-It has been reported that some version of Keycloak crash on Apple M4 Macbooks (the issue is tracked by [#1309](https://github.com/defenseunicorns/uds-core/issues/1309)). In order to apply a workaround, you have to override the `KEYCLOAK_HEAP_OPTIONS` variable and apply the `-XX:UseSVE=0 -XX:MaxRAMPercentage=70 -XX:MinRAMPercentage=70 -XX:InitialRAMPercentage=50 -XX:MaxRAM=1G` value, for example:
+It has been reported that some version of Keycloak crash on Apple M4 Macbooks (the issue is tracked by [#1309](https://github.com/defenseunicorns/uds-core/issues/1309)). In order to apply a workaround for both [`K3d Slim Dev`](https://github.com/defenseunicorns/uds-core/tree/main/bundles/k3d-slim-dev) and [`k3d Core`](https://github.com/defenseunicorns/uds-core/tree/main/bundles/k3d-standard) bundles, you have to override the `KEYCLOAK_HEAP_OPTIONS` variable and apply the `-XX:UseSVE=0 -XX:MaxRAMPercentage=70 -XX:MinRAMPercentage=70 -XX:InitialRAMPercentage=50 -XX:MaxRAM=1G` value, for example:
 
 ```bash
 uds deploy k3d-core-slim-dev:0.37.0 --set KEYCLOAK_HEAP_OPTIONS="-XX:UseSVE=0 -XX:MaxRAMPercentage=70 -XX:MinRAMPercentage=70 -XX:InitialRAMPercentage=50 -XX:MaxRAM=1G" --confirm
+```
+
+Similar overrides might be applied to the UDS Bundle overrides section. Please note that `-XX:MaxRAM` should be equal to the memory limits as this workaround leverages a very similar approach to overriding Keycloak Java Heap settings. Here's an example:
+
+```yaml
+packages:
+  - name: core
+    repository: oci://ghcr.io/defenseunicorns/packages/uds/core
+    ref: x.x.x
+    overrides:
+      keycloak:
+        keycloak:
+          values:
+            # Override Java memory settings
+            - path: env
+              value:
+                - name: JAVA_OPTS_KC_HEAP
+                  value: "-XX:UseSVE=0 -XX:MaxRAMPercentage=70 -XX:MinRAMPercentage=70 -XX:InitialRAMPercentage=50 -XX:MaxRAM=2G"
+            # Override limits - both figures need to match!
+            - path: resources.limits.memory
+              value: "2Gi"
 ```
 
 #### NeuVector
