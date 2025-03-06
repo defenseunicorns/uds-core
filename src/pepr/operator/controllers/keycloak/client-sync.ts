@@ -10,6 +10,7 @@ import { Store } from "../../common";
 import { Sso, UDSPackage } from "../../crd";
 import { getOwnerRef, purgeOrphans, retryWithDelay, sanitizeResourceName } from "../utils";
 import { Client, clientKeys } from "./types";
+import { DynamicClientRegistrationClient } from "./keycloak-client";
 
 let apiURL =
   "http://keycloak-http.keycloak.svc.cluster.local:8080/realms/uds/clients-registrations/default";
@@ -20,6 +21,8 @@ const samlDescriptorUrl =
 if (process.env.PEPR_MODE === "dev") {
   apiURL = "http://localhost:8080/realms/uds/clients-registrations/default";
 }
+
+const dynamicClientRegistrationClient = new DynamicClientRegistrationClient(apiURL);
 
 // Template regex to match clientField() references, see https://regex101.com/r/e41Dsk/3 for details
 const secretTemplateRegex = new RegExp(
@@ -80,14 +83,20 @@ export async function purgeSSOClients(pkg: UDSPackage, newClients: string[] = []
   const currentClients = pkg.status?.ssoClients || [];
   const toRemove = currentClients.filter(client => !newClients.includes(client));
   for (const ref of toRemove) {
-    const storeKey = `sso-client-${ref}`;
-    const token = Store.getItem(storeKey);
-    if (token) {
-      await apiCall({ clientId: ref }, "DELETE", token);
-      await Store.removeItemAndWait(storeKey);
-    } else {
-      log.warn(pkg.metadata, `Failed to remove client ${ref}, token not found`);
+    // const storeKey = `sso-client-${ref}`;
+    // const token = Store.getItem(storeKey);
+    // if (token) {
+      // await apiCall({ clientId: ref }, "DELETE", token);
+      // await Store.removeItemAndWait(storeKey);
+
+    try {
+      await dynamicClientRegistrationClient.delete({ clientId: ref });
+    } catch (err) {
+      log.warn(pkg.metadata, `Failed to remove client ${ref}, package ${pkg.metadata?.namespace}/${pkg.metadata?.name}. Error: ${err.message}`)
     }
+    // } else {
+    //   log.warn(pkg.metadata, `Failed to remove client ${ref}, token not found`);
+    // }
   }
 }
 
