@@ -132,3 +132,29 @@ packages:
             - path: tls.credentialName
               value: tenant-gateway-tls-secret # Reference to the Kubernetes secret for the tenant gateway's TLS certificate
 ```
+
+### Apex (Root) Domain Configuration
+By default, the UDS Core Gateways are configured with wildcard hosts (for example, `*.uds.dev`), which match only subdomains (such as `demo.uds.dev` or `keycloak.admin.uds.dev`). The apex domain (i.e. `uds.dev`) is not covered by a wildcard. This is important if you need an application to be accessible at the root of your domain.
+
+To support this use case, UDS Core provides an optional configuration to enable a dedicated server block for the apex domain. When enabled, two additional server blocks are added to your Istio Gateway:
+- HTTP on port 80: Redirects traffic to HTTPS.
+- HTTPS on port 443: Terminates TLS using settings from the rootDomainTLS section.
+
+For example, if you want your application to be reachable at `https://uds.dev`, you would enable the apex domain by setting the appropriate flags in your values file:
+```yaml
+# Enable apex (root) domain configuration. When true, the Gateway creates dedicated server blocks
+# for the apex domain (e.g. uds.dev). This is required because wildcard hosts (e.g. *.uds.dev) do not match the apex.
+enableRootDomain: true
+
+# TLS configuration for the apex (root) domain. The values below configure the TLS mode and certificate data.
+rootDomainTLS:
+  mode: SIMPLE                        # TLS mode (e.g., SIMPLE, MUTUAL). Default is SIMPLE.
+  credentialName: ""                  # Specify a TLS secret name if pre-created. Set to "" to auto-create using the cert data.
+  supportTLSV1_2: true                # Set to true to support TLS 1.2, or false to enforce TLS 1.3 only.
+  cert: "BASE64_ENCODED_CERTIFICATE"  # Base64-encoded certificate data. For self-signed certs, cert and cacert are typically the same.
+  key: "BASE64_ENCODED_PRIVATE_KEY"   # Base64-encoded private key.
+  cacert: "BASE64_ENCODED_CERTIFICATE"  # Base64-encoded CA certificate (use the same as cert for self-signed).
+```
+:::note
+- If you provide a non-empty value for credentialName, UDS Core assumes that you have pre-created the Kubernetes secret and will not auto-generate it using the certificate data.
+:::
