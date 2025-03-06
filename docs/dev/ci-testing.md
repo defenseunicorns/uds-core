@@ -9,7 +9,9 @@ Within UDS Core there are a number of pipelines we run for different types of te
 - Where: Tests are run on a variety of cluster types and sometimes cloud providers
 - What: Tests may have different configurations of Core to validate
 
-Note that all tests are run before release (on the release-please PR) to ensure we validate Core in all situations before a release.
+All tests are run before release (on the release-please PR) to ensure we validate Core in all situations before a release. Since release PRs are opened by github-actions, pipelines are not automatically run and must be kicked off by adding a milestone to the PR.
+
+On PRs opened by [Renovate](https://github.com/renovatebot/renovate), pipelines are not run until the `renovate-ready` label is added to the PR. This is primarily done to prevent excessive CI churn before images are up to date.
 
 ### "Full Core" Install
 
@@ -58,6 +60,8 @@ Core Pipelines include two types of testing, separated to provide faster feedbac
 ### Smoke Tests
 
 UDS Core maintains a suite of extremely lightweight smoke tests for each application in the platform. These tests are all found under the `validate` task name in `src/<pkg>/tasks.yaml`. Typically these will check pod readiness/health as well as basic endpoint validation.
+
+As part of the `validate` tasks we also run testing against our UDS Operator and Policies (`src/pepr`). Tests here are run with Jest and can be found in the individual `*.spec.ts` files in the code. Most of this testing is unit testing with mocks as necessary, but the full suite of testing does require a live cluster with Pepr's webhooks deployed (specifically for the policy tests).
 
 ### Functionality Tests
 
