@@ -1,0 +1,17 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+{{- $rootTls := .Values.rootDomainTLS }}
+{{ if and $rootTls.cert (not $rootTls.credentialName) }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: root-domain-tls
+  namespace: {{ .Release.Namespace }}
+data:
+  tls.crt: {{ $rootTls.cert }}
+  tls.key: {{ $rootTls.key }}
+  cacert: {{ $rootTls.cacert }}
+type: kubernetes.io/tls
+---
+{{ end }}
