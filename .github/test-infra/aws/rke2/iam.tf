@@ -78,7 +78,7 @@ data "aws_iam_policy_document" "aws_ccm" {
 }
 
 data "http" "aws-lb-controller-iam" {
-  url = "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.11.0/docs/install/iam_policy.json"
+  url = "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.11.0/docs/install/iam_policy_us-gov.json"
 }
 
 resource "aws_iam_role_policy" "aws-lb-controller" {
