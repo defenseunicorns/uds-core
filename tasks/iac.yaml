@@ -131,7 +131,8 @@ tasks:
             fi
           done
           #uds zarf tools kubectl apply -f ./metallb.yaml
-      - task: util:coredns-setup
+      - task: util:rke2-coredns-setup
+      - task: util:rke2-allow-prom-kube-dns
         dir: .github/test-infra/aws/rke2/
         maxTotalSeconds: 600
 
