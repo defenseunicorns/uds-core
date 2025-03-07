@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.38.0](https://github.com/defenseunicorns/uds-core/compare/v0.37.0...v0.38.0) (2025-03-07)
+
+
+### Features
+
+* add status for removing / removalfailed ([#1334](https://github.com/defenseunicorns/uds-core/issues/1334)) ([a99b408](https://github.com/defenseunicorns/uds-core/commit/a99b4084c592a5b2177c56ad12ab62368e759ee4))
+* document workaround for Keycloak and Apple M4 Macs ([#1337](https://github.com/defenseunicorns/uds-core/issues/1337)) ([ae51155](https://github.com/defenseunicorns/uds-core/commit/ae51155f304d2278be3d4ff8dc36ead3a1586128))
+* sso doc restructure ([#1293](https://github.com/defenseunicorns/uds-core/issues/1293)) ([3c934a0](https://github.com/defenseunicorns/uds-core/commit/3c934a00435d1a1aae76a71c1093647f7940971c))
+
+
+### Miscellaneous
+
+* **ci:** swap to govcloud for aws ci tests ([#1342](https://github.com/defenseunicorns/uds-core/issues/1342)) ([d51db55](https://github.com/defenseunicorns/uds-core/commit/d51db5599c1fae89a76c667abfa74c77cb94321b))
+* **ci:** swap to new aws account for rke/eks tests ([#1339](https://github.com/defenseunicorns/uds-core/issues/1339)) ([3b6fb50](https://github.com/defenseunicorns/uds-core/commit/3b6fb50022e396f04a3c821a1aceb3ec2eb1c21b))
+* **deps:** update support dependencies to v4.1.5 ([#1340](https://github.com/defenseunicorns/uds-core/issues/1340)) ([0714b05](https://github.com/defenseunicorns/uds-core/commit/0714b0554d05247a61f722a36d80687b4da294aa))
+* **deps:** update support-deps ([#1332](https://github.com/defenseunicorns/uds-core/issues/1332)) ([e37d062](https://github.com/defenseunicorns/uds-core/commit/e37d0623a5c65cd79d3199f43c75ef44003720b5))
+* **docs:** keycloak session timeout doc ([#1315](https://github.com/defenseunicorns/uds-core/issues/1315)) ([9509ac7](https://github.com/defenseunicorns/uds-core/commit/9509ac7119181056314cd956fc8db192a7fb819d))
+
+
+### Documentation
+
+* add developer doc on ci testing ([#1344](https://github.com/defenseunicorns/uds-core/issues/1344)) ([0e011a4](https://github.com/defenseunicorns/uds-core/commit/0e011a4915101f6dbc74b3c3e2ba27bd2fc57364))
+
 ## [0.37.0](https://github.com/defenseunicorns/uds-core/compare/v0.36.2...v0.37.0) (2025-03-03)
 
 
