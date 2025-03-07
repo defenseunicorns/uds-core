@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 {{- $domain := tpl .Values.domain . }}
+{{- $rootMode := .Values.rootDomainTLS.mode | default ($.Values.tls.mode | default "SIMPLE") -}}
+{{- $rootSupportTLS := .Values.rootDomainTLS.supportTLSV1_2 | default ($.Values.tls.supportTLSV1_2 | default true) -}}
 {{- if .Values.tls }}
 apiVersion: networking.istio.io/v1beta1
 kind: Gateway
@@ -55,11 +57,10 @@ spec:
         number: 443
         protocol: HTTPS
       tls:
-        mode: {{ .Values.rootDomainTLS.mode | default "SIMPLE" }}
-        {{- if ne (.Values.rootDomainTLS.mode | default "SIMPLE") "PASSTHROUGH" }}
+        mode: {{ $rootMode | quote }}
+        {{- if ne $rootMode "PASSTHROUGH" }}
         credentialName: {{ .Values.rootDomainTLS.credentialName | default "root-domain-tls" | quote }}
-        # if supportTLSV1_2 is both defined and true, use TLSV1_2, otherwise use TLSV1_3
-        minProtocolVersion: {{ if .Values.rootDomainTLS.supportTLSV1_2 }}TLSV1_2{{ else }}TLSV1_3{{ end }}
+        minProtocolVersion: {{ if $rootSupportTLS }}TLSV1_2{{ else }}TLSV1_3{{ end }}
         {{- end }}
     {{- end }}
 {{ end }}

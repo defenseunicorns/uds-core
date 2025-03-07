@@ -6,7 +6,7 @@ UDS Core deploys two Gateways by default - a Tenant Gateway for end-user applica
 
 ### Domain Configuration
 
-Each Gateway requires a wildcard DNS entry corresponding with the chosen `DOMAIN` and `ADMIN_DOMAIN` [variables](https://github.com/defenseunicorns/uds-core/blob/f6b0b59060a14febd11b0cdc7480f853a57f8520/src/istio/zarf.yaml#L10-L16) (or `admin.<DOMAIN>` if not specifying a separate admin domain).When deploying UDS Core, you can expect two Gateways to be created that match the following domain names:
+Each Gateway requires a wildcard DNS entry corresponding with the chosen `DOMAIN` and `ADMIN_DOMAIN` [variables](https://github.com/defenseunicorns/uds-core/blob/f6b0b59060a14febd11b0cdc7480f853a57f8520/src/istio/zarf.yaml#L10-L16) (or `admin.<DOMAIN>` if not specifying a separate admin domain). When deploying UDS Core, you can expect two Gateways to be created that match the following domain names:
 - `*.<DOMAIN>` / Tenant Gateway
 - `*.<ADMIN_DOMAIN>` / Admin Gateway if setting `ADMIN_DOMAIN`
 - `*.admin.<DOMAIN>` / Admin Gateway if NOT setting `ADMIN_DOMAIN`
