@@ -46,7 +46,10 @@ tasks:
           addons:
             - name: aws-ebs-csi-driver
               attachPolicyARNs:
-                - arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy
+                # Commercial IAM Policy
+                # - arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy
+                # GovCloud IAM Policy
+                - arn:aws-us-gov:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy
               configurationValues: |-
                 defaultStorageClass:
                   enabled: true
@@ -56,7 +59,10 @@ tasks:
 
             - name: vpc-cni
               attachPolicyARNs:
-                - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
+                # Commercial IAM Policy
+                # - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
+                # Govcloud IAM policy
+                - arn:aws-us-gov:iam::aws:policy/AmazonEKS_CNI_Policy
               permissionsBoundary: ${PERMISSIONS_BOUNDARY_ARN}
               tags:
                 PermissionsBoundary: ${PERMISSIONS_BOUNDARY_NAME}

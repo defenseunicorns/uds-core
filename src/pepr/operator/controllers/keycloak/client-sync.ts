@@ -61,7 +61,13 @@ export async function keycloak(pkg: UDSPackage) {
     clients.set(client.clientId, client);
   }
 
-  await purgeSSOClients(pkg, [...clients.keys()]);
+  // Purge orphaned clients
+  try {
+    await purgeSSOClients(pkg, [...clients.keys()]);
+  } catch (e) {
+    log.error(e, `Failed to purge orphaned clients in for ${pkg.metadata!.name!}: ${e}`);
+  }
+
   // Purge orphaned SSO secrets
   try {
     await purgeOrphans(generation, pkg.metadata!.namespace!, pkg.metadata!.name!, kind.Secret, log);
@@ -96,6 +102,7 @@ export async function purgeSSOClients(pkg: UDSPackage, newClients: string[] = []
         pkg.metadata,
         `Failed to remove client ${ref}, package ${pkg.metadata?.namespace}/${pkg.metadata?.name}. Error: ${err.message}`,
       );
+      throw new Error(`Failed to remove client ${ref}, token not found`);
     }
     // } else {
     //   log.warn(pkg.metadata, `Failed to remove client ${ref}, token not found`);

@@ -776,6 +776,7 @@ export enum Phase {
   Failed = "Failed",
   Pending = "Pending",
   Ready = "Ready",
+  RemovalFailed = "RemovalFailed",
   Removing = "Removing",
   Retrying = "Retrying",
 }
