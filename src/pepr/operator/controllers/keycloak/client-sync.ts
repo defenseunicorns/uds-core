@@ -86,13 +86,16 @@ export async function purgeSSOClients(pkg: UDSPackage, newClients: string[] = []
     // const storeKey = `sso-client-${ref}`;
     // const token = Store.getItem(storeKey);
     // if (token) {
-      // await apiCall({ clientId: ref }, "DELETE", token);
-      // await Store.removeItemAndWait(storeKey);
+    // await apiCall({ clientId: ref }, "DELETE", token);
+    // await Store.removeItemAndWait(storeKey);
 
     try {
       await dynamicClientRegistrationClient.delete({ clientId: ref });
     } catch (err) {
-      log.warn(pkg.metadata, `Failed to remove client ${ref}, package ${pkg.metadata?.namespace}/${pkg.metadata?.name}. Error: ${err.message}`)
+      log.warn(
+        pkg.metadata,
+        `Failed to remove client ${ref}, package ${pkg.metadata?.namespace}/${pkg.metadata?.name}. Error: ${err.message}`,
+      );
     }
     // } else {
     //   log.warn(pkg.metadata, `Failed to remove client ${ref}, token not found`);

@@ -47,9 +47,9 @@ export class DynamicClientRegistrationClient implements KeycloakClient {
     const response = await fetch<Client>(this.baseUrl, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
       },
-      body: JSON.stringify(client)
+      body: JSON.stringify(client),
     });
 
     this.throwErrorIfNeeded(response);
@@ -67,9 +67,9 @@ export class DynamicClientRegistrationClient implements KeycloakClient {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${registrationToken}`
+        Authorization: `Bearer ${registrationToken}`,
       },
-      body: JSON.stringify(client)
+      body: JSON.stringify(client),
     });
 
     this.throwErrorIfNeeded(response);
@@ -86,15 +86,18 @@ export class DynamicClientRegistrationClient implements KeycloakClient {
     const response = await fetch<Client>(url, {
       method: "DELETE",
       headers: {
-        Authorization: `Bearer ${registrationToken}`
-      }
+        Authorization: `Bearer ${registrationToken}`,
+      },
     });
 
     this.throwErrorIfNeeded(response);
     await this.updateRegistrationTokenInStore(client, true);
   }
 
-  private async updateRegistrationTokenInStore(client: Partial<Client>, deleteStoreKey: boolean = false) {
+  private async updateRegistrationTokenInStore(
+    client: Partial<Client>,
+    deleteStoreKey: boolean = false,
+  ) {
     try {
       const registrationTokenStoreKey = `sso-client-${client.clientId}`;
       await retryWithDelay(async function setStoreToken() {
@@ -114,7 +117,9 @@ export class DynamicClientRegistrationClient implements KeycloakClient {
       const status = response.status;
       const responseText = response.statusText;
       if (data) {
-        throw new Error(`${JSON.stringify(status)}, ${JSON.stringify(responseText)}, ${JSON.stringify(data)}`);
+        throw new Error(
+          `${JSON.stringify(status)}, ${JSON.stringify(responseText)}, ${JSON.stringify(data)}`,
+        );
       }
       throw new Error(`${JSON.stringify(status)}, ${JSON.stringify(responseText)}`);
     }
