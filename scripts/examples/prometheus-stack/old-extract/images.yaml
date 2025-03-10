@@ -1,0 +1,45 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+cgr.dev/du-uds-defenseunicorns/kube-state-metrics-fips:
+  - 2.15.0
+cgr.dev/du-uds-defenseunicorns/kube-webhook-certgen-fips:
+  - 1.12.0
+cgr.dev/du-uds-defenseunicorns/prometheus-alertmanager-fips:
+  - 0.28.0
+cgr.dev/du-uds-defenseunicorns/prometheus-config-reloader-fips:
+  - 0.80.0
+cgr.dev/du-uds-defenseunicorns/prometheus-fips:
+  - 3.1.0
+cgr.dev/du-uds-defenseunicorns/prometheus-node-exporter-fips:
+  - 1.8.2
+cgr.dev/du-uds-defenseunicorns/prometheus-operator-fips:
+  - 0.80.0
+quay.io/prometheus-operator/prometheus-config-reloader:
+  - 0.80.0
+quay.io/prometheus-operator/prometheus-operator:
+  - 0.80.0
+quay.io/prometheus/alertmanager:
+  - 0.28.0
+quay.io/prometheus/node-exporter:
+  - 1.8.2
+quay.io/prometheus/prometheus:
+  - 3.1.0
+registry.k8s.io/ingress-nginx/kube-webhook-certgen:
+  - 1.5.1
+registry.k8s.io/kube-state-metrics/kube-state-metrics:
+  - 2.15.0
+registry1.dso.mil/ironbank/opensource/ingress-nginx/kube-webhook-certgen:
+  - 1.5.1
+registry1.dso.mil/ironbank/opensource/kubernetes/kube-state-metrics:
+  - 2.15.0
+registry1.dso.mil/ironbank/opensource/prometheus-operator/prometheus-config-reloader:
+  - 0.80.0
+registry1.dso.mil/ironbank/opensource/prometheus-operator/prometheus-operator:
+  - 0.80.0
+registry1.dso.mil/ironbank/opensource/prometheus/alertmanager:
+  - 0.28.0
+registry1.dso.mil/ironbank/opensource/prometheus/node-exporter:
+  - 1.8.2
+registry1.dso.mil/ironbank/opensource/prometheus/prometheus:
+  - 3.1.0

@@ -1,0 +1,4 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+https://grafana.github.io/helm-charts//grafana: 8.10.1

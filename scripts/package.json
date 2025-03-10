@@ -1,0 +1,19 @@
+{
+  "name": "renovate-readiness",
+  "version": "0.0.1",
+  "description": "Scripts for handling Renovate PR readiness in UDS Core",
+  "main": "index.js",
+  "type": "module",
+  "dependencies": {
+    "semver": "^7.5.4",
+    "yaml": "^2.3.2"
+  },
+  "devDependencies": {
+    "@types/semver": "^7.5.8",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

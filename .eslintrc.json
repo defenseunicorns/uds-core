@@ -23,7 +23,8 @@
     "jest.*.js",
     "test/playwright/",
     "test/jest/",
-    "uds-docs/"
+    "uds-docs/",
+    "scripts/"
   ],
   "root": true,
   "rules": {
