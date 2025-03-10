@@ -10,7 +10,7 @@ import { Store } from "../../common";
 import { Sso, UDSPackage } from "../../crd";
 import { getOwnerRef, purgeOrphans, retryWithDelay, sanitizeResourceName } from "../utils";
 import { Client, clientKeys } from "./types";
-import { DynamicClientRegistrationClient } from "./keycloak-client";
+import {ClientCredentialsKeycloakClient, DynamicClientRegistrationClient} from "./keycloak-client";
 
 let apiURL =
   "http://keycloak-http.keycloak.svc.cluster.local:8080/realms/uds/clients-registrations/default";
@@ -22,7 +22,8 @@ if (process.env.PEPR_MODE === "dev") {
   apiURL = "http://localhost:8080/realms/uds/clients-registrations/default";
 }
 
-const dynamicClientRegistrationClient = new DynamicClientRegistrationClient(apiURL);
+// const keycloakClient = new DynamicClientRegistrationClient(apiURL);
+const keycloakClient = new ClientCredentialsKeycloakClient("http://localhost:8080");
 
 // Template regex to match clientField() references, see https://regex101.com/r/e41Dsk/3 for details
 const secretTemplateRegex = new RegExp(
@@ -90,7 +91,7 @@ export async function purgeSSOClients(pkg: UDSPackage, newClients: string[] = []
   const toRemove = currentClients.filter(client => !newClients.includes(client));
   for (const ref of toRemove) {
     try {
-      await dynamicClientRegistrationClient.delete({ clientId: ref });
+      await keycloakClient.delete({ clientId: ref });
     } catch (err) {
       log.warn(
         pkg.metadata,
@@ -153,7 +154,7 @@ async function syncClient(
     //   log.debug(pkg.metadata, `Creating new client for ${client.clientId}`);
     //   client = await apiCall(client);
     // }
-    client = await dynamicClientRegistrationClient.createOrUpdate(client);
+    client = await keycloakClient.createOrUpdate(client);
   } catch (err) {
     const msg =
       `Failed to process Keycloak request for client '${client.clientId}', package ` +
