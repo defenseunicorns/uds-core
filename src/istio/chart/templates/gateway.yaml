@@ -4,7 +4,7 @@
 {{- $domain := tpl .Values.domain . }}
 {{- $rootTLS := .Values.rootDomainTLS | default dict -}}
 {{- $rootMode := $rootTLS.mode | default ($.Values.tls.mode | default "SIMPLE") -}}
-{{- $rootSupportTLS := $rootTLS.supportTLSV1_2 | default ($.Values.tls.supportTLSV1_2 | default true) -}}
+{{- $rootSupportTLS := $rootTLS.supportTLSV1_2 | default ($.Values.tls.supportTLSV1_2 | default false) -}}
 {{- if .Values.tls }}
 apiVersion: networking.istio.io/v1beta1
 kind: Gateway

@@ -148,7 +148,7 @@ If you want your application to be reachable at `https://uds.dev`, enable apex (
     overrides:
       istio-tenant-gateway:
         uds-istio-config:
-          values:
+          variables:
             - path: enableRootDomain
               value: true
             - path: rootDomainTLS.mode
