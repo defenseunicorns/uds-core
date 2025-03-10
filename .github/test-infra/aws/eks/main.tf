@@ -62,7 +62,6 @@ module "S3" {
   name_prefix             = "${each.value.name}-"
   kms_key_arn             = local.kms_key_arns[each.key].kms_key_arn
   force_destroy           = "true"
-  create_bucket_lifecycle = true
 }
 
 module "irsa" {
