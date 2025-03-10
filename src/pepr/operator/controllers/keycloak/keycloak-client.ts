@@ -9,6 +9,7 @@ import { Store } from "../../common";
 import { retryWithDelay } from "../utils";
 import { Component, setupLogger } from "../../../logger";
 import { FetchResponse } from "kubernetes-fluent-client/src/fetch";
+import { logger } from "bs-logger";
 
 const log = setupLogger(Component.OPERATOR_KEYCLOAK);
 
@@ -36,6 +37,14 @@ export interface KeycloakClient {
    * @returns void
    */
   delete(client: Partial<Client>): Promise<void>;
+
+  /**
+   * Creates or updates a client in Keycloak
+   * If the client already exists, it updates the client; otherwise, it creates a new one
+   * @param client The client configuration to be created or updated
+   * @returns The created or updated client details
+   */
+  createOrUpdate(client: Partial<Client>): Promise<Client>;
 }
 
 /**
@@ -48,6 +57,16 @@ export class DynamicClientRegistrationClient implements KeycloakClient {
     this.baseUrl = baseUrl;
   }
 
+  async createOrUpdate(client: Partial<Client>): Promise<Client> {
+    const registrationTokenStoreKey = `sso-client-${client.clientId}`;
+    const registrationToken = Store.getItem(registrationTokenStoreKey) as string;
+
+    if (registrationToken) {
+      return this.update(client);
+    }
+    return this.create(client);
+  }
+
   async create(client: Partial<Client>): Promise<Client> {
     const response = await fetch<Client>(this.baseUrl, {
       method: "POST",
@@ -58,7 +77,7 @@ export class DynamicClientRegistrationClient implements KeycloakClient {
     });
 
     this.throwErrorIfNeeded(response);
-    await this.updateRegistrationTokenInStore(client);
+    await this.updateRegistrationTokenInStore(response.data);
 
     return response.data;
   }
@@ -66,6 +85,13 @@ export class DynamicClientRegistrationClient implements KeycloakClient {
   async update(client: Partial<Client>): Promise<Client> {
     const registrationTokenStoreKey = `sso-client-${client.clientId}`;
     const registrationToken = Store.getItem(registrationTokenStoreKey) as string;
+
+    logger.warn(`########## Updating client ${client.clientId}`);
+    logger.warn(`########## Updating client ${client.clientId}`);
+    logger.warn(`########## Updating client ${client.clientId}`);
+    logger.warn(`########## Updating client $registrationToken}`);
+    logger.warn(`########## Updating client ${registrationToken}`);
+    logger.warn(`########## Updating client ${registrationToken}`);
 
     const url = `${this.baseUrl}/${encodeURIComponent(client.clientId!)}`;
     const response = await fetch<Client>(url, {
@@ -78,7 +104,7 @@ export class DynamicClientRegistrationClient implements KeycloakClient {
     });
 
     this.throwErrorIfNeeded(response);
-    await this.updateRegistrationTokenInStore(client);
+    await this.updateRegistrationTokenInStore(response.data);
 
     return response.data;
   }
@@ -107,9 +133,10 @@ export class DynamicClientRegistrationClient implements KeycloakClient {
       const registrationTokenStoreKey = `sso-client-${client.clientId}`;
       await retryWithDelay(async function setStoreToken() {
         if (deleteStoreKey) {
-          return Store.removeItemAndWait(registrationTokenStoreKey);
+          await Store.removeItemAndWait(registrationTokenStoreKey);
+        } else {
+          await Store.setItemAndWait(registrationTokenStoreKey, client.registrationAccessToken!);
         }
-        return Store.setItemAndWait(registrationTokenStoreKey, client.registrationAccessToken!);
       }, log);
     } catch {
       throw Error(`Failed to remove token from store for client '${client.clientId}'`);
