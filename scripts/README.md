@@ -9,3 +9,5 @@ This will produce an `extract` folder under `../src/<folder>`. To perform a comp
 ```console
 npx ts-node compareImagesAndCharts.ts --old <path-to-old-extract> --new <path-to-new-extract>
 ```
+
+On stdout it will print out the list of labels to add to "the PR" (in addition to some `[DEBUG]` logging that can be removed or printed to stderr later on.
