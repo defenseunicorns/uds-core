@@ -83,7 +83,7 @@ tasks:
             name: coredns-custom
             namespace: kube-system
           EOF
-            uds zarf tools kubectl -n kube-system rollout restart deployment coredns          
+            uds zarf tools kubectl -n kube-system rollout restart deployment coredns
   - name: rke2-allow-prom-kube-dns
     actions:
       - description: Create NetworkPolicy to allow Prometheus to scrape kube-dns
