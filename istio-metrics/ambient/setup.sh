@@ -22,5 +22,8 @@ kubectl patch package nginx -n nginx --type='json' -p='[
   {"op": "replace", "path": "/spec/network/allow/0/remoteGenerated", "value": "Anywhere"},
   {"op": "replace", "path": "/spec/network/allow/1/remoteGenerated", "value": "Anywhere"}
 ]'
-kubectl label namespace nginx istio-injection- istio.io/dataplane-mode=ambient --overwrite
+sleep 2
+kubectl wait --for=jsonpath='{.status.phase}'=Ready package -n nginx nginx
+kubectl label namespace nginx istio.io/dataplane-mode=ambient --overwrite
+kubectl label namespace nginx istio-injection- --overwrite
 kubectl delete po -n nginx --all
