@@ -6,24 +6,21 @@
 import { fetch, K8s, kind } from "pepr";
 
 import { Component, setupLogger } from "../../../logger";
-import { Store } from "../../common";
 import { Sso, UDSPackage } from "../../crd";
 import { getOwnerRef, purgeOrphans, retryWithDelay, sanitizeResourceName } from "../utils";
 import { Client, clientKeys } from "./types";
-import {ClientCredentialsKeycloakClient, DynamicClientRegistrationClient} from "./keycloak-client";
+import { DynamicKeycloakClient } from "./keycloak-client";
 
-let apiURL =
-  "http://keycloak-http.keycloak.svc.cluster.local:8080/realms/uds/clients-registrations/default";
+let apiURL = "http://keycloak-http.keycloak.svc.cluster.local:8080";
 const samlDescriptorUrl =
   "http://keycloak-http.keycloak.svc.cluster.local:8080/realms/uds/protocol/saml/descriptor";
 
 // Support dev mode with port-forwarded keycloak svc
 if (process.env.PEPR_MODE === "dev") {
-  apiURL = "http://localhost:8080/realms/uds/clients-registrations/default";
+  apiURL = "http://localhost:8080";
 }
 
-// const keycloakClient = new DynamicClientRegistrationClient(apiURL);
-const keycloakClient = new ClientCredentialsKeycloakClient("http://localhost:8080");
+const keycloakClient = new DynamicKeycloakClient(apiURL);
 
 // Template regex to match clientField() references, see https://regex101.com/r/e41Dsk/3 for details
 const secretTemplateRegex = new RegExp(
@@ -142,18 +139,7 @@ async function syncClient(
   const name = `sso-client-${clientReq.clientId}`;
   let client = convertSsoToClient(clientReq);
 
-  // Get keycloak client token from the store if this is an existing client
-  // const token = Store.getItem(name);
-
   try {
-    // // If an existing client is found, use the token to update the client
-    // if (token && !isRetry) {
-    //   log.debug(pkg.metadata, `Found existing token for ${client.clientId}`);
-    //   client = await apiCall(client, "PUT", token);
-    // } else {
-    //   log.debug(pkg.metadata, `Creating new client for ${client.clientId}`);
-    //   client = await apiCall(client);
-    // }
     client = await keycloakClient.createOrUpdate(client);
   } catch (err) {
     const msg =
@@ -183,18 +169,6 @@ async function syncClient(
       }
     }
   }
-
-  // // Write the new token to the store
-  // try {
-  //   await retryWithDelay(async function setStoreToken() {
-  //     return Store.setItemAndWait(name, client.registrationAccessToken!);
-  //   }, log);
-  // } catch {
-  //   throw Error(
-  //     `Failed to set token in store for client '${client.clientId}', package ` +
-  //       `${pkg.metadata?.namespace}/${pkg.metadata?.name}`,
-  //   );
-  // }
 
   // Remove the registrationAccessToken from the client object to avoid problems (one-time use token)
   delete client.registrationAccessToken;

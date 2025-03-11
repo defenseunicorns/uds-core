@@ -4,12 +4,12 @@
  */
 
 import { Client } from "./types";
-import {fetch, K8s, kind} from "pepr";
+import { fetch, K8s, kind } from "pepr";
 import { Store } from "../../common";
 import { retryWithDelay } from "../utils";
 import { Component, setupLogger } from "../../../logger";
 import { FetchResponse } from "kubernetes-fluent-client/src/fetch";
-import { logger } from "bs-logger";
+import { decodeJwt } from "jose";
 
 const log = setupLogger(Component.OPERATOR_KEYCLOAK);
 
@@ -48,13 +48,76 @@ export interface KeycloakClient {
 }
 
 /**
+ * Empty implementation of KeycloakClient
+ */
+export class DynamicKeycloakClient implements KeycloakClient {
+  public readonly ENV_KEYCLOAK_CLIENT_IMPLEMENTATION = "PEPR_KEYCLOAK_CLIENT_IMPLEMENTATION";
+  public readonly ENV_KEYCLOAK_CLIENT_IMPLEMENTATION_DYNAMIC = "DYNAMIC";
+  public readonly ENV_KEYCLOAK_CLIENT_IMPLEMENTATION_CLIENT_CREDENTIALS = "CLIENT_CREDENTIALS";
+
+  private readonly dyanamicClientRegistrationKeycloakClient: DynamicClientRegistrationClient;
+  private readonly clientCredentialsKeycloakClient: ClientCredentialsKeycloakClient;
+
+  private hasClientCredentialsBeenUsed = false;
+
+  constructor(baseUrl: string) {
+    this.dyanamicClientRegistrationKeycloakClient = new DynamicClientRegistrationClient(baseUrl);
+    this.clientCredentialsKeycloakClient = new ClientCredentialsKeycloakClient(baseUrl);
+  }
+
+  private async pickImplementation() {
+    const implementation =
+      process.env[this.ENV_KEYCLOAK_CLIENT_IMPLEMENTATION] ??
+      this.ENV_KEYCLOAK_CLIENT_IMPLEMENTATION_CLIENT_CREDENTIALS;
+    switch (implementation) {
+      case this.ENV_KEYCLOAK_CLIENT_IMPLEMENTATION_DYNAMIC:
+        return this.dyanamicClientRegistrationKeycloakClient;
+      case this.ENV_KEYCLOAK_CLIENT_IMPLEMENTATION_CLIENT_CREDENTIALS:
+        try {
+          if (!this.hasClientCredentialsBeenUsed) {
+            log.info("Probing Client Credentials Keycloak Client implementation...");
+            await this.clientCredentialsKeycloakClient.getAccessToken();
+            this.hasClientCredentialsBeenUsed = true;
+          }
+          return this.clientCredentialsKeycloakClient;
+        } catch {
+          log.info(
+            "Client Credentials Keycloak Client is not properly configured, falling back to Dynamic Client Registration...",
+          );
+          return this.dyanamicClientRegistrationKeycloakClient;
+        }
+      default:
+        throw new Error(
+          `Invalid Keycloak Client implementation: ${implementation}. Supported values: ${this.ENV_KEYCLOAK_CLIENT_IMPLEMENTATION_DYNAMIC}, ${this.ENV_KEYCLOAK_CLIENT_IMPLEMENTATION_CLIENT_CREDENTIALS}`,
+        );
+    }
+  }
+
+  async create(client: Partial<Client>): Promise<Client> {
+    return (await this.pickImplementation()).create(client);
+  }
+
+  async update(client: Partial<Client>): Promise<Client> {
+    return (await this.pickImplementation()).update(client);
+  }
+
+  async delete(client: Partial<Client>): Promise<void> {
+    return (await this.pickImplementation()).delete(client);
+  }
+
+  async createOrUpdate(client: Partial<Client>): Promise<Client> {
+    return (await this.pickImplementation()).createOrUpdate(client);
+  }
+}
+
+/**
  * Implementation of KeycloakClient using Dynamic Client Registration
  */
 export class DynamicClientRegistrationClient implements KeycloakClient {
-  private readonly baseUrl: string;
+  private readonly dynamicClientRegistrationUrl: string;
 
   constructor(baseUrl: string) {
-    this.baseUrl = baseUrl;
+    this.dynamicClientRegistrationUrl = baseUrl + "/realms/uds/clients-registrations/default";
   }
 
   async createOrUpdate(client: Partial<Client>): Promise<Client> {
@@ -62,13 +125,13 @@ export class DynamicClientRegistrationClient implements KeycloakClient {
     const registrationToken = Store.getItem(registrationTokenStoreKey) as string;
 
     if (registrationToken) {
-      return this.update(client);
+      return this.update(client, registrationToken);
     }
     return this.create(client);
   }
 
   async create(client: Partial<Client>): Promise<Client> {
-    const response = await fetch<Client>(this.baseUrl, {
+    const response = await fetch<Client>(this.dynamicClientRegistrationUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -82,11 +145,15 @@ export class DynamicClientRegistrationClient implements KeycloakClient {
     return response.data;
   }
 
-  async update(client: Partial<Client>): Promise<Client> {
-    const registrationTokenStoreKey = `sso-client-${client.clientId}`;
-    const registrationToken = Store.getItem(registrationTokenStoreKey) as string;
+  async update(
+    client: Partial<Client>,
+    previouslyObtainedRegistrationToken: string = "",
+  ): Promise<Client> {
+    const registrationToken =
+      previouslyObtainedRegistrationToken ||
+      (Store.getItem(`sso-client-${client.clientId}`) as string);
 
-    const url = `${this.baseUrl}/${encodeURIComponent(client.clientId!)}`;
+    const url = `${this.dynamicClientRegistrationUrl}/${encodeURIComponent(client.clientId!)}`;
     const response = await fetch<Client>(url, {
       method: "PUT",
       headers: {
@@ -102,11 +169,15 @@ export class DynamicClientRegistrationClient implements KeycloakClient {
     return response.data;
   }
 
-  async delete(client: Partial<Client>): Promise<void> {
-    const registrationTokenStoreKey = `sso-client-${client.clientId}`;
-    const registrationToken = Store.getItem(registrationTokenStoreKey) as string;
+  async delete(
+    client: Partial<Client>,
+    previouslyObtainedRegistrationToken: string = "",
+  ): Promise<void> {
+    const registrationToken =
+      previouslyObtainedRegistrationToken ||
+      (Store.getItem(`sso-client-${client.clientId}`) as string);
 
-    const url = `${this.baseUrl}/${encodeURIComponent(client.clientId!)}`;
+    const url = `${this.dynamicClientRegistrationUrl}/${encodeURIComponent(client.clientId!)}`;
     const response = await fetch<Client>(url, {
       method: "DELETE",
       headers: {
@@ -137,15 +208,11 @@ export class DynamicClientRegistrationClient implements KeycloakClient {
   }
 }
 
-
-
-
 /**
- * Implementation of KeycloakClient using a Mock for testing purposes
+ * Implementation of KeycloakClient using Client Credentials Grant
  */
 export class ClientCredentialsKeycloakClient implements KeycloakClient {
-
-
+  private static readonly TOKEN_EXPIRATION_OFFSET_IN_S = 5;
   private static readonly KEYCLOAK_CLINETS_SECRET_NAMESPACE = "keycloak";
   private static readonly KEYCLOAK_CLINETS_SECRET = "keycloak-client-secrets";
   private static readonly UDS_OPERATOR_CLIENT_ID = "uds-operator";
@@ -158,30 +225,46 @@ export class ClientCredentialsKeycloakClient implements KeycloakClient {
     this.clientCredentialsUrl = baseUrl + "/realms/uds/protocol/openid-connect/token";
   }
 
-  async getAccessToken() {
-    log.error(`###1`)
-    //TODO: Check out why it contains additional new line at the end?
-    const keycloakClientsSecret = await K8s(kind.Secret).InNamespace(ClientCredentialsKeycloakClient.KEYCLOAK_CLINETS_SECRET_NAMESPACE).Get(ClientCredentialsKeycloakClient.KEYCLOAK_CLINETS_SECRET)
-    log.error(`###2`)
+  public async getAccessToken(previouslyObtainedToken: string = "") {
+    if (previouslyObtainedToken) {
+      const jwt = decodeJwt(previouslyObtainedToken);
+      if (jwt.exp) {
+        const tokenMaxExpirationDate =
+          Math.floor(Date.now() / 1000) +
+          ClientCredentialsKeycloakClient.TOKEN_EXPIRATION_OFFSET_IN_S;
+        log.debug(
+          `Max token expiration date: ${tokenMaxExpirationDate}, current time: ${Date.now() / 1000}, token expiration: ${jwt.exp}`,
+        );
+        if (jwt.exp > tokenMaxExpirationDate) {
+          // The Token will expire in more than 5 seconds - let's reuse it
+          log.debug(`Reusing previously obtained token`);
+          return previouslyObtainedToken;
+        }
+      }
+    }
+
+    const keycloakClientsSecret = await K8s(kind.Secret)
+      .InNamespace(ClientCredentialsKeycloakClient.KEYCLOAK_CLINETS_SECRET_NAMESPACE)
+      .Get(ClientCredentialsKeycloakClient.KEYCLOAK_CLINETS_SECRET);
     if (!keycloakClientsSecret) {
-      throw new Error(`The ${ClientCredentialsKeycloakClient.KEYCLOAK_CLINETS_SECRET} secret does not exist in the ${ClientCredentialsKeycloakClient.KEYCLOAK_CLINETS_SECRET_NAMESPACE} namespace.`);
+      throw new Error(
+        `The ${ClientCredentialsKeycloakClient.KEYCLOAK_CLINETS_SECRET} secret does not exist in the ${ClientCredentialsKeycloakClient.KEYCLOAK_CLINETS_SECRET_NAMESPACE} namespace.`,
+      );
     }
-    log.error(`###3`)
-    const udsOperatorClientSecret = keycloakClientsSecret.data?.[ClientCredentialsKeycloakClient.UDS_OPERATOR_CLIENT_ID] ?? "";
-    log.error(`###4`)
+    const udsOperatorClientSecret =
+      keycloakClientsSecret.data?.[ClientCredentialsKeycloakClient.UDS_OPERATOR_CLIENT_ID] ?? "";
     if (!udsOperatorClientSecret) {
-      throw new Error(`The ${ClientCredentialsKeycloakClient.KEYCLOAK_CLINETS_SECRET} doesn't contain the ${ClientCredentialsKeycloakClient.UDS_OPERATOR_CLIENT_ID} key.`);
+      throw new Error(
+        `The ${ClientCredentialsKeycloakClient.KEYCLOAK_CLINETS_SECRET} doesn't contain the ${ClientCredentialsKeycloakClient.UDS_OPERATOR_CLIENT_ID} key.`,
+      );
     }
-    log.error(`###5`)
 
     const clientSecret = Buffer.from(udsOperatorClientSecret, "base64").toString("utf-8");
-    log.error(`###6 ${clientSecret}`)
-    log.error(`###7 f8ySRQLWUx6coZCz269nkES4z7NRlBPy`)
 
     const params = new URLSearchParams();
     params.append("grant_type", "client_credentials");
     params.append("client_id", ClientCredentialsKeycloakClient.UDS_OPERATOR_CLIENT_ID);
-    params.append("client_secret", "f8ySRQLWUx6coZCz269nkES4z7NRlBPy");
+    params.append("client_secret", clientSecret);
 
     interface KeycloakAccessTokenResponse {
       access_token: string;
@@ -194,16 +277,26 @@ export class ClientCredentialsKeycloakClient implements KeycloakClient {
       },
       body: params.toString(),
     });
-    log.error(`###8 ${JSON.stringify(response)}`)
-    throwErrorIfNeeded(response)
-    return response.data.access_token
-  };
+    throwErrorIfNeeded(response);
 
+    const accessToken = response.data.access_token;
+    this.validate(accessToken);
 
-  async create(client: Partial<Client>): Promise<Client> {
-    const accessToken = await this.getAccessToken();
+    return response.data.access_token;
+  }
+
+  validate(accessToken: string) {
+    const jwt = decodeJwt(accessToken) as Record<string, any>;
+    const roles: string[] = jwt["resource_access"]["realm-management"]["roles"] ?? [];
+    if (!roles.includes("manage-clients")) {
+      throw new Error("The provided token does not have the manage-clients role");
+    }
+  }
+
+  async create(client: Partial<Client>, previouslyObtainedToken: string = ""): Promise<Client> {
+    const accessToken = await this.getAccessToken(previouslyObtainedToken);
     const url = `${this.clientsAdminUrl}`;
-    const response = await fetch<Client>(url, {
+    const response = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -213,32 +306,35 @@ export class ClientCredentialsKeycloakClient implements KeycloakClient {
     });
 
     throwErrorIfNeeded(response);
-    return response.data;
+    return await this.get(client, accessToken);
   }
 
-  async clientExists(client: Partial<Client>): Promise<boolean> {
-    const accessToken = await this.getAccessToken();
+  async get(client: Partial<Client>, previouslyObtainedToken: string = ""): Promise<ClientWithId> {
+    const accessToken = await this.getAccessToken(previouslyObtainedToken);
+    // Keycloak doesn't support finding specific client by client_id. It supports this in the collection endpoint.
     const url = `${this.clientsAdminUrl}?clientId=${encodeURIComponent(client.clientId!)}`;
-    const response = await fetch<Client[]>(url, {
+    const response = await fetch<ClientWithId[]>(url, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${accessToken}`,
       },
     });
-    log.error(`###9 ${JSON.stringify(response)}`)
-    log.error(`###10 ${JSON.stringify(response.data)}`)
-    log.error(`###11 ${response.status}`)
-
     throwErrorIfNeeded(response);
-    log.error(`###13 ${response.data.length}`)
-    return response.data.length > 0;
+    return response.data[0];
   }
 
-  async update(client: Partial<Client>): Promise<Client> {
-    const accessToken = await this.getAccessToken();
-    const url = `${this.clientsAdminUrl}/${encodeURIComponent(client.clientId!)}`;
-    const response = await fetch<Client>(url, {
+  async update(
+    client: Partial<Client>,
+    previouslyObtainedToken: string = "",
+    preciouslyObtainedClient: ClientWithId | null = null,
+  ): Promise<Client> {
+    const accessToken = await this.getAccessToken(previouslyObtainedToken);
+    // The update endpoint accepts Client.id (not client_id). We need to obtain a new client first
+    const obtainedClient = preciouslyObtainedClient || (await this.get(client, accessToken));
+
+    const url = `${this.clientsAdminUrl}/${encodeURIComponent(obtainedClient.id!)}`;
+    const response = await fetch(url, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -248,31 +344,41 @@ export class ClientCredentialsKeycloakClient implements KeycloakClient {
     });
 
     throwErrorIfNeeded(response);
-    return response.data;
+    return await this.get(client, accessToken);
   }
 
-  async delete(client: Partial<Client>): Promise<void> {
-    const accessToken = await this.getAccessToken();
-    const url = `${this.clientsAdminUrl}/${encodeURIComponent(client.clientId!)}`;
-    const response = await fetch<Client>(url, {
+  async delete(client: Partial<Client>, previouslyObtainedToken: string = ""): Promise<void> {
+    const accessToken = await this.getAccessToken(previouslyObtainedToken);
+    // The update endpoint accepts Client.id (not client_id). We need to obtain a new client first
+    const obtainedClient = await this.get(client, accessToken);
+
+    const url = `${this.clientsAdminUrl}/${encodeURIComponent(obtainedClient.id!)}`;
+    const response = await fetch(url, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${accessToken}`,
       },
+      body: JSON.stringify(client),
     });
 
     throwErrorIfNeeded(response);
   }
 
-  async createOrUpdate(client: Partial<Client>): Promise<Client> {
-    if (await this.clientExists(client)) {
-      return this.update(client);
+  async createOrUpdate(
+    client: Partial<Client>,
+    previouslyObtainedToken: string = "",
+  ): Promise<Client> {
+    const accessToken = previouslyObtainedToken || (await this.getAccessToken());
+    const obtainedClient = await this.get(client, accessToken);
+    if (obtainedClient != null) {
+      return this.update(client, accessToken, obtainedClient);
     }
-    return this.create(client);
+    return this.create(client, accessToken);
   }
 }
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 function throwErrorIfNeeded(response: FetchResponse<any>) {
   if (!response.ok) {
     const data = response.data;
@@ -280,9 +386,13 @@ function throwErrorIfNeeded(response: FetchResponse<any>) {
     const responseText = response.statusText;
     if (data) {
       throw new Error(
-          `${JSON.stringify(status)}, ${JSON.stringify(responseText)}, ${JSON.stringify(data)}`,
+        `${JSON.stringify(status)}, ${JSON.stringify(responseText)}, ${JSON.stringify(data)}`,
       );
     }
     throw new Error(`${JSON.stringify(status)}, ${JSON.stringify(responseText)}`);
   }
+}
+
+interface ClientWithId extends Client {
+  id: string;
 }
