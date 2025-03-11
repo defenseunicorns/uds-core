@@ -138,7 +138,7 @@ By default, the UDS Core Gateways are configured with wildcard hosts (for exampl
 
 To support this use case, UDS Core provides an optional configuration to enable a dedicated server block for the root domain. When enabled, two additional server blocks are added to your Istio Gateway:
 - **HTTP on port 80**: Redirects traffic to HTTPS.
-- **HTTPS on port 443**: Terminates TLS using settings from the rootDomainTLS section.
+- **HTTPS on port 443**: Terminates TLS using settings from the rootDomain.tls section.
 
 If you want your application to be reachable at `https://uds.dev`, enable root (apex) domain configuration via a bundle override in your UDS Bundle. For example:
 ```yaml
@@ -168,7 +168,7 @@ If you want your application to be reachable at `https://uds.dev`, enable root (
 :::note
 - If you provide a non-empty value for credentialName, UDS Core assumes that you have pre-created the Kubernetes secret and will not auto-generate it using the certificate data.
 
-- If you prefer to use an existing secret (such as when using a SAN certificate that covers both subdomains and the root) you may set the `rootDomainTLS.credentialName` field to the name of that secret (for example, `gateway-tls`). In that case, UDS Core assumes the secret exists and will not auto-create one using the certificate data.
+- If you prefer to use an existing secret (such as when using a SAN certificate that covers both subdomains and the root) you may set the `rootDomain.tls.credentialName` field to the name of that secret (for example, `gateway-tls`). In that case, UDS Core assumes the secret exists and will not auto-create one using the certificate data.
 :::
 
 #### Exposing a Service on the Root Domain with a VirtualService
