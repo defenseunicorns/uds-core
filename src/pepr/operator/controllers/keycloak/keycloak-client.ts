@@ -51,9 +51,9 @@ export interface KeycloakClient {
  * Empty implementation of KeycloakClient
  */
 export class DynamicKeycloakClient implements KeycloakClient {
-  public readonly ENV_KEYCLOAK_CLIENT_IMPLEMENTATION = "PEPR_KEYCLOAK_CLIENT_IMPLEMENTATION";
-  public readonly ENV_KEYCLOAK_CLIENT_IMPLEMENTATION_DYNAMIC = "DYNAMIC";
-  public readonly ENV_KEYCLOAK_CLIENT_IMPLEMENTATION_CLIENT_CREDENTIALS = "CLIENT_CREDENTIALS";
+  public readonly ENV_KEYCLOAK_CLIENT_IMPLEMENTATION = "PEPR_KEYCLOAK_CLIENT_STRATEGY";
+  public readonly ENV_KEYCLOAK_CLIENT_IMPLEMENTATION_DYNAMIC = "dynamic_client_registration";
+  public readonly ENV_KEYCLOAK_CLIENT_IMPLEMENTATION_CLIENT_CREDENTIALS = "client_credentials";
 
   private readonly dyanamicClientRegistrationKeycloakClient: DynamicClientRegistrationClient;
   private readonly clientCredentialsKeycloakClient: ClientCredentialsKeycloakClient;
@@ -286,6 +286,7 @@ export class ClientCredentialsKeycloakClient implements KeycloakClient {
   }
 
   validate(accessToken: string) {
+    /* eslint-disable @typescript-eslint/no-explicit-any */
     const jwt = decodeJwt(accessToken) as Record<string, any>;
     const roles: string[] = jwt["resource_access"]["realm-management"]["roles"] ?? [];
     if (!roles.includes("manage-clients")) {
