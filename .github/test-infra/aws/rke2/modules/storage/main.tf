@@ -35,7 +35,6 @@ module "s3" {
   name_prefix             = "${each.value.name}-${each.value.bucket_prefix}-"
   kms_key_arn             = module.generate_kms[each.key].kms_key_arn
   force_destroy           = "true"
-  create_bucket_lifecycle = true
 
   depends_on = [
     module.generate_kms
