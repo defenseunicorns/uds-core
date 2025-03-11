@@ -22,7 +22,7 @@ While not the main focus of this testing, we also noted that latency tends to be
 
 Sidecar mode typically required ~8 CPU millicores and ~40Mi of memory for each sidecar.
 
-Ambient mode required a fraction of the overall resources that sidecar mode required past a single workload pod:
+Ambient mode required a fraction of the overall resources (when considering Istio namespaces + the application namespace) that sidecar mode required past a single workload pod:
 - 1 pod: Similar resource usage
 - 10 pods: Somewhere between 1/2 and 1/4 the resource usage
 - 50 pods: Around 1/4 the resource usage
