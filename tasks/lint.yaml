@@ -36,10 +36,10 @@ tasks:
       - description: license lint
         task: license
 
-  - name: oscal
-    actions:
-      - description: Lula Lint OSCAL
-        task: remote:oscal
+  # - name: oscal
+  #   actions:
+  #     - description: Lula Lint OSCAL
+  #       task: remote:oscal
 
   - name: license
     actions:
