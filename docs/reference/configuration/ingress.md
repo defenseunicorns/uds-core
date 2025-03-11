@@ -148,7 +148,7 @@ If you want your application to be reachable at `https://uds.dev`, enable apex (
     overrides:
       istio-tenant-gateway:
         uds-istio-config:
-          variables:
+          values:
             - path: enableRootDomain
               value: true
             - path: rootDomainTLS.mode
@@ -157,12 +157,13 @@ If you want your application to be reachable at `https://uds.dev`, enable apex (
               value: ""  # Leave blank to auto-create the secret using the provided cert data.
             - path: rootDomainTLS.supportTLSV1_2
               value: true
+          variables:
             - path: rootDomainTLS.cert
-              value: "BASE64_ENCODED_CERTIFICATE"
+              name: "ROOT_TLS_CERT"
             - path: rootDomainTLS.key
-              value: "BASE64_ENCODED_PRIVATE_KEY"
+              name: "ROOT_TLS_KEY"
             - path: rootDomainTLS.cacert
-              value: "BASE64_ENCODED_CERTIFICATE"
+              name: "ROOT_TLS_CACERT"
 ```
 :::note
 - If you provide a non-empty value for credentialName, UDS Core assumes that you have pre-created the Kubernetes secret and will not auto-generate it using the certificate data.
