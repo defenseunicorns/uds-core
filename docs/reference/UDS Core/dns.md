@@ -12,7 +12,7 @@ Each Gateway requires a wildcard DNS entry corresponding with the chosen `DOMAIN
 - `*.admin.<DOMAIN>` / Admin Gateway if NOT setting `ADMIN_DOMAIN`
 
 :::note
-Wildcard records do not cover the apex (root) domain itself. If you need to serve applications directly on the apex (for example, `uds.dev`), see [Istio Ingress docs](https://uds.defenseunicorns.com/reference/configuration/ingress/).
+Wildcard records do not cover the root (apex) domain itself. If you need to serve applications directly on the root (for example, `uds.dev`), see [Istio Ingress docs](https://uds.defenseunicorns.com/reference/configuration/ingress/).
 :::
 
 :::note

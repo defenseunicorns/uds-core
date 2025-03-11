@@ -133,14 +133,14 @@ packages:
               value: tenant-gateway-tls-secret # Reference to the Kubernetes secret for the tenant gateway's TLS certificate
 ```
 
-### Apex (Root) Domain Configuration
-By default, the UDS Core Gateways are configured with wildcard hosts (for example, `*.uds.dev`), which match only subdomains (such as `demo.uds.dev` or `keycloak.admin.uds.dev`). The apex domain (i.e. `uds.dev`) is not covered by a wildcard. This is important if you need an application to be accessible at the root of your domain.
+### Root (Apex) Domain Configuration
+By default, the UDS Core Gateways are configured with wildcard hosts (for example, `*.uds.dev`), which match only subdomains (such as `demo.uds.dev` or `keycloak.admin.uds.dev`). The root domain (i.e. `uds.dev`) is not covered by a wildcard. This is important if you need an application to be accessible at the root of your domain.
 
-To support this use case, UDS Core provides an optional configuration to enable a dedicated server block for the apex domain. When enabled, two additional server blocks are added to your Istio Gateway:
+To support this use case, UDS Core provides an optional configuration to enable a dedicated server block for the root domain. When enabled, two additional server blocks are added to your Istio Gateway:
 - **HTTP on port 80**: Redirects traffic to HTTPS.
 - **HTTPS on port 443**: Terminates TLS using settings from the rootDomainTLS section.
 
-If you want your application to be reachable at `https://uds.dev`, enable apex (root) domain configuration via a bundle override in your UDS Bundle. For example:
+If you want your application to be reachable at `https://uds.dev`, enable root (apex) domain configuration via a bundle override in your UDS Bundle. For example:
 ```yaml
   - name: core
     repository: oci://ghcr.io/defenseunicorns/packages/uds/core
@@ -149,30 +149,30 @@ If you want your application to be reachable at `https://uds.dev`, enable apex (
       istio-tenant-gateway:
         uds-istio-config:
           values:
-            - path: enableRootDomain
+            - path: rootDomain.enabled
               value: true
-            - path: rootDomainTLS.mode
+            - path: rootDomain.tls.mode
               value: SIMPLE
-            - path: rootDomainTLS.credentialName
+            - path: rootDomain.tls.credentialName
               value: ""  # Leave blank to auto-create the secret using the provided cert data.
-            - path: rootDomainTLS.supportTLSV1_2
+            - path: rootDomain.tls.supportTLSV1_2
               value: true
           variables:
-            - path: rootDomainTLS.cert
+            - path: rootDomain.tls.cert
               name: "ROOT_TLS_CERT"
-            - path: rootDomainTLS.key
+            - path: rootDomain.tls.key
               name: "ROOT_TLS_KEY"
-            - path: rootDomainTLS.cacert
+            - path: rootDomain.tls.cacert
               name: "ROOT_TLS_CACERT"
 ```
 :::note
 - If you provide a non-empty value for credentialName, UDS Core assumes that you have pre-created the Kubernetes secret and will not auto-generate it using the certificate data.
 
-- If you prefer to use an existing secret (such as when using a SAN certificate that covers both subdomains and the apex) you may set the `rootDomainTLS.credentialName` field to the name of that secret (for example, `gateway-tls`). In that case, UDS Core assumes the secret exists and will not auto-create one using the certificate data.
+- If you prefer to use an existing secret (such as when using a SAN certificate that covers both subdomains and the root) you may set the `rootDomainTLS.credentialName` field to the name of that secret (for example, `gateway-tls`). In that case, UDS Core assumes the secret exists and will not auto-create one using the certificate data.
 :::
 
-#### Exposing a Service on the Apex Domain with a VirtualService
-Once your apex domain configuration is enabled and DNS is correctly set up (i.e. an A record for `uds.dev` points to your ingress gateway), you can expose services directly on the apex domain. For example, to route traffic from `https://uds.dev/my-app` to a service in your cluster, create a VirtualService similar to the following:
+#### Exposing a Service on the Root Domain with a VirtualService
+Once your root domain configuration is enabled and DNS is correctly set up (i.e. an A record for `uds.dev` points to your ingress gateway), you can expose services directly on the root domain. For example, to route traffic from `https://uds.dev/my-app` to a service in your cluster, create a VirtualService similar to the following:
 ```yaml
 apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
@@ -197,4 +197,4 @@ spec:
             port:
               number: 80
 ```
-This VirtualService matches requests to the apex domain (`uds.dev`) with the path prefix `/my-app` and routes them to your service (`my-app-service` on port 80).
+This VirtualService matches requests to the root domain (`uds.dev`) with the path prefix `/my-app` and routes them to your service (`my-app-service` on port 80).
