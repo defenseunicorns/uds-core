@@ -216,4 +216,4 @@ Istio-system CPU resource usage increases with ambient, although it is still rel
 
 Nginx namespace resources decrease by about the expected amount of a sidecar (40Mi memory and 8m CPU).
 
-Ambient resource usage is similar to sidecar on a single pod, but decreases exponentially with increased pod counts and requests (1/2, 1/3, 1/4, 1/5).
+Ambient resource usage is similar to sidecar on a single pod, but decreases with increased pod counts and requests (1/2, 1/3, 1/4, 1/5).
