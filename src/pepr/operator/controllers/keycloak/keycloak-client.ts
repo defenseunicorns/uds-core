@@ -131,7 +131,7 @@ export class DynamicClientRegistrationClient implements KeycloakClient {
   }
 
   async create(client: Partial<Client>): Promise<Client> {
-    log.warn(`DynamicClientRegistrationClient: creating client ${JSON.stringify(client)}`)
+    log.warn(`DynamicClientRegistrationClient: creating client ${JSON.stringify(client)}`);
     const response = await fetch<Client>(this.dynamicClientRegistrationUrl, {
       method: "POST",
       headers: {
@@ -150,7 +150,7 @@ export class DynamicClientRegistrationClient implements KeycloakClient {
     client: Partial<Client>,
     previouslyObtainedRegistrationToken: string = "",
   ): Promise<Client> {
-    log.warn(`DynamicClientRegistrationClient: updating client ${JSON.stringify(client)}`)
+    log.warn(`DynamicClientRegistrationClient: updating client ${JSON.stringify(client)}`);
     const registrationToken =
       previouslyObtainedRegistrationToken ||
       (Store.getItem(`sso-client-${client.clientId}`) as string);
@@ -175,7 +175,7 @@ export class DynamicClientRegistrationClient implements KeycloakClient {
     client: Partial<Client>,
     previouslyObtainedRegistrationToken: string = "",
   ): Promise<void> {
-    log.warn(`DynamicClientRegistrationClient: updating client ${JSON.stringify(client)}`)
+    log.warn(`DynamicClientRegistrationClient: updating client ${JSON.stringify(client)}`);
     const registrationToken =
       previouslyObtainedRegistrationToken ||
       (Store.getItem(`sso-client-${client.clientId}`) as string);
@@ -196,7 +196,7 @@ export class DynamicClientRegistrationClient implements KeycloakClient {
     client: Partial<Client>,
     deleteStoreKey: boolean = false,
   ) {
-    log.warn(`DynamicClientRegistrationClient: updating store ${JSON.stringify(client)}`)
+    log.warn(`DynamicClientRegistrationClient: updating store ${JSON.stringify(client)}`);
     try {
       const registrationTokenStoreKey = `sso-client-${client.clientId}`;
       await retryWithDelay(async function setStoreToken() {
@@ -230,7 +230,7 @@ export class ClientCredentialsKeycloakClient implements KeycloakClient {
   }
 
   public async getAccessToken(previouslyObtainedToken: string = "") {
-    log.warn(`ClientCredentialsKeycloakClient: getting token`)
+    log.warn(`ClientCredentialsKeycloakClient: getting token`);
     if (previouslyObtainedToken) {
       const jwt = decodeJwt(previouslyObtainedToken);
       if (jwt.exp) {
@@ -300,7 +300,7 @@ export class ClientCredentialsKeycloakClient implements KeycloakClient {
   }
 
   async create(client: Partial<Client>, previouslyObtainedToken: string = ""): Promise<Client> {
-    log.warn(`ClientCredentialsKeycloakClient: creating client ${JSON.stringify(client)}`)
+    log.warn(`ClientCredentialsKeycloakClient: creating client ${JSON.stringify(client)}`);
     const accessToken = await this.getAccessToken(previouslyObtainedToken);
     const url = `${this.clientsAdminUrl}`;
     const response = await fetch(url, {
@@ -317,7 +317,7 @@ export class ClientCredentialsKeycloakClient implements KeycloakClient {
   }
 
   async get(client: Partial<Client>, previouslyObtainedToken: string = ""): Promise<ClientWithId> {
-    log.warn(`ClientCredentialsKeycloakClient: getting client ${JSON.stringify(client)}`)
+    log.warn(`ClientCredentialsKeycloakClient: getting client ${JSON.stringify(client)}`);
     const accessToken = await this.getAccessToken(previouslyObtainedToken);
     // Keycloak doesn't support finding specific client by client_id. It supports this in the collection endpoint.
     const url = `${this.clientsAdminUrl}?clientId=${encodeURIComponent(client.clientId!)}`;
@@ -337,7 +337,7 @@ export class ClientCredentialsKeycloakClient implements KeycloakClient {
     previouslyObtainedToken: string = "",
     preciouslyObtainedClient: ClientWithId | null = null,
   ): Promise<Client> {
-    log.warn(`ClientCredentialsKeycloakClient: updating client ${JSON.stringify(client)}`)
+    log.warn(`ClientCredentialsKeycloakClient: updating client ${JSON.stringify(client)}`);
     const accessToken = await this.getAccessToken(previouslyObtainedToken);
     // The update endpoint accepts Client.id (not client_id). We need to obtain a new client first
     const obtainedClient = preciouslyObtainedClient || (await this.get(client, accessToken));
@@ -357,7 +357,7 @@ export class ClientCredentialsKeycloakClient implements KeycloakClient {
   }
 
   async delete(client: Partial<Client>, previouslyObtainedToken: string = ""): Promise<void> {
-    log.warn(`ClientCredentialsKeycloakClient: deleting client ${JSON.stringify(client)}`)
+    log.warn(`ClientCredentialsKeycloakClient: deleting client ${JSON.stringify(client)}`);
     const accessToken = await this.getAccessToken(previouslyObtainedToken);
     // The update endpoint accepts Client.id (not client_id). We need to obtain a new client first
     const obtainedClient = await this.get(client, accessToken);
@@ -390,7 +390,7 @@ export class ClientCredentialsKeycloakClient implements KeycloakClient {
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 function throwErrorIfNeeded(response: FetchResponse<any>) {
-  log.warn(`Checking response: ${JSON.stringify(response)}`)
+  log.warn(`Checking response: ${JSON.stringify(response)}`);
   if (!response.ok) {
     const data = response.data;
     const status = response.status;

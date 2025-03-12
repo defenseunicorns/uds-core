@@ -7,7 +7,7 @@ import { fetch, K8s, kind } from "pepr";
 
 import { Component, setupLogger } from "../../../logger";
 import { Sso, UDSPackage } from "../../crd";
-import { getOwnerRef, purgeOrphans, retryWithDelay, sanitizeResourceName } from "../utils";
+import { getOwnerRef, purgeOrphans, sanitizeResourceName } from "../utils";
 import { Client, clientKeys } from "./types";
 import { DynamicKeycloakClient } from "./keycloak-client";
 
@@ -199,43 +199,6 @@ async function syncClient(
   }
 
   return client;
-}
-
-async function apiCall(client: Partial<Client>, method = "POST", authToken = "") {
-  const req = {
-    body: JSON.stringify(client) as string | undefined,
-    method,
-    headers: {
-      "Content-Type": "application/json",
-    } as Record<string, string>,
-  };
-
-  let url = apiURL;
-
-  // When not creating a new client, add the client ID and registrationAccessToken
-  if (authToken) {
-    req.headers.Authorization = `Bearer ${authToken}`;
-    // Ensure that we URI encode the clientId in the request URL
-    url += `/${encodeURIComponent(client.clientId!)}`;
-  }
-
-  // Remove the body for DELETE requests
-  if (method === "DELETE" || method === "GET") {
-    delete req.body;
-  }
-
-  // Make the request
-  const resp = await fetch<Client>(url, req);
-
-  if (!resp.ok) {
-    if (resp.data) {
-      throw new Error(`${JSON.stringify(resp.statusText)}, ${JSON.stringify(resp.data)}`);
-    } else {
-      throw new Error(`${JSON.stringify(resp.statusText)}`);
-    }
-  }
-
-  return resp.data;
 }
 
 export function generateSecretData(client: Client, secretTemplate?: { [key: string]: string }) {
