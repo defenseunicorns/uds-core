@@ -110,7 +110,7 @@ chmod +x yq
 #Fix for metrics server scraping of kubernetes api server components
 ./yq -i '.kube-controller-manager-arg[2] = "bind-address=0.0.0.0"' /etc/rancher/rke2/config.yaml
 ./yq -i '.kube-scheduler-arg += "bind-address=0.0.0.0"' /etc/rancher/rke2/config.yaml
-./yq -i '.listen-metrics-urls = "http://0.0.0.0:2381"' /var/lib/rancher/rke2/server/db/etcd/config
+sudo ./yq -i '.listen-metrics-urls = "http://0.0.0.0:2381"' /var/lib/rancher/rke2/server/db/etcd/config
 rm -rf ./yq
 }
 
