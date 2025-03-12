@@ -50,7 +50,7 @@ metadata:
 spec:
   chart: longhorn
   repo: https://charts.longhorn.io
-  version: 1.7.1
+  version: 1.8.1
   targetNamespace: kube-system 
 EOM
 
@@ -78,7 +78,7 @@ metadata:
 spec:
   chart: aws-load-balancer-controller
   repo: https://aws.github.io/eks-charts
-  version: 1.11.0
+  version: 1.12.0
   targetNamespace: kube-system
   valuesContent: |-
     clusterName: ${cluster_name}
