@@ -74,11 +74,11 @@ export class DynamicKeycloakClient implements KeycloakClient {
         return this.dyanamicClientRegistrationKeycloakClient;
       case this.ENV_KEYCLOAK_CLIENT_IMPLEMENTATION_CLIENT_CREDENTIALS:
         try {
-          if (!this.hasClientCredentialsBeenUsed) {
+          // if (!this.hasClientCredentialsBeenUsed) {
             log.info("Probing Client Credentials Keycloak Client implementation...");
             await this.clientCredentialsKeycloakClient.getAccessToken();
-            this.hasClientCredentialsBeenUsed = true;
-          }
+            // this.hasClientCredentialsBeenUsed = true;
+          // }
           return this.clientCredentialsKeycloakClient;
         } catch {
           log.info(
