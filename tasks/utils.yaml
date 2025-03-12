@@ -64,7 +64,7 @@ tasks:
               --from-literal=password=${PASSWORD} \
               -n keycloak
           fi
-  - name: aks-coredns-setup
+  - name: coredns-setup
     actions:
       - description: Setup Custom ConfigMap for Core DNS
         cmd: |
@@ -95,9 +95,15 @@ tasks:
             name: allow-prometheus-to-kube-dns
             namespace: kube-system
           spec:
-            podSelector:
-              matchLabels:
-                k8s-app: kube-dns
+            # podSelector:
+            #   matchLabels:
+            #     k8s-app: kube-dns
+            #     endpoint: http-metrics
+            #   matchExpressions:
+            #     - key: job
+            #       operator: In
+            #       values:
+            #         - kube
             policyTypes:
               - Ingress
             ingress:

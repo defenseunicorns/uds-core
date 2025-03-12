@@ -89,7 +89,7 @@ jobs:
         run: uds run -f tasks/iac.yaml apply-tofu --no-progress --set K8S_DISTRO=aks --set CLOUD=azure
 
       - name: Configure Cluster DNS
-        run: uds run -f tasks/utils.yaml aks-coredns-setup --no-progress
+        run: uds run -f tasks/utils.yaml coredns-setup --no-progress
 
       - name: Deploy Core Bundle
         env:
