@@ -44,7 +44,8 @@ spec:
               # This is another fallback protection, as the KC policy already blocks it
               - "/realms/{{ .Values.realm }}/clients-registrations/*"
               # Block all admin calls unless they are coming from Pepr
-              - "/admin*"
+              - "/admin/realms/{{ .Values.realm }}/clients"
+              - "/realms/{{ .Values.realm }}/protocol/openid-connect/token"
       from:
         - source:
             notNamespaces:
