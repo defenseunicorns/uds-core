@@ -64,7 +64,44 @@ tasks:
               --from-literal=password=${PASSWORD} \
               -n keycloak
           fi
-  - name: coredns-setup
+  - name: eks-coredns-setup
+    actions:
+      - description: Setup Custom ConfigMap for Core DNS
+        cmd: |
+          uds zarf tools kubectl apply -f - <<EOF
+          apiVersion: v1
+          data:
+            Corefile: |
+              .:53 {
+                  errors
+                  health {
+                      lameduck 5s
+                    }
+                  ready
+                  kubernetes cluster.local in-addr.arpa ip6.arpa {
+                    pods insecure
+                    fallthrough in-addr.arpa ip6.arpa
+                  }
+                  prometheus :9153
+                  forward . /etc/resolv.conf
+                  cache 30
+                  loop
+                  reload
+                  loadbalance
+                  rewrite stop {
+                    name regex (.*\.admin\.uds\.dev) admin-ingressgateway.istio-admin-gateway.svc.cluster.local answer auto
+                    }
+                  rewrite stop {
+                  name regex (.*\.uds\.dev) tenant-ingressgateway.istio-tenant-gateway.svc.cluster.local answer auto
+                    }
+              }
+          kind: ConfigMap
+          metadata:
+            name: coredns
+            namespace: kube-system
+          EOF
+            uds zarf tools kubectl -n kube-system rollout restart deployment coredns
+  - name: aks-coredns-setup
     actions:
       - description: Setup Custom ConfigMap for Core DNS
         cmd: |
@@ -95,15 +132,9 @@ tasks:
             name: allow-prometheus-to-kube-dns
             namespace: kube-system
           spec:
-            # podSelector:
-            #   matchLabels:
-            #     k8s-app: kube-dns
-            #     endpoint: http-metrics
-            #   matchExpressions:
-            #     - key: job
-            #       operator: In
-            #       values:
-            #         - kube
+            podSelector:
+              matchLabels:
+                k8s-app: kube-dns
             policyTypes:
               - Ingress
             ingress:
