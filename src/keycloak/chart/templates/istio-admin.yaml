@@ -18,6 +18,7 @@ spec:
             ports:
               - "8080"
             paths:
+              - "/admin*"
               - "/realms/master*"
       from:
         - source:
@@ -28,12 +29,12 @@ spec:
             ports:
               - "8080"
             paths:
-              - /metrics*
+            - /metrics*
       from:
         - source:
             notNamespaces:
-              - istio-admin-gateway
-              - monitoring
+            - istio-admin-gateway
+            - monitoring
     - to:
         - operation:
             ports:
@@ -58,12 +59,12 @@ spec:
       from:
         - source:
             notNamespaces:
-              - istio-tenant-gateway
-              - istio-admin-gateway
+            - istio-tenant-gateway
+            - istio-admin-gateway
             {{- range .Values.additionalGatewayNamespaces }}
             {{- if not (hasPrefix "istio-" .) }}
               {{- fail (printf "Allowed gateway namespace '%s' must start with 'istio-'" .) }}
             {{- end }}
-              - {{ . }}
+            - {{ . }}
             {{- end }}
 {{- end }}
