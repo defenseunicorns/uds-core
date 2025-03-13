@@ -39,7 +39,7 @@ spec:
       - --v=2
       - --cloud-provider=aws
 EOM
-cat > /var/lib/rancher/rke2/server/manifests/01-local-path-provisioner.yaml << EOM
+cat > /var/lib/rancher/rke2/server/manifests/01-local-path-provisioner.yaml << 'EOM'
 ---
 # Source: uds-dev-stack/templates/localpath-rwx.yaml
 apiVersion: v1
