@@ -44,13 +44,33 @@ spec:
               # Never allow anonymous client registration except from the pepr-system namespace
               # This is another fallback protection, as the KC policy already blocks it
               - "/realms/{{ .Values.realm }}/clients-registrations/*"
-              # Block all admin calls unless they are coming from Pepr
-{{/*              - "/admin/realms/{{ .Values.realm }}/clients"*/}}
-{{/*              - "/realms/{{ .Values.realm }}/protocol/openid-connect/token"*/}}
       from:
         - source:
             notNamespaces:
               - "pepr-system"
+    - to:
+        - operation:
+            ports:
+              - "8080"
+            paths:
+              - "/admin/realms/{{ .Values.realm }}/clients"
+      from:
+        - source:
+            notNamespaces:
+              - pepr-system
+              - istio-admin-gateway
+    - to:
+        - operation:
+            ports:
+              - "8080"
+            paths:
+              - "/realms/{{ .Values.realm }}/protocol/openid-connect/token"
+      from:
+        - source:
+            notNamespaces:
+              - pepr-system
+              - istio-admin-gateway
+              - istio-tenant-gateway
     - when:
         - key: request.headers[istio-mtls-client-certificate]
           values: ["*"]
