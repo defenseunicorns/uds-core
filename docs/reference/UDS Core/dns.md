@@ -12,7 +12,11 @@ Each Gateway requires a wildcard DNS entry corresponding with the chosen `DOMAIN
 - `*.admin.<DOMAIN>` / Admin Gateway if NOT setting `ADMIN_DOMAIN`
 
 :::note
-The default value for `DOMAIN` is `uds.dev`, which is intended for development purposes only. For non-development purposes, you should override this value by specifying a value for `domain` in your `uds-config.yaml`. You can find instructions on how to do so [here](https://uds.defenseunicorns.com/reference/configuration/ingress/#configure-domain-name-and-tls-for-istio-gateways). 
+Wildcard records do not cover the root (apex) domain itself. If you need to serve applications directly on the root (for example, `uds.dev`), see [Istio Ingress docs](https://uds.defenseunicorns.com/reference/configuration/ingress/).
+:::
+
+:::note
+The default value for `DOMAIN` is `uds.dev`, which is intended for development purposes only. For non-development purposes, you should override this value by specifying a value for `domain` in your `uds-config.yaml`. You can find instructions on how to do so [here](https://uds.defenseunicorns.com/reference/configuration/ingress/#configure-domain-name-and-tls-for-istio-gateways).
 :::
 
 ### Bundle Configuration
@@ -28,7 +32,7 @@ metadata:
   name: core-with-lb-config
   description: A UDS example bundle for deploying UDS Core with external Load Balancer configuration
   version: "0.0.1"
-  
+
 packages:
   - name: core
     repository: oci://ghcr.io/defenseunicorns/packages/uds/core
@@ -52,7 +56,7 @@ overrides:
       - path: service.annotations.service\.beta\.kubernetes\.io/aws-load-balancer-scheme
         value: "internet-facing"
       - path: service.annotations.service\.beta\.kubernetes\.io/aws-load-balancer-attributes
-        value: "load_balancing.cross_zone.enabled=true"        
+        value: "load_balancing.cross_zone.enabled=true"
 ```
 
 ### Istio Gateways
@@ -72,4 +76,4 @@ istio-admin-gateway         admin-ingressgateway                             Loa
 istio-tenant-gateway        tenant-ingressgateway                            LoadBalancer   10.43.47.182    k8s-istioten-tenant...elb.us-east-1.amazonaws.com  15021:31222/TCP,80:30456/TCP,443:32508/TCP  1h
 ```
 
-From here, you can register your domain and/or create DNS records for your environment that point to the appropriate Gateways/Load Balancers. Refer to your DNS provider's documentation. 
+From here, you can register your domain and/or create DNS records for your environment that point to the appropriate Gateways/Load Balancers. Refer to your DNS provider's documentation.
