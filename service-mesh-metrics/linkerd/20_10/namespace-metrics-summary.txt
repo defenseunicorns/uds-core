@@ -1,0 +1,4 @@
+Namespace   CPU_min   CPU_max   CPU_avg   Mem_min   Mem_max   Mem_avg
+linkerd     3m        3m        3.00m     178Mi     178Mi     178.00Mi
+nginx       10m       15m       14.14m    143Mi     143Mi     143.00Mi
+TOTAL       13m       18m       17.14m    321Mi     321Mi     321.00Mi
