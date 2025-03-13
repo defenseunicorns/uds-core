@@ -185,12 +185,40 @@ curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip
 unzip awscliv2.zip
 sudo ./aws/install
 
+echo "Modifying selinux permissions for local path provisioner"
+cat > /root/localpathpolicy.te << EOM
+module localpathpolicy 1.0;
+
+require {
+    type usr_t;
+    type init_t;
+    type container_t;
+    type container_var_lib_t;
+    class dir { search write add_name create remove_name rmdir setattr getattr };
+    class file { create open write append read unlink setattr getattr };
+}
+
+#============= container_t ==============
+allow container_t container_var_lib_t:file { create open write append read setattr getattr unlink };
+allow container_t container_var_lib_t:dir { add_name create remove_name rmdir setattr write search };
+allow container_t init_t:dir search;
+allow container_t usr_t:dir { add_name create remove_name rmdir setattr getattr write };
+allow container_t usr_t:file { create unlink write setattr getattr };
+allow container_t init_t:file { read open };
+EOM
+checkmodule -M -m -o /root/localpathpolicy.mod /root/localpathpolicy.te
+semodule_package -o /root/localpathpolicy.pp -m /root/localpathpolicy.mod
+semodule -i /root/localpathpolicy.pp
+semanage fcontext -a -t container_file_t "/opt/local-path-provisioner-rwx(/.*)?"
+restorecon -R -v /opt/local-path-provisioner-rwx
+
 echo "Getting OIDC keypair"
 sudo mkdir /irsa
 sudo chown ec2-user:ec2-user /irsa
 aws secretsmanager get-secret-value --secret-id ${secret_prefix}-oidc-private-key | jq -r '.SecretString' > /irsa/signer.key
 aws secretsmanager get-secret-value --secret-id ${secret_prefix}-oidc-public-key | jq -r '.SecretString' > /irsa/signer.key.pub
 chcon -t svirt_sandbox_file_t /irsa/*
+chcon -Rt container_file_t  /opt/local-path-provisioner-rwx
 
 info "Setting up RKE2 config file"
 curl -L https://github.com/mikefarah/yq/releases/download/v4.40.4/yq_linux_amd64 -o yq
