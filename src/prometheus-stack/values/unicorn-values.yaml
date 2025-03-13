@@ -6,7 +6,7 @@ alertmanager:
     image:
       registry: cgr.dev
       repository: du-uds-defenseunicorns/prometheus-alertmanager-fips
-      tag: 0.28.0
+      tag: 0.28.1
 kube-state-metrics:
   image:
     registry: cgr.dev
@@ -51,9 +51,9 @@ prometheusOperator:
   image:
     registry: cgr.dev
     repository: du-uds-defenseunicorns/prometheus-operator-fips
-    tag: 0.80.1
+    tag: 0.81.0
   prometheusConfigReloader:
     image:
       registry: cgr.dev
       repository: du-uds-defenseunicorns/prometheus-config-reloader-fips
-      tag: 0.80.1
+      tag: 0.81.0
