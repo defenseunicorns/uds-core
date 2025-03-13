@@ -51,44 +51,42 @@ export interface KeycloakClient {
  * Empty implementation of KeycloakClient
  */
 export class DynamicKeycloakClient implements KeycloakClient {
-  public readonly ENV_KEYCLOAK_CLIENT_IMPLEMENTATION = "PEPR_KEYCLOAK_CLIENT_STRATEGY";
-  public readonly ENV_KEYCLOAK_CLIENT_IMPLEMENTATION_DYNAMIC = "dynamic_client_registration";
-  public readonly ENV_KEYCLOAK_CLIENT_IMPLEMENTATION_CLIENT_CREDENTIALS = "client_credentials";
 
-  private readonly dyanamicClientRegistrationKeycloakClient: DynamicClientRegistrationClient;
+  public static readonly ENV_KEYCLOAK_CLIENT_IMPLEMENTATION = "PEPR_KEYCLOAK_CLIENT_STRATEGY";
+  public static readonly ENV_KEYCLOAK_CLIENT_IMPLEMENTATION_DYNAMIC = "dynamic_client_registration";
+  public static readonly ENV_KEYCLOAK_CLIENT_IMPLEMENTATION_CLIENT_CREDENTIALS = "client_credentials";
+  public static readonly ENV_KEYCLOAK_CLIENT_IMPLEMENTATION_AUTO = "auto";
+
+  private readonly dynaamicClientRegistrationKeycloakClient: DynamicClientRegistrationClient;
   private readonly clientCredentialsKeycloakClient: ClientCredentialsKeycloakClient;
 
-  private hasClientCredentialsBeenUsed = false;
-
   constructor(baseUrl: string) {
-    this.dyanamicClientRegistrationKeycloakClient = new DynamicClientRegistrationClient(baseUrl);
+    this.dynaamicClientRegistrationKeycloakClient = new DynamicClientRegistrationClient(baseUrl);
     this.clientCredentialsKeycloakClient = new ClientCredentialsKeycloakClient(baseUrl);
   }
 
-  private async pickImplementation() {
-    const implementation =
-      process.env[this.ENV_KEYCLOAK_CLIENT_IMPLEMENTATION] ??
-      this.ENV_KEYCLOAK_CLIENT_IMPLEMENTATION_CLIENT_CREDENTIALS;
+  async pickImplementation() {
+    const implementation = process.env[DynamicKeycloakClient.ENV_KEYCLOAK_CLIENT_IMPLEMENTATION] ?? DynamicKeycloakClient.ENV_KEYCLOAK_CLIENT_IMPLEMENTATION_AUTO;
     switch (implementation) {
-      case this.ENV_KEYCLOAK_CLIENT_IMPLEMENTATION_DYNAMIC:
-        return this.dyanamicClientRegistrationKeycloakClient;
-      case this.ENV_KEYCLOAK_CLIENT_IMPLEMENTATION_CLIENT_CREDENTIALS:
+      case DynamicKeycloakClient.ENV_KEYCLOAK_CLIENT_IMPLEMENTATION_DYNAMIC:
+        return this.dynaamicClientRegistrationKeycloakClient;
+      case DynamicKeycloakClient.ENV_KEYCLOAK_CLIENT_IMPLEMENTATION_CLIENT_CREDENTIALS:
+        return this.clientCredentialsKeycloakClient;
+      case DynamicKeycloakClient.ENV_KEYCLOAK_CLIENT_IMPLEMENTATION_AUTO:
         try {
-          // if (!this.hasClientCredentialsBeenUsed) {
           log.info("Probing Client Credentials Keycloak Client implementation...");
           await this.clientCredentialsKeycloakClient.getAccessToken();
-          // this.hasClientCredentialsBeenUsed = true;
-          // }
+          log.info("Client Credentials Keycloak Client is available");
           return this.clientCredentialsKeycloakClient;
         } catch {
           log.info(
             "Client Credentials Keycloak Client is not properly configured, falling back to Dynamic Client Registration...",
           );
-          return this.dyanamicClientRegistrationKeycloakClient;
+          return this.dynaamicClientRegistrationKeycloakClient;
         }
       default:
         throw new Error(
-          `Invalid Keycloak Client implementation: ${implementation}. Supported values: ${this.ENV_KEYCLOAK_CLIENT_IMPLEMENTATION_DYNAMIC}, ${this.ENV_KEYCLOAK_CLIENT_IMPLEMENTATION_CLIENT_CREDENTIALS}`,
+          `Invalid Keycloak Client implementation: ${implementation}. Supported values: ${DynamicKeycloakClient.ENV_KEYCLOAK_CLIENT_IMPLEMENTATION_DYNAMIC}, ${DynamicKeycloakClient.ENV_KEYCLOAK_CLIENT_IMPLEMENTATION_CLIENT_CREDENTIALS}`,
         );
     }
   }
