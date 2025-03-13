@@ -48,13 +48,13 @@ export interface KeycloakClient {
 }
 
 /**
- * Empty implementation of KeycloakClient
+ * Dynamic Keycloak Client implementation that chooses between different Keycloak client implementations
  */
 export class DynamicKeycloakClient implements KeycloakClient {
-
   public static readonly ENV_KEYCLOAK_CLIENT_IMPLEMENTATION = "PEPR_KEYCLOAK_CLIENT_STRATEGY";
   public static readonly ENV_KEYCLOAK_CLIENT_IMPLEMENTATION_DYNAMIC = "dynamic_client_registration";
-  public static readonly ENV_KEYCLOAK_CLIENT_IMPLEMENTATION_CLIENT_CREDENTIALS = "client_credentials";
+  public static readonly ENV_KEYCLOAK_CLIENT_IMPLEMENTATION_CLIENT_CREDENTIALS =
+    "client_credentials";
   public static readonly ENV_KEYCLOAK_CLIENT_IMPLEMENTATION_AUTO = "auto";
 
   private readonly dynaamicClientRegistrationKeycloakClient: DynamicClientRegistrationClient;
@@ -66,7 +66,9 @@ export class DynamicKeycloakClient implements KeycloakClient {
   }
 
   async pickImplementation() {
-    const implementation = process.env[DynamicKeycloakClient.ENV_KEYCLOAK_CLIENT_IMPLEMENTATION] ?? DynamicKeycloakClient.ENV_KEYCLOAK_CLIENT_IMPLEMENTATION_AUTO;
+    const implementation =
+      process.env[DynamicKeycloakClient.ENV_KEYCLOAK_CLIENT_IMPLEMENTATION] ??
+      DynamicKeycloakClient.ENV_KEYCLOAK_CLIENT_IMPLEMENTATION_AUTO;
     switch (implementation) {
       case DynamicKeycloakClient.ENV_KEYCLOAK_CLIENT_IMPLEMENTATION_DYNAMIC:
         return this.dynaamicClientRegistrationKeycloakClient;
