@@ -59,18 +59,6 @@ spec:
             notNamespaces:
               - pepr-system
               - istio-admin-gateway
-    - to:
-        - operation:
-            ports:
-              - "8080"
-            paths:
-              - "/realms/{{ .Values.realm }}/protocol/openid-connect/token"
-      from:
-        - source:
-            notNamespaces:
-              - pepr-system
-              - istio-admin-gateway
-              - istio-tenant-gateway
     - when:
         - key: request.headers[istio-mtls-client-certificate]
           values: ["*"]
