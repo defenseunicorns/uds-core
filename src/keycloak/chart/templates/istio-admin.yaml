@@ -24,6 +24,7 @@ spec:
         - source:
             notNamespaces:
               - istio-admin-gateway
+              - "pepr-system"
     - to:
         - operation:
             ports:
@@ -44,8 +45,8 @@ spec:
               # This is another fallback protection, as the KC policy already blocks it
               - "/realms/{{ .Values.realm }}/clients-registrations/*"
               # Block all admin calls unless they are coming from Pepr
-              - "/admin/realms/{{ .Values.realm }}/clients"
-              - "/realms/{{ .Values.realm }}/protocol/openid-connect/token"
+{{/*              - "/admin/realms/{{ .Values.realm }}/clients"*/}}
+{{/*              - "/realms/{{ .Values.realm }}/protocol/openid-connect/token"*/}}
       from:
         - source:
             notNamespaces:
