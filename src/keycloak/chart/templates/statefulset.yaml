@@ -231,6 +231,8 @@ spec:
             - name: conf
               mountPath: /opt/keycloak/conf
               readOnly: true
+            - name: client-secrets
+              mountPath: /var/run/secrets/uds/client-secrets
       enableServiceLinks: {{ .Values.enableServiceLinks }}
       restartPolicy: {{ .Values.restartPolicy }}
       {{- with .Values.nodeSelector }}
@@ -254,6 +256,9 @@ spec:
       {{- end }}
       terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
       volumes:
+        - name: client-secrets
+          secret:
+            secretName: {{ include "keycloak.fullname" . }}-client-secrets
         - name: providers
           {{- if .Values.persistence.providers.enabled }}
           persistentVolumeClaim:
