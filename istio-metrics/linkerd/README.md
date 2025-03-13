@@ -8,6 +8,8 @@ As expected, Linkerd outperforms Istio for request latency and CPU utilization. 
 
 For a detailed comparison see [this doc](./comparison.md)
 
+For the full results of each test see [this doc](./linkerd.md)
+
 ## Specific Data Points
 
 Linkerd control plane requires slightly more resources to run at base configuration than Istio.
