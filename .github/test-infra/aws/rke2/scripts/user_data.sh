@@ -39,37 +39,132 @@ spec:
       - --v=2
       - --cloud-provider=aws
 EOM
-
-#longhorn helm values: https://github.com/longhorn/longhorn/tree/master/chart
-cat > /var/lib/rancher/rke2/server/manifests/01-longhorn.yaml << EOM
-apiVersion: helm.cattle.io/v1
-kind: HelmChart
+cat > /var/lib/rancher/rke2/server/manifests/01-local-path-provisioner.yaml << EOM
+---
+# Source: uds-dev-stack/templates/localpath-rwx.yaml
+apiVersion: v1
+kind: ServiceAccount
 metadata:
-  name: longhorn
+  name: local-path-provisioner-service-account
+  namespace: kube-system
+---
+# Source: uds-dev-stack/templates/localpath-rwx.yaml
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: local-path-config
+  namespace: kube-system
+data:
+  config.json: |-
+    {
+            "sharedFileSystemPath": "/opt/local-path-provisioner-rwx"
+    }
+  setup: |-
+    #!/bin/sh
+    set -eu
+    mkdir -m 0777 -p "$VOL_DIR"
+  teardown: |-
+    #!/bin/sh
+    set -eu
+    rm -rf "$VOL_DIR"
+  helperPod.yaml: |-
+    apiVersion: v1
+    kind: Pod
+    metadata:
+      name: helper-pod
+    spec:
+      containers:
+      - name: helper-pod
+        image: busybox
+        imagePullPolicy: IfNotPresent
+---
+# Source: uds-dev-stack/templates/localpath-rwx.yaml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: local-path
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "true"
+provisioner: rancher.io/local-path
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Delete
+allowVolumeExpansion: true
+---
+# Source: uds-dev-stack/templates/localpath-rwx.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: local-path-provisioner-role
+rules:
+  - apiGroups: [ "" ]
+    resources: [ "nodes", "persistentvolumeclaims", "configmaps" ]
+    verbs: [ "get", "list", "watch" ]
+  - apiGroups: [ "" ]
+    resources: [ "endpoints", "persistentvolumes", "pods" ]
+    verbs: [ "*" ]
+  - apiGroups: [ "" ]
+    resources: [ "events" ]
+    verbs: [ "create", "patch" ]
+  - apiGroups: [ "storage.k8s.io" ]
+    resources: [ "storageclasses" ]
+    verbs: [ "get", "list", "watch" ]
+---
+# Source: uds-dev-stack/templates/localpath-rwx.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: local-path-provisioner-bind
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: local-path-provisioner-role
+subjects:
+  - kind: ServiceAccount
+    name: local-path-provisioner-service-account
+    namespace: kube-system
+---
+# Source: uds-dev-stack/templates/localpath-rwx.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: local-path-provisioner
   namespace: kube-system
 spec:
-  chart: longhorn
-  repo: https://charts.longhorn.io
-  version: 1.8.1
-  targetNamespace: kube-system 
+  replicas: 1
+  selector:
+    matchLabels:
+      app: local-path-provisioner
+  template:
+    metadata:
+      labels:
+        app: local-path-provisioner
+    spec:
+      serviceAccountName: local-path-provisioner-service-account
+      containers:
+        - name: local-path-provisioner
+          image: rancher/local-path-provisioner:v0.0.31
+          imagePullPolicy: IfNotPresent
+          command:
+            - local-path-provisioner
+            - --debug
+            - start
+            - --config
+            - /etc/config/config.json
+          volumeMounts:
+            - name: config-volume
+              mountPath: /etc/config/
+          env:
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+      volumes:
+        - name: config-volume
+          configMap:
+            name: local-path-config
 EOM
-
-# #metallb helm values: https://github.com/metallb/metallb/tree/main/charts/metallb
-# cat > /var/lib/rancher/rke2/server/manifests/02-metallb.yaml << EOM
-# apiVersion: helm.cattle.io/v1
-# kind: HelmChart
-# metadata:
-#   name: metallb
-#   namespace: kube-system
-# spec:
-#   chart: metallb
-#   repo: https://metallb.github.io/metallb
-#   version: 0.14.9
-#   targetNamespace: kube-system
-# EOM
-
 # aws lb controller helm values: https://github.com/kubernetes-sigs/aws-load-balancer-controller/tree/main/helm/aws-load-balancer-controller#configuration
-cat > /var/lib/rancher/rke2/server/manifests/02-lb-controller.yaml << EOM
+cat > /var/lib/rancher/rke2/server/manifests/03-lb-controller.yaml << EOM
 apiVersion: helm.cattle.io/v1
 kind: HelmChart
 metadata:
@@ -78,7 +173,7 @@ metadata:
 spec:
   chart: aws-load-balancer-controller
   repo: https://aws.github.io/eks-charts
-  version: 1.12.0
+  version: 1.11.0
   targetNamespace: kube-system
   valuesContent: |-
     clusterName: ${cluster_name}
