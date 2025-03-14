@@ -71,6 +71,8 @@ spec:
   valuesContent: |-
     defaultSettings:
       deletingConfirmationFlag: true
+    longhornUI:
+      replicas: 0
 EOM
 
 info "Installing awscli"
