@@ -87,7 +87,6 @@ sudo chown ec2-user:ec2-user /irsa
 aws secretsmanager get-secret-value --secret-id ${secret_prefix}-oidc-private-key | jq -r '.SecretString' > /irsa/signer.key
 aws secretsmanager get-secret-value --secret-id ${secret_prefix}-oidc-public-key | jq -r '.SecretString' > /irsa/signer.key.pub
 chcon -t svirt_sandbox_file_t /irsa/*
-chcon -Rt container_file_t  /opt/local-path-provisioner-rwx
 
 info "Setting up RKE2 config file"
 curl -L https://github.com/mikefarah/yq/releases/download/v4.40.4/yq_linux_amd64 -o yq
