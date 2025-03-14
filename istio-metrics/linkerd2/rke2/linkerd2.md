@@ -29,7 +29,7 @@ Tests will use [Vegeta](https://github.com/tsenart/vegeta). This can be installe
 
 ## Testing
 
-Each test below was run using the `test.sh` script with slightly different variables setup. All tests run for 5 minutes to produce a sufficient amount of data.
+Each test below was run using the [test script](../../test.sh) with slightly different variables setup. All tests run for 5 minutes to produce a sufficient amount of data.
 ex:
 ```
 /test.sh --target http://<IP>:<NodePort> --replicas 50 --rate 50
