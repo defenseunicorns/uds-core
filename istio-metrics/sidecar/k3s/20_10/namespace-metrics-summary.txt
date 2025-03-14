@@ -1,0 +1,5 @@
+Namespace              CPU_min   CPU_max   CPU_avg   Mem_min   Mem_max   Mem_avg
+istio-tenant-gateway   1m        9m        7.52m     48Mi      53Mi      51.69Mi
+nginx                  1m        193m      29.57m    55Mi      534Mi     503.74Mi
+istio-system           1m        32m       2.52m     84Mi      90Mi      89.28Mi
+TOTAL                  3m        234m      39.60m    187Mi     677Mi     644.71Mi

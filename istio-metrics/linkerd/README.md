@@ -16,5 +16,5 @@ Linkerd control plane requires slightly more resources to run at base configurat
 
 Each Linkerd sidecar typically required ~1 CPU millicores and ~3Mi of memory for each sidecar.
 
-Request latency for Linkerd is extremely low, consitently coming in around 0.5ms which is around a 10x perforamnce increase over Istio. At higher workloads Istio Ambient provided around a 50% reduction in memory footprint (1.5G versus less than 1G)
+Request latency for Linkerd is extremely low, consitently coming in around 0.5ms which is around a 2x perforamnce increase over Istio. At higher workloads Istio Ambient provided around a 50% reduction in memory footprint (1.5G versus less than 1G)
 

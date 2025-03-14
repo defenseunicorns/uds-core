@@ -29,3 +29,6 @@ Ambient mode required a fraction of the overall resources (when considering Isti
 - 90 pods: Around 1/5 the resource usage
 
 Resource usage of istio-cni and ztunnel is extremely low even at load (peaks around 10 CPU millicores and 40Mi memory, similar to the cost of a single sidecar). Noticeably istiod seemed to require less resourcing in ambient mode (likely due to fewer/no sidecars to configure and manage), so the overall `istio-system` resource usage was similar or even lower in ambient mode at scale.
+
+## K3s and K3d
+Tests were performed on both `k3s` and `k3d` clusters. The findings show that `k3d` adds a significant amount of request latency although memory and CPU usage seems consistent between the two environments.

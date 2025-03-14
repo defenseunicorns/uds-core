@@ -1,0 +1,7 @@
+Timestamp, Namespace, Total CPU(mCPU), Total Memory(MiB)
+2025-03-10 20:44:24,nginx,50,451
+2025-03-10 20:44:24,istio-system,5,107
+2025-03-10 20:44:24,istio-tenant-gateway,5,33
+2025-03-10 20:44:30,nginx,10,91
+2025-03-10 20:44:30,istio-system,5,88
+2025-03-10 20:44:30,istio-tenant-gateway,4,33

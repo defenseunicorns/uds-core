@@ -29,7 +29,6 @@ nginx       1m        6m        5.05m     21Mi      21Mi      21.00Mi
 TOTAL       4m        10m       8.25m     196Mi     196Mi     196.00Mi
 ```
 
-
 ### 50 requests per second to a single Pod
 
 ```
@@ -48,25 +47,6 @@ Namespace   CPU_min   CPU_max   CPU_avg   Mem_min   Mem_max   Mem_avg
 linkerd     3m        3m        3.00m     175Mi     175Mi     175.00Mi
 nginx       1m        11m       8.20m     21Mi      22Mi      21.20Mi
 TOTAL       4m        14m       11.20m    196Mi     197Mi     196.20Mi
-```
-
-
-#### Comparison to Istio 
-```
-Mean Latency:  * ≈ 0.2ms
-Linkerd:        * (0.35ms)
-Istio Ambient:  ************* (2.76ms)
-Istio Sidecar:  ******************** (3.83ms)
-
-CPU Avg:  * ≈ 5m
-Linkerd:        ** (11.20m)
-Istio Ambient:  ************* (61.75m)
-Istio Sidecar:  ************* (67.71m)
-
-Memory Avg: * ≈ 20MiB
-Linkerd:        ********** (196.20Mi)
-Istio Ambient:  ****** (112.58Mi)
-Istio Sidecar:  ******* (126.31Mi)
 ```
 
 ### 20 requests per second loadbalanced between 10 Pods
