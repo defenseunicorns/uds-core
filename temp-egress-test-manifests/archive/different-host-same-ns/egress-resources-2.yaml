@@ -1,0 +1,102 @@
+# Add the gateway, service entry, destination rule, and virtual service
+apiVersion: networking.istio.io/v1
+kind: Gateway
+metadata:
+  name: different-host-same-ns-gateway-2
+  namespace: different-host-same-ns-test
+spec:
+  selector:
+    app: egressgateway
+  servers:
+  - port:
+      number: 443
+      name: tls
+      protocol: TLS
+    hosts:
+      - example.com
+    tls:
+      mode: PASSTHROUGH
+---
+apiVersion: networking.istio.io/v1
+kind: ServiceEntry
+metadata:
+  name: different-host-same-ns-service-entry-2
+  namespace: different-host-same-ns-test
+spec:
+  location: MESH_EXTERNAL
+  hosts:
+  - example.com
+  ports: 
+  - number: 443
+    name: tls
+    protocol: TLS
+  resolution: DNS
+---
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: egressgateway-for-different-host-same-ns-2
+  namespace: different-host-same-ns-test
+spec:
+  host: egressgateway.istio-egress-gateway.svc.cluster.local
+  subsets:
+    - name: different-host-same-ns-2
+---
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: different-host-same-ns-through-egress-gateway-2
+  namespace: different-host-same-ns-test
+spec:
+  hosts:
+  - example.com
+  gateways:
+  - different-host-same-ns-gateway-2
+  - mesh
+  tls:
+  - match:
+    - gateways:
+      - mesh
+      port: 443
+      sniHosts:
+      - example.com
+    route:
+    - destination:
+        host: egressgateway.istio-egress-gateway.svc.cluster.local
+        subset: different-host-same-ns-2
+        port:
+          number: 443
+  - match:
+    - gateways:
+      - different-host-same-ns-gateway-2
+      port: 443
+      sniHosts:
+      - example.com
+    route:
+    - destination:
+        host: example.com
+        port:
+          number: 443
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-egress-gateway-access-2
+  namespace: different-host-same-ns-test
+spec:
+  podSelector: 
+    matchLabels:
+      app: curl2
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: istio-egress-gateway
+      podSelector:
+        matchLabels:
+          app: egressgateway
+    ports:
+    - protocol: TCP
+      port: 443

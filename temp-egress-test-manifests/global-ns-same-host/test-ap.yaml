@@ -1,0 +1,36 @@
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-ns-1-example-com-to-egress
+  namespace: istio-egress-gateway
+spec:
+  selector:
+    matchLabels:
+      app: egressgateway
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        namespaces: ["ns-1"]
+    when:
+    - key: destination.port
+      values: ["443"]
+    - key: connection.sni
+      values: ["example.com"]
+---
+# apiVersion: security.istio.io/v1beta1
+# kind: AuthorizationPolicy
+# metadata:
+#   name: allow-ns-2-to-httpbin-org
+# spec:
+#   selector:
+#     matchLabels:
+#       app: egressgateway
+#   action: ALLOW
+#   rules:
+#   - from:
+#     - source:
+#         namespaces: ["ns-2"] 
+#     when:
+#     - key: connection.sni
+#       values: ["httpbin.org"]
