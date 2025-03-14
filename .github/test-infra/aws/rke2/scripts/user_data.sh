@@ -39,132 +39,9 @@ spec:
       - --v=2
       - --cloud-provider=aws
 EOM
-cat > /var/lib/rancher/rke2/server/manifests/01-local-path-provisioner.yaml << 'EOM'
----
-# Source: uds-dev-stack/templates/localpath-rwx.yaml
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: local-path-provisioner-service-account
-  namespace: kube-system
----
-# Source: uds-dev-stack/templates/localpath-rwx.yaml
-kind: ConfigMap
-apiVersion: v1
-metadata:
-  name: local-path-config
-  namespace: kube-system
-data:
-  config.json: |-
-    {
-            "sharedFileSystemPath": "/opt/local-path-provisioner-rwx"
-    }
-  setup: |-
-    #!/bin/sh
-    set -eu
-    mkdir -m 0777 -p "$VOL_DIR"
-  teardown: |-
-    #!/bin/sh
-    set -eu
-    rm -rf "$VOL_DIR"
-  helperPod.yaml: |-
-    apiVersion: v1
-    kind: Pod
-    metadata:
-      name: helper-pod
-    spec:
-      containers:
-      - name: helper-pod
-        image: busybox
-        imagePullPolicy: IfNotPresent
----
-# Source: uds-dev-stack/templates/localpath-rwx.yaml
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: local-path
-  annotations:
-    storageclass.kubernetes.io/is-default-class: "true"
-provisioner: rancher.io/local-path
-volumeBindingMode: WaitForFirstConsumer
-reclaimPolicy: Delete
-allowVolumeExpansion: true
----
-# Source: uds-dev-stack/templates/localpath-rwx.yaml
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: local-path-provisioner-role
-rules:
-  - apiGroups: [ "" ]
-    resources: [ "nodes", "persistentvolumeclaims", "configmaps" ]
-    verbs: [ "get", "list", "watch" ]
-  - apiGroups: [ "" ]
-    resources: [ "endpoints", "persistentvolumes", "pods" ]
-    verbs: [ "*" ]
-  - apiGroups: [ "" ]
-    resources: [ "events" ]
-    verbs: [ "create", "patch" ]
-  - apiGroups: [ "storage.k8s.io" ]
-    resources: [ "storageclasses" ]
-    verbs: [ "get", "list", "watch" ]
----
-# Source: uds-dev-stack/templates/localpath-rwx.yaml
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: local-path-provisioner-bind
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: local-path-provisioner-role
-subjects:
-  - kind: ServiceAccount
-    name: local-path-provisioner-service-account
-    namespace: kube-system
----
-# Source: uds-dev-stack/templates/localpath-rwx.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: local-path-provisioner
-  namespace: kube-system
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: local-path-provisioner
-  template:
-    metadata:
-      labels:
-        app: local-path-provisioner
-    spec:
-      serviceAccountName: local-path-provisioner-service-account
-      containers:
-        - name: local-path-provisioner
-          image: rancher/local-path-provisioner:v0.0.31
-          imagePullPolicy: IfNotPresent
-          command:
-            - local-path-provisioner
-            - --debug
-            - start
-            - --config
-            - /etc/config/config.json
-          volumeMounts:
-            - name: config-volume
-              mountPath: /etc/config/
-          env:
-            - name: POD_NAMESPACE
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.namespace
-      volumes:
-        - name: config-volume
-          configMap:
-            name: local-path-config
-EOM
+
 # aws lb controller helm values: https://github.com/kubernetes-sigs/aws-load-balancer-controller/tree/main/helm/aws-load-balancer-controller#configuration
-cat > /var/lib/rancher/rke2/server/manifests/03-lb-controller.yaml << EOM
+cat > /var/lib/rancher/rke2/server/manifests/01-lb-controller.yaml << EOM
 apiVersion: helm.cattle.io/v1
 kind: HelmChart
 metadata:
@@ -179,38 +56,28 @@ spec:
     clusterName: ${cluster_name}
 EOM
 
+#longhorn helm values: https://github.com/longhorn/longhorn/tree/master/chart
+cat > /var/lib/rancher/rke2/server/manifests/02-longhorn.yaml << EOM
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: longhorn
+  namespace: kube-system
+spec:
+  chart: longhorn
+  repo: https://charts.longhorn.io
+  version: 1.8.1
+  targetNamespace: kube-system
+  valuesContent: |-
+    defaultSettings:
+      deletingConfirmationFlag: true
+EOM
+
 info "Installing awscli"
 yum install -y unzip jq || apt-get -y install unzip jq
 curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
 unzip awscliv2.zip
 sudo ./aws/install
-
-echo "Modifying selinux permissions for local path provisioner"
-cat > /root/localpathpolicy.te << EOM
-module localpathpolicy 1.0;
-
-require {
-    type usr_t;
-    type init_t;
-    type container_t;
-    type container_var_lib_t;
-    class dir { search write add_name create remove_name rmdir setattr getattr };
-    class file { create open write append read unlink setattr getattr };
-}
-
-#============= container_t ==============
-allow container_t container_var_lib_t:file { create open write append read setattr getattr unlink };
-allow container_t container_var_lib_t:dir { add_name create remove_name rmdir setattr write search };
-allow container_t init_t:dir search;
-allow container_t usr_t:dir { add_name create remove_name rmdir setattr getattr write };
-allow container_t usr_t:file { create unlink write setattr getattr };
-allow container_t init_t:file { read open };
-EOM
-checkmodule -M -m -o /root/localpathpolicy.mod /root/localpathpolicy.te
-semodule_package -o /root/localpathpolicy.pp -m /root/localpathpolicy.mod
-semodule -i /root/localpathpolicy.pp
-semanage fcontext -a -t container_file_t "/opt/local-path-provisioner-rwx(/.*)?"
-restorecon -R -v /opt/local-path-provisioner-rwx
 
 echo "Getting OIDC keypair"
 sudo mkdir /irsa
