@@ -1,14 +1,39 @@
-# Linkerd
+# Linkerd2
+Tests were executed on a RHEL8.10 VM running RKE2 and Linkerd2. System resources were set to 32GB RAM and 12 cores.
 
+```
+Capacity:
+  cpu:                12
+  ephemeral-storage:  64296272Ki
+  hugepages-2Mi:      0
+  memory:             31878156Ki
+  pods:               110
+Allocatable:
+  cpu:                12
+  ephemeral-storage:  62547413353
+  hugepages-2Mi:      0
+  memory:             31878156Ki
+  pods:               110
+System Info:
+  Machine ID:                 74e0437d08524e8791be3c00c81a857a
+  System UUID:                74e0437d-0852-4e87-91be-3c00c81a857a
+  Boot ID:                    f8c8dc90-2524-4f18-862e-1ca1ef101fcd
+  Kernel Version:             4.18.0-553.44.1.el8_10.x86_64
+  OS Image:                   Red Hat Enterprise Linux 8.10 (Ootpa)
+  Operating System:           linux
+  Architecture:               amd64
+```
 ## Setup
-
-Tests were executed on a RHEL8.10 VM running RKE2 and Linkerd. System resources were set to 16GB RAM and 12 cores.
 
 Tests will use [Vegeta](https://github.com/tsenart/vegeta). This can be installed with brew: `brew install vegeta`
 
 ## Testing
 
 Each test below was run using the `test.sh` script with slightly different variables setup. All tests run for 5 minutes to produce a sufficient amount of data.
+ex:
+```
+/test.sh --target http://<IP>:<NodePort> --replicas 50 --rate 50
+```
 
 ### 20 requests per second to a single Pod
 

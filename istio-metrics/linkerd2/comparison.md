@@ -1,8 +1,8 @@
-# Service Mesh Performance Comparison: Linkerd vs. Istio (Ambient & Sidecar)
+# Service Mesh Performance Comparison: Linkerd2 vs. Istio (Ambient & Sidecar)
 
-This document presents the results of a performance benchmark comparing three service mesh implementations: **Linkerd**, **Istio Ambient**, and **Istio with Sidecars**. The tests were conducted using a consistent methodology, varying request rates and the number of service pods to simulate different load and scaling scenarios. Key performance indicators (KPIs) measured include **Mean Latency** (average request response time), **Average CPU Usage**, and **Average Memory Usage**. The best-performing (lowest) value for each metric in each test is indicated with **bold italics**.
+This document presents the results of a performance benchmark comparing three service mesh implementations: **Linkerd2**, **Istio Ambient**, and **Istio with Sidecars**. The tests were conducted using a consistent methodology, varying request rates and the number of service pods to simulate different load and scaling scenarios. Key performance indicators (KPIs) measured include **Mean Latency** (average request response time), **Average CPU Usage**, and **Average Memory Usage**. The best-performing (lowest) value for each metric in each test is indicated with **bold italics**.
 
-| Test Scenario                  | Metric      | Linkerd (Value) | Istio Ambient (Value) | Istio Sidecar (Value) |
+| Test Scenario                  | Metric      | Linkerd2 (Value) | Istio Ambient (Value) | Istio Sidecar (Value) |
 |--------------------------------|-------------|-----------------|-----------------------|-----------------------|
 | 20 Requests/Sec, Single Pod    | Mean Latency  | ***0.453ms*** | 0.880ms               | 1.036ms               |
 |                                | Avg CPU       | ***8.25m***   | 14.60m                | 16.53m                |
@@ -32,10 +32,10 @@ This document presents the results of a performance benchmark comparing three se
 
 # Summary
 
-Linkerd consistenly performs with the lowest latency and average CPU usage. Istio Ambient outperforms both Linkerd and Istio Sidecar on memory usage by a clear margin which only continues to grow as the workloads scale.
+Linkerd2 consistenly performs with the lowest latency and average CPU usage. Istio Ambient outperforms both Linkerd2 and Istio Sidecar on memory usage by a clear margin which only continues to grow as the workloads scale.
 
 # Differences Between Scenarios
-The Linkerd tests were performed in the most optimized scenario of `http` traffic being sent to a NodePort that is connected directly to the test workloads service. This contributed significantly the the low request latency. 
+The Linkerd2 tests were performed in the most optimized scenario of `http` traffic being sent to a NodePort that is connected directly to the test workloads service. This contributed significantly the the low request latency. 
 The Istio tests were performed with `https` traffic being sent to an Istio Gateway. The additional network hop and overhead of TLS added to the request latency observed for both Sidecar and Ambient
 
 Additional testing should be done around purely service to service traffic as well as Istio behind a NodePort with `http` traffic for true latency comparisons.
