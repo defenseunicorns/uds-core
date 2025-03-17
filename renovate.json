@@ -74,7 +74,7 @@
       "commitMessageTopic": "grafana"
     },
     {
-      "matchFileNames": ["test/**", ".github/**", "bundles/**", "tasks/*.yaml", ".vscode/settings.json", "src/test/**", "README.md"],
+      "matchFileNames": ["test/**/*", ".github/**", "bundles/**", "tasks/*.yaml", ".vscode/settings.json", "src/test/**", "README.md"],
       "groupName": "support-deps",
       "commitMessageTopic": "support dependencies"
     },
