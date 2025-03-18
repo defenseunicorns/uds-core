@@ -31,6 +31,7 @@ import { Component, setupLogger } from "../logger";
 import { updateUDSConfig } from "./controllers/config/config";
 import { exemptValidator } from "./crd/validators/exempt-validator";
 import { packageFinalizer, packageReconciler } from "./reconcilers/package-reconciler";
+import { updateKeycloakClientsSecret } from "./controllers/keycloak/client-secret-sync";
 
 // Export the operator capability for registration in the root pepr.ts
 export { operator } from "./common";
@@ -114,3 +115,10 @@ When(a.Secret)
   .InNamespace("pepr-system")
   .WithName("uds-operator-config")
   .Reconcile(updateUDSConfig);
+
+// Watch the Kubernetes Clients Secret
+When(a.Secret)
+  .IsCreatedOrUpdated()
+  .InNamespace("keycloak")
+  .WithName("keycloak-client-secrets")
+  .Reconcile(updateKeycloakClientsSecret);
