@@ -155,20 +155,6 @@ spec:
           bearer_only: clientField(bearerOnly)
 ```
 
-### Controlling how UDS Operator interacts with Keycloak
-
-The UDS Operator can interact with Keycloak in two primary ways: using the Dynamic Client Registration or Client Credentials Grant. The method used is determined automatically or by specifying the environment variable `PEPR_KEYCLOAK_CLIENT_STRATEGY`.
-
-Dynamic Client Registration allows the UDS Operator to dynamically register new Clients in the Keycloak server. A successful registration flow results in the Registration Token to be stored in Pepr store, which can be later used for modifying and remocing the client.
-
-Client Credentials Grant uses the OAuth 2.0 Client Credentials Grant to authenticate against the `uds-operator` client defined in Keycloak. This special client has a limited control over managing Keycloak Clients for the UDS Operator.
-
-The `PEPR_KEYCLOAK_CLIENT_STRATEGY` can be set to one of the following values:
-
-* `auto` (default): The UDS Operator will automatically determine the best strategy to use based on the Keycloak server configuration
-* `dynamic_client_registration`: The UDS Operator will use the Dynamic Client Registration strategy
-* `client_credentials`: The UDS Operator will use the Client Credentials Grant strategy
-
 ### Key Files and Folders
 
 ```bash
