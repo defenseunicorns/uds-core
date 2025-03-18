@@ -42,26 +42,23 @@ resource "random_id" "unique_id" {
 }
 
 module "generate_kms" {
-  for_each = local.bucket_configurations
-  source   = "github.com/defenseunicorns/terraform-aws-uds-kms?ref=v0.0.6"
-
-  key_owners = var.key_owner_arns
-  # A list of IAM ARNs for those who will have full key permissions (`kms:*`)
-  kms_key_alias_name_prefix = "${each.value.name}-" # Prefix for KMS key alias.
-  kms_key_deletion_window   = var.kms_key_deletion_window
-  # Waiting period for scheduled KMS Key deletion. Can be 7-30 days.
-  kms_key_description = "${var.name} UDS Core deployment Loki Key" # Description for the KMS key.
+  for_each                  = local.bucket_configurations
+  source                    = "../modules/kms"
+  kms_key_alias_name_prefix = "${each.value.name}-"
+  kms_key_description       = "${var.name} UDS Core ${each.value.name} key"
+  current_partition         = data.aws_partition.current.partition
+  account_id                = data.aws_caller_identity.current.account_id
   tags = {
     Deployment = "UDS Core ${each.value.name}"
   }
 }
 
 module "S3" {
-  for_each                = local.bucket_configurations
-  source                  = "github.com/defenseunicorns/terraform-aws-uds-s3?ref=v0.0.6"
-  name_prefix             = "${each.value.name}-"
-  kms_key_arn             = local.kms_key_arns[each.key].kms_key_arn
-  force_destroy           = "true"
+  for_each      = local.bucket_configurations
+  source        = "github.com/defenseunicorns/terraform-aws-uds-s3?ref=v0.0.6"
+  name_prefix   = "${each.value.name}-"
+  kms_key_arn   = local.kms_key_arns[each.key].kms_key_arn
+  force_destroy = "true"
 }
 
 module "irsa" {
