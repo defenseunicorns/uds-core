@@ -55,48 +55,28 @@ module "generate_kms" {
 
 module "S3" {
   for_each      = local.bucket_configurations
-  source        = "github.com/defenseunicorns/terraform-aws-uds-s3?ref=v0.0.6"
-  name_prefix   = "${each.value.name}-"
-  kms_key_arn   = local.kms_key_arns[each.key].kms_key_arn
-  force_destroy = "true"
+  source        = "../modules/s3"
+  bucket_prefix = "${each.value.name}-"
+  kms_key_arn   = module.generate_kms[each.key].kms_key_arn
+  irsa_role_arn = module.irsa[each.key].role_arn
 }
 
 module "irsa" {
   for_each                      = local.bucket_configurations
-  source                        = "github.com/defenseunicorns/terraform-aws-uds-irsa?ref=v0.0.3"
+  source                        = "../modules/irsa"
   name                          = each.value.name
   kubernetes_service_account    = each.value.service_account
-  kubernetes_namespace          = each.value.namespace
-  oidc_provider_arn             = local.oidc_arn
   role_permissions_boundary_arn = local.iam_role_permissions_boundary
+  account_id                    = data.aws_caller_identity.current.account_id
+  current_partition             = data.aws_partition.current.partition
 
+  oidc_providers = {
+    main = {
+      provider_arn               = local.oidc_arn
+      namespace_service_accounts = [format("%s:%s", each.value.namespace, each.value.service_account)]
+    }
+  }
   role_policy_arns = tomap({
     "${each.key}" = local.iam_policies[each.key]
-  })
-}
-
-resource "aws_s3_bucket_policy" "bucket_policy" {
-  for_each = local.bucket_configurations
-  bucket   = module.S3[each.key].bucket_name
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = [
-          "s3:ListBucket",
-          "s3:GetObject",
-          "s3:PutObject"
-        ]
-        Effect = "Allow"
-        Principal = {
-          AWS = module.irsa[each.key].role_arn
-        }
-        Resource = [
-          module.S3[each.key].bucket_arn,
-          "${module.S3[each.key].bucket_arn}/*"
-        ]
-      }
-    ]
   })
 }

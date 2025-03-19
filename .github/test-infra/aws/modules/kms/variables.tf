@@ -22,3 +22,9 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "kms_key_policy_default_identities" {
+  description = "A list of IAM ARNs for those who will have full key permissions (`kms:*`)"
+  type        = list(string)
+  default     = []
+}
