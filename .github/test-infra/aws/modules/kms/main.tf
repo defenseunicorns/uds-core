@@ -26,37 +26,7 @@ resource "aws_kms_key" "this" {
           }
           Resource = "*"
           Sid      = "KMS Key Default"
-        },
-        {
-          Action = [
-            "kms:ReEncrypt*",
-            "kms:GenerateDataKey*",
-            "kms:Encrypt*",
-            "kms:Describe*",
-            "kms:Decrypt*",
-          ]
-          Effect = "Allow"
-          Principal = {
-            Service = "logs.us-gov-west-1.amazonaws.com"
-          }
-          Resource = "*"
-          Sid      = "CloudWatchLogsEncryption"
-        },
-        {
-          Action = [
-            "kms:ReEncrypt*",
-            "kms:GenerateDataKey*",
-            "kms:Encrypt*",
-            "kms:Describe*",
-            "kms:Decrypt*",
-          ]
-          Effect = "Allow"
-          Principal = {
-            Service = "cloudtrail.amazonaws.com"
-          }
-          Resource = "*"
-          Sid      = "Cloudtrail KMS permissions"
-        },
+        }
       ]
       Version = "2012-10-17"
     }
