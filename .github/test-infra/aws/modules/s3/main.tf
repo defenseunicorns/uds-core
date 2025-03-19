@@ -1,3 +1,6 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 resource "aws_s3_bucket" "this" {
   bucket_prefix       = var.bucket_prefix
   force_destroy       = true

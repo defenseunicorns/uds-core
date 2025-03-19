@@ -1,3 +1,6 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 variable "irsa_iam_role_name" {
   type        = string
   description = "IAM role name for IRSA, overrides name variable for irsa module input `role_name`"

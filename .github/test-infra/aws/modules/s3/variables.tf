@@ -1,3 +1,6 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 variable "bucket_prefix" {
   description = "Name prefix for the bucket."
   type        = string

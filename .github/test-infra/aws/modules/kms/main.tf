@@ -1,3 +1,6 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 resource "aws_kms_alias" "default" {
   name_prefix   = "alias/${var.kms_key_alias_name_prefix}"
   target_key_id = aws_kms_key.this.key_id

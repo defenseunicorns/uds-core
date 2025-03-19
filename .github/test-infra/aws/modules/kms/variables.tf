@@ -1,3 +1,6 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 variable "kms_key_alias_name_prefix" {
   description = "Prefix for KMS key alias."
   type        = string
