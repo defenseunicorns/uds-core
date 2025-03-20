@@ -53,7 +53,7 @@ resource "aws_iam_policy" "velero_policy" {
             "kms:GenerateDataKey",
             "kms:Decrypt"
           ]
-          Resource = [local.kms_key_arns["velero"].kms_key_arn]
+          Resource = [module.generate_kms["velero"].kms_key_arn]
         }
 
       ]
