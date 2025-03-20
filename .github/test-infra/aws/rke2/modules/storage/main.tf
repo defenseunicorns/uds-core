@@ -1,6 +1,9 @@
 # Copyright 2024 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
+data "aws_caller_identity" "current" {}
+data "aws_partition" "current" {}
+
 # Terraform Module for provisioning s3 buckets with optional support for IRSA, tailored specifically for loki and velero atop uds-core
 locals {
   permissions_boundary_name = split("/", var.permissions_boundary)[1]
@@ -18,23 +21,22 @@ locals {
 # Create KMS keys for each bucket
 module "generate_kms" {
   for_each = local.bucket_configurations
-  source   = "github.com/defenseunicorns/terraform-aws-uds-kms?ref=v0.0.6"
-
-  key_owners = var.key_owner_arns
+  source   = "../../../modules/kms"
   # A list of IAM ARNs for those who will have full key permissions (`kms:*`)
-  kms_key_alias_name_prefix = "${each.value.name}-" # Prefix for KMS key alias.
-  kms_key_deletion_window   = var.kms_key_deletion_window
+  kms_key_alias_name_prefix = "${each.value.name}-"                                          # Prefix for KMS key alias.
   kms_key_description       = "${var.cluster_name}-${each.value.name} nightly ci s3 KMS key" # Description for the KMS key.
+  current_partition         = data.aws_partition.current.partition
+  account_id                = data.aws_caller_identity.current.account_id
   tags                      = var.tags
 }
 
 # Create s3 buckets and encrypt using keys from generate_kms module
 module "s3" {
-  for_each                = local.bucket_configurations
-  source                  = "github.com/defenseunicorns/terraform-aws-uds-s3?ref=v0.0.6"
-  name_prefix             = "${each.value.name}-${each.value.bucket_prefix}-"
-  kms_key_arn             = module.generate_kms[each.key].kms_key_arn
-  force_destroy           = "true"
+  for_each      = local.bucket_configurations
+  source        = "../../../modules/s3"
+  bucket_prefix = "${each.value.name}-${each.value.bucket_prefix}-"
+  kms_key_arn   = module.generate_kms[each.key].kms_key_arn
+  create_irsa   = false
 
   depends_on = [
     module.generate_kms
