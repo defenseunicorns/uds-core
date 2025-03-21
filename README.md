@@ -24,11 +24,6 @@ UDS Core establishes a secure baseline for cloud-native systems and ships with c
 - [Vector](https://vector.dev/) - Log Aggregation
 - [Velero](https://velero.io/) - Backup & Restore
 
-#### Future Applications
-
-- [Kiali](https://kiali.io/) - Service Mesh Observability
-- [Tempo](https://grafana.com/docs/tempo/latest/getting-started/) - Tracing
-
 ---
 
 ### Prerequisites

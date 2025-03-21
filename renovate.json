@@ -34,11 +34,6 @@
       "commitMessageTopic": "velero"
     },
     {
-      "matchFileNames": ["src/tempo/**"],
-      "groupName": "tempo",
-      "commitMessageTopic": "tempo"
-    },
-    {
       "matchFileNames": ["src/prometheus-stack/**"],
       "groupName": "prometheus-stack",
       "commitMessageTopic": "prometheus-stack"
@@ -57,11 +52,6 @@
       "matchFileNames": ["src/loki/**"],
       "groupName": "loki",
       "commitMessageTopic": "loki"
-    },
-    {
-      "matchFileNames": ["src/kiali/**"],
-      "groupName": "kiali",
-      "commitMessageTopic": "kiali"
     },
     {
       "matchFileNames": ["src/keycloak/**"],
