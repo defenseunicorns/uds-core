@@ -23,7 +23,9 @@ export async function getStrategy() {
       return "dynamic";
     }
   } else {
-    log.warn(`Invalid ${process.env.PEPR_KEYCLOAK_CLIENT_STRATEGY} parameter value, falling back to dynamic registration`);
+    log.warn(
+      `Invalid ${process.env.PEPR_KEYCLOAK_CLIENT_STRATEGY} parameter value, falling back to dynamic registration`,
+    );
     return "dynamic";
   }
 }
