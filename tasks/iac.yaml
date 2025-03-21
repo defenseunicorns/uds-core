@@ -22,7 +22,7 @@ tasks:
   - name: install-eksctl
     actions:
       - cmd: |
-          curl --silent --location "https://github.com/weaveworks/eksctl/releases/download/v0.204.0/eksctl_Linux_amd64.tar.gz" | tar xz -C /tmp
+          curl --silent --location "https://github.com/weaveworks/eksctl/releases/download/v0.205.0/eksctl_Linux_amd64.tar.gz" | tar xz -C /tmp
           sudo mv /tmp/eksctl /usr/local/bin
 
   - name: create-cluster
@@ -46,7 +46,10 @@ tasks:
           addons:
             - name: aws-ebs-csi-driver
               attachPolicyARNs:
-                - arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy
+                # Commercial IAM Policy
+                # - arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy
+                # GovCloud IAM Policy
+                - arn:aws-us-gov:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy
               configurationValues: |-
                 defaultStorageClass:
                   enabled: true
@@ -56,7 +59,10 @@ tasks:
 
             - name: vpc-cni
               attachPolicyARNs:
-                - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
+                # Commercial IAM Policy
+                # - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
+                # Govcloud IAM policy
+                - arn:aws-us-gov:iam::aws:policy/AmazonEKS_CNI_Policy
               permissionsBoundary: ${PERMISSIONS_BOUNDARY_ARN}
               tags:
                 PermissionsBoundary: ${PERMISSIONS_BOUNDARY_NAME}

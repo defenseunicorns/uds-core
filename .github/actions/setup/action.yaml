@@ -29,13 +29,13 @@ runs:
     - name: Install k3d
       shell: bash
       # renovate: datasource=github-tags depName=k3d-io/k3d versioning=semver
-      run: curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | TAG=v5.8.2 bash
+      run: curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | TAG=v5.8.3 bash
 
     - name: Install UDS CLI
       uses: defenseunicorns/setup-uds@ab842abcad1f7a3305c2538e3dd1950d0daacfa5 # v1.0.1
       with:
         # renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
-        version: v0.21.0
+        version: v0.24.0
 
     - name: Install Lula
       uses: defenseunicorns/lula-action/setup@badad8c4b1570095f57e66ffd62664847698a3b9 # v0.0.1
