@@ -7,36 +7,39 @@ import {
 import { dynamicCreateOrUpdate, dynamicDelete } from "./dynamic-client-registration";
 import { log } from "./common";
 
-export async function createOrUpdateClient(client: Partial<Client>) {
+export async function getStrategy() {
   const strategy = process.env.PEPR_KEYCLOAK_CLIENT_STRATEGY || "auto";
   if (strategy === "client_credentials") {
-    return credentialsCreateOrUpdate(client);
+    log.debug("Using Client Credentials strategy");
+    return "client_credentials";
   } else if (strategy === "auto") {
     try {
+      log.debug("Probing Client Credentials strategy");
       await credentialsGetAccessToken();
-      return credentialsCreateOrUpdate(client);
+      log.debug("Using Client Credentials strategy");
+      return "client_credentials";
     } catch {
-      log.info("Falling back to dynamic registration");
-      return dynamicCreateOrUpdate(client);
+      log.warn("Cannot use Client Credentials, falling back to dynamic registration");
+      return "dynamic";
     }
   } else {
-    return dynamicCreateOrUpdate(client);
+    log.warn(`Invalid ${process.env.PEPR_KEYCLOAK_CLIENT_STRATEGY} parameter value, falling back to dynamic registration`);
+    return "dynamic";
   }
 }
 
+export async function createOrUpdateClient(client: Partial<Client>) {
+  const strategy = await getStrategy();
+  if (strategy === "client_credentials") {
+    return credentialsCreateOrUpdate(client);
+  }
+  return dynamicCreateOrUpdate(client);
+}
+
 export async function deleteClient(client: Partial<Client>) {
-  const strategy = process.env.PEPR_KEYCLOAK_CLIENT_STRATEGY || "auto";
+  const strategy = await getStrategy();
   if (strategy === "client_credentials") {
     return credentialsDelete(client);
-  } else if (strategy === "auto") {
-    try {
-      await credentialsGetAccessToken();
-      return credentialsDelete(client);
-    } catch {
-      log.info("Falling back to dynamic registration");
-      return dynamicDelete(client);
-    }
-  } else {
-    return dynamicDelete(client);
   }
+  return dynamicDelete(client);
 }
