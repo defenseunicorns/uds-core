@@ -540,7 +540,7 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
               },
             },
             phase: {
-              enum: ["Pending", "Ready", "Failed", "Retrying", "Removing"],
+              enum: ["Pending", "Ready", "Failed", "Retrying", "Removing", "RemovalFailed"],
               type: "string",
             },
             ssoClients: {

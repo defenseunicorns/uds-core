@@ -24,7 +24,7 @@ resource "aws_iam_policy" "loki_policy" {
           "kms:GenerateDataKey",
           "kms:Decrypt"
         ]
-        Resource = [local.kms_key_arns["loki"].kms_key_arn]
+        Resource = [module.generate_kms["loki"].kms_key_arn]
       }
     ]
   })
