@@ -30,6 +30,16 @@ test("validate prometheus datasource", async ({ page }) => {
   });
 });
 
+test("validate alertmanager datasource", async ({ page }) => {
+  await test.step("check alertmanager", async () => {
+    await page.goto(`/connections/datasources`);
+    await page.getByRole('link', { name: 'Alertmanager' }).click();
+    await page.click('text=Save & test');
+    // Allow 20 second timeout for datasource validation
+    await expect(page.locator('[data-testid="data-testid Alert success"]')).toBeVisible({ timeout: 20000 });
+  });
+});
+
 // This dashboard is added by the upstream kube-prometheus-stack
 test("validate namespace dashboard", async ({ page }) => {
   await test.step("check dashboard", async () => {
