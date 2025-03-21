@@ -74,7 +74,7 @@ Layer selection will always be deployment-specific but below are guidelines for 
 :::
 
 :::note
-†The Monitoring and Runtime Security layers provide user login and therefore require the Identity and Authorization layer
+†The Monitoring and Runtime Security layers provide user login and therefore require the Identity and Authorization layer.
 :::
 
 :::note
