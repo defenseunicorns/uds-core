@@ -97,6 +97,30 @@ describe("Test validation of Exemption CRs", () => {
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
   });
 
+  it("allows one package per namespace", async () => {
+    const mockReqValidPkg = makeMockReq({}, [], [{}], [{}], [{}]);
+    await validator(mockReqValidPkg);
+    const mockReqInvalidPkg = makeMockReq({ metadata: { name: "should-be-denied" } }, [], [], [], []);
+    await validator(mockReqInvalidPkg);
+    expect(mockReqInvalidPkg.Deny).toHaveBeenCalledTimes(1);
+  });
+
+  it("allows packages to be created in unique namespaces", async () => {
+    const mockReq = makeMockReq({}, [], [{}], [{}], [{}]);
+    await validator(mockReq);
+    const mockReqNewPkg = makeMockReq({ metadata: { namespace: "foo", name: "should-be-approved" } }, [], [], [], []);
+    await validator(mockReqNewPkg);
+    expect(mockReqNewPkg.Approve).toHaveBeenCalledTimes(1);
+  });
+  
+  it("allows existing packages to be updated", async () => {
+    const mockReqValidPkg = makeMockReq({}, [{}], [{}], [{}], [{}]);
+    await validator(mockReqValidPkg);
+    const mockReqValidPkgUpdate = makeMockReq({ spec: { network: {} } }, [], [], [], []);
+    await validator(mockReqValidPkgUpdate);
+    expect(mockReqValidPkgUpdate.Approve).toHaveBeenCalledTimes(1);
+  });
+
   it("denies advancedHTTP when used with passthrough Gateways", async () => {
     const mockReq = makeMockReq(
       {},

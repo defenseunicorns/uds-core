@@ -5,6 +5,7 @@
 
 import { PeprValidateRequest } from "pepr";
 
+import { K8s } from "pepr";
 import { Gateway, Protocol, UDSPackage } from "..";
 import { generateVSName } from "../../controllers/istio/virtual-service";
 import { generateMonitorName } from "../../controllers/monitoring/common";
@@ -23,6 +24,22 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
 
   if (invalidNamespaces.includes(ns)) {
     return req.Deny("invalid namespace");
+  }
+  
+  // Check if a package already exists in the target namespace
+  const existingPackage = await K8s(UDSPackage)
+    .InNamespace(ns)
+    .Get()
+    .then(packages =>
+      packages.items.find(
+        existingPkg =>
+          existingPkg.metadata?.name !== pkg.metadata?.name,
+      ),
+    );
+  if (existingPackage) {
+    return req.Deny(
+      `A package with the name "${existingPackage.metadata?.name}" already exists in the namespace "${ns}". Only one package can exist in a namespace.`,
+    );
   }
 
   const exposeList = pkg.spec?.network?.expose ?? [];
