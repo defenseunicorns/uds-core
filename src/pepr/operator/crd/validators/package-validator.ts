@@ -25,16 +25,13 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
   if (invalidNamespaces.includes(ns)) {
     return req.Deny("invalid namespace");
   }
-  
+
   // Check if a package already exists in the target namespace
   const existingPackage = await K8s(UDSPackage)
     .InNamespace(ns)
     .Get()
     .then(packages =>
-      packages.items.find(
-        existingPkg =>
-          existingPkg.metadata?.name !== pkg.metadata?.name,
-      ),
+      packages.items.find(existingPkg => existingPkg.metadata?.name !== pkg.metadata?.name),
     );
   if (existingPackage) {
     return req.Deny(
