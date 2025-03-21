@@ -13,7 +13,7 @@ components:
     charts:
       - name: prometheus-operator-crds
         url: https://prometheus-community.github.io/helm-charts
-        version: 18.0.1
+        version: 19.0.0
         namespace: uds-crds
         valuesFiles:
           - "values/crd-values.yaml"
