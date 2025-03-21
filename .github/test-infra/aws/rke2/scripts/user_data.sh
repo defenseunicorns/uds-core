@@ -2,8 +2,6 @@
 # Copyright 2024 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
-
-
 info() {
     echo "[INFO] " "$@"
 }
@@ -42,8 +40,24 @@ spec:
       - --cloud-provider=aws
 EOM
 
+# aws lb controller helm values: https://github.com/kubernetes-sigs/aws-load-balancer-controller/tree/main/helm/aws-load-balancer-controller#configuration
+cat > /var/lib/rancher/rke2/server/manifests/01-lb-controller.yaml << EOM
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: aws-load-balancer-controller
+  namespace: kube-system
+spec:
+  chart: aws-load-balancer-controller
+  repo: https://aws.github.io/eks-charts
+  version: 1.11.0
+  targetNamespace: kube-system
+  valuesContent: |-
+    clusterName: ${cluster_name}
+EOM
+
 #longhorn helm values: https://github.com/longhorn/longhorn/tree/master/chart
-cat > /var/lib/rancher/rke2/server/manifests/01-longhorn.yaml << EOM
+cat > /var/lib/rancher/rke2/server/manifests/02-longhorn.yaml << EOM
 apiVersion: helm.cattle.io/v1
 kind: HelmChart
 metadata:
@@ -52,22 +66,13 @@ metadata:
 spec:
   chart: longhorn
   repo: https://charts.longhorn.io
-  version: 1.7.1
-  targetNamespace: kube-system 
-EOM
-
-#metallb helm values: https://github.com/metallb/metallb/tree/main/charts/metallb
-cat > /var/lib/rancher/rke2/server/manifests/02-metallb.yaml << EOM
-apiVersion: helm.cattle.io/v1
-kind: HelmChart
-metadata:
-  name: metallb
-  namespace: kube-system
-spec:
-  chart: metallb
-  repo: https://metallb.github.io/metallb
-  version: 0.14.8
+  version: 1.8.1
   targetNamespace: kube-system
+  valuesContent: |-
+    defaultSettings:
+      deletingConfirmationFlag: true
+    longhornUI:
+      replicas: 0
 EOM
 
 info "Installing awscli"
@@ -89,14 +94,15 @@ chmod +x yq
 ./yq -i '.cloud-provider-name += "external"' /etc/rancher/rke2/config.yaml
 ./yq -i '.disable-cloud-controller += "true"' /etc/rancher/rke2/config.yaml
 ./yq -i '.kube-apiserver-arg += "service-account-key-file=/irsa/signer.key.pub"' /etc/rancher/rke2/config.yaml
-./yq -i '.kube-apiserver-arg += "service-account-key-file=/irsa/signer.key.pub"' /etc/rancher/rke2/config.yaml
 ./yq -i '.kube-apiserver-arg += "service-account-signing-key-file=/irsa/signer.key"' /etc/rancher/rke2/config.yaml
 ./yq -i '.kube-apiserver-arg += "api-audiences=kubernetes.svc.default"' /etc/rancher/rke2/config.yaml
 ./yq -i '.kube-apiserver-arg += "service-account-issuer=https://${BUCKET_REGIONAL_DOMAIN_NAME}"' /etc/rancher/rke2/config.yaml
 ./yq -i '.kube-apiserver-arg += "audit-log-path=/var/log/kubernetes/audit/audit.log"' /etc/rancher/rke2/config.yaml
+#Fix for metrics server scraping of kubernetes api server components
+./yq -i '.kube-controller-manager-arg[2] = "bind-address=0.0.0.0"' /etc/rancher/rke2/config.yaml
+./yq -i '.kube-scheduler-arg += "bind-address=0.0.0.0"' /etc/rancher/rke2/config.yaml
+./yq -i '.etcd-arg += "listen-metrics-urls=http://0.0.0.0:2381"|.etcd-arg style="double"' /etc/rancher/rke2/config.yaml
 rm -rf ./yq
-
-
 }
 
 pre_userdata

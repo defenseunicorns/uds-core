@@ -1,6 +1,8 @@
 # Copyright 2024 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
+includes:
+  - util: ./utils.yaml
 
 variables:
   - name: CLUSTER_NAME
@@ -118,10 +120,9 @@ tasks:
               break
             fi
           done
-
           # wait for cluster components
           while true; do
-            if [ $(uds zarf tools kubectl get po,job -A --no-headers=true | egrep -v 'Running|Complete' | wc -l) -gt 0 ]; then
+            if [ $(uds zarf tools kubectl get po,job -A --no-headers=true | egrep -v 'helm-install|Running|Complete' | wc -l) -gt 0 ]; then
               echo "Waiting for cluster components to be ready...";
               sleep 5;
             else
@@ -129,7 +130,9 @@ tasks:
               break
             fi
           done
-          uds zarf tools kubectl apply -f ./metallb.yaml
+          #uds zarf tools kubectl apply -f ./metallb.yaml
+      - task: util:rke2-coredns-setup
+      - task: util:rke2-allow-prom-kube-dns
         dir: .github/test-infra/aws/rke2/
         maxTotalSeconds: 600
 
