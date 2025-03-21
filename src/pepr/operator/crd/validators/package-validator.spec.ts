@@ -17,6 +17,7 @@ import {
   UDSPackage,
 } from "..";
 import { validator } from "./package-validator";
+import { RemoteProtocol } from "../generated/package-v1alpha1";
 
 const makeMockReq = (
   pkg: Partial<UDSPackage>,
@@ -223,6 +224,39 @@ describe("Test validation of Exemption CRs", () => {
         {
           remoteGenerated: RemoteGenerated.Anywhere,
           remoteSelector: { app: "other" },
+        },
+      ],
+      [],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+  });
+
+  it("denies network policies that specify remoteHost and remoteGenerated", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [
+        {
+          remoteGenerated: RemoteGenerated.Anywhere,
+          remoteHost: "example.com",
+        },
+      ],
+      [],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+  });
+
+  it("denies network policies that specify remoteProtocol and not remoteHost", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [
+        {
+          remoteProtocol: RemoteProtocol.TLS,
         },
       ],
       [],

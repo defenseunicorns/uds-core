@@ -6,7 +6,7 @@
 import { describe, expect, it } from "@jest/globals";
 import { UDSConfig } from "../../../config";
 import { Expose, Gateway } from "../../crd";
-import { generateVirtualService } from "./virtual-service";
+import { generateIngressVirtualService } from "./virtual-service";
 
 describe("test generate virtual service", () => {
   const ownerRefs = [
@@ -33,7 +33,13 @@ describe("test generate virtual service", () => {
       service,
     };
 
-    const payload = generateVirtualService(expose, namespace, pkgName, generation, ownerRefs);
+    const payload = generateIngressVirtualService(
+      expose,
+      namespace,
+      pkgName,
+      generation,
+      ownerRefs,
+    );
 
     expect(payload).toBeDefined();
     expect(payload.metadata?.name).toEqual(
@@ -66,7 +72,13 @@ describe("test generate virtual service", () => {
       service,
     };
 
-    const payload = generateVirtualService(expose, namespace, pkgName, generation, ownerRefs);
+    const payload = generateIngressVirtualService(
+      expose,
+      namespace,
+      pkgName,
+      generation,
+      ownerRefs,
+    );
 
     expect(payload).toBeDefined();
     expect(payload.spec?.hosts).toBeDefined();
@@ -84,7 +96,13 @@ describe("test generate virtual service", () => {
       advancedHTTP,
     };
 
-    const payload = generateVirtualService(expose, namespace, pkgName, generation, ownerRefs);
+    const payload = generateIngressVirtualService(
+      expose,
+      namespace,
+      pkgName,
+      generation,
+      ownerRefs,
+    );
 
     expect(payload).toBeDefined();
     expect(payload.spec?.http).toBeDefined();
@@ -101,7 +119,13 @@ describe("test generate virtual service", () => {
       service,
     };
 
-    const payload = generateVirtualService(expose, namespace, pkgName, generation, ownerRefs);
+    const payload = generateIngressVirtualService(
+      expose,
+      namespace,
+      pkgName,
+      generation,
+      ownerRefs,
+    );
 
     expect(payload).toBeDefined();
     expect(payload.spec?.tls).toBeDefined();
@@ -125,7 +149,13 @@ describe("test generate virtual service", () => {
       advancedHTTP: { redirect: { uri: "https://example.com" } },
     };
 
-    const payload = generateVirtualService(expose, namespace, pkgName, generation, ownerRefs);
+    const payload = generateIngressVirtualService(
+      expose,
+      namespace,
+      pkgName,
+      generation,
+      ownerRefs,
+    );
 
     expect(payload).toBeDefined();
     expect(payload.spec!.http![0].route).toBeUndefined();

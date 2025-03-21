@@ -22,7 +22,7 @@ import { sanitizeResourceName } from "../utils";
  * @param pkg
  * @param namespace
  */
-export function generateServiceEntry(
+export function generateIngressServiceEntry(
   expose: Expose,
   namespace: string,
   pkgName: string,

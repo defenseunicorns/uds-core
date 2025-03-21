@@ -100,7 +100,7 @@ const allow = {
       remoteProtocol: {
         description: "Protocol used for external connection",
         type: "string",
-        enum: ["tls", "http"],
+        enum: ["TLS", "HTTP"],
       },
       port: {
         description: "The port to allow (protocol is always TCP)",

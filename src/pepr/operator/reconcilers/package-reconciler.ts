@@ -7,6 +7,7 @@ import { getReadinessConditions, handleFailure, shouldSkip, updateStatus, writeE
 import { UDSConfig } from "../../config";
 import { Component, setupLogger } from "../../logger";
 import { cleanupNamespace, enableInjection } from "../controllers/istio/injection";
+import { egressCleanup } from "../controllers/istio/egress-cleanup";
 import { istioResources } from "../controllers/istio/istio-resources";
 import {
   authservice,
@@ -71,6 +72,7 @@ export async function packageReconciler(pkg: UDSPackage) {
     const netPol = await networkPolicies(pkg, namespace!);
 
     let endpoints: string[] = [];
+
     // Update the namespace to ensure the istio-injection label is set
     await enableInjection(pkg);
 
@@ -88,12 +90,8 @@ export async function packageReconciler(pkg: UDSPackage) {
       );
     }
 
-    // Create the VirtualService and ServiceEntry for each exposed service
+    // Create the Istio Resources per the package configuration
     endpoints = await istioResources(pkg, namespace!);
-
-    // Create the egress resources
-    // Check if there's an egress gateway first, if not skip
-    // exposedHosts = await egressResources(pkg, namespace!);
 
     // Configure the ServiceMonitors
     const monitors: string[] = [];
@@ -164,6 +162,24 @@ export async function packageFinalizer(pkg: UDSPackage) {
     );
     await writeEvent(pkg, {
       message: `Removal of SSO / AuthService clients failed: ${e.message}`,
+      reason: "RemovalFailed",
+    });
+  }
+
+  try {
+    await writeEvent(pkg, {
+      message: `Reconciling any shared egress resources`,
+      reason: "RemovalInProgress",
+      type: "Normal",
+    });
+    // Remove any shared egress resources
+    await egressCleanup(pkg);
+  } catch (e) {
+    log.debug(
+      `Removal of shared egress resources during finalizer failed for ${pkg.metadata?.namespace}/${pkg.metadata?.name}: ${e.message}`,
+    );
+    await writeEvent(pkg, {
+      message: `Removal of shared egress resources failed: ${e.message}`,
       reason: "RemovalFailed",
     });
   }

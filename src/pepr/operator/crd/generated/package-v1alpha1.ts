@@ -223,8 +223,8 @@ export enum RemoteGenerated {
  * Protocol used for external connection
  */
 export enum RemoteProtocol {
-  HTTP = "http",
-  TLS = "tls",
+  HTTP = "HTTP",
+  TLS = "TLS",
 }
 
 export interface Expose {

@@ -14,7 +14,7 @@ import { sanitizeResourceName } from "../utils";
  * @param pkg
  * @param namespace
  */
-export function generateVirtualService(
+export function generateIngressVirtualService(
   expose: Expose,
   namespace: string,
   pkgName: string,
