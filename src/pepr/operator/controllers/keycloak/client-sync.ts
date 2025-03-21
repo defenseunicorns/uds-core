@@ -9,18 +9,10 @@ import { Component, setupLogger } from "../../../logger";
 import { Sso, UDSPackage } from "../../crd";
 import { getOwnerRef, purgeOrphans, sanitizeResourceName } from "../utils";
 import { Client, clientKeys } from "./types";
-import { DynamicKeycloakClient } from "./keycloak-client";
+import { createOrUpdateClient, deleteClient } from "./clients/dynamic-client";
 
-let apiURL = "http://keycloak-http.keycloak.svc.cluster.local:8080";
 const samlDescriptorUrl =
   "http://keycloak-http.keycloak.svc.cluster.local:8080/realms/uds/protocol/saml/descriptor";
-
-// Support dev mode with port-forwarded keycloak svc
-if (process.env.PEPR_MODE === "dev") {
-  apiURL = "http://localhost:8080";
-}
-
-const keycloakClient = new DynamicKeycloakClient(apiURL);
 
 // Template regex to match clientField() references, see https://regex101.com/r/e41Dsk/3 for details
 const secretTemplateRegex = new RegExp(
@@ -88,7 +80,7 @@ export async function purgeSSOClients(pkg: UDSPackage, newClients: string[] = []
   const toRemove = currentClients.filter(client => !newClients.includes(client));
   for (const ref of toRemove) {
     try {
-      await keycloakClient.delete({ clientId: ref });
+      await deleteClient({ clientId: ref });
     } catch (err) {
       log.warn(
         pkg.metadata,
@@ -140,7 +132,7 @@ async function syncClient(
   let client = convertSsoToClient(clientReq);
 
   try {
-    client = await keycloakClient.createOrUpdate(client);
+    client = await createOrUpdateClient(client);
   } catch (err) {
     const msg =
       `Failed to process Keycloak request for client '${client.clientId}', package ` +
