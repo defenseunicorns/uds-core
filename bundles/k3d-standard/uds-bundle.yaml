@@ -32,7 +32,7 @@ packages:
 
   - name: init
     repository: ghcr.io/zarf-dev/packages/init
-    ref: v0.49.1
+    ref: v0.50.0
 
   - name: core
     path: ../../build/
