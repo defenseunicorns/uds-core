@@ -51,6 +51,8 @@ realmAuthFlows:
   X509_AUTH_ENABLED: true
   SOCIAL_AUTH_ENABLED: true
   OTP_ENABLED: true
+  WEBAUTHN_ENABLED: false
+  X509_MFA_ENABLED: false
 
 # Generates an initial password for first admin user - only use if install is headless
 # (i.e. cannot hit keycloak UI with `zarf connect keycloak`), password should be changed after initial login
