@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.39.0](https://github.com/defenseunicorns/uds-core/compare/v0.38.0...v0.39.0) (2025-03-22)
+
+
+### Features
+
+* add alertmanager datasource to grafana ([#1374](https://github.com/defenseunicorns/uds-core/issues/1374)) ([818a3a0](https://github.com/defenseunicorns/uds-core/commit/818a3a0967a689dfceeb9b494c11167fda3d09a5))
+
+
+### Miscellaneous
+
+* **deps:** update istio to v1.25.0 ([#1335](https://github.com/defenseunicorns/uds-core/issues/1335)) ([1803ea7](https://github.com/defenseunicorns/uds-core/commit/1803ea7375100e61d2e06816e6c7150e0e4e76dc))
+* **deps:** update keycloak to v26.1.4 ([#1356](https://github.com/defenseunicorns/uds-core/issues/1356)) ([31152f7](https://github.com/defenseunicorns/uds-core/commit/31152f7659ef02335494d3a3646b49a4dd68398d))
+* **deps:** update pepr to v0.46.3 ([#1365](https://github.com/defenseunicorns/uds-core/issues/1365)) ([304a556](https://github.com/defenseunicorns/uds-core/commit/304a556f7cec391cda0c8f6b330bad652d329a03))
+* **deps:** update support-deps ([#1364](https://github.com/defenseunicorns/uds-core/issues/1364)) ([7819bec](https://github.com/defenseunicorns/uds-core/commit/7819bec4b32d32fb29c8c59ffda22eb6705175c1))
+
 ## [0.38.0](https://github.com/defenseunicorns/uds-core/compare/v0.37.0...v0.38.0) (2025-03-19)
 
 
