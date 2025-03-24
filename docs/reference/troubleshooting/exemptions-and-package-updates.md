@@ -87,14 +87,8 @@ If you are experiencing issues with the watch functionality, please provide the 
    kubectl exec -it -n pepr-system deploy/pepr-uds-core-watcher -- node -e "process.env.NODE_TLS_REJECT_UNAUTHORIZED = \"0\"; fetch(\"https://pepr-uds-core-watcher/metrics\").then(res => res.text()).then(body => console.log(body)).catch(err => console.error(err))"
    ```
 
-   **Iron Bank AMD Image** `registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller`:
+   **Iron Bank** `registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller`:
    ```bash
-   kubectl exec -it -n pepr-system deploy/pepr-uds-core-watcher -- node -e "process.env.NODE_TLS_REJECT_UNAUTHORIZED = \"0\"; fetch(\"https://pepr-uds-core-watcher/metrics\").then(res => res.text()).then(body => console.log(body)).catch(err => console.error(err))"
-   ```
-
-   **Iron Bank ARM Image** `registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller`:
-   ```bash
-   # in an airgap environment
    kubectl exec -it -n pepr-system deploy/pepr-uds-core-watcher -- node -e "process.env.NODE_TLS_REJECT_UNAUTHORIZED = \"0\"; fetch(\"https://pepr-uds-core-watcher/metrics\").then(res => res.text()).then(body => console.log(body)).catch(err => console.error(err))"
    ```
 
