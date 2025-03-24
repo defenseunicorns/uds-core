@@ -57,11 +57,11 @@ spec:
         remoteGenerated: Anywhere
 
       - direction: Egress
-        remoteNamespace: tempo
+        remoteNamespace: monitoring
         remoteSelector:
-          app.kubernetes.io/name: tempo
-        port: 9411
-        description: "Tempo"
+          app.kubernetes.io/name: alertmanager
+        port: 9093
+        description: "Alertmanager Datasource"
 
   # SSO allows for the creation of Keycloak clients and with automatic secret generation and protocolMappers
   sso:
