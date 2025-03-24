@@ -3,7 +3,7 @@ title: Configuring Velero with CSI Snapshot Support
 ---
 
 ## Introduction
-As of Velero v1.14, the velero-plugin-for-csi is included in Velero. This means you no longer need to install a separate velero-plugin-for-csi or the [velero-plugin-for-vsphere](https://github.com/vmware-tanzu/velero-plugin-for-vsphere). This guide covers the configuration required to enable Velero to work with CSI drivers for volume snapshots in a UDS Core deployment
+As of Velero v1.14, the velero-plugin-for-csi is included in Velero. This means you no longer need to install a separate velero-plugin-for-csi or the [velero-plugin-for-vsphere](https://github.com/vmware-tanzu/velero-plugin-for-vsphere). This guide covers the configuration required to enable Velero to use a vSphere CSI driver for volume snapshots of a UDS Core deployment.
 
 ## Prerequisites
 - An RKE2 Kubernetes cluster (additional configuration may be required for other distributions)
@@ -11,9 +11,7 @@ As of Velero v1.14, the velero-plugin-for-csi is included in Velero. This means 
 - UDS Core deployment with Velero configured for S3-compatible object storage
 
 ## Using a CSI driver in an RKE2 cluster
-The following instructions are specific to an RKE2 cluster, and assume bucket variables required for S3 object storage have already been set. The below tips are not meant to be step-by-step instructions, but useful tips for configuring the CSI driver. 
-
-To integrate Velero with a CSI driver, you should first install both [rancher-vsphere-cpi](https://github.com/rancher/vsphere-charts/tree/main/charts/rancher-vsphere-cpi) and [rancher-vsphere-csi](https://github.com/rancher/vsphere-charts/tree/main/charts/rancher-vsphere-csi).
+The following instructions are specific to an RKE2 cluster, and assume bucket variables required for S3 object storage have already been set. The below tips are not meant to be step-by-step instructions, but useful tips for configuring the CSI driver. To integrate Velero with a CSI driver, you should first install both [rancher-vsphere-cpi](https://github.com/rancher/vsphere-charts/tree/main/charts/rancher-vsphere-cpi) and [rancher-vsphere-csi](https://github.com/rancher/vsphere-charts/tree/main/charts/rancher-vsphere-csi).
 
 ## Key Overrides and Configuration
 - `blockVolumeSnapshot.enabled: true`
@@ -28,7 +26,7 @@ To integrate Velero with a CSI driver, you should first install both [rancher-vs
 ## CSI Driver Configuration
 ***When using a vSphere CSI driver, a user must be created
 
-At least three overrides must occur in the CSI driver configuration: `blockVolumeSnapshot`, `configTemplate` and `global-max-snapshots-per-block-volume`
+At least three overrides must occur in the vSphere CSI driver configuration: `blockVolumeSnapshot`, `configTemplate` and `global-max-snapshots-per-block-volume`
 - `blockVolumeSnapshot` must be enabled on the CSI driver to allow the deployment of the [csi-snapshotter](https://github.com/kubernetes-csi/external-snapshotter) sidecar, which is required to create snapshots of volumes
 - `configTemplate` must be completely overridden, to allow overriding of the `global-max-snapshots-per-block-volume` setting
 - `global-max-snapshots-per-block-volume` should be added as an override within the `configTemplate`, to allow control of how many snapshots are allowed per volume
@@ -48,7 +46,7 @@ spec:
       host: "{{ vsphere_server }}"
       port: 443
       insecureFlag: true
-      datacenters: "Kitchen"
+      datacenters: "<vsphere_datacenter_name>"
       username: "{{ vsphere_csi_username }}"
       password: "{{ vsphere_csi_password }}"
       credentialsSecret:
@@ -63,7 +61,7 @@ metadata:
 spec:
   valuesContent: |-
     vCenter:
-      datacenters: "Kitchen"
+      datacenters: "<vsphere_datacenter_name>"
       username: "{{ vsphere_csi_username }}"
       password: "{{ vsphere_csi_password }}"
       configSecret:
@@ -75,7 +73,7 @@ spec:
           port = 443
           insecure-flag = "1"
           [VirtualCenter "{{ vsphere_server }}"]
-          datacenters = "Kitchen"
+          datacenters = "<vsphere_datacenter_name>"
           [Snapshot]
           global-max-snapshots-per-block-volume = 12
     csiNode:
@@ -91,7 +89,7 @@ spec:
 ## Snapshot Limit Configuration
 The default snapshot limit (3) is insufficient for UDS Core's 10-day [backup retention policy](https://github.com/defenseunicorns/uds-core/blob/main/src/velero/values/values.yaml#L35-L47). 
 
-- Each UDS backup creates approximately 13 snapshots distributed across volumes
+- Each UDS backup creates approximately 13 snapshots distributed across all volumes
 - For a cluster that has 13 volumes, each nightly UDS backup will create 1 snapshot per volume
 - After 3 days of backups, the default `global-max-snapshots-per-block-volume` will have been met, and further backups will fail
 - To account for 10 days of UDS backups (assuming 13 volumes), set the `global-max-snapshots-per-block-volume` to a minimum of 10
@@ -146,14 +144,13 @@ Example uds-bundle.yaml core-backup-restore layer overrides:
 ```
 
 ## Additional Tips
-- When restoring specific namespaces, always use the --include-namespaces flag to avoid creating unnecessary VolumeSnapshotContents:
+- When restoring specific namespaces, always use the `--include-namespaces` flag to avoid creating unnecessary VolumeSnapshotContents:
     ```
     velero restore create --from-backup <backup-name> --include-namespaces <namespace>
     ```
 - Be cautious when deleting backups that have been used for restores, as this may attempt to delete VolumeSnapshotContents that are still in use by restored volumes.
 - Velero's garbage collection runs hourly by default. Ensure your TTL settings allow enough time for cleanup before hitting snapshot limits.
-- The [pyvmomi-community-samples](https://github.com/vmware/pyvmomi-community-samples/tree/master) repo contains several scripts that are useful for interacting with the vSphere client. In particular, the [fcd_list_vdisk_snapshots](https://github.com/vmware/pyvmomi-community-samples/blob/master/samples/fcd_list_vdisk_snapshots.py) script allows you to list snapshots stored in vSphere, even when they can't be directly viewed in the vSphere UI. This comes in handy when snapshots and snapshotsContent get manually deleted from the cluster, but are not cleaned up appropriately in vSphere.
-
+- The [pyvmomi-community-samples](https://github.com/vmware/pyvmomi-community-samples/tree/master) repo contains several scripts that are useful for interacting with the vSphere client. In particular, the [fcd_list_vdisk_snapshots](https://github.com/vmware/pyvmomi-community-samples/blob/master/samples/fcd_list_vdisk_snapshots.py) script allows you to list snapshots stored in vSphere, even when they can't be directly viewed in the vSphere UI. This comes in handy when snapshots and VolumeSnapshotContents get manually deleted from the cluster, but are not cleaned up appropriately in vSphere.
 
 ## Resources
 [Velero CSI Snapshot Support](https://velero.io/docs/main/csi/)
