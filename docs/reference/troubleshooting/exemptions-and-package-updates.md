@@ -72,7 +72,7 @@ If you are experiencing issues with the watch functionality, please provide the 
 - **Collect Metrics from the Watcher**  
    Use the following command based on the image you are using to retrieve metrics from the watcher service, store them in `metrics.txt`:
 
-   **Non-Airgap Environment** `pepr:dev`:
+   **Non-Airgap Environment** (all-images):
    ```bash
    kubectl run curler --image=nginx:alpine --rm -it --restart=Never -n pepr-system --labels=zarf.dev/agent=ignore -- curl -k https://pepr-uds-core-watcher/metrics
    ```
