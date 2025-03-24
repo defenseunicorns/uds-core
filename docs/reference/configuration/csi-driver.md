@@ -1,29 +1,37 @@
-<!-- > as noted in the [Velero documentation](https://velero.io/docs/main/csi/#prerequisites) - VolumeSnapshotLocation, VolumeSnapshotClass, etc.
-> as well as switching `snapshotVolume` to `true` in the backup config. -->
-
 ---
-title: CSI Driver
+title: Configuring Velero with CSI Snapshot Support
 ---
 
 ## Introduction
-As of Velero v1.14, the velero-plugin-for-csi is included in Velero. This means you are not required to install a separate velero-plugin-for-csi or the [velero-plugin-for-vsphere](https://github.com/vmware-tanzu/velero-plugin-for-vsphere).
+As of Velero v1.14, the velero-plugin-for-csi is included in Velero. This means you no longer need to install a separate velero-plugin-for-csi or the [velero-plugin-for-vsphere](https://github.com/vmware-tanzu/velero-plugin-for-vsphere). This guide covers the configuration required to enable Velero to work with CSI drivers for volume snapshots in a UDS Core deployment
+
+## Prerequisites
+- An RKE2 Kubernetes cluster (additional configuration may be required for other distributions)
+- Access to vSphere infrastructure
+- UDS Core deployment with Velero configured for S3-compatible object storage
 
 ## Using a CSI driver in an RKE2 cluster
-The following instructions are specific to an RKE2 cluster, and assume bucket variables required for S3 object storage have already been set. The below tips are not meant to be step-by-step instructions, but useful lessons learned when configuring the CSI driver. 
+The following instructions are specific to an RKE2 cluster, and assume bucket variables required for S3 object storage have already been set. The below tips are not meant to be step-by-step instructions, but useful tips for configuring the CSI driver. 
 
-To integrate Velero with a CSI driver, you should install both [rancher-vsphere-cpi](https://github.com/rancher/vsphere-charts/tree/main/charts/rancher-vsphere-cpi) and [rancher-vsphere-csi](https://github.com/rancher/vsphere-charts/tree/main/charts/rancher-vsphere-csi).
+To integrate Velero with a CSI driver, you should first install both [rancher-vsphere-cpi](https://github.com/rancher/vsphere-charts/tree/main/charts/rancher-vsphere-cpi) and [rancher-vsphere-csi](https://github.com/rancher/vsphere-charts/tree/main/charts/rancher-vsphere-csi).
 
-### Key Overrides
-- `blockVolumeSnapshot` must be enabled to allow the CSI driver to create snapshots of volumes via deploying the [csi-snapshotter](https://github.com/kubernetes-csi/external-snapshotter) sidecar
+## Key Overrides and Configuration
+- `blockVolumeSnapshot.enabled: true`
+- `configTemplate`
+- `global-max-snapshots-per-block-volume`
+- `volumeSnapshotClass`
+- `configuration.features: enableCSI`
+- `snapshotsEnabled: true`
+- `configuration.volumeSnapshotLocation.provider: velero.io/csi`
+- `schedules.udsbackup.template.snapshotVolumes: true`
+
+## CSI Driver Configuration
+***When using a vSphere CSI driver, a user must be created
+
+At least three overrides must occur in the CSI driver configuration: `blockVolumeSnapshot`, `configTemplate` and `global-max-snapshots-per-block-volume`
+- `blockVolumeSnapshot` must be enabled on the CSI driver to allow the deployment of the [csi-snapshotter](https://github.com/kubernetes-csi/external-snapshotter) sidecar, which is required to create snapshots of volumes
 - `configTemplate` must be completely overridden, to allow overriding of the `global-max-snapshots-per-block-volume` setting
-- `global-max-snapshots-per-block-volume` should be added as an override within the `configTemplate`, to allow control of how many snapshots are allowed per volume. 
-
-## `global-max-snapshots-per-block-volume` Configuration
-The default `global-max-snapshots-per-block-volume` is 3, however, when using the uds-core [backup schedule](https://github.com/defenseunicorns/uds-core/blob/main/src/velero/values/values.yaml#L35-L47) with TTL of 10 days, the max of 3 will quickly be met, and further backups will fail. Each `udsbackup` creates a total of 13 snapshots across the different volumes. 
-
-The number of volumes your cluster has will determine what you need to set the `global-max-snapshots-per-block-volume` to, to account for 10 days worth of udsbackups. For example, if a cluster has 13 volumes, and each volume gets 1 snapshot during the nightly udsbackup (remember 13 snapshots are created per night), you should set `global-max-snapshots-per-block-volume` to a minimum of 10 (1 snapshot per volume per night x 10 days). 
-
-To allow 10 days worth of udsbackups, with a buffer of 2 additional days (to allow room for any manually created backups), set the `global-max-snapshots-per-block-volume` to 12. 
+- `global-max-snapshots-per-block-volume` should be added as an override within the `configTemplate`, to allow control of how many snapshots are allowed per volume
 
 Example rancher-vsphere-cpi and rancher-vsphere-csi deployment with overrides:
 
@@ -80,9 +88,30 @@ spec:
       reclaimPolicy: Retain
 ```
 
-In addition to the above CSI driver overrides, you must create a `volumeSnapshotClass` that gets deployed to your cluster. This can be achieved by creating a velero-config Zarf package that contains the veleroSnapshotClass, and having your uds-bundle.yaml deploy this package. 
+## Snapshot Limit Configuration
+The default snapshot limit (3) is insufficient for UDS Core's 10-day [backup retention policy](https://github.com/defenseunicorns/uds-core/blob/main/src/velero/values/values.yaml#L35-L47). 
 
-Example `volumeSnapshotClass` deployment:
+- Each UDS backup creates approximately 13 snapshots distributed across volumes
+- For a cluster that has 13 volumes, each nightly UDS backup will create 1 snapshot per volume
+- After 3 days of backups, the default `global-max-snapshots-per-block-volume` will have been met, and further backups will fail
+- To account for 10 days of UDS backups (assuming 13 volumes), set the `global-max-snapshots-per-block-volume` to a minimum of 10
+- Consider setting a higher `global-max-snapshots-per-block-volume` to create a buffer that accommodates manual backups or restore testing (e.g, `global-max-snapshots-per-block-volume=12`)
+
+If the following error is seen when creating a backup, the `global-max-snapshots-per-block-volume` needs to be adjusted:
+```yaml
+name: /prometheus-kube-prometheus-stack-prometheus-0 message: /Error backing up item error: /error
+executing custom action (groupResource=volumesnapshots.snapshot.storage.k8s.io, namespace=monitoring,
+name=velero-prometheus-kube-prometheus-stack-prometheus-db-prom2n67g): rpc error: code = Unknown desc
+= CSI got timed out with error: Failed to check and update snapshot content:\n failed to take snapshot
+of the volume 6e908637-1c40-41ab-a65b-0460b403e364: "rpc error: code = FailedPrecondition desc =\n the
+number of snapshots on the source volume 6e908637-1c40-41ab-a65b-0460b403e364 reaches the configured
+maximum (3)"
+```
+
+## Create a VolumeSnapshotClass
+In addition to the above CSI driver overrides, a `VolumeSnapshotClass` must be defined to tell Velero how to create snapshots. This can be achieved by creating a velero-config Zarf package that contains the VolumeSnapshotClass manifest, and having your uds-bundle.yaml deploy this package. The `VolumeSnapshotClass` defines the driver, which in the below example is vSphere.
+
+Example `VolumeSnapshotClass` deployment:
 ```yaml
 apiVersion: snapshot.storage.k8s.io/v1
 kind: VolumeSnapshotClass
@@ -94,10 +123,10 @@ driver: csi.vsphere.vmware.com
 deletionPolicy: Retain
 ```
 
-
+## Configure Velero for CSI Support
 In the uds-bundle.yaml Velero overrides, you must `EnableCSI`, set `snapshotsEnabled` to `true`, define the `volumeSnapshotLocation` as the CSI driver, and set `snapshotVolumes` to `true`. 
 
-Example uds-bundle.yaml overrides:
+Example uds-bundle.yaml core-backup-restore layer overrides:
 
 ```yaml
     overrides:
@@ -115,6 +144,16 @@ Example uds-bundle.yaml overrides:
               - path: schedules.udsbackup.template.snapshotVolumes
                 value: true
 ```
+
+## Additional Tips
+- When restoring specific namespaces, always use the --include-namespaces flag to avoid creating unnecessary VolumeSnapshotContents:
+    ```
+    velero restore create --from-backup <backup-name> --include-namespaces <namespace>
+    ```
+- Be cautious when deleting backups that have been used for restores, as this may attempt to delete VolumeSnapshotContents that are still in use by restored volumes.
+- Velero's garbage collection runs hourly by default. Ensure your TTL settings allow enough time for cleanup before hitting snapshot limits.
+- The [pyvmomi-community-samples](https://github.com/vmware/pyvmomi-community-samples/tree/master) repo contains several scripts that are useful for interacting with the vSphere client. In particular, the [fcd_list_vdisk_snapshots](https://github.com/vmware/pyvmomi-community-samples/blob/master/samples/fcd_list_vdisk_snapshots.py) script allows you to list snapshots stored in vSphere, even when they can't be directly viewed in the vSphere UI. This comes in handy when snapshots and snapshotsContent get manually deleted from the cluster, but are not cleaned up appropriately in vSphere.
+
 
 ## Resources
 [Velero CSI Snapshot Support](https://velero.io/docs/main/csi/)
