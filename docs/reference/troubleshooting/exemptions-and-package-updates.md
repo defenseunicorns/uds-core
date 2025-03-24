@@ -70,14 +70,43 @@ If you are experiencing issues with the watch functionality, please provide the 
 - **Open an Issue**  
    Visit the [Pepr GitHub Issues](https://github.com/defenseunicorns/pepr/issues/new?template=watch_failure.md) page and create a new issue using the **Watch Failure** template and attach the logs and metrics.
 - **Collect Metrics from the Watcher**  
-   Use the following command to retrieve metrics from the watcher service, store them in `metrics.txt`:
+   Use the following command based on the image you are using to retrieve metrics from the watcher service, store them in `metrics.txt`:
+
+   **Non-Airgap Environment** `pepr:dev`:
+   ```bash
+   kubectl run curler --image=nginx:alpine --rm -it --restart=Never -n pepr-system --labels=zarf.dev/agent=ignore -- curl -k https://pepr-uds-core-watcher/metrics
+   ```
+
+   **Upstream Image** `ghcr.io/defenseunicorns/pepr/controller`:
    ```bash
    # in an airgap environment
-   kubectl exec -it -n pepr-system deploy/pepr-uds-core-watcher -- /bin/sh -c 'node -e "process.env.NODE_TLS_REJECT_UNAUTHORIZED = \"0\"; fetch(\"https://pepr-uds-core-watcher/metrics\").then(res => res.text()).then(body => console.log(body)).catch(err => console.error(err))"'
+   kubectl exec -it -n pepr-system deploy/pepr-uds-core-watcher -- /nodejs/bin/node -e "process.env.NODE_TLS_REJECT_UNAUTHORIZED = \"0\"; fetch(\"https://pepr-uds-core-watcher/metrics\").then(res => res.text()).then(body => console.log(body)).catch(err => console.error(JSON.stringify(err)))"
+   ```
 
-   # in a connected environment
-   kubectl run curler --image=nginx:alpine --rm -it --restart=Never -n pepr-system --labels=zarf.dev/agent=ignore -- curl -k https://pepr-uds-core-watcher/metrics
-    ```
+   **Unicorn Image** `ghcr.io/defenseunicorns/pepr/private/controller`:
+   ```bash
+   # in an airgap environment
+   kubectl exec -it -n pepr-system deploy/pepr-uds-core-watcher -- node -e "process.env.NODE_TLS_REJECT_UNAUTHORIZED = \"0\"; fetch(\"https://pepr-uds-core-watcher/metrics\").then(res => res.text()).then(body => console.log(body)).catch(err => console.error(err))"
+   ```
+
+   **Iron Bank Image** `registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller`:
+   ```bash
+   # in an airgap environment
+   kubectl exec -it -n pepr-system deploy/pepr-uds-core-watcher -- node -e "process.env.NODE_TLS_REJECT_UNAUTHORIZED = \"0\"; fetch(\"https://pepr-uds-core-watcher/metrics\").then(res => res.text()).then(body => console.log(body)).catch(err => console.error(err))"
+   ```
+
+   **Iron Bank AMD Image** `registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller`:
+   ```bash
+   # in an airgap environment
+   kubectl exec -it -n pepr-system deploy/pepr-uds-core-watcher -- node -e "process.env.NODE_TLS_REJECT_UNAUTHORIZED = \"0\"; fetch(\"https://pepr-uds-core-watcher/metrics\").then(res => res.text()).then(body => console.log(body)).catch(err => console.error(err))"
+   ```
+
+   **Iron Bank ARM Image** `registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller`:
+   ```bash
+   # in an airgap environment
+   kubectl exec -it -n pepr-system deploy/pepr-uds-core-watcher -- node -e "process.env.NODE_TLS_REJECT_UNAUTHORIZED = \"0\"; fetch(\"https://pepr-uds-core-watcher/metrics\").then(res => res.text()).then(body => console.log(body)).catch(err => console.error(err))"
+   ```
+
 - **Provide Watch Logs**  
    Include the logs from the controller and watch pod in the issue, store them in `watcher.log`.
    ```bash
