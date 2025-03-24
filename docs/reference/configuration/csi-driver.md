@@ -1,11 +1,11 @@
 <!-- > as noted in the [Velero documentation](https://velero.io/docs/main/csi/#prerequisites) - VolumeSnapshotLocation, VolumeSnapshotClass, etc.
 > as well as switching `snapshotVolume` to `true` in the backup config. -->
 
-NOTE: As of version release-1.14, the velero-plugin-for-csi is included in Velero
+> [!NOTE] As of version release-1.14, the velero-plugin-for-csi is included in Velero
 
-NOTE: You are not required to install the [velero-plugin-for-vsphere](https://github.com/vmware-tanzu/velero-plugin-for-vsphere) as you can simply use the Kubernetes snapshot controller
+> [!NOTE] You are not required to install the [velero-plugin-for-vsphere](https://github.com/vmware-tanzu/velero-plugin-for-vsphere) as you can simply use the Kubernetes snapshot controller
 
-NOTE: Velero CSI Documentation: https://velero.io/docs/main/csi/
+> [!TIP] Velero CSI Documentation: https://velero.io/docs/main/csi/
 
 The following instructions are specific to an RKE2 cluster, and assume bucket variables required for S3 object storage have already been set:
 
