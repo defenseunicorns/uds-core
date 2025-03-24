@@ -15,6 +15,12 @@
     "pathParameterProtection": {
       "type": "boolean"
     },
+    "additionalNetworkAllow": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
     "autoscaling": {
       "type": "object",
       "properties": {
