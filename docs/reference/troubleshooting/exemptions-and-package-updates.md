@@ -79,25 +79,16 @@ If you are experiencing issues with the watch functionality, please provide the 
 
    **Upstream Image** `ghcr.io/defenseunicorns/pepr/controller`:
    ```bash
-   # in an airgap environment
    kubectl exec -it -n pepr-system deploy/pepr-uds-core-watcher -- /nodejs/bin/node -e "process.env.NODE_TLS_REJECT_UNAUTHORIZED = \"0\"; fetch(\"https://pepr-uds-core-watcher/metrics\").then(res => res.text()).then(body => console.log(body)).catch(err => console.error(JSON.stringify(err)))"
    ```
 
    **Unicorn Image** `ghcr.io/defenseunicorns/pepr/private/controller`:
    ```bash
-   # in an airgap environment
-   kubectl exec -it -n pepr-system deploy/pepr-uds-core-watcher -- node -e "process.env.NODE_TLS_REJECT_UNAUTHORIZED = \"0\"; fetch(\"https://pepr-uds-core-watcher/metrics\").then(res => res.text()).then(body => console.log(body)).catch(err => console.error(err))"
-   ```
-
-   **Iron Bank Image** `registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller`:
-   ```bash
-   # in an airgap environment
    kubectl exec -it -n pepr-system deploy/pepr-uds-core-watcher -- node -e "process.env.NODE_TLS_REJECT_UNAUTHORIZED = \"0\"; fetch(\"https://pepr-uds-core-watcher/metrics\").then(res => res.text()).then(body => console.log(body)).catch(err => console.error(err))"
    ```
 
    **Iron Bank AMD Image** `registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller`:
    ```bash
-   # in an airgap environment
    kubectl exec -it -n pepr-system deploy/pepr-uds-core-watcher -- node -e "process.env.NODE_TLS_REJECT_UNAUTHORIZED = \"0\"; fetch(\"https://pepr-uds-core-watcher/metrics\").then(res => res.text()).then(body => console.log(body)).catch(err => console.error(err))"
    ```
 
