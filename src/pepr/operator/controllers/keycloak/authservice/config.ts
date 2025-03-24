@@ -9,11 +9,6 @@ import { UDSConfig } from "../../../../config";
 import { Client } from "../types";
 import { buildChain, log } from "./authservice";
 import { Action, AuthserviceConfig } from "./types";
-import {
-  KEYCLOAK_CLIENTS_SECRET_NAME,
-  KEYCLOAK_CLIENTS_SECRET_NAMESPACE,
-  updateKeycloakClientsSecret,
-} from "../client-secret-sync";
 
 let pendingSecretFetch: Promise<AuthserviceConfig> | null = null;
 
@@ -72,53 +67,6 @@ export async function setupAuthserviceSecret() {
         log.error(err, "Failed to create UDS managed authservice secret.");
         throw new Error("Failed to create UDS managed authservice secret.", { cause: err });
       }
-    }
-  }
-}
-
-export async function setupKeycloakClientSecret() {
-  if (process.env.PEPR_WATCH_MODE === "true" || process.env.PEPR_MODE === "dev") {
-    // Ensure the namespace exists in the Kubernetes cluster
-    await K8s(kind.Namespace).Apply({
-      metadata: {
-        name: KEYCLOAK_CLIENTS_SECRET_NAMESPACE,
-      },
-    });
-
-    // Create the secret if it doesn't exist
-    try {
-      await K8s(kind.Secret)
-        .InNamespace(KEYCLOAK_CLIENTS_SECRET_NAMESPACE)
-        .Get(KEYCLOAK_CLIENTS_SECRET_NAME);
-      log.info(`Keycloak Clients Secret exists, skipping creation`);
-    } catch {
-      log.info("Keycloak Clients Secret does not exist, creating it");
-      try {
-        await K8s(kind.Secret).Apply(
-          {
-            metadata: {
-              namespace: KEYCLOAK_CLIENTS_SECRET_NAMESPACE,
-              name: KEYCLOAK_CLIENTS_SECRET_NAME,
-            },
-          },
-          { force: true },
-        );
-      } catch (err) {
-        log.error(err, "Failed to create Keycloak Clients Secret");
-        throw new Error("Keycloak Clients Secret.", { cause: err });
-      }
-    }
-
-    try {
-      const secret = await K8s(kind.Secret)
-        .InNamespace(KEYCLOAK_CLIENTS_SECRET_NAMESPACE)
-        .Get(KEYCLOAK_CLIENTS_SECRET_NAME);
-      await updateKeycloakClientsSecret(secret, false);
-    } catch (err) {
-      log.error(
-        err,
-        "Failed to rotate Keycloak Clients Secret. It might be an temporary error. Skipping",
-      );
     }
   }
 }
