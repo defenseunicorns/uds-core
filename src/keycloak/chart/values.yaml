@@ -63,12 +63,10 @@ additionalNetworkAllow: []
 # ref: https://uds.defenseunicorns.com/reference/configuration/custom-resources/packages-v1alpha1-cr/#allow
 #   - direction: Egress
 #     selector:
-#       app.kubernetes.io/name: grafana
-#     remoteNamespace: thanos
-#     remoteSelector:
-#       app: thanos
-#     description: "Thanos Query"
-#     port: 9090
+#       app.kubernetes.io/name: keycloak
+#     remoteCidr: 72.123.123.123
+#     description: "IDP"
+#     port: 443
 
 # Indicates whether information about services should be injected into Pod's environment variables, matching the syntax of Docker links
 enableServiceLinks: true
