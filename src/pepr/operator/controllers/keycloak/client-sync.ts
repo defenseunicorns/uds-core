@@ -9,7 +9,7 @@ import { Component, setupLogger } from "../../../logger";
 import { Sso, UDSPackage } from "../../crd";
 import { getOwnerRef, purgeOrphans, sanitizeResourceName } from "../utils";
 import { Client, clientKeys } from "./types";
-import { createOrUpdateClient, deleteClient } from "./clients/dynamic-client";
+import { createOrUpdateClient, deleteClient } from "./clients/keycloak-client";
 
 const samlDescriptorUrl =
   "http://keycloak-http.keycloak.svc.cluster.local:8080/realms/uds/protocol/saml/descriptor";

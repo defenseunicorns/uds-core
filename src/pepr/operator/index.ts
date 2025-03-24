@@ -4,8 +4,8 @@
  */
 
 // Common imports
-import { a } from "pepr";
-import { When } from "./common";
+import { a, K8s } from "pepr";
+import { OnSchedule, When } from "./common";
 
 // Controller imports
 import {
@@ -31,7 +31,11 @@ import { Component, setupLogger } from "../logger";
 import { updateUDSConfig } from "./controllers/config/config";
 import { exemptValidator } from "./crd/validators/exempt-validator";
 import { packageFinalizer, packageReconciler } from "./reconcilers/package-reconciler";
-import { updateKeycloakClientsSecret } from "./controllers/keycloak/client-secret-sync";
+import {
+  KEYCLOAK_CLIENTS_SECRET_NAME,
+  KEYCLOAK_CLIENTS_SECRET_NAMESPACE,
+  updateKeycloakClientsSecret,
+} from "./controllers/keycloak/client-secret-sync";
 
 // Export the operator capability for registration in the root pepr.ts
 export { operator } from "./common";
@@ -119,6 +123,18 @@ When(a.Secret)
 // Watch the Kubernetes Clients Secret
 When(a.Secret)
   .IsCreatedOrUpdated()
-  .InNamespace("keycloak")
-  .WithName("keycloak-client-secrets")
-  .Reconcile(updateKeycloakClientsSecret);
+  .InNamespace(KEYCLOAK_CLIENTS_SECRET_NAMESPACE)
+  .WithName(KEYCLOAK_CLIENTS_SECRET_NAME)
+  .Reconcile(s => updateKeycloakClientsSecret(s, false));
+
+OnSchedule({
+  name: "rotate-keycloak-client-secret",
+  every: 24 * 7,
+  unit: "hours",
+  run: async () => {
+    const secret = await K8s(a.Secret)
+      .InNamespace(KEYCLOAK_CLIENTS_SECRET_NAMESPACE)
+      .Get(KEYCLOAK_CLIENTS_SECRET_NAME);
+    await updateKeycloakClientsSecret(secret, true);
+  },
+});

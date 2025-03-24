@@ -38,6 +38,10 @@ export interface KeycloakToken {
   [key: string]: unknown;
 }
 
+export function resetCachedToken() {
+  cachedToken = null;
+}
+
 export async function credentialsGetAccessToken() {
   if (cachedToken) {
     try {
@@ -88,7 +92,9 @@ export async function credentialsCreate(client: Partial<Client>) {
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
     body: JSON.stringify(client),
   });
-  await throwErrorIfNeeded(response);
+  await throwErrorIfNeeded(response, () => {
+    resetCachedToken();
+  });
   return credentialsGet(client);
 }
 
@@ -100,7 +106,9 @@ export async function credentialsGet(client: Partial<Client>) {
     method: "GET",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
   });
-  await throwErrorIfNeeded(response);
+  await throwErrorIfNeeded(response, () => {
+    resetCachedToken();
+  });
   return response.data[0];
 }
 
@@ -114,7 +122,9 @@ export async function credentialsUpdate(client: Partial<Client>) {
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
     body: JSON.stringify(client),
   });
-  await throwErrorIfNeeded(response);
+  await throwErrorIfNeeded(response, () => {
+    resetCachedToken();
+  });
   return credentialsGet(client);
 }
 
@@ -127,5 +137,7 @@ export async function credentialsDelete(client: Partial<Client>) {
     method: "DELETE",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
   });
-  await throwErrorIfNeeded(response);
+  await throwErrorIfNeeded(response, () => {
+    resetCachedToken();
+  });
 }

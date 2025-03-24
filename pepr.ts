@@ -9,7 +9,10 @@ import cfg from "./package.json";
 
 import { Component, setupLogger } from "./src/pepr/logger";
 import { operator } from "./src/pepr/operator";
-import { setupAuthserviceSecret } from "./src/pepr/operator/controllers/keycloak/authservice/config";
+import {
+  setupAuthserviceSecret,
+  setupKeycloakClientSecret,
+} from "./src/pepr/operator/controllers/keycloak/authservice/config";
 import { registerCRDs } from "./src/pepr/operator/crd/register";
 import { patches } from "./src/pepr/patches";
 import { policies, startExemptionWatch } from "./src/pepr/policies";
@@ -23,6 +26,7 @@ const log = setupLogger(Component.STARTUP);
   // KFC watch for exemptions and update in-memory map
   await startExemptionWatch();
   await setupAuthserviceSecret();
+  await setupKeycloakClientSecret();
   new PeprModule(cfg, [
     // UDS Core Operator
     operator,

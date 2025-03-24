@@ -20,9 +20,13 @@ export interface RestResponse {
   data: unknown;
 }
 
-export async function throwErrorIfNeeded(response: RestResponse) {
+export async function throwErrorIfNeeded(response: RestResponse, onError?: (error: Error) => void) {
   if (!response.ok) {
     const { status, statusText, data } = response;
-    throw new Error(`${status}, ${statusText}, ${data ? JSON.stringify(data) : ""}`);
+    const err = new Error(`${status}, ${statusText}, ${data ? JSON.stringify(data) : ""}`);
+    if (onError) {
+      onError(err);
+    }
+    throw err;
   }
 }
