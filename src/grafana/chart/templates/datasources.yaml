@@ -22,3 +22,11 @@ data:
       name: Loki
       type: loki
       url: http://loki-gateway.loki.svc.cluster.local:80
+    - access: proxy
+      editable: true
+      name: Alertmanager
+      type: alertmanager
+      jsonData:
+        implementation: prometheus
+        handleGrafanaManagedAlerts: true
+      url: http://kube-prometheus-stack-alertmanager.monitoring.svc.cluster.local:9093
