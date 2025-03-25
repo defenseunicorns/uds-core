@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2025 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -7,109 +7,7 @@ import { Direction, Gateway, RemoteGenerated, UDSPackage } from "../../crd";
 import { Action } from "../../crd/generated/istio/authorizationpolicy-v1beta1";
 import { generateAuthorizationPolicies } from "./authorizationPolicies";
 
-describe("generateAuthorizationPolicies", () => {
-  test("should generate correct policies for Neuvector", async () => {
-    const pkg: UDSPackage = {
-      metadata: { name: "neuvector", namespace: "neuvector", generation: 1 },
-      spec: {
-        network: {
-          expose: [
-            {
-              service: "neuvector-service-webui",
-              selector: { app: "neuvector-manager-pod" },
-              gateway: Gateway.Admin,
-              host: "neuvector",
-              port: 8443,
-            },
-          ],
-          allow: [
-            // IntraNamespace rules with no port info are skipped.
-            { direction: Direction.Ingress, remoteGenerated: RemoteGenerated.IntraNamespace },
-            { direction: Direction.Egress, remoteGenerated: RemoteGenerated.IntraNamespace },
-            // This allow rule has a selector and a port.
-            {
-              direction: Direction.Ingress,
-              remoteGenerated: RemoteGenerated.Anywhere,
-              selector: { app: "neuvector-controller-pod" },
-              port: 30443,
-              description: "Webhook",
-            },
-          ],
-        },
-      },
-    };
-
-    const policies = await generateAuthorizationPolicies(pkg);
-    expect(policies.length).toBe(2);
-
-    // Workload policy from the allow rule.
-    const controllerPolicy = policies.find(
-      p => p.metadata?.name === "protect-neuvector-neuvector-controller",
-    );
-    expect(controllerPolicy).toBeDefined();
-    expect(controllerPolicy?.spec?.selector?.matchLabels).toEqual({
-      app: "neuvector-controller-pod",
-    });
-    expect(controllerPolicy?.spec?.action).toBe(Action.Deny);
-    expect(controllerPolicy?.spec?.rules).toEqual(
-      expect.arrayContaining([
-        {
-          from: [{ source: { notNamespaces: ["neuvector"] } }],
-          to: [{ operation: { notPorts: ["30443"] } }],
-        },
-      ]),
-    );
-
-    // Workload policy from the expose rule.
-    const managerPolicy = policies.find(
-      p => p.metadata?.name === "protect-neuvector-neuvector-manager",
-    );
-    expect(managerPolicy).toBeDefined();
-    expect(managerPolicy?.spec?.selector?.matchLabels).toEqual({ app: "neuvector-manager-pod" });
-    expect(managerPolicy?.spec?.action).toBe(Action.Deny);
-    expect(managerPolicy?.spec?.rules).toEqual(
-      expect.arrayContaining([
-        {
-          from: [{ source: { namespaces: ["istio-admin-gateway"] } }],
-          to: [{ operation: { notPorts: ["8443"] } }],
-        },
-      ]),
-    );
-  });
-
-  test("should generate a namespace policy when no selectors are provided", async () => {
-    const pkg: UDSPackage = {
-      metadata: { name: "metrics-server", namespace: "metrics-server", generation: 1 },
-      spec: {
-        network: {
-          allow: [
-            {
-              direction: Direction.Egress,
-              // No selector provided: this rule will go into the namespace policy.
-              port: 10250,
-              remoteGenerated: RemoteGenerated.Anywhere,
-            },
-          ],
-        },
-      },
-    };
-
-    const policies = await generateAuthorizationPolicies(pkg);
-    expect(policies.length).toBe(1);
-    const nsPolicy = policies[0];
-    expect(nsPolicy.metadata?.name).toBe("protect-metrics-server-ns");
-    expect(nsPolicy.metadata?.namespace).toBe("metrics-server");
-    expect(nsPolicy.spec?.action).toBe(Action.Deny);
-    expect(nsPolicy.spec?.rules).toEqual(
-      expect.arrayContaining([
-        {
-          from: [{ source: { notNamespaces: ["metrics-server"] } }],
-          to: [{ operation: { notPorts: ["10250"] } }],
-        },
-      ]),
-    );
-  });
-
+describe("generateAuthorizationPolicies logic tests", () => {
   test("should merge multiple allow rules with the same selector", async () => {
     const pkg: UDSPackage = {
       metadata: { name: "myapp", namespace: "my-namespace", generation: 1 },
@@ -137,11 +35,12 @@ describe("generateAuthorizationPolicies", () => {
     expect(policies.length).toBe(1);
     const policy = policies[0];
     expect(policy.metadata?.name).toBe("protect-myapp-my-app");
+    expect(policy.spec?.action).toBe(Action.Allow);
     expect(policy.spec?.rules).toEqual(
       expect.arrayContaining([
         {
           from: [{ source: { notNamespaces: ["my-namespace"] } }],
-          to: [{ operation: { notPorts: expect.arrayContaining(["80", "443"]) } }],
+          to: [{ operation: { ports: expect.arrayContaining(["80", "443"]) } }],
         },
       ]),
     );
@@ -168,11 +67,12 @@ describe("generateAuthorizationPolicies", () => {
     const policies = await generateAuthorizationPolicies(pkg);
     expect(policies.length).toBe(1);
     const policy = policies[0];
+    expect(policy.spec?.action).toBe(Action.Allow);
     expect(policy.spec?.rules).toEqual(
       expect.arrayContaining([
         {
           from: [{ source: { principals: ["cluster.local/ns/authservice/sa/custom-sa"] } }],
-          to: [{ operation: { notPorts: ["10003"] } }],
+          to: [{ operation: { ports: ["10003"] } }],
         },
       ]),
     );
@@ -204,16 +104,17 @@ describe("generateAuthorizationPolicies", () => {
     const policies = await generateAuthorizationPolicies(pkg);
     expect(policies.length).toBe(1);
     const policy = policies[0];
+    expect(policy.spec?.action).toBe(Action.Allow);
     expect(policy.spec?.rules?.length).toBe(2);
     expect(policy.spec?.rules).toEqual(
       expect.arrayContaining([
         {
           from: [{ source: { namespaces: ["other-namespace"] } }],
-          to: [{ operation: { notPorts: ["3000"] } }],
+          to: [{ operation: { ports: ["3000"] } }],
         },
         {
           from: [{ source: { notNamespaces: ["test-namespace"] } }],
-          to: [{ operation: { notPorts: ["4000"] } }],
+          to: [{ operation: { ports: ["4000"] } }],
         },
       ]),
     );
@@ -239,17 +140,18 @@ describe("generateAuthorizationPolicies", () => {
     const policies = await generateAuthorizationPolicies(pkg);
     expect(policies.length).toBe(1);
     const policy = policies[0];
+    expect(policy.spec?.action).toBe(Action.Allow);
     expect(policy.spec?.rules).toEqual(
       expect.arrayContaining([
         {
           from: [{ source: { notNamespaces: ["multi-ns"] } }],
-          to: [{ operation: { notPorts: expect.arrayContaining(["8080", "9090"]) } }],
+          to: [{ operation: { ports: expect.arrayContaining(["8080", "9090"]) } }],
         },
       ]),
     );
   });
 
-  test("should skip rules with no port information", async () => {
+  test("should generate a policy for rules with no port information", async () => {
     const pkg: UDSPackage = {
       metadata: { name: "noports", namespace: "noports-ns", generation: 1 },
       spec: {
@@ -267,7 +169,17 @@ describe("generateAuthorizationPolicies", () => {
     };
 
     const policies = await generateAuthorizationPolicies(pkg);
-    expect(policies.length).toBe(0);
+    expect(policies.length).toBe(1);
+    const policy = policies[0];
+    expect(policy.spec?.action).toBe(Action.Allow);
+    // Rule should only have a "from" clause.
+    expect(policy.spec?.rules).toEqual(
+      expect.arrayContaining([
+        {
+          from: [{ source: { notNamespaces: ["noports-ns"] } }],
+        },
+      ]),
+    );
   });
 
   test("should derive policy name using app.kubernetes.io/name if app label is missing", async () => {
@@ -287,10 +199,9 @@ describe("generateAuthorizationPolicies", () => {
     };
 
     const policies = await generateAuthorizationPolicies(pkg);
-    // With no "app" label, derivePolicyName should use the "app.kubernetes.io/name" value.
-    // "example-pod" becomes "example-workload"
     expect(policies.length).toBe(1);
     expect(policies[0].metadata?.name).toBe("protect-testpkg-example-workload");
+    expect(policies[0].spec?.action).toBe(Action.Allow);
   });
 
   test("should default source to package namespace when no remote info is provided", async () => {
@@ -303,7 +214,6 @@ describe("generateAuthorizationPolicies", () => {
               direction: Direction.Ingress,
               selector: { app: "default-app" },
               port: 80,
-              // No remoteNamespace, remoteGenerated, or remoteServiceAccount provided.
             },
           ],
         },
@@ -312,15 +222,15 @@ describe("generateAuthorizationPolicies", () => {
 
     const policies = await generateAuthorizationPolicies(pkg);
     expect(policies.length).toBe(1);
-    // Expect the rule's source to be { namespaces: ["defaultns"] } due to the final else branch.
     expect(policies[0].spec?.rules).toEqual(
       expect.arrayContaining([
         {
           from: [{ source: { namespaces: ["defaultns"] } }],
-          to: [{ operation: { notPorts: ["80"] } }],
+          to: [{ operation: { ports: ["80"] } }],
         },
       ]),
     );
+    expect(policies[0].spec?.action).toBe(Action.Allow);
   });
 
   test("should use package namespace as source when remoteNamespace is empty", async () => {
@@ -346,68 +256,14 @@ describe("generateAuthorizationPolicies", () => {
       expect.arrayContaining([
         {
           from: [{ source: { namespaces: ["emptyns"] } }],
-          to: [{ operation: { notPorts: ["8081"] } }],
+          to: [{ operation: { ports: ["8081"] } }],
         },
       ]),
     );
+    expect(policies[0].spec?.action).toBe(Action.Allow);
   });
 
-  test("should derive policy name using app.kubernetes.io/name when app is missing", async () => {
-    // In this package, the selector does not contain "app" but does contain "app.kubernetes.io/name".
-    // The expected derived name is "example-workload" so the policy name should be "protect-testpkg-example-workload".
-    const pkg: UDSPackage = {
-      metadata: { name: "testpkg", namespace: "testns", generation: 1 },
-      spec: {
-        network: {
-          allow: [
-            {
-              direction: Direction.Ingress,
-              selector: { "app.kubernetes.io/name": "example-pod" },
-              port: 1234,
-            },
-          ],
-        },
-      },
-    };
-
-    const policies = await generateAuthorizationPolicies(pkg);
-    expect(policies.length).toBe(1);
-    expect(policies[0].metadata?.name).toBe("protect-testpkg-example-workload");
-  });
-
-  test("should default source to package namespace for allow rules when no remote info is provided", async () => {
-    // In this allow rule, no remote information is provided.
-    // The source should default to the package's namespace.
-    const pkg: UDSPackage = {
-      metadata: { name: "defaultsrc", namespace: "defaultns", generation: 1 },
-      spec: {
-        network: {
-          allow: [
-            {
-              direction: Direction.Ingress,
-              selector: { app: "default-app" },
-              port: 80,
-              // No remoteNamespace, remoteGenerated, or remoteServiceAccount provided.
-            },
-          ],
-        },
-      },
-    };
-
-    const policies = await generateAuthorizationPolicies(pkg);
-    expect(policies.length).toBe(1);
-    expect(policies[0].spec?.rules).toEqual(
-      expect.arrayContaining([
-        {
-          from: [{ source: { namespaces: ["defaultns"] } }],
-          to: [{ operation: { notPorts: ["80"] } }],
-        },
-      ]),
-    );
-  });
-
-  test("should use package namespace as source for expose rules when gateway is not Admin", async () => {
-    // For expose rules, if the gateway is not Admin, the source should default to the package namespace.
+  test("should default source to package namespace for expose rules when gateway is not Admin", async () => {
     const pkg: UDSPackage = {
       metadata: { name: "exposeTest", namespace: "exposeNs", generation: 1 },
       spec: {
@@ -416,7 +272,7 @@ describe("generateAuthorizationPolicies", () => {
             {
               service: "test-service",
               selector: { foo: "bar" },
-              gateway: Gateway.Tenant, // Not Admin, so falls to else branch.
+              gateway: Gateway.Tenant,
               host: "test.example.com",
               port: 8080,
             },
@@ -427,22 +283,19 @@ describe("generateAuthorizationPolicies", () => {
 
     const policies = await generateAuthorizationPolicies(pkg);
     expect(policies.length).toBe(1);
-    // Since selector { foo: "bar" } does not have "app" or "app.kubernetes.io/name",
-    // the derivePolicyName fallback returns "workload" and the policy name becomes "protect-exposeTest-workload".
     expect(policies[0].metadata?.name).toBe("protect-exposeTest-workload");
     expect(policies[0].spec?.rules).toEqual(
       expect.arrayContaining([
         {
           from: [{ source: { namespaces: ["exposeNs"] } }],
-          to: [{ operation: { notPorts: ["8080"] } }],
+          to: [{ operation: { ports: ["8080"] } }],
         },
       ]),
     );
+    expect(policies[0].spec?.action).toBe(Action.Allow);
   });
 
   test("should merge multiple expose rules with the same selector and gateway", async () => {
-    // Two expose rules with the same selector and with gateway Admin (so they share the same source).
-    // Their ports should be merged.
     const pkg: UDSPackage = {
       metadata: { name: "exposeMerge", namespace: "expose-ns", generation: 1 },
       spec: {
@@ -468,35 +321,32 @@ describe("generateAuthorizationPolicies", () => {
     };
 
     const policies = await generateAuthorizationPolicies(pkg);
-    // Since both expose rules have the same selector and the same gateway (Admin),
-    // they should be merged into one workload policy.
     expect(policies.length).toBe(1);
     const policy = policies[0];
-    // derivePolicyName({ app: "merge-app" }) returns "merge-app"
     expect(policy.metadata?.name).toBe("protect-exposeMerge-merge-app");
-    // The source should be forced to "istio-admin-gateway" for expose rules when gateway is Admin.
     expect(policy.spec?.rules).toEqual(
       expect.arrayContaining([
         {
           from: [{ source: { namespaces: ["istio-admin-gateway"] } }],
-          to: [{ operation: { notPorts: expect.arrayContaining(["8000", "9000"]) } }],
+          to: [{ operation: { ports: expect.arrayContaining(["8000", "9000"]) } }],
         },
       ]),
     );
+    expect(policy.spec?.action).toBe(Action.Allow);
   });
+});
 
-  test("should generate allow rule with remoteGenerated IntraNamespace using package namespace", async () => {
-    // An allow rule with remoteGenerated IntraNamespace and a port should yield source { namespaces: [pkgNamespace] }
+describe("generateAuthorizationPolicies UDS Core Packages", () => {
+  test("should generate correct AuthorizationPolicy for Loki", async () => {
     const pkg: UDSPackage = {
-      metadata: { name: "intraapp", namespace: "intra-ns", generation: 1 },
+      metadata: { name: "loki", namespace: "loki", generation: 1 },
       spec: {
         network: {
           allow: [
             {
               direction: Direction.Ingress,
               remoteGenerated: RemoteGenerated.IntraNamespace,
-              selector: { app: "intra-app" },
-              port: 7070,
+              // No port provided.
             },
           ],
         },
@@ -506,12 +356,487 @@ describe("generateAuthorizationPolicies", () => {
     const policies = await generateAuthorizationPolicies(pkg);
     expect(policies.length).toBe(1);
     const policy = policies[0];
-    // Expect the source to be the package namespace
+    expect(policy.metadata?.name).toBe("protect-loki-ns");
+    expect(policy.metadata?.namespace).toBe("loki");
+    expect(policy.spec?.action).toBe(Action.Allow);
+    // The rule should only have a "from" clause (no port restrictions)
     expect(policy.spec?.rules).toEqual(
       expect.arrayContaining([
         {
-          from: [{ source: { namespaces: ["intra-ns"] } }],
-          to: [{ operation: { notPorts: ["7070"] } }],
+          from: [{ source: { namespaces: ["loki"] } }],
+        },
+      ]),
+    );
+  });
+
+  test("should generate correct policies for Neuvector", async () => {
+    // Package with both an expose rule and allow rules.
+    const pkg: UDSPackage = {
+      metadata: { name: "neuvector", namespace: "neuvector", generation: 1 },
+      spec: {
+        network: {
+          expose: [
+            {
+              service: "neuvector-service-webui",
+              selector: { app: "neuvector-manager-pod" },
+              gateway: Gateway.Admin,
+              host: "neuvector",
+              port: 8443,
+            },
+          ],
+          allow: [
+            { direction: Direction.Ingress, remoteGenerated: RemoteGenerated.IntraNamespace },
+            { direction: Direction.Egress, remoteGenerated: RemoteGenerated.IntraNamespace },
+            {
+              direction: Direction.Ingress,
+              remoteGenerated: RemoteGenerated.Anywhere,
+              selector: { app: "neuvector-controller-pod" },
+              port: 30443,
+              description: "Webhook",
+            },
+          ],
+        },
+      },
+    };
+
+    const policies = await generateAuthorizationPolicies(pkg);
+    // Expect three policies: two workload policies and one namespace policy.
+    expect(policies.length).toBe(3);
+
+    // Workload policy from the allow rule with selector.
+    const controllerPolicy = policies.find(
+      p => p.metadata?.name === "protect-neuvector-neuvector-controller",
+    );
+    expect(controllerPolicy).toBeDefined();
+    expect(controllerPolicy?.spec?.selector?.matchLabels).toEqual({
+      app: "neuvector-controller-pod",
+    });
+    expect(controllerPolicy?.spec?.action).toBe(Action.Allow);
+    expect(controllerPolicy?.spec?.rules).toEqual(
+      expect.arrayContaining([
+        {
+          from: [{ source: { notNamespaces: ["neuvector"] } }],
+          to: [{ operation: { ports: ["30443"] } }],
+        },
+      ]),
+    );
+
+    // Workload policy from the expose rule.
+    const managerPolicy = policies.find(
+      p => p.metadata?.name === "protect-neuvector-neuvector-manager",
+    );
+    expect(managerPolicy).toBeDefined();
+    expect(managerPolicy?.spec?.selector?.matchLabels).toEqual({ app: "neuvector-manager-pod" });
+    expect(managerPolicy?.spec?.action).toBe(Action.Allow);
+    expect(managerPolicy?.spec?.rules).toEqual(
+      expect.arrayContaining([
+        {
+          from: [{ source: { namespaces: ["istio-admin-gateway"] } }],
+          to: [{ operation: { ports: ["8443"] } }],
+        },
+      ]),
+    );
+
+    // Namespace policy from the two intra-namespace rules.
+    const nsPolicy = policies.find(p => p.metadata?.name === "protect-neuvector-ns");
+    expect(nsPolicy).toBeDefined();
+    expect(nsPolicy?.metadata?.namespace).toBe("neuvector");
+    expect(nsPolicy?.spec?.action).toBe(Action.Allow);
+    // Rule should have only a "from" clause.
+    expect(nsPolicy?.spec?.rules).toEqual(
+      expect.arrayContaining([
+        {
+          from: [{ source: { namespaces: ["neuvector"] } }],
+        },
+      ]),
+    );
+  });
+
+  test("should generate correct AuthorizationPolicies for metrics-server", async () => {
+    const pkg: UDSPackage = {
+      metadata: { name: "metrics-server", namespace: "metrics-server", generation: 1 },
+      spec: {
+        network: {
+          allow: [
+            {
+              direction: Direction.Egress,
+              remoteGenerated: RemoteGenerated.Anywhere,
+              port: 10250,
+            },
+          ],
+        },
+      },
+    };
+
+    const policies = await generateAuthorizationPolicies(pkg);
+    // Expect one policy generated (namespace policy)
+    expect(policies.length).toBe(1);
+    const nsPolicy = policies[0];
+    expect(nsPolicy.metadata?.name).toBe("protect-metrics-server-ns");
+    expect(nsPolicy.metadata?.namespace).toBe("metrics-server");
+    expect(nsPolicy.spec?.action).toBe(Action.Allow);
+    expect(nsPolicy.spec?.rules).toEqual(
+      expect.arrayContaining([
+        {
+          from: [{ source: { notNamespaces: ["metrics-server"] } }],
+          to: [{ operation: { ports: ["10250"] } }],
+        },
+      ]),
+    );
+  });
+
+  test("should generate correct AuthorizationPolicies for vector", async () => {
+    const pkg: UDSPackage = {
+      metadata: { name: "vector", namespace: "vector", generation: 1 },
+      spec: {
+        network: {
+          allow: [
+            {
+              direction: Direction.Ingress,
+              selector: { "app.kubernetes.io/name": "vector" },
+              remoteNamespace: "monitoring",
+              remoteSelector: { "app.kubernetes.io/name": "prometheus" },
+              port: 9090,
+              description: "Prometheus Metrics",
+            },
+          ],
+        },
+      },
+    };
+
+    const policies = await generateAuthorizationPolicies(pkg);
+    expect(policies.length).toBe(1);
+    const policy = policies[0];
+    expect(policy.metadata?.name).toBe("protect-vector-vector-workload");
+    expect(policy.spec?.action).toBe(Action.Allow);
+    expect(policy.spec?.selector?.matchLabels).toEqual({ "app.kubernetes.io/name": "vector" });
+    expect(policy.spec?.rules).toEqual(
+      expect.arrayContaining([
+        {
+          from: [{ source: { namespaces: ["monitoring"] } }],
+          to: [{ operation: { ports: ["9090"] } }],
+        },
+      ]),
+    );
+  });
+
+  test("should generate correct AuthorizationPolicies for velero", async () => {
+    const pkg: UDSPackage = {
+      metadata: { name: "velero", namespace: "velero", generation: 1 },
+      spec: {
+        network: {
+          allow: [
+            {
+              direction: Direction.Ingress,
+              selector: { "app.kubernetes.io/name": "velero" },
+              remoteNamespace: "monitoring",
+              remoteSelector: { "app.kubernetes.io/name": "prometheus" },
+              port: 8085,
+              description: "Prometheus Metrics",
+            },
+          ],
+        },
+      },
+    };
+
+    const policies = await generateAuthorizationPolicies(pkg);
+    expect(policies.length).toBe(1);
+    const policy = policies[0];
+    expect(policy.metadata?.name).toBe("protect-velero-velero-workload");
+    expect(policy.spec?.action).toBe(Action.Allow);
+    expect(policy.spec?.selector?.matchLabels).toEqual({ "app.kubernetes.io/name": "velero" });
+    expect(policy.spec?.rules).toEqual(
+      expect.arrayContaining([
+        {
+          from: [{ source: { namespaces: ["monitoring"] } }],
+          to: [{ operation: { ports: ["8085"] } }],
+        },
+      ]),
+    );
+  });
+
+  test("should generate correct AuthorizationPolicy for authservice", async () => {
+    const pkg: UDSPackage = {
+      metadata: { name: "authservice", namespace: "authservice", generation: 1 },
+      spec: {
+        network: {
+          allow: [
+            { direction: Direction.Ingress, remoteGenerated: RemoteGenerated.IntraNamespace },
+            { direction: Direction.Egress, remoteGenerated: RemoteGenerated.IntraNamespace },
+            {
+              direction: Direction.Ingress,
+              selector: { "app.kubernetes.io/name": "authservice" },
+              remoteNamespace: "",
+              port: 10003,
+              description: "Protected Apps",
+            },
+          ],
+        },
+      },
+    };
+
+    const policies = await generateAuthorizationPolicies(pkg);
+    expect(policies.length).toBe(2);
+
+    const nsPolicy = policies.find(p => p.metadata?.name === "protect-authservice-ns");
+    expect(nsPolicy).toBeDefined();
+    expect(nsPolicy?.metadata?.namespace).toBe("authservice");
+    expect(nsPolicy?.spec?.action).toBe(Action.Allow);
+    expect(nsPolicy?.spec?.rules).toEqual(
+      expect.arrayContaining([
+        {
+          from: [{ source: { namespaces: ["authservice"] } }],
+        },
+      ]),
+    );
+
+    const workloadPolicy = policies.find(
+      p => p.metadata?.name === "protect-authservice-authservice-workload",
+    );
+    expect(workloadPolicy).toBeDefined();
+    expect(workloadPolicy?.spec?.selector?.matchLabels).toEqual({
+      "app.kubernetes.io/name": "authservice",
+    });
+    expect(workloadPolicy?.spec?.action).toBe(Action.Allow);
+    expect(workloadPolicy?.spec?.rules).toEqual(
+      expect.arrayContaining([
+        {
+          from: [{ source: { namespaces: ["authservice"] } }],
+          to: [{ operation: { ports: ["10003"] } }],
+        },
+      ]),
+    );
+  });
+
+  test("should generate correct AuthorizationPolicies for prometheus-stack", async () => {
+    const pkg: UDSPackage = {
+      metadata: { name: "prometheus-stack", namespace: "monitoring", generation: 1 },
+      spec: {
+        network: {
+          allow: [
+            { direction: Direction.Ingress, remoteGenerated: RemoteGenerated.IntraNamespace },
+            {
+              direction: Direction.Ingress,
+              selector: { "app.kubernetes.io/name": "prometheus" },
+              remoteNamespace: "grafana",
+              remoteSelector: { "app.kubernetes.io/name": "grafana" },
+              port: 9090,
+            },
+            {
+              direction: Direction.Ingress,
+              selector: { app: "kube-prometheus-stack-operator" },
+              remoteGenerated: RemoteGenerated.Anywhere,
+              port: 10250,
+              description: "Webhook",
+            },
+          ],
+        },
+      },
+    };
+
+    const policies = await generateAuthorizationPolicies(pkg);
+    // Expect three policies: one namespace policy and two workload policies.
+    expect(policies.length).toBe(3);
+
+    const nsPolicy = policies.find(p => p.metadata?.name === "protect-prometheus-stack-ns");
+    expect(nsPolicy).toBeDefined();
+    expect(nsPolicy?.metadata?.namespace).toBe("monitoring");
+    expect(nsPolicy?.spec?.action).toBe(Action.Allow);
+    expect(nsPolicy?.spec?.rules).toEqual(
+      expect.arrayContaining([
+        {
+          from: [{ source: { namespaces: ["monitoring"] } }],
+        },
+      ]),
+    );
+
+    const promPolicy = policies.find(
+      p => p.metadata?.name === "protect-prometheus-stack-prometheus-workload",
+    );
+    expect(promPolicy).toBeDefined();
+    expect(promPolicy?.spec?.selector?.matchLabels).toEqual({
+      "app.kubernetes.io/name": "prometheus",
+    });
+    expect(promPolicy?.spec?.action).toBe(Action.Allow);
+    expect(promPolicy?.spec?.rules).toEqual(
+      expect.arrayContaining([
+        {
+          from: [{ source: { namespaces: ["grafana"] } }],
+          to: [{ operation: { ports: ["9090"] } }],
+        },
+      ]),
+    );
+
+    const operatorPolicy = policies.find(
+      p => p.metadata?.name === "protect-prometheus-stack-kube-prometheus-stack-operator",
+    );
+    expect(operatorPolicy).toBeDefined();
+    expect(operatorPolicy?.spec?.selector?.matchLabels).toEqual({
+      app: "kube-prometheus-stack-operator",
+    });
+    expect(operatorPolicy?.spec?.action).toBe(Action.Allow);
+    expect(operatorPolicy?.spec?.rules).toEqual(
+      expect.arrayContaining([
+        {
+          from: [{ source: { notNamespaces: ["monitoring"] } }],
+          to: [{ operation: { ports: ["10250"] } }],
+        },
+      ]),
+    );
+  });
+
+  test("should generate correct AuthorizationPolicies for Grafana including monitor block", async () => {
+    const pkg: UDSPackage = {
+      metadata: { name: "grafana", namespace: "grafana", generation: 1 },
+      spec: {
+        monitor: [
+          {
+            description: "Metrics",
+            podSelector: { "app.kubernetes.io/name": "grafana" },
+            portName: "service",
+            selector: { "app.kubernetes.io/name": "grafana" },
+            targetPort: 3000,
+          },
+        ],
+        network: {
+          expose: [
+            {
+              service: "grafana",
+              selector: { "app.kubernetes.io/name": "grafana" },
+              host: "grafana",
+              gateway: Gateway.Admin,
+              port: 80,
+              targetPort: 3000,
+            },
+          ],
+          allow: [
+            {
+              direction: Direction.Ingress,
+              remoteGenerated: RemoteGenerated.IntraNamespace,
+              ports: [3000],
+            },
+          ],
+        },
+      },
+    };
+
+    const policies = await generateAuthorizationPolicies(pkg);
+    // Expect three policies: one workload policy (from expose), one namespace-wide policy (from allow), and one monitor policy (from monitor block)
+    expect(policies.length).toBe(3);
+
+    // Verify the workload policy from expose rules.
+    const exposePolicy = policies.find(
+      p => p.metadata?.name === "protect-grafana-grafana-workload",
+    );
+    expect(exposePolicy).toBeDefined();
+    expect(exposePolicy?.spec?.selector?.matchLabels).toEqual({
+      "app.kubernetes.io/name": "grafana",
+    });
+    expect(exposePolicy?.spec?.action).toBe(Action.Allow);
+    expect(exposePolicy?.spec?.rules).toEqual(
+      expect.arrayContaining([
+        {
+          from: [{ source: { namespaces: ["istio-admin-gateway"] } }],
+          to: [{ operation: { ports: ["3000"] } }],
+        },
+      ]),
+    );
+
+    // Verify the namespace-wide policy from allow rules.
+    const nsPolicy = policies.find(p => p.metadata?.name === "protect-grafana-ns");
+    expect(nsPolicy).toBeDefined();
+    expect(nsPolicy?.metadata?.namespace).toBe("grafana");
+    expect(nsPolicy?.spec?.action).toBe(Action.Allow);
+    expect(nsPolicy?.spec?.rules).toEqual(
+      expect.arrayContaining([
+        {
+          from: [{ source: { namespaces: ["grafana"] } }],
+          to: [{ operation: { ports: ["3000"] } }],
+        },
+      ]),
+    );
+
+    const monitorPolicy = policies.find(
+      p => p.metadata?.name === "protect-grafana-monitor-grafana-workload",
+    );
+    expect(monitorPolicy).toBeDefined();
+    expect(monitorPolicy?.metadata?.namespace).toBe("grafana");
+    expect(monitorPolicy?.spec?.action).toBe(Action.Allow);
+    expect(monitorPolicy?.spec?.selector?.matchLabels).toEqual({
+      "app.kubernetes.io/name": "grafana",
+    });
+    expect(monitorPolicy?.spec?.rules).toEqual(
+      expect.arrayContaining([
+        {
+          from: [{ source: { namespaces: ["monitoring"] } }],
+          to: [{ operation: { ports: ["3000"] } }],
+        },
+      ]),
+    );
+  });
+
+  test("should generate correct AuthorizationPolicies for keycloak", async () => {
+    const pkg: UDSPackage = {
+      metadata: { name: "keycloak", namespace: "keycloak", generation: 1 },
+      spec: {
+        network: {
+          allow: [
+            {
+              direction: Direction.Ingress,
+              remoteGenerated: RemoteGenerated.IntraNamespace,
+              ports: [7800, 57800],
+            },
+            {
+              direction: Direction.Ingress,
+              selector: { "app.kubernetes.io/name": "keycloak" },
+              remoteNamespace: "monitoring",
+              port: 9000,
+            },
+            {
+              direction: Direction.Ingress,
+              selector: { "app.kubernetes.io/name": "keycloak" },
+              remoteNamespace: "*",
+              port: 8080,
+            },
+          ],
+        },
+      },
+    };
+
+    const policies = await generateAuthorizationPolicies(pkg);
+    // Expect two policies: one namespace policy and one workload policy.
+    expect(policies.length).toBe(2);
+
+    const nsPolicy = policies.find(p => p.metadata?.name === "protect-keycloak-ns");
+    expect(nsPolicy).toBeDefined();
+    expect(nsPolicy?.metadata?.namespace).toBe("keycloak");
+    expect(nsPolicy?.spec?.action).toBe(Action.Allow);
+    expect(nsPolicy?.spec?.rules).toEqual(
+      expect.arrayContaining([
+        {
+          from: [{ source: { namespaces: ["keycloak"] } }],
+          to: [{ operation: { ports: expect.arrayContaining(["7800", "57800"]) } }],
+        },
+      ]),
+    );
+
+    const workloadPolicy = policies.find(
+      p => p.metadata?.name === "protect-keycloak-keycloak-workload",
+    );
+    expect(workloadPolicy).toBeDefined();
+    expect(workloadPolicy?.spec?.selector?.matchLabels).toEqual({
+      "app.kubernetes.io/name": "keycloak",
+    });
+    expect(workloadPolicy?.spec?.action).toBe(Action.Allow);
+    expect(workloadPolicy?.spec?.rules).toEqual(
+      expect.arrayContaining([
+        {
+          from: [{ source: { namespaces: ["monitoring"] } }],
+          to: [{ operation: { ports: ["9000"] } }],
+        },
+        {
+          from: [{ source: { notNamespaces: ["keycloak"] } }],
+          to: [{ operation: { ports: ["8080"] } }],
         },
       ]),
     );
