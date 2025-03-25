@@ -111,10 +111,10 @@ tasks:
     actions:
       - task: rke2-nodes-ready
       - cmd: |
-          # wait for at least 3 nodes
+          # wait for nodes to be ready
           while true; do
-            if [ $(uds zarf tools kubectl get nodes -o jsonpath='{range .items[*]}{.status.conditions[-1].type}={.status.conditions[-1].status}{"\n"}{end}' | egrep -i '^ready.*true' | wc -l) -lt 3 ]; then
-              echo "Waiting for at least 3 nodes to be ready...";
+            if [ $(uds zarf tools kubectl get nodes -o jsonpath='{range .items[*]}{.status.conditions[-1].type}={.status.conditions[-1].status}{"\n"}{end}' | egrep -i '^ready.*true' | wc -l) -lt 4 ]; then
+              echo "Waiting for all cluster nodes to be ready...";
               sleep 5;
             else
               break
@@ -122,6 +122,12 @@ tasks:
           done
           # wait for cluster components
           while true; do
+            if [ $(uds zarf tools kubectl get po -n kube-system -l batch.kubernetes.io/controller-uid --no-headers | egrep -v Completed) | wc -l) -gt 0 ]; then
+               echo "Waiting for Helm Controller to install cluster components..."
+               sleep 5;
+            fi
+          done
+          while true; do  
             if [ $(uds zarf tools kubectl get po,job -A --no-headers=true | egrep -v 'helm-install|Running|Complete' | wc -l) -gt 0 ]; then
               echo "Waiting for cluster components to be ready...";
               sleep 5;
@@ -130,7 +136,6 @@ tasks:
               break
             fi
           done
-          #uds zarf tools kubectl apply -f ./metallb.yaml
       - task: util:rke2-coredns-setup
       - task: util:rke2-allow-prom-kube-dns
         dir: .github/test-infra/aws/rke2/
