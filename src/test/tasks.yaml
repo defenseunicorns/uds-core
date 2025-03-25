@@ -152,7 +152,7 @@ tasks:
         cmd: |
           set -e
           AMBIENT_LABEL=$(uds zarf tools kubectl get namespace podinfo -o jsonpath='{.metadata.labels.istio\.io/dataplane-mode}')
-          if [ "$AMBIENT_LABEL" == "ambient" ]; then
+          if [ "$AMBIENT_LABEL" = "ambient" ]; then
             echo " Podinfo namespace has the correct ambient mode label: $AMBIENT_LABEL"
           else
             echo " Podinfo namespace does not have the correct ambient mode label. Found: $AMBIENT_LABEL"
@@ -163,7 +163,7 @@ tasks:
         cmd: |
           set -e
           CONTAINERS=$(uds zarf tools kubectl get pods -n podinfo -l app.kubernetes.io/name=podinfo -o jsonpath='{.items[0].spec.containers[*].name}')
-          if [[ "$CONTAINERS" != *"istio-proxy"* ]]; then
+          if [ -z "$(echo "$CONTAINERS" | grep "istio-proxy")" ]; then
             echo " Podinfo pods don't have istio-proxy sidecar (as expected with ambient mode)"
           else
             echo " Found istio-proxy sidecar in podinfo pods, which is unexpected with ambient mode"
