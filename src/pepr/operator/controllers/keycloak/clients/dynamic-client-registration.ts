@@ -11,6 +11,18 @@ import { baseUrl, log, throwErrorIfNeeded } from "./common";
 
 const dynamicUrl = `${baseUrl}/realms/uds/clients-registrations/default`;
 
+/**
+ * This Client Attribute is checked by the UDSClientPolicyPermissionsExecutor from the UDS Identity Config and ensures
+ * the UDS Operator can access the Client
+ */
+const client_policy_required_attribute_name = "created-by";
+
+/**
+ * This Client Attribute is checked by the UDSClientPolicyPermissionsExecutor from the UDS Identity Config and ensures
+ * the UDS Operator can access the Client
+ */
+const client_policy_required_attribute_value = "uds-operator";
+
 export async function dynamicCreateOrUpdate(client: Partial<Client>) {
   log.info(`dynamicCreateOrUpdate: creating/updating client ${JSON.stringify(client)}`);
   const token = Store.getItem(`sso-client-${client.clientId}`);
@@ -22,6 +34,7 @@ export async function dynamicCreateOrUpdate(client: Partial<Client>) {
 
 export async function dynamicCreate(client: Partial<Client>) {
   log.info(`dynamicCreate: creating client ${JSON.stringify(client)}`);
+  client = addRequiredAttributesToClient(client);
   const response = await fetch<Client>(dynamicUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -36,6 +49,7 @@ export async function dynamicUpdate(client: Partial<Client>) {
   log.info(`dynamicUpdate: updating client ${JSON.stringify(client)}`);
   const token = Store.getItem(`sso-client-${client.clientId}`);
   const url = `${dynamicUrl}/${encodeURIComponent(client.clientId!)}`;
+  client = addRequiredAttributesToClient(client);
   const response = await fetch<Client>(url, {
     method: "PUT",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -67,4 +81,16 @@ async function updateDynamicToken(clientId: string, token: string | undefined) {
       await Store.setItemAndWait(storeKey, token);
     }
   }, log);
+}
+
+export function addRequiredAttributesToClient(client: Partial<Client>) {
+  if (client.attributes) {
+    client.attributes[client_policy_required_attribute_name] =
+      client_policy_required_attribute_value;
+  } else {
+    client.attributes = {
+      [client_policy_required_attribute_name]: client_policy_required_attribute_value,
+    };
+  }
+  return client;
 }
