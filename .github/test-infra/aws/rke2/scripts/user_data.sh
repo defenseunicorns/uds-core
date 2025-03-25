@@ -50,6 +50,7 @@ metadata:
 spec:
   chart: aws-load-balancer-controller
   repo: https://aws.github.io/eks-charts
+  # renovate: datasource=helm depName=aws-load-balancer-controller versioning=helm registryUrl=https://aws.github.io/eks-charts
   version: 1.11.0
   targetNamespace: kube-system
   valuesContent: |-
@@ -66,6 +67,7 @@ metadata:
 spec:
   chart: longhorn
   repo: https://charts.longhorn.io
+  # renovate: datasource=helm depName=longhorn versioning=helm registryUrl=https://charts.longhorn.io 
   version: 1.8.1
   targetNamespace: kube-system
   valuesContent: |-
