@@ -14,6 +14,14 @@ export const KEYCLOAK_CLIENTS_SECRET_NAME = "keycloak-client-secrets";
 
 const log = setupLogger(Component.OPERATOR_CONFIG);
 
+/**
+ * Updates the Keycloak client secret in the provided config.
+ * If the secret does not exist or forceRotation is true, a new secret is generated.
+ * The secret is then applied to the Kubernetes cluster.
+ *
+ * @param {kind.Secret} config - The Kubernetes Secret object to update.
+ * @param {boolean} [forceRotation=false] - Whether to force rotation of the secret.
+ */
 export async function updateKeycloakClientsSecret(
   config: kind.Secret,
   forceRotation: boolean = false,

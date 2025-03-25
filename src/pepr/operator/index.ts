@@ -5,7 +5,7 @@
 
 // Common imports
 import { a, K8s } from "pepr";
-import { OnSchedule, When } from "./common";
+import { When } from "./common";
 
 // Controller imports
 import {
@@ -126,15 +126,3 @@ When(a.Secret)
   .InNamespace(KEYCLOAK_CLIENTS_SECRET_NAMESPACE)
   .WithName(KEYCLOAK_CLIENTS_SECRET_NAME)
   .Reconcile(s => updateKeycloakClientsSecret(s, false));
-
-OnSchedule({
-  name: "rotate-keycloak-client-secret",
-  every: 24 * 7,
-  unit: "hours",
-  run: async () => {
-    const secret = await K8s(a.Secret)
-      .InNamespace(KEYCLOAK_CLIENTS_SECRET_NAMESPACE)
-      .Get(KEYCLOAK_CLIENTS_SECRET_NAME);
-    await updateKeycloakClientsSecret(secret, true);
-  },
-});

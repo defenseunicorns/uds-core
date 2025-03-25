@@ -259,7 +259,6 @@ spec:
         - name: client-secrets
           secret:
             secretName: {{ include "keycloak.fullname" . }}-client-secrets
-            optional: true
         - name: providers
           {{- if .Values.persistence.providers.enabled }}
           persistentVolumeClaim:
