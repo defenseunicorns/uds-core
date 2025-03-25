@@ -206,10 +206,11 @@ const serviceMesh = {
   description: "Service Mesh configuration for the package",
   type: "object",
   properties: {
-    ambient: {
-      type: "boolean",
-      default: false,
-      description: "Enable ambient service mesh (disable sidecar injection)",
+    mode: {
+      type: "string",
+      enum: ["sidecar", "ambient"],
+      default: "sidecar",
+      description: "Set the service mesh mode for this package (namespace), defaults to sidecar",
     },
   },
 } as V1JSONSchemaProps;

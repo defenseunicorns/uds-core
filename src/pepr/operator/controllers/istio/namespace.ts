@@ -4,8 +4,11 @@
  */
 
 import { K8s, kind } from "pepr";
+import { UDSConfig } from "../../../config";
 import { Component, setupLogger } from "../../../logger";
 import { UDSPackage } from "../../crd";
+import { Mode } from "../../crd/generated/package-v1alpha1";
+import { writeEvent } from "../../reconcilers";
 
 // configure subproject logger
 const log = setupLogger(Component.OPERATOR_ISTIO);
@@ -15,8 +18,8 @@ const AMBIENT_LABEL = "istio.io/dataplane-mode";
 const ISTIO_STATE_ANNOTATION = "uds.dev/original-istio-state";
 
 export enum IstioState {
-  Sidecar = "sidecar",
-  Ambient = "ambient",
+  Sidecar = Mode.Sidecar,
+  Ambient = Mode.Ambient,
   None = "none",
 }
 
@@ -55,19 +58,47 @@ export async function enableIstio(pkg: UDSPackage) {
   let istioState = IstioState.None;
 
   // Handle labels based on ambient opt-in or sidecar default
-  if (pkg.spec?.network?.serviceMesh?.ambient) {
-    annotations[pkgKey] = "true";
-    if (originalAmbientLabel !== IstioState.Ambient) {
-      // Ensure ambient mode is enabled and injection is disabled
-      labels[AMBIENT_LABEL] = IstioState.Ambient;
-      delete labels[INJECTION_LABEL]; // Explicitly remove injection label if it exists
-      log.debug(`Enabling ambient mode for namespace ${pkg.metadata.namespace}.`);
-      if (originalInjectionLabel === "enabled") {
-        shouldRestartPods = true; // Pods need restarting to remove sidecar
+  if (pkg.spec?.network?.serviceMesh?.mode === Mode.Ambient) {
+    // Check if ambient mode is available
+    if (!UDSConfig.isAmbientDeployed) {
+      // Ambient mode requested but not available, fall back to sidecar mode
+      log.warn(
+        `Ambient mode requested for package ${pkg.metadata.name} but Ambient is not deployed. Falling back to sidecar mode.`,
+      );
+      await writeEvent(pkg, {
+        message:
+          "Ambient mode requested but Ambient is not deployed. Falling back to sidecar mode.",
+        reason: "AmbientUnavailable",
+        type: "Warning",
+      });
+
+      // Fall back to sidecar mode
+      annotations[pkgKey] = "true";
+      if (originalInjectionLabel !== "enabled") {
+        labels[INJECTION_LABEL] = "enabled";
+        delete labels[AMBIENT_LABEL]; // Explicitly remove ambient label if it exists
+        shouldRestartPods = true; // Pods need restarting due to label change
+        log.debug(
+          `Enabling Istio injection for namespace ${pkg.metadata.namespace} (fallback from ambient).`,
+        );
       }
-      istioState = IstioState.Ambient;
+      istioState = IstioState.Sidecar;
+    } else {
+      // Ambient mode is available and requested
+      annotations[pkgKey] = "true";
+      if (originalAmbientLabel !== IstioState.Ambient) {
+        // Ensure ambient mode is enabled and injection is disabled
+        labels[AMBIENT_LABEL] = IstioState.Ambient;
+        delete labels[INJECTION_LABEL]; // Explicitly remove injection label if it exists
+        log.debug(`Enabling ambient mode for namespace ${pkg.metadata.namespace}.`);
+        if (originalInjectionLabel === "enabled") {
+          shouldRestartPods = true; // Pods need restarting to remove sidecar
+        }
+        istioState = IstioState.Ambient;
+      }
     }
   } else {
+    // Sidecar mode requested
     annotations[pkgKey] = "true";
     // Ensure injection is enabled and ambient mode is disabled
     if (originalInjectionLabel !== "enabled") {

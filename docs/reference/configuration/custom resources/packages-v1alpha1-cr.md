@@ -2,8 +2,6 @@
 title: Packages CR (v1alpha1)
 tableOfContents:
   maxHeadingLevel: 6
-sidebar:
-  order: 10
 ---
 <a id="Packages"></a>
 <div style="margin-left: 20px; padding-top: 30px;">
@@ -488,7 +486,7 @@ Valid Options: FROM_PROTOCOL_DEFAULT, FROM_REQUEST_PORT</td></tr><tr><td style="
     </tr>
   </thead>
   <tbody>
-    <tr><td style="white-space: nowrap;">ambient</td><td style="white-space: nowrap;">boolean</td><td>Enable ambient service mesh (disable sidecar injection)</td></tr>
+    <tr><td style="white-space: nowrap;">mode</td><td style="white-space: nowrap;">string (enum):<ul><li><code>sidecar</code></li><li><code>ambient</code></li></ul></td><td>Set the service mesh mode for this package (namespace), defaults to sidecar</td></tr>
   </tbody>
 </table>
 </div>

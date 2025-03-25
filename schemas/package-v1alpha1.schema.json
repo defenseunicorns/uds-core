@@ -791,9 +791,9 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "ambient": {
-          "type": "boolean",
-          "description": "Enable ambient service mesh (disable sidecar injection)"
+        "mode": {
+          "$ref": "#/definitions/Mode",
+          "description": "Set the service mesh mode for this package (namespace), defaults to sidecar"
         }
       },
       "required": [],
@@ -1121,6 +1121,15 @@
       ],
       "title": "Gateway",
       "description": "The name of the gateway to expose the service on (default: tenant)"
+    },
+    "Mode": {
+      "type": "string",
+      "enum": [
+        "sidecar",
+        "ambient"
+      ],
+      "title": "Mode",
+      "description": "Set the service mesh mode for this package (namespace), defaults to sidecar"
     },
     "ClientAuthenticatorType": {
       "type": "string",

@@ -7,7 +7,7 @@ import { getReadinessConditions, handleFailure, shouldSkip, updateStatus, writeE
 import { UDSConfig } from "../../config";
 import { Component, setupLogger } from "../../logger";
 import { istioResources } from "../controllers/istio/istio-resources";
-import { cleanupNamespace, enableIstio, IstioState } from "../controllers/istio/namespace";
+import { cleanupNamespace, enableIstio } from "../controllers/istio/namespace";
 import {
   authservice,
   purgeAuthserviceClients,
@@ -19,6 +19,7 @@ import { serviceMonitor } from "../controllers/monitoring/service-monitor";
 import { networkPolicies } from "../controllers/network/policies";
 import { retryWithDelay } from "../controllers/utils";
 import { Phase, UDSPackage } from "../crd";
+import { Mode } from "../crd/generated/package-v1alpha1";
 import { migrate } from "../crd/migrate";
 
 // configure subproject logger
@@ -69,14 +70,24 @@ export async function packageReconciler(pkg: UDSPackage) {
   try {
     await updateStatus(pkg, { phase: Phase.Pending, conditions: getReadinessConditions(false) });
 
-    // Pass the Istio mode to the networkPolicies function
-    const istioMode = pkg.spec?.network?.serviceMesh?.ambient
-      ? IstioState.Ambient
-      : IstioState.Sidecar;
-    const netPol = await networkPolicies(pkg, namespace!, istioMode);
+    // Get the requested service mesh mode, default to sidecar if not specified
+    const requestedMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Sidecar;
+
+    // Check if ambient mode is requested but not available
+    let effectiveMode = requestedMode;
+    if (requestedMode === Mode.Ambient && !UDSConfig.isAmbientDeployed) {
+      log.warn(
+        `Ambient mode requested for package ${name} but Ambient is not deployed. Using sidecar mode for network policies.`,
+      );
+      effectiveMode = Mode.Sidecar;
+    }
+
+    // Pass the effective Istio mode to the networkPolicies function
+    const netPol = await networkPolicies(pkg, namespace!, effectiveMode);
 
     let endpoints: string[] = [];
     // Update the namespace to enable the expected Istio mode (sidecar or ambient)
+    // Note: enableIstio will also check UDSConfig.isAmbientDeployed and fall back if needed
     await enableIstio(pkg);
 
     let ssoClients = new Map<string, Client>();

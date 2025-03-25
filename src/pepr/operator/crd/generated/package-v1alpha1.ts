@@ -584,9 +584,17 @@ export interface FluffyURI {
  */
 export interface ServiceMesh {
   /**
-   * Enable ambient service mesh (disable sidecar injection)
+   * Set the service mesh mode for this package (namespace), defaults to sidecar
    */
-  ambient?: boolean;
+  mode?: Mode;
+}
+
+/**
+ * Set the service mesh mode for this package (namespace), defaults to sidecar
+ */
+export enum Mode {
+  Ambient = "ambient",
+  Sidecar = "sidecar",
 }
 
 export interface Sso {

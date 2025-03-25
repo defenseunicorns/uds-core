@@ -16,6 +16,7 @@ import {
   Sso,
   UDSPackage,
 } from "..";
+import { Mode } from "../generated/package-v1alpha1";
 import { validator } from "./package-validator";
 
 const makeMockReq = (
@@ -36,7 +37,7 @@ const makeMockReq = (
         expose: [],
         allow: [],
         serviceMesh: {
-          ambient,
+          mode: ambient ? Mode.Ambient : Mode.Sidecar,
         },
       },
       sso: [],
