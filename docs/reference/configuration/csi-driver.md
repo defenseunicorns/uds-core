@@ -99,7 +99,7 @@ The default snapshot limit (3) is insufficient for UDS Core's 10-day [backup ret
 - For a cluster that has 13 volumes, each nightly UDS backup will create 1 snapshot per volume
 - After 3 days of backups, the default `global-max-snapshots-per-block-volume` will have been met, and further backups will fail
 - To account for 10 days of UDS backups (assuming 13 volumes), set the `global-max-snapshots-per-block-volume` to a minimum of 10
-- Consider setting a higher `global-max-snapshots-per-block-volume` to create a buffer that accommodates manual backups or restore testing (e.g, `global-max-snapshots-per-block-volume=12`)
+- Consider setting a higher `global-max-snapshots-per-block-volume` to create a buffer that accommodates manual backups or restore testing (e.g., `global-max-snapshots-per-block-volume=12`)
 
 If the following error is seen when creating a backup, the `global-max-snapshots-per-block-volume` needs to be adjusted:
 ```yaml
