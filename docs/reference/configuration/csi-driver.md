@@ -11,7 +11,10 @@ As of Velero v1.14, the velero-plugin-for-csi is included in Velero. This means 
 - UDS Core deployment with Velero configured for S3-compatible object storage
 
 ## Using a CSI driver in an RKE2 cluster
-The following instructions are specific to an RKE2 cluster, and assume bucket variables required for S3 object storage have already been set. The below tips are not meant to be step-by-step instructions, but useful tips for configuring the CSI driver. To integrate Velero with a CSI driver, you should first install both [rancher-vsphere-cpi](https://github.com/rancher/vsphere-charts/tree/main/charts/rancher-vsphere-cpi) and [rancher-vsphere-csi](https://github.com/rancher/vsphere-charts/tree/main/charts/rancher-vsphere-csi).
+The following instructions are specific to an RKE2 cluster, and assume bucket variables required for S3 object storage have already been set. The below tips are not meant to be step-by-step instructions, but useful tips for configuring the CSI driver. To integrate Velero with a CSI driver, you should first install both [rancher-vsphere-cpi](https://github.com/rancher/vsphere-charts/tree/main/charts/rancher-vsphere-cpi) and [rancher-vsphere-csi](https://github.com/rancher/vsphere-charts/tree/main/charts/rancher-vsphere-csi). Installation of the vSphere CPI/CSI on RKE2 is done via setting `cloud-provider-name: rancher-vsphere` in RKE2's `config.yaml`. 
+
+> [!NOTE] 
+> While RKE2 deploys these helm charts automatically, they will not function correctly until properly configured with vSphere credentials and other settings. The HelmChartConfig overrides shown later in this document are essential for providing these configurations.
 
 ## Key Overrides and Configuration
 - `blockVolumeSnapshot.enabled: true`
@@ -24,14 +27,17 @@ The following instructions are specific to an RKE2 cluster, and assume bucket va
 - `schedules.udsbackup.template.snapshotVolumes: true`
 
 ## CSI Driver Configuration
-When using a vSphere CSI driver, a user must be created in vSphere with the appropriate permissions at the appropriate vSphere object levels. These roles and privileges can be found at [Broadcom vSphere Roles and Privileges](https://techdocs.broadcom.com/us/en/vmware-cis/vsphere/container-storage-plugin/3-0/getting-started-with-vmware-vsphere-container-storage-plug-in-3-0/vsphere-container-storage-plug-in-deployment/preparing-for-installation-of-vsphere-container-storage-plug-in.html#GUID-0AB6E692-AA47-4B6A-8CEA-38B754E16567-en). 
+When using a vSphere CSI driver, a user must be created in vSphere with the appropriate permissions at the appropriate vSphere object levels. These roles and privileges can be found at [Broadcom vSphere Roles and Privileges](https://techdocs.broadcom.com/us/en/vmware-cis/vsphere/container-storage-plugin/3-0/getting-started-with-vmware-vsphere-container-storage-plug-in-3-0/vsphere-container-storage-plug-in-deployment/preparing-for-installation-of-vsphere-container-storage-plug-in.html#GUID-0AB6E692-AA47-4B6A-8CEA-38B754E16567-en). This user is referenced below as `vsphere_csi_username` and `vsphere_csi_password` and is used by Velero to authenticate with the vSphere vCenter API to provision, manage, and snapshot volumes.
+
+> [!NOTE] 
+> Some roles referenced in the Broadcom link come pre-created and combined with other roles in vSphere, thus the referenced Broadcom roles may be named slightly different in vSphere (e.g., CNS-Datastore role may be called CNS-Supervisor-Datastore in vSphere; CNS-Host-Config-Storage and CNS-VM roles may be combined and called CNS-Supervisor-Host-Config-Storage-And-CNS-VM in vSphere).
 
 At least three overrides must occur in the vSphere CSI driver configuration: `blockVolumeSnapshot`, `configTemplate` and `global-max-snapshots-per-block-volume`
 - `blockVolumeSnapshot` must be enabled on the CSI driver to allow the deployment of the [csi-snapshotter](https://github.com/kubernetes-csi/external-snapshotter) sidecar, which is required to create snapshots of volumes
 - `configTemplate` must be completely overridden, to allow overriding of the `global-max-snapshots-per-block-volume` setting
 - `global-max-snapshots-per-block-volume` should be added as an override within the `configTemplate`, to allow control of how many snapshots are allowed per volume
 
-Example rancher-vsphere-cpi and rancher-vsphere-csi deployment with overrides:
+Example rancher-vsphere-cpi and rancher-vsphere-csi overrides:
 
 ```yaml
 ---
