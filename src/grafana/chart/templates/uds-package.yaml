@@ -55,7 +55,19 @@ spec:
         description: "Prometheus Datasource"
         port: 9090
 
-      # Egress allowed to Keyclaok
+      # Egress allowed to Alertmanager
+      - direction: Egress
+        selector:
+          app.kubernetes.io/name: grafana
+        remoteNamespace: monitoring
+        remoteSelector:
+          app.kubernetes.io/name: alertmanager
+        selector:
+          app.kubernetes.io/name: grafana
+        description: "Alertmanager Datasource"
+        port: 9093
+
+      # Egress allowed to Keycloak
       - direction: Egress
         selector:
           app.kubernetes.io/name: grafana

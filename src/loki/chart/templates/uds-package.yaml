@@ -59,3 +59,8 @@ spec:
         {{- else }}
         remoteGenerated: Anywhere
         {{- end }}
+
+      # Custom rules for additional networking access
+      {{- with .Values.additionalNetworkAllow }}
+      {{ toYaml . | nindent 6 }}
+      {{- end }}
