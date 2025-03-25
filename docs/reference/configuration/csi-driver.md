@@ -24,7 +24,7 @@ The following instructions are specific to an RKE2 cluster, and assume bucket va
 - `schedules.udsbackup.template.snapshotVolumes: true`
 
 ## CSI Driver Configuration
-***When using a vSphere CSI driver, a user must be created
+When using a vSphere CSI driver, a user must be created in vSphere with the appropriate permissions at the appropriate vSphere object levels. These roles and privileges can be found at [Broadcom vSphere Roles and Privileges](https://techdocs.broadcom.com/us/en/vmware-cis/vsphere/container-storage-plugin/3-0/getting-started-with-vmware-vsphere-container-storage-plug-in-3-0/vsphere-container-storage-plug-in-deployment/preparing-for-installation-of-vsphere-container-storage-plug-in.html#GUID-0AB6E692-AA47-4B6A-8CEA-38B754E16567-en). 
 
 At least three overrides must occur in the vSphere CSI driver configuration: `blockVolumeSnapshot`, `configTemplate` and `global-max-snapshots-per-block-volume`
 - `blockVolumeSnapshot` must be enabled on the CSI driver to allow the deployment of the [csi-snapshotter](https://github.com/kubernetes-csi/external-snapshotter) sidecar, which is required to create snapshots of volumes
