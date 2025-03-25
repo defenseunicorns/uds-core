@@ -4,7 +4,7 @@
  */
 
 // Common imports
-import { a, K8s } from "pepr";
+import { a } from "pepr";
 import { When } from "./common";
 
 // Controller imports

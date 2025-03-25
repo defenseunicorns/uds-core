@@ -10,4 +10,4 @@ export const operator = new Capability({
   description: "The UDS Operator is responsible for managing the lifecycle of UDS resources",
 });
 
-export const { Store, When} = operator;
+export const { Store, When } = operator;
