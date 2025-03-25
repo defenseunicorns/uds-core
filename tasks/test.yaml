@@ -63,15 +63,15 @@ tasks:
       validate_passthrough:
         description: Whether to validate the passthrough gateway.
         default: "true"
-    # loop through each src/* package and run the validate.yaml task    
+    # loop through each src/* package and run the validate.yaml task
     actions:
       - cmd: |
           for package in $(ls src); do
             if [ ! $(echo ${EXCLUDED_PACKAGES} | grep ${package}) ]; then
-              if [ "${package}" == "istio" ]; then 
+              if [ "${package}" == "istio" ]; then
                 uds run -f src/${package}/tasks.yaml validate --no-progress --with validate_passthrough=${{ .inputs.validate_passthrough }}
               fi
-             uds run -f src/${package}/tasks.yaml validate --no-progress 
+             uds run -f src/${package}/tasks.yaml validate --no-progress
             fi
           done
           set +e

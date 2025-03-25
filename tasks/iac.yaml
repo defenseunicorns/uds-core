@@ -122,12 +122,12 @@ tasks:
           done
           # wait for cluster components
           while true; do
-            if [ $(uds zarf tools kubectl get po -n kube-system -l batch.kubernetes.io/controller-uid --no-headers | egrep -v Completed) | wc -l) -gt 0 ]; then
+            if [ $(uds zarf tools kubectl get po -n kube-system -l batch.kubernetes.io/controller-uid --no-headers | egrep -v Completed | wc -l) -gt 0 ]; then
                echo "Waiting for Helm Controller to install cluster components..."
                sleep 5;
             fi
           done
-          while true; do  
+          while true; do
             if [ $(uds zarf tools kubectl get po,job -A --no-headers=true | egrep -v 'helm-install|Running|Complete' | wc -l) -gt 0 ]; then
               echo "Waiting for cluster components to be ready...";
               sleep 5;

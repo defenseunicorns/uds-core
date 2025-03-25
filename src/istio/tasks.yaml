@@ -7,7 +7,7 @@ tasks:
       validate_passthrough:
         description: Whether to validate the passthrough gateway
         default: "true"
-  
+
     actions:
       - description: Validate the Istio Admin Gateway
         wait:
