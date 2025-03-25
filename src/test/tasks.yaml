@@ -162,7 +162,7 @@ tasks:
       - description: Verify podinfo pods don't have istio-proxy sidecar
         cmd: |
           set -e
-          CONTAINERS=$(uds zarf tools kubectl get pods -n podinfo -l app.kubernetes.io/name=podinfo -o jsonpath='{.items[0].spec.containers[*].name}')
+          CONTAINERS=$(uds zarf tools kubectl get pods -n podinfo -l app.kubernetes.io/name=podinfo -o jsonpath='{.items[0].spec.initContainers[*].name}')
           if [ -z "$(echo "$CONTAINERS" | grep "istio-proxy")" ]; then
             echo " Podinfo pods don't have istio-proxy sidecar (as expected with ambient mode)"
           else
