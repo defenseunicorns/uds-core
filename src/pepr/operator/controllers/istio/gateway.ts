@@ -102,25 +102,25 @@ export async function patchGatewayAnnotations(
   attempt: number = 0,
   maxAttempts: number = 3,
 ) {
-  try {
-    await K8s(IstioGateway, { name: sharedResourceId, namespace: gw.metadata?.namespace }).Patch([
-      {
-        op: "replace",
-        path: `/metadata/annotations/uds.dev~1user-${pkgId}`,
-        value: "user",
-      },
-    ]);
-  } catch (error) {
-    log.error(
-      `Failed to patch gateway annotations for ${sharedResourceId}: ${Object.keys(error)}. Attempt ${attempt + 1} of ${maxAttempts}.`,
-    );
-    if (attempt + 1 >= maxAttempts) {
-      throw new Error(
-        `Failed to patch gateway annotations for ${sharedResourceId} after ${maxAttempts} attempts.`,
+  await K8s(IstioGateway, { name: sharedResourceId, namespace: gw.metadata?.namespace }).Patch([
+    {
+      op: "replace",
+      path: `/metadata/annotations/uds.dev~1user-${pkgId}`, // TODO: Replace with sharedResourcesAnnotationPrefix
+      value: "user",
+    },
+  ])
+    .catch(async () => {
+      log.error(
+        `Failed to patch gateway annotations for ${sharedResourceId}. Attempt ${attempt + 1} of ${maxAttempts}.`,
       );
+      if (attempt + 1 >= maxAttempts) {
+        throw new Error(
+          `Failed to patch gateway annotations for ${sharedResourceId} after ${maxAttempts} attempts.`,
+        );
+      }
+      return await patchGatewayAnnotations(gw, sharedResourceId, pkgId, attempt + 1, maxAttempts);
     }
-    return await patchGatewayAnnotations(gw, sharedResourceId, pkgId, attempt + 1, maxAttempts);
-  }
+  );
 }
 
 // Recursive function to patch the gateway server with the host, protocol, and port
@@ -133,35 +133,35 @@ async function patchGatewayServer(
   attempt: number = 0,
   maxAttempts: number = 3,
 ) {
-  try {
-    await K8s(IstioGateway, { name: sharedResourceId, namespace: gw.metadata?.namespace }).Patch([
-      {
-        op: "add",
-        path: "/spec/servers/-",
-        value: {
-          hosts: [host],
-          port: {
-            name: `${protocol.toLowerCase()}-${port.toString()}`,
-            number: port,
-            protocol: protocol,
-          },
-          tls: {
-            mode: IstioTLSMode.Passthrough,
-          },
+  await K8s(IstioGateway, { name: sharedResourceId, namespace: gw.metadata?.namespace }).Patch([
+    {
+      op: "add",
+      path: "/spec/servers/-",
+      value: {
+        hosts: [host],
+        port: {
+          name: `${protocol.toLowerCase()}-${port.toString()}`,
+          number: port,
+          protocol: protocol,
+        },
+        tls: {
+          mode: IstioTLSMode.Passthrough,
         },
       },
-    ]);
-  } catch (error) {
-    log.error(
-      `Failed to patch gateway server for ${sharedResourceId}: ${JSON.stringify(error)}. Attempt ${attempt + 1} of ${maxAttempts}.`,
-    );
-    if (attempt + 1 >= maxAttempts) {
-      throw new Error(
-        `Failed to patch gateway server for ${sharedResourceId} after ${maxAttempts} attempts.`,
+    },
+  ])
+    .catch(async () => {
+      log.error(
+        `Failed to patch gateway server for ${sharedResourceId}. Attempt ${attempt + 1} of ${maxAttempts}.`,
       );
+      if (attempt + 1 >= maxAttempts) {
+        throw new Error(
+          `Failed to patch gateway server for ${sharedResourceId} after ${maxAttempts} attempts.`,
+        );
+      }
+      return await patchGatewayServer(gw, sharedResourceId, host, protocol, port, attempt + 1, maxAttempts);
     }
-    return patchGatewayServer(gw, sharedResourceId, host, protocol, port, attempt + 1, maxAttempts);
-  }
+  );
 }
 
 // Generate the egress gateway resource
