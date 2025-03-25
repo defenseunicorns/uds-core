@@ -58,12 +58,20 @@ tasks:
 
   - name: validate-packages
     description: "Validate all packages"
-    # loop through each src/* package and run the validate.yaml task
+    inputs:
+      # Added to support bypassing passthrough gateway validation on non-k3d distributions.
+      validate_passthrough:
+        description: Whether to validate the passthrough gateway.
+        default: "true"
+    # loop through each src/* package and run the validate.yaml task    
     actions:
       - cmd: |
           for package in $(ls src); do
             if [ ! $(echo ${EXCLUDED_PACKAGES} | grep ${package}) ]; then
-            uds run -f src/${package}/tasks.yaml validate --no-progress
+              if [ "${package}" == "istio" ]; then 
+                uds run -f src/${package}/tasks.yaml validate --no-progress --with validate_passthrough=${{ .inputs.validate_passthrough }}
+              fi
+             uds run -f src/${package}/tasks.yaml validate --no-progress 
             fi
           done
           set +e
@@ -133,6 +141,8 @@ tasks:
     actions:
       - task: util:setup-hosts
       - task: validate-packages
+        with:
+          validate_passthrough: "false"
       - task: e2e-tests
         with:
           architecture: "amd64"
