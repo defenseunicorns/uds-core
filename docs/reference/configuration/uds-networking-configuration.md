@@ -59,8 +59,8 @@ To accomplish this, you can provide a bundle override as follows:
 ```yaml
 packages:
   - name: uds-core
-    repository: ghcr.io/defenseunicorns/packages/uds/core-monitoring
-    ref: 0.31.1-upstream
+    repository: ghcr.io/defenseunicorns/packages/uds/core
+    ref: 0.x.x-upstream
     overrides:
       kube-prometheus-stack:
         uds-prometheus-config:
@@ -86,8 +86,8 @@ It may also be desired to allow Vector to send logs to an external service. To f
 ```yaml
 packages:
   - name: uds-core
-    repository: ghcr.io/defenseunicorns/packages/uds/core-monitoring
-    ref: 0.31.1-upstream
+    repository: ghcr.io/defenseunicorns/packages/uds/core
+    ref: 0.x.x-upstream
     overrides:
       vector:
         uds-vector-config:
@@ -121,8 +121,8 @@ It may be desired to connect Grafana to additional datasources in or outside of 
 ```yaml
 packages:
   - name: uds-core
-    repository: ghcr.io/defenseunicorns/packages/uds/core-monitoring
-    ref: 0.31.1-upstream
+    repository: ghcr.io/defenseunicorns/packages/uds/core
+    ref: 0.x.x-upstream
     overrides:
       grafana:
         uds-grafana-config:
@@ -150,8 +150,8 @@ It may be desired send alerts from NeuVector to locations in or outside of the c
 ```yaml
 packages:
   - name: uds-core
-    repository: ghcr.io/defenseunicorns/packages/uds/core-monitoring
-    ref: 0.31.1-upstream
+    repository: ghcr.io/defenseunicorns/packages/uds/core
+    ref: 0.x.x-upstream
     overrides:
       neuvector:
         uds-neuvector-config:
@@ -167,5 +167,59 @@ packages:
 ```
 
 The example above allows NeuVector to send alerts to any external destination. Alternatively, you could use the remoteNamespace key to specify another namespace within the Kubernetes cluster (i.e. Mattermost).
+
+Reference the [spec for allow](https://uds.defenseunicorns.com/reference/configuration/custom-resources/packages-v1alpha1-cr/#allow) for all available fields.
+
+### Keycloak
+
+You may have a need to connect Keycloak to an external IdP or other service that the default network policies do not support. To facilitate this, you can provide a bundle override as follows:
+
+```yaml
+packages:
+  - name: uds-core
+    repository: ghcr.io/defenseunicorns/packages/uds/core
+    ref: 0.x.x-upstream
+    overrides:
+      keycloak:
+        keycloak:
+          values:
+            - path: additionalNetworkAllow
+              value:
+                - direction: Egress
+                  selector:
+                    app.kubernetes.io/name: keycloak
+                  remoteCidr: 72.123.123.123
+                  description: "IdP Connection"
+                  port: 443
+```
+
+The example above allows Keycloak to connect to an "external IdP" at a specific remoteCidr.
+
+Reference the [spec for allow](https://uds.defenseunicorns.com/reference/configuration/custom-resources/packages-v1alpha1-cr/#allow) for all available fields.
+
+### Loki
+
+You may have a need to configure Loki with egress to an additional destination, such as for [external caching](https://grafana.com/docs/loki/latest/operations/caching/) connections. To facilitate this, you can provide a bundle override as follows:
+
+```yaml
+packages:
+  - name: uds-core
+    repository: ghcr.io/defenseunicorns/packages/uds/core
+    ref: 0.x.x-upstream
+    overrides:
+      loki:
+        uds-loki-config:
+          values:
+            - path: additionalNetworkAllow
+              value:
+                - direction: Egress
+                  selector:
+                    app.kubernetes.io/name: loki
+                  remoteCidr: 72.123.123.123
+                  description: "Cache Connection"
+                  port: 6379
+```
+
+The example above allows Loki to connect to an "external cache" at a specific remoteCidr.
 
 Reference the [spec for allow](https://uds.defenseunicorns.com/reference/configuration/custom-resources/packages-v1alpha1-cr/#allow) for all available fields.
