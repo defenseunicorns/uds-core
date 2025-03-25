@@ -8,74 +8,16 @@ info() {
 
 export CCM="${ccm}"
 export CCM_EXTERNAL="${ccm_external}"
+export CLUSTER_NAME="${cluster_name}"
 
 ###############################
 ### pre userdata
 ###############################
 pre_userdata() {
 info "Beginning user defined pre userdata"
-
-# add aws cloud controller
-info "Adding AWS cloud provider manifest."
+info "Create HelmChart Resources."
 mkdir -p /var/lib/rancher/rke2/server/manifests
-cat > /var/lib/rancher/rke2/server/manifests/00-aws-ccm.yaml << EOM
-apiVersion: helm.cattle.io/v1
-kind: HelmChart
-metadata:
-  name: aws-cloud-controller-manager
-  namespace: kube-system
-spec:
-  chart: aws-cloud-controller-manager
-  repo: https://kubernetes.github.io/cloud-provider-aws
-  version: 0.0.8
-  targetNamespace: kube-system
-  bootstrap: true
-  valuesContent: |-
-    nodeSelector:
-      node-role.kubernetes.io/control-plane: "true"
-    hostNetworking: true
-    args:
-      - --configure-cloud-routes=false
-      - --v=2
-      - --cloud-provider=aws
-EOM
-
-# aws lb controller helm values: https://github.com/kubernetes-sigs/aws-load-balancer-controller/tree/main/helm/aws-load-balancer-controller#configuration
-cat > /var/lib/rancher/rke2/server/manifests/01-lb-controller.yaml << EOM
-apiVersion: helm.cattle.io/v1
-kind: HelmChart
-metadata:
-  name: aws-load-balancer-controller
-  namespace: kube-system
-spec:
-  chart: aws-load-balancer-controller
-  repo: https://aws.github.io/eks-charts
-  # renovate: datasource=helm depName=aws-load-balancer-controller versioning=helm registryUrl=https://aws.github.io/eks-charts
-  version: 1.11.0
-  targetNamespace: kube-system
-  valuesContent: |-
-    clusterName: ${cluster_name}
-EOM
-
-#longhorn helm values: https://github.com/longhorn/longhorn/tree/master/chart
-cat > /var/lib/rancher/rke2/server/manifests/02-longhorn.yaml << EOM
-apiVersion: helm.cattle.io/v1
-kind: HelmChart
-metadata:
-  name: longhorn
-  namespace: kube-system
-spec:
-  chart: longhorn
-  repo: https://charts.longhorn.io
-  # renovate: datasource=helm depName=longhorn versioning=helm registryUrl=https://charts.longhorn.io 
-  version: 1.8.1
-  targetNamespace: kube-system
-  valuesContent: |-
-    defaultSettings:
-      deletingConfirmationFlag: true
-    longhornUI:
-      replicas: 0
-EOM
+envsubst < helmchart-template.yaml > /var/lib/rancher/rke2/server/manifests/00-helmcharts.yaml
 
 info "Installing awscli"
 yum install -y unzip jq || apt-get -y install unzip jq

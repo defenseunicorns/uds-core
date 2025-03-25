@@ -1,0 +1,56 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: aws-cloud-controller-manager
+  namespace: kube-system
+spec:
+  chart: aws-cloud-controller-manager
+  repo: https://kubernetes.github.io/cloud-provider-aws
+  # renovate: datasource=helm depName=aws-cloud-controller-manager versioning=helm registryUrl=https://kubernetes.github.io/cloud-provider-aws
+  version: 0.0.8
+  targetNamespace: kube-system
+  bootstrap: true
+  valuesContent: |-
+    nodeSelector:
+      node-role.kubernetes.io/control-plane: "true"
+    hostNetworking: true
+    args:
+      - --configure-cloud-routes=false
+      - --v=2
+      - --cloud-provider=aws
+---
+# aws lb controller helm values: https://github.com/kubernetes-sigs/aws-load-balancer-controller/tree/main/helm/aws-load-balancer-controller#configuration
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: aws-load-balancer-controller
+  namespace: kube-system
+spec:
+  chart: aws-load-balancer-controller
+  repo: https://aws.github.io/eks-charts
+  # renovate: datasource=helm depName=aws-load-balancer-controller versioning=helm registryUrl=https://aws.github.io/eks-charts
+  version: 1.12.0
+  targetNamespace: kube-system
+  valuesContent: |-
+    clusterName: ${CLUSTER_NAME}
+---
+#longhorn helm values: https://github.com/longhorn/longhorn/tree/master/chart
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: longhorn
+  namespace: kube-system
+spec:
+  chart: longhorn
+  repo: https://charts.longhorn.io
+  # renovate: datasource=helm depName=longhorn versioning=helm registryUrl=https://charts.longhorn.io
+  version: 1.8.1
+  targetNamespace: kube-system
+  valuesContent: |-
+    defaultSettings:
+      deletingConfirmationFlag: true
+    longhornUI:
+      replicas: 0
