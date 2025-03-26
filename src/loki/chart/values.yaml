@@ -9,3 +9,13 @@ storage:
   egressCidr: ""
 
 dashboardAnnotations: {}
+
+# Support for custom `network.allow` entries on the Package CR, useful for extra datasources
+additionalNetworkAllow: []
+# ref: https://uds.defenseunicorns.com/reference/configuration/custom-resources/packages-v1alpha1-cr/#allow
+#   - direction: Egress
+#     selector:
+#       app.kubernetes.io/name: loki
+#     remoteCidr: 72.123.123.123
+#     description: "Cache"
+#     port: 6379
