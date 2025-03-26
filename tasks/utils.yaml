@@ -64,43 +64,6 @@ tasks:
               --from-literal=password=${PASSWORD} \
               -n keycloak
           fi
-  - name: eks-coredns-setup
-    actions:
-      - description: Setup Custom ConfigMap for Core DNS
-        cmd: |
-          uds zarf tools kubectl apply -f - <<EOF
-          apiVersion: v1
-          data:
-            Corefile: |
-              .:53 {
-                  errors
-                  health {
-                      lameduck 5s
-                    }
-                  ready
-                  kubernetes cluster.local in-addr.arpa ip6.arpa {
-                    pods insecure
-                    fallthrough in-addr.arpa ip6.arpa
-                  }
-                  prometheus :9153
-                  forward . /etc/resolv.conf
-                  cache 30
-                  loop
-                  reload
-                  loadbalance
-                  rewrite stop {
-                    name regex (.*\.admin\.uds\.dev) admin-ingressgateway.istio-admin-gateway.svc.cluster.local answer auto
-                    }
-                  rewrite stop {
-                  name regex (.*\.uds\.dev) tenant-ingressgateway.istio-tenant-gateway.svc.cluster.local answer auto
-                    }
-              }
-          kind: ConfigMap
-          metadata:
-            name: coredns
-            namespace: kube-system
-          EOF
-            uds zarf tools kubectl -n kube-system rollout restart deployment coredns
   - name: aks-coredns-setup
     actions:
       - description: Setup Custom ConfigMap for Core DNS
@@ -149,7 +112,14 @@ tasks:
                   - protocol: TCP
                     port: 9153
           EOF
-  - name: rke2-coredns-setup
+  - name: coredns-setup
+    inputs:
+      coredns_cm_name:
+        description: "Name of the default configmap for coredns. Will be overwritten by the manifest below."
+        default: "coredns"
+      coredns_deploy_name:
+        description: "Name of the coredns deployment."
+        default: "coredns"
     actions:
       - description: Setup Custom ConfigMap for Core DNS
         cmd: |
@@ -183,10 +153,10 @@ tasks:
               }
           kind: ConfigMap
           metadata:
-            name: rke2-coredns-rke2-coredns
+            name: ${{ .inputs.coredns_cm_name }}
             namespace: kube-system
           EOF
-          uds zarf tools kubectl rollout restart deployment -n kube-system -l app.kubernetes.io/instance=rke2-coredns
+          uds zarf tools kubectl rollout restart deployment -n kube-system ${{ .inputs.coredns_deploy_name }}
   - name: admin-gw-ip
     actions:
       - description: Fetch Admin Gateway IP Address

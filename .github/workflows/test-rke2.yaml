@@ -96,7 +96,7 @@ jobs:
         timeout-minutes: 20
 
       - name: Configure Cluster DNS
-        run: uds run -f tasks/utils.yaml rke2-coredns-setup --no-progress
+        run: uds run -f tasks/utils.yaml coredns-setup --no-progress --with coredns_deploy_name=rke2-coredns-rke2-coredns --with coredns_cm_name=rke2-coredns-rke2-coredns
 
       - name: Deploy Core Bundle
         env:
