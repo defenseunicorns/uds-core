@@ -9,9 +9,13 @@ import { Component, setupLogger } from "../../../logger";
 import { IstioServiceEntry, IstioVirtualService, UDSPackage } from "../../crd";
 import { RemoteProtocol } from "../../crd/generated/package-v1alpha1";
 import { getOwnerRef, purgeOrphans } from "../utils";
-import { createOrPatchEgressGateway } from "./gateway";
+import { generateOrPatchDestinationRule } from "./destination-rule";
+import { generateOrPatchEgressGateway } from "./gateway";
 import { generateIngressServiceEntry } from "./service-entry";
-import { generateIngressVirtualService } from "./virtual-service";
+import {
+  generateIngressVirtualService,
+  generateOrPatchEgressVirtualService,
+} from "./virtual-service";
 
 // configure subproject logger
 export const log = setupLogger(Component.OPERATOR_ISTIO);
@@ -93,14 +97,15 @@ export async function istioResources(pkg: UDSPackage, namespace: string) {
 
     // Add egress resources if remoteHost is defined
     if (remoteHost) {
-      // Get unique shared resource identifier
-      const sharedResourceId = getSharedResourceId(remoteHost);
+      // Reconcile with existing egress Gateway, or create a new one
+      await generateOrPatchEgressGateway(pkgId, remoteHost, remoteProtocol, port);
 
-      // Reconcile with existing egress gateway
-      await createOrPatchEgressGateway(sharedResourceId, pkgId, remoteHost, remoteProtocol, port);
+      // Reconcile with existing egress Destination Rule, or create a new one
+      await generateOrPatchDestinationRule(pkgId);
 
-      // Create Destination Rule
       // Create Virtual Service
+      await generateOrPatchEgressVirtualService(pkgId, remoteHost, remoteProtocol, port);
+
       // Create Service Entry
       // Create Sidecar
     }
@@ -113,9 +118,14 @@ export async function istioResources(pkg: UDSPackage, namespace: string) {
   return [...hosts];
 }
 
-// Get shared resource ID - converted host to lowercase and replace invalid characters with '-'
-export function getSharedResourceId(host: string) {
-  return host.toLowerCase().replace(/[^a-z0-9-]/g, "-");
+// Get the shared annotation key for the package
+export function getSharedAnnotationKey(pkgId: string) {
+  return `${sharedResourcesAnnotationPrefix}-${pkgId}`;
+}
+
+// Get the patch annotation key for the package
+export function getPatchAnnotationKey(pkgId: string) {
+  return `uds.dev~1user-${pkgId}`;
 }
 
 // Get the unique package ID
