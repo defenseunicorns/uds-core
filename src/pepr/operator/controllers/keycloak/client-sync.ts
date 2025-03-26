@@ -132,7 +132,7 @@ async function syncClient(
   let client = convertSsoToClient(clientReq);
 
   try {
-    client = await createOrUpdateClient(client);
+    client = await createOrUpdateClient(client, isRetry);
   } catch (err) {
     const msg =
       `Failed to process Keycloak request for client '${client.clientId}', package ` +

@@ -102,6 +102,10 @@ export async function credentialsGet(client: Partial<Client>) {
   log.info(`credentialsGet: retrieving client ${JSON.stringify(client)}`);
   const token = await credentialsGetAccessToken();
   const url = `${clientsAdminUrl}?clientId=${encodeURIComponent(client.clientId!)}`;
+  // There's no Client GET REST endpoint that obtains a client based on client_id (the logical client name, like uds-operator).
+  // All Admin REST endpoints for client operator on the database Client ID, which is a UUID. The only interface that allows to
+  // obtain the Client using the client_id is the collection interface which returns a singular collection with
+  // the Client in it.
   const response = await fetch<ClientWithId[]>(url, {
     method: "GET",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },

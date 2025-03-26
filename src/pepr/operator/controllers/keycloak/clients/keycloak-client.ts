@@ -42,12 +42,12 @@ export async function getStrategy() {
   }
 }
 
-export async function createOrUpdateClient(client: Partial<Client>) {
+export async function createOrUpdateClient(client: Partial<Client>, isRetry: boolean) {
   const strategy = await getStrategy();
   if (strategy === ClientStrategy.CLIENT_CREDENTIALS) {
     return credentialsCreateOrUpdate(client);
   }
-  return dynamicCreateOrUpdate(client);
+  return dynamicCreateOrUpdate(client, isRetry);
 }
 
 export async function deleteClient(client: Partial<Client>) {

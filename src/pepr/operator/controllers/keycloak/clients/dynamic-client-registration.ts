@@ -23,10 +23,13 @@ const client_policy_required_attribute_name = "created-by";
  */
 const client_policy_required_attribute_value = "uds-operator";
 
-export async function dynamicCreateOrUpdate(client: Partial<Client>) {
+export async function dynamicCreateOrUpdate(client: Partial<Client>, isRetry: boolean = false) {
   log.info(`dynamicCreateOrUpdate: creating/updating client ${JSON.stringify(client)}`);
   const token = Store.getItem(`sso-client-${client.clientId}`);
-  if (token) {
+  // The additional check for `isRetry` is address a situation, where a Client has been deleted in Keycloak
+  // but Peprs Store update failed. In this case, in a retry loop, we try to create a Client again and the worst
+  // case we'll get an HTTP 409 Conflict error.
+  if (token && !isRetry) {
     return dynamicUpdate(client);
   }
   return dynamicCreate(client);

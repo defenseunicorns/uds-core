@@ -31,31 +31,21 @@ export async function setupKeycloakClientSecret() {
     } catch {
       log.info("Keycloak Clients Secret does not exist, creating it");
       try {
-        await K8s(kind.Secret).Apply(
-          {
-            metadata: {
-              namespace: KEYCLOAK_CLIENTS_SECRET_NAMESPACE,
-              name: KEYCLOAK_CLIENTS_SECRET_NAME,
-            },
+        const secret = {
+          metadata: {
+            namespace: KEYCLOAK_CLIENTS_SECRET_NAMESPACE,
+            name: KEYCLOAK_CLIENTS_SECRET_NAME,
           },
-          { force: true },
-        );
+          type: "Opaque",
+        };
+        await updateKeycloakClientsSecret(secret, false);
       } catch (err) {
-        log.error(err, "Failed to create Keycloak Clients Secret");
-        throw new Error("Keycloak Clients Secret.", { cause: err });
+        log.error(
+          err,
+          "Failed to rotate Keycloak Clients Secret. It might be an temporary error. Skipping",
+        );
+        throw err;
       }
-    }
-
-    try {
-      const secret = await K8s(kind.Secret)
-        .InNamespace(KEYCLOAK_CLIENTS_SECRET_NAMESPACE)
-        .Get(KEYCLOAK_CLIENTS_SECRET_NAME);
-      await updateKeycloakClientsSecret(secret, false);
-    } catch (err) {
-      log.error(
-        err,
-        "Failed to rotate Keycloak Clients Secret. It might be an temporary error. Skipping",
-      );
     }
   }
 }

@@ -3,9 +3,11 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { ClientStrategy, getStrategy } from "./keycloak-client";
+import { ClientStrategy, createOrUpdateClient, getStrategy } from "./keycloak-client";
 import { credentialsGetAccessToken } from "./client-credentials";
+import { dynamicCreateOrUpdate } from "./dynamic-client-registration";
 
+jest.mock("./dynamic-client-registration");
 jest.mock("./client-credentials");
 jest.mock("./common");
 
@@ -51,5 +53,19 @@ describe("Test picking proper strategy", () => {
     (credentialsGetAccessToken as jest.Mock).mockRejectedValue(new Error("error"));
     const strategy = await getStrategy();
     expect(strategy).toBe(ClientStrategy.DYNAMIC_CLIENT_REGISTRATION);
+  });
+});
+
+describe("Test createOrUpdateClient function", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    delete process.env.PEPR_KEYCLOAK_CLIENT_STRATEGY;
+  });
+
+  it("should call dynamicCreateOrUpdate with isRetry set to true", async () => {
+    process.env.PEPR_KEYCLOAK_CLIENT_STRATEGY = "dynamic_client_registration";
+    const client = { clientId: "test-client" };
+    await createOrUpdateClient(client, true);
+    expect(dynamicCreateOrUpdate).toHaveBeenCalledWith(client, true);
   });
 });
