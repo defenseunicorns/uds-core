@@ -5,7 +5,7 @@
 
 import { addRequiredAttributesToClient } from "./dynamic-client-registration";
 
-describe("addReuiredAttributesToClient", () => {
+describe("addRequiredAttributesToClient", () => {
   it("should add 'created-by' attribute if attributes are present", async () => {
     const client = { attributes: { existing: "value" } };
     const result = addRequiredAttributesToClient(client);
