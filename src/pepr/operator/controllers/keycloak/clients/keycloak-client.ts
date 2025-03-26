@@ -52,7 +52,7 @@ export async function createOrUpdateClient(client: Partial<Client>) {
 
 export async function deleteClient(client: Partial<Client>) {
   const strategy = await getStrategy();
-  if (strategy === "client_credentials") {
+  if (strategy === ClientStrategy.CLIENT_CREDENTIALS) {
     return credentialsDelete(client);
   }
   return dynamicDelete(client);
