@@ -136,7 +136,10 @@ tasks:
               break
             fi
           done
-      - task: util:rke2-coredns-setup
+      - task: util:coredns-setup
+        with:
+          coredns_cm_name: "rke2-coredns-rke2-coredns"
+          coredns_deploy_name: "rke2-coredns-rke2-coredns"
       - task: util:rke2-allow-prom-kube-dns
         dir: .github/test-infra/aws/rke2/
         maxTotalSeconds: 600
