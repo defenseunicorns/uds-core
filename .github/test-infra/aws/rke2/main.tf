@@ -27,6 +27,7 @@ locals {
     token_bucket                = module.statestore.bucket,
     token_object                = module.statestore.token_object
     cluster_name                = local.tags.cluster_name
+    helm_chart_template         = file("./scripts/helmchart-template.yaml")
   }
 }
 

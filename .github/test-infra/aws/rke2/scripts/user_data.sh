@@ -16,6 +16,9 @@ export CLUSTER_NAME="${cluster_name}"
 pre_userdata() {
 info "Beginning user defined pre userdata"
 info "Create HelmChart Resources."
+cat > helmchart-template.yaml << EOM
+${helm_chart_template}
+EOM
 mkdir -p /var/lib/rancher/rke2/server/manifests
 envsubst < helmchart-template.yaml > /var/lib/rancher/rke2/server/manifests/00-helmcharts.yaml
 

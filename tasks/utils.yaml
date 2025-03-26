@@ -112,14 +112,7 @@ tasks:
                   - protocol: TCP
                     port: 9153
           EOF
-  - name: coredns-setup
-    inputs:
-      coredns_cm_name:
-        description: "Name of the default configmap for coredns. Will be overwritten by the manifest below."
-        default: "coredns"
-      coredns_deploy_name:
-        description: "Name of the coredns deployment."
-        default: "coredns"
+  - name: eks-coredns-setup
     actions:
       - description: Setup Custom ConfigMap for Core DNS
         cmd: |
@@ -153,10 +146,10 @@ tasks:
               }
           kind: ConfigMap
           metadata:
-            name: ${{ .inputs.coredns_cm_name }}
+            name: coredns
             namespace: kube-system
           EOF
-          uds zarf tools kubectl rollout restart deployment -n kube-system ${{ .inputs.coredns_deploy_name }}
+          uds zarf tools kubectl rollout restart deployment -n kube-system coredns
   - name: admin-gw-ip
     actions:
       - description: Fetch Admin Gateway IP Address

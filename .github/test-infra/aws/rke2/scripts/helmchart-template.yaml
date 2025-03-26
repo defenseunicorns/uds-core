@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2025 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 apiVersion: helm.cattle.io/v1
@@ -54,3 +54,34 @@ spec:
       deletingConfirmationFlag: true
     longhornUI:
       replicas: 0
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: coredns-custom
+  namespace: kube-system
+data:
+  uds.override: |
+    rewrite stop {
+      name regex (.*\.admin\.uds\.dev) admin-ingressgateway.istio-admin-gateway.svc.cluster.local answer auto
+    }
+    rewrite stop {
+      name regex (.*\.uds\.dev) tenant-ingressgateway.istio-tenant-gateway.svc.cluster.local answer auto
+    }
+---
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: rke2-coredns
+  namespace: kube-system
+spec:
+  valuesContent: |-
+    extraVolumes:
+      - name: custom-config-volume
+        configMap:
+          name: coredns-custom
+          optional: true
+    extraVolumeMounts:
+      - name: custom-config-volume
+        mountPath: /etc/coredns/custom
+        readOnly: true
