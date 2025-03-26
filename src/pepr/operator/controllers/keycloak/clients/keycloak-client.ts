@@ -23,7 +23,7 @@ export async function getStrategy() {
   switch (strategy) {
     case ClientStrategy.CLIENT_CREDENTIALS:
       log.debug("Using Client Credentials strategy");
-      return "client_credentials";
+      return ClientStrategy.CLIENT_CREDENTIALS;
     case ClientStrategy.AUTO:
       try {
         log.debug("Probing Client Credentials strategy");
