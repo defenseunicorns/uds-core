@@ -127,18 +127,18 @@ Example uds-bundle.yaml core-backup-restore layer overrides:
 ```yaml
     overrides:
       velero:
-          velero:
-            values:
-              - path: configuration.features
-                value: EnableCSI
-              - path: snapshotsEnabled
-                value: true
-              - path: configuration.volumeSnapshotLocation
-                value:
-                  - name: default
-                    provider: velero.io/csi
-              - path: schedules.udsbackup.template.snapshotVolumes
-                value: true
+        velero:
+          values:
+            - path: configuration.features
+              value: EnableCSI
+            - path: snapshotsEnabled
+              value: true
+            - path: configuration.volumeSnapshotLocation
+              value:
+                - name: default
+                  provider: velero.io/csi
+            - path: schedules.udsbackup.template.snapshotVolumes
+              value: true
 ```
 
 ## Additional Tips
