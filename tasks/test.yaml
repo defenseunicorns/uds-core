@@ -68,7 +68,7 @@ tasks:
       - cmd: |
           for package in $(ls src); do
             if [ ! $(echo ${EXCLUDED_PACKAGES} | grep ${package}) ]; then
-              if [ "${package}" == "istio" ]; then
+              if [ $(echo ${package} | grep "istio") ]; then
                 uds run -f src/${package}/tasks.yaml validate --no-progress --with validate_passthrough=${{ .inputs.validate_passthrough }}
               fi
              uds run -f src/${package}/tasks.yaml validate --no-progress
