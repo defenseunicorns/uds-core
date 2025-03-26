@@ -44,7 +44,7 @@ export async function getStrategy() {
 
 export async function createOrUpdateClient(client: Partial<Client>) {
   const strategy = await getStrategy();
-  if (strategy === ClientStrategy.CLIENT_CREDENTIALS.toString()) {
+  if (strategy === ClientStrategy.CLIENT_CREDENTIALS) {
     return credentialsCreateOrUpdate(client);
   }
   return dynamicCreateOrUpdate(client);
