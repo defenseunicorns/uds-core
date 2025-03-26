@@ -53,7 +53,7 @@ spec:
               mountPath: /opt/keycloak/themes
             - name: conf
               mountPath: /opt/keycloak/conf
-            {{- if .Values.themeCustomizations.resources.images }}
+            {{- if and .Values.themeCustomizations .Values.themeCustomizations.resources .Values.themeCustomizations.resources.images }}
             - name: theme-overrides
               mountPath: /opt/keycloak/theme-overrides
             {{- end }}
@@ -288,7 +288,7 @@ spec:
           {{- else }}
           emptyDir: {}
           {{- end }}
-        {{- if .Values.themeCustomizations.resources.images }}
+        {{- if and .Values.themeCustomizations .Values.themeCustomizations.resources .Values.themeCustomizations.resources.images }}
         - name: theme-overrides
           projected:
             sources:
