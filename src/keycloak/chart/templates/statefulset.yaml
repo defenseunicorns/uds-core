@@ -53,6 +53,10 @@ spec:
               mountPath: /opt/keycloak/themes
             - name: conf
               mountPath: /opt/keycloak/conf
+            {{- if .Values.themeCustomizations.resources.images }}
+            - name: theme-overrides
+              mountPath: /opt/keycloak/theme-overrides
+            {{- end }}
           envFrom:
             - secretRef:
                 name: {{ include "keycloak.fullname" . }}-realm-env
@@ -284,3 +288,17 @@ spec:
           {{- else }}
           emptyDir: {}
           {{- end }}
+        {{- if .Values.themeCustomizations.resources.images }}
+        - name: theme-overrides
+          projected:
+            sources:
+              {{- range $image := .Values.themeCustomizations.resources.images }}
+              {{- if $image.configmap.name }}
+              - configMap:
+                  name: {{ $image.configmap.name }}
+                  items:
+                    - key: {{ $image.name }}
+                      path: {{ $image.name }}
+              {{- end }}
+              {{- end }}
+        {{- end }}
