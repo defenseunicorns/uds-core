@@ -40,10 +40,7 @@ export async function setupKeycloakClientSecret() {
         };
         await updateKeycloakClientsSecret(secret, false);
       } catch (err) {
-        log.error(
-          err,
-          "Failed to create Keycloak Clients Secret",
-        );
+        log.error(err, "Failed to create Keycloak Clients Secret");
         throw err;
       }
     }
