@@ -2,7 +2,7 @@ apiVersion: networking.istio.io/v1
 kind: ServiceEntry
 metadata:
   name: service-entry-1
-  namespace: ns-1
+  namespace: istio-egress-gateway
 spec:
   location: MESH_EXTERNAL
   hosts:
@@ -12,9 +12,6 @@ spec:
     name: tls
     protocol: TLS
   resolution: DNS
-  exportTo:
-    - "."
-    - "istio-egress-gateway"
 ---
 # Global gateway, destination rule, virtual service
 apiVersion: networking.istio.io/v1
