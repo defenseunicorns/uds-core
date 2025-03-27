@@ -85,9 +85,6 @@ spec:
       - name: custom-config-volume
         mountPath: /etc/coredns/custom
         readOnly: true
-    extraConfig:
-      import:
-        parameters: /etc/coredns/custom/*.override
     # Below we take the default kubernetes configmap for coredns and add an import statement for our custom configmap
     # Ref: https://github.com/rancher/rke2-charts/blob/8078e4184e5b1730e518344aaa170a5e49e29766/charts/rke2-coredns/rke2-coredns/1.39.101/values.yaml#L104
     servers:
