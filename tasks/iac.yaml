@@ -99,7 +99,7 @@ tasks:
 
   - name: rke2-nodes-ready
     actions:
-      - cmd: sleep 30
+      #- cmd: sleep 30
       - wait:
           cluster:
             kind: nodes
@@ -112,27 +112,29 @@ tasks:
       - task: rke2-nodes-ready
       - cmd: |
           # wait for nodes to be ready
+          echo "Waiting for all cluster nodes to be ready...";
           while true; do
-            if [ $(uds zarf tools kubectl get nodes -o jsonpath='{range .items[*]}{.status.conditions[-1].type}={.status.conditions[-1].status}{"\n"}{end}' | egrep -i '^ready.*true' | wc -l) -lt 4 ]; then
-              echo "Waiting for all cluster nodes to be ready...";
+            if [ $(uds zarf tools kubectl get nodes | grep Ready | wc -l) -lt 4 ]; then
               sleep 5;
             else
               break
             fi
           done
           # wait for cluster components
+          echo "Waiting for Helm Controller to install cluster components..."
           while true; do
             if [ $(uds zarf tools kubectl get po -n kube-system -l batch.kubernetes.io/controller-uid --no-headers | egrep -v Completed | wc -l) -gt 0 ]; then
-               echo "Waiting for Helm Controller to install cluster components..."
                sleep 5;
+            else
+              break
             fi
           done
+          echo "Waiting for cluster components to be ready...";
           while true; do
             if [ $(uds zarf tools kubectl get po,job -A --no-headers=true | egrep -v 'helm-install|Running|Complete' | wc -l) -gt 0 ]; then
-              echo "Waiting for cluster components to be ready...";
               sleep 5;
             else
-              echo "Cluster is ready"
+              echo "Cluster is ready!"
               break
             fi
           done
