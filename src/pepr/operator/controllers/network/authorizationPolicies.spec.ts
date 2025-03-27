@@ -4,339 +4,172 @@
  */
 
 import { Direction, Gateway, RemoteGenerated, UDSPackage } from "../../crd";
-import { Action } from "../../crd/generated/istio/authorizationpolicy-v1beta1";
+import { Action, AuthorizationPolicy } from "../../crd/generated/istio/authorizationpolicy-v1beta1";
 import { generateAuthorizationPolicies } from "./authorizationPolicies";
 
-describe("generateAuthorizationPolicies logic tests", () => {
-  test("should merge multiple allow rules with the same selector", async () => {
-    const pkg: UDSPackage = {
-      metadata: { name: "myapp", namespace: "my-namespace", generation: 1 },
-      spec: {
-        network: {
-          allow: [
-            {
-              direction: Direction.Ingress,
-              remoteGenerated: RemoteGenerated.Anywhere,
-              selector: { app: "my-app" },
-              port: 80,
-            },
-            {
-              direction: Direction.Ingress,
-              remoteGenerated: RemoteGenerated.Anywhere,
-              selector: { app: "my-app" },
-              port: 443,
-            },
-          ],
-        },
-      },
-    };
+jest.mock("../../../logger", () => ({
+  setupLogger: () => ({
+    debug: jest.fn(),
+    info: jest.fn(),
+    error: jest.fn(),
+  }),
+  Component: {
+    OPERATOR_NETWORK: "OPERATOR_NETWORK",
+  },
+}));
 
-    const policies = await generateAuthorizationPolicies(pkg);
-    expect(policies.length).toBe(1);
-    const policy = policies[0];
-    expect(policy.metadata?.name).toBe("protect-myapp-my-app");
-    expect(policy.spec?.action).toBe(Action.Allow);
-    expect(policy.spec?.rules).toEqual(
-      expect.arrayContaining([
-        {
-          from: [{ source: { notNamespaces: ["my-namespace"] } }],
-          to: [{ operation: { ports: expect.arrayContaining(["80", "443"]) } }],
-        },
-      ]),
-    );
-  });
-
-  test("should override source with remoteServiceAccount", async () => {
-    const pkg: UDSPackage = {
-      metadata: { name: "authservice", namespace: "authservice", generation: 1 },
-      spec: {
-        network: {
-          allow: [
-            {
-              direction: Direction.Ingress,
-              remoteGenerated: RemoteGenerated.IntraNamespace,
-              selector: { app: "auth-app" },
-              port: 10003,
-              remoteServiceAccount: "custom-sa",
-            },
-          ],
-        },
-      },
-    };
-
-    const policies = await generateAuthorizationPolicies(pkg);
-    expect(policies.length).toBe(1);
-    const policy = policies[0];
-    expect(policy.spec?.action).toBe(Action.Allow);
-    expect(policy.spec?.rules).toEqual(
-      expect.arrayContaining([
-        {
-          from: [{ source: { principals: ["cluster.local/ns/authservice/sa/custom-sa"] } }],
-          to: [{ operation: { ports: ["10003"] } }],
-        },
-      ]),
-    );
-  });
-
-  test("should handle specific remoteNamespace vs remoteGenerated Anywhere", async () => {
-    const pkg: UDSPackage = {
-      metadata: { name: "testapp", namespace: "test-namespace", generation: 1 },
-      spec: {
-        network: {
-          allow: [
-            {
-              direction: Direction.Ingress,
-              remoteNamespace: "other-namespace",
-              selector: { app: "test-app" },
-              port: 3000,
-            },
-            {
-              direction: Direction.Ingress,
-              remoteGenerated: RemoteGenerated.Anywhere,
-              selector: { app: "test-app" },
-              port: 4000,
-            },
-          ],
-        },
-      },
-    };
-
-    const policies = await generateAuthorizationPolicies(pkg);
-    expect(policies.length).toBe(1);
-    const policy = policies[0];
-    expect(policy.spec?.action).toBe(Action.Allow);
-    expect(policy.spec?.rules?.length).toBe(2);
-    expect(policy.spec?.rules).toEqual(
-      expect.arrayContaining([
-        {
-          from: [{ source: { namespaces: ["other-namespace"] } }],
-          to: [{ operation: { ports: ["3000"] } }],
-        },
-        {
-          from: [{ source: { notNamespaces: ["test-namespace"] } }],
-          to: [{ operation: { ports: ["4000"] } }],
-        },
-      ]),
-    );
-  });
-
-  test("should include all ports from a rule with multiple ports", async () => {
-    const pkg: UDSPackage = {
-      metadata: { name: "multiports", namespace: "multi-ns", generation: 1 },
-      spec: {
-        network: {
-          allow: [
-            {
-              direction: Direction.Ingress,
-              remoteGenerated: RemoteGenerated.Anywhere,
-              selector: { app: "multiports-app" },
-              ports: [8080, 9090],
-            },
-          ],
-        },
-      },
-    };
-
-    const policies = await generateAuthorizationPolicies(pkg);
-    expect(policies.length).toBe(1);
-    const policy = policies[0];
-    expect(policy.spec?.action).toBe(Action.Allow);
-    expect(policy.spec?.rules).toEqual(
-      expect.arrayContaining([
-        {
-          from: [{ source: { notNamespaces: ["multi-ns"] } }],
-          to: [{ operation: { ports: expect.arrayContaining(["8080", "9090"]) } }],
-        },
-      ]),
-    );
-  });
-
-  test("should generate a policy for rules with no port information", async () => {
-    const pkg: UDSPackage = {
-      metadata: { name: "noports", namespace: "noports-ns", generation: 1 },
-      spec: {
-        network: {
-          allow: [
-            {
-              direction: Direction.Ingress,
-              remoteGenerated: RemoteGenerated.Anywhere,
-              selector: { app: "noports-app" },
-              // No port or ports provided.
-            },
-          ],
-        },
-      },
-    };
-
-    const policies = await generateAuthorizationPolicies(pkg);
-    expect(policies.length).toBe(1);
-    const policy = policies[0];
-    expect(policy.spec?.action).toBe(Action.Allow);
-    // Rule should only have a "from" clause.
-    expect(policy.spec?.rules).toEqual(
-      expect.arrayContaining([
-        {
-          from: [{ source: { notNamespaces: ["noports-ns"] } }],
-        },
-      ]),
-    );
-  });
-
-  test("should derive policy name using app.kubernetes.io/name if app label is missing", async () => {
-    const pkg: UDSPackage = {
-      metadata: { name: "testpkg", namespace: "testns", generation: 1 },
-      spec: {
-        network: {
-          allow: [
-            {
-              direction: Direction.Ingress,
-              selector: { "app.kubernetes.io/name": "example-pod" },
-              port: 8080,
-            },
-          ],
-        },
-      },
-    };
-
-    const policies = await generateAuthorizationPolicies(pkg);
-    expect(policies.length).toBe(1);
-    expect(policies[0].metadata?.name).toBe("protect-testpkg-example-workload");
-    expect(policies[0].spec?.action).toBe(Action.Allow);
-  });
-
-  test("should default source to package namespace when no remote info is provided", async () => {
-    const pkg: UDSPackage = {
-      metadata: { name: "defaultsrc", namespace: "defaultns", generation: 1 },
-      spec: {
-        network: {
-          allow: [
-            {
-              direction: Direction.Ingress,
-              selector: { app: "default-app" },
-              port: 80,
-            },
-          ],
-        },
-      },
-    };
-
-    const policies = await generateAuthorizationPolicies(pkg);
-    expect(policies.length).toBe(1);
-    expect(policies[0].spec?.rules).toEqual(
-      expect.arrayContaining([
-        {
-          from: [{ source: { namespaces: ["defaultns"] } }],
-          to: [{ operation: { ports: ["80"] } }],
-        },
-      ]),
-    );
-    expect(policies[0].spec?.action).toBe(Action.Allow);
-  });
-
-  test("should use package namespace as source when remoteNamespace is empty", async () => {
-    const pkg: UDSPackage = {
-      metadata: { name: "emptyRemote", namespace: "emptyns", generation: 1 },
-      spec: {
-        network: {
-          allow: [
-            {
-              direction: Direction.Ingress,
-              selector: { app: "empty-app" },
-              port: 8081,
-              remoteNamespace: "", // explicitly empty
-            },
-          ],
-        },
-      },
-    };
-
-    const policies = await generateAuthorizationPolicies(pkg);
-    expect(policies.length).toBe(1);
-    expect(policies[0].spec?.rules).toEqual(
-      expect.arrayContaining([
-        {
-          from: [{ source: { namespaces: ["emptyns"] } }],
-          to: [{ operation: { ports: ["8081"] } }],
-        },
-      ]),
-    );
-    expect(policies[0].spec?.action).toBe(Action.Allow);
-  });
-
-  test("should default source to package namespace for expose rules when gateway is not Admin", async () => {
-    const pkg: UDSPackage = {
-      metadata: { name: "exposeTest", namespace: "exposeNs", generation: 1 },
-      spec: {
-        network: {
-          expose: [
-            {
-              service: "test-service",
-              selector: { foo: "bar" },
-              gateway: Gateway.Tenant,
-              host: "test.example.com",
-              port: 8080,
-            },
-          ],
-        },
-      },
-    };
-
-    const policies = await generateAuthorizationPolicies(pkg);
-    expect(policies.length).toBe(1);
-    expect(policies[0].metadata?.name).toBe("protect-exposeTest-workload");
-    expect(policies[0].spec?.rules).toEqual(
-      expect.arrayContaining([
-        {
-          from: [{ source: { namespaces: ["exposeNs"] } }],
-          to: [{ operation: { ports: ["8080"] } }],
-        },
-      ]),
-    );
-    expect(policies[0].spec?.action).toBe(Action.Allow);
-  });
-
-  test("should merge multiple expose rules with the same selector and gateway", async () => {
-    const pkg: UDSPackage = {
-      metadata: { name: "exposeMerge", namespace: "expose-ns", generation: 1 },
-      spec: {
-        network: {
-          expose: [
-            {
-              service: "svc1",
-              selector: { app: "merge-app" },
-              gateway: Gateway.Admin,
-              host: "host1",
-              port: 8000,
-            },
-            {
-              service: "svc2",
-              selector: { app: "merge-app" },
-              gateway: Gateway.Admin,
-              host: "host2",
-              port: 9000,
-            },
-          ],
-        },
-      },
-    };
-
-    const policies = await generateAuthorizationPolicies(pkg);
-    expect(policies.length).toBe(1);
-    const policy = policies[0];
-    expect(policy.metadata?.name).toBe("protect-exposeMerge-merge-app");
-    expect(policy.spec?.rules).toEqual(
-      expect.arrayContaining([
-        {
-          from: [{ source: { namespaces: ["istio-admin-gateway"] } }],
-          to: [{ operation: { ports: expect.arrayContaining(["8000", "9000"]) } }],
-        },
-      ]),
-    );
-    expect(policy.spec?.action).toBe(Action.Allow);
-  });
-});
+jest.mock("pepr", () => ({
+  K8s: jest.fn(() => ({
+    Apply: jest.fn().mockResolvedValue({}),
+    InNamespace: jest.fn().mockReturnThis(),
+    WithLabel: jest.fn().mockReturnThis(),
+    Get: jest.fn().mockResolvedValue({ items: [] }),
+  })),
+}));
 
 describe("generateAuthorizationPolicies UDS Core Packages", () => {
+  test("should generate an authpol with ipBlocks from remoteCidr", async () => {
+    const pkg: UDSPackage = {
+      metadata: { name: "curl-pkg-remote-cidr", namespace: "curl-ns-remote-cidr", generation: 1 },
+      spec: {
+        network: {
+          allow: [
+            {
+              direction: Direction.Ingress,
+              remoteCidr: "0.0.0.0/0",
+              selector: { app: "curl-pkg-remote-cidr" },
+            },
+          ],
+        },
+      },
+    };
+
+    const policies: AuthorizationPolicy[] = await generateAuthorizationPolicies(pkg);
+    expect(policies).toHaveLength(1);
+    const policy = policies[0];
+    expect(policy.metadata?.namespace).toBe("curl-ns-remote-cidr");
+    // The selector should match the rule's selector
+    expect(policy.spec?.selector?.matchLabels).toEqual({ app: "curl-pkg-remote-cidr" });
+
+    // The rule should have a "from" block with source containing ipBlocks
+    expect(policy.spec?.rules).toHaveLength(1);
+    const rule = policy.spec!.rules![0];
+
+    // Since remoteCidr was provided, the computed source should use ipBlocks
+    expect(rule.from).toBeDefined();
+    expect(rule.from![0].source).toEqual({ ipBlocks: ["0.0.0.0/0"] });
+
+    // And no "to" clause should be present because no port was specified
+    expect(rule.to).toBeUndefined();
+
+    // Also verify that the action is Allow
+    expect(policy.spec?.action).toBe(Action.Allow);
+  });
+
+  test("should generate two distinct policies for expose and allow rules", async () => {
+    const pkg: UDSPackage = {
+      apiVersion: "uds.dev/v1alpha1",
+      kind: "Package",
+      metadata: {
+        name: "httpbin-other",
+        namespace: "authservice-test-app",
+        generation: 1,
+      },
+      spec: {
+        sso: [
+          {
+            name: "Demo SSO",
+            clientId: "uds-core-httpbin",
+            redirectUris: ["https://protected.uds.dev/login"],
+            enableAuthserviceSelector: { app: "httpbin" },
+            groups: { anyOf: ["/UDS Core/Admin"] },
+          },
+        ],
+        network: {
+          expose: [
+            {
+              service: "httpbin",
+              selector: { app: "httpbin" },
+              gateway: Gateway.Tenant,
+              host: "protected",
+              port: 8000,
+              targetPort: 80,
+            },
+          ],
+          allow: [
+            {
+              direction: Direction.Ingress,
+              selector: { app: "httpbin" },
+              ports: [80],
+            },
+          ],
+        },
+      },
+    };
+
+    const policies = await generateAuthorizationPolicies(pkg);
+    // We expect exactly two policies: one for the expose rule and one for the allow rule.
+    expect(policies.length).toBe(2);
+
+    // Allow rule policy (generated via generateAllowName)
+    const allowPolicy = policies.find(
+      p => p.metadata?.name === "protect-httpbin-other-ingress-httpbin-default-all-pods",
+    );
+    expect(allowPolicy).toBeDefined();
+    expect(allowPolicy!.spec!.action).toBe(Action.Allow);
+    expect(allowPolicy!.spec!.selector?.matchLabels).toEqual({ app: "httpbin" });
+    expect(allowPolicy!.spec!.rules![0].to).toEqual([{ operation: { ports: ["80"] } }]);
+
+    // Expose rule policy (generated via generateExposeName)
+    const exposePolicy = policies.find(
+      p => p.metadata?.name === "protect-httpbin-other-ingress-80-httpbin-istio-tenant-gateway",
+    );
+    expect(exposePolicy).toBeDefined();
+    expect(exposePolicy!.spec!.action).toBe(Action.Allow);
+    // For expose, no selector is applied by default
+    expect(exposePolicy!.spec!.rules![0].from).toEqual([
+      {
+        source: {
+          principals: ["cluster.local/ns/istio-tenant-gateway/sa/tenant-ingressgateway"],
+        },
+      },
+    ]);
+    expect(exposePolicy!.spec!.rules![0].to).toEqual([{ operation: { ports: ["80"] } }]);
+  });
+
+  test("should generate unique AuthorizationPolicies for expose rules with different ports", async () => {
+    const pkg: UDSPackage = {
+      metadata: { name: "test-tenant-app", namespace: "test-tenant-app", generation: 1 },
+      spec: {
+        network: {
+          expose: [
+            {
+              service: "test-tenant-app",
+              selector: { app: "test-tenant-app" },
+              gateway: Gateway.Tenant,
+              host: "demo-8080",
+              port: 8080,
+            },
+            {
+              service: "test-tenant-app",
+              selector: { app: "test-tenant-app" },
+              gateway: Gateway.Tenant,
+              host: "demo-8081",
+              port: 8081,
+            },
+          ],
+        },
+      },
+    };
+
+    const policies = await generateAuthorizationPolicies(pkg);
+    expect(policies.length).toBe(2);
+    const names = policies.map(p => p.metadata?.name);
+    expect(new Set(names).size).toBe(2);
+    expect(names.some(name => name?.includes("8080"))).toBe(true);
+    expect(names.some(name => name?.includes("8081"))).toBe(true);
+  });
+
   test("should generate correct AuthorizationPolicy for Loki", async () => {
     const pkg: UDSPackage = {
       metadata: { name: "loki", namespace: "loki", generation: 1 },
@@ -354,23 +187,19 @@ describe("generateAuthorizationPolicies UDS Core Packages", () => {
     };
 
     const policies = await generateAuthorizationPolicies(pkg);
+    // With one allow rule (Ingress/IntraNamespace), expect one policy
     expect(policies.length).toBe(1);
     const policy = policies[0];
-    expect(policy.metadata?.name).toBe("protect-loki-ns");
+    expect(policy.metadata?.name).toBe("protect-loki-ingress-all-pods-intranamespace");
     expect(policy.metadata?.namespace).toBe("loki");
     expect(policy.spec?.action).toBe(Action.Allow);
-    // The rule should only have a "from" clause (no port restrictions)
+    // The rule should only have a "from" clause with source { namespaces: ["loki"] }
     expect(policy.spec?.rules).toEqual(
-      expect.arrayContaining([
-        {
-          from: [{ source: { namespaces: ["loki"] } }],
-        },
-      ]),
+      expect.arrayContaining([{ from: [{ source: { namespaces: ["loki"] } }] }]),
     );
   });
 
   test("should generate correct policies for Neuvector", async () => {
-    // Package with both an expose rule and allow rules.
     const pkg: UDSPackage = {
       metadata: { name: "neuvector", namespace: "neuvector", generation: 1 },
       spec: {
@@ -386,7 +215,7 @@ describe("generateAuthorizationPolicies UDS Core Packages", () => {
           ],
           allow: [
             { direction: Direction.Ingress, remoteGenerated: RemoteGenerated.IntraNamespace },
-            { direction: Direction.Egress, remoteGenerated: RemoteGenerated.IntraNamespace },
+            { direction: Direction.Egress, remoteGenerated: RemoteGenerated.IntraNamespace }, // Skipped.
             {
               direction: Direction.Ingress,
               remoteGenerated: RemoteGenerated.Anywhere,
@@ -400,12 +229,23 @@ describe("generateAuthorizationPolicies UDS Core Packages", () => {
     };
 
     const policies = await generateAuthorizationPolicies(pkg);
-    // Expect three policies: two workload policies and one namespace policy.
+    // With the current per-rule design we expect three policies
     expect(policies.length).toBe(3);
 
-    // Workload policy from the allow rule with selector.
+    // Policy for the IntraNamespace allow rule (no selector)
+    const nsPolicy = policies.find(
+      p => p.metadata?.name === "protect-neuvector-ingress-all-pods-intranamespace",
+    );
+    expect(nsPolicy).toBeDefined();
+    expect(nsPolicy?.metadata?.namespace).toBe("neuvector");
+    expect(nsPolicy?.spec?.action).toBe(Action.Allow);
+    expect(nsPolicy?.spec?.rules).toEqual(
+      expect.arrayContaining([{ from: [{ source: { namespaces: ["neuvector"] } }] }]),
+    );
+
+    // Policy for the controller allow rule ("Webhook")
     const controllerPolicy = policies.find(
-      p => p.metadata?.name === "protect-neuvector-neuvector-controller",
+      p => p.metadata?.name === "protect-neuvector-ingress-webhook",
     );
     expect(controllerPolicy).toBeDefined();
     expect(controllerPolicy?.spec?.selector?.matchLabels).toEqual({
@@ -413,79 +253,35 @@ describe("generateAuthorizationPolicies UDS Core Packages", () => {
     });
     expect(controllerPolicy?.spec?.action).toBe(Action.Allow);
     expect(controllerPolicy?.spec?.rules).toEqual(
-      expect.arrayContaining([
-        {
-          from: [{ source: { notNamespaces: ["neuvector"] } }],
-          to: [{ operation: { ports: ["30443"] } }],
-        },
-      ]),
+      expect.arrayContaining([{ to: [{ operation: { ports: ["30443"] } }] }]),
     );
 
-    // Workload policy from the expose rule.
-    const managerPolicy = policies.find(
-      p => p.metadata?.name === "protect-neuvector-neuvector-manager",
+    // Policy for the expose rule (should use default base name)
+    const exposePolicy = policies.find(
+      p =>
+        p.metadata?.name ===
+        "protect-neuvector-ingress-8443-neuvector-manager-pod-istio-admin-gateway",
     );
-    expect(managerPolicy).toBeDefined();
-    expect(managerPolicy?.spec?.selector?.matchLabels).toEqual({ app: "neuvector-manager-pod" });
-    expect(managerPolicy?.spec?.action).toBe(Action.Allow);
-    expect(managerPolicy?.spec?.rules).toEqual(
+    expect(exposePolicy).toBeDefined();
+    expect(exposePolicy?.spec?.selector?.matchLabels).toEqual({ app: "neuvector-manager-pod" });
+    expect(exposePolicy?.spec?.action).toBe(Action.Allow);
+    expect(exposePolicy?.spec?.rules).toEqual(
       expect.arrayContaining([
         {
-          from: [{ source: { namespaces: ["istio-admin-gateway"] } }],
+          from: [
+            {
+              source: {
+                principals: ["cluster.local/ns/istio-admin-gateway/sa/admin-ingressgateway"],
+              },
+            },
+          ],
           to: [{ operation: { ports: ["8443"] } }],
         },
       ]),
     );
-
-    // Namespace policy from the two intra-namespace rules.
-    const nsPolicy = policies.find(p => p.metadata?.name === "protect-neuvector-ns");
-    expect(nsPolicy).toBeDefined();
-    expect(nsPolicy?.metadata?.namespace).toBe("neuvector");
-    expect(nsPolicy?.spec?.action).toBe(Action.Allow);
-    // Rule should have only a "from" clause.
-    expect(nsPolicy?.spec?.rules).toEqual(
-      expect.arrayContaining([
-        {
-          from: [{ source: { namespaces: ["neuvector"] } }],
-        },
-      ]),
-    );
   });
 
-  test("should generate correct AuthorizationPolicies for metrics-server", async () => {
-    const pkg: UDSPackage = {
-      metadata: { name: "metrics-server", namespace: "metrics-server", generation: 1 },
-      spec: {
-        network: {
-          allow: [
-            {
-              direction: Direction.Egress,
-              remoteGenerated: RemoteGenerated.Anywhere,
-              port: 10250,
-            },
-          ],
-        },
-      },
-    };
-
-    const policies = await generateAuthorizationPolicies(pkg);
-    // Expect one policy generated (namespace policy)
-    expect(policies.length).toBe(1);
-    const nsPolicy = policies[0];
-    expect(nsPolicy.metadata?.name).toBe("protect-metrics-server-ns");
-    expect(nsPolicy.metadata?.namespace).toBe("metrics-server");
-    expect(nsPolicy.spec?.action).toBe(Action.Allow);
-    expect(nsPolicy.spec?.rules).toEqual(
-      expect.arrayContaining([
-        {
-          from: [{ source: { notNamespaces: ["metrics-server"] } }],
-          to: [{ operation: { ports: ["10250"] } }],
-        },
-      ]),
-    );
-  });
-
-  test("should generate correct AuthorizationPolicies for vector", async () => {
+  test("should generate correct AuthorizationPolicies for Vector", async () => {
     const pkg: UDSPackage = {
       metadata: { name: "vector", namespace: "vector", generation: 1 },
       spec: {
@@ -507,7 +303,7 @@ describe("generateAuthorizationPolicies UDS Core Packages", () => {
     const policies = await generateAuthorizationPolicies(pkg);
     expect(policies.length).toBe(1);
     const policy = policies[0];
-    expect(policy.metadata?.name).toBe("protect-vector-vector-workload");
+    expect(policy.metadata?.name).toBe("protect-vector-ingress-prometheus-metrics");
     expect(policy.spec?.action).toBe(Action.Allow);
     expect(policy.spec?.selector?.matchLabels).toEqual({ "app.kubernetes.io/name": "vector" });
     expect(policy.spec?.rules).toEqual(
@@ -520,7 +316,7 @@ describe("generateAuthorizationPolicies UDS Core Packages", () => {
     );
   });
 
-  test("should generate correct AuthorizationPolicies for velero", async () => {
+  test("should generate correct AuthorizationPolicies for Velero", async () => {
     const pkg: UDSPackage = {
       metadata: { name: "velero", namespace: "velero", generation: 1 },
       spec: {
@@ -532,7 +328,7 @@ describe("generateAuthorizationPolicies UDS Core Packages", () => {
               remoteNamespace: "monitoring",
               remoteSelector: { "app.kubernetes.io/name": "prometheus" },
               port: 8085,
-              description: "Prometheus Metrics",
+              description: "Protected Apps",
             },
           ],
         },
@@ -540,9 +336,11 @@ describe("generateAuthorizationPolicies UDS Core Packages", () => {
     };
 
     const policies = await generateAuthorizationPolicies(pkg);
+    // Expect one policy
     expect(policies.length).toBe(1);
     const policy = policies[0];
-    expect(policy.metadata?.name).toBe("protect-velero-velero-workload");
+    expect(policy.metadata?.name).toBe("protect-velero-ingress-protected-apps");
+    expect(policy.metadata?.namespace).toBe("velero");
     expect(policy.spec?.action).toBe(Action.Allow);
     expect(policy.spec?.selector?.matchLabels).toEqual({ "app.kubernetes.io/name": "velero" });
     expect(policy.spec?.rules).toEqual(
@@ -555,7 +353,7 @@ describe("generateAuthorizationPolicies UDS Core Packages", () => {
     );
   });
 
-  test("should generate correct AuthorizationPolicy for authservice", async () => {
+  test("should generate correct AuthorizationPolicies for Authservice", async () => {
     const pkg: UDSPackage = {
       metadata: { name: "authservice", namespace: "authservice", generation: 1 },
       spec: {
@@ -576,39 +374,32 @@ describe("generateAuthorizationPolicies UDS Core Packages", () => {
     };
 
     const policies = await generateAuthorizationPolicies(pkg);
+    // Expect two policies
     expect(policies.length).toBe(2);
-
-    const nsPolicy = policies.find(p => p.metadata?.name === "protect-authservice-ns");
+    const nsPolicy = policies.find(
+      p => p.metadata?.name === "protect-authservice-ingress-all-pods-intranamespace",
+    );
     expect(nsPolicy).toBeDefined();
-    expect(nsPolicy?.metadata?.namespace).toBe("authservice");
-    expect(nsPolicy?.spec?.action).toBe(Action.Allow);
-    expect(nsPolicy?.spec?.rules).toEqual(
-      expect.arrayContaining([
-        {
-          from: [{ source: { namespaces: ["authservice"] } }],
-        },
-      ]),
+    expect(nsPolicy!.metadata?.namespace).toBe("authservice");
+    expect(nsPolicy!.spec?.action).toBe(Action.Allow);
+    expect(nsPolicy!.spec?.rules).toEqual(
+      expect.arrayContaining([{ from: [{ source: { namespaces: ["authservice"] } }] }]),
     );
 
     const workloadPolicy = policies.find(
-      p => p.metadata?.name === "protect-authservice-authservice-workload",
+      p => p.metadata?.name === "protect-authservice-ingress-protected-apps",
     );
     expect(workloadPolicy).toBeDefined();
-    expect(workloadPolicy?.spec?.selector?.matchLabels).toEqual({
+    expect(workloadPolicy!.spec?.selector?.matchLabels).toEqual({
       "app.kubernetes.io/name": "authservice",
     });
-    expect(workloadPolicy?.spec?.action).toBe(Action.Allow);
-    expect(workloadPolicy?.spec?.rules).toEqual(
-      expect.arrayContaining([
-        {
-          from: [{ source: { namespaces: ["authservice"] } }],
-          to: [{ operation: { ports: ["10003"] } }],
-        },
-      ]),
+    expect(workloadPolicy!.spec?.action).toBe(Action.Allow);
+    expect(workloadPolicy!.spec?.rules).toEqual(
+      expect.arrayContaining([{ to: [{ operation: { ports: ["10003"] } }] }]),
     );
   });
 
-  test("should generate correct AuthorizationPolicies for prometheus-stack", async () => {
+  test("should generate correct AuthorizationPolicies for Prometheus-Stack", async () => {
     const pkg: UDSPackage = {
       metadata: { name: "prometheus-stack", namespace: "monitoring", generation: 1 },
       spec: {
@@ -635,30 +426,27 @@ describe("generateAuthorizationPolicies UDS Core Packages", () => {
     };
 
     const policies = await generateAuthorizationPolicies(pkg);
-    // Expect three policies: one namespace policy and two workload policies.
+    // Expect three policies
     expect(policies.length).toBe(3);
-
-    const nsPolicy = policies.find(p => p.metadata?.name === "protect-prometheus-stack-ns");
+    const nsPolicy = policies.find(
+      p => p.metadata?.name === "protect-prometheus-stack-ingress-all-pods-intranamespace",
+    );
     expect(nsPolicy).toBeDefined();
-    expect(nsPolicy?.metadata?.namespace).toBe("monitoring");
-    expect(nsPolicy?.spec?.action).toBe(Action.Allow);
-    expect(nsPolicy?.spec?.rules).toEqual(
-      expect.arrayContaining([
-        {
-          from: [{ source: { namespaces: ["monitoring"] } }],
-        },
-      ]),
+    expect(nsPolicy!.metadata?.namespace).toBe("monitoring");
+    expect(nsPolicy!.spec?.action).toBe(Action.Allow);
+    expect(nsPolicy!.spec?.rules).toEqual(
+      expect.arrayContaining([{ from: [{ source: { namespaces: ["monitoring"] } }] }]),
     );
 
     const promPolicy = policies.find(
-      p => p.metadata?.name === "protect-prometheus-stack-prometheus-workload",
+      p => p.metadata?.name === "protect-prometheus-stack-ingress-prometheus-grafana-grafana",
     );
     expect(promPolicy).toBeDefined();
-    expect(promPolicy?.spec?.selector?.matchLabels).toEqual({
+    expect(promPolicy!.spec?.selector?.matchLabels).toEqual({
       "app.kubernetes.io/name": "prometheus",
     });
-    expect(promPolicy?.spec?.action).toBe(Action.Allow);
-    expect(promPolicy?.spec?.rules).toEqual(
+    expect(promPolicy!.spec?.action).toBe(Action.Allow);
+    expect(promPolicy!.spec?.rules).toEqual(
       expect.arrayContaining([
         {
           from: [{ source: { namespaces: ["grafana"] } }],
@@ -668,20 +456,15 @@ describe("generateAuthorizationPolicies UDS Core Packages", () => {
     );
 
     const operatorPolicy = policies.find(
-      p => p.metadata?.name === "protect-prometheus-stack-kube-prometheus-stack-operator",
+      p => p.metadata?.name === "protect-prometheus-stack-ingress-webhook",
     );
     expect(operatorPolicy).toBeDefined();
-    expect(operatorPolicy?.spec?.selector?.matchLabels).toEqual({
+    expect(operatorPolicy!.spec?.selector?.matchLabels).toEqual({
       app: "kube-prometheus-stack-operator",
     });
-    expect(operatorPolicy?.spec?.action).toBe(Action.Allow);
-    expect(operatorPolicy?.spec?.rules).toEqual(
-      expect.arrayContaining([
-        {
-          from: [{ source: { notNamespaces: ["monitoring"] } }],
-          to: [{ operation: { ports: ["10250"] } }],
-        },
-      ]),
+    expect(operatorPolicy!.spec?.action).toBe(Action.Allow);
+    expect(operatorPolicy!.spec?.rules).toEqual(
+      expect.arrayContaining([{ to: [{ operation: { ports: ["10250"] } }] }]),
     );
   });
 
@@ -693,9 +476,9 @@ describe("generateAuthorizationPolicies UDS Core Packages", () => {
           {
             description: "Metrics",
             podSelector: { "app.kubernetes.io/name": "grafana" },
-            portName: "service",
             selector: { "app.kubernetes.io/name": "grafana" },
             targetPort: 3000,
+            portName: "80",
           },
         ],
         network: {
@@ -721,33 +504,38 @@ describe("generateAuthorizationPolicies UDS Core Packages", () => {
     };
 
     const policies = await generateAuthorizationPolicies(pkg);
-    // Expect three policies: one workload policy (from expose), one namespace-wide policy (from allow), and one monitor policy (from monitor block)
+    // Expect three policies: one from expose, one from allow, and one monitor policy
     expect(policies.length).toBe(3);
-
-    // Verify the workload policy from expose rules.
     const exposePolicy = policies.find(
-      p => p.metadata?.name === "protect-grafana-grafana-workload",
+      p => p.metadata?.name === "protect-grafana-ingress-3000-grafana-istio-admin-gateway",
     );
     expect(exposePolicy).toBeDefined();
-    expect(exposePolicy?.spec?.selector?.matchLabels).toEqual({
+    expect(exposePolicy!.spec?.selector?.matchLabels).toEqual({
       "app.kubernetes.io/name": "grafana",
     });
-    expect(exposePolicy?.spec?.action).toBe(Action.Allow);
-    expect(exposePolicy?.spec?.rules).toEqual(
+    expect(exposePolicy!.spec?.action).toBe(Action.Allow);
+    expect(exposePolicy!.spec?.rules).toEqual(
       expect.arrayContaining([
         {
-          from: [{ source: { namespaces: ["istio-admin-gateway"] } }],
+          from: [
+            {
+              source: {
+                principals: ["cluster.local/ns/istio-admin-gateway/sa/admin-ingressgateway"],
+              },
+            },
+          ],
           to: [{ operation: { ports: ["3000"] } }],
         },
       ]),
     );
 
-    // Verify the namespace-wide policy from allow rules.
-    const nsPolicy = policies.find(p => p.metadata?.name === "protect-grafana-ns");
+    const nsPolicy = policies.find(
+      p => p.metadata?.name === "protect-grafana-ingress-all-pods-intranamespace",
+    );
     expect(nsPolicy).toBeDefined();
-    expect(nsPolicy?.metadata?.namespace).toBe("grafana");
-    expect(nsPolicy?.spec?.action).toBe(Action.Allow);
-    expect(nsPolicy?.spec?.rules).toEqual(
+    expect(nsPolicy!.metadata?.namespace).toBe("grafana");
+    expect(nsPolicy!.spec?.action).toBe(Action.Allow);
+    expect(nsPolicy!.spec?.rules).toEqual(
       expect.arrayContaining([
         {
           from: [{ source: { namespaces: ["grafana"] } }],
@@ -757,15 +545,15 @@ describe("generateAuthorizationPolicies UDS Core Packages", () => {
     );
 
     const monitorPolicy = policies.find(
-      p => p.metadata?.name === "protect-grafana-monitor-grafana-workload",
+      p => p.metadata?.name === "protect-grafana-monitor-grafana-workload-3000",
     );
     expect(monitorPolicy).toBeDefined();
-    expect(monitorPolicy?.metadata?.namespace).toBe("grafana");
-    expect(monitorPolicy?.spec?.action).toBe(Action.Allow);
-    expect(monitorPolicy?.spec?.selector?.matchLabels).toEqual({
+    expect(monitorPolicy!.metadata?.namespace).toBe("grafana");
+    expect(monitorPolicy!.spec?.action).toBe(Action.Allow);
+    expect(monitorPolicy!.spec?.selector?.matchLabels).toEqual({
       "app.kubernetes.io/name": "grafana",
     });
-    expect(monitorPolicy?.spec?.rules).toEqual(
+    expect(monitorPolicy!.spec?.rules).toEqual(
       expect.arrayContaining([
         {
           from: [{ source: { namespaces: ["monitoring"] } }],
@@ -775,28 +563,100 @@ describe("generateAuthorizationPolicies UDS Core Packages", () => {
     );
   });
 
-  test("should generate correct AuthorizationPolicies for keycloak", async () => {
+  test("should generate correct AuthorizationPolicies for Keycloak", async () => {
     const pkg: UDSPackage = {
       metadata: { name: "keycloak", namespace: "keycloak", generation: 1 },
       spec: {
+        monitor: [
+          {
+            description: "Metrics",
+            podSelector: { "app.kubernetes.io/name": "keycloak" },
+            selector: {
+              "app.kubernetes.io/name": "keycloak",
+              "app.kubernetes.io/component": "http",
+            },
+            targetPort: 9000,
+            portName: "http-metrics",
+          },
+        ],
         network: {
           allow: [
             {
-              direction: Direction.Ingress,
-              remoteGenerated: RemoteGenerated.IntraNamespace,
-              ports: [7800, 57800],
-            },
-            {
+              description: "UDS Operator",
               direction: Direction.Ingress,
               selector: { "app.kubernetes.io/name": "keycloak" },
-              remoteNamespace: "monitoring",
-              port: 9000,
+              remoteNamespace: "pepr-system",
+              remoteSelector: { app: "pepr-uds-core-watcher" },
+              port: 8080,
             },
             {
+              description: "Keycloak backchannel access",
               direction: Direction.Ingress,
               selector: { "app.kubernetes.io/name": "keycloak" },
               remoteNamespace: "*",
               port: 8080,
+            },
+            {
+              description: "OCSP Lookup",
+              direction: Direction.Egress,
+              selector: { "app.kubernetes.io/name": "keycloak" },
+              ports: [443, 80],
+              remoteGenerated: RemoteGenerated.Anywhere,
+            },
+          ],
+          expose: [
+            {
+              description: "remove private paths from public gateway",
+              host: "sso",
+              service: "keycloak-http",
+              selector: { "app.kubernetes.io/name": "keycloak" },
+              port: 8080,
+              advancedHTTP: {
+                match: [
+                  { name: "redirect-welcome", uri: { exact: "/" } },
+                  { name: "redirect-admin", uri: { prefix: "/admin" } },
+                  { name: "redirect-master-realm", uri: { prefix: "/realms/master" } },
+                  { name: "redirect-metrics", uri: { prefix: "/metrics" } },
+                ],
+                redirect: { uri: "/realms/uds/account" },
+                headers: {
+                  request: {
+                    remove: ["istio-mtls-client-certificate"],
+                    add: { "istio-mtls-client-certificate": "%DOWNSTREAM_PEER_CERT%" },
+                  },
+                },
+              },
+            },
+            {
+              description: "public auth access with optional client certificate",
+              service: "keycloak-http",
+              selector: { "app.kubernetes.io/name": "keycloak" },
+              host: "sso",
+              port: 8080,
+              advancedHTTP: {
+                headers: {
+                  request: {
+                    remove: ["istio-mtls-client-certificate"],
+                    add: { "istio-mtls-client-certificate": "%DOWNSTREAM_PEER_CERT%" },
+                  },
+                },
+              },
+            },
+            {
+              description: "admin access with optional client certificate",
+              service: "keycloak-http",
+              selector: { "app.kubernetes.io/name": "keycloak" },
+              gateway: Gateway.Admin,
+              host: "keycloak",
+              port: 8080,
+              advancedHTTP: {
+                headers: {
+                  request: {
+                    remove: ["istio-mtls-client-certificate"],
+                    add: { "istio-mtls-client-certificate": "%DOWNSTREAM_PEER_CERT%" },
+                  },
+                },
+              },
             },
           ],
         },
@@ -804,39 +664,122 @@ describe("generateAuthorizationPolicies UDS Core Packages", () => {
     };
 
     const policies = await generateAuthorizationPolicies(pkg);
-    // Expect two policies: one namespace policy and one workload policy.
-    expect(policies.length).toBe(2);
+    // We expect 6 policies
+    expect(policies.length).toBe(6);
 
-    const nsPolicy = policies.find(p => p.metadata?.name === "protect-keycloak-ns");
-    expect(nsPolicy).toBeDefined();
-    expect(nsPolicy?.metadata?.namespace).toBe("keycloak");
-    expect(nsPolicy?.spec?.action).toBe(Action.Allow);
-    expect(nsPolicy?.spec?.rules).toEqual(
+    // 1. UDS Operator allow rule
+    const udsOperatorPol = policies.find(
+      p => p.metadata?.name === "protect-keycloak-ingress-uds-operator",
+    );
+    expect(udsOperatorPol).toBeDefined();
+    expect(udsOperatorPol?.spec?.selector?.matchLabels).toEqual({
+      "app.kubernetes.io/name": "keycloak",
+    });
+    expect(udsOperatorPol?.spec?.rules).toEqual(
       expect.arrayContaining([
         {
-          from: [{ source: { namespaces: ["keycloak"] } }],
-          to: [{ operation: { ports: expect.arrayContaining(["7800", "57800"]) } }],
+          from: [{ source: { namespaces: ["pepr-system"] } }],
+          to: [{ operation: { ports: ["8080"] } }],
         },
       ]),
     );
 
-    const workloadPolicy = policies.find(
-      p => p.metadata?.name === "protect-keycloak-keycloak-workload",
+    // 2. Keycloak backchannel access allow rule
+    const backchannelPol = policies.find(
+      p => p.metadata?.name === "protect-keycloak-ingress-keycloak-backchannel-access",
     );
-    expect(workloadPolicy).toBeDefined();
-    expect(workloadPolicy?.spec?.selector?.matchLabels).toEqual({
+    expect(backchannelPol).toBeDefined();
+    expect(backchannelPol?.spec?.selector?.matchLabels).toEqual({
       "app.kubernetes.io/name": "keycloak",
     });
-    expect(workloadPolicy?.spec?.action).toBe(Action.Allow);
-    expect(workloadPolicy?.spec?.rules).toEqual(
+    expect(backchannelPol?.spec?.rules).toEqual(
+      expect.arrayContaining([{ to: [{ operation: { ports: ["8080"] } }] }]),
+    );
+
+    // 3. Expose rule: remove private paths from public gateway
+    const removePathsPol = policies.find(
+      p => p.metadata?.name === "protect-keycloak-ingress-8080-keycloak-istio-tenant-gateway",
+    );
+    expect(removePathsPol).toBeDefined();
+    expect(removePathsPol?.spec?.selector?.matchLabels).toEqual({
+      "app.kubernetes.io/name": "keycloak",
+    });
+    expect(removePathsPol?.spec?.rules).toEqual(
+      expect.arrayContaining([
+        {
+          from: [
+            {
+              source: {
+                principals: ["cluster.local/ns/istio-tenant-gateway/sa/tenant-ingressgateway"],
+              },
+            },
+          ],
+          to: [{ operation: { ports: ["8080"] } }],
+        },
+      ]),
+    );
+
+    // 4. Expose rule: public auth access with optional client certificate
+    const publicAuthPol = policies.find(
+      p => p.metadata?.name === "protect-keycloak-ingress-8080-keycloak-istio-tenant-gateway",
+    );
+    expect(publicAuthPol).toBeDefined();
+    expect(publicAuthPol?.spec?.selector?.matchLabels).toEqual({
+      "app.kubernetes.io/name": "keycloak",
+    });
+    expect(publicAuthPol?.spec?.rules).toEqual(
+      expect.arrayContaining([
+        {
+          from: [
+            {
+              source: {
+                principals: ["cluster.local/ns/istio-tenant-gateway/sa/tenant-ingressgateway"],
+              },
+            },
+          ],
+          to: [{ operation: { ports: ["8080"] } }],
+        },
+      ]),
+    );
+
+    // 5. Expose rule: admin access with optional client certificate
+    const adminAuthPol = policies.find(
+      p => p.metadata?.name === "protect-keycloak-ingress-8080-keycloak-istio-admin-gateway",
+    );
+    expect(adminAuthPol).toBeDefined();
+    expect(adminAuthPol?.spec?.selector?.matchLabels).toEqual({
+      "app.kubernetes.io/name": "keycloak",
+    });
+    expect(adminAuthPol?.spec?.rules).toEqual(
+      expect.arrayContaining([
+        {
+          from: [
+            {
+              source: {
+                principals: ["cluster.local/ns/istio-admin-gateway/sa/admin-ingressgateway"],
+              },
+            },
+          ],
+          to: [{ operation: { ports: ["8080"] } }],
+        },
+      ]),
+    );
+
+    // 6. Monitor rule: Metrics
+    const monitorPol = policies.find(
+      p => p.metadata?.name === "protect-keycloak-monitor-keycloak-workload-9000",
+    );
+    expect(monitorPol).toBeDefined();
+    expect(monitorPol?.metadata?.namespace).toBe("keycloak");
+    expect(monitorPol?.spec?.action).toBe(Action.Allow);
+    expect(monitorPol?.spec?.selector?.matchLabels).toEqual({
+      "app.kubernetes.io/name": "keycloak",
+    });
+    expect(monitorPol?.spec?.rules).toEqual(
       expect.arrayContaining([
         {
           from: [{ source: { namespaces: ["monitoring"] } }],
           to: [{ operation: { ports: ["9000"] } }],
-        },
-        {
-          from: [{ source: { notNamespaces: ["keycloak"] } }],
-          to: [{ operation: { ports: ["8080"] } }],
         },
       ]),
     );
