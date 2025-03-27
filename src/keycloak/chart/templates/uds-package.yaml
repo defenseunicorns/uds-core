@@ -85,6 +85,11 @@ spec:
           - 57800
       {{- end }}
 
+      # Custom rules for additional networking access
+      {{- with .Values.additionalNetworkAllow }}
+      {{ toYaml . | nindent 6 }}
+      {{- end }}
+
     expose:
       - description: "remove private paths from public gateway"
         host: sso

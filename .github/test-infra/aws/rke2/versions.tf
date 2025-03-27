@@ -6,7 +6,7 @@ terraform {
   }
   required_providers {
     aws = {
-      version = "~> 5.91.0"
+      version = "~> 5.92.0"
     }
     random = {
       version = "~> 3.7.0"
