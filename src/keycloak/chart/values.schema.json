@@ -468,7 +468,7 @@
                 "type": "object",
                 "properties": {
                   "name": {
-                    "type": "string"
+                    "enum": ["background.jpg", "footer.png", "logo.svg", "favicon.svg"]
                   },
                   "configmap": {
                     "type": "object",
