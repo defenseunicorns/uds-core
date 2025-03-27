@@ -99,7 +99,7 @@ tasks:
 
   - name: rke2-nodes-ready
     actions:
-      #- cmd: sleep 30
+      - cmd: sleep 30
       - wait:
           cluster:
             kind: nodes
