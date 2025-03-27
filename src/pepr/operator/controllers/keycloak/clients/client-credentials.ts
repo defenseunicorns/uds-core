@@ -139,7 +139,10 @@ export async function credentialsDelete(client: Partial<Client>) {
   log.info(`credentialsDelete: deleting client ${JSON.stringify(client)}`);
   const token = await credentialsGetAccessToken();
   const existing = await credentialsGet(client);
-  const url = `${clientsAdminUrl}/${encodeURIComponent(existing.id!)}`;
+  if (!existing || !existing.id) {
+    throw new Error(`Failed to retrieve existing client, ${client.clientId}`);
+  }
+  const url = `${clientsAdminUrl}/${encodeURIComponent(existing.id)}`;
   const response = await fetch(url, {
     method: "DELETE",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
