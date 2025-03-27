@@ -278,7 +278,7 @@ describe("Network Policy Validation", () => {
     // Default Deny for Blocked Port
     const blocked_port_curl = getCurlCommand("curl-pkg-deny-all-2", "curl-ns-deny-all", 9999);
     const denied_port_response = await execInPod("curl-ns-kube-api", curlPodName8, "curl-pkg-kube-api", blocked_port_curl);
-    expect(denied_port_response.stdout).not.toBe("200");
+    expect(isResponseError(denied_port_response)).toBe(true);
   });
 
   test.concurrent("RemoteCidr Restrictions", async () => {
