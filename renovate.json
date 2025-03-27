@@ -34,11 +34,6 @@
       "commitMessageTopic": "velero"
     },
     {
-      "matchFileNames": ["src/tempo/**"],
-      "groupName": "tempo",
-      "commitMessageTopic": "tempo"
-    },
-    {
       "matchFileNames": ["src/prometheus-stack/**"],
       "groupName": "prometheus-stack",
       "commitMessageTopic": "prometheus-stack"
@@ -59,11 +54,6 @@
       "commitMessageTopic": "loki"
     },
     {
-      "matchFileNames": ["src/kiali/**"],
-      "groupName": "kiali",
-      "commitMessageTopic": "kiali"
-    },
-    {
       "matchFileNames": ["src/keycloak/**"],
       "groupName": "keycloak",
       "commitMessageTopic": "keycloak"
@@ -74,7 +64,7 @@
       "commitMessageTopic": "grafana"
     },
     {
-      "matchFileNames": ["test/**", ".github/**", "bundles/**", "tasks/*.yaml", ".vscode/settings.json", "src/test/**", "README.md"],
+      "matchFileNames": ["test/**/*", ".github/**", "bundles/**", "tasks/*.yaml", ".vscode/settings.json", "src/test/**", "README.md"],
       "groupName": "support-deps",
       "commitMessageTopic": "support dependencies"
     },

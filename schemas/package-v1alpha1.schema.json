@@ -1157,7 +1157,8 @@
         "Ready",
         "Failed",
         "Retrying",
-        "Removing"
+        "Removing",
+        "RemovalFailed"
       ],
       "title": "Phase"
     }

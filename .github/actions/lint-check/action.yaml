@@ -8,14 +8,14 @@ runs:
   using: composite
   steps:
     - name: Use Node.js latest
-      uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
+      uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e # v4.3.0
       with:
         node-version: 20
     - name: Install UDS CLI
       uses: defenseunicorns/setup-uds@ab842abcad1f7a3305c2538e3dd1950d0daacfa5 # v1.0.1
       with:
         # renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
-        version: v0.21.0
+        version: v0.25.0
     - name: Run Formatting Checks
       run: uds run lint-check --no-progress
       shell: bash

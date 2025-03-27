@@ -27,8 +27,8 @@ components:
         valuesFiles:
           - "values/upstream/istiod.yaml"
     images:
-      - "docker.io/istio/pilot:1.24.3-distroless"
-      - "docker.io/istio/proxyv2:1.24.3-distroless"
+      - "docker.io/istio/pilot:1.25.0-distroless"
+      - "docker.io/istio/proxyv2:1.25.0-distroless"
 
   - name: istio-ambient
     required: false
@@ -44,8 +44,8 @@ components:
         valuesFiles:
           - "values/upstream/ztunnel.yaml"
     images:
-      - "docker.io/istio/install-cni:1.24.3-distroless"
-      - "docker.io/istio/ztunnel:1.24.3-distroless"
+      - "docker.io/istio/install-cni:1.25.0-distroless"
+      - "docker.io/istio/ztunnel:1.25.0-distroless"
 
   - name: istio-controlplane
     required: true
@@ -58,8 +58,8 @@ components:
         valuesFiles:
           - "values/registry1/istiod.yaml"
     images:
-      - registry1.dso.mil/ironbank/tetrate/istio/proxyv2:1.24.3-tetratefips0
-      - registry1.dso.mil/ironbank/tetrate/istio/pilot:1.24.3-tetratefips0
+      - registry1.dso.mil/ironbank/tetrate/istio/proxyv2:1.25.0-tetratefips0
+      - registry1.dso.mil/ironbank/tetrate/istio/pilot:1.25.0-tetratefips0
 
   - name: istio-ambient
     required: false
@@ -75,8 +75,8 @@ components:
         valuesFiles:
           - "values/registry1/ztunnel.yaml"
     images:
-      - registry1.dso.mil/ironbank/tetrate/istio/install-cni:1.24.3-tetratefips0
-      - registry1.dso.mil/ironbank/tetrate/istio/ztunnel:1.24.3-tetratefips0
+      - registry1.dso.mil/ironbank/tetrate/istio/install-cni:1.25.0-tetratefips0
+      - registry1.dso.mil/ironbank/tetrate/istio/ztunnel:1.25.0-tetratefips0
 
   - name: istio-controlplane
     required: true
@@ -89,8 +89,8 @@ components:
         valuesFiles:
           - "values/unicorn/istiod.yaml"
     images:
-      - cgr.dev/du-uds-defenseunicorns/istio-pilot-fips:1.24.3
-      - cgr.dev/du-uds-defenseunicorns/istio-proxy-fips:1.24.3
+      - cgr.dev/du-uds-defenseunicorns/istio-pilot-fips:1.25.0
+      - cgr.dev/du-uds-defenseunicorns/istio-proxy-fips:1.25.0
 
   - name: istio-ambient
     required: false
@@ -106,15 +106,15 @@ components:
         valuesFiles:
           - "values/unicorn/ztunnel.yaml"
     images:
-      - cgr.dev/du-uds-defenseunicorns/istio-install-cni:1.24.3
-      - cgr.dev/du-uds-defenseunicorns/ztunnel-fips:1.24.3
+      - cgr.dev/du-uds-defenseunicorns/istio-install-cni:1.25.0
+      - cgr.dev/du-uds-defenseunicorns/ztunnel-fips:1.25.0
 
   - name: istio-admin-gateway
     required: true
     charts:
       - name: gateway
         url: https://istio-release.storage.googleapis.com/charts
-        version: 1.24.3
+        version: 1.25.0
         releaseName: admin-ingressgateway
         namespace: istio-admin-gateway
       - name: uds-istio-config
@@ -129,7 +129,7 @@ components:
     charts:
       - name: gateway
         url: https://istio-release.storage.googleapis.com/charts
-        version: 1.24.3
+        version: 1.25.0
         releaseName: tenant-ingressgateway
         namespace: istio-tenant-gateway
       - name: uds-istio-config
@@ -144,7 +144,7 @@ components:
     charts:
       - name: gateway
         url: https://istio-release.storage.googleapis.com/charts
-        version: 1.24.3
+        version: 1.25.0
         releaseName: passthrough-ingressgateway
         namespace: istio-passthrough-gateway
       - name: uds-istio-config

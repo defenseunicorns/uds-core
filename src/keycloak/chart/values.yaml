@@ -5,7 +5,7 @@ image:
   # The Keycloak image repository
   repository: quay.io/keycloak/keycloak
   # Overrides the Keycloak image tag whose default is the chart appVersion
-  tag: "26.1.2"
+  tag: "26.1.4"
   # The Keycloak image pull policy
   pullPolicy: IfNotPresent
 
@@ -57,6 +57,16 @@ realmAuthFlows:
 insecureAdminPasswordGeneration:
   enabled: false
   username: admin
+
+# Support for custom `network.allow` entries on the Package CR, useful for extra datasources
+additionalNetworkAllow: []
+# ref: https://uds.defenseunicorns.com/reference/configuration/custom-resources/packages-v1alpha1-cr/#allow
+#   - direction: Egress
+#     selector:
+#       app.kubernetes.io/name: keycloak
+#     remoteCidr: 72.123.123.123
+#     description: "IDP"
+#     port: 443
 
 # Indicates whether information about services should be injected into Pod's environment variables, matching the syntax of Docker links
 enableServiceLinks: true
