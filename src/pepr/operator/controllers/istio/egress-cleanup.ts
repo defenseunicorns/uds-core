@@ -5,6 +5,7 @@
 import { UDSPackage } from "../../crd";
 import { cleanupEgressDestinationRule } from "./destination-rule";
 import { cleanupEgressGateway } from "./gateway";
+import { cleanupEgressVirtualService } from "./virtual-service";
 import { getPackageId } from "./istio-resources";
 
 export async function egressCleanup(pkg: UDSPackage) {
@@ -18,6 +19,7 @@ export async function egressCleanup(pkg: UDSPackage) {
 
     if (remoteHost) {
       // Clean up the virtual service
+      await cleanupEgressVirtualService(remoteHost, pkgId);
 
       // Clean up the destination rule
       await cleanupEgressDestinationRule(pkgId);

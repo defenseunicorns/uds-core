@@ -65,7 +65,7 @@ export async function generateOrPatchDestinationRule(
           log.warn(
             `Failed to get destination rule ${destinationRuleName}. Attempt ${attempt + 1} of ${maxAttempts}.`,
           );
-          generateOrPatchDestinationRule(pkgId, attempt + 1);
+          await generateOrPatchDestinationRule(pkgId, attempt + 1);
         } else {
           log.error(
             `Failed to get Destination Rule ${destinationRuleName} after ${maxAttempts} attempts.`,

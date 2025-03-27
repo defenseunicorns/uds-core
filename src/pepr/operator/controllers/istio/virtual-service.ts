@@ -8,12 +8,7 @@ import { V1OwnerReference } from "@kubernetes/client-node";
 import { UDSConfig } from "../../../config";
 import { Expose, Gateway, IstioHTTP, IstioHTTPRoute, IstioVirtualService } from "../../crd";
 import { sanitizeResourceName } from "../utils";
-import {
-  getSharedAnnotationKey,
-  istioEgressGatewayNamespace,
-  log,
-  sharedResourcesAnnotationPrefix,
-} from "./istio-resources";
+import { getSharedAnnotationKey, istioEgressGatewayNamespace, log, sharedResourcesAnnotationPrefix } from "./istio-resources";
 import { subsetName } from "./destination-rule";
 import { generateGatewayName } from "./gateway";
 
@@ -106,12 +101,12 @@ export function generateVSName(pkgName: string, expose: Expose) {
 /**
  * Find existing egress virtual service, generating if needed or patches if fields missing
  *
- * @param sharedResourceId
  * @param pkgId
  * @param host
  * @param protocol
  * @param port
  * @param attempt
+ * @param maxAttempts
  */
 export async function generateOrPatchEgressVirtualService(
   pkgId: string,
@@ -204,10 +199,51 @@ export async function generateOrPatchEgressVirtualService(
           log.warn(
             `Failed to get Virtual Service ${vsName}. Attempt ${attempt + 1} of ${maxAttempts}.`,
           );
-          generateOrPatchEgressVirtualService(pkgId, host, protocol, port, attempt + 1);
+          await generateOrPatchEgressVirtualService(pkgId, host, protocol, port, attempt + 1);
         } else {
           log.error(`Failed to get Virtual Service ${vsName} after ${maxAttempts} attempts.`);
         }
+      }
+    });
+}
+
+// Clean up the virtual service
+export async function cleanupEgressVirtualService(
+  host: string,
+  pkgId: string,
+  attempt: number = 0,
+  maxAttempts: number = 3,
+) {
+  const vsName = generateEgressVSName(host);
+
+  await K8s(IstioVirtualService)
+    .InNamespace(istioEgressGatewayNamespace)
+    .Get(vsName)
+    .then(async vs => {
+      // Get the sharedResourcesAnnotation annotation
+      const annotations = vs.metadata?.annotations || {};
+
+      // Remove the package annotation
+      delete annotations[`${getSharedAnnotationKey(pkgId)}`];
+
+      // If there are no more UDS Package annotations, remove the resource
+      if (!Object.keys(annotations).find(key => key.startsWith(sharedResourcesAnnotationPrefix))) {
+        await K8s(IstioVirtualService).InNamespace(istioEgressGatewayNamespace).Delete(vsName);
+      } else {
+        // Patch the gateway annotations
+        await patchVirtualServiceAnnotations(vs, annotations);
+      }
+    })
+    .catch(async err => {
+      if (err.status === 404) {
+        log.debug(`Gateway ${vsName} not found.`);
+        return;
+      } else {
+        log.error(`Failed to cleanup Virtual Service ${vsName}. Attempt ${attempt + 1} of ${maxAttempts}.`);
+        if (attempt + 1 >= maxAttempts) {
+          throw new Error(`Failed to cleanup Virtual Service ${vsName} after ${maxAttempts} attempts.`);
+        }
+        return await cleanupEgressVirtualService(host, pkgId, attempt + 1, maxAttempts);
       }
     });
 }
@@ -300,7 +336,7 @@ async function generateEgressVirtualService(
     },
     spec: {
       hosts: [host],
-      gateways: ["mesh"],
+      gateways: ["mesh", `${generateGatewayName(host)}`],
       ...(protocol == "TLS" && { tls: routes }),
       ...(protocol == "HTTP" && { http: routes }),
     },
@@ -309,6 +345,7 @@ async function generateEgressVirtualService(
   return vs;
 }
 
+// Generates the HTTP/TLS routes for the virtual service
 function generateVirtualServiceRoutes(host: string, port: number, protocol: string) {
   const match = [
     {
