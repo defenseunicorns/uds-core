@@ -42,7 +42,7 @@ export async function setupKeycloakClientSecret() {
       } catch (err) {
         log.error(
           err,
-          "Failed to rotate Keycloak Clients Secret. It might be an temporary error. Skipping",
+          "Failed to create Keycloak Clients Secret",
         );
         throw err;
       }
