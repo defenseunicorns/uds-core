@@ -1,0 +1,102 @@
+# Add the gateway, service entry, destination rule, and virtual service
+apiVersion: networking.istio.io/v1
+kind: Gateway
+metadata:
+  name: different-subdomain-gateway-2
+  namespace: different-subdomain-ns-2
+spec:
+  selector:
+    app: egressgateway
+  servers:
+  - port:
+      number: 443
+      name: tls
+      protocol: TLS
+    hosts:
+      - de.wikipedia.org
+    tls:
+      mode: PASSTHROUGH
+---
+apiVersion: networking.istio.io/v1
+kind: ServiceEntry
+metadata:
+  name: different-subdomain-service-entry-2
+  namespace: different-subdomain-ns-2
+spec:
+  location: MESH_EXTERNAL
+  hosts:
+  - de.wikipedia.org
+  ports: 
+  - number: 443
+    name: tls
+    protocol: TLS
+  resolution: DNS
+---
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: egressgateway-for-different-subdomain-2
+  namespace: different-subdomain-ns-2
+spec:
+  host: egressgateway.istio-egress-gateway.svc.cluster.local
+  subsets:
+    - name: different-subdomain-2
+---
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: different-subdomain-through-egress-gateway-2
+  namespace: different-subdomain-ns-2
+spec:
+  hosts:
+  - de.wikipedia.org
+  gateways:
+  - different-subdomain-gateway-2
+  - mesh
+  tls:
+  - match:
+    - gateways:
+      - mesh
+      port: 443
+      sniHosts:
+      - de.wikipedia.org
+    route:
+    - destination:
+        host: egressgateway.istio-egress-gateway.svc.cluster.local
+        subset: different-subdomain-2
+        port:
+          number: 443
+  - match:
+    - gateways:
+      - different-subdomain-gateway-2
+      port: 443
+      sniHosts:
+      - de.wikipedia.org
+    route:
+    - destination:
+        host: de.wikipedia.org
+        port:
+          number: 443
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-egress-gateway-access-2
+  namespace: different-subdomain-ns-2
+spec:
+  podSelector: 
+    matchLabels:
+      app: curl2
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: istio-egress-gateway
+      podSelector:
+        matchLabels:
+          app: egressgateway
+    ports:
+    - protocol: TCP
+      port: 443

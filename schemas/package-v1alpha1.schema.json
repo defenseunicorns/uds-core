@@ -206,6 +206,10 @@
           "$ref": "#/definitions/RemoteGenerated",
           "description": "Custom generated remote selector for the policy"
         },
+        "remoteHost": {
+          "type": "string",
+          "description": "Remote host to allow traffic out to"
+        },
         "remoteNamespace": {
           "type": "string",
           "description": "The remote namespace to allow traffic to/from. Use * or empty string to allow all\nnamespaces"
@@ -216,6 +220,10 @@
             "type": "string"
           },
           "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
+        },
+        "remoteProtocol": {
+          "$ref": "#/definitions/RemoteProtocol",
+          "description": "Protocol used for external connection"
         },
         "remoteSelector": {
           "type": "object",
@@ -1085,6 +1093,15 @@
       ],
       "title": "RemoteGenerated",
       "description": "Custom generated remote selector for the policy"
+    },
+    "RemoteProtocol": {
+      "type": "string",
+      "enum": [
+        "tls",
+        "http"
+      ],
+      "title": "RemoteProtocol",
+      "description": "Protocol used for external connection"
     },
     "DerivePort": {
       "type": "string",

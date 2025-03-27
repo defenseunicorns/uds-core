@@ -153,3 +153,14 @@ components:
         namespace: istio-passthrough-gateway
         valuesFiles:
           - "values/config-passthrough.yaml"
+
+  - name: istio-egress-gateway
+    required: true # testing
+    charts:
+      - name: gateway
+        url: https://istio-release.storage.googleapis.com/charts
+        version: 1.24.3
+        releaseName: egressgateway
+        namespace: istio-egress-gateway
+        valuesFiles:
+          - "values/base-egress.yaml"

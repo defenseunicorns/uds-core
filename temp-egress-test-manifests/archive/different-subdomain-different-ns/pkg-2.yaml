@@ -1,0 +1,67 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: different-subdomain-ns-2
+  labels:
+    istio-injection: enabled
+---
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: different-subdomain-ns-pkg-2
+  namespace: different-subdomain-ns-2
+spec:
+  network: {}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: curl2
+  namespace: different-subdomain-ns-2
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: curl2
+  namespace: different-subdomain-ns-2
+  labels:
+    app: curl2
+    service: curl2
+spec:
+  ports:
+  - port: 80
+    name: http
+  selector:
+    app: curl2
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: curl2
+  namespace: different-subdomain-ns-2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: curl2
+  template:
+    metadata:
+      labels:
+        app: curl2
+    spec:
+      terminationGracePeriodSeconds: 0
+      serviceAccountName: curl2
+      containers:
+      - name: curl
+        image: curlimages/curl
+        command: ["/bin/sleep", "infinity"]
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+        - mountPath: /etc/curl/tls
+          name: secret-volume
+      volumes:
+      - name: secret-volume
+        secret:
+          secretName: curl-secret
+          optional: true
+---

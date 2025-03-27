@@ -7,6 +7,7 @@ import { getReadinessConditions, handleFailure, shouldSkip, updateStatus, writeE
 import { UDSConfig } from "../../config";
 import { Component, setupLogger } from "../../logger";
 import { cleanupNamespace, enableInjection } from "../controllers/istio/injection";
+import { egressCleanup } from "../controllers/istio/egress-cleanup";
 import { istioResources } from "../controllers/istio/istio-resources";
 import {
   authservice,
@@ -72,6 +73,7 @@ export async function packageReconciler(pkg: UDSPackage) {
     const netPol = await networkPolicies(pkg, namespace!);
 
     let endpoints: string[] = [];
+
     // Update the namespace to ensure the istio-injection label is set
     await enableInjection(pkg);
 
@@ -89,7 +91,7 @@ export async function packageReconciler(pkg: UDSPackage) {
       );
     }
 
-    // Create the VirtualService and ServiceEntry for each exposed service
+    // Create the Istio Resources per the package configuration
     endpoints = await istioResources(pkg, namespace!);
 
     // Configure the ServiceMonitors
@@ -97,6 +99,7 @@ export async function packageReconciler(pkg: UDSPackage) {
     monitors.push(...(await podMonitor(pkg, namespace!)));
     monitors.push(...(await serviceMonitor(pkg, namespace!)));
 
+    // TODO: add status field for exposedHosts
     await updateStatus(pkg, {
       phase: Phase.Ready,
       conditions: getReadinessConditions(true),
@@ -121,98 +124,111 @@ export async function packageReconciler(pkg: UDSPackage) {
  * @param pkg the package to finalize
  */
 export async function packageFinalizer(pkg: UDSPackage) {
-  // Skip running the finalizer if it is already running
-  if (pkg.status?.phase === Phase.Removing || pkg.status?.phase === Phase.RemovalFailed) {
-    // Trace log since this can be confusing when the finalizer hits quickly for the status patch
-    log.trace(
-      `Skipping finalizer for ${pkg.metadata?.namespace}/${pkg.metadata?.name}, removal already in progress or failed.`,
-    );
-    return false;
-  }
+// Skip running the finalizer if it is already running
+if (pkg.status?.phase === Phase.Removing || pkg.status?.phase === Phase.RemovalFailed) {
+  // Trace log since this can be confusing when the finalizer hits quickly for the status patch
+  log.trace(
+    `Skipping finalizer for ${pkg.metadata?.namespace}/${pkg.metadata?.name}, removal already in progress or failed.`,
+  );
+  return false;
+}
 
-  // Skip running the finalizer if the CR has not completed initial reconciliation - running this during reconciliation can lead to orphaned resources and failed cleanup
-  if (pkg.status?.phase !== Phase.Ready && pkg.status?.phase !== Phase.Failed) {
-    log.debug(
-      `Waiting to finalize package ${pkg.metadata?.namespace}/${pkg.metadata?.name}, package has not completed initial reconciliation.`,
-    );
-    return false;
-  }
+// Skip running the finalizer if the CR has not completed initial reconciliation - running this during reconciliation can lead to orphaned resources and failed cleanup
+if (pkg.status?.phase !== Phase.Ready && pkg.status?.phase !== Phase.Failed) {
+  log.debug(
+    `Waiting to finalize package ${pkg.metadata?.namespace}/${pkg.metadata?.name}, package has not completed initial reconciliation.`,
+  );
+  return false;
+}
 
-  log.debug(`Processing removal of package ${pkg.metadata?.namespace}/${pkg.metadata?.name}`);
+log.debug(`Processing removal of package ${pkg.metadata?.namespace}/${pkg.metadata?.name}`);
 
-  // Update Package to indicate removal in progress
-  await updateStatus(pkg, { phase: Phase.Removing });
+// Update Package to indicate removal in progress
+await updateStatus(pkg, { phase: Phase.Removing });
 
-  // Cleanup Istio status on namespace
+// Cleanup Istio status on namespace
+try {
+  await writeEvent(pkg, {
+    message: `Restoring original Istio injection status on namespace`,
+    reason: "RemovalInProgress",
+    type: "Normal",
+  });
+  // Cleanup the namespace - retry on failure
+  await retryWithDelay(async function cleanupIstioConfig() {
+    return cleanupNamespace(pkg);
+  }, log);
+} catch (e) {
+  log.debug(
+    `Restoration of Istio injection status during finalizer failed for ${pkg.metadata?.namespace}/${pkg.metadata?.name}: ${e.message}`,
+  );
+  await writeEvent(pkg, {
+    message: `Restoration of Istio injection status failed: ${e.message}. Istio status must be manually restored, by updating or deleting the istio-injection label and cycling pods.`,
+    reason: "RemovalFailed",
+    type: "Warning",
+  });
+  await updateStatus(pkg, { phase: Phase.RemovalFailed });
+  return false;
+}
+
+// Cleanup AuthService Clients
+try {
+  await writeEvent(pkg, {
+    message: `Removing AuthService configuration for package`,
+    reason: "RemovalInProgress",
+    type: "Normal",
+  });
+  // Remove any Authservice configuration - retry on failure
+  await retryWithDelay(async function cleanupAuthserviceConfig() {
+    return purgeAuthserviceClients(pkg, []);
+  }, log);
+} catch (e) {
+  log.debug(
+    `Removal of AuthService configuration during finalizer failed for ${pkg.metadata?.namespace}/${pkg.metadata?.name}: ${e.message}`,
+  );
+  await writeEvent(pkg, {
+    message: `Removal of AuthService configuration failed: ${e.message}. AuthService configuration secret should be reviewed and cleaned up as needed.`,
+    reason: "RemovalFailed",
+    type: "Warning",
+  });
+  await updateStatus(pkg, { phase: Phase.RemovalFailed });
+  return false;
+}
+
   try {
     await writeEvent(pkg, {
-      message: `Restoring original Istio injection status on namespace`,
+      message: `Removing SSO / AuthService clients for package`,
       reason: "RemovalInProgress",
       type: "Normal",
     });
-    // Cleanup the namespace - retry on failure
-    await retryWithDelay(async function cleanupIstioConfig() {
-      return cleanupNamespace(pkg);
-    }, log);
+    // Remove any SSO clients
+    await purgeSSOClients(pkg, []);
+    await purgeAuthserviceClients(pkg, []);
   } catch (e) {
     log.debug(
-      `Restoration of Istio injection status during finalizer failed for ${pkg.metadata?.namespace}/${pkg.metadata?.name}: ${e.message}`,
+      `Removal of SSO / AuthService clients during finalizer failed for ${pkg.metadata?.namespace}/${pkg.metadata?.name}: ${e.message}`,
     );
     await writeEvent(pkg, {
-      message: `Restoration of Istio injection status failed: ${e.message}. Istio status must be manually restored, by updating or deleting the istio-injection label and cycling pods.`,
+      message: `Removal of SSO / AuthService clients failed: ${e.message}`,
       reason: "RemovalFailed",
-      type: "Warning",
     });
-    await updateStatus(pkg, { phase: Phase.RemovalFailed });
-    return false;
   }
 
-  // Cleanup AuthService Clients
   try {
     await writeEvent(pkg, {
-      message: `Removing AuthService configuration for package`,
+      message: `Reconciling any shared egress resources`,
       reason: "RemovalInProgress",
       type: "Normal",
     });
-    // Remove any Authservice configuration - retry on failure
-    await retryWithDelay(async function cleanupAuthserviceConfig() {
-      return purgeAuthserviceClients(pkg, []);
-    }, log);
+    // Remove any shared egress resources
+    await egressCleanup(pkg);
   } catch (e) {
     log.debug(
-      `Removal of AuthService configuration during finalizer failed for ${pkg.metadata?.namespace}/${pkg.metadata?.name}: ${e.message}`,
+      `Removal of shared egress resources during finalizer failed for ${pkg.metadata?.namespace}/${pkg.metadata?.name}: ${e.message}`,
     );
     await writeEvent(pkg, {
-      message: `Removal of AuthService configuration failed: ${e.message}. AuthService configuration secret should be reviewed and cleaned up as needed.`,
+      message: `Removal of shared egress resources failed: ${e.message}`,
       reason: "RemovalFailed",
-      type: "Warning",
     });
-    await updateStatus(pkg, { phase: Phase.RemovalFailed });
-    return false;
-  }
-
-  // Cleanup SSO Clients
-  try {
-    await writeEvent(pkg, {
-      message: `Removing SSO clients for package`,
-      reason: "RemovalInProgress",
-      type: "Normal",
-    });
-    // Remove any SSO clients - retry on failure
-    await retryWithDelay(async function cleanupSSOClients() {
-      return purgeSSOClients(pkg, []);
-    }, log);
-  } catch (e) {
-    log.debug(
-      `Removal of SSO clients during finalizer failed for ${pkg.metadata?.namespace}/${pkg.metadata?.name}: ${e.message}`,
-    );
-    await writeEvent(pkg, {
-      message: `Removal of SSO clients failed: ${e.message}. Clients must be manually removed from Keycloak.`,
-      reason: "RemovalFailed",
-      type: "Warning",
-    });
-    await updateStatus(pkg, { phase: Phase.RemovalFailed });
-    return false;
   }
 
   // Indicate success - all other resources (network policies, virtual services, etc) are cleaned up through owner references

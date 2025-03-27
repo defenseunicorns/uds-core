@@ -6,7 +6,7 @@
 import { describe, expect, it } from "@jest/globals";
 import { UDSConfig } from "../../../config";
 import { Expose, Gateway, IstioLocation, IstioResolution } from "../../crd";
-import { generateServiceEntry } from "./service-entry";
+import { generateIngressServiceEntry } from "./service-entry";
 
 describe("test generate service entry", () => {
   const ownerRefs = [
@@ -33,7 +33,7 @@ describe("test generate service entry", () => {
       service,
     };
 
-    const payload = generateServiceEntry(expose, namespace, pkgName, generation, ownerRefs);
+    const payload = generateIngressServiceEntry(expose, namespace, pkgName, generation, ownerRefs);
 
     expect(payload).toBeDefined();
     expect(payload.metadata?.name).toEqual(`${pkgName}-${Gateway.Tenant}-${host}`);
