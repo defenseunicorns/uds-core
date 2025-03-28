@@ -307,7 +307,7 @@ describe("Test processExemptions() duplicate matchers in same CR", () => {
     expect(ExemptionStore.getByPolicy(Policy.DropAllCapabilities)).toEqual([storedEnforcerMatcher]);
   });
 
-  it.only("Handles updates - remove policy, remove matcher, add policy, add matcher", async () => {
+  it("Handles updates - remove policy, remove matcher, add policy, add matcher", async () => {
     // remove RequireNonRoot from enforcerMatcher (satisfies remove matcher in this duplicate case)
     // add DisallowHostNamespaces to enforcerMatcher
     // add controllerMatcher with DisallowPrivileged
