@@ -10,7 +10,7 @@ data "aws_vpc" "vpc" {
 
 data "aws_subnet" "rke2_ci_subnet" {
   vpc_id            = data.aws_vpc.vpc.id
-  availability_zone = "${var.region}c"
+  availability_zone = "${var.region}a"
 
   filter {
     name   = "tag:Name"

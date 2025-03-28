@@ -2,73 +2,25 @@
 # Copyright 2024 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
-
-
 info() {
     echo "[INFO] " "$@"
 }
 
 export CCM="${ccm}"
 export CCM_EXTERNAL="${ccm_external}"
+export CLUSTER_NAME="${cluster_name}"
 
 ###############################
 ### pre userdata
 ###############################
 pre_userdata() {
 info "Beginning user defined pre userdata"
-
-# add aws cloud controller
-info "Adding AWS cloud provider manifest."
+info "Create HelmChart Resources."
+cat > helmchart-template.yaml << EOM
+${helm_chart_template}
+EOM
 mkdir -p /var/lib/rancher/rke2/server/manifests
-cat > /var/lib/rancher/rke2/server/manifests/00-aws-ccm.yaml << EOM
-apiVersion: helm.cattle.io/v1
-kind: HelmChart
-metadata:
-  name: aws-cloud-controller-manager
-  namespace: kube-system
-spec:
-  chart: aws-cloud-controller-manager
-  repo: https://kubernetes.github.io/cloud-provider-aws
-  version: 0.0.8
-  targetNamespace: kube-system
-  bootstrap: true
-  valuesContent: |-
-    nodeSelector:
-      node-role.kubernetes.io/control-plane: "true"
-    hostNetworking: true
-    args:
-      - --configure-cloud-routes=false
-      - --v=2
-      - --cloud-provider=aws
-EOM
-
-#longhorn helm values: https://github.com/longhorn/longhorn/tree/master/chart
-cat > /var/lib/rancher/rke2/server/manifests/01-longhorn.yaml << EOM
-apiVersion: helm.cattle.io/v1
-kind: HelmChart
-metadata:
-  name: longhorn
-  namespace: kube-system
-spec:
-  chart: longhorn
-  repo: https://charts.longhorn.io
-  version: 1.7.1
-  targetNamespace: kube-system 
-EOM
-
-#metallb helm values: https://github.com/metallb/metallb/tree/main/charts/metallb
-cat > /var/lib/rancher/rke2/server/manifests/02-metallb.yaml << EOM
-apiVersion: helm.cattle.io/v1
-kind: HelmChart
-metadata:
-  name: metallb
-  namespace: kube-system
-spec:
-  chart: metallb
-  repo: https://metallb.github.io/metallb
-  version: 0.14.8
-  targetNamespace: kube-system
-EOM
+envsubst < helmchart-template.yaml > /var/lib/rancher/rke2/server/manifests/00-helmcharts.yaml
 
 info "Installing awscli"
 yum install -y unzip jq || apt-get -y install unzip jq
@@ -89,14 +41,15 @@ chmod +x yq
 ./yq -i '.cloud-provider-name += "external"' /etc/rancher/rke2/config.yaml
 ./yq -i '.disable-cloud-controller += "true"' /etc/rancher/rke2/config.yaml
 ./yq -i '.kube-apiserver-arg += "service-account-key-file=/irsa/signer.key.pub"' /etc/rancher/rke2/config.yaml
-./yq -i '.kube-apiserver-arg += "service-account-key-file=/irsa/signer.key.pub"' /etc/rancher/rke2/config.yaml
 ./yq -i '.kube-apiserver-arg += "service-account-signing-key-file=/irsa/signer.key"' /etc/rancher/rke2/config.yaml
 ./yq -i '.kube-apiserver-arg += "api-audiences=kubernetes.svc.default"' /etc/rancher/rke2/config.yaml
 ./yq -i '.kube-apiserver-arg += "service-account-issuer=https://${BUCKET_REGIONAL_DOMAIN_NAME}"' /etc/rancher/rke2/config.yaml
 ./yq -i '.kube-apiserver-arg += "audit-log-path=/var/log/kubernetes/audit/audit.log"' /etc/rancher/rke2/config.yaml
+#Fix for metrics server scraping of kubernetes api server components
+./yq -i '.kube-controller-manager-arg[2] = "bind-address=0.0.0.0"' /etc/rancher/rke2/config.yaml
+./yq -i '.kube-scheduler-arg += "bind-address=0.0.0.0"' /etc/rancher/rke2/config.yaml
+./yq -i '.etcd-arg += "listen-metrics-urls=http://0.0.0.0:2381"|.etcd-arg style="double"' /etc/rancher/rke2/config.yaml
 rm -rf ./yq
-
-
 }
 
 pre_userdata
