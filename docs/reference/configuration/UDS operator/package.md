@@ -10,6 +10,10 @@ sidebar:
 
 - **Enabling Istio Sidecar Injection:**
   - The operator facilitates the activation of Istio sidecar injection within namespaces where the CR is deployed.
+- **Support for Istio Ambient Mode:**
+  - Packages can now opt into Istio's Ambient mode by setting `spec.network.serviceMesh.mode: ambient`. This provides service mesh capabilities without sidecars, reducing resource overhead.
+  - If Ambient mode is not deployed in the cluster, the operator will automatically fall back to sidecar mode.
+  - Note that `Packages` with Authservice clients are not currently supported in ambient mode.
 - **Establishing Default-Deny Ingress/Egress Network Policies:**
   - It sets up default-deny network policies for both ingress and egress, creating a foundational security posture.
 - **Implementing Layered Allow-List Approach:**

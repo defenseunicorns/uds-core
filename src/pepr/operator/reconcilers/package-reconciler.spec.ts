@@ -7,7 +7,7 @@ import { beforeEach, describe, expect, jest, test } from "@jest/globals";
 
 import { K8s, Log } from "pepr";
 import { writeEvent } from ".";
-import { cleanupNamespace } from "../controllers/istio/injection";
+import { cleanupNamespace } from "../controllers/istio/namespace";
 import { purgeAuthserviceClients } from "../controllers/keycloak/authservice/authservice";
 import { purgeSSOClients } from "../controllers/keycloak/client-sync";
 import { retryWithDelay } from "../controllers/utils";
@@ -22,7 +22,7 @@ const mockWriteEvent = jest.fn();
 
 jest.mock("kubernetes-fluent-client");
 jest.mock("../../config");
-jest.mock("../controllers/istio/injection", () => ({
+jest.mock("../controllers/istio/namespace", () => ({
   cleanupNamespace: jest.fn(),
 }));
 jest.mock("../controllers/keycloak/client-sync", () => ({

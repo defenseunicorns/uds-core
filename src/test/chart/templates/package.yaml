@@ -7,6 +7,16 @@ metadata:
   name: podinfo
   namespace: podinfo
 spec:
+  network:
+    serviceMesh:
+      mode: ambient
+    expose:
+      - service: podinfo
+        selector:
+          app.kubernetes.io/name: podinfo
+        gateway: tenant
+        host: podinfo
+        port: 9898
   monitor:
     - selector:
         app.kubernetes.io/name: podinfo
@@ -20,11 +30,3 @@ spec:
       portName: http
       description: "svcmonitor"
       kind: ServiceMonitor
-  network:
-    expose:
-      - service: podinfo
-        selector:
-          app.kubernetes.io/name: podinfo
-        gateway: tenant
-        host: podinfo
-        port: 9898
