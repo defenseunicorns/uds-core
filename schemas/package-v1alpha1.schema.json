@@ -10,7 +10,7 @@
           "$ref": "#/definitions/Spec"
         },
         "status": {
-          "$ref": "#/definitions/Status"
+          "$ref": "#/definitions/StatusObject"
         }
       },
       "required": [],
@@ -954,7 +954,7 @@
       ],
       "title": "ProtocolMapper"
     },
-    "Status": {
+    "StatusObject": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -963,6 +963,13 @@
           "items": {
             "type": "string"
           }
+        },
+        "conditions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Condition"
+          },
+          "description": "Status conditions following Kubernetes-style conventions"
         },
         "endpoints": {
           "type": "array",
@@ -996,7 +1003,46 @@
         }
       },
       "required": [],
-      "title": "Status"
+      "title": "StatusObject"
+    },
+    "Condition": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "lastTransitionTime": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The last time the condition transitioned from one status to another"
+        },
+        "message": {
+          "type": "string",
+          "description": "A human-readable message indicating details about the transition"
+        },
+        "observedGeneration": {
+          "type": "integer",
+          "description": "Represents the .metadata.generation that the condition was set based upon"
+        },
+        "reason": {
+          "type": "string",
+          "description": "A programmatic identifier indicating the reason for the condition's last transition"
+        },
+        "status": {
+          "$ref": "#/definitions/StatusEnum",
+          "description": "Status of the condition, one of True, False, Unknown"
+        },
+        "type": {
+          "type": "string",
+          "description": "Type of condition in CamelCase or in foo.example.com/CamelCase format"
+        }
+      },
+      "required": [
+        "lastTransitionTime",
+        "message",
+        "reason",
+        "status",
+        "type"
+      ],
+      "title": "Condition"
     },
     "FallbackScrapeProtocol": {
       "type": "string",
@@ -1077,6 +1123,16 @@
       "title": "Protocol",
       "description": "Specifies the protocol of the client, either 'openid-connect' or 'saml'\nProtocol of the mapper"
     },
+    "StatusEnum": {
+      "type": "string",
+      "enum": [
+        "True",
+        "False",
+        "Unknown"
+      ],
+      "title": "StatusEnum",
+      "description": "Status of the condition, one of True, False, Unknown"
+    },
     "Phase": {
       "type": "string",
       "enum": [
@@ -1084,7 +1140,8 @@
         "Ready",
         "Failed",
         "Retrying",
-        "Removing"
+        "Removing",
+        "RemovalFailed"
       ],
       "title": "Phase"
     }

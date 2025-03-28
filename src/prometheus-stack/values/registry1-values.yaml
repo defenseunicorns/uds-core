@@ -6,7 +6,7 @@ alertmanager:
     image:
       registry: registry1.dso.mil
       repository: ironbank/opensource/prometheus/alertmanager
-      tag: v0.28.0
+      tag: v0.28.1
 kube-state-metrics:
   image:
     registry: registry1.dso.mil
@@ -23,12 +23,12 @@ prometheus:
     image:
       registry: registry1.dso.mil
       repository: ironbank/opensource/prometheus/prometheus
-      tag: v3.1.0
+      tag: v3.2.1
 prometheus-node-exporter:
   image:
     registry: registry1.dso.mil
     repository: ironbank/opensource/prometheus/node-exporter
-    tag: v1.8.2
+    tag: v1.9.0
 prometheusOperator:
   admissionWebhooks:
     containerSecurityContext:
@@ -40,7 +40,7 @@ prometheusOperator:
       image:
         registry: registry1.dso.mil
         repository: ironbank/opensource/ingress-nginx/kube-webhook-certgen
-        tag: v1.5.1
+        tag: v1.5.2
       registry: registry1.dso.mil
       repository: ironbank/opensource/ingress-nginx/kube-webhook-certgen
       tag: v1.3.0
@@ -51,9 +51,9 @@ prometheusOperator:
   image:
     registry: registry1.dso.mil
     repository: ironbank/opensource/prometheus-operator/prometheus-operator
-    tag: v0.80.0
+    tag: v0.81.0
   prometheusConfigReloader:
     image:
       registry: registry1.dso.mil
       repository: ironbank/opensource/prometheus-operator/prometheus-config-reloader
-      tag: v0.80.0
+      tag: v0.81.0

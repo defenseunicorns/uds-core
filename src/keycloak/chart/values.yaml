@@ -5,12 +5,12 @@ image:
   # The Keycloak image repository
   repository: quay.io/keycloak/keycloak
   # Overrides the Keycloak image tag whose default is the chart appVersion
-  tag: "26.1.1"
+  tag: "26.1.4"
   # The Keycloak image pull policy
   pullPolicy: IfNotPresent
 
 # renovate: datasource=github-tags depName=defenseunicorns/uds-identity-config versioning=semver
-configImage: ghcr.io/defenseunicorns/uds/identity-config:0.10.0
+configImage: ghcr.io/defenseunicorns/uds/identity-config:0.10.2
 
 # The public domain name of the Keycloak server
 domain: "###ZARF_VAR_DOMAIN###"
@@ -22,6 +22,10 @@ adminDomain: '{{ "###ZARF_VAR_ADMIN_DOMAIN###" | default "admin.###ZARF_VAR_DOMA
 additionalGatewayNamespaces: []
 # Example
 # - "istio-login-gateway"
+
+# Enables an EnvoyFilter to block path-parameter bypasses of AuthorizationPolicy rules
+# Should only be disabled if this is incorrectly blocking paths you expect to be allowed
+pathParameterProtection: true
 
 # The primary Keycloak realm
 realm: uds
@@ -47,12 +51,41 @@ realmAuthFlows:
   X509_AUTH_ENABLED: true
   SOCIAL_AUTH_ENABLED: true
   OTP_ENABLED: true
+  WEBAUTHN_ENABLED: false
+  X509_MFA_ENABLED: false
+
+# Theme customizations with allowed types. More info here: https://github.com/defenseunicorns/uds-identity-config/blob/main/docs/reference/UDS%20Core/IdAM/customization.md#branding-customizations
+#themeCustomizations:
+#  resources:
+#    images:
+#      - name: background.jpg
+#        configmap:
+#          name: keycloak-theme-overrides
+#      - name: footer.png
+#        configmap:
+#          name: keycloak-theme-overrides
+#      - name: logo.svg
+#        configmap:
+#          name: keycloak-theme-overrides
+#      - name: favicon.svg
+#        configmap:
+#          name: keycloak-theme-overrides
 
 # Generates an initial password for first admin user - only use if install is headless
 # (i.e. cannot hit keycloak UI with `zarf connect keycloak`), password should be changed after initial login
 insecureAdminPasswordGeneration:
   enabled: false
   username: admin
+
+# Support for custom `network.allow` entries on the Package CR, useful for extra datasources
+additionalNetworkAllow: []
+# ref: https://uds.defenseunicorns.com/reference/configuration/custom-resources/packages-v1alpha1-cr/#allow
+#   - direction: Egress
+#     selector:
+#       app.kubernetes.io/name: keycloak
+#     remoteCidr: 72.123.123.123
+#     description: "IDP"
+#     port: 443
 
 # Indicates whether information about services should be injected into Pod's environment variables, matching the syntax of Docker links
 enableServiceLinks: true

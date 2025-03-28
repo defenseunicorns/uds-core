@@ -1,7 +1,6 @@
 # Copyright 2024 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
-
 includes:
   - utils: utils.yaml
 
@@ -9,7 +8,7 @@ variables:
   - name: VERSION
     description: "The version of the packages to deploy"
     # x-release-please-start-version
-    default: "0.35.0"
+    default: "0.38.0"
     # x-release-please-end
   - name: FLAVOR
     default: upstream
@@ -61,7 +60,7 @@ tasks:
         setVariables:
           - name: LATEST_VERSION
       - description: "Deploy the latest UDS Core package release"
-        cmd: uds zarf package deploy oci://${TARGET_REPO}/core:${LATEST_VERSION} --confirm --no-progress --components '*'
+        cmd: uds zarf package deploy oci://${TARGET_REPO}/core:${LATEST_VERSION} --confirm --no-progress --components '*' --set CNI_BIN_DIR="/var/lib/rancher/k3s/data/cni"
 
   - name: latest-slim-bundle-release
     actions:
@@ -71,6 +70,7 @@ tasks:
   - name: standard-package
     actions:
       - description: "Deploy the standard UDS Core zarf package"
+        # Note: The `CNI_BIN_DIR` override is temporary to workaround an upgrade issue with the k3s 1.31.7
         cmd: uds zarf package deploy build/zarf-package-core-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress --components '*'
 
   - name: checkpoint-package

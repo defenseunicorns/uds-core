@@ -84,7 +84,7 @@ tasks:
               # Extract the version (e.g., v1alpha1)
               version=$(kubectl get crd $CRD -o json | jq -r '.status.storedVersions[0]')
               # Typescript format markdown
-              npx ts-node src/pepr/docs-gen/main.ts "$CRD-crd.json" "$version"
+              npx ts-node --project src/pepr/tsconfig-docs-gen.json src/pepr/docs-gen/main.ts "$CRD-crd.json" "$version"
               # Remove the json and go files
               rm -f "$CRD-crd.json"
           done

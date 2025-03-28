@@ -13,11 +13,13 @@ on:
     paths:
       - tasks/iac.yaml
       - .github/bundles/rke2/*
-      - .github/test-infra/aws/rke2/*
+      - .github/test-infra/aws/rke2/**
+      - .github/workflows/test-rke2.yaml
 
 permissions:
   id-token: write
   contents: read
+  packages: read
 
 jobs:
   test-rke2-install:
@@ -28,11 +30,13 @@ jobs:
     runs-on: ubuntu-latest
     env:
       SHA: ${{ github.sha }}
-      UDS_REGION: us-west-2
-      UDS_PERMISSIONS_BOUNDARY_ARN: ${{ secrets.PERMISSIONS_BOUNDARY_ARN }}
+      UDS_REGION: us-gov-west-1
+      UDS_PERMISSIONS_BOUNDARY_ARN: ${{ secrets.GOV_PERMISSIONS_BOUNDARY_ARN }}
       UDS_PERMISSIONS_BOUNDARY_NAME: ${{ secrets.PERMISSIONS_BOUNDARY_NAME }}
-      UDS_STATE_BUCKET_NAME: uds-aws-ci-commercial-us-west-2-5246-tfstate
-      UDS_STATE_DYNAMODB_TABLE_NAME: uds-aws-ci-commercial-org-us-west-2-5246-tfstate-lock
+      # UDS_STATE_BUCKET_NAME: uds-tf-state-20250305185900362500000001 # commercial
+      UDS_STATE_BUCKET_NAME: uds-tf-state-20250305185903808500000001 # govcloud
+      UDS_STATE_DYNAMODB_TABLE_NAME: uds-tf-state-lock
+      UDS_IMAGES_AWS_ACCOUNT_ID: ${{ secrets.GOV_UDS_IMAGES_AWS_ACCOUNT_ID }}
     steps:
       - name: Set ENV
         run: |
@@ -42,6 +46,7 @@ jobs:
           echo "TF_VAR_run_id=$GITHUB_RUN_ID" >> $GITHUB_ENV
           echo "TF_VAR_use_permissions_boundary=true" >> $GITHUB_ENV
           echo "TF_VAR_permissions_boundary_name=${UDS_PERMISSIONS_BOUNDARY_NAME}" >> $GITHUB_ENV
+          echo "TF_VAR_uds_images_aws_account_id=${UDS_IMAGES_AWS_ACCOUNT_ID}" >> $GITHUB_ENV
 
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -53,10 +58,10 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4
         with:
-          role-to-assume: ${{ secrets.AWS_COMMERCIAL_ROLE_TO_ASSUME }}
+          role-to-assume: ${{ secrets.AWS_GOVCLOUD_ROLE_TO_ASSUME }}
           role-session-name: ${{ github.job || github.event.client_payload.pull_request.head.sha || github.sha }}
           aws-region: ${{ env.UDS_REGION }}
-          role-duration-seconds: 21600
+          role-duration-seconds: 7200
 
       - name: Environment setup
         uses: ./.github/actions/setup
@@ -65,9 +70,6 @@ jobs:
           registry1Password: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
           ghToken: ${{ secrets.GITHUB_TOKEN }}
           chainguardIdentity: ${{ secrets.CHAINGUARD_IDENTITY }}
-
-      # - name: Install eksctl
-      #   run: uds run -f tasks/iac.yaml install-eksctl --no-progress
 
       - name: Setup Tofu
         uses: opentofu/setup-opentofu@592200bd4b9bbf4772ace78f887668b1aee8f716 # v1.0.5

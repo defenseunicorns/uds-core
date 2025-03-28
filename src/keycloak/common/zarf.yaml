@@ -13,7 +13,7 @@ components:
       - name: keycloak
         namespace: keycloak
         # renovate: datasource=docker depName=quay.io/keycloak/keycloak versioning=semver
-        version: 26.1.1
+        version: 26.1.4
         localPath: ../chart
         valuesFiles:
           - ../chart/values.yaml
@@ -58,11 +58,3 @@ components:
                 name: app.kubernetes.io/name=keycloak
                 condition: Ready
                 namespace: keycloak
-          - description: Validate Keycloak Package
-            maxTotalSeconds: 300
-            wait:
-              cluster:
-                kind: packages.uds.dev
-                name: keycloak
-                namespace: keycloak
-                condition: "'{.status.phase}'=Ready"

@@ -7,7 +7,7 @@ tasks:
     actions:
       - description: "Create the K3d cluster"
         # renovate: datasource=github-tags depName=defenseunicorns/uds-k3d versioning=semver
-        cmd: "uds zarf package deploy oci://defenseunicorns/uds-k3d:0.12.0 --confirm --no-progress"
+        cmd: "uds zarf package deploy oci://defenseunicorns/uds-k3d:0.12.1 --confirm --no-progress"
 
   - name: k3d-test-cluster
     actions:
@@ -15,4 +15,4 @@ tasks:
 
       - description: "Initialize the cluster with Zarf"
         # renovate: datasource=github-tags depName=zarf-dev/zarf versioning=semver
-        cmd: "uds zarf package deploy oci://ghcr.io/zarf-dev/packages/init:v0.48.1 --confirm --no-progress"
+        cmd: "uds zarf package deploy oci://ghcr.io/zarf-dev/packages/init:v0.50.0 --confirm --no-progress"

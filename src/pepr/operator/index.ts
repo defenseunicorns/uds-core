@@ -29,6 +29,11 @@ import { validator } from "./crd/validators/package-validator";
 
 import { Component, setupLogger } from "../logger";
 import { UDSConfig, updateCfg, updateCfgSecrets } from "./controllers/config/config";
+import {
+  KEYCLOAK_CLIENTS_SECRET_NAME,
+  KEYCLOAK_CLIENTS_SECRET_NAMESPACE,
+  updateKeycloakClientsSecret,
+} from "./controllers/keycloak/client-secret-sync";
 import { validateCfgUpdate } from "./crd/validators/clusterconfig-validator";
 import { exemptValidator } from "./crd/validators/exempt-validator";
 import { packageFinalizer, packageReconciler } from "./reconcilers/package-reconciler";
@@ -118,3 +123,10 @@ When(a.Secret)
 
 // Watch UDS ClusterConfig and handle changes
 When(ClusterConfig).IsCreatedOrUpdated().Validate(validateCfgUpdate).Reconcile(updateCfg);
+
+// Watch the Kubernetes Clients Secret
+When(a.Secret)
+  .IsCreatedOrUpdated()
+  .InNamespace(KEYCLOAK_CLIENTS_SECRET_NAMESPACE)
+  .WithName(KEYCLOAK_CLIENTS_SECRET_NAME)
+  .Reconcile(s => updateKeycloakClientsSecret(s, false));

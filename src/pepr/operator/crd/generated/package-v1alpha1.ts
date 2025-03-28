@@ -7,7 +7,7 @@
 import { GenericKind, RegisterKind } from "kubernetes-fluent-client";
 export class Package extends GenericKind {
   spec?: Spec;
-  status?: Status;
+  status?: StatusObject;
 }
 
 export interface Spec {
@@ -721,8 +721,12 @@ export interface ProtocolMapper {
   protocolMapper: string;
 }
 
-export interface Status {
+export interface StatusObject {
   authserviceClients?: string[];
+  /**
+   * Status conditions following Kubernetes-style conventions
+   */
+  conditions?: Condition[];
   endpoints?: string[];
   monitors?: string[];
   networkPolicyCount?: number;
@@ -732,10 +736,47 @@ export interface Status {
   ssoClients?: string[];
 }
 
+export interface Condition {
+  /**
+   * The last time the condition transitioned from one status to another
+   */
+  lastTransitionTime: Date;
+  /**
+   * A human-readable message indicating details about the transition
+   */
+  message: string;
+  /**
+   * Represents the .metadata.generation that the condition was set based upon
+   */
+  observedGeneration?: number;
+  /**
+   * A programmatic identifier indicating the reason for the condition's last transition
+   */
+  reason: string;
+  /**
+   * Status of the condition, one of True, False, Unknown
+   */
+  status: StatusEnum;
+  /**
+   * Type of condition in CamelCase or in foo.example.com/CamelCase format
+   */
+  type: string;
+}
+
+/**
+ * Status of the condition, one of True, False, Unknown
+ */
+export enum StatusEnum {
+  False = "False",
+  True = "True",
+  Unknown = "Unknown",
+}
+
 export enum Phase {
   Failed = "Failed",
   Pending = "Pending",
   Ready = "Ready",
+  RemovalFailed = "RemovalFailed",
   Removing = "Removing",
   Retrying = "Retrying",
 }
