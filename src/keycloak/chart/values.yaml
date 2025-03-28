@@ -54,6 +54,23 @@ realmAuthFlows:
   WEBAUTHN_ENABLED: false
   X509_MFA_ENABLED: false
 
+# Theme customizations with allowed types. More info here: https://github.com/defenseunicorns/uds-identity-config/blob/main/docs/reference/UDS%20Core/IdAM/customization.md#branding-customizations
+#themeCustomizations:
+#  resources:
+#    images:
+#      - name: background.jpg
+#        configmap:
+#          name: keycloak-theme-overrides
+#      - name: footer.png
+#        configmap:
+#          name: keycloak-theme-overrides
+#      - name: logo.svg
+#        configmap:
+#          name: keycloak-theme-overrides
+#      - name: favicon.svg
+#        configmap:
+#          name: keycloak-theme-overrides
+
 # Generates an initial password for first admin user - only use if install is headless
 # (i.e. cannot hit keycloak UI with `zarf connect keycloak`), password should be changed after initial login
 insecureAdminPasswordGeneration:
