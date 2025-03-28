@@ -108,7 +108,7 @@ sidebar:
     </tr>
   </thead>
   <tbody>
-    <tr><td style="white-space: nowrap;">allow</td><td style="white-space: nowrap;"><a href="#Allow">Allow[]</a></td><td>Allow specific traffic (namespace will have a default-deny policy)</td></tr><tr><td style="white-space: nowrap;">expose</td><td style="white-space: nowrap;"><a href="#Expose">Expose[]</a></td><td>Expose a service on an Istio Gateway</td></tr>
+    <tr><td style="white-space: nowrap;">allow</td><td style="white-space: nowrap;"><a href="#Allow">Allow[]</a></td><td>Allow specific traffic (namespace will have a default-deny policy)</td></tr><tr><td style="white-space: nowrap;">expose</td><td style="white-space: nowrap;"><a href="#Expose">Expose[]</a></td><td>Expose a service on an Istio Gateway</td></tr><tr><td style="white-space: nowrap;">serviceMesh</td><td style="white-space: nowrap;"><a href="#ServiceMesh">ServiceMesh</a></td><td>Service mesh configuration for the package</td></tr>
   </tbody>
 </table>
 </div>
@@ -126,7 +126,7 @@ sidebar:
     </tr>
   </thead>
   <tbody>
-    <tr><td style="white-space: nowrap;">description</td><td style="white-space: nowrap;">string</td><td>A description of the policy, this will become part of the policy name</td></tr><tr><td style="white-space: nowrap;">direction</td><td style="white-space: nowrap;">string (enum):<ul><li><code>Ingress</code></li><li><code>Egress</code></li></ul></td><td>The direction of the traffic</td></tr><tr><td style="white-space: nowrap;">labels</td><td style="white-space: nowrap;"></td><td>The labels to apply to the policy</td></tr><tr><td style="white-space: nowrap;">podLabels</td><td style="white-space: nowrap;"></td><td>Deprecated: use selector</td></tr><tr><td style="white-space: nowrap;">port</td><td style="white-space: nowrap;">number</td><td>The port to allow (protocol is always TCP)</td></tr><tr><td style="white-space: nowrap;">ports</td><td style="white-space: nowrap;">number[]</td><td>A list of ports to allow (protocol is always TCP)</td></tr><tr><td style="white-space: nowrap;">remoteCidr</td><td style="white-space: nowrap;">string</td><td>Custom generated policy CIDR</td></tr><tr><td style="white-space: nowrap;">remoteGenerated</td><td style="white-space: nowrap;">string (enum):<ul><li><code>KubeAPI</code></li><li><code>KubeNodes</code></li><li><code>IntraNamespace</code></li><li><code>CloudMetadata</code></li><li><code>Anywhere</code></li></ul></td><td>Custom generated remote selector for the policy</td></tr><tr><td style="white-space: nowrap;">remoteNamespace</td><td style="white-space: nowrap;">string</td><td>The remote namespace to allow traffic to/from. Use * or empty string to allow all namespaces</td></tr><tr><td style="white-space: nowrap;">remotePodLabels</td><td style="white-space: nowrap;"></td><td>Deprecated: use remoteSelector</td></tr><tr><td style="white-space: nowrap;">remoteSelector</td><td style="white-space: nowrap;"></td><td>The remote pod selector labels to allow traffic to/from</td></tr><tr><td style="white-space: nowrap;">selector</td><td style="white-space: nowrap;"></td><td>Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace</td></tr>
+    <tr><td style="white-space: nowrap;">description</td><td style="white-space: nowrap;">string</td><td>A description of the policy, this will become part of the policy name</td></tr><tr><td style="white-space: nowrap;">direction</td><td style="white-space: nowrap;">string (enum):<ul><li><code>Ingress</code></li><li><code>Egress</code></li></ul></td><td>The direction of the traffic</td></tr><tr><td style="white-space: nowrap;">labels</td><td style="white-space: nowrap;"></td><td>The labels to apply to the policy</td></tr><tr><td style="white-space: nowrap;">podLabels</td><td style="white-space: nowrap;"></td><td>Deprecated: use selector</td></tr><tr><td style="white-space: nowrap;">port</td><td style="white-space: nowrap;">number</td><td>The port to allow (protocol is always TCP)</td></tr><tr><td style="white-space: nowrap;">ports</td><td style="white-space: nowrap;">number[]</td><td>A list of ports to allow (protocol is always TCP)</td></tr><tr><td style="white-space: nowrap;">remoteCidr</td><td style="white-space: nowrap;">string</td><td>Custom generated policy CIDR</td></tr><tr><td style="white-space: nowrap;">remoteGenerated</td><td style="white-space: nowrap;">string (enum):<ul><li><code>KubeAPI</code></li><li><code>KubeNodes</code></li><li><code>IntraNamespace</code></li><li><code>CloudMetadata</code></li><li><code>Anywhere</code></li></ul></td><td>Custom generated remote selector for the policy</td></tr><tr><td style="white-space: nowrap;">remoteNamespace</td><td style="white-space: nowrap;">string</td><td>The remote namespace to allow traffic to/from. Use * or empty string to allow all namespaces</td></tr><tr><td style="white-space: nowrap;">remotePodLabels</td><td style="white-space: nowrap;"></td><td>Deprecated: use remoteSelector</td></tr><tr><td style="white-space: nowrap;">remoteSelector</td><td style="white-space: nowrap;"></td><td>The remote pod selector labels to allow traffic to/from</td></tr><tr><td style="white-space: nowrap;">remoteServiceAccount</td><td style="white-space: nowrap;">string</td><td>The remote service account to restrict incoming traffic from within the remote namespace.           Only valid for Ingress rules.</td></tr><tr><td style="white-space: nowrap;">selector</td><td style="white-space: nowrap;"></td><td>Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace</td></tr>
   </tbody>
 </table>
 </div>
@@ -471,6 +471,24 @@ Valid Options: FROM_PROTOCOL_DEFAULT, FROM_REQUEST_PORT</td></tr><tr><td style="
   </thead>
   <tbody>
     <tr><td style="white-space: nowrap;">exact</td><td style="white-space: nowrap;">string</td><td></td></tr><tr><td style="white-space: nowrap;">prefix</td><td style="white-space: nowrap;">string</td><td></td></tr><tr><td style="white-space: nowrap;">regex</td><td style="white-space: nowrap;">string</td><td>RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax).</td></tr>
+  </tbody>
+</table>
+</div>
+
+<a id="ServiceMesh"></a>
+<div style="margin-left: 80px; padding-top: 30px;">
+
+#### ServiceMesh
+<table style="width: 100%; table-layout: fixed;">
+  <thead>
+    <tr>
+      <th style="width: 20%; white-space: nowrap;">Field</th>
+      <th style="width: 25%; white-space: nowrap;">Type</th>
+      <th style="width: 55%; white-space: nowrap;">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td style="white-space: nowrap;">ambient</td><td style="white-space: nowrap;">boolean</td><td>Enable ambient authentication for the service mesh</td></tr>
   </tbody>
 </table>
 </div>

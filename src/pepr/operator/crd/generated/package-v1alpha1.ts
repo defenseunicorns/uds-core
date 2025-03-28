@@ -137,6 +137,10 @@ export interface Network {
    * Expose a service on an Istio Gateway
    */
   expose?: Expose[];
+  /**
+   * Service mesh configuration for the package
+   */
+  serviceMesh?: ServiceMesh;
 }
 
 export interface Allow {
@@ -185,6 +189,11 @@ export interface Allow {
    * The remote pod selector labels to allow traffic to/from
    */
   remoteSelector?: { [key: string]: string };
+  /**
+   * The remote service account to restrict incoming traffic from within the remote
+   * namespace.           Only valid for Ingress rules.
+   */
+  remoteServiceAccount?: string;
   /**
    * Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all
    * pods in the namespace
@@ -575,6 +584,16 @@ export interface FluffyURI {
   regex?: string;
 }
 
+/**
+ * Service mesh configuration for the package
+ */
+export interface ServiceMesh {
+  /**
+   * Enable ambient authentication for the service mesh
+   */
+  ambient?: boolean;
+}
+
 export interface Sso {
   /**
    * Always list this client in the Account UI, even if the user does not have an active
@@ -722,6 +741,7 @@ export interface ProtocolMapper {
 }
 
 export interface StatusObject {
+  authorizationPolicyCount?: number;
   authserviceClients?: string[];
   /**
    * Status conditions following Kubernetes-style conventions

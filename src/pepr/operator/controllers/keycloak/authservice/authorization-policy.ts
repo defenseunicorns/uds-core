@@ -68,6 +68,7 @@ function jwtAuthZAuthorizationPolicy(
       namespace,
     },
     spec: {
+      action: IstioAction.Deny,
       selector: {
         matchLabels: labelSelector,
       },
@@ -76,7 +77,7 @@ function jwtAuthZAuthorizationPolicy(
           from: [
             {
               source: {
-                requestPrincipals: [`https://sso.${UDSConfig.domain}/realms/uds/*`],
+                notRequestPrincipals: [`https://sso.${UDSConfig.domain}/realms/uds/*`],
               },
             },
           ],
