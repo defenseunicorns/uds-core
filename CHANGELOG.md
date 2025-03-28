@@ -2,6 +2,40 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.39.0](https://github.com/defenseunicorns/uds-core/compare/v0.38.0...v0.39.0) (2025-03-28)
+
+
+### Features
+
+* add alertmanager datasource to grafana ([#1374](https://github.com/defenseunicorns/uds-core/issues/1374)) ([818a3a0](https://github.com/defenseunicorns/uds-core/commit/818a3a0967a689dfceeb9b494c11167fda3d09a5))
+* new webauth and mfa flows ([#1370](https://github.com/defenseunicorns/uds-core/issues/1370)) ([1ac1b03](https://github.com/defenseunicorns/uds-core/commit/1ac1b03b985feae924f0881c28ab11adba9aed33))
+* theme customization ([#1382](https://github.com/defenseunicorns/uds-core/issues/1382)) ([55ef41b](https://github.com/defenseunicorns/uds-core/commit/55ef41b9fd9cf20b13699b6955ac99cd5bb9a9a0))
+* use Client Credentials for managing Keycloak Clients ([#1341](https://github.com/defenseunicorns/uds-core/issues/1341)) ([4db9cc7](https://github.com/defenseunicorns/uds-core/commit/4db9cc75aac1473ebd9cffd772e7be39761fa2a6))
+
+
+### Miscellaneous
+
+* add additionalNetworkAllow to keycloak and loki ([#1379](https://github.com/defenseunicorns/uds-core/issues/1379)) ([8200bce](https://github.com/defenseunicorns/uds-core/commit/8200bce42dfa0baf3349187a440d871eda20e3cd))
+* add docs for layer selection ([#1216](https://github.com/defenseunicorns/uds-core/issues/1216)) ([c170322](https://github.com/defenseunicorns/uds-core/commit/c1703221b85d37451d60c226863a0b168e702e01))
+* **deps:** update grafana to v8.10.4 ([#1363](https://github.com/defenseunicorns/uds-core/issues/1363)) ([fb163bd](https://github.com/defenseunicorns/uds-core/commit/fb163bdf69b6b8a3d5d251a9e52bd512cc3e394e))
+* **deps:** update istio to v1.25.0 ([#1335](https://github.com/defenseunicorns/uds-core/issues/1335)) ([1803ea7](https://github.com/defenseunicorns/uds-core/commit/1803ea7375100e61d2e06816e6c7150e0e4e76dc))
+* **deps:** update keycloak to v26.1.4 ([#1356](https://github.com/defenseunicorns/uds-core/issues/1356)) ([31152f7](https://github.com/defenseunicorns/uds-core/commit/31152f7659ef02335494d3a3646b49a4dd68398d))
+* **deps:** update pepr to v0.46.3 ([#1365](https://github.com/defenseunicorns/uds-core/issues/1365)) ([304a556](https://github.com/defenseunicorns/uds-core/commit/304a556f7cec391cda0c8f6b330bad652d329a03))
+* **deps:** update prometheus-stack ([#1362](https://github.com/defenseunicorns/uds-core/issues/1362)) ([ae40b27](https://github.com/defenseunicorns/uds-core/commit/ae40b27e38522749e7b8cd21702610307d2e182a))
+* **deps:** update prometheus-stack ([#1380](https://github.com/defenseunicorns/uds-core/issues/1380)) ([eec3337](https://github.com/defenseunicorns/uds-core/commit/eec3337a61992a2eb50af54471c96f5d5d9c001e))
+* **deps:** update support-deps ([#1364](https://github.com/defenseunicorns/uds-core/issues/1364)) ([7819bec](https://github.com/defenseunicorns/uds-core/commit/7819bec4b32d32fb29c8c59ffda22eb6705175c1))
+* **deps:** update support-deps ([#1376](https://github.com/defenseunicorns/uds-core/issues/1376)) ([dd22589](https://github.com/defenseunicorns/uds-core/commit/dd22589fbe8e9ef44674ad09c2f4317c9a103759))
+* **deps:** update support-deps ([#1390](https://github.com/defenseunicorns/uds-core/issues/1390)) ([f06bb70](https://github.com/defenseunicorns/uds-core/commit/f06bb7066a42e0dc298cac5164025a706255faec))
+* **deps:** update velero to v8.6.0 ([#1371](https://github.com/defenseunicorns/uds-core/issues/1371)) ([93a44e6](https://github.com/defenseunicorns/uds-core/commit/93a44e6d67b36f92c204d043484d996e877194ac))
+* remove kiali and tempo references from repo ([#1375](https://github.com/defenseunicorns/uds-core/issues/1375)) ([8374de3](https://github.com/defenseunicorns/uds-core/commit/8374de3cbfccfffd6825ae59c18e6080f691346b))
+* update how to scrape metrics ([#1378](https://github.com/defenseunicorns/uds-core/issues/1378)) ([e808f7d](https://github.com/defenseunicorns/uds-core/commit/e808f7d394ea4848c6203cc469960f82b89d0fa4))
+* update unicorn ztunnel image to 1.25.0 ([#1389](https://github.com/defenseunicorns/uds-core/issues/1389)) ([7e446cb](https://github.com/defenseunicorns/uds-core/commit/7e446cbff939d144f964d41c55190626075f410a))
+
+
+### Documentation
+
+* velero csi vsphere backups ([#1385](https://github.com/defenseunicorns/uds-core/issues/1385)) ([5ae33b2](https://github.com/defenseunicorns/uds-core/commit/5ae33b2d01f308f5d7d067d30aa4b911d1c0d20e))
+
 ## [0.38.0](https://github.com/defenseunicorns/uds-core/compare/v0.37.0...v0.38.0) (2025-03-19)
 
 
