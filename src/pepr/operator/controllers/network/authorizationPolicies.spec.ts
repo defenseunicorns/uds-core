@@ -44,7 +44,10 @@ describe("generateAuthorizationPolicies UDS Core Packages", () => {
       },
     };
 
-    const policies: AuthorizationPolicy[] = await generateAuthorizationPolicies(pkg);
+    const policies: AuthorizationPolicy[] = await generateAuthorizationPolicies(
+      pkg,
+      "curl-ns-remote-cidr",
+    );
     expect(policies).toHaveLength(1);
     const policy = policies[0];
     expect(policy.metadata?.namespace).toBe("curl-ns-remote-cidr");
@@ -107,7 +110,7 @@ describe("generateAuthorizationPolicies UDS Core Packages", () => {
       },
     };
 
-    const policies = await generateAuthorizationPolicies(pkg);
+    const policies = await generateAuthorizationPolicies(pkg, "authservice-test-app");
     // We expect exactly two policies: one for the expose rule and one for the allow rule.
     expect(policies.length).toBe(2);
 
@@ -162,7 +165,7 @@ describe("generateAuthorizationPolicies UDS Core Packages", () => {
       },
     };
 
-    const policies = await generateAuthorizationPolicies(pkg);
+    const policies = await generateAuthorizationPolicies(pkg, "test-tenant-app");
     expect(policies.length).toBe(2);
     const names = policies.map(p => p.metadata?.name);
     expect(new Set(names).size).toBe(2);
@@ -186,7 +189,7 @@ describe("generateAuthorizationPolicies UDS Core Packages", () => {
       },
     };
 
-    const policies = await generateAuthorizationPolicies(pkg);
+    const policies = await generateAuthorizationPolicies(pkg, "loki");
     // With one allow rule (Ingress/IntraNamespace), expect one policy
     expect(policies.length).toBe(1);
     const policy = policies[0];
@@ -228,7 +231,7 @@ describe("generateAuthorizationPolicies UDS Core Packages", () => {
       },
     };
 
-    const policies = await generateAuthorizationPolicies(pkg);
+    const policies = await generateAuthorizationPolicies(pkg, "neuvector");
     // With the current per-rule design we expect three policies
     expect(policies.length).toBe(3);
 
@@ -300,7 +303,7 @@ describe("generateAuthorizationPolicies UDS Core Packages", () => {
       },
     };
 
-    const policies = await generateAuthorizationPolicies(pkg);
+    const policies = await generateAuthorizationPolicies(pkg, "vector");
     expect(policies.length).toBe(1);
     const policy = policies[0];
     expect(policy.metadata?.name).toBe("protect-vector-ingress-prometheus-metrics");
@@ -335,7 +338,7 @@ describe("generateAuthorizationPolicies UDS Core Packages", () => {
       },
     };
 
-    const policies = await generateAuthorizationPolicies(pkg);
+    const policies = await generateAuthorizationPolicies(pkg, "velero");
     // Expect one policy
     expect(policies.length).toBe(1);
     const policy = policies[0];
@@ -373,7 +376,7 @@ describe("generateAuthorizationPolicies UDS Core Packages", () => {
       },
     };
 
-    const policies = await generateAuthorizationPolicies(pkg);
+    const policies = await generateAuthorizationPolicies(pkg, "authservice");
     // Expect two policies
     expect(policies.length).toBe(2);
     const nsPolicy = policies.find(
@@ -425,7 +428,7 @@ describe("generateAuthorizationPolicies UDS Core Packages", () => {
       },
     };
 
-    const policies = await generateAuthorizationPolicies(pkg);
+    const policies = await generateAuthorizationPolicies(pkg, "monitoring");
     // Expect three policies
     expect(policies.length).toBe(3);
     const nsPolicy = policies.find(
@@ -503,7 +506,7 @@ describe("generateAuthorizationPolicies UDS Core Packages", () => {
       },
     };
 
-    const policies = await generateAuthorizationPolicies(pkg);
+    const policies = await generateAuthorizationPolicies(pkg, "grafana");
     // Expect three policies: one from expose, one from allow, and one monitor policy
     expect(policies.length).toBe(3);
     const exposePolicy = policies.find(
@@ -545,7 +548,7 @@ describe("generateAuthorizationPolicies UDS Core Packages", () => {
     );
 
     const monitorPolicy = policies.find(
-      p => p.metadata?.name === "protect-grafana-monitor-grafana-workload-3000",
+      p => p.metadata?.name === "protect-grafana-monitor-3000-grafana-workload",
     );
     expect(monitorPolicy).toBeDefined();
     expect(monitorPolicy!.metadata?.namespace).toBe("grafana");
@@ -663,7 +666,7 @@ describe("generateAuthorizationPolicies UDS Core Packages", () => {
       },
     };
 
-    const policies = await generateAuthorizationPolicies(pkg);
+    const policies = await generateAuthorizationPolicies(pkg, "keycloak");
     // We expect 6 policies
     expect(policies.length).toBe(6);
 
@@ -767,7 +770,7 @@ describe("generateAuthorizationPolicies UDS Core Packages", () => {
 
     // 6. Monitor rule: Metrics
     const monitorPol = policies.find(
-      p => p.metadata?.name === "protect-keycloak-monitor-keycloak-workload-9000",
+      p => p.metadata?.name === "protect-keycloak-monitor-9000-keycloak-workload",
     );
     expect(monitorPol).toBeDefined();
     expect(monitorPol?.metadata?.namespace).toBe("keycloak");

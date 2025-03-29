@@ -600,17 +600,6 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
               properties: {
                 expose,
                 allow,
-                serviceMesh: {
-                  description: "Service mesh configuration for the package",
-                  type: "object",
-                  properties: {
-                    ambient: {
-                      description: "Enable ambient authentication for the service mesh",
-                      type: "boolean",
-                      default: false,
-                    },
-                  },
-                },
               },
             },
             monitor,

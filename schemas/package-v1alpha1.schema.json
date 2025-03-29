@@ -155,10 +155,6 @@
             "$ref": "#/definitions/Expose"
           },
           "description": "Expose a service on an Istio Gateway"
-        },
-        "serviceMesh": {
-          "$ref": "#/definitions/ServiceMesh",
-          "description": "Service mesh configuration for the package"
         }
       },
       "required": [],
@@ -790,19 +786,6 @@
       },
       "required": [],
       "title": "FluffyURI"
-    },
-    "ServiceMesh": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "ambient": {
-          "type": "boolean",
-          "description": "Enable ambient authentication for the service mesh"
-        }
-      },
-      "required": [],
-      "title": "ServiceMesh",
-      "description": "Service mesh configuration for the package"
     },
     "Sso": {
       "type": "object",

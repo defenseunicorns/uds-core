@@ -12,7 +12,7 @@ import {
   Rule,
   Source,
 } from "../../crd/generated/istio/authorizationpolicy-v1beta1";
-import { purgeOrphans } from "../utils";
+import { purgeOrphans, sanitizeResourceName } from "../utils";
 
 const log = setupLogger(Component.OPERATOR_NETWORK);
 
@@ -21,20 +21,21 @@ const ADMIN_INGRESS = "cluster.local/ns/istio-admin-gateway/sa/admin-ingressgate
 const TENANT_INGRESS = "cluster.local/ns/istio-tenant-gateway/sa/tenant-ingressgateway";
 
 /**
- * Type guard to determine if a rule is an Expose rule.
+ * Generates a unique name for a Monitor rule.
+ * Combines the target port and a derived name from the pod selector or fallback selector.
+ * Prioritizes "app" or "app.kubernetes.io/name" label values to form a stable, readable base.
+ * Falls back to joining all selector values, or "workload" if none exist.
  */
-function isExposeRule(rule: Allow | Expose): rule is Expose {
-  return "service" in rule && Boolean(rule.service);
-}
-
-/**
- * Derives a short name from a selector.
- */
-function derivePolicyName(selector: { [key: string]: string }): string {
-  if (selector["app"]) return selector["app"].replace(/-pod$/, "");
-  if (selector["app.kubernetes.io/name"])
-    return selector["app.kubernetes.io/name"].replace(/-pod$/, "") + "-workload";
-  return "workload";
+function generateMonitorName(monitor: Monitor): string {
+  const selector = monitor.podSelector ?? monitor.selector ?? {};
+  const portPart = monitor.targetPort?.toString() ?? "unknown-port";
+  const baseName =
+    selector["app"]?.replace(/-pod$/, "") ??
+    (selector["app.kubernetes.io/name"]
+      ? selector["app.kubernetes.io/name"].replace(/-pod$/, "") + "-workload"
+      : undefined) ??
+    (Object.values(selector).join("-") || "workload");
+  return `monitor-${portPart}-${baseName}`;
 }
 
 /**
@@ -55,7 +56,7 @@ function generateAllowName(rule: Allow): string {
     ]
       .flat()
       .join("-");
-  return `ingress-${baseName}`.toLowerCase().replace(/\s+/g, "-");
+  return `ingress-${baseName}`;
 }
 
 /**
@@ -65,16 +66,7 @@ function generateExposeName(rule: Expose): string {
   const effectivePort = rule.targetPort ?? rule.port;
   const selPart = rule.selector ? Object.values(rule.selector).join("-") : "all";
   const gateway = rule.gateway || "tenant";
-  return `ingress-${effectivePort}-${selPart}-istio-${gateway}-gateway`
-    .toLowerCase()
-    .replace(/\s+/g, "-");
-}
-
-/**
- * Generates a unique authorization policy name for a given rule.
- */
-export function generateAuthPolName(rule: Allow | Expose): string {
-  return isExposeRule(rule) ? generateExposeName(rule) : generateAllowName(rule);
+  return `ingress-${effectivePort}-${selPart}-istio-${gateway}-gateway`;
 }
 
 /**
@@ -86,7 +78,14 @@ function processAllowRule(rule: Allow, pkgNamespace: string): { source: Source; 
   if (rule.ports) ports.push(...rule.ports.map(p => p.toString()));
 
   let source: Source = {};
-  if (rule.remoteCidr) {
+
+  if (rule.remoteServiceAccount && rule.remoteServiceAccount.trim() !== "") {
+    const nsForSA =
+      rule.remoteNamespace && rule.remoteNamespace.trim() !== ""
+        ? rule.remoteNamespace
+        : pkgNamespace;
+    source = { principals: [`cluster.local/ns/${nsForSA}/sa/${rule.remoteServiceAccount}`] };
+  } else if (rule.remoteCidr) {
     source = { ipBlocks: [rule.remoteCidr] };
   } else if (
     rule.remoteNamespace === "" ||
@@ -96,17 +95,8 @@ function processAllowRule(rule: Allow, pkgNamespace: string): { source: Source; 
     source = {};
   } else if (rule.remoteGenerated === RemoteGenerated.IntraNamespace) {
     source = { namespaces: [pkgNamespace] };
-  } else if (rule.remoteNamespace && rule.remoteNamespace !== "" && rule.remoteNamespace !== "*") {
+  } else if (rule.remoteNamespace) {
     source = { namespaces: [rule.remoteNamespace] };
-  } else {
-    source = {};
-  }
-  if (rule.remoteServiceAccount && rule.remoteServiceAccount.trim() !== "") {
-    const nsForSA =
-      rule.remoteNamespace && rule.remoteNamespace.trim() !== ""
-        ? rule.remoteNamespace
-        : pkgNamespace;
-    source = { principals: [`cluster.local/ns/${nsForSA}/sa/${rule.remoteServiceAccount}`] };
   }
   return { source, ports };
 }
@@ -139,14 +129,14 @@ function isEmpty(obj: object): boolean {
  * If the computed source is empty, the "from" field is omitted.
  */
 function buildAuthPolicy(
+  policyName: string,
   pkgName: string,
   pkgNamespace: string,
   generation: string,
-  rule: Allow | Expose,
+  selector: Record<string, string> | undefined,
   source: Source,
   ports: string[],
 ): AuthorizationPolicy {
-  const policyName = `protect-${pkgName}-${generateAuthPolName(rule)}`;
   const ruleEntry: Rule = {};
   if (!isEmpty(source)) {
     ruleEntry.from = [{ source }];
@@ -154,6 +144,7 @@ function buildAuthPolicy(
   if (ports.length > 0) {
     ruleEntry.to = [{ operation: { ports } }];
   }
+
   return {
     apiVersion: "security.istio.io/v1beta1",
     kind: "AuthorizationPolicy",
@@ -164,39 +155,8 @@ function buildAuthPolicy(
     },
     spec: {
       action: Action.Allow,
-      ...(rule.selector ? { selector: { matchLabels: rule.selector } } : {}),
+      ...(selector ? { selector: { matchLabels: selector } } : {}),
       rules: [ruleEntry],
-    },
-  };
-}
-
-/**
- * Helper to generate a monitor AuthorizationPolicy.
- */
-function buildMonitorAuthPolicy(
-  pkgName: string,
-  pkgNamespace: string,
-  generation: string,
-  monitor: Monitor,
-): AuthorizationPolicy {
-  const mSelector = monitor.podSelector ?? monitor.selector;
-  const monitorRule: Rule = {
-    from: [{ source: { namespaces: ["monitoring"] } }],
-    to: [{ operation: { ports: [monitor.targetPort.toString()] } }],
-  };
-  const monitorPolicyName = `protect-${pkgName}-monitor-${derivePolicyName(mSelector)}-${monitor.targetPort}`;
-  return {
-    apiVersion: "security.istio.io/v1beta1",
-    kind: "AuthorizationPolicy",
-    metadata: {
-      name: monitorPolicyName,
-      namespace: pkgNamespace,
-      labels: { "uds/package": pkgName, "uds/generation": generation },
-    },
-    spec: {
-      action: Action.Allow,
-      selector: { matchLabels: mSelector },
-      rules: [monitorRule],
     },
   };
 }
@@ -206,10 +166,9 @@ function buildMonitorAuthPolicy(
  */
 export async function generateAuthorizationPolicies(
   pkg: UDSPackage,
-  overrideNamespace?: string,
+  pkgNamespace: string,
 ): Promise<AuthorizationPolicy[]> {
   const pkgName = pkg.metadata?.name ?? "unknown";
-  const pkgNamespace = pkg.metadata?.namespace ?? overrideNamespace ?? "default";
   const generation = pkg.metadata?.generation?.toString() ?? "0";
   log.info(
     `Starting policy generation for package "${pkgName}" in namespace "${pkgNamespace}" (generation ${generation}).`,
@@ -222,7 +181,16 @@ export async function generateAuthorizationPolicies(
     for (const rule of pkg.spec.network.allow) {
       if (rule.direction === "Egress") continue;
       const { source, ports } = processAllowRule(rule, pkgNamespace);
-      const authPolicy = buildAuthPolicy(pkgName, pkgNamespace, generation, rule, source, ports);
+      const policyName = sanitizeResourceName(`protect-${pkgName}-${generateAllowName(rule)}`);
+      const authPolicy = buildAuthPolicy(
+        policyName,
+        pkgName,
+        pkgNamespace,
+        generation,
+        rule.selector,
+        source,
+        ports,
+      );
       policies.push(authPolicy);
       log.debug(`Generated authpol: ${authPolicy.metadata?.name}`);
     }
@@ -232,7 +200,16 @@ export async function generateAuthorizationPolicies(
   if (pkg.spec?.network?.expose) {
     for (const rule of pkg.spec.network.expose) {
       const { source, ports } = processExposeRule(rule);
-      const authPolicy = buildAuthPolicy(pkgName, pkgNamespace, generation, rule, source, ports);
+      const policyName = sanitizeResourceName(`protect-${pkgName}-${generateExposeName(rule)}`);
+      const authPolicy = buildAuthPolicy(
+        policyName,
+        pkgName,
+        pkgNamespace,
+        generation,
+        rule.selector,
+        source,
+        ports,
+      );
       policies.push(authPolicy);
       log.debug(`Generated authpol: ${authPolicy.metadata?.name}`);
     }
@@ -241,28 +218,41 @@ export async function generateAuthorizationPolicies(
   // Process monitor rules.
   if (pkg.spec?.monitor) {
     for (const monitor of pkg.spec.monitor) {
-      const authPolicy = buildMonitorAuthPolicy(pkgName, pkgNamespace, generation, monitor);
+      const selector = monitor.podSelector ?? monitor.selector;
+      const source: Source = { namespaces: ["monitoring"] };
+      const ports: string[] = [monitor.targetPort.toString()];
+      const policyName = sanitizeResourceName(`protect-${pkgName}-${generateMonitorName(monitor)}`);
+
+      const authPolicy = buildAuthPolicy(
+        policyName,
+        pkgName,
+        pkgNamespace,
+        generation,
+        selector,
+        source,
+        ports,
+      );
+
       policies.push(authPolicy);
       log.debug(`Generated monitor authpol: ${authPolicy.metadata?.name}`);
     }
   }
 
   // Apply policies concurrently.
-  await Promise.all(
-    policies.map(async policy => {
-      try {
-        await K8s(AuthorizationPolicy).Apply(policy, { force: true });
-        log.info(
-          `Applied AuthorizationPolicy ${policy.metadata?.name} in namespace ${policy.metadata?.namespace}`,
-        );
-      } catch (err) {
-        log.error(
-          err,
-          `Error applying AuthorizationPolicy ${policy.metadata?.name} in namespace ${policy.metadata?.namespace}`,
-        );
-      }
-    }),
-  );
+  for (const policy of policies) {
+    try {
+      await K8s(AuthorizationPolicy).Apply(policy, { force: true });
+      log.debug(
+        `Applied AuthorizationPolicy ${policy.metadata?.name} in namespace ${policy.metadata?.namespace}`,
+      );
+    } catch (err) {
+      log.error(
+        err,
+        `Error applying AuthorizationPolicy ${policy.metadata?.name} in namespace ${policy.metadata?.namespace}`,
+      );
+      throw err; // Rethrow to fail the reconciliation process.
+    }
+  }
 
   await purgeOrphans(generation, pkgNamespace, pkgName, AuthorizationPolicy, log);
   return policies;
