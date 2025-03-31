@@ -24,6 +24,7 @@ const ADMIN_INGRESS = "cluster.local/ns/istio-admin-gateway/sa/admin-ingressgate
 const TENANT_INGRESS = "cluster.local/ns/istio-tenant-gateway/sa/tenant-ingressgateway";
 const PASSTHROUGH_INGRESS =
   "cluster.local/ns/istio-passthrough-gateway/sa/passthrough-ingressgateway";
+const PROMETHEUS_PRINCIPAL = "cluster.local/ns/monitoring/sa/prometheus";
 
 /**
  * Generates a unique name for a Monitor rule.
@@ -239,7 +240,7 @@ export async function generateAuthorizationPolicies(
   if (pkg.spec?.monitor) {
     for (const monitor of pkg.spec.monitor) {
       const selector = monitor.podSelector ?? monitor.selector;
-      const source: Source = { namespaces: ["monitoring"] };
+      const source: Source = { principals: [PROMETHEUS_PRINCIPAL] };
       const ports: string[] = [monitor.targetPort.toString()];
       const policyName = sanitizeResourceName(`protect-${pkgName}-${generateMonitorName(monitor)}`);
       const authPolicy = buildAuthPolicy(policyName, pkg, selector, source, ports);

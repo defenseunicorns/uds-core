@@ -108,7 +108,7 @@ export async function packageReconciler(pkg: UDSPackage) {
       endpoints,
       monitors,
       networkPolicyCount: netPol.length,
-      authorizationPolicyCount: authPol.length,
+      authorizationPolicyCount: authPol.length + authserviceClients.length * 2,
       observedGeneration: metadata.generation,
       retryAttempt: 0, // todo: make this nullable when kfc generates the type
     });
