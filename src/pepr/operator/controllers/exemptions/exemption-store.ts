@@ -46,7 +46,7 @@ function add(exemption: UDSExemption, logger: boolean = true) {
   // Remove any existing exemption for this owner, in case of WatchPhase.Modified
   remove(exemption);
   const owner = exemption.metadata?.uid || "";
-  policyOwnerMap.set(owner, exemption);
+  policyOwnerMap.set( , exemption);
 
   for (const e of exemption.spec?.exemptions ?? []) {
     const policies = e.policies ?? [];

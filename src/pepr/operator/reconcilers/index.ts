@@ -6,6 +6,8 @@
 import { K8s, kind } from "pepr";
 
 import { Component, setupLogger } from "../../logger";
+import { PackageStore } from "../controllers/packages/package-store";
+import { processPackages } from "../controllers/packages/packages";
 import { Phase, PkgStatus, UDSPackage } from "../crd";
 import { StatusObject as Status, StatusEnum } from "../crd/generated/package-v1alpha1";
 
@@ -176,4 +178,19 @@ export function getReadinessConditions(ready: boolean = true) {
       reason: "ReconciliationComplete",
     },
   ];
+}
+
+export async function startPackageWatch() {
+  PackageStore.init();
+  // only run in admission controller or dev mode
+  if (process.env.PEPR_WATCH_MODE === "false" || process.env.PEPR_MODE === "dev") {
+        const watcher = K8s(UDSPackage).Watch(async (pkg, phase) => {
+          log.debug(`Processing package ${pkg.metadata?.name}, watch phase: ${phase}`);
+    
+          processPackages(pkg, phase);
+        });
+    // This will run until the process is terminated or the watch is aborted
+    log.debug("Starting package watch...");
+    await watcher.start();
+  }
 }
