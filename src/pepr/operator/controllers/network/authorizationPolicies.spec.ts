@@ -649,7 +649,13 @@ describe("authorization policy generation", () => {
     expect(monitorPolicy!.spec?.rules).toEqual(
       expect.arrayContaining([
         {
-          from: [{ source: { principals: ["cluster.local/ns/monitoring/sa/prometheus"] } }],
+          from: [
+            {
+              source: {
+                principals: ["cluster.local/ns/monitoring/sa/kube-prometheus-stack-prometheus"],
+              },
+            },
+          ],
           to: [{ operation: { ports: ["3000"] } }],
         },
       ]),
@@ -871,7 +877,13 @@ describe("authorization policy generation", () => {
     expect(monitorPol?.spec?.rules).toEqual(
       expect.arrayContaining([
         {
-          from: [{ source: { principals: ["cluster.local/ns/monitoring/sa/prometheus"] } }],
+          from: [
+            {
+              source: {
+                principals: ["cluster.local/ns/monitoring/sa/kube-prometheus-stack-prometheus"],
+              },
+            },
+          ],
           to: [{ operation: { ports: ["9000"] } }],
         },
       ]),

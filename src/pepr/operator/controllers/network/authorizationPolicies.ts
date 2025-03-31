@@ -24,7 +24,7 @@ const ADMIN_INGRESS = "cluster.local/ns/istio-admin-gateway/sa/admin-ingressgate
 const TENANT_INGRESS = "cluster.local/ns/istio-tenant-gateway/sa/tenant-ingressgateway";
 const PASSTHROUGH_INGRESS =
   "cluster.local/ns/istio-passthrough-gateway/sa/passthrough-ingressgateway";
-const PROMETHEUS_PRINCIPAL = "cluster.local/ns/monitoring/sa/prometheus";
+const PROMETHEUS_PRINCIPAL = "cluster.local/ns/monitoring/sa/kube-prometheus-stack-prometheus";
 
 /**
  * Generates a unique name for a Monitor rule.
@@ -164,6 +164,7 @@ function buildAuthPolicy(
   selector: Record<string, string> | undefined,
   source: Source,
   ports: string[],
+  additionalLabels?: Record<string, string>,
 ): AuthorizationPolicy {
   const ruleEntry: Rule = {};
   if (!isEmpty(source)) {
@@ -187,6 +188,7 @@ function buildAuthPolicy(
         "uds/package": pkgName,
         "uds/generation": generation,
         "uds/for": "network",
+        ...additionalLabels,
       },
       ownerReferences: getOwnerRef(pkg),
     },
@@ -219,7 +221,17 @@ export async function generateAuthorizationPolicies(
       if (rule.direction === "Egress") continue;
       const { source, ports } = processAllowRule(rule, pkgNamespace);
       const policyName = sanitizeResourceName(`protect-${pkgName}-${generateAllowName(rule)}`);
-      const authPolicy = buildAuthPolicy(policyName, pkg, rule.selector, source, ports);
+      const additionalLabels: Record<string, string> | undefined = rule.remoteGenerated
+        ? { "uds/generated": rule.remoteGenerated }
+        : undefined;
+      const authPolicy = buildAuthPolicy(
+        policyName,
+        pkg,
+        rule.selector,
+        source,
+        ports,
+        additionalLabels,
+      );
       policies.push(authPolicy);
       log.debug(`Generated authpol: ${authPolicy.metadata?.name}`);
     }
