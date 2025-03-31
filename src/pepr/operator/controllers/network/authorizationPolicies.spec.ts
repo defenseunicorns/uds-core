@@ -12,6 +12,7 @@ jest.mock("../../../logger", () => ({
     debug: jest.fn(),
     info: jest.fn(),
     error: jest.fn(),
+    warn: jest.fn(),
   }),
   Component: {
     OPERATOR_NETWORK: "OPERATOR_NETWORK",
@@ -27,7 +28,96 @@ jest.mock("pepr", () => ({
   })),
 }));
 
-describe("generateAuthorizationPolicies UDS Core Packages", () => {
+jest.mock("./generators/cloudMetadata", () => ({
+  META_IP: "169.254.169.254/32",
+}));
+
+jest.mock("./generators/kubeAPI", () => ({
+  kubeAPI: () => [{ ipBlock: { cidr: "10.0.0.1/32" } }],
+}));
+
+jest.mock("./generators/kubeNodes", () => ({
+  kubeNodes: () => [{ ipBlock: { cidr: "192.168.0.0/16" } }],
+}));
+
+describe("authorization policy generation", () => {
+  test("should generate authpol with ipBlock for CloudMetadata", async () => {
+    const pkg: UDSPackage = {
+      metadata: { name: "cloud-metadata-test", namespace: "test-ns", generation: 1 },
+      spec: {
+        network: {
+          allow: [
+            {
+              direction: Direction.Ingress,
+              remoteGenerated: RemoteGenerated.CloudMetadata,
+              selector: { app: "cloud-metadata-test" },
+            },
+          ],
+        },
+      },
+    };
+
+    const policies = await generateAuthorizationPolicies(pkg, "test-ns");
+    expect(policies.length).toBe(1);
+    const policy = policies[0];
+    expect(policy.metadata?.name).toBe(
+      "protect-cloud-metadata-test-ingress-cloud-metadata-test-cloudmetadata",
+    );
+    expect(policy.spec?.rules?.[0].from?.[0].source).toEqual({
+      ipBlocks: ["169.254.169.254/32"],
+    });
+  });
+
+  test("should generate authpol with ipBlock from kubeAPI", async () => {
+    const pkg: UDSPackage = {
+      metadata: { name: "kubeapi-test", namespace: "test-ns", generation: 1 },
+      spec: {
+        network: {
+          allow: [
+            {
+              direction: Direction.Ingress,
+              remoteGenerated: RemoteGenerated.KubeAPI,
+              selector: { app: "kubeapi-test" },
+            },
+          ],
+        },
+      },
+    };
+
+    const policies = await generateAuthorizationPolicies(pkg, "test-ns");
+    expect(policies.length).toBe(1);
+    const policy = policies[0];
+    expect(policy.metadata?.name).toBe("protect-kubeapi-test-ingress-kubeapi-test-kubeapi");
+    expect(policy.spec?.rules?.[0].from?.[0].source).toEqual({
+      ipBlocks: ["10.0.0.1/32"],
+    });
+  });
+
+  test("should generate authpol with ipBlock from kubeNodes", async () => {
+    const pkg: UDSPackage = {
+      metadata: { name: "kubenodes-test", namespace: "test-ns", generation: 1 },
+      spec: {
+        network: {
+          allow: [
+            {
+              direction: Direction.Ingress,
+              remoteGenerated: RemoteGenerated.KubeNodes,
+              selector: { app: "kubenodes-test" },
+            },
+          ],
+        },
+      },
+    };
+
+    const policies = await generateAuthorizationPolicies(pkg, "test-ns");
+    expect(policies.length).toBe(1);
+    const policy = policies[0];
+    expect(policy.metadata?.name).toBe("protect-kubenodes-test-ingress-kubenodes-test-kubenodes");
+    expect(policy.spec?.rules?.[0].from?.[0].source).toEqual({
+      ipBlocks: ["192.168.0.0/16"],
+    });
+  });
+
   test("should generate an authpol with ipBlocks from remoteCidr", async () => {
     const pkg: UDSPackage = {
       metadata: { name: "curl-pkg-remote-cidr", namespace: "curl-ns-remote-cidr", generation: 1 },

@@ -12,7 +12,10 @@ import {
   Rule,
   Source,
 } from "../../crd/generated/istio/authorizationpolicy-v1beta1";
-import { purgeOrphans, sanitizeResourceName } from "../utils";
+import { getOwnerRef, purgeOrphans, sanitizeResourceName } from "../utils";
+import { META_IP } from "./generators/cloudMetadata";
+import { kubeAPI } from "./generators/kubeAPI";
+import { kubeNodes } from "./generators/kubeNodes";
 
 const log = setupLogger(Component.OPERATOR_NETWORK);
 
@@ -79,22 +82,44 @@ function processAllowRule(rule: Allow, pkgNamespace: string): { source: Source; 
 
   let source: Source = {};
 
-  if (rule.remoteServiceAccount && rule.remoteServiceAccount.trim() !== "") {
-    const nsForSA =
-      rule.remoteNamespace && rule.remoteNamespace.trim() !== ""
-        ? rule.remoteNamespace
-        : pkgNamespace;
-    source = { principals: [`cluster.local/ns/${nsForSA}/sa/${rule.remoteServiceAccount}`] };
+  const hasRemoteSA = rule.remoteServiceAccount?.trim();
+  const hasRemoteNS = rule.remoteNamespace?.trim();
+
+  if (hasRemoteSA) {
+    const ns = hasRemoteNS || pkgNamespace;
+    source = {
+      principals: [`cluster.local/ns/${ns}/sa/${rule.remoteServiceAccount}`],
+    };
   } else if (rule.remoteCidr) {
     source = { ipBlocks: [rule.remoteCidr] };
-  } else if (
-    rule.remoteNamespace === "" ||
-    rule.remoteNamespace === "*" ||
-    rule.remoteGenerated === RemoteGenerated.Anywhere
-  ) {
+  } else if (rule.remoteGenerated) {
+    switch (rule.remoteGenerated) {
+      case RemoteGenerated.CloudMetadata:
+        source = { ipBlocks: [META_IP] };
+        break;
+      case RemoteGenerated.KubeAPI:
+        source = {
+          ipBlocks: kubeAPI()
+            .map((peer: { ipBlock?: { cidr: string } }) => peer.ipBlock?.cidr)
+            .filter((cidr): cidr is string => typeof cidr === "string"),
+        };
+        break;
+      case RemoteGenerated.KubeNodes:
+        source = {
+          ipBlocks: kubeNodes()
+            .map((peer: { ipBlock?: { cidr: string } }) => peer.ipBlock?.cidr)
+            .filter((cidr): cidr is string => typeof cidr === "string"),
+        };
+        break;
+      case RemoteGenerated.IntraNamespace:
+        source = { namespaces: [pkgNamespace] };
+        break;
+      case RemoteGenerated.Anywhere:
+        source = {};
+        break;
+    }
+  } else if (rule.remoteNamespace === "" || rule.remoteNamespace === "*") {
     source = {};
-  } else if (rule.remoteGenerated === RemoteGenerated.IntraNamespace) {
-    source = { namespaces: [pkgNamespace] };
   } else if (rule.remoteNamespace) {
     source = { namespaces: [rule.remoteNamespace] };
   }
@@ -130,9 +155,7 @@ function isEmpty(obj: object): boolean {
  */
 function buildAuthPolicy(
   policyName: string,
-  pkgName: string,
-  pkgNamespace: string,
-  generation: string,
+  pkg: UDSPackage,
   selector: Record<string, string> | undefined,
   source: Source,
   ports: string[],
@@ -145,13 +168,22 @@ function buildAuthPolicy(
     ruleEntry.to = [{ operation: { ports } }];
   }
 
+  const pkgName = pkg.metadata?.name ?? "unknown";
+  const pkgNamespace = pkg.metadata?.namespace ?? "default";
+  const generation = pkg.metadata?.generation?.toString() ?? "0";
+
   return {
     apiVersion: "security.istio.io/v1beta1",
     kind: "AuthorizationPolicy",
     metadata: {
       name: policyName,
       namespace: pkgNamespace,
-      labels: { "uds/package": pkgName, "uds/generation": generation },
+      labels: {
+        "uds/package": pkgName,
+        "uds/generation": generation,
+        "uds/for": "network",
+      },
+      ownerReferences: getOwnerRef(pkg),
     },
     spec: {
       action: Action.Allow,
@@ -182,15 +214,7 @@ export async function generateAuthorizationPolicies(
       if (rule.direction === "Egress") continue;
       const { source, ports } = processAllowRule(rule, pkgNamespace);
       const policyName = sanitizeResourceName(`protect-${pkgName}-${generateAllowName(rule)}`);
-      const authPolicy = buildAuthPolicy(
-        policyName,
-        pkgName,
-        pkgNamespace,
-        generation,
-        rule.selector,
-        source,
-        ports,
-      );
+      const authPolicy = buildAuthPolicy(policyName, pkg, rule.selector, source, ports);
       policies.push(authPolicy);
       log.debug(`Generated authpol: ${authPolicy.metadata?.name}`);
     }
@@ -201,15 +225,7 @@ export async function generateAuthorizationPolicies(
     for (const rule of pkg.spec.network.expose) {
       const { source, ports } = processExposeRule(rule);
       const policyName = sanitizeResourceName(`protect-${pkgName}-${generateExposeName(rule)}`);
-      const authPolicy = buildAuthPolicy(
-        policyName,
-        pkgName,
-        pkgNamespace,
-        generation,
-        rule.selector,
-        source,
-        ports,
-      );
+      const authPolicy = buildAuthPolicy(policyName, pkg, rule.selector, source, ports);
       policies.push(authPolicy);
       log.debug(`Generated authpol: ${authPolicy.metadata?.name}`);
     }
@@ -222,17 +238,7 @@ export async function generateAuthorizationPolicies(
       const source: Source = { namespaces: ["monitoring"] };
       const ports: string[] = [monitor.targetPort.toString()];
       const policyName = sanitizeResourceName(`protect-${pkgName}-${generateMonitorName(monitor)}`);
-
-      const authPolicy = buildAuthPolicy(
-        policyName,
-        pkgName,
-        pkgNamespace,
-        generation,
-        selector,
-        source,
-        ports,
-      );
-
+      const authPolicy = buildAuthPolicy(policyName, pkg, selector, source, ports);
       policies.push(authPolicy);
       log.debug(`Generated monitor authpol: ${authPolicy.metadata?.name}`);
     }
@@ -254,6 +260,9 @@ export async function generateAuthorizationPolicies(
     }
   }
 
-  await purgeOrphans(generation, pkgNamespace, pkgName, AuthorizationPolicy, log);
+  await purgeOrphans(generation, pkgNamespace, pkgName, AuthorizationPolicy, log, {
+    "uds/for": "network",
+  });
+
   return policies;
 }
