@@ -2,7 +2,7 @@
 
 This guide describes how Istio AuthorizationPolicies are generated from the UDSPackage CR by the UDS‑Core operator. These **ALLOW** policies are primarily used to enable ingress security within an Istio Ambient Mesh environment.
 
-The code responsible for generating these policies can be found in the Pepr policy implementation and includes support for three rule types:
+The code responsible for generating these policies can be found [here](https://github.com/defenseunicorns/uds-core/blob/main/src/pepr/operator/controllers/network/authorizationPolicies.ts) and includes support for three rule types:
 - `allow`: Direct ingress rules for services.
 - `expose`: Gateway-based ingress exposure.
 - `monitor`: Restricts access to metrics endpoints.

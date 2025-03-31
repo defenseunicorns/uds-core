@@ -4,7 +4,7 @@ sidebar:
   order: 3
 ---
 
-In clusters running Istio Ambient Mesh, UDS‑Core enforces **ingress network security** using Istio **ALLOW** AuthorizationPolicies. These policies are automatically generated for each application package you define with a UDSPackage resource.
+In clusters running Istio Ambient Mesh, UDS‑Core enforces **ingress network security** using Istio **ALLOW** AuthorizationPolicies. These policies are automatically generated for each application package you define with a [UDS Package](https://uds.defenseunicorns.com/reference/configuration/uds-operator/package/) resource.
 
 This document explains what this means for you as an application developer and how to take full advantage of the built-in security model.
 
@@ -40,7 +40,7 @@ spec:
         port: 8080
 ```
 
-> This ensures that only a specific service account in another namespace can access your service.
+> This ensures that only a workload running as this specific service account in another namespace can access your service.
 
 ### 2. Expose Your Service Safely
 
@@ -92,7 +92,7 @@ More info: [Istio Authorization Policy Evaluation](https://istio.io/latest/docs/
 ## Summary
 
 - Ingress is denied by default.
-- You allow ingress by defining `allow` or `expose` rules in your UDSPackage.
+- You allow ingress by defining `allow` or `expose` rules in your UDS Package resource definition.
 - You can further tighten security using DENY policies.
 - Use `remoteServiceAccount` for the strongest protection.
 - Authservice is good for simple cases only—use stronger methods for complex needs.

@@ -22,6 +22,8 @@ const log = setupLogger(Component.OPERATOR_NETWORK);
 // Constants for gateway principals.
 const ADMIN_INGRESS = "cluster.local/ns/istio-admin-gateway/sa/admin-ingressgateway";
 const TENANT_INGRESS = "cluster.local/ns/istio-tenant-gateway/sa/tenant-ingressgateway";
+const PASSTHROUGH_INGRESS =
+  "cluster.local/ns/istio-passthrough-gateway/sa/passthrough-ingressgateway";
 
 /**
  * Generates a unique name for a Monitor rule.
@@ -138,7 +140,9 @@ function processExposeRule(rule: Expose): { source: Source; ports: string[] } {
   const source =
     rule.gateway === Gateway.Admin
       ? { principals: [ADMIN_INGRESS] }
-      : { principals: [TENANT_INGRESS] };
+      : rule.gateway === Gateway.Passthrough
+        ? { principals: [PASSTHROUGH_INGRESS] }
+        : { principals: [TENANT_INGRESS] };
   return { source, ports };
 }
 
