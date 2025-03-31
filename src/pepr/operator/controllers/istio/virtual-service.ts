@@ -3,14 +3,21 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { K8s } from "pepr";
 import { V1OwnerReference } from "@kubernetes/client-node";
+import { K8s } from "pepr";
 import { UDSConfig } from "../../../config";
-import { Expose, Gateway, IstioHTTP, IstioHTTPRoute, IstioVirtualService } from "../../crd";
+import { Expose, Gateway, IstioHTTP, IstioTL, IstioHTTPRoute, IstioVirtualService } from "../../crd";
 import { sanitizeResourceName } from "../utils";
-import { getSharedAnnotationKey, istioEgressGatewayNamespace, log, sharedResourcesAnnotationPrefix } from "./istio-resources";
 import { subsetName } from "./destination-rule";
 import { generateGatewayName } from "./gateway";
+import { EgressResource } from "./types";
+import {
+  getSharedAnnotationKey,
+  istioEgressGatewayNamespace as namespace,
+  log,
+  sharedResourcesAnnotationPrefix,
+} from "./istio-resources";
+import { sharedEgressPkgId } from "./egress";
 
 /**
  * Creates a VirtualService for each exposed service in the package
@@ -99,246 +106,57 @@ export function generateVSName(pkgName: string, expose: Expose) {
 }
 
 /**
- * Find existing egress virtual service, generating if needed or patches if fields missing
+ * Create the egress Virtual Service resource
  *
- * @param pkgId
  * @param host
- * @param protocol
- * @param port
- * @param attempt
- * @param maxAttempts
+ * @param resource
+ * @param generation
  */
-export async function generateOrPatchEgressVirtualService(
-  pkgId: string,
+export async function generateEgressVirtualService(
   host: string,
-  protocol: string,
-  port: number,
-  attempt: number = 0, // Add attempt counter
-  maxAttempts: number = 3, // Maximum number of attempts to reconcile
-) {
-  const vsName = generateEgressVSName(host);
+  resource: EgressResource,
+  generation: number,
+){
+  const name = generateEgressVSName(host);
 
-  // Retrieve the existing Gateway matching the sharedResourceId
-  await K8s(IstioVirtualService)
-    .InNamespace(istioEgressGatewayNamespace)
-    .Get(vsName)
-    .then(async vs => {
-      // Check port/protocol is defined for the host
-      let foundMatchingPortProtocol: boolean = false;
-      if (vs.spec && vs.spec.http && protocol == "HTTP") {
-        // Check if any http route destinations match the port
-        for (const http of vs.spec.http) {
-          if (http.route) {
-            for (const route of http.route) {
-              if (route.destination?.port == port) {
-                foundMatchingPortProtocol = true;
-                break;
-              }
-            }
-          }
-        }
-      } else if (vs.spec && vs.spec.tls && protocol == "TLS") {
-        // Check if any tls route destinations match the port
-        for (const tls of vs.spec.tls) {
-          if (tls.route) {
-            for (const route of tls.route) {
-              if (route.destination?.port === port) {
-                foundMatchingPortProtocol = true;
-                break;
-              }
-            }
-          }
-        }
-      }
-
-      // Patch the port/protocol if not found
-      if (!foundMatchingPortProtocol) {
-        log.debug(
-          `Found existing Virtual Service ${vsName} with different port/protocol. Patching ${protocol}:${port}.`,
-        );
-        await patchVirtualServiceRoute(vs, host, protocol, port);
-      }
-
-      // Add the package annotation if not found
-      const annotations = vs.metadata?.annotations || {};
-      const pkgKey = getSharedAnnotationKey(pkgId);
-      if (!Object.keys(annotations).find(key => key == pkgKey)) {
-        // TODO: Add something more descriptive than "user" to the annotation value, e.g., [{ "host": "x", "protocol": "y", "port": "z" }]
-        // Scenario where a package allow is modified... the old data will still be persisted in the server
-        annotations[`${pkgKey}`] = "user";
-        await patchVirtualServiceAnnotations(vs, annotations);
-      }
-    })
-    .catch(async err => {
-      if (err.status == 404) {
-        const newVs = await generateEgressVirtualService(vsName, pkgId, host, protocol, port);
-        log.debug(`Creating new Virtual Service ${vsName} with ${protocol}:${port}.`);
-
-        await K8s(IstioVirtualService)
-          .Create(newVs)
-          .catch(async () => {
-            log.error(
-              `Failed to create Virtual Service ${vsName}. Attempt ${attempt + 1} of ${maxAttempts}.`,
-            );
-            if (attempt + 1 >= maxAttempts) {
-              throw new Error(
-                `Failed to create Virtual Service ${vsName} after ${maxAttempts} attempts.`,
-              );
-            }
-            return await generateOrPatchEgressVirtualService(
-              pkgId,
-              host,
-              protocol,
-              port,
-              attempt + 1,
-            );
-          });
-      } else {
-        // Retry if the error is not a 404
-        if (attempt < maxAttempts) {
-          log.warn(
-            `Failed to get Virtual Service ${vsName}. Attempt ${attempt + 1} of ${maxAttempts}.`,
-          );
-          await generateOrPatchEgressVirtualService(pkgId, host, protocol, port, attempt + 1);
-        } else {
-          log.error(`Failed to get Virtual Service ${vsName} after ${maxAttempts} attempts.`);
-        }
-      }
-    });
-}
-
-// Clean up the virtual service
-export async function cleanupEgressVirtualService(
-  host: string,
-  pkgId: string,
-  attempt: number = 0,
-  maxAttempts: number = 3,
-) {
-  const vsName = generateEgressVSName(host);
-
-  await K8s(IstioVirtualService)
-    .InNamespace(istioEgressGatewayNamespace)
-    .Get(vsName)
-    .then(async vs => {
-      // Get the sharedResourcesAnnotation annotation
-      const annotations = vs.metadata?.annotations || {};
-
-      // Remove the package annotation
-      delete annotations[`${getSharedAnnotationKey(pkgId)}`];
-
-      // If there are no more UDS Package annotations, remove the resource
-      if (!Object.keys(annotations).find(key => key.startsWith(sharedResourcesAnnotationPrefix))) {
-        await K8s(IstioVirtualService).InNamespace(istioEgressGatewayNamespace).Delete(vsName);
-      } else {
-        // Patch the gateway annotations
-        await patchVirtualServiceAnnotations(vs, annotations);
-      }
-    })
-    .catch(async err => {
-      if (err.status === 404) {
-        log.debug(`Gateway ${vsName} not found.`);
-        return;
-      } else {
-        log.error(`Failed to cleanup Virtual Service ${vsName}. Attempt ${attempt + 1} of ${maxAttempts}.`);
-        if (attempt + 1 >= maxAttempts) {
-          throw new Error(`Failed to cleanup Virtual Service ${vsName} after ${maxAttempts} attempts.`);
-        }
-        return await cleanupEgressVirtualService(host, pkgId, attempt + 1, maxAttempts);
-      }
-    });
-}
-
-// Recursive function to patch the virtual service with the host, protocol, and port
-async function patchVirtualServiceRoute(
-  vs: IstioVirtualService,
-  host: string,
-  protocol: string,
-  port: number,
-  attempt: number = 0,
-  maxAttempts: number = 3,
-) {
-  // Set default patch path as TLS
-  let patchPath = "/spec/tls/-";
-
-  if (protocol == "HTTP") {
-    patchPath = "/spec/http/-";
-  }
-
-  // Patch the virtual service
-  await K8s(IstioVirtualService, { name: vs.metadata?.name, namespace: vs.metadata?.namespace })
-    .Patch([
-      {
-        op: "add",
-        path: `${patchPath}`,
-        value: generateVirtualServiceRoutes(host, port, protocol),
-      },
-    ])
-    .catch(async () => {
-      log.error(
-        `Failed to patch gateway server for ${vs.metadata?.name}. Attempt ${attempt + 1} of ${maxAttempts}.`,
-      );
-      if (attempt + 1 >= maxAttempts) {
-        throw new Error(
-          `Failed to patch gateway server for ${vs.metadata?.name} after ${maxAttempts} attempts.`,
-        );
-      }
-      return await patchVirtualServiceRoute(vs, host, protocol, port, attempt + 1, maxAttempts);
-    });
-}
-
-// Recursive function to patch the virtual service annotations with the package ID
-async function patchVirtualServiceAnnotations(
-  vs: IstioVirtualService,
-  annotations: Record<string, string>,
-  attempt: number = 0,
-  maxAttempts: number = 3,
-) {
-  await K8s(IstioVirtualService, { name: vs.metadata?.name, namespace: vs.metadata?.namespace })
-    .Patch([
-      {
-        op: "replace",
-        path: "/metadata/annotations",
-        value: annotations,
-      },
-    ])
-    .catch(async () => {
-      log.error(
-        `Failed to patch gateway annotations for ${vs.metadata?.name}. Attempt ${attempt + 1} of ${maxAttempts}.`,
-      );
-      if (attempt + 1 >= maxAttempts) {
-        throw new Error(
-          `Failed to patch gateway annotations for ${vs.metadata?.name} after ${maxAttempts} attempts.`,
-        );
-      }
-      return await patchVirtualServiceAnnotations(vs, annotations, attempt + 1, maxAttempts);
-    });
-}
-
-// Generaate the virtual service resource
-async function generateEgressVirtualService(
-  vsName: string,
-  pkgId: string,
-  host: string,
-  protocol: string,
-  port: number,
-) {
   // Warn if there are existing gateways with the same host
   await warnMatchingExistingVirtualServices(host);
-  const routes = generateVirtualServiceRoutes(host, port, protocol);
 
+  // Add annotations from resource
+  const annotations: Record<string, string> = {};
+  for (const pkgId of resource.packages) {
+    annotations[`${getSharedAnnotationKey(pkgId)}`] = "user";
+  }
+
+  // Add the gateway servers
+  const httpRoutes: IstioHTTP[] = [];
+  const tlsRoutes: IstioTL[] = [];
+  for (const portProtocol of resource.portProtocols) {
+    const port = portProtocol.port;
+    const protocol = portProtocol.protocol;
+    const route = generateVirtualServiceRoutes(host, port, protocol);
+    if (protocol == "TLS") {
+      tlsRoutes.push(...(route as IstioTL[]));
+    } else if (protocol == "HTTP") {
+      httpRoutes.push(...(route as IstioHTTP[]));
+    }
+  }
+
+  // Define the gateway
   const vs: IstioVirtualService = {
     metadata: {
-      name: vsName,
-      namespace: istioEgressGatewayNamespace,
-      annotations: {
-        [`${getSharedAnnotationKey(pkgId)}`]: "user",
+      name,
+      namespace,
+      labels: {
+        "uds/generation": generation.toString(),
+        "uds/package": sharedEgressPkgId,
       },
     },
     spec: {
       hosts: [host],
       gateways: ["mesh", `${generateGatewayName(host)}`],
-      ...(protocol == "TLS" && { tls: routes }),
-      ...(protocol == "HTTP" && { http: routes }),
+      ...(tlsRoutes.length > 0 && { tls: tlsRoutes }),
+      ...(httpRoutes.length > 0 && { http: httpRoutes }),
     },
   };
 
@@ -347,26 +165,25 @@ async function generateEgressVirtualService(
 
 // Generates the HTTP/TLS routes for the virtual service
 function generateVirtualServiceRoutes(host: string, port: number, protocol: string) {
-  const match = [
-    {
-      gateways: ["mesh"],
-      port: port,
-      ...(protocol == "TLS" && { sniHosts: [host] }),
-    },
-    {
-      gateways: [`${generateGatewayName(host)}`],
-      port: port,
-      ...(protocol == "TLS" && { sniHosts: [host] }),
-    },
-  ];
+  const meshMatch = {
+    gateways: ["mesh"],
+    port,
+    ...(protocol == "TLS" && { sniHosts: [host] }),
+  };
+
+  const gatewayMatch = {
+    gateways: [`${generateGatewayName(host)}`],
+    port,
+    ...(protocol == "TLS" && { sniHosts: [host] }),
+  };
 
   return [
     {
-      match: [match[0]],
+      match: [meshMatch],
       route: [
         {
           destination: {
-            host: `egressgateway.${istioEgressGatewayNamespace}.svc.cluster.local`,
+            host: `egressgateway.${namespace}.svc.cluster.local`,
             subset: subsetName,
             port: { number: port },
           },
@@ -374,12 +191,11 @@ function generateVirtualServiceRoutes(host: string, port: number, protocol: stri
       ],
     },
     {
-      match: [match[1]],
+      match: [gatewayMatch],
       route: [
         {
           destination: {
-            host: `egressgateway.${istioEgressGatewayNamespace}.svc.cluster.local`,
-            subset: subsetName,
+            host,
             port: { number: port },
           },
         },
@@ -388,15 +204,20 @@ function generateVirtualServiceRoutes(host: string, port: number, protocol: stri
   ];
 }
 
-// *** What about virtual services that are not added by the operator? ***
-// Assumption: Users adding their own Istio resources will need to understand the possible conflicts with the spec. This is not an operation
+// Check for other virtual services that might conflict - virtual services that are not added by the operator
+// Note: Users adding their own Istio resources will need to understand the possible conflicts with the spec. This is not an operation
 // blocked by K8s, but will be identified as invalid by Istio. The UDS operator will only manage/deconflict resources it creates or those
 // that follow the naming convention.
 async function warnMatchingExistingVirtualServices(host: string) {
   const virtualServices = await K8s(IstioVirtualService).Get();
+  const name = generateEgressVSName(host);
 
   // Match any virtual services with matching hosts
   for (const vs of virtualServices.items) {
+    if (vs.metadata?.name === name && vs.metadata?.namespace === namespace) {
+      // Don't warn if the virtual service is the one we created
+      continue;
+    }
     if (vs.spec && vs.spec.hosts) {
       for (const vsHost of vs.spec.hosts) {
         if (vsHost === host) {

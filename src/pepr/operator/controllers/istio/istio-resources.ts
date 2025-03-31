@@ -6,21 +6,19 @@
 import { K8s } from "pepr";
 
 import { Component, setupLogger } from "../../../logger";
-import { IstioServiceEntry, IstioVirtualService, UDSPackage } from "../../crd";
-import { RemoteProtocol } from "../../crd/generated/package-v1alpha1";
+import { IstioServiceEntry, IstioVirtualService, IstioSidecar, UDSPackage } from "../../crd";
+import { RemoteProtocol } from "../../crd";
 import { getOwnerRef, purgeOrphans } from "../utils";
-import { generateOrPatchDestinationRule } from "./destination-rule";
-import { generateOrPatchEgressGateway } from "./gateway";
-import { generateIngressServiceEntry } from "./service-entry";
-import {
-  generateIngressVirtualService,
-  generateOrPatchEgressVirtualService,
-} from "./virtual-service";
+import { generateIngressServiceEntry, generateEgressServiceEntry } from "./service-entry";
+import { generateIngressVirtualService } from "./virtual-service";
+import { generateEgressSidecar } from "./sidecar";
+import { reconcileSharedEgressResources } from "./egress";
+import { PackageAction } from "./types";
 
 // configure subproject logger
 export const log = setupLogger(Component.OPERATOR_ISTIO);
 
-// Constants for egress gateway
+// Egress gateway variables
 export const istioEgressGatewayNamespace = "istio-egress-gateway";
 export const sharedResourcesAnnotationPrefix = "uds.dev/user";
 
@@ -33,7 +31,7 @@ export const sharedResourcesAnnotationPrefix = "uds.dev/user";
  */
 export async function istioResources(pkg: UDSPackage, namespace: string) {
   const pkgName = pkg.metadata!.name!;
-  const pkgId = getPackageId(pkg);
+  // const pkgId = getPackageId(pkg);
   const generation = (pkg.metadata?.generation ?? 0).toString();
   const ownerRefs = getOwnerRef(pkg);
 
@@ -95,24 +93,68 @@ export async function istioResources(pkg: UDSPackage, namespace: string) {
     const remoteProtocol = allow.remoteProtocol ?? RemoteProtocol.TLS;
     const port = allow.port || 443;
 
-    // Add egress resources if remoteHost is defined
+    // Add package-related egress resources if remoteHost is defined
     if (remoteHost) {
-      // Reconcile with existing egress Gateway, or create a new one
-      await generateOrPatchEgressGateway(pkgId, remoteHost, remoteProtocol, port);
-
-      // Reconcile with existing egress Destination Rule, or create a new one
-      await generateOrPatchDestinationRule(pkgId);
-
-      // Create Virtual Service
-      await generateOrPatchEgressVirtualService(pkgId, remoteHost, remoteProtocol, port);
-
       // Create Service Entry
+      const serviceEntry = generateEgressServiceEntry(
+        remoteHost,
+        remoteProtocol,
+        port,
+        pkgName,
+        namespace,
+        generation,
+        ownerRefs,
+      );
+
+      log.debug(serviceEntry, `Applying Service Entry ${serviceEntry.metadata?.name}`);
+
+      // Apply the ServiceEntry and force overwrite any existing resource
+      await K8s(IstioServiceEntry)
+        .InNamespace(namespace)
+        .Get(serviceEntry.metadata!.name!)
+        .catch(async err => {
+          if (err.status === 404) {
+            await K8s(IstioServiceEntry).Apply(serviceEntry, { force: true });
+          } else {
+            log.error(`Failed to reconcile Service Entry ${serviceEntry.metadata?.name}: ${err}`);
+          }
+        });
+
       // Create Sidecar
+      const sidecar = generateEgressSidecar(
+        remoteHost,
+        remoteProtocol,
+        port,
+        allow.selector,
+        pkgName,
+        namespace,
+        generation,
+        ownerRefs,
+      );
+
+      log.debug(sidecar, `Applying Sidecar ${sidecar.metadata?.name}`);
+
+      // Apply the Sidecar and force overwrite any existing resource
+      await K8s(IstioSidecar)
+        .InNamespace(namespace)
+        .Get(sidecar.metadata!.name!)
+        .catch(async err => {
+          if (err.status === 404) {
+            await K8s(IstioSidecar).Apply(sidecar, { force: true });
+          } else {
+            log.error(`Failed to reconcile Sidecar ${sidecar.metadata?.name}: ${err}`);
+          }
+        });
     }
   }
 
+  // Reconcile shared egress resources
+  await reconcileSharedEgressResources(pkg, PackageAction.AddOrUpdate);
+
+  // Purge any orphaned resources
   await purgeOrphans(generation, namespace, pkgName, IstioVirtualService, log);
   await purgeOrphans(generation, namespace, pkgName, IstioServiceEntry, log);
+  await purgeOrphans(generation, namespace, pkgName, IstioSidecar, log);
 
   // Return the list of unique hostnames
   return [...hosts];

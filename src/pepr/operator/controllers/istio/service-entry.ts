@@ -14,6 +14,7 @@ import {
   IstioResolution,
   IstioServiceEntry,
 } from "../../crd";
+import { istioEgressGatewayNamespace } from "./istio-resources";
 import { sanitizeResourceName } from "../utils";
 
 /**
@@ -81,4 +82,65 @@ export function generateSEName(pkgName: string, expose: Expose) {
   const name = sanitizeResourceName(`${pkgName}-${gateway}-${host}`);
 
   return name;
+}
+
+/**
+ * Creates a ServiceEntry for allowed external hosts in the package
+ *
+ * @param host
+ * @param protocol
+ * @param port
+ * @param pkgName
+ * @param namespace
+ * @param generation
+ * @param ownerRefs
+ */
+export function generateEgressServiceEntry(
+  host: string,
+  protocol: string,
+  port: number,
+  pkgName: string,
+  namespace: string,
+  generation: string,
+  ownerRefs: V1OwnerReference[],
+) {
+  const name = generateEgressSEName(pkgName, port, protocol, host);
+
+  const serviceEntry: IstioServiceEntry = {
+    metadata: {
+      name,
+      namespace,
+      labels: {
+        "uds/package": pkgName,
+        "uds/generation": generation,
+      },
+      // Use the CR as the owner ref for each ServiceEntry
+      ownerReferences: ownerRefs,
+    },
+    spec: {
+      // Append the UDS Domain to the host
+      hosts: [host],
+      location: IstioLocation.MeshExternal,
+      resolution: IstioResolution.DNS,
+      ports: [
+        {
+          name: `${protocol.toLowerCase()}-${port.toString()}`,
+          number: port,
+          protocol: protocol,
+        },
+      ],
+      exportTo: [".", istioEgressGatewayNamespace],
+    },
+  };
+
+  return serviceEntry;
+}
+
+export function generateEgressSEName(
+  pkgName: string,
+  port: number,
+  protocol: string,
+  host: string,
+) {
+  return sanitizeResourceName(`${pkgName}-egress-${protocol}-${port.toString()}-${host}`);
 }
