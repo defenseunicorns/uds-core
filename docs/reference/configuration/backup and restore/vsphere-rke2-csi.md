@@ -1,5 +1,7 @@
 ---
 title: RKE2 CSI Snapshotting on vSphere
+sidebar:
+  order: 3
 ---
 
 ## Introduction

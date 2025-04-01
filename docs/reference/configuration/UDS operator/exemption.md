@@ -1,7 +1,5 @@
 ---
 title: UDS Exemption
-sidebar:
-    order: 3
 ---
 
 ![UDS Operator Exemption Flowchart](https://github.com/defenseunicorns/uds-core/blob/main/docs/.images/diagrams/uds-core-operator-uds-exemption.svg?raw=true)
