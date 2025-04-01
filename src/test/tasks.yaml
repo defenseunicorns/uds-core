@@ -224,5 +224,5 @@ tasks:
 
   - name: remove
     actions:
-      - description:
+      - description: Remove the test apps zarf package
         cmd: "uds zarf package remove build/zarf-package-uds-core-test-apps-*.zst --confirm --no-progress"
