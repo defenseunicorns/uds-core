@@ -82,7 +82,7 @@ The `istio-ambient` component installs the Istio CNI plugin which requires speci
 ```yaml
 # K3d cluster
 cniConfDir: /var/lib/rancher/k3s/agent/etc/cni/net.d
-cniBinDir: /bin/
+cniBinDir: /opt/cni/bin/ # Historically this was `/bin/`
 
 # K3s cluster
 cniConfDir: /var/lib/rancher/k3s/agent/etc/cni/net.d
