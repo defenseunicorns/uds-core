@@ -228,6 +228,10 @@
           },
           "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
         },
+        "remoteServiceAccount": {
+          "type": "string",
+          "description": "The remote service account to restrict incoming traffic from within the remote\nnamespace.           Only valid for Ingress rules."
+        },
         "selector": {
           "type": "object",
           "additionalProperties": {
@@ -975,6 +979,9 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "authorizationPolicyCount": {
+          "type": "integer"
+        },
         "authserviceClients": {
           "type": "array",
           "items": {

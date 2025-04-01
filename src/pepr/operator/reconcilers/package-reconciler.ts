@@ -16,6 +16,7 @@ import { keycloak, purgeSSOClients } from "../controllers/keycloak/client-sync";
 import { Client } from "../controllers/keycloak/types";
 import { podMonitor } from "../controllers/monitoring/pod-monitor";
 import { serviceMonitor } from "../controllers/monitoring/service-monitor";
+import { generateAuthorizationPolicies } from "../controllers/network/authorizationPolicies";
 import { networkPolicies } from "../controllers/network/policies";
 import { retryWithDelay } from "../controllers/utils";
 import { Phase, UDSPackage } from "../crd";
@@ -85,6 +86,8 @@ export async function packageReconciler(pkg: UDSPackage) {
     // Pass the effective Istio mode to the networkPolicies function
     const netPol = await networkPolicies(pkg, namespace!, effectiveMode);
 
+    const authPol = await generateAuthorizationPolicies(pkg, namespace!);
+
     let endpoints: string[] = [];
     // Update the namespace to enable the expected Istio mode (sidecar or ambient)
     // Note: enableIstio will also check UDSConfig.isAmbientDeployed and fall back if needed
@@ -120,6 +123,7 @@ export async function packageReconciler(pkg: UDSPackage) {
       endpoints,
       monitors,
       networkPolicyCount: netPol.length,
+      authorizationPolicyCount: authPol.length + authserviceClients.length * 2,
       observedGeneration: metadata.generation,
       retryAttempt: 0, // todo: make this nullable when kfc generates the type
     });
