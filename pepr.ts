@@ -14,6 +14,7 @@ import { registerCRDs } from "./src/pepr/operator/crd/register";
 import { patches } from "./src/pepr/patches";
 import { policies, startExemptionWatch } from "./src/pepr/policies";
 import { prometheus } from "./src/pepr/prometheus";
+import { setupKeycloakClientSecret } from "./src/pepr/operator/controllers/keycloak/config";
 
 const log = setupLogger(Component.STARTUP);
 
@@ -23,6 +24,7 @@ const log = setupLogger(Component.STARTUP);
   // KFC watch for exemptions and update in-memory map
   await startExemptionWatch();
   await setupAuthserviceSecret();
+  await setupKeycloakClientSecret();
   new PeprModule(cfg, [
     // UDS Core Operator
     operator,

@@ -53,6 +53,10 @@ spec:
               mountPath: /opt/keycloak/themes
             - name: conf
               mountPath: /opt/keycloak/conf
+            {{- if and .Values.themeCustomizations .Values.themeCustomizations.resources .Values.themeCustomizations.resources.images }}
+            - name: theme-overrides
+              mountPath: /opt/keycloak/theme-overrides
+            {{- end }}
           envFrom:
             - secretRef:
                 name: {{ include "keycloak.fullname" . }}-realm-env
@@ -231,6 +235,8 @@ spec:
             - name: conf
               mountPath: /opt/keycloak/conf
               readOnly: true
+            - name: client-secrets
+              mountPath: /var/run/secrets/uds/client-secrets
       enableServiceLinks: {{ .Values.enableServiceLinks }}
       restartPolicy: {{ .Values.restartPolicy }}
       {{- with .Values.nodeSelector }}
@@ -254,6 +260,9 @@ spec:
       {{- end }}
       terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
       volumes:
+        - name: client-secrets
+          secret:
+            secretName: {{ include "keycloak.fullname" . }}-client-secrets
         - name: providers
           {{- if .Values.persistence.providers.enabled }}
           persistentVolumeClaim:
@@ -284,3 +293,17 @@ spec:
           {{- else }}
           emptyDir: {}
           {{- end }}
+        {{- if and .Values.themeCustomizations .Values.themeCustomizations.resources .Values.themeCustomizations.resources.images }}
+        - name: theme-overrides
+          projected:
+            sources:
+              {{- range $image := .Values.themeCustomizations.resources.images }}
+              {{- if $image.configmap.name }}
+              - configMap:
+                  name: {{ $image.configmap.name }}
+                  items:
+                    - key: {{ $image.name }}
+                      path: {{ $image.name }}
+              {{- end }}
+              {{- end }}
+        {{- end }}
