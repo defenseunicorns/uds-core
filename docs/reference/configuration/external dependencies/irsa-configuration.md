@@ -1,7 +1,7 @@
 ---
 title: IRSA Support
 sidebar:
-  order: 2
+  order: 5
 ---
 
 Several applications within UDS Core can be configured to utilize resources that are external to your Kubernetes cluster, such as object storage and databases. If you are running in AWS, you can leverage [IRSA](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html) to provide applications within UDS Core with a secure means of accessing external resources.
