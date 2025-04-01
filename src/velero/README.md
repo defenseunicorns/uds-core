@@ -129,6 +129,5 @@ velero restore create uds-restore-$(date +%s) \
 > before running the restore.
 
 > [!NOTE]
-> Additional configuration will be required to get CSI backed PVCs to be snapshotted
-> as noted in the [Velero documentation](https://velero.io/docs/main/csi/#prerequisites) - VolumeSnapshotLocation, VolumeSnapshotClass, etc.
-> as well as switching `snapshotVolume` to `true` in the backup config.
+> Additional configuration will be required to get CSI backed PVCs to be snapshotted. For more information on configuring CSI backed volumes, see https://github.com/defenseunicorns/uds-core/tree/main/docs/reference/configuration/csi-driver.md
+
