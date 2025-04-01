@@ -14,16 +14,11 @@ describe("test generate destination rule", () => {
   it("should create a destination rule object", () => {
     const egressResources: EgressResource = {
       packages: ["test-pkg1", "test-pkg2"],
-      portProtocols: [
-        { port: 443, protocol: RemoteProtocol.TLS },
-      ],
-    }
+      portProtocols: [{ port: 443, protocol: RemoteProtocol.TLS }],
+    };
     const generation = 1;
 
-    const destinationRule = generateDestinationRule(
-      egressResources,
-      1,
-    );
+    const destinationRule = generateDestinationRule(egressResources, 1);
 
     expect(destinationRule).toBeDefined();
     expect(destinationRule.metadata?.name).toEqual(`egressgateway-destination-rule`);
@@ -32,7 +27,9 @@ describe("test generate destination rule", () => {
       "uds/generation": generation.toString(),
       "uds/package": sharedEgressPkgId,
     });
-    expect(destinationRule.spec?.host).toEqual(`egressgateway.${istioEgressGatewayNamespace}.svc.cluster.local`);
+    expect(destinationRule.spec?.host).toEqual(
+      `egressgateway.${istioEgressGatewayNamespace}.svc.cluster.local`,
+    );
     expect(destinationRule.spec?.subsets).toBeDefined();
     expect(destinationRule.spec?.subsets?.[0].name).toEqual(subsetName);
   });

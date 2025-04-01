@@ -50,11 +50,6 @@ export function generateEgressSidecar(
   return sidecar;
 }
 
-function generateEgressName(
-  pkgName: string,
-  port: number,
-  protocol: string,
-  host: string,
-) {
+function generateEgressName(pkgName: string, port: number, protocol: string, host: string) {
   return sanitizeResourceName(`${pkgName}-egress-${protocol}-${port.toString()}-${host}`);
 }

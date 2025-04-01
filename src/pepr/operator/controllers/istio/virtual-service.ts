@@ -6,7 +6,14 @@
 import { V1OwnerReference } from "@kubernetes/client-node";
 import { K8s } from "pepr";
 import { UDSConfig } from "../../../config";
-import { Expose, Gateway, IstioHTTP, IstioTL, IstioHTTPRoute, IstioVirtualService } from "../../crd";
+import {
+  Expose,
+  Gateway,
+  IstioHTTP,
+  IstioTL,
+  IstioHTTPRoute,
+  IstioVirtualService,
+} from "../../crd";
 import { sanitizeResourceName } from "../utils";
 import { subsetName } from "./destination-rule";
 import { generateGatewayName } from "./gateway";
@@ -116,7 +123,7 @@ export async function generateEgressVirtualService(
   host: string,
   resource: EgressResource,
   generation: number,
-){
+) {
   const name = generateEgressVSName(host);
 
   // Warn if there are existing gateways with the same host

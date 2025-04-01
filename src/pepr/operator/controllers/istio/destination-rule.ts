@@ -22,12 +22,12 @@ export const subsetName = "egressgateway-subset";
 export function generateDestinationRule(resource: EgressResource, generation: number) {
   const name = "egressgateway-destination-rule";
 
-   // Add annotations from resource
-   const annotations: Record<string, string> = {};
-   for (const pkgId of resource.packages) {
-     annotations[`${getSharedAnnotationKey(pkgId)}`] = "user";
-   }
-  
+  // Add annotations from resource
+  const annotations: Record<string, string> = {};
+  for (const pkgId of resource.packages) {
+    annotations[`${getSharedAnnotationKey(pkgId)}`] = "user";
+  }
+
   const destinationRule: DestinationRule = {
     metadata: {
       name,

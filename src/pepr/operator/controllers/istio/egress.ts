@@ -3,7 +3,13 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 import { K8s } from "pepr";
-import { IstioDestinationRule, IstioGateway, IstioVirtualService, RemoteProtocol, UDSPackage } from "../../crd";
+import {
+  IstioDestinationRule,
+  IstioGateway,
+  IstioVirtualService,
+  RemoteProtocol,
+  UDSPackage,
+} from "../../crd";
 import { generateEgressGateway } from "./gateway";
 import { generateDestinationRule } from "./destination-rule";
 import { generateEgressVirtualService } from "./virtual-service";
@@ -104,7 +110,7 @@ export function remapEgressResources(packageEgress: PackageHostMap) {
       }
       for (const portProtocol of portProtocols) {
         const existingPortProtocol = egressResources[host].portProtocols.find(
-          pp => pp.port === portProtocol.port && pp.protocol === portProtocol.protocol
+          pp => pp.port === portProtocol.port && pp.protocol === portProtocol.protocol,
         );
 
         if (!existingPortProtocol) {
@@ -130,21 +136,24 @@ export async function applyEgressResources(packageEgress: PackageHostMap, genera
     log.debug(gateway, `Applying Egress Gateway ${gateway.metadata?.name}`);
 
     // Apply the Gateway and force overwrite any existing resource
-    await K8s(IstioGateway).Apply(gateway, { force: true })
+    await K8s(IstioGateway)
+      .Apply(gateway, { force: true })
       .catch(async e => {
-        log.error(
-          `Failed to apply Gateway ${gateway.metadata?.name} of generation ${generation}`,
-        );
+        log.error(`Failed to apply Gateway ${gateway.metadata?.name} of generation ${generation}`);
         throw e;
       });
 
     // Generate and Apply the egress Destination Rule
     const destinationRule = generateDestinationRule(resource, generation);
 
-    log.debug(destinationRule, `Applying Egress Destination Rule ${destinationRule.metadata?.name}`);
+    log.debug(
+      destinationRule,
+      `Applying Egress Destination Rule ${destinationRule.metadata?.name}`,
+    );
 
     // Apply the Destination Rule and force overwrite any existing resource
-    await K8s(IstioDestinationRule).Apply(destinationRule, { force: true })
+    await K8s(IstioDestinationRule)
+      .Apply(destinationRule, { force: true })
       .catch(async e => {
         log.error(
           `Failed to apply Destination Rule ${destinationRule.metadata?.name} of generation ${generation}`,
@@ -158,7 +167,8 @@ export async function applyEgressResources(packageEgress: PackageHostMap, genera
     log.debug(virtualService, `Applying Egress Virtual Service ${virtualService.metadata?.name}`);
 
     // Apply the Virtual Service and force overwrite any existing resource
-    await K8s(IstioVirtualService).Apply(virtualService, { force: true })
+    await K8s(IstioVirtualService)
+      .Apply(virtualService, { force: true })
       .catch(async e => {
         log.error(
           `Failed to apply Virtual Service ${virtualService.metadata?.name} of generation ${generation}`,

@@ -83,7 +83,6 @@ function generateGatewayServer(host: string, protocol: RemoteProtocol, port: num
   };
 }
 
-
 // Check for other gateways that might conflict - gateways that are not added by the operator
 // Note: Users adding their own Istio resources will need to understand the possible conflicts with the spec. This is not an operation
 // blocked by K8s, but will be identified as invalid by Istio. The UDS operator will only manage/deconflict resources it creates or those

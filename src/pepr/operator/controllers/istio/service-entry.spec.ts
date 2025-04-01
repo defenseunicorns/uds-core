@@ -74,7 +74,7 @@ describe("test generate egress service entry", () => {
         uid: "f50120aa-2713-4502-9496-566b102b1174",
       },
     ];
-    
+
     const serviceEntry = generateEgressServiceEntry(
       host,
       protocol,
