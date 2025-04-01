@@ -5,7 +5,7 @@
 
 import { describe, expect, it } from "@jest/globals";
 import { UDSConfig } from "../../../config";
-import { Expose, Gateway, IstioLocation, IstioResolution } from "../../crd";
+import { Expose, Gateway, IstioLocation, IstioResolution, RemoteProtocol } from "../../crd";
 import { generateIngressServiceEntry, generateEgressServiceEntry } from "./service-entry";
 import { istioEgressGatewayNamespace } from "./istio-resources";
 
@@ -62,7 +62,7 @@ describe("test generate egress service entry", () => {
   it("should create an egress ServiceEntry object", () => {
     const host = "example.com";
     const port = 80;
-    const protocol = "HTTP";
+    const protocol = RemoteProtocol.HTTP;
     const namespace = "test-namespace";
     const packageName = "test-pkg";
     const generation = "1";

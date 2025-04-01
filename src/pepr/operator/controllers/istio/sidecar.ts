@@ -4,7 +4,7 @@
  */
 
 import { V1OwnerReference } from "@kubernetes/client-node";
-import { IstioSidecar, IstioOutboundTrafficPolicyMode } from "../../crd";
+import { IstioSidecar, IstioOutboundTrafficPolicyMode, RemoteProtocol } from "../../crd";
 import { sanitizeResourceName } from "../utils";
 
 /**
@@ -20,7 +20,7 @@ import { sanitizeResourceName } from "../utils";
  */
 export function generateEgressSidecar(
   host: string,
-  protocol: string,
+  protocol: RemoteProtocol,
   port: number,
   selector: Record<string, string> | undefined,
   pkgName: string,

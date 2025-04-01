@@ -2,6 +2,7 @@
  * Copyright 2024 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
+import {RemoteProtocol} from "../../crd";
 
 export type PackageHostMap = Record<string, HostResourceMap>;
 export type HostResourceMap = Record<string, HostResource>;
@@ -18,7 +19,7 @@ export interface EgressResource {
 
 export interface PortProtocol {
   port: number;
-  protocol: string;
+  protocol: RemoteProtocol;
 }
 
 export enum PackageAction {

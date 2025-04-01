@@ -41,12 +41,12 @@ describe("test createHostResourceMap", () => {
     expect(hostResourceMap).toEqual({
       "example.com": {
         portProtocol: [
-          { port: 443, protocol: "TLS" },
-          { port: 80, protocol: "HTTP" },
+          { port: 443, protocol: RemoteProtocol.TLS },
+          { port: 80, protocol: RemoteProtocol.HTTP },
         ],
       },
       "another-example.com": {
-        portProtocol: [{ port: 8080, protocol: "TLS" }],
+        portProtocol: [{ port: 8080, protocol: RemoteProtocol.TLS }],
       },
     });
   });
@@ -70,14 +70,14 @@ describe("test remapEgressResources", () => {
       package1: {
         "example.com": {
           portProtocol: [
-            { port: 443, protocol: "TLS" },
-            { port: 80, protocol: "HTTP" },
+            { port: 443, protocol: RemoteProtocol.TLS },
+            { port: 80, protocol: RemoteProtocol.HTTP },
           ],
         },
       },
       package2: {
         "example.com": {
-          portProtocol: [{ port: 80, protocol: "HTTP" }],
+          portProtocol: [{ port: 80, protocol: RemoteProtocol.HTTP }],
         },
       },
     };
@@ -88,8 +88,8 @@ describe("test remapEgressResources", () => {
       "example.com": {
         packages: ["package1", "package2"],
         portProtocols: [
-          { port: 443, protocol: "TLS" },
-          { port: 80, protocol: "HTTP" },
+          { port: 443, protocol: RemoteProtocol.TLS },
+          { port: 80, protocol: RemoteProtocol.HTTP },
         ],
       },
     });

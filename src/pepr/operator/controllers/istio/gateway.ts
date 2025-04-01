@@ -4,7 +4,7 @@
  */
 
 import { K8s } from "pepr";
-import { IstioGateway, IstioServer, IstioTLSMode } from "../../crd";
+import { IstioGateway, IstioServer, IstioTLSMode, RemoteProtocol } from "../../crd";
 import {
   getSharedAnnotationKey,
   istioEgressGatewayNamespace as namespace,
@@ -69,7 +69,7 @@ export async function generateEgressGateway(
 }
 
 // Generate the gateway server portion of the spec
-function generateGatewayServer(host: string, protocol: string, port: number) {
+function generateGatewayServer(host: string, protocol: RemoteProtocol, port: number) {
   return {
     hosts: [host],
     port: {

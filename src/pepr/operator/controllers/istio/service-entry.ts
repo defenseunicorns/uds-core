@@ -16,6 +16,7 @@ import {
 } from "../../crd";
 import { istioEgressGatewayNamespace } from "./istio-resources";
 import { sanitizeResourceName } from "../utils";
+import { RemoteProtocol } from "../../crd";
 
 /**
  * Creates a ServiceEntry for each exposed service in the package
@@ -97,7 +98,7 @@ export function generateSEName(pkgName: string, expose: Expose) {
  */
 export function generateEgressServiceEntry(
   host: string,
-  protocol: string,
+  protocol: RemoteProtocol,
   port: number,
   pkgName: string,
   namespace: string,
@@ -139,7 +140,7 @@ export function generateEgressServiceEntry(
 function generateEgressSEName(
   pkgName: string,
   port: number,
-  protocol: string,
+  protocol: RemoteProtocol,
   host: string,
 ) {
   return sanitizeResourceName(`${pkgName}-egress-${protocol}-${port.toString()}-${host}`);

@@ -5,16 +5,17 @@
 
 import { describe, expect, it } from "@jest/globals";
 import { generateDestinationRule, subsetName } from "./destination-rule";
-import { EgressResource } from "./types";
 import { sharedEgressPkgId } from "./egress";
 import { istioEgressGatewayNamespace } from "./istio-resources";
+import { EgressResource } from "./types";
+import { RemoteProtocol } from "../../crd";
 
 describe("test generate destination rule", () => {
   it("should create a destination rule object", () => {
     const egressResources: EgressResource = {
       packages: ["test-pkg1", "test-pkg2"],
       portProtocols: [
-        { port: 443, protocol: "TLS" },
+        { port: 443, protocol: RemoteProtocol.TLS },
       ],
     }
     const generation = 1;

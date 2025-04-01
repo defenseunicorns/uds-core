@@ -5,12 +5,12 @@
 
 import { describe, expect, it } from "@jest/globals";
 import { generateEgressSidecar } from "./sidecar";
-import { IstioOutboundTrafficPolicyMode } from "../../crd";
+import { IstioOutboundTrafficPolicyMode, RemoteProtocol } from "../../crd";
 
 describe("test generate sidecar", () => {
   it("should create a sidecar object", () => {
     const host = "example.com";
-    const protocol = "HTTP";
+    const protocol = RemoteProtocol.HTTP;
     const port = 80;
     const labels = { app: "test" };
     const packageName = "test-pkg";

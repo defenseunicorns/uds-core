@@ -3,8 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 import { K8s } from "pepr";
-import { IstioDestinationRule, IstioGateway, IstioVirtualService, UDSPackage } from "../../crd";
-import { RemoteProtocol } from "../../crd/generated/package-v1alpha1";
+import { IstioDestinationRule, IstioGateway, IstioVirtualService, RemoteProtocol, UDSPackage } from "../../crd";
 import { generateEgressGateway } from "./gateway";
 import { generateDestinationRule } from "./destination-rule";
 import { generateEgressVirtualService } from "./virtual-service";
