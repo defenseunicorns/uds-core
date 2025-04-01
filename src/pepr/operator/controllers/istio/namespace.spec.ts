@@ -47,6 +47,96 @@ describe("enableIstio", () => {
     UDSConfig.isAmbientDeployed = true;
   });
 
+  test("should not update when labels have same content but different order", async () => {
+    // Mock existing namespace with labels in one specific order
+    mockGet.mockResolvedValue({
+      metadata: {
+        labels: {
+          "b-label": "value-b",
+          "a-label": "value-a",
+          "istio-injection": "enabled",
+        },
+        annotations: {
+          "uds.dev/pkg-test-pkg": "true",
+          "uds.dev/original-istio-state": IstioState.None,
+        },
+      },
+    });
+
+    // Create a package that would normally generate the same labels (but potentially in different order)
+    const pkg = {
+      metadata: { namespace: "test-ns", name: "test-pkg" },
+      spec: {},
+    };
+
+    // Run enableIstio
+    await enableIstio(pkg);
+
+    // No updates should be applied since content is the same, regardless of key order
+    expect(mockApply).not.toHaveBeenCalled();
+  });
+
+  test("should update when labels have different content", async () => {
+    // Mock existing namespace with labels that don't include istio-injection
+    mockGet.mockResolvedValue({
+      metadata: {
+        labels: {
+          "a-label": "value-a",
+          "b-label": "value-b",
+        },
+        annotations: {
+          "uds.dev/pkg-test-pkg": "true",
+        },
+      },
+    });
+
+    // Create a package that will cause enableIstio to generate different labels
+    const pkg = {
+      metadata: { namespace: "test-ns", name: "test-pkg" },
+      spec: {},
+    };
+
+    // Run enableIstio (which should add istio-injection: enabled)
+    await enableIstio(pkg);
+
+    // Updates should be applied since content is different
+    expect(mockApply).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: expect.objectContaining({
+          labels: expect.objectContaining({ "istio-injection": "enabled" }),
+        }),
+      }),
+      { force: true },
+    );
+  });
+
+  test("should not update when annotations have same content but different order", async () => {
+    // Mock existing namespace with annotations in one specific order
+    mockGet.mockResolvedValue({
+      metadata: {
+        labels: { "istio-injection": "enabled" },
+        annotations: {
+          "z-annotation": "value-z",
+          "a-annotation": "value-a",
+          "uds.dev/pkg-test-pkg": "true",
+          "uds.dev/original-istio-state": IstioState.None,
+        },
+      },
+    });
+
+    // Create a package that would normally generate the same annotations (but potentially in different order)
+    const pkg = {
+      metadata: { namespace: "test-ns", name: "test-pkg" },
+      spec: {},
+    };
+
+    // Run enableIstio
+    await enableIstio(pkg);
+
+    // No updates should be applied since content is the same, regardless of key order
+    expect(mockApply).not.toHaveBeenCalled();
+  });
+
   test("package missing metadata", async () => {
     const pkg = { metadata: { name: "test-pkg" }, spec: {} };
 

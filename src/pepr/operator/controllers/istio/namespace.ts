@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { K8s, kind } from "pepr";
+import { K8s, kind, R } from "pepr";
 import { UDSConfig } from "../../../config";
 import { Component, setupLogger } from "../../../logger";
 import { UDSPackage } from "../../crd";
@@ -119,8 +119,8 @@ export async function enableIstio(pkg: UDSPackage) {
     },
   };
   if (
-    JSON.stringify(sourceNS.metadata?.labels) !== JSON.stringify(labels) ||
-    JSON.stringify(sourceNS.metadata?.annotations) !== JSON.stringify(annotations)
+    !R.equals(sourceNS.metadata?.labels, labels) ||
+    !R.equals(sourceNS.metadata?.annotations, annotations)
   ) {
     log.debug(`Applying updates to namespace ${pkg.metadata.namespace}.`);
     await K8s(kind.Namespace).Apply(updatedNamespace, { force: true });
