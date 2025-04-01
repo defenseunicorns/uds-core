@@ -7,7 +7,7 @@ All notable changes to this project will be documented in this file.
 
 ### ⚠ BREAKING CHANGES
 
-* dynamic generation of Istio AuthorizationPolicy resources in ambient mode based on the configuration defined in a UDSPackage. ALL requests to a pod with authservice protection MUST have a jwt from Keycloak. More fine-grained protection can be done with additional DENY policies, but there will always be a requirement for a Keycloak JWT in addition.
+* AuthService protection of pods is now absolute: ALL requests to a pod with authservice protection MUST have a jwt from Keycloak. More fine-grained protection can be done with additional `DENY` istio authorization policies, but there will always be a requirement for a Keycloak JWT in addition.
 
 ### Features
 
