@@ -172,12 +172,16 @@ export async function updateKubeNodesAuthorizationPolicies(): Promise<void> {
     .map(peer => peer.ipBlock?.cidr)
     .filter((cidr): cidr is string => typeof cidr === "string");
 
-  // Query for AuthorizationPolicies labeled with uds/generated=KubeNodes.
-  log.debug("Calling K8s(AuthorizationPolicy).WithLabel(...).Get()");
   const authPols = await K8s(AuthorizationPolicy)
     .WithLabel("uds/generated", RemoteGenerated.KubeNodes)
     .Get();
-  log.debug("Fetched AuthorizationPolicies:", authPols);
+
+  if (authPols.items.length > 0) {
+    const summary = authPols.items
+      .map(pol => `name: ${pol.metadata?.name}, namespace: ${pol.metadata?.namespace}`)
+      .join(" | ");
+    log.trace(`Fetched ${authPols.items.length} AuthorizationPolicies: ${summary}`);
+  }
 
   for (const pol of authPols.items) {
     // Ensure the policy has rules.

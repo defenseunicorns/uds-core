@@ -247,6 +247,13 @@ export async function updateKubeAPIAuthorizationPolicies(
     .WithLabel("uds/generated", RemoteGenerated.KubeAPI)
     .Get();
 
+  if (authPols.items.length > 0) {
+    const summary = authPols.items
+      .map(pol => `name: ${pol.metadata?.name}, namespace: ${pol.metadata?.namespace}`)
+      .join(" | ");
+    log.trace(`Fetched ${authPols.items.length} AuthorizationPolicies: ${summary}`);
+  }
+
   for (const pol of authPols.items) {
     // Safety check: ensure the policy has rules.
     if (!pol.spec || !pol.spec.rules || pol.spec.rules.length === 0) {

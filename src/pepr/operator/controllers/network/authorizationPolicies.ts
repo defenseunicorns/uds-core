@@ -210,7 +210,7 @@ export async function generateAuthorizationPolicies(
   const pkgName = pkg.metadata?.name ?? "unknown";
   const generation = pkg.metadata?.generation?.toString() ?? "0";
   log.info(
-    `Starting policy generation for package "${pkgName}" in namespace "${pkgNamespace}" (generation ${generation}).`,
+    `Starting authorization policy generation for package "${pkgName}" in namespace "${pkgNamespace}" (generation ${generation}).`,
   );
 
   const policies: AuthorizationPolicy[] = [];
@@ -233,7 +233,7 @@ export async function generateAuthorizationPolicies(
         additionalLabels,
       );
       policies.push(authPolicy);
-      log.debug(`Generated authpol: ${authPolicy.metadata?.name}`);
+      log.trace(`Generated authpol: ${authPolicy.metadata?.name}`);
     }
   }
 
@@ -244,7 +244,7 @@ export async function generateAuthorizationPolicies(
       const policyName = sanitizeResourceName(`protect-${pkgName}-${generateExposeName(rule)}`);
       const authPolicy = buildAuthPolicy(policyName, pkg, rule.selector, source, ports);
       policies.push(authPolicy);
-      log.debug(`Generated authpol: ${authPolicy.metadata?.name}`);
+      log.trace(`Generated authpol: ${authPolicy.metadata?.name}`);
     }
   }
 
@@ -257,7 +257,7 @@ export async function generateAuthorizationPolicies(
       const policyName = sanitizeResourceName(`protect-${pkgName}-${generateMonitorName(monitor)}`);
       const authPolicy = buildAuthPolicy(policyName, pkg, selector, source, ports);
       policies.push(authPolicy);
-      log.debug(`Generated monitor authpol: ${authPolicy.metadata?.name}`);
+      log.trace(`Generated monitor authpol: ${authPolicy.metadata?.name}`);
     }
   }
 
@@ -265,7 +265,7 @@ export async function generateAuthorizationPolicies(
   for (const policy of policies) {
     try {
       await K8s(AuthorizationPolicy).Apply(policy, { force: true });
-      log.debug(
+      log.trace(
         `Applied AuthorizationPolicy ${policy.metadata?.name} in namespace ${policy.metadata?.namespace}`,
       );
     } catch (err) {
