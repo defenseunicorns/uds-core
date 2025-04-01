@@ -12,7 +12,7 @@ This document explains what this means for you as an application developer and h
 
 ## Key Takeaways
 
-- **Ingress is denied by default.** UDS-Core only allows what you explicitly configure using `allow` and `expose` rules.
+- **Ingress is denied by default.** UDS Core only allows what you explicitly configure using `allow` and `expose` rules.
 
 - **AuthorizationPolicies are ALLOW-based**, which means you must write **DENY** rules separately if you want to restrict internal traffic further.
 
