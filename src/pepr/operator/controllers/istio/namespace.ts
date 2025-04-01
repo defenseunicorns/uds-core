@@ -30,6 +30,8 @@ export enum IstioState {
  * @returns string mode
  */
 export async function enableIstio(pkg: UDSPackage) {
+  // This should be impossible in practice but added here so that we can assume these are defined in the rest of the function
+  // The types for the GenericKind here allow metadata to be undefined technically
   if (!pkg.metadata?.namespace || !pkg.metadata.name) {
     throw new Error(`Invalid Package definition, missing namespace or name`);
   }
