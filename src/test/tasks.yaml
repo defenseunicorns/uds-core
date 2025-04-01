@@ -15,6 +15,10 @@ tasks:
         cmd: |
           npx jest test/jest/network.spec.ts
         dir: test/jest
+      - description: "Run Test Resources Tests"
+        cmd: |
+          npx jest test/jest/test-resources.spec.ts
+        dir: test/jest
       - description: "Remove Test Apps resources"
         task: remove
 
@@ -147,28 +151,6 @@ tasks:
             name: podinfo
             namespace: podinfo
             condition: "'{.status.phase}'=Ready"
-
-      - description: Verify podinfo namespace has ambient mode label
-        cmd: |
-          set -e
-          AMBIENT_LABEL=$(uds zarf tools kubectl get namespace podinfo -o jsonpath='{.metadata.labels.istio\.io/dataplane-mode}')
-          if [ "$AMBIENT_LABEL" = "ambient" ]; then
-            echo " Podinfo namespace has the correct ambient mode label: $AMBIENT_LABEL"
-          else
-            echo " Podinfo namespace does not have the correct ambient mode label. Found: $AMBIENT_LABEL"
-            exit 1
-          fi
-
-      - description: Verify podinfo pods don't have istio-proxy sidecar
-        cmd: |
-          set -e
-          CONTAINERS=$(uds zarf tools kubectl get pods -n podinfo -l app.kubernetes.io/name=podinfo -o jsonpath='{.items[0].spec.initContainers[*].name}')
-          if [ -z "$(echo "$CONTAINERS" | grep "istio-proxy")" ]; then
-            echo " Podinfo pods don't have istio-proxy sidecar (as expected with ambient mode)"
-          else
-            echo " Found istio-proxy sidecar in podinfo pods, which is unexpected with ambient mode"
-            exit 1
-          fi
 
       - description: Verify podinfo podmonitor exists
         wait:
