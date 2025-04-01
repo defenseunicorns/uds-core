@@ -28,7 +28,7 @@ export function generateEgressSidecar(
   generation: string,
   ownerRefs: V1OwnerReference[],
 ) {
-  const name = generateEgressSEName(pkgName, port, protocol, host);
+  const name = generateEgressName(pkgName, port, protocol, host);
 
   const sidecar: IstioSidecar = {
     metadata: {
@@ -50,7 +50,7 @@ export function generateEgressSidecar(
   return sidecar;
 }
 
-export function generateEgressSEName(
+function generateEgressName(
   pkgName: string,
   port: number,
   protocol: string,

@@ -165,11 +165,6 @@ export function getSharedAnnotationKey(pkgId: string) {
   return `${sharedResourcesAnnotationPrefix}-${pkgId}`;
 }
 
-// Get the patch annotation key for the package
-export function getPatchAnnotationKey(pkgId: string) {
-  return `uds.dev~1user-${pkgId}`;
-}
-
 // Get the unique package ID
 export function getPackageId(pkg: UDSPackage) {
   return `${pkg.metadata?.name}-${pkg.metadata?.namespace}`;

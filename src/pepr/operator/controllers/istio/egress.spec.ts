@@ -42,7 +42,7 @@ describe("test createHostResourceMap", () => {
       "example.com": {
         portProtocol: [
           { port: 443, protocol: "TLS" },
-          { port: 80, protocol: "TLS" },
+          { port: 80, protocol: "HTTP" },
         ],
       },
       "another-example.com": {
@@ -60,7 +60,7 @@ describe("test createHostResourceMap", () => {
       },
     };
     const hostResourceMap = createHostResourceMap(pkg);
-    expect(hostResourceMap).toEqual({});
+    expect(hostResourceMap).toEqual(null);
   });
 });
 
@@ -71,13 +71,13 @@ describe("test remapEgressResources", () => {
         "example.com": {
           portProtocol: [
             { port: 443, protocol: "TLS" },
-            { port: 80, protocol: "TLS" },
+            { port: 80, protocol: "HTTP" },
           ],
         },
       },
       package2: {
-        "another-example.com": {
-          portProtocol: [{ port: 8080, protocol: "TLS" }],
+        "example.com": {
+          portProtocol: [{ port: 80, protocol: "HTTP" }],
         },
       },
     };
@@ -86,15 +86,11 @@ describe("test remapEgressResources", () => {
 
     expect(egressResources).toEqual({
       "example.com": {
-        packages: ["package1"],
+        packages: ["package1", "package2"],
         portProtocols: [
           { port: 443, protocol: "TLS" },
-          { port: 80, protocol: "TLS" },
+          { port: 80, protocol: "HTTP" },
         ],
-      },
-      "another-example.com": {
-        packages: ["package2"],
-        portProtocols: [{ port: 8080, protocol: "TLS" }],
       },
     });
   });

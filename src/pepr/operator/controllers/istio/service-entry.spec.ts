@@ -6,7 +6,8 @@
 import { describe, expect, it } from "@jest/globals";
 import { UDSConfig } from "../../../config";
 import { Expose, Gateway, IstioLocation, IstioResolution } from "../../crd";
-import { generateIngressServiceEntry } from "./service-entry";
+import { generateIngressServiceEntry, generateEgressServiceEntry } from "./service-entry";
+import { istioEgressGatewayNamespace } from "./istio-resources";
 
 describe("test generate service entry", () => {
   const ownerRefs = [
@@ -54,5 +55,53 @@ describe("test generate service entry", () => {
     expect(payload.spec!.endpoints![0].address).toEqual(
       `${Gateway.Tenant}-ingressgateway.istio-${Gateway.Tenant}-gateway.svc.cluster.local`,
     );
+  });
+});
+
+describe("test generate egress service entry", () => {
+  it("should create an egress ServiceEntry object", () => {
+    const host = "example.com";
+    const port = 80;
+    const protocol = "HTTP";
+    const namespace = "test-namespace";
+    const packageName = "test-pkg";
+    const generation = "1";
+    const ownerReferences = [
+      {
+        apiVersion: "uds.dev/v1alpha1",
+        kind: "Package",
+        name: "test-pkg",
+        uid: "f50120aa-2713-4502-9496-566b102b1174",
+      },
+    ];
+    
+    const serviceEntry = generateEgressServiceEntry(
+      host,
+      protocol,
+      port,
+      packageName,
+      namespace,
+      generation,
+      ownerReferences,
+    );
+
+    expect(serviceEntry).toBeDefined();
+    expect(serviceEntry.metadata?.name).toEqual("test-pkg-egress-http-80-example-com");
+    expect(serviceEntry.metadata?.namespace).toEqual(namespace);
+    expect(serviceEntry.metadata?.labels).toEqual({
+      "uds/package": packageName,
+      "uds/generation": generation,
+    });
+    expect(serviceEntry.metadata?.ownerReferences).toBeDefined();
+    expect(serviceEntry.spec?.hosts).toBeDefined();
+    expect(serviceEntry.spec?.hosts![0]).toEqual(host);
+    expect(serviceEntry.spec?.ports).toBeDefined();
+    expect(serviceEntry.spec?.ports![0].number).toEqual(port);
+    expect(serviceEntry.spec?.ports![0].protocol).toEqual(protocol);
+    expect(serviceEntry.spec!.location).toEqual(IstioLocation.MeshExternal);
+    expect(serviceEntry.spec!.resolution).toEqual(IstioResolution.DNS);
+    expect(serviceEntry.spec?.exportTo).toBeDefined();
+    expect(serviceEntry.spec?.exportTo![0]).toEqual(".");
+    expect(serviceEntry.spec?.exportTo![1]).toEqual(istioEgressGatewayNamespace);
   });
 });

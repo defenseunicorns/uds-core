@@ -136,7 +136,7 @@ export function generateEgressServiceEntry(
   return serviceEntry;
 }
 
-export function generateEgressSEName(
+function generateEgressSEName(
   pkgName: string,
   port: number,
   protocol: string,
