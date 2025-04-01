@@ -4,39 +4,33 @@
  */
 
 /**
-  * A collection of functions related to watching UDSPackages
-  * Manages an in-memory map of UDSPackage resources
-  * Used in Pepr Validating Webhook Pods when vetting UDS Package resources for admission
-*/
+ * A collection of functions related to watching UDSPackages
+ * Manages an in-memory map of UDSPackage resources
+ * Used in Pepr Validating Webhook Pods when vetting UDS Package resources for admission
+ */
 import { Component, setupLogger } from "../../../logger";
 import { UDSPackage } from "../../crd";
 
 const log = setupLogger(Component.OPERATOR_PACKAGES);
 
 export type PackageNamespaceMap = Map<string, UDSPackage>;
-let packageNamespaceMap: PackageNamespaceMap;
-
-/**
- * Initializes an in-memory map of UDSPackages.
- *
- * @returns A new Map object to store UDSPackages.
- */
-function init(): void {
-  packageNamespaceMap = new Map();
-}
+const packageNamespaceMap: PackageNamespaceMap = new Map();
 
 /**
  * Adds a package to the package namespace map.
  *
  * @param {UDSPackage} pkg - The package to be added. It should contain metadata with a namespace.
  * @param {boolean} [logger=true] - Optional flag to enable logging. Defaults to true.
- * 
+ *
  * This function retrieves the namespace from the package metadata and adds the package
  * to the packageNamespaceMap. If the namespace is not present, it defaults to an empty string.
  */
 function add(pkg: UDSPackage, logger: boolean = true) {
-    const namespace = pkg.metadata?.namespace || ""
-    packageNamespaceMap.set(namespace, pkg)
+  const namespace = pkg.metadata?.namespace || "";
+  packageNamespaceMap.set(namespace, pkg);
+  if (logger) {
+    log.debug(`Added package: ${namespace}/${pkg.metadata?.name} to package map`);
+  }
 }
 
 /**
@@ -44,18 +38,20 @@ function add(pkg: UDSPackage, logger: boolean = true) {
  *
  * @param {UDSPackage} pkg - The package to be removed. It should contain metadata with a namespace.
  * @param {boolean} [logger=true] - Optional flag to enable logging. Defaults to true.
- * 
+ *
  * This function retrieves the namespace from the package metadata and deletes it from the
  * packageNamespaceMap. If the namespace is not present, it defaults to an empty string.
  */
 function remove(pkg: UDSPackage, logger: boolean = true) {
-    const namespace = pkg.metadata?.namespace || ""
-    packageNamespaceMap.delete(namespace)
+  const namespace = pkg.metadata?.namespace || "";
+  packageNamespaceMap.delete(namespace);
+  if (logger) {
+    log.debug(`Removed package: ${namespace}/${pkg.metadata?.name} from package map`);
+  }
 }
 
 export const PackageStore = {
-    init,
-    add,
-    remove
-  };
-  
+  add,
+  remove,
+  packageNamespaceMap,
+};

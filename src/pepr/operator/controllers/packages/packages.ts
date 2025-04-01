@@ -22,12 +22,11 @@ import { PackageStore } from "./package-store";
 export function processPackages(pkg: UDSPackage, phase: WatchPhase) {
   switch (phase) {
     case WatchPhase.Added:
-    case WatchPhase.Modified:
-        PackageStore.add(pkg);
+      PackageStore.add(pkg);
       break;
 
     case WatchPhase.Deleted:
-        PackageStore.remove(pkg);
+      PackageStore.remove(pkg);
       break;
   }
 }

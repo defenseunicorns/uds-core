@@ -5,11 +5,11 @@
 
 import { PeprValidateRequest } from "pepr";
 
-import { K8s } from "pepr";
 import { Gateway, Protocol, UDSPackage } from "..";
 import { generateVSName } from "../../controllers/istio/virtual-service";
 import { generateMonitorName } from "../../controllers/monitoring/common";
 import { generateName } from "../../controllers/network/generate";
+import { PackageStore } from "../../controllers/packages/package-store";
 import { sanitizeResourceName } from "../../controllers/utils";
 import { Kind } from "../../crd/generated/package-v1alpha1";
 import { migrate } from "../migrate";
@@ -27,16 +27,13 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
   }
 
   // Check if a package already exists in the target namespace
-  const existingPackage = await K8s(UDSPackage)
-    .InNamespace(ns)
-    .Get()
-    .then(packages =>
-      packages.items.find(existingPkg => existingPkg.metadata?.name !== pkg.metadata?.name),
-    );
-  if (existingPackage) {
-    return req.Deny(
-      `A package with the name "${existingPackage.metadata?.name}" already exists in the namespace "${ns}". Only one package can exist in a namespace.`,
-    );
+  for (const key of PackageStore.packageNamespaceMap.keys()) {
+    const existingPkgName = PackageStore.packageNamespaceMap.get(ns)?.metadata?.name ?? null
+    if (ns === key && existingPkgName !== pkgName ) {
+      return req.Deny(
+        `A package with the name "${existingPkgName}" already exists in the namespace "${ns}". Only one package can exist in a namespace.`,
+      );
+    }
   }
 
   const exposeList = pkg.spec?.network?.expose ?? [];
