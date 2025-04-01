@@ -13,6 +13,7 @@ jest.mock("../../../logger", () => ({
     info: jest.fn(),
     error: jest.fn(),
     warn: jest.fn(),
+    trace: jest.fn(),
   }),
   Component: {
     OPERATOR_NETWORK: "OPERATOR_NETWORK",
