@@ -5,7 +5,12 @@
 
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { K8s, kind } from "pepr";
-import { updateAPIServerCIDR, updateKubeAPINetworkPolicies } from "./kubeAPI";
+import { AuthorizationPolicy } from "../../../crd/generated/istio/authorizationpolicy-v1beta1";
+import {
+  updateAPIServerCIDR,
+  updateKubeAPIAuthorizationPolicies,
+  updateKubeAPINetworkPolicies,
+} from "./kubeAPI";
 
 type KubernetesList<T> = {
   items: T[];
@@ -573,5 +578,98 @@ describe("updateKubeAPINetworkPolicies", () => {
 
     expect(mockGet).toHaveBeenCalled();
     expect(mockApply).not.toHaveBeenCalled(); // No policies to update
+  });
+});
+
+describe("updateKubeAPIAuthorizationPolicies", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("should not update a policy if ipBlocks are already correct", async () => {
+    const newPeers = [{ ipBlock: { cidr: "10.0.0.1/32" } }, { ipBlock: { cidr: "10.0.0.2/32" } }];
+
+    // Simulate a policy that already has the correct ipBlocks.
+    mockGet.mockResolvedValue({
+      items: [
+        {
+          metadata: { name: "authpol-1", namespace: "default" },
+          spec: {
+            rules: [{ from: [{ source: { ipBlocks: ["10.0.0.1/32", "10.0.0.2/32"] } }] }],
+          },
+        },
+      ],
+    } as unknown as KubernetesList<kind.NetworkPolicy>);
+
+    await updateKubeAPIAuthorizationPolicies(newPeers);
+
+    expect(mockApply).not.toHaveBeenCalled();
+  });
+
+  it("should update a policy if ipBlocks are outdated", async () => {
+    const newPeers = [{ ipBlock: { cidr: "10.0.0.1/32" } }, { ipBlock: { cidr: "10.0.0.2/32" } }];
+
+    // Simulate a policy that currently has outdated ipBlocks.
+    mockGet.mockResolvedValue({
+      items: [
+        {
+          metadata: { name: "authpol-1", namespace: "default", managedFields: {} },
+          spec: {
+            rules: [{ from: [{ source: { ipBlocks: ["192.168.1.0/32"] } }] }],
+          },
+        },
+      ],
+    } as unknown as KubernetesList<kind.NetworkPolicy>);
+
+    await updateKubeAPIAuthorizationPolicies(newPeers);
+
+    expect(mockApply).toHaveBeenCalled();
+    const updatedPolicy = mockApply.mock.calls[0][0] as AuthorizationPolicy;
+    expect(updatedPolicy.spec!.rules![0].from![0].source!.ipBlocks).toEqual([
+      "10.0.0.1/32",
+      "10.0.0.2/32",
+    ]);
+  });
+
+  it("should create a 'from' entry if missing", async () => {
+    const newPeers = [{ ipBlock: { cidr: "10.0.0.1/32" } }];
+
+    // Simulate a policy with no 'from' field in its rule.
+    mockGet.mockResolvedValue({
+      items: [
+        {
+          metadata: { name: "authpol-2", namespace: "default", managedFields: {} },
+          spec: {
+            rules: [{}],
+          },
+        },
+      ],
+    } as unknown as KubernetesList<kind.NetworkPolicy>);
+
+    await updateKubeAPIAuthorizationPolicies(newPeers);
+
+    expect(mockApply).toHaveBeenCalled();
+    const updatedPolicy = mockApply.mock.calls[0][0] as AuthorizationPolicy;
+    expect(updatedPolicy.spec!.rules![0].from![0].source!.ipBlocks).toEqual(["10.0.0.1/32"]);
+  });
+
+  it("should log a warning for policies with missing rules and not update", async () => {
+    const newPeers = [{ ipBlock: { cidr: "10.0.0.1/32" } }];
+
+    // Simulate a policy that has an empty rules array.
+    mockGet.mockResolvedValue({
+      items: [
+        {
+          metadata: { name: "authpol-3", namespace: "default" },
+          spec: {
+            rules: [],
+          },
+        },
+      ],
+    } as unknown as KubernetesList<kind.NetworkPolicy>);
+
+    await updateKubeAPIAuthorizationPolicies(newPeers);
+
+    expect(mockApply).not.toHaveBeenCalled();
   });
 });

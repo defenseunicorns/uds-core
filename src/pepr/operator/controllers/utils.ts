@@ -55,6 +55,7 @@ export function getOwnerRef(cr: GenericKind): V1OwnerReference[] {
  * @param {string} pkgName - The package name label to filter resources.
  * @param {T} kind - The Kubernetes resource kind to purge.
  * @param {Logger} log - Logger instance for logging debug messages.
+ * @param {Record<string, string>} [additionalLabels] - Optional additional label filters to further narrow down the resources to purge.
  * @returns {Promise<void>} - A promise that resolves when the operation is complete.
  */
 export async function purgeOrphans<T extends GenericClass>(
@@ -63,8 +64,17 @@ export async function purgeOrphans<T extends GenericClass>(
   pkgName: string,
   kind: T,
   log: Logger,
+  additionalLabels?: Record<string, string> | undefined,
 ) {
-  const resources = await K8s(kind).InNamespace(namespace).WithLabel("uds/package", pkgName).Get();
+  let query = K8s(kind).InNamespace(namespace).WithLabel("uds/package", pkgName);
+
+  if (additionalLabels) {
+    for (const [key, value] of Object.entries(additionalLabels)) {
+      query = query.WithLabel(key, value);
+    }
+  }
+
+  const resources = await query.Get();
 
   for (const resource of resources.items) {
     if (resource.metadata?.labels?.["uds/generation"] !== generation) {
