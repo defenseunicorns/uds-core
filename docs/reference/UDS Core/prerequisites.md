@@ -68,7 +68,7 @@ In addition, to run Istio ingress gateways (part of Core) you will need to ensur
 
 ##### Ambient Mode
 
-Istio can be deployed in [Ambient Mode](https://istio.io/latest/docs/ambient/overview/) by deploying the optional `istio-ambient` component. This mode is still in alpha release and is not recommended for production use. Also note that only the `unicorn` flavor of core has a `FIPS` compliant image for the `ztunnel` proxy currently. The `istio-ambient` component is **required** if you want to use UDS Packages with `spec.network.serviceMesh.mode: ambient`. If Ambient mode is not deployed in the cluster, packages configured for ambient mode will automatically fall back to sidecar mode.
+Istio can be deployed in [Ambient Mode](https://istio.io/latest/docs/ambient/overview/) by deploying the optional `istio-ambient` component. This mode is still in alpha release and is not recommended for production use. Also note that only the `unicorn` and `registry1` flavors of core contain `FIPS` compliant images. The `istio-ambient` component is **required** if you want to use UDS Packages with `spec.network.serviceMesh.mode: ambient`. If Ambient mode is not deployed in the cluster, packages configured for ambient mode will automatically fall back to sidecar mode.
 
 When using ambient mode with UDS Packages, you can benefit from:
 - Reduced resource overhead compared to sidecar mode, as workloads don't require an injected sidecar container
