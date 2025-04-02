@@ -58,8 +58,8 @@ components:
         valuesFiles:
           - "values/registry1/istiod.yaml"
     images:
-      - registry1.dso.mil/ironbank/tetrate/istio/proxyv2:1.25.0-tetratefips0
-      - registry1.dso.mil/ironbank/tetrate/istio/pilot:1.25.0-tetratefips0
+      - registry1.dso.mil/ironbank/tetrate/istio/proxyv2:1.25.1-tetratefipslatest1
+      - registry1.dso.mil/ironbank/tetrate/istio/pilot:1.25.1-tetratefipslatest1
 
   - name: istio-ambient
     required: false
@@ -75,8 +75,8 @@ components:
         valuesFiles:
           - "values/registry1/ztunnel.yaml"
     images:
-      - registry1.dso.mil/ironbank/tetrate/istio/install-cni:1.25.0-tetratefips0
-      - registry1.dso.mil/ironbank/tetrate/istio/ztunnel:1.25.0-tetratefips0
+      - registry1.dso.mil/ironbank/tetrate/istio/install-cni:1.25.1-tetratefipslatest1
+      - registry1.dso.mil/ironbank/tetrate/istio/ztunnel:1.25.1-tetratefipslatest1
 
   - name: istio-controlplane
     required: true
