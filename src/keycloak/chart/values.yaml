@@ -55,7 +55,9 @@ realmAuthFlows:
 
 # Theme customizations with allowed types. More info here: https://github.com/defenseunicorns/uds-identity-config/blob/main/docs/reference/UDS%20Core/IdAM/customization.md#branding-customizations
 themeCustomizations:
-  DISABLE_REGISTRATION_FIELDS: false
+  settings:
+    # Extra Registration Form Fields ( Affiliation, Pay Grade, Unit Organization or Company Name )
+    enableRegistrationFields: true
 #   resources:
 #     images:
 #       - name: background.jpg
