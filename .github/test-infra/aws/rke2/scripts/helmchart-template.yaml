@@ -51,6 +51,7 @@ spec:
   targetNamespace: kube-system
   # change from default value of reinstall
   failurePolicy: abort
+  timeout: "10m"
   valuesContent: |-
     defaultSettings:
       deletingConfirmationFlag: true
