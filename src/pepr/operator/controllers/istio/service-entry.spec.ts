@@ -79,7 +79,7 @@ describe("test generate egress service entry", () => {
       host,
       ports: [port],
       protocol,
-    }
+    };
 
     const serviceEntry = generateEgressServiceEntry(
       hostPortsProtocol,

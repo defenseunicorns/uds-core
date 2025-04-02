@@ -188,7 +188,7 @@ function generateVirtualServiceRoutes(host: string, port: number, protocol: stri
         {
           destination: {
             host: `egressgateway.${namespace}.svc.cluster.local`,
-            subset: subsetName,
+            // subset: subsetName,
             port: { number: port },
           },
         },

@@ -18,7 +18,13 @@ import {
   warnMatchingExistingVirtualServices,
 } from "./virtual-service";
 import { getPackageId, log, istioEgressGatewayNamespace } from "./istio-resources";
-import { EgressResourceMap, HostResourceMap, PackageAction, PackageHostMap, HostPortsProtocol } from "./types";
+import {
+  EgressResourceMap,
+  HostResourceMap,
+  PackageAction,
+  PackageHostMap,
+  HostPortsProtocol,
+} from "./types";
 import { purgeOrphans } from "../utils";
 
 // Cache for in-memory egress resources from package CRs
@@ -72,7 +78,7 @@ export function createHostResourceMap(pkg: UDSPackage) {
 
   for (const allow of pkg.spec?.network?.allow ?? []) {
     const hostPortsProtocol = getHostPortsProtocol(allow);
-    
+
     if (hostPortsProtocol) {
       // Check if the host already exists in the map
       if (!hostResourceMap[hostPortsProtocol.host]) {
@@ -159,23 +165,23 @@ export async function applyEgressResources(packageEgress: PackageHostMap, genera
         throw e;
       });
 
-    // Generate and Apply the egress Destination Rule
-    const destinationRule = generateDestinationRule(resource, generation);
+    // // Generate and Apply the egress Destination Rule
+    // const destinationRule = generateDestinationRule(resource, generation);
 
-    log.debug(
-      destinationRule,
-      `Applying Egress Destination Rule ${destinationRule.metadata?.name}`,
-    );
+    // log.debug(
+    //   destinationRule,
+    //   `Applying Egress Destination Rule ${destinationRule.metadata?.name}`,
+    // );
 
-    // Apply the Destination Rule and force overwrite any existing resource
-    await K8s(IstioDestinationRule)
-      .Apply(destinationRule, { force: true })
-      .catch(async e => {
-        log.error(
-          `Failed to apply Destination Rule ${destinationRule.metadata?.name} of generation ${generation}`,
-        );
-        throw e;
-      });
+    // // Apply the Destination Rule and force overwrite any existing resource
+    // await K8s(IstioDestinationRule)
+    //   .Apply(destinationRule, { force: true })
+    //   .catch(async e => {
+    //     log.error(
+    //       `Failed to apply Destination Rule ${destinationRule.metadata?.name} of generation ${generation}`,
+    //     );
+    //     throw e;
+    //   });
 
     // Generate and Apply the egress Virtual Service
     const virtualService = await generateEgressVirtualService(host, resource, generation);

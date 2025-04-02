@@ -63,7 +63,7 @@ describe("test createHostResourceMap", () => {
               ports: [443, 8443],
             },
           ],
-        },  
+        },
       },
     };
 
@@ -77,7 +77,6 @@ describe("test createHostResourceMap", () => {
         ],
       },
     });
-
   });
 
   it("should handle empty package spec", () => {
