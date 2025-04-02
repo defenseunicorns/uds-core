@@ -30,7 +30,6 @@ spec:
         remoteNamespace: loki
         remoteSelector:
           app.kubernetes.io/name: loki
-        remoteServiceAccount: vector
         port: 8080
         description: "Write Logs to Loki"
 
