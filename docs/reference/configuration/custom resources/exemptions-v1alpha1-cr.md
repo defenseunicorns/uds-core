@@ -3,7 +3,7 @@ title: Exemptions CR (v1alpha1)
 tableOfContents:
   maxHeadingLevel: 6
 sidebar:
-  order: 11
+  order: 20
 ---
 <a id="Exemptions"></a>
 <div style="margin-left: 20px; padding-top: 30px;">
