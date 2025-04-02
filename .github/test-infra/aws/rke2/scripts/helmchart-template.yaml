@@ -49,6 +49,8 @@ spec:
   # renovate: datasource=helm depName=longhorn versioning=helm registryUrl=https://charts.longhorn.io
   version: 1.8.1
   targetNamespace: kube-system
+  # change from default value of reinstall
+  failurePolicy: abort
   valuesContent: |-
     defaultSettings:
       deletingConfirmationFlag: true
