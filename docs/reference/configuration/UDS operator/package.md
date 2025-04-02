@@ -1,7 +1,5 @@
 ---
 title: UDS Package
-sidebar:
-    order: 2
 ---
 
 ![UDS Operator Package Flowchart](https://github.com/defenseunicorns/uds-core/blob/main/docs/.images/diagrams/uds-core-operator-uds-package.svg?raw=true)
