@@ -21,11 +21,7 @@ import { EgressResource } from "./types";
  * @param resource
  * @param generation
  */
-export function generateEgressGateway(
-  host: string,
-  resource: EgressResource,
-  generation: number,
-) {
+export function generateEgressGateway(host: string, resource: EgressResource, generation: number) {
   const name = generateGatewayName(host);
 
   // Add annotations from resource

@@ -12,6 +12,12 @@ export interface HostResource {
   portProtocol: PortProtocol[];
 }
 
+export interface HostPortsProtocol {
+  host: string;
+  ports: number[];
+  protocol: RemoteProtocol;
+}
+
 export interface EgressResource {
   packages: string[];
   portProtocols: PortProtocol[];

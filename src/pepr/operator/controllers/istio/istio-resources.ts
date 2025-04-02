@@ -12,15 +12,14 @@ import { getOwnerRef, purgeOrphans } from "../utils";
 import { generateIngressServiceEntry, generateEgressServiceEntry } from "./service-entry";
 import { generateIngressVirtualService } from "./virtual-service";
 import { generateEgressSidecar } from "./sidecar";
-import { reconcileSharedEgressResources } from "./egress";
+import { reconcileSharedEgressResources, getHostPortsProtocol } from "./egress";
 import { PackageAction } from "./types";
 
 // configure subproject logger
 export const log = setupLogger(Component.OPERATOR_ISTIO);
 
-// Egress gateway variables
+// Egress gateway namespace
 export const istioEgressGatewayNamespace = "istio-egress-gateway";
-export const sharedResourcesAnnotationPrefix = "uds.dev/user";
 
 /**
  * Creates a VirtualService and ServiceEntry for each exposed service in the package
@@ -89,17 +88,13 @@ export async function istioResources(pkg: UDSPackage, namespace: string) {
 
   // Iterate over each allowed service
   for (const allow of allowList) {
-    const remoteHost = allow.remoteHost;
-    const remoteProtocol = allow.remoteProtocol ?? RemoteProtocol.TLS;
-    const port = allow.port || 443;
+    const hostPortsProtocol = getHostPortsProtocol(allow);
 
     // Add package-related egress resources if remoteHost is defined
-    if (remoteHost) {
+    if (hostPortsProtocol) {
       // Create Service Entry
       const serviceEntry = generateEgressServiceEntry(
-        remoteHost,
-        remoteProtocol,
-        port,
+        hostPortsProtocol,
         pkgName,
         namespace,
         generation,
@@ -122,9 +117,7 @@ export async function istioResources(pkg: UDSPackage, namespace: string) {
 
       // Create Sidecar
       const sidecar = generateEgressSidecar(
-        remoteHost,
-        remoteProtocol,
-        port,
+        hostPortsProtocol,
         allow.selector,
         pkgName,
         namespace,
@@ -162,7 +155,7 @@ export async function istioResources(pkg: UDSPackage, namespace: string) {
 
 // Get the shared annotation key for the package
 export function getSharedAnnotationKey(pkgId: string) {
-  return `${sharedResourcesAnnotationPrefix}-${pkgId}`;
+  return `uds.dev/user-${pkgId}`;
 }
 
 // Get the unique package ID

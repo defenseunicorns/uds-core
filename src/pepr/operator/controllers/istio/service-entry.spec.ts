@@ -8,6 +8,7 @@ import { UDSConfig } from "../../../config";
 import { Expose, Gateway, IstioLocation, IstioResolution, RemoteProtocol } from "../../crd";
 import { generateIngressServiceEntry, generateEgressServiceEntry } from "./service-entry";
 import { istioEgressGatewayNamespace } from "./istio-resources";
+import { HostPortsProtocol } from "./types";
 
 describe("test generate service entry", () => {
   const ownerRefs = [
@@ -74,11 +75,14 @@ describe("test generate egress service entry", () => {
         uid: "f50120aa-2713-4502-9496-566b102b1174",
       },
     ];
+    const hostPortsProtocol: HostPortsProtocol = {
+      host,
+      ports: [port],
+      protocol,
+    }
 
     const serviceEntry = generateEgressServiceEntry(
-      host,
-      protocol,
-      port,
+      hostPortsProtocol,
       packageName,
       namespace,
       generation,
@@ -101,6 +105,6 @@ describe("test generate egress service entry", () => {
     expect(serviceEntry.spec!.location).toEqual(IstioLocation.MeshExternal);
     expect(serviceEntry.spec!.resolution).toEqual(IstioResolution.DNS);
     expect(serviceEntry.spec?.exportTo).toBeDefined();
-    expect(serviceEntry.spec?.exportTo!).toEqual([".", istioEgressGatewayNamespace]);
+    expect(serviceEntry.spec?.exportTo ?? []).toEqual([".", istioEgressGatewayNamespace]);
   });
 });

@@ -15,6 +15,8 @@ tasks:
         cmd: |
           npx jest test/jest/network.spec.ts
         dir: test/jest
+      - description: "Test shared egress resource reconciliation"
+        task: test-shared-egress-resources
       - description: "Remove Test Apps resources"
         task: remove
 
@@ -218,6 +220,145 @@ tasks:
             namespace: curl-ns-remote-cidr
             condition: Ready
 
+      - description: "Wait for Egress Test Package 1 to be Ready"
+        wait:
+          cluster:
+            kind: Pod
+            name: app=curl
+            namespace: egress-gw-1
+            condition: Ready
+
+      - description: "Wait for Egress Test Package 2 to be Ready"
+        wait:
+          cluster:
+            kind: Pod
+            name: app=curl
+            namespace: egress-gw-2
+            condition: Ready
+
+  - name: test-shared-egress-resources
+    description: Test reconciliation and clean-up of shared egress resources
+    actions:
+      - description: "Patch port to 81 in pkg-2"
+        cmd: |
+          uds zarf kubectl patch package pkg-2 \
+          -n egress-gw-2 \
+          --type='json' \
+          -p='[{"op": "replace", "path": "/spec/network/allow/0/ports/0", "value": 81}]'
+
+           # Check the gateway spec is updated
+          gateway_ports = $(uds zarf kubectl get gateway gateway-httpbin-org -n istio-egress-gateway -ojson | jq '[.spec.servers[].port.number]')
+          if ! echo "$gateway_ports" | jq 'index(81)' >/dev/null; then
+            echo "Port 81 is not present in gateway-httpbin-org"
+            exit 1
+          fi
+          if echo "$gateway_ports" | jq 'index(80)' >/dev/null; then
+            echo "Port 80 is still present in gateway-httpbin-org"
+            exit 1
+          fi
+
+          # Check the virtual service spec is updated
+          vs_ports = $(uds zarf kubectl get vs egress-vs-httpbin-org -n istio-egress-gateway -ojson | jq '[.spec.http[].route[].destination.port.number]')
+          if ! echo "$gateway_ports" | jq 'index(81)' >/dev/null; then
+            echo "Port 81 is not present in egress-vs-httpbin-org"
+            exit 1
+          fi
+          if echo "$gateway_ports" | jq 'index(80)' >/dev/null; then
+            echo "Port 80 is still present in egress-vs-httpbin-org"
+            exit 1
+          fi
+
+      - description: "Patch protocol to TLS in pkg-2"
+        cmd: |
+          uds zarf kubectl patch package pkg-2 \
+          -n egress-gw-2 \
+          --type='json' \
+          -p='[{"op": "replace", "path": "/spec/network/allow/0/remoteProtocol", "value": TLS}]'
+
+          # Check the gateway spec is updated
+          gateway_proto = $(uds zarf kubectl get gateway gateway-httpbin-org -n istio-egress-gateway -ojson | jq '[.spec.servers[].port.protocol]')
+          if echo "$gateway_proto" | jq 'index("HTTP")' >/dev/null; then
+            echo "HTTP protocol is still present in gateway-httpbin-org"
+            exit 1
+          fi
+
+          # Check the virtual service spec is updated
+          vs_spec_keys = $(uds zarf kubectl get vs egress-vs-httpbin-org -n istio-egress-gateway -ojson | jq '.spec | keys')
+          if echo "$vs_spec_keys" | jq 'index("http")' >/dev/null; then
+            echo "HTTP protocol is still present in egress-vs-httpbin-org"
+            exit 1
+          fi
+
+      - description: "Patch remote host to example.com in pkg-2"
+        cmd: |
+          uds zarf kubectl patch package pkg-2 \
+          -n egress-gw-2 \
+          --type='json' \
+          -p='[{"op": "replace", "path": "/spec/network/allow/0/remoteHost", "value": example.com}]}'
+
+          # Check the spec and annotations removed from httpbin-org shared resources
+          # Gateway checks
+          annotations=$(uds zarf kubectl get gateway gateway-httpbin-org --namespace istio-egress-gateway -o jsonpath='{.metadata.annotations}' | jq -r '.["uds.dev/user-pkg-2-egress-gw-2"]'))
+          if [ "$annotations" != "null" ]; then
+            echo "Package annotation still exists on gateway-httpbin-org"
+            exit 1
+          fi
+
+          # Virtual Service checks
+          annotations=$(uds zarf kubectl get virtualservice egress-vs-httpbin-org --namespace istio-egress-gateway -o jsonpath='{.metadata.annotations}' | jq -r '.["uds.dev/user-pkg-2-egress-gw-2"]'))
+          if [ "$annotations" != "null" ]; then
+            echo "Package annotation still exists on gateway"
+            exit 1
+          fi
+
+          # Check new shared resources created for example.com
+          gateway_found=$(kubectl get gateway gateway-example-com -n istio-egress-gateway >/dev/null 2>&1 && echo "True" || echo "False")
+          if [ "$gateway_found" == "True" ]; then
+            echo "gateway-example-com does not exists"
+            exit 1
+          fi
+
+          vs_found=$(kubectl get virtualservice egress-vs-example-com -n istio-egress-gateway >/dev/null 2>&1 && echo "True" || echo "False")
+          if [ "$vs_found" == "False" ]; then
+            echo "egress-vs-example-com does not exist"
+            exit 1
+          fi
+
+      - description: "Remove pkg-2"
+        cmd: |
+          uds zarf kubectl delete package pkg-2 --namespace egress-gw-2
+
+          # Check that the shared istio resources are removed
+          gateway_found=$(kubectl get gateway gateway-example-com -n istio-egress-gateway >/dev/null 2>&1 && echo "True" || echo "False")
+          if [ "$gateway_found" == "True" ]; then
+            echo "gateway-example-com still exists"
+            exit 1
+          fi
+
+          vs_found=$(kubectl get virtualservice egress-vs-example-com -n istio-egress-gateway >/dev/null 2>&1 && echo "True" || echo "False")
+          if [ "$vs_found" == "True" ]; then
+            echo "egress-vs-example-com still exists"
+            exit 1
+          fi
+
+          # Destination Rule annotation check
+          annotations=$(uds zarf kubectl get destinationrule egressgateway-destination-rule --namespace istio-egress-gateway -o jsonpath='{.metadata.annotations}' | jq -r '.["uds.dev/user-pkg-2-egress-gw-2"]'))
+          if [ "$annotations" != "null" ]; then
+            echo "Package annotation still exists on gateway"
+            exit 1
+          fi
+
+      - description: "Remove pkg-1"
+        cmd: |
+          uds zarf kubectl delete package pkg-1 --namespace egress-gw-1
+
+          # Check all shared resources are removed
+          resource_count=$(uds zarf kubectl get gateway,virtualservice,destinationrule --namespace istio-egress-gateway -ojson | jq '.items | length')
+          if [ "$resource_count" -ne 0 ]; then
+            echo "Shared resources still exist"
+            exit 1
+          fi
+  
   - name: remove
     actions:
       - description:

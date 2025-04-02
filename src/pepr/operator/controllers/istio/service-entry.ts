@@ -6,6 +6,7 @@
 import { V1OwnerReference } from "@kubernetes/client-node";
 import { UDSConfig } from "../../../config";
 import {
+  Allow,
   Expose,
   Gateway,
   IstioEndpoint,
@@ -17,6 +18,8 @@ import {
 import { istioEgressGatewayNamespace } from "./istio-resources";
 import { sanitizeResourceName } from "../utils";
 import { RemoteProtocol } from "../../crd";
+import { getHostPortsProtocol } from "./egress";
+import { HostPortsProtocol } from "./types";
 
 /**
  * Creates a ServiceEntry for each exposed service in the package
@@ -97,15 +100,22 @@ export function generateSEName(pkgName: string, expose: Expose) {
  * @param ownerRefs
  */
 export function generateEgressServiceEntry(
-  host: string,
-  protocol: RemoteProtocol,
-  port: number,
+  hostPortsProtocol: HostPortsProtocol,
   pkgName: string,
   namespace: string,
   generation: string,
   ownerRefs: V1OwnerReference[],
 ) {
-  const name = generateEgressSEName(pkgName, port, protocol, host);
+  const { host, ports, protocol } = hostPortsProtocol;
+
+  const name = generateEgressSEName(pkgName, ports, protocol, host);
+
+  // Update the ports array
+  const portsArray: IstioPort[] = ports.map(port => ({
+    name: `${protocol.toLowerCase()}-${port.toString()}`,
+    number: port,
+    protocol: protocol,
+  }));
 
   const serviceEntry: IstioServiceEntry = {
     metadata: {
@@ -123,13 +133,7 @@ export function generateEgressServiceEntry(
       hosts: [host],
       location: IstioLocation.MeshExternal,
       resolution: IstioResolution.DNS,
-      ports: [
-        {
-          name: `${protocol.toLowerCase()}-${port.toString()}`,
-          number: port,
-          protocol: protocol,
-        },
-      ],
+      ports: portsArray,
       exportTo: [".", istioEgressGatewayNamespace],
     },
   };
@@ -139,9 +143,10 @@ export function generateEgressServiceEntry(
 
 function generateEgressSEName(
   pkgName: string,
-  port: number,
+  ports: number[],
   protocol: RemoteProtocol,
   host: string,
 ) {
-  return sanitizeResourceName(`${pkgName}-egress-${protocol}-${port.toString()}-${host}`);
+  const portString = ports.join("-");
+  return sanitizeResourceName(`${pkgName}-egress-${protocol}-${portString}-${host}`);
 }

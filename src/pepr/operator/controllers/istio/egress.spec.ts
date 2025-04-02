@@ -51,6 +51,35 @@ describe("test createHostResourceMap", () => {
     });
   });
 
+  it("should handle ports instead of port", () => {
+    const pkg = {
+      spec: {
+        network: {
+          allow: [
+            {
+              direction: Direction.Egress,
+              remoteHost: "example.com",
+              remoteProtocol: RemoteProtocol.TLS,
+              ports: [443, 8443],
+            },
+          ],
+        },  
+      },
+    };
+
+    const hostResourceMap = createHostResourceMap(pkg);
+
+    expect(hostResourceMap).toEqual({
+      "example.com": {
+        portProtocol: [
+          { port: 443, protocol: RemoteProtocol.TLS },
+          { port: 8443, protocol: RemoteProtocol.TLS },
+        ],
+      },
+    });
+
+  });
+
   it("should handle empty package spec", () => {
     const pkg = {
       spec: {

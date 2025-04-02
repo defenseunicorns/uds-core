@@ -6,6 +6,7 @@
 import { V1OwnerReference } from "@kubernetes/client-node";
 import { IstioSidecar, IstioOutboundTrafficPolicyMode, RemoteProtocol } from "../../crd";
 import { sanitizeResourceName } from "../utils";
+import { HostPortsProtocol } from "./types";
 
 /**
  * Creates a Sidecar to enforce outbound traffic policies
@@ -19,16 +20,16 @@ import { sanitizeResourceName } from "../utils";
  * @param ownerRefs
  */
 export function generateEgressSidecar(
-  host: string,
-  protocol: RemoteProtocol,
-  port: number,
+  hostPortsProtocol: HostPortsProtocol,
   selector: Record<string, string> | undefined,
   pkgName: string,
   namespace: string,
   generation: string,
   ownerRefs: V1OwnerReference[],
 ) {
-  const name = generateEgressName(pkgName, port, protocol, host);
+  const { host, ports, protocol } = hostPortsProtocol;
+
+  const name = generateEgressName(pkgName, ports, protocol, host);
 
   const sidecar: IstioSidecar = {
     metadata: {
@@ -50,6 +51,7 @@ export function generateEgressSidecar(
   return sidecar;
 }
 
-function generateEgressName(pkgName: string, port: number, protocol: string, host: string) {
-  return sanitizeResourceName(`${pkgName}-egress-${protocol}-${port.toString()}-${host}`);
+function generateEgressName(pkgName: string, ports: number[], protocol: string, host: string) {
+  const portString = ports.join("-");
+  return sanitizeResourceName(`${pkgName}-egress-${protocol}-${portString}-${host}`);
 }

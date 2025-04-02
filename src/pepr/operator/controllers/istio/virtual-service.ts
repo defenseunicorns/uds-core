@@ -22,7 +22,6 @@ import {
   getSharedAnnotationKey,
   istioEgressGatewayNamespace as namespace,
   log,
-  sharedResourcesAnnotationPrefix,
 } from "./istio-resources";
 import { sharedEgressPkgId } from "./egress";
 

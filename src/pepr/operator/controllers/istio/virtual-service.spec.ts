@@ -190,10 +190,7 @@ describe("test generate egress virtual service", () => {
       "uds.dev/user-test-pkg2": "user",
     });
     expect(virtualService.spec?.hosts).toEqual([host]);
-    expect(virtualService.spec?.gateways).toEqual([
-      "mesh",
-      "gateway-example-com",
-    ]);
+    expect(virtualService.spec?.gateways).toEqual(["mesh", "gateway-example-com"]);
     expect(virtualService.spec?.http).toBeDefined();
     expect(virtualService.spec?.tls).toBeDefined();
   });
@@ -202,9 +199,7 @@ describe("test generate egress virtual service", () => {
     const host = "example.com";
     const resource: EgressResource = {
       packages: ["test-pkg1", "test-pkg2"],
-      portProtocols: [
-        { port: 80, protocol: RemoteProtocol.HTTP },
-      ],
+      portProtocols: [{ port: 80, protocol: RemoteProtocol.HTTP }],
     };
     const generation = 1;
 
@@ -219,9 +214,7 @@ describe("test generate egress virtual service", () => {
     const host = "example.com";
     const resource: EgressResource = {
       packages: ["test-pkg1", "test-pkg2"],
-      portProtocols: [
-        { port: 443, protocol: RemoteProtocol.TLS },
-      ],
+      portProtocols: [{ port: 443, protocol: RemoteProtocol.TLS }],
     };
     const generation = 1;
 

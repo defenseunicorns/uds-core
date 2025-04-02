@@ -110,6 +110,8 @@ let curlPodName1 = "";
 let testAdminApp = "";
 let curlPodName6 = "";
 let curlPodName8 = "";
+let curlPodNameEgress1 = "";
+let curlPodNameEgress2 = "";
 
 beforeAll(async () => {
   [
@@ -117,12 +119,15 @@ beforeAll(async () => {
     testAdminApp,
     curlPodName6,
     curlPodName8,
+    curlPodNameEgress1,
+    curlPodNameEgress2,
   ] = await Promise.all([
     getPodName("curl-ns-deny-all", "app=curl-pkg-deny-all-1"),
     getPodName("test-admin-app", "app=httpbin"),
     getPodName("curl-ns-remote-ns-1", "app=curl-pkg-remote-ns-egress"),
     getPodName("curl-ns-kube-api", "app=curl-pkg-kube-api"),
-    getPodName("curl-ns-egress-gw", "app=curl-pkg-egress-gw"),
+    getPodName("egress-gw-1", "app=curl-pkg-egress-gw"),
+    getPodName("egress-gw-2", "app=curl-pkg-egress-gw"),
   ]);
 });
 
@@ -269,18 +274,40 @@ describe("Network Policy Validation", () => {
   });
 
   test.concurrent("Egress Gateway", async () => {
-    const egress_gateway_curl = [
+    const egress_gateway_http_curl = [
       "sh",
       "-c",
       `curl -s -o /dev/null -w "%{http_code}" http://httpbin.org/headers`
     ];
 
-    // Validate successful request when using Egress Gateway
-    const success_response = await execInPod("curl-ns-egress-gw", curlPodName1, "curl-pkg-egress-gw", egress_gateway_curl);
-    expect(success_response.stdout).toBe("200");
+    const egress_gateway_tls_curl = [
+      "sh",
+      "-c",
+      `curl -s -o /dev/null -w "%{http_code}" https://httpbin.org/headers`
+    ];
 
-    // Validate unsuccessful request to Google because not in remoteHost
-    const success_google_response = await execInPod("curl-ns-egress-gw", curlPodName1, "curl-pkg-egress-gw", GOOGLE_CURL);
-    expect(success_google_response.stdout).toBe("503");
+    // Validate successful tls request when using Egress Gateway for egress-gw-1
+    const success_response_tls = await execInPod("egress-gw-1", curlPodNameEgress1, "curl", egress_gateway_tls_curl);
+    expect(success_response_tls.stdout).toBe("200");
+
+    // Validate unsuccessful http request when using Egress Gateway for egress-gw-1
+    const not_success_response_http = await execInPod("egress-gw-1", curlPodNameEgress1, "curl", egress_gateway_http_curl);
+    expect(not_success_response_http.stdout).toBe("503");
+
+    // Validate unsuccessful request to Google when using Egress Gateway for egress-gw-1
+    const not_success_google_response_1 = await execInPod("egress-gw-1", curlPodNameEgress1, "curl", GOOGLE_CURL);
+    expect(not_success_google_response_1.stdout).toBe("000");
+
+    // Validate unsuccessful tls request when using Egress Gateway for curl-pkg-egress-gw-2
+    const not_success_response_tls = await execInPod("egress-gw-2", curlPodNameEgress2, "curl", egress_gateway_tls_curl);
+    expect(not_success_response_tls.stdout).toBe("503");
+
+    // Validate successful http request when using Egress Gateway for curl-pkg-egress-gw-2
+    const success_response_http = await execInPod("egress-gw-2", curlPodNameEgress2, "curl", egress_gateway_http_curl);
+    expect(not_success_response_http.stdout).toBe("200");
+
+    // Validate unsuccessful request to Google when using Egress Gateway for curl-pkg-egress-gw-2
+    const not_success_google_response_2 = await execInPod("egress-gw-2", curlPodNameEgress2, "curl", GOOGLE_CURL);
+    expect(not_success_google_response_2.stdout).toBe("000");
   });
 });

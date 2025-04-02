@@ -4,6 +4,7 @@
  */
 import { K8s } from "pepr";
 import {
+  Allow,
   IstioDestinationRule,
   IstioGateway,
   IstioVirtualService,
@@ -12,9 +13,12 @@ import {
 } from "../../crd";
 import { generateEgressGateway, warnMatchingExistingGateways } from "./gateway";
 import { generateDestinationRule } from "./destination-rule";
-import { generateEgressVirtualService, warnMatchingExistingVirtualServices } from "./virtual-service";
+import {
+  generateEgressVirtualService,
+  warnMatchingExistingVirtualServices,
+} from "./virtual-service";
 import { getPackageId, log, istioEgressGatewayNamespace } from "./istio-resources";
-import { EgressResourceMap, HostResourceMap, PackageAction, PackageHostMap } from "./types";
+import { EgressResourceMap, HostResourceMap, PackageAction, PackageHostMap, HostPortsProtocol } from "./types";
 import { purgeOrphans } from "../utils";
 
 // Cache for in-memory egress resources from package CRs
@@ -54,35 +58,43 @@ export async function reconcileSharedEgressResources(pkg: UDSPackage, action: Pa
     IstioGateway,
     log,
   );
+  await purgeOrphans(
+    generation.toString(),
+    istioEgressGatewayNamespace,
+    sharedEgressPkgId,
+    IstioVirtualService,
+    log,
+  );
 }
 
 export function createHostResourceMap(pkg: UDSPackage) {
   const hostResourceMap: HostResourceMap = {};
 
   for (const allow of pkg.spec?.network?.allow ?? []) {
-    const remoteHost = allow.remoteHost;
-    const remoteProtocol = allow.remoteProtocol ?? RemoteProtocol.TLS;
-    const port = allow.port || 443;
-
-    if (remoteHost) {
+    const hostPortsProtocol = getHostPortsProtocol(allow);
+    
+    if (hostPortsProtocol) {
       // Check if the host already exists in the map
-      if (!hostResourceMap[remoteHost]) {
-        hostResourceMap[remoteHost] = {
+      if (!hostResourceMap[hostPortsProtocol.host]) {
+        hostResourceMap[hostPortsProtocol.host] = {
           portProtocol: [],
         };
       }
 
-      // Check if the port/protocol already exists
-      const existingPortProtocol = hostResourceMap[remoteHost].portProtocol.find(
-        pp => pp.port === port && pp.protocol === remoteProtocol,
-      );
+      // Iterate over the ports array to add port/protocol pairs
+      for (const port of hostPortsProtocol.ports) {
+        // Check if the port/protocol already exists
+        const existingPortProtocol = hostResourceMap[hostPortsProtocol.host].portProtocol.find(
+          pp => pp.port === port && pp.protocol === hostPortsProtocol.protocol,
+        );
 
-      // If it doesn't exist, add it to the list
-      if (!existingPortProtocol) {
-        hostResourceMap[remoteHost].portProtocol.push({
-          port: port,
-          protocol: remoteProtocol,
-        });
+        // If it doesn't exist, add it to the list
+        if (!existingPortProtocol) {
+          hostResourceMap[hostPortsProtocol.host].portProtocol.push({
+            port: port,
+            protocol: hostPortsProtocol.protocol,
+          });
+        }
       }
     }
   }
@@ -180,6 +192,32 @@ export async function applyEgressResources(packageEgress: PackageHostMap, genera
         throw e;
       });
   }
+}
+
+export function getHostPortsProtocol(allow: Allow) {
+  let hostPortsProtocol: HostPortsProtocol | null = null;
+
+  const host = allow.remoteHost;
+  const protocol = allow.remoteProtocol ?? RemoteProtocol.TLS;
+
+  // reconcile ports
+  let ports = [];
+  if (allow.ports) {
+    ports = allow.ports;
+  } else if (allow.port) {
+    ports = [allow.port];
+  } else {
+    ports = [443];
+  }
+
+  if (host) {
+    hostPortsProtocol = {
+      host,
+      ports,
+      protocol,
+    };
+  }
+  return hostPortsProtocol;
 }
 
 function removeEgressResources(pkgId: string) {
