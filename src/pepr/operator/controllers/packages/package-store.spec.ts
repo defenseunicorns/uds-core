@@ -29,10 +29,9 @@ const makeMockReq = (pkg: Partial<UDSPackage>) => {
 };
 
 describe("Package Store", () => {
-
   it("Should add a package", async () => {
     const mockReq = makeMockReq({});
-    const ns = mockReq.Raw.metadata?.namespace || ""
+    const ns = mockReq.Raw.metadata?.namespace || "";
     PackageStore.add(mockReq.Raw);
     expect(PackageStore.hasKey(ns)).toEqual(true);
   });
@@ -43,9 +42,9 @@ describe("Package Store", () => {
     const mockReqNewPkg = makeMockReq({ metadata: { namespace: "test", name: "other-package" } });
     const nsNewPkg = mockReqNewPkg.Raw.metadata?.namespace || "";
     PackageStore.add(mockReqNewPkg.Raw);
-    let pkgsExist = false
+    let pkgsExist = false;
     if (PackageStore.hasKey(ns) && PackageStore.hasKey(nsNewPkg)) {
-      pkgsExist = true
+      pkgsExist = true;
     }
     expect(pkgsExist).toEqual(true);
   });

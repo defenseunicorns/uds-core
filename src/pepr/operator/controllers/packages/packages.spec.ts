@@ -27,7 +27,6 @@ const makeMockReq = (pkg: Partial<UDSPackage>) => {
 };
 
 describe("Package Watch", () => {
-
   it("Should add a package", async () => {
     const mockReq = makeMockReq({});
     const ns = mockReq.Raw.metadata?.namespace || "";
@@ -42,9 +41,9 @@ describe("Package Watch", () => {
     const mockReqNewPkg = makeMockReq({ metadata: { namespace: "test", name: "other-package" } });
     const nsNewPkg = mockReqNewPkg.Raw.metadata?.namespace || "";
     processPackages(mockReqNewPkg.Raw, WatchPhase.Added);
-    let pkgsExist = false
+    let pkgsExist = false;
     if (PackageStore.hasKey(ns) && PackageStore.hasKey(nsNewPkg)) {
-      pkgsExist = true
+      pkgsExist = true;
     }
     expect(pkgsExist).toBe(true);
   });
@@ -56,9 +55,9 @@ describe("Package Watch", () => {
     const nsNewPkg = mockReqNewPkg.Raw.metadata?.namespace || "";
     processPackages(mockReq.Raw, WatchPhase.Deleted);
     processPackages(mockReqNewPkg.Raw, WatchPhase.Deleted);
-    let pkgsExist = false
+    let pkgsExist = false;
     if (PackageStore.hasKey(ns) && PackageStore.hasKey(nsNewPkg)) {
-      pkgsExist = true
+      pkgsExist = true;
     }
     expect(pkgsExist).toBe(false);
   });
