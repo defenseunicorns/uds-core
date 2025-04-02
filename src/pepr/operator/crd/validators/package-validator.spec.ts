@@ -16,7 +16,10 @@ import {
   Sso,
   UDSPackage,
 } from "..";
+import { PackageStore } from "../../controllers/packages/package-store";
 import { validator } from "./package-validator";
+
+PackageStore.init();
 
 const makeMockReq = (
   pkg: Partial<UDSPackage>,

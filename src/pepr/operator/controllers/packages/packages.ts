@@ -9,13 +9,13 @@ import { PackageStore } from "./package-store";
 
 /**
  * Processes exemptions based on the watch phase.
- * This function determines how to handle a UDSPackage based on whether it has been added, modified, or deleted
+ * This function determines how to handle a UDSPackage based on whether it has been added or deleted
  * during a watch operation.  It uses a switch statement to execute the appropriate logic
  * based on the provided WatchPhase.
  *
  * @param {UDSPackage} pkg - The UDSPackage to process.  UDSPackage is assumed to be a defined type/interface
  *                           representing a package of exemptions.
- * @param {WatchPhase} phase - The phase of the watch operation (Added, Modified, or Deleted).
+ * @param {WatchPhase} phase - The phase of the watch operation (Added or Deleted).
  *                             WatchPhase is assumed to be an enum or a set of constant values.
  * @returns {void} This function does not return a value; it performs actions based on the input.
  */
