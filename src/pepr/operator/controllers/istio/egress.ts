@@ -10,9 +10,9 @@ import {
   RemoteProtocol,
   UDSPackage,
 } from "../../crd";
-import { generateEgressGateway } from "./gateway";
+import { generateEgressGateway, warnMatchingExistingGateways } from "./gateway";
 import { generateDestinationRule } from "./destination-rule";
-import { generateEgressVirtualService } from "./virtual-service";
+import { generateEgressVirtualService, warnMatchingExistingVirtualServices } from "./virtual-service";
 import { getPackageId, log, istioEgressGatewayNamespace } from "./istio-resources";
 import { EgressResourceMap, HostResourceMap, PackageAction, PackageHostMap } from "./types";
 import { purgeOrphans } from "../utils";
@@ -129,6 +129,10 @@ export async function applyEgressResources(packageEgress: PackageHostMap, genera
   // Apply the unique set of egress resources per defined host
   for (const host in egressResources) {
     const resource = egressResources[host];
+
+    // Check if matching hosts exist for Gateway and Virtual Service
+    await warnMatchingExistingGateways(host);
+    await warnMatchingExistingVirtualServices(host);
 
     // Generate and Apply the egress gateway
     const gateway = await generateEgressGateway(host, resource, generation);

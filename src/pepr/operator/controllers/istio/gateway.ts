@@ -21,15 +21,12 @@ import { EgressResource } from "./types";
  * @param resource
  * @param generation
  */
-export async function generateEgressGateway(
+export function generateEgressGateway(
   host: string,
   resource: EgressResource,
   generation: number,
 ) {
   const name = generateGatewayName(host);
-
-  // Warn if there are existing gateways with the same host
-  await warnMatchingExistingGateways(host);
 
   // Add annotations from resource
   const annotations: Record<string, string> = {};
@@ -87,11 +84,11 @@ function generateGatewayServer(host: string, protocol: RemoteProtocol, port: num
 // Note: Users adding their own Istio resources will need to understand the possible conflicts with the spec. This is not an operation
 // blocked by K8s, but will be identified as invalid by Istio. The UDS operator will only manage/deconflict resources it creates or those
 // that follow the deterministic naming convention.
-async function warnMatchingExistingGateways(host: string) {
+export async function warnMatchingExistingGateways(host: string) {
   const gateways = await K8s(IstioGateway).Get();
   const name = generateGatewayName(host);
 
-  // Match any gateways with matching host, port, and protocol
+  // Match any gateways with matching hosts
   for (const gw of gateways.items) {
     if (gw.metadata?.name === name && gw.metadata?.namespace === namespace) {
       // Don't warn if the gateway is the one we created

@@ -119,15 +119,12 @@ export function generateVSName(pkgName: string, expose: Expose) {
  * @param resource
  * @param generation
  */
-export async function generateEgressVirtualService(
+export function generateEgressVirtualService(
   host: string,
   resource: EgressResource,
   generation: number,
 ) {
   const name = generateEgressVSName(host);
-
-  // Warn if there are existing gateways with the same host
-  await warnMatchingExistingVirtualServices(host);
 
   // Add annotations from resource
   const annotations: Record<string, string> = {};
@@ -158,6 +155,7 @@ export async function generateEgressVirtualService(
         "uds/generation": generation.toString(),
         "uds/package": sharedEgressPkgId,
       },
+      annotations,
     },
     spec: {
       hosts: [host],
@@ -215,7 +213,7 @@ function generateVirtualServiceRoutes(host: string, port: number, protocol: stri
 // Note: Users adding their own Istio resources will need to understand the possible conflicts with the spec. This is not an operation
 // blocked by K8s, but will be identified as invalid by Istio. The UDS operator will only manage/deconflict resources it creates or those
 // that follow the naming convention.
-async function warnMatchingExistingVirtualServices(host: string) {
+export async function warnMatchingExistingVirtualServices(host: string) {
   const virtualServices = await K8s(IstioVirtualService).Get();
   const name = generateEgressVSName(host);
 

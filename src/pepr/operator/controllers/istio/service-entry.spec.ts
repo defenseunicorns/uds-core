@@ -101,7 +101,6 @@ describe("test generate egress service entry", () => {
     expect(serviceEntry.spec!.location).toEqual(IstioLocation.MeshExternal);
     expect(serviceEntry.spec!.resolution).toEqual(IstioResolution.DNS);
     expect(serviceEntry.spec?.exportTo).toBeDefined();
-    expect(serviceEntry.spec?.exportTo![0]).toEqual(".");
-    expect(serviceEntry.spec?.exportTo![1]).toEqual(istioEgressGatewayNamespace);
+    expect(serviceEntry.spec?.exportTo!).toEqual([".", istioEgressGatewayNamespace]);
   });
 });

@@ -21,7 +21,7 @@ describe("test generate destination rule", () => {
     const destinationRule = generateDestinationRule(egressResources, 1);
 
     expect(destinationRule).toBeDefined();
-    expect(destinationRule.metadata?.name).toEqual(`egressgateway-destination-rule`);
+    expect(destinationRule.metadata?.name).toEqual("egressgateway-destination-rule");
     expect(destinationRule.metadata?.namespace).toEqual(istioEgressGatewayNamespace);
     expect(destinationRule.metadata?.labels).toEqual({
       "uds/generation": generation.toString(),
