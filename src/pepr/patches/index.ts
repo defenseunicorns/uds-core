@@ -46,32 +46,32 @@ When(a.Service)
  * Temporary until fixed upstream
  */
 
-When(a.DaemonSet)
-  .IsCreatedOrUpdated()
-  .InNamespace("neuvector")
-  .WithName("neuvector-enforcer-pod")
-  .Mutate(async ds => {
-    const enforcerContainer = ds.Raw.spec?.template.spec?.containers.find(
-      container => container.name === "neuvector-enforcer-pod",
-    );
+// When(a.DaemonSet)
+//   .IsCreatedOrUpdated()
+//   .InNamespace("neuvector")
+//   .WithName("neuvector-enforcer-pod")
+//   .Mutate(async ds => {
+//     const enforcerContainer = ds.Raw.spec?.template.spec?.containers.find(
+//       container => container.name === "neuvector-enforcer-pod",
+//     );
 
-    if (enforcerContainer && enforcerContainer.livenessProbe === undefined) {
-      log.debug("Patching NeuVector Enforcer Daemonset to add livenessProbe");
-      const livenessProbe = {
-        exec: { command: ["curl", "--no-progress-meter", "127.0.0.1:8500"] },
-        periodSeconds: 10,
-        failureThreshold: 2,
-      };
-      enforcerContainer.livenessProbe = livenessProbe;
-    }
+//     if (enforcerContainer && enforcerContainer.livenessProbe === undefined) {
+//       log.debug("Patching NeuVector Enforcer Daemonset to add livenessProbe");
+//       const livenessProbe = {
+//         exec: { command: ["curl", "--no-progress-meter", "127.0.0.1:8500"] },
+//         periodSeconds: 10,
+//         failureThreshold: 2,
+//       };
+//       enforcerContainer.livenessProbe = livenessProbe;
+//     }
 
-    if (enforcerContainer && enforcerContainer.readinessProbe === undefined) {
-      log.debug("Patching NeuVector Enforcer Daemonset to add readinessProbe");
-      const readinessProbe = {
-        exec: { command: ["curl", "--no-progress-meter", "127.0.0.1:8500"] },
-        initialDelaySeconds: 10,
-        periodSeconds: 5,
-      };
-      enforcerContainer.readinessProbe = readinessProbe;
-    }
-  });
+//     if (enforcerContainer && enforcerContainer.readinessProbe === undefined) {
+//       log.debug("Patching NeuVector Enforcer Daemonset to add readinessProbe");
+//       const readinessProbe = {
+//         exec: { command: ["curl", "--no-progress-meter", "127.0.0.1:8500"] },
+//         initialDelaySeconds: 10,
+//         periodSeconds: 5,
+//       };
+//       enforcerContainer.readinessProbe = readinessProbe;
+//     }
+//   });
