@@ -161,7 +161,7 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
       }
     } else if (policy.spec?.egress) {
       for (const egress of policy.spec.egress) {
-        // Don't add port 15008 for certain destinations that we know are not in-mesh or not in-cluster
+        // Don't add port 15008 for egress destinations that we know are not in-mesh or not in-cluster
         if (
           policy.metadata?.labels?.["uds/generated"] === RemoteGenerated.KubeNodes ||
           policy.metadata?.labels?.["uds/generated"] === RemoteGenerated.KubeAPI ||
