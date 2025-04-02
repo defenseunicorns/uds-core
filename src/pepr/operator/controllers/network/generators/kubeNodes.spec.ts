@@ -3,20 +3,27 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { beforeEach, beforeAll, describe, expect, it, jest } from "@jest/globals";
+import { beforeAll, beforeEach, describe, expect, it, jest } from "@jest/globals";
 
+import { V1NetworkPolicyList } from "@kubernetes/client-node";
+import { K8s, kind } from "pepr";
+import { AuthorizationPolicy } from "../../../crd/generated/istio/authorizationpolicy-v1beta1";
+import { anywhere } from "./anywhere";
 import {
   initAllNodesTarget,
   kubeNodes,
+  updateKubeNodesAuthorizationPolicies,
   updateKubeNodesFromCreateUpdate,
   updateKubeNodesFromDelete,
 } from "./kubeNodes";
-import { K8s, kind } from "pepr";
-import { V1NetworkPolicyList } from "@kubernetes/client-node";
-import { anywhere } from "./anywhere";
 
 type KubernetesList<T> = {
   items: T[];
+};
+
+type MockNode = {
+  metadata: { name: string };
+  status: { addresses: { type: string; address: string }[] };
 };
 
 jest.mock("pepr", () => {
@@ -29,6 +36,131 @@ jest.mock("pepr", () => {
       NetworkPolicy: "NetworkPolicy",
     },
   };
+});
+
+describe("updateKubeNodesAuthorizationPolicies", () => {
+  const mockApply = jest.fn();
+  const mockK8sGetNodes = jest.fn<() => Promise<KubernetesList<kind.Node>>>();
+  const mockGetNetworkPolicies = jest.fn<() => Promise<KubernetesList<kind.NetworkPolicy>>>();
+  const mockGetAuthPolicies = jest.fn<() => Promise<KubernetesList<AuthorizationPolicy>>>();
+
+  (K8s as jest.Mock).mockImplementation(() => ({
+    Get: mockK8sGetNodes,
+    WithLabel: jest.fn(() => ({
+      Get: mockGetAuthPolicies,
+    })),
+    Apply: mockApply,
+  }));
+
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    mockGetAuthPolicies.mockReset();
+    mockGetNetworkPolicies.mockResolvedValue({ items: [] });
+    mockK8sGetNodes.mockResolvedValue({ items: [] }); // ensures nodeSet starts empty
+
+    await initAllNodesTarget(); // resets nodeSet to []
+  });
+
+  it("should update AuthorizationPolicy if ipBlocks differ", async () => {
+    const authPol = {
+      apiVersion: "security.istio.io/v1beta1",
+      kind: "AuthorizationPolicy",
+      metadata: {
+        name: "example-authpol",
+        namespace: "default",
+        managedFields: [],
+      },
+      spec: {
+        rules: [
+          {
+            from: [{ source: { ipBlocks: ["0.0.0.0/0"] } }],
+          },
+        ],
+      },
+    } as AuthorizationPolicy;
+
+    mockGetAuthPolicies.mockResolvedValue({ items: [authPol] });
+
+    await updateKubeNodesFromCreateUpdate({
+      metadata: { name: "node1" },
+      status: { addresses: [{ type: "InternalIP", address: "10.0.0.5" }] },
+    } as MockNode);
+
+    expect(authPol.spec!.rules![0].from![0].source!.ipBlocks).toEqual(["10.0.0.5/32"]);
+    expect(authPol.metadata!.managedFields).toBeUndefined();
+    expect(mockApply).toHaveBeenCalled();
+  });
+
+  it("should not update AuthorizationPolicy if ipBlocks match", async () => {
+    const authPol = {
+      apiVersion: "security.istio.io/v1beta1",
+      kind: "AuthorizationPolicy",
+      metadata: {
+        name: "authpol-match",
+        namespace: "default",
+        managedFields: [],
+      },
+      spec: {
+        rules: [
+          {
+            from: [{ source: { ipBlocks: ["10.0.0.6/32"] } }],
+          },
+        ],
+      },
+    } as AuthorizationPolicy;
+
+    mockGetAuthPolicies.mockResolvedValue({ items: [authPol] });
+
+    await updateKubeNodesFromCreateUpdate({
+      metadata: { name: "node2" },
+      status: { addresses: [{ type: "InternalIP", address: "10.0.0.6" }] },
+    } as MockNode);
+
+    expect(mockApply).not.toHaveBeenCalled();
+  });
+
+  it("should create 'from' field if missing", async () => {
+    const authPol = {
+      apiVersion: "security.istio.io/v1beta1",
+      kind: "AuthorizationPolicy",
+      metadata: {
+        name: "authpol-nofrom",
+        namespace: "default",
+        managedFields: [],
+      },
+      spec: {
+        rules: [{}],
+      },
+    } as AuthorizationPolicy;
+
+    mockGetAuthPolicies.mockResolvedValue({ items: [authPol] });
+
+    await updateKubeNodesFromCreateUpdate({
+      metadata: { name: "node3" },
+      status: { addresses: [{ type: "InternalIP", address: "10.0.0.7" }] },
+    } as MockNode);
+
+    expect(authPol.spec!.rules![0].from?.[0]?.source?.ipBlocks).toEqual(["10.0.0.7/32"]);
+    expect(mockApply).toHaveBeenCalled();
+  });
+
+  it("should skip policies missing rules", async () => {
+    const authPol = {
+      apiVersion: "security.istio.io/v1beta1",
+      kind: "AuthorizationPolicy",
+      metadata: {
+        name: "authpol-norules",
+        namespace: "default",
+      },
+      spec: {},
+    } as AuthorizationPolicy;
+
+    mockGetAuthPolicies.mockResolvedValue({ items: [authPol] });
+
+    await updateKubeNodesAuthorizationPolicies();
+
+    expect(mockApply).not.toHaveBeenCalled();
+  });
 });
 
 describe("kubeNodes module", () => {

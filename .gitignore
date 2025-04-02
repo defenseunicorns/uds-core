@@ -32,3 +32,5 @@ uds-docs/**
 **.backup
 **/.playwright/**
 **/.playwright
+
+coverage/**
