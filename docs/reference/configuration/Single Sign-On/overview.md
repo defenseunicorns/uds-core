@@ -55,3 +55,4 @@ All groups are under the Uds Core parent group. Frequently a group will be refer
 5. [Client Attribute Validation](/reference/configuration/single-sign-on/sso-client-validation/)
 6. [Secret Templating](/reference/configuration/single-sign-on/sso-templating/)
 7. [Trusted Certificate Authority](/reference/configuration/single-sign-on/trusted-ca/)
+8. [Recovering lost Keycloak credentials](/reference/configuration/single-sign-on/recoving-lost-credentials/)
