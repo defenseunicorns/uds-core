@@ -11,7 +11,7 @@ This procedure requires at least 1.5G of memory allocated to the Keycloak contai
 The procedure involves creating a new user with administrator privileges, logging into that user, and recovering the lost credentials. First, create a new temporary admin user called `temp-admin` with the password `temp-admin`:
 
 ```bash
-kubectl exec -it keycloak-0 -n keycloak -- /opt/keycloak/bin/kc.sh bootstrap-admin user
+uds zarf tools kubectl exec -it keycloak-0 -n keycloak -- /opt/keycloak/bin/kc.sh bootstrap-admin user
 ```
 
 When prompted, enter the `temp-admin` password:
