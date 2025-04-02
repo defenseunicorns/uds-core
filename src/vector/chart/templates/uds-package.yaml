@@ -15,6 +15,7 @@ spec:
         remoteNamespace: monitoring
         remoteSelector:
           app.kubernetes.io/name: prometheus
+        remoteServiceAccount: kube-prometheus-stack-prometheus
         port: 9090
         description: "Prometheus Metrics"
 
@@ -29,6 +30,7 @@ spec:
         remoteNamespace: loki
         remoteSelector:
           app.kubernetes.io/name: loki
+        remoteServiceAccount: vector
         port: 8080
         description: "Write Logs to Loki"
 
