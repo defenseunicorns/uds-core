@@ -10,17 +10,17 @@ import { UDSPackage } from "../../../crd";
 import { Client } from "../types";
 import { updatePolicy } from "./authorization-policy";
 import {
-    getAuthserviceConfig,
-    operatorConfig,
-    setAuthserviceConfig,
-    updateAuthServiceSecret,
+  getAuthserviceConfig,
+  operatorConfig,
+  setAuthserviceConfig,
+  updateAuthServiceSecret,
 } from "./config";
 import {
-    Action,
-    AddOrRemoveClientEvent,
-    AuthServiceEvent,
-    AuthserviceConfig,
-    Chain,
+  Action,
+  AddOrRemoveClientEvent,
+  AuthServiceEvent,
+  AuthserviceConfig,
+  Chain,
 } from "./types";
 
 export const log = setupLogger(Component.OPERATOR_AUTHSERVICE);
