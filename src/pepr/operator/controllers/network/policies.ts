@@ -151,7 +151,6 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
       policy.metadata.name = `allow-${pkgName}-${policy.metadata.name}`;
     }
 
-    // todo: validate if this is needed for out of mesh locations???
     // Loop through all ports in ingress/egress policies and add port 15008 for ztunnel
     if (policy.spec?.ingress) {
       for (const ingress of policy.spec.ingress) {
@@ -162,6 +161,14 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
       }
     } else if (policy.spec?.egress) {
       for (const egress of policy.spec.egress) {
+        // Don't add port 15008 for certain destinations that we know are not in-mesh or not in-cluster
+        if (
+          policy.metadata?.labels?.["uds/generated"] === RemoteGenerated.KubeNodes ||
+          policy.metadata?.labels?.["uds/generated"] === RemoteGenerated.KubeAPI ||
+          policy.metadata?.labels?.["uds/generated"] === RemoteGenerated.CloudMetadata
+        ) {
+          continue;
+        }
         // Only add the port if there is a port restriction
         if (egress.ports && egress.ports.some(port => port.protocol !== "UDP")) {
           egress.ports.push({ port: 15008 });
