@@ -6,12 +6,12 @@
 import { Capability, K8s, kind } from "pepr";
 import { Component, setupLogger } from "../logger";
 import {
-  PodMonitorEndpoint,
-  PodMonitorScheme,
-  PrometheusPodMonitor,
-  PrometheusServiceMonitor,
-  ServiceMonitorEndpoint,
-  ServiceMonitorScheme,
+    PodMonitorEndpoint,
+    PodMonitorScheme,
+    PrometheusPodMonitor,
+    PrometheusServiceMonitor,
+    ServiceMonitorEndpoint,
+    ServiceMonitorScheme,
 } from "../operator/crd";
 import { FallbackScrapeProtocol } from "../operator/crd/generated/prometheus/servicemonitor-v1";
 // configure subproject logger
@@ -30,7 +30,7 @@ const { When } = prometheus;
 When(PrometheusServiceMonitor)
   .IsCreatedOrUpdated()
   .Mutate(async sm => {
-    if (sm.Raw.spec === undefined || sm.Raw.spec.scrapeClass != undefined) {
+    if (sm.Raw.spec === undefined || sm.Raw.spec.scrapeClass !== undefined) {
       // Support the legacy (Prometheus 2.x fallback) until upstream applications properly handle protocol
       if (sm.Raw.spec && !sm.Raw.spec.fallbackScrapeProtocol) {
         sm.Raw.spec.fallbackScrapeProtocol = FallbackScrapeProtocol.PrometheusText004;
@@ -82,7 +82,7 @@ When(PrometheusServiceMonitor)
 When(PrometheusPodMonitor)
   .IsCreatedOrUpdated()
   .Mutate(async pm => {
-    if (pm.Raw.spec === undefined || pm.Raw.spec.scrapeClass != undefined) {
+    if (pm.Raw.spec === undefined || pm.Raw.spec.scrapeClass !== undefined) {
       // Support the legacy (Prometheus 2.x fallback) until upstream applications properly handle protocol
       if (pm.Raw.spec && !pm.Raw.spec.fallbackScrapeProtocol) {
         pm.Raw.spec.fallbackScrapeProtocol = FallbackScrapeProtocol.PrometheusText004;
@@ -116,7 +116,7 @@ When(PrometheusPodMonitor)
     }
   });
 
-// This assumes istio-injection == strict mTLS due to complexity around mTLS lookup
+// This assumes istio-injection === strict mTLS due to complexity around mTLS lookup
 async function isIstioInjected(monitor: PrometheusServiceMonitor | PrometheusPodMonitor) {
   // If monitor allows any namespace assume istio injection
   if (monitor.Raw.spec?.namespaceSelector?.any) {
