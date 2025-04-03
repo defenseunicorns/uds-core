@@ -91,9 +91,7 @@ export function generateSEName(pkgName: string, expose: Expose) {
 /**
  * Creates a ServiceEntry for allowed external hosts in the package
  *
- * @param host
- * @param protocol
- * @param port
+ * @param hostPortsProtocol
  * @param pkgName
  * @param namespace
  * @param generation

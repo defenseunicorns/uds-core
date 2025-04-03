@@ -4,7 +4,7 @@
  */
 
 import { describe, expect, it } from "@jest/globals";
-import { createHostResourceMap, remapEgressResources } from "./egress";
+import { createHostResourceMap, remapEgressResources, getHostPortsProtocol } from "./egress";
 import { Direction, RemoteProtocol } from "../../crd";
 
 describe("test createHostResourceMap", () => {
@@ -127,5 +127,41 @@ describe("test remapEgressResources", () => {
     const packageEgress = {};
     const egressResources = remapEgressResources(packageEgress);
     expect(egressResources).toEqual({});
+  });
+});
+
+describe("test getHostPortsProtocol", () => {
+  it("should return tls hostPortsProtocol object", () => {
+    const allow = {
+      direction: Direction.Egress,
+      remoteHost: "example.com",
+      remoteProtocol: RemoteProtocol.TLS,
+      ports: [443, 8443],
+    };
+
+    const result = getHostPortsProtocol(allow);
+
+    expect(result).toEqual({
+      host: "example.com",
+      ports: [443, 8443],
+      protocol: RemoteProtocol.TLS,
+    });
+  });
+
+  it("should return null for non-egress direction", () => {
+    const allow = {
+      direction: Direction.Ingress,
+      remoteHost: "example.com",
+      remoteProtocol: RemoteProtocol.HTTP,
+      port: 80,
+    };
+
+    const result = getHostPortsProtocol(allow);
+
+    expect(result).toEqual({
+      host: "example.com",
+      ports: [80],
+      protocol: RemoteProtocol.HTTP,
+    });
   });
 });

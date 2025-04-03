@@ -11,9 +11,8 @@ import { HostPortsProtocol } from "./types";
 /**
  * Creates a Sidecar to enforce outbound traffic policies
  *
- * @param host
- * @param protocol
- * @param port
+ * @param hostPortsProtocol
+ * @param selector
  * @param pkgName
  * @param namespace
  * @param generation
