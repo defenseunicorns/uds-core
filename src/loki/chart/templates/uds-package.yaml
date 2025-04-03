@@ -52,7 +52,8 @@ spec:
           app.kubernetes.io/name: loki
         description: Storage
         {{- if .Values.storage.internal.enabled }}
-        remoteSelector: {{ .Values.storage.internal.remoteSelector }}
+        remoteSelector:
+          {{- .Values.storage.internal.remoteSelector | toYaml | nindent 10 }}
         remoteNamespace: {{ .Values.storage.internal.remoteNamespace }}
         {{- else if .Values.storage.egressCidr }}
         remoteCidr: {{ .Values.storage.egressCidr }}

@@ -1,9 +1,8 @@
 # Copyright 2024 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
-
 includes:
-  - common: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.11.0/tasks/create.yaml
+  - common: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.11.2/tasks/create.yaml
 
 variables:
   - name: FLAVOR
@@ -11,11 +10,11 @@ variables:
 
   - name: REGISTRY1_PEPR_IMAGE
     # renovate: datasource=docker depName=registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller versioning=semver
-    default: registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller:v0.46.3
+    default: registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller:v0.47.0
 
   - name: UNICORN_PEPR_IMAGE
     # renovate: datasource=github-tags depName=defenseunicorns/pepr versioning=semver
-    default: ghcr.io/defenseunicorns/pepr/private/controller:v0.46.3
+    default: ghcr.io/defenseunicorns/pepr/private/controller:v0.47.0
 
   - name: LAYER
 
@@ -80,8 +79,11 @@ tasks:
         default: ${CREATE_OPTIONS}
         description: "Additional options passed in when creating Zarf packages. For example: --skip-sbom"
     actions:
+      # Note: Maru does not support `or` for this conditional task so we just duplicate it for each case
       - task: pepr-build
-        if: ${{ eq .inputs.layer "base" or eq .inputs.layer "standard" }}
+        if: ${{ eq .inputs.layer "standard" }}
+      - task: pepr-build
+        if: ${{ eq .inputs.layer "base" }}
       - description: "Create the UDS Core Zarf Package"
         task: common:package
         with:
