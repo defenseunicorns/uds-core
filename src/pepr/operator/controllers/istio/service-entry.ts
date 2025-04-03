@@ -6,7 +6,6 @@
 import { V1OwnerReference } from "@kubernetes/client-node";
 import { UDSConfig } from "../../../config";
 import {
-  Allow,
   Expose,
   Gateway,
   IstioEndpoint,
@@ -18,7 +17,6 @@ import {
 import { istioEgressGatewayNamespace } from "./istio-resources";
 import { sanitizeResourceName } from "../utils";
 import { RemoteProtocol } from "../../crd";
-import { getHostPortsProtocol } from "./egress";
 import { HostPortsProtocol } from "./types";
 
 /**

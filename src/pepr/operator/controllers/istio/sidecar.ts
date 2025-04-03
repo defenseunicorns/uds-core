@@ -4,7 +4,7 @@
  */
 
 import { V1OwnerReference } from "@kubernetes/client-node";
-import { IstioSidecar, IstioOutboundTrafficPolicyMode, RemoteProtocol } from "../../crd";
+import { IstioSidecar, IstioOutboundTrafficPolicyMode } from "../../crd";
 import { sanitizeResourceName } from "../utils";
 import { HostPortsProtocol } from "./types";
 

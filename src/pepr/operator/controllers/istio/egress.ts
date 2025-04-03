@@ -3,16 +3,8 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 import { K8s } from "pepr";
-import {
-  Allow,
-  IstioDestinationRule,
-  IstioGateway,
-  IstioVirtualService,
-  RemoteProtocol,
-  UDSPackage,
-} from "../../crd";
+import { Allow, IstioGateway, IstioVirtualService, RemoteProtocol, UDSPackage } from "../../crd";
 import { generateEgressGateway, warnMatchingExistingGateways } from "./gateway";
-import { generateDestinationRule } from "./destination-rule";
 import {
   generateEgressVirtualService,
   warnMatchingExistingVirtualServices,
@@ -164,24 +156,6 @@ export async function applyEgressResources(packageEgress: PackageHostMap, genera
         log.error(`Failed to apply Gateway ${gateway.metadata?.name} of generation ${generation}`);
         throw e;
       });
-
-    // // Generate and Apply the egress Destination Rule
-    // const destinationRule = generateDestinationRule(resource, generation);
-
-    // log.debug(
-    //   destinationRule,
-    //   `Applying Egress Destination Rule ${destinationRule.metadata?.name}`,
-    // );
-
-    // // Apply the Destination Rule and force overwrite any existing resource
-    // await K8s(IstioDestinationRule)
-    //   .Apply(destinationRule, { force: true })
-    //   .catch(async e => {
-    //     log.error(
-    //       `Failed to apply Destination Rule ${destinationRule.metadata?.name} of generation ${generation}`,
-    //     );
-    //     throw e;
-    //   });
 
     // Generate and Apply the egress Virtual Service
     const virtualService = await generateEgressVirtualService(host, resource, generation);

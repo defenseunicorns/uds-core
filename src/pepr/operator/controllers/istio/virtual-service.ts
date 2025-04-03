@@ -15,7 +15,6 @@ import {
   IstioVirtualService,
 } from "../../crd";
 import { sanitizeResourceName } from "../utils";
-import { subsetName } from "./destination-rule";
 import { generateGatewayName } from "./gateway";
 import { EgressResource } from "./types";
 import {
@@ -188,7 +187,6 @@ function generateVirtualServiceRoutes(host: string, port: number, protocol: stri
         {
           destination: {
             host: `egressgateway.${namespace}.svc.cluster.local`,
-            // subset: subsetName,
             port: { number: port },
           },
         },
