@@ -17,7 +17,7 @@ import {
 import { istioEgressGatewayNamespace, getSharedAnnotationKey } from "./istio-resources";
 import { sanitizeResourceName } from "../utils";
 import { RemoteProtocol } from "../../crd";
-import { HostPortsProtocol, PortProtocol, EgressResource } from "./types";
+import { HostPortsProtocol, EgressResource } from "./types";
 import { sharedEgressPkgId } from "./egress";
 
 /**
