@@ -30,7 +30,7 @@ tasks:
       - description: "Deploy the Istio source package with Zarf Dev"
         cmd: "uds zarf dev deploy src/istio --flavor upstream --registry-url docker.io --no-progress"
 
-      # Note: Since this is a dev deploy without any `--flavor` it only deploys the CRDs (other charts are per-flavor)
+      # Note: Since this is a dev deploy without any `--flavor` it only deploys the CRDs (other components are flavored)
       - description: "Deploy the Prometheus-Stack source package with Zarf Dev to only install the CRDs"
         cmd: "uds zarf dev deploy src/prometheus-stack --no-progress"
 
