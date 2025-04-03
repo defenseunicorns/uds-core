@@ -38,26 +38,17 @@ export async function enableIstio(pkg: UDSPackage) {
 
   const sourceNS = await K8s(kind.Namespace).Get(pkg.metadata.namespace);
   const labels = { ...(sourceNS.metadata?.labels || {}) };
-  const originalInjectionLabel = labels[INJECTION_LABEL];
-  const originalAmbientLabel = labels[AMBIENT_LABEL];
   const annotations = { ...(sourceNS.metadata?.annotations || {}) };
   const pkgKey = `uds.dev/pkg-${pkg.metadata.name}`;
+  const currentIstioState = getCurrentIstioState(labels);
 
-  // Mark the original namespace istio setting for if all packages are removed
+  // Mark the original namespace istio setting for if packages are removed
   if (!annotations[ISTIO_STATE_ANNOTATION]) {
-    // If injectionLabel exists, and is "enabled", mark as "sidecar"
-    // If ambientLabel exists and is set to "ambient", mark as "ambient"
-    // Otherwise, mark as "none"
-    annotations[ISTIO_STATE_ANNOTATION] =
-      originalInjectionLabel === "enabled"
-        ? IstioState.Sidecar
-        : originalAmbientLabel === "ambient"
-          ? IstioState.Ambient
-          : IstioState.None;
+    annotations[ISTIO_STATE_ANNOTATION] = currentIstioState;
   }
 
-  let shouldRestartPods = false;
-  let istioState = IstioState.None;
+  let targetIstioState = IstioState.None;
+  annotations[pkgKey] = "true";
 
   // Handle labels based on ambient opt-in or sidecar default
   if (pkg.spec?.network?.serviceMesh?.mode === Mode.Ambient) {
@@ -75,70 +66,28 @@ export async function enableIstio(pkg: UDSPackage) {
       });
 
       // Fall back to sidecar mode
-      annotations[pkgKey] = "true";
-      if (originalInjectionLabel !== "enabled") {
-        labels[INJECTION_LABEL] = "enabled";
-        delete labels[AMBIENT_LABEL]; // Explicitly remove ambient label if it exists
-        shouldRestartPods = true; // Pods need restarting due to label change
-        log.debug(
-          `Enabling Istio injection for namespace ${pkg.metadata.namespace} (fallback from ambient).`,
-        );
-      }
-      istioState = IstioState.Sidecar;
+      targetIstioState = IstioState.Sidecar;
     } else {
       // Ambient mode is available and requested
-      annotations[pkgKey] = "true";
-      if (originalAmbientLabel !== IstioState.Ambient) {
-        // Ensure ambient mode is enabled and injection is disabled
-        labels[AMBIENT_LABEL] = IstioState.Ambient;
-        delete labels[INJECTION_LABEL]; // Explicitly remove injection label if it exists
-        log.debug(`Enabling ambient mode for namespace ${pkg.metadata.namespace}.`);
-        if (originalInjectionLabel === "enabled") {
-          shouldRestartPods = true; // Pods need restarting to remove sidecar
-        }
-        istioState = IstioState.Ambient;
-      }
+      targetIstioState = IstioState.Ambient;
     }
   } else {
-    // Sidecar mode requested
-    annotations[pkgKey] = "true";
-    // Ensure injection is enabled and ambient mode is disabled
-    if (originalInjectionLabel !== "enabled") {
-      labels[INJECTION_LABEL] = "enabled";
-      delete labels[AMBIENT_LABEL]; // Explicitly remove ambient label if it exists
-      shouldRestartPods = true; // Pods need restarting due to label change
-      log.debug(`Enabling Istio injection for namespace ${pkg.metadata.namespace}.`);
-    }
-    istioState = IstioState.Sidecar;
+    // Sidecar mode requested/by default
+    targetIstioState = IstioState.Sidecar;
   }
 
-  // Apply namespace updates if there are changes
-  const updatedNamespace = {
-    metadata: {
-      name: pkg.metadata.namespace,
-      labels,
-      annotations,
-    },
-  };
-  if (
-    !R.equals(sourceNS.metadata?.labels, labels) ||
-    !R.equals(sourceNS.metadata?.annotations, annotations)
-  ) {
-    log.debug(`Applying updates to namespace ${pkg.metadata.namespace}.`);
-    await K8s(kind.Namespace).Apply(updatedNamespace, { force: true });
-  } else {
-    log.debug(`No namespace updates needed for ${pkg.metadata.namespace}.`);
-  }
+  const result = getIstioLabels(labels, targetIstioState, currentIstioState);
 
-  // Restart pods if required (to enable or disable sidecar)
-  if (shouldRestartPods) {
-    log.debug(`Restarting pods in ${pkg.metadata.namespace} due to configuration changes.`);
-    if (istioState === IstioState.Sidecar) {
-      await killPods(pkg.metadata.namespace, true);
-    } else if (istioState === IstioState.Ambient) {
-      await killPods(pkg.metadata.namespace, false);
-    }
-  }
+  // Apply namespace updates and restart pods if needed
+  await applyNamespaceUpdates(
+    pkg.metadata.namespace,
+    result.labels,
+    annotations,
+    sourceNS.metadata?.labels,
+    sourceNS.metadata?.annotations,
+  );
+
+  await restartPodsIfNeeded(pkg.metadata.namespace, result.shouldRestartPods, targetIstioState);
 }
 
 /**
@@ -153,69 +102,43 @@ export async function cleanupNamespace(pkg: UDSPackage) {
   }
 
   const sourceNS = await K8s(kind.Namespace).Get(pkg.metadata.namespace);
-  const labels = sourceNS.metadata?.labels || {};
-  const annotations = sourceNS.metadata?.annotations || {};
-  const currentInjectionLabel = labels[INJECTION_LABEL];
-  const currentAmbientLabel = labels[AMBIENT_LABEL];
-  const originalIstioState = annotations[ISTIO_STATE_ANNOTATION];
-  const currentState =
-    currentInjectionLabel === "enabled"
-      ? IstioState.Sidecar
-      : currentAmbientLabel === "ambient"
-        ? IstioState.Ambient
-        : IstioState.None;
-  let shouldRestartPods = false;
+  const labels = { ...(sourceNS.metadata?.labels || {}) };
+  const annotations = { ...(sourceNS.metadata?.annotations || {}) };
+  const currentState = getCurrentIstioState(labels);
+  const originalIstioState = annotations[ISTIO_STATE_ANNOTATION] as IstioState;
 
   // Remove the package annotation
   delete annotations[`uds.dev/pkg-${pkg.metadata.name}`];
 
-  // Since we only allow one Package per namespace, restore the original value of the istio-injection label
-  if (originalIstioState === IstioState.Sidecar) {
-    labels[INJECTION_LABEL] = "enabled";
-    delete labels[AMBIENT_LABEL];
-    // Add sidecar if not present
-    if (currentState === IstioState.Ambient) {
-      shouldRestartPods = true;
-    }
-  } else if (originalIstioState === IstioState.Ambient) {
-    labels[AMBIENT_LABEL] = "ambient";
-    delete labels[INJECTION_LABEL];
-    // Remove sidecar if present
-    if (currentState === IstioState.Sidecar) {
-      shouldRestartPods = true;
-    }
+  // Check if there are any other package annotations
+  // Backwards compatibility for multiple package CRs in a single namespace
+  const hasOtherPackages = Object.keys(annotations).some(key => key.startsWith("uds.dev/pkg-"));
+
+  // Only modify Istio labels if this is the last package
+  let result;
+  if (hasOtherPackages) {
+    // Keep existing labels if other packages are still present, don't cycle pods/change istio state
+    result = { labels, shouldRestartPods: false };
   } else {
-    delete labels[INJECTION_LABEL];
-    delete labels[AMBIENT_LABEL];
-    // Remove sidecar if present
-    if (currentState === IstioState.Sidecar) {
-      shouldRestartPods = true;
-    }
+    // Set labels based on the original state and determine if pods need to be restarted
+    result = getIstioLabels(labels, originalIstioState, currentState);
+
+    // Delete the annotation since we're restoring to original state
+    delete annotations[ISTIO_STATE_ANNOTATION];
   }
-  delete annotations[ISTIO_STATE_ANNOTATION];
 
   // Apply the updated Namespace
-  log.debug(`Updating namespace ${pkg.metadata.namespace}, removing ${pkg.metadata.name} state.`);
-  await K8s(kind.Namespace).Apply(
-    {
-      metadata: {
-        name: pkg.metadata.namespace,
-        labels,
-        annotations,
-      },
-    },
-    { force: true },
+  await applyNamespaceUpdates(
+    pkg.metadata.namespace,
+    result.labels,
+    annotations,
+    sourceNS.metadata?.labels,
+    sourceNS.metadata?.annotations,
+    `Updating namespace ${pkg.metadata.namespace}, removing ${pkg.metadata.name} state.`,
   );
 
-  // Kill the pods if we changed the effective Istio state
-  if (shouldRestartPods) {
-    log.debug(`Attempting pod restart in ${pkg.metadata.namespace} based on istio label change`);
-    if (originalIstioState === IstioState.Sidecar) {
-      await killPods(pkg.metadata.namespace, true);
-    } else if (originalIstioState === IstioState.Ambient) {
-      await killPods(pkg.metadata.namespace, false);
-    }
-  }
+  // Restart pods if needed
+  await restartPodsIfNeeded(pkg.metadata.namespace, result.shouldRestartPods, originalIstioState);
 }
 
 /**
@@ -274,4 +197,119 @@ export async function killPods(ns: string, wantSidecar: boolean) {
       await K8s(kind.Pod).Delete(pod);
     }
   }
+}
+
+/**
+ * Get the current Istio state of a namespace based on its labels
+ *
+ * @param labels The namespace labels
+ * @returns The current Istio state
+ */
+export function getCurrentIstioState(labels: Record<string, string>): IstioState {
+  return labels[INJECTION_LABEL] === "enabled"
+    ? IstioState.Sidecar
+    : labels[AMBIENT_LABEL] === "ambient"
+      ? IstioState.Ambient
+      : IstioState.None;
+}
+
+/**
+ * Apply namespace updates if there are changes to labels or annotations
+ *
+ * @param namespace The namespace name
+ * @param labels The updated labels
+ * @param annotations The updated annotations
+ * @param originalLabels The original labels
+ * @param originalAnnotations The original annotations
+ * @param logMessage Optional log message
+ * @returns Whether updates were applied
+ */
+export async function applyNamespaceUpdates(
+  namespace: string,
+  labels: Record<string, string>,
+  annotations: Record<string, string>,
+  originalLabels: Record<string, string> | undefined,
+  originalAnnotations: Record<string, string> | undefined,
+  logMessage?: string,
+): Promise<boolean> {
+  const updatedNamespace = {
+    metadata: {
+      name: namespace,
+      labels,
+      annotations,
+    },
+  };
+
+  if (!R.equals(originalLabels, labels) || !R.equals(originalAnnotations, annotations)) {
+    log.debug(logMessage || `Applying updates to namespace ${namespace}.`);
+    await K8s(kind.Namespace).Apply(updatedNamespace, { force: true });
+    return true;
+  } else {
+    log.debug(`No namespace updates needed for ${namespace}.`);
+    return false;
+  }
+}
+
+/**
+ * Restart pods if the Istio state has changed
+ *
+ * @param namespace The namespace name
+ * @param shouldRestart Whether pods should be restarted
+ * @param istioState The target Istio state
+ */
+async function restartPodsIfNeeded(
+  namespace: string,
+  shouldRestart: boolean,
+  targetIstioState: IstioState,
+): Promise<void> {
+  if (shouldRestart) {
+    log.debug(`Restarting pods in ${namespace} due to configuration changes.`);
+    if (targetIstioState === IstioState.Sidecar) {
+      await killPods(namespace, true);
+    } else if (targetIstioState === IstioState.Ambient) {
+      await killPods(namespace, false);
+    }
+  }
+}
+
+/**
+ * Gets the appropriate Istio labels based on the target state and determines if pods need to be restarted
+ *
+ * @param labels The current labels
+ * @param targetState The target Istio state
+ * @param currentState The current Istio state
+ * @returns Updated labels and whether pods should be restarted
+ */
+export function getIstioLabels(
+  labels: Record<string, string>,
+  targetState: IstioState,
+  currentState: IstioState,
+): { labels: Record<string, string>; shouldRestartPods: boolean } {
+  let shouldRestartPods = false;
+
+  if (targetState === IstioState.Sidecar) {
+    labels[INJECTION_LABEL] = "enabled";
+    delete labels[AMBIENT_LABEL];
+    // Add sidecar if not present or coming from ambient
+    if (currentState !== IstioState.Sidecar) {
+      shouldRestartPods = true;
+    }
+  } else if (targetState === IstioState.Ambient) {
+    labels[AMBIENT_LABEL] = "ambient";
+    delete labels[INJECTION_LABEL];
+    // Remove sidecar if present
+    if (currentState === IstioState.Sidecar) {
+      shouldRestartPods = true;
+    }
+  } else {
+    // None state - remove all Istio labels
+    delete labels[INJECTION_LABEL];
+    delete labels[AMBIENT_LABEL];
+    // Remove sidecar if present
+    if (currentState === IstioState.Sidecar) {
+      shouldRestartPods = true;
+    }
+  }
+
+  return { labels, shouldRestartPods };
 }
