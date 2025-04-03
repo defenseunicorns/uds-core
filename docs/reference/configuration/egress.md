@@ -8,10 +8,20 @@ UDS Core leverages Istio to route dedicated egress out of the service mesh. This
 
 ## Configuring the Egress Workload
 
-The dedicated egress workload is an *optional* component of UDS Core. To enable it in the UDS Bundle...
+The dedicated egress workload is an *optional* component of UDS Core. To enable it in the UDS Bundle, add it to the optional components as follows:
 
 ```yaml
+kind: UDSBundle
+metadata:
+  name: core-demo
+  description: A UDS bundle for deploying the standard UDS Core package on a development cluster
+  version: "0.39.0"
 
+packages:
+  - name: core
+    path: ../../build/
+    optionalComponents:
+      - istio-egress-gateway
 ```
 
 You will also need to configure any additional ports that you'd expect to egress to. 443 and 80 are default out of the box, but in the case of modifications you should use the overrides as follows:
@@ -27,10 +37,11 @@ The UDS Core Package Custom Resource (CR) is used to configure the egress worklo
 > [!NOTE] Currently, only HTTP and TLS protocols are supported. The configuration will default to TLS if not specified.
 
 When a Package CR specifies the `network.allow` field with, at minimum, the `remoteHost` and `port` or `ports` parameters, the UDS Core operator will create the necessary Istio resources to allow traffic to egress from the mesh. These include the following:
-* A ServiceEntry CR, in the package namespace, which is used to define the external service that the workload can access.
-* A Sidecar CR, in the package namespace, which is used to enforce that only registered traffic can egress from the workload.
-* A VirtualService CR, in the istio egress gateway namespace, which is used to route the traffic to the egress gateway.
-* A Gateway CR, in the istio egress gateway namespace, which is used to expose the egress gateway to the outside world.
+* An Istio ServiceEntry, in the package namespace, which is used to define the external service that the workload can access.
+* An Istio Sidecar, in the package namespace, which is used to enforce that only registered traffic can egress from the workload. This is only applied to the workload selected in the `network.allow`.
+* A shared Istio VirtualService, in the istio egress gateway namespace, which is used to route the traffic to the egress gateway.
+* A shared Istio Gateway, in the istio egress gateway namespace, which is used to expose the egress gateway to the outside world.
+* A shared Istio Service Entry, in the istio egress gateway namespace, to registry the hosts and the ports for the egress gateway.
 
 The following provide some examples for the configuration of egress using the Package Custom Resource. 
 
@@ -46,17 +57,19 @@ The configuration Package CRs in combination with the behavior of Istio should b
 
 > [!NOTE] The following are not exhaustive and are subject to change as this implementation matures from sidecar to ambient.
 
-* Specifying a port in a Package that is not exposed via the workload: This will be allowed, but the traffic will not be able to egress. 
+* Currently, egress will only work for workloads that are using the Istio sidecar proxy.
 
-* Specifying a remote host that is also used in other Gateways or VirtualServices: ... 
+* Specifying a port in a Package that is not exposed via the workload: This will be allowed with a warning from the operator, but the traffic will not be able to egress. An `istioctl analyze` will show an error such as: `Referenced host:port not found: "egressgateway.istio-egress-gateway.svc.cluster.local:9200"`
 
-* Specifying different port/protocol combinations in different Package CRs: Different packages will be able to access all port/protocols because of shared service entries
+* Specifying a remote host that is also used in other Gateways or VirtualServices: This will be allowed with a warning from the operator, but some unexpected behavior may occur. An `istioctl analyze` will show an error such as: `The VirtualServices ... define the same host ... which can lead to unexpected behavior` and `Conflict with gateways ...`
 
-* The TLS mode is PASSTHROUGH, this means that traffic will exit the mesh as-is. Without TLS origination, details like HTTP paths cannot be inspected, restricted or logged.
+* For all egresses defined within a single Package CR, all workloads that also have egress will have shared access to any host defined (is that true with the VS?)
 
 ## Security Considarations
 
 Additional security considerations to keep in mind when implementing egress:
+
+* The TLS mode is PASSTHROUGH, this means that traffic will exit the mesh as-is. Without TLS origination, details like HTTP paths cannot be inspected, restricted or logged.
 
 * Per Istio documentation: “The cluster administrator or the cloud provider must ensure that no traffic leaves the mesh bypassing the egress gateway. Mechanisms external to Istio must enforce this requirement” - Essentially, additional work may be needed to ensure traffic is actually egressing the cluster when and where it should be.
 

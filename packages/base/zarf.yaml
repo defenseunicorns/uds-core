@@ -56,6 +56,6 @@ components:
       path: ../../src/istio
 
   - name: istio-egress-gateway
-    required: true # testing
+    required: false
     import:
       path: ../../src/istio

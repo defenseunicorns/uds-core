@@ -42,6 +42,7 @@ packages:
     optionalComponents:
       - istio-ambient
       - istio-passthrough-gateway
+      - istio-egress-gateway
       - metrics-server
     overrides:
       pepr-uds-core:
