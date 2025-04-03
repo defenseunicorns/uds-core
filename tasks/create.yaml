@@ -1,7 +1,6 @@
 # Copyright 2024 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
-
 includes:
   - common: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.11.2/tasks/create.yaml
 
@@ -80,8 +79,11 @@ tasks:
         default: ${CREATE_OPTIONS}
         description: "Additional options passed in when creating Zarf packages. For example: --skip-sbom"
     actions:
+      # Note: Maru does not support `or` for this conditional task so we just duplicate it for each case
       - task: pepr-build
-        if: ${{ eq .inputs.layer "base" or eq .inputs.layer "standard" }}
+        if: ${{ eq .inputs.layer "standard" }}
+      - task: pepr-build
+        if: ${{ eq .inputs.layer "base" }}
       - description: "Create the UDS Core Zarf Package"
         task: common:package
         with:
