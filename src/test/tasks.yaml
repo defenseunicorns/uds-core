@@ -388,7 +388,7 @@ tasks:
             echo "Shared resources still exist"
             exit 1
           fi
-  
+
   - name: remove
     actions:
       - description:

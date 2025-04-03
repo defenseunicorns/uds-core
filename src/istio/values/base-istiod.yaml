@@ -17,7 +17,7 @@ meshConfig:
         port: "10003"
   outboundTrafficPolicy:
     mode: "ALLOW_ANY"
-    
+
 pilot:
   env:
     PILOT_JWT_ENABLE_REMOTE_JWKS: hybrid
