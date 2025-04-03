@@ -194,6 +194,11 @@ export interface Allow {
    */
   remoteSelector?: { [key: string]: string };
   /**
+   * The remote service account to restrict incoming traffic from within the remote
+   * namespace.           Only valid for Ingress rules.
+   */
+  remoteServiceAccount?: string;
+  /**
    * Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all
    * pods in the namespace
    */
@@ -738,6 +743,7 @@ export interface ProtocolMapper {
 }
 
 export interface StatusObject {
+  authorizationPolicyCount?: number;
   authserviceClients?: string[];
   /**
    * Status conditions following Kubernetes-style conventions

@@ -18,6 +18,7 @@ import { keycloak, purgeSSOClients } from "../controllers/keycloak/client-sync";
 import { Client } from "../controllers/keycloak/types";
 import { podMonitor } from "../controllers/monitoring/pod-monitor";
 import { serviceMonitor } from "../controllers/monitoring/service-monitor";
+import { generateAuthorizationPolicies } from "../controllers/network/authorizationPolicies";
 import { networkPolicies } from "../controllers/network/policies";
 import { retryWithDelay } from "../controllers/utils";
 import { Phase, UDSPackage } from "../crd";
@@ -73,6 +74,8 @@ export async function packageReconciler(pkg: UDSPackage) {
 
     const netPol = await networkPolicies(pkg, namespace!);
 
+    const authPol = await generateAuthorizationPolicies(pkg, namespace!);
+
     let endpoints: string[] = [];
 
     // Update the namespace to ensure the istio-injection label is set
@@ -109,6 +112,7 @@ export async function packageReconciler(pkg: UDSPackage) {
       endpoints,
       monitors,
       networkPolicyCount: netPol.length,
+      authorizationPolicyCount: authPol.length + authserviceClients.length * 2,
       observedGeneration: metadata.generation,
       retryAttempt: 0, // todo: make this nullable when kfc generates the type
     });
