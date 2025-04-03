@@ -51,7 +51,7 @@ All groups are under the Uds Core parent group. Frequently a group will be refer
 1. [Authservice Protection](/reference/configuration/single-sign-on/auth-service/)
 2. [Device Flow Clients](/reference/configuration/single-sign-on/device-flow/)
 3. [Group Based Authorization](/reference/configuration/single-sign-on/group-based-auth/)
-4. [Keycloak Session Timeout](/reference/configuration/single-sign-on/keycloak-session-timeout/)
+4. [Keycloak Session Timeout](/reference/configuration/single-sign-on/keycloak-session-timeouts/)
 5. [Recovering lost Keycloak credentials](/reference/configuration/single-sign-on/recoving-lost-credentials/)
 6. [Service Account Roles Clients](/reference/configuration/single-sign-on/service-account/)
 7. [Client Attribute Validation](/reference/configuration/single-sign-on/sso-client-validation/)
