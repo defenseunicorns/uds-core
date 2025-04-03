@@ -149,11 +149,11 @@ export function generateEgressVirtualService(
     metadata: {
       name,
       namespace,
+      annotations,
       labels: {
         "uds/generation": generation.toString(),
         "uds/package": sharedEgressPkgId,
       },
-      annotations,
     },
     spec: {
       hosts: [host],

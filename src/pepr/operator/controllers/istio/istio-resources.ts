@@ -8,7 +8,7 @@ import { K8s } from "pepr";
 import { Component, setupLogger } from "../../../logger";
 import { IstioServiceEntry, IstioVirtualService, IstioSidecar, UDSPackage } from "../../crd";
 import { getOwnerRef, purgeOrphans } from "../utils";
-import { generateIngressServiceEntry, generateEgressServiceEntry } from "./service-entry";
+import { generateIngressServiceEntry, generateLocalEgressServiceEntry } from "./service-entry";
 import { generateIngressVirtualService } from "./virtual-service";
 import { generateEgressSidecar } from "./sidecar";
 import { reconcileSharedEgressResources, getHostPortsProtocol } from "./egress";
@@ -92,7 +92,7 @@ export async function istioResources(pkg: UDSPackage, namespace: string) {
     // Add package-related egress resources if remoteHost is defined
     if (hostPortsProtocol) {
       // Create Service Entry
-      const serviceEntry = generateEgressServiceEntry(
+      const serviceEntry = generateLocalEgressServiceEntry(
         hostPortsProtocol,
         pkgName,
         namespace,

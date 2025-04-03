@@ -3,21 +3,22 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 import { K8s } from "pepr";
-import { Allow, IstioGateway, IstioVirtualService, RemoteProtocol, UDSPackage } from "../../crd";
+import { Allow, IstioGateway, IstioServiceEntry, IstioVirtualService, RemoteProtocol, UDSPackage } from "../../crd";
+import { purgeOrphans } from "../utils";
 import { generateEgressGateway, warnMatchingExistingGateways } from "./gateway";
+import { getPackageId, istioEgressGatewayNamespace, log } from "./istio-resources";
+import { generateSharedServiceEntry } from "./service-entry";
+import {
+  EgressResourceMap,
+  HostPortsProtocol,
+  HostResourceMap,
+  PackageAction,
+  PackageHostMap,
+} from "./types";
 import {
   generateEgressVirtualService,
   warnMatchingExistingVirtualServices,
 } from "./virtual-service";
-import { getPackageId, log, istioEgressGatewayNamespace } from "./istio-resources";
-import {
-  EgressResourceMap,
-  HostResourceMap,
-  PackageAction,
-  PackageHostMap,
-  HostPortsProtocol,
-} from "./types";
-import { purgeOrphans } from "../utils";
 
 // Cache for in-memory egress resources from package CRs
 const inMemoryPackageMap: PackageHostMap = {};
@@ -61,6 +62,13 @@ export async function reconcileSharedEgressResources(pkg: UDSPackage, action: Pa
     istioEgressGatewayNamespace,
     sharedEgressPkgId,
     IstioVirtualService,
+    log,
+  );
+  await purgeOrphans(
+    generation.toString(),
+    istioEgressGatewayNamespace,
+    sharedEgressPkgId,
+    IstioServiceEntry,
     log,
   );
 }
@@ -166,9 +174,20 @@ export async function applyEgressResources(packageEgress: PackageHostMap, genera
     await K8s(IstioVirtualService)
       .Apply(virtualService, { force: true })
       .catch(async e => {
-        log.error(
-          `Failed to apply Virtual Service ${virtualService.metadata?.name} of generation ${generation}`,
-        );
+        log.error(`Failed to apply Virtual Service ${virtualService.metadata?.name} of generation ${generation}`);
+        throw e;
+      });
+
+    // Generate and Apply the egress Service Entry
+    const serviceEntry = await generateSharedServiceEntry(host, resource, generation);
+
+    log.debug(serviceEntry, `Applying Service Entry ${serviceEntry.metadata?.name}`);
+
+    // Apply the Service Entry and force overwrite any existing resource
+    await K8s(IstioServiceEntry)
+      .Apply(serviceEntry, { force: true })
+      .catch(async e => {
+        log.error(`Failed to apply Service Entry ${serviceEntry.metadata?.name} of generation ${generation}`);
         throw e;
       });
   }
