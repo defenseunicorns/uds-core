@@ -21,7 +21,13 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
 
   const pkgName = pkg.metadata?.name ?? "_unknown_";
   const ns = pkg.metadata?.namespace ?? "_unknown_";
-
+  
+  // Always permit packages that are being removed
+  const deletionTimestamp = pkg.metadata?.deletionTimestamp ?? null
+  if (deletionTimestamp) {
+    return req.Approve()
+  }
+  
   if (invalidNamespaces.includes(ns)) {
     return req.Deny("invalid namespace");
   }
