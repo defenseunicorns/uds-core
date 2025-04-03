@@ -8,26 +8,39 @@ UDS Core leverages Istio to route dedicated egress out of the service mesh. This
 
 ## Configuring the Egress Workload
 
-The dedicated egress workload is an *optional* component of UDS Core. To enable it in the UDS Bundle, add it to the optional components as follows:
+The dedicated egress workload is an *optional* component of UDS Core. To enable it in the UDS Bundle, add it to the `optionalComponents` as follows:
 
 ```yaml
 kind: UDSBundle
 metadata:
-  name: core-demo
-  description: A UDS bundle for deploying the standard UDS Core package on a development cluster
-  version: "0.39.0"
+  name: uds-core-bundle
+  description: My UDS Core Bundle
+  version: "0.1.0"
 
 packages:
-  - name: core
-    path: ../../build/
+  - name: uds-core
+    repository: oci://ghcr.io/defenseunicorns/packages/uds/core
+    version: "0.39.0"
     optionalComponents:
       - istio-egress-gateway
 ```
 
-You will also need to configure any additional ports that you'd expect to egress to. 443 and 80 are default out of the box, but in the case of modifications you should use the overrides as follows:
+You will also need to configure any additional ports that you'd expect to egress to. 443 and 80 are default out of the box, but in the case of modifications you should use the `pacakges.overrides` as follows:
 
 ```yaml
-
+overrides:
+  istio-egress-gateway:
+    gateway:
+      ports:
+        - name: http
+          port: 80
+          targetPort: 80
+        - name: https
+          port: 443
+          targetPort: 443
+        - name: custom-port
+          port: 9200
+          targetPort: 9200
 ```
 
 ## Specifying Egress using the Package CR
