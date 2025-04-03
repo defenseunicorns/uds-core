@@ -173,7 +173,7 @@ export function generateSharedServiceEntry(
       location: IstioLocation.MeshExternal,
       resolution: IstioResolution.DNS,
       ports,
-      exportTo: [istioEgressGatewayNamespace],
+      exportTo: ["."],
     },
   };
 

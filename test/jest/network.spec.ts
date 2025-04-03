@@ -300,7 +300,7 @@ describe("Network Policy Validation", () => {
 
     // Validate unsuccessful tls request when using Egress Gateway for curl-pkg-egress-gw-2
     const not_success_response_tls = await execInPod("egress-gw-2", curlPodNameEgress2, "curl", egress_gateway_tls_curl);
-    expect(not_success_response_tls.stdout).toBe("503");
+    expect(not_success_response_tls.stdout).toBe("000");
 
     // Validate successful http request when using Egress Gateway for curl-pkg-egress-gw-2
     const success_response_http = await execInPod("egress-gw-2", curlPodNameEgress2, "curl", egress_gateway_http_curl);

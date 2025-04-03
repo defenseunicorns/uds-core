@@ -268,6 +268,17 @@ tasks:
             exit 1
           fi
 
+          # Check that the shared service entry spec is updated
+          se_ports = $(uds zarf kubectl get serviceentry service-entry-httpbin-org -n istio-egress-gateway -ojson | jq '[.spec.ports[].number]')
+          if ! echo "$se_ports" | jq 'index(81)' >/dev/null; then
+            echo "Port 81 is not present in service-entry-httpbin-org"
+            exit 1
+          fi
+          if echo "$se_ports" | jq 'index(80)' >/dev/null; then
+            echo "Port 80 is still present in service-entry-httpbin-org"
+            exit 1
+          fi
+
       - description: "Patch protocol to TLS in pkg-2"
         cmd: |
           uds zarf kubectl patch package pkg-2 \
@@ -289,6 +300,13 @@ tasks:
             exit 1
           fi
 
+          # Check that the shared service entry spec is updated
+          se_protocol = $(uds zarf kubectl get serviceentry service-entry-httpbin-org -n istio-egress-gateway -ojson | jq '[.spec.ports[].protocol]')
+          if echo "$se_protocol" | jq 'index("HTTP")' >/dev/null; then
+            echo "HTTP protocol is still present in service-entry-httpbin-org"
+            exit 1
+          fi
+
       - description: "Patch remote host to example.com in pkg-2"
         cmd: |
           uds zarf kubectl patch package pkg-2 \
@@ -307,7 +325,14 @@ tasks:
           # Virtual Service checks
           annotations=$(uds zarf kubectl get virtualservice egress-vs-httpbin-org --namespace istio-egress-gateway -o jsonpath='{.metadata.annotations}' | jq -r '.["uds.dev/user-pkg-2-egress-gw-2"]'))
           if [ "$annotations" != "null" ]; then
-            echo "Package annotation still exists on gateway"
+            echo "Package annotation still exists on egress-vs-httpbin-org"
+            exit 1
+          fi
+
+          # Service Entry checks
+          annotations=$(uds zarf kubectl get serviceentry service-entry-httpbin-org --namespace istio-egress-gateway -o jsonpath='{.metadata.annotations}' | jq -r '.["uds.dev/user-pkg-2-egress-gw-2"]'))
+          if [ "$annotations" != "null" ]; then
+            echo "Package annotation still exists on service-entry-httpbin-org"
             exit 1
           fi
 
@@ -321,6 +346,12 @@ tasks:
           vs_found=$(kubectl get virtualservice egress-vs-example-com -n istio-egress-gateway >/dev/null 2>&1 && echo "True" || echo "False")
           if [ "$vs_found" == "False" ]; then
             echo "egress-vs-example-com does not exist"
+            exit 1
+          fi
+
+          se_found=$(kubectl get serviceentry service-entry-example-com -n istio-egress-gateway >/dev/null 2>&1 && echo "True" || echo "False")
+          if [ "$se_found" == "False" ]; then
+            echo "service-entry-example-com does not exist"
             exit 1
           fi
 
@@ -341,10 +372,9 @@ tasks:
             exit 1
           fi
 
-          # Destination Rule annotation check
-          annotations=$(uds zarf kubectl get destinationrule egressgateway-destination-rule --namespace istio-egress-gateway -o jsonpath='{.metadata.annotations}' | jq -r '.["uds.dev/user-pkg-2-egress-gw-2"]'))
-          if [ "$annotations" != "null" ]; then
-            echo "Package annotation still exists on gateway"
+          se_found=$(kubectl get serviceentry service-entry-example-com -n istio-egress-gateway >/dev/null 2>&1 && echo "True" || echo "False")
+          if [ "$se_found" == "True" ]; then
+            echo "service-entry-example-com still exists"
             exit 1
           fi
 
@@ -353,7 +383,7 @@ tasks:
           uds zarf kubectl delete package pkg-1 --namespace egress-gw-1
 
           # Check all shared resources are removed
-          resource_count=$(uds zarf kubectl get gateway,virtualservice,destinationrule --namespace istio-egress-gateway -ojson | jq '.items | length')
+          resource_count=$(uds zarf kubectl get gateway,virtualservice,serviceentry --namespace istio-egress-gateway -ojson | jq '.items | length')
           if [ "$resource_count" -ne 0 ]; then
             echo "Shared resources still exist"
             exit 1
