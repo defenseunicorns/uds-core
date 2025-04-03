@@ -263,10 +263,12 @@ async function restartPodsIfNeeded(
   targetIstioState: IstioState,
 ): Promise<void> {
   if (shouldRestart) {
-    log.debug(`Restarting pods in ${namespace} due to configuration changes.`);
+    log.debug(
+      `Restarting pods in ${namespace} due to configuration changes (switching to ${targetIstioState} Istio state)`,
+    );
     if (targetIstioState === IstioState.Sidecar) {
       await killPods(namespace, true);
-    } else if (targetIstioState === IstioState.Ambient) {
+    } else if (targetIstioState === IstioState.Ambient || targetIstioState === IstioState.None) {
       await killPods(namespace, false);
     }
   }

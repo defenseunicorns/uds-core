@@ -396,7 +396,7 @@ describe("cleanupNamespace", () => {
     );
 
     // This is a cheap way to check if killPods was called
-    expect(mockPodGet).not.toHaveBeenCalled();
+    expect(mockPodGet).toHaveBeenCalled();
   });
 
   test("restores sidecar istio mode", async () => {
