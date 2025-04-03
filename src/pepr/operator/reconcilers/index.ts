@@ -169,10 +169,10 @@ export function getReadinessConditions(ready: boolean = true) {
   return [
     {
       type: "Ready",
-      status: ready == true ? StatusEnum.True : StatusEnum.False,
+      status: ready === true ? StatusEnum.True : StatusEnum.False,
       lastTransitionTime: new Date(),
       message:
-        ready == true ? "The package is ready for use." : "The package is not ready for use.",
+        ready === true ? "The package is ready for use." : "The package is not ready for use.",
       reason: "ReconciliationComplete",
     },
   ];
