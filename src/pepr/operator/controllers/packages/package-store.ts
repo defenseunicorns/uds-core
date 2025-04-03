@@ -12,7 +12,7 @@ import { Component, setupLogger } from "../../../logger";
 import { UDSPackage } from "../../crd";
 const log = setupLogger(Component.OPERATOR_PACKAGES);
 
-export type PackageNamespaceMap = Map<string, UDSPackage>;
+export type PackageNamespaceMap = Map<string, UDSPackage[]>;
 let packageNamespaceMap: PackageNamespaceMap;
 
 /**
@@ -36,7 +36,15 @@ function init(): void {
  */
 function add(pkg: UDSPackage, logger: boolean = true): void {
   const namespace = pkg.metadata?.namespace || "";
-  packageNamespaceMap.set(namespace, pkg);
+  // Get existing packages if any and merge into the one being added
+  const existingValue = packageNamespaceMap.get(namespace);
+  if (existingValue) {
+    existingValue.push(pkg);
+    packageNamespaceMap.set(namespace, existingValue);
+  } else {
+    packageNamespaceMap.set(namespace, [pkg]);
+  }
+
   if (logger) {
     log.debug(`Added package: ${namespace}/${pkg.metadata?.name} to package map`);
   }
@@ -53,7 +61,18 @@ function add(pkg: UDSPackage, logger: boolean = true): void {
  */
 function remove(pkg: UDSPackage, logger: boolean = true): void {
   const namespace = pkg.metadata?.namespace || "";
-  packageNamespaceMap.delete(namespace);
+  const pkgToRemove = pkg.metadata?.name;
+  const items = packageNamespaceMap.get(namespace) || [];
+  if (items.length > 1) {
+    items.forEach((value, index) => {
+      if (value.metadata?.name === pkgToRemove) {
+        items.splice(index, 1);
+      }
+    });
+    packageNamespaceMap.set(namespace, items);
+  } else {
+    packageNamespaceMap.delete(namespace);
+  }
   if (logger) {
     log.debug(`Removed package: ${namespace}/${pkg.metadata?.name} from package map`);
   }
@@ -92,7 +111,14 @@ function hasKey(namespace: string): boolean {
  * const packageName = getPkgName('unknown-namespace'); // Returns null
  */
 function getPkgName(namespace: string): string | null {
-  return packageNamespaceMap.get(namespace)?.metadata?.name || null;
+  const items = packageNamespaceMap.get(namespace) || [];
+  if (items.length > 0) {
+    // Always return the first package found
+    const foundPkg = items[0];
+    return foundPkg.metadata?.name || null;
+  } else {
+    return null;
+  }
 }
 
 export const PackageStore = {
