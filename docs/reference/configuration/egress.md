@@ -25,7 +25,7 @@ packages:
       - istio-egress-gateway
 ```
 
-You will also need to configure any additional ports that you'd expect to egress to. 443 and 80 are default out of the box, but in the case of modifications you should use the `packges.overrides` as follows:
+You will also need to configure any additional ports that you'd expect to egress to. 443 and 80 are default out of the box, but in the case of modifications you should use the `packages.overrides` as follows:
 
 ```yaml
 overrides:
