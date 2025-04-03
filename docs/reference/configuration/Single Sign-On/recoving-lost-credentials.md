@@ -28,4 +28,4 @@ The command will exit with an error indicating that it can't bootstrap the Keycl
 <timestamp> INFO  [org.keycloak.services] (main) KC-SERVICES0077: Created temporary admin user with username temp-admin
 ```
 
-Navigate to https://keycloak.admin.uds.dev/ and log in with the `temp-admin` user. Once logged in, create a new user with administrator privileges. Use this user to reset the admin user password by navigating to the `Users` tab, selecting `admin`, going to the `Credentials` tab, and clicking on `Reset Password`.
+Navigate to https://keycloak.admin.uds.dev/ and log in with the `temp-admin` user. Once logged in, reset the admin user password by navigating to the `Users` tab, selecting `admin`, going to the `Credentials` tab, and clicking on `Reset Password`.
