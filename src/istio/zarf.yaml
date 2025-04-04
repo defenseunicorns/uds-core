@@ -26,17 +26,6 @@ components:
       - name: istiod
         valuesFiles:
           - "values/upstream/istiod.yaml"
-    images:
-      - "docker.io/istio/pilot:1.25.1-distroless"
-      - "docker.io/istio/proxyv2:1.25.1-distroless"
-
-  - name: istio-ambient
-    required: false
-    only:
-      flavor: upstream
-    import:
-      path: ambient
-    charts:
       - name: cni
         valuesFiles:
           - "values/upstream/cni.yaml"
@@ -44,6 +33,8 @@ components:
         valuesFiles:
           - "values/upstream/ztunnel.yaml"
     images:
+      - "docker.io/istio/pilot:1.25.1-distroless"
+      - "docker.io/istio/proxyv2:1.25.1-distroless"
       - "docker.io/istio/install-cni:1.25.1-distroless"
       - "docker.io/istio/ztunnel:1.25.1-distroless"
 
@@ -57,17 +48,6 @@ components:
       - name: istiod
         valuesFiles:
           - "values/registry1/istiod.yaml"
-    images:
-      - registry1.dso.mil/ironbank/tetrate/istio/proxyv2:1.25.1-tetratefipslatest1
-      - registry1.dso.mil/ironbank/tetrate/istio/pilot:1.25.1-tetratefipslatest1
-
-  - name: istio-ambient
-    required: false
-    only:
-      flavor: registry1
-    import:
-      path: ambient
-    charts:
       - name: cni
         valuesFiles:
           - "values/registry1/cni.yaml"
@@ -75,6 +55,8 @@ components:
         valuesFiles:
           - "values/registry1/ztunnel.yaml"
     images:
+      - registry1.dso.mil/ironbank/tetrate/istio/proxyv2:1.25.1-tetratefipslatest1
+      - registry1.dso.mil/ironbank/tetrate/istio/pilot:1.25.1-tetratefipslatest1
       - registry1.dso.mil/ironbank/tetrate/istio/install-cni:1.25.1-tetratefipslatest1
       - registry1.dso.mil/ironbank/tetrate/istio/ztunnel:1.25.1-tetratefipslatest1
 
@@ -88,17 +70,6 @@ components:
       - name: istiod
         valuesFiles:
           - "values/unicorn/istiod.yaml"
-    images:
-      - cgr.dev/du-uds-defenseunicorns/istio-pilot-fips:1.25.1
-      - cgr.dev/du-uds-defenseunicorns/istio-proxy-fips:1.25.1
-
-  - name: istio-ambient
-    required: false
-    only:
-      flavor: unicorn
-    import:
-      path: ambient
-    charts:
       - name: cni
         valuesFiles:
           - "values/unicorn/cni.yaml"
@@ -106,6 +77,8 @@ components:
         valuesFiles:
           - "values/unicorn/ztunnel.yaml"
     images:
+      - cgr.dev/du-uds-defenseunicorns/istio-pilot-fips:1.25.1
+      - cgr.dev/du-uds-defenseunicorns/istio-proxy-fips:1.25.1
       - cgr.dev/du-uds-defenseunicorns/istio-install-cni:1.25.1
       - cgr.dev/du-uds-defenseunicorns/ztunnel-fips:1.25.1
 
