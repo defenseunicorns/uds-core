@@ -7,6 +7,8 @@ import { getReadinessConditions, handleFailure, shouldSkip, updateStatus, writeE
 import { UDSConfig } from "../../config";
 import { Component, setupLogger } from "../../logger";
 import { cleanupNamespace, enableInjection } from "../controllers/istio/injection";
+import { reconcileSharedEgressResources } from "../controllers/istio/egress";
+import { PackageAction } from "../controllers/istio/types";
 import { istioResources } from "../controllers/istio/istio-resources";
 import {
   authservice,
@@ -75,6 +77,7 @@ export async function packageReconciler(pkg: UDSPackage) {
     const authPol = await generateAuthorizationPolicies(pkg, namespace!);
 
     let endpoints: string[] = [];
+
     // Update the namespace to ensure the istio-injection label is set
     await enableInjection(pkg);
 
@@ -92,7 +95,7 @@ export async function packageReconciler(pkg: UDSPackage) {
       );
     }
 
-    // Create the VirtualService and ServiceEntry for each exposed service
+    // Create the Istio Resources per the package configuration
     endpoints = await istioResources(pkg, namespace!);
 
     // Configure the ServiceMonitors
@@ -100,6 +103,7 @@ export async function packageReconciler(pkg: UDSPackage) {
     monitors.push(...(await podMonitor(pkg, namespace!)));
     monitors.push(...(await serviceMonitor(pkg, namespace!)));
 
+    // TODO: add status field for exposedHosts
     await updateStatus(pkg, {
       phase: Phase.Ready,
       conditions: getReadinessConditions(true),
@@ -217,6 +221,27 @@ export async function packageFinalizer(pkg: UDSPackage) {
     });
     await updateStatus(pkg, { phase: Phase.RemovalFailed });
     return false;
+  }
+
+  // Clean up any shared egress resources
+  try {
+    await writeEvent(pkg, {
+      message: `Reconciling any shared egress resources`,
+      reason: "RemovalInProgress",
+      type: "Normal",
+    });
+    // Clean annotations and/or remove any shared egress resources
+    await retryWithDelay(async function cleanupSharedEgressResources() {
+      await reconcileSharedEgressResources(pkg, PackageAction.Remove);
+    }, log);
+  } catch (e) {
+    log.debug(
+      `Removal of shared egress resources during finalizer failed for ${pkg.metadata?.namespace}/${pkg.metadata?.name}: ${e.message}`,
+    );
+    await writeEvent(pkg, {
+      message: `Removal of shared egress resources failed: ${e.message}`,
+      reason: "RemovalFailed",
+    });
   }
 
   // Indicate success - all other resources (network policies, virtual services, etc) are cleaned up through owner references
