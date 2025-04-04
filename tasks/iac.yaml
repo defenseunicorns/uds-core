@@ -24,7 +24,7 @@ tasks:
   - name: install-eksctl
     actions:
       - cmd: |
-          curl --silent --location "https://github.com/weaveworks/eksctl/releases/download/v0.206.0/eksctl_Linux_amd64.tar.gz" | tar xz -C /tmp
+          curl --silent --location "https://github.com/weaveworks/eksctl/releases/download/v0.207.0/eksctl_Linux_amd64.tar.gz" | tar xz -C /tmp
           sudo mv /tmp/eksctl /usr/local/bin
 
   - name: create-cluster

@@ -14,8 +14,8 @@ includes:
   - test-resources: ../src/test/tasks.yaml
   - base-layer: ../packages/base/tasks.yaml
   - idam-layer: ../packages/identity-authorization/tasks.yaml
-  - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/refs/tags/v1.11.2/tasks/setup.yaml
-  - compliance: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.11.2/tasks/compliance.yaml
+  - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/refs/tags/v1.12.0/tasks/setup.yaml
+  - compliance: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.12.0/tasks/compliance.yaml
 
 tasks:
   - name: base

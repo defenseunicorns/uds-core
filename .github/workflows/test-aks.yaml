@@ -58,7 +58,7 @@ jobs:
         uses: ./.github/actions/renovate-readiness
 
       - name: Azure login
-        uses: azure/login@a65d910e8af852a8061c627c456678983e180302 # v2
+        uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2
         with:
           client-id: ${{ secrets.AZURE_GOV_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_GOV_TENANT_ID }}
