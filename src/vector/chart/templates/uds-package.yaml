@@ -15,6 +15,7 @@ spec:
         remoteNamespace: monitoring
         remoteSelector:
           app.kubernetes.io/name: prometheus
+        remoteServiceAccount: kube-prometheus-stack-prometheus
         port: 9090
         description: "Prometheus Metrics"
 
