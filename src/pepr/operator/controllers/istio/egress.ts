@@ -2,7 +2,7 @@
  * Copyright 2024 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
-import { K8s } from "pepr";
+import { K8s, kind } from "pepr";
 import {
   Allow,
   IstioGateway,
@@ -52,32 +52,49 @@ export async function reconcileSharedEgressResources(pkg: UDSPackage, action: Pa
     removeEgressResources(pkgId);
   }
 
-  // Apply the egress resources
-  generation++;
-  await applyEgressResources(inMemoryPackageMap, generation);
+  // Check if there is an istioEgressGatewayNamespace, if not don't proceed
+  log.debug("HEREHEREHERE");
+  await K8s(kind.Namespace)
+    .Get(istioEgressGatewayNamespace)
+    .then(async () => {
+      // Apply the egress resources
+      generation++;
+      await applyEgressResources(inMemoryPackageMap, generation);
 
-  // Purge any orphaned resources
-  await purgeOrphans(
-    generation.toString(),
-    istioEgressGatewayNamespace,
-    sharedEgressPkgId,
-    IstioGateway,
-    log,
-  );
-  await purgeOrphans(
-    generation.toString(),
-    istioEgressGatewayNamespace,
-    sharedEgressPkgId,
-    IstioVirtualService,
-    log,
-  );
-  await purgeOrphans(
-    generation.toString(),
-    istioEgressGatewayNamespace,
-    sharedEgressPkgId,
-    IstioServiceEntry,
-    log,
-  );
+      // Purge any orphaned shared resources
+      await purgeOrphans(
+        generation.toString(),
+        istioEgressGatewayNamespace,
+        sharedEgressPkgId,
+        IstioGateway,
+        log,
+      );
+      await purgeOrphans(
+        generation.toString(),
+        istioEgressGatewayNamespace,
+        sharedEgressPkgId,
+        IstioVirtualService,
+        log,
+      );
+      await purgeOrphans(
+        generation.toString(),
+        istioEgressGatewayNamespace,
+        sharedEgressPkgId,
+        IstioServiceEntry,
+        log,
+      );
+    })
+    .catch(e => {
+      if (e.status == 404) {
+        log.debug(
+          `Namespace ${istioEgressGatewayNamespace} not found. Skipping shared egress resource reconciliation.`,
+        );
+        return; // Exit the routine
+      } else {
+        log.error(`Error getting namespace ${istioEgressGatewayNamespace}: ${e}`);
+        throw e;
+      }
+    });
 }
 
 export function createHostResourceMap(pkg: UDSPackage) {
