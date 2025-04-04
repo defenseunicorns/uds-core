@@ -16,11 +16,19 @@ export CLUSTER_NAME="${cluster_name}"
 pre_userdata() {
 info "Beginning user defined pre userdata"
 info "Create HelmChart Resources."
+mkdir -p /var/lib/rancher/rke2/server/manifests
 cat > helmchart-template.yaml << EOM
 ${helm_chart_template}
 EOM
-mkdir -p /var/lib/rancher/rke2/server/manifests
 envsubst < helmchart-template.yaml > /var/lib/rancher/rke2/server/manifests/00-helmcharts.yaml
+HELM_LATEST=$(curl -L --silent --show-error --fail "https://get.helm.sh/helm-latest-version" 2>&1 || true)
+curl https://get.helm.sh/helm-$HELM_LATEST-linux-amd64.tar.gz --output helm.tar.gz
+tar -xvf ./helm.tar.gz && rm -rf ./helm.tar.gz
+chmod +x ./linux-amd64/helm
+./linux-amd64/helm repo add longhorn https://charts.longhorn.io
+./linux-amd64/helm repo update
+./linux-amd64/helm template longhorn longhorn/longhorn --set defaultSettings.deletingConfirmationFlag=true --set longhornUI.replicas=0 --set namespaceOverride=kube-system > /var/lib/rancher/rke2/server/manifests/01-longhorn.yaml
+rm -rf ./linux-amd64/helm 
 
 info "Installing awscli"
 yum install -y unzip jq || apt-get -y install unzip jq

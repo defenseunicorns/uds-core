@@ -37,26 +37,26 @@ spec:
   valuesContent: |-
     clusterName: ${CLUSTER_NAME}
 ---
-#longhorn helm values: https://github.com/longhorn/longhorn/tree/master/chart
-apiVersion: helm.cattle.io/v1
-kind: HelmChart
-metadata:
-  name: longhorn
-  namespace: kube-system
-spec:
-  chart: longhorn
-  repo: https://charts.longhorn.io
-  # renovate: datasource=helm depName=longhorn versioning=helm registryUrl=https://charts.longhorn.io
-  version: 1.8.1
-  targetNamespace: kube-system
-  # change from default value of reinstall
-  failurePolicy: abort
-  timeout: "10m"
-  valuesContent: |-
-    defaultSettings:
-      deletingConfirmationFlag: true
-    longhornUI:
-      replicas: 0
+# #longhorn helm values: https://github.com/longhorn/longhorn/tree/master/chart
+# apiVersion: helm.cattle.io/v1
+# kind: HelmChart
+# metadata:
+#   name: longhorn
+#   namespace: kube-system
+# spec:
+#   chart: longhorn
+#   repo: https://charts.longhorn.io
+#   # ignoredRenovate: datasource=helm depName=longhorn versioning=helm registryUrl=https://charts.longhorn.io
+#   version: 1.8.1
+#   targetNamespace: kube-system
+#   # change from default value of reinstall
+#   failurePolicy: abort
+#   timeout: "60m"
+#   valuesContent: |-
+#     defaultSettings:
+#       deletingConfirmationFlag: true
+#     longhornUI:
+#       replicas: 0
 ---
 apiVersion: v1
 kind: ConfigMap
