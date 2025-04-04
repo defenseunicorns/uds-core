@@ -28,7 +28,7 @@ const log = setupLogger(Component.OPERATOR_RECONCILERS);
 
 /**
  * The reconciler is called from the queue and is responsible for reconciling the state of the package
- * with the cluster. This includes creating the namespace, network policies and virtual services.
+ * with the cluster. This includes creating the network policies, virtual services, sso, and monitoring config.
  *
  * @param pkg the package to reconcile
  */
