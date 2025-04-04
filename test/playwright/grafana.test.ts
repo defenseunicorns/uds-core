@@ -46,7 +46,7 @@ test("validate namespace dashboard", async ({ page }) => {
     await page.goto(`/dashboards`);
     await page.click('text="Kubernetes / Compute Resources / Namespace (Pods)"');
     await page.getByTestId('data-testid Dashboard template variables Variable Value DropDown value link text authservice').click();
-    await page.getByRole('option', { name: 'grafana' }).click();
+    await page.getByRole('option', { name: 'authservice-test-app' }).click();
   });
 });
 
