@@ -1,3 +1,8 @@
+/**
+ * Copyright 2025 Defense Unicorns
+ * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+ */
+
 //should add packages
 //should remove packages
 //should add packages from different namespaces

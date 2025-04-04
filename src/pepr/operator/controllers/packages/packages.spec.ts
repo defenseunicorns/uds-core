@@ -1,3 +1,8 @@
+/**
+ * Copyright 2025 Defense Unicorns
+ * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+ */
+
 import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 import { PeprValidateRequest } from "pepr";
 import { UDSPackage } from "../../crd";
