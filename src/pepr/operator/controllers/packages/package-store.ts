@@ -33,6 +33,9 @@ function init(): void {
  *
  * This function retrieves the namespace from the package metadata and adds the package
  * to the packageNamespaceMap. If the namespace is not present, it defaults to an empty string.
+ * For backwards compatability, the function checks if the namespace has an existing package. If it does,
+ * the packge to be added is appended to the existing list of Packages. If not, a new key is created 
+ * in packageNamespaceMap for that namespace, containing a list of one element.
  */
 function add(pkg: UDSPackage, logger: boolean = true): void {
   const namespace = pkg.metadata?.namespace || "";
@@ -58,11 +61,16 @@ function add(pkg: UDSPackage, logger: boolean = true): void {
  *
  * This function retrieves the namespace from the package metadata and deletes it from the
  * packageNamespaceMap. If the namespace is not present, it defaults to an empty string.
+ * For backwards compatability, we check if the namespace has more than one package.
+ * If that is the case, we update the value for that namespace in packageNamespaceMap.
+ * Otherwise, if there is only one package in the namespace, we delete the key.
+ * 
  */
 function remove(pkg: UDSPackage, logger: boolean = true): void {
   const namespace = pkg.metadata?.namespace || "";
   const pkgToRemove = pkg.metadata?.name;
   const items = packageNamespaceMap.get(namespace) || [];
+
   if (items.length > 1) {
     items.forEach((value, index) => {
       if (value.metadata?.name === pkgToRemove) {
@@ -75,7 +83,7 @@ function remove(pkg: UDSPackage, logger: boolean = true): void {
   }
   if (logger) {
     log.debug(`Removed package: ${namespace}/${pkg.metadata?.name} from package map`);
-  }
+  } 
 }
 
 /**
@@ -103,11 +111,11 @@ function hasKey(namespace: string): boolean {
  * @returns The package name associated with the namespace, or null if not found.
  *
  * @example
- * // Assuming packageNamespaceMap contains { 'my-namespace': { metadata: { name: 'my-package' } } }
+ * Assuming packageNamespaceMap contains { 'my-namespace': [{ metadata: { name: 'my-package' } }], [{ metadata: { name: 'other-package' } }]}
  * const packageName = getPkgName('my-namespace'); // Returns 'my-package'
  *
  * @example
- * // Assuming packageNamespaceMap does not contain 'unknown-namespace'
+ * Assuming packageNamespaceMap does not contain 'unknown-namespace'
  * const packageName = getPkgName('unknown-namespace'); // Returns null
  */
 function getPkgName(namespace: string): string | null {
