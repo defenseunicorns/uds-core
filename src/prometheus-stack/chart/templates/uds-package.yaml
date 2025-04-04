@@ -66,6 +66,7 @@ spec:
         remoteNamespace: grafana
         remoteSelector:
           app.kubernetes.io/name: grafana
+        remoteServiceAccount: grafana
         selector:
           app.kubernetes.io/name: prometheus
         port: 9090
@@ -75,6 +76,7 @@ spec:
         remoteNamespace: grafana
         remoteSelector:
           app.kubernetes.io/name: grafana
+        remoteServiceAccount: grafana
         selector:
           app.kubernetes.io/name: alertmanager
         description: Grafana Alerts Queries
