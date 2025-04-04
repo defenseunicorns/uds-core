@@ -33,6 +33,7 @@ spec:
         remoteNamespace: monitoring
         remoteSelector:
           app: prometheus
+        remoteServiceAccount: kube-prometheus-stack-prometheus
         selector:
           app.kubernetes.io/name: velero
         port: 8085
