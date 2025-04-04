@@ -34,10 +34,10 @@ components:
     import:
       path: ../base
 
-  - name: istio-ambient
+  - name: gateway-api-crds
     required: true
     import:
-      path: ../base
+      path: ../../src/istio/common
 
   - name: istio-admin-gateway
     required: true

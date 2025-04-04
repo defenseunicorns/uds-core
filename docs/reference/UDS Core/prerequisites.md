@@ -68,7 +68,7 @@ In addition, to run Istio ingress gateways (part of Core) you will need to ensur
 
 ##### Ambient Mode
 
-Istio can be deployed in [Ambient Mode](https://istio.io/latest/docs/ambient/overview/) by deploying the optional `istio-ambient` component. This mode is still in alpha release and is not recommended for production use or for clusters requiring `FIPS` compliance. The `istio-ambient` component installs the Istio CNI plugin which requires specifying the `CNI_CONF_DIR` and `CNI_BIN_DIR` variables. These values can change based on the environment Istio is being deployed into. By default the package will attempt to auto-detect these values and will use the following values if not specified:
+[Ambient Mode](https://istio.io/latest/docs/ambient/overview/) in Istio is now integrated directly into the `istio-controlplane` component and enabled by default. This mode uses the Istio CNI plugin, which requires the proper configuration of the `CNI_CONF_DIR` and `CNI_BIN_DIR` variables. These values can change based on your deployment environment. By default, the package will attempt to auto-detect these values as follows:
 
 ```yaml
 # K3d cluster
@@ -84,7 +84,7 @@ cniConfDir: /etc/cni/net.d
 cniBinDir: /opt/cni/bin/
 ```
 
-These values can be overwritten when installing core by setting the `cniConfDir` and `cniBinDir` values in the `istio-ambient` component.
+These values can be overwritten when installing core by setting the `cniConfDir` and `cniBinDir` values in the `istio-controlplane` component.
 
 To set these values add the following to the `uds-config.yaml` file:
 
