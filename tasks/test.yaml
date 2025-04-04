@@ -95,6 +95,8 @@ tasks:
         cmd: |
           npm ci
           npx jest test/jest/
+      - description: "Run Egress Tests"
+        task: test-resources:shared-egress-resources
       - description: remove test resources
         task: test-resources:remove
 

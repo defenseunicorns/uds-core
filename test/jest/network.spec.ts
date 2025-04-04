@@ -126,8 +126,8 @@ beforeAll(async () => {
     getPodName("test-admin-app", "app=httpbin"),
     getPodName("curl-ns-remote-ns-1", "app=curl-pkg-remote-ns-egress"),
     getPodName("curl-ns-kube-api", "app=curl-pkg-kube-api"),
-    getPodName("egress-gw-1", "app=curl-pkg-egress-gw"),
-    getPodName("egress-gw-2", "app=curl-pkg-egress-gw"),
+    getPodName("egress-gw-1", "app=curl"),
+    getPodName("egress-gw-2", "app=curl"),
   ]);
 });
 
@@ -304,7 +304,7 @@ describe("Network Policy Validation", () => {
 
     // Validate successful http request when using Egress Gateway for curl-pkg-egress-gw-2
     const success_response_http = await execInPod("egress-gw-2", curlPodNameEgress2, "curl", egress_gateway_http_curl);
-    expect(not_success_response_http.stdout).toBe("200");
+    expect(success_response_http.stdout).toBe("200");
 
     // Validate unsuccessful request to Google when using Egress Gateway for curl-pkg-egress-gw-2
     const not_success_google_response_2 = await execInPod("egress-gw-2", curlPodNameEgress2, "curl", GOOGLE_CURL);

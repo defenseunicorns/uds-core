@@ -32,14 +32,21 @@ overrides:
   istio-egress-gateway:
     gateway:
       ports:
-        - name: http
+        - name: status-port
+          port: 15021
+          protocol: TCP
+          targetPort: 15021
+        - name: http2
           port: 80
+          protocol: TCP
           targetPort: 80
         - name: https
           port: 443
+          protocol: TCP
           targetPort: 443
         - name: custom-port
           port: 9200
+          protocol: TCP
           targetPort: 9200
 ```
 
@@ -49,20 +56,32 @@ The UDS Core Package Custom Resource (CR) is used to configure the egress worklo
 
 > [!NOTE] Currently, only HTTP and TLS protocols are supported. The configuration will default to TLS if not specified.
 
+The following sample Package CR shows configuring egress to a specific host, "httpbin.org", on port 443. 
+
+```yaml
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: pkg-1
+  namespace: egress-gw-1
+spec:
+  network:
+    allow:
+      - description: "Example Curl"
+        direction: Egress
+        port: 443
+        remoteHost: httpbin.org
+        remoteProtocol: TLS
+        selector:
+          app: curl
+```
+
 When a Package CR specifies the `network.allow` field with, at minimum, the `remoteHost` and `port` or `ports` parameters, the UDS Core operator will create the necessary Istio resources to allow traffic to egress from the mesh. These include the following:
 * An Istio ServiceEntry, in the package namespace, which is used to define the external service that the workload can access.
 * An Istio Sidecar, in the package namespace, which is used to enforce that only registered traffic can egress from the workload. This is only applied to the workload selected in the `network.allow`.
 * A shared Istio VirtualService, in the istio egress gateway namespace, which is used to route the traffic to the egress gateway.
 * A shared Istio Gateway, in the istio egress gateway namespace, which is used to expose the egress gateway to the outside world.
-* A shared Istio Service Entry, in the istio egress gateway namespace, to registry the hosts and the ports for the egress gateway.
-
-The following provide some examples for the configuration of egress using the Package Custom Resource. 
-
-### ...
-
-```yaml
-
-```
+* A shared Istio Service Entry, in the istio egress gateway namespace, to register the hosts and the ports for the egress gateway.
 
 ## Limitations
 
