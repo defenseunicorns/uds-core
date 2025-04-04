@@ -31,7 +31,7 @@ components:
       - "docker.io/istio/proxyv2:1.25.1-distroless"
 
   - name: istio-ambient
-    required: false
+    required: true
     only:
       flavor: upstream
     import:
@@ -62,7 +62,7 @@ components:
       - registry1.dso.mil/ironbank/tetrate/istio/pilot:1.25.1-tetratefipslatest1
 
   - name: istio-ambient
-    required: false
+    required: true
     only:
       flavor: registry1
     import:
@@ -93,7 +93,7 @@ components:
       - cgr.dev/du-uds-defenseunicorns/istio-proxy-fips:1.25.1
 
   - name: istio-ambient
-    required: false
+    required: true
     only:
       flavor: unicorn
     import:

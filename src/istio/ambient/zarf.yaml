@@ -16,7 +16,7 @@ variables:
 
 components:
   - name: istio-ambient
-    required: false
+    required: true
     charts:
       - name: uds-istio-ambient-config
         namespace: istio-system
