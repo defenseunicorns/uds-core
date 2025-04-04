@@ -155,6 +155,10 @@
             "$ref": "#/definitions/Expose"
           },
           "description": "Expose a service on an Istio Gateway"
+        },
+        "serviceMesh": {
+          "$ref": "#/definitions/ServiceMesh",
+          "description": "Service Mesh configuration for the package"
         }
       },
       "required": [],
@@ -787,6 +791,19 @@
       "required": [],
       "title": "FluffyURI"
     },
+    "ServiceMesh": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "$ref": "#/definitions/Mode",
+          "description": "Set the service mesh mode for this package (namespace), defaults to sidecar"
+        }
+      },
+      "required": [],
+      "title": "ServiceMesh",
+      "description": "Service Mesh configuration for the package"
+    },
     "Sso": {
       "type": "object",
       "additionalProperties": false,
@@ -1111,6 +1128,15 @@
       ],
       "title": "Gateway",
       "description": "The name of the gateway to expose the service on (default: tenant)"
+    },
+    "Mode": {
+      "type": "string",
+      "enum": [
+        "sidecar",
+        "ambient"
+      ],
+      "title": "Mode",
+      "description": "Set the service mesh mode for this package (namespace), defaults to sidecar"
     },
     "ClientAuthenticatorType": {
       "type": "string",

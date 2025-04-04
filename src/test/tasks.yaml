@@ -15,6 +15,10 @@ tasks:
         cmd: |
           npx jest test/jest/network.spec.ts
         dir: test/jest
+      - description: "Run Test Resources Tests"
+        cmd: |
+          npx jest test/jest/test-resources.spec.ts
+        dir: test/jest
       - description: "Remove Test Apps resources"
         task: remove
 
@@ -220,5 +224,5 @@ tasks:
 
   - name: remove
     actions:
-      - description:
+      - description: Remove the test apps zarf package
         cmd: "uds zarf package remove build/zarf-package-uds-core-test-apps-*.zst --confirm --no-progress"

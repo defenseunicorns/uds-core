@@ -29,13 +29,13 @@ import { validator } from "./crd/validators/package-validator";
 import { UDSConfig } from "../config";
 import { Component, setupLogger } from "../logger";
 import { updateUDSConfig } from "./controllers/config/config";
-import { exemptValidator } from "./crd/validators/exempt-validator";
-import { packageFinalizer, packageReconciler } from "./reconcilers/package-reconciler";
 import {
   KEYCLOAK_CLIENTS_SECRET_NAME,
   KEYCLOAK_CLIENTS_SECRET_NAMESPACE,
   updateKeycloakClientsSecret,
 } from "./controllers/keycloak/client-secret-sync";
+import { exemptValidator } from "./crd/validators/exempt-validator";
+import { packageFinalizer, packageReconciler } from "./reconcilers/package-reconciler";
 
 // Export the operator capability for registration in the root pepr.ts
 export { operator } from "./common";
@@ -101,6 +101,24 @@ When(UDSPackage)
   .Watch(() => {
     log.info("Identity and Authorization layer removed, operator will NOT handle SSO.");
     UDSConfig.isIdentityDeployed = false;
+  });
+
+// Watch for optional Ambient mode and update config (temporary while ambient components are optional)
+When(a.DaemonSet)
+  .IsCreatedOrUpdated()
+  .InNamespace("istio-system")
+  .WithName("ztunnel")
+  .Watch(() => {
+    log.info("Istio Ambient deployed, operator configured to handle ambient packages.");
+    UDSConfig.isAmbientDeployed = true;
+  });
+When(a.DaemonSet)
+  .IsDeleted()
+  .InNamespace("istio-system")
+  .WithName("ztunnel")
+  .Watch(() => {
+    log.info("Istio Ambient removed, operator will run all packages in sidecar mode.");
+    UDSConfig.isAmbientDeployed = false;
   });
 
 // Watch for changes to the Nodes and update the Node CIDR list

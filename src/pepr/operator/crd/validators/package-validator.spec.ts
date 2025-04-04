@@ -17,6 +17,7 @@ import {
   UDSPackage,
 } from "..";
 import { PackageStore } from "../../controllers/packages/package-store";
+import { Mode } from "../generated/package-v1alpha1";
 import { validator } from "./package-validator";
 
 PackageStore.init();
@@ -27,6 +28,7 @@ const makeMockReq = (
   allowList: Partial<Allow>[],
   ssoClients: Partial<Sso>[],
   monitorList: Partial<Monitor>[],
+  ambient: boolean = false,
 ) => {
   const defaultPkg: UDSPackage = {
     metadata: {
@@ -37,6 +39,9 @@ const makeMockReq = (
       network: {
         expose: [],
         allow: [],
+        serviceMesh: {
+          mode: ambient ? Mode.Ambient : Mode.Sidecar,
+        },
       },
       sso: [],
       monitor: [],
@@ -83,7 +88,7 @@ const makeMockReq = (
   } as unknown as PeprValidateRequest<UDSPackage>;
 };
 
-describe("Test validation of Exemption CRs", () => {
+describe("Test validation of Package CRs", () => {
   afterEach(() => {
     jest.resetAllMocks();
   });
@@ -565,6 +570,26 @@ describe("Test validation of Exemption CRs", () => {
     );
     await validator(mockReq);
     expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+  });
+
+  it("denies authservice clients in ambient mode", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [],
+      [
+        {
+          clientId: "http://example.com",
+          enableAuthserviceSelector: {
+            app: "foobar",
+          },
+        },
+      ],
+      [],
+      true,
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
   });
 });
 
