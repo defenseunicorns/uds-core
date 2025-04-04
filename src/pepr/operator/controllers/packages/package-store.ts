@@ -34,7 +34,7 @@ function init(): void {
  * This function retrieves the namespace from the package metadata and adds the package
  * to the packageNamespaceMap. If the namespace is not present, it defaults to an empty string.
  * For backwards compatability, the function checks if the namespace has an existing package. If it does,
- * the packge to be added is appended to the existing list of Packages. If not, a new key is created 
+ * the packge to be added is appended to the existing list of Packages. If not, a new key is created
  * in packageNamespaceMap for that namespace, containing a list of one element.
  */
 function add(pkg: UDSPackage, logger: boolean = true): void {
@@ -64,7 +64,7 @@ function add(pkg: UDSPackage, logger: boolean = true): void {
  * For backwards compatability, we check if the namespace has more than one package.
  * If that is the case, we update the value for that namespace in packageNamespaceMap.
  * Otherwise, if there is only one package in the namespace, we delete the key.
- * 
+ *
  */
 function remove(pkg: UDSPackage, logger: boolean = true): void {
   const namespace = pkg.metadata?.namespace || "";
@@ -83,7 +83,7 @@ function remove(pkg: UDSPackage, logger: boolean = true): void {
   }
   if (logger) {
     log.debug(`Removed package: ${namespace}/${pkg.metadata?.name} from package map`);
-  } 
+  }
 }
 
 /**
