@@ -10,6 +10,11 @@ metadata:
   version: "0.40.0"
   # x-release-please-end
   x-uds-dependencies: []
+  annotations:
+    dev.uds.title: UDS Core (Base)
+    dev.uds.tagline: UDS Core mTLS, zero trust, and Pepr
+    dev.uds.category: Base
+    dev.uds.keywords: uds,pepr,istio
 
 components:
   - name: uds-operator-config

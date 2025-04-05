@@ -9,6 +9,11 @@ metadata:
   # x-release-please-start-version
   version: "0.40.0"
   # x-release-please-end
+  annotations:
+    dev.uds.title: UDS Core
+    dev.uds.tagline: Standard components for UDS Core
+    dev.uds.category: Core
+    dev.uds.keywords: uds,core
 
 components:
   - name: uds-operator-config
