@@ -56,6 +56,7 @@ components:
               ./zarf tools kubectl label $(./zarf tools kubectl get crds -l chart=istio -o name && ./zarf tools kubectl get crds -l app.kubernetes.io/part-of=istio -o name) "app.kubernetes.io/managed-by=Helm" --overwrite || true
               ./zarf tools kubectl annotate $(./zarf tools kubectl get crds -l chart=istio -o name && ./zarf tools kubectl get crds -l app.kubernetes.io/part-of=istio -o name) "meta.helm.sh/release-name=base" --overwrite || true
               ./zarf tools kubectl annotate $(./zarf tools kubectl get crds -l chart=istio -o name && ./zarf tools kubectl get crds -l app.kubernetes.io/part-of=istio -o name) "meta.helm.sh/release-namespace=istio-system" --overwrite || true
+              ./zarf tools kubectl annotate exemption istio -n uds-policy-exemptions "meta.helm.sh/release-name=uds-global-istio-config" --overwrite || true
           - description: "Ensure CNI_CONF_DIR is set"
             cmd: |
               if [ \"${ZARF_VAR_CNI_CONF_DIR}\" = \"\" ]; then
