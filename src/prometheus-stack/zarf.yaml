@@ -30,7 +30,7 @@ components:
         valuesFiles:
           - "values/upstream-values.yaml"
     images:
-      - "quay.io/prometheus/node-exporter:v1.9.0"
+      - "quay.io/prometheus/node-exporter:v1.9.1"
       - "quay.io/prometheus-operator/prometheus-operator:v0.81.0"
       - "registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.15.0"
       - "quay.io/prometheus/alertmanager:v0.28.1"
@@ -50,7 +50,7 @@ components:
         valuesFiles:
           - "values/registry1-values.yaml"
     images:
-      - "registry1.dso.mil/ironbank/opensource/prometheus/node-exporter:v1.9.0"
+      - "registry1.dso.mil/ironbank/opensource/prometheus/node-exporter:v1.9.1"
       - "registry1.dso.mil/ironbank/opensource/prometheus-operator/prometheus-operator:v0.81.0"
       - "registry1.dso.mil/ironbank/opensource/kubernetes/kube-state-metrics:v2.15.0"
       - "registry1.dso.mil/ironbank/opensource/prometheus/alertmanager:v0.28.1"
@@ -70,7 +70,7 @@ components:
         valuesFiles:
           - "values/unicorn-values.yaml"
     images:
-      - "cgr.dev/du-uds-defenseunicorns/prometheus-node-exporter-fips:1.9.0"
+      - "cgr.dev/du-uds-defenseunicorns/prometheus-node-exporter-fips:1.9.1"
       - "cgr.dev/du-uds-defenseunicorns/prometheus-operator-fips:0.81.0"
       - "cgr.dev/du-uds-defenseunicorns/kube-state-metrics-fips:2.15.0"
       - "cgr.dev/du-uds-defenseunicorns/prometheus-alertmanager-fips:0.28.1"

@@ -8,17 +8,19 @@ import { K8s, kind } from "pepr";
 import { UDSConfig } from "../../../config";
 import { Component, setupLogger } from "../../../logger";
 import { Allow, Direction, Gateway, RemoteGenerated, UDSPackage } from "../../crd";
+import { IstioState } from "../istio/namespace";
 import { getOwnerRef, purgeOrphans, sanitizeResourceName } from "../utils";
 import { allowEgressDNS } from "./defaults/allow-egress-dns";
 import { allowEgressIstiod } from "./defaults/allow-egress-istiod";
 import { allowIngressSidecarMonitoring } from "./defaults/allow-ingress-sidecar-monitoring";
 import { defaultDenyAll } from "./defaults/default-deny-all";
 import { generate } from "./generate";
+import { allowAmbientHealthprobes } from "./generators/ambientHealthprobes";
 
 // configure subproject logger
 const log = setupLogger(Component.OPERATOR_NETWORK);
 
-export async function networkPolicies(pkg: UDSPackage, namespace: string) {
+export async function networkPolicies(pkg: UDSPackage, namespace: string, istioMode: string) {
   const customPolicies = pkg.spec?.network?.allow ?? [];
   const pkgName = pkg.metadata!.name!;
 
@@ -34,11 +36,18 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
 
     // Allow DNS lookups
     allowEgressDNS(namespace),
-
-    // Istio rules
-    allowEgressIstiod(namespace),
-    allowIngressSidecarMonitoring(namespace),
   ];
+
+  // Istio rules for sidecars
+  if (istioMode === IstioState.Sidecar) {
+    policies.push(allowEgressIstiod(namespace));
+    policies.push(allowIngressSidecarMonitoring(namespace));
+  }
+
+  // Istio rules for ambient mode
+  if (istioMode === IstioState.Ambient) {
+    policies.push(allowAmbientHealthprobes(namespace));
+  }
 
   // Process custom policies
   for (const policy of customPolicies) {
@@ -140,6 +149,31 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string) {
       policy.metadata.name = `deny-${pkgName}-${policy.metadata.name}`;
     } else {
       policy.metadata.name = `allow-${pkgName}-${policy.metadata.name}`;
+    }
+
+    // Loop through all ports in ingress/egress policies and add port 15008 for ztunnel
+    if (policy.spec?.ingress) {
+      for (const ingress of policy.spec.ingress) {
+        // Only add the port if there is a port restriction
+        if (ingress.ports && ingress.ports.some(port => port.protocol !== "UDP")) {
+          ingress.ports.push({ port: 15008 });
+        }
+      }
+    } else if (policy.spec?.egress) {
+      for (const egress of policy.spec.egress) {
+        // Don't add port 15008 for egress destinations that we know are not in-mesh or not in-cluster
+        if (
+          policy.metadata?.labels?.["uds/generated"] === RemoteGenerated.KubeNodes ||
+          policy.metadata?.labels?.["uds/generated"] === RemoteGenerated.KubeAPI ||
+          policy.metadata?.labels?.["uds/generated"] === RemoteGenerated.CloudMetadata
+        ) {
+          continue;
+        }
+        // Only add the port if there is a port restriction
+        if (egress.ports && egress.ports.some(port => port.protocol !== "UDP")) {
+          egress.ports.push({ port: 15008 });
+        }
+      }
     }
 
     // Ensure the name is a valid resource name
