@@ -58,12 +58,14 @@ describe("Package Store", () => {
   });
 
   it("Should update an existing package", async () => {
-    const mockReq = makeMockReq({ metadata: { namespace: "test", name: "other-package", labels: { test: "value"}}});
+    const mockReq = makeMockReq({
+      metadata: { namespace: "test", name: "other-package", labels: { test: "value" } },
+    });
     const ns = mockReq.Raw.metadata?.namespace || "";
     const pkgName = mockReq.Raw.metadata?.name || "";
-    PackageStore.add(mockReq.Raw)
+    PackageStore.add(mockReq.Raw);
     const updatedPackage = PackageStore.getPkgName(ns);
-    expect(updatedPackage).toEqual(pkgName)
+    expect(updatedPackage).toEqual(pkgName);
   });
 
   it("Should remove a package", async () => {
