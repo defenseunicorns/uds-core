@@ -12,6 +12,7 @@ import {
   Rule,
   Source,
 } from "../../crd/generated/istio/authorizationpolicy-v1beta1";
+import { IstioState } from "../istio/namespace";
 import { getOwnerRef, purgeOrphans, sanitizeResourceName } from "../utils";
 import { META_IP } from "./generators/cloudMetadata";
 import { kubeAPI } from "./generators/kubeAPI";
@@ -206,6 +207,7 @@ function buildAuthPolicy(
 export async function generateAuthorizationPolicies(
   pkg: UDSPackage,
   pkgNamespace: string,
+  istioMode: string,
 ): Promise<AuthorizationPolicy[]> {
   const pkgName = pkg.metadata?.name ?? "unknown";
   const generation = pkg.metadata?.generation?.toString() ?? "0";
@@ -259,6 +261,25 @@ export async function generateAuthorizationPolicies(
       policies.push(authPolicy);
       log.trace(`Generated monitor authpol: ${authPolicy.metadata?.name}`);
     }
+  }
+
+  // In Sidecar mode, Prometheus lacks mTLS credentials, causing metric scrapes on port 15020 to fail.
+  // Add an AuthorizationPolicy to allow all traffic on port 15020 for the package's namespace.
+  if (istioMode === IstioState.Sidecar) {
+    const extraPolicyName = sanitizeResourceName(
+      `protect-${pkgName}-ingress-15020-metric-scraping`,
+    );
+    const extraPolicy = buildAuthPolicy(
+      extraPolicyName,
+      pkg,
+      {}, // empty selector to apply to all workloads in the namespace
+      {}, // empty source; no "from" clause will be added
+      ["15020"],
+    );
+    policies.push(extraPolicy);
+    log.trace(
+      `Generated extra ambient allow authpol for port 15020: ${extraPolicy.metadata?.name}`,
+    );
   }
 
   // Apply policies concurrently.

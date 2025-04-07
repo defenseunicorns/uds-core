@@ -86,7 +86,7 @@ export async function packageReconciler(pkg: UDSPackage) {
     // Pass the effective Istio mode to the networkPolicies function
     const netPol = await networkPolicies(pkg, namespace!, effectiveMode);
 
-    const authPol = await generateAuthorizationPolicies(pkg, namespace!);
+    const authPol = await generateAuthorizationPolicies(pkg, namespace!, effectiveMode);
 
     let endpoints: string[] = [];
     // Update the namespace to enable the expected Istio mode (sidecar or ambient)
