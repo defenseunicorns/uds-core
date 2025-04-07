@@ -50,6 +50,22 @@ describe("Package Store", () => {
     expect(pkgsExist).toEqual(true);
   });
 
+  it("Should return the first package in the namespace", async () => {
+    const mockReq = makeMockReq({});
+    const ns = mockReq.Raw.metadata?.namespace || "";
+    const pkgName = mockReq.Raw.metadata?.name || "";
+    expect(PackageStore.getPkgName(ns)).toEqual(pkgName);
+  });
+
+  it("Should update an existing package", async () => {
+    const mockReq = makeMockReq({ metadata: { namespace: "test", name: "other-package", labels: { test: "value"}}});
+    const ns = mockReq.Raw.metadata?.namespace || "";
+    const pkgName = mockReq.Raw.metadata?.name || "";
+    PackageStore.add(mockReq.Raw)
+    const updatedPackage = PackageStore.getPkgName(ns);
+    expect(updatedPackage).toEqual(pkgName)
+  });
+
   it("Should remove a package", async () => {
     const mockReq = makeMockReq({});
     const ns = mockReq.Raw.metadata?.namespace || "";
