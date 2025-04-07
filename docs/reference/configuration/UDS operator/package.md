@@ -5,7 +5,12 @@ title: UDS Package
 ![UDS Operator Package Flowchart](https://github.com/defenseunicorns/uds-core/blob/main/docs/.images/diagrams/uds-core-operator-uds-package.svg?raw=true)
 
 ## Package
+:::note
+Only one UDS Package Custom Resource can exist in a namespace. This pattern was chosen by design to better enable workload isolation and to reduce complexity.
+:::
+Namespaces are common boundary for isolating workloads in multi-tenant clusters. When defining a UDS Package resource, consider the implications for all workloads that exist in the target namespace. If the UDS Package that you are defining has configurations that conflict each other or would be simplified by using a separate UDS Package definition, consider using a separate Kubernetes namespace. Read more about namespaces and mulitenancy [here](https://kubernetes.io/docs/concepts/security/multi-tenancy/).
 
+The UDS Operator seamlessly enables the following enhancements and protections for your workloads:
 - **Enabling Istio Sidecar Injection:**
   - The operator facilitates the activation of Istio sidecar injection within namespaces where the CR is deployed.
 - **Support for Istio Ambient Mode:**
