@@ -10,7 +10,7 @@ import { generateVSName } from "../../controllers/istio/virtual-service";
 import { generateMonitorName } from "../../controllers/monitoring/common";
 import { generateName } from "../../controllers/network/generate";
 import { sanitizeResourceName } from "../../controllers/utils";
-import { Kind } from "../../crd/generated/package-v1alpha1";
+import { Kind, Mode } from "../../crd/generated/package-v1alpha1";
 import { migrate } from "../migrate";
 
 const invalidNamespaces = ["kube-system", "kube-public", "_unknown_", "pepr-system"];
@@ -184,6 +184,13 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
     if (client.enableAuthserviceSelector && client.clientId.includes(":")) {
       return req.Deny(
         `The client ID "${client.clientId}" is invalid as an Authservice client - Authservice does not support client IDs with the ":" character`,
+      );
+    }
+    // If this is an authservice client ensure the package is not in ambient mode,
+    // See https://github.com/defenseunicorns/uds-core/issues/1029 and https://github.com/defenseunicorns/uds-core/issues/1200
+    if (client.enableAuthserviceSelector && pkg.spec?.network?.serviceMesh?.mode === Mode.Ambient) {
+      return req.Deny(
+        `The package contains an invalid configuration combination - Authservice clients are not currently supported in ambient mode`,
       );
     }
   }

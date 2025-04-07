@@ -108,6 +108,12 @@ const allow = {
           type: "number",
         },
       },
+      remoteServiceAccount: {
+        description:
+          "The remote service account to restrict incoming traffic from within the remote namespace. \
+          Only valid for Ingress rules.",
+        type: "string",
+      },
       // Deprecated fields
       podLabels: {
         description: "Deprecated: use selector",
@@ -200,6 +206,19 @@ const expose = {
       },
     },
   } as V1JSONSchemaProps,
+} as V1JSONSchemaProps;
+
+const serviceMesh = {
+  description: "Service Mesh configuration for the package",
+  type: "object",
+  properties: {
+    mode: {
+      type: "string",
+      enum: ["sidecar", "ambient"],
+      default: "sidecar",
+      description: "Set the service mesh mode for this package (namespace), defaults to sidecar",
+    },
+  },
 } as V1JSONSchemaProps;
 
 const monitor = {
@@ -480,6 +499,12 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
       jsonPath: ".status.networkPolicyCount",
     },
     {
+      name: "Authorization Policies",
+      type: "integer",
+      description: "The number of authorization policies created by the package",
+      jsonPath: ".status.authorizationPolicyCount",
+    },
+    {
       name: "Age",
       type: "date",
       description: "The age of the package",
@@ -570,6 +595,9 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
             networkPolicyCount: {
               type: "integer",
             },
+            authorizationPolicyCount: {
+              type: "integer",
+            },
             retryAttempt: {
               type: "integer",
               nullable: true,
@@ -585,6 +613,7 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
               properties: {
                 expose,
                 allow,
+                serviceMesh,
               },
             },
             monitor,

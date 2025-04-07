@@ -16,7 +16,7 @@ const kindToPolicyMap = new Map<MatcherKind, Policy[]>([
   [
     MatcherKind.Pod,
     Object.values(Policy).filter(
-      p => p != Policy.DisallowNodePortServices && p != Policy.RestrictExternalNames,
+      p => p !== Policy.DisallowNodePortServices && p !== Policy.RestrictExternalNames,
     ),
   ],
   [MatcherKind.Service, [Policy.RestrictExternalNames, Policy.DisallowNodePortServices]],

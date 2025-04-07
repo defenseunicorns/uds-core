@@ -8,6 +8,7 @@ import { K8s, kind, R } from "pepr";
 
 import { Component, setupLogger } from "../../../../logger";
 import { RemoteGenerated } from "../../../crd";
+import { AuthorizationPolicy } from "../../../crd/generated/istio/authorizationpolicy-v1beta1";
 import { UDSConfig } from "../../config/config";
 import { retryWithDelay } from "../../utils";
 import { anywhere } from "./anywhere";
@@ -28,6 +29,7 @@ export async function initAllNodesTarget() {
       nodeSet.add(nodeCidr);
     }
     await updateKubeNodesNetworkPolicies();
+    await updateKubeNodesAuthorizationPolicies();
     return;
   }
 
@@ -40,6 +42,7 @@ export async function initAllNodesTarget() {
       if (ip) nodeSet.add(ip);
     }
     await updateKubeNodesNetworkPolicies();
+    await updateKubeNodesAuthorizationPolicies();
   } catch (err) {
     log.error("error fetching node IPs:", err);
   }
@@ -66,6 +69,7 @@ export async function updateKubeNodesFromCreateUpdate(node: kind.Node) {
   if (ip) nodeSet.add(ip);
 
   await updateKubeNodesNetworkPolicies();
+  await updateKubeNodesAuthorizationPolicies();
 }
 
 /**
@@ -77,6 +81,7 @@ export async function updateKubeNodesFromDelete(node: kind.Node) {
   if (ip) nodeSet.delete(ip);
 
   await updateKubeNodesNetworkPolicies();
+  await updateKubeNodesAuthorizationPolicies();
 }
 
 /**
@@ -141,6 +146,82 @@ export async function updateKubeNodesNetworkPolicies() {
             ", ensure that the KUBENODE_CIDRS override configured for the operator is correct.";
         }
         throw new Error(message);
+      }
+    }
+  }
+}
+
+/**
+ * Updates the AuthorizationPolicies for KubeNodes.
+ *
+ * This function rebuilds the current set of node peers from the in-memory node set,
+ * extracts their CIDR strings, and then queries for all AuthorizationPolicies that are labeled
+ * with "uds/generated" equal to RemoteGenerated.KubeNodes. For each matching policy, it checks
+ * whether the current IP blocks in the policy's "from" source match the newly computed IP blocks.
+ * If they differ, the policy is updated (with managedFields cleared to avoid server-side apply issues)
+ * and then re-applied.
+ *
+ * @returns {Promise<void>} A promise that resolves once the update process is complete.
+ */
+export async function updateKubeNodesAuthorizationPolicies(): Promise<void> {
+  // Build the current set of node peers from nodeSet.
+  const newPeers = buildNodePolicies([...nodeSet]);
+  // Extract CIDR strings from the new peers.
+  const newIpBlocks = newPeers
+    .map(peer => peer.ipBlock?.cidr)
+    .filter((cidr): cidr is string => typeof cidr === "string");
+
+  const authPols = await K8s(AuthorizationPolicy)
+    .WithLabel("uds/generated", RemoteGenerated.KubeNodes)
+    .Get();
+
+  if (authPols.items.length > 0) {
+    const summary = authPols.items
+      .map(pol => `name: ${pol.metadata?.name}, namespace: ${pol.metadata?.namespace}`)
+      .join(" | ");
+    log.trace(`Fetched ${authPols.items.length} AuthorizationPolicies: ${summary}`);
+  }
+
+  for (const pol of authPols.items) {
+    // Ensure the policy has rules.
+    if (!pol.spec || !pol.spec.rules || pol.spec.rules.length === 0) {
+      log.warn(
+        `AuthorizationPolicy ${pol.metadata?.namespace}/${pol.metadata?.name} is missing rules.`,
+      );
+      continue;
+    }
+
+    let updateRequired = false;
+    const rule = pol.spec.rules[0];
+
+    // Check if a "from" entry exists with ipBlocks.
+    if (rule.from && rule.from.length > 0 && rule.from[0].source?.ipBlocks) {
+      const oldIpBlocks = rule.from[0].source.ipBlocks;
+      if (!R.equals(oldIpBlocks, newIpBlocks)) {
+        rule.from[0].source.ipBlocks = newIpBlocks;
+        updateRequired = true;
+      }
+    } else {
+      // Otherwise, create a "from" entry.
+      rule.from = [{ source: { ipBlocks: newIpBlocks } }];
+      updateRequired = true;
+    }
+
+    if (updateRequired) {
+      // Clear managedFields to avoid server-side apply issues.
+      if (pol.metadata) {
+        pol.metadata.managedFields = undefined;
+      }
+      try {
+        await K8s(AuthorizationPolicy).Apply(pol, { force: true });
+        log.debug(
+          `Updated KubeNodes AuthorizationPolicy ${pol.metadata?.namespace}/${pol.metadata?.name}`,
+        );
+      } catch (err) {
+        log.error(
+          err,
+          `Failed to update AuthorizationPolicy ${pol.metadata?.namespace}/${pol.metadata?.name}`,
+        );
       }
     }
   }

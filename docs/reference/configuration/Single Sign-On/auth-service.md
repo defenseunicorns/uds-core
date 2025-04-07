@@ -30,3 +30,8 @@ The UDS Operator uses the first `redirectUris` to populate the `match.prefix` ho
 :::
 
 For a complete example, see [app-authservice-tenant.yaml](https://github.com/defenseunicorns/uds-core/blob/main/src/test/app-authservice-tenant.yaml)
+
+## Limitations:
+Authservice is intended for simple, basic protection scenarios where an absolute level of protection is acceptable. For more advanced authentication requirements, you should implement authentication directly in your application or via a more comprehensive solution.
+
+Authservice is currently not supported for ambient workloads (Package CR `network.serviceMesh.mode` of `ambient`). Package CRs with ambient configuration will be denied when applying if an Authservice SSO client is present. This restriction will be removed in the future once supported is added for this in the UDS Operator.

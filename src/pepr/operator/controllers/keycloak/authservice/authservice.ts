@@ -123,7 +123,7 @@ export async function updateConfig(event: AuthServiceEvent) {
 export function buildConfig(config: AuthserviceConfig, event: AuthServiceEvent) {
   let chains: Chain[];
 
-  if (event.action == Action.AddClient) {
+  if (event.action === Action.AddClient) {
     // Add the new chain to the existing authservice config
     chains = config.chains.filter(chain => chain.name !== event.name);
     chains = chains.concat(buildChain(event));
@@ -131,12 +131,12 @@ export function buildConfig(config: AuthserviceConfig, event: AuthServiceEvent) 
     // sorting here is not relevant, only the consistency.
     const sortByName = R.sortBy(R.prop("name"));
     chains = sortByName(chains);
-  } else if (event.action == Action.RemoveClient) {
+  } else if (event.action === Action.RemoveClient) {
     // Search in the existing chains for the chain to remove by name.
     // Filtering here should preserve the order, so there is no need to re-sort.
     chains = config.chains.filter(chain => chain.name !== event.name);
     // Handle global config updates
-  } else if (event.action == Action.UpdateGlobalConfig) {
+  } else if (event.action === Action.UpdateGlobalConfig) {
     if (!event.redisUri) {
       // Remove the redis session store config if a URI is not provided
       delete config.default_oidc_config.redis_session_store_config;
