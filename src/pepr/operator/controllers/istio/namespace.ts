@@ -4,11 +4,11 @@
  */
 
 import { K8s, kind, R } from "pepr";
-import { UDSConfig } from "../../../config";
 import { Component, setupLogger } from "../../../logger";
 import { UDSPackage } from "../../crd";
 import { Mode } from "../../crd/generated/package-v1alpha1";
 import { writeEvent } from "../../reconcilers";
+import { UDSConfig } from "../config/config";
 
 // configure subproject logger
 const log = setupLogger(Component.OPERATOR_ISTIO);
