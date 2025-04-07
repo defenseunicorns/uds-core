@@ -3,15 +3,11 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-//should add packages
-//should remove packages
-//should add packages from different namespaces
 import { describe, expect, it } from "@jest/globals";
 import { PeprValidateRequest } from "pepr";
 import { UDSPackage } from "../../crd";
 import { PackageStore } from "./package-store";
 PackageStore.init();
-//const packageNamespaceMap: PackageNamespaceMap = new Map();
 
 const makeMockReq = (pkg: Partial<UDSPackage>) => {
   const defaultPkg: UDSPackage = {
