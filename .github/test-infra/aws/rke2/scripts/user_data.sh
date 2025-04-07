@@ -27,7 +27,7 @@ tar -xvf ./helm.tar.gz && rm -rf ./helm.tar.gz
 chmod +x ./linux-amd64/helm
 ./linux-amd64/helm repo add longhorn https://charts.longhorn.io
 ./linux-amd64/helm repo update
-./linux-amd64/helm template longhorn longhorn/longhorn --set defaultSettings.deletingConfirmationFlag=true --set longhornUI.replicas=0 --set namespaceOverride=kube-system > /var/lib/rancher/rke2/server/manifests/01-longhorn.yaml
+./linux-amd64/helm template longhorn longhorn/longhorn --set defaultSettings.deletingConfirmationFlag=true --set longhornUI.replicas=0 --set namespaceOverride=kube-system --no-hooks > /var/lib/rancher/rke2/server/manifests/01-longhorn.yaml
 rm -rf ./linux-amd64/helm 
 
 info "Installing awscli"
