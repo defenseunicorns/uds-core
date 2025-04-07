@@ -21,21 +21,16 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
 
   const pkgName = pkg.metadata?.name ?? "_unknown_";
   const ns = pkg.metadata?.namespace ?? "_unknown_";
-
-  // Always permit packages that are being removed
   const deletionTimestamp = pkg.metadata?.deletionTimestamp ?? null;
-  if (deletionTimestamp) {
-    return req.Approve();
-  }
 
   if (invalidNamespaces.includes(ns)) {
     return req.Deny("invalid namespace");
   }
 
   // Check if a package already exists in the target namespace
-  if (PackageStore.hasKey(ns)) {
+  if (PackageStore.hasKey(ns) && !deletionTimestamp) {
     const existingPkgName = PackageStore.getPkgName(ns);
-    //Since this function is called on admission, we need to allow updating existing packages
+    // Since this function is called on admission, we need to allow updating existing packages
     if (existingPkgName !== pkgName) {
       return req.Deny(
         `A package with the name "${existingPkgName}" already exists in the namespace "${ns}". Only one package can exist in a namespace.`,
