@@ -18,7 +18,7 @@ When prompted, enter the `temp-admin` password:
 
 ```bash
 Enter username [temp-admin]: <enter>
-Enter password: <temp-admin>
+Enter password: <temp-admin password>
 Enter password again: <temp-admin password>
 ```
 
