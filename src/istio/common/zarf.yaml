@@ -13,6 +13,9 @@ variables:
   - name: CNI_BIN_DIR
     description: "CNI binary directory"
     default: ""
+  - name: CREATE_EXEMPTIONS
+    description: "Whether or not to create exemptions for istio."
+    default: "true"
 
 components:
   - name: istio-controlplane
