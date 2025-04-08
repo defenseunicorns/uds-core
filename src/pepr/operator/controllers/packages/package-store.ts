@@ -13,7 +13,7 @@ import { UDSPackage } from "../../crd";
 const log = setupLogger(Component.OPERATOR_PACKAGES);
 
 export type PackageNamespaceMap = Map<string, UDSPackage[]>;
-let packageNamespaceMap: PackageNamespaceMap = new Map();
+let packageNamespaceMap: PackageNamespaceMap
 
 /**
  * Initializes the package namespace map.
@@ -69,7 +69,11 @@ function add(pkg: UDSPackage, logger: boolean = true): void {
  *
  */
 function remove(pkg: UDSPackage, logger: boolean = true): void {
-  const namespace = pkg.metadata?.namespace || "";
+  if (!pkg.metadata?.namespace || !pkg.metadata.name) {
+    throw new Error(`Invalid Package definition, missing namespace or name`);
+  }
+  
+  const namespace = pkg.metadata?.namespace;
   const pkgToRemove = pkg.metadata?.name;
   const items = packageNamespaceMap.get(namespace) || [];
 
