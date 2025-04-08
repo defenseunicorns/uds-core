@@ -68,12 +68,21 @@ In addition, to run Istio ingress gateways (part of Core) you will need to ensur
 
 ##### Ambient Mode
 
-Istio can be deployed in [Ambient Mode](https://istio.io/latest/docs/ambient/overview/) by deploying the optional `istio-ambient` component. This mode is still in alpha release and is not recommended for production use or for clusters requiring `FIPS` compliance. The `istio-ambient` component installs the Istio CNI plugin which requires specifying the `CNI_CONF_DIR` and `CNI_BIN_DIR` variables. These values can change based on the environment Istio is being deployed into. By default the package will attempt to auto-detect these values and will use the following values if not specified:
+Istio can be deployed in [Ambient Mode](https://istio.io/latest/docs/ambient/overview/) by deploying the optional `istio-ambient` component. This mode is still in alpha release and is not recommended for production use. Also note that only the `unicorn` and `registry1` flavors of core contain `FIPS` compliant images. The `istio-ambient` component is **required** if you want to use UDS Packages with `spec.network.serviceMesh.mode: ambient`. If Ambient mode is not deployed in the cluster, packages configured for ambient mode will automatically fall back to sidecar mode.
+
+When using ambient mode with UDS Packages, you can benefit from:
+- Reduced resource overhead compared to sidecar mode, as workloads don't require an injected sidecar container
+- Simplified deployment and operations for service mesh capabilities
+- Faster pod startup times since there's no need to wait for sidecar initialization
+
+Note that Packages with Authservice clients are not currently supported in ambient mode and will be rejected by the UDS Operator.
+
+The `istio-ambient` component installs the Istio CNI plugin which requires specifying the `CNI_CONF_DIR` and `CNI_BIN_DIR` variables. These values can change based on the environment Istio is being deployed into. By default the package will attempt to auto-detect these values and will use the following values if not specified:
 
 ```yaml
 # K3d cluster
 cniConfDir: /var/lib/rancher/k3s/agent/etc/cni/net.d
-cniBinDir: /bin/
+cniBinDir: /opt/cni/bin/ # Historically this was `/bin/`
 
 # K3s cluster
 cniConfDir: /var/lib/rancher/k3s/agent/etc/cni/net.d
@@ -160,7 +169,6 @@ sysctl -p
 Metrics server is provided as an optional component in UDS Core and can be enabled if needed. For distros where metrics-server is already provided, ensure that you do NOT enable metrics-server. See the below as an example for enabling metrics-server if your cluster does not include it.
 
 ```yaml
----
 - name: uds-core
   repository: ghcr.io/defenseunicorns/packages/private/uds/core
   ref: 0.25.2-unicorn
