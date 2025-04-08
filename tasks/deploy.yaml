@@ -47,7 +47,7 @@ tasks:
     actions:
       - description: "Deploy UDS Core Base Layer without Ambient (must set UDS_LAYER environment variable)"
         if: ${{ eq .inputs.layer "base"}}
-        cmd: uds zarf package deploy build/zarf-package-core-${{ index .inputs "layer" }}-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress --components '-istio-ambient,*'
+        cmd: uds zarf package deploy build/zarf-package-core-${{ index .inputs "layer" }}-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress --components '*'
       - description: "Deploy a single UDS Core Layer (must set UDS_LAYER environment variable)"
         if: ${{ ne .inputs.layer "base"}}
         cmd: uds zarf package deploy build/zarf-package-core-${{ index .inputs "layer" }}-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress --components '*'
