@@ -273,7 +273,7 @@ export async function generateAuthorizationPolicies(
       extraPolicyName,
       pkg,
       {}, // empty selector to apply to all workloads in the namespace
-      {}, // empty source; no "from" clause will be added
+      { principals: [PROMETHEUS_PRINCIPAL] },
       ["15020"],
     );
     policies.push(extraPolicy);

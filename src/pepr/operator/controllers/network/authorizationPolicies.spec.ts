@@ -555,7 +555,18 @@ describe("authorization policy generation", () => {
     expect(metricScrapingPolicy!.spec?.selector?.matchLabels).toEqual({});
     expect(metricScrapingPolicy!.spec?.action).toBe(Action.Allow);
     expect(metricScrapingPolicy!.spec?.rules).toEqual(
-      expect.arrayContaining([{ to: [{ operation: { ports: ["15020"] } }] }]),
+      expect.arrayContaining([
+        {
+          from: [
+            {
+              source: {
+                principals: ["cluster.local/ns/monitoring/sa/kube-prometheus-stack-prometheus"],
+              },
+            },
+          ],
+          to: [{ operation: { ports: ["15020"] } }],
+        },
+      ]),
     );
   });
 
