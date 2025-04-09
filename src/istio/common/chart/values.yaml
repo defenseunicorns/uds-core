@@ -11,5 +11,3 @@ classificationBanner:
 domain: "###ZARF_VAR_DOMAIN###"
 # Note: This does not handle an empty admin domain zarf var
 adminDomain: "###ZARF_VAR_ADMIN_DOMAIN###"
-exemptions:
-  enabled: ###ZARF_VAR_CREATE_EXEMPTIONS###
