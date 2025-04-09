@@ -30,7 +30,7 @@ tasks:
         cmd: npx ts-node -e "import { registerCRDs } from './src/pepr/operator/crd/register'; registerCRDs()"
         env:
           - "PEPR_MODE=dev"
-        
+
       # Note: the `registry-url` flag used here requires uds 0.19.2+
       - description: "Deploy the Istio source package with Zarf Dev"
         cmd: "uds zarf dev deploy src/istio --flavor upstream --registry-url docker.io --no-progress"
