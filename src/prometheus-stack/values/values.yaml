@@ -25,9 +25,6 @@ prometheus:
   serviceMonitor:
     selfMonitor: false
   prometheusSpec:
-    additionalConfig:
-      scrapeClasses:
-        - name: exempt
     podMetadata:
       labels:
         app: prometheus
