@@ -116,6 +116,10 @@ spec:
             - name: KC_HTTPS_CLIENT_AUTH
               value: request
 
+            # Escape Slashes in Group Names
+            - name: KC_SPI_GROUP_JPA_ESCAPE_SLASHES_IN_GROUP_PATH
+              value: "true"
+
             ## Activate the nginx provider
             - name: KC_SPI_X509CERT_LOOKUP_PROVIDER
               value: nginx
