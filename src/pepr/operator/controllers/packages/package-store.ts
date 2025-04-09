@@ -56,8 +56,9 @@ function add(pkg: UDSPackage, logger: boolean = true): void {
           `Updating PackageStore for package ${pkg.metadata?.name} in namespace ${namespace}.`,
         );
       }
+    } else {
+      existingValue.push(pkg);
     }
-    existingValue.push(pkg);
   } else {
     packageNamespaceMap.set(namespace, [pkg]);
     if (logger) {
