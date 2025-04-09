@@ -9,6 +9,8 @@ Group-based authorization allows to control access to a specific application bas
 | `Admin`        | `/UDS Core/Admin`   | Defined for Administrators |
 | `Auditor`      | `/UDS Core/Auditor` | Defined for regular Users  |
 
+The `/` character is used to define group hierarchy in Keycloak. To include it as part of a group name, escape it with a `~`, for example: `a~/b~/c`.
+
 Below is an example to configure authorization based on the `Admin` (`/UDS Core/Admin`) Group:
 
 ```yaml
