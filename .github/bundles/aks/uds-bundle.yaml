@@ -19,8 +19,6 @@ packages:
     # x-release-please-start-version
     ref: 0.39.0
     # x-release-please-end
-    optionalComponents:
-      - istio-ambient
     overrides:
       istio-admin-gateway:
         gateway:
