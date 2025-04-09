@@ -12,7 +12,8 @@ import { Component, setupLogger } from "../../../logger";
 import { UDSPackage } from "../../crd";
 const log = setupLogger(Component.OPERATOR_PACKAGES);
 
-export type PackageNamespaceMap = Map<string, UDSPackage[]>;
+// Map structure: namespace -> (package name -> package)
+export type PackageNamespaceMap = Map<string, Map<string, UDSPackage>>;
 let packageNamespaceMap: PackageNamespaceMap;
 
 /**
@@ -28,74 +29,74 @@ function init(): void {
 /**
  * Adds a package to the package namespace map.
  *
- * @param {UDSPackage} pkg - The package to be added. It should contain metadata with a namespace.
+ * @param {UDSPackage} pkg - The package to be added. It should contain metadata with a namespace and name.
  * @param {boolean} [logger=true] - Optional flag to enable logging. Defaults to true.
  *
- * This function retrieves the namespace from the package metadata and adds the package
- * to the packageNamespaceMap. If the namespace is not present, it defaults to an empty string.
- * For backwards compatibility, the function checks if the namespace has an existing package. If it does,
- * the package to be added is appended to the existing list of Packages. If not, a new key is created
- * in packageNamespaceMap for that namespace, containing a list of one element.
+ * This function retrieves the namespace and name from the package metadata and adds the package
+ * to the packageNamespaceMap. If the namespace doesn't exist, it creates a new map for that namespace.
+ * The function then adds or updates the package in the namespace map using the package name as the key.
  */
 function add(pkg: UDSPackage, logger: boolean = true): void {
   if (!pkg.metadata?.namespace || !pkg.metadata.name) {
     throw new Error(`Invalid Package definition, missing namespace or name`);
   }
-  const namespace = pkg.metadata?.namespace;
+  const namespace = pkg.metadata.namespace;
+  const name = pkg.metadata.name;
 
-  // Get existing packages if any and merge into the one being added
-  const existingValue = packageNamespaceMap.get(namespace);
-  if (existingValue) {
-    // Check if package already exists in map
-    const index = existingValue.findIndex(p => p.metadata?.name === pkg.metadata?.name);
-    if (index !== -1) {
-      // Update existing package
-      existingValue[index] = pkg;
-      if (logger) {
-        log.debug(
-          `Updating PackageStore for package ${pkg.metadata?.name} in namespace ${namespace}.`,
-        );
-      }
+  // Get or create the namespace map
+  if (!packageNamespaceMap.has(namespace)) {
+    packageNamespaceMap.set(namespace, new Map());
+  }
+
+  const namespaceMap = packageNamespaceMap.get(namespace)!;
+  const isUpdate = namespaceMap.has(name);
+
+  // Set the package
+  namespaceMap.set(name, pkg);
+
+  if (logger) {
+    if (isUpdate) {
+      log.debug(`Updating PackageStore for package ${name} in namespace ${namespace}.`);
     } else {
-      existingValue.push(pkg);
-    }
-  } else {
-    packageNamespaceMap.set(namespace, [pkg]);
-    if (logger) {
-      log.debug(`Added package: ${namespace}/${pkg.metadata?.name} to package map`);
+      log.debug(`Added package: ${namespace}/${name} to package map`);
     }
   }
 }
+
 /**
  * Removes a package from the package namespace map.
  *
- * @param {UDSPackage} pkg - The package to be removed. It should contain metadata with a namespace.
+ * @param {UDSPackage} pkg - The package to be removed. It should contain metadata with a namespace and name.
  * @param {boolean} [logger=true] - Optional flag to enable logging. Defaults to true.
  *
- * This function retrieves the namespace from the package metadata and deletes it from the
- * packageNamespaceMap. If the namespace is not present, it defaults to an empty string.
- * For backwards compatibility, we check if the namespace has more than one package.
- * If that is the case, we update the value for that namespace in packageNamespaceMap.
- * Otherwise, if there is only one package in the namespace, we delete the key.
- *
+ * This function retrieves the namespace and name from the package metadata and removes the package
+ * from the packageNamespaceMap. If the namespace map becomes empty after removal, the namespace
+ * is also removed from the packageNamespaceMap.
  */
 function remove(pkg: UDSPackage, logger: boolean = true): void {
   if (!pkg.metadata?.namespace || !pkg.metadata.name) {
     throw new Error(`Invalid Package definition, missing namespace or name`);
   }
 
-  const namespace = pkg.metadata?.namespace;
-  const pkgToRemove = pkg.metadata?.name;
-  const items = packageNamespaceMap.get(namespace) || [];
+  const namespace = pkg.metadata.namespace;
+  const name = pkg.metadata.name;
 
-  const updatedItems = items.filter(pkg => pkg.metadata?.name !== pkgToRemove);
-  if (updatedItems.length > 0) {
-    packageNamespaceMap.set(namespace, updatedItems);
-  } else {
+  const namespaceMap = packageNamespaceMap.get(namespace);
+  if (!namespaceMap) {
+    // Namespace doesn't exist, nothing to remove
+    return;
+  }
+
+  // Remove the package
+  namespaceMap.delete(name);
+
+  // If namespace map is empty, remove the namespace
+  if (namespaceMap.size === 0) {
     packageNamespaceMap.delete(namespace);
   }
+
   if (logger) {
-    log.debug(`Removed package: ${namespace}/${pkg.metadata?.name} from package map`);
+    log.debug(`Removed package: ${namespace}/${name} from package map`);
   }
 }
 
@@ -117,29 +118,20 @@ function hasKey(namespace: string): boolean {
  * Retrieves the package name associated with a given namespace.
  *
  * This function looks up the namespace in the `packageNamespaceMap` and, if found,
- * returns the `name` property from the `metadata` of the associated package.
- * If the namespace is not found or the metadata or name is missing, it returns null.
+ * returns the name of the first package in that namespace.
+ * If the namespace is not found or there are no packages, it returns null.
  *
  * @param namespace The namespace to look up in the `packageNamespaceMap`.
  * @returns The package name associated with the namespace, or null if not found.
- *
- * @example
- * Assuming packageNamespaceMap contains { 'my-namespace': [{ metadata: { name: 'my-package' } }], [{ metadata: { name: 'other-package' } }]}
- * const packageName = getPkgName('my-namespace'); // Returns 'my-package'
- *
- * @example
- * Assuming packageNamespaceMap does not contain 'unknown-namespace'
- * const packageName = getPkgName('unknown-namespace'); // Returns null
  */
 function getPkgName(namespace: string): string | null {
-  const items = packageNamespaceMap.get(namespace) || [];
-  if (items.length > 0) {
-    // Always return the first package found
-    const foundPkg = items[0];
-    return foundPkg.metadata?.name || null;
-  } else {
+  const namespaceMap = packageNamespaceMap.get(namespace);
+  if (!namespaceMap || namespaceMap.size === 0) {
     return null;
   }
+
+  // Return the name of the first package in the namespace
+  return Array.from(namespaceMap.keys())[0];
 }
 
 export const PackageStore = {
