@@ -41,7 +41,6 @@ packages:
     ref: 0.39.0
     # x-release-please-end
     optionalComponents:
-      - istio-ambient
       - metrics-server
     overrides:
       velero:
