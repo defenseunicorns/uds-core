@@ -13,7 +13,7 @@ import { UDSPackage } from "../../crd";
 const log = setupLogger(Component.OPERATOR_PACKAGES);
 
 export type PackageNamespaceMap = Map<string, UDSPackage[]>;
-let packageNamespaceMap: PackageNamespaceMap
+let packageNamespaceMap: PackageNamespaceMap;
 
 /**
  * Initializes the package namespace map.
@@ -42,19 +42,29 @@ function add(pkg: UDSPackage, logger: boolean = true): void {
     throw new Error(`Invalid Package definition, missing namespace or name`);
   }
   const namespace = pkg.metadata?.namespace;
+
   // Get existing packages if any and merge into the one being added
   const existingValue = packageNamespaceMap.get(namespace);
   if (existingValue) {
+    // Check if package already exists in map
+    const index = existingValue.findIndex(p => p.metadata?.name === pkg.metadata?.name);
+    if (index !== -1) {
+      // Update existing package
+      existingValue[index] = pkg;
+      if (logger) {
+        log.debug(
+          `Updating PackageStore for package ${pkg.metadata?.name} in namespace ${namespace}.`,
+        );
+      }
+    }
     existingValue.push(pkg);
   } else {
     packageNamespaceMap.set(namespace, [pkg]);
-  }
-
-  if (logger) {
-    log.debug(`Added package: ${namespace}/${pkg.metadata?.name} to package map`);
+    if (logger) {
+      log.debug(`Added package: ${namespace}/${pkg.metadata?.name} to package map`);
+    }
   }
 }
-
 /**
  * Removes a package from the package namespace map.
  *
@@ -72,7 +82,7 @@ function remove(pkg: UDSPackage, logger: boolean = true): void {
   if (!pkg.metadata?.namespace || !pkg.metadata.name) {
     throw new Error(`Invalid Package definition, missing namespace or name`);
   }
-  
+
   const namespace = pkg.metadata?.namespace;
   const pkgToRemove = pkg.metadata?.name;
   const items = packageNamespaceMap.get(namespace) || [];
