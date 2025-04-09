@@ -4,7 +4,6 @@
  */
 
 import { K8s, kind } from "pepr";
-import { UDSConfig } from "../../../config";
 import { UDSPackage } from "../../crd";
 import { Mode } from "../../crd/generated/package-v1alpha1";
 import { cleanupNamespace, enableIstio, IstioState, killPods } from "./namespace";
