@@ -56,9 +56,6 @@ export async function startPackageWatch() {
 export function processPackages(pkg: UDSPackage, phase: WatchPhase) {
   switch (phase) {
     case WatchPhase.Added:
-      PackageStore.add(pkg);
-      break;
-
     case WatchPhase.Modified:
       PackageStore.add(pkg);
       break;
