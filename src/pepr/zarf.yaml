@@ -32,6 +32,14 @@ variables:
     default: "true"
 
 components:
+  - name: uds-crds
+    required: true
+    charts:
+      - name: uds-cluster-crds
+        namespace: pepr-system
+        version: 0.1.0
+        localPath: uds-cluster-crds
+
   - name: uds-operator-config
     required: true
     charts:

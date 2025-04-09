@@ -21,7 +21,7 @@ const mockPatchStatus: jest.MockedFunction<() => Promise<void>> = jest.fn();
 const mockWriteEvent = jest.fn();
 
 jest.mock("kubernetes-fluent-client");
-jest.mock("../../config");
+jest.mock("../controllers/config/config");
 jest.mock("../controllers/istio/namespace", () => ({
   cleanupNamespace: jest.fn(),
 }));
