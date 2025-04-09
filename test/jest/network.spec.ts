@@ -137,7 +137,7 @@ beforeAll(async () => {
     curlPodName6,
     curlPodName8,
   ] = await Promise.all([
-    getPodName("curl-ns-deny-all", "app=curl-pkg-deny-all-1"),
+    getPodName("curl-ns-deny-all-1", "app=curl-pkg-deny-all-1"),
     getPodName("test-admin-app", "app=httpbin"),
     getPodName("curl-ns-remote-ns-1", "app=curl-pkg-remote-ns-egress"),
     getPodName("curl-ns-kube-api", "app=curl-pkg-kube-api"),
@@ -145,7 +145,7 @@ beforeAll(async () => {
 });
 
 describe("Network Policy Validation", () => {
-  const INTERNAL_CURL_COMMAND_1 = getCurlCommand("curl-pkg-deny-all-2", "curl-ns-deny-all");
+  const INTERNAL_CURL_COMMAND_1 = getCurlCommand("curl-pkg-deny-all-2", "curl-ns-deny-all-2");
   const INTERNAL_CURL_COMMAND_2 = getCurlCommand("curl-pkg-allow-all", "curl-ns-allow-all");
   const INTERNAL_CURL_COMMAND_5 = getCurlCommand("curl-pkg-remote-ns-ingress", "curl-ns-remote-ns-2");
   const INTERNAL_CURL_COMMAND_7 = getCurlCommand("curl-pkg-remote-cidr", "curl-ns-remote-cidr");
@@ -173,7 +173,7 @@ describe("Network Policy Validation", () => {
     expect(isResponseError(denied_internal_response)).toBe(true);
 
     // Default Deny for Google Curl when no Egress defined
-    const denied_google_response = await execInPod("curl-ns-deny-all", curlPodName1, "curl-pkg-deny-all-1", GOOGLE_CURL);
+    const denied_google_response = await execInPod("curl-ns-deny-all-1", curlPodName1, "curl-pkg-deny-all-1", GOOGLE_CURL);
     expect(denied_google_response.stdout).toBe("000");
 
     // Default Deny for Blocked Port
@@ -276,7 +276,7 @@ describe("Network Policy Validation", () => {
     expect(denied_google_response.stdout).toBe("000");
 
     // Default Deny for Blocked Port
-    const blocked_port_curl = getCurlCommand("curl-pkg-deny-all-2", "curl-ns-deny-all", 9999);
+    const blocked_port_curl = getCurlCommand("curl-pkg-deny-all-2", "curl-ns-deny-all-2", 9999);
     const denied_port_response = await execInPod("curl-ns-kube-api", curlPodName8, "curl-pkg-kube-api", blocked_port_curl);
     expect(isResponseError(denied_port_response)).toBe(true);
   });
