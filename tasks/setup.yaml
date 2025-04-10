@@ -4,7 +4,7 @@
 variables:
   - name: K3D_EXTRA_ARGS
     description: "Optionally pass k3d arguments to the default"
-    default: "--servers 2"
+    default: "--agents 1"
 
 tasks:
   - name: create-k3d-cluster
