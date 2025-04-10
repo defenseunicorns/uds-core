@@ -78,8 +78,7 @@ tasks:
       - description: "Setup the Doug User for testing"
         task: common-setup:keycloak-user
         with:
-          with:
-            group: "/UDS Core/Admin"
+          group: "/UDS Core/Admin"
       - description: "Create and Deploy Test App Package"
         task: test-resources:create-deploy
       - description: "Run Playwright E2E tests for all packages"
