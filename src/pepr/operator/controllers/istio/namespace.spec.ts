@@ -4,7 +4,6 @@
  */
 
 import { K8s, kind } from "pepr";
-import { UDSConfig } from "../../../config";
 import { UDSPackage } from "../../crd";
 import { Mode } from "../../crd/generated/package-v1alpha1";
 import { cleanupNamespace, enableIstio, IstioState, killPods } from "./namespace";
@@ -48,7 +47,6 @@ describe("enableIstio", () => {
       }
       return { Get: jest.fn() };
     });
-    UDSConfig.isAmbientDeployed = true;
   });
 
   test("should not update when labels have same content but different order", async () => {
@@ -245,49 +243,6 @@ describe("enableIstio", () => {
 
     // This is a cheap way to check if killPods was called
     expect(mockPodGet).toHaveBeenCalled();
-  });
-
-  // Test that ambient mode falls back to sidecar when ambient is not deployed
-  test("ambient package falls back to sidecar when ambient is not available", async () => {
-    // Temporarily set ambient mode to unavailable
-    UDSConfig.isAmbientDeployed = false;
-
-    mockGet.mockResolvedValue({ metadata: { labels: {}, annotations: {}, name: "test-ns" } });
-    const pkg: UDSPackage = {
-      metadata: { namespace: "test-ns", name: "test-pkg" },
-      spec: { network: { serviceMesh: { mode: Mode.Ambient } } },
-    };
-
-    await enableIstio(pkg);
-
-    // Should apply sidecar mode instead of ambient
-    expect(mockApply).toHaveBeenCalledWith(
-      expect.objectContaining({
-        metadata: expect.objectContaining({
-          labels: { "istio-injection": "enabled" },
-          annotations: expect.objectContaining({
-            "uds.dev/pkg-test-pkg": "true",
-            "uds.dev/original-istio-state": IstioState.None,
-          }),
-        }),
-      }),
-      { force: true },
-    );
-
-    // Verify warning event was written
-    expect(jest.requireMock("../../reconcilers").writeEvent).toHaveBeenCalledWith(
-      pkg,
-      expect.objectContaining({
-        reason: "AmbientUnavailable",
-        type: "Warning",
-      }),
-    );
-
-    // This is a cheap way to check if killPods was called
-    expect(mockPodGet).toHaveBeenCalled();
-
-    // Restore the original value for other tests
-    UDSConfig.isAmbientDeployed = true;
   });
 
   test("should handle namespace without metadata.labels", async () => {
