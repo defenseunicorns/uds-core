@@ -20,6 +20,10 @@ mkdir -p /var/lib/rancher/rke2/server/manifests
 cat > helmchart-template.yaml << EOM
 ${helm_chart_template}
 EOM
+curl -L https://github.com/mikefarah/yq/releases/download/v4.40.4/yq_linux_amd64 -o yq
+chmod +x yq
+# Remove the image tag at the bottom, as it's only there for renovate
+yq -i 'select(documentIndex < 4)' helmchart-template.yaml
 envsubst < helmchart-template.yaml > /var/lib/rancher/rke2/server/manifests/00-helmcharts.yaml
 HELM_LATEST=$(curl -L --silent --show-error --fail "https://get.helm.sh/helm-latest-version" 2>&1 || true)
 curl https://get.helm.sh/helm-$HELM_LATEST-linux-amd64.tar.gz --output helm.tar.gz
@@ -44,8 +48,6 @@ aws secretsmanager get-secret-value --secret-id ${secret_prefix}-oidc-public-key
 chcon -t svirt_sandbox_file_t /irsa/*
 
 info "Setting up RKE2 config file"
-curl -L https://github.com/mikefarah/yq/releases/download/v4.40.4/yq_linux_amd64 -o yq
-chmod +x yq
 ./yq -i '.cloud-provider-name += "external"' /etc/rancher/rke2/config.yaml
 ./yq -i '.disable-cloud-controller += "true"' /etc/rancher/rke2/config.yaml
 ./yq -i '.kube-apiserver-arg += "service-account-key-file=/irsa/signer.key.pub"' /etc/rancher/rke2/config.yaml

@@ -82,7 +82,7 @@ data "local_file" "helm_template" {
 }
 
 data "http" "aws-lb-controller-iam" {
-  url = "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v${yamldecode(local.longhorn_template[1]).spec.version}/docs/install/iam_policy_us-gov.json"
+  url = "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/${split(":", yamldecode(local.aws_load_balancer_controller_template[4]).image)[1]}/docs/install/iam_policy_us-gov.json"
 }
 
 resource "aws_iam_role_policy" "aws-lb-controller" {

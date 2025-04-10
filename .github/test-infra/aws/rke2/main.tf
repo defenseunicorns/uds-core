@@ -30,8 +30,8 @@ locals {
     helm_chart_template         = file("./scripts/helmchart-template.yaml")
   }
   
-  # Used to get the latest version of longhorn from renovate into this tf
-  longhorn_template = split("---", data.local_file.helm_template.content)
+  # Used to get the latest version of aws-load-balancer-controller from renovate into this tf
+  aws_load_balancer_controller_template = split("---", data.local_file.helm_template.content)
 }
 
 data "aws_caller_identity" "current" {}

@@ -23,7 +23,7 @@ spec:
       - --cloud-provider=aws
 ---
 # aws lb controller helm values: https://github.com/kubernetes-sigs/aws-load-balancer-controller/tree/main/helm/aws-load-balancer-controller#configuration
-# this manifest specifically is referenced in terraform by its position after the `---` in this file (1) - be careful if you order manifests in this file differently!
+# this manifest specifically is referenced in terraform by its position after the each separator in this file (1) - be careful if you order manifests in this file differently!
 apiVersion: helm.cattle.io/v1
 kind: HelmChart
 metadata:
@@ -106,3 +106,6 @@ spec:
       - name: loadbalance
       - name: import
         parameters: /etc/coredns/custom/*.override
+--- 
+# renovate: image=public.ecr.aws/eks/aws-load-balancer-controller
+image: public.ecr.aws/eks/aws-load-balancer-controller:v2.12.0
