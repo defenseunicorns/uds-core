@@ -52,8 +52,7 @@ tasks:
       - description: "Setup the Doug User for testing"
         task: setup:keycloak-user
         with:
-          with:
-            group: "/UDS Core/Admin"
+          group: "/UDS Core/Admin"
       - description: E2E Test for NeuVector
         cmd: |
           # renovate: datasource=docker depName=mcr.microsoft.com/playwright versioning=docker
