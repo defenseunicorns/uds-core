@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 includes:
-  - utils: ../../tasks/utils.yaml
+  - setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/373-remove-test-realm/tasks/setup.yaml
 
 tasks:
   - name: validate
@@ -49,11 +49,11 @@ tasks:
 
   - name: e2e-test
     actions:
-      - description: "Setup the Keycloak admin user if needed"
-        task: utils:keycloak-admin-user
       - description: "Setup the Doug User for testing"
-        # Self-reference this task file to avoid https://github.com/defenseunicorns/maru-runner/issues/144
-        cmd: uds run -f tasks/test.yaml common-setup:create-doug-user --set KEYCLOAK_GROUP="/UDS Core/Admin" --no-progress # Adds the test doug user
+        task: setup:keycloak-user
+        with:
+          with:
+            group: "/UDS Core/Admin"
       - description: E2E Test for NeuVector
         cmd: |
           # renovate: datasource=docker depName=mcr.microsoft.com/playwright versioning=docker
