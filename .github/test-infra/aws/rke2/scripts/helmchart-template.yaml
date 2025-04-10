@@ -23,6 +23,7 @@ spec:
       - --cloud-provider=aws
 ---
 # aws lb controller helm values: https://github.com/kubernetes-sigs/aws-load-balancer-controller/tree/main/helm/aws-load-balancer-controller#configuration
+# this manifest specifically is referenced in terraform by its position after the `---` in this file (1) - be careful if you order manifests in this file differently!
 apiVersion: helm.cattle.io/v1
 kind: HelmChart
 metadata:
@@ -36,27 +37,6 @@ spec:
   targetNamespace: kube-system
   valuesContent: |-
     clusterName: ${CLUSTER_NAME}
----
-# #longhorn helm values: https://github.com/longhorn/longhorn/tree/master/chart
-# apiVersion: helm.cattle.io/v1
-# kind: HelmChart
-# metadata:
-#   name: longhorn
-#   namespace: kube-system
-# spec:
-#   chart: longhorn
-#   repo: https://charts.longhorn.io
-#   # ignoredRenovate: datasource=helm depName=longhorn versioning=helm registryUrl=https://charts.longhorn.io
-#   version: 1.8.1
-#   targetNamespace: kube-system
-#   # change from default value of reinstall
-#   failurePolicy: abort
-#   timeout: "60m"
-#   valuesContent: |-
-#     defaultSettings:
-#       deletingConfirmationFlag: true
-#     longhornUI:
-#       replicas: 0
 ---
 apiVersion: v1
 kind: ConfigMap
