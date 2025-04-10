@@ -44,9 +44,6 @@ export const UDSConfig = {
 
   // Track if UDS Core identity-authorization layer is deployed
   isIdentityDeployed: false,
-
-  // Track if Istio Ambient optional components are deployed
-  isAmbientDeployed: false,
 };
 
 // configure subproject logger
