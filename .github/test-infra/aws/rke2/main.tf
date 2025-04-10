@@ -29,6 +29,9 @@ locals {
     cluster_name                = local.tags.cluster_name
     helm_chart_template         = file("./scripts/helmchart-template.yaml")
   }
+  
+  # Used to get the latest version of longhorn from renovate into this tf
+  longhorn_template = split("---", data.local_file.helm_template.content)
 }
 
 data "aws_caller_identity" "current" {}

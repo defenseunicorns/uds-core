@@ -77,8 +77,12 @@ data "aws_iam_policy_document" "aws_ccm" {
   }
 }
 
+data "local_file" "helm_template" {
+  filename = "./scripts/helmchart-template.yaml"
+}
+
 data "http" "aws-lb-controller-iam" {
-  url = "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.11.0/docs/install/iam_policy_us-gov.json"
+  url = "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v${yamldecode(local.yaml_documents[1]).spec.version}/docs/install/iam_policy_us-gov.json"
 }
 
 resource "aws_iam_role_policy" "aws-lb-controller" {
