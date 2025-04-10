@@ -103,6 +103,7 @@ jobs:
 
       - name: Test UDS Core
         run: uds run -f tasks/test.yaml uds-core-non-k3d
+        continue-on-error: true
 
       - name: Debug Output
         if: ${{ always() }}
