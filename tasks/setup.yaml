@@ -1,13 +1,17 @@
 # Copyright 2024 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
+variables:
+  - name: K3D_EXTRA_ARGS
+    description: "Optionally pass k3d arguments to the default"
+    default: "--servers 2"
 
 tasks:
   - name: create-k3d-cluster
     actions:
       - description: "Create the K3d cluster"
         # renovate: datasource=github-tags depName=defenseunicorns/uds-k3d versioning=semver
-        cmd: "uds zarf package deploy oci://defenseunicorns/uds-k3d:0.12.2 --confirm --no-progress"
+        cmd: "uds zarf package deploy oci://defenseunicorns/uds-k3d:0.12.2 --confirm --no-progress --set k3d_extra_args=\"${K3D_EXTRA_ARGS}\""
 
   - name: k3d-test-cluster
     actions:
