@@ -23,7 +23,7 @@ nodeExporter:
     interval: ""
 prometheus:
   serviceMonitor:
-    selfMonitor: false
+    selfMonitor: true
   prometheusSpec:
     podMetadata:
       labels:
