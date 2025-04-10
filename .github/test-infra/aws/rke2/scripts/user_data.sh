@@ -23,7 +23,7 @@ EOM
 curl -L https://github.com/mikefarah/yq/releases/download/v4.40.4/yq_linux_amd64 -o yq
 chmod +x yq
 # Remove the image tag at the bottom, as it's only there for renovate
-yq -i 'select(documentIndex < 4)' helmchart-template.yaml
+./yq -i 'select(documentIndex < 4)' helmchart-template.yaml
 envsubst < helmchart-template.yaml > /var/lib/rancher/rke2/server/manifests/00-helmcharts.yaml
 HELM_LATEST=$(curl -L --silent --show-error --fail "https://get.helm.sh/helm-latest-version" 2>&1 || true)
 curl https://get.helm.sh/helm-$HELM_LATEST-linux-amd64.tar.gz --output helm.tar.gz

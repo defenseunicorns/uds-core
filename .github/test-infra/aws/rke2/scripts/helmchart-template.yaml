@@ -106,6 +106,6 @@ spec:
       - name: loadbalance
       - name: import
         parameters: /etc/coredns/custom/*.override
---- 
+---
 # renovate: image=public.ecr.aws/eks/aws-load-balancer-controller
 image: public.ecr.aws/eks/aws-load-balancer-controller:v2.12.0
