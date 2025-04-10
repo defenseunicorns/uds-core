@@ -2,6 +2,55 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.40.0](https://github.com/defenseunicorns/uds-core/compare/v0.39.0...v0.40.0) (2025-04-10)
+
+
+### ⚠ BREAKING CHANGES
+
+* only allow creation of one `UDSPackage` per namespace ([#1372](https://github.com/defenseunicorns/uds-core/issues/1372))
+* make istio ambient components default in uds core ([#1428](https://github.com/defenseunicorns/uds-core/issues/1428))
+* move disable registration fields to theme values ([#1397](https://github.com/defenseunicorns/uds-core/issues/1397))
+
+### Features
+
+* add serviceMesh.mode in Package CR ([#1386](https://github.com/defenseunicorns/uds-core/issues/1386)) ([7e50b5d](https://github.com/defenseunicorns/uds-core/commit/7e50b5d591a93e1c6117f52d45f48b37950ef3f1))
+* escape slashes in Keycloak Group names ([#1433](https://github.com/defenseunicorns/uds-core/issues/1433)) ([6b6be2d](https://github.com/defenseunicorns/uds-core/commit/6b6be2d66f64b80b3ac3e5389c1a5f7c1c5b2e99))
+* make istio ambient components default in uds core ([#1428](https://github.com/defenseunicorns/uds-core/issues/1428)) ([32d2752](https://github.com/defenseunicorns/uds-core/commit/32d275223c4e4ad305ab6a8e3f902133743fc1c0))
+* only allow creation of one `UDSPackage` per namespace ([#1372](https://github.com/defenseunicorns/uds-core/issues/1372)) ([2f4dbac](https://github.com/defenseunicorns/uds-core/commit/2f4dbac60ee17afe07a4ce62f96285a0e0f04e47))
+* recovering lost Keycloak credentials ([#1410](https://github.com/defenseunicorns/uds-core/issues/1410)) ([0f3b536](https://github.com/defenseunicorns/uds-core/commit/0f3b536015ae28e153956bdd26989be33257b7e5))
+
+
+### Bug Fixes
+
+* authpol remoteserviceaccount enablement ([#1415](https://github.com/defenseunicorns/uds-core/issues/1415)) ([c6ae565](https://github.com/defenseunicorns/uds-core/commit/c6ae565bbaf2b958ccf01a1e292ee9038bef7f5f))
+* conditional pepr build in tasks ([#1414](https://github.com/defenseunicorns/uds-core/issues/1414)) ([ea75df2](https://github.com/defenseunicorns/uds-core/commit/ea75df2ad409ff48f9859aeb848c8af2df2434d6))
+* make exemptions conditional for `dev-setup` ([#1442](https://github.com/defenseunicorns/uds-core/issues/1442)) ([4d7b471](https://github.com/defenseunicorns/uds-core/commit/4d7b471c1c15622871ecd537710c6096317f148e))
+* move disable registration fields to theme values ([#1397](https://github.com/defenseunicorns/uds-core/issues/1397)) ([61c67f0](https://github.com/defenseunicorns/uds-core/commit/61c67f0731734b92e96842163f48a7319d3b2156))
+* remove flavor from dev deploy of prom CRDs task ([#1419](https://github.com/defenseunicorns/uds-core/issues/1419)) ([10c9ff2](https://github.com/defenseunicorns/uds-core/commit/10c9ff23b74c8f22e47e53767ea963368d7f381d))
+
+
+### Miscellaneous
+
+* **deps:** update istio to v1.25.1 ([#1387](https://github.com/defenseunicorns/uds-core/issues/1387)) ([c538ef4](https://github.com/defenseunicorns/uds-core/commit/c538ef4a5671f8157880422cd88baa8e304f4f9b))
+* **deps:** update loki ([#1349](https://github.com/defenseunicorns/uds-core/issues/1349)) ([f087f55](https://github.com/defenseunicorns/uds-core/commit/f087f55b64cd13578e9b9d1c652ae69ca1a0c694))
+* **deps:** update loki to v3.4.3 ([#1426](https://github.com/defenseunicorns/uds-core/issues/1426)) ([cc7fbd1](https://github.com/defenseunicorns/uds-core/commit/cc7fbd198fa429e8dd48fafa61bca8cf8742b480))
+* **deps:** update neuvector to 5.4.3 ([#1368](https://github.com/defenseunicorns/uds-core/issues/1368)) ([6c4b44e](https://github.com/defenseunicorns/uds-core/commit/6c4b44e969aa633726f0ed70f2e5ccf7c88dcc9b))
+* **deps:** update prometheus-stack ([#1402](https://github.com/defenseunicorns/uds-core/issues/1402)) ([707b07d](https://github.com/defenseunicorns/uds-core/commit/707b07d4f17a872859c77cf9480433f277a006fa))
+* **deps:** update support dependencies to v3.28.14 ([#1435](https://github.com/defenseunicorns/uds-core/issues/1435)) ([d29d1b5](https://github.com/defenseunicorns/uds-core/commit/d29d1b5abfe484747631b53b7475af83fa7946d0))
+* **deps:** update support dependencies to v3.28.15 ([#1441](https://github.com/defenseunicorns/uds-core/issues/1441)) ([1e7ebce](https://github.com/defenseunicorns/uds-core/commit/1e7ebce255256c3b3bb7a5407acdd43473fb918f))
+* **deps:** update support dependencies to v3.4.8 ([#1450](https://github.com/defenseunicorns/uds-core/issues/1450)) ([598242b](https://github.com/defenseunicorns/uds-core/commit/598242bdcc77f164d124459a169729905d933394))
+* **deps:** update support dependencies to v4.6.1 ([#1451](https://github.com/defenseunicorns/uds-core/issues/1451)) ([efb22ab](https://github.com/defenseunicorns/uds-core/commit/efb22ab920b1972a0bfe0d3deb220ad80c2a040c))
+* **deps:** update support-deps ([#1409](https://github.com/defenseunicorns/uds-core/issues/1409)) ([d1ade16](https://github.com/defenseunicorns/uds-core/commit/d1ade16d282b78f1dd35b9ced2a4979672f534a1))
+* **deps:** update support-deps ([#1418](https://github.com/defenseunicorns/uds-core/issues/1418)) ([0eecf5f](https://github.com/defenseunicorns/uds-core/commit/0eecf5ff47d0b1388f99261b24f0e919db9b7829))
+* **deps:** update support-deps ([#1425](https://github.com/defenseunicorns/uds-core/issues/1425)) ([9b6f681](https://github.com/defenseunicorns/uds-core/commit/9b6f6812042aa5345efc69c7242922c0014ae867))
+* **deps:** update support-deps ([#1443](https://github.com/defenseunicorns/uds-core/issues/1443)) ([05def89](https://github.com/defenseunicorns/uds-core/commit/05def890049a4cb33e19634f93f08bed008cb09f))
+* **deps:** update vector ([#1444](https://github.com/defenseunicorns/uds-core/issues/1444)) ([d36014d](https://github.com/defenseunicorns/uds-core/commit/d36014ddbfcb90844e0bf984b3fa5ab8b0e33c96))
+* **deps:** update velero to v8.7.1 ([#1391](https://github.com/defenseunicorns/uds-core/issues/1391)) ([ea4ed0f](https://github.com/defenseunicorns/uds-core/commit/ea4ed0fe7aa2282ed6aeec397432f14790461cb9))
+* **docs:** fix order of authpols doc ([#1408](https://github.com/defenseunicorns/uds-core/issues/1408)) ([ee55ab1](https://github.com/defenseunicorns/uds-core/commit/ee55ab10091f1ef150bc1050b19ca8ec494deaa8))
+* prefer `===` for comparisons ([#1412](https://github.com/defenseunicorns/uds-core/issues/1412)) ([6963633](https://github.com/defenseunicorns/uds-core/commit/696363385bfc569c79688364ad16d03aae852117))
+* remove watch and conditional logic around ambient component ([#1447](https://github.com/defenseunicorns/uds-core/issues/1447)) ([d519af3](https://github.com/defenseunicorns/uds-core/commit/d519af3d9f90980dfcaa90eed0ecf98cec089111))
+* update changelog ([#1406](https://github.com/defenseunicorns/uds-core/issues/1406)) ([4239d95](https://github.com/defenseunicorns/uds-core/commit/4239d958744408d47c93021d4d5937b426d36db9))
+
 ## [0.39.0](https://github.com/defenseunicorns/uds-core/compare/v0.38.0...v0.39.0) (2025-04-01)
 
 
