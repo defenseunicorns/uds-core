@@ -33,7 +33,6 @@ The UDS Operator seamlessly enables the following enhancements and protections f
 :::caution
 Warning: **Istio Ambient Mode** Package support is in Alpha and may not be stable. Different workloads may experience issues when migrating away from sidecars so testing in a development/staging environment is encouraged. In addition there are some known limitations with ambient support at this time:
 - `Package` CRs with AuthService SSO clients (`enableAuthserviceSelector`) are not supported in ambient mode. This is a limitation we plan to remove with operator support/configuration of [waypoint proxies](https://istio.io/latest/docs/ambient/usage/waypoint/), track progress on [this issue in GitHub](https://github.com/defenseunicorns/uds-core/issues/1200).
-- Metrics of applications in ambient mode will _NOT_ be scraped successfully by Prometheus when STRICT mTLS is being enforced (there may be workarounds to scrape in PERMISSIVE mode but this is not advised). This will be resolved once Prometheus is migrated to ambient mode.
 :::
 
 ### Example UDS Package CR
