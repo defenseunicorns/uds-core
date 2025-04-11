@@ -108,7 +108,7 @@ describe("Metrics Server", () => {
         });
         expect(response.status).toBe(200);
         const body = await response.json();
-        expect(body.kind).toBe("PodMetricsList");
+        expect(body.kind).toBe("NodeMetricsList");
         expect(body.items).toBeDefined();
         expect(body.items.length).toBeGreaterThan(0);
     });
