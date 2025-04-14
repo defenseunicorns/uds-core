@@ -131,7 +131,7 @@ tasks:
           done
           echo "Waiting for cluster components to be ready...";
           while true; do
-            if [ $(uds zarf tools kubectl get po,job -A --no-headers=true | egrep -v 'helm-install|Running|Complete' | wc -l) -gt 0 ]; then
+            if [ $(uds zarf tools kubectl get po,job -A --no-headers=true | egrep -v 'Running|Complete' | wc -l) -gt 0 ]; then
               sleep 5;
             else
               echo "Cluster is ready!"
