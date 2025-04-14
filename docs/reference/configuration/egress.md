@@ -5,7 +5,7 @@ title: Istio Egress
 UDS Core leverages Istio to route dedicated egress out of the service mesh. This document provides an overview and examples of the Istio resources that UDS Core deploys to handle egress.
 
 :::note
-This is only usable for workloads implementing an Istio sidecar proxy
+This does not currently work with ambient mode enabled (`spec.network.serviceMesh.mode=ambient`) or with workloads that omit the sidecar proxy
 :::
 
 ## Configuring the Egress Workload

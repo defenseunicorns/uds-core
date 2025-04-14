@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { K8s } from "pepr";
+import { K8s, kind } from "pepr";
 
 import { Component, setupLogger } from "../../../logger";
 import { IstioServiceEntry, IstioVirtualService, IstioSidecar, UDSPackage } from "../../crd";
@@ -84,12 +84,28 @@ export async function istioResources(pkg: UDSPackage, namespace: string) {
     serviceEntryNames.set(sePayload.metadata!.name!, true);
   }
 
+  // Check if egress gateway is enabled in the cluster
+  const egressGatewayEnabled = true; // Placeholder for actual check
+  await K8s(kind.Namespace)
+    .Get(istioEgressGatewayNamespace)
+    .catch(async err => {
+      log.error(`Egress gateway namespace ${istioEgressGatewayNamespace} not found. Egress gateway is disabled.`);
+      throw err;
+    });
+
   // Iterate over each allowed service
   for (const allow of allowList) {
     const hostPortsProtocol = getHostPortsProtocol(allow);
 
     // Add package-related egress resources if remoteHost is defined
     if (hostPortsProtocol) {
+      // If egress is not enabled throw an error
+      if (!egressGatewayEnabled) {
+        const errText = `Egress gateway is not enabled in the cluster. Please enable the egress gateway and retry.`;
+        log.error(errText);
+        throw new Error(errText);
+      }
+
       // Create Service Entry
       const serviceEntry = generateLocalEgressServiceEntry(
         hostPortsProtocol,

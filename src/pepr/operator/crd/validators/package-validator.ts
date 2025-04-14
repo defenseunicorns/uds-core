@@ -73,6 +73,7 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
   }
 
   const networkPolicy = pkg.spec?.network?.allow ?? [];
+  const networkSpec = pkg.spec?.network;
 
   // Track the names of the network policies to ensure they are unique
   const networkPolicyNames = new Set<string>();
@@ -153,13 +154,23 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
       );
     }
 
-    // If 'remoteHost' does not support wildcard domains.
+    // The 'remoteHost' does not support wildcard domains.
     if (
       policy.remoteHost &&
       policy.remoteHost.includes("*")
     ) {
       return req.Deny(
         "remoteHost does not support wildcard domains",
+      );
+    }
+
+    // Ambient is not compatible with 'remoteHost'.
+    if (
+      policy.remoteHost &&
+      networkSpec?.serviceMesh?.mode === Mode.Ambient
+    ) {
+      return req.Deny(
+        "remoteHost not supported in ambient mode",
       );
     }
 
