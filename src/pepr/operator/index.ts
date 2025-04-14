@@ -29,13 +29,13 @@ import { validator } from "./crd/validators/package-validator";
 import { UDSConfig } from "../config";
 import { Component, setupLogger } from "../logger";
 import { updateUDSConfig } from "./controllers/config/config";
-import { exemptValidator } from "./crd/validators/exempt-validator";
-import { packageFinalizer, packageReconciler } from "./reconcilers/package-reconciler";
 import {
   KEYCLOAK_CLIENTS_SECRET_NAME,
   KEYCLOAK_CLIENTS_SECRET_NAMESPACE,
   updateKeycloakClientsSecret,
 } from "./controllers/keycloak/client-secret-sync";
+import { exemptValidator } from "./crd/validators/exempt-validator";
+import { packageFinalizer, packageReconciler } from "./reconcilers/package-reconciler";
 
 // Export the operator capability for registration in the root pepr.ts
 export { operator } from "./common";

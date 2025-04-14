@@ -137,6 +137,10 @@ export interface Network {
    * Expose a service on an Istio Gateway
    */
   expose?: Expose[];
+  /**
+   * Service Mesh configuration for the package
+   */
+  serviceMesh?: ServiceMesh;
 }
 
 export interface Allow {
@@ -594,6 +598,24 @@ export interface FluffyURI {
    * RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax).
    */
   regex?: string;
+}
+
+/**
+ * Service Mesh configuration for the package
+ */
+export interface ServiceMesh {
+  /**
+   * Set the service mesh mode for this package (namespace), defaults to sidecar
+   */
+  mode?: Mode;
+}
+
+/**
+ * Set the service mesh mode for this package (namespace), defaults to sidecar
+ */
+export enum Mode {
+  Ambient = "ambient",
+  Sidecar = "sidecar",
 }
 
 export interface Sso {

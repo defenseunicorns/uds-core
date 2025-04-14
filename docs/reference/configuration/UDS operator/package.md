@@ -5,9 +5,16 @@ title: UDS Package
 ![UDS Operator Package Flowchart](https://github.com/defenseunicorns/uds-core/blob/main/docs/.images/diagrams/uds-core-operator-uds-package.svg?raw=true)
 
 ## Package
+:::note
+Only one UDS Package Custom Resource can exist in a namespace. This pattern was chosen by design to better enable workload isolation and to reduce complexity.
+:::
+Namespaces are a common boundary for isolating workloads in multi-tenant clusters. When defining a UDS Package resource, consider the implications for all workloads that exist in the target namespace. If the UDS Package that you are defining has configurations that conflict with each other or would be simplified by using a separate UDS Package definition, consider using a separate Kubernetes namespace. Read more about namespaces and mulitenancy [here](https://kubernetes.io/docs/concepts/security/multi-tenancy/).
 
+The UDS Operator seamlessly enables the following enhancements and protections for your workloads:
 - **Enabling Istio Sidecar Injection:**
   - The operator facilitates the activation of Istio sidecar injection within namespaces where the CR is deployed.
+- **Support for Istio Ambient Mode:**
+  - Packages can now opt into Istio's Ambient mode by setting `spec.network.serviceMesh.mode: ambient`. This provides service mesh capabilities and security without sidecars, reducing resource overhead.
 - **Establishing Default-Deny Ingress/Egress Network Policies:**
   - It sets up default-deny network policies for both ingress and egress, creating a foundational security posture.
 - **Implementing Layered Allow-List Approach:**
@@ -24,7 +31,8 @@ title: UDS Package
   - Authservice authentication provides application agnostic SSO for applications that opt-in.
 
 :::caution
-Warning: **Authservice Protection** and **SSO Group Authentication** are in Alpha and may not be stable. Avoid using in production. Feedback is appreciated to improve reliability.
+Warning: **Istio Ambient Mode** Package support is in Alpha and may not be stable. Different workloads may experience issues when migrating away from sidecars so testing in a development/staging environment is encouraged. In addition there are some known limitations with ambient support at this time:
+- `Package` CRs with AuthService SSO clients (`enableAuthserviceSelector`) are not supported in ambient mode. This is a limitation we plan to remove with operator support/configuration of [waypoint proxies](https://istio.io/latest/docs/ambient/usage/waypoint/), track progress on [this issue in GitHub](https://github.com/defenseunicorns/uds-core/issues/1200).
 :::
 
 ### Example UDS Package CR

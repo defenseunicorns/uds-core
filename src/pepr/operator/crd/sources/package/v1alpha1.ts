@@ -217,6 +217,19 @@ const expose = {
   } as V1JSONSchemaProps,
 } as V1JSONSchemaProps;
 
+const serviceMesh = {
+  description: "Service Mesh configuration for the package",
+  type: "object",
+  properties: {
+    mode: {
+      type: "string",
+      enum: ["sidecar", "ambient"],
+      default: "sidecar",
+      description: "Set the service mesh mode for this package (namespace), defaults to sidecar",
+    },
+  },
+} as V1JSONSchemaProps;
+
 const monitor = {
   description: "Create Service or Pod Monitor configurations",
   type: "array",
@@ -609,6 +622,7 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
               properties: {
                 expose,
                 allow,
+                serviceMesh,
               },
             },
             monitor,

@@ -6,10 +6,10 @@
 import { getReadinessConditions, handleFailure, shouldSkip, updateStatus, writeEvent } from ".";
 import { UDSConfig } from "../../config";
 import { Component, setupLogger } from "../../logger";
-import { cleanupNamespace, enableInjection } from "../controllers/istio/injection";
+import { istioResources } from "../controllers/istio/istio-resources";
+import { cleanupNamespace, enableIstio } from "../controllers/istio/namespace";
 import { reconcileSharedEgressResources } from "../controllers/istio/egress";
 import { PackageAction } from "../controllers/istio/types";
-import { istioResources } from "../controllers/istio/istio-resources";
 import {
   authservice,
   purgeAuthserviceClients,
@@ -22,6 +22,7 @@ import { generateAuthorizationPolicies } from "../controllers/network/authorizat
 import { networkPolicies } from "../controllers/network/policies";
 import { retryWithDelay } from "../controllers/utils";
 import { Phase, UDSPackage } from "../crd";
+import { Mode } from "../crd/generated/package-v1alpha1";
 import { migrate } from "../crd/migrate";
 
 // configure subproject logger
@@ -29,7 +30,7 @@ const log = setupLogger(Component.OPERATOR_RECONCILERS);
 
 /**
  * The reconciler is called from the queue and is responsible for reconciling the state of the package
- * with the cluster. This includes creating the namespace, network policies and virtual services.
+ * with the cluster. This includes creating the network policies, virtual services, sso, and monitoring config.
  *
  * @param pkg the package to reconcile
  */
@@ -72,14 +73,17 @@ export async function packageReconciler(pkg: UDSPackage) {
   try {
     await updateStatus(pkg, { phase: Phase.Pending, conditions: getReadinessConditions(false) });
 
-    const netPol = await networkPolicies(pkg, namespace!);
+    // Get the requested service mesh mode, default to sidecar if not specified
+    const istioMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Sidecar;
 
-    const authPol = await generateAuthorizationPolicies(pkg, namespace!);
+    // Pass the effective Istio mode to the networkPolicies function
+    const netPol = await networkPolicies(pkg, namespace!, istioMode);
+
+    const authPol = await generateAuthorizationPolicies(pkg, namespace!, istioMode);
 
     let endpoints: string[] = [];
-
-    // Update the namespace to ensure the istio-injection label is set
-    await enableInjection(pkg);
+    // Update the namespace to enable the expected Istio mode (sidecar or ambient)
+    await enableIstio(pkg);
 
     let ssoClients = new Map<string, Client>();
     let authserviceClients: string[] = [];
