@@ -77,6 +77,19 @@ data "aws_iam_policy_document" "aws_ccm" {
   }
 }
 
+data "local_file" "helm_template" {
+  filename = "./scripts/helmchart-template.yaml"
+}
+
+data "http" "aws-lb-controller-iam" {
+  url = "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.12.0/docs/install/iam_policy_us-gov.json"
+}
+resource "aws_iam_role_policy" "aws-lb-controller" {
+  name = "${local.cluster_name}-lb-controller"
+  role = aws_iam_role.rke2_server.id
+  policy = data.http.aws-lb-controller-iam.response_body
+}
+
 resource "aws_iam_role_policy" "s3_token" {
   name   = "${local.cluster_name}-server-token"
   role   = aws_iam_role.rke2_server.id
