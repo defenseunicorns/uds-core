@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 includes:
-  - setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.14.0/tasks/setup.yaml
+  - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.14.0/tasks/setup.yaml
 
 tasks:
   - name: validate
@@ -50,7 +50,7 @@ tasks:
   - name: e2e-test
     actions:
       - description: "Setup the Doug User for testing"
-        task: setup:keycloak-user
+        task: common-setup:keycloak-user
         with:
           group: "/UDS Core/Admin"
       - description: E2E Test for NeuVector
