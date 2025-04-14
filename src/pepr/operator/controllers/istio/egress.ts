@@ -53,7 +53,6 @@ export async function reconcileSharedEgressResources(pkg: UDSPackage, action: Pa
   }
 
   // Check if there is an istioEgressGatewayNamespace, if not don't proceed
-  log.debug("HEREHEREHERE");
   await K8s(kind.Namespace)
     .Get(istioEgressGatewayNamespace)
     .then(async () => {
@@ -91,7 +90,7 @@ export async function reconcileSharedEgressResources(pkg: UDSPackage, action: Pa
         );
         return; // Exit the routine
       } else {
-        log.error(`Error getting namespace ${istioEgressGatewayNamespace}: ${e}`);
+        log.error(`Unable to reconcile shared egress resources: ${e}`);
         throw e;
       }
     });
@@ -247,7 +246,7 @@ export function getHostPortsProtocol(allow: Allow) {
   return hostPortsProtocol;
 }
 
-function removeEgressResources(pkgId: string) {
+export function removeEgressResources(pkgId: string) {
   if (inMemoryPackageMap[pkgId]) {
     delete inMemoryPackageMap[pkgId];
   } else {

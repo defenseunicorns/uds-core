@@ -29,7 +29,6 @@ export const istioEgressGatewayNamespace = "istio-egress-gateway";
  */
 export async function istioResources(pkg: UDSPackage, namespace: string) {
   const pkgName = pkg.metadata!.name!;
-  // const pkgId = getPackageId(pkg);
   const generation = (pkg.metadata?.generation ?? 0).toString();
   const ownerRefs = getOwnerRef(pkg);
 
@@ -111,6 +110,7 @@ export async function istioResources(pkg: UDSPackage, namespace: string) {
             await K8s(IstioServiceEntry).Apply(serviceEntry, { force: true });
           } else {
             log.error(`Failed to reconcile Service Entry ${serviceEntry.metadata?.name}: ${err}`);
+            throw err;
           }
         });
 
@@ -135,6 +135,7 @@ export async function istioResources(pkg: UDSPackage, namespace: string) {
             await K8s(IstioSidecar).Apply(sidecar, { force: true });
           } else {
             log.error(`Failed to reconcile Sidecar ${sidecar.metadata?.name}: ${err}`);
+            throw err;
           }
         });
     }

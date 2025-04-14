@@ -29,7 +29,7 @@ export {
 export {
   HTTP as IstioHTTP,
   HTTPRoute as IstioHTTPRoute,
-  Tl as IstioTL,
+  Tl as IstioTLS,
   VirtualService as IstioVirtualService,
 } from "./generated/istio/virtualservice-v1beta1";
 

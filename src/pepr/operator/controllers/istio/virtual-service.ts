@@ -7,22 +7,22 @@ import { V1OwnerReference } from "@kubernetes/client-node";
 import { K8s } from "pepr";
 import { UDSConfig } from "../../../config";
 import {
-  Expose,
-  Gateway,
-  IstioHTTP,
-  IstioTL,
-  IstioHTTPRoute,
-  IstioVirtualService,
+    Expose,
+    Gateway,
+    IstioHTTP,
+    IstioHTTPRoute,
+    IstioTLS,
+    IstioVirtualService,
 } from "../../crd";
 import { sanitizeResourceName } from "../utils";
-import { generateGatewayName } from "./gateway";
-import { EgressResource } from "./types";
-import {
-  getSharedAnnotationKey,
-  istioEgressGatewayNamespace as namespace,
-  log,
-} from "./istio-resources";
 import { sharedEgressPkgId } from "./egress";
+import { generateGatewayName } from "./gateway";
+import {
+    getSharedAnnotationKey,
+    log,
+    istioEgressGatewayNamespace as namespace,
+} from "./istio-resources";
+import { EgressResource } from "./types";
 
 /**
  * Creates a VirtualService for each exposed service in the package
@@ -132,13 +132,13 @@ export function generateEgressVirtualService(
 
   // Add the gateway servers
   const httpRoutes: IstioHTTP[] = [];
-  const tlsRoutes: IstioTL[] = [];
+  const tlsRoutes: IstioTLS[] = [];
   for (const portProtocol of resource.portProtocols) {
     const port = portProtocol.port;
     const protocol = portProtocol.protocol;
     const route = generateVirtualServiceRoutes(host, port, protocol);
     if (protocol == "TLS") {
-      tlsRoutes.push(...(route as IstioTL[]));
+      tlsRoutes.push(...(route as IstioTLS[]));
     } else if (protocol == "HTTP") {
       httpRoutes.push(...(route as IstioHTTP[]));
     }
@@ -223,10 +223,9 @@ export async function warnMatchingExistingVirtualServices(host: string) {
     if (vs.spec && vs.spec.hosts) {
       for (const vsHost of vs.spec.hosts) {
         if (vsHost === host) {
-          log.debug(
-            `Found existing Virtual Service ${vs.metadata?.name}/${vs.metadata?.namespace} with matching host. Istio will not behave properly with multiple Virtual Services routing the same hosts.`,
-          );
-          break;
+          const errText = `Found existing Virtual Service ${vs.metadata?.name}/${vs.metadata?.namespace} with matching host. Istio will not behave properly with multiple Virtual Services using the same hosts.`;
+            log.error(errText);
+            throw new Error(errText);
         }
       }
     }

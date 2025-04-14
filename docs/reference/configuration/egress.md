@@ -4,8 +4,9 @@ title: Istio Egress
 
 UDS Core leverages Istio to route dedicated egress out of the service mesh. This document provides an overview and examples of the Istio resources that UDS Core deploys to handle egress.
 
->[!NOTE]
->This is only usable for workloads implementing an Istio sidecar proxy
+:::note
+This is only usable for workloads implementing an Istio sidecar proxy
+:::
 
 ## Configuring the Egress Workload
 
@@ -55,9 +56,13 @@ overrides:
 
 The UDS Core Package Custom Resource (CR) is used to configure the egress workload. The egress routes are realized through the use of the `network.allow` - specifically the `remoteHost`, `remoteProtocol`, and `port` or `ports` parameters therein.
 
->[!NOTE]
->Currently, only HTTP and TLS protocols are supported. The configuration will default to TLS if not specified.
->Wildcards in host names are NOT currently supported.
+:::note
+Currently, only HTTP and TLS protocols are supported. The configuration will default to TLS if not specified.
+:::
+
+:::note
+Wildcards in host names are NOT currently supported.
+:::
 
 The following sample Package CR shows configuring egress to a specific host, "httpbin.org", on port 443. 
 
@@ -90,8 +95,9 @@ When a Package CR specifies the `network.allow` field with, at minimum, the `rem
 
 The configuration Package CRs in combination with the behavior of Istio should be understood when using egress. There are a few "gotchas" that might occur while using the egress configurations.
 
->[!NOTE]
->The following are not exhaustive and are subject to change as this implementation matures from sidecar to ambient.
+:::note
+The following are not exhaustive and are subject to change as this implementation matures from sidecar to ambient.
+:::
 
 * Currently, egress will only work for workloads that are using the Istio sidecar proxy.
 

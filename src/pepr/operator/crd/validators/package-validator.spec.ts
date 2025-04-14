@@ -266,6 +266,39 @@ describe("Test validation of Exemption CRs", () => {
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
   });
 
+  it("denies network policies that specify ingress and remoteHost", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [
+        {
+          direction: Direction.Ingress,
+          remoteHost: "example.com",
+        },
+      ],
+      [],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+  });
+
+  it("denies network policies that specify remoteHost as a wildcard", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [
+        {
+          remoteHost: "*.example.com",
+        },
+      ],
+      [],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+  });
+
   it("denies network policies that are the same name", async () => {
     const mockReq = makeMockReq({}, [], [{}, {}], [], []);
     await validator(mockReq);

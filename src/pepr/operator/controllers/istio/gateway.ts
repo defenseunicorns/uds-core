@@ -94,10 +94,9 @@ export async function warnMatchingExistingGateways(host: string) {
       for (const srv of gw.spec.servers) {
         for (const srvHost of srv.hosts) {
           if (srvHost === host) {
-            log.debug(
-              `Found existing Gateway ${gw.metadata?.name}/${gw.metadata?.namespace} with matching host. Istio will not behave properly with multiple Gateways using the same hosts.`,
-            );
-            break;
+            const errText = `Found existing Gateway ${gw.metadata?.name}/${gw.metadata?.namespace} with matching host. Istio will not behave properly with multiple Gateways using the same hosts.`;
+            log.error(errText);
+            throw new Error(errText);
           }
         }
       }

@@ -103,7 +103,6 @@ export async function packageReconciler(pkg: UDSPackage) {
     monitors.push(...(await podMonitor(pkg, namespace!)));
     monitors.push(...(await serviceMonitor(pkg, namespace!)));
 
-    // TODO: add status field for exposedHosts
     await updateStatus(pkg, {
       phase: Phase.Ready,
       conditions: getReadinessConditions(true),
@@ -241,7 +240,10 @@ export async function packageFinalizer(pkg: UDSPackage) {
     await writeEvent(pkg, {
       message: `Removal of shared egress resources failed: ${e.message}`,
       reason: "RemovalFailed",
+      type: "Warning",
     });
+    await updateStatus(pkg, { phase: Phase.RemovalFailed });
+    return false;
   }
 
   // Indicate success - all other resources (network policies, virtual services, etc) are cleaned up through owner references

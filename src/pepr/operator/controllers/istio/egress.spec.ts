@@ -4,7 +4,7 @@
  */
 
 import { describe, expect, it } from "@jest/globals";
-import { createHostResourceMap, remapEgressResources, getHostPortsProtocol } from "./egress";
+import { createHostResourceMap, remapEgressResources, getHostPortsProtocol, removeEgressResources } from "./egress";
 import { Direction, RemoteProtocol } from "../../crd";
 
 describe("test createHostResourceMap", () => {
@@ -162,6 +162,22 @@ describe("test getHostPortsProtocol", () => {
       host: "example.com",
       ports: [80],
       protocol: RemoteProtocol.HTTP,
+    });
+  });
+
+  it("should return defaults for unspecified port", () => {
+    const allow = {
+      direction: Direction.Egress,
+      remoteHost: "example.com",
+      remoteProtocol: RemoteProtocol.TLS,
+    };
+
+    const result = getHostPortsProtocol(allow);
+
+    expect(result).toEqual({
+      host: "example.com",
+      ports: [443],
+      protocol: RemoteProtocol.TLS,
     });
   });
 });

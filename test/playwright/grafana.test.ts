@@ -46,6 +46,11 @@ test("validate namespace dashboard", async ({ page }) => {
     await page.goto(`/dashboards`);
     await page.click('text="Kubernetes / Compute Resources / Namespace (Pods)"');
     await page.getByTestId('data-testid Dashboard template variables Variable Value DropDown value link text authservice').click();
+    if (!fullCore) {
+      // Check grafana if not a full core deploy
+      await page.getByRole('option', { name: 'grafana' }).click();
+      return;
+    }
     await page.getByRole('option', { name: 'authservice-test-app' }).click();
   });
 });
@@ -58,7 +63,12 @@ test("validate loki dashboard", async ({ page }) => {
     await page.getByPlaceholder('Search for dashboards and folders').fill('Loki');
     await page.click('text="Loki Dashboard quick search"');
     await page.getByTestId('data-testid Dashboard template variables Variable Value DropDown value link text authservice').click();
-    await page.getByRole('option', { name: 'authservice-test-app' }).click();
+    if (!fullCore) {
+      // Check grafana if not a full core deploy
+      await page.getByRole('option', { name: 'grafana' }).click();
+    } else {
+      await page.getByRole('option', { name: 'authservice-test-app' }).click();
+    }
     await expect(page.getByTestId('data-testid Panel header Logs Panel').getByTestId('data-testid panel content')).toBeVisible();
   });
 });

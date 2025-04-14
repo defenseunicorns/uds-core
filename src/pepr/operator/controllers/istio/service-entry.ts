@@ -126,7 +126,6 @@ export function generateLocalEgressServiceEntry(
       ownerReferences: ownerRefs,
     },
     spec: {
-      // Append the UDS Domain to the host
       hosts: [host],
       location: IstioLocation.MeshExternal,
       resolution: IstioResolution.DNS,
