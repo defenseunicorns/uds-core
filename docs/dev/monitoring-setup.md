@@ -1,5 +1,25 @@
 # UDS Core Metrics Scraping Setup
 
+<details open>
+<summary>Istio Ambient Mode</summary>
+
+## Unified Traffic Handling:
+Ambient mode routes all workload traffic through ztunnel, which uses a common HBONE-based port (e.g. 15008), eliminating per‑workload sidecars.
+
+## Simplified TLS Management:
+No need for individual certificate mounts; TLS is centrally handled, and metrics endpoints can be scraped over HTTP (with operator mutations removing TLS config).
+
+## Limited L7 Enforcement:
+Since ztunnel does not process L7 attributes by default, HTTP headers and JWT validation must be handled via a waypoint (or bypassed), which differs from sidecar mode where the sidecar enforces these rules.
+
+## Operator Mutation:
+The Prometheus operator mutates ServiceMonitor/PodMonitor resources to remove TLS configuration and reset the scrapeClass when a target is meant to run in ambient mode.
+
+</details>
+
+<details>
+<summary>Istio Sidecar Mode [LEGACY]</summary>
+
 UDS Core leverages Pepr to handle setup of Prometheus scraping metrics endpoints, with the particular configuration necessary to work in a STRICT mTLS (Istio) environment. We handle this via a default scrapeClass in prometheus to add the istio certs. When a monitor needs to be exempt from that tlsConfig a mutation is performed to leverage a plain scrape class without istio certs.
 
 > [!NOTE]  
@@ -30,3 +50,5 @@ An alternative spec option would use the service name instead of selectors/port 
 ### Generation of service + monitor
 
 Another alternative approach would be to use a pod selector and port only. We would then generate both a service and servicemonitor, giving us full control of the port names and selectors. This seems like a viable path, but does add an extra resource for us to generate and manage. There could be unknown side effects of generating services that could clash with other services (particularly with istio endpoints). This would otherwise be a relative straightforward approach and is worth evaluating again if we want to simplify the spec later on.
+
+</details>
