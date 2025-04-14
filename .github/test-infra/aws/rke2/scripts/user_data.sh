@@ -20,18 +20,18 @@ mkdir -p /var/lib/rancher/rke2/server/manifests
 cat > helmchart-template.yaml << EOM
 ${helm_chart_template}
 EOM
-curl -L https://github.com/mikefarah/yq/releases/download/v4.40.4/yq_linux_amd64 -o yq
-chmod +x yq
-# Remove the image tag at the bottom, as it's only there for renovate
-./yq -i 'select(documentIndex < 4)' helmchart-template.yaml
+
 envsubst < helmchart-template.yaml > /var/lib/rancher/rke2/server/manifests/00-helmcharts.yaml
+# We install longhorn from a template to avoid install issues with the HelmController
+<!-- renovate: datasource=helm depName=longhorn versioning=helm registryUrl=https://charts.longhorn.io -->
+LONGHORN_VERSION=1.8.1
 HELM_LATEST=$(curl -L --silent --show-error --fail "https://get.helm.sh/helm-latest-version" 2>&1 || true)
 curl https://get.helm.sh/helm-$HELM_LATEST-linux-amd64.tar.gz --output helm.tar.gz
 tar -xvf ./helm.tar.gz && rm -rf ./helm.tar.gz
 chmod +x ./linux-amd64/helm
 ./linux-amd64/helm repo add longhorn https://charts.longhorn.io
 ./linux-amd64/helm repo update
-./linux-amd64/helm template longhorn longhorn/longhorn --set defaultSettings.deletingConfirmationFlag=true --set longhornUI.replicas=0 --set namespaceOverride=kube-system --no-hooks > /var/lib/rancher/rke2/server/manifests/01-longhorn.yaml
+./linux-amd64/helm template longhorn longhorn/longhorn --version $LONGHORN_VERSION --set defaultSettings.deletingConfirmationFlag=true --set longhornUI.replicas=0 --set namespaceOverride=kube-system --no-hooks > /var/lib/rancher/rke2/server/manifests/01-longhorn.yaml
 rm -rf ./linux-amd64
 
 info "Installing awscli"
@@ -39,6 +39,8 @@ yum install -y unzip jq || apt-get -y install unzip jq
 curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
 unzip awscliv2.zip
 sudo ./aws/install
+curl -L https://github.com/mikefarah/yq/releases/download/v4.40.4/yq_linux_amd64 -o yq
+chmod +x yq
 
 echo "Getting OIDC keypair"
 sudo mkdir /irsa
