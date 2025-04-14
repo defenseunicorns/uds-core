@@ -28,6 +28,13 @@ components:
         namespace: istio-system
         valuesFiles:
           - "../values/base-istiod.yaml"
+        variables:
+          - name: PROXY_MEMORY_REQUEST
+            description: "Memory requests for sidecars in cluster"
+            path: "global.proxy.resources.requests.memory"
+          - name: PROXY_CPU_REQUEST
+            description: "CPU requests for sidecars in cluster"
+            path: "global.proxy.resources.requests.cpu"
       - name: uds-global-istio-config
         namespace: istio-system
         version: 0.1.0
