@@ -46,10 +46,6 @@ spec:
         type: "Bearer"
 ```
 
-Due to UDS Core using STRICT Istio mTLS across the cluster, Prometheus is also configured by default to manage properly scraping metrics with STRICT mTLS. This is done primarily by leveraging a default [`scrapeClass`](https://github.com/prometheus-operator/prometheus-operator/blob/v0.75.1/Documentation/api.md#monitoring.coreos.com/v1.ScrapeClass) which provides the correct TLS configuration and certificates to make mTLS connections. The default configuration works in most scenarios since the operator will attempt to auto-detect needs based istio-injection status in each namespace. If this configuration does not work (the main place this may be an issue is metrics being exposed on a PERMISSIVE mTLS port) there are two options for manually opt-ing out of the Istio TLS configuration:
-1. Individual monitors can explicitly set the `exempt` scrape class to opt out of the Istio certificate configuration.
-1. If setting a `scrapeClass` is not an option due to lack of configuration in a helm chart, or for other reasons, monitors can set the `uds/skip-mutate` annotation (with any value) to have Pepr mutate the `exempt` scrape class onto the monitor.
-
 ## Adding Dashboards
 
 Grafana within UDS Core is configured with [a sidecar](https://github.com/grafana/helm-charts/blob/6eecb003569dc41a494d21893b8ecb3e8a9741a0/charts/grafana/values.yaml#L926-L928) that will watch for new dashboards added via configmaps or secrets and load them into Grafana dynamically. In order to have your dashboard added the configmap or secret must be labelled with `grafana_dashboard: "1"`, which is used by the sidecar to watch and collect new dashboards.
