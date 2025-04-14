@@ -5,6 +5,7 @@
 
 import { Direction, Gateway, RemoteGenerated, UDSPackage } from "../../crd";
 import { Action, AuthorizationPolicy } from "../../crd/generated/istio/authorizationpolicy-v1beta1";
+import { IstioState } from "../istio/namespace";
 import { generateAuthorizationPolicies } from "./authorizationPolicies";
 
 jest.mock("../../../logger", () => ({
@@ -58,7 +59,7 @@ describe("authorization policy generation", () => {
       },
     };
 
-    const policies = await generateAuthorizationPolicies(pkg, "test-ns");
+    const policies = await generateAuthorizationPolicies(pkg, "test-ns", IstioState.Ambient);
     expect(policies.length).toBe(1);
     const policy = policies[0];
     expect(policy.metadata?.name).toBe(
@@ -85,7 +86,7 @@ describe("authorization policy generation", () => {
       },
     };
 
-    const policies = await generateAuthorizationPolicies(pkg, "test-ns");
+    const policies = await generateAuthorizationPolicies(pkg, "test-ns", IstioState.Ambient);
     expect(policies.length).toBe(1);
     const policy = policies[0];
     expect(policy.metadata?.name).toBe("protect-kubeapi-test-ingress-kubeapi-test-kubeapi");
@@ -110,7 +111,7 @@ describe("authorization policy generation", () => {
       },
     };
 
-    const policies = await generateAuthorizationPolicies(pkg, "test-ns");
+    const policies = await generateAuthorizationPolicies(pkg, "test-ns", IstioState.Ambient);
     expect(policies.length).toBe(1);
     const policy = policies[0];
     expect(policy.metadata?.name).toBe("protect-kubenodes-test-ingress-kubenodes-test-kubenodes");
@@ -138,6 +139,7 @@ describe("authorization policy generation", () => {
     const policies: AuthorizationPolicy[] = await generateAuthorizationPolicies(
       pkg,
       "curl-ns-remote-cidr",
+      IstioState.Ambient,
     );
     expect(policies).toHaveLength(1);
     const policy = policies[0];
@@ -201,7 +203,11 @@ describe("authorization policy generation", () => {
       },
     };
 
-    const policies = await generateAuthorizationPolicies(pkg, "authservice-test-app");
+    const policies = await generateAuthorizationPolicies(
+      pkg,
+      "authservice-test-app",
+      IstioState.Ambient,
+    );
     // We expect exactly two policies: one for the expose rule and one for the allow rule.
     expect(policies.length).toBe(2);
 
@@ -256,7 +262,11 @@ describe("authorization policy generation", () => {
       },
     };
 
-    const policies = await generateAuthorizationPolicies(pkg, "test-tenant-app");
+    const policies = await generateAuthorizationPolicies(
+      pkg,
+      "test-tenant-app",
+      IstioState.Ambient,
+    );
     expect(policies.length).toBe(2);
     const names = policies.map(p => p.metadata?.name);
     expect(new Set(names).size).toBe(2);
@@ -280,7 +290,7 @@ describe("authorization policy generation", () => {
       },
     };
 
-    const policies = await generateAuthorizationPolicies(pkg, "loki");
+    const policies = await generateAuthorizationPolicies(pkg, "loki", IstioState.Ambient);
     // With one allow rule (Ingress/IntraNamespace), expect one policy
     expect(policies.length).toBe(1);
     const policy = policies[0];
@@ -322,7 +332,7 @@ describe("authorization policy generation", () => {
       },
     };
 
-    const policies = await generateAuthorizationPolicies(pkg, "neuvector");
+    const policies = await generateAuthorizationPolicies(pkg, "neuvector", IstioState.Ambient);
     // With the current per-rule design we expect three policies
     expect(policies.length).toBe(3);
 
@@ -394,7 +404,7 @@ describe("authorization policy generation", () => {
       },
     };
 
-    const policies = await generateAuthorizationPolicies(pkg, "vector");
+    const policies = await generateAuthorizationPolicies(pkg, "vector", IstioState.Ambient);
     expect(policies.length).toBe(1);
     const policy = policies[0];
     expect(policy.metadata?.name).toBe("protect-vector-ingress-prometheus-metrics");
@@ -429,7 +439,7 @@ describe("authorization policy generation", () => {
       },
     };
 
-    const policies = await generateAuthorizationPolicies(pkg, "velero");
+    const policies = await generateAuthorizationPolicies(pkg, "velero", IstioState.Ambient);
     // Expect one policy
     expect(policies.length).toBe(1);
     const policy = policies[0];
@@ -447,7 +457,7 @@ describe("authorization policy generation", () => {
     );
   });
 
-  test("should generate correct AuthorizationPolicies for Authservice", async () => {
+  test("should generate correct AuthorizationPolicies for Ambient Authservice", async () => {
     const pkg: UDSPackage = {
       metadata: { name: "authservice", namespace: "authservice", generation: 1 },
       spec: {
@@ -467,7 +477,7 @@ describe("authorization policy generation", () => {
       },
     };
 
-    const policies = await generateAuthorizationPolicies(pkg, "authservice");
+    const policies = await generateAuthorizationPolicies(pkg, "authservice", IstioState.Ambient);
     // Expect two policies
     expect(policies.length).toBe(2);
     const nsPolicy = policies.find(
@@ -490,6 +500,73 @@ describe("authorization policy generation", () => {
     expect(workloadPolicy!.spec?.action).toBe(Action.Allow);
     expect(workloadPolicy!.spec?.rules).toEqual(
       expect.arrayContaining([{ to: [{ operation: { ports: ["10003"] } }] }]),
+    );
+  });
+
+  test("should generate correct AuthorizationPolicies for Sidecar Authservice", async () => {
+    const pkg: UDSPackage = {
+      metadata: { name: "authservice", namespace: "authservice", generation: 1 },
+      spec: {
+        network: {
+          allow: [
+            { direction: Direction.Ingress, remoteGenerated: RemoteGenerated.IntraNamespace },
+            { direction: Direction.Egress, remoteGenerated: RemoteGenerated.IntraNamespace },
+            {
+              direction: Direction.Ingress,
+              selector: { "app.kubernetes.io/name": "authservice" },
+              remoteNamespace: "",
+              port: 10003,
+              description: "Protected Apps",
+            },
+          ],
+        },
+      },
+    };
+
+    const policies = await generateAuthorizationPolicies(pkg, "authservice", IstioState.Sidecar);
+    // Expect three policies
+    expect(policies.length).toBe(3);
+    const nsPolicy = policies.find(
+      p => p.metadata?.name === "protect-authservice-ingress-all-pods-intranamespace",
+    );
+    expect(nsPolicy).toBeDefined();
+    expect(nsPolicy!.metadata?.namespace).toBe("authservice");
+    expect(nsPolicy!.spec?.action).toBe(Action.Allow);
+    expect(nsPolicy!.spec?.rules).toEqual(
+      expect.arrayContaining([{ from: [{ source: { namespaces: ["authservice"] } }] }]),
+    );
+
+    const workloadPolicy = policies.find(
+      p => p.metadata?.name === "protect-authservice-ingress-protected-apps",
+    );
+    expect(workloadPolicy).toBeDefined();
+    expect(workloadPolicy!.spec?.selector?.matchLabels).toEqual({
+      "app.kubernetes.io/name": "authservice",
+    });
+    expect(workloadPolicy!.spec?.action).toBe(Action.Allow);
+    expect(workloadPolicy!.spec?.rules).toEqual(
+      expect.arrayContaining([{ to: [{ operation: { ports: ["10003"] } }] }]),
+    );
+
+    const metricScrapingPolicy = policies.find(
+      p => p.metadata?.name === "protect-authservice-ingress-15020-sidecar-metric-scraping",
+    );
+    expect(metricScrapingPolicy).toBeDefined();
+    expect(metricScrapingPolicy!.spec?.selector?.matchLabels).toEqual({});
+    expect(metricScrapingPolicy!.spec?.action).toBe(Action.Allow);
+    expect(metricScrapingPolicy!.spec?.rules).toEqual(
+      expect.arrayContaining([
+        {
+          from: [
+            {
+              source: {
+                principals: ["cluster.local/ns/monitoring/sa/kube-prometheus-stack-prometheus"],
+              },
+            },
+          ],
+          to: [{ operation: { ports: ["15020"] } }],
+        },
+      ]),
     );
   });
 
@@ -519,7 +596,7 @@ describe("authorization policy generation", () => {
       },
     };
 
-    const policies = await generateAuthorizationPolicies(pkg, "monitoring");
+    const policies = await generateAuthorizationPolicies(pkg, "monitoring", IstioState.Ambient);
     // Expect three policies
     expect(policies.length).toBe(3);
     const nsPolicy = policies.find(
@@ -597,7 +674,7 @@ describe("authorization policy generation", () => {
       },
     };
 
-    const policies = await generateAuthorizationPolicies(pkg, "grafana");
+    const policies = await generateAuthorizationPolicies(pkg, "grafana", IstioState.Ambient);
     // Expect three policies: one from expose, one from allow, and one monitor policy
     expect(policies.length).toBe(3);
     const exposePolicy = policies.find(
@@ -763,7 +840,7 @@ describe("authorization policy generation", () => {
       },
     };
 
-    const policies = await generateAuthorizationPolicies(pkg, "keycloak");
+    const policies = await generateAuthorizationPolicies(pkg, "keycloak", IstioState.Ambient);
     // We expect 6 policies
     expect(policies.length).toBe(6);
 

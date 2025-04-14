@@ -24,8 +24,8 @@ components:
     actions:
       onDeploy:
         after:
-          - description: Annotate all service and pod monitors to ensure they are mutated with the 3.x fallbackScrapeProtocol
+          - description: Annotate all service and pod monitors to ensure they are mutated for ambient http metrics
             cmd: |
-              # This ensures that all monitors go through the latest Pepr mutation code to have fallbackScrapeProtocol added
-              ./zarf tools kubectl annotate servicemonitors -A --all uds.dev/prometheus-fallback=true
-              ./zarf tools kubectl annotate podmonitors -A --all uds.dev/prometheus-fallback=true
+              # This ensures that all monitors go through the latest Pepr mutation code to use the correct http metrics
+              ./zarf tools kubectl annotate servicemonitors -A --all uds.dev/prometheus-ambient=true
+              ./zarf tools kubectl annotate podmonitors -A --all uds.dev/prometheus-ambient=true
