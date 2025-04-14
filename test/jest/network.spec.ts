@@ -165,11 +165,11 @@ describe("Network Policy Validation", () => {
   test.concurrent("Denied Requests by Default and Incorrect Ports and Labels", async () => {
     // Default Deny when no Ingress or Egress defined or Exposed Endpoints
     // The HTTP response code could either be 000 or 503, depending on the K8s distro
-    const denied_external_response = await execInPod("curl-ns-deny-all", curlPodName1, "curl-pkg-deny-all-1", CURL_GATEWAY);
+    const denied_external_response = await execInPod("curl-ns-deny-al-1", curlPodName1, "curl-pkg-deny-all-1", CURL_GATEWAY);
     expect(isResponseError(denied_external_response)).toBe(true);
 
     // Default deny when no Ingress or Egress for internal curl command
-    const denied_internal_response = await execInPod("curl-ns-deny-all", curlPodName1, "curl-pkg-deny-all-1", INTERNAL_CURL_COMMAND_1);
+    const denied_internal_response = await execInPod("curl-ns-deny-all-1", curlPodName1, "curl-pkg-deny-all-1", INTERNAL_CURL_COMMAND_1);
     expect(isResponseError(denied_internal_response)).toBe(true);
 
     // Default Deny for Google Curl when no Egress defined
@@ -177,8 +177,8 @@ describe("Network Policy Validation", () => {
     expect(denied_google_response.stdout).toBe("000");
 
     // Default Deny for Blocked Port
-    const blocked_port_curl = getCurlCommand("curl-pkg-deny-all-2", "curl-ns-deny-all", 9999);
-    const denied_port_response = await execInPod("curl-ns-deny-all", curlPodName1, "curl-pkg-deny-all-1", blocked_port_curl);
+    const blocked_port_curl = getCurlCommand("curl-pkg-deny-all-2", "curl-ns-deny-all-2", 9999);
+    const denied_port_response = await execInPod("curl-ns-deny-all-1", curlPodName1, "curl-pkg-deny-all-1", blocked_port_curl);
     expect(isResponseError(denied_port_response)).toBe(true);
   });
 
