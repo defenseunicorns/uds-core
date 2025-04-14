@@ -8,24 +8,11 @@ import fetch from 'node-fetch';
 const kc = new k8s.KubeConfig();
 kc.loadFromDefault();
 
-interface NodeMetrics {
-    metadata: {
-      name: string;
-      creationTimestamp: string;
-      labels: Map<string, string>
-    };
-    timestamp: string;
-    window: string;
-    usage: {
-      cpu: string;
-      memory: string;
-    };
-  }
-  interface KubeConfigCerts {
-    caCert?: string;
-    cert?: string;
-    key?: string;
-  }
+interface KubeConfigCerts {
+  caCert?: string;
+  cert?: string;
+  key?: string;
+}
 
 function getApiServerAddress(): string | undefined {
     try {
@@ -75,11 +62,9 @@ function getCertsFromKubeConfig(): KubeConfigCerts | undefined {
       const cert = user?.certData || ""
       const key = user?.keyData || ""
       
-      const ceCertDecoded = Buffer.from(caCert, 'base64').toString('utf-8');
       return { caCert, cert, key };
   
     } catch (err) {
-      console.log('error here')
       console.error('Error getting certs from kubeconfig:', err);
       return undefined;
     }
@@ -87,23 +72,33 @@ function getCertsFromKubeConfig(): KubeConfigCerts | undefined {
 
 describe("Metrics Server", () => {
     const apiServerAddress = getApiServerAddress();
-    const metricsApi = { nodes: "/apis/metrics.k8s.io/v1beta1/nodes", pods: "/apis/metrics.k8s.io/v1beta1/pods"};
     const certs = getCertsFromKubeConfig() || {};
+    const metricsApi = "/apis/metrics.k8s.io/v1beta1";
+    const https = require('https');
+
     if (!apiServerAddress) {
         console.error("API server address not found.");
         return;
     }
+    if (!certs) {
+      console.error("Cluster certificates could not be loaded.");
+      return;
+    }
 
-    const https = require('https');
+    const decodedCerts = {
+      caCert: Buffer.from(certs.caCert || "", 'base64').toString('utf-8'),
+      cert: Buffer.from(certs.cert || "", 'base64').toString('utf-8'),
+      key: Buffer.from(certs.key || "", 'base64').toString('utf-8'),
+    };
+
     const agent = new https.Agent({
-        cert: Buffer.from(certs?.cert || "", 'base64').toString('utf-8'),
-        key: Buffer.from(certs?.key || "", 'base64').toString('utf-8'),
-        ca: Buffer.from(certs?.caCert || "", 'base64').toString('utf-8'),
-        //rejectUnauthorized: false,
+        cert: decodedCerts.cert,
+        key: decodedCerts.key,
+        ca: decodedCerts.caCert
     });
 
     test("metrics-server should return node metrics", async () => {
-        const response = await fetch(`${apiServerAddress}${metricsApi.nodes}`, {
+        const response = await fetch(`${apiServerAddress}${metricsApi}/nodes`, {
             agent: agent,
         });
         expect(response.status).toBe(200);
@@ -113,7 +108,7 @@ describe("Metrics Server", () => {
         expect(body.items.length).toBeGreaterThan(0);
     });
     test("metrics-server should return pod metrics", async () => {
-        const response = await fetch(`${apiServerAddress}${metricsApi.pods}`, {
+        const response = await fetch(`${apiServerAddress}${metricsApi}/pods`, {
             agent: agent,
         });
         expect(response.status).toBe(200);
