@@ -129,5 +129,5 @@ velero restore create uds-restore-$(date +%s) \
 > before running the restore.
 
 > [!NOTE]
-> Additional configuration will be required to get CSI backed PVCs to be snapshotted. For more information on configuring CSI backed volumes, see https://github.com/defenseunicorns/uds-core/tree/main/docs/reference/configuration/csi-driver.md
+> Additional configuration will be required to get CSI backed PVCs to be snapshotted. For more information on configuring CSI backed volumes, see https://github.com/defenseunicorns/uds-core/blob/main/docs/reference/configuration/backup%20and%20restore/vsphere-rke2-csi.md
 
