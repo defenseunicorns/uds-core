@@ -43,6 +43,20 @@ packages:
     optionalComponents:
       - metrics-server
     overrides:
+      istio-admin-gateway:
+        gateway:
+          values:
+            - path: service.annotations
+              value:
+                service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
+                service.beta.kubernetes.io/aws-load-balancer-target-node-labels: "kubernetes.io/os=linux"
+      istio-tenant-gateway:
+        gateway:
+          values:
+            - path: service.annotations
+              value:
+                service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
+                service.beta.kubernetes.io/aws-load-balancer-target-node-labels: "kubernetes.io/os=linux"
       velero:
         velero:
           variables:
