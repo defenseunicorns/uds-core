@@ -9,7 +9,7 @@ UDS Core leverages Istio to route dedicated egress out of the service mesh. This
 
 ## Configuring the Egress Workload
 
-The dedicated egress workload is an *optional* component of UDS Core. To enable it in the UDS Bundle, add it to the `optionalComponents` as follows:
+The dedicated egress gateway is an *optional* component of UDS Core. To enable it in the UDS Bundle, add it to the `optionalComponents` as follows:
 
 ```yaml
 kind: UDSBundle
