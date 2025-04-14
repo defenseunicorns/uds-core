@@ -549,7 +549,7 @@ describe("authorization policy generation", () => {
     );
 
     const metricScrapingPolicy = policies.find(
-      p => p.metadata?.name === "protect-authservice-ingress-15020-metric-scraping",
+      p => p.metadata?.name === "protect-authservice-ingress-15020-sidecar-metric-scraping",
     );
     expect(metricScrapingPolicy).toBeDefined();
     expect(metricScrapingPolicy!.spec?.selector?.matchLabels).toEqual({});

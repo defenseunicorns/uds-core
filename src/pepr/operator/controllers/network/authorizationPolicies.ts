@@ -263,11 +263,12 @@ export async function generateAuthorizationPolicies(
     }
   }
 
-  // In Sidecar mode, Prometheus lacks mTLS credentials, causing metric scrapes on port 15020 to fail.
+  // With Prometheus in Ambient mode, all traffic is sent over mTLS and the
+  // destination sidecar requires an ALLOW policy to expose sidecar metrics.
   // Add an AuthorizationPolicy to allow all traffic on port 15020 for the package's namespace.
   if (istioMode === IstioState.Sidecar) {
     const extraPolicyName = sanitizeResourceName(
-      `protect-${pkgName}-ingress-15020-metric-scraping`,
+      `protect-${pkgName}-ingress-15020-sidecar-metric-scraping`,
     );
     const extraPolicy = buildAuthPolicy(
       extraPolicyName,

@@ -137,9 +137,6 @@ When(PrometheusPodMonitor)
     if (pm.Raw.spec?.podMetricsEndpoints && Array.isArray(pm.Raw.spec.podMetricsEndpoints)) {
       pm.Raw.spec.podMetricsEndpoints.forEach((endpoint: PodMonitorEndpoint) => {
         endpoint.scheme = PodMonitorScheme.HTTP;
-        if (endpoint.tlsConfig) {
-          delete endpoint.tlsConfig;
-        }
       });
     }
   });
