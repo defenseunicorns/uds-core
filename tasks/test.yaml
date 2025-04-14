@@ -14,8 +14,8 @@ includes:
   - test-resources: ../src/test/tasks.yaml
   - base-layer: ../packages/base/tasks.yaml
   - idam-layer: ../packages/identity-authorization/tasks.yaml
-  - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/refs/tags/v1.13.0/tasks/setup.yaml
-  - compliance: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.13.0/tasks/compliance.yaml
+  - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.14.0/tasks/setup.yaml
+  - compliance: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.14.0/tasks/compliance.yaml
 
 tasks:
   - name: base
@@ -96,11 +96,10 @@ tasks:
         default: ${UDS_ARCH}
     # Run each e2e test type from the e2e folder
     actions:
-      - description: "Setup the Keycloak admin user if needed"
-        task: util:keycloak-admin-user
       - description: "Setup the Doug User for testing"
-        # Self-reference this task file to avoid https://github.com/defenseunicorns/maru-runner/issues/144
-        cmd: uds run -f tasks/test.yaml common-setup:create-doug-user --set KEYCLOAK_GROUP="/UDS Core/Admin" # Adds the test doug user
+        task: common-setup:keycloak-user
+        with:
+          group: "/UDS Core/Admin"
       - description: "Create and Deploy Test App Package"
         task: test-resources:create-deploy
         with:
