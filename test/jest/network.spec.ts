@@ -165,7 +165,7 @@ describe("Network Policy Validation", () => {
   test.concurrent("Denied Requests by Default and Incorrect Ports and Labels", async () => {
     // Default Deny when no Ingress or Egress defined or Exposed Endpoints
     // The HTTP response code could either be 000 or 503, depending on the K8s distro
-    const denied_external_response = await execInPod("curl-ns-deny-al-1", curlPodName1, "curl-pkg-deny-all-1", CURL_GATEWAY);
+    const denied_external_response = await execInPod("curl-ns-deny-all-1", curlPodName1, "curl-pkg-deny-all-1", CURL_GATEWAY);
     expect(isResponseError(denied_external_response)).toBe(true);
 
     // Default deny when no Ingress or Egress for internal curl command
