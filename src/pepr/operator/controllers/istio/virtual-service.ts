@@ -232,6 +232,6 @@ export async function warnMatchingExistingVirtualServices(host: string) {
   }
 }
 
-function generateEgressVSName(host: string) {
+export function generateEgressVSName(host: string) {
   return sanitizeResourceName(`egress-vs-${host}`);
 }

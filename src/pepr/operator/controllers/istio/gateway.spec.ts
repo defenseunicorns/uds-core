@@ -4,7 +4,7 @@
  */
 
 import { describe, expect, it, jest, beforeEach } from "@jest/globals";
-import { K8s, kind } from "pepr";
+import { K8s } from "pepr";
 import { generateEgressGateway, warnMatchingExistingGateways, generateGatewayName } from "./gateway";
 import { EgressResource } from "./types";
 import { IstioGateway, RemoteProtocol, IstioTLSMode } from "../../crd";
@@ -56,7 +56,7 @@ jest.mock("pepr", () => ({
   },
 }));
 
-describe("warnMatchingExistingGateways", () => {
+describe("test warnMatchingExistingGateways", () => {
   const host = "example.com";
   const gwName = generateGatewayName(host);
 

@@ -3,11 +3,13 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { describe, expect, it } from "@jest/globals";
+import { describe, expect, it, jest, beforeEach } from "@jest/globals";
+import { K8s } from "pepr";
 import { UDSConfig } from "../../../config";
-import { Expose, Gateway, RemoteProtocol } from "../../crd";
-import { generateEgressVirtualService, generateIngressVirtualService } from "./virtual-service";
+import { Expose, Gateway, RemoteProtocol, IstioVirtualService } from "../../crd";
+import { generateEgressVirtualService, generateIngressVirtualService, warnMatchingExistingVirtualServices, generateEgressVSName } from "./virtual-service";
 import { EgressResource } from "./types";
+import { istioEgressGatewayNamespace } from "./istio-resources";
 
 describe("test generate virtual service", () => {
   const ownerRefs = [
@@ -223,5 +225,139 @@ describe("test generate egress virtual service", () => {
     expect(virtualService).toBeDefined();
     expect(virtualService.spec?.http).toBeUndefined();
     expect(virtualService.spec?.tls).toBeDefined();
+  });
+});
+
+// Mock the necessary Kubernetes functions
+jest.mock("pepr", () => ({
+  K8s: jest.fn(),
+  Log: {
+    child: jest.fn(() => ({
+      info: jest.fn(),
+      error: jest.fn(),
+      warn: jest.fn(),
+      level: "info",
+    })),
+  },
+  kind: {
+    VirtualService: "VirtualService",
+  },
+}));
+
+describe("test warnMatchingExistingVirtualServices", () => {
+  const host = "example.com";
+  const vsName = generateEgressVSName(host);
+
+  beforeEach(() => {
+    process.env.PEPR_WATCH_MODE = "true";
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.runOnlyPendingTimers();
+    jest.useRealTimers();
+    jest.clearAllMocks();
+  });
+
+  it("does not warn when no virtual services exist", async () => {
+    const getMock = jest.fn<() => Promise<{ items: IstioVirtualService[] }>>().mockResolvedValue({
+      items: [],
+    });
+
+    (K8s as jest.Mock).mockImplementation(kindType => {
+      if (kindType === IstioVirtualService) {
+        return {
+          Get: getMock,
+        };
+      }
+    });
+
+    await expect(warnMatchingExistingVirtualServices(host)).resolves.not.toThrow();
+  });
+
+  it("does not warn when gateway with same host name exists in egress gw namespace", async () => { 
+    const getMock = jest.fn<() => Promise<{ items: IstioVirtualService[] }>>().mockResolvedValue({
+      items: [
+        {
+          metadata: {
+            name: vsName,
+            namespace: istioEgressGatewayNamespace,
+          },
+          spec: {
+            hosts: [host],
+          },
+        },
+      ],
+    });
+
+    (K8s as jest.Mock).mockImplementation(kindType => {
+      if (kindType === IstioVirtualService) {
+        return {
+          Get: getMock,
+        };
+      }
+    });
+
+    await expect(warnMatchingExistingVirtualServices(host)).resolves.not.toThrow();
+  });
+
+  it("does not warn when gateway with differnt host name exists in the egress gw namespace", async () => {
+    const newHost = "httpbin.org";
+    const newVsName = generateEgressVSName(newHost);
+
+    const getMock = jest.fn<() => Promise<{ items: IstioVirtualService[] }>>().mockResolvedValue({
+      items: [
+        {
+          metadata: {
+            name: newVsName,
+            namespace: istioEgressGatewayNamespace,
+          },
+          spec: {
+            hosts: [newHost],
+          },
+        },
+      ],
+    });
+
+    (K8s as jest.Mock).mockImplementation(kindType => {
+      if (kindType === IstioVirtualService) {
+        return {
+          Get: getMock,
+        };
+      }
+    });
+
+    await expect(warnMatchingExistingVirtualServices(host)).resolves.not.toThrow();
+  });
+
+  it("warns when another gateway has matching host in a different namespace", async () => {
+    const newVsName = "custom-gateway";
+    const newVsNamespace = "custom-namespace";
+
+    const getMock = jest.fn<() => Promise<{ items: IstioVirtualService[] }>>().mockResolvedValue({
+      items: [
+        {
+          metadata: {
+            name: newVsName,
+            namespace: newVsNamespace,
+          },
+          spec: {
+              hosts: [host],
+          },
+        },
+      ],
+    });
+
+    (K8s as jest.Mock).mockImplementation(kindType => {
+      if (kindType === IstioVirtualService) {
+        return {
+          Get: getMock,
+        };
+      }
+    });
+
+    await expect(warnMatchingExistingVirtualServices(host)).rejects.toThrow(
+      `Found existing Virtual Service ${newVsName}/${newVsNamespace} with matching host. Istio will not behave properly with multiple Virtual Services using the same hosts.`,
+    );
   });
 });
