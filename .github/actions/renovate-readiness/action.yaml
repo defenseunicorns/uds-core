@@ -131,7 +131,7 @@ runs:
       if: steps.check-ready-label.outputs.should_process == 'true' && steps.process-branch.outputs.needs_comparison == 'true'
       run: |
         cd scripts/renovate
-        npx ts-node getImagesAndCharts.ts old
+        npx ts-node getImagesAndCharts.ts $GITHUB_WORKSPACE/old
       shell: bash
 
     # Extract images and charts from new branch
@@ -139,7 +139,7 @@ runs:
       if: steps.check-ready-label.outputs.should_process == 'true' && steps.process-branch.outputs.needs_comparison == 'true'
       run: |
         cd scripts/renovate
-        npx ts-node getImagesAndCharts.ts new
+        npx ts-node getImagesAndCharts.ts $GITHUB_WORKSPACE/new
       shell: bash
 
     # Compare images and charts
@@ -148,7 +148,7 @@ runs:
       if: steps.check-ready-label.outputs.should_process == 'true' && steps.process-branch.outputs.needs_comparison == 'true'
       run: |
         cd scripts/renovate
-        OUTPUT=$(npx ts-node compareImagesAndCharts.ts old/extract new/extract)
+        OUTPUT=$(npx ts-node compareImagesAndCharts.ts $GITHUB_WORKSPACE/old/extract $GITHUB_WORKSPACE/new/extract)
         echo "$OUTPUT"
 
         # Extract labels from output
