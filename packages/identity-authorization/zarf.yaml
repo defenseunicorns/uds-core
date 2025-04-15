@@ -10,6 +10,11 @@ metadata:
   version: "0.40.0"
   # x-release-please-end
   x-uds-dependencies: ["base"]
+  annotations:
+    dev.uds.title: UDS Core (Identity & Authorization)
+    dev.uds.tagline: Enables authentication and authorization functionality
+    dev.uds.category: UDS-Core, Identity, Authorization
+    dev.uds.keywords: uds,keycloak,authservice
 
 components:
   # Keycloak

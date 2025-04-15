@@ -10,6 +10,11 @@ metadata:
   version: "0.40.0"
   # x-release-please-end
   x-uds-dependencies: ["base", "identity-authorization"]
+  annotations:
+    dev.uds.title: UDS Core (Monitoring)
+    dev.uds.tagline: Enables frontend log data, metrics monitoring, and alerting
+    dev.uds.category: UDS-Core,Monitoring
+    dev.uds.keywords: uds,prometheus,grafana
 
 components:
   # Prometheus
