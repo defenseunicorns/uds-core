@@ -12,8 +12,8 @@ metadata:
   x-uds-dependencies: []
   annotations:
     dev.uds.title: UDS Core (Base)
-    dev.uds.tagline: UDS Core mTLS, zero trust, and Pepr
-    dev.uds.category: Base
+    dev.uds.tagline: Provides the base for all other UDS Core Functional Layers
+    dev.uds.category: UDS-Core
     dev.uds.keywords: uds,pepr,istio
 
 components:
