@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 includes:
-  - utils: ../../tasks/utils.yaml
+  - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.14.0/tasks/setup.yaml
 
 tasks:
   - name: validate
@@ -32,11 +32,10 @@ tasks:
 
   - name: e2e-test
     actions:
-      - description: "Setup the Keycloak admin user if needed"
-        task: utils:keycloak-admin-user
       - description: "Setup the Doug User for testing"
-        # Self-reference this task file to avoid https://github.com/defenseunicorns/maru-runner/issues/144
-        cmd: uds run -f tasks/test.yaml common-setup:create-doug-user --set KEYCLOAK_GROUP="/UDS Core/Admin" # Adds the test doug user
+        task: common-setup:keycloak-user
+        with:
+          group: "/UDS Core/Admin"
       - description: E2E Test for Grafana, optionally set FULL_CORE=true to test integrations with Loki
         cmd: |
           # renovate: datasource=docker depName=mcr.microsoft.com/playwright versioning=docker

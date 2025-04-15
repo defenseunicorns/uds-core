@@ -1,6 +1,11 @@
 # Copyright 2024 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
+variables:
+  - name: EXCLUDED_PACKAGES
+    description: A comma separated string of packages to be excluded from validation and e2e tests.
+    default: ""
+
 includes:
   - create: ./create.yaml
   - setup: ./setup.yaml
@@ -9,8 +14,8 @@ includes:
   - test-resources: ../src/test/tasks.yaml
   - base-layer: ../packages/base/tasks.yaml
   - idam-layer: ../packages/identity-authorization/tasks.yaml
-  - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/refs/tags/v1.13.0/tasks/setup.yaml
-  - compliance: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.13.0/tasks/compliance.yaml
+  - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.14.0/tasks/setup.yaml
+  - compliance: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.14.0/tasks/compliance.yaml
 
 tasks:
   - name: base
@@ -53,11 +58,22 @@ tasks:
 
   - name: validate-packages
     description: "Validate all packages"
+    inputs:
+      # Added to support bypassing passthrough gateway validation on non-k3d distributions.
+      validate_passthrough:
+        description: Whether to validate the passthrough gateway.
+        default: "true"
     # loop through each src/* package and run the validate.yaml task
     actions:
       - cmd: |
-          for package in src/*; do
-            uds run -f ${package}/tasks.yaml validate --no-progress
+          for package in $(ls src); do
+            if [ ! $(echo ${EXCLUDED_PACKAGES} | grep ${package}) ]; then
+              if [ ${package} = "istio" ]; then
+                uds run -f src/${package}/tasks.yaml validate --no-progress --with validate_passthrough=${{ .inputs.validate_passthrough }}
+              else
+                uds run -f src/${package}/tasks.yaml validate --no-progress
+              fi
+            fi
           done
           set +e
 
@@ -73,15 +89,21 @@ tasks:
 
   - name: e2e-tests
     description: "E2E Test all packages"
+    inputs:
+      architecture:
+        description: "System architecture that the test-apps package should be built for."
+        required: true
+        default: ${UDS_ARCH}
     # Run each e2e test type from the e2e folder
     actions:
-      - description: "Setup the Keycloak admin user if needed"
-        task: util:keycloak-admin-user
       - description: "Setup the Doug User for testing"
-        # Self-reference this task file to avoid https://github.com/defenseunicorns/maru-runner/issues/144
-        cmd: uds run -f tasks/test.yaml common-setup:create-doug-user --set KEYCLOAK_GROUP="/UDS Core/Admin" # Adds the test doug user
+        task: common-setup:keycloak-user
+        with:
+          group: "/UDS Core/Admin"
       - description: "Create and Deploy Test App Package"
         task: test-resources:create-deploy
+        with:
+          architecture: ${{ .inputs.architecture }}
       - description: "Run Playwright E2E tests for all packages"
         dir: test/playwright
         cmd: |
@@ -113,6 +135,17 @@ tasks:
     actions:
       - task: uds-core
       - task: e2e-tests
+
+  - name: uds-core-non-k3d
+    description: "Validate and Test UDS Core deployment on a non K3d Cluster"
+    actions:
+      - task: util:setup-hosts
+      - task: validate-packages
+        with:
+          validate_passthrough: "false"
+      - task: e2e-tests
+        with:
+          architecture: "amd64"
 
   - name: uds-core-ha
     description: "Build and test UDS Core"

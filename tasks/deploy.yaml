@@ -8,7 +8,7 @@ variables:
   - name: VERSION
     description: "The version of the packages to deploy"
     # x-release-please-start-version
-    default: "0.39.0"
+    default: "0.40.0"
     # x-release-please-end
   - name: FLAVOR
     default: upstream
@@ -45,9 +45,9 @@ tasks:
         default: base
         description: The UDS Core layer to deploy
     actions:
-      - description: "Deploy UDS Core Base Layer without Ambient (must set UDS_LAYER environment variable)"
+      - description: "Deploy UDS Core Base Layer"
         if: ${{ eq .inputs.layer "base"}}
-        cmd: uds zarf package deploy build/zarf-package-core-${{ index .inputs "layer" }}-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress --components '*'
+        cmd: uds zarf package deploy build/zarf-package-core-${{ index .inputs "layer" }}-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress --components '*' --set PROXY_MEMORY_REQUEST=40Mi --set PROXY_CPU_REQUEST=10m
       - description: "Deploy a single UDS Core Layer (must set UDS_LAYER environment variable)"
         if: ${{ ne .inputs.layer "base"}}
         cmd: uds zarf package deploy build/zarf-package-core-${{ index .inputs "layer" }}-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress --components '*'

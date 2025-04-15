@@ -6,7 +6,7 @@ metadata:
   name: uds-core-rke2-nightly
   description: A UDS bundle for deploying RKE2 and UDS Core
   # x-release-please-start-version
-  version: "0.39.0"
+  version: "0.40.0"
   # x-release-please-end
 
 packages:
@@ -38,11 +38,25 @@ packages:
   - name: core
     path: ../../../build
     # x-release-please-start-version
-    ref: 0.39.0
+    ref: 0.40.0
     # x-release-please-end
     optionalComponents:
       - metrics-server
     overrides:
+      istio-admin-gateway:
+        gateway:
+          values:
+            - path: service.annotations
+              value:
+                service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
+                service.beta.kubernetes.io/aws-load-balancer-target-node-labels: "kubernetes.io/os=linux"
+      istio-tenant-gateway:
+        gateway:
+          values:
+            - path: service.annotations
+              value:
+                service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
+                service.beta.kubernetes.io/aws-load-balancer-target-node-labels: "kubernetes.io/os=linux"
       velero:
         velero:
           variables:
