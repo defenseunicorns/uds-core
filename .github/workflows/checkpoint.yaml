@@ -12,8 +12,8 @@ permissions:
 on:
   pull_request:
     # milestoned is added here as a workaround for release-please not triggering PR workflows (PRs should be added to a milestone to trigger the workflow).
-    # labeled is added here to allow for "manual" triggering of CI on renovate PRs
-    types: [milestoned, opened, reopened, synchronize, labeled]
+    # removed labeled trigger to prevent infinite loops when renovate-readiness applies labels
+    types: [milestoned, opened, reopened, synchronize]
     paths:
       - packages/checkpoint-dev/**
       - .github/workflows/checkpoint**
@@ -38,6 +38,7 @@ jobs:
       contents: read
       packages: write
       id-token: write  # This is needed for OIDC federation.
+      pull-requests: write # Allows writing to pull requests (needed for renovate-readiness)
 
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -45,6 +46,8 @@ jobs:
       - name: Check renovate readiness
         if: startsWith(github.event.pull_request.head.ref, 'renovate/') # Only call for Renovate PRs
         uses: ./.github/actions/renovate-readiness
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Environment setup
         uses: ./.github/actions/setup

@@ -7,8 +7,8 @@ name: Filter
 on:
   pull_request:
     # milestoned is added here as a workaround for release-please not triggering PR workflows (PRs should be added to a milestone to trigger the workflow).
-    # labeled is added here to allow for "manual" triggering of CI on renovate PRs
-    types: [milestoned, opened, reopened, synchronize, labeled]
+    # removed labeled trigger to prevent infinite loops when renovate-readiness applies labels
+    types: [milestoned, opened, reopened, synchronize]
     paths-ignore:
       - "**.md"
       - "**.jpg"
@@ -66,6 +66,8 @@ jobs:
       - name: Check renovate readiness
         if: startsWith(github.event.pull_request.head.ref, 'renovate/') # Only call for Renovate PRs
         uses: ./.github/actions/renovate-readiness
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
       # Uses a custom action to filter paths for source packages.
       - name: Check src paths

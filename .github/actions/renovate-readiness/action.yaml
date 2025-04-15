@@ -4,14 +4,182 @@
 name: renovate-readiness
 description: "Check if Renovate PRs are ready for testing"
 
+inputs:
+  github_token:
+    description: "GitHub token for API calls"
+    required: true
+
 runs:
   using: composite
   steps:
-    # This is current a stub for future logic that would auto-detect readiness
-    # In lieu of that, we require an engineer to review changes and manually add the `renovate-ready` label
+    # Check if PR has the renovate-ready label (manual override)
     - name: Check if PR has the ready label
-      if: ${{ ! contains(github.event.pull_request.labels.*.name, 'renovate-ready') }}
+      id: check-ready-label
       run: |
-        echo "This PR is not ready to run CI. Failing job."
+        if [[ "${{ contains(github.event.pull_request.labels.*.name, 'renovate-ready') }}" == "true" ]]; then
+          echo "PR has the renovate-ready label. Skipping readiness check."
+          echo "should_process=false" >> $GITHUB_OUTPUT
+        else
+          echo "PR does not have the renovate-ready label. Proceeding with readiness check."
+          echo "should_process=true" >> $GITHUB_OUTPUT
+        fi
+      shell: bash
+
+    # Process branch name to determine package
+    - name: Process branch name
+      id: process-branch
+      if: steps.check-ready-label.outputs.should_process == 'true'
+      run: |
+        BRANCH_NAME="${{ github.head_ref }}"
+        echo "Branch name: $BRANCH_NAME"
+
+        # Remove 'renovate/' prefix if present
+        if [[ $BRANCH_NAME == renovate/* ]]; then
+          PACKAGE_NAME=${BRANCH_NAME#renovate/}
+          echo "Package name after removing prefix: $PACKAGE_NAME"
+        else
+          PACKAGE_NAME=$BRANCH_NAME
+          echo "Branch doesn't have renovate/ prefix, using as is: $PACKAGE_NAME"
+        fi
+
+        # Handle special cases
+        if [[ "$PACKAGE_NAME" == "pepr" ]]; then
+          echo "Detected Pepr update"
+          echo "package=pepr" >> $GITHUB_OUTPUT
+          echo "is_pepr=true" >> $GITHUB_OUTPUT
+          echo "needs_comparison=false" >> $GITHUB_OUTPUT
+        elif [[ "$PACKAGE_NAME" == "support-deps" ]]; then
+          echo "Detected support dependencies update"
+          echo "package=support-deps" >> $GITHUB_OUTPUT
+          echo "is_support_deps=true" >> $GITHUB_OUTPUT
+          echo "needs_comparison=false" >> $GITHUB_OUTPUT
+        else
+          echo "Regular package update: $PACKAGE_NAME"
+          echo "package=$PACKAGE_NAME" >> $GITHUB_OUTPUT
+          echo "needs_comparison=true" >> $GITHUB_OUTPUT
+        fi
+      shell: bash
+
+    # Handle Pepr updates
+    - name: Handle Pepr update
+      if: steps.check-ready-label.outputs.should_process == 'true' && steps.process-branch.outputs.is_pepr == 'true'
+      run: |
+        # Get Pepr version from package.json
+        PEPR_VERSION=$(jq -r '.dependencies.pepr' package.json)
+        echo "Pepr version from package.json: $PEPR_VERSION"
+
+        # Get image versions from tasks/create.yaml
+        IRONBANK_IMAGE_VERSION=$(yq e '.tasks[].actions[].args[] | select(. == "registry1.dso.mil/ironbank/opensource/pepr/pepr-*") | split(":")[1]' tasks/create.yaml)
+        echo "Ironbank image version: $IRONBANK_IMAGE_VERSION"
+
+        # Compare versions
+        if [[ "$PEPR_VERSION" != "$IRONBANK_IMAGE_VERSION" ]]; then
+          echo "Pepr version mismatch. Waiting on Ironbank image update."
+          gh pr edit ${{ github.event.pull_request.number }} --add-label "waiting on ironbank"
+          exit 1
+        else
+          echo "Pepr versions match. Ready for review."
+          gh pr edit ${{ github.event.pull_request.number }} --add-label "needs-review"
+        fi
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github_token }}
+
+    # Handle support dependencies
+    - name: Handle support dependencies
+      if: steps.check-ready-label.outputs.should_process == 'true' && steps.process-branch.outputs.is_support_deps == 'true'
+      run: |
+        echo "Support dependencies update detected. Needs manual review."
+        gh pr edit ${{ github.event.pull_request.number }} --add-label "needs-review"
+        exit 1
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github_token }}
+
+    # Checkout PR branch (sparse checkout of src/<pkg>)
+    - name: Checkout PR branch
+      if: steps.check-ready-label.outputs.should_process == 'true' && steps.process-branch.outputs.needs_comparison == 'true'
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event.pull_request.head.ref }}
+        path: new
+        sparse-checkout: |
+          src/${{ steps.process-branch.outputs.package }}
+        sparse-checkout-cone-mode: false
+
+    # Checkout main branch (sparse checkout of src/<pkg>)
+    - name: Checkout main branch
+      if: steps.check-ready-label.outputs.should_process == 'true' && steps.process-branch.outputs.needs_comparison == 'true'
+      uses: actions/checkout@v4
+      with:
+        ref: main
+        path: old
+        sparse-checkout: |
+          src/${{ steps.process-branch.outputs.package }}
+        sparse-checkout-cone-mode: false
+
+    # Install dependencies
+    - name: Install dependencies
+      if: steps.check-ready-label.outputs.should_process == 'true' && steps.process-branch.outputs.needs_comparison == 'true'
+      run: |
+        cd scripts/renovate
+        npm install
+      shell: bash
+
+    # Extract images and charts from old branch
+    - name: Extract images and charts from old branch
+      if: steps.check-ready-label.outputs.should_process == 'true' && steps.process-branch.outputs.needs_comparison == 'true'
+      run: |
+        cd scripts/renovate
+        npx ts-node getImagesAndCharts.ts old
+      shell: bash
+
+    # Extract images and charts from new branch
+    - name: Extract images and charts from new branch
+      if: steps.check-ready-label.outputs.should_process == 'true' && steps.process-branch.outputs.needs_comparison == 'true'
+      run: |
+        cd scripts/renovate
+        npx ts-node getImagesAndCharts.ts new
+      shell: bash
+
+    # Compare images and charts
+    - name: Compare images and charts
+      id: compare
+      if: steps.check-ready-label.outputs.should_process == 'true' && steps.process-branch.outputs.needs_comparison == 'true'
+      run: |
+        cd scripts/renovate
+        OUTPUT=$(npx ts-node compareImagesAndCharts.ts old/extract new/extract)
+        echo "$OUTPUT"
+
+        # Extract labels from output
+        LABELS=$(echo "$OUTPUT" | grep "LABELS=" | cut -d'=' -f2)
+        echo "labels=$LABELS" >> $GITHUB_OUTPUT
+
+        # Check if waiting on labels are present
+        if [[ "$LABELS" == *"waiting on ironbank"* ]] || [[ "$LABELS" == *"waiting on cgr"* ]]; then
+          echo "waiting=true" >> $GITHUB_OUTPUT
+        else
+          echo "waiting=false" >> $GITHUB_OUTPUT
+        fi
+      shell: bash
+
+    # Apply labels
+    - name: Apply labels
+      if: steps.check-ready-label.outputs.should_process == 'true' && steps.process-branch.outputs.needs_comparison == 'true'
+      run: |
+        LABELS="${{ steps.compare.outputs.labels }}"
+        if [[ -n "$LABELS" ]]; then
+          echo "Applying labels: $LABELS"
+          gh pr edit ${{ github.event.pull_request.number }} --add-label "$LABELS"
+        fi
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github_token }}
+
+    # Fail if waiting on images
+    - name: Fail if waiting on images
+      if: steps.check-ready-label.outputs.should_process == 'true' && steps.compare.outputs.waiting == 'true'
+      run: |
+        echo "PR is waiting on image updates. Failing job."
         exit 1
       shell: bash

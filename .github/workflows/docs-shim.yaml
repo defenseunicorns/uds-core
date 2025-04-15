@@ -10,8 +10,8 @@ permissions:
 on:
   pull_request:
     # milestoned is added here as a workaround for release-please not triggering PR workflows (PRs should be added to a milestone to trigger the workflow).
-    # labeled is added here to allow for "manual" triggering of CI on renovate PRs
-    types: [milestoned, opened, reopened, synchronize, labeled]
+    # removed labeled trigger to prevent infinite loops when renovate-readiness applies labels
+    types: [milestoned, opened, reopened, synchronize]
     paths:
       - "**.md"
       - "**.jpg"
@@ -31,6 +31,10 @@ on:
 jobs:
   lint-check:
     runs-on: ubuntu-latest
+    # Job-level permissions override workflow-level permissions
+    permissions:
+      contents: read # Allows reading the content of the repository.
+      pull-requests: write # Allows writing to pull requests (needed for renovate-readiness)
     steps:
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -38,6 +42,8 @@ jobs:
       - name: Check renovate readiness
         if: startsWith(github.event.pull_request.head.ref, 'renovate/') # Only call for Renovate PRs
         uses: ./.github/actions/renovate-readiness
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: lint-check
         uses: ./.github/actions/lint-check
