@@ -93,7 +93,7 @@ When a Package CR specifies the `network.allow` field with, at minimum, the `rem
 
 ## Limitations
 
-The configuration Package CRs in combination with the behavior of Istio should be understood when using egress. There are a few "gotchas" that might occur while using the egress configurations.
+The configuration in Package CRs in combination with the behavior of Istio should be understood when using egress. There are a few "gotchas" that might occur while using the egress configurations.
 
 :::note
 The following are not exhaustive and are subject to change as this implementation matures from sidecar to ambient.
