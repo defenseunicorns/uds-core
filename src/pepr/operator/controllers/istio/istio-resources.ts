@@ -89,7 +89,9 @@ export async function istioResources(pkg: UDSPackage, namespace: string) {
   await K8s(kind.Namespace)
     .Get(istioEgressGatewayNamespace)
     .catch(async err => {
-      log.error(`Egress gateway namespace ${istioEgressGatewayNamespace} not found. Egress gateway is disabled.`);
+      log.error(
+        `Egress gateway namespace ${istioEgressGatewayNamespace} not found. Egress gateway is disabled.`,
+      );
       throw err;
     });
 

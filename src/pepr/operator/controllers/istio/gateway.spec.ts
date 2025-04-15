@@ -5,7 +5,11 @@
 
 import { describe, expect, it, jest, beforeEach } from "@jest/globals";
 import { K8s } from "pepr";
-import { generateEgressGateway, warnMatchingExistingGateways, generateGatewayName } from "./gateway";
+import {
+  generateEgressGateway,
+  warnMatchingExistingGateways,
+  generateGatewayName,
+} from "./gateway";
 import { EgressResource } from "./types";
 import { IstioGateway, RemoteProtocol, IstioTLSMode } from "../../crd";
 import { istioEgressGatewayNamespace } from "./istio-resources";
@@ -87,7 +91,7 @@ describe("test warnMatchingExistingGateways", () => {
     await expect(warnMatchingExistingGateways(host)).resolves.not.toThrow();
   });
 
-  it("does not warn when gateway with same host name exists in egress gw namespace", async () => { 
+  it("does not warn when gateway with same host name exists in egress gw namespace", async () => {
     const getMock = jest.fn<() => Promise<{ items: IstioGateway[] }>>().mockResolvedValue({
       items: [
         {
@@ -97,7 +101,7 @@ describe("test warnMatchingExistingGateways", () => {
           },
           spec: {
             servers: [
-              { 
+              {
                 hosts: [host],
                 port: {
                   name: "tls-443",
@@ -135,7 +139,7 @@ describe("test warnMatchingExistingGateways", () => {
           },
           spec: {
             servers: [
-              { 
+              {
                 hosts: [newHost],
                 port: {
                   name: "tls-443",
@@ -173,7 +177,7 @@ describe("test warnMatchingExistingGateways", () => {
           },
           spec: {
             servers: [
-              { 
+              {
                 hosts: [host],
                 port: {
                   name: "tls-443",

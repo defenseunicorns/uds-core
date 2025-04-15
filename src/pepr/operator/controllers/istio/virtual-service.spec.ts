@@ -7,7 +7,12 @@ import { describe, expect, it, jest, beforeEach } from "@jest/globals";
 import { K8s } from "pepr";
 import { UDSConfig } from "../../../config";
 import { Expose, Gateway, RemoteProtocol, IstioVirtualService } from "../../crd";
-import { generateEgressVirtualService, generateIngressVirtualService, warnMatchingExistingVirtualServices, generateEgressVSName } from "./virtual-service";
+import {
+  generateEgressVirtualService,
+  generateIngressVirtualService,
+  warnMatchingExistingVirtualServices,
+  generateEgressVSName,
+} from "./virtual-service";
 import { EgressResource } from "./types";
 import { istioEgressGatewayNamespace } from "./istio-resources";
 
@@ -275,7 +280,7 @@ describe("test warnMatchingExistingVirtualServices", () => {
     await expect(warnMatchingExistingVirtualServices(host)).resolves.not.toThrow();
   });
 
-  it("does not warn when gateway with same host name exists in egress gw namespace", async () => { 
+  it("does not warn when gateway with same host name exists in egress gw namespace", async () => {
     const getMock = jest.fn<() => Promise<{ items: IstioVirtualService[] }>>().mockResolvedValue({
       items: [
         {
@@ -342,7 +347,7 @@ describe("test warnMatchingExistingVirtualServices", () => {
             namespace: newVsNamespace,
           },
           spec: {
-              hosts: [host],
+            hosts: [host],
           },
         },
       ],

@@ -145,33 +145,18 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
     }
 
     // The 'remoteHost' and 'remoteProtocol' cannot be used with 'Ingress'.
-    if (
-      (policy.remoteHost || policy.remoteProtocol) &&
-      (policy.direction == "Ingress")
-    ) {
-      return req.Deny(
-        "remoteHost and/or remoteProtocol cannot be used with Ingress",
-      );
+    if ((policy.remoteHost || policy.remoteProtocol) && policy.direction == "Ingress") {
+      return req.Deny("remoteHost and/or remoteProtocol cannot be used with Ingress");
     }
 
     // The 'remoteHost' does not support wildcard domains.
-    if (
-      policy.remoteHost &&
-      policy.remoteHost.includes("*")
-    ) {
-      return req.Deny(
-        "remoteHost does not support wildcard domains",
-      );
+    if (policy.remoteHost && policy.remoteHost.includes("*")) {
+      return req.Deny("remoteHost does not support wildcard domains");
     }
 
     // Ambient is not compatible with 'remoteHost'.
-    if (
-      policy.remoteHost &&
-      networkSpec?.serviceMesh?.mode === Mode.Ambient
-    ) {
-      return req.Deny(
-        "remoteHost not supported in ambient mode",
-      );
+    if (policy.remoteHost && networkSpec?.serviceMesh?.mode === Mode.Ambient) {
+      return req.Deny("remoteHost not supported in ambient mode");
     }
 
     // Ensure the policy name is unique

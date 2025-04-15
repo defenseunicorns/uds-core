@@ -4,8 +4,12 @@
  */
 
 import { describe, expect, it } from "@jest/globals";
-import { createHostResourceMap, remapEgressResources, getHostPortsProtocol, removeEgressResources } from "./egress";
 import { Direction, RemoteProtocol } from "../../crd";
+import {
+  createHostResourceMap,
+  getHostPortsProtocol,
+  remapEgressResources,
+} from "./egress";
 
 describe("test createHostResourceMap", () => {
   it("should create a host resource map from a package", () => {

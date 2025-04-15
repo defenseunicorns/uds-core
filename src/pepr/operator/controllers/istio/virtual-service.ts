@@ -7,20 +7,20 @@ import { V1OwnerReference } from "@kubernetes/client-node";
 import { K8s } from "pepr";
 import { UDSConfig } from "../../../config";
 import {
-    Expose,
-    Gateway,
-    IstioHTTP,
-    IstioHTTPRoute,
-    IstioTLS,
-    IstioVirtualService,
+  Expose,
+  Gateway,
+  IstioHTTP,
+  IstioHTTPRoute,
+  IstioTLS,
+  IstioVirtualService,
 } from "../../crd";
 import { sanitizeResourceName } from "../utils";
 import { sharedEgressPkgId } from "./egress";
 import { generateGatewayName } from "./gateway";
 import {
-    getSharedAnnotationKey,
-    log,
-    istioEgressGatewayNamespace as namespace,
+  getSharedAnnotationKey,
+  log,
+  istioEgressGatewayNamespace as namespace,
 } from "./istio-resources";
 import { EgressResource } from "./types";
 
@@ -224,8 +224,8 @@ export async function warnMatchingExistingVirtualServices(host: string) {
       for (const vsHost of vs.spec.hosts) {
         if (vsHost === host) {
           const errText = `Found existing Virtual Service ${vs.metadata?.name}/${vs.metadata?.namespace} with matching host. Istio will not behave properly with multiple Virtual Services using the same hosts.`;
-            log.error(errText);
-            throw new Error(errText);
+          log.error(errText);
+          throw new Error(errText);
         }
       }
     }
