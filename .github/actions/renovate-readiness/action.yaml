@@ -29,8 +29,9 @@ runs:
     - name: Process branch name
       id: process-branch
       if: steps.check-ready-label.outputs.should_process == 'true'
+      env:
+        BRANCH_NAME: ${{ github.head_ref }}
       run: |
-        BRANCH_NAME="${{ github.head_ref }}"
         echo "Branch name: $BRANCH_NAME"
 
         # Remove 'renovate/' prefix if present
