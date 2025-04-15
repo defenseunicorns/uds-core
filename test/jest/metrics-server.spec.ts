@@ -18,23 +18,19 @@ function getApiServerAddress(): string | undefined {
     try {
       const currentContext = kc.getCurrentContext();
       const context = kc.getContextObject(currentContext);
-  
       if (!context) {
-        console.error(`Context "${currentContext}" not found in kubeconfig`);
+        throw new Error(`Context "${currentContext}" not found in kubeconfig`);
         return undefined;
       }
-  
       const clusterName = context.cluster;
       const cluster = kc.getCluster(clusterName);
-  
       if (!cluster) {
-        console.error(`Cluster "${clusterName}" not found in kubeconfig`);
+        throw new Error(`Cluster "${clusterName}" not found in kubeconfig`);
         return undefined;
       }
-  
       return cluster.server;
     } catch (err) {
-      console.error('Error getting API server address:', err);
+      throw new Error('Error getting API server address:');
       return undefined;
     }
   }
@@ -43,29 +39,23 @@ function getCertsFromKubeConfig(): KubeConfigCerts | undefined {
     try {
       const currentContext = kc.getCurrentContext();
       const context = kc.getContextObject(currentContext);
-  
       if (!context) {
-        console.error(`Context "${currentContext}" not found in kubeconfig`);
+        throw new Error(`Context "${currentContext}" not found in kubeconfig`);
         return undefined;
       }
-  
       const clusterName = context.cluster;
       const cluster = kc.getCluster(clusterName)
       const user = kc.getCurrentUser()
-  
       if (!cluster) {
-        console.error(`Cluster "${clusterName}" not found in kubeconfig`);
+        throw new Error(`Cluster "${clusterName}" not found in kubeconfig`);
         return undefined;
       }
-
       const caCert = cluster?.caData || "";
       const cert = user?.certData || ""
       const key = user?.keyData || ""
-      
       return { caCert, cert, key };
-  
     } catch (err) {
-      console.error('Error getting certs from kubeconfig:', err);
+      throw new Error('Error getting certs from kubeconfig:');
       return undefined;
     }
   }
@@ -75,28 +65,24 @@ describe("Metrics Server", () => {
     const certs = getCertsFromKubeConfig() || {};
     const metricsApi = "/apis/metrics.k8s.io/v1beta1";
     const https = require('https');
-
     if (!apiServerAddress) {
-        console.error("API server address not found.");
+        throw new Error("API server address not found.");
         return;
     }
     if (!certs) {
-      console.error("Cluster certificates could not be loaded.");
+      throw new Error("Cluster certificates could not be loaded.");
       return;
     }
-
     const decodedCerts = {
       caCert: Buffer.from(certs.caCert || "", 'base64').toString('utf-8'),
       cert: Buffer.from(certs.cert || "", 'base64').toString('utf-8'),
       key: Buffer.from(certs.key || "", 'base64').toString('utf-8'),
     };
-
     const agent = new https.Agent({
         cert: decodedCerts.cert,
         key: decodedCerts.key,
         ca: decodedCerts.caCert
     });
-
     test("metrics-server should return node metrics", async () => {
         const response = await fetch(`${apiServerAddress}${metricsApi}/nodes`, {
             agent: agent,
