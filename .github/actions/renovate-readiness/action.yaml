@@ -99,7 +99,7 @@ runs:
     # Checkout PR branch (sparse checkout of src/<pkg>)
     - name: Checkout PR branch
       if: steps.check-ready-label.outputs.should_process == 'true' && steps.process-branch.outputs.needs_comparison == 'true'
-      uses: actions/checkout@v4
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       with:
         ref: ${{ github.event.pull_request.head.ref }}
         path: new
@@ -110,7 +110,7 @@ runs:
     # Checkout main branch (sparse checkout of src/<pkg>)
     - name: Checkout main branch
       if: steps.check-ready-label.outputs.should_process == 'true' && steps.process-branch.outputs.needs_comparison == 'true'
-      uses: actions/checkout@v4
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       with:
         ref: main
         path: old
@@ -169,7 +169,24 @@ runs:
       run: |
         LABELS="${{ steps.compare.outputs.labels }}"
         if [[ -n "$LABELS" ]]; then
-          echo "Applying labels: $LABELS"
+          echo "New labels to apply: $LABELS"
+
+          # Get current labels on the PR
+          CURRENT_LABELS=$(gh pr view ${{ github.event.pull_request.number }} --json labels --jq '.labels[].name' | tr '\n' ' ')
+          echo "Current labels: $CURRENT_LABELS"
+
+          # Define the managed labels we care about
+          MANAGED_LABELS=("waiting on ironbank" "waiting on cgr" "needs-review" "helm-chart-only" "major-helm-update" "major-image-update")
+
+          # Remove labels that are currently on the PR but not in the new set
+          for LABEL in "${MANAGED_LABELS[@]}"; do
+            if [[ "$CURRENT_LABELS" == *"$LABEL"* ]] && [[ "$LABELS" != *"$LABEL"* ]]; then
+              echo "Removing outdated label: $LABEL"
+              gh pr edit ${{ github.event.pull_request.number }} --remove-label "$LABEL" || true
+            fi
+          done
+
+          # Add the new labels
           gh pr edit ${{ github.event.pull_request.number }} --add-label "$LABELS"
         fi
       shell: bash
