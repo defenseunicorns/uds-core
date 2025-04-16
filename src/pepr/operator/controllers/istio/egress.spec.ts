@@ -208,11 +208,55 @@ jest.mock("pepr", () => ({
 }));
 
 describe("test applyEgressResources", () => {
-  const applyMock = jest.fn();
+  const TEST_PACKAGE_HOST_MAP = {
+    package1: {
+      "example.com": {
+        portProtocol: [
+          { port: 443, protocol: RemoteProtocol.TLS },
+        ],
+      },
+    },
+  };
+  
+  let applyMock: jest.Mock;
+  let getGwMock: jest.Mock;
+  let getVsMock: jest.Mock;
   
   beforeEach(() => {
+    
     process.env.PEPR_WATCH_MODE = "true";
     jest.useFakeTimers();
+    
+    const mockK8s = jest.mocked(K8s);
+    
+    applyMock = jest.fn().mockReturnValue(Promise.resolve());
+    getGwMock = jest.fn<() => Promise<{ items: IstioGateway[] }>>().mockResolvedValue({
+      items: [],
+    });
+    getVsMock = jest.fn<() => Promise<{ items: IstioVirtualService[] }>>().mockResolvedValue({
+      items: [],
+    });
+
+    const baseImplementation = {
+      Apply: applyMock,
+      InNamespace: jest.fn().mockReturnThis(),
+      Get: jest.fn(),
+      Logs: jest.fn(),
+      Delete: jest.fn(),
+      Watch: jest.fn(),
+    };
+    
+    // Define only the differences for specific resources
+    const k8sImplementations = {
+      [IstioGateway.name]: { ...baseImplementation, Get: getGwMock },
+      [IstioVirtualService.name]: { ...baseImplementation, Get: getVsMock },
+      [IstioServiceEntry.name]: { ...baseImplementation }
+    };
+
+    // Add type assertion to fix TypeScript errors
+    mockK8s.mockImplementation(((model: any) => 
+      k8sImplementations[model.name] || baseImplementation
+    ) as any);
   });
 
   afterEach(() => {
@@ -222,52 +266,25 @@ describe("test applyEgressResources", () => {
   });
 
   it("should apply egress resources", async () => {
-    const packageHostMap = {
-      package1: {
-        "example.com": {
-          portProtocol: [
-            { port: 443, protocol: RemoteProtocol.TLS },
-          ],
-        },
-      },
-    };
-
-    const getGwMock = jest.fn<() => Promise<{ items: IstioGateway[] }>>().mockResolvedValue({
-      items: [],
-    });
-
-    const getVsMock = jest.fn<() => Promise<{ items: IstioVirtualService[] }>>().mockResolvedValue({
-      items: [],
-    });
-
-    (K8s as jest.Mock).mockImplementation(kindType => {
-      if (kindType === IstioGateway) {
-        return {
-          Get: getGwMock,
-          Apply: applyMock,
-        };
-      } else if (kindType === IstioVirtualService) {
-        return {
-          Get: getVsMock,
-          Apply: applyMock,
-        };
-      }
-      else if (kindType === IstioServiceEntry) {
-        return {
-          Apply: applyMock,
-        };
-      }
-      else {
-        return {
-          Get: jest.fn(),
-          Apply: jest.fn(),
-        };
-      }
-    });
-
-    await applyEgressResources(packageHostMap, 1);
+    await applyEgressResources(TEST_PACKAGE_HOST_MAP, 1);
+    
     expect(applyMock).toHaveBeenCalledTimes(3); // Gateway, VirtualService, ServiceEntry
-    expect(getGwMock).toHaveBeenCalled();
-    expect(getVsMock).toHaveBeenCalled();
+    expect(getGwMock).toHaveBeenCalledTimes(1);
+    expect(getVsMock).toHaveBeenCalledTimes(1);
+    
+    const resources = applyMock.mock.calls.map(call => call[0] as any);
+    
+    expect(resources.length).toBe(3);
+    expect(resources.some(result => result?.spec?.hosts?.includes("example.com") || 
+                               result?.spec?.servers?.some((s: any) => s.hosts?.includes("example.com")))).toBe(true);
+  });
+  
+  it("should handle errors when applying egress resources", async () => {
+    const errorMessage = "K8s API error";
+    
+    applyMock.mockImplementationOnce(() => Promise.reject(new Error(errorMessage)));
+    
+    await expect(applyEgressResources(TEST_PACKAGE_HOST_MAP, 1))
+      .rejects.toThrow(errorMessage);
   });
 });
