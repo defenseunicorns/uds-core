@@ -229,7 +229,7 @@ describe("test applyEgressResources", () => {
     
     const mockK8s = jest.mocked(K8s);
     
-    applyMock = jest.fn().mockReturnValue(Promise.resolve());
+    applyMock = jest.fn<() => Promise<void>>().mockResolvedValue();
     getGwMock = jest.fn<() => Promise<{ items: IstioGateway[] }>>().mockResolvedValue({
       items: [],
     });
