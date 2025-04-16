@@ -3,9 +3,11 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { describe, expect, it } from "@jest/globals";
-import { Direction, RemoteProtocol } from "../../crd";
+import { describe, expect, it, jest, beforeEach } from "@jest/globals";
+import { K8s } from "pepr";
+import { Direction, RemoteProtocol, IstioGateway, IstioVirtualService, IstioServiceEntry } from "../../crd";
 import {
+  applyEgressResources,
   createHostResourceMap,
   getHostPortsProtocol,
   remapEgressResources,
@@ -183,5 +185,89 @@ describe("test getHostPortsProtocol", () => {
       ports: [443],
       protocol: RemoteProtocol.TLS,
     });
+  });
+});
+
+// Mock the necessary Kubernetes functions
+jest.mock("pepr", () => ({
+  K8s: jest.fn(),
+  Log: {
+    child: jest.fn(() => ({
+      info: jest.fn(),
+      debug: jest.fn(),
+      error: jest.fn(),
+      warn: jest.fn(),
+      level: "info",
+    })),
+  },
+  kind: {
+    Gateway: "Gateway",
+    VirtualService: "VirtualService",
+    ServiceEntry: "ServiceEntry",
+  },
+}));
+
+describe("test applyEgressResources", () => {
+  const applyMock = jest.fn();
+  
+  beforeEach(() => {
+    process.env.PEPR_WATCH_MODE = "true";
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.runOnlyPendingTimers();
+    jest.useRealTimers();
+    jest.clearAllMocks();
+  });
+
+  it("should apply egress resources", async () => {
+    const packageHostMap = {
+      package1: {
+        "example.com": {
+          portProtocol: [
+            { port: 443, protocol: RemoteProtocol.TLS },
+          ],
+        },
+      },
+    };
+
+    const getGwMock = jest.fn<() => Promise<{ items: IstioGateway[] }>>().mockResolvedValue({
+      items: [],
+    });
+
+    const getVsMock = jest.fn<() => Promise<{ items: IstioVirtualService[] }>>().mockResolvedValue({
+      items: [],
+    });
+
+    (K8s as jest.Mock).mockImplementation(kindType => {
+      if (kindType === IstioGateway) {
+        return {
+          Get: getGwMock,
+          Apply: applyMock,
+        };
+      } else if (kindType === IstioVirtualService) {
+        return {
+          Get: getVsMock,
+          Apply: applyMock,
+        };
+      }
+      else if (kindType === IstioServiceEntry) {
+        return {
+          Apply: applyMock,
+        };
+      }
+      else {
+        return {
+          Get: jest.fn(),
+          Apply: jest.fn(),
+        };
+      }
+    });
+
+    await applyEgressResources(packageHostMap, 1);
+    expect(applyMock).toHaveBeenCalledTimes(3); // Gateway, VirtualService, ServiceEntry
+    expect(getGwMock).toHaveBeenCalled();
+    expect(getVsMock).toHaveBeenCalled();
   });
 });

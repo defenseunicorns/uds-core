@@ -138,17 +138,20 @@ export function remapEgressResources(packageEgress: PackageHostMap) {
   const egressResources: EgressResourceMap = {};
   for (const pkgId in packageEgress) {
     const hostResourceMap = packageEgress[pkgId];
+    console.log(`Host resource map: ${JSON.stringify(hostResourceMap)}`);
     for (const host in hostResourceMap) {
       const portProtocols = hostResourceMap[host].portProtocol;
-      if (!egressResources[host]) {
-        egressResources[host] = {
-          packages: [],
-          portProtocols: [],
-        };
+      console.log(`Port protocols: ${JSON.stringify(portProtocols)}`);
+
+      egressResources[host] ??= {
+        packages: [],
+        portProtocols: [],
       }
+
       if (!egressResources[host].packages.includes(pkgId)) {
         egressResources[host].packages.push(pkgId);
       }
+
       for (const portProtocol of portProtocols) {
         const existingPortProtocol = egressResources[host].portProtocols.find(
           pp => pp.port === portProtocol.port && pp.protocol === portProtocol.protocol,
@@ -160,11 +163,14 @@ export function remapEgressResources(packageEgress: PackageHostMap) {
       }
     }
   }
+  console.log(`egressResources: ${JSON.stringify(egressResources)}`);
+
   return egressResources;
 }
 
 export async function applyEgressResources(packageEgress: PackageHostMap, generation: number) {
   // Re-map the package egress definitions to required egress resources
+  console.log(`Egress resources: ${JSON.stringify(packageEgress)}`);
   const egressResources = remapEgressResources(packageEgress);
 
   // Apply the unique set of egress resources per defined host
@@ -172,9 +178,14 @@ export async function applyEgressResources(packageEgress: PackageHostMap, genera
     const resource = egressResources[host];
 
     // Check if matching hosts exist for Gateway and Virtual Service
-    await warnMatchingExistingGateways(host);
-    await warnMatchingExistingVirtualServices(host);
-
+    try {
+      await warnMatchingExistingGateways(host);
+      await warnMatchingExistingVirtualServices(host);
+    } catch(e) {
+      log.error(`Existing istio resources found for host, ${host}: ${e}`);
+      throw e;
+    }
+    
     // Generate and Apply the egress gateway
     const gateway = await generateEgressGateway(host, resource, generation);
 
