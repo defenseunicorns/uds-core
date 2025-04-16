@@ -26,7 +26,9 @@ describe("Prometheus and Alertmanager", () => {
   });
 
   test("alert manager should be firing watchdog alert", async () => {
-    const maxRetries = 30;
+    // The Watchdog configuration uses group_interval: 5m and group_wait: 30s. This test might be executed too quickly
+    // to catch this. Therefore, we introduce an exponential with 30 times 10000ms (10s) delay, which is more than 6 mins in total.
+    const maxRetries = 40;
     const delay = 10000;
     let success = false;
 
