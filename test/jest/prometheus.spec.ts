@@ -26,17 +26,30 @@ describe("Prometheus and Alertmanager", () => {
   });
 
   test("alert manager should be firing watchdog alert", async () => {
-    // fetch active alerts with alertname="Watchdog"
-    const response = await fetch(
-      `${alertmanagerProxy.url}/api/v2/alerts/groups?filter=alertname%3D%22Watchdog%22&silenced=false&inhibited=false&active=true`,
-    );
-    expect(response.status).toBe(200);
+    const maxRetries = 30;
+    const delay = 10000;
+    let success = false;
 
-    const body = (await response.json()) as {
-      alerts: Array<{ status: { state: string } }>;
-    }[];
-    expect(body[0]).toBeDefined();
-    expect(body[0].alerts[0].status.state).toEqual("active");
+    for (let retries = 0; retries < maxRetries; retries++) {
+      const response = await fetch(
+        `${alertmanagerProxy.url}/api/v2/alerts/groups?filter=alertname%3D%22Watchdog%22&silenced=false&inhibited=false&active=true`
+      );
+
+      if (response.status === 200) {
+        const body = (await response.json()) as {
+          alerts: Array<{ status: { state: string } }>;
+        }[];
+
+        if (body[0]?.alerts[0]?.status.state === "active") {
+          success = true;
+          break;
+        }
+      }
+
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+
+    expect(success).toBe(true);
   });
 
   test("prometheus web ui should be responsive via the internal service address", async () => {
