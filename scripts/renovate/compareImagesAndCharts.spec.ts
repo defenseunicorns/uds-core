@@ -236,7 +236,7 @@ describe('compareImagesAndCharts', () => {
 
     const result = await compareImagesAndCharts('old', 'new');
 
-    expect(result.labels).toContain('needs-review');
+    expect(result.labels).not.toContain('needs-review');
     expect(result.changes).toContain('Chart chart2 updated from 2.0.0 to 2.1.0');
     expect(result.labels).toContain('helm-chart-only');
     expect(result.changes).toContain('PR contains only helm chart updates');
@@ -300,7 +300,7 @@ describe('compareImagesAndCharts', () => {
 
     const result = await compareImagesAndCharts('old', 'new');
 
-    expect(result.labels).toContain('needs-review');
+    expect(result.labels).not.toContain('needs-review');
     expect(result.labels).toContain('major-helm-update');
     expect(result.changes).toContain('Chart chart2 updated from 2.0.0 to 3.0.0');
     expect(result.changes).toContain('Major helm chart update detected for chart2');
@@ -789,7 +789,7 @@ describe('compareImagesAndCharts', () => {
 
     const result = await compareImagesAndCharts('old', 'new');
 
-    expect(result.labels).toContain('needs-review');
+    expect(result.labels).not.toContain('needs-review');
     expect(result.labels).toContain('helm-chart-only');
     expect(result.labels).not.toContain('waiting on ironbank');
     expect(result.labels).not.toContain('waiting on cgr');
@@ -833,7 +833,6 @@ describe('compareImagesAndCharts', () => {
 
     const result = await compareImagesAndCharts('old', 'new');
 
-    expect(result.labels).toContain('needs-review');
     expect(result.labels).toContain('major-helm-update');
     expect(result.labels).toContain('helm-chart-only');
     expect(result.labels).not.toContain('waiting on ironbank');

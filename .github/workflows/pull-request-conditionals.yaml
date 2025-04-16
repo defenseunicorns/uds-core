@@ -7,8 +7,8 @@ name: Filter
 on:
   pull_request:
     # milestoned is added here as a workaround for release-please not triggering PR workflows (PRs should be added to a milestone to trigger the workflow).
-    # removed labeled trigger to prevent infinite loops when renovate-readiness applies labels
-    types: [milestoned, opened, reopened, synchronize]
+    # labeled is added to support renovate-ready labelling on PRs
+    types: [milestoned, labeled, opened, reopened, synchronize]
     paths-ignore:
       - "**.md"
       - "**.jpg"
@@ -103,14 +103,14 @@ jobs:
       test_type: ${{ matrix.test_type }}
     secrets: inherit # Inherits all secrets from the parent workflow.
 
-  # evaluate-package-compliance:
-  #   needs: run-package-test
-  #   name: Compliance Evaluation
-  #   strategy:
-  #     matrix:
-  #       flavor: [upstream, registry1, unicorn]
-  #     fail-fast: false
-  #   uses: ./.github/workflows/compliance.yaml
-  #   with:
-  #     flavor: ${{ matrix.flavor }}
-  #   secrets: inherit # Inherits all secrets from the parent workflow.
+# evaluate-package-compliance:
+#   needs: run-package-test
+#   name: Compliance Evaluation
+#   strategy:
+#     matrix:
+#       flavor: [upstream, registry1, unicorn]
+#     fail-fast: false
+#   uses: ./.github/workflows/compliance.yaml
+#   with:
+#     flavor: ${{ matrix.flavor }}
+#   secrets: inherit # Inherits all secrets from the parent workflow.

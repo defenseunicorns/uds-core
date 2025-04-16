@@ -50,7 +50,8 @@ export async function compareImagesAndCharts(oldPath: string, newPath: string): 
 
     // If no waiting labels were added, add needs-review
     if (!result.labels.includes('waiting on ironbank') &&
-      !result.labels.includes('waiting on cgr')) {
+      !result.labels.includes('waiting on cgr') &&
+      !result.labels.includes('helm-chart-only')) {
       result.labels.push('needs-review');
     }
   } catch (error: unknown) {
