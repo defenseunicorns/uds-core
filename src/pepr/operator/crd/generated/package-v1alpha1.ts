@@ -177,6 +177,10 @@ export interface Allow {
    */
   remoteGenerated?: RemoteGenerated;
   /**
+   * Remote host to allow traffic out to
+   */
+  remoteHost?: string;
+  /**
    * The remote namespace to allow traffic to/from. Use * or empty string to allow all
    * namespaces
    */
@@ -185,6 +189,10 @@ export interface Allow {
    * Deprecated: use remoteSelector
    */
   remotePodLabels?: { [key: string]: string };
+  /**
+   * Protocol used for external connection
+   */
+  remoteProtocol?: RemoteProtocol;
   /**
    * The remote pod selector labels to allow traffic to/from
    */
@@ -218,6 +226,14 @@ export enum RemoteGenerated {
   IntraNamespace = "IntraNamespace",
   KubeAPI = "KubeAPI",
   KubeNodes = "KubeNodes",
+}
+
+/**
+ * Protocol used for external connection
+ */
+export enum RemoteProtocol {
+  HTTP = "HTTP",
+  TLS = "TLS",
 }
 
 export interface Expose {

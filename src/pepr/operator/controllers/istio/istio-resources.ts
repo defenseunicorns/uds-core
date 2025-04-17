@@ -3,19 +3,26 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { K8s } from "pepr";
+import { K8s, kind } from "pepr";
 
 import { Component, setupLogger } from "../../../logger";
-import { IstioServiceEntry, IstioVirtualService, UDSPackage } from "../../crd";
+import { IstioServiceEntry, IstioVirtualService, IstioSidecar, UDSPackage } from "../../crd";
 import { getOwnerRef, purgeOrphans } from "../utils";
-import { generateServiceEntry } from "./service-entry";
-import { generateVirtualService } from "./virtual-service";
+import { generateIngressServiceEntry, generateLocalEgressServiceEntry } from "./service-entry";
+import { generateIngressVirtualService } from "./virtual-service";
+import { generateEgressSidecar } from "./sidecar";
+import { reconcileSharedEgressResources, getHostPortsProtocol } from "./egress";
+import { PackageAction } from "./types";
 
 // configure subproject logger
-const log = setupLogger(Component.OPERATOR_ISTIO);
+export const log = setupLogger(Component.OPERATOR_ISTIO);
+
+// Egress gateway namespace
+export const istioEgressGatewayNamespace = "istio-egress-gateway";
 
 /**
  * Creates a VirtualService and ServiceEntry for each exposed service in the package
+ * and creates or merges Istio resources for allowing egress traffic to external services
  *
  * @param pkg
  * @param namespace
@@ -28,6 +35,9 @@ export async function istioResources(pkg: UDSPackage, namespace: string) {
   // Get the list of exposed services
   const exposeList = pkg.spec?.network?.expose ?? [];
 
+  // Get the list of allowed services
+  const allowList = pkg.spec?.network?.allow ?? [];
+
   // Create a Set of processed hosts (to maintain uniqueness)
   const hosts = new Set<string>();
 
@@ -37,7 +47,13 @@ export async function istioResources(pkg: UDSPackage, namespace: string) {
   // Iterate over each exposed service
   for (const expose of exposeList) {
     // Generate a VirtualService for this `expose` entry
-    const vsPayload = generateVirtualService(expose, namespace, pkgName, generation, ownerRefs);
+    const vsPayload = generateIngressVirtualService(
+      expose,
+      namespace,
+      pkgName,
+      generation,
+      ownerRefs,
+    );
 
     log.debug(vsPayload, `Applying VirtualService ${vsPayload.metadata?.name}`);
 
@@ -47,7 +63,13 @@ export async function istioResources(pkg: UDSPackage, namespace: string) {
     vsPayload.spec!.hosts!.forEach(h => hosts.add(h));
 
     // Generate a ServiceEntry for this `expose` entry
-    const sePayload = generateServiceEntry(expose, namespace, pkgName, generation, ownerRefs);
+    const sePayload = generateIngressServiceEntry(
+      expose,
+      namespace,
+      pkgName,
+      generation,
+      ownerRefs,
+    );
 
     // If we have already made a ServiceEntry with this name, skip (i.e. if advancedHTTP was used)
     if (serviceEntryNames.get(sePayload.metadata!.name!)) {
@@ -62,9 +84,99 @@ export async function istioResources(pkg: UDSPackage, namespace: string) {
     serviceEntryNames.set(sePayload.metadata!.name!, true);
   }
 
+  // Check if egress gateway is enabled in the cluster
+  const egressGatewayEnabled = true; // Placeholder for actual check
+  await K8s(kind.Namespace)
+    .Get(istioEgressGatewayNamespace)
+    .catch(async err => {
+      log.error(
+        `Egress gateway namespace ${istioEgressGatewayNamespace} not found. Egress gateway is disabled.`,
+      );
+      throw err;
+    });
+
+  // Iterate over each allowed service
+  for (const allow of allowList) {
+    const hostPortsProtocol = getHostPortsProtocol(allow);
+
+    // Add package-related egress resources if remoteHost is defined
+    if (hostPortsProtocol) {
+      // If egress is not enabled throw an error
+      if (!egressGatewayEnabled) {
+        const errText = `Egress gateway is not enabled in the cluster. Please enable the egress gateway and retry.`;
+        log.error(errText);
+        throw new Error(errText);
+      }
+
+      // Create Service Entry
+      const serviceEntry = generateLocalEgressServiceEntry(
+        hostPortsProtocol,
+        pkgName,
+        namespace,
+        generation,
+        ownerRefs,
+      );
+
+      log.debug(serviceEntry, `Applying Service Entry ${serviceEntry.metadata?.name}`);
+
+      // Apply the ServiceEntry and force overwrite any existing resource
+      await K8s(IstioServiceEntry)
+        .InNamespace(namespace)
+        .Get(serviceEntry.metadata!.name!)
+        .catch(async err => {
+          if (err.status === 404) {
+            await K8s(IstioServiceEntry).Apply(serviceEntry, { force: true });
+          } else {
+            log.error(`Failed to reconcile Service Entry ${serviceEntry.metadata?.name}: ${err}`);
+            throw err;
+          }
+        });
+
+      // Create Sidecar
+      const sidecar = generateEgressSidecar(
+        hostPortsProtocol,
+        allow.selector,
+        pkgName,
+        namespace,
+        generation,
+        ownerRefs,
+      );
+
+      log.debug(sidecar, `Applying Sidecar ${sidecar.metadata?.name}`);
+
+      // Apply the Sidecar and force overwrite any existing resource
+      await K8s(IstioSidecar)
+        .InNamespace(namespace)
+        .Get(sidecar.metadata!.name!)
+        .catch(async err => {
+          if (err.status === 404) {
+            await K8s(IstioSidecar).Apply(sidecar, { force: true });
+          } else {
+            log.error(`Failed to reconcile Sidecar ${sidecar.metadata?.name}: ${err}`);
+            throw err;
+          }
+        });
+    }
+  }
+
+  // Reconcile shared egress resources
+  await reconcileSharedEgressResources(pkg, PackageAction.AddOrUpdate);
+
+  // Purge any orphaned resources
   await purgeOrphans(generation, namespace, pkgName, IstioVirtualService, log);
   await purgeOrphans(generation, namespace, pkgName, IstioServiceEntry, log);
+  await purgeOrphans(generation, namespace, pkgName, IstioSidecar, log);
 
   // Return the list of unique hostnames
   return [...hosts];
+}
+
+// Get the shared annotation key for the package
+export function getSharedAnnotationKey(pkgId: string) {
+  return `uds.dev/user-${pkgId}`;
+}
+
+// Get the unique package ID
+export function getPackageId(pkg: UDSPackage) {
+  return `${pkg.metadata?.name}-${pkg.metadata?.namespace}`;
 }
