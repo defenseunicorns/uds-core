@@ -80,7 +80,7 @@ When(a.DaemonSet)
  * See issue for reference: https://github.com/defenseunicorns/uds-core/issues/1446
  */
 
-  When(a.Deployment)
+When(a.Deployment)
   .IsCreatedOrUpdated()
   .InNamespace("neuvector")
   .WithName("neuvector-controller-pod")
