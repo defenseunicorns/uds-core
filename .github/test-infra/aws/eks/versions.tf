@@ -6,6 +6,7 @@ provider "aws" {
 
   default_tags {
     tags = {
+      run-id              = var.name
       PermissionsBoundary = var.permissions_boundary_name
     }
   }

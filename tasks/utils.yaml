@@ -116,6 +116,26 @@ tasks:
             namespace: kube-system
           EOF
           uds zarf tools kubectl rollout restart deployment -n kube-system coredns
+  - name: eks-storageclass-setup
+    actions:
+      - description: Setup GP3 Storage Class
+        cmd: |
+          uds zarf tools kubectl apply -f - <<EOF
+            apiVersion: storage.k8s.io/v1
+            kind: StorageClass
+            metadata:
+              name: gp3
+              annotations:
+                storageclass.kubernetes.io/is-default-class: "true"
+            provisioner: ebs.csi.aws.com
+            allowVolumeExpansion: true
+            reclaimPolicy: Delete
+            volumeBindingMode: WaitForFirstConsumer
+            parameters:
+              encrypted: "true"
+              fsType: ext4
+              type: gp3
+          EOF
   - name: admin-gw-ip
     actions:
       - description: Fetch Admin Gateway IP Address
