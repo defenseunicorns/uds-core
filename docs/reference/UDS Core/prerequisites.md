@@ -48,6 +48,12 @@ local-path (default)   rancher.io/local-path   Delete          WaitForFirstConsu
 
 It’s generally beneficial if your storage class supports volume expansion (set `allowVolumeExpansion: true`, provided your provisioner allows it). This enables you to resize volumes when needed. Additionally, be mindful of any size restrictions imposed by your provisioner. For instance, EBS volumes have a minimum size of 1Gi, which could lead to unexpected behavior, especially during Velero’s CSI backup and restore process. These constraints may also necessitate adjustments to default PVC sizes, such as Keycloak’s PVCs, which default to 512Mi in `devMode`.
 
+:::caution
+If you are deploying stateful applications, including but not limited to critical UDS Core services such as [Velero](#velero) or [Loki](#loki), ensure you understand where their data is stored and that the underlying volumes are properly backed up and stored safely. 
+
+Cluster or deployment issues may result in data loss, particularly when these services rely on in-cluster storage such as the [Minio Operator UDS Package](https://github.com/defenseunicorns/uds-package-minio-operator).
+:::
+
 #### Network Policy Support
 
 The UDS Operator will dynamically provision network policies to secure traffic between components in UDS Core. To ensure these are effective, validate that your CNI supports enforcing network policies. In addition, UDS Core makes use of some CIDR based policies for communication with the KubeAPI server. If you are using Cilium, support for node addressability with CIDR based policies must be enabled with a [feature flag](https://docs.cilium.io/en/stable/security/policy/language/#selecting-nodes-with-cidr-ipblock).
@@ -185,22 +191,26 @@ Metrics server is provided as an optional component in UDS Core and can be enabl
 The Loki deployment is (by default) backed by an object storage provider for log retention.  For cloud environments you can wire this into the environment's storage provider with the following overrides:
 
 ```yaml
-loki:
-  values:
-    - path: loki.storage.s3.endpoint
-      value: "<s3-endpoint>"
-    - path: loki.storage.s3.secretAccessKey
-      value: "<s3-secret-key>"
-    - path: loki.storage.s3.accessKeyId
-      value: "<s3-access-key>"
-    - path: loki.storage.bucketNames.chunks
-      value: "<chunks-bucket-name>"
-    - path: loki.storage.bucketNames.ruler
-      value: "<ruler-bucket-name>"
-    - path: loki.storage.bucketNames.admin
-      value: "<admin-bucket-name>"
-    - path: loki.storage.bucketNames.region
-      value: "<s3-region>"
+- name: uds-core
+  ...
+  overrides:
+    loki:
+      loki:
+        values:
+          - path: loki.storage.s3.endpoint
+            value: "<s3-endpoint>"
+          - path: loki.storage.s3.secretAccessKey
+            value: "<s3-secret-key>"
+          - path: loki.storage.s3.accessKeyId
+            value: "<s3-access-key>"
+          - path: loki.storage.bucketNames.chunks
+            value: "<chunks-bucket-name>"
+          - path: loki.storage.bucketNames.ruler
+            value: "<ruler-bucket-name>"
+          - path: loki.storage.bucketNames.admin
+            value: "<admin-bucket-name>"
+          - path: loki.storage.bucketNames.region
+            value: "<s3-region>"
 ```
 
 You can also use the [Minio Operator UDS Package](https://github.com/defenseunicorns/uds-package-minio-operator) to back Loki with the following overrides:
@@ -229,6 +239,14 @@ You can also use the [Minio Operator UDS Package](https://github.com/defenseunic
   ...
   overrides:
     loki:
+      uds-loki-config:
+        values:
+          - path: storage.internal
+            value:
+              enabled: true
+              remoteSelector:
+                v1.min.io/tenant: loki
+              remoteNamespace: minio
       loki:
         values:
           - path: loki.storage.bucketNames.chunks
@@ -286,25 +304,29 @@ You can also use the [Minio Operator UDS Package](https://github.com/defenseunic
 The Velero deployment is (by default) backed by an object storage provider for backup retention.  For cloud environments you can wire this into the environment's storage provider with the following overrides:
 
 ```yaml
-velero:
-  values:
-    - path: credentials.secretContents.cloud
-      value: |
-        [default]
-        aws_access_key_id=<s3-access-key>
-        aws_secret_access_key=<s3-secret-key>
-    - path: "configuration.backupStorageLocation"
-      value:
-        - name: default
-          provider: aws
-          bucket: "<bucket-name>"
-          config:
-            region: "<s3-region>"
-            s3ForcePathStyle: true
-            s3Url: "<s3-endpoint>"
-          credential:
-            name: "velero-bucket-credentials"
-            key: "cloud"
+- name: uds-core
+  ...
+  overrides:
+    velero:
+      velero:
+        values:
+          - path: credentials.secretContents.cloud
+            value: |
+              [default]
+              aws_access_key_id=<s3-access-key>
+              aws_secret_access_key=<s3-secret-key>
+          - path: "configuration.backupStorageLocation"
+            value:
+              - name: default
+                provider: aws
+                bucket: "<bucket-name>"
+                config:
+                  region: "<s3-region>"
+                  s3ForcePathStyle: true
+                  s3Url: "<s3-endpoint>"
+                credential:
+                  name: "velero-bucket-credentials"
+                  key: "cloud"
 ```
 
 You can also use the [Minio Operator UDS Package](https://github.com/defenseunicorns/uds-package-minio-operator) to back Velero with the following overrides:
@@ -333,6 +355,14 @@ You can also use the [Minio Operator UDS Package](https://github.com/defenseunic
   ...
   overrides:
     velero:
+      uds-velero-config:
+        values:
+          - path: storage.internal
+            value:
+              enabled: true
+              remoteSelector:
+                v1.min.io/tenant: velero
+              remoteNamespace: minio
       velero:
         values:
           - path: "credentials"
@@ -352,7 +382,3 @@ You can also use the [Minio Operator UDS Package](https://github.com/defenseunic
                   s3ForcePathStyle: true
                   s3Url: "http://uds-minio-hl.minio.svc.cluster.local:9000/"
 ```
-
-:::caution
-If you are using the in-cluster Minio Operator UDS Package for backups you must ensure that the volumes that back that storage are themselves backed up!  Cluster or deployment issues may result in a loss of Minio as well as the application you intend to back up.
-:::
