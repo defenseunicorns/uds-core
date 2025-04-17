@@ -56,6 +56,9 @@ prometheus-node-exporter:
   podAnnotations:
     cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
 prometheusOperator:
+  # Kubelet healthprobes on FIPS nodes fail when this is set to 1.3
+  tls:
+    tlsMinVersion: VersionTLS12
   admissionWebhooks:
     patch:
       resources:
