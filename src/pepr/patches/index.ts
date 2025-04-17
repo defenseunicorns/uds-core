@@ -57,7 +57,7 @@ When(a.DaemonSet)
     if (enforcerContainer && enforcerContainer.livenessProbe === undefined) {
       log.debug("Patching NeuVector Enforcer Daemonset to add livenessProbe");
       const livenessProbe = {
-        exec: { command: ["curl", "--no-progress-meter", "127.0.0.1:8500"] },
+        tcpSocket: { port: 8500 },
         periodSeconds: 30,
         failureThreshold: 3,
       };
@@ -67,7 +67,7 @@ When(a.DaemonSet)
     if (enforcerContainer && enforcerContainer.readinessProbe === undefined) {
       log.debug("Patching NeuVector Enforcer Daemonset to add readinessProbe");
       const readinessProbe = {
-        exec: { command: ["curl", "--no-progress-meter", "127.0.0.1:8500"] },
+        tcpSocket: { port: 8500 },
         initialDelaySeconds: 30,
         periodSeconds: 30,
         failureThreshold: 3,
