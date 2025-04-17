@@ -68,6 +68,7 @@ When(a.DaemonSet)
       log.debug("Patching NeuVector Enforcer Daemonset to add readinessProbe");
       const readinessProbe = {
         exec: { command: ["curl", "--no-progress-meter", "127.0.0.1:8500"] },
+        initialDelaySeconds: 30,
         periodSeconds: 30,
         failureThreshold: 3,
       };
@@ -92,6 +93,7 @@ When(a.Deployment)
     if (controllerContainer && controllerContainer.readinessProbe) {
       log.trace("Patching NeuVector Controller deployment to modify readinessProbe");
       const readinessProbe = {
+        // Probe default port for controller REST API server
         tcpSocket: { port: 10443 },
       };
       controllerContainer.readinessProbe = readinessProbe;
