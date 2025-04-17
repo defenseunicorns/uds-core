@@ -26,17 +26,6 @@ components:
       - name: istiod
         valuesFiles:
           - "values/upstream/istiod.yaml"
-    images:
-      - "docker.io/istio/pilot:1.24.2-distroless"
-      - "docker.io/istio/proxyv2:1.24.2-distroless"
-
-  - name: istio-ambient
-    required: false
-    only:
-      flavor: upstream
-    import:
-      path: ambient
-    charts:
       - name: cni
         valuesFiles:
           - "values/upstream/cni.yaml"
@@ -44,8 +33,10 @@ components:
         valuesFiles:
           - "values/upstream/ztunnel.yaml"
     images:
-      - "docker.io/istio/install-cni:1.24.2-distroless"
-      - "docker.io/istio/ztunnel:1.24.2-distroless"
+      - "docker.io/istio/pilot:1.25.1-distroless"
+      - "docker.io/istio/proxyv2:1.25.1-distroless"
+      - "docker.io/istio/install-cni:1.25.1-distroless"
+      - "docker.io/istio/ztunnel:1.25.1-distroless"
 
   - name: istio-controlplane
     required: true
@@ -57,37 +48,17 @@ components:
       - name: istiod
         valuesFiles:
           - "values/registry1/istiod.yaml"
-    images:
-      - registry1.dso.mil/ironbank/tetrate/istio/proxyv2:1.24.2-tetratefips0
-      - registry1.dso.mil/ironbank/tetrate/istio/pilot:1.24.2-tetratefips0
-
-  - name: istio-ambient
-    required: false
-    only:
-      flavor: registry1
-    import:
-      path: ambient
-    charts:
       - name: cni
         valuesFiles:
-          # Update once Registry1 has working cni image
-          #- "values/registry1/cni.yaml"
-          - "values/upstream/cni.yaml"
+          - "values/registry1/cni.yaml"
       - name: ztunnel
         valuesFiles:
-          # Update once Registry1 has working ztunnel image
-          #- "values/registry1/ztunnel.yaml"
-          - "values/upstream/ztunnel.yaml"
+          - "values/registry1/ztunnel.yaml"
     images:
-      # https://github.com/defenseunicorns/uds-core/issues/1225
-      # Registry1 ztunnel image is not working right now
-      # https://repo1.dso.mil/dsop/tetrate/istio/1.24/ztunnel/-/issues/9
-      #- registry1.dso.mil/ironbank/tetrate/istio/ztunnel:1.24.2-tetratefips0
-      - docker.io/istio/ztunnel:1.24.2-distroless
-      # Registry1s install-cni-fips is not working right now
-      # https://repo1.dso.mil/dsop/tetrate/istio/1.24/install-cni/-/issues/11
-      #- registry1.dso.mil/ironbank/opensource/istio/install-cni:1.24.2
-      - docker.io/istio/install-cni:1.24.2-distroless
+      - registry1.dso.mil/ironbank/tetrate/istio/proxyv2:1.25.1-tetratefipslatest1
+      - registry1.dso.mil/ironbank/tetrate/istio/pilot:1.25.1-tetratefipslatest1
+      - registry1.dso.mil/ironbank/tetrate/istio/install-cni:1.25.1-tetratefipslatest1
+      - registry1.dso.mil/ironbank/tetrate/istio/ztunnel:1.25.1-tetratefipslatest1
 
   - name: istio-controlplane
     required: true
@@ -99,17 +70,6 @@ components:
       - name: istiod
         valuesFiles:
           - "values/unicorn/istiod.yaml"
-    images:
-      - cgr.dev/du-uds-defenseunicorns/istio-pilot-fips:1.24.2
-      - cgr.dev/du-uds-defenseunicorns/istio-proxy-fips:1.24.2
-
-  - name: istio-ambient
-    required: false
-    only:
-      flavor: unicorn
-    import:
-      path: ambient
-    charts:
       - name: cni
         valuesFiles:
           - "values/unicorn/cni.yaml"
@@ -117,15 +77,17 @@ components:
         valuesFiles:
           - "values/unicorn/ztunnel.yaml"
     images:
-      - cgr.dev/du-uds-defenseunicorns/istio-install-cni:1.24.2
-      - cgr.dev/du-uds-defenseunicorns/ztunnel:1.24.1
+      - cgr.dev/du-uds-defenseunicorns/istio-pilot-fips:1.25.1
+      - cgr.dev/du-uds-defenseunicorns/istio-proxy-fips:1.25.1
+      - cgr.dev/du-uds-defenseunicorns/istio-install-cni:1.25.1
+      - cgr.dev/du-uds-defenseunicorns/ztunnel-fips:1.25.1
 
   - name: istio-admin-gateway
     required: true
     charts:
       - name: gateway
         url: https://istio-release.storage.googleapis.com/charts
-        version: 1.24.2
+        version: 1.25.1
         releaseName: admin-ingressgateway
         namespace: istio-admin-gateway
       - name: uds-istio-config
@@ -140,7 +102,7 @@ components:
     charts:
       - name: gateway
         url: https://istio-release.storage.googleapis.com/charts
-        version: 1.24.2
+        version: 1.25.1
         releaseName: tenant-ingressgateway
         namespace: istio-tenant-gateway
       - name: uds-istio-config
@@ -155,7 +117,7 @@ components:
     charts:
       - name: gateway
         url: https://istio-release.storage.googleapis.com/charts
-        version: 1.24.2
+        version: 1.25.1
         releaseName: passthrough-ingressgateway
         namespace: istio-passthrough-gateway
       - name: uds-istio-config

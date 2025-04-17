@@ -8,6 +8,8 @@ metadata:
   namespace: {{ .Release.Namespace }}
 spec:
   network:
+    serviceMesh:
+      mode: ambient
     allow:
       # Permit intra-namespace communication
       - direction: Ingress
@@ -66,10 +68,21 @@ spec:
         remoteNamespace: grafana
         remoteSelector:
           app.kubernetes.io/name: grafana
+        remoteServiceAccount: grafana
         selector:
           app.kubernetes.io/name: prometheus
         port: 9090
         description: "Grafana Metrics Queries"
+
+      - direction: Ingress
+        remoteNamespace: grafana
+        remoteSelector:
+          app.kubernetes.io/name: grafana
+        remoteServiceAccount: grafana
+        selector:
+          app.kubernetes.io/name: alertmanager
+        description: Grafana Alerts Queries
+        port: 9093
 
       # Custom rules for additional networking access
       {{- with .Values.additionalNetworkAllow }}

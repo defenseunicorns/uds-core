@@ -1,7 +1,5 @@
 ---
 title: UDS Exemption
-sidebar:
-    order: 3
 ---
 
 ![UDS Operator Exemption Flowchart](https://github.com/defenseunicorns/uds-core/blob/main/docs/.images/diagrams/uds-core-operator-uds-exemption.svg?raw=true)
@@ -50,6 +48,10 @@ spec:
         namespace: neuvector
         name: "^neuvector-prometheus-exporter-pod.*"
 ```
+
+:::note
+This example may not contain all fields, the full specification for the Exemption CR is documented [here](/reference/configuration/custom-resources/exemptions-v1alpha1-cr). In addition, there is a JSON schema published [here](https://raw.githubusercontent.com/defenseunicorns/uds-core/refs/heads/main/schemas/exemption-v1alpha1.schema.json) for use in your IDE.
+:::
 
 ### Configuring UDS Core Policy Exemptions
 

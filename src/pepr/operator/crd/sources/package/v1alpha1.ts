@@ -108,6 +108,12 @@ const allow = {
           type: "number",
         },
       },
+      remoteServiceAccount: {
+        description:
+          "The remote service account to restrict incoming traffic from within the remote namespace. \
+          Only valid for Ingress rules.",
+        type: "string",
+      },
       // Deprecated fields
       podLabels: {
         description: "Deprecated: use selector",
@@ -200,6 +206,19 @@ const expose = {
       },
     },
   } as V1JSONSchemaProps,
+} as V1JSONSchemaProps;
+
+const serviceMesh = {
+  description: "Service Mesh configuration for the package",
+  type: "object",
+  properties: {
+    mode: {
+      type: "string",
+      enum: ["sidecar", "ambient"],
+      default: "sidecar",
+      description: "Set the service mesh mode for this package (namespace), defaults to sidecar",
+    },
+  },
 } as V1JSONSchemaProps;
 
 const monitor = {
@@ -480,6 +499,12 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
       jsonPath: ".status.networkPolicyCount",
     },
     {
+      name: "Authorization Policies",
+      type: "integer",
+      description: "The number of authorization policies created by the package",
+      jsonPath: ".status.authorizationPolicyCount",
+    },
+    {
       name: "Age",
       type: "date",
       description: "The age of the package",
@@ -499,8 +524,48 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
             observedGeneration: {
               type: "integer",
             },
+            conditions: {
+              description: "Status conditions following Kubernetes-style conventions",
+              type: "array",
+              items: {
+                type: "object",
+                required: ["type", "status", "lastTransitionTime", "reason", "message"],
+                properties: {
+                  type: {
+                    description:
+                      "Type of condition in CamelCase or in foo.example.com/CamelCase format",
+                    type: "string",
+                  },
+                  status: {
+                    description: "Status of the condition, one of True, False, Unknown",
+                    type: "string",
+                    enum: ["True", "False", "Unknown"],
+                  },
+                  observedGeneration: {
+                    description:
+                      "Represents the .metadata.generation that the condition was set based upon",
+                    type: "integer",
+                  },
+                  lastTransitionTime: {
+                    description:
+                      "The last time the condition transitioned from one status to another",
+                    type: "string",
+                    format: "date-time",
+                  },
+                  reason: {
+                    description:
+                      "A programmatic identifier indicating the reason for the condition's last transition",
+                    type: "string",
+                  },
+                  message: {
+                    description: "A human-readable message indicating details about the transition",
+                    type: "string",
+                  },
+                },
+              },
+            },
             phase: {
-              enum: ["Pending", "Ready", "Failed", "Retrying", "Removing"],
+              enum: ["Pending", "Ready", "Failed", "Retrying", "Removing", "RemovalFailed"],
               type: "string",
             },
             ssoClients: {
@@ -530,6 +595,9 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
             networkPolicyCount: {
               type: "integer",
             },
+            authorizationPolicyCount: {
+              type: "integer",
+            },
             retryAttempt: {
               type: "integer",
               nullable: true,
@@ -545,6 +613,7 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
               properties: {
                 expose,
                 allow,
+                serviceMesh,
               },
             },
             monitor,

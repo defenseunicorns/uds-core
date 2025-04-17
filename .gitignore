@@ -5,6 +5,8 @@ build/**
 *.tar.zst
 zarf-sbom
 zarf-sbom/**
+cve
+cve/**
 tmp/
 env.ts
 **/node_modules
@@ -30,3 +32,5 @@ uds-docs/**
 **.backup
 **/.playwright/**
 **/.playwright
+
+coverage/**

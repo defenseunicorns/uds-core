@@ -1,6 +1,8 @@
 # Copyright 2024 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
+includes:
+  - util: ./utils.yaml
 
 variables:
   - name: CLUSTER_NAME
@@ -22,7 +24,7 @@ tasks:
   - name: install-eksctl
     actions:
       - cmd: |
-          curl --silent --location "https://github.com/weaveworks/eksctl/releases/download/v0.201.0/eksctl_Linux_amd64.tar.gz" | tar xz -C /tmp
+          curl --silent --location "https://github.com/weaveworks/eksctl/releases/download/v0.207.0/eksctl_Linux_amd64.tar.gz" | tar xz -C /tmp
           sudo mv /tmp/eksctl /usr/local/bin
 
   - name: create-cluster
@@ -44,19 +46,27 @@ tasks:
             serviceRolePermissionsBoundary: ${PERMISSIONS_BOUNDARY_ARN}
 
           addons:
-            - name: aws-ebs-csi-driver
+            - name: vpc-cni
               attachPolicyARNs:
-                - arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy
-              configurationValues: |-
-                defaultStorageClass:
-                  enabled: true
+                # Commercial IAM Policy
+                # - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
+                # Govcloud IAM policy
+                - arn:aws-us-gov:iam::aws:policy/AmazonEKS_CNI_Policy
               permissionsBoundary: ${PERMISSIONS_BOUNDARY_ARN}
               tags:
                 PermissionsBoundary: ${PERMISSIONS_BOUNDARY_NAME}
+              configurationValues: |-
+                enableNetworkPolicy: "true"
 
-            - name: vpc-cni
+            - name: aws-ebs-csi-driver
               attachPolicyARNs:
-                - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
+                # Commercial IAM Policy
+                # - arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy
+                # GovCloud IAM Policy
+                - arn:aws-us-gov:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy
+              configurationValues: |-
+                defaultStorageClass:
+                  enabled: true
               permissionsBoundary: ${PERMISSIONS_BOUNDARY_ARN}
               tags:
                 PermissionsBoundary: ${PERMISSIONS_BOUNDARY_NAME}
@@ -103,27 +113,34 @@ tasks:
     actions:
       - task: rke2-nodes-ready
       - cmd: |
-          # wait for at least 3 nodes
+          # wait for nodes to be ready
+          echo "Waiting for all cluster nodes to be ready...";
           while true; do
-            if [ $(uds zarf tools kubectl get nodes -o jsonpath='{range .items[*]}{.status.conditions[-1].type}={.status.conditions[-1].status}{"\n"}{end}' | egrep -i '^ready.*true' | wc -l) -lt 3 ]; then
-              echo "Waiting for at least 3 nodes to be ready...";
+            if [ $(uds zarf tools kubectl get nodes | grep Ready | wc -l) -lt 4 ]; then
               sleep 5;
             else
               break
             fi
           done
-
           # wait for cluster components
+          echo "Waiting for Helm Controller to install cluster components..."
+          while true; do
+            if [ $(uds zarf tools kubectl get po -n kube-system -l batch.kubernetes.io/controller-uid --no-headers | egrep -v Completed | wc -l) -gt 0 ]; then
+               sleep 5;
+            else
+              break
+            fi
+          done
+          echo "Waiting for cluster components to be ready...";
           while true; do
             if [ $(uds zarf tools kubectl get po,job -A --no-headers=true | egrep -v 'Running|Complete' | wc -l) -gt 0 ]; then
-              echo "Waiting for cluster components to be ready...";
               sleep 5;
             else
-              echo "Cluster is ready"
+              echo "Cluster is ready!"
               break
             fi
           done
-          uds zarf tools kubectl apply -f ./metallb.yaml
+      - task: util:rke2-allow-prom-kube-dns
         dir: .github/test-infra/aws/rke2/
         maxTotalSeconds: 600
 

@@ -146,6 +146,8 @@ async function generateMarkdown(jsonSchema: JsonSchema, version: string, schemaF
 title: ${title} CR (${version})
 tableOfContents:
   maxHeadingLevel: 6
+sidebar:
+  order: 20
 ---
 ${generateMarkdownFromSchema(jsonSchema.properties, `${title}`, 1).trim()}`;
 

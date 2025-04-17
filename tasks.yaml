@@ -26,13 +26,18 @@ tasks:
       - description: "Create the dev cluster"
         task: setup:create-k3d-cluster
 
+      - description: "Register CRDs in cluster"
+        cmd: npx ts-node -e "import { registerCRDs } from './src/pepr/operator/crd/register'; registerCRDs()"
+        env:
+          - "PEPR_MODE=dev"
+
       # Note: the `registry-url` flag used here requires uds 0.19.2+
       - description: "Deploy the Istio source package with Zarf Dev"
         cmd: "uds zarf dev deploy src/istio --flavor upstream --registry-url docker.io --no-progress"
 
-      # Note: this abuses the --flavor flag to only install the CRDs from this package - the "crds-only" flavor is not an explicit flavor of the package
+      # Note: Since this is a dev deploy without any `--flavor` it only deploys the CRDs (other components are flavored)
       - description: "Deploy the Prometheus-Stack source package with Zarf Dev to only install the CRDs"
-        cmd: "uds zarf dev deploy src/prometheus-stack --flavor crds-only --no-progress"
+        cmd: "uds zarf dev deploy src/prometheus-stack --no-progress"
 
       - description: "Dev instructions"
         cmd: |

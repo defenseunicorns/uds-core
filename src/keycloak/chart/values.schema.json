@@ -12,6 +12,15 @@
         "type": "string"
       }
     },
+    "pathParameterProtection": {
+      "type": "boolean"
+    },
+    "additionalNetworkAllow": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
     "autoscaling": {
       "type": "object",
       "properties": {
@@ -431,6 +440,50 @@
     },
     "updateStrategy": {
       "type": "string"
+    },
+    "env": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "required": ["name", "value"]
+      }
+    },
+    "themeCustomizations": {
+      "type": "object",
+      "properties": {
+        "resources": {
+          "type": "object",
+          "properties": {
+            "images": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "enum": ["background.jpg", "footer.png", "logo.svg", "favicon.svg"]
+                  },
+                  "configmap": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   }
 }

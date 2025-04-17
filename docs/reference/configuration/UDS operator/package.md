@@ -1,15 +1,20 @@
 ---
 title: UDS Package
-sidebar:
-    order: 2
 ---
 
 ![UDS Operator Package Flowchart](https://github.com/defenseunicorns/uds-core/blob/main/docs/.images/diagrams/uds-core-operator-uds-package.svg?raw=true)
 
 ## Package
+:::note
+Only one UDS Package Custom Resource can exist in a namespace. This pattern was chosen by design to better enable workload isolation and to reduce complexity.
+:::
+Namespaces are a common boundary for isolating workloads in multi-tenant clusters. When defining a UDS Package resource, consider the implications for all workloads that exist in the target namespace. If the UDS Package that you are defining has configurations that conflict with each other or would be simplified by using a separate UDS Package definition, consider using a separate Kubernetes namespace. Read more about namespaces and mulitenancy [here](https://kubernetes.io/docs/concepts/security/multi-tenancy/).
 
+The UDS Operator seamlessly enables the following enhancements and protections for your workloads:
 - **Enabling Istio Sidecar Injection:**
   - The operator facilitates the activation of Istio sidecar injection within namespaces where the CR is deployed.
+- **Support for Istio Ambient Mode:**
+  - Packages can now opt into Istio's Ambient mode by setting `spec.network.serviceMesh.mode: ambient`. This provides service mesh capabilities and security without sidecars, reducing resource overhead.
 - **Establishing Default-Deny Ingress/Egress Network Policies:**
   - It sets up default-deny network policies for both ingress and egress, creating a foundational security posture.
 - **Implementing Layered Allow-List Approach:**
@@ -23,10 +28,11 @@ sidebar:
   - At this time `anyOf` allows defining a list of groups, a user must belong to at least one of them.
   - Custom client `protocolMapper`'s that will be created alongside the client and added to the client's dedicated scope.
 - **Authservice Protection:**
-- Authservice authentication provides application agnostic SSO for applications that opt-in.
+  - Authservice authentication provides application agnostic SSO for applications that opt-in.
 
 :::caution
-Warning: **Authservice Protection** and **SSO Group Authentication** are in Alpha and may not be stable. Avoid using in production. Feedback is appreciated to improve reliability.
+Warning: **Istio Ambient Mode** Package support is in Alpha and may not be stable. Different workloads may experience issues when migrating away from sidecars so testing in a development/staging environment is encouraged. In addition there are some known limitations with ambient support at this time:
+- `Package` CRs with AuthService SSO clients (`enableAuthserviceSelector`) are not supported in ambient mode. This is a limitation we plan to remove with operator support/configuration of [waypoint proxies](https://istio.io/latest/docs/ambient/usage/waypoint/), track progress on [this issue in GitHub](https://github.com/defenseunicorns/uds-core/issues/1200).
 :::
 
 ### Example UDS Package CR
@@ -57,11 +63,11 @@ spec:
         remoteGenerated: Anywhere
 
       - direction: Egress
-        remoteNamespace: tempo
+        remoteNamespace: monitoring
         remoteSelector:
-          app.kubernetes.io/name: tempo
-        port: 9411
-        description: "Tempo"
+          app.kubernetes.io/name: alertmanager
+        port: 9093
+        description: "Alertmanager Datasource"
 
   # SSO allows for the creation of Keycloak clients and with automatic secret generation and protocolMappers
   sso:
@@ -90,177 +96,8 @@ spec:
             userinfo.token.claim: "true"
 ```
 
-### Example UDS Package CR with SSO Templating
-
-By default, UDS generates a secret for the Single Sign-On (SSO) client that encapsulates all client contents as an opaque secret. In this setup, each key within the secret corresponds to its own environment variable or file, based on the method used to mount the secret. If customization of the secret rendering is required, basic templating can be achieved using the `secretTemplate` property. Below are examples showing this functionality. To see how templating works, please see the [Regex website](https://regex101.com/r/e41Dsk/3).
-
-```yaml
-apiVersion: uds.dev/v1alpha1
-kind: Package
-metadata:
-  name: grafana
-  namespace: grafana
-spec:
-  sso:
-    - name: My Keycloak Client
-      clientId: demo-client
-      redirectUris:
-        - "https://demo.uds.dev/login"
-      # Customize the name of the generated secret
-      secretName: my-cool-auth-client
-      secretTemplate:
-        # Raw text examples
-        rawTextClientId: "clientField(clientId)"
-        rawTextClientSecret: "clientField(secret)"
-
-        # JSON example
-        auth.json: |
-          {
-            "client_id": "clientField(clientId)",
-            "client_secret": "clientField(secret)",
-            "defaultScopes": clientField(defaultClientScopes).json(),
-            "redirect_uri": "clientField(redirectUris)[0]",
-            "bearerOnly": clientField(bearerOnly),
-          }
-
-        # Properties example
-        auth.properties: |
-          client-id=clientField(clientId)
-          client-secret=clientField(secret)
-          default-scopes=clientField(defaultClientScopes)
-          redirect-uri=clientField(redirectUris)[0]
-
-        # YAML example (uses JSON for the defaultScopes array)
-        auth.yaml: |
-          client_id: clientField(clientId)
-          client_secret: clientField(secret)
-          default_scopes: clientField(defaultClientScopes).json()
-          redirect_uri: clientField(redirectUris)[0]
-          bearer_only: clientField(bearerOnly)
-  ```
-
-### Protecting a UDS Package with Authservice
-
-To enable authentication for applications that do not have native OIDC configuration, UDS Core can utilize Authservice as an authentication layer.
-
-Follow these steps to protect your application with Authservice:
-
-* Set `enableAuthserviceSelector` with a matching label selector in the `sso` configuration of the Package.
-* Ensure that the pods of the application are labeled with the corresponding selector
-
-```yaml
-apiVersion: uds.dev/v1alpha1
-kind: Package
-metadata:
-  name: httpbin
-  namespace: httpbin
-spec:
-  sso:
-    - name: Demo SSO httpbin
-      clientId: uds-core-httpbin
-      redirectUris:
-        - "https://httpbin.uds.dev/login"
-      enableAuthserviceSelector:
-        app: httpbin
-```
+This example may not contain all fields, the full specification for the Package CR is documented [here](/reference/configuration/custom-resources/packages-v1alpha1-cr). In addition, there is a JSON schema published [here](https://raw.githubusercontent.com/defenseunicorns/uds-core/refs/heads/main/schemas/package-v1alpha1.schema.json) for use in your IDE.
 
 :::note
-The UDS Operator uses the first `redirectUris` to populate the `match.prefix` hostname and `callback_uri` in the authservice chain.
+More SSO Package examples might be found [here](/reference/configuration/single-sign-on/overview/).
 :::
-
-For a complete example, see [app-authservice-tenant.yaml](https://github.com/defenseunicorns/uds-core/blob/main/src/test/app-authservice-tenant.yaml)
-
-#### Trusted Certificate Authority
-
-Authservice can be configured with additional trusted certificate bundle in cases where UDS Core ingress gateways are deployed with private PKI.
-
-To configure, set [UDS_CA_CERT](https://github.com/defenseunicorns/uds-core/blob/main/packages/standard/zarf.yaml#L11-L13) as an environment variable with a Base64 encoded PEM formatted certificate bundle that can be used to verify the certificates of the tenant gateway.
-
-Alternatively you can specify the `CA_CERT` variable in your `uds-config.yaml`:
-
-```yaml
-variables:
-  core:
-    CA_CERT: <base64 encoded certificate authority>
-```
-
-See [configuring Istio Ingress](https://uds.defenseunicorns.com/reference/configuration/ingress/#configure-domain-name-and-tls-for-istio-gateways) for the relevant documentation on configuring ingress certificates.
-
-### Creating a UDS Package with a Device Flow client
-
-Some applications may not have a web UI / server component to login to and may instead grant OAuth tokens to devices.  This flow is known as the [OAuth 2.0 Device Authorization Grant](https://oauth.net/2/device-flow/) and is supported in a UDS Package with the following configuration:
-
-```yaml
-apiVersion: uds.dev/v1alpha1
-kind: Package
-metadata:
-  name: fulcio
-  namespace: fulcio-system
-spec:
-  sso:
-    - name: Sigstore Login
-      clientId: sigstore
-      standardFlowEnabled: false
-      publicClient: true
-      attributes:
-        oauth2.device.authorization.grant.enabled: "true"
-```
-
-This configuration does not create a secret in the cluster and instead tells the UDS Operator to create a public client (one that requires no auth secret) that enables the `oauth2.device.authorization.grant.enabled` flow and disables the standard redirect auth flow.  Because this creates a public client configuration that deviates from this is limited - if your application requires both the Device Authorization Grant and the standard flow this is currently not supported without creating two separate clients.
-
-### Creating a UDS Package with a Service Account Roles client
-
-Some applications may need to access resources / obtain OAuth tokens on behalf of *themselves* vice users. This may be needed to allow API access to Authservice protected applications (outside of a web browser). This is commonly used in machine-to-machine authentication for automated processes. This type of grant in OAuth 2.0 is known as the [Client Credentials Grant](https://oauth.net/2/grant-types/client-credentials/) and is supported in a UDS Package with the following configuration:
-
-```yaml
-apiVersion: uds.dev/v1alpha1
-kind: Package
-metadata:
-  name: client-cred
-  namespace: argo
-spec:
-  sso:
-    - name: httpbin-api-client
-      clientId: httpbin-api-client
-      standardFlowEnabled: false
-      serviceAccountsEnabled: true
-
-      # By default, Keycloak will not set the audience `aud` claim for service account access token JWTs.
-      # You can optionally add a protocolMapper to set the audience.
-      # If you map the audience to the same client used for authservice, you can enable access to authservice protected apps with a service account JWT.
-      protocolMappers:
-        - name: audience
-          protocol: "openid-connect"
-          protocolMapper: "oidc-audience-mapper"
-          config:
-            included.client.audience: "uds-core-httpbin" # Set this to match the app's authservice client id
-            access.token.claim: "true"
-            introspection.token.claim: "true"
-            id.token.claim: "false"
-            lightweight.claim: "false"
-            userinfo.token.claim: "false"
-```
-Setting `serviceAccountsEnabled: true` requires `standardFlowEnabled: false` and is incompatible with `publicClient: true`.
-
-If needed, multiple clients can be added to the same application: an AuthService client, a device flow client, and as many service account clients as required.
-
-A keycloak service account JWT can be distinguished by a username prefix of `service-account-` and a new claim called `client_id`.  Note that the `aud` field is not set by default, hence the mapper in the example.
-
-### SSO Client Attribute Validation
-
-The SSO spec supports a subset of the Keycloak attributes for clients, but does not support all of them. The current supported attributes are:
-- oidc.ciba.grant.enabled
-- backchannel.logout.session.required
-- backchannel.logout.revoke.offline.tokens
-- post.logout.redirect.uris
-- oauth2.device.authorization.grant.enabled
-- pkce.code.challenge.method
-- client.session.idle.timeout
-- client.session.max.lifespan
-- access.token.lifespan
-- saml.assertion.signature
-- saml.client.signature
-- saml_assertion_consumer_url_post
-- saml_assertion_consumer_url_redirect
-- saml_single_logout_service_url_post
-- saml_single_logout_service_url_redirect

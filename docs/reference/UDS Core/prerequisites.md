@@ -57,7 +57,7 @@ The UDS Operator will dynamically provision network policies to secure traffic b
 Istio requires a number of kernel modules to be loaded for full functionality. The below is a script that will ensure these modules are loaded and persisted across reboots (see also Istio's [upstream requirements list](https://istio.io/latest/docs/ops/deployment/platform-requirements/)). Ideally this script is used as part of an image build or cloud-init process on each node.
 
 ```console
-modules=("br_netfilter" "xt_REDIRECT" "xt_owner" "xt_statistic" "iptable_mangle" "iptable_nat" "xt_conntrack" "xt_tcpudp")
+modules=("br_netfilter" "xt_REDIRECT" "xt_owner" "xt_statistic" "iptable_mangle" "iptable_nat" "xt_conntrack" "xt_tcpudp" "xt_connmark" "xt_mark" "ip_set")
 for module in "${modules[@]}"; do
   modprobe "$module"
   echo "$module" >> "/etc/modules-load.d/istio-modules.conf"
@@ -72,12 +72,21 @@ If you would like to use MetalLB as your load balancer provisioner there is a UD
 
 ##### Ambient Mode
 
-Istio can be deployed in [Ambient Mode](https://istio.io/latest/docs/ambient/overview/) by deploying the optional `istio-ambient` component. This mode is still in alpha release and is not recommended for production use or for clusters requiring `FIPS` compliance. The `istio-ambient` component installs the Istio CNI plugin which requires specifying the `CNI_CONF_DIR` and `CNI_BIN_DIR` variables. These values can change based on the environment Istio is being deployed into. By default the package will attempt to auto-detect these values and will use the following values if not specified:
+[Ambient Mode](https://istio.io/latest/docs/ambient/overview/) in Istio is now integrated directly into the `istio-controlplane` component and enabled by default. Also note that only the `unicorn` and `registry1` flavors of core contain `FIPS` compliant images.
+
+When using ambient mode with UDS Packages, you can benefit from:
+- Reduced resource overhead compared to sidecar mode, as workloads don't require an injected sidecar container
+- Simplified deployment and operations for service mesh capabilities
+- Faster pod startup times since there's no need to wait for sidecar initialization
+
+Note that Packages with Authservice clients are not currently supported in ambient mode and will be rejected by the UDS Operator.
+
+The `istio-controlplane` component installs the Istio CNI plugin which requires specifying the `CNI_CONF_DIR` and `CNI_BIN_DIR` variables. These values can change based on the environment Istio is being deployed into. By default the package will attempt to auto-detect these values and will use the following values if not specified:
 
 ```yaml
 # K3d cluster
 cniConfDir: /var/lib/rancher/k3s/agent/etc/cni/net.d
-cniBinDir: /bin/
+cniBinDir: /opt/cni/bin/ # Historically this was `/bin/`
 
 # K3s cluster
 cniConfDir: /var/lib/rancher/k3s/agent/etc/cni/net.d
@@ -88,7 +97,7 @@ cniConfDir: /etc/cni/net.d
 cniBinDir: /opt/cni/bin/
 ```
 
-These values can be overwritten when installing core by setting the `cniConfDir` and `cniBinDir` values in the `istio-ambient` component.
+These values can be overwritten when installing core by setting the `cniConfDir` and `cniBinDir` values in the `istio-controlplane` component.
 
 To set these values add the following to the `uds-config.yaml` file:
 
@@ -103,6 +112,37 @@ or via `--set` if deploying the package via `zarf`:
 
 ```console
 uds zarf package deploy uds-core --set CNI_CONF_DIR=/etc/cni/net.d --set CNI_BIN_DIR=/opt/cni/bin
+```
+
+If you are using Cilium you will also need to make some additional configuration changes and add a cluster wide network policy to prevent Cilium's CNI from interfering with the Istio CNI plugin (part of the ambient stack). See the [upstream documentation](https://istio.io/latest/docs/ambient/install/platform-prerequisites/#cilium) for these required changes.
+
+#### Keycloak
+
+It has been reported that some versions of Keycloak crash on Apple M4 Macbooks (the issue is tracked by [#1309](https://github.com/defenseunicorns/uds-core/issues/1309)). In order to apply a workaround for both [`K3d Slim Dev`](https://github.com/defenseunicorns/uds-core/tree/main/bundles/k3d-slim-dev) and [`k3d Core`](https://github.com/defenseunicorns/uds-core/tree/main/bundles/k3d-standard) bundles, you have to override the `KEYCLOAK_HEAP_OPTIONS` variable and apply the `-XX:UseSVE=0 -XX:MaxRAMPercentage=70 -XX:MinRAMPercentage=70 -XX:InitialRAMPercentage=50 -XX:MaxRAM=1G` value, for example:
+
+```console
+uds deploy k3d-core-slim-dev:0.37.0 --set KEYCLOAK_HEAP_OPTIONS="-XX:UseSVE=0 -XX:MaxRAMPercentage=70 -XX:MinRAMPercentage=70 -XX:InitialRAMPercentage=50 -XX:MaxRAM=1G" --confirm
+```
+
+Similar overrides might be applied to the UDS Bundle overrides section. Please note that `-XX:MaxRAM` should be equal to the memory limits as this workaround leverages a very similar approach to overriding Keycloak Java Heap settings. Here's an example:
+
+```yaml
+packages:
+  - name: core
+    repository: oci://ghcr.io/defenseunicorns/packages/uds/core
+    ref: x.x.x
+    overrides:
+      keycloak:
+        keycloak:
+          values:
+            # Override Java memory settings
+            - path: env
+              value:
+                - name: JAVA_OPTS_KC_HEAP
+                  value: "-XX:UseSVE=0 -XX:MaxRAMPercentage=70 -XX:MinRAMPercentage=70 -XX:InitialRAMPercentage=50 -XX:MaxRAM=2G"
+            # Override limits - both figures need to match!
+            - path: resources.limits.memory
+              value: "2Gi"
 ```
 
 #### NeuVector
@@ -133,7 +173,6 @@ sysctl -p
 Metrics server is provided as an optional component in UDS Core and can be enabled if needed. For distros where metrics-server is already provided, ensure that you do NOT enable metrics-server. See the below as an example for enabling metrics-server if your cluster does not include it.
 
 ```yaml
----
 - name: uds-core
   repository: ghcr.io/defenseunicorns/packages/private/uds/core
   ref: 0.25.2-unicorn

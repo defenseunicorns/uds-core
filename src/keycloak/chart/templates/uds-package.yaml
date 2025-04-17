@@ -26,6 +26,7 @@ spec:
         remoteNamespace: pepr-system
         remoteSelector:
           app: pepr-uds-core-watcher
+        remoteServiceAccount: pepr-uds-core
         port: 8080
 
       - description: "Keycloak backchannel access"
@@ -62,7 +63,8 @@ spec:
           app.kubernetes.io/name: keycloak
         port: {{ .Values.postgresql.port }}
         {{- if .Values.postgresql.internal.enabled }}
-        remoteSelector: {{ .Values.postgresql.internal.remoteSelector }}
+        remoteSelector:
+          {{- .Values.postgresql.internal.remoteSelector | toYaml | nindent 10 }}
         remoteNamespace: {{ .Values.postgresql.internal.remoteNamespace }}
         {{- else if .Values.postgresql.egressCidr }}
         remoteCidr: {{ .Values.postgresql.egressCidr }}
@@ -83,6 +85,11 @@ spec:
         ports:
           - 7800
           - 57800
+      {{- end }}
+
+      # Custom rules for additional networking access
+      {{- with .Values.additionalNetworkAllow }}
+      {{ toYaml . | nindent 6 }}
       {{- end }}
 
     expose:

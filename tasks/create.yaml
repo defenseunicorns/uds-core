@@ -1,9 +1,8 @@
 # Copyright 2024 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
-
 includes:
-  - common: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.6.3/tasks/create.yaml
+  - common: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.14.1/tasks/create.yaml
 
 variables:
   - name: FLAVOR
@@ -11,18 +10,30 @@ variables:
 
   - name: REGISTRY1_PEPR_IMAGE
     # renovate: datasource=docker depName=registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller versioning=semver
-    default: registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller:v0.44.0
+    default: registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller:v0.47.0
+
+  - name: UNICORN_PEPR_IMAGE
+    # renovate: datasource=github-tags depName=defenseunicorns/pepr versioning=semver
+    default: ghcr.io/defenseunicorns/pepr/private/controller:v0.47.0
 
   - name: LAYER
+
+  - name: CREATE_OPTIONS
+    description: "Additional options passed in when creating Zarf packages. For example: --skip-sbom"
+    default: ""
 
 tasks:
   - name: standard-package
     description: "Create the UDS Core Zarf Package"
+    inputs:
+      create_options:
+        default: ${CREATE_OPTIONS}
+        description: "Additional options passed in when creating Zarf packages. For example: --skip-sbom"
     actions:
-      - task: pepr-build
-
-      - description: "Create the UDS Core Standard Zarf Package"
-        cmd: "uds zarf package create packages/standard --confirm --no-progress --flavor ${FLAVOR}"
+      - task: single-layer
+        with:
+          layer: standard
+          create_options: ${{ .inputs.create_options }}
 
   - name: k3d-standard-bundle
     description: "Create the K3d-UDS Core Bundle"
@@ -64,10 +75,22 @@ tasks:
       layer:
         default: base
         description: The UDS Core layer to build
+      create_options:
+        default: ${CREATE_OPTIONS}
+        description: "Additional options passed in when creating Zarf packages. For example: --skip-sbom"
     actions:
+      # Note: Maru does not support `or` for this conditional task so we just duplicate it for each case
       - task: pepr-build
-        if: ${{ eq .inputs.layer "base"}}
-      - cmd: uds zarf package create packages/${{ index .inputs "layer" }} --confirm --no-progress --flavor ${FLAVOR}
+        if: ${{ eq .inputs.layer "standard" }}
+      - task: pepr-build
+        if: ${{ eq .inputs.layer "base" }}
+      - description: "Create the UDS Core Zarf Package"
+        task: common:package
+        with:
+          path: packages/${{ index .inputs "layer" }}
+          config: ./zarf-config.yaml
+          options: ${{ .inputs.create_options }}
+          architecture: ${ZARF_ARCHITECTURE}
 
   - name: pepr-build
     description: "Build the UDS Core Pepr Module"
@@ -79,6 +102,8 @@ tasks:
             PEPR_OVERRIDE_IMAGE="--custom-image ${PEPR_CUSTOM_IMAGE}"
           elif [ "${FLAVOR}" = "registry1" ] ; then
             PEPR_OVERRIDE_IMAGE="--custom-image ${REGISTRY1_PEPR_IMAGE}"
+          elif [ "${FLAVOR}" = "unicorn" ] ; then
+            PEPR_OVERRIDE_IMAGE="--custom-image ${UNICORN_PEPR_IMAGE}"
           else
             PEPR_OVERRIDE_IMAGE=""
           fi

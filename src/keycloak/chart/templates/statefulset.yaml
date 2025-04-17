@@ -53,6 +53,10 @@ spec:
               mountPath: /opt/keycloak/themes
             - name: conf
               mountPath: /opt/keycloak/conf
+            {{- if and .Values.themeCustomizations .Values.themeCustomizations.resources .Values.themeCustomizations.resources.images }}
+            - name: theme-overrides
+              mountPath: /opt/keycloak/theme-overrides
+            {{- end }}
           envFrom:
             - secretRef:
                 name: {{ include "keycloak.fullname" . }}-realm-env
@@ -89,6 +93,9 @@ spec:
             - secretRef:
                 name: {{ include "keycloak.fullname" . }}-realm-env
           env:
+          {{- if .Values.env }}
+            {{- tpl (toYaml .Values.env) . | nindent 12 }}
+          {{- end }}
             # Common configuration
             - name: UDS_DOMAIN
               value: "{{ .Values.domain }}"
@@ -108,6 +115,10 @@ spec:
             # X509 configuration
             - name: KC_HTTPS_CLIENT_AUTH
               value: request
+
+            # Escape Slashes in Group Names
+            - name: KC_SPI_GROUP_JPA_ESCAPE_SLASHES_IN_GROUP_PATH
+              value: "true"
 
             ## Activate the nginx provider
             - name: KC_SPI_X509CERT_LOOKUP_PROVIDER
@@ -228,6 +239,8 @@ spec:
             - name: conf
               mountPath: /opt/keycloak/conf
               readOnly: true
+            - name: client-secrets
+              mountPath: /var/run/secrets/uds/client-secrets
       enableServiceLinks: {{ .Values.enableServiceLinks }}
       restartPolicy: {{ .Values.restartPolicy }}
       {{- with .Values.nodeSelector }}
@@ -251,6 +264,9 @@ spec:
       {{- end }}
       terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
       volumes:
+        - name: client-secrets
+          secret:
+            secretName: {{ include "keycloak.fullname" . }}-client-secrets
         - name: providers
           {{- if .Values.persistence.providers.enabled }}
           persistentVolumeClaim:
@@ -281,3 +297,17 @@ spec:
           {{- else }}
           emptyDir: {}
           {{- end }}
+        {{- if and .Values.themeCustomizations .Values.themeCustomizations.resources .Values.themeCustomizations.resources.images }}
+        - name: theme-overrides
+          projected:
+            sources:
+              {{- range $image := .Values.themeCustomizations.resources.images }}
+              {{- if $image.configmap.name }}
+              - configMap:
+                  name: {{ $image.configmap.name }}
+                  items:
+                    - key: {{ $image.name }}
+                      path: {{ $image.name }}
+              {{- end }}
+              {{- end }}
+        {{- end }}

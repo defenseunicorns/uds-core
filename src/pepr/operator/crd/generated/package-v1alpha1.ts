@@ -7,7 +7,7 @@
 import { GenericKind, RegisterKind } from "kubernetes-fluent-client";
 export class Package extends GenericKind {
   spec?: Spec;
-  status?: Status;
+  status?: StatusObject;
 }
 
 export interface Spec {
@@ -137,6 +137,10 @@ export interface Network {
    * Expose a service on an Istio Gateway
    */
   expose?: Expose[];
+  /**
+   * Service Mesh configuration for the package
+   */
+  serviceMesh?: ServiceMesh;
 }
 
 export interface Allow {
@@ -185,6 +189,11 @@ export interface Allow {
    * The remote pod selector labels to allow traffic to/from
    */
   remoteSelector?: { [key: string]: string };
+  /**
+   * The remote service account to restrict incoming traffic from within the remote
+   * namespace.           Only valid for Ingress rules.
+   */
+  remoteServiceAccount?: string;
   /**
    * Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all
    * pods in the namespace
@@ -575,6 +584,24 @@ export interface FluffyURI {
   regex?: string;
 }
 
+/**
+ * Service Mesh configuration for the package
+ */
+export interface ServiceMesh {
+  /**
+   * Set the service mesh mode for this package (namespace), defaults to sidecar
+   */
+  mode?: Mode;
+}
+
+/**
+ * Set the service mesh mode for this package (namespace), defaults to sidecar
+ */
+export enum Mode {
+  Ambient = "ambient",
+  Sidecar = "sidecar",
+}
+
 export interface Sso {
   /**
    * Always list this client in the Account UI, even if the user does not have an active
@@ -721,8 +748,13 @@ export interface ProtocolMapper {
   protocolMapper: string;
 }
 
-export interface Status {
+export interface StatusObject {
+  authorizationPolicyCount?: number;
   authserviceClients?: string[];
+  /**
+   * Status conditions following Kubernetes-style conventions
+   */
+  conditions?: Condition[];
   endpoints?: string[];
   monitors?: string[];
   networkPolicyCount?: number;
@@ -732,10 +764,47 @@ export interface Status {
   ssoClients?: string[];
 }
 
+export interface Condition {
+  /**
+   * The last time the condition transitioned from one status to another
+   */
+  lastTransitionTime: Date;
+  /**
+   * A human-readable message indicating details about the transition
+   */
+  message: string;
+  /**
+   * Represents the .metadata.generation that the condition was set based upon
+   */
+  observedGeneration?: number;
+  /**
+   * A programmatic identifier indicating the reason for the condition's last transition
+   */
+  reason: string;
+  /**
+   * Status of the condition, one of True, False, Unknown
+   */
+  status: StatusEnum;
+  /**
+   * Type of condition in CamelCase or in foo.example.com/CamelCase format
+   */
+  type: string;
+}
+
+/**
+ * Status of the condition, one of True, False, Unknown
+ */
+export enum StatusEnum {
+  False = "False",
+  True = "True",
+  Unknown = "Unknown",
+}
+
 export enum Phase {
   Failed = "Failed",
   Pending = "Pending",
   Ready = "Ready",
+  RemovalFailed = "RemovalFailed",
   Removing = "Removing",
   Retrying = "Retrying",
 }
