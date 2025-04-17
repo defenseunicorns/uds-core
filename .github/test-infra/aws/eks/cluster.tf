@@ -33,7 +33,7 @@ module "eks" {
   node_security_group_enable_recommended_rules = true
   node_security_group_additional_rules = {
     clusterapi_ingress = {
-      description                   = "Cluster API Ingress on non-privileged  ports"
+      description                   = "Cluster API Ingress on non-privileged ports"
       protocol                      = "tcp"
       from_port                     = 1025
       to_port                       = 65535
