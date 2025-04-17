@@ -6,11 +6,6 @@ variables:
     description: A comma separated string of packages to be excluded from validation and e2e tests.
     default: ""
 
-variables:
-  - name: EXCLUDED_PACKAGES
-    description: A comma separated string of packages to be excluded from validation and e2e tests.
-    default: ""
-
 includes:
   - create: ./create.yaml
   - setup: ./setup.yaml
