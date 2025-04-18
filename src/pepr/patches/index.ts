@@ -91,7 +91,7 @@ When(a.Deployment)
     );
 
     if (controllerContainer && controllerContainer.readinessProbe) {
-      log.trace("Patching NeuVector Controller deployment to modify readinessProbe");
+      log.debug("Patching NeuVector Controller deployment to modify readinessProbe");
       const readinessProbe = {
         // Probe default port for controller REST API server
         tcpSocket: { port: 10443 },
