@@ -6,7 +6,7 @@ data "aws_caller_identity" "current" {}
 data "aws_partition" "current" {}
 data "aws_region" "current" {}
 
-# Use existing VPC and subnets or create new ones
+# Use existing VPC and subnets
 data "aws_vpc" "vpc" {
   filter {
     name   = "tag:Name"
@@ -14,33 +14,22 @@ data "aws_vpc" "vpc" {
   }
 }
 
-# Find the public route table in the VPC
-data "aws_route_table" "public" {
-  vpc_id = data.aws_vpc.vpc.id
+data "aws_subnet" "eks_ci_subnet_b" {
+  vpc_id            = data.aws_vpc.vpc.id
+  availability_zone = "${var.region}b"
+
   filter {
     name   = "tag:Name"
-    values = ["*public*"]
+    values = [var.subnet_name]
   }
 }
 
-# Random identifiers
-resource "random_id" "default" {
-  byte_length = 2
-}
+data "aws_subnet" "eks_ci_subnet_c" {
+  vpc_id            = data.aws_vpc.vpc.id
+  availability_zone = "${var.region}c"
 
-resource "random_id" "unique_id" {
-  byte_length = 4
-}
-
-# Generate a random subnet CIDR that's valid for the VPC
-resource "random_integer" "subnet_octet_3" {
-  min  = 0
-  max  = 250
-  seed = var.name
-}
-
-resource "random_integer" "subnet_octet_3_second" {
-  min  = 0
-  max  = 250
-  seed = "${var.name}-second"
+  filter {
+    name   = "tag:Name"
+    values = [var.subnet_name]
+  }
 }

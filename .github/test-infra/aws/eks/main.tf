@@ -1,14 +1,8 @@
 # Copyright 2024 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 locals {
-  # Generate deterministic subnet CIDRs based on cluster name
-  # Use 172.168.x.x/24 to match the VPC CIDR (172.168.0.0/16)
-  generated_subnet_cidr = "172.168.${random_integer.subnet_octet_3.result}.0/24"
-  subnet_cidr           = var.subnet_cidr != "" ? var.subnet_cidr : local.generated_subnet_cidr
-  subnet_cidr_second    = "172.168.${random_integer.subnet_octet_3_second.result}.0/24"
-
   # Combine subnet IDs for EKS
-  subnet_ids = [aws_subnet.cluster_subnet.id, aws_subnet.cluster_subnet_second.id]
+  subnet_ids = [data.aws_subnet.eks_ci_subnet_b.id, data.aws_subnet.eks_ci_subnet_c.id]
 
   # Tags for resources
   tags = {
@@ -49,6 +43,10 @@ module "generate_kms" {
   depends_on = [
     module.eks
   ]
+}
+
+resource "random_id" "unique_id" {
+  byte_length = 4
 }
 
 module "S3" {
