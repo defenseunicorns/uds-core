@@ -4,7 +4,7 @@
 image:
   registry: cgr.dev
   repository: du-uds-defenseunicorns/grafana-fips
-  tag: 11.5.3
+  tag: 11.6.0
 
 initChownData:
   image:

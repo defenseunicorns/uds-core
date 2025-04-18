@@ -7,9 +7,14 @@ metadata:
   description: "UDS Core (Base)"
   authors: "Defense Unicorns - Product"
   # x-release-please-start-version
-  version: "0.40.0"
+  version: "0.40.1"
   # x-release-please-end
   x-uds-dependencies: []
+  annotations:
+    dev.uds.title: UDS Core (Base)
+    dev.uds.tagline: Provides the base for all other UDS Core Functional Layers
+    dev.uds.category: UDS-Core
+    dev.uds.keywords: uds,pepr,istio,operator,policies
 
 components:
   - name: uds-operator-config
