@@ -10,7 +10,7 @@ gateway:
   image:
     registry: cgr.dev
     repository: du-uds-defenseunicorns/nginx-fips
-    tag: 1.27.4
+    tag: 1.27.5
 memcached:
   image:
     repository: cgr.dev/du-uds-defenseunicorns/memcached
