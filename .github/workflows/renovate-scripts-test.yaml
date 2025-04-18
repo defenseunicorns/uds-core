@@ -1,0 +1,29 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+name: Renovate Readiness Tests
+
+on:
+  pull_request:
+    paths:
+      - "scripts/renovate/**"
+
+jobs:
+  test:
+    name: Jest Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+
+      - name: Install dependencies
+        working-directory: scripts/renovate
+        run: npm i
+
+      - name: Run tests
+        working-directory: scripts/renovate
+        run: npx jest .

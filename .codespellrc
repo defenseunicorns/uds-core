@@ -1,6 +1,6 @@
 # Lint Codespell configurations
 [codespell]
-skip = .codespellrc,.git,node_modules,build,dist,*.zst,CHANGELOG.md,.playwright,.terraform,*.svg,**/pepr/operator/crd/generated/*.ts,**/uds-docs/**
+skip = .codespellrc,.git,node_modules,build,dist,*.zst,CHANGELOG.md,.playwright,.terraform,*.svg,**/pepr/operator/crd/generated/*.ts,**/uds-docs/**,**/package-lock.json
 ignore-words-list = NotIn,AKS,LICENS,aks,afterAll
 enable-colors =
 check-hidden =

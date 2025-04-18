@@ -11,7 +11,7 @@ Within UDS Core there are a number of pipelines we run for different types of te
 
 All tests are run before release (on the release-please PR) to ensure we validate Core in all situations before a release. Since release PRs are opened by github-actions, pipelines are not automatically run and must be kicked off by adding a milestone to the PR.
 
-On PRs opened by [Renovate](https://github.com/renovatebot/renovate), pipelines are not run until the `renovate-ready` label is added to the PR. This is primarily done to prevent excessive CI churn before images are up to date.
+On PRs opened by [Renovate](https://github.com/renovatebot/renovate), pipelines are only run once the renovate-readiness action/scripts determine the PR is ready (all images are up to date with aligned versions). CI can also be manually kicked off by adding the `renovate-ready` label to the PR.
 
 ### "Full Core" Install
 

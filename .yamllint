@@ -12,6 +12,7 @@ ignore:
   - "src/pepr/uds-operator-config/templates/**"
   - ".codespellrc"
   - ".lintstagedrc.json"
+  - "**/package-lock.json"
   - "uds-docs/**"
 
 rules:
