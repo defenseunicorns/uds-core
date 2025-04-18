@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.40.1](https://github.com/defenseunicorns/uds-core/compare/v0.40.0...v0.40.1) (2025-04-17)
+
+
+### Bug Fixes
+
+* update prometheus-operator to allow TLS 1.2 healthprobes ([#1471](https://github.com/defenseunicorns/uds-core/issues/1471)) ([7bed436](https://github.com/defenseunicorns/uds-core/commit/7bed436e0e7afc650560034cb7906acc9182f033))
+
+
+### Miscellaneous
+
+* add docs for wiring in pre-reqs for S3/MetalLB ([#1235](https://github.com/defenseunicorns/uds-core/issues/1235)) ([16ad626](https://github.com/defenseunicorns/uds-core/commit/16ad626e4d05acadfcd7bd6f0d9794974988cb82))
+* **deps:** update grafana ([#1464](https://github.com/defenseunicorns/uds-core/issues/1464)) ([e0c8701](https://github.com/defenseunicorns/uds-core/commit/e0c87012691f041762c41d07e8f2f36f7288bdac))
+* **deps:** update grafana to v8.11.1 ([#1405](https://github.com/defenseunicorns/uds-core/issues/1405)) ([9a4b8fe](https://github.com/defenseunicorns/uds-core/commit/9a4b8fe66ebb8603548585f1d7044015d856907f))
+* **deps:** update loki to v1.27.5 ([#1468](https://github.com/defenseunicorns/uds-core/issues/1468)) ([b9c37a4](https://github.com/defenseunicorns/uds-core/commit/b9c37a489f53c3470e0458a984a1330cafc5eedb))
+* **deps:** update support-deps ([#1463](https://github.com/defenseunicorns/uds-core/issues/1463)) ([7d81e18](https://github.com/defenseunicorns/uds-core/commit/7d81e1898ed5779e08fbd0f2ddc2bff5b1c38107))
+* **deps:** update vector to 0.46.1 ([#1460](https://github.com/defenseunicorns/uds-core/issues/1460)) ([ce0646b](https://github.com/defenseunicorns/uds-core/commit/ce0646bfc3fb44a24c06f939e04c6f40955a71c8))
+* **docs:** zarf package annotations ([#1429](https://github.com/defenseunicorns/uds-core/issues/1429)) ([d45dc83](https://github.com/defenseunicorns/uds-core/commit/d45dc83bdd91d9fce74aa0a8331a0f57e4567d14))
+* enable netpols for eks ([#1467](https://github.com/defenseunicorns/uds-core/issues/1467)) ([2a78317](https://github.com/defenseunicorns/uds-core/commit/2a78317b63c3363402e016de36e540015ab68441))
+
 ## [0.40.0](https://github.com/defenseunicorns/uds-core/compare/v0.39.0...v0.40.0) (2025-04-14)
 
 
