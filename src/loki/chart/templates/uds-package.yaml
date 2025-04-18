@@ -8,6 +8,8 @@ metadata:
   namespace: {{ .Release.Namespace }}
 spec:
   network:
+    serviceMesh:
+      mode: ambient
     allow:
       # Permit intra-namespace communication for gateway -> loki read/write
       - direction: Ingress
