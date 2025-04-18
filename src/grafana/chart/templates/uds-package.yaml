@@ -25,6 +25,8 @@ spec:
       description: Metrics
 
   network:
+    serviceMesh:
+      mode: ambient
     expose:
       - service: grafana
         selector:
