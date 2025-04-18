@@ -12,29 +12,12 @@ variable "name" {
 }
 
 variable "permissions_boundary_name" {
-  description = "The name of the permissions boundary for IAM resources.  This will be used for tagging and to build out the ARN."
+  description = "Name of the permissions boundary to use for IAM roles"
   type        = string
   default     = null
 }
 
-variable "use_permissions_boundary" {
-  description = "Whether to use IAM permissions boundary for resources."
-  type        = bool
-  default     = true
-}
-
-variable "key_owner_arns" {
-  description = "ARNS of KMS key owners, needed for use of key"
-  type        = list(string)
-  default     = []
-}
-
-# taken from zarf bb repo
-variable "kms_key_deletion_window" {
-  description = "Waiting period for scheduled KMS Key deletion. Can be 7-30 days."
-  type        = number
-  default     = 7
-}
+# Core Dependency Config
 
 variable "bucket_configurations" {
   type = map(object({
@@ -82,7 +65,7 @@ variable "username" {
 variable "db_engine_version" {
   description = "The Postgres engine version to use for the DB"
   type        = string
-  default     = "15.7"
+  default     = "16.8"
 }
 
 variable "db_allocated_storage" {
@@ -91,14 +74,58 @@ variable "db_allocated_storage" {
   default     = 20
 }
 
-variable "db_storage_type" {
-  description = "The type of storage (e.g., gp2, io1)"
-  type        = string
-  default     = "gp2"
-}
-
 variable "db_instance_class" {
   description = "The class of RDS instance (e.g., db.t4g.large)"
   type        = string
   default     = "db.t4g.large"
+}
+
+# EKS Config
+
+variable "kubernetes_version" {
+  description = "Kubernetes version to use for the EKS cluster"
+  type        = string
+  default     = "1.31"
+}
+
+variable "vpc_name" {
+  description = "Name of the VPC to use for the EKS cluster"
+  type        = string
+  default     = "uds-vpc"
+}
+
+variable "subnet_name" {
+  type        = string
+  description = "Name of subnet to use for testing. Can use a wildcard as long as it only matches one subnet per az."
+  default     = "uds-vpc-public*"
+}
+
+variable "instance_type" {
+  description = "Instance type to use for the EKS node group"
+  type        = string
+  default     = "m5.2xlarge"
+}
+
+variable "node_group_min_size" {
+  description = "Minimum size of the EKS node group"
+  type        = number
+  default     = 3
+}
+
+variable "node_group_max_size" {
+  description = "Maximum size of the EKS node group"
+  type        = number
+  default     = 3
+}
+
+variable "node_group_desired_size" {
+  description = "Desired size of the EKS node group"
+  type        = number
+  default     = 3
+}
+
+variable "node_disk_size" {
+  description = "Disk size in GB for the EKS node group"
+  type        = number
+  default     = 150
 }

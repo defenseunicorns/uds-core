@@ -22,7 +22,7 @@ module "db" {
   source  = "terraform-aws-modules/rds/aws"
   version = "6.11.0"
 
-  identifier                     = "${var.db_name}-db"
+  identifier                     = "${var.name}-db"
   instance_use_identifier_prefix = true
 
   allocated_storage       = var.db_allocated_storage
@@ -34,14 +34,14 @@ module "db" {
   engine               = "postgres"
   engine_version       = var.db_engine_version
   major_engine_version = split(".", var.db_engine_version)[0]
-  family               = "postgres15"
+  family               = "postgres16"
   instance_class       = var.db_instance_class
 
   db_name  = var.db_name
   username = var.username
   port     = var.db_port
 
-  subnet_ids                  = data.aws_subnets.subnets.ids
+  subnet_ids                  = data.aws_subnets.rds_subnets.ids
   create_db_subnet_group      = true
   create_db_parameter_group   = false
   manage_master_user_password = false
@@ -55,7 +55,7 @@ module "db" {
 }
 
 resource "aws_security_group" "rds_sg" {
-  vpc_id = local.vpc_id
+  vpc_id = data.aws_vpc.rds_vpc.id
 
   egress {
     from_port        = 0
@@ -75,20 +75,16 @@ resource "aws_vpc_security_group_ingress_rule" "rds_ingress" {
   to_port     = 5432
 }
 
-data "aws_vpc" "vpc" {
+data "aws_vpc" "rds_vpc" {
   filter {
     name   = "tag:Name"
-    values = ["eksctl-${var.name}-cluster/VPC"]
+    values = [var.vpc_name]
   }
 }
 
-data "aws_subnets" "subnets" {
+data "aws_subnets" "rds_subnets" {
   filter {
     name   = "vpc-id"
-    values = [data.aws_vpc.vpc.id]
+    values = [data.aws_vpc.rds_vpc.id]
   }
-}
-
-locals {
-  vpc_id = data.aws_vpc.vpc.id
 }

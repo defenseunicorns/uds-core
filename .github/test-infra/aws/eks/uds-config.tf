@@ -28,6 +28,10 @@ resource "local_sensitive_file" "uds_config" {
         "grafana_pg_password" : random_password.db_password.result,
         "grafana_pg_user" : var.username
       }
+      "init" : {
+        # Workaround for Bottlerocket EBS issue - https://github.com/bottlerocket-os/bottlerocket/issues/2417
+        "registry_hpa_enable" : false
+      }
     }
   })
 }

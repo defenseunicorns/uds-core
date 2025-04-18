@@ -6,30 +6,37 @@ output "aws_region" {
 }
 
 output "loki_irsa_role_arn" {
+  sensitive   = true
   value = module.irsa["loki"].role_arn
 }
 
 output "loki_s3" {
+  sensitive   = true
   value = module.S3["loki"]
 }
 
 output "loki_s3_bucket" {
+  sensitive   = true
   value = module.S3["loki"].bucket_name
 }
 
 output "velero_irsa_role_arn" {
+  sensitive   = true
   value = module.irsa["velero"].role_arn
 }
 
 output "velero_s3" {
+  sensitive   = true
   value = module.S3["velero"]
 }
 
 output "velero_s3_bucket" {
+  sensitive   = true
   value = module.S3["velero"].bucket_name
 }
 
 output "grafana_pg_host" {
+  sensitive   = true
   description = "RDS Endpoint for Grafana"
   value       = element(split(":", module.db.db_instance_endpoint), 0)
 }
