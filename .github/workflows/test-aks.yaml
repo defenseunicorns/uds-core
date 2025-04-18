@@ -15,6 +15,12 @@ on:
       - .github/bundles/aks/*
       - .github/test-infra/azure/aks/*
       - .github/workflows/test-aks.yaml
+  push:
+    paths:
+      - tasks/iac.yaml
+      - .github/bundles/aks/*
+      - .github/test-infra/azure/aks/*
+      - .github/workflows/test-aks.yaml
 
 permissions:
   id-token: write
@@ -28,7 +34,7 @@ jobs:
       matrix:
         flavor: [upstream, registry1, unicorn]
     runs-on: ubuntu-latest
-    if: github.event.pull_request.label.name == 'test-aks' || github.event_name == 'schedule' || github.event.pull_request.milestoned == true || github.event.pull_request.opened == true || github.event.pull_request.reopened == true || github.event.pull_request.synchronize == true
+    if: github.event.pull_request.labels.*.name contains 'test-aks' || github.event_name == 'schedule' || github.event.pull_request.milestoned == true || github.event.pull_request.opened == true || github.event.pull_request.reopened == true || github.event.pull_request.synchronize == true || github.event_name == 'push'
     env:
       SHA: ${{ github.sha }}
       UDS_REGION: usgovvirginia
