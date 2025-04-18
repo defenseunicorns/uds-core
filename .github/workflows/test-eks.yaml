@@ -103,7 +103,6 @@ jobs:
 
       - name: Test UDS Core
         run: uds run -f tasks/test.yaml uds-core-non-k3d --set EXCLUDED_PACKAGES="metrics-server"
-        continue-on-error: true
 
       - name: Debug Output
         if: ${{ always() }}
