@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.40.2](https://github.com/defenseunicorns/uds-core/compare/v0.40.1...v0.40.2) (2025-04-18)
+
+
+### Miscellaneous
+
+* **deps:** update istio to v1.25.2 ([#1461](https://github.com/defenseunicorns/uds-core/issues/1461)) ([1067560](https://github.com/defenseunicorns/uds-core/commit/1067560b7295fad5b4c2f40e18f989c22fc9c4f2))
+* **deps:** update neuvector ([#1417](https://github.com/defenseunicorns/uds-core/issues/1417)) ([4c0d95d](https://github.com/defenseunicorns/uds-core/commit/4c0d95db6239ccf6f06acbbc1b708506dea0d0fc))
+* **deps:** update support-deps ([#1473](https://github.com/defenseunicorns/uds-core/issues/1473)) ([3d9d501](https://github.com/defenseunicorns/uds-core/commit/3d9d50101da2d607721b6c31df78d3a202635441))
+* **deps:** update velero ([#1453](https://github.com/defenseunicorns/uds-core/issues/1453)) ([7330ea9](https://github.com/defenseunicorns/uds-core/commit/7330ea92e346aaa525a182916d41d3a2dad8e8c4))
+
 ## [0.40.1](https://github.com/defenseunicorns/uds-core/compare/v0.40.0...v0.40.1) (2025-04-17)
 
 
