@@ -26,34 +26,17 @@ describe("Prometheus and Alertmanager", () => {
   });
 
   test("alert manager should be firing watchdog alert", async () => {
-    // The Watchdog configuration uses group_interval: 5m and group_wait: 30s. This test might be executed too quickly
-    // to catch this. Therefore, we retry this test over the course of 6 mins (36 retries of 10s each). The absolute
-    // test timeout is set to 7 minutes to accommodate extra execution delays.
-    const maxRetries = 36;
-    const delay = 10000;
-    let success = false;
+    const response = await fetch(
+      `${alertmanagerProxy.url}/api/v2/alerts`
+    );
 
-    for (let retries = 0; retries < maxRetries; retries++) {
-      const response = await fetch(
-        `${alertmanagerProxy.url}/api/v2/alerts/groups?filter=alertname%3D%22Watchdog%22&silenced=false&inhibited=false&active=true`
-      );
+    expect(response.status).toBe(200)
+    const body = (await response.json()) as Array<{ labels: { alertname: string }; status: { state: string } }>;
 
-      if (response.status === 200) {
-        const body = (await response.json()) as {
-          alerts: Array<{ status: { state: string } }>;
-        }[];
-
-        if (body[0]?.alerts[0]?.status.state === "active") {
-          success = true;
-          break;
-        }
-      }
-
-      await new Promise(resolve => setTimeout(resolve, delay));
-    }
-
-    expect(success).toBe(true);
-  }, 420000);
+    expect(body.some(
+      alert => alert.labels.alertname === "Watchdog" && alert.status.state === "active"
+    )).toBe(true);
+  });
 
   test("prometheus web ui should be responsive via the internal service address", async () => {
     const response = await fetch(`${prometheusProxy.url}`);
