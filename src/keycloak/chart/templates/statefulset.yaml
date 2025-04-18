@@ -137,6 +137,13 @@ spec:
               value: DEBUG
             - name: QUARKUS_LOG_CATEGORY__ORG_KEYCLOAK_SERVICES_X509__LEVEL
               value: TRACE
+            # https://github.com/keycloak/keycloak/issues/39046
+            # Starting from 26.2.0, Keycloak doesn't use password for the internal H2 database.
+            # This breaks upgrade scenarios, so we need to use the same password as in 26.1.x
+            - name: KC_DB_USERNAME
+              value: sa
+            - name: KC_DB_PASSWORD
+              value: password
           {{- end }}
           {{- if eq (include "keycloak.postgresql.config" .) "true" }}
             # Infinispan cache configuration
