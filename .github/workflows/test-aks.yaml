@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2025 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 name: AKS Test
@@ -99,7 +99,6 @@ jobs:
 
       - name: Test UDS Core
         run: uds run -f tasks/test.yaml uds-core-non-k3d --set EXCLUDED_PACKAGES="metrics-server"
-        continue-on-error: true
 
       - name: Debug Output
         if: ${{ always() }}
