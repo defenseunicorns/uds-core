@@ -4,10 +4,6 @@
 # Run as an agent daemonset
 role: "Agent"
 
-# Disable headless service for Ambient ServiceMesh
-serviceHeadless:
-  enabled: false
-
 customConfig:
   api:
     enabled: false
