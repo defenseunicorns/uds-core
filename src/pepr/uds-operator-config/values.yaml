@@ -17,5 +17,3 @@ operator:
   PEPR_RELIST_INTERVAL_SECONDS: "600"
   # Configure Pepr reconcile strategy to have separate queues for faster reconciliation
   PEPR_RECONCILE_STRATEGY: "kindNsName"
-  # Keycloak Client Mode. Possible values: "dynamic_client_registration", "client_credentials" and "auto"
-  PEPR_KEYCLOAK_CLIENT_STRATEGY: "auto"
