@@ -43,7 +43,6 @@ When(a.Service)
 
 /**
  * Mutate the Neuvector Enforcer DaemonSet to add a livenessProbe
- * Temporary until fixed upstream
  */
 
 When(a.DaemonSet)
@@ -58,9 +57,9 @@ When(a.DaemonSet)
     if (enforcerContainer && enforcerContainer.livenessProbe === undefined) {
       log.debug("Patching NeuVector Enforcer Daemonset to add livenessProbe");
       const livenessProbe = {
-        exec: { command: ["curl", "--no-progress-meter", "127.0.0.1:8500"] },
-        periodSeconds: 10,
-        failureThreshold: 2,
+        tcpSocket: { port: 8500 },
+        periodSeconds: 30,
+        failureThreshold: 3,
       };
       enforcerContainer.livenessProbe = livenessProbe;
     }
@@ -68,10 +67,35 @@ When(a.DaemonSet)
     if (enforcerContainer && enforcerContainer.readinessProbe === undefined) {
       log.debug("Patching NeuVector Enforcer Daemonset to add readinessProbe");
       const readinessProbe = {
-        exec: { command: ["curl", "--no-progress-meter", "127.0.0.1:8500"] },
-        initialDelaySeconds: 10,
-        periodSeconds: 5,
+        tcpSocket: { port: 8500 },
+        initialDelaySeconds: 30,
+        periodSeconds: 30,
+        failureThreshold: 3,
       };
       enforcerContainer.readinessProbe = readinessProbe;
+    }
+  });
+
+/**
+ * Mutate the Neuvector Controller Deployment to patch in new readinessProbe
+ * See issue for reference: https://github.com/defenseunicorns/uds-core/issues/1446
+ */
+
+When(a.Deployment)
+  .IsCreatedOrUpdated()
+  .InNamespace("neuvector")
+  .WithName("neuvector-controller-pod")
+  .Mutate(async deploy => {
+    const controllerContainer = deploy.Raw.spec?.template.spec?.containers.find(
+      container => container.name === "neuvector-controller-pod",
+    );
+
+    if (controllerContainer && controllerContainer.readinessProbe) {
+      log.debug("Patching NeuVector Controller deployment to modify readinessProbe");
+      const readinessProbe = {
+        // Probe default port for controller REST API server
+        tcpSocket: { port: 10443 },
+      };
+      controllerContainer.readinessProbe = readinessProbe;
     }
   });

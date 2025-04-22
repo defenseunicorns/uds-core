@@ -46,6 +46,18 @@ tasks:
             serviceRolePermissionsBoundary: ${PERMISSIONS_BOUNDARY_ARN}
 
           addons:
+            - name: vpc-cni
+              attachPolicyARNs:
+                # Commercial IAM Policy
+                # - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
+                # Govcloud IAM policy
+                - arn:aws-us-gov:iam::aws:policy/AmazonEKS_CNI_Policy
+              permissionsBoundary: ${PERMISSIONS_BOUNDARY_ARN}
+              tags:
+                PermissionsBoundary: ${PERMISSIONS_BOUNDARY_NAME}
+              configurationValues: |-
+                enableNetworkPolicy: "true"
+
             - name: aws-ebs-csi-driver
               attachPolicyARNs:
                 # Commercial IAM Policy
@@ -55,16 +67,6 @@ tasks:
               configurationValues: |-
                 defaultStorageClass:
                   enabled: true
-              permissionsBoundary: ${PERMISSIONS_BOUNDARY_ARN}
-              tags:
-                PermissionsBoundary: ${PERMISSIONS_BOUNDARY_NAME}
-
-            - name: vpc-cni
-              attachPolicyARNs:
-                # Commercial IAM Policy
-                # - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
-                # Govcloud IAM policy
-                - arn:aws-us-gov:iam::aws:policy/AmazonEKS_CNI_Policy
               permissionsBoundary: ${PERMISSIONS_BOUNDARY_ARN}
               tags:
                 PermissionsBoundary: ${PERMISSIONS_BOUNDARY_NAME}
