@@ -10,6 +10,9 @@ metadata:
   name: block-path-parameters-in-non-final-segments
   namespace: {{ .Release.Namespace }}
 spec:
+  workloadSelector:
+    labels:
+      app: tenant-ingressgateway
   configPatches:
     - applyTo: HTTP_FILTER
       match:

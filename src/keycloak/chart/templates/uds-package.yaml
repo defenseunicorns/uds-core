@@ -19,16 +19,6 @@ spec:
 
   network:
     allow:
-      - description: "UDS Operator"
-        direction: Ingress
-        selector:
-          app.kubernetes.io/name: keycloak
-        remoteNamespace: pepr-system
-        remoteSelector:
-          app: pepr-uds-core-watcher
-        remoteServiceAccount: pepr-uds-core
-        port: 8080
-
       - description: "Keycloak backchannel access"
         direction: Ingress
         selector:
