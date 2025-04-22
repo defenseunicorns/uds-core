@@ -19,4 +19,7 @@ tasks:
 
   - name: e2e-test
     actions:
-      - description: "Run Metrics-Server E2E tests"
+      - description: "Run Metrics Server E2E tests"
+        cmd: |
+            npm ci && npx jest --testPathPattern metrics-server*
+        dir: test/jest
