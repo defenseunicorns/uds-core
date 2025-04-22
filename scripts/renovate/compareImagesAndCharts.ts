@@ -20,8 +20,6 @@ interface ComparisonResult {
  * @returns ComparisonResult with changes and labels
  */
 export async function compareImagesAndCharts(oldPath: string, newPath: string): Promise<ComparisonResult> {
-  console.log(`Comparing ${oldPath} and ${newPath}`);
-
   const result: ComparisonResult = {
     changes: [],
     labels: []

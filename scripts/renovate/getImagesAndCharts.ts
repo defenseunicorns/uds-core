@@ -12,8 +12,6 @@ import * as yaml from 'yaml';
  * @param directoryPath - Path to the directory containing zarf.yaml files
  */
 export async function getImagesAndCharts(directoryPath: string): Promise<void> {
-  console.log(`Extracting images and charts from ${directoryPath}`);
-
   // Create extract directory if it doesn't exist
   const extractDir = path.join(directoryPath, 'extract');
   if (!fs.existsSync(extractDir)) {
@@ -22,7 +20,6 @@ export async function getImagesAndCharts(directoryPath: string): Promise<void> {
 
   // Find all zarf.yaml files
   const zarfFiles = findZarfYamlFiles(directoryPath);
-  console.log(`Found ${zarfFiles.length} zarf.yaml files`);
 
   // Extract charts and images
   const charts: Record<string, string> = {};
@@ -54,8 +51,6 @@ export async function getImagesAndCharts(directoryPath: string): Promise<void> {
     path.join(extractDir, 'images.yaml'),
     yaml.stringify(images)
   );
-
-  console.log(`Extraction complete. Files written to ${extractDir}`);
 }
 
 /**
@@ -121,19 +116,6 @@ function extractImages(zarfConfig: any, images: Record<string, string[]>): void 
       for (const image of component.images) {
         if (typeof image === 'string') {
           processImage(image, images);
-        }
-      }
-    }
-
-    // Also check for images in actions
-    if (component.actions) {
-      for (const action of component.actions) {
-        if (action.images) {
-          for (const image of action.images) {
-            if (typeof image === 'string') {
-              processImage(image, images);
-            }
-          }
         }
       }
     }
