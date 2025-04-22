@@ -97,34 +97,3 @@ When(a.Deployment)
       controllerContainer.readinessProbe = readinessProbe;
     }
   });
-
-/**
- * Mutate the Neuvector Manager Deployment to set the entrypoint rather than using the default entrypoint scripts
- * This is a workaround for https://github.com/neuvector/neuvector/issues/1757 to support FIPS nodes
- */
-When(a.Deployment)
-  .IsCreatedOrUpdated()
-  .InNamespace("neuvector")
-  .WithName("neuvector-manager-pod")
-  .Mutate(async deployment => {
-    const managerContainer = deployment.Raw.spec?.template.spec?.containers.find(
-      container => container.name === "neuvector-manager-pod",
-    );
-
-    if (managerContainer) {
-      log.debug("Patching NeuVector Manager Deployment to modify entrypoint for FIPS node support");
-      // This entrypoint matches the one used by the Unicorn and Registry1 images
-      // It runs the same command as the upstream entrypoint (https://github.com/neuvector/manager/blob/v5.4.3/package/entrypoint.sh) with two changes:
-      // - does not include the java security properties file as this causes failures on FIPS nodes
-      // - adds "-Dcom.redhat.fips=false" arg as FIPS alignment causes failures on FIPS nodes
-      managerContainer.command = [
-        "java",
-        "-Xms256m",
-        "-Xmx2048m",
-        "-Djdk.tls.rejectClientInitiatedRenegotiation=true",
-        "-Dcom.redhat.fips=false",
-        "-jar",
-        "/usr/local/bin/admin-assembly-1.0.jar",
-      ];
-    }
-  });
