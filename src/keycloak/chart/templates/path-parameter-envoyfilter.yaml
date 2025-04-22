@@ -8,12 +8,16 @@ apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: block-path-parameters-in-non-final-segments
-  namespace: {{ .Release.Namespace }}
+  namespace: istio-system
 spec:
   configPatches:
     - applyTo: HTTP_FILTER
       match:
-        context: SIDECAR_INBOUND
+        context: GATEWAY
+        listener:
+          filterChain:
+            filter:
+              name: envoy.filters.network.http_connection_manager
       patch:
         operation: INSERT_BEFORE
         value:
@@ -23,16 +27,21 @@ spec:
             inlineCode: |
               function envoy_on_request(request_handle)
                 local path = request_handle:headers():get(":path")
+                local host = request_handle:headers():get(":authority")
 
-                if path then
-                  -- Pattern to detect semicolons NOT in the last path segment
-                  -- Match a ; before / (a ; after the final / is ok and will be allowed)
-                  local invalid_semicolon = string.match(path, "^[^;]*;[^/]*/")
-                  if invalid_semicolon then
-                    request_handle:respond(
-                      { [":status"] = "400" },
-                      "Path parameters may only appear after the final path segment"
-                    )
+                -- Only apply to keycloak endpoints
+                if host and (
+                  string.match(host, "^sso%.uds%.dev$") or
+                  string.match(host, "^keycloak%.admin%.uds%.dev$")
+                ) then
+                  if path then
+                    local invalid_semicolon = string.match(path, "^[^;]*;[^/]*/")
+                    if invalid_semicolon then
+                      request_handle:respond(
+                        { [":status"] = "400" },
+                        "Path parameters may only appear after the final path segment"
+                      )
+                    end
                   end
                 end
               end
