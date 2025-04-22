@@ -5,7 +5,7 @@ name: RKE2 Test
 
 on:
   schedule:
-    - cron: '0 0 * * 0' # Every Sunday Midnight (UTC) / Saturday 5pm MT
+    - cron: "0 0 * * 0" # Every Sunday Midnight (UTC) / Saturday 5pm MT
   pull_request:
     # milestoned is added here as a workaround for release-please not triggering PR workflows (PRs should be added to a milestone to trigger the workflow).
     # labeled is added here to allow for "manual" triggering of CI on renovate PRs
@@ -78,7 +78,7 @@ jobs:
           tofu_wrapper: false
 
       - name: Create UDS Core Package
-        run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress --set FLAVOR=${{ matrix.flavor }}
+        run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress --with create_options="--skip-sbom" --set FLAVOR=${{ matrix.flavor }}
 
       - name: Create Core Bundle
         run: uds create .github/bundles/rke2 --confirm
@@ -118,8 +118,6 @@ jobs:
       - name: Remove UDS Core
         if: always()
         run: uds remove .github/bundles/rke2/uds-bundle-uds-core-rke2-*.tar.zst --confirm
-        env:
-          KUBECONFIG: ".github/test-infra/aws/rke2/rke2-config"
         timeout-minutes: 20
         continue-on-error: true
 

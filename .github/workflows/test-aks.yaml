@@ -5,7 +5,7 @@ name: AKS Test
 
 on:
   schedule:
-    - cron: '0 0 * * 0' # Every Sunday Midnight (UTC) / Saturday 5pm MT
+    - cron: "0 0 * * 0" # Every Sunday Midnight (UTC) / Saturday 5pm MT
   pull_request:
     # milestoned is added here as a workaround for release-please not triggering PR workflows (PRs should be added to a milestone to trigger the workflow).
     # labeled is added here to allow for "manual" triggering of CI on renovate PRs
@@ -63,7 +63,7 @@ jobs:
           client-id: ${{ secrets.AZURE_GOV_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_GOV_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_GOV_SUBSCRIPTION_ID }}
-          environment: 'AzureUSGovernment'
+          environment: "AzureUSGovernment"
 
       - name: Environment setup
         uses: ./.github/actions/setup
@@ -80,7 +80,7 @@ jobs:
           tofu_wrapper: false
 
       - name: Create UDS Core Package
-        run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress --set FLAVOR=${{ matrix.flavor }}
+        run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress --with create_options="--skip-sbom" --set FLAVOR=${{ matrix.flavor }}
 
       - name: Create Core Bundle
         run: uds create .github/bundles/aks --confirm
