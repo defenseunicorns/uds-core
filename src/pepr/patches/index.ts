@@ -44,7 +44,6 @@ When(a.Service)
 /**
  * Mutate the Neuvector Enforcer DaemonSet to add a livenessProbe
  */
-
 When(a.DaemonSet)
   .IsCreatedOrUpdated()
   .InNamespace("neuvector")
@@ -80,7 +79,6 @@ When(a.DaemonSet)
  * Mutate the Neuvector Controller Deployment to patch in new readinessProbe
  * See issue for reference: https://github.com/defenseunicorns/uds-core/issues/1446
  */
-
 When(a.Deployment)
   .IsCreatedOrUpdated()
   .InNamespace("neuvector")
