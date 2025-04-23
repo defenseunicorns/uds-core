@@ -7,9 +7,14 @@ metadata:
   description: "UDS Core Monitoring (Prometheus and Grafana)"
   authors: "Defense Unicorns - Product"
   # x-release-please-start-version
-  version: "0.39.0"
+  version: "0.40.1"
   # x-release-please-end
   x-uds-dependencies: ["base", "identity-authorization"]
+  annotations:
+    dev.uds.title: UDS Core (Monitoring)
+    dev.uds.tagline: Enables frontend log data, metrics monitoring, and alerting
+    dev.uds.category: UDS-Core,Monitoring
+    dev.uds.keywords: uds,prometheus,grafana
 
 components:
   # Prometheus

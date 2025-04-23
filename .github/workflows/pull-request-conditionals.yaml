@@ -7,8 +7,8 @@ name: Filter
 on:
   pull_request:
     # milestoned is added here as a workaround for release-please not triggering PR workflows (PRs should be added to a milestone to trigger the workflow).
-    # labeled is added here to allow for "manual" triggering of CI on renovate PRs
-    types: [milestoned, opened, reopened, synchronize, labeled]
+    # labeled is added to support renovate-ready labelling on PRs
+    types: [milestoned, labeled, opened, reopened, synchronize]
     paths-ignore:
       - "**.md"
       - "**.jpg"
@@ -24,6 +24,7 @@ on:
       - release-please-config.json
       - CODEOWNERS
       - LICENSE
+      - scripts/** # scripts/hacks that are used specifically for non-testing workflows
 
 # Permissions for the GITHUB_TOKEN used by the workflow.
 permissions:
@@ -66,6 +67,8 @@ jobs:
       - name: Check renovate readiness
         if: startsWith(github.event.pull_request.head.ref, 'renovate/') # Only call for Renovate PRs
         uses: ./.github/actions/renovate-readiness
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
       # Uses a custom action to filter paths for source packages.
       - name: Check src paths
@@ -101,14 +104,14 @@ jobs:
       test_type: ${{ matrix.test_type }}
     secrets: inherit # Inherits all secrets from the parent workflow.
 
-  # evaluate-package-compliance:
-  #   needs: run-package-test
-  #   name: Compliance Evaluation
-  #   strategy:
-  #     matrix:
-  #       flavor: [upstream, registry1, unicorn]
-  #     fail-fast: false
-  #   uses: ./.github/workflows/compliance.yaml
-  #   with:
-  #     flavor: ${{ matrix.flavor }}
-  #   secrets: inherit # Inherits all secrets from the parent workflow.
+# evaluate-package-compliance:
+#   needs: run-package-test
+#   name: Compliance Evaluation
+#   strategy:
+#     matrix:
+#       flavor: [upstream, registry1, unicorn]
+#     fail-fast: false
+#   uses: ./.github/workflows/compliance.yaml
+#   with:
+#     flavor: ${{ matrix.flavor }}
+#   secrets: inherit # Inherits all secrets from the parent workflow.

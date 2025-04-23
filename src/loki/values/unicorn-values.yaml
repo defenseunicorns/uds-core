@@ -5,12 +5,12 @@ loki:
   image:
     registry: cgr.dev
     repository: du-uds-defenseunicorns/loki
-    tag: 3.4.2
+    tag: 3.4.3
 gateway:
   image:
     registry: cgr.dev
     repository: du-uds-defenseunicorns/nginx-fips
-    tag: 1.27.4
+    tag: 1.27.5
 memcached:
   image:
     repository: cgr.dev/du-uds-defenseunicorns/memcached

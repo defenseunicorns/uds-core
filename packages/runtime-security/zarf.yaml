@@ -7,9 +7,14 @@ metadata:
   description: "UDS Core (Runtime Security)"
   authors: "Defense Unicorns - Product"
   # x-release-please-start-version
-  version: "0.39.0"
+  version: "0.40.1"
   # x-release-please-end
   x-uds-dependencies: ["base", "identity-authorization"]
+  annotations:
+    dev.uds.title: UDS Core (Runtime Security)
+    dev.uds.tagline: Enable more advanced security with Runtime inspection
+    dev.uds.category: UDS-Core,Runtime Security
+    dev.uds.keywords: uds,neuvector
 
 components:
   # Neuvector

@@ -7,9 +7,14 @@ metadata:
   description: "UDS Core (Backup and Restore)"
   authors: "Defense Unicorns - Product"
   # x-release-please-start-version
-  version: "0.39.0"
+  version: "0.40.1"
   # x-release-please-end
   x-uds-dependencies: ["base"]
+  annotations:
+    dev.uds.title: UDS Core (Backup and Restore)
+    dev.uds.tagline: Enable volumes and Kubernetes objects to be backed up and restored
+    dev.uds.category: UDS-Core, Backup, Restore
+    dev.uds.keywords: uds,backup,restore,velero
 
 components:
   # Velero

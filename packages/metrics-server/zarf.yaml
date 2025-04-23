@@ -7,9 +7,14 @@ metadata:
   description: "UDS Core (Metrics Server)"
   authors: "Defense Unicorns - Product"
   # x-release-please-start-version
-  version: "0.39.0"
+  version: "0.40.1"
   # x-release-please-end
   x-uds-dependencies: ["base"]
+  annotations:
+    dev.uds.title: UDS Core (Metrics Server)
+    dev.uds.tagline: Enables metrics collection capabilities
+    dev.uds.category: UDS-Core,Metrics
+    dev.uds.keywords: uds,metrics,metrics-server
 
 components:
   # Metrics Server

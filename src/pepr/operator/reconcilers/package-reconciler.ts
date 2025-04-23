@@ -28,7 +28,7 @@ const log = setupLogger(Component.OPERATOR_RECONCILERS);
 
 /**
  * The reconciler is called from the queue and is responsible for reconciling the state of the package
- * with the cluster. This includes creating the namespace, network policies and virtual services.
+ * with the cluster. This includes creating the network policies, virtual services, sso, and monitoring config.
  *
  * @param pkg the package to reconcile
  */
@@ -72,25 +72,15 @@ export async function packageReconciler(pkg: UDSPackage) {
     await updateStatus(pkg, { phase: Phase.Pending, conditions: getReadinessConditions(false) });
 
     // Get the requested service mesh mode, default to sidecar if not specified
-    const requestedMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Sidecar;
-
-    // Check if ambient mode is requested but not available
-    let effectiveMode = requestedMode;
-    if (requestedMode === Mode.Ambient && !UDSConfig.isAmbientDeployed) {
-      log.warn(
-        `Ambient mode requested for package ${name} but Ambient is not deployed. Using sidecar mode for network policies.`,
-      );
-      effectiveMode = Mode.Sidecar;
-    }
+    const istioMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Sidecar;
 
     // Pass the effective Istio mode to the networkPolicies function
-    const netPol = await networkPolicies(pkg, namespace!, effectiveMode);
+    const netPol = await networkPolicies(pkg, namespace!, istioMode);
 
-    const authPol = await generateAuthorizationPolicies(pkg, namespace!);
+    const authPol = await generateAuthorizationPolicies(pkg, namespace!, istioMode);
 
     let endpoints: string[] = [];
     // Update the namespace to enable the expected Istio mode (sidecar or ambient)
-    // Note: enableIstio will also check UDSConfig.isAmbientDeployed and fall back if needed
     await enableIstio(pkg);
 
     let ssoClients = new Map<string, Client>();

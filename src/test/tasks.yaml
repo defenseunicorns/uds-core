@@ -1,6 +1,9 @@
 # Copyright 2024 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
+includes:
+  - utils: ../../tasks/utils.yaml
+
 tasks:
   - name: validate
     actions:
@@ -24,9 +27,14 @@ tasks:
 
   - name: create-deploy
     description: Test app used for UDS Core validation
+    inputs:
+      architecture:
+        description: "System architecture that the test-apps package should be built for."
+        default: ${UDS_ARCH}
+
     actions:
       - description: Create zarf package for the test resources
-        cmd: "uds zarf package create src/test --confirm --no-progress --skip-sbom"
+        cmd: uds zarf package create src/test --confirm --no-progress --skip-sbom -a ${{ index .inputs "architecture" }}
 
       - description: Deploy the test resources
         cmd: "uds zarf package deploy build/zarf-package-uds-core-test-apps-*.zst --confirm --no-progress"
@@ -120,9 +128,10 @@ tasks:
 
       - description: Verify the authservice tenant app is protected by checking redirect
         maxRetries: 3
+        task: utils:tenant-gw-ip
         cmd: |
           set -e
-          SSO_REDIRECT=$(uds zarf tools kubectl run curl-test --image=cgr.dev/chainguard/curl:latest -q --restart=Never --rm -i -- -Ls -o /dev/null -w %{url_effective} "https://protected.uds.dev")
+          SSO_REDIRECT=$(uds zarf tools kubectl run curl-test --image=cgr.dev/chainguard/curl:latest -q --restart=Never --rm -i -- --resolve 'protected.uds.dev:$TENANT_GW_IP:443' -Ls -o /dev/null -w %{url_effective} "https://protected.uds.dev")
 
           case "${SSO_REDIRECT}" in
           "https://sso.uds.dev"*)
@@ -171,7 +180,7 @@ tasks:
           cluster:
             kind: Pod
             name: app=curl-pkg-deny-all-1
-            namespace: curl-ns-deny-all
+            namespace: curl-ns-deny-all-1
             condition: Ready
 
       - description: "Wait for Deny All Package 2 to be Ready"
@@ -179,7 +188,7 @@ tasks:
           cluster:
             kind: Pod
             name: app=curl-pkg-deny-all-2
-            namespace: curl-ns-deny-all
+            namespace: curl-ns-deny-all-2
             condition: Ready
 
       - description: "Wait for Allow All Package to be Ready"

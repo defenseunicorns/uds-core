@@ -11,11 +11,12 @@ import { Component, setupLogger } from "./src/pepr/logger";
 import { operator } from "./src/pepr/operator";
 import { loadUDSConfig } from "./src/pepr/operator/controllers/config/config";
 import { setupAuthserviceSecret } from "./src/pepr/operator/controllers/keycloak/authservice/config";
+import { setupKeycloakClientSecret } from "./src/pepr/operator/controllers/keycloak/config";
+import { startPackageWatch } from "./src/pepr/operator/controllers/packages/packages";
 import { registerCRDs } from "./src/pepr/operator/crd/register";
 import { patches } from "./src/pepr/patches";
 import { policies, startExemptionWatch } from "./src/pepr/policies";
 import { prometheus } from "./src/pepr/prometheus";
-import { setupKeycloakClientSecret } from "./src/pepr/operator/controllers/keycloak/config";
 
 const log = setupLogger(Component.STARTUP);
 
@@ -24,6 +25,7 @@ const log = setupLogger(Component.STARTUP);
   await registerCRDs();
   // KFC watch for exemptions and update in-memory map
   await startExemptionWatch();
+  await startPackageWatch();
   await setupAuthserviceSecret();
   await setupKeycloakClientSecret();
   new PeprModule(cfg, [

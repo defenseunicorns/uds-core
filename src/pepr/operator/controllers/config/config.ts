@@ -23,7 +23,6 @@ export let UDSConfig: Config = {
   kubeApiCidr: "",
   kubeNodeCidrs: [],
   isIdentityDeployed: false,
-  isAmbientDeployed: false,
 };
 
 export const configLog = setupLogger(Component.CONFIG);
@@ -205,9 +204,6 @@ export function setConfig(cfg: ClusterConfig, cfgSecret: kind.Secret | undefined
 
     // Track if UDS Core identity-authorization layer is deployed
     isIdentityDeployed: false,
-
-    // Track if Istio Ambient optional components are deployed
-    isAmbientDeployed: false,
   };
 
   configLog.info(UDSConfig, "Loaded UDS Config");

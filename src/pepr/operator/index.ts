@@ -104,24 +104,6 @@ When(UDSPackage)
     UDSConfig.isIdentityDeployed = false;
   });
 
-// Watch for optional Ambient mode and update config (temporary while ambient components are optional)
-When(a.DaemonSet)
-  .IsCreatedOrUpdated()
-  .InNamespace("istio-system")
-  .WithName("ztunnel")
-  .Watch(() => {
-    log.info("Istio Ambient deployed, operator configured to handle ambient packages.");
-    UDSConfig.isAmbientDeployed = true;
-  });
-When(a.DaemonSet)
-  .IsDeleted()
-  .InNamespace("istio-system")
-  .WithName("ztunnel")
-  .Watch(() => {
-    log.info("Istio Ambient removed, operator will run all packages in sidecar mode.");
-    UDSConfig.isAmbientDeployed = false;
-  });
-
 // Watch for changes to the Nodes and update the Node CIDR list
 if (UDSConfig.kubeNodeCidrs.length === 0) {
   When(a.Node).IsCreatedOrUpdated().Reconcile(updateKubeNodesFromCreateUpdate);

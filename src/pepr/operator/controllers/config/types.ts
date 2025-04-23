@@ -12,5 +12,4 @@ export type Config = {
   kubeApiCidr: string | undefined;
   kubeNodeCidrs: string[];
   isIdentityDeployed: boolean;
-  isAmbientDeployed: boolean;
 };

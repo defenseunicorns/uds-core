@@ -7,8 +7,6 @@ import { K8s, kind, R } from "pepr";
 import { Component, setupLogger } from "../../../logger";
 import { UDSPackage } from "../../crd";
 import { Mode } from "../../crd/generated/package-v1alpha1";
-import { writeEvent } from "../../reconcilers";
-import { UDSConfig } from "../config/config";
 
 // configure subproject logger
 const log = setupLogger(Component.OPERATOR_ISTIO);
@@ -52,25 +50,8 @@ export async function enableIstio(pkg: UDSPackage) {
 
   // Handle labels based on ambient opt-in or sidecar default
   if (pkg.spec?.network?.serviceMesh?.mode === Mode.Ambient) {
-    // Check if ambient mode is available
-    if (!UDSConfig.isAmbientDeployed) {
-      // Ambient mode requested but not available, fall back to sidecar mode
-      log.warn(
-        `Ambient mode requested for package ${pkg.metadata.name} but Ambient is not deployed. Falling back to sidecar mode.`,
-      );
-      await writeEvent(pkg, {
-        message:
-          "Ambient mode requested but Ambient is not deployed. Falling back to sidecar mode.",
-        reason: "AmbientUnavailable",
-        type: "Warning",
-      });
-
-      // Fall back to sidecar mode
-      targetIstioState = IstioState.Sidecar;
-    } else {
-      // Ambient mode is available and requested
-      targetIstioState = IstioState.Ambient;
-    }
+    // Ambient mode requested
+    targetIstioState = IstioState.Ambient;
   } else {
     // Sidecar mode requested/by default
     targetIstioState = IstioState.Sidecar;

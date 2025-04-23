@@ -48,6 +48,14 @@ function authserviceAuthorizationPolicy(
               notValues: ["*"],
             },
           ],
+          to: [
+            {
+              operation: {
+                notPorts: ["15020"],
+                notPaths: ["/stats/prometheus"],
+              },
+            },
+          ],
         },
       ],
       selector: {
@@ -79,6 +87,14 @@ function jwtAuthZAuthorizationPolicy(
             {
               source: {
                 notRequestPrincipals: [`https://sso.${UDSConfig.domain}/realms/uds/*`],
+              },
+            },
+          ],
+          to: [
+            {
+              operation: {
+                notPorts: ["15020"],
+                notPaths: ["/stats/prometheus"],
               },
             },
           ],

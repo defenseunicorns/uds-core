@@ -48,6 +48,12 @@ local-path (default)   rancher.io/local-path   Delete          WaitForFirstConsu
 
 It’s generally beneficial if your storage class supports volume expansion (set `allowVolumeExpansion: true`, provided your provisioner allows it). This enables you to resize volumes when needed. Additionally, be mindful of any size restrictions imposed by your provisioner. For instance, EBS volumes have a minimum size of 1Gi, which could lead to unexpected behavior, especially during Velero’s CSI backup and restore process. These constraints may also necessitate adjustments to default PVC sizes, such as Keycloak’s PVCs, which default to 512Mi in `devMode`.
 
+:::caution
+If you are deploying stateful applications, including but not limited to critical UDS Core services such as [Velero](#velero) or [Loki](#loki), ensure you understand where their data is stored and that the underlying volumes are properly backed up and stored safely. 
+
+Cluster or deployment issues may result in data loss, particularly when these services rely on in-cluster storage such as the [Minio Operator UDS Package](https://github.com/defenseunicorns/uds-package-minio-operator).
+:::
+
 #### Network Policy Support
 
 The UDS Operator will dynamically provision network policies to secure traffic between components in UDS Core. To ensure these are effective, validate that your CNI supports enforcing network policies. In addition, UDS Core makes use of some CIDR based policies for communication with the KubeAPI server. If you are using Cilium, support for node addressability with CIDR based policies must be enabled with a [feature flag](https://docs.cilium.io/en/stable/security/policy/language/#selecting-nodes-with-cidr-ipblock).
@@ -66,9 +72,13 @@ done
 
 In addition, to run Istio ingress gateways (part of Core) you will need to ensure your cluster supports dynamic load balancer provisioning when services of type LoadBalancer are created. Typically in cloud environments this is handled using a cloud provider's controller (example: [AWS LB Controller](https://github.com/kubernetes-sigs/aws-load-balancer-controller)). When deploying on-prem, this is commonly done by using a "bare metal" load balancer provisioner like [MetalLB](https://metallb.universe.tf/) or [kube-vip](https://kube-vip.io/). Certain distributions may also include ingress controllers that you will want to disable as they may conflict with Istio (example: RKE2 includes ingress-nginx).
 
+:::note
+If you would like to use MetalLB as your load balancer provisioner there is a UDS Package available for MetalLB from the [UDS Package MetalLB GitHub repository](https://github.com/uds-packages/metallb)
+:::
+
 ##### Ambient Mode
 
-Istio can be deployed in [Ambient Mode](https://istio.io/latest/docs/ambient/overview/) by deploying the optional `istio-ambient` component. This mode is still in alpha release and is not recommended for production use. Also note that only the `unicorn` and `registry1` flavors of core contain `FIPS` compliant images. The `istio-ambient` component is **required** if you want to use UDS Packages with `spec.network.serviceMesh.mode: ambient`. If Ambient mode is not deployed in the cluster, packages configured for ambient mode will automatically fall back to sidecar mode.
+[Ambient Mode](https://istio.io/latest/docs/ambient/overview/) in Istio is now integrated directly into the `istio-controlplane` component and enabled by default. Also note that only the `unicorn` and `registry1` flavors of core contain `FIPS` compliant images.
 
 When using ambient mode with UDS Packages, you can benefit from:
 - Reduced resource overhead compared to sidecar mode, as workloads don't require an injected sidecar container
@@ -77,7 +87,7 @@ When using ambient mode with UDS Packages, you can benefit from:
 
 Note that Packages with Authservice clients are not currently supported in ambient mode and will be rejected by the UDS Operator.
 
-The `istio-ambient` component installs the Istio CNI plugin which requires specifying the `CNI_CONF_DIR` and `CNI_BIN_DIR` variables. These values can change based on the environment Istio is being deployed into. By default the package will attempt to auto-detect these values and will use the following values if not specified:
+The `istio-controlplane` component installs the Istio CNI plugin which requires specifying the `CNI_CONF_DIR` and `CNI_BIN_DIR` variables. These values can change based on the environment Istio is being deployed into. By default the package will attempt to auto-detect these values and will use the following values if not specified:
 
 ```yaml
 # K3d cluster
@@ -93,7 +103,7 @@ cniConfDir: /etc/cni/net.d
 cniBinDir: /opt/cni/bin/
 ```
 
-These values can be overwritten when installing core by setting the `cniConfDir` and `cniBinDir` values in the `istio-ambient` component.
+These values can be overwritten when installing core by setting the `cniConfDir` and `cniBinDir` values in the `istio-controlplane` component.
 
 To set these values add the following to the `uds-config.yaml` file:
 
@@ -174,4 +184,201 @@ Metrics server is provided as an optional component in UDS Core and can be enabl
   ref: 0.25.2-unicorn
   optionalComponents:
     - metrics-server
+```
+
+#### Loki
+
+The Loki deployment is (by default) backed by an object storage provider for log retention.  For cloud environments you can wire this into the environment's storage provider with the following overrides:
+
+```yaml
+- name: uds-core
+  ...
+  overrides:
+    loki:
+      loki:
+        values:
+          - path: loki.storage.s3.endpoint
+            value: "<s3-endpoint>"
+          - path: loki.storage.s3.secretAccessKey
+            value: "<s3-secret-key>"
+          - path: loki.storage.s3.accessKeyId
+            value: "<s3-access-key>"
+          - path: loki.storage.bucketNames.chunks
+            value: "<chunks-bucket-name>"
+          - path: loki.storage.bucketNames.ruler
+            value: "<ruler-bucket-name>"
+          - path: loki.storage.bucketNames.admin
+            value: "<admin-bucket-name>"
+          - path: loki.storage.bucketNames.region
+            value: "<s3-region>"
+```
+
+You can also use the [Minio Operator UDS Package](https://github.com/defenseunicorns/uds-package-minio-operator) to back Loki with the following overrides:
+
+```yaml
+- name: minio-operator
+  ...
+  overrides:
+    minio-operator:
+      uds-minio-config:
+        values:
+          - path: apps
+            value:
+              - name: loki
+                namespace: loki
+                remoteSelector:
+                  app.kubernetes.io/name: loki
+                bucketNames:
+                  - uds-loki-chunks
+                  - uds-loki-ruler
+                  - uds-loki-admin
+                copyPassword:
+                  enabled: true
+
+- name: core-logging
+  ...
+  overrides:
+    loki:
+      uds-loki-config:
+        values:
+          - path: storage.internal
+            value:
+              enabled: true
+              remoteSelector:
+                v1.min.io/tenant: loki
+              remoteNamespace: minio
+      loki:
+        values:
+          - path: loki.storage.bucketNames.chunks
+            value: "uds-loki-chunks"
+          - path: loki.storage.bucketNames.ruler
+            value: "uds-loki-ruler"
+          - path: loki.storage.bucketNames.admin
+            value: "uds-loki-admin"
+          - path: loki.storage.s3.endpoint
+            value: http://uds-minio-hl.minio.svc.cluster.local:9000/
+          - path: loki.storage.s3.region
+            value: ""
+          - path: loki.storage.s3.accessKeyId
+            value: ${LOKI_ACCESS_KEY_ID}
+          - path: loki.storage.s3.secretAccessKey
+            value: ${LOKI_SECRET_ACCESS_KEY}
+          - path: loki.storage.s3.s3ForcePathStyle
+            value: true
+          - path: loki.storage.s3.signatureVersion
+            value: "v4"
+          - path: write.extraArgs
+            value:
+            - "-config.expand-env=true"
+          - path: write.extraEnv
+            value:
+            - name: LOKI_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: minio-loki
+                  key: accessKey
+            - name: LOKI_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: minio-loki
+                  key: secretKey
+          - path: read.extraArgs
+            value:
+            - "-config.expand-env=true"
+          - path: read.extraEnv
+            value:
+            - name: LOKI_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: minio-loki
+                  key: accessKey
+            - name: LOKI_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: minio-loki
+                  key: secretKey
+```
+
+#### Velero
+
+The Velero deployment is (by default) backed by an object storage provider for backup retention.  For cloud environments you can wire this into the environment's storage provider with the following overrides:
+
+```yaml
+- name: uds-core
+  ...
+  overrides:
+    velero:
+      velero:
+        values:
+          - path: credentials.secretContents.cloud
+            value: |
+              [default]
+              aws_access_key_id=<s3-access-key>
+              aws_secret_access_key=<s3-secret-key>
+          - path: "configuration.backupStorageLocation"
+            value:
+              - name: default
+                provider: aws
+                bucket: "<bucket-name>"
+                config:
+                  region: "<s3-region>"
+                  s3ForcePathStyle: true
+                  s3Url: "<s3-endpoint>"
+                credential:
+                  name: "velero-bucket-credentials"
+                  key: "cloud"
+```
+
+You can also use the [Minio Operator UDS Package](https://github.com/defenseunicorns/uds-package-minio-operator) to back Velero with the following overrides:
+
+```yaml
+- name: minio-operator
+  ...
+  overrides:
+    minio-operator:
+      uds-minio-config:
+        values:
+          - path: apps
+            value:
+              - name: velero
+                namespace: velero
+                remoteSelector:
+                  app.kubernetes.io/name: velero
+                bucketNames:
+                  - uds-velero
+                copyPassword:
+                  enabled: true
+                  secretIDKey: AWS_ACCESS_KEY_ID
+                  secretPasswordKey: AWS_SECRET_ACCESS_KEY
+
+- name: core-backup-restore
+  ...
+  overrides:
+    velero:
+      uds-velero-config:
+        values:
+          - path: storage.internal
+            value:
+              enabled: true
+              remoteSelector:
+                v1.min.io/tenant: velero
+              remoteNamespace: minio
+      velero:
+        values:
+          - path: "credentials"
+            value:
+              useSecret: true
+              existingSecret: "minio-velero"
+              extraEnvVars:
+                AWS_ACCESS_KEY_ID: dummy
+                AWS_SECRET_ACCESS_KEY: dummy
+          - path: "configuration.backupStorageLocation"
+            value:
+              - name: default
+                provider: aws
+                bucket: "uds-velero"
+                config:
+                  region: ""
+                  s3ForcePathStyle: true
+                  s3Url: "http://uds-minio-hl.minio.svc.cluster.local:9000/"
 ```
