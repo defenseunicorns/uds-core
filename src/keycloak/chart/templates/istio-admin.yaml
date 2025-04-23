@@ -19,7 +19,7 @@ spec:
               - "8080"
             paths:
               - "/admin*"
-              - "/realms/master"
+              - "/realms/master*"
       from:
         - source:
             notNamespaces:
