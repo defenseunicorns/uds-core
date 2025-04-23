@@ -124,12 +124,12 @@ function extractImages(zarfConfig: any, images: Record<string, string[]>): void 
 
 /**
  * Processes an image string to extract name and normalized version
- * @param imageString - Full image string (e.g., registry1.dso.mil/ironbank/opensource/nginx:1.21.6)
+ * @param imagePullString - Full image string (e.g., registry1.dso.mil/ironbank/opensource/nginx:1.21.6)
  * @param images - Record to store image information
  */
-function processImage(imageString: string, images: Record<string, string[]>): void {
+function processImage(imagePullString: string, images: Record<string, string[]>): void {
   // Split image name and tag
-  const [imageName, imageTag] = imageString.split(':');
+  const [imageName, imageTag] = imagePullString.split(':');
 
   if (!imageName || !imageTag) return;
 
@@ -152,8 +152,8 @@ function processImage(imageString: string, images: Record<string, string[]>): vo
     images[normalizedTag] = [];
   }
 
-  if (!images[normalizedTag].includes(imageString)) {
-    images[normalizedTag].push(imageString);
+  if (!images[normalizedTag].includes(imagePullString)) {
+    images[normalizedTag].push(imagePullString);
   }
 }
 

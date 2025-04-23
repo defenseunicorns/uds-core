@@ -15,6 +15,7 @@ runs:
     # Check if PR has the renovate-ready label (manual override)
     - name: Check if PR has the ready label
       id: check-ready-label
+      shell: bash
       run: |
         if [[ "${{ contains(github.event.pull_request.labels.*.name, 'renovate-ready') }}" == "true" ]]; then
           echo "PR has the renovate-ready label. Skipping readiness check."
@@ -23,12 +24,12 @@ runs:
           echo "PR does not have the renovate-ready label. Proceeding with readiness check."
           echo "should_process=true" >> $GITHUB_OUTPUT
         fi
-      shell: bash
 
     # Process branch name to determine package
     - name: Process branch name
       id: process-branch
       if: steps.check-ready-label.outputs.should_process == 'true'
+      shell: bash
       env:
         BRANCH_NAME: ${{ github.head_ref }}
       run: |
@@ -59,11 +60,13 @@ runs:
           echo "package=$PACKAGE_NAME" >> $GITHUB_OUTPUT
           echo "needs_comparison=true" >> $GITHUB_OUTPUT
         fi
-      shell: bash
 
     # Handle Pepr updates
     - name: Handle Pepr update
       if: steps.process-branch.outputs.is_pepr == 'true'
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github_token }}
       run: |
         # Get Pepr version from package.json
         PEPR_VERSION=$(jq -r '.dependencies.pepr' package.json)
@@ -84,21 +87,18 @@ runs:
           gh pr edit ${{ github.event.pull_request.number }} --remove-label "waiting on ironbank" || true
           gh pr edit ${{ github.event.pull_request.number }} --add-label "needs-review"
         fi
-      shell: bash
-      env:
-        GH_TOKEN: ${{ inputs.github_token }}
 
     # Handle support dependencies
     - name: Handle support dependencies
       if: steps.process-branch.outputs.is_support_deps == 'true'
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github_token }}
       run: |
         echo "Support dependencies update detected. Needs manual review."
         gh pr edit ${{ github.event.pull_request.number }} --add-label "needs-review"
         # Fail the job to prevent excessive CI runs of IAC clusters
         exit 1
-      shell: bash
-      env:
-        GH_TOKEN: ${{ inputs.github_token }}
 
     # Checkout PR branch (sparse checkout of src/<pkg>)
     - name: Checkout PR branch
@@ -125,31 +125,32 @@ runs:
     # Install dependencies
     - name: Install dependencies
       if: steps.process-branch.outputs.needs_comparison == 'true'
+      shell: bash
       run: |
         cd scripts/renovate
         npm install
-      shell: bash
 
     # Extract images and charts from old branch
     - name: Extract images and charts from old branch
       if: steps.process-branch.outputs.needs_comparison == 'true'
+      shell: bash
       run: |
         cd scripts/renovate
         npx ts-node getImagesAndCharts.ts $GITHUB_WORKSPACE/old
-      shell: bash
 
     # Extract images and charts from new branch
     - name: Extract images and charts from new branch
       if: steps.process-branch.outputs.needs_comparison == 'true'
+      shell: bash
       run: |
         cd scripts/renovate
         npx ts-node getImagesAndCharts.ts $GITHUB_WORKSPACE/new
-      shell: bash
 
     # Compare images and charts
     - name: Compare images and charts
       id: compare
       if: steps.process-branch.outputs.needs_comparison == 'true'
+      shell: bash
       run: |
         cd scripts/renovate
         OUTPUT=$(npx ts-node compareImagesAndCharts.ts $GITHUB_WORKSPACE/old/extract $GITHUB_WORKSPACE/new/extract)
@@ -165,11 +166,13 @@ runs:
         else
           echo "waiting=false" >> $GITHUB_OUTPUT
         fi
-      shell: bash
 
     # Apply labels
     - name: Apply labels
       if: steps.process-branch.outputs.needs_comparison == 'true'
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github_token }}
       run: |
         LABELS="${{ steps.compare.outputs.labels }}"
         if [[ -n "$LABELS" ]]; then
@@ -193,14 +196,11 @@ runs:
           # Add the new labels
           gh pr edit ${{ github.event.pull_request.number }} --add-label "$LABELS"
         fi
-      shell: bash
-      env:
-        GH_TOKEN: ${{ inputs.github_token }}
 
     # Fail if waiting on images
     - name: Fail if waiting on images or helm update only
       if: steps.compare.outputs.waiting == 'true'
+      shell: bash
       run: |
         echo "PR is waiting on image updates or only contains a helm chart update. Failing job."
         exit 1
-      shell: bash
