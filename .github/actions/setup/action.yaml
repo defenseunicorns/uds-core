@@ -53,7 +53,7 @@ runs:
 
     - name: Chainguard Login
       if: ${{ inputs.chainguardIdentity != '' }}
-      uses: chainguard-dev/setup-chainctl@2302a56a61228140753b428d1018cb0d0addbec6 # v0.3.0
+      uses: chainguard-dev/setup-chainctl@272698817627c158bbd813cb783b62a4b9bbbc67 # v0.3.1
       with:
         identity: ${{ inputs.chainguardIdentity }}
 
