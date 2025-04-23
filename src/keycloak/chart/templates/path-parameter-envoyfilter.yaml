@@ -23,21 +23,16 @@ spec:
             inlineCode: |
               function envoy_on_request(request_handle)
                 local path = request_handle:headers():get(":path")
-                local host = request_handle:headers():get(":authority")
 
-                -- Only apply to keycloak endpoints
-                if host and (
-                  host == "sso.{{ .Values.domain }}" or
-                  host == "keycloak.{{ tpl .Values.adminDomain . }}"
-                ) then
-                  if path then
-                    local invalid_semicolon = string.match(path, "^[^;]*;[^/]*/")
-                    if invalid_semicolon then
-                      request_handle:respond(
-                        { [":status"] = "400" },
-                        "Path parameters may only appear after the final path segment"
-                      )
-                    end
+                if path then
+                  -- Pattern to detect semicolons NOT in the last path segment
+                  -- Match a ; before / (a ; after the final / is ok and will be allowed)
+                  local invalid_semicolon = string.match(path, "^[^;]*;[^/]*/")
+                  if invalid_semicolon then
+                    request_handle:respond(
+                      { [":status"] = "400" },
+                      "Path parameters may only appear after the final path segment"
+                    )
                   end
                 end
               end
