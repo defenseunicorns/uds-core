@@ -27,6 +27,7 @@ on:
       - release-please-config.json
       - CODEOWNERS
       - LICENSE
+      - scripts/** # scripts/hacks that are used specifically for non-testing workflows
 
 jobs:
   lint-check:
