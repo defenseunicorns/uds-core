@@ -172,6 +172,18 @@ function compareImages(oldImages: any, newImages: any, result: ComparisonResult)
     newVersionMap[version] = newImages[version].map((img: string) => img.split(':')[0]);
   }
 
+  // Create a map of all image base names to their versions in the new data
+  const allNewImageVersions: Record<string, string[]> = {};
+  for (const version in newImages) {
+    for (const img of newImages[version]) {
+      const imgName = img.split(':')[0];
+      if (!allNewImageVersions[imgName]) {
+        allNewImageVersions[imgName] = [];
+      }
+      allNewImageVersions[imgName].push(version);
+    }
+  }
+
   // For each new version list, check if it's a subset of an old version list
   for (const newVersion in newVersionMap) {
     const newImageNames = newVersionMap[newVersion];
@@ -202,6 +214,18 @@ function compareImages(oldImages: any, newImages: any, result: ComparisonResult)
 
         // Check registry prefixes and add appropriate labels
         for (const missingImg of missingImageStrings) {
+          const imgName = missingImg.split(':')[0];
+
+          // Check if this image exists in any newer version
+          const existsInNewerVersion = allNewImageVersions[imgName]?.some(ver =>
+            semver.valid(ver) && semver.valid(newVersion) && semver.gt(ver, newVersion)
+          );
+
+          // Skip if the image exists in a newer version
+          if (existsInNewerVersion) {
+            continue;
+          }
+
           if (missingImg.includes('registry1.dso.mil')) {
             if (!result.labels.includes('waiting on ironbank')) {
               result.labels.push('waiting on ironbank');
@@ -217,7 +241,6 @@ function compareImages(oldImages: any, newImages: any, result: ComparisonResult)
 
         // Check if this is a major version update
         checkForMajorUpdate(oldVersion, newVersion, result);
-
         break;
       }
     }

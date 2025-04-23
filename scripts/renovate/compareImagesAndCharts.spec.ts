@@ -100,10 +100,8 @@ describe('compareImagesAndCharts', () => {
 
     const result = await compareImagesAndCharts('old', 'new');
 
-    // With our updated logic, we should have needs-review since all images are updated properly
-    expect(result.labels).toContain('needs-review');
-    expect(result.labels).not.toContain('waiting on ironbank');
-    expect(result.labels).not.toContain('waiting on cgr');
+    // We should have needs-review since all images are updated properly
+    expect(result.labels).toEqual(['needs-review']);
   });
 
   it('should detect major image updates', async () => {
@@ -174,7 +172,7 @@ describe('compareImagesAndCharts', () => {
 
     const result = await compareImagesAndCharts('old', 'new');
 
-    expect(result.labels).toContain('major-image-update');
+    expect(result.labels).toEqual(['major-image-update', 'needs-review']);
     expect(result.changes).toContain('Major image update detected: 1.21.6 to 2.0.0');
   });
 
@@ -236,9 +234,8 @@ describe('compareImagesAndCharts', () => {
 
     const result = await compareImagesAndCharts('old', 'new');
 
-    expect(result.labels).not.toContain('needs-review');
+    expect(result.labels).toEqual(['helm-chart-only']);
     expect(result.changes).toContain('Chart chart2 updated from 2.0.0 to 2.1.0');
-    expect(result.labels).toContain('helm-chart-only');
     expect(result.changes).toContain('PR contains only helm chart updates');
   });
 
@@ -300,11 +297,9 @@ describe('compareImagesAndCharts', () => {
 
     const result = await compareImagesAndCharts('old', 'new');
 
-    expect(result.labels).not.toContain('needs-review');
-    expect(result.labels).toContain('major-helm-update');
+    expect(result.labels).toEqual(['major-helm-update', 'helm-chart-only']);
     expect(result.changes).toContain('Chart chart2 updated from 2.0.0 to 3.0.0');
     expect(result.changes).toContain('Major helm chart update detected for chart2');
-    expect(result.labels).toContain('helm-chart-only');
     expect(result.changes).toContain('PR contains only helm chart updates');
   });
 
@@ -354,12 +349,10 @@ describe('compareImagesAndCharts', () => {
         return {
           '1.25.3': [
             'docker.io/library/nginx:1.25.3',
+            'cgr.dev/chainguard/nginx:1.25.3',
           ],
           '1.22.6': [
             'registry1.dso.mil/ironbank/nginx:1.22.6'
-          ],
-          '1.21.6': [
-            'cgr.dev/chainguard/nginx:1.21.6'
           ]
         };
       }
@@ -368,7 +361,7 @@ describe('compareImagesAndCharts', () => {
 
     const result = await compareImagesAndCharts('old', 'new');
 
-    expect(result.labels).toContain('waiting on ironbank');
+    expect(result.labels).toEqual(['waiting on ironbank']);
     expect(result.changes).toContain('Waiting on Ironbank image update: registry1.dso.mil/ironbank/nginx:1.21.6');
   });
 
@@ -430,7 +423,7 @@ describe('compareImagesAndCharts', () => {
 
     const result = await compareImagesAndCharts('old', 'new');
 
-    expect(result.labels).toContain('waiting on cgr');
+    expect(result.labels).toEqual(['waiting on cgr']);
     expect(result.changes).toContain('Waiting on Chainguard image update: cgr.dev/chainguard/nginx:1.21.6');
   });
 
@@ -504,10 +497,9 @@ describe('compareImagesAndCharts', () => {
 
     const result = await compareImagesAndCharts('old', 'new');
 
-    // With our updated logic, we should have waiting labels since some images are outdated
-    expect(result.labels).toContain('waiting on ironbank');
-    expect(result.labels).toContain('waiting on cgr');
-    expect(result.labels).not.toContain('needs-review');
+    expect(result.labels).toEqual(['waiting on ironbank', 'waiting on cgr']);
+    expect(result.changes).toContain('Waiting on Ironbank image update: registry1.dso.mil/ironbank/nginx:1.21.6');
+    expect(result.changes).toContain('Waiting on Chainguard image update: cgr.dev/chainguard/nginx:1.21.6');
   });
 
   it('should handle empty files gracefully', async () => {
@@ -544,8 +536,7 @@ describe('compareImagesAndCharts', () => {
 
     const result = await compareImagesAndCharts('old', 'new');
 
-    // Should complete successfully with empty new/images.yaml
-    expect(result.labels).toContain('needs-review');
+    expect(result.labels).toEqual(['needs-review']);
   });
 
   it('should throw an error if old images file is missing', async () => {
@@ -750,9 +741,7 @@ describe('compareImagesAndCharts', () => {
 
     const result = await compareImagesAndCharts('old', 'new');
 
-    expect(result.labels).toContain('needs-review');
-    expect(result.labels).not.toContain('waiting on ironbank');
-    expect(result.labels).not.toContain('waiting on cgr');
+    expect(result.labels).toEqual(['needs-review']);
   });
 
   it('should handle helm chart only update', async () => {
@@ -789,12 +778,7 @@ describe('compareImagesAndCharts', () => {
 
     const result = await compareImagesAndCharts('old', 'new');
 
-    expect(result.labels).not.toContain('needs-review');
-    expect(result.labels).toContain('helm-chart-only');
-    expect(result.labels).not.toContain('waiting on ironbank');
-    expect(result.labels).not.toContain('waiting on cgr');
-    expect(result.labels).not.toContain('major-helm-update');
-    expect(result.labels).not.toContain('major-image-update');
+    expect(result.labels).toEqual(['helm-chart-only']);
     expect(result.changes).toContain('Chart grafana updated from 6.50.5 to 6.50.7');
     expect(result.changes).toContain('PR contains only helm chart updates');
   });
@@ -833,12 +817,99 @@ describe('compareImagesAndCharts', () => {
 
     const result = await compareImagesAndCharts('old', 'new');
 
-    expect(result.labels).toContain('major-helm-update');
-    expect(result.labels).toContain('helm-chart-only');
-    expect(result.labels).not.toContain('waiting on ironbank');
-    expect(result.labels).not.toContain('waiting on cgr');
+    expect(result.labels).toEqual(['major-helm-update', 'helm-chart-only']);
     expect(result.changes).toContain('Chart grafana updated from 6.50.5 to 7.0.0');
     expect(result.changes).toContain('Major helm chart update detected for grafana');
     expect(result.changes).toContain('PR contains only helm chart updates');
   });
+});
+
+it('should detect wait for loki (regression test)', async () => {
+  // Mock fs.readFileSync to return different content based on the file path
+  (fs.readFileSync as jest.Mock).mockImplementation((filePath) => {
+    if (filePath === 'old/charts.yaml') {
+      return 'charts-old';
+    }
+    if (filePath === 'new/charts.yaml') {
+      return 'charts-new';
+    }
+    if (filePath === 'old/images.yaml') {
+      return 'images-old';
+    }
+    if (filePath === 'new/images.yaml') {
+      return 'images-new';
+    }
+    return '';
+  });
+
+  // Mock fs.existsSync to return true for all files
+  (fs.existsSync as jest.Mock).mockReturnValue(true);
+
+  // Mock yaml.parse to return different content based on the input
+  (yaml.parse as jest.Mock).mockImplementation((content) => {
+    if (content === 'charts-old') {
+      return {
+        'https://grafana.github.io/helm-charts/loki': '6.29.0'
+      };
+    }
+    if (content === 'charts-new') {
+      return {
+        'https://grafana.github.io/helm-charts/loki': '6.29.0'
+      };
+    }
+    if (content === 'images-old') {
+      return {
+        '3.4.3': [
+          'docker.io/grafana/loki:3.4.3',
+          'registry1.dso.mil/ironbank/opensource/grafana/loki:3.4.3',
+          'cgr.dev/du-uds-defenseunicorns/loki:3.4.3'
+        ],
+        '1.6.38': [
+          'docker.io/memcached:1.6.38-alpine',
+          'registry1.dso.mil/ironbank/opensource/memcached/memcached:1.6.38',
+          'cgr.dev/du-uds-defenseunicorns/memcached:1.6.38'
+        ],
+        '1.27': [
+          'docker.io/nginxinc/nginx-unprivileged:1.27-alpine'
+        ],
+        '1.26.3': [
+          'registry1.dso.mil/ironbank/opensource/nginx/nginx-alpine:1.26.3'
+        ],
+        '1.27.5': [
+          'cgr.dev/du-uds-defenseunicorns/nginx-fips:1.27.5'
+        ]
+      };
+    }
+    if (content === 'images-new') {
+      return {
+        '1.27': [
+          'docker.io/nginxinc/nginx-unprivileged:1.27-alpine'
+        ],
+        '3.4.3': [
+          'cgr.dev/du-uds-defenseunicorns/loki:3.4.3'
+        ],
+        '1.6.38': [
+          'docker.io/memcached:1.6.38-alpine',
+          'registry1.dso.mil/ironbank/opensource/memcached/memcached:1.6.38',
+          'cgr.dev/du-uds-defenseunicorns/memcached:1.6.38'
+        ],
+        '1.26.3': [
+          'registry1.dso.mil/ironbank/opensource/nginx/nginx-alpine:1.26.3'
+        ],
+        '1.27.5': [
+          'cgr.dev/du-uds-defenseunicorns/nginx-fips:1.27.5'
+        ],
+        '3.5.0': [
+          'docker.io/grafana/loki:3.5.0',
+          'registry1.dso.mil/ironbank/opensource/grafana/loki:3.5.0'
+        ]
+      };
+    }
+    return {};
+  });
+
+  const result = await compareImagesAndCharts('old', 'new');
+
+  expect(result.labels).toEqual(['waiting on cgr']);
+  expect(result.changes).toContain('Waiting on Chainguard image update: cgr.dev/du-uds-defenseunicorns/loki:3.4.3');
 });
