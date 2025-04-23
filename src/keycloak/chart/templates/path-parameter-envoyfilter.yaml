@@ -32,7 +32,7 @@ spec:
                 -- Only apply to keycloak endpoints
                 if host and (
                   host == "sso.{{ .Values.domain }}" or
-                  host == "keycloak.{{ .Values.adminDomain }}"
+                  host == "keycloak.{{ tpl .Values.adminDomain . }}"
                 ) then
                   if path then
                     local invalid_semicolon = string.match(path, "^[^;]*;[^/]*/")
