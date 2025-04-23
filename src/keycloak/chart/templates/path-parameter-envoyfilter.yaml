@@ -13,11 +13,7 @@ spec:
   configPatches:
     - applyTo: HTTP_FILTER
       match:
-        context: GATEWAY
-        listener:
-          filterChain:
-            filter:
-              name: envoy.filters.network.http_connection_manager
+        context: SIDECAR_INBOUND
       patch:
         operation: INSERT_BEFORE
         value:
@@ -31,8 +27,8 @@ spec:
 
                 -- Only apply to keycloak endpoints
                 if host and (
-                  string.match(host, "^sso%.uds%.dev$") or
-                  string.match(host, "^keycloak%.admin%.uds%.dev$")
+                  host == "sso.{{ .Values.domain }}" or
+                  host == "keycloak.{{ .Values.adminDomain }}"
                 ) then
                   if path then
                     local invalid_semicolon = string.match(path, "^[^;]*;[^/]*/")
