@@ -19,7 +19,6 @@ spec:
               - "8080"
             paths:
               - "/admin*"
-              - "/realms/master*"
       from:
         - source:
             notNamespaces:
@@ -36,18 +35,6 @@ spec:
             notNamespaces:
             - istio-admin-gateway
             - monitoring
-    - to:
-        - operation:
-            ports:
-              - "8080"
-            paths:
-              # Never allow anonymous client registration except from the pepr-system namespace
-              # This is another fallback protection, as the KC policy already blocks it
-              - "/realms/{{ .Values.realm }}/clients-registrations/*"
-      from:
-        - source:
-            notNamespaces:
-              - "pepr-system"
     - to:
         - operation:
             ports:
