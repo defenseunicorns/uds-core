@@ -24,6 +24,7 @@ on:
       - release-please-config.json
       - CODEOWNERS
       - LICENSE
+      - scripts/** # scripts/hacks that are used specifically for non-testing workflows
 
 # Permissions for the GITHUB_TOKEN used by the workflow.
 permissions:
