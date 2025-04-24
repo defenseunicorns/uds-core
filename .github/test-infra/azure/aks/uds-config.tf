@@ -24,6 +24,10 @@ resource "local_sensitive_file" "uds_config" {
         "grafana_pg_password" : random_password.db_password.result,
         "grafana_pg_user" : var.username,
       }
+      "init" : {
+        # Disabled to prevent scaling timing issues with image pushes
+        "registry_hpa_enable" : false
+      }
     }
   })
 }
