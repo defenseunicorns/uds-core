@@ -50,6 +50,9 @@ spec:
               global_role: reader
 
   network:
+    serviceMesh:
+      mode: "ambient"
+
     expose:
       - service: neuvector-service-webui
         selector:
@@ -107,6 +110,16 @@ spec:
           app: neuvector-controller-pod
         port: 30443
         description: "Webhook"
+
+      - direction: Ingress
+        remoteNamespace: istio-admin-gateway
+        remoteSelector:
+          app.kubernetes.io/name: admin-ingressgateway
+        remoteServiceAccount: admin-ingressgateway
+        selector:
+          app: neuvector-manager-waypoint
+        port: 8443
+        description: waypoint-admin-gateway
 
       # Custom rules for additional networking access
       {{- with .Values.additionalNetworkAllow }}
