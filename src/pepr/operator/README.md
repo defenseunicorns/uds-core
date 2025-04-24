@@ -165,9 +165,9 @@ Client Credentials Grant uses the OAuth 2.0 Client Credentials Grant to authenti
 
 The `PEPR_KEYCLOAK_CLIENT_STRATEGY` can be set to one of the following values:
 
-* `auto` (default): The UDS Operator will automatically determine the best strategy to use based on the Keycloak server configuration
+* `auto`: The UDS Operator will automatically determine the best strategy to use based on the Keycloak server configuration
 * `dynamic_client_registration`: The UDS Operator will use the Dynamic Client Registration strategy
-* `client_credentials`: The UDS Operator will use the Client Credentials Grant strategy
+* `client_credentials` (default): The UDS Operator will use the Client Credentials Grant strategy
 
 ### Key Files and Folders
 
