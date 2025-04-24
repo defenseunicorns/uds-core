@@ -73,39 +73,90 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
   }
 
   const networkPolicy = pkg.spec?.network?.allow ?? [];
+  const networkSpec = pkg.spec?.network;
 
   // Track the names of the network policies to ensure they are unique
   const networkPolicyNames = new Set<string>();
 
   for (const policy of networkPolicy) {
-    // If 'remoteGenerated' is set, it cannot be combined with 'remoteNamespace', 'remoteSelector', or 'remoteCidr'.
+    // If 'remoteGenerated' is set, it cannot be combined with 'remoteNamespace', 'remoteSelector', 'remoteCidr', 'remoteHost', or 'remoteProtocol'.
     if (
       policy.remoteGenerated &&
-      (policy.remoteNamespace || policy.remoteSelector || policy.remoteCidr)
+      (policy.remoteNamespace ||
+        policy.remoteSelector ||
+        policy.remoteCidr ||
+        policy.remoteHost ||
+        policy.remoteProtocol)
     ) {
       return req.Deny(
-        "remoteGenerated cannot be combined with remoteNamespace, remoteSelector, or remoteCidr",
+        "remoteGenerated cannot be combined with remoteNamespace, remoteSelector, remoteCidr, remoteHost, or remoteProtocol",
       );
     }
 
-    // If either 'remoteNamespace' or 'remoteSelector' is set, they cannot be combined with 'remoteGenerated' or 'remoteCidr'.
+    // If either 'remoteNamespace' or 'remoteSelector' is set, they cannot be combined with 'remoteGenerated', 'remoteCidr', 'remoteHost', or 'remoteProtocol'.
     if (
       (policy.remoteNamespace || policy.remoteSelector) &&
-      (policy.remoteGenerated || policy.remoteCidr)
+      (policy.remoteGenerated || policy.remoteCidr || policy.remoteHost || policy.remoteProtocol)
     ) {
       return req.Deny(
-        "remoteNamespace and remoteSelector cannot be combined with remoteGenerated or remoteCidr",
+        "remoteNamespace and remoteSelector cannot be combined with remoteGenerated, remoteCidr, remoteHost, or remoteProtocol",
       );
     }
 
-    // If 'remoteCidr' is set, it cannot be combined with 'remoteGenerated', 'remoteNamespace', or 'remoteSelector'.
+    // If 'remoteCidr' is set, it cannot be combined with 'remoteGenerated', 'remoteNamespace', 'remoteSelector', 'remoteHost', or 'remoteProtocol'.
     if (
       policy.remoteCidr &&
-      (policy.remoteGenerated || policy.remoteNamespace || policy.remoteSelector)
+      (policy.remoteGenerated ||
+        policy.remoteNamespace ||
+        policy.remoteSelector ||
+        policy.remoteHost ||
+        policy.remoteProtocol)
     ) {
       return req.Deny(
-        "remoteCidr cannot be combined with remoteGenerated, remoteNamespace, or remoteSelector",
+        "remoteCidr cannot be combined with remoteGenerated, remoteNamespace, remoteSelector, remoteHost, or remoteProtocol",
       );
+    }
+
+    // If 'remoteHost' is set, it cannot be combined with 'remoteGenerated', 'remoteNamespace', 'remoteSelector', or 'remoteCidr'.
+    if (
+      policy.remoteHost &&
+      (policy.remoteGenerated ||
+        policy.remoteNamespace ||
+        policy.remoteSelector ||
+        policy.remoteCidr)
+    ) {
+      return req.Deny(
+        "remoteHost cannot be combined with remoteGenerated, remoteNamespace, remoteSelector, or remoteCidr",
+      );
+    }
+
+    // If 'remoteProtocol' is set, it cannot be combined with 'remoteGenerated', 'remoteNamespace', 'remoteSelector', or 'remoteCidr'and must have 'remoteHost'.
+    if (
+      policy.remoteProtocol &&
+      (policy.remoteGenerated ||
+        policy.remoteNamespace ||
+        policy.remoteSelector ||
+        policy.remoteCidr ||
+        !policy.remoteHost)
+    ) {
+      return req.Deny(
+        "remoteProtocol cannot be combined with remoteGenerated, remoteNamespace, remoteSelector, or remoteCidr and must have remoteHost",
+      );
+    }
+
+    // The 'remoteHost' and 'remoteProtocol' cannot be used with 'Ingress'.
+    if ((policy.remoteHost || policy.remoteProtocol) && policy.direction == "Ingress") {
+      return req.Deny("remoteHost and/or remoteProtocol cannot be used with Ingress");
+    }
+
+    // The 'remoteHost' does not support wildcard domains.
+    if (policy.remoteHost && policy.remoteHost.includes("*")) {
+      return req.Deny("remoteHost does not support wildcard domains");
+    }
+
+    // Ambient is not compatible with 'remoteHost'.
+    if (policy.remoteHost && networkSpec?.serviceMesh?.mode === Mode.Ambient) {
+      return req.Deny("remoteHost not supported in ambient mode");
     }
 
     // Ensure the policy name is unique

@@ -23,6 +23,9 @@ components:
       - name: curl-test
         files:
           - "app-curl.yaml"
+      - name: egress-test
+        files:
+          - "app-egress.yaml"
     images:
       - docker.io/kong/httpbin:0.2.3
       - hashicorp/http-echo:latest
