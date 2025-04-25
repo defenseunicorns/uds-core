@@ -132,6 +132,15 @@ jobs:
     name: Schedule AKS
     if: ${{contains(fromJSON(needs.check-paths.outputs.distros), 'aks')}} || contains(github.event.pull_request.labels.*.name, 'test-aks')
     uses: ./.github/workflows/test-aks.yaml
+    secrets: inherit # Inherits all secrets from the parent workflow.
+
+ # Trigger EKS IaC
+  run-iac-test-eks:
+    needs: check-paths
+    name: Schedule EKS
+    if: ${{contains(fromJSON(needs.check-paths.outputs.distros), 'eks')}} || contains(github.event.pull_request.labels.*.name, 'test-eks')
+    uses: ./.github/workflows/test-eks.yaml
+    secrets: inherit # Inherits all secrets from the parent workflow.
 
 # evaluate-package-compliance:
 #   needs: run-package-test
