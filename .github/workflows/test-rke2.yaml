@@ -28,7 +28,7 @@ jobs:
       matrix:
         flavor: [upstream, registry1, unicorn]
     runs-on: ubuntu-latest
-    if: github.event.pull_request.label.name == 'test-rke2' || github.event_name == 'schedule' || github.event.pull_request.milestoned == true || github.event.pull_request.opened == true || github.event.pull_request.reopened == true || github.event.pull_request.synchronize == true || github.event_name == 'pull_request'
+    if: github.event.label.name == 'test-rke2' || github.event_name == 'schedule' || github.event.pull_request.milestoned == true || github.event.pull_request.opened == true || github.event.pull_request.reopened == true || github.event.pull_request.synchronize == true || github.event_name == 'pull_request'
     permissions:
       id-token: write
       contents: read
