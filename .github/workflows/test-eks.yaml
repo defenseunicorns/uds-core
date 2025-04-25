@@ -6,15 +6,17 @@ name: EKS Test
 on:
   schedule:
     - cron: "0 0 * * 0" # Every Sunday Midnight (UTC) / Saturday 5pm MT
-  pull_request:
-    # milestoned is added here as a workaround for release-please not triggering PR workflows (PRs should be added to a milestone to trigger the workflow).
-    # labeled is added to support renovate-ready labelling on PRs
-    types: [milestoned, labeled, opened, reopened, synchronize]
-    paths:
-      - tasks/iac.yaml
-      - .github/bundles/eks/*
-      - .github/test-infra/aws/eks/*
-      - .github/workflows/test-eks.yaml
+  workflow_call:
+    inputs: {}
+  # pull_request:
+  #   # milestoned is added here as a workaround for release-please not triggering PR workflows (PRs should be added to a milestone to trigger the workflow).
+  #   # labeled is added to support renovate-ready labelling on PRs
+  #   types: [milestoned, labeled, opened, reopened, synchronize]
+  #   paths:
+  #     - tasks/iac.yaml
+  #     - .github/bundles/eks/*
+  #     - .github/test-infra/aws/eks/*
+  #     - .github/workflows/test-eks.yaml
 
 permissions:
   id-token: write
