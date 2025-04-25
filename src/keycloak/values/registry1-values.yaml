@@ -3,7 +3,7 @@
 
 image:
   repository: registry1.dso.mil/ironbank/opensource/keycloak/keycloak
-  tag: "26.2.0"
+  tag: "26.2.1"
 podSecurityContext:
   fsGroup: 2000
 securityContext:
