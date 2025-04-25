@@ -57,6 +57,11 @@ packages:
               value:
                 service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
                 service.beta.kubernetes.io/aws-load-balancer-target-node-labels: "kubernetes.io/os=linux"
+      kube-prometheus-stack:
+        uds-prometheus-config:
+          values:
+            - path: addRke2CorednsNetpol.enabled
+              value: true
       velero:
         velero:
           variables:

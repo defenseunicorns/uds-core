@@ -10,3 +10,5 @@ additionalNetworkAllow: []
 #     remoteGenerated: Anywhere
 #     description: "from alertmanager to anywhere"
 #     port: 443
+addRke2CorednsNetpol:
+  enabled: false
