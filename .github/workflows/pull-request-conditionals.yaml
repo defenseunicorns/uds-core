@@ -97,7 +97,7 @@ jobs:
               - "tasks/iac.yaml"
               - ".github/bundles/eks/**"
               - ".github/test-infra/aws/eks/**"
-              - ".github/workflows/test-eks.yaml"
+# - ".github/workflows/test-eks.yaml"
 
   # This job triggers a separate workflow for each changed source package, if any.
   run-package-test:
