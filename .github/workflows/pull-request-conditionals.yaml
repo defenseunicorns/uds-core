@@ -97,7 +97,7 @@ jobs:
               - "tasks/iac.yaml"
               - ".github/bundles/eks/**"
               - ".github/test-infra/aws/eks/**"
-# - ".github/workflows/test-eks.yaml"
+              - ".github/workflows/test-eks.yaml"
 
   # This job triggers a separate workflow for each changed source package, if any.
   run-package-test:
@@ -141,6 +141,15 @@ jobs:
     if: ${{contains(fromJSON(needs.check-paths.outputs.distros), 'eks')}} || contains(github.event.pull_request.labels.*.name, 'test-eks')
     uses: ./.github/workflows/test-eks.yaml
     secrets: inherit # Inherits all secrets from the parent workflow.
+
+ # Trigger RKE2 IaC
+  run-iac-test-rke2:
+    needs: check-paths
+    name: Schedule RKE2
+    if: ${{contains(fromJSON(needs.check-paths.outputs.distros), 'rke2')}} || contains(github.event.pull_request.labels.*.name, 'test-rke2')
+    uses: ./.github/workflows/test-rke2.yaml
+    secrets: inherit # Inherits all secrets from the parent workflow.
+
 
 # evaluate-package-compliance:
 #   needs: run-package-test
