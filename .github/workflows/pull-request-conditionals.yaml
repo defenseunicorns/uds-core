@@ -59,6 +59,7 @@ jobs:
     name: Select Jobs
     outputs:
       packages: ${{ steps.path-filter.outputs.changes }}
+      distros: ${{ steps.path-filter-iac.outputs.changes }}
 
     steps:
       - name: Checkout the code
@@ -76,6 +77,27 @@ jobs:
         uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3
         with:
           filters: .github/filters.yaml
+
+      - name: Check iac distros src paths
+        id: path-filter-iac
+        uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3
+        with:
+          filters: |
+            aks:
+              - "tasks/iac.yaml"
+              - ".github/bundles/aks/**"
+              - ".github/test-infra/azure/aks/**"
+              - ".github/workflows/test-aks.yaml"
+            rke2:
+              - "tasks/iac.yaml"
+              - ".github/bundles/rke2/**"
+              - ".github/test-infra/aws/rke2/**"
+              - ".github/workflows/test-rke2.yaml"
+            eks:
+              - "tasks/iac.yaml"
+              - ".github/bundles/eks/**"
+              - ".github/test-infra/aws/eks/**"
+              - ".github/workflows/test-eks.yaml"
 
   # This job triggers a separate workflow for each changed source package, if any.
   run-package-test:
@@ -103,6 +125,13 @@ jobs:
       flavor: ${{ matrix.flavor }}
       test_type: ${{ matrix.test_type }}
     secrets: inherit # Inherits all secrets from the parent workflow.
+
+  # Trigger AKS IaC
+  run-iac-test-aks:
+    needs: check-paths
+    name: Schedule AKS
+    if: ${{contains(fromJSON(needs.check-paths.outputs.distros), 'aks')}} || contains(github.event.pull_request.labels.*.name, 'test-aks')
+    uses: ./.github/workflows/test-aks.yaml
 
 # evaluate-package-compliance:
 #   needs: run-package-test
