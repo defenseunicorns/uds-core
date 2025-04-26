@@ -1,4 +1,4 @@
-# Unicorn Delivery Service - Core (UDS Core)
+# CHANCE  Unicorn Delivery Service - Core (UDS Core)
 
 [![Latest Release](https://img.shields.io/github/v/release/defenseunicorns/uds-core)](https://github.com/defenseunicorns/uds-core/releases)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/defenseunicorns/uds-core/tag-and-release.yaml)](https://github.com/defenseunicorns/uds-core/tag-and-release.yaml)
