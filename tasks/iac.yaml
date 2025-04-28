@@ -65,9 +65,6 @@ tasks:
               break
             fi
           done
-      # - task: util:rke2-allow-prom-kube-dns
-      #   dir: .github/test-infra/aws/rke2/
-      #   maxTotalSeconds: 600
 
   - name: create-iac
     actions:
