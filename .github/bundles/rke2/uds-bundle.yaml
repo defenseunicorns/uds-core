@@ -60,7 +60,7 @@ packages:
       kube-prometheus-stack:
         uds-prometheus-config:
           values:
-            - path: addRke2CorednsNetpol.enabled
+            - path: rke2CorednsNetpol.enabled
               value: true
       velero:
         velero:
