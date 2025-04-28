@@ -103,6 +103,14 @@ When(UDSPackage)
     UDSConfig.isIdentityDeployed = false;
   });
 
+// See https://istio.io/latest/docs/ambient/usage/waypoint/#useawaypoint
+When(a.Namespace)
+  .IsCreatedOrUpdated()
+  .WithName("keycloak")
+  .Mutate(req => {
+    req.SetLabel("istio.io/use-waypoint", "waypoint");
+  });
+
 // Watch for changes to the Nodes and update the Node CIDR list
 if (!UDSConfig.kubeNodeCidrs) {
   When(a.Node).IsCreatedOrUpdated().Reconcile(updateKubeNodesFromCreateUpdate);

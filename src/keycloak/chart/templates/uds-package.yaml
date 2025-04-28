@@ -18,6 +18,8 @@ spec:
       description: Metrics
 
   network:
+    serviceMesh:
+      mode: ambient
     allow:
       - description: "UDS Operator"
         direction: Ingress

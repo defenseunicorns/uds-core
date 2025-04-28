@@ -8,9 +8,10 @@ metadata:
   name: keycloak-block-admin-access-from-public-gateway
   namespace: {{ .Release.Namespace }}
 spec:
-  selector:
-    matchLabels:
-      {{- include "keycloak.selectorLabels" . | nindent 6 }}
+  targetRefs:
+    - kind: Service
+      group: ""
+      name: "keycloak-http"
   action: DENY
   rules:
     - to:
