@@ -90,37 +90,24 @@ components:
             setVariables:
               - name: CNI_BIN_DIR
         after:
-          - description: "Ensure istio-injection is enabled for Pepr"
-            mute: true
-            cmd: "./zarf tools kubectl label namespace pepr-system istio-injection=enabled --overwrite"
-          - description: "Cycle Pepr to ensure enrollment in Istio"
+          - description: "Ensure istio ambient is enabled for Pepr"
+            cmd: "./zarf tools kubectl label namespace pepr-system istio.io/dataplane-mode=ambient --overwrite"
+          - description: "Ensure istio-injection is disabled for Pepr"
+            cmd: "./zarf tools kubectl label namespace pepr-system istio-injection=disabled --overwrite"
+          - description: "Cycle Pepr to refresh connections post-ambient"
             cmd: |
-              # Check if Istio is enabled. The pepr-system namespace should exist because that is added when istio is configured
-              if ! ./zarf tools kubectl get pods -n pepr-system -o jsonpath="{range .items[*]}{.metadata.name}:{range .spec.initContainers[*]}{.name} {end}{range .spec.containers[*]}{.name} {end}{'\n'}{end}" | grep -q 'istio-proxy'; then
-                  # Check if the "pepr-uds-core-watcher" deployment exists before restarting
-                  if ./zarf tools kubectl get deploy -n pepr-system pepr-uds-core-watcher > /dev/null 2>&1; then
-                      ./zarf tools kubectl rollout restart -n pepr-system deploy/pepr-uds-core-watcher
-                  else
-                      echo "Deployment 'pepr-uds-core-watcher' does not exist. Skipping restart."
-                  fi
-
-                  # Check if the "pepr-uds-core" deployment exists before restarting
-                  if ./zarf tools kubectl get deploy -n pepr-system pepr-uds-core > /dev/null 2>&1; then
-                      ./zarf tools kubectl rollout restart -n pepr-system deploy/pepr-uds-core
-                  else
-                      echo "Deployment 'pepr-uds-core' does not exist. Skipping restart."
-                  fi
+              echo "Checking if Pepr pods have sidecars and need restart..."
+              if ./zarf tools kubectl get pods -n pepr-system -o jsonpath="{range .items[*]}{.metadata.name}:{range .spec.initContainers[*]}{.name} {end}{range .spec.containers[*]}{.name} {end}{'\n'}{end}" | grep -q 'istio-proxy'; then
+                echo "Istio sidecar detected, restarting Pepr deployments..."
+                if ./zarf tools kubectl get deploy -n pepr-system pepr-uds-core-watcher > /dev/null 2>&1; then
+                  ./zarf tools kubectl rollout restart -n pepr-system deploy/pepr-uds-core-watcher
+                fi
+                if ./zarf tools kubectl get deploy -n pepr-system pepr-uds-core > /dev/null 2>&1; then
+                  ./zarf tools kubectl rollout restart -n pepr-system deploy/pepr-uds-core
+                fi
+              else
+                echo "No sidecars detected. Pepr pods are already Ambient-compatible. Skipping restart."
               fi
-    # Enable this when ready to switch Core components to use ambient
-    #     after:
-    #       - description: "Ensure istio ambient is enabled for Pepr"
-    #         cmd: "./zarf tools kubectl label namespace pepr-system istio.io/dataplane-mode=ambient --overwrite"
-    #       - description: "Ensure istio-injection is disabled for Pepr"
-    #         cmd: "./zarf tools kubectl label namespace pepr-system istio-injection=disabled --overwrite"
-    #       - description: "Cycle Pepr to refresh connections post-ambient"
-    #         cmd: |
-    #           ./zarf tools kubectl rollout restart -n pepr-system deploy/pepr-uds-core-watcher
-    #           ./zarf tools kubectl rollout restart -n pepr-system deploy/pepr-uds-core
 
   - name: gateway-api-crds
     required: true
