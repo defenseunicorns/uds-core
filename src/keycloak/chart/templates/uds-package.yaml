@@ -31,6 +31,16 @@ spec:
         remoteServiceAccount: pepr-uds-core
         port: 8080
 
+      - description: "Waypoint health"
+        direction: Ingress
+        selector:
+          app.kubernetes.io/name: keycloak
+        remoteNamespace: monitoring
+        remoteSelector:
+          app.kubernetes.io/name: prometheus
+        remoteServiceAccount: kube-prometheus-stack-prometheus
+        port: 15020
+
       - description: "UDS Operator to Waypoint"
         direction: Ingress
         selector:

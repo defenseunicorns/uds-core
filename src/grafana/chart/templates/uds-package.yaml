@@ -78,14 +78,6 @@ spec:
           app.kubernetes.io/name: keycloak
         description: "SSO Provider"
 
-      - direction: Egress
-        selector:
-          app.kubernetes.io/name: grafana
-        remoteNamespace: keycloak
-        remoteSelector:
-          gateway.networking.k8s.io/gateway-name: waypoint
-        description: "SSO Provider (Waypoint)"
-
       # Egress allowed to KubeAPI
       - direction: Egress
         selector:

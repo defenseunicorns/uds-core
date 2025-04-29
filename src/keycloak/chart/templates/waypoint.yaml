@@ -13,4 +13,7 @@ spec:
     - name: mesh
       port: 15008
       protocol: HBONE
+  infrastructure:
+    labels:
+      app.kubernetes.io/name: keycloak
 {{- end }}
