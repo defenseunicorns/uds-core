@@ -155,22 +155,27 @@ jobs:
             let distros;
 
             console.log(hasTestAllIacLabel);
-            if (hasTestAllIacLabel || (hasAksLabel && hasRke2Label && hasEksLabel)) {
+            if (hasTestAllIacLabel || (hasTestAksLabel && hasTestRke2Label && hasTestEksLabel)) {
               console.log('Triggering tests for all distros.');
               distros = new Set(["aks", "rke2", "eks"]);
             } else {
               if (process.env.HAS_AKS_LABEL === 'true') {
                 distros.add("aks");
+                console.log("Triggering AKS test based on label.")
               }
               if (process.env.HAS_RKE2_LABEL === 'true') {
                 distros.add("rke2");
+                console.log("Triggering RKE2 test based on label.")
               }
                if (process.env.HAS_EKS_LABEL === 'true') {
                 distros.add("eks");
+                console.log("Triggering EKS test based on label.")
               }
               const defaultDistros = JSON.parse(process.env.DISTROS);
-              defaultDistros.forEach(distro => distros.add(distro));
-              console.log(distros)
+              defaultDistros.forEach(distro => {
+                console.log(`Triggering ${distro.toUpperCase()} test based on modified files.`);
+                distros.add(distro);
+              });
             }
 
             distros = Array.from(distros);
