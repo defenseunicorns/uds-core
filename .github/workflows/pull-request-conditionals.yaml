@@ -129,51 +129,68 @@ jobs:
     secrets: inherit # Inherits all secrets from the parent workflow.
 
   # Trigger AKS IaC
-  run-iac-test-aks:
+  run-iac-test:
     needs: check-paths
-    name: Schedule AKS
-    if: ${{contains(fromJSON(needs.check-paths.outputs.distros), 'aks')}} || contains(github.event.pull_request.labels.*.name, 'test-aks') || contains(github.event.pull_request.labels.*.name, 'test-all-iac')
-    uses: actions/github-script@v7
     secrets: inherit # Inherits all secrets from the parent workflow.
-    script: |
-      //documentation: https://octokit.github.io/rest.js/v21/#actions-create-workflow-dispatch
-      const owner = context.repo.owner
-      const repo = context.repo.repo
-      const workflow_id = 'test-aks.yaml'
-      const ref = context.ref
-      try {
-        await github.rest.actions.createWorkflowDispatch({
-          owner,
-          repo,
-          workflow_id,
-          ref,
-        });
-      } catch (error) {
-        console.error('Failed to dispatch workflow:', error);
-        if (error.message.includes('rate limit exceeded')) {
-          console.warn('Rate limit exceeded.  Consider adding a delay before retrying.');
-          // Implement retry logic with a delay if appropriate.
-        } else {
-          console.error('An unexpected error occurred during workflow dispatch.');
-        }
-        core.setFailed(`Workflow dispatch failed: ${error.message}`);
-      }
+    name: Schedule IaC Tests
+    if: ${{ needs.check-paths.outputs.distros || contains(github.event.pull_request.labels.*.name, 'test-aks') || contains(github.event.pull_request.labels.*.name, 'test-all-iac')
+    steps:
+      - uses: actions/github-script@v7
+        script: |
+          const owner = context.repo.owner;
+          const repo = context.repo.repo;
+          const ref = context.ref;
+          const distros = JSON.parse(process.env.DISTROS);
+
+          for (const distro of distros) {
+            let workflow_id;
+            if (distro === 'aks') {
+              workflow_id = './test-aks.yaml';
+            } else if (distro === 'rke2') {
+              workflow_id = 'test-rke2.yaml';
+            } else if (distro === 'eks') {
+              workflow_id = 'test-eks.yaml';
+            } else {
+                console.warn(`No workflow defined for distro: ${distro}`);
+                continue;
+            }
+            try {
+              console.log(`Dispatching workflow ${workflow_id} for distro ${distro}`);
+              await github.rest.actions.createWorkflowDispatch({
+                owner,
+                repo,
+                workflow_id,
+                ref,
+              });
+              console.log(`Successfully dispatched workflow ${workflow_id} for distro ${distro}`);
+            } catch (error) {
+              console.error(`Failed to dispatch workflow ${workflow_id} for distro ${distro}:`, error);
+              if (error.message.includes('rate limit exceeded')) {
+                console.warn('Rate limit exceeded. Consider adding a delay before retrying.');
+              } else {
+                console.error('An unexpected error occurred during workflow dispatch.');
+              }
+              core.setFailed(`Workflow dispatch failed for ${distro}: ${error.message}`);
+            }
+          }
+        env:
+          DISTROS: ${{ needs.check-paths.outputs.distros }}
 
  # Trigger EKS IaC
-  run-iac-test-eks:
-    needs: check-paths
-    name: Schedule EKS
-    if: ${{contains(fromJSON(needs.check-paths.outputs.distros), 'eks')}} || contains(github.event.pull_request.labels.*.name, 'test-eks') || contains(github.event.pull_request.labels.*.name, 'test-all-iac')
-    #uses: ./.github/workflows/test-eks.yaml
-    secrets: inherit # Inherits all secrets from the parent workflow.
+#   run-iac-test-eks:
+#     needs: check-paths
+#     name: Schedule EKS
+#     if: ${{contains(fromJSON(needs.check-paths.outputs.distros), 'eks')}} || contains(github.event.pull_request.labels.*.name, 'test-eks') || contains(github.event.pull_request.labels.*.name, 'test-all-iac')
+#     #uses: ./.github/workflows/test-eks.yaml
+#     secrets: inherit # Inherits all secrets from the parent workflow.
 
- # Trigger RKE2 IaC
-  run-iac-test-rke2:
-    needs: check-paths
-    name: Schedule RKE2
-    if: ${{contains(fromJSON(needs.check-paths.outputs.distros), 'rke2')}} || contains(github.event.pull_request.labels.*.name, 'test-rke2') || contains(github.event.pull_request.labels.*.name, 'test-all-iac')
-    uses: ./.github/workflows/test-rke2.yaml
-    secrets: inherit # Inherits all secrets from the parent workflow.
+#  # Trigger RKE2 IaC
+#   run-iac-test-rke2:
+#     needs: check-paths
+#     name: Schedule RKE2
+#     if: ${{contains(fromJSON(needs.check-paths.outputs.distros), 'rke2')}} || contains(github.event.pull_request.labels.*.name, 'test-rke2') || contains(github.event.pull_request.labels.*.name, 'test-all-iac')
+#     uses: ./.github/workflows/test-rke2.yaml
+#     secrets: inherit # Inherits all secrets from the parent workflow.
 
 
 # evaluate-package-compliance:
