@@ -15,3 +15,21 @@ data:
 type: kubernetes.io/tls
 ---
 {{ end }}
+
+
+{{ range $name,$server := .Values.tls.servers }}
+{{ if and $server.cert (not $server.credentialName) }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{$name}}-tls
+  # need to get this value outside the range
+  namespace: {{ .Release.Namespace }}
+data:
+  tls.crt: {{ $server.tls.cert }}
+  tls.key: {{ $server.tls.key }}
+  cacert: {{ $server.tls.cacert }}
+type: kubernetes.io/tls
+---
+{{ end }}
+{{ end }}
