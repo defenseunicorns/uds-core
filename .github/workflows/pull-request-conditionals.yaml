@@ -133,31 +133,47 @@ jobs:
     needs: check-paths
     name: Schedule IaC Tests
     runs-on: ubuntu-latest
-    if: ${{ needs.check-paths.outputs.distros != '[]' || contains(github.event.pull_request.labels.*.name, 'test-all-iac') }}
+    if: ${{ needs.check-paths.outputs.distros != '[]' || contains(github.event.pull_request.labels.*.name, 'test-all-iac') || contains(github.event.pull_request.labels.*.name, 'test-aks') || contains(github.event.pull_request.labels.*.name, 'test-rke2') || contains(github.event.pull_request.labels.*.name, 'test-eks') }}
     steps:
       - name: Trigger IaC Workflows
         uses: actions/github-script@v7
         env:
-          DISTROS: ${{ needs.check-paths.outputs.distros }}
-          ALL_DISTROS: ${{ contains(github.event.pull_request.labels.*.name, 'test-all-iac') }}
+          DISTROS_MODIFIED: ${{ needs.check-paths.outputs.distros }}
+          HAS_ALL_DISTROS_LABEL: ${{ contains(github.event.pull_request.labels.*.name, 'test-all-iac') }}
+          HAS_AKS_LABEL: ${{ contains(github.event.pull_request.labels.*.name, 'test-aks') }}
+          HAS_RKE2_LABEL: ${{ contains(github.event.pull_request.labels.*.name, 'test-rke2') }}
+          HAS_EKS_LABEL: ${{ contains(github.event.pull_request.labels.*.name, 'test-eks') }}
         with:
           script: |
             const owner = context.repo.owner;
             const repo = context.repo.repo;
             const ref = context.ref;
             const hasTestAllIacLabel = process.env.ALL_DISTROS === 'true';
+            const hasTestAksLabel = process.env.HAS_AKS_LABEL === 'true';
+            const hasTestRke2Label = process.env.HAS_RKE2_LABEL === 'true';
+            const hasTestEksLabel = process.env.HAS_EKS_LABEL === 'true';
             let distros;
 
             console.log(hasTestAllIacLabel);
-            if (hasTestAllIacLabel) {
-              console.log('The PR has the "test-all-iac" label. Triggering tests for all distros.');
-              distros = ["aks", "rke2", "eks"];
+            if (hasTestAllIacLabel || (hasAksLabel && hasRke2Label && hasEksLabel)) {
+              console.log('Triggering tests for all distros.');
+              distros = new Set(["aks", "rke2", "eks"]);
             } else {
-              distros = JSON.parse(process.env.DISTROS);
-              console.log(JSON.parse(process.env.DISTROS));
+              if (process.env.HAS_AKS_LABEL === 'true') {
+                distros.add("aks");
+              }
+              if (process.env.HAS_RKE2_LABEL === 'true') {
+                distros.add("rke2");
+              }
+               if (process.env.HAS_EKS_LABEL === 'true') {
+                distros.add("eks");
+              }
+              const defaultDistros = JSON.parse(process.env.DISTROS);
+              defaultDistros.forEach(distro => distros.add(distro));
               console.log(distros)
             }
 
+            distros = Array.from(distros);
             for (const distro of distros) {
               let workflow_id;
               if (distro === 'aks') {
