@@ -105,7 +105,7 @@ jobs:
       - name: Merge Path Filter Outputs for Packages
         id: combine-path-filters
         run: |
-          allPackagesChanges="${{ formJson(steps.path-filter-all.outputs.changes) }}"
+          allPackagesChanges="${{ fromJson(steps.path-filter-all.outputs.changes) }}"
           packageChanges="${{ fromJson(steps.path-filter.outputs.changes) }}"
           COMBINED=$(jq -n --argjson arr1 "$allPackagesChanges" --argjson arr2 "$packageChanges" '$arr1 + $arr2')
           echo "combined=$COMBINED" >> $GITHUB_OUTPUT
