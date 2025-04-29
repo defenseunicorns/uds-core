@@ -6,13 +6,13 @@ terraform {
   }
   required_providers {
     aws = {
-      version = "~> 5.95.0"
+      version = "~> 5.96.0"
     }
     random = {
       version = "~> 3.7.0"
     }
     tls = {
-      version = "~> 4.0.0"
+      version = "~> 4.1.0"
     }
   }
   required_version = ">= 1.8.0"

@@ -8,6 +8,8 @@ metadata:
   namespace: {{ .Release.Namespace }}
 spec:
   network:
+    serviceMesh:
+      mode: ambient
     allow:
       # Egress for S3 connections
       - direction: Egress
