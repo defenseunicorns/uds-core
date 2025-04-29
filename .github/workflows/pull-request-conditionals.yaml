@@ -152,7 +152,7 @@ jobs:
             const hasTestAksLabel = process.env.HAS_AKS_LABEL === 'true';
             const hasTestRke2Label = process.env.HAS_RKE2_LABEL === 'true';
             const hasTestEksLabel = process.env.HAS_EKS_LABEL === 'true';
-            let distros;
+            let distros = new Set();
 
             console.log(hasTestAllIacLabel);
             if (hasTestAllIacLabel || (hasTestAksLabel && hasTestRke2Label && hasTestEksLabel)) {
@@ -171,14 +171,13 @@ jobs:
                 distros.add("eks");
                 console.log("Triggering EKS test based on label.")
               }
-              const defaultDistros = JSON.parse(process.env.DISTROS);
+              const defaultDistros = JSON.parse(process.env.DISTROS) ?? [];
               defaultDistros.forEach(distro => {
                 console.log(`Triggering ${distro.toUpperCase()} test based on modified files.`);
                 distros.add(distro);
               });
             }
 
-            distros = Array.from(distros);
             for (const distro of distros) {
               let workflow_id;
               if (distro === 'aks') {
