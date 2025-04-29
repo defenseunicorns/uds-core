@@ -132,57 +132,59 @@ jobs:
   run-iac-test:
     needs: check-paths
     name: Schedule IaC Tests
+    runs-on: ubuntu-latest
     if: ${{ needs.check-paths.outputs.distros || contains(github.event.pull_request.labels.*.name, 'test-all-iac') }}
     steps:
       - name: Trigger IaC Workflows
         uses: actions/github-script@v7
-        script: |
-          const owner = context.repo.owner;
-          const repo = context.repo.repo;
-          const ref = context.ref;
-          const prLabels = github.event.pull_request.labels.map(label => label.name);
-          const hasTestAllIacLabel = prLabels.some(label => label === 'test-all-iac');
-
-          if (hasTestAllIacLabel) {
-            console.log('The PR has the "test-all-iac" label. Triggering tests for all distros.');
-            const distros = ["aks", "rke2", "eks"];
-          } else {
-            const distros = JSON.parse(process.env.DISTROS);
-          }
-
-          for (const distro of distros) {
-            let workflow_id;
-            if (distro === 'aks') {
-              workflow_id = './test-aks.yaml';
-            } else if (distro === 'rke2') {
-              workflow_id = './test-rke2.yaml';
-            } else if (distro === 'eks') {
-              workflow_id = './test-eks.yaml';
-            } else {
-                console.warn(`No workflow defined for distro: ${distro}`);
-                continue;
-            }
-            try {
-              console.log(`Dispatching workflow ${workflow_id} for distro ${distro}`);
-              await github.rest.actions.createWorkflowDispatch({
-                owner,
-                repo,
-                workflow_id,
-                ref,
-              });
-              console.log(`Successfully dispatched workflow ${workflow_id} for distro ${distro}`);
-            } catch (error) {
-              console.error(`Failed to dispatch workflow ${workflow_id} for distro ${distro}:`, error);
-              if (error.message.includes('rate limit exceeded')) {
-                console.warn('Rate limit exceeded. Consider adding a delay before retrying.');
-              } else {
-                console.error('An unexpected error occurred during workflow dispatch.');
-              }
-              core.setFailed(`Workflow dispatch failed for ${distro}: ${error.message}`);
-            }
-          }
         env:
           DISTROS: ${{ needs.check-paths.outputs.distros }}
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const ref = context.ref;
+            const prLabels = github.event.pull_request.labels.map(label => label.name);
+            const hasTestAllIacLabel = prLabels.some(label => label === 'test-all-iac');
+
+            if (hasTestAllIacLabel) {
+              console.log('The PR has the "test-all-iac" label. Triggering tests for all distros.');
+              const distros = ["aks", "rke2", "eks"];
+            } else {
+              const distros = JSON.parse(process.env.DISTROS);
+            }
+
+            for (const distro of distros) {
+              let workflow_id;
+              if (distro === 'aks') {
+                workflow_id = './test-aks.yaml';
+              } else if (distro === 'rke2') {
+                workflow_id = './test-rke2.yaml';
+              } else if (distro === 'eks') {
+                workflow_id = './test-eks.yaml';
+              } else {
+                  console.warn(`No workflow defined for distro: ${distro}`);
+                  continue;
+              }
+              try {
+                console.log(`Dispatching workflow ${workflow_id} for distro ${distro}`);
+                await github.rest.actions.createWorkflowDispatch({
+                  owner,
+                  repo,
+                  workflow_id,
+                  ref,
+                });
+                console.log(`Successfully dispatched workflow ${workflow_id} for distro ${distro}`);
+              } catch (error) {
+                console.error(`Failed to dispatch workflow ${workflow_id} for distro ${distro}:`, error);
+                if (error.message.includes('rate limit exceeded')) {
+                  console.warn('Rate limit exceeded. Consider adding a delay before retrying.');
+                } else {
+                  console.error('An unexpected error occurred during workflow dispatch.');
+                }
+                core.setFailed(`Workflow dispatch failed for ${distro}: ${error.message}`);
+              }
+            }
 
  # Trigger EKS IaC
 #   run-iac-test-eks:
