@@ -133,7 +133,7 @@ jobs:
     needs: check-paths
     name: Schedule IaC Tests
     runs-on: ubuntu-latest
-    if: ${{ needs.check-paths.outputs.distros || contains(github.event.pull_request.labels.*.name, 'test-all-iac') }}
+    if: ${{ needs.check-paths.outputs.distros != '[]' || contains(github.event.pull_request.labels.*.name, 'test-all-iac') }}
     steps:
       - name: Trigger IaC Workflows
         uses: actions/github-script@v7
