@@ -2,13 +2,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 all:
-  - "**"
   - "!.github/workflows/test-aks.yaml"
   - "!.github/workflows/test-eks.yaml"
   - "!.github/workflows/test-rke2.yaml"
   - "!.github/bundles/aks"
   - "!.github/bundles/eks"
   - "!.github/bundles/rke2"
+  - "**"
 
 base:
   - "packages/base/**"
