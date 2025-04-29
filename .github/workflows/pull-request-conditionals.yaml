@@ -145,8 +145,9 @@ jobs:
             const owner = context.repo.owner;
             const repo = context.repo.repo;
             const ref = context.ref;
-            const hasTestAllIacLabel = process.env.ALL_DISTROS
+            const hasTestAllIacLabel = process.env.ALL_DISTROS;
 
+            console.log(hasTestAllIacLabel);
             if (hasTestAllIacLabel) {
               console.log('The PR has the "test-all-iac" label. Triggering tests for all distros.');
               const distros = ["aks", "rke2", "eks"];
