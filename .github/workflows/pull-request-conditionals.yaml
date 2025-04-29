@@ -74,7 +74,7 @@ jobs:
 
       # Add a custom filter for all packages that excludes any changes to IaC testing related config
       # Noting that adding `predicate-quantifier` produces a false warning message about an unexpected input, despite still being evaluated by the action
-      - name: Check src paths
+      - name: Check src paths - all
         id: path-filter-all
         uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3
         with:
@@ -88,7 +88,7 @@ jobs:
               - "!.github/bundles/**"
 
       # Uses a custom action to filter paths for source packages.
-      - name: Check src paths
+      - name: Check src paths - packages
         id: path-filter
         uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3
         with:
@@ -203,11 +203,11 @@ jobs:
             for (const distro of distros) {
               let workflow_id;
               if (distro === 'aks') {
-                workflow_id = './test-aks.yaml';
+                workflow_id = 'test-aks.yaml';
               } else if (distro === 'rke2') {
-                workflow_id = './test-rke2.yaml';
+                workflow_id = 'test-rke2.yaml';
               } else if (distro === 'eks') {
-                workflow_id = './test-eks.yaml';
+                workflow_id = 'test-eks.yaml';
               } else {
                   console.warn(`No workflow defined for distro: ${distro}`);
                   continue;
