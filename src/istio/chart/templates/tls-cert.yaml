@@ -18,7 +18,7 @@ type: kubernetes.io/tls
 
 
 {{ range $name,$server := .Values.tls.servers }}
-{{ if and $server.cert (not $server.credentialName) }}
+{{ if and $server.tls.cert (not $server.credentialName) }}
 apiVersion: v1
 kind: Secret
 metadata:
