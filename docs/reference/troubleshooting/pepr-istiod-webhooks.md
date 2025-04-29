@@ -70,7 +70,7 @@ Save and exit.
 Manually delete the stuck pods so they restart:
 
 ```bash
-kubectl delete pods -n pepr-system -l app.kubernetes.io/name=pepr
+kubectl delete pods -n pepr-system -l app=pepr-uds-core
 kubectl delete pods -n istio-system -l app=istiod
 ```
 This forces Kubernetes to recreate them.
