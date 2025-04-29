@@ -6,7 +6,7 @@ name: AKS Test
 on:
   schedule:
     - cron: "0 0 * * 0" # Every Sunday Midnight (UTC) / Saturday 5pm MT
-  workflow_call:
+  workflow_dispatch:
     inputs: {}
 
 permissions:
