@@ -153,6 +153,8 @@ jobs:
               const distros = ["aks", "rke2", "eks"];
             } else {
               const distros = JSON.parse(process.env.DISTROS);
+              console.log(JSON.parse(process.env.DISTROS));
+              console.log(distros)
             }
 
             for (const distro of distros) {
