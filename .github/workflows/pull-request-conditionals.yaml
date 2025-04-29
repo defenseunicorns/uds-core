@@ -170,7 +170,7 @@ jobs:
           script: |
             const owner = context.repo.owner;
             const repo = context.repo.repo;
-            const ref = context.ref;
+            const ref = ${{GITHUB_HEAD_REF}}
             const hasTestAllIacLabel = process.env.HAS_ALL_DISTROS_LABEL === 'true';
             const hasTestAksLabel = process.env.HAS_AKS_LABEL === 'true';
             const hasTestRke2Label = process.env.HAS_RKE2_LABEL === 'true';
