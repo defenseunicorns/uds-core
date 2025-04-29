@@ -60,6 +60,7 @@ jobs:
     name: Select Jobs
     outputs:
       packages: ${{ steps.path-filter.outputs.changes }}
+      all: ${{ steps.path-filter-all.outputs.changes }}
       distros: ${{ steps.path-filter-iac.outputs.changes }}
 
     steps:
@@ -71,6 +72,20 @@ jobs:
         uses: ./.github/actions/renovate-readiness
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      # Add a custom filter for all packages that excludes any changes to IaC testing related config
+      - name: Check src paths
+        id: path-filter-all
+        uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3
+        with:
+          filters: |
+            all:
+              - "**"
+              - "!.github/workflows/test-aks.yaml"
+              - "!.github/workflows/test-eks.yaml"
+              - "!.github/workflows/test-rke2.yaml"
+              - "!.github/bundles/**"
+            predicate-quantifier: 'every'
 
       # Uses a custom action to filter paths for source packages.
       - name: Check src paths
@@ -86,6 +101,15 @@ jobs:
           filters: |
             aks:
               - "tasks/iac.yaml"
+
+      - name: Merge Path Filter Outputs for Packages
+        id: combine-path-filters
+        run: |
+          allPackagesChanges="${{ steps.path-filter-all.outputs.changes }}"
+          packageChanges="${{ steps.path-filter.outputs.changes }}"
+          COMBINED=$(jq -n --arg arr1 "$allPackagesChanges" --arg arr2 "$packageChanges" '$arr1 + $arr2')
+          echo "combined=$COMBINED" >> $GITHUB_OUTPUT
+
   # - ".github/bundles/aks/**"
   # - ".github/test-infra/azure/aks/**"
   # - ".github/workflows/test-aks.yaml"
@@ -107,7 +131,7 @@ jobs:
     name: Schedule
     strategy:
       matrix:
-        package: ${{ fromJSON(needs.check-paths.outputs.packages) }}
+        package: ${{ fromJSON(needs.combine-path-filters-paths.outputs.combined) }}
         flavor: [upstream, registry1, unicorn]
         test_type: [install]
         # Upgrade tests are included for all flavors, but ONLY for `all` package tests
