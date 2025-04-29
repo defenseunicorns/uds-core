@@ -148,7 +148,7 @@ jobs:
             const owner = context.repo.owner;
             const repo = context.repo.repo;
             const ref = context.ref;
-            const hasTestAllIacLabel = process.env.ALL_DISTROS === 'true';
+            const hasTestAllIacLabel = process.env.HAS_ALL_DISTROS_LABEL === 'true';
             const hasTestAksLabel = process.env.HAS_AKS_LABEL === 'true';
             const hasTestRke2Label = process.env.HAS_RKE2_LABEL === 'true';
             const hasTestEksLabel = process.env.HAS_EKS_LABEL === 'true';
