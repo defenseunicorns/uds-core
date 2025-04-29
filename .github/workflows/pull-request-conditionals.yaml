@@ -131,11 +131,11 @@ jobs:
   # Trigger IaC
   run-iac-test:
     needs: check-paths
-    name: Schedule IaC Tests
+    name: Schedule IaC
     runs-on: ubuntu-latest
     if: ${{ needs.check-paths.outputs.distros != '[]' || contains(github.event.pull_request.labels.*.name, 'test-all-iac') || contains(github.event.pull_request.labels.*.name, 'test-aks') || contains(github.event.pull_request.labels.*.name, 'test-rke2') || contains(github.event.pull_request.labels.*.name, 'test-eks') }}
     steps:
-      - name: Trigger IaC Workflows
+      - name: Dispatch IaC Workflows
         uses: actions/github-script@v7
         env:
           DISTROS_MODIFIED: ${{ needs.check-paths.outputs.distros }}
@@ -154,7 +154,6 @@ jobs:
             const hasTestEksLabel = process.env.HAS_EKS_LABEL === 'true';
             let distros = new Set();
 
-            console.log(hasTestAllIacLabel);
             if (hasTestAllIacLabel || (hasTestAksLabel && hasTestRke2Label && hasTestEksLabel)) {
               console.log('Triggering tests for all distros.');
               distros = new Set(["aks", "rke2", "eks"]);
