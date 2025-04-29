@@ -86,9 +86,9 @@ jobs:
           filters: |
             aks:
               - "tasks/iac.yaml"
-              - ".github/bundles/aks/**"
-              - ".github/test-infra/azure/aks/**"
-              - ".github/workflows/test-aks.yaml"
+  # - ".github/bundles/aks/**"
+  # - ".github/test-infra/azure/aks/**"
+  # - ".github/workflows/test-aks.yaml"
   # disabling temporarily for testing
   # rke2:
   #   - "tasks/iac.yaml"
