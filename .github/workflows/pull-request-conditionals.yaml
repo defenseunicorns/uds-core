@@ -133,7 +133,7 @@ jobs:
     needs: check-paths
     secrets: inherit # Inherits all secrets from the parent workflow.
     name: Schedule IaC Tests
-    if: ${{ needs.check-paths.outputs.distros || contains(github.event.pull_request.labels.*.name, 'test-aks') || contains(github.event.pull_request.labels.*.name, 'test-all-iac')
+    if: ${{ needs.check-paths.outputs.distros || contains(github.event.pull_request.labels.*.name, 'test-aks') || contains(github.event.pull_request.labels.*.name, 'test-all-iac') }}
     steps:
       - uses: actions/github-script@v7
         script: |
