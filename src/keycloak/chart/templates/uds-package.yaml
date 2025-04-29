@@ -31,6 +31,16 @@ spec:
         remoteServiceAccount: pepr-uds-core
         port: 8080
 
+      - description: "UDS Operator to Waypoint"
+        direction: Ingress
+        selector:
+          gateway.networking.k8s.io/gateway-name: waypoint
+        remoteNamespace: pepr-system
+        remoteSelector:
+          app: pepr-uds-core-watcher
+        remoteServiceAccount: pepr-uds-core
+        port: 8080
+
       - description: "Keycloak backchannel access"
         direction: Ingress
         selector:
@@ -38,6 +48,30 @@ spec:
         # Allow access from anything in cluster using an empty namespace selector
         remoteNamespace: "*"
         port: 8080
+
+      - description: "Keycloak backchannel access to Waypoint"
+        direction: Ingress
+        selector:
+          gateway.networking.k8s.io/gateway-name: waypoint
+        # Allow access from anything in cluster using an empty namespace selector
+        remoteNamespace: "*"
+        port: 8080
+
+      - description: "Keycloak ambient backchannel access"
+        direction: Ingress
+        selector:
+          app.kubernetes.io/name: keycloak
+        # Allow access from anything in cluster using an empty namespace selector
+        remoteNamespace: "*"
+        port: 15008
+
+      - description: "Keycloak ambient backchannel access to Waypoint"
+        direction: Ingress
+        selector:
+          gateway.networking.k8s.io/gateway-name: waypoint
+        # Allow access from anything in cluster using an empty namespace selector
+        remoteNamespace: "*"
+        port: 15008
 
       # Keycloak OCSP to check certs cannot guarantee a static IP
       - description: "OCSP Lookup"
@@ -49,11 +83,27 @@ spec:
           - 80
         remoteGenerated: Anywhere
 
+      - description: "OCSP Lookup from Waypoint"
+        direction: Egress
+        selector:
+          gateway.networking.k8s.io/gateway-name: waypoint
+        ports:
+          - 443
+          - 80
+        remoteGenerated: Anywhere
+
       {{- if .Values.smtp.enabled }}
       - description: "SMTP access"
         direction: Egress
         selector:
           app.kubernetes.io/name: keycloak
+        port: {{ .Values.smtp.port }}
+        remoteGenerated: Anywhere
+
+      - description: "SMTP access from Waypoint"
+        direction: Egress
+        selector:
+          gateway.networking.k8s.io/gateway-name: waypoint
         port: {{ .Values.smtp.port }}
         remoteGenerated: Anywhere
       {{- end }}
@@ -73,7 +123,44 @@ spec:
         {{- else }}
         remoteGenerated: Anywhere
         {{- end }}
+
+      - description: "PostgreSQL Database access from Waypoint"
+        direction: Egress
+        selector:
+          gateway.networking.k8s.io/gateway-name: waypoint
+        port: {{ .Values.postgresql.port }}
+        {{- if .Values.postgresql.internal.enabled }}
+        remoteSelector:
+          {{- .Values.postgresql.internal.remoteSelector | toYaml | nindent 10 }}
+        remoteNamespace: {{ .Values.postgresql.internal.remoteNamespace }}
+        {{- else if .Values.postgresql.egressCidr }}
+        remoteCidr: {{ .Values.postgresql.egressCidr }}
+        {{- else }}
+        remoteGenerated: Anywhere
+        {{- end }}
       {{- end }}
+
+      - description: "Keycloak to Waypoint"
+        direction: Ingress
+        remoteGenerated: IntraNamespace
+        ports:
+          - 15008
+          - 8080
+      - description: "Waypoint to Keycloak"
+        direction: Egress
+        remoteGenerated: IntraNamespace
+        ports:
+          - 15008
+          - 8080
+
+      - description: "Waypoint to Istio Control Plane"
+        direction: Egress
+        selector:
+          gateway.networking.k8s.io/gateway-name: waypoint
+        remoteNamespace: istio-system
+        remoteSelector:
+          app: istiod
+        port: 15012
 
       {{- if .Values.autoscaling.enabled }}
       # HA for keycloak
