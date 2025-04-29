@@ -59,7 +59,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Select Jobs
     outputs:
-      combined: ${{ steps.combine-path-filters.outputs.combined }}
+      combined: ${{ fromJson(steps.combine-path-filters.outputs.combined) }}
       distros: ${{ steps.path-filter-iac.outputs.changes }}
 
     steps:
@@ -132,7 +132,7 @@ jobs:
     name: Schedule
     strategy:
       matrix:
-        package: ${{ fromJSON(needs.combine-path-filters-paths.outputs.combined) }}
+        package: ${{ needs.combine-path-filters-paths.outputs.combined }}
         flavor: [upstream, registry1, unicorn]
         test_type: [install]
         # Upgrade tests are included for all flavors, but ONLY for `all` package tests
