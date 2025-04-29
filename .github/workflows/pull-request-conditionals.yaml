@@ -108,7 +108,7 @@ jobs:
         run: |
           allPackagesChanges="${{ steps.path-filter-all.outputs.changes }}"
           packageChanges="${{ steps.path-filter.outputs.changes }}"
-          COMBINED=$(jq -n --arg arr1 "$allPackagesChanges" --arg arr2 "$packageChanges" '$arr1 + $arr2')
+          COMBINED=$(jq -n --argjson arr1 "$allPackagesChanges" --argjson arr2 "$packageChanges" '$arr1 + $arr2')
           echo "combined=$COMBINED" >> $GITHUB_OUTPUT
           echo $COMBINED
 
