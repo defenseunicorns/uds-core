@@ -95,6 +95,11 @@ tasks:
     actions:
       - task: test:uds-core
 
+  - name: test-uds-core-multi-node
+    description: "Build and test UDS Core on a multi-node cluster"
+    actions:
+      - task: test:uds-core-multi-node
+
   - name: test-uds-core-ha
     description: "Build and test UDS Core"
     actions:

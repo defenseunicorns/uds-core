@@ -130,6 +130,16 @@ tasks:
       - task: deploy:k3d-standard-bundle
       - task: validate-packages
 
+  - name: uds-core-multi-node
+    description: "Build and test UDS Core on a multi-node K3d cluster"
+    actions:
+      - task: create:standard-package
+        with:
+          create_options: "--skip-sbom"
+      - task: create:k3d-standard-bundle
+      - task: deploy:k3d-standard-bundle-multi-node
+      - task: validate-packages
+
   - name: uds-core-e2e
     description: "Build and test UDS Core e2e"
     actions:

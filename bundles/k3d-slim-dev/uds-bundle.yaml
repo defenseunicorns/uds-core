@@ -30,6 +30,9 @@ packages:
             - name: policies
               description: "Minio policies"
               path: policies
+            - name: K3D_EXTRA_ARGS
+              description: "Extra arguments for k3d cluster creation"
+              path: k3d_extra_args
 
   - name: init
     repository: ghcr.io/zarf-dev/packages/init

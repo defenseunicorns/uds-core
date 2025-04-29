@@ -19,6 +19,11 @@ tasks:
       - description: "Deploy the UDS Core Standard Bundle"
         cmd: uds deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --set INSECURE_ADMIN_PASSWORD_GENERATION=true --confirm --no-progress
 
+  - name: k3d-standard-bundle-multi-node
+    actions:
+      - description: "Deploy the UDS Core Standard Bundle"
+        cmd: uds deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --set INSECURE_ADMIN_PASSWORD_GENERATION=true --set uds-k3d-dev.k3d_extra_args="--servers 3 --agents 2" --confirm --no-progress
+
   - name: k3d-standard-bundle-ha
     actions:
       - description: "Deploy the UDS Core Standard Bundle"

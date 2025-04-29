@@ -16,3 +16,9 @@ tasks:
       - description: "Initialize the cluster with Zarf"
         # renovate: datasource=github-tags depName=zarf-dev/zarf versioning=semver
         cmd: "uds zarf package deploy oci://ghcr.io/zarf-dev/packages/init:v0.53.0 --confirm --no-progress"
+
+  - name: create-k3d-cluster-multi-node
+    actions:
+      - description: "Create the multi-node K3d cluster"
+        # renovate: datasource=github-tags depName=defenseunicorns/uds-k3d versioning=semver
+        cmd: "uds zarf package deploy oci://defenseunicorns/uds-k3d:0.12.3 --confirm --no-progress --set k3d_extra_args='--servers 3 --agents 2'"
