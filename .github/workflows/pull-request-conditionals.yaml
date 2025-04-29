@@ -59,7 +59,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Select Jobs
     outputs:
-      combined: ${{ fromJson(steps.combine-path-filters.outputs.combined) }}
+      combined: ${{ steps.combine-path-filters.outputs.combined }}
       distros: ${{ steps.path-filter-iac.outputs.changes }}
 
     steps:
@@ -108,7 +108,7 @@ jobs:
           allPackageChanges='${{ steps.path-filter-all.outputs.changes }}'
           packageChanges='${{ steps.path-filter.outputs.changes }}'
           COMBINED=$(echo $allPackageChanges $packageChanges | jq -s 'add')
-          echo "combined=$COMBINED" >> $GITHUB_OUTPUT
+          echo combined=$COMBINED >> $GITHUB_OUTPUT
           echo $COMBINED
 
   # - ".github/bundles/aks/**"
