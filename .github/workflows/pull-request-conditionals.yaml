@@ -32,6 +32,7 @@ permissions:
   contents: read # Allows reading the content of the repository.
   pull-requests: write # Allows writing pull request metadata.
   packages: read # Allows reading the published GHCR packages
+  actions: write # Allows for triggering `workflow_dispatch` events
 
 # Default settings for all run commands in the workflow jobs.
 defaults:
@@ -88,16 +89,17 @@ jobs:
               - ".github/bundles/aks/**"
               - ".github/test-infra/azure/aks/**"
               - ".github/workflows/test-aks.yaml"
-            rke2:
-              - "tasks/iac.yaml"
-              - ".github/bundles/rke2/**"
-              - ".github/test-infra/aws/rke2/**"
-              - ".github/workflows/test-rke2.yaml"
-            eks:
-              - "tasks/iac.yaml"
-              - ".github/bundles/eks/**"
-              - ".github/test-infra/aws/eks/**"
-              - ".github/workflows/test-eks.yaml"
+  # disabling temporarily for testing
+  # rke2:
+  #   - "tasks/iac.yaml"
+  #   - ".github/bundles/rke2/**"
+  #   - ".github/test-infra/aws/rke2/**"
+  #   - ".github/workflows/test-rke2.yaml"
+  # eks:
+  #   - "tasks/iac.yaml"
+  #   - ".github/bundles/eks/**"
+  #   - ".github/test-infra/aws/eks/**"
+  #   - ".github/workflows/test-eks.yaml"
 
   # This job triggers a separate workflow for each changed source package, if any.
   run-package-test:
@@ -130,23 +132,46 @@ jobs:
   run-iac-test-aks:
     needs: check-paths
     name: Schedule AKS
-    if: ${{contains(fromJSON(needs.check-paths.outputs.distros), 'aks')}} || contains(github.event.pull_request.labels.*.name, 'test-aks')
-    uses: ./.github/workflows/test-aks.yaml
+    if: ${{contains(fromJSON(needs.check-paths.outputs.distros), 'aks')}} || contains(github.event.pull_request.labels.*.name, 'test-aks') || contains(github.event.pull_request.labels.*.name, 'test-all-iac')
+    uses: actions/github-script@v7
     secrets: inherit # Inherits all secrets from the parent workflow.
+    script: |
+      //documentation: https://octokit.github.io/rest.js/v21/#actions-create-workflow-dispatch
+      const owner = context.repo.owner
+      const repo = context.repo.repo
+      const workflow_id = 'test-aks.yaml'
+      const ref = context.ref
+      try {
+        await github.rest.actions.createWorkflowDispatch({
+          owner,
+          repo,
+          workflow_id,
+          ref,
+        });
+      } catch (error) {
+        console.error('Failed to dispatch workflow:', error);
+        if (error.message.includes('rate limit exceeded')) {
+          console.warn('Rate limit exceeded.  Consider adding a delay before retrying.');
+          // Implement retry logic with a delay if appropriate.
+        } else {
+          console.error('An unexpected error occurred during workflow dispatch.');
+        }
+        core.setFailed(`Workflow dispatch failed: ${error.message}`);
+      }
 
  # Trigger EKS IaC
   run-iac-test-eks:
     needs: check-paths
     name: Schedule EKS
-    if: ${{contains(fromJSON(needs.check-paths.outputs.distros), 'eks')}} || contains(github.event.pull_request.labels.*.name, 'test-eks')
-    uses: ./.github/workflows/test-eks.yaml
+    if: ${{contains(fromJSON(needs.check-paths.outputs.distros), 'eks')}} || contains(github.event.pull_request.labels.*.name, 'test-eks') || contains(github.event.pull_request.labels.*.name, 'test-all-iac')
+    #uses: ./.github/workflows/test-eks.yaml
     secrets: inherit # Inherits all secrets from the parent workflow.
 
  # Trigger RKE2 IaC
   run-iac-test-rke2:
     needs: check-paths
     name: Schedule RKE2
-    if: ${{contains(fromJSON(needs.check-paths.outputs.distros), 'rke2')}} || contains(github.event.pull_request.labels.*.name, 'test-rke2')
+    if: ${{contains(fromJSON(needs.check-paths.outputs.distros), 'rke2')}} || contains(github.event.pull_request.labels.*.name, 'test-rke2') || contains(github.event.pull_request.labels.*.name, 'test-all-iac')
     uses: ./.github/workflows/test-rke2.yaml
     secrets: inherit # Inherits all secrets from the parent workflow.
 
