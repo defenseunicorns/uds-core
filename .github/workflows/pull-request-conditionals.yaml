@@ -128,14 +128,15 @@ jobs:
       test_type: ${{ matrix.test_type }}
     secrets: inherit # Inherits all secrets from the parent workflow.
 
-  # Trigger AKS IaC
+  # Trigger IaC
   run-iac-test:
     needs: check-paths
-    secrets: inherit # Inherits all secrets from the parent workflow.
     name: Schedule IaC Tests
+    secrets: inherit # Inherits all secrets from the parent workflow.
     if: ${{ needs.check-paths.outputs.distros || contains(github.event.pull_request.labels.*.name, 'test-all-iac') }}
     steps:
-      - uses: actions/github-script@v7
+      - name: Trigger IaC Workflows
+        uses: actions/github-script@v7
         script: |
           const owner = context.repo.owner;
           const repo = context.repo.repo;
