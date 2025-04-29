@@ -14,10 +14,10 @@ watcher:
           podAffinityTerm:
             labelSelector:
               matchExpressions:
-                - key: app.kubernetes.io/name
+                - key: app
                   operator: In
                   values:
-                    - pepr
+                    - pepr-uds-core
             topologyKey: kubernetes.io/hostname
 
 admission:
@@ -33,8 +33,8 @@ admission:
           podAffinityTerm:
             labelSelector:
               matchExpressions:
-                - key: app.kubernetes.io/name
+                - key: app
                   operator: In
                   values:
-                    - pepr
+                    - pepr-uds-core
             topologyKey: kubernetes.io/hostname

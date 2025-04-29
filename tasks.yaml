@@ -96,9 +96,11 @@ tasks:
       - task: test:uds-core
 
   - name: test-uds-core-multi-node
-    description: "Build and test UDS Core on a multi-node cluster"
+    description: "Deploys UDS Core on a multi-node cluster (based on K3D_EXTRA_ARGS variable)"
     actions:
-      - task: test:uds-core-multi-node
+      - task: test:uds-core
+        with:
+          K3D_EXTRA_ARGS: "--servers 3 --agents 2"
 
   - name: test-uds-core-ha
     description: "Build and test UDS Core"

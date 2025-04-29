@@ -13,7 +13,7 @@ Tasks to assist with multi-node deployments:
 Task:
 
 ```bash
-uds run -f tasks/setup.yaml create-k3d-cluster-multi-node
+uds run -f tasks/setup.yaml create-k3d-cluster --with K3D_EXTRA_ARGS="--servers 3 --agents 2"
 ```
 This creates a multi-node k3d cluster with:
 - 3 servers
@@ -24,14 +24,14 @@ No packages are deployed — you will have a blank multi-node Kubernetes cluster
 ### 2. Deploy UDS Core on a Multi-Node Cluster
 
 ```bash
-uds run -f tasks/test.yaml test-uds-core-multi-node
+uds run test-uds-core-multi-node
 ```
 This creates a multi-node cluster AND automatically deploys the standard UDS Core bundle on top of it.
 
 ## Example Usage
 ### A. Create a Multi-Node Cluster Only
 ```bash
-uds run -f tasks/setup.yaml create-k3d-cluster-multi-node
+uds run -f tasks/setup.yaml create-k3d-cluster --with K3D_EXTRA_ARGS="--servers 3 --agents 2"
 ```
 - After the cluster is created, you can manually deploy additional packages using uds or zarf as needed.
 
@@ -41,7 +41,7 @@ uds zarf package deploy oci://defenseunicorns/uds-core:<version> --confirm
 
 ### B. Full Deployment: Cluster + UDS Core
 ```bash
-uds run -f tasks/test.yaml test-uds-core-multi-node
+uds run test-uds-core-multi-node
 ```
 - This will fully prepare a multi-node cluster and install UDS Core in one step.
 
