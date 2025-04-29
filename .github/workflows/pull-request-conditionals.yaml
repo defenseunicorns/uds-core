@@ -171,7 +171,7 @@ jobs:
                 distros.add("eks");
                 console.log("Triggering EKS test based on label.")
               }
-              const defaultDistros = JSON.parse(process.env.DISTROS) ?? [];
+              const defaultDistros = JSON.parse(process.env.DISTROS_MODIFIED) ?? [];
               defaultDistros.forEach(distro => {
                 console.log(`Triggering ${distro.toUpperCase()} test based on modified files.`);
                 distros.add(distro);
