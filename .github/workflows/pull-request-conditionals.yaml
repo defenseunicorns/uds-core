@@ -145,7 +145,7 @@ jobs:
             const owner = context.repo.owner;
             const repo = context.repo.repo;
             const ref = context.ref;
-            const hasTestAllIacLabel = process.env.ALL_DISTROS;
+            const hasTestAllIacLabel = process.env.ALL_DISTROS === 'true';
 
             console.log(hasTestAllIacLabel);
             if (hasTestAllIacLabel) {
