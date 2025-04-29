@@ -132,7 +132,7 @@ jobs:
     name: Schedule
     strategy:
       matrix:
-        package: ${{ needs.combine-path-filters-paths.outputs.combined }}
+        package: ${{ fromJson(needs.combine-path-filters-paths.outputs.combined) }}
         flavor: [upstream, registry1, unicorn]
         test_type: [install]
         # Upgrade tests are included for all flavors, but ONLY for `all` package tests
