@@ -6,8 +6,12 @@ name: RKE2 Test
 on:
   schedule:
     - cron: "0 0 * * 0" # Every Sunday Midnight (UTC) / Saturday 5pm MT
-  workflow_call:
-    inputs: {}
+  workflow_dispatch:
+    inputs:
+      triggered_by:
+        description: 'The workflow run that triggered this workflow'
+        required: true
+        type: string
 
 permissions:
   id-token: write
@@ -37,6 +41,8 @@ jobs:
       UDS_STATE_DYNAMODB_TABLE_NAME: uds-tf-state-lock
       UDS_IMAGES_AWS_ACCOUNT_ID: ${{ secrets.GOV_UDS_IMAGES_AWS_ACCOUNT_ID }}
     steps:
+      - name: Output Caller
+        run: "echo Called by: ${{ inputs.triggered_by }}"
       - name: Set ENV
         run: |
           echo "UDS_CLUSTER_NAME=uds-ci-${{ matrix.flavor }}-${SHA:0:7}" >> $GITHUB_ENV
