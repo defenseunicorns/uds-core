@@ -275,7 +275,7 @@ jobs:
                       await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds
                     }
                   } else {
-                    console.log("No workflows found matching ${workflow_id} and ${sha}")
+                    console.log(`No workflows found matching ${workflow_id} and ${sha}`)
                     conclusion = 'No runs found for this workflow and SHA';
                     url = "";
                   }
