@@ -44,40 +44,37 @@ variable "recovery_window" {
   type    = number
 }
 
-variable "db_name" {
-  description = "The name to give the database"
-  type        = string
-  default     = "grafana"
-}
-
-variable "db_port" {
-  description = "The database port"
-  type        = number
-  default     = 5432
-}
-
-variable "username" {
-  description = "The username to use to login to the DB"
-  type        = string
-  default     = "grafana"
-}
-
-variable "db_engine_version" {
-  description = "The Postgres engine version to use for the DB"
-  type        = string
-  default     = "16.8"
-}
-
-variable "db_allocated_storage" {
-  description = "Storage allocated to RDS instance"
-  type        = number
-  default     = 20
-}
-
-variable "db_instance_class" {
-  description = "The class of RDS instance (e.g., db.t4g.large)"
-  type        = string
-  default     = "db.t4g.large"
+variable "databases" {
+  description = "Map of database configurations"
+  type = map(object({
+    name              = string
+    port              = number
+    username          = string
+    engine_version    = string
+    family            = string
+    allocated_storage = number
+    instance_class    = string
+  }))
+  default = {
+    grafana = {
+      name              = "grafana"
+      port              = 5432
+      username          = "grafana"
+      engine_version    = "16.8"
+      family            = "postgres16"
+      allocated_storage = 20
+      instance_class    = "db.t4g.large"
+    },
+    keycloak = {
+      name              = "keycloak"
+      port              = 5432
+      username          = "keycloak"
+      engine_version    = "15.12"
+      family            = "postgres15"
+      allocated_storage = 20
+      instance_class    = "db.t4g.large"
+    }
+  }
 }
 
 # EKS Config

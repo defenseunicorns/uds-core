@@ -79,3 +79,22 @@ packages:
             - name: GRAFANA_PG_USER
               description: Grafana postgresql username
               path: postgresql.user
+      keycloak:
+        keycloak:
+          values:
+            - path: devMode
+              value: false
+            - path: fips
+              value: true
+            # Enable HPA to autoscale Keycloak
+            - path: autoscaling.enabled
+              value: true
+          variables:
+            - name: KEYCLOAK_DB_HOST
+              path: postgresql.host
+            - name: KEYCLOAK_DB_USERNAME
+              path: postgresql.username
+            - name: KEYCLOAK_DB_DATABASE
+              path: postgresql.database
+            - name: KEYCLOAK_DB_PASSWORD
+              path: postgresql.password
