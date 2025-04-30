@@ -235,6 +235,79 @@ jobs:
               }
             }
 
+  check-iac-test:
+    needs: run-iac-test
+    name: Wait for IaC
+    runs-on: ubuntu-latest
+    # Only wait for status when the PR directly modifies IaC workflow related files
+    if: ${{ needs.check-paths.outputs.distros != '[]' }}
+    steps:
+      - name: Check IaC Workflow Status
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const workflow_ids = JSON.parse(process.env.DISTROS_MODIFIED)
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const sha = process.env.GITHUB_SHA;
+            let conclusions = [];
+
+            for (const workflow_id of workflow_ids) {
+              try {
+                let conclusion = null;
+                let workflow_runs = [];
+                while (conclusion === null) {
+                  const response = await github.rest.actions.listWorkflowRunsForRepo({
+                    owner: owner,
+                    repo: repo,
+                    workflow_id: "test-${workflow_id}.yaml",
+                    head_sha: sha,
+                  });
+
+                  if (response.data.workflow_runs && response.data.workflow_runs.length > 0) {
+                    workflow_runs = response.data.workflow_runs;
+                    //If there are multiple attempts, the latest one should be reported first
+                    conclusion = response.data.workflow_runs[0].conclusion;
+                    url = esponse.data.workflow_runs[0].html_url;
+                    if (conclusion === null) {
+                      await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds
+                    }
+                  } else {
+                    conclusion = 'No runs found for this workflow and SHA';
+                  }
+
+                }
+                conclusions.push({
+                  workflow_id: workflow_id,
+                  conclusion: conclusion,
+                  url: url
+                });
+                if (conclusion !== 'success') {
+                  allSuccessful = false;
+                };
+
+              } catch (error) {
+                console.error(`Error fetching workflow ${workflow_id}: ${error}`);
+                conclusions.push({
+                  workflow_id: workflow_id,
+                  conclusion: 'Error fetching conclusion',
+                  url: ""
+                });
+                allSuccessful = false;
+              }
+            }
+
+            if (!allSuccessful) {
+              const failedWorkflowUrls = conclusions
+                .filter(item => item.conclusion !== 'success')
+                .map(item => item.url)
+                .join(', ');
+              core.setFailed(`One or more workflows did not succeed. Failed workflow URLs: ${failedWorkflowUrls}`);
+            } else {
+              console.log(`All workflows succeeded.`)
+            }
+
+
 
 # evaluate-package-compliance:
 #   needs: run-package-test
