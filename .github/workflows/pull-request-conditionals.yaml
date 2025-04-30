@@ -268,7 +268,7 @@ jobs:
                     workflow_runs = response.data.workflow_runs;
                     //If there are multiple attempts, the latest one should be reported first
                     conclusion = response.data.workflow_runs[0].conclusion;
-                    url = esponse.data.workflow_runs[0].html_url;
+                    url = response.data.workflow_runs[0].html_url;
                     if (conclusion === null) {
                       await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds
                     }
