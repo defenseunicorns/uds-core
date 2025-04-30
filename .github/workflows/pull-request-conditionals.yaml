@@ -246,12 +246,13 @@ jobs:
         uses: actions/github-script@v7
         env:
           DISTROS_MODIFIED: ${{ needs.check-paths.outputs.distros }}
+          COMMIT_SHA: ${{ github.event.pull_request.head.sha }}
         with:
           script: |
             const workflow_ids = JSON.parse(process.env.DISTROS_MODIFIED)
             const owner = context.repo.owner;
             const repo = context.repo.repo;
-            const sha = process.env.GITHUB_SHA;
+            const sha = process.env.COMMIT_SHA;
             let conclusions = [];
 
             for (const workflow_id of workflow_ids) {
