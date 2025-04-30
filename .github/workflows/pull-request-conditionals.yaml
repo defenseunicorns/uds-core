@@ -101,19 +101,19 @@ jobs:
           filters: |
             aks:
               - "tasks/iac.yaml"
-          # - ".github/bundles/aks/**"
-          # - ".github/test-infra/azure/aks/**"
-          # - ".github/workflows/test-aks.yaml"
-          # rke2:
-          #   - "tasks/iac.yaml"
-          #   - ".github/bundles/rke2/**"
-          #   - ".github/test-infra/aws/rke2/**"
-          #   - ".github/workflows/test-rke2.yaml"
-          # eks:
-          #   - "tasks/iac.yaml"
-          #   - ".github/bundles/eks/**"
-          #   - ".github/test-infra/aws/eks/**"
-          #   - ".github/workflows/test-eks.yaml"
+              - ".github/bundles/aks/**"
+              - ".github/test-infra/azure/aks/**"
+              - ".github/workflows/test-aks.yaml"
+              rke2:
+                - "tasks/iac.yaml"
+                - ".github/bundles/rke2/**"
+                - ".github/test-infra/aws/rke2/**"
+                - ".github/workflows/test-rke2.yaml"
+              eks:
+                - "tasks/iac.yaml"
+                - ".github/bundles/eks/**"
+                - ".github/test-infra/aws/eks/**"
+                - ".github/workflows/test-eks.yaml"
 
       - name: Merge Path Filter Outputs for Packages
         id: combine-path-filters
