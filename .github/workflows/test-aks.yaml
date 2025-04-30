@@ -67,10 +67,11 @@ jobs:
       - name: Azure login
         uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2
         with:
-          client-id: ${{ secrets.AZURE_GOV_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_GOV_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_GOV_SUBSCRIPTION_ID }}
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
           environment: "AzureUSGovernment"
+          # below values configure OIDC login
+          # tenant-id: ${{ secrets.AZURE_GOV_TENANT_ID }}
+          # subscription-id: ${{ secrets.AZURE_GOV_SUBSCRIPTION_ID }}
 
       - name: Environment setup
         uses: ./.github/actions/setup
