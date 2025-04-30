@@ -236,7 +236,7 @@ jobs:
             }
 
   check-iac-test:
-    needs: run-iac-test
+    needs: [check-paths, run-iac-test]
     name: Wait for IaC
     runs-on: ubuntu-latest
     # Only wait for status when the PR directly modifies IaC workflow related files
