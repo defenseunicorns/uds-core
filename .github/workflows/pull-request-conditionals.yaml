@@ -245,7 +245,7 @@ jobs:
       - name: Check IaC Workflow Status
         uses: actions/github-script@v7
         env:
-          DISTROS_MODIFIED: ${{ needs.check-paths.outputs.distros }}        
+          DISTROS_MODIFIED: ${{ needs.check-paths.outputs.distros }}
         with:
           script: |
             const workflow_ids = JSON.parse(process.env.DISTROS_MODIFIED)
