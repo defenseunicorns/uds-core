@@ -33,50 +33,21 @@ Temporarily modify the Pepr mutating and validating webhooks, as well as the Ist
 ```bash
 kubectl patch mutatingwebhookconfiguration pepr-uds-core --type='json' \
   -p='[{
-    "op": "replace",
-    "path": "/webhooks/0/namespaceSelector",
-    "value": {
-      "matchExpressions": [{
-        "key": "kubernetes.io/metadata.name",
-        "operator": "NotIn",
-        "values": ["pepr-system", "istio-system"]
-      }]
-    }
+    "op": "add",
+    "path": "/webhooks/0/namespaceSelector/matchExpressions/0/values/-",
+    "value": "istio-system"
   }]'
 
 kubectl patch validatingwebhookconfiguration pepr-uds-core --type='json' \
   -p='[{
-    "op": "replace",
-    "path": "/webhooks/0/namespaceSelector",
-    "value": {
-      "matchExpressions": [{
-        "key": "kubernetes.io/metadata.name",
-        "operator": "NotIn",
-        "values": ["pepr-system", "istio-system"]
-      }]
-    }
+    "op": "add",
+    "path": "/webhooks/0/namespaceSelector/matchExpressions/0/values/-",
+    "value": "istio-system"
   }]'
 ```
 
-### 2. Patch the Istiod Mutating Webhook to Exclude Pepr
-
-```bash
-kubectl patch mutatingwebhookconfiguration istio-sidecar-injector --type='json' \
-  -p='[{
-    "op": "replace",
-    "path": "/webhooks/0/namespaceSelector",
-    "value": {
-      "matchExpressions": [{
-        "key": "kubernetes.io/metadata.name",
-        "operator": "NotIn",
-        "values": ["pepr-system"]
-      }]
-    }
-  }]'
-```
-
-### 3. Restart the Pepr and Istiod Pods
-This isn't always required — typically the pods will retry and succeed once the webhooks have been patched.
+### 2. Restart the Pepr and Istiod Pods
+This isn't always required — typically the pods will retry and succeed once Istiod is healthy.
 
 ```bash
 kubectl rollout restart deployment pepr-uds-core -n pepr-system
@@ -84,7 +55,7 @@ kubectl rollout restart deployment istiod -n istio-system
 ```
 This forces Kubernetes to recreate them.
 
-### 4. Restore the Webhook Policies
+### 3. Restore the Webhook Policies
 
 :::caution
 VERY IMPORTANT:
@@ -92,25 +63,16 @@ After both Pepr and Istiod pods are running and healthy, revert your webhook con
 :::
 
 ```bash
-kubectl patch mutatingwebhookconfiguration pepr-uds-core --type='json' \
-  -p='[{"op": "remove", "path": "/webhooks/0/namespaceSelector"}]'
+kubectl get mutatingwebhookconfiguration pepr-uds-core -o json | \
+  uds zarf tools yq -p json -o json '.webhooks[0].namespaceSelector.matchExpressions[0].values |= map(select(. != "istio-system"))' | \
+  kubectl apply -f -
 
-kubectl patch validatingwebhookconfiguration pepr-uds-core --type='json' \
-  -p='[{"op": "remove", "path": "/webhooks/0/namespaceSelector"}]'
-
-kubectl patch mutatingwebhookconfiguration istio-sidecar-injector --type='json' \
-  -p='[{"op": "remove", "path": "/webhooks/0/namespaceSelector"}]'
+kubectl get validatingwebhookconfiguration pepr-uds-core -o json | \
+  uds zarf tools yq -p json -o json '.webhooks[0].namespaceSelector.matchExpressions[0].values |= map(select(. != "istio-system"))' | \
+  kubectl apply -f -
 ```
 This restores strict security enforcement in admission control.
 
 :::caution
-While the webhooks are excluding each other, any newly created resources (e.g., Pods) could bypass Istio sidecar injection or Pepr policy enforcement. This is rare but possible — identify and reapply configuration to any workloads started during this window.
+While the Pepr webhooks are excluding `istio-system`, any newly created resources in the `istio-system` namespace (e.g., pods/services) will bypass Pepr policy enforcement. It is important to audit any new/unexpected resources during this time.
 :::
-
-## Alternative Ideas
-Rather than changing webhook failure policies, consider long-term approaches such as:
-
-- Adding a `namespaceSelector` to exclude the `istio-system` namespace from Pepr’s webhooks and vice versa.
-- Removing the Istio injection label from Pepr pods (especially if you're using Ambient Mesh).
-
-These strategies help prevent circular dependencies without relaxing webhook enforcement.

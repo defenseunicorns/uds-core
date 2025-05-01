@@ -56,4 +56,4 @@ Ideal for HA simulation and scaling tests.
 - The multi-node cluster is still a local k3d environment.
 - Networking is provided by Flannel.
 - No node taints are applied — all nodes are schedulable.
-- UDS Core packages will automatically distribute workloads across available nodes based on their scheduling rules.
+- UDS Core packages will automatically have their workloads distributed across the cluster by kube-scheduler based on their scheduling rules.
