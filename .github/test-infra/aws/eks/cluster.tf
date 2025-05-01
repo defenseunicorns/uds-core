@@ -74,7 +74,7 @@ module "eks" {
     main = {
       name           = var.name
       instance_types = [var.instance_type]
-      ami_type       = "BOTTLEROCKET_x86_64_FIPS"
+      ami_type       = "BOTTLEROCKET_x86_64" # TODO: Switch this back to add `_FIPS` once testing is complete
 
       min_size     = var.node_group_min_size
       max_size     = var.node_group_max_size
