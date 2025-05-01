@@ -45,6 +45,13 @@ module "dbs" {
   family               = each.value.family
   instance_class       = each.value.instance_class
 
+  parameters = [
+    {
+      name  = "ssl_min_protocol_version"
+      value = "TLSv1.2"
+    }
+  ]
+
   db_name  = each.value.name
   username = each.value.username
   port     = each.value.port

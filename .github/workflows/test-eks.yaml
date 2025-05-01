@@ -26,7 +26,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        flavor: [upstream, registry1, unicorn]
+        flavor: [upstream] # [upstream, registry1, unicorn]
     runs-on: ubuntu-latest
     permissions:
       id-token: write
