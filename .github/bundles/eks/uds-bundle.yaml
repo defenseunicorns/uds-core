@@ -84,8 +84,6 @@ packages:
           values:
             - path: devMode
               value: false
-            - path: fips
-              value: true
             # Enable HPA to autoscale Keycloak
             - path: autoscaling.enabled
               value: true
