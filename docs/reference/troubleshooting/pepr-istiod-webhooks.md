@@ -26,7 +26,7 @@ Both Pepr and Istiod register Kubernetes admission webhooks.
 When a cluster restarts, if the webhook targets (pods) aren’t available yet, admission fails, blocking the pods from being recreated — a chicken-and-egg problem.
 
 ## Manual Recovery Procedure
-Temporarily modify the Pepr mutating and validating webhooks, as well as the Istiod mutating webhook, to exclude each other:
+Temporarily modify the Pepr mutating and validating webhooks to exclude each other:
 
 ### 1. Patch the Pepr Webhooks to Exclude Itself and Istio
 
