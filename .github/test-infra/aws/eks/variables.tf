@@ -69,8 +69,8 @@ variable "databases" {
       name              = "keycloak"
       port              = 5432
       username          = "keycloak"
-      engine_version    = "15.12"
-      family            = "postgres15"
+      engine_version    = "16.8"
+      family            = "postgres16"
       allocated_storage = 20
       instance_class    = "db.t4g.large"
     }
