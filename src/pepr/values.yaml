@@ -7,34 +7,9 @@ watcher:
   envFrom:
     - secretRef:
         name: uds-operator-config
-  affinity:
-    podAntiAffinity:
-      preferredDuringSchedulingIgnoredDuringExecution:
-        - weight: 100
-          podAffinityTerm:
-            labelSelector:
-              matchExpressions:
-                - key: app
-                  operator: In
-                  values:
-                    - pepr-uds-core
-            topologyKey: kubernetes.io/hostname
-
 admission:
   serviceMonitor:
     enabled: ###ZARF_VAR_PEPR_SERVICE_MONITORS###
   envFrom:
     - secretRef:
         name: uds-operator-config
-  affinity:
-    podAntiAffinity:
-      preferredDuringSchedulingIgnoredDuringExecution:
-        - weight: 100
-          podAffinityTerm:
-            labelSelector:
-              matchExpressions:
-                - key: app
-                  operator: In
-                  values:
-                    - pepr-uds-core
-            topologyKey: kubernetes.io/hostname
