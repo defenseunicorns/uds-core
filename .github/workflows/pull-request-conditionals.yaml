@@ -240,6 +240,7 @@ jobs:
     name: Wait for IaC
     runs-on: ubuntu-latest
     # Only wait for status when the PR directly modifies IaC workflow related files
+    #todo: trigger on same as above and milestone
     if: ${{ needs.check-paths.outputs.distros != '[]' }}
     steps:
       - name: Check IaC Workflow Status

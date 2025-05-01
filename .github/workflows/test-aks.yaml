@@ -10,7 +10,7 @@ on:
     inputs:
       triggered_by:
         description: 'The workflow run that triggered this workflow'
-        required: true
+        required: false
         type: string
 
 permissions:
