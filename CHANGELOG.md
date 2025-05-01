@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.41.1](https://github.com/defenseunicorns/uds-core/compare/v0.41.0...v0.41.1) (2025-04-30)
+
+
+### Bug Fixes
+
+* unconditionally mutate neuvector probes ([#1513](https://github.com/defenseunicorns/uds-core/issues/1513)) ([9228e33](https://github.com/defenseunicorns/uds-core/commit/9228e3358ec849df0894a94875985cddb6551959))
+
 ## [0.41.0](https://github.com/defenseunicorns/uds-core/compare/v0.40.1...v0.41.0) (2025-04-28)
 
 
