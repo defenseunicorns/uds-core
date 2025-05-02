@@ -49,14 +49,6 @@ spec:
         remoteNamespace: "*"
         port: 8080
 
-      - description: "Keycloak ambient backchannel access"
-        direction: Ingress
-        selector:
-          app.kubernetes.io/name: keycloak
-        # Allow access from anything in cluster using an empty namespace selector
-        remoteNamespace: "*"
-        port: 15008
-
       # Keycloak OCSP to check certs cannot guarantee a static IP
       - description: "OCSP Lookup"
         direction: Egress
@@ -97,19 +89,17 @@ spec:
         direction: Ingress
         remoteGenerated: IntraNamespace
         ports:
-          - 15008
           - 8080
       - description: "Waypoint to Keycloak"
         direction: Egress
         remoteGenerated: IntraNamespace
         ports:
-          - 15008
           - 8080
 
       - description: "Waypoint to Istio Control Plane"
         direction: Egress
         selector:
-          gateway.networking.k8s.io/gateway-name: waypoint
+          gateway.networking.k8s.io/gateway-name: {{ include "keycloak.fullname" . }}-waypoint
         remoteNamespace: istio-system
         remoteSelector:
           app: istiod

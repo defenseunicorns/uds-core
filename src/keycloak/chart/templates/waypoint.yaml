@@ -5,8 +5,8 @@
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
-  name: waypoint
-  namespace: keycloak
+  name: {{ include "keycloak.fullname" . }}-waypoint
+  namespace: {{ .Release.Namespace }}
 spec:
   gatewayClassName: istio-waypoint
   listeners:
@@ -15,5 +15,5 @@ spec:
       protocol: HBONE
   infrastructure:
     labels:
-      app.kubernetes.io/name: keycloak
+      {{- include "keycloak.labels" . | nindent 6 }}
 {{- end }}
