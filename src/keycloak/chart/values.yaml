@@ -310,3 +310,6 @@ autoscaling:
           periodSeconds: 300
 
 env: []
+
+# mtlsClientCert
+mtlsClientCert: "%DOWNSTREAM_PEER_CERT%"
