@@ -122,12 +122,17 @@ tasks:
 
   - name: uds-core
     description: "Build and test UDS Core"
+    inputs:
+      K3D_EXTRA_ARGS:
+        default: ""
     actions:
       - task: create:standard-package
         with:
           create_options: "--skip-sbom"
       - task: create:k3d-standard-bundle
       - task: deploy:k3d-standard-bundle
+        with:
+          K3D_EXTRA_ARGS: "${{ .inputs.K3D_EXTRA_ARGS }}"
       - task: validate-packages
 
   - name: uds-core-e2e

@@ -53,7 +53,7 @@ When(a.DaemonSet)
       container => container.name === "neuvector-enforcer-pod",
     );
 
-    if (enforcerContainer && enforcerContainer.livenessProbe === undefined) {
+    if (enforcerContainer) {
       log.debug("Patching NeuVector Enforcer Daemonset to add livenessProbe");
       const livenessProbe = {
         tcpSocket: { port: 8500 },
@@ -63,7 +63,7 @@ When(a.DaemonSet)
       enforcerContainer.livenessProbe = livenessProbe;
     }
 
-    if (enforcerContainer && enforcerContainer.readinessProbe === undefined) {
+    if (enforcerContainer) {
       log.debug("Patching NeuVector Enforcer Daemonset to add readinessProbe");
       const readinessProbe = {
         tcpSocket: { port: 8500 },
@@ -88,7 +88,7 @@ When(a.Deployment)
       container => container.name === "neuvector-controller-pod",
     );
 
-    if (controllerContainer && controllerContainer.readinessProbe) {
+    if (controllerContainer) {
       log.debug("Patching NeuVector Controller deployment to modify readinessProbe");
       const readinessProbe = {
         // Probe default port for controller REST API server
