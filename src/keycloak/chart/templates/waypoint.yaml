@@ -15,5 +15,5 @@ spec:
       protocol: HBONE
   infrastructure:
     labels:
-      {{- include "keycloak.labels" . | nindent 6 }}
+      app.kubernetes.io/name: {{ include "keycloak.fullname" . }}
 {{- end }}
