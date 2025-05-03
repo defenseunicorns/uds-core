@@ -310,3 +310,5 @@ autoscaling:
           periodSeconds: 300
 
 env: []
+
+x509LookupProvider: nginx
