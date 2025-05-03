@@ -9,9 +9,9 @@ metadata:
   namespace: {{ .Release.Namespace }}
 spec:
   targetRefs:
-    - kind: Service
-      group: ""
-      name: "keycloak-http"
+    - kind: Gateway
+      group: gateway.networking.k8s.io
+      name: {{ include "keycloak.fullname" . }}-waypoint
   action: DENY
   rules:
     - to:
