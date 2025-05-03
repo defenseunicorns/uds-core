@@ -25,7 +25,7 @@ spec:
         name: "http-{{ $name }}"
         number: 80
         protocol: HTTP
-      {{- if $server.enableHttpsRedirect | default true }}
+      {{- if or (not (hasKey $server "enableHttpsRedirect")) $server.enableHttpsRedirect }}
       tls:
         httpsRedirect: true
       {{- end }}
