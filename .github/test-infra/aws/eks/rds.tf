@@ -5,7 +5,10 @@ resource "random_password" "db_passwords" {
   for_each = var.databases
 
   length  = 16
-  special = false
+  special = true
+  upper = true
+  lower = true
+  override_special = "#$"
 }
 
 resource "aws_secretsmanager_secret" "db_secrets" {

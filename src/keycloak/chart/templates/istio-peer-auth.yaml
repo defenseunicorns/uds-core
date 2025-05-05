@@ -10,4 +10,19 @@ metadata:
 spec:
   mtls:
     mode: STRICT
+---
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: keycloak-infinispan
+  namespace: {{ .Release.Namespace }}
+spec:
+  mtls:
+    mode: STRICT
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: keycloak
+  portLevelMtls:
+    "7800":
+      mode: PERMISSIVE
 {{- end }}
