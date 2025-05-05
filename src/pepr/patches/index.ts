@@ -44,37 +44,36 @@ When(a.Service)
 /**
  * Mutate the Neuvector Enforcer DaemonSet to add a livenessProbe
  */
+When(a.DaemonSet)
+  .IsCreatedOrUpdated()
+  .InNamespace("neuvector")
+  .WithName("neuvector-enforcer-pod")
+  .Mutate(async ds => {
+    const enforcerContainer = ds.Raw.spec?.template.spec?.containers.find(
+      container => container.name === "neuvector-enforcer-pod",
+    );
 
-// When(a.DaemonSet)
-//   .IsCreatedOrUpdated()
-//   .InNamespace("neuvector")
-//   .WithName("neuvector-enforcer-pod")
-//   .Mutate(async ds => {
-//     const enforcerContainer = ds.Raw.spec?.template.spec?.containers.find(
-//       container => container.name === "neuvector-enforcer-pod",
-//     );
+    if (enforcerContainer && enforcerContainer.livenessProbe === undefined) {
+      log.debug("Patching NeuVector Enforcer Daemonset to add livenessProbe");
+      const livenessProbe = {
+        http: { port: 8500 },
+        periodSeconds: 30,
+        failureThreshold: 3,
+      };
+      enforcerContainer.livenessProbe = livenessProbe;
+    }
 
-//     if (enforcerContainer && enforcerContainer.livenessProbe === undefined) {
-//       log.debug("Patching NeuVector Enforcer Daemonset to add livenessProbe");
-//       const livenessProbe = {
-//         http: { port: 8500 },
-//         periodSeconds: 30,
-//         failureThreshold: 3,
-//       };
-//       enforcerContainer.livenessProbe = livenessProbe;
-//     }
-
-//     if (enforcerContainer && enforcerContainer.readinessProbe === undefined) {
-//       log.debug("Patching NeuVector Enforcer Daemonset to add readinessProbe");
-//       const readinessProbe = {
-//         http: { port: 8500 },
-//         initialDelaySeconds: 30,
-//         periodSeconds: 30,
-//         failureThreshold: 3,
-//       };
-//       enforcerContainer.readinessProbe = readinessProbe;
-//     }
-//   });
+    if (enforcerContainer && enforcerContainer.readinessProbe === undefined) {
+      log.debug("Patching NeuVector Enforcer Daemonset to add readinessProbe");
+      const readinessProbe = {
+        http: { port: 8500 },
+        initialDelaySeconds: 30,
+        periodSeconds: 30,
+        failureThreshold: 3,
+      };
+      enforcerContainer.readinessProbe = readinessProbe;
+    }
+  });
 
 /**
  * Mutate the Neuvector Controller Deployment to patch in new readinessProbe
@@ -90,7 +89,7 @@ When(a.Deployment)
       container => container.name === "neuvector-controller-pod",
     );
 
-    if (controllerContainer && controllerContainer.readinessProbe) {
+    if (controllerContainer) {
       log.debug("Patching NeuVector Controller deployment to modify readinessProbe");
       const readinessProbe = {
         // Probe default port for controller REST API server
