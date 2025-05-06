@@ -19,3 +19,4 @@ The `sso.attributes` part of the [UDS Package CR](/reference/configuration/custo
 - saml_assertion_consumer_url_redirect
 - saml_single_logout_service_url_post
 - saml_single_logout_service_url_redirect
+- use.refresh.tokens
