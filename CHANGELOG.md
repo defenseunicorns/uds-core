@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.41.2](https://github.com/defenseunicorns/uds-core/compare/v0.41.1...v0.41.2) (2025-05-06)
+
+
+### Bug Fixes
+
+* **ci:** add postgres/HA keycloak to EKS and AKS testing ([#1516](https://github.com/defenseunicorns/uds-core/issues/1516)) ([4026162](https://github.com/defenseunicorns/uds-core/commit/4026162f08ad1b0eef61ca4eaff92471766105c5))
+* errors on re-creating checkpoint cluster due to leftover files ([#1528](https://github.com/defenseunicorns/uds-core/issues/1528)) ([f7f1bf4](https://github.com/defenseunicorns/uds-core/commit/f7f1bf4f7e8eff87120b1bf99a554aa651f20590))
+* keycloak clustering ([#1529](https://github.com/defenseunicorns/uds-core/issues/1529)) ([bb29000](https://github.com/defenseunicorns/uds-core/commit/bb29000b6aba2863c593044466b0233dc193f513))
+
+
+### Miscellaneous
+
+* **deps:** update identity-config to v0.13.1 ([#1532](https://github.com/defenseunicorns/uds-core/issues/1532)) ([b349e9b](https://github.com/defenseunicorns/uds-core/commit/b349e9b8f1152be4a1ecab0a591634d9d9f22fa8))
+* **deps:** update keycloak to v26.2.2 ([#1512](https://github.com/defenseunicorns/uds-core/issues/1512)) ([0969468](https://github.com/defenseunicorns/uds-core/commit/0969468f7867d0aca3b135099ebf00e9f5566ba9))
+* **deps:** update pepr to v0.49.0 ([#1511](https://github.com/defenseunicorns/uds-core/issues/1511)) ([ec9e924](https://github.com/defenseunicorns/uds-core/commit/ec9e924033aa16b1769d9ad64b209dd68b687966))
+* **deps:** update support-deps ([#1503](https://github.com/defenseunicorns/uds-core/issues/1503)) ([dffe4a4](https://github.com/defenseunicorns/uds-core/commit/dffe4a4d16a9f5f6eba91ea161960b6fcb1ec56d))
+* **doc:** remove keycloak prereq ([#1519](https://github.com/defenseunicorns/uds-core/issues/1519)) ([adbbbc9](https://github.com/defenseunicorns/uds-core/commit/adbbbc90e146b6227a487256ec6575c227536aad))
+* pod anti-affinity for istiod, troubleshooting doc for webhook issue (https://github.com/defenseunicorns/uds-core/pull/1509) ([2a2b299](https://github.com/defenseunicorns/uds-core/commit/2a2b2991f894930de01f96f4e9f8bdfe053d5567))
+
 ## [0.41.1](https://github.com/defenseunicorns/uds-core/compare/v0.41.0...v0.41.1) (2025-04-30)
 
 
