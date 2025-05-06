@@ -121,6 +121,15 @@ spec:
         port: 8443
         description: waypoint-admin-gateway
 
+      - direction: Egress
+        selector:
+          app: neuvector-manager-waypoint
+        remoteNamespace: istio-system
+        remoteSelector:
+          app: istiod
+        port: 15012
+        description: Waypoint to Istiod
+
       # Custom rules for additional networking access
       {{- with .Values.additionalNetworkAllow }}
       {{ toYaml . | nindent 6 }}
