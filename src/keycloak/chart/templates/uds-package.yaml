@@ -79,11 +79,31 @@ spec:
         remoteGenerated: IntraNamespace
         ports:
           - 7800
+          - 7801
+          - 7802
+          - 7803
+          - 7804
+          - 7805
+          - 7806
+          - 7807
+          - 7808
+          - 7809
+          - 7810
           - 57800
       - direction: Egress
         remoteGenerated: IntraNamespace
         ports:
           - 7800
+          - 7801
+          - 7802
+          - 7803
+          - 7804
+          - 7805
+          - 7806
+          - 7807
+          - 7808
+          - 7809
+          - 7810
           - 57800
       {{- end }}
 
