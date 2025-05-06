@@ -37,6 +37,13 @@ components:
             description: "Destroy the cluster"
           - cmd: |
               sudo rm -rf data
+          - cmd: |
+              if [ -z "$TMPDIR" ]; then
+                #  macOS sets TMPDIR to a user temp directory - this also provides more options to linux
+                TMPDIR="/tmp"
+              fi
+              DATA_DIR="${TMPDIR}/uds-checkpoint-data"
+              sudo rm -rf "$DATA_DIR"
 
   - name: create-cluster
     required: true
