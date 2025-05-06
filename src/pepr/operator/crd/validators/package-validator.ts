@@ -143,6 +143,7 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
     "saml_single_logout_service_url_post",
     "saml_single_logout_service_url_redirect",
     "saml_idp_initiated_sso_url_name",
+    "use.refresh.tokens",
   ]);
 
   for (const client of ssoClients) {
