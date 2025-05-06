@@ -18,6 +18,8 @@ spec:
       description: Metrics
 
   network:
+    serviceMesh:
+      mode: ambient
     allow:
       - description: "UDS Operator"
         direction: Ingress
@@ -28,6 +30,16 @@ spec:
           app: pepr-uds-core-watcher
         remoteServiceAccount: pepr-uds-core
         port: 8080
+
+      - description: "Waypoint health"
+        direction: Ingress
+        selector:
+          app.kubernetes.io/name: keycloak
+        remoteNamespace: monitoring
+        remoteSelector:
+          app.kubernetes.io/name: prometheus
+        remoteServiceAccount: kube-prometheus-stack-prometheus
+        port: 15020
 
       - description: "Keycloak backchannel access"
         direction: Ingress
@@ -72,6 +84,26 @@ spec:
         remoteGenerated: Anywhere
         {{- end }}
       {{- end }}
+
+      - description: "Keycloak to Waypoint"
+        direction: Ingress
+        remoteGenerated: IntraNamespace
+        ports:
+          - 8080
+      - description: "Waypoint to Keycloak"
+        direction: Egress
+        remoteGenerated: IntraNamespace
+        ports:
+          - 8080
+
+      - description: "Waypoint to Istio Control Plane"
+        direction: Egress
+        selector:
+          gateway.networking.k8s.io/gateway-name: {{ include "keycloak.fullname" . }}-waypoint
+        remoteNamespace: istio-system
+        remoteSelector:
+          app: istiod
+        port: 15012
 
       {{- if .Values.autoscaling.enabled }}
       # HA for keycloak
