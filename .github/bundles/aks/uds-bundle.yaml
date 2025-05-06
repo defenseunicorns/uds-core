@@ -6,7 +6,7 @@ metadata:
   name: uds-core-aks-nightly
   description: A UDS bundle for deploying UDS Core on AKS
   # x-release-please-start-version
-  version: "0.41.1"
+  version: "0.41.2"
   # x-release-please-end
 
 packages:
@@ -17,7 +17,7 @@ packages:
   - name: core
     path: ../../../build
     # x-release-please-start-version
-    ref: 0.41.1
+    ref: 0.41.2
     # x-release-please-end
     overrides:
       istio-admin-gateway:
@@ -37,6 +37,22 @@ packages:
                 service.beta.kubernetes.io/azure-load-balancer-internal: "false"
                 service.beta.kubernetes.io/azure-load-balancer-sku: "Standard"
                 service.beta.kubernetes.io/azure-load-balancer-resource-group: "${NODE_RESOURCE_GROUP_NAME}"
+      keycloak:
+        keycloak:
+          values:
+            - path: devMode
+              value: false
+            - path: autoscaling.enabled
+              value: true
+          variables:
+            - name: KEYCLOAK_DB_HOST
+              path: postgresql.host
+            - name: KEYCLOAK_DB_USERNAME
+              path: postgresql.username
+            - name: KEYCLOAK_DB_DATABASE
+              path: postgresql.database
+            - name: KEYCLOAK_DB_PASSWORD
+              path: postgresql.password
       loki:
         loki:
           variables:
