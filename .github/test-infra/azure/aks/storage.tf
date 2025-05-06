@@ -32,8 +32,8 @@ resource "random_password" "db_password" {
   special = false
 }
 
-resource "azurerm_postgresql_flexible_server" "grafana_psql_server" {
-  name                          = "${local.cluster_name}-grafana-psqlserver"
+resource "azurerm_postgresql_flexible_server" "psql_server" {
+  name                          = "${local.cluster_name}-psqlserver"
   resource_group_name           = azurerm_resource_group.this.name
   location                      = azurerm_resource_group.this.location
   version                       = "16"
@@ -54,8 +54,16 @@ resource "azurerm_postgresql_flexible_server" "grafana_psql_server" {
 }
 
 resource "azurerm_postgresql_flexible_server_database" "grafana_psql_db" {
-  name      = var.db_name
-  server_id = azurerm_postgresql_flexible_server.grafana_psql_server.id
+  name      = "${var.db_name}-grafana"
+  server_id = azurerm_postgresql_flexible_server.psql_server.id
+  collation = "en_US.utf8"
+  charset   = "utf8"
+}
+
+
+resource "azurerm_postgresql_flexible_server_database" "keycloak_psql_db" {
+  name      = "${var.db_name}-keycloak"
+  server_id = azurerm_postgresql_flexible_server.psql_server.id
   collation = "en_US.utf8"
   charset   = "utf8"
 }
