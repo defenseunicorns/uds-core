@@ -8,16 +8,19 @@ variables:
   - name: VERSION
     description: "The version of the packages to deploy"
     # x-release-please-start-version
-    default: "0.41.1"
+    default: "0.41.2"
     # x-release-please-end
   - name: FLAVOR
     default: upstream
 
 tasks:
   - name: k3d-standard-bundle
+    inputs:
+      K3D_EXTRA_ARGS:
+        default: ""
     actions:
       - description: "Deploy the UDS Core Standard Bundle"
-        cmd: uds deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --set INSECURE_ADMIN_PASSWORD_GENERATION=true --confirm --no-progress
+        cmd: uds deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --set INSECURE_ADMIN_PASSWORD_GENERATION=true --set K3D_EXTRA_ARGS="${{ .inputs.K3D_EXTRA_ARGS }}" --confirm --no-progress
 
   - name: k3d-standard-bundle-ha
     actions:
