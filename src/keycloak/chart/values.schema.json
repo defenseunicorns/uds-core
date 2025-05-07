@@ -484,6 +484,9 @@
           }
         }
       }
+    },
+    "x509LookupProvider": {
+      "type": "string"
     }
   }
 }
