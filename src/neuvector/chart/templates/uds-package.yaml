@@ -19,7 +19,7 @@ spec:
   #     description: "Metrics"
 
   sso:
-    - name: Neuvector
+    - name: NeuVector
       clientId: uds-core-admin-neuvector
       redirectUris:
         {{- if .Values.adminDomain }}

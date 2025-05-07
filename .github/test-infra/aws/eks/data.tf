@@ -33,3 +33,10 @@ data "aws_subnet" "eks_ci_subnet_c" {
     values = [var.subnet_name]
   }
 }
+
+data "aws_subnets" "rds_subnets" {
+  filter {
+    name   = "vpc-id"
+    values = [data.aws_vpc.vpc.id]
+  }
+}
