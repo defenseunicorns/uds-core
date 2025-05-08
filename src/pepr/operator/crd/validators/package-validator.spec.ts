@@ -722,6 +722,7 @@ describe("Test Allowed SSO Client Attributes", () => {
             "access.token.lifespan": "60",
             "saml.assertion.signature": "false",
             "saml.client.signature": "false",
+            "use.refresh.tokens": "false",
             saml_assertion_consumer_url_post: "https://nexus.uds.dev/saml",
             saml_assertion_consumer_url_redirect: "https://nexus.uds.dev/saml",
             saml_single_logout_service_url_post: "https://nexus.uds.dev/saml/single-logout",
