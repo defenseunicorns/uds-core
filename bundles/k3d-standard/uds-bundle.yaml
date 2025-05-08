@@ -41,6 +41,7 @@ packages:
     # x-release-please-end
     optionalComponents:
       - istio-passthrough-gateway
+      - istio-egress-gateway
       - metrics-server
     overrides:
       pepr-uds-core:
