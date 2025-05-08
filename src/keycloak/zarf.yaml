@@ -54,5 +54,5 @@ components:
         valuesFiles:
           - "values/unicorn-values.yaml"
     images:
-      - cgr.dev/du-uds-defenseunicorns/keycloak:26.2.2 # todo: switch to FIPS image
+      - cgr.dev/du-uds-defenseunicorns/keycloak-fips:26.2.2
       - ghcr.io/defenseunicorns/uds/identity-config:0.13.1
