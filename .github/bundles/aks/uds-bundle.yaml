@@ -53,6 +53,7 @@ packages:
               path: postgresql.database
             - name: KEYCLOAK_DB_PASSWORD
               path: postgresql.password
+              sensitive: true
       loki:
         loki:
           variables:
@@ -61,6 +62,7 @@ packages:
               path: "loki.storage_config.azure.account_name"
             - name: AZURE_LOKI_STORAGE_ACCOUNT_ACCESS_KEY
               description: "Primary access Key for the Storage Account"
+              sensitive: true
               path: "loki.storage_config.azure.account_key"
             - name: AZURE_LOKI_STORAGE_ACCOUNT_CONTAINER
               description: "The destination container in the Storage Account where logs will be saved"
