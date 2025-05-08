@@ -105,10 +105,45 @@ tasks:
   - name: test-uds-core-ha
     description: "Build and test UDS Core"
     actions:
-      - cmd: docker stop postgres && docker rm postgres || true
-      - cmd: docker network create k3d-uds || true
-      - cmd: docker run -p 5432:5432 --network=k3d-uds --name postgres -e POSTGRES_DB=keycloak -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=password -d postgres
-      - cmd: sleep 3 && docker exec postgres psql -U postgres -c "CREATE DATABASE grafana;"
+      - description: "Cleanup previous PostgreSQL runs"
+        cmd: docker stop postgres && docker rm postgres || true
+      - description: "Create a network for the PostgreSQL container"
+        cmd: docker network create k3d-uds || true
+      - description: "Generate PostgreSQL certs"
+        cmd: |
+          mkdir -p build
+          openssl req -x509 -newkey rsa:4096 -sha256 -nodes -keyout build/postgres.key -out build/postgres.crt -days 365 -subj "/CN=postgres" > /dev/null 2>&1 || { echo "Error: Failed to generate PostgreSQL certs"; exit 1; }
+          chmod 600 build/postgres.crt
+          chmod 600 build/postgres.key
+      - description: "Start PostgreSQL Docker container"
+        cmd: |
+          CONTAINER_NAME=postgres
+          # We're using Postgres 16 as this is the compatibility version for RDS
+          POSTGRES_VERSION=16
+          # RDS (Postgres 16) supports only TLS 1.2 only
+          TLS_VERSION=TLSv1.2
+
+          docker kill $CONTAINER_NAME && docker rm $CONTAINER_NAME || true
+
+          docker run -p 5432:5432 --network=k3d-uds --rm --name $CONTAINER_NAME \
+            -e POSTGRES_DB=keycloak \
+            -e POSTGRES_USER=postgres \
+            -e POSTGRES_PASSWORD='unicorn123!@#UN' \
+            -v $(pwd)/build/postgres.crt:/var/lib/postgresql/server.crt:ro \
+            -v $(pwd)/build/postgres.key:/var/lib/postgresql/server.key:ro \
+            -d postgres:$POSTGRES_VERSION \
+            -c ssl=on \
+            -c ssl_cert_file=/var/lib/postgresql/server.crt \
+            -c ssl_key_file=/var/lib/postgresql/server.key \
+            -c ssl_min_protocol_version=$TLS_VERSION \
+            -c ssl_max_protocol_version=$TLS_VERSION \
+            -c log_connections=on \
+            -c log_disconnections=on \
+            -c log_min_messages=debug1 \
+            -c log_line_prefix='%m [%p] %q%u@%d ' \
+            -c log_statement=all
+      - description: "Add Grafana database to PostgreSQL"
+        cmd: sleep 3 && docker exec postgres psql -U postgres -c "CREATE DATABASE grafana;"
       - task: test:uds-core-ha
 
   - name: test-uds-core-upgrade
