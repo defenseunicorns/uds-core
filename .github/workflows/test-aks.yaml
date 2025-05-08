@@ -6,15 +6,12 @@ name: AKS Test
 on:
   schedule:
     - cron: "0 0 * * 0" # Every Sunday Midnight (UTC) / Saturday 5pm MT
-  pull_request:
-    # milestoned is added here as a workaround for release-please not triggering PR workflows (PRs should be added to a milestone to trigger the workflow).
-    # labeled is added to support renovate-ready labelling on PRs
-    types: [milestoned, labeled, opened, reopened, synchronize]
-    paths:
-      - tasks/iac.yaml
-      - .github/bundles/aks/*
-      - .github/test-infra/azure/aks/*
-      - .github/workflows/test-aks.yaml
+  workflow_dispatch:
+    inputs:
+      triggered_by:
+        description: 'The workflow run that triggered this workflow'
+        required: false
+        type: string
 
 permissions:
   id-token: write
@@ -28,7 +25,7 @@ jobs:
       matrix:
         flavor: [upstream, registry1, unicorn]
     runs-on: ubuntu-latest
-    name: AKS Install
+    name: test-aks
     permissions:
       id-token: write
       contents: read
@@ -42,6 +39,8 @@ jobs:
       UDS_CONTAINER_NAME: ${{ secrets.AZURE_GOV_STORAGE_CONTAINER_NAME }}
 
     steps:
+      - name: Output Caller
+        run: "echo Called by: ${{ inputs.triggered_by }}"
       - name: Set ENV
         run: |
           echo "UDS_CLUSTER_NAME=uds-ci-${{ matrix.flavor }}-${SHA:0:7}" >> $GITHUB_ENV
@@ -68,10 +67,11 @@ jobs:
       - name: Azure login
         uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2
         with:
-          client-id: ${{ secrets.AZURE_GOV_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_GOV_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_GOV_SUBSCRIPTION_ID }}
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
           environment: "AzureUSGovernment"
+          # below values configure OIDC login
+          # tenant-id: ${{ secrets.AZURE_GOV_TENANT_ID }}
+          # subscription-id: ${{ secrets.AZURE_GOV_SUBSCRIPTION_ID }}
 
       - name: Environment setup
         uses: ./.github/actions/setup
