@@ -23,7 +23,6 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: {{$name}}-tls
-  # need to get this value outside the range
   namespace: {{ $.Release.Namespace }}
 data:
   tls.crt: {{ $server.tls.cert }}
