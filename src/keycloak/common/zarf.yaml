@@ -48,7 +48,7 @@ components:
                   echo "Keycloak is not deployed in HA mode, skipping scale down."
                 fi
               else
-                echo "Keycloak 26.0.5 is already installed, skipping scale down."
+                echo "Keycloak is already installed, skipping scale down."
               fi
         after:
           - description: Validate Keycloak Pods

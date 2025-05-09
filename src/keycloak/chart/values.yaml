@@ -124,6 +124,8 @@ smtp:
 
 # Configure FIPS mode for Keycloak
 fips: false
+# By default, Keycloak requires 14+ character passwords in FIPS mode. This switch disables this requirement.
+fipsAllowWeakPasswords: false
 
 #  Pod priority class name
 priorityClassName: ""
