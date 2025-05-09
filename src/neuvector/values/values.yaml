@@ -9,6 +9,8 @@ manager:
     ssl: false
   svc:
     type: ClusterIP
+  probes:
+    enabled: true
 
 internal:
   autoRotateCert: true
@@ -31,11 +33,6 @@ controller:
   env:
     - name: NO_DEFAULT_ADMIN
       value: "1"
-  podAnnotations:
-    # Prevent istio from rewriting TCP Port readiness checks
-    # We modify the default readinessProbe for neuvector controller in pepr
-    # See https://github.com/defenseunicorns/uds-core/issues/1446
-    sidecar.istio.io/rewriteAppHTTPProbers: "false"
 
 cve:
   updater:
@@ -44,10 +41,3 @@ cve:
 crdwebhook:
   enabled: false
   type: ClusterIP
-
-enforcer:
-  podAnnotations:
-    # Prevent istio from rewriting TCP Port readiness checks
-    # We add default a readinessProbe and livenessProbe for neuvector enforcer in pepr
-    # See https://github.com/defenseunicorns/uds-core/issues/1446
-    sidecar.istio.io/rewriteAppHTTPProbers: "false"
