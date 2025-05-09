@@ -130,6 +130,9 @@
     "configImage": {
       "type": "string"
     },
+    "mtlsClientCert": {
+      "type": "string"
+    },
     "debugMode": {
       "type": "boolean"
     },

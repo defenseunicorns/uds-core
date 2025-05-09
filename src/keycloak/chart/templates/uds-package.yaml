@@ -170,7 +170,7 @@ spec:
               remove:
                 - istio-mtls-client-certificate
               add:
-                istio-mtls-client-certificate: "%DOWNSTREAM_PEER_CERT%"
+                istio-mtls-client-certificate: "{{ .Values.mtlsClientCert }}"
 
       - description: "public auth access with optional client certificate"
         service: keycloak-http
@@ -184,7 +184,7 @@ spec:
               remove:
                 - istio-mtls-client-certificate
               add:
-                istio-mtls-client-certificate: "%DOWNSTREAM_PEER_CERT%"
+                istio-mtls-client-certificate: "{{ .Values.mtlsClientCert }}"
 
       - description: "admin access with optional client certificate"
         service: keycloak-http
@@ -199,4 +199,4 @@ spec:
               remove:
                 - istio-mtls-client-certificate
               add:
-                istio-mtls-client-certificate: "%DOWNSTREAM_PEER_CERT%"
+                istio-mtls-client-certificate: "{{ .Values.mtlsClientCert }}"
