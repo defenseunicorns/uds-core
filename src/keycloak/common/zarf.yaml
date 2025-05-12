@@ -19,37 +19,6 @@ components:
           - ../chart/values.yaml
     actions:
       onDeploy:
-        before:
-          - description: Scale down previous Keycloak pods if in HA Mode
-            mute: true
-            cmd: |
-              set +e
-              # Check if Keycloak is installed
-              KEYCLOAK_INSTALLED=$(zarf tools kubectl get sts -n keycloak keycloak > /dev/null 2>&1; echo $?)
-              echo "KEYCLOAK_INSTALLED: $KEYCLOAK_INSTALLED"  # Check the value
-
-              # Check if Keycloak is not yet on the latest version
-              KEYCLOAK_IS_LATEST=$(zarf tools kubectl get sts -n keycloak -l helm.sh/chart=keycloak-26.0.5 -ojsonpath='{.items[].metadata.name}' > /dev/null 2>&1; echo $?)
-              echo "KEYCLOAK_IS_LATEST: $KEYCLOAK_IS_LATEST"  # Check the value
-
-              # Check if Keycloak is in HA mode
-              KEYCLOAK_IS_HA=$(zarf tools kubectl get hpa keycloak -n keycloak > /dev/null 2>&1; echo $?)
-              echo "KEYCLOAK_IS_HA: $KEYCLOAK_IS_HA"  # Check the value
-
-              # If Keycloak is installed but not the latest, check if HA is enabled, then delete HPA and scale down
-              if [ "${KEYCLOAK_INSTALLED}" -eq 0 ] && [ "${KEYCLOAK_IS_LATEST}" -ne 0 ]; then
-                if [ "${KEYCLOAK_IS_HA}" -eq 0 ]; then
-                  echo "Keycloak is installed and not on the latest version. Scaling down..."
-                  zarf tools kubectl delete hpa keycloak -n keycloak
-                  zarf tools kubectl scale statefulsets keycloak -n keycloak --replicas=1
-                  zarf tools kubectl wait --for=jsonpath='{.status.replicas}'=1 statefulset/keycloak -n keycloak --timeout=60s
-                  export KEYCLOAK_IS_HA=true
-                else
-                  echo "Keycloak is not deployed in HA mode, skipping scale down."
-                fi
-              else
-                echo "Keycloak 26.0.5 is already installed, skipping scale down."
-              fi
         after:
           - description: Validate Keycloak Pods
             wait:
