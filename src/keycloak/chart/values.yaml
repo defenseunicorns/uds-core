@@ -314,3 +314,4 @@ autoscaling:
 env: []
 
 x509LookupProvider: nginx
+mtlsClientCert: "%DOWNSTREAM_PEER_CERT%"
