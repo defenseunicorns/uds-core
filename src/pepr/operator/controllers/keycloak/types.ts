@@ -39,6 +39,7 @@ export interface Client {
 
 // Define a constant array of keys
 export const clientKeys = [
+  "adminUrl",
   "alwaysDisplayInConsole",
   "attributes",
   "authenticationFlowBindingOverrides",
