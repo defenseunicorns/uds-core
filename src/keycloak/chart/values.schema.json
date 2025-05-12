@@ -151,6 +151,9 @@
     "fips": {
       "type": "boolean"
     },
+    "fipsAllowWeakPasswords": {
+      "type": "boolean"
+    },
     "image": {
       "type": "object",
       "properties": {
