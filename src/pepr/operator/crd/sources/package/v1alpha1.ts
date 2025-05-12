@@ -337,6 +337,11 @@ const sso = {
           "Default URL to use when the auth server needs to redirect or link back to the client.",
         type: "string",
       },
+      adminUrl: {
+        description:
+          "This URL will be used for every binding to both the SP's Assertion Consumer and Single Logout Services.",
+        type: "string",
+      },
       protocol: {
         description: "Specifies the protocol of the client, either 'openid-connect' or 'saml'",
         type: "string",
