@@ -4,9 +4,10 @@
  */
 
 import { KubernetesObject, V1Container, V1SecurityContext } from "@kubernetes/client-node";
-import { Capability, PeprMutateRequest, PeprValidateRequest, a } from "pepr";
+import { Capability, PeprMutateRequest, PeprValidateRequest, a, sdk } from "pepr";
 import { Policy } from "../operator/crd";
 
+const { containers } = sdk;
 export type Ctx = {
   name?: string;
   ctx: V1SecurityContext;
@@ -23,15 +24,6 @@ export const { When } = policies;
 // Returns all volumes in the pod
 export function volumes(request: PeprValidateRequest<a.Pod>) {
   return request.Raw.spec?.volumes || [];
-}
-
-// Returns all containers in the pod
-export function containers(request: PeprValidateRequest<a.Pod> | PeprMutateRequest<a.Pod>) {
-  return [
-    ...(request.Raw.spec?.containers || []),
-    ...(request.Raw.spec?.initContainers || []),
-    ...(request.Raw.spec?.ephemeralContainers || []),
-  ];
 }
 
 /**

@@ -1,51 +1,62 @@
 # Copyright 2024 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
-resource "random_password" "db_password" {
+resource "random_password" "db_passwords" {
+  for_each = var.databases
+
   length  = 16
-  special = false
+  special = true
+  upper = true
+  lower = true
+  override_special = "#$"
 }
 
-resource "aws_secretsmanager_secret" "db_secret" {
-  name                    = "${var.db_name}-db-secret-${random_id.unique_id.hex}"
-  description             = "DB authentication token for ${var.db_name}"
+resource "aws_secretsmanager_secret" "db_secrets" {
+  for_each = var.databases
+
+  name                    = "${each.value.name}-db-secret-${random_id.unique_id.hex}"
+  description             = "DB authentication token for ${each.value.name}"
   recovery_window_in_days = var.recovery_window
 }
 
-resource "aws_secretsmanager_secret_version" "db_secret_value" {
-  depends_on    = [aws_secretsmanager_secret.db_secret]
-  secret_id     = aws_secretsmanager_secret.db_secret.id
-  secret_string = random_password.db_password.result
+resource "aws_secretsmanager_secret_version" "db_secret_values" {
+  for_each = var.databases
+
+  depends_on    = [aws_secretsmanager_secret.db_secrets]
+  secret_id     = aws_secretsmanager_secret.db_secrets[each.key].id
+  secret_string = random_password.db_passwords[each.key].result
 }
 
-module "db" {
+module "dbs" {
   source  = "terraform-aws-modules/rds/aws"
   version = "6.12.0"
 
-  identifier                     = "${var.name}-db"
+  for_each = var.databases
+
+  identifier                     = "${var.name}-${each.value.name}-db"
   instance_use_identifier_prefix = true
 
-  allocated_storage       = var.db_allocated_storage
+  allocated_storage       = each.value.allocated_storage
   backup_retention_period = 1
   backup_window           = "03:00-06:00"
   maintenance_window      = "Mon:00:00-Mon:03:00"
   skip_final_snapshot     = true
 
   engine               = "postgres"
-  engine_version       = var.db_engine_version
-  major_engine_version = split(".", var.db_engine_version)[0]
-  family               = "postgres16"
-  instance_class       = var.db_instance_class
+  engine_version       = each.value.engine_version
+  major_engine_version = split(".", each.value.engine_version)[0]
+  family               = each.value.family
+  instance_class       = each.value.instance_class
 
-  db_name  = var.db_name
-  username = var.username
-  port     = var.db_port
+  db_name  = each.value.name
+  username = each.value.username
+  port     = each.value.port
 
   subnet_ids                  = data.aws_subnets.rds_subnets.ids
   create_db_subnet_group      = true
   create_db_parameter_group   = false
   manage_master_user_password = false
-  password                    = random_password.db_password.result
+  password                    = random_password.db_passwords[each.key].result
 
   vpc_security_group_ids = [aws_security_group.rds_sg.id]
 
@@ -55,7 +66,7 @@ module "db" {
 }
 
 resource "aws_security_group" "rds_sg" {
-  vpc_id = data.aws_vpc.rds_vpc.id
+  vpc_id = data.aws_vpc.vpc.id
 
   egress {
     from_port        = 0
@@ -73,18 +84,4 @@ resource "aws_vpc_security_group_ingress_rule" "rds_ingress" {
   ip_protocol = "tcp"
   from_port   = 0
   to_port     = 5432
-}
-
-data "aws_vpc" "rds_vpc" {
-  filter {
-    name   = "tag:Name"
-    values = [var.vpc_name]
-  }
-}
-
-data "aws_subnets" "rds_subnets" {
-  filter {
-    name   = "vpc-id"
-    values = [data.aws_vpc.rds_vpc.id]
-  }
 }

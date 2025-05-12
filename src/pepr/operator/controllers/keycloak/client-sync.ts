@@ -8,8 +8,8 @@ import { fetch, K8s, kind } from "pepr";
 import { Component, setupLogger } from "../../../logger";
 import { Sso, UDSPackage } from "../../crd";
 import { getOwnerRef, purgeOrphans, sanitizeResourceName } from "../utils";
+import { credentialsCreateOrUpdate, credentialsDelete } from "./clients/client-credentials";
 import { Client, clientKeys } from "./types";
-import { createOrUpdateClient, deleteClient } from "./clients/keycloak-client";
 
 const samlDescriptorUrl =
   "http://keycloak-http.keycloak.svc.cluster.local:8080/realms/uds/protocol/saml/descriptor";
@@ -80,7 +80,7 @@ export async function purgeSSOClients(pkg: UDSPackage, newClients: string[] = []
   const toRemove = currentClients.filter(client => !newClients.includes(client));
   for (const ref of toRemove) {
     try {
-      await deleteClient({ clientId: ref });
+      await credentialsDelete({ clientId: ref });
     } catch (err) {
       log.warn(
         pkg.metadata,
@@ -132,7 +132,7 @@ async function syncClient(
   let client = convertSsoToClient(clientReq);
 
   try {
-    client = await createOrUpdateClient(client, isRetry);
+    client = await credentialsCreateOrUpdate(client);
   } catch (err) {
     const msg =
       `Failed to process Keycloak request for client '${client.clientId}', package ` +

@@ -129,7 +129,7 @@ spec:
 
             ## Activate the nginx provider
             - name: KC_SPI_X509CERT_LOOKUP_PROVIDER
-              value: nginx
+              value: {{ .Values.x509LookupProvider }}
             # Set nginx provider header name
             - name: KC_SPI_X509CERT_LOOKUP_NGINX_SSL_CLIENT_CERT
               value: istio-mtls-client-certificate

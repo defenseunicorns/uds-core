@@ -22,12 +22,16 @@ resource "local_sensitive_file" "uds_config" {
         "velero_bucket_credential_name" : "",
         "velero_bucket_credential_key" : "",
         "grafana_ha" : true,
-        "grafana_pg_host" : element(split(":", module.db.db_instance_endpoint), 0),
-        "grafana_pg_port" : var.db_port,
-        "grafana_pg_database" : var.db_name,
-        "grafana_pg_password" : random_password.db_password.result,
-        "grafana_pg_user" : var.username
-      }
+        "grafana_pg_host" : element(split(":", module.dbs["grafana"].db_instance_endpoint), 0),
+        "grafana_pg_port" : var.databases["grafana"].port,
+        "grafana_pg_database" : var.databases["grafana"].name,
+        "grafana_pg_password" : random_password.db_passwords["grafana"].result,
+        "grafana_pg_user" : var.databases["grafana"].username,
+        "keycloak_db_host" : element(split(":", module.dbs["keycloak"].db_instance_endpoint), 0),
+        "keycloak_db_username" : var.databases["keycloak"].username,
+        "keycloak_db_database" : var.databases["keycloak"].name,
+        "keycloak_db_password" : random_password.db_passwords["keycloak"].result
+      },
       "init" : {
         # Workaround for Bottlerocket EBS issue - https://github.com/bottlerocket-os/bottlerocket/issues/2417
         "registry_hpa_enable" : false

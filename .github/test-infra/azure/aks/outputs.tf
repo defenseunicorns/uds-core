@@ -33,33 +33,38 @@ output "subscription_id" {
   sensitive = true
 }
 
-output "grafana_pg_host" {
-  description = "DB Endpoint for Grafana"
-  value       = azurerm_postgresql_flexible_server.grafana_psql_server.fqdn
+output "pg_host" {
+  description = "DB Endpoint"
+  value       = azurerm_postgresql_flexible_server.psql_server.fqdn
   sensitive   = true
 }
 
-output "grafana_pg_port" {
-  description = "DB Port for Grafana"
+output "pg_port" {
+  description = "DB Port"
   value       = var.db_port
 }
 
 output "grafana_pg_database" {
   description = "Database name for Grafana"
-  value       = var.db_name
+  value       = azurerm_postgresql_flexible_server_database.grafana_psql_db.name
 }
 
 output "grafana_pg_user" {
-  description = "Database username for Grafana"
+  description = "Database username"
   value       = var.username
 }
 
 output "grafana_pg_password" {
-  description = "RDS Password for Grafana"
+  description = "RDS Password"
   value       = random_password.db_password.result
   sensitive   = true
 }
 
 output "grafana_ha" {
   value = true
+}
+
+output "keycloak_pg_database" {
+  description = "Database name for Keycloak"
+  value       = azurerm_postgresql_flexible_server_database.keycloak_psql_db.name
 }

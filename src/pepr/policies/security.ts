@@ -3,19 +3,19 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { a } from "pepr";
+import { a, sdk } from "pepr";
 
 import { V1SecurityContext } from "@kubernetes/client-node";
 import { Policy } from "../operator/crd";
 import {
   When,
   annotateMutation,
-  containers,
   securityContextContainers,
   securityContextMessage,
 } from "./common";
 import { exemptionAnnotationPrefix, isExempt, markExemption } from "./exemptions";
 
+const { containers } = sdk;
 /**
  * This policy ensures that Pods do not allow privilege escalation.
  *

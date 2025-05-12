@@ -8,6 +8,8 @@ metadata:
   namespace: {{ .Release.Namespace }}
 spec:
   network:
+    serviceMesh:
+      mode: ambient
     allow:
       # Permit intra-namespace communication for multi-replica setup
       - direction: Ingress

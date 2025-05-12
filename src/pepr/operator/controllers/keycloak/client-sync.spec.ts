@@ -27,6 +27,7 @@ const mockClient: Client = {
   frontchannelLogout: true,
   fullScopeAllowed: true,
   implicitFlowEnabled: true,
+  name: "Test Client",
   nodeReRegistrationTimeout: 1,
   notBefore: 1,
   optionalClientScopes: [],
@@ -56,6 +57,7 @@ const mockClientStringified: Record<string, string> = {
   frontchannelLogout: "true",
   fullScopeAllowed: "true",
   implicitFlowEnabled: "true",
+  name: "Test Client",
   nodeReRegistrationTimeout: "1",
   notBefore: "1",
   optionalClientScopes: "[]",
@@ -152,6 +154,7 @@ describe("convertSsoToClient function", () => {
 
     const expectedClient: Partial<Client> = {
       clientId: "test-client",
+      name: "Test Client",
       attributes: { "uds.core.groups": "" },
     };
 
@@ -190,6 +193,7 @@ describe("convertSsoToClient function", () => {
       },
       defaultClientScopes: ["scope1", "scope2"],
       enabled: true,
+      name: "Test Client",
       publicClient: true,
       redirectUris: ["https://example.com/callback"],
       secret: "secret",
@@ -211,6 +215,7 @@ describe("convertSsoToClient function", () => {
 
     const expectedClient: Partial<Client> = {
       clientId: "test-client",
+      name: "Test Client",
       attributes: { "uds.core.groups": '{"anyOf":[]}' },
       registrationAccessToken: undefined,
       samlIdpCertificate: undefined,
@@ -228,6 +233,7 @@ describe("convertSsoToClient function", () => {
 
     const expectedClient: Partial<Client> = {
       clientId: "test-client",
+      name: "Test Client",
       attributes: { "uds.core.groups": "" },
     };
 
@@ -266,6 +272,7 @@ describe("convertSsoToClient function", () => {
       },
       defaultClientScopes: ["scope1", "scope2"],
       enabled: true,
+      name: "Test Client",
       publicClient: true,
       redirectUris: ["https://example.com/callback"],
       secret: "secret",

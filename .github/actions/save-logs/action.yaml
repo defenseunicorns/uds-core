@@ -69,6 +69,15 @@ runs:
         echo "::endgroup::"
       shell: bash
 
+    - name: Keycloak Debug
+      if: ${{ inputs.distro != 'k3d' }}
+      run: |
+        echo "::group::Fetch Keycloak logs"
+        uds zarf tools kubectl logs sts/keycloak -n keycloak --tail -1 > /tmp/keycloak-logs.log
+        uds zarf tools kubectl logs sts/keycloak -n keycloak --tail -1 --previous > /tmp/keycloak-previous-logs.log || true
+        echo "::endgroup::"
+      shell: bash
+
     - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
       with:
         name: debug-log${{ inputs.suffix }}
@@ -83,3 +92,4 @@ runs:
           /tmp/playwright/output
           /tmp/playwright/reports
           /tmp/pepr-*.log
+          /tmp/keycloak-*.log

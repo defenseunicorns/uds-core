@@ -20,6 +20,7 @@ export interface Client {
   frontchannelLogout: boolean;
   fullScopeAllowed: boolean;
   implicitFlowEnabled: boolean;
+  name: string;
   nodeReRegistrationTimeout: number;
   notBefore: number;
   optionalClientScopes: string[];
@@ -53,6 +54,7 @@ export const clientKeys = [
   "frontchannelLogout",
   "fullScopeAllowed",
   "implicitFlowEnabled",
+  "name",
   "nodeReRegistrationTimeout",
   "notBefore",
   "optionalClientScopes",

@@ -1,0 +1,19 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+{{- if .Capabilities.APIVersions.Has "gateway.networking.k8s.io/v1" }}
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: {{ include "keycloak.fullname" . }}-waypoint
+  namespace: {{ .Release.Namespace }}
+spec:
+  gatewayClassName: istio-waypoint
+  listeners:
+    - name: mesh
+      port: 15008
+      protocol: HBONE
+  infrastructure:
+    labels:
+      app.kubernetes.io/name: {{ include "keycloak.fullname" . }}
+{{- end }}
