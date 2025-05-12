@@ -76,6 +76,7 @@ packages:
             - name: GRAFANA_PG_PASSWORD
               description: Grafana postgresql password
               path: postgresql.password
+              sensitive: true
             - name: GRAFANA_PG_USER
               description: Grafana postgresql username
               path: postgresql.user
@@ -95,3 +96,4 @@ packages:
               path: postgresql.database
             - name: KEYCLOAK_DB_PASSWORD
               path: postgresql.password
+              sensitive: true
