@@ -3,6 +3,7 @@
 
 {{- $domain := tpl .Values.domain . }}
 {{- $rootTLS := .Values.rootDomain.tls | default dict -}}
+{{- $rootEnableHttpsRedirect := .Values.rootDomain.enableHttpsRedirect | default true -}}
 {{- $rootMode := $rootTLS.mode | default ($.Values.tls.mode | default "SIMPLE") -}}
 {{- $rootSupportTLS := $rootTLS.supportTLSV1_2 | default ($.Values.tls.supportTLSV1_2 | default false) -}}
 {{- if .Values.tls }}
@@ -24,8 +25,10 @@ spec:
         name: "http-{{ $name }}"
         number: 80
         protocol: HTTP
+      {{- if or (not (hasKey $server "enableHttpsRedirect")) $server.enableHttpsRedirect }}
       tls:
         httpsRedirect: true
+      {{- end }}
     - hosts:
         {{- range $server.hosts | default (list "*") }}
         - "{{ . }}.{{ $domain }}"
@@ -48,8 +51,10 @@ spec:
         name: "http-root-domain"
         number: 80
         protocol: HTTP
+      {{- if $rootEnableHttpsRedirect }}
       tls:
         httpsRedirect: true
+      {{- end }}
     - hosts:
         - "{{ $domain }}"
       port:
