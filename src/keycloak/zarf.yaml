@@ -27,7 +27,7 @@ components:
           - "values/upstream-values.yaml"
     images:
       - quay.io/keycloak/keycloak:26.2.3
-      - ghcr.io/defenseunicorns/uds/identity-config:0.13.1
+      - ghcr.io/defenseunicorns/uds/identity-config:0.14.0
 
   - name: keycloak
     required: true
@@ -41,7 +41,7 @@ components:
           - "values/registry1-values.yaml"
     images:
       - registry1.dso.mil/ironbank/opensource/keycloak/keycloak:26.2.3
-      - ghcr.io/defenseunicorns/uds/identity-config:0.13.1
+      - ghcr.io/defenseunicorns/uds/identity-config:0.14.0
 
   - name: keycloak
     required: true
@@ -59,4 +59,4 @@ components:
       # and Keycloak is no exception. Again, this effort doesn't change anything in terms of UDS Security and FIPS compliance posture.
       # The switch is tracked via https://github.com/defenseunicorns/uds-core/issues/1541
       - cgr.dev/du-uds-defenseunicorns/keycloak:26.2.3
-      - ghcr.io/defenseunicorns/uds/identity-config:0.13.1
+      - ghcr.io/defenseunicorns/uds/identity-config:0.14.0
