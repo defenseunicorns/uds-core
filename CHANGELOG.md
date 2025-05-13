@@ -2,6 +2,45 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.42.0](https://github.com/defenseunicorns/uds-core/compare/v0.41.2...v0.42.0) (2025-05-12)
+
+
+### ⚠ BREAKING CHANGES
+
+* This release switches the default way that the UDS Operator creates and manages Keycloak clients. Make sure you have followed the 0.11.0 realm updates for identity-config if upgrading an existing installation. Realm upgrades are not currently automated and the upgrade steps for the new client credentials are required.
+
+### Features
+
+* ability to add adminUrl to Keycloak client ([#1545](https://github.com/defenseunicorns/uds-core/issues/1545)) ([9a155eb](https://github.com/defenseunicorns/uds-core/commit/9a155eb268ca6e97a543df7faa8056276c6960a9))
+* add saml_idp_initiated_sso_url_name to allowed keycloak attributes ([#1539](https://github.com/defenseunicorns/uds-core/issues/1539)) ([01217e8](https://github.com/defenseunicorns/uds-core/commit/01217e88df089d35ee55339dcb395adf9963d6d4))
+* add support for `use.refresh.tokens` keycloak attribute ([#1536](https://github.com/defenseunicorns/uds-core/issues/1536)) ([b21ef54](https://github.com/defenseunicorns/uds-core/commit/b21ef544771390a99bbcc7d9193eb52015cb1396))
+* configurable Istio mtlsClientCert ([#1553](https://github.com/defenseunicorns/uds-core/issues/1553)) ([c34047e](https://github.com/defenseunicorns/uds-core/commit/c34047e26bb7edb01d09b31184c9c426ad22b4f6))
+* configurable tls redirect ([#1522](https://github.com/defenseunicorns/uds-core/issues/1522)) ([e1c4afd](https://github.com/defenseunicorns/uds-core/commit/e1c4afd8c22d724d0def131662cfe65a8dc947d6))
+* configurable x509 lookup provider for keycloak ([#1521](https://github.com/defenseunicorns/uds-core/issues/1521)) ([41342b4](https://github.com/defenseunicorns/uds-core/commit/41342b4cd8829a720eff5d83f42ecf70b55d3af2))
+* keycloak ambient opt in ([#1504](https://github.com/defenseunicorns/uds-core/issues/1504)) ([0ea0666](https://github.com/defenseunicorns/uds-core/commit/0ea0666a7e992f94df70a163fb987498f383862f))
+* keycloak fips ([#1537](https://github.com/defenseunicorns/uds-core/issues/1537)) ([476ed07](https://github.com/defenseunicorns/uds-core/commit/476ed0731c41ab4f511ac06aea8dea62826e1d2c))
+* opt authservice into ambient mode ([#1514](https://github.com/defenseunicorns/uds-core/issues/1514)) ([606074c](https://github.com/defenseunicorns/uds-core/commit/606074c7f6d9bfbb0f84bb8679e609eb3d89ccf2))
+
+
+### Bug Fixes
+
+* add support for client name in pepr types ([#1535](https://github.com/defenseunicorns/uds-core/issues/1535)) ([c29e4cb](https://github.com/defenseunicorns/uds-core/commit/c29e4cb6ca4c0d578202f3175fcf311c03507b49))
+* remove dynamic client registration ([#1479](https://github.com/defenseunicorns/uds-core/issues/1479)) ([3f4510e](https://github.com/defenseunicorns/uds-core/commit/3f4510eada55b0109cb2507045c408b4a812bc76))
+
+
+### Miscellaneous
+
+* **ci:** mark auth related vars as sensitive ([#1546](https://github.com/defenseunicorns/uds-core/issues/1546)) ([87ffc18](https://github.com/defenseunicorns/uds-core/commit/87ffc18ac2c35c116a56b3681be8969f60dfd705))
+* **deps:** update identity-config v0.14.0 ([#1555](https://github.com/defenseunicorns/uds-core/issues/1555)) ([b3f83c1](https://github.com/defenseunicorns/uds-core/commit/b3f83c1db18e17254a477c8e649b1e8572fa8f76))
+* **deps:** update keycloak to v26.2.3 ([#1523](https://github.com/defenseunicorns/uds-core/issues/1523)) ([7c354d3](https://github.com/defenseunicorns/uds-core/commit/7c354d3b1a78a9fb209548e1bd404f70ad8320e4))
+* **deps:** update keycloak to v26.2.4 ([#1544](https://github.com/defenseunicorns/uds-core/issues/1544)) ([680f55e](https://github.com/defenseunicorns/uds-core/commit/680f55ec41b6108541c980a3a049b0e8cae9f099))
+* **deps:** update pepr to v15.5.2 ([#1531](https://github.com/defenseunicorns/uds-core/issues/1531)) ([0aa2874](https://github.com/defenseunicorns/uds-core/commit/0aa28747cf52f67654e0654f9671ff5920ebc203))
+* **deps:** update pepr to v16 ([#1554](https://github.com/defenseunicorns/uds-core/issues/1554)) ([add9277](https://github.com/defenseunicorns/uds-core/commit/add9277f7aa0d6ea7f283ffe2e989c5c3e5247ec))
+* **deps:** update support dependencies to v3.5.3 ([#1538](https://github.com/defenseunicorns/uds-core/issues/1538)) ([151e65b](https://github.com/defenseunicorns/uds-core/commit/151e65b7eb5d3436ff1ac63addbd78968e954137))
+* **deps:** update support-deps ([#1520](https://github.com/defenseunicorns/uds-core/issues/1520)) ([34015a3](https://github.com/defenseunicorns/uds-core/commit/34015a3a7a8773172cedb54c654f2847f9659eb3))
+* **deps:** update support-deps ([#1540](https://github.com/defenseunicorns/uds-core/issues/1540)) ([4ce2399](https://github.com/defenseunicorns/uds-core/commit/4ce2399a6a00684739a95cba801573f258554b3e))
+* use built-in sdk for containers ([#1530](https://github.com/defenseunicorns/uds-core/issues/1530)) ([1e045ac](https://github.com/defenseunicorns/uds-core/commit/1e045acffecc60c38d6a59697c20c6ab2afc3610))
+
 ## [0.41.2](https://github.com/defenseunicorns/uds-core/compare/v0.41.1...v0.41.2) (2025-05-06)
 
 

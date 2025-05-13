@@ -130,6 +130,9 @@
     "configImage": {
       "type": "string"
     },
+    "mtlsClientCert": {
+      "type": "string"
+    },
     "debugMode": {
       "type": "boolean"
     },
@@ -146,6 +149,9 @@
       "type": "boolean"
     },
     "fips": {
+      "type": "boolean"
+    },
+    "fipsAllowWeakPasswords": {
       "type": "boolean"
     },
     "image": {
@@ -484,6 +490,9 @@
           }
         }
       }
+    },
+    "x509LookupProvider": {
+      "type": "string"
     }
   }
 }
