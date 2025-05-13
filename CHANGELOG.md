@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 ## [0.42.0](https://github.com/defenseunicorns/uds-core/compare/v0.41.2...v0.42.0) (2025-05-12)
 
 
+### ⚠ BREAKING CHANGES
+
+* This release switches the default way that the UDS Operator creates and manages Keycloak clients. Make sure you have followed the 0.11.0 realm updates for identity-config if upgrading an existing installation. Realm upgrades are not currently automated and the upgrade steps for the new client credentials are required.
+
 ### Features
 
 * ability to add adminUrl to Keycloak client ([#1545](https://github.com/defenseunicorns/uds-core/issues/1545)) ([9a155eb](https://github.com/defenseunicorns/uds-core/commit/9a155eb268ca6e97a543df7faa8056276c6960a9))
