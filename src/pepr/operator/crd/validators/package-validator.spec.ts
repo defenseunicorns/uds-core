@@ -640,7 +640,7 @@ describe("Test Allowed SSO Client Attributes", () => {
             "saml.client.signature": "false",
             "use.refresh.tokens": "false",
             "saml.encrypt": "false",
-            "saml_name_id_format": "username",
+            saml_name_id_format: "username",
             "saml.signing.certificate": "",
             saml_assertion_consumer_url_post: "https://nexus.uds.dev/saml",
             saml_assertion_consumer_url_redirect: "https://nexus.uds.dev/saml",
