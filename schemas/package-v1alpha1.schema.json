@@ -816,6 +816,10 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "adminUrl": {
+          "type": "string",
+          "description": "This URL will be used for every binding to both the SP's Assertion Consumer and Single Logout Services"
+        },
         "alwaysDisplayInConsole": {
           "type": "boolean",
           "description": "Always list this client in the Account UI, even if the user does not have an active\nsession."

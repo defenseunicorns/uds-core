@@ -620,6 +620,10 @@ export enum Mode {
 
 export interface Sso {
   /**
+   * This URL will be used for every binding to both the SP's Assertion Consumer and Single Logout Services.
+   */
+  adminUrl?: string;
+  /**
    * Always list this client in the Account UI, even if the user does not have an active
    * session.
    */
