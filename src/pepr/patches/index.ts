@@ -42,6 +42,44 @@ When(a.Service)
   });
 
 /**
+ * Mutate the Neuvector Controller Deployment to patch in new readinessProbe
+ * See issue for reference: https://github.com/defenseunicorns/uds-core/issues/1446
+ * This can be moved to values when probes are supported in the chart: https://github.com/neuvector/neuvector-helm/pull/487
+ * This can also be removed once the unicoorn image issue is resolved
+ */
+When(a.Deployment)
+  .IsCreatedOrUpdated()
+  .InNamespace("neuvector")
+  .WithName("neuvector-controller-pod")
+  .Mutate(async deploy => {
+    const controllerContainer = deploy.Raw.spec?.template.spec?.containers.find(
+      container => container.name === "neuvector-controller-pod",
+    );
+
+    if (controllerContainer) {
+      log.debug("Patching NeuVector Controller deployment to modify readinessProbe");
+      const readinessProbe = {
+        // Probe default port for controller REST API server
+        tcpSocket: { port: 10443 },
+      };
+      controllerContainer.readinessProbe = readinessProbe;
+    }
+  });
+
+/**
+ * Mutate the Neuvector controller service to publish not ready addresses
+ * This ensures that the controllers can detect others in the cluster before our probe returns ready
+ */
+When(a.Service)
+  .IsCreatedOrUpdated()
+  .InNamespace("neuvector")
+  .WithName("neuvector-svc-controller")
+  .Mutate(async svc => {
+    log.debug("Patching NeuVector Controller service to publish not ready addresses");
+    svc.Raw.spec!.publishNotReadyAddresses = true;
+  });
+
+/**
  * Mutate the Neuvector UI service to add labels to use the waypoint
  * This can be moved to values when labels are supported in the chart: https://github.com/neuvector/neuvector-helm/pull/487
  */
