@@ -77,11 +77,10 @@ components:
             cmd: |
               if [ \"${ZARF_VAR_CNI_BIN_DIR}\" = \"\" ]; then
                 if ./zarf tools kubectl version -o json 2>/dev/null | ./zarf tools yq '.serverVersion.gitVersion' 2>/dev/null | grep -q "k3s"; then
-                  if ./zarf tools kubectl get nodes -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}' 2>/dev/null | grep -q "k3d"; then
-                    echo "/bin/"
-                  else
-                    echo "/var/lib/rancher/k3s/data/cni"
-                  fi
+                  # Note: this was previously the k3d bin dir, but with k3s 1.31.7 it has changed to the default k3s dir
+                  # if ./zarf tools kubectl get nodes -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}' 2>/dev/null | grep -q "k3d"; then
+                  #   echo "/bin/"
+                  echo "/var/lib/rancher/k3s/data/cni"
                 else
                   echo "/opt/cni/bin"
                 fi
