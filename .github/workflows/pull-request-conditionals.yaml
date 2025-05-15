@@ -32,6 +32,7 @@ permissions:
   contents: read # Allows reading the content of the repository.
   pull-requests: write # Allows writing pull request metadata.
   packages: read # Allows reading the published GHCR packages
+  actions: write # Allows for triggering `workflow_dispatch` events
 
 # Default settings for all run commands in the workflow jobs.
 defaults:
@@ -58,7 +59,8 @@ jobs:
     runs-on: ubuntu-latest
     name: Select Jobs
     outputs:
-      packages: ${{ steps.path-filter.outputs.changes }}
+      combined: ${{ steps.combine-path-filters.outputs.combined }}
+      distros: ${{ steps.path-filter-iac.outputs.changes }}
 
     steps:
       - name: Checkout the code
@@ -70,12 +72,57 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
+      # Add a custom filter for all packages that excludes any changes to IaC testing related config
+      # Noting that adding `predicate-quantifier` produces a false warning message about an unexpected input, despite still being evaluated by the action
+      - name: Check src paths - all
+        id: path-filter-all
+        uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3
+        with:
+          predicate-quantifier: 'every'
+          filters: |
+            all:
+              - "**"
+              - "!.github/workflows/test-aks.yaml"
+              - "!.github/workflows/test-eks.yaml"
+              - "!.github/workflows/test-rke2.yaml"
+              - "!.github/bundles/**"
+
       # Uses a custom action to filter paths for source packages.
-      - name: Check src paths
+      - name: Check src paths - packages
         id: path-filter
         uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3
         with:
           filters: .github/filters.yaml
+
+      - name: Check iac distros src paths
+        id: path-filter-iac
+        uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3
+        with:
+          filters: |
+            aks:
+              - "tasks/iac.yaml"
+              - ".github/bundles/aks/**"
+              - ".github/test-infra/azure/aks/**"
+              - ".github/workflows/test-aks.yaml"
+            rke2:
+              - "tasks/iac.yaml"
+              - ".github/bundles/rke2/**"
+              - ".github/test-infra/aws/rke2/**"
+              - ".github/workflows/test-rke2.yaml"
+            eks:
+              - "tasks/iac.yaml"
+              - ".github/bundles/eks/**"
+              - ".github/test-infra/aws/eks/**"
+              - ".github/workflows/test-eks.yaml"
+
+      - name: Merge Path Filter Outputs for Packages
+        id: combine-path-filters
+        run: |
+          allPackageChanges='${{ steps.path-filter-all.outputs.changes }}'
+          packageChanges='${{ steps.path-filter.outputs.changes }}'
+          COMBINED=$(echo $allPackageChanges $packageChanges | jq -s 'add')
+          echo combined=$COMBINED >> $GITHUB_OUTPUT
+          echo The following packages will be triggered: $COMBINED
 
   # This job triggers a separate workflow for each changed source package, if any.
   run-package-test:
@@ -83,7 +130,7 @@ jobs:
     name: Schedule
     strategy:
       matrix:
-        package: ${{ fromJSON(needs.check-paths.outputs.packages) }}
+        package: ${{ fromJson(needs.check-paths.outputs.combined) }}
         flavor: [upstream, registry1, unicorn]
         test_type: [install]
         # Upgrade tests are included for all flavors, but ONLY for `all` package tests
@@ -103,6 +150,168 @@ jobs:
       flavor: ${{ matrix.flavor }}
       test_type: ${{ matrix.test_type }}
     secrets: inherit # Inherits all secrets from the parent workflow.
+
+  # Trigger IaC
+  run-iac-test:
+    needs: check-paths
+    name: Schedule IaC
+    runs-on: ubuntu-latest
+    if: ${{ needs.check-paths.outputs.distros != '[]' || contains(github.event.pull_request.labels.*.name, 'test-all-iac') || contains(github.event.pull_request.labels.*.name, 'test-aks') || contains(github.event.pull_request.labels.*.name, 'test-rke2') || contains(github.event.pull_request.labels.*.name, 'test-eks') }}
+    steps:
+      - name: Dispatch IaC Workflows
+        uses: actions/github-script@v7
+        env:
+          DISTROS_MODIFIED: ${{ needs.check-paths.outputs.distros }}
+          HAS_ALL_DISTROS_LABEL: ${{ contains(github.event.pull_request.labels.*.name, 'test-all-iac') }}
+          HAS_AKS_LABEL: ${{ contains(github.event.pull_request.labels.*.name, 'test-aks') }}
+          HAS_RKE2_LABEL: ${{ contains(github.event.pull_request.labels.*.name, 'test-rke2') }}
+          HAS_EKS_LABEL: ${{ contains(github.event.pull_request.labels.*.name, 'test-eks') }}
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const ref = process.env.GITHUB_HEAD_REF
+            const hasTestAllIacLabel = process.env.HAS_ALL_DISTROS_LABEL === 'true';
+            const hasTestAksLabel = process.env.HAS_AKS_LABEL === 'true';
+            const hasTestRke2Label = process.env.HAS_RKE2_LABEL === 'true';
+            const hasTestEksLabel = process.env.HAS_EKS_LABEL === 'true';
+            let distros = new Set();
+
+            if (hasTestAllIacLabel || (hasTestAksLabel && hasTestRke2Label && hasTestEksLabel)) {
+              console.log('Triggering tests for all distros.');
+              distros = new Set(["aks", "rke2", "eks"]);
+            } else {
+              if (process.env.HAS_AKS_LABEL === 'true') {
+                distros.add("aks");
+                console.log("Triggering AKS test based on label.")
+              }
+              if (process.env.HAS_RKE2_LABEL === 'true') {
+                distros.add("rke2");
+                console.log("Triggering RKE2 test based on label.")
+              }
+               if (process.env.HAS_EKS_LABEL === 'true') {
+                distros.add("eks");
+                console.log("Triggering EKS test based on label.")
+              }
+              const defaultDistros = JSON.parse(process.env.DISTROS_MODIFIED) ?? [];
+              defaultDistros.forEach(distro => {
+                console.log(`Triggering ${distro.toUpperCase()} test based on modified files.`);
+                distros.add(distro);
+              });
+            }
+
+            for (const distro of distros) {
+              let workflow_id;
+              if (distro === 'aks') {
+                workflow_id = 'test-aks.yaml';
+              } else if (distro === 'rke2') {
+                workflow_id = 'test-rke2.yaml';
+              } else if (distro === 'eks') {
+                workflow_id = 'test-eks.yaml';
+              } else {
+                  console.warn(`No workflow defined for distro: ${distro}`);
+                  continue;
+              }
+              try {
+                console.log(`Dispatching workflow ${workflow_id} for distro ${distro}`);
+                await github.rest.actions.createWorkflowDispatch({
+                  owner,
+                  repo,
+                  workflow_id,
+                  ref,
+                  inputs: {
+                    triggered_by: `https://github.com/${owner}/${repo}/actions/runs/${process.env.GITHUB_RUN_ID}`
+                  }
+                });
+                console.log(`Successfully dispatched workflow ${workflow_id} for distro ${distro}`);
+              } catch (error) {
+                console.error(`Failed to dispatch workflow ${workflow_id} for distro ${distro}:`, error);
+                if (error.message.includes('rate limit exceeded')) {
+                  console.warn('Rate limit exceeded. Consider adding a delay before retrying.');
+                } else {
+                  console.error('An unexpected error occurred during workflow dispatch.');
+                }
+                core.setFailed(`Workflow dispatch failed for ${distro}: ${error.message}`);
+              }
+            }
+
+  check-iac-test:
+    needs: [check-paths, run-iac-test]
+    name: Wait for IaC
+    runs-on: ubuntu-latest
+    # Only wait for status when the PR directly modifies IaC workflow related files
+    #todo: trigger on same as above and milestone
+    if: ${{ needs.check-paths.outputs.distros != '[]' }}
+    steps:
+      - name: Check IaC Workflow Status
+        uses: actions/github-script@v7
+        env:
+          DISTROS_MODIFIED: ${{ needs.check-paths.outputs.distros }}
+          COMMIT_SHA: ${{ github.event.pull_request.head.sha }}
+        with:
+          script: |
+            const workflow_ids = JSON.parse(process.env.DISTROS_MODIFIED)
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const sha = process.env.COMMIT_SHA;
+            let conclusions = [];
+
+            for (const workflow_id of workflow_ids) {
+              try {
+                let conclusion = null;
+                let workflow_runs = [];
+                while (conclusion === null) {
+                  const response = await github.rest.actions.listWorkflowRunsForRepo({
+                    owner: owner,
+                    repo: repo,
+                    workflow_id: "test-${workflow_id}.yaml",
+                    head_sha: sha,
+                  });
+
+                  if (response.data.workflow_runs && response.data.workflow_runs.length > 0) {
+                    workflow_runs = response.data.workflow_runs;
+                    //If there are multiple attempts, the latest one should be reported first
+                    conclusion = response.data.workflow_runs[0].conclusion;
+                    url = response.data.workflow_runs[0].html_url;
+                    if (conclusion === null) {
+                      await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds
+                    }
+                  } else {
+                    console.log(`No workflows found matching ${workflow_id} and ${sha}`)
+                    conclusion = 'No runs found for this workflow and SHA';
+                    url = "";
+                  }
+
+                }
+                conclusions.push({
+                  workflow_id: workflow_id,
+                  conclusion: conclusion,
+                  url: url
+                });
+                if (conclusion !== 'success') {
+                  allSuccessful = false;
+                };
+
+              } catch (error) {
+                console.error(`Error fetching workflow ${workflow_id}: ${error}`);
+                conclusions.push({
+                  workflow_id: workflow_id,
+                  conclusion: 'Error fetching conclusion',
+                  url: ""
+                });
+                allSuccessful = false;
+              }
+            }
+
+            if (!allSuccessful) {
+              const failedWorkflowUrls = conclusions
+                .filter(item => item.conclusion !== 'success')
+                .map(item => item.url)
+                .join(', ');
+              core.setFailed(`One or more workflows did not succeed. Failed workflow URLs: ${failedWorkflowUrls}`);
+            } else {
+              console.log(`All workflows succeeded.`)
+            }
 
 # evaluate-package-compliance:
 #   needs: run-package-test

@@ -6,15 +6,12 @@ name: RKE2 Test
 on:
   schedule:
     - cron: "0 0 * * 0" # Every Sunday Midnight (UTC) / Saturday 5pm MT
-  pull_request:
-    # milestoned is added here as a workaround for release-please not triggering PR workflows (PRs should be added to a milestone to trigger the workflow).
-    # labeled is added to support renovate-ready labelling on PRs
-    types: [milestoned, labeled, opened, reopened, synchronize]
-    paths:
-      - tasks/iac.yaml
-      - .github/bundles/rke2/*
-      - .github/test-infra/aws/rke2/**
-      - .github/workflows/test-rke2.yaml
+  workflow_dispatch:
+    inputs:
+      triggered_by:
+        description: 'The workflow run that triggered this workflow'
+        required: false
+        type: string
 
 permissions:
   id-token: write
@@ -28,6 +25,7 @@ jobs:
       matrix:
         flavor: [upstream, registry1, unicorn]
     runs-on: ubuntu-latest
+    name: test-rke2
     permissions:
       id-token: write
       contents: read
@@ -43,6 +41,8 @@ jobs:
       UDS_STATE_DYNAMODB_TABLE_NAME: uds-tf-state-lock
       UDS_IMAGES_AWS_ACCOUNT_ID: ${{ secrets.GOV_UDS_IMAGES_AWS_ACCOUNT_ID }}
     steps:
+      - name: Output Caller
+        run: "echo Called by: ${{ inputs.triggered_by }}"
       - name: Set ENV
         run: |
           echo "UDS_CLUSTER_NAME=uds-ci-${{ matrix.flavor }}-${SHA:0:7}" >> $GITHUB_ENV
