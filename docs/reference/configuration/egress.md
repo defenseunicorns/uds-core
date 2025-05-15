@@ -107,7 +107,7 @@ The following are not exhaustive and are subject to change as this implementatio
 
 * For all egresses defined within a single Package CR, all workloads that also have egress will have shared access to any host defined (is that true with the VS?)
 
-## Security Considarations
+## Security Considerations
 
 Additional security considerations to keep in mind when implementing egress:
 
