@@ -40,8 +40,10 @@ components:
     actions:
       onDeploy:
         before:
-          - description: Annotate Controller service to ensure mutation
-            cmd: ./zarf tools kubectl annotate svc neuvector-svc-controller -n neuvector uds.dev/mutate=true
+          - description: Annotate Controller service and deployment to ensure mutation
+            cmd: |
+              ./zarf tools kubectl annotate svc neuvector-svc-controller -n neuvector uds.dev/mutate=true || true
+              ./zarf tools kubectl annotate deployment neuvector-controller-pod -n neuvector uds.dev/mutate=true || true
         after:
           - description: Annotate Controller deployment for Neuvector SSO secret
             cmd: |
