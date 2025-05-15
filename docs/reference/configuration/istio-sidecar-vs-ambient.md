@@ -48,7 +48,7 @@ In Sidecar mode, an Envoy proxy runs as a sidecar container within each applicat
 
 **Configuration:**
 
-To explicitly use sidecar injection, set `spec.network.serviceMesh.mode: sidecar` in your [UDS Package](file:///Volumes/Macintosh%20HD/Users/noahb/projects/defenseunicorns/uds-core/docs/reference/configuration/UDS%20operator/package.md) resource definition. If you do not configure `spec.network.serviceMesh.mode` in your UDS Package, the UDS Operator will default to Sidecar mode.
+To explicitly use sidecar injection, set `spec.network.serviceMesh.mode: sidecar` in your [UDS Package](/reference/configuration/uds-operator/package/) resource definition. If you do not configure `spec.network.serviceMesh.mode` in your UDS Package, the UDS Operator will default to Sidecar mode.
 
 ## Ambient Mesh Mode
 
@@ -75,7 +75,7 @@ In Ambient Mesh mode, Istio uses node-level proxies (ztunnel) and optional waypo
 
 **Configuration:**
 
-You can use ambient mode by setting `spec.network.serviceMesh.mode: ambient` in your UDS Package. When `spec.network.serviceMesh.mode` is not configured, the UDS Operator will default your Package to Sidecar mode.
+You can use ambient mode by setting `spec.network.serviceMesh.mode: ambient` in your [UDS Package](/reference/configuration/uds-operator/package/). When `spec.network.serviceMesh.mode` is not configured, the UDS Operator will default your Package to Sidecar mode.
 
 ## Choosing the Right Mode
 
