@@ -67,6 +67,31 @@ When(a.Deployment)
   });
 
 /**
+ * Mutate the NeuVector enforcer to remote the probes
+ * This is a temporary patch to remove problematic probes that we previously mutated onto the pod
+ */
+When(a.DaemonSet)
+  .IsCreatedOrUpdated()
+  .InNamespace("neuvector")
+  .WithName("neuvector-enforcer-pod")
+  .Mutate(async ds => {
+    const enforcerContainer = ds.Raw.spec?.template.spec?.containers.find(
+      container => container.name === "neuvector-enforcer-pod",
+    );
+
+    if (enforcerContainer) {
+      if (enforcerContainer.livenessProbe?.tcpSocket?.port === 8500) {
+        log.debug("Patching NeuVector Enforcer Daemonset to remove livenessProbe");
+        delete enforcerContainer.livenessProbe;
+      }
+      if (enforcerContainer.readinessProbe?.tcpSocket?.port === 8500) {
+        log.debug("Patching NeuVector Enforcer Daemonset to remove readinessProbe");
+        delete enforcerContainer.readinessProbe;
+      }
+    }
+  });
+
+/**
  * Mutate the Neuvector controller service to publish not ready addresses
  * This ensures that the controllers can detect others in the cluster before our probe returns ready
  */

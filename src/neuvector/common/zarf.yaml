@@ -39,6 +39,9 @@ components:
       #     - ../values/monitor-values.yaml
     actions:
       onDeploy:
+        before:
+          - description: Annotate Controller service to ensure mutation
+            cmd: ./zarf tools kubectl annotate svc neuvector-svc-controller -n neuvector uds.dev/mutate=true
         after:
           - description: Annotate Controller deployment for Neuvector SSO secret
             cmd: |
