@@ -139,7 +139,10 @@ export async function istioEgressResources(
           log.error(errText);
           throw new Error(errText);
         } else {
-          log.error(e, `Unable to reconcile get the egress gateway namespace ${istioEgressGatewayNamespace}.`);
+          log.error(
+            e,
+            `Unable to reconcile get the egress gateway namespace ${istioEgressGatewayNamespace}.`,
+          );
           throw e;
         }
       }
