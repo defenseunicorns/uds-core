@@ -134,10 +134,14 @@ export async function istioEgressResources(
     .Get(istioEgressGatewayNamespace)
     .catch(e => {
       if (hostResourceMap) {
-        log.error(
-          `Egress gateway is not enabled in the cluster. Please enable the egress gateway and retry.`,
-        );
-        throw e;
+        if (e.status == 404) {
+          const errText = `Egress gateway is not enabled in the cluster. Please enable the egress gateway and retry.`;
+          log.error(errText);
+          throw new Error(errText);
+        } else {
+          log.error(e, `Unable to reconcile shared egress resources.`);
+          throw e;
+        }
       }
     });
 
