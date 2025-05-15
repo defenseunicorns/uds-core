@@ -87,6 +87,13 @@ spec:
             # Full configuration might be found at https://www.keycloak.org/server/fips
             - "--features=preview,fips"
             - "--fips-mode=strict"
+            {{- if .Values.fipsAllowWeakPasswords}}
+            # These switches enable the shorter passwords, which do not break FIPS compliance.
+            # See https://github.com/keycloak/keycloak/blob/2aaf9ac00868370ee23f49cfecb5d508f40dbee8/testsuite/integration-arquillian/tests/base/src/main/java/org/keycloak/testsuite/arquillian/containers/AbstractQuarkusDeployableContainer.java#L439-L441
+            - "--spi-password-hashing-pbkdf2-max-padding-length=14"
+            - "--spi-password-hashing-pbkdf2-sha256-max-padding-length=14"
+            - "--spi-password-hashing-pbkdf2-sha512-max-padding-length=14"
+            {{- end }}
             {{- else }}
             - "--features=preview"
             {{- end }}
@@ -136,6 +143,13 @@ spec:
             # Dumb value (not used in the nginx provider, but required by the SPI)
             - name: KC_SPI_X509CERT_LOOKUP_NGINX_SSL_CLIENT_CERT_CHAIN_PREFIX
               value: UNUSED
+          {{- if .Values.fips }}
+            # This is a workaround for https://github.com/keycloak/keycloak/issues/39454
+            # It silences the TLS Errors coming from DNS_PING out. Once the above issue is resolved and released,
+            # this can be removed.
+            - name: QUARKUS_LOG_CATEGORY__ORG_BOUNCYCASTLE_JSSE_PROVIDER__LEVEL
+              value: WARNING
+          {{- end }}
           {{- if or .Values.devMode .Values.debugMode }}
             # Enable debug logs
             - name: KC_LOG_LEVEL
@@ -149,6 +163,8 @@ spec:
               value: TRACE
             - name: QUARKUS_LOG_CATEGORY__ORG_KEYCLOAK_CRYPTO__LEVEL
               value: TRACE
+          {{- end }}
+          {{- if .Values.devMode }}
             # https://github.com/keycloak/keycloak/issues/39046
             # Starting from 26.2.0, Keycloak doesn't use password for the internal H2 database.
             # This breaks upgrade scenarios, so we need to use the same password as in 26.1.x
