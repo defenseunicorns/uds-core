@@ -62,7 +62,7 @@ In Ambient Mesh mode, Istio uses node-level proxies (ztunnel) and optional waypo
 
 **Cons:**
 
-*   **Migration:** If migrating from Sidecar to Ambient, planning must be done ahead of time to ensure a smooth transition. However, he UDS Operator automatically handles Istio configuration changes for you, making the tranistion an easier process.
+*   **Migration:** If migrating from Sidecar to Ambient, planning must be done ahead of time to ensure a smooth transition. However, he UDS Operator automatically handles Istio configuration changes for you, making the transition an easier process.
 *   **Less Mature than Sidecar:** Ambient is a newer feature than Sidecar, this not all bugs have been discovered yet.
 *   **Traffic Shift:** With the introduction of Ambient, Layer 7 Authorization features are only available via opting into an optional Envoy proxy via the Waypoint resource.
 
