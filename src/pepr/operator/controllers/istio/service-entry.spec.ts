@@ -5,8 +5,16 @@
 
 import { describe, expect, it } from "@jest/globals";
 import { UDSConfig } from "../../../config";
-import { Expose, Gateway, IstioLocation, IstioResolution } from "../../crd";
-import { generateServiceEntry } from "./service-entry";
+import { Expose, Gateway, IstioLocation, IstioResolution, RemoteProtocol } from "../../crd";
+import {
+  generateIngressServiceEntry,
+  generateLocalEgressServiceEntry,
+  generateSharedServiceEntry,
+} from "./service-entry";
+import { istioEgressGatewayNamespace } from "./istio-resources";
+import { EgressResource, HostResource } from "./types";
+import { sharedEgressPkgId } from "./egress";
+import { ownerRefsMock } from "./defaultTestMocks";
 
 describe("test generate service entry", () => {
   const ownerRefs = [
@@ -33,7 +41,7 @@ describe("test generate service entry", () => {
       service,
     };
 
-    const payload = generateServiceEntry(expose, namespace, pkgName, generation, ownerRefs);
+    const payload = generateIngressServiceEntry(expose, namespace, pkgName, generation, ownerRefs);
 
     expect(payload).toBeDefined();
     expect(payload.metadata?.name).toEqual(`${pkgName}-${Gateway.Tenant}-${host}`);
@@ -54,5 +62,125 @@ describe("test generate service entry", () => {
     expect(payload.spec!.endpoints![0].address).toEqual(
       `${Gateway.Tenant}-ingressgateway.istio-${Gateway.Tenant}-gateway.svc.cluster.local`,
     );
+  });
+});
+
+describe("test generate local egress service entry with one port protocol", () => {
+  const host = "example.com";
+  const cleanHost = "example-com";
+  const namespace = "test-namespace";
+  const packageName = "test-pkg";
+  const generation = "1";
+
+  it("should create a local egress ServiceEntry object", () => {
+    const port = 80;
+    const protocol = RemoteProtocol.HTTP;
+
+    const hostResource: HostResource = {
+      portProtocol: [{ port: port, protocol: protocol }],
+    };
+
+    const serviceEntry = generateLocalEgressServiceEntry(
+      host,
+      hostResource,
+      packageName,
+      namespace,
+      generation,
+      ownerRefsMock,
+    );
+
+    expect(serviceEntry).toBeDefined();
+    expect(serviceEntry.metadata?.name).toEqual(
+      `${packageName}-egress-${cleanHost}-${port.toString()}-${protocol.toLowerCase()}`,
+    );
+    expect(serviceEntry.metadata?.namespace).toEqual(namespace);
+    expect(serviceEntry.metadata?.labels).toEqual({
+      "uds/package": packageName,
+      "uds/generation": generation,
+    });
+    expect(serviceEntry.metadata?.ownerReferences).toBeDefined();
+    expect(serviceEntry.spec?.hosts).toBeDefined();
+    expect(serviceEntry.spec?.hosts![0]).toEqual(host);
+    expect(serviceEntry.spec?.ports).toBeDefined();
+    expect(serviceEntry.spec?.ports![0].number).toEqual(port);
+    expect(serviceEntry.spec?.ports![0].protocol).toEqual(protocol);
+    expect(serviceEntry.spec!.location).toEqual(IstioLocation.MeshExternal);
+    expect(serviceEntry.spec!.resolution).toEqual(IstioResolution.DNS);
+    expect(serviceEntry.spec!.exportTo?.[0]).toEqual(".");
+  });
+
+  it("should create a local egress ServiceEntry with multiple ports", () => {
+    const port1 = 80;
+    const protocol1 = RemoteProtocol.HTTP;
+    const port2 = 443;
+    const protocol2 = RemoteProtocol.TLS;
+
+    const hostResource: HostResource = {
+      portProtocol: [
+        { port: port1, protocol: protocol1 },
+        { port: port2, protocol: protocol2 },
+      ],
+    };
+
+    const serviceEntry = generateLocalEgressServiceEntry(
+      host,
+      hostResource,
+      packageName,
+      namespace,
+      generation,
+      ownerRefsMock,
+    );
+
+    expect(serviceEntry).toBeDefined();
+    expect(serviceEntry.metadata?.name).toEqual(
+      `${packageName}-egress-${cleanHost}-${port1.toString()}-${protocol1.toLowerCase()}-${port2.toString()}-${protocol2.toLowerCase()}`,
+    );
+    expect(serviceEntry.metadata?.namespace).toEqual(namespace);
+    expect(serviceEntry.metadata?.labels).toEqual({
+      "uds/package": packageName,
+      "uds/generation": generation,
+    });
+    expect(serviceEntry.metadata?.ownerReferences).toBeDefined();
+    expect(serviceEntry.spec?.hosts).toBeDefined();
+    expect(serviceEntry.spec?.hosts![0]).toEqual(host);
+    expect(serviceEntry.spec?.ports).toBeDefined();
+    expect(serviceEntry.spec?.ports![0].number).toEqual(port1);
+    expect(serviceEntry.spec?.ports![0].protocol).toEqual(protocol1);
+    expect(serviceEntry.spec?.ports![1].number).toEqual(port2);
+    expect(serviceEntry.spec?.ports![1].protocol).toEqual(protocol2);
+    expect(serviceEntry.spec!.location).toEqual(IstioLocation.MeshExternal);
+    expect(serviceEntry.spec!.resolution).toEqual(IstioResolution.DNS);
+    expect(serviceEntry.spec!.exportTo?.[0]).toEqual(".");
+  });
+});
+
+describe("test generate shared egress service entry", () => {
+  it("should create a local egress ServiceEntry object", () => {
+    const host = "example.com";
+    const resource: EgressResource = {
+      packages: ["test-pkg1", "test-pkg2"],
+      portProtocols: [
+        { port: 443, protocol: RemoteProtocol.TLS },
+        { port: 80, protocol: RemoteProtocol.HTTP },
+      ],
+    };
+    const generation = 1;
+
+    const serviceEntry = generateSharedServiceEntry(host, resource, generation);
+
+    expect(serviceEntry).toBeDefined();
+    expect(serviceEntry.metadata?.name).toEqual("service-entry-example-com");
+    expect(serviceEntry.metadata?.namespace).toEqual(istioEgressGatewayNamespace);
+    expect(serviceEntry.metadata?.labels).toEqual({
+      "uds/package": sharedEgressPkgId,
+      "uds/generation": generation.toString(),
+    });
+    expect(serviceEntry.spec?.hosts).toBeDefined();
+    expect(serviceEntry.spec?.hosts![0]).toEqual(host);
+    expect(serviceEntry.spec?.ports).toBeDefined();
+    expect(serviceEntry.spec?.ports?.length).toEqual(2);
+    expect(serviceEntry.spec!.location).toEqual(IstioLocation.MeshExternal);
+    expect(serviceEntry.spec!.resolution).toEqual(IstioResolution.DNS);
+    expect(serviceEntry.spec!.exportTo?.[0]).toEqual(".");
   });
 });

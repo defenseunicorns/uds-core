@@ -231,6 +231,22 @@ tasks:
             namespace: curl-ns-remote-cidr
             condition: Ready
 
+      - description: "Wait for Egress Test Package 1 to be Ready"
+        wait:
+          cluster:
+            kind: Pod
+            name: app=curl
+            namespace: egress-gw-1
+            condition: Ready
+
+      - description: "Wait for Egress Test Package 2 to be Ready"
+        wait:
+          cluster:
+            kind: Pod
+            name: app=curl
+            namespace: egress-gw-2
+            condition: Ready
+
   - name: remove
     actions:
       - description: Remove the test apps zarf package

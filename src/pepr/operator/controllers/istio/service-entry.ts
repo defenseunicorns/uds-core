@@ -14,7 +14,10 @@ import {
   IstioResolution,
   IstioServiceEntry,
 } from "../../crd";
+import { istioEgressGatewayNamespace, getSharedAnnotationKey } from "./istio-resources";
 import { sanitizeResourceName } from "../utils";
+import { HostResource, EgressResource, PortProtocol } from "./types";
+import { sharedEgressPkgId } from "./egress";
 
 /**
  * Creates a ServiceEntry for each exposed service in the package
@@ -22,7 +25,7 @@ import { sanitizeResourceName } from "../utils";
  * @param pkg
  * @param namespace
  */
-export function generateServiceEntry(
+export function generateIngressServiceEntry(
   expose: Expose,
   namespace: string,
   pkgName: string,
@@ -81,4 +84,109 @@ export function generateSEName(pkgName: string, expose: Expose) {
   const name = sanitizeResourceName(`${pkgName}-${gateway}-${host}`);
 
   return name;
+}
+
+/**
+ * Creates a ServiceEntry for allowed external hosts in the package
+ *
+ * @param host
+ * @param hostResource
+ * @param pkgName
+ * @param namespace
+ * @param generation
+ * @param ownerRefs
+ */
+export function generateLocalEgressServiceEntry(
+  host: string,
+  hostResource: HostResource,
+  pkgName: string,
+  namespace: string,
+  generation: string,
+  ownerRefs: V1OwnerReference[],
+) {
+  const { portProtocol } = hostResource;
+
+  const name = generateLocalEgressSEName(pkgName, portProtocol, host);
+
+  // Update the ports array
+  const portsArray: IstioPort[] = portProtocol.map(pp => ({
+    name: `${pp.protocol.toLowerCase()}-${pp.port.toString()}`,
+    number: pp.port,
+    protocol: pp.protocol,
+  }));
+
+  const serviceEntry: IstioServiceEntry = {
+    metadata: {
+      name,
+      namespace,
+      labels: {
+        "uds/package": pkgName,
+        "uds/generation": generation,
+      },
+      // Use the CR as the owner ref for each ServiceEntry
+      ownerReferences: ownerRefs,
+    },
+    spec: {
+      hosts: [host],
+      location: IstioLocation.MeshExternal,
+      resolution: IstioResolution.DNS,
+      ports: portsArray,
+      exportTo: ["."],
+    },
+  };
+
+  return serviceEntry;
+}
+
+export function generateSharedServiceEntry(
+  host: string,
+  resource: EgressResource,
+  generation: number,
+) {
+  const name = generateSharedEgressSEName(host);
+
+  // Add annotations from resource
+  const annotations: Record<string, string> = {};
+  for (const pkgId of resource.packages) {
+    annotations[`${getSharedAnnotationKey(pkgId)}`] = "user";
+  }
+
+  // Add the gateway servers
+  const ports = resource.portProtocols.map(pp => ({
+    name: `${pp.protocol.toLowerCase()}-${pp.port.toString()}`,
+    number: pp.port,
+    protocol: pp.protocol,
+  }));
+
+  const serviceEntry: IstioServiceEntry = {
+    metadata: {
+      name,
+      namespace: istioEgressGatewayNamespace,
+      annotations,
+      labels: {
+        "uds/package": sharedEgressPkgId,
+        "uds/generation": generation.toString(),
+      },
+    },
+    spec: {
+      hosts: [host],
+      location: IstioLocation.MeshExternal,
+      resolution: IstioResolution.DNS,
+      ports,
+      exportTo: ["."],
+    },
+  };
+
+  return serviceEntry;
+}
+
+function generateLocalEgressSEName(pkgName: string, portProtocol: PortProtocol[], host: string) {
+  const ppString = portProtocol
+    .map(pp => `${pp.port.toString()}-${pp.protocol.toLowerCase()}`)
+    .join("-");
+  return sanitizeResourceName(`${pkgName}-egress-${host}-${ppString}`);
+}
+
+function generateSharedEgressSEName(host: string) {
+  return sanitizeResourceName(`service-entry-${host}`);
 }

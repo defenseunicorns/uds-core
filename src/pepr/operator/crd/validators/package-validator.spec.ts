@@ -19,6 +19,7 @@ import {
 import { PackageStore } from "../../controllers/packages/package-store";
 import { Mode } from "../generated/package-v1alpha1";
 import { validator } from "./package-validator";
+import { RemoteProtocol } from "../generated/package-v1alpha1";
 
 PackageStore.init();
 
@@ -271,6 +272,89 @@ describe("Test validation of Package CRs", () => {
       ],
       [],
       [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+  });
+
+  it("denies network policies that specify remoteHost and remoteGenerated", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [
+        {
+          remoteGenerated: RemoteGenerated.Anywhere,
+          remoteHost: "example.com",
+        },
+      ],
+      [],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+  });
+
+  it("denies network policies that specify remoteProtocol and not remoteHost", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [
+        {
+          remoteProtocol: RemoteProtocol.TLS,
+        },
+      ],
+      [],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+  });
+
+  it("denies network policies that specify ingress and remoteHost", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [
+        {
+          direction: Direction.Ingress,
+          remoteHost: "example.com",
+        },
+      ],
+      [],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+  });
+
+  it("denies network policies that specify remoteHost as a wildcard", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [
+        {
+          remoteHost: "*.example.com",
+        },
+      ],
+      [],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+  });
+
+  it("denies network policies that specify remoteHost during ambient mode", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [
+        {
+          remoteHost: "example.com",
+        },
+      ],
+      [],
+      [],
+      true,
     );
     await validator(mockReq);
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
