@@ -42,42 +42,10 @@ When(a.Service)
   });
 
 /**
- * Mutate the Neuvector Enforcer DaemonSet to add a livenessProbe
- */
-When(a.DaemonSet)
-  .IsCreatedOrUpdated()
-  .InNamespace("neuvector")
-  .WithName("neuvector-enforcer-pod")
-  .Mutate(async ds => {
-    const enforcerContainer = ds.Raw.spec?.template.spec?.containers.find(
-      container => container.name === "neuvector-enforcer-pod",
-    );
-
-    if (enforcerContainer) {
-      log.debug("Patching NeuVector Enforcer Daemonset to add livenessProbe");
-      const livenessProbe = {
-        tcpSocket: { port: 8500 },
-        periodSeconds: 30,
-        failureThreshold: 3,
-      };
-      enforcerContainer.livenessProbe = livenessProbe;
-    }
-
-    if (enforcerContainer) {
-      log.debug("Patching NeuVector Enforcer Daemonset to add readinessProbe");
-      const readinessProbe = {
-        tcpSocket: { port: 8500 },
-        initialDelaySeconds: 30,
-        periodSeconds: 30,
-        failureThreshold: 3,
-      };
-      enforcerContainer.readinessProbe = readinessProbe;
-    }
-  });
-
-/**
  * Mutate the Neuvector Controller Deployment to patch in new readinessProbe
  * See issue for reference: https://github.com/defenseunicorns/uds-core/issues/1446
+ * This can be moved to values when probes are supported in the chart: https://github.com/neuvector/neuvector-helm/pull/487
+ * This can also be removed once the unicoorn image issue is resolved
  */
 When(a.Deployment)
   .IsCreatedOrUpdated()
@@ -96,4 +64,56 @@ When(a.Deployment)
       };
       controllerContainer.readinessProbe = readinessProbe;
     }
+  });
+
+/**
+ * Mutate the NeuVector enforcer to remote the probes
+ * This is a temporary patch to remove problematic probes that we previously mutated onto the pod
+ */
+When(a.DaemonSet)
+  .IsCreatedOrUpdated()
+  .InNamespace("neuvector")
+  .WithName("neuvector-enforcer-pod")
+  .Mutate(async ds => {
+    const enforcerContainer = ds.Raw.spec?.template.spec?.containers.find(
+      container => container.name === "neuvector-enforcer-pod",
+    );
+
+    if (enforcerContainer) {
+      if (enforcerContainer.livenessProbe?.tcpSocket?.port === 8500) {
+        log.debug("Patching NeuVector Enforcer Daemonset to remove livenessProbe");
+        delete enforcerContainer.livenessProbe;
+      }
+      if (enforcerContainer.readinessProbe?.tcpSocket?.port === 8500) {
+        log.debug("Patching NeuVector Enforcer Daemonset to remove readinessProbe");
+        delete enforcerContainer.readinessProbe;
+      }
+    }
+  });
+
+/**
+ * Mutate the Neuvector controller service to publish not ready addresses
+ * This ensures that the controllers can detect others in the cluster before our probe returns ready
+ */
+When(a.Service)
+  .IsCreatedOrUpdated()
+  .InNamespace("neuvector")
+  .WithName("neuvector-svc-controller")
+  .Mutate(async svc => {
+    log.debug("Patching NeuVector Controller service to publish not ready addresses");
+    svc.Raw.spec!.publishNotReadyAddresses = true;
+  });
+
+/**
+ * Mutate the Neuvector UI service to add labels to use the waypoint
+ * This can be moved to values when labels are supported in the chart: https://github.com/neuvector/neuvector-helm/pull/487
+ */
+When(a.Service)
+  .IsCreatedOrUpdated()
+  .InNamespace("neuvector")
+  .WithName("neuvector-service-webui")
+  .Mutate(async svc => {
+    log.debug("Patching NeuVector Manager service to use the waypoint");
+    svc.SetLabel("istio.io/ingress-use-waypoint", "true");
+    svc.SetLabel("istio.io/use-waypoint", "neuvector-manager-waypoint");
   });
