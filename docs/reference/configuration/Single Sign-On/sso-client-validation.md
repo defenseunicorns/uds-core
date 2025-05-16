@@ -21,3 +21,6 @@ The `sso.attributes` part of the [UDS Package CR](/reference/configuration/custo
 - saml_single_logout_service_url_redirect
 - saml_idp_initiated_sso_url_name
 - use.refresh.tokens
+- saml.encrypt
+- saml_name_id_format
+- saml.signing.certificate
