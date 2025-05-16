@@ -20,6 +20,7 @@ export interface Client {
   frontchannelLogout: boolean;
   fullScopeAllowed: boolean;
   implicitFlowEnabled: boolean;
+  name: string;
   nodeReRegistrationTimeout: number;
   notBefore: number;
   optionalClientScopes: string[];
@@ -38,6 +39,7 @@ export interface Client {
 
 // Define a constant array of keys
 export const clientKeys = [
+  "adminUrl",
   "alwaysDisplayInConsole",
   "attributes",
   "authenticationFlowBindingOverrides",
@@ -53,6 +55,7 @@ export const clientKeys = [
   "frontchannelLogout",
   "fullScopeAllowed",
   "implicitFlowEnabled",
+  "name",
   "nodeReRegistrationTimeout",
   "notBefore",
   "optionalClientScopes",

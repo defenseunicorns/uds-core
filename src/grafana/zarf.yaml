@@ -27,7 +27,7 @@ components:
         valuesFiles:
           - values/upstream-values.yaml
     images:
-      - docker.io/grafana/grafana:11.6.0
+      - docker.io/grafana/grafana:11.6.1
       - docker.io/curlimages/curl:8.13.0
       - docker.io/library/busybox:1.37.0
       - ghcr.io/kiwigrid/k8s-sidecar:1.30.3
@@ -43,7 +43,7 @@ components:
         valuesFiles:
           - values/registry1-values.yaml
     images:
-      - registry1.dso.mil/ironbank/opensource/grafana/grafana:11.6.0
+      - registry1.dso.mil/ironbank/opensource/grafana/grafana:11.6.1
       - registry1.dso.mil/ironbank/redhat/ubi/ubi9-minimal:9.5
       - registry1.dso.mil/ironbank/kiwigrid/k8s-sidecar:1.30.3
 
@@ -58,7 +58,7 @@ components:
         valuesFiles:
           - values/unicorn-values.yaml
     images:
-      - cgr.dev/du-uds-defenseunicorns/grafana-fips:11.6.0
+      - cgr.dev/du-uds-defenseunicorns/grafana-fips:11.6.1
       - cgr.dev/du-uds-defenseunicorns/busybox-fips:1.37.0
       - cgr.dev/du-uds-defenseunicorns/curl-fips:8.12.1
       - cgr.dev/du-uds-defenseunicorns/k8s-sidecar-fips:1.30.3

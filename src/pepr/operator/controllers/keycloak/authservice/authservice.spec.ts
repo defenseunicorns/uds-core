@@ -21,6 +21,7 @@ describe("authservice", () => {
 
     mockClient = {
       clientId: "test-client",
+      name: "test",
       redirectUris: ["https://foo.uds.dev/login"],
       secret: "test-secret",
       alwaysDisplayInConsole: false,

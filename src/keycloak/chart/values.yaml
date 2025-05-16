@@ -5,12 +5,12 @@ image:
   # The Keycloak image repository
   repository: quay.io/keycloak/keycloak
   # Overrides the Keycloak image tag whose default is the chart appVersion
-  tag: "26.2.0"
+  tag: "26.2.4"
   # The Keycloak image pull policy
   pullPolicy: IfNotPresent
 
 # renovate: datasource=github-tags depName=defenseunicorns/uds-identity-config versioning=semver
-configImage: ghcr.io/defenseunicorns/uds/identity-config:0.12.1
+configImage: ghcr.io/defenseunicorns/uds/identity-config:0.14.0
 
 # The public domain name of the Keycloak server
 domain: "###ZARF_VAR_DOMAIN###"
@@ -124,6 +124,8 @@ smtp:
 
 # Configure FIPS mode for Keycloak
 fips: false
+# By default, Keycloak requires 14+ character passwords in FIPS mode. This switch disables this requirement.
+fipsAllowWeakPasswords: false
 
 #  Pod priority class name
 priorityClassName: ""
@@ -310,3 +312,6 @@ autoscaling:
           periodSeconds: 300
 
 env: []
+
+x509LookupProvider: nginx
+mtlsClientCert: "%DOWNSTREAM_PEER_CERT%"
