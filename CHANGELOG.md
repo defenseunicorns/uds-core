@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.42.1](https://github.com/defenseunicorns/uds-core/compare/v0.42.0...v0.42.1) (2025-05-16)
+
+
+### Bug Fixes
+
+* keycloak sts devmode db settings ([#1566](https://github.com/defenseunicorns/uds-core/issues/1566)) ([e79bdf4](https://github.com/defenseunicorns/uds-core/commit/e79bdf4e2d0335ee05e14687a4adab357073b24e))
+* update namespace template for pepr to use ambient label ([#1568](https://github.com/defenseunicorns/uds-core/issues/1568)) ([52b9904](https://github.com/defenseunicorns/uds-core/commit/52b9904f894f7fdd6224ce4f5c6c782a115788c9))
+
+
+### Miscellaneous
+
+* add keycloak attributes `saml.encrypt`, `saml_name_id_format`, `saml.signing.certificate` ([#1557](https://github.com/defenseunicorns/uds-core/issues/1557)) ([f8a2dc4](https://github.com/defenseunicorns/uds-core/commit/f8a2dc4446804a001ddb4c8713421f57ec2ed880))
+* change default cve scan severity to negligible ([#1574](https://github.com/defenseunicorns/uds-core/issues/1574)) ([f7ca5a0](https://github.com/defenseunicorns/uds-core/commit/f7ca5a04b97a5735452ac92697b93050ae2ac86c))
+* **deps:** update neuvector to 5.4.4 ([#1559](https://github.com/defenseunicorns/uds-core/issues/1559)) ([4b3b10d](https://github.com/defenseunicorns/uds-core/commit/4b3b10d1eeebce2effe7463ac2b753b3c674f78a))
+* **deps:** update neuvector ubi9 to v9.6 ([#1563](https://github.com/defenseunicorns/uds-core/issues/1563)) ([173889f](https://github.com/defenseunicorns/uds-core/commit/173889fa2b0447176271a2c703473fa23e4a85fe))
+* **deps:** update pepr ([#1562](https://github.com/defenseunicorns/uds-core/issues/1562)) ([dafff9b](https://github.com/defenseunicorns/uds-core/commit/dafff9bc1bee377adbf9c51f01aac64b406c0b1b))
+* **deps:** update support-deps ([#1556](https://github.com/defenseunicorns/uds-core/issues/1556)) ([79db725](https://github.com/defenseunicorns/uds-core/commit/79db725612d9decf3e685df32c81d6563bf74dca))
+* **doc:** update changelog ([#1558](https://github.com/defenseunicorns/uds-core/issues/1558)) ([e9f4d24](https://github.com/defenseunicorns/uds-core/commit/e9f4d24e4ff662517ab4943884a668fdff425113))
+* remove old misc cacert from admin gateway ([#1561](https://github.com/defenseunicorns/uds-core/issues/1561)) ([10cafee](https://github.com/defenseunicorns/uds-core/commit/10cafee742650a7e6e2cf4b15080cf0902a0ca68))
+* switch gateway crd install to release artifacts ([#1572](https://github.com/defenseunicorns/uds-core/issues/1572)) ([76db3ac](https://github.com/defenseunicorns/uds-core/commit/76db3acde24f19b598be47c8f1364b0cd582858c))
+* update ca certs in istio gateways ([#1567](https://github.com/defenseunicorns/uds-core/issues/1567)) ([03053fd](https://github.com/defenseunicorns/uds-core/commit/03053fdc377ed7636593d1c392c1e69ae5103a74))
+
 ## [0.42.0](https://github.com/defenseunicorns/uds-core/compare/v0.41.2...v0.42.0) (2025-05-12)
 
 
