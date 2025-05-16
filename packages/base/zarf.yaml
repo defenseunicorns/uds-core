@@ -17,6 +17,11 @@ metadata:
     dev.uds.keywords: uds,pepr,istio,operator,policies
 
 components:
+  - name: uds-crds
+    required: true
+    import:
+      path: ../../src/pepr
+
   - name: uds-operator-config
     required: true
     import:
