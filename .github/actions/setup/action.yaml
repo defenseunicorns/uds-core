@@ -66,5 +66,6 @@ runs:
 
     - name: Maru Login
       if: ${{ inputs.ghToken != '' }}
-      run: echo "MARU_AUTH=\"{\"raw.githubusercontent.com\": \"${{ inputs.ghToken }}\"}\"" >> "GITHUB_ENV"
+      run: |
+        echo "MARU_AUTH=\"{\"raw.githubusercontent.com\": \"${{ inputs.ghToken }}\"}\"" >> "GITHUB_ENV"
       shell: bash
