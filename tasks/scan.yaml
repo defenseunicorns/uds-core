@@ -16,7 +16,7 @@ variables:
     default: core
   - name: MIN_SEVERITY
     description: "The minimum severity level for CVEs to report"
-    default: "High"
+    default: "Negligible"
 
 tasks:
   - name: default
