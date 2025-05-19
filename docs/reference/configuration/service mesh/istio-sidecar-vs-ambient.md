@@ -52,7 +52,7 @@ To explicitly use sidecar injection, set `spec.network.serviceMesh.mode: sidecar
 
 ## Ambient Mesh Mode
 
-In Ambient Mesh mode, Istio uses node-level proxies (ztunnel) and optional waypoint proxies to provide service mesh functionality. ztunnel runs on each node and intercepts traffic at the node level. Waypoint proxies are deployed alongside applications that require more fine-grained control or advanced features.
+In Ambient Mesh mode, Istio uses node-level proxies (ztunnel) and optional waypoint proxies to provide service mesh functionality. Ztunnel runs on each node and intercepts traffic at the node level. [Waypoint proxies](https://istio.io/latest/docs/ambient/usage/waypoint/) are deployed alongside applications that require more fine-grained control or advanced features.
 
 **Pros:**
 
@@ -62,8 +62,8 @@ In Ambient Mesh mode, Istio uses node-level proxies (ztunnel) and optional waypo
 
 **Cons:**
 
-*   **Migration:** If migrating from Sidecar to Ambient, planning must be done ahead of time to ensure a smooth transition. However, he UDS Operator automatically handles Istio configuration changes for you, making the transition an easier process.
-*   **Less Mature than Sidecar:** Ambient is a newer feature than Sidecar, this not all bugs have been discovered yet.
+*   **Migration:** If migrating from Sidecar to Ambient, planning must be done ahead of time to ensure a smooth transition. However, the UDS Operator automatically handles Istio configuration changes for you, making the transition an easier process.
+*   **Less Mature than Sidecar:** Ambient is a newer feature than Sidecar, so there may be more undiscovered bugs.
 *   **Traffic Shift:** With the introduction of Ambient, Layer 7 Authorization features are only available via opting into an optional Envoy proxy via the Waypoint resource.
 
 **When to Use Ambient Mesh Mode:**
@@ -78,14 +78,13 @@ In Ambient Mesh mode, Istio uses node-level proxies (ztunnel) and optional waypo
 You can use ambient mode by setting `spec.network.serviceMesh.mode: ambient` in your [UDS Package](/reference/configuration/uds-operator/package/). When `spec.network.serviceMesh.mode` is not configured, the UDS Operator will default your Package to Sidecar mode.
 
 ## Choosing the Right Mode
-
-The choice between Sidecar and Ambient mode depends on your specific requirements and priorities:
+While Ambient Mesh has clear benefits and growing adoption, consider the following when choosing between Sidecar and Ambient Mesh:
 
 *   **Resource Optimization:** If minimizing resource consumption is a top priority, Ambient Mesh is the better choice.
-*   **Security and Control:** If you require very strong isolation and fine-grained control, Sidecar mode might be necessary. However, Waypoint proxies in Ambient Mesh can provide similar levels of control when needed.
+*   **Security and Control:** Ambient Mesh offers the same level of security as sidecar, but waypoint proxies must be configured for each service.
 *   **Simplicity:** If you want to simplify application deployments and reduce operational overhead, Ambient Mesh is a good option.
 *   **Feature Requirements:** Evaluate whether all the features you need are supported in Ambient Mesh. If not, you'll need to use Sidecar mode or consider using Waypoint Proxies with ambient mode when possible.
 
-Sidecar mode remains a valuable option for specific use cases where its strengths are required. For more resource aware deployments, Ambient offers a more streamlined approach that saves CPU, Memory, and Networking overhead as your environment scales.
+Sidecar mode remains a valuable option for specific use cases where its strengths are required. For more resource aware deployments, Ambient offers a more streamlined approach that saves CPU, Memory, and Networking overhead as your environment scales. The UDS Operator will continue to support both Sidecar and Ambient, allowing you to make the best choice for your needs.
 
 See the [Istio documentation](https://istio.io/latest/docs/overview/dataplane-modes/#choosing-between-sidecar-and-ambient) for more information and resources.
