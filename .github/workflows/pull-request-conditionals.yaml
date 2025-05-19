@@ -157,18 +157,21 @@ jobs:
     name: Schedule EKS
     if: ${{ contains(needs.check-paths.outputs.distros, 'eks') || contains(github.event.pull_request.labels.*.name, 'test-all-iac') || contains(github.event.pull_request.labels.*.name, 'test-eks') }}
     uses: ./.github/workflows/test-eks.yaml
+    secrets: inherit
 
   run-rke2-test:
     needs: check-paths
     name: Schedule RKE2
     if: ${{ contains(needs.check-paths.outputs.distros, 'rke2') || contains(github.event.pull_request.labels.*.name, 'test-all-iac') || contains(github.event.pull_request.labels.*.name, 'test-rke2') }}
     uses: ./.github/workflows/test-rke2.yaml
+    secrets: inherit
 
   run-aks-test:
     needs: check-paths
     name: Schedule AKS
     if: ${{ contains(needs.check-paths.outputs.distros, 'aks') || contains(github.event.pull_request.labels.*.name, 'test-all-iac') || contains(github.event.pull_request.labels.*.name, 'test-aks') }}
     uses: ./.github/workflows/test-aks.yaml
+    secrets: inherit
 
 # evaluate-package-compliance:
 #   needs: run-package-test
