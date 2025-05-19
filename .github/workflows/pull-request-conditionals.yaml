@@ -156,7 +156,7 @@ jobs:
     needs: check-paths
     name: Schedule IaC
     runs-on: ubuntu-latest
-    if: ${{ contains(needs.check-paths.outputs.distros, 'eks')' || contains(github.event.pull_request.labels.*.name, 'test-all-iac') || contains(github.event.pull_request.labels.*.name, 'test-eks') }}
+    if: ${{ contains(needs.check-paths.outputs.distros, 'eks') || contains(github.event.pull_request.labels.*.name, 'test-all-iac') || contains(github.event.pull_request.labels.*.name, 'test-eks') }}
     steps:
       - name: Dispatch EKS Test Workflow
         uses: ./.github/workflows/test-eks.yaml
