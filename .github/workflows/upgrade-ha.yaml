@@ -1,0 +1,41 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+name: UDS Core Install/Upgrade HA Test
+
+on:
+  schedule:
+    # Runs every morning at 2:00 AM UTC
+    - cron: '0 2 * * *'
+
+permissions:
+  contents: read
+  id-token: write
+  packages: read
+
+jobs:
+  uds-core-ha-upgrade-nightly:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        flavor: [upstream, registry1, unicorn]
+
+    name: Run HA Install/Upgrade Test for ${{ matrix.flavor }}
+
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v4
+
+      - name: Environment setup
+        uses: ./.github/actions/setup
+        with:
+          registry1Username: ${{ secrets.IRON_BANK_ROBOT_USERNAME }}
+          registry1Password: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
+          ghToken: ${{ secrets.GITHUB_TOKEN }}
+          chainguardIdentity: ${{ secrets.CHAINGUARD_IDENTITY }}
+
+      - name: Run UDS Core Install HA Test
+        run: uds run uds-core-upgrade --set FLAVOR=${{ matrix.flavor }} --no-progress
+
+      - name: Run UDS Core Upgrade HA Test
+        run: uds run uds-core-ha-upgrade --set FLAVOR=${{ matrix.flavor }} --no-progress
