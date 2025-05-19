@@ -4,10 +4,13 @@
 
 tasks:
   - name: create-k3d-cluster
+    inputs:
+      K3D_EXTRA_ARGS:
+        default: ""
     actions:
       - description: "Create the K3d cluster"
         # renovate: datasource=github-tags depName=defenseunicorns/uds-k3d versioning=semver
-        cmd: "uds zarf package deploy oci://defenseunicorns/uds-k3d:0.12.3 --confirm --no-progress"
+        cmd: "uds zarf package deploy oci://defenseunicorns/uds-k3d:0.13.0 --confirm --set K3D_EXTRA_ARGS='${{ .inputs.K3D_EXTRA_ARGS }}' --no-progress"
 
   - name: k3d-test-cluster
     actions:
@@ -15,4 +18,4 @@ tasks:
 
       - description: "Initialize the cluster with Zarf"
         # renovate: datasource=github-tags depName=zarf-dev/zarf versioning=semver
-        cmd: "uds zarf package deploy oci://ghcr.io/zarf-dev/packages/init:v0.53.0 --confirm --no-progress"
+        cmd: "uds zarf package deploy oci://ghcr.io/zarf-dev/packages/init:v0.54.0 --confirm --no-progress"

@@ -14,8 +14,8 @@ includes:
   - test-resources: ../src/test/tasks.yaml
   - base-layer: ../packages/base/tasks.yaml
   - idam-layer: ../packages/identity-authorization/tasks.yaml
-  - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.14.2/tasks/setup.yaml
-  - compliance: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.14.2/tasks/compliance.yaml
+  - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.14.3/tasks/setup.yaml
+  - compliance: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.14.3/tasks/compliance.yaml
 
 tasks:
   - name: base
@@ -122,12 +122,17 @@ tasks:
 
   - name: uds-core
     description: "Build and test UDS Core"
+    inputs:
+      K3D_EXTRA_ARGS:
+        default: ""
     actions:
       - task: create:standard-package
         with:
           create_options: "--skip-sbom"
       - task: create:k3d-standard-bundle
       - task: deploy:k3d-standard-bundle
+        with:
+          K3D_EXTRA_ARGS: "${{ .inputs.K3D_EXTRA_ARGS }}"
       - task: validate-packages
 
   - name: uds-core-e2e
