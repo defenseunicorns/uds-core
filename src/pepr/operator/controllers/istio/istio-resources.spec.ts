@@ -79,6 +79,46 @@ describe("test istioEgressResources", () => {
     ).rejects.toThrow(errorMessage);
   });
 
+  it("should err if no egress gateway port", async () => {
+    const mockError = new Error(
+      "Egress gateway does not expose port 1234 for host example.com. Please update the egress gateway service to expose this port.",
+    );
+    const mockHostResourceMap = {
+      "example.com": {
+        portProtocol: [{ port: 1234, protocol: RemoteProtocol.TLS }],
+      },
+    };
+
+    const getServiceMock = jest.fn<() => Promise<kind.Service>>().mockResolvedValue({
+      metadata: {
+        name: "egressgateway",
+        namespace: "istio-egress-gateway",
+      },
+      spec: {
+        ports: [{ port: 80 }, { port: 443 }],
+      },
+    });
+
+    const getServiceInNamespaceMock = jest.fn().mockReturnValue({ Get: getServiceMock });
+
+    updateEgressMocks({
+      ...defaultEgressMocks,
+      getServiceInNamespaceMock,
+    });
+
+    await expect(
+      istioEgressResources(
+        mockHostResourceMap,
+        [],
+        pkgIdMock,
+        pkgMock.metadata!.name!,
+        pkgMock.metadata!.namespace!,
+        pkgMock.metadata!.generation!.toString(),
+        [],
+      ),
+    ).rejects.toThrowError(mockError);
+  });
+
   it("should create egress resources", async () => {
     updateEgressMocks(defaultEgressMocks);
 

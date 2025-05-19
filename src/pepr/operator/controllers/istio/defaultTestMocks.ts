@@ -59,6 +59,7 @@ export const defaultEgressMocks = {
     items: [],
   }),
   getNsMock: jest.fn<() => Promise<kind.Namespace>>().mockResolvedValue({}),
+  getServiceInNsMock: jest.fn().mockReturnThis(),
   deleteGwMock: jest.fn<() => Promise<void>>().mockResolvedValue(),
   deleteVsMock: jest.fn<() => Promise<void>>().mockResolvedValue(),
   deleteSeMock: jest.fn<() => Promise<void>>().mockResolvedValue(),
@@ -103,6 +104,7 @@ export function updateEgressMocks(egressMocks: Record<string, jest.Mock>) {
       Delete: egressMocks.deleteSidecarMock,
     },
     [kind.Namespace.name]: { ...baseImplementation, Get: egressMocks.getNsMock },
+    [kind.Service.name]: { ...baseImplementation, InNamespace: egressMocks.getServiceInNsMock },
   };
 
   mockK8s.mockImplementation(

@@ -148,6 +148,27 @@ export async function istioEgressResources(
       }
     });
 
+  // Validate that ports are exposed by the egress gateway
+  await K8s(kind.Service)
+    .InNamespace(istioEgressGatewayNamespace)
+    .Get("egressgateway")
+    .then(async service => {
+      const ports = service.spec?.ports ?? [];
+      for (const host in hostResourceMap) {
+        for (const portProtocol of hostResourceMap[host].portProtocol) {
+          const port = ports.find(p => p.port === portProtocol.port);
+          if (!port) {
+            const errText = `Egress gateway does not expose port ${portProtocol.port} for host ${host}. Please update the egress gateway service to expose this port.`;
+            log.error(errText);
+            throw new Error(errText);
+          }
+        }
+      }
+    })
+    .catch(e => {
+      throw e;
+    });
+
   // Add needed service entries and sidecars if egress is requested
   if (hostResourceMap) {
     // Add service entry for each defined host
