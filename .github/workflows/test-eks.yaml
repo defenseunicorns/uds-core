@@ -6,12 +6,7 @@ name: EKS Test
 on:
   schedule:
     - cron: "0 0 * * 0" # Every Sunday Midnight (UTC) / Saturday 5pm MT
-  workflow_dispatch:
-    inputs:
-      triggered_by:
-        description: 'The workflow run that triggered this workflow'
-        required: false
-        type: string
+  workflow_call: {}
 
 permissions:
   id-token: write

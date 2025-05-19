@@ -152,166 +152,32 @@ jobs:
     secrets: inherit # Inherits all secrets from the parent workflow.
 
   # Trigger IaC
-  run-iac-test:
+  run-eks-test:
     needs: check-paths
     name: Schedule IaC
     runs-on: ubuntu-latest
-    if: ${{ needs.check-paths.outputs.distros != '[]' || contains(github.event.pull_request.labels.*.name, 'test-all-iac') || contains(github.event.pull_request.labels.*.name, 'test-aks') || contains(github.event.pull_request.labels.*.name, 'test-rke2') || contains(github.event.pull_request.labels.*.name, 'test-eks') }}
+    if: ${{ contains(needs.check-paths.outputs.distros, 'eks')' || contains(github.event.pull_request.labels.*.name, 'test-all-iac') || contains(github.event.pull_request.labels.*.name, 'test-eks') }}
     steps:
-      - name: Dispatch IaC Workflows
-        uses: actions/github-script@v7
-        env:
-          DISTROS_MODIFIED: ${{ needs.check-paths.outputs.distros }}
-          HAS_ALL_DISTROS_LABEL: ${{ contains(github.event.pull_request.labels.*.name, 'test-all-iac') }}
-          HAS_AKS_LABEL: ${{ contains(github.event.pull_request.labels.*.name, 'test-aks') }}
-          HAS_RKE2_LABEL: ${{ contains(github.event.pull_request.labels.*.name, 'test-rke2') }}
-          HAS_EKS_LABEL: ${{ contains(github.event.pull_request.labels.*.name, 'test-eks') }}
-        with:
-          script: |
-            const owner = context.repo.owner;
-            const repo = context.repo.repo;
-            const ref = process.env.GITHUB_HEAD_REF
-            const hasTestAllIacLabel = process.env.HAS_ALL_DISTROS_LABEL === 'true';
-            const hasTestAksLabel = process.env.HAS_AKS_LABEL === 'true';
-            const hasTestRke2Label = process.env.HAS_RKE2_LABEL === 'true';
-            const hasTestEksLabel = process.env.HAS_EKS_LABEL === 'true';
-            let distros = new Set();
+      - name: Dispatch EKS Test Workflow
+        uses: ./.github/workflows/test-eks.yaml
 
-            if (hasTestAllIacLabel || (hasTestAksLabel && hasTestRke2Label && hasTestEksLabel)) {
-              console.log('Triggering tests for all distros.');
-              distros = new Set(["aks", "rke2", "eks"]);
-            } else {
-              if (process.env.HAS_AKS_LABEL === 'true') {
-                distros.add("aks");
-                console.log("Triggering AKS test based on label.")
-              }
-              if (process.env.HAS_RKE2_LABEL === 'true') {
-                distros.add("rke2");
-                console.log("Triggering RKE2 test based on label.")
-              }
-               if (process.env.HAS_EKS_LABEL === 'true') {
-                distros.add("eks");
-                console.log("Triggering EKS test based on label.")
-              }
-              const defaultDistros = JSON.parse(process.env.DISTROS_MODIFIED) ?? [];
-              defaultDistros.forEach(distro => {
-                console.log(`Triggering ${distro.toUpperCase()} test based on modified files.`);
-                distros.add(distro);
-              });
-            }
-
-            for (const distro of distros) {
-              let workflow_id;
-              if (distro === 'aks') {
-                workflow_id = 'test-aks.yaml';
-              } else if (distro === 'rke2') {
-                workflow_id = 'test-rke2.yaml';
-              } else if (distro === 'eks') {
-                workflow_id = 'test-eks.yaml';
-              } else {
-                  console.warn(`No workflow defined for distro: ${distro}`);
-                  continue;
-              }
-              try {
-                console.log(`Dispatching workflow ${workflow_id} for distro ${distro}`);
-                await github.rest.actions.createWorkflowDispatch({
-                  owner,
-                  repo,
-                  workflow_id,
-                  ref,
-                  inputs: {
-                    triggered_by: `https://github.com/${owner}/${repo}/actions/runs/${process.env.GITHUB_RUN_ID}`
-                  }
-                });
-                console.log(`Successfully dispatched workflow ${workflow_id} for distro ${distro}`);
-              } catch (error) {
-                console.error(`Failed to dispatch workflow ${workflow_id} for distro ${distro}:`, error);
-                if (error.message.includes('rate limit exceeded')) {
-                  console.warn('Rate limit exceeded. Consider adding a delay before retrying.');
-                } else {
-                  console.error('An unexpected error occurred during workflow dispatch.');
-                }
-                core.setFailed(`Workflow dispatch failed for ${distro}: ${error.message}`);
-              }
-            }
-
-  check-iac-test:
-    needs: [check-paths, run-iac-test]
-    name: Wait for IaC
+  run-rke2-test:
+    needs: check-paths
+    name: Schedule IaC
     runs-on: ubuntu-latest
-    # Only wait for status when the PR directly modifies IaC workflow related files
-    #todo: trigger on same as above and milestone
-    if: ${{ needs.check-paths.outputs.distros != '[]' }}
+    if: ${{ contains(needs.check-paths.outputs.distros, 'rke2') || contains(github.event.pull_request.labels.*.name, 'test-all-iac') || contains(github.event.pull_request.labels.*.name, 'test-rke2') }}
     steps:
-      - name: Check IaC Workflow Status
-        uses: actions/github-script@v7
-        env:
-          DISTROS_MODIFIED: ${{ needs.check-paths.outputs.distros }}
-          COMMIT_SHA: ${{ github.event.pull_request.head.sha }}
-        with:
-          script: |
-            const workflow_ids = JSON.parse(process.env.DISTROS_MODIFIED)
-            const owner = context.repo.owner;
-            const repo = context.repo.repo;
-            const sha = process.env.COMMIT_SHA;
-            let conclusions = [];
+      - name: Dispatch RKE2 Test Workflow
+        uses: ./.github/workflows/test-rke2.yaml
 
-            for (const workflow_id of workflow_ids) {
-              try {
-                let conclusion = null;
-                let workflow_runs = [];
-                while (conclusion === null) {
-                  const response = await github.rest.actions.listWorkflowRunsForRepo({
-                    owner: owner,
-                    repo: repo,
-                    workflow_id: "test-${workflow_id}.yaml",
-                    head_sha: sha,
-                  });
-
-                  if (response.data.workflow_runs && response.data.workflow_runs.length > 0) {
-                    workflow_runs = response.data.workflow_runs;
-                    //If there are multiple attempts, the latest one should be reported first
-                    conclusion = response.data.workflow_runs[0].conclusion;
-                    url = response.data.workflow_runs[0].html_url;
-                    if (conclusion === null) {
-                      await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds
-                    }
-                  } else {
-                    console.log(`No workflows found matching ${workflow_id} and ${sha}`)
-                    conclusion = 'No runs found for this workflow and SHA';
-                    url = "";
-                  }
-
-                }
-                conclusions.push({
-                  workflow_id: workflow_id,
-                  conclusion: conclusion,
-                  url: url
-                });
-                if (conclusion !== 'success') {
-                  allSuccessful = false;
-                };
-
-              } catch (error) {
-                console.error(`Error fetching workflow ${workflow_id}: ${error}`);
-                conclusions.push({
-                  workflow_id: workflow_id,
-                  conclusion: 'Error fetching conclusion',
-                  url: ""
-                });
-                allSuccessful = false;
-              }
-            }
-
-            if (!allSuccessful) {
-              const failedWorkflowUrls = conclusions
-                .filter(item => item.conclusion !== 'success')
-                .map(item => item.url)
-                .join(', ');
-              core.setFailed(`One or more workflows did not succeed. Failed workflow URLs: ${failedWorkflowUrls}`);
-            } else {
-              console.log(`All workflows succeeded.`)
-            }
+  run-aks-test:
+    needs: check-paths
+    name: Schedule IaC
+    runs-on: ubuntu-latest
+    if: ${{ contains(needs.check-paths.outputs.distros, 'aks') || contains(github.event.pull_request.labels.*.name, 'test-all-iac') || contains(github.event.pull_request.labels.*.name, 'test-aks') }}
+    steps:
+      - name: Dispatch AKS Test Workflow
+        uses: ./.github/workflows/test-aks.yaml
 
 # evaluate-package-compliance:
 #   needs: run-package-test

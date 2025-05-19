@@ -6,12 +6,7 @@ name: AKS Test
 on:
   schedule:
     - cron: "0 0 * * 0" # Every Sunday Midnight (UTC) / Saturday 5pm MT
-  workflow_dispatch:
-    inputs:
-      triggered_by:
-        description: 'The workflow run that triggered this workflow'
-        required: false
-        type: string
+  workflow_call: {}
 
 permissions:
   id-token: write
@@ -67,11 +62,9 @@ jobs:
       - name: Azure login
         uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
           environment: "AzureUSGovernment"
-          # below values configure OIDC login
-          # tenant-id: ${{ secrets.AZURE_GOV_TENANT_ID }}
-          # subscription-id: ${{ secrets.AZURE_GOV_SUBSCRIPTION_ID }}
+          tenant-id: ${{ secrets.AZURE_GOV_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_GOV_SUBSCRIPTION_ID }}
 
       - name: Environment setup
         uses: ./.github/actions/setup
