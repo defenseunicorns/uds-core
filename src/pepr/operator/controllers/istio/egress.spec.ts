@@ -14,10 +14,20 @@ import {
   getHostPortsProtocol,
   reconcileSharedEgressResources,
   remapEgressResources,
+  updateInMemoryPackageMap,
   inMemoryPackageMap,
 } from "./egress";
 import { PackageAction, HostResourceMap, PackageHostMap } from "./types";
 import { purgeOrphans } from "../utils";
+
+jest.mock("./istio-resources", () => ({
+  log: {
+    debug: jest.fn(),
+    error: jest.fn(),
+  },
+}));
+
+import { log } from "./istio-resources";
 
 const mockPurgeOrphans: jest.MockedFunction<() => Promise<void>> = jest.fn();
 
@@ -208,6 +218,84 @@ describe("test reconcileEgressResources", () => {
 
     // Should not call purge
     expect(mockPurgeOrphans).not.toHaveBeenCalled();
+  });
+});
+
+describe("test updateInMemoryPackageMap", () => {
+  const hostResourceMapMockTls: HostResourceMap = {
+    "example.com": {
+      portProtocol: [{ port: 443, protocol: RemoteProtocol.TLS }],
+    },
+  };
+  const hostResourceMapMockHttp: HostResourceMap = {
+    "example.com": {
+      portProtocol: [{ port: 80, protocol: RemoteProtocol.HTTP }],
+    },
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    // Reset the map before each test
+    for (const key in inMemoryPackageMap) {
+      delete inMemoryPackageMap[key];
+    }
+  });
+
+  test("concurrent updates should resolve correctly", async () => {
+    // Mock packages
+    const mockUpdates = [
+      {
+        pkgId: "test-package-test-namespace1",
+        hostResourceMap: hostResourceMapMockTls,
+        action: PackageAction.AddOrUpdate,
+      },
+      {
+        pkgId: "test-package-test-namespace2",
+        hostResourceMap: hostResourceMapMockHttp,
+        action: PackageAction.AddOrUpdate,
+      },
+      {
+        pkgId: "test-package-test-namespace3",
+        hostResourceMap: hostResourceMapMockTls,
+        action: PackageAction.AddOrUpdate,
+      },
+      {
+        pkgId: "test-package-test-namespace4",
+        hostResourceMap: hostResourceMapMockHttp,
+        action: PackageAction.AddOrUpdate,
+      },
+    ];
+
+    // Create an array of promises for each update
+    const promises = mockUpdates.map(
+      ({ pkgId, hostResourceMap, action }) =>
+        new Promise<void>(resolve => {
+          setTimeout(() => {
+            updateInMemoryPackageMap(hostResourceMap, pkgId, action);
+            resolve();
+          }, 0);
+        }),
+    );
+
+    // Wait for all updates to complete
+    await Promise.all(promises);
+
+    // Validate inMemoryPackageMap
+    expect(inMemoryPackageMap).toEqual({
+      "test-package-test-namespace1": hostResourceMapMockTls,
+      "test-package-test-namespace2": hostResourceMapMockHttp,
+      "test-package-test-namespace3": hostResourceMapMockTls,
+      "test-package-test-namespace4": hostResourceMapMockHttp,
+    });
+
+    // Check that the lock was set and released
+    expect(log.debug).toHaveBeenCalledWith(
+      expect.stringContaining("Locking egress package map for update"),
+    );
+    expect(log.debug).toHaveBeenCalledWith(
+      expect.stringContaining("Unlocking egress package map for update"),
+    );
+    expect(log.error).not.toHaveBeenCalled();
   });
 });
 

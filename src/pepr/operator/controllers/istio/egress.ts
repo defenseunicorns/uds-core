@@ -30,6 +30,15 @@ import {
 // Cache for in-memory egress resources from package CRs
 export const inMemoryPackageMap: PackageHostMap = {};
 
+// Lock to prevent concurrent updates to the inMemoryPackageMap
+let lock = false;
+
+// Timer for debouncing updates to the shared egress resources
+let debounceTimer: NodeJS.Timeout | null = null;
+
+// Debounce duration (1 seconds) to reduce excessive updates, configurable via environment variable
+const DEBOUNCE_DURATION = parseInt(process.env.DEBOUNCE_DURATION || "1000", 10);
+
 let generation = 0;
 
 export const sharedEgressPkgId = "shared-egress-resource";
@@ -40,60 +49,99 @@ export async function reconcileSharedEgressResources(
   pkgId: string,
   action: PackageAction,
 ) {
-  // Get the package's resources first
-  if (action == PackageAction.AddOrUpdate) {
-    if (hostResourceMap) {
-      // update inMemoryPackageMap
-      inMemoryPackageMap[pkgId] = hostResourceMap;
-    } else {
-      removeEgressResources(pkgId);
-    }
-  } else if (action == PackageAction.Remove) {
-    removeEgressResources(pkgId);
+  // Update the in-memory package map with the new host resource map
+  updateInMemoryPackageMap(hostResourceMap, pkgId, action);
+
+  // Clear the previous debounce timer, if it exists
+  if (debounceTimer) {
+    clearTimeout(debounceTimer);
   }
 
-  // Check if there is an istioEgressGatewayNamespace, if not don't proceed
-  await K8s(kind.Namespace)
-    .Get(istioEgressGatewayNamespace)
-    .then(async () => {
-      // Apply the egress resources
-      generation++;
-      await applyEgressResources(inMemoryPackageMap, generation);
+  // Set a new debounce timer to apply the update after the delay
+  debounceTimer = setTimeout(async () => {
+    // Check if there is an istioEgressGatewayNamespace, if not don't proceed
+    await K8s(kind.Namespace)
+      .Get(istioEgressGatewayNamespace)
+      .then(async () => {
+        // Apply the egress resources
+        generation++;
+        await applyEgressResources(inMemoryPackageMap, generation);
 
-      // Purge any orphaned shared resources
-      await purgeOrphans(
-        generation.toString(),
-        istioEgressGatewayNamespace,
-        sharedEgressPkgId,
-        IstioGateway,
-        log,
-      );
-      await purgeOrphans(
-        generation.toString(),
-        istioEgressGatewayNamespace,
-        sharedEgressPkgId,
-        IstioVirtualService,
-        log,
-      );
-      await purgeOrphans(
-        generation.toString(),
-        istioEgressGatewayNamespace,
-        sharedEgressPkgId,
-        IstioServiceEntry,
-        log,
-      );
-    })
-    .catch(e => {
-      if (e.status == 404) {
-        log.debug(
-          `Namespace ${istioEgressGatewayNamespace} not found. Skipping shared egress resource reconciliation.`,
+        // Purge any orphaned shared resources
+        await purgeOrphans(
+          generation.toString(),
+          istioEgressGatewayNamespace,
+          sharedEgressPkgId,
+          IstioGateway,
+          log,
         );
-        return; // Exit the routine
+        await purgeOrphans(
+          generation.toString(),
+          istioEgressGatewayNamespace,
+          sharedEgressPkgId,
+          IstioVirtualService,
+          log,
+        );
+        await purgeOrphans(
+          generation.toString(),
+          istioEgressGatewayNamespace,
+          sharedEgressPkgId,
+          IstioServiceEntry,
+          log,
+        );
+      })
+      .catch(e => {
+        if (e.status == 404) {
+          log.debug(
+            `Namespace ${istioEgressGatewayNamespace} not found. Skipping shared egress resource reconciliation.`,
+          );
+          return; // Exit the routine
+        } else {
+          log.error(`Unable to reconcile shared egress resources: ${e}`);
+          throw e;
+        }
+      })
+      .finally(() => {
+        // Clear the debounce timer after applying the resources
+        debounceTimer = null;
+      });
+  }, DEBOUNCE_DURATION);
+}
+
+export function updateInMemoryPackageMap(
+  hostResourceMap: HostResourceMap | undefined,
+  pkgId: string,
+  action: PackageAction,
+) {
+  // Lock to prevent concurrent updates
+  if (lock) {
+    log.debug("Lock is set for egress package map update, retrying...");
+    setTimeout(() => updateInMemoryPackageMap(hostResourceMap, pkgId, action), 0);
+    return;
+  }
+
+  try {
+    log.debug("Locking egress package map for update");
+    lock = true;
+
+    if (action == PackageAction.AddOrUpdate) {
+      if (hostResourceMap) {
+        // update inMemoryPackageMap
+        inMemoryPackageMap[pkgId] = hostResourceMap;
       } else {
-        log.error(`Unable to reconcile shared egress resources: ${e}`);
-        throw e;
+        removeEgressResources(pkgId);
       }
-    });
+    } else if (action == PackageAction.Remove) {
+      removeEgressResources(pkgId);
+    }
+  } catch (e) {
+    log.error("Failed to update in memory egress package map for event", action, e);
+    throw e;
+  } finally {
+    // unlock inMemoryPackageMap
+    log.debug("Unlocking egress package map for update");
+    lock = false;
+  }
 }
 
 export function createHostResourceMap(pkg: UDSPackage) {
