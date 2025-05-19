@@ -35,8 +35,6 @@ jobs:
       UDS_STATE_BUCKET_NAME: uds-tf-state-20250305185903808500000001 # govcloud
       UDS_STATE_DYNAMODB_TABLE_NAME: uds-tf-state-lock
     steps:
-      - name: Output Caller
-        run: "echo Called by: ${{ inputs.triggered_by }}"
       - name: Set ENV
         run: |
           echo "UDS_CLUSTER_NAME=uds-ci-${{ matrix.flavor }}-${SHA:0:7}" >> $GITHUB_ENV

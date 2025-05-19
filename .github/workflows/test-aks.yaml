@@ -34,8 +34,6 @@ jobs:
       UDS_CONTAINER_NAME: ${{ secrets.AZURE_GOV_STORAGE_CONTAINER_NAME }}
 
     steps:
-      - name: Output Caller
-        run: "echo Called by: ${{ inputs.triggered_by }}"
       - name: Set ENV
         run: |
           echo "UDS_CLUSTER_NAME=uds-ci-${{ matrix.flavor }}-${SHA:0:7}" >> $GITHUB_ENV

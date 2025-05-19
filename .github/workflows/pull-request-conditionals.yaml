@@ -157,27 +157,21 @@ jobs:
     name: Schedule IaC
     runs-on: ubuntu-latest
     if: ${{ contains(needs.check-paths.outputs.distros, 'eks') || contains(github.event.pull_request.labels.*.name, 'test-all-iac') || contains(github.event.pull_request.labels.*.name, 'test-eks') }}
-    steps:
-      - name: Dispatch EKS Test Workflow
-        uses: ./.github/workflows/test-eks.yaml
+    uses: ./.github/workflows/test-eks.yaml
 
   run-rke2-test:
     needs: check-paths
     name: Schedule IaC
     runs-on: ubuntu-latest
     if: ${{ contains(needs.check-paths.outputs.distros, 'rke2') || contains(github.event.pull_request.labels.*.name, 'test-all-iac') || contains(github.event.pull_request.labels.*.name, 'test-rke2') }}
-    steps:
-      - name: Dispatch RKE2 Test Workflow
-        uses: ./.github/workflows/test-rke2.yaml
+    uses: ./.github/workflows/test-rke2.yaml
 
   run-aks-test:
     needs: check-paths
     name: Schedule IaC
     runs-on: ubuntu-latest
     if: ${{ contains(needs.check-paths.outputs.distros, 'aks') || contains(github.event.pull_request.labels.*.name, 'test-all-iac') || contains(github.event.pull_request.labels.*.name, 'test-aks') }}
-    steps:
-      - name: Dispatch AKS Test Workflow
-        uses: ./.github/workflows/test-aks.yaml
+    uses: ./.github/workflows/test-aks.yaml
 
 # evaluate-package-compliance:
 #   needs: run-package-test
