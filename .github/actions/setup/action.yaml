@@ -63,3 +63,8 @@ runs:
         GH_TOKEN: ${{ inputs.ghToken }}
       run: echo "${{ env.GH_TOKEN }}" | uds zarf tools registry login -u "dummy" --password-stdin ghcr.io
       shell: bash
+
+    - name: Maru Login
+      if: ${{ inputs.ghToken != '' }}
+      run: echo "MARU_AUTH=\"{\"raw.githubusercontent.com\": \"${{ inputs.ghToken }}\"}\"" >> "GITHUB_ENV"
+      shell: bash
