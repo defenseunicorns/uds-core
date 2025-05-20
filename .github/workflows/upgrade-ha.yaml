@@ -55,4 +55,4 @@ jobs:
         if: always()
         uses: ./.github/actions/save-logs
         with:
-          suffix: -nightly-upstream-${{ matrix.flavor }}-${{ matrix.test-type }}
+          suffix: -nightly-${{ matrix.flavor }}-${{ matrix.test-type }}
