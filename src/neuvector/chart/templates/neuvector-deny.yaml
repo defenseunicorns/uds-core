@@ -18,4 +18,6 @@ spec:
     - operation:
         paths: ["/auth"]
         ports: ["8443"]
+        # Don't block DELETE which is used for OIDC logout
+        methods: ["POST","GET","PUT","CONNECT"]
 {{- end }}
