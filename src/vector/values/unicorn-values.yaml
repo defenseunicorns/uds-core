@@ -2,5 +2,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 image:
-  repository: cgr.dev/du-uds-defenseunicorns/vector
+  repository: cgr.dev/du-uds-defenseunicorns/vector-fips
   tag: 0.46.1
