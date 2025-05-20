@@ -1,0 +1,58 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+name: Nightly
+
+on:
+  schedule:
+    # Runs every morning at 2:00 AM UTC
+    - cron: '0 2 * * *'
+  pull_request:
+    paths:
+      - '.github/workflows/upgrade-ha.yaml'
+      - 'bundles/k3d-standard/**'
+
+permissions:
+  contents: read
+  id-token: write
+  packages: read
+
+jobs:
+  uds-core-ha-upgrade-nightly:
+    runs-on: uds-ubuntu-big-boy-8-core
+    timeout-minutes: 45
+    name: HA Testing
+    strategy:
+      matrix:
+        flavor: [upstream, registry1, unicorn]
+        test-type: [install, upgrade]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Environment setup
+        uses: ./.github/actions/setup
+        with:
+          registry1Username: ${{ secrets.IRON_BANK_ROBOT_USERNAME }}
+          registry1Password: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
+          ghToken: ${{ secrets.GITHUB_TOKEN }}
+          chainguardIdentity: ${{ secrets.CHAINGUARD_IDENTITY }}
+
+      - name: Run UDS Core Install HA Test
+        if: ${{ matrix.test-type == 'install' }}
+        run: uds run test-uds-core-ha --set FLAVOR=${{ matrix.flavor }} --no-progress
+
+      - name: Run UDS Core Upgrade HA Test
+        if: ${{ matrix.test-type == 'upgrade' }}
+        run: uds run test-uds-core-ha-upgrade --set FLAVOR=${{ matrix.flavor }} --no-progress
+
+      - name: Debug Output
+        if: ${{ always() }}
+        uses: ./.github/actions/debug-output
+
+      - name: Save logs
+        if: always()
+        uses: ./.github/actions/save-logs
+        with:
+          suffix: -nightly-${{ matrix.flavor }}-${{ matrix.test-type }}
