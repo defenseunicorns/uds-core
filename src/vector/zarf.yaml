@@ -48,4 +48,4 @@ components:
         valuesFiles:
           - values/unicorn-values.yaml
     images:
-      - cgr.dev/du-uds-defenseunicorns/vector:0.46.1
+      - cgr.dev/du-uds-defenseunicorns/vector-fips:0.46.1
