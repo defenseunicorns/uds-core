@@ -24,3 +24,10 @@ data "aws_ami" "rhel_rke2" {
   owners      = [var.uds_images_aws_account_id]
 }
 
+data "aws_subnets" "rds_subnets" {
+  filter {
+    name   = "vpc-id"
+    values = [data.aws_vpc.vpc.id]
+  }
+}
+
