@@ -63,3 +63,21 @@ components:
               # (temporary) also ensure that the proper probe is set on the controllers - keep this in the same patch to prevent excessive cycling
               SSO_CHECKSUM=$(./zarf tools kubectl get secret neuvector-secret -o json -n neuvector | sha256sum | cut -d' ' -f1)
               ./zarf tools kubectl -n neuvector patch deployment neuvector-controller-pod --type=strategic -p '{"spec":{"template":{"metadata":{"annotations":{"checksum/uds-sso-secret":"'"$SSO_CHECKSUM"'"}},"spec":{"containers":[{"name":"neuvector-controller-pod","readinessProbe":{"exec":{"command":["cat","/tmp/ready"]},"initialDelaySeconds":5,"periodSeconds":5}}]}}}}'
+          # On certain upgrades, due to timing, the lease can get stuck on a terminated job pod and we need to remove it + restart the job by cycling the existing job pod
+          - description: Manage cert upgrader job lease conflicts on upgrade
+            cmd: |
+              # Check if the lease exists and has a holder
+              HOLDER=$(./zarf tools kubectl get lease neuvector-cert-upgrader -n neuvector -o jsonpath='{.spec.holderIdentity}' 2>/dev/null)
+
+              if [ -n "$HOLDER" ]; then
+                # Extract pod name from holder identity using cut (works across different shells)
+                # Assumes format like: neuvector-cert-upgrader-pod-xyz_neuvector_guid
+                POD_NAME=$(echo "$HOLDER" | cut -d '_' -f 1)
+
+                # Check if the pod exists
+                if ! ./zarf tools kubectl get pod "$POD_NAME" -n neuvector &>/dev/null; then
+                  # Delete the lease and any existing cert-upgrader pods
+                  ./zarf tools kubectl delete lease neuvector-cert-upgrader -n neuvector --ignore-not-found=true
+                  ./zarf tools kubectl delete pods -l app=neuvector-cert-upgrader-pod -n neuvector --grace-period=0 --force --ignore-not-found=true &>/dev/null
+                fi
+              fi
