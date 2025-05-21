@@ -130,8 +130,7 @@ spec:
         port: 15012
         description: Waypoint to Istiod
 
-      - description: "Waypoint Metrics"
-        direction: Ingress
+      - direction: Ingress
         selector:
           app: neuvector-manager-waypoint
         remoteNamespace: monitoring
@@ -139,6 +138,7 @@ spec:
           app.kubernetes.io/name: prometheus
         remoteServiceAccount: kube-prometheus-stack-prometheus
         port: 15020
+        description: Waypoint Metrics
 
       # Custom rules for additional networking access
       {{- with .Values.additionalNetworkAllow }}

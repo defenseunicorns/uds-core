@@ -40,12 +40,24 @@ components:
     actions:
       onDeploy:
         before:
-          - description: Annotate Controller service and Enforcer daemonset to ensure mutation
+          - description: Annotate Controller Service to ensure mutation
             cmd: |
               ./zarf tools kubectl annotate svc neuvector-svc-controller -n neuvector uds.dev/mutate=true || true
-              ./zarf tools kubectl annotate daemonset neuvector-enforcer-pod -n neuvector uds.dev/mutate=true || true
-        after:
-          - description: Annotate Controller deployment for Neuvector SSO secret
+          - description: Patch Controller Deployment and Enforcer Daemonset to reset probes
             cmd: |
+              # Patch the controller to remove previously added probes (if set to tcpSocket probe)
+              if [ "$(./zarf tools kubectl -n neuvector get deployment neuvector-controller-pod -o jsonpath='{.spec.template.spec.containers[?(@.name=="neuvector-controller-pod")].readinessProbe.tcpSocket}' 2>/dev/null)" != "" ]; then
+                ./zarf tools kubectl -n neuvector patch deployment neuvector-controller-pod --type=strategic -p '{"spec":{"template":{"spec":{"containers":[{"name":"neuvector-controller-pod","readinessProbe":null}]}}}}' || true
+              fi
+
+              # Patch the enforcer to remove previously added probes
+              ./zarf tools kubectl -n neuvector patch daemonset neuvector-enforcer-pod --type=strategic -p '{"spec":{"template":{"spec":{"containers":[{"name":"neuvector-enforcer-pod","livenessProbe":null,"readinessProbe":null}]}}}}' || true
+        after:
+          - description: Annotate Controller deployment for Neuvector SSO secret and ensure proper probe is added
+            cmd: |
+              # Ensure the probe was set to the upstream default (this should be a no-op if helm applied the upstream template as expected, but we have seen issues with this on upgrades)
+              ./zarf tools kubectl -n neuvector patch deployment neuvector-controller-pod --type=strategic -p '{"spec":{"template":{"spec":{"containers":[{"name":"neuvector-controller-pod","readinessProbe":{"exec":{"command":["cat","/tmp/ready"]},"initialDelaySeconds":5,"periodSeconds":5}}]}}}}'
+
+              # Ensure the controllers cycle if the SSO secret has changed
               SSO_CHECKSUM=$(./zarf tools kubectl get secret neuvector-secret -o json -n neuvector | sha256sum | cut -d' ' -f1)
               ./zarf tools kubectl patch deployment neuvector-controller-pod -n neuvector -p "{\"spec\":{\"template\":{\"metadata\":{\"annotations\":{\"checksum/uds-sso-secret\":\"$SSO_CHECKSUM\"}}}}}"
