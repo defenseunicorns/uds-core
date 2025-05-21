@@ -23,6 +23,16 @@ Where: k3d
 
 What: [Standard k3d bundle](https://github.com/defenseunicorns/uds-core/blob/main/bundles/k3d-standard/uds-bundle.yaml), all `optionalComponents` enabled
 
+### "Full Core" HA Install
+
+This tests validates an install of the `k3d-core-demo` bundle in HA mode. The demo bundles includes all functional layers and components in Core, so this test provides full coverage of all applications.
+
+When: Nightly (2AM UTC)
+
+Where: k3d
+
+What: [Standard k3d bundle](https://github.com/defenseunicorns/uds-core/blob/main/bundles/k3d-standard/uds-bundle.yaml), all `optionalComponents` enabled using [HA Config](https://github.com/defenseunicorns/uds-core/blob/main/bundles/k3d-standard/uds-ha-config.yaml)
+
 ### "Full Core" Upgrade
 
 In order to ensure we catch any breaking changes across upgrades we also run an upgrade test of Core. This test deploys the latest release of the `k3d-core-demo` bundle, then upgrades to the version of core built from the PR branch. This test includes all functional layers and components in Core.
@@ -32,6 +42,16 @@ When: On all PRs
 Where: k3d
 
 What: [Standard k3d bundle](https://github.com/defenseunicorns/uds-core/blob/main/bundles/k3d-standard/uds-bundle.yaml), all `optionalComponents` enabled, upgrade tested from latest release
+
+### "Full Core" HA Upgrade
+
+In order to ensure we catch any breaking changes across upgrades with HA we also run an upgrade test of Core in HA mode. This test deploys the latest release of the `k3d-core-demo` HA bundle, then upgrades to the version of core built from the PR branch. This test includes all functional layers and components in Core.
+
+When: Nightly (2AM UTC)
+
+Where: k3d
+
+What: [Standard k3d bundle](https://github.com/defenseunicorns/uds-core/blob/main/bundles/k3d-standard/uds-bundle.yaml), all `optionalComponents` enabled, using [HA Config](https://github.com/defenseunicorns/uds-core/blob/main/bundles/k3d-standard/uds-ha-config.yaml), upgrade tested from latest release
 
 ### "Single Layer"
 
