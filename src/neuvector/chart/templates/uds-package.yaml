@@ -1,6 +1,29 @@
 # Copyright 2024 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
-{{- $neuvectorAdminPass := join "" (list (randAlphaNum 12) (randAlpha 2 | upper) (randAlpha 2 | lower) (randNumeric 2))}}
+
+{{- /* Check if the neuvector-secret exists and get the admin password from it */}}
+{{- $neuvectorAdminPass := ""}}
+{{- /* Try to lookup existing neuvector-secret */}}
+{{- $secret := (lookup "v1" "Secret" "neuvector" "neuvector-secret") }}
+{{- if $secret }}
+  {{- /* If we found the secret, try to extract the admin password from userinitcfg.yaml */}}
+  {{- if (index $secret "data" "userinitcfg.yaml") }}
+    {{- $secretData := (get $secret.data "userinitcfg.yaml" | b64dec | fromYaml) }}
+    {{- if $secretData }}
+      {{- if $secretData.users }}
+        {{- range $user := $secretData.users }}
+          {{- if eq $user.username "admin" }}
+            {{- $neuvectorAdminPass = $user.password }}
+          {{- end }}
+        {{- end }}
+      {{- end }}
+    {{- end }}
+  {{- end }}
+{{- end }}
+{{- /* Generate a new password if we couldn't find an existing one */}}
+{{- if eq $neuvectorAdminPass "" }}
+  {{- $neuvectorAdminPass = join "" (list (randAlphaNum 12) (randAlpha 2 | upper) (randAlpha 2 | lower) (randNumeric 2)) }}
+{{- end }}
 
 apiVersion: uds.dev/v1alpha1
 kind: Package
