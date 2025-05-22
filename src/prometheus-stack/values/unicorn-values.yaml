@@ -23,7 +23,7 @@ prometheus:
     image:
       registry: cgr.dev
       repository: du-uds-defenseunicorns/prometheus-fips
-      tag: 3.2.1
+      tag: 3.4.0
 prometheus-node-exporter:
   image:
     registry: cgr.dev
@@ -40,7 +40,7 @@ prometheusOperator:
       image:
         registry: cgr.dev
         repository: du-uds-defenseunicorns/kube-webhook-certgen-fips
-        tag: 1.12.1
+        tag: 1.12.2
       registry: cgr.dev
       repository: du-uds-defenseunicorns/kube-webhook-certgen-fips
       tag: 1.10.1
@@ -51,9 +51,9 @@ prometheusOperator:
   image:
     registry: cgr.dev
     repository: du-uds-defenseunicorns/prometheus-operator-fips
-    tag: 0.81.0
+    tag: 0.82.2
   prometheusConfigReloader:
     image:
       registry: cgr.dev
       repository: du-uds-defenseunicorns/prometheus-config-reloader-fips
-      tag: 0.81.0
+      tag: 0.82.2

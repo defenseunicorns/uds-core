@@ -23,7 +23,7 @@ prometheus:
     image:
       registry: quay.io
       repository: prometheus/prometheus
-      tag: v3.2.1
+      tag: v3.4.0
 prometheus-node-exporter:
   image:
     registry: quay.io
@@ -35,7 +35,7 @@ prometheusOperator:
       image:
         registry: registry.k8s.io
         repository: ingress-nginx/kube-webhook-certgen
-        tag: v1.5.2
+        tag: v1.5.3
       securityContext:
         runAsGroup: 2000
         runAsNonRoot: true
@@ -43,9 +43,9 @@ prometheusOperator:
   image:
     registry: quay.io
     repository: prometheus-operator/prometheus-operator
-    tag: v0.81.0
+    tag: v0.82.2
   prometheusConfigReloader:
     image:
       registry: quay.io
       repository: prometheus-operator/prometheus-config-reloader
-      tag: v0.81.0
+      tag: v0.82.2
