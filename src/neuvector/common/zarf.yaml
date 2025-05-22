@@ -43,12 +43,21 @@ components:
           - description: Annotate Controller Service to ensure mutation
             cmd: |
               ./zarf tools kubectl annotate svc neuvector-svc-controller -n neuvector uds.dev/mutate=true || true
-          - description: Patch Controller Deployment and Enforcer Daemonset to reset probes
+          - description: Handle upgrade changes for NeuVector controller and enforcer
             cmd: |
+              # Scale down the deployment for the 5.4.3 -> 5.4.4 upgrade
+              if [ "$(./zarf tools kubectl -n neuvector get deployment neuvector-controller-pod 2>/dev/null)" != "" ]; then
+                CURRENT_IMAGE=$(./zarf tools kubectl -n neuvector get deployment neuvector-controller-pod -o jsonpath='{.spec.template.spec.containers[0].image}' 2>/dev/null)
+                if [ "$(echo "$CURRENT_IMAGE" | grep ":5.4.3")" != "" ]; then
+                  echo "Found NeuVector controller with 5.4.3 image, scaling down for upgrade"
+                  ./zarf tools kubectl scale -n neuvector --replicas=0 deployment neuvector-controller-pod
+                  ./zarf tools kubectl rollout status deployment neuvector-controller-pod -n neuvector --timeout=600s
+                fi
+              fi
+
               # Patch the controller to remove previously added probes (if set to tcpSocket probe)
               if [ "$(./zarf tools kubectl -n neuvector get deployment neuvector-controller-pod -o jsonpath='{.spec.template.spec.containers[?(@.name=="neuvector-controller-pod")].readinessProbe.tcpSocket}' 2>/dev/null)" != "" ]; then
                 ./zarf tools kubectl -n neuvector patch deployment neuvector-controller-pod --type=strategic -p '{"spec":{"template":{"spec":{"containers":[{"name":"neuvector-controller-pod","readinessProbe":null}]}}}}'
-                ./zarf tools kubectl rollout status deployment neuvector-controller-pod -n neuvector --timeout=600s
               fi
 
               # Patch the enforcer to remove previously added probes
@@ -63,21 +72,6 @@ components:
               # (temporary) also ensure that the proper probe is set on the controllers - keep this in the same patch to prevent excessive cycling
               SSO_CHECKSUM=$(./zarf tools kubectl get secret neuvector-secret -o json -n neuvector | sha256sum | cut -d' ' -f1)
               ./zarf tools kubectl -n neuvector patch deployment neuvector-controller-pod --type=strategic -p '{"spec":{"template":{"metadata":{"annotations":{"checksum/uds-sso-secret":"'"$SSO_CHECKSUM"'"}},"spec":{"containers":[{"name":"neuvector-controller-pod","readinessProbe":{"exec":{"command":["cat","/tmp/ready"]},"initialDelaySeconds":5,"periodSeconds":5}}]}}}}'
-          # On certain upgrades, due to timing, the lease can get stuck on a terminated job pod and we need to remove it + restart the job by cycling the existing job pod
-          - description: Manage cert upgrader job lease conflicts on upgrade
-            cmd: |
-              # Check if the lease exists and has a holder
-              HOLDER=$(./zarf tools kubectl get lease neuvector-cert-upgrader -n neuvector -o jsonpath='{.spec.holderIdentity}' 2>/dev/null)
 
-              if [ -n "$HOLDER" ]; then
-                # Extract pod name from holder identity using cut (works across different shells)
-                # Assumes format like: neuvector-cert-upgrader-pod-xyz_neuvector_guid
-                POD_NAME=$(echo "$HOLDER" | cut -d '_' -f 1)
-
-                # Check if the pod exists
-                if ! ./zarf tools kubectl get pod "$POD_NAME" -n neuvector &>/dev/null; then
-                  # Delete the lease and any existing cert-upgrader pods
-                  ./zarf tools kubectl delete lease neuvector-cert-upgrader -n neuvector --ignore-not-found=true
-                  ./zarf tools kubectl delete pods -l app=neuvector-cert-upgrader-pod -n neuvector --grace-period=0 --force --ignore-not-found=true &>/dev/null
-                fi
-              fi
+              # Scale back up to 3 replicas in case helm merge didn't do this for us
+              ./zarf tools kubectl scale -n neuvector --replicas=3 deployment neuvector-controller-pod
