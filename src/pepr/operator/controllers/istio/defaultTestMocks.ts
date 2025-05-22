@@ -79,8 +79,19 @@ export function updateEgressMocks(egressMocks: Record<string, jest.Mock>) {
 
   const mockK8s = jest.mocked(K8s);
 
+  // Define a type for the K8s implementation for better type safety
+  type K8sImplementation = {
+    Apply: jest.Mock;
+    InNamespace: jest.Mock;
+    Get: jest.Mock;
+    Logs: jest.Mock;
+    Delete: jest.Mock;
+    Watch: jest.Mock;
+    WithLabel: jest.Mock;
+  };
+
   // Define only the implementations for specific resources
-  const k8sImplementations = {
+  const k8sImplementations: Record<string, K8sImplementation> = {
     [IstioGateway.name]: {
       ...baseImplementation,
       Get: egressMocks.getGwMock,
@@ -103,8 +114,8 @@ export function updateEgressMocks(egressMocks: Record<string, jest.Mock>) {
       Apply: egressMocks.applySidecarMock,
       Delete: egressMocks.deleteSidecarMock,
     },
-    [kind.Namespace.name]: { ...baseImplementation, Get: egressMocks.getNsMock },
-    [kind.Service.name]: { ...baseImplementation, InNamespace: egressMocks.getServiceInNsMock },
+    "namespace": { ...baseImplementation, Get: egressMocks.getNsMock },
+    "service": { ...baseImplementation, InNamespace: egressMocks.getServiceInNsMock },
   };
 
   mockK8s.mockImplementation(

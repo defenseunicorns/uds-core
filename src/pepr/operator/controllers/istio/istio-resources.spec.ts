@@ -103,7 +103,7 @@ describe("test istioEgressResources", () => {
 
     updateEgressMocks({
       ...defaultEgressMocks,
-      getServiceInNamespaceMock,
+      getServiceInNsMock: getServiceInNamespaceMock, // Match the property name expected in implementation
     });
 
     await expect(
