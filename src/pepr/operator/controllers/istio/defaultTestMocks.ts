@@ -114,8 +114,35 @@ export function updateEgressMocks(egressMocks: Record<string, jest.Mock>) {
     "service": { ...baseImplementation, InNamespace: egressMocks.getServiceInNsMock },
   };
 
+  // Define a function to get the appropriate implementation based on model type
   mockK8s.mockImplementation(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ((model: any) => k8sImplementations[model.name] || baseImplementation) as any,
+    ((model: any) => {
+      // First ensure model exists to prevent 'Cannot read properties of undefined' errors
+      if (!model) {
+        return baseImplementation;
+      }
+      
+      // For Istio resources that have a name property
+      // Using optional chaining to safely access model.name
+      if (model?.name && k8sImplementations[model.name]) {
+        return k8sImplementations[model.name];
+      }
+      
+      // For core K8s resources, determine by kind
+      // Using optional chaining to safely access model.kind
+      if (model?.kind) {
+        const kindLower = model.kind.toLowerCase();
+        if (kindLower === "namespace" && k8sImplementations["namespace"]) {
+          return k8sImplementations["namespace"];
+        }
+        if (kindLower === "service" && k8sImplementations["service"]) {
+          return k8sImplementations["service"];
+        }
+      }
+      
+      // If we can't determine the type, return the base implementation
+      return baseImplementation;
+    }) as any
   );
 }
