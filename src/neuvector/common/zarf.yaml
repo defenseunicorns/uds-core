@@ -75,3 +75,4 @@ components:
 
               # Scale back up to 3 replicas in case helm merge didn't do this for us
               ./zarf tools kubectl scale -n neuvector --replicas=3 deployment neuvector-controller-pod
+              ./zarf tools kubectl rollout status deployment neuvector-controller-pod -n neuvector --timeout=600s
