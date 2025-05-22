@@ -19,12 +19,14 @@ permissions:
   contents: read
   id-token: write
   packages: read
+  pull-requests: write # Allows writing to pull requests (needed for renovate-readiness)
 
 jobs:
   uds-core-ha-upgrade-nightly:
     runs-on: uds-ubuntu-big-boy-8-core
     timeout-minutes: 45
     name: HA Testing
+
     strategy:
       matrix:
         flavor: [upstream, registry1, unicorn]
