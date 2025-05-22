@@ -48,33 +48,29 @@ export const pkgHostMapMock: PackageHostMap = {
 };
 
 export const defaultEgressMocks = {
-  applyGwMock: jest.fn<() => Promise<void>>().mockResolvedValue(),
-  applyVsMock: jest.fn<() => Promise<void>>().mockResolvedValue(),
-  applySeMock: jest.fn<() => Promise<void>>().mockResolvedValue(),
-  applySidecarMock: jest.fn<() => Promise<void>>().mockResolvedValue(),
-  getGwMock: jest.fn<() => Promise<{ items: IstioGateway[] }>>().mockResolvedValue({
-    items: [],
-  }),
-  getVsMock: jest.fn<() => Promise<{ items: IstioVirtualService[] }>>().mockResolvedValue({
-    items: [],
-  }),
-  getNsMock: jest.fn<() => Promise<kind.Namespace>>().mockResolvedValue({}),
+  applyGwMock: jest.fn().mockImplementation(() => Promise.resolve()),
+  applyVsMock: jest.fn().mockImplementation(() => Promise.resolve()),
+  applySeMock: jest.fn().mockImplementation(() => Promise.resolve()),
+  applySidecarMock: jest.fn().mockImplementation(() => Promise.resolve()),
+  getGwMock: jest.fn().mockImplementation(() => Promise.resolve({ items: [] })),
+  getVsMock: jest.fn().mockImplementation(() => Promise.resolve({ items: [] })),
+  getNsMock: jest.fn().mockImplementation(() => Promise.resolve({})),
   getServiceInNsMock: jest.fn().mockReturnThis(),
-  deleteGwMock: jest.fn<() => Promise<void>>().mockResolvedValue(),
-  deleteVsMock: jest.fn<() => Promise<void>>().mockResolvedValue(),
-  deleteSeMock: jest.fn<() => Promise<void>>().mockResolvedValue(),
-  deleteSidecarMock: jest.fn<() => Promise<void>>().mockResolvedValue(),
+  deleteGwMock: jest.fn().mockImplementation(() => Promise.resolve()),
+  deleteVsMock: jest.fn().mockImplementation(() => Promise.resolve()),
+  deleteSeMock: jest.fn().mockImplementation(() => Promise.resolve()),
+  deleteSidecarMock: jest.fn().mockImplementation(() => Promise.resolve()),
 };
 
 export function updateEgressMocks(egressMocks: Record<string, jest.Mock>) {
   const baseImplementation = {
-    Apply: jest.fn<() => Promise<void>>().mockResolvedValue(),
+    Apply: jest.fn().mockImplementation(() => Promise.resolve()),
     InNamespace: jest.fn().mockReturnThis(),
-    Get: jest.fn(),
-    Logs: jest.fn(),
-    Delete: jest.fn(),
-    Watch: jest.fn(),
-    WithLabel: jest.fn(),
+    Get: jest.fn().mockImplementation(() => Promise.resolve({})),
+    Logs: jest.fn().mockImplementation(() => Promise.resolve()),
+    Delete: jest.fn().mockImplementation(() => Promise.resolve()),
+    Watch: jest.fn().mockImplementation(() => Promise.resolve()),
+    WithLabel: jest.fn().mockReturnThis(),
   };
 
   const mockK8s = jest.mocked(K8s);
