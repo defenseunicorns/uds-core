@@ -1,7 +1,7 @@
 # Copyright 2024 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
-name: CI Docs
+name: IaC Shim
 
 # Permissions for the GITHUB_TOKEN used by the workflow.
 permissions:
@@ -17,6 +17,7 @@ on:
       - ".github/workflows/test-eks.yaml"
       - ".github/workflows/test-rke2.yaml"
       - ".github/bundles/**"
+      - "!**"
 
 jobs:
   lint-check:
