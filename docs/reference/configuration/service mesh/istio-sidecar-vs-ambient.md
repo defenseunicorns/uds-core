@@ -4,8 +4,6 @@ title: Istio Sidecar vs. Ambient Mode in UDS Core
 
 This document outlines the key differences between Istio's Sidecar and Ambient modes as they relate to UDS Core. Understanding these differences is crucial for choosing the right mode for your application deployments.
 
-## Overview
-
 UDS Core leverages Istio for service mesh capabilities. Istio offers two primary modes of operation:
 
 *   **Sidecar Proxy:** The traditional Istio model where each application pod has its own dedicated Envoy proxy running as a sidecar container.
