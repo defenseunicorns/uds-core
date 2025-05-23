@@ -123,7 +123,7 @@ smtp:
   port: 587
 
 # Configure FIPS mode for Keycloak
-fips: false
+fips: true
 # By default, Keycloak requires 14+ character passwords in FIPS mode. This switch disables this requirement.
 fipsAllowWeakPasswords: false
 
