@@ -17,7 +17,6 @@ on:
       - ".github/workflows/test-eks.yaml"
       - ".github/workflows/test-rke2.yaml"
       - ".github/bundles/**"
-      - "!**"
 
 jobs:
   run-package-test:
