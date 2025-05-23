@@ -98,3 +98,44 @@ packages:
             - name: LOKI_IRSA_ROLE_ARN
               description: "The irsa role annotation"
               path: serviceAccount.annotations.irsa/role-arn
+      grafana:
+        grafana:
+          variables:
+            - name: GRAFANA_HA
+              description: Enable HA Grafana
+              path: autoscaling.enabled
+        uds-grafana-config:
+          variables:
+            - name: GRAFANA_PG_HOST
+              description: Grafana postgresql host
+              path: postgresql.host
+            - name: GRAFANA_PG_PORT
+              description: Grafana postgresql port
+              path: postgresql.port
+            - name: GRAFANA_PG_DATABASE
+              description: Grafana postgresql database
+              path: postgresql.database
+            - name: GRAFANA_PG_PASSWORD
+              description: Grafana postgresql password
+              path: postgresql.password
+              sensitive: true
+            - name: GRAFANA_PG_USER
+              description: Grafana postgresql username
+              path: postgresql.user
+      keycloak:
+        keycloak:
+          values:
+            - path: devMode
+              value: false
+            - path: autoscaling.enabled
+              value: true
+          variables:
+            - name: KEYCLOAK_DB_HOST
+              path: postgresql.host
+            - name: KEYCLOAK_DB_USERNAME
+              path: postgresql.username
+            - name: KEYCLOAK_DB_DATABASE
+              path: postgresql.database
+            - name: KEYCLOAK_DB_PASSWORD
+              path: postgresql.password
+              sensitive: true

@@ -65,6 +65,13 @@ tasks:
       - description: "Deploy the latest UDS Core package release"
         cmd: uds zarf package deploy oci://${TARGET_REPO}/core:${LATEST_VERSION} --confirm --no-progress --components '*' --set CNI_BIN_DIR="/var/lib/rancher/k3s/data/cni"
 
+  - name: latest-bundle-release-ha
+    actions:
+      - description: "Deploy the latest UDS Core bundle release with HA config"
+        cmd: uds deploy oci://ghcr.io/defenseunicorns/packages/uds/bundles/k3d-core-demo:latest --confirm --no-progress
+        env:
+          - UDS_CONFIG=bundles/k3d-standard/uds-ha-config.yaml
+
   - name: latest-slim-bundle-release
     actions:
       - description: "Deploy the latest UDS Core package release"
