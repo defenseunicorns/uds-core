@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { K8s, kind } from "pepr";
+import { K8s } from "pepr";
 
 import { V1OwnerReference } from "@kubernetes/client-node";
 import { Component, setupLogger } from "../../../logger";
@@ -13,6 +13,7 @@ import {
   createHostResourceMap,
   egressRequestedFromNetwork,
   reconcileSharedEgressResources,
+  validateEgressGateway,
 } from "./egress";
 import { generateIngressServiceEntry, generateLocalEgressServiceEntry } from "./service-entry";
 import { generateEgressSidecar } from "./sidecar";
@@ -129,48 +130,11 @@ export async function istioEgressResources(
   generation: string,
   ownerRefs: V1OwnerReference[],
 ) {
-  // Error if egress gateway is NOT enabled in the cluster and we have egress resources
-  await K8s(kind.Namespace)
-    .Get(istioEgressGatewayNamespace)
-    .catch(e => {
-      if (hostResourceMap) {
-        if (e.status == 404) {
-          const errText = `Egress gateway is not enabled in the cluster. Please enable the egress gateway and retry.`;
-          log.error(errText);
-          throw new Error(errText);
-        } else {
-          log.error(
-            e,
-            `Unable to reconcile get the egress gateway namespace ${istioEgressGatewayNamespace}.`,
-          );
-          throw e;
-        }
-      }
-    });
-
-  // Validate that ports are exposed by the egress gateway
-  await K8s(kind.Service)
-    .InNamespace(istioEgressGatewayNamespace)
-    .Get("egressgateway")
-    .then(async service => {
-      const ports = service.spec?.ports ?? [];
-      for (const host in hostResourceMap) {
-        for (const portProtocol of hostResourceMap[host].portProtocol) {
-          const port = ports.find(p => p.port === portProtocol.port);
-          if (!port) {
-            const errText = `Egress gateway does not expose port ${portProtocol.port} for host ${host}. Please update the egress gateway service to expose this port.`;
-            log.error(errText);
-            throw new Error(errText);
-          }
-        }
-      }
-    })
-    .catch(e => {
-      throw e;
-    });
-
   // Add needed service entries and sidecars if egress is requested
   if (hostResourceMap) {
+    // Validate existing egress gateway namespace and service
+    await validateEgressGateway(hostResourceMap);
+
     // Add service entry for each defined host
     for (const host of Object.keys(hostResourceMap)) {
       // Create Service Entry

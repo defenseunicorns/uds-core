@@ -69,7 +69,7 @@ describe("test istioEgressResources", () => {
     jest.clearAllMocks();
   });
 
-  it("should err if no egress gateway namespace", async () => {
+  it("should err if no egress gateway namespace with defined hostResourceMap", async () => {
     const mockHostResourceMap = {
       "example.com": {
         portProtocol: [{ port: 443, protocol: RemoteProtocol.TLS }],
@@ -100,7 +100,7 @@ describe("test istioEgressResources", () => {
     ).rejects.toThrow(errorMessage);
   });
 
-  it("should err if no egress gateway port", async () => {
+  it("should err if no egress gateway port with defined hostResourceMap", async () => {
     // Mock set-ups
     const mockError = new Error(
       "Egress gateway does not expose port 1234 for host example.com. Please update the egress gateway service to expose this port.",
@@ -125,6 +125,20 @@ describe("test istioEgressResources", () => {
         [],
       ),
     ).rejects.toThrowError(mockError);
+  });
+
+  it("should pass for undefined hostResourceMap", async () => {
+    await istioEgressResources(
+      undefined,
+      [],
+      pkgIdMock,
+      pkgMock.metadata!.name!,
+      pkgMock.metadata!.namespace!,
+      pkgMock.metadata!.generation!.toString(),
+      [],
+    );
+
+    expect(mockReconcileSharedEgressResources).toHaveBeenCalledTimes(1);
   });
 
   it("should create egress resources", async () => {

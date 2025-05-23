@@ -16,6 +16,7 @@ import {
   remapEgressResources,
   updateInMemoryPackageMap,
   inMemoryPackageMap,
+  validateEgressGateway,
 } from "./egress";
 import { PackageAction, HostResourceMap, PackageHostMap } from "./types";
 import { purgeOrphans } from "../utils";
@@ -52,6 +53,7 @@ jest.mock("pepr", () => ({
     VirtualService: "VirtualService",
     ServiceEntry: "ServiceEntry",
     Namespace: "Namespace",
+    Service: "Service",
   },
 }));
 jest.mock("../utils", () => {
@@ -701,5 +703,61 @@ describe("test egressRequestedFromNetwork", () => {
     const egressAllowList = egressRequestedFromNetwork(allowList);
 
     expect(egressAllowList).toHaveLength(0);
+  });
+});
+
+describe("test validateEgressGateway", () => {
+  beforeEach(() => {
+    process.env.PEPR_WATCH_MODE = "true";
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.runOnlyPendingTimers();
+    jest.useRealTimers();
+    jest.clearAllMocks();
+  });
+
+  it("should err if no egress gateway namespace", async () => {
+    const errorMessage = "Namespace not found";
+
+    const getNsMock = jest
+      .fn<() => Promise<kind.Namespace>>()
+      .mockRejectedValue(new Error(errorMessage));
+
+    updateEgressMocks({
+      ...defaultEgressMocks,
+      getNsMock,
+    });
+
+    await expect(validateEgressGateway({})).rejects.toThrow(errorMessage);
+  });
+
+  it("should err if no egress gateway port", async () => {
+    const mockError = new Error(
+      "Egress gateway does not expose port 1234 for host example.com. Please update the egress gateway service to expose this port.",
+    );
+
+    const mockHostResourceMap = {
+      "example.com": {
+        portProtocol: [{ port: 1234, protocol: RemoteProtocol.TLS }],
+      },
+    };
+
+    updateEgressMocks(defaultEgressMocks);
+
+    await expect(validateEgressGateway(mockHostResourceMap)).rejects.toThrowError(mockError);
+  });
+
+  it("should pass if namespace is not found and service is good", async () => {
+    const mockHostResourceMap = {
+      "example.com": {
+        portProtocol: [{ port: 443, protocol: RemoteProtocol.TLS }],
+      },
+    };
+
+    updateEgressMocks(defaultEgressMocks);
+
+    await expect(validateEgressGateway(mockHostResourceMap)).resolves;
   });
 });
