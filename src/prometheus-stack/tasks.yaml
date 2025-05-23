@@ -36,9 +36,9 @@ tasks:
   - name: gen-crds
     actions:
       - description: Generate servicemonitor types
-        cmd: "npx kubernetes-fluent-client crd https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.81.0/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml src/pepr/operator/crd/generated/prometheus"
+        cmd: "npx kubernetes-fluent-client crd https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.82.2/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml src/pepr/operator/crd/generated/prometheus"
       - description: Generate podmonitor types
-        cmd: "npx kubernetes-fluent-client crd https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.81.0/example/prometheus-operator-crd/monitoring.coreos.com_podmonitors.yaml src/pepr/operator/crd/generated/prometheus"
+        cmd: "npx kubernetes-fluent-client crd https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.82.2/example/prometheus-operator-crd/monitoring.coreos.com_podmonitors.yaml src/pepr/operator/crd/generated/prometheus"
       - description: "Add license headers to generated CRD files"
         shell:
           darwin: bash
