@@ -42,7 +42,7 @@ Mission Application = Any application outside of UDS Core
 :::
 
 :::note
-**Existing Deployments** | When upgrading to **0.43.0+** UDS Core will auto-transition Core services to Ambient Mode. No opt-out is available.
+**Existing Deployments** When upgrading to **0.43.0+** UDS Core will auto-transition Core services to Ambient Mode. No opt-out is available.
 :::
 
 ---
