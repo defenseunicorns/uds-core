@@ -59,14 +59,14 @@ function add(pkg: UDSPackage, logger: boolean = true): void {
   // Add SSO index if necessary
   const clients = pkg.spec?.sso;
   if (clients) {
-    for (let i = 0; i < clients.length; i++) {
-      const clientId = clients[i].clientId;
+    clients.forEach(client => {
+      const clientId = client.clientId;
       if (!ssoIndex.has(clientId)) {
         ssoIndex.set(clientId, new Set());
       }
       // Store based on namespace since we only allow a single Package per namespace
       ssoIndex.get(clientId)!.add(namespace);
-    }
+    });
   }
 
   if (logger) {
@@ -113,13 +113,15 @@ function remove(pkg: UDSPackage, logger: boolean = true): void {
   // Remove SSO index if necessary
   const clients = pkg.spec?.sso;
   if (clients) {
-    for (let i = 0; i < clients.length; i++) {
-      const clientId = clients[i].clientId;
+    clients.forEach(client => {
+      const clientId = client.clientId;
       const nsSet = ssoIndex.get(clientId);
-      if (!nsSet) continue;
+      if (!nsSet) return;
       nsSet.delete(namespace);
-      if (nsSet.size === 0) ssoIndex.delete(clientId);
-    }
+      if (nsSet.size === 0) {
+        ssoIndex.delete(clientId);
+      }
+    });
   }
 
   if (logger) {
