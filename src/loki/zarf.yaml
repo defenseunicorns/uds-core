@@ -19,7 +19,7 @@ components:
         valuesFiles:
           - ./values/upstream-values.yaml
     images:
-      - docker.io/grafana/loki:3.5.0
+      - docker.io/grafana/loki:3.5.1
       - docker.io/nginxinc/nginx-unprivileged:1.28-alpine
       - docker.io/memcached:1.6.38-alpine
 
@@ -35,7 +35,7 @@ components:
         valuesFiles:
           - ./values/registry1-values.yaml
     images:
-      - registry1.dso.mil/ironbank/opensource/grafana/loki:3.5.0
+      - registry1.dso.mil/ironbank/opensource/grafana/loki:3.5.1
       - registry1.dso.mil/ironbank/opensource/nginx/nginx-alpine:1.26.3
       - registry1.dso.mil/ironbank/opensource/memcached/memcached:1.6.38
 
@@ -51,6 +51,6 @@ components:
         valuesFiles:
           - ./values/unicorn-values.yaml
     images:
-      - cgr.dev/du-uds-defenseunicorns/loki-fips:3.5.0
+      - cgr.dev/du-uds-defenseunicorns/loki-fips:3.5.1
       - cgr.dev/du-uds-defenseunicorns/nginx-fips:1.27.5
       - cgr.dev/du-uds-defenseunicorns/memcached-fips:1.6.38
