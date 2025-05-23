@@ -114,54 +114,51 @@ describe("Package Store", () => {
       const pkg = createPackageWithSsoClient("test-ns", "test-app", "test-client-id");
       PackageStore.add(pkg);
 
-      // Find packages with the client ID
+      // Find namespaces with the client ID
       const result = PackageStore.findPackagesWithSsoClientId("test-client-id");
 
       // Verify the result
-      expect(result.length).toEqual(1);
-      expect(result[0].namespace).toEqual("test-ns");
-      expect(result[0].name).toEqual("test-app");
-      expect(result[0].pkg.spec?.sso?.[0].clientId).toEqual("test-client-id");
+      expect(result.size).toEqual(1);
+      expect(result.has("test-ns")).toBeTruthy();
+
+      // Verify the package in the namespace has the expected client ID
+      const pkgName = PackageStore.getPkgName("test-ns");
+      expect(pkgName).toEqual("test-app");
     });
 
-    it("Should return an empty array when no packages have the client ID", () => {
+    it("Should return an empty set when no packages have the client ID", () => {
       // Create and add a package with an SSO client
       const pkg = createPackageWithSsoClient("test-ns", "test-app", "test-client-id");
       PackageStore.add(pkg);
 
-      // Find packages with a non-existent client ID
+      // Find namespaces with a non-existent client ID
       const result = PackageStore.findPackagesWithSsoClientId("non-existent-client-id");
 
       // Verify the result is empty
-      expect(result.length).toEqual(0);
+      expect(result.size).toEqual(0);
     });
 
-    it("Should find multiple packages with the same SSO client ID", () => {
+    it("Should find multiple namespaces with the same SSO client ID", () => {
       // Create and add multiple packages with the same SSO client ID
       const pkg1 = createPackageWithSsoClient("test-ns-1", "test-app-1", "shared-client-id");
       const pkg2 = createPackageWithSsoClient("test-ns-2", "test-app-2", "shared-client-id");
       PackageStore.add(pkg1);
       PackageStore.add(pkg2);
 
-      // Find packages with the shared client ID
+      // Find namespaces with the shared client ID
       const result = PackageStore.findPackagesWithSsoClientId("shared-client-id");
 
-      // Verify the result contains both packages
-      expect(result.length).toEqual(2);
+      // Verify the result contains both namespaces
+      expect(result.size).toEqual(2);
+      expect(result.has("test-ns-1")).toBeTruthy();
+      expect(result.has("test-ns-2")).toBeTruthy();
 
-      // Sort the results by namespace to make the test deterministic
-      const sortedResults = result.sort((a, b) => a.namespace.localeCompare(b.namespace));
-
-      expect(sortedResults[0].namespace).toEqual("test-ns-1");
-      expect(sortedResults[0].name).toEqual("test-app-1");
-      expect(sortedResults[0].pkg.spec?.sso?.[0].clientId).toEqual("shared-client-id");
-
-      expect(sortedResults[1].namespace).toEqual("test-ns-2");
-      expect(sortedResults[1].name).toEqual("test-app-2");
-      expect(sortedResults[1].pkg.spec?.sso?.[0].clientId).toEqual("shared-client-id");
+      // Verify the packages in each namespace
+      expect(PackageStore.getPkgName("test-ns-1")).toEqual("test-app-1");
+      expect(PackageStore.getPkgName("test-ns-2")).toEqual("test-app-2");
     });
 
-    it("Should find a package with multiple SSO clients when one matches", () => {
+    it("Should find a namespace with multiple SSO clients when one matches", () => {
       // Create a package with multiple SSO clients
       const pkg = createPackageWithSsoClient("test-ns", "test-app", "client-id-1");
 
@@ -176,16 +173,16 @@ describe("Package Store", () => {
 
       PackageStore.add(pkg);
 
-      // Find packages with the second client ID
+      // Find namespaces with the second client ID
       const result = PackageStore.findPackagesWithSsoClientId("client-id-2");
 
       // Verify the result
-      expect(result.length).toEqual(1);
-      expect(result[0].namespace).toEqual("test-ns");
-      expect(result[0].name).toEqual("test-app");
-      expect(
-        result[0].pkg.spec?.sso?.some(client => client.clientId === "client-id-2"),
-      ).toBeTruthy();
+      expect(result.size).toEqual(1);
+      expect(result.has("test-ns")).toBeTruthy();
+
+      // Verify the package in the namespace has the expected client ID
+      const pkgName = PackageStore.getPkgName("test-ns");
+      expect(pkgName).toEqual("test-app");
     });
   });
 });

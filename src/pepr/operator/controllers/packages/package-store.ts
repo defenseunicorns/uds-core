@@ -15,6 +15,7 @@ const log = setupLogger(Component.OPERATOR_PACKAGES);
 // Map structure: namespace -> (package name -> package)
 export type PackageNamespaceMap = Map<string, Map<string, UDSPackage>>;
 let packageNamespaceMap: PackageNamespaceMap;
+let ssoIndex: Map<string, Set<string>>;
 
 /**
  * Initializes the package namespace map.
@@ -24,6 +25,7 @@ let packageNamespaceMap: PackageNamespaceMap;
  */
 function init(): void {
   packageNamespaceMap = new Map();
+  ssoIndex = new Map();
 }
 
 /**
@@ -53,6 +55,19 @@ function add(pkg: UDSPackage, logger: boolean = true): void {
 
   // Set the package
   namespaceMap.set(name, pkg);
+
+  // Add SSO index if necessary
+  const clients = pkg.spec?.sso;
+  if (clients) {
+    for (let i = 0; i < clients.length; i++) {
+      const clientId = clients[i].clientId;
+      if (!ssoIndex.has(clientId)) {
+        ssoIndex.set(clientId, new Set());
+      }
+      // Store based on namespace since we only allow a single Package per namespace
+      ssoIndex.get(clientId)!.add(namespace);
+    }
+  }
 
   if (logger) {
     if (isUpdate) {
@@ -93,6 +108,18 @@ function remove(pkg: UDSPackage, logger: boolean = true): void {
   // If namespace map is empty, remove the namespace
   if (namespaceMap.size === 0) {
     packageNamespaceMap.delete(namespace);
+  }
+
+  // Remove SSO index if necessary
+  const clients = pkg.spec?.sso;
+  if (clients) {
+    for (let i = 0; i < clients.length; i++) {
+      const clientId = clients[i].clientId;
+      const nsSet = ssoIndex.get(clientId);
+      if (!nsSet) continue;
+      nsSet.delete(namespace);
+      if (nsSet.size === 0) ssoIndex.delete(clientId);
+    }
   }
 
   if (logger) {
@@ -138,28 +165,10 @@ function getPkgName(namespace: string): string | null {
  * Finds packages that have an SSO client with the specified client ID.
  *
  * @param {string} clientId - The client ID to search for.
- * @returns {Array<{namespace: string, name: string, pkg: UDSPackage}>} - Array of packages that have the specified client ID.
+ * @returns {Array<{namespace: string, name: string, pkg: UDSPackage}>} - Array of namespaces with Packages using the specified client ID.
  */
-function findPackagesWithSsoClientId(
-  clientId: string,
-): Array<{ namespace: string; name: string; pkg: UDSPackage }> {
-  const result: Array<{ namespace: string; name: string; pkg: UDSPackage }> = [];
-
-  // Iterate through all namespaces
-  for (const [namespace, namespaceMap] of packageNamespaceMap.entries()) {
-    // Iterate through all packages in the namespace
-    for (const [name, pkg] of namespaceMap.entries()) {
-      // Check if the package has SSO clients
-      const ssoClients = pkg.spec?.sso ?? [];
-
-      // Check if any of the SSO clients have the specified client ID
-      if (ssoClients.some(client => client.clientId === clientId)) {
-        result.push({ namespace, name, pkg });
-      }
-    }
-  }
-
-  return result;
+function findPackagesWithSsoClientId(clientId: string): Set<string> {
+  return ssoIndex.get(clientId) ?? new Set<string>();
 }
 
 export const PackageStore = {
