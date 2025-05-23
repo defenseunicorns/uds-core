@@ -34,12 +34,16 @@ These benefits are particularly important as UDS expands its **edge capabilities
 
 | Component                | Transition Path                                                                  |
 | ------------------------ | -------------------------------------------------------------------------------- |
-| **UDS Core Services**    | All deployments will use Istio Ambient Mode by default starting **0.43.0**.     |
-| **Existing Deployments** | When upgrading to **0.43.0+** UDS Core will auto-transition to Ambient Mode. No opt-out is available.                                                         |
+| **UDS Core Services**    | All deployments will use Istio Ambient Mode by default starting **0.43.0**.      |
 | **Mission Applications** | Both sidecar and ambient modes supported. Ambient is **opt-in** and recommended. |
 
-> **Note:**
-> Mission Application = Any application outside of UDS Core
+:::note
+Mission Application = Any application outside of UDS Core
+:::
+
+:::note
+**Existing Deployments** | When upgrading to **0.43.0+** UDS Core will auto-transition Core services to Ambient Mode. No opt-out is available.
+:::
 
 ---
 
@@ -57,60 +61,7 @@ These benefits are particularly important as UDS expands its **edge capabilities
 
 ## Technical Guidance
 
-To enable **Ambient Mode**, configure your **UDS Package CR** with the appropriate mesh mode. The two supported configurations are:
-
-To use **Ambient Mode**:
-
-```yaml
-mesh:
-  mode: ambient
-```
-
-To use **Sidecar Mode**:
-
-```yaml
-mesh:
-  mode: sidecar
-```
-
-This configuration enables traffic routing via the **Istio CNI plugin** and **ZTunnel proxy**, providing **Layer 4** security transparently without requiring sidecar injection or application modifications.
-
-💡 To add **Layer 7** security controls, deploy **Istio Waypoints** as an additional proxy layer.
-
----
-
-## Key Benefits of Ambient Mode
-
-* Simplified service mesh configuration
-* Improved pod startup time
-* Reduced memory & CPU per workload
-* Easier scaling and onboarding
-* Eliminates the need for sidecar proxy per pod
-* Better observability and control through a layered architecture (L4 via ztunnel, L7 via waypoint)
-
-See more from the upstream Istio docs:
-
-* [Istio Ambient Architecture Overview](https://istio.io/latest/docs/ambient/what-is-ambient/#architecture-overview)
-* [Ambient Mesh Design](https://istio.io/latest/docs/ambient/)
-* [Ambient Features and Capabilities](https://istio.io/latest/docs/ambient/faq/#ambient-features)
-
----
-
-## When to Prefer Sidecar Mode
-
-While Ambient Mode is recommended, there are scenarios where sidecar mode may be preferable:
-
-* **Multi-cluster topologies** not yet fully supported in Ambient
-* **Advanced networking needs** like custom Envoy filters, protocol sniffing, or fine-grained traffic control
-* **Performance tuning** needs for latency-sensitive workloads
-* **Legacy or compatibility constraints** where ambient functionality has not been validated
-
-Useful references:
-
-* [Istio Multi-Cluster Support](https://istio.io/latest/docs/setup/install/multicluster/)
-* [Envoy Filter Customization](https://istio.io/latest/docs/reference/config/networking/envoy-filter/)
-* [Sidecar Optimization Guide](https://istio.io/latest/docs/ops/deployment/performance-and-scalability/)
-* [Ambient Compatibility FAQ](https://istio.io/latest/docs/ambient/faq/#ambient-compatibility)
+See this [doc for additional Technical Guidance](https://uds.defenseunicorns.com/reference/configuration/service-mesh/istio-sidecar-vs-ambient/).
 
 ---
 
@@ -132,7 +83,4 @@ Useful references:
 **A:** No. Ambient is an alternate data plane within Istio. The core control plane remains unchanged.
 
 **Q: How can I test or migrate to Ambient Mode?**
-**A:**
-
-* Enable Ambient in a non-production namespace using the `mesh.mode: ambient` configuration.
-* Run sidecar and ambient services side-by-side in the same cluster to validate and compare behaviors.
+**A:** By upgrading to 0.43.0+ UDS Core services will automatically migrate to ambient mode. Mission apps can be switched to ambient by opting-in.
