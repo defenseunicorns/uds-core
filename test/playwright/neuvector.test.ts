@@ -6,6 +6,8 @@
 import { expect, test } from "@playwright/test";
 import { domain } from "./uds.config";
 
+const FIFTEEN_SECONDS = 15_000;
+
 const url = `https://neuvector.admin.${domain}`
 test.use({ baseURL: url });
 
@@ -86,4 +88,15 @@ test("validate local login is blocked", async ({ page }) => {
     await page.getByRole('button', { name: 'Login', exact: true }).click();
     await expect(page.getByText('RBAC: access denied')).toBeVisible();
   });
+});
+
+// Add a 15 second delay after a test failure
+test.afterEach(async ({ page }, testInfo) => {
+  if (testInfo.status === testInfo.expectedStatus || testInfo.retry === testInfo.project.retries) {
+    return;
+  }
+
+  testInfo.setTimeout(testInfo.timeout + FIFTEEN_SECONDS);
+  console.info(`Backoff: waiting 15s before the next test retry`);
+  await page.waitForTimeout(FIFTEEN_SECONDS);
 });
