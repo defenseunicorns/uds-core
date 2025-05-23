@@ -1,5 +1,7 @@
 ---
 title: Istio Ingress
+sidebar:
+  order: 4
 ---
 
 UDS Core leverages Istio for ingress into the service mesh. This document provides an overview and examples of the Istio resources that UDS Core deploys to handle ingress.
