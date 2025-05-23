@@ -59,6 +59,11 @@ components:
     import:
       path: ../base
 
+  - name: istio-egress-gateway
+    required: false
+    import:
+      path: ../base
+
   # Metrics Server
   - name: metrics-server
     required: false
