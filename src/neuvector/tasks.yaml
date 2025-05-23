@@ -10,9 +10,9 @@ tasks:
       - description: Validate Neuvector Controller
         wait:
           cluster:
-            kind: Pod
-            name: app=neuvector-controller-pod
-            condition: Ready
+            kind: Deployment
+            name: neuvector-controller-pod
+            condition: Available
             namespace: neuvector
       - description: Validate Neuvector Enforcer
         wait:
@@ -24,16 +24,16 @@ tasks:
       - description: Validate Neuvector Manager
         wait:
           cluster:
-            kind: Pod
-            name: app=neuvector-manager-pod
-            condition: Ready
+            kind: Deployment
+            name: neuvector-manager-pod
+            condition: Available
             namespace: neuvector
       - description: Validate Neuvector Scanner
         wait:
           cluster:
-            kind: Pod
-            name: app=neuvector-scanner-pod
-            condition: Ready
+            kind: Deployment
+            name: neuvector-scanner-pod
+            condition: Available
             namespace: neuvector
       - description: Validate Neuvector Interface
         wait:
