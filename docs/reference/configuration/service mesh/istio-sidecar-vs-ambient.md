@@ -87,4 +87,8 @@ While Ambient Mesh has clear benefits and growing adoption, consider the followi
 
 Sidecar mode remains a valuable option for specific use cases where its strengths are required. For more resource aware deployments, Ambient offers a more streamlined approach that saves CPU, Memory, and Networking overhead as your environment scales. The UDS Operator will continue to support both Sidecar and Ambient, allowing you to make the best choice for your needs.
 
+:::note
+Interested in seeing how Ambient Mesh can reduce CPU and Memory utilization for your workloads that are using Sidecar? Check out the "Istio Sidecar vs Ambient Resource Comparison" Dashboard in Grafana!
+:::
+
 See the [Istio documentation](https://istio.io/latest/docs/overview/dataplane-modes/#choosing-between-sidecar-and-ambient) for more information and resources.
