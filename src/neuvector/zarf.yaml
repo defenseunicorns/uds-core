@@ -48,7 +48,7 @@ components:
     images:
       - registry1.dso.mil/ironbank/neuvector/neuvector/controller:5.4.4
       - registry1.dso.mil/ironbank/neuvector/neuvector/manager:5.4.4
-      - registry1.dso.mil/ironbank/redhat/ubi/ubi9-minimal:9.5
+      - registry1.dso.mil/ironbank/redhat/ubi/ubi9-minimal:9.6
       - registry1.dso.mil/ironbank/neuvector/neuvector/scanner:6
       - registry1.dso.mil/ironbank/neuvector/neuvector/enforcer:5.4.4
 
@@ -60,9 +60,6 @@ components:
     import:
       path: common
     charts:
-      - name: uds-neuvector-config
-        valuesFiles:
-          - values/unicorn-config-values.yaml
       - name: core
         valuesFiles:
           - values/unicorn-values.yaml
