@@ -9,8 +9,10 @@ import { Direction, RemoteGenerated, RemoteProtocol } from "../../crd";
 import { purgeOrphans } from "../utils";
 import { defaultEgressMocks, pkgMock, updateEgressMocks } from "./defaultTestMocks";
 import { istioEgressResources } from "./istio-resources";
+import { reconcileSharedEgressResources } from "./egress";
 
 const mockPurgeOrphans: jest.MockedFunction<() => Promise<void>> = jest.fn();
+const mockReconcileSharedEgressResources = jest.fn();
 
 // Mock the necessary functions
 jest.mock("pepr", () => ({
@@ -28,7 +30,9 @@ jest.mock("pepr", () => ({
     Gateway: "Gateway",
     VirtualService: "VirtualService",
     ServiceEntry: "ServiceEntry",
+    Sidecar: "Sidecar",
     Namespace: "Namespace",
+    Service: "Service",
   },
 }));
 jest.mock("../utils", () => {
@@ -36,6 +40,13 @@ jest.mock("../utils", () => {
   return {
     ...(typeof originalModule === "object" ? originalModule : {}),
     purgeOrphans: jest.fn(async <T>(fn: () => Promise<T>) => fn()),
+  };
+});
+jest.mock("./egress", () => {
+  const originalModule = jest.requireActual("./egress");
+  return {
+    ...(typeof originalModule === "object" ? originalModule : {}),
+    reconcileSharedEgressResources: jest.fn(),
   };
 });
 
@@ -47,6 +58,9 @@ describe("test istioEgressResources", () => {
     jest.useFakeTimers();
 
     (purgeOrphans as jest.Mock).mockImplementation(mockPurgeOrphans);
+    (reconcileSharedEgressResources as jest.Mock).mockImplementation(
+      mockReconcileSharedEgressResources,
+    );
   });
 
   afterEach(() => {
@@ -56,7 +70,14 @@ describe("test istioEgressResources", () => {
   });
 
   it("should err if no egress gateway namespace", async () => {
+    const mockHostResourceMap = {
+      "example.com": {
+        portProtocol: [{ port: 443, protocol: RemoteProtocol.TLS }],
+      },
+    };
+
     const errorMessage = "Namespace not found";
+
     const getNsMock = jest
       .fn<() => Promise<kind.Namespace>>()
       .mockRejectedValue(new Error(errorMessage));
@@ -68,7 +89,7 @@ describe("test istioEgressResources", () => {
 
     await expect(
       istioEgressResources(
-        undefined,
+        mockHostResourceMap,
         [],
         pkgIdMock,
         pkgMock.metadata!.name!,
@@ -80,31 +101,18 @@ describe("test istioEgressResources", () => {
   });
 
   it("should err if no egress gateway port", async () => {
+    // Mock set-ups
     const mockError = new Error(
       "Egress gateway does not expose port 1234 for host example.com. Please update the egress gateway service to expose this port.",
     );
+
     const mockHostResourceMap = {
       "example.com": {
         portProtocol: [{ port: 1234, protocol: RemoteProtocol.TLS }],
       },
     };
 
-    const getServiceMock = jest.fn<() => Promise<kind.Service>>().mockResolvedValue({
-      metadata: {
-        name: "egressgateway",
-        namespace: "istio-egress-gateway",
-      },
-      spec: {
-        ports: [{ port: 80 }, { port: 443 }],
-      },
-    });
-
-    const getServiceInNamespaceMock = jest.fn().mockReturnValue({ Get: getServiceMock });
-
-    updateEgressMocks({
-      ...defaultEgressMocks,
-      getServiceInNamespaceMock,
-    });
+    updateEgressMocks(defaultEgressMocks);
 
     await expect(
       istioEgressResources(
@@ -120,37 +128,41 @@ describe("test istioEgressResources", () => {
   });
 
   it("should create egress resources", async () => {
+    const mockHostResourceMap = {
+      "example.com": {
+        portProtocol: [
+          { port: 443, protocol: RemoteProtocol.TLS },
+          { port: 80, protocol: RemoteProtocol.HTTP },
+        ],
+      },
+    };
+
+    const mockApply = [
+      {
+        remoteHost: "example.com",
+        port: 443,
+        remoteProtocol: RemoteProtocol.TLS,
+        direction: Direction.Egress,
+        selector: {
+          app: "example-app1",
+        },
+      },
+      {
+        remoteHost: "example.com",
+        port: 80,
+        remoteProtocol: RemoteProtocol.TLS,
+        direction: Direction.Egress,
+        selector: {
+          app: "example-app2",
+        },
+      },
+    ];
+
     updateEgressMocks(defaultEgressMocks);
 
     await istioEgressResources(
-      {
-        "example.com": {
-          portProtocol: [
-            { port: 443, protocol: RemoteProtocol.TLS },
-            { port: 80, protocol: RemoteProtocol.HTTP },
-          ],
-        },
-      },
-      [
-        {
-          remoteHost: "example.com",
-          port: 443,
-          remoteProtocol: RemoteProtocol.TLS,
-          direction: Direction.Egress,
-          selector: {
-            app: "example-app1",
-          },
-        },
-        {
-          remoteHost: "example.com",
-          port: 80,
-          remoteProtocol: RemoteProtocol.TLS,
-          direction: Direction.Egress,
-          selector: {
-            app: "example-app2",
-          },
-        },
-      ],
+      mockHostResourceMap,
+      mockApply,
       pkgIdMock,
       pkgMock.metadata!.name!,
       pkgMock.metadata!.namespace!,
@@ -158,10 +170,8 @@ describe("test istioEgressResources", () => {
       [],
     );
 
-    expect(defaultEgressMocks.applySeMock).toHaveBeenCalledTimes(2); // in package namespace and egress gateway namespace
-    expect(defaultEgressMocks.applySidecarMock).toHaveBeenCalledTimes(2); // once for each selector
-    expect(defaultEgressMocks.applyGwMock).toHaveBeenCalledTimes(1);
-    expect(defaultEgressMocks.applyVsMock).toHaveBeenCalledTimes(1);
+    expect(defaultEgressMocks.applySeMock).toHaveBeenCalledTimes(1);
+    expect(defaultEgressMocks.applySidecarMock).toHaveBeenCalledTimes(2);
   });
 
   it("should not create egress resources", async () => {
@@ -188,7 +198,5 @@ describe("test istioEgressResources", () => {
 
     expect(defaultEgressMocks.applySeMock).not.toHaveBeenCalled();
     expect(defaultEgressMocks.applySidecarMock).not.toHaveBeenCalled();
-    expect(defaultEgressMocks.applyGwMock).not.toHaveBeenCalled();
-    expect(defaultEgressMocks.applyVsMock).not.toHaveBeenCalled();
   });
 });

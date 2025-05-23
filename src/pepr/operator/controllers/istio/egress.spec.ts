@@ -20,12 +20,16 @@ import {
 import { PackageAction, HostResourceMap, PackageHostMap } from "./types";
 import { purgeOrphans } from "../utils";
 
-jest.mock("./istio-resources", () => ({
-  log: {
-    debug: jest.fn(),
-    error: jest.fn(),
-  },
-}));
+jest.mock("./istio-resources", () => {
+  const originalModule = jest.requireActual("./istio-resources");
+  return {
+    ...(typeof originalModule === "object" ? originalModule : {}),
+    log: {
+      debug: jest.fn(),
+      error: jest.fn(),
+    },
+  };
+});
 
 import { log } from "./istio-resources";
 
@@ -79,14 +83,21 @@ describe("test reconcileEgressResources", () => {
     jest.clearAllMocks();
   });
 
+  // Helper function to run reconcileSharedEgressResources with timer handling
+  async function runReconcileWithTimers(
+    hostResourceMap: HostResourceMap | undefined,
+    pkgId: string,
+    action: PackageAction,
+  ) {
+    const promise = reconcileSharedEgressResources(hostResourceMap, pkgId, action);
+    jest.advanceTimersByTime(1100); // fast-forward timer to trigger debounced functions
+    await promise;
+  }
+
   it("should create egress resources on action AddOrUpdate", async () => {
     updateEgressMocks(defaultEgressMocks);
 
-    await reconcileSharedEgressResources(
-      hostResourceMapMock,
-      packageIdMock,
-      PackageAction.AddOrUpdate,
-    );
+    await runReconcileWithTimers(hostResourceMapMock, packageIdMock, PackageAction.AddOrUpdate);
 
     // Check apply methods are called
     expect(defaultEgressMocks.applyGwMock).toHaveBeenCalledTimes(1);
@@ -100,11 +111,7 @@ describe("test reconcileEgressResources", () => {
   it("should apply an updated set of egress resources on action AddOrUpdate", async () => {
     updateEgressMocks(defaultEgressMocks);
 
-    await reconcileSharedEgressResources(
-      hostResourceMapMock,
-      packageIdMock,
-      PackageAction.AddOrUpdate,
-    );
+    await runReconcileWithTimers(hostResourceMapMock, packageIdMock, PackageAction.AddOrUpdate);
 
     expect(defaultEgressMocks.applyGwMock).toHaveBeenCalledTimes(1);
     expect(defaultEgressMocks.applyVsMock).toHaveBeenCalledTimes(1);
@@ -124,7 +131,7 @@ describe("test reconcileEgressResources", () => {
       },
     };
 
-    await reconcileSharedEgressResources(
+    await runReconcileWithTimers(
       updatedHostResourceMapMock,
       packageIdMock,
       PackageAction.AddOrUpdate,
@@ -143,11 +150,7 @@ describe("test reconcileEgressResources", () => {
   it("should remove an old egress allow rule on action AddOrUpdate", async () => {
     updateEgressMocks(defaultEgressMocks);
 
-    await reconcileSharedEgressResources(
-      hostResourceMapMock,
-      packageIdMock,
-      PackageAction.AddOrUpdate,
-    );
+    await runReconcileWithTimers(hostResourceMapMock, packageIdMock, PackageAction.AddOrUpdate);
 
     expect(defaultEgressMocks.applyGwMock).toHaveBeenCalledTimes(1);
     expect(defaultEgressMocks.applyVsMock).toHaveBeenCalledTimes(1);
@@ -162,7 +165,7 @@ describe("test reconcileEgressResources", () => {
     mockPurgeOrphans.mockClear();
 
     // mock the old egress allow rule was removed from the package
-    await reconcileSharedEgressResources(undefined, packageIdMock, PackageAction.AddOrUpdate);
+    await runReconcileWithTimers(undefined, packageIdMock, PackageAction.AddOrUpdate);
 
     // no new calls after old allow was removed
     expect(defaultEgressMocks.applyGwMock).not.toHaveBeenCalled();
@@ -179,11 +182,7 @@ describe("test reconcileEgressResources", () => {
   it("should remove old egress resources on action Remove", async () => {
     updateEgressMocks(defaultEgressMocks);
 
-    await reconcileSharedEgressResources(
-      hostResourceMapMock,
-      packageIdMock,
-      PackageAction.AddOrUpdate,
-    );
+    await runReconcileWithTimers(hostResourceMapMock, packageIdMock, PackageAction.AddOrUpdate);
 
     expect(defaultEgressMocks.applyGwMock).toHaveBeenCalledTimes(1);
     expect(defaultEgressMocks.applyVsMock).toHaveBeenCalledTimes(1);
@@ -192,7 +191,7 @@ describe("test reconcileEgressResources", () => {
     mockPurgeOrphans.mockClear();
 
     // Mock removal of the package
-    await reconcileSharedEgressResources(undefined, packageIdMock, PackageAction.Remove);
+    await runReconcileWithTimers(undefined, packageIdMock, PackageAction.Remove);
 
     // Check the value of inMemoryPackageMap
     expect(inMemoryPackageMap).toEqual({});
@@ -214,7 +213,7 @@ describe("test reconcileEgressResources", () => {
     });
 
     // Mock removal of the package
-    await reconcileSharedEgressResources(undefined, packageIdMock, PackageAction.Remove);
+    await runReconcileWithTimers(undefined, packageIdMock, PackageAction.Remove);
 
     // Should not call purge
     expect(mockPurgeOrphans).not.toHaveBeenCalled();

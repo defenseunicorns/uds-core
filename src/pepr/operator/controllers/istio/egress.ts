@@ -48,64 +48,70 @@ export async function reconcileSharedEgressResources(
   hostResourceMap: HostResourceMap | undefined,
   pkgId: string,
   action: PackageAction,
-) {
+): Promise<void> {
   // Update the in-memory package map with the new host resource map
   updateInMemoryPackageMap(hostResourceMap, pkgId, action);
 
-  // Clear the previous debounce timer, if it exists
-  if (debounceTimer) {
-    clearTimeout(debounceTimer);
-  }
+  return new Promise<void>((resolve, reject) => {
+    // Clear the previous debounce timer, if it exists
+    if (debounceTimer) {
+      clearTimeout(debounceTimer);
+    }
 
-  // Set a new debounce timer to apply the update after the delay
-  debounceTimer = setTimeout(async () => {
-    // Check if there is an istioEgressGatewayNamespace, if not don't proceed
-    await K8s(kind.Namespace)
-      .Get(istioEgressGatewayNamespace)
-      .then(async () => {
-        // Apply the egress resources
-        generation++;
-        await applyEgressResources(inMemoryPackageMap, generation);
+    // Set a new debounce timer to apply the update after the delay
+    debounceTimer = setTimeout(async () => {
+      try {
+        // Check if there is an istioEgressGatewayNamespace, if not don't proceed
+        await K8s(kind.Namespace)
+          .Get(istioEgressGatewayNamespace)
+          .then(async () => {
+            // Apply the egress resources
+            generation++;
+            await applyEgressResources(inMemoryPackageMap, generation);
 
-        // Purge any orphaned shared resources
-        await purgeOrphans(
-          generation.toString(),
-          istioEgressGatewayNamespace,
-          sharedEgressPkgId,
-          IstioGateway,
-          log,
-        );
-        await purgeOrphans(
-          generation.toString(),
-          istioEgressGatewayNamespace,
-          sharedEgressPkgId,
-          IstioVirtualService,
-          log,
-        );
-        await purgeOrphans(
-          generation.toString(),
-          istioEgressGatewayNamespace,
-          sharedEgressPkgId,
-          IstioServiceEntry,
-          log,
-        );
-      })
-      .catch(e => {
-        if (e.status == 404) {
-          log.debug(
-            `Namespace ${istioEgressGatewayNamespace} not found. Skipping shared egress resource reconciliation.`,
-          );
-          return; // Exit the routine
-        } else {
-          log.error(`Unable to reconcile shared egress resources: ${e}`);
-          throw e;
-        }
-      })
-      .finally(() => {
-        // Clear the debounce timer after applying the resources
+            // Purge any orphaned shared resources
+            await purgeOrphans(
+              generation.toString(),
+              istioEgressGatewayNamespace,
+              sharedEgressPkgId,
+              IstioGateway,
+              log,
+            );
+            await purgeOrphans(
+              generation.toString(),
+              istioEgressGatewayNamespace,
+              sharedEgressPkgId,
+              IstioVirtualService,
+              log,
+            );
+            await purgeOrphans(
+              generation.toString(),
+              istioEgressGatewayNamespace,
+              sharedEgressPkgId,
+              IstioServiceEntry,
+              log,
+            );
+          })
+          .catch(e => {
+            if (e.status == 404) {
+              log.debug(
+                `Namespace ${istioEgressGatewayNamespace} not found. Skipping shared egress resource reconciliation.`,
+              );
+              return; // Exit the routine
+            } else {
+              log.error(`Unable to reconcile shared egress resources: ${e}`);
+              reject(e);
+              return;
+            }
+          });
+        resolve();
+      } catch (e) {
+        reject(e);
+      } finally {
         debounceTimer = null;
-      });
-  }, DEBOUNCE_DURATION);
+      }
+    }, DEBOUNCE_DURATION);
+  });
 }
 
 export function updateInMemoryPackageMap(

@@ -128,7 +128,7 @@ components:
           - "values/config-passthrough.yaml"
 
   - name: istio-egress-gateway
-    required: false
+    required: true
     charts:
       - name: gateway
         url: https://istio-release.storage.googleapis.com/charts
