@@ -134,10 +134,39 @@ function getPkgName(namespace: string): string | null {
   return Array.from(namespaceMap.keys())[0];
 }
 
+/**
+ * Finds packages that have an SSO client with the specified client ID.
+ *
+ * @param {string} clientId - The client ID to search for.
+ * @returns {Array<{namespace: string, name: string, pkg: UDSPackage}>} - Array of packages that have the specified client ID.
+ */
+function findPackagesWithSsoClientId(
+  clientId: string,
+): Array<{ namespace: string; name: string; pkg: UDSPackage }> {
+  const result: Array<{ namespace: string; name: string; pkg: UDSPackage }> = [];
+
+  // Iterate through all namespaces
+  for (const [namespace, namespaceMap] of packageNamespaceMap.entries()) {
+    // Iterate through all packages in the namespace
+    for (const [name, pkg] of namespaceMap.entries()) {
+      // Check if the package has SSO clients
+      const ssoClients = pkg.spec?.sso ?? [];
+
+      // Check if any of the SSO clients have the specified client ID
+      if (ssoClients.some(client => client.clientId === clientId)) {
+        result.push({ namespace, name, pkg });
+      }
+    }
+  }
+
+  return result;
+}
+
 export const PackageStore = {
   init,
   add,
   hasKey,
   getPkgName,
   remove,
+  findPackagesWithSsoClientId,
 };
