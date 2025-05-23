@@ -55,6 +55,20 @@ describe("test istioEgressResources", () => {
     jest.clearAllMocks();
   });
 
+  async function runEgressWithTimers() {
+    const promise = istioEgressResources(
+      undefined,
+      [],
+      pkgIdMock,
+      pkgMock.metadata!.name!,
+      pkgMock.metadata!.namespace!,
+      pkgMock.metadata!.generation!.toString(),
+      [],
+    );
+    jest.runAllTimers(); // Run all timers immediately to trigger debounced functions
+    await promise;
+  }
+
   it("should err if no egress gateway namespace", async () => {
     const errorMessage = "Namespace not found";
     const getNsMock = jest
@@ -66,17 +80,7 @@ describe("test istioEgressResources", () => {
       getNsMock,
     });
 
-    await expect(
-      istioEgressResources(
-        undefined,
-        [],
-        pkgIdMock,
-        pkgMock.metadata!.name!,
-        pkgMock.metadata!.namespace!,
-        pkgMock.metadata!.generation!.toString(),
-        [],
-      ),
-    ).rejects.toThrow(errorMessage);
+    await expect(runEgressWithTimers()).rejects.toThrow(errorMessage);
   });
 
   it("should err if no egress gateway port", async () => {

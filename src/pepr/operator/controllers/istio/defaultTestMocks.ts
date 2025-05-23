@@ -5,7 +5,7 @@
 
 import { jest } from "@jest/globals";
 import { V1OwnerReference } from "@kubernetes/client-node";
-import { K8s, kind } from "pepr";
+import { K8s } from "pepr";
 import {
   IstioGateway,
   IstioServiceEntry,
@@ -48,14 +48,33 @@ export const pkgHostMapMock: PackageHostMap = {
 };
 
 export const defaultEgressMocks = {
+  getGwMock: jest.fn().mockImplementation(() => Promise.resolve({ items: [] })),
+  getVsMock: jest.fn().mockImplementation(() => Promise.resolve({ items: [] })),
+  getNsMock: jest.fn().mockImplementation(() => Promise.resolve({})),
+  getServiceInNsMock: jest.fn().mockImplementation(() =>
+    Promise.resolve({
+      spec: {
+        ports: [
+          { port: 80, name: "http" },
+          { port: 443, name: "https" },
+        ],
+      },
+    }),
+  ),
+  getServiceMock: jest.fn().mockImplementation(() =>
+    Promise.resolve({
+      spec: {
+        ports: [
+          { port: 80, name: "http" },
+          { port: 443, name: "https" },
+        ],
+      },
+    }),
+  ),
   applyGwMock: jest.fn().mockImplementation(() => Promise.resolve()),
   applyVsMock: jest.fn().mockImplementation(() => Promise.resolve()),
   applySeMock: jest.fn().mockImplementation(() => Promise.resolve()),
   applySidecarMock: jest.fn().mockImplementation(() => Promise.resolve()),
-  getGwMock: jest.fn().mockImplementation(() => Promise.resolve({ items: [] })),
-  getVsMock: jest.fn().mockImplementation(() => Promise.resolve({ items: [] })),
-  getNsMock: jest.fn().mockImplementation(() => Promise.resolve({})),
-  getServiceInNsMock: jest.fn().mockReturnThis(),
   deleteGwMock: jest.fn().mockImplementation(() => Promise.resolve()),
   deleteVsMock: jest.fn().mockImplementation(() => Promise.resolve()),
   deleteSeMock: jest.fn().mockImplementation(() => Promise.resolve()),
@@ -110,8 +129,12 @@ export function updateEgressMocks(egressMocks: Record<string, jest.Mock>) {
       Apply: egressMocks.applySidecarMock,
       Delete: egressMocks.deleteSidecarMock,
     },
-    "namespace": { ...baseImplementation, Get: egressMocks.getNsMock },
-    "service": { ...baseImplementation, InNamespace: egressMocks.getServiceInNsMock },
+    namespace: { ...baseImplementation, Get: egressMocks.getNsMock },
+    service: {
+      ...baseImplementation,
+      InNamespace: egressMocks.getServiceInNsMock,
+      Get: egressMocks.getServiceMock,
+    },
   };
 
   // Define a function to get the appropriate implementation based on model type
@@ -122,27 +145,29 @@ export function updateEgressMocks(egressMocks: Record<string, jest.Mock>) {
       if (!model) {
         return baseImplementation;
       }
-      
-      // For Istio resources that have a name property
-      // Using optional chaining to safely access model.name
-      if (model?.name && k8sImplementations[model.name]) {
-        return k8sImplementations[model.name];
-      }
-      
-      // For core K8s resources, determine by kind
+
+      // For core K8s resources, determine by kind first (higher priority)
       // Using optional chaining to safely access model.kind
       if (model?.kind) {
         const kindLower = model.kind.toLowerCase();
         if (kindLower === "namespace" && k8sImplementations["namespace"]) {
+          // Add debug logging to verify the namespace mock is being used
+          console.log("Using namespace mock", egressMocks.getNsMock);
           return k8sImplementations["namespace"];
         }
         if (kindLower === "service" && k8sImplementations["service"]) {
           return k8sImplementations["service"];
         }
       }
-      
+
+      // For Istio resources that have a name property
+      // Using optional chaining to safely access model.name
+      if (model?.name && k8sImplementations[model.name]) {
+        return k8sImplementations[model.name];
+      }
+
       // If we can't determine the type, return the base implementation
       return baseImplementation;
-    }) as any
+    }) as any,
   );
 }
