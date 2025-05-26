@@ -13,7 +13,7 @@ components:
     charts:
       - name: prometheus-operator-crds
         url: https://prometheus-community.github.io/helm-charts
-        version: 19.0.0
+        version: 20.0.0
         namespace: uds-crds
         valuesFiles:
           - "values/crd-values.yaml"
@@ -31,12 +31,12 @@ components:
           - "values/upstream-values.yaml"
     images:
       - "quay.io/prometheus/node-exporter:v1.9.1"
-      - "quay.io/prometheus-operator/prometheus-operator:v0.81.0"
+      - "quay.io/prometheus-operator/prometheus-operator:v0.82.2"
       - "registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.15.0"
       - "quay.io/prometheus/alertmanager:v0.28.1"
-      - "quay.io/prometheus-operator/prometheus-config-reloader:v0.81.0"
-      - "quay.io/prometheus/prometheus:v3.2.1"
-      - "registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.5.2"
+      - "quay.io/prometheus-operator/prometheus-config-reloader:v0.82.2"
+      - "quay.io/prometheus/prometheus:v3.4.0"
+      - "registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.5.3"
 
   - name: kube-prometheus-stack
     required: true
@@ -51,12 +51,12 @@ components:
           - "values/registry1-values.yaml"
     images:
       - "registry1.dso.mil/ironbank/opensource/prometheus/node-exporter:v1.9.1"
-      - "registry1.dso.mil/ironbank/opensource/prometheus-operator/prometheus-operator:v0.81.0"
+      - "registry1.dso.mil/ironbank/opensource/prometheus-operator/prometheus-operator:v0.82.2"
       - "registry1.dso.mil/ironbank/opensource/kubernetes/kube-state-metrics:v2.15.0"
       - "registry1.dso.mil/ironbank/opensource/prometheus/alertmanager:v0.28.1"
-      - "registry1.dso.mil/ironbank/opensource/prometheus-operator/prometheus-config-reloader:v0.81.0"
-      - "registry1.dso.mil/ironbank/opensource/prometheus/prometheus:v3.2.1"
-      - "registry1.dso.mil/ironbank/opensource/ingress-nginx/kube-webhook-certgen:v1.5.2"
+      - "registry1.dso.mil/ironbank/opensource/prometheus-operator/prometheus-config-reloader:v0.82.2"
+      - "registry1.dso.mil/ironbank/opensource/prometheus/prometheus:v3.4.0"
+      - "registry1.dso.mil/ironbank/opensource/ingress-nginx/kube-webhook-certgen:v1.5.3"
 
   - name: kube-prometheus-stack
     required: true
@@ -71,9 +71,9 @@ components:
           - "values/unicorn-values.yaml"
     images:
       - "cgr.dev/du-uds-defenseunicorns/prometheus-node-exporter-fips:1.9.1"
-      - "cgr.dev/du-uds-defenseunicorns/prometheus-operator-fips:0.81.0"
+      - "cgr.dev/du-uds-defenseunicorns/prometheus-operator-fips:0.82.2"
       - "cgr.dev/du-uds-defenseunicorns/kube-state-metrics-fips:2.15.0"
       - "cgr.dev/du-uds-defenseunicorns/prometheus-alertmanager-fips:0.28.1"
-      - "cgr.dev/du-uds-defenseunicorns/prometheus-config-reloader-fips:0.81.0"
-      - "cgr.dev/du-uds-defenseunicorns/prometheus-fips:3.2.1"
-      - "cgr.dev/du-uds-defenseunicorns/kube-webhook-certgen-fips:1.12.1"
+      - "cgr.dev/du-uds-defenseunicorns/prometheus-config-reloader-fips:0.82.2"
+      - "cgr.dev/du-uds-defenseunicorns/prometheus-fips:3.4.0"
+      - "cgr.dev/du-uds-defenseunicorns/kube-webhook-certgen-fips:1.12.2"
