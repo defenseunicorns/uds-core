@@ -14,8 +14,8 @@ includes:
   - test-resources: ../src/test/tasks.yaml
   - base-layer: ../packages/base/tasks.yaml
   - idam-layer: ../packages/identity-authorization/tasks.yaml
-  - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.14.2/tasks/setup.yaml
-  - compliance: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.14.2/tasks/compliance.yaml
+  - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.14.5/tasks/setup.yaml
+  - compliance: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.14.5/tasks/compliance.yaml
 
 tasks:
   - name: base
@@ -161,6 +161,20 @@ tasks:
       - task: create:k3d-standard-bundle
       - task: deploy:k3d-standard-bundle-ha
       - task: validate-packages
+
+  - name: uds-core-ha-upgrade
+    description: "Test an upgrade from the latest released UDS Core package with HA to current branch with HA"
+    actions:
+      - task: deploy:latest-bundle-release-ha
+      - task: create:standard-package
+        with:
+          create_options: "--skip-sbom"
+      - task: create:k3d-standard-bundle
+      - cmd: uds deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --packages core --confirm --no-progress
+        env:
+          - UDS_CONFIG=bundles/k3d-standard/uds-ha-config.yaml
+      - task: validate-packages
+      - task: e2e-tests
 
   - name: uds-core-upgrade
     description: "Test an upgrade from the latest released UDS Core package to current branch"

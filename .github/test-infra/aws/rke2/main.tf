@@ -61,6 +61,11 @@ resource "aws_kms_key" "s3_encryption_key" {
   deletion_window_in_days = 7
 }
 
+# RDS random secret name
+resource "random_id" "unique_id" {
+  byte_length = 4
+}
+
 #######################################
 # Compute Resources
 #######################################

@@ -14,7 +14,7 @@ components:
     charts:
       - name: crd
         url: https://neuvector.github.io/neuvector-helm/
-        version: 2.8.5
+        version: 2.8.6
         namespace: neuvector
         gitPath: charts/crd
       - name: uds-neuvector-config
@@ -25,22 +25,54 @@ components:
           - ../chart/values.yaml
       - name: core
         url: https://neuvector.github.io/neuvector-helm/
-        version: 2.8.5
+        version: 2.8.6
         namespace: neuvector
         gitPath: charts/core
         valuesFiles:
           - ../values/values.yaml
       # - name: monitor
       #   url: https://neuvector.github.io/neuvector-helm/
-      #   version: 2.8.5
+      #   version: 2.8.6
       #   namespace: neuvector
       #   gitPath: charts/monitor
       #   valuesFiles:
       #     - ../values/monitor-values.yaml
     actions:
       onDeploy:
-        after:
-          - description: Annotate Controller deployment for Neuvector SSO secret
+        before:
+          - description: Annotate Controller Service to ensure mutation
             cmd: |
+              ./zarf tools kubectl annotate svc neuvector-svc-controller -n neuvector uds.dev/mutate=true || true
+          - description: Handle upgrade changes for NeuVector controller and enforcer
+            cmd: |
+              # Scale down the deployment for the 5.4.3 -> 5.4.4 upgrade
+              if [ "$(./zarf tools kubectl -n neuvector get deployment neuvector-controller-pod 2>/dev/null)" != "" ]; then
+                CURRENT_IMAGE=$(./zarf tools kubectl -n neuvector get deployment neuvector-controller-pod -o jsonpath='{.spec.template.spec.containers[0].image}' 2>/dev/null)
+                if [ "$(echo "$CURRENT_IMAGE" | grep ":5.4.3")" != "" ]; then
+                  echo "Found NeuVector controller with 5.4.3 image, scaling down for upgrade"
+                  ./zarf tools kubectl scale -n neuvector --replicas=0 deployment neuvector-controller-pod
+                  ./zarf tools kubectl rollout status deployment neuvector-controller-pod -n neuvector --timeout=600s
+                fi
+              fi
+
+              # Patch the controller to remove previously added probes (if set to tcpSocket probe)
+              if [ "$(./zarf tools kubectl -n neuvector get deployment neuvector-controller-pod -o jsonpath='{.spec.template.spec.containers[?(@.name=="neuvector-controller-pod")].readinessProbe.tcpSocket}' 2>/dev/null)" != "" ]; then
+                ./zarf tools kubectl -n neuvector patch deployment neuvector-controller-pod --type=strategic -p '{"spec":{"template":{"spec":{"containers":[{"name":"neuvector-controller-pod","readinessProbe":null}]}}}}'
+              fi
+
+              # Patch the enforcer to remove previously added probes
+              if [ "$(./zarf tools kubectl -n neuvector get daemonset neuvector-enforcer-pod -o jsonpath='{.spec.template.spec.containers[?(@.name=="neuvector-enforcer-pod")].readinessProbe.tcpSocket}' 2>/dev/null)" != "" ]; then
+                ./zarf tools kubectl -n neuvector patch daemonset neuvector-enforcer-pod --type=strategic -p '{"spec":{"template":{"spec":{"containers":[{"name":"neuvector-enforcer-pod","livenessProbe":null,"readinessProbe":null}]}}}}'
+                ./zarf tools kubectl rollout status daemonset neuvector-enforcer-pod -n neuvector --timeout=600s
+              fi
+        after:
+          - description: Annotate Controller deployment for Neuvector SSO secret and ensure proper probe is added
+            cmd: |
+              # Ensure the controllers cycle if the SSO secret has changed
+              # (temporary) also ensure that the proper probe is set on the controllers - keep this in the same patch to prevent excessive cycling
               SSO_CHECKSUM=$(./zarf tools kubectl get secret neuvector-secret -o json -n neuvector | sha256sum | cut -d' ' -f1)
-              ./zarf tools kubectl patch deployment neuvector-controller-pod -n neuvector -p "{\"spec\":{\"template\":{\"metadata\":{\"annotations\":{\"checksum/uds-sso-secret\":\"$SSO_CHECKSUM\"}}}}}"
+              ./zarf tools kubectl -n neuvector patch deployment neuvector-controller-pod --type=strategic -p '{"spec":{"template":{"metadata":{"annotations":{"checksum/uds-sso-secret":"'"$SSO_CHECKSUM"'"}},"spec":{"containers":[{"name":"neuvector-controller-pod","readinessProbe":{"exec":{"command":["cat","/tmp/ready"]},"initialDelaySeconds":5,"periodSeconds":5}}]}}}}'
+
+              # Scale back up to 3 replicas in case helm merge didn't do this for us
+              ./zarf tools kubectl scale -n neuvector --replicas=3 deployment neuvector-controller-pod
+              ./zarf tools kubectl rollout status deployment neuvector-controller-pod -n neuvector --timeout=600s

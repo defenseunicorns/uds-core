@@ -55,7 +55,7 @@ If you want to try out UDS Core, you can use the [k3d-core-demo bundle](./bundle
 <!-- x-release-please-start-version -->
 
 ```bash
-uds deploy k3d-core-demo:0.41.2
+uds deploy k3d-core-demo:0.42.0
 ```
 
 <!-- x-release-please-end -->
@@ -69,7 +69,7 @@ Deploy Istio, Keycloak and Pepr:
 <!-- x-release-please-start-version -->
 
 ```bash
-uds deploy k3d-core-slim-dev:0.41.2
+uds deploy k3d-core-slim-dev:0.42.0
 ```
 
 <!-- x-release-please-end -->

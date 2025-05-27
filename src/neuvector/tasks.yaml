@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 includes:
-  - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.14.2/tasks/setup.yaml
+  - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.14.5/tasks/setup.yaml
 
 tasks:
   - name: validate
@@ -10,9 +10,9 @@ tasks:
       - description: Validate Neuvector Controller
         wait:
           cluster:
-            kind: Pod
-            name: app=neuvector-controller-pod
-            condition: Ready
+            kind: Deployment
+            name: neuvector-controller-pod
+            condition: Available
             namespace: neuvector
       - description: Validate Neuvector Enforcer
         wait:
@@ -24,16 +24,16 @@ tasks:
       - description: Validate Neuvector Manager
         wait:
           cluster:
-            kind: Pod
-            name: app=neuvector-manager-pod
-            condition: Ready
+            kind: Deployment
+            name: neuvector-manager-pod
+            condition: Available
             namespace: neuvector
       - description: Validate Neuvector Scanner
         wait:
           cluster:
-            kind: Pod
-            name: app=neuvector-scanner-pod
-            condition: Ready
+            kind: Deployment
+            name: neuvector-scanner-pod
+            condition: Available
             namespace: neuvector
       - description: Validate Neuvector Interface
         wait:

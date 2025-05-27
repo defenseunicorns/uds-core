@@ -9,12 +9,15 @@ metadata:
   namespace: {{ .Release.Namespace }}
 spec:
   action: DENY
-  selector:
-    matchLabels:
-      app: neuvector-manager-pod
+  targetRefs:
+  - name: neuvector-manager-waypoint
+    kind: Gateway
+    group: gateway.networking.k8s.io
   rules:
   - to:
     - operation:
         paths: ["/auth"]
         ports: ["8443"]
+        # Don't block DELETE which is used for OIDC logout
+        methods: ["POST","GET","PUT","CONNECT"]
 {{- end }}

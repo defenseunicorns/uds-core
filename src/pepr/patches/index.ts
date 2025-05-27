@@ -42,58 +42,15 @@ When(a.Service)
   });
 
 /**
- * Mutate the Neuvector Enforcer DaemonSet to add a livenessProbe
+ * Mutate the Neuvector UI service to add labels to use the waypoint
+ * This can be moved to values when labels are supported in the chart: https://github.com/neuvector/neuvector-helm/pull/487
  */
-When(a.DaemonSet)
+When(a.Service)
   .IsCreatedOrUpdated()
   .InNamespace("neuvector")
-  .WithName("neuvector-enforcer-pod")
-  .Mutate(async ds => {
-    const enforcerContainer = ds.Raw.spec?.template.spec?.containers.find(
-      container => container.name === "neuvector-enforcer-pod",
-    );
-
-    if (enforcerContainer) {
-      log.debug("Patching NeuVector Enforcer Daemonset to add livenessProbe");
-      const livenessProbe = {
-        tcpSocket: { port: 8500 },
-        periodSeconds: 30,
-        failureThreshold: 3,
-      };
-      enforcerContainer.livenessProbe = livenessProbe;
-    }
-
-    if (enforcerContainer) {
-      log.debug("Patching NeuVector Enforcer Daemonset to add readinessProbe");
-      const readinessProbe = {
-        tcpSocket: { port: 8500 },
-        initialDelaySeconds: 30,
-        periodSeconds: 30,
-        failureThreshold: 3,
-      };
-      enforcerContainer.readinessProbe = readinessProbe;
-    }
-  });
-
-/**
- * Mutate the Neuvector Controller Deployment to patch in new readinessProbe
- * See issue for reference: https://github.com/defenseunicorns/uds-core/issues/1446
- */
-When(a.Deployment)
-  .IsCreatedOrUpdated()
-  .InNamespace("neuvector")
-  .WithName("neuvector-controller-pod")
-  .Mutate(async deploy => {
-    const controllerContainer = deploy.Raw.spec?.template.spec?.containers.find(
-      container => container.name === "neuvector-controller-pod",
-    );
-
-    if (controllerContainer) {
-      log.debug("Patching NeuVector Controller deployment to modify readinessProbe");
-      const readinessProbe = {
-        // Probe default port for controller REST API server
-        tcpSocket: { port: 10443 },
-      };
-      controllerContainer.readinessProbe = readinessProbe;
-    }
+  .WithName("neuvector-service-webui")
+  .Mutate(async svc => {
+    log.debug("Patching NeuVector Manager service to use the waypoint");
+    svc.SetLabel("istio.io/ingress-use-waypoint", "true");
+    svc.SetLabel("istio.io/use-waypoint", "neuvector-manager-waypoint");
   });

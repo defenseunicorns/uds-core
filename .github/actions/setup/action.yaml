@@ -35,7 +35,7 @@ runs:
       uses: defenseunicorns/setup-uds@ab842abcad1f7a3305c2538e3dd1950d0daacfa5 # v1.0.1
       with:
         # renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
-        version: v0.27.2
+        version: v0.27.5
 
     - name: Install Lula
       uses: defenseunicorns/lula-action/setup@badad8c4b1570095f57e66ffd62664847698a3b9 # v0.0.1
@@ -62,4 +62,10 @@ runs:
       env:
         GH_TOKEN: ${{ inputs.ghToken }}
       run: echo "${{ env.GH_TOKEN }}" | uds zarf tools registry login -u "dummy" --password-stdin ghcr.io
+      shell: bash
+
+    - name: Maru Login
+      if: ${{ inputs.ghToken != '' }}
+      run: |
+        echo "MARU_AUTH=\"{\"raw.githubusercontent.com\": \"${{ inputs.ghToken }}\"}\"" >> "GITHUB_ENV"
       shell: bash

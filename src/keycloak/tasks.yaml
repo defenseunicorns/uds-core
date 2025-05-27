@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 includes:
-  - config: https://raw.githubusercontent.com/defenseunicorns/uds-identity-config/v0.13.1/tasks.yaml
+  - config: https://raw.githubusercontent.com/defenseunicorns/uds-identity-config/v0.14.1/tasks.yaml
 
 tasks:
   - name: validate
@@ -25,17 +25,19 @@ tasks:
       - task: config:dev-theme
 
   - name: cacert
+    description: "Get the CA cert value for the Istio Gateway"
     actions:
-      - task: config:cacert
-
-  - name: dev-cacert
-    description: Updates the cacert value in default values files for gateways
-    actions:
-      - task: config:cacert
       - cmd: |
-          export cacert=$(cat cacert.b64)
-          yq e -i '.tls[0].cacert = env(cacert)' src/istio/values/config-tenant.yaml
-          yq e -i '.tls[0].cacert = env(cacert)' src/istio/values/config-admin.yaml
+          # renovate: datasource=docker depName=ghcr.io/defenseunicorns/uds/identity-config versioning=semver
+          IMAGE_TAG="0.14.1"
+          # This is written to a file because it is larger than the max env size in the shell
+          cat <<EOF > tls_cacert.yaml
+          tls:
+            cacert: "$(docker run --rm --entrypoint sh ghcr.io/defenseunicorns/uds/identity-config:${IMAGE_TAG} -c 'cat /home/nonroot/authorized_certs.pem | base64 -w 0')"
+          EOF
+          yq eval '.tls.cacert = load("tls_cacert.yaml").tls.cacert' -i src/istio/values/config-admin.yaml
+          yq eval '.tls.cacert = load("tls_cacert.yaml").tls.cacert' -i src/istio/values/config-tenant.yaml
+          rm tls_cacert.yaml
 
   - name: debug-istio-traffic
     actions:
