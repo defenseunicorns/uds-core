@@ -62,7 +62,6 @@ export async function reconcileSharedEgressResources(
   pkgId: string,
   action: PackageAction,
 ) {
-
   // Update the in-memory package map with the new host resource map
   updateInMemoryPackageMap(hostResourceMap, pkgId, action);
 
