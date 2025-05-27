@@ -150,10 +150,24 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
   ]);
 
   for (const client of ssoClients) {
+    // Check for local uniqueness (within this package)
     if (clientIDs.has(client.clientId)) {
-      return req.Deny(`The client ID "${client.clientId}" is not unique`);
+      return req.Deny(`The client ID "${client.clientId}" is not unique within this package`);
     }
     clientIDs.add(client.clientId);
+
+    // Check for global uniqueness (across all packages/namespaces)
+    const namespacesWithClientId = PackageStore.findPackagesWithSsoClientId(client.clientId);
+
+    // If we find namespaces with this client ID, make sure it's only the current namespace being updated
+    if (namespacesWithClientId.size > 0) {
+      const isOwnedByCurrentPackage = namespacesWithClientId.has(ns);
+
+      // If this client ID exists in other namespaces, deny the request
+      if (!isOwnedByCurrentPackage) {
+        return req.Deny(`The client ID "${client.clientId}" is already in use by another package.`);
+      }
+    }
     // Don't allow illegal k8s resource names for the secret name
     if (client.secretName && client.secretName !== sanitizeResourceName(client.secretName)) {
       return req.Deny(
