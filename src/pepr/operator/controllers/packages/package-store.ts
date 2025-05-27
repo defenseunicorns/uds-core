@@ -15,6 +15,7 @@ const log = setupLogger(Component.OPERATOR_PACKAGES);
 // Map structure: namespace -> (package name -> package)
 export type PackageNamespaceMap = Map<string, Map<string, UDSPackage>>;
 let packageNamespaceMap: PackageNamespaceMap;
+let ssoIndex: Map<string, Set<string>>;
 
 /**
  * Initializes the package namespace map.
@@ -24,6 +25,7 @@ let packageNamespaceMap: PackageNamespaceMap;
  */
 function init(): void {
   packageNamespaceMap = new Map();
+  ssoIndex = new Map();
 }
 
 /**
@@ -53,6 +55,19 @@ function add(pkg: UDSPackage, logger: boolean = true): void {
 
   // Set the package
   namespaceMap.set(name, pkg);
+
+  // Add SSO index if necessary
+  const clients = pkg.spec?.sso;
+  if (clients) {
+    clients.forEach(client => {
+      const clientId = client.clientId;
+      if (!ssoIndex.has(clientId)) {
+        ssoIndex.set(clientId, new Set());
+      }
+      // Store based on namespace since we only allow a single Package per namespace
+      ssoIndex.get(clientId)!.add(namespace);
+    });
+  }
 
   if (logger) {
     if (isUpdate) {
@@ -95,6 +110,20 @@ function remove(pkg: UDSPackage, logger: boolean = true): void {
     packageNamespaceMap.delete(namespace);
   }
 
+  // Remove SSO index if necessary
+  const clients = pkg.spec?.sso;
+  if (clients) {
+    clients.forEach(client => {
+      const clientId = client.clientId;
+      const nsSet = ssoIndex.get(clientId);
+      if (!nsSet) return;
+      nsSet.delete(namespace);
+      if (nsSet.size === 0) {
+        ssoIndex.delete(clientId);
+      }
+    });
+  }
+
   if (logger) {
     log.debug(`Removed package: ${namespace}/${name} from package map`);
   }
@@ -134,10 +163,21 @@ function getPkgName(namespace: string): string | null {
   return Array.from(namespaceMap.keys())[0];
 }
 
+/**
+ * Finds packages that have an SSO client with the specified client ID.
+ *
+ * @param {string} clientId - The client ID to search for.
+ * @returns {Array<{namespace: string, name: string, pkg: UDSPackage}>} - Array of namespaces with Packages using the specified client ID.
+ */
+function findPackagesWithSsoClientId(clientId: string): Set<string> {
+  return ssoIndex.get(clientId) ?? new Set<string>();
+}
+
 export const PackageStore = {
   init,
   add,
   hasKey,
   getPkgName,
   remove,
+  findPackagesWithSsoClientId,
 };
