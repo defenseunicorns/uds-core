@@ -1,7 +1,7 @@
 ---
 title: RKE2 CSI Snapshotting on vSphere
 sidebar:
-  order: 4
+  order: 5
 ---
 
 ## Introduction

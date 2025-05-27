@@ -17,7 +17,7 @@ The UDS Operator plays a pivotal role in managing the lifecycle of UDS Package C
 src/pepr/operator/
 ├── controllers             # Core business logic called by the reconciler
 │   ├── exemptions          # Manages updating Pepr store with exemptions from UDS Exemption
-│   ├── istio               # Manages Istio VirtualServices and sidecar injection for UDS Packages/Namespace
+│   ├── istio               # Manages Istio VirtualServices and mesh integration for UDS Packages/Namespace
 │   ├── keycloak            # Manages Keycloak client syncing
 │   ├── monitoring          # Manages Prometheus scraping metrics endpoints
 │   └── network             # Manages default and generated NetworkPolicies for UDS Packages/Namespace

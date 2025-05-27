@@ -31,8 +31,10 @@ The UDS Operator seamlessly enables the following enhancements and protections f
   - Authservice authentication provides application agnostic SSO for applications that opt-in.
 
 :::caution
-Warning: **Istio Ambient Mode** Package support is in Alpha and may not be stable. Different workloads may experience issues when migrating away from sidecars so testing in a development/staging environment is encouraged. In addition there are some known limitations with ambient support at this time:
-- `Package` CRs with AuthService SSO clients (`enableAuthserviceSelector`) are not supported in ambient mode. This is a limitation we plan to remove with operator support/configuration of [waypoint proxies](https://istio.io/latest/docs/ambient/usage/waypoint/), track progress on [this issue in GitHub](https://github.com/defenseunicorns/uds-core/issues/1200).
+Warning: **Istio Ambient Mode**: Different workloads may experience issues when migrating away from sidecars so testing in a development/staging environment is encouraged. In addition there are some known limitations with ambient support at this time:
+- `Package` CRs with AuthService SSO clients (`enableAuthserviceSelector`) are not supported in ambient mode. This is a limitation we plan to remove with operator support/configuration of [waypoint proxies](https://istio.io/latest/docs/ambient/usage/waypoint/), track progress on [this issue in GitHub](https://github.com/defenseunicorns/uds-core/issues/1200). 
+
+Learn more about the difference between Sidecar and Ambient mode [here](/reference/configuration/service-mesh/istio-sidecar-vs-ambient/).
 :::
 
 ### Example UDS Package CR
@@ -45,6 +47,9 @@ metadata:
   namespace: grafana
 spec:
   network:
+    # Configure Istio Mode: sidecar or ambient
+    serviceMesh:
+      mode: ambient
     # Expose rules generate Istio VirtualServices and related network policies
     expose:
       - service: grafana

@@ -7,7 +7,7 @@ adminDomain: "###ZARF_VAR_ADMIN_DOMAIN###"
 grafana:
   enabled: false
 
-generateInternalCert: false
+generateInternalCert: true
 
 denyLocalAuth: true
 

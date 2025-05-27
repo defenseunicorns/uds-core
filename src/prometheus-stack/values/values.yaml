@@ -6,11 +6,10 @@ crds:
 grafana:
   enabled: false
   forceDeployDashboards: true
-kubeStateMetrics:
-  serviceMonitor:
-    interval: ""
-    selfMonitor:
-      enabled: false
+kube-state-metrics:
+  # Enable scraping of istio-specifc namespace labels
+  metricLabelsAllowlist:
+    - namespaces=[istio-injection,istio.io/dataplane-mode]
 nameOverride: kube-prometheus-stack
 nodeExporter:
   jobLabel: jobLabel

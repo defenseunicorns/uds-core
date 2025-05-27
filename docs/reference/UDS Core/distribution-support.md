@@ -1,5 +1,7 @@
 ---
 title: Distribution Support
+sidebar:
+  order: 3
 ---
 
 UDS Core is a versatile software baseline designed to operate effectively across a variety of Kubernetes distributions. While it is not specifically tailored to any single Kubernetes distribution, it is compatible with multiple environments. This documentation provides an overview of UDS Core's compatibility with different distributions and the level of support provided.

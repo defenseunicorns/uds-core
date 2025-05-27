@@ -60,9 +60,6 @@ components:
     import:
       path: common
     charts:
-      - name: uds-neuvector-config
-        valuesFiles:
-          - values/unicorn-config-values.yaml
       - name: core
         valuesFiles:
           - values/unicorn-values.yaml

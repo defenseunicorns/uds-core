@@ -42,6 +42,14 @@ cve:
           - ALL
       runAsNonRoot: true
       runAsUser: 1000
+    # These volumes ensure the permissions are set properly for the certs mounted from the secret
+    volumes:
+      - name: internal-cert-dir
+        emptyDir:
+          sizeLimit: 50Mi
+    volumeMounts:
+      - mountPath: /etc/neuvector/certs/internal/
+        name: internal-cert-dir
   updater:
     enabled: true
     image:

@@ -5,7 +5,7 @@ loki:
   image:
     registry: cgr.dev
     repository: du-uds-defenseunicorns/loki-fips
-    tag: 3.5.0
+    tag: 3.5.1
 gateway:
   image:
     registry: cgr.dev
