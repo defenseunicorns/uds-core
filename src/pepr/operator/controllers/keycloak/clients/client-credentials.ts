@@ -4,6 +4,7 @@
  */
 
 import { fetch, K8s, kind } from "pepr";
+import { Agent } from "undici";
 import { Client } from "../types";
 import { baseUrl, log, throwErrorIfNeeded } from "./common";
 
@@ -68,6 +69,10 @@ export async function credentialsGetAccessToken() {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: params.toString(),
+    dispatcher: new Agent({
+      bodyTimeout: 60,
+      headersTimeout: 60,
+    }),
   });
   await throwErrorIfNeeded(response);
   cachedToken = response.data.access_token;
@@ -91,6 +96,10 @@ export async function credentialsCreate(client: Partial<Client>) {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
     body: JSON.stringify(client),
+    dispatcher: new Agent({
+      bodyTimeout: 60,
+      headersTimeout: 60,
+    }),
   });
   await throwErrorIfNeeded(response, () => {
     resetCachedToken();
@@ -109,6 +118,10 @@ export async function credentialsGet(client: Partial<Client>) {
   const response = await fetch<ClientWithId[]>(url, {
     method: "GET",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    dispatcher: new Agent({
+      bodyTimeout: 60,
+      headersTimeout: 60,
+    }),
   });
   await throwErrorIfNeeded(response, () => {
     resetCachedToken();
@@ -128,6 +141,10 @@ export async function credentialsUpdate(client: Partial<Client>) {
     method: "PUT",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
     body: JSON.stringify(client),
+    dispatcher: new Agent({
+      bodyTimeout: 60,
+      headersTimeout: 60,
+    }),
   });
   await throwErrorIfNeeded(response, () => {
     resetCachedToken();
@@ -146,6 +163,10 @@ export async function credentialsDelete(client: Partial<Client>) {
   const response = await fetch(url, {
     method: "DELETE",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    dispatcher: new Agent({
+      bodyTimeout: 60,
+      headersTimeout: 60,
+    }),
   });
   await throwErrorIfNeeded(response, () => {
     resetCachedToken();

@@ -4,6 +4,7 @@
  */
 
 import { fetch, K8s, kind } from "pepr";
+import { Agent } from "undici";
 
 import { Component, setupLogger } from "../../../logger";
 import { Sso, UDSPackage } from "../../crd";
@@ -217,7 +218,12 @@ export function generateSecretData(client: Client, secretTemplate?: { [key: stri
 }
 
 export async function getSamlCertificate() {
-  const resp = await fetch<string>(samlDescriptorUrl);
+  const resp = await fetch<string>(samlDescriptorUrl, {
+    dispatcher: new Agent({
+      bodyTimeout: 60,
+      headersTimeout: 60,
+    }),
+  });
 
   if (!resp.ok) {
     return undefined;
