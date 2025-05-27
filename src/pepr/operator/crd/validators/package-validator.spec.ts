@@ -366,7 +366,7 @@ describe("Test validation of Package CRs", () => {
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
   });
 
-  it("denies clients with clientIDs that are not unique", async () => {
+  it("denies clients with clientIDs that are not unique within the same package", async () => {
     const mockReq = makeMockReq({}, [], [], [{}, {}], []);
     await validator(mockReq);
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
