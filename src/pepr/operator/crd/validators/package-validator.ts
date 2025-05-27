@@ -165,17 +165,7 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
 
       // If this client ID exists in other namespaces, deny the request
       if (!isOwnedByCurrentPackage) {
-        // Get package names for each namespace with this client ID
-        const ownerInfo = Array.from(namespacesWithClientId)
-          .map(namespace => {
-            const pkgName = PackageStore.getPkgName(namespace);
-            return `${namespace}/${pkgName}`;
-          })
-          .join(", ");
-
-        return req.Deny(
-          `The client ID "${client.clientId}" is already used by package(s): ${ownerInfo}`,
-        );
+        return req.Deny(`The client ID "${client.clientId}" is already in use by another package.`);
       }
     }
     // Don't allow illegal k8s resource names for the secret name
