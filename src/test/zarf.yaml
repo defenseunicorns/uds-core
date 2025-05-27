@@ -36,11 +36,11 @@ components:
         localPath: ./chart
         version: 0.1.0
       - name: podinfo
-        version: 6.8.0
+        version: 6.9.0
         namespace: podinfo
         url: https://github.com/stefanprodan/podinfo.git
         gitPath: charts/podinfo
         valuesFiles:
           - ./podinfo-values.yaml
     images:
-      - ghcr.io/stefanprodan/podinfo:6.8.0
+      - ghcr.io/stefanprodan/podinfo:6.9.0
