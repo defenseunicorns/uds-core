@@ -17,6 +17,7 @@ import {
   updateInMemoryPackageMap,
   inMemoryPackageMap,
   validateEgressGateway,
+  __testOnly,
 } from "./egress";
 import { PackageAction, HostResourceMap, PackageHostMap } from "./types";
 import { purgeOrphans } from "../utils";
@@ -91,9 +92,9 @@ describe("test reconcileEgressResources", () => {
     pkgId: string,
     action: PackageAction,
   ) {
-    const promise = reconcileSharedEgressResources(hostResourceMap, pkgId, action);
+    await reconcileSharedEgressResources(hostResourceMap, pkgId, action);
     jest.advanceTimersByTime(1100); // fast-forward timer to trigger debounced functions
-    await promise;
+    await __testOnly.latestDebouncePromise;
   }
 
   it("should create egress resources on action AddOrUpdate", async () => {
