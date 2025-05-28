@@ -74,7 +74,7 @@ spec:
 
   network:
     serviceMesh:
-      mode: "ambient"
+      mode: "sidecar"
 
     expose:
       - service: neuvector-service-webui
