@@ -32,4 +32,4 @@ cve:
     image:
       repository: du-uds-defenseunicorns/neuvector-updater-fips
       # renovate: datasource=docker depName=cgr.dev/du-uds-defenseunicorns/neuvector-updater-fips versioning=docker
-      tag: 8.13.0-dev
+      tag: 8.14.0-dev
