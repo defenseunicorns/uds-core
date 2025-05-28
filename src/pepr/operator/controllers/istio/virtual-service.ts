@@ -4,9 +4,25 @@
  */
 
 import { V1OwnerReference } from "@kubernetes/client-node";
+import { K8s } from "pepr";
 import { UDSConfig } from "../../../config";
-import { Expose, Gateway, IstioHTTP, IstioHTTPRoute, IstioVirtualService } from "../../crd";
+import {
+  Expose,
+  Gateway,
+  IstioHTTP,
+  IstioHTTPRoute,
+  IstioTLS,
+  IstioVirtualService,
+} from "../../crd";
 import { sanitizeResourceName } from "../utils";
+import { sharedEgressPkgId } from "./egress";
+import { generateGatewayName } from "./gateway";
+import {
+  getSharedAnnotationKey,
+  log,
+  istioEgressGatewayNamespace as namespace,
+} from "./istio-resources";
+import { EgressResource } from "./types";
 
 /**
  * Creates a VirtualService for each exposed service in the package
@@ -14,7 +30,7 @@ import { sanitizeResourceName } from "../utils";
  * @param pkg
  * @param namespace
  */
-export function generateVirtualService(
+export function generateIngressVirtualService(
   expose: Expose,
   namespace: string,
   pkgName: string,
@@ -92,4 +108,130 @@ export function generateVSName(pkgName: string, expose: Expose) {
   const name = sanitizeResourceName(`${pkgName}-${gateway}-${nameSuffix}`);
 
   return name;
+}
+
+/**
+ * Create the egress Virtual Service resource
+ *
+ * @param host
+ * @param resource
+ * @param generation
+ */
+export function generateEgressVirtualService(
+  host: string,
+  resource: EgressResource,
+  generation: number,
+) {
+  const name = generateEgressVSName(host);
+
+  // Add annotations from resource
+  const annotations: Record<string, string> = {};
+  for (const pkgId of resource.packages) {
+    annotations[`${getSharedAnnotationKey(pkgId)}`] = "user";
+  }
+
+  // Add the gateway servers
+  const httpRoutes: IstioHTTP[] = [];
+  const tlsRoutes: IstioTLS[] = [];
+  for (const portProtocol of resource.portProtocols) {
+    const port = portProtocol.port;
+    const protocol = portProtocol.protocol;
+    const route = generateVirtualServiceRoutes(host, port, protocol);
+    if (protocol == "TLS") {
+      tlsRoutes.push(...(route as IstioTLS[]));
+    } else if (protocol == "HTTP") {
+      httpRoutes.push(...(route as IstioHTTP[]));
+    }
+  }
+
+  // Define the gateway
+  const vs: IstioVirtualService = {
+    metadata: {
+      name,
+      namespace,
+      annotations,
+      labels: {
+        "uds/generation": generation.toString(),
+        "uds/package": sharedEgressPkgId,
+      },
+    },
+    spec: {
+      hosts: [host],
+      gateways: ["mesh", `${generateGatewayName(host)}`],
+      ...(tlsRoutes.length > 0 && { tls: tlsRoutes }),
+      ...(httpRoutes.length > 0 && { http: httpRoutes }),
+    },
+  };
+
+  return vs;
+}
+
+// Generates the HTTP/TLS routes for the virtual service
+function generateVirtualServiceRoutes(host: string, port: number, protocol: string) {
+  const meshMatch = {
+    gateways: ["mesh"],
+    port,
+    ...(protocol == "TLS" && { sniHosts: [host] }),
+  };
+
+  const gatewayMatch = {
+    gateways: [`${generateGatewayName(host)}`],
+    port,
+    ...(protocol == "TLS" && { sniHosts: [host] }),
+  };
+
+  return [
+    {
+      match: [meshMatch],
+      route: [
+        {
+          destination: {
+            host: `egressgateway.${namespace}.svc.cluster.local`,
+            port: { number: port },
+          },
+        },
+      ],
+    },
+    {
+      match: [gatewayMatch],
+      route: [
+        {
+          destination: {
+            host,
+            port: { number: port },
+          },
+        },
+      ],
+    },
+  ];
+}
+
+// Check for other virtual services that might conflict - virtual services that are not added by the operator
+// Note: Users adding their own Istio resources will need to understand the possible conflicts with the spec. This is not an operation
+// blocked by K8s, but will be identified as invalid by Istio. The UDS operator will only manage/deconflict resources it creates or those
+// that follow the naming convention.
+export async function warnMatchingExistingVirtualServices(host: string) {
+  const virtualServices = await K8s(IstioVirtualService).Get();
+  const name = generateEgressVSName(host);
+
+  // Match any virtual services with matching hosts
+  for (const vs of virtualServices.items) {
+    if (vs.metadata?.name === name && vs.metadata?.namespace === namespace) {
+      // Don't warn if the virtual service is the one we created
+      continue;
+    }
+    if (vs.spec && vs.spec.hosts) {
+      for (const vsHost of vs.spec.hosts) {
+        if (vsHost === host) {
+          const errText = `Found existing Virtual Service ${vs.metadata?.name}/${vs.metadata?.namespace} with matching host. Istio will not behave properly with multiple Virtual Services using the same hosts.`;
+          log.error(errText);
+          throw new Error(errText);
+        }
+      }
+    }
+  }
+}
+
+export function generateEgressVSName(host: string) {
+  return sanitizeResourceName(`egress-vs-${host}`);
 }
