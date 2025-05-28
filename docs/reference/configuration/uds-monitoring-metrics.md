@@ -131,3 +131,28 @@ data:
 :::note
 If using this configuration, any dashboards without a `grafana_folder` annotation will still be loaded in Grafana, but will not be grouped (they will appear at the top level outside of any folders). Also note that new dashboards in UDS Core may also need to be overridden to add the folder annotation, this example represents the current set of dashboards deployed by default.
 :::
+
+## Adding Datasources
+
+Grafana in UDS Core is deployed with a [datasource sidecar](https://github.com/grafana/helm-charts/blob/main/charts/grafana/values.yaml#L872-L875) that watches for external datasource `ConfigMap`s or `Secret`s. This allows you to extend Grafana’s datasource configuration without modifying the default datasources deployed by UDS Core.
+
+### Extending the Default Datasource ConfigMap
+
+The default UDS Core deployment creates a `ConfigMap` named `grafana-datasources`, which includes built-in datasources like Prometheus, Loki, and Alertmanager. You can extend this list by providing additional datasource definitions via the `extraDatasources` value in your UDS bundle.
+
+```yaml
+overrides:
+  grafana:
+    grafana:
+      values:
+        - path: extraDatasources
+          values:
+            - name: Prometheus
+              type: prometheus
+              access: proxy
+              url: http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090
+```
+
+These entries will be injected into the existing `datasources.yaml` generated in the `grafana-datasources` ConfigMap. This keeps your configuration declarative and avoids needing to replace the whole configmap.
+
+The datasource will appear alongside the default ones when Grafana boots, and no extra ConfigMap management is required.
