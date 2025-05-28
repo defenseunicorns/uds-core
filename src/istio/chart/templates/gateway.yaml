@@ -40,7 +40,11 @@ spec:
       tls:
         mode: {{ $server.mode }}
         {{- if ne $server.mode "PASSTHROUGH" }}
-        credentialName: {{ $.Values.tls.credentialName | default "gateway-tls" | quote }}
+        {{ if and ($server.tls).cert (not ($server.tls).credentialName) }}
+        credentialName: "{{ $name }}-tls"
+        {{ else }}
+        credentialName: {{ ($server.tls).credentialName | default $.Values.tls.credentialName | default "gateway-tls" | quote }}
+        {{ end }}
         minProtocolVersion: {{ if $.Values.tls.supportTLSV1_2 }}TLSV1_2{{ else }}TLSV1_3{{ end }}
         {{- end }}
     {{ end }}

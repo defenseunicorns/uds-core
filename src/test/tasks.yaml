@@ -33,6 +33,9 @@ tasks:
         default: ${UDS_ARCH}
 
     actions:
+      - description: "Create build output directory"
+        cmd: "mkdir -p build"
+
       - description: Create zarf package for the test resources
         cmd: uds zarf package create src/test --confirm --no-progress --skip-sbom -a ${{ index .inputs "architecture" }}
 
