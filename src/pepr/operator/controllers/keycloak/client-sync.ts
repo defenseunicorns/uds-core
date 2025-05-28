@@ -150,7 +150,7 @@ async function syncClient(
       log.error(`${msg}, retrying...`);
 
       try {
-        return await syncClient(clientReq, pkg, true);
+        return await syncClient({ secretName, secretTemplate, ...clientReq }, pkg, true);
       } catch (retryErr) {
         // If the retry fails, log the retry error and throw the original error
         const retryMsg =
