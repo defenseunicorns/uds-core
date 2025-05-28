@@ -104,9 +104,6 @@ jobs:
         flavor: [upstream, registry1, unicorn]
         layer: [base, identity-authorization, runtime-security, backup-restore, logging, metrics-server, monitoring]
         arch: [amd64, arm64]
-        exclude:
-          - flavor: registry1
-            arch: arm64
     runs-on: ${{ matrix.arch == 'arm64' && 'uds-ubuntu-arm64-4-core' || 'uds-ubuntu-big-boy-4-core' }}
     name: Publish package layers
 
