@@ -23,7 +23,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        flavor: [upstream, registry1, unicorn]
+        flavor: [upstream, registry1] # todo: add unicorn back in
     runs-on: "uds-ubuntu-big-boy-8-core"
     name: Publish packages
 
@@ -41,7 +41,9 @@ jobs:
           registry1Username: ${{ secrets.IRON_BANK_ROBOT_USERNAME }}
           registry1Password: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
           ghToken: ${{ secrets.GITHUB_TOKEN }}
-          chainguardIdentity: ${{ secrets.CHAINGUARD_IDENTITY }}
+          rfAccessId: ${{ secrets.RF_ACCESS_ID }}
+          rfSecretAccessKey: ${{ secrets.RF_SECRET_ACCESS_KEY }}
+          rfRootUrl: ${{ secrets.RF_ROOT_URL }}
 
       - name: (Snapshot) Get snapshot version using git commit short sha and date
         if: ${{ inputs.snapshot }}
@@ -103,7 +105,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        flavor: [upstream, registry1, unicorn]
+        flavor: [upstream, registry1] # todo: add unicorn back in
         layer: [base, identity-authorization, runtime-security, backup-restore, logging, metrics-server, monitoring]
         arch: [amd64, arm64]
         exclude:
@@ -126,7 +128,9 @@ jobs:
           registry1Username: ${{ secrets.IRON_BANK_ROBOT_USERNAME }}
           registry1Password: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
           ghToken: ${{ secrets.GITHUB_TOKEN }}
-          chainguardIdentity: ${{ secrets.CHAINGUARD_IDENTITY }}
+          rfAccessId: ${{ secrets.RF_ACCESS_ID }}
+          rfSecretAccessKey: ${{ secrets.RF_SECRET_ACCESS_KEY }}
+          rfRootUrl: ${{ secrets.RF_ROOT_URL }}
 
       - name: Test and Publish Core Package Layer
         run: uds run -f tasks/publish.yaml single-layer --set FLAVOR=${{ matrix.flavor }} --set LAYER=${{ matrix.layer }} --no-progress

@@ -14,9 +14,15 @@ inputs:
   registry1Password:
     description: 'IRON_BANK_ROBOT_PASSWORD'
     required: true
-  chainguardIdentity:
-    description: "ID for Chainguard Identity"
+  rfAccessId:
+    description: "Rapidfort Access ID"
     required: true
+  rfSecretAccessKey:
+    description: "Rapidfort Secret Access Key"
+    required: true
+  rfRootUrl:
+    description: "Rapidfort Root URL"
+    required: false
 
 runs:
   using: "composite"
@@ -51,12 +57,6 @@ runs:
       run: echo "${{ env.REGISTRY_PASSWORD }}" | uds zarf tools registry login -u "${{ env.REGISTRY_USERNAME }}" --password-stdin registry1.dso.mil
       shell: bash
 
-    - name: Chainguard Login
-      if: ${{ inputs.chainguardIdentity != '' }}
-      uses: chainguard-dev/setup-chainctl@272698817627c158bbd813cb783b62a4b9bbbc67 # v0.3.1
-      with:
-        identity: ${{ inputs.chainguardIdentity }}
-
     - name: GHCR Login
       if: ${{ inputs.ghToken != '' }}
       env:
@@ -69,3 +69,11 @@ runs:
       run: |
         echo "MARU_AUTH=\"{\"raw.githubusercontent.com\": \"${{ inputs.ghToken }}\"}\"" >> "GITHUB_ENV"
       shell: bash
+
+    - name: Rapidfort Login
+      shell: bash
+      env:
+        RF_ACCESS_ID: ${{ inputs.rfAccessId }}
+        RF_SECRET_ACCESS_KEY: ${{ inputs.rfSecretAccessKey }}
+        RF_ROOT_URL: ${{ inputs.rfRootUrl }}
+      run: echo "$RF_SECRET_ACCESS_KEY" | docker login "$RF_ROOT_URL" -u "$RF_ACCESS_ID" --password-stdin

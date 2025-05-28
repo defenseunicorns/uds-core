@@ -29,7 +29,7 @@ jobs:
 
     strategy:
       matrix:
-        flavor: [upstream, registry1, unicorn]
+        flavor: [upstream, registry1] # todo: add unicorn back in
         test-type: [install, upgrade]
 
     steps:
@@ -48,7 +48,9 @@ jobs:
           registry1Username: ${{ secrets.IRON_BANK_ROBOT_USERNAME }}
           registry1Password: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
           ghToken: ${{ secrets.GITHUB_TOKEN }}
-          chainguardIdentity: ${{ secrets.CHAINGUARD_IDENTITY }}
+          rfAccessId: ${{ secrets.RF_ACCESS_ID }}
+          rfSecretAccessKey: ${{ secrets.RF_SECRET_ACCESS_KEY }}
+          rfRootUrl: ${{ secrets.RF_ROOT_URL }}
 
       - name: Run UDS Core Install HA Test
         if: ${{ matrix.test-type == 'install' }}

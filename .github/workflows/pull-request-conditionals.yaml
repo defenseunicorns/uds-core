@@ -84,7 +84,7 @@ jobs:
     strategy:
       matrix:
         package: ${{ fromJSON(needs.check-paths.outputs.packages) }}
-        flavor: [upstream, registry1, unicorn]
+        flavor: [upstream, registry1] # todo: add unicorn back in
         test_type: [install]
         # Upgrade tests are included for all flavors, but ONLY for `all` package tests
         include:

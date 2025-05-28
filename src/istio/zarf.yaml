@@ -77,10 +77,10 @@ components:
         valuesFiles:
           - "values/unicorn/ztunnel.yaml"
     images:
-      - cgr.dev/du-uds-defenseunicorns/istio-pilot-fips:1.25.2
-      - cgr.dev/du-uds-defenseunicorns/istio-proxy-fips:1.25.2
-      - cgr.dev/du-uds-defenseunicorns/istio-install-cni:1.25.2
-      - cgr.dev/du-uds-defenseunicorns/ztunnel-fips:1.25.2
+      - quay.io/rfcurated/istio/pilot:1.26.0-jammy-fips-rfcurated-rfhardened
+      - quay.io/rfcurated/istio/proxyv2:1.26.0-jammy-fips-rfcurated-rfhardened
+      - quay.io/rfcurated/istio/install-cni:1.26.0-jammy-fips-rfcurated-rfhardened
+      - quay.io/rfcurated/istio/ztunnel:1.26.0-jammy-scratch-fips-rfcurated
 
   - name: istio-admin-gateway
     required: true
