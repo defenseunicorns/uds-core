@@ -6,15 +6,7 @@ name: RKE2 Test
 on:
   schedule:
     - cron: "0 0 * * 0" # Every Sunday Midnight (UTC) / Saturday 5pm MT
-  pull_request:
-    # milestoned is added here as a workaround for release-please not triggering PR workflows (PRs should be added to a milestone to trigger the workflow).
-    # labeled is added to support renovate-ready labelling on PRs
-    types: [milestoned, labeled, opened, reopened, synchronize]
-    paths:
-      - tasks/iac.yaml
-      - .github/bundles/rke2/*
-      - .github/test-infra/aws/rke2/**
-      - .github/workflows/test-rke2.yaml
+  workflow_call: {}
 
 permissions:
   id-token: write
@@ -28,6 +20,7 @@ jobs:
       matrix:
         flavor: [upstream, registry1, unicorn]
     runs-on: ubuntu-latest
+    name: test-rke2
     permissions:
       id-token: write
       contents: read
