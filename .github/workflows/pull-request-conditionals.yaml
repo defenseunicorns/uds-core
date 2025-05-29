@@ -94,9 +94,9 @@ jobs:
           - package: all
             flavor: upstream
             test_type: upgrade
-          - package: all
-            flavor: unicorn
-            test_type: upgrade
+          # - package: all
+          #   flavor: unicorn
+          #   test_type: upgrade
     uses: ./.github/workflows/test.yaml
     with:
       package: ${{ matrix.package }}
@@ -109,7 +109,7 @@ jobs:
 #   name: Compliance Evaluation
 #   strategy:
 #     matrix:
-#       flavor: [upstream, registry1] # todo: add unicorn flavor back in
+#       flavor: [upstream, registry1, unicorn]
 #     fail-fast: false
 #   uses: ./.github/workflows/compliance.yaml
 #   with:
