@@ -30,7 +30,7 @@ Scan tasks will run CVE scanning against a given package and provide a markdown 
 uds run -f tasks/scan.yaml --set PACKAGE=core-base --set MIN_SEVERITY=Medium --set VERSION=0.34.0 --set FLAVOR=upstream
 ```
 
-All pulled information and produced artifacts will be stored under the `cve` directory locally, with the aggregated report for this example at `cve/scans/core-base-vulnerability-report.md`. Note that by default this will pull the package for your local system architecture although it can be overridden using the `ZARF_ARCHITECTURE` env if necessary (for example, registry1 flavor packages are only published for amd64).
+All pulled information and produced artifacts will be stored under the `cve` directory locally, with the aggregated report for this example at `cve/scans/core-base-vulnerability-report.md`. Note that by default this will pull the package for your local system architecture although it can be overridden using the `ZARF_ARCHITECTURE` env if necessary.
 
 See all available tasks and descriptions with `uds run -f tasks/scan.yaml --list`.
 
