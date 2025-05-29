@@ -48,9 +48,8 @@ jobs:
           registry1Username: ${{ secrets.IRON_BANK_ROBOT_USERNAME }}
           registry1Password: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
           ghToken: ${{ secrets.GITHUB_TOKEN }}
-          rfAccessId: ${{ secrets.RF_ACCESS_ID }}
-          rfSecretAccessKey: ${{ secrets.RF_SECRET_ACCESS_KEY }}
-          rfRootUrl: ${{ secrets.RF_ROOT_URL }}
+          rapidfortUsername: ${{ secrets.RAPIDFORT_USERNAME }}
+          rapidfortPassword: ${{ secrets.RAPIDFORT_PASSWORD }}
 
       - name: Run UDS Core Install HA Test
         if: ${{ matrix.test-type == 'install' }}

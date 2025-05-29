@@ -14,15 +14,12 @@ inputs:
   registry1Password:
     description: 'IRON_BANK_ROBOT_PASSWORD'
     required: true
-  rfAccessId:
-    description: "Rapidfort Access ID"
+  rapidfortUsername:
+    description: "RAPIDFORT_USERNAME"
     required: true
-  rfSecretAccessKey:
-    description: "Rapidfort Secret Access Key"
+  rapidfortPassword:
+    description: "RAPIDFORT_PASSWORD"
     required: true
-  rfRootUrl:
-    description: "Rapidfort Root URL"
-    required: false
 
 runs:
   using: "composite"
@@ -73,7 +70,6 @@ runs:
     - name: Rapidfort Login
       shell: bash
       env:
-        RF_ACCESS_ID: ${{ inputs.rfAccessId }}
-        RF_SECRET_ACCESS_KEY: ${{ inputs.rfSecretAccessKey }}
-        RF_ROOT_URL: ${{ inputs.rfRootUrl }}
-      run: echo "$RF_SECRET_ACCESS_KEY" | docker login "$RF_ROOT_URL" -u "$RF_ACCESS_ID" --password-stdin
+        RAPIDFORT_USERNAME: ${{ inputs.rapidfortUsername }}
+        RAPIDFORT_PASSWORD: ${{ inputs.rapidfortPassword }}
+      run: echo "${{ env.RAPIDFORT_PASSWORD }}" | uds zarf tools registry login -u "${{ env.RAPIDFORT_USERNAME }}" --password-stdin quay.io

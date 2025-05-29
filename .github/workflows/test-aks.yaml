@@ -79,9 +79,8 @@ jobs:
           registry1Username: ${{ secrets.IRON_BANK_ROBOT_USERNAME }}
           registry1Password: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
           ghToken: ${{ secrets.GITHUB_TOKEN }}
-          rfAccessId: ${{ secrets.RF_ACCESS_ID }}
-          rfSecretAccessKey: ${{ secrets.RF_SECRET_ACCESS_KEY }}
-          rfRootUrl: ${{ secrets.RF_ROOT_URL }}
+          rapidfortUsername: ${{ secrets.RAPIDFORT_USERNAME }}
+          rapidfortPassword: ${{ secrets.RAPIDFORT_PASSWORD }}
 
       - name: Setup Tofu
         uses: opentofu/setup-opentofu@592200bd4b9bbf4772ace78f887668b1aee8f716 # v1.0.5
