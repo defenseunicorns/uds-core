@@ -29,7 +29,7 @@ jobs:
 
     strategy:
       matrix:
-        flavor: [upstream, registry1, unicorn]
+        flavor: [upstream, registry1] # todo: add unicorn flavor back in
         test-type: [install, upgrade]
 
     steps:

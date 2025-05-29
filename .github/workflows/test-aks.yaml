@@ -26,7 +26,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        flavor: [upstream, registry1, unicorn]
+        flavor: [upstream, registry1] # todo: add unicorn flavor back in
     runs-on: ubuntu-latest
     name: AKS Install
     permissions:

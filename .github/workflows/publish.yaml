@@ -23,7 +23,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        flavor: [upstream, registry1, unicorn]
+        flavor: [upstream, registry1] # todo: add unicorn flavor back in
     runs-on: "uds-ubuntu-big-boy-8-core"
     name: Publish packages
 
@@ -101,7 +101,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        flavor: [upstream, registry1, unicorn]
+        flavor: [upstream, registry1] # todo: add unicorn flavor back in
         layer: [base, identity-authorization, runtime-security, backup-restore, logging, metrics-server, monitoring]
         arch: [amd64, arm64]
     runs-on: ${{ matrix.arch == 'arm64' && 'uds-ubuntu-arm64-4-core' || 'uds-ubuntu-big-boy-4-core' }}
