@@ -54,6 +54,20 @@ components:
     actions:
       onCreate:
         before:
+          # todo: scale down pepr, keycloak, ztunnel, istio-cni (maybe?)
+          - description: "Scale down ztunnel, keycloak, and pepr before snapshot"
+            cmd: |
+              set -e
+              echo "Scaling down pods..."
+              kubectl -n istio-system scale deploy ztunnel --replicas=0 || true
+              kubectl -n pepr-system scale deploy pepr-uds-core --replicas=0 || true
+              kubectl -n keycloak scale statefulset keycloak --replicas=0 || true
+
+              echo "Waiting for pods to terminate..."
+              kubectl -n istio-system wait --for=delete pod -l app=ztunnel --timeout=60s || true
+              kubectl -n pepr-system wait --for=delete pod -l app=pepr-uds-core --timeout=60s || true
+              kubectl -n keycloak wait --for=delete pod -l app.kubernetes.io/name=keycloak --timeout=60s || true
+
           - cmd: ./checkpoint.sh
         onSuccess:
           - cmd: |
@@ -92,6 +106,19 @@ components:
                 --image ghcr.io/defenseunicorns/uds-core/checkpoint:latest ${ZARF_VAR_K3D_EXTRA_ARGS} \
                 ${ZARF_VAR_CLUSTER_NAME}
             description: "Create the cluster"
+
+          # todo: scale back up pepr, keycloak, ztunnel, istio-cni (maybe?)
+          - description: "Scale up ztunnel, keycloak, and pepr after checkpoint restore"
+            cmd: |
+              kubectl -n istio-system scale deploy ztunnel --replicas=1 || true
+              kubectl -n pepr-system scale deploy pepr-uds-core --replicas=1 || true
+              kubectl -n keycloak scale statefulset keycloak --replicas=1 || true
+
+              echo "Waiting for rollouts to complete..."
+              kubectl -n istio-system rollout status deploy ztunnel
+              kubectl -n pepr-system rollout status deploy pepr-uds-core
+              kubectl -n keycloak rollout status statefulset keycloak
+
           # This action waits on Keycloak since it is the slowest pod to start after cluster creation. By waiting on it, we guarantee the cluster is healthy and usable after deployment.
           - description: Keycloak to be Healthy
             wait:
