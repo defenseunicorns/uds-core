@@ -10,7 +10,7 @@ tag: 5.4.4-jammy-scratch-fips-rfcurated
 
 manager:
   image:
-    repository: rfcurated/neuvector/managerr
+    repository: rfcurated/neuvector/manager
 
 enforcer:
   image:

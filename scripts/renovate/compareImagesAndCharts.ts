@@ -231,7 +231,7 @@ function compareImages(oldImages: any, newImages: any, result: ComparisonResult)
               result.labels.push('waiting on ironbank');
               result.changes.push(`Waiting on Ironbank image update: ${missingImg}`);
             }
-          } else if (missingImg.includes('quay.io')) {
+          } else if (missingImg.startsWith('quay.io/rfcurated')) {
             if (!result.labels.includes('waiting on rapidfort')) {
               result.labels.push('waiting on rapidfort');
               result.changes.push(`Waiting on Rapidfort image update: ${missingImg}`);
