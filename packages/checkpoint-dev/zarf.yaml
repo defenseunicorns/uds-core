@@ -54,7 +54,6 @@ components:
     actions:
       onCreate:
         before:
-          # todo: scale down pepr, keycloak, ztunnel, istio-cni (maybe?)
           - description: "Scale down ztunnel, keycloak, and pepr before snapshot"
             cmd: |
               set -e
@@ -107,7 +106,6 @@ components:
                 ${ZARF_VAR_CLUSTER_NAME}
             description: "Create the cluster"
 
-          # todo: scale back up pepr, keycloak, ztunnel, istio-cni (maybe?)
           - description: "Scale up ztunnel, keycloak, and pepr after checkpoint restore"
             cmd: |
               ./zarf tools kubectl -n istio-system patch daemonset ztunnel --type=json -p='[{"op":"remove","path":"/spec/template/spec/nodeSelector/no-such-label"}]'
