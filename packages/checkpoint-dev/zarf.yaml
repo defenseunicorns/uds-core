@@ -59,14 +59,14 @@ components:
             cmd: |
               set -e
               echo "Scaling down pods..."
-              kubectl -n pepr-system scale deploy pepr-uds-core-watcher --replicas=0
-              kubectl rollout status -n pepr-system deploy pepr-uds-core-watcher --timeout=60s
+              ./zarf tools kubectl -n pepr-system scale deploy pepr-uds-core-watcher --replicas=0
+              ./zarf tools kubectl rollout status -n pepr-system deploy pepr-uds-core-watcher --timeout=60s
 
-              kubectl -n keycloak scale statefulset keycloak --replicas=0
-              kubectl rollout status -n keycloak statefulset keycloak --timeout=60s
+              ./zarf tools kubectl -n keycloak scale statefulset keycloak --replicas=0
+              ./zarf tools kubectl rollout status -n keycloak statefulset keycloak --timeout=60s
 
-              kubectl -n istio-system patch daemonset ztunnel --type='strategic' -p '{"spec":{"template":{"spec":{"nodeSelector":{"no-such-label":"true"}}}}}'
-              kubectl -n istio-system wait --for=delete pod -l app=ztunnel --timeout=60s
+              ./zarf tools kubectl -n istio-system patch daemonset ztunnel --type='strategic' -p '{"spec":{"template":{"spec":{"nodeSelector":{"no-such-label":"true"}}}}}'
+              ./zarf tools kubectl -n istio-system wait --for=delete pod -l app=ztunnel --timeout=60s
 
           - cmd: ./checkpoint.sh
         onSuccess:
@@ -110,13 +110,13 @@ components:
           # todo: scale back up pepr, keycloak, ztunnel, istio-cni (maybe?)
           - description: "Scale up ztunnel, keycloak, and pepr after checkpoint restore"
             cmd: |
-              kubectl -n istio-system patch daemonset ztunnel --type=json -p='[{"op":"remove","path":"/spec/template/spec/nodeSelector/no-such-label"}]'
-              kubectl -n istio-system rollout status daemonset ztunnel --timeout=60s
+              ./zarf tools kubectl -n istio-system patch daemonset ztunnel --type=json -p='[{"op":"remove","path":"/spec/template/spec/nodeSelector/no-such-label"}]'
+              ./zarf tools kubectl -n istio-system rollout status daemonset ztunnel --timeout=60s
 
-              kubectl -n keycloak scale statefulset keycloak --replicas=1
-              kubectl -n keycloak rollout status statefulset keycloak --timeout=60s
+              ./zarf tools kubectl -n keycloak scale statefulset keycloak --replicas=1
+              ./zarf tools kubectl -n keycloak rollout status statefulset keycloak --timeout=60s
 
-              kubectl -n pepr-system scale deploy pepr-uds-core-watcher --replicas=1
-              kubectl -n pepr-system rollout status deploy pepr-uds-core-watcher --timeout=60s
+              ./zarf tools kubectl -n pepr-system scale deploy pepr-uds-core-watcher --replicas=1
+              ./zarf tools kubectl -n pepr-system rollout status deploy pepr-uds-core-watcher --timeout=60s
         onSuccess:
           - cmd: rm -f uds-checkpoint.tar
