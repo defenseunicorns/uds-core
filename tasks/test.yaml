@@ -212,6 +212,7 @@ tasks:
         with:
           validate_passthrough: "false"
       - task: idam-layer:validate
+      - task: test-resources:e2e-test
 
   - name: local-compliance-compose
     description: "compose oscal component definitions"
