@@ -59,14 +59,14 @@ components:
             cmd: |
               set -e
               echo "Scaling down pods..."
-              kubectl -n istio-system scale deploy ztunnel --replicas=0 || true
-              kubectl -n pepr-system scale deploy pepr-uds-core --replicas=0 || true
-              kubectl -n keycloak scale statefulset keycloak --replicas=0 || true
+              kubectl -n pepr-system scale deploy pepr-uds-core-watcher --replicas=0
+              kubectl rollout status -n pepr-system deploy pepr-uds-core-watcher --timeout=60s
 
-              echo "Waiting for pods to terminate..."
-              kubectl -n istio-system wait --for=delete pod -l app=ztunnel --timeout=60s || true
-              kubectl -n pepr-system wait --for=delete pod -l app=pepr-uds-core --timeout=60s || true
-              kubectl -n keycloak wait --for=delete pod -l app.kubernetes.io/name=keycloak --timeout=60s || true
+              kubectl -n keycloak scale statefulset keycloak --replicas=0
+              kubectl rollout status -n keycloak statefulset keycloak --timeout=60s
+
+              kubectl -n istio-system patch daemonset ztunnel --type='strategic' -p '{"spec":{"template":{"spec":{"nodeSelector":{"no-such-label":"true"}}}}}'
+              kubectl -n istio-system wait --for=delete pod -l app=ztunnel --timeout=60s
 
           - cmd: ./checkpoint.sh
         onSuccess:
@@ -110,22 +110,13 @@ components:
           # todo: scale back up pepr, keycloak, ztunnel, istio-cni (maybe?)
           - description: "Scale up ztunnel, keycloak, and pepr after checkpoint restore"
             cmd: |
-              kubectl -n istio-system scale deploy ztunnel --replicas=1 || true
-              kubectl -n pepr-system scale deploy pepr-uds-core --replicas=1 || true
-              kubectl -n keycloak scale statefulset keycloak --replicas=1 || true
+              kubectl -n istio-system patch daemonset ztunnel --type=json -p='[{"op":"remove","path":"/spec/template/spec/nodeSelector/no-such-label"}]'
+              kubectl -n istio-system rollout status daemonset ztunnel --timeout=60s
 
-              echo "Waiting for rollouts to complete..."
-              kubectl -n istio-system rollout status deploy ztunnel
-              kubectl -n pepr-system rollout status deploy pepr-uds-core
-              kubectl -n keycloak rollout status statefulset keycloak
+              kubectl -n keycloak scale statefulset keycloak --replicas=1
+              kubectl -n keycloak rollout status statefulset keycloak --timeout=60s
 
-          # This action waits on Keycloak since it is the slowest pod to start after cluster creation. By waiting on it, we guarantee the cluster is healthy and usable after deployment.
-          - description: Keycloak to be Healthy
-            wait:
-              cluster:
-                kind: Pod
-                name: app.kubernetes.io/name=keycloak
-                namespace: keycloak
-                condition: Ready
+              kubectl -n pepr-system scale deploy pepr-uds-core-watcher --replicas=1
+              kubectl -n pepr-system rollout status deploy pepr-uds-core-watcher --timeout=60s
         onSuccess:
           - cmd: rm -f uds-checkpoint.tar
