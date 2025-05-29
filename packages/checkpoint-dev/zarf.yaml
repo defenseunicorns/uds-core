@@ -124,7 +124,7 @@ components:
               ./zarf tools kubectl patch validatingwebhookconfiguration pepr-uds-core --type='json' -p='[{"op":"replace","path":"/webhooks/0/failurePolicy","value":"Fail"}]'
 
               ./zarf tools kubectl -n keycloak scale statefulset keycloak --replicas=1
-              ./zarf tools kubectl -n keycloak rollout status statefulset keycloak --timeout=60s
+              ./zarf tools kubectl -n keycloak rollout status statefulset keycloak --timeout=180s
 
               ./zarf tools kubectl -n pepr-system scale deploy pepr-uds-core-watcher --replicas=1
               ./zarf tools kubectl -n pepr-system rollout status deploy pepr-uds-core-watcher --timeout=60s
