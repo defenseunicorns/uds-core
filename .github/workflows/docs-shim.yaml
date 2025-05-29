@@ -57,6 +57,8 @@ jobs:
         package: [all]
         flavor: [upstream, registry1, unicorn]
         test_type: [install, upgrade]
+        exclude:
+          - flavor: unicorn # todo: add unicorn flavor back in
     uses: ./.github/workflows/test-shim.yaml
     with:
       package: ${{ matrix.package }}

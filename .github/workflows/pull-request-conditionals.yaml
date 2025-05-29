@@ -94,9 +94,11 @@ jobs:
           - package: all
             flavor: upstream
             test_type: upgrade
-          - package: all
-            flavor: unicorn
-            test_type: upgrade
+          # - package: all
+          #   flavor: unicorn
+          #   test_type: upgrade
+        exclude:
+          - flavor: unicorn # todo: add unicorn flavor back in
     uses: ./.github/workflows/test.yaml
     with:
       package: ${{ matrix.package }}

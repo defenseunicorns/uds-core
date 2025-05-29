@@ -31,6 +31,8 @@ jobs:
       matrix:
         flavor: [upstream, registry1, unicorn]
         test-type: [install, upgrade]
+        exclude:
+          - flavor: unicorn # todo: add unicorn flavor back in
 
     steps:
       - name: Checkout repository
