@@ -84,7 +84,7 @@ jobs:
     strategy:
       matrix:
         package: ${{ fromJSON(needs.check-paths.outputs.packages) }}
-        flavor: [upstream, registry1, unicorn]
+        flavor: [upstream, registry1] # Todo: add unicorn flavor back in
         test_type: [install]
         # Upgrade tests are included for all flavors, but ONLY for `all` package tests
         include:
@@ -97,8 +97,13 @@ jobs:
           # - package: all
           #   flavor: unicorn
           #   test_type: upgrade
-        exclude:
-          - flavor: unicorn # todo: add unicorn flavor back in
+        exclude: # todo: add unicorn flavor back in
+          - package: all
+            flavor: unicorn
+            test_type: upgrade
+          - package: all
+            flavor: unicorn
+            test_type: install
     uses: ./.github/workflows/test.yaml
     with:
       package: ${{ matrix.package }}
