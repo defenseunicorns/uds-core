@@ -2,23 +2,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 apiVersion: v1
-kind: Namespace
-metadata:
-  labels:
-    uds: curl-testing-namespace
-  name: curl-ns-deny-all-1
----
-apiVersion: uds.dev/v1alpha1
-kind: Package
-metadata:
-  name: curl-pkg-deny-all-1
-  namespace: curl-ns-deny-all-1
-spec:
-  network:
-    allow: []
-    expose: []
----
-apiVersion: v1
 kind: Service
 metadata:
   name: curl-pkg-deny-all-1
@@ -68,23 +51,6 @@ spec:
             - containerPort: 8080
 ---
 apiVersion: v1
-kind: Namespace
-metadata:
-  labels:
-    uds: curl-testing-namespace
-  name: curl-ns-deny-all-2
----
-apiVersion: uds.dev/v1alpha1
-kind: Package
-metadata:
-  name: curl-pkg-deny-all-2
-  namespace: curl-ns-deny-all-2
-spec:
-  network:
-    allow: []
-    expose: []
----
-apiVersion: v1
 kind: Service
 metadata:
   name: curl-pkg-deny-all-2
@@ -132,27 +98,6 @@ spec:
               memory: 16Mi
           ports:
             - containerPort: 8080
----
-apiVersion: v1
-kind: Namespace
-metadata:
-  labels:
-    uds: curl-testing-namespace
-  name: curl-ns-allow-all
----
-apiVersion: uds.dev/v1alpha1
-kind: Package
-metadata:
-  name: curl-pkg-allow-all
-  namespace: curl-ns-allow-all
-spec:
-  network:
-    allow:
-      - direction: Ingress
-        selector:
-          app: curl-pkg-allow-all
-        ports:
-          - 8080
 ---
 apiVersion: v1
 kind: Service
@@ -212,26 +157,6 @@ spec:
             - containerPort: 8081
 ---
 apiVersion: v1
-kind: Namespace
-metadata:
-  labels:
-    uds: curl-testing-namespace
-  name: curl-ns-remote-ns-1
----
-apiVersion: uds.dev/v1alpha1
-kind: Package
-metadata:
-  name: curl-pkg-remote-ns-egress
-  namespace: curl-ns-remote-ns-1
-spec:
-  network:
-    allow:
-      - direction: Egress
-        remoteNamespace: curl-ns-remote-ns-2
-        selector:
-          app: curl-pkg-remote-ns-egress
----
-apiVersion: v1
 kind: Service
 metadata:
   name: curl-pkg-remote-ns-egress
@@ -281,32 +206,6 @@ spec:
             - containerPort: 8080
 ---
 apiVersion: v1
-kind: Namespace
-metadata:
-  labels:
-    uds: curl-testing-namespace
-  name: curl-ns-remote-ns-2
----
-apiVersion: uds.dev/v1alpha1
-kind: Package
-metadata:
-  name: curl-pkg-remote-ns-ingress
-  namespace: curl-ns-remote-ns-2
-spec:
-  network:
-    allow:
-      - direction: Ingress
-        remoteNamespace: curl-ns-remote-ns-1
-        remoteSelector:
-          app: curl-pkg-remote-ns-egress
-        selector:
-          app: curl-pkg-remote-ns-ingress
-        ports:
-          - 443
-          - 8080
-          - 80
----
-apiVersion: v1
 kind: Service
 metadata:
   name: curl-pkg-remote-ns-ingress
@@ -350,26 +249,6 @@ spec:
             - "-listen=:8080"
           ports:
             - containerPort: 8080
----
-apiVersion: v1
-kind: Namespace
-metadata:
-  labels:
-    uds: curl-testing-namespace
-  name: curl-ns-kube-api
----
-apiVersion: uds.dev/v1alpha1
-kind: Package
-metadata:
-  name: curl-pkg-kube-api
-  namespace: curl-ns-kube-api
-spec:
-  network:
-    allow:
-      - direction: Egress
-        remoteGenerated: KubeAPI
-        selector:
-          app: curl-pkg-kube-api
 ---
 apiVersion: v1
 kind: Service
@@ -419,26 +298,6 @@ spec:
               memory: 16Mi
           ports:
             - containerPort: 8080
----
-apiVersion: v1
-kind: Namespace
-metadata:
-  labels:
-    uds: curl-testing-namespace
-  name: curl-ns-remote-cidr
----
-apiVersion: uds.dev/v1alpha1
-kind: Package
-metadata:
-  name: curl-pkg-remote-cidr
-  namespace: curl-ns-remote-cidr
-spec:
-  network:
-    allow:
-      - direction: Ingress
-        remoteCidr: 0.0.0.0/0
-        selector:
-          app: curl-pkg-remote-cidr
 ---
 apiVersion: v1
 kind: Service
