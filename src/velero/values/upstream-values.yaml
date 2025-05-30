@@ -3,22 +3,22 @@
 
 image:
   repository: velero/velero
-  tag: v1.15.2
+  tag: v1.16.1
 
 kubectl:
   image:
     repository: docker.io/bitnami/kubectl
-    tag: 1.32.3
+    tag: 1.33.1
 
 initContainers:
   - name: velero-plugin-for-aws
-    image: velero/velero-plugin-for-aws:v1.11.1
+    image: velero/velero-plugin-for-aws:v1.12.1
     imagePullPolicy: IfNotPresent
     volumeMounts:
       - mountPath: /target
         name: plugins
   - name: velero-plugin-for-azure
-    image: velero/velero-plugin-for-microsoft-azure:v1.11.1
+    image: velero/velero-plugin-for-microsoft-azure:v1.12.1
     imagePullPolicy: IfNotPresent
     volumeMounts:
       - mountPath: /target

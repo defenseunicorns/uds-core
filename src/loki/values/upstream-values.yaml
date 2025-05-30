@@ -5,13 +5,13 @@ loki:
   image:
     registry: docker.io
     repository: grafana/loki
-    tag: 3.4.3
+    tag: 3.5.1
 
 gateway:
   image:
     registry: docker.io
     repository: nginxinc/nginx-unprivileged
-    tag: 1.27-alpine
+    tag: 1.28-alpine
 
 memcached:
   image:

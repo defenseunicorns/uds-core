@@ -50,72 +50,26 @@ tasks:
             namespace: kube-system
           EOF
             uds zarf tools kubectl -n kube-system rollout restart deployment coredns
-  - name: rke2-allow-prom-kube-dns
+  - name: eks-storageclass-setup
     actions:
-      - description: Create NetworkPolicy to allow Prometheus to scrape kube-dns
+      - description: Setup GP3 Storage Class
         cmd: |
           uds zarf tools kubectl apply -f - <<EOF
-          apiVersion: networking.k8s.io/v1
-          kind: NetworkPolicy
-          metadata:
-            name: allow-prometheus-to-kube-dns
-            namespace: kube-system
-          spec:
-            podSelector:
-              matchLabels:
-                k8s-app: kube-dns
-            policyTypes:
-              - Ingress
-            ingress:
-              - from:
-                  - namespaceSelector:
-                      matchLabels:
-                        kubernetes.io/metadata.name: monitoring
-                    podSelector:
-                      matchLabels:
-                        app: prometheus
-                ports:
-                  - protocol: TCP
-                    port: 9153
+            apiVersion: storage.k8s.io/v1
+            kind: StorageClass
+            metadata:
+              name: gp3
+              annotations:
+                storageclass.kubernetes.io/is-default-class: "true"
+            provisioner: ebs.csi.aws.com
+            allowVolumeExpansion: true
+            reclaimPolicy: Delete
+            volumeBindingMode: WaitForFirstConsumer
+            parameters:
+              encrypted: "true"
+              fsType: ext4
+              type: gp3
           EOF
-  - name: eks-coredns-setup
-    actions:
-      - description: Setup Custom ConfigMap for Core DNS
-        cmd: |
-          uds zarf tools kubectl apply -f - <<EOF
-          apiVersion: v1
-          data:
-            Corefile: |-
-              .:53 {
-                  errors
-                  health {
-                      lameduck 5s
-                  }
-                  ready
-                  kubernetes  cluster.local  cluster.local in-addr.arpa ip6.arpa {
-                      pods insecure
-                      fallthrough in-addr.arpa ip6.arpa
-                      ttl 30
-                  }
-                  prometheus  0.0.0.0:9153
-                  forward  . /etc/resolv.conf
-                  cache  30
-                  loop
-                  reload
-                  loadbalance
-                  rewrite stop {
-                    name regex (.*\.admin\.uds\.dev) admin-ingressgateway.istio-admin-gateway.svc.cluster.local answer auto
-                    }
-                  rewrite stop {
-                  name regex (.*\.uds\.dev) tenant-ingressgateway.istio-tenant-gateway.svc.cluster.local answer auto
-                    }
-              }
-          kind: ConfigMap
-          metadata:
-            name: coredns
-            namespace: kube-system
-          EOF
-          uds zarf tools kubectl rollout restart deployment -n kube-system coredns
   - name: admin-gw-ip
     actions:
       - description: Fetch Admin Gateway IP Address
@@ -123,7 +77,7 @@ tasks:
           IP_ADDR=$(uds zarf tools kubectl get service -n istio-admin-gateway admin-ingressgateway -o=jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null)
           if [ -z $IP_ADDR ]; then
             HOSTNAME=$(uds zarf tools kubectl get service -n istio-admin-gateway admin-ingressgateway -o=jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null)
-            IP_ADDR=$(dig +short $HOSTNAME)
+            IP_ADDR=$(dig +short $HOSTNAME | head -n1)
           fi; echo $IP_ADDR
         mute: true
         setVariables:
@@ -135,7 +89,7 @@ tasks:
           IP_ADDR=$(uds zarf tools kubectl get service -n istio-tenant-gateway tenant-ingressgateway -o=jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null)
           if [ -z $IP_ADDR ]; then
             HOSTNAME=$(uds zarf tools kubectl get service -n istio-tenant-gateway tenant-ingressgateway -o=jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null)
-            IP_ADDR=$(dig +short $HOSTNAME)
+            IP_ADDR=$(dig +short $HOSTNAME | head -n1)
           fi; echo $IP_ADDR
         mute: true
         setVariables:
@@ -147,4 +101,4 @@ tasks:
       - description: Adds Cluster LoadBalancer IP Addresses to match appropriate hosts names in /etc/hosts
         mute: true
         cmd: |
-          echo "$ADMIN_GW_IP keycloak.admin.uds.dev neuvector.admin.uds.dev grafana.admin.uds.dev demo.admin.uds.dev\n$TENANT_GW_IP sso.uds.dev demo-8080.uds.dev demo-8081.uds.dev protected.uds.dev" | sudo tee --append /etc/hosts
+          echo "$ADMIN_GW_IP keycloak.admin.uds.dev neuvector.admin.uds.dev grafana.admin.uds.dev demo.admin.uds.dev\n$TENANT_GW_IP sso.uds.dev demo-8080.uds.dev demo-8081.uds.dev protected.uds.dev" | sudo tee -a /etc/hosts

@@ -9,6 +9,8 @@ manager:
     ssl: false
   svc:
     type: ClusterIP
+  probes:
+    enabled: true
 
 internal:
   autoRotateCert: true
@@ -31,10 +33,22 @@ controller:
   env:
     - name: NO_DEFAULT_ADMIN
       value: "1"
+  internal:
+    certificate:
+      secret: neuvector-internal-cert
+
+enforcer:
+  internal:
+    certificate:
+      secret: neuvector-internal-cert
 
 cve:
   updater:
     enabled: true
+  scanner:
+    internal:
+      certificate:
+        secret: neuvector-internal-cert
 
 crdwebhook:
   enabled: false

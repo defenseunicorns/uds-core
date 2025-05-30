@@ -30,6 +30,16 @@ domain: "###ZARF_VAR_DOMAIN###"
 #       # Hosts to add to this gateway
 #       hosts:
 #         - "*"
+
+#       # TLS certificate scoped to this specific server, if not set, will default to the gateway-level TLS certificate
+#       cert: ""
+
+#       # TLS key scoped to this specific server, if not set, will default to the gateway-level TLS key
+#       key: ""
+
+#       # TLS CA certificate scoped to this specific server, if not set, will default to the gateway-level TLS certificate
+#       cacert: ""
+
 #   # Whether to support TLS 1.2 (if false, only TLS 1.3 will be supported)
 #   supportTLSV1_2: true
 
@@ -37,6 +47,7 @@ domain: "###ZARF_VAR_DOMAIN###"
 # for the root domain (e.g. uds.dev). This is required because wildcard hosts (e.g. *.uds.dev) do not match the root.
 rootDomain:
   enabled: false
+  enableHttpsRedirect: true
   tls: {}
   #   mode: SIMPLE                          # TLS mode (e.g., SIMPLE, MUTUAL). Default is SIMPLE.
   #   credentialName: ""                    # Specify a TLS secret name if pre-created. Set to "" to auto-create using the cert data.

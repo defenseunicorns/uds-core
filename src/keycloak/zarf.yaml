@@ -26,8 +26,8 @@ components:
         valuesFiles:
           - "values/upstream-values.yaml"
     images:
-      - quay.io/keycloak/keycloak:26.1.4
-      - ghcr.io/defenseunicorns/uds/identity-config:0.12.1
+      - quay.io/keycloak/keycloak:26.2.5
+      - ghcr.io/defenseunicorns/uds/identity-config:0.14.1
 
   - name: keycloak
     required: true
@@ -40,8 +40,8 @@ components:
         valuesFiles:
           - "values/registry1-values.yaml"
     images:
-      - registry1.dso.mil/ironbank/opensource/keycloak/keycloak:26.1.4
-      - ghcr.io/defenseunicorns/uds/identity-config:0.12.1
+      - registry1.dso.mil/ironbank/opensource/keycloak/keycloak:26.2.5
+      - ghcr.io/defenseunicorns/uds/identity-config:0.14.1
 
   - name: keycloak
     required: true
@@ -54,5 +54,9 @@ components:
         valuesFiles:
           - "values/unicorn-values.yaml"
     images:
-      - cgr.dev/du-uds-defenseunicorns/keycloak:26.1.4 # todo: switch to FIPS image
-      - ghcr.io/defenseunicorns/uds/identity-config:0.12.1
+      # Keycloak doesn't require the FIPS image as it switches itself into FIPS mode when Bouncy Castle libraries are provided.
+      # This happens through the UDS Identity Config. However, in the future we aim to align all the images with their FIPS versions
+      # and Keycloak is no exception. Again, this effort doesn't change anything in terms of UDS Security and FIPS compliance posture.
+      # The switch is tracked via https://github.com/defenseunicorns/uds-core/issues/1541
+      - cgr.dev/du-uds-defenseunicorns/keycloak:26.2.5
+      - ghcr.io/defenseunicorns/uds/identity-config:0.14.1

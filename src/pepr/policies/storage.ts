@@ -3,12 +3,13 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { a } from "pepr";
+import { a, sdk } from "pepr";
 
 import { Policy } from "../operator/crd";
-import { When, containers, volumes } from "./common";
+import { When, volumes } from "./common";
 import { isExempt, markExemption } from "./exemptions";
 
+const { containers } = sdk;
 /**
  * Restrict Volume Types for Pods
  *

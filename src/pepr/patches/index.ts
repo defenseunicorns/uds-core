@@ -42,36 +42,15 @@ When(a.Service)
   });
 
 /**
- * Mutate the Neuvector Enforcer DaemonSet to add a livenessProbe
- * Temporary until fixed upstream
+ * Mutate the Neuvector UI service to add labels to use the waypoint
+ * This can be moved to values when labels are supported in the chart: https://github.com/neuvector/neuvector-helm/pull/487
  */
-
-When(a.DaemonSet)
+When(a.Service)
   .IsCreatedOrUpdated()
   .InNamespace("neuvector")
-  .WithName("neuvector-enforcer-pod")
-  .Mutate(async ds => {
-    const enforcerContainer = ds.Raw.spec?.template.spec?.containers.find(
-      container => container.name === "neuvector-enforcer-pod",
-    );
-
-    if (enforcerContainer && enforcerContainer.livenessProbe === undefined) {
-      log.debug("Patching NeuVector Enforcer Daemonset to add livenessProbe");
-      const livenessProbe = {
-        exec: { command: ["curl", "--no-progress-meter", "127.0.0.1:8500"] },
-        periodSeconds: 10,
-        failureThreshold: 2,
-      };
-      enforcerContainer.livenessProbe = livenessProbe;
-    }
-
-    if (enforcerContainer && enforcerContainer.readinessProbe === undefined) {
-      log.debug("Patching NeuVector Enforcer Daemonset to add readinessProbe");
-      const readinessProbe = {
-        exec: { command: ["curl", "--no-progress-meter", "127.0.0.1:8500"] },
-        initialDelaySeconds: 10,
-        periodSeconds: 5,
-      };
-      enforcerContainer.readinessProbe = readinessProbe;
-    }
+  .WithName("neuvector-service-webui")
+  .Mutate(async svc => {
+    log.debug("Patching NeuVector Manager service to use the waypoint");
+    svc.SetLabel("istio.io/ingress-use-waypoint", "true");
+    svc.SetLabel("istio.io/use-waypoint", "neuvector-manager-waypoint");
   });

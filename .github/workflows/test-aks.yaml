@@ -1,15 +1,15 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2025 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 name: AKS Test
 
 on:
   schedule:
-    - cron: '0 0 * * 0' # Every Sunday Midnight (UTC) / Saturday 5pm MT
+    - cron: "0 0 * * 0" # Every Sunday Midnight (UTC) / Saturday 5pm MT
   pull_request:
     # milestoned is added here as a workaround for release-please not triggering PR workflows (PRs should be added to a milestone to trigger the workflow).
-    # labeled is added here to allow for "manual" triggering of CI on renovate PRs
-    types: [milestoned, opened, reopened, synchronize, labeled]
+    # labeled is added to support renovate-ready labelling on PRs
+    types: [milestoned, labeled, opened, reopened, synchronize]
     paths:
       - tasks/iac.yaml
       - .github/bundles/aks/*
@@ -28,6 +28,12 @@ jobs:
       matrix:
         flavor: [upstream, registry1, unicorn]
     runs-on: ubuntu-latest
+    name: AKS Install
+    permissions:
+      id-token: write
+      contents: read
+      packages: read
+      pull-requests: write # Allows writing to pull requests (needed for renovate-readiness)
     env:
       SHA: ${{ github.sha }}
       UDS_REGION: usgovvirginia
@@ -56,6 +62,8 @@ jobs:
       - name: Check renovate readiness
         if: startsWith(github.event.pull_request.head.ref, 'renovate/') # Only call for Renovate PRs
         uses: ./.github/actions/renovate-readiness
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Azure login
         uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2
@@ -63,7 +71,7 @@ jobs:
           client-id: ${{ secrets.AZURE_GOV_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_GOV_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_GOV_SUBSCRIPTION_ID }}
-          environment: 'AzureUSGovernment'
+          environment: "AzureUSGovernment"
 
       - name: Environment setup
         uses: ./.github/actions/setup
@@ -80,7 +88,7 @@ jobs:
           tofu_wrapper: false
 
       - name: Create UDS Core Package
-        run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress --set FLAVOR=${{ matrix.flavor }}
+        run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress --with create_options="--skip-sbom" --set FLAVOR=${{ matrix.flavor }}
 
       - name: Create Core Bundle
         run: uds create .github/bundles/aks --confirm
@@ -99,7 +107,6 @@ jobs:
 
       - name: Test UDS Core
         run: uds run -f tasks/test.yaml uds-core-non-k3d --set EXCLUDED_PACKAGES="metrics-server"
-        continue-on-error: true
 
       - name: Debug Output
         if: ${{ always() }}

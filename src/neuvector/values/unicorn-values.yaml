@@ -6,7 +6,7 @@ autoGenerateCert: true
 
 registry: cgr.dev
 # renovate: datasource=docker depName=cgr.dev/du-uds-defenseunicorns/neuvector-controller-fips versioning=docker
-tag: "5.4.2"
+tag: "5.4.4"
 manager:
   image:
     repository: du-uds-defenseunicorns/neuvector-manager
@@ -16,22 +16,13 @@ enforcer:
     repository: du-uds-defenseunicorns/neuvector-enforcer-fips
   containerSecurityContext:
     privileged: true
-  internal:
-    certificate:
-      secret: neuvector-internal-cert
 
 controller:
   image:
     repository: du-uds-defenseunicorns/neuvector-controller-fips
-  internal:
-    certificate:
-      secret: neuvector-internal-cert
 
 cve:
   scanner:
-    internal:
-      certificate:
-        secret: neuvector-internal-cert
     image:
       registry: docker.io
       repository: neuvector/scanner
@@ -41,4 +32,4 @@ cve:
     image:
       repository: du-uds-defenseunicorns/neuvector-updater-fips
       # renovate: datasource=docker depName=cgr.dev/du-uds-defenseunicorns/neuvector-updater-fips versioning=docker
-      tag: 8.12.1-dev
+      tag: 8.14.0-dev

@@ -7,7 +7,7 @@ metadata:
   description: "Rehydratable UDS K3d + UDS Core Slim (Istio, UDS Operator and Keycloak) Checkpoint"
   authors: "Defense Unicorns - Product"
   # x-release-please-start-version
-  version: "0.40.1"
+  version: "0.43.0"
   # x-release-please-end
 
 variables:
@@ -37,6 +37,13 @@ components:
             description: "Destroy the cluster"
           - cmd: |
               sudo rm -rf data
+          - cmd: |
+              if [ -z "$TMPDIR" ]; then
+                #  macOS sets TMPDIR to a user temp directory - this also provides more options to linux
+                TMPDIR="/tmp"
+              fi
+              DATA_DIR="${TMPDIR}/uds-checkpoint-data"
+              sudo rm -rf "$DATA_DIR"
 
   - name: create-cluster
     required: true

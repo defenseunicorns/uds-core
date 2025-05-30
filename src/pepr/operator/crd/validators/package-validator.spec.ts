@@ -282,7 +282,7 @@ describe("Test validation of Package CRs", () => {
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
   });
 
-  it("denies clients with clientIDs that are not unique", async () => {
+  it("denies clients with clientIDs that are not unique within the same package", async () => {
     const mockReq = makeMockReq({}, [], [], [{}, {}], []);
     await validator(mockReq);
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
@@ -638,6 +638,10 @@ describe("Test Allowed SSO Client Attributes", () => {
             "access.token.lifespan": "60",
             "saml.assertion.signature": "false",
             "saml.client.signature": "false",
+            "use.refresh.tokens": "false",
+            "saml.encrypt": "false",
+            saml_name_id_format: "username",
+            "saml.signing.certificate": "",
             saml_assertion_consumer_url_post: "https://nexus.uds.dev/saml",
             saml_assertion_consumer_url_redirect: "https://nexus.uds.dev/saml",
             saml_single_logout_service_url_post: "https://nexus.uds.dev/saml/single-logout",

@@ -8,7 +8,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
 spec:
   sso:
-    - name: Grafana Dashboard
+    - name: Grafana
       clientId: uds-core-admin-grafana
       redirectUris:
         {{- if .Values.adminDomain }}
@@ -25,6 +25,8 @@ spec:
       description: Metrics
 
   network:
+    serviceMesh:
+      mode: ambient
     expose:
       - service: grafana
         selector:

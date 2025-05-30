@@ -8,8 +8,8 @@ import { fetch, K8s, kind } from "pepr";
 import { Component, setupLogger } from "../../../logger";
 import { Sso, UDSPackage } from "../../crd";
 import { getOwnerRef, purgeOrphans, sanitizeResourceName } from "../utils";
+import { credentialsCreateOrUpdate, credentialsDelete } from "./clients/client-credentials";
 import { Client, clientKeys } from "./types";
-import { createOrUpdateClient, deleteClient } from "./clients/keycloak-client";
 
 const samlDescriptorUrl =
   "http://keycloak-http.keycloak.svc.cluster.local:8080/realms/uds/protocol/saml/descriptor";
@@ -80,13 +80,15 @@ export async function purgeSSOClients(pkg: UDSPackage, newClients: string[] = []
   const toRemove = currentClients.filter(client => !newClients.includes(client));
   for (const ref of toRemove) {
     try {
-      await deleteClient({ clientId: ref });
+      await credentialsDelete({ clientId: ref });
     } catch (err) {
       log.warn(
         pkg.metadata,
         `Failed to remove client ${ref}, package ${pkg.metadata?.namespace}/${pkg.metadata?.name}. Error: ${err.message}`,
       );
-      throw new Error(`Failed to remove client ${ref}, token not found`);
+      throw new Error(
+        `Failed to remove client ${ref}, package ${pkg.metadata?.namespace}/${pkg.metadata?.name}. Error: ${err.message}`,
+      );
     }
   }
 }
@@ -120,7 +122,7 @@ export function convertSsoToClient(sso: Partial<Sso>): Client {
   return client as Client;
 }
 
-async function syncClient(
+export async function syncClient(
   { secretName, secretTemplate, ...clientReq }: Sso,
   pkg: UDSPackage,
   isRetry = false,
@@ -132,31 +134,31 @@ async function syncClient(
   let client = convertSsoToClient(clientReq);
 
   try {
-    client = await createOrUpdateClient(client, isRetry);
+    client = await credentialsCreateOrUpdate(client);
   } catch (err) {
     const msg =
       `Failed to process Keycloak request for client '${client.clientId}', package ` +
       `${pkg.metadata?.namespace}/${pkg.metadata?.name}. Error: ${err.message}`;
 
     // Throw the error if this is the retry or was an initial client creation attempt
-    // if (isRetry || !token) {
     if (isRetry) {
       log.error(`${msg}, retry failed.`);
       // Throw the original error captured from the first attempt
       throw new Error(msg);
     } else {
-      // Retry the request without the token in case we have a bad token stored
+      // Retry the request in case it is an intermittent failure
       log.error(`${msg}, retrying...`);
 
       try {
-        return await syncClient(clientReq, pkg, true);
+        // Ensure we pass the same inputs bass to this function, including the secret name/template
+        return await syncClient({ secretName, secretTemplate, ...clientReq }, pkg, true);
       } catch (retryErr) {
         // If the retry fails, log the retry error and throw the original error
         const retryMsg =
           `Retry of Keycloak request failed for client '${client.clientId}', package ` +
           `${pkg.metadata?.namespace}/${pkg.metadata?.name}. Error: ${retryErr.message}`;
         log.error(retryMsg);
-        // Throw the error from the original attempt since our retry without token failed
+        // Throw the error from the original attempt since our retry failed
         throw new Error(msg);
       }
     }

@@ -3,22 +3,22 @@
 
 image:
   repository: cgr.dev/du-uds-defenseunicorns/velero-fips
-  tag: 1.15.2-dev
+  tag: 1.16.1-dev
 
 kubectl:
   image:
     repository: cgr.dev/du-uds-defenseunicorns/kubectl-fips
-    tag: 1.32.3-dev
+    tag: 1.33.1-dev
 
 initContainers:
   - name: velero-plugin-for-aws
-    image: cgr.dev/du-uds-defenseunicorns/velero-plugin-for-aws-fips:1.11.1
+    image: cgr.dev/du-uds-defenseunicorns/velero-plugin-for-aws-fips:1.12.1
     imagePullPolicy: IfNotPresent
     volumeMounts:
       - mountPath: /target
         name: plugins
   - name: velero-plugin-for-azure
-    image: velero/velero-plugin-for-microsoft-azure:v1.11.1
+    image: velero/velero-plugin-for-microsoft-azure:v1.12.1
     imagePullPolicy: IfNotPresent
     volumeMounts:
       - mountPath: /target

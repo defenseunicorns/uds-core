@@ -37,7 +37,7 @@ variable "sku_tier" {
 
 variable "kubernetes_version" {
   description = "Specifies the AKS Kubernetes version"
-  default     = "1.30"
+  default     = "1.31"
   type        = string
 }
 
@@ -180,7 +180,7 @@ variable "enable_key_vault_csi_driver" {
 variable "username" {
   description = "The username to use to login to the DB"
   type        = string
-  default     = "grafana"
+  default     = "testuser"
 }
 
 variable "db_port" {
@@ -192,5 +192,5 @@ variable "db_port" {
 variable "db_name" {
   description = "The name to give the database"
   type        = string
-  default     = "grafana"
+  default     = "psql-ci"
 }

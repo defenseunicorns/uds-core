@@ -19,10 +19,10 @@ components:
         valuesFiles:
           - values/upstream-values.yaml
     images:
-      - velero/velero:v1.15.2
-      - velero/velero-plugin-for-aws:v1.11.1
-      - docker.io/bitnami/kubectl:1.32.3
-      - velero/velero-plugin-for-microsoft-azure:v1.11.1
+      - velero/velero:v1.16.1
+      - velero/velero-plugin-for-aws:v1.12.1
+      - docker.io/bitnami/kubectl:1.33.1
+      - velero/velero-plugin-for-microsoft-azure:v1.12.1
 
   - name: velero
     required: true
@@ -35,10 +35,10 @@ components:
         valuesFiles:
           - values/registry1-values.yaml
     images:
-      - registry1.dso.mil/ironbank/opensource/velero/velero:v1.15.2
-      - registry1.dso.mil/ironbank/opensource/velero/velero-plugin-for-aws:v1.11.1
+      - registry1.dso.mil/ironbank/opensource/velero/velero:v1.16.1
+      - registry1.dso.mil/ironbank/opensource/velero/velero-plugin-for-aws:v1.12.1
       - registry1.dso.mil/ironbank/big-bang/base:2.1.0
-      - registry1.dso.mil/ironbank/opensource/velero/velero-plugin-for-microsoft-azure:v1.11.1
+      - registry1.dso.mil/ironbank/opensource/velero/velero-plugin-for-microsoft-azure:v1.12.1
 
   - name: velero
     required: true
@@ -51,7 +51,7 @@ components:
         valuesFiles:
           - values/unicorn-values.yaml
     images:
-      - cgr.dev/du-uds-defenseunicorns/velero-fips:1.15.2-dev
-      - cgr.dev/du-uds-defenseunicorns/velero-plugin-for-aws-fips:1.11.1
-      - cgr.dev/du-uds-defenseunicorns/kubectl-fips:1.32.3-dev
-      - velero/velero-plugin-for-microsoft-azure:v1.11.1
+      - cgr.dev/du-uds-defenseunicorns/velero-fips:1.16.1-dev
+      - cgr.dev/du-uds-defenseunicorns/velero-plugin-for-aws-fips:1.12.1
+      - cgr.dev/du-uds-defenseunicorns/kubectl-fips:1.33.1-dev
+      - velero/velero-plugin-for-microsoft-azure:v1.12.1

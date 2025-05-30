@@ -1,15 +1,15 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2025 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 name: EKS Test
 
 on:
   schedule:
-    - cron: '0 0 * * 0' # Every Sunday Midnight (UTC) / Saturday 5pm MT
+    - cron: "0 0 * * 0" # Every Sunday Midnight (UTC) / Saturday 5pm MT
   pull_request:
     # milestoned is added here as a workaround for release-please not triggering PR workflows (PRs should be added to a milestone to trigger the workflow).
-    # labeled is added here to allow for "manual" triggering of CI on renovate PRs
-    types: [milestoned, opened, reopened, synchronize, labeled]
+    # labeled is added to support renovate-ready labelling on PRs
+    types: [milestoned, labeled, opened, reopened, synchronize]
     paths:
       - tasks/iac.yaml
       - .github/bundles/eks/*
@@ -28,6 +28,11 @@ jobs:
       matrix:
         flavor: [upstream, registry1, unicorn]
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+      packages: read
+      pull-requests: write # Allows writing to pull requests (needed for renovate-readiness)
     env:
       SHA: ${{ github.sha }}
       UDS_REGION: us-gov-west-1
@@ -43,7 +48,6 @@ jobs:
           echo "UDS_STATE_KEY="tfstate/ci/install/${SHA:0:7}-eks-core-${{ matrix.flavor }}-aws.tfstate >> $GITHUB_ENV
           echo "TF_VAR_region=${UDS_REGION}" >> $GITHUB_ENV
           echo "TF_VAR_name=uds-ci-${{ matrix.flavor }}-${SHA:0:7}" >> $GITHUB_ENV
-          echo "TF_VAR_use_permissions_boundary=true" >> $GITHUB_ENV
           echo "TF_VAR_permissions_boundary_name=${UDS_PERMISSIONS_BOUNDARY_NAME}" >> $GITHUB_ENV
 
       - name: Checkout repository
@@ -52,6 +56,8 @@ jobs:
       - name: Check renovate readiness
         if: startsWith(github.event.pull_request.head.ref, 'renovate/') # Only call for Renovate PRs
         uses: ./.github/actions/renovate-readiness
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4
@@ -69,9 +75,6 @@ jobs:
           ghToken: ${{ secrets.GITHUB_TOKEN }}
           chainguardIdentity: ${{ secrets.CHAINGUARD_IDENTITY }}
 
-      - name: Install eksctl
-        run: uds run -f tasks/iac.yaml install-eksctl --no-progress
-
       - name: Setup Tofu
         uses: opentofu/setup-opentofu@592200bd4b9bbf4772ace78f887668b1aee8f716 # v1.0.5
         with:
@@ -79,21 +82,21 @@ jobs:
           tofu_wrapper: false
 
       - name: Create UDS Core Package
-        run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress --set FLAVOR=${{ matrix.flavor }}
+        run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress --with create_options="--skip-sbom" --set FLAVOR=${{ matrix.flavor }}
 
       - name: Create Core Bundle
-        run: uds create .github/bundles/eks --confirm
+        run: uds create .github/bundles/eks --confirm -a amd64
 
       - name: Create Cluster
-        run: uds run -f tasks/iac.yaml create-cluster --no-progress
+        run: uds run -f tasks/iac.yaml create-iac --no-progress --set K8S_DISTRO=eks --set CLOUD=aws
         timeout-minutes: 60
 
-      - name: Create IAC
-        run: uds run -f tasks/iac.yaml create-iac --no-progress --set K8S_DISTRO=eks --set CLOUD=aws
-        timeout-minutes: 20
+      - name: Get Kubeconfig
+        run: uds run -f tasks/iac.yaml eks-get-kubeconfig --no-progress
+        timeout-minutes: 5
 
-      - name: Configure Cluster DNS
-        run: uds run -f tasks/utils.yaml eks-coredns-setup --no-progress
+      - name: Setup GP3 Storage Class
+        run: uds run -f tasks/utils.yaml eks-storageclass-setup --no-progress
 
       - name: Deploy Core Bundle
         env:
@@ -102,8 +105,7 @@ jobs:
         timeout-minutes: 30
 
       - name: Test UDS Core
-        run: uds run -f tasks/test.yaml uds-core-non-k3d --set EXCLUDED_PACKAGES="metrics-server"
-        continue-on-error: true
+        run: uds run -f tasks/test.yaml uds-core-non-k3d
 
       - name: Debug Output
         if: ${{ always() }}
@@ -122,14 +124,8 @@ jobs:
         timeout-minutes: 10
         continue-on-error: true
 
-      - name: Remove IAC
-        if: always()
-        run: uds run -f tasks/iac.yaml destroy-iac --no-progress --set K8S_DISTRO=eks --set CLOUD=aws
-        timeout-minutes: 10
-        continue-on-error: true
-
       - name: Teardown EKS cluster
         if: always()
-        run: uds run -f tasks/iac.yaml destroy-cluster --no-progress --set K8S_DISTRO=eks
+        run: uds run -f tasks/iac.yaml destroy-iac --no-progress --set K8S_DISTRO=eks --set CLOUD=aws
         timeout-minutes: 30
         continue-on-error: true

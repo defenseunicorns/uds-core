@@ -1,15 +1,15 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2025 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 name: RKE2 Test
 
 on:
   schedule:
-    - cron: '0 0 * * 0' # Every Sunday Midnight (UTC) / Saturday 5pm MT
+    - cron: "0 0 * * 0" # Every Sunday Midnight (UTC) / Saturday 5pm MT
   pull_request:
     # milestoned is added here as a workaround for release-please not triggering PR workflows (PRs should be added to a milestone to trigger the workflow).
-    # labeled is added here to allow for "manual" triggering of CI on renovate PRs
-    types: [milestoned, opened, reopened, synchronize, labeled]
+    # labeled is added to support renovate-ready labelling on PRs
+    types: [milestoned, labeled, opened, reopened, synchronize]
     paths:
       - tasks/iac.yaml
       - .github/bundles/rke2/*
@@ -28,6 +28,11 @@ jobs:
       matrix:
         flavor: [upstream, registry1, unicorn]
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+      packages: read
+      pull-requests: write # Allows writing to pull requests (needed for renovate-readiness)
     env:
       SHA: ${{ github.sha }}
       UDS_REGION: us-gov-west-1
@@ -43,6 +48,7 @@ jobs:
           echo "UDS_CLUSTER_NAME=uds-ci-${{ matrix.flavor }}-${SHA:0:7}" >> $GITHUB_ENV
           echo "UDS_STATE_KEY="tfstate/ci/install/${SHA:0:7}-rke2-core-${{ matrix.flavor }}-aws.tfstate >> $GITHUB_ENV
           echo "TF_VAR_region=${UDS_REGION}" >> $GITHUB_ENV
+          echo "TF_VAR_name=uds-ci-${{ matrix.flavor }}-${SHA:0:7}" >> $GITHUB_ENV
           echo "TF_VAR_run_id=$GITHUB_RUN_ID" >> $GITHUB_ENV
           echo "TF_VAR_use_permissions_boundary=true" >> $GITHUB_ENV
           echo "TF_VAR_permissions_boundary_name=${UDS_PERMISSIONS_BOUNDARY_NAME}" >> $GITHUB_ENV
@@ -54,6 +60,8 @@ jobs:
       - name: Check renovate readiness
         if: startsWith(github.event.pull_request.head.ref, 'renovate/') # Only call for Renovate PRs
         uses: ./.github/actions/renovate-readiness
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4
@@ -78,7 +86,7 @@ jobs:
           tofu_wrapper: false
 
       - name: Create UDS Core Package
-        run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress --set FLAVOR=${{ matrix.flavor }}
+        run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress --with create_options="--skip-sbom" --set FLAVOR=${{ matrix.flavor }}
 
       - name: Create Core Bundle
         run: uds create .github/bundles/rke2 --confirm
@@ -103,7 +111,6 @@ jobs:
 
       - name: Test UDS Core
         run: uds run -f tasks/test.yaml uds-core-non-k3d
-        continue-on-error: true
 
       - name: Debug Output
         if: ${{ always() }}
@@ -119,8 +126,6 @@ jobs:
       - name: Remove UDS Core
         if: always()
         run: uds remove .github/bundles/rke2/uds-bundle-uds-core-rke2-*.tar.zst --confirm
-        env:
-          KUBECONFIG: ".github/test-infra/aws/rke2/rke2-config"
         timeout-minutes: 20
         continue-on-error: true
 
