@@ -31,7 +31,7 @@ jobs:
     strategy:
       matrix:
         architecture: [amd64, arm64]
-    runs-on: ${{ matrix.architecture == 'arm64' && 'uds-ubuntu-arm64-4-core' || 'uds-ubuntu-big-boy-4-core' }}
+    runs-on: ${{ matrix.architecture == 'arm64' && 'ubuntu-24.04-arm' || 'uds-ubuntu-big-boy-4-core' }}
     name: UDS Core Checkpoint
 
     permissions:
@@ -64,8 +64,6 @@ jobs:
       - name: Deploy K3d + Source UDS Core Slim Bundle
         if: ${{ github.event_name == 'pull_request' }}
         run: |
-          sudo apt-get update -y
-          sudo apt-get upgrade iptables -y
           uds run slim-dev --no-progress
 
       - name: Create Checkpoint Package
