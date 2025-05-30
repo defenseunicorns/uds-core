@@ -72,6 +72,6 @@ echo "Container image saved to ${DATA_DIR}/uds-k3d-checkpoint-latest.tar"
 echo "Creating a final tarball to include in the package"
 sudo tar --blocking-factor=64 -cpf uds-checkpoint.tar -C "$DATA_DIR" .
 
-echo "Successfully checkpointed the cluster!"
+echo "Successfully checkpointed the cluster, hooray!"
 
 exit 0
