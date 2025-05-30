@@ -41,9 +41,6 @@ prometheusOperator:
         registry: quay.io
         repository: rfcurated/ingress-nginx/kube-webhook-certgen
         tag: 1.5.3-jammy-fips-rfcurated-rfhardened
-      registry: quay.io
-      repository: rfcurated/ingress-nginx/kube-webhook-certgen
-      tag: 1.5.3-jammy-fips-rfcurated-rfhardened
       securityContext:
         runAsGroup: 65532
         runAsNonRoot: true
