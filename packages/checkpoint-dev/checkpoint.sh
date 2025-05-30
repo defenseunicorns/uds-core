@@ -58,8 +58,6 @@ for row in $(echo "$VOLUMES" | jq -r '.[] | @base64'); do
     esac
 done
 
-docker exec -i ${K3S_CONTAINER} iptables-save > ${DATA_DIR}/iptables.bak
-
 # Step 5: Commit and save the current container as a new image
 IMAGE_NAME="ghcr.io/defenseunicorns/uds-core/checkpoint:latest"
 echo "Committing container $CONTAINER_ID to image $IMAGE_NAME:latest..."

@@ -106,9 +106,6 @@ components:
                 -v "${DATA_DIR}/k3s_data:/var/lib/rancher/k3s@server:*" \
                 --image ghcr.io/defenseunicorns/uds-core/checkpoint:latest ${ZARF_VAR_K3D_EXTRA_ARGS} \
                 ${ZARF_VAR_CLUSTER_NAME}
-
-              docker cp "${DATA_DIR}/iptables.bak" k3d-uds-server-0:/tmp/iptables.bak
-              docker exec -i k3d-uds-server-0 iptables-restore /tmp/iptables.bak
             description: "Create the cluster"
 
           - description: "Scale up ztunnel, pepr, and keycloak after checkpoint restore"
