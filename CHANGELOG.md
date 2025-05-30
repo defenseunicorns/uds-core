@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.43.1](https://github.com/defenseunicorns/uds-core/compare/v0.43.0...v0.43.1) (2025-05-30)
+
+
+### Features
+
+* enable keycloak user event metrics ([#1614](https://github.com/defenseunicorns/uds-core/issues/1614)) ([3077426](https://github.com/defenseunicorns/uds-core/commit/307742684d71e1cfa274f4c0b552d422208879e5))
+
+
+### Bug Fixes
+
+* ensure secret name/template get passed to client retry ([#1613](https://github.com/defenseunicorns/uds-core/issues/1613)) ([8090a05](https://github.com/defenseunicorns/uds-core/commit/8090a05f0ed6d0eaba3728224e78c5637e3e7f0c))
+
+
+### Miscellaneous
+
+* **deps:** update grafana curl to v8.14.0 ([#1607](https://github.com/defenseunicorns/uds-core/issues/1607)) ([aceafe6](https://github.com/defenseunicorns/uds-core/commit/aceafe6b7d24d84fe163ac71d6753e975726ef8d))
+* **deps:** update keycloak to v26.2.5 ([#1605](https://github.com/defenseunicorns/uds-core/issues/1605)) ([d8bc4f8](https://github.com/defenseunicorns/uds-core/commit/d8bc4f8ec35cfca42ce773b53c0a066a1d87f800))
+* **deps:** update neuvector updater to v8.14.0 ([#1608](https://github.com/defenseunicorns/uds-core/issues/1608)) ([59b6d47](https://github.com/defenseunicorns/uds-core/commit/59b6d4794705c396f0e15c75820c84b5948c918a))
+* **deps:** update pepr to 0.51.0 ([#1602](https://github.com/defenseunicorns/uds-core/issues/1602)) ([bc39f9c](https://github.com/defenseunicorns/uds-core/commit/bc39f9c4b4cbaf7407a70fd7a52f93edd2d8b09d))
+* **deps:** update support-deps ([#1598](https://github.com/defenseunicorns/uds-core/issues/1598)) ([f325905](https://github.com/defenseunicorns/uds-core/commit/f3259055aa27f3f3b75ffc0ee944068a87aa8adb))
+* remove architecture restriction on registry1 flavor ([#1612](https://github.com/defenseunicorns/uds-core/issues/1612)) ([1298642](https://github.com/defenseunicorns/uds-core/commit/129864213a0da9ebd887e93e70fa1f0454bdbe9c))
+
 ## [0.43.0](https://github.com/defenseunicorns/uds-core/compare/v0.42.0...v0.43.0) (2025-05-27)
 
 
