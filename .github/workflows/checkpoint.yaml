@@ -65,6 +65,7 @@ jobs:
       - name: Deploy K3d + Source UDS Core Slim Bundle
         if: ${{ github.event_name == 'pull_request' }}
         run: |
+          sudo apt-get upgrade iptables -y
           uds run slim-dev --no-progress
 
       - name: Create Checkpoint Package
