@@ -70,7 +70,7 @@ jobs:
 
       - name: Test Checkpoint Package
         run: |
-          uds zarf p deploy oci://ghcr.io/defenseunicorns/dev/uds/checkpoints/k3d-core-slim-dev:0.43.0 --confirm
+          uds zarf p deploy oci://ghcr.io/defenseunicorns/dev/uds/checkpoints/k3d-core-slim-dev:0.40.1 --confirm
           npm ci
           uds run test:slim-dev --no-progress
 
