@@ -30,3 +30,6 @@ data:
         implementation: prometheus
         handleGrafanaManagedAlerts: true
       url: http://kube-prometheus-stack-alertmanager.monitoring.svc.cluster.local:9093
+{{- if .Values.extraDatasources }}
+  {{ toYaml .Values.extraDatasources | indent 4 }}
+{{- end }}
