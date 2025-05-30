@@ -44,8 +44,8 @@ jobs:
   test:
     # Use the 8 core runner for full-core or 4 core runner (with larger disk) for func layers tests
     runs-on: "${{ inputs.package == 'all' && 'uds-ubuntu-big-boy-8-core' || 'uds-ubuntu-big-boy-4-core'}}"
-    # Increase the timeout for longer upgrades
-    timeout-minutes: ${{ inputs.test_type == 'upgrade' && 40 || 30 }}
+    # Increase the timeout for longer upgrades - temporarily increased to 60 for longer upgrade from cgr -> rf
+    timeout-minutes: ${{ inputs.test_type == 'upgrade' && 60 || 30 }}
     name: Test
     env:
       UDS_LAYER: ${{ inputs.package }}

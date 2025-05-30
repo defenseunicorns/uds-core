@@ -104,7 +104,7 @@ jobs:
         env:
           UDS_CONFIG: .github/bundles/aks/uds-config.yaml
         run: uds deploy .github/bundles/aks/uds-bundle-uds-core-aks-nightly-*.tar.zst --confirm
-        timeout-minutes: 30
+        timeout-minutes: 40
 
       - name: Test UDS Core
         run: uds run -f tasks/test.yaml uds-core-non-k3d --set EXCLUDED_PACKAGES="metrics-server"
