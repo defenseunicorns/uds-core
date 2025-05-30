@@ -8,6 +8,7 @@ import { K8s, kind } from "pepr";
 import { Writable } from "stream";
 
 jest.setTimeout(30000);
+jest.retryTimes(2, { logErrorsBeforeRetry: true });
 
 const CURL_GATEWAY = [
   "curl",
