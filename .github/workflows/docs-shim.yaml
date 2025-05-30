@@ -55,7 +55,7 @@ jobs:
     strategy:
       matrix:
         package: [all]
-        flavor: [upstream, registry1] # todo: add unicorn back in
+        flavor: [upstream, registry1, unicorn]
         test_type: [install, upgrade]
     uses: ./.github/workflows/test-shim.yaml
     with:

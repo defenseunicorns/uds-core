@@ -3,22 +3,22 @@
 
 image:
   repository: quay.io/rfcurated/velero/velero
-  tag: 1.16.0-jammy-scratch-fips-rfcurated
+  tag: 1.16.1-jammy-scratch-fips-rfcurated
 
 kubectl:
   image:
     repository: quay.io/rfcurated/kubectl
-    tag: 1.33.0-jammy-scratch-fips-rfcurated
+    tag: 1.33.1-jammy-scratch-fips-rfcurated
 
 initContainers:
   - name: velero-plugin-for-aws
-    image: quay.io/rfcurated/velero/velero-plugin-for-aws:1.12.0-jammy-scratch-fips-rfcurated
+    image: quay.io/rfcurated/velero/velero-plugin-for-aws:1.12.1-jammy-scratch-fips-rfcurated
     imagePullPolicy: IfNotPresent
     volumeMounts:
       - mountPath: /target
         name: plugins
   - name: velero-plugin-for-azure
-    image: quay.io/rfcurated/velero/velero-plugin-for-microsoft-azure:1.12.0-jammy-scratch-fips-rfcurated
+    image: quay.io/rfcurated/velero/velero-plugin-for-microsoft-azure:1.12.1-jammy-scratch-fips-rfcurated
     imagePullPolicy: IfNotPresent
     volumeMounts:
       - mountPath: /target

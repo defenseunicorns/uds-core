@@ -4,7 +4,7 @@
 image:
   registry: quay.io
   repository: rfcurated/grafana
-  tag: 11.6.1-jammy-scratch-fips-rfcurated
+  tag: 12.0.1-jammy-scratch-fips-rfcurated
 
 initChownData:
   image:

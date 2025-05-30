@@ -51,9 +51,9 @@ prometheusOperator:
   image:
     registry: quay.io
     repository: rfcurated/prometheus-operator
-    tag: 0.82.1-jammy-scratch-fips-rfcurated
+    tag: 0.82.2-jammy-scratch-fips-rfcurated
   prometheusConfigReloader:
     image:
       registry: quay.io
       repository: rfcurated/prometheus-operator/prometheus-config-reloader
-      tag: 0.82.1-jammy-scratch-fips-rfcurated
+      tag: 0.82.2-jammy-scratch-fips-rfcurated
