@@ -54,10 +54,9 @@ components:
     actions:
       onCreate:
         before:
-          - description: "Scale down ztunnel, keycloak, and pepr before snapshot"
+          - description: "Scale down cni, ztunnel, keycloak, and pepr before snapshot"
             cmd: |
               set -e
-              echo "Scaling down pods..."
               ./zarf tools kubectl -n pepr-system scale deploy pepr-uds-core-watcher --replicas=0
               ./zarf tools kubectl rollout status -n pepr-system deploy pepr-uds-core-watcher --timeout=60s
 
@@ -69,6 +68,9 @@ components:
 
               ./zarf tools kubectl -n istio-system patch daemonset ztunnel --type='strategic' -p '{"spec":{"template":{"spec":{"nodeSelector":{"no-such-label":"true"}}}}}'
               ./zarf tools kubectl -n istio-system wait --for=delete pod -l app=ztunnel --timeout=60s
+
+              ./zarf tools kubectl -n istio-system patch daemonset istio-cni-node --type='strategic' -p '{"spec":{"template":{"spec":{"nodeSelector":{"no-such-label":"true"}}}}}'
+              ./zarf tools kubectl -n istio-system wait --for=delete pod -l k8s-app=istio-cni-node --timeout=60s
 
           - cmd: ./checkpoint.sh
         onSuccess:
@@ -109,10 +111,14 @@ components:
                 ${ZARF_VAR_CLUSTER_NAME}
             description: "Create the cluster"
 
-          - description: "Scale up ztunnel, keycloak, and pepr after checkpoint restore"
+          - description: "Scale up cni, ztunnel, keycloak, and pepr after checkpoint restore"
             cmd: |
+              set -e
               ./zarf tools kubectl patch mutatingwebhookconfiguration pepr-uds-core --type='json' -p='[{"op":"replace","path":"/webhooks/0/failurePolicy","value":"Ignore"}]'
               ./zarf tools kubectl patch validatingwebhookconfiguration pepr-uds-core --type='json' -p='[{"op":"replace","path":"/webhooks/0/failurePolicy","value":"Ignore"}]'
+
+              ./zarf tools kubectl -n istio-system patch daemonset istio-cni-node --type=json -p='[{"op":"remove","path":"/spec/template/spec/nodeSelector/no-such-label"}]'
+              ./zarf tools kubectl -n istio-system rollout status daemonset istio-cni-node --timeout=60s
 
               ./zarf tools kubectl -n istio-system patch daemonset ztunnel --type=json -p='[{"op":"remove","path":"/spec/template/spec/nodeSelector/no-such-label"}]'
               ./zarf tools kubectl -n istio-system rollout status daemonset ztunnel --timeout=60s
