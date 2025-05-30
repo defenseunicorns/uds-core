@@ -35,7 +35,7 @@ runs:
         CONTAINER_NAME="k3d-uds-server-0"
         if docker ps | grep -q "$CONTAINER_NAME"; then
           echo "Container $CONTAINER_NAME is running. Proceeding with iptables-save..."
-          docker exec -it ${CONTAINER_NAME} iptables-save > /tmp/uds-iptables.log
+          docker exec -i ${CONTAINER_NAME} iptables-save > /tmp/uds-iptables.log
         else
           echo "Container $CONTAINER_NAME is not running. Skipping iptables-save."
         fi
