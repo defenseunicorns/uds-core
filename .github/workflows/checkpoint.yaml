@@ -73,8 +73,6 @@ jobs:
         run: |
           # 1. Kernel info & config
           uname -a
-          # (if present) show config flags
-          zcat /proc/config.gz 2>/dev/null | grep -E 'CONFIG_BRIDGE|CONFIG_NF_CONNTRACK|CONFIG_XT_'
 
           # 2. iptables versions & backend
           iptables -V
