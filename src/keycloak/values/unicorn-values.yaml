@@ -2,10 +2,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 podSecurityContext:
-  fsGroup: 1001
+  fsGroup: 1000
 securityContext:
   runAsUser: 1001
-  runAsGroup: 1001
+  runAsGroup: 1000
   runAsNonRoot: true
   capabilities:
     drop:
@@ -13,3 +13,6 @@ securityContext:
 image:
   repository: quay.io/rfcurated/keycloak
   tag: "26.2.3-jammy-rfcurated"
+
+migrations:
+  deleteGeneratedTrustStore: true

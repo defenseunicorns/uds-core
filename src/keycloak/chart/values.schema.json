@@ -493,6 +493,14 @@
     },
     "x509LookupProvider": {
       "type": "string"
+    },
+    "migrations": {
+      "type": "object",
+      "properties": {
+        "deleteGeneratedTrustStore": {
+          "type": "boolean"
+        }
+      }
     }
   }
 }
