@@ -72,6 +72,27 @@ jobs:
 
       - name: Test Checkpoint Package
         run: |
+          # 1. Kernel info & config
+          uname -a
+          # (if present) show config flags
+          zcat /proc/config.gz 2>/dev/null | grep -E 'CONFIG_BRIDGE|CONFIG_NF_CONNTRACK|CONFIG_XT_'
+
+          # 2. iptables versions & backend
+          iptables -V
+          update-alternatives --display iptables
+          iptables-nft -V 2>/dev/null && echo "nft backend"
+          iptables-legacy -V 2>/dev/null && echo "legacy backend"
+
+          # 3. Loaded netfilter modules
+          lsmod | grep -E 'br_netfilter|nf_conntrack|xt_conntrack|nf_tables'
+
+          # 4. Key sysctls
+          sysctl -a | grep -E 'net.bridge.bridge-nf|net.ipv4.ip_forward|net.netfilter.nf_conntrack_max'
+
+          # 5. Check conntrack table size & usage
+          sudo cat /proc/sys/net/netfilter/nf_conntrack_max
+          sudo conntrack -L | wc -l  # if conntrack-tools is installed
+
           uds zarf p deploy oci://ghcr.io/defenseunicorns/dev/uds/checkpoints/k3d-core-slim-dev:0.40.1 --confirm
           npm ci
           uds run test:slim-dev --no-progress
@@ -79,10 +100,6 @@ jobs:
       - name: Debug Output
         if: always()
         uses: ./.github/actions/debug-output
-
-      - name: Publish Checkpoint Package
-        if: ${{ github.event_name != 'pull_request' }}
-        run: uds run -f tasks/publish.yaml checkpoint-package --no-progress
 
       - name: Save logs
         if: always()
