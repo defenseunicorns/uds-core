@@ -4,7 +4,7 @@
 podSecurityContext:
   fsGroup: 1000
 securityContext:
-  runAsUser: 1001
+  runAsUser: 1000
   runAsGroup: 1000
   runAsNonRoot: true
   capabilities:
