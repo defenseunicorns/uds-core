@@ -2,5 +2,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 image:
-  repository: cgr.dev/du-uds-defenseunicorns/metrics-server-fips
-  tag: "0.7.2"
+  repository: quay.io/rfcurated/metrics-server
+  tag: "0.7.2-jammy-scratch-fips-rfcurated-rfhardened"

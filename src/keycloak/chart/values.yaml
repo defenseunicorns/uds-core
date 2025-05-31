@@ -315,3 +315,8 @@ env: []
 
 x509LookupProvider: nginx
 mtlsClientCert: "%DOWNSTREAM_PEER_CERT%"
+
+# Custom migrations setting for UDS Core internal usage only
+migrations:
+  # Deletes the generated truststore to enable recreating it by Keycloak
+  deleteGeneratedTrustStore: false

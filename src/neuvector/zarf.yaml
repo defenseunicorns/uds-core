@@ -64,8 +64,8 @@ components:
         valuesFiles:
           - values/unicorn-values.yaml
     images:
-      - cgr.dev/du-uds-defenseunicorns/neuvector-manager:5.4.4
-      - cgr.dev/du-uds-defenseunicorns/neuvector-enforcer-fips:5.4.4
-      - cgr.dev/du-uds-defenseunicorns/neuvector-controller-fips:5.4.4
-      - docker.io/neuvector/scanner:latest
-      - cgr.dev/du-uds-defenseunicorns/neuvector-updater-fips:8.14.0-dev
+      - quay.io/rfcurated/neuvector/controller:5.4.4-jammy-scratch-fips-rfcurated
+      - quay.io/rfcurated/neuvector/manager:5.4.4-jammy-scratch-fips-rfcurated
+      - quay.io/rfcurated/neuvector/enforcer:5.4.4-jammy-scratch-fips-rfcurated
+      - quay.io/rfcurated/curl:8.12.1-jammy-scratch-fips-rfcurated
+      - quay.io/rfcurated/neuvector/scanner:latest-jammy-scratch-fips-rfcurated

@@ -23,7 +23,7 @@ prometheus:
     image:
       registry: registry1.dso.mil
       repository: ironbank/opensource/prometheus/prometheus
-      tag: v3.2.1
+      tag: v3.3.1
 prometheus-node-exporter:
   image:
     registry: registry1.dso.mil
@@ -41,9 +41,6 @@ prometheusOperator:
         registry: registry1.dso.mil
         repository: ironbank/opensource/ingress-nginx/kube-webhook-certgen
         tag: v1.5.3
-      registry: registry1.dso.mil
-      repository: ironbank/opensource/ingress-nginx/kube-webhook-certgen
-      tag: v1.3.0
       securityContext:
         runAsGroup: 65532
         runAsNonRoot: true

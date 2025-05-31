@@ -35,7 +35,7 @@ components:
       - "registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.15.0"
       - "quay.io/prometheus/alertmanager:v0.28.1"
       - "quay.io/prometheus-operator/prometheus-config-reloader:v0.82.2"
-      - "quay.io/prometheus/prometheus:v3.2.1"
+      - "quay.io/prometheus/prometheus:v3.3.1"
       - "registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.5.3"
 
   - name: kube-prometheus-stack
@@ -55,7 +55,7 @@ components:
       - "registry1.dso.mil/ironbank/opensource/kubernetes/kube-state-metrics:v2.15.0"
       - "registry1.dso.mil/ironbank/opensource/prometheus/alertmanager:v0.28.1"
       - "registry1.dso.mil/ironbank/opensource/prometheus-operator/prometheus-config-reloader:v0.82.2"
-      - "registry1.dso.mil/ironbank/opensource/prometheus/prometheus:v3.2.1"
+      - "registry1.dso.mil/ironbank/opensource/prometheus/prometheus:v3.3.1"
       - "registry1.dso.mil/ironbank/opensource/ingress-nginx/kube-webhook-certgen:v1.5.3"
 
   - name: kube-prometheus-stack
@@ -70,10 +70,10 @@ components:
         valuesFiles:
           - "values/unicorn-values.yaml"
     images:
-      - "cgr.dev/du-uds-defenseunicorns/prometheus-node-exporter-fips:1.9.1"
-      - "cgr.dev/du-uds-defenseunicorns/prometheus-operator-fips:0.82.2"
-      - "cgr.dev/du-uds-defenseunicorns/kube-state-metrics-fips:2.15.0"
-      - "cgr.dev/du-uds-defenseunicorns/prometheus-alertmanager-fips:0.28.1"
-      - "cgr.dev/du-uds-defenseunicorns/prometheus-config-reloader-fips:0.82.2"
-      - "cgr.dev/du-uds-defenseunicorns/prometheus-fips:3.2.1"
-      - "cgr.dev/du-uds-defenseunicorns/kube-webhook-certgen-fips:1.12.2"
+      - "quay.io/rfcurated/prometheus/node-exporter:1.9.1-jammy-scratch-fips-rfcurated"
+      - "quay.io/rfcurated/prometheus-operator:0.82.2-jammy-scratch-fips-rfcurated"
+      - "quay.io/rfcurated/kube-state-metrics:2.15.0-jammy-scratch-fips-rfcurated-rfhardened"
+      - "quay.io/rfcurated/prometheus/alertmanager:0.28.1-jammy-fips-rfcurated-rfhardened"
+      - "quay.io/rfcurated/prometheus-operator/prometheus-config-reloader:0.82.2-jammy-scratch-fips-rfcurated"
+      - "quay.io/rfcurated/prometheus:3.3.1-jammy-fips-rfcurated-rfhardened"
+      - "quay.io/rfcurated/ingress-nginx/kube-webhook-certgen:1.5.3-jammy-fips-rfcurated-rfhardened"

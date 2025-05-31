@@ -41,7 +41,7 @@ components:
 
   - name: loki
     required: true
-    description: "Install Loki using chainguard images"
+    description: "Install Loki using Rapidfort images"
     only:
       flavor: "unicorn"
     import:
@@ -51,6 +51,6 @@ components:
         valuesFiles:
           - ./values/unicorn-values.yaml
     images:
-      - cgr.dev/du-uds-defenseunicorns/loki-fips:3.5.1
-      - cgr.dev/du-uds-defenseunicorns/nginx-fips:1.27.5
-      - cgr.dev/du-uds-defenseunicorns/memcached-fips:1.6.38
+      - quay.io/rfcurated/grafana/loki:3.5.1-jammy-fips-rfcurated-rfhardened
+      - quay.io/rfcurated/nginx:1.27.5-slim-jammy-fips-rfcurated-rfhardened
+      - quay.io/rfcurated/memcached:1.6.38-jammy-fips-rfcurated-rfhardened

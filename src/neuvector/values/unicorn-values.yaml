@@ -4,32 +4,39 @@
 # Generate certs missing from unicorn images
 autoGenerateCert: true
 
-registry: cgr.dev
-# renovate: datasource=docker depName=cgr.dev/du-uds-defenseunicorns/neuvector-controller-fips versioning=docker
-tag: "5.4.4"
+registry: quay.io
+# renovate: datasource=docker depName=quay.io/rfcurated/neuvector/controller versioning=docker
+tag: 5.4.4-jammy-scratch-fips-rfcurated
+
 manager:
   image:
-    repository: du-uds-defenseunicorns/neuvector-manager
+    repository: rfcurated/neuvector/manager
 
 enforcer:
   image:
-    repository: du-uds-defenseunicorns/neuvector-enforcer-fips
+    repository: rfcurated/neuvector/enforcer
   containerSecurityContext:
     privileged: true
 
 controller:
   image:
-    repository: du-uds-defenseunicorns/neuvector-controller-fips
+    repository: rfcurated/neuvector/controller
 
 cve:
   scanner:
     image:
-      registry: docker.io
-      repository: neuvector/scanner
-      tag: latest
+      repository: rfcurated/neuvector/scanner
+      tag: latest-jammy-scratch-fips-rfcurated
+    volumes:
+      - name: internal-cert-dir
+        emptyDir:
+          sizeLimit: 50Mi
+    volumeMounts:
+      - mountPath: /etc/neuvector/certs/internal/
+        name: internal-cert-dir
   updater:
     enabled: true
     image:
-      repository: du-uds-defenseunicorns/neuvector-updater-fips
-      # renovate: datasource=docker depName=cgr.dev/du-uds-defenseunicorns/neuvector-updater-fips versioning=docker
-      tag: 8.14.0-dev
+      repository: rfcurated/curl
+      # renovate: datasource=docker depName=quay.io/rfcurated/curl versioning=docker
+      tag: 8.12.1-jammy-scratch-fips-rfcurated

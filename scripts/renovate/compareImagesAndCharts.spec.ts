@@ -72,12 +72,12 @@ describe('compareImagesAndCharts', () => {
           '1.21.6': [
             'docker.io/library/nginx:1.21.6',
             'registry1.dso.mil/ironbank/nginx:1.21.6',
-            'cgr.dev/chainguard/nginx:1.21.6'
+            'quay.io/rfcurated/nginx:1.21.6-slim-jammy-fips-rfcurated-rfhardened'
           ],
           '8.12.1': [
             'docker.io/curlimages/curl:8.12.1',
             'registry1.dso.mil/ironbank/curl:8.12.1',
-            'cgr.dev/chainguard/curl:8.12.1'
+            'quay.io/rfcurated/curl:8.12.1-jammy-scratch-fips-rfcurated'
           ]
         };
       }
@@ -86,12 +86,12 @@ describe('compareImagesAndCharts', () => {
           '1.25.3': [
             'docker.io/library/nginx:1.25.3',
             'registry1.dso.mil/ironbank/nginx:1.25.3',
-            'cgr.dev/chainguard/nginx:1.25.3'
+            'quay.io/rfcurated/nginx:1.25.3-slim-jammy-fips-rfcurated-rfhardened'
           ],
           '8.12.1': [
             'docker.io/curlimages/curl:8.12.1',
             'registry1.dso.mil/ironbank/curl:8.12.1',
-            'cgr.dev/chainguard/curl:8.12.1'
+            'quay.io/rfcurated/curl:8.12.1-jammy-scratch-fips-rfcurated'
           ]
         };
       }
@@ -144,12 +144,12 @@ describe('compareImagesAndCharts', () => {
           '1.21.6': [
             'docker.io/library/nginx:1.21.6',
             'registry1.dso.mil/ironbank/nginx:1.21.6',
-            'cgr.dev/chainguard/nginx:1.21.6'
+            'quay.io/rfcurated/nginx:1.21.6-slim-jammy-fips-rfcurated-rfhardened'
           ],
           '8.12.1': [
             'docker.io/curlimages/curl:8.12.1',
             'registry1.dso.mil/ironbank/curl:8.12.1',
-            'cgr.dev/chainguard/curl:8.12.1'
+            'quay.io/rfcurated/curl:8.12.1-jammy-scratch-fips-rfcurated'
           ]
         };
       }
@@ -158,12 +158,12 @@ describe('compareImagesAndCharts', () => {
           '2.0.0': [
             'docker.io/library/nginx:2.0.0',
             'registry1.dso.mil/ironbank/nginx:2.0.0',
-            'cgr.dev/chainguard/nginx:2.0.0'
+            'quay.io/rfcurated/nginx:2.0.0-slim-jammy-fips-rfcurated-rfhardened'
           ],
           '8.12.1': [
             'docker.io/curlimages/curl:8.12.1',
             'registry1.dso.mil/ironbank/curl:8.12.1',
-            'cgr.dev/chainguard/curl:8.12.1'
+            'quay.io/rfcurated/curl:8.12.1-jammy-scratch-fips-rfcurated'
           ]
         };
       }
@@ -216,7 +216,7 @@ describe('compareImagesAndCharts', () => {
           '1.21.6': [
             'docker.io/library/nginx:1.21.6',
             'registry1.dso.mil/ironbank/nginx:1.21.6',
-            'cgr.dev/chainguard/nginx:1.21.6'
+            'quay.io/rfcurated/nginx:1.21.6-slim-jammy-fips-rfcurated-rfhardened'
           ]
         };
       }
@@ -225,7 +225,7 @@ describe('compareImagesAndCharts', () => {
           '1.21.6': [
             'docker.io/library/nginx:1.21.6',
             'registry1.dso.mil/ironbank/nginx:1.21.6',
-            'cgr.dev/chainguard/nginx:1.21.6'
+            'quay.io/rfcurated/nginx:1.21.6-slim-jammy-fips-rfcurated-rfhardened'
           ]
         };
       }
@@ -279,7 +279,7 @@ describe('compareImagesAndCharts', () => {
           '1.21.6': [
             'docker.io/library/nginx:1.21.6',
             'registry1.dso.mil/ironbank/nginx:1.21.6',
-            'cgr.dev/chainguard/nginx:1.21.6'
+            'quay.io/rfcurated/nginx:1.21.6-slim-jammy-fips-rfcurated-rfhardened'
           ]
         };
       }
@@ -288,7 +288,7 @@ describe('compareImagesAndCharts', () => {
           '1.21.6': [
             'docker.io/library/nginx:1.21.6',
             'registry1.dso.mil/ironbank/nginx:1.21.6',
-            'cgr.dev/chainguard/nginx:1.21.6'
+            'quay.io/rfcurated/nginx:1.21.6-slim-jammy-fips-rfcurated-rfhardened'
           ]
         };
       }
@@ -341,7 +341,7 @@ describe('compareImagesAndCharts', () => {
           '1.21.6': [
             'docker.io/library/nginx:1.21.6',
             'registry1.dso.mil/ironbank/nginx:1.21.6',
-            'cgr.dev/chainguard/nginx:1.21.6'
+            'quay.io/rfcurated/nginx:1.21.6-slim-jammy-fips-rfcurated-rfhardened'
           ]
         };
       }
@@ -349,7 +349,7 @@ describe('compareImagesAndCharts', () => {
         return {
           '1.25.3': [
             'docker.io/library/nginx:1.25.3',
-            'cgr.dev/chainguard/nginx:1.25.3',
+            'quay.io/rfcurated/nginx:1.25.3-slim-jammy-fips-rfcurated-rfhardened',
           ],
           '1.22.6': [
             'registry1.dso.mil/ironbank/nginx:1.22.6'
@@ -365,7 +365,7 @@ describe('compareImagesAndCharts', () => {
     expect(result.changes).toContain('Waiting on Ironbank image update: registry1.dso.mil/ironbank/nginx:1.21.6');
   });
 
-  it('should detect waiting on cgr', async () => {
+  it('should detect waiting on rapidfort', async () => {
     // Mock fs.readFileSync to return different content based on the file path
     (fs.readFileSync as jest.Mock).mockImplementation((filePath) => {
       if (filePath === 'old/charts.yaml') {
@@ -403,7 +403,7 @@ describe('compareImagesAndCharts', () => {
           '1.21.6': [
             'docker.io/library/nginx:1.21.6',
             'registry1.dso.mil/ironbank/nginx:1.21.6',
-            'cgr.dev/chainguard/nginx:1.21.6'
+            'quay.io/rfcurated/nginx:1.21.6-slim-jammy-fips-rfcurated-rfhardened'
           ]
         };
       }
@@ -414,7 +414,7 @@ describe('compareImagesAndCharts', () => {
             'registry1.dso.mil/ironbank/nginx:1.25.3',
           ],
           '1.21.6': [
-            'cgr.dev/chainguard/nginx:1.21.6'
+            'quay.io/rfcurated/nginx:1.21.6-slim-jammy-fips-rfcurated-rfhardened'
           ]
         };
       }
@@ -423,8 +423,8 @@ describe('compareImagesAndCharts', () => {
 
     const result = await compareImagesAndCharts('old', 'new');
 
-    expect(result.labels).toEqual(['waiting on cgr']);
-    expect(result.changes).toContain('Waiting on Chainguard image update: cgr.dev/chainguard/nginx:1.21.6');
+    expect(result.labels).toEqual(['waiting on rapidfort']);
+    expect(result.changes).toContain('Waiting on Rapidfort image update: quay.io/rfcurated/nginx:1.21.6-slim-jammy-fips-rfcurated-rfhardened');
   });
 
   it('should handle mixed image updates with some waiting', async () => {
@@ -465,12 +465,12 @@ describe('compareImagesAndCharts', () => {
           '1.21.6': [
             'docker.io/library/nginx:1.21.6',
             'registry1.dso.mil/ironbank/nginx:1.21.6',
-            'cgr.dev/chainguard/nginx:1.21.6'
+            'quay.io/rfcurated/nginx:1.21.6-slim-jammy-fips-rfcurated-rfhardened'
           ],
           '8.12.1': [
             'docker.io/curlimages/curl:8.12.1',
             'registry1.dso.mil/ironbank/curl:8.12.1',
-            'cgr.dev/chainguard/curl:8.12.1'
+            'quay.io/rfcurated/curl:8.12.1-jammy-scratch-fips-rfcurated'
           ]
         };
       }
@@ -483,12 +483,12 @@ describe('compareImagesAndCharts', () => {
             'registry1.dso.mil/ironbank/nginx:1.22.6'
           ],
           '1.21.6': [
-            'cgr.dev/chainguard/nginx:1.21.6'
+            'quay.io/rfcurated/nginx:1.21.6-slim-jammy-fips-rfcurated-rfhardened'
           ],
           '8.12.1': [
             'docker.io/curlimages/curl:8.12.1',
             'registry1.dso.mil/ironbank/curl:8.12.1',
-            'cgr.dev/chainguard/curl:8.12.1'
+            'quay.io/rfcurated/curl:8.12.1-jammy-scratch-fips-rfcurated'
           ]
         };
       }
@@ -497,9 +497,9 @@ describe('compareImagesAndCharts', () => {
 
     const result = await compareImagesAndCharts('old', 'new');
 
-    expect(result.labels).toEqual(['waiting on ironbank', 'waiting on cgr']);
+    expect(result.labels).toEqual(['waiting on ironbank', 'waiting on rapidfort']);
     expect(result.changes).toContain('Waiting on Ironbank image update: registry1.dso.mil/ironbank/nginx:1.21.6');
-    expect(result.changes).toContain('Waiting on Chainguard image update: cgr.dev/chainguard/nginx:1.21.6');
+    expect(result.changes).toContain('Waiting on Rapidfort image update: quay.io/rfcurated/nginx:1.21.6-slim-jammy-fips-rfcurated-rfhardened');
   });
 
   it('should handle empty files gracefully', async () => {
@@ -862,12 +862,12 @@ it('should detect wait for loki (regression test)', async () => {
         '3.4.3': [
           'docker.io/grafana/loki:3.4.3',
           'registry1.dso.mil/ironbank/opensource/grafana/loki:3.4.3',
-          'cgr.dev/du-uds-defenseunicorns/loki:3.4.3'
+          'quay.io/rfcurated/grafana/loki:3.4.3-jammy-fips-rfcurated-rfhardened'
         ],
         '1.6.38': [
           'docker.io/memcached:1.6.38-alpine',
           'registry1.dso.mil/ironbank/opensource/memcached/memcached:1.6.38',
-          'cgr.dev/du-uds-defenseunicorns/memcached:1.6.38'
+          'quay.io/rfcurated/memcached:1.6.38-jammy-fips-rfcurated-rfhardened'
         ],
         '1.27': [
           'docker.io/nginxinc/nginx-unprivileged:1.27-alpine'
@@ -876,7 +876,7 @@ it('should detect wait for loki (regression test)', async () => {
           'registry1.dso.mil/ironbank/opensource/nginx/nginx-alpine:1.26.3'
         ],
         '1.27.5': [
-          'cgr.dev/du-uds-defenseunicorns/nginx-fips:1.27.5'
+          'quay.io/rfcurated/nginx:1.27.5-slim-jammy-fips-rfcurated-rfhardened'
         ]
       };
     }
@@ -886,18 +886,18 @@ it('should detect wait for loki (regression test)', async () => {
           'docker.io/nginxinc/nginx-unprivileged:1.27-alpine'
         ],
         '3.4.3': [
-          'cgr.dev/du-uds-defenseunicorns/loki:3.4.3'
+          'quay.io/rfcurated/grafana/loki:3.4.3-jammy-fips-rfcurated-rfhardened'
         ],
         '1.6.38': [
           'docker.io/memcached:1.6.38-alpine',
           'registry1.dso.mil/ironbank/opensource/memcached/memcached:1.6.38',
-          'cgr.dev/du-uds-defenseunicorns/memcached:1.6.38'
+          'quay.io/rfcurated/memcached:1.6.38-jammy-fips-rfcurated-rfhardened'
         ],
         '1.26.3': [
           'registry1.dso.mil/ironbank/opensource/nginx/nginx-alpine:1.26.3'
         ],
         '1.27.5': [
-          'cgr.dev/du-uds-defenseunicorns/nginx-fips:1.27.5'
+          'quay.io/rfcurated/nginx:1.27.5-slim-jammy-fips-rfcurated-rfhardened'
         ],
         '3.5.0': [
           'docker.io/grafana/loki:3.5.0',
@@ -910,6 +910,6 @@ it('should detect wait for loki (regression test)', async () => {
 
   const result = await compareImagesAndCharts('old', 'new');
 
-  expect(result.labels).toEqual(['waiting on cgr']);
-  expect(result.changes).toContain('Waiting on Chainguard image update: cgr.dev/du-uds-defenseunicorns/loki:3.4.3');
+  expect(result.labels).toEqual(['waiting on rapidfort']);
+  expect(result.changes).toContain('Waiting on Rapidfort image update: quay.io/rfcurated/grafana/loki:3.4.3-jammy-fips-rfcurated-rfhardened');
 });

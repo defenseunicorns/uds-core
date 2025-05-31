@@ -3,15 +3,15 @@
 
 loki:
   image:
-    registry: cgr.dev
-    repository: du-uds-defenseunicorns/loki-fips
-    tag: 3.5.1
+    registry: quay.io
+    repository: rfcurated/grafana/loki
+    tag: 3.5.1-jammy-fips-rfcurated-rfhardened
 gateway:
   image:
-    registry: cgr.dev
-    repository: du-uds-defenseunicorns/nginx-fips
-    tag: 1.27.5
+    registry: quay.io
+    repository: rfcurated/nginx
+    tag: 1.27.5-slim-jammy-fips-rfcurated-rfhardened
 memcached:
   image:
-    repository: cgr.dev/du-uds-defenseunicorns/memcached-fips
-    tag: 1.6.38
+    repository: quay.io/rfcurated/memcached
+    tag: 1.6.38-jammy-fips-rfcurated-rfhardened
