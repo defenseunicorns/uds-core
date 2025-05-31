@@ -283,7 +283,6 @@ spec:
               mountPath: /opt/keycloak/themes
             - name: conf
               mountPath: /opt/keycloak/conf
-              readOnly: true
             - name: client-secrets
               mountPath: /var/run/secrets/uds/client-secrets
       enableServiceLinks: {{ .Values.enableServiceLinks }}
