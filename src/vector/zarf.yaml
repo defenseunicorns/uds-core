@@ -48,4 +48,4 @@ components:
         valuesFiles:
           - values/unicorn-values.yaml
     images:
-      - cgr.dev/du-uds-defenseunicorns/vector-fips:0.47.0
+      - quay.io/rfcurated/vector:0.47.0-jammy-rfcurated-rfhardened
