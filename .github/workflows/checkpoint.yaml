@@ -58,8 +58,7 @@ jobs:
           rapidfortUsername: ${{ secrets.RAPIDFORT_USERNAME }}
           rapidfortPassword: ${{ secrets.RAPIDFORT_PASSWORD }}
 
-      - name: Deploy K3d + Latest UDS Core Slim Bundle
-        if: ${{ github.event_name != 'pull_request' }}
+      - name: Debug output / Kernel mods
         run: |
           iptables -V
           # Istio modules for good measure
@@ -68,6 +67,9 @@ jobs:
             sudo modprobe "$module"
           done
 
+      - name: Deploy K3d + Latest UDS Core Slim Bundle
+        if: ${{ github.event_name != 'pull_request' }}
+        run: |
           uds run -f tasks/deploy.yaml latest-slim-bundle-release --no-progress
 
       - name: Deploy K3d + Source UDS Core Slim Bundle
