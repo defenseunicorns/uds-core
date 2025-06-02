@@ -62,6 +62,12 @@ jobs:
         if: ${{ github.event_name != 'pull_request' }}
         run: |
           iptables -V
+          # Istio modules for good measure
+          modules=("br_netfilter" "xt_REDIRECT" "xt_owner" "xt_statistic" "iptable_mangle" "iptable_nat" "xt_conntrack" "xt_tcpudp" "xt_connmark" "xt_mark" "ip_set")
+          for module in "${modules[@]}"; do
+            sudo modprobe "$module"
+          done
+
           uds run -f tasks/deploy.yaml latest-slim-bundle-release --no-progress
 
       - name: Deploy K3d + Source UDS Core Slim Bundle
