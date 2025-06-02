@@ -60,6 +60,20 @@ spec:
           envFrom:
             - secretRef:
                 name: {{ include "keycloak.fullname" . }}-realm-env
+        {{- if .Values.migrations.deleteGeneratedTrustStore }}
+        - name: remove-generated-truststore
+          image: "{{ .Values.configImage }}"
+          command: ["sh", "-c", "rm -rf /opt/keycloak/data/keycloak-truststore.p12 ; ls -la /opt/keycloak/data"]
+          securityContext:
+          {{- toYaml .Values.securityContext | nindent 12 }}
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+          volumeMounts:
+            - name: data
+              mountPath: /opt/keycloak/data
+        {{- end }}
       containers:
         - name: keycloak
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"

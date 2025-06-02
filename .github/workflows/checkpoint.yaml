@@ -55,10 +55,13 @@ jobs:
           registry1Username: ${{ secrets.IRON_BANK_ROBOT_USERNAME }}
           registry1Password: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
           ghToken: ${{ secrets.GITHUB_TOKEN }}
+          rapidfortUsername: ${{ secrets.RAPIDFORT_USERNAME }}
+          rapidfortPassword: ${{ secrets.RAPIDFORT_PASSWORD }}
 
       - name: Deploy K3d + Latest UDS Core Slim Bundle
         if: ${{ github.event_name != 'pull_request' }}
         run: |
+          iptables -V
           uds run -f tasks/deploy.yaml latest-slim-bundle-release --no-progress
 
       - name: Deploy K3d + Source UDS Core Slim Bundle

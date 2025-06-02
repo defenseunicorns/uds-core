@@ -36,7 +36,7 @@ npx ts-node compareImagesAndCharts.ts <old-extract-path> <new-extract-path>
 This script will:
 1. Compare chart versions between old and new, detecting major updates
 2. Compare image versions between old and new, detecting major updates
-3. Identify if the PR is waiting on Ironbank or Chainguard image updates
+3. Identify if the PR is waiting on Ironbank or Rapidfort image updates
 4. Output a list of changes and labels to apply to the PR
 
 ## Labels
@@ -44,7 +44,7 @@ This script will:
 The scripts can apply the following labels to PRs:
 
 - `waiting on ironbank`: If a registry1 image is behind
-- `waiting on cgr`: If a chainguard image is behind
+- `waiting on rapidfort`: If a rapidfort image is behind
 - `helm-chart-only`: If a PR only contains a helm chart update
 - `needs-review`: If PR is NOT waiting on image updates
 - `major-helm-update`: If the PR contains a major chart version bump
