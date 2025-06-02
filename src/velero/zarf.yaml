@@ -51,7 +51,7 @@ components:
         valuesFiles:
           - values/unicorn-values.yaml
     images:
-      - cgr.dev/du-uds-defenseunicorns/velero-fips:1.16.1-dev
-      - cgr.dev/du-uds-defenseunicorns/velero-plugin-for-aws-fips:1.12.1
-      - cgr.dev/du-uds-defenseunicorns/kubectl-fips:1.33.1-dev
-      - velero/velero-plugin-for-microsoft-azure:v1.12.1
+      - quay.io/rfcurated/velero/velero:1.16.1-jammy-scratch-fips-rfcurated
+      - quay.io/rfcurated/velero/velero-plugin-for-aws:1.12.1-jammy-scratch-fips-rfcurated
+      - quay.io/rfcurated/kubectl:1.33.1-jammy-scratch-fips-rfcurated
+      - quay.io/rfcurated/velero/velero-plugin-for-microsoft-azure:1.12.1-jammy-scratch-fips-rfcurated

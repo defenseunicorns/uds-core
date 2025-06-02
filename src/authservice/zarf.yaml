@@ -45,4 +45,4 @@ components:
         valuesFiles:
           - values/unicorn-values.yaml
     images:
-      - cgr.dev/du-uds-defenseunicorns/authservice-fips:1.0.4
+      - quay.io/rfcurated/istio-ecosystem/authservice:1.0.4-jammy-scratch-fips-rfcurated

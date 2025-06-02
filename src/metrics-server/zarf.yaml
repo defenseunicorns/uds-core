@@ -45,4 +45,4 @@ components:
         valuesFiles:
           - "values/unicorn-values.yaml"
     images:
-      - cgr.dev/du-uds-defenseunicorns/metrics-server-fips:0.7.2
+      - quay.io/rfcurated/metrics-server:0.7.2-jammy-scratch-fips-rfcurated-rfhardened
