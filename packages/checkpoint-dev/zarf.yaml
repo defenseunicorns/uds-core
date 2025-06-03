@@ -110,7 +110,6 @@ components:
                 --k3s-arg "--token=${K8S_TOKEN}@server:*" \
                 --k3s-arg "--debug@server:*" --k3s-arg "-v=1@server:*" \
                 --k3s-arg "--prefer-bundled-bin@server:*" \
-                --k3s-arg "--iptables-backend=legacy@server:*" \
                 -v "${DATA_DIR}/kubelet_data:/var/lib/kubelet@server:*" \
                 -v "${DATA_DIR}/k3s_data:/var/lib/rancher/k3s@server:*" \
                 --image ghcr.io/defenseunicorns/uds-core/checkpoint:latest ${ZARF_VAR_K3D_EXTRA_ARGS} \
