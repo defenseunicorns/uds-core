@@ -58,11 +58,6 @@ jobs:
           rapidfortUsername: ${{ secrets.RAPIDFORT_USERNAME }}
           rapidfortPassword: ${{ secrets.RAPIDFORT_PASSWORD }}
 
-      - name: Debug output / Kernel mods
-        run: |
-          iptables -V
-          lsmod
-
       - name: Deploy K3d + Latest UDS Core Slim Bundle
         if: ${{ github.event_name != 'pull_request' }}
         run: |
@@ -76,19 +71,12 @@ jobs:
       - name: Create Checkpoint Package
         run: |
           uds run -f tasks/create.yaml checkpoint-dev-package --no-progress
-          k3d cluster delete uds
 
       - name: Test Checkpoint Package
         run: |
           uds run -f tasks/deploy.yaml checkpoint-package --no-progress
           npm ci
           uds run test:slim-dev --no-progress
-
-      - name: Debug output / Kernel mods
-        if: always()
-        run: |
-          iptables -V
-          lsmod
 
       - name: Debug Output
         if: always()
