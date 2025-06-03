@@ -31,7 +31,7 @@ jobs:
     strategy:
       matrix:
         architecture: [amd64, arm64]
-    runs-on: ${{ matrix.architecture == 'arm64' && 'ubuntu-24.04-arm' || 'uds-ubuntu-big-boy-4-core' }}
+    runs-on: ${{ matrix.architecture == 'arm64' && 'uds-ubuntu-24-arm64-4-core' || 'uds-ubuntu-big-boy-4-core' }}
     name: UDS Core Checkpoint
 
     permissions:
