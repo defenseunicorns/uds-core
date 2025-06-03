@@ -32,7 +32,7 @@ tasks:
   - name: k3d-slim-dev-bundle
     actions:
       - description: "Deploy the UDS Core Slim Dev Only Bundle"
-        cmd: uds deploy bundles/k3d-slim-dev/uds-bundle-k3d-core-slim-dev-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress --set K3D_EXTRA_ARGS="--k3s-arg --prefer-bundled-bin@server:*"
+        cmd: uds deploy bundles/k3d-slim-dev/uds-bundle-k3d-core-slim-dev-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress
 
   # This task is a wrapper to support --set LAYER=identity-authorization
   - name: single-layer-callable

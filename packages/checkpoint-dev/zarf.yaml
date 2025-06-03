@@ -93,6 +93,8 @@ components:
               echo $K8S_TOKEN
               sudo docker load -i "${DATA_DIR}/uds-k3d-checkpoint-latest.tar"
 
+              sudo update-alternatives --set iptables /usr/sbin/iptables-legacy
+
               k3d cluster create \
                 -p "80:80@server:*" \
                 -p "443:443@server:*" \
@@ -103,7 +105,6 @@ components:
                 --k3s-arg "--disable=local-storage@server:*" \
                 --k3s-arg "--token=${K8S_TOKEN}@server:*" \
                 --k3s-arg "--debug@server:*" --k3s-arg "-v=3@server:*" \
-                --k3s-arg "--prefer-bundled-bin@server:*" \
                 -v "${DATA_DIR}/kubelet_data:/var/lib/kubelet@server:*" \
                 -v "${DATA_DIR}/k3s_data:/var/lib/rancher/k3s@server:*" \
                 --image ghcr.io/defenseunicorns/uds-core/checkpoint:latest ${ZARF_VAR_K3D_EXTRA_ARGS} \
