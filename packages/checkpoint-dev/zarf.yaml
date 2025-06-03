@@ -93,8 +93,6 @@ components:
               echo $K8S_TOKEN
               sudo docker load -i "${DATA_DIR}/uds-k3d-checkpoint-latest.tar"
 
-              sudo update-alternatives --set iptables /usr/sbin/iptables-legacy
-
               k3d cluster create \
                 -p "80:80@server:*" \
                 -p "443:443@server:*" \
