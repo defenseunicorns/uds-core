@@ -61,11 +61,7 @@ jobs:
       - name: Debug output / Kernel mods
         run: |
           iptables -V
-          # Istio modules for good measure
-          modules=("br_netfilter" "xt_REDIRECT" "xt_owner" "xt_statistic" "iptable_mangle" "iptable_nat" "xt_conntrack" "xt_tcpudp" "xt_connmark" "xt_mark" "ip_set")
-          for module in "${modules[@]}"; do
-            sudo modprobe "$module"
-          done
+          lsmod
 
       - name: Deploy K3d + Latest UDS Core Slim Bundle
         if: ${{ github.event_name != 'pull_request' }}
@@ -80,12 +76,19 @@ jobs:
       - name: Create Checkpoint Package
         run: |
           uds run -f tasks/create.yaml checkpoint-dev-package --no-progress
+          k3d cluster delete uds
 
       - name: Test Checkpoint Package
         run: |
           uds run -f tasks/deploy.yaml checkpoint-package --no-progress
           npm ci
           uds run test:slim-dev --no-progress
+
+      - name: Debug output / Kernel mods
+        if: always()
+        run: |
+          iptables -V
+          lsmod
 
       - name: Debug Output
         if: always()
