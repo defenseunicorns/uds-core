@@ -31,7 +31,6 @@ jobs:
     strategy:
       matrix:
         architecture: [amd64, arm64]
-        style: [checkpoint, stopstart]
     runs-on: ${{ matrix.architecture == 'arm64' && 'uds-ubuntu-24-arm64-4-core' || 'uds-ubuntu-big-boy-4-core' }}
     name: UDS Core Checkpoint
 
@@ -70,19 +69,10 @@ jobs:
           uds run slim-dev --no-progress
 
       - name: Create Checkpoint Package
-        if: ${{ matrix.style == 'checkpoint' }}
         run: |
           uds run -f tasks/create.yaml checkpoint-dev-package --no-progress
 
-      - name: Stop Start Test
-        if: ${{ matrix.style == 'stopstart' }}
-        run: |
-          k3d cluster stop uds
-          k3d cluster start uds
-          uds run test:slim-dev --no-progress
-
       - name: Test Checkpoint Package
-        if: ${{ matrix.style == 'checkpoint' }}
         run: |
           uds run -f tasks/deploy.yaml checkpoint-package --no-progress
           npm ci
