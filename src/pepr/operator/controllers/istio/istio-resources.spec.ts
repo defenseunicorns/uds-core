@@ -76,7 +76,7 @@ describe("test istioEgressResources", () => {
       },
     };
 
-    const errorMessage = "Namespace not found";
+    const errorMessage = "Unable to reconcile get the egress gateway namespace istio-egress-gateway.";
 
     const getNsMock = jest
       .fn<() => Promise<kind.Namespace>>()
@@ -101,7 +101,6 @@ describe("test istioEgressResources", () => {
   });
 
   it("should err if no egress gateway port with defined hostResourceMap", async () => {
-    // Mock set-ups
     const mockError = new Error(
       "Egress gateway does not expose port 1234 for host example.com. Please update the egress gateway service to expose this port.",
     );
