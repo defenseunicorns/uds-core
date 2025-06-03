@@ -76,7 +76,8 @@ describe("test istioEgressResources", () => {
       },
     };
 
-    const errorMessage = "Unable to reconcile get the egress gateway namespace istio-egress-gateway.";
+    const errorMessage =
+      "Unable to reconcile get the egress gateway namespace istio-egress-gateway.";
 
     const getNsMock = jest
       .fn<() => Promise<kind.Namespace>>()
