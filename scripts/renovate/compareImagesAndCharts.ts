@@ -48,7 +48,7 @@ export async function compareImagesAndCharts(oldPath: string, newPath: string): 
 
     // If no waiting labels were added, add needs-review
     if (!result.labels.includes('waiting on ironbank') &&
-      !result.labels.includes('waiting on cgr') &&
+      !result.labels.includes('waiting on rapidfort') &&
       !result.labels.includes('helm-chart-only')) {
       result.labels.push('needs-review');
     }
@@ -231,10 +231,10 @@ function compareImages(oldImages: any, newImages: any, result: ComparisonResult)
               result.labels.push('waiting on ironbank');
               result.changes.push(`Waiting on Ironbank image update: ${missingImg}`);
             }
-          } else if (missingImg.includes('cgr.dev')) {
-            if (!result.labels.includes('waiting on cgr')) {
-              result.labels.push('waiting on cgr');
-              result.changes.push(`Waiting on Chainguard image update: ${missingImg}`);
+          } else if (missingImg.startsWith('quay.io/rfcurated')) {
+            if (!result.labels.includes('waiting on rapidfort')) {
+              result.labels.push('waiting on rapidfort');
+              result.changes.push(`Waiting on Rapidfort image update: ${missingImg}`);
             }
           }
         }

@@ -3,14 +3,50 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { describe, expect, it } from "@jest/globals";
-import { Sso } from "../../crd";
+import { beforeEach, describe, expect, it, jest } from "@jest/globals";
+import { Sso, UDSPackage } from "../../crd";
+import { syncClient } from "./client-sync";
+import * as clientCredentials from "./clients/client-credentials";
+
+// Mock the logger before importing the modules that use it
+jest.mock("../../../logger", () => ({
+  Component: {
+    OPERATOR_KEYCLOAK: "OPERATOR_KEYCLOAK",
+  },
+  setupLogger: jest.fn().mockReturnValue({
+    debug: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+  }),
+}));
+
 import {
   convertSsoToClient,
   extractSamlCertificateFromXML,
   generateSecretData,
 } from "./client-sync";
 import { Client } from "./types";
+
+// Mock the K8s Apply function
+const mockApply = jest.fn().mockImplementation(resource => Promise.resolve(resource));
+
+// Mock the pepr module
+jest.mock("pepr", () => {
+  return {
+    K8s: () => ({
+      Apply: mockApply,
+    }),
+    kind: {
+      Secret: "Secret",
+    },
+  };
+});
+
+jest.mock("./clients/client-credentials", () => ({
+  credentialsCreateOrUpdate: jest.fn(),
+  credentialsDelete: jest.fn(),
+}));
 
 const mockClient: Client = {
   alwaysDisplayInConsole: true,
@@ -281,5 +317,111 @@ describe("convertSsoToClient function", () => {
     };
 
     expect(convertSsoToClient(sso)).toEqual(expectedClient);
+  });
+});
+
+// Test for the secretName preservation during retries
+describe("syncClient secretName preservation", () => {
+  // We'll use the mocks set up at the top of the file
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("should preserve secretName when creating K8s secret", async () => {
+    // Set up our test data
+    const mockSso: Sso = {
+      clientId: "test-client",
+      name: "Test Client",
+      secretName: "custom-secret-name",
+      redirectUris: ["https://example.com"],
+    };
+
+    const mockPkg: UDSPackage = {
+      apiVersion: "uds.dev/v1alpha1",
+      kind: "Package",
+      metadata: {
+        name: "test-package",
+        namespace: "test-namespace",
+        generation: 1,
+      },
+      spec: {},
+    };
+
+    // Mock successful client creation
+    const mockCredentialsCreateOrUpdate =
+      clientCredentials.credentialsCreateOrUpdate as jest.MockedFunction<
+        typeof clientCredentials.credentialsCreateOrUpdate
+      >;
+    // Create a minimal Client object with required fields
+    mockCredentialsCreateOrUpdate.mockResolvedValueOnce({
+      id: "test-id",
+      clientId: "test-client",
+      secret: "generated-secret",
+    } as Client & { id: string });
+
+    // Reset the mock apply function to track calls
+    mockApply.mockClear();
+
+    // Call the actual syncClient function
+    await syncClient(mockSso, mockPkg);
+
+    // Verify the K8s Apply was called with the correct secret name
+    expect(mockApply).toHaveBeenCalled();
+    // Use type assertion to fix TypeScript error
+    const appliedResource = mockApply.mock.calls[0][0] as { metadata: { name: string } };
+    expect(appliedResource.metadata.name).toBe("custom-secret-name");
+  });
+
+  it("should preserve secretName during retry", async () => {
+    // Set up our test data
+    const mockSso: Sso = {
+      clientId: "test-client",
+      name: "Test Client",
+      secretName: "custom-secret-name",
+      redirectUris: ["https://example.com"],
+    };
+
+    const mockPkg: UDSPackage = {
+      apiVersion: "uds.dev/v1alpha1",
+      kind: "Package",
+      metadata: {
+        name: "test-package",
+        namespace: "test-namespace",
+        generation: 1,
+      },
+      spec: {},
+    };
+
+    // Mock credentialsCreateOrUpdate to fail on first call and succeed on second
+    const mockCredentialsCreateOrUpdate =
+      clientCredentials.credentialsCreateOrUpdate as jest.MockedFunction<
+        typeof clientCredentials.credentialsCreateOrUpdate
+      >;
+    mockCredentialsCreateOrUpdate.mockImplementationOnce(() => {
+      throw new Error("Test error");
+    });
+    mockCredentialsCreateOrUpdate.mockImplementationOnce(() => {
+      return Promise.resolve({
+        id: "test-id",
+        clientId: "test-client",
+        secret: "generated-secret",
+      } as Client & { id: string });
+    });
+
+    // Reset the mock apply function to track calls
+    mockApply.mockClear();
+
+    // Call the actual syncClient function
+    await syncClient(mockSso, mockPkg);
+
+    // Verify credentialsCreateOrUpdate was called twice (initial + retry)
+    expect(mockCredentialsCreateOrUpdate).toHaveBeenCalledTimes(2);
+
+    // Verify the K8s Apply was called with the correct secret name
+    expect(mockApply).toHaveBeenCalled();
+    // Use type assertion to fix TypeScript error
+    const appliedResource = mockApply.mock.calls[0][0] as { metadata: { name: string } };
+    expect(appliedResource.metadata.name).toBe("custom-secret-name");
   });
 });
