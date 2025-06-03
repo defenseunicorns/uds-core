@@ -8,6 +8,18 @@ metadata:
   url: https://github.com/defenseunicorns/uds-core
 
 components:
+  # Deploy package CRs
+  - name: test-app-packages
+    required: true
+    manifests:
+      - name: test-app-packages
+        files:
+          - "app-admin-package.yaml"
+          - "app-authservice-tenant-package.yaml"
+          - "app-tenant-package.yaml"
+          - "app-curl-packages.yaml"
+
+  # Deploy test workloads
   - name: test-apps
     required: true
     manifests:
