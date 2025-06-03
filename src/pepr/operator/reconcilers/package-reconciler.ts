@@ -6,9 +6,9 @@
 import { getReadinessConditions, handleFailure, shouldSkip, updateStatus, writeEvent } from ".";
 import { UDSConfig } from "../../config";
 import { Component, setupLogger } from "../../logger";
-import { istioResources, getPackageId } from "../controllers/istio/istio-resources";
-import { cleanupNamespace, enableIstio } from "../controllers/istio/namespace";
 import { reconcileSharedEgressResources } from "../controllers/istio/egress";
+import { getPackageId, istioResources } from "../controllers/istio/istio-resources";
+import { cleanupNamespace, enableIstio } from "../controllers/istio/namespace";
 import { PackageAction } from "../controllers/istio/types";
 import {
   authservice,

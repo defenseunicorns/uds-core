@@ -7,7 +7,7 @@ import { K8s } from "pepr";
 
 import { V1OwnerReference } from "@kubernetes/client-node";
 import { Component, setupLogger } from "../../../logger";
-import { IstioServiceEntry, IstioSidecar, IstioVirtualService, UDSPackage, Allow } from "../../crd";
+import { Allow, IstioServiceEntry, IstioSidecar, IstioVirtualService, UDSPackage } from "../../crd";
 import { getOwnerRef, purgeOrphans } from "../utils";
 import {
   createHostResourceMap,
@@ -174,7 +174,12 @@ export async function istioEgressResources(
   }
 
   // Reconcile shared egress resources
-  await reconcileSharedEgressResources(hostResourceMap, pkgId, PackageAction.AddOrUpdate);
+  try {
+    await reconcileSharedEgressResources(hostResourceMap, pkgId, PackageAction.AddOrUpdate);
+  } catch (e) {
+    log.error(`Failed to reconcile shared egress resources for package ${pkgId}`, e);
+    throw e;
+  }
 }
 
 // Get the shared annotation key for the package

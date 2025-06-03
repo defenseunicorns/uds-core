@@ -16,6 +16,7 @@ import { generateEgressGateway, warnMatchingExistingGateways } from "./gateway";
 import { istioEgressGatewayNamespace, log } from "./istio-resources";
 import { generateSharedServiceEntry } from "./service-entry";
 import {
+  EgressResource,
   EgressResourceMap,
   HostPortsProtocol,
   HostResourceMap,
@@ -33,137 +34,216 @@ export const inMemoryPackageMap: PackageHostMap = {};
 // Lock to prevent concurrent updates to the inMemoryPackageMap
 let lock = false;
 
-// Timer for debouncing updates to the shared egress resources
-let debounceTimer: NodeJS.Timeout | null = null;
+// Mutex to prevent concurrent reconciliation operations
+let reconciliationMutex: Promise<void> | null = null;
 
-// Debounce duration (1 seconds) to reduce excessive updates, configurable via environment variable
-const DEBOUNCE_DURATION = parseInt(process.env.DEBOUNCE_DURATION || "1000", 10);
-
-// Internal state for test visibility
-let latestDebouncePromise: Promise<void> | null = null;
-
-// Add this export for test environments only
-export const __testOnly = {
-  get latestDebouncePromise(): Promise<void> {
-    if (!latestDebouncePromise) {
-      throw new Error("latestDebouncePromise was null");
-    }
-    return latestDebouncePromise;
-  },
-};
-
+// Generation counter for shared egress resources
 let generation = 0;
 
+// Unique identifier for shared egress resources
 export const sharedEgressPkgId = "shared-egress-resource";
 
-// reconcileEgressResources reconciles the egress resources based on the config?
+// reconcileEgressResources reconciles the egress resources based on the config
 export async function reconcileSharedEgressResources(
   hostResourceMap: HostResourceMap | undefined,
   pkgId: string,
   action: PackageAction,
 ) {
   // Update the in-memory package map with the new host resource map
-  updateInMemoryPackageMap(hostResourceMap, pkgId, action);
+  await updateInMemoryPackageMap(hostResourceMap, pkgId, action);
 
-  // Clear the previous debounce timer, if it exists
-  if (debounceTimer) {
-    clearTimeout(debounceTimer);
-  }
-
-  // Set a new debounce timer to apply the update after the delay
-  debounceTimer = setTimeout(() => {
-    const promise = (async () => {
-      try {
-        // Check if the istioEgressGatewayNamespace exists
-        try {
-          await K8s(kind.Namespace).Get(istioEgressGatewayNamespace);
-        } catch (e) {
-          if (e?.status == 404) {
-            log.debug(
-              `Namespace ${istioEgressGatewayNamespace} not found. Skipping shared egress resource reconciliation.`,
-            );
-            return;
-          } else {
-            throw e;
-          }
-        }
-
-        generation++;
-
-        // Apply any egress resources
-        await applyEgressResources(inMemoryPackageMap, generation);
-
-        // Purge any orphaned shared resources
-        await purgeOrphans(
-          generation.toString(),
-          istioEgressGatewayNamespace,
-          sharedEgressPkgId,
-          IstioGateway,
-          log,
-        );
-        await purgeOrphans(
-          generation.toString(),
-          istioEgressGatewayNamespace,
-          sharedEgressPkgId,
-          IstioVirtualService,
-          log,
-        );
-        await purgeOrphans(
-          generation.toString(),
-          istioEgressGatewayNamespace,
-          sharedEgressPkgId,
-          IstioServiceEntry,
-          log,
-        );
-      } catch (e) {
-        const errText = `Failed to reconcile shared egress resources for package ID ${pkgId}`;
-        log.debug(errText);
-        throw e;
-      } finally {
-        debounceTimer = null;
-      }
-    })();
-
-    latestDebouncePromise = promise;
-  }, DEBOUNCE_DURATION);
+  // Use a mutex-like approach to prevent overwhelming the operator
+  // Multiple packages can update the map, but only one reconciliation runs at a time
+  return await performEgressReconciliationWithMutex();
 }
 
-export function updateInMemoryPackageMap(
+// Mutex-based reconciliation to prevent overwhelming the operator
+export async function performEgressReconciliationWithMutex(): Promise<void> {
+  // If there's already a reconciliation in progress, wait for it to complete
+  if (reconciliationMutex) {
+    log.debug("Egress reconciliation already in progress, waiting for completion");
+    try {
+      await reconciliationMutex;
+      // After the previous reconciliation completes, our changes are already included
+      // since updateInMemoryPackageMap was called before this function
+      return;
+    } catch (e) {
+      // If the previous reconciliation failed, we still need to try our own reconciliation
+      // Log the previous failure but don't propagate it
+      log.warn("Previous egress reconciliation failed, proceeding with new reconciliation", e);
+      // Clear the failed mutex so we can start a new one
+      reconciliationMutex = null;
+    }
+  }
+
+  // Start a new reconciliation
+  reconciliationMutex = performEgressReconciliation();
+
+  try {
+    await reconciliationMutex;
+  } catch (e) {
+    // Log the error and re-throw to maintain error propagation
+    log.error("Egress reconciliation failed", e);
+    throw e;
+  } finally {
+    // Clear the mutex when done
+    reconciliationMutex = null;
+  }
+}
+
+// Perform the actual egress reconciliation
+export async function performEgressReconciliation() {
+  try {
+    // Check if the istioEgressGatewayNamespace exists
+    try {
+      await K8s(kind.Namespace).Get(istioEgressGatewayNamespace);
+    } catch (e) {
+      if (e?.status == 404) {
+        log.debug(
+          `Namespace ${istioEgressGatewayNamespace} not found. Skipping shared egress resource reconciliation.`,
+        );
+        return;
+      } else {
+        throw e;
+      }
+    }
+
+    generation++;
+
+    // Apply any egress resources
+    await applyEgressResources(inMemoryPackageMap, generation);
+
+    // Purge any orphaned shared resources
+    await purgeOrphans(
+      generation.toString(),
+      istioEgressGatewayNamespace,
+      sharedEgressPkgId,
+      IstioGateway,
+      log,
+    );
+    await purgeOrphans(
+      generation.toString(),
+      istioEgressGatewayNamespace,
+      sharedEgressPkgId,
+      IstioVirtualService,
+      log,
+    );
+    await purgeOrphans(
+      generation.toString(),
+      istioEgressGatewayNamespace,
+      sharedEgressPkgId,
+      IstioServiceEntry,
+      log,
+    );
+  } catch (e) {
+    const errText = `Failed to reconcile shared egress resources`;
+    log.error(errText, e);
+    throw e;
+  }
+}
+
+// Update the in-memory package map with the new host resource map
+export async function updateInMemoryPackageMap(
   hostResourceMap: HostResourceMap | undefined,
   pkgId: string,
   action: PackageAction,
-) {
-  // Lock to prevent concurrent updates
-  if (lock) {
-    log.debug("Lock is set for egress package map update, retrying...");
-    setTimeout(() => updateInMemoryPackageMap(hostResourceMap, pkgId, action), 0);
-    return;
+): Promise<void> {
+  const maxRetries = 10;
+  const retryDelay = 10; // 10ms delay between retries
+
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    // Check if lock is available
+    if (!lock) {
+      try {
+        log.debug("Locking egress package map for update");
+        lock = true;
+
+        if (action == PackageAction.AddOrUpdate) {
+          if (hostResourceMap) {
+            // Validate for protocol conflicts before updating
+            validateProtocolConflicts(inMemoryPackageMap, hostResourceMap, pkgId);
+            // update inMemoryPackageMap
+            inMemoryPackageMap[pkgId] = hostResourceMap;
+          } else {
+            removeEgressResources(pkgId);
+          }
+        } else if (action == PackageAction.Remove) {
+          removeEgressResources(pkgId);
+        }
+
+        // Success - exit the retry loop
+        return;
+      } catch (e) {
+        log.error("Failed to update in memory egress package map for event", action, e);
+        throw e;
+      } finally {
+        // unlock inMemoryPackageMap
+        log.debug("Unlocking egress package map for update");
+        lock = false;
+      }
+    }
+
+    // Lock is held, wait before retrying
+    if (attempt < maxRetries - 1) {
+      log.debug(
+        `Lock is set for egress package map update, retrying in ${retryDelay}ms... (attempt ${attempt + 1}/${maxRetries})`,
+      );
+      await new Promise(resolve => setTimeout(resolve, retryDelay));
+    }
   }
 
-  try {
-    log.debug("Locking egress package map for update");
-    lock = true;
+  // If we get here, we've exhausted all retries
+  const errorMsg = `Failed to acquire lock for egress package map update after ${maxRetries} attempts`;
+  log.error(errorMsg);
+  throw new Error(errorMsg);
+}
 
-    if (action == PackageAction.AddOrUpdate) {
-      if (hostResourceMap) {
-        // update inMemoryPackageMap
-        inMemoryPackageMap[pkgId] = hostResourceMap;
-      } else {
-        removeEgressResources(pkgId);
-      }
-    } else if (action == PackageAction.Remove) {
-      removeEgressResources(pkgId);
+// Validate that there are no protocol conflicts for the same host/port combination
+export function validateProtocolConflicts(
+  currentPackageMap: PackageHostMap,
+  newHostResourceMap: HostResourceMap,
+  newPkgId: string,
+): void {
+  // Create a map of host:port -> protocol for existing packages (excluding the package being updated)
+  const existingHostPortProtocols: Record<string, { protocol: RemoteProtocol; packageId: string }> =
+    {};
+
+  for (const [pkgId, hostResourceMap] of Object.entries(currentPackageMap)) {
+    // Skip the package being updated since it will be replaced
+    if (pkgId === newPkgId) {
+      continue;
     }
-  } catch (e) {
-    log.error("Failed to update in memory egress package map for event", action, e);
-    throw e;
-  } finally {
-    // unlock inMemoryPackageMap
-    log.debug("Unlocking egress package map for update");
-    lock = false;
+
+    for (const [host, hostResource] of Object.entries(hostResourceMap)) {
+      for (const portProtocol of hostResource.portProtocol) {
+        const key = `${host}:${portProtocol.port}`;
+        existingHostPortProtocols[key] = {
+          protocol: portProtocol.protocol,
+          packageId: pkgId,
+        };
+      }
+    }
+  }
+
+  // Check the new host resource map for conflicts
+  for (const [host, hostResource] of Object.entries(newHostResourceMap)) {
+    for (const portProtocol of hostResource.portProtocol) {
+      const key = `${host}:${portProtocol.port}`;
+      const existing = existingHostPortProtocols[key];
+
+      if (existing && existing.protocol !== portProtocol.protocol) {
+        const errorMsg =
+          `Protocol conflict detected for ${host}:${portProtocol.port}. ` +
+          `Package "${newPkgId}" wants to use ${portProtocol.protocol} but package "${existing.packageId}" ` +
+          `is already using ${existing.protocol} for the same host and port combination.`;
+        log.error(errorMsg);
+        throw new Error(errorMsg);
+      }
+    }
   }
 }
 
+// Create a host resource map from a UDSPackage
 export function createHostResourceMap(pkg: UDSPackage) {
   const hostResourceMap: HostResourceMap = {};
 
@@ -202,6 +282,7 @@ export function createHostResourceMap(pkg: UDSPackage) {
   return undefined;
 }
 
+// Remap the package egress definitions to required egress resources
 export function remapEgressResources(packageEgress: PackageHostMap) {
   const egressResources: EgressResourceMap = {};
   for (const pkgId in packageEgress) {
@@ -233,109 +314,123 @@ export function remapEgressResources(packageEgress: PackageHostMap) {
   return egressResources;
 }
 
+// Apply the egress resources for all hosts
 export async function applyEgressResources(packageEgress: PackageHostMap, generation: number) {
   // Re-map the package egress definitions to required egress resources
   const egressResources = remapEgressResources(packageEgress);
   log.debug(`Egress resources to apply: ${JSON.stringify(egressResources)}`);
 
   // Apply the unique set of egress resources per defined host
+  const applyPromises: Promise<void>[] = [];
+
   for (const host in egressResources) {
     const resource = egressResources[host];
 
+    // Create a promise for applying this host's resources
+    const hostPromise = applyHostResources(host, resource, generation);
+    applyPromises.push(hostPromise);
+  }
+
+  // Wait for all host resources to be applied
+  await Promise.all(applyPromises);
+}
+
+// Apply resources for a given host
+async function applyHostResources(host: string, resource: EgressResource, generation: number) {
+  try {
     // Check if matching hosts exist for Gateway and Virtual Service
-    try {
-      await warnMatchingExistingGateways(host);
-      await warnMatchingExistingVirtualServices(host);
-    } catch (e) {
-      log.error(`Existing istio resources found for host, ${host}: ${e}`);
-      throw e;
-    }
+    await warnMatchingExistingGateways(host);
+    await warnMatchingExistingVirtualServices(host);
+
+    // Apply each resource type with individual error handling
+    const resourcePromises: Promise<void>[] = [];
 
     // Generate and Apply the egress gateway
-    const gateway = await generateEgressGateway(host, resource, generation);
-
-    log.debug(gateway, `Applying Egress Gateway ${gateway.metadata?.name}`);
-
-    // Apply the Gateway and force overwrite any existing resource
-    await K8s(IstioGateway)
-      .Apply(gateway, { force: true })
-      .catch(async e => {
-        log.error(`Failed to apply Gateway ${gateway.metadata?.name} of generation ${generation}`);
-        throw e;
-      });
+    const gatewayPromise = (async () => {
+      try {
+        const gateway = await generateEgressGateway(host, resource, generation);
+        log.debug(gateway, `Applying Egress Gateway ${gateway.metadata?.name}`);
+        await K8s(IstioGateway).Apply(gateway, { force: true });
+      } catch (e) {
+        const errText = `Failed to apply Gateway for host ${host}`;
+        log.error(errText, e);
+        throw new Error(errText);
+      }
+    })();
+    resourcePromises.push(gatewayPromise);
 
     // Generate and Apply the egress Virtual Service
-    const virtualService = await generateEgressVirtualService(host, resource, generation);
-
-    log.debug(virtualService, `Applying Egress Virtual Service ${virtualService.metadata?.name}`);
-
-    // Apply the Virtual Service and force overwrite any existing resource
-    await K8s(IstioVirtualService)
-      .Apply(virtualService, { force: true })
-      .catch(async e => {
-        log.error(
-          `Failed to apply Virtual Service ${virtualService.metadata?.name} of generation ${generation}`,
+    const virtualServicePromise = (async () => {
+      try {
+        const virtualService = await generateEgressVirtualService(host, resource, generation);
+        log.debug(
+          virtualService,
+          `Applying Egress Virtual Service ${virtualService.metadata?.name}`,
         );
-        throw e;
-      });
+        await K8s(IstioVirtualService).Apply(virtualService, { force: true });
+      } catch (e) {
+        const errText = `Failed to apply Virtual Service for host ${host}`;
+        log.error(errText, e);
+        throw new Error(errText);
+      }
+    })();
+    resourcePromises.push(virtualServicePromise);
 
     // Generate and Apply the egress Service Entry
-    const serviceEntry = await generateSharedServiceEntry(host, resource, generation);
+    const serviceEntryPromise = (async () => {
+      try {
+        const serviceEntry = await generateSharedServiceEntry(host, resource, generation);
+        log.debug(serviceEntry, `Applying Service Entry ${serviceEntry.metadata?.name}`);
+        await K8s(IstioServiceEntry).Apply(serviceEntry, { force: true });
+      } catch (e) {
+        const errText = `Failed to apply Service Entry for host ${host}`;
+        log.error(errText, e);
+        throw new Error(errText);
+      }
+    })();
+    resourcePromises.push(serviceEntryPromise);
 
-    log.debug(serviceEntry, `Applying Service Entry ${serviceEntry.metadata?.name}`);
-
-    // Apply the Service Entry and force overwrite any existing resource
-    await K8s(IstioServiceEntry)
-      .Apply(serviceEntry, { force: true })
-      .catch(async e => {
-        log.error(
-          `Failed to apply Service Entry ${serviceEntry.metadata?.name} of generation ${generation}`,
-        );
-        throw e;
-      });
+    // Wait for all resource applications to complete
+    await Promise.all(resourcePromises);
+  } catch (e) {
+    log.error(`Failed to apply egress resources for host ${host} of generation ${generation}`, e);
+    throw e;
   }
 }
 
+// Validate that namespace exists and ports are exposed by the Istio egress gateway
 export async function validateEgressGateway(hostResourceMap: HostResourceMap) {
   // Error if egress gateway is not enabled in the cluster
-  await K8s(kind.Namespace)
-    .Get(istioEgressGatewayNamespace)
-    .catch(e => {
-      if (e.status == 404) {
-        const errText = `Egress gateway is not enabled in the cluster. Please enable the egress gateway and retry.`;
+  try {
+    await K8s(kind.Namespace).Get(istioEgressGatewayNamespace);
+  } catch (e) {
+    let errText = `Unable to reconcile get the egress gateway namespace ${istioEgressGatewayNamespace}.`;
+    if (e.status == 404) {
+      errText = `Egress gateway is not enabled in the cluster. Please enable the egress gateway and retry.`;
+    }
+    log.error(errText);
+    throw new Error(errText);
+  }
+
+  // Check the desired ports are exposed by the service
+  const service = await K8s(kind.Service)
+    .InNamespace(istioEgressGatewayNamespace)
+    .Get("egressgateway");
+
+  const ports = service.spec?.ports ?? [];
+  for (const host in hostResourceMap) {
+    for (const portProtocol of hostResourceMap[host].portProtocol) {
+      const port = ports.find(p => p.port === portProtocol.port);
+      if (!port) {
+        const errText = `Egress gateway does not expose port ${portProtocol.port} for host ${host}. Please update the egress gateway service to expose this port.`;
         log.error(errText);
         throw new Error(errText);
-      } else {
-        log.error(
-          e,
-          `Unable to reconcile get the egress gateway namespace ${istioEgressGatewayNamespace}.`,
-        );
-        throw e;
       }
-    });
-
-  // Validate that ports are exposed by the egress gateway
-  await K8s(kind.Service)
-    .InNamespace(istioEgressGatewayNamespace)
-    .Get("egressgateway")
-    .then(async service => {
-      const ports = service.spec?.ports ?? [];
-      for (const host in hostResourceMap) {
-        for (const portProtocol of hostResourceMap[host].portProtocol) {
-          const port = ports.find(p => p.port === portProtocol.port);
-          if (!port) {
-            const errText = `Egress gateway does not expose port ${portProtocol.port} for host ${host}. Please update the egress gateway service to expose this port.`;
-            log.error(errText);
-            throw new Error(errText);
-          }
-        }
-      }
-    })
-    .catch(e => {
-      throw e;
-    });
+    }
+  }
 }
 
+// Get the host, ports, and protocol from an Allow
 export function getHostPortsProtocol(allow: Allow) {
   let hostPortsProtocol: HostPortsProtocol | undefined = undefined;
 
@@ -362,6 +457,7 @@ export function getHostPortsProtocol(allow: Allow) {
   return hostPortsProtocol;
 }
 
+// Remove egress resources for a package
 export function removeEgressResources(pkgId: string) {
   if (inMemoryPackageMap[pkgId]) {
     delete inMemoryPackageMap[pkgId];
@@ -370,6 +466,7 @@ export function removeEgressResources(pkgId: string) {
   }
 }
 
+// Check if egress is requested from the network from the Allow list
 export function egressRequestedFromNetwork(allowList: Allow[]) {
   return allowList.filter(allow => {
     return allow.remoteHost;
