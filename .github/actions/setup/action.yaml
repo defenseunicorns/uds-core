@@ -14,8 +14,11 @@ inputs:
   registry1Password:
     description: 'IRON_BANK_ROBOT_PASSWORD'
     required: true
-  chainguardIdentity:
-    description: "ID for Chainguard Identity"
+  rapidfortUsername:
+    description: "RAPIDFORT_USERNAME"
+    required: true
+  rapidfortPassword:
+    description: "RAPIDFORT_PASSWORD"
     required: true
 
 runs:
@@ -35,7 +38,7 @@ runs:
       uses: defenseunicorns/setup-uds@ab842abcad1f7a3305c2538e3dd1950d0daacfa5 # v1.0.1
       with:
         # renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
-        version: v0.27.5
+        version: v0.27.6
 
     - name: Install Lula
       uses: defenseunicorns/lula-action/setup@badad8c4b1570095f57e66ffd62664847698a3b9 # v0.0.1
@@ -51,12 +54,6 @@ runs:
       run: echo "${{ env.REGISTRY_PASSWORD }}" | uds zarf tools registry login -u "${{ env.REGISTRY_USERNAME }}" --password-stdin registry1.dso.mil
       shell: bash
 
-    - name: Chainguard Login
-      if: ${{ inputs.chainguardIdentity != '' }}
-      uses: chainguard-dev/setup-chainctl@272698817627c158bbd813cb783b62a4b9bbbc67 # v0.3.1
-      with:
-        identity: ${{ inputs.chainguardIdentity }}
-
     - name: GHCR Login
       if: ${{ inputs.ghToken != '' }}
       env:
@@ -69,3 +66,10 @@ runs:
       run: |
         echo "MARU_AUTH=\"{\"raw.githubusercontent.com\": \"${{ inputs.ghToken }}\"}\"" >> "GITHUB_ENV"
       shell: bash
+
+    - name: Rapidfort Login
+      shell: bash
+      env:
+        RAPIDFORT_USERNAME: ${{ inputs.rapidfortUsername }}
+        RAPIDFORT_PASSWORD: ${{ inputs.rapidfortPassword }}
+      run: echo "${{ env.RAPIDFORT_PASSWORD }}" | uds zarf tools registry login -u "${{ env.RAPIDFORT_USERNAME }}" --password-stdin quay.io
