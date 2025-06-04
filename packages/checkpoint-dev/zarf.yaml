@@ -108,7 +108,7 @@ components:
                 --image ghcr.io/defenseunicorns/uds-core/checkpoint:latest ${ZARF_VAR_K3D_EXTRA_ARGS} \
                 ${ZARF_VAR_CLUSTER_NAME}
 
-              docker exec -it k3d-uds-server-0 nft flush ruleset
+              docker exec -i k3d-uds-server-0 nft flush ruleset
             description: "Create the cluster"
 
           - description: "Scale up ztunnel, pepr, and keycloak after checkpoint restore"
