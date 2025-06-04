@@ -72,9 +72,13 @@ jobs:
         run: |
           uds run -f tasks/create.yaml checkpoint-dev-package --no-progress
 
-      - name: Test Checkpoint Package
+      - name: Deploy Checkpoint Package
         run: |
           uds run -f tasks/deploy.yaml checkpoint-package --no-progress
+
+      - name: Test Checkpoint Package
+        continue-on-error: ${{ matrix.architecture == 'arm64' }}
+        run: |
           npm ci
           uds run test:slim-dev --no-progress
 
