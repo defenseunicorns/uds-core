@@ -5,28 +5,26 @@ name: Slim Dev
 
 # This workflow is triggered on pull requests
 on:
-  workflow_call:
-
-  # pull_request:
-  #   # milestoned is added here as a workaround for release-please not triggering PR workflows (PRs should be added to a milestone to trigger the workflow).
-  #   # labeled is added to support renovate-ready labelling on PRs
-  #   types: [milestoned, labeled, opened, reopened, synchronize]
-  #   paths:
-  #     - src/pepr/**
-  #     - src/keycloak/**
-  #     - src/authservice/**
-  #     - src/istio/**
-  #     - src/prometheus-stack/**
-  #     - packages/base/**
-  #     - packages/identity-authorization/**
-  #     - bundles/k3d-slim-dev/**
-  #     - .github/workflows/slim-dev**
-  #     - tasks/test.yaml
-  #     - "!**/*.md"
-  #     - "!**.jpg"
-  #     - "!**.png"
-  #     - "!**.gif"
-  #     - "!**.svg"
+  pull_request:
+    # milestoned is added here as a workaround for release-please not triggering PR workflows (PRs should be added to a milestone to trigger the workflow).
+    # labeled is added to support renovate-ready labelling on PRs
+    types: [milestoned, labeled, opened, reopened, synchronize]
+    paths:
+      - src/pepr/**
+      - src/keycloak/**
+      - src/authservice/**
+      - src/istio/**
+      - src/prometheus-stack/**
+      - packages/base/**
+      - packages/identity-authorization/**
+      - bundles/k3d-slim-dev/**
+      - .github/workflows/slim-dev**
+      - tasks/test.yaml
+      - "!**/*.md"
+      - "!**.jpg"
+      - "!**.png"
+      - "!**.gif"
+      - "!**.svg"
 
 # Permissions for the GITHUB_TOKEN used by the workflow.
 permissions:

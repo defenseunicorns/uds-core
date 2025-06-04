@@ -5,27 +5,26 @@ name: Filter
 
 # This workflow is triggered on pull requests
 on:
-  workflow_call:
-  # pull_request:
-  #   # milestoned is added here as a workaround for release-please not triggering PR workflows (PRs should be added to a milestone to trigger the workflow).
-  #   # labeled is added to support renovate-ready labelling on PRs
-  #   types: [milestoned, labeled, opened, reopened, synchronize]
-  #   paths-ignore:
-  #     - "**.md"
-  #     - "**.jpg"
-  #     - "**.png"
-  #     - "**.gif"
-  #     - "**.svg"
-  #     - docs/**
-  #     - .vscode/**
-  #     - .gitignore
-  #     - renovate.json
-  #     - .release-please-config.json
-  #     - .codespellrc
-  #     - release-please-config.json
-  #     - CODEOWNERS
-  #     - LICENSE
-  #     - scripts/** # scripts/hacks that are used specifically for non-testing workflows
+  pull_request:
+    # milestoned is added here as a workaround for release-please not triggering PR workflows (PRs should be added to a milestone to trigger the workflow).
+    # labeled is added to support renovate-ready labelling on PRs
+    types: [milestoned, labeled, opened, reopened, synchronize]
+    paths-ignore:
+      - "**.md"
+      - "**.jpg"
+      - "**.png"
+      - "**.gif"
+      - "**.svg"
+      - docs/**
+      - .vscode/**
+      - .gitignore
+      - renovate.json
+      - .release-please-config.json
+      - .codespellrc
+      - release-please-config.json
+      - CODEOWNERS
+      - LICENSE
+      - scripts/** # scripts/hacks that are used specifically for non-testing workflows
 
 # Permissions for the GITHUB_TOKEN used by the workflow.
 permissions:
