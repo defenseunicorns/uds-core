@@ -33,12 +33,17 @@ export const inMemoryPackageMap: PackageHostMap = {};
 
 // Lock to prevent concurrent updates to the inMemoryPackageMap
 let lock = false;
+// eslint-disable-next-line prefer-const
+let lockQueue: (() => void)[] = [];
 
 // Mutex to prevent concurrent reconciliation operations
 let reconciliationMutex: Promise<void> | null = null;
 
 // Generation counter for shared egress resources
 let generation = 0;
+
+// Track which packages were included in the last reconciliation
+let lastReconciliationPackages: Set<string> = new Set();
 
 // Unique identifier for shared egress resources
 export const sharedEgressPkgId = "shared-egress-resource";
@@ -54,23 +59,21 @@ export async function reconcileSharedEgressResources(
 
   // Use a mutex-like approach to prevent overwhelming the operator
   // Multiple packages can update the map, but only one reconciliation runs at a time
-  return await performEgressReconciliationWithMutex();
+  return await performEgressReconciliationWithMutex(pkgId);
 }
 
 // Mutex-based reconciliation to prevent overwhelming the operator
-export async function performEgressReconciliationWithMutex(): Promise<void> {
+export async function performEgressReconciliationWithMutex(pkgId: string): Promise<void> {
   // If there's already a reconciliation in progress, wait for it to complete
   if (reconciliationMutex) {
-    log.debug("Egress reconciliation already in progress, waiting for completion");
     try {
       await reconciliationMutex;
-      // After the previous reconciliation completes, our changes are already included
-      // since updateInMemoryPackageMap was called before this function
-      return;
-    } catch (e) {
+      // Check if this package was included in the last reconciliation
+      if (lastReconciliationPackages.has(pkgId)) {
+        return;
+      }
+    } catch {
       // If the previous reconciliation failed, we still need to try our own reconciliation
-      // Log the previous failure but don't propagate it
-      log.warn("Previous egress reconciliation failed, proceeding with new reconciliation", e);
       // Clear the failed mutex so we can start a new one
       reconciliationMutex = null;
     }
@@ -110,6 +113,9 @@ export async function performEgressReconciliation() {
 
     generation++;
 
+    // Capture which packages are included in this reconciliation
+    lastReconciliationPackages = new Set(Object.keys(inMemoryPackageMap));
+
     // Apply any egress resources
     await applyEgressResources(inMemoryPackageMap, generation);
 
@@ -142,60 +148,46 @@ export async function performEgressReconciliation() {
   }
 }
 
-// Update the in-memory package map with the new host resource map
 export async function updateInMemoryPackageMap(
   hostResourceMap: HostResourceMap | undefined,
   pkgId: string,
   action: PackageAction,
-): Promise<void> {
-  const maxRetries = 10;
-  const retryDelay = 10; // 10ms delay between retries
-
-  for (let attempt = 0; attempt < maxRetries; attempt++) {
-    // Check if lock is available
-    if (!lock) {
-      try {
-        log.debug("Locking egress package map for update");
-        lock = true;
-
-        if (action == PackageAction.AddOrUpdate) {
-          if (hostResourceMap) {
-            // Validate for protocol conflicts before updating
-            validateProtocolConflicts(inMemoryPackageMap, hostResourceMap, pkgId);
-            // update inMemoryPackageMap
-            inMemoryPackageMap[pkgId] = hostResourceMap;
-          } else {
-            removeEgressResources(pkgId);
-          }
-        } else if (action == PackageAction.Remove) {
-          removeEgressResources(pkgId);
-        }
-
-        // Success - exit the retry loop
-        return;
-      } catch (e) {
-        log.error("Failed to update in memory egress package map for event", action, e);
-        throw e;
-      } finally {
-        // unlock inMemoryPackageMap
-        log.debug("Unlocking egress package map for update");
-        lock = false;
-      }
-    }
-
-    // Lock is held, wait before retrying
-    if (attempt < maxRetries - 1) {
-      log.debug(
-        `Lock is set for egress package map update, retrying in ${retryDelay}ms... (attempt ${attempt + 1}/${maxRetries})`,
-      );
-      await new Promise(resolve => setTimeout(resolve, retryDelay));
-    }
+) {
+  // Wait for lock to be available using a promise-based queue
+  if (lock) {
+    await new Promise<void>(resolve => {
+      lockQueue.push(resolve);
+    });
   }
 
-  // If we get here, we've exhausted all retries
-  const errorMsg = `Failed to acquire lock for egress package map update after ${maxRetries} attempts`;
-  log.error(errorMsg);
-  throw new Error(errorMsg);
+  try {
+    log.debug("Locking egress package map for update");
+    lock = true;
+
+    if (action == PackageAction.AddOrUpdate) {
+      if (hostResourceMap) {
+        // Validate for protocol conflicts before updating
+        validateProtocolConflicts(inMemoryPackageMap, hostResourceMap, pkgId);
+        // update inMemoryPackageMap
+        inMemoryPackageMap[pkgId] = hostResourceMap;
+      } else {
+        removeEgressResources(pkgId);
+      }
+    } else if (action == PackageAction.Remove) {
+      removeEgressResources(pkgId);
+    }
+  } catch (e) {
+    log.error("Failed to update in memory egress package map for event", action, e);
+    throw e;
+  } finally {
+    // unlock inMemoryPackageMap and notify next waiter
+    log.debug("Unlocking egress package map for update");
+    lock = false;
+    const nextResolve = lockQueue.shift();
+    if (nextResolve) {
+      nextResolve();
+    }
+  }
 }
 
 // Validate that there are no protocol conflicts for the same host/port combination
@@ -318,7 +310,6 @@ export function remapEgressResources(packageEgress: PackageHostMap) {
 export async function applyEgressResources(packageEgress: PackageHostMap, generation: number) {
   // Re-map the package egress definitions to required egress resources
   const egressResources = remapEgressResources(packageEgress);
-  log.debug(`Egress resources to apply: ${JSON.stringify(egressResources)}`);
 
   // Apply the unique set of egress resources per defined host
   const applyPromises: Promise<void>[] = [];
@@ -348,7 +339,7 @@ async function applyHostResources(host: string, resource: EgressResource, genera
     // Generate and Apply the egress gateway
     const gatewayPromise = (async () => {
       try {
-        const gateway = await generateEgressGateway(host, resource, generation);
+        const gateway = generateEgressGateway(host, resource, generation);
         log.debug(gateway, `Applying Egress Gateway ${gateway.metadata?.name}`);
         await K8s(IstioGateway).Apply(gateway, { force: true });
       } catch (e) {
@@ -362,7 +353,7 @@ async function applyHostResources(host: string, resource: EgressResource, genera
     // Generate and Apply the egress Virtual Service
     const virtualServicePromise = (async () => {
       try {
-        const virtualService = await generateEgressVirtualService(host, resource, generation);
+        const virtualService = generateEgressVirtualService(host, resource, generation);
         log.debug(
           virtualService,
           `Applying Egress Virtual Service ${virtualService.metadata?.name}`,
@@ -379,7 +370,7 @@ async function applyHostResources(host: string, resource: EgressResource, genera
     // Generate and Apply the egress Service Entry
     const serviceEntryPromise = (async () => {
       try {
-        const serviceEntry = await generateSharedServiceEntry(host, resource, generation);
+        const serviceEntry = generateSharedServiceEntry(host, resource, generation);
         log.debug(serviceEntry, `Applying Service Entry ${serviceEntry.metadata?.name}`);
         await K8s(IstioServiceEntry).Apply(serviceEntry, { force: true });
       } catch (e) {
