@@ -9,3 +9,6 @@ cniBinDir: ###ZARF_VAR_CNI_BIN_DIR###
 # SELinux enforcing environments require the spc_t SELinux type
 seLinuxOptions:
   type: spc_t
+
+ambient:
+  reconcileIptablesOnStartup: true
