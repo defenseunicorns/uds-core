@@ -3,7 +3,10 @@
 This is a special Zarf package that takes a running K3d cluster (named `uds`) and wraps its committed container and volumes into a zarf package.
 
 > [!CAUTION]
-> This package does not currently work on macOS due to some limitations with filesystem permissions.
+> This package does not currently work on macOS due to some limitations with filesystem permissions.  
+
+> [!CAUTION]
+> *KNOWN ISSUE*: ARM64 builds of this package do not properly enforce network policies in GitHub CI. There may be additional unexpected behavior and issues with ARM64 builds.
 
 ## Creating this package
 
