@@ -120,7 +120,45 @@ export async function packageReconciler(pkg: UDSPackage) {
       retryAttempt: 0, // todo: make this nullable when kfc generates the type
     });
   } catch (err) {
-    void handleFailure(err, pkg);
+    // void handleFailure(err, pkg); // OLD
+    try {
+      await handleFailure(err, pkg);
+    } catch (handleFailureErr) {
+      log.error(
+        { err: handleFailureErr },
+        `Critical error in handleFailure for package ${pkg.metadata?.namespace}/${pkg.metadata?.name}`,
+      );
+
+      // If handleFailure itself fails, we need to ensure the package doesn't get stuck
+      // Attempt a basic status update to trigger retry mechanism
+      try {
+        const retryAttempt = (pkg.status?.retryAttempt || 0) + 1;
+        const status =
+          retryAttempt < 4
+            ? { phase: Phase.Retrying, conditions: getReadinessConditions(false), retryAttempt }
+            : {
+                phase: Phase.Failed,
+                conditions: getReadinessConditions(false),
+                observedGeneration: pkg.metadata?.generation,
+                retryAttempt: 0,
+              };
+
+        await updateStatus(pkg, status);
+
+        // Try to write an event about the critical failure
+        await writeEvent(pkg, {
+          message: `Critical reconciliation failure: ${handleFailureErr.message || "Unknown error"}`,
+          reason: "CriticalFailure",
+          type: "Warning",
+        });
+      } catch (finalErr) {
+        // Log final failure if retries fail
+        log.error(
+          { err: finalErr },
+          `Failed to update status after critical handleFailure error for package ${pkg.metadata?.namespace}/${pkg.metadata?.name}`,
+        );
+      }
+    }
   }
 }
 
