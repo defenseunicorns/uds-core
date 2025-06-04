@@ -69,9 +69,6 @@ components:
               ./zarf tools kubectl -n istio-system patch daemonset ztunnel --type='strategic' -p '{"spec":{"template":{"spec":{"nodeSelector":{"no-such-label":"true"}}}}}'
               ./zarf tools kubectl -n istio-system wait --for=delete pod -l app=ztunnel --timeout=60s
 
-              ./zarf tools kubectl -n istio-system patch daemonset istio-cni-node --type='strategic' -p '{"spec":{"template":{"spec":{"nodeSelector":{"no-such-label":"true"}}}}}'
-              ./zarf tools kubectl -n istio-system wait --for=delete pod -l k8s-app=istio-cni-node --timeout=60s
-
           - cmd: ./checkpoint.sh
         onSuccess:
           - cmd: |
@@ -110,6 +107,8 @@ components:
                 -v "${DATA_DIR}/k3s_data:/var/lib/rancher/k3s@server:*" \
                 --image ghcr.io/defenseunicorns/uds-core/checkpoint:latest ${ZARF_VAR_K3D_EXTRA_ARGS} \
                 ${ZARF_VAR_CLUSTER_NAME}
+
+              docker exec -it k3d-uds-server-0 nft flush ruleset
             description: "Create the cluster"
 
           - description: "Scale up ztunnel, pepr, and keycloak after checkpoint restore"
@@ -117,9 +116,6 @@ components:
               set -e
               ./zarf tools kubectl patch mutatingwebhookconfiguration pepr-uds-core --type='json' -p='[{"op":"replace","path":"/webhooks/0/failurePolicy","value":"Ignore"}]'
               ./zarf tools kubectl patch validatingwebhookconfiguration pepr-uds-core --type='json' -p='[{"op":"replace","path":"/webhooks/0/failurePolicy","value":"Ignore"}]'
-
-              ./zarf tools kubectl -n istio-system patch daemonset istio-cni-node --type=json -p='[{"op":"remove","path":"/spec/template/spec/nodeSelector/no-such-label"}]'
-              ./zarf tools kubectl -n istio-system rollout status daemonset istio-cni-node --timeout=60s
 
               ./zarf tools kubectl -n istio-system patch daemonset ztunnel --type=json -p='[{"op":"remove","path":"/spec/template/spec/nodeSelector/no-such-label"}]'
               ./zarf tools kubectl -n istio-system rollout status daemonset ztunnel --timeout=60s

@@ -24,6 +24,9 @@ if [ -z "$CONTAINER_ID" ]; then
     exit 1
 fi
 
+# Flush iptables/nftables ruleset
+docker exec -it $CONTAINER_ID nft flush ruleset
+
 # Step 2: Get the mounted volumes of the running container
 echo "Inspecting container volumes for $CONTAINER_ID..."
 VOLUMES=$(docker inspect -f '{{ json .Mounts }}' "$CONTAINER_ID" | jq)
