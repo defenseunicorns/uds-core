@@ -9,10 +9,6 @@ sidecar:
   datasources:
     enabled: true
     label: grafana_datasource
-    searchNamespace: ALL
-
-# optional extra datasources to be added to configmap
-extraDatasources: []
 
 extraSecretMounts:
   - name: auth-generic-oauth-secret-mount

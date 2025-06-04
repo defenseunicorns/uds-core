@@ -143,10 +143,10 @@ The default UDS Core deployment creates a `ConfigMap` named `grafana-datasources
 ```yaml
 overrides:
   grafana:
-    grafana:
+    uds-grafana-config:
       values:
         - path: extraDatasources
-          values:
+          value:
             - name: Prometheus
               type: prometheus
               access: proxy
