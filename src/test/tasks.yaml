@@ -54,7 +54,7 @@ tasks:
         cmd: "uds zarf package deploy build/zarf-package-uds-core-test-apps-*.zst --confirm --no-progress --components egress-app"
 
       - description: Deploy the test resources
-        if: ${{ eq .inputs.validate_egress "true" }}
+        if: ${{ eq .inputs.validate_egress "false" }}
         cmd: "uds zarf package deploy build/zarf-package-uds-core-test-apps-*.zst --confirm --no-progress"
 
       - description: Verify the admin app is accessible
