@@ -60,16 +60,16 @@ themeCustomizations:
     enableRegistrationFields: true
 #   resources:
 #     images:
-#       - name: background.jpg
+#       - name: background.ong
 #         configmap:
 #           name: keycloak-theme-overrides
 #       - name: footer.png
 #         configmap:
 #           name: keycloak-theme-overrides
-#       - name: logo.svg
+#       - name: logo.ong
 #         configmap:
 #           name: keycloak-theme-overrides
-#       - name: favicon.svg
+#       - name: favicon.png
 #         configmap:
 #           name: keycloak-theme-overrides
 
