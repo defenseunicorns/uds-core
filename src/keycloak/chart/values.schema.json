@@ -474,7 +474,7 @@
                 "type": "object",
                 "properties": {
                   "name": {
-                    "enum": ["background.jpg", "footer.png", "logo.svg", "favicon.svg"]
+                    "enum": ["background.png", "footer.png", "logo.png", "favicon.png"]
                   },
                   "configmap": {
                     "type": "object",
