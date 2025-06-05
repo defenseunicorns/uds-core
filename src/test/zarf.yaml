@@ -29,6 +29,8 @@ components:
       - name: egress-app
         files:
           - "app-egress.yaml"
+    images:
+      - curlimages/curl:latest
 
   # Deploy test workloads
   - name: test-apps
