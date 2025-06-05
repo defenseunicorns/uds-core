@@ -60,7 +60,7 @@ themeCustomizations:
     enableRegistrationFields: true
 #   resources:
 #     images:
-#       - name: background.ong
+#       - name: background.png
 #         configmap:
 #           name: keycloak-theme-overrides
 #       - name: footer.png
