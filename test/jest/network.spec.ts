@@ -125,6 +125,9 @@ function isResponseError(curlOutput: { stdout: string, stderr: string }) {
   }
 }
 
+// Check if egress tests should run
+const runEgressTests = process.env.EGRESS_TESTS === "true";
+
 let curlPodName1 = "";
 let testAdminApp = "";
 let curlPodName6 = "";
@@ -133,21 +136,17 @@ let curlPodNameEgress1 = "";
 let curlPodNameEgress2 = "";
 
 beforeAll(async () => {
-  [
-    curlPodName1,
-    testAdminApp,
-    curlPodName6,
-    curlPodName8,
-    curlPodNameEgress1,
-    curlPodNameEgress2,
-  ] = await Promise.all([
-    getPodName("curl-ns-deny-all-1", "app=curl-pkg-deny-all-1"),
-    getPodName("test-admin-app", "app=httpbin"),
-    getPodName("curl-ns-remote-ns-1", "app=curl-pkg-remote-ns-egress"),
-    getPodName("curl-ns-kube-api", "app=curl-pkg-kube-api"),
-    getPodName("egress-gw-1", "app=curl"),
-    getPodName("egress-gw-2", "app=curl"),
-  ]);
+  // Always fetch these pod names
+  curlPodName1 = await getPodName("curl-ns-deny-all-1", "app=curl-pkg-deny-all-1");
+  testAdminApp = await getPodName("test-admin-app", "app=httpbin");
+  curlPodName6 = await getPodName("curl-ns-remote-ns-1", "app=curl-pkg-remote-ns-egress");
+  curlPodName8 = await getPodName("curl-ns-kube-api", "app=curl-pkg-kube-api");
+
+  // Only fetch egress pod names if egress tests will run
+  if (runEgressTests) {
+    curlPodNameEgress1 = await getPodName("egress-gw-1", "app=curl");
+    curlPodNameEgress2 = await getPodName("egress-gw-2", "app=curl");
+  }
 });
 
 describe("Network Policy Validation", () => {
@@ -297,7 +296,8 @@ describe("Network Policy Validation", () => {
     expect(success_google_response.stdout).toBe("200");
   });
 
-  test.concurrent("Egress Gateway", async () => {
+  (runEgressTests ? test.concurrent : test.concurrent.skip)("Egress Gateway", async () => {
+
     const egress_gateway_http_curl = [
       "sh",
       "-c",

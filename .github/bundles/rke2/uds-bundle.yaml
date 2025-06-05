@@ -42,6 +42,7 @@ packages:
     # x-release-please-end
     optionalComponents:
       - metrics-server
+      - istio-egress-gateway
     overrides:
       istio-admin-gateway:
         gateway:
