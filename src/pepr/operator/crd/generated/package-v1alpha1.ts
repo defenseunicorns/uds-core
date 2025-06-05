@@ -620,7 +620,8 @@ export enum Mode {
 
 export interface Sso {
   /**
-   * This URL will be used for every binding to both the SP's Assertion Consumer and Single Logout Services.
+   * This URL will be used for every binding to both the SP's Assertion Consumer and Single
+   * Logout Services.
    */
   adminUrl?: string;
   /**
