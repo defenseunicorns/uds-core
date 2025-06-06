@@ -10,5 +10,4 @@ securityContext:
 service:
   enabled: true
   type: NodePort
-  nodePort: 31123
   hostPort: 1000
