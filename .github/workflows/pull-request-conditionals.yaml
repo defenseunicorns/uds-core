@@ -85,6 +85,8 @@ jobs:
               - "!.github/workflows/test-eks.yaml"
               - "!.github/workflows/test-rke2.yaml"
               - "!.github/bundles/**"
+              - "!.github/test-infra/**"
+              - "!tasks/iac.yaml"
 
       # Uses a custom action to filter paths for source packages.
       - name: Check src paths - packages
