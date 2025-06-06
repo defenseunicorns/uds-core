@@ -22,6 +22,10 @@ tasks:
 
   - name: dev-setup
     description: "Create k3d cluster with istio"
+    inputs:
+      istio_components:
+        description: "Comma separated list of istio components to deploy"
+        default: ""
     actions:
       - description: "Create the dev cluster"
         task: setup:create-k3d-cluster
@@ -33,7 +37,7 @@ tasks:
 
       # Note: the `registry-url` flag used here requires uds 0.19.2+
       - description: "Deploy the Istio source package with Zarf Dev"
-        cmd: "uds zarf dev deploy src/istio --flavor upstream --registry-url docker.io --no-progress"
+        cmd: "uds zarf dev deploy src/istio --flavor upstream --registry-url docker.io --no-progress --components=${{ .inputs.istio_components }}"
 
       # Note: Since this is a dev deploy without any `--flavor` it only deploys the CRDs (other components are flavored)
       - description: "Deploy the Prometheus-Stack source package with Zarf Dev to only install the CRDs"

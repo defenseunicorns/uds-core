@@ -1,0 +1,50 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    uds: egress-testing-namespace-1
+  name: egress-gw-1
+---
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: pkg-1
+  namespace: egress-gw-1
+spec:
+  network:
+    allow:
+      - direction: Egress
+        selector:
+          app: curl
+        ports:
+          - 443
+        remoteHost: example.com
+        remoteProtocol: TLS
+        description: "Example Curl"
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    uds: egress-testing-namespace-2
+  name: egress-gw-2
+---
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: pkg-2
+  namespace: egress-gw-2
+spec:
+  network:
+    allow:
+      - direction: Egress
+        selector:
+          app: curl
+        ports:
+          - 80
+        remoteHost: example.com
+        remoteProtocol: HTTP
+        description: "Example Curl"

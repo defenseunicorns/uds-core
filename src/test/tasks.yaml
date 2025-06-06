@@ -11,12 +11,19 @@ tasks:
         cmd: "echo Replace Me"
 
   - name: e2e-test
+    inputs:
+      validate_egress:
+        description: Whether to validate egress controls with the egress gateway
+        default: "true"
+
     actions:
       - description: "Run Test Apps E2E tests"
         task: create-deploy
+        with:
+          validate_egress: ${{ .inputs.validate_egress }}
       - description: "Run Network Tests"
         cmd: |
-          npx jest test/jest/network.spec.ts
+          EGRESS_TESTS=${{ .inputs.validate_egress }} npx jest test/jest/network.spec.ts
         dir: test/jest
       - description: "Run Test Resources Tests"
         cmd: |
@@ -31,6 +38,9 @@ tasks:
       architecture:
         description: "System architecture that the test-apps package should be built for."
         default: ${UDS_ARCH}
+      validate_egress:
+        description: Whether to validate egress controls with the egress gateway
+        default: "true"
 
     actions:
       - description: "Create build output directory"
@@ -39,7 +49,12 @@ tasks:
       - description: Create zarf package for the test resources
         cmd: uds zarf package create src/test --confirm --no-progress --skip-sbom -a ${{ index .inputs "architecture" }}
 
+      - description: Deploy the test resources (with egress-app)
+        if: ${{ eq .inputs.validate_egress "true" }}
+        cmd: "uds zarf package deploy build/zarf-package-uds-core-test-apps-*.zst --confirm --no-progress --components egress-app"
+
       - description: Deploy the test resources
+        if: ${{ eq .inputs.validate_egress "false" }}
         cmd: "uds zarf package deploy build/zarf-package-uds-core-test-apps-*.zst --confirm --no-progress"
 
       - description: Verify the admin app is accessible

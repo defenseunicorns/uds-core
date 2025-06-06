@@ -21,6 +21,7 @@ packages:
     # x-release-please-end
     optionalComponents:
       - metrics-server # note: metrics-server is not available as an EKS addon in govcloud
+      - istio-egress-gateway
     overrides:
       velero:
         velero:

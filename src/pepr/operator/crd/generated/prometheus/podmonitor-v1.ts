@@ -35,7 +35,6 @@ export class PodMonitor extends GenericKind {
    * https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
    */
   declare kind?: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   declare metadata?: { [key: string]: any };
   /**
    * Specification of desired Pod selection for target discovery by Prometheus.
