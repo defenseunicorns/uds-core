@@ -93,6 +93,15 @@ const allow = {
         description: "Custom generated policy CIDR",
         type: "string",
       },
+      remoteHost: {
+        description: "Remote host to allow traffic out to",
+        type: "string",
+      },
+      remoteProtocol: {
+        description: "Protocol used for external connection",
+        type: "string",
+        enum: ["TLS", "HTTP"],
+      },
       port: {
         description: "The port to allow (protocol is always TCP)",
         minimum: 1,
