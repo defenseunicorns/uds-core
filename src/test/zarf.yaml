@@ -19,6 +19,19 @@ components:
           - "app-tenant-package.yaml"
           - "app-curl-packages.yaml"
 
+  # This is excluded from slim-dev to save some resources in package CI
+  - name: egress-app
+    required: false
+    manifests:
+      - name: egress-pkg
+        files:
+          - "app-egress-package.yaml"
+      - name: egress-app
+        files:
+          - "app-egress.yaml"
+    images:
+      - curlimages/curl:latest
+
   # Deploy test workloads
   - name: test-apps
     required: true
