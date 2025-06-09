@@ -1,0 +1,104 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+name: Filter IaC
+
+# This workflow is triggered on pull requests
+on:
+  pull_request:
+    # milestoned is added here as a workaround for release-please not triggering PR workflows (PRs should be added to a milestone to trigger the workflow).
+    # labeled is added to support renovate-ready labelling on PRs
+    types: [milestoned, labeled, opened, reopened, synchronize]
+    paths-ignore:
+      - "**.md"
+      - "**.jpg"
+      - "**.png"
+      - "**.gif"
+      - "**.svg"
+      - docs/**
+      - .vscode/**
+      - .gitignore
+      - renovate.json
+      - .release-please-config.json
+      - .codespellrc
+      - release-please-config.json
+      - CODEOWNERS
+      - LICENSE
+      - scripts/** # scripts/hacks that are used specifically for non-testing workflows
+
+# Permissions for the GITHUB_TOKEN used by the workflow.
+permissions:
+  id-token: write # Needed for OIDC-related operations.
+  contents: read # Allows reading the content of the repository.
+  pull-requests: write # Allows writing pull request metadata.
+  packages: read # Allows reading the published GHCR packages
+
+# Default settings for all run commands in the workflow jobs.
+defaults:
+  run:
+    shell: bash -e -o pipefail {0} # Ensures that scripts fail on error and pipefail is set.
+
+# Abort prior jobs on the same commmit
+concurrency:
+  group: test-iac-${{ github.sha }}
+  cancel-in-progress: false
+
+jobs:
+  # This job checks if there are changes in specific paths source packages.
+  check-paths:
+    runs-on: ubuntu-latest
+    name: Select Jobs
+    outputs:
+      distros: ${{ steps.path-filter-iac.outputs.changes }}
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Check renovate readiness
+        if: startsWith(github.event.pull_request.head.ref, 'renovate/') # Only call for Renovate PRs
+        uses: ./.github/actions/renovate-readiness
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check iac distros src paths
+        id: path-filter-iac
+        uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3
+        with:
+          filters: |
+            aks:
+              - "tasks/iac.yaml"
+              - ".github/bundles/aks/**"
+              - ".github/test-infra/azure/aks/**"
+              - ".github/workflows/test-aks.yaml"
+            rke2:
+              - "tasks/iac.yaml"
+              - ".github/bundles/rke2/**"
+              - ".github/test-infra/aws/rke2/**"
+              - ".github/workflows/test-rke2.yaml"
+            eks:
+              - "tasks/iac.yaml"
+              - ".github/bundles/eks/**"
+              - ".github/test-infra/aws/eks/**"
+              - ".github/workflows/test-eks.yaml"
+
+  # Trigger IaC
+  run-eks-test:
+    needs: check-paths
+    name: Schedule EKS
+    if: ${{ contains(needs.check-paths.outputs.distros, 'eks') || contains(github.event.pull_request.labels.*.name, 'test-all-iac') || contains(github.event.pull_request.labels.*.name, 'test-eks') }}
+    uses: ./.github/workflows/test-eks.yaml
+    secrets: inherit
+
+  run-rke2-test:
+    needs: check-paths
+    name: Schedule RKE2
+    if: ${{ contains(needs.check-paths.outputs.distros, 'rke2') || contains(github.event.pull_request.labels.*.name, 'test-all-iac') || contains(github.event.pull_request.labels.*.name, 'test-rke2') }}
+    uses: ./.github/workflows/test-rke2.yaml
+    secrets: inherit
+
+  run-aks-test:
+    needs: check-paths
+    name: Schedule AKS
+    if: ${{ contains(needs.check-paths.outputs.distros, 'aks') || contains(github.event.pull_request.labels.*.name, 'test-all-iac') || contains(github.event.pull_request.labels.*.name, 'test-aks') }}
+    uses: ./.github/workflows/test-aks.yaml
+    secrets: inherit
