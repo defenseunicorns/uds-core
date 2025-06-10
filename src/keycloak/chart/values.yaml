@@ -72,6 +72,12 @@ themeCustomizations:
 #       - name: favicon.svg
 #         configmap:
 #           name: keycloak-theme-overrides
+#  termsAndConditions:
+#    text1: lorem ipsum
+#    text2: lorem ipsum
+#    text3: lorem ipsum
+#    configmap:
+#      name: keycloak-theme-overrides
 
 # Generates an initial password for first admin user - only use if install is headless
 # (i.e. cannot hit keycloak UI with `zarf connect keycloak`), password should be changed after initial login
