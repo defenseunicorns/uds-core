@@ -361,17 +361,9 @@ spec:
               - configMap:
                   name: {{ .Values.themeCustomizations.termsAndConditions.configmap.name }}
                   items:
-                    {{- if .Values.themeCustomizations.termsAndConditions.text1 }}
-                    - key: text1
-                      path: text1
-                    {{- end }}
-                    {{- if .Values.themeCustomizations.termsAndConditions.text2 }}
-                    - key: text2
-                      path: text2
-                    {{- end }}
-                    {{- if .Values.themeCustomizations.termsAndConditions.text3 }}
-                    - key: text3
-                      path: text3
+                    {{- range $key := .Values.themeCustomizations.termsAndConditions.keys }}
+                    - key: {{ $key }}
+                      path: tc_{{ $key }}.txt
                     {{- end }}
               {{- end }}
         {{- end }}

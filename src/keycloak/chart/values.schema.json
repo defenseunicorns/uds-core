@@ -474,30 +474,6 @@
           },
           "additionalProperties": true
         },
-        "termsAndConditions": {
-          "type": "object",
-          "properties": {
-            "text1": {
-              "type": "string"
-            },
-            "text2": {
-              "type": "string"
-            },
-            "text3": {
-              "type": "string"
-            },
-            "configmap": {
-              "type": "object",
-              "properties": {
-                "name": {
-                  "type": "string"
-                }
-              },
-              "additionalProperties": false
-            }
-          },
-          "additionalProperties": false
-        },
         "resources": {
           "type": "object",
           "properties": {
@@ -517,6 +493,25 @@
                       }
                     }
                   }
+                }
+              }
+            }
+          }
+        },
+        "termsAndConditions": {
+          "type": "object",
+          "properties": {
+            "keys": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "configmap": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
                 }
               }
             }
