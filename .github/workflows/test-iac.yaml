@@ -38,7 +38,7 @@ defaults:
   run:
     shell: bash -e -o pipefail {0} # Ensures that scripts fail on error and pipefail is set.
 
-# Abort prior jobs on the same commmit
+# Abort prior jobs on the same commit
 concurrency:
   group: test-iac-${{ github.sha }}
   cancel-in-progress: false
