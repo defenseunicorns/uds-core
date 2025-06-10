@@ -9,7 +9,7 @@ metadata:
 spec:
   network:
     serviceMesh:
-      mode: ambient
+      mode: {{ if .Values.ambient }}ambient{{ else }}sidecar{{ end }}
     allow:
       - direction: Ingress
         selector:
