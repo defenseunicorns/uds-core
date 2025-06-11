@@ -25,7 +25,7 @@ export default defineConfig([globalIgnores([
     "**/dist",
     "**/jest.*.js",
     "test/playwright/",
-    "test/jest/",
+    "test/vitest/",
     "**/scripts/",
     "**/uds-docs/",
 ]), {

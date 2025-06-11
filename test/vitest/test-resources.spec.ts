@@ -3,10 +3,10 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { describe, expect, test } from "@jest/globals";
+import { describe, expect, test, vi } from "vitest";
 import { K8s, kind } from "pepr";
 
-jest.setTimeout(30000);
+vi.setConfig({ testTimeout: 30000 });
 
 describe("Test Resources Configuration", () => {
   describe("Istio Ambient Mode", () => {
