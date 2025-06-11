@@ -4,17 +4,27 @@
  */
 
 import { kind } from "pepr";
-import { afterEach, beforeEach, describe, expect, it, Mock, MockedFunction, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Direction, RemoteGenerated, RemoteProtocol } from "../../crd";
-import { purgeOrphans } from "../utils";
+import * as utils from "../utils";
 import { defaultEgressMocks, pkgMock, updateEgressMocks } from "./defaultTestMocks";
-import { reconcileSharedEgressResources } from "./egress";
+import * as egressMod from "./egress";
 import { istioEgressResources } from "./istio-resources";
 
-const mockPurgeOrphans: MockedFunction<() => Promise<void>> = vi.fn();
-const mockReconcileSharedEgressResources = vi.fn();
+vi.mock("../utils", async importOriginal => {
+  const original = (await importOriginal()) as typeof utils;
+  return {
+    ...original,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    purgeOrphans: vi.fn(async (fn?: () => Promise<any>) => {
+      if (typeof fn === "function") {
+        return await fn();
+      }
+      return;
+    }),
+  };
+});
 
-// Mock the necessary functions
 vi.mock("pepr", () => ({
   K8s: vi.fn(),
   Log: {
@@ -35,20 +45,6 @@ vi.mock("pepr", () => ({
     Service: "Service",
   },
 }));
-vi.mock("../utils", async () => {
-  const originalModule = (await vi.importActual("../utils")) as object;
-  return {
-    ...originalModule,
-    purgeOrphans: vi.fn(async <T>(fn: () => Promise<T>) => fn()),
-  };
-});
-vi.mock("./egress", async () => {
-  const originalModule = (await vi.importActual("./egress")) as object;
-  return {
-    ...originalModule,
-    reconcileSharedEgressResources: vi.fn(),
-  };
-});
 
 describe("test istioEgressResources", () => {
   const pkgIdMock = "test-package-test-namespace";
@@ -57,14 +53,14 @@ describe("test istioEgressResources", () => {
     process.env.PEPR_WATCH_MODE = "true";
     vi.useFakeTimers();
 
-    (purgeOrphans as Mock).mockImplementation(mockPurgeOrphans);
-    (reconcileSharedEgressResources as Mock).mockImplementation(mockReconcileSharedEgressResources);
+    vi.spyOn(egressMod, "reconcileSharedEgressResources").mockImplementation(async () => {});
+    updateEgressMocks(defaultEgressMocks);
+    vi.clearAllMocks();
   });
 
   afterEach(() => {
     vi.runOnlyPendingTimers();
     vi.useRealTimers();
-    vi.clearAllMocks();
   });
 
   it("should err if no egress gateway namespace with defined hostResourceMap", async () => {
@@ -136,7 +132,7 @@ describe("test istioEgressResources", () => {
       [],
     );
 
-    expect(mockReconcileSharedEgressResources).toHaveBeenCalledTimes(1);
+    expect(egressMod.reconcileSharedEgressResources).toHaveBeenCalledTimes(1);
   });
 
   it("should create egress resources", async () => {
