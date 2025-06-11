@@ -3,26 +3,26 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { kind } from "pepr";
+import { afterEach, beforeEach, describe, expect, it, Mock, MockedFunction, vi } from "vitest";
 import { Direction, RemoteGenerated, RemoteProtocol } from "../../crd";
 import { purgeOrphans } from "../utils";
 import { defaultEgressMocks, pkgMock, updateEgressMocks } from "./defaultTestMocks";
-import { istioEgressResources } from "./istio-resources";
 import { reconcileSharedEgressResources } from "./egress";
+import { istioEgressResources } from "./istio-resources";
 
-const mockPurgeOrphans: jest.MockedFunction<() => Promise<void>> = jest.fn();
-const mockReconcileSharedEgressResources = jest.fn();
+const mockPurgeOrphans: MockedFunction<() => Promise<void>> = vi.fn();
+const mockReconcileSharedEgressResources = vi.fn();
 
 // Mock the necessary functions
-jest.mock("pepr", () => ({
-  K8s: jest.fn(),
+vi.mock("pepr", () => ({
+  K8s: vi.fn(),
   Log: {
-    child: jest.fn(() => ({
-      info: jest.fn(),
-      debug: jest.fn(),
-      error: jest.fn(),
-      warn: jest.fn(),
+    child: vi.fn(() => ({
+      info: vi.fn(),
+      debug: vi.fn(),
+      error: vi.fn(),
+      warn: vi.fn(),
       level: "info",
     })),
   },
@@ -35,18 +35,18 @@ jest.mock("pepr", () => ({
     Service: "Service",
   },
 }));
-jest.mock("../utils", () => {
-  const originalModule = jest.requireActual("../utils");
+vi.mock("../utils", async () => {
+  const originalModule = (await vi.importActual("../utils")) as object;
   return {
-    ...(typeof originalModule === "object" ? originalModule : {}),
-    purgeOrphans: jest.fn(async <T>(fn: () => Promise<T>) => fn()),
+    ...originalModule,
+    purgeOrphans: vi.fn(async <T>(fn: () => Promise<T>) => fn()),
   };
 });
-jest.mock("./egress", () => {
-  const originalModule = jest.requireActual("./egress");
+vi.mock("./egress", async () => {
+  const originalModule = (await vi.importActual("./egress")) as object;
   return {
-    ...(typeof originalModule === "object" ? originalModule : {}),
-    reconcileSharedEgressResources: jest.fn(),
+    ...originalModule,
+    reconcileSharedEgressResources: vi.fn(),
   };
 });
 
@@ -55,18 +55,16 @@ describe("test istioEgressResources", () => {
 
   beforeEach(() => {
     process.env.PEPR_WATCH_MODE = "true";
-    jest.useFakeTimers();
+    vi.useFakeTimers();
 
-    (purgeOrphans as jest.Mock).mockImplementation(mockPurgeOrphans);
-    (reconcileSharedEgressResources as jest.Mock).mockImplementation(
-      mockReconcileSharedEgressResources,
-    );
+    (purgeOrphans as Mock).mockImplementation(mockPurgeOrphans);
+    (reconcileSharedEgressResources as Mock).mockImplementation(mockReconcileSharedEgressResources);
   });
 
   afterEach(() => {
-    jest.runOnlyPendingTimers();
-    jest.useRealTimers();
-    jest.clearAllMocks();
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
+    vi.clearAllMocks();
   });
 
   it("should err if no egress gateway namespace with defined hostResourceMap", async () => {
@@ -79,7 +77,7 @@ describe("test istioEgressResources", () => {
     const errorMessage =
       "Unable to reconcile get the egress gateway namespace istio-egress-gateway.";
 
-    const getNsMock = jest
+    const getNsMock = vi
       .fn<() => Promise<kind.Namespace>>()
       .mockRejectedValue(new Error(errorMessage));
 

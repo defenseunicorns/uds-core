@@ -3,16 +3,16 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { describe, expect, it, jest, beforeEach } from "@jest/globals";
 import { K8s } from "pepr";
+import { afterEach, beforeEach, describe, expect, it, Mock, vi } from "vitest";
+import { IstioGateway, IstioTLSMode, RemoteProtocol } from "../../crd";
 import {
   generateEgressGateway,
-  warnMatchingExistingGateways,
   generateGatewayName,
+  warnMatchingExistingGateways,
 } from "./gateway";
-import { EgressResource } from "./types";
-import { IstioGateway, RemoteProtocol, IstioTLSMode } from "../../crd";
 import { istioEgressGatewayNamespace } from "./istio-resources";
+import { EgressResource } from "./types";
 
 describe("test generate egress gateway", () => {
   it("should create an http gateway object", () => {
@@ -45,13 +45,13 @@ describe("test generate egress gateway", () => {
 });
 
 // Mock the necessary Kubernetes functions
-jest.mock("pepr", () => ({
-  K8s: jest.fn(),
+vi.mock("pepr", () => ({
+  K8s: vi.fn(),
   Log: {
-    child: jest.fn(() => ({
-      info: jest.fn(),
-      error: jest.fn(),
-      warn: jest.fn(),
+    child: vi.fn(() => ({
+      info: vi.fn(),
+      error: vi.fn(),
+      warn: vi.fn(),
       level: "info",
     })),
   },
@@ -66,21 +66,21 @@ describe("test warnMatchingExistingGateways", () => {
 
   beforeEach(() => {
     process.env.PEPR_WATCH_MODE = "true";
-    jest.useFakeTimers();
+    vi.useFakeTimers();
   });
 
   afterEach(() => {
-    jest.runOnlyPendingTimers();
-    jest.useRealTimers();
-    jest.clearAllMocks();
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
+    vi.clearAllMocks();
   });
 
   it("does not warn when no gateways exist", async () => {
-    const getMock = jest.fn<() => Promise<{ items: IstioGateway[] }>>().mockResolvedValue({
+    const getMock = vi.fn<() => Promise<{ items: IstioGateway[] }>>().mockResolvedValue({
       items: [],
     });
 
-    (K8s as jest.Mock).mockImplementation(kindType => {
+    (K8s as Mock).mockImplementation(kindType => {
       if (kindType === IstioGateway) {
         return {
           Get: getMock,
@@ -92,7 +92,7 @@ describe("test warnMatchingExistingGateways", () => {
   });
 
   it("does not warn when gateway with same host name exists in egress gw namespace", async () => {
-    const getMock = jest.fn<() => Promise<{ items: IstioGateway[] }>>().mockResolvedValue({
+    const getMock = vi.fn<() => Promise<{ items: IstioGateway[] }>>().mockResolvedValue({
       items: [
         {
           metadata: {
@@ -115,7 +115,7 @@ describe("test warnMatchingExistingGateways", () => {
       ],
     });
 
-    (K8s as jest.Mock).mockImplementation(kindType => {
+    (K8s as Mock).mockImplementation(kindType => {
       if (kindType === IstioGateway) {
         return {
           Get: getMock,
@@ -130,7 +130,7 @@ describe("test warnMatchingExistingGateways", () => {
     const newHost = "httpbin.org";
     const newGwName = generateGatewayName(newHost);
 
-    const getMock = jest.fn<() => Promise<{ items: IstioGateway[] }>>().mockResolvedValue({
+    const getMock = vi.fn<() => Promise<{ items: IstioGateway[] }>>().mockResolvedValue({
       items: [
         {
           metadata: {
@@ -153,7 +153,7 @@ describe("test warnMatchingExistingGateways", () => {
       ],
     });
 
-    (K8s as jest.Mock).mockImplementation(kindType => {
+    (K8s as Mock).mockImplementation(kindType => {
       if (kindType === IstioGateway) {
         return {
           Get: getMock,
@@ -168,7 +168,7 @@ describe("test warnMatchingExistingGateways", () => {
     const newGwName = "custom-gateway";
     const newGwNamespace = "custom-namespace";
 
-    const getMock = jest.fn<() => Promise<{ items: IstioGateway[] }>>().mockResolvedValue({
+    const getMock = vi.fn<() => Promise<{ items: IstioGateway[] }>>().mockResolvedValue({
       items: [
         {
           metadata: {
@@ -191,7 +191,7 @@ describe("test warnMatchingExistingGateways", () => {
       ],
     });
 
-    (K8s as jest.Mock).mockImplementation(kindType => {
+    (K8s as Mock).mockImplementation(kindType => {
       if (kindType === IstioGateway) {
         return {
           Get: getMock,
