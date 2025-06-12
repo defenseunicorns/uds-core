@@ -73,7 +73,7 @@ variable "autoscaling_min_node_count_worker" {
 
 variable "default_node_pool_vm_size" {
   description = "Specifies the vm size of the default node pool"
-  default     = "Standard_A8_v2"
+  default     = "Standard_D4s_v4"
   type        = string
 }
 
@@ -85,13 +85,13 @@ variable "worker_node_pool_count" {
 
 variable "worker_pool_vm_size" {
   description = "Specifies the vm size of the worker node pool"
-  default     = "Standard_A8_v2"
+  default     = "Standard_D4s_v4"
   type        = string
 }
 
 variable "default_node_pool_availability_zones" {
   description = "Specifies the availability zones of the default node pool"
-  default     = ["1", "2", "3"]
+  default     = ["1"]
   type        = list(string)
 }
 
