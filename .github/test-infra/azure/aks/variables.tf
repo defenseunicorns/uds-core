@@ -91,7 +91,7 @@ variable "worker_pool_vm_size" {
 
 variable "default_node_pool_availability_zones" {
   description = "Specifies the availability zones of the default node pool"
-  default     = ["1", "2", "3"]
+  default     = ["1"]
   type        = list(string)
 }
 
