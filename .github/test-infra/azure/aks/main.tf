@@ -20,6 +20,9 @@ resource "random_string" "name" {
 resource "azurerm_resource_group" "this" {
   name     = "${var.resource_group_name}-${random_string.name.result}"
   location = var.location
+  tags = {
+    "Owner" = "UDS Foundations"
+  }
 }
 
 resource "azurerm_role_assignment" "cluster_admin" {
@@ -55,6 +58,9 @@ resource "azapi_resource" "aks_cluster" {
   name      = local.cluster_name
   parent_id = azurerm_resource_group.this.id
   location  = azurerm_resource_group.this.location
+  tags = {
+    "Owner" = "UDS Foundations"
+  }
 
   body = {
     identity = {
