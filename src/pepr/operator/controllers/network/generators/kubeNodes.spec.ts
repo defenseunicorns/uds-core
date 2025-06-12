@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { beforeAll, beforeEach, describe, expect, it, jest } from "@jest/globals";
+import { beforeAll, beforeEach, describe, expect, it, Mock, vi } from "vitest";
 
 import { V1NetworkPolicyList } from "@kubernetes/client-node";
 import { K8s, kind } from "pepr";
@@ -26,11 +26,11 @@ type MockNode = {
   status: { addresses: { type: string; address: string }[] };
 };
 
-jest.mock("pepr", () => {
-  const originalModule = jest.requireActual("pepr") as object;
+vi.mock("pepr", async () => {
+  const originalModule = (await vi.importActual("pepr")) as object;
   return {
     ...originalModule,
-    K8s: jest.fn(),
+    K8s: vi.fn(),
     kind: {
       Node: "Node",
       NetworkPolicy: "NetworkPolicy",
@@ -39,21 +39,21 @@ jest.mock("pepr", () => {
 });
 
 describe("updateKubeNodesAuthorizationPolicies", () => {
-  const mockApply = jest.fn();
-  const mockK8sGetNodes = jest.fn<() => Promise<KubernetesList<kind.Node>>>();
-  const mockGetNetworkPolicies = jest.fn<() => Promise<KubernetesList<kind.NetworkPolicy>>>();
-  const mockGetAuthPolicies = jest.fn<() => Promise<KubernetesList<AuthorizationPolicy>>>();
+  const mockApply = vi.fn();
+  const mockK8sGetNodes = vi.fn<() => Promise<KubernetesList<kind.Node>>>();
+  const mockGetNetworkPolicies = vi.fn<() => Promise<KubernetesList<kind.NetworkPolicy>>>();
+  const mockGetAuthPolicies = vi.fn<() => Promise<KubernetesList<AuthorizationPolicy>>>();
 
-  (K8s as jest.Mock).mockImplementation(() => ({
+  (K8s as Mock).mockImplementation(() => ({
     Get: mockK8sGetNodes,
-    WithLabel: jest.fn(() => ({
+    WithLabel: vi.fn(() => ({
       Get: mockGetAuthPolicies,
     })),
     Apply: mockApply,
   }));
 
   beforeEach(async () => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockGetAuthPolicies.mockReset();
     mockGetNetworkPolicies.mockResolvedValue({ items: [] });
     mockK8sGetNodes.mockResolvedValue({ items: [] }); // ensures nodeSet starts empty
@@ -207,14 +207,14 @@ describe("kubeNodes module", () => {
     ],
   };
 
-  const mockK8sGetNodes = jest.fn<() => Promise<KubernetesList<kind.Node>>>();
-  const mockGetNetworkPolicies = jest.fn<() => Promise<KubernetesList<kind.NetworkPolicy>>>();
-  const mockApply = jest.fn();
+  const mockK8sGetNodes = vi.fn<() => Promise<KubernetesList<kind.Node>>>();
+  const mockGetNetworkPolicies = vi.fn<() => Promise<KubernetesList<kind.NetworkPolicy>>>();
+  const mockApply = vi.fn();
 
   beforeAll(() => {
-    (K8s as jest.Mock).mockImplementation(() => ({
+    (K8s as Mock).mockImplementation(() => ({
       Get: mockK8sGetNodes,
-      WithLabel: jest.fn(() => ({
+      WithLabel: vi.fn(() => ({
         Get: mockGetNetworkPolicies,
       })),
       Apply: mockApply,
@@ -222,7 +222,7 @@ describe("kubeNodes module", () => {
   });
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("initAllNodesTarget", () => {

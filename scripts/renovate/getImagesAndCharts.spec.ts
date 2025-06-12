@@ -5,29 +5,30 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { afterEach, beforeEach, describe, expect, Mock, test, vi } from 'vitest';
 import * as yaml from 'yaml';
 import { getImagesAndCharts } from './getImagesAndCharts';
 
 // Mock fs and path modules
-jest.mock('fs');
-jest.mock('path');
+vi.mock('fs');
+vi.mock('path');
 
 describe('getImagesAndCharts', () => {
   beforeEach(() => {
     // Clear all mocks
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     // Mock path.join to return predictable paths
-    (path.join as jest.Mock).mockImplementation((...args) => args.join('/'));
+    (path.join as Mock).mockImplementation((...args) => args.join('/'));
 
     // Mock fs.existsSync to return false for extract dir
-    (fs.existsSync as jest.Mock).mockReturnValue(false);
+    (fs.existsSync as Mock).mockReturnValue(false);
 
     // Mock fs.mkdirSync
-    (fs.mkdirSync as jest.Mock).mockImplementation(() => undefined);
+    (fs.mkdirSync as Mock).mockImplementation(() => undefined);
 
     // Mock fs.readdirSync for the main directory
-    (fs.readdirSync as jest.Mock).mockImplementation((dir) => {
+    (fs.readdirSync as Mock).mockImplementation((dir) => {
       if (dir === 'test-dir') {
         return ['zarf.yaml', 'common'];
       }
@@ -38,25 +39,25 @@ describe('getImagesAndCharts', () => {
     });
 
     // Mock fs.statSync
-    (fs.statSync as jest.Mock).mockImplementation((filePath) => ({
+    (fs.statSync as Mock).mockImplementation((filePath) => ({
       isDirectory: () => filePath.endsWith('common')
     }));
 
     // Mock fs.writeFileSync
-    (fs.writeFileSync as jest.Mock).mockImplementation(() => undefined);
+    (fs.writeFileSync as Mock).mockImplementation(() => undefined);
 
     // Mock console.error to prevent test output pollution
-    jest.spyOn(console, 'error').mockImplementation(() => { });
+    vi.spyOn(console, 'error').mockImplementation(() => { });
   });
 
   afterEach(() => {
     // Restore console.error
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   test('should extract charts and images from realistic zarf.yaml files', async () => {
     // Mock real-world zarf.yaml files based on the grafana example
-    (fs.readFileSync as jest.Mock).mockImplementation((filePath) => {
+    (fs.readFileSync as Mock).mockImplementation((filePath) => {
       if (filePath === 'test-dir/zarf.yaml') {
         return `
 kind: ZarfPackageConfig
@@ -166,14 +167,14 @@ components:
     );
 
     // Get the actual content written to charts.yaml
-    const chartsContent = (fs.writeFileSync as jest.Mock).mock.calls.find(
+    const chartsContent = (fs.writeFileSync as Mock).mock.calls.find(
       call => call[0] === 'test-dir/extract/charts.yaml'
-    )[1];
+    )![1];
 
     // Get the actual content written to images.yaml
-    const imagesContent = (fs.writeFileSync as jest.Mock).mock.calls.find(
+    const imagesContent = (fs.writeFileSync as Mock).mock.calls.find(
       call => call[0] === 'test-dir/extract/images.yaml'
-    )[1];
+    )![1];
 
     // Parse the YAML content
     const charts = yaml.parse(chartsContent);
@@ -210,7 +211,7 @@ components:
 
   test('should handle multi-flavor images with same version but different image names', async () => {
     // Mock zarf.yaml with different image names but same versions across flavors
-    (fs.readFileSync as jest.Mock).mockImplementation((filePath) => {
+    (fs.readFileSync as Mock).mockImplementation((filePath) => {
       if (filePath === 'test-dir/zarf.yaml') {
         return `
 kind: ZarfPackageConfig
@@ -261,9 +262,9 @@ metadata:
     await getImagesAndCharts('test-dir');
 
     // Get the actual content written to images.yaml
-    const imagesContent = (fs.writeFileSync as jest.Mock).mock.calls.find(
+    const imagesContent = (fs.writeFileSync as Mock).mock.calls.find(
       call => call[0] === 'test-dir/extract/images.yaml'
-    )[1];
+    )![1];
 
     // Parse the YAML content
     const images = yaml.parse(imagesContent);
@@ -285,7 +286,7 @@ metadata:
 
   test('should handle empty directory', async () => {
     // Mock empty directory
-    (fs.readdirSync as jest.Mock).mockReturnValue([]);
+    (fs.readdirSync as Mock).mockReturnValue([]);
 
     await getImagesAndCharts('empty-dir');
 
@@ -293,13 +294,13 @@ metadata:
     expect(fs.mkdirSync).toHaveBeenCalledWith('empty-dir/extract', { recursive: true });
 
     // Check if empty files were written
-    const chartsContent = (fs.writeFileSync as jest.Mock).mock.calls.find(
+    const chartsContent = (fs.writeFileSync as Mock).mock.calls.find(
       call => call[0] === 'empty-dir/extract/charts.yaml'
-    )[1];
+    )![1];
 
-    const imagesContent = (fs.writeFileSync as jest.Mock).mock.calls.find(
+    const imagesContent = (fs.writeFileSync as Mock).mock.calls.find(
       call => call[0] === 'empty-dir/extract/images.yaml'
-    )[1];
+    )![1];
 
     // Parse the YAML content
     const charts = yaml.parse(chartsContent);
@@ -312,7 +313,7 @@ metadata:
 
   test('should handle invalid zarf.yaml file', async () => {
     // Mock invalid YAML content
-    (fs.readFileSync as jest.Mock).mockImplementation((filePath) => {
+    (fs.readFileSync as Mock).mockImplementation((filePath) => {
       if (filePath === 'test-dir/zarf.yaml') {
         return `invalid: yaml: content: - [ }`;
       }
@@ -325,13 +326,13 @@ metadata:
     expect(fs.mkdirSync).toHaveBeenCalledWith('test-dir/extract', { recursive: true });
 
     // Check if empty files were written
-    const chartsContent = (fs.writeFileSync as jest.Mock).mock.calls.find(
+    const chartsContent = (fs.writeFileSync as Mock).mock.calls.find(
       call => call[0] === 'test-dir/extract/charts.yaml'
-    )[1];
+    )![1];
 
-    const imagesContent = (fs.writeFileSync as jest.Mock).mock.calls.find(
+    const imagesContent = (fs.writeFileSync as Mock).mock.calls.find(
       call => call[0] === 'test-dir/extract/images.yaml'
-    )[1];
+    )![1];
 
     // Parse the YAML content
     const charts = yaml.parse(chartsContent);
@@ -344,7 +345,7 @@ metadata:
 
   test('should handle images with beta/rc version tags', async () => {
     // Mock YAML with images having beta/rc version tags
-    (fs.readFileSync as jest.Mock).mockImplementation((filePath) => {
+    (fs.readFileSync as Mock).mockImplementation((filePath) => {
       if (filePath === 'test-dir/zarf.yaml') {
         return `
 kind: ZarfPackageConfig
@@ -376,9 +377,9 @@ metadata:
     await getImagesAndCharts('test-dir');
 
     // Get the actual content written to images.yaml
-    const imagesContent = (fs.writeFileSync as jest.Mock).mock.calls.find(
+    const imagesContent = (fs.writeFileSync as Mock).mock.calls.find(
       call => call[0] === 'test-dir/extract/images.yaml'
-    )[1];
+    )![1];
 
     // Parse the YAML content
     const images = yaml.parse(imagesContent);

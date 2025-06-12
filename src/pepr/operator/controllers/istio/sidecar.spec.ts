@@ -3,10 +3,10 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { describe, expect, it } from "@jest/globals";
-import { generateEgressSidecar } from "./sidecar";
+import { describe, expect, it } from "vitest";
 import { IstioOutboundTrafficPolicyMode } from "../../crd";
 import { ownerRefsMock } from "./defaultTestMocks";
+import { generateEgressSidecar } from "./sidecar";
 
 describe("test generate sidecar", () => {
   const packageName = "test-pkg";
