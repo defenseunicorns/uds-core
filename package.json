@@ -38,5 +38,8 @@
     "husky": "9.1.7",
     "lint-staged": "16.1.0",
     "vitest": "^3.0.0"
+  },
+  "overrides": {
+    "brace-expansion": "1.1.11"
   }
 }
