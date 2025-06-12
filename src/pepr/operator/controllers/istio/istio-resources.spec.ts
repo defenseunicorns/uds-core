@@ -15,8 +15,7 @@ vi.mock("../utils", async importOriginal => {
   const original = (await importOriginal()) as typeof utils;
   return {
     ...original,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    purgeOrphans: vi.fn(async (fn?: () => Promise<any>) => {
+    purgeOrphans: vi.fn(async <T>(fn?: () => Promise<T>) => {
       if (typeof fn === "function") {
         return await fn();
       }
