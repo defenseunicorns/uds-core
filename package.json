@@ -29,7 +29,7 @@
     "k3d-setup": "k3d cluster delete pepr-dev && k3d cluster create pepr-dev --k3s-arg '--debug@server:0'"
   },
   "dependencies": {
-    "pepr": "0.51.3"
+    "pepr": "0.51.4"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
