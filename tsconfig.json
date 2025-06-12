@@ -5,18 +5,15 @@
     "declarationMap": true,
     "emitDeclarationOnly": true,
     "esModuleInterop": true,
-    "lib": [
-      "ES2022"
-    ],
-    "module": "CommonJS",
-    "moduleResolution": "node",
+    "lib": ["ES2022", "WebWorker"],
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
     "outDir": "dist",
     "resolveJsonModule": true,
     "rootDir": ".",
     "strict": true,
     "target": "ES2022",
     "useUnknownInCatchVariables": false,
-    "types": ["jest"]
   },
   "include": [
     "**/*.ts"
@@ -24,7 +21,7 @@
   "exclude": [
     "dist",
     "test/playwright",
-    "test/jest",
+    "test/vitest",
     "scripts/",
     "uds-docs"
   ]

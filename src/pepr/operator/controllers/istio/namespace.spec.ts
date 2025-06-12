@@ -10,42 +10,43 @@ import { cleanupNamespace, enableIstio, IstioState, killPods } from "./namespace
 
 // Import the utility functions for direct testing
 // Note: These need to be exported in namespace.ts for testing
+import { beforeEach, describe, expect, Mock, test, vi } from "vitest";
 import { applyNamespaceUpdates, getCurrentIstioState, getIstioLabels } from "./namespace";
 
-jest.mock("pepr", () => {
-  const originalModule = jest.requireActual("pepr") as object;
+vi.mock("pepr", async () => {
+  const originalModule = (await vi.importActual("pepr")) as object;
   return {
     ...originalModule,
-    K8s: jest.fn(),
+    K8s: vi.fn(),
   };
 });
 
-jest.mock("../../reconcilers", () => ({
-  writeEvent: jest.fn(),
+vi.mock("../../reconcilers", () => ({
+  writeEvent: vi.fn(),
 }));
 
-const mockApply = jest.fn();
-const mockGet = jest.fn();
-const mockPodGet = jest.fn().mockResolvedValue({ items: [] });
-const mockPodDelete = jest.fn().mockResolvedValue({});
-const mockPackageGet = jest
+const mockApply = vi.fn();
+const mockGet = vi.fn();
+const mockPodGet = vi.fn().mockResolvedValue({ items: [] });
+const mockPodDelete = vi.fn().mockResolvedValue({});
+const mockPackageGet = vi
   .fn()
   .mockResolvedValue({ metadata: { namespace: "test-ns", name: "pkg-existing" } });
 
 describe("enableIstio", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
-    (K8s as jest.Mock).mockImplementation(resourceKind => {
+    vi.clearAllMocks();
+    (K8s as Mock).mockImplementation(resourceKind => {
       if (resourceKind === kind.Pod) {
-        return { InNamespace: jest.fn().mockReturnValue({ Get: mockPodGet }) };
+        return { InNamespace: vi.fn().mockReturnValue({ Get: mockPodGet }) };
       }
       if (resourceKind === kind.Namespace) {
         return { Get: mockGet, Apply: mockApply };
       }
       if (resourceKind === UDSPackage) {
-        return { InNamespace: jest.fn().mockReturnValue({ Get: mockPackageGet }) };
+        return { InNamespace: vi.fn().mockReturnValue({ Get: mockPackageGet }) };
       }
-      return { Get: jest.fn() };
+      return { Get: vi.fn() };
     });
   });
 
@@ -302,18 +303,18 @@ describe("enableIstio", () => {
 
 describe("cleanupNamespace", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
-    (K8s as jest.Mock).mockImplementation(resourceKind => {
+    vi.clearAllMocks();
+    (K8s as Mock).mockImplementation(resourceKind => {
       if (resourceKind === kind.Pod) {
-        return { InNamespace: jest.fn().mockReturnValue({ Get: mockPodGet }) };
+        return { InNamespace: vi.fn().mockReturnValue({ Get: mockPodGet }) };
       }
       if (resourceKind === kind.Namespace) {
         return { Get: mockGet, Apply: mockApply };
       }
       if (resourceKind === UDSPackage) {
-        return { InNamespace: jest.fn().mockReturnValue({ Get: mockPackageGet }) };
+        return { InNamespace: vi.fn().mockReturnValue({ Get: mockPackageGet }) };
       }
-      return { Get: jest.fn() };
+      return { Get: vi.fn() };
     });
   });
 
@@ -493,11 +494,11 @@ describe("cleanupNamespace", () => {
 
 describe("killPods", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
-    (K8s as jest.Mock).mockImplementation(resourceKind => {
+    vi.clearAllMocks();
+    (K8s as Mock).mockImplementation(resourceKind => {
       if (resourceKind === kind.Pod) {
         return {
-          InNamespace: jest.fn().mockReturnValue({ Get: mockPodGet }),
+          InNamespace: vi.fn().mockReturnValue({ Get: mockPodGet }),
           Delete: mockPodDelete,
         };
       }
@@ -876,12 +877,12 @@ describe("getIstioLabels", () => {
 
 describe("applyNamespaceUpdates", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
-    (K8s as jest.Mock).mockImplementation(resourceKind => {
+    vi.clearAllMocks();
+    (K8s as Mock).mockImplementation(resourceKind => {
       if (resourceKind === kind.Namespace) {
         return { Apply: mockApply };
       }
-      return { Get: jest.fn() };
+      return { Get: vi.fn() };
     });
   });
 

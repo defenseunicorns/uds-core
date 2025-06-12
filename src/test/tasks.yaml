@@ -23,12 +23,12 @@ tasks:
           validate_egress: ${{ .inputs.validate_egress }}
       - description: "Run Network Tests"
         cmd: |
-          EGRESS_TESTS=${{ .inputs.validate_egress }} npx jest test/jest/network.spec.ts
-        dir: test/jest
+          EGRESS_TESTS=${{ .inputs.validate_egress }} npx vitest run "network.spec.ts"
+        dir: test/vitest
       - description: "Run Test Resources Tests"
         cmd: |
-          npx jest test/jest/test-resources.spec.ts
-        dir: test/jest
+          npx vitest run "test-resources.spec.ts"
+        dir: test/vitest
       - description: "Remove Test Apps resources"
         task: remove
 

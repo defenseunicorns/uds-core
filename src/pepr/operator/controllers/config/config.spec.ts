@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { kind } from "pepr";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { UDSConfig } from "../../../config";
 import { Component, setupLogger } from "../../../logger";
 import { reconcileAuthservice } from "../keycloak/authservice/authservice";
@@ -13,7 +13,7 @@ import { initAllNodesTarget } from "../network/generators/kubeNodes";
 import { updateUDSConfig } from "./config";
 
 // Mock dependencies
-jest.mock("../../../config", () => ({
+vi.mock("../../../config", () => ({
   UDSConfig: {
     caCert: "",
     authserviceRedisUri: "",
@@ -25,33 +25,33 @@ jest.mock("../../../config", () => ({
   },
 }));
 
-jest.mock("../keycloak/authservice/authservice", () => ({
-  reconcileAuthservice: jest.fn(),
+vi.mock("../keycloak/authservice/authservice", () => ({
+  reconcileAuthservice: vi.fn(),
 }));
 
-jest.mock("../network/generators/kubeAPI", () => ({
-  initAPIServerCIDR: jest.fn(),
+vi.mock("../network/generators/kubeAPI", () => ({
+  initAPIServerCIDR: vi.fn(),
 }));
 
-jest.mock("../network/generators/kubeNodes", () => ({
-  initAllNodesTarget: jest.fn(),
+vi.mock("../network/generators/kubeNodes", () => ({
+  initAllNodesTarget: vi.fn(),
 }));
 
-jest.mock("../../../logger", () => {
+vi.mock("../../../logger", () => {
   const mockLogger = {
-    warn: jest.fn(),
-    level: jest.fn(),
-    fatal: jest.fn(),
-    error: jest.fn(),
-    info: jest.fn(),
-    debug: jest.fn(),
-    trace: jest.fn(),
+    warn: vi.fn(),
+    level: vi.fn(),
+    fatal: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
+    trace: vi.fn(),
   };
   return {
     Component: {
       OPERATOR_CONFIG: "operator-config",
     },
-    setupLogger: jest.fn(() => mockLogger),
+    setupLogger: vi.fn(() => mockLogger),
   };
 });
 
@@ -74,7 +74,7 @@ describe("updateUDSConfig", () => {
     };
 
     // Reset mocks
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     UDSConfig.caCert = "";
     UDSConfig.authserviceRedisUri = "";
     UDSConfig.kubeApiCidr = "";

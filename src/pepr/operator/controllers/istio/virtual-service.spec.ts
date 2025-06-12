@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { K8s } from "pepr";
+import { afterEach, beforeEach, describe, expect, it, Mock, vi } from "vitest";
 import { UDSConfig } from "../../../config";
 import { Expose, Gateway, IstioVirtualService, RemoteProtocol } from "../../crd";
 import { istioEgressGatewayNamespace } from "./istio-resources";
@@ -234,13 +234,13 @@ describe("test generate egress virtual service", () => {
 });
 
 // Mock the necessary Kubernetes functions
-jest.mock("pepr", () => ({
-  K8s: jest.fn(),
+vi.mock("pepr", () => ({
+  K8s: vi.fn(),
   Log: {
-    child: jest.fn(() => ({
-      info: jest.fn(),
-      error: jest.fn(),
-      warn: jest.fn(),
+    child: vi.fn(() => ({
+      info: vi.fn(),
+      error: vi.fn(),
+      warn: vi.fn(),
       level: "info",
     })),
   },
@@ -255,21 +255,21 @@ describe("test warnMatchingExistingVirtualServices", () => {
 
   beforeEach(() => {
     process.env.PEPR_WATCH_MODE = "true";
-    jest.useFakeTimers();
+    vi.useFakeTimers();
   });
 
   afterEach(() => {
-    jest.runOnlyPendingTimers();
-    jest.useRealTimers();
-    jest.clearAllMocks();
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
+    vi.clearAllMocks();
   });
 
   it("does not warn when no virtual services exist", async () => {
-    const getMock = jest.fn<() => Promise<{ items: IstioVirtualService[] }>>().mockResolvedValue({
+    const getMock = vi.fn<() => Promise<{ items: IstioVirtualService[] }>>().mockResolvedValue({
       items: [],
     });
 
-    (K8s as jest.Mock).mockImplementation(kindType => {
+    (K8s as Mock).mockImplementation(kindType => {
       if (kindType === IstioVirtualService) {
         return {
           Get: getMock,
@@ -281,7 +281,7 @@ describe("test warnMatchingExistingVirtualServices", () => {
   });
 
   it("does not warn when gateway with same host name exists in egress gw namespace", async () => {
-    const getMock = jest.fn<() => Promise<{ items: IstioVirtualService[] }>>().mockResolvedValue({
+    const getMock = vi.fn<() => Promise<{ items: IstioVirtualService[] }>>().mockResolvedValue({
       items: [
         {
           metadata: {
@@ -295,7 +295,7 @@ describe("test warnMatchingExistingVirtualServices", () => {
       ],
     });
 
-    (K8s as jest.Mock).mockImplementation(kindType => {
+    (K8s as Mock).mockImplementation(kindType => {
       if (kindType === IstioVirtualService) {
         return {
           Get: getMock,
@@ -310,7 +310,7 @@ describe("test warnMatchingExistingVirtualServices", () => {
     const newHost = "httpbin.org";
     const newVsName = generateEgressVSName(newHost);
 
-    const getMock = jest.fn<() => Promise<{ items: IstioVirtualService[] }>>().mockResolvedValue({
+    const getMock = vi.fn<() => Promise<{ items: IstioVirtualService[] }>>().mockResolvedValue({
       items: [
         {
           metadata: {
@@ -324,7 +324,7 @@ describe("test warnMatchingExistingVirtualServices", () => {
       ],
     });
 
-    (K8s as jest.Mock).mockImplementation(kindType => {
+    (K8s as Mock).mockImplementation(kindType => {
       if (kindType === IstioVirtualService) {
         return {
           Get: getMock,
@@ -339,7 +339,7 @@ describe("test warnMatchingExistingVirtualServices", () => {
     const newVsName = "custom-gateway";
     const newVsNamespace = "custom-namespace";
 
-    const getMock = jest.fn<() => Promise<{ items: IstioVirtualService[] }>>().mockResolvedValue({
+    const getMock = vi.fn<() => Promise<{ items: IstioVirtualService[] }>>().mockResolvedValue({
       items: [
         {
           metadata: {
@@ -353,7 +353,7 @@ describe("test warnMatchingExistingVirtualServices", () => {
       ],
     });
 
-    (K8s as jest.Mock).mockImplementation(kindType => {
+    (K8s as Mock).mockImplementation(kindType => {
       if (kindType === IstioVirtualService) {
         return {
           Get: getMock,

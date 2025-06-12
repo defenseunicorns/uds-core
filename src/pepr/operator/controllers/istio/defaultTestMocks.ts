@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { jest } from "@jest/globals";
 import { V1OwnerReference } from "@kubernetes/client-node";
 import { K8s, kind } from "pepr";
+import { Mock, MockedFunction, vi } from "vitest";
 import {
   IstioGateway,
   IstioServiceEntry,
@@ -49,50 +49,50 @@ export const pkgHostMapMock: PackageHostMap = {
 
 // Type for the common mocked methods
 export type K8sMockImpl = {
-  InNamespace: jest.MockedFunction<() => K8sMockImpl>; // InNamespace doesn't actually type out to a K8sMockImpl, but good enough for testing
+  InNamespace: MockedFunction<() => K8sMockImpl>; // InNamespace doesn't actually type out to a K8sMockImpl, but good enough for testing
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  Apply: jest.MockedFunction<() => Promise<any>>;
+  Apply: MockedFunction<() => Promise<any>>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  Get: jest.MockedFunction<() => Promise<any>>;
+  Get: MockedFunction<() => Promise<any>>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  Delete: jest.MockedFunction<() => Promise<any>>;
-  Logs: jest.Mock;
-  Watch: jest.Mock;
-  WithLabel: jest.Mock;
+  Delete: MockedFunction<() => Promise<any>>;
+  Logs: Mock;
+  Watch: Mock;
+  WithLabel: Mock;
 };
 
 // Type for egress mocks
 type EgressMocks = {
-  applyGwMock: jest.MockedFunction<() => Promise<void>>;
-  applyVsMock: jest.MockedFunction<() => Promise<void>>;
-  applySeMock: jest.MockedFunction<() => Promise<void>>;
-  applySidecarMock: jest.MockedFunction<() => Promise<void>>;
-  getGwMock: jest.MockedFunction<() => Promise<{ items: IstioGateway[] }>>;
-  getVsMock: jest.MockedFunction<() => Promise<{ items: IstioVirtualService[] }>>;
-  getNsMock: jest.MockedFunction<() => Promise<kind.Namespace>>;
-  getServiceInNsMock: jest.MockedFunction<() => K8sMockImpl>;
-  getServiceMock: jest.MockedFunction<() => Promise<kind.Service>>;
-  deleteGwMock: jest.MockedFunction<() => Promise<void>>;
-  deleteVsMock: jest.MockedFunction<() => Promise<void>>;
-  deleteSeMock: jest.MockedFunction<() => Promise<void>>;
-  deleteSidecarMock: jest.MockedFunction<() => Promise<void>>;
+  applyGwMock: MockedFunction<() => Promise<void>>;
+  applyVsMock: MockedFunction<() => Promise<void>>;
+  applySeMock: MockedFunction<() => Promise<void>>;
+  applySidecarMock: MockedFunction<() => Promise<void>>;
+  getGwMock: MockedFunction<() => Promise<{ items: IstioGateway[] }>>;
+  getVsMock: MockedFunction<() => Promise<{ items: IstioVirtualService[] }>>;
+  getNsMock: MockedFunction<() => Promise<kind.Namespace>>;
+  getServiceInNsMock: MockedFunction<() => K8sMockImpl>;
+  getServiceMock: MockedFunction<() => Promise<kind.Service>>;
+  deleteGwMock: MockedFunction<() => Promise<void>>;
+  deleteVsMock: MockedFunction<() => Promise<void>>;
+  deleteSeMock: MockedFunction<() => Promise<void>>;
+  deleteSidecarMock: MockedFunction<() => Promise<void>>;
 };
 
 // Default mock implementation for K8s egress operations
 export const defaultEgressMocks: EgressMocks = {
-  applyGwMock: jest.fn<() => Promise<void>>().mockResolvedValue(),
-  applyVsMock: jest.fn<() => Promise<void>>().mockResolvedValue(),
-  applySeMock: jest.fn<() => Promise<void>>().mockResolvedValue(),
-  applySidecarMock: jest.fn<() => Promise<void>>().mockResolvedValue(),
-  getGwMock: jest.fn<() => Promise<{ items: IstioGateway[] }>>().mockResolvedValue({
+  applyGwMock: vi.fn<() => Promise<void>>().mockResolvedValue(),
+  applyVsMock: vi.fn<() => Promise<void>>().mockResolvedValue(),
+  applySeMock: vi.fn<() => Promise<void>>().mockResolvedValue(),
+  applySidecarMock: vi.fn<() => Promise<void>>().mockResolvedValue(),
+  getGwMock: vi.fn<() => Promise<{ items: IstioGateway[] }>>().mockResolvedValue({
     items: [],
   }),
-  getVsMock: jest.fn<() => Promise<{ items: IstioVirtualService[] }>>().mockResolvedValue({
+  getVsMock: vi.fn<() => Promise<{ items: IstioVirtualService[] }>>().mockResolvedValue({
     items: [],
   }),
-  getNsMock: jest.fn<() => Promise<kind.Namespace>>().mockResolvedValue({}),
-  getServiceInNsMock: jest.fn<() => K8sMockImpl>().mockReturnThis(),
-  getServiceMock: jest.fn<() => Promise<kind.Service>>().mockResolvedValue({
+  getNsMock: vi.fn<() => Promise<kind.Namespace>>().mockResolvedValue({}),
+  getServiceInNsMock: vi.fn<() => K8sMockImpl>().mockReturnThis(),
+  getServiceMock: vi.fn<() => Promise<kind.Service>>().mockResolvedValue({
     spec: {
       ports: [
         {
@@ -106,24 +106,24 @@ export const defaultEgressMocks: EgressMocks = {
       ],
     },
   }),
-  deleteGwMock: jest.fn<() => Promise<void>>().mockResolvedValue(),
-  deleteVsMock: jest.fn<() => Promise<void>>().mockResolvedValue(),
-  deleteSeMock: jest.fn<() => Promise<void>>().mockResolvedValue(),
-  deleteSidecarMock: jest.fn<() => Promise<void>>().mockResolvedValue(),
+  deleteGwMock: vi.fn<() => Promise<void>>().mockResolvedValue(),
+  deleteVsMock: vi.fn<() => Promise<void>>().mockResolvedValue(),
+  deleteSeMock: vi.fn<() => Promise<void>>().mockResolvedValue(),
+  deleteSidecarMock: vi.fn<() => Promise<void>>().mockResolvedValue(),
 };
 
 export function updateEgressMocks(egressMocks: EgressMocks) {
   const baseImplementation: K8sMockImpl = {
-    Apply: jest.fn<() => Promise<void>>().mockResolvedValue(),
-    InNamespace: jest.fn<() => K8sMockImpl>().mockReturnThis(),
-    Get: jest.fn<() => Promise<void>>().mockResolvedValue(),
-    Logs: jest.fn(),
-    Delete: jest.fn(),
-    Watch: jest.fn(),
-    WithLabel: jest.fn(),
+    Apply: vi.fn<() => Promise<void>>().mockResolvedValue(),
+    InNamespace: vi.fn<() => K8sMockImpl>().mockReturnThis(),
+    Get: vi.fn<() => Promise<void>>().mockResolvedValue(),
+    Logs: vi.fn(),
+    Delete: vi.fn(),
+    Watch: vi.fn(),
+    WithLabel: vi.fn(),
   };
 
-  const mockK8s = jest.mocked(K8s);
+  const mockK8s = vi.mocked(K8s);
 
   // Create a mapping keyed by model name string
   const k8sImplementations: Record<string, Partial<K8sMockImpl>> = {
