@@ -26,7 +26,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: scripts/renovate
-        run: npm i
+        run: npm ci
 
       - name: Run tests
         working-directory: scripts/renovate
