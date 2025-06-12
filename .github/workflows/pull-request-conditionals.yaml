@@ -107,6 +107,7 @@ jobs:
   # This job triggers a separate workflow for each changed source package, if any.
   run-package-test:
     needs: check-paths
+    if: ${{ fromJson(needs.check-paths.outputs.combined) }}
     name: Schedule
     strategy:
       matrix:
