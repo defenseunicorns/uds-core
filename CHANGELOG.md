@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.44.1](https://github.com/defenseunicorns/uds-core/compare/v0.44.0...v0.44.1) (2025-06-13)
+
+
+### Miscellaneous
+
+* **ci:** add iac filter workflow ([#1639](https://github.com/defenseunicorns/uds-core/issues/1639)) ([d1a35a7](https://github.com/defenseunicorns/uds-core/commit/d1a35a71766cd9663c5e0f93a95e0988305e261e))
+* **ci:** migrate to vitest for kfc and pepr updates ([#1642](https://github.com/defenseunicorns/uds-core/issues/1642)) ([92da915](https://github.com/defenseunicorns/uds-core/commit/92da915e2738a134a76fda524a46b3117ab1d6c8))
+* **ci:** update to node 24 ([#1649](https://github.com/defenseunicorns/uds-core/issues/1649)) ([d67e263](https://github.com/defenseunicorns/uds-core/commit/d67e263d3232777b650e648b122dd5d3cc7e67fd))
+* **deps:** update pepr to v0.51.4 ([#1638](https://github.com/defenseunicorns/uds-core/issues/1638)) ([00d6b94](https://github.com/defenseunicorns/uds-core/commit/00d6b94aa507cf9961ab0c69d25e3994804b4690))
+* **deps:** update support-deps ([#1635](https://github.com/defenseunicorns/uds-core/issues/1635)) ([c478257](https://github.com/defenseunicorns/uds-core/commit/c47825781a6e08b1985174327b3000606ee4366b))
+
 ## [0.44.0](https://github.com/defenseunicorns/uds-core/compare/v0.43.0...v0.44.0) (2025-06-09)
 
 
