@@ -73,7 +73,7 @@ variable "autoscaling_min_node_count_worker" {
 
 variable "default_node_pool_vm_size" {
   description = "Specifies the vm size of the default node pool"
-  default     = "Standard_D4s_v4"
+  default     = "Standard_D4_v4"
   type        = string
 }
 
@@ -85,7 +85,7 @@ variable "worker_node_pool_count" {
 
 variable "worker_pool_vm_size" {
   description = "Specifies the vm size of the worker node pool"
-  default     = "Standard_D4s_v4"
+  default     = "Standard_D4_v4"
   type        = string
 }
 
