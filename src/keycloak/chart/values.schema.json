@@ -499,22 +499,24 @@
           }
         },
         "termsAndConditions": {
-          "type": "object",
-          "properties": {
-            "keys": {
-              "type": "array",
-              "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
                 "type": "string"
+              },
+              "configmap": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "required": ["name"]
               }
             },
-            "configmap": {
-              "type": "object",
-              "properties": {
-                "name": {
-                  "type": "string"
-                }
-              }
-            }
+            "required": ["name", "configmap"]
           }
         }
       }

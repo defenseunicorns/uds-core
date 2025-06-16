@@ -357,13 +357,15 @@ spec:
               {{- end }}
               {{- end }}
               {{- end }}
-              {{- if and .Values.themeCustomizations.termsAndConditions .Values.themeCustomizations.termsAndConditions.configmap .Values.themeCustomizations.termsAndConditions.configmap.name }}
+              {{- if .Values.themeCustomizations.termsAndConditions }}
+              {{- range $tc := .Values.themeCustomizations.termsAndConditions }}
+              {{- if $tc.configmap.name }}
               - configMap:
-                  name: {{ .Values.themeCustomizations.termsAndConditions.configmap.name }}
+                  name: {{ $tc.configmap.name }}
                   items:
-                    {{- range $key := .Values.themeCustomizations.termsAndConditions.keys }}
-                    - key: {{ $key }}
-                      path: tc_{{ $key }}.txt
-                    {{- end }}
+                    - key: {{ $tc.name }}
+                      path: tc_{{ $tc.name }}.txt
+              {{- end }}
+              {{- end }}
               {{- end }}
         {{- end }}
