@@ -68,7 +68,7 @@ Before starting, ensure that you have the following installed:
 
 - **Git**: [Install Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
 - **K3d**: [Install K3d](https://k3d.io/#installation)
-- **Node.js** (for building and running Pepr): [Install Node.js](https://nodejs.org/en/download/)
+- **Node.js** (for building and running Pepr): [Install Node.js](https://nodejs.org/en/download/) (we recommend Node 24 to align with what CI tests/builds with)
 - **UDS CLI** (for running tasks and deploying): [Install UDS](https://uds.defenseunicorns.com/cli/quickstart-and-usage/)
 
 ### 2. Clone the Repository and Make a Branch

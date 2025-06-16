@@ -3,18 +3,18 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { describe, expect, it } from "@jest/globals";
+import { describe, expect, it } from "vitest";
 import { UDSConfig } from "../../../config";
 import { Expose, Gateway, IstioLocation, IstioResolution, RemoteProtocol } from "../../crd";
+import { ownerRefsMock } from "./defaultTestMocks";
+import { sharedEgressPkgId } from "./egress";
+import { istioEgressGatewayNamespace } from "./istio-resources";
 import {
   generateIngressServiceEntry,
   generateLocalEgressServiceEntry,
   generateSharedServiceEntry,
 } from "./service-entry";
-import { istioEgressGatewayNamespace } from "./istio-resources";
 import { EgressResource, HostResource } from "./types";
-import { sharedEgressPkgId } from "./egress";
-import { ownerRefsMock } from "./defaultTestMocks";
 
 describe("test generate service entry", () => {
   const ownerRefs = [

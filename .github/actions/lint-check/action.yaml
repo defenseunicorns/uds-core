@@ -10,7 +10,7 @@ runs:
     - name: Use Node.js latest
       uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
       with:
-        node-version: 20
+        node-version: 24
     - name: Install UDS CLI
       uses: defenseunicorns/setup-uds@ab842abcad1f7a3305c2538e3dd1950d0daacfa5 # v1.0.1
       with:

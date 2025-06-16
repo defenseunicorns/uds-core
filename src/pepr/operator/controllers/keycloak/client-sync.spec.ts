@@ -3,21 +3,21 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { beforeEach, describe, expect, it, jest } from "@jest/globals";
+import { beforeEach, describe, expect, it, MockedFunction, vi } from "vitest";
 import { Sso, UDSPackage } from "../../crd";
 import { syncClient } from "./client-sync";
 import * as clientCredentials from "./clients/client-credentials";
 
 // Mock the logger before importing the modules that use it
-jest.mock("../../../logger", () => ({
+vi.mock("../../../logger", () => ({
   Component: {
     OPERATOR_KEYCLOAK: "OPERATOR_KEYCLOAK",
   },
-  setupLogger: jest.fn().mockReturnValue({
-    debug: jest.fn(),
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
+  setupLogger: vi.fn().mockReturnValue({
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
   }),
 }));
 
@@ -29,10 +29,10 @@ import {
 import { Client } from "./types";
 
 // Mock the K8s Apply function
-const mockApply = jest.fn().mockImplementation(resource => Promise.resolve(resource));
+const mockApply = vi.fn().mockImplementation(resource => Promise.resolve(resource));
 
 // Mock the pepr module
-jest.mock("pepr", () => {
+vi.mock("pepr", () => {
   return {
     K8s: () => ({
       Apply: mockApply,
@@ -43,9 +43,9 @@ jest.mock("pepr", () => {
   };
 });
 
-jest.mock("./clients/client-credentials", () => ({
-  credentialsCreateOrUpdate: jest.fn(),
-  credentialsDelete: jest.fn(),
+vi.mock("./clients/client-credentials", () => ({
+  credentialsCreateOrUpdate: vi.fn(),
+  credentialsDelete: vi.fn(),
 }));
 
 const mockClient: Client = {
@@ -325,7 +325,7 @@ describe("syncClient secretName preservation", () => {
   // We'll use the mocks set up at the top of the file
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("should preserve secretName when creating K8s secret", async () => {
@@ -350,7 +350,7 @@ describe("syncClient secretName preservation", () => {
 
     // Mock successful client creation
     const mockCredentialsCreateOrUpdate =
-      clientCredentials.credentialsCreateOrUpdate as jest.MockedFunction<
+      clientCredentials.credentialsCreateOrUpdate as MockedFunction<
         typeof clientCredentials.credentialsCreateOrUpdate
       >;
     // Create a minimal Client object with required fields
@@ -395,7 +395,7 @@ describe("syncClient secretName preservation", () => {
 
     // Mock credentialsCreateOrUpdate to fail on first call and succeed on second
     const mockCredentialsCreateOrUpdate =
-      clientCredentials.credentialsCreateOrUpdate as jest.MockedFunction<
+      clientCredentials.credentialsCreateOrUpdate as MockedFunction<
         typeof clientCredentials.credentialsCreateOrUpdate
       >;
     mockCredentialsCreateOrUpdate.mockImplementationOnce(() => {

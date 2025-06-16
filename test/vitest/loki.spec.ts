@@ -2,8 +2,8 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { afterAll, beforeAll, describe, expect, test } from "@jest/globals";
 import * as net from "net";
+import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { closeForward, getForward } from "./forward";
 
 // Global variables
@@ -112,7 +112,7 @@ const validateLogInQuery = (
   expect(logExists).toBe(true);
 };
 
-// Jest test cases
+// Vitest test cases
 describe("Loki Tests", () => {
   beforeAll(async () => {
     lokiBackend = await getForward("loki-backend", "loki", 3100);
@@ -147,7 +147,7 @@ describe("Loki Tests", () => {
   });
 
   test("Send log to Loki-write and validate in Loki-read", async () => {
-    const logMessage = "Test log from jest";
+    const logMessage = "Test log from vitest";
     await sendLog(logMessage, { job: "test-job", level: "info" });
     const data = await queryLogs('{job="test-job"}');
     validateLogInQuery(data, logMessage);

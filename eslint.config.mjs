@@ -23,9 +23,9 @@ const compat = new FlatCompat({
 export default defineConfig([globalIgnores([
     "**/node_modules",
     "**/dist",
-    "**/jest.*.js",
+    "**/vitest.*.js",
     "test/playwright/",
-    "test/jest/",
+    "test/vitest/",
     "**/scripts/",
     "**/uds-docs/",
 ]), {

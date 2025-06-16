@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { beforeEach, describe, expect, it } from "@jest/globals";
 import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
+import { beforeEach, describe, expect, it } from "vitest";
 import { MatcherKind, Policy } from "../../crd";
 import { Exemption } from "../../crd/generated/exemption-v1alpha1";
 import { ExemptionStore } from "./exemption-store";
@@ -307,7 +307,7 @@ describe("Test processExemptions() duplicate matchers in same CR", () => {
     expect(ExemptionStore.getByPolicy(Policy.DropAllCapabilities)).toEqual([storedEnforcerMatcher]);
   });
 
-  it.only("Handles updates - remove policy, remove matcher, add policy, add matcher", async () => {
+  it("Handles updates - remove policy, remove matcher, add policy, add matcher", async () => {
     // remove RequireNonRoot from enforcerMatcher (satisfies remove matcher in this duplicate case)
     // add DisallowHostNamespaces to enforcerMatcher
     // add controllerMatcher with DisallowPrivileged

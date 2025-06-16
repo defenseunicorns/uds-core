@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { K8s, kind } from "pepr";
+import { beforeEach, describe, expect, it, Mock, vi } from "vitest";
 import { AuthorizationPolicy } from "../../../crd/generated/istio/authorizationpolicy-v1beta1";
 import {
   updateAPIServerCIDR,
@@ -16,22 +16,22 @@ type KubernetesList<T> = {
   items: T[];
 };
 
-jest.mock("pepr", () => {
-  const originalModule = jest.requireActual("pepr") as object;
+vi.mock("pepr", async () => {
+  const originalModule = (await vi.importActual("pepr")) as object;
   return {
     ...originalModule,
-    K8s: jest.fn(),
+    K8s: vi.fn(),
   };
 });
 
-const mockApply = jest.fn();
-const mockGet = jest.fn<() => Promise<KubernetesList<kind.NetworkPolicy>>>();
+const mockApply = vi.fn();
+const mockGet = vi.fn<() => Promise<KubernetesList<kind.NetworkPolicy>>>();
 
 describe("updateAPIServerCIDR", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
-    (K8s as jest.Mock).mockImplementation(() => ({
-      WithLabel: jest.fn(() => ({
+    vi.clearAllMocks();
+    (K8s as Mock).mockImplementation(() => ({
+      WithLabel: vi.fn(() => ({
         Get: mockGet,
       })),
       Apply: mockApply,
@@ -267,9 +267,9 @@ describe("updateAPIServerCIDR", () => {
 
 describe("updateKubeAPINetworkPolicies", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
-    (K8s as jest.Mock).mockImplementation(() => ({
-      WithLabel: jest.fn(() => ({
+    vi.clearAllMocks();
+    (K8s as Mock).mockImplementation(() => ({
+      WithLabel: vi.fn(() => ({
         Get: mockGet,
       })),
       Apply: mockApply,
@@ -583,7 +583,7 @@ describe("updateKubeAPINetworkPolicies", () => {
 
 describe("updateKubeAPIAuthorizationPolicies", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("should not update a policy if ipBlocks are already correct", async () => {

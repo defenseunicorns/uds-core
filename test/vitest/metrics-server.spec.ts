@@ -1,7 +1,7 @@
 /**
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
-import { describe, test } from "@jest/globals";
+import { describe, test, expect } from "vitest";
 import * as k8s from "@kubernetes/client-node";
 
 const kc = new k8s.KubeConfig();

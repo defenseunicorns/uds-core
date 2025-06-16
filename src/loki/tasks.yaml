@@ -29,5 +29,5 @@ tasks:
     actions:
       - description: "Run Loki E2E tests"
         cmd: |
-            npm ci && npx jest --testPathPattern loki*
-        dir: test/jest
+          npm ci && npx vitest run "loki"
+        dir: test/vitest

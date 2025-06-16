@@ -3,42 +3,43 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
+import { describe, expect, test, vi } from "vitest";
 import { Direction, Gateway, RemoteGenerated, UDSPackage } from "../../crd";
 import { Action, AuthorizationPolicy } from "../../crd/generated/istio/authorizationpolicy-v1beta1";
 import { IstioState } from "../istio/namespace";
 import { generateAuthorizationPolicies } from "./authorizationPolicies";
 
-jest.mock("../../../logger", () => ({
+vi.mock("../../../logger", () => ({
   setupLogger: () => ({
-    debug: jest.fn(),
-    info: jest.fn(),
-    error: jest.fn(),
-    warn: jest.fn(),
-    trace: jest.fn(),
+    debug: vi.fn(),
+    info: vi.fn(),
+    error: vi.fn(),
+    warn: vi.fn(),
+    trace: vi.fn(),
   }),
   Component: {
     OPERATOR_NETWORK: "OPERATOR_NETWORK",
   },
 }));
 
-jest.mock("pepr", () => ({
-  K8s: jest.fn(() => ({
-    Apply: jest.fn().mockResolvedValue({}),
-    InNamespace: jest.fn().mockReturnThis(),
-    WithLabel: jest.fn().mockReturnThis(),
-    Get: jest.fn().mockResolvedValue({ items: [] }),
+vi.mock("pepr", () => ({
+  K8s: vi.fn(() => ({
+    Apply: vi.fn().mockResolvedValue({}),
+    InNamespace: vi.fn().mockReturnThis(),
+    WithLabel: vi.fn().mockReturnThis(),
+    Get: vi.fn().mockResolvedValue({ items: [] }),
   })),
 }));
 
-jest.mock("./generators/cloudMetadata", () => ({
+vi.mock("./generators/cloudMetadata", () => ({
   META_IP: "169.254.169.254/32",
 }));
 
-jest.mock("./generators/kubeAPI", () => ({
+vi.mock("./generators/kubeAPI", () => ({
   kubeAPI: () => [{ ipBlock: { cidr: "10.0.0.1/32" } }],
 }));
 
-jest.mock("./generators/kubeNodes", () => ({
+vi.mock("./generators/kubeNodes", () => ({
   kubeNodes: () => [{ ipBlock: { cidr: "192.168.0.0/16" } }],
 }));
 

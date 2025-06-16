@@ -57,7 +57,7 @@ Run the tests with:
 ```bash
 # From within the scripts/renovate directory
 cd scripts/renovate
-npx jest
+npm run test
 ```
 
 The tests cover various scenarios including:

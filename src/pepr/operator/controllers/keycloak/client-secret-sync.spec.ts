@@ -3,12 +3,12 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { describe, expect, it } from "@jest/globals";
+import { describe, expect, it } from "vitest";
 import {
-  updateKeycloakClientsSecret,
   KEYCLOAK_CLIENT_SECRET_KEY,
   KEYCLOAK_CLIENTS_SECRET_NAME,
   KEYCLOAK_CLIENTS_SECRET_NAMESPACE,
+  updateKeycloakClientsSecret,
 } from "./client-secret-sync";
 
 interface Config {

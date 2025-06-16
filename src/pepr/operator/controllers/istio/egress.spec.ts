@@ -3,8 +3,18 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { kind } from "pepr";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  Mock,
+  MockedFunction,
+  test,
+  vi,
+} from "vitest";
 import { Direction, IstioGateway, RemoteGenerated, RemoteProtocol } from "../../crd";
 import { purgeOrphans } from "../utils";
 import { defaultEgressMocks, pkgMock, updateEgressMocks } from "./defaultTestMocks";
@@ -25,30 +35,30 @@ import {
 } from "./egress";
 import { HostResourceMap, PackageAction, PackageHostMap } from "./types";
 
-jest.mock("./istio-resources", () => {
-  const originalModule = jest.requireActual("./istio-resources");
+vi.mock("./istio-resources", async () => {
+  const originalModule = (await vi.importActual("./istio-resources")) as object;
   return {
-    ...(typeof originalModule === "object" ? originalModule : {}),
+    ...originalModule,
     log: {
-      debug: jest.fn(),
-      error: jest.fn(),
+      debug: vi.fn(),
+      error: vi.fn(),
     },
   };
 });
 
 import { log } from "./istio-resources";
 
-const mockPurgeOrphans: jest.MockedFunction<() => Promise<void>> = jest.fn();
+const mockPurgeOrphans: MockedFunction<() => Promise<void>> = vi.fn();
 
 // Mock the necessary functions
-jest.mock("pepr", () => ({
-  K8s: jest.fn(),
+vi.mock("pepr", () => ({
+  K8s: vi.fn(),
   Log: {
-    child: jest.fn(() => ({
-      info: jest.fn(),
-      debug: jest.fn(),
-      error: jest.fn(),
-      warn: jest.fn(),
+    child: vi.fn(() => ({
+      info: vi.fn(),
+      debug: vi.fn(),
+      error: vi.fn(),
+      warn: vi.fn(),
       level: "info",
     })),
   },
@@ -60,11 +70,11 @@ jest.mock("pepr", () => ({
     Service: "Service",
   },
 }));
-jest.mock("../utils", () => {
-  const originalModule = jest.requireActual("../utils");
+vi.mock("../utils", async () => {
+  const originalModule = (await vi.importActual("../utils")) as object;
   return {
-    ...(typeof originalModule === "object" ? originalModule : {}),
-    purgeOrphans: jest.fn(async <T>(fn: () => Promise<T>) => fn()),
+    ...originalModule,
+    purgeOrphans: vi.fn(async <T>(fn: () => Promise<T>) => fn()),
   };
 });
 
@@ -78,20 +88,20 @@ describe("test reconcileEgressResources", () => {
 
   beforeEach(() => {
     process.env.PEPR_WATCH_MODE = "true";
-    jest.useFakeTimers();
-    jest.clearAllMocks();
+    vi.useFakeTimers();
+    vi.clearAllMocks();
     // Reset the map before each test
     for (const key in inMemoryPackageMap) {
       delete inMemoryPackageMap[key];
     }
 
-    (purgeOrphans as jest.Mock).mockImplementation(mockPurgeOrphans);
+    (purgeOrphans as Mock).mockImplementation(mockPurgeOrphans);
   });
 
   afterEach(() => {
-    jest.runOnlyPendingTimers();
-    jest.useRealTimers();
-    jest.clearAllMocks();
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
+    vi.clearAllMocks();
   });
 
   it("should create egress resources on action AddOrUpdate", async () => {
@@ -218,7 +228,7 @@ describe("test reconcileEgressResources", () => {
 
   it("should not delete egress resources if egress namespace is not found on action Remove", async () => {
     const errorMessage = "Namespace not found";
-    const getNsMock = jest.fn<() => Promise<kind.Namespace>>().mockRejectedValue({
+    const getNsMock = vi.fn<() => Promise<kind.Namespace>>().mockRejectedValue({
       message: errorMessage,
       status: 404,
     });
@@ -243,7 +253,7 @@ describe("test reconcileEgressResources", () => {
     };
 
     const errorMessage = "Reconciliation failed";
-    const getNsMock = jest
+    const getNsMock = vi
       .fn<() => Promise<kind.Namespace>>()
       .mockRejectedValue(new Error(errorMessage));
 
@@ -276,8 +286,8 @@ describe("test reconcileEgressResources", () => {
 describe("test performEgressReconciliationWithMutex", () => {
   beforeEach(() => {
     process.env.PEPR_WATCH_MODE = "true";
-    jest.useFakeTimers();
-    jest.clearAllMocks();
+    vi.useFakeTimers();
+    vi.clearAllMocks();
     // Reset the map before each test
     for (const key in inMemoryPackageMap) {
       delete inMemoryPackageMap[key];
@@ -285,8 +295,8 @@ describe("test performEgressReconciliationWithMutex", () => {
   });
 
   afterEach(() => {
-    jest.runOnlyPendingTimers();
-    jest.useRealTimers();
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
   });
 
   it("should successfully perform reconciliation when no mutex is held", async () => {
@@ -302,7 +312,7 @@ describe("test performEgressReconciliationWithMutex", () => {
     const errorMessage = "Reconciliation failed";
     const error = Object.assign(new Error(errorMessage), { status: 500 });
 
-    const getNsMock = jest.fn<() => Promise<kind.Namespace>>().mockRejectedValue(error);
+    const getNsMock = vi.fn<() => Promise<kind.Namespace>>().mockRejectedValue(error);
 
     updateEgressMocks({
       ...defaultEgressMocks,
@@ -336,7 +346,7 @@ describe("test performEgressReconciliationWithMutex", () => {
     const error = Object.assign(new Error(errorMessage), { status: 500 });
 
     let callCount = 0;
-    const getNsMock = jest.fn<() => Promise<kind.Namespace>>().mockImplementation(() => {
+    const getNsMock = vi.fn<() => Promise<kind.Namespace>>().mockImplementation(() => {
       callCount++;
       if (callCount === 1) {
         return Promise.reject(error);
@@ -362,7 +372,7 @@ describe("test performEgressReconciliationWithMutex", () => {
   });
 
   it("should handle namespace 404 gracefully", async () => {
-    const getNsMock = jest.fn<() => Promise<kind.Namespace>>().mockRejectedValue({
+    const getNsMock = vi.fn<() => Promise<kind.Namespace>>().mockRejectedValue({
       status: 404,
       message: "Namespace not found",
     });
@@ -382,8 +392,8 @@ describe("test performEgressReconciliationWithMutex", () => {
 describe("test performEgressReconciliation", () => {
   beforeEach(() => {
     process.env.PEPR_WATCH_MODE = "true";
-    jest.useFakeTimers();
-    jest.clearAllMocks();
+    vi.useFakeTimers();
+    vi.clearAllMocks();
     // Reset the map before each test
     for (const key in inMemoryPackageMap) {
       delete inMemoryPackageMap[key];
@@ -391,12 +401,12 @@ describe("test performEgressReconciliation", () => {
   });
 
   afterEach(() => {
-    jest.runOnlyPendingTimers();
-    jest.useRealTimers();
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
   });
 
   it("should skip reconciliation when namespace is not found (404)", async () => {
-    const getNsMock = jest.fn<() => Promise<kind.Namespace>>().mockRejectedValue({
+    const getNsMock = vi.fn<() => Promise<kind.Namespace>>().mockRejectedValue({
       status: 404,
       message: "Namespace not found",
     });
@@ -419,7 +429,7 @@ describe("test performEgressReconciliation", () => {
     const errorMessage = "Internal server error";
     const error = Object.assign(new Error(errorMessage), { status: 500 });
 
-    const getNsMock = jest.fn<() => Promise<kind.Namespace>>().mockRejectedValue(error);
+    const getNsMock = vi.fn<() => Promise<kind.Namespace>>().mockRejectedValue(error);
 
     updateEgressMocks({
       ...defaultEgressMocks,
@@ -458,7 +468,7 @@ describe("test performEgressReconciliation", () => {
     const errorMessage = "Apply resources failed";
     updateEgressMocks({
       ...defaultEgressMocks,
-      applyGwMock: jest.fn<() => Promise<void>>().mockRejectedValue(new Error(errorMessage)),
+      applyGwMock: vi.fn<() => Promise<void>>().mockRejectedValue(new Error(errorMessage)),
     });
 
     await expect(performEgressReconciliation()).rejects.toThrow(
@@ -491,7 +501,7 @@ describe("test updateInMemoryPackageMap", () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     // Reset the map before each test
     for (const key in inMemoryPackageMap) {
       delete inMemoryPackageMap[key];
@@ -651,13 +661,13 @@ describe("test applyEgressResources", () => {
 
   beforeEach(() => {
     process.env.PEPR_WATCH_MODE = "true";
-    jest.useFakeTimers();
+    vi.useFakeTimers();
   });
 
   afterEach(() => {
-    jest.runOnlyPendingTimers();
-    jest.useRealTimers();
-    jest.clearAllMocks();
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
+    vi.clearAllMocks();
   });
 
   it("should apply egress resources", async () => {
@@ -720,7 +730,7 @@ describe("test applyEgressResources", () => {
 
     updateEgressMocks({
       ...defaultEgressMocks,
-      applyGwMock: jest
+      applyGwMock: vi
         .fn<() => Promise<void>>()
         .mockImplementationOnce(() => Promise.reject(new Error(errorMessage))),
     });
@@ -743,7 +753,7 @@ describe("test applyEgressResources", () => {
 
     updateEgressMocks({
       ...defaultEgressMocks,
-      applyVsMock: jest
+      applyVsMock: vi
         .fn<() => Promise<void>>()
         .mockImplementationOnce(() => Promise.reject(new Error(errorMessage))),
     });
@@ -766,7 +776,7 @@ describe("test applyEgressResources", () => {
 
     updateEgressMocks({
       ...defaultEgressMocks,
-      applySeMock: jest
+      applySeMock: vi
         .fn<() => Promise<void>>()
         .mockImplementationOnce(() => Promise.reject(new Error(errorMessage))),
     });
@@ -780,7 +790,7 @@ describe("test applyEgressResources", () => {
     const gwName = "sample-gateway";
     const gwNamespace = "sample-ns";
 
-    const getGwMock = jest.fn<() => Promise<{ items: IstioGateway[] }>>().mockResolvedValueOnce({
+    const getGwMock = vi.fn<() => Promise<{ items: IstioGateway[] }>>().mockResolvedValueOnce({
       items: [
         {
           metadata: {
@@ -820,7 +830,7 @@ describe("test applyEgressResources", () => {
     const gwName = "sample-gateway";
     const gwNamespace = "sample-ns";
 
-    const getGwMock = jest.fn<() => Promise<{ items: IstioGateway[] }>>().mockResolvedValue({
+    const getGwMock = vi.fn<() => Promise<{ items: IstioGateway[] }>>().mockResolvedValue({
       items: [
         {
           metadata: {
@@ -1155,20 +1165,20 @@ describe("test egressRequestedFromNetwork", () => {
 describe("test validateEgressGateway", () => {
   beforeEach(() => {
     process.env.PEPR_WATCH_MODE = "true";
-    jest.useFakeTimers();
+    vi.useFakeTimers();
   });
 
   afterEach(() => {
-    jest.runOnlyPendingTimers();
-    jest.useRealTimers();
-    jest.clearAllMocks();
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
+    vi.clearAllMocks();
   });
 
   it("should err if get egress gateway namespace fails", async () => {
     const errorMessage =
       "Unable to reconcile get the egress gateway namespace istio-egress-gateway.";
 
-    const getNsMock = jest
+    const getNsMock = vi
       .fn<() => Promise<kind.Namespace>>()
       .mockRejectedValue(new Error(errorMessage));
 
@@ -1232,7 +1242,7 @@ describe("test validateEgressGateway", () => {
 
 describe("test validateProtocolConflicts", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("should not throw error when no conflicts exist", () => {
@@ -1397,7 +1407,7 @@ describe("test validateProtocolConflicts", () => {
 
 describe("test removeEgressResources", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     // Reset the map before each test
     for (const key in inMemoryPackageMap) {
       delete inMemoryPackageMap[key];

@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { describe, expect, it } from "@jest/globals";
 import { K8s, kind } from "pepr";
+import { describe, expect, it } from "vitest";
 
 const failIfReached = () => expect(true).toBe(false);
 

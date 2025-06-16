@@ -2,12 +2,13 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { beforeAll, describe, expect, test } from "@jest/globals";
+import { beforeAll, describe, expect, test, vi } from "vitest";
 import { Exec, KubeConfig } from "@kubernetes/client-node";
 import { K8s, kind } from "pepr";
 import { Writable } from "stream";
 
-jest.setTimeout(30000);
+// Set timeout for all tests
+vi.setConfig({ testTimeout: 30000 });
 
 const CURL_GATEWAY = [
   "curl",

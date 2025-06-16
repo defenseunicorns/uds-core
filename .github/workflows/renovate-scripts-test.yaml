@@ -14,7 +14,7 @@ on:
 
 jobs:
   test:
-    name: Jest Tests
+    name: Vitest Tests
     runs-on: ubuntu-latest
 
     steps:
@@ -26,8 +26,8 @@ jobs:
 
       - name: Install dependencies
         working-directory: scripts/renovate
-        run: npm i
+        run: npm ci
 
       - name: Run tests
         working-directory: scripts/renovate
-        run: npx jest .
+        run: npm run test

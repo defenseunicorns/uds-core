@@ -5,36 +5,37 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { afterEach, beforeEach, describe, expect, it, Mock, MockInstance, vi } from 'vitest';
 import * as yaml from 'yaml';
 import { compareImagesAndCharts } from './compareImagesAndCharts';
 
 // Mock fs and path modules
-jest.mock('fs');
-jest.mock('path');
-jest.mock('yaml');
+vi.mock('fs');
+vi.mock('path');
+vi.mock('yaml');
 
 describe('compareImagesAndCharts', () => {
-  let consoleLogSpy: jest.SpyInstance;
-  let consoleErrorSpy: jest.SpyInstance;
+  let consoleLogSpy: MockInstance;
+  let consoleErrorSpy: MockInstance;
 
   beforeEach(() => {
     // Mock path.join to return the input path
-    (path.join as jest.Mock).mockImplementation((...args) => args.join('/'));
+    (path.join as Mock).mockImplementation((...args) => args.join('/'));
 
     // Mock console.log and console.error to prevent output during tests
-    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => { });
-    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
+    consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => { });
+    consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     consoleLogSpy.mockRestore();
     consoleErrorSpy.mockRestore();
   });
 
   it('should detect image updates', async () => {
     // Mock fs.readFileSync to return different content based on the file path
-    (fs.readFileSync as jest.Mock).mockImplementation((filePath) => {
+    (fs.readFileSync as Mock).mockImplementation((filePath) => {
       if (filePath === 'old/charts.yaml') {
         return 'charts-old';
       }
@@ -51,10 +52,10 @@ describe('compareImagesAndCharts', () => {
     });
 
     // Mock fs.existsSync to return true for all files
-    (fs.existsSync as jest.Mock).mockReturnValue(true);
+    (fs.existsSync as Mock).mockReturnValue(true);
 
     // Mock yaml.parse to return different content based on the input
-    (yaml.parse as jest.Mock).mockImplementation((content) => {
+    (yaml.parse as Mock).mockImplementation((content) => {
       if (content === 'charts-old') {
         return {
           'chart1': '1.0.0',
@@ -106,7 +107,7 @@ describe('compareImagesAndCharts', () => {
 
   it('should detect major image updates', async () => {
     // Mock fs.readFileSync to return different content based on the file path
-    (fs.readFileSync as jest.Mock).mockImplementation((filePath) => {
+    (fs.readFileSync as Mock).mockImplementation((filePath) => {
       if (filePath === 'old/charts.yaml') {
         return 'charts-old';
       }
@@ -123,10 +124,10 @@ describe('compareImagesAndCharts', () => {
     });
 
     // Mock fs.existsSync to return true for all files
-    (fs.existsSync as jest.Mock).mockReturnValue(true);
+    (fs.existsSync as Mock).mockReturnValue(true);
 
     // Mock yaml.parse to return different content based on the input
-    (yaml.parse as jest.Mock).mockImplementation((content) => {
+    (yaml.parse as Mock).mockImplementation((content) => {
       if (content === 'charts-old') {
         return {
           'chart1': '1.0.0',
@@ -178,7 +179,7 @@ describe('compareImagesAndCharts', () => {
 
   it('should detect chart updates', async () => {
     // Mock fs.readFileSync to return different content based on the file path
-    (fs.readFileSync as jest.Mock).mockImplementation((filePath) => {
+    (fs.readFileSync as Mock).mockImplementation((filePath) => {
       if (filePath === 'old/charts.yaml') {
         return 'charts-old';
       }
@@ -195,10 +196,10 @@ describe('compareImagesAndCharts', () => {
     });
 
     // Mock fs.existsSync to return true for all files
-    (fs.existsSync as jest.Mock).mockReturnValue(true);
+    (fs.existsSync as Mock).mockReturnValue(true);
 
     // Mock yaml.parse to return different content based on the input
-    (yaml.parse as jest.Mock).mockImplementation((content) => {
+    (yaml.parse as Mock).mockImplementation((content) => {
       if (content === 'charts-old') {
         return {
           'chart1': '1.0.0',
@@ -241,7 +242,7 @@ describe('compareImagesAndCharts', () => {
 
   it('should detect major chart updates', async () => {
     // Mock fs.readFileSync to return different content based on the file path
-    (fs.readFileSync as jest.Mock).mockImplementation((filePath) => {
+    (fs.readFileSync as Mock).mockImplementation((filePath) => {
       if (filePath === 'old/charts.yaml') {
         return 'charts-old';
       }
@@ -258,10 +259,10 @@ describe('compareImagesAndCharts', () => {
     });
 
     // Mock fs.existsSync to return true for all files
-    (fs.existsSync as jest.Mock).mockReturnValue(true);
+    (fs.existsSync as Mock).mockReturnValue(true);
 
     // Mock yaml.parse to return different content based on the input
-    (yaml.parse as jest.Mock).mockImplementation((content) => {
+    (yaml.parse as Mock).mockImplementation((content) => {
       if (content === 'charts-old') {
         return {
           'chart1': '1.0.0',
@@ -305,7 +306,7 @@ describe('compareImagesAndCharts', () => {
 
   it('should detect waiting on ironbank', async () => {
     // Mock fs.readFileSync to return different content based on the file path
-    (fs.readFileSync as jest.Mock).mockImplementation((filePath) => {
+    (fs.readFileSync as Mock).mockImplementation((filePath) => {
       if (filePath === 'old/charts.yaml') {
         return 'charts-old';
       }
@@ -322,10 +323,10 @@ describe('compareImagesAndCharts', () => {
     });
 
     // Mock fs.existsSync to return true for all files
-    (fs.existsSync as jest.Mock).mockReturnValue(true);
+    (fs.existsSync as Mock).mockReturnValue(true);
 
     // Mock yaml.parse to return different content based on the input
-    (yaml.parse as jest.Mock).mockImplementation((content) => {
+    (yaml.parse as Mock).mockImplementation((content) => {
       if (content === 'charts-old') {
         return {
           'chart1': '1.0.0'
@@ -367,7 +368,7 @@ describe('compareImagesAndCharts', () => {
 
   it('should detect waiting on rapidfort', async () => {
     // Mock fs.readFileSync to return different content based on the file path
-    (fs.readFileSync as jest.Mock).mockImplementation((filePath) => {
+    (fs.readFileSync as Mock).mockImplementation((filePath) => {
       if (filePath === 'old/charts.yaml') {
         return 'charts-old';
       }
@@ -384,10 +385,10 @@ describe('compareImagesAndCharts', () => {
     });
 
     // Mock fs.existsSync to return true for all files
-    (fs.existsSync as jest.Mock).mockReturnValue(true);
+    (fs.existsSync as Mock).mockReturnValue(true);
 
     // Mock yaml.parse to return different content based on the input
-    (yaml.parse as jest.Mock).mockImplementation((content) => {
+    (yaml.parse as Mock).mockImplementation((content) => {
       if (content === 'charts-old') {
         return {
           'chart1': '1.0.0'
@@ -429,7 +430,7 @@ describe('compareImagesAndCharts', () => {
 
   it('should handle mixed image updates with some waiting', async () => {
     // Mock fs.readFileSync to return different content based on the file path
-    (fs.readFileSync as jest.Mock).mockImplementation((filePath) => {
+    (fs.readFileSync as Mock).mockImplementation((filePath) => {
       if (filePath === 'old/charts.yaml') {
         return 'charts-old';
       }
@@ -446,10 +447,10 @@ describe('compareImagesAndCharts', () => {
     });
 
     // Mock fs.existsSync to return true for all files
-    (fs.existsSync as jest.Mock).mockReturnValue(true);
+    (fs.existsSync as Mock).mockReturnValue(true);
 
     // Mock yaml.parse to return different content based on the input
-    (yaml.parse as jest.Mock).mockImplementation((content) => {
+    (yaml.parse as Mock).mockImplementation((content) => {
       if (content === 'charts-old') {
         return {
           'chart1': '1.0.0'
@@ -504,10 +505,10 @@ describe('compareImagesAndCharts', () => {
 
   it('should handle empty files gracefully', async () => {
     // Mock fs.existsSync to return true for all files
-    (fs.existsSync as jest.Mock).mockReturnValue(true);
+    (fs.existsSync as Mock).mockReturnValue(true);
 
     // Mock fs.readFileSync to return empty content for new/images.yaml
-    (fs.readFileSync as jest.Mock).mockImplementation((filePath) => {
+    (fs.readFileSync as Mock).mockImplementation((filePath) => {
       if (filePath === 'old/charts.yaml') {
         return 'charts-old';
       }
@@ -524,7 +525,7 @@ describe('compareImagesAndCharts', () => {
     });
 
     // Mock yaml.parse to return valid content for non-empty files
-    (yaml.parse as jest.Mock).mockImplementation((content) => {
+    (yaml.parse as Mock).mockImplementation((content) => {
       if (content === 'charts-old' || content === 'charts-new') {
         return { 'chart1': '1.0.0' };
       }
@@ -541,12 +542,12 @@ describe('compareImagesAndCharts', () => {
 
   it('should throw an error if old images file is missing', async () => {
     // Mock fs.existsSync to return false for old/images.yaml
-    (fs.existsSync as jest.Mock).mockImplementation((filePath) => {
+    (fs.existsSync as Mock).mockImplementation((filePath) => {
       return filePath !== 'old/images.yaml';
     });
 
     // Mock fs.readFileSync to return content for other files
-    (fs.readFileSync as jest.Mock).mockImplementation((filePath) => {
+    (fs.readFileSync as Mock).mockImplementation((filePath) => {
       if (filePath === 'old/charts.yaml') {
         return 'charts-old';
       }
@@ -560,7 +561,7 @@ describe('compareImagesAndCharts', () => {
     });
 
     // Mock yaml.parse to return valid content
-    (yaml.parse as jest.Mock).mockImplementation((content) => {
+    (yaml.parse as Mock).mockImplementation((content) => {
       if (content === 'charts-old' || content === 'charts-new') {
         return { 'chart1': '1.0.0' };
       }
@@ -575,12 +576,12 @@ describe('compareImagesAndCharts', () => {
 
   it('should throw an error if new images file is missing', async () => {
     // Mock fs.existsSync to return false for new/images.yaml
-    (fs.existsSync as jest.Mock).mockImplementation((filePath) => {
+    (fs.existsSync as Mock).mockImplementation((filePath) => {
       return filePath !== 'new/images.yaml';
     });
 
     // Mock fs.readFileSync to return content for other files
-    (fs.readFileSync as jest.Mock).mockImplementation((filePath) => {
+    (fs.readFileSync as Mock).mockImplementation((filePath) => {
       if (filePath === 'old/charts.yaml') {
         return 'charts-old';
       }
@@ -594,7 +595,7 @@ describe('compareImagesAndCharts', () => {
     });
 
     // Mock yaml.parse to return valid content
-    (yaml.parse as jest.Mock).mockImplementation((content) => {
+    (yaml.parse as Mock).mockImplementation((content) => {
       if (content === 'charts-old' || content === 'charts-new') {
         return { 'chart1': '1.0.0' };
       }
@@ -609,12 +610,12 @@ describe('compareImagesAndCharts', () => {
 
   it('should throw an error if old charts file is missing', async () => {
     // Mock fs.existsSync to return false for old/charts.yaml
-    (fs.existsSync as jest.Mock).mockImplementation((filePath) => {
+    (fs.existsSync as Mock).mockImplementation((filePath) => {
       return filePath !== 'old/charts.yaml';
     });
 
     // Mock fs.readFileSync to return content for other files
-    (fs.readFileSync as jest.Mock).mockImplementation((filePath) => {
+    (fs.readFileSync as Mock).mockImplementation((filePath) => {
       if (filePath === 'new/charts.yaml') {
         return 'charts-new';
       }
@@ -628,7 +629,7 @@ describe('compareImagesAndCharts', () => {
     });
 
     // Mock yaml.parse to return valid content
-    (yaml.parse as jest.Mock).mockImplementation((content) => {
+    (yaml.parse as Mock).mockImplementation((content) => {
       if (content === 'charts-new') {
         return { 'chart1': '1.0.0' };
       }
@@ -643,12 +644,12 @@ describe('compareImagesAndCharts', () => {
 
   it('should throw an error if new charts file is missing', async () => {
     // Mock fs.existsSync to return false for new/charts.yaml
-    (fs.existsSync as jest.Mock).mockImplementation((filePath) => {
+    (fs.existsSync as Mock).mockImplementation((filePath) => {
       return filePath !== 'new/charts.yaml';
     });
 
     // Mock fs.readFileSync to return content for other files
-    (fs.readFileSync as jest.Mock).mockImplementation((filePath) => {
+    (fs.readFileSync as Mock).mockImplementation((filePath) => {
       if (filePath === 'old/charts.yaml') {
         return 'charts-old';
       }
@@ -662,7 +663,7 @@ describe('compareImagesAndCharts', () => {
     });
 
     // Mock yaml.parse to return valid content
-    (yaml.parse as jest.Mock).mockImplementation((content) => {
+    (yaml.parse as Mock).mockImplementation((content) => {
       if (content === 'charts-old') {
         return { 'chart1': '1.0.0' };
       }
@@ -677,10 +678,10 @@ describe('compareImagesAndCharts', () => {
 
   it('should throw an error if a file contains invalid YAML', async () => {
     // Mock fs.existsSync to return true for all files
-    (fs.existsSync as jest.Mock).mockReturnValue(true);
+    (fs.existsSync as Mock).mockReturnValue(true);
 
     // Mock fs.readFileSync to return content for all files
-    (fs.readFileSync as jest.Mock).mockImplementation((filePath) => {
+    (fs.readFileSync as Mock).mockImplementation((filePath) => {
       if (filePath === 'old/charts.yaml') {
         return 'charts-old';
       }
@@ -697,7 +698,7 @@ describe('compareImagesAndCharts', () => {
     });
 
     // Mock yaml.parse to throw an error for new/images.yaml
-    (yaml.parse as jest.Mock).mockImplementation((content) => {
+    (yaml.parse as Mock).mockImplementation((content) => {
       if (content === 'charts-old' || content === 'charts-new') {
         return { 'chart1': '1.0.0' };
       }
@@ -715,7 +716,7 @@ describe('compareImagesAndCharts', () => {
 
   it('should handle images without matches in other flavors', async () => {
     // Mock fs.readFileSync to return different content based on the file path
-    (fs.readFileSync as jest.Mock).mockImplementation((filePath) => {
+    (fs.readFileSync as Mock).mockImplementation((filePath) => {
       if (filePath === 'old/charts.yaml') {
         return '';
       }
@@ -746,7 +747,7 @@ describe('compareImagesAndCharts', () => {
 
   it('should handle helm chart only update', async () => {
     // Mock fs.readFileSync to return different content based on the file path
-    (fs.readFileSync as jest.Mock).mockImplementation((filePath) => {
+    (fs.readFileSync as Mock).mockImplementation((filePath) => {
       if (filePath === 'old/charts.yaml') {
         return {
           'grafana': '6.50.5',
@@ -785,7 +786,7 @@ describe('compareImagesAndCharts', () => {
 
   it('should detect major helm chart update', async () => {
     // Mock fs.readFileSync to return different content based on the file path
-    (fs.readFileSync as jest.Mock).mockImplementation((filePath) => {
+    (fs.readFileSync as Mock).mockImplementation((filePath) => {
       if (filePath === 'old/charts.yaml') {
         return {
           'grafana': '6.50.5',
@@ -826,7 +827,7 @@ describe('compareImagesAndCharts', () => {
 
 it('should detect wait for loki (regression test)', async () => {
   // Mock fs.readFileSync to return different content based on the file path
-  (fs.readFileSync as jest.Mock).mockImplementation((filePath) => {
+  (fs.readFileSync as Mock).mockImplementation((filePath) => {
     if (filePath === 'old/charts.yaml') {
       return 'charts-old';
     }
@@ -843,10 +844,10 @@ it('should detect wait for loki (regression test)', async () => {
   });
 
   // Mock fs.existsSync to return true for all files
-  (fs.existsSync as jest.Mock).mockReturnValue(true);
+  (fs.existsSync as Mock).mockReturnValue(true);
 
   // Mock yaml.parse to return different content based on the input
-  (yaml.parse as jest.Mock).mockImplementation((content) => {
+  (yaml.parse as Mock).mockImplementation((content) => {
     if (content === 'charts-old') {
       return {
         'https://grafana.github.io/helm-charts/loki': '6.29.0'

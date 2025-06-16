@@ -6,13 +6,13 @@ name: "Setup Environment"
 description: "UDS Environment Setup"
 inputs:
   ghToken:
-    description: 'GITHUB_TOKEN'
+    description: "GITHUB_TOKEN"
     required: true
   registry1Username:
-    description: 'IRON_BANK_ROBOT_USERNAME'
+    description: "IRON_BANK_ROBOT_USERNAME"
     required: true
   registry1Password:
-    description: 'IRON_BANK_ROBOT_PASSWORD'
+    description: "IRON_BANK_ROBOT_PASSWORD"
     required: true
   rapidfortUsername:
     description: "RAPIDFORT_USERNAME"
@@ -27,7 +27,7 @@ runs:
     - name: Use Node.js latest
       uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
       with:
-        node-version: 20
+        node-version: 24
 
     - name: Install k3d
       shell: bash
