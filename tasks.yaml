@@ -154,6 +154,7 @@ tasks:
 
   # Note that due to cloning the docs repo (which is private) this task will require organization access to the repo
   # This task does not clone in/manage docs outside of the core repo so you may hit some 404s during development
+  # This task does not run the integration-script in the uds-docs repo, the sidebar will not be the same as the live docs
   - name: dev-docs
     description: "Start the dev docs server"
     actions:
@@ -170,4 +171,4 @@ tasks:
       - description: "Start the docs server with npm (this will run until you stop it)"
         cmd: |
           # Actual startup takes up to a minute because of the npm install
-          cd uds-docs && npm i && npm run dev
+          cd uds-docs && npm i && echo "Sidebar will be different from the live docs, this is expected" && npm run dev && echo ""
