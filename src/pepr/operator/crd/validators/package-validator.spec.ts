@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { afterEach, describe, expect, it, jest } from "@jest/globals";
 import { PeprValidateRequest } from "pepr";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   Allow,
   Direction,
@@ -17,7 +17,7 @@ import {
   UDSPackage,
 } from "..";
 import { PackageStore } from "../../controllers/packages/package-store";
-import { Mode } from "../generated/package-v1alpha1";
+import { Mode, RemoteProtocol } from "../generated/package-v1alpha1";
 import { validator } from "./package-validator";
 
 PackageStore.init();
@@ -83,14 +83,14 @@ const makeMockReq = (
 
   return {
     Raw: { ...defaultPkg, ...pkg },
-    Approve: jest.fn(),
-    Deny: jest.fn(),
+    Approve: vi.fn(),
+    Deny: vi.fn(),
   } as unknown as PeprValidateRequest<UDSPackage>;
 };
 
 describe("Test validation of Package CRs", () => {
   afterEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   it("allows packages that have no issues", async () => {
@@ -271,6 +271,89 @@ describe("Test validation of Package CRs", () => {
       ],
       [],
       [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+  });
+
+  it("denies network policies that specify remoteHost and remoteGenerated", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [
+        {
+          remoteGenerated: RemoteGenerated.Anywhere,
+          remoteHost: "example.com",
+        },
+      ],
+      [],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+  });
+
+  it("denies network policies that specify remoteProtocol and not remoteHost", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [
+        {
+          remoteProtocol: RemoteProtocol.TLS,
+        },
+      ],
+      [],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+  });
+
+  it("denies network policies that specify ingress and remoteHost", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [
+        {
+          direction: Direction.Ingress,
+          remoteHost: "example.com",
+        },
+      ],
+      [],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+  });
+
+  it("denies network policies that specify remoteHost as a wildcard", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [
+        {
+          remoteHost: "*.example.com",
+        },
+      ],
+      [],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+  });
+
+  it("denies network policies that specify remoteHost during ambient mode", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [
+        {
+          remoteHost: "example.com",
+        },
+      ],
+      [],
+      [],
+      true,
     );
     await validator(mockReq);
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
@@ -595,7 +678,7 @@ describe("Test validation of Package CRs", () => {
 
 describe("Test Allowed SSO Client Attributes", () => {
   afterEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   it("denies clients with unsupported attributes", async () => {
@@ -702,7 +785,7 @@ describe("Test Allowed SSO Client Attributes", () => {
 
 describe("Test proper generation of a unique name for service monitors", () => {
   afterEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   it("given an undefined description, a unique serviceMonitor name should be generated using the selector and portName fields", async () => {

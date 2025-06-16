@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { afterEach, beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { K8s, kind } from "pepr";
+import { afterEach, beforeEach, describe, expect, it, Mock, vi } from "vitest";
 import {
   buildInitialSecret,
   getAuthserviceConfig,
@@ -88,13 +88,13 @@ const getConfig = () => {
 };
 
 // Mock the necessary Kubernetes functions
-jest.mock("pepr", () => ({
-  K8s: jest.fn(),
+vi.mock("pepr", () => ({
+  K8s: vi.fn(),
   Log: {
-    child: jest.fn(() => ({
-      info: jest.fn(),
-      error: jest.fn(),
-      warn: jest.fn(),
+    child: vi.fn(() => ({
+      info: vi.fn(),
+      error: vi.fn(),
+      warn: vi.fn(),
       level: "info",
     })),
   },
@@ -106,7 +106,7 @@ jest.mock("pepr", () => ({
 }));
 
 describe("AuthService Config Tests", () => {
-  const applyMock = jest
+  const applyMock = vi
     .fn<(s: kind.Secret) => Promise<kind.Secret>>()
     .mockImplementation((s: kind.Secret) =>
       Promise.resolve({
@@ -119,13 +119,13 @@ describe("AuthService Config Tests", () => {
 
   beforeEach(() => {
     process.env.PEPR_WATCH_MODE = "true";
-    jest.useFakeTimers();
+    vi.useFakeTimers();
   });
 
   afterEach(() => {
-    jest.runOnlyPendingTimers();
-    jest.useRealTimers();
-    jest.clearAllMocks();
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
+    vi.clearAllMocks();
   });
 
   it("buildInitialSecret should return the correct initial secret", () => {
@@ -148,23 +148,23 @@ describe("AuthService Config Tests", () => {
   });
 
   it("setupAuthserviceSecret should skip creation if secret exists", async () => {
-    const getMock = jest.fn<() => Promise<kind.Secret>>().mockResolvedValue({
+    const getMock = vi.fn<() => Promise<kind.Secret>>().mockResolvedValue({
       metadata: { name: "authservice-uds" },
       data: {
         "config.json": btoa(JSON.stringify(getConfig())),
       },
     });
 
-    (K8s as jest.Mock).mockImplementation(kindType => {
+    (K8s as Mock).mockImplementation(kindType => {
       if (kindType === kind.Secret) {
         return {
           Apply: applyMock,
-          InNamespace: jest.fn().mockReturnThis(),
+          InNamespace: vi.fn().mockReturnThis(),
           Get: getMock,
         };
       } else {
         return {
-          Apply: jest.fn(),
+          Apply: vi.fn(),
         };
       }
     });
@@ -176,11 +176,11 @@ describe("AuthService Config Tests", () => {
   });
 
   it("updateAuthServiceSecret should debounce and update the Kubernetes secret", async () => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
 
-    const patchMock = jest.fn(); // Mock the Patch method
+    const patchMock = vi.fn(); // Mock the Patch method
 
-    (K8s as jest.Mock).mockImplementation(kindType => {
+    (K8s as Mock).mockImplementation(kindType => {
       if (kindType === kind.Secret) {
         return {
           Apply: applyMock,
@@ -197,7 +197,7 @@ describe("AuthService Config Tests", () => {
 
     const updatePromise = updateAuthServiceSecret(newConfig);
 
-    jest.advanceTimersByTime(12000);
+    vi.advanceTimersByTime(12000);
 
     await updatePromise;
 
@@ -206,12 +206,12 @@ describe("AuthService Config Tests", () => {
   });
 
   it("updateAuthServiceSecret should only apply changes after debounce delay", async () => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
 
-    const patchMock = jest.fn(); // Mock Patch for Deployment
+    const patchMock = vi.fn(); // Mock Patch for Deployment
 
     // Mock K8s functionality for Secret and Deployment
-    (K8s as jest.Mock).mockImplementation(kindType => {
+    (K8s as Mock).mockImplementation(kindType => {
       if (kindType === "Secret") {
         return {
           Apply: applyMock,
@@ -228,7 +228,7 @@ describe("AuthService Config Tests", () => {
 
     const updatePromise = updateAuthServiceSecret(newConfig); // Capture the promise to ensure it's awaited later
 
-    jest.advanceTimersByTime(2000); // Fast-forward time
+    vi.advanceTimersByTime(2000); // Fast-forward time
 
     await updatePromise; // Ensure the promise is awaited after the debounce
 
@@ -237,12 +237,12 @@ describe("AuthService Config Tests", () => {
   });
 
   it("updateAuthServiceSecret should only applied if called once between debounce delay", async () => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
 
-    const patchMock = jest.fn(); // Mock Patch for Deployment
+    const patchMock = vi.fn(); // Mock Patch for Deployment
 
     // Mock K8s functionality for Secret and Deployment
-    (K8s as jest.Mock).mockImplementation(kindType => {
+    (K8s as Mock).mockImplementation(kindType => {
       if (kindType === "Secret") {
         return {
           Apply: applyMock,
@@ -269,7 +269,7 @@ describe("AuthService Config Tests", () => {
 
     const otherPromise = updateAuthServiceSecret(updatedConfig); // Capture the promise to ensure it's awaited later
 
-    jest.advanceTimersByTime(2000); // Fast-forward time
+    vi.advanceTimersByTime(2000); // Fast-forward time
 
     await updatePromise;
     await otherPromise;
@@ -289,11 +289,11 @@ describe("AuthService Config Tests", () => {
   });
 
   it("updateAuthServiceSecret should reset secret on failure", async () => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
 
-    const patchMock = jest.fn(); // Mock Patch for Deployment
+    const patchMock = vi.fn(); // Mock Patch for Deployment
 
-    (K8s as jest.Mock).mockImplementation(kindType => {
+    (K8s as Mock).mockImplementation(kindType => {
       if (kindType === kind.Secret) {
         return {
           Apply: applyMock,
@@ -313,7 +313,7 @@ describe("AuthService Config Tests", () => {
 
     const updatePromise = updateAuthServiceSecret(baseConfig); // Capture the promise to ensure it's awaited later
 
-    jest.advanceTimersByTime(2000); // Fast-forward time
+    vi.advanceTimersByTime(2000); // Fast-forward time
     await updatePromise;
 
     // ensure applyMock has been called with particular config
@@ -329,7 +329,7 @@ describe("AuthService Config Tests", () => {
     expect(applyMock).toHaveBeenCalledTimes(1);
     expect(patchMock).toHaveBeenCalledTimes(1); // Ensure Patch is called for the deployment
 
-    (K8s as jest.Mock).mockImplementationOnce(kindType => {
+    (K8s as Mock).mockImplementationOnce(kindType => {
       if (kindType === kind.Secret) {
         return {
           Apply: () => Promise.reject(new Error("Failed to apply secret")),
@@ -343,7 +343,7 @@ describe("AuthService Config Tests", () => {
 
     const failedUpdate = updateAuthServiceSecret(baseConfig); // Capture the promise to ensure it's awaited later
 
-    jest.advanceTimersByTime(2000); // Fast-forward time
+    vi.advanceTimersByTime(2000); // Fast-forward time
 
     failedUpdate
       .then(config => {

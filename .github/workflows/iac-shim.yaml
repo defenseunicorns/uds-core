@@ -1,0 +1,35 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+name: IaC Shim
+
+# Permissions for the GITHUB_TOKEN used by the workflow.
+permissions:
+  contents: read # Allows reading the content of the repository.
+
+on:
+  pull_request:
+    # milestoned is added here as a workaround for release-please not triggering PR workflows (PRs should be added to a milestone to trigger the workflow).
+    # labeled is added to support renovate-ready labelling on PRs
+    types: [milestoned, labeled, opened, reopened, synchronize]
+    paths:
+      - ".github/workflows/test-aks.yaml"
+      - ".github/workflows/test-eks.yaml"
+      - ".github/workflows/test-rke2.yaml"
+      - ".github/bundles/**"
+      - ".github/test-infra/**"
+      - "tasks/iac.yaml"
+
+jobs:
+  run-package-test:
+    name: Schedule
+    strategy:
+      matrix:
+        package: [all]
+        flavor: [upstream, registry1, unicorn]
+        test_type: [install, upgrade]
+    uses: ./.github/workflows/test-shim.yaml
+    with:
+      package: ${{ matrix.package }}
+      flavor: ${{ matrix.flavor }}
+      test_type: ${{ matrix.test_type }}

@@ -1,10 +1,10 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2025 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-const { K8s, kind } = require("kubernetes-fluent-client");
+import { K8s, kind } from 'pepr';
 
-module.exports = async () => {
+export default async () => {
   await K8s(kind.Namespace).Delete("policy-tests");
 }
