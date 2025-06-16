@@ -28,7 +28,7 @@ components:
           - values/upstream-values.yaml
     images:
       - docker.io/grafana/grafana:12.0.1
-      - docker.io/curlimages/curl:8.13.0
+      - docker.io/curlimages/curl:8.14.1
       - docker.io/library/busybox:1.37.0
       - ghcr.io/kiwigrid/k8s-sidecar:1.30.3
 
