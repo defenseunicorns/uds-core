@@ -73,4 +73,93 @@ data "aws_iam_policy_document" "this" {
 
     }
   }
+
+  # velero aws plugin policy scope from here: https://github.com/vmware-tanzu/velero-plugin-for-aws?tab=readme-ov-file#set-permissions-for-velero
+  # ref policy for scoping based on tags: https://cloudonaut.io/restricting-access-to-ec2-instances-based-on-tags/
+  statement {
+    effect = "Allow"
+    actions = [
+      "kms:ReEncryptFrom",
+      "kms:ReEncryptTo"
+    ]
+    resources = [data.aws_secretsmanager_secret_version.rke2_kms_key_arn_latest.secret_string]
+  }
+
+  statement {
+    effect = "Allow"
+    actions = [
+      "ec2:DescribeVolumes",
+      "ec2:DescribeSnapshots"
+    ]
+    resources = ["*"]
+  }
+
+  statement {
+    effect = "Allow"
+    actions = [
+      "ec2:CreateVolume",
+    ]
+    resources = ["*"]
+    condition {
+      test     = "StringEquals"
+      variable = "aws:RequestTag/ebs.csi.aws.com/cluster"
+      values   = ["true"]
+    }
+  }
+
+  statement {
+    effect = "Allow"
+    actions = [
+      "ec2:CreateSnapshot",
+    ]
+    resources = ["*"]
+    condition {
+      test     = "StringEquals"
+      variable = "aws:RequestTag/ebs.csi.aws.com/cluster"
+      values   = ["true"]
+    }
+  }
+
+  statement {
+    effect = "Allow"
+    actions = [
+      "ec2:CreateSnapshot",
+    ]
+    resources = ["*"]
+    condition {
+      test     = "StringEquals"
+      variable = "ec2:ResourceTag/ebs.csi.aws.com/cluster"
+      values   = ["true"]
+    }
+  }
+
+  statement {
+    effect = "Allow"
+    actions = [
+      "ec2:DeleteSnapshot"
+    ]
+    resources = ["*"]
+    condition {
+      test     = "StringEquals"
+      variable = "ec2:ResourceTag/ebs.csi.aws.com/cluster"
+      values   = ["true"]
+    }
+  }
+
+  statement {
+    effect    = "Allow"
+    actions   = ["ec2:CreateTags"]
+    resources = ["*"]
+    condition {
+      test     = "ForAllValues:StringEquals"
+      variable = "aws:RequestTag/ebs.csi.aws.com/cluster"
+      values   = ["true"]
+    }
+    condition {
+      test     = "ForAllValues:StringEqualsIfExists"
+      variable = "ec2:ResourceTag/ebs.csi.aws.com/cluster"
+      values   = ["true"]
+    }
+  }
+
 }

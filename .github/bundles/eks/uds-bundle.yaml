@@ -32,6 +32,11 @@ packages:
             - name: VELERO_IRSA_ROLE_ARN
               description: "IRSA ARN annotation to use for Velero"
               path: serviceAccount.server.annotations.eks\.amazonaws\.com/role-arn
+          values:
+            - path: snapshotsEnabled
+              value: true
+            - path: schedules.udsbackup.template.snapshotVolume
+              value: true
       loki:
         loki:
           values:
