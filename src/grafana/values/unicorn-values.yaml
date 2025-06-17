@@ -15,7 +15,7 @@ initChownData:
 downloadDashboardsImage:
   registry: quay.io
   repository: rfcurated/curl
-  tag: 8.12.1-jammy-scratch-fips-rfcurated
+  tag: 8.14.1-jammy-scratch-fips-rfcurated
 
 sidecar:
   image:
