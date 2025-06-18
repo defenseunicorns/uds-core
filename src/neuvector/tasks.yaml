@@ -7,45 +7,47 @@ includes:
 tasks:
   - name: validate
     actions:
-      - description: Validate Neuvector Controller
+      - description: Validate NeuVector Controller
         wait:
           cluster:
             kind: Deployment
             name: neuvector-controller-pod
             condition: Available
             namespace: neuvector
-      - description: Validate Neuvector Enforcer
+      - description: Validate NeuVector Enforcer
         wait:
           cluster:
             kind: Pod
             name: app=neuvector-enforcer-pod
             condition: Ready
             namespace: neuvector
-      - description: Validate Neuvector Manager
+      - description: Validate NeuVector Manager
         wait:
           cluster:
             kind: Deployment
             name: neuvector-manager-pod
             condition: Available
             namespace: neuvector
-      - description: Validate Neuvector Scanner
+      - description: Validate NeuVector Interface
+        wait:
+          network:
+            protocol: https
+            address: neuvector.admin.uds.dev
+            code: 200
+      - description: Trigger updater job and wait for all job completion
+        cmd: |
+          kubectl create job --from=cronjob/neuvector-updater-pod updater -n neuvector
+          if ./uds zarf tools kubectl get jobs -n neuvector --no-headers 2>/dev/null | grep -q .; then
+            ./uds zarf tools kubectl wait --for=condition=complete job --all -n neuvector --timeout=5m
+          fi
+      # Wait after job completion since updater job cycles scanners
+      - description: Validate NeuVector Scanner
         wait:
           cluster:
             kind: Deployment
             name: neuvector-scanner-pod
             condition: Available
             namespace: neuvector
-      - description: Validate Neuvector Interface
-        wait:
-          network:
-            protocol: https
-            address: neuvector.admin.uds.dev
-            code: 200
-      - description: Wait for NeuVector Job Completion
-        cmd: |
-          if ./uds zarf tools kubectl get jobs -n neuvector --no-headers 2>/dev/null | grep -q .; then
-            ./uds zarf tools kubectl wait --for=condition=complete job --all -n neuvector --timeout=5m
-          fi
 
   - name: e2e-test
     actions:
