@@ -1,5 +1,6 @@
 # Copyright 2024 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 locals {
   # Combine subnet IDs for EKS
   subnet_ids = [data.aws_subnet.eks_ci_subnet_b.id, data.aws_subnet.eks_ci_subnet_c.id]
@@ -70,6 +71,7 @@ module "irsa" {
   role_permissions_boundary_arn = "arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:policy/${var.permissions_boundary_name}"
   account_id                    = data.aws_caller_identity.current.account_id
   current_partition             = data.aws_partition.current.partition
+  kms_key_arn = module.generate_kms[each.key].kms_key_arn
 
   oidc_providers = {
     main = {

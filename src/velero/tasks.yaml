@@ -32,6 +32,7 @@ tasks:
               name: ${BACKUP_NAME}
               namespace: velero
             spec:
+              storageLocation: default
               csiSnapshotTimeout: 0s
               excludedNamespaces:
               - kube-system
@@ -41,7 +42,7 @@ tasks:
               includeClusterResources: true
               itemOperationTimeout: 0s
               metadata: {}
-              snapshotVolumes: false
+              snapshotVolumes: true
               ttl: 240h0m0s
           EOF
       - description: wait for the backup object
@@ -81,6 +82,19 @@ tasks:
               # be a quitter
               exit 1
             fi
+          fi
+
+          echo "Checking Velero Volume Snapshot counts in the backup status..."
+          SNAPSHOT_INFO=$(uds zarf tools kubectl describe backup -n velero ${BACKUP_NAME})
+          ATTEMPTED=$(echo "$SNAPSHOT_INFO" | grep 'Volume Snapshots Attempted:' | awk '{print $4}')
+          COMPLETED=$(echo "$SNAPSHOT_INFO" | grep 'Volume Snapshots Completed:' | awk '{print $4}')
+
+          echo "Velero Volume Snapshots Attempted: ${ATTEMPTED}"
+          echo "Velero Volume Snapshots Completed: ${COMPLETED}"
+
+          if [ "$ATTEMPTED" != "$COMPLETED" ]; then
+            echo "Mismatch detected: Only ${COMPLETED} out of ${ATTEMPTED} Velero volume snapshots completed."
+            exit 1
           fi
           echo "Status is Complete! Great success!"
 
