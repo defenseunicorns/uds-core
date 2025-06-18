@@ -20,6 +20,9 @@ resource "random_string" "name" {
 resource "azurerm_resource_group" "this" {
   name     = "${var.resource_group_name}-${random_string.name.result}"
   location = var.location
+  tags = {
+    "Owner" = "UDS Foundations"
+  }
 }
 
 resource "azurerm_role_assignment" "cluster_admin" {
@@ -48,13 +51,17 @@ resource "azurerm_user_assigned_identity" "cluster_identity" {
   resource_group_name = azurerm_resource_group.this.name
 }
 
-#Create cluster via API call because API server VNET integration will not be added to the azurerm provider until it is GA
-#Tracking GA availability: https://github.com/Azure/AKS/issues/2729
+# Create cluster via API call because API server VNET integration will not be added to the azurerm provider until it is GA
+# Tracking GA availability: https://github.com/Azure/AKS/issues/2729
+# Tracking support in azurerm provider: https://github.com/hashicorp/terraform-provider-azurerm/issues/27640
 resource "azapi_resource" "aks_cluster" {
   type      = "Microsoft.ContainerService/ManagedClusters@2024-09-02-preview"
   name      = local.cluster_name
   parent_id = azurerm_resource_group.this.id
   location  = azurerm_resource_group.this.location
+  tags = {
+    "Owner" = "UDS Foundations"
+  }
 
   body = {
     identity = {
