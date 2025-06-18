@@ -42,10 +42,6 @@ test("validate system health", async ({ page }) => {
     expect(scannerData).toHaveProperty('scanners');
     expect(Array.isArray(scannerData.scanners)).toBe(true);
     expect(scannerData.scanners.length).toBeGreaterThanOrEqual(3);
-    const hasScannedContainers = scannerData.scanners.some(
-      (scanner: { scanned_containers: number }) => scanner.scanned_containers > 0
-    );
-    expect(hasScannedContainers).toBe(true);
 
     // Ensure at least three controller exists and all are connected
     await page.getByRole('tab', { name: 'Controllers' }).click();
@@ -76,6 +72,18 @@ test("validate system health", async ({ page }) => {
     enforcerData.enforcers.forEach((enforcer: { connection_state: string }) => {
       expect(enforcer.connection_state).toBe('connected');
     });
+  });
+
+  await test.step("check scanning functionality", async () => {
+    await page.goto('/#/workloads');
+    await page.waitForLoadState("domcontentloaded");
+
+    // Pick the first istio-proxy image to scan
+    await page.getByText('istio-proxy').first().click();
+    const scannerPromise = page.waitForResponse(`${url}/workload/scanned*`);
+    await page.getByRole('button', { name: 'Scan action' }).click();
+    const scannerResponse = await scannerPromise;
+    expect(scannerResponse.status()).toBe(200);
   });
 });
 
