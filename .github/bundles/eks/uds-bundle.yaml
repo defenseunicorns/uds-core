@@ -35,8 +35,14 @@ packages:
           values:
             - path: snapshotsEnabled
               value: true
-            - path: schedules.udsbackup.template.snapshotVolume
+            - path: schedules.udsbackup.template.snapshotVolumes
               value: true
+            - path: configuration.volumeSnapshotLocation
+              value:
+                - name: default
+                  provider: aws
+                  config:
+                    region: us-gov-west-1
       loki:
         loki:
           values:
