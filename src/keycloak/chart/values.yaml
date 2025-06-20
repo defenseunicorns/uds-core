@@ -314,6 +314,7 @@ autoscaling:
 env: []
 
 x509LookupProvider: nginx
+x509SSLClientCert: istio-mtls-client-certificate
 mtlsClientCert: "%DOWNSTREAM_PEER_CERT%"
 
 # Custom migrations setting for UDS Core internal usage only

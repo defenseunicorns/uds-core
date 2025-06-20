@@ -494,6 +494,9 @@
     "x509LookupProvider": {
       "type": "string"
     },
+    "x509SSLClientCert" : {
+      "type": "string"
+    },
     "migrations": {
       "type": "object",
       "properties": {
