@@ -465,6 +465,15 @@
     "themeCustomizations": {
       "type": "object",
       "properties": {
+        "settings": {
+          "type": "object",
+          "properties": {
+            "enableRegistrationFields": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": true
+        },
         "resources": {
           "type": "object",
           "properties": {
@@ -487,6 +496,27 @@
                 }
               }
             }
+          }
+        },
+        "termsAndConditions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "configmap": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "required": ["name"]
+              }
+            },
+            "required": ["name", "configmap"]
           }
         }
       }
