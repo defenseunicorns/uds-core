@@ -53,8 +53,3 @@ variable "name" {
   description = "Cluster name, used in the name of the iam role that is created"
   default     = "irsa-role"
 }
-
-variable "kms_key_arn" {
-  type        = string
-  description = "KMS key ARN for the IRSA policy to allow access to encrypted resources"
-}

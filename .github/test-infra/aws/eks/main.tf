@@ -54,7 +54,6 @@ module "S3" {
   for_each      = local.bucket_configurations
   source        = "../modules/s3"
   bucket_prefix = "${each.value.name}-"
-  kms_key_arn   = module.generate_kms[each.key].kms_key_arn
   irsa_role_arn = module.irsa[each.key].role_arn
 
   # Explicit dependency on KMS
@@ -71,7 +70,6 @@ module "irsa" {
   role_permissions_boundary_arn = "arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:policy/${var.permissions_boundary_name}"
   account_id                    = data.aws_caller_identity.current.account_id
   current_partition             = data.aws_partition.current.partition
-  kms_key_arn = module.generate_kms[each.key].kms_key_arn
 
   oidc_providers = {
     main = {

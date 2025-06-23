@@ -42,7 +42,7 @@ packages:
                 - name: default
                   provider: aws
                   config:
-                    region: us-gov-west-1
+                    region: "###ZARF_VAR_VELERO_BUCKET_REGION###"
       loki:
         loki:
           values:

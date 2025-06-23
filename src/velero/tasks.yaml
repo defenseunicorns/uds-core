@@ -53,6 +53,22 @@ tasks:
             namespace: velero
       - description: check the status of the backup object
         cmd: |-
+          debug_velero_backup() {
+            # get backup object
+            uds zarf tools kubectl get backup.velero.io -n velero ${BACKUP_NAME} -o yaml
+            uds zarf tools kubectl get backup.velero.io -A -o yaml
+            echo "::endgroup::"
+
+            # get backupstoragelocations
+            uds zarf tools kubectl get backupstoragelocation -A -o yaml
+
+            # describe backup
+            uds zarf tools kubectl describe backup -n velero ${BACKUP_NAME}
+
+            # velero pod logs
+            uds zarf tools kubectl logs -n velero -l name=velero
+          }
+
           STATUS=$(uds zarf tools kubectl get backup.velero.io -n velero ${BACKUP_NAME} -o jsonpath='{.status.phase}')
           if [ ${STATUS} != "Completed" ]; then
             echo "Status is '$STATUS'... waiting to see if it changes"
@@ -64,21 +80,7 @@ tasks:
             STATUS=$(uds zarf tools kubectl get backup.velero.io -n velero ${BACKUP_NAME} -o jsonpath='{.status.phase}')
             if [ ${STATUS} != "Completed" ]; then
               echo "Status is $STATUS... something isn't right.."
-
-              # get backup object
-              uds zarf tools kubectl get backup.velero.io -n velero ${BACKUP_NAME} -o yaml
-              uds zarf tools kubectl get backup.velero.io -A -o yaml
-              echo "::endgroup::"
-
-              # get backupstoragelocations
-              uds zarf tools kubectl get backupstoragelocation -A -o yaml
-
-              # describe backup
-              uds zarf tools kubectl describe backup -n velero ${BACKUP_NAME}
-
-              # velero pod logs
-              uds zarf tools kubectl logs -n velero -l name=velero
-
+              debug_velero_backup
               # be a quitter
               exit 1
             fi
@@ -94,6 +96,7 @@ tasks:
 
           if [ "$ATTEMPTED" != "$COMPLETED" ]; then
             echo "Mismatch detected: Only ${COMPLETED} out of ${ATTEMPTED} Velero volume snapshots completed."
+            debug_velero_backup
             exit 1
           fi
           echo "Status is Complete! Great success!"

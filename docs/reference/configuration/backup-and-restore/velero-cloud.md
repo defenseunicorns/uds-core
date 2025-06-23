@@ -27,6 +27,7 @@ These values ensure that volume snapshots are included in the default `udsbackup
 The Velero service account must have an IRSA role with the necessary permissions to manage EBS snapshots. Add the following IAM policy statements to your Velero IRSA role definition:
 
 ```hcl
+# Example IAM policy for Velero AWS plugin
 # velero aws plugin policy scope from here: https://github.com/vmware-tanzu/velero-plugin-for-aws?tab=readme-ov-file#set-permissions-for-velero
 # ref policy for scoping based on tags: https://cloudonaut.io/restricting-access-to-ec2-instances-based-on-tags/
 data "aws_iam_policy_document" "velero_policy" {
@@ -36,7 +37,8 @@ data "aws_iam_policy_document" "velero_policy" {
       "kms:ReEncryptFrom",
       "kms:ReEncryptTo"
     ]
-    resources = [data.aws_secretsmanager_secret_version.rke2_kms_key_arn_latest.secret_string]
+    # Replace <YOUR_EBS_KMS_KEY_ARN> with the ARN of your EBS volume encryption KMS key
+    resources = ["<YOUR_EBS_KMS_KEY_ARN>"]
   }
 
   statement {

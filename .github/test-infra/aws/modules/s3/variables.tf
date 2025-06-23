@@ -11,6 +11,7 @@ variable "bucket_prefix" {
 }
 
 variable "kms_key_arn" {
+  default = null
   type        = string
   description = "KMS Key ARN to use for encryption"
 }
