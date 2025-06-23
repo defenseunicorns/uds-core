@@ -53,7 +53,7 @@ spec:
               mountPath: /opt/keycloak/themes
             - name: conf
               mountPath: /opt/keycloak/conf
-            {{- if and .Values.themeCustomizations .Values.themeCustomizations.resources .Values.themeCustomizations.resources.images }}
+            {{- if .Values.themeCustomizations }}
             - name: theme-overrides
               mountPath: /opt/keycloak/theme-overrides
             {{- end }}
@@ -342,10 +342,11 @@ spec:
           {{- else }}
           emptyDir: {}
           {{- end }}
-        {{- if and .Values.themeCustomizations .Values.themeCustomizations.resources .Values.themeCustomizations.resources.images }}
+        {{- if .Values.themeCustomizations }}
         - name: theme-overrides
           projected:
             sources:
+              {{- if and .Values.themeCustomizations.resources .Values.themeCustomizations.resources.images }}
               {{- range $image := .Values.themeCustomizations.resources.images }}
               {{- if $image.configmap.name }}
               - configMap:
@@ -353,6 +354,16 @@ spec:
                   items:
                     - key: {{ $image.name }}
                       path: {{ $image.name }}
+              {{- end }}
+              {{- end }}
+              {{- end }}
+              {{- if and .Values.themeCustomizations.termsAndConditions .Values.themeCustomizations.termsAndConditions.text }}
+              {{- with .Values.themeCustomizations.termsAndConditions.text.configmap }}
+              - configMap:
+                  name: {{ .name }}
+                  items:
+                    - key: {{ .key }}
+                      path: tc.txt
               {{- end }}
               {{- end }}
         {{- end }}
