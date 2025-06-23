@@ -363,7 +363,7 @@ spec:
                   name: {{ .name }}
                   items:
                     - key: {{ .key }}
-                      path: tc_{{ .key }}.txt
+                      path: tc.txt
               {{- end }}
               {{- end }}
         {{- end }}
