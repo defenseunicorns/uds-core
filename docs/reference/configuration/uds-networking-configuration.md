@@ -27,7 +27,7 @@ When configuring a static CIDR range, it is important to make the range as restr
 
 ## KubeNodes CIDRs
 
-The UDS operator is responsible for dynamically updating network policies that use the `remoteGenerated: KubeNodes` custom selector, in response to changes to nodes in the Kubernetes cluster. As nodes are added, updated, or removed from a cluster, the operator will ensure that policies remain accurate and include all the nodes in the cluster. 
+The UDS operator is responsible for dynamically updating network policies that use the `remoteGenerated: KubeNodes` custom selector, in response to changes to nodes in the Kubernetes cluster. As nodes are added, updated, or removed from a cluster, the operator will ensure that policies remain accurate and include all the nodes in the cluster.
 
 UDS operator provides an option to configure a set of static CIDR ranges in place of offering a dynamically updated list by setting an override to `operator.KUBENODE_CIDRS` in your bundle as a value or variable. The value should be a single string of comma (`,`) separated values for the individual IP addresses, using `/32` notation. For example:
 
@@ -106,7 +106,7 @@ packages:
                   selector:
                     app.kubernetes.io/name: vector
                   remoteGenerated: Anywhere
-                  port: 80
+                  port: 80 # or 443
                   description: "S3 Storage"
 ```
 
