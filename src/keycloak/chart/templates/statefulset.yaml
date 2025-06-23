@@ -154,10 +154,10 @@ spec:
             - name: KC_SPI_X509CERT_LOOKUP_PROVIDER
               value: {{ .Values.x509LookupProvider }}
             # Set nginx provider header name
-            - name: KC_SPI_X509CERT_LOOKUP_NGINX_SSL_CLIENT_CERT
+            - name: KC_SPI_X509CERT_LOOKUP_{{ .Values.x509LookupProvider | upper }}_SSL_CLIENT_CERT
               value: istio-mtls-client-certificate
             # Dumb value (not used in the nginx provider, but required by the SPI)
-            - name: KC_SPI_X509CERT_LOOKUP_NGINX_SSL_CLIENT_CERT_CHAIN_PREFIX
+            - name: KC_SPI_X509CERT_LOOKUP_{{ .Values.x509LookupProvider | upper }}_SSL_CLIENT_CERT_CHAIN_PREFIX
               value: UNUSED
           {{- if .Values.fips }}
             # This is a workaround for https://github.com/keycloak/keycloak/issues/39454
