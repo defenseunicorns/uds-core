@@ -1,5 +1,6 @@
 # Copyright 2024 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
 locals {
   # Combine subnet IDs for EKS
   subnet_ids = [data.aws_subnet.eks_ci_subnet_b.id, data.aws_subnet.eks_ci_subnet_c.id]
@@ -53,7 +54,6 @@ module "S3" {
   for_each      = local.bucket_configurations
   source        = "../modules/s3"
   bucket_prefix = "${each.value.name}-"
-  kms_key_arn   = module.generate_kms[each.key].kms_key_arn
   irsa_role_arn = module.irsa[each.key].role_arn
 
   # Explicit dependency on KMS
