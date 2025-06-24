@@ -1,4 +1,8 @@
-# Velero Cloud Provider Snapshot Support
+---
+title: Velero Cloud Provider Snapshot Support
+sidebar:
+  order: 5
+---
 
 This document describes how to enable volume snapshot support in Velero for cloud-provider-specific infrastructure in `uds-core`. This allows backup and restoration of persistent volumes via native snapshot mechanisms provided by each cloud provider.
 
