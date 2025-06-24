@@ -87,7 +87,7 @@ tasks:
           fi
 
           echo "Checking Velero Volume Snapshot counts in the backup status..."
-          SNAPSHOT_INFO=$(uds zarf tools kubectl describe backup -n velero ${BACKUP_NAME})
+          SNAPSHOT_INFO=$(uds zarf tools kubectl describe backup.velero.io -n velero ${BACKUP_NAME})
           ATTEMPTED=$(echo "$SNAPSHOT_INFO" | grep 'Volume Snapshots Attempted:' | awk '{print $4}')
           COMPLETED=$(echo "$SNAPSHOT_INFO" | grep 'Volume Snapshots Completed:' | awk '{print $4}')
 
