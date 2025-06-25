@@ -179,4 +179,4 @@ tasks:
       - description: "Regenerate operator resource tree"
         cmd: |
           d2 fmt docs/.images/diagrams/operator-resource-tree.d2
-          d2 docs/.images/diagrams/operator-resource-tree.d2 docs/.images/diagrams/operator-resource-tree.svg --pad 0 --layout elk
+          d2 docs/.images/diagrams/operator-resource-tree.d2 docs/.images/diagrams/operator-resource-tree.png --layout elk
