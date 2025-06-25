@@ -1,0 +1,340 @@
+# Theme and direction
+direction: down
+
+# Global diagram styling
+style: {
+  fill: "white"
+  stroke: "#144a8f"
+  stroke-width: 2
+  border-radius: 10
+  font-color: "#000000"
+}
+
+# Define classes for styling
+classes: {
+  pkgSpec: {
+    style: {
+      fill: "#144a8f"
+      stroke: "#102349"
+      stroke-width: 2
+      border-radius: 5
+      font-color: "#ffffff"
+    }
+  }
+  defaultResource: {
+    style: {
+      fill: "#e6e6e6"
+      stroke: "#9e9e9e"
+      border-radius: 5
+    }
+  }
+  networkResource: {
+    style: {
+      fill: "#24b0ff"
+      stroke: "#144a8f"
+      stroke-width: 2
+      border-radius: 5
+      font-color: "#000000"
+    }
+  }
+  istioResource: {
+    style: {
+      fill: "#102349"
+      stroke: "#0c1a3e"
+      stroke-width: 2
+      border-radius: 5
+      font-color: "#ffffff"
+    }
+  }
+  monitorResource: {
+    style: {
+      fill: "#9e9e9e"
+      stroke: "#323336"
+      stroke-width: 2
+      border-radius: 5
+    }
+  }
+  authResource: {
+    style: {
+      fill: "#eb2628"
+      stroke: "#a51c1e"
+      stroke-width: 2
+      border-radius: 5
+      font-color: "#ffffff"
+    }
+  }
+  container: {
+    style: {
+      fill: "transparent"
+      stroke: "#144a8f"
+      stroke-width: 1
+      border-radius: 8
+      stroke-dash: 3
+    }
+  }
+}
+
+# Main Package CR
+Package: {
+  label: "Package CR"
+  class: pkgSpec
+}
+
+# Package Specs
+AllowSpec: {
+  label: "spec.network.allow"
+  class: pkgSpec
+}
+
+ExposeSpec: {
+  label: "spec.network.expose"
+  class: pkgSpec
+}
+
+ServiceMeshSpec: {
+  label: "spec.network.serviceMesh.mode"
+  class: pkgSpec
+}
+
+MonitorSpec: {
+  label: "spec.monitor"
+  class: pkgSpec
+}
+
+SSOSpec: {
+  label: "spec.sso"
+  class: pkgSpec
+}
+
+# Default Resources & Service Mesh
+DefaultResources: {
+  label: "Default Resources & Service Mesh"
+  class: container
+  direction: down
+
+  DefPol: {
+    label: "Default-Deny Policy"
+    class: networkResource
+  }
+
+  DNSPol: {
+    label: "DNS Egress Policy"
+    class: networkResource
+  }
+
+  SidecarResources: {
+    label: "Sidecar Mode"
+    class: container
+    direction: down
+
+    NSLabelsSidecar: {
+      label: "Namespace Labels\n(Istio Injection)"
+      class: defaultResource
+    }
+
+    SidecarNetPols: {
+      label: "NetworkPolicies\n(Istiod Egress, Sidecar Monitoring)"
+      class: networkResource
+    }
+  }
+
+  AmbientResources: {
+    label: "Ambient Mode"
+    class: container
+    direction: down
+
+    NSLabelsAmbient: {
+      label: "Namespace Labels\n(Ambient)"
+      class: defaultResource
+    }
+
+    AmbientNetPols: {
+      label: "NetworkPolicies\n(Healthprobes)"
+      class: networkResource
+    }
+  }
+}
+
+# Network Resources
+NetworkResources: {
+  label: "Network Resources"
+  class: container
+  direction: down
+
+  RemoteHostResources: {
+    label: "Remote Host Resources"
+    class: container
+    direction: down
+
+    RemoteSvcEntry: {
+      label: "ServiceEntries"
+      class: istioResource
+    }
+
+    RemoteSidecar: {
+      label: "Sidecar Config\n(egress)"
+      class: istioResource
+    }
+  }
+
+  AllowNetPol: {
+    label: "NetworkPolicies"
+    class: networkResource
+  }
+
+  AllowAuthPol: {
+    label: "ALLOW Authorization\nPolicies"
+    class: networkResource
+  }
+}
+
+# Identity Resources
+IdentityResources: {
+  label: "Identity Resources"
+  class: container
+  direction: down
+
+  AuthserviceResources: {
+    label: "Authservice Resources"
+    class: container
+    direction: down
+
+    AuthserviceConfig: {
+      label: "Authservice Config"
+      class: authResource
+    }
+
+    AuthserviceNetPol: {
+      label: "NetworkPolicies\n(Keycloak to Authservice)"
+      class: networkResource
+    }
+  }
+
+  KeycloakClients: {
+    label: "Keycloak Clients"
+    class: authResource
+  }
+}
+
+# Expose Resources
+ExposeResources: {
+  label: "Expose Resources"
+  class: container
+  direction: down
+
+  ExposeNetPol: {
+    label: "NetworkPolicies"
+    class: networkResource
+  }
+
+  ExposeAuthPol: {
+    label: "Authorization Policies\n(ALLOW from gateway)"
+    class: networkResource
+  }
+
+  ExposeVirtSvc: {
+    label: "VirtualServices"
+    class: istioResource
+  }
+
+  ExposeSvcEntry: {
+    label: "ServiceEntries"
+    class: istioResource
+  }
+}
+
+# Monitoring Resources
+MonitoringResources: {
+  label: "Monitoring Resources"
+  class: container
+  direction: down
+
+  MonitorNetPols: {
+    label: "NetworkPolicies"
+    class: networkResource
+  }
+
+  MonitorAuthPols: {
+    label: "Authorization Policies\n(Prometheus ingress)"
+    class: networkResource
+  }
+
+  PodMonitorResources: {
+    label: "PodMonitor Resources"
+    class: container
+    direction: down
+
+    PodMonitors: {
+      label: "PodMonitors"
+      class: monitorResource
+    }
+  }
+
+  ServiceMonitorResources: {
+    label: "ServiceMonitor Resources"
+    class: container
+    direction: down
+
+    ServiceMonitors: {
+      label: "ServiceMonitors"
+      class: monitorResource
+    }
+  }
+}
+
+# Legend
+Legend: {
+  label: "Legend"
+  style: {
+    fill: "white"
+    stroke: "#144a8f"
+    stroke-width: 2
+    border-radius: 8
+  }
+  direction: down
+
+  L1: {label: "Package Spec Fields"; class: pkgSpec}
+  L2: {label: "Namespace Labels"; class: defaultResource}
+  L3: {label: "Network Policies"; class: networkResource}
+  L4: {label: "Istio Custom Resources"; class: istioResource}
+  L5: {label: "Prometheus Custom Resources"; class: monitorResource}
+  L6: {label: "Identity Resources"; class: authResource}
+
+  near: "bottom-center"
+}
+
+# Edges
+Package -> AllowSpec
+Package -> ExposeSpec
+Package -> ServiceMeshSpec
+Package -> MonitorSpec
+Package -> SSOSpec
+Package -> DefaultResources
+
+ServiceMeshSpec -> DefaultResources.SidecarResources: "mode=sidecar (default)"
+ServiceMeshSpec -> DefaultResources.AmbientResources: "mode=ambient"
+
+AllowSpec -> NetworkResources
+SSOSpec -> IdentityResources
+ExposeSpec -> ExposeResources
+MonitorSpec -> MonitoringResources
+
+# Invisible‐edge ordering inside each container
+DefaultResources.DefPol -> DefaultResources.DNSPol: {style.stroke: transparent}
+DefaultResources.SidecarResources.NSLabelsSidecar -> DefaultResources.SidecarResources.SidecarNetPols: {style.stroke: transparent}
+DefaultResources.AmbientResources.NSLabelsAmbient -> DefaultResources.AmbientResources.AmbientNetPols: {style.stroke: transparent}
+
+NetworkResources.AllowNetPol -> NetworkResources.AllowAuthPol: {style.stroke: transparent}
+NetworkResources.RemoteHostResources.RemoteSvcEntry -> NetworkResources.RemoteHostResources.RemoteSidecar: {style.stroke: transparent}
+NetworkResources.AllowAuthPol -> NetworkResources.RemoteHostResources: {style.stroke: transparent}
+
+IdentityResources.KeycloakClients -> IdentityResources.AuthserviceResources: {style.stroke: transparent}
+IdentityResources.AuthserviceResources.AuthserviceConfig -> IdentityResources.AuthserviceResources.AuthserviceNetPol: {style.stroke: transparent}
+
+ExposeResources.ExposeNetPol -> ExposeResources.ExposeAuthPol: {style.stroke: transparent}
+ExposeResources.ExposeAuthPol -> ExposeResources.ExposeVirtSvc: {style.stroke: transparent}
+ExposeResources.ExposeVirtSvc -> ExposeResources.ExposeSvcEntry: {style.stroke: transparent}
+
+MonitoringResources.MonitorNetPols -> MonitoringResources.MonitorAuthPols: {style.stroke: transparent}
+MonitoringResources.MonitorAuthPols -> MonitoringResources.PodMonitorResources: {style.stroke: transparent}
+MonitoringResources.PodMonitorResources -> MonitoringResources.ServiceMonitorResources: {style.stroke: transparent}

@@ -172,3 +172,11 @@ tasks:
         cmd: |
           # Actual startup takes up to a minute because of the npm install
           cd uds-docs && npm i && echo "Sidebar will be different from the live docs, this is expected" && npm run dev && echo ""
+
+  - name: update-diagrams
+    description: "Regenerate D2 Diagrams for the Docs Site"
+    actions:
+      - description: "Regenerate operator resource tree"
+        cmd: |
+          d2 fmt docs/.images/diagrams/operator-resource-tree.d2
+          d2 docs/.images/diagrams/operator-resource-tree.d2 docs/.images/diagrams/operator-resource-tree.svg
