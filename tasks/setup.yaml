@@ -80,3 +80,40 @@ tasks:
           done
       - description: "Add Grafana database to PostgreSQL"
         cmd: docker exec postgres psql -U postgres -c "CREATE DATABASE grafana;"
+
+  - name: external-loadbalancer
+    Description: "Setup HAProxy as an external load balancer for the test-infra namespace"
+    actions:
+      - description: "Cleanup previous runs"
+        cmd: |
+          docker kill haproxy || true
+          docker rm haproxy || true
+      - description: Verify if Tenant Gateway is on 172.18.0.201 (it should be stable)
+        cmd: |
+          TENANT_IP=$(uds zarf tools kubectl get svc tenant-ingressgateway -n istio-tenant-gateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+          if [ "$TENANT_IP" != "172.18.0.201" ]; then
+            echo "Error: Tenant Gateway IP changed"
+            exit 1
+          fi
+      - description: Run HAProxy
+        cmd: |
+          docker run -d \
+            --name haproxy \
+            --network k3d-uds \
+            -v $(pwd)/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro \
+            -p 9080:80 \
+            -p 9443:443 \
+            haproxy:alpine
+      - description: Other test commands
+        cmd: |
+          set -x
+          curl -v --header 'Host: sso.uds.dev' localhost:9080
+          set +x
+          echo "You should see the 301 redirection here - that's good!"
+      - description: "What's missing?"
+        cmd: |
+          echo "* [ ] Add necessary modifications to the UDS Core"
+          echo "* [ ] Add configuration for number of proxies, see https://istio.io/latest/docs/ops/configuration/traffic-management/network-topologies/"
+          echo "* [ ] Add TLS support with custom self-signed certs and edge TLS termination"
+          echo "* [ ] Modify Cypress tests to accept customized Hosts (see "hosts" param in cypress.json)"
+          echo "* [ ] Fix HA Proxy version once finished with the above"
