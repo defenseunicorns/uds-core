@@ -71,6 +71,8 @@ classes: {
       border-radius: 8
       stroke-dash: 3
     }
+    grid-columns: 1
+    direction: down
   }
   containerNoDash: {
     style: {
@@ -79,6 +81,8 @@ classes: {
       stroke-width: 1
       border-radius: 8
     }
+    grid-columns: 1
+    direction: down
   }
 }
 
@@ -118,8 +122,6 @@ SSOSpec: {
 DefaultResources: {
   label: "Default Resources"
   class: containerNoDash
-  direction: down
-  grid-columns: 1
 
   DefPol: {
     label: "Default-Deny Policy"
@@ -141,8 +143,6 @@ ServiceMeshResources: {
   SidecarResources: {
     label: "Sidecar Mode"
     class: container
-    direction: down
-    grid-columns: 1
 
     NSLabelsSidecar: {
       label: "Namespace Labels\n(Istio Injection)"
@@ -158,8 +158,6 @@ ServiceMeshResources: {
   AmbientResources: {
     label: "Ambient Mode"
     class: container
-    direction: down
-    grid-columns: 1
 
     NSLabelsAmbient: {
       label: "Namespace Labels\n(Ambient)"
@@ -177,8 +175,6 @@ ServiceMeshResources: {
 NetworkResources: {
   label: "Network Resources"
   class: container
-  direction: down
-  grid-columns: 1
 
   AllowNetPol: {
     label: "NetworkPolicies"
@@ -211,8 +207,6 @@ NetworkResources: {
 IdentityResources: {
   label: "Identity Resources"
   class: container
-  direction: down
-  grid-columns: 1
 
   KeycloakClients: {
     label: "Keycloak Clients"
@@ -222,7 +216,6 @@ IdentityResources: {
   AuthserviceResources: {
     label: "Authservice Resources"
     class: container
-    direction: down
 
     AuthserviceConfig: {
       label: "Authservice Config"
@@ -240,8 +233,6 @@ IdentityResources: {
 ExposeResources: {
   label: "Expose Resources"
   class: container
-  direction: down
-  grid-columns: 1
 
   ExposeNetPol: {
     label: "NetworkPolicies"
@@ -268,8 +259,6 @@ ExposeResources: {
 MonitoringResources: {
   label: "Monitoring Resources"
   class: container
-  direction: down
-  grid-columns: 1
 
   MonitorNetPols: {
     label: "NetworkPolicies"
