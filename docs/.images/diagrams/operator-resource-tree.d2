@@ -137,8 +137,6 @@ DefaultResources: {
 ServiceMeshResources: {
   label: "Service Mesh Resources"
   class: containerNoDash
-  direction: down
-  grid-columns: 2
 
   SidecarResources: {
     label: "Sidecar Mode"
@@ -273,7 +271,6 @@ MonitoringResources: {
   PodMonitorResources: {
     label: "PodMonitor Resources"
     class: container
-    direction: down
 
     PodMonitors: {
       label: "PodMonitors"
@@ -284,7 +281,6 @@ MonitoringResources: {
   ServiceMonitorResources: {
     label: "ServiceMonitor Resources"
     class: container
-    direction: down
 
     ServiceMonitors: {
       label: "ServiceMonitors"
@@ -310,7 +306,7 @@ Legend: {
   L4: {label: "Istio Custom Resources"; class: istioResource}
   L5: {label: "Prometheus Custom Resources"; class: monitorResource}
   L6: {label: "Identity Resources"; class: authResource}
-  L7: {label: "Conditional Resources"; class: container}
+  L7: {label: "Conditional Resources"; class: container; style.font-size: 16}
 
   near: "bottom-center"
 }
