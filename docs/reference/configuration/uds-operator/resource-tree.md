@@ -4,7 +4,7 @@ title: UDS Package Resource Tree
 
 This diagram illustrates the relationship between the Package CR spec fields and the Kubernetes resources created during reconciliation.
 
-![UDS Package Resource Tree](../../../images/diagrams/operator-resource-tree.svg)
+![UDS Package Resource Tree](https://github.com/defenseunicorns/uds-core/blob/operator-resource-tree/docs/.images/diagrams/operator-resource-tree.svg?raw=true)
 
 
 ## Understanding the Resource Tree
