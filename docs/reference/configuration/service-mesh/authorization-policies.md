@@ -2,7 +2,7 @@
 title: How Authorization Policies Protect Your Services
 ---
 
-In clusters running Istio Ambient Mesh, UDS‑Core partially enforces **ingress network security** using Istio **ALLOW** AuthorizationPolicies. These policies are automatically generated for each application package you define with a [UDS Package](https://uds.defenseunicorns.com/reference/configuration/uds-operator/package/) resource.
+In clusters running Istio Ambient Mesh, UDS Core partially enforces **ingress network security** using Istio **ALLOW** AuthorizationPolicies. These policies are automatically generated for each application package you define with a [UDS Package](https://uds.defenseunicorns.com/reference/configuration/uds-operator/package/) resource.
 
 This document explains what this means for you as an application developer and how to take full advantage of the built-in security model.
 
