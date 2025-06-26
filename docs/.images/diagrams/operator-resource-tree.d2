@@ -19,6 +19,7 @@ classes: {
       stroke-width: 2
       border-radius: 5
       font-color: "#ffffff"
+      bold: false
     }
   }
   defaultResource: {
@@ -26,7 +27,10 @@ classes: {
       fill: "#e6e6e6"
       stroke: "#9e9e9e"
       border-radius: 5
+      bold: false
     }
+    width: 225
+    height: 65
   }
   networkResource: {
     style: {
@@ -35,7 +39,10 @@ classes: {
       stroke-width: 2
       border-radius: 5
       font-color: "#000000"
+      bold: false
     }
+    width: 225
+    height: 65
   }
   istioResource: {
     style: {
@@ -44,7 +51,10 @@ classes: {
       stroke-width: 2
       border-radius: 5
       font-color: "#ffffff"
+      bold: false
     }
+    width: 225
+    height: 65
   }
   monitorResource: {
     style: {
@@ -52,7 +62,10 @@ classes: {
       stroke: "#323336"
       stroke-width: 2
       border-radius: 5
+      bold: false
     }
+    width: 225
+    height: 65
   }
   authResource: {
     style: {
@@ -61,7 +74,10 @@ classes: {
       stroke-width: 2
       border-radius: 5
       font-color: "#ffffff"
+      bold: false
     }
+    width: 225
+    height: 65
   }
   container: {
     style: {
@@ -148,7 +164,7 @@ ServiceMeshResources: {
     }
 
     SidecarNetPols: {
-      label: "NetworkPolicies\n(Istiod Egress, Sidecar Monitoring)"
+      label: "Istiod Egress\nSidecar Monitoring"
       class: networkResource
     }
   }
@@ -163,7 +179,7 @@ ServiceMeshResources: {
     }
 
     AmbientNetPols: {
-      label: "NetworkPolicies\n(Healthprobes)"
+      label: "Ambient Healthprobes"
       class: networkResource
     }
   }
@@ -221,7 +237,7 @@ IdentityResources: {
     }
 
     AuthserviceNetPol: {
-      label: "NetworkPolicies\n(Keycloak and Authservice)"
+      label: "Keycloak / Authservice\nEgress"
       class: networkResource
     }
   }
@@ -233,7 +249,7 @@ ExposeResources: {
   class: container
 
   ExposeNetPol: {
-    label: "NetworkPolicies"
+    label: "Gateway Ingress"
     class: networkResource
   }
 
@@ -259,7 +275,7 @@ MonitoringResources: {
   class: container
 
   MonitorNetPols: {
-    label: "NetworkPolicies"
+    label: "Prometheus Ingress"
     class: networkResource
   }
 
@@ -304,9 +320,9 @@ Legend: {
   L2: {label: "Namespace Labels"; class: defaultResource}
   L3: {label: "Network Policies"; class: networkResource}
   L4: {label: "Istio Custom Resources"; class: istioResource}
-  L5: {label: "Prometheus Custom Resources"; class: monitorResource}
+  L5: {label: "Prometheus\nCustom Resources"; class: monitorResource}
   L6: {label: "Identity Resources"; class: authResource}
-  L7: {label: "Conditional Resources"; class: container; style.font-size: 16}
+  L7: {label: "Conditional Resources"; class: container; style.font-size: 16; style.bold: false}
 
   near: "bottom-center"
 }
