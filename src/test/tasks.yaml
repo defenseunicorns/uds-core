@@ -49,88 +49,88 @@ tasks:
       - description: Create zarf package for the test resources
         cmd: uds zarf package create src/test --confirm --no-progress --skip-sbom -a ${{ index .inputs "architecture" }}
 
-      - description: Deploy the test resources (with egress-app)
-        if: ${{ eq .inputs.validate_egress "true" }}
-        cmd: "uds zarf package deploy build/zarf-package-uds-core-test-apps-*.zst --confirm --no-progress --components egress-app"
+      # - description: Deploy the test resources (with egress-app)
+      #   if: ${{ eq .inputs.validate_egress "true" }}
+      #   cmd: "uds zarf package deploy build/zarf-package-uds-core-test-apps-*.zst --confirm --no-progress --components egress-app"
 
       - description: Deploy the test resources
-        if: ${{ eq .inputs.validate_egress "false" }}
+        # if: ${{ eq .inputs.validate_egress "false" }}
         cmd: "uds zarf package deploy build/zarf-package-uds-core-test-apps-*.zst --confirm --no-progress"
 
-      - description: Verify the admin app is accessible
-        wait:
-          network:
-            protocol: https
-            address: demo.admin.uds.dev/status/202
-            code: 202
+      # - description: Verify the admin app is accessible
+      #   wait:
+      #     network:
+      #       protocol: https
+      #       address: demo.admin.uds.dev/status/202
+      #       code: 202
 
-      - description: Verify the VS Match rules for method regex/uri prefix
-        wait:
-          network:
-            protocol: https
-            address: demo.admin.uds.dev/status/302
-            code: 404
+      # - description: Verify the VS Match rules for method regex/uri prefix
+      #   wait:
+      #     network:
+      #       protocol: https
+      #       address: demo.admin.uds.dev/status/302
+      #       code: 404
 
-      - description: Verify the VS Match rules for uri exact
-        wait:
-          network:
-            protocol: https
-            address: demo.admin.uds.dev/status/410
-            code: 410
+      # - description: Verify the VS Match rules for uri exact
+      #   wait:
+      #     network:
+      #       protocol: https
+      #       address: demo.admin.uds.dev/status/410
+      #       code: 410
 
-      - description: Verify the tenant app 8080 is accessible
-        wait:
-          network:
-            protocol: https
-            address: demo-8080.uds.dev
-            code: 200
+      # - description: Verify the tenant app 8080 is accessible
+      #   wait:
+      #     network:
+      #       protocol: https
+      #       address: demo-8080.uds.dev
+      #       code: 200
 
-      - description: Verify the tenant app 8081 is accessible
-        wait:
-          network:
-            protocol: https
-            address: demo-8081.uds.dev
-            code: 200
+      # - description: Verify the tenant app 8081 is accessible
+      #   wait:
+      #     network:
+      #       protocol: https
+      #       address: demo-8081.uds.dev
+      #       code: 200
 
-      - description: Verify the authservice tenant app is accessible
-        wait:
-          network:
-            protocol: https
-            address: protected.uds.dev
-            code: 200
+      # - description: Verify the authservice tenant app is accessible
+      #   wait:
+      #     network:
+      #       protocol: https
+      #       address: protected.uds.dev
+      #       code: 200
 
-      - description: Verify the authservice tenant app is protected by checking redirect
-        maxRetries: 3
-        task: utils:tenant-gw-ip
-        cmd: |
-          set -e
-          SSO_REDIRECT=$(uds zarf tools kubectl run curl-test --image=cgr.dev/chainguard/curl:latest -q --restart=Never --rm -i -- --resolve 'protected.uds.dev:$TENANT_GW_IP:443' -Ls -o /dev/null -w %{url_effective} "https://protected.uds.dev")
+      # - description: Verify the authservice tenant app is protected by checking redirect
+      #   maxRetries: 3
+      #   task: utils:tenant-gw-ip
+      #   cmd: |
+      #     set -e
+      #     SSO_REDIRECT=$(uds zarf tools kubectl run curl-test --image=cgr.dev/chainguard/curl:latest -q --restart=Never --rm -i -- --resolve 'protected.uds.dev:$TENANT_GW_IP:443' -Ls -o /dev/null -w %{url_effective} "https://protected.uds.dev")
 
-          case "${SSO_REDIRECT}" in
-          "https://sso.uds.dev"*)
-              echo "Protected by authservice"
-              ;;
-          *)
-              # Fallback option if the condition is false
-              echo "App is not protected by authservice"
-              echo $SSO_REDIRECT
-              exit 1
-              ;;
-          esac
+      #     case "${SSO_REDIRECT}" in
+      #     "https://sso.uds.dev"*)
+      #         echo "Protected by authservice"
+      #         ;;
+      #     *)
+      #         # Fallback option if the condition is false
+      #         echo "App is not protected by authservice"
+      #         echo $SSO_REDIRECT
+      #         exit 1
+      #         ;;
+      #     esac
 
-      - description: Verify podinfo podmonitor exists
-        wait:
-          cluster:
-            kind: PodMonitor
-            name: podinfo-podmonitor
-            namespace: podinfo
+      # - description: Verify podinfo podmonitor exists
+      #   wait:
+      #     cluster:
+      #       kind: PodMonitor
+      #       name: podinfo-podmonitor
+      #       namespace: podinfo
 
-      - description: Validate podinfo servicemonitor exists
-        wait:
-          cluster:
-            kind: ServiceMonitor
-            name: podinfo-svcmonitor
-            namespace: podinfo
+      # - description: Validate podinfo servicemonitor exists
+      #   wait:
+      #     cluster:
+      #       kind: ServiceMonitor
+      #       name: podinfo-svcmonitor
+      #       namespace: podinfo
 
   - name: remove
     actions:

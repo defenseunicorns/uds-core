@@ -23,6 +23,8 @@ spec:
         anyOf:
           - "/UDS Core/Admin"
   network:
+    serviceMesh:
+      mode: ambient
     expose:
       - service: httpbin
         selector:

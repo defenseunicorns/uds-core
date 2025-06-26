@@ -6,6 +6,11 @@
 import { getReadinessConditions, handleFailure, shouldSkip, updateStatus, writeEvent } from ".";
 import { UDSConfig } from "../../config";
 import { Component, setupLogger } from "../../logger";
+import {
+  isAmbientEnabled,
+  setupAmbientWaypoint,
+  unregisterAmbientPackage,
+} from "../controllers/istio/ambient-waypoint";
 import { reconcileSharedEgressResources } from "../controllers/istio/egress";
 import { getPackageId, istioResources } from "../controllers/istio/istio-resources";
 import { cleanupNamespace, enableIstio } from "../controllers/istio/namespace";
@@ -22,7 +27,7 @@ import { generateAuthorizationPolicies } from "../controllers/network/authorizat
 import { networkPolicies } from "../controllers/network/policies";
 import { retryWithDelay } from "../controllers/utils";
 import { Phase, UDSPackage } from "../crd";
-import { Mode } from "../crd/generated/package-v1alpha1";
+import { Condition, Mode, StatusEnum } from "../crd/generated/package-v1alpha1";
 import { migrate } from "../crd/migrate";
 
 // configure subproject logger
@@ -106,6 +111,60 @@ export async function packageReconciler(pkg: UDSPackage) {
     const monitors: string[] = [];
     monitors.push(...(await podMonitor(pkg, namespace!)));
     monitors.push(...(await serviceMonitor(pkg, namespace!)));
+
+    // Handle ambient waypoint if needed
+    if (pkg.spec?.sso) {
+      const hasAuthService = pkg.spec.sso.some(sso => sso.enableAuthserviceSelector);
+      const isAmbient = await isAmbientEnabled(namespace!);
+
+      try {
+        if (isAmbient && hasAuthService) {
+          // Get the first client ID that has authservice enabled
+          const authServiceClient = pkg.spec.sso.find(sso => sso.enableAuthserviceSelector);
+
+          // Set up the ambient waypoint with proper two-phase activation
+          await setupAmbientWaypoint(pkg, authServiceClient!.clientId);
+
+          // Update package status with waypoint information
+          const now = new Date();
+          const conditions: Condition[] = [
+            ...(pkg.status?.conditions || []).filter(c => c.type !== "WaypointReady"),
+            {
+              type: "WaypointReady",
+              status: StatusEnum.True,
+              reason: "WaypointProvisioned",
+              message: "Ambient waypoint is ready for service traffic",
+              lastTransitionTime: now,
+            },
+          ];
+
+          await updateStatus(pkg, { conditions });
+        } else {
+          // Check if we need to clean up any existing waypoint
+          const currentKey =
+            pkg.metadata?.namespace && pkg.metadata?.name
+              ? `${pkg.metadata.namespace}/${pkg.metadata.name}`
+              : null;
+
+          if (currentKey) {
+            await unregisterAmbientPackage(pkg);
+          }
+        }
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorStack = error instanceof Error ? error.stack : "No stack trace available";
+        const errorDetails = {
+          error: errorMessage,
+          stack: errorStack,
+          packageName: pkg.metadata?.name,
+          namespace: pkg.metadata?.namespace,
+          phase: pkg.status?.phase,
+          conditions: pkg.status?.conditions,
+        };
+        log.error("Error configuring ambient auth", errorDetails);
+        throw new Error(`Failed to configure ambient auth: ${errorMessage}`);
+      }
+    }
 
     await updateStatus(pkg, {
       phase: Phase.Ready,
@@ -219,6 +278,30 @@ export async function packageFinalizer(pkg: UDSPackage) {
     );
     await writeEvent(pkg, {
       message: `Removal of SSO clients failed: ${e.message}. Clients must be manually removed from Keycloak.`,
+      reason: "RemovalFailed",
+      type: "Warning",
+    });
+    await updateStatus(pkg, { phase: Phase.RemovalFailed });
+    return false;
+  }
+
+  // Clean up ambient waypoint registration
+  try {
+    await writeEvent(pkg, {
+      message: "Removing package from ambient waypoint registration",
+      reason: "RemovalInProgress",
+      type: "Normal",
+    });
+    log.info(
+      `Unregistering package ${pkg.metadata?.namespace}/${pkg.metadata?.name} from ambient waypoint`,
+    );
+    await unregisterAmbientPackage(pkg);
+  } catch (e) {
+    log.debug(
+      `Removal of ambient waypoint registration during finalizer failed for ${pkg.metadata?.namespace}/${pkg.metadata?.name}: ${e.message}`,
+    );
+    await writeEvent(pkg, {
+      message: `Removal of ambient waypoint registration failed: ${e.message}. Manual cleanup may be required.`,
       reason: "RemovalFailed",
       type: "Warning",
     });
