@@ -22,7 +22,8 @@ runs:
         k3d cluster create --k3s-arg "--disable=traefik@server:*" \
           --k3s-arg "--disable=metrics-server@server:*" \
           --k3s-arg "--disable=servicelb@server:*" \
-          --k3s-arg "--disable=local-storage@server:*"
+          --k3s-arg "--disable=local-storage@server:*" \
+          --no-lb
 
         # Generate CRD files
         uds run -f src/pepr/tasks.yaml gen-crds
