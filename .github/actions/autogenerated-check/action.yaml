@@ -16,7 +16,7 @@ runs:
         # Install Pepr/Dependencies
         npm ci
         # renovate: datasource=github-tags depName=google/addlicense versioning=semver
-        cmd: GOPATH="$HOME/go" go install github.com/google/addlicense@v1.1.1
+        GOPATH="$HOME/go" go install github.com/google/addlicense@v1.1.1
 
         # We need a cluster for generating our CRD files - args used to simplify cluster setup
         k3d cluster create --k3s-arg "--disable=traefik@server:*" \
