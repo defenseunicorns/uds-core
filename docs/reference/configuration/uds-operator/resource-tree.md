@@ -8,15 +8,13 @@ This diagram illustrates the relationship between the Package CR spec fields and
 
 ## Understanding the Resource Tree
 
-The diagram above illustrates how various fields in the UDS Package spec map to Kubernetes resources created during reconciliation. Resources are created in a specific order during reconciliation, and the diagram groups them accordingly.
-
 ### Default Resources
 
 - **Default-Deny Policy**: Created for every Package to establish a baseline zero-trust posture
 - **DNS Egress Policy**: Allows DNS resolution for all workloads in the namespace
 - **Service Mesh Configuration**: Based on the `serviceMesh.mode` setting (defaults to `sidecar` if not specified):
-  - **Sidecar Mode**: Adds namespace labels for sidecar injection and NetworkPolicies for Istiod communication
-  - **Ambient Mode**: Adds namespace labels for ambient mode and NetworkPolicies for healthprobes and ztunnel traffic (port 15008)
+  - **Sidecar Mode**: Adds namespace labels for sidecar injection and NetworkPolicies for Istiod communication and sidecar monitoring
+  - **Ambient Mode**: Adds namespace labels for ambient mode and NetworkPolicies for ambient node healthprobes
 
 ### Network Resources
 
@@ -28,17 +26,18 @@ The diagram above illustrates how various fields in the UDS Package spec map to 
 
 ### Identity Resources
 
-- **Keycloak Clients**: Created from `sso` entries to establish identity providers
+- **Keycloak Clients**: Created from `sso` entries based on provided configuration
 - **Authservice Resources**: When `enableAuthserviceSelector` is enabled:
-  - **Authservice Config**: Configure authentication service
+  - **Authservice Config**: Configure Authservice chains
   - **NetworkPolicies**: Allow egress to Authservice and Keycloak
+  - **Authorization Policies and Request Authentication**: Provide protection on the workload with Istio custom resources
 
 ### Ingress Resources
 
 - **NetworkPolicies**: Allow ingress traffic from gateways based on `expose` entries
 - **Authorization Policies**: Permit traffic from gateways to exposed services
 - **VirtualServices**: Route traffic from gateways to internal services
-- **ServiceEntries**: Define external services when needed for exposed routes
+- **ServiceEntries**: Define routes for in-cluster traffic to the gateway for exposed hosts
 
 ### Monitoring Resources
 
