@@ -176,36 +176,6 @@ tasks:
   - name: update-diagrams
     description: "Regenerate D2 Diagrams for the Docs Site"
     actions:
-      - description: "Download Poppins font for diagram"
-        shell:
-          linux: bash
-          darwin: bash
-        cmd: |
-          FAMILY="Poppins"
-          DEST_DIR="docs/.images/fonts"
-          FONT_LIST_URL="https://fonts.google.com/download/list?family=${FAMILY}"
-
-          mkdir -p "$DEST_DIR"
-
-          # Fetch and clean up the JSON list (remove )]}'
-          FONT_JSON=$(curl -s "$FONT_LIST_URL" | tail -n +2)
-
-          # Extract matching fonts
-          echo "$FONT_JSON" | jq -r '
-            .manifest.fileRefs[]
-            | select(
-                .filename | test("(?i)Poppins-(Regular|Italic|Bold|SemiBold)\\.ttf$")
-              )
-            | [.filename, .url] | @tsv
-          ' | while IFS=$'\t' read -r filename url; do
-            dest="$DEST_DIR/$filename"
-            if [[ -f "$dest" ]]; then
-              echo "✔️  $filename already exists, skipping."
-            else
-              echo "⬇️  Downloading $filename..."
-              curl -sSL "$url" -o "$dest"
-            fi
-          done
       - description: "Regenerate operator resource tree"
         cmd: |
           d2 fmt docs/.images/diagrams/operator-resource-tree.d2

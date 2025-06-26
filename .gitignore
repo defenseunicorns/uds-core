@@ -35,6 +35,3 @@ uds-docs/**
 **/.playwright
 
 coverage/**
-docs/.images/fonts/**
-docs/.images/fonts/
-
