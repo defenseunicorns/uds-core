@@ -68,6 +68,7 @@ runs:
       shell: bash
 
     - name: Rapidfort Login
+      if: ${{ inputs.rapidfortUsername != '' }}
       shell: bash
       env:
         RAPIDFORT_USERNAME: ${{ inputs.rapidfortUsername }}
