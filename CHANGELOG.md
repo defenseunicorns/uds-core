@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.45.1](https://github.com/defenseunicorns/uds-core/compare/v0.45.0...v0.45.1) (2025-06-27)
+
+
+### Bug Fixes
+
+* documentation and testing of Velero EBS backups ([#1658](https://github.com/defenseunicorns/uds-core/issues/1658)) ([df58bc8](https://github.com/defenseunicorns/uds-core/commit/df58bc8e171476173009dc57d24752e3500a63c7))
+
+
+### Miscellaneous
+
+* **ci:** upgrade iac clusters to 1.32 ([#1666](https://github.com/defenseunicorns/uds-core/issues/1666)) ([85544f0](https://github.com/defenseunicorns/uds-core/commit/85544f0ceb47b1876f198e177bd12b2e77449971))
+* **deps:** update keycloak to v0.15.1 ([#1676](https://github.com/defenseunicorns/uds-core/issues/1676)) ([bc2ff66](https://github.com/defenseunicorns/uds-core/commit/bc2ff66bfef778a0283e141717a764a72beb1ed5))
+* **deps:** update pepr to v0.51.5 ([#1668](https://github.com/defenseunicorns/uds-core/issues/1668)) ([52cf841](https://github.com/defenseunicorns/uds-core/commit/52cf84186812c49e166cd3f60144896b267a8576))
+* **deps:** update support-deps ([#1669](https://github.com/defenseunicorns/uds-core/issues/1669)) ([d0da547](https://github.com/defenseunicorns/uds-core/commit/d0da547214d21abae8e44456e8e5a75c3cbc4055))
+
+
+### Documentation
+
+* fix velero frontmatter ([#1667](https://github.com/defenseunicorns/uds-core/issues/1667)) ([d3dfa0b](https://github.com/defenseunicorns/uds-core/commit/d3dfa0ba70a9aed9a162fdf9e272cff97c2cdce3))
+* operator resource tree ([#1671](https://github.com/defenseunicorns/uds-core/issues/1671)) ([2a0ec43](https://github.com/defenseunicorns/uds-core/commit/2a0ec4386a52c383887395fd3f1bd1793e567fa2))
+
 ## [0.45.0](https://github.com/defenseunicorns/uds-core/compare/v0.44.0...v0.45.0) (2025-06-24)
 
 
