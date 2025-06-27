@@ -2,23 +2,23 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 image:
-  repository: cgr.dev/du-uds-defenseunicorns/velero-fips
-  tag: 1.16.0-dev
+  repository: quay.io/rfcurated/velero/velero
+  tag: 1.16.1-jammy-scratch-fips-rfcurated
 
 kubectl:
   image:
-    repository: cgr.dev/du-uds-defenseunicorns/kubectl-fips
-    tag: 1.33.0-dev
+    repository: quay.io/rfcurated/kubectl
+    tag: 1.33.1-jammy-scratch-fips-rfcurated
 
 initContainers:
   - name: velero-plugin-for-aws
-    image: cgr.dev/du-uds-defenseunicorns/velero-plugin-for-aws-fips:1.12.0
+    image: quay.io/rfcurated/velero/velero-plugin-for-aws:1.12.1-jammy-scratch-fips-rfcurated
     imagePullPolicy: IfNotPresent
     volumeMounts:
       - mountPath: /target
         name: plugins
   - name: velero-plugin-for-azure
-    image: velero/velero-plugin-for-microsoft-azure:v1.12.0
+    image: quay.io/rfcurated/velero/velero-plugin-for-microsoft-azure:1.12.1-jammy-scratch-fips-rfcurated
     imagePullPolicy: IfNotPresent
     volumeMounts:
       - mountPath: /target

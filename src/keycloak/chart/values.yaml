@@ -5,12 +5,12 @@ image:
   # The Keycloak image repository
   repository: quay.io/keycloak/keycloak
   # Overrides the Keycloak image tag whose default is the chart appVersion
-  tag: "26.2.4"
+  tag: "26.2.5"
   # The Keycloak image pull policy
   pullPolicy: IfNotPresent
 
 # renovate: datasource=github-tags depName=defenseunicorns/uds-identity-config versioning=semver
-configImage: ghcr.io/defenseunicorns/uds/identity-config:0.14.0
+configImage: ghcr.io/defenseunicorns/uds/identity-config:0.15.1
 
 # The public domain name of the Keycloak server
 domain: "###ZARF_VAR_DOMAIN###"
@@ -60,18 +60,24 @@ themeCustomizations:
     enableRegistrationFields: true
 #   resources:
 #     images:
-#       - name: background.jpg
+#       - name: background.png
 #         configmap:
 #           name: keycloak-theme-overrides
 #       - name: footer.png
 #         configmap:
 #           name: keycloak-theme-overrides
-#       - name: logo.svg
+#       - name: logo.png
 #         configmap:
 #           name: keycloak-theme-overrides
-#       - name: favicon.svg
+#       - name: favicon.png
 #         configmap:
 #           name: keycloak-theme-overrides
+# Customizable Terms and Conditions
+#  termsAndConditions:
+#    text:
+#      configmap:
+#        key: text
+#        name: keycloak-theme-overrides
 
 # Generates an initial password for first admin user - only use if install is headless
 # (i.e. cannot hit keycloak UI with `zarf connect keycloak`), password should be changed after initial login
@@ -123,7 +129,7 @@ smtp:
   port: 587
 
 # Configure FIPS mode for Keycloak
-fips: false
+fips: true
 # By default, Keycloak requires 14+ character passwords in FIPS mode. This switch disables this requirement.
 fipsAllowWeakPasswords: false
 
@@ -315,3 +321,8 @@ env: []
 
 x509LookupProvider: nginx
 mtlsClientCert: "%DOWNSTREAM_PEER_CERT%"
+
+# Custom migrations setting for UDS Core internal usage only
+migrations:
+  # Deletes the generated truststore to enable recreating it by Keycloak
+  deleteGeneratedTrustStore: false

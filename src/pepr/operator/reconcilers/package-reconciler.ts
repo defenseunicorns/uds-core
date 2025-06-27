@@ -6,8 +6,10 @@
 import { getReadinessConditions, handleFailure, shouldSkip, updateStatus, writeEvent } from ".";
 import { Component, setupLogger } from "../../logger";
 import { UDSConfig } from "../controllers/config/config";
-import { istioResources } from "../controllers/istio/istio-resources";
+import { reconcileSharedEgressResources } from "../controllers/istio/egress";
+import { getPackageId, istioResources } from "../controllers/istio/istio-resources";
 import { cleanupNamespace, enableIstio } from "../controllers/istio/namespace";
+import { PackageAction } from "../controllers/istio/types";
 import {
   authservice,
   purgeAuthserviceClients,
@@ -97,7 +99,7 @@ export async function packageReconciler(pkg: UDSPackage) {
       );
     }
 
-    // Create the VirtualService and ServiceEntry for each exposed service
+    // Create the Istio Resources per the package configuration
     endpoints = await istioResources(pkg, namespace!);
 
     // Configure the ServiceMonitors
@@ -217,6 +219,30 @@ export async function packageFinalizer(pkg: UDSPackage) {
     );
     await writeEvent(pkg, {
       message: `Removal of SSO clients failed: ${e.message}. Clients must be manually removed from Keycloak.`,
+      reason: "RemovalFailed",
+      type: "Warning",
+    });
+    await updateStatus(pkg, { phase: Phase.RemovalFailed });
+    return false;
+  }
+
+  // Clean up any shared egress resources
+  try {
+    await writeEvent(pkg, {
+      message: `Reconciling any shared egress resources`,
+      reason: "RemovalInProgress",
+      type: "Normal",
+    });
+    // Clean annotations and/or remove any shared egress resources
+    await retryWithDelay(async function cleanupSharedEgressResources() {
+      await reconcileSharedEgressResources(undefined, getPackageId(pkg), PackageAction.Remove);
+    }, log);
+  } catch (e) {
+    log.debug(
+      `Removal of shared egress resources during finalizer failed for ${pkg.metadata?.namespace}/${pkg.metadata?.name}: ${e.message}`,
+    );
+    await writeEvent(pkg, {
+      message: `Removal of shared egress resources failed: ${e.message}`,
       reason: "RemovalFailed",
       type: "Warning",
     });

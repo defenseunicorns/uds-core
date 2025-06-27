@@ -14,8 +14,8 @@ includes:
   - test-resources: ../src/test/tasks.yaml
   - base-layer: ../packages/base/tasks.yaml
   - idam-layer: ../packages/identity-authorization/tasks.yaml
-  - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.14.3/tasks/setup.yaml
-  - compliance: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.14.3/tasks/compliance.yaml
+  - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.16.3/tasks/setup.yaml
+  - compliance: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.16.3/tasks/compliance.yaml
 
 tasks:
   - name: base
@@ -108,7 +108,7 @@ tasks:
         dir: test/playwright
         cmd: |
           # renovate: datasource=docker depName=mcr.microsoft.com/playwright versioning=docker
-          docker run --rm --ipc=host --net=host -e FULL_CORE="true" --mount type=bind,source="$(pwd)",target=/app mcr.microsoft.com/playwright:v1.52.0-noble sh -c " \
+          docker run --rm --ipc=host --net=host -e FULL_CORE="true" --mount type=bind,source="$(pwd)",target=/app mcr.microsoft.com/playwright:v1.53.1-noble sh -c " \
             cd app && \
             npm ci && \
             npx playwright test \
@@ -116,7 +116,8 @@ tasks:
       - description: "Run E2E Tests"
         cmd: |
           npm ci
-          npx jest test/jest/
+          npx vitest run
+        dir: test/vitest
       - description: remove test resources
         task: test-resources:remove
 
@@ -162,6 +163,20 @@ tasks:
       - task: deploy:k3d-standard-bundle-ha
       - task: validate-packages
 
+  - name: uds-core-ha-upgrade
+    description: "Test an upgrade from the latest released UDS Core package with HA to current branch with HA"
+    actions:
+      - task: deploy:latest-bundle-release-ha
+      - task: create:standard-package
+        with:
+          create_options: "--skip-sbom"
+      - task: create:k3d-standard-bundle
+      - cmd: uds deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --packages core --confirm --no-progress
+        env:
+          - UDS_CONFIG=bundles/k3d-standard/uds-ha-config.yaml
+      - task: validate-packages
+      - task: e2e-tests
+
   - name: uds-core-upgrade
     description: "Test an upgrade from the latest released UDS Core package to current branch"
     actions:
@@ -198,6 +213,9 @@ tasks:
         with:
           validate_passthrough: "false"
       - task: idam-layer:validate
+      - task: test-resources:e2e-test
+        with:
+          validate_egress: "false"
 
   - name: local-compliance-compose
     description: "compose oscal component definitions"

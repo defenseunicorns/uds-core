@@ -26,8 +26,8 @@ components:
         valuesFiles:
           - "values/upstream-values.yaml"
     images:
-      - quay.io/keycloak/keycloak:26.2.4
-      - ghcr.io/defenseunicorns/uds/identity-config:0.14.0
+      - quay.io/keycloak/keycloak:26.2.5
+      - ghcr.io/defenseunicorns/uds/identity-config:0.15.1
 
   - name: keycloak
     required: true
@@ -40,8 +40,8 @@ components:
         valuesFiles:
           - "values/registry1-values.yaml"
     images:
-      - registry1.dso.mil/ironbank/opensource/keycloak/keycloak:26.2.4
-      - ghcr.io/defenseunicorns/uds/identity-config:0.14.0
+      - registry1.dso.mil/ironbank/opensource/keycloak/keycloak:26.2.5
+      - ghcr.io/defenseunicorns/uds/identity-config:0.15.1
 
   - name: keycloak
     required: true
@@ -58,5 +58,5 @@ components:
       # This happens through the UDS Identity Config. However, in the future we aim to align all the images with their FIPS versions
       # and Keycloak is no exception. Again, this effort doesn't change anything in terms of UDS Security and FIPS compliance posture.
       # The switch is tracked via https://github.com/defenseunicorns/uds-core/issues/1541
-      - cgr.dev/du-uds-defenseunicorns/keycloak:26.2.4
-      - ghcr.io/defenseunicorns/uds/identity-config:0.14.0
+      - quay.io/rfcurated/keycloak:26.2.5-jammy-rfcurated
+      - ghcr.io/defenseunicorns/uds/identity-config:0.15.1

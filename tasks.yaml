@@ -22,6 +22,10 @@ tasks:
 
   - name: dev-setup
     description: "Create k3d cluster with istio"
+    inputs:
+      istio_components:
+        description: "Comma separated list of istio components to deploy"
+        default: ""
     actions:
       - description: "Create the dev cluster"
         task: setup:create-k3d-cluster
@@ -33,7 +37,7 @@ tasks:
 
       # Note: the `registry-url` flag used here requires uds 0.19.2+
       - description: "Deploy the Istio source package with Zarf Dev"
-        cmd: "uds zarf dev deploy src/istio --flavor upstream --registry-url docker.io --no-progress"
+        cmd: "uds zarf dev deploy src/istio --flavor upstream --registry-url docker.io --no-progress --components=${{ .inputs.istio_components }}"
 
       # Note: Since this is a dev deploy without any `--flavor` it only deploys the CRDs (other components are flavored)
       - description: "Deploy the Prometheus-Stack source package with Zarf Dev to only install the CRDs"
@@ -105,66 +109,14 @@ tasks:
   - name: test-uds-core-ha
     description: "Build and test UDS Core"
     actions:
-      - description: "Cleanup previous PostgreSQL runs"
-        cmd: |
-          docker kill postgres || true
-          docker rm postgres || true
-      - description: "Create a network for the PostgreSQL container"
-        cmd: docker network create k3d-uds || true
-      - description: "Generate PostgreSQL certs"
-        cmd: |
-          mkdir -p build/certs
-          openssl req -x509 -newkey rsa:4096 -sha256 -nodes \
-            -keyout build/certs/server.key \
-            -out build/certs/server.crt \
-            -days 365 -subj "/CN=postgres" > /dev/null 2>&1 || {
-              echo "Error: Failed to generate PostgreSQL certs"
-              exit 1
-            }
-          chmod 600 build/certs/server.key
-          chmod 644 build/certs/server.crt
-      - description: "Prepare PostgreSQL certs inside a temp container"
-        cmd: |
-          docker run --rm \
-            -v $(pwd)/build/certs:/certs \
-            --entrypoint bash postgres:16 \
-            -c "cp /certs/server.key /certs/fixed.key && \
-                cp /certs/server.crt /certs/fixed.crt && \
-                chown 999:999 /certs/fixed.key /certs/fixed.crt && \
-                chmod 600 /certs/fixed.key && chmod 644 /certs/fixed.crt"
-      - description: "Start PostgreSQL Docker container"
-        cmd: |
-          CONTAINER_NAME=postgres
-          # We're using Postgres 16 as this is the compatibility version for RDS
-          POSTGRES_VERSION=16
-          # RDS (Postgres 16) supports only TLS 1.2 only
-          TLS_VERSION=TLSv1.2
-          docker run -p 5432:5432 --network=k3d-uds --rm --name $CONTAINER_NAME \
-            -e POSTGRES_DB=keycloak \
-            -e POSTGRES_USER=postgres \
-            -e POSTGRES_PASSWORD='unicorn123!@#UN' \
-            -v $(pwd)/build/certs/fixed.crt:/var/lib/postgresql/server.crt:ro \
-            -v $(pwd)/build/certs/fixed.key:/var/lib/postgresql/server.key:ro \
-            -d postgres:$POSTGRES_VERSION \
-            -c ssl=on \
-            -c ssl_cert_file=/var/lib/postgresql/server.crt \
-            -c ssl_key_file=/var/lib/postgresql/server.key \
-            -c ssl_min_protocol_version=$TLS_VERSION \
-            -c ssl_max_protocol_version=$TLS_VERSION \
-            -c log_connections=on \
-            -c log_disconnections=on \
-            -c log_min_messages=debug1 \
-            -c log_line_prefix='%m [%p] %q%u@%d ' \
-            -c log_statement=all
-      - description: "Wait for PostgreSQL to be ready"
-        cmd: |
-          for i in {1..10}; do
-            docker exec postgres pg_isready -U postgres && break
-            sleep 1
-          done
-      - description: "Add Grafana database to PostgreSQL"
-        cmd: docker exec postgres psql -U postgres -c "CREATE DATABASE grafana;"
+      - task: setup:ha-postgres
       - task: test:uds-core-ha
+
+  - name: test-uds-core-ha-upgrade
+    description: "Test an upgrade from the latest released UDS Core package with HA to current branch with HA"
+    actions:
+      - task: setup:ha-postgres
+      - task: test:uds-core-ha-upgrade
 
   - name: test-uds-core-upgrade
     description: "Test an upgrade from the latest released UDS Core package to current branch"
@@ -202,6 +154,7 @@ tasks:
 
   # Note that due to cloning the docs repo (which is private) this task will require organization access to the repo
   # This task does not clone in/manage docs outside of the core repo so you may hit some 404s during development
+  # This task does not run the integration-script in the uds-docs repo, the sidebar will not be the same as the live docs
   - name: dev-docs
     description: "Start the dev docs server"
     actions:
@@ -218,4 +171,15 @@ tasks:
       - description: "Start the docs server with npm (this will run until you stop it)"
         cmd: |
           # Actual startup takes up to a minute because of the npm install
-          cd uds-docs && npm i && npm run dev
+          cd uds-docs && npm i && echo "Sidebar will be different from the live docs, this is expected" && npm run dev && echo ""
+
+  - name: update-diagrams
+    description: "Regenerate D2 Diagrams for the Docs Site"
+    actions:
+      - description: "Regenerate operator resource tree"
+        cmd: |
+          d2 fmt docs/.images/diagrams/operator-resource-tree.d2
+          # Using Poppins font from https://fonts.google.com/specimen/Poppins, license: https://fonts.google.com/specimen/Poppins/license
+          d2 docs/.images/diagrams/operator-resource-tree.d2 docs/.images/diagrams/operator-resource-tree.png --layout elk --pad 20 \
+            --font-regular docs/.images/fonts/Poppins-Regular.ttf --font-italic docs/.images/fonts/Poppins-Italic.ttf \
+            --font-bold docs/.images/fonts/Poppins-Bold.ttf --font-semibold docs/.images/fonts/Poppins-SemiBold.ttf

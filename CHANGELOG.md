@@ -2,6 +2,154 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.45.1](https://github.com/defenseunicorns/uds-core/compare/v0.45.0...v0.45.1) (2025-06-27)
+
+
+### Bug Fixes
+
+* documentation and testing of Velero EBS backups ([#1658](https://github.com/defenseunicorns/uds-core/issues/1658)) ([df58bc8](https://github.com/defenseunicorns/uds-core/commit/df58bc8e171476173009dc57d24752e3500a63c7))
+
+
+### Miscellaneous
+
+* **ci:** upgrade iac clusters to 1.32 ([#1666](https://github.com/defenseunicorns/uds-core/issues/1666)) ([85544f0](https://github.com/defenseunicorns/uds-core/commit/85544f0ceb47b1876f198e177bd12b2e77449971))
+* **deps:** update keycloak to v0.15.1 ([#1676](https://github.com/defenseunicorns/uds-core/issues/1676)) ([bc2ff66](https://github.com/defenseunicorns/uds-core/commit/bc2ff66bfef778a0283e141717a764a72beb1ed5))
+* **deps:** update pepr to v0.51.5 ([#1668](https://github.com/defenseunicorns/uds-core/issues/1668)) ([52cf841](https://github.com/defenseunicorns/uds-core/commit/52cf84186812c49e166cd3f60144896b267a8576))
+* **deps:** update support-deps ([#1669](https://github.com/defenseunicorns/uds-core/issues/1669)) ([d0da547](https://github.com/defenseunicorns/uds-core/commit/d0da547214d21abae8e44456e8e5a75c3cbc4055))
+
+
+### Documentation
+
+* fix velero frontmatter ([#1667](https://github.com/defenseunicorns/uds-core/issues/1667)) ([d3dfa0b](https://github.com/defenseunicorns/uds-core/commit/d3dfa0ba70a9aed9a162fdf9e272cff97c2cdce3))
+* operator resource tree ([#1671](https://github.com/defenseunicorns/uds-core/issues/1671)) ([2a0ec43](https://github.com/defenseunicorns/uds-core/commit/2a0ec4386a52c383887395fd3f1bd1793e567fa2))
+
+## [0.45.0](https://github.com/defenseunicorns/uds-core/compare/v0.44.0...v0.45.0) (2025-06-24)
+
+
+### ⚠ BREAKING CHANGES
+
+* The new Keycloak Theme provided by the UDS Identity config changes the `themeCustomizations.resources` array and now accepts only PNG images (for example: `background.png` instead of `background.jpg`). If you use this feature, ensure all the images are converted into the PNG format and properly supplied to the configuration.
+
+### Features
+
+* configurable terms and conditions ([#1637](https://github.com/defenseunicorns/uds-core/issues/1637)) ([50524f8](https://github.com/defenseunicorns/uds-core/commit/50524f8a5dd4fbea834a974bb92817862a2730f2))
+* new Keycloak theme (https://github.com/defenseunicorns/uds-core/pull/1632) ([cef5f1c](https://github.com/defenseunicorns/uds-core/commit/cef5f1c2a32196178131d43583393665574604ab))
+* set keycloak `KC_SPI_X509CERT_LOOKUP` vars from x509 lookup provider ([#1659](https://github.com/defenseunicorns/uds-core/issues/1659)) ([4fe0fcc](https://github.com/defenseunicorns/uds-core/commit/4fe0fcccb301789e427466f5eece81a824434ae5))
+
+
+### Bug Fixes
+
+* update curl to 8.14.1 (unicorn) for neuvector cronjob ([#1651](https://github.com/defenseunicorns/uds-core/issues/1651)) ([efe8853](https://github.com/defenseunicorns/uds-core/commit/efe8853f41cc037f67b454fc925a0e98f8aae68d))
+
+
+### Miscellaneous
+
+* **ci:** add iac filter workflow ([#1639](https://github.com/defenseunicorns/uds-core/issues/1639)) ([d1a35a7](https://github.com/defenseunicorns/uds-core/commit/d1a35a71766cd9663c5e0f93a95e0988305e261e))
+* **ci:** add owner tags to AKS resources ([#1645](https://github.com/defenseunicorns/uds-core/issues/1645)) ([12d1fa6](https://github.com/defenseunicorns/uds-core/commit/12d1fa6f179d1801a62a864456e441a25a820a03))
+* **ci:** migrate to vitest for kfc and pepr updates ([#1642](https://github.com/defenseunicorns/uds-core/issues/1642)) ([92da915](https://github.com/defenseunicorns/uds-core/commit/92da915e2738a134a76fda524a46b3117ab1d6c8))
+* **ci:** update to node 24 ([#1649](https://github.com/defenseunicorns/uds-core/issues/1649)) ([d67e263](https://github.com/defenseunicorns/uds-core/commit/d67e263d3232777b650e648b122dd5d3cc7e67fd))
+* **deps:** update grafana ([#1647](https://github.com/defenseunicorns/uds-core/issues/1647)) ([d333ba6](https://github.com/defenseunicorns/uds-core/commit/d333ba66dc8ebc53797bc54fe27ddac25ccb313b))
+* **deps:** update keycloak to v0.15.0 ([#1664](https://github.com/defenseunicorns/uds-core/issues/1664)) ([6815699](https://github.com/defenseunicorns/uds-core/commit/68156998b002373fcd29c638475e5877a13f9fe7))
+* **deps:** update pepr ([#1648](https://github.com/defenseunicorns/uds-core/issues/1648)) ([e27fc8e](https://github.com/defenseunicorns/uds-core/commit/e27fc8e3acf1b6a535d88da9e516e9854caed3f4))
+* **deps:** update pepr to v0.51.4 ([#1638](https://github.com/defenseunicorns/uds-core/issues/1638)) ([00d6b94](https://github.com/defenseunicorns/uds-core/commit/00d6b94aa507cf9961ab0c69d25e3994804b4690))
+* **deps:** update pepr to v3.2.4 ([#1655](https://github.com/defenseunicorns/uds-core/issues/1655)) ([c522384](https://github.com/defenseunicorns/uds-core/commit/c5223846ee0d07c12403386addc75832df665a24))
+* **deps:** update prometheus-stack ([#1603](https://github.com/defenseunicorns/uds-core/issues/1603)) ([8d0db3e](https://github.com/defenseunicorns/uds-core/commit/8d0db3e6c5639b96452f9f9f7ac7e2472565586a))
+* **deps:** update support-deps ([#1635](https://github.com/defenseunicorns/uds-core/issues/1635)) ([c478257](https://github.com/defenseunicorns/uds-core/commit/c47825781a6e08b1985174327b3000606ee4366b))
+* **deps:** update support-deps ([#1646](https://github.com/defenseunicorns/uds-core/issues/1646)) ([6536218](https://github.com/defenseunicorns/uds-core/commit/65362189dc3d031a1d872c69493b596ba6bc3186))
+* **deps:** update support-deps ([#1656](https://github.com/defenseunicorns/uds-core/issues/1656)) ([bdbb2c9](https://github.com/defenseunicorns/uds-core/commit/bdbb2c9e53f80f9b8599d62daeb6c2d28d350c16))
+* **deps:** update support-deps ([#1657](https://github.com/defenseunicorns/uds-core/issues/1657)) ([14d2337](https://github.com/defenseunicorns/uds-core/commit/14d2337e3133f27f0cff91a7bd18d353df65272a))
+* **deps:** update support-deps ([#1661](https://github.com/defenseunicorns/uds-core/issues/1661)) ([9de7760](https://github.com/defenseunicorns/uds-core/commit/9de7760724644da58c83f477b4b8e4c2c3f87dad))
+* **docs:** sanitize docs directory naming ([#1653](https://github.com/defenseunicorns/uds-core/issues/1653)) ([ac3c24e](https://github.com/defenseunicorns/uds-core/commit/ac3c24ea8ad1a48d5936775f743dd7a74ddebfac))
+* **docs:** update vector networking example ([#1662](https://github.com/defenseunicorns/uds-core/issues/1662)) ([2a33586](https://github.com/defenseunicorns/uds-core/commit/2a33586cb4e4067aca372d24ec04dd967838ece0))
+
+## [0.44.0](https://github.com/defenseunicorns/uds-core/compare/v0.43.0...v0.44.0) (2025-06-09)
+
+
+### Features
+
+* ability to add extra datasources to grafana ([#1616](https://github.com/defenseunicorns/uds-core/issues/1616)) ([dba32c5](https://github.com/defenseunicorns/uds-core/commit/dba32c5dd452d27a41ab10dd019752f906acc2af))
+* egress gw ([#1331](https://github.com/defenseunicorns/uds-core/issues/1331)) ([b1c905e](https://github.com/defenseunicorns/uds-core/commit/b1c905eb76219af8b7e2edb2501537fc225aa348))
+* enable keycloak user event metrics ([#1614](https://github.com/defenseunicorns/uds-core/issues/1614)) ([3077426](https://github.com/defenseunicorns/uds-core/commit/307742684d71e1cfa274f4c0b552d422208879e5))
+* migrate to rapidfort images ([#1615](https://github.com/defenseunicorns/uds-core/issues/1615)) ([9f190ae](https://github.com/defenseunicorns/uds-core/commit/9f190ae67429bf92c7709fd262e79b639ac0f5ab))
+
+
+### Bug Fixes
+
+* checkpoint with istio ambient ([#1617](https://github.com/defenseunicorns/uds-core/issues/1617)) ([e28aca5](https://github.com/defenseunicorns/uds-core/commit/e28aca52ba49a2bd6bbf8909e02feaee0fad59da))
+* **ci:** dynamic nodeport for podinfo ([#1634](https://github.com/defenseunicorns/uds-core/issues/1634)) ([2e436e8](https://github.com/defenseunicorns/uds-core/commit/2e436e822a5c91ffaf7c05d86425725f7f61ac28))
+* ensure secret name/template get passed to client retry ([#1613](https://github.com/defenseunicorns/uds-core/issues/1613)) ([8090a05](https://github.com/defenseunicorns/uds-core/commit/8090a05f0ed6d0eaba3728224e78c5637e3e7f0c))
+
+
+### Miscellaneous
+
+* **ci:** trigger iac workflows via label ([#1476](https://github.com/defenseunicorns/uds-core/issues/1476)) ([3e00ff0](https://github.com/defenseunicorns/uds-core/commit/3e00ff0c32a908a53b6c3d7043c68e4c54d4314b))
+* **deps:** update eslint to v9.28.0 ([#1622](https://github.com/defenseunicorns/uds-core/issues/1622)) ([4b9d619](https://github.com/defenseunicorns/uds-core/commit/4b9d6191867bcacb1ba7bf999930da0378411c28))
+* **deps:** update grafana curl to v8.14.0 ([#1607](https://github.com/defenseunicorns/uds-core/issues/1607)) ([aceafe6](https://github.com/defenseunicorns/uds-core/commit/aceafe6b7d24d84fe163ac71d6753e975726ef8d))
+* **deps:** update keycloak to v26.2.5 ([#1605](https://github.com/defenseunicorns/uds-core/issues/1605)) ([d8bc4f8](https://github.com/defenseunicorns/uds-core/commit/d8bc4f8ec35cfca42ce773b53c0a066a1d87f800))
+* **deps:** update loki to v6.30.1 ([#1606](https://github.com/defenseunicorns/uds-core/issues/1606)) ([1eb803d](https://github.com/defenseunicorns/uds-core/commit/1eb803d726d8a1aabb98ee696f2462e16efc96f4))
+* **deps:** update neuvector updater to v8.14.0 ([#1608](https://github.com/defenseunicorns/uds-core/issues/1608)) ([59b6d47](https://github.com/defenseunicorns/uds-core/commit/59b6d4794705c396f0e15c75820c84b5948c918a))
+* **deps:** update pepr to 0.51.0 ([#1602](https://github.com/defenseunicorns/uds-core/issues/1602)) ([bc39f9c](https://github.com/defenseunicorns/uds-core/commit/bc39f9c4b4cbaf7407a70fd7a52f93edd2d8b09d))
+* **deps:** update pepr to v0.51.3 ([#1626](https://github.com/defenseunicorns/uds-core/issues/1626)) ([f830eb3](https://github.com/defenseunicorns/uds-core/commit/f830eb3922cbd034c875f9a95d30241857f41f2c))
+* **deps:** update support-deps ([#1598](https://github.com/defenseunicorns/uds-core/issues/1598)) ([f325905](https://github.com/defenseunicorns/uds-core/commit/f3259055aa27f3f3b75ffc0ee944068a87aa8adb))
+* **deps:** update support-deps ([#1620](https://github.com/defenseunicorns/uds-core/issues/1620)) ([878a6fe](https://github.com/defenseunicorns/uds-core/commit/878a6fe52c44404848c34afc0cc439854bd6b2d5))
+* **deps:** update support-deps ([#1627](https://github.com/defenseunicorns/uds-core/issues/1627)) ([f864095](https://github.com/defenseunicorns/uds-core/commit/f8640954ed678fb357baf66c16bba75bfafc1bca))
+* **deps:** update support-deps ([#1631](https://github.com/defenseunicorns/uds-core/issues/1631)) ([878c165](https://github.com/defenseunicorns/uds-core/commit/878c165928267f4b69eeec49310672e99571b630))
+* remove architecture restriction on registry1 flavor ([#1612](https://github.com/defenseunicorns/uds-core/issues/1612)) ([1298642](https://github.com/defenseunicorns/uds-core/commit/129864213a0da9ebd887e93e70fa1f0454bdbe9c))
+* reorganize test packages ([#1629](https://github.com/defenseunicorns/uds-core/issues/1629)) ([5773bee](https://github.com/defenseunicorns/uds-core/commit/5773beeec5aaa969f5e8e0aaedf1e89b9902888f))
+* switch to rapidfort vector fips image ([#1628](https://github.com/defenseunicorns/uds-core/issues/1628)) ([d2f0853](https://github.com/defenseunicorns/uds-core/commit/d2f085352fe6f4f73d60991b0dd8e793c57ce2ce))
+
+## [0.43.0](https://github.com/defenseunicorns/uds-core/compare/v0.42.0...v0.43.0) (2025-05-27)
+
+
+### ⚠ BREAKING CHANGES
+
+* UDS Core now uses Keycloak in FIPS (STRICT) mode by default (the `fips` Helm Chart flag is set to `true` by default). In some environments, this may be a breaking change that could result in the Keycloak Administrator account being locked out. Before upgrading, please ensure you have read and followed the [UDS Identity v0.14.0 upgrade guide](https://uds.defenseunicorns.com/reference/uds-core/idam/upgrading-versions/#v0140).
+
+### Features
+
+* add grafana dashboard for istio mode comparison ([#1582](https://github.com/defenseunicorns/uds-core/issues/1582)) ([fc6d36b](https://github.com/defenseunicorns/uds-core/commit/fc6d36bf0fc347eff67f94e068aac78c72a7c7a1))
+* enable Keycloak FIPS mode by default ([#1518](https://github.com/defenseunicorns/uds-core/issues/1518)) ([fe6482a](https://github.com/defenseunicorns/uds-core/commit/fe6482ab047df3f88d495bfb2ae8ecfd50f98b16))
+* opt neuvector into ambient ([#1498](https://github.com/defenseunicorns/uds-core/issues/1498)) ([44ed89e](https://github.com/defenseunicorns/uds-core/commit/44ed89e0ce9e3f4dcdb5ca0a5387ee7e247eb936))
+* support Istio TLS certificate at server level ([#1552](https://github.com/defenseunicorns/uds-core/issues/1552)) ([3b12a40](https://github.com/defenseunicorns/uds-core/commit/3b12a40746f4f82b70cae3b3f9b6ca4b4dda0556))
+
+
+### Bug Fixes
+
+* allow OIDC logout from NeuVector ([#1580](https://github.com/defenseunicorns/uds-core/issues/1580)) ([9c9e51f](https://github.com/defenseunicorns/uds-core/commit/9c9e51f65e9e06946861af5b5f54a83e8a975667))
+* **ci:** add maru auth for remote tasks ([#1579](https://github.com/defenseunicorns/uds-core/issues/1579)) ([75eb53b](https://github.com/defenseunicorns/uds-core/commit/75eb53b1e13239c6ba458392cdb014a912ce336b))
+* ensure uniqueness of sso client ids in cluster ([#1589](https://github.com/defenseunicorns/uds-core/issues/1589)) ([be4ff0c](https://github.com/defenseunicorns/uds-core/commit/be4ff0cad7e41e34a11b83ec813e6588437eaa64))
+* keycloak sts devmode db settings ([#1566](https://github.com/defenseunicorns/uds-core/issues/1566)) ([e79bdf4](https://github.com/defenseunicorns/uds-core/commit/e79bdf4e2d0335ee05e14687a4adab357073b24e))
+* remove duplicate ha test ([#1597](https://github.com/defenseunicorns/uds-core/issues/1597)) ([7666666](https://github.com/defenseunicorns/uds-core/commit/766666648e9d5cdb42748e5b4fdff16e1e9f3437))
+* update namespace template for pepr to use ambient label ([#1568](https://github.com/defenseunicorns/uds-core/issues/1568)) ([52b9904](https://github.com/defenseunicorns/uds-core/commit/52b9904f894f7fdd6224ce4f5c6c782a115788c9))
+
+
+### Miscellaneous
+
+* add keycloak attributes `saml.encrypt`, `saml_name_id_format`, `saml.signing.certificate` ([#1557](https://github.com/defenseunicorns/uds-core/issues/1557)) ([f8a2dc4](https://github.com/defenseunicorns/uds-core/commit/f8a2dc4446804a001ddb4c8713421f57ec2ed880))
+* change default cve scan severity to negligible ([#1574](https://github.com/defenseunicorns/uds-core/issues/1574)) ([f7ca5a0](https://github.com/defenseunicorns/uds-core/commit/f7ca5a04b97a5735452ac92697b93050ae2ac86c))
+* **ci:** add HA install and upgrade nightly tests ([#1578](https://github.com/defenseunicorns/uds-core/issues/1578)) ([51fd9a4](https://github.com/defenseunicorns/uds-core/commit/51fd9a4edddcf8a04a69b94d375b2e4b60ac52df))
+* **ci:** add renovate-readiness to HA workflow ([#1587](https://github.com/defenseunicorns/uds-core/issues/1587)) ([353347e](https://github.com/defenseunicorns/uds-core/commit/353347ef056df84dc11726bc8b778ec6edd25d7c))
+* **deps:** update grafana to v12.0.1 ([#1510](https://github.com/defenseunicorns/uds-core/issues/1510)) ([1b5914d](https://github.com/defenseunicorns/uds-core/commit/1b5914db2312120c32a86fd8b38192a93448e18f))
+* **deps:** update identity-config to v0.14.1 ([#1600](https://github.com/defenseunicorns/uds-core/issues/1600)) ([892762c](https://github.com/defenseunicorns/uds-core/commit/892762c7552e064cd28a31dd1f6dea4d629c5d19))
+* **deps:** update loki to 3.5.1 ([#1585](https://github.com/defenseunicorns/uds-core/issues/1585)) ([e74ea78](https://github.com/defenseunicorns/uds-core/commit/e74ea786b42d18a247dd1ab19e6014529cf7bd32))
+* **deps:** update neuvector to 5.4.4 ([#1559](https://github.com/defenseunicorns/uds-core/issues/1559)) ([4b3b10d](https://github.com/defenseunicorns/uds-core/commit/4b3b10d1eeebce2effe7463ac2b753b3c674f78a))
+* **deps:** update neuvector ubi9 to v9.6 ([#1563](https://github.com/defenseunicorns/uds-core/issues/1563)) ([173889f](https://github.com/defenseunicorns/uds-core/commit/173889fa2b0447176271a2c703473fa23e4a85fe))
+* **deps:** update pepr to v0.50.0 ([#1562](https://github.com/defenseunicorns/uds-core/issues/1562)) ([dafff9b](https://github.com/defenseunicorns/uds-core/commit/dafff9bc1bee377adbf9c51f01aac64b406c0b1b))
+* **deps:** update prometheus-stack ([#1434](https://github.com/defenseunicorns/uds-core/issues/1434)) ([03c92d5](https://github.com/defenseunicorns/uds-core/commit/03c92d52f001963955b968dce58a99eac402a949))
+* **deps:** update support-deps ([#1556](https://github.com/defenseunicorns/uds-core/issues/1556)) ([79db725](https://github.com/defenseunicorns/uds-core/commit/79db725612d9decf3e685df32c81d6563bf74dca))
+* **deps:** update support-deps ([#1565](https://github.com/defenseunicorns/uds-core/issues/1565)) ([60a84c6](https://github.com/defenseunicorns/uds-core/commit/60a84c630f3543fe222d7cfaecc533856ba7d555))
+* **deps:** update ts-jest to v29.3.4 ([#1573](https://github.com/defenseunicorns/uds-core/issues/1573)) ([c741920](https://github.com/defenseunicorns/uds-core/commit/c7419204ef0887e489e6bd74e6bded1260f5291e))
+* **deps:** update vector to v0.47.0 ([#1583](https://github.com/defenseunicorns/uds-core/issues/1583)) ([ef6e718](https://github.com/defenseunicorns/uds-core/commit/ef6e718ed5b80a710e476084410ae5f36d2ffefd))
+* **deps:** update velero kubectl images ([#1505](https://github.com/defenseunicorns/uds-core/issues/1505)) ([d77901c](https://github.com/defenseunicorns/uds-core/commit/d77901c632b996f6c8832f6b94dca0827fab76c8))
+* **deps:** update velero to v1.16.1, plugins to v1.12.1 ([#1576](https://github.com/defenseunicorns/uds-core/issues/1576)) ([bee6007](https://github.com/defenseunicorns/uds-core/commit/bee6007d232c8cc0064392aef12e884ccf2b5254))
+* **docs:** new ambient transition policy doc ([#1577](https://github.com/defenseunicorns/uds-core/issues/1577)) ([8f9b2c2](https://github.com/defenseunicorns/uds-core/commit/8f9b2c2b34f22d599a4981579484802506b1c252))
+* **docs:** update ambient docs ([#1571](https://github.com/defenseunicorns/uds-core/issues/1571)) ([296838c](https://github.com/defenseunicorns/uds-core/commit/296838c467ab118e14368d936cac273094906f6d))
+* **doc:** update changelog ([#1558](https://github.com/defenseunicorns/uds-core/issues/1558)) ([e9f4d24](https://github.com/defenseunicorns/uds-core/commit/e9f4d24e4ff662517ab4943884a668fdff425113))
+* remove old misc cacert from admin gateway ([#1561](https://github.com/defenseunicorns/uds-core/issues/1561)) ([10cafee](https://github.com/defenseunicorns/uds-core/commit/10cafee742650a7e6e2cf4b15080cf0902a0ca68))
+* switch gateway crd install to release artifacts ([#1572](https://github.com/defenseunicorns/uds-core/issues/1572)) ([76db3ac](https://github.com/defenseunicorns/uds-core/commit/76db3acde24f19b598be47c8f1364b0cd582858c))
+* switch to vector fips image ([#1584](https://github.com/defenseunicorns/uds-core/issues/1584)) ([f8394e6](https://github.com/defenseunicorns/uds-core/commit/f8394e6bfca079b67365ac02aca390941b6d2566))
+* update ca certs in istio gateways ([#1567](https://github.com/defenseunicorns/uds-core/issues/1567)) ([03053fd](https://github.com/defenseunicorns/uds-core/commit/03053fdc377ed7636593d1c392c1e69ae5103a74))
+
 ## [0.42.0](https://github.com/defenseunicorns/uds-core/compare/v0.41.2...v0.42.0) (2025-05-12)
 
 

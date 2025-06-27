@@ -36,9 +36,13 @@ tasks:
   - name: gen-crds
     actions:
       - description: Generate servicemonitor types
-        cmd: "npx kubernetes-fluent-client crd https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.81.0/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml src/pepr/operator/crd/generated/prometheus"
+        cmd: |
+          # renovate: datasource=github-tags depName=defenseunicorns/kubernetes-fluent-client versioning=semver
+          npx kubernetes-fluent-client@3.8.0 crd https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.83.0/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml src/pepr/operator/crd/generated/prometheus
       - description: Generate podmonitor types
-        cmd: "npx kubernetes-fluent-client crd https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.81.0/example/prometheus-operator-crd/monitoring.coreos.com_podmonitors.yaml src/pepr/operator/crd/generated/prometheus"
+        cmd: |
+          # renovate: datasource=github-tags depName=defenseunicorns/kubernetes-fluent-client versioning=semver
+          npx kubernetes-fluent-client@3.8.0 crd https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.83.0/example/prometheus-operator-crd/monitoring.coreos.com_podmonitors.yaml src/pepr/operator/crd/generated/prometheus
       - description: "Add license headers to generated CRD files"
         shell:
           darwin: bash
@@ -59,5 +63,5 @@ tasks:
     actions:
       - description: "Run Prometheus-Stack E2E tests"
         cmd: |
-          npm ci && npx jest --testPathPattern prometheus*
-        dir: test/jest
+          npm ci && npx vitest run "prometheus"
+        dir: test/vitest

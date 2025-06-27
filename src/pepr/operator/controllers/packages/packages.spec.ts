@@ -5,6 +5,7 @@
 
 import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
 import { PeprValidateRequest } from "pepr";
+import { describe, expect, it } from "vitest";
 import { UDSPackage } from "../../crd";
 import { PackageStore } from "./package-store";
 import { processPackages } from "./packages";

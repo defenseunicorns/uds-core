@@ -109,7 +109,7 @@ packages:
                   selector:
                     app.kubernetes.io/name: vector
                   remoteGenerated: Anywhere
-                  port: 80
+                  port: 80 # or 443
                   description: "S3 Storage"
 ```
 

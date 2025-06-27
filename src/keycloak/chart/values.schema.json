@@ -465,6 +465,15 @@
     "themeCustomizations": {
       "type": "object",
       "properties": {
+        "settings": {
+          "type": "object",
+          "properties": {
+            "enableRegistrationFields": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": true
+        },
         "resources": {
           "type": "object",
           "properties": {
@@ -474,7 +483,7 @@
                 "type": "object",
                 "properties": {
                   "name": {
-                    "enum": ["background.jpg", "footer.png", "logo.svg", "favicon.svg"]
+                    "enum": ["background.png", "footer.png", "logo.png", "favicon.png"]
                   },
                   "configmap": {
                     "type": "object",
@@ -488,11 +497,42 @@
               }
             }
           }
+        },
+        "termsAndConditions": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "object",
+              "properties": {
+                "configmap": {
+                  "type": "object",
+                  "properties": {
+                    "key": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["key", "name"]
+                }
+              },
+              "required": ["configmap"]
+            }
+          }
         }
       }
     },
     "x509LookupProvider": {
       "type": "string"
+    },
+    "migrations": {
+      "type": "object",
+      "properties": {
+        "deleteGeneratedTrustStore": {
+          "type": "boolean"
+        }
+      }
     }
   }
 }

@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 includes:
-  - common: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.14.3/tasks/create.yaml
+  - common: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.16.3/tasks/create.yaml
 
 variables:
   - name: FLAVOR
@@ -10,11 +10,11 @@ variables:
 
   - name: REGISTRY1_PEPR_IMAGE
     # renovate: datasource=docker depName=registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller versioning=semver
-    default: registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller:v0.50.0
+    default: registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller:v0.51.5
 
   - name: UNICORN_PEPR_IMAGE
     # renovate: datasource=github-tags depName=defenseunicorns/pepr versioning=semver
-    default: ghcr.io/defenseunicorns/pepr/private/controller:v0.50.0
+    default: ghcr.io/defenseunicorns/pepr/private/controller:v0.51.5
 
   - name: LAYER
 
@@ -60,6 +60,8 @@ tasks:
   - name: checkpoint-dev-package
     description: "Create the K3d + UDS Core Checkpoint Zarf Package"
     actions:
+      - description: "Create build output directory"
+        cmd: "mkdir -p build"
       - description: "Create the UDS Core Checkpoint Zarf Package"
         cmd: "uds zarf package create packages/checkpoint-dev --confirm --no-progress --skip-sbom"
 
@@ -84,6 +86,8 @@ tasks:
         if: ${{ eq .inputs.layer "standard" }}
       - task: pepr-build
         if: ${{ eq .inputs.layer "base" }}
+      - description: "Create build output directory"
+        cmd: "mkdir -p build"
       - description: "Create the UDS Core Zarf Package"
         task: common:package
         with:

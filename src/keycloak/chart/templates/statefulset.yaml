@@ -53,13 +53,27 @@ spec:
               mountPath: /opt/keycloak/themes
             - name: conf
               mountPath: /opt/keycloak/conf
-            {{- if and .Values.themeCustomizations .Values.themeCustomizations.resources .Values.themeCustomizations.resources.images }}
+            {{- if .Values.themeCustomizations }}
             - name: theme-overrides
               mountPath: /opt/keycloak/theme-overrides
             {{- end }}
           envFrom:
             - secretRef:
                 name: {{ include "keycloak.fullname" . }}-realm-env
+        {{- if .Values.migrations.deleteGeneratedTrustStore }}
+        - name: remove-generated-truststore
+          image: "{{ .Values.configImage }}"
+          command: ["sh", "-c", "rm -rf /opt/keycloak/data/keycloak-truststore.p12 ; ls -la /opt/keycloak/data"]
+          securityContext:
+          {{- toYaml .Values.securityContext | nindent 12 }}
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+          volumeMounts:
+            - name: data
+              mountPath: /opt/keycloak/data
+        {{- end }}
       containers:
         - name: keycloak
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
@@ -121,6 +135,8 @@ spec:
               value: "true"
             - name: KC_METRICS_ENABLED
               value: "true"
+            - name: KC_EVENT_METRICS_USER_ENABLED
+              value: "true"
 
             # Enable access log
             - name: QUARKUS_HTTP_ACCESS_LOG_ENABLED
@@ -138,10 +154,10 @@ spec:
             - name: KC_SPI_X509CERT_LOOKUP_PROVIDER
               value: {{ .Values.x509LookupProvider }}
             # Set nginx provider header name
-            - name: KC_SPI_X509CERT_LOOKUP_NGINX_SSL_CLIENT_CERT
+            - name: KC_SPI_X509CERT_LOOKUP_{{ .Values.x509LookupProvider | upper }}_SSL_CLIENT_CERT
               value: istio-mtls-client-certificate
             # Dumb value (not used in the nginx provider, but required by the SPI)
-            - name: KC_SPI_X509CERT_LOOKUP_NGINX_SSL_CLIENT_CERT_CHAIN_PREFIX
+            - name: KC_SPI_X509CERT_LOOKUP_{{ .Values.x509LookupProvider | upper }}_SSL_CLIENT_CERT_CHAIN_PREFIX
               value: UNUSED
           {{- if .Values.fips }}
             # This is a workaround for https://github.com/keycloak/keycloak/issues/39454
@@ -326,10 +342,11 @@ spec:
           {{- else }}
           emptyDir: {}
           {{- end }}
-        {{- if and .Values.themeCustomizations .Values.themeCustomizations.resources .Values.themeCustomizations.resources.images }}
+        {{- if .Values.themeCustomizations }}
         - name: theme-overrides
           projected:
             sources:
+              {{- if and .Values.themeCustomizations.resources .Values.themeCustomizations.resources.images }}
               {{- range $image := .Values.themeCustomizations.resources.images }}
               {{- if $image.configmap.name }}
               - configMap:
@@ -337,6 +354,16 @@ spec:
                   items:
                     - key: {{ $image.name }}
                       path: {{ $image.name }}
+              {{- end }}
+              {{- end }}
+              {{- end }}
+              {{- if and .Values.themeCustomizations.termsAndConditions .Values.themeCustomizations.termsAndConditions.text }}
+              {{- with .Values.themeCustomizations.termsAndConditions.text.configmap }}
+              - configMap:
+                  name: {{ .name }}
+                  items:
+                    - key: {{ .key }}
+                      path: tc.txt
               {{- end }}
               {{- end }}
         {{- end }}

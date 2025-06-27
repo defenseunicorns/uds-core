@@ -6,15 +6,7 @@ name: EKS Test
 on:
   schedule:
     - cron: "0 0 * * 0" # Every Sunday Midnight (UTC) / Saturday 5pm MT
-  pull_request:
-    # milestoned is added here as a workaround for release-please not triggering PR workflows (PRs should be added to a milestone to trigger the workflow).
-    # labeled is added to support renovate-ready labelling on PRs
-    types: [milestoned, labeled, opened, reopened, synchronize]
-    paths:
-      - tasks/iac.yaml
-      - .github/bundles/eks/*
-      - .github/test-infra/aws/eks/*
-      - .github/workflows/test-eks.yaml
+  workflow_call: {}
 
 permissions:
   id-token: write
@@ -28,6 +20,7 @@ jobs:
       matrix:
         flavor: [upstream, registry1, unicorn]
     runs-on: ubuntu-latest
+    name: test-eks
     permissions:
       id-token: write
       contents: read
@@ -73,7 +66,8 @@ jobs:
           registry1Username: ${{ secrets.IRON_BANK_ROBOT_USERNAME }}
           registry1Password: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
           ghToken: ${{ secrets.GITHUB_TOKEN }}
-          chainguardIdentity: ${{ secrets.CHAINGUARD_IDENTITY }}
+          rapidfortUsername: ${{ secrets.RAPIDFORT_USERNAME }}
+          rapidfortPassword: ${{ secrets.RAPIDFORT_PASSWORD }}
 
       - name: Setup Tofu
         uses: opentofu/setup-opentofu@592200bd4b9bbf4772ace78f887668b1aee8f716 # v1.0.5
@@ -102,7 +96,7 @@ jobs:
         env:
           UDS_CONFIG: .github/bundles/eks/uds-config.yaml
         run: uds deploy .github/bundles/eks/uds-bundle-uds-core-eks-nightly-*.tar.zst --confirm
-        timeout-minutes: 30
+        timeout-minutes: 40
 
       - name: Test UDS Core
         run: uds run -f tasks/test.yaml uds-core-non-k3d

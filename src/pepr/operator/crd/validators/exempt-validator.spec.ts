@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { afterEach, describe, expect, it, jest } from "@jest/globals";
 import { PeprValidateRequest } from "pepr";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { MatcherKind, UDSExemption } from "..";
 
 import { UDSConfig } from "../../controllers/config/config";
@@ -38,14 +38,14 @@ const makeMockReq = ({ ns = "uds-policy-exemptions", exempts = mockExemptions }:
         exemptions: exempts,
       },
     },
-    Approve: jest.fn(),
-    Deny: jest.fn(),
+    Approve: vi.fn(),
+    Deny: vi.fn(),
   } as unknown as PeprValidateRequest<UDSExemption>;
 };
 
 describe("Test validation of Exemption CRs", () => {
   afterEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   it("allows default namespace", async () => {

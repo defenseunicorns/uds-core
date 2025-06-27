@@ -4,8 +4,7 @@
 tasks:
   - name: validate
     actions:
-      - cmd: "npx jest src/pepr/**/"
-
+      - cmd: "npx vitest src/pepr"
   - name: gen-crds
     description: "Generate CRDS, requires a running kubernetes cluster"
     actions:
@@ -13,11 +12,14 @@ tasks:
         description: "Register CRDs in cluster"
         env:
           - "PEPR_MODE=dev"
-      - cmd: "npx kubernetes-fluent-client crd packages.uds.dev src/pepr/operator/crd/generated"
+      - cmd: |
+          # renovate: datasource=github-tags depName=defenseunicorns/kubernetes-fluent-client versioning=semver
+          npx kubernetes-fluent-client@3.8.0 crd packages.uds.dev src/pepr/operator/crd/generated
         description: "Generate TS types for packages.uds.dev"
 
       - cmd: |
-          npx kubernetes-fluent-client crd packages.uds.dev -l json-schema schemas
+          # renovate: datasource=github-tags depName=defenseunicorns/kubernetes-fluent-client versioning=semver
+          npx kubernetes-fluent-client@3.8.0 crd packages.uds.dev -l json-schema schemas
           # Move the schema files to a standard path
           mv schemas/package-v1alpha1.json-schema schemas/package-v1alpha1.schema.json
           # Make the schema strict on additionalProperties
@@ -25,11 +27,14 @@ tasks:
           uds zarf tools yq -i '.definitions.Package.additionalProperties = {}' schemas/package-v1alpha1.schema.json
         description: "Generate JSON schema for packages.uds.dev"
 
-      - cmd: "npx kubernetes-fluent-client crd exemptions.uds.dev src/pepr/operator/crd/generated"
+      - cmd: |
+          # renovate: datasource=github-tags depName=defenseunicorns/kubernetes-fluent-client versioning=semver
+          npx kubernetes-fluent-client@3.8.0 crd exemptions.uds.dev src/pepr/operator/crd/generated
         description: "Generate TS types for exemptions.uds.dev"
 
       - cmd: |
-          npx kubernetes-fluent-client crd exemptions.uds.dev -l json-schema schemas
+          # renovate: datasource=github-tags depName=defenseunicorns/kubernetes-fluent-client versioning=semver
+          npx kubernetes-fluent-client@3.8.0 crd exemptions.uds.dev -l json-schema schemas
           # Move the schema files to a standard path
           mv schemas/exemption-v1alpha1.json-schema schemas/exemption-v1alpha1.schema.json
           # Make the schema strict on additionalProperties
@@ -72,9 +77,10 @@ tasks:
           done
 
   - name: gen-docs
-    description: "Generate Docs for generated CRDS, requires a running kubernetes cluster"
+    description: "Generate Docs for generated CRDs, requires a running kubernetes cluster"
     actions:
-      - cmd: |
+      - description: "Generate Docs for CRDs"
+        cmd: |
           # Define CRD list as a space-separated string
           CRD_LIST="exemptions.uds.dev packages.uds.dev clusterconfig.uds.dev"
           # For each CRD retrieve the CRD and create a Go struct file to then create a markdown file

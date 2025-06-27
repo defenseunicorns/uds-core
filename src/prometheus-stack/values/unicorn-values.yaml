@@ -4,14 +4,14 @@
 alertmanager:
   alertmanagerSpec:
     image:
-      registry: cgr.dev
-      repository: du-uds-defenseunicorns/prometheus-alertmanager-fips
-      tag: 0.28.1
+      registry: quay.io
+      repository: rfcurated/prometheus/alertmanager
+      tag: 0.28.1-jammy-fips-rfcurated-rfhardened
 kube-state-metrics:
   image:
-    registry: cgr.dev
-    repository: du-uds-defenseunicorns/kube-state-metrics-fips
-    tag: 2.15.0
+    registry: quay.io
+    repository: rfcurated/kube-state-metrics
+    tag: 2.15.0-jammy-scratch-fips-rfcurated-rfhardened
   securityContext:
     enabled: true
     fsGroup: 65532
@@ -21,14 +21,14 @@ kube-state-metrics:
 prometheus:
   prometheusSpec:
     image:
-      registry: cgr.dev
-      repository: du-uds-defenseunicorns/prometheus-fips
-      tag: 3.2.1
+      registry: quay.io
+      repository: rfcurated/prometheus
+      tag: 3.4.1-jammy-fips-rfcurated-rfhardened
 prometheus-node-exporter:
   image:
-    registry: cgr.dev
-    repository: du-uds-defenseunicorns/prometheus-node-exporter-fips
-    tag: 1.9.1
+    registry: quay.io
+    repository: rfcurated/prometheus/node-exporter
+    tag: 1.9.1-jammy-scratch-fips-rfcurated
 prometheusOperator:
   admissionWebhooks:
     containerSecurityContext:
@@ -38,22 +38,19 @@ prometheusOperator:
     patch:
       enabled: true
       image:
-        registry: cgr.dev
-        repository: du-uds-defenseunicorns/kube-webhook-certgen-fips
-        tag: 1.12.1
-      registry: cgr.dev
-      repository: du-uds-defenseunicorns/kube-webhook-certgen-fips
-      tag: 1.10.1
+        registry: quay.io
+        repository: rfcurated/ingress-nginx/kube-webhook-certgen
+        tag: 1.5.4-jammy-fips-rfcurated-rfhardened
       securityContext:
         runAsGroup: 65532
         runAsNonRoot: true
         runAsUser: 65532
   image:
-    registry: cgr.dev
-    repository: du-uds-defenseunicorns/prometheus-operator-fips
-    tag: 0.81.0
+    registry: quay.io
+    repository: rfcurated/prometheus-operator
+    tag: 0.83.0-jammy-scratch-fips-rfcurated
   prometheusConfigReloader:
     image:
-      registry: cgr.dev
-      repository: du-uds-defenseunicorns/prometheus-config-reloader-fips
-      tag: 0.81.0
+      registry: quay.io
+      repository: rfcurated/prometheus-operator/prometheus-config-reloader
+      tag: 0.83.0-jammy-scratch-fips-rfcurated

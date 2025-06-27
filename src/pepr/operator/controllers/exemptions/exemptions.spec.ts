@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { beforeEach, describe, expect, it } from "@jest/globals";
 import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
+import { beforeEach, describe, expect, it } from "vitest";
 import { MatcherKind, Policy } from "../../crd";
 import { Exemption } from "../../crd/generated/exemption-v1alpha1";
 import { ExemptionStore } from "./exemption-store";

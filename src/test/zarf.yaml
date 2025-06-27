@@ -8,6 +8,31 @@ metadata:
   url: https://github.com/defenseunicorns/uds-core
 
 components:
+  # Deploy package CRs
+  - name: test-app-packages
+    required: true
+    manifests:
+      - name: test-app-packages
+        files:
+          - "app-admin-package.yaml"
+          - "app-authservice-tenant-package.yaml"
+          - "app-tenant-package.yaml"
+          - "app-curl-packages.yaml"
+
+  # This is excluded from slim-dev to save some resources in package CI
+  - name: egress-app
+    required: false
+    manifests:
+      - name: egress-pkg
+        files:
+          - "app-egress-package.yaml"
+      - name: egress-app
+        files:
+          - "app-egress.yaml"
+    images:
+      - curlimages/curl:latest
+
+  # Deploy test workloads
   - name: test-apps
     required: true
     manifests:
@@ -36,11 +61,11 @@ components:
         localPath: ./chart
         version: 0.1.0
       - name: podinfo
-        version: 6.8.0
+        version: 6.9.0
         namespace: podinfo
         url: https://github.com/stefanprodan/podinfo.git
         gitPath: charts/podinfo
         valuesFiles:
           - ./podinfo-values.yaml
     images:
-      - ghcr.io/stefanprodan/podinfo:6.8.0
+      - ghcr.io/stefanprodan/podinfo:6.9.0

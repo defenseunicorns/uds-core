@@ -2,23 +2,23 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 image:
-  registry: cgr.dev
-  repository: du-uds-defenseunicorns/grafana-fips
-  tag: 11.6.1
+  registry: quay.io
+  repository: rfcurated/grafana
+  tag: 12.0.1-jammy-scratch-fips-rfcurated
 
 initChownData:
   image:
-    registry: cgr.dev
-    repository: du-uds-defenseunicorns/busybox-fips
-    tag: 1.37.0
+    registry: quay.io
+    repository: rfcurated/busybox
+    tag: 1.37.0-musl-rf.1-fips-rfcurated
 
 downloadDashboardsImage:
-  registry: cgr.dev
-  repository: du-uds-defenseunicorns/curl-fips
-  tag: 8.12.1
+  registry: quay.io
+  repository: rfcurated/curl
+  tag: 8.14.1-jammy-scratch-fips-rfcurated
 
 sidecar:
   image:
-    registry: cgr.dev
-    repository: du-uds-defenseunicorns/k8s-sidecar-fips
-    tag: 1.30.3
+    registry: quay.io
+    repository: rfcurated/k8s-sidecar
+    tag: 1.30.3-jammy-scratch-fips-rfcurated-rfhardened

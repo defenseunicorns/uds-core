@@ -3,23 +3,21 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { GenericKind } from "kubernetes-fluent-client";
-import { K8s, Log, kind } from "pepr";
-
-import { Mock } from "jest-mock";
+import { K8s, kind, Log } from "pepr";
+import { beforeEach, describe, expect, it, Mock, vi } from "vitest";
 import { handleFailure, shouldSkip, uidSeen, updateStatus, writeEvent } from ".";
 import { Phase, PkgStatus, UDSPackage } from "../crd";
 import { StatusEnum } from "../crd/generated/package-v1alpha1";
 
-jest.mock("pepr", () => ({
-  K8s: jest.fn(),
+vi.mock("pepr", () => ({
+  K8s: vi.fn(),
   Log: {
-    debug: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-    trace: jest.fn(),
-    child: jest.fn().mockReturnThis(),
+    debug: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    trace: vi.fn(),
+    child: vi.fn().mockReturnThis(),
   },
   kind: {
     CoreEvent: "CoreEvent",
@@ -28,10 +26,10 @@ jest.mock("pepr", () => ({
 
 describe("isPendingOrCurrent", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
-    (K8s as jest.Mock).mockImplementation(() => ({
-      Create: jest.fn(),
+    (K8s as Mock).mockImplementation(() => ({
+      Create: vi.fn(),
     }));
   });
 
@@ -66,12 +64,12 @@ describe("isPendingOrCurrent", () => {
 describe("updateStatus", () => {
   let PatchStatus: Mock;
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
-    PatchStatus = jest.fn();
+    PatchStatus = vi.fn();
 
-    (K8s as jest.Mock).mockImplementation(() => ({
-      Create: jest.fn(),
+    (K8s as Mock).mockImplementation(() => ({
+      Create: vi.fn(),
       PatchStatus,
     }));
   });
@@ -102,13 +100,13 @@ describe("updateStatus", () => {
 describe("writeEvent", () => {
   let Create: Mock;
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
-    Create = jest.fn();
+    Create = vi.fn();
 
-    (K8s as jest.Mock).mockImplementation(() => ({
+    (K8s as Mock).mockImplementation(() => ({
       Create,
-      PatchStatus: jest.fn(),
+      PatchStatus: vi.fn(),
     }));
   });
 
@@ -144,12 +142,12 @@ describe("handleFailure", () => {
   let Create: Mock;
   let PatchStatus: Mock;
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
-    Create = jest.fn();
-    PatchStatus = jest.fn();
+    Create = vi.fn();
+    PatchStatus = vi.fn();
 
-    (K8s as jest.Mock).mockImplementation(() => ({
+    (K8s as Mock).mockImplementation(() => ({
       Create,
       PatchStatus,
     }));

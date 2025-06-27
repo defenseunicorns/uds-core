@@ -7,7 +7,7 @@ metadata:
   description: "Rehydratable UDS K3d + UDS Core Slim (Istio, UDS Operator and Keycloak) Checkpoint"
   authors: "Defense Unicorns - Product"
   # x-release-please-start-version
-  version: "0.42.0"
+  version: "0.45.1"
   # x-release-please-end
 
 variables:
@@ -54,6 +54,21 @@ components:
     actions:
       onCreate:
         before:
+          - description: "Scale down ztunnel, pepr, and keycloak before snapshot"
+            cmd: |
+              set -e
+              ./zarf tools kubectl -n keycloak scale statefulset keycloak --replicas=0
+              ./zarf tools kubectl rollout status -n keycloak statefulset keycloak --timeout=60s
+
+              ./zarf tools kubectl -n pepr-system scale deploy pepr-uds-core-watcher --replicas=0
+              ./zarf tools kubectl rollout status -n pepr-system deploy pepr-uds-core-watcher --timeout=60s
+
+              ./zarf tools kubectl -n pepr-system scale deploy pepr-uds-core --replicas=0
+              ./zarf tools kubectl rollout status -n pepr-system deploy pepr-uds-core --timeout=60s
+
+              ./zarf tools kubectl -n istio-system patch daemonset ztunnel --type='strategic' -p '{"spec":{"template":{"spec":{"nodeSelector":{"no-such-label":"true"}}}}}'
+              ./zarf tools kubectl -n istio-system wait --for=delete pod -l app=ztunnel --timeout=60s
+
           - cmd: ./checkpoint.sh
         onSuccess:
           - cmd: |
@@ -92,13 +107,27 @@ components:
                 --image ghcr.io/defenseunicorns/uds-core/checkpoint:latest ${ZARF_VAR_K3D_EXTRA_ARGS} \
                 ${ZARF_VAR_CLUSTER_NAME}
             description: "Create the cluster"
-          # This action waits on Keycloak since it is the slowest pod to start after cluster creation. By waiting on it, we guarantee the cluster is healthy and usable after deployment.
-          - description: Keycloak to be Healthy
-            wait:
-              cluster:
-                kind: Pod
-                name: app.kubernetes.io/name=keycloak
-                namespace: keycloak
-                condition: Ready
+
+          - description: "Scale up ztunnel, pepr, and keycloak after checkpoint restore"
+            cmd: |
+              set -e
+              ./zarf tools kubectl patch mutatingwebhookconfiguration pepr-uds-core --type='json' -p='[{"op":"replace","path":"/webhooks/0/failurePolicy","value":"Ignore"}]'
+              ./zarf tools kubectl patch validatingwebhookconfiguration pepr-uds-core --type='json' -p='[{"op":"replace","path":"/webhooks/0/failurePolicy","value":"Ignore"}]'
+
+              ./zarf tools kubectl -n istio-system patch daemonset ztunnel --type=json -p='[{"op":"remove","path":"/spec/template/spec/nodeSelector/no-such-label"}]'
+              ./zarf tools kubectl -n istio-system rollout status daemonset ztunnel --timeout=60s
+
+              ./zarf tools kubectl -n pepr-system scale deploy pepr-uds-core --replicas=2
+              ./zarf tools kubectl rollout status -n pepr-system deploy pepr-uds-core --timeout=60s
+
+              ./zarf tools kubectl patch mutatingwebhookconfiguration pepr-uds-core --type='json' -p='[{"op":"replace","path":"/webhooks/0/failurePolicy","value":"Fail"}]'
+              ./zarf tools kubectl patch validatingwebhookconfiguration pepr-uds-core --type='json' -p='[{"op":"replace","path":"/webhooks/0/failurePolicy","value":"Fail"}]'
+
+              ./zarf tools kubectl -n pepr-system scale deploy pepr-uds-core-watcher --replicas=1
+              ./zarf tools kubectl -n pepr-system rollout status deploy pepr-uds-core-watcher --timeout=60s
+
+              ./zarf tools kubectl -n keycloak scale statefulset keycloak --replicas=1
+              ./zarf tools kubectl -n keycloak rollout status statefulset keycloak --timeout=180s
+
         onSuccess:
           - cmd: rm -f uds-checkpoint.tar

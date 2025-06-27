@@ -3,10 +3,11 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { beforeEach, describe, expect, jest, test } from "@jest/globals";
+import { beforeEach, describe, expect, Mock, MockedFunction, test, vi } from "vitest";
 
 import { K8s, Log } from "pepr";
 import { writeEvent } from ".";
+import { reconcileSharedEgressResources } from "../controllers/istio/egress";
 import { cleanupNamespace } from "../controllers/istio/namespace";
 import { purgeAuthserviceClients } from "../controllers/keycloak/authservice/authservice";
 import { purgeSSOClients } from "../controllers/keycloak/client-sync";
@@ -14,51 +15,61 @@ import { retryWithDelay } from "../controllers/utils";
 import { Phase, UDSPackage } from "../crd";
 import { packageFinalizer, packageReconciler } from "./package-reconciler";
 
-const mockCleanupNamespace: jest.MockedFunction<() => Promise<void>> = jest.fn();
-const mockPurgeSSO: jest.MockedFunction<() => Promise<void>> = jest.fn();
-const mockPurgeAuthservice: jest.MockedFunction<() => Promise<void>> = jest.fn();
-const mockPatchStatus: jest.MockedFunction<() => Promise<void>> = jest.fn();
-const mockWriteEvent = jest.fn();
+const mockCleanupNamespace: MockedFunction<() => Promise<void>> = vi.fn();
+const mockPurgeSSO: MockedFunction<() => Promise<void>> = vi.fn();
+const mockPurgeAuthservice: MockedFunction<() => Promise<void>> = vi.fn();
+const mockPatchStatus: MockedFunction<() => Promise<void>> = vi.fn();
+const mockReconcileSharedEgressResources: MockedFunction<() => Promise<void>> = vi.fn();
+const mockWriteEvent = vi.fn();
 
-jest.mock("kubernetes-fluent-client");
-jest.mock("../controllers/config/config");
-jest.mock("../controllers/istio/namespace", () => ({
-  cleanupNamespace: jest.fn(),
+// jest.mock("../controllers/config/config");
+
+vi.mock("kubernetes-fluent-client");
+vi.mock("../../config");
+vi.mock("../controllers/istio/namespace", () => ({
+  cleanupNamespace: vi.fn(),
 }));
-jest.mock("../controllers/keycloak/client-sync", () => ({
-  purgeSSOClients: jest.fn(),
+vi.mock("../controllers/keycloak/client-sync", () => ({
+  purgeSSOClients: vi.fn(),
 }));
-jest.mock("../controllers/keycloak/authservice/authservice", () => ({
-  purgeAuthserviceClients: jest.fn(),
+vi.mock("../controllers/keycloak/authservice/authservice", () => ({
+  purgeAuthserviceClients: vi.fn(),
 }));
-jest.mock("../controllers/utils", () => ({
-  retryWithDelay: jest.fn(async <T>(fn: () => Promise<T>) => fn()),
+vi.mock("../controllers/utils", () => ({
+  retryWithDelay: vi.fn(async <T>(fn: () => Promise<T>) => fn()),
 }));
-jest.mock(".", () => {
-  const originalModule = jest.requireActual(".") as object;
+vi.mock(".", async () => {
+  const originalModule = (await vi.importActual(".")) as object;
   return {
     ...originalModule,
-    writeEvent: jest.fn(),
+    writeEvent: vi.fn(),
+  };
+});
+vi.mock("../controllers/istio/egress", async () => {
+  const originalModule = (await vi.importActual("../controllers/istio/egress")) as object;
+  return {
+    ...originalModule,
+    reconcileSharedEgressResources: vi.fn(async <T>(fn: () => Promise<T>) => fn()),
   };
 });
 
-jest.mock("../controllers/istio/virtual-service");
-jest.mock("../controllers/network/policies");
+vi.mock("../controllers/istio/virtual-service");
+vi.mock("../controllers/network/policies");
 
-jest.mock("pepr", () => ({
-  K8s: jest.fn(),
+vi.mock("pepr", () => ({
+  K8s: vi.fn(),
   Log: {
-    info: jest.fn(),
-    debug: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-    trace: jest.fn(),
-    child: jest.fn().mockReturnThis(),
+    info: vi.fn(),
+    debug: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    trace: vi.fn(),
+    child: vi.fn().mockReturnThis(),
   },
   kind: {
     CoreEvent: "CoreEvent",
   },
-  Capability: jest.fn().mockImplementation(() => {
+  Capability: vi.fn().mockImplementation(() => {
     return {
       name: "uds-core-operator",
       description: "The UDS Operator is responsible for managing the lifecycle of UDS resources",
@@ -70,16 +81,16 @@ describe("reconciler", () => {
   let mockPackage: UDSPackage;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     mockPackage = {
       metadata: { name: "test-package", namespace: "test-namespace", generation: 1 },
       status: { phase: Phase.Pending, observedGeneration: 0 },
     };
 
-    (K8s as jest.Mock).mockImplementation(() => ({
-      Create: jest.fn(),
-      PatchStatus: jest.fn(),
+    (K8s as Mock).mockImplementation(() => ({
+      Create: vi.fn(),
+      PatchStatus: vi.fn(),
     }));
   });
 
@@ -94,20 +105,21 @@ describe("finalizer", () => {
   let mockPackage: UDSPackage;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     mockPackage = {
       metadata: { name: "test-package", namespace: "test-namespace", generation: 1 },
     };
 
-    (K8s as jest.Mock).mockImplementation(() => ({
-      Create: jest.fn(),
+    (K8s as Mock).mockImplementation(() => ({
+      Create: vi.fn(),
       PatchStatus: mockPatchStatus,
     }));
-    (cleanupNamespace as jest.Mock).mockImplementation(mockCleanupNamespace);
-    (purgeSSOClients as jest.Mock).mockImplementation(mockPurgeSSO);
-    (purgeAuthserviceClients as jest.Mock).mockImplementation(mockPurgeAuthservice);
-    (writeEvent as jest.Mock).mockImplementation(mockWriteEvent);
+    (cleanupNamespace as Mock).mockImplementation(mockCleanupNamespace);
+    (purgeSSOClients as Mock).mockImplementation(mockPurgeSSO);
+    (purgeAuthserviceClients as Mock).mockImplementation(mockPurgeAuthservice);
+    (reconcileSharedEgressResources as Mock).mockImplementation(mockReconcileSharedEgressResources);
+    (writeEvent as Mock).mockImplementation(mockWriteEvent);
   });
 
   test("should not remove the finalizer for pending packages", async () => {
@@ -154,6 +166,7 @@ describe("finalizer", () => {
     expect(mockCleanupNamespace).toHaveBeenCalled();
     expect(mockPurgeSSO).toHaveBeenCalled();
     expect(mockPurgeAuthservice).toHaveBeenCalled();
+    expect(mockReconcileSharedEgressResources).toHaveBeenCalled();
   });
 
   test("should handle failure in cleanupNamespace and set phase to RemovalFailed", async () => {
@@ -161,6 +174,7 @@ describe("finalizer", () => {
     mockCleanupNamespace.mockRejectedValue(new Error("Istio cleanup failed"));
     mockPurgeAuthservice.mockReset();
     mockPurgeSSO.mockReset();
+    mockReconcileSharedEgressResources.mockReset();
 
     const finalizerRemoved = await packageFinalizer(mockPackage);
 
@@ -187,6 +201,7 @@ describe("finalizer", () => {
     mockCleanupNamespace.mockReset();
     mockPurgeAuthservice.mockRejectedValue(new Error("AuthService cleanup failed"));
     mockPurgeSSO.mockReset();
+    mockReconcileSharedEgressResources.mockReset();
 
     const finalizerRemoved = await packageFinalizer(mockPackage);
 
@@ -214,6 +229,7 @@ describe("finalizer", () => {
     mockCleanupNamespace.mockReset();
     mockPurgeAuthservice.mockReset();
     mockPurgeSSO.mockRejectedValue(new Error("SSO cleanup failed"));
+    mockReconcileSharedEgressResources.mockReset();
 
     const finalizerRemoved = await packageFinalizer(mockPackage);
 
@@ -233,6 +249,36 @@ describe("finalizer", () => {
       expect.objectContaining({
         reason: "RemovalFailed",
         message: expect.stringContaining("SSO"),
+      }),
+    );
+  });
+
+  test("should handle failure in reconcileSharedEgressResources and set phase to RemovalFailed", async () => {
+    mockPackage.status = { phase: Phase.Ready };
+    mockCleanupNamespace.mockReset();
+    mockPurgeAuthservice.mockReset();
+    mockPurgeSSO.mockReset();
+    mockReconcileSharedEgressResources.mockRejectedValue(new Error("Egress cleanup failed"));
+
+    const finalizerRemoved = await packageFinalizer(mockPackage);
+
+    expect(finalizerRemoved).toEqual(false);
+    expect(retryWithDelay).toHaveBeenCalled();
+    expect(mockCleanupNamespace).toHaveBeenCalled();
+    expect(mockPurgeAuthservice).toHaveBeenCalled();
+    expect(mockPurgeSSO).toHaveBeenCalled();
+    expect(mockReconcileSharedEgressResources).toHaveBeenCalled();
+    expect(mockPatchStatus).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: { name: "test-package", namespace: "test-namespace" },
+        status: { phase: Phase.RemovalFailed },
+      }),
+    );
+    expect(mockWriteEvent).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        reason: "RemovalFailed",
+        message: expect.stringContaining("Egress"),
       }),
     );
   });

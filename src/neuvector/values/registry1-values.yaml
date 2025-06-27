@@ -42,12 +42,20 @@ cve:
           - ALL
       runAsNonRoot: true
       runAsUser: 1000
+    # These volumes ensure the permissions are set properly for the certs mounted from the secret
+    volumes:
+      - name: internal-cert-dir
+        emptyDir:
+          sizeLimit: 50Mi
+    volumeMounts:
+      - mountPath: /etc/neuvector/certs/internal/
+        name: internal-cert-dir
   updater:
     enabled: true
     image:
       repository: ironbank/redhat/ubi/ubi9-minimal
       # renovate: datasource=docker depName=registry1.dso.mil/ironbank/redhat/ubi/ubi9-minimal versioning=docker
-      tag: "9.5"
+      tag: "9.6"
     containerSecurityContext:
       capabilities:
         drop:
