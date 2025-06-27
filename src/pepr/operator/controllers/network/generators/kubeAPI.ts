@@ -6,10 +6,10 @@
 import { V1NetworkPolicyPeer } from "@kubernetes/client-node";
 import { K8s, kind, R } from "pepr";
 
-import { UDSConfig } from "../../../../config";
 import { Component, setupLogger } from "../../../../logger";
 import { RemoteGenerated } from "../../../crd";
 import { AuthorizationPolicy } from "../../../crd/generated/istio/authorizationpolicy-v1beta1";
+import { UDSConfig } from "../../config/config";
 import { retryWithDelay } from "../../utils";
 import { anywhere } from "./anywhere";
 
@@ -169,7 +169,9 @@ export async function updateKubeAPINetworkPolicies(newPeers: V1NetworkPolicyPeer
     // Safety check for network policy spec existence
     if (!netPol.spec) {
       log.warn(
-        `KubeAPI NetworkPolicy ${netPol.metadata!.namespace}/${netPol.metadata!.name} is missing spec.`,
+        `KubeAPI NetworkPolicy ${netPol.metadata!.namespace}/${
+          netPol.metadata!.name
+        } is missing spec.`,
       );
       continue;
     }
@@ -205,7 +207,9 @@ export async function updateKubeAPINetworkPolicies(newPeers: V1NetworkPolicyPeer
       }
 
       log.debug(
-        `Updating KubeAPI NetworkPolicy ${netPol.metadata!.namespace}/${netPol.metadata!.name} with new CIDRs.`,
+        `Updating KubeAPI NetworkPolicy ${netPol.metadata!.namespace}/${
+          netPol.metadata!.name
+        } with new CIDRs.`,
       );
       try {
         await K8s(kind.NetworkPolicy).Apply(netPol, { force: true });

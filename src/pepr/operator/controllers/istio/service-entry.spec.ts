@@ -3,9 +3,10 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
+
 import { describe, expect, it } from "vitest";
-import { UDSConfig } from "../../../config";
 import { Expose, Gateway, IstioLocation, IstioResolution, RemoteProtocol } from "../../crd";
+import { UDSConfig } from "../config/config";
 import { ownerRefsMock } from "./defaultTestMocks";
 import { sharedEgressPkgId } from "./egress";
 import { istioEgressGatewayNamespace } from "./istio-resources";
