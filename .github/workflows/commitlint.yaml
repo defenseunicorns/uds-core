@@ -27,12 +27,12 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Node.js
-        uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
 
       - name: Install commitlint
         run: |
-          npm install --save-dev @commitlint/config-conventional@19.6.0
-          npm install --save-dev @commitlint/cli@19.6.1
+          npm install --save-dev @commitlint/config-conventional@19.8.1
+          npm install --save-dev @commitlint/cli@19.8.1
 
       - name: Lint PR title
         env:

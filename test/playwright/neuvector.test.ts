@@ -6,6 +6,8 @@
 import { expect, test } from "@playwright/test";
 import { domain } from "./uds.config";
 
+const FIFTEEN_SECONDS = 15_000;
+
 const url = `https://neuvector.admin.${domain}`
 test.use({ baseURL: url });
 
@@ -40,10 +42,6 @@ test("validate system health", async ({ page }) => {
     expect(scannerData).toHaveProperty('scanners');
     expect(Array.isArray(scannerData.scanners)).toBe(true);
     expect(scannerData.scanners.length).toBeGreaterThanOrEqual(3);
-    const hasScannedContainers = scannerData.scanners.some(
-      (scanner: { scanned_containers: number }) => scanner.scanned_containers > 0
-    );
-    expect(hasScannedContainers).toBe(true);
 
     // Ensure at least three controller exists and all are connected
     await page.getByRole('tab', { name: 'Controllers' }).click();
@@ -75,6 +73,18 @@ test("validate system health", async ({ page }) => {
       expect(enforcer.connection_state).toBe('connected');
     });
   });
+
+  await test.step("check scanning functionality", async () => {
+    await page.goto('/#/workloads');
+    await page.waitForLoadState("domcontentloaded");
+
+    // Pick the first istio-proxy image to scan
+    await page.getByText('istio-proxy').first().click();
+    const scannerPromise = page.waitForResponse(`${url}/workload/scanned*`);
+    await page.getByRole('button', { name: 'Scan action' }).click();
+    const scannerResponse = await scannerPromise;
+    expect(scannerResponse.status()).toBe(200);
+  });
 });
 
 test("validate local login is blocked", async ({ page }) => {
@@ -86,4 +96,15 @@ test("validate local login is blocked", async ({ page }) => {
     await page.getByRole('button', { name: 'Login', exact: true }).click();
     await expect(page.getByText('RBAC: access denied')).toBeVisible();
   });
+});
+
+// Add a 15 second delay after a test failure
+test.afterEach(async ({ page }, testInfo) => {
+  if (testInfo.status === testInfo.expectedStatus || testInfo.retry === testInfo.project.retries) {
+    return;
+  }
+
+  testInfo.setTimeout(testInfo.timeout + FIFTEEN_SECONDS);
+  console.info(`Backoff: waiting 15s before the next test retry`);
+  await page.waitForTimeout(FIFTEEN_SECONDS);
 });

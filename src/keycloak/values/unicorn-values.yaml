@@ -2,7 +2,17 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 podSecurityContext:
-  fsGroup: 65532
+  fsGroup: 1000
+securityContext:
+  runAsUser: 1000
+  runAsGroup: 1000
+  runAsNonRoot: true
+  capabilities:
+    drop:
+      - ALL
 image:
-  repository: cgr.dev/du-uds-defenseunicorns/keycloak
-  tag: "26.0.8"
+  repository: quay.io/rfcurated/keycloak
+  tag: "26.2.5-jammy-rfcurated"
+
+migrations:
+  deleteGeneratedTrustStore: true

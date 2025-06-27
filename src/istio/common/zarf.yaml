@@ -6,6 +6,13 @@ metadata:
   name: uds-core-istio-common
   description: "UDS Core Istio Common"
   url: https://istio.io/latest/
+variables:
+  - name: CNI_CONF_DIR
+    description: "CNI configuration directory"
+    default: ""
+  - name: CNI_BIN_DIR
+    description: "CNI binary directory"
+    default: ""
 
 components:
   - name: istio-controlplane
@@ -13,49 +20,98 @@ components:
     charts:
       - name: base
         url: https://istio-release.storage.googleapis.com/charts
-        version: 1.24.2
+        version: 1.26.0
         namespace: istio-system
       - name: istiod
         url: https://istio-release.storage.googleapis.com/charts
-        version: 1.24.2
+        version: 1.26.0
         namespace: istio-system
         valuesFiles:
           - "../values/base-istiod.yaml"
+        variables:
+          - name: PROXY_MEMORY_REQUEST
+            description: "Memory requests for sidecars in cluster"
+            path: "global.proxy.resources.requests.memory"
+          - name: PROXY_CPU_REQUEST
+            description: "CPU requests for sidecars in cluster"
+            path: "global.proxy.resources.requests.cpu"
       - name: uds-global-istio-config
         namespace: istio-system
         version: 0.1.0
         localPath: chart
         valuesFiles:
           - "chart/values.yaml"
+      - name: cni
+        url: https://istio-release.storage.googleapis.com/charts
+        version: 1.26.0
+        namespace: istio-system
+        valuesFiles:
+          - "../values/base-cni.yaml"
+      - name: ztunnel
+        url: https://istio-release.storage.googleapis.com/charts
+        version: 1.26.0
+        namespace: istio-system
+        valuesFiles:
+          - "../values/base-ztunnel.yaml"
     actions:
       onDeploy:
         before:
           - description: "Add helm ownership if necessary for clean helm upgrade"
             mute: true
             cmd: |
-              # Commands pulled from https://istio.io/latest/news/releases/1.24.x/announcing-1.24/upgrade-notes/#istio-crds-are-templated-by-default-and-can-be-installed-and-upgraded-via-helm-install-istio-base
-              ./zarf tools kubectl label $(./zarf tools kubectl get crds -l chart=istio -o name && ./zarf tools kubectl get crds -l app.kubernetes.io/part-of=istio -o name) "app.kubernetes.io/managed-by=Helm" --overwrite || true
-              ./zarf tools kubectl annotate $(./zarf tools kubectl get crds -l chart=istio -o name && ./zarf tools kubectl get crds -l app.kubernetes.io/part-of=istio -o name) "meta.helm.sh/release-name=base" --overwrite || true
-              ./zarf tools kubectl annotate $(./zarf tools kubectl get crds -l chart=istio -o name && ./zarf tools kubectl get crds -l app.kubernetes.io/part-of=istio -o name) "meta.helm.sh/release-namespace=istio-system" --overwrite || true
-        after:
-          - description: "Ensure istio-injection is enabled for Pepr"
-            mute: true
-            cmd: "./zarf tools kubectl label namespace pepr-system istio-injection=enabled --overwrite"
-          - description: "Cycle Pepr to ensure enrollment in Istio"
+              ./zarf tools kubectl annotate exemption istio -n uds-policy-exemptions "meta.helm.sh/release-name=uds-global-istio-config" --overwrite || true
+          - description: "Ensure CNI_CONF_DIR is set"
             cmd: |
-              # Check if Istio is enabled. The pepr-system namespace should exist because that is added when istio is configured
-              if ! ./zarf tools kubectl get pods -n pepr-system -o jsonpath="{range .items[*]}{.metadata.name}:{range .spec.initContainers[*]}{.name} {end}{range .spec.containers[*]}{.name} {end}{'\n'}{end}" | grep -q 'istio-proxy'; then
-                  # Check if the "pepr-uds-core-watcher" deployment exists before restarting
-                  if ./zarf tools kubectl get deploy -n pepr-system pepr-uds-core-watcher > /dev/null 2>&1; then
-                      ./zarf tools kubectl rollout restart -n pepr-system deploy/pepr-uds-core-watcher
-                  else
-                      echo "Deployment 'pepr-uds-core-watcher' does not exist. Skipping restart."
-                  fi
-
-                  # Check if the "pepr-uds-core" deployment exists before restarting
-                  if ./zarf tools kubectl get deploy -n pepr-system pepr-uds-core > /dev/null 2>&1; then
-                      ./zarf tools kubectl rollout restart -n pepr-system deploy/pepr-uds-core
-                  else
-                      echo "Deployment 'pepr-uds-core' does not exist. Skipping restart."
-                  fi
+              if [ \"${ZARF_VAR_CNI_CONF_DIR}\" = \"\" ]; then
+                if ./zarf tools kubectl version -o json 2>/dev/null | ./zarf tools yq '.serverVersion.gitVersion' 2>/dev/null | grep -q "k3s"; then
+                  echo "/var/lib/rancher/k3s/agent/etc/cni/net.d"
+                else
+                  echo "/etc/cni/net.d"
+                fi
+              else
+                echo "${ZARF_VAR_CNI_CONF_DIR}"
               fi
+            setVariables:
+              - name: CNI_CONF_DIR
+          - description: "Ensure CNI_BIN_DIR is set"
+            cmd: |
+              if [ \"${ZARF_VAR_CNI_BIN_DIR}\" = \"\" ]; then
+                if ./zarf tools kubectl version -o json 2>/dev/null | ./zarf tools yq '.serverVersion.gitVersion' 2>/dev/null | grep -q "k3s"; then
+                  # Note: this was previously the k3d bin dir, but with k3s 1.31.7 it has changed to the default k3s dir
+                  # if ./zarf tools kubectl get nodes -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}' 2>/dev/null | grep -q "k3d"; then
+                  #   echo "/bin/"
+                  echo "/var/lib/rancher/k3s/data/cni"
+                else
+                  echo "/opt/cni/bin"
+                fi
+              else
+                echo "${ZARF_VAR_CNI_BIN_DIR}"
+              fi
+            setVariables:
+              - name: CNI_BIN_DIR
+        after:
+          - description: "Ensure istio ambient is enabled for Pepr"
+            cmd: "./zarf tools kubectl label namespace pepr-system istio.io/dataplane-mode=ambient --overwrite"
+          - description: "Ensure istio-injection is disabled for Pepr"
+            cmd: "./zarf tools kubectl label namespace pepr-system istio-injection=disabled --overwrite"
+          - description: "Cycle Pepr to refresh connections post-ambient"
+            cmd: |
+              echo "Checking if Pepr pods have sidecars and need restart..."
+              if ./zarf tools kubectl get pods -n pepr-system -o jsonpath="{range .items[*]}{.metadata.name}:{range .spec.initContainers[*]}{.name} {end}{range .spec.containers[*]}{.name} {end}{'\n'}{end}" | grep -q 'istio-proxy'; then
+                echo "Istio sidecar detected, restarting Pepr deployments..."
+                if ./zarf tools kubectl get deploy -n pepr-system pepr-uds-core-watcher > /dev/null 2>&1; then
+                  ./zarf tools kubectl rollout restart -n pepr-system deploy/pepr-uds-core-watcher
+                fi
+                if ./zarf tools kubectl get deploy -n pepr-system pepr-uds-core > /dev/null 2>&1; then
+                  ./zarf tools kubectl rollout restart -n pepr-system deploy/pepr-uds-core
+                fi
+              else
+                echo "No sidecars detected. Pepr pods are already Ambient-compatible. Skipping restart."
+              fi
+
+  - name: gateway-api-crds
+    required: true
+    manifests:
+      - name: gateway-api-crds
+        files:
+          - https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.3.0/standard-install.yaml

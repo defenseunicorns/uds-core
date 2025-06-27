@@ -15,8 +15,23 @@ meshConfig:
       envoyExtAuthzGrpc:
         service: "authservice.authservice.svc.cluster.local"
         port: "10003"
+  outboundTrafficPolicy:
+    mode: "ALLOW_ANY"
 
 pilot:
   env:
     PILOT_JWT_ENABLE_REMOTE_JWKS: hybrid
     ENABLE_NATIVE_SIDECARS: true
+
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - istiod
+          topologyKey: kubernetes.io/hostname

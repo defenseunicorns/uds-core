@@ -12,7 +12,7 @@ Demo and dev bundles (`k3d-core-demo` and `k3d-core-slim-dev`) are only publishe
 
 | Flavor                | GHCR Location                                  | Image Source                                                                                                         |
 | --------------------- | ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| `registry1`           | `ghcr.io/defenseunicorns/packages/uds`         | [Ironbank](https://p1.dso.mil/services/iron-bank) - DoD hardened images (only supports amd64 architecture currently) |
+| `registry1`           | `ghcr.io/defenseunicorns/packages/uds`         | [Ironbank](https://p1.dso.mil/services/iron-bank) - DoD hardened images                                              |
 | `upstream`            | `ghcr.io/defenseunicorns/packages/uds`         | Various sources, typically DockerHub/GHCR/Quay, these are the default images used by helm charts                     |
 | `unicorn`             | `ghcr.io/defenseunicorns/packages/private/uds` | Industry best images designed with security and minimalism in mind                                                   |
 

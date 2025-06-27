@@ -16,12 +16,19 @@ resource "azurerm_subnet" "cluster_node_subnet" {
   address_prefixes     = ["10.0.0.0/20"]
 }
 
+resource "azurerm_subnet" "cluster_worker_node_subnet" {
+  name                 = "${local.cluster_name}-worker-node-subnet"
+  resource_group_name  = azurerm_resource_group.this.name
+  virtual_network_name = azurerm_virtual_network.cluster-vnet.name
+  address_prefixes     = ["10.0.16.0/20"]
+}
+
 # https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/concepts-networking-private
 resource "azurerm_subnet" "postgres_subnet" {
   name                 = "${local.cluster_name}-postgres-subnet"
   resource_group_name  = azurerm_resource_group.this.name
   virtual_network_name = azurerm_virtual_network.cluster-vnet.name
-  address_prefixes     = ["10.0.16.0/20"]
+  address_prefixes     = ["10.0.32.0/20"]
   service_endpoints = [
     "Microsoft.Storage",
   ]
@@ -36,9 +43,24 @@ resource "azurerm_subnet" "postgres_subnet" {
   }
 }
 
+resource "azurerm_subnet" "cluster_api_subnet" {
+  name                 = "${local.cluster_name}-api-subnet"
+  resource_group_name  = azurerm_resource_group.this.name
+  virtual_network_name = azurerm_virtual_network.cluster-vnet.name
+  address_prefixes     = ["10.0.48.0/24"]
+  delegation {
+    name = "api"
+    service_delegation {
+      name = "Microsoft.ContainerService/managedClusters"
+      actions = [
+        "Microsoft.Network/virtualNetworks/subnets/join/action",
+      ]
+    }
+  }
+}
 
 resource "azurerm_private_dns_zone" "cluster_dns_zone" {
-  name                = "${local.cluster_name}.postgres.database.azure.com"
+  name                = "${local.cluster_name}.postgres.database.usgovcloudapi.net"
   resource_group_name = azurerm_resource_group.this.name
 }
 

@@ -1,0 +1,20 @@
+{
+  "name": "renovate-readiness-scripts",
+  "version": "1.0.0",
+  "description": "Scripts for renovate readiness checks",
+  "private": true,
+  "scripts": {
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "semver": "^7.5.4",
+    "yaml": "^2.3.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/semver": "^7.5.6",
+    "vitest": "^3.2.3",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
+}

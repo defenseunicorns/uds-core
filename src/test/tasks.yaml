@@ -1,45 +1,61 @@
 # Copyright 2024 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
+includes:
+  - utils: ../../tasks/utils.yaml
+
 tasks:
   - name: validate
-    description: Test app used for UDS Core validation
     actions:
+      - description: Validate...
+        cmd: "echo Replace Me"
+
+  - name: e2e-test
+    inputs:
+      validate_egress:
+        description: Whether to validate egress controls with the egress gateway
+        default: "true"
+
+    actions:
+      - description: "Run Test Apps E2E tests"
+        task: create-deploy
+        with:
+          validate_egress: ${{ .inputs.validate_egress }}
+      - description: "Run Network Tests"
+        cmd: |
+          EGRESS_TESTS=${{ .inputs.validate_egress }} npx vitest run "network.spec.ts"
+        dir: test/vitest
+      - description: "Run Test Resources Tests"
+        cmd: |
+          npx vitest run "test-resources.spec.ts"
+        dir: test/vitest
+      - description: "Remove Test Apps resources"
+        task: remove
+
+  - name: create-deploy
+    description: Test app used for UDS Core validation
+    inputs:
+      architecture:
+        description: "System architecture that the test-apps package should be built for."
+        default: ${UDS_ARCH}
+      validate_egress:
+        description: Whether to validate egress controls with the egress gateway
+        default: "true"
+
+    actions:
+      - description: "Create build output directory"
+        cmd: "mkdir -p build"
+
       - description: Create zarf package for the test resources
-        cmd: "uds zarf package create src/test --confirm --no-progress"
+        cmd: uds zarf package create src/test --confirm --no-progress --skip-sbom -a ${{ index .inputs "architecture" }}
+
+      - description: Deploy the test resources (with egress-app)
+        if: ${{ eq .inputs.validate_egress "true" }}
+        cmd: "uds zarf package deploy build/zarf-package-uds-core-test-apps-*.zst --confirm --no-progress --components egress-app"
 
       - description: Deploy the test resources
+        if: ${{ eq .inputs.validate_egress "false" }}
         cmd: "uds zarf package deploy build/zarf-package-uds-core-test-apps-*.zst --confirm --no-progress"
-
-      - description: Wait for the admin app to be ready
-        wait:
-          cluster:
-            kind: Deployment
-            name: httpbin
-            namespace: test-admin-app
-
-      - description: Verify admin package CR is ready
-        wait:
-          cluster:
-            kind: Package
-            name: httpbin
-            namespace: test-admin-app
-            condition: "'{.status.phase}'=Ready"
-
-      - description: Wait for the tenant app to be ready
-        wait:
-          cluster:
-            kind: Deployment
-            name: http-echo-multi-port
-            namespace: test-tenant-app
-
-      - description: Verify tenant package CR is ready
-        wait:
-          cluster:
-            kind: Package
-            name: test-tenant-app
-            namespace: test-tenant-app
-            condition: "'{.status.phase}'=Ready"
 
       - description: Verify the admin app is accessible
         wait:
@@ -76,14 +92,6 @@ tasks:
             address: demo-8081.uds.dev
             code: 200
 
-      - description: Verify authservice app package CR is ready
-        wait:
-          cluster:
-            kind: Package
-            name: httpbin-other
-            namespace: authservice-test-app
-            condition: "'{.status.phase}'=Ready"
-
       - description: Verify the authservice tenant app is accessible
         wait:
           network:
@@ -91,18 +99,12 @@ tasks:
             address: protected.uds.dev
             code: 200
 
-      - description: Wait for authservice to reload configuration
-        wait:
-          cluster:
-            kind: Deployment
-            name: authservice
-            namespace: authservice
-
       - description: Verify the authservice tenant app is protected by checking redirect
         maxRetries: 3
+        task: utils:tenant-gw-ip
         cmd: |
           set -e
-          SSO_REDIRECT=$(uds zarf tools kubectl run curl-test --image=cgr.dev/chainguard/curl:latest -q --restart=Never --rm -i -- -Ls -o /dev/null -w %{url_effective} "https://protected.uds.dev")
+          SSO_REDIRECT=$(uds zarf tools kubectl run curl-test --image=cgr.dev/chainguard/curl:latest -q --restart=Never --rm -i -- --resolve 'protected.uds.dev:$TENANT_GW_IP:443' -Ls -o /dev/null -w %{url_effective} "https://protected.uds.dev")
 
           case "${SSO_REDIRECT}" in
           "https://sso.uds.dev"*)
@@ -115,22 +117,6 @@ tasks:
               exit 1
               ;;
           esac
-
-      - description: Verify podinfo is healthy
-        wait:
-          cluster:
-            kind: Pod
-            name: app.kubernetes.io/name=podinfo
-            namespace: podinfo
-            condition: Ready
-
-      - description: Verify podinfo package CR is ready
-        wait:
-          cluster:
-            kind: Package
-            name: podinfo
-            namespace: podinfo
-            condition: "'{.status.phase}'=Ready"
 
       - description: Verify podinfo podmonitor exists
         wait:
@@ -146,9 +132,7 @@ tasks:
             name: podinfo-svcmonitor
             namespace: podinfo
 
-      - description: Remove the test resources
-        cmd: "uds zarf package remove build/zarf-package-uds-core-test-apps-*.zst --confirm --no-progress"
-
-  - name: e2e-test
+  - name: remove
     actions:
-      - description: "Run Test Apps E2E tests"
+      - description: Remove the test apps zarf package
+        cmd: "uds zarf package remove build/zarf-package-uds-core-test-apps-*.zst --confirm --no-progress"

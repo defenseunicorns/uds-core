@@ -29,6 +29,18 @@ runs:
         fi
       shell: bash
 
+    - name: Pull iptables rules (network policies)
+      if: ${{ inputs.distro == 'k3d' }}
+      run: |
+        CONTAINER_NAME="k3d-uds-server-0"
+        if docker ps | grep -q "$CONTAINER_NAME"; then
+          echo "Container $CONTAINER_NAME is running. Proceeding with iptables-save..."
+          docker exec -i ${CONTAINER_NAME} iptables-save > /tmp/uds-iptables.log
+        else
+          echo "Container $CONTAINER_NAME is not running. Skipping iptables-save."
+        fi
+      shell: bash
+
     - name: Dump Node Logs
       if: ${{ inputs.distro == 'k3d' }}
       run: |
@@ -69,7 +81,16 @@ runs:
         echo "::endgroup::"
       shell: bash
 
-    - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+    - name: Keycloak Debug
+      if: ${{ inputs.distro != 'k3d' }}
+      run: |
+        echo "::group::Fetch Keycloak logs"
+        uds zarf tools kubectl logs sts/keycloak -n keycloak --tail -1 > /tmp/keycloak-logs.log
+        uds zarf tools kubectl logs sts/keycloak -n keycloak --tail -1 --previous > /tmp/keycloak-previous-logs.log || true
+        echo "::endgroup::"
+      shell: bash
+
+    - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
       with:
         name: debug-log${{ inputs.suffix }}
         retention-days: 7
@@ -83,3 +104,4 @@ runs:
           /tmp/playwright/output
           /tmp/playwright/reports
           /tmp/pepr-*.log
+          /tmp/keycloak-*.log

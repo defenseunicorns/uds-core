@@ -1,0 +1,107 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: aws-cloud-controller-manager
+  namespace: kube-system
+spec:
+  chart: aws-cloud-controller-manager
+  repo: https://kubernetes.github.io/cloud-provider-aws
+  # renovate: datasource=helm depName=aws-cloud-controller-manager versioning=helm registryUrl=https://kubernetes.github.io/cloud-provider-aws
+  version: 0.0.8
+  targetNamespace: kube-system
+  bootstrap: true
+  valuesContent: |-
+    nodeSelector:
+      node-role.kubernetes.io/control-plane: "true"
+    hostNetworking: true
+    args:
+      - --configure-cloud-routes=false
+      - --v=2
+      - --cloud-provider=aws
+---
+# aws lb controller helm values: https://github.com/kubernetes-sigs/aws-load-balancer-controller/tree/main/helm/aws-load-balancer-controller#configuration
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: aws-load-balancer-controller
+  namespace: kube-system
+spec:
+  chart: aws-load-balancer-controller
+  repo: https://aws.github.io/eks-charts
+  # renovate: datasource=helm depName=aws-load-balancer-controller versioning=helm registryUrl=https://aws.github.io/eks-charts
+  version: 1.13.3
+  targetNamespace: kube-system
+  valuesContent: |-
+    clusterName: ${CLUSTER_NAME}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: coredns-custom
+  namespace: kube-system
+data:
+  uds.override: |
+    rewrite stop {
+      name regex (.*\.admin\.uds\.dev) admin-ingressgateway.istio-admin-gateway.svc.cluster.local answer auto
+    }
+    rewrite stop {
+      name regex (.*\.uds\.dev) tenant-ingressgateway.istio-tenant-gateway.svc.cluster.local answer auto
+    }
+---
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: rke2-coredns
+  namespace: kube-system
+spec:
+  valuesContent: |-
+    extraVolumes:
+      - name: custom-config-volume
+        configMap:
+          name: coredns-custom
+          optional: true
+    extraVolumeMounts:
+      - name: custom-config-volume
+        mountPath: /etc/coredns/custom
+        readOnly: true
+    # Below we take the default kubernetes configmap for coredns and add an import statement for our custom configmap
+    # Ref: https://github.com/rancher/rke2-charts/blob/8078e4184e5b1730e518344aaa170a5e49e29766/charts/rke2-coredns/rke2-coredns/1.39.101/values.yaml#L104
+    servers:
+    - zones:
+      - zone: .
+      port: 53
+      # -- expose the service on a different port
+      # servicePort: 5353
+      # If serviceType is nodePort you can specify nodePort here
+      # nodePort: 30053
+      # hostPort: 53
+      plugins:
+      - name: errors
+      # Serves a /health endpoint on :8080, required for livenessProbe
+      - name: health
+        configBlock: |-
+          lameduck 5s
+      # Serves a /ready endpoint on :8181, required for readinessProbe
+      - name: ready
+      # Required to query kubernetes API for data
+      - name: kubernetes
+        parameters: cluster.local in-addr.arpa ip6.arpa
+        configBlock: |-
+          pods insecure
+          fallthrough in-addr.arpa ip6.arpa
+          ttl 30
+      # Serves a /metrics endpoint on :9153, required for serviceMonitor
+      - name: prometheus
+        parameters: 0.0.0.0:9153
+      - name: forward
+        parameters: . /etc/resolv.conf
+      - name: cache
+        parameters: 30
+      - name: loop
+      - name: reload
+      - name: loadbalance
+      - name: import
+        parameters: /etc/coredns/custom/*.override

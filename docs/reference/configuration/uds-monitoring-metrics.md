@@ -46,10 +46,6 @@ spec:
         type: "Bearer"
 ```
 
-Due to UDS Core using STRICT Istio mTLS across the cluster, Prometheus is also configured by default to manage properly scraping metrics with STRICT mTLS. This is done primarily by leveraging a default [`scrapeClass`](https://github.com/prometheus-operator/prometheus-operator/blob/v0.75.1/Documentation/api.md#monitoring.coreos.com/v1.ScrapeClass) which provides the correct TLS configuration and certificates to make mTLS connections. The default configuration works in most scenarios since the operator will attempt to auto-detect needs based istio-injection status in each namespace. If this configuration does not work (the main place this may be an issue is metrics being exposed on a PERMISSIVE mTLS port) there are two options for manually opt-ing out of the Istio TLS configuration:
-1. Individual monitors can explicitly set the `exempt` scrape class to opt out of the Istio certificate configuration.
-1. If setting a `scrapeClass` is not an option due to lack of configuration in a helm chart, or for other reasons, monitors can set the `uds/skip-mutate` annotation (with any value) to have Pepr mutate the `exempt` scrape class onto the monitor.
-
 ## Adding Dashboards
 
 Grafana within UDS Core is configured with [a sidecar](https://github.com/grafana/helm-charts/blob/6eecb003569dc41a494d21893b8ecb3e8a9741a0/charts/grafana/values.yaml#L926-L928) that will watch for new dashboards added via configmaps or secrets and load them into Grafana dynamically. In order to have your dashboard added the configmap or secret must be labelled with `grafana_dashboard: "1"`, which is used by the sidecar to watch and collect new dashboards.
@@ -135,3 +131,28 @@ data:
 :::note
 If using this configuration, any dashboards without a `grafana_folder` annotation will still be loaded in Grafana, but will not be grouped (they will appear at the top level outside of any folders). Also note that new dashboards in UDS Core may also need to be overridden to add the folder annotation, this example represents the current set of dashboards deployed by default.
 :::
+
+## Adding Datasources
+
+Grafana in UDS Core is deployed with a [datasource sidecar](https://github.com/grafana/helm-charts/blob/main/charts/grafana/values.yaml#L872-L875) that watches for external datasource `ConfigMap`s or `Secret`s. This allows you to extend Grafana’s datasource configuration without modifying the default datasources deployed by UDS Core.
+
+### Extending the Default Datasource ConfigMap
+
+The default UDS Core deployment creates a `ConfigMap` named `grafana-datasources`, which includes built-in datasources like Prometheus, Loki, and Alertmanager. You can extend this list by providing additional datasource definitions via the `extraDatasources` value in your UDS bundle.
+
+```yaml
+overrides:
+  grafana:
+    uds-grafana-config:
+      values:
+        - path: extraDatasources
+          value:
+            - name: Prometheus
+              type: prometheus
+              access: proxy
+              url: http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090
+```
+
+These entries will be injected into the existing `datasources.yaml` generated in the `grafana-datasources` ConfigMap. This keeps your configuration declarative and avoids needing to replace the whole configmap.
+
+The datasource will appear alongside the default ones when Grafana boots, and no extra ConfigMap management is required.

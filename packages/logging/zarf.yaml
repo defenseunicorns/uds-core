@@ -7,9 +7,14 @@ metadata:
   description: "UDS Core (Logging)"
   authors: "Defense Unicorns - Product"
   # x-release-please-start-version
-  version: "0.35.0"
+  version: "0.45.1"
   # x-release-please-end
   x-uds-dependencies: ["base"]
+  annotations:
+    dev.uds.title: UDS Core (Logging)
+    dev.uds.tagline: Enables backend log storage and log shipping capabilities
+    dev.uds.category: UDS-Core,Logging
+    dev.uds.keywords: uds,logging,loki,vector
 
 components:
   # Loki

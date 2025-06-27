@@ -77,6 +77,19 @@ data "aws_iam_policy_document" "aws_ccm" {
   }
 }
 
+data "local_file" "helm_template" {
+  filename = "./scripts/helmchart-template.yaml"
+}
+
+data "http" "aws-lb-controller-iam" {
+  url = "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.13.3/docs/install/iam_policy_us-gov.json"
+}
+resource "aws_iam_role_policy" "aws-lb-controller" {
+  name = "${local.cluster_name}-lb-controller"
+  role = aws_iam_role.rke2_server.id
+  policy = data.http.aws-lb-controller-iam.response_body
+}
+
 resource "aws_iam_role_policy" "s3_token" {
   name   = "${local.cluster_name}-server-token"
   role   = aws_iam_role.rke2_server.id
@@ -97,10 +110,11 @@ resource "aws_iam_role_policy" "server_ccm" {
 }
 
 module "rke2_kms_key" {
-  source = "github.com/defenseunicorns/terraform-aws-uds-kms?ref=v0.0.6"
+  source            = "../modules/kms"
+  current_partition = data.aws_partition.current.partition
+  account_id        = data.aws_caller_identity.current.account_id
 
   kms_key_alias_name_prefix         = "rke2-${local.cluster_name}-server"
-  kms_key_deletion_window           = 7
   kms_key_description               = "RKE2 Key"
   kms_key_policy_default_identities = [aws_iam_role.rke2_server.arn]
 }

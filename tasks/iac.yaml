@@ -1,6 +1,8 @@
 # Copyright 2024 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
+includes:
+  - util: ./utils.yaml
 
 variables:
   - name: CLUSTER_NAME
@@ -15,75 +17,8 @@ variables:
   - name: RESOURCE_GROUP_NAME
   - name: STORAGE_ACCOUNT_NAME
   - name: CONTAINER_NAME
-  - name: AMI_ID
-    default: ami-068ab6ac1cec494e0
 
 tasks:
-  - name: install-eksctl
-    actions:
-      - cmd: |
-          curl --silent --location "https://github.com/weaveworks/eksctl/releases/download/v0.201.0/eksctl_Linux_amd64.tar.gz" | tar xz -C /tmp
-          sudo mv /tmp/eksctl /usr/local/bin
-
-  - name: create-cluster
-    actions:
-      - cmd: |
-          cat <<EOF> cluster-config.yaml
-          apiVersion: eksctl.io/v1alpha5
-          kind: ClusterConfig
-
-          metadata:
-            name: ${CLUSTER_NAME}
-            region: ${REGION}
-            version: "1.30"
-            tags:
-              PermissionsBoundary: ${PERMISSIONS_BOUNDARY_NAME}
-
-          iam:
-            withOIDC: true
-            serviceRolePermissionsBoundary: ${PERMISSIONS_BOUNDARY_ARN}
-
-          addons:
-            - name: aws-ebs-csi-driver
-              attachPolicyARNs:
-                - arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy
-              configurationValues: |-
-                defaultStorageClass:
-                  enabled: true
-              permissionsBoundary: ${PERMISSIONS_BOUNDARY_ARN}
-              tags:
-                PermissionsBoundary: ${PERMISSIONS_BOUNDARY_NAME}
-
-            - name: vpc-cni
-              attachPolicyARNs:
-                - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
-              permissionsBoundary: ${PERMISSIONS_BOUNDARY_ARN}
-              tags:
-                PermissionsBoundary: ${PERMISSIONS_BOUNDARY_NAME}
-
-          managedNodeGroups:
-            - name: ng-1
-              instanceType: m5.2xlarge
-              desiredCapacity: 3
-              volumeSize: 150
-              tags:
-                PermissionsBoundary: ${PERMISSIONS_BOUNDARY_NAME}
-              iam:
-                instanceRolePermissionsBoundary: ${PERMISSIONS_BOUNDARY_ARN}
-                withAddonPolicies:
-                  cloudWatch: true
-                  ebs: true
-          cloudWatch:
-            clusterLogging:
-              enableTypes: ["*"]
-              logRetentionInDays: 1
-          EOF
-
-      - cmd: eksctl create cluster --dry-run -f cluster-config.yaml
-      - cmd: sleep 5
-      - cmd: eksctl create cluster -f cluster-config.yaml
-      - cmd: eksctl utils write-kubeconfig -c ${CLUSTER_NAME}
-
   - name: rke2-get-kubeconfig
     actions:
       - cmd: chmod +x ./scripts/get-kubeconfig.sh && ./scripts/get-kubeconfig.sh
@@ -103,33 +38,33 @@ tasks:
     actions:
       - task: rke2-nodes-ready
       - cmd: |
-          # wait for at least 3 nodes
+          # wait for nodes to be ready
+          echo "Waiting for all cluster nodes to be ready...";
           while true; do
-            if [ $(uds zarf tools kubectl get nodes -o jsonpath='{range .items[*]}{.status.conditions[-1].type}={.status.conditions[-1].status}{"\n"}{end}' | egrep -i '^ready.*true' | wc -l) -lt 3 ]; then
-              echo "Waiting for at least 3 nodes to be ready...";
+            if [ $(uds zarf tools kubectl get nodes | grep Ready | wc -l) -lt 4 ]; then
               sleep 5;
             else
               break
             fi
           done
-
           # wait for cluster components
+          echo "Waiting for Helm Controller to install cluster components..."
+          while true; do
+            if [ $(uds zarf tools kubectl get po -n kube-system -l batch.kubernetes.io/controller-uid --no-headers | egrep -v Completed | wc -l) -gt 0 ]; then
+               sleep 5;
+            else
+              break
+            fi
+          done
+          echo "Waiting for cluster components to be ready...";
           while true; do
             if [ $(uds zarf tools kubectl get po,job -A --no-headers=true | egrep -v 'Running|Complete' | wc -l) -gt 0 ]; then
-              echo "Waiting for cluster components to be ready...";
               sleep 5;
             else
-              echo "Cluster is ready"
+              echo "Cluster is ready!"
               break
             fi
           done
-          uds zarf tools kubectl apply -f ./metallb.yaml
-        dir: .github/test-infra/aws/rke2/
-        maxTotalSeconds: 600
-
-  - name: destroy-cluster
-    actions:
-      - cmd: eksctl delete cluster -f cluster-config.yaml --disable-nodegroup-eviction --wait
 
   - name: create-iac
     actions:
@@ -161,3 +96,8 @@ tasks:
         dir: .github/test-infra/${CLOUD}/${K8S_DISTRO}
       - cmd: tofu apply -auto-approve
         dir: .github/test-infra/${CLOUD}/${K8S_DISTRO}
+
+  - name: eks-get-kubeconfig
+    actions:
+      - cmd: |
+          aws eks update-kubeconfig --name ${CLUSTER_NAME} --region ${REGION}

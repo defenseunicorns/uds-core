@@ -8,6 +8,8 @@ metadata:
   namespace: {{ .Release.Namespace }}
 spec:
   network:
+    serviceMesh:
+      mode: ambient
     allow:
       # Egress for S3 connections
       - direction: Egress
@@ -15,7 +17,8 @@ spec:
           app.kubernetes.io/name: velero
         description: Storage
         {{- if .Values.storage.internal.enabled }}
-        remoteSelector: {{ .Values.storage.internal.remoteSelector }}
+        remoteSelector:
+          {{- .Values.storage.internal.remoteSelector | toYaml | nindent 10 }}
         remoteNamespace: {{ .Values.storage.internal.remoteNamespace }}
         {{- else if .Values.storage.egressCidr }}
         remoteCidr: {{ .Values.storage.egressCidr }}
@@ -32,6 +35,7 @@ spec:
         remoteNamespace: monitoring
         remoteSelector:
           app: prometheus
+        remoteServiceAccount: kube-prometheus-stack-prometheus
         selector:
           app.kubernetes.io/name: velero
         port: 8085

@@ -2,62 +2,63 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 includes:
-  - utils: ../../tasks/utils.yaml
+  - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.16.3/tasks/setup.yaml
 
 tasks:
   - name: validate
     actions:
-      - description: Validate Neuvector Controller
+      - description: Validate NeuVector Controller
         wait:
           cluster:
-            kind: Pod
-            name: app=neuvector-controller-pod
-            condition: Ready
+            kind: Deployment
+            name: neuvector-controller-pod
+            condition: Available
             namespace: neuvector
-      - description: Validate Neuvector Enforcer
+      - description: Validate NeuVector Enforcer
         wait:
           cluster:
             kind: Pod
             name: app=neuvector-enforcer-pod
             condition: Ready
             namespace: neuvector
-      - description: Validate Neuvector Manager
+      - description: Validate NeuVector Manager
         wait:
           cluster:
-            kind: Pod
-            name: app=neuvector-manager-pod
-            condition: Ready
+            kind: Deployment
+            name: neuvector-manager-pod
+            condition: Available
             namespace: neuvector
-      - description: Validate Neuvector Scanner
-        wait:
-          cluster:
-            kind: Pod
-            name: app=neuvector-scanner-pod
-            condition: Ready
-            namespace: neuvector
-      - description: Validate Neuvector Interface
+      - description: Validate NeuVector Interface
         wait:
           network:
             protocol: https
             address: neuvector.admin.uds.dev
             code: 200
-      - description: Wait for NeuVector Job Completion
+      - description: Trigger updater job and wait for all job completion
         cmd: |
+          kubectl create job --from=cronjob/neuvector-updater-pod updater -n neuvector
           if ./uds zarf tools kubectl get jobs -n neuvector --no-headers 2>/dev/null | grep -q .; then
             ./uds zarf tools kubectl wait --for=condition=complete job --all -n neuvector --timeout=5m
           fi
+      # Wait after job completion since updater job cycles scanners
+      - description: Validate NeuVector Scanner
+        wait:
+          cluster:
+            kind: Deployment
+            name: neuvector-scanner-pod
+            condition: Available
+            namespace: neuvector
 
   - name: e2e-test
     actions:
-      - description: "Setup the Keycloak admin user if needed"
-        task: utils:keycloak-admin-user
       - description: "Setup the Doug User for testing"
-        # Self-reference this task file to avoid https://github.com/defenseunicorns/maru-runner/issues/144
-        cmd: uds run -f tasks/test.yaml common-setup:create-doug-user --set KEYCLOAK_GROUP="/UDS Core/Admin" --no-progress # Adds the test doug user
+        task: common-setup:keycloak-user
+        with:
+          group: "/UDS Core/Admin"
       - description: E2E Test for NeuVector
         cmd: |
           # renovate: datasource=docker depName=mcr.microsoft.com/playwright versioning=docker
-          docker run --rm --ipc=host -e FULL_CORE="${FULL_CORE}" --net=host --mount type=bind,source="$(pwd)",target=/app mcr.microsoft.com/playwright:v1.49.1-noble sh -c " \
+          docker run --rm --ipc=host -e FULL_CORE="${FULL_CORE}" --net=host --mount type=bind,source="$(pwd)",target=/app mcr.microsoft.com/playwright:v1.53.1-noble sh -c " \
             cd app && \
             npm ci && \
             npx playwright test neuvector.test.ts \

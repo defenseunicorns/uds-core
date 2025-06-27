@@ -1,23 +1,17 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2025 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 name: AKS Test
 
 on:
   schedule:
-    - cron: '0 0 * * 0' # Every Sunday Midnight (UTC) / Saturday 5pm MT
-  pull_request:
-    # milestoned is added here as a workaround for release-please not triggering PR workflows (PRs should be added to a milestone to trigger the workflow).
-    # labeled is added here to allow for "manual" triggering of CI on renovate PRs
-    types: [milestoned, opened, reopened, synchronize, labeled]
-    paths:
-      - tasks/iac.yaml
-      - .github/bundles/aks/*
-      - .github/test-infra/azure/aks/*
+    - cron: "0 0 * * 0" # Every Sunday Midnight (UTC) / Saturday 5pm MT
+  workflow_call: {}
 
 permissions:
   id-token: write
   contents: read
+  packages: read
 
 jobs:
   test-aks-install:
@@ -26,12 +20,18 @@ jobs:
       matrix:
         flavor: [upstream, registry1, unicorn]
     runs-on: ubuntu-latest
+    name: test-aks
+    permissions:
+      id-token: write
+      contents: read
+      packages: read
+      pull-requests: write # Allows writing to pull requests (needed for renovate-readiness)
     env:
       SHA: ${{ github.sha }}
-      UDS_REGION: centralus
-      UDS_RESOURCE_GROUP_NAME: ${{ secrets.AZURE_RESOURCE_GROUP }}
-      UDS_STORAGE_ACCOUNT_NAME: ${{ secrets.AZURE_STORAGE_ACCOUNT_NAME }}
-      UDS_CONTAINER_NAME: ${{ secrets.AZURE_STORAGE_CONTAINER_NAME }}
+      UDS_REGION: usgovvirginia
+      UDS_RESOURCE_GROUP_NAME: ${{ secrets.AZURE_GOV_RESOURCE_GROUP }}
+      UDS_STORAGE_ACCOUNT_NAME: ${{ secrets.AZURE_GOV_STORAGE_ACCOUNT_NAME }}
+      UDS_CONTAINER_NAME: ${{ secrets.AZURE_GOV_STORAGE_CONTAINER_NAME }}
 
     steps:
       - name: Set ENV
@@ -41,10 +41,11 @@ jobs:
           echo "TF_VAR_location=${UDS_REGION}" >> $GITHUB_ENV
           echo "TF_VAR_cluster_name=uds-ci-${{ matrix.flavor }}-${SHA:0:7}" >> $GITHUB_ENV
           echo "TF_VAR_resource_group_name=uds-ci-${{ matrix.flavor }}" >> $GITHUB_ENV
-          echo "ARM_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}" >> $GITHUB_ENV
-          echo "ARM_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}" >> $GITHUB_ENV
-          echo "ARM_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}" >> $GITHUB_ENV
+          echo "ARM_SUBSCRIPTION_ID=${{ secrets.AZURE_GOV_SUBSCRIPTION_ID }}" >> $GITHUB_ENV
+          echo "ARM_CLIENT_ID=${{ secrets.AZURE_GOV_CLIENT_ID }}" >> $GITHUB_ENV
+          echo "ARM_TENANT_ID=${{ secrets.AZURE_GOV_TENANT_ID }}" >> $GITHUB_ENV
           echo "ARM_USE_OIDC=true" >> $GITHUB_ENV
+          echo "ARM_ENVIRONMENT=usgovernment" >> $GITHUB_ENV
           echo "ARM_STORAGE_USE_AZUREAD=true" >> $GITHUB_ENV
 
       - name: Checkout repository
@@ -53,13 +54,16 @@ jobs:
       - name: Check renovate readiness
         if: startsWith(github.event.pull_request.head.ref, 'renovate/') # Only call for Renovate PRs
         uses: ./.github/actions/renovate-readiness
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Azure login
-        uses: azure/login@a65d910e8af852a8061c627c456678983e180302 # v2
+        uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          client-id: ${{ secrets.AZURE_GOV_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_GOV_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_GOV_SUBSCRIPTION_ID }}
+          environment: "AzureUSGovernment"
 
       - name: Environment setup
         uses: ./.github/actions/setup
@@ -67,7 +71,8 @@ jobs:
           registry1Username: ${{ secrets.IRON_BANK_ROBOT_USERNAME }}
           registry1Password: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
           ghToken: ${{ secrets.GITHUB_TOKEN }}
-          chainguardIdentity: ${{ secrets.CHAINGUARD_IDENTITY }}
+          rapidfortUsername: ${{ secrets.RAPIDFORT_USERNAME }}
+          rapidfortPassword: ${{ secrets.RAPIDFORT_PASSWORD }}
 
       - name: Setup Tofu
         uses: opentofu/setup-opentofu@592200bd4b9bbf4772ace78f887668b1aee8f716 # v1.0.5
@@ -76,7 +81,7 @@ jobs:
           tofu_wrapper: false
 
       - name: Create UDS Core Package
-        run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress --set FLAVOR=${{ matrix.flavor }}
+        run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress --with create_options="--skip-sbom" --set FLAVOR=${{ matrix.flavor }}
 
       - name: Create Core Bundle
         run: uds create .github/bundles/aks --confirm
@@ -84,11 +89,17 @@ jobs:
       - name: Create IAC
         run: uds run -f tasks/iac.yaml apply-tofu --no-progress --set K8S_DISTRO=aks --set CLOUD=azure
 
+      - name: Configure Cluster DNS
+        run: uds run -f tasks/utils.yaml aks-coredns-setup --no-progress
+
       - name: Deploy Core Bundle
         env:
           UDS_CONFIG: .github/bundles/aks/uds-config.yaml
         run: uds deploy .github/bundles/aks/uds-bundle-uds-core-aks-nightly-*.tar.zst --confirm
-        timeout-minutes: 30
+        timeout-minutes: 40
+
+      - name: Test UDS Core
+        run: uds run -f tasks/test.yaml uds-core-non-k3d --set EXCLUDED_PACKAGES="metrics-server"
 
       - name: Debug Output
         if: ${{ always() }}
@@ -103,7 +114,7 @@ jobs:
 
       - name: Remove UDS Core
         if: always()
-        run: uds remove .github/bundles/aks/uds-bundle-uds-core-aks-nightly-*.tar.zst --confirm
+        run: set +e; for i in $(seq 0 2); do uds remove .github/bundles/aks/uds-bundle-uds-core-aks-nightly-*.tar.zst --confirm; if [ $? -eq 0 ]; then break; fi; done
         timeout-minutes: 10
         continue-on-error: true
 

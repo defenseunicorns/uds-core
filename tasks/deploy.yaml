@@ -1,7 +1,6 @@
 # Copyright 2024 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
-
 includes:
   - utils: utils.yaml
 
@@ -9,16 +8,19 @@ variables:
   - name: VERSION
     description: "The version of the packages to deploy"
     # x-release-please-start-version
-    default: "0.35.0"
+    default: "0.45.1"
     # x-release-please-end
   - name: FLAVOR
     default: upstream
 
 tasks:
   - name: k3d-standard-bundle
+    inputs:
+      K3D_EXTRA_ARGS:
+        default: ""
     actions:
       - description: "Deploy the UDS Core Standard Bundle"
-        cmd: uds deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --set INSECURE_ADMIN_PASSWORD_GENERATION=true --confirm --no-progress
+        cmd: uds deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --set INSECURE_ADMIN_PASSWORD_GENERATION=true --set K3D_EXTRA_ARGS="${{ .inputs.K3D_EXTRA_ARGS }}" --confirm --no-progress
 
   - name: k3d-standard-bundle-ha
     actions:
@@ -46,7 +48,11 @@ tasks:
         default: base
         description: The UDS Core layer to deploy
     actions:
+      - description: "Deploy UDS Core Base Layer"
+        if: ${{ eq .inputs.layer "base"}}
+        cmd: uds zarf package deploy build/zarf-package-core-${{ index .inputs "layer" }}-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress --components '*' --set PROXY_MEMORY_REQUEST=40Mi --set PROXY_CPU_REQUEST=10m
       - description: "Deploy a single UDS Core Layer (must set UDS_LAYER environment variable)"
+        if: ${{ ne .inputs.layer "base"}}
         cmd: uds zarf package deploy build/zarf-package-core-${{ index .inputs "layer" }}-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress --components '*'
 
   - name: latest-package-release
@@ -57,7 +63,14 @@ tasks:
         setVariables:
           - name: LATEST_VERSION
       - description: "Deploy the latest UDS Core package release"
-        cmd: uds zarf package deploy oci://${TARGET_REPO}/core:${LATEST_VERSION} --confirm --no-progress --components '*'
+        cmd: uds zarf package deploy oci://${TARGET_REPO}/core:${LATEST_VERSION} --confirm --no-progress --components '*' --set CNI_BIN_DIR="/var/lib/rancher/k3s/data/cni"
+
+  - name: latest-bundle-release-ha
+    actions:
+      - description: "Deploy the latest UDS Core bundle release with HA config"
+        cmd: uds deploy oci://ghcr.io/defenseunicorns/packages/uds/bundles/k3d-core-demo:latest --confirm --no-progress
+        env:
+          - UDS_CONFIG=bundles/k3d-standard/uds-ha-config.yaml
 
   - name: latest-slim-bundle-release
     actions:
@@ -67,6 +80,7 @@ tasks:
   - name: standard-package
     actions:
       - description: "Deploy the standard UDS Core zarf package"
+        # Note: The `CNI_BIN_DIR` override is temporary to workaround an upgrade issue with the k3s 1.31.7
         cmd: uds zarf package deploy build/zarf-package-core-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress --components '*'
 
   - name: checkpoint-package

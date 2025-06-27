@@ -6,16 +6,21 @@ variable "environment" {
   default     = "ci"
 }
 
+variable "name" {
+  description = "Name for cluster"
+  type        = string
+}
+
 variable "vpc_name" {
   type        = string
   description = "VPC ID to deploy into"
-  default     = "uds-ci-commercial-*"
+  default     = "uds-vpc"
 }
 
 variable "subnet_name" {
   type        = string
-  description = "Name of subnet tobrew install libtool use for testing. Can use a wildcard as long as it only matches one subnet per az."
-  default     = "uds-ci-commercial-*-public*"
+  description = "Name of subnet to use for testing. Can use a wildcard as long as it only matches one subnet per az."
+  default     = "uds-vpc-public*"
 }
 
 variable "region" {
@@ -88,6 +93,39 @@ variable "permissions_boundary_name" {
   description = "The name of the permissions boundary for IAM resources.  This will be used for tagging and to build out the ARN."
 }
 
+variable "databases" {
+  description = "Map of database configurations"
+  type = map(object({
+    name              = string
+    port              = number
+    username          = string
+    engine_version    = string
+    family            = string
+    allocated_storage = number
+    instance_class    = string
+  }))
+  default = {
+    grafana = {
+      name              = "grafana"
+      port              = 5432
+      username          = "grafana"
+      engine_version    = "16.8"
+      family            = "postgres16"
+      allocated_storage = 20
+      instance_class    = "db.t4g.large"
+    },
+    keycloak = {
+      name              = "keycloak"
+      port              = 5432
+      username          = "keycloak"
+      engine_version    = "16.8"
+      family            = "postgres16"
+      allocated_storage = 20
+      instance_class    = "db.t4g.large"
+    }
+  }
+}
+
 variable "recovery_window" {
   default = 7
   type    = number
@@ -106,4 +144,9 @@ variable "client_id_list" {
 
 variable "run_id" {
   description = "Github Actions Run ID. Used to tag AWS resources that are created by this workspace."
+}
+
+variable "uds_images_aws_account_id" {
+  description = "The AWS Account ID for uds-images that the RKE2 amis are published to"
+  type        = string
 }

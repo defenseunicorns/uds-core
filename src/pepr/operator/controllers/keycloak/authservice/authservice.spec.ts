@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { beforeEach, describe, expect, jest, test } from "@jest/globals";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { UDSPackage } from "../../../crd";
 import { Client } from "../types";
 import { updatePolicy } from "./authorization-policy";
@@ -15,10 +15,11 @@ describe("authservice", () => {
   let mockClient: Client;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     mockClient = {
       clientId: "test-client",
+      name: "test",
       redirectUris: ["https://foo.uds.dev/login"],
       secret: "test-secret",
       alwaysDisplayInConsole: false,

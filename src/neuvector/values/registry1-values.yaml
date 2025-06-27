@@ -3,7 +3,7 @@
 
 registry: registry1.dso.mil
 # renovate: datasource=docker depName=registry1.dso.mil/ironbank/neuvector/neuvector/controller versioning=docker
-tag: "5.4.2"
+tag: "5.4.4"
 manager:
   image:
     repository: ironbank/neuvector/neuvector/manager
@@ -35,19 +35,27 @@ cve:
     image:
       repository: ironbank/neuvector/neuvector/scanner
       # renovate: datasource=docker depName=registry1.dso.mil/ironbank/neuvector/neuvector/scanner versioning=docker
-      tag: "5"
+      tag: "6"
     containerSecurityContext:
       capabilities:
         drop:
           - ALL
       runAsNonRoot: true
       runAsUser: 1000
+    # These volumes ensure the permissions are set properly for the certs mounted from the secret
+    volumes:
+      - name: internal-cert-dir
+        emptyDir:
+          sizeLimit: 50Mi
+    volumeMounts:
+      - mountPath: /etc/neuvector/certs/internal/
+        name: internal-cert-dir
   updater:
     enabled: true
     image:
       repository: ironbank/redhat/ubi/ubi9-minimal
       # renovate: datasource=docker depName=registry1.dso.mil/ironbank/redhat/ubi/ubi9-minimal versioning=docker
-      tag: "9.5"
+      tag: "9.6"
     containerSecurityContext:
       capabilities:
         drop:

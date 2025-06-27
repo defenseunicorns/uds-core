@@ -6,20 +6,13 @@
 import { fetch, K8s, kind } from "pepr";
 
 import { Component, setupLogger } from "../../../logger";
-import { Store } from "../../common";
 import { Sso, UDSPackage } from "../../crd";
-import { getOwnerRef, purgeOrphans, retryWithDelay, sanitizeResourceName } from "../utils";
+import { getOwnerRef, purgeOrphans, sanitizeResourceName } from "../utils";
+import { credentialsCreateOrUpdate, credentialsDelete } from "./clients/client-credentials";
 import { Client, clientKeys } from "./types";
 
-let apiURL =
-  "http://keycloak-http.keycloak.svc.cluster.local:8080/realms/uds/clients-registrations/default";
 const samlDescriptorUrl =
   "http://keycloak-http.keycloak.svc.cluster.local:8080/realms/uds/protocol/saml/descriptor";
-
-// Support dev mode with port-forwarded keycloak svc
-if (process.env.PEPR_MODE === "dev") {
-  apiURL = "http://localhost:8080/realms/uds/clients-registrations/default";
-}
 
 // Template regex to match clientField() references, see https://regex101.com/r/e41Dsk/3 for details
 const secretTemplateRegex = new RegExp(
@@ -58,7 +51,13 @@ export async function keycloak(pkg: UDSPackage) {
     clients.set(client.clientId, client);
   }
 
-  await purgeSSOClients(pkg, [...clients.keys()]);
+  // Purge orphaned clients
+  try {
+    await purgeSSOClients(pkg, [...clients.keys()]);
+  } catch (e) {
+    log.error(e, `Failed to purge orphaned clients in for ${pkg.metadata!.name!}: ${e}`);
+  }
+
   // Purge orphaned SSO secrets
   try {
     await purgeOrphans(generation, pkg.metadata!.namespace!, pkg.metadata!.name!, kind.Secret, log);
@@ -80,13 +79,16 @@ export async function purgeSSOClients(pkg: UDSPackage, newClients: string[] = []
   const currentClients = pkg.status?.ssoClients || [];
   const toRemove = currentClients.filter(client => !newClients.includes(client));
   for (const ref of toRemove) {
-    const storeKey = `sso-client-${ref}`;
-    const token = Store.getItem(storeKey);
-    if (token) {
-      await apiCall({ clientId: ref }, "DELETE", token);
-      await Store.removeItemAndWait(storeKey);
-    } else {
-      log.warn(pkg.metadata, `Failed to remove client ${ref}, token not found`);
+    try {
+      await credentialsDelete({ clientId: ref });
+    } catch (err) {
+      log.warn(
+        pkg.metadata,
+        `Failed to remove client ${ref}, package ${pkg.metadata?.namespace}/${pkg.metadata?.name}. Error: ${err.message}`,
+      );
+      throw new Error(
+        `Failed to remove client ${ref}, package ${pkg.metadata?.namespace}/${pkg.metadata?.name}. Error: ${err.message}`,
+      );
     }
   }
 }
@@ -120,7 +122,7 @@ export function convertSsoToClient(sso: Partial<Sso>): Client {
   return client as Client;
 }
 
-async function syncClient(
+export async function syncClient(
   { secretName, secretTemplate, ...clientReq }: Sso,
   pkg: UDSPackage,
   isRetry = false,
@@ -131,56 +133,35 @@ async function syncClient(
   const name = `sso-client-${clientReq.clientId}`;
   let client = convertSsoToClient(clientReq);
 
-  // Get keycloak client token from the store if this is an existing client
-  const token = Store.getItem(name);
-
   try {
-    // If an existing client is found, use the token to update the client
-    if (token && !isRetry) {
-      log.debug(pkg.metadata, `Found existing token for ${client.clientId}`);
-      client = await apiCall(client, "PUT", token);
-    } else {
-      log.debug(pkg.metadata, `Creating new client for ${client.clientId}`);
-      client = await apiCall(client);
-    }
+    client = await credentialsCreateOrUpdate(client);
   } catch (err) {
     const msg =
       `Failed to process Keycloak request for client '${client.clientId}', package ` +
       `${pkg.metadata?.namespace}/${pkg.metadata?.name}. Error: ${err.message}`;
 
     // Throw the error if this is the retry or was an initial client creation attempt
-    if (isRetry || !token) {
+    if (isRetry) {
       log.error(`${msg}, retry failed.`);
       // Throw the original error captured from the first attempt
       throw new Error(msg);
     } else {
-      // Retry the request without the token in case we have a bad token stored
-      log.error(msg);
+      // Retry the request in case it is an intermittent failure
+      log.error(`${msg}, retrying...`);
 
       try {
-        return await syncClient(clientReq, pkg, true);
+        // Ensure we pass the same inputs bass to this function, including the secret name/template
+        return await syncClient({ secretName, secretTemplate, ...clientReq }, pkg, true);
       } catch (retryErr) {
         // If the retry fails, log the retry error and throw the original error
         const retryMsg =
           `Retry of Keycloak request failed for client '${client.clientId}', package ` +
           `${pkg.metadata?.namespace}/${pkg.metadata?.name}. Error: ${retryErr.message}`;
         log.error(retryMsg);
-        // Throw the error from the original attempt since our retry without token failed
+        // Throw the error from the original attempt since our retry failed
         throw new Error(msg);
       }
     }
-  }
-
-  // Write the new token to the store
-  try {
-    await retryWithDelay(async function setStoreToken() {
-      return Store.setItemAndWait(name, client.registrationAccessToken!);
-    }, log);
-  } catch (err) {
-    throw Error(
-      `Failed to set token in store for client '${client.clientId}', package ` +
-        `${pkg.metadata?.namespace}/${pkg.metadata?.name}`,
-    );
   }
 
   // Remove the registrationAccessToken from the client object to avoid problems (one-time use token)
@@ -212,43 +193,6 @@ async function syncClient(
   }
 
   return client;
-}
-
-async function apiCall(client: Partial<Client>, method = "POST", authToken = "") {
-  const req = {
-    body: JSON.stringify(client) as string | undefined,
-    method,
-    headers: {
-      "Content-Type": "application/json",
-    } as Record<string, string>,
-  };
-
-  let url = apiURL;
-
-  // When not creating a new client, add the client ID and registrationAccessToken
-  if (authToken) {
-    req.headers.Authorization = `Bearer ${authToken}`;
-    // Ensure that we URI encode the clientId in the request URL
-    url += `/${encodeURIComponent(client.clientId!)}`;
-  }
-
-  // Remove the body for DELETE requests
-  if (method === "DELETE" || method === "GET") {
-    delete req.body;
-  }
-
-  // Make the request
-  const resp = await fetch<Client>(url, req);
-
-  if (!resp.ok) {
-    if (resp.data) {
-      throw new Error(`${JSON.stringify(resp.statusText)}, ${JSON.stringify(resp.data)}`);
-    } else {
-      throw new Error(`${JSON.stringify(resp.statusText)}`);
-    }
-  }
-
-  return resp.data;
 }
 
 export function generateSecretData(client: Client, secretTemplate?: { [key: string]: string }) {

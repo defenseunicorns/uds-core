@@ -7,7 +7,7 @@ import { K8s, kind } from "pepr";
 
 import { Component, setupLogger } from "../../logger";
 import { Phase, PkgStatus, UDSPackage } from "../crd";
-import { Status } from "../crd/generated/package-v1alpha1";
+import { StatusObject as Status, StatusEnum } from "../crd/generated/package-v1alpha1";
 
 export const uidSeen = new Set<string>();
 
@@ -24,7 +24,10 @@ export function shouldSkip(cr: UDSPackage) {
   const isRetrying = cr.status?.phase === Phase.Retrying;
   const isPending = cr.status?.phase === Phase.Pending;
   // Check for status removing OR a deletion timestamp present
-  const isRemoving = cr.status?.phase === Phase.Removing || cr.metadata?.deletionTimestamp;
+  const isRemoving =
+    cr.metadata?.deletionTimestamp ||
+    cr.status?.phase === Phase.Removing ||
+    cr.status?.phase === Phase.RemovalFailed;
   const isCurrentGeneration = cr.metadata?.generation === cr.status?.observedGeneration;
 
   // First check if the CR has been seen before and return false if it has not
@@ -137,6 +140,7 @@ export async function handleFailure(err: { status: number; message: string }, cr
 
     status = {
       phase: Phase.Retrying,
+      conditions: getReadinessConditions(false),
       retryAttempt: currRetry,
     };
   } else {
@@ -144,6 +148,7 @@ export async function handleFailure(err: { status: number; message: string }, cr
 
     status = {
       phase: Phase.Failed,
+      conditions: getReadinessConditions(false),
       observedGeneration: metadata.generation,
       retryAttempt: 0, // todo: make this nullable when kfc generates the type
     };
@@ -158,4 +163,17 @@ export async function handleFailure(err: { status: number; message: string }, cr
     log.error({ err: finalErr }, `Error updating status for ${identifier} failed`);
     void writeEvent(cr, { message: finalErr.message });
   });
+}
+
+export function getReadinessConditions(ready: boolean = true) {
+  return [
+    {
+      type: "Ready",
+      status: ready === true ? StatusEnum.True : StatusEnum.False,
+      lastTransitionTime: new Date(),
+      message:
+        ready === true ? "The package is ready for use." : "The package is not ready for use.",
+      reason: "ReconciliationComplete",
+    },
+  ];
 }

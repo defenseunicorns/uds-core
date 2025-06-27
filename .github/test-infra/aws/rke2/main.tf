@@ -26,6 +26,8 @@ locals {
     ccm_external                = true,
     token_bucket                = module.statestore.bucket,
     token_object                = module.statestore.token_object
+    cluster_name                = local.tags.cluster_name
+    helm_chart_template         = file("./scripts/helmchart-template.yaml")
   }
 }
 
@@ -57,6 +59,11 @@ resource "aws_key_pair" "control_plane_key_pair" {
 resource "aws_kms_key" "s3_encryption_key" {
   description             = "KMS used to encrypt s3 objects deployed by this project."
   deletion_window_in_days = 7
+}
+
+# RDS random secret name
+resource "random_id" "unique_id" {
+  byte_length = 4
 }
 
 #######################################
@@ -95,7 +102,7 @@ resource "aws_instance" "rke2_ci_control_plane_node" {
   associate_public_ip_address = true
 
   root_block_device {
-    volume_size = 100
+    volume_size = 250
   }
 
   tags = merge(local.tags, { "kubernetes.io/cluster/${local.cluster_name}" = "owned" })
@@ -107,15 +114,16 @@ resource "aws_instance" "rke2_ci_agent_node" {
   ami                         = data.aws_ami.rhel_rke2.image_id
   instance_type               = var.agent_instance_type
   key_name                    = aws_key_pair.control_plane_key_pair.key_name
-  user_data                   = templatefile("${path.module}/scripts/user_data.sh", merge(local.userdata, { BOOTSTRAP_IP = aws_instance.rke2_ci_bootstrap_node.private_ip }))
+  user_data                   = templatefile("${path.module}/scripts/user_data.sh", merge(local.userdata, { BOOTSTRAP_IP = aws_instance.rke2_ci_bootstrap_node.private_ip, AGENT_NODE = true }))
   subnet_id                   = data.aws_subnet.rke2_ci_subnet.id
   user_data_replace_on_change = true
   iam_instance_profile        = aws_iam_instance_profile.rke2_server.name
   vpc_security_group_ids      = [aws_security_group.rke2_ci_node_sg.id]
   associate_public_ip_address = true
+  availability_zone           = "${var.region}a"
 
   root_block_device {
-    volume_size = 100
+    volume_size = 250
   }
 
   tags = merge(local.tags, { "kubernetes.io/cluster/${local.cluster_name}" = "owned" })

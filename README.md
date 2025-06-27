@@ -24,11 +24,6 @@ UDS Core establishes a secure baseline for cloud-native systems and ships with c
 - [Vector](https://vector.dev/) - Log Aggregation
 - [Velero](https://velero.io/) - Backup & Restore
 
-#### Future Applications
-
-- [Kiali](https://kiali.io/) - Service Mesh Observability
-- [Tempo](https://grafana.com/docs/tempo/latest/getting-started/) - Tracing
-
 ---
 
 ### Prerequisites
@@ -60,7 +55,7 @@ If you want to try out UDS Core, you can use the [k3d-core-demo bundle](./bundle
 <!-- x-release-please-start-version -->
 
 ```bash
-uds deploy k3d-core-demo:0.35.0
+uds deploy k3d-core-demo:0.45.1
 ```
 
 <!-- x-release-please-end -->
@@ -74,7 +69,7 @@ Deploy Istio, Keycloak and Pepr:
 <!-- x-release-please-start-version -->
 
 ```bash
-uds deploy k3d-core-slim-dev:0.35.0
+uds deploy k3d-core-slim-dev:0.45.1
 ```
 
 <!-- x-release-please-end -->

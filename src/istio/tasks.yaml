@@ -6,12 +6,12 @@ tasks:
     inputs:
       validate_passthrough:
         description: Whether to validate the passthrough gateway
-        default: "true"
+
     actions:
       - description: Validate the Istio Admin Gateway
         wait:
           cluster:
-            kind: Gateway
+            kind: gateways.networking.istio.io
             name: admin-gateway
             namespace: istio-admin-gateway
 
@@ -19,14 +19,14 @@ tasks:
         if: ${{ eq .inputs.validate_passthrough "true" }}
         wait:
           cluster:
-            kind: Gateway
+            kind: gateways.networking.istio.io
             name: passthrough-gateway
             namespace: istio-passthrough-gateway
 
       - description: Validate the Istio Tenant Gateway
         wait:
           cluster:
-            kind: Gateway
+            kind: gateways.networking.istio.io
             name: tenant-gateway
             namespace: istio-tenant-gateway
 

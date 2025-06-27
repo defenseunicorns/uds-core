@@ -6,11 +6,10 @@ crds:
 grafana:
   enabled: false
   forceDeployDashboards: true
-kubeStateMetrics:
-  serviceMonitor:
-    interval: ""
-    selfMonitor:
-      enabled: false
+kube-state-metrics:
+  # Enable scraping of istio-specifc namespace labels
+  metricLabelsAllowlist:
+    - namespaces=[istio-injection,istio.io/dataplane-mode]
 nameOverride: kube-prometheus-stack
 nodeExporter:
   jobLabel: jobLabel
@@ -23,27 +22,9 @@ nodeExporter:
     interval: ""
 prometheus:
   serviceMonitor:
-    selfMonitor: false
+    selfMonitor: true
   prometheusSpec:
-    enableFeatures:
-      - remote-write-receiver
-    additionalConfig:
-      scrapeClasses:
-        - name: istio-certs
-          default: true
-          tlsConfig:
-            caFile: /etc/prom-certs/root-cert.pem
-            certFile: /etc/prom-certs/cert-chain.pem
-            keyFile: /etc/prom-certs/key.pem
-            insecureSkipVerify: true
-        - name: exempt
     podMetadata:
-      annotations:
-        proxy.istio.io/config: |
-          proxyMetadata:
-            OUTPUT_CERTS: /etc/istio-output-certs
-        sidecar.istio.io/userVolumeMount: '[{"name": "istio-certs", "mountPath": "/etc/istio-output-certs"}]'
-        traffic.sidecar.istio.io/includeOutboundIPRanges: ""
       labels:
         app: prometheus
     podMonitorSelectorNilUsesHelmValues: false
@@ -66,13 +47,6 @@ prometheus:
             requests:
               storage: 50Gi
           storageClassName: null
-    volumeMounts:
-      - mountPath: /etc/prom-certs/
-        name: istio-certs
-    volumes:
-      - emptyDir:
-          medium: Memory
-        name: istio-certs
 prometheus-node-exporter:
   containerSecurityContext:
     readOnlyRootFilesystem: true
@@ -81,6 +55,9 @@ prometheus-node-exporter:
   podAnnotations:
     cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
 prometheusOperator:
+  # Kubelet healthprobes on FIPS nodes fail when this is set to 1.3
+  tls:
+    tlsMinVersion: VersionTLS12
   admissionWebhooks:
     patch:
       resources:
@@ -107,12 +84,6 @@ prometheusOperator:
     requests:
       cpu: 100m
       memory: 512Mi
-
 alertmanager:
   alertmanagerSpec:
-    scheme: "https"
-    tlsConfig:
-      caFile: /etc/prom-certs/root-cert.pem
-      certFile: /etc/prom-certs/cert-chain.pem
-      insecureSkipVerify: true
-      keyFile: /etc/prom-certs/key.pem
+    scheme: "http"

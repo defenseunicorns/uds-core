@@ -5,6 +5,8 @@ build/**
 *.tar.zst
 zarf-sbom
 zarf-sbom/**
+cve
+cve/**
 tmp/
 env.ts
 **/node_modules
@@ -18,6 +20,7 @@ tmp-tasks.yaml
 cacert.b64
 run/
 extract-terraform.sh
+**/.terraform/**
 **/.terraform*
 cluster-config.yaml
 **.tfstate
@@ -30,3 +33,5 @@ uds-docs/**
 **.backup
 **/.playwright/**
 **/.playwright
+
+coverage/**

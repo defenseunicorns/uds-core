@@ -155,6 +155,14 @@ spec:
           bearer_only: clientField(bearerOnly)
 ```
 
+### How UDS Operator interacts with Keycloak
+
+The UDS Operator authenticates with Keycloak using the OAuth 2.0 Client Credentials Grant. It uses the OAuth 2.0 Client Credentials Grant to authenticate against the `uds-operator` client defined in Keycloak. This special client has a limited control over managing Keycloak Clients for the UDS Operator.
+
+:::note
+Support for dynamic client registration and configurable strategy selection has been removed for compatibility with Ambient Mesh. The Client Credentials Grant is now the only supported authentication method.
+:::
+
 ### Key Files and Folders
 
 ```bash

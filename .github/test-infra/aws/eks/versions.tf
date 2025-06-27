@@ -6,6 +6,7 @@ provider "aws" {
 
   default_tags {
     tags = {
+      run-id              = var.name
       PermissionsBoundary = var.permissions_boundary_name
     }
   }
@@ -17,12 +18,17 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = ">= 4.0"
+      version = ">= 5.0"
     }
 
     random = {
       source  = "hashicorp/random"
-      version = "3.6.3"
+      version = "3.7.2"
+    }
+
+    local = {
+      source  = "hashicorp/local"
+      version = "2.5.3"
     }
   }
 }

@@ -15,15 +15,62 @@ resource "aws_iam_policy" "velero_policy" {
           Effect = "Allow",
           Action = [
             "ec2:DescribeVolumes",
-            "ec2:DescribeSnapshots",
-            "ec2:CreateTags",
-            "ec2:CreateVolume",
-            "ec2:CreateSnapshot",
-            "ec2:DeleteSnapshot"
-          ]
-          Resource = [
-            "*"
-          ]
+            "ec2:DescribeSnapshots"
+          ],
+          Resource = ["*"]
+        },
+        {
+          Effect = "Allow",
+          Action = ["ec2:CreateVolume"],
+          Resource = ["*"],
+          Condition = {
+            StringEquals = {
+              "aws:RequestTag/ebs.csi.aws.com/cluster" = "true"
+            }
+          }
+        },
+        {
+          Effect = "Allow",
+          Action = ["ec2:CreateSnapshot"],
+          Resource = ["*"],
+          Condition = {
+            StringEquals = {
+              "aws:RequestTag/ebs.csi.aws.com/cluster" = "true"
+            }
+          }
+        },
+        {
+          Effect = "Allow",
+          Action = ["ec2:CreateSnapshot"],
+          Resource = ["*"],
+          Condition = {
+            StringEquals = {
+              "ec2:ResourceTag/ebs.csi.aws.com/cluster" = "true"
+            }
+          }
+        },
+        {
+          Effect = "Allow",
+          Action = ["ec2:DeleteSnapshot"],
+          Resource = ["*"],
+          Condition = {
+            StringEquals = {
+              "ec2:ResourceTag/ebs.csi.aws.com/cluster" = "true"
+            }
+          }
+        },
+        {
+          Effect = "Allow",
+          Action = ["ec2:CreateTags"],
+          Resource = ["*"],
+          Condition = {
+            "ForAllValues:StringEquals" = {
+              "aws:RequestTag/ebs.csi.aws.com/cluster" = "true"
+            },
+            "ForAllValues:StringEqualsIfExists" = {
+              "ec2:ResourceTag/ebs.csi.aws.com/cluster" = "true"
+            }
+          }
         },
         {
           Effect = "Allow"
@@ -53,7 +100,7 @@ resource "aws_iam_policy" "velero_policy" {
             "kms:GenerateDataKey",
             "kms:Decrypt"
           ]
-          Resource = [local.kms_key_arns["velero"].kms_key_arn]
+          Resource = [module.generate_kms["velero"].kms_key_arn]
         }
 
       ]

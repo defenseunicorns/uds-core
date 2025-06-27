@@ -2,6 +2,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 {{- $domain := tpl .Values.domain . }}
+{{- $rootTLS := .Values.rootDomain.tls | default dict -}}
+{{- $rootEnableHttpsRedirect := .Values.rootDomain.enableHttpsRedirect | default true -}}
+{{- $rootMode := $rootTLS.mode | default ($.Values.tls.mode | default "SIMPLE") -}}
+{{- $rootSupportTLS := $rootTLS.supportTLSV1_2 | default ($.Values.tls.supportTLSV1_2 | default false) -}}
 {{- if .Values.tls }}
 apiVersion: networking.istio.io/v1beta1
 kind: Gateway
@@ -21,8 +25,10 @@ spec:
         name: "http-{{ $name }}"
         number: 80
         protocol: HTTP
+      {{- if or (not (hasKey $server "enableHttpsRedirect")) $server.enableHttpsRedirect }}
       tls:
         httpsRedirect: true
+      {{- end }}
     - hosts:
         {{- range $server.hosts | default (list "*") }}
         - "{{ . }}.{{ $domain }}"
@@ -34,9 +40,36 @@ spec:
       tls:
         mode: {{ $server.mode }}
         {{- if ne $server.mode "PASSTHROUGH" }}
-        credentialName: {{ $.Values.tls.credentialName | default "gateway-tls" | quote }}
-        # if supportTLSV1_2 is both defined and true, use TLSV1_2, otherwise use TLSV1_3
+        {{ if and ($server.tls).cert (not ($server.tls).credentialName) }}
+        credentialName: "{{ $name }}-tls"
+        {{ else }}
+        credentialName: {{ ($server.tls).credentialName | default $.Values.tls.credentialName | default "gateway-tls" | quote }}
+        {{ end }}
         minProtocolVersion: {{ if $.Values.tls.supportTLSV1_2 }}TLSV1_2{{ else }}TLSV1_3{{ end }}
         {{- end }}
     {{ end }}
+    {{- if .Values.rootDomain.enabled }}
+    - hosts:
+        - "{{ $domain }}"
+      port:
+        name: "http-root-domain"
+        number: 80
+        protocol: HTTP
+      {{- if $rootEnableHttpsRedirect }}
+      tls:
+        httpsRedirect: true
+      {{- end }}
+    - hosts:
+        - "{{ $domain }}"
+      port:
+        name: "https-root-domain"
+        number: 443
+        protocol: HTTPS
+      tls:
+        mode: {{ $rootMode | quote }}
+        {{- if ne $rootMode "PASSTHROUGH" }}
+        credentialName: {{ $rootTLS.credentialName | default "root-domain-tls" | quote }}
+        minProtocolVersion: {{ if $rootSupportTLS }}TLSV1_2{{ else }}TLSV1_3{{ end }}
+        {{- end }}
+    {{- end }}
 {{ end }}

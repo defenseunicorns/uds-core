@@ -29,6 +29,11 @@ import { validator } from "./crd/validators/package-validator";
 import { UDSConfig } from "../config";
 import { Component, setupLogger } from "../logger";
 import { updateUDSConfig } from "./controllers/config/config";
+import {
+  KEYCLOAK_CLIENTS_SECRET_NAME,
+  KEYCLOAK_CLIENTS_SECRET_NAMESPACE,
+  updateKeycloakClientsSecret,
+} from "./controllers/keycloak/client-secret-sync";
 import { exemptValidator } from "./crd/validators/exempt-validator";
 import { packageFinalizer, packageReconciler } from "./reconcilers/package-reconciler";
 
@@ -114,3 +119,10 @@ When(a.Secret)
   .InNamespace("pepr-system")
   .WithName("uds-operator-config")
   .Reconcile(updateUDSConfig);
+
+// Watch the Kubernetes Clients Secret
+When(a.Secret)
+  .IsCreatedOrUpdated()
+  .InNamespace(KEYCLOAK_CLIENTS_SECRET_NAMESPACE)
+  .WithName(KEYCLOAK_CLIENTS_SECRET_NAME)
+  .Reconcile(s => updateKeycloakClientsSecret(s, false));

@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { beforeAll, describe, expect, it, jest } from "@jest/globals";
 import { PeprValidateRequest, kind } from "pepr";
+import { beforeAll, describe, expect, it, vi } from "vitest";
 import { isExempt } from ".";
 import { ExemptionStore } from "../../operator/controllers/exemptions/exemption-store";
 import { MatcherKind, Policy } from "../../operator/crd";
@@ -12,7 +12,7 @@ import { MatcherKind, Policy } from "../../operator/crd";
 describe("test registering exemptions", () => {
   beforeAll(() => {
     ExemptionStore.init();
-    jest.spyOn(ExemptionStore, "getByPolicy").mockReturnValue([
+    vi.spyOn(ExemptionStore, "getByPolicy").mockReturnValue([
       {
         namespace: "neuvector",
         name: "^neuvector-enforcer-pod-.*",

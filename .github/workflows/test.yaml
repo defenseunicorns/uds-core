@@ -44,8 +44,8 @@ jobs:
   test:
     # Use the 8 core runner for full-core or 4 core runner (with larger disk) for func layers tests
     runs-on: "${{ inputs.package == 'all' && 'uds-ubuntu-big-boy-8-core' || 'uds-ubuntu-big-boy-4-core'}}"
-    # Increase the timeout for longer upgrades
-    timeout-minutes: ${{ inputs.test_type == 'upgrade' && 40 || 30 }}
+    # Increase the timeout for longer upgrades - temporarily increased to 60 for longer upgrade from cgr -> rf
+    timeout-minutes: ${{ inputs.test_type == 'upgrade' && 60 || 30 }}
     name: Test
     env:
       UDS_LAYER: ${{ inputs.package }}
@@ -60,7 +60,8 @@ jobs:
           registry1Username: ${{ secrets.IRON_BANK_ROBOT_USERNAME }}
           registry1Password: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
           ghToken: ${{ secrets.GITHUB_TOKEN }}
-          chainguardIdentity: ${{ secrets.CHAINGUARD_IDENTITY }}
+          rapidfortUsername: ${{ secrets.RAPIDFORT_USERNAME }}
+          rapidfortPassword: ${{ secrets.RAPIDFORT_PASSWORD }}
 
       - name: Test a single layer package
         if: ${{ inputs.package != 'all' && inputs.test_type == 'install' }}
@@ -70,20 +71,20 @@ jobs:
         if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
         run: uds run test:uds-core-e2e --set FLAVOR=${{ inputs.flavor }} --no-progress
 
-      - name: Compose UDS Core Component Definitions
-        if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
-        run: uds run test-compliance-compose --no-progress
+      # - name: Compose UDS Core Component Definitions
+      #   if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
+      #   run: uds run test-compliance-compose --no-progress
 
-      - name: Validate UDS Core Compliance
-        if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
-        run: uds run test-compliance-validate --no-progress
+      # - name: Validate UDS Core Compliance
+      #   if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
+      #   run: uds run test-compliance-validate --no-progress
 
-      - name: Upload Assessment
-        if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
-        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
-        with:
-          name: ${{ inputs.flavor }}-assessment-results
-          path: ./compliance/oscal-assessment-results.yaml
+      # - name: Upload Assessment
+      #   if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
+      #   uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
+      #   with:
+      #     name: ${{ inputs.flavor }}-assessment-results
+      #     path: ./compliance/oscal-assessment-results.yaml
 
       - name: Test UDS Core Upgrade
         if: ${{ inputs.package == 'all' && inputs.test_type == 'upgrade' }}

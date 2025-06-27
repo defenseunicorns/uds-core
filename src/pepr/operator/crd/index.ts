@@ -10,9 +10,10 @@ export {
   Gateway,
   Monitor,
   Phase,
-  Status as PkgStatus,
+  StatusObject as PkgStatus,
   Protocol,
   RemoteGenerated,
+  RemoteProtocol,
   Sso,
   Package as UDSPackage,
 } from "./generated/package-v1alpha1";
@@ -28,6 +29,7 @@ export {
 export {
   HTTP as IstioHTTP,
   HTTPRoute as IstioHTTPRoute,
+  Tl as IstioTLS,
   VirtualService as IstioVirtualService,
 } from "./generated/istio/virtualservice-v1beta1";
 
@@ -56,3 +58,16 @@ export {
   AuthorizationPolicy as IstioAuthorizationPolicy,
 } from "./generated/istio/authorizationpolicy-v1beta1";
 export { RequestAuthentication as IstioRequestAuthentication } from "./generated/istio/requestauthentication-v1";
+
+export { DestinationRule as IstioDestinationRule } from "./generated/istio/destinationrule-v1";
+
+export {
+  Gateway as IstioGateway,
+  Server as IstioServer,
+  Mode as IstioTLSMode,
+} from "./generated/istio/gateway-v1";
+
+export {
+  OutboundTrafficPolicyMode as IstioOutboundTrafficPolicyMode,
+  Sidecar as IstioSidecar,
+} from "./generated/istio/sidecar-v1";

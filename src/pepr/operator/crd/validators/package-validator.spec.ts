@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { afterEach, describe, expect, it, jest } from "@jest/globals";
 import { PeprValidateRequest } from "pepr";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   Allow,
   Direction,
@@ -16,7 +16,11 @@ import {
   Sso,
   UDSPackage,
 } from "..";
+import { PackageStore } from "../../controllers/packages/package-store";
+import { Mode, RemoteProtocol } from "../generated/package-v1alpha1";
 import { validator } from "./package-validator";
+
+PackageStore.init();
 
 const makeMockReq = (
   pkg: Partial<UDSPackage>,
@@ -24,6 +28,7 @@ const makeMockReq = (
   allowList: Partial<Allow>[],
   ssoClients: Partial<Sso>[],
   monitorList: Partial<Monitor>[],
+  ambient: boolean = false,
 ) => {
   const defaultPkg: UDSPackage = {
     metadata: {
@@ -34,6 +39,9 @@ const makeMockReq = (
       network: {
         expose: [],
         allow: [],
+        serviceMesh: {
+          mode: ambient ? Mode.Ambient : Mode.Sidecar,
+        },
       },
       sso: [],
       monitor: [],
@@ -75,14 +83,14 @@ const makeMockReq = (
 
   return {
     Raw: { ...defaultPkg, ...pkg },
-    Approve: jest.fn(),
-    Deny: jest.fn(),
+    Approve: vi.fn(),
+    Deny: vi.fn(),
   } as unknown as PeprValidateRequest<UDSPackage>;
 };
 
-describe("Test validation of Exemption CRs", () => {
+describe("Test validation of Package CRs", () => {
   afterEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   it("allows packages that have no issues", async () => {
@@ -95,6 +103,42 @@ describe("Test validation of Exemption CRs", () => {
     const mockReq = makeMockReq({ metadata: { namespace: "kube-system" } }, [], [], [], []);
     await validator(mockReq);
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+  });
+
+  it("allows one package per namespace", async () => {
+    const mockReqValidPkg = makeMockReq({}, [], [{}], [{}], [{}]);
+    await validator(mockReqValidPkg);
+    const mockReqInvalidPkg = makeMockReq(
+      { metadata: { name: "should-be-denied" } },
+      [],
+      [],
+      [],
+      [],
+    );
+    await validator(mockReqInvalidPkg);
+    expect(mockReqInvalidPkg.Deny).toHaveBeenCalledTimes(1);
+  });
+
+  it("allows packages to be created in unique namespaces", async () => {
+    const mockReq = makeMockReq({}, [], [{}], [{}], [{}]);
+    await validator(mockReq);
+    const mockReqNewPkg = makeMockReq(
+      { metadata: { namespace: "foo", name: "should-be-approved" } },
+      [],
+      [],
+      [],
+      [],
+    );
+    await validator(mockReqNewPkg);
+    expect(mockReqNewPkg.Approve).toHaveBeenCalledTimes(1);
+  });
+
+  it("allows existing packages to be updated", async () => {
+    const mockReqValidPkg = makeMockReq({}, [{}], [{}], [{}], [{}]);
+    await validator(mockReqValidPkg);
+    const mockReqValidPkgUpdate = makeMockReq({ spec: { network: {} } }, [], [], [], []);
+    await validator(mockReqValidPkgUpdate);
+    expect(mockReqValidPkgUpdate.Approve).toHaveBeenCalledTimes(1);
   });
 
   it("denies advancedHTTP when used with passthrough Gateways", async () => {
@@ -232,13 +276,96 @@ describe("Test validation of Exemption CRs", () => {
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
   });
 
+  it("denies network policies that specify remoteHost and remoteGenerated", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [
+        {
+          remoteGenerated: RemoteGenerated.Anywhere,
+          remoteHost: "example.com",
+        },
+      ],
+      [],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+  });
+
+  it("denies network policies that specify remoteProtocol and not remoteHost", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [
+        {
+          remoteProtocol: RemoteProtocol.TLS,
+        },
+      ],
+      [],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+  });
+
+  it("denies network policies that specify ingress and remoteHost", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [
+        {
+          direction: Direction.Ingress,
+          remoteHost: "example.com",
+        },
+      ],
+      [],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+  });
+
+  it("denies network policies that specify remoteHost as a wildcard", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [
+        {
+          remoteHost: "*.example.com",
+        },
+      ],
+      [],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+  });
+
+  it("denies network policies that specify remoteHost during ambient mode", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [
+        {
+          remoteHost: "example.com",
+        },
+      ],
+      [],
+      [],
+      true,
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+  });
+
   it("denies network policies that are the same name", async () => {
     const mockReq = makeMockReq({}, [], [{}, {}], [], []);
     await validator(mockReq);
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
   });
 
-  it("denies clients with clientIDs that are not unique", async () => {
+  it("denies clients with clientIDs that are not unique within the same package", async () => {
     const mockReq = makeMockReq({}, [], [], [{}, {}], []);
     await validator(mockReq);
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
@@ -527,11 +654,31 @@ describe("Test validation of Exemption CRs", () => {
     await validator(mockReq);
     expect(mockReq.Approve).toHaveBeenCalledTimes(1);
   });
+
+  it("denies authservice clients in ambient mode", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [],
+      [
+        {
+          clientId: "http://example.com",
+          enableAuthserviceSelector: {
+            app: "foobar",
+          },
+        },
+      ],
+      [],
+      true,
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe("Test Allowed SSO Client Attributes", () => {
   afterEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   it("denies clients with unsupported attributes", async () => {
@@ -574,6 +721,10 @@ describe("Test Allowed SSO Client Attributes", () => {
             "access.token.lifespan": "60",
             "saml.assertion.signature": "false",
             "saml.client.signature": "false",
+            "use.refresh.tokens": "false",
+            "saml.encrypt": "false",
+            saml_name_id_format: "username",
+            "saml.signing.certificate": "",
             saml_assertion_consumer_url_post: "https://nexus.uds.dev/saml",
             saml_assertion_consumer_url_redirect: "https://nexus.uds.dev/saml",
             saml_single_logout_service_url_post: "https://nexus.uds.dev/saml/single-logout",
@@ -634,7 +785,7 @@ describe("Test Allowed SSO Client Attributes", () => {
 
 describe("Test proper generation of a unique name for service monitors", () => {
   afterEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   it("given an undefined description, a unique serviceMonitor name should be generated using the selector and portName fields", async () => {

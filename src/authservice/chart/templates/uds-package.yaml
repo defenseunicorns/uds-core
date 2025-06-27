@@ -8,6 +8,8 @@ metadata:
   namespace: {{ .Release.Namespace }}
 spec:
   network:
+    serviceMesh:
+      mode: ambient
     allow:
       # Permit intra-namespace communication for multi-replica setup
       - direction: Ingress
@@ -27,7 +29,8 @@ spec:
       - direction: Egress
         description: Redis Session Store
         {{- if .Values.redis.internal.enabled }}
-        remoteSelector: {{ .Values.redis.internal.remoteSelector }}
+        remoteSelector:
+          {{- .Values.redis.internal.remoteSelector | toYaml | nindent 10 }}
         remoteNamespace: {{ .Values.redis.internal.remoteNamespace }}
         {{- else if .Values.redis.egressCidr }}
         remoteCidr: {{ .Values.redis.egressCidr }}

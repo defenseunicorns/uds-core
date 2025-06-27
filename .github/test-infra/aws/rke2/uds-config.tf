@@ -22,11 +22,19 @@ resource "local_sensitive_file" "uds_config" {
         "velero_bucket_credential_name" : "",
         "velero_bucket_credential_key" : "",
         "grafana_ha" : false,
-        "grafana_pg_host" : "\"\"",
-        "grafana_pg_port" : "\"\"",
-        "grafana_pg_database" : "\"\"",
-        "grafana_pg_password" : "\"\"",
-        "grafana_pg_user" : "\"\"",
+        "grafana_pg_host" : element(split(":", module.dbs["grafana"].db_instance_endpoint), 0),
+        "grafana_pg_port" : var.databases["grafana"].port,
+        "grafana_pg_database" : var.databases["grafana"].name,
+        "grafana_pg_password" : random_password.db_passwords["grafana"].result,
+        "grafana_pg_user" : var.databases["grafana"].username,
+        "keycloak_db_host" : element(split(":", module.dbs["keycloak"].db_instance_endpoint), 0),
+        "keycloak_db_username" : var.databases["keycloak"].username,
+        "keycloak_db_database" : var.databases["keycloak"].name,
+        "keycloak_db_password" : random_password.db_passwords["keycloak"].result
+      }
+      "init" : {
+        # Disabled to prevent scaling timing issues with image pushes
+        "registry_hpa_enable" : false
       }
     }
   })

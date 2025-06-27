@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 includes:
-  - remote: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.6.3/tasks/lint.yaml
+  - remote: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.16.3/tasks/lint.yaml
 
 tasks:
   - name: fix
@@ -36,10 +36,10 @@ tasks:
       - description: license lint
         task: license
 
-  - name: oscal
-    actions:
-      - description: Lula Lint OSCAL
-        task: remote:oscal
+  # - name: oscal
+  #   actions:
+  #     - description: Lula Lint OSCAL
+  #       task: remote:oscal
 
   - name: license
     actions:

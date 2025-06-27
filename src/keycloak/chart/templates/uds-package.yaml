@@ -18,15 +18,18 @@ spec:
       description: Metrics
 
   network:
+    serviceMesh:
+      mode: ambient
     allow:
-      - description: "UDS Operator"
+      - description: "Waypoint health"
         direction: Ingress
         selector:
           app.kubernetes.io/name: keycloak
-        remoteNamespace: pepr-system
+        remoteNamespace: monitoring
         remoteSelector:
-          app: pepr-uds-core-watcher
-        port: 8080
+          app.kubernetes.io/name: prometheus
+        remoteServiceAccount: kube-prometheus-stack-prometheus
+        port: 15020
 
       - description: "Keycloak backchannel access"
         direction: Ingress
@@ -62,7 +65,8 @@ spec:
           app.kubernetes.io/name: keycloak
         port: {{ .Values.postgresql.port }}
         {{- if .Values.postgresql.internal.enabled }}
-        remoteSelector: {{ .Values.postgresql.internal.remoteSelector }}
+        remoteSelector:
+          {{- .Values.postgresql.internal.remoteSelector | toYaml | nindent 10 }}
         remoteNamespace: {{ .Values.postgresql.internal.remoteNamespace }}
         {{- else if .Values.postgresql.egressCidr }}
         remoteCidr: {{ .Values.postgresql.egressCidr }}
@@ -71,18 +75,71 @@ spec:
         {{- end }}
       {{- end }}
 
+      - description: "Keycloak to Waypoint"
+        direction: Ingress
+        remoteGenerated: IntraNamespace
+        ports:
+          - 8080
+      - description: "Waypoint to Keycloak"
+        direction: Egress
+        remoteGenerated: IntraNamespace
+        ports:
+          - 8080
+
+      - description: "Waypoint to Istio Control Plane"
+        direction: Egress
+        selector:
+          gateway.networking.k8s.io/gateway-name: {{ include "keycloak.fullname" . }}-waypoint
+        remoteNamespace: istio-system
+        remoteSelector:
+          app: istiod
+        port: 15012
+
       {{- if .Values.autoscaling.enabled }}
       # HA for keycloak
       - direction: Ingress
         remoteGenerated: IntraNamespace
         ports:
           - 7800
+          # Below array of ports is required as JGroups probe the entire range of Transport Ports with DNS_PING.
+          # Other cluster members might listen on any of them.
+          # See:
+          # - https://github.com/belaban/JGroups/blob/master/src/org/jgroups/protocols/dns/DNS_PING.java#L168-L169
+          # - Trace logs from a living cluster:
+          #   2025-05-06 07:34:23,226 DEBUG [org.jgroups.protocols.dns.DNS_PING] () keycloak-2-51586: sending discovery requests to hosts [10.42.0.71:0, 10.42.0.72:0, 10.42.0.73:0] on ports [7800 .. 7810]
+          # This will go away once we switch to JDBC_PING2
+          - 7801
+          - 7802
+          - 7803
+          - 7804
+          - 7805
+          - 7806
+          - 7807
+          - 7808
+          - 7809
+          - 7810
           - 57800
       - direction: Egress
         remoteGenerated: IntraNamespace
         ports:
           - 7800
+          # Below array of ports is required as JGroups probe the entire range of Transport Ports with DNS_PING.
+          - 7801
+          - 7802
+          - 7803
+          - 7804
+          - 7805
+          - 7806
+          - 7807
+          - 7808
+          - 7809
+          - 7810
           - 57800
+      {{- end }}
+
+      # Custom rules for additional networking access
+      {{- with .Values.additionalNetworkAllow }}
+      {{ toYaml . | nindent 6 }}
       {{- end }}
 
     expose:
@@ -113,7 +170,7 @@ spec:
               remove:
                 - istio-mtls-client-certificate
               add:
-                istio-mtls-client-certificate: "%DOWNSTREAM_PEER_CERT%"
+                istio-mtls-client-certificate: "{{ .Values.mtlsClientCert }}"
 
       - description: "public auth access with optional client certificate"
         service: keycloak-http
@@ -127,7 +184,7 @@ spec:
               remove:
                 - istio-mtls-client-certificate
               add:
-                istio-mtls-client-certificate: "%DOWNSTREAM_PEER_CERT%"
+                istio-mtls-client-certificate: "{{ .Values.mtlsClientCert }}"
 
       - description: "admin access with optional client certificate"
         service: keycloak-http
@@ -142,4 +199,4 @@ spec:
               remove:
                 - istio-mtls-client-certificate
               add:
-                istio-mtls-client-certificate: "%DOWNSTREAM_PEER_CERT%"
+                istio-mtls-client-certificate: "{{ .Values.mtlsClientCert }}"

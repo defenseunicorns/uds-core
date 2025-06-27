@@ -1,10 +1,11 @@
 # Copyright 2024 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
-
 includes:
   - utils: utils.yaml
   - test: test.yaml
+  - create: create.yaml
+  - deploy: deploy.yaml
   - setup: setup.yaml
 
 variables:
@@ -14,7 +15,7 @@ variables:
   - name: VERSION
     description: "The version of the packages to build"
     # x-release-please-start-version
-    default: "0.35.0"
+    default: "0.45.1"
     # x-release-please-end
 
   - name: LAYER
@@ -28,11 +29,7 @@ tasks:
         cmd: |
           echo "Publishing package to ${TARGET_REPO}"
           uds zarf package publish build/zarf-package-core-amd64-${VERSION}.tar.zst oci://${TARGET_REPO}
-
-          # dont publish arm64 for registry1 since IB images are only amd64
-          if [ "${FLAVOR}" != "registry1" ]; then
-            uds zarf package publish build/zarf-package-core-arm64-${VERSION}.tar.zst oci://${TARGET_REPO}
-          fi
+          uds zarf package publish build/zarf-package-core-arm64-${VERSION}.tar.zst oci://${TARGET_REPO}
 
       - description: "Tag the latest package (if a snapshot release)"
         cmd: |
@@ -72,7 +69,15 @@ tasks:
     description: "Test and Publish UDS Core layer"
     actions:
       - task: test:layer-dependencies
-      - task: test:single-layer
+      - task: create:single-layer
+        with:
+          layer: ${LAYER}
+      - task: deploy:single-layer
+        with:
+          layer: ${LAYER}
+      - task: test:validate-package
+        with:
+          layer: ${LAYER}
       - task: utils:determine-repo
       - description: "Publish build of layer"
         cmd: uds zarf package publish build/zarf-package-core-${LAYER}-${UDS_ARCH}-${VERSION}.tar.zst oci://${TARGET_REPO}

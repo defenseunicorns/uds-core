@@ -18,22 +18,14 @@ components:
       - name: kube-prometheus-stack
         namespace: monitoring
         url: https://prometheus-community.github.io/helm-charts
-        version: 68.1.0
+        version: 75.4.0
         valuesFiles:
           - "../values/values.yaml"
     actions:
       onDeploy:
         after:
-          - description: Validate Prometheus-Stack Package
-            maxTotalSeconds: 300
-            wait:
-              cluster:
-                kind: packages.uds.dev
-                name: prometheus-stack
-                namespace: monitoring
-                condition: "'{.status.phase}'=Ready"
-          - description: Annotate all service and pod monitors to ensure they are mutated with the 3.x fallbackScrapeProtocol
+          - description: Annotate all service and pod monitors to ensure they are mutated for ambient http metrics
             cmd: |
-              # This ensures that all monitors go through the latest Pepr mutation code to have fallbackScrapeProtocol added
-              ./zarf tools kubectl annotate servicemonitors -A --all uds.dev/prometheus-fallback=true
-              ./zarf tools kubectl annotate podmonitors -A --all uds.dev/prometheus-fallback=true
+              # This ensures that all monitors go through the latest Pepr mutation code to use the correct http metrics
+              ./zarf tools kubectl annotate servicemonitors -A --all uds.dev/prometheus-ambient=true
+              ./zarf tools kubectl annotate podmonitors -A --all uds.dev/prometheus-ambient=true

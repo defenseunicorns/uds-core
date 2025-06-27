@@ -1,0 +1,48 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+{{- if .Values.pathParameterProtection }}
+# Block use of `;` path parameters in non-final path segments
+# This prevents bypass of path-based authorization policies
+apiVersion: networking.istio.io/v1alpha3
+kind: EnvoyFilter
+metadata:
+  name: block-path-parameters-in-non-final-segments
+  namespace: istio-system
+spec:
+  configPatches:
+    - applyTo: HTTP_FILTER
+      match:
+        context: GATEWAY
+        listener:
+          filterChain:
+            filter:
+              name: envoy.filters.network.http_connection_manager
+      patch:
+        operation: INSERT_BEFORE
+        value:
+          name: envoy.filters.http.lua
+          typed_config:
+            "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
+            inlineCode: |
+              function envoy_on_request(request_handle)
+                local path = request_handle:headers():get(":path")
+                local host = request_handle:headers():get(":authority")
+
+                -- Only apply to keycloak endpoints
+                if host and (
+                  host == "sso.{{ .Values.domain }}" or
+                  host == "keycloak.{{ tpl .Values.adminDomain . }}"
+                ) then
+                  if path then
+                    local invalid_semicolon = string.match(path, "^[^;]*;[^/]*/")
+                    if invalid_semicolon then
+                      request_handle:respond(
+                        { [":status"] = "400" },
+                        "Path parameters may only appear after the final path segment"
+                      )
+                    end
+                  end
+                end
+              end
+{{- end }}

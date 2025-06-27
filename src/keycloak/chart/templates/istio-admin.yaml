@@ -8,14 +8,15 @@ metadata:
   name: keycloak-block-admin-access-from-public-gateway
   namespace: {{ .Release.Namespace }}
 spec:
-  selector:
-    matchLabels:
-      {{- include "keycloak.selectorLabels" . | nindent 6 }}
+  targetRefs:
+    - kind: Gateway
+      group: gateway.networking.k8s.io
+      name: {{ include "keycloak.fullname" . }}-waypoint
   action: DENY
   rules:
     - to:
         - operation:
-            ports: 
+            ports:
               - "8080"
             paths:
               - "/admin*"
@@ -24,9 +25,10 @@ spec:
         - source:
             notNamespaces:
               - istio-admin-gateway
+              - "pepr-system"
     - to:
         - operation:
-            ports: 
+            ports:
               - "8080"
             paths:
             - /metrics*
@@ -37,22 +39,21 @@ spec:
             - monitoring
     - to:
         - operation:
-            ports: 
+            ports:
               - "8080"
             paths:
-              # Never allow anonymous client registration except from the pepr-system namespace
-              # This is another fallback protection, as the KC policy already blocks it
-              - "/realms/{{ .Values.realm }}/clients-registrations/*"
+              - "/admin/realms/{{ .Values.realm }}/clients"
       from:
         - source:
-            notNamespaces: 
-              - "pepr-system"
+            notNamespaces:
+              - pepr-system
+              - istio-admin-gateway
     - when:
         - key: request.headers[istio-mtls-client-certificate]
           values: ["*"]
       to:
         - operation:
-            ports: 
+            ports:
               - "8080"
       from:
         - source:

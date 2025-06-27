@@ -10,7 +10,7 @@ data "aws_vpc" "vpc" {
 
 data "aws_subnet" "rke2_ci_subnet" {
   vpc_id            = data.aws_vpc.vpc.id
-  availability_zone = "${var.region}c"
+  availability_zone = "${var.region}a"
 
   filter {
     name   = "tag:Name"
@@ -21,5 +21,13 @@ data "aws_subnet" "rke2_ci_subnet" {
 data "aws_ami" "rhel_rke2" {
   most_recent = true
   name_regex  = "^uds-rhel-rke2-v${var.rke2_version}"
-  owners      = ["self"]
+  owners      = [var.uds_images_aws_account_id]
 }
+
+data "aws_subnets" "rds_subnets" {
+  filter {
+    name   = "vpc-id"
+    values = [data.aws_vpc.vpc.id]
+  }
+}
+

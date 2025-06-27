@@ -16,18 +16,7 @@ components:
         localPath: ../chart
       - name: loki
         url: https://grafana.github.io/helm-charts/
-        version: 6.24.0
+        version: 6.30.1
         namespace: loki
         valuesFiles:
           - ../values/values.yaml
-    actions:
-      onDeploy:
-        after:
-          - description: Validate Loki Package
-            maxTotalSeconds: 300
-            wait:
-              cluster:
-                kind: packages.uds.dev
-                name: loki
-                namespace: loki
-                condition: "'{.status.phase}'=Ready"
