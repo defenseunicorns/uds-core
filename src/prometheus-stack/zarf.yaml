@@ -32,11 +32,11 @@ components:
     images:
       - "quay.io/prometheus/node-exporter:v1.9.1"
       - "quay.io/prometheus-operator/prometheus-operator:v0.83.0"
-      - "registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.15.0"
+      - "registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.16.0"
       - "quay.io/prometheus/alertmanager:v0.28.1"
       - "quay.io/prometheus-operator/prometheus-config-reloader:v0.83.0"
-      - "quay.io/prometheus/prometheus:v3.4.1"
-      - "registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.5.4"
+      - "quay.io/prometheus/prometheus:v3.4.2"
+      - "registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.6.0"
 
   - name: kube-prometheus-stack
     required: true
@@ -52,10 +52,10 @@ components:
     images:
       - "registry1.dso.mil/ironbank/opensource/prometheus/node-exporter:v1.9.1"
       - "registry1.dso.mil/ironbank/opensource/prometheus-operator/prometheus-operator:v0.83.0"
-      - "registry1.dso.mil/ironbank/opensource/kubernetes/kube-state-metrics:v2.15.0"
+      - "registry1.dso.mil/ironbank/opensource/kubernetes/kube-state-metrics:v2.16.0"
       - "registry1.dso.mil/ironbank/opensource/prometheus/alertmanager:v0.28.1"
       - "registry1.dso.mil/ironbank/opensource/prometheus-operator/prometheus-config-reloader:v0.83.0"
-      - "registry1.dso.mil/ironbank/opensource/prometheus/prometheus:v3.4.1"
+      - "registry1.dso.mil/ironbank/opensource/prometheus/prometheus:v3.4.2"
       - "registry1.dso.mil/ironbank/opensource/ingress-nginx/kube-webhook-certgen:v1.5.4"
 
   - name: kube-prometheus-stack
