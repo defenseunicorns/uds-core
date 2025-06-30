@@ -7,25 +7,13 @@ import { kind } from "pepr";
 
 import { KubernetesListObject } from "kubernetes-fluent-client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { UDSConfig } from "../../../config";
 import { ClusterConfig } from "../../crd";
 import { reconcileAuthservice } from "../keycloak/authservice/authservice";
 import { initAPIServerCIDR } from "../network/generators/kubeAPI";
 import { initAllNodesTarget } from "../network/generators/kubeNodes";
-import { loadUDSConfig, updateCfg, updateCfgSecrets } from "./config";
+import { loadUDSConfig, UDSConfig, updateCfg, updateCfgSecrets } from "./config";
 
 // Mock dependencies
-vi.mock("../../../config", () => ({
-  UDSConfig: {
-    caCert: "",
-    authserviceRedisUri: "",
-    kubeApiCidr: "",
-    kubeNodeCidrs: "",
-    domain: "",
-    adminDomain: "",
-    allowAllNSExemptions: false,
-  },
-}));
 
 vi.mock("../keycloak/authservice/authservice", () => ({
   reconcileAuthservice: vi.fn(),
@@ -57,7 +45,7 @@ vi.mock("../../../logger", () => {
   };
 });
 
-jest.mock("pepr", () => {
+vi.mock("pepr", () => {
   const mockCfg = {
     metadata: {
       name: "uds-cluster-config",
@@ -90,45 +78,44 @@ jest.mock("pepr", () => {
   } as kind.Secret;
 
   return {
-    K8s: jest
-      .fn()
+    K8s: vi.fn()
       // valid ClusterConfig and config secret
       .mockReturnValueOnce({
-        InNamespace: jest.fn().mockReturnValue({
-          Get: jest
+        InNamespace: vi.fn().mockReturnValue({
+          Get: vi
             .fn<() => Promise<KubernetesListObject<ClusterConfig>>>()
             .mockResolvedValue({ items: [mockCfg] }),
         }),
       })
       .mockReturnValueOnce({
-        InNamespace: jest.fn().mockReturnValue({
-          Get: jest.fn<() => Promise<kind.Secret>>().mockResolvedValue(mockSecret),
+        InNamespace: vi.fn().mockReturnValue({
+          Get: vi.fn<() => Promise<kind.Secret>>().mockResolvedValue(mockSecret),
         }),
       })
       // too many ClusterConfigs (ERROR)
       .mockReturnValueOnce({
-        InNamespace: jest.fn().mockReturnValue({
-          Get: jest
+        InNamespace: vi.fn().mockReturnValue({
+          Get: vi
             .fn<() => Promise<KubernetesListObject<ClusterConfig>>>()
             .mockResolvedValue({ items: [mockCfg, mockCfg] }),
         }),
       })
       .mockReturnValueOnce({
-        InNamespace: jest.fn().mockReturnValue({
-          Get: jest.fn<() => Promise<kind.Secret>>().mockResolvedValue(mockSecret),
+        InNamespace: vi.fn().mockReturnValue({
+          Get: vi.fn<() => Promise<kind.Secret>>().mockResolvedValue(mockSecret),
         }),
       })
       // no ClusterConfig (ERROR)
       .mockReturnValueOnce({
-        InNamespace: jest.fn().mockReturnValue({
-          Get: jest
+        InNamespace: vi.fn().mockReturnValue({
+          Get: vi
             .fn<() => Promise<KubernetesListObject<ClusterConfig>>>()
             .mockResolvedValue({ items: [] }),
         }),
       })
       .mockReturnValueOnce({
-        InNamespace: jest.fn().mockReturnValue({
-          Get: jest.fn<() => Promise<kind.Secret>>().mockResolvedValue(mockSecret),
+        InNamespace: vi.fn().mockReturnValue({
+          Get: vi.fn<() => Promise<kind.Secret>>().mockResolvedValue(mockSecret),
         }),
       }),
     kind: {
