@@ -5,7 +5,7 @@
 
 import { K8s, kind } from "pepr";
 import { Component, setupLogger } from "../../../logger";
-import { ClusterConfig } from "../../crd";
+import { ClusterConfig, ConfigExpose } from "../../crd";
 import { validateCfg } from "../../crd/validators/clusterconfig-validator";
 import { reconcileAuthservice } from "../keycloak/authservice/authservice";
 import { Action, AuthServiceEvent } from "../keycloak/authservice/types";
@@ -25,7 +25,7 @@ export let UDSConfig: Config = {
   isIdentityDeployed: false,
 };
 
-export const configLog = setupLogger(Component.CONFIG);
+export const configLog = setupLogger(Component.OPERATOR_CONFIG);
 
 function decodeSecret(secret: kind.Secret) {
   // Base64 decode the secret data
@@ -51,18 +51,19 @@ export async function updateCfgSecrets(cfg: kind.Secret) {
 
   const decodedCfgData = decodeSecret(cfg);
 
-  // Handle changes to the Authservice configuration
-  if (decodedCfgData.AUTHSERVICE_REDIS_URI !== UDSConfig.authserviceRedisUri) {
-    // Account for undefined or placeholder values (dev mode)
-    if (
-      decodedCfgData.AUTHSERVICE_REDIS_URI &&
-      decodedCfgData.AUTHSERVICE_REDIS_URI !== "###ZARF_VAR_AUTHSERVICE_REDIS_URI###"
-    ) {
-      UDSConfig.authserviceRedisUri = decodedCfgData.AUTHSERVICE_REDIS_URI;
-    } else {
-      UDSConfig.authserviceRedisUri = "";
-    }
+  // no data key then return
+  if (!Object.keys(decodedCfgData).includes("AUTHSERVICE_REDIS_URI")) {
+    return;
+  }
 
+  // Handle placeholder values (dev mode)
+  if (decodedCfgData.AUTHSERVICE_REDIS_URI === "###ZARF_VAR_AUTHSERVICE_REDIS_URI###") {
+    decodedCfgData.AUTHSERVICE_REDIS_URI = "";
+  }
+
+  // Handle changes to the Authservice configuration
+  if (UDSConfig.authserviceRedisUri !== decodedCfgData.AUTHSERVICE_REDIS_URI) {
+    UDSConfig.authserviceRedisUri = decodedCfgData.AUTHSERVICE_REDIS_URI;
     const authserviceUpdate: AuthServiceEvent = {
       name: "global-config-update",
       action: Action.UpdateGlobalConfig,
@@ -75,18 +76,18 @@ export async function updateCfgSecrets(cfg: kind.Secret) {
   }
 }
 
-export async function updateCfg(cfg: ClusterConfig) {
-  configLog.info("Updating UDS Config from uds-operator-config ClusterConfig change");
+async function handleCAUpdate(expose: ConfigExpose) {
+  if (!Object.keys(expose).includes("caCert")) {
+    return;
+  }
 
-  const { expose, policy, networking } = cfg.spec!;
+  // handle dev mode placeholder
+  if (expose.caCert === "###ZARF_VAR_CA_CERT###") {
+    expose.caCert = "";
+  }
 
-  // Handle changes to the Authservice configuration
-  if (expose.caCert !== UDSConfig.caCert) {
-    if (expose.caCert && expose.caCert !== "###ZARF_VAR_CA_CERT###") {
-      UDSConfig.caCert = expose.caCert;
-    } else {
-      UDSConfig.caCert = "";
-    }
+  if (UDSConfig.caCert !== expose.caCert) {
+    UDSConfig.caCert = expose.caCert || "";
 
     const authserviceUpdate: AuthServiceEvent = {
       name: "global-config-update",
@@ -98,6 +99,15 @@ export async function updateCfg(cfg: ClusterConfig) {
     configLog.debug("Updating Authservice secret based on change to CA Cert");
     await reconcileAuthservice(authserviceUpdate);
   }
+}
+
+export async function updateCfg(cfg: ClusterConfig) {
+  configLog.info("Updating UDS Config from uds-operator-config ClusterConfig change");
+
+  const { expose, policy, networking } = cfg.spec!;
+
+  // Handle changes to the Authservice configuration for CA Cert
+  await handleCAUpdate(expose);
 
   // Handle changes to the kubeApiCidr
   if (networking?.kubeapiCIDR !== UDSConfig.kubeApiCidr) {

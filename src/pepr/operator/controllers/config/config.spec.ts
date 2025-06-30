@@ -5,13 +5,13 @@
 
 import { kind } from "pepr";
 
-import { KubernetesListObject } from "kubernetes-fluent-client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ClusterConfig } from "../../crd";
 import { reconcileAuthservice } from "../keycloak/authservice/authservice";
 import { initAPIServerCIDR } from "../network/generators/kubeAPI";
 import { initAllNodesTarget } from "../network/generators/kubeNodes";
 import { loadUDSConfig, UDSConfig, updateCfg, updateCfgSecrets } from "./config";
+import { mockClusterConfGet, mockSecretGet } from "./test-helpers";
 
 // Mock dependencies
 
@@ -45,85 +45,51 @@ vi.mock("../../../logger", () => {
   };
 });
 
-vi.mock("pepr", () => {
-  const mockCfg = {
-    metadata: {
-      name: "uds-cluster-config",
-      namespace: "pepr-system",
-    },
-    spec: {
-      expose: {
-        domain: "mock-domain",
-        adminDomain: "mock-admin-domain",
-        caCert: btoa("mock-ca-cert"),
-      },
-      networking: {
-        kubeapiCIDR: "mock-cidr",
-        kubenodeCIDRS: ["mock-node-cidrs"],
-      },
-      policy: {
-        allowAllNsExemptions: true,
-      },
-    },
-  } as ClusterConfig;
-
-  const mockSecret = {
-    metadata: {
-      name: "uds-operator-config",
-      namespace: "pepr-system",
-    },
-    data: {
-      AUTHSERVICE_REDIS_URI: btoa("mock-redis-uri"),
-    },
-  } as kind.Secret;
-
+vi.mock("pepr", async importOriginal => {
+  const actual: typeof import("pepr") = await importOriginal();
   return {
-    K8s: vi
-      .fn()
-      // valid ClusterConfig and config secret
-      .mockReturnValueOnce({
-        InNamespace: vi.fn().mockReturnValue({
-          Get: vi
-            .fn<() => Promise<KubernetesListObject<ClusterConfig>>>()
-            .mockResolvedValue({ items: [mockCfg] }),
-        }),
-      })
-      .mockReturnValueOnce({
-        InNamespace: vi.fn().mockReturnValue({
-          Get: vi.fn<() => Promise<kind.Secret>>().mockResolvedValue(mockSecret),
-        }),
-      })
-      // too many ClusterConfigs (ERROR)
-      .mockReturnValueOnce({
-        InNamespace: vi.fn().mockReturnValue({
-          Get: vi
-            .fn<() => Promise<KubernetesListObject<ClusterConfig>>>()
-            .mockResolvedValue({ items: [mockCfg, mockCfg] }),
-        }),
-      })
-      .mockReturnValueOnce({
-        InNamespace: vi.fn().mockReturnValue({
-          Get: vi.fn<() => Promise<kind.Secret>>().mockResolvedValue(mockSecret),
-        }),
-      })
-      // no ClusterConfig (ERROR)
-      .mockReturnValueOnce({
-        InNamespace: vi.fn().mockReturnValue({
-          Get: vi
-            .fn<() => Promise<KubernetesListObject<ClusterConfig>>>()
-            .mockResolvedValue({ items: [] }),
-        }),
-      })
-      .mockReturnValueOnce({
-        InNamespace: vi.fn().mockReturnValue({
-          Get: vi.fn<() => Promise<kind.Secret>>().mockResolvedValue(mockSecret),
-        }),
-      }),
-    kind: {
-      Secret: "Secret",
-    },
+    ...actual,
+    K8s: vi.fn().mockImplementation(resourceKind => {
+      if (resourceKind === ClusterConfig) {
+        return { InNamespace: vi.fn().mockReturnValue({ Get: mockClusterConfGet }) };
+      }
+      if (resourceKind === kind.Secret) {
+        return { InNamespace: vi.fn().mockReturnValue({ Get: mockSecretGet }) };
+      }
+    }),
   };
 });
+
+const mockCfg: ClusterConfig = {
+  metadata: {
+    name: "uds-cluster-config",
+    namespace: "pepr-system",
+  },
+  spec: {
+    expose: {
+      domain: "mock-domain",
+      adminDomain: "mock-admin-domain",
+      caCert: btoa("mock-ca-cert"),
+    },
+    networking: {
+      kubeapiCIDR: "mock-cidr",
+      kubenodeCIDRS: ["mock-node-cidrs"],
+    },
+    policy: {
+      allowAllNsExemptions: true,
+    },
+  },
+};
+
+const mockSecret: kind.Secret = {
+  metadata: {
+    name: "uds-operator-config",
+    namespace: "pepr-system",
+  },
+  data: {
+    AUTHSERVICE_REDIS_URI: btoa("mock-redis-uri"),
+  },
+};
 
 describe("initial config load", () => {
   beforeEach(() => {
@@ -132,6 +98,8 @@ describe("initial config load", () => {
   });
 
   it("loads initial config", async () => {
+    mockClusterConfGet.mockResolvedValue({ items: [mockCfg] });
+    mockSecretGet.mockResolvedValue(mockSecret);
     await loadUDSConfig();
 
     expect(UDSConfig.caCert).toBe(btoa("mock-ca-cert"));
@@ -144,6 +112,7 @@ describe("initial config load", () => {
   });
 
   it("throws error because too many configs", async () => {
+    mockClusterConfGet.mockResolvedValue({ items: [mockCfg, mockCfg] });
     try {
       await loadUDSConfig();
     } catch (e) {
@@ -154,6 +123,8 @@ describe("initial config load", () => {
   });
 
   it("throws error because no config", async () => {
+    mockClusterConfGet.mockResolvedValue({ items: [] });
+
     try {
       await loadUDSConfig();
     } catch (e) {
@@ -163,37 +134,7 @@ describe("initial config load", () => {
 });
 
 describe("updateUDSConfig", () => {
-  let mockSecret: kind.Secret;
-  let mockCfg: ClusterConfig;
-
   beforeEach(() => {
-    mockSecret = {
-      data: {
-        AUTHSERVICE_REDIS_URI: btoa("mock-redis-uri"),
-      },
-    };
-
-    mockCfg = {
-      metadata: {
-        name: "uds-cluster-config",
-        namespace: "pepr-system",
-      },
-      spec: {
-        expose: {
-          domain: "mock-domain",
-          adminDomain: "mock-admin-domain",
-          caCert: btoa("mock-ca-cert"),
-        },
-        networking: {
-          kubeapiCIDR: "mock-cidr",
-          kubenodeCIDRS: ["mock-node-cidrs"],
-        },
-        policy: {
-          allowAllNsExemptions: true,
-        },
-      },
-    };
-
     // Reset mocks
     vi.clearAllMocks();
     UDSConfig.caCert = "";
@@ -222,31 +163,122 @@ describe("updateUDSConfig", () => {
     expect(UDSConfig.allowAllNSExemptions).toBe(true);
   });
 
-  it("calls reconcileAuthservice if CA Cert changes", async () => {
-    UDSConfig.caCert = "old-ca-cert";
-    UDSConfig.authserviceRedisUri = "old-redis-uri";
+  describe("reconcileAuthservice", () => {
+    it("calls if CA Cert changes", async () => {
+      UDSConfig.caCert = "old-ca-cert";
 
-    await updateCfg(mockCfg);
+      await updateCfg(mockCfg);
 
-    expect(reconcileAuthservice).toHaveBeenCalledWith({
-      name: "global-config-update",
-      action: expect.any(String),
-      trustedCA: "mock-ca-cert",
-      redisUri: UDSConfig.authserviceRedisUri,
+      expect(reconcileAuthservice).toHaveBeenCalledWith({
+        name: "global-config-update",
+        action: expect.any(String),
+        trustedCA: "mock-ca-cert",
+        redisUri: "",
+      });
     });
-  });
 
-  it("calls reconcileAuthservice if Redis URI changes", async () => {
-    UDSConfig.caCert = btoa("old-ca-cert");
-    UDSConfig.authserviceRedisUri = "old-redis-uri";
+    it("calls if CA Cert changes to empty string (dev mode)", async () => {
+      UDSConfig.caCert = "old-ca-cert";
+      const cfg = {
+        ...mockCfg,
+        spec: { ...mockCfg.spec, expose: { caCert: "###ZARF_VAR_CA_CERT###" } },
+      } as ClusterConfig;
 
-    await updateCfgSecrets(mockSecret);
+      await updateCfg(cfg);
 
-    expect(reconcileAuthservice).toHaveBeenCalledWith({
-      name: "global-config-update",
-      action: expect.any(String),
-      trustedCA: "old-ca-cert",
-      redisUri: "mock-redis-uri",
+      expect(reconcileAuthservice).toHaveBeenCalledWith({
+        name: "global-config-update",
+        action: expect.any(String),
+        trustedCA: "",
+        redisUri: "",
+      });
+    });
+
+    it("does not call if CA Cert key is undefined", async () => {
+      UDSConfig.caCert = "old-ca-cert";
+      const cfg = { ...mockCfg, spec: { ...mockCfg.spec, expose: {} } } as ClusterConfig;
+
+      await updateCfg(cfg);
+
+      expect(reconcileAuthservice).not.toHaveBeenCalled();
+    });
+
+    it("does not call if CA Cert is still empty string (dev mode)", async () => {
+      UDSConfig.caCert = "";
+      const cfg = {
+        ...mockCfg,
+        spec: { ...mockCfg.spec, expose: { caCert: "###ZARF_VAR_CA_CERT###" } },
+      } as ClusterConfig;
+
+      await updateCfg(cfg);
+
+      expect(reconcileAuthservice).not.toHaveBeenCalled();
+    });
+
+    it("calls if Redis URI changes", async () => {
+      UDSConfig.caCert = btoa("old-ca-cert");
+      UDSConfig.authserviceRedisUri = "old-redis-uri";
+
+      await updateCfgSecrets(mockSecret);
+
+      expect(reconcileAuthservice).toHaveBeenCalledWith({
+        name: "global-config-update",
+        action: expect.any(String),
+        trustedCA: "old-ca-cert",
+        redisUri: "mock-redis-uri",
+      });
+    });
+
+    it("calls if setting Redis URI to empty string", async () => {
+      UDSConfig.authserviceRedisUri = "old-redis-uri";
+      const emptyRedisURI = { ...mockSecret, data: { AUTHSERVICE_REDIS_URI: btoa("") } };
+
+      await updateCfgSecrets(emptyRedisURI);
+
+      expect(reconcileAuthservice).toHaveBeenCalledWith({
+        name: "global-config-update",
+        action: expect.any(String),
+        trustedCA: "",
+        redisUri: "",
+      });
+    });
+
+    it("calls if setting Redis URI to empty string (dev mode)", async () => {
+      UDSConfig.authserviceRedisUri = "old-redis-uri";
+      const emptyRedisURI = {
+        ...mockSecret,
+        data: { AUTHSERVICE_REDIS_URI: btoa("###ZARF_VAR_AUTHSERVICE_REDIS_URI###") },
+      };
+
+      await updateCfgSecrets(emptyRedisURI);
+
+      expect(reconcileAuthservice).toHaveBeenCalledWith({
+        name: "global-config-update",
+        action: expect.any(String),
+        trustedCA: "",
+        redisUri: "",
+      });
+    });
+
+    it("does not call if AUTHSERVICE_REDIS_URI key is missing", async () => {
+      UDSConfig.authserviceRedisUri = "";
+      const emptyRedisURI = { ...mockSecret, data: {} };
+
+      await updateCfgSecrets(emptyRedisURI);
+
+      expect(reconcileAuthservice).not.toHaveBeenCalled();
+    });
+
+    it("does not call if Redis URI is still empty string (dev mode)", async () => {
+      UDSConfig.authserviceRedisUri = "";
+      const emptyRedisURI = {
+        ...mockSecret,
+        data: { AUTHSERVICE_REDIS_URI: btoa("###ZARF_VAR_AUTHSERVICE_REDIS_URI###") },
+      };
+
+      await updateCfgSecrets(emptyRedisURI);
+
+      expect(reconcileAuthservice).not.toHaveBeenCalled();
     });
   });
 
@@ -301,12 +333,5 @@ describe("updateUDSConfig", () => {
 
     expect(initAPIServerCIDR).not.toHaveBeenCalled();
     expect(initAllNodesTarget).not.toHaveBeenCalled();
-  });
-
-  it("sets caCert to an empty string if the value is a placeholder", async () => {
-    mockCfg.spec!.expose.caCert = "###ZARF_VAR_CA_CERT###";
-
-    await updateCfg(mockCfg);
-    expect(UDSConfig.caCert).toBe("");
   });
 });
