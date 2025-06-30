@@ -11,7 +11,7 @@ gateway:
   image:
     registry: docker.io
     repository: nginxinc/nginx-unprivileged
-    tag: 1.28-alpine
+    tag: 1.29-alpine
 
 memcached:
   image:
