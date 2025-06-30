@@ -56,10 +56,6 @@ components:
     actions:
       onDeploy:
         before:
-          - description: "Add helm ownership if necessary for clean helm upgrade"
-            mute: true
-            cmd: |
-              ./zarf tools kubectl annotate exemption istio -n uds-policy-exemptions "meta.helm.sh/release-name=uds-global-istio-config" --overwrite || true
           - description: "Ensure CNI_CONF_DIR is set"
             cmd: |
               if [ \"${ZARF_VAR_CNI_CONF_DIR}\" = \"\" ]; then
