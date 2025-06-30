@@ -1,0 +1,116 @@
+{
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "$ref": "#/definitions/ClusterConfig",
+  "definitions": {
+    "ClusterConfig": {
+      "type": "object",
+      "additionalProperties": {},
+      "properties": {
+        "spec": {
+          "$ref": "#/definitions/Spec"
+        }
+      },
+      "required": [
+        "spec"
+      ],
+      "title": "ClusterConfig"
+    },
+    "Spec": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "attributes": {
+          "$ref": "#/definitions/Attributes"
+        },
+        "expose": {
+          "$ref": "#/definitions/Expose"
+        },
+        "networking": {
+          "$ref": "#/definitions/Networking"
+        },
+        "policy": {
+          "$ref": "#/definitions/Policy"
+        }
+      },
+      "required": [
+        "expose",
+        "policy"
+      ],
+      "title": "Spec"
+    },
+    "Attributes": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "clusterName": {
+          "type": "string",
+          "description": "Friendly name to associate with your UDS cluster"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Tags to apply to your UDS cluster"
+        }
+      },
+      "required": [],
+      "title": "Attributes"
+    },
+    "Expose": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "adminDomain": {
+          "type": "string",
+          "description": "Domain all cluster services on the admin gateway will be exposed on"
+        },
+        "caCert": {
+          "type": "string",
+          "description": "The trusted CA that signed your domain certificates if using Private PKI"
+        },
+        "domain": {
+          "type": "string",
+          "description": "Domain all cluster services will be exposed on"
+        }
+      },
+      "required": [
+        "domain"
+      ],
+      "title": "Expose"
+    },
+    "Networking": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kubeapiCIDR": {
+          "type": "string",
+          "description": "cidr range for your Kubernetes control plane nodes. This is a manual override that can be\nused instead of relying on Pepr to automatically watch and update the values"
+        },
+        "kubenodeCIDRS": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "cidr(s) for all Kubernetes nodes (not just control plane). Similar reason to above,annual\noverride instead of relying on watch"
+        }
+      },
+      "required": [],
+      "title": "Networking"
+    },
+    "Policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "allowAllNsExemptions": {
+          "type": "boolean",
+          "description": "Allow UDS Exemption custom resources to live in any namespace (default false)"
+        }
+      },
+      "required": [
+        "allowAllNsExemptions"
+      ],
+      "title": "Policy"
+    }
+  }
+}

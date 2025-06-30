@@ -42,7 +42,20 @@ tasks:
           uds zarf tools yq -i '.definitions.Exemption.additionalProperties = {}' schemas/exemption-v1alpha1.schema.json
         description: "Generate JSON schema for exemptions.uds.dev"
 
-      - cmd: "npx kubernetes-fluent-client crd clusterconfig.uds.dev src/pepr/operator/crd/generated"
+      - cmd: |
+          # renovate: datasource=github-tags depName=defenseunicorns/kubernetes-fluent-client versioning=semver
+          npx kubernetes-fluent-client@3.8.0 crd clusterconfig.uds.dev src/pepr/operator/crd/generated
+        description: "Generate TS types for clusterconfig.uds.dev"
+
+      - cmd: |
+          # renovate: datasource=github-tags depName=defenseunicorns/kubernetes-fluent-client versioning=semver
+          npx kubernetes-fluent-client@3.8.0 crd clusterconfig.uds.dev -l json-schema schemas
+          # Move the schema files to a standard path
+          mv schemas/clusterconfig-v1alpha1.json-schema schemas/clusterconfig-v1alpha1.schema.json
+          # Make the schema strict on additionalProperties
+          uds zarf tools yq -i '(.. | select(has("additionalProperties") and .additionalProperties | select(length==0))) |= .additionalProperties = false' schemas/clusterconfig-v1alpha1.schema.json
+          uds zarf tools yq -i '.definitions.ClusterConfig.additionalProperties = {}' schemas/clusterconfig-v1alpha1.schema.json
+        description: "Generate JSON schema for clusterconfig.uds.dev"
 
       - task: gen-manifests
 

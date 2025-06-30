@@ -11,9 +11,9 @@ export class ClusterConfig extends GenericKind {
 
 export interface Spec {
   attributes?: Attributes;
-  expose: Expose;
+  expose:      Expose;
   networking?: Networking;
-  policy: Policy;
+  policy:      Policy;
 }
 
 export interface Attributes {
