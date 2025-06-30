@@ -58,7 +58,7 @@ components:
         valuesFiles:
           - values/unicorn-values.yaml
     images:
-      - quay.io/rfcurated/grafana:12.0.1-jammy-scratch-fips-rfcurated
+      - quay.io/rfcurated/grafana:12.0.2-jammy-scratch-fips-rfcurated
       - quay.io/rfcurated/busybox:1.37.0-musl-rf.1-fips-rfcurated
       - quay.io/rfcurated/curl:8.14.1-jammy-scratch-fips-rfcurated
-      - quay.io/rfcurated/k8s-sidecar:1.30.3-jammy-scratch-fips-rfcurated-rfhardened
+      - quay.io/rfcurated/k8s-sidecar:1.30.5-jammy-scratch-fips-rfcurated-rfhardened
