@@ -32,5 +32,5 @@ cluster:
   policy:
     allowAllNsExemptions: "###ZARF_VAR_ALLOW_ALL_NS_EXEMPTIONS###"
   networking:
-    kubeApiCidr: ""
-    kubeNodeCidrs: []
+    kubeApiCIDR: ""
+    kubeNodeCIDRS: []

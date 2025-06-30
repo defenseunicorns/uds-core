@@ -15,39 +15,37 @@ const log = setupLogger(Component.OPERATOR_CRD);
 
 export async function registerClusterConfig() {
   // Register the ClusterConfig CRD
-  if (process.env.PEPR_WATCH_MODE || process.env.PEPR_MODE === "dev") {
-    await K8s(kind.CustomResourceDefinition)
-      .Apply(
-        {
-          apiVersion: "apiextensions.k8s.io/v1",
-          kind: "CustomResourceDefinition",
-          metadata: {
-            name: "clusterconfig.uds.dev",
-          },
-          spec: {
-            group: "uds.dev",
-            versions: [clusterConfig],
-            scope: "Namespaced",
-            names: {
-              plural: "clusterconfig",
-              singular: "clusterconfig",
-              kind: "ClusterConfig",
-              shortNames: ["clusterconfig"],
-            },
+  await K8s(kind.CustomResourceDefinition)
+    .Apply(
+      {
+        apiVersion: "apiextensions.k8s.io/v1",
+        kind: "CustomResourceDefinition",
+        metadata: {
+          name: "clusterconfig.uds.dev",
+        },
+        spec: {
+          group: "uds.dev",
+          versions: [clusterConfig],
+          scope: "Namespaced",
+          names: {
+            plural: "clusterconfig",
+            singular: "clusterconfig",
+            kind: "ClusterConfig",
+            shortNames: ["clusterconfig"],
           },
         },
-        { force: true },
-      )
-      .then(() => {
-        log.info("ClusterConfig CRD registered");
-      })
-      .catch(err => {
-        log.error({ err }, "Failed to register ClusterConfig CRD");
+      },
+      { force: true },
+    )
+    .then(() => {
+      log.info("ClusterConfig CRD registered");
+    })
+    .catch(err => {
+      log.error({ err }, "Failed to register ClusterConfig CRD");
 
-        // Sad times, let's exit
-        process.exit(1);
-      });
-  }
+      // Sad times, let's exit
+      process.exit(1);
+    });
 }
 
 export async function registerCRDs() {
