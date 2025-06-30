@@ -41,7 +41,7 @@ export function initializeOperatorConfig() {
     realm: "uds",
   };
 
-  log.info(operatorConfig, `Operator config initialized`);
+  log.info(operatorConfig, `Authservice operator config initialized`);
 }
 /**
  * Sets up the initial authservice secret in the Kubernetes cluster.

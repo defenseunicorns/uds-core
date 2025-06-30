@@ -72,8 +72,8 @@ const mockCfg: ClusterConfig = {
       caCert: btoa("mock-ca-cert"),
     },
     networking: {
-      kubeapiCIDR: "mock-cidr",
-      kubenodeCIDRS: ["mock-node-cidrs"],
+      kubeApiCIDR: "mock-cidr",
+      kubeNodeCIDRs: ["mock-node-cidrs"],
     },
     policy: {
       allowAllNsExemptions: true,
@@ -112,12 +112,14 @@ describe("initial config load", () => {
   });
 
   it("throws error because too many configs", async () => {
-    mockClusterConfGet.mockResolvedValue({ items: [mockCfg, mockCfg] });
+    mockClusterConfGet.mockResolvedValue({
+      items: [mockCfg, { ...mockCfg, metadata: { name: "uds-cluster-config-2" } }],
+    });
     try {
       await loadUDSConfig();
     } catch (e) {
       expect(e.message).toBe(
-        "ClusterConfig Processing: only one ClusterConfig is allowed -- found: 2",
+        "ClusterConfig Processing: only one ClusterConfig is allowed -- found: 2; uds-cluster-config, uds-cluster-config-2",
       );
     }
   });
@@ -326,8 +328,8 @@ describe("updateUDSConfig", () => {
 
   it("does not call netpol updates if no values change", async () => {
     // Set mockSecret to match UDSConfig data
-    mockCfg.spec!.networking!.kubeapiCIDR = "";
-    mockCfg.spec!.networking!.kubenodeCIDRS = [];
+    mockCfg.spec!.networking!.kubeApiCIDR = "";
+    mockCfg.spec!.networking!.kubeNodeCIDRs = [];
 
     await updateCfg(mockCfg);
 

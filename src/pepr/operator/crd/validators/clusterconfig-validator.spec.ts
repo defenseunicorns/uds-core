@@ -20,8 +20,8 @@ const mockCfg: ClusterConfig = {
       caCert: btoa("mock-ca-cert"),
     },
     networking: {
-      kubeapiCIDR: "mock-cidr",
-      kubenodeCIDRS: ["mock-node-cidrs"],
+      kubeApiCIDR: "mock-cidr",
+      kubeNodeCIDRs: ["mock-node-cidrs"],
     },
     policy: {
       allowAllNsExemptions: true,

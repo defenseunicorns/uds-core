@@ -83,16 +83,16 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "kubeapiCIDR": {
+        "kubeApiCIDR": {
           "type": "string",
-          "description": "cidr range for your Kubernetes control plane nodes. This is a manual override that can be\nused instead of relying on Pepr to automatically watch and update the values"
+          "description": "CIDR range for your Kubernetes control plane nodes. This is a manual override that can be\nused instead of relying on Pepr to automatically watch and update the values"
         },
-        "kubenodeCIDRS": {
+        "kubeNodeCIDRs": {
           "type": "array",
           "items": {
             "type": "string"
           },
-          "description": "cidr(s) for all Kubernetes nodes (not just control plane). Similar reason to above,annual\noverride instead of relying on watch"
+          "description": "CIDR(s) for all Kubernetes nodes (not just control plane). Similar reason to above,annual\noverride instead of relying on watch"
         }
       },
       "required": [],

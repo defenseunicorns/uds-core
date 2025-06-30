@@ -35,15 +35,15 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
             networking: {
               type: "object",
               properties: {
-                kubeapiCIDR: {
+                kubeApiCIDR: {
                   type: "string",
                   description:
-                    "cidr range for your Kubernetes control plane nodes. This is a manual override that can be used instead of relying on Pepr to automatically watch and update the values",
+                    "CIDR range for your Kubernetes control plane nodes. This is a manual override that can be used instead of relying on Pepr to automatically watch and update the values",
                 },
-                kubenodeCIDRS: {
+                kubeNodeCIDRs: {
                   type: "array",
                   description:
-                    "cidr(s) for all Kubernetes nodes (not just control plane). Similar reason to above,annual override instead of relying on watch",
+                    "CIDR(s) for all Kubernetes nodes (not just control plane). Similar reason to above,annual override instead of relying on watch",
                   items: {
                     type: "string",
                   },

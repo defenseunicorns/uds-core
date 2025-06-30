@@ -110,15 +110,15 @@ export async function updateCfg(cfg: ClusterConfig) {
   await handleCAUpdate(expose);
 
   // Handle changes to the kubeApiCidr
-  if (networking?.kubeapiCIDR !== UDSConfig.kubeApiCidr) {
-    UDSConfig.kubeApiCidr = networking?.kubeapiCIDR;
+  if (networking?.kubeApiCIDR !== UDSConfig.kubeApiCidr) {
+    UDSConfig.kubeApiCidr = networking?.kubeApiCIDR;
     // This re-runs the "init" function to update netpols if necessary
     configLog.debug("Updating KubeAPI network policies based on change to kubeApiCidr");
     await initAPIServerCIDR();
   }
 
-  if (!areKubeNodeCidrsEqual(networking?.kubenodeCIDRS, UDSConfig.kubeNodeCidrs)) {
-    UDSConfig.kubeNodeCidrs = networking?.kubenodeCIDRS || [];
+  if (!areKubeNodeCidrsEqual(networking?.kubeNodeCIDRs, UDSConfig.kubeNodeCidrs)) {
+    UDSConfig.kubeNodeCidrs = networking?.kubeNodeCIDRs || [];
     // This re-runs the "init" function to update netpols if necessary
     configLog.debug("Updating KubeNodes network policies based on change to kubeNodeCidrs");
     await initAllNodesTarget();
@@ -157,7 +157,7 @@ export async function loadUDSConfig() {
     // Important check in case additional configs are created in window between uds-operator-config chart and pepr module chart
     if (cfgList.items.length > 1) {
       throw new Error(
-        `ClusterConfig Processing: only one ClusterConfig is allowed -- found: ${cfgList.items.length}`,
+        `ClusterConfig Processing: only one ClusterConfig is allowed -- found: ${cfgList.items.length}; ${cfgList.items.map(c => c.metadata?.name).join(", ")}`,
       );
     }
 
@@ -207,10 +207,10 @@ export function setConfig(cfg: ClusterConfig, cfgSecret: kind.Secret | undefined
     authserviceRedisUri,
 
     // Static CIDR range to use for KubeAPI instead of k8s watch
-    kubeApiCidr: cfg.spec?.networking?.kubeapiCIDR || "",
+    kubeApiCidr: cfg.spec?.networking?.kubeApiCIDR || "",
 
     // Static CIDRs to use for KubeNodes instead of k8s watch. Comma separated list of CIDRs.
-    kubeNodeCidrs: cfg.spec?.networking?.kubenodeCIDRS || [],
+    kubeNodeCidrs: cfg.spec?.networking?.kubeNodeCIDRs || [],
 
     // Track if UDS Core identity-authorization layer is deployed
     isIdentityDeployed: false,

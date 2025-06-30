@@ -44,15 +44,15 @@ export interface Expose {
 
 export interface Networking {
   /**
-   * cidr range for your Kubernetes control plane nodes. This is a manual override that can be
+   * CIDR range for your Kubernetes control plane nodes. This is a manual override that can be
    * used instead of relying on Pepr to automatically watch and update the values
    */
-  kubeapiCIDR?: string;
+  kubeApiCIDR?: string;
   /**
-   * cidr(s) for all Kubernetes nodes (not just control plane). Similar reason to above,annual
+   * CIDR(s) for all Kubernetes nodes (not just control plane). Similar reason to above,annual
    * override instead of relying on watch
    */
-  kubenodeCIDRS?: string[];
+  kubeNodeCIDRs?: string[];
 }
 
 export interface Policy {

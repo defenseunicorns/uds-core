@@ -90,7 +90,7 @@ sidebar:
     </tr>
   </thead>
   <tbody>
-    <tr><td style="white-space: nowrap;">kubeapiCIDR</td><td style="white-space: nowrap;">string</td><td>cidr range for your Kubernetes control plane nodes. This is a manual override that can be used instead of relying on Pepr to automatically watch and update the values</td></tr><tr><td style="white-space: nowrap;">kubenodeCIDRS</td><td style="white-space: nowrap;">string[]</td><td>cidr(s) for all Kubernetes nodes (not just control plane). Similar reason to above,annual override instead of relying on watch</td></tr>
+    <tr><td style="white-space: nowrap;">kubeApiCIDR</td><td style="white-space: nowrap;">string</td><td>CIDR range for your Kubernetes control plane nodes. This is a manual override that can be used instead of relying on Pepr to automatically watch and update the values</td></tr><tr><td style="white-space: nowrap;">kubeNodeCIDRs</td><td style="white-space: nowrap;">string[]</td><td>CIDR(s) for all Kubernetes nodes (not just control plane). Similar reason to above,annual override instead of relying on watch</td></tr>
   </tbody>
 </table>
 </div>

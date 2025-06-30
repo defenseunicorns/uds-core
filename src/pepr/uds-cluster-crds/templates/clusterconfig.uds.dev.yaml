@@ -51,11 +51,11 @@ spec:
                   type: object
                 networking:
                   properties:
-                    kubeapiCIDR:
-                      description: cidr range for your Kubernetes control plane nodes. This is a manual override that can be used instead of relying on Pepr to automatically watch and update the values
+                    kubeApiCIDR:
+                      description: CIDR range for your Kubernetes control plane nodes. This is a manual override that can be used instead of relying on Pepr to automatically watch and update the values
                       type: string
-                    kubenodeCIDRS:
-                      description: cidr(s) for all Kubernetes nodes (not just control plane). Similar reason to above,annual override instead of relying on watch
+                    kubeNodeCIDRs:
+                      description: CIDR(s) for all Kubernetes nodes (not just control plane). Similar reason to above,annual override instead of relying on watch
                       items:
                         type: string
                       type: array
