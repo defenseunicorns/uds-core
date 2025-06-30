@@ -22,8 +22,6 @@ const mockPatchStatus: MockedFunction<() => Promise<void>> = vi.fn();
 const mockReconcileSharedEgressResources: MockedFunction<() => Promise<void>> = vi.fn();
 const mockWriteEvent = vi.fn();
 
-// jest.mock("../controllers/config/config");
-
 vi.mock("kubernetes-fluent-client");
 vi.mock("../../config");
 vi.mock("../controllers/istio/namespace", () => ({

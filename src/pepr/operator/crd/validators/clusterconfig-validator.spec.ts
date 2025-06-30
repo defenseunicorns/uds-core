@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { describe, expect, it, jest } from "@jest/globals";
 import { PeprValidateRequest } from "pepr";
+import { describe, expect, it } from "vitest";
 import { ClusterConfig } from "../generated/clusterconfig-v1alpha1";
 import { validateCfg, validateCfgUpdate } from "./clusterconfig-validator";
 
@@ -80,8 +80,8 @@ describe("ClusterConfig Update validation", () => {
   const makeMockReq = (cfg: ClusterConfig = mockCfg) => {
     return {
       Raw: cfg,
-      Approve: jest.fn(),
-      Deny: jest.fn(),
+      Approve: vi.fn(),
+      Deny: vi.fn(),
     } as unknown as PeprValidateRequest<ClusterConfig>;
   };
 
