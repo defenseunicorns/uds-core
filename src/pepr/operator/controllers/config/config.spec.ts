@@ -78,7 +78,8 @@ vi.mock("pepr", () => {
   } as kind.Secret;
 
   return {
-    K8s: vi.fn()
+    K8s: vi
+      .fn()
       // valid ClusterConfig and config secret
       .mockReturnValueOnce({
         InNamespace: vi.fn().mockReturnValue({
