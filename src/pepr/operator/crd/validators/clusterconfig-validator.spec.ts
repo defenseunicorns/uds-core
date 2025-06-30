@@ -4,7 +4,7 @@
  */
 
 import { PeprValidateRequest } from "pepr";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { ClusterConfig } from "../generated/clusterconfig-v1alpha1";
 import { validateCfg, validateCfgUpdate } from "./clusterconfig-validator";
 
