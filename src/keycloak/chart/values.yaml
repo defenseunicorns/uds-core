@@ -108,7 +108,7 @@ updateStrategy: RollingUpdate
 restartPolicy: Always
 
 # Termination grace period in seconds for Keycloak shutdown. Clusters with a large cache might need to extend this to give Infinispan more time to rebalance
-terminationGracePeriodSeconds: 5
+terminationGracePeriodSeconds: 60
 
 # The internal Kubernetes cluster domain
 clusterDomain: cluster.local
