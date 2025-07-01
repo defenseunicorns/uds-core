@@ -13,8 +13,10 @@ spec:
       redirectUris:
         {{- if .Values.adminDomain }}
         - "https://grafana.{{ .Values.adminDomain }}/login/generic_oauth"
+        - "https://grafana.{{ .Values.adminDomain }}/login"
         {{- else }}
         - "https://grafana.admin.{{ .Values.domain }}/login/generic_oauth"
+        - "https://grafana.admin.{{ .Values.domain }}/login"
         {{- end }}
 
   monitor:
