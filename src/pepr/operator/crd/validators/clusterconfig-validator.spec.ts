@@ -37,7 +37,7 @@ describe("ClusterConfigValidator", () => {
   it("throws errors for wrong name", () => {
     const wrongNameCfg = { ...mockCfg, metadata: { name: "wrong-name", namespace: "pepr-system" } };
     expect(() => validateCfg(wrongNameCfg)).toThrowError(
-      "ClusterConfig Validation: namespace or name is invalid",
+      "ClusterConfig: namespace or name is invalid; expected 'pepr-system' and 'uds-cluster-config'",
     );
   });
 
@@ -47,7 +47,7 @@ describe("ClusterConfigValidator", () => {
       metadata: { name: "uds-cluster-config", namespace: "invalid" },
     };
     expect(() => validateCfg(wrongNameCfg)).toThrowError(
-      "ClusterConfig Validation: namespace or name is invalid",
+      "ClusterConfig: namespace or name is invalid; expected 'pepr-system' and 'uds-cluster-config'",
     );
   });
 
@@ -57,7 +57,7 @@ describe("ClusterConfigValidator", () => {
       spec: { ...mockCfg.spec!, expose: { ...mockCfg.spec!.expose, caCert: "invalid" } },
     };
     expect(() => validateCfg(invalidCaCert)).toThrowError(
-      "ClusterConfig Validation: caCert must be base64 encoded -- found invalid value",
+      "ClusterConfig: caCert must be base64 encoded; found invalid value",
     );
   });
 
@@ -99,7 +99,7 @@ describe("ClusterConfig Update validation", () => {
     const req = makeMockReq(wrongNameCfg);
     await validateCfgUpdate(req);
     expect(req.Deny).toHaveBeenCalledWith(
-      "Failed to validate UDSConfig update: Error: ClusterConfig Validation: namespace or name is invalid",
+      "Validation failed: ClusterConfig: namespace or name is invalid; expected 'pepr-system' and 'uds-cluster-config'",
     );
   });
 });

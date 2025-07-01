@@ -11,20 +11,22 @@ export async function validateCfgUpdate(req: PeprValidateRequest<ClusterConfig>)
   try {
     validateCfg(req.Raw);
   } catch (e) {
-    return req.Deny(`Validation failed: ${e}`);
+    return req.Deny(`Validation failed: ${e.message}`);
   }
   return req.Approve();
 }
 
 export function validateCfg(cfg: ClusterConfig) {
   if (cfg.metadata?.namespace !== "pepr-system" || cfg.metadata?.name !== "uds-cluster-config") {
-    throw new Error("ClusterConfig: namespace or name is invalid");
+    throw new Error(
+      "ClusterConfig: namespace or name is invalid; expected 'pepr-system' and 'uds-cluster-config'",
+    );
   }
 
   // Validate that the cacert is base64 encoded
   if (cfg.spec?.expose.caCert && cfg.spec.expose.caCert !== "###ZARF_VAR_CA_CERT###") {
     if (!isBase64(cfg.spec.expose.caCert)) {
-      throw new Error("ClusterConfig: caCert must be base64 encoded -- found invalid value");
+      throw new Error("ClusterConfig: caCert must be base64 encoded; found invalid value");
     }
   }
 }

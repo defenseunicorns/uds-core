@@ -140,5 +140,9 @@ export async function retryWithDelay<T>(
  * @returns {boolean} - The result of the validation.
  */
 export function isBase64(str: string) {
-  return Buffer.from(str, "base64").toString("base64") === str;
+  try {
+    return Buffer.from(str, "base64").toString("base64") === str;
+  } catch {
+    return false;
+  }
 }
