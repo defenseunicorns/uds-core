@@ -528,3 +528,39 @@ spec:
             port:
               number: 8000
     ```
+
+We're refactoring the ambient waypoint package management in the Istio operator to:
+
+One Waypoint per Package (instead of per namespace)
+Each UDS package gets its own dedicated waypoint
+Enables better isolation and management of mixed authentication applications
+Kubernetes Owner References
+All waypoint resources (Gateways, RequestAuthentications, AuthorizationPolicies) are owned by their parent UDSPackage
+Kubernetes garbage collection automatically cleans up resources when packages are deleted
+Reduces manual cleanup logic and potential resource leaks
+Improved Resource Management
+Standardized labeling with uds/ prefix
+Consistent app.kubernetes.io/managed-by: uds-operator label
+Better traceability with package and namespace labels
+Simplified Cleanup
+Delete the waypoint gateway, and let Kubernetes handle the rest
+Reduced complexity and improved reliability
+
+
+```bash
+# update src/istio/zarf.yaml to include the following:
+#
+#  - name: gateway-api-crds
+#    required: true
+#    import:
+#    path: common
+
+uds run dev-setup
+npx pepr dev --confirm # in new terminal
+zarf dev deploy src/keycloak --flavor upstream
+# port forward keycloak in k9s with shift+f
+zarf dev deploy src/authservice --flavor upstream
+zarf dev deploy src/test --flavor upstream
+zarf p ls # view packages deployed
+zarf p remove uds-core-test-package --confirm
+```

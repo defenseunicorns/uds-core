@@ -3,27 +3,58 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
+import { V1OwnerReference } from "@kubernetes/client-node";
 import { a, K8s, kind } from "pepr";
-import { UDSConfig } from "../../../config";
-import {
-  IstioAuthorizationPolicy,
-  IstioRequestAuthentication,
-  K8sGateway,
-  UDSPackage,
-} from "../../crd";
-import { Action } from "../../crd/generated/istio/authorizationpolicy-v1beta1";
+import { K8sGateway, UDSPackage } from "../../crd";
 import { log } from "./istio-resources";
+
+// Constants
+const WAYPOINT_SUFFIX = "-waypoint";
+const UDS_MANAGED_LABEL = "uds/managed-by";
+const UDS_PACKAGE_LABEL = "uds/package";
+const UDS_NAMESPACE_LABEL = "uds/namespace";
+const ISTIO_WAYPOINT_LABEL = "istio.io/use-waypoint";
+
+// Utility Functions
+function getWaypointName(clientId: string): string {
+  return `${clientId}${WAYPOINT_SUFFIX}`;
+}
+
+function createOwnerReference(pkg: UDSPackage): V1OwnerReference {
+  return {
+    apiVersion: pkg.apiVersion || "uds.dev/v1alpha1",
+    kind: pkg.kind || "UDSPackage",
+    name: pkg.metadata?.name || "",
+    uid: pkg.metadata?.uid || "",
+    controller: true,
+    blockOwnerDeletion: true,
+  };
+}
+
+function createManagedLabels(
+  pkg: UDSPackage,
+  waypointName: string,
+  additionalLabels: Record<string, string> = {},
+) {
+  return {
+    [UDS_MANAGED_LABEL]: "uds-operator",
+    [UDS_PACKAGE_LABEL]: pkg.metadata?.name || "",
+    [UDS_NAMESPACE_LABEL]: pkg.metadata?.namespace || "",
+    [ISTIO_WAYPOINT_LABEL]: waypointName,
+    ...additionalLabels,
+  };
+}
 
 interface AmbientPackageInfo {
   pkg: UDSPackage;
   selectors: Array<Record<string, string>>;
   waypointName: string;
+  clientId: string;
+  namespace: string;
 }
 
 // In-memory store for packages that need ambient waypoint
 const ambientPackages = new Map<string, AmbientPackageInfo>();
-// Track waypoint readiness state
-const waypointReadiness = new Map<string, boolean>();
 
 /**
  * Checks if a service matches any of the provided selectors
@@ -35,110 +66,35 @@ function serviceMatchesSelectors(
   svc: a.Service,
   selectors: Array<Record<string, string>>,
 ): boolean {
-  if (!svc.spec?.selector) return false;
-  return selectors.some(selector =>
-    Object.entries(selector).every(([k, v]) => svc.spec?.selector?.[k] === v),
+  return Boolean(
+    svc.spec?.selector &&
+      selectors.some(selector =>
+        Object.entries(selector).every(([k, v]) => svc.spec?.selector?.[k] === v),
+      ),
   );
 }
 
 /**
- * Generates a unique key for a package
- * @param pkg - The UDS package
- * @returns string in format "namespace/name"
- */
-function getPackageKey(pkg: UDSPackage): string {
-  return `${pkg.metadata?.namespace}/${pkg.metadata?.name}`;
-}
-
-/**
- * Generates a unique key for a waypoint
- * @param namespace - The namespace of the waypoint
- * @param waypointName - The name of the waypoint
- * @returns string in format "namespace/name"
- */
-function getWaypointKey(namespace: string, waypointName: string): string {
-  return `${namespace}/${waypointName}`;
-}
-
-/**
  * Checks if a gateway is in a ready state
- * @param gateway - The gateway to check
- * @returns boolean indicating if the gateway is ready
  */
 function isGatewayReady(gateway: K8sGateway): boolean {
   const conditions = gateway.status?.conditions || [];
   const acceptedCondition = conditions.find(c => c.type === "Accepted");
   const programmedCondition = conditions.find(c => c.type === "Programmed");
 
-  const isReady = Boolean(
-    acceptedCondition?.status === "True" && programmedCondition?.status === "True",
-  );
-
-  const logData = {
-    namespace: gateway.metadata?.namespace,
-    name: gateway.metadata?.name,
-    conditions: conditions.map(c => ({
-      type: c.type,
-      status: c.status,
-      reason: c.reason,
-      message: "message" in c ? String(c.message) : undefined,
-      lastTransitionTime: "lastTransitionTime" in c ? String(c.lastTransitionTime) : undefined,
-    })),
-    generation: gateway.metadata?.generation,
-    observedGeneration: gateway.metadata?.generation,
-  };
-
-  if (isReady) {
-    log.debug(`Gateway ${gateway.metadata?.name} is ready`, logData);
-  } else {
-    log.debug(`Gateway ${gateway.metadata?.name} is not ready`, logData, {
-      acceptedStatus: acceptedCondition?.status,
-      programmedStatus: programmedCondition?.status,
-    });
-  }
-
-  return isReady;
+  return Boolean(acceptedCondition?.status === "True" && programmedCondition?.status === "True");
 }
 
 /**
  * Verifies that a waypoint gateway exists and returns it
- * @param namespace - The namespace of the waypoint
- * @param waypointName - The name of the waypoint
- * @returns The found K8sGateway
- * @throws Error if the waypoint is not found
  */
 async function verifyWaypointExists(namespace: string, waypointName: string): Promise<K8sGateway> {
-  const startTime = Date.now();
-  const logContext = { namespace, waypointName };
-
-  log.debug(`Verifying waypoint gateway exists`, logContext);
-
   try {
     const gateway = await K8s(K8sGateway).InNamespace(namespace).Get(waypointName);
-    const duration = Date.now() - startTime;
-
-    log.debug(`Successfully verified waypoint gateway exists`, {
-      ...logContext,
-      durationMs: duration,
-      gatewayStatus: gateway.status,
-      generation: gateway.metadata?.generation,
-      resourceVersion: gateway.metadata?.resourceVersion,
-    });
-
+    log.debug("Verified waypoint gateway exists", { namespace, waypointName });
     return gateway;
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    const errorStack = error instanceof Error ? error.stack : "No stack trace";
-    const duration = Date.now() - startTime;
-
-    log.error(`Failed to verify waypoint gateway`, {
-      ...logContext,
-      error: errorMessage,
-      stack: errorStack,
-      durationMs: duration,
-      errorType: error?.constructor?.name || typeof error,
-    });
-
     throw new Error(
       `Waypoint Gateway ${waypointName} not found in namespace ${namespace}: ${errorMessage}`,
     );
@@ -147,237 +103,71 @@ async function verifyWaypointExists(namespace: string, waypointName: string): Pr
 
 /**
  * Creates a waypoint gateway for the given package
- * @param pkg - The UDS package to create the waypoint for
- * @returns A promise that resolves to the name of the created waypoint
- * @throws Error if the waypoint cannot be created
  */
-export async function createWaypointGateway(pkg: UDSPackage): Promise<string> {
-  const { namespace, name } = pkg.metadata!;
-  log.info(`Creating waypoint gateway for package: ${namespace}/${name}`);
+export async function createWaypointGateway(pkg: UDSPackage, clientId: string): Promise<string> {
+  const { namespace, name } = pkg.metadata || {};
+  if (!namespace || !name) {
+    throw new Error("Package metadata is missing namespace or name");
+  }
 
-  // Sanitize the namespace and name to create a valid k8s resource name
-  const sanitizeName = (s: string) => s.toLowerCase().replace(/[^a-z0-9-]/g, "-");
-  const waypointName = `${sanitizeName(namespace!)}-${sanitizeName(name!)}-waypoint`;
-  log.debug(`Generated waypoint name: ${waypointName}`, { namespace });
-
-  const labels = {
-    "istio.io/waypoint-for": "all",
-    "app.kubernetes.io/created-by": "uds-operator",
-    "app.kubernetes.io/part-of": name!,
-  };
+  const waypointName = getWaypointName(clientId);
+  log.info(`Creating waypoint gateway for package: ${namespace}/${name}`, { waypointName });
 
   try {
-    log.debug(`Checking if waypoint gateway ${waypointName} already exists`, { namespace });
-    const existing = await K8s(K8sGateway).InNamespace(namespace!).Get(waypointName);
+    // Check if gateway already exists and is ready
+    const existing = await K8s(K8sGateway).InNamespace(namespace).Get(waypointName);
     if (isGatewayReady(existing)) {
-      log.info(`Waypoint Gateway ${waypointName} already exists and is ready`, { namespace });
+      log.info("Waypoint Gateway already exists and is ready", { namespace, waypointName });
       return waypointName;
     }
-    log.info(`Waypoint Gateway ${waypointName} exists but is not ready, waiting...`, { namespace });
+    log.info("Waypoint Gateway exists but is not ready, waiting...", { namespace, waypointName });
   } catch (error) {
-    log.info(`Waypoint Gateway ${waypointName} does not exist, will create it`, {
+    // Gateway doesn't exist, create it
+    log.info("Creating new Waypoint Gateway", { namespace, waypointName });
+
+    const gateway = new K8sGateway();
+    gateway.metadata = {
+      name: waypointName,
       namespace,
-      error: error instanceof Error ? error.message : String(error),
-    });
+      labels: createManagedLabels(pkg, waypointName, {
+        "app.kubernetes.io/component": "ambient-waypoint",
+        "app.kubernetes.io/name": clientId,
+        "istio.io/waypoint-for": "all",
+      }),
+      ownerReferences: [createOwnerReference(pkg)],
+      annotations: {
+        "uds.dev/created-at": new Date().toISOString(),
+        ...(pkg.metadata?.annotations || {}),
+      },
+    };
+
+    gateway.spec = {
+      gatewayClassName: "istio-waypoint",
+      listeners: [
+        {
+          name: "mesh",
+          port: 15008,
+          protocol: "HBONE",
+        },
+      ],
+    };
+
+    try {
+      await K8s(K8sGateway).Apply(gateway, { force: true });
+      log.info("Successfully applied Waypoint Gateway", { namespace, waypointName });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      log.error("Failed to apply Waypoint Gateway", {
+        namespace,
+        waypointName,
+        error: errorMessage,
+      });
+      throw new Error(`Failed to create waypoint gateway: ${errorMessage}`);
+    }
   }
 
-  log.info(`Creating new Waypoint Gateway: ${waypointName} in namespace ${namespace}`);
-  const gateway = new K8sGateway();
-  gateway.metadata = {
-    name: waypointName,
-    namespace,
-    labels: {
-      ...labels,
-      ...(pkg.metadata?.labels || {}),
-    },
-    annotations: {
-      "uds.dev/created-at": new Date().toISOString(),
-      ...(pkg.metadata?.annotations || {}),
-    },
-  };
-
-  gateway.spec = {
-    gatewayClassName: "istio-waypoint",
-    listeners: [
-      {
-        name: "mesh",
-        port: 15008,
-        protocol: "HBONE",
-      },
-    ],
-  };
-
-  log.debug(`Applying Waypoint Gateway resource`, {
-    namespace,
-    waypointName,
-    spec: JSON.stringify(gateway.spec),
-  });
-
-  try {
-    await K8s(K8sGateway).Apply(gateway, { force: true });
-    log.info(`Successfully applied Waypoint Gateway: ${waypointName}`, { namespace });
-  } catch (error) {
-    log.error(`Failed to apply Waypoint Gateway ${waypointName}`, {
-      namespace,
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
-    });
-    throw error;
-  }
-
-  log.info(`Waiting for Waypoint Gateway ${waypointName} to become ready`, { namespace });
-  return waitForWaypointReady(waypointName, namespace!);
-}
-
-/**
- * Creates a RequestAuthentication resource for the waypoint
- * @param pkg - The UDS package to create the authentication for
- * @param waypointName - The name of the waypoint gateway
- * @param clientId - The OIDC client ID to authenticate
- * @returns A promise that resolves when the RequestAuthentication is created
- * @throws Error if the waypoint doesn't exist or creation fails
- */
-export async function createRequestAuthentication(
-  pkg: UDSPackage,
-  waypointName: string,
-  clientId: string,
-): Promise<void> {
-  const { namespace, name } = pkg.metadata!;
-
-  await verifyWaypointExists(namespace!, waypointName);
-
-  const ra = new IstioRequestAuthentication();
-  ra.metadata = {
-    name: `${name}-jwt`,
-    namespace,
-  };
-
-  ra.spec = {
-    targetRef: {
-      kind: "Gateway",
-      group: "gateway.networking.k8s.io",
-      name: waypointName,
-    },
-    jwtRules: [
-      {
-        issuer: `https://${UDSConfig.domain}/realms/uds`,
-        jwksUri: `http://keycloak-http.keycloak.svc.cluster.local:8080/realms/uds/protocol/openid-connect/certs`,
-        audiences: [clientId],
-      },
-    ],
-  };
-
-  await K8s(IstioRequestAuthentication).Apply(ra, { force: true });
-}
-
-/**
- * Creates a Deny AuthorizationPolicy for the waypoint
- * @param pkg - The UDS package to create the policy for
- * @param waypointName - The name of the waypoint gateway
- * @returns A promise that resolves when the policy is created
- * @throws Error if the waypoint doesn't exist or creation fails
- */
-export async function createDenyPolicy(pkg: UDSPackage, waypointName: string): Promise<void> {
-  const namespace = pkg.metadata!.namespace;
-
-  await verifyWaypointExists(namespace!, waypointName);
-
-  const policy = new IstioAuthorizationPolicy();
-  policy.metadata = {
-    name: `deny-unauth-${pkg.metadata?.name}`,
-    namespace: namespace!,
-  };
-
-  policy.spec = {
-    action: Action.Deny,
-    targetRef: {
-      kind: "Gateway",
-      group: "gateway.networking.k8s.io",
-      name: waypointName,
-    },
-    rules: [
-      {
-        from: [
-          {
-            source: {
-              notRequestPrincipals: [`https://${UDSConfig.domain}/realms/uds/*`],
-            },
-          },
-        ],
-      },
-    ],
-  };
-
-  await K8s(IstioAuthorizationPolicy).Apply(policy, { force: true });
-}
-
-/**
- * Creates an AuthorizationPolicy to allow authentication requests to Keycloak
- * @param pkg - The UDS package to create the policy for
- * @param waypointName - The name of the waypoint gateway
- * @returns A promise that resolves when the policy is created
- * @throws Error if the waypoint doesn't exist or creation fails
- */
-export async function createAuthServicePolicy(
-  pkg: UDSPackage,
-  waypointName: string,
-): Promise<void> {
-  const { namespace, name } = pkg.metadata!;
-
-  await verifyWaypointExists(namespace!, waypointName);
-
-  const policy = new IstioAuthorizationPolicy();
-  policy.metadata = {
-    name: `authservice-${name}`,
-    namespace,
-  };
-
-  policy.spec = {
-    action: Action.Custom,
-    provider: {
-      name: "authservice",
-    },
-    targetRef: {
-      kind: "Gateway",
-      group: "gateway.networking.k8s.io",
-      name: waypointName,
-    },
-    rules: [
-      {
-        to: [
-          {
-            operation: {
-              notPaths: ["/stats/prometheus"],
-              notPorts: ["15020"],
-            },
-          },
-        ],
-        when: [
-          {
-            key: "request.headers[authorization]",
-            notValues: ["*"],
-          },
-        ],
-      },
-    ],
-  };
-
-  await K8s(IstioAuthorizationPolicy).Apply(policy, { force: true });
-}
-
-/**
- * Checks if ambient mode is enabled in the given namespace
- * @param namespace - The namespace to check
- * @returns A promise that resolves to a boolean indicating if ambient is enabled
- */
-export async function isAmbientEnabled(namespace: string): Promise<boolean> {
-  try {
-    const ns = await K8s(kind.Namespace).Get(namespace);
-    return ns.metadata?.labels?.["istio.io/dataplane-mode"] === "ambient";
-  } catch (error) {
-    log.error(`Error checking if namespace ${namespace} is ambient enabled`, { error });
-    return false;
-  }
+  log.info("Waiting for Waypoint Gateway to become ready", { namespace, waypointName });
+  return waitForWaypointReady(waypointName, namespace);
 }
 
 /**
@@ -385,47 +175,55 @@ export async function isAmbientEnabled(namespace: string): Promise<boolean> {
  * @param pkg - The UDS package to register
  * @returns A promise that resolves when registration is complete
  */
-export async function registerAmbientPackage(pkg: UDSPackage): Promise<void> {
-  const key = getPackageKey(pkg);
+export async function registerAmbientPackage(pkg: UDSPackage, clientId: string): Promise<void> {
+  const namespace = pkg.metadata?.namespace;
+  if (!namespace) {
+    log.warn("Cannot register package without a namespace", { clientId });
+    return;
+  }
+
+  const key = clientId;
+  const waypointName = getWaypointName(clientId);
   const selectors =
     pkg.spec?.sso
       ?.filter(s => s.enableAuthserviceSelector)
       .map(s => s.enableAuthserviceSelector || {}) || [];
 
-  const waypointName = `${pkg.metadata?.namespace}-${pkg.metadata?.name}-waypoint`;
-  ambientPackages.set(key, { pkg, selectors, waypointName });
+  // Store package info with all required fields
+  const packageInfo: AmbientPackageInfo = {
+    pkg,
+    selectors,
+    waypointName,
+    clientId,
+    namespace,
+  };
+
+  ambientPackages.set(key, packageInfo);
 
   // Reconcile existing services and pods
   try {
     // Reconcile services
-    const services = await K8s(a.Service)
-      .InNamespace(pkg.metadata?.namespace || "")
-      .Get();
+    const services = await K8s(a.Service).InNamespace(namespace).Get();
     for (const svc of services.items || []) {
       await reconcileService(svc);
     }
 
     // Reconcile pods
-    const pods = await K8s(a.Pod)
-      .InNamespace(pkg.metadata?.namespace || "")
-      .Get();
+    const pods = await K8s(a.Pod).InNamespace(namespace).Get();
     for (const pod of pods.items || []) {
       await reconcilePod(pod);
     }
   } catch (error) {
-    log.error(`Error reconciling existing resources for package ${key}`, { error });
+    log.error(`Error reconciling existing resources for package ${key}`, {
+      error,
+      namespace,
+      clientId,
+    });
   }
 }
 
 /**
  * Waits for a waypoint gateway to become ready
- * @param name - The name of the waypoint gateway
- * @param namespace - The namespace of the waypoint gateway
- * @param options - Configuration options
- * @param options.maxAttempts - Maximum number of attempts (default: 30)
- * @param options.intervalMs - Interval between attempts in milliseconds (default: 1000)
- * @returns A promise that resolves with the waypoint name when ready
- * @throws Error if the waypoint doesn't become ready within the specified attempts
  */
 async function waitForWaypointReady(
   name: string,
@@ -433,147 +231,138 @@ async function waitForWaypointReady(
   options: { maxAttempts?: number; intervalMs?: number } = {},
 ): Promise<string> {
   const { maxAttempts = 10, intervalMs = 2000 } = options;
-  log.info(`Waiting for Waypoint Gateway ${name} in namespace ${namespace} to become ready`, {
-    maxAttempts,
-    intervalMs,
-  });
+  const logContext = { name, namespace, maxAttempts, intervalMs };
+
+  log.info("Waiting for Waypoint Gateway to become ready", logContext);
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    const attemptStartTime = Date.now();
+    const attemptStart = Date.now();
+
     try {
-      log.debug(`Attempt ${attempt}/${maxAttempts}: Checking if waypoint is ready`, {
-        name,
-        namespace,
-      });
+      log.debug(`Checking waypoint status (attempt ${attempt}/${maxAttempts})`, logContext);
       const gateway = await verifyWaypointExists(namespace, name);
 
       if (isGatewayReady(gateway)) {
-        log.info(`Waypoint Gateway ${name} is ready`, {
-          namespace,
+        log.info("Waypoint Gateway is ready", {
+          ...logContext,
           attempt,
-          totalTimeMs: Date.now() - attemptStartTime,
+          durationMs: Date.now() - attemptStart,
         });
         return name;
       }
 
-      log.debug(`Waypoint Gateway ${name} exists but is not ready yet`, {
-        namespace,
+      log.debug("Waypoint Gateway not ready yet", {
+        ...logContext,
         attempt,
-        conditions: gateway.status?.conditions,
+        conditions: gateway.status?.conditions?.map(c => ({
+          type: c.type,
+          status: c.status,
+          message: c.message,
+          reason: c.reason,
+        })),
       });
     } catch (error) {
-      log.warn(`Attempt ${attempt}/${maxAttempts}: Error checking waypoint status`, {
-        name,
-        namespace,
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined,
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      log.warn("Error checking waypoint status", {
+        ...logContext,
+        attempt,
+        error: errorMessage,
       });
     }
 
     if (attempt < maxAttempts) {
-      log.debug(`Waiting ${intervalMs}ms before next attempt`, { name, namespace, attempt });
       await new Promise(resolve => setTimeout(resolve, intervalMs));
     }
   }
 
-  const errorMessage = `Timed out waiting for Waypoint Gateway ${name} in namespace ${namespace} to become ready after ${maxAttempts} attempts`;
-  log.error(errorMessage, { name, namespace, maxAttempts, intervalMs });
+  const errorMessage = `Waypoint Gateway ${name} in namespace ${namespace} did not become ready after ${maxAttempts} attempts`;
+  log.error(errorMessage, logContext);
   throw new Error(errorMessage);
 }
 
 /**
  * Sets up all resources needed for ambient waypoint functionality
- * @param pkg - The UDS package to set up the waypoint for
- * @param clientId - The OIDC client ID for authentication
- * @returns A promise that resolves when setup is complete
- * @throws Error if any part of the setup fails
  */
 export async function setupAmbientWaypoint(pkg: UDSPackage, clientId: string): Promise<void> {
-  const { namespace, name } = pkg.metadata!;
-  log.info(`Starting ambient waypoint setup for package: ${namespace}/${name}`, { clientId });
+  const { namespace, name } = pkg.metadata || {};
+  if (!namespace || !name) {
+    throw new Error("Package metadata is missing namespace or name");
+  }
 
-  const waypointName = `${namespace}-${name}-waypoint`;
-  const waypointKey = getWaypointKey(namespace!, waypointName);
-  log.debug(`Generated waypoint name: ${waypointName}, key: ${waypointKey}`);
+  const waypointName = getWaypointName(clientId);
+  log.info("Starting ambient waypoint setup", { namespace, package: name, clientId, waypointName });
 
   try {
-    log.info("Phase 1: Creating waypoint gateway");
-    await createWaypointGateway(pkg);
-    log.info("Waypoint gateway created, waiting for readiness");
-    await waitForWaypointReady(waypointName, namespace!);
-    log.info("Waypoint gateway is ready");
+    log.debug("Creating waypoint gateway", { namespace, waypointName });
+    await createWaypointGateway(pkg, clientId);
 
-    await Promise.all([
-      createRequestAuthentication(pkg, waypointName, clientId),
-      createDenyPolicy(pkg, waypointName),
-      createAuthServicePolicy(pkg, waypointName),
-    ]);
+    log.debug("Waiting for waypoint to become ready", { namespace, waypointName });
+    await waitForWaypointReady(waypointName, namespace);
 
-    // Phase 2: Activation
-    waypointReadiness.set(waypointKey, true);
-    await registerAmbientPackage(pkg);
+    log.info("Successfully set up ambient waypoint", {
+      namespace,
+      package: name,
+      waypointName,
+    });
   } catch (error) {
-    waypointReadiness.delete(waypointKey);
-    log.error(`Failed to set up ambient waypoint for ${namespace}/${name}`, { error });
-    throw error;
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    log.error("Failed to set up ambient waypoint", {
+      namespace,
+      package: name,
+      waypointName,
+      error: errorMessage,
+    });
+    throw new Error(`Failed to set up ambient waypoint: ${errorMessage}`);
   }
 }
 
 /**
  * Unregisters a package for ambient waypoint handling
- * @param pkg - The UDS package to unregister
- * @returns A promise that resolves when unregistration is complete
  */
-export async function unregisterAmbientPackage(pkg: UDSPackage): Promise<void> {
-  const { namespace, name } = pkg.metadata!;
+export async function unregisterAmbientPackage(pkg: UDSPackage, clientId: string): Promise<void> {
+  const { namespace, name } = pkg.metadata || {};
+  if (!namespace || !name) {
+    log.warn("Package metadata is missing namespace or name, skipping unregistration");
+    return;
+  }
 
-  const waypointName = `${name}-waypoint`;
-  const waypointKey = getWaypointKey(namespace!, waypointName);
-  const packageKey = getPackageKey(pkg);
+  const waypointName = getWaypointName(clientId);
+  const packageKey = clientId;
+  const logContext = { namespace, package: name, waypointName, clientId };
 
   try {
-    // Clean up waypoint resources
-    const cleanupTasks = [
-      // Delete Gateway
-      K8s(K8sGateway)
-        .InNamespace(namespace!)
-        .Delete(waypointName)
-        .catch(error => {
-          if (error?.status !== 404) throw error;
-        }),
+    log.info("Deleting waypoint gateway", logContext);
 
-      // Delete RequestAuthentication
-      K8s(IstioRequestAuthentication)
-        .InNamespace(namespace!)
-        .Delete(`${name}-jwt`)
-        .catch(error => {
-          if (error?.status !== 404) throw error;
-        }),
-
-      // Delete AuthorizationPolicies
-      Promise.all(
-        [`${name}-deny-unauth`, `${name}-authservice`].map(policy =>
-          K8s(IstioAuthorizationPolicy)
-            .InNamespace(namespace!)
-            .Delete(policy)
-            .catch(error => {
-              if (error?.status !== 404) throw error;
-            }),
-        ),
-      ),
-    ];
-
-    await Promise.all(cleanupTasks);
+    // Delete the waypoint gateway if it exists
+    try {
+      await K8s(K8sGateway).InNamespace(namespace).Delete(waypointName);
+      log.debug("Successfully deleted waypoint gateway", logContext);
+    } catch (error) {
+      // Ignore 404 errors as the resource might already be deleted
+      if (error?.status !== 404) {
+        throw error;
+      }
+      log.debug("Waypoint gateway not found, continuing cleanup", logContext);
+    }
 
     // Clean up in-memory state
-    waypointReadiness.delete(waypointKey);
     ambientPackages.delete(packageKey);
+    log.info("Successfully unregistered ambient waypoint", logContext);
   } catch (error) {
-    log.error(`Failed to clean up ambient waypoint resources for ${packageKey}`, { error });
-    throw error;
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    log.error("Failed to clean up ambient waypoint resources", {
+      ...logContext,
+      error: errorMessage,
+    });
+    throw new Error(`Failed to clean up ambient waypoint: ${errorMessage}`);
   }
 }
 
+/**
+ * Reconciles a service for ambient waypoint handling
+ * @param svc - The service to reconcile
+ * @returns A promise that resolves when reconciliation is complete
+ */
 export async function reconcileService(svc: a.Service): Promise<void> {
   const namespace = svc.metadata?.namespace;
   if (!namespace) return;
@@ -582,14 +371,39 @@ export async function reconcileService(svc: a.Service): Promise<void> {
     if (pkg.metadata?.namespace !== namespace) continue;
 
     if (serviceMatchesSelectors(svc, selectors)) {
-      if (svc.metadata?.labels?.["istio.io/use-waypoint"] !== waypointName) {
+      const needsUpdate =
+        svc.metadata?.labels?.["istio.io/use-waypoint"] !== waypointName ||
+        svc.metadata?.labels?.["uds/managed-by"] !== "uds-operator" ||
+        !svc.metadata?.ownerReferences?.some(
+          (ref: { kind?: string; name?: string }) =>
+            ref.kind === (pkg.kind || "UDSPackage") && ref.name === pkg.metadata?.name,
+        );
+
+      if (needsUpdate) {
         svc.metadata = {
           ...(svc.metadata || {}),
           labels: {
             ...(svc.metadata?.labels || {}),
             "istio.io/use-waypoint": waypointName,
             "istio.io/ingress-use-waypoint": "true",
+            "uds/managed-by": "uds-operator",
+            "uds/package": pkg.metadata?.name || "",
+            "uds/namespace": namespace,
           },
+          ownerReferences: [
+            ...(svc.metadata?.ownerReferences?.filter(
+              (ref: { kind?: string; name?: string }) =>
+                !(ref.kind === (pkg.kind || "UDSPackage") && ref.name === pkg.metadata?.name),
+            ) || []),
+            {
+              apiVersion: pkg.apiVersion || "uds.dev/v1alpha1",
+              kind: pkg.kind || "UDSPackage",
+              name: pkg.metadata?.name || "",
+              uid: pkg.metadata?.uid || "",
+              controller: true,
+              blockOwnerDeletion: true,
+            },
+          ],
         };
       }
       return;
@@ -609,16 +423,56 @@ export async function reconcilePod(pod: a.Pod): Promise<void> {
     );
 
     if (matches) {
-      if (pod.metadata?.labels?.["istio.io/use-waypoint"] !== waypointName) {
+      const needsUpdate =
+        pod.metadata?.labels?.["istio.io/use-waypoint"] !== waypointName ||
+        pod.metadata?.labels?.["uds/managed-by"] !== "uds-operator" ||
+        !pod.metadata?.ownerReferences?.some(
+          (ref: { kind?: string; name?: string }) =>
+            ref.kind === (pkg.kind || "UDSPackage") && ref.name === pkg.metadata?.name,
+        );
+
+      if (needsUpdate) {
         pod.metadata = {
           ...(pod.metadata || {}),
           labels: {
             ...(pod.metadata?.labels || {}),
             "istio.io/use-waypoint": waypointName,
+            "uds/managed-by": "uds-operator",
+            "uds/package": pkg.metadata?.name || "",
+            "uds/namespace": namespace,
           },
+          ownerReferences: [
+            ...(pod.metadata?.ownerReferences?.filter(
+              (ref: { kind?: string; name?: string }) =>
+                !(ref.kind === (pkg.kind || "UDSPackage") && ref.name === pkg.metadata?.name),
+            ) || []),
+            {
+              apiVersion: pkg.apiVersion || "uds.dev/v1alpha1",
+              kind: pkg.kind || "UDSPackage",
+              name: pkg.metadata?.name || "",
+              uid: pkg.metadata?.uid || "",
+              controller: true,
+              blockOwnerDeletion: true,
+            },
+          ],
         };
       }
       return;
     }
+  }
+}
+
+/**
+ * Checks if ambient mode is enabled in the given namespace
+ * @param namespace - The namespace to check
+ * @returns A promise that resolves to a boolean indicating if ambient is enabled
+ */
+export async function isAmbientEnabled(namespace: string): Promise<boolean> {
+  try {
+    const ns = await K8s(kind.Namespace).Get(namespace);
+    return ns.metadata?.labels?.["istio.io/dataplane-mode"] === "ambient";
+  } catch (error) {
+    log.error(`Error checking if namespace ${namespace} is ambient enabled`, { error });
+    return false;
   }
 }

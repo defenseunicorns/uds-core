@@ -147,7 +147,16 @@ export async function packageReconciler(pkg: UDSPackage) {
               : null;
 
           if (currentKey) {
-            await unregisterAmbientPackage(pkg);
+            // Get the first client ID that has authservice enabled for cleanup
+            if (pkg.spec?.sso) {
+              const authServiceClient = pkg.spec.sso.find(sso => sso.enableAuthserviceSelector);
+              if (authServiceClient) {
+                await unregisterAmbientPackage(pkg, authServiceClient.clientId);
+              } else {
+                // If no auth service client is found, try to clean up with the package name as fallback
+                await unregisterAmbientPackage(pkg, pkg.metadata?.name || "");
+              }
+            }
           }
         }
       } catch (error) {
@@ -295,7 +304,19 @@ export async function packageFinalizer(pkg: UDSPackage) {
     log.info(
       `Unregistering package ${pkg.metadata?.namespace}/${pkg.metadata?.name} from ambient waypoint`,
     );
-    await unregisterAmbientPackage(pkg);
+    // Get the first client ID that has authservice enabled for cleanup
+    if (pkg.spec?.sso) {
+      const authServiceClient = pkg.spec.sso.find(sso => sso.enableAuthserviceSelector);
+      if (authServiceClient) {
+        await unregisterAmbientPackage(pkg, authServiceClient.clientId);
+      } else {
+        // If no auth service client is found, try to clean up with the package name as fallback
+        await unregisterAmbientPackage(pkg, pkg.metadata?.name || "");
+      }
+    } else {
+      // If no SSO config is found, try to clean up with the package name as fallback
+      await unregisterAmbientPackage(pkg, pkg.metadata?.name || "");
+    }
   } catch (e) {
     log.debug(
       `Removal of ambient waypoint registration during finalizer failed for ${pkg.metadata?.namespace}/${pkg.metadata?.name}: ${e.message}`,
