@@ -23,7 +23,7 @@ We need to extend the operator so that it can:
 
 ## Proposal
 
-Extend the UDS Operator to provision **one shared Waypoint per namespace** *only* when an Authservice‑protected workload runs in Ambient. The operator will:
+Extend the UDS Operator to provision **one dedicated Waypoint per UDSPackage** *only* when an Authservice‑protected workload runs in Ambient. The operator will:
 
 1. **Ensure all relevant Services and Pods/Deployments are properly labeled** with `istio.io/use-waypoint` pointing to the correct Waypoint.
 2. **Update the operator to reconcile based on both Package and resource lifecycle events.**
@@ -33,13 +33,13 @@ Extend the UDS Operator to provision **one shared Waypoint per namespace** *only
 
 ## Scope and Requirements
 
-- **Automated provisioning**: One Waypoint per namespace per Authservice client *only* when needed.
+- **Automated provisioning**: One Waypoint per UDSPackage *only* when needed, ensuring isolation between packages.
     - The RequestAuthentication resource will be scoped to the Authservice client via an audience claim. Allowing for multiple waypoint configurations in a single namespace if necessary.
 - **Operator‑owned lifecycle**: Create, update, delete all related Kubernetes objects.
 - **Safe rollout**: Services are annotated *after* Waypoint readiness; automatic rollback on error.
 - **Backward compatibility**: Sidecar clusters and unprotected workloads remain unaffected.
 - **No extra config**: Developers keep using the existing `serviceMesh.mode: ambient` and `enableAuthserviceSelector` fields, nothing new to add to the CR.
-- **Low overhead**: One Envoy pod per namespace, reused across many Services.
+- **Isolation**: Each package gets its own dedicated waypoint, providing better isolation between applications.
 - **Default‑deny friendly**: Generated NetworkPolicies ensure traffic follows `ztunnel → Waypoint → Pod` only.
 - **Definition of Done**:
     1. Design doc approved by the UDS Foundations Team
@@ -51,7 +51,7 @@ Extend the UDS Operator to provision **one shared Waypoint per namespace** *only
 
 ### Resource Labeling
 
-- **Gateway resource**: Created for the namespace or for all workloads (`waypoint-for=all`).
+- **Gateway resource**: Created per package with a unique name based on the package name (`<package-name>-waypoint`).
     - This label means that the waypoint is configured for both workload and service resources. Required so that we can protect both in-cluster and pod ip traffic with their respective labels.
 - **Workload labels**: Set `istio.io/use-waypoint: <waypoint-name>`.
     - A workload label provides protection at the POD IP level, adding an additional layer of L7 protection so that requests directly to the pod IP flow through the waypoint.
@@ -60,9 +60,9 @@ Extend the UDS Operator to provision **one shared Waypoint per namespace** *only
 
 ### Operator Reconciliation Strategy
 
-### Ambient and Authservice Enabled Namespaces
+### Ambient and Authservice Enabled Packages
 
-When a Package is applied and its namespace is both ambient-enabled (`istio.io/dataplane-mode=ambient`) and has `spec.sso[].enableAuthserviceSelector` set, the operator will:
+When a Package is applied with `spec.network.serviceMesh.mode=ambient` and has `spec.sso[].enableAuthserviceSelector` set, the operator will:
 
 1. Reconcile the namespace and create the necessary Gateway and policy resources.
 2. Mutate new Services and Pods/Deployments via webhook to inject the `istio.io/use-waypoint` label.
@@ -562,5 +562,5 @@ zarf dev deploy src/keycloak --flavor upstream
 zarf dev deploy src/authservice --flavor upstream
 zarf dev deploy src/test --flavor upstream
 zarf p ls # view packages deployed
-zarf p remove uds-core-test-package --confirm
+zarf p remove uds-core-test-apps --confirm
 ```

@@ -8,12 +8,18 @@ import { a, K8s, kind } from "pepr";
 import { K8sGateway, UDSPackage } from "../../crd";
 import { log } from "./istio-resources";
 
-// Constants
-const WAYPOINT_SUFFIX = "-waypoint";
+// Environment variable configuration for waypoint health check
+const WAYPOINT_HEALTH_MAX_ATTEMPTS = parseInt(process.env.WAYPOINT_HEALTH_MAX_ATTEMPTS || "10", 10);
+const WAYPOINT_HEALTH_INTERVAL_MS = parseInt(process.env.WAYPOINT_HEALTH_INTERVAL_MS || "5000", 10);
+const WAYPOINT_HEALTH_TIMEOUT_MS = parseInt(process.env.WAYPOINT_HEALTH_TIMEOUT_MS || "60000", 10);
+
 const UDS_MANAGED_LABEL = "uds/managed-by";
 const UDS_PACKAGE_LABEL = "uds/package";
 const UDS_NAMESPACE_LABEL = "uds/namespace";
 const ISTIO_WAYPOINT_LABEL = "istio.io/use-waypoint";
+
+// Constants
+const WAYPOINT_SUFFIX = "-waypoint";
 
 // Utility Functions
 function getWaypointName(clientId: string): string {
@@ -86,25 +92,95 @@ function isGatewayReady(gateway: K8sGateway): boolean {
 }
 
 /**
- * Verifies that a waypoint gateway exists and returns it
+ * Checks if the waypoint pod is healthy by verifying:
+ * 1. The pod is in Running state
+ * 2. All containers are ready
+ * 3. The pod has connected to istiod (checking specific readiness probe or logs)
+ *
+ * @param namespace - The namespace where the waypoint pod is running
+ * @param waypointName - The name of the waypoint gateway
+ * @returns A promise that resolves to a boolean indicating if the waypoint pod is healthy
  */
-async function verifyWaypointExists(namespace: string, waypointName: string): Promise<K8sGateway> {
+async function isWaypointPodHealthy(namespace: string, waypointName: string): Promise<boolean> {
   try {
-    const gateway = await K8s(K8sGateway).InNamespace(namespace).Get(waypointName);
-    log.debug("Verified waypoint gateway exists", { namespace, waypointName });
-    return gateway;
+    // Find the waypoint pod - it will have a label that matches the waypoint name
+    const podList = await K8s(a.Pod).InNamespace(namespace).Get();
+
+    // Filter pods with the waypoint label
+    const waypointPods =
+      podList.items?.filter(pod => {
+        const labels = pod.metadata?.labels || {};
+        // Use exact label key match for better reliability
+        return labels["istio.io/gateway-name"] === waypointName;
+      }) || [];
+
+    if (waypointPods.length === 0) {
+      log.debug(`No waypoint pods found for ${waypointName} in namespace ${namespace}`);
+      return false;
+    }
+
+    const waypointPod = waypointPods[0]; // Typically there's only one waypoint pod per gateway
+
+    // Check if the pod is in Running state
+    if (waypointPod.status?.phase !== "Running") {
+      log.debug(
+        `Waypoint pod ${waypointPod.metadata?.name} is not running, current phase: ${waypointPod.status?.phase}`,
+      );
+      return false;
+    }
+
+    // Check if all containers are ready
+    const containerStatuses = waypointPod.status?.containerStatuses || [];
+    const allContainersReady = containerStatuses.every(status => status.ready);
+    if (!allContainersReady) {
+      log.debug(`Not all containers in waypoint pod ${waypointPod.metadata?.name} are ready`);
+      return false;
+    }
+
+    // Check if the pod has been ready for at least 5 seconds to ensure stability
+    const readyCondition = waypointPod.status?.conditions?.find(c => c.type === "Ready");
+    if (!readyCondition || readyCondition.status !== "True") {
+      log.debug(`Waypoint pod ${waypointPod.metadata?.name} is not in Ready condition`);
+      return false;
+    }
+
+    // Check if the pod has connected to istiod by examining the istio-proxy container's readiness
+    const istioProxyContainer = containerStatuses.find(c => c.name === "istio-proxy");
+    if (!istioProxyContainer || !istioProxyContainer.ready) {
+      log.debug(`Istio-proxy container in waypoint pod ${waypointPod.metadata?.name} is not ready`);
+      return false;
+    }
+
+    // Additional check: verify no recent restarts which might indicate instability
+    if (istioProxyContainer.restartCount > 0) {
+      // Check if the last restart was recent (within the last 30 seconds)
+      const lastStateTerminated = istioProxyContainer.lastState?.terminated;
+      if (lastStateTerminated) {
+        const terminatedTime = new Date(lastStateTerminated.finishedAt || "").getTime();
+        const thirtySecondsAgo = Date.now() - 30000;
+
+        if (terminatedTime > thirtySecondsAgo) {
+          log.debug(
+            `Istio-proxy in waypoint pod ${waypointPod.metadata?.name} restarted recently, waiting for stability`,
+          );
+          return false;
+        }
+      }
+    }
+
+    log.info(`Waypoint pod ${waypointPod.metadata?.name} is healthy and connected to istiod`);
+    return true;
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    throw new Error(
-      `Waypoint Gateway ${waypointName} not found in namespace ${namespace}: ${errorMessage}`,
-    );
+    log.error(`Error checking waypoint pod health: ${errorMessage}`, { namespace, waypointName });
+    return false;
   }
 }
 
 /**
  * Creates a waypoint gateway for the given package
  */
-export async function createWaypointGateway(pkg: UDSPackage, clientId: string): Promise<string> {
+export async function createWaypointGateway(pkg: UDSPackage, clientId: string) {
   const { namespace, name } = pkg.metadata || {};
   if (!namespace || !name) {
     throw new Error("Package metadata is missing namespace or name");
@@ -121,8 +197,15 @@ export async function createWaypointGateway(pkg: UDSPackage, clientId: string): 
       return waypointName;
     }
     log.info("Waypoint Gateway exists but is not ready, waiting...", { namespace, waypointName });
-  } catch (error) {
-    // Gateway doesn't exist, create it
+  } catch (notFoundError) {
+    // Gateway doesn't exist, log the error and create it
+    const errorMessage =
+      notFoundError instanceof Error ? notFoundError.message : String(notFoundError);
+    log.debug("Waypoint Gateway not found, creating new one", {
+      namespace,
+      waypointName,
+      error: errorMessage,
+    });
     log.info("Creating new Waypoint Gateway", { namespace, waypointName });
 
     const gateway = new K8sGateway();
@@ -133,6 +216,7 @@ export async function createWaypointGateway(pkg: UDSPackage, clientId: string): 
         "app.kubernetes.io/component": "ambient-waypoint",
         "app.kubernetes.io/name": clientId,
         "istio.io/waypoint-for": "all",
+        "istio.io/gateway-name": waypointName,
       }),
       ownerReferences: [createOwnerReference(pkg)],
       annotations: {
@@ -167,7 +251,6 @@ export async function createWaypointGateway(pkg: UDSPackage, clientId: string): 
   }
 
   log.info("Waiting for Waypoint Gateway to become ready", { namespace, waypointName });
-  return waitForWaypointReady(waypointName, namespace);
 }
 
 /**
@@ -223,59 +306,72 @@ export async function registerAmbientPackage(pkg: UDSPackage, clientId: string):
 }
 
 /**
- * Waits for a waypoint gateway to become ready
+ * Waits for the waypoint pod to become healthy with a timeout
+ *
+ * @param namespace - The namespace where the waypoint pod is running
+ * @param waypointName - The name of the waypoint gateway
+ * @param options - Configuration options for the wait operation
+ * @returns A promise that resolves when the pod is healthy or rejects on timeout
  */
-async function waitForWaypointReady(
-  name: string,
-  namespace: string,
-  options: { maxAttempts?: number; intervalMs?: number } = {},
-): Promise<string> {
-  const { maxAttempts = 10, intervalMs = 2000 } = options;
-  const logContext = { name, namespace, maxAttempts, intervalMs };
+async function waitForWaypointPodHealthy(namespace: string, waypointName: string): Promise<void> {
+  const logContext = {
+    namespace,
+    waypointName,
+    WAYPOINT_HEALTH_MAX_ATTEMPTS,
+    WAYPOINT_HEALTH_INTERVAL_MS,
+    WAYPOINT_HEALTH_TIMEOUT_MS,
+  };
+  log.debug("Starting waypoint pod health check", logContext);
 
-  log.info("Waiting for Waypoint Gateway to become ready", logContext);
+  const startTime = Date.now();
 
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    const attemptStart = Date.now();
+  for (let attempt = 1; attempt <= WAYPOINT_HEALTH_MAX_ATTEMPTS; attempt++) {
+    // Check if we've exceeded the max attempts (primary condition)
+    if (attempt > WAYPOINT_HEALTH_MAX_ATTEMPTS) {
+      const errorMessage = `Waypoint pod for ${waypointName} in namespace ${namespace} did not become healthy after ${WAYPOINT_HEALTH_MAX_ATTEMPTS} attempts (${(WAYPOINT_HEALTH_MAX_ATTEMPTS * WAYPOINT_HEALTH_INTERVAL_MS) / 1000} seconds total)`;
+      log.error(errorMessage, logContext);
+      throw new Error(errorMessage);
+    }
+
+    // Secondary timeout check as a safety measure
+    if (Date.now() - startTime > WAYPOINT_HEALTH_TIMEOUT_MS) {
+      const errorMessage = `Waypoint pod for ${waypointName} in namespace ${namespace} did not become healthy within ${WAYPOINT_HEALTH_TIMEOUT_MS / 1000} seconds timeout`;
+      log.error(errorMessage, logContext);
+      throw new Error(errorMessage);
+    }
 
     try {
-      log.debug(`Checking waypoint status (attempt ${attempt}/${maxAttempts})`, logContext);
-      const gateway = await verifyWaypointExists(namespace, name);
+      const isHealthy = await isWaypointPodHealthy(namespace, waypointName);
 
-      if (isGatewayReady(gateway)) {
-        log.info("Waypoint Gateway is ready", {
+      if (isHealthy) {
+        log.info("Waypoint pod is healthy", {
           ...logContext,
           attempt,
-          durationMs: Date.now() - attemptStart,
+          durationMs: Date.now() - startTime,
         });
-        return name;
+        return;
       }
 
-      log.debug("Waypoint Gateway not ready yet", {
+      log.debug("Waypoint pod not healthy yet, waiting", {
         ...logContext,
         attempt,
-        conditions: gateway.status?.conditions?.map(c => ({
-          type: c.type,
-          status: c.status,
-          message: c.message,
-          reason: c.reason,
-        })),
+        elapsedMs: Date.now() - startTime,
       });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      log.warn("Error checking waypoint status", {
+      log.warn("Error checking waypoint pod health", {
         ...logContext,
         attempt,
         error: errorMessage,
       });
     }
 
-    if (attempt < maxAttempts) {
-      await new Promise(resolve => setTimeout(resolve, intervalMs));
+    if (attempt < WAYPOINT_HEALTH_MAX_ATTEMPTS) {
+      await new Promise(resolve => setTimeout(resolve, WAYPOINT_HEALTH_INTERVAL_MS));
     }
   }
 
-  const errorMessage = `Waypoint Gateway ${name} in namespace ${namespace} did not become ready after ${maxAttempts} attempts`;
+  const errorMessage = `Waypoint pod for ${waypointName} in namespace ${namespace} did not become healthy after ${WAYPOINT_HEALTH_MAX_ATTEMPTS} attempts`;
   log.error(errorMessage, logContext);
   throw new Error(errorMessage);
 }
@@ -296,8 +392,9 @@ export async function setupAmbientWaypoint(pkg: UDSPackage, clientId: string): P
     log.debug("Creating waypoint gateway", { namespace, waypointName });
     await createWaypointGateway(pkg, clientId);
 
-    log.debug("Waiting for waypoint to become ready", { namespace, waypointName });
-    await waitForWaypointReady(waypointName, namespace);
+    log.debug("Waiting for waypoint pod to become healthy", { namespace, waypointName });
+    // Check waypoint pod health using environment variable configuration
+    await waitForWaypointPodHealthy(namespace, waypointName);
 
     log.info("Successfully set up ambient waypoint", {
       namespace,

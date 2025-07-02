@@ -122,23 +122,72 @@ export async function packageReconciler(pkg: UDSPackage) {
           // Get the first client ID that has authservice enabled
           const authServiceClient = pkg.spec.sso.find(sso => sso.enableAuthserviceSelector);
 
-          // Set up the ambient waypoint with proper two-phase activation
-          await setupAmbientWaypoint(pkg, authServiceClient!.clientId);
+          try {
+            await setupAmbientWaypoint(pkg, authServiceClient!.clientId);
 
-          // Update package status with waypoint information
-          const now = new Date();
-          const conditions: Condition[] = [
-            ...(pkg.status?.conditions || []).filter(c => c.type !== "WaypointReady"),
-            {
-              type: "WaypointReady",
-              status: StatusEnum.True,
-              reason: "WaypointProvisioned",
-              message: "Ambient waypoint is ready for service traffic",
-              lastTransitionTime: now,
-            },
-          ];
+            // Update package status with waypoint information
+            const now = new Date();
+            const conditions: Condition[] = [
+              ...(pkg.status?.conditions || []).filter(c => c.type !== "WaypointReady"),
+              {
+                type: "WaypointReady",
+                status: StatusEnum.True,
+                reason: "WaypointProvisioned",
+                message: "Ambient waypoint is ready and pod is healthy for service traffic",
+                lastTransitionTime: now,
+              },
+            ];
 
-          await updateStatus(pkg, { conditions });
+            await updateStatus(pkg, { conditions });
+            await writeEvent(pkg, {
+              message: "Ambient waypoint is ready and pod is healthy",
+            });
+          } catch (waypointError) {
+            // If the waypoint setup fails due to pod health issues, we need to fail the package deployment
+            const errorMessage =
+              waypointError instanceof Error ? waypointError.message : String(waypointError);
+            // Check for timeout errors from the waitForWaypointPodHealthy function
+            const isHealthTimeout =
+              errorMessage.includes("did not become healthy within") ||
+              errorMessage.includes("did not become healthy after");
+
+            if (isHealthTimeout) {
+              log.error(`Waypoint pod health check timed out for package ${namespace}/${name}`, {
+                error: errorMessage,
+                package: name,
+                namespace,
+              });
+
+              // Update status to Failed
+              const now = new Date();
+              const conditions: Condition[] = [
+                ...(pkg.status?.conditions || []).filter(c => c.type !== "WaypointReady"),
+                {
+                  type: "WaypointReady",
+                  status: StatusEnum.False,
+                  reason: "WaypointUnhealthy",
+                  message: `Waypoint pod health check failed: ${errorMessage}`,
+                  lastTransitionTime: now,
+                },
+              ];
+
+              await updateStatus(pkg, {
+                phase: Phase.Failed,
+                conditions,
+              });
+
+              await writeEvent(pkg, {
+                message: `Waypoint pod health check failed but resources were left in place for debugging. To fix this issue: 1) Check if the waypoint pod exists, 2) Verify the pod can connect to istiod, 3) Check for network policies that might block pod-to-istiod communication.`,
+                reason: "WaypointHealthCheckFailedNoCleanup",
+                type: "Warning",
+              });
+
+              throw new Error(`Waypoint health check failed: ${errorMessage}`);
+            }
+
+            // For other types of errors, propagate them
+            throw waypointError;
+          }
         } else {
           // Check if we need to clean up any existing waypoint
           const currentKey =
@@ -165,13 +214,26 @@ export async function packageReconciler(pkg: UDSPackage) {
         const errorDetails = {
           error: errorMessage,
           stack: errorStack,
-          packageName: pkg.metadata?.name,
-          namespace: pkg.metadata?.namespace,
+          packageName: name,
+          namespace,
           phase: pkg.status?.phase,
           conditions: pkg.status?.conditions,
         };
         log.error("Error configuring ambient auth", errorDetails);
-        throw new Error(`Failed to configure ambient auth: ${errorMessage}`);
+
+        // Update status to Failed
+        await updateStatus(pkg, {
+          phase: Phase.Failed,
+        });
+
+        await writeEvent(pkg, {
+          message: `Failed to configure ambient auth: ${errorMessage}`,
+          reason: "AmbientAuthConfigFailed",
+          type: "Warning",
+        });
+
+        // Return early to prevent further processing
+        return;
       }
     }
 
