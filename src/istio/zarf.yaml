@@ -77,10 +77,10 @@ components:
         valuesFiles:
           - "values/unicorn/ztunnel.yaml"
     images:
-      - quay.io/rfcurated/istio/pilot:1.26.0-jammy-fips-rfcurated-rfhardened
-      - quay.io/rfcurated/istio/proxyv2:1.26.0-jammy-fips-rfcurated-rfhardened
-      - quay.io/rfcurated/istio/install-cni:1.26.0-jammy-fips-rfcurated-rfhardened
-      - quay.io/rfcurated/istio/ztunnel:1.26.0-jammy-scratch-fips-rfcurated
+      - quay.io/rfcurated/istio/pilot:1.26.2-jammy-fips-rfcurated-rfhardened
+      - quay.io/rfcurated/istio/proxyv2:1.26.2-jammy-fips-rfcurated-rfhardened
+      - quay.io/rfcurated/istio/install-cni:1.26.2-jammy-fips-rfcurated-rfhardened
+      - quay.io/rfcurated/istio/ztunnel:1.26.2-jammy-scratch-fips-rfcurated
 
   - name: istio-admin-gateway
     required: true
