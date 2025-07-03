@@ -5,8 +5,24 @@
 
 import { K8s, kind } from "pepr";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { computeSecretChecksum, handleSecretUpdate, handleSecretDelete } from "./auto-reload";
 import * as utils from "../utils";
+import {
+  computeSecretChecksum,
+  handleSecretDelete,
+  handleSecretUpdate,
+  parseSelectorString,
+} from "./auto-reload";
+
+// Mock the logger
+vi.mock("../../../logger", () => ({
+  Component: { OPERATOR_SECRETS: "OPERATOR_SECRETS" },
+  setupLogger: vi.fn().mockReturnValue({
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  }),
+}));
 
 // Mock dependencies
 vi.mock("pepr", async importOriginal => {
@@ -134,14 +150,69 @@ describe("auto-reload", () => {
       expect(utils.evictPods).not.toHaveBeenCalled();
     });
 
-    it("should evict pods when data changes and pods are found with explicit selector", async () => {
-      // Mock pods
-      const mockPods = {
-        items: [
-          { metadata: { name: "pod1", namespace: "default" } },
-          { metadata: { name: "pod2", namespace: "default" } },
-        ],
+    it("should return early when the selector format is invalid without evicting pods", async () => {
+      // Secret with invalid selector format
+      const secret = {
+        metadata: {
+          name: "test-secret",
+          namespace: "default",
+          labels: {
+            "uds.dev/reload": "true",
+          },
+          annotations: {
+            "uds.dev/reload-selector": "app:invalid-format", // Invalid format (uses : instead of =)
+          },
+        },
+        data: {
+          username: "dXNlcm5hbWU=",
+          password: "cGFzc3dvcmQ=",
+        },
       };
+
+      // Should complete without throwing
+      await handleSecretUpdate(secret as kind.Secret);
+
+      // Verify that the function returns early and doesn't call evictPods
+      expect(utils.evictPods).not.toHaveBeenCalled();
+    });
+
+    it("should only evict pods that match the selector when data changes", async () => {
+      // The matching pod with correct label
+      const matchingPod = {
+        metadata: {
+          name: "pod1",
+          namespace: "default",
+          labels: { app: "test-app" }, // This pod matches the selector
+        },
+      };
+
+      // Mock the K8s API with chainable methods
+      const mockWithLabel = vi.fn().mockReturnThis();
+      const mockInNamespace = vi.fn().mockReturnThis();
+      const mockGet = vi.fn().mockResolvedValue({
+        items: [matchingPod], // Only return the matching pod
+      });
+
+      // Set up the K8s mock to return our chainable mock functions
+      vi.mocked(K8s).mockImplementation(() => ({
+        InNamespace: mockInNamespace,
+        WithLabel: mockWithLabel,
+        Get: mockGet,
+        // Add required methods to satisfy the TypeScript interface
+        Logs: vi.fn(),
+        Delete: vi.fn(),
+        Evict: vi.fn(),
+        Watch: vi.fn(),
+        Apply: vi.fn(),
+        WithField: vi.fn().mockReturnThis(),
+        Create: vi.fn(),
+        Patch: vi.fn(),
+        PatchStatus: vi.fn(),
+        Raw: vi.fn(),
+      }));
+
+      // Mock evictPods
+      vi.mocked(utils.evictPods).mockResolvedValue();
 
       // First secret with initial data
       const secret1 = {
@@ -150,7 +221,9 @@ describe("auto-reload", () => {
           namespace: "default",
           labels: {
             "uds.dev/reload": "true",
-            "uds.dev/reload-selector": JSON.stringify({ app: "test-app" }),
+          },
+          annotations: {
+            "uds.dev/reload-selector": "app=test-app",
           },
         },
         data: {
@@ -168,20 +241,153 @@ describe("auto-reload", () => {
         },
       };
 
-      // Mock K8s responses
-      mockGet.mockResolvedValue(mockPods);
-
       // First call should cache the checksum without evicting
       await handleSecretUpdate(secret1 as kind.Secret);
       expect(utils.evictPods).not.toHaveBeenCalled();
       vi.clearAllMocks(); // Clear mock call history
 
+      // Reset our mocks for the second call
+      vi.mocked(K8s).mockImplementation(() => ({
+        InNamespace: mockInNamespace,
+        WithLabel: mockWithLabel,
+        Get: mockGet,
+        // Add required methods to satisfy the TypeScript interface
+        Logs: vi.fn(),
+        Delete: vi.fn(),
+        Evict: vi.fn(),
+        Watch: vi.fn(),
+        Apply: vi.fn(),
+        WithField: vi.fn().mockReturnThis(),
+        Create: vi.fn(),
+        Patch: vi.fn(),
+        PatchStatus: vi.fn(),
+        Raw: vi.fn(),
+      }));
+
       // Second call with changed data should evict pods
       await handleSecretUpdate(secret2 as kind.Secret);
+
+      // Verify the correct namespace was used
+      expect(mockInNamespace).toHaveBeenCalledWith("default");
+
+      // Verify WithLabel was called with the correct selector
+      expect(mockWithLabel).toHaveBeenCalledWith("app", "test-app");
+
+      // Verify eviction was called with only the matching pod
       expect(utils.evictPods).toHaveBeenCalledWith(
         "default",
-        expect.any(Array),
+        [matchingPod], // Only the matching pod should be passed
         "Secret test-secret change",
+        expect.anything(),
+      );
+    });
+
+    it("should handle multiple selectors when data changes", async () => {
+      // The matching pod with correct labels
+      const matchingPod = {
+        metadata: {
+          name: "pod1",
+          namespace: "default",
+          labels: {
+            app: "test-app",
+            tier: "frontend",
+            env: "prod",
+          },
+        },
+      };
+
+      // Mock the K8s API with chainable methods
+      const mockWithLabel = vi.fn().mockReturnThis();
+      const mockInNamespace = vi.fn().mockReturnThis();
+      const mockGet = vi.fn().mockResolvedValue({
+        items: [matchingPod],
+      });
+
+      // Set up the K8s mock
+      vi.mocked(K8s).mockImplementation(() => ({
+        InNamespace: mockInNamespace,
+        WithLabel: mockWithLabel,
+        Get: mockGet,
+        Logs: vi.fn(),
+        Delete: vi.fn(),
+        Evict: vi.fn(),
+        Watch: vi.fn(),
+        Apply: vi.fn(),
+        WithField: vi.fn().mockReturnThis(),
+        Create: vi.fn(),
+        Patch: vi.fn(),
+        PatchStatus: vi.fn(),
+        Raw: vi.fn(),
+      }));
+
+      // Mock evictPods
+      vi.mocked(utils.evictPods).mockResolvedValue();
+
+      // Secret with multiple selectors
+      const secret1 = {
+        metadata: {
+          name: "multi-selector-secret",
+          namespace: "default",
+          labels: {
+            "uds.dev/reload": "true",
+          },
+          annotations: {
+            "uds.dev/reload-selector": "app=test-app,tier=frontend,env=prod",
+          },
+        },
+        data: {
+          username: "dXNlcm5hbWU=", // base64 'username'
+          password: "cGFzc3dvcmQ=", // base64 'password'
+        },
+      };
+
+      // Changed secret data
+      const secret2 = {
+        ...secret1,
+        data: {
+          username: "dXNlcm5hbWU=",
+          password: "bmV3cGFzc3dvcmQ=", // changed password
+        },
+      };
+
+      // First call caches the checksum
+      await handleSecretUpdate(secret1 as kind.Secret);
+      expect(utils.evictPods).not.toHaveBeenCalled();
+      vi.clearAllMocks();
+
+      // Reset mocks for second call
+      vi.mocked(K8s).mockImplementation(() => ({
+        InNamespace: mockInNamespace,
+        WithLabel: mockWithLabel,
+        Get: mockGet,
+        Logs: vi.fn(),
+        Delete: vi.fn(),
+        Evict: vi.fn(),
+        Watch: vi.fn(),
+        Apply: vi.fn(),
+        WithField: vi.fn().mockReturnThis(),
+        Create: vi.fn(),
+        Patch: vi.fn(),
+        PatchStatus: vi.fn(),
+        Raw: vi.fn(),
+      }));
+
+      // Second call should evict pods
+      await handleSecretUpdate(secret2 as kind.Secret);
+
+      // Verify namespace was set correctly
+      expect(mockInNamespace).toHaveBeenCalledWith("default");
+
+      // Verify all three selectors were applied
+      expect(mockWithLabel).toHaveBeenCalledWith("app", "test-app");
+      expect(mockWithLabel).toHaveBeenCalledWith("tier", "frontend");
+      expect(mockWithLabel).toHaveBeenCalledWith("env", "prod");
+
+      // Verify eviction happened with the matching pod
+      expect(utils.evictPods).toHaveBeenCalledWith(
+        "default",
+        [matchingPod],
+        "Secret multi-selector-secret change",
         expect.anything(),
       );
     });
@@ -295,6 +501,32 @@ describe("auto-reload", () => {
       // which should not trigger eviction because cache was cleared
       await handleSecretUpdate(secret as kind.Secret);
       expect(utils.evictPods).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("parseSelectorString", () => {
+    it("should parse valid key=value format", () => {
+      const validSelector = "app=test-app";
+      const result = parseSelectorString(validSelector);
+      expect(result).toEqual({ app: "test-app" });
+    });
+
+    it("should parse multiple key=value pairs", () => {
+      const validSelector = "app=test-app,component=api";
+      const result = parseSelectorString(validSelector);
+      expect(result).toEqual({ app: "test-app", component: "api" });
+    });
+
+    it("should handle whitespace in selector", () => {
+      const validSelector = " app = test-app , component = api ";
+      const result = parseSelectorString(validSelector);
+      expect(result).toEqual({ app: "test-app", component: "api" });
+    });
+
+    it("should return null for invalid format", () => {
+      const invalidSelector = "app:test-app";
+      const result = parseSelectorString(invalidSelector);
+      expect(result).toBeNull();
     });
   });
 });

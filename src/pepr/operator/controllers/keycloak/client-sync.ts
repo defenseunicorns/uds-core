@@ -187,12 +187,21 @@ export async function syncClient(
       Object.assign(secretLabels, clientReq.secretLabels);
     }
 
+    // Prepare annotations if defined in the CRD
+    const secretAnnotations: Record<string, string> = {};
+
+    // Apply any user-defined annotations from the CRD
+    if (clientReq.secretAnnotations) {
+      Object.assign(secretAnnotations, clientReq.secretAnnotations);
+    }
+
     await K8s(kind.Secret).Apply({
       metadata: {
         namespace: pkg.metadata!.namespace,
         // Use the CR secret name if provided, otherwise use the client name
         name: sanitizedSecretName,
         labels: secretLabels,
+        annotations: secretAnnotations,
 
         // Use the CR as the owner ref for each VirtualService
         ownerReferences: getOwnerRef(pkg),

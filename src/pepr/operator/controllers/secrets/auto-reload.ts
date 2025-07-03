@@ -67,15 +67,29 @@ async function discoverSecretConsumers(namespace: string, secretName: string) {
 }
 
 /**
- * Parse a JSON string from a label or annotation
- *
- * @param value The JSON string to parse
- * @returns Parsed object or null if invalid
+ * Parse a key=value selector string from an annotation
+ * @param value The string value to parse (format: "key1=value1,key2=value2")
+ * @returns The parsed object or null if invalid
  */
-function parseJsonLabel(value: string): Record<string, string> | null {
+export function parseSelectorString(value: string): Record<string, string> | null {
   try {
-    const parsed = JSON.parse(value);
-    return typeof parsed === "object" && parsed !== null ? parsed : null;
+    // Handle key=value format (like "app=neuvector-controller-pod")
+    const result: Record<string, string> = {};
+
+    // Split by commas if multiple key=value pairs
+    const pairs = value.split(",");
+
+    for (const pair of pairs) {
+      const [key, val] = pair.trim().split("=");
+      if (key && val) {
+        result[key.trim()] = val.trim();
+      } else {
+        // Invalid format
+        return null;
+      }
+    }
+
+    return Object.keys(result).length > 0 ? result : null;
   } catch {
     return null;
   }
@@ -105,7 +119,6 @@ export async function handleSecretUpdate(secret: kind.Secret) {
 
   // If this is the first time we're seeing this secret, or if the data hasn't changed, exit early
   if (!previousChecksum || previousChecksum === currentChecksum) {
-    log.debug({ secret: name, namespace }, "Secret unchanged or initial cache, no pods evicted");
     return;
   }
 
@@ -114,30 +127,30 @@ export async function handleSecretUpdate(secret: kind.Secret) {
   // Determine which pods to evict based on the strategy
   let podsToEvict: kind.Pod[] = [];
 
-  // Check if we have an explicit pod selector
-  const selectorStr = secret.metadata.labels?.["uds.dev/reload-selector"];
+  // Check if we have an explicit pod selector in annotations
+  const selectorStr = secret.metadata?.annotations?.["uds.dev/reload-selector"];
+
   if (selectorStr) {
-    const selector = parseJsonLabel(selectorStr);
-    if (selector) {
-      log.debug(
-        { secret: name, namespace, selector },
-        "Using explicit pod selector from secret label",
-      );
-
-      // Build query with each label
-      let podQuery = K8s(kind.Pod).InNamespace(namespace);
-      for (const [key, value] of Object.entries(selector)) {
-        podQuery = podQuery.WithLabel(key, value);
-      }
-
-      const pods = await podQuery.Get();
-      podsToEvict = pods.items;
-    } else {
-      log.warn(
-        { secret: name, namespace, selector: selectorStr },
-        "Invalid selector JSON in uds.dev/reload-selector label",
-      );
+    const selector = parseSelectorString(selectorStr);
+    if (!selector) {
+      const errorMsg = `Invalid selector format in uds.dev/reload-selector annotation for secret ${namespace}/${name}: ${selectorStr}. Expected format: key1=value1,key2=value2`;
+      log.error({ secret: name, namespace, selector: selectorStr }, errorMsg);
+      return;
     }
+
+    log.debug(
+      { secret: name, namespace, selector },
+      "Using explicit pod selector from secret label for eviction",
+    );
+
+    // Build query with each label
+    let podQuery = K8s(kind.Pod).InNamespace(namespace);
+    for (const [key, value] of Object.entries(selector)) {
+      podQuery = podQuery.WithLabel(key, value);
+    }
+
+    const pods = await podQuery.Get();
+    podsToEvict = pods.items;
   } else {
     // No explicit selector, use auto-discovery
     log.debug(
@@ -177,6 +190,4 @@ export function handleSecretDelete(secret: kind.Secret) {
 
   // Clean up the cache entry
   secretChecksumCache.delete(cacheKey);
-
-  log.debug({ secret: name, namespace }, "Removed secret from checksum cache");
 }

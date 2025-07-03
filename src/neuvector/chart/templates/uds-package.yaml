@@ -51,6 +51,10 @@ spec:
         - "https://neuvector.admin.{{ .Values.domain }}/openId_auth"
         {{- end }}
       secretName: neuvector-secret
+      secretLabels:
+        uds.dev/reload: "true"
+      secretAnnotations:
+        uds.dev/reload-selector: 'app=neuvector-controller-pod'
       secretTemplate:
         userinitcfg.yaml: |-
           always_reload: true

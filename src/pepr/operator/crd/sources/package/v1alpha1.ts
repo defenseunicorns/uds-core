@@ -324,6 +324,14 @@ const sso = {
           type: "string",
         },
       },
+      secretAnnotations: {
+        description:
+          "Additional annotations to apply to the generated secret, can be used for pod reloading with a selector",
+        type: "object",
+        additionalProperties: {
+          type: "string",
+        },
+      },
       secretTemplate: {
         description: "A template for the generated secret",
         // Create a map of the secret data
