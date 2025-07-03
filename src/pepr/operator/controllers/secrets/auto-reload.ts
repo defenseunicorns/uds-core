@@ -8,10 +8,11 @@ import { K8s, kind } from "pepr";
 import { Component, setupLogger } from "../../../logger";
 import { evictPods } from "../utils";
 
-const log = setupLogger(Component.OPERATOR);
+const log = setupLogger(Component.OPERATOR_SECRETS);
 
 // Map to store secret checksums for change detection
-const secretChecksumCache = new Map<string, string>();
+// Exported for testing purposes
+export const secretChecksumCache = new Map<string, string>();
 
 /**
  * Computes a SHA256 checksum of the secret data
@@ -19,7 +20,7 @@ const secretChecksumCache = new Map<string, string>();
  * @param data The secret data to compute the checksum for
  * @returns A hex-encoded SHA256 checksum
  */
-function computeSecretChecksum(data: Record<string, string>): string {
+export function computeSecretChecksum(data: Record<string, string>): string {
   // Sort keys to ensure consistent hashing regardless of key order
   const sortedKeys = Object.keys(data).sort();
   const hash = createHash("sha256");
