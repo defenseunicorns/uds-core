@@ -5,7 +5,7 @@
 
 import { V1OwnerReference } from "@kubernetes/client-node";
 import { GenericClass, GenericKind } from "kubernetes-fluent-client";
-import { K8s } from "pepr";
+import { K8s, kind } from "pepr";
 import { Logger } from "pino";
 
 /**
@@ -131,4 +131,77 @@ export async function retryWithDelay<T>(
 
   // This line should never be reached, but TypeScript wants it for safety.
   throw new Error("Retry loop exited unexpectedly without returning.");
+}
+
+/**
+ * Evicts a list of pods using the Evict API with fallback to Delete
+ *
+ * @param namespace The namespace containing the pods
+ * @param pods List of pods to evict
+ * @param reason The reason for eviction (for logging)
+ * @param log Logger instance for logging
+ */
+export async function evictPods(namespace: string, pods: kind.Pod[], reason: string, log: Logger) {
+  if (pods.length === 0) {
+    log.warn(`No pods provided for eviction in namespace ${namespace}`);
+    return;
+  }
+
+  log.info(`Evicting ${pods.length} pods in namespace ${namespace}`);
+
+  // Group pods by owner UID for ordered eviction
+  const groups: Record<string, kind.Pod[]> = {};
+
+  for (const pod of pods) {
+    // Ignore pods that already have a deletion timestamp
+    if (pod.metadata?.deletionTimestamp) {
+      log.debug(`Ignoring Pod ${namespace}/${pod.metadata?.name}, already being deleted`);
+      continue;
+    }
+
+    // Get the UID of the owner of the pod or default to "other"
+    const controlledBy =
+      pod.metadata?.ownerReferences?.find((ref: V1OwnerReference) => ref.controller)?.uid ||
+      "other";
+    groups[controlledBy] = groups[controlledBy] || [];
+    groups[controlledBy].push(pod);
+  }
+
+  // Evict each group of pods
+  for (const group of Object.values(groups)) {
+    // If this is a statefulset, evict the pods in reverse name order
+    if (
+      group[0].metadata?.ownerReferences?.find(
+        (ref: V1OwnerReference) => ref.kind === "StatefulSet",
+      )
+    ) {
+      group.sort((a, b) => (b.metadata?.name || "").localeCompare(a.metadata?.name || ""));
+    }
+
+    for (const pod of group) {
+      log.info(`Evicting pod ${namespace}/${pod.metadata?.name} due to ${reason}`);
+
+      try {
+        // Try to use the Evict API
+        await K8s(kind.Pod).Evict(pod);
+        log.info(`Successfully evicted pod ${namespace}/${pod.metadata?.name}`);
+      } catch (err) {
+        // Fall back to Delete with grace period if Evict fails
+        log.warn(
+          `Failed to evict pod ${namespace}/${pod.metadata?.name} using Evict API, falling back to Delete: ${err.message}`,
+        );
+        try {
+          pod.metadata!.deletionGracePeriodSeconds = 30;
+          await K8s(kind.Pod).Delete(pod);
+          log.info(
+            `Successfully initiated graceful deletion of pod ${namespace}/${pod.metadata?.name}`,
+          );
+        } catch (deleteErr) {
+          log.error(
+            `Failed to delete pod ${namespace}/${pod.metadata?.name}: ${deleteErr.message}`,
+          );
+        }
+      }
+    }
+  }
 }

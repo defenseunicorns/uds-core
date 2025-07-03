@@ -175,15 +175,24 @@ export async function syncClient(
   if (!client.publicClient) {
     const generation = (pkg.metadata?.generation ?? 0).toString();
     const sanitizedSecretName = sanitizeResourceName(secretName || name);
+
+    // Prepare default labels
+    const secretLabels: Record<string, string> = {
+      "uds/package": pkg.metadata?.name || "",
+      "uds/generation": generation,
+    };
+
+    // Apply any additional user-defined labels from the CRD
+    if (clientReq.secretLabels) {
+      Object.assign(secretLabels, clientReq.secretLabels);
+    }
+
     await K8s(kind.Secret).Apply({
       metadata: {
         namespace: pkg.metadata!.namespace,
         // Use the CR secret name if provided, otherwise use the client name
         name: sanitizedSecretName,
-        labels: {
-          "uds/package": pkg.metadata!.name,
-          "uds/generation": generation,
-        },
+        labels: secretLabels,
 
         // Use the CR as the owner ref for each VirtualService
         ownerReferences: getOwnerRef(pkg),

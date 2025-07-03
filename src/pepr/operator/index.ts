@@ -14,6 +14,9 @@ import {
   updateAPIServerCIDRFromService,
 } from "./controllers/network/generators/kubeAPI";
 
+// Secret Auto-Reload controller
+import { handleSecretUpdate, handleSecretDelete } from "./controllers/secrets/auto-reload";
+
 // Controller imports
 import {
   initAllNodesTarget,
@@ -126,3 +129,12 @@ When(a.Secret)
   .InNamespace(KEYCLOAK_CLIENTS_SECRET_NAMESPACE)
   .WithName(KEYCLOAK_CLIENTS_SECRET_NAME)
   .Reconcile(s => updateKeycloakClientsSecret(s, false));
+
+// Watch for secrets with the uds.dev/reload label for auto-reloading
+When(a.Secret)
+  .IsCreatedOrUpdated()
+  .WithLabel("uds.dev/reload", "true")
+  .Reconcile(handleSecretUpdate);
+
+// Watch for deleted secrets to clean up the checksum cache
+When(a.Secret).IsDeleted().WithLabel("uds.dev/reload", "true").Reconcile(handleSecretDelete);
