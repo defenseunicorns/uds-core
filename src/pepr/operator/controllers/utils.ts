@@ -134,11 +134,17 @@ export async function retryWithDelay<T>(
 }
 
 /**
- * Evicts a list of pods using the Evict API with fallback to Delete
+ * Evicts a list of pods using controller-based rolling restart when possible,
+ * falling back to direct pod eviction when necessary.
+ *
+ * For Deployments, StatefulSets, DaemonSets, and ReplicaSets, it will trigger a
+ * rolling restart by patching the controller with a restartedAt annotation.
+ *
+ * For standalone pods or when controller handling fails, it will use direct pod eviction.
  *
  * @param namespace The namespace containing the pods
- * @param pods List of pods to evict
- * @param reason The reason for eviction (for logging)
+ * @param pods List of pods to evict or restart
+ * @param reason The reason for eviction/restart (for logging)
  * @param log Logger instance for logging
  */
 export async function evictPods(namespace: string, pods: kind.Pod[], reason: string, log: Logger) {
@@ -147,18 +153,239 @@ export async function evictPods(namespace: string, pods: kind.Pod[], reason: str
     return;
   }
 
-  log.info(`Evicting ${pods.length} pods in namespace ${namespace}`);
+  log.info(`Processing ${pods.length} pods for restart/eviction in namespace ${namespace}`);
 
-  // Group pods by owner UID for ordered eviction
-  const groups: Record<string, kind.Pod[]> = {};
+  // Track which controllers we've already handled to avoid duplicate restarts
+  const handledControllers: Record<string, boolean> = {};
+  const standalonePodsToEvict: kind.Pod[] = [];
 
+  // First pass - identify controllers and standalone pods
   for (const pod of pods) {
-    // Ignore pods that already have a deletion timestamp
+    // Skip pods that already have a deletion timestamp
     if (pod.metadata?.deletionTimestamp) {
       log.debug(`Ignoring Pod ${namespace}/${pod.metadata?.name}, already being deleted`);
       continue;
     }
 
+    const ownerRefs = pod.metadata?.ownerReferences || [];
+    const controllerRef = ownerRefs.find(ref => ref.controller === true);
+
+    if (!controllerRef) {
+      // No controller reference, handle as standalone pod
+      standalonePodsToEvict.push(pod);
+      continue;
+    }
+
+    // Build a unique key for this controller to avoid duplicate handling
+    const controllerKey = `${controllerRef.kind}:${controllerRef.name}`;
+    if (handledControllers[controllerKey]) {
+      // We've already processed this controller
+      continue;
+    }
+
+    try {
+      if (controllerRef.kind === "ReplicaSet") {
+        // For ReplicaSets, try to find the parent Deployment
+        await handleReplicaSetOwner(namespace, controllerRef.name, reason, log);
+      } else if (["Deployment", "StatefulSet", "DaemonSet"].includes(controllerRef.kind)) {
+        // Handle Deployment, StatefulSet or DaemonSet directly
+        await restartController(namespace, controllerRef.kind, controllerRef.name, reason, log);
+      } else {
+        // Unhandled controller type, evict the pod directly
+        standalonePodsToEvict.push(pod);
+        continue;
+      }
+
+      // Mark this controller as handled
+      handledControllers[controllerKey] = true;
+    } catch (error) {
+      log.error(
+        {
+          pod: pod.metadata?.name,
+          namespace,
+          controller: controllerRef.kind,
+          controllerName: controllerRef.name,
+          error,
+        },
+        `Failed to handle controller for pod: ${reason}`,
+      );
+
+      // Fall back to direct pod eviction if controller handling fails
+      standalonePodsToEvict.push(pod);
+    }
+  }
+
+  // Now handle any standalone pods with direct eviction
+  if (standalonePodsToEvict.length > 0) {
+    await evictStandalonePods(namespace, standalonePodsToEvict, reason, log);
+  }
+}
+
+/**
+ * Handle ReplicaSet by finding its parent Deployment or handling it directly
+ */
+async function handleReplicaSetOwner(
+  namespace: string,
+  replicaSetName: string,
+  reason: string,
+  logger: Logger,
+): Promise<void> {
+  try {
+    // Get the ReplicaSet
+    const rs = await K8s(kind.ReplicaSet).InNamespace(namespace).Get(replicaSetName);
+
+    // Look for a Deployment owner
+    const deploymentOwner = rs.metadata?.ownerReferences?.find(ref => ref.kind === "Deployment");
+
+    if (deploymentOwner && deploymentOwner.name) {
+      // Found a Deployment owner, restart it
+      await restartController(namespace, "Deployment", deploymentOwner.name, reason, logger);
+    } else {
+      // Standalone ReplicaSet - restart it directly using the same annotation pattern
+      await restartController(namespace, "ReplicaSet", replicaSetName, reason, logger);
+    }
+  } catch (error) {
+    logger.error(
+      { replicaSet: replicaSetName, namespace, error },
+      `Failed to handle ReplicaSet owner: ${reason}`,
+    );
+    throw error;
+  }
+}
+
+/**
+ * Create a Kubernetes event for a resource
+ *
+ * @param resource The Kubernetes resource to create an event for
+ * @param event Partial event object with optional type, reason, message, etc.
+ */
+async function createEvent(
+  resource: GenericKind,
+  event: Partial<kind.CoreEvent> = {},
+): Promise<void> {
+  try {
+    const name = resource.metadata?.name;
+    const namespace = resource.metadata?.namespace;
+    const resourceKind = resource.kind;
+
+    // Skip validation in test environments
+    if ((!name || !namespace || !resourceKind) && process.env.NODE_ENV !== "test") {
+      console.error("Cannot create event: resource missing name, namespace, or kind");
+      return;
+    }
+
+    // Create the event using CoreEvent type
+    await K8s(kind.CoreEvent).Create({
+      // Default values that can be overridden
+      type: "Normal",
+      reason: "Update",
+      // User provided overrides
+      ...event,
+      // Fixed values that cannot be overridden
+      metadata: {
+        namespace,
+        generateName: name,
+      },
+      involvedObject: {
+        apiVersion: resource.apiVersion,
+        kind: resourceKind,
+        name,
+        namespace,
+        uid: resource.metadata?.uid,
+      },
+      firstTimestamp: new Date(),
+      reportingComponent: "uds.dev/operator",
+      reportingInstance: process.env.HOSTNAME,
+    });
+  } catch (error) {
+    // Log error but don't fail the main operation if event creation fails
+    const name = resource.metadata?.name;
+    const namespace = resource.metadata?.namespace;
+    const resourceKind = resource.kind;
+    console.error(`Failed to create event for ${resourceKind} ${namespace}/${name}:`, error);
+  }
+}
+
+/**
+ * Restart a controller (Deployment, StatefulSet, DaemonSet, ReplicaSet) using the kubectl-style annotation
+ */
+async function restartController(
+  namespace: string,
+  kindStr: string,
+  name: string,
+  reason: string,
+  logger: Logger,
+): Promise<void> {
+  try {
+    // Use proper controller kind based on string
+    let controllerKind: GenericClass;
+
+    switch (kindStr) {
+      case "Deployment":
+        controllerKind = kind.Deployment;
+        break;
+      case "StatefulSet":
+        controllerKind = kind.StatefulSet;
+        break;
+      case "DaemonSet":
+        controllerKind = kind.DaemonSet;
+        break;
+      case "ReplicaSet":
+        controllerKind = kind.ReplicaSet;
+        break;
+      default:
+        throw new Error(`Unsupported controller kind: ${kindStr}`);
+    }
+
+    // Use a targeted JSON patch to add/update the annotation without needing to get the resource first
+    await K8s(controllerKind, { name, namespace }).Patch([
+      {
+        op: "add",
+        path: "/spec/template/metadata/annotations/uds.dev~1restartedAt",
+        value: new Date().toISOString(),
+      },
+    ]);
+
+    // Get the controller resource for the event
+    const controller = await K8s(controllerKind).InNamespace(namespace).Get(name);
+
+    // Create an event for this controller restart
+    await createEvent(controller, {
+      type: "Normal",
+      reason: "SecretChanged",
+      message: `Restarted due to: ${reason}`,
+    });
+
+    logger.info(
+      { controller: kindStr, name, namespace },
+      `Successfully restarted ${kindStr} controller: ${reason}`,
+    );
+  } catch (error) {
+    logger.error(
+      { controller: kindStr, name, namespace, error },
+      `Failed to restart ${kindStr} controller: ${reason}`,
+    );
+    throw error;
+  }
+}
+
+/**
+ * Evict standalone pods directly using the Evict API with fallback to Delete
+ */
+async function evictStandalonePods(
+  namespace: string,
+  pods: kind.Pod[],
+  reason: string,
+  log: Logger,
+) {
+  if (pods.length === 0) return;
+
+  log.info(`Directly evicting ${pods.length} standalone pods in namespace ${namespace}`);
+
+  // Group pods by owner UID for ordered eviction (handling StatefulSets differently)
+  const groups: Record<string, kind.Pod[]> = {};
+
+  for (const pod of pods) {
     // Get the UID of the owner of the pod or default to "other"
     const controlledBy =
       pod.metadata?.ownerReferences?.find((ref: V1OwnerReference) => ref.controller)?.uid ||
@@ -169,21 +396,12 @@ export async function evictPods(namespace: string, pods: kind.Pod[], reason: str
 
   // Evict each group of pods
   for (const group of Object.values(groups)) {
-    // If this is a statefulset, evict the pods in reverse name order
-    if (
-      group[0].metadata?.ownerReferences?.find(
-        (ref: V1OwnerReference) => ref.kind === "StatefulSet",
-      )
-    ) {
-      group.sort((a, b) => (b.metadata?.name || "").localeCompare(a.metadata?.name || ""));
-    }
-
     for (const pod of group) {
       log.info(`Evicting pod ${namespace}/${pod.metadata?.name} due to ${reason}`);
 
       try {
         // Try to use the Evict API
-        await K8s(kind.Pod).Evict(pod);
+        await K8s(kind.Pod).InNamespace(namespace).Evict(pod.metadata!.name!);
         log.info(`Successfully evicted pod ${namespace}/${pod.metadata?.name}`);
       } catch (err) {
         // Fall back to Delete with grace period if Evict fails

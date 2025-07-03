@@ -48,11 +48,21 @@ async function discoverSecretConsumers(namespace: string, secretName: string) {
   return pods.items.filter(pod => {
     if (!pod.spec) return false;
 
-    // Check volume mounts
+    // Check volume mounts for direct secret volumes
     const usesSecretVolume = pod.spec.volumes?.some(
       volume => volume.secret && volume.secret.secretName === secretName,
     );
     if (usesSecretVolume) return true;
+
+    // Check for projected volumes that include the secret
+    const usesProjectedSecretVolume = pod.spec.volumes?.some(volume => {
+      if (!volume.projected || !volume.projected.sources) return false;
+
+      return volume.projected.sources.some(
+        source => source.secret && source.secret.name === secretName,
+      );
+    });
+    if (usesProjectedSecretVolume) return true;
 
     // Check environment variables
     const containers = [...(pod.spec.containers || []), ...(pod.spec.initContainers || [])];
