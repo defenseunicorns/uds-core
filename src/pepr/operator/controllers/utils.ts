@@ -132,3 +132,17 @@ export async function retryWithDelay<T>(
   // This line should never be reached, but TypeScript wants it for safety.
   throw new Error("Retry loop exited unexpectedly without returning.");
 }
+
+/**
+ * Node.js friendly base64 validator.
+ *
+ * @param {string} str - string to validate as base64
+ * @returns {boolean} - The result of the validation.
+ */
+export function isBase64(str: string) {
+  try {
+    return Buffer.from(str, "base64").toString("base64") === str;
+  } catch {
+    return false;
+  }
+}
