@@ -4,13 +4,13 @@
  */
 
 import { IstioWaypoint, WaypointFromType } from "../../crd";
-import { istioEgressWaypointNamespace, getSharedAnnotationKey } from "./istio-resources";
-import { sharedEgressPkgId } from "./egress";
+import { getSharedAnnotationKey } from "./istio-resources";
+import { ambientEgressNamespace, sharedEgressPkgId } from "./egress-ambient";
 
 export const waypointName = "egress-waypoint";
 
 // Generate Waypoint for ambient egress
-export function generateWaypoint(pkgs: string[], generation: number) {
+export function generateWaypoint(pkgs: Set<string>, generation: number) {
   // Add annotations from resource
   const annotations: Record<string, string> = {};
   for (const pkgId of pkgs) {
@@ -21,7 +21,7 @@ export function generateWaypoint(pkgs: string[], generation: number) {
   const waypoint: IstioWaypoint = {
     metadata: {
       name: waypointName,
-      namespace: istioEgressWaypointNamespace,
+      namespace: ambientEgressNamespace,
       annotations,
       labels: {
         "uds/package": sharedEgressPkgId,
@@ -48,14 +48,14 @@ export function generateWaypoint(pkgs: string[], generation: number) {
           },
         },
       ],
+      infrastructure: {
+        parametersRef: {
+          group: "",
+          kind: "ConfigMap",
+          name: "egress-waypoint-config",
+        },
+      },
     },
-    // TODO: if env.EGRESS_WAYPOINT_CONFIG
-    // infrastructure:
-    //   parametersRef:
-    //     group: ""
-    //     kind: ConfigMap
-    //     name: gw-options
-    // },
   };
 
   return waypoint;

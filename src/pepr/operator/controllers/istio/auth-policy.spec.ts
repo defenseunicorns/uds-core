@@ -29,7 +29,7 @@ describe("test generate authorization policy", () => {
       serviceAccount,
     );
 
-    expect(authPolicy.metadata?.name).toBe("example-com-test-service-account-egress-authz");
+    expect(authPolicy.metadata?.name).toBe("example-com-test-service-account-egress");
     expect(authPolicy.spec?.action).toBe("ALLOW");
     expect(authPolicy.spec?.rules).toEqual(
       expect.arrayContaining([

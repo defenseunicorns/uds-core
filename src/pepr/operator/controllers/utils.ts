@@ -5,7 +5,7 @@
 
 import { V1OwnerReference } from "@kubernetes/client-node";
 import { GenericClass, GenericKind } from "kubernetes-fluent-client";
-import { K8s } from "pepr";
+import { K8s, kind } from "pepr";
 import { Logger } from "pino";
 
 /**
@@ -131,4 +131,24 @@ export async function retryWithDelay<T>(
 
   // This line should never be reached, but TypeScript wants it for safety.
   throw new Error("Retry loop exited unexpectedly without returning.");
+}
+
+// Validate that namespace exists, optionally allowing for missing namespace
+export async function validateNamespace(
+  namespace: string,
+  missingAllowed?: boolean,
+): Promise<kind.Namespace | null> {
+  try {
+    return await K8s(kind.Namespace).Get(namespace);
+  } catch (e) {
+    if (e?.status == 404) {
+      if (missingAllowed) {
+        return null;
+      } else {
+        throw e;
+      }
+    } else {
+      throw e;
+    }
+  }
 }

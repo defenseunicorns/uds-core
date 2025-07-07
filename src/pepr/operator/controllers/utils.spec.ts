@@ -3,9 +3,25 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
+import { kind } from "pepr";
 import { Logger } from "pino";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { retryWithDelay } from "./utils";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { retryWithDelay, validateNamespace } from "./utils";
+
+// Mock the K8s Get function
+const mockGet = vi.fn().mockImplementation(resource => Promise.resolve(resource));
+
+// Mock the pepr module
+vi.mock("pepr", () => {
+  return {
+    K8s: vi.fn(() => ({
+      Get: mockGet,
+    })),
+    kind: {
+      Namespace: "Namespace",
+    },
+  };
+});
 
 describe("retryWithDelay", () => {
   let mockLogger: Logger;
@@ -84,5 +100,70 @@ describe("retryWithDelay", () => {
       expect.stringContaining("Attempt 2 of spy failed, retrying in 100ms."),
       expect.objectContaining({ error: error.message }),
     );
+  });
+});
+
+describe("test validateNamespace", () => {
+  beforeEach(() => {
+    process.env.PEPR_WATCH_MODE = "true";
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  // Helper function to test validateNamespace with custom mocks
+  const testValidateNamespaceWithMock = async (
+    namespaceName: string,
+    mockImplementation: (resource: string) => Promise<kind.Namespace>,
+    missingAllowed?: boolean,
+  ) => {
+    mockGet.mockImplementation(mockImplementation);
+    return await validateNamespace(namespaceName, missingAllowed);
+  };
+
+  it("should return namespace object when namespace is found", async () => {
+    const mockNamespace = { metadata: { name: "test-ns" } } as kind.Namespace;
+
+    const result = await testValidateNamespaceWithMock("test-ns", () =>
+      Promise.resolve(mockNamespace),
+    );
+
+    expect(result).toEqual(mockNamespace);
+    expect(mockGet).toHaveBeenCalledWith("test-ns");
+  });
+
+  it("should return null if namespace is missing with missingAllowed=true", async () => {
+    const error = { status: 404, message: "Namespace not found" };
+
+    const result = await testValidateNamespaceWithMock(
+      "missing-ns",
+      () => Promise.reject(error),
+      true,
+    );
+
+    expect(result).toBeNull();
+    expect(mockGet).toHaveBeenCalledWith("missing-ns");
+  });
+
+  it("should throw error if namespace is missing with missingAllowed=false", async () => {
+    const error = { status: 404, message: "Namespace not found" };
+
+    await expect(
+      testValidateNamespaceWithMock("missing-ns", () => Promise.reject(error), false),
+    ).rejects.toEqual(error);
+
+    expect(mockGet).toHaveBeenCalledWith("missing-ns");
+  });
+
+  it("should throw error for non-404 errors even with missingAllowed=true", async () => {
+    const error = { status: 401, message: "Unauthorized" };
+
+    await expect(
+      testValidateNamespaceWithMock("test-ns", () => Promise.reject(error), true),
+    ).rejects.toEqual(error);
+
+    expect(mockGet).toHaveBeenCalledWith("test-ns");
   });
 });

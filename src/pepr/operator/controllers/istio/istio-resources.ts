@@ -8,15 +8,14 @@ import { K8s } from "pepr";
 import { V1OwnerReference } from "@kubernetes/client-node";
 import { Component, setupLogger } from "../../../logger";
 import { Allow, IstioServiceEntry, IstioSidecar, IstioVirtualService, UDSPackage } from "../../crd";
-import { getOwnerRef, purgeOrphans } from "../utils";
+import { getOwnerRef, purgeOrphans, validateNamespace } from "../utils";
 import {
-  createAmbientWorkloadEgressResources,
   createHostResourceMap,
-  createSidecarWorkloadEgressResources,
+  egressRequestedFromNetwork,
   reconcileSharedEgressResources,
-  validateEgressGateway,
-  validateEgressWaypoint,
 } from "./egress";
+import { createAmbientWorkloadEgressResources, ambientEgressNamespace } from "./egress-ambient";
+import { validateEgressGateway, createSidecarWorkloadEgressResources } from "./egress-sidecar";
 import { IstioState } from "./namespace";
 import { generateIngressServiceEntry } from "./service-entry";
 import { HostResourceMap, PackageAction } from "./types";
@@ -24,10 +23,6 @@ import { generateIngressVirtualService } from "./virtual-service";
 
 // configure subproject logger
 export const log = setupLogger(Component.OPERATOR_ISTIO);
-
-// Egress namespaces
-export const istioEgressGatewayNamespace = "istio-egress-gateway";
-export const istioEgressWaypointNamespace = "istio-egress-waypoint";
 
 /**
  * Creates a VirtualService and ServiceEntry for each exposed service in the package
@@ -96,7 +91,7 @@ export async function istioResources(pkg: UDSPackage, namespace: string, istioMo
   // Reconcile any egress requested
   await istioEgressResources(
     createHostResourceMap(pkg),
-    allowList,
+    egressRequestedFromNetwork(allowList),
     getPackageId(pkg),
     pkgName,
     namespace,
@@ -142,7 +137,16 @@ export async function istioEgressResources(
   if (hostResourceMap) {
     if (istioMode === IstioState.Ambient) {
       // Validate existing egress waypoint namespace
-      await validateEgressWaypoint();
+      try {
+        await validateNamespace(ambientEgressNamespace);
+      } catch (e) {
+        let errText = `Unable to get the egress waypoint namespace ${ambientEgressNamespace}.`;
+        if (e?.status == 404) {
+          errText = `Egress waypoint is not enabled in the cluster. Please enable the egress waypoint and retry.`;
+        }
+        log.error(errText);
+        throw new Error(errText);
+      }
 
       // For ambient workloads
       await createAmbientWorkloadEgressResources(

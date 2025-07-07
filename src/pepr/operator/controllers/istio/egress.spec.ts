@@ -4,38 +4,29 @@
  */
 
 import { kind } from "pepr";
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  Mock,
-  MockedFunction,
-  test,
-  vi,
-} from "vitest";
-import { Direction, IstioGateway, RemoteGenerated, RemoteProtocol } from "../../crd";
-import { purgeOrphans } from "../utils";
+import { afterEach, beforeEach, describe, expect, it, Mock, MockedFunction, vi } from "vitest";
+import { Direction, RemoteGenerated, RemoteProtocol } from "../../crd";
 import { defaultEgressMocks, pkgMock, updateEgressMocks } from "./defaultTestMocks";
 import {
-  applyEgressResources,
   createHostResourceMap,
   egressRequestedFromNetwork,
   getHostPortsProtocol,
+  inMemoryAmbientPackages,
   inMemoryPackageMap,
+  lastReconciliationPackages,
+  performEgressReconciliation,
   performEgressReconciliationWithMutex,
-  performSidecarEgressReconciliation,
   reconcileSharedEgressResources,
-  remapEgressResources,
   removeEgressResources,
+  updateInMemoryPackageList,
   updateInMemoryPackageMap,
-  validateEgressGateway,
+  updateLastReconciliationPackages,
   validateProtocolConflicts,
 } from "./egress";
 import { IstioState } from "./namespace";
 import { HostResourceMap, PackageAction, PackageHostMap } from "./types";
 
+// Mock istio-resources
 vi.mock("./istio-resources", async () => {
   const originalModule = (await vi.importActual("./istio-resources")) as object;
   return {
@@ -49,9 +40,40 @@ vi.mock("./istio-resources", async () => {
 
 import { log } from "./istio-resources";
 
+// Mock purge orphans
+import { purgeOrphans } from "../utils";
 const mockPurgeOrphans: MockedFunction<() => Promise<void>> = vi.fn();
+vi.mock("../utils", async () => {
+  const originalModule = (await vi.importActual("../utils")) as object;
+  return {
+    ...originalModule,
+    purgeOrphans: vi.fn(async <T>(fn: () => Promise<T>) => fn()),
+  };
+});
 
-// Mock the necessary functions
+// Mock apply functions for sidecar
+import { applySidecarEgressResources } from "./egress-sidecar";
+const mockApplySidecarEgressResources: MockedFunction<() => Promise<void>> = vi.fn();
+vi.mock("./egress-sidecar.ts", async () => {
+  const originalModule = await vi.importActual("./egress-sidecar");
+  return {
+    ...originalModule,
+    applySidecarEgressResources: vi.fn(),
+  };
+});
+
+// Mock apply functions for ambient
+import { applyAmbientEgressResources } from "./egress-ambient";
+const mockApplyAmbientEgressResources: MockedFunction<() => Promise<void>> = vi.fn();
+vi.mock("./egress-ambient.ts", async () => {
+  const originalModule = await vi.importActual("./egress-ambient");
+  return {
+    ...originalModule,
+    applyAmbientEgressResources: vi.fn(),
+  };
+});
+
+// Mock pepr functions
 vi.mock("pepr", () => ({
   K8s: vi.fn(),
   Log: {
@@ -69,17 +91,12 @@ vi.mock("pepr", () => ({
     ServiceEntry: "ServiceEntry",
     Namespace: "Namespace",
     Service: "Service",
+    ServiceAccount: "ServiceAccount",
+    Waypoint: "Waypoint",
   },
 }));
-vi.mock("../utils", async () => {
-  const originalModule = (await vi.importActual("../utils")) as object;
-  return {
-    ...originalModule,
-    purgeOrphans: vi.fn(async <T>(fn: () => Promise<T>) => fn()),
-  };
-});
 
-describe("test reconcileEgressResources", () => {
+describe("test reconcileSharedEgressResources", () => {
   const hostResourceMapMock: HostResourceMap = {
     "example.com": {
       portProtocol: [{ port: 443, protocol: RemoteProtocol.TLS }],
@@ -87,6 +104,186 @@ describe("test reconcileEgressResources", () => {
   };
   const packageIdMock = "test-package-test-namespace";
 
+  beforeEach(async () => {
+    process.env.PEPR_WATCH_MODE = "true";
+    vi.useFakeTimers();
+    vi.clearAllMocks();
+    // Reset the map before each test
+    for (const key in inMemoryPackageMap) {
+      delete inMemoryPackageMap[key];
+    }
+    inMemoryAmbientPackages.clear();
+
+    (purgeOrphans as Mock).mockImplementation(mockPurgeOrphans);
+  });
+
+  afterEach(() => {
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
+    vi.clearAllMocks();
+  });
+
+  it("should populate in-memory vars on action AddOrUpdate, sidecar", async () => {
+    updateEgressMocks(defaultEgressMocks);
+
+    await reconcileSharedEgressResources(
+      hostResourceMapMock,
+      packageIdMock,
+      PackageAction.AddOrUpdate,
+      IstioState.Sidecar,
+    );
+
+    // Validate inMemoryPackageMap
+    expect(inMemoryPackageMap).toEqual({ "test-package-test-namespace": hostResourceMapMock });
+
+    // Validate inMemoryAmbientPackages
+    expect(inMemoryAmbientPackages).toEqual(new Set());
+  });
+
+  it("should populate in-memory vars on action AddOrUpdate, ambient", async () => {
+    updateEgressMocks(defaultEgressMocks);
+
+    await reconcileSharedEgressResources(
+      hostResourceMapMock,
+      packageIdMock,
+      PackageAction.AddOrUpdate,
+      IstioState.Ambient,
+    );
+
+    // Validate inMemoryPackageMap
+    expect(inMemoryPackageMap).toEqual({});
+
+    // Validate inMemoryAmbientPackages
+    expect(inMemoryAmbientPackages).toEqual(new Set([packageIdMock]));
+  });
+
+  it("should update in-memory vars on action AddOrUpdate, sidecar to ambient", async () => {
+    updateEgressMocks(defaultEgressMocks);
+
+    await reconcileSharedEgressResources(
+      hostResourceMapMock,
+      packageIdMock,
+      PackageAction.AddOrUpdate,
+      IstioState.Sidecar,
+    );
+
+    // Validate inMemoryPackageMap is populated
+    expect(inMemoryPackageMap).toEqual({ "test-package-test-namespace": hostResourceMapMock });
+
+    // Validate inMemoryAmbientPackages is still empty
+    expect(inMemoryAmbientPackages).toEqual(new Set());
+
+    // Update to ambient
+    await reconcileSharedEgressResources(
+      hostResourceMapMock,
+      packageIdMock,
+      PackageAction.AddOrUpdate,
+      IstioState.Ambient,
+    );
+
+    // Validate inMemoryPackageMap now empty
+    expect(inMemoryPackageMap).toEqual({});
+
+    // Validate inMemoryAmbientPackages is populated
+    expect(inMemoryAmbientPackages).toEqual(new Set([packageIdMock]));
+  });
+
+  it("should update in-memory vars on action AddOrUpdate, ambient to sidecar", async () => {
+    updateEgressMocks(defaultEgressMocks);
+
+    await reconcileSharedEgressResources(
+      hostResourceMapMock,
+      packageIdMock,
+      PackageAction.AddOrUpdate,
+      IstioState.Ambient,
+    );
+
+    // Validate inMemoryPackageMap is empty
+    expect(inMemoryPackageMap).toEqual({});
+
+    // Validate inMemoryAmbientPackages is populated
+    expect(inMemoryAmbientPackages).toEqual(new Set([packageIdMock]));
+
+    await reconcileSharedEgressResources(
+      hostResourceMapMock,
+      packageIdMock,
+      PackageAction.AddOrUpdate,
+      IstioState.Sidecar,
+    );
+
+    // Validate inMemoryPackageMap is populated
+    expect(inMemoryPackageMap).toEqual({ "test-package-test-namespace": hostResourceMapMock });
+
+    // Validate inMemoryAmbientPackages is now empty
+    expect(inMemoryAmbientPackages).toEqual(new Set());
+  });
+
+  it("should update in-memory vars on action Remove, sidecar", async () => {
+    updateEgressMocks(defaultEgressMocks);
+
+    // Populate inMemoryPackageMap first
+    await reconcileSharedEgressResources(
+      hostResourceMapMock,
+      packageIdMock,
+      PackageAction.AddOrUpdate,
+      IstioState.Sidecar,
+    );
+
+    // Validate inMemoryPackageMap is populated
+    expect(inMemoryPackageMap).toEqual({ "test-package-test-namespace": hostResourceMapMock });
+
+    // Validate inMemoryAmbientPackages is still empty
+    expect(inMemoryAmbientPackages).toEqual(new Set());
+
+    // Remove packageIdMock
+    await reconcileSharedEgressResources(
+      hostResourceMapMock,
+      packageIdMock,
+      PackageAction.Remove,
+      IstioState.Sidecar,
+    );
+
+    // Validate inMemoryPackageMap is now empty
+    expect(inMemoryPackageMap).toEqual({});
+
+    // Validate inMemoryAmbientPackages is still empty
+    expect(inMemoryAmbientPackages).toEqual(new Set());
+  });
+
+  it("should update in-memory vars on action Remove, ambient", async () => {
+    updateEgressMocks(defaultEgressMocks);
+
+    // Populate inMemoryAmbientPackages first
+    await reconcileSharedEgressResources(
+      hostResourceMapMock,
+      packageIdMock,
+      PackageAction.AddOrUpdate,
+      IstioState.Ambient,
+    );
+
+    // Validate inMemoryPackageMap is still empty
+    expect(inMemoryPackageMap).toEqual({});
+
+    // Validate inMemoryAmbientPackages is populated
+    expect(inMemoryAmbientPackages).toEqual(new Set([packageIdMock]));
+
+    // Remove packageIdMock
+    await reconcileSharedEgressResources(
+      hostResourceMapMock,
+      packageIdMock,
+      PackageAction.Remove,
+      IstioState.Ambient,
+    );
+
+    // Validate inMemoryPackageMap is still empty
+    expect(inMemoryPackageMap).toEqual({});
+
+    // Validate inMemoryAmbientPackages is now empty
+    expect(inMemoryAmbientPackages).toEqual(new Set());
+  });
+});
+
+describe("test performEgressReconciliationWithMutex", () => {
   beforeEach(() => {
     process.env.PEPR_WATCH_MODE = "true";
     vi.useFakeTimers();
@@ -102,236 +299,12 @@ describe("test reconcileEgressResources", () => {
   afterEach(() => {
     vi.runOnlyPendingTimers();
     vi.useRealTimers();
-    vi.clearAllMocks();
-  });
-
-  it("should create egress resources on action AddOrUpdate", async () => {
-    updateEgressMocks(defaultEgressMocks);
-
-    await reconcileSharedEgressResources(
-      hostResourceMapMock,
-      packageIdMock,
-      PackageAction.AddOrUpdate,
-      IstioState.Sidecar,
-    );
-
-    // Check apply methods are called
-    expect(defaultEgressMocks.applyGwMock).toHaveBeenCalledTimes(1);
-    expect(defaultEgressMocks.applyVsMock).toHaveBeenCalledTimes(1);
-    expect(defaultEgressMocks.applySeMock).toHaveBeenCalledTimes(1);
-
-    // Validate inMemoryPackageMap
-    expect(inMemoryPackageMap).toEqual({ "test-package-test-namespace": hostResourceMapMock });
-  });
-
-  it("should apply an updated set of egress resources on action AddOrUpdate", async () => {
-    updateEgressMocks(defaultEgressMocks);
-
-    await reconcileSharedEgressResources(
-      hostResourceMapMock,
-      packageIdMock,
-      PackageAction.AddOrUpdate,
-      IstioState.Sidecar,
-    );
-
-    expect(defaultEgressMocks.applyGwMock).toHaveBeenCalledTimes(1);
-    expect(defaultEgressMocks.applyVsMock).toHaveBeenCalledTimes(1);
-    expect(defaultEgressMocks.applySeMock).toHaveBeenCalledTimes(1);
-
-    // Check the value of inMemoryPackageMap
-    expect(inMemoryPackageMap).toEqual({ "test-package-test-namespace": hostResourceMapMock });
-
-    defaultEgressMocks.applyGwMock.mockClear();
-    defaultEgressMocks.applyVsMock.mockClear();
-    defaultEgressMocks.applySeMock.mockClear();
-
-    // update the pkg
-    const updatedHostResourceMapMock: HostResourceMap = {
-      "example.com": {
-        portProtocol: [{ port: 80, protocol: RemoteProtocol.HTTP }],
-      },
-    };
-
-    await reconcileSharedEgressResources(
-      updatedHostResourceMapMock,
-      packageIdMock,
-      PackageAction.AddOrUpdate,
-      IstioState.Sidecar,
-    );
-
-    expect(defaultEgressMocks.applyGwMock).toHaveBeenCalledTimes(1);
-    expect(defaultEgressMocks.applyVsMock).toHaveBeenCalledTimes(1);
-    expect(defaultEgressMocks.applySeMock).toHaveBeenCalledTimes(1);
-
-    // Check the value of inMemoryPackageMap
-    expect(inMemoryPackageMap).toEqual({
-      "test-package-test-namespace": updatedHostResourceMapMock,
-    });
-  });
-
-  it("should remove an old egress allow rule on action AddOrUpdate", async () => {
-    updateEgressMocks(defaultEgressMocks);
-
-    await reconcileSharedEgressResources(
-      hostResourceMapMock,
-      packageIdMock,
-      PackageAction.AddOrUpdate,
-      IstioState.Sidecar,
-    );
-
-    expect(defaultEgressMocks.applyGwMock).toHaveBeenCalledTimes(1);
-    expect(defaultEgressMocks.applyVsMock).toHaveBeenCalledTimes(1);
-    expect(defaultEgressMocks.applySeMock).toHaveBeenCalledTimes(1);
-
-    // Check the value of inMemoryPackageMap
-    expect(inMemoryPackageMap).toEqual({ "test-package-test-namespace": hostResourceMapMock });
-
-    defaultEgressMocks.applyGwMock.mockClear();
-    defaultEgressMocks.applyVsMock.mockClear();
-    defaultEgressMocks.applySeMock.mockClear();
-    mockPurgeOrphans.mockClear();
-
-    // mock the old egress allow rule was removed from the package
-    await reconcileSharedEgressResources(
-      undefined,
-      packageIdMock,
-      PackageAction.AddOrUpdate,
-      IstioState.Sidecar,
-    );
-
-    // no new calls after old allow was removed
-    expect(defaultEgressMocks.applyGwMock).not.toHaveBeenCalled();
-    expect(defaultEgressMocks.applyVsMock).not.toHaveBeenCalled();
-    expect(defaultEgressMocks.applySeMock).not.toHaveBeenCalled();
-
-    // existing resources were purged
-    expect(mockPurgeOrphans).toHaveBeenCalledTimes(3);
-
-    // Check the value of inMemoryPackageMap
-    expect(inMemoryPackageMap).toEqual({});
-  });
-
-  it("should remove old egress resources on action Remove", async () => {
-    updateEgressMocks(defaultEgressMocks);
-
-    await reconcileSharedEgressResources(
-      hostResourceMapMock,
-      packageIdMock,
-      PackageAction.AddOrUpdate,
-      IstioState.Sidecar,
-    );
-
-    expect(defaultEgressMocks.applyGwMock).toHaveBeenCalledTimes(1);
-    expect(defaultEgressMocks.applyVsMock).toHaveBeenCalledTimes(1);
-    expect(defaultEgressMocks.applySeMock).toHaveBeenCalledTimes(1);
-
-    mockPurgeOrphans.mockClear();
-
-    // Mock removal of the package
-    await reconcileSharedEgressResources(
-      undefined,
-      packageIdMock,
-      PackageAction.Remove,
-      IstioState.Sidecar,
-    );
-
-    // Check the value of inMemoryPackageMap
-    expect(inMemoryPackageMap).toEqual({});
-
-    // Check purge methods are called (Gateway, VirtualService, ServiceEntry)
-    expect(mockPurgeOrphans).toHaveBeenCalledTimes(3);
-  });
-
-  it("should not delete egress resources if egress namespace is not found on action Remove", async () => {
-    const errorMessage = "Namespace not found";
-    const getNsMock = vi.fn<() => Promise<kind.Namespace>>().mockRejectedValue({
-      message: errorMessage,
-      status: 404,
-    });
-
-    updateEgressMocks({
-      ...defaultEgressMocks,
-      getNsMock,
-    });
-
-    // Mock removal of the package
-    await reconcileSharedEgressResources(
-      undefined,
-      packageIdMock,
-      PackageAction.Remove,
-      IstioState.Sidecar,
-    );
-
-    // Should not call purge
-    expect(mockPurgeOrphans).not.toHaveBeenCalled();
-  });
-
-  it("should handle reconciliation errors gracefully", async () => {
-    const hostResourceMapMock: HostResourceMap = {
-      "example.com": {
-        portProtocol: [{ port: 443, protocol: RemoteProtocol.TLS }],
-      },
-    };
-
-    const errorMessage = "Reconciliation failed";
-    const getNsMock = vi
-      .fn<() => Promise<kind.Namespace>>()
-      .mockRejectedValue(new Error(errorMessage));
-
-    updateEgressMocks({
-      ...defaultEgressMocks,
-      getNsMock,
-    });
-
-    await expect(
-      reconcileSharedEgressResources(
-        hostResourceMapMock,
-        "test-package",
-        PackageAction.AddOrUpdate,
-        IstioState.Sidecar,
-      ),
-    ).rejects.toThrow(errorMessage);
-  });
-
-  it("should handle undefined hostResourceMap with AddOrUpdate action", async () => {
-    updateEgressMocks(defaultEgressMocks);
-
-    // This should not throw and should result in removal
-    await expect(
-      reconcileSharedEgressResources(
-        undefined,
-        "test-package",
-        PackageAction.AddOrUpdate,
-        IstioState.Sidecar,
-      ),
-    ).resolves.not.toThrow();
-
-    expect(inMemoryPackageMap).toEqual({});
-  });
-});
-
-describe("test performEgressReconciliationWithMutex", () => {
-  beforeEach(() => {
-    process.env.PEPR_WATCH_MODE = "true";
-    vi.useFakeTimers();
-    vi.clearAllMocks();
-    // Reset the map before each test
-    for (const key in inMemoryPackageMap) {
-      delete inMemoryPackageMap[key];
-    }
-  });
-
-  afterEach(() => {
-    vi.runOnlyPendingTimers();
-    vi.useRealTimers();
   });
 
   it("should successfully perform reconciliation when no mutex is held", async () => {
     updateEgressMocks(defaultEgressMocks);
 
-    await expect(
-      performEgressReconciliationWithMutex("test-package", IstioState.Sidecar),
-    ).resolves.not.toThrow();
+    await expect(performEgressReconciliationWithMutex("test-package")).resolves.not.toThrow();
 
     // Should have called the namespace check
     expect(defaultEgressMocks.getNsMock).toHaveBeenCalled();
@@ -348,25 +321,19 @@ describe("test performEgressReconciliationWithMutex", () => {
       getNsMock,
     });
 
-    await expect(
-      performEgressReconciliationWithMutex("test-package", IstioState.Sidecar),
-    ).rejects.toThrow(errorMessage);
+    await expect(performEgressReconciliationWithMutex("test-package")).rejects.toThrow(
+      errorMessage,
+    );
   });
 
   it("should wait for existing reconciliation to complete", async () => {
     updateEgressMocks(defaultEgressMocks);
 
     // Start first reconciliation (this will hold the mutex)
-    const firstReconciliation = performEgressReconciliationWithMutex(
-      "test-package-1",
-      IstioState.Sidecar,
-    );
+    const firstReconciliation = performEgressReconciliationWithMutex("test-package-1");
 
     // Start second reconciliation while first is in progress
-    const secondReconciliation = performEgressReconciliationWithMutex(
-      "test-package-2",
-      IstioState.Ambient,
-    );
+    const secondReconciliation = performEgressReconciliationWithMutex("test-package-2");
 
     // Check both can reconcile without error
     await expect(Promise.all([firstReconciliation, secondReconciliation])).resolves.not.toThrow();
@@ -395,17 +362,15 @@ describe("test performEgressReconciliationWithMutex", () => {
     });
 
     // First reconciliation should fail
-    await expect(
-      performEgressReconciliationWithMutex("test-package", IstioState.Sidecar),
-    ).rejects.toThrow(errorMessage);
+    await expect(performEgressReconciliationWithMutex("test-package")).rejects.toThrow(
+      errorMessage,
+    );
 
     // Second reconciliation should succeed despite the previous failure
-    await expect(
-      performEgressReconciliationWithMutex("test-package", IstioState.Sidecar),
-    ).resolves.not.toThrow();
+    await expect(performEgressReconciliationWithMutex("test-package")).resolves.not.toThrow();
 
-    // Should have been called twice
-    expect(getNsMock).toHaveBeenCalledTimes(2);
+    // Should have been called 3 times, once for failure + 2 times for each ambient and sidecar
+    expect(getNsMock).toHaveBeenCalledTimes(3);
   });
 
   it("should handle namespace 404 gracefully", async () => {
@@ -420,110 +385,109 @@ describe("test performEgressReconciliationWithMutex", () => {
     });
 
     // Should not throw for 404 (early return)
-    await expect(
-      performEgressReconciliationWithMutex("test-package", IstioState.Sidecar),
-    ).resolves.not.toThrow();
+    await expect(performEgressReconciliationWithMutex("test-package")).resolves.not.toThrow();
 
     expect(getNsMock).toHaveBeenCalled();
   });
 });
 
-describe("test performSidecarEgressReconciliation", () => {
+describe("test performEgressReconciliation", () => {
   beforeEach(() => {
-    process.env.PEPR_WATCH_MODE = "true";
-    vi.useFakeTimers();
     vi.clearAllMocks();
-    // Reset the map before each test
+
+    // Reset the in-memory vars before each test
     for (const key in inMemoryPackageMap) {
       delete inMemoryPackageMap[key];
     }
+    inMemoryAmbientPackages.clear();
+
+    (purgeOrphans as Mock).mockImplementation(mockPurgeOrphans);
+    (applySidecarEgressResources as Mock).mockImplementation(mockApplySidecarEgressResources);
+    (applyAmbientEgressResources as Mock).mockImplementation(mockApplyAmbientEgressResources);
   });
 
-  afterEach(() => {
-    vi.runOnlyPendingTimers();
-    vi.useRealTimers();
-  });
-
-  it("should skip reconciliation when namespace is not found (404)", async () => {
-    const getNsMock = vi.fn<() => Promise<kind.Namespace>>().mockRejectedValue({
-      status: 404,
-      message: "Namespace not found",
-    });
-
-    updateEgressMocks({
-      ...defaultEgressMocks,
-      getNsMock,
-    });
-
-    // Should not throw and should return early
-    await expect(performSidecarEgressReconciliation()).resolves.not.toThrow();
-
-    // Should not call apply methods since it returns early
-    expect(defaultEgressMocks.applyGwMock).not.toHaveBeenCalled();
-    expect(defaultEgressMocks.applyVsMock).not.toHaveBeenCalled();
-    expect(defaultEgressMocks.applySeMock).not.toHaveBeenCalled();
-  });
-
-  it("should throw error for namespace errors other than 404", async () => {
-    const errorMessage = "Internal server error";
-    const error = Object.assign(new Error(errorMessage), { status: 500 });
-
-    const getNsMock = vi.fn<() => Promise<kind.Namespace>>().mockRejectedValue(error);
-
-    updateEgressMocks({
-      ...defaultEgressMocks,
-      getNsMock,
-    });
-
-    await expect(performSidecarEgressReconciliation()).rejects.toThrow(errorMessage);
-  });
-
-  it("should successfully reconcile when namespace exists", async () => {
-    // Add some test data to inMemoryPackageMap
-    inMemoryPackageMap["test-package"] = {
-      "example.com": {
-        portProtocol: [{ port: 443, protocol: RemoteProtocol.TLS }],
-      },
-    };
-
+  it("should successfully reconcile egress resources", async () => {
     updateEgressMocks(defaultEgressMocks);
 
-    await expect(performSidecarEgressReconciliation()).resolves.not.toThrow();
+    await performEgressReconciliation();
 
-    // Should call apply methods for the resources
-    expect(defaultEgressMocks.applyGwMock).toHaveBeenCalled();
-    expect(defaultEgressMocks.applyVsMock).toHaveBeenCalled();
-    expect(defaultEgressMocks.applySeMock).toHaveBeenCalled();
+    // Check that apply functions are called
+    expect(applySidecarEgressResources).toHaveBeenCalled();
+    expect(applyAmbientEgressResources).toHaveBeenCalled();
+
+    // Check that purge was called 4 times (for sidecar and ambient resources)
+    expect(purgeOrphans).toHaveBeenCalledTimes(4);
   });
 
-  it("should handle applyEgressResources failure", async () => {
-    // Add some test data to inMemoryPackageMap
-    inMemoryPackageMap["test-package"] = {
-      "example.com": {
-        portProtocol: [{ port: 443, protocol: RemoteProtocol.TLS }],
-      },
-    };
-
-    const errorMessage = "Apply resources failed";
+  it("should skip sidecar reconciliation when namespace is not found", async () => {
     updateEgressMocks({
       ...defaultEgressMocks,
-      applyGwMock: vi.fn<() => Promise<void>>().mockRejectedValue(new Error(errorMessage)),
+      getNsMock: vi
+        .fn<() => Promise<kind.Namespace>>()
+        .mockRejectedValueOnce({
+          status: 404,
+          message: "Namespace not found",
+        })
+        .mockResolvedValueOnce({}),
     });
 
-    await expect(performSidecarEgressReconciliation()).rejects.toThrow(
-      "Failed to apply Gateway for host example.com",
-    );
+    await performEgressReconciliation();
+
+    // Check that apply functions are not called
+    expect(applySidecarEgressResources).not.toHaveBeenCalled();
+    expect(applyAmbientEgressResources).toHaveBeenCalled();
+
+    // Check that purge was called 1 times (for ambient only)
+    expect(purgeOrphans).toHaveBeenCalledTimes(1);
   });
 
-  it("should handle empty inMemoryPackageMap", async () => {
-    updateEgressMocks(defaultEgressMocks);
+  it("should err on reconciliation when get namespace returns error", async () => {
+    updateEgressMocks({
+      ...defaultEgressMocks,
+      getNsMock: vi.fn<() => Promise<kind.Namespace>>().mockRejectedValueOnce({
+        status: 401,
+        message: "Authorization error",
+      }),
+    });
 
-    await expect(performSidecarEgressReconciliation()).resolves.not.toThrow();
+    await expect(performEgressReconciliation()).rejects.toThrow();
+  });
 
-    // Should not call apply methods for empty map
-    expect(defaultEgressMocks.applyGwMock).not.toHaveBeenCalled();
-    expect(defaultEgressMocks.applyVsMock).not.toHaveBeenCalled();
-    expect(defaultEgressMocks.applySeMock).not.toHaveBeenCalled();
+  it("should skip ambient reconciliation when namespace is not found", async () => {
+    updateEgressMocks({
+      ...defaultEgressMocks,
+      getNsMock: vi
+        .fn<() => Promise<kind.Namespace>>()
+        .mockResolvedValueOnce({})
+        .mockRejectedValueOnce({
+          status: 404,
+          message: "Namespace not found",
+        }),
+    });
+
+    await performEgressReconciliation();
+
+    // Check that apply functions are not called
+    expect(applySidecarEgressResources).toHaveBeenCalled();
+    expect(applyAmbientEgressResources).not.toHaveBeenCalled();
+
+    // Check that purge was called 3 times (for sidecar only)
+    expect(purgeOrphans).toHaveBeenCalledTimes(3);
+  });
+
+  it("should err on ambient reconciliation when get namespace returns error", async () => {
+    updateEgressMocks({
+      ...defaultEgressMocks,
+      getNsMock: vi
+        .fn<() => Promise<kind.Namespace>>()
+        .mockResolvedValueOnce({})
+        .mockRejectedValueOnce({
+          status: 401,
+          message: "Authorization error",
+        }),
+    });
+
+    await expect(performEgressReconciliation()).rejects.toThrow();
   });
 });
 
@@ -562,7 +526,7 @@ describe("test updateInMemoryPackageMap", () => {
     expect(inMemoryPackageMap["package1"]).toEqual(hostResourceMap);
   });
 
-  test("should resolve concurrent updates correctly", async () => {
+  it("should resolve concurrent updates correctly", async () => {
     // Mock packages
     const mockUpdates = [
       {
@@ -602,17 +566,6 @@ describe("test updateInMemoryPackageMap", () => {
         }),
     );
 
-    // // Create an array of promises for each update
-    // const promises = mockUpdates.map(
-    //   ({ pkgId, hostResourceMap, action }) =>
-    //     new Promise<void>(resolve => {
-    //       setTimeout(() => {
-    //         updateInMemoryPackageMap(hostResourceMap, pkgId, action);
-    //         resolve();
-    //       }, 0);
-    //     }),
-    // );
-
     // Wait for all updates to complete
     await Promise.all(promises);
 
@@ -634,7 +587,7 @@ describe("test updateInMemoryPackageMap", () => {
     expect(log.error).not.toHaveBeenCalled();
   });
 
-  test("should reject conflicting protocols during update", async () => {
+  it("should reject conflicting protocols during update", async () => {
     // First, add a package with TLS on port 443
     await updateInMemoryPackageMap(hostResourceMapMockTls, "package1", PackageAction.AddOrUpdate);
 
@@ -657,7 +610,7 @@ describe("test updateInMemoryPackageMap", () => {
     });
   });
 
-  test("should allow updating same package with different protocol", async () => {
+  it("should allow updating same package with different protocol", async () => {
     // First, add a package with TLS on port 443
     await updateInMemoryPackageMap(hostResourceMapMockTls, "package1", PackageAction.AddOrUpdate);
 
@@ -672,250 +625,235 @@ describe("test updateInMemoryPackageMap", () => {
     });
   });
 
-  it("should handle Remove action correctly", async () => {
-    const hostResourceMap: HostResourceMap = {
-      "example.com": {
-        portProtocol: [{ port: 443, protocol: RemoteProtocol.TLS }],
-      },
-    };
+  it("should handle undefined hostResourceMap correctly", async () => {
+    await updateInMemoryPackageMap(undefined, "package1", PackageAction.AddOrUpdate);
+    expect(inMemoryPackageMap).toEqual({});
+  });
 
-    // First add a package
-    await updateInMemoryPackageMap(hostResourceMap, "package1", PackageAction.AddOrUpdate);
-    expect(inMemoryPackageMap["package1"]).toEqual(hostResourceMap);
+  it("should remove package correctly on action AddOrUpdate", async () => {
+    // Add a package
+    await updateInMemoryPackageMap(hostResourceMapMockTls, "package1", PackageAction.AddOrUpdate);
+    expect(inMemoryPackageMap["package1"]).toEqual(hostResourceMapMockTls);
+
+    // Then update with empty map
+    await updateInMemoryPackageMap(undefined, "package1", PackageAction.AddOrUpdate);
+    expect(inMemoryPackageMap).toEqual({});
+  });
+
+  it("should remove package correctly on action Remove", async () => {
+    // Add a package
+    await updateInMemoryPackageMap(hostResourceMapMockTls, "package1", PackageAction.AddOrUpdate);
+    expect(inMemoryPackageMap["package1"]).toEqual(hostResourceMapMockTls);
 
     // Then remove it
     await updateInMemoryPackageMap(undefined, "package1", PackageAction.Remove);
-    expect(inMemoryPackageMap).not.toHaveProperty("package1");
+    expect(inMemoryPackageMap).toEqual({});
   });
 });
 
-describe("test applyEgressResources", () => {
-  const pkgHostMapMock: PackageHostMap = {
-    package1: {
-      "example.com": {
-        portProtocol: [{ port: 443, protocol: RemoteProtocol.TLS }],
-      },
+describe("test updateInMemoryPackageList", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // Reset the list before each test
+    inMemoryAmbientPackages.clear();
+  });
+
+  it("should update list correctly on AddOrUpdate", async () => {
+    await updateInMemoryPackageList("test-package-1", PackageAction.AddOrUpdate);
+    expect(inMemoryAmbientPackages).toEqual(new Set(["test-package-1"]));
+  });
+
+  it("should update list correctly on AddOrUpdate if pkg exists", async () => {
+    await updateInMemoryPackageList("test-package-1", PackageAction.AddOrUpdate);
+    expect(inMemoryAmbientPackages).toEqual(new Set(["test-package-1"]));
+
+    await updateInMemoryPackageList("test-package-1", PackageAction.AddOrUpdate);
+    expect(inMemoryAmbientPackages).toEqual(new Set(["test-package-1"]));
+  });
+
+  it("should update list correctly on Remove", async () => {
+    await updateInMemoryPackageList("test-package-1", PackageAction.AddOrUpdate);
+    await updateInMemoryPackageList("test-package-2", PackageAction.AddOrUpdate);
+    expect(inMemoryAmbientPackages).toEqual(new Set(["test-package-1", "test-package-2"]));
+
+    await updateInMemoryPackageList("test-package-1", PackageAction.Remove);
+    expect(inMemoryAmbientPackages).toEqual(new Set(["test-package-2"]));
+  });
+
+  it("should handle concurrent requests with race conditions", async () => {
+    // This test simulates real concurrent requests by introducing delays
+    // and ensuring operations start before others complete
+
+    const operationTimes: number[] = [];
+
+    // Create promises that start immediately but have different execution patterns
+    const promises = [
+      // Fast operation
+      (async () => {
+        await updateInMemoryPackageList("fast-package", PackageAction.AddOrUpdate);
+        operationTimes.push(Date.now());
+        return "fast-package";
+      })(),
+
+      // Slow operation that should be queued
+      (async () => {
+        // Simulate some async work before the update
+        await new Promise(resolve => setTimeout(resolve, 10));
+        await updateInMemoryPackageList("slow-package", PackageAction.AddOrUpdate);
+        operationTimes.push(Date.now());
+        return "slow-package";
+      })(),
+
+      // Another fast operation that should be queued behind the slow one
+      (async () => {
+        await updateInMemoryPackageList("queued-package", PackageAction.AddOrUpdate);
+        operationTimes.push(Date.now());
+        return "queued-package";
+      })(),
+
+      // Mixed operation with remove action
+      (async () => {
+        await new Promise(resolve => setTimeout(resolve, 5));
+        await updateInMemoryPackageList("temp-package", PackageAction.AddOrUpdate);
+        await updateInMemoryPackageList("temp-package", PackageAction.Remove);
+        operationTimes.push(Date.now());
+        return "temp-package";
+      })(),
+    ];
+
+    // Start all operations concurrently
+    await Promise.all(promises);
+
+    // Validate final state - temp-package should be removed
+    expect(inMemoryAmbientPackages).toContain("fast-package");
+    expect(inMemoryAmbientPackages).toContain("slow-package");
+    expect(inMemoryAmbientPackages).toContain("queued-package");
+    expect(inMemoryAmbientPackages).not.toContain("temp-package");
+
+    // Verify that lock/unlock operations occurred multiple times
+    const lockCalls = (log.debug as Mock).mock.calls.filter(call =>
+      call[0]?.includes("Locking ambient package list for update"),
+    );
+    const unlockCalls = (log.debug as Mock).mock.calls.filter(call =>
+      call[0]?.includes("Unlocking ambient package map for update"),
+    );
+
+    // Should have at least 5 lock/unlock pairs (4 adds + 1 remove)
+    expect(lockCalls.length).toBeGreaterThanOrEqual(5);
+    expect(unlockCalls.length).toBeGreaterThanOrEqual(5);
+    expect(lockCalls.length).toEqual(unlockCalls.length);
+
+    // Verify no errors occurred during concurrent operations
+    expect(log.error).not.toHaveBeenCalled();
+  });
+
+  it("should demonstrate lock queue mechanism with blocking operations", async () => {
+    // This test verifies that the lock queue properly serializes operations
+    // by creating a scenario where operations must wait for each other
+
+    const executionOrder: string[] = [];
+
+    // Create a long-running operation that will hold the lock
+    const longRunningOperation = (async () => {
+      executionOrder.push("long-start");
+      await updateInMemoryPackageList("long-package", PackageAction.AddOrUpdate);
+      // Simulate additional work while holding the lock conceptually
+      await new Promise(resolve => setTimeout(resolve, 20));
+      executionOrder.push("long-end");
+      return "long-package";
+    })();
+
+    // Create operations that should be queued
+    const queuedOperations = [
+      (async () => {
+        // Small delay to ensure this starts after the long operation
+        await new Promise(resolve => setTimeout(resolve, 5));
+        executionOrder.push("queued1-start");
+        await updateInMemoryPackageList("queued1-package", PackageAction.AddOrUpdate);
+        executionOrder.push("queued1-end");
+        return "queued1-package";
+      })(),
+
+      (async () => {
+        // Small delay to ensure this starts after the long operation
+        await new Promise(resolve => setTimeout(resolve, 8));
+        executionOrder.push("queued2-start");
+        await updateInMemoryPackageList("queued2-package", PackageAction.AddOrUpdate);
+        executionOrder.push("queued2-end");
+        return "queued2-package";
+      })(),
+    ];
+
+    // Wait for all operations to complete
+    await Promise.all([longRunningOperation, ...queuedOperations]);
+
+    // Verify all packages were added
+    expect(inMemoryAmbientPackages).toContain("long-package");
+    expect(inMemoryAmbientPackages).toContain("queued1-package");
+    expect(inMemoryAmbientPackages).toContain("queued2-package");
+
+    // Verify that operations were properly serialized
+    // The long operation should start first, and queued operations should start after
+    expect(executionOrder[0]).toBe("long-start");
+    expect(executionOrder).toContain("queued1-start");
+    expect(executionOrder).toContain("queued2-start");
+
+    // Verify multiple lock/unlock cycles occurred
+    const lockCalls = (log.debug as Mock).mock.calls.filter(call =>
+      call[0]?.includes("Locking ambient package list for update"),
+    );
+    expect(lockCalls.length).toBeGreaterThanOrEqual(3);
+
+    // Verify no errors occurred
+    expect(log.error).not.toHaveBeenCalled();
+  });
+});
+
+describe("test updateLastReconciliationPackages", () => {
+  const hostResourceMapMock: HostResourceMap = {
+    "example.com": {
+      portProtocol: [{ port: 443, protocol: RemoteProtocol.TLS }],
     },
   };
 
   beforeEach(() => {
-    process.env.PEPR_WATCH_MODE = "true";
-    vi.useFakeTimers();
-  });
-
-  afterEach(() => {
-    vi.runOnlyPendingTimers();
-    vi.useRealTimers();
     vi.clearAllMocks();
+    // Reset the vars before each test
+    for (const key in inMemoryPackageMap) {
+      delete inMemoryPackageMap[key];
+    }
+    inMemoryAmbientPackages.clear();
+    lastReconciliationPackages.clear();
   });
 
-  it("should apply egress resources", async () => {
-    updateEgressMocks(defaultEgressMocks);
-
-    await applyEgressResources(pkgHostMapMock, 1);
-
-    expect(defaultEgressMocks.getGwMock).toHaveBeenCalledTimes(1);
-    expect(defaultEgressMocks.getVsMock).toHaveBeenCalledTimes(1);
-    expect(defaultEgressMocks.applyGwMock).toHaveBeenCalledTimes(1);
-    expect(defaultEgressMocks.applyVsMock).toHaveBeenCalledTimes(1);
-    expect(defaultEgressMocks.applySeMock).toHaveBeenCalledTimes(1);
-  });
-
-  it("should apply multiple shared egress resources - multiple defined hosts", async () => {
-    const pkgHostMap = {
-      package1: {
-        "example.com": {
-          portProtocol: [{ port: 443, protocol: RemoteProtocol.TLS }],
-        },
-        "httpbin.org": {
-          portProtocol: [{ port: 80, protocol: RemoteProtocol.HTTP }],
-        },
-      },
-    };
-
-    updateEgressMocks(defaultEgressMocks);
-
-    await applyEgressResources(pkgHostMap, 1);
-
-    expect(defaultEgressMocks.getGwMock).toHaveBeenCalledTimes(2);
-    expect(defaultEgressMocks.getVsMock).toHaveBeenCalledTimes(2);
-    expect(defaultEgressMocks.applyGwMock).toHaveBeenCalledTimes(2);
-    expect(defaultEgressMocks.applyVsMock).toHaveBeenCalledTimes(2);
-    expect(defaultEgressMocks.applySeMock).toHaveBeenCalledTimes(2);
-  });
-
-  it("should apply shared egress resources once - one host", async () => {
-    const pkg2HostMap = {
-      package2: {
-        "example.com": {
-          portProtocol: [{ port: 80, protocol: RemoteProtocol.HTTP }],
-        },
-      },
-    };
-
-    updateEgressMocks(defaultEgressMocks);
-
-    await applyEgressResources({ ...pkgHostMapMock, ...pkg2HostMap }, 1);
-
-    expect(defaultEgressMocks.getGwMock).toHaveBeenCalledTimes(1);
-    expect(defaultEgressMocks.getVsMock).toHaveBeenCalledTimes(1);
-    expect(defaultEgressMocks.applyGwMock).toHaveBeenCalledTimes(1);
-    expect(defaultEgressMocks.applyVsMock).toHaveBeenCalledTimes(1);
-    expect(defaultEgressMocks.applySeMock).toHaveBeenCalledTimes(1);
-  });
-
-  it("should handle Gateway application error", async () => {
-    const errorMessage = "K8s API error";
-
-    updateEgressMocks({
-      ...defaultEgressMocks,
-      applyGwMock: vi
-        .fn<() => Promise<void>>()
-        .mockImplementationOnce(() => Promise.reject(new Error(errorMessage))),
-    });
-
-    await expect(applyEgressResources(pkgHostMapMock, 1)).rejects.toThrow(
-      "Failed to apply Gateway for host example.com",
+  it("should update lastReconciliationPackages correctly", async () => {
+    // Update in-memory vars
+    await updateInMemoryPackageMap(
+      hostResourceMapMock,
+      "test-package-1",
+      PackageAction.AddOrUpdate,
     );
+    await updateInMemoryPackageList("test-package-2", PackageAction.AddOrUpdate);
+
+    // Validate lastReconciliationPackages
+    updateLastReconciliationPackages();
+    expect(lastReconciliationPackages).toEqual(new Set(["test-package-1", "test-package-2"]));
   });
 
-  it("should handle Virtual Service application error", async () => {
-    const pkgHostMapMock: PackageHostMap = {
-      package1: {
-        "example.com": {
-          portProtocol: [{ port: 443, protocol: RemoteProtocol.TLS }],
-        },
-      },
-    };
+  it("should update lastReconciliationPackages correctly for empty set", async () => {
+    // Update in-memory vars
+    await updateInMemoryPackageList("test-package-1", PackageAction.AddOrUpdate);
+    await updateInMemoryPackageList("test-package-2", PackageAction.AddOrUpdate);
 
-    const errorMessage = "Virtual Service error";
-
-    updateEgressMocks({
-      ...defaultEgressMocks,
-      applyVsMock: vi
-        .fn<() => Promise<void>>()
-        .mockImplementationOnce(() => Promise.reject(new Error(errorMessage))),
-    });
-
-    await expect(applyEgressResources(pkgHostMapMock, 1)).rejects.toThrow(
-      "Failed to apply Virtual Service for host example.com",
-    );
+    // Validate lastReconciliationPackages
+    updateLastReconciliationPackages();
+    expect(lastReconciliationPackages).toEqual(new Set(["test-package-1", "test-package-2"]));
   });
 
-  it("should handle Service Entry application error", async () => {
-    const pkgHostMapMock: PackageHostMap = {
-      package1: {
-        "example.com": {
-          portProtocol: [{ port: 443, protocol: RemoteProtocol.TLS }],
-        },
-      },
-    };
-
-    const errorMessage = "Service Entry error";
-
-    updateEgressMocks({
-      ...defaultEgressMocks,
-      applySeMock: vi
-        .fn<() => Promise<void>>()
-        .mockImplementationOnce(() => Promise.reject(new Error(errorMessage))),
-    });
-
-    await expect(applyEgressResources(pkgHostMapMock, 1)).rejects.toThrow(
-      "Failed to apply Service Entry for host example.com",
-    );
-  });
-
-  it("should not apply egress resources when conflicting host is found", async () => {
-    const gwName = "sample-gateway";
-    const gwNamespace = "sample-ns";
-
-    const getGwMock = vi.fn<() => Promise<{ items: IstioGateway[] }>>().mockResolvedValueOnce({
-      items: [
-        {
-          metadata: {
-            name: gwName,
-            namespace: gwNamespace,
-          },
-          spec: {
-            selector: {
-              istio: "egressgateway",
-            },
-            servers: [
-              {
-                hosts: ["example.com"],
-                port: {
-                  number: 443,
-                  name: "tls-443",
-                  protocol: "TLS",
-                },
-              },
-            ],
-          },
-        },
-      ],
-    });
-
-    updateEgressMocks({
-      ...defaultEgressMocks,
-      getGwMock,
-    });
-
-    const expectedErrorMessage = `Found existing Gateway ${gwName}/${gwNamespace} with matching host. Istio will not behave properly with multiple Gateways using the same hosts.`;
-
-    await expect(applyEgressResources(pkgHostMapMock, 1)).rejects.toThrow(expectedErrorMessage);
-  });
-
-  it("should apply egress resources when non-conflicting host is found", async () => {
-    const gwName = "sample-gateway";
-    const gwNamespace = "sample-ns";
-
-    const getGwMock = vi.fn<() => Promise<{ items: IstioGateway[] }>>().mockResolvedValue({
-      items: [
-        {
-          metadata: {
-            name: gwName,
-            namespace: gwNamespace,
-          },
-          spec: {
-            selector: {
-              istio: "egressgateway",
-            },
-            servers: [
-              {
-                hosts: ["google.com"],
-                port: {
-                  number: 443,
-                  name: "tls-443",
-                  protocol: "TLS",
-                },
-              },
-            ],
-          },
-        },
-      ],
-    });
-
-    updateEgressMocks({
-      ...defaultEgressMocks,
-      getGwMock,
-    });
-
-    await applyEgressResources(pkgHostMapMock, 1);
-
-    expect(defaultEgressMocks.applyGwMock).toHaveBeenCalledTimes(1);
-    expect(defaultEgressMocks.applyVsMock).toHaveBeenCalledTimes(1);
-    expect(defaultEgressMocks.applySeMock).toHaveBeenCalledTimes(1);
-  });
-
-  it("should handle empty package host map", async () => {
-    updateEgressMocks(defaultEgressMocks);
-
-    await expect(applyEgressResources({}, 1)).resolves.not.toThrow();
-
-    // No resources should be applied for empty map
-    expect(defaultEgressMocks.applyGwMock).not.toHaveBeenCalled();
-    expect(defaultEgressMocks.applyVsMock).not.toHaveBeenCalled();
-    expect(defaultEgressMocks.applySeMock).not.toHaveBeenCalled();
+  it("should update lastReconciliationPackages correctly for empty list", () => {
+    // if empty set or empty array, capture correctly
+    updateLastReconciliationPackages();
+    expect(lastReconciliationPackages.size).toEqual(0);
   });
 });
 
@@ -1034,44 +972,6 @@ describe("test createHostResourceMap", () => {
   });
 });
 
-describe("test remapEgressResources", () => {
-  it("should remap egress resources from package host map", () => {
-    const packageEgress = {
-      package1: {
-        "example.com": {
-          portProtocol: [
-            { port: 443, protocol: RemoteProtocol.TLS },
-            { port: 80, protocol: RemoteProtocol.HTTP },
-          ],
-        },
-      },
-      package2: {
-        "example.com": {
-          portProtocol: [{ port: 80, protocol: RemoteProtocol.HTTP }],
-        },
-      },
-    };
-
-    const egressResources = remapEgressResources(packageEgress);
-
-    expect(egressResources).toEqual({
-      "example.com": {
-        packages: ["package1", "package2"],
-        portProtocols: [
-          { port: 443, protocol: RemoteProtocol.TLS },
-          { port: 80, protocol: RemoteProtocol.HTTP },
-        ],
-      },
-    });
-  });
-
-  it("should handle empty package host map", () => {
-    const packageEgress = {};
-    const egressResources = remapEgressResources(packageEgress);
-    expect(egressResources).toEqual({});
-  });
-});
-
 describe("test getHostPortsProtocol", () => {
   it("should return tls hostPortsProtocol object", () => {
     const allow = {
@@ -1164,117 +1064,6 @@ describe("test getHostPortsProtocol", () => {
       ports: [8443, 9443],
       protocol: RemoteProtocol.TLS,
     });
-  });
-});
-
-describe("test egressRequestedFromNetwork", () => {
-  it("should return a subset of items from allow", () => {
-    const allowList = [
-      {
-        direction: Direction.Ingress,
-        port: 443,
-      },
-      {
-        direction: Direction.Egress,
-        remoteHost: "example.com",
-        remoteProtocol: RemoteProtocol.HTTP,
-        port: 80,
-      },
-    ];
-
-    const egressAllowList = egressRequestedFromNetwork(allowList);
-
-    expect(egressAllowList).toHaveLength(1);
-  });
-
-  it("should return no items from allow", () => {
-    const allowList = [
-      {
-        direction: Direction.Ingress,
-        port: 443,
-      },
-    ];
-
-    const egressAllowList = egressRequestedFromNetwork(allowList);
-
-    expect(egressAllowList).toHaveLength(0);
-  });
-});
-
-describe("test validateEgressGateway", () => {
-  beforeEach(() => {
-    process.env.PEPR_WATCH_MODE = "true";
-    vi.useFakeTimers();
-  });
-
-  afterEach(() => {
-    vi.runOnlyPendingTimers();
-    vi.useRealTimers();
-    vi.clearAllMocks();
-  });
-
-  it("should err if get egress gateway namespace fails", async () => {
-    const errorMessage = "Unable to get the egress gateway namespace istio-egress-gateway.";
-
-    const getNsMock = vi
-      .fn<() => Promise<kind.Namespace>>()
-      .mockRejectedValue(new Error(errorMessage));
-
-    updateEgressMocks({
-      ...defaultEgressMocks,
-      getNsMock,
-    });
-
-    await expect(validateEgressGateway({})).rejects.toThrow(errorMessage);
-  });
-
-  it("should err if no egress gateway port", async () => {
-    const mockError = new Error(
-      "Egress gateway does not expose port 1234 for host example.com. Please update the egress gateway service to expose this port.",
-    );
-
-    const mockHostResourceMap = {
-      "example.com": {
-        portProtocol: [{ port: 1234, protocol: RemoteProtocol.TLS }],
-      },
-    };
-
-    updateEgressMocks(defaultEgressMocks);
-
-    await expect(validateEgressGateway(mockHostResourceMap)).rejects.toThrowError(mockError);
-  });
-
-  it("should handle multiple hosts and ports validation", async () => {
-    updateEgressMocks(defaultEgressMocks);
-
-    const mockHostResourceMap = {
-      "example.com": {
-        portProtocol: [
-          { port: 443, protocol: RemoteProtocol.TLS },
-          { port: 80, protocol: RemoteProtocol.HTTP },
-        ],
-      },
-      "another.com": {
-        portProtocol: [{ port: 8080, protocol: RemoteProtocol.HTTP }],
-      },
-    };
-
-    // Should fail because 8080 is not in the default service mock
-    await expect(validateEgressGateway(mockHostResourceMap)).rejects.toThrow(
-      "Egress gateway does not expose port 8080 for host another.com",
-    );
-  });
-
-  it("should pass if namespace is not found and service is good", async () => {
-    const mockHostResourceMap = {
-      "example.com": {
-        portProtocol: [{ port: 443, protocol: RemoteProtocol.TLS }],
-      },
-    };
-
-    updateEgressMocks(defaultEgressMocks);
-
-    await expect(validateEgressGateway(mockHostResourceMap)).resolves.not.toThrow();
   });
 });
 
@@ -1506,18 +1295,36 @@ describe("test removeEgressResources", () => {
   });
 });
 
-describe("test validateEgressWaypoint", () => {
-  it("should validate egress waypoint exists", async () => {
-    // TODO: Add test
+describe("test egressRequestedFromNetwork", () => {
+  it("should return a subset of items from allow", () => {
+    const allowList = [
+      {
+        direction: Direction.Ingress,
+        port: 443,
+      },
+      {
+        direction: Direction.Egress,
+        remoteHost: "example.com",
+        remoteProtocol: RemoteProtocol.HTTP,
+        port: 80,
+      },
+    ];
+
+    const egressAllowList = egressRequestedFromNetwork(allowList);
+
+    expect(egressAllowList).toHaveLength(1);
   });
-});
 
-describe("test createSidecarWorkloadEgressResources", () => {
-  // Move some of the test cases from istioEgressResources here
-});
+  it("should return no items from allow", () => {
+    const allowList = [
+      {
+        direction: Direction.Ingress,
+        port: 443,
+      },
+    ];
 
-describe("test createAmbientWorkloadEgressResources", () => {
-  // Test: What if multiple workloads request egress to the same host (in the same package) → mostly authpolicy check I think
-  // Test: without serviceAccount
-  // Test: validate that a serviceAccount exists -> if not throw error
+    const egressAllowList = egressRequestedFromNetwork(allowList);
+
+    expect(egressAllowList).toHaveLength(0);
+  });
 });

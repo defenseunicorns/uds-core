@@ -22,6 +22,7 @@ import {
 import { sanitizeResourceName } from "../utils";
 import { HostResource, EgressResource, PortProtocol } from "./types";
 import { sharedEgressPkgId } from "./egress";
+import { waypointName } from "./waypoint";
 
 /**
  * Creates a ServiceEntry for each exposed service in the package
@@ -143,9 +144,9 @@ export function generateLocalEgressServiceEntry(
 
   // If ambient, add labels for service entry to use waypoint proxy
   if (ambient) {
-    serviceEntry.metadata!.labels!["istio.io/use-waypoint"] = "egress-waypoint";
+    serviceEntry.metadata!.labels!["istio.io/use-waypoint"] = waypointName;
     serviceEntry.metadata!.labels!["istio.io/use-waypoint-namespace"] =
-      istioEgressWaypointNamespace; // TODO: env var?
+      istioEgressWaypointNamespace;
   }
 
   return serviceEntry;

@@ -70,8 +70,7 @@ describe("test istioEgressResources", () => {
       },
     };
 
-    const errorMessage =
-      "Unable to reconcile get the egress gateway namespace istio-egress-gateway.";
+    const errorMessage = "Unable to get the egress gateway namespace istio-egress-gateway.";
 
     const getNsMock = vi
       .fn<() => Promise<kind.Namespace>>()

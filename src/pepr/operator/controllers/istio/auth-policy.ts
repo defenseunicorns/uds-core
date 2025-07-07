@@ -54,5 +54,5 @@ export function generateAuthorizationPolicy(
 }
 
 function generateAuthorizationPolicyName(host: string, serviceAccount: string) {
-  return sanitizeResourceName(`${host}-${serviceAccount}-egress-authz`);
+  return sanitizeResourceName(`${host}-${serviceAccount}-egress`);
 }
