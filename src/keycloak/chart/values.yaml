@@ -10,7 +10,7 @@ image:
   pullPolicy: IfNotPresent
 
 # renovate: datasource=github-tags depName=defenseunicorns/uds-identity-config versioning=semver
-configImage: ghcr.io/defenseunicorns/uds/identity-config:0.14.1
+configImage: ghcr.io/defenseunicorns/uds/identity-config:0.15.2
 
 # The public domain name of the Keycloak server
 domain: "###ZARF_VAR_DOMAIN###"
@@ -72,6 +72,12 @@ themeCustomizations:
 #       - name: favicon.png
 #         configmap:
 #           name: keycloak-theme-overrides
+# Customizable Terms and Conditions
+#  termsAndConditions:
+#    text:
+#      configmap:
+#        key: text
+#        name: keycloak-theme-overrides
 
 # Generates an initial password for first admin user - only use if install is headless
 # (i.e. cannot hit keycloak UI with `zarf connect keycloak`), password should be changed after initial login
@@ -100,6 +106,9 @@ updateStrategy: RollingUpdate
 
 # Pod restart policy. One of `Always`, `OnFailure`, or `Never`
 restartPolicy: Always
+
+# Lifecycle hooks for the Keycloak container
+lifecycleHooks: {}
 
 # Termination grace period in seconds for Keycloak shutdown. Clusters with a large cache might need to extend this to give Infinispan more time to rebalance
 terminationGracePeriodSeconds: 5

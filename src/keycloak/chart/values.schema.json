@@ -182,6 +182,10 @@
     "jsonLogFormat": {
       "type": "boolean"
     },
+    "lifecycleHooks": {
+      "type": "object",
+      "properties": {}
+    },
     "nodeSelector": {
       "type": "object",
       "properties": {}
@@ -465,6 +469,15 @@
     "themeCustomizations": {
       "type": "object",
       "properties": {
+        "settings": {
+          "type": "object",
+          "properties": {
+            "enableRegistrationFields": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": true
+        },
         "resources": {
           "type": "object",
           "properties": {
@@ -486,6 +499,29 @@
                   }
                 }
               }
+            }
+          }
+        },
+        "termsAndConditions": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "object",
+              "properties": {
+                "configmap": {
+                  "type": "object",
+                  "properties": {
+                    "key": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["key", "name"]
+                }
+              },
+              "required": ["configmap"]
             }
           }
         }

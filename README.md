@@ -55,7 +55,7 @@ If you want to try out UDS Core, you can use the [k3d-core-demo bundle](./bundle
 <!-- x-release-please-start-version -->
 
 ```bash
-uds deploy k3d-core-demo:0.44.0
+uds deploy k3d-core-demo:0.45.1
 ```
 
 <!-- x-release-please-end -->
@@ -69,8 +69,17 @@ Deploy Istio, Keycloak and Pepr:
 <!-- x-release-please-start-version -->
 
 ```bash
-uds deploy k3d-core-slim-dev:0.44.0
+uds deploy k3d-core-slim-dev:0.45.1
 ```
+
+> [!IMPORTANT]
+> The k3d-core-slim-dev bundle is intended for dev/test/demo environments and should not be used for production use.
+
+> [!TIP]
+> While the k3d-core-slim-dev bundle will work without internet, DNS will likely not resolve. If you are in an airgapped environment you may need to configure your /etc/hosts file such as:
+> ```
+> 127.0.0.1 localhost yourAppNameHere.uds.dev sso.uds.dev keycloak.admin.uds.dev
+> ```
 
 <!-- x-release-please-end -->
 

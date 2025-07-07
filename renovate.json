@@ -74,7 +74,7 @@
       "commitMessageTopic": "pepr"
     },
     {
-      "matchPackageNames": ["defenseunicorns/uds-common", "mcr.microsoft.com/playwright"],
+      "matchPackageNames": ["defenseunicorns/uds-common", "mcr.microsoft.com/playwright", "defenseunicorns/kubernetes-fluent-client"],
       "groupName": "support-deps",
       "commitMessageTopic": "support-deps"
     }

@@ -13,8 +13,10 @@ spec:
       redirectUris:
         {{- if .Values.adminDomain }}
         - "https://grafana.{{ .Values.adminDomain }}/login/generic_oauth"
+        - "https://grafana.{{ .Values.adminDomain }}/login"
         {{- else }}
         - "https://grafana.admin.{{ .Values.domain }}/login/generic_oauth"
+        - "https://grafana.admin.{{ .Values.domain }}/login"
         {{- end }}
 
   monitor:
@@ -69,13 +71,13 @@ spec:
         description: "Alertmanager Datasource"
         port: 9093
 
-      # Egress allowed to Keycloak
+      # Egress must be allowed to the external facing Keycloak endpoint
       - direction: Egress
         selector:
           app.kubernetes.io/name: grafana
-        remoteNamespace: keycloak
         remoteSelector:
-          app.kubernetes.io/name: keycloak
+          app: tenant-ingressgateway
+        remoteNamespace: istio-tenant-gateway
         description: "SSO Provider"
 
       # Egress allowed to KubeAPI
