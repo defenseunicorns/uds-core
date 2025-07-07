@@ -107,6 +107,9 @@ updateStrategy: RollingUpdate
 # Pod restart policy. One of `Always`, `OnFailure`, or `Never`
 restartPolicy: Always
 
+# Lifecycle hooks for the Keycloak container
+lifecycleHooks: {}
+
 # Termination grace period in seconds for Keycloak shutdown. Clusters with a large cache might need to extend this to give Infinispan more time to rebalance
 terminationGracePeriodSeconds: 5
 

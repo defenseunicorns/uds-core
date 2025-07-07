@@ -72,3 +72,20 @@ test("validate loki dashboard", async ({ page }) => {
     await expect(page.getByTestId('data-testid Panel header Logs Panel').getByTestId('data-testid panel content')).toBeVisible();
   });
 });
+
+// Test the logout functionality
+test("validate logout functionality", async ({ page }) => {
+  await test.step("perform logout", async () => {
+    await page.goto(`/`);
+
+    await page.locator('button[aria-label="Profile"]').click();
+    await page.locator('span').filter({ hasText: 'Sign out' }).click();
+
+    // After logout, we should be redirected through a series of redirects
+    // First to /login/generic_oauth, then to SSO
+    await page.waitForURL(/.*sso\.uds\.dev.*/, { timeout: 15000 });
+
+    // Verify we're at the Keycloak login page
+    await expect(page.locator('h3:has-text("Sign in")')).toBeVisible({ timeout: 10000 });
+  });
+});
