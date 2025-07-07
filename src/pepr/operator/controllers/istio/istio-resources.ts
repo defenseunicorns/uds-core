@@ -157,7 +157,7 @@ export async function istioEgressResources(
       // Validate existing egress gateway namespace and service
       await validateEgressGateway(hostResourceMap);
 
-      // Create sidecar and service entry resoureces
+      // Create sidecar and service entry resources
       await createSidecarWorkloadEgressResources(
         hostResourceMap,
         allowList,

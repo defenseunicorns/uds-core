@@ -12,7 +12,7 @@ config:
   # - podDisruptionBudget
   # These configurations will be overlaid on top of the generated resources using a Strategic Merge Patch strategy
   #
-  # Exmples:
+  # Examples:
   # horizontalPodAutoscaler: |
   #   spec:
   #     minReplicas: 2
