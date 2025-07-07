@@ -81,7 +81,7 @@ components:
       - quay.io/rfcurated/istio/proxyv2:1.26.0-jammy-fips-rfcurated-rfhardened
       - quay.io/rfcurated/istio/install-cni:1.26.0-jammy-fips-rfcurated-rfhardened
       - quay.io/rfcurated/istio/ztunnel:1.26.0-jammy-scratch-fips-rfcurated
-  
+
   - name: gateway-api-crds
     required: true
     import:

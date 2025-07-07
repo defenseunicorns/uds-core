@@ -7,6 +7,7 @@ ignore:
   - "k3d/local/manifests/metallb/metallb-native.yaml"
   - "**/.terraform/**"
   - "**/chart/templates/**"
+  - "**/charts/**/templates/**"
   - "**/node_modules/**"
   - "dist/**"
   - "src/pepr/uds-operator-config/templates/**"
