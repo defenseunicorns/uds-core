@@ -51,9 +51,9 @@ export async function updateCfgSecrets(cfg: kind.Secret) {
 
   const decodedCfgData = decodeSecret(cfg);
 
-  // no data key then return
+  // no data key then set to empty string
   if (!Object.keys(decodedCfgData).includes("AUTHSERVICE_REDIS_URI")) {
-    return;
+    decodedCfgData.AUTHSERVICE_REDIS_URI = "";
   }
 
   // Handle placeholder values (dev mode)
@@ -77,8 +77,9 @@ export async function updateCfgSecrets(cfg: kind.Secret) {
 }
 
 async function handleCAUpdate(expose: ConfigExpose) {
+  // no caCert key then set to empty string
   if (!Object.keys(expose).includes("caCert")) {
-    return;
+    expose.caCert = "";
   }
 
   // handle dev mode placeholder

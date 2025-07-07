@@ -202,7 +202,12 @@ describe("updateUDSConfig", () => {
 
       await updateCfg(cfg);
 
-      expect(reconcileAuthservice).not.toHaveBeenCalled();
+      expect(reconcileAuthservice).toHaveBeenCalledWith({
+        name: "global-config-update",
+        action: expect.any(String),
+        trustedCA: "",
+        redisUri: "",
+      });
     });
 
     it("does not call if CA Cert is still empty string (dev mode)", async () => {
@@ -262,13 +267,18 @@ describe("updateUDSConfig", () => {
       });
     });
 
-    it("does not call if AUTHSERVICE_REDIS_URI key is missing", async () => {
-      UDSConfig.authserviceRedisUri = "";
+    it("calls if AUTHSERVICE_REDIS_URI key is missing and sets to empty string", async () => {
+      UDSConfig.authserviceRedisUri = "original";
       const emptyRedisURI = { ...mockSecret, data: {} };
 
       await updateCfgSecrets(emptyRedisURI);
 
-      expect(reconcileAuthservice).not.toHaveBeenCalled();
+      expect(reconcileAuthservice).toHaveBeenCalledWith({
+        name: "global-config-update",
+        action: expect.any(String),
+        trustedCA: "",
+        redisUri: "",
+      });
     });
 
     it("does not call if Redis URI is still empty string (dev mode)", async () => {
