@@ -10,21 +10,24 @@ import { Component, setupLogger } from "../../../logger";
 import { Allow, IstioServiceEntry, IstioSidecar, IstioVirtualService, UDSPackage } from "../../crd";
 import { getOwnerRef, purgeOrphans } from "../utils";
 import {
+  createAmbientWorkloadEgressResources,
   createHostResourceMap,
-  egressRequestedFromNetwork,
+  createSidecarWorkloadEgressResources,
   reconcileSharedEgressResources,
   validateEgressGateway,
+  validateEgressWaypoint,
 } from "./egress";
-import { generateIngressServiceEntry, generateLocalEgressServiceEntry } from "./service-entry";
-import { generateEgressSidecar } from "./sidecar";
+import { IstioState } from "./namespace";
+import { generateIngressServiceEntry } from "./service-entry";
 import { HostResourceMap, PackageAction } from "./types";
 import { generateIngressVirtualService } from "./virtual-service";
 
 // configure subproject logger
 export const log = setupLogger(Component.OPERATOR_ISTIO);
 
-// Egress gateway namespace
+// Egress namespaces
 export const istioEgressGatewayNamespace = "istio-egress-gateway";
+export const istioEgressWaypointNamespace = "istio-egress-waypoint";
 
 /**
  * Creates a VirtualService and ServiceEntry for each exposed service in the package
@@ -33,7 +36,7 @@ export const istioEgressGatewayNamespace = "istio-egress-gateway";
  * @param pkg
  * @param namespace
  */
-export async function istioResources(pkg: UDSPackage, namespace: string) {
+export async function istioResources(pkg: UDSPackage, namespace: string, istioMode: string) {
   const pkgName = pkg.metadata!.name!;
   const generation = (pkg.metadata?.generation ?? 0).toString();
   const ownerRefs = getOwnerRef(pkg);
@@ -99,6 +102,7 @@ export async function istioResources(pkg: UDSPackage, namespace: string) {
     namespace,
     generation,
     ownerRefs,
+    istioMode,
   );
 
   // Purge any orphaned resources
@@ -110,16 +114,19 @@ export async function istioResources(pkg: UDSPackage, namespace: string) {
   return [...hosts];
 }
 
+// TODO: Update tests for this function
 /**
  * Creates a ServiceEntry and Sidecar resource for egress traffic and reconciles
  * shared egress resources
  *
  * @param hostResourceMap
+ * @param allowList
  * @param pkg
  * @param pkgName
  * @param namespace
  * @param generation
  * @param ownerRefs
+ * @param ambient
  */
 export async function istioEgressResources(
   hostResourceMap: HostResourceMap | undefined,
@@ -129,53 +136,47 @@ export async function istioEgressResources(
   namespace: string,
   generation: string,
   ownerRefs: V1OwnerReference[],
+  istioMode: string,
 ) {
   // Add needed service entries and sidecars if egress is requested
   if (hostResourceMap) {
-    // Validate existing egress gateway namespace and service
-    await validateEgressGateway(hostResourceMap);
+    if (istioMode === IstioState.Ambient) {
+      // Validate existing egress waypoint namespace
+      await validateEgressWaypoint();
 
-    // Add service entry for each defined host
-    for (const host of Object.keys(hostResourceMap)) {
-      // Create Service Entry
-      const serviceEntry = generateLocalEgressServiceEntry(
-        host,
-        hostResourceMap[host],
+      // For ambient workloads
+      await createAmbientWorkloadEgressResources(
+        hostResourceMap,
+        allowList,
         pkgName,
         namespace,
         generation,
         ownerRefs,
       );
+    } else {
+      // Validate existing egress gateway namespace and service
+      await validateEgressGateway(hostResourceMap);
 
-      log.debug(serviceEntry, `Applying Service Entry ${serviceEntry.metadata?.name}`);
-
-      // Apply the ServiceEntry and force overwrite any existing resource
-      await K8s(IstioServiceEntry).Apply(serviceEntry, { force: true });
-    }
-
-    // Add sidecar for each egress allow
-    const egressRequested = egressRequestedFromNetwork(allowList);
-
-    for (const allow of egressRequested) {
-      // Create Sidecar
-      const sidecar = generateEgressSidecar(
-        allow.selector,
+      // Create sidecar and service entry resoureces
+      await createSidecarWorkloadEgressResources(
+        hostResourceMap,
+        allowList,
         pkgName,
         namespace,
         generation,
         ownerRefs,
       );
-
-      log.debug(sidecar, `Applying Sidecar ${sidecar.metadata?.name}`);
-
-      // Apply the Sidecar and force overwrite any existing resource
-      await K8s(IstioSidecar).Apply(sidecar, { force: true });
     }
   }
 
   // Reconcile shared egress resources
   try {
-    await reconcileSharedEgressResources(hostResourceMap, pkgId, PackageAction.AddOrUpdate);
+    await reconcileSharedEgressResources(
+      hostResourceMap,
+      pkgId,
+      PackageAction.AddOrUpdate,
+      istioMode,
+    );
   } catch (e) {
     log.error(`Failed to reconcile shared egress resources for package ${pkgId}`, e);
     throw e;

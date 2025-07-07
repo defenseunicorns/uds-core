@@ -69,12 +69,12 @@ export async function packageReconciler(pkg: UDSPackage) {
   // Migrate the package to the latest version
   migrate(pkg);
 
+  // Get the requested service mesh mode, default to sidecar if not specified
+  const istioMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Sidecar;
+
   // Configure the namespace and namespace-wide network policies
   try {
     await updateStatus(pkg, { phase: Phase.Pending, conditions: getReadinessConditions(false) });
-
-    // Get the requested service mesh mode, default to sidecar if not specified
-    const istioMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Sidecar;
 
     // Pass the effective Istio mode to the networkPolicies function
     const netPol = await networkPolicies(pkg, namespace!, istioMode);
@@ -100,7 +100,7 @@ export async function packageReconciler(pkg: UDSPackage) {
     }
 
     // Create the Istio Resources per the package configuration
-    endpoints = await istioResources(pkg, namespace!);
+    endpoints = await istioResources(pkg, namespace!, istioMode);
 
     // Configure the ServiceMonitors
     const monitors: string[] = [];
@@ -235,7 +235,13 @@ export async function packageFinalizer(pkg: UDSPackage) {
     });
     // Clean annotations and/or remove any shared egress resources
     await retryWithDelay(async function cleanupSharedEgressResources() {
-      await reconcileSharedEgressResources(undefined, getPackageId(pkg), PackageAction.Remove);
+      const istioMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Sidecar;
+      await reconcileSharedEgressResources(
+        undefined,
+        getPackageId(pkg),
+        PackageAction.Remove,
+        istioMode,
+      );
     }, log);
   } catch (e) {
     log.debug(

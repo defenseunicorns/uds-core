@@ -14,7 +14,11 @@ import {
   IstioResolution,
   IstioServiceEntry,
 } from "../../crd";
-import { istioEgressGatewayNamespace, getSharedAnnotationKey } from "./istio-resources";
+import {
+  istioEgressGatewayNamespace,
+  istioEgressWaypointNamespace,
+  getSharedAnnotationKey,
+} from "./istio-resources";
 import { sanitizeResourceName } from "../utils";
 import { HostResource, EgressResource, PortProtocol } from "./types";
 import { sharedEgressPkgId } from "./egress";
@@ -86,6 +90,7 @@ export function generateSEName(pkgName: string, expose: Expose) {
   return name;
 }
 
+// TODO: Update test for ambient case
 /**
  * Creates a ServiceEntry for allowed external hosts in the package
  *
@@ -103,6 +108,7 @@ export function generateLocalEgressServiceEntry(
   namespace: string,
   generation: string,
   ownerRefs: V1OwnerReference[],
+  ambient: boolean,
 ) {
   const { portProtocol } = hostResource;
 
@@ -134,6 +140,13 @@ export function generateLocalEgressServiceEntry(
       exportTo: ["."],
     },
   };
+
+  // If ambient, add labels for service entry to use waypoint proxy
+  if (ambient) {
+    serviceEntry.metadata!.labels!["istio.io/use-waypoint"] = "egress-waypoint";
+    serviceEntry.metadata!.labels!["istio.io/use-waypoint-namespace"] =
+      istioEgressWaypointNamespace; // TODO: env var?
+  }
 
   return serviceEntry;
 }
@@ -180,7 +193,12 @@ export function generateSharedServiceEntry(
   return serviceEntry;
 }
 
-function generateLocalEgressSEName(pkgName: string, portProtocol: PortProtocol[], host: string) {
+// TODO: add a test
+export function generateLocalEgressSEName(
+  pkgName: string,
+  portProtocol: PortProtocol[],
+  host: string,
+) {
   const ppString = portProtocol
     .map(pp => `${pp.port.toString()}-${pp.protocol.toLowerCase()}`)
     .join("-");

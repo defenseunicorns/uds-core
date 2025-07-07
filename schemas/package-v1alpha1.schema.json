@@ -1,1203 +1,863 @@
-{
-  "$schema": "http://json-schema.org/draft-06/schema#",
-  "$ref": "#/definitions/Package",
-  "definitions": {
-    "Package": {
-      "type": "object",
-      "additionalProperties": {},
-      "properties": {
-        "spec": {
-          "$ref": "#/definitions/Spec"
-        },
-        "status": {
-          "$ref": "#/definitions/StatusObject"
-        }
-      },
-      "required": [],
-      "title": "Package"
-    },
-    "Spec": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "monitor": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/Monitor"
-          },
-          "description": "Create Service or Pod Monitor configurations"
-        },
-        "network": {
-          "$ref": "#/definitions/Network",
-          "description": "Network configuration for the package"
-        },
-        "sso": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/Sso"
-          },
-          "description": "Create SSO client configurations"
-        }
-      },
-      "required": [],
-      "title": "Spec"
-    },
-    "Monitor": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "authorization": {
-          "$ref": "#/definitions/Authorization",
-          "description": "Authorization settings."
-        },
-        "description": {
-          "type": "string",
-          "description": "A description of this monitor entry, this will become part of the ServiceMonitor name"
-        },
-        "fallbackScrapeProtocol": {
-          "$ref": "#/definitions/FallbackScrapeProtocol",
-          "description": "The protocol for Prometheus to use if a scrape returns a blank, unparsable, or otherwise\ninvalid Content-Type"
-        },
-        "kind": {
-          "$ref": "#/definitions/Kind",
-          "description": "The type of monitor to create; PodMonitor or ServiceMonitor. ServiceMonitor is the\ndefault."
-        },
-        "path": {
-          "type": "string",
-          "description": "HTTP path from which to scrape for metrics, defaults to `/metrics`"
-        },
-        "podSelector": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
-        },
-        "portName": {
-          "type": "string",
-          "description": "The port name for the serviceMonitor"
-        },
-        "selector": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
-        },
-        "targetPort": {
-          "type": "number",
-          "description": "The service targetPort. This is required so the NetworkPolicy can be generated correctly."
-        }
-      },
-      "required": [
-        "portName",
-        "selector",
-        "targetPort"
-      ],
-      "title": "Monitor"
-    },
-    "Authorization": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "credentials": {
-          "$ref": "#/definitions/Credentials",
-          "description": "Selects a key of a Secret in the namespace that contains the credentials for\nauthentication."
-        },
-        "type": {
-          "type": "string",
-          "description": "Defines the authentication type. The value is case-insensitive. \"Basic\" is not a\nsupported value. Default: \"Bearer\""
-        }
-      },
-      "required": [
-        "credentials"
-      ],
-      "title": "Authorization",
-      "description": "Authorization settings."
-    },
-    "Credentials": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "key": {
-          "type": "string",
-          "description": "The key of the secret to select from. Must be a valid secret key."
-        },
-        "name": {
-          "type": "string",
-          "description": "Name of the referent. More info:\nhttps://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names"
-        },
-        "optional": {
-          "type": "boolean",
-          "description": "Specify whether the Secret or its key must be defined"
-        }
-      },
-      "required": [
-        "key"
-      ],
-      "title": "Credentials",
-      "description": "Selects a key of a Secret in the namespace that contains the credentials for authentication."
-    },
-    "Network": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "allow": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/Allow"
-          },
-          "description": "Allow specific traffic (namespace will have a default-deny policy)"
-        },
-        "expose": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/Expose"
-          },
-          "description": "Expose a service on an Istio Gateway"
-        },
-        "serviceMesh": {
-          "$ref": "#/definitions/ServiceMesh",
-          "description": "Service Mesh configuration for the package"
-        }
-      },
-      "required": [],
-      "title": "Network",
-      "description": "Network configuration for the package"
-    },
-    "Allow": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "description": {
-          "type": "string",
-          "description": "A description of the policy, this will become part of the policy name"
-        },
-        "direction": {
-          "$ref": "#/definitions/Direction",
-          "description": "The direction of the traffic"
-        },
-        "labels": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
-        },
-        "podLabels": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
-        },
-        "port": {
-          "type": "number",
-          "description": "The port to allow (protocol is always TCP)"
-        },
-        "ports": {
-          "type": "array",
-          "items": {
-            "type": "number"
-          },
-          "description": "A list of ports to allow (protocol is always TCP)"
-        },
-        "remoteCidr": {
-          "type": "string",
-          "description": "Custom generated policy CIDR"
-        },
-        "remoteGenerated": {
-          "$ref": "#/definitions/RemoteGenerated",
-          "description": "Custom generated remote selector for the policy"
-        },
-        "remoteHost": {
-          "type": "string",
-          "description": "Remote host to allow traffic out to"
-        },
-        "remoteNamespace": {
-          "type": "string",
-          "description": "The remote namespace to allow traffic to/from. Use * or empty string to allow all\nnamespaces"
-        },
-        "remotePodLabels": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
-        },
-        "remoteProtocol": {
-          "$ref": "#/definitions/RemoteProtocol",
-          "description": "Protocol used for external connection"
-        },
-        "remoteSelector": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
-        },
-        "remoteServiceAccount": {
-          "type": "string",
-          "description": "The remote service account to restrict incoming traffic from within the remote\nnamespace.           Only valid for Ingress rules."
-        },
-        "selector": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
-        }
-      },
-      "required": [
-        "direction"
-      ],
-      "title": "Allow"
-    },
-    "Expose": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "advancedHTTP": {
-          "$ref": "#/definitions/AdvancedHTTP",
-          "description": "Advanced HTTP settings for the route."
-        },
-        "description": {
-          "type": "string",
-          "description": "A description of this expose entry, this will become part of the VirtualService name"
-        },
-        "gateway": {
-          "$ref": "#/definitions/Gateway",
-          "description": "The name of the gateway to expose the service on (default: tenant)"
-        },
-        "host": {
-          "type": "string",
-          "description": "The hostname to expose the service on"
-        },
-        "match": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/ExposeMatch"
-          },
-          "description": "Match the incoming request based on custom rules. Not permitted when using the\npassthrough gateway."
-        },
-        "podLabels": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
-        },
-        "port": {
-          "type": "number",
-          "description": "The port number to expose"
-        },
-        "selector": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
-        },
-        "service": {
-          "type": "string",
-          "description": "The name of the service to expose"
-        },
-        "targetPort": {
-          "type": "number",
-          "description": "The service targetPort. This defaults to port and is only required if the service port is\ndifferent from the target port (so the NetworkPolicy can be generated correctly)."
-        }
-      },
-      "required": [
-        "host"
-      ],
-      "title": "Expose"
-    },
-    "AdvancedHTTP": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "corsPolicy": {
-          "$ref": "#/definitions/CorsPolicy",
-          "description": "Cross-Origin Resource Sharing policy (CORS)."
-        },
-        "directResponse": {
-          "$ref": "#/definitions/DirectResponse",
-          "description": "A HTTP rule can either return a direct_response, redirect or forward (default) traffic."
-        },
-        "headers": {
-          "$ref": "#/definitions/Headers"
-        },
-        "match": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/AdvancedHTTPMatch"
-          },
-          "description": "Match the incoming request based on custom rules. Not permitted when using the\npassthrough gateway."
-        },
-        "redirect": {
-          "$ref": "#/definitions/Redirect",
-          "description": "A HTTP rule can either return a direct_response, redirect or forward (default) traffic."
-        },
-        "retries": {
-          "$ref": "#/definitions/Retries",
-          "description": "Retry policy for HTTP requests."
-        },
-        "rewrite": {
-          "$ref": "#/definitions/Rewrite",
-          "description": "Rewrite HTTP URIs and Authority headers."
-        },
-        "timeout": {
-          "type": "string",
-          "description": "Timeout for HTTP requests, default is disabled."
-        },
-        "weight": {
-          "type": "integer",
-          "description": "Weight specifies the relative proportion of traffic to be forwarded to the destination."
-        }
-      },
-      "required": [],
-      "title": "AdvancedHTTP",
-      "description": "Advanced HTTP settings for the route."
-    },
-    "CorsPolicy": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "allowCredentials": {
-          "type": "boolean",
-          "description": "Indicates whether the caller is allowed to send the actual request (not the preflight)\nusing credentials."
-        },
-        "allowHeaders": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "List of HTTP headers that can be used when requesting the resource."
-        },
-        "allowMethods": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "List of HTTP methods allowed to access the resource."
-        },
-        "allowOrigin": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "allowOrigins": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/AllowOrigin"
-          },
-          "description": "String patterns that match allowed origins."
-        },
-        "exposeHeaders": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "A list of HTTP headers that the browsers are allowed to access."
-        },
-        "maxAge": {
-          "type": "string",
-          "description": "Specifies how long the results of a preflight request can be cached."
-        }
-      },
-      "required": [],
-      "title": "CorsPolicy",
-      "description": "Cross-Origin Resource Sharing policy (CORS)."
-    },
-    "AllowOrigin": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "exact": {
-          "type": "string"
-        },
-        "prefix": {
-          "type": "string"
-        },
-        "regex": {
-          "type": "string",
-          "description": "RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax)."
-        }
-      },
-      "required": [],
-      "title": "AllowOrigin"
-    },
-    "DirectResponse": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "body": {
-          "$ref": "#/definitions/Body",
-          "description": "Specifies the content of the response body."
-        },
-        "status": {
-          "type": "integer",
-          "description": "Specifies the HTTP response status to be returned."
-        }
-      },
-      "required": [
-        "status"
-      ],
-      "title": "DirectResponse",
-      "description": "A HTTP rule can either return a direct_response, redirect or forward (default) traffic."
-    },
-    "Body": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "bytes": {
-          "type": "string",
-          "description": "response body as base64 encoded bytes."
-        },
-        "string": {
-          "type": "string"
-        }
-      },
-      "required": [],
-      "title": "Body",
-      "description": "Specifies the content of the response body."
-    },
-    "Headers": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "request": {
-          "$ref": "#/definitions/Request"
-        },
-        "response": {
-          "$ref": "#/definitions/Response"
-        }
-      },
-      "required": [],
-      "title": "Headers"
-    },
-    "Request": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "add": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
-        },
-        "remove": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "set": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
-        }
-      },
-      "required": [],
-      "title": "Request"
-    },
-    "Response": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "add": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
-        },
-        "remove": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "set": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
-        }
-      },
-      "required": [],
-      "title": "Response"
-    },
-    "AdvancedHTTPMatch": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "ignoreUriCase": {
-          "type": "boolean",
-          "description": "Flag to specify whether the URI matching should be case-insensitive."
-        },
-        "method": {
-          "$ref": "#/definitions/PurpleMethod"
-        },
-        "name": {
-          "type": "string",
-          "description": "The name assigned to a match."
-        },
-        "queryParams": {
-          "type": "object",
-          "additionalProperties": {
-            "$ref": "#/definitions/PurpleQueryParam"
-          },
-          "description": "Query parameters for matching."
-        },
-        "uri": {
-          "$ref": "#/definitions/PurpleURI"
-        }
-      },
-      "required": [
-        "name"
-      ],
-      "title": "AdvancedHTTPMatch"
-    },
-    "PurpleMethod": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "exact": {
-          "type": "string"
-        },
-        "prefix": {
-          "type": "string"
-        },
-        "regex": {
-          "type": "string",
-          "description": "RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax)."
-        }
-      },
-      "required": [],
-      "title": "PurpleMethod"
-    },
-    "PurpleQueryParam": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "exact": {
-          "type": "string"
-        },
-        "prefix": {
-          "type": "string"
-        },
-        "regex": {
-          "type": "string",
-          "description": "RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax)."
-        }
-      },
-      "required": [],
-      "title": "PurpleQueryParam"
-    },
-    "PurpleURI": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "exact": {
-          "type": "string"
-        },
-        "prefix": {
-          "type": "string"
-        },
-        "regex": {
-          "type": "string",
-          "description": "RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax)."
-        }
-      },
-      "required": [],
-      "title": "PurpleURI"
-    },
-    "Redirect": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "authority": {
-          "type": "string",
-          "description": "On a redirect, overwrite the Authority/Host portion of the URL with this value."
-        },
-        "derivePort": {
-          "$ref": "#/definitions/DerivePort",
-          "description": "On a redirect, dynamically set the port: * FROM_PROTOCOL_DEFAULT: automatically set to 80\nfor HTTP and 443 for HTTPS.\n\nValid Options: FROM_PROTOCOL_DEFAULT, FROM_REQUEST_PORT"
-        },
-        "port": {
-          "type": "integer",
-          "description": "On a redirect, overwrite the port portion of the URL with this value."
-        },
-        "redirectCode": {
-          "type": "integer",
-          "description": "On a redirect, Specifies the HTTP status code to use in the redirect response."
-        },
-        "scheme": {
-          "type": "string",
-          "description": "On a redirect, overwrite the scheme portion of the URL with this value."
-        },
-        "uri": {
-          "type": "string",
-          "description": "On a redirect, overwrite the Path portion of the URL with this value."
-        }
-      },
-      "required": [],
-      "title": "Redirect",
-      "description": "A HTTP rule can either return a direct_response, redirect or forward (default) traffic."
-    },
-    "Retries": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "attempts": {
-          "type": "integer",
-          "description": "Number of retries to be allowed for a given request."
-        },
-        "perTryTimeout": {
-          "type": "string",
-          "description": "Timeout per attempt for a given request, including the initial call and any retries."
-        },
-        "retryOn": {
-          "type": "string",
-          "description": "Specifies the conditions under which retry takes place."
-        },
-        "retryRemoteLocalities": {
-          "type": "boolean",
-          "description": "Flag to specify whether the retries should retry to other localities."
-        }
-      },
-      "required": [],
-      "title": "Retries",
-      "description": "Retry policy for HTTP requests."
-    },
-    "Rewrite": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "authority": {
-          "type": "string",
-          "description": "rewrite the Authority/Host header with this value."
-        },
-        "uri": {
-          "type": "string",
-          "description": "rewrite the path (or the prefix) portion of the URI with this value."
-        },
-        "uriRegexRewrite": {
-          "$ref": "#/definitions/URIRegexRewrite",
-          "description": "rewrite the path portion of the URI with the specified regex."
-        }
-      },
-      "required": [],
-      "title": "Rewrite",
-      "description": "Rewrite HTTP URIs and Authority headers."
-    },
-    "URIRegexRewrite": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "match": {
-          "type": "string",
-          "description": "RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax)."
-        },
-        "rewrite": {
-          "type": "string",
-          "description": "The string that should replace into matching portions of original URI."
-        }
-      },
-      "required": [],
-      "title": "URIRegexRewrite",
-      "description": "rewrite the path portion of the URI with the specified regex."
-    },
-    "ExposeMatch": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "ignoreUriCase": {
-          "type": "boolean",
-          "description": "Flag to specify whether the URI matching should be case-insensitive."
-        },
-        "method": {
-          "$ref": "#/definitions/FluffyMethod"
-        },
-        "name": {
-          "type": "string",
-          "description": "The name assigned to a match."
-        },
-        "queryParams": {
-          "type": "object",
-          "additionalProperties": {
-            "$ref": "#/definitions/FluffyQueryParam"
-          },
-          "description": "Query parameters for matching."
-        },
-        "uri": {
-          "$ref": "#/definitions/FluffyURI"
-        }
-      },
-      "required": [
-        "name"
-      ],
-      "title": "ExposeMatch"
-    },
-    "FluffyMethod": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "exact": {
-          "type": "string"
-        },
-        "prefix": {
-          "type": "string"
-        },
-        "regex": {
-          "type": "string",
-          "description": "RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax)."
-        }
-      },
-      "required": [],
-      "title": "FluffyMethod"
-    },
-    "FluffyQueryParam": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "exact": {
-          "type": "string"
-        },
-        "prefix": {
-          "type": "string"
-        },
-        "regex": {
-          "type": "string",
-          "description": "RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax)."
-        }
-      },
-      "required": [],
-      "title": "FluffyQueryParam"
-    },
-    "FluffyURI": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "exact": {
-          "type": "string"
-        },
-        "prefix": {
-          "type": "string"
-        },
-        "regex": {
-          "type": "string",
-          "description": "RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax)."
-        }
-      },
-      "required": [],
-      "title": "FluffyURI"
-    },
-    "ServiceMesh": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "mode": {
-          "$ref": "#/definitions/Mode",
-          "description": "Set the service mesh mode for this package (namespace), defaults to sidecar"
-        }
-      },
-      "required": [],
-      "title": "ServiceMesh",
-      "description": "Service Mesh configuration for the package"
-    },
-    "Sso": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "adminUrl": {
-          "type": "string",
-          "description": "This URL will be used for every binding to both the SP's Assertion Consumer and Single\nLogout Services."
-        },
-        "alwaysDisplayInConsole": {
-          "type": "boolean",
-          "description": "Always list this client in the Account UI, even if the user does not have an active\nsession."
-        },
-        "attributes": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
-        },
-        "baseUrl": {
-          "type": "string",
-          "description": "Default URL to use when the auth server needs to redirect or link back to the client."
-        },
-        "clientAuthenticatorType": {
-          "$ref": "#/definitions/ClientAuthenticatorType",
-          "description": "The client authenticator type"
-        },
-        "clientId": {
-          "type": "string",
-          "description": "The client identifier registered with the identity provider."
-        },
-        "defaultClientScopes": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "Default client scopes"
-        },
-        "description": {
-          "type": "string",
-          "description": "A description for the client, can be a URL to an image to replace the login logo"
-        },
-        "enableAuthserviceSelector": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
-        },
-        "enabled": {
-          "type": "boolean",
-          "description": "Whether the SSO client is enabled"
-        },
-        "groups": {
-          "$ref": "#/definitions/Groups",
-          "description": "The client SSO group type"
-        },
-        "name": {
-          "type": "string",
-          "description": "Specifies display name of the client"
-        },
-        "protocol": {
-          "$ref": "#/definitions/Protocol",
-          "description": "Specifies the protocol of the client, either 'openid-connect' or 'saml'"
-        },
-        "protocolMappers": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/ProtocolMapper"
-          },
-          "description": "Protocol Mappers to configure on the client"
-        },
-        "publicClient": {
-          "type": "boolean",
-          "description": "Defines whether the client requires a client secret for authentication"
-        },
-        "redirectUris": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "Valid URI pattern a browser can redirect to after a successful login. Simple wildcards\nare allowed such as 'https://unicorns.uds.dev/*'"
-        },
-        "rootUrl": {
-          "type": "string",
-          "description": "Root URL appended to relative URLs"
-        },
-        "secret": {
-          "type": "string",
-          "description": "The client secret. Typically left blank and auto-generated."
-        },
-        "secretName": {
-          "type": "string",
-          "description": "The name of the secret to store the client secret"
-        },
-        "secretTemplate": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
-        },
-        "serviceAccountsEnabled": {
-          "type": "boolean",
-          "description": "Enables the client credentials grant based authentication via OpenID Connect protocol."
-        },
-        "standardFlowEnabled": {
-          "type": "boolean",
-          "description": "Enables the standard OpenID Connect redirect based authentication with authorization code."
-        },
-        "webOrigins": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "Allowed CORS origins. To permit all origins of Valid Redirect URIs, add '+'. This does\nnot include the '*' wildcard though. To permit all origins, explicitly add '*'."
-        }
-      },
-      "required": [
-        "clientId",
-        "name"
-      ],
-      "title": "Sso"
-    },
-    "Groups": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "anyOf": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "List of groups allowed to access the client"
-        }
-      },
-      "required": [],
-      "title": "Groups",
-      "description": "The client SSO group type"
-    },
-    "ProtocolMapper": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "config": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
-        },
-        "consentRequired": {
-          "type": "boolean",
-          "description": "Whether user consent is required for this mapper"
-        },
-        "name": {
-          "type": "string",
-          "description": "Name of the mapper"
-        },
-        "protocol": {
-          "$ref": "#/definitions/Protocol",
-          "description": "Protocol of the mapper"
-        },
-        "protocolMapper": {
-          "type": "string",
-          "description": "Protocol Mapper type of the mapper"
-        }
-      },
-      "required": [
-        "name",
-        "protocol",
-        "protocolMapper"
-      ],
-      "title": "ProtocolMapper"
-    },
-    "StatusObject": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "authorizationPolicyCount": {
-          "type": "integer"
-        },
-        "authserviceClients": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "conditions": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/Condition"
-          },
-          "description": "Status conditions following Kubernetes-style conventions"
-        },
-        "endpoints": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "monitors": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "networkPolicyCount": {
-          "type": "integer"
-        },
-        "observedGeneration": {
-          "type": "integer"
-        },
-        "phase": {
-          "$ref": "#/definitions/Phase"
-        },
-        "retryAttempt": {
-          "type": "integer"
-        },
-        "ssoClients": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        }
-      },
-      "required": [],
-      "title": "StatusObject"
-    },
-    "Condition": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "lastTransitionTime": {
-          "type": "string",
-          "format": "date-time",
-          "description": "The last time the condition transitioned from one status to another"
-        },
-        "message": {
-          "type": "string",
-          "description": "A human-readable message indicating details about the transition"
-        },
-        "observedGeneration": {
-          "type": "integer",
-          "description": "Represents the .metadata.generation that the condition was set based upon"
-        },
-        "reason": {
-          "type": "string",
-          "description": "A programmatic identifier indicating the reason for the condition's last transition"
-        },
-        "status": {
-          "$ref": "#/definitions/StatusEnum",
-          "description": "Status of the condition, one of True, False, Unknown"
-        },
-        "type": {
-          "type": "string",
-          "description": "Type of condition in CamelCase or in foo.example.com/CamelCase format"
-        }
-      },
-      "required": [
-        "lastTransitionTime",
-        "message",
-        "reason",
-        "status",
-        "type"
-      ],
-      "title": "Condition"
-    },
-    "FallbackScrapeProtocol": {
-      "type": "string",
-      "enum": [
-        "OpenMetricsText0.0.1",
-        "OpenMetricsText1.0.0",
-        "PrometheusProto",
-        "PrometheusText0.0.4",
-        "PrometheusText1.0.0"
-      ],
-      "title": "FallbackScrapeProtocol",
-      "description": "The protocol for Prometheus to use if a scrape returns a blank, unparsable, or otherwise invalid Content-Type"
-    },
-    "Kind": {
-      "type": "string",
-      "enum": [
-        "PodMonitor",
-        "ServiceMonitor"
-      ],
-      "title": "Kind",
-      "description": "The type of monitor to create; PodMonitor or ServiceMonitor. ServiceMonitor is the default."
-    },
-    "Direction": {
-      "type": "string",
-      "enum": [
-        "Ingress",
-        "Egress"
-      ],
-      "title": "Direction",
-      "description": "The direction of the traffic"
-    },
-    "RemoteGenerated": {
-      "type": "string",
-      "enum": [
-        "KubeAPI",
-        "KubeNodes",
-        "IntraNamespace",
-        "CloudMetadata",
-        "Anywhere"
-      ],
-      "title": "RemoteGenerated",
-      "description": "Custom generated remote selector for the policy"
-    },
-    "RemoteProtocol": {
-      "type": "string",
-      "enum": [
-        "TLS",
-        "HTTP"
-      ],
-      "title": "RemoteProtocol",
-      "description": "Protocol used for external connection"
-    },
-    "DerivePort": {
-      "type": "string",
-      "enum": [
-        "FROM_PROTOCOL_DEFAULT",
-        "FROM_REQUEST_PORT"
-      ],
-      "title": "DerivePort",
-      "description": "On a redirect, dynamically set the port: * FROM_PROTOCOL_DEFAULT: automatically set to 80 for HTTP and 443 for HTTPS.\n\nValid Options: FROM_PROTOCOL_DEFAULT, FROM_REQUEST_PORT"
-    },
-    "Gateway": {
-      "type": "string",
-      "enum": [
-        "admin",
-        "tenant",
-        "passthrough"
-      ],
-      "title": "Gateway",
-      "description": "The name of the gateway to expose the service on (default: tenant)"
-    },
-    "Mode": {
-      "type": "string",
-      "enum": [
-        "sidecar",
-        "ambient"
-      ],
-      "title": "Mode",
-      "description": "Set the service mesh mode for this package (namespace), defaults to sidecar"
-    },
-    "ClientAuthenticatorType": {
-      "type": "string",
-      "enum": [
-        "client-secret",
-        "client-jwt"
-      ],
-      "title": "ClientAuthenticatorType",
-      "description": "The client authenticator type"
-    },
-    "Protocol": {
-      "type": "string",
-      "enum": [
-        "openid-connect",
-        "saml"
-      ],
-      "title": "Protocol",
-      "description": "Specifies the protocol of the client, either 'openid-connect' or 'saml'\nProtocol of the mapper"
-    },
-    "StatusEnum": {
-      "type": "string",
-      "enum": [
-        "True",
-        "False",
-        "Unknown"
-      ],
-      "title": "StatusEnum",
-      "description": "Status of the condition, one of True, False, Unknown"
-    },
-    "Phase": {
-      "type": "string",
-      "enum": [
-        "Pending",
-        "Ready",
-        "Failed",
-        "Retrying",
-        "Removing",
-        "RemovalFailed"
-      ],
-      "title": "Phase"
-    }
-  }
+export interface Package {
+    spec?:   Spec;
+    status?: StatusObject;
+    [property: string]: any;
+}
+
+export interface Spec {
+    /**
+     * Create Service or Pod Monitor configurations
+     */
+    monitor?: Monitor[];
+    /**
+     * Network configuration for the package
+     */
+    network?: Network;
+    /**
+     * Create SSO client configurations
+     */
+    sso?: Sso[];
+    [property: string]: any;
+}
+
+export interface Monitor {
+    /**
+     * Authorization settings.
+     */
+    authorization?: Authorization;
+    /**
+     * A description of this monitor entry, this will become part of the ServiceMonitor name
+     */
+    description?: string;
+    /**
+     * The protocol for Prometheus to use if a scrape returns a blank, unparsable, or otherwise
+     * invalid Content-Type
+     */
+    fallbackScrapeProtocol?: FallbackScrapeProtocol;
+    /**
+     * The type of monitor to create; PodMonitor or ServiceMonitor. ServiceMonitor is the
+     * default.
+     */
+    kind?: Kind;
+    /**
+     * HTTP path from which to scrape for metrics, defaults to `/metrics`
+     */
+    path?: string;
+    /**
+     * Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all
+     * pods in the namespace
+     */
+    podSelector?: { [key: string]: string };
+    /**
+     * The port name for the serviceMonitor
+     */
+    portName: string;
+    /**
+     * Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all
+     * pods in the namespace
+     */
+    selector: { [key: string]: string };
+    /**
+     * The service targetPort. This is required so the NetworkPolicy can be generated correctly.
+     */
+    targetPort: number;
+    [property: string]: any;
+}
+
+/**
+ * Authorization settings.
+ */
+export interface Authorization {
+    /**
+     * Selects a key of a Secret in the namespace that contains the credentials for
+     * authentication.
+     */
+    credentials: Credentials;
+    /**
+     * Defines the authentication type. The value is case-insensitive. "Basic" is not a
+     * supported value. Default: "Bearer"
+     */
+    type?: string;
+    [property: string]: any;
+}
+
+/**
+ * Selects a key of a Secret in the namespace that contains the credentials for
+ * authentication.
+ */
+export interface Credentials {
+    /**
+     * The key of the secret to select from. Must be a valid secret key.
+     */
+    key: string;
+    /**
+     * Name of the referent. More info:
+     * https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+     */
+    name?: string;
+    /**
+     * Specify whether the Secret or its key must be defined
+     */
+    optional?: boolean;
+    [property: string]: any;
+}
+
+/**
+ * The protocol for Prometheus to use if a scrape returns a blank, unparsable, or otherwise
+ * invalid Content-Type
+ */
+export enum FallbackScrapeProtocol {
+    OpenMetricsText001 = "OpenMetricsText0.0.1",
+    OpenMetricsText100 = "OpenMetricsText1.0.0",
+    PrometheusProto = "PrometheusProto",
+    PrometheusText004 = "PrometheusText0.0.4",
+    PrometheusText100 = "PrometheusText1.0.0",
+}
+
+/**
+ * The type of monitor to create; PodMonitor or ServiceMonitor. ServiceMonitor is the
+ * default.
+ */
+export enum Kind {
+    PodMonitor = "PodMonitor",
+    ServiceMonitor = "ServiceMonitor",
+}
+
+/**
+ * Network configuration for the package
+ */
+export interface Network {
+    /**
+     * Allow specific traffic (namespace will have a default-deny policy)
+     */
+    allow?: Allow[];
+    /**
+     * Expose a service on an Istio Gateway
+     */
+    expose?: Expose[];
+    /**
+     * Service Mesh configuration for the package
+     */
+    serviceMesh?: ServiceMesh;
+    [property: string]: any;
+}
+
+export interface Allow {
+    /**
+     * A description of the policy, this will become part of the policy name
+     */
+    description?: string;
+    /**
+     * The direction of the traffic
+     */
+    direction: Direction;
+    /**
+     * The labels to apply to the policy
+     */
+    labels?: { [key: string]: string };
+    /**
+     * Deprecated: use selector
+     */
+    podLabels?: { [key: string]: string };
+    /**
+     * The port to allow (protocol is always TCP)
+     */
+    port?: number;
+    /**
+     * A list of ports to allow (protocol is always TCP)
+     */
+    ports?: number[];
+    /**
+     * Custom generated policy CIDR
+     */
+    remoteCidr?: string;
+    /**
+     * Custom generated remote selector for the policy
+     */
+    remoteGenerated?: RemoteGenerated;
+    /**
+     * Remote host to allow traffic out to
+     */
+    remoteHost?: string;
+    /**
+     * The remote namespace to allow traffic to/from. Use * or empty string to allow all
+     * namespaces
+     */
+    remoteNamespace?: string;
+    /**
+     * Deprecated: use remoteSelector
+     */
+    remotePodLabels?: { [key: string]: string };
+    /**
+     * Protocol used for external connection
+     */
+    remoteProtocol?: RemoteProtocol;
+    /**
+     * The remote pod selector labels to allow traffic to/from
+     */
+    remoteSelector?: { [key: string]: string };
+    /**
+     * The remote service account to restrict incoming traffic from within the remote
+     * namespace.           Only valid for Ingress rules.
+     */
+    remoteServiceAccount?: string;
+    /**
+     * Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all
+     * pods in the namespace
+     */
+    selector?: { [key: string]: string };
+    /**
+     * The service account to restrict outgoing traffic from within the package
+     * namespace.           Only valid for Egress rules.
+     */
+    serviceAccount?: string;
+    [property: string]: any;
+}
+
+/**
+ * The direction of the traffic
+ */
+export enum Direction {
+    Egress = "Egress",
+    Ingress = "Ingress",
+}
+
+/**
+ * Custom generated remote selector for the policy
+ */
+export enum RemoteGenerated {
+    Anywhere = "Anywhere",
+    CloudMetadata = "CloudMetadata",
+    IntraNamespace = "IntraNamespace",
+    KubeAPI = "KubeAPI",
+    KubeNodes = "KubeNodes",
+}
+
+/**
+ * Protocol used for external connection
+ */
+export enum RemoteProtocol {
+    HTTP = "HTTP",
+    TLS = "TLS",
+}
+
+export interface Expose {
+    /**
+     * Advanced HTTP settings for the route.
+     */
+    advancedHTTP?: AdvancedHTTP;
+    /**
+     * A description of this expose entry, this will become part of the VirtualService name
+     */
+    description?: string;
+    /**
+     * The name of the gateway to expose the service on (default: tenant)
+     */
+    gateway?: Gateway;
+    /**
+     * The hostname to expose the service on
+     */
+    host: string;
+    /**
+     * Match the incoming request based on custom rules. Not permitted when using the
+     * passthrough gateway.
+     */
+    match?: ExposeMatch[];
+    /**
+     * Deprecated: use selector
+     */
+    podLabels?: { [key: string]: string };
+    /**
+     * The port number to expose
+     */
+    port?: number;
+    /**
+     * Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all
+     * pods in the namespace
+     */
+    selector?: { [key: string]: string };
+    /**
+     * The name of the service to expose
+     */
+    service?: string;
+    /**
+     * The service targetPort. This defaults to port and is only required if the service port is
+     * different from the target port (so the NetworkPolicy can be generated correctly).
+     */
+    targetPort?: number;
+    [property: string]: any;
+}
+
+/**
+ * Advanced HTTP settings for the route.
+ */
+export interface AdvancedHTTP {
+    /**
+     * Cross-Origin Resource Sharing policy (CORS).
+     */
+    corsPolicy?: CorsPolicy;
+    /**
+     * A HTTP rule can either return a direct_response, redirect or forward (default) traffic.
+     */
+    directResponse?: DirectResponse;
+    headers?:        Headers;
+    /**
+     * Match the incoming request based on custom rules. Not permitted when using the
+     * passthrough gateway.
+     */
+    match?: AdvancedHTTPMatch[];
+    /**
+     * A HTTP rule can either return a direct_response, redirect or forward (default) traffic.
+     */
+    redirect?: Redirect;
+    /**
+     * Retry policy for HTTP requests.
+     */
+    retries?: Retries;
+    /**
+     * Rewrite HTTP URIs and Authority headers.
+     */
+    rewrite?: Rewrite;
+    /**
+     * Timeout for HTTP requests, default is disabled.
+     */
+    timeout?: string;
+    /**
+     * Weight specifies the relative proportion of traffic to be forwarded to the destination.
+     */
+    weight?: number;
+    [property: string]: any;
+}
+
+/**
+ * Cross-Origin Resource Sharing policy (CORS).
+ */
+export interface CorsPolicy {
+    /**
+     * Indicates whether the caller is allowed to send the actual request (not the preflight)
+     * using credentials.
+     */
+    allowCredentials?: boolean;
+    /**
+     * List of HTTP headers that can be used when requesting the resource.
+     */
+    allowHeaders?: string[];
+    /**
+     * List of HTTP methods allowed to access the resource.
+     */
+    allowMethods?: string[];
+    allowOrigin?:  string[];
+    /**
+     * String patterns that match allowed origins.
+     */
+    allowOrigins?: AllowOrigin[];
+    /**
+     * A list of HTTP headers that the browsers are allowed to access.
+     */
+    exposeHeaders?: string[];
+    /**
+     * Specifies how long the results of a preflight request can be cached.
+     */
+    maxAge?: string;
+    [property: string]: any;
+}
+
+export interface AllowOrigin {
+    exact?:  string;
+    prefix?: string;
+    /**
+     * RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax).
+     */
+    regex?: string;
+    [property: string]: any;
+}
+
+/**
+ * A HTTP rule can either return a direct_response, redirect or forward (default) traffic.
+ */
+export interface DirectResponse {
+    /**
+     * Specifies the content of the response body.
+     */
+    body?: Body;
+    /**
+     * Specifies the HTTP response status to be returned.
+     */
+    status: number;
+    [property: string]: any;
+}
+
+/**
+ * Specifies the content of the response body.
+ */
+export interface Body {
+    /**
+     * response body as base64 encoded bytes.
+     */
+    bytes?:  string;
+    string?: string;
+    [property: string]: any;
+}
+
+export interface Headers {
+    request?:  Request;
+    response?: Response;
+    [property: string]: any;
+}
+
+export interface Request {
+    add?:    { [key: string]: string };
+    remove?: string[];
+    set?:    { [key: string]: string };
+    [property: string]: any;
+}
+
+export interface Response {
+    add?:    { [key: string]: string };
+    remove?: string[];
+    set?:    { [key: string]: string };
+    [property: string]: any;
+}
+
+export interface AdvancedHTTPMatch {
+    /**
+     * Flag to specify whether the URI matching should be case-insensitive.
+     */
+    ignoreUriCase?: boolean;
+    method?:        PurpleMethod;
+    /**
+     * The name assigned to a match.
+     */
+    name: string;
+    /**
+     * Query parameters for matching.
+     */
+    queryParams?: { [key: string]: PurpleQueryParam };
+    uri?:         PurpleURI;
+    [property: string]: any;
+}
+
+export interface PurpleMethod {
+    exact?:  string;
+    prefix?: string;
+    /**
+     * RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax).
+     */
+    regex?: string;
+    [property: string]: any;
+}
+
+export interface PurpleQueryParam {
+    exact?:  string;
+    prefix?: string;
+    /**
+     * RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax).
+     */
+    regex?: string;
+    [property: string]: any;
+}
+
+export interface PurpleURI {
+    exact?:  string;
+    prefix?: string;
+    /**
+     * RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax).
+     */
+    regex?: string;
+    [property: string]: any;
+}
+
+/**
+ * A HTTP rule can either return a direct_response, redirect or forward (default) traffic.
+ */
+export interface Redirect {
+    /**
+     * On a redirect, overwrite the Authority/Host portion of the URL with this value.
+     */
+    authority?: string;
+    /**
+     * On a redirect, dynamically set the port: * FROM_PROTOCOL_DEFAULT: automatically set to 80
+     * for HTTP and 443 for HTTPS.
+     *
+     * Valid Options: FROM_PROTOCOL_DEFAULT, FROM_REQUEST_PORT
+     */
+    derivePort?: DerivePort;
+    /**
+     * On a redirect, overwrite the port portion of the URL with this value.
+     */
+    port?: number;
+    /**
+     * On a redirect, Specifies the HTTP status code to use in the redirect response.
+     */
+    redirectCode?: number;
+    /**
+     * On a redirect, overwrite the scheme portion of the URL with this value.
+     */
+    scheme?: string;
+    /**
+     * On a redirect, overwrite the Path portion of the URL with this value.
+     */
+    uri?: string;
+    [property: string]: any;
+}
+
+/**
+ * On a redirect, dynamically set the port: * FROM_PROTOCOL_DEFAULT: automatically set to 80
+ * for HTTP and 443 for HTTPS.
+ *
+ * Valid Options: FROM_PROTOCOL_DEFAULT, FROM_REQUEST_PORT
+ */
+export enum DerivePort {
+    FromProtocolDefault = "FROM_PROTOCOL_DEFAULT",
+    FromRequestPort = "FROM_REQUEST_PORT",
+}
+
+/**
+ * Retry policy for HTTP requests.
+ */
+export interface Retries {
+    /**
+     * Number of retries to be allowed for a given request.
+     */
+    attempts?: number;
+    /**
+     * Timeout per attempt for a given request, including the initial call and any retries.
+     */
+    perTryTimeout?: string;
+    /**
+     * Specifies the conditions under which retry takes place.
+     */
+    retryOn?: string;
+    /**
+     * Flag to specify whether the retries should retry to other localities.
+     */
+    retryRemoteLocalities?: boolean;
+    [property: string]: any;
+}
+
+/**
+ * Rewrite HTTP URIs and Authority headers.
+ */
+export interface Rewrite {
+    /**
+     * rewrite the Authority/Host header with this value.
+     */
+    authority?: string;
+    /**
+     * rewrite the path (or the prefix) portion of the URI with this value.
+     */
+    uri?: string;
+    /**
+     * rewrite the path portion of the URI with the specified regex.
+     */
+    uriRegexRewrite?: URIRegexRewrite;
+    [property: string]: any;
+}
+
+/**
+ * rewrite the path portion of the URI with the specified regex.
+ */
+export interface URIRegexRewrite {
+    /**
+     * RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax).
+     */
+    match?: string;
+    /**
+     * The string that should replace into matching portions of original URI.
+     */
+    rewrite?: string;
+    [property: string]: any;
+}
+
+/**
+ * The name of the gateway to expose the service on (default: tenant)
+ */
+export enum Gateway {
+    Admin = "admin",
+    Passthrough = "passthrough",
+    Tenant = "tenant",
+}
+
+export interface ExposeMatch {
+    /**
+     * Flag to specify whether the URI matching should be case-insensitive.
+     */
+    ignoreUriCase?: boolean;
+    method?:        FluffyMethod;
+    /**
+     * The name assigned to a match.
+     */
+    name: string;
+    /**
+     * Query parameters for matching.
+     */
+    queryParams?: { [key: string]: FluffyQueryParam };
+    uri?:         FluffyURI;
+    [property: string]: any;
+}
+
+export interface FluffyMethod {
+    exact?:  string;
+    prefix?: string;
+    /**
+     * RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax).
+     */
+    regex?: string;
+    [property: string]: any;
+}
+
+export interface FluffyQueryParam {
+    exact?:  string;
+    prefix?: string;
+    /**
+     * RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax).
+     */
+    regex?: string;
+    [property: string]: any;
+}
+
+export interface FluffyURI {
+    exact?:  string;
+    prefix?: string;
+    /**
+     * RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax).
+     */
+    regex?: string;
+    [property: string]: any;
+}
+
+/**
+ * Service Mesh configuration for the package
+ */
+export interface ServiceMesh {
+    /**
+     * Set the service mesh mode for this package (namespace), defaults to sidecar
+     */
+    mode?: Mode;
+    [property: string]: any;
+}
+
+/**
+ * Set the service mesh mode for this package (namespace), defaults to sidecar
+ */
+export enum Mode {
+    Ambient = "ambient",
+    Sidecar = "sidecar",
+}
+
+export interface Sso {
+    /**
+     * This URL will be used for every binding to both the SP's Assertion Consumer and Single
+     * Logout Services.
+     */
+    adminUrl?: string;
+    /**
+     * Always list this client in the Account UI, even if the user does not have an active
+     * session.
+     */
+    alwaysDisplayInConsole?: boolean;
+    /**
+     * Specifies attributes for the client.
+     */
+    attributes?: { [key: string]: string };
+    /**
+     * Default URL to use when the auth server needs to redirect or link back to the client.
+     */
+    baseUrl?: string;
+    /**
+     * The client authenticator type
+     */
+    clientAuthenticatorType?: ClientAuthenticatorType;
+    /**
+     * The client identifier registered with the identity provider.
+     */
+    clientId: string;
+    /**
+     * Default client scopes
+     */
+    defaultClientScopes?: string[];
+    /**
+     * A description for the client, can be a URL to an image to replace the login logo
+     */
+    description?: string;
+    /**
+     * Labels to match pods to automatically protect with authservice. Leave empty to disable
+     * authservice protection
+     */
+    enableAuthserviceSelector?: { [key: string]: string };
+    /**
+     * Whether the SSO client is enabled
+     */
+    enabled?: boolean;
+    /**
+     * The client SSO group type
+     */
+    groups?: Groups;
+    /**
+     * Specifies display name of the client
+     */
+    name: string;
+    /**
+     * Specifies the protocol of the client, either 'openid-connect' or 'saml'
+     */
+    protocol?: Protocol;
+    /**
+     * Protocol Mappers to configure on the client
+     */
+    protocolMappers?: ProtocolMapper[];
+    /**
+     * Defines whether the client requires a client secret for authentication
+     */
+    publicClient?: boolean;
+    /**
+     * Valid URI pattern a browser can redirect to after a successful login. Simple wildcards
+     * are allowed such as 'https://unicorns.uds.dev/*'
+     */
+    redirectUris?: string[];
+    /**
+     * Root URL appended to relative URLs
+     */
+    rootUrl?: string;
+    /**
+     * The client secret. Typically left blank and auto-generated.
+     */
+    secret?: string;
+    /**
+     * The name of the secret to store the client secret
+     */
+    secretName?: string;
+    /**
+     * A template for the generated secret
+     */
+    secretTemplate?: { [key: string]: string };
+    /**
+     * Enables the client credentials grant based authentication via OpenID Connect protocol.
+     */
+    serviceAccountsEnabled?: boolean;
+    /**
+     * Enables the standard OpenID Connect redirect based authentication with authorization code.
+     */
+    standardFlowEnabled?: boolean;
+    /**
+     * Allowed CORS origins. To permit all origins of Valid Redirect URIs, add '+'. This does
+     * not include the '*' wildcard though. To permit all origins, explicitly add '*'.
+     */
+    webOrigins?: string[];
+    [property: string]: any;
+}
+
+/**
+ * The client authenticator type
+ */
+export enum ClientAuthenticatorType {
+    ClientJwt = "client-jwt",
+    ClientSecret = "client-secret",
+}
+
+/**
+ * The client SSO group type
+ */
+export interface Groups {
+    /**
+     * List of groups allowed to access the client
+     */
+    anyOf?: string[];
+    [property: string]: any;
+}
+
+/**
+ * Specifies the protocol of the client, either 'openid-connect' or 'saml'
+ *
+ * Protocol of the mapper
+ */
+export enum Protocol {
+    OpenidConnect = "openid-connect",
+    Saml = "saml",
+}
+
+export interface ProtocolMapper {
+    /**
+     * Configuration options for the mapper.
+     */
+    config?: { [key: string]: string };
+    /**
+     * Whether user consent is required for this mapper
+     */
+    consentRequired?: boolean;
+    /**
+     * Name of the mapper
+     */
+    name: string;
+    /**
+     * Protocol of the mapper
+     */
+    protocol: Protocol;
+    /**
+     * Protocol Mapper type of the mapper
+     */
+    protocolMapper: string;
+    [property: string]: any;
+}
+
+export interface StatusObject {
+    authorizationPolicyCount?: number;
+    authserviceClients?:       string[];
+    /**
+     * Status conditions following Kubernetes-style conventions
+     */
+    conditions?:         Condition[];
+    endpoints?:          string[];
+    monitors?:           string[];
+    networkPolicyCount?: number;
+    observedGeneration?: number;
+    phase?:              Phase;
+    retryAttempt?:       number;
+    ssoClients?:         string[];
+    [property: string]: any;
+}
+
+export interface Condition {
+    /**
+     * The last time the condition transitioned from one status to another
+     */
+    lastTransitionTime: Date;
+    /**
+     * A human-readable message indicating details about the transition
+     */
+    message: string;
+    /**
+     * Represents the .metadata.generation that the condition was set based upon
+     */
+    observedGeneration?: number;
+    /**
+     * A programmatic identifier indicating the reason for the condition's last transition
+     */
+    reason: string;
+    /**
+     * Status of the condition, one of True, False, Unknown
+     */
+    status: StatusEnum;
+    /**
+     * Type of condition in CamelCase or in foo.example.com/CamelCase format
+     */
+    type: string;
+    [property: string]: any;
+}
+
+/**
+ * Status of the condition, one of True, False, Unknown
+ */
+export enum StatusEnum {
+    False = "False",
+    True = "True",
+    Unknown = "Unknown",
+}
+
+export enum Phase {
+    Failed = "Failed",
+    Pending = "Pending",
+    Ready = "Ready",
+    RemovalFailed = "RemovalFailed",
+    Removing = "Removing",
+    Retrying = "Retrying",
 }

@@ -81,6 +81,11 @@ components:
       - quay.io/rfcurated/istio/proxyv2:1.26.0-jammy-fips-rfcurated-rfhardened
       - quay.io/rfcurated/istio/install-cni:1.26.0-jammy-fips-rfcurated-rfhardened
       - quay.io/rfcurated/istio/ztunnel:1.26.0-jammy-scratch-fips-rfcurated
+  
+  - name: gateway-api-crds
+    required: true
+    import:
+      path: common
 
   - name: istio-admin-gateway
     required: true
@@ -92,7 +97,7 @@ components:
         namespace: istio-admin-gateway
       - name: uds-istio-config
         version: 0.2.0
-        localPath: chart
+        localPath: charts/uds-istio-config
         namespace: istio-admin-gateway
         valuesFiles:
           - "values/config-admin.yaml"
@@ -107,10 +112,18 @@ components:
         namespace: istio-tenant-gateway
       - name: uds-istio-config
         version: 0.2.0
-        localPath: chart
+        localPath: charts/uds-istio-config
         namespace: istio-tenant-gateway
         valuesFiles:
           - "values/config-tenant.yaml"
+
+  - name: istio-egress-waypoint
+    required: true
+    charts:
+      - name: uds-istio-egress-config
+        version: 0.1.0
+        localPath: charts/uds-istio-egress-config
+        namespace: istio-egress-waypoint
 
   - name: istio-passthrough-gateway
     required: false
@@ -122,7 +135,7 @@ components:
         namespace: istio-passthrough-gateway
       - name: uds-istio-config
         version: 0.2.0
-        localPath: chart
+        localPath: charts/uds-istio-config
         namespace: istio-passthrough-gateway
         valuesFiles:
           - "values/config-passthrough.yaml"

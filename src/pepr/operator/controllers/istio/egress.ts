@@ -2,19 +2,30 @@
  * Copyright 2024 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
+import { V1OwnerReference } from "@kubernetes/client-node";
 import { K8s, kind } from "pepr";
 import {
   Allow,
+  IstioAuthorizationPolicy,
   IstioGateway,
   IstioServiceEntry,
+  IstioSidecar,
   IstioVirtualService,
+  IstioWaypoint,
   RemoteProtocol,
   UDSPackage,
 } from "../../crd";
 import { purgeOrphans } from "../utils";
+import { generateAuthorizationPolicy } from "./auth-policy";
 import { generateEgressGateway, warnMatchingExistingGateways } from "./gateway";
-import { istioEgressGatewayNamespace, log } from "./istio-resources";
-import { generateSharedServiceEntry } from "./service-entry";
+import { istioEgressGatewayNamespace, istioEgressWaypointNamespace, log } from "./istio-resources";
+import { IstioState } from "./namespace";
+import {
+  generateLocalEgressSEName,
+  generateLocalEgressServiceEntry,
+  generateSharedServiceEntry,
+} from "./service-entry";
+import { generateEgressSidecar } from "./sidecar";
 import {
   EgressResource,
   EgressResourceMap,
@@ -27,8 +38,9 @@ import {
   generateEgressVirtualService,
   warnMatchingExistingVirtualServices,
 } from "./virtual-service";
+import { generateWaypoint } from "./waypoint";
 
-// Cache for in-memory egress resources from package CRs
+// Cache for in-memory sidecar-only shared egress resources from package CRs
 export const inMemoryPackageMap: PackageHostMap = {};
 
 // Lock to prevent concurrent updates to the inMemoryPackageMap
@@ -36,66 +48,141 @@ let lock = false;
 // eslint-disable-next-line prefer-const
 let lockQueue: (() => void)[] = [];
 
-// Mutex to prevent concurrent reconciliation operations
-let reconciliationMutex: Promise<void> | null = null;
+// Cache for in-memory ambient egress resources from package CRs
+export const inMemoryAmbientPackages: string[] = [];
+let ambientLock = false;
+// eslint-disable-next-line prefer-const
+let ambientLockQueue: (() => void)[] = [];
 
-// Generation counter for shared egress resources
-let generation = 0;
+// Mutexes to prevent concurrent reconciliation operations for each mode
+let sidecarReconciliationMutex: Promise<void> | null = null;
+let ambientReconciliationMutex: Promise<void> | null = null;
 
-// Track which packages were included in the last reconciliation
-let lastReconciliationPackages: Set<string> = new Set();
+// Generation counters for shared egress resources (separate for each mode)
+let sidecarGeneration = 0;
+let ambientGeneration = 0;
+
+// Track which packages were included in the last reconciliation for each mode
+let lastSidecarReconciliationPackages: Set<string> = new Set();
+let lastAmbientReconciliationPackages: Set<string> = new Set();
 
 // Unique identifier for shared egress resources
 export const sharedEgressPkgId = "shared-egress-resource";
 
-// reconcileEgressResources reconciles the egress resources based on the config
+// reconcileSharedEgressResources reconciles the egress resources based on the config
+// Handles mode transitions by updating both sidecar and ambient in-memory maps appropriately
 export async function reconcileSharedEgressResources(
   hostResourceMap: HostResourceMap | undefined,
   pkgId: string,
   action: PackageAction,
+  istioMode: string,
 ) {
-  // Update the in-memory package map with the new host resource map
-  await updateInMemoryPackageMap(hostResourceMap, pkgId, action);
+  // Update in-memory maps based on the target mode
+  if (istioMode === IstioState.Ambient) {
+    // Remove from sidecar map (handles sidecar -> ambient transition)
+    await updateInMemoryPackageMap(hostResourceMap, pkgId, PackageAction.Remove);
+    // Update ambient package list
+    await updateInMemoryAmbientPackages(pkgId, action);
+  } else {
+    // Update sidecar map
+    await updateInMemoryPackageMap(hostResourceMap, pkgId, action);
+    // Remove from ambient list (handles ambient -> sidecar transition)
+    await updateInMemoryAmbientPackages(pkgId, PackageAction.Remove);
+  }
 
-  // Use a mutex-like approach to prevent overwhelming the operator
-  // Multiple packages can update the map, but only one reconciliation runs at a time
-  return await performEgressReconciliationWithMutex(pkgId);
+  // Reconcile both modes to ensure proper cleanup and application
+  // This handles mode transitions and prevents resource conflicts
+  return await performEgressReconciliationWithMutex(pkgId, istioMode);
 }
 
-// Mutex-based reconciliation to prevent overwhelming the operator
-export async function performEgressReconciliationWithMutex(pkgId: string): Promise<void> {
-  // If there's already a reconciliation in progress, wait for it to complete
-  if (reconciliationMutex) {
-    try {
-      await reconciliationMutex;
-      // Check if this package was included in the last reconciliation
-      if (lastReconciliationPackages.has(pkgId)) {
+// Mutex-based reconciliation to prevent stomping of shared resources
+// Always reconciles both sidecar and ambient modes to handle mode transitions.
+// When a package switches from sidecar -> ambient or ambient -> sidecar, we need to:
+// 1. Clean up resources from the old mode
+// 2. Apply resources for the new mode
+// This ensures proper cleanup and prevents resource conflicts.
+export async function performEgressReconciliationWithMutex(
+  pkgId: string,
+  istioMode: string,
+): Promise<void> {
+  // Wait for any existing reconciliations to complete before starting new ones
+  const waitPromises: Promise<void>[] = [];
+
+  if (sidecarReconciliationMutex) {
+    waitPromises.push(
+      sidecarReconciliationMutex.catch(() => {
+        // Clear failed mutex
+        sidecarReconciliationMutex = null;
+      }),
+    );
+  }
+
+  if (ambientReconciliationMutex) {
+    waitPromises.push(
+      ambientReconciliationMutex.catch(() => {
+        // Clear failed mutex
+        ambientReconciliationMutex = null;
+      }),
+    );
+  }
+
+  // Check current reconciliation state for this package
+  const inSidecarReconciliation = lastSidecarReconciliationPackages.has(pkgId);
+  const inAmbientReconciliation = lastAmbientReconciliationPackages.has(pkgId);
+
+  // Wait for all existing reconciliations to complete
+  if (waitPromises.length > 0) {
+    await Promise.all(waitPromises);
+
+    // Check if this package is already in the correct state for its mode
+    // This ensures proper mode transitions and prevents unnecessary reconciliations
+    if (istioMode === IstioState.Ambient) {
+      // For ambient mode: package should be in ambient tracking and NOT in sidecar tracking
+      // This ensures the package has been properly transitioned from sidecar to ambient
+      if (inAmbientReconciliation && !inSidecarReconciliation) {
+        log.debug(`Package ${pkgId} already properly reconciled for ambient mode, skipping`);
         return;
       }
-    } catch {
-      // If the previous reconciliation failed, we still need to try our own reconciliation
-      // Clear the failed mutex so we can start a new one
-      reconciliationMutex = null;
+    } else {
+      // For sidecar mode: package should be in sidecar tracking and NOT in ambient tracking
+      // This ensures the package has been properly transitioned from ambient to sidecar
+      if (inSidecarReconciliation && !inAmbientReconciliation) {
+        log.debug(`Package ${pkgId} already properly reconciled for sidecar mode, skipping`);
+        return;
+      }
     }
   }
 
-  // Start a new reconciliation
-  reconciliationMutex = performEgressReconciliation();
+  // Log the current state before reconciliation
+  log.debug(
+    `Starting egress reconciliation for package ${pkgId} (mode: ${istioMode}). ` +
+      `Current state - sidecar: ${inSidecarReconciliation}, ambient: ${inAmbientReconciliation}`,
+  );
+
+  // Start reconciliation for both modes to handle mode transitions
+  const sidecarPromise = performSidecarEgressReconciliation();
+  const ambientPromise = performAmbientEgressReconciliation();
+
+  sidecarReconciliationMutex = sidecarPromise;
+  ambientReconciliationMutex = ambientPromise;
 
   try {
-    await reconciliationMutex;
+    // Wait for both reconciliations to complete
+    await Promise.all([sidecarPromise, ambientPromise]);
+    log.debug(`Egress reconciliation completed for package ${pkgId} (mode: ${istioMode})`);
   } catch (e) {
     // Log the error and re-throw to maintain error propagation
-    log.error("Egress reconciliation failed", e);
+    log.error(`Egress reconciliation failed for package ${pkgId} (mode: ${istioMode})`, e);
     throw e;
   } finally {
-    // Clear the mutex when done
-    reconciliationMutex = null;
+    // Clear both mutexes when done
+    sidecarReconciliationMutex = null;
+    ambientReconciliationMutex = null;
   }
 }
 
-// Perform the actual egress reconciliation
-export async function performEgressReconciliation() {
+// Perform sidecar egress resources reconciliation
+export async function performSidecarEgressReconciliation() {
   try {
     // Check if the istioEgressGatewayNamespace exists
     try {
@@ -111,38 +198,78 @@ export async function performEgressReconciliation() {
       }
     }
 
-    generation++;
+    sidecarGeneration++;
 
     // Capture which packages are included in this reconciliation
-    lastReconciliationPackages = new Set(Object.keys(inMemoryPackageMap));
+    lastSidecarReconciliationPackages = new Set(Object.keys(inMemoryPackageMap));
 
     // Apply any egress resources
-    await applyEgressResources(inMemoryPackageMap, generation);
+    await applyEgressResources(inMemoryPackageMap, sidecarGeneration);
 
     // Purge any orphaned shared resources
     await purgeOrphans(
-      generation.toString(),
+      sidecarGeneration.toString(),
       istioEgressGatewayNamespace,
       sharedEgressPkgId,
       IstioGateway,
       log,
     );
     await purgeOrphans(
-      generation.toString(),
+      sidecarGeneration.toString(),
       istioEgressGatewayNamespace,
       sharedEgressPkgId,
       IstioVirtualService,
       log,
     );
     await purgeOrphans(
-      generation.toString(),
+      sidecarGeneration.toString(),
       istioEgressGatewayNamespace,
       sharedEgressPkgId,
       IstioServiceEntry,
       log,
     );
   } catch (e) {
-    const errText = `Failed to reconcile shared egress resources`;
+    const errText = `Failed to reconcile shared sidecar egress resources`;
+    log.error(errText, e);
+    throw e;
+  }
+}
+
+// Perform ambient egress resources reconciliation
+export async function performAmbientEgressReconciliation() {
+  try {
+    // Check if the istioEgressWaypointNamespace exists
+    try {
+      await K8s(kind.Namespace).Get(istioEgressWaypointNamespace);
+    } catch (e) {
+      if (e?.status == 404) {
+        log.debug(
+          `Namespace ${istioEgressWaypointNamespace} not found. Skipping ambient egress resource reconciliation.`,
+        );
+        return;
+      } else {
+        throw e;
+      }
+    }
+
+    ambientGeneration++;
+
+    // Capture which packages are included in this reconciliation
+    lastAmbientReconciliationPackages = new Set(inMemoryAmbientPackages);
+
+    // Apply ambient egress resources (waypoint)
+    await applyAmbientEgressResources(inMemoryAmbientPackages, ambientGeneration);
+
+    // Purge any orphaned ambient resources (waypoint)
+    await purgeOrphans(
+      ambientGeneration.toString(),
+      istioEgressWaypointNamespace,
+      sharedEgressPkgId,
+      IstioWaypoint,
+      log,
+    );
+  } catch (e) {
+    const errText = `Failed to reconcile shared ambient egress resources`;
     log.error(errText, e);
     throw e;
   }
@@ -184,6 +311,40 @@ export async function updateInMemoryPackageMap(
     log.debug("Unlocking egress package map for update");
     lock = false;
     const nextResolve = lockQueue.shift();
+    if (nextResolve) {
+      nextResolve();
+    }
+  }
+}
+
+export async function updateInMemoryAmbientPackages(pkgId: string, action: PackageAction) {
+  // Wait for lock to be available using a promise-based queue
+  if (ambientLock) {
+    await new Promise<void>(resolve => {
+      ambientLockQueue.push(resolve);
+    });
+  }
+
+  try {
+    log.debug("Locking ambient package list for update");
+    ambientLock = true;
+
+    if (action == PackageAction.AddOrUpdate) {
+      inMemoryAmbientPackages.push(pkgId);
+    } else if (action == PackageAction.Remove) {
+      const index = inMemoryAmbientPackages.indexOf(pkgId);
+      if (index > -1) {
+        inMemoryAmbientPackages.splice(index, 1);
+      }
+    }
+  } catch (e) {
+    log.error("Failed to update in memory ambient package list for event", action, e);
+    throw e;
+  } finally {
+    // unlock inMemoryAmbientPackages and notify next waiter
+    log.debug("Unlocking ambient package map for update");
+    ambientLock = false;
+    const nextResolve = ambientLockQueue.shift();
     if (nextResolve) {
       nextResolve();
     }
@@ -326,6 +487,23 @@ export async function applyEgressResources(packageEgress: PackageHostMap, genera
   await Promise.all(applyPromises);
 }
 
+// Apply the ambient egress resources
+export async function applyAmbientEgressResources(packageList: string[], generation: number) {
+  // If no packages using ambient egress, don't create the waypoint
+  if (packageList.length === 0) {
+    return;
+  }
+
+  // Generate the waypoint payload
+  const waypoint = generateWaypoint(packageList, generation);
+
+  // Apply waypoint
+  log.debug(waypoint, `Applying Waypoint ${waypoint.metadata?.name}`);
+
+  // Apply the Waypoint and force overwrite any existing resource
+  await K8s(IstioWaypoint).Apply(waypoint, { force: true });
+}
+
 // Apply resources for a given host
 async function applyHostResources(host: string, resource: EgressResource, generation: number) {
   try {
@@ -395,7 +573,7 @@ export async function validateEgressGateway(hostResourceMap: HostResourceMap) {
   try {
     await K8s(kind.Namespace).Get(istioEgressGatewayNamespace);
   } catch (e) {
-    let errText = `Unable to reconcile get the egress gateway namespace ${istioEgressGatewayNamespace}.`;
+    let errText = `Unable to get the egress gateway namespace ${istioEgressGatewayNamespace}.`;
     if (e.status == 404) {
       errText = `Egress gateway is not enabled in the cluster. Please enable the egress gateway and retry.`;
     }
@@ -417,6 +595,139 @@ export async function validateEgressGateway(hostResourceMap: HostResourceMap) {
         log.error(errText);
         throw new Error(errText);
       }
+    }
+  }
+}
+
+// Validate that the egress waypoint namespace exists
+// TODO: tests
+export async function validateEgressWaypoint() {
+  // Error if egress waypoint is not enabled in the cluster
+  try {
+    await K8s(kind.Namespace).Get(istioEgressWaypointNamespace);
+  } catch (e) {
+    let errText = `Unable to get the egress waypoint namespace ${istioEgressWaypointNamespace}.`;
+    if (e.status == 404) {
+      errText = `Egress waypoint is not enabled in the cluster. Please enable the egress waypoint and retry.`;
+    }
+    log.error(errText);
+    throw new Error(errText);
+  }
+}
+
+// Create package owned sidecar egress resources
+// TODO: Update/add tests
+export async function createSidecarWorkloadEgressResources(
+  hostResourceMap: HostResourceMap,
+  allowList: Allow[],
+  pkgName: string,
+  namespace: string,
+  generation: string,
+  ownerRefs: V1OwnerReference[],
+) {
+  // Add service entry for each defined host
+  for (const host of Object.keys(hostResourceMap)) {
+    // Create Service Entry
+    const serviceEntry = generateLocalEgressServiceEntry(
+      host,
+      hostResourceMap[host],
+      pkgName,
+      namespace,
+      generation,
+      ownerRefs,
+      false,
+    );
+
+    log.debug(serviceEntry, `Applying Service Entry ${serviceEntry.metadata?.name}`);
+
+    // Apply the ServiceEntry and force overwrite any existing resource
+    await K8s(IstioServiceEntry).Apply(serviceEntry, { force: true });
+  }
+
+  // Add sidecar for each egress allow
+  const egressRequested = egressRequestedFromNetwork(allowList);
+
+  for (const allow of egressRequested) {
+    // Create Sidecar
+    const sidecar = generateEgressSidecar(
+      allow.selector,
+      pkgName,
+      namespace,
+      generation,
+      ownerRefs,
+    );
+
+    log.debug(sidecar, `Applying Sidecar ${sidecar.metadata?.name}`);
+
+    // Apply the Sidecar and force overwrite any existing resource
+    await K8s(IstioSidecar).Apply(sidecar, { force: true });
+  }
+}
+
+// Create package owned ambient egress resources
+// TODO: Add tests for this
+export async function createAmbientWorkloadEgressResources(
+  hostResourceMap: HostResourceMap,
+  egressRequested: Allow[],
+  pkgName: string,
+  namespace: string,
+  generation: string,
+  ownerRefs: V1OwnerReference[],
+) {
+  // Add service entry for each defined host
+  for (const host of Object.keys(hostResourceMap)) {
+    // Create Service Entry
+    const serviceEntry = generateLocalEgressServiceEntry(
+      host,
+      hostResourceMap[host],
+      pkgName,
+      namespace,
+      generation,
+      ownerRefs,
+      true,
+    );
+
+    log.debug(serviceEntry, `Applying Service Entry ${serviceEntry.metadata?.name}`);
+
+    // Apply the ServiceEntry and force overwrite any existing resource
+    await K8s(IstioServiceEntry).Apply(serviceEntry, { force: true });
+  }
+
+  // Create Authorization Policy for service entry, if serviceAccount is specified
+  for (const allow of egressRequested) {
+    if (allow.serviceAccount) {
+      const serviceAccount = allow.serviceAccount;
+      const hostPortsProtocol = getHostPortsProtocol(allow);
+      if (!hostPortsProtocol) {
+        continue;
+      }
+      const { host, ports, protocol } = hostPortsProtocol;
+      const portsProtocol = ports.map(port => ({ port, protocol }));
+
+      // Validate serviceAccount exists - else all egress traffic will fail
+      try {
+        await K8s(kind.ServiceAccount).InNamespace(namespace).Get(serviceAccount);
+      } catch {
+        const errText = `ServiceAccount ${serviceAccount} does not exist in namespace ${namespace}. Please create the ServiceAccount and retry.`;
+        log.error(errText);
+        throw new Error(errText);
+      }
+
+      // Create Authorization Policy
+      const authPolicy = generateAuthorizationPolicy(
+        host,
+        pkgName,
+        namespace,
+        generation,
+        ownerRefs,
+        generateLocalEgressSEName(pkgName, portsProtocol, host),
+        serviceAccount,
+      );
+
+      log.debug(authPolicy, `Applying Authorization Policy ${authPolicy.metadata?.name}`);
+
+      // Apply the AuthorizationPolicy and force overwrite any existing resource
+      await K8s(IstioAuthorizationPolicy).Apply(authPolicy, { force: true });
     }
   }
 }

@@ -1,0 +1,31 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+{{- if .Values.config.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: egress-waypoint-config
+  namespace: {{ .Release.Namespace }}
+data:
+  {{- if .Values.config.deployment }}
+  deployment: |
+    {{ .Values.config.deployment | nindent 4 }}
+  {{- end }}
+  {{- if .Values.config.service }}
+  service: |
+    {{ .Values.config.service | nindent 4 }}
+  {{- end }}
+  {{- if .Values.config.serviceAccount }}
+  serviceAccount: |
+    {{ .Values.config.serviceAccount | nindent 4 }}
+  {{- end }}
+  {{- if .Values.config.horizontalPodAutoscaler }}
+  horizontalPodAutoscaler: |
+    {{ .Values.config.horizontalPodAutoscaler | nindent 4 }}
+  {{- end }}
+  {{- if .Values.config.podDisruptionBudget }}
+  podDisruptionBudget: |
+    {{ .Values.config.podDisruptionBudget | nindent 4 }}
+  {{- end }}
+{{- end }}

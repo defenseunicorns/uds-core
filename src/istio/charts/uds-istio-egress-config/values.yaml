@@ -1,0 +1,39 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# Egress Config
+config:
+  enabled: false
+  # Set the deployment specification for the following resource types:
+  # - service
+  # - deployment
+  # - serviceAccount
+  # - horizontalPodAutoscaler
+  # - podDisruptionBudget
+  # These configurations will be overlaid on top of the generated resources using a Strategic Merge Patch strategy
+  #
+  # Exmples:
+  # horizontalPodAutoscaler: |
+  #   spec:
+  #     minReplicas: 2
+  #     maxReplicas: 2
+  #
+  # deployment: |
+  #   metadata:
+  #     annotations:
+  #       additional-annotation: some-value
+  #   spec:
+  #     replicas: 4
+  #     template:
+  #       spec:
+  #         containers:
+  #         - name: istio-proxy
+  #           resources:
+  #             requests:
+  #               cpu: 1234m
+  #
+  # service: |
+  #   spec:
+  #     ports:
+  #     - "\$patch": delete
+  #       port: 15021
