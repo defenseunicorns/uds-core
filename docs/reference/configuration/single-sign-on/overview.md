@@ -25,7 +25,7 @@ To enable this functionality for SSO client secrets, you can add the `uds.dev/wa
 1. Restart pods matching the selector specified in the `uds.dev/pod-selector` annotation (which can be added via the `secretAnnotations` field), or
 2. Automatically discover and restart pods that are consuming the secret through volume mounts, environment variables, or projected volumes
 
-For more details on configuring secret auto-reload, see the [Secret Templating documentation](/reference/configuration/single-sign-on/sso-templating#secret-auto-reload).
+For more details on configuring secret auto-reload, see the [Secret Auto-Reload documentation](/reference/deployment/secret-auto-reload) or the [Secret Templating documentation](/reference/configuration/single-sign-on/sso-templating#secret-auto-reload).
 
 ## User Groups
 
