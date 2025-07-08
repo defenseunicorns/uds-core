@@ -157,10 +157,10 @@ describe("auto-reload", () => {
           name: "test-secret",
           namespace: "default",
           labels: {
-            "uds.dev/reload": "true",
+            "uds.dev/watch": "true",
           },
           annotations: {
-            "uds.dev/reload-selector": "app:invalid-format", // Invalid format (uses : instead of =)
+            "uds.dev/pod-selector": "app:invalid-format", // Invalid format (uses : instead of =)
           },
         },
         data: {
@@ -220,10 +220,10 @@ describe("auto-reload", () => {
           name: "test-secret",
           namespace: "default",
           labels: {
-            "uds.dev/reload": "true",
+            "uds.dev/watch": "true",
           },
           annotations: {
-            "uds.dev/reload-selector": "app=test-app",
+            "uds.dev/pod-selector": "app=test-app",
           },
         },
         data: {
@@ -329,10 +329,10 @@ describe("auto-reload", () => {
           name: "multi-selector-secret",
           namespace: "default",
           labels: {
-            "uds.dev/reload": "true",
+            "uds.dev/watch": "true",
           },
           annotations: {
-            "uds.dev/reload-selector": "app=test-app,tier=frontend,env=prod",
+            "uds.dev/pod-selector": "app=test-app,tier=frontend,env=prod",
           },
         },
         data: {
@@ -431,7 +431,7 @@ describe("auto-reload", () => {
           name: "test-secret",
           namespace: "default",
           labels: {
-            "uds.dev/reload": "true",
+            "uds.dev/watch": "true",
           },
         },
         data: {

@@ -29,6 +29,10 @@ tasks:
         cmd: |
           npx vitest run "test-resources.spec.ts"
         dir: test/vitest
+      - description: "Run Secret Reload Tests"
+        cmd: |
+          npx vitest run "secret-auto-reload.spec.ts"
+        dir: test/vitest
       - description: "Remove Test Apps resources"
         task: remove
 

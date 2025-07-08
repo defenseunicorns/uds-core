@@ -138,12 +138,12 @@ export async function handleSecretUpdate(secret: kind.Secret) {
   let podsToEvict: kind.Pod[] = [];
 
   // Check if we have an explicit pod selector in annotations
-  const selectorStr = secret.metadata?.annotations?.["uds.dev/reload-selector"];
+  const selectorStr = secret.metadata?.annotations?.["uds.dev/pod-selector"];
 
   if (selectorStr) {
     const selector = parseSelectorString(selectorStr);
     if (!selector) {
-      const errorMsg = `Invalid selector format in uds.dev/reload-selector annotation for secret ${namespace}/${name}: ${selectorStr}. Expected format: key1=value1,key2=value2`;
+      const errorMsg = `Invalid selector format in uds.dev/pod-selector annotation for secret ${namespace}/${name}: ${selectorStr}. Expected format: key1=value1,key2=value2`;
       log.error({ secret: name, namespace, selector: selectorStr }, errorMsg);
       return;
     }
