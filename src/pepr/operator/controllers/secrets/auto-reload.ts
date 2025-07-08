@@ -6,7 +6,7 @@
 import { createHash } from "crypto";
 import { K8s, kind } from "pepr";
 import { Component, setupLogger } from "../../../logger";
-import { evictPods } from "../utils";
+import { rotatePods } from "../utils";
 
 const log = setupLogger(Component.OPERATOR_SECRETS);
 
@@ -132,10 +132,10 @@ export async function handleSecretUpdate(secret: kind.Secret) {
     return;
   }
 
-  log.info({ secret: name, namespace }, "Secret data changed, processing pod eviction");
+  log.info({ secret: name, namespace }, "Secret data changed, processing pod rotation");
 
-  // Determine which pods to evict based on the strategy
-  let podsToEvict: kind.Pod[] = [];
+  // Determine which pods to rotate based on the strategy
+  let podsToRotate: kind.Pod[] = [];
 
   // Check if we have an explicit pod selector in annotations
   const selectorStr = secret.metadata?.annotations?.["uds.dev/pod-selector"];
@@ -150,7 +150,7 @@ export async function handleSecretUpdate(secret: kind.Secret) {
 
     log.debug(
       { secret: name, namespace, selector },
-      "Using explicit pod selector from secret label for eviction",
+      "Using explicit pod selector from secret label for rotation",
     );
 
     // Build query with each label
@@ -160,29 +160,29 @@ export async function handleSecretUpdate(secret: kind.Secret) {
     }
 
     const pods = await podQuery.Get();
-    podsToEvict = pods.items;
+    podsToRotate = pods.items;
   } else {
     // No explicit selector, use auto-discovery
     log.debug(
       { secret: name, namespace },
       "No explicit selector found, auto-discovering secret consumers",
     );
-    podsToEvict = await discoverSecretConsumers(namespace, name);
+    podsToRotate = await discoverSecretConsumers(namespace, name);
   }
 
   // If no pods found, log and exit
-  if (podsToEvict.length === 0) {
-    log.warn({ secret: name, namespace }, "No pods found to evict for secret change");
+  if (podsToRotate.length === 0) {
+    log.warn({ secret: name, namespace }, "No pods found to rotate for secret change");
     return;
   }
 
-  // Evict the pods
+  // Rotate the pods
   log.info(
-    { secret: name, namespace, podCount: podsToEvict.length },
-    `Evicting ${podsToEvict.length} pods due to secret change`,
+    { secret: name, namespace, podCount: podsToRotate.length },
+    `Rotating ${podsToRotate.length} pods due to secret change`,
   );
 
-  await evictPods(namespace, podsToEvict, `Secret ${name} change`, log);
+  await rotatePods(namespace, podsToRotate, `Secret ${name} change`, log);
 }
 
 /**

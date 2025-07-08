@@ -7,7 +7,7 @@ import { K8s, kind } from "pepr";
 import { Logger } from "pino";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as utils from "./utils";
-import { evictPods, retryWithDelay } from "./utils";
+import { rotatePods, retryWithDelay } from "./utils";
 
 // Mock K8s client
 vi.mock("pepr", () => {
@@ -107,7 +107,7 @@ describe("retryWithDelay", () => {
   });
 });
 
-describe("evictPods", () => {
+describe("rotatePods", () => {
   let mockLogger: Logger;
 
   // Mock K8s client operations
@@ -172,12 +172,12 @@ describe("evictPods", () => {
     mockApply.mockResolvedValue({ status: "Success" });
     mockDelete.mockResolvedValue({ status: "Success" });
 
-    // Reset the evictPods helper spy
-    vi.spyOn(utils, "evictPods").mockClear();
+    // Reset the rotatePods helper spy
+    vi.spyOn(utils, "rotatePods").mockClear();
   });
 
   it("should handle empty pod lists", async () => {
-    await evictPods("default", [], "Test reason", mockLogger);
+    await rotatePods("default", [], "Test reason", mockLogger);
     expect(mockLogger.warn).toHaveBeenCalledWith(expect.stringContaining("No pods"));
   });
 
@@ -201,7 +201,7 @@ describe("evictPods", () => {
       Apply: mockApply,
     }));
 
-    await evictPods("default", pods as kind.Pod[], "Test eviction", mockLogger);
+    await rotatePods("default", pods as kind.Pod[], "Test eviction", mockLogger);
 
     // The standalone pod should be evicted
     expect(mockEvict).toHaveBeenCalled();
@@ -234,7 +234,7 @@ describe("evictPods", () => {
       spec: { template: { metadata: { annotations: {} } } },
     });
 
-    await evictPods("default", pods as kind.Pod[], "Test eviction", mockLogger);
+    await rotatePods("default", pods as kind.Pod[], "Test eviction", mockLogger);
 
     // Should patch the StatefulSet with restart annotation
     expect(mockPatch).toHaveBeenCalledWith([
@@ -303,7 +303,7 @@ describe("evictPods", () => {
       spec: { template: { metadata: { annotations: {} } } },
     });
 
-    await evictPods("default", pods as kind.Pod[], "Test eviction", mockLogger);
+    await rotatePods("default", pods as kind.Pod[], "Test eviction", mockLogger);
 
     // Should patch the Deployment with restart annotation
     expect(mockPatch).toHaveBeenCalledWith([
@@ -357,7 +357,7 @@ describe("evictPods", () => {
       spec: { template: { metadata: { annotations: {} } } },
     });
 
-    await evictPods("default", pods as kind.Pod[], "Test eviction", mockLogger);
+    await rotatePods("default", pods as kind.Pod[], "Test eviction", mockLogger);
 
     // Should patch the ReplicaSet directly with restart annotation
     expect(mockPatch).toHaveBeenCalledWith([
@@ -448,7 +448,7 @@ describe("evictPods", () => {
     vi.mocked(K8s).mockImplementation(mockK8sImplementation as unknown as typeof K8s);
 
     // Execute the function under test
-    await evictPods("default", pods as kind.Pod[], "Test eviction", mockLogger);
+    await rotatePods("default", pods as kind.Pod[], "Test eviction", mockLogger);
 
     // Verify Patch was called and errored
     expect(mockPatch).toHaveBeenCalledWith([

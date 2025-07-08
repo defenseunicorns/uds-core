@@ -10,7 +10,7 @@ The secret auto-reload controller watches for changes to Kubernetes secrets labe
 
 1. Identify which pods or deployments should be restarted
 2. For pods managed by standard controllers (Deployments, ReplicaSets, StatefulSets, DaemonSets), restart by patching the controller's pod template annotations
-3. For standalone pods or other cases, use pod eviction to trigger recreation
+3. For standalone pods or other cases, use pod rotation via eviction to trigger recreation
 4. Generate Kubernetes events to track the restart operations
 
 ## Configuration
@@ -70,7 +70,7 @@ data:
   password: cGFzc3dvcmQxMjM=  # base64 encoded "password123"
 ```
 
-When this secret is updated (for example, when rotating the database password), all pods with the labels `app=my-app` and `component=database` will be automatically restarted to pick up the new credentials.
+When this secret is updated (for example, when rotating the database password), all pods with the labels `app=my-app` and `component=database` will be automatically rotated to pick up the new credentials.
 
 ## Integration with SSO
 

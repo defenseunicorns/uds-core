@@ -147,7 +147,7 @@ export async function retryWithDelay<T>(
  * @param reason The reason for eviction/restart (for logging)
  * @param log Logger instance for logging
  */
-export async function evictPods(namespace: string, pods: kind.Pod[], reason: string, log: Logger) {
+export async function rotatePods(namespace: string, pods: kind.Pod[], reason: string, log: Logger) {
   if (pods.length === 0) {
     log.warn(`No pods provided for eviction in namespace ${namespace}`);
     return;

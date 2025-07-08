@@ -51,7 +51,7 @@ vi.mock("../../../logger", () => ({
 }));
 
 vi.mock("../utils", () => ({
-  evictPods: vi.fn(),
+  rotatePods: vi.fn(),
 }));
 
 // Import the secretChecksumCache directly
@@ -111,24 +111,24 @@ describe("auto-reload", () => {
     it("should do nothing if secret is missing metadata or data", async () => {
       // Missing metadata
       await handleSecretUpdate({} as kind.Secret);
-      expect(utils.evictPods).not.toHaveBeenCalled();
+      expect(utils.rotatePods).not.toHaveBeenCalled();
 
       // Missing name
       await handleSecretUpdate({ metadata: {} } as kind.Secret);
-      expect(utils.evictPods).not.toHaveBeenCalled();
+      expect(utils.rotatePods).not.toHaveBeenCalled();
 
       // Missing namespace
       await handleSecretUpdate({ metadata: { name: "test-secret" } } as kind.Secret);
-      expect(utils.evictPods).not.toHaveBeenCalled();
+      expect(utils.rotatePods).not.toHaveBeenCalled();
 
       // Missing data
       await handleSecretUpdate({
         metadata: { name: "test-secret", namespace: "default" },
       } as kind.Secret);
-      expect(utils.evictPods).not.toHaveBeenCalled();
+      expect(utils.rotatePods).not.toHaveBeenCalled();
     });
 
-    it("should not evict pods if the checksum has not changed", async () => {
+    it("should not rotate pods if the checksum has not changed", async () => {
       // Setup a secret with metadata and data
       const secret = {
         metadata: {
@@ -143,14 +143,14 @@ describe("auto-reload", () => {
 
       // First call should cache the checksum
       await handleSecretUpdate(secret as kind.Secret);
-      expect(utils.evictPods).not.toHaveBeenCalled();
+      expect(utils.rotatePods).not.toHaveBeenCalled();
 
-      // Second call with the same data should not evict pods
+      // Second call with the same data should not rotate pods
       await handleSecretUpdate(secret as kind.Secret);
-      expect(utils.evictPods).not.toHaveBeenCalled();
+      expect(utils.rotatePods).not.toHaveBeenCalled();
     });
 
-    it("should return early when the selector format is invalid without evicting pods", async () => {
+    it("should return early when the selector format is invalid without rotating pods", async () => {
       // Secret with invalid selector format
       const secret = {
         metadata: {
@@ -172,11 +172,11 @@ describe("auto-reload", () => {
       // Should complete without throwing
       await handleSecretUpdate(secret as kind.Secret);
 
-      // Verify that the function returns early and doesn't call evictPods
-      expect(utils.evictPods).not.toHaveBeenCalled();
+      // Verify that the function returns early and doesn't call rotatePods
+      expect(utils.rotatePods).not.toHaveBeenCalled();
     });
 
-    it("should only evict pods that match the selector when data changes", async () => {
+    it("should only rotate pods that match the selector when data changes", async () => {
       // The matching pod with correct label
       const matchingPod = {
         metadata: {
@@ -211,8 +211,8 @@ describe("auto-reload", () => {
         Raw: vi.fn(),
       }));
 
-      // Mock evictPods
-      vi.mocked(utils.evictPods).mockResolvedValue();
+      // Mock rotatePods
+      vi.mocked(utils.rotatePods).mockResolvedValue();
 
       // First secret with initial data
       const secret1 = {
@@ -241,9 +241,9 @@ describe("auto-reload", () => {
         },
       };
 
-      // First call should cache the checksum without evicting
+      // First call should cache the checksum without rotating
       await handleSecretUpdate(secret1 as kind.Secret);
-      expect(utils.evictPods).not.toHaveBeenCalled();
+      expect(utils.rotatePods).not.toHaveBeenCalled();
       vi.clearAllMocks(); // Clear mock call history
 
       // Reset our mocks for the second call
@@ -264,7 +264,7 @@ describe("auto-reload", () => {
         Raw: vi.fn(),
       }));
 
-      // Second call with changed data should evict pods
+      // Second call with changed data should rotate pods
       await handleSecretUpdate(secret2 as kind.Secret);
 
       // Verify the correct namespace was used
@@ -273,8 +273,8 @@ describe("auto-reload", () => {
       // Verify WithLabel was called with the correct selector
       expect(mockWithLabel).toHaveBeenCalledWith("app", "test-app");
 
-      // Verify eviction was called with only the matching pod
-      expect(utils.evictPods).toHaveBeenCalledWith(
+      // Verify rotation was called with only the matching pod
+      expect(utils.rotatePods).toHaveBeenCalledWith(
         "default",
         [matchingPod], // Only the matching pod should be passed
         "Secret test-secret change",
@@ -320,8 +320,8 @@ describe("auto-reload", () => {
         Raw: vi.fn(),
       }));
 
-      // Mock evictPods
-      vi.mocked(utils.evictPods).mockResolvedValue();
+      // Mock rotatePods
+      vi.mocked(utils.rotatePods).mockResolvedValue();
 
       // Secret with multiple selectors
       const secret1 = {
@@ -352,7 +352,7 @@ describe("auto-reload", () => {
 
       // First call caches the checksum
       await handleSecretUpdate(secret1 as kind.Secret);
-      expect(utils.evictPods).not.toHaveBeenCalled();
+      expect(utils.rotatePods).not.toHaveBeenCalled();
       vi.clearAllMocks();
 
       // Reset mocks for second call
@@ -372,7 +372,7 @@ describe("auto-reload", () => {
         Raw: vi.fn(),
       }));
 
-      // Second call should evict pods
+      // Second call should rotate pods
       await handleSecretUpdate(secret2 as kind.Secret);
 
       // Verify namespace was set correctly
@@ -383,8 +383,8 @@ describe("auto-reload", () => {
       expect(mockWithLabel).toHaveBeenCalledWith("tier", "frontend");
       expect(mockWithLabel).toHaveBeenCalledWith("env", "prod");
 
-      // Verify eviction happened with the matching pod
-      expect(utils.evictPods).toHaveBeenCalledWith(
+      // Verify rotation happened with the matching pod
+      expect(utils.rotatePods).toHaveBeenCalledWith(
         "default",
         [matchingPod],
         "Secret multi-selector-secret change",
@@ -452,28 +452,28 @@ describe("auto-reload", () => {
       // Mock K8s responses
       mockGet.mockResolvedValue(mockPods);
 
-      // First call should cache the checksum without evicting
+      // First call should cache the checksum without rotating
       await handleSecretUpdate(secret1 as kind.Secret);
-      expect(utils.evictPods).not.toHaveBeenCalled();
+      expect(utils.rotatePods).not.toHaveBeenCalled();
       vi.clearAllMocks(); // Clear mock call history
 
-      // Second call with changed data should evict only the pods using the secret
+      // Second call with changed data should rotate only the pods using the secret
       await handleSecretUpdate(secret2 as kind.Secret);
 
-      // Verify evictPods was called with the correct parameters
-      expect(utils.evictPods).toHaveBeenCalledTimes(1);
+      // Verify rotatePods was called with the correct parameters
+      expect(utils.rotatePods).toHaveBeenCalledTimes(1);
 
       // Check that the namespace and reason are correct
-      const evictPodCalls = (utils.evictPods as ReturnType<typeof vi.fn>).mock.calls[0];
-      expect(evictPodCalls[0]).toBe("default"); // namespace
-      expect(evictPodCalls[2]).toBe("Secret test-secret change"); // reason
+      const rotatePodCalls = (utils.rotatePods as ReturnType<typeof vi.fn>).mock.calls[0];
+      expect(rotatePodCalls[0]).toBe("default"); // namespace
+      expect(rotatePodCalls[2]).toBe("Secret test-secret change"); // reason
 
       // Verify pods 1 and 2 were included and pod3 is NOT included
-      const evictedPods = evictPodCalls[1] as kind.Pod[];
-      expect(evictedPods.length).toBe(2);
-      expect(evictedPods.some(pod => pod.metadata?.name === "pod1")).toBe(true);
-      expect(evictedPods.some(pod => pod.metadata?.name === "pod2")).toBe(true);
-      expect(evictedPods.some(pod => pod.metadata?.name === "pod3")).toBe(false);
+      const rotatedPods = rotatePodCalls[1] as kind.Pod[];
+      expect(rotatedPods.length).toBe(2);
+      expect(rotatedPods.some(pod => pod.metadata?.name === "pod1")).toBe(true);
+      expect(rotatedPods.some(pod => pod.metadata?.name === "pod2")).toBe(true);
+      expect(rotatedPods.some(pod => pod.metadata?.name === "pod3")).toBe(false);
     });
   });
 
@@ -498,9 +498,9 @@ describe("auto-reload", () => {
       await handleSecretDelete(secret as kind.Secret);
 
       // Verify it was removed from cache by updating it again
-      // which should not trigger eviction because cache was cleared
+      // which should not trigger rotation because cache was cleared
       await handleSecretUpdate(secret as kind.Secret);
-      expect(utils.evictPods).not.toHaveBeenCalled();
+      expect(utils.rotatePods).not.toHaveBeenCalled();
     });
   });
 
