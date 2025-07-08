@@ -48,3 +48,41 @@ spec:
           redirect_uri: clientField(redirectUris)[0]
           bearer_only: clientField(bearerOnly)
   ```
+
+## Secret Auto-Reload
+
+UDS Core provides an automatic secret reload mechanism that can restart pods or deployments when secrets are updated. This is useful for SSO client secrets when they need to be updated.
+
+To enable automatic reloading when a secret changes, add the `uds.dev/watch: "true"` label to your secret.
+
+### Example
+
+Here's an example of a secret configuration with auto-reload enabled:
+
+```yaml
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: my-app
+  namespace: my-namespace
+spec:
+  sso:
+    - name: My App
+      clientId: my-app-client
+      redirectUris:
+        - "https://my-app.example.com/callback"
+      secretName: my-app-secret
+      # To enable auto-reload for this secret, add these labels and annotations
+      secretLabels:
+        uds.dev/watch: "true"
+      secretAnnotations:
+        uds.dev/pod-selector: 'app=my-app' # Target a specific pod(s) to rotate
+      secretTemplate:
+        config.json: |
+          {
+            "client_id": "clientField(clientId)",
+            "client_secret": "clientField(secret)"
+          }
+```
+
+When this secret is updated (for example, when rotating the client secret), all pods with the label `app=my-app` will be automatically restarted to pick up the new secret value.
