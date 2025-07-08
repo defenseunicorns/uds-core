@@ -134,7 +134,7 @@ export async function retryWithDelay<T>(
 }
 
 /**
- * Evicts a list of pods using controller-based rolling restart when possible,
+ * Rotate a list of pods using controller-based rolling restart when possible,
  * falling back to direct pod eviction when necessary.
  *
  * For Deployments, StatefulSets, DaemonSets, and ReplicaSets, it will trigger a
