@@ -7,7 +7,6 @@ import { getReadinessConditions, handleFailure, shouldSkip, updateStatus, writeE
 import { UDSConfig } from "../../config";
 import { Component, setupLogger } from "../../logger";
 import {
-  isAmbientEnabled,
   setupAmbientWaypoint,
   unregisterAmbientPackage,
 } from "../controllers/istio/ambient-waypoint";
@@ -27,7 +26,7 @@ import { generateAuthorizationPolicies } from "../controllers/network/authorizat
 import { networkPolicies } from "../controllers/network/policies";
 import { retryWithDelay } from "../controllers/utils";
 import { Phase, UDSPackage } from "../crd";
-import { Condition, Mode, StatusEnum } from "../crd/generated/package-v1alpha1";
+import { Mode } from "../crd/generated/package-v1alpha1";
 import { migrate } from "../crd/migrate";
 
 // configure subproject logger
@@ -39,6 +38,20 @@ const log = setupLogger(Component.OPERATOR_RECONCILERS);
  *
  * @param pkg the package to reconcile
  */
+// Helper to apply exponential backoff if needed
+async function withBackoffIfNeeded(pkg: UDSPackage, fn: () => Promise<void>) {
+  if (pkg.status?.retryAttempt && pkg.status?.retryAttempt > 0) {
+    const backOffSeconds = 3 ** pkg.status.retryAttempt;
+    log.info(
+      pkg.metadata,
+      `Waiting ${backOffSeconds} seconds before processing package ${pkg.metadata?.namespace}/${pkg.metadata?.name}`,
+    );
+    await writeEvent(pkg, { message: `Waiting ${backOffSeconds} seconds before retrying package` });
+    await new Promise(resolve => setTimeout(resolve, backOffSeconds * 1000));
+  }
+  await fn();
+}
+
 export async function packageReconciler(pkg: UDSPackage) {
   const metadata = pkg.metadata!;
   const { namespace, name } = metadata;
@@ -54,204 +67,105 @@ export async function packageReconciler(pkg: UDSPackage) {
     return;
   }
 
-  if (pkg.status?.retryAttempt && pkg.status?.retryAttempt > 0) {
-    // calculate exponential backoff where backoffSeconds = 3^retryAttempt
-    const backOffSeconds = 3 ** pkg.status?.retryAttempt;
-
-    log.info(
-      metadata,
-      `Waiting ${backOffSeconds} seconds before processing package ${namespace}/${name}, status.phase: ${pkg.status?.phase}, observedGeneration: ${pkg.status?.observedGeneration}, retryAttempt: ${pkg.status?.retryAttempt}`,
-    );
-
-    await writeEvent(pkg, {
-      message: `Waiting ${backOffSeconds} seconds before retrying package`,
-    });
-
-    // wait for backOff seconds before retrying
-    await new Promise(resolve => setTimeout(resolve, backOffSeconds * 1000));
-  }
-
   // Migrate the package to the latest version
   migrate(pkg);
 
-  // Configure the namespace and namespace-wide network policies
-  try {
-    await updateStatus(pkg, { phase: Phase.Pending, conditions: getReadinessConditions(false) });
-
-    // Get the requested service mesh mode, default to sidecar if not specified
-    const istioMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Sidecar;
-
-    // Pass the effective Istio mode to the networkPolicies function
-    const netPol = await networkPolicies(pkg, namespace!, istioMode);
-
-    const authPol = await generateAuthorizationPolicies(pkg, namespace!, istioMode);
-
-    let endpoints: string[] = [];
-    // Update the namespace to enable the expected Istio mode (sidecar or ambient)
-    await enableIstio(pkg);
-
-    let ssoClients = new Map<string, Client>();
-    let authserviceClients: string[] = [];
-
-    if (UDSConfig.isIdentityDeployed) {
-      // Configure SSO
-      ssoClients = await keycloak(pkg);
-      authserviceClients = await authservice(pkg, ssoClients);
-    } else if (pkg.spec?.sso) {
-      log.error("Identity & Authorization is not deployed, but the package has SSO configuration");
-      throw new Error(
-        "Identity & Authorization is not deployed, but the package has SSO configuration",
-      );
+  await withBackoffIfNeeded(pkg, async () => {
+    try {
+      await reconcilePackageFlow(pkg);
+    } catch (err) {
+      void handleFailure(err, pkg);
     }
+  });
+}
 
-    // Create the Istio Resources per the package configuration
-    endpoints = await istioResources(pkg, namespace!);
+/**
+ * Orchestrates the main reconciliation flow for a package.
+ * Handles status updates, resource creation, and sequencing.
+ */
+async function reconcilePackageFlow(pkg: UDSPackage): Promise<void> {
+  const metadata = pkg.metadata!;
+  const { namespace } = metadata;
 
-    // Configure the ServiceMonitors
-    const monitors: string[] = [];
-    monitors.push(...(await podMonitor(pkg, namespace!)));
-    monitors.push(...(await serviceMonitor(pkg, namespace!)));
+  // Get the requested service mesh mode, default to sidecar if not specified
+  const istioMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Sidecar;
 
-    // Handle ambient waypoint if needed
-    if (pkg.spec?.sso) {
-      const hasAuthService = pkg.spec.sso.some(sso => sso.enableAuthserviceSelector);
-      const isAmbient = await isAmbientEnabled(namespace!);
+  // Enable Istio mode in the namespace first (for ambient, ensures waypoint can be created)
+  await enableIstio(pkg);
 
-      try {
-        if (isAmbient && hasAuthService) {
-          // Get the first client ID that has authservice enabled
-          const authServiceClient = pkg.spec.sso.find(sso => sso.enableAuthserviceSelector);
-
-          try {
-            await setupAmbientWaypoint(pkg, authServiceClient!.clientId);
-
-            // Update package status with waypoint information
-            const now = new Date();
-            const conditions: Condition[] = [
-              ...(pkg.status?.conditions || []).filter(c => c.type !== "WaypointReady"),
-              {
-                type: "WaypointReady",
-                status: StatusEnum.True,
-                reason: "WaypointProvisioned",
-                message: "Ambient waypoint is ready and pod is healthy for service traffic",
-                lastTransitionTime: now,
-              },
-            ];
-
-            await updateStatus(pkg, { conditions });
-            await writeEvent(pkg, {
-              message: "Ambient waypoint is ready and pod is healthy",
-            });
-          } catch (waypointError) {
-            // If the waypoint setup fails due to pod health issues, we need to fail the package deployment
-            const errorMessage =
-              waypointError instanceof Error ? waypointError.message : String(waypointError);
-            // Check for timeout errors from the waitForWaypointPodHealthy function
-            const isHealthTimeout =
-              errorMessage.includes("did not become healthy within") ||
-              errorMessage.includes("did not become healthy after");
-
-            if (isHealthTimeout) {
-              log.error(`Waypoint pod health check timed out for package ${namespace}/${name}`, {
-                error: errorMessage,
-                package: name,
-                namespace,
-              });
-
-              // Update status to Failed
-              const now = new Date();
-              const conditions: Condition[] = [
-                ...(pkg.status?.conditions || []).filter(c => c.type !== "WaypointReady"),
-                {
-                  type: "WaypointReady",
-                  status: StatusEnum.False,
-                  reason: "WaypointUnhealthy",
-                  message: `Waypoint pod health check failed: ${errorMessage}`,
-                  lastTransitionTime: now,
-                },
-              ];
-
-              await updateStatus(pkg, {
-                phase: Phase.Failed,
-                conditions,
-              });
-
-              await writeEvent(pkg, {
-                message: `Waypoint pod health check failed but resources were left in place for debugging. To fix this issue: 1) Check if the waypoint pod exists, 2) Verify the pod can connect to istiod, 3) Check for network policies that might block pod-to-istiod communication.`,
-                reason: "WaypointHealthCheckFailedNoCleanup",
-                type: "Warning",
-              });
-
-              throw new Error(`Waypoint health check failed: ${errorMessage}`);
-            }
-
-            // For other types of errors, propagate them
-            throw waypointError;
-          }
-        } else {
-          // Check if we need to clean up any existing waypoint
-          const currentKey =
-            pkg.metadata?.namespace && pkg.metadata?.name
-              ? `${pkg.metadata.namespace}/${pkg.metadata.name}`
-              : null;
-
-          if (currentKey) {
-            // Get the first client ID that has authservice enabled for cleanup
-            if (pkg.spec?.sso) {
-              const authServiceClient = pkg.spec.sso.find(sso => sso.enableAuthserviceSelector);
-              if (authServiceClient) {
-                await unregisterAmbientPackage(pkg, authServiceClient.clientId);
-              } else {
-                // If no auth service client is found, try to clean up with the package name as fallback
-                await unregisterAmbientPackage(pkg, pkg.metadata?.name || "");
-              }
-            }
-          }
-        }
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        const errorStack = error instanceof Error ? error.stack : "No stack trace available";
-        const errorDetails = {
-          error: errorMessage,
-          stack: errorStack,
-          packageName: name,
-          namespace,
-          phase: pkg.status?.phase,
-          conditions: pkg.status?.conditions,
-        };
-        log.error("Error configuring ambient auth", errorDetails);
-
-        // Update status to Failed
-        await updateStatus(pkg, {
-          phase: Phase.Failed,
-        });
-
-        await writeEvent(pkg, {
-          message: `Failed to configure ambient auth: ${errorMessage}`,
-          reason: "AmbientAuthConfigFailed",
-          type: "Warning",
-        });
-
-        // Return early to prevent further processing
-        return;
-      }
+  // If ambient mode and authservice needed, create waypoint before policies
+  if (istioMode === Mode.Ambient && pkg.spec?.sso?.some(sso => sso.enableAuthserviceSelector)) {
+    const authServiceClient = pkg.spec.sso.find(sso => sso.enableAuthserviceSelector);
+    if (authServiceClient) {
+      await setupAmbientWaypoint(pkg, authServiceClient.clientId);
     }
-
-    await updateStatus(pkg, {
-      phase: Phase.Ready,
-      conditions: getReadinessConditions(true),
-      ssoClients: [...ssoClients.keys()],
-      authserviceClients,
-      endpoints,
-      monitors,
-      networkPolicyCount: netPol.length,
-      authorizationPolicyCount: authPol.length + authserviceClients.length * 2,
-      observedGeneration: metadata.generation,
-      retryAttempt: 0, // todo: make this nullable when kfc generates the type
-    });
-  } catch (err) {
-    void handleFailure(err, pkg);
   }
+
+  // Pass the effective Istio mode to the networkPolicies and auth policies
+  const netPol = await networkPolicies(pkg, namespace!, istioMode);
+  const authPol = await generateAuthorizationPolicies(pkg, namespace!, istioMode);
+
+  let endpoints: string[] = [];
+  let ssoClients = new Map<string, Client>();
+  let authserviceClients: string[] = [];
+  const monitors: string[] = [];
+
+  if (UDSConfig.isIdentityDeployed) {
+    // Configure SSO
+    ssoClients = await keycloak(pkg);
+    authserviceClients = await authservice(pkg, ssoClients);
+  } else if (pkg.spec?.sso) {
+    log.error("Identity & Authorization is not deployed, but the package has SSO configuration");
+    throw new Error(
+      "Identity & Authorization is not deployed, but the package has SSO configuration",
+    );
+  }
+
+  // Create the Istio Resources per the package configuration
+  endpoints = await istioResources(pkg, namespace!);
+
+  // Configure the ServiceMonitors
+  monitors.push(...(await podMonitor(pkg, namespace!)));
+  monitors.push(...(await serviceMonitor(pkg, namespace!)));
+
+  // Update status to Ready using a dedicated helper
+  await updatePackageStatusToReady(pkg, {
+    ssoClients,
+    authserviceClients,
+    endpoints,
+    monitors,
+    networkPolicyCount: netPol.length,
+    authorizationPolicyCount: authPol.length + authserviceClients.length * 2,
+  });
+}
+
+/**
+ * Helper to update the package status to Ready after successful reconciliation.
+ */
+async function updatePackageStatusToReady(
+  pkg: UDSPackage,
+  opts: {
+    ssoClients: Map<string, Client>;
+    authserviceClients: string[];
+    endpoints: string[];
+    monitors: string[];
+    networkPolicyCount: number;
+    authorizationPolicyCount: number;
+  },
+): Promise<void> {
+  const metadata = pkg.metadata!;
+  await updateStatus(pkg, {
+    phase: Phase.Ready,
+    conditions: getReadinessConditions(true),
+    ssoClients: [...opts.ssoClients.keys()],
+    authserviceClients: opts.authserviceClients,
+    endpoints: opts.endpoints,
+    monitors: opts.monitors,
+    networkPolicyCount: opts.networkPolicyCount,
+    authorizationPolicyCount: opts.authorizationPolicyCount,
+    observedGeneration: metadata.generation,
+    retryAttempt: 0,
+  });
 }
 
 /**

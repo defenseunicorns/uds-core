@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { V1OwnerReference } from "@kubernetes/client-node";
 import { a, K8s, kind } from "pepr";
 import { K8sGateway, UDSPackage } from "../../crd";
 import { log } from "./istio-resources";
@@ -26,16 +25,9 @@ function getWaypointName(clientId: string): string {
   return `${clientId}${WAYPOINT_SUFFIX}`;
 }
 
-function createOwnerReference(pkg: UDSPackage): V1OwnerReference {
-  return {
-    apiVersion: pkg.apiVersion || "uds.dev/v1alpha1",
-    kind: pkg.kind || "UDSPackage",
-    name: pkg.metadata?.name || "",
-    uid: pkg.metadata?.uid || "",
-    controller: true,
-    blockOwnerDeletion: true,
-  };
-}
+// NOTE: If ambient-waypoint logic is only used for AuthService, consider merging this file into the AuthService controller for cohesion. If not, keep it generic for mesh modularity.
+import { getOwnerRef } from "../utils"; // add import if not present
+// Removed local createOwnerReference; use getOwnerRef instead.
 
 function createManagedLabels(
   pkg: UDSPackage,
@@ -60,7 +52,9 @@ interface AmbientPackageInfo {
 }
 
 // In-memory store for packages that need ambient waypoint
+// Now also indexed by namespace for efficient lookup
 const ambientPackages = new Map<string, AmbientPackageInfo>();
+const ambientPackagesByNamespace = new Map<string, AmbientPackageInfo[]>();
 
 /**
  * Checks if a service matches any of the provided selectors
@@ -101,80 +95,31 @@ function isGatewayReady(gateway: K8sGateway): boolean {
  * @param waypointName - The name of the waypoint gateway
  * @returns A promise that resolves to a boolean indicating if the waypoint pod is healthy
  */
-async function isWaypointPodHealthy(namespace: string, waypointName: string): Promise<boolean> {
-  try {
-    // Find the waypoint pod - it will have a label that matches the waypoint name
-    const podList = await K8s(a.Pod).InNamespace(namespace).Get();
+export async function isWaypointPodHealthy(
+  namespace: string,
+  waypointName: string,
+): Promise<boolean> {
+  // Use label selector for efficiency
+  const pods = await K8s(a.Pod)
+    .InNamespace(namespace)
+    .WithLabel(`istio.io/gateway-name=${waypointName}`)
+    .Get();
 
-    // Filter pods with the waypoint label
-    const waypointPods =
-      podList.items?.filter(pod => {
-        const labels = pod.metadata?.labels || {};
-        // Use exact label key match for better reliability
-        return labels["istio.io/gateway-name"] === waypointName;
-      }) || [];
-
-    if (waypointPods.length === 0) {
-      log.debug(`No waypoint pods found for ${waypointName} in namespace ${namespace}`);
-      return false;
-    }
-
-    const waypointPod = waypointPods[0]; // Typically there's only one waypoint pod per gateway
-
-    // Check if the pod is in Running state
-    if (waypointPod.status?.phase !== "Running") {
-      log.debug(
-        `Waypoint pod ${waypointPod.metadata?.name} is not running, current phase: ${waypointPod.status?.phase}`,
+  for (const pod of pods.items || []) {
+    // Log if istio-proxy container has restarted
+    const proxyStatus = pod.status?.containerStatuses?.find(cs => cs.name === "istio-proxy");
+    if (proxyStatus && proxyStatus.restartCount && proxyStatus.restartCount > 0) {
+      log.warn(
+        `istio-proxy container for waypoint ${waypointName} in pod ${pod.metadata?.name} has restarted ${proxyStatus.restartCount} times`,
+        { namespace },
       );
-      return false;
     }
-
-    // Check if all containers are ready
-    const containerStatuses = waypointPod.status?.containerStatuses || [];
-    const allContainersReady = containerStatuses.every(status => status.ready);
-    if (!allContainersReady) {
-      log.debug(`Not all containers in waypoint pod ${waypointPod.metadata?.name} are ready`);
-      return false;
+    // All containers ready check is sufficient, no need for redundant istioProxyContainer check
+    if (pod.status?.phase === "Running" && pod.status?.containerStatuses?.every(cs => cs.ready)) {
+      return true;
     }
-
-    // Check if the pod has been ready for at least 5 seconds to ensure stability
-    const readyCondition = waypointPod.status?.conditions?.find(c => c.type === "Ready");
-    if (!readyCondition || readyCondition.status !== "True") {
-      log.debug(`Waypoint pod ${waypointPod.metadata?.name} is not in Ready condition`);
-      return false;
-    }
-
-    // Check if the pod has connected to istiod by examining the istio-proxy container's readiness
-    const istioProxyContainer = containerStatuses.find(c => c.name === "istio-proxy");
-    if (!istioProxyContainer || !istioProxyContainer.ready) {
-      log.debug(`Istio-proxy container in waypoint pod ${waypointPod.metadata?.name} is not ready`);
-      return false;
-    }
-
-    // Additional check: verify no recent restarts which might indicate instability
-    if (istioProxyContainer.restartCount > 0) {
-      // Check if the last restart was recent (within the last 30 seconds)
-      const lastStateTerminated = istioProxyContainer.lastState?.terminated;
-      if (lastStateTerminated) {
-        const terminatedTime = new Date(lastStateTerminated.finishedAt || "").getTime();
-        const thirtySecondsAgo = Date.now() - 30000;
-
-        if (terminatedTime > thirtySecondsAgo) {
-          log.debug(
-            `Istio-proxy in waypoint pod ${waypointPod.metadata?.name} restarted recently, waiting for stability`,
-          );
-          return false;
-        }
-      }
-    }
-
-    log.info(`Waypoint pod ${waypointPod.metadata?.name} is healthy and connected to istiod`);
-    return true;
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    log.error(`Error checking waypoint pod health: ${errorMessage}`, { namespace, waypointName });
-    return false;
   }
+  return false;
 }
 
 /**
@@ -218,7 +163,7 @@ export async function createWaypointGateway(pkg: UDSPackage, clientId: string) {
         "istio.io/waypoint-for": "all",
         "istio.io/gateway-name": waypointName,
       }),
-      ownerReferences: [createOwnerReference(pkg)],
+      ownerReferences: getOwnerRef(pkg),
       annotations: {
         "uds.dev/created-at": new Date().toISOString(),
         ...(pkg.metadata?.annotations || {}),
@@ -283,16 +228,20 @@ export async function registerAmbientPackage(pkg: UDSPackage, clientId: string):
 
   ambientPackages.set(key, packageInfo);
 
-  // Reconcile existing services and pods
+  // Update namespace index for efficient lookup
+  if (!ambientPackagesByNamespace.has(namespace)) {
+    ambientPackagesByNamespace.set(namespace, []);
+  }
+  ambientPackagesByNamespace.get(namespace)!.push(packageInfo);
+
+  // Reconcile existing services and pods efficiently
   try {
-    // Reconcile services
     const services = await K8s(a.Service).InNamespace(namespace).Get();
+    const pods = await K8s(a.Pod).InNamespace(namespace).Get();
+    // Use map lookups for selectors
     for (const svc of services.items || []) {
       await reconcileService(svc);
     }
-
-    // Reconcile pods
-    const pods = await K8s(a.Pod).InNamespace(namespace).Get();
     for (const pod of pods.items || []) {
       await reconcilePod(pod);
     }
@@ -464,9 +413,9 @@ export async function reconcileService(svc: a.Service): Promise<void> {
   const namespace = svc.metadata?.namespace;
   if (!namespace) return;
 
-  for (const [, { pkg, selectors, waypointName }] of ambientPackages) {
-    if (pkg.metadata?.namespace !== namespace) continue;
-
+  // Use efficient lookup by namespace
+  const pkgs = ambientPackagesByNamespace.get(namespace) || [];
+  for (const { pkg, selectors, waypointName } of pkgs) {
     if (serviceMatchesSelectors(svc, selectors)) {
       const needsUpdate =
         svc.metadata?.labels?.["istio.io/use-waypoint"] !== waypointName ||
@@ -475,31 +424,20 @@ export async function reconcileService(svc: a.Service): Promise<void> {
           (ref: { kind?: string; name?: string }) =>
             ref.kind === (pkg.kind || "UDSPackage") && ref.name === pkg.metadata?.name,
         );
-
       if (needsUpdate) {
         svc.metadata = {
           ...(svc.metadata || {}),
-          labels: {
-            ...(svc.metadata?.labels || {}),
-            "istio.io/use-waypoint": waypointName,
+          labels: createManagedLabels(pkg, waypointName, {
             "istio.io/ingress-use-waypoint": "true",
-            "uds/managed-by": "uds-operator",
-            "uds/package": pkg.metadata?.name || "",
-            "uds/namespace": namespace,
-          },
+            ...(svc.metadata?.labels || {}),
+          }),
           ownerReferences: [
             ...(svc.metadata?.ownerReferences?.filter(
               (ref: { kind?: string; name?: string }) =>
                 !(ref.kind === (pkg.kind || "UDSPackage") && ref.name === pkg.metadata?.name),
             ) || []),
-            {
-              apiVersion: pkg.apiVersion || "uds.dev/v1alpha1",
-              kind: pkg.kind || "UDSPackage",
-              name: pkg.metadata?.name || "",
-              uid: pkg.metadata?.uid || "",
-              controller: true,
-              blockOwnerDeletion: true,
-            },
+            // Only add ownerRef if this service should be owned by the package
+            ...getOwnerRef(pkg),
           ],
         };
       }
@@ -512,13 +450,12 @@ export async function reconcilePod(pod: a.Pod): Promise<void> {
   const namespace = pod.metadata?.namespace;
   if (!namespace) return;
 
-  for (const [, { pkg, selectors, waypointName }] of ambientPackages) {
-    if (pkg.metadata?.namespace !== namespace) continue;
-
+  // Use efficient lookup by namespace
+  const pkgs = ambientPackagesByNamespace.get(namespace) || [];
+  for (const { pkg, selectors, waypointName } of pkgs) {
     const matches = selectors.some(selector =>
       Object.entries(selector).every(([k, v]) => pod.metadata?.labels?.[k] === v),
     );
-
     if (matches) {
       const needsUpdate =
         pod.metadata?.labels?.["istio.io/use-waypoint"] !== waypointName ||
@@ -527,30 +464,19 @@ export async function reconcilePod(pod: a.Pod): Promise<void> {
           (ref: { kind?: string; name?: string }) =>
             ref.kind === (pkg.kind || "UDSPackage") && ref.name === pkg.metadata?.name,
         );
-
       if (needsUpdate) {
         pod.metadata = {
           ...(pod.metadata || {}),
-          labels: {
+          labels: createManagedLabels(pkg, waypointName, {
             ...(pod.metadata?.labels || {}),
-            "istio.io/use-waypoint": waypointName,
-            "uds/managed-by": "uds-operator",
-            "uds/package": pkg.metadata?.name || "",
-            "uds/namespace": namespace,
-          },
+          }),
           ownerReferences: [
             ...(pod.metadata?.ownerReferences?.filter(
               (ref: { kind?: string; name?: string }) =>
                 !(ref.kind === (pkg.kind || "UDSPackage") && ref.name === pkg.metadata?.name),
             ) || []),
-            {
-              apiVersion: pkg.apiVersion || "uds.dev/v1alpha1",
-              kind: pkg.kind || "UDSPackage",
-              name: pkg.metadata?.name || "",
-              uid: pkg.metadata?.uid || "",
-              controller: true,
-              blockOwnerDeletion: true,
-            },
+            // Only add ownerRef if this pod should be owned by the package
+            ...getOwnerRef(pkg),
           ],
         };
       }

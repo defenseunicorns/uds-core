@@ -39,11 +39,3 @@ spec:
           app: httpbin
         ports:
           - 80
-      - description: "Waypoint to Istio Control Plane"
-        direction: Egress
-        selector:
-          gateway.networking.k8s.io/gateway-name: httpbin-waypoint
-        remoteNamespace: istio-system
-        remoteSelector:
-          app: istiod
-        port: 15012

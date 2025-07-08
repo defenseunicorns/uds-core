@@ -95,9 +95,42 @@ describe("ambient-waypoint", () => {
           InNamespace: mockInNamespace,
           Apply: mockApply,
         };
-      } else if (resource === a.Service || resource === a.Pod) {
+      } else if (resource === a.Service) {
         return {
           InNamespace: mockInNamespace,
+        };
+      } else if (resource === a.Pod) {
+        return {
+          InNamespace: () => ({
+            List: vi.fn().mockResolvedValue({
+              items: [
+                {
+                  metadata: {
+                    name: "test-client-waypoint-pod",
+                    labels: {
+                      "istio.io/gateway-name": "test-client-waypoint",
+                    },
+                  },
+                  status: {
+                    phase: "Running",
+                    containerStatuses: [
+                      {
+                        name: "istio-proxy",
+                        ready: true,
+                        restartCount: 0,
+                      },
+                    ],
+                    conditions: [
+                      {
+                        type: "Ready",
+                        status: "True",
+                      },
+                    ],
+                  },
+                },
+              ],
+            }),
+          }),
         };
       }
       return {
@@ -153,54 +186,58 @@ describe("ambient-waypoint", () => {
 
   describe("setupAmbientWaypoint", () => {
     test("should create waypoint gateway and wait for pod health", async () => {
-      // Create a simplified test that focuses on the high-level functionality
-      // rather than the internal implementation details
-
+      vi.useFakeTimers();
       // Setup mocks
       const mockApplyGateway = vi.fn().mockResolvedValue({});
-      const mockGetPods = vi.fn().mockResolvedValue({
-        items: [
-          {
-            metadata: {
-              name: "test-client-waypoint-pod",
-              labels: {
-                "istio.io/gateway-name": "test-client-waypoint",
-              },
-            },
-            status: {
-              phase: "Running",
-              containerStatuses: [
-                {
-                  name: "istio-proxy",
-                  ready: true,
-                  restartCount: 0,
-                },
-              ],
-              conditions: [
-                {
-                  type: "Ready",
-                  status: "True",
-                },
-              ],
-            },
+      // Return a healthy pod only for the correct namespace
+      const healthyPod = {
+        metadata: {
+          name: "test-client-waypoint-pod",
+          labels: {
+            "istio.io/gateway-name": "test-client-waypoint",
           },
-        ],
-      });
-
-      // Setup K8s mock with specific implementations for each resource type
+        },
+        status: {
+          phase: "Running",
+          containerStatuses: [
+            {
+              name: "istio-proxy",
+              ready: true,
+              restartCount: 0,
+            },
+          ],
+          conditions: [
+            {
+              type: "Ready",
+              status: "True",
+            },
+          ],
+        },
+      };
+      // Patch K8s mock for this test
       (K8s as Mock).mockImplementation(resource => {
         if (resource === K8sGateway) {
           return {
             Apply: mockApplyGateway,
             InNamespace: () => ({
-              Get: vi.fn().mockRejectedValue({ status: 404 }), // Gateway not found
+              Get: vi.fn().mockRejectedValue({ status: 404 }),
               Delete: vi.fn().mockResolvedValue({}),
             }),
           };
         } else if (resource === a.Pod) {
           return {
-            InNamespace: () => ({
-              Get: mockGetPods,
+            InNamespace: (ns: string) => ({
+              WithLabel: (label: string) => ({
+                Get: vi.fn().mockImplementation(() => {
+                  if (
+                    ns === "test-namespace" &&
+                    label === "istio.io/gateway-name=test-client-waypoint"
+                  ) {
+                    return Promise.resolve({ items: [healthyPod] });
+                  }
+                  return Promise.resolve({ items: [] });
+                }),
+              }),
             }),
           };
         }
@@ -210,17 +247,13 @@ describe("ambient-waypoint", () => {
           InNamespace: mockInNamespace,
         };
       });
-
-      // Set environment variables for testing
       const originalEnv = process.env;
       process.env.WAYPOINT_HEALTH_MAX_ATTEMPTS = "1";
       process.env.WAYPOINT_HEALTH_INTERVAL_MS = "10";
-
       try {
-        // Execute the function under test
-        await setupAmbientWaypoint(testPackage, "test-client");
-
-        // Verify gateway was created
+        const promise = setupAmbientWaypoint(testPackage, "test-client");
+        await vi.runAllTimersAsync();
+        await promise;
         expect(mockApplyGateway).toHaveBeenCalledWith(
           expect.objectContaining({
             metadata: expect.objectContaining({
@@ -236,6 +269,7 @@ describe("ambient-waypoint", () => {
       } finally {
         // Restore environment
         process.env = originalEnv;
+        vi.useRealTimers();
       }
     });
 

@@ -30,8 +30,8 @@ import { UDSConfig } from "../config";
 import { Component, setupLogger } from "../logger";
 import { updateUDSConfig } from "./controllers/config/config";
 import {
-  reconcileService,
   reconcilePod,
+  reconcileService,
   unregisterAmbientPackage,
 } from "./controllers/istio/ambient-waypoint";
 import {
@@ -80,10 +80,12 @@ When(a.Service)
 When(a.Service)
   .IsCreatedOrUpdated()
   // apply ambient waypoint labels
-  .Reconcile(reconcileService);
+  .Mutate(req => reconcileService(req.Raw));
 
 // Watch for Pod mutations to apply ambient waypoint labels
-When(a.Pod).IsCreatedOrUpdated().Reconcile(reconcilePod);
+When(a.Pod)
+  .IsCreatedOrUpdated()
+  .Mutate(req => reconcilePod(req.Raw));
 
 // Watch for Package deletions
 When(UDSPackage)

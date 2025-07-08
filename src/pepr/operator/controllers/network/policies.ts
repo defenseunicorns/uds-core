@@ -111,6 +111,26 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
     // Generate the policy
     const keycloakGeneratedPolicy = generate(namespace, keycloakPolicy);
     policies.push(keycloakGeneratedPolicy);
+
+    // Ambient mode: add waypoint-to-istiod egress policy for the package's dedicated waypoint
+    if (istioMode === IstioState.Ambient) {
+      const waypointSelector = {
+        "gateway.networking.k8s.io/gateway-name": `${sso.clientId}-waypoint`,
+      };
+
+      const istiodPolicy: Allow = {
+        direction: Direction.Egress,
+        selector: waypointSelector,
+        remoteNamespace: "istio-system",
+        remoteSelector: { app: "istiod" },
+        ports: [15012],
+        labels: {
+          "uds/package": pkg.metadata!.name!,
+        },
+      };
+      const generatedIstiodPolicy = generate(namespace, istiodPolicy);
+      policies.push(generatedIstiodPolicy);
+    }
   }
 
   // Generate NetworkPolicies for any monitors that are generated
