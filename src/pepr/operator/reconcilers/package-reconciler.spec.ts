@@ -3,33 +3,13 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { beforeEach, describe, expect, Mock, MockedFunction, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, Mock, MockedFunction, test, vi } from "vitest";
 
-import { K8s, Log } from "pepr";
-import { writeEvent } from ".";
-import { reconcileSharedEgressResources } from "../controllers/istio/egress";
-import { cleanupNamespace } from "../controllers/istio/namespace";
-import { purgeAuthserviceClients } from "../controllers/keycloak/authservice/authservice";
-import { purgeSSOClients } from "../controllers/keycloak/client-sync";
-import { retryWithDelay } from "../controllers/utils";
-import { Phase, UDSPackage } from "../crd";
-import { packageFinalizer, packageReconciler } from "./package-reconciler";
-
-const mockCleanupNamespace: MockedFunction<() => Promise<void>> = vi.fn();
-const mockPurgeSSO: MockedFunction<() => Promise<void>> = vi.fn();
-const mockPurgeAuthservice: MockedFunction<() => Promise<void>> = vi.fn();
-const mockPatchStatus: MockedFunction<() => Promise<void>> = vi.fn();
-const mockReconcileSharedEgressResources: MockedFunction<() => Promise<void>> = vi.fn();
-const mockWriteEvent = vi.fn();
-
+// ---- Vitest mocks ----
 vi.mock("kubernetes-fluent-client");
 vi.mock("../../config");
-vi.mock("../controllers/istio/namespace", () => ({
-  cleanupNamespace: vi.fn(),
-}));
-vi.mock("../controllers/keycloak/client-sync", () => ({
-  purgeSSOClients: vi.fn(),
-}));
+vi.mock("../controllers/istio/namespace", () => ({ cleanupNamespace: vi.fn() }));
+vi.mock("../controllers/keycloak/client-sync", () => ({ purgeSSOClients: vi.fn() }));
 vi.mock("../controllers/keycloak/authservice/authservice", () => ({
   purgeAuthserviceClients: vi.fn(),
 }));
@@ -38,10 +18,7 @@ vi.mock("../controllers/utils", () => ({
 }));
 vi.mock(".", async () => {
   const originalModule = (await vi.importActual(".")) as object;
-  return {
-    ...originalModule,
-    writeEvent: vi.fn(),
-  };
+  return { ...originalModule, writeEvent: vi.fn() };
 });
 vi.mock("../controllers/istio/egress", async () => {
   const originalModule = (await vi.importActual("../controllers/istio/egress")) as object;
@@ -50,10 +27,16 @@ vi.mock("../controllers/istio/egress", async () => {
     reconcileSharedEgressResources: vi.fn(async <T>(fn: () => Promise<T>) => fn()),
   };
 });
-
+vi.mock("../controllers/istio/ambient-waypoint", () => {
+  const mockUnregisterAmbientPackage = vi.fn();
+  return {
+    unregisterAmbientPackage: mockUnregisterAmbientPackage,
+    __esModule: true,
+    mockUnregisterAmbientPackage,
+  };
+});
 vi.mock("../controllers/istio/virtual-service");
 vi.mock("../controllers/network/policies");
-
 vi.mock("pepr", () => ({
   K8s: vi.fn(),
   Log: {
@@ -64,51 +47,232 @@ vi.mock("pepr", () => ({
     trace: vi.fn(),
     child: vi.fn().mockReturnThis(),
   },
-  kind: {
-    CoreEvent: "CoreEvent",
-  },
-  Capability: vi.fn().mockImplementation(() => {
-    return {
-      name: "uds-core-operator",
-      description: "The UDS Operator is responsible for managing the lifecycle of UDS resources",
-    };
-  }),
+  kind: { CoreEvent: "CoreEvent" },
+  Capability: vi.fn().mockImplementation(() => ({
+    name: "uds-core-operator",
+    description: "The UDS Operator is responsible for managing the lifecycle of UDS resources",
+  })),
 }));
 
-describe("reconciler", () => {
+// ---- Imports that depend on mocks ----
+import { K8s, Log } from "pepr";
+import { writeEvent } from ".";
+import { reconcileSharedEgressResources } from "../controllers/istio/egress";
+import { cleanupNamespace } from "../controllers/istio/namespace";
+import { purgeAuthserviceClients } from "../controllers/keycloak/authservice/authservice";
+import { purgeSSOClients } from "../controllers/keycloak/client-sync";
+import { retryWithDelay } from "../controllers/utils";
+import { Phase, UDSPackage } from "../crd";
+import { packageFinalizer, packageReconciler, withBackoffIfNeeded } from "./package-reconciler";
+
+const mockCleanupNamespace: MockedFunction<() => Promise<void>> = vi.fn();
+const mockPurgeSSO: MockedFunction<() => Promise<void>> = vi.fn();
+const mockPurgeAuthservice: MockedFunction<() => Promise<void>> = vi.fn();
+const mockPatchStatus: MockedFunction<() => Promise<void>> = vi.fn();
+const mockReconcileSharedEgressResources: MockedFunction<() => Promise<void>> = vi.fn();
+const mockWriteEvent = vi.fn();
+const mockUnregisterAmbientPackage: MockedFunction<() => Promise<void>> = vi.fn();
+
+vi.mock("kubernetes-fluent-client");
+vi.mock("../../config");
+vi.mock("../controllers/istio/namespace", () => ({ cleanupNamespace: vi.fn() }));
+vi.mock("../controllers/keycloak/client-sync", () => ({ purgeSSOClients: vi.fn() }));
+vi.mock("../controllers/keycloak/authservice/authservice", () => ({
+  purgeAuthserviceClients: vi.fn(),
+}));
+vi.mock("../controllers/utils", () => ({
+  retryWithDelay: vi.fn(async <T>(fn: () => Promise<T>) => fn()),
+}));
+vi.mock(".", async () => {
+  const originalModule = (await vi.importActual(".")) as object;
+  return { ...originalModule, writeEvent: vi.fn() };
+});
+vi.mock("../controllers/istio/egress", async () => {
+  const originalModule = (await vi.importActual("../controllers/istio/egress")) as object;
+  return {
+    ...originalModule,
+    reconcileSharedEgressResources: vi.fn(async <T>(fn: () => Promise<T>) => fn()),
+  };
+});
+vi.mock("../controllers/istio/ambient-waypoint", () => {
+  const mockUnregisterAmbientPackage = vi.fn();
+  return {
+    unregisterAmbientPackage: mockUnregisterAmbientPackage,
+    __esModule: true,
+    mockUnregisterAmbientPackage,
+  };
+});
+vi.mock("../controllers/istio/virtual-service");
+vi.mock("../controllers/network/policies");
+vi.mock("pepr", () => ({
+  K8s: vi.fn(),
+  Log: {
+    info: vi.fn(),
+    debug: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    trace: vi.fn(),
+    child: vi.fn().mockReturnThis(),
+  },
+  kind: { CoreEvent: "CoreEvent" },
+  Capability: vi.fn().mockImplementation(() => ({
+    name: "uds-core-operator",
+    description: "The UDS Operator is responsible for managing the lifecycle of UDS resources",
+  })),
+}));
+
+describe("withBackoffIfNeeded", () => {
   let mockPackage: UDSPackage;
+  let mockFn: Mock;
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.useFakeTimers();
 
+    mockPackage = {
+      metadata: { name: "test-pkg", namespace: "test-ns" },
+      status: { phase: Phase.Pending },
+    };
+
+    mockFn = vi.fn().mockResolvedValue(undefined);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  test("should not delay when retryAttempt is 0", async () => {
+    mockPackage.status = { phase: Phase.Pending, retryAttempt: 0 };
+
+    await withBackoffIfNeeded(mockPackage, mockFn);
+
+    expect(mockFn).toHaveBeenCalledTimes(1);
+    expect(vi.getTimerCount()).toBe(0); // No timers should be set
+  });
+
+  test("should not delay when retryAttempt is undefined", async () => {
+    mockPackage.status = { phase: Phase.Pending };
+
+    await withBackoffIfNeeded(mockPackage, mockFn);
+
+    expect(mockFn).toHaveBeenCalledTimes(1);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  test("should delay with exponential backoff based on retryAttempt", async () => {
+    // Mock the timer functions
+    vi.useFakeTimers();
+
+    const testCases = [
+      { retryAttempt: 1, expectedDelay: 3000 }, // 3^1 = 3s
+      { retryAttempt: 2, expectedDelay: 9000 }, // 3^2 = 9s
+      { retryAttempt: 3, expectedDelay: 27000 }, // 3^3 = 27s
+      { retryAttempt: 4, expectedDelay: 81000 }, // 3^4 = 81s
+    ];
+
+    for (const { retryAttempt, expectedDelay } of testCases) {
+      vi.clearAllMocks();
+      mockPackage.status = { phase: Phase.Pending, retryAttempt };
+
+      // Spy on the mock function
+      const mockFnSpy = vi.fn().mockResolvedValue(undefined);
+
+      // Call the function
+      const promise = withBackoffIfNeeded(mockPackage, mockFnSpy);
+
+      // Fast-forward time
+      await vi.advanceTimersByTimeAsync(expectedDelay);
+      await promise;
+
+      // Verify the function was called after the delay
+      expect(mockFnSpy).toHaveBeenCalledTimes(1);
+
+      // Verify the log message
+      expect(Log.info).toHaveBeenCalledWith(
+        mockPackage.metadata,
+        `Waiting ${expectedDelay / 1000} seconds before processing package ${mockPackage.metadata?.namespace}/${mockPackage.metadata?.name}`,
+      );
+
+      // Verify the event was written
+      expect(writeEvent).toHaveBeenCalledWith(mockPackage, {
+        message: `Waiting ${expectedDelay / 1000} seconds before retrying package`,
+      });
+    }
+
+    // Restore real timers
+    vi.useRealTimers();
+  });
+
+  test("should call the provided function after delay", async () => {
+    // Mock the timer functions
+    vi.useFakeTimers();
+
+    try {
+      mockPackage.status = { phase: Phase.Pending, retryAttempt: 1 };
+      const testResult = { success: true };
+
+      // Create a mock function that returns our test result
+      const mockFnWithResult = vi.fn().mockResolvedValue(testResult);
+
+      // Call the function
+      const resultPromise = withBackoffIfNeeded(mockPackage, mockFnWithResult);
+
+      // Fast-forward past the delay
+      await vi.advanceTimersByTimeAsync(3000);
+      const result = await resultPromise;
+
+      // Verify the function was called and the result is correct
+      expect(mockFnWithResult).toHaveBeenCalledTimes(1);
+      expect(result).toEqual(testResult);
+    } finally {
+      // Restore real timers
+      vi.useRealTimers();
+    }
+  });
+});
+
+describe("packageReconciler", () => {
+  let mockPackage: UDSPackage;
+  beforeEach(() => {
+    vi.clearAllMocks();
     mockPackage = {
       metadata: { name: "test-package", namespace: "test-namespace", generation: 1 },
       status: { phase: Phase.Pending, observedGeneration: 0 },
     };
-
-    (K8s as Mock).mockImplementation(() => ({
-      Create: vi.fn(),
-      PatchStatus: vi.fn(),
-    }));
+    (K8s as Mock).mockImplementation(() => ({ Create: vi.fn(), PatchStatus: vi.fn() }));
   });
-
-  test("should log an error for invalid package definitions", async () => {
+  test("logs error for invalid package definitions", async () => {
     delete mockPackage.metadata!.namespace;
     await packageReconciler(mockPackage);
     expect(Log.error).toHaveBeenCalled();
   });
 });
 
-describe("finalizer", () => {
+describe("packageFinalizer", () => {
   let mockPackage: UDSPackage;
-
   beforeEach(() => {
     vi.clearAllMocks();
 
     mockPackage = {
       metadata: { name: "test-package", namespace: "test-namespace", generation: 1 },
+      spec: {
+        sso: [
+          {
+            name: "test-sso",
+            clientId: "test-client",
+            enableAuthserviceSelector: { enabled: "true" },
+          },
+        ],
+      },
     };
 
+    mockCleanupNamespace.mockReset().mockResolvedValue(undefined);
+    mockPurgeSSO.mockReset().mockResolvedValue(undefined);
+    mockPurgeAuthservice.mockReset().mockResolvedValue(undefined);
+    mockPatchStatus.mockReset().mockResolvedValue(undefined);
+    mockReconcileSharedEgressResources.mockReset().mockResolvedValue(undefined);
+    mockUnregisterAmbientPackage.mockReset().mockResolvedValue(undefined);
+    mockWriteEvent.mockReset();
     (K8s as Mock).mockImplementation(() => ({
       Create: vi.fn(),
       PatchStatus: mockPatchStatus,
@@ -253,10 +417,15 @@ describe("finalizer", () => {
 
   test("should handle failure in reconcileSharedEgressResources and set phase to RemovalFailed", async () => {
     mockPackage.status = { phase: Phase.Ready };
-    mockCleanupNamespace.mockReset();
-    mockPurgeAuthservice.mockReset();
-    mockPurgeSSO.mockReset();
-    mockReconcileSharedEgressResources.mockRejectedValue(new Error("Egress cleanup failed"));
+    mockCleanupNamespace.mockReset().mockResolvedValue(undefined);
+    mockPurgeAuthservice.mockReset().mockResolvedValue(undefined);
+    mockPurgeSSO.mockReset().mockResolvedValue(undefined);
+    mockReconcileSharedEgressResources
+      .mockReset()
+      .mockRejectedValue(new Error("Egress cleanup failed"));
+
+    // Always resolve unregisterAmbientPackage
+    mockUnregisterAmbientPackage.mockReset().mockResolvedValue(undefined);
 
     const finalizerRemoved = await packageFinalizer(mockPackage);
 

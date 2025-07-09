@@ -11,6 +11,7 @@ import {
   IstioRequestAuthentication,
   UDSPackage,
 } from "../../../crd";
+import { Spec } from "../../../crd/generated/istio/authorizationpolicy-v1beta1";
 import { getOwnerRef, purgeOrphans, sanitizeResourceName } from "../../utils";
 import { log } from "./authservice";
 import { AddOrRemoveClientEvent, Action as AuthServiceAction } from "./types";
@@ -68,8 +69,11 @@ function jwtAuthZAuthorizationPolicy(
   labelSelector: { [key: string]: string },
   name: string,
   namespace: string,
+  isAmbient = false,
+  waypointName?: string,
 ): IstioAuthorizationPolicy {
-  return {
+  // Create a base policy with the common properties
+  const policy: IstioAuthorizationPolicy = {
     kind: "AuthorizationPolicy",
     metadata: {
       name: sanitizeResourceName(`${name}-jwt-authz`),
@@ -77,9 +81,6 @@ function jwtAuthZAuthorizationPolicy(
     },
     spec: {
       action: IstioAction.Deny,
-      selector: {
-        matchLabels: labelSelector,
-      },
       rules: [
         {
           from: [
@@ -101,6 +102,23 @@ function jwtAuthZAuthorizationPolicy(
       ],
     },
   };
+
+  // For ambient mode, use targetRef to the waypoint Gateway
+  if (isAmbient && waypointName) {
+    // Use type assertion to add targetRef which is valid in the spec
+    (policy.spec as Spec).targetRef = {
+      group: "gateway.networking.k8s.io",
+      kind: "Gateway",
+      name: waypointName,
+    };
+  } else {
+    // For non-ambient mode, use pod selector
+    policy.spec!.selector = {
+      matchLabels: labelSelector,
+    };
+  }
+
+  return policy;
 }
 
 function authNRequestAuthentication(
@@ -157,8 +175,14 @@ async function updatePolicy(
     await K8s(IstioRequestAuthentication)[operation](
       updateMetadata(authNRequestAuthentication(labelSelector, event.name, namespace)),
     );
+    // Check if we're in ambient mode by looking for the waypoint label
+    const isAmbient = labelSelector["istio.io/use-waypoint"] !== undefined;
+    const waypointName = isAmbient ? labelSelector["istio.io/use-waypoint"] : undefined;
+
     await K8s(IstioAuthorizationPolicy)[operation](
-      updateMetadata(jwtAuthZAuthorizationPolicy(labelSelector, event.name, namespace)),
+      updateMetadata(
+        jwtAuthZAuthorizationPolicy(labelSelector, event.name, namespace, isAmbient, waypointName),
+      ),
     );
   } catch (e) {
     const msg = `Failed to update auth policy for ${event.name} in ${namespace}: ${e}`;

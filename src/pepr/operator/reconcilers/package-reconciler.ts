@@ -6,6 +6,10 @@
 import { getReadinessConditions, handleFailure, shouldSkip, updateStatus, writeEvent } from ".";
 import { UDSConfig } from "../../config";
 import { Component, setupLogger } from "../../logger";
+import {
+  setupAmbientWaypoint,
+  unregisterAmbientPackage,
+} from "../controllers/istio/ambient-waypoint";
 import { reconcileSharedEgressResources } from "../controllers/istio/egress";
 import { getPackageId, istioResources } from "../controllers/istio/istio-resources";
 import { cleanupNamespace, enableIstio } from "../controllers/istio/namespace";
@@ -34,6 +38,23 @@ const log = setupLogger(Component.OPERATOR_RECONCILERS);
  *
  * @param pkg the package to reconcile
  */
+// Helper to apply exponential backoff if needed
+export async function withBackoffIfNeeded<T = void>(
+  pkg: UDSPackage,
+  fn: () => Promise<T>,
+): Promise<T> {
+  if (pkg.status?.retryAttempt && pkg.status?.retryAttempt > 0) {
+    const backOffSeconds = 3 ** pkg.status.retryAttempt;
+    log.info(
+      pkg.metadata,
+      `Waiting ${backOffSeconds} seconds before processing package ${pkg.metadata?.namespace}/${pkg.metadata?.name}`,
+    );
+    await writeEvent(pkg, { message: `Waiting ${backOffSeconds} seconds before retrying package` });
+    await new Promise(resolve => setTimeout(resolve, backOffSeconds * 1000));
+  }
+  return await fn();
+}
+
 export async function packageReconciler(pkg: UDSPackage) {
   const metadata = pkg.metadata!;
   const { namespace, name } = metadata;
@@ -49,79 +70,105 @@ export async function packageReconciler(pkg: UDSPackage) {
     return;
   }
 
-  if (pkg.status?.retryAttempt && pkg.status?.retryAttempt > 0) {
-    // calculate exponential backoff where backoffSeconds = 3^retryAttempt
-    const backOffSeconds = 3 ** pkg.status?.retryAttempt;
-
-    log.info(
-      metadata,
-      `Waiting ${backOffSeconds} seconds before processing package ${namespace}/${name}, status.phase: ${pkg.status?.phase}, observedGeneration: ${pkg.status?.observedGeneration}, retryAttempt: ${pkg.status?.retryAttempt}`,
-    );
-
-    await writeEvent(pkg, {
-      message: `Waiting ${backOffSeconds} seconds before retrying package`,
-    });
-
-    // wait for backOff seconds before retrying
-    await new Promise(resolve => setTimeout(resolve, backOffSeconds * 1000));
-  }
-
   // Migrate the package to the latest version
   migrate(pkg);
 
-  // Configure the namespace and namespace-wide network policies
-  try {
-    await updateStatus(pkg, { phase: Phase.Pending, conditions: getReadinessConditions(false) });
-
-    // Get the requested service mesh mode, default to sidecar if not specified
-    const istioMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Sidecar;
-
-    // Pass the effective Istio mode to the networkPolicies function
-    const netPol = await networkPolicies(pkg, namespace!, istioMode);
-
-    const authPol = await generateAuthorizationPolicies(pkg, namespace!, istioMode);
-
-    let endpoints: string[] = [];
-    // Update the namespace to enable the expected Istio mode (sidecar or ambient)
-    await enableIstio(pkg);
-
-    let ssoClients = new Map<string, Client>();
-    let authserviceClients: string[] = [];
-
-    if (UDSConfig.isIdentityDeployed) {
-      // Configure SSO
-      ssoClients = await keycloak(pkg);
-      authserviceClients = await authservice(pkg, ssoClients);
-    } else if (pkg.spec?.sso) {
-      log.error("Identity & Authorization is not deployed, but the package has SSO configuration");
-      throw new Error(
-        "Identity & Authorization is not deployed, but the package has SSO configuration",
-      );
+  await withBackoffIfNeeded(pkg, async () => {
+    try {
+      await reconcilePackageFlow(pkg);
+    } catch (err) {
+      void handleFailure(err, pkg);
     }
+  });
+}
 
-    // Create the Istio Resources per the package configuration
-    endpoints = await istioResources(pkg, namespace!);
+/**
+ * Orchestrates the main reconciliation flow for a package.
+ * Handles status updates, resource creation, and sequencing.
+ */
+async function reconcilePackageFlow(pkg: UDSPackage): Promise<void> {
+  const metadata = pkg.metadata!;
+  const { namespace } = metadata;
 
-    // Configure the ServiceMonitors
-    const monitors: string[] = [];
-    monitors.push(...(await podMonitor(pkg, namespace!)));
-    monitors.push(...(await serviceMonitor(pkg, namespace!)));
+  // Get the requested service mesh mode, default to sidecar if not specified
+  const istioMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Sidecar;
 
-    await updateStatus(pkg, {
-      phase: Phase.Ready,
-      conditions: getReadinessConditions(true),
-      ssoClients: [...ssoClients.keys()],
-      authserviceClients,
-      endpoints,
-      monitors,
-      networkPolicyCount: netPol.length,
-      authorizationPolicyCount: authPol.length + authserviceClients.length * 2,
-      observedGeneration: metadata.generation,
-      retryAttempt: 0, // todo: make this nullable when kfc generates the type
-    });
-  } catch (err) {
-    void handleFailure(err, pkg);
+  // Enable Istio mode in the namespace first (for ambient, ensures waypoint can be created)
+  await enableIstio(pkg);
+
+  // If ambient mode and authservice needed, create waypoint before policies
+  if (istioMode === Mode.Ambient && pkg.spec?.sso?.some(sso => sso.enableAuthserviceSelector)) {
+    const authServiceClient = pkg.spec.sso.find(sso => sso.enableAuthserviceSelector);
+    if (authServiceClient) {
+      await setupAmbientWaypoint(pkg, authServiceClient.clientId);
+    }
   }
+
+  // Pass the effective Istio mode to the networkPolicies and auth policies
+  const netPol = await networkPolicies(pkg, namespace!, istioMode);
+  const authPol = await generateAuthorizationPolicies(pkg, namespace!, istioMode);
+
+  let endpoints: string[] = [];
+  let ssoClients = new Map<string, Client>();
+  let authserviceClients: string[] = [];
+  const monitors: string[] = [];
+
+  if (UDSConfig.isIdentityDeployed) {
+    // Configure SSO
+    ssoClients = await keycloak(pkg);
+    authserviceClients = await authservice(pkg, ssoClients);
+  } else if (pkg.spec?.sso) {
+    log.error("Identity & Authorization is not deployed, but the package has SSO configuration");
+    throw new Error(
+      "Identity & Authorization is not deployed, but the package has SSO configuration",
+    );
+  }
+
+  // Create the Istio Resources per the package configuration
+  endpoints = await istioResources(pkg, namespace!);
+
+  // Configure the ServiceMonitors
+  monitors.push(...(await podMonitor(pkg, namespace!)));
+  monitors.push(...(await serviceMonitor(pkg, namespace!)));
+
+  // Update status to Ready using a dedicated helper
+  await updatePackageStatusToReady(pkg, {
+    ssoClients,
+    authserviceClients,
+    endpoints,
+    monitors,
+    networkPolicyCount: netPol.length,
+    authorizationPolicyCount: authPol.length + authserviceClients.length * 2,
+  });
+}
+
+/**
+ * Helper to update the package status to Ready after successful reconciliation.
+ */
+async function updatePackageStatusToReady(
+  pkg: UDSPackage,
+  opts: {
+    ssoClients: Map<string, Client>;
+    authserviceClients: string[];
+    endpoints: string[];
+    monitors: string[];
+    networkPolicyCount: number;
+    authorizationPolicyCount: number;
+  },
+): Promise<void> {
+  const metadata = pkg.metadata!;
+  await updateStatus(pkg, {
+    phase: Phase.Ready,
+    conditions: getReadinessConditions(true),
+    ssoClients: [...opts.ssoClients.keys()],
+    authserviceClients: opts.authserviceClients,
+    endpoints: opts.endpoints,
+    monitors: opts.monitors,
+    networkPolicyCount: opts.networkPolicyCount,
+    authorizationPolicyCount: opts.authorizationPolicyCount,
+    observedGeneration: metadata.generation,
+    retryAttempt: 0,
+  });
 }
 
 /**
@@ -219,6 +266,42 @@ export async function packageFinalizer(pkg: UDSPackage) {
     );
     await writeEvent(pkg, {
       message: `Removal of SSO clients failed: ${e.message}. Clients must be manually removed from Keycloak.`,
+      reason: "RemovalFailed",
+      type: "Warning",
+    });
+    await updateStatus(pkg, { phase: Phase.RemovalFailed });
+    return false;
+  }
+
+  // Clean up ambient waypoint registration
+  try {
+    await writeEvent(pkg, {
+      message: "Removing package from ambient waypoint registration",
+      reason: "RemovalInProgress",
+      type: "Normal",
+    });
+    log.info(
+      `Unregistering package ${pkg.metadata?.namespace}/${pkg.metadata?.name} from ambient waypoint`,
+    );
+    // Get the first client ID that has authservice enabled for cleanup
+    if (pkg.spec?.sso) {
+      const authServiceClient = pkg.spec.sso.find(sso => sso.enableAuthserviceSelector);
+      if (authServiceClient) {
+        await unregisterAmbientPackage(pkg, authServiceClient.clientId);
+      } else {
+        // If no auth service client is found, try to clean up with the package name as fallback
+        await unregisterAmbientPackage(pkg, pkg.metadata?.name || "");
+      }
+    } else {
+      // If no SSO config is found, try to clean up with the package name as fallback
+      await unregisterAmbientPackage(pkg, pkg.metadata?.name || "");
+    }
+  } catch (e) {
+    log.debug(
+      `Removal of ambient waypoint registration during finalizer failed for ${pkg.metadata?.namespace}/${pkg.metadata?.name}: ${e.message}`,
+    );
+    await writeEvent(pkg, {
+      message: `Removal of ambient waypoint registration failed: ${e.message}. Manual cleanup may be required.`,
       reason: "RemovalFailed",
       type: "Warning",
     });

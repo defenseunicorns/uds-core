@@ -30,6 +30,11 @@ import { UDSConfig } from "../config";
 import { Component, setupLogger } from "../logger";
 import { updateUDSConfig } from "./controllers/config/config";
 import {
+  reconcilePod,
+  reconcileService,
+  unregisterAmbientPackage,
+} from "./controllers/istio/ambient-waypoint";
+import {
   KEYCLOAK_CLIENTS_SECRET_NAME,
   KEYCLOAK_CLIENTS_SECRET_NAMESPACE,
   updateKeycloakClientsSecret,
@@ -71,7 +76,24 @@ When(a.Service)
   .WithName("kubernetes")
   .Reconcile(updateAPIServerCIDRFromService);
 
-// Watch for changes to the UDSPackage CRD to enqueue a package for processing
+// Watch for Service mutations
+When(a.Service)
+  .IsCreatedOrUpdated()
+  // apply ambient waypoint labels
+  .Mutate(req => reconcileService(req.Raw));
+
+// Watch for Pod mutations to apply ambient waypoint labels
+When(a.Pod)
+  .IsCreatedOrUpdated()
+  .Mutate(req => reconcilePod(req.Raw));
+
+// Watch for Package deletions
+When(UDSPackage)
+  .IsDeleted()
+  // clean up ambient waypoint resources
+  .Reconcile(unregisterAmbientPackage);
+
+// Watch for changes to the UDSPackage CRD for processing
 When(UDSPackage)
   .IsCreatedOrUpdated()
   // Advanced CR validation
