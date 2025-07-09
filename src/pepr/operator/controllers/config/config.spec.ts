@@ -67,7 +67,7 @@ const mockCfg: ClusterConfig = {
   spec: {
     expose: {
       domain: "mock-domain",
-      adminDomain: "mock-admin-domain", 
+      adminDomain: "mock-admin-domain",
       caCert: btoa("mock-ca-cert"),
     },
     networking: {
