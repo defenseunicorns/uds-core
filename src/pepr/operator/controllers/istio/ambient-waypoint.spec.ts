@@ -18,7 +18,6 @@ import {
 // Define a type for the ambient waypoint module with the internal function
 interface AmbientWaypointModule {
   registerAmbientPackage: (pkg: UDSPackage, clientId: string) => Promise<void>;
-  // Include other exported functions as needed
 }
 
 // Mock K8s

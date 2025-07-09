@@ -5,6 +5,7 @@
 
 import { a, K8s, kind } from "pepr";
 import { K8sGateway, UDSPackage } from "../../crd";
+import { getOwnerRef } from "../utils";
 import { log } from "./istio-resources";
 
 // Environment variable configuration for waypoint health check
@@ -16,18 +17,11 @@ const UDS_MANAGED_LABEL = "uds/managed-by";
 const UDS_PACKAGE_LABEL = "uds/package";
 const UDS_NAMESPACE_LABEL = "uds/namespace";
 const ISTIO_WAYPOINT_LABEL = "istio.io/use-waypoint";
-
-// Constants
 const WAYPOINT_SUFFIX = "-waypoint";
 
-// Utility Functions
 function getWaypointName(clientId: string): string {
   return `${clientId}${WAYPOINT_SUFFIX}`;
 }
-
-// NOTE: If ambient-waypoint logic is only used for AuthService, consider merging this file into the AuthService controller for cohesion. If not, keep it generic for mesh modularity.
-import { getOwnerRef } from "../utils"; // add import if not present
-// Removed local createOwnerReference; use getOwnerRef instead.
 
 function createManagedLabels(
   pkg: UDSPackage,
@@ -52,7 +46,6 @@ interface AmbientPackageInfo {
 }
 
 // In-memory store for packages that need ambient waypoint
-// Now also indexed by namespace for efficient lookup
 const ambientPackages = new Map<string, AmbientPackageInfo>();
 const ambientPackagesByNamespace = new Map<string, AmbientPackageInfo[]>();
 
@@ -413,7 +406,6 @@ export async function reconcileService(svc: a.Service): Promise<void> {
   const namespace = svc.metadata?.namespace;
   if (!namespace) return;
 
-  // Use efficient lookup by namespace
   const pkgs = ambientPackagesByNamespace.get(namespace) || [];
   for (const { pkg, selectors, waypointName } of pkgs) {
     if (serviceMatchesSelectors(svc, selectors)) {
@@ -436,7 +428,6 @@ export async function reconcileService(svc: a.Service): Promise<void> {
               (ref: { kind?: string; name?: string }) =>
                 !(ref.kind === (pkg.kind || "UDSPackage") && ref.name === pkg.metadata?.name),
             ) || []),
-            // Only add ownerRef if this service should be owned by the package
             ...getOwnerRef(pkg),
           ],
         };
@@ -450,7 +441,6 @@ export async function reconcilePod(pod: a.Pod): Promise<void> {
   const namespace = pod.metadata?.namespace;
   if (!namespace) return;
 
-  // Use efficient lookup by namespace
   const pkgs = ambientPackagesByNamespace.get(namespace) || [];
   for (const { pkg, selectors, waypointName } of pkgs) {
     const matches = selectors.some(selector =>
@@ -475,7 +465,6 @@ export async function reconcilePod(pod: a.Pod): Promise<void> {
               (ref: { kind?: string; name?: string }) =>
                 !(ref.kind === (pkg.kind || "UDSPackage") && ref.name === pkg.metadata?.name),
             ) || []),
-            // Only add ownerRef if this pod should be owned by the package
             ...getOwnerRef(pkg),
           ],
         };
