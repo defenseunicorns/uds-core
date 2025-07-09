@@ -148,18 +148,11 @@ export async function updateCfg(cfg: ClusterConfig) {
 export async function loadUDSConfig() {
   // Run in Admission and Watcher pods
   if (process.env.PEPR_WATCH_MODE || process.env.PEPR_MODE === "dev") {
-    const cfgList = await K8s(ClusterConfig).InNamespace("pepr-system").Get();
+    const cfgList = await K8s(ClusterConfig).Get();
     const cfgSecret = await K8s(kind.Secret).InNamespace("pepr-system").Get("uds-operator-config");
 
     if (cfgList.items.length === 0) {
       throw new Error("No ClusterConfig found");
-    }
-
-    // Important check in case additional configs are created in window between uds-operator-config chart and pepr module chart
-    if (cfgList.items.length > 1) {
-      throw new Error(
-        `ClusterConfig Processing: only one ClusterConfig is allowed -- found: ${cfgList.items.length}; ${cfgList.items.map(c => c.metadata?.name).join(", ")}`,
-      );
     }
 
     try {

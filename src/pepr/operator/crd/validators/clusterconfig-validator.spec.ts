@@ -5,13 +5,12 @@
 
 import { PeprValidateRequest } from "pepr";
 import { describe, expect, it, vi } from "vitest";
-import { ClusterConfig } from "../generated/clusterconfig-v1alpha1";
+import { ClusterConfig, Name } from "../generated/clusterconfig-v1alpha1";
 import { validateCfg, validateCfgUpdate } from "./clusterconfig-validator";
 
 const mockCfg: ClusterConfig = {
   metadata: {
-    name: "uds-cluster-config",
-    namespace: "pepr-system",
+    name: Name.UdsClusterConfig,
   },
   spec: {
     expose: {
@@ -32,23 +31,6 @@ const mockCfg: ClusterConfig = {
 describe("ClusterConfigValidator", () => {
   it("should validate a valid ClusterConfig", () => {
     expect(() => validateCfg(mockCfg)).not.toThrowError();
-  });
-
-  it("throws errors for wrong name", () => {
-    const wrongNameCfg = { ...mockCfg, metadata: { name: "wrong-name", namespace: "pepr-system" } };
-    expect(() => validateCfg(wrongNameCfg)).toThrowError(
-      "ClusterConfig: namespace or name is invalid; expected 'pepr-system' and 'uds-cluster-config'",
-    );
-  });
-
-  it("throws errors for wrong namespace", () => {
-    const wrongNameCfg = {
-      ...mockCfg,
-      metadata: { name: "uds-cluster-config", namespace: "invalid" },
-    };
-    expect(() => validateCfg(wrongNameCfg)).toThrowError(
-      "ClusterConfig: namespace or name is invalid; expected 'pepr-system' and 'uds-cluster-config'",
-    );
   });
 
   it("throws errors for invalid caCert", () => {
@@ -92,14 +74,14 @@ describe("ClusterConfig Update validation", () => {
   });
 
   it("denies request on invalid ClusterConfig", async () => {
-    const wrongNameCfg = {
+    const invalidCaCert = {
       ...mockCfg,
-      metadata: { name: "uds-cluster-config", namespace: "invalid" },
+      spec: { ...mockCfg.spec!, expose: { ...mockCfg.spec!.expose, caCert: "invalid" } },
     };
-    const req = makeMockReq(wrongNameCfg);
+    const req = makeMockReq(invalidCaCert);
     await validateCfgUpdate(req);
     expect(req.Deny).toHaveBeenCalledWith(
-      "Validation failed: ClusterConfig: namespace or name is invalid; expected 'pepr-system' and 'uds-cluster-config'",
+      "Validation failed: ClusterConfig: caCert must be base64 encoded; found invalid value",
     );
   });
 });

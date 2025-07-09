@@ -13,6 +13,15 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
     openAPIV3Schema: {
       type: "object",
       properties: {
+        metadata: {
+          type: "object",
+          properties: {
+            name: {
+              type: "string",
+              enum: ["uds-cluster-config"],
+            },
+          },
+        } as V1JSONSchemaProps,
         spec: {
           type: "object",
           properties: {

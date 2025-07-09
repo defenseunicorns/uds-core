@@ -17,12 +17,6 @@ export async function validateCfgUpdate(req: PeprValidateRequest<ClusterConfig>)
 }
 
 export function validateCfg(cfg: ClusterConfig) {
-  if (cfg.metadata?.namespace !== "pepr-system" || cfg.metadata?.name !== "uds-cluster-config") {
-    throw new Error(
-      "ClusterConfig: namespace or name is invalid; expected 'pepr-system' and 'uds-cluster-config'",
-    );
-  }
-
   // Validate that the cacert is base64 encoded
   if (cfg.spec?.expose.caCert && cfg.spec.expose.caCert !== "###ZARF_VAR_CA_CERT###") {
     if (!isBase64(cfg.spec.expose.caCert)) {

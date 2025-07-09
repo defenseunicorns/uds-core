@@ -13,15 +13,20 @@ spec:
     kind: ClusterConfig
     listKind: ClusterConfigList
     plural: clusterconfig
-    shortNames:
-      - clusterconfig
     singular: clusterconfig
-  scope: Namespaced
+  scope: Cluster
   versions:
     - name: v1alpha1
       schema:
         openAPIV3Schema:
           properties:
+            metadata:
+              properties:
+                name:
+                  enum:
+                    - uds-cluster-config
+                  type: string
+              type: object
             spec:
               properties:
                 attributes:

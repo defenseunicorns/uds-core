@@ -6,6 +6,9 @@
       "type": "object",
       "additionalProperties": {},
       "properties": {
+        "metadata": {
+          "$ref": "#/definitions/Metadata"
+        },
         "spec": {
           "$ref": "#/definitions/Spec"
         }
@@ -14,6 +17,17 @@
         "spec"
       ],
       "title": "ClusterConfig"
+    },
+    "Metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "$ref": "#/definitions/Name"
+        }
+      },
+      "required": [],
+      "title": "Metadata"
     },
     "Spec": {
       "type": "object",
@@ -111,6 +125,13 @@
         "allowAllNsExemptions"
       ],
       "title": "Policy"
+    },
+    "Name": {
+      "type": "string",
+      "enum": [
+        "uds-cluster-config"
+      ],
+      "title": "Name"
     }
   }
 }

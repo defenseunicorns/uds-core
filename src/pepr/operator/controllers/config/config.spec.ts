@@ -6,7 +6,7 @@
 import { kind } from "pepr";
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ClusterConfig } from "../../crd";
+import { ClusterConfig, Name } from "../../crd";
 import { reconcileAuthservice } from "../keycloak/authservice/authservice";
 import { initAPIServerCIDR } from "../network/generators/kubeAPI";
 import { initAllNodesTarget } from "../network/generators/kubeNodes";
@@ -51,7 +51,7 @@ vi.mock("pepr", async importOriginal => {
     ...actual,
     K8s: vi.fn().mockImplementation(resourceKind => {
       if (resourceKind === ClusterConfig) {
-        return { InNamespace: vi.fn().mockReturnValue({ Get: mockClusterConfGet }) };
+        return { Get: mockClusterConfGet };
       }
       if (resourceKind === kind.Secret) {
         return { InNamespace: vi.fn().mockReturnValue({ Get: mockSecretGet }) };
@@ -62,13 +62,12 @@ vi.mock("pepr", async importOriginal => {
 
 const mockCfg: ClusterConfig = {
   metadata: {
-    name: "uds-cluster-config",
-    namespace: "pepr-system",
+    name: Name.UdsClusterConfig,
   },
   spec: {
     expose: {
       domain: "mock-domain",
-      adminDomain: "mock-admin-domain",
+      adminDomain: "mock-admin-domain", 
       caCert: btoa("mock-ca-cert"),
     },
     networking: {
@@ -111,19 +110,6 @@ describe("initial config load", () => {
     expect(UDSConfig.authserviceRedisUri).toBe("mock-redis-uri");
   });
 
-  it("throws error because too many configs", async () => {
-    mockClusterConfGet.mockResolvedValue({
-      items: [mockCfg, { ...mockCfg, metadata: { name: "uds-cluster-config-2" } }],
-    });
-    try {
-      await loadUDSConfig();
-    } catch (e) {
-      expect(e.message).toBe(
-        "ClusterConfig Processing: only one ClusterConfig is allowed -- found: 2; uds-cluster-config, uds-cluster-config-2",
-      );
-    }
-  });
-
   it("throws error because no config", async () => {
     mockClusterConfGet.mockResolvedValue({ items: [] });
 
@@ -131,6 +117,43 @@ describe("initial config load", () => {
       await loadUDSConfig();
     } catch (e) {
       expect(e.message).toBe("No ClusterConfig found");
+    }
+  });
+
+  it("does not throw error because no config secret", async () => {
+    mockClusterConfGet.mockResolvedValue({ items: [mockCfg] });
+    mockSecretGet.mockResolvedValue(undefined);
+
+    await loadUDSConfig();
+
+    expect(UDSConfig.caCert).toBe(btoa("mock-ca-cert"));
+    expect(UDSConfig.kubeApiCidr).toBe("mock-cidr");
+    expect(UDSConfig.kubeNodeCidrs).toStrictEqual(["mock-node-cidrs"]);
+    expect(UDSConfig.domain).toBe("mock-domain");
+    expect(UDSConfig.adminDomain).toBe("mock-admin-domain");
+    expect(UDSConfig.allowAllNSExemptions).toBe(true);
+    expect(UDSConfig.authserviceRedisUri).toBe("");
+  });
+
+  it("validates config and bubbles error", async () => {
+    const invalidCfg = {
+      ...mockCfg,
+      spec: {
+        ...mockCfg.spec,
+        expose: {
+          ...mockCfg.spec!.expose,
+          caCert: "invalid-cert",
+        },
+      },
+    };
+
+    mockClusterConfGet.mockResolvedValue({ items: [invalidCfg] });
+    mockSecretGet.mockResolvedValue(mockSecret);
+
+    try {
+      await loadUDSConfig();
+    } catch (e) {
+      expect(e.message).toBe("ClusterConfig: caCert must be base64 encoded; found invalid value");
     }
   });
 });

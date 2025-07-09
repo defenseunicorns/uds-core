@@ -26,12 +26,11 @@ export async function registerClusterConfig() {
         spec: {
           group: "uds.dev",
           versions: [clusterConfig],
-          scope: "Namespaced",
+          scope: "Cluster",
           names: {
             plural: "clusterconfig",
             singular: "clusterconfig",
             kind: "ClusterConfig",
-            shortNames: ["clusterconfig"],
           },
         },
       },
