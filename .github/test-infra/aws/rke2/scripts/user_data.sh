@@ -34,20 +34,17 @@ chmod +x ./linux-amd64/helm
 ./linux-amd64/helm template longhorn longhorn/longhorn --version $LONGHORN_VERSION --set defaultSettings.deletingConfirmationFlag=true --set longhornUI.replicas=0 --set namespaceOverride=kube-system --no-hooks > /var/lib/rancher/rke2/server/manifests/01-longhorn.yaml
 rm -rf ./linux-amd64
 
-info "Installing awscli"
-yum install -y unzip jq || apt-get -y install unzip jq
-curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-unzip awscliv2.zip
-sudo ./aws/install
-curl -L https://github.com/mikefarah/yq/releases/download/v4.40.4/yq_linux_amd64 -o yq
+info "Installing awscli and yq"
+sudo dnf install -y awscli
+curl -L https://github.com/mikefarah/yq/releases/download/v4.45.4/yq_linux_amd64 -o yq
 chmod +x yq
 
 echo "Getting OIDC keypair"
-sudo mkdir /irsa
+sudo mkdir -p /irsa
 sudo chown ec2-user:ec2-user /irsa
 aws secretsmanager get-secret-value --secret-id ${secret_prefix}-oidc-private-key | jq -r '.SecretString' > /irsa/signer.key
 aws secretsmanager get-secret-value --secret-id ${secret_prefix}-oidc-public-key | jq -r '.SecretString' > /irsa/signer.key.pub
-chcon -t svirt_sandbox_file_t /irsa/*
+sudo chcon -t svirt_sandbox_file_t /irsa/*
 
 info "Setting up RKE2 config file"
 ./yq -i '.cloud-provider-name += "external"' /etc/rancher/rke2/config.yaml
