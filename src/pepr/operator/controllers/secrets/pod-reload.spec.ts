@@ -128,7 +128,7 @@ describe("pod-reload", () => {
       expect(utils.reloadPods).not.toHaveBeenCalled();
     });
 
-    it("should not rotate pods if the checksum has not changed", async () => {
+    it("should not reload pods if the checksum has not changed", async () => {
       // Setup a secret with metadata and data
       const secret = {
         metadata: {
@@ -145,7 +145,7 @@ describe("pod-reload", () => {
       await handleSecretUpdate(secret as kind.Secret);
       expect(utils.reloadPods).not.toHaveBeenCalled();
 
-      // Second call with the same data should not rotate pods
+      // Second call with the same data should not reload pods
       await handleSecretUpdate(secret as kind.Secret);
       expect(utils.reloadPods).not.toHaveBeenCalled();
     });
@@ -176,7 +176,7 @@ describe("pod-reload", () => {
       expect(utils.reloadPods).not.toHaveBeenCalled();
     });
 
-    it("should only rotate pods that match the selector when data changes", async () => {
+    it("should only reload pods that match the selector when data changes", async () => {
       // The matching pod with correct label
       const matchingPod = {
         metadata: {
@@ -211,7 +211,7 @@ describe("pod-reload", () => {
         Raw: vi.fn(),
       }));
 
-      // Mock rotatePods
+      // Mock reloadPods
       vi.mocked(utils.reloadPods).mockResolvedValue();
 
       // First secret with initial data
@@ -264,7 +264,7 @@ describe("pod-reload", () => {
         Raw: vi.fn(),
       }));
 
-      // Second call with changed data should rotate pods
+      // Second call with changed data should reload pods
       await handleSecretUpdate(secret2 as kind.Secret);
 
       // Verify the correct namespace was used
@@ -320,7 +320,7 @@ describe("pod-reload", () => {
         Raw: vi.fn(),
       }));
 
-      // Mock rotatePods
+      // Mock reloadPods
       vi.mocked(utils.reloadPods).mockResolvedValue();
 
       // Secret with multiple selectors
@@ -372,7 +372,7 @@ describe("pod-reload", () => {
         Raw: vi.fn(),
       }));
 
-      // Second call should rotate pods
+      // Second call should reload pods
       await handleSecretUpdate(secret2 as kind.Secret);
 
       // Verify namespace was set correctly
@@ -457,7 +457,7 @@ describe("pod-reload", () => {
       expect(utils.reloadPods).not.toHaveBeenCalled();
       vi.clearAllMocks(); // Clear mock call history
 
-      // Second call with changed data should rotate only the pods using the secret
+      // Second call with changed data should reload only the pods using the secret
       await handleSecretUpdate(secret2 as kind.Secret);
 
       // Verify reloadPods was called with the correct parameters
@@ -469,11 +469,11 @@ describe("pod-reload", () => {
       expect(reloadPodCalls[2]).toBe("Secret test-secret change"); // reason
 
       // Verify pods 1 and 2 were included and pod3 is NOT included
-      const rotatedPods = reloadPodCalls[1] as kind.Pod[];
-      expect(rotatedPods.length).toBe(2);
-      expect(rotatedPods.some(pod => pod.metadata?.name === "pod1")).toBe(true);
-      expect(rotatedPods.some(pod => pod.metadata?.name === "pod2")).toBe(true);
-      expect(rotatedPods.some(pod => pod.metadata?.name === "pod3")).toBe(false);
+      const reloaddPods = reloadPodCalls[1] as kind.Pod[];
+      expect(reloaddPods.length).toBe(2);
+      expect(reloaddPods.some(pod => pod.metadata?.name === "pod1")).toBe(true);
+      expect(reloaddPods.some(pod => pod.metadata?.name === "pod2")).toBe(true);
+      expect(reloaddPods.some(pod => pod.metadata?.name === "pod3")).toBe(false);
     });
   });
 
