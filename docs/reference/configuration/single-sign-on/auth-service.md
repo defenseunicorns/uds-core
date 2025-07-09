@@ -34,4 +34,20 @@ For a complete example, see [app-authservice-tenant.yaml](https://github.com/def
 ## Limitations:
 Authservice is intended for simple, basic protection scenarios where an absolute level of protection is acceptable. For more advanced authentication requirements, you should implement authentication directly in your application or via a more comprehensive solution.
 
-Authservice is currently not supported for ambient workloads (Package CR `network.serviceMesh.mode` of `ambient`). Package CRs with ambient configuration will be denied when applying if an Authservice SSO client is present. This restriction will be removed in the future once supported is added for this in the UDS Operator.
+## Ambient Mode Support
+
+Authservice is fully supported for packages running in Istio Ambient Mesh mode (`spec.network.serviceMesh.mode: ambient`).
+
+### How This Works
+- When a Package CR specifies ambient mode and includes an SSO client with `enableAuthserviceSelector`, the UDS Operator will:
+  - Automatically create and manage the necessary [waypoint proxy](https://istio.io/latest/docs/ambient/usage/waypoint/) resources for your application.
+  - Monitor the health and readiness of the waypoint proxy before enabling Authservice protection.
+  - Associate the waypoint proxy with the correct services based on your selector.
+  - Clean up the waypoint and related configuration automatically when the package is deleted.
+
+This enhancement removes the previous limitation and enables transparent authentication and authorization for ambient workloads protected by Authservice. No manual waypoint management is required.
+
+**Usage:**
+- Set `spec.network.serviceMesh.mode: ambient` in your Package CR.
+- Add your SSO configuration with `enableAuthserviceSelector` as usual.
+- The operator will handle the rest.
