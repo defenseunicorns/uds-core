@@ -49,15 +49,15 @@ spec:
           bearer_only: clientField(bearerOnly)
   ```
 
-## Secret Auto-Reload
+## Secret Pod Reload
 
-UDS Core provides an automatic secret reload mechanism that can restart pods or deployments when secrets are updated. This is useful for SSO client secrets when they need to be updated.
+UDS Core provides a Secret Pod Reload mechanism that can restart pods or deployments when secrets are updated. This is useful for SSO client secrets when they need to be updated.
 
-To enable automatic reloading when a secret changes, add the `uds.dev/watch: "true"` label to your secret.
+To enable automatic pod reload when a secret changes, add the `uds.dev/pod-reload: "true"` label to your secret.
 
 ### Example
 
-Here's an example of a secret configuration with auto-reload enabled:
+Here's an example of a secret configuration with pod reload enabled:
 
 ```yaml
 apiVersion: uds.dev/v1alpha1
@@ -72,11 +72,11 @@ spec:
       redirectUris:
         - "https://my-app.example.com/callback"
       secretName: my-app-secret
-      # To enable auto-reload for this secret, add these labels and annotations
+      # To enable pod reload for this secret, add these labels and annotations
       secretLabels:
-        uds.dev/watch: "true"
+        uds.dev/pod-reload: "true"
       secretAnnotations:
-        uds.dev/pod-selector: 'app=my-app' # Target a specific pod(s) to rotate
+        uds.dev/pod-reload-selector: 'app=my-app' # Target a specific pod(s) to reload
       secretTemplate:
         config.json: |
           {

@@ -6,7 +6,7 @@
 import { createHash } from "crypto";
 import { K8s, kind } from "pepr";
 import { Component, setupLogger } from "../../../logger";
-import { rotatePods } from "../utils";
+import { reloadPods } from "../utils";
 
 const log = setupLogger(Component.OPERATOR_SECRETS);
 
@@ -132,25 +132,25 @@ export async function handleSecretUpdate(secret: kind.Secret) {
     return;
   }
 
-  log.info({ secret: name, namespace }, "Secret data changed, processing pod rotation");
+  log.info({ secret: name, namespace }, "Secret data changed, processing pod reload");
 
-  // Determine which pods to rotate based on the strategy
-  let podsToRotate: kind.Pod[] = [];
+  // Determine which pods to reload based on the strategy
+  let podsToReload: kind.Pod[] = [];
 
   // Check if we have an explicit pod selector in annotations
-  const selectorStr = secret.metadata?.annotations?.["uds.dev/pod-selector"];
+  const selectorStr = secret.metadata?.annotations?.["uds.dev/pod-reload-selector"];
 
   if (selectorStr) {
     const selector = parseSelectorString(selectorStr);
     if (!selector) {
-      const errorMsg = `Invalid selector format in uds.dev/pod-selector annotation for secret ${namespace}/${name}: ${selectorStr}. Expected format: key1=value1,key2=value2`;
+      const errorMsg = `Invalid selector format in uds.dev/pod-reload-selector annotation for secret ${namespace}/${name}: ${selectorStr}. Expected format: key1=value1,key2=value2`;
       log.error({ secret: name, namespace, selector: selectorStr }, errorMsg);
       return;
     }
 
     log.debug(
       { secret: name, namespace, selector },
-      "Using explicit pod selector from secret label for rotation",
+      "Using explicit pod selector from secret label for reload",
     );
 
     // Build query with each label
@@ -160,29 +160,29 @@ export async function handleSecretUpdate(secret: kind.Secret) {
     }
 
     const pods = await podQuery.Get();
-    podsToRotate = pods.items;
+    podsToReload = pods.items;
   } else {
     // No explicit selector, use auto-discovery
     log.debug(
       { secret: name, namespace },
       "No explicit selector found, auto-discovering secret consumers",
     );
-    podsToRotate = await discoverSecretConsumers(namespace, name);
+    podsToReload = await discoverSecretConsumers(namespace, name);
   }
 
   // If no pods found, log and exit
-  if (podsToRotate.length === 0) {
-    log.warn({ secret: name, namespace }, "No pods found to rotate for secret change");
+  if (podsToReload.length === 0) {
+    log.warn({ secret: name, namespace }, "No pods found to reload for secret change");
     return;
   }
 
-  // Rotate the pods
+  // Reload the pods
   log.info(
-    { secret: name, namespace, podCount: podsToRotate.length },
-    `Rotating ${podsToRotate.length} pods due to secret change`,
+    { secret: name, namespace, podCount: podsToReload.length },
+    `Reloading ${podsToReload.length} pods due to secret change`,
   );
 
-  await rotatePods(namespace, podsToRotate, `Secret ${name} change`, log);
+  await reloadPods(namespace, podsToReload, `Secret ${name} change`, log);
 }
 
 /**

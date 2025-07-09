@@ -134,7 +134,7 @@ export async function retryWithDelay<T>(
 }
 
 /**
- * Rotate a list of pods using controller-based rolling restart when possible,
+ * Reload a list of pods using controller-based rolling restart when possible,
  * falling back to direct pod eviction when necessary.
  *
  * For Deployments, StatefulSets, DaemonSets, and ReplicaSets, it will trigger a
@@ -147,7 +147,7 @@ export async function retryWithDelay<T>(
  * @param reason The reason for eviction/restart (for logging)
  * @param log Logger instance for logging
  */
-export async function rotatePods(namespace: string, pods: kind.Pod[], reason: string, log: Logger) {
+export async function reloadPods(namespace: string, pods: kind.Pod[], reason: string, log: Logger) {
   if (pods.length === 0) {
     log.warn(`No pods provided for eviction in namespace ${namespace}`);
     return;

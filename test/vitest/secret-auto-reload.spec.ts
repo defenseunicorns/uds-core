@@ -103,11 +103,11 @@ describe("Secret Auto-reload", () => {
         name: SELECTOR_SECRET_NAME,
         namespace: PODINFO_NAMESPACE,
         labels: {
-          "uds.dev/watch": "true"
+          "uds.dev/pod-reload": "true"
         },
         annotations: {
           // This is the key part: we're using an explicit selector to target the podinfo pods
-          "uds.dev/pod-selector": `${selectorKey}=${selectorValue}`
+          "uds.dev/pod-reload-selector": `${selectorKey}=${selectorValue}`
         }
       },
       type: "Opaque",
@@ -225,9 +225,9 @@ describe("Secret Auto-reload", () => {
         name: AUTO_LOOKUP_SECRET_NAME,
         namespace: PODINFO_NAMESPACE,
         labels: {
-          "uds.dev/watch": "true"
+          "uds.dev/pod-reload": "true"
         }
-        // No uds.dev/pod-selector annotation - this will force auto-lookup
+        // No uds.dev/pod-reload-selector annotation - this will force auto-lookup
       },
       type: "Opaque",
       data: {

@@ -11,7 +11,7 @@ import {
   handleSecretDelete,
   handleSecretUpdate,
   parseSelectorString,
-} from "./auto-reload";
+} from "./pod-reload";
 
 // Mock the logger
 vi.mock("../../../logger", () => ({
@@ -51,13 +51,13 @@ vi.mock("../../../logger", () => ({
 }));
 
 vi.mock("../utils", () => ({
-  rotatePods: vi.fn(),
+  reloadPods: vi.fn(),
 }));
 
 // Import the secretChecksumCache directly
-import { secretChecksumCache } from "./auto-reload";
+import { secretChecksumCache } from "./pod-reload";
 
-describe("auto-reload", () => {
+describe("pod-reload", () => {
   // Mock K8s responses
   const mockGet = vi.fn();
   const mockWithLabel = vi.fn(() => ({ Get: mockGet }));
@@ -111,21 +111,21 @@ describe("auto-reload", () => {
     it("should do nothing if secret is missing metadata or data", async () => {
       // Missing metadata
       await handleSecretUpdate({} as kind.Secret);
-      expect(utils.rotatePods).not.toHaveBeenCalled();
+      expect(utils.reloadPods).not.toHaveBeenCalled();
 
       // Missing name
       await handleSecretUpdate({ metadata: {} } as kind.Secret);
-      expect(utils.rotatePods).not.toHaveBeenCalled();
+      expect(utils.reloadPods).not.toHaveBeenCalled();
 
       // Missing namespace
       await handleSecretUpdate({ metadata: { name: "test-secret" } } as kind.Secret);
-      expect(utils.rotatePods).not.toHaveBeenCalled();
+      expect(utils.reloadPods).not.toHaveBeenCalled();
 
       // Missing data
       await handleSecretUpdate({
         metadata: { name: "test-secret", namespace: "default" },
       } as kind.Secret);
-      expect(utils.rotatePods).not.toHaveBeenCalled();
+      expect(utils.reloadPods).not.toHaveBeenCalled();
     });
 
     it("should not rotate pods if the checksum has not changed", async () => {
@@ -143,11 +143,11 @@ describe("auto-reload", () => {
 
       // First call should cache the checksum
       await handleSecretUpdate(secret as kind.Secret);
-      expect(utils.rotatePods).not.toHaveBeenCalled();
+      expect(utils.reloadPods).not.toHaveBeenCalled();
 
       // Second call with the same data should not rotate pods
       await handleSecretUpdate(secret as kind.Secret);
-      expect(utils.rotatePods).not.toHaveBeenCalled();
+      expect(utils.reloadPods).not.toHaveBeenCalled();
     });
 
     it("should return early when the selector format is invalid without rotating pods", async () => {
@@ -157,10 +157,10 @@ describe("auto-reload", () => {
           name: "test-secret",
           namespace: "default",
           labels: {
-            "uds.dev/watch": "true",
+            "uds.dev/pod-reload": "true",
           },
           annotations: {
-            "uds.dev/pod-selector": "app:invalid-format", // Invalid format (uses : instead of =)
+            "uds.dev/pod-reload-selector": "app:invalid-format", // Invalid format (uses : instead of =)
           },
         },
         data: {
@@ -172,8 +172,8 @@ describe("auto-reload", () => {
       // Should complete without throwing
       await handleSecretUpdate(secret as kind.Secret);
 
-      // Verify that the function returns early and doesn't call rotatePods
-      expect(utils.rotatePods).not.toHaveBeenCalled();
+      // Verify that the function returns early and doesn't call reloadPods
+      expect(utils.reloadPods).not.toHaveBeenCalled();
     });
 
     it("should only rotate pods that match the selector when data changes", async () => {
@@ -212,7 +212,7 @@ describe("auto-reload", () => {
       }));
 
       // Mock rotatePods
-      vi.mocked(utils.rotatePods).mockResolvedValue();
+      vi.mocked(utils.reloadPods).mockResolvedValue();
 
       // First secret with initial data
       const secret1 = {
@@ -220,10 +220,10 @@ describe("auto-reload", () => {
           name: "test-secret",
           namespace: "default",
           labels: {
-            "uds.dev/watch": "true",
+            "uds.dev/pod-reload": "true",
           },
           annotations: {
-            "uds.dev/pod-selector": "app=test-app",
+            "uds.dev/pod-reload-selector": "app=test-app",
           },
         },
         data: {
@@ -243,7 +243,7 @@ describe("auto-reload", () => {
 
       // First call should cache the checksum without rotating
       await handleSecretUpdate(secret1 as kind.Secret);
-      expect(utils.rotatePods).not.toHaveBeenCalled();
+      expect(utils.reloadPods).not.toHaveBeenCalled();
       vi.clearAllMocks(); // Clear mock call history
 
       // Reset our mocks for the second call
@@ -274,7 +274,7 @@ describe("auto-reload", () => {
       expect(mockWithLabel).toHaveBeenCalledWith("app", "test-app");
 
       // Verify rotation was called with only the matching pod
-      expect(utils.rotatePods).toHaveBeenCalledWith(
+      expect(utils.reloadPods).toHaveBeenCalledWith(
         "default",
         [matchingPod], // Only the matching pod should be passed
         "Secret test-secret change",
@@ -321,7 +321,7 @@ describe("auto-reload", () => {
       }));
 
       // Mock rotatePods
-      vi.mocked(utils.rotatePods).mockResolvedValue();
+      vi.mocked(utils.reloadPods).mockResolvedValue();
 
       // Secret with multiple selectors
       const secret1 = {
@@ -329,10 +329,10 @@ describe("auto-reload", () => {
           name: "multi-selector-secret",
           namespace: "default",
           labels: {
-            "uds.dev/watch": "true",
+            "uds.dev/pod-reload": "true",
           },
           annotations: {
-            "uds.dev/pod-selector": "app=test-app,tier=frontend,env=prod",
+            "uds.dev/pod-reload-selector": "app=test-app,tier=frontend,env=prod",
           },
         },
         data: {
@@ -352,7 +352,7 @@ describe("auto-reload", () => {
 
       // First call caches the checksum
       await handleSecretUpdate(secret1 as kind.Secret);
-      expect(utils.rotatePods).not.toHaveBeenCalled();
+      expect(utils.reloadPods).not.toHaveBeenCalled();
       vi.clearAllMocks();
 
       // Reset mocks for second call
@@ -384,7 +384,7 @@ describe("auto-reload", () => {
       expect(mockWithLabel).toHaveBeenCalledWith("env", "prod");
 
       // Verify rotation happened with the matching pod
-      expect(utils.rotatePods).toHaveBeenCalledWith(
+      expect(utils.reloadPods).toHaveBeenCalledWith(
         "default",
         [matchingPod],
         "Secret multi-selector-secret change",
@@ -431,7 +431,7 @@ describe("auto-reload", () => {
           name: "test-secret",
           namespace: "default",
           labels: {
-            "uds.dev/watch": "true",
+            "uds.dev/pod-reload": "true",
           },
         },
         data: {
@@ -454,22 +454,22 @@ describe("auto-reload", () => {
 
       // First call should cache the checksum without rotating
       await handleSecretUpdate(secret1 as kind.Secret);
-      expect(utils.rotatePods).not.toHaveBeenCalled();
+      expect(utils.reloadPods).not.toHaveBeenCalled();
       vi.clearAllMocks(); // Clear mock call history
 
       // Second call with changed data should rotate only the pods using the secret
       await handleSecretUpdate(secret2 as kind.Secret);
 
-      // Verify rotatePods was called with the correct parameters
-      expect(utils.rotatePods).toHaveBeenCalledTimes(1);
+      // Verify reloadPods was called with the correct parameters
+      expect(utils.reloadPods).toHaveBeenCalledTimes(1);
 
       // Check that the namespace and reason are correct
-      const rotatePodCalls = (utils.rotatePods as ReturnType<typeof vi.fn>).mock.calls[0];
-      expect(rotatePodCalls[0]).toBe("default"); // namespace
-      expect(rotatePodCalls[2]).toBe("Secret test-secret change"); // reason
+      const reloadPodCalls = (utils.reloadPods as ReturnType<typeof vi.fn>).mock.calls[0];
+      expect(reloadPodCalls[0]).toBe("default"); // namespace
+      expect(reloadPodCalls[2]).toBe("Secret test-secret change"); // reason
 
       // Verify pods 1 and 2 were included and pod3 is NOT included
-      const rotatedPods = rotatePodCalls[1] as kind.Pod[];
+      const rotatedPods = reloadPodCalls[1] as kind.Pod[];
       expect(rotatedPods.length).toBe(2);
       expect(rotatedPods.some(pod => pod.metadata?.name === "pod1")).toBe(true);
       expect(rotatedPods.some(pod => pod.metadata?.name === "pod2")).toBe(true);
@@ -500,7 +500,7 @@ describe("auto-reload", () => {
       // Verify it was removed from cache by updating it again
       // which should not trigger rotation because cache was cleared
       await handleSecretUpdate(secret as kind.Secret);
-      expect(utils.rotatePods).not.toHaveBeenCalled();
+      expect(utils.reloadPods).not.toHaveBeenCalled();
     });
   });
 

@@ -52,9 +52,9 @@ spec:
         {{- end }}
       secretName: neuvector-secret
       secretLabels:
-        uds.dev/watch: "true"
+        uds.dev/pod-reload: "true"
       secretAnnotations:
-        uds.dev/pod-selector: 'app=neuvector-controller-pod'
+        uds.dev/pod-reload-selector: 'app=neuvector-controller-pod'
       secretTemplate:
         userinitcfg.yaml: |-
           always_reload: true
