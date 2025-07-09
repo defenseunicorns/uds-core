@@ -39,7 +39,10 @@ const log = setupLogger(Component.OPERATOR_RECONCILERS);
  * @param pkg the package to reconcile
  */
 // Helper to apply exponential backoff if needed
-async function withBackoffIfNeeded(pkg: UDSPackage, fn: () => Promise<void>) {
+export async function withBackoffIfNeeded<T = void>(
+  pkg: UDSPackage,
+  fn: () => Promise<T>,
+): Promise<T> {
   if (pkg.status?.retryAttempt && pkg.status?.retryAttempt > 0) {
     const backOffSeconds = 3 ** pkg.status.retryAttempt;
     log.info(
@@ -49,7 +52,7 @@ async function withBackoffIfNeeded(pkg: UDSPackage, fn: () => Promise<void>) {
     await writeEvent(pkg, { message: `Waiting ${backOffSeconds} seconds before retrying package` });
     await new Promise(resolve => setTimeout(resolve, backOffSeconds * 1000));
   }
-  await fn();
+  return await fn();
 }
 
 export async function packageReconciler(pkg: UDSPackage) {

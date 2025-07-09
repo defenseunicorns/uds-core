@@ -70,7 +70,7 @@ function serviceMatchesSelectors(
 /**
  * Checks if a gateway is in a ready state
  */
-function isGatewayReady(gateway: K8sGateway): boolean {
+export function isGatewayReady(gateway: K8sGateway): boolean {
   const conditions = gateway.status?.conditions || [];
   const acceptedCondition = conditions.find(c => c.type === "Accepted");
   const programmedCondition = conditions.find(c => c.type === "Programmed");

@@ -158,8 +158,24 @@ describe("ambient-waypoint", () => {
       expect(mockGet).toHaveBeenCalledWith("test-namespace");
     });
 
-    test("should return false when namespace does not have ambient mode enabled", async () => {
-      // Mock namespace without ambient mode
+    test("should return false when namespace has ambient mode disabled", async () => {
+      // Mock namespace with ambient mode explicitly disabled
+      mockGet.mockResolvedValue({
+        metadata: {
+          labels: {
+            "istio.io/dataplane-mode": "disabled",
+          },
+        },
+      });
+
+      const result = await isAmbientEnabled("test-namespace");
+
+      expect(result).toBe(false);
+      expect(mockGet).toHaveBeenCalledWith("test-namespace");
+    });
+
+    test("should return false when namespace has no labels", async () => {
+      // Mock namespace with no labels
       mockGet.mockResolvedValue({
         metadata: {
           labels: {},
@@ -180,6 +196,68 @@ describe("ambient-waypoint", () => {
 
       expect(result).toBe(false);
       expect(mockGet).toHaveBeenCalledWith("test-namespace");
+    });
+  });
+
+  describe("isGatewayReady", () => {
+    test("should return true when gateway is ready", () => {
+      const gateway = {
+        status: {
+          conditions: [
+            { type: "Accepted", status: "True" },
+            { type: "Programmed", status: "True" },
+          ],
+        },
+      };
+      expect(ambientWaypoint.isGatewayReady(gateway as K8sGateway)).toBe(true);
+    });
+
+    test("should return false when programmed is true but accepted is false", () => {
+      const gateway = {
+        status: {
+          conditions: [
+            { type: "Accepted", status: "False" },
+            { type: "Programmed", status: "True" },
+          ],
+        },
+      };
+      expect(ambientWaypoint.isGatewayReady(gateway as K8sGateway)).toBe(false);
+    });
+
+    test("should return false when programmed is false but accepted is true", () => {
+      const gateway = {
+        status: {
+          conditions: [
+            { type: "Accepted", status: "True" },
+            { type: "Programmed", status: "False" },
+          ],
+        },
+      };
+      expect(ambientWaypoint.isGatewayReady(gateway as K8sGateway)).toBe(false);
+    });
+
+    test("should return false when both programmed and accepted are false", () => {
+      const gateway = {
+        status: {
+          conditions: [
+            { type: "Accepted", status: "False" },
+            { type: "Programmed", status: "False" },
+          ],
+        },
+      };
+      expect(ambientWaypoint.isGatewayReady(gateway as K8sGateway)).toBe(false);
+    });
+
+    test("should return false when conditions are missing", () => {
+      const gateway = {
+        status: {},
+      };
+      expect(ambientWaypoint.isGatewayReady(gateway as K8sGateway)).toBe(false);
+    });
+
+    test("should return false when status is missing", () => {
+      const gateway = {};
+      expect(ambientWaypoint.isGatewayReady(gateway as K8sGateway)).toBe(false);
     });
   });
 
