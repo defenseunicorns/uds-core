@@ -32,7 +32,7 @@ The UDS Operator uses the first `redirectUris` to populate the `match.prefix` ho
 For a complete example, see [app-authservice-tenant.yaml](https://github.com/defenseunicorns/uds-core/blob/main/src/test/app-authservice-tenant.yaml)
 
 ## Limitations:
-Authservice is intended for simple, basic protection scenarios where an absolute level of protection is acceptable. For more advanced authentication requirements, you should implement authentication directly in your application or via a more comprehensive solution.
+Authservice is intended for simple, basic protection scenarios where an absolute level of protection is acceptable (such as a Web UI or dashboard). For more advanced authentication requirements, you should implement authentication directly in your application or via a more comprehensive solution.
 
 ## Ambient Mode Support
 

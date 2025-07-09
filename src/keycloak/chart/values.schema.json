@@ -182,6 +182,10 @@
     "jsonLogFormat": {
       "type": "boolean"
     },
+    "lifecycleHooks": {
+      "type": "object",
+      "properties": {}
+    },
     "nodeSelector": {
       "type": "object",
       "properties": {}

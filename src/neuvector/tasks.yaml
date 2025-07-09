@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 includes:
-  - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.16.2/tasks/setup.yaml
+  - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.16.3/tasks/setup.yaml
 
 tasks:
   - name: validate
@@ -58,7 +58,7 @@ tasks:
       - description: E2E Test for NeuVector
         cmd: |
           # renovate: datasource=docker depName=mcr.microsoft.com/playwright versioning=docker
-          docker run --rm --ipc=host -e FULL_CORE="${FULL_CORE}" --net=host --mount type=bind,source="$(pwd)",target=/app mcr.microsoft.com/playwright:v1.53.1-noble sh -c " \
+          docker run --rm --ipc=host -e FULL_CORE="${FULL_CORE}" --net=host --mount type=bind,source="$(pwd)",target=/app mcr.microsoft.com/playwright:v1.53.2-noble sh -c " \
             cd app && \
             npm ci && \
             npx playwright test neuvector.test.ts \

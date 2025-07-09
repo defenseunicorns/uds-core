@@ -4,7 +4,7 @@
 image:
   registry: quay.io
   repository: rfcurated/grafana
-  tag: 12.0.1-jammy-scratch-fips-rfcurated
+  tag: 12.0.2-jammy-scratch-fips-rfcurated
 
 initChownData:
   image:
@@ -21,4 +21,4 @@ sidecar:
   image:
     registry: quay.io
     repository: rfcurated/k8s-sidecar
-    tag: 1.30.3-jammy-scratch-fips-rfcurated-rfhardened
+    tag: 1.30.6-jammy-scratch-fips-rfcurated-rfhardened
