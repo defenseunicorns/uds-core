@@ -207,6 +207,11 @@ export interface Allow {
    * pods in the namespace
    */
   selector?: { [key: string]: string };
+  /**
+   * The service account to restrict outgoing traffic from within the package
+   * namespace.           Only valid for Egress rules.
+   */
+  serviceAccount?: string;
 }
 
 /**

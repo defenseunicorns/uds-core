@@ -24,8 +24,8 @@ import {
   egressRequestedFromNetwork,
   getHostPortsProtocol,
   inMemoryPackageMap,
-  performEgressReconciliation,
   performEgressReconciliationWithMutex,
+  performSidecarEgressReconciliation,
   reconcileSharedEgressResources,
   remapEgressResources,
   removeEgressResources,
@@ -33,6 +33,7 @@ import {
   validateEgressGateway,
   validateProtocolConflicts,
 } from "./egress";
+import { IstioState } from "./namespace";
 import { HostResourceMap, PackageAction, PackageHostMap } from "./types";
 
 vi.mock("./istio-resources", async () => {
@@ -111,6 +112,7 @@ describe("test reconcileEgressResources", () => {
       hostResourceMapMock,
       packageIdMock,
       PackageAction.AddOrUpdate,
+      IstioState.Sidecar,
     );
 
     // Check apply methods are called
@@ -129,6 +131,7 @@ describe("test reconcileEgressResources", () => {
       hostResourceMapMock,
       packageIdMock,
       PackageAction.AddOrUpdate,
+      IstioState.Sidecar,
     );
 
     expect(defaultEgressMocks.applyGwMock).toHaveBeenCalledTimes(1);
@@ -153,6 +156,7 @@ describe("test reconcileEgressResources", () => {
       updatedHostResourceMapMock,
       packageIdMock,
       PackageAction.AddOrUpdate,
+      IstioState.Sidecar,
     );
 
     expect(defaultEgressMocks.applyGwMock).toHaveBeenCalledTimes(1);
@@ -172,6 +176,7 @@ describe("test reconcileEgressResources", () => {
       hostResourceMapMock,
       packageIdMock,
       PackageAction.AddOrUpdate,
+      IstioState.Sidecar,
     );
 
     expect(defaultEgressMocks.applyGwMock).toHaveBeenCalledTimes(1);
@@ -187,7 +192,12 @@ describe("test reconcileEgressResources", () => {
     mockPurgeOrphans.mockClear();
 
     // mock the old egress allow rule was removed from the package
-    await reconcileSharedEgressResources(undefined, packageIdMock, PackageAction.AddOrUpdate);
+    await reconcileSharedEgressResources(
+      undefined,
+      packageIdMock,
+      PackageAction.AddOrUpdate,
+      IstioState.Sidecar,
+    );
 
     // no new calls after old allow was removed
     expect(defaultEgressMocks.applyGwMock).not.toHaveBeenCalled();
@@ -208,6 +218,7 @@ describe("test reconcileEgressResources", () => {
       hostResourceMapMock,
       packageIdMock,
       PackageAction.AddOrUpdate,
+      IstioState.Sidecar,
     );
 
     expect(defaultEgressMocks.applyGwMock).toHaveBeenCalledTimes(1);
@@ -217,7 +228,12 @@ describe("test reconcileEgressResources", () => {
     mockPurgeOrphans.mockClear();
 
     // Mock removal of the package
-    await reconcileSharedEgressResources(undefined, packageIdMock, PackageAction.Remove);
+    await reconcileSharedEgressResources(
+      undefined,
+      packageIdMock,
+      PackageAction.Remove,
+      IstioState.Sidecar,
+    );
 
     // Check the value of inMemoryPackageMap
     expect(inMemoryPackageMap).toEqual({});
@@ -239,7 +255,12 @@ describe("test reconcileEgressResources", () => {
     });
 
     // Mock removal of the package
-    await reconcileSharedEgressResources(undefined, packageIdMock, PackageAction.Remove);
+    await reconcileSharedEgressResources(
+      undefined,
+      packageIdMock,
+      PackageAction.Remove,
+      IstioState.Sidecar,
+    );
 
     // Should not call purge
     expect(mockPurgeOrphans).not.toHaveBeenCalled();
@@ -267,6 +288,7 @@ describe("test reconcileEgressResources", () => {
         hostResourceMapMock,
         "test-package",
         PackageAction.AddOrUpdate,
+        IstioState.Sidecar,
       ),
     ).rejects.toThrow(errorMessage);
   });
@@ -276,7 +298,12 @@ describe("test reconcileEgressResources", () => {
 
     // This should not throw and should result in removal
     await expect(
-      reconcileSharedEgressResources(undefined, "test-package", PackageAction.AddOrUpdate),
+      reconcileSharedEgressResources(
+        undefined,
+        "test-package",
+        PackageAction.AddOrUpdate,
+        IstioState.Sidecar,
+      ),
     ).resolves.not.toThrow();
 
     expect(inMemoryPackageMap).toEqual({});
@@ -302,7 +329,9 @@ describe("test performEgressReconciliationWithMutex", () => {
   it("should successfully perform reconciliation when no mutex is held", async () => {
     updateEgressMocks(defaultEgressMocks);
 
-    await expect(performEgressReconciliationWithMutex("test-package")).resolves.not.toThrow();
+    await expect(
+      performEgressReconciliationWithMutex("test-package", IstioState.Sidecar),
+    ).resolves.not.toThrow();
 
     // Should have called the namespace check
     expect(defaultEgressMocks.getNsMock).toHaveBeenCalled();
@@ -319,19 +348,25 @@ describe("test performEgressReconciliationWithMutex", () => {
       getNsMock,
     });
 
-    await expect(performEgressReconciliationWithMutex("test-package")).rejects.toThrow(
-      errorMessage,
-    );
+    await expect(
+      performEgressReconciliationWithMutex("test-package", IstioState.Sidecar),
+    ).rejects.toThrow(errorMessage);
   });
 
   it("should wait for existing reconciliation to complete", async () => {
     updateEgressMocks(defaultEgressMocks);
 
     // Start first reconciliation (this will hold the mutex)
-    const firstReconciliation = performEgressReconciliationWithMutex("test-package-1");
+    const firstReconciliation = performEgressReconciliationWithMutex(
+      "test-package-1",
+      IstioState.Sidecar,
+    );
 
     // Start second reconciliation while first is in progress
-    const secondReconciliation = performEgressReconciliationWithMutex("test-package-2");
+    const secondReconciliation = performEgressReconciliationWithMutex(
+      "test-package-2",
+      IstioState.Ambient,
+    );
 
     // Check both can reconcile without error
     await expect(Promise.all([firstReconciliation, secondReconciliation])).resolves.not.toThrow();
@@ -360,12 +395,14 @@ describe("test performEgressReconciliationWithMutex", () => {
     });
 
     // First reconciliation should fail
-    await expect(performEgressReconciliationWithMutex("test-package")).rejects.toThrow(
-      errorMessage,
-    );
+    await expect(
+      performEgressReconciliationWithMutex("test-package", IstioState.Sidecar),
+    ).rejects.toThrow(errorMessage);
 
     // Second reconciliation should succeed despite the previous failure
-    await expect(performEgressReconciliationWithMutex("test-package")).resolves.not.toThrow();
+    await expect(
+      performEgressReconciliationWithMutex("test-package", IstioState.Sidecar),
+    ).resolves.not.toThrow();
 
     // Should have been called twice
     expect(getNsMock).toHaveBeenCalledTimes(2);
@@ -383,13 +420,15 @@ describe("test performEgressReconciliationWithMutex", () => {
     });
 
     // Should not throw for 404 (early return)
-    await expect(performEgressReconciliationWithMutex("test-package")).resolves.not.toThrow();
+    await expect(
+      performEgressReconciliationWithMutex("test-package", IstioState.Sidecar),
+    ).resolves.not.toThrow();
 
     expect(getNsMock).toHaveBeenCalled();
   });
 });
 
-describe("test performEgressReconciliation", () => {
+describe("test performSidecarEgressReconciliation", () => {
   beforeEach(() => {
     process.env.PEPR_WATCH_MODE = "true";
     vi.useFakeTimers();
@@ -417,7 +456,7 @@ describe("test performEgressReconciliation", () => {
     });
 
     // Should not throw and should return early
-    await expect(performEgressReconciliation()).resolves.not.toThrow();
+    await expect(performSidecarEgressReconciliation()).resolves.not.toThrow();
 
     // Should not call apply methods since it returns early
     expect(defaultEgressMocks.applyGwMock).not.toHaveBeenCalled();
@@ -436,7 +475,7 @@ describe("test performEgressReconciliation", () => {
       getNsMock,
     });
 
-    await expect(performEgressReconciliation()).rejects.toThrow(errorMessage);
+    await expect(performSidecarEgressReconciliation()).rejects.toThrow(errorMessage);
   });
 
   it("should successfully reconcile when namespace exists", async () => {
@@ -449,7 +488,7 @@ describe("test performEgressReconciliation", () => {
 
     updateEgressMocks(defaultEgressMocks);
 
-    await expect(performEgressReconciliation()).resolves.not.toThrow();
+    await expect(performSidecarEgressReconciliation()).resolves.not.toThrow();
 
     // Should call apply methods for the resources
     expect(defaultEgressMocks.applyGwMock).toHaveBeenCalled();
@@ -471,7 +510,7 @@ describe("test performEgressReconciliation", () => {
       applyGwMock: vi.fn<() => Promise<void>>().mockRejectedValue(new Error(errorMessage)),
     });
 
-    await expect(performEgressReconciliation()).rejects.toThrow(
+    await expect(performSidecarEgressReconciliation()).rejects.toThrow(
       "Failed to apply Gateway for host example.com",
     );
   });
@@ -479,7 +518,7 @@ describe("test performEgressReconciliation", () => {
   it("should handle empty inMemoryPackageMap", async () => {
     updateEgressMocks(defaultEgressMocks);
 
-    await expect(performEgressReconciliation()).resolves.not.toThrow();
+    await expect(performSidecarEgressReconciliation()).resolves.not.toThrow();
 
     // Should not call apply methods for empty map
     expect(defaultEgressMocks.applyGwMock).not.toHaveBeenCalled();
@@ -1175,8 +1214,7 @@ describe("test validateEgressGateway", () => {
   });
 
   it("should err if get egress gateway namespace fails", async () => {
-    const errorMessage =
-      "Unable to reconcile get the egress gateway namespace istio-egress-gateway.";
+    const errorMessage = "Unable to get the egress gateway namespace istio-egress-gateway.";
 
     const getNsMock = vi
       .fn<() => Promise<kind.Namespace>>()
@@ -1466,4 +1504,20 @@ describe("test removeEgressResources", () => {
     expect(inMemoryPackageMap).toHaveProperty("package2");
     expect(inMemoryPackageMap["package2"]).toEqual(hostResourceMap2);
   });
+});
+
+describe("test validateEgressWaypoint", () => {
+  it("should validate egress waypoint exists", async () => {
+    // TODO: Add test
+  });
+});
+
+describe("test createSidecarWorkloadEgressResources", () => {
+  // Move some of the test cases from istioEgressResources here
+});
+
+describe("test createAmbientWorkloadEgressResources", () => {
+  // Test: What if multiple workloads request egress to the same host (in the same package) → mostly authpolicy check I think
+  // Test: without serviceAccount
+  // Test: validate that a serviceAccount exists -> if not throw error
 });

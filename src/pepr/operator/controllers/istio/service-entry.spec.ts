@@ -87,6 +87,7 @@ describe("test generate local egress service entry with one port protocol", () =
       namespace,
       generation,
       ownerRefsMock,
+      false,
     );
 
     expect(serviceEntry).toBeDefined();
@@ -129,6 +130,7 @@ describe("test generate local egress service entry with one port protocol", () =
       namespace,
       generation,
       ownerRefsMock,
+      false,
     );
 
     expect(serviceEntry).toBeDefined();
