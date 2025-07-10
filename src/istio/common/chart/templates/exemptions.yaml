@@ -34,3 +34,35 @@ spec:
        name: "ztunnel.*"
      title: "Istio ztunnel exemptions"
      description: "Exemptions necessary for ztunnel to manage network traffic and ensure secure data plane operations"
+   - policies:
+       - RestrictIstioUser # admin-ingressgateway runs istio-proxy as UID 1337
+     matcher:
+       namespace: "istio-admin-gateway"
+       kind: pod
+       name: "admin-ingressgateway*"
+     title: "Istio gateways exemption"
+     description: "Exemption for gateways to allow istio-proxy to run as UID 1337"
+   - policies:
+       - RestrictIstioUser # tenant-ingressgateway runs istio-proxy as UID 1337
+     matcher:
+       namespace: "istio-tenant-gateway"
+       kind: pod
+       name: "tenant-ingressgateway*"
+     title: "Istio gateways exemption"
+     description: "Exemption for gateways to allow istio-proxy to run as UID 1337"
+   - policies:
+       - RestrictIstioUser # passthrough-ingressgateway runs istio-proxy as UID 1337
+     matcher:
+       namespace: "istio-passthrough-gateway"
+       kind: pod
+       name: "passthrough-ingressgateway*"
+     title: "Istio gateways exemption"
+     description: "Exemption for gateways to allow istio-proxy to run as UID 1337"
+   - policies:
+       - RestrictIstioUser # passthrough-ingressgateway runs istio-proxy as UID 1337
+     matcher:
+       namespace: "istio-egress-gateway"
+       kind: pod
+       name: "egressgateway*"
+     title: "Istio gateways exemption"
+     description: "Exemption for gateways to allow istio-proxy to run as UID 1337"

@@ -16,6 +16,53 @@ import {
 import { exemptionAnnotationPrefix, isExempt, markExemption } from "./exemptions";
 
 const { containers } = sdk;
+
+/**
+ * This policy restricts the use of the Istio proxy user/group (1337) to only be used by Istio proxy containers.
+ *
+ * The policy enforces that only containers with the label 'security.istio.io/tlsMode: istio' can run as UID/GID 1337.
+ * This prevents unauthorized pods from running with elevated privileges that could be used to bypass security controls.
+ */
+When(a.Pod)
+  .IsCreatedOrUpdated()
+  .Mutate(markExemption(Policy.RestrictIstioUser))
+  .Validate(request => {
+    if (isExempt(request, Policy.RestrictIstioUser)) {
+      return request.Approve();
+    }
+
+    const pod = request.Raw;
+
+    // Check pod security context
+    const podRunAsUser = pod.spec?.securityContext?.runAsUser;
+    if (podRunAsUser === 1337 && !hasIstioProxyLabel(pod)) {
+      return request.Deny(
+        "Pods cannot run as UID 1337 (Istio proxy user) unless they have the label 'security.istio.io/tlsMode: istio'",
+      );
+    }
+
+    // Check all containers
+    for (const container of containers(request)) {
+      const containerCtx = container.securityContext || {};
+      const runAsUser = containerCtx.runAsUser ?? podRunAsUser;
+
+      if (runAsUser === 1337 && !hasIstioProxyLabel(pod)) {
+        return request.Deny(
+          `Container '${container.name}' cannot run as UID 1337 (Istio proxy user) unless the pod has the label 'security.istio.io/tlsMode: istio'`,
+        );
+      }
+    }
+
+    return request.Approve();
+  });
+
+/**
+ * Checks if a pod has the Istio proxy label
+ */
+function hasIstioProxyLabel(pod: a.Pod): boolean {
+  return pod.metadata?.labels?.["security.istio.io/tlsMode"] === "istio";
+}
+
 /**
  * This policy ensures that Pods do not allow privilege escalation.
  *

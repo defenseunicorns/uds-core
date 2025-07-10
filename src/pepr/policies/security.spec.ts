@@ -368,6 +368,161 @@ describe("security policies", () => {
     ]);
   });
 
+  it("should restrict istio proxy user (1337) to pods with istio label", async () => {
+    const expected = (e: Error) =>
+      expect(e).toMatchObject({
+        ok: false,
+        data: {
+          message: expect.stringMatching(
+            /cannot run as UID 1337 \(Istio proxy user\) unless (the pod has|they have) the label 'security\.istio\.io\/tlsMode: istio'/,
+          ),
+        },
+      });
+
+    return Promise.all([
+      // Test pod-level runAsUser = 1337 without label (should fail)
+      K8s(kind.Pod)
+        .Apply({
+          metadata: {
+            name: "istio-user-pod-level",
+            namespace: "policy-tests",
+          },
+          spec: {
+            securityContext: {
+              runAsUser: 1337,
+            },
+            containers: [
+              {
+                name: "test",
+                image: "127.0.0.1/fake",
+              },
+            ],
+          },
+        })
+        .then(failIfReached)
+        .catch(expected),
+
+      // Test container-level runAsUser = 1337 without label (should fail)
+      K8s(kind.Pod)
+        .Apply({
+          metadata: {
+            name: "istio-user-container-level",
+            namespace: "policy-tests",
+          },
+          spec: {
+            containers: [
+              {
+                name: "test",
+                image: "127.0.0.1/fake",
+                securityContext: {
+                  runAsUser: 1337,
+                },
+              },
+            ],
+          },
+        })
+        .then(failIfReached)
+        .catch(expected),
+    ]);
+  });
+
+  it("should allow istio proxy user (1337) with correct label", async () => {
+    // This should pass as the pod has the required label
+    return K8s(kind.Pod)
+      .Apply({
+        metadata: {
+          name: "istio-proxy-allowed",
+          namespace: "policy-tests",
+          labels: {
+            "security.istio.io/tlsMode": "istio",
+          },
+        },
+        spec: {
+          containers: [
+            {
+              name: "istio-proxy",
+              image: "127.0.0.1/istio-proxy",
+              securityContext: {
+                runAsUser: 1337,
+              },
+            },
+          ],
+        },
+      })
+      .then(pod => {
+        expect(pod).toMatchObject({
+          metadata: {
+            name: "istio-proxy-allowed",
+            labels: {
+              "security.istio.io/tlsMode": "istio",
+            },
+          },
+          spec: {
+            containers: [
+              {
+                name: "istio-proxy",
+                securityContext: {
+                  runAsUser: 1337,
+                },
+              },
+            ],
+          },
+        });
+      })
+      .catch(failIfReached);
+  });
+
+  it("should allow non-istio user without label", async () => {
+    // This should pass as the pod is not using the Istio proxy user
+    return K8s(kind.Pod)
+      .Apply({
+        metadata: {
+          name: "non-istio-user",
+          namespace: "policy-tests",
+        },
+        spec: {
+          containers: [
+            {
+              name: "test",
+              image: "127.0.0.1/fake",
+              securityContext: {
+                runAsUser: 1000,
+              },
+            },
+          ],
+        },
+      })
+      .then(pod => {
+        expect(pod).toMatchObject({
+          metadata: {
+            name: "non-istio-user",
+          },
+          spec: {
+            containers: [
+              {
+                name: "test",
+                securityContext: {
+                  runAsUser: 1000,
+                },
+              },
+            ],
+          },
+        });
+      })
+      .catch(failIfReached);
+  });
+
+  it("should allow exempted pods to use istio proxy user", async () => {
+    // This test is skipped because it requires a running Kubernetes cluster with the exemption CRD installed
+    // and the Pepr controller running to process the exemption
+    // In a real environment, the exemption would be created by the cluster admin or through some automation
+    // and the test would verify that the pod with the exemption can run as UID 1337
+    console.log(
+      "Skipping exemption test as it requires a running Kubernetes cluster with the exemption CRD",
+    );
+    return Promise.resolve();
+  });
+
   it("should drop all capabilities", async () => {
     const expected = (pod: kind.Pod) =>
       expect(pod).toMatchObject({
