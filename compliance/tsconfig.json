@@ -1,29 +1,18 @@
 {
   "compilerOptions": {
-    "allowSyntheticDefaultImports": true,
     "declaration": true,
     "declarationMap": true,
-    "emitDeclarationOnly": true,
     "esModuleInterop": true,
     "lib": ["ES2022", "WebWorker"],
     "module": "nodenext",
     "moduleResolution": "nodenext",
     "outDir": "dist",
     "resolveJsonModule": true,
-    "rootDir": ".",
+    "rootDir": "./src",
     "strict": true,
     "target": "ES2022",
-    "useUnknownInCatchVariables": false,
+    "useUnknownInCatchVariables": false
   },
-  "include": [
-    "**/*.ts"
-  ],
-  "exclude": [
-    "dist",
-    "test/playwright",
-    "test/vitest",
-    "scripts/",
-    "uds-docs",
-    "compliance/"
-  ]
+  "include": ["./src/**/*.ts"],
+  "exclude": ["../src", "node_modules"]
 }
