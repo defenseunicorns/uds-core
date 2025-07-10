@@ -210,7 +210,11 @@ export function setConfig(cfg: ClusterConfig, cfgSecret: kind.Secret | undefined
     isIdentityDeployed: false,
   };
 
-  configLog.info(UDSConfig, "Loaded UDS Config");
+  configLog.info(redactConfig(), "Loaded UDS Config");
+}
+
+function redactConfig() {
+  return {...UDSConfig, authserviceRedisUri: "****"}
 }
 
 function areKubeNodeCidrsEqual(newCidrs: string[] = [], currentCidrs: string[] = []): boolean {

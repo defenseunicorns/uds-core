@@ -6,7 +6,7 @@ title: Networking Configuration
 
 The UDS operator is responsible for dynamically updating network policies that use the `remoteGenerated: KubeAPI` custom selector, in response to changes in the Kubernetes API server’s IP address. This ensures that policies remain accurate as cluster configurations evolve. However, in environments where the API server IP(s) frequently change, this behavior can lead to unnecessary overhead or instability.
 
-To address this, the UDS operator provides an option to configure a static CIDR range. This approach eliminates the need for continuous updates by using a predefined range of IP addresses for network policies. To configure a specific CIDR range, set an override to `cluster.networking.kubeApiCidr` in your bundle as a value or variable. For example:
+To address this, the UDS operator provides an option to configure a static CIDR range. This approach eliminates the need for continuous updates by using a predefined range of IP addresses for network policies. To configure a specific CIDR range, set an override to `cluster.networking.kubeApiCIDR` in your bundle as a value or variable. For example:
 
 ```yaml
 packages:
@@ -17,7 +17,7 @@ packages:
       uds-operator-config:
         uds-operator-config:
           values:
-            - path: cluster.networking.kubeApiCidr
+            - path: cluster.networking.kubeApiCIDR
               value: "172.0.0.0/24"
 ```
 
@@ -29,7 +29,7 @@ When configuring a static CIDR range, it is important to make the range as restr
 
 The UDS operator is responsible for dynamically updating network policies that use the `remoteGenerated: KubeNodes` custom selector, in response to changes to nodes in the Kubernetes cluster. As nodes are added, updated, or removed from a cluster, the operator will ensure that policies remain accurate and include all the nodes in the cluster.
 
-UDS operator provides an option to configure a set of static CIDR ranges in place of offering a dynamically updated list by setting an override to `cluster.networking.kubeNodeCidrs` in your bundle as a value or variable. The value should be an array of values for the individual IP addresses, using `/32` notation. For example:
+UDS operator provides an option to configure a set of static CIDR ranges in place of offering a dynamically updated list by setting an override to `cluster.networking.kubeNodeCIDRs` in your bundle as a value or variable. The value should be an array of values for the individual IP addresses, using `/32` notation. For example:
 
 ```yaml
 packages:
@@ -40,11 +40,11 @@ packages:
       uds-operator-config:
         uds-operator-config:
           values:
-            - path: cluster.networking.kubeNodeCidrs
+            - path: cluster.networking.kubeNodeCIDRs
               value: |
-                172.28.0.2/32
-                172.28.0.3/32
-                172.28.0.4/32
+                - 172.28.0.2/32
+                - 172.28.0.3/32
+                - 172.28.0.4/32
 ```
 
 ## Additional Network Allowances
