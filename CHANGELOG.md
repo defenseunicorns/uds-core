@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.46.1](https://github.com/defenseunicorns/uds-core/compare/v0.46.0...v0.46.1) (2025-07-10)
+
+
+### Miscellaneous
+
+* **deps:** update pepr to v0.51.6 ([#1701](https://github.com/defenseunicorns/uds-core/issues/1701)) ([f523c31](https://github.com/defenseunicorns/uds-core/commit/f523c3157115923619cc999174a706369c0c0f6f))
+
 ## [0.46.0](https://github.com/defenseunicorns/uds-core/compare/v0.45.1...v0.46.0) (2025-07-08)
 
 
