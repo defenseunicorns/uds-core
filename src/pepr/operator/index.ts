@@ -22,18 +22,19 @@ import {
 } from "./controllers/network/generators/kubeNodes";
 
 // CRD imports
-import { UDSExemption, UDSPackage } from "./crd";
+import { ClusterConfig, UDSExemption, UDSPackage } from "./crd";
 import { validator } from "./crd/validators/package-validator";
 
 // Reconciler imports
-import { UDSConfig } from "../config";
+
 import { Component, setupLogger } from "../logger";
-import { updateUDSConfig } from "./controllers/config/config";
+import { UDSConfig, updateCfg, updateCfgSecrets } from "./controllers/config/config";
 import {
   KEYCLOAK_CLIENTS_SECRET_NAME,
   KEYCLOAK_CLIENTS_SECRET_NAMESPACE,
   updateKeycloakClientsSecret,
 } from "./controllers/keycloak/client-secret-sync";
+import { validateCfgUpdate } from "./crd/validators/clusterconfig-validator";
 import { exemptValidator } from "./crd/validators/exempt-validator";
 import { packageFinalizer, packageReconciler } from "./reconcilers/package-reconciler";
 
@@ -56,7 +57,7 @@ if (process.env.PEPR_WATCH_MODE === "true" || process.env.PEPR_MODE === "dev") {
 
 // Watch for changes to the API server EndpointSlice and update the API server CIDR
 // Skip if a CIDR is defined in the UDS Config
-if (!UDSConfig.kubeApiCidr) {
+if (!UDSConfig.kubeApiCIDR) {
   When(a.EndpointSlice)
     .IsCreatedOrUpdated()
     .InNamespace("default")
@@ -104,12 +105,12 @@ When(UDSPackage)
   });
 
 // Watch for changes to the Nodes and update the Node CIDR list
-if (!UDSConfig.kubeNodeCidrs) {
+if (UDSConfig.kubeNodeCIDRs.length === 0) {
   When(a.Node).IsCreatedOrUpdated().Reconcile(updateKubeNodesFromCreateUpdate);
 }
 
 // Watch for Node deletions and update the Node CIDR list
-if (!UDSConfig.kubeNodeCidrs) {
+if (UDSConfig.kubeNodeCIDRs.length === 0) {
   When(a.Node).IsDeleted().Reconcile(updateKubeNodesFromDelete);
 }
 
@@ -118,7 +119,10 @@ When(a.Secret)
   .IsUpdated()
   .InNamespace("pepr-system")
   .WithName("uds-operator-config")
-  .Reconcile(updateUDSConfig);
+  .Reconcile(updateCfgSecrets);
+
+// Watch UDS ClusterConfig and handle changes
+When(ClusterConfig).IsCreatedOrUpdated().Validate(validateCfgUpdate).Reconcile(updateCfg);
 
 // Watch the Kubernetes Clients Secret
 When(a.Secret)

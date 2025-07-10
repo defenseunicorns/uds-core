@@ -6,10 +6,10 @@
 import { KubernetesListObject, V1NetworkPolicyPeer, V1NodeAddress } from "@kubernetes/client-node";
 import { K8s, kind, R } from "pepr";
 
-import { UDSConfig } from "../../../../config";
 import { Component, setupLogger } from "../../../../logger";
 import { RemoteGenerated } from "../../../crd";
 import { AuthorizationPolicy } from "../../../crd/generated/istio/authorizationpolicy-v1beta1";
+import { UDSConfig } from "../../config/config";
 import { retryWithDelay } from "../../utils";
 import { anywhere } from "./anywhere";
 
@@ -24,9 +24,8 @@ const nodeSet = new Set<string>();
  */
 export async function initAllNodesTarget() {
   // if a list of CIDRs is defined, use those
-  if (UDSConfig.kubeNodeCidrs) {
-    const nodeCidrs = UDSConfig.kubeNodeCidrs.split(",");
-    for (const nodeCidr of nodeCidrs) {
+  if (UDSConfig.kubeNodeCIDRs.length > 0) {
+    for (const nodeCidr of UDSConfig.kubeNodeCIDRs) {
       nodeSet.add(nodeCidr);
     }
     await updateKubeNodesNetworkPolicies();
@@ -142,7 +141,7 @@ export async function updateKubeNodesNetworkPolicies() {
         await K8s(kind.NetworkPolicy).Apply(netPol, { force: true });
       } catch (err) {
         let message = err.data?.message || "Unknown error while applying KubeNode network policies";
-        if (UDSConfig.kubeNodeCidrs) {
+        if (UDSConfig.kubeNodeCIDRs.length > 0) {
           message +=
             ", ensure that the KUBENODE_CIDRS override configured for the operator is correct.";
         }
