@@ -97,7 +97,7 @@ describe("initial config load", () => {
   });
 
   it("loads initial config", async () => {
-    mockClusterConfGet.mockResolvedValue({ items: [mockCfg] });
+    mockClusterConfGet.mockResolvedValue(mockCfg );
     mockSecretGet.mockResolvedValue(mockSecret);
     await loadUDSConfig();
 
@@ -111,7 +111,7 @@ describe("initial config load", () => {
   });
 
   it("throws error because no config", async () => {
-    mockClusterConfGet.mockResolvedValue({ items: [] });
+    mockClusterConfGet.mockResolvedValue(undefined);
 
     try {
       await loadUDSConfig();
@@ -121,7 +121,7 @@ describe("initial config load", () => {
   });
 
   it("does not throw error because no config secret", async () => {
-    mockClusterConfGet.mockResolvedValue({ items: [mockCfg] });
+    mockClusterConfGet.mockResolvedValue(mockCfg);
     mockSecretGet.mockResolvedValue(undefined);
 
     await loadUDSConfig();
@@ -147,7 +147,7 @@ describe("initial config load", () => {
       },
     };
 
-    mockClusterConfGet.mockResolvedValue({ items: [invalidCfg] });
+    mockClusterConfGet.mockResolvedValue(invalidCfg);
     mockSecretGet.mockResolvedValue(mockSecret);
 
     try {

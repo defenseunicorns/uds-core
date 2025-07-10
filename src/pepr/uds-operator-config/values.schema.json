@@ -12,7 +12,7 @@
         },
         "UDS_CA_CERT": { "type": "string", "description": "Deprecated: CA certificate." },
         "UDS_ALLOW_ALL_NS_EXEMPTIONS": {
-          "type": "string",
+          "type": ["boolean", "string"],
           "description": "Deprecated: Allow all namespace exemptions."
         },
         "KUBEAPI_CIDR": {
@@ -73,7 +73,7 @@
           "type": "object",
           "properties": {
             "allowAllNsExemptions": {
-              "type": "string",
+              "type": ["boolean", "string"],
               "description": "Allow all namespace exemptions."
             }
           }

@@ -148,16 +148,18 @@ export async function updateCfg(cfg: ClusterConfig) {
 export async function loadUDSConfig() {
   // Run in Admission and Watcher pods
   if (process.env.PEPR_WATCH_MODE || process.env.PEPR_MODE === "dev") {
-    const cfgList = await K8s(ClusterConfig).Get();
+    const cfg = await K8s(ClusterConfig).Get("uds-cluster-config");
     const cfgSecret = await K8s(kind.Secret).InNamespace("pepr-system").Get("uds-operator-config");
 
-    if (cfgList.items.length === 0) {
+    if (!cfg) {
       throw new Error("No ClusterConfig found");
     }
 
     try {
-      validateCfg(cfgList.items[0]);
-      setConfig(cfgList.items[0], cfgSecret);
+      validateCfg(cfg);
+      await updateCfg(cfg);
+      await updateCfgSecrets(cfgSecret || {});
+      configLog.info(redactConfig(), "Loaded UDS Config");
     } catch (e) {
       configLog.error(e);
       throw e;
@@ -165,56 +167,9 @@ export async function loadUDSConfig() {
   }
 }
 
-export function setConfig(cfg: ClusterConfig, cfgSecret: kind.Secret | undefined) {
-  const secretData = cfgSecret ? decodeSecret(cfgSecret) : {};
-
-  let domain = cfg.spec?.expose.domain;
-  let adminDomain = cfg.spec?.expose.adminDomain;
-  let caCert = cfg.spec?.expose.caCert;
-  let authserviceRedisUri = secretData.AUTHSERVICE_REDIS_URI;
-
-  // We need to handle `npx pepr <>` commands that will not template the env vars
-  if (!domain || domain === "###ZARF_VAR_DOMAIN###") {
-    domain = "uds.dev";
-  }
-  if (!adminDomain || adminDomain === "###ZARF_VAR_ADMIN_DOMAIN###") {
-    adminDomain = `admin.${domain}`;
-  }
-  if (!caCert || caCert === "###ZARF_VAR_CA_CERT###") {
-    caCert = "";
-  }
-  if (!authserviceRedisUri || authserviceRedisUri === "###ZARF_VAR_AUTHSERVICE_REDIS_URI###") {
-    authserviceRedisUri = "";
-  }
-
-  UDSConfig = {
-    // Set the base domain (tenant) and admin domain
-    domain,
-    adminDomain,
-    // Base64 Encoded Trusted CA cert for Istio certificates (i.e. for `sso.domain`)
-    caCert,
-
-    // Allow UDS policy exemptions to be used in any namespace
-    allowAllNSExemptions: cfg.spec?.policy.allowAllNsExemptions === true,
-
-    // Redis URI for Authservice
-    authserviceRedisUri,
-
-    // Static CIDR range to use for KubeAPI instead of k8s watch
-    kubeApiCIDR: cfg.spec?.networking?.kubeApiCIDR || "",
-
-    // Static CIDRs to use for KubeNodes instead of k8s watch. Comma separated list of CIDRs.
-    kubeNodeCIDRs: cfg.spec?.networking?.kubeNodeCIDRs || [],
-
-    // Track if UDS Core identity-authorization layer is deployed
-    isIdentityDeployed: false,
-  };
-
-  configLog.info(redactConfig(), "Loaded UDS Config");
-}
-
 function redactConfig() {
-  return {...UDSConfig, authserviceRedisUri: "****"}
+  const authserviceRedisUri = UDSConfig.authserviceRedisUri ? "****" : ""
+  return { ...UDSConfig, authserviceRedisUri };
 }
 
 function areKubeNodeCidrsEqual(newCidrs: string[] = [], currentCidrs: string[] = []): boolean {

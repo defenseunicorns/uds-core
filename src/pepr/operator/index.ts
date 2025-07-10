@@ -9,16 +9,16 @@ import { When } from "./common";
 
 // Controller imports
 import {
-    initAPIServerCIDR,
-    updateAPIServerCIDRFromEndpointSlice,
-    updateAPIServerCIDRFromService,
+  initAPIServerCIDR,
+  updateAPIServerCIDRFromEndpointSlice,
+  updateAPIServerCIDRFromService,
 } from "./controllers/network/generators/kubeAPI";
 
 // Controller imports
 import {
-    initAllNodesTarget,
-    updateKubeNodesFromCreateUpdate,
-    updateKubeNodesFromDelete,
+  initAllNodesTarget,
+  updateKubeNodesFromCreateUpdate,
+  updateKubeNodesFromDelete,
 } from "./controllers/network/generators/kubeNodes";
 
 // CRD imports
@@ -30,9 +30,9 @@ import { validator } from "./crd/validators/package-validator";
 import { Component, setupLogger } from "../logger";
 import { UDSConfig, updateCfg, updateCfgSecrets } from "./controllers/config/config";
 import {
-    KEYCLOAK_CLIENTS_SECRET_NAME,
-    KEYCLOAK_CLIENTS_SECRET_NAMESPACE,
-    updateKeycloakClientsSecret,
+  KEYCLOAK_CLIENTS_SECRET_NAME,
+  KEYCLOAK_CLIENTS_SECRET_NAMESPACE,
+  updateKeycloakClientsSecret,
 } from "./controllers/keycloak/client-secret-sync";
 import { validateCfgUpdate } from "./crd/validators/clusterconfig-validator";
 import { exemptValidator } from "./crd/validators/exempt-validator";
