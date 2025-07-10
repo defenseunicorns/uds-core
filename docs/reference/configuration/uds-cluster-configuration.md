@@ -32,11 +32,6 @@ cluster:
     kubeNodeCIDRs: []
 ```
 
-> Note
-:::note
-Many of the values under `operator` are deprecated and will be removed. Please use `cluster` going forward.
-:::
-
 ## Setting Values
 
 Some configurations, like `clusterName`, `clusterTags`, `kubeApiCIDR`, and `kubeNodeCIDRs`, can only be set by bundle overrides. All other values can be set either by bundle overrides or by setting the corresponding Zarf variable.

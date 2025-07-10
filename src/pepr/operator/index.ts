@@ -9,16 +9,16 @@ import { When } from "./common";
 
 // Controller imports
 import {
-  initAPIServerCIDR,
-  updateAPIServerCIDRFromEndpointSlice,
-  updateAPIServerCIDRFromService,
+    initAPIServerCIDR,
+    updateAPIServerCIDRFromEndpointSlice,
+    updateAPIServerCIDRFromService,
 } from "./controllers/network/generators/kubeAPI";
 
 // Controller imports
 import {
-  initAllNodesTarget,
-  updateKubeNodesFromCreateUpdate,
-  updateKubeNodesFromDelete,
+    initAllNodesTarget,
+    updateKubeNodesFromCreateUpdate,
+    updateKubeNodesFromDelete,
 } from "./controllers/network/generators/kubeNodes";
 
 // CRD imports
@@ -30,9 +30,9 @@ import { validator } from "./crd/validators/package-validator";
 import { Component, setupLogger } from "../logger";
 import { UDSConfig, updateCfg, updateCfgSecrets } from "./controllers/config/config";
 import {
-  KEYCLOAK_CLIENTS_SECRET_NAME,
-  KEYCLOAK_CLIENTS_SECRET_NAMESPACE,
-  updateKeycloakClientsSecret,
+    KEYCLOAK_CLIENTS_SECRET_NAME,
+    KEYCLOAK_CLIENTS_SECRET_NAMESPACE,
+    updateKeycloakClientsSecret,
 } from "./controllers/keycloak/client-secret-sync";
 import { validateCfgUpdate } from "./crd/validators/clusterconfig-validator";
 import { exemptValidator } from "./crd/validators/exempt-validator";
@@ -57,7 +57,7 @@ if (process.env.PEPR_WATCH_MODE === "true" || process.env.PEPR_MODE === "dev") {
 
 // Watch for changes to the API server EndpointSlice and update the API server CIDR
 // Skip if a CIDR is defined in the UDS Config
-if (!UDSConfig.kubeApiCidr) {
+if (!UDSConfig.kubeApiCIDR) {
   When(a.EndpointSlice)
     .IsCreatedOrUpdated()
     .InNamespace("default")
@@ -105,12 +105,12 @@ When(UDSPackage)
   });
 
 // Watch for changes to the Nodes and update the Node CIDR list
-if (UDSConfig.kubeNodeCidrs.length === 0) {
+if (UDSConfig.kubeNodeCIDRs.length === 0) {
   When(a.Node).IsCreatedOrUpdated().Reconcile(updateKubeNodesFromCreateUpdate);
 }
 
 // Watch for Node deletions and update the Node CIDR list
-if (UDSConfig.kubeNodeCidrs.length === 0) {
+if (UDSConfig.kubeNodeCIDRs.length === 0) {
   When(a.Node).IsDeleted().Reconcile(updateKubeNodesFromDelete);
 }
 

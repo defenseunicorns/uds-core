@@ -188,14 +188,14 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
     } catch (err) {
       let message = err.data?.message || "Unknown error while applying network policies";
       if (
-        UDSConfig.kubeApiCidr &&
+        UDSConfig.kubeApiCIDR &&
         policy.metadata.labels["uds/generated"] === RemoteGenerated.KubeAPI
       ) {
         message +=
           ", ensure that the KUBEAPI_CIDR override configured for the operator is correct.";
       }
       if (
-        UDSConfig.kubeNodeCidrs.length > 0 &&
+        UDSConfig.kubeNodeCIDRs.length > 0 &&
         policy.metadata.labels["uds/generated"] === RemoteGenerated.KubeNodes
       ) {
         message +=

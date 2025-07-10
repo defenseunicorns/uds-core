@@ -31,11 +31,11 @@ export async function initAPIServerCIDR() {
     const svc = await retryWithDelay(fetchKubernetesService, log);
 
     // If static CIDR is defined, pass it directly
-    if (UDSConfig.kubeApiCidr) {
+    if (UDSConfig.kubeApiCIDR) {
       log.info(
-        `Static CIDR (${UDSConfig.kubeApiCidr}) is defined for KubeAPI, skipping EndpointSlice lookup.`,
+        `Static CIDR (${UDSConfig.kubeApiCIDR}) is defined for KubeAPI, skipping EndpointSlice lookup.`,
       );
-      await updateAPIServerCIDR(svc, UDSConfig.kubeApiCidr); // Pass static CIDR
+      await updateAPIServerCIDR(svc, UDSConfig.kubeApiCIDR); // Pass static CIDR
     } else {
       const slice = await retryWithDelay(fetchKubernetesEndpointSlice, log);
       await updateAPIServerCIDR(svc, slice);
@@ -90,9 +90,9 @@ export async function updateAPIServerCIDRFromEndpointSlice(slice: kind.EndpointS
  */
 export async function updateAPIServerCIDRFromService(svc: kind.Service) {
   try {
-    if (UDSConfig.kubeApiCidr) {
+    if (UDSConfig.kubeApiCIDR) {
       log.debug("Processing watch for api service, using configured API CIDR for endpoints");
-      await updateAPIServerCIDR(svc, UDSConfig.kubeApiCidr);
+      await updateAPIServerCIDR(svc, UDSConfig.kubeApiCIDR);
     } else {
       log.debug(
         "Processing watch for api service, getting endpoint slices for updating API server CIDR",
@@ -215,7 +215,7 @@ export async function updateKubeAPINetworkPolicies(newPeers: V1NetworkPolicyPeer
         await K8s(kind.NetworkPolicy).Apply(netPol, { force: true });
       } catch (err) {
         let message = err.data?.message || "Unknown error while applying KubeAPI network policies";
-        if (UDSConfig.kubeApiCidr) {
+        if (UDSConfig.kubeApiCIDR) {
           message +=
             ", ensure that the KUBEAPI_CIDR override configured for the operator is correct.";
         }

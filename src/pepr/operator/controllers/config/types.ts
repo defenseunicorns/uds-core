@@ -9,7 +9,7 @@ export type Config = {
   caCert: string;
   authserviceRedisUri: string | undefined;
   allowAllNSExemptions: boolean;
-  kubeApiCidr: string | undefined;
-  kubeNodeCidrs: string[];
+  kubeApiCIDR: string | undefined;
+  kubeNodeCIDRs: string[];
   isIdentityDeployed: boolean;
 };

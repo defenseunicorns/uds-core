@@ -102,8 +102,8 @@ describe("initial config load", () => {
     await loadUDSConfig();
 
     expect(UDSConfig.caCert).toBe(btoa("mock-ca-cert"));
-    expect(UDSConfig.kubeApiCidr).toBe("mock-cidr");
-    expect(UDSConfig.kubeNodeCidrs).toStrictEqual(["mock-node-cidrs"]);
+    expect(UDSConfig.kubeApiCIDR).toBe("mock-cidr");
+    expect(UDSConfig.kubeNodeCIDRs).toStrictEqual(["mock-node-cidrs"]);
     expect(UDSConfig.domain).toBe("mock-domain");
     expect(UDSConfig.adminDomain).toBe("mock-admin-domain");
     expect(UDSConfig.allowAllNSExemptions).toBe(true);
@@ -127,8 +127,8 @@ describe("initial config load", () => {
     await loadUDSConfig();
 
     expect(UDSConfig.caCert).toBe(btoa("mock-ca-cert"));
-    expect(UDSConfig.kubeApiCidr).toBe("mock-cidr");
-    expect(UDSConfig.kubeNodeCidrs).toStrictEqual(["mock-node-cidrs"]);
+    expect(UDSConfig.kubeApiCIDR).toBe("mock-cidr");
+    expect(UDSConfig.kubeNodeCIDRs).toStrictEqual(["mock-node-cidrs"]);
     expect(UDSConfig.domain).toBe("mock-domain");
     expect(UDSConfig.adminDomain).toBe("mock-admin-domain");
     expect(UDSConfig.allowAllNSExemptions).toBe(true);
@@ -164,8 +164,8 @@ describe("updateUDSConfig", () => {
     vi.clearAllMocks();
     UDSConfig.caCert = "";
     UDSConfig.authserviceRedisUri = "";
-    UDSConfig.kubeApiCidr = "";
-    UDSConfig.kubeNodeCidrs = [];
+    UDSConfig.kubeApiCIDR = "";
+    UDSConfig.kubeNodeCIDRs = [];
     UDSConfig.domain = "";
     UDSConfig.adminDomain = "";
     UDSConfig.allowAllNSExemptions = false;
@@ -181,8 +181,8 @@ describe("updateUDSConfig", () => {
     await updateCfg(mockCfg);
 
     expect(UDSConfig.caCert).toBe(btoa("mock-ca-cert"));
-    expect(UDSConfig.kubeApiCidr).toBe("mock-cidr");
-    expect(UDSConfig.kubeNodeCidrs).toStrictEqual(["mock-node-cidrs"]);
+    expect(UDSConfig.kubeApiCIDR).toBe("mock-cidr");
+    expect(UDSConfig.kubeNodeCIDRs).toStrictEqual(["mock-node-cidrs"]);
     expect(UDSConfig.domain).toBe("mock-domain");
     expect(UDSConfig.adminDomain).toBe("mock-admin-domain");
     expect(UDSConfig.allowAllNSExemptions).toBe(true);
@@ -318,7 +318,7 @@ describe("updateUDSConfig", () => {
   });
 
   it("should call initAPIServerCIDR if KUBEAPI_CIDR changes", async () => {
-    UDSConfig.kubeApiCidr = "old-cidr";
+    UDSConfig.kubeApiCIDR = "old-cidr";
 
     await updateCfg(mockCfg);
 
@@ -326,7 +326,7 @@ describe("updateUDSConfig", () => {
   });
 
   it("should call initAllNodesTarget if KUBENODE_CIDRS changes", async () => {
-    UDSConfig.kubeNodeCidrs = ["old-node-cidrs"];
+    UDSConfig.kubeNodeCIDRs = ["old-node-cidrs"];
 
     await updateCfg(mockCfg);
 
@@ -346,8 +346,8 @@ describe("updateUDSConfig", () => {
   it("does not call unnecessary updates if no values change", async () => {
     // Set UDSConfig to match mockCfg
     UDSConfig.caCert = btoa("mock-ca-cert");
-    UDSConfig.kubeApiCidr = "mock-cidr";
-    UDSConfig.kubeNodeCidrs = ["mock-node-cidrs"];
+    UDSConfig.kubeApiCIDR = "mock-cidr";
+    UDSConfig.kubeNodeCIDRs = ["mock-node-cidrs"];
     UDSConfig.domain = "mock-domain";
     UDSConfig.adminDomain = "mock-admin-domain";
     UDSConfig.allowAllNSExemptions = true;

@@ -24,8 +24,8 @@ const nodeSet = new Set<string>();
  */
 export async function initAllNodesTarget() {
   // if a list of CIDRs is defined, use those
-  if (UDSConfig.kubeNodeCidrs.length > 0) {
-    for (const nodeCidr of UDSConfig.kubeNodeCidrs) {
+  if (UDSConfig.kubeNodeCIDRs.length > 0) {
+    for (const nodeCidr of UDSConfig.kubeNodeCIDRs) {
       nodeSet.add(nodeCidr);
     }
     await updateKubeNodesNetworkPolicies();
@@ -141,7 +141,7 @@ export async function updateKubeNodesNetworkPolicies() {
         await K8s(kind.NetworkPolicy).Apply(netPol, { force: true });
       } catch (err) {
         let message = err.data?.message || "Unknown error while applying KubeNode network policies";
-        if (UDSConfig.kubeNodeCidrs.length > 0) {
+        if (UDSConfig.kubeNodeCIDRs.length > 0) {
           message +=
             ", ensure that the KUBENODE_CIDRS override configured for the operator is correct.";
         }

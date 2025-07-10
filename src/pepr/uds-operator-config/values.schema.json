@@ -5,6 +5,24 @@
     "operator": {
       "type": "object",
       "properties": {
+        "UDS_DOMAIN": { "type": "string", "description": "Deprecated: Domain configuration." },
+        "UDS_ADMIN_DOMAIN": {
+          "type": "string",
+          "description": "Deprecated: Admin domain configuration."
+        },
+        "UDS_CA_CERT": { "type": "string", "description": "Deprecated: CA certificate." },
+        "UDS_ALLOW_ALL_NS_EXEMPTIONS": {
+          "type": "string",
+          "description": "Deprecated: Allow all namespace exemptions."
+        },
+        "KUBEAPI_CIDR": {
+          "type": "string",
+          "description": "Deprecated: CIDR for the Kubernetes API server."
+        },
+        "KUBENODE_CIDRS": {
+          "type": "string",
+          "description": "Deprecated: Comma separated list of CIDRs for Kubernetes nodes."
+        },
         "AUTHSERVICE_REDIS_URI": {
           "type": "string",
           "description": "Redis URI for the auth service."

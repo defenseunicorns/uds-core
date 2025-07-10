@@ -14,10 +14,14 @@ spec:
     tags:
 {{ toYaml .Values.cluster.attributes.clusterTags | nindent 6 }}
   networking:
-    kubeApiCIDR: {{ .Values.cluster.networking.kubeApiCIDR | quote }}
+    kubeApiCIDR: {{ .Values.cluster.networking.kubeApiCIDR | default .Values.operator.KUBEAPI_CIDR | quote }}
     kubeNodeCIDRs:
 {{- if .Values.cluster.networking.kubeNodeCIDRs }}
 {{ toYaml .Values.cluster.networking.kubeNodeCIDRs | nindent 6 }}
+{{- else if .Values.operator.KUBENODE_CIDRS }}
+{{- range ( split "," .Values.operator.KUBENODE_CIDRS ) }}
+      - {{ . | quote }}
+{{- end }}
 {{- end }}
   expose:
     domain: {{ .Values.cluster.expose.domain | quote }}

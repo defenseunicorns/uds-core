@@ -20,8 +20,8 @@ export let UDSConfig: Config = {
   caCert: "",
   authserviceRedisUri: "",
   allowAllNSExemptions: false,
-  kubeApiCidr: "",
-  kubeNodeCidrs: [],
+  kubeApiCIDR: "",
+  kubeNodeCIDRs: [],
   isIdentityDeployed: false,
 };
 
@@ -111,15 +111,15 @@ export async function updateCfg(cfg: ClusterConfig) {
   await handleCAUpdate(expose);
 
   // Handle changes to the kubeApiCidr
-  if (networking?.kubeApiCIDR !== UDSConfig.kubeApiCidr) {
-    UDSConfig.kubeApiCidr = networking?.kubeApiCIDR;
+  if (networking?.kubeApiCIDR !== UDSConfig.kubeApiCIDR) {
+    UDSConfig.kubeApiCIDR = networking?.kubeApiCIDR;
     // This re-runs the "init" function to update netpols if necessary
     configLog.debug("Updating KubeAPI network policies based on change to kubeApiCidr");
     await initAPIServerCIDR();
   }
 
-  if (!areKubeNodeCidrsEqual(networking?.kubeNodeCIDRs, UDSConfig.kubeNodeCidrs)) {
-    UDSConfig.kubeNodeCidrs = networking?.kubeNodeCIDRs || [];
+  if (!areKubeNodeCidrsEqual(networking?.kubeNodeCIDRs, UDSConfig.kubeNodeCIDRs)) {
+    UDSConfig.kubeNodeCIDRs = networking?.kubeNodeCIDRs || [];
     // This re-runs the "init" function to update netpols if necessary
     configLog.debug("Updating KubeNodes network policies based on change to kubeNodeCidrs");
     await initAllNodesTarget();
@@ -201,10 +201,10 @@ export function setConfig(cfg: ClusterConfig, cfgSecret: kind.Secret | undefined
     authserviceRedisUri,
 
     // Static CIDR range to use for KubeAPI instead of k8s watch
-    kubeApiCidr: cfg.spec?.networking?.kubeApiCIDR || "",
+    kubeApiCIDR: cfg.spec?.networking?.kubeApiCIDR || "",
 
     // Static CIDRs to use for KubeNodes instead of k8s watch. Comma separated list of CIDRs.
-    kubeNodeCidrs: cfg.spec?.networking?.kubeNodeCIDRs || [],
+    kubeNodeCIDRs: cfg.spec?.networking?.kubeNodeCIDRs || [],
 
     // Track if UDS Core identity-authorization layer is deployed
     isIdentityDeployed: false,
