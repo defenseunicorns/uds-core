@@ -5,7 +5,7 @@
 
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { UDSPackage } from "../../../crd";
-import { setConfig } from "../../config/config";
+import { updateCfg, updateCfgSecrets } from "../../config/config";
 import { Client } from "../types";
 import { updatePolicy } from "./authorization-policy";
 import { buildChain, buildConfig } from "./authservice";
@@ -16,7 +16,7 @@ import { Action, AuthServiceEvent, AuthserviceConfig } from "./types";
 describe("authservice", () => {
   let mockClient: Client;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
 
     mockClient = {
@@ -48,10 +48,10 @@ describe("authservice", () => {
       webOrigins: [],
     };
 
-    setConfig(
-      { spec: { expose: { domain: "uds.dev" }, policy: { allowAllNsExemptions: false } } },
-      { data: { AUTHSERVICE_REDIS_URI: btoa("redis://localhost:6379") } },
-    );
+    await updateCfg({
+      spec: { expose: { domain: "uds.dev" }, policy: { allowAllNsExemptions: false } },
+    });
+    await updateCfgSecrets({ data: { AUTHSERVICE_REDIS_URI: btoa("redis://localhost:6379") } });
     initializeOperatorConfig();
   });
 

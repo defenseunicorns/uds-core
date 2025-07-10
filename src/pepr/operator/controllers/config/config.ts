@@ -14,7 +14,7 @@ import { initAllNodesTarget } from "../network/generators/kubeNodes";
 import { Config } from "./types";
 
 // Set default UDSConfig for build time compiling
-export let UDSConfig: Config = {
+export const UDSConfig: Config = {
   domain: "",
   adminDomain: "",
   caCert: "",
@@ -168,7 +168,7 @@ export async function loadUDSConfig() {
 }
 
 function redactConfig() {
-  const authserviceRedisUri = UDSConfig.authserviceRedisUri ? "****" : ""
+  const authserviceRedisUri = UDSConfig.authserviceRedisUri ? "****" : "";
   return { ...UDSConfig, authserviceRedisUri };
 }
 

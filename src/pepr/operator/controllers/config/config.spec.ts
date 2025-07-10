@@ -97,7 +97,7 @@ describe("initial config load", () => {
   });
 
   it("loads initial config", async () => {
-    mockClusterConfGet.mockResolvedValue(mockCfg );
+    mockClusterConfGet.mockResolvedValue(mockCfg);
     mockSecretGet.mockResolvedValue(mockSecret);
     await loadUDSConfig();
 
