@@ -43,7 +43,9 @@ cluster:
 ```
 
 > Note
-> Many of the values under `operator` are deprecated and will be removed. Please use `cluster` going forward.
+:::note
+Many of the values under `operator` are deprecated and will be removed. Please use `cluster` going forward.
+:::
 
 ## Setting Values
 
