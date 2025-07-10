@@ -18,18 +18,6 @@ export const controls = registerControls({
     description: "Prevents Volume Escalation",
     remarks: "Does not allow Volume to be mounted with elevated privileges"
   },
-
-  ServiceMesh: {
-    id: "NIST-800-53-5",
-    description: "Service Mesh",
-    remarks: "Uses mTLS for encrypted communication between services"
-  },
-
-  NetworkPolicy: {
-    id: "NIST-800-53-6",
-    description: "Network Policy",
-    remarks: "Uses Network Policies to control traffic between pods"
-  },
 })
 describe("KSI Continuous Scanning", () => {
     it("does not allow privilege escalation", async () => {

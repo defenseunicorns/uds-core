@@ -38,19 +38,5 @@
         "source": "node"
       }
     ]
-  },
-  "NIST-800-53-5": {
-    "id": "NIST-800-53-5",
-    "description": "Service Mesh",
-    "remarks": "Uses mTLS for encrypted communication between services",
-    "coveragePercent": 0,
-    "implementations": []
-  },
-  "NIST-800-53-6": {
-    "id": "NIST-800-53-6",
-    "description": "Network Policy",
-    "remarks": "Uses Network Policies to control traffic between pods",
-    "coveragePercent": 0,
-    "implementations": []
   }
 }
