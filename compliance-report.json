@@ -1,0 +1,56 @@
+{
+  "AC-1": {
+    "id": "AC-1",
+    "description": "Prevents Pod Escalation",
+    "remarks": "Does not allow Pods to run as root or escalate privileges",
+    "coveragePercent": 100,
+    "implementations": [
+      {
+        "controlId": "AC-1",
+        "coverage": 100,
+        "justification": "PASS - Privilege escalation is disallowed.",
+        "source": "node"
+      },
+      {
+        "controlId": "AC-1",
+        "coverage": 100,
+        "justification": "PASS - Containers must not run as root.",
+        "source": "node"
+      }
+    ]
+  },
+  "AC-2": {
+    "id": "AC-2",
+    "description": "Prevents Volume Escalation",
+    "remarks": "Does not allow Volume to be mounted with elevated privileges",
+    "coveragePercent": 100,
+    "implementations": [
+      {
+        "controlId": "AC-2",
+        "coverage": 100,
+        "justification": "PASS - Volume kubelet-dir has a disallowed volume type of 'hostPath'.",
+        "source": "node"
+      },
+      {
+        "controlId": "AC-2",
+        "coverage": 100,
+        "justification": "PASS - hostPath volume 'kubelet-dir' must be mounted as readOnly.",
+        "source": "node"
+      }
+    ]
+  },
+  "NIST-800-53-5": {
+    "id": "NIST-800-53-5",
+    "description": "Service Mesh",
+    "remarks": "Uses mTLS for encrypted communication between services",
+    "coveragePercent": 0,
+    "implementations": []
+  },
+  "NIST-800-53-6": {
+    "id": "NIST-800-53-6",
+    "description": "Network Policy",
+    "remarks": "Uses Network Policies to control traffic between pods",
+    "coveragePercent": 0,
+    "implementations": []
+  }
+}
