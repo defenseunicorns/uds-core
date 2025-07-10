@@ -5,6 +5,7 @@ name: Compliance Test
 
 # This workflow is triggered on pull requests
 on:
+  workflow_dispatch:
   pull_request:
     # milestoned is added here as a workaround for release-please not triggering PR workflows (PRs should be added to a milestone to trigger the workflow).
     # labeled is added to support renovate-ready labelling on PRs

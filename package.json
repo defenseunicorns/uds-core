@@ -30,11 +30,12 @@
     "test:compliance": "uds run slim-dev --no-progress && npx vitest run compliance/e2e-suite"
   },
   "dependencies": {
-    "pepr": "0.51.5"
+    "pepr": "0.51.6"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.27.0",
+    "@types/ws": "^8.18.1",
     "compliance-reporter": "^0.1.1",
     "globals": "^16.2.0",
     "husky": "9.1.7",
