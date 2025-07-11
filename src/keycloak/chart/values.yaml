@@ -124,7 +124,7 @@ devMode: true
 debugMode: false
 
 # Enable JSON logging format for Keycloak
-jsonLogFormat: true
+jsonLogFormat: false
 
 # Enable SMTP networkPolicy and config
 smtp:
@@ -329,3 +329,14 @@ mtlsClientCert: "%DOWNSTREAM_PEER_CERT%"
 migrations:
   # Deletes the generated truststore to enable recreating it by Keycloak
   deleteGeneratedTrustStore: false
+
+#thirdPartyIntegration:
+#  tls:
+#    # This would instruct Istio to allow unencrypted traffic at the Tenant Gateway
+#    # We could potentially configure numTrustedProxies when this is set to external
+#    tlsTermination: external
+#    # This would deploy the Envoy Filter and switch to HAProxy SSL Lookup Provider in Keycloak
+#    # For AWS, we'd use x-amzn-mtls-clientcert here
+#    tlsCertificateHeader: x-ssl-custom-cert
+#    # The format of the client certificate header (PEM or DER)
+#    tlsCertificateFormat: PEM

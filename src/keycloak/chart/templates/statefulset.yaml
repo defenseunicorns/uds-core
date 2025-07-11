@@ -176,6 +176,8 @@ spec:
               value: DEBUG
             - name: QUARKUS_LOG_CATEGORY__ORG_APACHE_HTTP__LEVEL
               value: DEBUG
+            - name: QUARKUS_HTTP_ACCESS_LOG_PATTERN
+              value: long
             - name: QUARKUS_LOG_CATEGORY__ORG_KEYCLOAK_SERVICES_X509__LEVEL
               value: TRACE
             # Crypto information, primarily for FIPS debugging
