@@ -55,9 +55,7 @@ UDS Core provides a Secret Pod Reload mechanism that can restart pods or deploym
 
 To enable automatic pod reload when a secret changes, add the `uds.dev/pod-reload: "true"` label to your secret.
 
-### Example
-
-Here's an example of a secret configuration with pod reload enabled:
+### Example SSO Secret with Pod Reload
 
 ```yaml
 apiVersion: uds.dev/v1alpha1

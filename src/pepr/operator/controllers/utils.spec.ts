@@ -3,11 +3,12 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
+import { GenericClass } from "kubernetes-fluent-client";
 import { K8s, kind } from "pepr";
 import { Logger } from "pino";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as utils from "./utils";
-import { reloadPods, retryWithDelay } from "./utils";
+import { createEvent, reloadPods, restartController, retryWithDelay } from "./utils";
 
 // Mock K8s client
 vi.mock("pepr", () => {
@@ -17,6 +18,7 @@ vi.mock("pepr", () => {
     ReplicaSet: "ReplicaSet",
     StatefulSet: "StatefulSet",
     DaemonSet: "DaemonSet",
+    CoreEvent: "CoreEvent",
   };
 
   return {
@@ -25,21 +27,52 @@ vi.mock("pepr", () => {
   };
 });
 
-// No need to mock the internal functions - we'll use spies instead
+// Helper function to create a mock Pino logger
+function createMockLogger(overrides = {}) {
+  return {
+    level: "info",
+    fatal: vi.fn(),
+    error: vi.fn(),
+    warn: vi.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
+    trace: vi.fn(),
+    // Override with any custom implementations
+    ...overrides,
+  } as unknown as Logger;
+}
+
+// Helper function to create a mock K8s client with all required methods
+function createMockK8sClient(overrides = {}) {
+  return {
+    // Core methods
+    Create: vi.fn().mockResolvedValue({}),
+    Logs: vi.fn().mockResolvedValue({}),
+    Get: vi.fn().mockResolvedValue({}),
+    Delete: vi.fn().mockResolvedValue({}),
+    Evict: vi.fn().mockResolvedValue({}),
+    Watch: vi.fn().mockResolvedValue({}),
+    Apply: vi.fn().mockResolvedValue({}),
+    Patch: vi.fn().mockResolvedValue({}),
+    PatchStatus: vi.fn().mockResolvedValue({}),
+    Raw: vi.fn().mockResolvedValue({}),
+    Proxy: vi.fn().mockResolvedValue({}),
+
+    // Fluent API methods
+    WithField: vi.fn().mockReturnThis(),
+    InNamespace: vi.fn().mockReturnThis(),
+    WithLabel: vi.fn().mockReturnThis(),
+
+    // Apply any custom overrides
+    ...overrides,
+  };
+}
 
 describe("retryWithDelay", () => {
   let mockLogger: Logger;
 
   beforeEach(() => {
-    mockLogger = {
-      warn: vi.fn(),
-      level: "info",
-      fatal: vi.fn(),
-      error: vi.fn(),
-      info: vi.fn(),
-      debug: vi.fn(),
-      trace: vi.fn(),
-    } as unknown as Logger;
+    mockLogger = createMockLogger();
   });
 
   beforeEach(() => {});
@@ -109,71 +142,39 @@ describe("retryWithDelay", () => {
 
 describe("reloadPods", () => {
   let mockLogger: Logger;
+  let mockK8sClient: ReturnType<typeof createMockK8sClient>;
 
-  // Mock K8s client operations
-  const mockWithName = vi.fn().mockReturnThis();
-  const mockInNamespace = vi.fn().mockReturnThis();
-  const mockGet = vi.fn();
-  const mockEvict = vi.fn();
-  const mockApply = vi.fn();
-  const mockDelete = vi.fn();
-  const mockPatch = vi.fn();
-  const mockCreate = vi.fn();
+  // Track which controller kinds are used with K8s
+  let lastUsedControllerKind: GenericClass | null = null;
+  let lastControllerName: string = "";
 
   beforeEach(() => {
     vi.resetAllMocks();
 
     // Setup logger mock
-    mockLogger = {
-      warn: vi.fn(),
-      level: "info",
-      fatal: vi.fn(),
-      error: vi.fn(),
-      info: vi.fn(),
-      debug: vi.fn(),
-      trace: vi.fn(),
-    } as unknown as Logger;
+    mockLogger = createMockLogger();
 
-    // Setup K8s mock with chainable methods
-    mockWithName.mockImplementation(() => ({
-      Get: mockGet,
-      Evict: mockEvict,
-      Apply: mockApply,
-      Delete: mockDelete,
-    }));
-
-    mockInNamespace.mockImplementation(() => ({
-      WithName: mockWithName,
-      Get: mockGet,
-      Apply: mockApply,
-      Patch: mockPatch,
-    }));
-
-    // Configure the main K8s mock with all required methods
-    vi.mocked(K8s).mockImplementation(() => ({
-      InNamespace: mockInNamespace,
-      Apply: mockApply,
-      Delete: mockDelete,
-      Get: mockGet,
-      Evict: mockEvict,
-      Patch: mockPatch,
-      Watch: vi.fn(),
-      Logs: vi.fn(),
-      WithField: vi.fn().mockReturnThis(),
-      WithLabel: vi.fn().mockReturnThis(),
-      Create: mockCreate,
-      PatchStatus: vi.fn(),
-      Raw: vi.fn(),
-    }));
-
-    // Default successful responses
-    mockGet.mockResolvedValue({ items: [] });
-    mockEvict.mockResolvedValue({ status: "Success" });
-    mockApply.mockResolvedValue({ status: "Success" });
-    mockDelete.mockResolvedValue({ status: "Success" });
+    // Create a mock K8s client with default responses
+    mockK8sClient = createMockK8sClient();
 
     // Reset the reloadPods helper spy
     vi.spyOn(utils, "reloadPods").mockClear();
+
+    // Reset tracking variables
+    lastUsedControllerKind = null;
+    lastControllerName = "";
+
+    // Configure the main K8s mock
+    vi.mocked(K8s).mockImplementation(
+      (resourceKind: GenericClass, options?: { name?: string; namespace?: string }) => {
+        // Track the controller kind and name when a specific controller is targeted
+        if (options?.name) {
+          lastUsedControllerKind = resourceKind;
+          lastControllerName = options.name;
+        }
+        return mockK8sClient;
+      },
+    );
   });
 
   it("should handle empty pod lists", async () => {
@@ -183,28 +184,20 @@ describe("reloadPods", () => {
 
   it("should directly evict standalone pods", async () => {
     // Pod without any owner reference
+    const podName = "standalone-pod";
     const pods = [
       {
         metadata: {
-          name: "standalone-pod",
+          name: podName,
           namespace: "default",
         },
       },
     ];
 
-    // Setup the namespace chain for pod eviction
-    mockInNamespace.mockImplementation(() => ({
-      WithName: mockWithName,
-      Evict: mockEvict,
-      WithLabel: vi.fn().mockReturnThis(),
-      Get: mockGet,
-      Apply: mockApply,
-    }));
-
     await reloadPods("default", pods as kind.Pod[], "Test eviction", mockLogger);
 
     // The standalone pod should be evicted
-    expect(mockEvict).toHaveBeenCalled();
+    expect(mockK8sClient.Evict).toHaveBeenCalledWith(podName);
   });
 
   it("should restart StatefulSets by patching with annotation", async () => {
@@ -227,7 +220,7 @@ describe("reloadPods", () => {
     ];
 
     // Mock StatefulSet get response
-    mockGet.mockResolvedValueOnce({
+    mockK8sClient.Get.mockResolvedValueOnce({
       metadata: { name: "test-statefulset", namespace: "default", uid: "test-uid" },
       apiVersion: "apps/v1",
       kind: "StatefulSet",
@@ -237,7 +230,7 @@ describe("reloadPods", () => {
     await reloadPods("default", pods as kind.Pod[], "Test eviction", mockLogger);
 
     // Should patch the StatefulSet with restart annotation
-    expect(mockPatch).toHaveBeenCalledWith([
+    expect(mockK8sClient.Patch).toHaveBeenCalledWith([
       expect.objectContaining({
         op: "add",
         path: "/spec/template/metadata/annotations/uds.dev~1restartedAt",
@@ -245,8 +238,12 @@ describe("reloadPods", () => {
       }),
     ]);
 
+    // Verify the correct controller kind was used
+    expect(lastUsedControllerKind).toBe(kind.StatefulSet);
+    expect(lastControllerName).toBe("test-statefulset");
+
     // Should create an event for the controller restart
-    expect(mockCreate).toHaveBeenCalledWith(
+    expect(mockK8sClient.Create).toHaveBeenCalledWith(
       expect.objectContaining({
         type: "Normal",
         reason: "SecretChanged",
@@ -281,7 +278,7 @@ describe("reloadPods", () => {
     ];
 
     // Mock ReplicaSet with Deployment owner
-    mockGet.mockResolvedValueOnce({
+    mockK8sClient.Get.mockResolvedValueOnce({
       metadata: {
         name: "test-replicaset",
         ownerReferences: [
@@ -296,7 +293,7 @@ describe("reloadPods", () => {
     });
 
     // Mock Deployment
-    mockGet.mockResolvedValueOnce({
+    mockK8sClient.Get.mockResolvedValueOnce({
       metadata: { name: "test-deployment", namespace: "default", uid: "deployment-uid" },
       apiVersion: "apps/v1",
       kind: "Deployment",
@@ -306,7 +303,7 @@ describe("reloadPods", () => {
     await reloadPods("default", pods as kind.Pod[], "Test eviction", mockLogger);
 
     // Should patch the Deployment with restart annotation
-    expect(mockPatch).toHaveBeenCalledWith([
+    expect(mockK8sClient.Patch).toHaveBeenCalledWith([
       expect.objectContaining({
         op: "add",
         path: "/spec/template/metadata/annotations/uds.dev~1restartedAt",
@@ -314,8 +311,12 @@ describe("reloadPods", () => {
       }),
     ]);
 
+    // Verify the correct controller kind was used
+    expect(lastUsedControllerKind).toBe(kind.Deployment);
+    expect(lastControllerName).toBe("test-deployment");
+
     // Should create an event for the controller restart
-    expect(mockCreate).toHaveBeenCalledWith(
+    expect(mockK8sClient.Create).toHaveBeenCalledWith(
       expect.objectContaining({
         type: "Normal",
         reason: "SecretChanged",
@@ -350,7 +351,7 @@ describe("reloadPods", () => {
     ];
 
     // Mock ReplicaSet with no owner
-    mockGet.mockResolvedValue({
+    mockK8sClient.Get.mockResolvedValue({
       metadata: { name: "standalone-replicaset", namespace: "default", uid: "replicaset-uid" },
       apiVersion: "apps/v1",
       kind: "ReplicaSet",
@@ -360,7 +361,7 @@ describe("reloadPods", () => {
     await reloadPods("default", pods as kind.Pod[], "Test eviction", mockLogger);
 
     // Should patch the ReplicaSet directly with restart annotation
-    expect(mockPatch).toHaveBeenCalledWith([
+    expect(mockK8sClient.Patch).toHaveBeenCalledWith([
       expect.objectContaining({
         op: "add",
         path: "/spec/template/metadata/annotations/uds.dev~1restartedAt",
@@ -368,8 +369,12 @@ describe("reloadPods", () => {
       }),
     ]);
 
+    // Verify the correct controller kind was used
+    expect(lastUsedControllerKind).toBe(kind.ReplicaSet);
+    expect(lastControllerName).toBe("standalone-replicaset");
+
     // Should create an event for the ReplicaSet restart
-    expect(mockCreate).toHaveBeenCalledWith(
+    expect(mockK8sClient.Create).toHaveBeenCalledWith(
       expect.objectContaining({
         type: "Normal",
         reason: "SecretChanged",
@@ -384,7 +389,7 @@ describe("reloadPods", () => {
     );
   });
 
-  it("should fall back to direct pod eviction if controller patching fails", async () => {
+  it("should log an error if controller patching fails but not attempt pod eviction", async () => {
     // Create a statefulset-controlled pod
     const pods = [
       {
@@ -406,58 +411,43 @@ describe("reloadPods", () => {
     // Reset all mocks before test
     vi.resetAllMocks();
 
-    // Set up the K8s mock to handle different resources
-    const mockStatefulSetClient = {
-      InNamespace: vi.fn().mockReturnValue({
-        Get: vi.fn().mockResolvedValue({
-          metadata: { name: "test-statefulset" },
-          spec: { template: { metadata: { annotations: {} } } },
-        }),
-        Patch: mockPatch, // This will be rejected below
-      }),
-      Patch: mockPatch, // Also provide at this level for flexibility
-    };
-
-    const mockPodClient = {
-      InNamespace: vi.fn().mockReturnValue({
-        WithName: vi.fn().mockReturnValue({
-          Evict: vi.fn().mockResolvedValue({}), // Successfully evict the pod
-        }),
-      }),
-    };
+    // Configure mockK8sClient for this test
+    mockK8sClient.Get.mockResolvedValueOnce({
+      metadata: { name: "test-statefulset" },
+      spec: { template: { metadata: { annotations: {} } } },
+    });
 
     // Fail the Patch call to trigger fallback path
-    mockPatch.mockRejectedValueOnce(new Error("Failed to patch controller"));
+    mockK8sClient.Patch.mockRejectedValueOnce(new Error("Failed to patch controller"));
 
-    // Setup K8s mock to handle different resource types with proper types
-    const mockK8sImplementation = (resourceKind: typeof kind.StatefulSet | typeof kind.Pod) => {
-      if (resourceKind === kind.StatefulSet) {
-        return mockStatefulSetClient;
-      } else if (resourceKind === kind.Pod) {
-        return mockPodClient;
+    // Configure successful pod eviction
+    mockK8sClient.Evict.mockResolvedValue({});
+
+    // Set up K8s mock to return our mockK8sClient
+    vi.mocked(K8s).mockImplementation((resourceKind, options) => {
+      // Track the controller kind and name when a specific controller is targeted
+      if (options?.name) {
+        lastUsedControllerKind = resourceKind;
+        lastControllerName = options.name;
       }
-      return {
-        InNamespace: vi.fn().mockReturnThis(),
-        Apply: vi.fn(),
-        Get: vi.fn(),
-        Patch: vi.fn(),
-      };
-    };
-
-    // Use unknown first, then cast to the expected K8s function type
-    vi.mocked(K8s).mockImplementation(mockK8sImplementation as unknown as typeof K8s);
+      return mockK8sClient;
+    });
 
     // Execute the function under test
     await reloadPods("default", pods as kind.Pod[], "Test eviction", mockLogger);
 
     // Verify Patch was called and errored
-    expect(mockPatch).toHaveBeenCalledWith([
+    expect(mockK8sClient.Patch).toHaveBeenCalledWith([
       expect.objectContaining({
         op: "add",
         path: "/spec/template/metadata/annotations/uds.dev~1restartedAt",
         value: expect.any(String),
       }),
     ]);
+
+    // Verify the correct controller kind was used
+    expect(lastUsedControllerKind).toBe(kind.StatefulSet);
+    expect(lastControllerName).toBe("test-statefulset");
 
     // Verify error was logged with correct controller info
     expect(mockLogger.error).toHaveBeenCalledWith(
@@ -468,10 +458,248 @@ describe("reloadPods", () => {
       expect.stringContaining("Failed to handle controller for pod"),
     );
 
-    // Verify pod eviction client was accessed
-    expect(mockPodClient.InNamespace).toHaveBeenCalledWith("default");
+    // Verify pod eviction was NOT attempted
+    expect(mockK8sClient.InNamespace).not.toHaveBeenCalled();
+    expect(mockK8sClient.Evict).not.toHaveBeenCalled();
+  });
+});
 
-    // Verify the fallback path logged the right message
-    expect(mockLogger.info).toHaveBeenCalledWith(expect.stringContaining("Directly evicting"));
+describe("createEvent", () => {
+  // Save original environment
+  const originalEnv = process.env;
+  let mockLogger: Logger;
+  let mockK8sClient: ReturnType<typeof createMockK8sClient>;
+
+  beforeEach(() => {
+    // Reset mocks
+    vi.resetAllMocks();
+
+    // Setup environment variables
+    process.env = { ...originalEnv, HOSTNAME: "test-host" };
+
+    // Setup logger mock
+    mockLogger = createMockLogger();
+
+    // Create a mock K8s client
+    mockK8sClient = createMockK8sClient();
+  });
+
+  afterEach(() => {
+    // Restore environment
+    process.env = originalEnv;
+  });
+
+  it("should create an event for a valid resource", async () => {
+    // Set up K8s mocks
+    vi.mocked(K8s).mockReturnValue(mockK8sClient);
+
+    // Create a test resource
+    const resource = {
+      apiVersion: "v1",
+      kind: "Pod",
+      metadata: {
+        name: "test-pod",
+        namespace: "test-ns",
+        uid: "test-uid",
+      },
+    };
+
+    // Call the function
+    await createEvent(
+      resource,
+      {
+        reason: "TestReason",
+        message: "Test message",
+      },
+      mockLogger,
+    );
+
+    // Verify K8s was called with CoreEvent
+    expect(K8s).toHaveBeenCalledWith(kind.CoreEvent);
+
+    // Verify Create was called with the correct event data
+    expect(mockK8sClient.Create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "Normal",
+        reason: "TestReason",
+        message: "Test message",
+        metadata: {
+          namespace: "test-ns",
+          generateName: "test-pod",
+        },
+        involvedObject: {
+          apiVersion: "v1",
+          kind: "Pod",
+          name: "test-pod",
+          namespace: "test-ns",
+          uid: "test-uid",
+        },
+        reportingComponent: "uds.dev/operator",
+        reportingInstance: "test-host",
+      }),
+    );
+  });
+
+  it("should throw errors when event creation fails", async () => {
+    // Mock K8s Create function to throw an error
+    const mockCreate = vi.fn().mockRejectedValue(new Error("Test error"));
+
+    // Set up K8s mocks
+    vi.mocked(K8s).mockReturnValue(
+      createMockK8sClient({
+        Create: mockCreate,
+      }),
+    );
+
+    // Create a test resource
+    const resource = {
+      apiVersion: "v1",
+      kind: "Pod",
+      metadata: {
+        name: "test-pod",
+        namespace: "test-ns",
+      },
+    };
+
+    // Call the function - should throw
+    await expect(createEvent(resource, {}, mockLogger)).rejects.toThrow("Test error");
+  });
+});
+
+describe("restartController", () => {
+  let mockLogger: Logger;
+  let mockK8sClient: ReturnType<typeof createMockK8sClient>;
+
+  beforeEach(() => {
+    // Reset mocks
+    vi.resetAllMocks();
+
+    // Setup logger mock
+    mockLogger = createMockLogger();
+
+    // Create a mock K8s client
+    mockK8sClient = createMockK8sClient();
+  });
+
+  it("should restart a Deployment controller", async () => {
+    // Configure mockK8sClient for this test
+    mockK8sClient.Get.mockResolvedValue({
+      apiVersion: "apps/v1",
+      kind: "Deployment",
+      spec: {
+        template: {
+          metadata: {
+            annotations: {},
+          },
+        },
+      },
+      metadata: {
+        name: "test-deployment",
+        namespace: "test-ns",
+      },
+    });
+
+    // Set up K8s mock to return our mockK8sClient
+    vi.mocked(K8s).mockReturnValue(mockK8sClient);
+
+    // Call the function
+    await restartController(
+      "test-ns",
+      kind.Deployment,
+      "test-deployment",
+      "Secret changed",
+      mockLogger,
+    );
+
+    // Verify Patch was called with the correct annotation
+    expect(mockK8sClient.Patch).toHaveBeenCalledWith([
+      {
+        op: "add",
+        path: "/spec/template/metadata/annotations/uds.dev~1restartedAt",
+        value: expect.any(String),
+      },
+    ]);
+
+    // Verify createEvent was called
+    expect(mockK8sClient.Create).toHaveBeenCalled();
+
+    // Verify the event has the correct properties
+    const eventArg = mockK8sClient.Create.mock.calls[0][0];
+    expect(eventArg).toMatchObject({
+      involvedObject: {
+        apiVersion: "apps/v1",
+        kind: "Deployment",
+        name: "test-deployment",
+        namespace: "test-ns",
+      },
+      metadata: {
+        generateName: "test-deployment",
+        namespace: "test-ns",
+      },
+      message: "Restarted due to: Secret changed",
+      reason: "SecretChanged",
+      type: "Normal",
+      reportingComponent: "uds.dev/operator",
+    });
+
+    // Verify firstTimestamp is a Date
+    expect(eventArg.firstTimestamp).toBeInstanceOf(Date);
+
+    // Verify logger was called
+    expect(mockLogger.info).toHaveBeenCalledWith(
+      expect.objectContaining({
+        controller: "Deployment",
+        name: "test-deployment",
+        namespace: "test-ns",
+      }),
+      expect.stringContaining("Successfully restarted Deployment controller"),
+    );
+  });
+
+  it("should throw an error for unsupported controller kinds", async () => {
+    // Set up K8s mocks
+    vi.mocked(K8s).mockReturnValue(createMockK8sClient());
+
+    // Call the function and expect it to throw
+    await expect(
+      restartController("test-ns", {} as GenericClass, "test-name", "test-reason", mockLogger),
+    ).rejects.toThrow("Unsupported controller kind");
+  });
+
+  it("should handle errors during controller restart", async () => {
+    // Mock K8s Patch function to throw an error
+    const mockPatch = vi.fn().mockRejectedValue(new Error("Test error"));
+
+    // Set up K8s mocks with custom implementation
+    vi.mocked(K8s).mockImplementation((resourceKind, options) => {
+      if (options?.name && options?.namespace) {
+        return createMockK8sClient({
+          Patch: mockPatch,
+        });
+      }
+      return createMockK8sClient();
+    });
+
+    // Call the function and expect it to throw
+    await expect(
+      restartController(
+        "test-ns",
+        kind.StatefulSet,
+        "test-statefulset",
+        "Secret changed",
+        mockLogger,
+      ),
+    ).rejects.toThrow("Test error");
+
+    // Verify logger error was called
+    expect(mockLogger.error).toHaveBeenCalledWith(
+      expect.objectContaining({
+        controller: "StatefulSet",
+        name: "test-statefulset",
+        namespace: "test-ns",
+        error: expect.any(Error),
+      }),
+      "Failed to patch StatefulSet controller: Secret changed",
+    );
   });
 });

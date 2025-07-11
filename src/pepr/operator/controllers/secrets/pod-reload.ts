@@ -40,7 +40,7 @@ export function computeSecretChecksum(data: Record<string, string>): string {
  * @param secretName Name of the secret
  * @returns Array of pods that mount or reference the secret
  */
-async function discoverSecretConsumers(namespace: string, secretName: string) {
+export async function discoverSecretConsumers(namespace: string, secretName: string) {
   // Get all pods in the namespace
   const pods = await K8s(kind.Pod).InNamespace(namespace).Get();
 
@@ -55,13 +55,9 @@ async function discoverSecretConsumers(namespace: string, secretName: string) {
     if (usesSecretVolume) return true;
 
     // Check for projected volumes that include the secret
-    const usesProjectedSecretVolume = pod.spec.volumes?.some(volume => {
-      if (!volume.projected || !volume.projected.sources) return false;
-
-      return volume.projected.sources.some(
-        source => source.secret && source.secret.name === secretName,
-      );
-    });
+    const usesProjectedSecretVolume = pod.spec.volumes?.some(volume =>
+      volume.projected?.sources?.some(source => source.secret?.name === secretName),
+    );
     if (usesProjectedSecretVolume) return true;
 
     // Check environment variables
@@ -150,7 +146,7 @@ export async function handleSecretUpdate(secret: kind.Secret) {
 
     log.debug(
       { secret: name, namespace, selector },
-      "Using explicit pod selector from secret label for reload",
+      "Using explicit pod selector from secret annotation for reload",
     );
 
     // Build query with each label
@@ -159,15 +155,28 @@ export async function handleSecretUpdate(secret: kind.Secret) {
       podQuery = podQuery.WithLabel(key, value);
     }
 
-    const pods = await podQuery.Get();
-    podsToReload = pods.items;
+    try {
+      const pods = await podQuery.Get();
+      podsToReload = pods.items;
+    } catch (error) {
+      log.error(
+        { secret: name, namespace, selector, error },
+        "Failed to get pods using selector from secret annotation",
+      );
+      return;
+    }
   } else {
     // No explicit selector, use auto-discovery
     log.debug(
       { secret: name, namespace },
       "No explicit selector found, auto-discovering secret consumers",
     );
-    podsToReload = await discoverSecretConsumers(namespace, name);
+    try {
+      podsToReload = await discoverSecretConsumers(namespace, name);
+    } catch (error) {
+      log.error({ secret: name, namespace, error }, "Failed to discover secret consumers");
+      return;
+    }
   }
 
   // If no pods found, log and exit
@@ -182,7 +191,15 @@ export async function handleSecretUpdate(secret: kind.Secret) {
     `Reloading ${podsToReload.length} pods due to secret change`,
   );
 
-  await reloadPods(namespace, podsToReload, `Secret ${name} change`, log);
+  try {
+    await reloadPods(namespace, podsToReload, `Secret ${name} change`, log);
+  } catch (error) {
+    log.error(
+      { secret: name, namespace, podCount: podsToReload.length, error },
+      "Failed to reload pods after secret change",
+    );
+    return;
+  }
 }
 
 /**

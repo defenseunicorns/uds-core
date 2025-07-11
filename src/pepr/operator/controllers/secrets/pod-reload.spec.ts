@@ -8,21 +8,33 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as utils from "../utils";
 import {
   computeSecretChecksum,
+  discoverSecretConsumers,
   handleSecretDelete,
   handleSecretUpdate,
   parseSelectorString,
 } from "./pod-reload";
 
-// Mock the logger
-vi.mock("../../../logger", () => ({
-  Component: { OPERATOR_SECRETS: "OPERATOR_SECRETS" },
-  setupLogger: vi.fn().mockReturnValue({
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-  }),
+// Create hoisted mocks
+const mocks = vi.hoisted(() => ({
+  mockDebug: vi.fn(),
+  mockInfo: vi.fn(),
+  mockWarn: vi.fn(),
+  mockError: vi.fn(),
 }));
+
+// Mock the logger
+vi.mock("../../../logger.js", () => ({
+  Component: { OPERATOR_SECRETS: "OPERATOR_SECRETS" },
+  setupLogger: vi.fn().mockImplementation(() => ({
+    debug: mocks.mockDebug,
+    info: mocks.mockInfo,
+    warn: mocks.mockWarn,
+    error: mocks.mockError,
+  })),
+}));
+
+// Destructure mocks for easier access
+const { mockDebug, mockInfo, mockError } = mocks;
 
 // Mock dependencies
 vi.mock("pepr", async importOriginal => {
@@ -38,45 +50,70 @@ vi.mock("pepr", async importOriginal => {
   };
 });
 
-vi.mock("../../../logger", () => ({
-  setupLogger: vi.fn(() => ({
-    debug: vi.fn(),
-    info: vi.fn(),
-    error: vi.fn(),
-    warn: vi.fn(),
-  })),
-  Component: {
-    OPERATOR: "OPERATOR",
-  },
-}));
-
-vi.mock("../utils", () => ({
-  reloadPods: vi.fn(),
-}));
+vi.mock("../utils", async () => {
+  return {
+    reloadPods: vi.fn(),
+  };
+});
 
 // Import the secretChecksumCache directly
 import { secretChecksumCache } from "./pod-reload";
 
 describe("pod-reload", () => {
-  // Mock K8s responses
+  // Clear the secretChecksumCache before each test
+  beforeEach(() => {
+    secretChecksumCache.clear();
+  });
+
+  // Global mocks for K8s API
   const mockGet = vi.fn();
-  const mockWithLabel = vi.fn(() => ({ Get: mockGet }));
-  const mockInNamespace = vi.fn(() => ({
-    Get: mockGet,
-    WithLabel: mockWithLabel,
-  }));
+  const mockWithLabel = vi.fn().mockReturnThis();
+  const mockInNamespace = vi.fn().mockReturnThis();
+
+  // Define interface for K8s response
+  interface K8sResponse<T = unknown> {
+    items: T[];
+  }
+
+  // Helper function to setup K8s mock with standard methods
+  function setupK8sMock(mockGetResponse: K8sResponse = { items: [] }) {
+    // Reset the mocks
+    mockGet.mockReset();
+    mockWithLabel.mockReset().mockReturnThis();
+    mockInNamespace.mockReset().mockReturnThis();
+
+    // Set the response for mockGet
+    mockGet.mockResolvedValue(mockGetResponse);
+
+    // Create the mock K8s client
+    const mockK8sClient = {
+      InNamespace: mockInNamespace,
+      WithLabel: mockWithLabel,
+      Get: mockGet,
+      // Add required methods to satisfy the TypeScript interface
+      Logs: vi.fn(),
+      Delete: vi.fn(),
+      Evict: vi.fn(),
+      Watch: vi.fn(),
+      Apply: vi.fn(),
+      WithField: vi.fn().mockReturnThis(),
+      Create: vi.fn(),
+      Patch: vi.fn(),
+      PatchStatus: vi.fn(),
+      Raw: vi.fn(),
+      Proxy: vi.fn(),
+    };
+
+    // Setup the K8s function mock
+    vi.mocked(K8s).mockImplementation(() => mockK8sClient);
+  }
 
   beforeEach(() => {
     vi.resetAllMocks();
-    // Reset the secret checksum cache before each test
     secretChecksumCache.clear();
 
-    // Setup K8s mocks with fluent API
-    const mockK8s = vi.fn(() => ({
-      InNamespace: mockInNamespace,
-    }));
-
-    (K8s as unknown as ReturnType<typeof vi.fn>).mockImplementation(mockK8s);
+    // Setup K8s mock with empty items array by default
+    setupK8sMock({ items: [] });
   });
 
   afterEach(() => {
@@ -151,8 +188,8 @@ describe("pod-reload", () => {
     });
 
     it("should return early when the selector format is invalid without rotating pods", async () => {
-      // Secret with invalid selector format
-      const secret = {
+      // First, create a secret with valid data to set the initial checksum
+      const initialSecret = {
         metadata: {
           name: "test-secret",
           namespace: "default",
@@ -160,7 +197,7 @@ describe("pod-reload", () => {
             "uds.dev/pod-reload": "true",
           },
           annotations: {
-            "uds.dev/pod-reload-selector": "app:invalid-format", // Invalid format (uses : instead of =)
+            "uds.dev/pod-reload-selector": "app:invalid-format",
           },
         },
         data: {
@@ -169,11 +206,38 @@ describe("pod-reload", () => {
         },
       };
 
-      // Should complete without throwing
-      await handleSecretUpdate(secret as kind.Secret);
+      // Process the initial secret to set the checksum
+      await handleSecretUpdate(initialSecret as kind.Secret);
 
-      // Verify that the function returns early and doesn't call reloadPods
+      // Clear mocks to prepare for the actual test
+      vi.clearAllMocks();
+
+      // Update the secret with invalid selector format and new data
+      const updatedSecret = {
+        ...initialSecret,
+        data: {
+          ...initialSecret.data,
+          username: "bmV3LXVzZXJuYW1l", // new-username
+        },
+      };
+
+      // Process the updated secret
+      await handleSecretUpdate(updatedSecret as kind.Secret);
+
+      // Verify that the function doesn't call reloadPods
       expect(utils.reloadPods).not.toHaveBeenCalled();
+
+      // Verify error log for invalid selector format
+      expect(mockError).toHaveBeenCalledWith(
+        {
+          secret: "test-secret",
+          namespace: "default",
+          selector: "app:invalid-format",
+        },
+        expect.stringContaining(
+          "Invalid selector format in uds.dev/pod-reload-selector annotation for secret",
+        ),
+      );
     });
 
     it("should only reload pods that match the selector when data changes", async () => {
@@ -186,30 +250,8 @@ describe("pod-reload", () => {
         },
       };
 
-      // Mock the K8s API with chainable methods
-      const mockWithLabel = vi.fn().mockReturnThis();
-      const mockInNamespace = vi.fn().mockReturnThis();
-      const mockGet = vi.fn().mockResolvedValue({
-        items: [matchingPod], // Only return the matching pod
-      });
-
-      // Set up the K8s mock to return our chainable mock functions
-      vi.mocked(K8s).mockImplementation(() => ({
-        InNamespace: mockInNamespace,
-        WithLabel: mockWithLabel,
-        Get: mockGet,
-        // Add required methods to satisfy the TypeScript interface
-        Logs: vi.fn(),
-        Delete: vi.fn(),
-        Evict: vi.fn(),
-        Watch: vi.fn(),
-        Apply: vi.fn(),
-        WithField: vi.fn().mockReturnThis(),
-        Create: vi.fn(),
-        Patch: vi.fn(),
-        PatchStatus: vi.fn(),
-        Raw: vi.fn(),
-      }));
+      // Setup K8s mock with our matching pod
+      setupK8sMock({ items: [matchingPod] });
 
       // Mock reloadPods
       vi.mocked(utils.reloadPods).mockResolvedValue();
@@ -246,26 +288,22 @@ describe("pod-reload", () => {
       expect(utils.reloadPods).not.toHaveBeenCalled();
       vi.clearAllMocks(); // Clear mock call history
 
-      // Reset our mocks for the second call
-      vi.mocked(K8s).mockImplementation(() => ({
-        InNamespace: mockInNamespace,
-        WithLabel: mockWithLabel,
-        Get: mockGet,
-        // Add required methods to satisfy the TypeScript interface
-        Logs: vi.fn(),
-        Delete: vi.fn(),
-        Evict: vi.fn(),
-        Watch: vi.fn(),
-        Apply: vi.fn(),
-        WithField: vi.fn().mockReturnThis(),
-        Create: vi.fn(),
-        Patch: vi.fn(),
-        PatchStatus: vi.fn(),
-        Raw: vi.fn(),
-      }));
+      // Reset our mocks for the second call with the same pod
+      setupK8sMock({ items: [matchingPod] });
 
       // Second call with changed data should reload pods
       await handleSecretUpdate(secret2 as kind.Secret);
+
+      // Verify log messages
+      expect(mockInfo).toHaveBeenCalledWith(
+        { secret: "test-secret", namespace: "default" },
+        "Secret data changed, processing pod reload",
+      );
+
+      expect(mockDebug).toHaveBeenCalledWith(
+        { secret: "test-secret", namespace: "default", selector: { app: "test-app" } },
+        "Using explicit pod selector from secret annotation for reload",
+      );
 
       // Verify the correct namespace was used
       expect(mockInNamespace).toHaveBeenCalledWith("default");
@@ -296,29 +334,10 @@ describe("pod-reload", () => {
         },
       };
 
-      // Mock the K8s API with chainable methods
-      const mockWithLabel = vi.fn().mockReturnThis();
-      const mockInNamespace = vi.fn().mockReturnThis();
-      const mockGet = vi.fn().mockResolvedValue({
+      // Setup K8s mock with our matching pod
+      setupK8sMock({
         items: [matchingPod],
       });
-
-      // Set up the K8s mock
-      vi.mocked(K8s).mockImplementation(() => ({
-        InNamespace: mockInNamespace,
-        WithLabel: mockWithLabel,
-        Get: mockGet,
-        Logs: vi.fn(),
-        Delete: vi.fn(),
-        Evict: vi.fn(),
-        Watch: vi.fn(),
-        Apply: vi.fn(),
-        WithField: vi.fn().mockReturnThis(),
-        Create: vi.fn(),
-        Patch: vi.fn(),
-        PatchStatus: vi.fn(),
-        Raw: vi.fn(),
-      }));
 
       // Mock reloadPods
       vi.mocked(utils.reloadPods).mockResolvedValue();
@@ -355,25 +374,30 @@ describe("pod-reload", () => {
       expect(utils.reloadPods).not.toHaveBeenCalled();
       vi.clearAllMocks();
 
-      // Reset mocks for second call
-      vi.mocked(K8s).mockImplementation(() => ({
-        InNamespace: mockInNamespace,
-        WithLabel: mockWithLabel,
-        Get: mockGet,
-        Logs: vi.fn(),
-        Delete: vi.fn(),
-        Evict: vi.fn(),
-        Watch: vi.fn(),
-        Apply: vi.fn(),
-        WithField: vi.fn().mockReturnThis(),
-        Create: vi.fn(),
-        Patch: vi.fn(),
-        PatchStatus: vi.fn(),
-        Raw: vi.fn(),
-      }));
+      // Reset mocks for second call with the same pod
+      setupK8sMock({ items: [matchingPod] });
 
       // Second call should reload pods
       await handleSecretUpdate(secret2 as kind.Secret);
+
+      // Verify log messages
+      expect(mockInfo).toHaveBeenCalledWith(
+        { secret: "multi-selector-secret", namespace: "default" },
+        "Secret data changed, processing pod reload",
+      );
+
+      expect(mockDebug).toHaveBeenCalledWith(
+        {
+          secret: "multi-selector-secret",
+          namespace: "default",
+          selector: {
+            app: "test-app",
+            tier: "frontend",
+            env: "prod",
+          },
+        },
+        "Using explicit pod selector from secret annotation for reload",
+      );
 
       // Verify namespace was set correctly
       expect(mockInNamespace).toHaveBeenCalledWith("default");
@@ -449,8 +473,8 @@ describe("pod-reload", () => {
         },
       };
 
-      // Mock K8s responses
-      mockGet.mockResolvedValue(mockPods);
+      // Setup K8s mock with custom response
+      setupK8sMock(mockPods);
 
       // First call should cache the checksum without rotating
       await handleSecretUpdate(secret1 as kind.Secret);
@@ -460,11 +484,28 @@ describe("pod-reload", () => {
       // Second call with changed data should reload only the pods using the secret
       await handleSecretUpdate(secret2 as kind.Secret);
 
+      // Verify log messages for auto-discovery
+      expect(mockInfo).toHaveBeenCalledWith(
+        { secret: "test-secret", namespace: "default" },
+        "Secret data changed, processing pod reload",
+      );
+
+      expect(mockDebug).toHaveBeenCalledWith(
+        { secret: "test-secret", namespace: "default" },
+        "No explicit selector found, auto-discovering secret consumers",
+      );
+
       // Verify reloadPods was called with the correct parameters
       expect(utils.reloadPods).toHaveBeenCalledTimes(1);
 
+      // Verify the final info log with pod count
+      expect(mockInfo).toHaveBeenCalledWith(
+        { secret: "test-secret", namespace: "default", podCount: 2 },
+        "Reloading 2 pods due to secret change",
+      );
+
       // Check that the namespace and reason are correct
-      const reloadPodCalls = (utils.reloadPods as ReturnType<typeof vi.fn>).mock.calls[0];
+      const reloadPodCalls = vi.mocked(utils.reloadPods).mock.calls[0];
       expect(reloadPodCalls[0]).toBe("default"); // namespace
       expect(reloadPodCalls[2]).toBe("Secret test-secret change"); // reason
 
@@ -527,6 +568,153 @@ describe("pod-reload", () => {
       const invalidSelector = "app:test-app";
       const result = parseSelectorString(invalidSelector);
       expect(result).toBeNull();
+    });
+  });
+
+  describe("discoverSecretConsumers", () => {
+    const secretName = "test-secret";
+    const namespace = "test-ns";
+
+    // Mock the K8s API
+    const mockPods: { items: kind.Pod[] } = {
+      items: [],
+    };
+
+    beforeEach(() => {
+      setupK8sMock(mockPods);
+    });
+
+    it("should return empty array when no pods exist", async () => {
+      mockPods.items = [];
+      const result = await discoverSecretConsumers(namespace, secretName);
+      expect(result).toEqual([]);
+    });
+
+    it("should find pods with direct secret volumes", async () => {
+      mockPods.items = [
+        {
+          metadata: { name: "pod-with-secret-volume" },
+          spec: {
+            volumes: [{ name: "secret-vol", secret: { secretName } }],
+          },
+        } as kind.Pod,
+        {
+          metadata: { name: "pod-without-secret" },
+          spec: {
+            volumes: [{ name: "config", configMap: { name: "config-map" } }],
+          },
+        } as kind.Pod,
+      ];
+
+      const result = await discoverSecretConsumers(namespace, secretName);
+      expect(result).toHaveLength(1);
+      expect(result[0]?.metadata?.name).toBe("pod-with-secret-volume");
+    });
+
+    it("should find pods with projected volumes containing the secret", async () => {
+      mockPods.items = [
+        {
+          metadata: { name: "pod-with-projected-secret" },
+          spec: {
+            volumes: [
+              {
+                name: "projected-vol",
+                projected: {
+                  sources: [
+                    { secret: { name: secretName } },
+                    { configMap: { name: "some-config" } },
+                  ],
+                },
+              },
+            ],
+          },
+        } as kind.Pod,
+      ];
+
+      const result = await discoverSecretConsumers(namespace, secretName);
+      expect(result).toHaveLength(1);
+      expect(result[0]?.metadata?.name).toBe("pod-with-projected-secret");
+    });
+
+    it("should find pods with environment variables from the secret", async () => {
+      mockPods.items = [
+        {
+          metadata: { name: "pod-with-secret-env" },
+          spec: {
+            containers: [
+              {
+                env: [
+                  {
+                    name: "SECRET_VAR",
+                    valueFrom: { secretKeyRef: { name: secretName, key: "key" } },
+                  },
+                ],
+              },
+            ],
+          },
+        } as kind.Pod,
+      ];
+
+      const result = await discoverSecretConsumers(namespace, secretName);
+      expect(result).toHaveLength(1);
+      expect(result[0]?.metadata?.name).toBe("pod-with-secret-env");
+    });
+
+    it("should find pods with environment variables from secret references", async () => {
+      mockPods.items = [
+        {
+          metadata: { name: "pod-with-secret-envfrom" },
+          spec: {
+            containers: [
+              {
+                envFrom: [{ secretRef: { name: secretName } }],
+              },
+            ],
+          },
+        } as kind.Pod,
+      ];
+
+      const result = await discoverSecretConsumers(namespace, secretName);
+      expect(result).toHaveLength(1);
+      expect(result[0]?.metadata?.name).toBe("pod-with-secret-envfrom");
+    });
+
+    it("should check initContainers for secret usage", async () => {
+      mockPods.items = [
+        {
+          metadata: { name: "pod-with-init-container" },
+          spec: {
+            initContainers: [
+              {
+                name: "init",
+                env: [
+                  {
+                    name: "INIT_SECRET",
+                    valueFrom: { secretKeyRef: { name: secretName, key: "key" } },
+                  },
+                ],
+              },
+            ],
+            containers: [],
+          },
+        } as kind.Pod,
+      ];
+
+      const result = await discoverSecretConsumers(namespace, secretName);
+      expect(result).toHaveLength(1);
+      expect(result[0]?.metadata?.name).toBe("pod-with-init-container");
+    });
+
+    it("should handle pods with no spec", async () => {
+      mockPods.items = [
+        {
+          metadata: { name: "pod-without-spec" },
+          // No spec
+        } as kind.Pod,
+      ];
+
+      const result = await discoverSecretConsumers(namespace, secretName);
+      expect(result).toHaveLength(0);
     });
   });
 });

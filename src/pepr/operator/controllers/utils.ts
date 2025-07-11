@@ -161,6 +161,12 @@ export async function reloadPods(namespace: string, pods: kind.Pod[], reason: st
 
   // First pass - identify controllers and standalone pods
   for (const pod of pods) {
+    // Skip pods that don't need to be reloaded (succeeded or failed pods are not automatically restarted)
+    const phase = pod.status?.phase;
+    if (phase === "Succeeded" || phase === "Failed") {
+      log.debug(`Ignoring Pod ${namespace}/${pod.metadata?.name} (phase: ${phase})`);
+      continue;
+    }
     // Skip pods that already have a deletion timestamp
     if (pod.metadata?.deletionTimestamp) {
       log.debug(`Ignoring Pod ${namespace}/${pod.metadata?.name}, already being deleted`);
@@ -187,9 +193,15 @@ export async function reloadPods(namespace: string, pods: kind.Pod[], reason: st
       if (controllerRef.kind === "ReplicaSet") {
         // For ReplicaSets, try to find the parent Deployment
         await handleReplicaSetOwner(namespace, controllerRef.name, reason, log);
-      } else if (["Deployment", "StatefulSet", "DaemonSet"].includes(controllerRef.kind)) {
-        // Handle Deployment, StatefulSet or DaemonSet directly
-        await restartController(namespace, controllerRef.kind, controllerRef.name, reason, log);
+      } else if (controllerRef.kind === "Deployment") {
+        // Handle Deployment directly
+        await restartController(namespace, kind.Deployment, controllerRef.name, reason, log);
+      } else if (controllerRef.kind === "StatefulSet") {
+        // Handle StatefulSet directly
+        await restartController(namespace, kind.StatefulSet, controllerRef.name, reason, log);
+      } else if (controllerRef.kind === "DaemonSet") {
+        // Handle DaemonSet directly
+        await restartController(namespace, kind.DaemonSet, controllerRef.name, reason, log);
       } else {
         // Unhandled controller type, evict the pod directly
         standalonePodsToEvict.push(pod);
@@ -209,9 +221,6 @@ export async function reloadPods(namespace: string, pods: kind.Pod[], reason: st
         },
         `Failed to handle controller for pod: ${reason}`,
       );
-
-      // Fall back to direct pod eviction if controller handling fails
-      standalonePodsToEvict.push(pod);
     }
   }
 
@@ -237,12 +246,12 @@ async function handleReplicaSetOwner(
     // Look for a Deployment owner
     const deploymentOwner = rs.metadata?.ownerReferences?.find(ref => ref.kind === "Deployment");
 
-    if (deploymentOwner && deploymentOwner.name) {
+    if (deploymentOwner?.name) {
       // Found a Deployment owner, restart it
-      await restartController(namespace, "Deployment", deploymentOwner.name, reason, logger);
+      await restartController(namespace, kind.Deployment, deploymentOwner.name, reason, logger);
     } else {
       // Standalone ReplicaSet - restart it directly using the same annotation pattern
-      await restartController(namespace, "ReplicaSet", replicaSetName, reason, logger);
+      await restartController(namespace, kind.ReplicaSet, replicaSetName, reason, logger);
     }
   } catch (error) {
     logger.error(
@@ -258,85 +267,73 @@ async function handleReplicaSetOwner(
  *
  * @param resource The Kubernetes resource to create an event for
  * @param event Partial event object with optional type, reason, message, etc.
+ * @param logger Logger instance for logging
  */
-async function createEvent(
+export async function createEvent(
   resource: GenericKind,
   event: Partial<kind.CoreEvent> = {},
+  logger: Logger,
 ): Promise<void> {
-  try {
-    const name = resource.metadata?.name;
-    const namespace = resource.metadata?.namespace;
-    const resourceKind = resource.kind;
+  const name = resource.metadata?.name;
+  const namespace = resource.metadata?.namespace;
+  const resourceKind = resource.kind;
 
-    // Skip validation in test environments
-    if ((!name || !namespace || !resourceKind) && process.env.NODE_ENV !== "test") {
-      console.error("Cannot create event: resource missing name, namespace, or kind");
-      return;
-    }
-
-    // Create the event using CoreEvent type
-    await K8s(kind.CoreEvent).Create({
-      // Default values that can be overridden
-      type: "Normal",
-      reason: "Update",
-      // User provided overrides
-      ...event,
-      // Fixed values that cannot be overridden
-      metadata: {
-        namespace,
-        generateName: name,
-      },
-      involvedObject: {
-        apiVersion: resource.apiVersion,
-        kind: resourceKind,
-        name,
-        namespace,
-        uid: resource.metadata?.uid,
-      },
-      firstTimestamp: new Date(),
-      reportingComponent: "uds.dev/operator",
-      reportingInstance: process.env.HOSTNAME,
-    });
-  } catch (error) {
-    // Log error but don't fail the main operation if event creation fails
-    const name = resource.metadata?.name;
-    const namespace = resource.metadata?.namespace;
-    const resourceKind = resource.kind;
-    console.error(`Failed to create event for ${resourceKind} ${namespace}/${name}:`, error);
+  if (!name || !namespace || !resourceKind) {
+    const error = new Error("Cannot create event: resource missing name, namespace, or kind");
+    logger.error(error.message);
+    throw error;
   }
+
+  // Create the event using CoreEvent type
+  await K8s(kind.CoreEvent).Create({
+    // Default values that can be overridden
+    type: "Normal",
+    reason: "Update",
+    // User provided overrides
+    ...event,
+    // Fixed values that cannot be overridden
+    metadata: {
+      namespace,
+      generateName: name,
+    },
+    involvedObject: {
+      apiVersion: resource.apiVersion,
+      kind: resourceKind,
+      name,
+      namespace,
+      uid: resource.metadata?.uid,
+    },
+    firstTimestamp: new Date(),
+    reportingComponent: "uds.dev/operator",
+    reportingInstance: process.env.HOSTNAME,
+  });
 }
 
 /**
  * Restart a controller (Deployment, StatefulSet, DaemonSet, ReplicaSet) using the kubectl-style annotation
  */
-async function restartController(
+export async function restartController(
   namespace: string,
-  kindStr: string,
+  controllerKind: GenericClass,
   name: string,
   reason: string,
   logger: Logger,
 ): Promise<void> {
+  // Get the controller kind name for logging
+  const controllerKindName = controllerKind?.name ?? String(controllerKind);
+
+  // Create a list of allowed controller kinds
+  const allowedKinds = [kind.Deployment, kind.StatefulSet, kind.DaemonSet, kind.ReplicaSet];
+
+  // Check if the provided kind is in our allowed list
+  // We use strict equality to check if it's the same object reference
+  const isAllowedKind = allowedKinds.some(k => k === controllerKind);
+
+  if (!isAllowedKind) {
+    throw new Error(`Unsupported controller kind: ${controllerKindName}`);
+  }
+
   try {
-    // Use proper controller kind based on string
-    let controllerKind: GenericClass;
-
-    switch (kindStr) {
-      case "Deployment":
-        controllerKind = kind.Deployment;
-        break;
-      case "StatefulSet":
-        controllerKind = kind.StatefulSet;
-        break;
-      case "DaemonSet":
-        controllerKind = kind.DaemonSet;
-        break;
-      case "ReplicaSet":
-        controllerKind = kind.ReplicaSet;
-        break;
-      default:
-        throw new Error(`Unsupported controller kind: ${kindStr}`);
-    }
-
     // Use a targeted JSON patch to add/update the annotation without needing to get the resource first
     await K8s(controllerKind, { name, namespace }).Patch([
       {
@@ -345,34 +342,47 @@ async function restartController(
         value: new Date().toISOString(),
       },
     ]);
+  } catch (error) {
+    logger.error(
+      { controller: controllerKindName, name, namespace, error },
+      `Failed to patch ${controllerKindName} controller: ${reason}`,
+    );
+    throw error;
+  }
 
+  try {
     // Get the controller resource for the event
     const controller = await K8s(controllerKind).InNamespace(namespace).Get(name);
 
     // Create an event for this controller restart
-    await createEvent(controller, {
-      type: "Normal",
-      reason: "SecretChanged",
-      message: `Restarted due to: ${reason}`,
-    });
-
-    logger.info(
-      { controller: kindStr, name, namespace },
-      `Successfully restarted ${kindStr} controller: ${reason}`,
+    await createEvent(
+      controller,
+      {
+        type: "Normal",
+        reason: "SecretChanged",
+        message: `Restarted due to: ${reason}`,
+      },
+      logger,
     );
   } catch (error) {
     logger.error(
-      { controller: kindStr, name, namespace, error },
-      `Failed to restart ${kindStr} controller: ${reason}`,
+      { controller: controllerKindName, name, namespace, error },
+      `Controller ${controllerKindName}/${name} was restarted, but failed to create event notification`,
     );
-    throw error;
+    // Don't rethrow this error since the patch was successful
   }
+
+  // Log success if we got here (patch was successful)
+  logger.info(
+    { controller: controllerKindName, name, namespace },
+    `Successfully restarted ${controllerKindName} controller: ${reason}`,
+  );
 }
 
 /**
  * Evict standalone pods directly using the Evict API with fallback to Delete
  */
-async function evictStandalonePods(
+export async function evictStandalonePods(
   namespace: string,
   pods: kind.Pod[],
   reason: string,
@@ -409,7 +419,6 @@ async function evictStandalonePods(
           `Failed to evict pod ${namespace}/${pod.metadata?.name} using Evict API, falling back to Delete: ${err.message}`,
         );
         try {
-          pod.metadata!.deletionGracePeriodSeconds = 30;
           await K8s(kind.Pod).Delete(pod);
           log.info(
             `Successfully initiated graceful deletion of pod ${namespace}/${pod.metadata?.name}`,

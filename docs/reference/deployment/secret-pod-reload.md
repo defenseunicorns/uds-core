@@ -1,5 +1,7 @@
 ---
 title: Secret Pod Reload
+tableOfContents:
+  maxHeadingLevel: 4
 ---
 
 UDS Core provides a Secret Pod Reload mechanism that automatically reloads pods when secrets are updated. This feature is particularly useful for credentials, certificates, and configuration data that applications need to refresh without manual intervention.

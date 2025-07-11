@@ -178,7 +178,7 @@ export async function syncClient(
 
     // Prepare default labels
     const secretLabels: Record<string, string> = {
-      "uds/package": pkg.metadata?.name || "",
+      "uds/package": pkg.metadata!.name || "",
       "uds/generation": generation,
     };
 
