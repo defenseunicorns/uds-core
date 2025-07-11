@@ -19,7 +19,7 @@ components:
         valuesFiles:
           - ./values/upstream-values.yaml
     images:
-      - docker.io/grafana/loki:3.5.1
+      - docker.io/grafana/loki:3.5.2
       - docker.io/nginxinc/nginx-unprivileged:1.29-alpine
       - docker.io/memcached:1.6.38-alpine
 
