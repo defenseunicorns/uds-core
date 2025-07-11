@@ -1,9 +1,45 @@
 /**
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
+import { V1ContainerStatus } from "@kubernetes/client-node";
 import { K8s, kind } from "pepr";
 import { v4 as uuidv4 } from "uuid";
-import { afterAll, beforeAll, describe, expect, test } from "vitest";
+import { afterAll, describe, expect, test } from "vitest";
+
+// Helper function to wait on a pod to be ready matching the selector
+async function waitForPodReady(
+  namespace: string,
+  labelSelector: Record<string, string>,
+  timeoutSeconds = 30
+): Promise<void> {
+  const selector = Object.entries(labelSelector)
+    .map(([k, v]) => `${k}=${v}`)
+    .join(",");
+
+  let attempts = 0;
+  const maxAttempts = timeoutSeconds;
+
+  while (attempts < maxAttempts) {
+    const pods = await K8s(kind.Pod)
+      .InNamespace(namespace)
+      .WithLabel(selector)
+      .Get();
+
+    for (const pod of pods.items ?? []) {
+      if (
+        pod.status?.phase === "Running" &&
+        (pod.status.containerStatuses ?? []).every((cs: V1ContainerStatus) => cs.ready)
+      ) {
+        return; // Pod is healthy!
+      }
+    }
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    attempts++;
+  }
+  throw new Error(
+    `Timed out waiting for pod with selector ${selector} in ${namespace} to become healthy`
+  );
+}
 
 // Helper function to wait for a deployment to complete a rollout
 async function waitForDeploymentRollout(
@@ -78,43 +114,36 @@ async function checkForEvents(namespace: string, options: {
 // Test configuration
 const PODINFO_NAMESPACE = "podinfo";
 const PODINFO_DEPLOYMENT = "podinfo";
-const SELECTOR_SECRET_NAME = "test-selector-secret";
-const AUTO_LOOKUP_SECRET_NAME = "test-auto-lookup-secret";
-const TEST_DEPLOYMENT_NAME = "test-secret-consumer";
+const SELECTOR_SECRET_PREFIX = "test-selector-secret";
+const AUTO_LOOKUP_SECRET_PREFIX = "test-auto-lookup-secret";
+const TEST_DEPLOYMENT_PREFIX = "test-secret-consumer";
 
 describe("Secret Auto-reload", () => {
-  // Test setup and cleanup
-  beforeAll(async () => {
-    try {
-      // Clean up any existing test resources
-      try {
-        await K8s(kind.Secret).InNamespace(PODINFO_NAMESPACE).Delete(SELECTOR_SECRET_NAME);
-        await K8s(kind.Secret).InNamespace(PODINFO_NAMESPACE).Delete(AUTO_LOOKUP_SECRET_NAME);
-        await K8s(kind.Deployment).InNamespace(PODINFO_NAMESPACE).Delete(TEST_DEPLOYMENT_NAME);
-      } catch (err) {
-        // Resources might not exist, continue
-      }
-    } catch (error) {
-      console.error("Error in beforeAll:", error);
-      throw error;
-    }
-  });
+  const createdSecrets: string[] = [];
+  const createdDeployments: string[] = [];
 
   afterAll(async () => {
-    // Clean up test resources
-    try {
-      await K8s(kind.Secret).InNamespace(PODINFO_NAMESPACE).Delete(SELECTOR_SECRET_NAME);
-      await K8s(kind.Secret).InNamespace(PODINFO_NAMESPACE).Delete(AUTO_LOOKUP_SECRET_NAME);
-      await K8s(kind.Deployment).InNamespace(PODINFO_NAMESPACE).Delete(TEST_DEPLOYMENT_NAME);
-    } catch (err) {
-      // Ignore cleanup errors
+    // Tear down whatever this test created
+    for (const name of createdDeployments) {
+      await K8s(kind.Deployment)
+        .InNamespace(PODINFO_NAMESPACE)
+        .Delete(name)
+        .catch(() => undefined);
+    }
+
+    for (const name of createdSecrets) {
+      await K8s(kind.Secret)
+        .InNamespace(PODINFO_NAMESPACE)
+        .Delete(name)
+        .catch(() => undefined);
     }
   });
 
   test("should restart deployment when secret has explicit selector annotation", { timeout: 30000 }, async () => {
     // Generate a unique test ID for this test run
-    const testId = uuidv4().substring(0, 8);
-    const testSecretName = `${SELECTOR_SECRET_NAME}-${testId}`;
+    const testId = uuidv4().substring(0, 4);
+    const testSecretName = `${SELECTOR_SECRET_PREFIX}-${testId}`;
+    createdSecrets.push(testSecretName);
 
     // Create a secret with explicit reload selector using the pod selector
     await K8s(kind.Secret).Create({
@@ -190,8 +219,11 @@ describe("Secret Auto-reload", () => {
 
   test("should restart deployment using auto-lookup when pod uses secret", { timeout: 30000 }, async () => {
     // Generate a unique test ID for this test run
-    const testId = uuidv4().substring(0, 8);
-    const testSecretName = `${AUTO_LOOKUP_SECRET_NAME}-${testId}`;
+    const testId = uuidv4().substring(0, 4);
+    const testSecretName = `${AUTO_LOOKUP_SECRET_PREFIX}-${testId}`;
+    const testDeploymentName = `${TEST_DEPLOYMENT_PREFIX}-${testId}`
+    createdSecrets.push(testSecretName);
+    createdDeployments.push(testDeploymentName);
 
     // Get the podinfo deployment to find its image and pull secrets
     const podinfoDeployment = await K8s(kind.Deployment)
@@ -214,7 +246,6 @@ describe("Secret Auto-reload", () => {
         labels: {
           "uds.dev/pod-reload": "true"
         }
-        // No uds.dev/pod-reload-selector annotation - this will force auto-lookup
       },
       type: "Opaque",
       data: {
@@ -222,24 +253,23 @@ describe("Secret Auto-reload", () => {
       }
     });
 
-
     // Create a test deployment that uses this secret
     await K8s(kind.Deployment).Create({
       metadata: {
-        name: TEST_DEPLOYMENT_NAME,
+        name: testDeploymentName,
         namespace: PODINFO_NAMESPACE,
       },
       spec: {
         replicas: 1,
         selector: {
           matchLabels: {
-            "app": TEST_DEPLOYMENT_NAME
+            "app": testDeploymentName
           }
         },
         template: {
           metadata: {
             labels: {
-              "app": TEST_DEPLOYMENT_NAME
+              "app": testDeploymentName
             },
           },
           spec: {
@@ -252,7 +282,7 @@ describe("Secret Auto-reload", () => {
                     name: "TEST_SECRET_VALUE",
                     valueFrom: {
                       secretKeyRef: {
-                        name: AUTO_LOOKUP_SECRET_NAME,
+                        name: testSecretName,
                         key: "testKey"
                       }
                     }
@@ -266,6 +296,8 @@ describe("Secret Auto-reload", () => {
         }
       }
     });
+
+    await waitForPodReady(PODINFO_NAMESPACE, { "app": testDeploymentName })
 
     // Update the auto-lookup secret to trigger controller restart
     const newValue = uuidv4();
@@ -282,13 +314,13 @@ describe("Secret Auto-reload", () => {
     // Get the current test deployment generation
     const testDeployment = await K8s(kind.Deployment)
       .InNamespace(PODINFO_NAMESPACE)
-      .Get(TEST_DEPLOYMENT_NAME);
+      .Get(testDeploymentName);
     const testInitialGeneration = testDeployment.metadata!.generation!;
 
     // Wait for the test deployment to be restarted
     const { rolledOut } = await waitForDeploymentRollout(
       PODINFO_NAMESPACE,
-      TEST_DEPLOYMENT_NAME,
+      testDeploymentName,
       testInitialGeneration
     );
     expect(rolledOut).toBe(true);
@@ -299,7 +331,7 @@ describe("Secret Auto-reload", () => {
       {
         secretName: testSecretName,
         targetKind: "Deployment",
-        targetName: TEST_DEPLOYMENT_NAME
+        targetName: testDeploymentName
       }
     );
 
@@ -317,6 +349,6 @@ describe("Secret Auto-reload", () => {
     const scalingEvent = scalingEvents[0];
     expect(scalingEvent.type).toBe("Normal");
     expect(scalingEvent.involvedObject?.namespace).toBe(PODINFO_NAMESPACE);
-    expect(scalingEvent.involvedObject?.name).toBe(TEST_DEPLOYMENT_NAME);
+    expect(scalingEvent.involvedObject?.name).toBe(testDeploymentName);
   });
 });

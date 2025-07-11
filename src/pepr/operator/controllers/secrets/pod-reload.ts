@@ -6,7 +6,8 @@
 import { createHash } from "crypto";
 import { K8s, kind } from "pepr";
 import { Component, setupLogger } from "../../../logger";
-import { reloadPods } from "../utils";
+import { retryWithDelay } from "../utils";
+import { reloadPods } from "./reload-utils";
 
 const log = setupLogger(Component.OPERATOR_SECRETS);
 
@@ -156,7 +157,11 @@ export async function handleSecretUpdate(secret: kind.Secret) {
     }
 
     try {
-      const pods = await podQuery.Get();
+      async function getPodsWithSelector() {
+        return podQuery.Get();
+      }
+
+      const pods = await retryWithDelay(getPodsWithSelector, log);
       podsToReload = pods.items;
     } catch (error) {
       log.error(
@@ -167,12 +172,12 @@ export async function handleSecretUpdate(secret: kind.Secret) {
     }
   } else {
     // No explicit selector, use auto-discovery
-    log.debug(
-      { secret: name, namespace },
-      "No explicit selector found, auto-discovering secret consumers",
-    );
+    log.debug({ secret: name, namespace }, "Auto-discovering secret consumers");
     try {
-      podsToReload = await discoverSecretConsumers(namespace, name);
+      async function getPodsUsingSecret() {
+        return discoverSecretConsumers(namespace, name);
+      }
+      podsToReload = await retryWithDelay(getPodsUsingSecret, log);
     } catch (error) {
       log.error({ secret: name, namespace, error }, "Failed to discover secret consumers");
       return;

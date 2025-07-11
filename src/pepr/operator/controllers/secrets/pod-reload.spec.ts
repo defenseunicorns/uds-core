@@ -5,7 +5,6 @@
 
 import { K8s, kind } from "pepr";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import * as utils from "../utils";
 import {
   computeSecretChecksum,
   discoverSecretConsumers,
@@ -13,6 +12,7 @@ import {
   handleSecretUpdate,
   parseSelectorString,
 } from "./pod-reload";
+import * as utils from "./reload-utils";
 
 // Create hoisted mocks
 const mocks = vi.hoisted(() => ({
@@ -50,7 +50,7 @@ vi.mock("pepr", async importOriginal => {
   };
 });
 
-vi.mock("../utils", async () => {
+vi.mock("./reload-utils", async () => {
   return {
     reloadPods: vi.fn(),
   };
@@ -492,7 +492,7 @@ describe("pod-reload", () => {
 
       expect(mockDebug).toHaveBeenCalledWith(
         { secret: "test-secret", namespace: "default" },
-        "No explicit selector found, auto-discovering secret consumers",
+        "Auto-discovering secret consumers",
       );
 
       // Verify reloadPods was called with the correct parameters
