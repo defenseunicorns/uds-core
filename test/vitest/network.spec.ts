@@ -71,14 +71,14 @@ async function execInPod(
       containerName,
       command,
       new Writable({
-        write(chunk, encoding, callback) {
-          stdoutBuffer += chunk.toString(encoding);
+        write(chunk, _encoding, callback) {
+          stdoutBuffer += chunk.toString();
           callback();
         },
       }),
       new Writable({
-        write(chunk, encoding, callback) {
-          stderrBuffer += chunk.toString(encoding);
+        write(chunk, _encoding, callback) {
+          stderrBuffer += chunk.toString();
           callback();
         },
       }),

@@ -21,7 +21,7 @@ const compat = new FlatCompat({
 });
 
 export default defineConfig([
-  globalIgnores(["**/node_modules", "**/dist", "test/playwright/", "**/scripts/", "**/uds-docs/"]),
+  globalIgnores(["**/node_modules", "**/dist"]),
   {
     extends: compat.extends("eslint:recommended", "plugin:@typescript-eslint/recommended"),
 
@@ -39,7 +39,12 @@ export default defineConfig([
       sourceType: "script",
 
       parserOptions: {
-        project: ["./tsconfig.json", "test/vitest/tsconfig.json", "test/playwright/tsconfig.json"],
+        project: [
+          "./tsconfig.json",
+          "test/vitest/tsconfig.json",
+          "test/playwright/tsconfig.json",
+          "scripts/renovate/tsconfig.json",
+        ],
       },
     },
 
