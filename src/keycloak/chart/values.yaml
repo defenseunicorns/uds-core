@@ -233,6 +233,27 @@ postgresql:
   # Port the database is listening on
   port: 5432
   egressCidr: ""
+  # Reference to existing secrets for PostgreSQL configuration
+  # If specified, the chart will use values from these secrets instead of creating its own
+  # This is mutually exclusive with the above username/password/database/host/port values
+  secretRef:
+    # Individual secret references for each PostgreSQL value
+    # Each can reference a different secret and key
+    username:
+      name: ""
+      key: ""
+    password:
+      name: ""
+      key: ""
+    database:
+      name: ""
+      key: ""
+    host:
+      name: ""
+      key: ""
+    port:
+      name: ""
+      key: ""
   # Configure internal postgresql deployment, requires keycloak not be deployed in dev-mode
   internal:
     enabled: false
