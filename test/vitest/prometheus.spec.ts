@@ -26,16 +26,17 @@ describe("Prometheus and Alertmanager", () => {
   });
 
   test("alert manager should be firing watchdog alert", async () => {
-    const response = await fetch(
-      `${alertmanagerProxy.url}/api/v2/alerts`
-    );
+    const response = await fetch(`${alertmanagerProxy.url}/api/v2/alerts`);
 
-    expect(response.status).toBe(200)
-    const body = (await response.json()) as Array<{ labels: { alertname: string }; status: { state: string } }>;
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as Array<{
+      labels: { alertname: string };
+      status: { state: string };
+    }>;
 
-    expect(body.some(
-      alert => alert.labels.alertname === "Watchdog" && alert.status.state === "active"
-    )).toBe(true);
+    expect(
+      body.some(alert => alert.labels.alertname === "Watchdog" && alert.status.state === "active"),
+    ).toBe(true);
   });
 
   test("prometheus web ui should be responsive via the internal service address", async () => {

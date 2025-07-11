@@ -19,23 +19,21 @@ export default defineConfig({
   timeout: 45000, // 45 second timeout for tests
   reporter: [
     // Reporter to use. See https://playwright.dev/docs/test-reporters
-    ['html', { outputFolder: `${playwrightDir}/reports`, open: 'never' }]
+    ["html", { outputFolder: `${playwrightDir}/reports`, open: "never" }],
   ],
 
   outputDir: `${playwrightDir}/output`,
 
   use: {
-    trace: 'retain-on-failure', // save trace for failed tests. See https://playwright.dev/docs/trace-viewer#opening-the-trace
+    trace: "retain-on-failure", // save trace for failed tests. See https://playwright.dev/docs/trace-viewer#opening-the-trace
   },
 
   projects: [
-    { name: 'setup', testMatch: /.*\.setup\.ts/ }, // authentication
+    { name: "setup", testMatch: /.*\.setup\.ts/ }, // authentication
 
-    ...[
-      'Desktop Chrome',
-    ].map((p) => ({
+    ...["Desktop Chrome"].map(p => ({
       name: devices[p].defaultBrowserType,
-      dependencies: ['setup'],
+      dependencies: ["setup"],
       use: {
         ...devices[p],
         storageState: authFile,
