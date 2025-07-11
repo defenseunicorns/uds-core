@@ -5,7 +5,7 @@
 
 import { K8s, kind } from 'pepr';
 
-export default async () => {
+export async function setup() {
   await K8s(kind.Namespace).Apply({
     metadata: {
       name: "policy-tests",
@@ -15,4 +15,8 @@ export default async () => {
       },
     },
   });
+}
+
+export async function teardown() {
+  await K8s(kind.Namespace).Delete("policy-tests");
 }

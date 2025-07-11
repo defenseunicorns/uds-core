@@ -9,9 +9,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    setupFiles: ['./vitest.setup.js'],
     globalSetup: ['./vitest.setup.js'],
-    globalTeardown: './vitest.teardown.js',
     include: ['**/*.spec.ts'],
     coverage: {
       provider: 'v8',
