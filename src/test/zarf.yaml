@@ -17,6 +17,7 @@ components:
           - "app-admin-package.yaml"
           - "app-authservice-tenant-package.yaml"
           - "app-tenant-package.yaml"
+          - "app-ambient-authservice-tenant-package.yaml"
           - "app-curl-packages.yaml"
 
   # This is excluded from slim-dev to save some resources in package CI
@@ -45,6 +46,9 @@ components:
       - name: app-authservice-tenant
         files:
           - "app-authservice-tenant.yaml"
+      - name: app-ambient-authservice-tenant
+        files:
+          - "app-ambient-authservice-tenant.yaml"
       - name: curl-test
         files:
           - "app-curl.yaml"

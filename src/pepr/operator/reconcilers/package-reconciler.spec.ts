@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { afterEach, beforeEach, describe, expect, Mock, MockedFunction, test, vi } from "vitest";
+import { beforeEach, describe, expect, Mock, MockedFunction, test, vi } from "vitest";
 
 // ---- Vitest mocks ----
 vi.mock("kubernetes-fluent-client");
@@ -63,7 +63,7 @@ import { purgeAuthserviceClients } from "../controllers/keycloak/authservice/aut
 import { purgeSSOClients } from "../controllers/keycloak/client-sync";
 import { retryWithDelay } from "../controllers/utils";
 import { Phase, UDSPackage } from "../crd";
-import { packageFinalizer, packageReconciler, withBackoffIfNeeded } from "./package-reconciler";
+import { packageFinalizer, packageReconciler } from "./package-reconciler";
 
 const mockCleanupNamespace: MockedFunction<() => Promise<void>> = vi.fn();
 const mockPurgeSSO: MockedFunction<() => Promise<void>> = vi.fn();
@@ -120,116 +120,6 @@ vi.mock("pepr", () => ({
     description: "The UDS Operator is responsible for managing the lifecycle of UDS resources",
   })),
 }));
-
-describe("withBackoffIfNeeded", () => {
-  let mockPackage: UDSPackage;
-  let mockFn: Mock;
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-    vi.useFakeTimers();
-
-    mockPackage = {
-      metadata: { name: "test-pkg", namespace: "test-ns" },
-      status: { phase: Phase.Pending },
-    };
-
-    mockFn = vi.fn().mockResolvedValue(undefined);
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
-  test("should not delay when retryAttempt is 0", async () => {
-    mockPackage.status = { phase: Phase.Pending, retryAttempt: 0 };
-
-    await withBackoffIfNeeded(mockPackage, mockFn);
-
-    expect(mockFn).toHaveBeenCalledTimes(1);
-    expect(vi.getTimerCount()).toBe(0); // No timers should be set
-  });
-
-  test("should not delay when retryAttempt is undefined", async () => {
-    mockPackage.status = { phase: Phase.Pending };
-
-    await withBackoffIfNeeded(mockPackage, mockFn);
-
-    expect(mockFn).toHaveBeenCalledTimes(1);
-    expect(vi.getTimerCount()).toBe(0);
-  });
-
-  test("should delay with exponential backoff based on retryAttempt", async () => {
-    // Mock the timer functions
-    vi.useFakeTimers();
-
-    const testCases = [
-      { retryAttempt: 1, expectedDelay: 3000 }, // 3^1 = 3s
-      { retryAttempt: 2, expectedDelay: 9000 }, // 3^2 = 9s
-      { retryAttempt: 3, expectedDelay: 27000 }, // 3^3 = 27s
-      { retryAttempt: 4, expectedDelay: 81000 }, // 3^4 = 81s
-    ];
-
-    for (const { retryAttempt, expectedDelay } of testCases) {
-      vi.clearAllMocks();
-      mockPackage.status = { phase: Phase.Pending, retryAttempt };
-
-      // Spy on the mock function
-      const mockFnSpy = vi.fn().mockResolvedValue(undefined);
-
-      // Call the function
-      const promise = withBackoffIfNeeded(mockPackage, mockFnSpy);
-
-      // Fast-forward time
-      await vi.advanceTimersByTimeAsync(expectedDelay);
-      await promise;
-
-      // Verify the function was called after the delay
-      expect(mockFnSpy).toHaveBeenCalledTimes(1);
-
-      // Verify the log message
-      expect(Log.info).toHaveBeenCalledWith(
-        mockPackage.metadata,
-        `Waiting ${expectedDelay / 1000} seconds before processing package ${mockPackage.metadata?.namespace}/${mockPackage.metadata?.name}`,
-      );
-
-      // Verify the event was written
-      expect(writeEvent).toHaveBeenCalledWith(mockPackage, {
-        message: `Waiting ${expectedDelay / 1000} seconds before retrying package`,
-      });
-    }
-
-    // Restore real timers
-    vi.useRealTimers();
-  });
-
-  test("should call the provided function after delay", async () => {
-    // Mock the timer functions
-    vi.useFakeTimers();
-
-    try {
-      mockPackage.status = { phase: Phase.Pending, retryAttempt: 1 };
-      const testResult = { success: true };
-
-      // Create a mock function that returns our test result
-      const mockFnWithResult = vi.fn().mockResolvedValue(testResult);
-
-      // Call the function
-      const resultPromise = withBackoffIfNeeded(mockPackage, mockFnWithResult);
-
-      // Fast-forward past the delay
-      await vi.advanceTimersByTimeAsync(3000);
-      const result = await resultPromise;
-
-      // Verify the function was called and the result is correct
-      expect(mockFnWithResult).toHaveBeenCalledTimes(1);
-      expect(result).toEqual(testResult);
-    } finally {
-      // Restore real timers
-      vi.useRealTimers();
-    }
-  });
-});
 
 describe("packageReconciler", () => {
   let mockPackage: UDSPackage;

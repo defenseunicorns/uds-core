@@ -169,7 +169,7 @@ describe("authorization policy generation", () => {
       kind: "Package",
       metadata: {
         name: "httpbin-other",
-        namespace: "authservice-test-app",
+        namespace: "authservice-sidecar-test-app",
         generation: 1,
       },
       spec: {
@@ -206,7 +206,7 @@ describe("authorization policy generation", () => {
 
     const policies = await generateAuthorizationPolicies(
       pkg,
-      "authservice-test-app",
+      "authservice-sidecar-test-app",
       IstioState.Ambient,
     );
     // We expect exactly two policies: one for the expose rule and one for the allow rule.

@@ -1,0 +1,41 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: authservice-ambient-test-app
+---
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: ambient-httpbin
+  namespace: authservice-ambient-test-app
+spec:
+  sso:
+    - name: "Ambient SSO"
+      clientId: uds-core-ambient-httpbin
+      redirectUris:
+        - "https://ambient-protected.uds.dev/login"
+      enableAuthserviceSelector:
+        app: httpbin
+      groups:
+        anyOf:
+          - "/UDS Core/Admin"
+  network:
+    serviceMesh:
+      mode: ambient
+    expose:
+      - service: httpbin
+        selector:
+          app: httpbin
+        gateway: tenant
+        host: ambient-protected
+        port: 8000
+        targetPort: 80
+    allow:
+      - direction: Ingress
+        selector:
+          app: httpbin
+        ports:
+          - 80

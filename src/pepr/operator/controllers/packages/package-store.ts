@@ -69,6 +69,14 @@ function add(pkg: UDSPackage, logger: boolean = true): void {
     });
   }
 
+  // Add ambient waypoint labels if needed
+  if (pkg.metadata.annotations?.["istio.io/use-waypoint"]) {
+    pkg.metadata.labels = {
+      ...pkg.metadata.labels,
+      "istio.io/use-waypoint": "enabled",
+    };
+  }
+
   if (logger) {
     if (isUpdate) {
       log.debug(`Updating PackageStore for package ${name} in namespace ${namespace}.`);
@@ -173,11 +181,43 @@ function findPackagesWithSsoClientId(clientId: string): Set<string> {
   return ssoIndex.get(clientId) ?? new Set<string>();
 }
 
+/**
+ * Finds all packages that have ambient waypoint enabled
+ * @returns Array of UDSPackage objects with ambient waypoint enabled
+ */
+function getAmbientPackages(): UDSPackage[] {
+  const result: UDSPackage[] = [];
+  for (const namespaceMap of packageNamespaceMap.values()) {
+    for (const pkg of namespaceMap.values()) {
+      if (pkg.spec?.network?.serviceMesh?.mode === "ambient") {
+        result.push(pkg);
+      }
+    }
+  }
+  return result;
+}
+
+/**
+ * Finds all packages with ambient waypoint enabled in a specific namespace
+ * @param namespace The namespace to search in
+ * @returns Array of UDSPackage objects with ambient waypoint enabled in the namespace
+ */
+function getAmbientPackagesByNamespace(namespace: string): UDSPackage[] {
+  const namespaceMap = packageNamespaceMap.get(namespace);
+  if (!namespaceMap) return [];
+
+  return Array.from(namespaceMap.values()).filter(
+    pkg => pkg.spec?.network?.serviceMesh?.mode === "ambient",
+  );
+}
+
 export const PackageStore = {
   init,
   add,
+  remove,
   hasKey,
   getPkgName,
-  remove,
   findPackagesWithSsoClientId,
+  getAmbientPackages,
+  getAmbientPackagesByNamespace,
 };

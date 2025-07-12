@@ -4,6 +4,7 @@
  */
 
 import { R } from "pepr";
+import { getWaypointName } from "../../istio/ambient-waypoint";
 import { UDSConfig } from "../../../../config";
 import { Component, setupLogger } from "../../../../logger";
 import { UDSPackage } from "../../../crd";
@@ -33,22 +34,35 @@ export async function authservice(pkg: UDSPackage, clients: Map<string, Client>)
     pkg.spec?.sso || [],
   );
 
+  // Check if we're in ambient mode by looking for the waypoint annotation
+  const isAmbient =
+    pkg.metadata?.annotations?.["istio.io/use-waypoint"] !== undefined ||
+    pkg.spec?.network?.serviceMesh?.mode === "ambient";
+
   for (const sso of authServiceClients) {
     const client = clients.get(sso.clientId);
     if (!client) {
       throw new Error(`Failed to get client ${sso.clientId}`);
     }
 
+    // Use client ID directly as the waypoint ID
+    // The full waypoint name with prefix and suffix will be constructed by getWaypointName
+    const waypointId = sso.clientId;
+    // Get the full waypoint name for authorization policies
+    const fullWaypointName = getWaypointName(waypointId);
+
     await reconcileAuthservice(
       { name: sso.clientId, action: Action.AddClient, client },
       sso.enableAuthserviceSelector!,
       pkg,
+      isAmbient,
+      fullWaypointName,
     );
   }
 
   const authserviceClients = authServiceClients.map(client => client.clientId);
 
-  await purgeAuthserviceClients(pkg, authserviceClients);
+  await purgeAuthserviceClients(pkg, authserviceClients, isAmbient);
 
   return authserviceClients;
 }
@@ -56,12 +70,22 @@ export async function authservice(pkg: UDSPackage, clients: Map<string, Client>)
 export async function purgeAuthserviceClients(
   pkg: UDSPackage,
   newAuthserviceClients: string[] = [],
+  isAmbient = false,
 ) {
-  // compute set difference of pkg.status.authserviceClients and authserviceClients using Ramda
   R.difference(pkg.status?.authserviceClients || [], newAuthserviceClients).forEach(
     async clientId => {
       log.info(`Removing stale authservice chain for client ${clientId}`);
-      await reconcileAuthservice({ name: clientId, action: Action.RemoveClient }, {}, pkg);
+      // Use client ID directly as the waypoint ID
+      const waypointId = clientId;
+      // Get the full waypoint name for authorization policies
+      const fullWaypointName = getWaypointName(waypointId);
+      await reconcileAuthservice(
+        { name: clientId, action: Action.RemoveClient },
+        {},
+        pkg,
+        isAmbient,
+        fullWaypointName,
+      );
     },
   );
 }
@@ -71,15 +95,17 @@ function isAddOrRemoveClientEvent(event: AuthServiceEvent): event is AddOrRemove
 }
 export async function reconcileAuthservice(
   event: AuthServiceEvent,
-  labelSelector?: { [key: string]: string },
+  labelSelector: { [key: string]: string } = {},
   pkg?: UDSPackage,
+  isAmbient = false,
+  waypointName?: string,
 ) {
   await updateConfig(event);
   if (isAddOrRemoveClientEvent(event)) {
     if (!pkg) {
       throw new Error("Package must be provided for AddClient or RemoveClient events");
     }
-    await updatePolicy(event, labelSelector || {}, pkg);
+    await updatePolicy(event, labelSelector, pkg, isAmbient, waypointName);
   }
 }
 

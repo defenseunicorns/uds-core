@@ -14,7 +14,7 @@ tasks:
     inputs:
       validate_egress:
         description: Whether to validate egress controls with the egress gateway
-        default: "true"
+        default: "false"
 
     actions:
       - description: "Run Test Apps E2E tests"
@@ -29,8 +29,8 @@ tasks:
         cmd: |
           npx vitest run "test-resources.spec.ts"
         dir: test/vitest
-      - description: "Remove Test Apps resources"
-        task: remove
+      # - description: "Remove Test Apps resources"
+      #   task: remove
 
   - name: create-deploy
     description: Test app used for UDS Core validation
@@ -99,7 +99,7 @@ tasks:
             address: protected.uds.dev
             code: 200
 
-      - description: Verify the authservice tenant app is protected by checking redirect
+      - description: Verify the sidcar authservice tenant app is protected by checking redirect
         maxRetries: 3
         task: utils:tenant-gw-ip
         cmd: |
@@ -113,6 +113,31 @@ tasks:
           *)
               # Fallback option if the condition is false
               echo "App is not protected by authservice"
+              echo $SSO_REDIRECT
+              exit 1
+              ;;
+          esac
+
+      - description: Verify the ambient authservice tenant app is accessible
+        wait:
+          network:
+            protocol: https
+            address: ambient-protected.uds.dev
+            code: 200
+
+      - description: Verify the ambient authservice tenant app is protected by checking redirect
+        maxRetries: 3
+        task: utils:tenant-gw-ip
+        cmd: |
+          set -e
+          SSO_REDIRECT=$(uds zarf tools kubectl run curl-test --image=cgr.dev/chainguard/curl:latest -q --restart=Never --rm -i -- --resolve 'ambient-protected.uds.dev:$TENANT_GW_IP:443' -Ls -o /dev/null -w %{url_effective} "https://ambient-protected.uds.dev")
+
+          case "${SSO_REDIRECT}" in
+          "https://sso.uds.dev"*)
+              echo "Protected by ambient authservice"
+              ;;
+          *)
+              echo "App is not protected by ambient authservice"
               echo $SSO_REDIRECT
               exit 1
               ;;

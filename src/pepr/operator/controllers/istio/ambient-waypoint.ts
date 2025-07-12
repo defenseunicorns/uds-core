@@ -3,8 +3,9 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { a, K8s, kind } from "pepr";
+import { a, K8s } from "pepr";
 import { K8sGateway, UDSPackage } from "../../crd";
+import { PackageStore } from "../packages/package-store";
 import { getOwnerRef } from "../utils";
 import { log } from "./istio-resources";
 
@@ -19,11 +20,13 @@ const UDS_NAMESPACE_LABEL = "uds/namespace";
 const ISTIO_WAYPOINT_LABEL = "istio.io/use-waypoint";
 const WAYPOINT_SUFFIX = "-waypoint";
 
-function getWaypointName(clientId: string): string {
-  return `${clientId}${WAYPOINT_SUFFIX}`;
+export function getWaypointName(waypointId: string): string {
+  // Avoid double prefixing by checking if the ID already starts with 'uds-core-'
+  const prefix = waypointId.startsWith("uds-core-") ? "" : "uds-core-";
+  return `${prefix}${waypointId}${WAYPOINT_SUFFIX}`;
 }
 
-function createManagedLabels(
+export function createManagedLabels(
   pkg: UDSPackage,
   waypointName: string,
   additionalLabels: Record<string, string> = {},
@@ -37,34 +40,19 @@ function createManagedLabels(
   };
 }
 
-interface AmbientPackageInfo {
-  pkg: UDSPackage;
-  selectors: Array<Record<string, string>>;
-  waypointName: string;
-  clientId: string;
-  namespace: string;
-}
-
-// In-memory store for packages that need ambient waypoint
-const ambientPackages = new Map<string, AmbientPackageInfo>();
-const ambientPackagesByNamespace = new Map<string, AmbientPackageInfo[]>();
+// Ambient package tracking is handled by PackageStore
 
 /**
- * Checks if a service matches any of the provided selectors
+ * Checks if a service matches the provided selector
  * @param svc - The service to check
- * @param selectors - Array of label selectors to match against
- * @returns boolean indicating if any selector matches the service
+ * @param selector - Label selector to match against
+ * @returns boolean indicating if the selector matches the service
  */
-function serviceMatchesSelectors(
-  svc: a.Service,
-  selectors: Array<Record<string, string>>,
-): boolean {
-  return Boolean(
-    svc.spec?.selector &&
-      selectors.some(selector =>
-        Object.entries(selector).every(([k, v]) => svc.spec?.selector?.[k] === v),
-      ),
-  );
+export function serviceMatchesSelector(svc: a.Service, selector: Record<string, string>): boolean {
+  const svcSelector = svc.spec?.selector;
+  if (!svcSelector) return false;
+
+  return Object.entries(selector).every(([k, v]) => svcSelector[k] === v);
 }
 
 /**
@@ -118,14 +106,25 @@ export async function isWaypointPodHealthy(
 /**
  * Creates a waypoint gateway for the given package
  */
-export async function createWaypointGateway(pkg: UDSPackage, clientId: string) {
+export async function createWaypointGateway(pkg: UDSPackage, waypointId: string) {
   const { namespace, name } = pkg.metadata || {};
   if (!namespace || !name) {
     throw new Error("Package metadata is missing namespace or name");
   }
 
-  const waypointName = getWaypointName(clientId);
+  const waypointName = getWaypointName(waypointId);
   log.info(`Creating waypoint gateway for package: ${namespace}/${name}`, { waypointName });
+
+  // Extract app selector from SSO configuration
+  let appSelector: Record<string, string> | undefined;
+  if (pkg.spec?.sso && pkg.spec.sso.length > 0) {
+    for (const ssoConfig of pkg.spec.sso) {
+      if (ssoConfig.enableAuthserviceSelector) {
+        appSelector = ssoConfig.enableAuthserviceSelector;
+        break;
+      }
+    }
+  }
 
   try {
     // Check if gateway already exists and is ready
@@ -152,9 +151,11 @@ export async function createWaypointGateway(pkg: UDSPackage, clientId: string) {
       namespace,
       labels: createManagedLabels(pkg, waypointName, {
         "app.kubernetes.io/component": "ambient-waypoint",
-        "app.kubernetes.io/name": clientId,
+        "app.kubernetes.io/name": waypointId,
         "istio.io/waypoint-for": "all",
         "istio.io/gateway-name": waypointName,
+        // Add app selector labels from the package's SSO configuration
+        ...(appSelector || {}),
       }),
       ownerReferences: getOwnerRef(pkg),
       annotations: {
@@ -196,54 +197,47 @@ export async function createWaypointGateway(pkg: UDSPackage, clientId: string) {
  * @param pkg - The UDS package to register
  * @returns A promise that resolves when registration is complete
  */
-export async function registerAmbientPackage(pkg: UDSPackage, clientId: string): Promise<void> {
+export async function registerAmbientPackage(pkg: UDSPackage, waypointId: string): Promise<void> {
   const namespace = pkg.metadata?.namespace;
   if (!namespace) {
-    log.warn("Cannot register package without a namespace", { clientId });
+    log.warn("Cannot register package without a namespace", { waypointId });
     return;
   }
 
-  const key = clientId;
-  const waypointName = getWaypointName(clientId);
-  const selectors =
-    pkg.spec?.sso
-      ?.filter(s => s.enableAuthserviceSelector)
-      .map(s => s.enableAuthserviceSelector || {}) || [];
-
-  // Store package info with all required fields
-  const packageInfo: AmbientPackageInfo = {
-    pkg,
-    selectors,
-    waypointName,
-    clientId,
-    namespace,
-  };
-
-  ambientPackages.set(key, packageInfo);
-
-  // Update namespace index for efficient lookup
-  if (!ambientPackagesByNamespace.has(namespace)) {
-    ambientPackagesByNamespace.set(namespace, []);
-  }
-  ambientPackagesByNamespace.get(namespace)!.push(packageInfo);
-
-  // Reconcile existing services and pods efficiently
+  // The package is already registered in PackageStore with the necessary labels
+  // We just need to reconcile existing resources
   try {
-    const services = await K8s(a.Service).InNamespace(namespace).Get();
-    const pods = await K8s(a.Pod).InNamespace(namespace).Get();
-    // Use map lookups for selectors
-    for (const svc of services.items || []) {
-      await reconcileService(svc);
-    }
-    for (const pod of pods.items || []) {
-      await reconcilePod(pod);
+    const selectors =
+      pkg.spec?.sso
+        ?.filter(s => s.enableAuthserviceSelector)
+        .map(s => s.enableAuthserviceSelector || {}) || [];
+
+    // Reconcile existing services and pods
+    const serviceSelector = selectors
+      .map(s => Object.entries(s).map(([k, v]) => `${k}=${v}`))
+      .flat()
+      .join(",");
+
+    if (serviceSelector) {
+      const services = await K8s(a.Service).InNamespace(namespace).WithLabel(serviceSelector).Get();
+      for (const svc of services.items || []) {
+        await reconcileService(svc);
+      }
+
+      const pods = await K8s(a.Pod).InNamespace(namespace).WithLabel(serviceSelector).Get();
+      for (const pod of pods.items || []) {
+        await reconcilePod(pod);
+      }
     }
   } catch (error) {
-    log.error(`Error reconciling existing resources for package ${key}`, {
-      error,
-      namespace,
-      clientId,
-    });
+    log.error(
+      `Error reconciling resources for package ${pkg.metadata?.name} in namespace ${namespace}`,
+      {
+        error,
+        namespace,
+        waypointId,
+      },
+    );
   }
 }
 
@@ -255,7 +249,10 @@ export async function registerAmbientPackage(pkg: UDSPackage, clientId: string):
  * @param options - Configuration options for the wait operation
  * @returns A promise that resolves when the pod is healthy or rejects on timeout
  */
-async function waitForWaypointPodHealthy(namespace: string, waypointName: string): Promise<void> {
+export async function waitForWaypointPodHealthy(
+  namespace: string,
+  waypointName: string,
+): Promise<void> {
   const logContext = {
     namespace,
     waypointName,
@@ -321,22 +318,102 @@ async function waitForWaypointPodHealthy(namespace: string, waypointName: string
 /**
  * Sets up all resources needed for ambient waypoint functionality
  */
-export async function setupAmbientWaypoint(pkg: UDSPackage, clientId: string): Promise<void> {
+// Generate and apply NetworkPolicies for waypoint-app traffic
+export async function generateWaypointNetworkPolicies(
+  pkg: UDSPackage,
+  waypointName: string,
+  appSelector: Record<string, string>,
+) {
+  const namespace = pkg.metadata?.namespace;
+  if (!namespace) return;
+
+  // Waypoint pod selector
+  const waypointPodSelector = { matchLabels: { "istio.io/gateway-name": waypointName } };
+  // App pod selector
+  const appPodSelector = { matchLabels: appSelector };
+
+  // Ingress: app -> waypoint
+  const ingressNetpol = {
+    apiVersion: "networking.k8s.io/v1",
+    kind: "NetworkPolicy",
+    metadata: {
+      name: `${waypointName}-ingress-from-app`,
+      namespace,
+      labels: { "uds/managed-by": "uds-operator" },
+    },
+    spec: {
+      podSelector: waypointPodSelector,
+      ingress: [
+        {
+          from: [{ podSelector: appPodSelector }],
+          // No ports field: allow all ports
+        },
+      ],
+      policyTypes: ["Ingress"],
+    },
+  };
+
+  // Egress: waypoint -> app
+  const egressNetpol = {
+    apiVersion: "networking.k8s.io/v1",
+    kind: "NetworkPolicy",
+    metadata: {
+      name: `${waypointName}-egress-to-app`,
+      namespace,
+      labels: { "uds/managed-by": "uds-operator" },
+    },
+    spec: {
+      podSelector: waypointPodSelector,
+      egress: [
+        {
+          to: [{ podSelector: appPodSelector }],
+          // No ports field: allow all ports
+        },
+      ],
+      policyTypes: ["Egress"],
+    },
+  };
+
+  // Apply both
+  await K8s(a.NetworkPolicy).Apply(ingressNetpol, { force: true });
+  await K8s(a.NetworkPolicy).Apply(egressNetpol, { force: true });
+}
+
+export async function setupAmbientWaypoint(pkg: UDSPackage, waypointId: string): Promise<void> {
   const { namespace, name } = pkg.metadata || {};
   if (!namespace || !name) {
     throw new Error("Package metadata is missing namespace or name");
   }
 
-  const waypointName = getWaypointName(clientId);
-  log.info("Starting ambient waypoint setup", { namespace, package: name, clientId, waypointName });
+  const waypointName = getWaypointName(waypointId);
+  log.info("Starting ambient waypoint setup", {
+    namespace,
+    package: name,
+    waypointId,
+    waypointName,
+  });
 
   try {
     log.debug("Creating waypoint gateway", { namespace, waypointName });
-    await createWaypointGateway(pkg, clientId);
+    await createWaypointGateway(pkg, waypointId);
 
     log.debug("Waiting for waypoint pod to become healthy", { namespace, waypointName });
     // Check waypoint pod health using environment variable configuration
     await waitForWaypointPodHealthy(namespace, waypointName);
+
+    // Extract app selector from SSO config (same as in createWaypointGateway)
+    let appSelector: Record<string, string> | undefined;
+    if (pkg.spec?.sso && pkg.spec.sso.length > 0) {
+      for (const ssoConfig of pkg.spec.sso) {
+        if (ssoConfig.enableAuthserviceSelector) {
+          appSelector = ssoConfig.enableAuthserviceSelector;
+          break;
+        }
+      }
+    }
+    if (appSelector) {
+      await generateWaypointNetworkPolicies(pkg, waypointName, appSelector);
+    }
 
     log.info("Successfully set up ambient waypoint", {
       namespace,
@@ -358,34 +435,29 @@ export async function setupAmbientWaypoint(pkg: UDSPackage, clientId: string): P
 /**
  * Unregisters a package for ambient waypoint handling
  */
-export async function unregisterAmbientPackage(pkg: UDSPackage, clientId: string): Promise<void> {
+export async function unregisterAmbientPackage(pkg: UDSPackage, waypointId: string): Promise<void> {
   const { namespace, name } = pkg.metadata || {};
   if (!namespace || !name) {
     log.warn("Package metadata is missing namespace or name, skipping unregistration");
     return;
   }
 
-  const waypointName = getWaypointName(clientId);
-  const packageKey = clientId;
-  const logContext = { namespace, package: name, waypointName, clientId };
+  const waypointName = getWaypointName(waypointId);
+  const logContext = { namespace, package: name, waypointName, waypointId };
 
   try {
     log.info("Deleting waypoint gateway", logContext);
 
     // Delete the waypoint gateway if it exists
     try {
-      await K8s(K8sGateway).InNamespace(namespace).Delete(waypointName);
-      log.debug("Successfully deleted waypoint gateway", logContext);
+      // Gateway will be garbage collected by owner reference
+      log.debug("Waypoint gateway will be garbage collected by owner reference", logContext);
     } catch (error) {
-      // Ignore 404 errors as the resource might already be deleted
-      if (error?.status !== 404) {
-        throw error;
-      }
-      log.debug("Waypoint gateway not found, continuing cleanup", logContext);
+      log.error("Error during waypoint gateway cleanup", { error, ...logContext });
+      throw error;
     }
 
-    // Clean up in-memory state
-    ambientPackages.delete(packageKey);
+    // Package cleanup is handled by the package watch
     log.info("Successfully unregistered ambient waypoint", logContext);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
@@ -406,32 +478,31 @@ export async function reconcileService(svc: a.Service): Promise<void> {
   const namespace = svc.metadata?.namespace;
   if (!namespace) return;
 
-  const pkgs = ambientPackagesByNamespace.get(namespace) || [];
-  for (const { pkg, selectors, waypointName } of pkgs) {
-    if (serviceMatchesSelectors(svc, selectors)) {
-      const needsUpdate =
-        svc.metadata?.labels?.["istio.io/use-waypoint"] !== waypointName ||
-        svc.metadata?.labels?.["uds/managed-by"] !== "uds-operator" ||
-        !svc.metadata?.ownerReferences?.some(
-          (ref: { kind?: string; name?: string }) =>
-            ref.kind === (pkg.kind || "UDSPackage") && ref.name === pkg.metadata?.name,
-        );
-      if (needsUpdate) {
-        svc.metadata = {
-          ...(svc.metadata || {}),
-          labels: createManagedLabels(pkg, waypointName, {
-            "istio.io/ingress-use-waypoint": "true",
-            ...(svc.metadata?.labels || {}),
-          }),
-          ownerReferences: [
-            ...(svc.metadata?.ownerReferences?.filter(
-              (ref: { kind?: string; name?: string }) =>
-                !(ref.kind === (pkg.kind || "UDSPackage") && ref.name === pkg.metadata?.name),
-            ) || []),
-            ...getOwnerRef(pkg),
-          ],
-        };
-      }
+  // Get all ambient packages in this namespace
+  const ambientPkgs = PackageStore.getAmbientPackagesByNamespace(namespace);
+
+  for (const pkg of ambientPkgs) {
+    if (!pkg.metadata?.name) continue;
+
+    const waypointName = getWaypointName(pkg.metadata.name);
+    const selectors =
+      (pkg.spec?.sso || [])
+        .filter(
+          (s: { enableAuthserviceSelector?: Record<string, string> }) =>
+            s.enableAuthserviceSelector,
+        )
+        .map(s => s.enableAuthserviceSelector || {}) || [];
+
+    if (selectors.some(selector => serviceMatchesSelector(svc, selector))) {
+      // Update the service with waypoint labels
+      svc.metadata = {
+        ...(svc.metadata || {}),
+        labels: {
+          ...(svc.metadata?.labels || {}),
+          [ISTIO_WAYPOINT_LABEL]: waypointName,
+          "istio.io/ingress-use-waypoint": "true",
+        },
+      };
       return;
     }
   }
@@ -441,50 +512,36 @@ export async function reconcilePod(pod: a.Pod): Promise<void> {
   const namespace = pod.metadata?.namespace;
   if (!namespace) return;
 
-  const pkgs = ambientPackagesByNamespace.get(namespace) || [];
-  for (const { pkg, selectors, waypointName } of pkgs) {
+  // Get all ambient packages in this namespace
+  const ambientPkgs = PackageStore.getAmbientPackagesByNamespace(namespace);
+
+  for (const pkg of ambientPkgs) {
+    if (!pkg.metadata?.name) continue;
+
+    const waypointName = getWaypointName(pkg.metadata.name);
+    const selectors =
+      (pkg.spec?.sso || [])
+        .filter(
+          (s: { enableAuthserviceSelector?: Record<string, string> }) =>
+            s.enableAuthserviceSelector,
+        )
+        .map(s => s.enableAuthserviceSelector || {}) || [];
+
+    // Check if pod matches any selector (OR operation)
     const matches = selectors.some(selector =>
       Object.entries(selector).every(([k, v]) => pod.metadata?.labels?.[k] === v),
     );
+
     if (matches) {
-      const needsUpdate =
-        pod.metadata?.labels?.["istio.io/use-waypoint"] !== waypointName ||
-        pod.metadata?.labels?.["uds/managed-by"] !== "uds-operator" ||
-        !pod.metadata?.ownerReferences?.some(
-          (ref: { kind?: string; name?: string }) =>
-            ref.kind === (pkg.kind || "UDSPackage") && ref.name === pkg.metadata?.name,
-        );
-      if (needsUpdate) {
-        pod.metadata = {
-          ...(pod.metadata || {}),
-          labels: createManagedLabels(pkg, waypointName, {
-            ...(pod.metadata?.labels || {}),
-          }),
-          ownerReferences: [
-            ...(pod.metadata?.ownerReferences?.filter(
-              (ref: { kind?: string; name?: string }) =>
-                !(ref.kind === (pkg.kind || "UDSPackage") && ref.name === pkg.metadata?.name),
-            ) || []),
-            ...getOwnerRef(pkg),
-          ],
-        };
-      }
+      // Update the pod with waypoint labels
+      pod.metadata = {
+        ...(pod.metadata || {}),
+        labels: {
+          ...(pod.metadata?.labels || {}),
+          [ISTIO_WAYPOINT_LABEL]: waypointName,
+        },
+      };
       return;
     }
-  }
-}
-
-/**
- * Checks if ambient mode is enabled in the given namespace
- * @param namespace - The namespace to check
- * @returns A promise that resolves to a boolean indicating if ambient is enabled
- */
-export async function isAmbientEnabled(namespace: string): Promise<boolean> {
-  try {
-    const ns = await K8s(kind.Namespace).Get(namespace);
-    return ns.metadata?.labels?.["istio.io/dataplane-mode"] === "ambient";
-  } catch (error) {
-    log.error(`Error checking if namespace ${namespace} is ambient enabled`, { error });
-    return false;
   }
 }

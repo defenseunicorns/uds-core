@@ -1,458 +1,299 @@
 /**
- * Copyright 2024 Defense Unicorns
- * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+ * Copyright 2025 Defense Unicorns
+ * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns
  */
 
-import { a, K8s, kind } from "pepr";
-import { beforeEach, describe, expect, Mock, test, vi } from "vitest";
+import { V1ContainerStatus } from "@kubernetes/client-node";
+import * as a from "pepr";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { K8sGateway, UDSPackage } from "../../crd";
+
+// Import the module to test
 import * as ambientWaypoint from "./ambient-waypoint";
-import {
-  isAmbientEnabled,
-  reconcilePod,
-  reconcileService,
-  setupAmbientWaypoint,
-  unregisterAmbientPackage,
-} from "./ambient-waypoint";
 
-// Define a type for the ambient waypoint module with the internal function
-interface AmbientWaypointModule {
-  registerAmbientPackage: (pkg: UDSPackage, clientId: string) => Promise<void>;
-}
+// Mock the K8s API
+const mockK8s = {
+  InNamespace: vi.fn().mockReturnThis(),
+  WithLabel: vi.fn().mockReturnThis(),
+  Get: vi.fn(),
+  Apply: vi.fn().mockResolvedValue({}),
+  Delete: vi.fn().mockResolvedValue({}),
+};
 
-// Mock K8s
 vi.mock("pepr", () => ({
-  K8s: vi.fn(),
   a: {
-    Service: "Service",
-    Pod: "Pod",
+    Service: {},
+    Pod: {},
+    K8sGateway: {},
   },
-  kind: {
-    Namespace: "Namespace",
-  },
-  Log: {
-    info: vi.fn(),
-    error: vi.fn(),
-    debug: vi.fn(),
-    warn: vi.fn(),
-    child: vi.fn().mockReturnValue({
-      info: vi.fn(),
-      error: vi.fn(),
-      debug: vi.fn(),
-      warn: vi.fn(),
-    }),
+  K8s: vi.fn().mockImplementation(() => mockK8s),
+}));
+
+// Mock the PackageStore
+vi.mock("../packages/package-store", () => ({
+  PackageStore: {
+    getAmbientPackagesByNamespace: vi.fn().mockReturnValue([]),
   },
 }));
 
-describe("ambient-waypoint", () => {
-  // Mock package for testing
-  const testPackage: UDSPackage = {
-    apiVersion: "uds.dev/v1alpha1",
-    kind: "UDSPackage",
-    metadata: {
-      name: "test-package",
-      namespace: "test-namespace",
-      uid: "test-uid",
-    },
-    spec: {
-      sso: [
-        {
-          clientId: "test-client",
-          name: "test-client",
-          enableAuthserviceSelector: { app: "test-app" },
-        },
-      ],
-    },
-  };
+// Mock the logger
+vi.mock("./istio-resources", () => ({
+  log: {
+    info: vi.fn(),
+    debug: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  },
+}));
 
-  // Mock K8s implementation
-  let mockGet: Mock;
-  let mockApply: Mock;
-  let mockDelete: Mock;
-  let mockInNamespace: Mock;
+// Mock the getOwnerRef utility
+vi.mock("../utils", () => ({
+  getOwnerRef: vi.fn().mockReturnValue([{ kind: "Package", name: "test-pkg", uid: "test-uid" }]),
+}));
+
+describe("getWaypointName", () => {
+  it("should return the correct waypoint name without prefix", () => {
+    const waypointId = "test-waypoint";
+    const result = ambientWaypoint.getWaypointName(waypointId);
+    expect(result).toBe("uds-core-test-waypoint-waypoint");
+  });
+
+  it("should not add duplicate uds-core prefix", () => {
+    const waypointId = "uds-core-test-waypoint";
+    const result = ambientWaypoint.getWaypointName(waypointId);
+    expect(result).toBe("uds-core-test-waypoint-waypoint");
+  });
+});
+
+describe("createManagedLabels", () => {
+  it("should create managed labels with package and waypoint information", () => {
+    const pkg = {
+      metadata: {
+        name: "test-pkg",
+        namespace: "test-ns",
+      },
+    } as UDSPackage;
+
+    const waypointName = "test-waypoint";
+    const additionalLabels = { "custom/label": "value" };
+
+    const result = ambientWaypoint.createManagedLabels(pkg, waypointName, additionalLabels);
+
+    expect(result).toEqual({
+      "uds/managed-by": "uds-operator",
+      "uds/package": "test-pkg",
+      "uds/namespace": "test-ns",
+      "istio.io/use-waypoint": "test-waypoint",
+      "custom/label": "value",
+    });
+  });
+});
+
+describe("isGatewayReady", () => {
+  it("should return true when gateway has both Accepted and Programmed conditions set to True", () => {
+    const gateway: K8sGateway = {
+      status: {
+        conditions: [
+          { type: "Accepted", status: "True" },
+          { type: "Programmed", status: "True" },
+        ],
+      },
+    } as K8sGateway;
+
+    expect(ambientWaypoint.isGatewayReady(gateway)).toBe(true);
+  });
+
+  it("should return false when gateway is missing conditions", () => {
+    const gateway: K8sGateway = {
+      status: {},
+    } as K8sGateway;
+
+    expect(ambientWaypoint.isGatewayReady(gateway)).toBe(false);
+  });
+
+  it("should return false when gateway has only one required condition", () => {
+    const gateway: K8sGateway = {
+      status: {
+        conditions: [
+          { type: "Accepted", status: "True" },
+          { type: "Programmed", status: "False" },
+        ],
+      },
+    } as K8sGateway;
+
+    expect(ambientWaypoint.isGatewayReady(gateway)).toBe(false);
+  });
+});
+
+describe("serviceMatchesSelector", () => {
+  it("should return true when service matches all selector labels", () => {
+    const service = {
+      metadata: {
+        name: "test-service",
+        namespace: "test-ns",
+      },
+      spec: {
+        selector: { "app.kubernetes.io/name": "test-app" },
+      },
+    } as a.kind.Service;
+
+    const selector = { "app.kubernetes.io/name": "test-app" };
+    const matches = ambientWaypoint.serviceMatchesSelector(service, selector);
+    expect(matches).toBe(true);
+  });
+
+  it("should return false when service does not match selector", () => {
+    const service = {
+      metadata: {
+        name: "test-service",
+        namespace: "test-ns",
+      },
+      spec: {
+        selector: { "app.kubernetes.io/name": "test-app" },
+      },
+    } as a.kind.Service;
+
+    const selector = { "app.kubernetes.io/name": "other-app" };
+    const matches = ambientWaypoint.serviceMatchesSelector(service, selector);
+    expect(matches).toBe(false);
+  });
+
+  it("should return false when service has no selector", () => {
+    const service = {
+      metadata: {
+        name: "test-service",
+        namespace: "test-ns",
+      },
+      spec: {},
+    } as a.kind.Service;
+
+    const selector = { "app.kubernetes.io/name": "test-app" };
+    const matches = ambientWaypoint.serviceMatchesSelector(service, selector);
+    expect(matches).toBe(false);
+  });
+});
+
+describe("isWaypointPodHealthy", () => {
+  const mockPod = (ready: boolean, containerStatuses: V1ContainerStatus[] = []) => ({
+    metadata: { name: "test-pod" },
+    status: {
+      phase: ready ? "Running" : "Pending",
+      containerStatuses:
+        containerStatuses.length > 0 ? containerStatuses : [{ name: "istio-proxy", ready }],
+    },
+  });
 
   beforeEach(() => {
     vi.clearAllMocks();
+  });
 
-    // Reset mocks
-    mockGet = vi.fn();
-    mockApply = vi.fn().mockResolvedValue({});
-    mockDelete = vi.fn().mockResolvedValue({});
-    mockInNamespace = vi.fn().mockReturnValue({
-      Get: mockGet,
-      Delete: mockDelete,
-    });
+  it("should return true when all containers are ready", async () => {
+    const pod = mockPod(true);
+    mockK8s.Get.mockResolvedValueOnce({ items: [pod] });
 
-    // Setup K8s mock implementation
-    (K8s as Mock).mockImplementation(resource => {
-      if (resource === kind.Namespace) {
-        return {
-          Get: mockGet,
-        };
-      } else if (resource === K8sGateway) {
-        return {
-          InNamespace: mockInNamespace,
-          Apply: mockApply,
-        };
-      } else if (resource === a.Service) {
-        return {
-          InNamespace: mockInNamespace,
-        };
-      } else if (resource === a.Pod) {
-        return {
-          InNamespace: () => ({
-            List: vi.fn().mockResolvedValue({
-              items: [
-                {
-                  metadata: {
-                    name: "test-client-waypoint-pod",
-                    labels: {
-                      "istio.io/gateway-name": "test-client-waypoint",
-                    },
-                  },
-                  status: {
-                    phase: "Running",
-                    containerStatuses: [
-                      {
-                        name: "istio-proxy",
-                        ready: true,
-                        restartCount: 0,
-                      },
-                    ],
-                    conditions: [
-                      {
-                        type: "Ready",
-                        status: "True",
-                      },
-                    ],
-                  },
-                },
-              ],
-            }),
+    const isHealthy = await ambientWaypoint.isWaypointPodHealthy("test-ns", "test-gateway");
+    expect(isHealthy).toBe(true);
+    expect(mockK8s.InNamespace).toHaveBeenCalledWith("test-ns");
+    expect(mockK8s.WithLabel).toHaveBeenCalledWith("istio.io/gateway-name=test-gateway");
+  });
+
+  it("should return false when container is not ready", async () => {
+    const pod = mockPod(false);
+    mockK8s.Get.mockResolvedValueOnce({ items: [pod] });
+
+    const isHealthy = await ambientWaypoint.isWaypointPodHealthy("test-ns", "test-gateway");
+    expect(isHealthy).toBe(false);
+  });
+
+  it("should return false when pod is not running", async () => {
+    const pod = { ...mockPod(true), status: { phase: "Pending" } };
+    mockK8s.Get.mockResolvedValueOnce({ items: [pod] });
+
+    const isHealthy = await ambientWaypoint.isWaypointPodHealthy("test-ns", "test-gateway");
+    expect(isHealthy).toBe(false);
+  });
+});
+
+describe("createWaypointGateway", () => {
+  const mockPkg = {
+    metadata: {
+      name: "test-pkg",
+      namespace: "test-ns",
+      annotations: { "test/annotation": "value" },
+    },
+    spec: {},
+  } as UDSPackage;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("should create a new waypoint gateway when none exists", async () => {
+    const waypointId = "test-waypoint";
+    const waypointName = "uds-core-test-waypoint-waypoint";
+
+    // Reset mocks before this test
+    vi.clearAllMocks();
+
+    // Mock the Get to throw a 404 error
+    mockK8s.Get.mockRejectedValueOnce({ status: 404 });
+
+    await ambientWaypoint.createWaypointGateway(mockPkg, waypointId);
+
+    // Verify the gateway was created with the correct parameters
+    expect(mockK8s.Apply).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: expect.objectContaining({
+          name: waypointName,
+          namespace: "test-ns",
+          labels: expect.objectContaining({
+            "app.kubernetes.io/component": "ambient-waypoint",
+            "app.kubernetes.io/name": "test-waypoint",
+            "istio.io/waypoint-for": "all",
+            "istio.io/gateway-name": waypointName,
           }),
-        };
-      }
-      return {
-        Get: mockGet,
-        Apply: mockApply,
-        Delete: mockDelete,
-        InNamespace: mockInNamespace,
-      };
-    });
-  });
-
-  describe("isAmbientEnabled", () => {
-    test("should return true when namespace has ambient mode enabled", async () => {
-      // Mock namespace with ambient mode enabled
-      mockGet.mockResolvedValue({
-        metadata: {
-          labels: {
-            "istio.io/dataplane-mode": "ambient",
-          },
-        },
-      });
-
-      const result = await isAmbientEnabled("test-namespace");
-
-      expect(result).toBe(true);
-      expect(mockGet).toHaveBeenCalledWith("test-namespace");
-    });
-
-    test("should return false when namespace has ambient mode disabled", async () => {
-      // Mock namespace with ambient mode explicitly disabled
-      mockGet.mockResolvedValue({
-        metadata: {
-          labels: {
-            "istio.io/dataplane-mode": "disabled",
-          },
-        },
-      });
-
-      const result = await isAmbientEnabled("test-namespace");
-
-      expect(result).toBe(false);
-      expect(mockGet).toHaveBeenCalledWith("test-namespace");
-    });
-
-    test("should return false when namespace has no labels", async () => {
-      // Mock namespace with no labels
-      mockGet.mockResolvedValue({
-        metadata: {
-          labels: {},
-        },
-      });
-
-      const result = await isAmbientEnabled("test-namespace");
-
-      expect(result).toBe(false);
-      expect(mockGet).toHaveBeenCalledWith("test-namespace");
-    });
-
-    test("should return false when namespace check throws an error", async () => {
-      // Mock error when getting namespace
-      mockGet.mockRejectedValue(new Error("Namespace not found"));
-
-      const result = await isAmbientEnabled("test-namespace");
-
-      expect(result).toBe(false);
-      expect(mockGet).toHaveBeenCalledWith("test-namespace");
-    });
-  });
-
-  describe("isGatewayReady", () => {
-    test("should return true when gateway is ready", () => {
-      const gateway = {
-        status: {
-          conditions: [
-            { type: "Accepted", status: "True" },
-            { type: "Programmed", status: "True" },
-          ],
-        },
-      };
-      expect(ambientWaypoint.isGatewayReady(gateway as K8sGateway)).toBe(true);
-    });
-
-    test("should return false when programmed is true but accepted is false", () => {
-      const gateway = {
-        status: {
-          conditions: [
-            { type: "Accepted", status: "False" },
-            { type: "Programmed", status: "True" },
-          ],
-        },
-      };
-      expect(ambientWaypoint.isGatewayReady(gateway as K8sGateway)).toBe(false);
-    });
-
-    test("should return false when programmed is false but accepted is true", () => {
-      const gateway = {
-        status: {
-          conditions: [
-            { type: "Accepted", status: "True" },
-            { type: "Programmed", status: "False" },
-          ],
-        },
-      };
-      expect(ambientWaypoint.isGatewayReady(gateway as K8sGateway)).toBe(false);
-    });
-
-    test("should return false when both programmed and accepted are false", () => {
-      const gateway = {
-        status: {
-          conditions: [
-            { type: "Accepted", status: "False" },
-            { type: "Programmed", status: "False" },
-          ],
-        },
-      };
-      expect(ambientWaypoint.isGatewayReady(gateway as K8sGateway)).toBe(false);
-    });
-
-    test("should return false when conditions are missing", () => {
-      const gateway = {
-        status: {},
-      };
-      expect(ambientWaypoint.isGatewayReady(gateway as K8sGateway)).toBe(false);
-    });
-
-    test("should return false when status is missing", () => {
-      const gateway = {};
-      expect(ambientWaypoint.isGatewayReady(gateway as K8sGateway)).toBe(false);
-    });
-  });
-
-  describe("setupAmbientWaypoint", () => {
-    test("should create waypoint gateway and wait for pod health", async () => {
-      vi.useFakeTimers();
-      // Setup mocks
-      const mockApplyGateway = vi.fn().mockResolvedValue({});
-      // Return a healthy pod only for the correct namespace
-      const healthyPod = {
-        metadata: {
-          name: "test-client-waypoint-pod",
-          labels: {
-            "istio.io/gateway-name": "test-client-waypoint",
-          },
-        },
-        status: {
-          phase: "Running",
-          containerStatuses: [
-            {
-              name: "istio-proxy",
-              ready: true,
-              restartCount: 0,
-            },
-          ],
-          conditions: [
-            {
-              type: "Ready",
-              status: "True",
-            },
-          ],
-        },
-      };
-      // Patch K8s mock for this test
-      (K8s as Mock).mockImplementation(resource => {
-        if (resource === K8sGateway) {
-          return {
-            Apply: mockApplyGateway,
-            InNamespace: () => ({
-              Get: vi.fn().mockRejectedValue({ status: 404 }),
-              Delete: vi.fn().mockResolvedValue({}),
-            }),
-          };
-        } else if (resource === a.Pod) {
-          return {
-            InNamespace: (ns: string) => ({
-              WithLabel: (label: string) => ({
-                Get: vi.fn().mockImplementation(() => {
-                  if (
-                    ns === "test-namespace" &&
-                    label === "istio.io/gateway-name=test-client-waypoint"
-                  ) {
-                    return Promise.resolve({ items: [healthyPod] });
-                  }
-                  return Promise.resolve({ items: [] });
-                }),
-              }),
-            }),
-          };
-        }
-        return {
-          Get: mockGet,
-          Apply: mockApply,
-          InNamespace: mockInNamespace,
-        };
-      });
-      const originalEnv = process.env;
-      process.env.WAYPOINT_HEALTH_MAX_ATTEMPTS = "1";
-      process.env.WAYPOINT_HEALTH_INTERVAL_MS = "10";
-      try {
-        const promise = setupAmbientWaypoint(testPackage, "test-client");
-        await vi.runAllTimersAsync();
-        await promise;
-        expect(mockApplyGateway).toHaveBeenCalledWith(
-          expect.objectContaining({
-            metadata: expect.objectContaining({
-              name: "test-client-waypoint",
-              namespace: "test-namespace",
-            }),
-            spec: expect.objectContaining({
-              gatewayClassName: "istio-waypoint",
-            }),
+          annotations: expect.objectContaining({
+            "uds.dev/created-at": expect.any(String),
+            "test/annotation": "value",
           }),
-          expect.anything(),
-        );
-      } finally {
-        // Restore environment
-        process.env = originalEnv;
-        vi.useRealTimers();
-      }
-    });
-
-    test("should throw error when package metadata is missing", async () => {
-      const invalidPackage: UDSPackage = {
-        apiVersion: "uds.dev/v1alpha1",
-        kind: "UDSPackage",
-        metadata: {},
-      };
-
-      await expect(setupAmbientWaypoint(invalidPackage, "test-client")).rejects.toThrow(
-        "Package metadata is missing namespace or name",
-      );
-    });
-  });
-
-  describe("unregisterAmbientPackage", () => {
-    test("should delete waypoint gateway", async () => {
-      await unregisterAmbientPackage(testPackage, "test-client");
-
-      expect(mockInNamespace).toHaveBeenCalledWith("test-namespace");
-      expect(mockDelete).toHaveBeenCalledWith("test-client-waypoint");
-    });
-
-    test("should handle 404 errors gracefully", async () => {
-      // Mock gateway not found
-      mockDelete.mockRejectedValue({ status: 404 });
-
-      await expect(unregisterAmbientPackage(testPackage, "test-client")).resolves.not.toThrow();
-    });
-
-    test("should throw other errors", async () => {
-      // Mock other error
-      mockDelete.mockRejectedValue(new Error("Connection refused"));
-
-      await expect(unregisterAmbientPackage(testPackage, "test-client")).rejects.toThrow(
-        "Failed to clean up ambient waypoint",
-      );
-    });
-  });
-
-  describe("reconcileService", () => {
-    test("should update service with waypoint labels when it matches selectors", async () => {
-      // Create a service that matches the selector
-      const service = {
-        metadata: {
-          name: "test-service",
-          namespace: "test-namespace",
-          labels: {},
-        },
+        }),
         spec: {
-          selector: {
-            app: "test-app",
-          },
+          gatewayClassName: "istio-waypoint",
+          listeners: [
+            {
+              name: "mesh",
+              port: 15008,
+              protocol: "HBONE",
+            },
+          ],
         },
-      };
+      }),
+      { force: true },
+    );
 
-      // Register the package first (this is normally done by setupAmbientWaypoint)
-      await (ambientWaypoint as unknown as AmbientWaypointModule).registerAmbientPackage(
-        testPackage,
-        "test-client",
-      );
-
-      // Now reconcile the service
-      await reconcileService(service);
-
-      // Verify service was updated with waypoint labels
-      expect(service.metadata.labels).toEqual(
-        expect.objectContaining({
-          "istio.io/use-waypoint": "test-client-waypoint",
-          "istio.io/ingress-use-waypoint": "true",
-          "uds/managed-by": "uds-operator",
-        }),
-      );
-    });
+    // Verify the namespace was set correctly
+    expect(mockK8s.InNamespace).toHaveBeenCalledWith("test-ns");
   });
 
-  describe("reconcilePod", () => {
-    test("should update pod with waypoint labels when it matches selectors", async () => {
-      // Create a pod that matches the selector
-      const pod = {
-        metadata: {
-          name: "test-pod",
-          namespace: "test-namespace",
-          labels: {
-            app: "test-app",
-          },
-        },
-      };
+  it("should use existing gateway if it is already ready", async () => {
+    const waypointId = "existing-waypoint";
 
-      // Register the package first (this is normally done by setupAmbientWaypoint)
-      await (ambientWaypoint as unknown as AmbientWaypointModule).registerAmbientPackage(
-        testPackage,
-        "test-client",
-      );
+    // Reset mocks before this test
+    vi.clearAllMocks();
 
-      // Now reconcile the pod
-      await reconcilePod(pod);
-
-      // Verify pod was updated with waypoint labels
-      expect(pod.metadata.labels).toEqual(
-        expect.objectContaining({
-          "istio.io/use-waypoint": "test-client-waypoint",
-          "uds/managed-by": "uds-operator",
-        }),
-      );
+    // Mock an existing ready gateway
+    mockK8s.Get.mockResolvedValueOnce({
+      status: {
+        conditions: [
+          { type: "Accepted", status: "True" },
+          { type: "Programmed", status: "True" },
+        ],
+      },
     });
+
+    await ambientWaypoint.createWaypointGateway(mockPkg, waypointId);
+
+    // Should not try to create a new gateway
+    expect(mockK8s.Apply).not.toHaveBeenCalled();
   });
 });

@@ -118,18 +118,15 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
         "gateway.networking.k8s.io/gateway-name": `${sso.clientId}-waypoint`,
       };
 
-      const istiodPolicy: Allow = {
-        direction: Direction.Egress,
-        selector: waypointSelector,
-        remoteNamespace: "istio-system",
-        remoteSelector: { app: "istiod" },
-        ports: [15012],
-        labels: {
-          "uds/package": pkg.metadata!.name!,
-        },
+      const istiodPolicy = allowEgressIstiod(namespace);
+      istiodPolicy.spec!.podSelector = { matchLabels: waypointSelector };
+      istiodPolicy.metadata = istiodPolicy.metadata || {};
+      istiodPolicy.metadata.labels = {
+        ...istiodPolicy.metadata.labels,
+        "uds/package": pkg.metadata!.name!,
       };
-      const generatedIstiodPolicy = generate(namespace, istiodPolicy);
-      policies.push(generatedIstiodPolicy);
+
+      policies.push(istiodPolicy);
     }
   }
 
