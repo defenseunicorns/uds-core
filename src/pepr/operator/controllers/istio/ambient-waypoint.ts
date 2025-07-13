@@ -40,8 +40,6 @@ export function createManagedLabels(
   };
 }
 
-// Ambient package tracking is handled by PackageStore
-
 /**
  * Checks if a service matches the provided selector
  * @param svc - The service to check
@@ -134,6 +132,7 @@ export async function createWaypointGateway(pkg: UDSPackage, waypointId: string)
       return waypointName;
     }
     log.info("Waypoint Gateway exists but is not ready, waiting...", { namespace, waypointName });
+    return waypointName;
   } catch (notFoundError) {
     // Gateway doesn't exist, log the error and create it
     const errorMessage =
@@ -178,6 +177,7 @@ export async function createWaypointGateway(pkg: UDSPackage, waypointId: string)
     try {
       await K8s(K8sGateway).Apply(gateway, { force: true });
       log.info("Successfully applied Waypoint Gateway", { namespace, waypointName });
+      return waypointName;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       log.error("Failed to apply Waypoint Gateway", {
@@ -188,8 +188,6 @@ export async function createWaypointGateway(pkg: UDSPackage, waypointId: string)
       throw new Error(`Failed to create waypoint gateway: ${errorMessage}`);
     }
   }
-
-  log.info("Waiting for Waypoint Gateway to become ready", { namespace, waypointName });
 }
 
 /**
@@ -316,9 +314,8 @@ export async function waitForWaypointPodHealthy(
 }
 
 /**
- * Sets up all resources needed for ambient waypoint functionality
+ * Generate and apply NetworkPolicies for waypoint-app traffic
  */
-// Generate and apply NetworkPolicies for waypoint-app traffic
 export async function generateWaypointNetworkPolicies(
   pkg: UDSPackage,
   waypointName: string,
@@ -379,6 +376,11 @@ export async function generateWaypointNetworkPolicies(
   await K8s(a.NetworkPolicy).Apply(egressNetpol, { force: true });
 }
 
+/**
+ * Sets up an ambient waypoint for a package
+ * @param pkg - The package to set up the ambient waypoint for
+ * @param waypointId - The ID of the waypoint to set up
+ */
 export async function setupAmbientWaypoint(pkg: UDSPackage, waypointId: string): Promise<void> {
   const { namespace, name } = pkg.metadata || {};
   if (!namespace || !name) {
@@ -508,6 +510,11 @@ export async function reconcileService(svc: a.Service): Promise<void> {
   }
 }
 
+/**
+ * Reconciles a pod for ambient waypoint handling
+ * @param pod - The pod to reconcile
+ * @returns A promise that resolves when reconciliation is complete
+ */
 export async function reconcilePod(pod: a.Pod): Promise<void> {
   const namespace = pod.metadata?.namespace;
   if (!namespace) return;
