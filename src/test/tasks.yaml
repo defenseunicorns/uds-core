@@ -14,7 +14,7 @@ tasks:
     inputs:
       validate_egress:
         description: Whether to validate egress controls with the egress gateway
-        default: "false"
+        default: "true"
 
     actions:
       - description: "Run Test Apps E2E tests"
@@ -29,8 +29,8 @@ tasks:
         cmd: |
           npx vitest run "test-resources.spec.ts"
         dir: test/vitest
-      # - description: "Remove Test Apps resources"
-      #   task: remove
+      - description: "Remove Test Apps resources"
+        task: remove
 
   - name: create-deploy
     description: Test app used for UDS Core validation
