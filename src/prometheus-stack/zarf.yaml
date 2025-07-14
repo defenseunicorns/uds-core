@@ -76,4 +76,4 @@ components:
       - "quay.io/rfcurated/prometheus/alertmanager:0.28.1-jammy-fips-rfcurated-rfhardened"
       - "quay.io/rfcurated/prometheus-operator/prometheus-config-reloader:0.83.0-jammy-scratch-fips-rfcurated"
       - "quay.io/rfcurated/prometheus:3.4.2-jammy-fips-rfcurated-rfhardened"
-      - "quay.io/rfcurated/ingress-nginx/kube-webhook-certgen:1.5.0-jammy-fips-rfcurated-rfhardened"
+      - "quay.io/rfcurated/ingress-nginx/kube-webhook-certgen:1.6.0-jammy-fips-rfcurated-rfhardened"
