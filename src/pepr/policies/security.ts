@@ -5,7 +5,7 @@
 
 import { a, sdk } from "pepr";
 
-import { V1SecurityContext } from "@kubernetes/client-node";
+import { V1Pod, V1PodSecurityContext, V1PodSpec } from "@kubernetes/client-node";
 import { Policy } from "../operator/crd";
 import {
   When,
@@ -19,8 +19,7 @@ const { containers } = sdk;
 
 /**
  * This policy restricts the use of the Istio proxy user/group (1337) to only be used by Istio proxy containers.
- *
- * The policy enforces that only containers with the label 'security.istio.io/tlsMode: istio' can run as UID/GID 1337.
+ * It allows specific Istio components (waypoints, ztunnel, and sidecars) to use these IDs.
  * This prevents unauthorized pods from running with elevated privileges that could be used to bypass security controls.
  */
 When(a.Pod)
@@ -31,37 +30,60 @@ When(a.Pod)
       return request.Approve();
     }
 
-    const pod = request.Raw;
+    const pod = request.Raw as V1Pod;
+    const podSpec = pod.spec || ({} as V1PodSpec);
+    const podSecurityCtx = podSpec.securityContext || ({} as V1PodSecurityContext);
 
-    // Check pod security context
-    const podRunAsUser = pod.spec?.securityContext?.runAsUser;
-    if (podRunAsUser === 1337 && !hasIstioProxyLabel(pod)) {
+    // Check if this is a ztunnel pod using multiple reliable labels
+    const isZtunnelPod =
+      pod.metadata?.labels?.["app"] === "ztunnel" &&
+      pod.metadata?.labels?.["app.kubernetes.io/name"] === "ztunnel" &&
+      pod.metadata?.labels?.["app.kubernetes.io/part-of"] === "istio";
+
+    // Check if this is a waypoint using multiple reliable indicators
+    const isWaypoint =
+      pod.metadata?.labels?.["gateway.istio.io/managed"] === "istio.io-mesh-controller" &&
+      pod.metadata?.labels?.["service.istio.io/canonical-name"]?.endsWith("-waypoint") &&
+      pod.metadata?.labels?.["istio.io/dataplane-mode"] === "none";
+
+    // Skip validation for trusted Istio components
+    if (isZtunnelPod || isWaypoint) {
+      return request.Approve();
+    }
+
+    // Check pod-level security context for UID/GID 1337
+    if (
+      podSecurityCtx.runAsUser === 1337 ||
+      podSecurityCtx.runAsGroup === 1337 ||
+      podSecurityCtx.fsGroup === 1337 ||
+      podSecurityCtx.supplementalGroups?.includes(1337)
+    ) {
       return request.Deny(
-        "Pods cannot run as UID 1337 (Istio proxy user) unless they have the label 'security.istio.io/tlsMode: istio'",
+        "Pods cannot use UID/GID 1337 (Istio proxy) unless they are trusted Istio components",
       );
     }
 
-    // Check all containers
+    // Check container security contexts
     for (const container of containers(request)) {
       const containerCtx = container.securityContext || {};
-      const runAsUser = containerCtx.runAsUser ?? podRunAsUser;
 
-      if (runAsUser === 1337 && !hasIstioProxyLabel(pod)) {
+      // Skip validation for istio-proxy containers
+      if (container.name === "istio-proxy") {
+        continue;
+      }
+
+      const runAsUser = containerCtx.runAsUser ?? podSecurityCtx.runAsUser;
+      const runAsGroup = containerCtx.runAsGroup ?? podSecurityCtx.runAsGroup;
+
+      if (runAsUser === 1337 || runAsGroup === 1337) {
         return request.Deny(
-          `Container '${container.name}' cannot run as UID 1337 (Istio proxy user) unless the pod has the label 'security.istio.io/tlsMode: istio'`,
+          `Container '${container.name}' cannot use UID/GID 1337 (Istio proxy) as it is not a trusted Istio component`,
         );
       }
     }
 
     return request.Approve();
   });
-
-/**
- * Checks if a pod has the Istio proxy label
- */
-function hasIstioProxyLabel(pod: a.Pod): boolean {
-  return pod.metadata?.labels?.["security.istio.io/tlsMode"] === "istio";
-}
 
 /**
  * This policy ensures that Pods do not allow privilege escalation.
@@ -189,7 +211,7 @@ When(a.Pod)
       return request.Approve();
     }
     // Check if running as root by checking if runAsNonRoot is false or runAsUser is 0
-    const isRoot = (ctx: Partial<V1SecurityContext>) => {
+    const isRoot = (ctx: Partial<V1PodSecurityContext>) => {
       const isRunAsRoot = ctx.runAsNonRoot === false;
       const isRunAsRootUser = ctx.runAsUser === 0;
 
@@ -317,7 +339,7 @@ When(a.Pod)
     if (seLinuxOptions?.user || seLinuxOptions?.role) {
       return request.Deny(
         securityContextMessage(`Unauthorized pod SELinux Options`, authorized, [
-          { ctx: request.Raw.spec?.securityContext as V1SecurityContext },
+          { ctx: request.Raw.spec?.securityContext as V1PodSecurityContext },
         ]),
       );
     }
@@ -360,7 +382,7 @@ When(a.Pod)
     if (!authorized.includes(podSeLinuxType)) {
       return request.Deny(
         securityContextMessage("Unauthorized pod SELinux type", authorized, [
-          { ctx: request.Raw.spec?.securityContext as V1SecurityContext },
+          { ctx: request.Raw.spec?.securityContext as V1PodSecurityContext },
         ]),
       );
     }

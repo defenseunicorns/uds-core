@@ -368,161 +368,6 @@ describe("security policies", () => {
     ]);
   });
 
-  it("should restrict istio proxy user (1337) to pods with istio label", async () => {
-    const expected = (e: Error) =>
-      expect(e).toMatchObject({
-        ok: false,
-        data: {
-          message: expect.stringMatching(
-            /cannot run as UID 1337 \(Istio proxy user\) unless (the pod has|they have) the label 'security\.istio\.io\/tlsMode: istio'/,
-          ),
-        },
-      });
-
-    return Promise.all([
-      // Test pod-level runAsUser = 1337 without label (should fail)
-      K8s(kind.Pod)
-        .Apply({
-          metadata: {
-            name: "istio-user-pod-level",
-            namespace: "policy-tests",
-          },
-          spec: {
-            securityContext: {
-              runAsUser: 1337,
-            },
-            containers: [
-              {
-                name: "test",
-                image: "127.0.0.1/fake",
-              },
-            ],
-          },
-        })
-        .then(failIfReached)
-        .catch(expected),
-
-      // Test container-level runAsUser = 1337 without label (should fail)
-      K8s(kind.Pod)
-        .Apply({
-          metadata: {
-            name: "istio-user-container-level",
-            namespace: "policy-tests",
-          },
-          spec: {
-            containers: [
-              {
-                name: "test",
-                image: "127.0.0.1/fake",
-                securityContext: {
-                  runAsUser: 1337,
-                },
-              },
-            ],
-          },
-        })
-        .then(failIfReached)
-        .catch(expected),
-    ]);
-  });
-
-  it("should allow istio proxy user (1337) with correct label", async () => {
-    // This should pass as the pod has the required label
-    return K8s(kind.Pod)
-      .Apply({
-        metadata: {
-          name: "istio-proxy-allowed",
-          namespace: "policy-tests",
-          labels: {
-            "security.istio.io/tlsMode": "istio",
-          },
-        },
-        spec: {
-          containers: [
-            {
-              name: "istio-proxy",
-              image: "127.0.0.1/istio-proxy",
-              securityContext: {
-                runAsUser: 1337,
-              },
-            },
-          ],
-        },
-      })
-      .then(pod => {
-        expect(pod).toMatchObject({
-          metadata: {
-            name: "istio-proxy-allowed",
-            labels: {
-              "security.istio.io/tlsMode": "istio",
-            },
-          },
-          spec: {
-            containers: [
-              {
-                name: "istio-proxy",
-                securityContext: {
-                  runAsUser: 1337,
-                },
-              },
-            ],
-          },
-        });
-      })
-      .catch(failIfReached);
-  });
-
-  it("should allow non-istio user without label", async () => {
-    // This should pass as the pod is not using the Istio proxy user
-    return K8s(kind.Pod)
-      .Apply({
-        metadata: {
-          name: "non-istio-user",
-          namespace: "policy-tests",
-        },
-        spec: {
-          containers: [
-            {
-              name: "test",
-              image: "127.0.0.1/fake",
-              securityContext: {
-                runAsUser: 1000,
-              },
-            },
-          ],
-        },
-      })
-      .then(pod => {
-        expect(pod).toMatchObject({
-          metadata: {
-            name: "non-istio-user",
-          },
-          spec: {
-            containers: [
-              {
-                name: "test",
-                securityContext: {
-                  runAsUser: 1000,
-                },
-              },
-            ],
-          },
-        });
-      })
-      .catch(failIfReached);
-  });
-
-  it("should allow exempted pods to use istio proxy user", async () => {
-    // This test is skipped because it requires a running Kubernetes cluster with the exemption CRD installed
-    // and the Pepr controller running to process the exemption
-    // In a real environment, the exemption would be created by the cluster admin or through some automation
-    // and the test would verify that the pod with the exemption can run as UID 1337
-    console.log(
-      "Skipping exemption test as it requires a running Kubernetes cluster with the exemption CRD",
-    );
-    return Promise.resolve();
-  });
-
   it("should drop all capabilities", async () => {
     const expected = (pod: kind.Pod) =>
       expect(pod).toMatchObject({
@@ -604,5 +449,196 @@ describe("security policies", () => {
         .then(failIfReached)
         .catch(expected),
     ]);
+  });
+
+  describe("istio proxy user/group restrictions", () => {
+    interface K8sError extends Error {
+      data?: {
+        message?: string;
+      };
+      ok: boolean;
+    }
+
+    const expectIstioUserDenied = (e: unknown) => {
+      const error = e as K8sError;
+      const message = error.data?.message || error.message || "";
+      expect(message).toMatch(/use UID\/GID 1337 \(Istio proxy\)/);
+      return expect(error).toMatchObject({ ok: false });
+    };
+
+    it("should deny pod with runAsUser 1337", async () => {
+      return K8s(kind.Pod)
+        .Apply({
+          metadata: {
+            name: "istio-user-pod",
+            namespace: "policy-tests",
+          },
+          spec: {
+            securityContext: {
+              runAsUser: 1337,
+            },
+            containers: [
+              {
+                name: "test",
+                image: "127.0.0.1/fake",
+              },
+            ],
+          },
+        })
+        .then(failIfReached)
+        .catch(expectIstioUserDenied);
+    });
+
+    it("should deny pod with runAsGroup 1337", async () => {
+      return K8s(kind.Pod)
+        .Apply({
+          metadata: {
+            name: "istio-group-pod",
+            namespace: "policy-tests",
+          },
+          spec: {
+            securityContext: {
+              runAsGroup: 1337,
+            },
+            containers: [
+              {
+                name: "test",
+                image: "127.0.0.1/fake",
+              },
+            ],
+          },
+        })
+        .then(failIfReached)
+        .catch(expectIstioUserDenied);
+    });
+
+    it("should allow ztunnel pod with UID/GID 1337", async () => {
+      return K8s(kind.Pod)
+        .Apply({
+          metadata: {
+            name: "ztunnel-test",
+            namespace: "istio-system",
+            labels: {
+              app: "ztunnel",
+              "app.kubernetes.io/name": "ztunnel",
+              "app.kubernetes.io/part-of": "istio",
+            },
+          },
+          spec: {
+            securityContext: {
+              runAsUser: 1337,
+              runAsGroup: 1337,
+            },
+            containers: [
+              {
+                name: "ztunnel",
+                image: "127.0.0.1/ztunnel",
+              },
+            ],
+          },
+        })
+        .then(pod => {
+          expect(pod).toMatchObject({
+            metadata: {
+              name: "ztunnel-test",
+              namespace: "istio-system",
+            },
+          });
+        });
+    });
+
+    it("should allow waypoint pod with UID/GID 1337", async () => {
+      return K8s(kind.Pod)
+        .Apply({
+          metadata: {
+            name: "waypoint-test",
+            namespace: "policy-tests",
+            labels: {
+              "gateway.istio.io/managed": "istio.io-mesh-controller",
+              "service.istio.io/canonical-name": "test-waypoint",
+              "istio.io/dataplane-mode": "none",
+            },
+          },
+          spec: {
+            securityContext: {
+              runAsUser: 1337,
+              runAsGroup: 1337,
+            },
+            containers: [
+              {
+                name: "istio-proxy",
+                image: "127.0.0.1/istio/proxyv2",
+              },
+            ],
+          },
+        })
+        .then(pod => {
+          expect(pod).toMatchObject({
+            metadata: {
+              name: "waypoint-test",
+              namespace: "policy-tests",
+            },
+          });
+        });
+    });
+
+    it("should allow istio-proxy container with UID/GID 1337", async () => {
+      return K8s(kind.Pod)
+        .Apply({
+          metadata: {
+            name: "istio-sidecar",
+            namespace: "policy-tests",
+          },
+          spec: {
+            containers: [
+              {
+                name: "app",
+                image: "127.0.0.1/app",
+                securityContext: {
+                  runAsUser: 1000,
+                },
+              },
+              {
+                name: "istio-proxy",
+                image: "127.0.0.1/istio/proxyv2",
+                securityContext: {
+                  runAsUser: 1337,
+                  runAsGroup: 1337,
+                },
+              },
+            ],
+          },
+        })
+        .then(pod => {
+          expect(pod).toMatchObject({
+            metadata: {
+              name: "istio-sidecar",
+            },
+          });
+        });
+    });
+
+    it("should deny non-istio container with UID 1337", async () => {
+      return K8s(kind.Pod)
+        .Apply({
+          metadata: {
+            name: "bad-container",
+            namespace: "policy-tests",
+          },
+          spec: {
+            containers: [
+              {
+                name: "bad-container",
+                image: "127.0.0.1/malicious",
+                securityContext: {
+                  runAsUser: 1337,
+                },
+              },
+            ],
+          },
+        })
+        .then(failIfReached)
+        .catch(expectIstioUserDenied);
+    });
   });
 });
