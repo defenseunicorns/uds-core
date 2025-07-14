@@ -8,7 +8,11 @@ import { K8s, kind } from "pepr";
 import { UDSConfig } from "../../../config";
 import { Component, setupLogger } from "../../../logger";
 import { Allow, Direction, Gateway, RemoteGenerated, UDSPackage } from "../../crd";
-import { getWaypointName } from "../istio/ambient-waypoint";
+import {
+  getPodSelector,
+  getWaypointName,
+  shouldUseAmbientWaypoint,
+} from "../istio/ambient-waypoint";
 import { IstioState } from "../istio/namespace";
 import { getOwnerRef, purgeOrphans, sanitizeResourceName } from "../utils";
 import { allowEgressDNS } from "./defaults/allow-egress-dns";
@@ -71,11 +75,8 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
     // Create the NetworkPolicy for the VirtualService
     const policy: Allow = {
       direction: Direction.Ingress,
-      // In ambient mode, target the waypoint pods instead of the app pods
-      selector:
-        istioMode === IstioState.Ambient
-          ? { "gateway.networking.k8s.io/gateway-name": waypointName }
-          : selector,
+      // In ambient mode, target the waypoint pods instead of the app pods if the package should use ambient waypoint
+      selector: getPodSelector(pkg, selector, waypointName),
       remoteNamespace: `istio-${gateway}-gateway`,
       remoteSelector: {
         app: `${gateway}-ingressgateway`,
@@ -83,7 +84,7 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
       port: policyPort,
       // Use the port, selector, and gateway to generate a description for VirtualService derived policies
       description:
-        istioMode === IstioState.Ambient
+        istioMode === IstioState.Ambient && shouldUseAmbientWaypoint(pkg)
           ? `${policyPort}-${waypointName} Istio ${gateway} gateway (ambient)`
           : `${policyPort}-${Object.values(selector)} Istio ${gateway} gateway`,
     };
@@ -97,15 +98,11 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
   const ssos = pkg.spec?.sso?.filter(sso => sso.enableAuthserviceSelector);
 
   for (const sso of ssos || []) {
-    let netpolSelector;
-    // In ambient mode, target the waypoint pods instead of the app pods
-    if (istioMode === IstioState.Ambient) {
-      netpolSelector = {
-        "gateway.networking.k8s.io/gateway-name": `${sso.clientId}-waypoint`,
-      };
-    } else {
-      netpolSelector = sso.enableAuthserviceSelector;
-    }
+    // In ambient mode, target the waypoint pods instead of the app pods if the package should use ambient waypoint
+    const netpolSelector =
+      istioMode === IstioState.Ambient && shouldUseAmbientWaypoint(pkg)
+        ? { "gateway.networking.k8s.io/gateway-name": `${sso.clientId}-waypoint` }
+        : sso.enableAuthserviceSelector;
 
     const policy: Allow = {
       direction: Direction.Egress,
@@ -134,7 +131,7 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
     policies.push(keycloakGeneratedPolicy);
 
     // Ambient mode: add waypoint-to-istiod egress policy for the package's dedicated waypoint
-    if (istioMode === IstioState.Ambient) {
+    if (istioMode === IstioState.Ambient && shouldUseAmbientWaypoint(pkg)) {
       const waypointSelector = {
         "gateway.networking.k8s.io/gateway-name": `${sso.clientId}-waypoint`,
       };
