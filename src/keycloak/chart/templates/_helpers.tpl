@@ -85,7 +85,7 @@ Check external PostgreSQL connection information. Fails when required values are
 {{- if .Values.postgresql -}}
 {{- $requiredKeys := list "username" "password" "database" "host" "port" -}}
 
-{{- if and .Values.postgresql.secretRef (not (empty (compact (values .Values.postgresql.secretRef)))) -}}
+{{- if eq (include "keycloak.postgresql.usingExistingSecrets" .) "true" -}}
   {{- /* Validate secretRef configuration only */ -}}
   {{- range $k := $requiredKeys -}}
     {{- if empty (get $.Values.postgresql.secretRef $k) -}}{{- fail (printf "Missing secretRef configuration for \"postgresql.%s\"." $k ) -}}{{- end -}}
