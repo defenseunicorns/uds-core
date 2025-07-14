@@ -45,4 +45,4 @@ components:
         valuesFiles:
           - "values/unicorn-values.yaml"
     images:
-      - quay.io/rfcurated/metrics-server:0.7.2-jammy-scratch-fips-rfcurated-rfhardened
+      - quay.io/rfcurated/metrics-server:0.8.0-jammy-scratch-fips-rfcurated-rfhardened
