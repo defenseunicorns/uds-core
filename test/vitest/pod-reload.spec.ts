@@ -53,20 +53,15 @@ async function waitForDeploymentRollout(
 
     const observedGeneration = deployment.status?.observedGeneration;
     const currentGeneration = deployment.metadata?.generation || 0;
-    const updatedReplicas = deployment.status?.updatedReplicas || 0;
-    const availableReplicas = deployment.status?.availableReplicas || 0;
-    const replicas = deployment.spec?.replicas || 0;
+    const available = deployment.status?.conditions?.some(
+      c => c.type === "Available" && c.status === "True",
+    );
 
     // If initialGeneration is provided, wait for a new generation
     const isNewGeneration = currentGeneration > initialGeneration;
 
     // Deployment has been updated and all pods are available
-    if (
-      isNewGeneration &&
-      observedGeneration === currentGeneration &&
-      updatedReplicas === replicas &&
-      availableReplicas === replicas
-    ) {
+    if (isNewGeneration && observedGeneration === currentGeneration && available) {
       return { rolledOut: true, currentGeneration };
     }
 

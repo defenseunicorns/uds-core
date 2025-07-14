@@ -406,7 +406,7 @@ describe("reloadPods", () => {
     // Execute the function under test
     await reloadPods("default", pods as kind.Pod[], "Test eviction", mockLogger);
 
-    // Verify Apply was called and errored
+    // Verify Apply was called
     expect(mockK8sClient.Apply).toHaveBeenCalledWith(withRestartedAtAnnotation(testStatefulSet));
 
     // Verify the correct controller kind was used
