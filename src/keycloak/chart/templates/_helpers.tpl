@@ -85,29 +85,20 @@ Check external PostgreSQL connection information. Fails when required values are
 {{- if .Values.postgresql -}}
 {{- $requiredKeys := list "username" "password" "database" "host" "port" -}}
 
-{{/* Check if using secretRef approach */}}
 {{- if and .Values.postgresql.secretRef (not (empty (compact (values .Values.postgresql.secretRef)))) -}}
-
-{{/* Check for mixed configuration - both secretRef and direct values */}}
-{{- $directValues := omit .Values.postgresql "egressCidr" "secretRef" "port" "internal" -}}
-{{- $nonEmptyDirectValues := compact (values $directValues) -}}
-{{- if not (empty $nonEmptyDirectValues) -}}{{- fail "Cannot mix secretRef and direct values for postgresql configuration. Use either secretRef for all required fields or direct values for all required fields." -}}{{- end -}}
-
-{{/* Validate secretRef configuration */}}
-{{- range $k := $requiredKeys -}}
-{{- if empty (get $.Values.postgresql.secretRef $k) -}}{{- fail (printf "Missing secretRef configuration for \"postgresql.%s\"." $k ) -}}{{- end -}}
-{{- $secretRefConfig := get $.Values.postgresql.secretRef $k -}}
-{{- if empty $secretRefConfig.name -}}{{- fail (printf "Missing 'name' in secretRef for \"postgresql.%s\"." $k ) -}}{{- end -}}
-{{- if empty $secretRefConfig.key -}}{{- fail (printf "Missing 'key' in secretRef for \"postgresql.%s\"." $k ) -}}{{- end -}}
-{{- end -}}
-
+  {{- /* Validate secretRef configuration only */ -}}
+  {{- range $k := $requiredKeys -}}
+    {{- if empty (get $.Values.postgresql.secretRef $k) -}}{{- fail (printf "Missing secretRef configuration for \"postgresql.%s\"." $k ) -}}{{- end -}}
+    {{- $secretRefConfig := get $.Values.postgresql.secretRef $k -}}
+    {{- if empty $secretRefConfig.name -}}{{- fail (printf "Missing 'name' in secretRef for \"postgresql.%s\"." $k ) -}}{{- end -}}
+    {{- if empty $secretRefConfig.key -}}{{- fail (printf "Missing 'key' in secretRef for \"postgresql.%s\"." $k ) -}}{{- end -}}
+  {{- end -}}
 {{- else -}}
-{{/* Validate direct values */}}
-{{- range $k := $requiredKeys -}}
-{{ if empty (get $.Values.postgresql $k) }}{{- fail (printf "Missing value for \"postgresql.%s\"." $k ) -}}{{- end }}
+  {{- /* Validate direct values only */ -}}
+  {{- range $k := $requiredKeys -}}
+    {{- if empty (get $.Values.postgresql $k) -}}{{- fail (printf "Missing value for \"postgresql.%s\"." $k ) -}}{{- end -}}
+  {{- end -}}
 {{- end -}}
-{{- end -}}
-
 {{- true -}}
 {{- else -}}{{fail "You must define \"username\", \"password\", \"database\", \"host\", and \"port\" for \"postgresql\"."}}
 {{- end -}}
@@ -121,9 +112,9 @@ Check external PostgreSQL connection information. Fails when required values are
 {{/* Helper to determine if we're using existing secrets via secretRef */}}
 {{- define "keycloak.postgresql.usingExistingSecrets" -}}
 {{- if and .Values.postgresql.secretRef (not (empty (compact (values .Values.postgresql.secretRef)))) -}}
-{{- "true" -}}
+true
 {{- else -}}
-{{- "false" -}}
+false
 {{- end -}}
 {{- end -}}
 
