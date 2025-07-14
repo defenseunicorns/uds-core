@@ -4,7 +4,7 @@
  */
 
 import { WatchCfg } from "kubernetes-fluent-client";
-import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/types";
+import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/shared-types";
 import { K8s } from "pepr";
 import { Component, setupLogger } from "../../../logger";
 import { UDSPackage } from "../../crd";
