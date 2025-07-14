@@ -14,6 +14,9 @@ import {
   updateAPIServerCIDRFromService,
 } from "./controllers/network/generators/kubeAPI";
 
+// Secret Pod Reload controller
+import { handleSecretDelete, handleSecretUpdate } from "./controllers/secrets/pod-reload";
+
 // Controller imports
 import {
   initAllNodesTarget,
@@ -130,3 +133,12 @@ When(a.Secret)
   .InNamespace(KEYCLOAK_CLIENTS_SECRET_NAMESPACE)
   .WithName(KEYCLOAK_CLIENTS_SECRET_NAME)
   .Reconcile(s => updateKeycloakClientsSecret(s, false));
+
+// Watch for secrets with the uds.dev/pod-reload label for pod reload
+When(a.Secret)
+  .IsCreatedOrUpdated()
+  .WithLabel("uds.dev/pod-reload", "true")
+  .Reconcile(handleSecretUpdate);
+
+// Watch for deleted secrets to clean up the checksum cache
+When(a.Secret).IsDeleted().WithLabel("uds.dev/pod-reload", "true").Reconcile(handleSecretDelete);

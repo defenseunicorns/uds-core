@@ -121,7 +121,10 @@ export async function writeEvent(cr: GenericKind, event: Partial<kind.CoreEvent>
  * @param err The error-like object
  * @param cr The custom resource that failed
  */
-export async function handleFailure(err: { status: number; message: string }, cr: UDSPackage) {
+export async function handleFailure(
+  err: { status: number; message: string; data?: { message?: string; reason?: string } },
+  cr: UDSPackage,
+) {
   const metadata = cr.metadata!;
   const identifier = `${metadata.namespace}/${metadata.name}`;
   let status: Status;
@@ -131,6 +134,9 @@ export async function handleFailure(err: { status: number; message: string }, cr
     log.warn({ err }, `Package metadata seems to have been deleted`);
     return;
   }
+
+  // Extract the most detailed error message available
+  const detailedMessage = err.data?.message || err.message;
 
   const retryAttempt = cr.status?.retryAttempt || 0;
 
@@ -155,8 +161,8 @@ export async function handleFailure(err: { status: number; message: string }, cr
     };
   }
 
-  // Write an event for the error
-  await writeEvent(cr, { message: err.message });
+  // Write an event for the error with the most detailed message available
+  await writeEvent(cr, { message: detailedMessage });
 
   // Update the status of the package with the error
   updateStatus(cr, status).catch(finalErr => {

@@ -5,7 +5,7 @@
 
 import { V1OwnerReference } from "@kubernetes/client-node";
 import { GenericClass, GenericKind } from "kubernetes-fluent-client";
-import { K8s } from "pepr";
+import { K8s, kind } from "pepr";
 import { Logger } from "pino";
 
 /**
@@ -145,4 +145,51 @@ export function isBase64(str: string) {
   } catch {
     return false;
   }
+}
+
+/**
+ * Create a Kubernetes event for a resource
+ *
+ * @param resource The Kubernetes resource to create an event for
+ * @param event Partial event object with optional type, reason, message, etc.
+ * @param logger Logger instance for logging
+ */
+export async function createEvent(
+  resource: GenericKind,
+  event: Partial<kind.CoreEvent> = {},
+  log: Logger,
+): Promise<void> {
+  const name = resource.metadata?.name;
+  const namespace = resource.metadata?.namespace;
+  const resourceKind = resource.kind;
+
+  if (!name || !namespace || !resourceKind) {
+    const error = new Error("Cannot create event: resource missing name, namespace, or kind");
+    log.error(error.message);
+    throw error;
+  }
+
+  // Create the event using CoreEvent type
+  await K8s(kind.CoreEvent).Create({
+    // Default values that can be overridden
+    type: "Normal",
+    reason: "Update",
+    // User provided overrides
+    ...event,
+    // Fixed values that cannot be overridden
+    metadata: {
+      namespace,
+      generateName: name,
+    },
+    involvedObject: {
+      apiVersion: resource.apiVersion,
+      kind: resourceKind,
+      name,
+      namespace,
+      uid: resource.metadata?.uid,
+    },
+    firstTimestamp: new Date(),
+    reportingComponent: "uds.dev/operator",
+    reportingInstance: process.env.HOSTNAME,
+  });
 }
