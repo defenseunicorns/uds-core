@@ -241,7 +241,7 @@ postgresql:
   # Individual secret references for each PostgreSQL configuration value
   # Each can reference a different secret and key
   #   name - the name of the secret to reference
-  #   key - the key to reference from the afforementioned key
+  #   key - the key to reference from the aforementioned key
   #
   # secretRef:
   #   username:
