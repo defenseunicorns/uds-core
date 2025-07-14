@@ -21,7 +21,7 @@ const compat = new FlatCompat({
 });
 
 export default defineConfig([
-  globalIgnores(["**/node_modules", "**/dist"]),
+  globalIgnores(["**/node_modules", "**/dist", "**/uds-docs/"]),
   {
     extends: compat.extends("eslint:recommended", "plugin:@typescript-eslint/recommended"),
 
