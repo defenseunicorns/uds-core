@@ -696,6 +696,15 @@ export interface Sso {
    */
   secret?: string;
   /**
+   * Additional annotations to apply to the generated secret, can be used for pod reloading
+   * with a selector
+   */
+  secretAnnotations?: { [key: string]: string };
+  /**
+   * Additional labels to apply to the generated secret, can be used for pod reloading
+   */
+  secretLabels?: { [key: string]: string };
+  /**
    * The name of the secret to store the client secret
    */
   secretName?: string;
