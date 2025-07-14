@@ -30,14 +30,21 @@ export function createManagedLabels(
   pkg: UDSPackage,
   waypointName: string,
   additionalLabels: Record<string, string> = {},
+  isGateway = false,
 ) {
-  return {
+  const labels: Record<string, string> = {
     [UDS_MANAGED_LABEL]: "uds-operator",
     [UDS_PACKAGE_LABEL]: pkg.metadata?.name || "",
     [UDS_NAMESPACE_LABEL]: pkg.metadata?.namespace || "",
-    [ISTIO_WAYPOINT_LABEL]: waypointName,
     ...additionalLabels,
   };
+
+  // Only add the waypoint label if this is not a gateway
+  if (!isGateway) {
+    labels[ISTIO_WAYPOINT_LABEL] = waypointName;
+  }
+
+  return labels;
 }
 
 /**
@@ -113,17 +120,6 @@ export async function createWaypointGateway(pkg: UDSPackage, waypointId: string)
   const waypointName = getWaypointName(waypointId);
   log.info(`Creating waypoint gateway for package: ${namespace}/${name}`, { waypointName });
 
-  // Extract app selector from SSO configuration
-  let appSelector: Record<string, string> | undefined;
-  if (pkg.spec?.sso && pkg.spec.sso.length > 0) {
-    for (const ssoConfig of pkg.spec.sso) {
-      if (ssoConfig.enableAuthserviceSelector) {
-        appSelector = ssoConfig.enableAuthserviceSelector;
-        break;
-      }
-    }
-  }
-
   try {
     // Check if gateway already exists and is ready
     const existing = await K8s(K8sGateway).InNamespace(namespace).Get(waypointName);
@@ -148,14 +144,17 @@ export async function createWaypointGateway(pkg: UDSPackage, waypointId: string)
     gateway.metadata = {
       name: waypointName,
       namespace,
-      labels: createManagedLabels(pkg, waypointName, {
-        "app.kubernetes.io/component": "ambient-waypoint",
-        "app.kubernetes.io/name": waypointId,
-        "istio.io/waypoint-for": "all",
-        "istio.io/gateway-name": waypointName,
-        // Add app selector labels from the package's SSO configuration
-        ...(appSelector || {}),
-      }),
+      labels: createManagedLabels(
+        pkg,
+        waypointName,
+        {
+          "app.kubernetes.io/component": "ambient-waypoint",
+          "app.kubernetes.io/name": waypointId,
+          "istio.io/waypoint-for": "all",
+          "istio.io/gateway-name": waypointName,
+        },
+        true, // don't add use-waypoint label to waypoint pod
+      ),
       ownerReferences: getOwnerRef(pkg),
       annotations: {
         "uds.dev/created-at": new Date().toISOString(),
@@ -337,6 +336,7 @@ export async function generateWaypointNetworkPolicies(
       name: `${waypointName}-ingress-from-app`,
       namespace,
       labels: { "uds/managed-by": "uds-operator" },
+      ownerReferences: getOwnerRef(pkg),
     },
     spec: {
       podSelector: waypointPodSelector,
@@ -358,6 +358,7 @@ export async function generateWaypointNetworkPolicies(
       name: `${waypointName}-egress-to-app`,
       namespace,
       labels: { "uds/managed-by": "uds-operator" },
+      ownerReferences: getOwnerRef(pkg),
     },
     spec: {
       podSelector: waypointPodSelector,

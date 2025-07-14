@@ -537,7 +537,6 @@ describe("ambient-waypoint", () => {
         name: waypointName,
         namespace: "test-ns",
         labels: {
-          app: "test-app", // From the SSO config
           "app.kubernetes.io/component": "ambient-waypoint",
           "app.kubernetes.io/name": "test-waypoint",
           "istio.io/gateway-name": waypointName,
@@ -545,7 +544,6 @@ describe("ambient-waypoint", () => {
           "uds/managed-by": "uds-operator",
           "uds/namespace": "test-ns",
           "uds/package": "test-pkg",
-          "istio.io/use-waypoint": waypointName,
         },
         annotations: {
           "uds.dev/created-at": expect.any(String),

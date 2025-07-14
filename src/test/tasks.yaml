@@ -3,6 +3,7 @@
 
 includes:
   - utils: ../../tasks/utils.yaml
+  - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.16.3/tasks/setup.yaml
 
 tasks:
   - name: validate
@@ -28,7 +29,19 @@ tasks:
       - description: "Run Test Resources Tests"
         cmd: |
           npx vitest run "test-resources.spec.ts"
-        dir: test/vitest
+      - description: "Setup the Doug User for testing"
+        task: common-setup:keycloak-user
+        with:
+          group: "/UDS Core/Admin"
+      - description: "Run Ambient Playwright Test"
+        cmd: |
+          # renovate: datasource=docker depName=mcr.microsoft.com/playwright versioning=docker
+          docker run --rm --ipc=host -e FULL_CORE="${FULL_CORE}" --net=host --mount type=bind,source="$(pwd)",target=/app mcr.microsoft.com/playwright:v1.53.2-noble sh -c " \
+            cd app && \
+            npm ci && \
+            npx playwright test ambient-waypoint.test.ts \
+            "
+        dir: test/playwright
       - description: "Remove Test Apps resources"
         task: remove
 
