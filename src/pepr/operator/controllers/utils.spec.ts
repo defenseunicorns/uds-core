@@ -242,14 +242,9 @@ describe("createEvent", () => {
 });
 
 describe("test validateNamespace", () => {
-  let mockK8sClient: ReturnType<typeof createMockK8sClient>;
-  
   beforeEach(() => {
     process.env.PEPR_WATCH_MODE = "true";
     vi.useFakeTimers();
-
-    // Create a mock K8s client
-    mockK8sClient = createMockK8sClient();
   });
 
   afterEach(() => {
@@ -315,5 +310,4 @@ describe("test validateNamespace", () => {
 
     await expect(validateNamespace("test-ns", true)).rejects.toEqual(error);
   });
-
 });
