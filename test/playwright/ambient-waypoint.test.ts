@@ -18,7 +18,7 @@ test("validate ambient waypoint authentication flow with saved session", async (
     await page.goto(url);
     
     // Verify we're on the protected page (not redirected to login)
-    await expect(page).toHaveURL(new RegExp(`^${url}`));
+    await expect(page).toHaveURL(url, { timeout: 5000 });
 
     // Verify the specific title element with text 'httpbin.org'
     const titleElement = page.locator('h2.title');
