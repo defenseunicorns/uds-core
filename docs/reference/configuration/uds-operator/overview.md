@@ -30,7 +30,7 @@ packages:
                 - bar-system
 ```
 
-In the example above policies would not be enforced on the `foo-system` and `bar-system` namespaces. In addition, any `Package` or `Exemption` custom resources in these namespaces would be ignored and not processed.
+In the example above, policies would not be enforced on the `foo-system` and `bar-system` namespaces. In addition, any `Package` or `Exemption` custom resources in these namespaces would be ignored and not processed.
 
 :::caution
 This should typically only be used for "system" namespaces where you do not want/expect UDS Integration. By ignoring a namespace you are incurring risk as these workloads will run without policy restrictions and likely without other security controls (service mesh, network restrictions, etc). Proper RBAC and auditing around these ignored namespaces is strongly advised.

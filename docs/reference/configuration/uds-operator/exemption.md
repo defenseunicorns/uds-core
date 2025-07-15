@@ -1,5 +1,7 @@
 ---
 title: UDS Exemption
+tableOfContents:
+  maxHeadingLevel: 4
 ---
 
 ![UDS Operator Exemption Flowchart](https://github.com/defenseunicorns/uds-core/blob/main/docs/.images/diagrams/uds-core-operator-uds-exemption.svg?raw=true)
