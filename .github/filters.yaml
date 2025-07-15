@@ -5,6 +5,7 @@ base:
   - "packages/base/**"
   - "src/istio/**"
   - "src/pepr/**"
+  - "bundles/base-shim/**"
 
 identity-authorization:
   - "packages/identity-authorization/**"
