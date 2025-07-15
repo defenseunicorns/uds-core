@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
-import * as yaml from 'yaml';
+import * as fs from "fs";
+import * as path from "path";
+import * as yaml from "yaml";
 
 /**
  * Extracts images and charts from zarf.yaml files in a given directory path
@@ -13,7 +13,7 @@ import * as yaml from 'yaml';
  */
 export async function getImagesAndCharts(directoryPath: string): Promise<void> {
   // Create extract directory if it doesn't exist
-  const extractDir = path.join(directoryPath, 'extract');
+  const extractDir = path.join(directoryPath, "extract");
   if (!fs.existsSync(extractDir)) {
     fs.mkdirSync(extractDir, { recursive: true });
   }
@@ -27,7 +27,7 @@ export async function getImagesAndCharts(directoryPath: string): Promise<void> {
 
   for (const zarfFile of zarfFiles) {
     try {
-      const fileContent = fs.readFileSync(zarfFile, 'utf8');
+      const fileContent = fs.readFileSync(zarfFile, "utf8");
       const zarfConfig = yaml.parse(fileContent);
 
       // Extract charts
@@ -41,16 +41,10 @@ export async function getImagesAndCharts(directoryPath: string): Promise<void> {
   }
 
   // Write charts to file
-  fs.writeFileSync(
-    path.join(extractDir, 'charts.yaml'),
-    yaml.stringify(charts)
-  );
+  fs.writeFileSync(path.join(extractDir, "charts.yaml"), yaml.stringify(charts));
 
   // Write images to file
-  fs.writeFileSync(
-    path.join(extractDir, 'images.yaml'),
-    yaml.stringify(images)
-  );
+  fs.writeFileSync(path.join(extractDir, "images.yaml"), yaml.stringify(images));
 }
 
 /**
@@ -69,10 +63,10 @@ function findZarfYamlFiles(dir: string): string[] {
 
     if (stat.isDirectory()) {
       // Skip the extract directory and node_modules
-      if (file !== 'extract' && file !== 'node_modules' && file !== '.git') {
+      if (file !== "extract" && file !== "node_modules" && file !== ".git") {
         results = results.concat(findZarfYamlFiles(filePath));
       }
-    } else if (file === 'zarf.yaml') {
+    } else if (file === "zarf.yaml") {
       results.push(filePath);
     }
   }
@@ -85,7 +79,17 @@ function findZarfYamlFiles(dir: string): string[] {
  * @param zarfConfig - Parsed zarf.yaml configuration
  * @param charts - Record to store chart information
  */
-function extractCharts(zarfConfig: any, charts: Record<string, string>): void {
+// Define a ZarfConfig type to replace 'any'
+interface ZarfComponent {
+  charts?: Array<{ name: string; version: string; localPath?: string; url?: string }>;
+  images?: Array<{ name: string }>;
+}
+
+interface ZarfConfig {
+  components?: ZarfComponent[];
+}
+
+function extractCharts(zarfConfig: ZarfConfig, charts: Record<string, string>): void {
   if (!zarfConfig.components) return;
 
   for (const component of zarfConfig.components) {
@@ -108,13 +112,13 @@ function extractCharts(zarfConfig: any, charts: Record<string, string>): void {
  * @param zarfConfig - Parsed zarf.yaml configuration
  * @param images - Record to store image information
  */
-function extractImages(zarfConfig: any, images: Record<string, string[]>): void {
+function extractImages(zarfConfig: ZarfConfig, images: Record<string, string[]>): void {
   if (!zarfConfig.components) return;
 
   for (const component of zarfConfig.components) {
     if (component.images) {
       for (const image of component.images) {
-        if (typeof image === 'string') {
+        if (typeof image === "string") {
           processImage(image, images);
         }
       }
@@ -129,7 +133,7 @@ function extractImages(zarfConfig: any, images: Record<string, string[]>): void 
  */
 function processImage(imagePullString: string, images: Record<string, string[]>): void {
   // Split image name and tag
-  const [imageName, imageTag] = imagePullString.split(':');
+  const [imageName, imageTag] = imagePullString.split(":");
 
   if (!imageName || !imageTag) return;
 
@@ -137,7 +141,7 @@ function processImage(imagePullString: string, images: Record<string, string[]>)
   let normalizedTag = imageTag;
 
   // Remove 'v' prefix if present
-  if (normalizedTag.startsWith('v')) {
+  if (normalizedTag.startsWith("v")) {
     normalizedTag = normalizedTag.substring(1);
   }
 
@@ -161,13 +165,13 @@ function processImage(imagePullString: string, images: Record<string, string[]>)
 if (require.main === module) {
   const directoryPath = process.argv[2];
   if (!directoryPath) {
-    console.error('Please provide a directory path');
+    console.error("Please provide a directory path");
     process.exit(1);
   }
 
   getImagesAndCharts(directoryPath)
     .then(() => process.exit(0))
-    .catch((error) => {
+    .catch(error => {
       console.error(error);
       process.exit(1);
     });

@@ -71,7 +71,7 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
+          "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret"
         },
         "portName": {
           "type": "string",
@@ -82,7 +82,7 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
+          "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret"
         },
         "targetPort": {
           "type": "number",
@@ -182,14 +182,14 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
+          "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret"
         },
         "podLabels": {
           "type": "object",
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
+          "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret"
         },
         "port": {
           "type": "number",
@@ -223,7 +223,7 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
+          "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret"
         },
         "remoteProtocol": {
           "$ref": "#/definitions/RemoteProtocol",
@@ -234,7 +234,7 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
+          "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret"
         },
         "remoteServiceAccount": {
           "type": "string",
@@ -245,7 +245,7 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
+          "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret"
         },
         "serviceAccount": {
           "type": "string",
@@ -289,7 +289,7 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
+          "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret"
         },
         "port": {
           "type": "number",
@@ -300,7 +300,7 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
+          "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret"
         },
         "service": {
           "type": "string",
@@ -490,7 +490,7 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
+          "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret"
         },
         "remove": {
           "type": "array",
@@ -503,7 +503,7 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
+          "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret"
         }
       },
       "required": [],
@@ -518,7 +518,7 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
+          "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret"
         },
         "remove": {
           "type": "array",
@@ -531,7 +531,7 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
+          "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret"
         }
       },
       "required": [],
@@ -833,7 +833,7 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
+          "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret"
         },
         "baseUrl": {
           "type": "string",
@@ -863,7 +863,7 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
+          "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret"
         },
         "enabled": {
           "type": "boolean",
@@ -907,6 +907,20 @@
           "type": "string",
           "description": "The client secret. Typically left blank and auto-generated."
         },
+        "secretAnnotations": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret"
+        },
+        "secretLabels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret"
+        },
         "secretName": {
           "type": "string",
           "description": "The name of the secret to store the client secret"
@@ -916,7 +930,7 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
+          "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret"
         },
         "serviceAccountsEnabled": {
           "type": "boolean",
@@ -965,7 +979,7 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nA template for the generated secret"
+          "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret"
         },
         "consentRequired": {
           "type": "boolean",
