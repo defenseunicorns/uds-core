@@ -29,6 +29,7 @@ tasks:
       - description: "Run Test Resources Tests"
         cmd: |
           npx vitest run "test-resources.spec.ts"
+        dir: test/vitest
       - description: "Setup the Doug User for testing"
         task: common-setup:keycloak-user
         with:
@@ -42,6 +43,10 @@ tasks:
             npx playwright test ambient-waypoint.test.ts \
             "
         dir: test/playwright
+      - description: "Run Secret Reload Tests"
+        cmd: |
+          npx vitest run "pod-reload.spec.ts"
+        dir: test/vitest
       - description: "Remove Test Apps resources"
         task: remove
 

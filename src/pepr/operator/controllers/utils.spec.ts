@@ -3,23 +3,74 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
+import { K8s, kind } from "pepr";
 import { Logger } from "pino";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { retryWithDelay } from "./utils";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { createEvent, retryWithDelay } from "./utils";
+
+// Mock K8s client
+vi.mock("pepr", () => {
+  const actualKind = {
+    Pod: "Pod",
+    Deployment: "Deployment",
+    ReplicaSet: "ReplicaSet",
+    StatefulSet: "StatefulSet",
+    DaemonSet: "DaemonSet",
+    CoreEvent: "CoreEvent",
+  };
+
+  return {
+    K8s: vi.fn(),
+    kind: actualKind,
+  };
+});
+
+// Helper function to create a mock Pino logger
+function createMockLogger(overrides = {}) {
+  return {
+    level: "info",
+    fatal: vi.fn(),
+    error: vi.fn(),
+    warn: vi.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
+    trace: vi.fn(),
+    // Override with any custom implementations
+    ...overrides,
+  } as unknown as Logger;
+}
+
+// Helper function to create a mock K8s client with all required methods
+function createMockK8sClient(overrides = {}) {
+  return {
+    // Core methods
+    Create: vi.fn().mockResolvedValue({}),
+    Logs: vi.fn().mockResolvedValue({}),
+    Get: vi.fn().mockResolvedValue({}),
+    Delete: vi.fn().mockResolvedValue({}),
+    Evict: vi.fn().mockResolvedValue({}),
+    Watch: vi.fn().mockResolvedValue({}),
+    Apply: vi.fn().mockResolvedValue({}),
+    Patch: vi.fn().mockResolvedValue({}),
+    PatchStatus: vi.fn().mockResolvedValue({}),
+    Raw: vi.fn().mockResolvedValue({}),
+    Proxy: vi.fn().mockResolvedValue({}),
+
+    // Fluent API methods
+    WithField: vi.fn().mockReturnThis(),
+    InNamespace: vi.fn().mockReturnThis(),
+    WithLabel: vi.fn().mockReturnThis(),
+
+    // Apply any custom overrides
+    ...overrides,
+  };
+}
 
 describe("retryWithDelay", () => {
   let mockLogger: Logger;
 
   beforeEach(() => {
-    mockLogger = {
-      warn: vi.fn(),
-      level: "info",
-      fatal: vi.fn(),
-      error: vi.fn(),
-      info: vi.fn(),
-      debug: vi.fn(),
-      trace: vi.fn(),
-    } as unknown as Logger;
+    mockLogger = createMockLogger();
   });
 
   beforeEach(() => {});
@@ -84,5 +135,107 @@ describe("retryWithDelay", () => {
       expect.stringContaining("Attempt 2 of spy failed, retrying in 100ms."),
       expect.objectContaining({ error: error.message }),
     );
+  });
+});
+
+describe("createEvent", () => {
+  // Save original environment
+  const originalEnv = process.env;
+  let mockLogger: Logger;
+  let mockK8sClient: ReturnType<typeof createMockK8sClient>;
+
+  beforeEach(() => {
+    // Reset mocks
+    vi.resetAllMocks();
+
+    // Setup environment variables
+    process.env = { ...originalEnv, HOSTNAME: "test-host" };
+
+    // Setup logger mock
+    mockLogger = createMockLogger();
+
+    // Create a mock K8s client
+    mockK8sClient = createMockK8sClient();
+  });
+
+  afterEach(() => {
+    // Restore environment
+    process.env = originalEnv;
+  });
+
+  it("should create an event for a valid resource", async () => {
+    // Set up K8s mocks
+    vi.mocked(K8s).mockReturnValue(mockK8sClient);
+
+    // Create a test resource
+    const resource = {
+      apiVersion: "v1",
+      kind: "Pod",
+      metadata: {
+        name: "test-pod",
+        namespace: "test-ns",
+        uid: "test-uid",
+      },
+    };
+
+    // Call the function
+    await createEvent(
+      resource,
+      {
+        reason: "TestReason",
+        message: "Test message",
+      },
+      mockLogger,
+    );
+
+    // Verify K8s was called with CoreEvent
+    expect(K8s).toHaveBeenCalledWith(kind.CoreEvent);
+
+    // Verify Create was called with the correct event data
+    expect(mockK8sClient.Create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "Normal",
+        reason: "TestReason",
+        message: "Test message",
+        metadata: {
+          namespace: "test-ns",
+          generateName: "test-pod",
+        },
+        involvedObject: {
+          apiVersion: "v1",
+          kind: "Pod",
+          name: "test-pod",
+          namespace: "test-ns",
+          uid: "test-uid",
+        },
+        reportingComponent: "uds.dev/operator",
+        reportingInstance: "test-host",
+      }),
+    );
+  });
+
+  it("should throw errors when event creation fails", async () => {
+    // Mock K8s Create function to throw an error
+    const mockCreate = vi.fn().mockRejectedValue(new Error("Test error"));
+
+    // Set up K8s mocks
+    vi.mocked(K8s).mockReturnValue(
+      createMockK8sClient({
+        Create: mockCreate,
+      }),
+    );
+
+    // Create a test resource
+    const resource = {
+      apiVersion: "v1",
+      kind: "Pod",
+      metadata: {
+        name: "test-pod",
+        namespace: "test-ns",
+      },
+    };
+
+    // Call the function - should throw
+    await expect(createEvent(resource, {}, mockLogger)).rejects.toThrow("Test error");
   });
 });
