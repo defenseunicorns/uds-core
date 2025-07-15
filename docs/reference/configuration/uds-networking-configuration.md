@@ -41,7 +41,7 @@ packages:
         uds-operator-config:
           values:
             - path: cluster.networking.kubeNodeCIDRs
-              value: |
+              value:
                 - 172.28.0.2/32
                 - 172.28.0.3/32
                 - 172.28.0.4/32

@@ -11,9 +11,10 @@ import { reconcileAuthservice } from "../keycloak/authservice/authservice";
 import { initAPIServerCIDR } from "../network/generators/kubeAPI";
 import { initAllNodesTarget } from "../network/generators/kubeNodes";
 import { loadUDSConfig, UDSConfig, updateCfg, updateCfgSecrets } from "./config";
-import { mockClusterConfGet, mockSecretGet } from "./test-helpers";
 
 // Mock dependencies
+const mockClusterConfGet = vi.fn();
+const mockSecretGet = vi.fn();
 
 vi.mock("../keycloak/authservice/authservice", () => ({
   reconcileAuthservice: vi.fn(),
@@ -166,7 +167,7 @@ describe("updateUDSConfig", () => {
     UDSConfig.authserviceRedisUri = "";
     UDSConfig.kubeApiCIDR = "";
     UDSConfig.kubeNodeCIDRs = [];
-    UDSConfig.domain = "";
+    UDSConfig.domain = "uds.dev";
     UDSConfig.adminDomain = "";
     UDSConfig.allowAllNSExemptions = false;
   });
@@ -368,5 +369,15 @@ describe("updateUDSConfig", () => {
 
     expect(initAPIServerCIDR).not.toHaveBeenCalled();
     expect(initAllNodesTarget).not.toHaveBeenCalled();
+  });
+
+  it("should not update cluster resources during initial load", async () => {
+    UDSConfig.domain = ""; // Simulate first load
+
+    await updateCfg(mockCfg);
+
+    expect(initAPIServerCIDR).not.toHaveBeenCalled();
+    expect(initAllNodesTarget).not.toHaveBeenCalled();
+    expect(reconcileAuthservice).not.toHaveBeenCalled();
   });
 });

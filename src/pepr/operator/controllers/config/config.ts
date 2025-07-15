@@ -99,8 +99,8 @@ export async function updateCfgSecrets(cfg: kind.Secret) {
 }
 
 async function handleCAUpdate(expose: ConfigExpose, updateClusterResources?: boolean) {
-  // no caCert key then set to empty string
-  if (!Object.keys(expose).includes("caCert")) {
+  // no caCert then set to empty string
+  if (!expose.caCert) {
     expose.caCert = "";
   }
 

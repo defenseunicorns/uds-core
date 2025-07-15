@@ -12,21 +12,14 @@ By default policy exemptions ([UDSExemptions](https://github.com/defenseunicorns
 
 If you believe that the default scoping is not the right approach for your cluster, you can configure UDS-CORE at deploy time to allow exemption CRs in all namespaces.
 
-`zarf package deploy zarf-package-uds-core-*.zst --set ALLOW_ALL_NS_EXEMPTIONS=true`
+CLI set: `zarf package deploy zarf-package-uds-core-*.zst --set ALLOW_ALL_NS_EXEMPTIONS=true`
 
-or via a uds bundle config:
-
-uds-config.yaml
+Or via a uds bundle `uds-config.yaml` file:
 
 ```yaml
-options:
-  # options here
-
-shared:
-  ALLOW_ALL_NS_EXEMPTIONS: "true"
-
 variables:
-  # package specific variables here
+  core:
+    ALLOW_ALL_NS_EXEMPTIONS: "true"
 ```
 
 or via bundle overrides:
