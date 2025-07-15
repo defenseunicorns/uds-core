@@ -7,8 +7,11 @@ import { describe, expect, it } from "vitest";
 import { UDSConfig } from "../../../config";
 import { Expose, Gateway, IstioLocation, IstioResolution, RemoteProtocol } from "../../crd";
 import { ownerRefsMock } from "./defaultTestMocks";
-import { sharedEgressPkgId } from "./egress";
-import { istioEgressGatewayNamespace, istioEgressWaypointNamespace } from "./istio-resources";
+import {
+  sidecarEgressNamespace,
+  sharedEgressPkgId as sidecarSharedEgressPkgId,
+} from "./egress-sidecar";
+import { ambientEgressNamespace } from "./egress-ambient";
 import {
   generateIngressServiceEntry,
   generateLocalEgressServiceEntry,
@@ -183,7 +186,7 @@ describe("test generate local egress service entry", () => {
       "uds/package": packageName,
       "uds/generation": generation,
       "istio.io/use-waypoint": waypointName,
-      "istio.io/use-waypoint-namespace": istioEgressWaypointNamespace,
+      "istio.io/use-waypoint-namespace": ambientEgressNamespace,
     });
     expect(serviceEntry.metadata?.ownerReferences).toBeDefined();
     expect(serviceEntry.spec?.hosts).toBeDefined();
@@ -213,9 +216,9 @@ describe("test generate shared egress service entry", () => {
 
     expect(serviceEntry).toBeDefined();
     expect(serviceEntry.metadata?.name).toEqual("service-entry-example-com");
-    expect(serviceEntry.metadata?.namespace).toEqual(istioEgressGatewayNamespace);
+    expect(serviceEntry.metadata?.namespace).toEqual(sidecarEgressNamespace);
     expect(serviceEntry.metadata?.labels).toEqual({
-      "uds/package": sharedEgressPkgId,
+      "uds/package": sidecarSharedEgressPkgId,
       "uds/generation": generation.toString(),
     });
     expect(serviceEntry.spec?.hosts).toBeDefined();

@@ -4,16 +4,14 @@
  */
 
 import { V1NetworkPolicyPeer } from "@kubernetes/client-node";
-import {
-  istioEgressGatewayNamespace,
-  istioEgressWaypointNamespace,
-} from "../../istio/istio-resources";
+import { ambientEgressNamespace } from "../../istio/egress-ambient";
+import { sidecarEgressNamespace } from "../../istio/egress-sidecar";
 
-/** Matches a the egress gateway resource */
+/* Matches the egress gateway resource */
 export const egressGateway: V1NetworkPolicyPeer = {
   namespaceSelector: {
     matchLabels: {
-      "kubernetes.io/metadata.name": istioEgressGatewayNamespace,
+      "kubernetes.io/metadata.name": sidecarEgressNamespace,
     },
   },
   podSelector: {
@@ -23,11 +21,11 @@ export const egressGateway: V1NetworkPolicyPeer = {
   },
 };
 
-/** Matches a the egress waypoint resource */
+/* Matches the egress waypoint resource */
 export const egressWaypoint: V1NetworkPolicyPeer = {
   namespaceSelector: {
     matchLabels: {
-      "kubernetes.io/metadata.name": istioEgressWaypointNamespace,
+      "kubernetes.io/metadata.name": ambientEgressNamespace,
     },
   },
   podSelector: {

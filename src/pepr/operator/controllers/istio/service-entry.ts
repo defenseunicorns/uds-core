@@ -14,14 +14,14 @@ import {
   IstioResolution,
   IstioServiceEntry,
 } from "../../crd";
+import { getSharedAnnotationKey } from "./istio-resources";
 import {
-  istioEgressGatewayNamespace,
-  istioEgressWaypointNamespace,
-  getSharedAnnotationKey,
-} from "./istio-resources";
+  sidecarEgressNamespace,
+  sharedEgressPkgId as sidecarSharedEgressPkgId,
+} from "./egress-sidecar";
+import { ambientEgressNamespace } from "./egress-ambient";
 import { sanitizeResourceName } from "../utils";
 import { HostResource, EgressResource, PortProtocol } from "./types";
-import { sharedEgressPkgId } from "./egress";
 import { waypointName } from "./waypoint";
 
 /**
@@ -145,8 +145,7 @@ export function generateLocalEgressServiceEntry(
   // If ambient, add labels for service entry to use waypoint proxy
   if (ambient) {
     serviceEntry.metadata!.labels!["istio.io/use-waypoint"] = waypointName;
-    serviceEntry.metadata!.labels!["istio.io/use-waypoint-namespace"] =
-      istioEgressWaypointNamespace;
+    serviceEntry.metadata!.labels!["istio.io/use-waypoint-namespace"] = ambientEgressNamespace;
   }
 
   return serviceEntry;
@@ -175,10 +174,10 @@ export function generateSharedServiceEntry(
   const serviceEntry: IstioServiceEntry = {
     metadata: {
       name,
-      namespace: istioEgressGatewayNamespace,
+      namespace: sidecarEgressNamespace,
       annotations,
       labels: {
-        "uds/package": sharedEgressPkgId,
+        "uds/package": sidecarSharedEgressPkgId,
         "uds/generation": generation.toString(),
       },
     },
