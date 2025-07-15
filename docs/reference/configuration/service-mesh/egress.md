@@ -17,8 +17,6 @@ overrides:
   istio-egress-waypoint:
     uds-istio-egress-config:
       values:
-        - path: "config.enabled"
-          value: true
         - path: "config.deployment"
           value: |
             spec:

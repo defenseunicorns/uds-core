@@ -2,8 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 # Egress Config
-config:
-  enabled: false
+config: {}
   # Set the deployment specification for the following resource types:
   # - service
   # - deployment
