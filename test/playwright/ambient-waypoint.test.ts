@@ -12,16 +12,16 @@ test("validate ambient waypoint authentication flow with saved session", async (
   // The auth.setup.ts will handle the authentication automatically because:
   // 1. The test is marked with 'setup' dependency in playwright.config.ts
   // 2. The storage state is automatically loaded from authFile
-  
+
   // Navigate to the protected URL - should be automatically authenticated
   await test.step("should load protected URL with saved session", async () => {
     await page.goto(url);
-    
+
     // Verify we're on the protected page (not redirected to login)
     await expect(page).toHaveURL(url, { timeout: 5000 });
 
     // Verify the specific title element with text 'httpbin.org'
-    const titleElement = page.locator('h2.title');
-    await expect(titleElement).toContainText('httpbin.org');
+    const titleElement = page.locator("h2.title");
+    await expect(titleElement).toContainText("httpbin.org");
   });
 });

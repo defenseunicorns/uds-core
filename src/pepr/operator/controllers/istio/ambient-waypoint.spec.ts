@@ -370,7 +370,9 @@ describe("matchesLabels", () => {
   ];
 
   test.each(testCases)("$name", ({ labels, selector, expected }) => {
-    expect(matchesLabels(labels as Record<string, string>, selector as Record<string, string>)).toBe(expected);
+    expect(
+      matchesLabels(labels as Record<string, string>, selector as Record<string, string>),
+    ).toBe(expected);
   });
 });
 
@@ -397,7 +399,7 @@ describe("reconcileService and reconcilePod", () => {
 
   test.each(testCases)(
     "$name - should add waypoint labels when matching package exists",
-    async ({ reconcileFn, createResource, expectedLabels }) => {
+    async ({ createResource, expectedLabels }) => {
       const resource = createResource({ "app.kubernetes.io/name": "test-app" });
       const pkg = createMockPackage("test-pkg", { "app.kubernetes.io/name": "test-app" });
       (
@@ -407,7 +409,7 @@ describe("reconcileService and reconcilePod", () => {
       ).mockReturnValue([pkg]);
 
       // Cast to the appropriate type based on the resource
-      if ('spec' in resource && 'selector' in resource.spec!) {
+      if ("spec" in resource && "selector" in resource.spec!) {
         await reconcileService(resource as a.Service);
       } else {
         await reconcilePod(resource as a.Pod);
@@ -419,7 +421,7 @@ describe("reconcileService and reconcilePod", () => {
 
   test.each(testCases)(
     "$name - should not modify when no matching package",
-    async ({ reconcileFn, createResource, expectedLabels }) => {
+    async ({ createResource, expectedLabels }) => {
       const resource = createResource({ "app.kubernetes.io/name": "test-app" });
       const pkg = createMockPackage("test-pkg", { "app.kubernetes.io/name": "no-match" });
       (
@@ -432,7 +434,7 @@ describe("reconcileService and reconcilePod", () => {
       const originalLabels = { ...(resource.metadata?.labels || {}) };
 
       // Cast to the appropriate type based on the resource
-      if ('spec' in resource && 'selector' in resource.spec!) {
+      if ("spec" in resource && "selector" in resource.spec!) {
         await reconcileService(resource as a.Service);
       } else {
         await reconcilePod(resource as a.Pod);
