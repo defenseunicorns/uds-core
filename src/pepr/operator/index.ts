@@ -9,7 +9,6 @@ import { When } from "./common";
 
 // Controller imports
 import {
-  initAPIServerCIDR,
   updateAPIServerCIDRFromEndpointSlice,
   updateAPIServerCIDRFromService,
 } from "./controllers/network/generators/kubeAPI";
@@ -19,7 +18,6 @@ import { handleSecretDelete, handleSecretUpdate } from "./controllers/secrets/po
 
 // Controller imports
 import {
-  initAllNodesTarget,
   updateKubeNodesFromCreateUpdate,
   updateKubeNodesFromDelete,
 } from "./controllers/network/generators/kubeNodes";
@@ -45,18 +43,6 @@ import { packageFinalizer, packageReconciler } from "./reconcilers/package-recon
 export { operator } from "./common";
 
 const log = setupLogger(Component.OPERATOR);
-
-// Pre-populate the API server CIDR since we are not persisting the EndpointSlice
-// Note ignore any errors since the watch will still be running hereafter
-if (process.env.PEPR_WATCH_MODE === "true" || process.env.PEPR_MODE === "dev") {
-  void initAPIServerCIDR();
-}
-
-// Pre-populate the Node CIDR list since we are not persisting it
-// Note ignore any errors since the watch will still be running hereafter
-if (process.env.PEPR_WATCH_MODE === "true" || process.env.PEPR_MODE === "dev") {
-  void initAllNodesTarget();
-}
 
 // Watch for changes to the API server EndpointSlice and update the API server CIDR
 // Skip if a CIDR is defined in the UDS Config
@@ -119,7 +105,7 @@ if (UDSConfig.kubeNodeCIDRs.length === 0) {
 
 // Watch the UDS Operator Config Secret and handle changes
 When(a.Secret)
-  .IsUpdated()
+  .IsCreatedOrUpdated()
   .InNamespace("pepr-system")
   .WithName("uds-operator-config")
   .Reconcile(updateCfgSecrets);

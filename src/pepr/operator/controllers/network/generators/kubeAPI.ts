@@ -19,6 +19,9 @@ const log = setupLogger(Component.OPERATOR_GENERATORS);
 // This is an in-memory cache of the API server CIDR
 let apiServerPeers: V1NetworkPolicyPeer[];
 
+// Track whether AuthorizationPolicies are available yet (Pepr installs before Istio)
+let authorizationPolicyExists = false;
+
 /**
  * Initialize the API server CIDR.
  *
@@ -27,23 +30,25 @@ let apiServerPeers: V1NetworkPolicyPeer[];
  * Otherwise, it fetches the EndpointSlice and updates the CIDR dynamically.
  */
 export async function initAPIServerCIDR() {
-  try {
-    const svc = await retryWithDelay(fetchKubernetesService, log);
+  if (process.env.PEPR_WATCH_MODE === "true" || process.env.PEPR_MODE === "dev") {
+    try {
+      const svc = await retryWithDelay(fetchKubernetesService, log);
 
-    // If static CIDR is defined, pass it directly
-    if (UDSConfig.kubeApiCIDR) {
-      log.info(
-        `Static CIDR (${UDSConfig.kubeApiCIDR}) is defined for KubeAPI, skipping EndpointSlice lookup.`,
-      );
-      await updateAPIServerCIDR(svc, UDSConfig.kubeApiCIDR); // Pass static CIDR
-    } else {
-      const slice = await retryWithDelay(fetchKubernetesEndpointSlice, log);
-      await updateAPIServerCIDR(svc, slice);
+      // If static CIDR is defined, pass it directly
+      if (UDSConfig.kubeApiCIDR) {
+        log.info(
+          `Static CIDR (${UDSConfig.kubeApiCIDR}) is defined for KubeAPI, skipping EndpointSlice lookup.`,
+        );
+        await updateAPIServerCIDR(svc, UDSConfig.kubeApiCIDR); // Pass static CIDR
+      } else {
+        const slice = await retryWithDelay(fetchKubernetesEndpointSlice, log);
+        await updateAPIServerCIDR(svc, slice);
+      }
+    } catch (error) {
+      log.error("Failed to initialize API Server CIDR for KubeAPI generated network policies", {
+        err: JSON.stringify(error),
+      });
     }
-  } catch (error) {
-    log.error("Failed to initialize API Server CIDR for KubeAPI generated network policies", {
-      err: JSON.stringify(error),
-    });
   }
 }
 
@@ -71,7 +76,7 @@ export function kubeAPI(): V1NetworkPolicyPeer[] {
 export async function updateAPIServerCIDRFromEndpointSlice(slice: kind.EndpointSlice) {
   try {
     log.debug(
-      "Processing watch for endpointslices, getting k8s service for updating API server CIDR",
+      "Processing update for endpointslices, getting k8s service for updating API server CIDR",
     );
     const svc = await retryWithDelay(fetchKubernetesService, log);
     await updateAPIServerCIDR(svc, slice);
@@ -91,11 +96,11 @@ export async function updateAPIServerCIDRFromEndpointSlice(slice: kind.EndpointS
 export async function updateAPIServerCIDRFromService(svc: kind.Service) {
   try {
     if (UDSConfig.kubeApiCIDR) {
-      log.debug("Processing watch for api service, using configured API CIDR for endpoints");
+      log.debug("Processing update for api service, using configured API CIDR for endpoints");
       await updateAPIServerCIDR(svc, UDSConfig.kubeApiCIDR);
     } else {
       log.debug(
-        "Processing watch for api service, getting endpoint slices for updating API server CIDR",
+        "Processing update for api service, getting endpoint slices for updating API server CIDR",
       );
       const slice = await retryWithDelay(fetchKubernetesEndpointSlice, log);
       await updateAPIServerCIDR(svc, slice);
@@ -245,6 +250,19 @@ export async function updateKubeAPIAuthorizationPolicies(
   const newIpBlocks = newPeers
     .map(peer => peer.ipBlock?.cidr)
     .filter((cidr): cidr is string => typeof cidr === "string");
+
+  // Check if AuthorizationPolicy is available in the cluster
+  if (!authorizationPolicyExists) {
+    try {
+      await K8s(kind.CustomResourceDefinition).Get("authorizationpolicies.security.istio.io");
+      authorizationPolicyExists = true;
+    } catch {
+      log.warn(
+        "AuthorizationPolicy CRD is not present in the cluster, skipping KubeAPI AuthorizationPolicy updates",
+      );
+      return;
+    }
+  }
 
   // Query for AuthorizationPolicies with the generated label for KubeAPI.
   const authPols = await K8s(AuthorizationPolicy)

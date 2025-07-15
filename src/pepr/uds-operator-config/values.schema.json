@@ -1,20 +1,12 @@
 {
   "$schema": "http://json-schema.org/schema#",
   "type": "object",
+  "additionalProperties": false,
   "properties": {
     "operator": {
       "type": "object",
+      "additionalProperties": false,
       "properties": {
-        "UDS_DOMAIN": { "type": "string", "description": "Deprecated: Domain configuration." },
-        "UDS_ADMIN_DOMAIN": {
-          "type": "string",
-          "description": "Deprecated: Admin domain configuration."
-        },
-        "UDS_CA_CERT": { "type": "string", "description": "Deprecated: CA certificate." },
-        "UDS_ALLOW_ALL_NS_EXEMPTIONS": {
-          "type": ["boolean", "string"],
-          "description": "Deprecated: Allow all namespace exemptions."
-        },
         "KUBEAPI_CIDR": {
           "type": "string",
           "description": "Deprecated: CIDR for the Kubernetes API server."
@@ -26,26 +18,12 @@
         "AUTHSERVICE_REDIS_URI": {
           "type": "string",
           "description": "Redis URI for the auth service."
-        },
-        "PEPR_LAST_SEEN_LIMIT_SECONDS": {
-          "type": "string",
-          "pattern": "^[0-9]+$",
-          "description": "Limit in seconds for Pepr last seen tracking."
-        },
-        "PEPR_RELIST_INTERVAL_SECONDS": {
-          "type": "string",
-          "pattern": "^[0-9]+$",
-          "description": "Interval in seconds for Pepr to relist resources."
-        },
-        "PEPR_RECONCILE_STRATEGY": {
-          "type": "string",
-          "enum": ["kindNsName", "namespace", "kind"],
-          "description": "Strategy for Pepr reconciliation."
         }
       }
     },
     "cluster": {
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "attributes": {
           "type": "object",

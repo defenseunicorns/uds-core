@@ -18,33 +18,38 @@ const log = setupLogger(Component.OPERATOR_GENERATORS);
 // Maintain a set of all node internal IPs
 const nodeSet = new Set<string>();
 
+// Track whether AuthorizationPolicies are available yet (Pepr installs before Istio)
+let authorizationPolicyExists = false;
+
 /**
  * Initialize the node targets by fetching the current nodes in the cluster
  * and populating the nodeSet with their Internal IPs.
  */
 export async function initAllNodesTarget() {
-  // if a list of CIDRs is defined, use those
-  if (UDSConfig.kubeNodeCIDRs.length > 0) {
-    for (const nodeCidr of UDSConfig.kubeNodeCIDRs) {
-      nodeSet.add(nodeCidr);
+  if (process.env.PEPR_WATCH_MODE === "true" || process.env.PEPR_MODE === "dev") {
+    // if a list of CIDRs is defined, use those
+    if (UDSConfig.kubeNodeCIDRs.length > 0) {
+      for (const nodeCidr of UDSConfig.kubeNodeCIDRs) {
+        nodeSet.add(nodeCidr);
+      }
+      await updateKubeNodesNetworkPolicies();
+      await updateKubeNodesAuthorizationPolicies();
+      return;
     }
-    await updateKubeNodesNetworkPolicies();
-    await updateKubeNodesAuthorizationPolicies();
-    return;
-  }
 
-  try {
-    const nodes = await retryWithDelay(fetchKubernetesNodes, log);
-    nodeSet.clear();
+    try {
+      const nodes = await retryWithDelay(fetchKubernetesNodes, log);
+      nodeSet.clear();
 
-    for (const node of nodes.items) {
-      const ip = getNodeInternalIP(node);
-      if (ip) nodeSet.add(ip);
+      for (const node of nodes.items) {
+        const ip = getNodeInternalIP(node);
+        if (ip) nodeSet.add(ip);
+      }
+      await updateKubeNodesNetworkPolicies();
+      await updateKubeNodesAuthorizationPolicies();
+    } catch (err) {
+      log.error("error fetching node IPs:", err);
     }
-    await updateKubeNodesNetworkPolicies();
-    await updateKubeNodesAuthorizationPolicies();
-  } catch (err) {
-    log.error("error fetching node IPs:", err);
   }
 }
 
@@ -170,6 +175,19 @@ export async function updateKubeNodesAuthorizationPolicies(): Promise<void> {
   const newIpBlocks = newPeers
     .map(peer => peer.ipBlock?.cidr)
     .filter((cidr): cidr is string => typeof cidr === "string");
+
+  // Check if AuthorizationPolicy is available in the cluster
+  if (!authorizationPolicyExists) {
+    try {
+      await K8s(kind.CustomResourceDefinition).Get("authorizationpolicies.security.istio.io");
+      authorizationPolicyExists = true;
+    } catch {
+      log.warn(
+        "AuthorizationPolicy CRD is not present in the cluster, skipping KubeNodes AuthorizationPolicy updates",
+      );
+      return;
+    }
+  }
 
   const authPols = await K8s(AuthorizationPolicy)
     .WithLabel("uds/generated", RemoteGenerated.KubeNodes)

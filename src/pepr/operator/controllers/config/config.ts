@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
+import { WatchCfg } from "kubernetes-fluent-client";
+import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/shared-types";
 import { K8s, kind } from "pepr";
 import { Component, setupLogger } from "../../../logger";
 import { ClusterConfig, ConfigExpose } from "../../crd";
@@ -18,7 +20,7 @@ export const UDSConfig: Config = {
   domain: "",
   adminDomain: "",
   caCert: "",
-  authserviceRedisUri: "",
+  authserviceRedisUri: undefined,
   allowAllNSExemptions: false,
   kubeApiCIDR: "",
   kubeNodeCIDRs: [],
@@ -47,7 +49,20 @@ function decodeSecret(secret: kind.Secret) {
 }
 
 export async function updateCfgSecrets(cfg: kind.Secret) {
-  configLog.info("Updating UDS Config from uds-operator-config secret change");
+  let firstLoad = false;
+  // If the authserviceRedisUri is undefined we know we're loading the config for the first time
+  // An "empty" redis uri will be an empty string after the first load
+  if (UDSConfig.authserviceRedisUri === undefined) {
+    firstLoad = true;
+  }
+
+  configLog.info(
+    `${firstLoad ? "Loading" : "Updating"} UDS Config from uds-operator-config secret${firstLoad ? "" : " change"}`,
+  );
+
+  // Only update cluster resources in the watcher pod if not on the first load
+  const updateClusterResources =
+    !firstLoad && (process.env.PEPR_WATCH_MODE === "true" || process.env.PEPR_MODE === "dev");
 
   const decodedCfgData = decodeSecret(cfg);
 
@@ -64,19 +79,26 @@ export async function updateCfgSecrets(cfg: kind.Secret) {
   // Handle changes to the Authservice configuration
   if (UDSConfig.authserviceRedisUri !== decodedCfgData.AUTHSERVICE_REDIS_URI) {
     UDSConfig.authserviceRedisUri = decodedCfgData.AUTHSERVICE_REDIS_URI;
-    const authserviceUpdate: AuthServiceEvent = {
-      name: "global-config-update",
-      action: Action.UpdateGlobalConfig,
-      // Base64 decode the CA cert before passing to the update function
-      trustedCA: atob(UDSConfig.caCert),
-      redisUri: UDSConfig.authserviceRedisUri,
-    };
-    configLog.debug("Updating Authservice secret based on change to Redis URI");
-    await reconcileAuthservice(authserviceUpdate);
+
+    if (updateClusterResources) {
+      const authserviceUpdate: AuthServiceEvent = {
+        name: "global-config-update",
+        action: Action.UpdateGlobalConfig,
+        // Base64 decode the CA cert before passing to the update function
+        trustedCA: atob(UDSConfig.caCert),
+        redisUri: UDSConfig.authserviceRedisUri,
+      };
+      configLog.debug("Updating Authservice secret based on change to Redis URI");
+      await reconcileAuthservice(authserviceUpdate);
+    }
   }
+
+  configLog.info(
+    `${firstLoad ? "Loaded" : "Updated"} UDS Config based on uds-operator-config secret${firstLoad ? "" : " change"}`,
+  );
 }
 
-async function handleCAUpdate(expose: ConfigExpose) {
+async function handleCAUpdate(expose: ConfigExpose, updateClusterResources?: boolean) {
   // no caCert key then set to empty string
   if (!Object.keys(expose).includes("caCert")) {
     expose.caCert = "";
@@ -90,39 +112,57 @@ async function handleCAUpdate(expose: ConfigExpose) {
   if (UDSConfig.caCert !== expose.caCert) {
     UDSConfig.caCert = expose.caCert || "";
 
-    const authserviceUpdate: AuthServiceEvent = {
-      name: "global-config-update",
-      action: Action.UpdateGlobalConfig,
-      // Base64 decode the CA cert before passing to the update function
-      trustedCA: atob(UDSConfig.caCert),
-      redisUri: UDSConfig.authserviceRedisUri,
-    };
-    configLog.debug("Updating Authservice secret based on change to CA Cert");
-    await reconcileAuthservice(authserviceUpdate);
+    if (updateClusterResources) {
+      const authserviceUpdate: AuthServiceEvent = {
+        name: "global-config-update",
+        action: Action.UpdateGlobalConfig,
+        // Base64 decode the CA cert before passing to the update function
+        trustedCA: atob(UDSConfig.caCert),
+        redisUri: UDSConfig.authserviceRedisUri,
+      };
+      configLog.debug("Updating Authservice secret based on change to CA Cert");
+      await reconcileAuthservice(authserviceUpdate);
+    }
   }
 }
 
 export async function updateCfg(cfg: ClusterConfig) {
-  configLog.info("Updating UDS Config from uds-operator-config ClusterConfig change");
+  let firstLoad = false;
+  // If the domain is empty we know we're loading the config for the first time
+  if (!UDSConfig.domain) {
+    firstLoad = true;
+  }
+
+  configLog.info(
+    `${firstLoad ? "Loading" : "Updating"} UDS Config from uds-operator-config ClusterConfig${firstLoad ? "" : " change"}`,
+  );
+
+  // Only update cluster resources in the watcher pod if not on the first load
+  const updateClusterResources =
+    !firstLoad && (process.env.PEPR_WATCH_MODE === "true" || process.env.PEPR_MODE === "dev");
 
   const { expose, policy, networking } = cfg.spec!;
 
   // Handle changes to the Authservice configuration for CA Cert
-  await handleCAUpdate(expose);
+  await handleCAUpdate(expose, updateClusterResources);
 
   // Handle changes to the kubeApiCidr
   if (networking?.kubeApiCIDR !== UDSConfig.kubeApiCIDR) {
     UDSConfig.kubeApiCIDR = networking?.kubeApiCIDR;
-    // This re-runs the "init" function to update netpols if necessary
-    configLog.debug("Updating KubeAPI network policies based on change to kubeApiCidr");
-    await initAPIServerCIDR();
+    if (updateClusterResources) {
+      // This re-runs the "init" function to update netpols if necessary
+      configLog.debug("Updating KubeAPI network policies based on change to kubeApiCidr");
+      await initAPIServerCIDR();
+    }
   }
 
   if (!areKubeNodeCidrsEqual(networking?.kubeNodeCIDRs, UDSConfig.kubeNodeCIDRs)) {
     UDSConfig.kubeNodeCIDRs = networking?.kubeNodeCIDRs || [];
-    // This re-runs the "init" function to update netpols if necessary
-    configLog.debug("Updating KubeNodes network policies based on change to kubeNodeCidrs");
-    await initAllNodesTarget();
+    if (updateClusterResources) {
+      // This re-runs the "init" function to update netpols if necessary
+      configLog.debug("Updating KubeNodes network policies based on change to kubeNodeCidrs");
+      await initAllNodesTarget();
+    }
   }
 
   if (expose.domain !== UDSConfig.domain || expose.adminDomain !== UDSConfig.adminDomain) {
@@ -142,14 +182,24 @@ export async function updateCfg(cfg: ClusterConfig) {
   // Update other config values (no need for special handling)
   UDSConfig.allowAllNSExemptions = policy.allowAllNsExemptions === true;
 
-  configLog.info("Updated UDS Config based on uds-operator-config ClusterConfig changes");
+  configLog.info(
+    `${firstLoad ? "Loaded" : "Updated"} UDS Config based on uds-operator-config ClusterConfig${firstLoad ? "" : " change"}`,
+  );
 }
 
+// Loads the UDS Config on startup
 export async function loadUDSConfig() {
   // Run in Admission and Watcher pods
   if (process.env.PEPR_WATCH_MODE || process.env.PEPR_MODE === "dev") {
-    const cfg = await K8s(ClusterConfig).Get("uds-cluster-config");
-    const cfgSecret = await K8s(kind.Secret).InNamespace("pepr-system").Get("uds-operator-config");
+    let cfg: ClusterConfig = {};
+    let cfgSecret: kind.Secret = {};
+
+    try {
+      cfg = await K8s(ClusterConfig).Get("uds-cluster-config");
+      cfgSecret = await K8s(kind.Secret).InNamespace("pepr-system").Get("uds-operator-config");
+    } catch (e) {
+      configLog.warn(e, "Error while fetching cluster config and operator config secret");
+    }
 
     if (!cfg) {
       throw new Error("No ClusterConfig found");
@@ -167,11 +217,13 @@ export async function loadUDSConfig() {
   }
 }
 
+// Helper function for redacting sensitive values from the UDS Config
 function redactConfig() {
   const authserviceRedisUri = UDSConfig.authserviceRedisUri ? "****" : "";
   return { ...UDSConfig, authserviceRedisUri };
 }
 
+// Helper function to detect if 2 lists of CIDRs are equal, irrespective of order
 function areKubeNodeCidrsEqual(newCidrs: string[] = [], currentCidrs: string[] = []): boolean {
   if (newCidrs.length !== currentCidrs.length) {
     return false;
@@ -179,4 +231,48 @@ function areKubeNodeCidrsEqual(newCidrs: string[] = [], currentCidrs: string[] =
   const sortedNewCidrs = [...newCidrs].sort();
   const sortedCurrentCidrs = [...currentCidrs].sort();
   return sortedNewCidrs.every((cidr, index) => cidr === sortedCurrentCidrs[index]);
+}
+
+// Starts a watch of the cluster config, used for Admission pods
+export async function startConfigWatch() {
+  // only run in admission controller or dev mode
+  if (process.env.PEPR_WATCH_MODE === "false" || process.env.PEPR_MODE === "dev") {
+    const watchCfg: WatchCfg = {
+      resyncFailureMax: process.env.PEPR_RESYNC_FAILURE_MAX
+        ? parseInt(process.env.PEPR_RESYNC_FAILURE_MAX, 10)
+        : 5,
+      resyncDelaySec: process.env.PEPR_RESYNC_DELAY_SECONDS
+        ? parseInt(process.env.PEPR_RESYNC_DELAY_SECONDS, 10)
+        : 5,
+      lastSeenLimitSeconds: process.env.PEPR_LAST_SEEN_LIMIT_SECONDS
+        ? parseInt(process.env.PEPR_LAST_SEEN_LIMIT_SECONDS, 10)
+        : 300,
+      relistIntervalSec: process.env.PEPR_RELIST_INTERVAL_SECONDS
+        ? parseInt(process.env.PEPR_RELIST_INTERVAL_SECONDS, 10)
+        : 1800,
+    };
+    const watcher = K8s(ClusterConfig).Watch(async (cfg, phase) => {
+      configLog.debug(`Processing cluster config update, phase ${phase}`);
+
+      if (cfg.metadata?.name !== "uds-cluster-config") {
+        // This should be impossible based on the schema, but we add this as a safeguard
+        return;
+      }
+
+      switch (phase) {
+        case WatchPhase.Added:
+        case WatchPhase.Modified:
+          try {
+            await updateCfg(cfg);
+          } catch (e) {
+            configLog.error(e, "Unexpected error during cluster config update");
+          }
+          break;
+        // We don't expect/handle deletions of the cluster config
+      }
+    }, watchCfg);
+    // This will run until the process is terminated or the watch is aborted
+    configLog.debug("Starting cluster config watch...");
+    await watcher.start();
+  }
 }

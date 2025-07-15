@@ -5,24 +5,25 @@ apiVersion: uds.dev/v1alpha1
 kind: ClusterConfig
 metadata:
   name: uds-cluster-config
-  namespace: pepr-system
   labels:
     {{- include "uds-operator-config.labels" . | nindent 4 }}
 spec:
   attributes:
     clusterName: {{ .Values.cluster.attributes.clusterName | quote }}
     tags:
-{{ toYaml .Values.cluster.attributes.clusterTags | nindent 6 }}
+      {{- toYaml .Values.cluster.attributes.clusterTags | nindent 6 }}
   networking:
     kubeApiCIDR: {{ .Values.cluster.networking.kubeApiCIDR | default .Values.operator.KUBEAPI_CIDR | quote }}
     kubeNodeCIDRs:
-{{- if .Values.cluster.networking.kubeNodeCIDRs }}
-{{ toYaml .Values.cluster.networking.kubeNodeCIDRs | nindent 6 }}
-{{- else if .Values.operator.KUBENODE_CIDRS }}
-{{- range ( split "," .Values.operator.KUBENODE_CIDRS ) }}
+    {{- if .Values.cluster.networking.kubeNodeCIDRs }}
+      {{- toYaml .Values.cluster.networking.kubeNodeCIDRs | nindent 6 }}
+    {{- else if .Values.operator.KUBENODE_CIDRS }}
+    {{- range ( split "," .Values.operator.KUBENODE_CIDRS ) }}
       - {{ . | quote }}
-{{- end }}
-{{- end }}
+    {{- end }}
+    {{- else }}
+      []
+    {{- end }}
   expose:
     domain: {{ .Values.cluster.expose.domain | quote }}
     adminDomain: {{ .Values.cluster.expose.adminDomain | quote }}
