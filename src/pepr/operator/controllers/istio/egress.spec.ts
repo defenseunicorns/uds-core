@@ -322,7 +322,7 @@ describe("test performEgressReconciliationWithMutex", () => {
     });
 
     await expect(performEgressReconciliationWithMutex("test-package")).rejects.toThrow(
-      errorMessage,
+      /Egress reconciliation failed: .*/,
     );
   });
 
@@ -363,14 +363,14 @@ describe("test performEgressReconciliationWithMutex", () => {
 
     // First reconciliation should fail
     await expect(performEgressReconciliationWithMutex("test-package")).rejects.toThrow(
-      errorMessage,
+      /Egress reconciliation failed: .*/,
     );
 
     // Second reconciliation should succeed despite the previous failure
     await expect(performEgressReconciliationWithMutex("test-package")).resolves.not.toThrow();
 
-    // Should have been called 3 times, once for failure + 2 times for each ambient and sidecar
-    expect(getNsMock).toHaveBeenCalledTimes(3);
+    // Should have been called 4 times, once for each ambient and sidecar
+    expect(getNsMock).toHaveBeenCalledTimes(4);
   });
 
   it("should handle namespace 404 gracefully", async () => {
@@ -433,7 +433,7 @@ describe("test performEgressReconciliation", () => {
 
     await performEgressReconciliation();
 
-    // Check that apply functions are not called
+    // Check that apply functions are called or not called
     expect(applySidecarEgressResources).not.toHaveBeenCalled();
     expect(applyAmbientEgressResources).toHaveBeenCalled();
 
@@ -444,13 +444,23 @@ describe("test performEgressReconciliation", () => {
   it("should err on reconciliation when get namespace returns error", async () => {
     updateEgressMocks({
       ...defaultEgressMocks,
-      getNsMock: vi.fn<() => Promise<kind.Namespace>>().mockRejectedValueOnce({
-        status: 401,
-        message: "Authorization error",
-      }),
+      getNsMock: vi
+        .fn<() => Promise<kind.Namespace>>()
+        .mockRejectedValueOnce({
+          status: 401,
+          message: "Authorization error",
+        })
+        .mockResolvedValueOnce({}),
     });
 
     await expect(performEgressReconciliation()).rejects.toThrow();
+
+    // Check that apply functions are called or not called
+    expect(applySidecarEgressResources).not.toHaveBeenCalled();
+    expect(applyAmbientEgressResources).toHaveBeenCalled();
+
+    // Check that purge was called 1 times (for ambient only)
+    expect(purgeOrphans).toHaveBeenCalledTimes(1);
   });
 
   it("should skip ambient reconciliation when namespace is not found", async () => {
@@ -467,11 +477,11 @@ describe("test performEgressReconciliation", () => {
 
     await performEgressReconciliation();
 
-    // Check that apply functions are not called
+    // Check that apply functions are called or not called
     expect(applySidecarEgressResources).toHaveBeenCalled();
     expect(applyAmbientEgressResources).not.toHaveBeenCalled();
 
-    // Check that purge was called 3 times (for sidecar only)
+    // Check that purge was called 3 times (sidecar only)
     expect(purgeOrphans).toHaveBeenCalledTimes(3);
   });
 

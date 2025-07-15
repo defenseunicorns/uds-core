@@ -104,11 +104,14 @@ export async function performEgressReconciliationWithMutex(pkgId: string): Promi
 
 // Perform sidecar egress resources reconciliation
 export async function performEgressReconciliation() {
-  try {
-    // Capture which packages were included in this reconciliation
-    updateLastReconciliationPackages();
+  // Capture which packages were included in this reconciliation
+  updateLastReconciliationPackages();
 
-    // Reconcile sidecar egress resources if namespace is found
+  // Array to collect any errors that occur during reconciliation
+  const errors: Error[] = [];
+
+  // Reconcile sidecar egress resources if namespace is found
+  try {
     const egressSidecarNamespace = await validateNamespace(sidecarEgressNamespace, true);
     if (egressSidecarNamespace) {
       sidecarGeneration++;
@@ -119,8 +122,14 @@ export async function performEgressReconciliation() {
       // Purge any orphaned sidecar shared resources
       await purgeSidecarEgressResources(sidecarGeneration.toString());
     }
+  } catch (e) {
+    const errText = `Failed to reconcile sidecar egress resources`;
+    log.error(errText, e);
+    errors.push(new Error(errText));
+  }
 
-    // Reconcile ambient egress resources if namespace is found
+  // Reconcile ambient egress resources if namespace is found
+  try {
     const egressAmbientNamespace = await validateNamespace(ambientEgressNamespace, true);
     if (egressAmbientNamespace) {
       ambientGeneration++;
@@ -132,9 +141,15 @@ export async function performEgressReconciliation() {
       await purgeAmbientEgressResources(ambientGeneration.toString());
     }
   } catch (e) {
-    const errText = `Failed to reconcile shared sidecar egress resources`;
+    const errText = `Failed to reconcile ambient egress resources`;
     log.error(errText, e);
-    throw e;
+    errors.push(new Error(errText));
+  }
+
+  // If any errors occurred, aggregate them and throw
+  if (errors.length > 0) {
+    const aggregatedMessage = errors.map(err => err.message).join("; ");
+    throw new Error(`Egress reconciliation failed: ${aggregatedMessage}`);
   }
 }
 
