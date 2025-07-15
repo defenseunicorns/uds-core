@@ -26,6 +26,12 @@ vi.mock("pepr", async () => {
 
 const mockApply = vi.fn();
 const mockGet = vi.fn<() => Promise<KubernetesList<kind.NetworkPolicy>>>();
+const mockCrdGet = vi.fn<() => Promise<KubernetesList<kind.CustomResourceDefinition>>>();
+
+beforeEach(async () => {
+  process.env.PEPR_WATCH_MODE = "true";
+  process.env.PEPR_MODE = "dev";
+});
 
 describe("updateAPIServerCIDR", () => {
   beforeEach(() => {
@@ -34,6 +40,7 @@ describe("updateAPIServerCIDR", () => {
       WithLabel: vi.fn(() => ({
         Get: mockGet,
       })),
+      Get: mockCrdGet, // Mock authorization policy CRD get
       Apply: mockApply,
     }));
   });
