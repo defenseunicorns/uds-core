@@ -4,13 +4,39 @@ title: Istio Egress
 
 UDS Core leverages Istio to route dedicated egress out of the service mesh. This document provides an overview and examples of the Istio resources that UDS Core deploys to handle egress.
 
-:::note
-This does not currently work with ambient mode enabled (`spec.network.serviceMesh.mode=ambient`) or with workloads that omit the sidecar proxy
-:::
-
 ## Configuring the Egress Workload
 
-The dedicated egress gateway is an *optional* component of UDS Core. To enable it in the UDS Bundle, add it to the `optionalComponents` as follows:
+### Ambient
+
+For workloads running in ambient mode, the dedicated egress gateway is a *default* component of UDS Core. It is enabled by default and deploys waypoint workloads to the `istio-egress-waypoint` namespace.
+
+Additional configurations for the waypoint can be added in the form of helm overrides to the `uds-istio-egress-config` chart in the UDS Bundle, such as:
+
+```yaml
+overrides:
+  istio-egress-waypoint:
+    uds-istio-egress-config:
+      values:
+        - path: "config.enabled"
+          value: true
+        - path: "config.deployment"
+          value: |
+            spec:
+              replicas: 4
+              template:
+                spec:
+                  containers:
+                  - name: istio-proxy
+                    resources:
+                      requests:
+                        cpu: 1234m
+```
+
+See the values.yaml for additional details.
+
+### Sidecar
+
+For workloads running in sidecar mode, the dedicated egress gateway is an *optional* component of UDS Core and will need to be manually enabled. To enable it in the UDS Bundle, add it to the `optionalComponents` as follows:
 
 ```yaml
 kind: UDSBundle
@@ -33,24 +59,28 @@ You will also need to configure any additional ports that you'd expect to egress
 overrides:
   istio-egress-gateway:
     gateway:
-      ports:
-        - name: status-port
-          port: 15021
-          protocol: TCP
-          targetPort: 15021
-        - name: http2
-          port: 80
-          protocol: TCP
-          targetPort: 80
-        - name: https
-          port: 443
-          protocol: TCP
-          targetPort: 443
-        - name: custom-port
-          port: 9200
-          protocol: TCP
-          targetPort: 9200
+      values:
+        - path: "service.ports"
+          value:
+          - name: status-port
+            port: 15021
+            protocol: TCP
+            targetPort: 15021
+          - name: http2
+            port: 80
+            protocol: TCP
+            targetPort: 80
+          - name: https
+            port: 443
+            protocol: TCP
+            targetPort: 443
+          - name: custom-port
+            port: 9200
+            protocol: TCP
+            targetPort: 9200
 ```
+
+This passes through to the upstream [Istio gateway chart](https://github.com/istio/istio/tree/master/manifests/charts/gateway), so any other overrides to that chart can follow this format.
 
 ## Specifying Egress using the Package CR
 
@@ -64,6 +94,8 @@ Currently, only HTTP and TLS protocols are supported. The configuration will def
 Wildcards in host names are NOT currently supported.
 :::
 
+### Ambient Mode
+
 The following sample Package CR shows configuring egress to a specific host, "httpbin.org", on port 443. 
 
 ```yaml
@@ -74,6 +106,38 @@ metadata:
   namespace: egress-gw-1
 spec:
   network:
+    serviceMesh:
+      mode: ambient
+    allow:
+      - description: "Example Curl"
+        direction: Egress
+        port: 443
+        remoteHost: httpbin.org
+        remoteProtocol: TLS
+        selector:
+          app: curl
+        serviceAccount: curl
+```
+
+When a Package CR specifies the `network.allow` field with, at minimum, the `remoteHost` and `port` or `ports` parameters, the UDS Core operator will create the necessary Istio resources to allow traffic to egress from the mesh. For ambient, the `serviceAccount` can be specified for an additional layer of security. The resources that are created include the following:
+* An Istio ServiceEntry, in the package namespace, which is used to define the external service that the workload can access.
+* (Optional, if `serviceAccount`) An Istio AuthorizationPolicy, in the package namespace, which is used to enforce that only traffic from workloads using the selected service account can egress.
+* A shared Istio Waypoint, in the `istio-egress-waypoint` namespace, which is used to route the egress traffic.
+
+### Sidecar Mode
+
+The following sample Package CR shows configuring egress to a specific host, "httpbin.org", on port 443. 
+
+```yaml
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: pkg-1
+  namespace: egress-gw-1
+spec:
+  network:
+    serviceMesh:
+      mode: sidecar
     allow:
       - description: "Example Curl"
         direction: Egress
@@ -91,21 +155,15 @@ When a Package CR specifies the `network.allow` field with, at minimum, the `rem
 * A shared Istio Gateway, in the istio egress gateway namespace, which is used to expose the egress gateway to the outside world.
 * A shared Istio Service Entry, in the istio egress gateway namespace, to register the hosts and the ports for the egress gateway.
 
-## Limitations
+#### Limitations
 
-The configuration in Package CRs in combination with the behavior of Istio should be understood when using egress. There are a few "gotchas" that might occur while using the egress configurations.
-
-:::note
-The following are not exhaustive and are subject to change as this implementation matures from sidecar to ambient.
-:::
-
-* Currently, egress will only work for workloads that are using the Istio sidecar proxy.
+The configuration in Package CRs in combination with the behavior of Istio should be understood when using egress for sidecar workloads. There are a few "gotchas" that might occur while using the sidecar egress configurations.
 
 * Specifying a port in a Package that is not exposed via the workload: This will be allowed with a warning from the operator, but the traffic will not be able to egress. An `istioctl analyze` will show an error such as: `Referenced host:port not found: "egressgateway.istio-egress-gateway.svc.cluster.local:9200"`
 
 * Specifying a remote host that is also used in other Gateways or VirtualServices: This will be allowed with a warning from the operator, but some unexpected behavior may occur. An `istioctl analyze` will show an error such as: `The VirtualServices ... define the same host ... which can lead to unexpected behavior` and `Conflict with gateways ...`
 
-* For all egresses defined within a single Package CR, all workloads that also have egress will have shared access to any host defined (is that true with the VS?)
+* For all egresses defined within a single Package CR, all workloads that also have egress will have shared access to any host defined
 
 ## Security Considerations
 
