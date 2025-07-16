@@ -19,7 +19,6 @@
     "logLevel": "info",
     "alwaysIgnore": {
       "namespaces": [
-        "uds-dev-stack",
         "zarf"
       ],
       "labels": []

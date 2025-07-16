@@ -1,5 +1,7 @@
 ---
 title: UDS Exemption
+tableOfContents:
+  maxHeadingLevel: 4
 ---
 
 ![UDS Operator Exemption Flowchart](https://github.com/defenseunicorns/uds-core/blob/main/docs/.images/diagrams/uds-core-operator-uds-exemption.svg?raw=true)
@@ -64,7 +66,7 @@ Default [policy exemptions](https://uds.defenseunicorns.com/reference/configurat
 - **Mitigation of Configuration Risks:**
   - By restricting exemptions to a specific namespace, the risk of unintentional misconfigurations in RBAC is significantly reduced. This ensures that cluster exemptions are only granted intentionally and within the confines of the designated namespace, minimizing the potential for security vulnerabilities resulting from misconfigured permissions.
 
-### Allow All Namespaces
+#### Allow Exemptions In All Namespaces
 
 If you find that the default scoping is not the right approach for your cluster, you have the option to configure `UDS-CORE` at deploy time to allow exemption CRs in all namespaces:
 
