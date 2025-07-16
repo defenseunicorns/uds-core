@@ -101,18 +101,11 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
     const matchingClient = findMatchingClient(pkg, selector);
     const waypointName = matchingClient ? getWaypointName(matchingClient.clientId) : undefined;
 
-    // Determine the appropriate pod selector based on the mode
-    const podSelector = (() => {
-      if (waypointName) {
-        // If we have a waypoint, use the waypoint's pod selector
-        return getPodSelector(pkg, selector, waypointName);
-      } else if (istioMode === IstioState.Ambient) {
-        // In ambient mode without waypoint, target ztunnel
-        return { "istio.io/ztunnel": "enabled" };
-      }
-      // Otherwise use the original selector
-      return selector;
-    })();
+    // Use waypoint selector only if we have a waypoint and the package is configured for ambient waypoint
+    const podSelector =
+      waypointName && shouldUseAmbientWaypoint(pkg)
+        ? getPodSelector(pkg, selector, waypointName)
+        : selector;
 
     // Create the NetworkPolicy for the VirtualService
     const policy: Allow = {

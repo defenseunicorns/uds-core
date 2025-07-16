@@ -563,7 +563,7 @@ describe("setupAmbientWaypoint", () => {
     const networkPolicyCalls = mockApply.mock.calls.filter(
       call => call[0]?.kind === "NetworkPolicy",
     );
-    expect(networkPolicyCalls).toHaveLength(2);
+    expect(networkPolicyCalls).toHaveLength(3);
   });
 });
 

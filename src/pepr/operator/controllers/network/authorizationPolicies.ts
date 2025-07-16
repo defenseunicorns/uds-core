@@ -309,20 +309,27 @@ export async function generateAuthorizationPolicies(
 }
 
 /**
- * Checks if a service should be handled by ambient waypoint
+ * Checks if a service should be handled by an ambient waypoint by verifying:
+ * 1. The package is in ambient mode
+ * 2. The service has an SSO configuration with a matching enableAuthserviceSelector
  */
 function isAmbientWaypointService(
   pkg: UDSPackage,
   selector: Record<string, string> | undefined,
 ): boolean {
-  if (!selector) return false;
+  // Early return if no selector or not in ambient mode
+  if (!selector || pkg.spec?.network?.serviceMesh?.mode !== "ambient") {
+    return false;
+  }
 
   return (
-    pkg.spec?.sso?.some(
-      sso =>
-        sso.enableAuthserviceSelector?.["app.kubernetes.io/name"] ===
-          selector["app.kubernetes.io/name"] || sso.enableAuthserviceSelector?.app === selector.app,
-    ) ?? false
+    pkg.spec.sso?.some(sso => {
+      const waypointSelector = sso.enableAuthserviceSelector;
+      if (!waypointSelector) return false;
+
+      // Check if any label in the waypoint selector matches the service selector
+      return Object.entries(waypointSelector).some(([key, value]) => selector[key] === value);
+    }) ?? false
   );
 }
 
