@@ -34,23 +34,6 @@ When(a.Pod)
     const podSpec = pod.spec || ({} as V1PodSpec);
     const podSecurityCtx = podSpec.securityContext || ({} as V1PodSecurityContext);
 
-    // Check if this is a ztunnel pod using multiple reliable labels
-    const isZtunnelPod =
-      pod.metadata?.labels?.["app"] === "ztunnel" &&
-      pod.metadata?.labels?.["app.kubernetes.io/name"] === "ztunnel" &&
-      pod.metadata?.labels?.["app.kubernetes.io/part-of"] === "istio";
-
-    // Check if this is a waypoint using multiple reliable indicators
-    const isWaypoint =
-      pod.metadata?.labels?.["gateway.istio.io/managed"] === "istio.io-mesh-controller" &&
-      pod.metadata?.labels?.["service.istio.io/canonical-name"]?.endsWith("-waypoint") &&
-      pod.metadata?.labels?.["istio.io/dataplane-mode"] === "none";
-
-    // Skip validation for trusted Istio components
-    if (isZtunnelPod || isWaypoint) {
-      return request.Approve();
-    }
-
     // Check pod-level security context for UID/GID 1337
     if (
       podSecurityCtx.runAsUser === 1337 ||
@@ -67,18 +50,22 @@ When(a.Pod)
     for (const container of containers(request)) {
       const containerCtx = container.securityContext || {};
 
-      // Skip validation for istio-proxy containers
-      if (container.name === "istio-proxy") {
-        continue;
-      }
+      // Check if this is an Istio proxy container
+      const isIstioProxy =
+        container.name === "istio-proxy" &&
+        container.ports?.some(p => p.name === "http-envoy-prom") &&
+        container.args?.some(arg => arg.includes("proxy"));
 
-      const runAsUser = containerCtx.runAsUser ?? podSecurityCtx.runAsUser;
-      const runAsGroup = containerCtx.runAsGroup ?? podSecurityCtx.runAsGroup;
+      // Only check UID/GID 1337 if this is not an Istio proxy container
+      if (!isIstioProxy) {
+        const runAsUser = containerCtx.runAsUser ?? podSecurityCtx.runAsUser;
+        const runAsGroup = containerCtx.runAsGroup ?? podSecurityCtx.runAsGroup;
 
-      if (runAsUser === 1337 || runAsGroup === 1337) {
-        return request.Deny(
-          `Container '${container.name}' cannot use UID/GID 1337 (Istio proxy) as it is not a trusted Istio component`,
-        );
+        if (runAsUser === 1337 || runAsGroup === 1337) {
+          return request.Deny(
+            `Container '${container.name}' cannot use UID/GID 1337 (Istio proxy) as it is not a trusted Istio component`,
+          );
+        }
       }
     }
 
