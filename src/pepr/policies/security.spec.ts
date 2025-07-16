@@ -594,8 +594,8 @@ describe("istio proxy user/group restrictions", () => {
                 {
                   name: "http-envoy-prom",
                   containerPort: 15090,
-                  protocol: "TCP"
-                }
+                  protocol: "TCP",
+                },
               ],
               args: ["proxy", "sidecar"],
               securityContext: {
