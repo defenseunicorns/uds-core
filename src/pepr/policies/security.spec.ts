@@ -73,7 +73,7 @@ describe("security policies", () => {
         ok: false,
         data: {
           message: expect.stringContaining(
-            "Unauthorized container securityContext. Containers must not run as root. Authorized: [runAsNonRoot = true | runAsUser > 0]",
+            "Unauthorized container securityContext. Containers must not run as root or have root-level supplemental groups. Authorized: [runAsNonRoot = true | runAsUser > 0 | supplementalGroups must not include 0]",
           ),
         },
       });
@@ -449,5 +449,169 @@ describe("security policies", () => {
         .then(failIfReached)
         .catch(expected),
     ]);
+  });
+});
+
+describe("istio proxy user/group restrictions", () => {
+  interface K8sError extends Error {
+    data?: {
+      message?: string;
+    };
+    ok: boolean;
+  }
+
+  const expectIstioUserDenied = (e: unknown) => {
+    const error = e as K8sError;
+    const message = error.data?.message || error.message || "";
+    expect(message).toMatch(/use UID\/GID 1337 \(Istio proxy\)/);
+    return expect(error).toMatchObject({ ok: false });
+  };
+
+  it("should deny pod with runAsUser 1337", async () => {
+    return K8s(kind.Pod)
+      .Apply({
+        metadata: {
+          name: "istio-user-pod",
+          namespace: "policy-tests",
+        },
+        spec: {
+          securityContext: {
+            runAsUser: 1337,
+          },
+          containers: [
+            {
+              name: "test",
+              image: "127.0.0.1/fake",
+            },
+          ],
+        },
+      })
+      .then(failIfReached)
+      .catch(expectIstioUserDenied);
+  });
+
+  it("should deny pod with runAsGroup 1337", async () => {
+    return K8s(kind.Pod)
+      .Apply({
+        metadata: {
+          name: "istio-group-pod",
+          namespace: "policy-tests",
+        },
+        spec: {
+          securityContext: {
+            runAsGroup: 1337,
+          },
+          containers: [
+            {
+              name: "test",
+              image: "127.0.0.1/fake",
+            },
+          ],
+        },
+      })
+      .then(failIfReached)
+      .catch(expectIstioUserDenied);
+  });
+
+  it("should deny non-istio container with UID 1337", async () => {
+    return K8s(kind.Pod)
+      .Apply({
+        metadata: {
+          name: "bad-container",
+          namespace: "policy-tests",
+        },
+        spec: {
+          containers: [
+            {
+              name: "bad-container",
+              image: "127.0.0.1/malicious",
+              securityContext: {
+                runAsUser: 1337,
+              },
+            },
+          ],
+        },
+      })
+      .then(failIfReached)
+      .catch(expectIstioUserDenied);
+  });
+
+  it("should allow ztunnel pod with UID/GID 1337", async () => {
+    return K8s(kind.Pod)
+      .Apply({
+        metadata: {
+          name: "ztunnel-test",
+          namespace: "istio-system",
+          labels: {
+            app: "ztunnel",
+            "app.kubernetes.io/name": "ztunnel",
+            "app.kubernetes.io/part-of": "istio",
+          },
+        },
+        spec: {
+          securityContext: {
+            runAsUser: 1337,
+            runAsGroup: 1337,
+          },
+          containers: [
+            {
+              name: "ztunnel",
+              image: "127.0.0.1/ztunnel",
+            },
+          ],
+        },
+      })
+      .then(pod => {
+        expect(pod).toMatchObject({
+          metadata: {
+            name: "ztunnel-test",
+            namespace: "istio-system",
+          },
+        });
+      });
+  });
+
+  it("should allow istio-proxy container with UID/GID 1337", async () => {
+    return K8s(kind.Pod)
+      .Apply({
+        metadata: {
+          name: "istio-sidecar",
+          namespace: "policy-tests",
+        },
+        spec: {
+          containers: [
+            {
+              name: "app",
+              image: "127.0.0.1/app",
+              securityContext: {
+                runAsUser: 1000,
+              },
+            },
+            {
+              name: "istio-proxy",
+              image: "127.0.0.1/istio/proxyv2",
+              ports: [
+                {
+                  name: "http-envoy-prom",
+                  containerPort: 15090,
+                  protocol: "TCP",
+                },
+              ],
+              args: ["proxy", "sidecar"],
+              securityContext: {
+                runAsUser: 1337,
+                runAsGroup: 1337,
+              },
+            },
+          ],
+        },
+      })
+      .then(pod => {
+        expect(pod).toMatchObject({
+          metadata: {
+            name: "istio-sidecar",
+          },
+        });
+      });
   });
 });
