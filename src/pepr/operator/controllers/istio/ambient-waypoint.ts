@@ -6,6 +6,7 @@
 import { V1LabelSelector, V1NetworkPolicySpec } from "@kubernetes/client-node";
 import { a, K8s } from "pepr";
 import { K8sGateway, UDSPackage } from "../../crd";
+import { generateWaypointAuthPolicies } from "../network/authorizationPolicies";
 import { PackageStore } from "../packages/package-store";
 import { getOwnerRef } from "../utils";
 import { log } from "./istio-resources";
@@ -109,8 +110,10 @@ export async function setupAmbientWaypoint(pkg: UDSPackage, waypointId: string):
     const appSelector = pkg.spec?.sso?.find(
       s => s.enableAuthserviceSelector,
     )?.enableAuthserviceSelector;
+
     if (appSelector) {
       await generateWaypointNetworkPolicies(pkg, waypointName, appSelector);
+      await generateWaypointAuthPolicies(pkg, waypointName, appSelector);
     }
 
     log.info("Successfully set up ambient waypoint", { namespace, package: name, waypointName });
@@ -193,6 +196,29 @@ export async function generateWaypointNetworkPolicies(
       podSelector: waypointSelector,
       egress: [{ to: [{ podSelector: appSelectorObj }] }],
       policyTypes: ["Egress"],
+    }),
+    // Health check policy: Allow monitoring access to waypoint
+    createNetworkPolicy(`allow-${pkg.metadata.name}-ingress-waypoint-health`, namespace, pkg, {
+      podSelector: { matchLabels: appSelector },
+      ingress: [
+        {
+          from: [
+            {
+              namespaceSelector: {
+                matchLabels: { "kubernetes.io/metadata.name": "monitoring" },
+              },
+              podSelector: {
+                matchLabels: { "app.kubernetes.io/name": "prometheus" },
+              },
+            },
+          ],
+          ports: [
+            { port: 15020, protocol: "TCP" },
+            { port: 15008, protocol: "TCP" },
+          ],
+        },
+      ],
+      policyTypes: ["Ingress"],
     }),
   ];
 

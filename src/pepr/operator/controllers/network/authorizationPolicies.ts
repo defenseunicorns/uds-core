@@ -239,14 +239,16 @@ export async function generateAuthorizationPolicies(
     }
   }
 
-  // Process expose rules.
+  // Process expose rules
   if (pkg.spec?.network?.expose) {
     for (const rule of pkg.spec.network.expose) {
-      const { source, ports } = processExposeRule(rule);
-      const policyName = sanitizeResourceName(`protect-${pkgName}-${generateExposeName(rule)}`);
-      const authPolicy = buildAuthPolicy(policyName, pkg, rule.selector, source, ports);
-      policies.push(authPolicy);
-      log.trace(`Generated authpol: ${authPolicy.metadata?.name}`);
+      if (!isAmbientWaypointService(pkg, rule.selector)) {
+        const { source, ports } = processExposeRule(rule);
+        const policyName = sanitizeResourceName(`protect-${pkgName}-${generateExposeName(rule)}`);
+        const authPolicy = buildAuthPolicy(policyName, pkg, rule.selector, source, ports);
+        policies.push(authPolicy);
+        log.trace(`Generated authpol: ${authPolicy.metadata?.name}`);
+      }
     }
   }
 
@@ -304,4 +306,99 @@ export async function generateAuthorizationPolicies(
   });
 
   return policies;
+}
+
+/**
+ * Checks if a service should be handled by ambient waypoint
+ */
+function isAmbientWaypointService(
+  pkg: UDSPackage,
+  selector: Record<string, string> | undefined,
+): boolean {
+  if (!selector) return false;
+
+  return (
+    pkg.spec?.sso?.some(
+      sso =>
+        sso.enableAuthserviceSelector?.["app.kubernetes.io/name"] ===
+          selector["app.kubernetes.io/name"] || sso.enableAuthserviceSelector?.app === selector.app,
+    ) ?? false
+  );
+}
+
+/**
+ * Applies an AuthorizationPolicy with targetRef instead of selector
+ */
+async function applyWaypointAuthPolicy(
+  name: string,
+  pkg: UDSPackage,
+  source: Source,
+  ports: string[],
+  waypointName: string,
+): Promise<void> {
+  const namespace = pkg.metadata?.namespace;
+  if (!namespace) {
+    log.warn(`No namespace found for package ${pkg.metadata?.name}`);
+    return;
+  }
+
+  // Build the policy without selector
+  const authPolicy = buildAuthPolicy(name, pkg, undefined, source, ports);
+
+  // Set targetRef instead of selector
+  if (authPolicy.spec) {
+    authPolicy.spec = {
+      ...authPolicy.spec,
+      targetRef: {
+        group: "gateway.networking.k8s.io",
+        kind: "Gateway",
+        name: waypointName,
+      },
+    };
+  }
+
+  try {
+    await K8s(AuthorizationPolicy).Apply(authPolicy, { force: true });
+    log.trace(`Applied waypoint AuthorizationPolicy ${name} in namespace ${namespace}`);
+  } catch (err) {
+    log.error(err, `Error applying waypoint AuthorizationPolicy ${name} in namespace ${namespace}`);
+    throw err;
+  }
+}
+
+/**
+ * Generates and applies authorization policies for waypoint-to-application communication
+ * @param pkg - The UDS package
+ * @param waypointName - Name of the waypoint
+ * @param appSelector - Selector for the target application
+ */
+export async function generateWaypointAuthPolicies(
+  pkg: UDSPackage,
+  waypointName: string,
+  appSelector: Record<string, string>,
+): Promise<void> {
+  const namespace = pkg.metadata?.namespace;
+  if (!namespace || !pkg.metadata?.uid) return;
+
+  const exposeRule = pkg.spec?.network?.expose?.find(
+    exp =>
+      exp.selector?.["app.kubernetes.io/name"] === appSelector["app.kubernetes.io/name"] ||
+      exp.selector?.app === appSelector.app,
+  );
+
+  if (!exposeRule) return;
+
+  const { source } = processExposeRule(exposeRule);
+  const waypointPorts = exposeRule.port ? [exposeRule.port.toString()] : [];
+
+  if (waypointPorts.length === 0) {
+    log.warn(`No exposed port found for waypoint policy for ${exposeRule.selector?.app}`);
+    return;
+  }
+
+  const policyName = sanitizeResourceName(
+    `protect-${pkg.metadata.name}-ingress-${exposeRule.port || "http"}-${exposeRule.selector?.app || "app"}-istio-${exposeRule.gateway || "tenant"}-gateway`,
+  );
+
+  await applyWaypointAuthPolicy(policyName, pkg, source, waypointPorts, waypointName);
 }

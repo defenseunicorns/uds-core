@@ -22,6 +22,36 @@ import { defaultDenyAll } from "./defaults/default-deny-all";
 import { generate } from "./generate";
 import { allowAmbientHealthprobes } from "./generators/ambientHealthprobes";
 
+/**
+ * Finds the SSO client that matches the given service selector
+ */
+function findMatchingClient(pkg: UDSPackage, serviceSelector: Record<string, string>) {
+  if (!serviceSelector) return undefined;
+
+  return pkg.spec?.sso?.find(
+    sso =>
+      sso.enableAuthserviceSelector &&
+      (sso.enableAuthserviceSelector["app.kubernetes.io/name"] ===
+        serviceSelector["app.kubernetes.io/name"] ||
+        sso.enableAuthserviceSelector.app === serviceSelector.app),
+  );
+}
+
+/**
+ * Generates a safe description for network policies
+ */
+function getPolicyDescription(
+  port: number,
+  clientId: string | undefined,
+  gateway: string,
+  isAmbient: boolean,
+): string {
+  if (isAmbient && clientId) {
+    return `${port}-${clientId} Istio ${gateway} gateway (ambient)`;
+  }
+  return `${port}-service Istio ${gateway} gateway`;
+}
+
 // configure subproject logger
 const log = setupLogger(Component.OPERATOR_NETWORK);
 
@@ -64,29 +94,42 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
   const exposeList = pkg.spec?.network?.expose ?? [];
   // Iterate over each exposed service, excluding directResponse services
   for (const expose of exposeList.filter(exp => !exp.advancedHTTP?.directResponse)) {
-    const { gateway = Gateway.Tenant, port, selector = {}, targetPort } = expose;
-
-    // Use the same port as the VirtualService if targetPort is not set
+    const { gateway = Gateway.Tenant, port = 80, selector = {}, targetPort } = expose;
     const policyPort = targetPort ?? port;
 
-    // In ambient mode, we need to target the waypoint pods instead of the app pods
-    const waypointName = getWaypointName(pkg.metadata!.name!);
+    // Find if this service has a matching client with waypoint
+    const matchingClient = findMatchingClient(pkg, selector);
+    const waypointName = matchingClient ? getWaypointName(matchingClient.clientId) : undefined;
+
+    // Determine the appropriate pod selector based on the mode
+    const podSelector = (() => {
+      if (waypointName) {
+        // If we have a waypoint, use the waypoint's pod selector
+        return getPodSelector(pkg, selector, waypointName);
+      } else if (istioMode === IstioState.Ambient) {
+        // In ambient mode without waypoint, target ztunnel
+        return { "istio.io/ztunnel": "enabled" };
+      }
+      // Otherwise use the original selector
+      return selector;
+    })();
 
     // Create the NetworkPolicy for the VirtualService
     const policy: Allow = {
       direction: Direction.Ingress,
-      // In ambient mode, target the waypoint pods instead of the app pods if the package should use ambient waypoint
-      selector: getPodSelector(pkg, selector, waypointName),
+      // Use the waypoint selector if in ambient mode with a matching client
+      selector: podSelector,
       remoteNamespace: `istio-${gateway}-gateway`,
       remoteSelector: {
         app: `${gateway}-ingressgateway`,
       },
       port: policyPort,
-      // Use the port, selector, and gateway to generate a description for VirtualService derived policies
-      description:
-        istioMode === IstioState.Ambient && shouldUseAmbientWaypoint(pkg)
-          ? `${policyPort}-${waypointName} Istio ${gateway} gateway (ambient)`
-          : `${policyPort}-${Object.values(selector)} Istio ${gateway} gateway`,
+      description: getPolicyDescription(
+        policyPort,
+        matchingClient?.clientId || undefined,
+        gateway,
+        !!waypointName,
+      ),
     };
 
     // Generate the policy
@@ -94,14 +137,14 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
     policies.push(generatedPolicy);
   }
 
-  // Add a network policy for each sso block with authservice enabled (if any pkg.spec.sso[*].enableAuthserviceSelector is set)
-  const ssos = pkg.spec?.sso?.filter(sso => sso.enableAuthserviceSelector);
+  // Add network policies for each SSO client with authservice enabled
+  const ssos = pkg.spec?.sso?.filter(sso => sso.enableAuthserviceSelector) || [];
 
-  for (const sso of ssos || []) {
-    // In ambient mode, target the waypoint pods instead of the app pods if the package should use ambient waypoint
+  for (const sso of ssos) {
+    const waypointName = getWaypointName(sso.clientId);
     const netpolSelector =
       istioMode === IstioState.Ambient && shouldUseAmbientWaypoint(pkg)
-        ? { "gateway.networking.k8s.io/gateway-name": `${sso.clientId}-waypoint` }
+        ? { "gateway.networking.k8s.io/gateway-name": waypointName }
         : sso.enableAuthserviceSelector;
 
     const policy: Allow = {
@@ -123,27 +166,23 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
       remoteNamespace: "keycloak",
       remoteSelector: { "app.kubernetes.io/name": "keycloak" },
       port: 8080,
-      description: `${sanitizeResourceName(sso.clientId)} keycloak JWKS egress`,
+      description: `${sso.clientId} keycloak JWKS egress`,
     };
 
     // Generate the policy
     const keycloakGeneratedPolicy = generate(namespace, keycloakPolicy);
     policies.push(keycloakGeneratedPolicy);
 
-    // Ambient mode: add waypoint-to-istiod egress policy for the package's dedicated waypoint
+    // Ambient mode: add waypoint-to-istiod egress policy for this client's waypoint
     if (istioMode === IstioState.Ambient && shouldUseAmbientWaypoint(pkg)) {
-      const waypointSelector = {
-        "gateway.networking.k8s.io/gateway-name": `${sso.clientId}-waypoint`,
-      };
-
       const istiodPolicy = allowEgressIstiod(namespace);
-      istiodPolicy.spec!.podSelector = { matchLabels: waypointSelector };
+      istiodPolicy.spec!.podSelector = { matchLabels: netpolSelector };
       istiodPolicy.metadata = istiodPolicy.metadata || {};
       istiodPolicy.metadata.labels = {
         ...istiodPolicy.metadata.labels,
         "uds/package": pkg.metadata!.name!,
+        "uds/sso-client": sso.clientId,
       };
-
       policies.push(istiodPolicy);
     }
   }
