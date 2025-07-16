@@ -5,7 +5,7 @@
 
 import { a, sdk } from "pepr";
 
-import { V1Pod, V1PodSecurityContext, V1PodSpec } from "@kubernetes/client-node";
+import { V1PodSecurityContext } from "@kubernetes/client-node";
 import { Policy } from "../operator/crd";
 import {
   When,
@@ -30,9 +30,8 @@ When(a.Pod)
       return request.Approve();
     }
 
-    const pod = request.Raw as V1Pod;
-    const podSpec = pod.spec || ({} as V1PodSpec);
-    const podSecurityCtx = podSpec.securityContext || ({} as V1PodSecurityContext);
+    const pod = request.Raw.spec!;
+    const podSecurityCtx = pod.securityContext || ({} as V1PodSecurityContext);
 
     // Check pod-level security context for UID/GID 1337
     if (
@@ -58,10 +57,7 @@ When(a.Pod)
 
       // Only check UID/GID 1337 if this is not an Istio proxy container
       if (!isIstioProxy) {
-        const runAsUser = containerCtx.runAsUser ?? podSecurityCtx.runAsUser;
-        const runAsGroup = containerCtx.runAsGroup ?? podSecurityCtx.runAsGroup;
-
-        if (runAsUser === 1337 || runAsGroup === 1337) {
+        if (containerCtx.runAsUser === 1337 || containerCtx.runAsGroup === 1337) {
           return request.Deny(
             `Container '${container.name}' cannot use UID/GID 1337 (Istio proxy) as it is not a trusted Istio component`,
           );
@@ -197,12 +193,13 @@ When(a.Pod)
     if (isExempt(request, Policy.RequireNonRootUser)) {
       return request.Approve();
     }
-    // Check if running as root by checking if runAsNonRoot is false or runAsUser is 0
+    // Check if running as root by checking if runAsNonRoot is false, runAsUser is 0, or has root-level supplemental groups
     const isRoot = (ctx: Partial<V1PodSecurityContext>) => {
       const isRunAsRoot = ctx.runAsNonRoot === false;
       const isRunAsRootUser = ctx.runAsUser === 0;
+      const hasRootSupplementalGroups = ctx.supplementalGroups?.includes(0);
 
-      return isRunAsRoot || isRunAsRootUser;
+      return isRunAsRoot || isRunAsRootUser || hasRootSupplementalGroups;
     };
 
     // Check pod securityContext
@@ -217,8 +214,8 @@ When(a.Pod)
     if (violations.length) {
       return request.Deny(
         securityContextMessage(
-          "Unauthorized container securityContext. Containers must not run as root",
-          ["runAsNonRoot = true", "runAsUser > 0"],
+          "Unauthorized container securityContext. Containers must not run as root or have root-level supplemental groups",
+          ["runAsNonRoot = true", "runAsUser > 0", "supplementalGroups must not include 0"],
           violations,
         ),
       );
