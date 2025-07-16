@@ -198,8 +198,8 @@ export async function generateWaypointNetworkPolicies(
       policyTypes: ["Egress"],
     }),
     // Health check policy: Allow monitoring access to waypoint
-    createNetworkPolicy(`allow-${pkg.metadata.name}-ingress-waypoint-health`, namespace, pkg, {
-      podSelector: { matchLabels: appSelector },
+    createNetworkPolicy(`allow-${waypointName}-ingress-health`, namespace, pkg, {
+      podSelector: waypointSelector,
       ingress: [
         {
           from: [
@@ -213,8 +213,8 @@ export async function generateWaypointNetworkPolicies(
             },
           ],
           ports: [
-            { port: 15020, protocol: "TCP" },
-            { port: 15008, protocol: "TCP" },
+            { port: 15020, protocol: "TCP" }, // Envoy admin port
+            { port: 15008, protocol: "TCP" }, // HBONE port
           ],
         },
       ],
