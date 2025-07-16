@@ -8,11 +8,7 @@ import { K8s, kind } from "pepr";
 import { UDSConfig } from "../../../config";
 import { Component, setupLogger } from "../../../logger";
 import { Allow, Direction, Gateway, RemoteGenerated, UDSPackage } from "../../crd";
-import {
-  getPodSelector,
-  getWaypointName,
-  shouldUseAmbientWaypoint,
-} from "../istio/ambient-waypoint";
+import { getPodSelector, getWaypointName, shouldUseAmbientWaypoint } from "../../utils/waypoint";
 import { IstioState } from "../istio/namespace";
 import { getOwnerRef, purgeOrphans, sanitizeResourceName } from "../utils";
 import { allowEgressDNS } from "./defaults/allow-egress-dns";
@@ -25,22 +21,23 @@ import { allowAmbientHealthprobes } from "./generators/ambientHealthprobes";
 /**
  * Finds the SSO client that matches the given service selector
  */
-function findMatchingClient(pkg: UDSPackage, serviceSelector: Record<string, string>) {
+export function findMatchingClient(pkg: UDSPackage, serviceSelector: Record<string, string>) {
   if (!serviceSelector) return undefined;
 
   return pkg.spec?.sso?.find(
     sso =>
       sso.enableAuthserviceSelector &&
-      (sso.enableAuthserviceSelector["app.kubernetes.io/name"] ===
-        serviceSelector["app.kubernetes.io/name"] ||
-        sso.enableAuthserviceSelector.app === serviceSelector.app),
+      ((serviceSelector["app.kubernetes.io/name"] &&
+        sso.enableAuthserviceSelector["app.kubernetes.io/name"] ===
+          serviceSelector["app.kubernetes.io/name"]) ||
+        (serviceSelector.app && sso.enableAuthserviceSelector.app === serviceSelector.app)),
   );
 }
 
 /**
  * Generates a safe description for network policies
  */
-function getPolicyDescription(
+export function getPolicyDescription(
   port: number,
   clientId: string | undefined,
   gateway: string,

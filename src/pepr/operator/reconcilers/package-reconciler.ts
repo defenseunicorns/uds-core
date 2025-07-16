@@ -102,9 +102,24 @@ async function reconcilePackageFlow(pkg: UDSPackage): Promise<void> {
     // Set up waypoints for each client that needs one
     for (const client of authServiceClients) {
       try {
+        log.info(`Setting up ambient waypoint for client`, {
+          namespace: pkg.metadata?.namespace,
+          package: pkg.metadata?.name,
+          clientId: client.clientId,
+          selector: JSON.stringify(client.enableAuthserviceSelector),
+        });
         await setupAmbientWaypoint(pkg, client.clientId);
       } catch (err) {
-        log.error(`Failed to set up ambient waypoint for client ${client.clientId}:`, err);
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        const errorStack = err instanceof Error ? err.stack : undefined;
+
+        log.error(`Failed to set up ambient waypoint for client ${client.clientId}:`, {
+          namespace: pkg.metadata?.namespace,
+          package: pkg.metadata?.name,
+          clientId: client.clientId,
+          error: errorMessage,
+          stack: errorStack,
+        });
         throw err; // Re-throw to fail the reconciliation if any waypoint setup fails
       }
     }

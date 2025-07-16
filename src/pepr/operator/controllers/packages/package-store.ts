@@ -10,6 +10,7 @@
  */
 import { Component, setupLogger } from "../../../logger";
 import { UDSPackage } from "../../crd";
+import { Mode } from "../../crd/generated/package-v1alpha1";
 const log = setupLogger(Component.OPERATOR_PACKAGES);
 
 // Map structure: namespace -> (package name -> package)
@@ -189,7 +190,7 @@ function getAmbientPackages(): UDSPackage[] {
   const result: UDSPackage[] = [];
   for (const namespaceMap of packageNamespaceMap.values()) {
     for (const pkg of namespaceMap.values()) {
-      if (pkg.spec?.network?.serviceMesh?.mode === "ambient") {
+      if (pkg.spec?.network?.serviceMesh?.mode === Mode.Ambient) {
         result.push(pkg);
       }
     }
@@ -198,17 +199,16 @@ function getAmbientPackages(): UDSPackage[] {
 }
 
 /**
- * Finds all packages with ambient waypoint enabled in a specific namespace
- * @param namespace The namespace to search in
- * @returns Array of UDSPackage objects with ambient waypoint enabled in the namespace
+ * Gets the package for a specific namespace
+ * @param namespace The namespace to get the package for
+ * @returns The UDSPackage for the namespace, or undefined if not found
  */
-function getAmbientPackagesByNamespace(namespace: string): UDSPackage[] {
+function getPackageByNamespace(namespace: string): UDSPackage | undefined {
   const namespaceMap = packageNamespaceMap.get(namespace);
-  if (!namespaceMap) return [];
+  if (!namespaceMap || namespaceMap.size === 0) return undefined;
 
-  return Array.from(namespaceMap.values()).filter(
-    pkg => pkg.spec?.network?.serviceMesh?.mode === "ambient",
-  );
+  // Since we only allow one package per namespace, just return the first one
+  return Array.from(namespaceMap.values())[0];
 }
 
 export const PackageStore = {
@@ -219,5 +219,5 @@ export const PackageStore = {
   getPkgName,
   findPackagesWithSsoClientId,
   getAmbientPackages,
-  getAmbientPackagesByNamespace,
+  getPackageByNamespace,
 };

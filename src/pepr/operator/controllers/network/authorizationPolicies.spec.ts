@@ -176,7 +176,7 @@ describe("authorization policy generation", () => {
         sso: [
           {
             name: "Demo SSO",
-            clientId: "uds-core-httpbin",
+            clientId: "uds-core-sidecar-httpbin",
             redirectUris: ["https://protected.uds.dev/login"],
             enableAuthserviceSelector: { app: "httpbin" },
             groups: { anyOf: ["/UDS Core/Admin"] },

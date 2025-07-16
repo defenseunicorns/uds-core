@@ -6,13 +6,19 @@
 import { V1LabelSelector, V1NetworkPolicySpec } from "@kubernetes/client-node";
 import { a, K8s } from "pepr";
 import { K8sGateway, UDSPackage } from "../../crd";
+import { Mode } from "../../crd/generated/package-v1alpha1";
+import {
+  getWaypointName,
+  matchesLabels,
+  serviceMatchesSelector,
+  shouldUseAmbientWaypoint,
+} from "../../utils/waypoint";
 import { generateWaypointAuthPolicies } from "../network/authorizationPolicies";
 import { PackageStore } from "../packages/package-store";
 import { getOwnerRef } from "../utils";
 import { log } from "./istio-resources";
 
 // Constants for labels and configuration
-const WAYPOINT_SUFFIX = "-waypoint"; // Suffix for waypoint resource names
 const ISTIO_WAYPOINT_LABEL = "istio.io/use-waypoint"; // Label to enable waypoint injection
 const UDS_MANAGED_LABEL = "uds/managed-by"; // Label to identify UDS-managed resources
 
@@ -22,48 +28,6 @@ const HEALTH_OPTS = {
   intervalMs: parseInt(process.env.WAYPOINT_HEALTH_INTERVAL_MS || "5000", 10),
   timeoutMs: parseInt(process.env.WAYPOINT_HEALTH_TIMEOUT_MS || "60000", 10),
 };
-
-/**
- * Checks if a package has SSO configured with enableAuthserviceSelector
- * @param pkg - The UDS package to check
- * @returns boolean indicating if SSO is configured
- */
-export const hasAuthserviceSSO = (pkg?: UDSPackage): boolean =>
-  pkg?.spec?.sso?.some(s => !!s.enableAuthserviceSelector) || false;
-
-/**
- * Determines if a package should use ambient waypoint networking
- * @param pkg - The UDS package to check
- * @returns boolean indicating if ambient waypoint should be used
- */
-export const shouldUseAmbientWaypoint = (pkg?: UDSPackage): boolean =>
-  pkg?.spec?.network?.serviceMesh?.mode === "ambient" && hasAuthserviceSSO(pkg);
-
-/**
- * Generates a consistent waypoint name from an ID
- * @param id - The base ID to generate the name from
- * @returns Formatted waypoint name
- */
-export const getWaypointName = (id: string): string =>
-  `${id.startsWith("uds-core-") ? "" : "uds-core-"}${id}${WAYPOINT_SUFFIX}`;
-
-/**
- * Gets the appropriate pod selector based on whether ambient waypoint is enabled
- * @param pkg - The UDS package
- * @param selector - The default pod selector
- * @param waypointName - The name of the waypoint (if in ambient mode)
- * @returns The appropriate pod selector to use
- */
-export function getPodSelector(
-  pkg: UDSPackage,
-  selector: Record<string, string>,
-  waypointName: string,
-): Record<string, string> {
-  if (shouldUseAmbientWaypoint(pkg)) {
-    return { "istio.io/gateway-name": waypointName };
-  }
-  return selector;
-}
 
 /**
  * Network Policy Helper: Creates a network policy object
@@ -104,7 +68,10 @@ export async function setupAmbientWaypoint(pkg: UDSPackage, waypointId: string):
   log.info("Starting ambient waypoint setup", { namespace, package: name, waypointName });
 
   try {
+    log.info("Creating waypoint gateway", { namespace, package: name, waypointId, waypointName });
     await createWaypointGateway(pkg, waypointId);
+
+    log.info("Waiting for waypoint pod to become healthy", { namespace, waypointName });
     await waitForWaypointPodHealthy(namespace, waypointName);
 
     const appSelector = pkg.spec?.sso?.find(
@@ -112,19 +79,28 @@ export async function setupAmbientWaypoint(pkg: UDSPackage, waypointId: string):
     )?.enableAuthserviceSelector;
 
     if (appSelector) {
+      log.info("Generating waypoint network policies", { namespace, waypointName });
       await generateWaypointNetworkPolicies(pkg, waypointName, appSelector);
+
+      log.info("Generating waypoint authorization policies", { namespace, waypointName });
       await generateWaypointAuthPolicies(pkg, waypointName, appSelector);
     }
 
     log.info("Successfully set up ambient waypoint", { namespace, package: name, waypointName });
   } catch (error) {
+    // Capture detailed error information
     const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+
     log.error("Failed to set up ambient waypoint", {
       namespace,
       package: name,
       waypointName,
       error: errorMessage,
+      stack: errorStack,
     });
+
+    // Throw a more descriptive error
     throw new Error(`Failed to set up ambient waypoint: ${errorMessage}`);
   }
 }
@@ -139,30 +115,95 @@ export async function createWaypointGateway(pkg: UDSPackage, waypointId: string)
   const { namespace, name } = pkg.metadata || {};
   if (!namespace || !name) throw new Error("Package metadata is missing namespace or name");
 
+  // Get the waypoint name using the utility function
   const waypointName = getWaypointName(waypointId);
-  log.info(`Creating waypoint gateway for package: ${namespace}/${name}`, { waypointName });
-
-  const gateway = new K8sGateway();
-
-  gateway.metadata = {
-    name: waypointName,
+  log.info(`Creating waypoint gateway for package: ${namespace}/${name}`, {
+    waypointName,
+    waypointId,
     namespace,
-    labels: {
-      [UDS_MANAGED_LABEL]: "uds-operator",
-      "app.kubernetes.io/component": "ambient-waypoint",
-      "istio.io/waypoint-for": "all",
-      "istio.io/gateway-name": waypointName,
-    },
-    ownerReferences: getOwnerRef(pkg),
-  };
+    packageName: name,
+  });
 
-  gateway.spec = {
-    gatewayClassName: "istio-waypoint",
-    listeners: [{ name: "mesh", port: 15008, protocol: "HBONE" }],
-  };
+  try {
+    // First check if the gateway already exists
+    try {
+      const existingGateway = await K8s(K8sGateway).InNamespace(namespace).Get(waypointName);
+      if (existingGateway) {
+        log.info(`Waypoint gateway ${waypointName} already exists in namespace ${namespace}`);
+        return waypointName;
+      }
+    } catch (e) {
+      // Gateway doesn't exist, which is expected
+      log.info(`Waypoint gateway ${waypointName} does not exist yet, creating it`, e.message);
+    }
 
-  await K8s(K8sGateway).Apply(gateway, { force: true });
-  return waypointName;
+    const gateway = new K8sGateway();
+
+    gateway.metadata = {
+      name: waypointName,
+      namespace,
+      labels: {
+        [UDS_MANAGED_LABEL]: "uds-operator",
+        "app.kubernetes.io/component": "ambient-waypoint",
+        "istio.io/waypoint-for": "all",
+        "istio.io/gateway-name": waypointName,
+      },
+      ownerReferences: getOwnerRef(pkg),
+    };
+
+    gateway.spec = {
+      gatewayClassName: "istio-waypoint",
+      listeners: [{ name: "mesh", port: 15008, protocol: "HBONE" }],
+    };
+
+    // Log the gateway object before applying
+    log.info("Applying waypoint gateway", {
+      namespace,
+      name: waypointName,
+      gatewayClassName: gateway.spec.gatewayClassName,
+      ownerReferences: JSON.stringify(gateway.metadata.ownerReferences),
+    });
+
+    try {
+      // Use Create instead of Apply to get more specific error messages
+      await K8s(K8sGateway).Create(gateway);
+      log.info("Successfully created waypoint gateway", { namespace, waypointName });
+      return waypointName;
+    } catch (applyError) {
+      // Detailed logging of the apply error
+      log.error("Error creating waypoint gateway", {
+        namespace,
+        waypointName,
+        errorType: typeof applyError,
+        errorDetails: applyError,
+      });
+
+      // Try to get more information about what went wrong
+      try {
+        const gatewayClass = await K8s(a.CustomResourceDefinition).Get(
+          "gatewayclasses.gateway.networking.k8s.io",
+        );
+        log.info("GatewayClass CRD exists", { exists: !!gatewayClass });
+      } catch (crdError) {
+        log.error("Error checking GatewayClass CRD", { error: crdError });
+      }
+
+      throw new Error(
+        `Failed to create waypoint gateway: ${applyError instanceof Error ? applyError.message : String(applyError)}`,
+      );
+    }
+  } catch (error) {
+    // Capture all error details
+    log.error("Failed to create waypoint gateway", {
+      namespace,
+      waypointName,
+      errorDetails: error,
+    });
+
+    throw new Error(
+      `Failed to create waypoint gateway: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
 }
 
 /**
@@ -261,21 +302,75 @@ export async function waitForWaypointPodHealthy(
   const start = Date.now();
   const { maxAttempts, intervalMs, timeoutMs } = HEALTH_OPTS;
 
+  log.info("Starting waypoint pod health check", {
+    namespace,
+    waypointName,
+    maxAttempts,
+    intervalMs,
+    timeoutMs,
+  });
+
   for (let i = 1; i <= maxAttempts; i++) {
     if (Date.now() - start > timeoutMs) {
+      log.error("Timeout waiting for waypoint pod", {
+        namespace,
+        waypointName,
+        elapsedMs: Date.now() - start,
+      });
       throw new Error(`Timeout waiting for waypoint pod ${waypointName} in ${namespace}`);
     }
 
-    if (await isWaypointPodHealthy(namespace, waypointName)) {
-      return;
+    try {
+      // Check if pods exist with the waypoint label
+      const pods = await K8s(a.Pod)
+        .InNamespace(namespace)
+        .WithLabel(`istio.io/gateway-name=${waypointName}`)
+        .Get();
+
+      if (!pods.items || pods.items.length === 0) {
+        log.info(
+          `No waypoint pods found for ${waypointName} in ${namespace}, attempt ${i}/${maxAttempts}`,
+        );
+      } else {
+        log.info(
+          `Found ${pods.items.length} waypoint pods for ${waypointName} in ${namespace}, checking health...`,
+        );
+
+        // Log pod status for debugging
+        pods.items.forEach(pod => {
+          log.info(`Pod status: ${pod.metadata?.name}`, {
+            phase: pod.status?.phase,
+            ready: pod.status?.containerStatuses?.every(cs => cs.ready),
+            conditions: pod.status?.conditions,
+          });
+        });
+
+        if (await isWaypointPodHealthy(namespace, waypointName)) {
+          log.info(`Waypoint pod ${waypointName} in ${namespace} is healthy`);
+          return;
+        }
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      log.warn(`Error checking waypoint pod health (attempt ${i}/${maxAttempts})`, {
+        namespace,
+        waypointName,
+        error: errorMessage,
+      });
     }
 
     if (i < maxAttempts) {
+      log.info(`Waiting for waypoint pod to become healthy, attempt ${i}/${maxAttempts}`);
       await new Promise(resolve => setTimeout(resolve, intervalMs));
     }
   }
 
-  throw new Error(`Waypoint pod ${waypointName} in ${namespace} did not become healthy`);
+  log.error(
+    `Waypoint pod ${waypointName} in ${namespace} did not become healthy after ${maxAttempts} attempts`,
+  );
+  throw new Error(
+    `Waypoint pod ${waypointName} in ${namespace} did not become healthy after ${maxAttempts} attempts`,
+  );
 }
 
 /**
@@ -286,20 +381,19 @@ export async function reconcileService(svc: a.Service): Promise<void> {
   const namespace = svc.metadata?.namespace;
   if (!namespace || !svc.metadata?.labels) return;
 
-  for (const pkg of PackageStore.getAmbientPackagesByNamespace(namespace)) {
-    const waypointName = pkg.metadata?.name && getWaypointName(pkg.metadata.name);
-    const selector = pkg.spec?.sso?.find(
-      s => s.enableAuthserviceSelector,
-    )?.enableAuthserviceSelector;
+  const pkg = PackageStore.getPackageByNamespace(namespace);
+  if (!pkg || pkg.spec?.network?.serviceMesh?.mode !== Mode.Ambient) return;
 
-    if (waypointName && selector && serviceMatchesSelector(svc, selector)) {
-      svc.metadata.labels = {
-        ...svc.metadata.labels,
-        [ISTIO_WAYPOINT_LABEL]: waypointName,
-        "istio.io/ingress-use-waypoint": "true",
-      };
-      return;
-    }
+  const waypointName = pkg.metadata?.name && getWaypointName(pkg.metadata.name);
+  const selector = pkg.spec?.sso?.find(s => s.enableAuthserviceSelector)?.enableAuthserviceSelector;
+
+  if (waypointName && selector && serviceMatchesSelector(svc, selector)) {
+    svc.metadata.labels = {
+      ...svc.metadata.labels,
+      [ISTIO_WAYPOINT_LABEL]: waypointName,
+      "istio.io/ingress-use-waypoint": "true",
+    };
+    return;
   }
 }
 
@@ -311,45 +405,22 @@ export async function reconcilePod(pod: a.Pod): Promise<void> {
   const namespace = pod.metadata?.namespace;
   if (!namespace || !pod.metadata?.labels) return;
 
-  for (const pkg of PackageStore.getAmbientPackagesByNamespace(namespace)) {
-    const waypointName = pkg.metadata?.name && getWaypointName(pkg.metadata.name);
-    const selector = pkg.spec?.sso?.find(
-      s => s.enableAuthserviceSelector,
-    )?.enableAuthserviceSelector;
+  const pkg = PackageStore.getPackageByNamespace(namespace);
+  if (!pkg || pkg.spec?.network?.serviceMesh?.mode !== Mode.Ambient) return;
 
-    if (waypointName && selector && matchesLabels(pod.metadata.labels, selector)) {
-      pod.metadata.labels = {
-        ...pod.metadata.labels,
-        [ISTIO_WAYPOINT_LABEL]: waypointName,
-      };
-      return;
-    }
+  const waypointName = pkg.metadata?.name && getWaypointName(pkg.metadata.name);
+  const selector = pkg.spec?.sso?.find(s => s.enableAuthserviceSelector)?.enableAuthserviceSelector;
+
+  if (waypointName && selector && matchesLabels(pod.metadata.labels, selector)) {
+    pod.metadata.labels = {
+      ...pod.metadata.labels,
+      [ISTIO_WAYPOINT_LABEL]: waypointName,
+    };
+    return;
   }
 }
 
-/**
- * Checks if a service's selector matches the given labels
- * @param svc - The service to check
- * @param selector - The label selector to match against
- * @returns boolean indicating if there's a match
- */
-export function serviceMatchesSelector(svc: a.Service, selector: Record<string, string>): boolean {
-  const svcSelector = svc.spec?.selector || {};
-  return Object.entries(selector).every(([k, v]) => svcSelector[k] === v);
-}
-
-/**
- * Checks if pod labels match a selector
- * @param labels - The pod labels to check
- * @param selector - The selector to match against
- * @returns boolean indicating if there's a match
- */
-export function matchesLabels(
-  labels: Record<string, string>,
-  selector: Record<string, string>,
-): boolean {
-  return Object.entries(selector).every(([k, v]) => labels[k] === v);
-}
+// These functions are now imported from the waypoint utility module
 
 /**
  * Registers an ambient package and reconciles its resources

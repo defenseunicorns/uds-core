@@ -271,18 +271,9 @@ describe("Package Store", () => {
     });
 
     it("should find ambient packages in a specific namespace", () => {
-      // Add packages to different namespaces
+      // Add package to different namespaces
       const ambientPkg1 = makeMockReq({
         metadata: { namespace: "target-ns", name: "ambient1" },
-        spec: {
-          network: {
-            serviceMesh: { mode: Mode.Ambient },
-          },
-        },
-      }).Raw;
-
-      const ambientPkg2 = makeMockReq({
-        metadata: { namespace: "target-ns", name: "ambient2" },
         spec: {
           network: {
             serviceMesh: { mode: Mode.Ambient },
@@ -301,17 +292,17 @@ describe("Package Store", () => {
       }).Raw;
 
       PackageStore.add(ambientPkg1);
-      PackageStore.add(ambientPkg2);
       PackageStore.add(ambientPkgOtherNs);
 
-      const ambientPackages = PackageStore.getAmbientPackagesByNamespace("target-ns");
+      const ambientPackage = PackageStore.getPackageByNamespace("target-ns");
 
-      expect(ambientPackages).toHaveLength(2);
-      const packageNames = ambientPackages.map(pkg => pkg.metadata?.name).sort();
-      expect(packageNames).toEqual(["ambient1", "ambient2"]);
+      expect(ambientPackage).toBeDefined();
+      expect(ambientPackage?.metadata?.name).toBeDefined();
+      // Since we now only get one package per namespace, we should get either ambient1 or ambient2
+      expect(["ambient1", "ambient2"]).toContain(ambientPackage?.metadata?.name);
     });
 
-    it("should return empty array when namespace has no ambient packages", () => {
+    it("should return a package even if it's not in ambient mode", () => {
       // Add a non-ambient package
       const nonAmbientPkg = makeMockReq({
         metadata: { namespace: "empty-ns", name: "non-ambient" },
@@ -322,13 +313,16 @@ describe("Package Store", () => {
 
       PackageStore.add(nonAmbientPkg);
 
-      const ambientPackages = PackageStore.getAmbientPackagesByNamespace("empty-ns");
-      expect(ambientPackages).toHaveLength(0);
+      const pkg = PackageStore.getPackageByNamespace("empty-ns");
+      expect(pkg).toBeDefined();
+      expect(pkg?.metadata?.name).toBe("non-ambient");
+      // Verify it's not in ambient mode
+      expect(pkg?.spec?.network?.serviceMesh?.mode).not.toBe(Mode.Ambient);
     });
 
-    it("should return empty array when namespace doesn't exist", () => {
-      const ambientPackages = PackageStore.getAmbientPackagesByNamespace("non-existent-ns");
-      expect(ambientPackages).toHaveLength(0);
+    it("should return undefined when namespace doesn't exist", () => {
+      const ambientPackage = PackageStore.getPackageByNamespace("non-existent-ns");
+      expect(ambientPackage).toBeUndefined();
     });
   });
 });

@@ -4,10 +4,11 @@
  */
 
 import { R } from "pepr";
-import { getWaypointName } from "../../istio/ambient-waypoint";
 import { UDSConfig } from "../../../../config";
 import { Component, setupLogger } from "../../../../logger";
 import { UDSPackage } from "../../../crd";
+import { Mode } from "../../../crd/generated/package-v1alpha1";
+import { getWaypointName } from "../../../utils/waypoint";
 import { Client } from "../types";
 import { updatePolicy } from "./authorization-policy";
 import {
@@ -35,9 +36,7 @@ export async function authservice(pkg: UDSPackage, clients: Map<string, Client>)
   );
 
   // Check if we're in ambient mode by looking for the waypoint annotation
-  const isAmbient =
-    pkg.metadata?.annotations?.["istio.io/use-waypoint"] !== undefined ||
-    pkg.spec?.network?.serviceMesh?.mode === "ambient";
+  const isAmbient = pkg.spec?.network?.serviceMesh?.mode === Mode.Ambient;
 
   for (const sso of authServiceClients) {
     const client = clients.get(sso.clientId);
