@@ -32,10 +32,7 @@ import { validator } from "./crd/validators/package-validator";
 import { UDSConfig } from "../config";
 import { Component, setupLogger } from "../logger";
 import { updateUDSConfig } from "./controllers/config/config";
-import {
-  reconcilePod,
-  reconcileService,
-} from "./controllers/istio/ambient-waypoint";
+import { reconcilePod, reconcileService } from "./controllers/istio/ambient-waypoint";
 import {
   KEYCLOAK_CLIENTS_SECRET_NAME,
   KEYCLOAK_CLIENTS_SECRET_NAMESPACE,

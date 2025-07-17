@@ -132,10 +132,9 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
 
   for (const sso of ssos) {
     const waypointName = getWaypointName(sso.clientId);
-    const netpolSelector =
-      shouldUseAmbientWaypoint(pkg)
-        ? { "gateway.networking.k8s.io/gateway-name": waypointName }
-        : sso.enableAuthserviceSelector;
+    const netpolSelector = shouldUseAmbientWaypoint(pkg)
+      ? { "gateway.networking.k8s.io/gateway-name": waypointName }
+      : sso.enableAuthserviceSelector;
 
     const policy: Allow = {
       direction: Direction.Egress,

@@ -6,9 +6,7 @@
 import { getReadinessConditions, handleFailure, shouldSkip, updateStatus, writeEvent } from ".";
 import { UDSConfig } from "../../config";
 import { Component, setupLogger } from "../../logger";
-import {
-  setupAmbientWaypoint,
-} from "../controllers/istio/ambient-waypoint";
+import { setupAmbientWaypoint } from "../controllers/istio/ambient-waypoint";
 import { reconcileSharedEgressResources } from "../controllers/istio/egress";
 import { getPackageId, istioResources } from "../controllers/istio/istio-resources";
 import { cleanupNamespace, enableIstio } from "../controllers/istio/namespace";
@@ -86,6 +84,7 @@ export async function packageReconciler(pkg: UDSPackage) {
  */
 async function reconcilePackageFlow(pkg: UDSPackage): Promise<void> {
   const metadata = pkg.metadata!;
+  const generation = (pkg.metadata?.generation ?? 0).toString();
   const { namespace } = metadata;
 
   // Get the requested service mesh mode, default to sidecar if not specified
@@ -126,13 +125,7 @@ async function reconcilePackageFlow(pkg: UDSPackage): Promise<void> {
   }
 
   // Clean up any existing waypoint resources if SSO is not configured
-  await purgeOrphans(
-    pkg.metadata?.generation?.toString() || "0",
-    pkg.metadata?.namespace!,
-    pkg.metadata?.name!,
-    K8sGateway,
-    log
-  );
+  await purgeOrphans(generation, metadata.namespace!, metadata.name!, K8sGateway, log);
 
   // Pass the effective Istio mode to the networkPolicies and auth policies
   const netPol = await networkPolicies(pkg, namespace!, istioMode);
