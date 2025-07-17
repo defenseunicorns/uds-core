@@ -448,11 +448,16 @@ describe("networkPolicies", () => {
 
     const policies = await networkPolicies(pkg, namespace, istioMode);
 
-    // Should have default policies plus authservice and keycloak policies
-    expect(policies.length).toBe(4);
+    // Expected policies:
+    // 1. Default Deny All - blocks all traffic by default
+    // 2. Allow Egress DNS - allows DNS lookups from pods
+    // 3. Egress to Authservice - allows SSO client to talk to authservice
+    // 4. Egress to Keycloak - allows SSO client to talk to Keycloak
+    // 5. Egress to Istiod - allows waypoint to communicate with Istio control plane
+    expect(policies.length).toBe(5);
 
     // Verify K8s.Apply was called for each policy
-    expect(K8s).toHaveBeenCalledTimes(4);
+    expect(K8s).toHaveBeenCalledTimes(5);
   });
 
   it("should generate policies for SSO clients in ambient mode", async () => {

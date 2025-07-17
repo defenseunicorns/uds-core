@@ -27,14 +27,6 @@ vi.mock("../controllers/istio/egress", async () => {
     reconcileSharedEgressResources: vi.fn(async <T>(fn: () => Promise<T>) => fn()),
   };
 });
-vi.mock("../controllers/istio/ambient-waypoint", () => {
-  const mockUnregisterAmbientPackage = vi.fn();
-  return {
-    unregisterAmbientPackage: mockUnregisterAmbientPackage,
-    __esModule: true,
-    mockUnregisterAmbientPackage,
-  };
-});
 vi.mock("../controllers/istio/virtual-service");
 vi.mock("../controllers/network/policies");
 vi.mock("pepr", () => ({
@@ -71,7 +63,6 @@ const mockPurgeAuthservice: MockedFunction<() => Promise<void>> = vi.fn();
 const mockPatchStatus: MockedFunction<() => Promise<void>> = vi.fn();
 const mockReconcileSharedEgressResources: MockedFunction<() => Promise<void>> = vi.fn();
 const mockWriteEvent = vi.fn();
-const mockUnregisterAmbientPackage: MockedFunction<() => Promise<void>> = vi.fn();
 
 vi.mock("kubernetes-fluent-client");
 vi.mock("../../config");
@@ -92,14 +83,6 @@ vi.mock("../controllers/istio/egress", async () => {
   return {
     ...originalModule,
     reconcileSharedEgressResources: vi.fn(async <T>(fn: () => Promise<T>) => fn()),
-  };
-});
-vi.mock("../controllers/istio/ambient-waypoint", () => {
-  const mockUnregisterAmbientPackage = vi.fn();
-  return {
-    unregisterAmbientPackage: mockUnregisterAmbientPackage,
-    __esModule: true,
-    mockUnregisterAmbientPackage,
   };
 });
 vi.mock("../controllers/istio/virtual-service");
@@ -161,7 +144,6 @@ describe("packageFinalizer", () => {
     mockPurgeAuthservice.mockReset().mockResolvedValue(undefined);
     mockPatchStatus.mockReset().mockResolvedValue(undefined);
     mockReconcileSharedEgressResources.mockReset().mockResolvedValue(undefined);
-    mockUnregisterAmbientPackage.mockReset().mockResolvedValue(undefined);
     mockWriteEvent.mockReset();
     (K8s as Mock).mockImplementation(() => ({
       Create: vi.fn(),
@@ -313,9 +295,6 @@ describe("packageFinalizer", () => {
     mockReconcileSharedEgressResources
       .mockReset()
       .mockRejectedValue(new Error("Egress cleanup failed"));
-
-    // Always resolve unregisterAmbientPackage
-    mockUnregisterAmbientPackage.mockReset().mockResolvedValue(undefined);
 
     const finalizerRemoved = await packageFinalizer(mockPackage);
 

@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
+import { V1NetworkPolicySpec } from "@kubernetes/client-node";
+import { getOwnerRef } from "../controllers/utils";
 import { UDSPackage } from "../crd";
 import { Mode } from "../crd/generated/package-v1alpha1";
 // No logger needed in this utility module
@@ -11,6 +13,7 @@ import { Mode } from "../crd/generated/package-v1alpha1";
 // Constants for waypoint configuration
 const WAYPOINT_SUFFIX = "-waypoint"; // Suffix for waypoint resource names
 const WAYPOINT_PREFIX = "uds-core-"; // Prefix for waypoint resource names
+const UDS_MANAGED_LABEL = "uds/managed-by"; // Label to identify UDS-managed resources
 
 // Cache for waypoint names to avoid regenerating them
 const waypointNameCache = new Map<string, string>();
@@ -20,7 +23,7 @@ const waypointNameCache = new Map<string, string>();
  * @param pkg - The UDS package to check
  * @returns boolean indicating if ambient waypoint should be used
  */
-export const shouldUseAmbientWaypoint = (pkg?: UDSPackage): boolean => {
+export const shouldUseAmbientWaypoint = (pkg: UDSPackage): boolean => {
   if (!pkg) return false;
 
   // Check if package has ambient mode and authservice SSO
@@ -31,9 +34,10 @@ export const shouldUseAmbientWaypoint = (pkg?: UDSPackage): boolean => {
  * Checks if a package has authservice SSO configuration
  * @param pkg - The UDS package to check
  * @returns boolean indicating if package has authservice SSO
+ * @remarks Returns true if enableAuthserviceSelector exists (even if empty object), false otherwise
  */
-export const hasAuthserviceSSO = (pkg?: UDSPackage): boolean =>
-  pkg?.spec?.sso?.some(s => !!s.enableAuthserviceSelector) || false;
+export const hasAuthserviceSSO = (pkg: UDSPackage): boolean =>
+  pkg.spec?.sso?.some(s => s.enableAuthserviceSelector !== undefined) || false;
 
 /**
  * Generates a consistent waypoint name from an ID with caching
@@ -69,14 +73,6 @@ export const getWaypointName = (id: string): string => {
   waypointNameCache.set(id, waypointName);
 
   return waypointName;
-};
-
-/**
- * Clears the waypoint name cache
- * Useful for testing or when configuration changes
- */
-export const clearWaypointNameCache = (): void => {
-  waypointNameCache.clear();
 };
 
 /**
@@ -123,3 +119,28 @@ export function matchesLabels(
 ): boolean {
   return Object.entries(selector).every(([k, v]) => labels[k] === v);
 }
+
+/**
+ * Network Policy Helper: Creates a network policy object
+ * @param name - Name of the network policy
+ * @param namespace - Namespace for the policy
+ * @param pkg - The owning UDS package
+ * @param spec - Network policy spec
+ * @returns Network policy object
+ */
+export const createNetworkPolicy = (
+  name: string,
+  namespace: string,
+  pkg: UDSPackage,
+  spec: V1NetworkPolicySpec,
+) => ({
+  apiVersion: "networking.k8s.io/v1",
+  kind: "NetworkPolicy",
+  metadata: {
+    name,
+    namespace,
+    labels: { [UDS_MANAGED_LABEL]: "uds-operator" },
+    ownerReferences: getOwnerRef(pkg),
+  },
+  spec,
+});

@@ -25,3 +25,40 @@ test("validate ambient waypoint authentication flow with saved session", async (
     await expect(titleElement).toContainText("httpbin.org");
   });
 });
+
+test("should redirect unauthenticated users to login", async ({ browser }) => {
+  // Create a new browser context without any stored authentication
+  const context = await browser.newContext({
+    storageState: undefined, // Ensures no saved auth state
+    permissions: [], // Clear any permissions that might bypass auth
+  });
+
+  // Create a new page in this context
+  const page = await context.newPage();
+
+  try {
+    // Get the final URL after all redirects
+    const currentUrl = page.url();
+
+    // Check if we were redirected to the SSO login page
+    // The URL contains the SSO domain and OAuth2/OIDC parameters
+    const isSSOLoginPage =
+      currentUrl.includes("sso.uds.dev/realms/uds/protocol/openid-connect/auth") &&
+      currentUrl.includes("client_id=") &&
+      currentUrl.includes("response_type=code");
+
+    expect(
+      isSSOLoginPage,
+      `Expected to be redirected to SSO login page, but was on ${currentUrl}`,
+    ).toBeTruthy();
+
+    // Verify SSO login form elements are present
+    if (isSSOLoginPage) {
+      await expect(page.locator('input[name="username"]')).toBeVisible();
+      await expect(page.locator('input[name="password"]')).toBeVisible();
+    }
+  } finally {
+    // Clean up
+    await context.close();
+  }
+});

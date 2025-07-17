@@ -8,7 +8,6 @@ import { UDSConfig } from "../../config";
 import { Component, setupLogger } from "../../logger";
 import {
   setupAmbientWaypoint,
-  unregisterAmbientPackage,
 } from "../controllers/istio/ambient-waypoint";
 import { reconcileSharedEgressResources } from "../controllers/istio/egress";
 import { getPackageId, istioResources } from "../controllers/istio/istio-resources";
@@ -24,8 +23,8 @@ import { podMonitor } from "../controllers/monitoring/pod-monitor";
 import { serviceMonitor } from "../controllers/monitoring/service-monitor";
 import { generateAuthorizationPolicies } from "../controllers/network/authorizationPolicies";
 import { networkPolicies } from "../controllers/network/policies";
-import { retryWithDelay } from "../controllers/utils";
-import { Phase, UDSPackage } from "../crd";
+import { purgeOrphans, retryWithDelay } from "../controllers/utils";
+import { K8sGateway, Phase, UDSPackage } from "../crd";
 import { Mode } from "../crd/generated/package-v1alpha1";
 import { migrate } from "../crd/migrate";
 
@@ -74,6 +73,7 @@ export async function packageReconciler(pkg: UDSPackage) {
   }
 
   try {
+    await updateStatus(pkg, { phase: Phase.Pending, conditions: getReadinessConditions(false) });
     await reconcilePackageFlow(pkg);
   } catch (err) {
     await handleFailure(err, pkg);
@@ -124,6 +124,15 @@ async function reconcilePackageFlow(pkg: UDSPackage): Promise<void> {
       }
     }
   }
+
+  // Clean up any existing waypoint resources if SSO is not configured
+  await purgeOrphans(
+    pkg.metadata?.generation?.toString() || "0",
+    pkg.metadata?.namespace!,
+    pkg.metadata?.name!,
+    K8sGateway,
+    log
+  );
 
   // Pass the effective Istio mode to the networkPolicies and auth policies
   const netPol = await networkPolicies(pkg, namespace!, istioMode);
@@ -261,42 +270,6 @@ export async function packageFinalizer(pkg: UDSPackage) {
     );
     await writeEvent(pkg, {
       message: `Removal of SSO clients failed: ${e.message}. Clients must be manually removed from Keycloak.`,
-      reason: "RemovalFailed",
-      type: "Warning",
-    });
-    await updateStatus(pkg, { phase: Phase.RemovalFailed });
-    return false;
-  }
-
-  // Clean up ambient waypoint registration
-  try {
-    await writeEvent(pkg, {
-      message: "Removing package from ambient waypoint registration",
-      reason: "RemovalInProgress",
-      type: "Normal",
-    });
-    log.info(
-      `Unregistering package ${pkg.metadata?.namespace}/${pkg.metadata?.name} from ambient waypoint`,
-    );
-    // Get the first client ID that has authservice enabled for cleanup
-    if (pkg.spec?.sso) {
-      const authServiceClient = pkg.spec.sso.find(sso => sso.enableAuthserviceSelector);
-      if (authServiceClient) {
-        await unregisterAmbientPackage(pkg, authServiceClient.clientId);
-      } else {
-        // If no auth service client is found, try to clean up with the package name as fallback
-        await unregisterAmbientPackage(pkg, pkg.metadata?.name || "");
-      }
-    } else {
-      // If no SSO config is found, try to clean up with the package name as fallback
-      await unregisterAmbientPackage(pkg, pkg.metadata?.name || "");
-    }
-  } catch (e) {
-    log.debug(
-      `Removal of ambient waypoint registration during finalizer failed for ${pkg.metadata?.namespace}/${pkg.metadata?.name}: ${e.message}`,
-    );
-    await writeEvent(pkg, {
-      message: `Removal of ambient waypoint registration failed: ${e.message}. Manual cleanup may be required.`,
       reason: "RemovalFailed",
       type: "Warning",
     });

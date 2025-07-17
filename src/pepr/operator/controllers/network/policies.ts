@@ -133,7 +133,7 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
   for (const sso of ssos) {
     const waypointName = getWaypointName(sso.clientId);
     const netpolSelector =
-      istioMode === IstioState.Ambient && shouldUseAmbientWaypoint(pkg)
+      shouldUseAmbientWaypoint(pkg)
         ? { "gateway.networking.k8s.io/gateway-name": waypointName }
         : sso.enableAuthserviceSelector;
 
@@ -164,7 +164,7 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
     policies.push(keycloakGeneratedPolicy);
 
     // Ambient mode: add waypoint-to-istiod egress policy for this client's waypoint
-    if (istioMode === IstioState.Ambient && shouldUseAmbientWaypoint(pkg)) {
+    if (shouldUseAmbientWaypoint(pkg)) {
       const istiodPolicy = allowEgressIstiod(namespace);
       istiodPolicy.spec!.podSelector = { matchLabels: netpolSelector };
       istiodPolicy.metadata = istiodPolicy.metadata || {};

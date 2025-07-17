@@ -3,11 +3,12 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { V1LabelSelector, V1NetworkPolicySpec } from "@kubernetes/client-node";
+import { V1LabelSelector } from "@kubernetes/client-node";
 import { a, K8s } from "pepr";
 import { K8sGateway, UDSPackage } from "../../crd";
 import { Mode } from "../../crd/generated/package-v1alpha1";
 import {
+  createNetworkPolicy,
   getWaypointName,
   matchesLabels,
   serviceMatchesSelector,
@@ -28,31 +29,6 @@ const HEALTH_OPTS = {
   intervalMs: parseInt(process.env.WAYPOINT_HEALTH_INTERVAL_MS || "5000", 10),
   timeoutMs: parseInt(process.env.WAYPOINT_HEALTH_TIMEOUT_MS || "60000", 10),
 };
-
-/**
- * Network Policy Helper: Creates a network policy object
- * @param name - Name of the network policy
- * @param namespace - Namespace for the policy
- * @param pkg - The owning UDS package
- * @param spec - Network policy spec
- * @returns Network policy object
- */
-export const createNetworkPolicy = (
-  name: string,
-  namespace: string,
-  pkg: UDSPackage,
-  spec: V1NetworkPolicySpec,
-) => ({
-  apiVersion: "networking.k8s.io/v1",
-  kind: "NetworkPolicy",
-  metadata: {
-    name,
-    namespace,
-    labels: { [UDS_MANAGED_LABEL]: "uds-operator" },
-    ownerReferences: getOwnerRef(pkg),
-  },
-  spec,
-});
 
 /**
  * Sets up an ambient waypoint for a package
@@ -418,48 +394,4 @@ export async function reconcilePod(pod: a.Pod): Promise<void> {
     };
     return;
   }
-}
-
-// These functions are now imported from the waypoint utility module
-
-/**
- * Registers an ambient package and reconciles its resources
- * @param pkg - The UDS package to register
- */
-export async function registerAmbientPackage(pkg: UDSPackage): Promise<void> {
-  const namespace = pkg.metadata?.namespace;
-  if (!namespace) return;
-
-  const selector = pkg.spec?.sso?.find(s => s.enableAuthserviceSelector)?.enableAuthserviceSelector;
-  if (!selector) return;
-
-  const serviceSelector = Object.entries(selector)
-    .map(([k, v]) => `${k}=${v}`)
-    .join(",");
-  const [services, pods] = await Promise.all([
-    K8s(a.Service).InNamespace(namespace).WithLabel(serviceSelector).Get(),
-    K8s(a.Pod).InNamespace(namespace).WithLabel(serviceSelector).Get(),
-  ]);
-
-  await Promise.all([
-    ...(services.items || []).map(svc => reconcileService(svc)),
-    ...(pods.items || []).map(pod => reconcilePod(pod)),
-  ]);
-}
-
-/**
- * Unregisters an ambient package and cleans up resources
- * @param pkg - The UDS package to unregister
- * @param waypointId - The waypoint ID
- */
-export async function unregisterAmbientPackage(pkg: UDSPackage, waypointId: string): Promise<void> {
-  const { namespace, name } = pkg.metadata || {};
-  if (!namespace || !name) return;
-
-  const waypointName = getWaypointName(waypointId);
-  log.info("Unregistering ambient waypoint", {
-    namespace,
-    package: name,
-    waypointName,
-  });
 }

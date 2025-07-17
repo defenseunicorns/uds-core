@@ -35,7 +35,6 @@ import { updateUDSConfig } from "./controllers/config/config";
 import {
   reconcilePod,
   reconcileService,
-  unregisterAmbientPackage,
 } from "./controllers/istio/ambient-waypoint";
 import {
   KEYCLOAK_CLIENTS_SECRET_NAME,
@@ -89,12 +88,6 @@ When(a.Service)
 When(a.Pod)
   .IsCreatedOrUpdated()
   .Mutate(req => reconcilePod(req.Raw));
-
-// Watch for Package deletions
-When(UDSPackage)
-  .IsDeleted()
-  // clean up ambient waypoint resources
-  .Reconcile(unregisterAmbientPackage);
 
 // Watch for changes to the UDSPackage CRD for processing
 When(UDSPackage)
