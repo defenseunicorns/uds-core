@@ -37,6 +37,12 @@ test("should redirect unauthenticated users to login", async ({ browser }) => {
   const page = await context.newPage();
 
   try {
+    // Navigate to the protected URL - this should trigger the authentication flow
+    await page.goto(url);
+
+    // Wait for navigation to complete and redirects to finish
+    await page.waitForLoadState("networkidle");
+
     // Get the final URL after all redirects
     const currentUrl = page.url();
 
