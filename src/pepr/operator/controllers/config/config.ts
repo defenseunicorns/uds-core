@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { WatchCfg } from "kubernetes-fluent-client";
 import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/shared-types";
 import { K8s, kind } from "pepr";
 import { Component, setupLogger } from "../../../logger";
@@ -13,6 +12,7 @@ import { reconcileAuthservice } from "../keycloak/authservice/authservice";
 import { Action, AuthServiceEvent } from "../keycloak/authservice/types";
 import { initAPIServerCIDR } from "../network/generators/kubeAPI";
 import { initAllNodesTarget } from "../network/generators/kubeNodes";
+import { watchCfg } from "../utils";
 import { Config } from "./types";
 
 // Set default UDSConfig for build time compiling
@@ -81,15 +81,7 @@ export async function updateCfgSecrets(cfg: kind.Secret) {
     UDSConfig.authserviceRedisUri = decodedCfgData.AUTHSERVICE_REDIS_URI;
 
     if (updateClusterResources) {
-      const authserviceUpdate: AuthServiceEvent = {
-        name: "global-config-update",
-        action: Action.UpdateGlobalConfig,
-        // Base64 decode the CA cert before passing to the update function
-        trustedCA: atob(UDSConfig.caCert),
-        redisUri: UDSConfig.authserviceRedisUri,
-      };
-      configLog.debug("Updating Authservice secret based on change to Redis URI");
-      await reconcileAuthservice(authserviceUpdate);
+      await performAuthserviceUpdate("change to Redis URI");
     }
   }
 
@@ -113,15 +105,7 @@ async function handleCAUpdate(expose: ConfigExpose, updateClusterResources?: boo
     UDSConfig.caCert = expose.caCert || "";
 
     if (updateClusterResources) {
-      const authserviceUpdate: AuthServiceEvent = {
-        name: "global-config-update",
-        action: Action.UpdateGlobalConfig,
-        // Base64 decode the CA cert before passing to the update function
-        trustedCA: atob(UDSConfig.caCert),
-        redisUri: UDSConfig.authserviceRedisUri,
-      };
-      configLog.debug("Updating Authservice secret based on change to CA Cert");
-      await reconcileAuthservice(authserviceUpdate);
+      await performAuthserviceUpdate("change to CA Cert");
     }
   }
 }
@@ -196,13 +180,24 @@ export async function loadUDSConfig() {
 
     try {
       cfg = await K8s(ClusterConfig).Get("uds-cluster-config");
-      cfgSecret = await K8s(kind.Secret).InNamespace("pepr-system").Get("uds-operator-config");
+      // Make sure we got the cluster config even if K8s call succeeded
+      if (!cfg) {
+        throw new Error("'uds-cluster-config' not found");
+      }
     } catch (e) {
-      configLog.warn(e, "Error while fetching cluster config and operator config secret");
+      configLog.error("Error while fetching cluster config", e);
+      throw new Error("Error while fetching cluster config", { cause: e });
     }
 
-    if (!cfg) {
-      throw new Error("No ClusterConfig found");
+    try {
+      cfgSecret = await K8s(kind.Secret).InNamespace("pepr-system").Get("uds-operator-config");
+      // Make sure we got the secret even if K8s call succeeded
+      if (!cfgSecret) {
+        throw new Error("'uds-operator-config' not found");
+      }
+    } catch (e) {
+      configLog.error("Error while fetching operator config secret", e);
+      throw new Error("Error while fetching operator config secret", { cause: e });
     }
 
     try {
@@ -233,25 +228,24 @@ function areKubeNodeCidrsEqual(newCidrs: string[] = [], currentCidrs: string[] =
   return sortedNewCidrs.every((cidr, index) => cidr === sortedCurrentCidrs[index]);
 }
 
+// Runs `reconcileAuthservice` with the global config update event based on the current config
+async function performAuthserviceUpdate(reason: string) {
+  const authserviceUpdate: AuthServiceEvent = {
+    name: "global-config-update",
+    action: Action.UpdateGlobalConfig,
+    // Base64 decode the CA cert before passing to the update function
+    trustedCA: atob(UDSConfig.caCert),
+    redisUri: UDSConfig.authserviceRedisUri,
+  };
+  configLog.debug(`Updating Authservice secret based on: ${reason}`);
+  await reconcileAuthservice(authserviceUpdate);
+}
+
 // Starts a watch of the cluster config, used for Admission pods
 export async function startConfigWatch() {
   // only run in admission controller or dev mode
   if (process.env.PEPR_WATCH_MODE === "false" || process.env.PEPR_MODE === "dev") {
-    const watchCfg: WatchCfg = {
-      resyncFailureMax: process.env.PEPR_RESYNC_FAILURE_MAX
-        ? parseInt(process.env.PEPR_RESYNC_FAILURE_MAX, 10)
-        : 5,
-      resyncDelaySec: process.env.PEPR_RESYNC_DELAY_SECONDS
-        ? parseInt(process.env.PEPR_RESYNC_DELAY_SECONDS, 10)
-        : 5,
-      lastSeenLimitSeconds: process.env.PEPR_LAST_SEEN_LIMIT_SECONDS
-        ? parseInt(process.env.PEPR_LAST_SEEN_LIMIT_SECONDS, 10)
-        : 300,
-      relistIntervalSec: process.env.PEPR_RELIST_INTERVAL_SECONDS
-        ? parseInt(process.env.PEPR_RELIST_INTERVAL_SECONDS, 10)
-        : 1800,
-    };
-    const watcher = K8s(ClusterConfig).Watch(async (cfg, phase) => {
+    const watcher = K8s(ClusterConfig).Watch(async (cfg: ClusterConfig, phase: WatchPhase) => {
       configLog.debug(`Processing cluster config update, phase ${phase}`);
 
       if (cfg.metadata?.name !== "uds-cluster-config") {

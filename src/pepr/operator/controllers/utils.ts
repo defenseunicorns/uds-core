@@ -4,9 +4,28 @@
  */
 
 import { V1OwnerReference } from "@kubernetes/client-node";
-import { GenericClass, GenericKind } from "kubernetes-fluent-client";
+import { GenericClass, GenericKind, WatchCfg } from "kubernetes-fluent-client";
 import { K8s, kind } from "pepr";
 import { Logger } from "pino";
+
+/**
+ * Watch configuration for use in KFC watches
+ * This is primarily used for any watches occurring in admission pods
+ */
+export const watchCfg: WatchCfg = {
+  resyncFailureMax: process.env.PEPR_RESYNC_FAILURE_MAX
+    ? parseInt(process.env.PEPR_RESYNC_FAILURE_MAX, 10)
+    : 5,
+  resyncDelaySec: process.env.PEPR_RESYNC_DELAY_SECONDS
+    ? parseInt(process.env.PEPR_RESYNC_DELAY_SECONDS, 10)
+    : 5,
+  lastSeenLimitSeconds: process.env.PEPR_LAST_SEEN_LIMIT_SECONDS
+    ? parseInt(process.env.PEPR_LAST_SEEN_LIMIT_SECONDS, 10)
+    : 300,
+  relistIntervalSec: process.env.PEPR_RELIST_INTERVAL_SECONDS
+    ? parseInt(process.env.PEPR_RELIST_INTERVAL_SECONDS, 10)
+    : 1800,
+};
 
 /**
  * Sanitize a resource name to make it a valid Kubernetes resource name.
