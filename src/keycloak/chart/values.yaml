@@ -324,8 +324,21 @@ env: []
 
 x509LookupProvider: nginx
 mtlsClientCert: "%DOWNSTREAM_PEER_CERT%"
-
 # Custom migrations setting for UDS Core internal usage only
 migrations:
   # Deletes the generated truststore to enable recreating it by Keycloak
   deleteGeneratedTrustStore: false
+
+# Third-party integration settings, such as Application Load Balancer support
+thirdPartyIntegration:
+  tls:
+    # This setting controls deploying additional Envoy Filter that transforms Client Certificate into
+    # a format that Keycloak can use for authentication.
+    # Allowed settings: "default" and "external"
+    tlsTermination: "default"
+    # The name of the header used to pass the Client Certificate from an L7 Load Balancer to Keycloak.
+    # For AWS, use "x-amzn-mtls-clientcert" here
+    tlsCertificateHeader: ""
+    # The Client Certificate format used by the L7 Load Balancer.
+    # Allowed settings: "PEM" and "AWS"
+    tlsCertificateFormat: PEM

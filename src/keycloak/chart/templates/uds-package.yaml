@@ -165,12 +165,14 @@ spec:
                 prefix: /metrics
           redirect:
             uri: "/realms/{{ .Values.realm }}/account"
+          {{- if .Values.thirdPartyIntegration.tls.tlsCertificateHeader | default "" | eq "" }}
           headers:
             request:
               remove:
                 - istio-mtls-client-certificate
               add:
                 istio-mtls-client-certificate: "{{ .Values.mtlsClientCert }}"
+          {{- end }}
 
       - description: "public auth access with optional client certificate"
         service: keycloak-http
@@ -178,6 +180,7 @@ spec:
           app.kubernetes.io/name: keycloak
         host: sso
         port: 8080
+        {{- if .Values.thirdPartyIntegration.tls.tlsCertificateHeader | default "" | eq "" }}
         advancedHTTP:
           headers:
             request:
@@ -185,6 +188,7 @@ spec:
                 - istio-mtls-client-certificate
               add:
                 istio-mtls-client-certificate: "{{ .Values.mtlsClientCert }}"
+        {{- end }}
 
       - description: "admin access with optional client certificate"
         service: keycloak-http
@@ -193,6 +197,7 @@ spec:
         gateway: admin
         host: keycloak
         port: 8080
+        {{- if .Values.thirdPartyIntegration.tls.tlsCertificateHeader | default "" | eq "" }}
         advancedHTTP:
           headers:
             request:
@@ -200,3 +205,4 @@ spec:
                 - istio-mtls-client-certificate
               add:
                 istio-mtls-client-certificate: "{{ .Values.mtlsClientCert }}"
+        {{- end }}

@@ -537,6 +537,28 @@
           "type": "boolean"
         }
       }
+    },
+    "thirdPartyIntegration": {
+      "type": "object",
+      "properties": {
+        "tls": {
+          "type": "object",
+          "properties": {
+            "tlsTermination": {
+              "type": "string",
+              "enum": ["external", "default"]
+            },
+            "tlsCertificateHeader": {
+              "type": "string"
+            },
+            "tlsCertificateFormat": {
+              "type": "string",
+              "enum": ["PEM", "AWS"]
+            }
+          }
+        }
+      },
+      "required": ["tls"]
     }
   }
 }
