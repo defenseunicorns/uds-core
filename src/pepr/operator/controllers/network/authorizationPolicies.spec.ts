@@ -7,7 +7,10 @@ import { describe, expect, test, vi } from "vitest";
 import { Direction, Gateway, RemoteGenerated, UDSPackage } from "../../crd";
 import { Action, AuthorizationPolicy } from "../../crd/generated/istio/authorizationpolicy-v1beta1";
 import { IstioState } from "../istio/namespace";
-import { generateAuthorizationPolicies } from "./authorizationPolicies";
+import {
+  createDenyAllExceptWaypointPolicy,
+  generateAuthorizationPolicies,
+} from "./authorizationPolicies";
 
 vi.mock("../../../logger", () => ({
   setupLogger: () => ({
@@ -967,5 +970,47 @@ describe("authorization policy generation", () => {
         },
       ]),
     );
+  });
+});
+
+describe("createDenyAllExceptWaypointPolicy", () => {
+  test("should create a deny-all policy that only allows traffic from the waypoint", () => {
+    const pkg: UDSPackage = {
+      metadata: {
+        name: "test-app",
+        namespace: "test-ns",
+        generation: 1,
+      },
+      spec: {},
+    };
+
+    const waypointName = "test-waypoint";
+    const appSelector = { app: "test-app" };
+
+    const policy = createDenyAllExceptWaypointPolicy(pkg, waypointName, appSelector);
+
+    // Verify basic policy structure
+    expect(policy.apiVersion).toBe("security.istio.io/v1beta1");
+    expect(policy.kind).toBe("AuthorizationPolicy");
+    expect(policy.metadata?.name).toContain("deny-all-except-waypoint-test-waypoint");
+    expect(policy.metadata?.namespace).toBe("test-ns");
+
+    // Verify labels
+    expect(policy.metadata?.labels).toEqual({
+      "uds/package": "test-app",
+      "uds/generation": "1",
+      "uds/for": "network",
+      "uds/ambient-waypoint": "test-waypoint",
+    });
+
+    // Verify spec
+    expect(policy.spec?.action).toBe(Action.Deny);
+    expect(policy.spec?.selector?.matchLabels).toEqual({ app: "test-app" });
+
+    // Verify deny rule that allows waypoint
+    expect(policy.spec?.rules).toHaveLength(1);
+    expect(policy.spec?.rules?.[0].from?.[0].source?.notPrincipals).toEqual([
+      "cluster.local/ns/test-ns/sa/test-waypoint",
+    ]);
   });
 });

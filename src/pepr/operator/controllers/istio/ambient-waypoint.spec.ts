@@ -9,7 +9,6 @@ import { UDSPackage } from "../../crd";
 import { Mode, Sso } from "../../crd/generated/package-v1alpha1";
 import { PackageStore } from "../packages/package-store";
 import {
-  generateWaypointNetworkPolicies,
   isWaypointPodHealthy,
   reconcilePod,
   reconcileService,
@@ -292,12 +291,11 @@ describe("reconcileService and reconcilePod", () => {
 });
 
 describe("setupAmbientWaypoint", () => {
-  const waypointId = "test-client";
-  const expectedWaypointName = "test-client-waypoint"; // This matches getWaypointName(waypointId)
+  const expectedWaypointName = "test-client-waypoint";
 
   const pkg = createMockPackage("test-pkg", { "app.kubernetes.io/name": "test-app" }, "ambient", [
     {
-      clientId: "test-client", // This will be transformed to test-client-waypoint
+      clientId: "test-client",
       name: "test-sso",
       enableAuthserviceSelector: { "app.kubernetes.io/name": "test-app" },
     },
@@ -325,7 +323,7 @@ describe("setupAmbientWaypoint", () => {
     // Mock the createWaypointGateway function directly
     mockCreate.mockResolvedValue({
       metadata: {
-        name: expectedWaypointName, // Use the expected waypoint name
+        name: expectedWaypointName,
         namespace: "test-ns",
       },
     });
@@ -335,7 +333,6 @@ describe("setupAmbientWaypoint", () => {
     // Mock the Get method to first return undefined (gateway doesn't exist)
     mockGet.mockImplementation(name => {
       if (name === expectedWaypointName) {
-        // Use the expected waypoint name
         // Simulate gateway not existing to force creation
         throw new Error("Gateway not found");
       }
@@ -356,7 +353,7 @@ describe("setupAmbientWaypoint", () => {
       });
     });
 
-    await setupAmbientWaypoint(pkg, waypointId);
+    await setupAmbientWaypoint(pkg);
 
     // Verify the gateway was created
     expect(mockCreate).toHaveBeenCalled();
@@ -375,51 +372,6 @@ describe("setupAmbientWaypoint", () => {
       },
       spec: {
         gatewayClassName: "istio-waypoint",
-      },
-    });
-
-    // Verify network policies were created
-    const networkPolicyCalls = mockApply.mock.calls.filter(
-      call => call[0]?.kind === "NetworkPolicy",
-    );
-    expect(networkPolicyCalls).toHaveLength(3);
-  });
-});
-
-describe("generateWaypointNetworkPolicies", () => {
-  const pkg = createMockPackage("test-pkg", { "app.kubernetes.io/name": "test-app" }, "ambient", [
-    {
-      clientId: "test-client",
-      name: "test-sso",
-      enableAuthserviceSelector: { "app.kubernetes.io/name": "test-app" },
-    },
-  ]);
-  const waypointName = "test-waypoint";
-  const appSelector = { "app.kubernetes.io/name": "test-app" };
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockApply.mockResolvedValue({});
-  });
-
-  it("should create ingress and egress network policies", async () => {
-    await generateWaypointNetworkPolicies(pkg, waypointName, appSelector);
-
-    const policies = mockApply.mock.calls.map(call => call[0]);
-    const ingressPolicy = policies.find(p => p.metadata.name.includes("ingress"));
-    const egressPolicy = policies.find(p => p.metadata.name.includes("egress"));
-
-    expect(ingressPolicy).toMatchObject({
-      spec: {
-        podSelector: { matchLabels: { "istio.io/gateway-name": waypointName } },
-        policyTypes: ["Ingress"],
-      },
-    });
-
-    expect(egressPolicy).toMatchObject({
-      spec: {
-        podSelector: { matchLabels: { "istio.io/gateway-name": waypointName } },
-        policyTypes: ["Egress"],
       },
     });
   });

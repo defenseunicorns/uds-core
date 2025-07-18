@@ -13,6 +13,7 @@ import {
   Source,
 } from "../../crd/generated/istio/authorizationpolicy-v1beta1";
 import { IstioState } from "../istio/namespace";
+import { getWaypointName, shouldUseAmbientWaypoint } from "../istio/waypoint-utils";
 import { getOwnerRef, purgeOrphans, sanitizeResourceName } from "../utils";
 import { META_IP } from "./generators/cloudMetadata";
 import { kubeAPI } from "./generators/kubeAPI";
@@ -265,6 +266,57 @@ export async function generateAuthorizationPolicies(
     }
   }
 
+  // Process waypoint auth policies for SSO clients
+  if (pkg.spec?.sso && shouldUseAmbientWaypoint(pkg)) {
+    for (const sso of pkg.spec.sso) {
+      if (!sso.enableAuthserviceSelector) continue;
+
+      const waypointName = getWaypointName(sso.clientId);
+      const appSelector = sso.enableAuthserviceSelector;
+
+      // Add deny-all policy that only allows traffic from the waypoint
+      const denyPolicy = createDenyAllExceptWaypointPolicy(pkg, waypointName, appSelector);
+      policies.push(denyPolicy);
+
+      // Find matching expose rule
+      const exposeRule = pkg.spec.network?.expose?.find(exp => {
+        if (!exp.selector) return false;
+        return (
+          (exp.selector["app.kubernetes.io/name"] &&
+            exp.selector["app.kubernetes.io/name"] === appSelector?.["app.kubernetes.io/name"]) ||
+          (exp.selector.app && exp.selector.app === appSelector?.app)
+        );
+      });
+
+      if (exposeRule) {
+        const { source } = processExposeRule(exposeRule);
+        const waypointPorts = exposeRule.port ? [exposeRule.port.toString()] : [];
+
+        if (waypointPorts.length > 0) {
+          const policyName = sanitizeResourceName(
+            `protect-${pkgName}-ingress-${exposeRule.port || "http"}-${exposeRule.selector?.app || "app"}-${waypointName}-istio-${exposeRule.gateway || "tenant"}-gateway`,
+          );
+
+          // Create waypoint selector
+          const waypointSelector = { "istio.io/gateway-name": waypointName };
+
+          // Build and add the policy
+          const authPolicy = buildAuthPolicy(
+            policyName,
+            pkg,
+            waypointSelector,
+            source,
+            waypointPorts,
+          );
+          policies.push(authPolicy);
+          log.trace(`Generated waypoint authpol: ${authPolicy.metadata?.name}`);
+        } else {
+          log.warn(`No exposed port found for waypoint policy for ${exposeRule.selector?.app}`);
+        }
+      }
+    }
+  }
+
   // With Prometheus in Ambient mode, all traffic is sent over mTLS and the
   // destination sidecar requires an ALLOW policy to expose sidecar metrics.
   // Add an AuthorizationPolicy to allow all traffic on port 15020 for the package's namespace.
@@ -334,78 +386,48 @@ function isAmbientWaypointService(
 }
 
 /**
- * Applies an AuthorizationPolicy with targetRef instead of selector
+ * Creates a deny-all AuthorizationPolicy that only allows traffic from the specified waypoint.
+ * This policy is used in ambient mode to ensure all traffic to application pods
+ * must go through the waypoint proxy.
  */
-async function applyWaypointAuthPolicy(
-  name: string,
-  pkg: UDSPackage,
-  source: Source,
-  ports: string[],
-  waypointName: string,
-): Promise<void> {
-  const namespace = pkg.metadata?.namespace;
-  if (!namespace) {
-    log.warn(`No namespace found for package ${pkg.metadata?.name}`);
-    return;
-  }
-
-  // Build the policy without selector
-  const authPolicy = buildAuthPolicy(name, pkg, undefined, source, ports);
-
-  // Set targetRef instead of selector
-  if (authPolicy.spec) {
-    authPolicy.spec = {
-      ...authPolicy.spec,
-      targetRef: {
-        group: "gateway.networking.k8s.io",
-        kind: "Gateway",
-        name: waypointName,
-      },
-    };
-  }
-
-  try {
-    await K8s(AuthorizationPolicy).Apply(authPolicy, { force: true });
-    log.trace(`Applied waypoint AuthorizationPolicy ${name} in namespace ${namespace}`);
-  } catch (err) {
-    log.error(err, `Error applying waypoint AuthorizationPolicy ${name} in namespace ${namespace}`);
-    throw err;
-  }
-}
-
-/**
- * Generates and applies authorization policies for waypoint-to-application communication
- * @param pkg - The UDS package
- * @param waypointName - Name of the waypoint
- * @param appSelector - Selector for the target application
- */
-export async function generateWaypointAuthPolicies(
+export function createDenyAllExceptWaypointPolicy(
   pkg: UDSPackage,
   waypointName: string,
   appSelector: Record<string, string>,
-): Promise<void> {
-  const namespace = pkg.metadata?.namespace;
-  if (!namespace || !pkg.metadata?.uid) return;
+): AuthorizationPolicy {
+  const pkgName = pkg.metadata?.name ?? "unknown";
+  const policyName = sanitizeResourceName(`deny-all-except-waypoint-${waypointName}`);
 
-  const exposeRule = pkg.spec?.network?.expose?.find(
-    exp =>
-      exp.selector?.["app.kubernetes.io/name"] === appSelector["app.kubernetes.io/name"] ||
-      exp.selector?.app === appSelector.app,
-  );
-
-  if (!exposeRule) return;
-
-  const { source } = processExposeRule(exposeRule);
-  const waypointPorts = exposeRule.port ? [exposeRule.port.toString()] : [];
-
-  if (waypointPorts.length === 0) {
-    log.warn(`No exposed port found for waypoint policy for ${exposeRule.selector?.app}`);
-    return;
-  }
-
-  const policyName = sanitizeResourceName(
-    `protect-${pkg.metadata.name}-ingress-${exposeRule.port || "http"}-${exposeRule.selector?.app || "app"}-${waypointName}-istio-${exposeRule.gateway || "tenant"}-gateway`,
-  );
-
-  await applyWaypointAuthPolicy(policyName, pkg, source, waypointPorts, waypointName);
+  return {
+    apiVersion: "security.istio.io/v1beta1",
+    kind: "AuthorizationPolicy",
+    metadata: {
+      name: policyName,
+      namespace: pkg.metadata?.namespace ?? "default",
+      labels: {
+        "uds/package": pkgName,
+        "uds/generation": pkg.metadata?.generation?.toString() ?? "0",
+        "uds/for": "network",
+        "uds/ambient-waypoint": waypointName,
+      },
+      ownerReferences: getOwnerRef(pkg),
+    },
+    spec: {
+      action: Action.Deny,
+      selector: {
+        matchLabels: appSelector,
+      },
+      rules: [
+        {
+          from: [
+            {
+              source: {
+                notPrincipals: [`cluster.local/ns/${pkg.metadata?.namespace}/sa/${waypointName}`],
+              },
+            },
+          ],
+        },
+      ],
+    },
+  };
 }

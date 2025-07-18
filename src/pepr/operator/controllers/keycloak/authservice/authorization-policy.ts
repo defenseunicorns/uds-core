@@ -127,14 +127,19 @@ function jwtAuthZAuthorizationPolicy(
               },
             },
           ],
-          to: [
-            {
-              operation: {
-                notPorts: ["15020"],
-                notPaths: ["/stats/prometheus"],
-              },
-            },
-          ],
+          // Only add the 'to' block if not in ambient mode
+          ...(isAmbient
+            ? []
+            : {
+                to: [
+                  {
+                    operation: {
+                      notPorts: ["15020"],
+                      notPaths: ["/stats/prometheus"],
+                    },
+                  },
+                ],
+              }),
         },
       ],
     },

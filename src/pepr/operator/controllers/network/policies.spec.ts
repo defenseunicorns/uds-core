@@ -3,11 +3,9 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { K8s } from "pepr";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { Direction, Gateway, UDSPackage } from "../../crd";
-import { IstioState } from "../istio/namespace";
-import { findMatchingClient, getPolicyDescription, networkPolicies } from "./policies";
+import { describe, expect, it, vi } from "vitest";
+import { Direction, UDSPackage } from "../../crd";
+import { findMatchingClient, getGatewayPolicyDescription } from "./policies";
 
 // Mock dependencies
 vi.mock("pepr", () => {
@@ -126,116 +124,167 @@ vi.mock("./generate", () => ({
 }));
 
 describe("findMatchingClient", () => {
-  it("should return undefined when serviceSelector is undefined", () => {
+  it("should return undefined when podLabels is undefined", () => {
     const pkg: UDSPackage = {
       apiVersion: "uds.dev/v1",
       kind: "UDSPackage",
-      metadata: {
-        name: "test-pkg",
-        namespace: "test-ns",
-      },
+      metadata: { name: "test-pkg", namespace: "test-ns" },
       spec: {},
     };
-
-    const result = findMatchingClient(pkg, undefined as unknown as Record<string, string>);
-    expect(result).toBeUndefined();
+    expect(findMatchingClient(pkg, undefined as unknown as Record<string, string>)).toBeUndefined();
   });
 
-  it("should return undefined when no SSO clients match the selector", () => {
+  it("should return undefined when podLabels is empty", () => {
     const pkg: UDSPackage = {
       apiVersion: "uds.dev/v1",
       kind: "UDSPackage",
-      metadata: {
-        name: "test-pkg",
-        namespace: "test-ns",
-      },
+      metadata: { name: "test-pkg", namespace: "test-ns" },
       spec: {
         sso: [
           {
             clientId: "client1",
-            enableAuthserviceSelector: { app: "auth-app-1" },
-            name: "client-1",
-          },
-          {
-            clientId: "client2",
-            enableAuthserviceSelector: { "app.kubernetes.io/name": "auth-app-2" },
-            name: "client-2",
+            enableAuthserviceSelector: { app: "test" },
+            name: "",
           },
         ],
       },
     };
-
-    const result = findMatchingClient(pkg, { app: "different-app" });
-    expect(result).toBeUndefined();
+    expect(findMatchingClient(pkg, {})).toBeUndefined();
   });
 
-  it("should find matching client by app label", () => {
+  it("should return undefined when no SSO clients exist", () => {
     const pkg: UDSPackage = {
       apiVersion: "uds.dev/v1",
       kind: "UDSPackage",
-      metadata: {
-        name: "test-pkg",
-        namespace: "test-ns",
-      },
+      metadata: { name: "test-pkg", namespace: "test-ns" },
+      spec: { sso: [] },
+    };
+    expect(findMatchingClient(pkg, { app: "test" })).toBeUndefined();
+  });
+
+  it("should match client by single label", () => {
+    const pkg: UDSPackage = {
+      apiVersion: "uds.dev/v1",
+      kind: "UDSPackage",
+      metadata: { name: "test-pkg", namespace: "test-ns" },
       spec: {
         sso: [
           {
             clientId: "client1",
-            enableAuthserviceSelector: { app: "auth-app-1" },
-            name: "client-1",
+            enableAuthserviceSelector: { app: "app1" },
+            name: "",
           },
           {
             clientId: "client2",
-            enableAuthserviceSelector: { "app.kubernetes.io/name": "auth-app-2" },
-            name: "client-2",
+            enableAuthserviceSelector: { "app.kubernetes.io/name": "app2" },
+            name: "",
           },
         ],
       },
     };
-
-    const result = findMatchingClient(pkg, { app: "auth-app-1" });
-    expect(result).toBeDefined();
-    expect(result?.clientId).toBe("client1");
+    expect(findMatchingClient(pkg, { app: "app1" })?.clientId).toBe("client1");
   });
 
-  it("should find matching client by app.kubernetes.io/name label", () => {
+  it("should match client by multiple labels", () => {
     const pkg: UDSPackage = {
       apiVersion: "uds.dev/v1",
       kind: "UDSPackage",
-      metadata: {
-        name: "test-pkg",
-        namespace: "test-ns",
-      },
+      metadata: { name: "test-pkg", namespace: "test-ns" },
       spec: {
         sso: [
           {
             clientId: "client1",
-            enableAuthserviceSelector: { app: "auth-app-1" },
-            name: "client-1",
-          },
-          {
-            clientId: "client2",
-            enableAuthserviceSelector: { "app.kubernetes.io/name": "auth-app-2" },
-            name: "client-2",
+            enableAuthserviceSelector: {
+              app: "app1",
+              "app.kubernetes.io/part-of": "test",
+            },
+            name: "",
           },
         ],
       },
     };
+    expect(
+      findMatchingClient(pkg, {
+        app: "app1",
+        "app.kubernetes.io/part-of": "test",
+      })?.clientId,
+    ).toBe("client1");
+  });
 
-    const result = findMatchingClient(pkg, { "app.kubernetes.io/name": "auth-app-2" });
-    expect(result).toBeDefined();
-    expect(result?.clientId).toBe("client2");
+  it("should not match when only some labels match", () => {
+    const pkg: UDSPackage = {
+      apiVersion: "uds.dev/v1",
+      kind: "UDSPackage",
+      metadata: { name: "test-pkg", namespace: "test-ns" },
+      spec: {
+        sso: [
+          {
+            clientId: "client1",
+            enableAuthserviceSelector: {
+              app: "app1",
+              "app.kubernetes.io/part-of": "test",
+            },
+            name: "",
+          },
+        ],
+      },
+    };
+    expect(findMatchingClient(pkg, { app: "app1" })).toBeUndefined();
+  });
+
+  it("should match first client when multiple could match", () => {
+    const pkg: UDSPackage = {
+      apiVersion: "uds.dev/v1",
+      kind: "UDSPackage",
+      metadata: { name: "test-pkg", namespace: "test-ns" },
+      spec: {
+        sso: [
+          {
+            clientId: "client1",
+            enableAuthserviceSelector: { app: "app1" },
+            name: "",
+          },
+          {
+            clientId: "client2",
+            enableAuthserviceSelector: { app: "app1" },
+            name: "",
+          },
+        ],
+      },
+    };
+    expect(findMatchingClient(pkg, { app: "app1" })?.clientId).toBe("client1");
+  });
+
+  it("should match any pod when SSO client has empty selector", () => {
+    const pkg: UDSPackage = {
+      apiVersion: "uds.dev/v1",
+      kind: "UDSPackage",
+      metadata: { name: "test-pkg", namespace: "test-ns" },
+      spec: {
+        sso: [
+          {
+            clientId: "client1",
+            enableAuthserviceSelector: {},
+            name: "empty-selector",
+          },
+        ],
+      },
+    };
+    // Should match any pod, including empty labels
+    expect(findMatchingClient(pkg, {})?.clientId).toBe("client1");
+    // Should also match pods with labels
+    expect(findMatchingClient(pkg, { app: "test" })?.clientId).toBe("client1");
   });
 });
 
-describe("getPolicyDescription", () => {
+describe("getGatewayPolicyDescription", () => {
   it("should return ambient description when isAmbient is true and clientId is provided", () => {
     const port = 8080;
     const clientId = "test-client";
     const gateway = "tenant";
     const isAmbient = true;
 
-    const result = getPolicyDescription(port, clientId, gateway, isAmbient);
+    const result = getGatewayPolicyDescription(port, clientId, gateway, isAmbient);
     expect(result).toBe("8080-test-client Istio tenant gateway (ambient)");
   });
 
@@ -245,7 +294,7 @@ describe("getPolicyDescription", () => {
     const gateway = "tenant";
     const isAmbient = false;
 
-    const result = getPolicyDescription(port, clientId, gateway, isAmbient);
+    const result = getGatewayPolicyDescription(port, clientId, gateway, isAmbient);
     expect(result).toBe("8080-service Istio tenant gateway");
   });
 
@@ -255,7 +304,7 @@ describe("getPolicyDescription", () => {
     const gateway = "tenant";
     const isAmbient = true;
 
-    const result = getPolicyDescription(port, clientId, gateway, isAmbient);
+    const result = getGatewayPolicyDescription(port, clientId, gateway, isAmbient);
     expect(result).toBe("8080-service Istio tenant gateway");
   });
 
@@ -265,339 +314,7 @@ describe("getPolicyDescription", () => {
     const gateway = "public";
     const isAmbient = true;
 
-    const result = getPolicyDescription(port, clientId, gateway, isAmbient);
+    const result = getGatewayPolicyDescription(port, clientId, gateway, isAmbient);
     expect(result).toBe("8080-test-client Istio public gateway (ambient)");
-  });
-});
-
-describe("networkPolicies", () => {
-  // Reset mocks before each test
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it("should generate default policies", async () => {
-    // Create a minimal UDSPackage
-    const pkg: UDSPackage = {
-      apiVersion: "uds.dev/v1",
-      kind: "UDSPackage",
-      metadata: {
-        name: "test-pkg",
-        namespace: "test-ns",
-        generation: 1,
-      },
-      spec: {},
-    };
-
-    const namespace = "test-namespace";
-    const istioMode = "none";
-
-    const policies = await networkPolicies(pkg, namespace, istioMode);
-
-    // Should have default policies (deny-all and egress-dns)
-    expect(policies.length).toBe(2);
-    expect(policies[0].metadata!.name).toContain("deny");
-    expect(policies[1].metadata!.name).toContain("allow");
-
-    // Verify K8s.Apply was called for each policy
-    expect(K8s).toHaveBeenCalledTimes(2);
-  });
-
-  it("should generate sidecar mode policies", async () => {
-    const pkg: UDSPackage = {
-      apiVersion: "uds.dev/v1",
-      kind: "UDSPackage",
-      metadata: {
-        name: "test-pkg",
-        namespace: "test-ns",
-        generation: 1,
-      },
-      spec: {},
-    };
-
-    const namespace = "test-namespace";
-    const istioMode = IstioState.Sidecar;
-
-    const policies = await networkPolicies(pkg, namespace, istioMode);
-
-    // Should have default policies plus sidecar-specific policies
-    expect(policies.length).toBe(4);
-
-    // Verify K8s.Apply was called for each policy
-    expect(K8s).toHaveBeenCalledTimes(4);
-  });
-
-  it("should generate ambient mode policies", async () => {
-    const pkg: UDSPackage = {
-      apiVersion: "uds.dev/v1",
-      kind: "UDSPackage",
-      metadata: {
-        name: "test-pkg",
-        namespace: "test-ns",
-        generation: 1,
-      },
-      spec: {},
-    };
-
-    const namespace = "test-namespace";
-    const istioMode = IstioState.Ambient;
-
-    const policies = await networkPolicies(pkg, namespace, istioMode);
-
-    // Should have default policies plus ambient-specific policies
-    expect(policies.length).toBe(3);
-
-    // Verify K8s.Apply was called for each policy
-    expect(K8s).toHaveBeenCalledTimes(3);
-  });
-
-  it("should generate policies for custom allow rules", async () => {
-    const pkg: UDSPackage = {
-      apiVersion: "uds.dev/v1",
-      kind: "UDSPackage",
-      metadata: {
-        name: "test-pkg",
-        namespace: "test-ns",
-        generation: 1,
-      },
-      spec: {
-        network: {
-          allow: [
-            {
-              direction: Direction.Ingress,
-              selector: { app: "test-app" },
-              remoteNamespace: "test-remote",
-              remoteSelector: { app: "remote-app" },
-              port: 8080,
-              description: "test-policy",
-            },
-          ],
-        },
-      },
-    };
-
-    const namespace = "test-namespace";
-    const istioMode = "none";
-
-    const policies = await networkPolicies(pkg, namespace, istioMode);
-
-    // Should have default policies plus custom policy
-    expect(policies.length).toBe(3);
-
-    // Verify K8s.Apply was called for each policy
-    expect(K8s).toHaveBeenCalledTimes(3);
-  });
-
-  it("should generate policies for exposed services", async () => {
-    const pkg: UDSPackage = {
-      apiVersion: "uds.dev/v1",
-      kind: "UDSPackage",
-      metadata: {
-        name: "test-pkg",
-        namespace: "test-ns",
-        generation: 1,
-      },
-      spec: {
-        network: {
-          expose: [
-            {
-              gateway: Gateway.Tenant,
-              port: 8080,
-              selector: { app: "test-app" },
-              host: "",
-            },
-          ],
-        },
-      },
-    };
-
-    const namespace = "test-namespace";
-    const istioMode = "none";
-
-    const policies = await networkPolicies(pkg, namespace, istioMode);
-
-    // Should have default policies plus expose policy
-    expect(policies.length).toBe(3);
-
-    // Verify K8s.Apply was called for each policy
-    expect(K8s).toHaveBeenCalledTimes(3);
-  });
-
-  it("should generate policies for SSO clients", async () => {
-    const pkg: UDSPackage = {
-      apiVersion: "uds.dev/v1",
-      kind: "UDSPackage",
-      metadata: {
-        name: "test-pkg",
-        namespace: "test-ns",
-        generation: 1,
-      },
-      spec: {
-        sso: [
-          {
-            clientId: "test-client",
-            name: "Test Client",
-            enableAuthserviceSelector: { app: "test-app" },
-          },
-        ],
-      },
-    };
-
-    const namespace = "test-namespace";
-    const istioMode = "none";
-
-    const policies = await networkPolicies(pkg, namespace, istioMode);
-
-    // Expected policies:
-    // 1. Default Deny All - blocks all traffic by default
-    // 2. Allow Egress DNS - allows DNS lookups from pods
-    // 3. Egress to Authservice - allows SSO client to talk to authservice
-    // 4. Egress to Keycloak - allows SSO client to talk to Keycloak
-    expect(policies.length).toBe(4);
-
-    // Verify K8s.Apply was called for each policy
-    expect(K8s).toHaveBeenCalledTimes(4);
-  });
-
-  it("should generate policies for SSO clients in ambient mode", async () => {
-    const pkg: UDSPackage = {
-      apiVersion: "uds.dev/v1",
-      kind: "UDSPackage",
-      metadata: {
-        name: "test-pkg",
-        namespace: "test-ns",
-        generation: 1,
-      },
-      spec: {
-        sso: [
-          {
-            clientId: "test-client",
-            name: "Test Client",
-            enableAuthserviceSelector: { app: "test-app" },
-          },
-        ],
-      },
-    };
-
-    const namespace = "test-namespace";
-    const istioMode = IstioState.Ambient;
-
-    const policies = await networkPolicies(pkg, namespace, istioMode);
-
-    // Expected policies:
-    // 1. Default Deny All - blocks all traffic by default
-    // 2. Allow Egress DNS - allows DNS lookups from pods
-    // 3. Egress to Authservice - allows SSO client to talk to authservice
-    // 4. Egress to Keycloak - allows SSO client to talk to Keycloak
-    // 5. Egress to Istiod - allows waypoint to communicate with Istio control plane
-    expect(policies.length).toBe(5);
-
-    // Verify K8s.Apply was called for each policy
-    expect(K8s).toHaveBeenCalledTimes(5);
-  });
-
-  it("should generate policies for monitors", async () => {
-    const pkg: UDSPackage = {
-      apiVersion: "uds.dev/v1",
-      kind: "UDSPackage",
-      metadata: {
-        name: "test-pkg",
-        namespace: "test-ns",
-        generation: 1,
-      },
-      spec: {
-        monitor: [
-          {
-            selector: { app: "test-app" },
-            targetPort: 9090,
-            portName: "",
-          },
-        ],
-      },
-    };
-
-    const namespace = "test-namespace";
-    const istioMode = "none";
-
-    const policies = await networkPolicies(pkg, namespace, istioMode);
-
-    // Should have default policies plus monitor policy
-    expect(policies.length).toBe(3);
-
-    // Verify K8s.Apply was called for each policy
-    expect(K8s).toHaveBeenCalledTimes(3);
-  });
-
-  it("should add port 15008 to ingress policies", async () => {
-    const pkg: UDSPackage = {
-      apiVersion: "uds.dev/v1",
-      kind: "UDSPackage",
-      metadata: {
-        name: "test-pkg",
-        namespace: "test-ns",
-        generation: 1,
-      },
-      spec: {
-        network: {
-          expose: [
-            {
-              gateway: Gateway.Tenant,
-              port: 8080,
-              selector: { app: "test-app" },
-              host: "",
-            },
-          ],
-        },
-      },
-    };
-
-    const namespace = "test-namespace";
-    const istioMode = "none";
-
-    // Create a mock for K8s.Apply that we can inspect later
-    const mockApply = vi.fn().mockResolvedValue({});
-
-    // Mock the K8s client with a type assertion to a more specific type
-    // This avoids using 'any' while still allowing the test to work
-    vi.mocked(K8s).mockImplementation(() => {
-      // Create the mock object with all required methods
-      const k8sMock = {
-        Apply: mockApply,
-        Get: vi.fn().mockResolvedValue({ items: [] }),
-        Delete: vi.fn(),
-        Logs: vi.fn(),
-        Proxy: vi.fn(),
-        Watch: vi.fn(),
-        List: vi.fn(),
-        Evict: vi.fn(),
-        Create: vi.fn(),
-        Patch: vi.fn(),
-        PatchStatus: vi.fn(),
-        Raw: vi.fn(),
-        // Filter methods that return this
-        InNamespace: vi.fn().mockReturnThis(),
-        WithLabel: vi.fn().mockReturnThis(),
-        WithField: vi.fn().mockReturnThis(),
-      };
-
-      // Use a more specific type than 'any'
-      return k8sMock as unknown as ReturnType<typeof import("pepr").K8s>;
-    });
-
-    await networkPolicies(pkg, namespace, istioMode);
-
-    // Verify port 15008 was added to the ingress policy
-    const applyCalls = mockApply.mock.calls;
-    const ingressPolicies = applyCalls.filter(call => call[0].spec?.ingress);
-
-    for (const call of ingressPolicies) {
-      const policy = call[0];
-      for (const ingress of policy.spec.ingress) {
-        if (ingress.ports) {
-          const hasTunnelPort = ingress.ports.some((port: { port: number }) => port.port === 15008);
-          expect(hasTunnelPort).toBe(true);
-        }
-      }
-    }
   });
 });

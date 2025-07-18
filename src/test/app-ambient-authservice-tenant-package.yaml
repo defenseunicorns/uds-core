@@ -49,14 +49,3 @@ spec:
         host: ambient2-protected
         port: 8000
         targetPort: 80
-    allow:
-      - direction: Ingress
-        selector:
-          app: httpbin
-        ports:
-          - 80
-      - direction: Ingress
-        selector:
-          app: httpbin2
-        ports:
-          - 80

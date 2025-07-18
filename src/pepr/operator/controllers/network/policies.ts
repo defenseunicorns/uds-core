@@ -19,25 +19,35 @@ import { generate } from "./generate";
 import { allowAmbientHealthprobes } from "./generators/ambientHealthprobes";
 
 /**
- * Finds the SSO client that matches the given service selector
+ * Finds an SSO client that matches the given pod labels.
+ * - If the client has no selector, it matches all pods in the namespace (namespace-wide protection)
+ * - If the client has a selector, it matches only pods with all the specified labels
  */
-export function findMatchingClient(pkg: UDSPackage, serviceSelector: Record<string, string>) {
-  if (!serviceSelector) return undefined;
+export function findMatchingClient(pkg: UDSPackage, podLabels: Record<string, string>) {
+  if (!podLabels || !pkg.spec?.sso?.length) {
+    return undefined;
+  }
 
-  return pkg.spec?.sso?.find(
-    sso =>
-      sso.enableAuthserviceSelector &&
-      ((serviceSelector["app.kubernetes.io/name"] &&
-        sso.enableAuthserviceSelector["app.kubernetes.io/name"] ===
-          serviceSelector["app.kubernetes.io/name"]) ||
-        (serviceSelector.app && sso.enableAuthserviceSelector.app === serviceSelector.app)),
-  );
+  return pkg.spec.sso.find(sso => {
+    const selector = sso.enableAuthserviceSelector;
+
+    // If no selector is defined, it matches all pods in the namespace
+    if (!selector || Object.keys(selector).length === 0) {
+      return true;
+    }
+
+    // Otherwise, check that every label in the selector exists and matches in podLabels
+    return Object.entries(selector).every(
+      ([key, value]) => key in podLabels && podLabels[key] === value,
+    );
+  });
 }
 
 /**
- * Generates a safe description for network policies
+ * Generates a description for Istio gateway network policies, with special handling for ambient mode.
+ * In ambient mode, includes the client ID in the description for better traceability.
  */
-export function getPolicyDescription(
+export function getGatewayPolicyDescription(
   port: number,
   clientId: string | undefined,
   gateway: string,
@@ -91,7 +101,7 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
   const exposeList = pkg.spec?.network?.expose ?? [];
   // Iterate over each exposed service, excluding directResponse services
   for (const expose of exposeList.filter(exp => !exp.advancedHTTP?.directResponse)) {
-    const { gateway = Gateway.Tenant, port = 80, selector = {}, targetPort } = expose;
+    const { gateway = Gateway.Tenant, port, selector = {}, targetPort } = expose;
     const policyPort = targetPort ?? port;
 
     // Find if this service has a matching client with waypoint
@@ -99,10 +109,7 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
     const waypointName = matchingClient ? getWaypointName(matchingClient.clientId) : undefined;
 
     // Use waypoint selector only if we have a waypoint and the package is configured for ambient waypoint
-    const podSelector =
-      waypointName && shouldUseAmbientWaypoint(pkg)
-        ? getPodSelector(pkg, selector, waypointName)
-        : selector;
+    const podSelector = waypointName ? getPodSelector(pkg, selector, waypointName) : selector;
 
     // Create the NetworkPolicy for the VirtualService
     const policy: Allow = {
@@ -114,8 +121,8 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
         app: `${gateway}-ingressgateway`,
       },
       port: policyPort,
-      description: getPolicyDescription(
-        policyPort,
+      description: getGatewayPolicyDescription(
+        policyPort!,
         matchingClient?.clientId || undefined,
         gateway,
         !!waypointName,
@@ -132,9 +139,7 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
 
   for (const sso of ssos) {
     const waypointName = getWaypointName(sso.clientId);
-    const netpolSelector = shouldUseAmbientWaypoint(pkg)
-      ? { "gateway.networking.k8s.io/gateway-name": waypointName }
-      : sso.enableAuthserviceSelector;
+    const netpolSelector = getPodSelector(pkg, sso.enableAuthserviceSelector!, waypointName);
 
     const policy: Allow = {
       direction: Direction.Egress,
@@ -162,17 +167,70 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
     const keycloakGeneratedPolicy = generate(namespace, keycloakPolicy);
     policies.push(keycloakGeneratedPolicy);
 
-    // Ambient mode: add waypoint-to-istiod egress policy for this client's waypoint
+    // Add waypoint network policies for ambient mode
     if (shouldUseAmbientWaypoint(pkg)) {
-      const istiodPolicy = allowEgressIstiod(namespace, sso.clientId);
-      istiodPolicy.spec!.podSelector = { matchLabels: netpolSelector };
-      istiodPolicy.metadata = istiodPolicy.metadata || {};
-      istiodPolicy.metadata.labels = {
-        ...istiodPolicy.metadata.labels,
-        "uds/package": pkg.metadata!.name!,
-        "uds/sso-client": sso.clientId,
+      const waypointName = getWaypointName(sso.clientId);
+      const appSelector = sso.enableAuthserviceSelector;
+
+      // Egress policy: Allow traffic from waypoint to istiod
+      const istiodPolicy: Allow = {
+        direction: Direction.Egress,
+        selector: netpolSelector,
+        remoteNamespace: "istio-system",
+        remoteSelector: { app: "istiod" },
+        port: 15012,
+        description: `istiod egress for ${sso.clientId} waypoint`,
+        labels: {
+          "uds/package": pkg.metadata!.name!,
+          "uds/sso-client": sso.clientId,
+        },
       };
-      policies.push(istiodPolicy);
+      policies.push(generate(namespace, istiodPolicy));
+
+      // Ingress policy: Allow traffic from app pods to waypoint
+      policies.push(
+        generate(namespace, {
+          direction: Direction.Ingress,
+          selector: { "istio.io/gateway-name": waypointName },
+          remoteSelector: appSelector,
+          description: `Allow traffic from app to ${waypointName}`,
+        }),
+      );
+
+      // Egress policy: Allow traffic from waypoint to app pods
+      policies.push(
+        generate(namespace, {
+          direction: Direction.Egress,
+          selector: { "istio.io/gateway-name": waypointName },
+          remoteSelector: appSelector,
+          description: `Allow traffic from ${waypointName} to app`,
+        }),
+      );
+
+      // Add ingress policy to app pods to allow traffic from waypoint
+      policies.push(
+        generate(namespace, {
+          direction: Direction.Ingress,
+          selector: appSelector,
+          remoteSelector: { "istio.io/gateway-name": waypointName },
+          description: `Allow traffic from ${waypointName} to app pods`,
+        }),
+      );
+
+      // Health check policy: Allow monitoring access to waypoint
+      policies.push(
+        generate(namespace, {
+          direction: Direction.Ingress,
+          selector: { "istio.io/gateway-name": waypointName },
+          remoteNamespace: "monitoring",
+          remoteSelector: { "app.kubernetes.io/name": "prometheus" },
+          ports: [
+            15020, // Envoy admin port
+            15008, // HBONE port
+          ],
+          description: `Allow health checks from monitoring to ${waypointName}`,
+        }),
+      );
     }
   }
 

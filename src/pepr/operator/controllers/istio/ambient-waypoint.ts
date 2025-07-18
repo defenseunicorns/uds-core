@@ -3,21 +3,13 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { V1LabelSelector } from "@kubernetes/client-node";
 import { a, K8s } from "pepr";
 import { K8sGateway, UDSPackage } from "../../crd";
 import { Mode } from "../../crd/generated/package-v1alpha1";
-import { generateWaypointAuthPolicies } from "../network/authorizationPolicies";
 import { PackageStore } from "../packages/package-store";
 import { getOwnerRef } from "../utils";
 import { log } from "./istio-resources";
-import {
-  createNetworkPolicy,
-  getWaypointName,
-  matchesLabels,
-  serviceMatchesSelector,
-  shouldUseAmbientWaypoint,
-} from "./waypoint-utils";
+import { getWaypointName, matchesLabels, serviceMatchesSelector } from "./waypoint-utils";
 
 // Constants for labels and configuration
 const ISTIO_WAYPOINT_LABEL = "istio.io/use-waypoint"; // Label to enable waypoint injection
@@ -36,69 +28,37 @@ const HEALTH_OPTS = {
  * @param waypointId - The ID of the waypoint to set up
  * @throws Error if setup fails
  */
-export async function setupAmbientWaypoint(pkg: UDSPackage, waypointId: string): Promise<void> {
+export async function setupAmbientWaypoint(pkg: UDSPackage): Promise<void> {
   const { namespace, name } = pkg.metadata || {};
   if (!namespace || !name) throw new Error("Package metadata is missing namespace or name");
 
-  const waypointName = getWaypointName(waypointId);
-  log.info("Starting ambient waypoint setup", { namespace, package: name, waypointName });
+  const authServiceClients = pkg.spec?.sso?.filter(sso => sso.enableAuthserviceSelector) || [];
 
-  try {
-    log.info("Creating waypoint gateway", { namespace, package: name, waypointId, waypointName });
-    await createWaypointGateway(pkg, waypointName, waypointId);
+  for (const client of authServiceClients) {
+    const waypointId = client.clientId;
+    const waypointName = getWaypointName(waypointId);
+    try {
+      log.info("Creating waypoint gateway", { namespace, package: name, waypointId, waypointName });
+      await createWaypointGateway(pkg, waypointName, waypointId);
 
-    log.info("Waiting for waypoint pod to become healthy", { namespace, waypointName });
-    await waitForWaypointPodHealthy(namespace, waypointName);
+      log.info("Waiting for waypoint pod to become healthy", { namespace, waypointName });
+      await waitForWaypointPodHealthy(namespace, waypointName);
 
-    // Get all SSO clients with enableAuthserviceSelector
-    const ssoClients = pkg.spec?.sso?.filter(s => s.enableAuthserviceSelector) || [];
+      log.info("Successfully set up ambient waypoint", { namespace, package: name, waypointName });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorStack = error instanceof Error ? error.stack : undefined;
 
-    // Find the SSO client that matches this waypoint
-    const ssoClient = ssoClients.find(sso => {
-      const clientWaypointName = sso.clientId ? getWaypointName(sso.clientId) : null;
-      return clientWaypointName === waypointName;
-    });
-
-    if (ssoClient?.enableAuthserviceSelector) {
-      log.info("Generating waypoint network policies", {
+      log.error("Failed to set up ambient waypoint", {
         namespace,
+        package: name,
         waypointName,
-        clientId: ssoClient.clientId,
-        appSelector: ssoClient.enableAuthserviceSelector,
+        error: errorMessage,
+        stack: errorStack,
       });
 
-      await generateWaypointNetworkPolicies(pkg, waypointName, ssoClient.enableAuthserviceSelector);
-
-      log.info("Generating waypoint authorization policies", {
-        namespace,
-        waypointName,
-        clientId: ssoClient.clientId,
-      });
-
-      await generateWaypointAuthPolicies(pkg, waypointName, ssoClient.enableAuthserviceSelector);
-    } else {
-      log.warn("No matching SSO client found for waypoint", {
-        waypointName,
-        ssoClients: ssoClients.map(s => s.clientId),
-      });
+      throw new Error(`Failed to set up ambient waypoint: ${errorMessage}`);
     }
-
-    log.info("Successfully set up ambient waypoint", { namespace, package: name, waypointName });
-  } catch (error) {
-    // Capture detailed error information
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    const errorStack = error instanceof Error ? error.stack : undefined;
-
-    log.error("Failed to set up ambient waypoint", {
-      namespace,
-      package: name,
-      waypointName,
-      error: errorMessage,
-      stack: errorStack,
-    });
-
-    // Throw a more descriptive error
-    throw new Error(`Failed to set up ambient waypoint: ${errorMessage}`);
   }
 }
 
@@ -193,66 +153,6 @@ export async function createWaypointGateway(
       `Failed to create waypoint gateway: ${error instanceof Error ? error.message : String(error)}`,
     );
   }
-}
-
-/**
- * Generates and applies network policies for waypoint-to-application communication
- * @param pkg - The UDS package
- * @param waypointName - Name of the waypoint
- * @param appSelector - Selector for the application pods
- */
-export async function generateWaypointNetworkPolicies(
-  pkg: UDSPackage,
-  waypointName: string,
-  appSelector: Record<string, string>,
-) {
-  const namespace = pkg.metadata?.namespace;
-  if (!namespace || !pkg.metadata?.uid || !shouldUseAmbientWaypoint(pkg)) return;
-
-  const waypointSelector: V1LabelSelector = {
-    matchLabels: { "istio.io/gateway-name": waypointName },
-  };
-  const appSelectorObj: V1LabelSelector = { matchLabels: appSelector };
-
-  const policies = [
-    // Ingress policy: Allow traffic from app pods to waypoint
-    createNetworkPolicy(`${waypointName}-ingress-from-app`, namespace, pkg, {
-      podSelector: waypointSelector,
-      ingress: [{ from: [{ podSelector: appSelectorObj }] }],
-      policyTypes: ["Ingress"],
-    }),
-    // Egress policy: Allow traffic from waypoint to app pods
-    createNetworkPolicy(`${waypointName}-egress-to-app`, namespace, pkg, {
-      podSelector: waypointSelector,
-      egress: [{ to: [{ podSelector: appSelectorObj }] }],
-      policyTypes: ["Egress"],
-    }),
-    // Health check policy: Allow monitoring access to waypoint
-    createNetworkPolicy(`allow-${waypointName}-ingress-health`, namespace, pkg, {
-      podSelector: waypointSelector,
-      ingress: [
-        {
-          from: [
-            {
-              namespaceSelector: {
-                matchLabels: { "kubernetes.io/metadata.name": "monitoring" },
-              },
-              podSelector: {
-                matchLabels: { "app.kubernetes.io/name": "prometheus" },
-              },
-            },
-          ],
-          ports: [
-            { port: 15020, protocol: "TCP" }, // Envoy admin port
-            { port: 15008, protocol: "TCP" }, // HBONE port
-          ],
-        },
-      ],
-      policyTypes: ["Ingress"],
-    }),
-  ];
-
-  await Promise.all(policies.map(policy => K8s(a.NetworkPolicy).Apply(policy, { force: true })));
 }
 
 /**

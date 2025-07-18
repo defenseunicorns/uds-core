@@ -4,15 +4,12 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { V1NetworkPolicySpec } from "@kubernetes/client-node";
 import { UDSPackage } from "../../crd";
 import { Mode } from "../../crd/generated/package-v1alpha1";
-import { getOwnerRef } from "../utils";
 // No logger needed in this utility module
 
 // Constants for waypoint configuration
 const WAYPOINT_SUFFIX = "-waypoint"; // Suffix for waypoint resource names
-const UDS_MANAGED_LABEL = "uds/managed-by"; // Label to identify UDS-managed resources
 
 /**
  * Determines if a package should use ambient waypoint networking
@@ -20,8 +17,6 @@ const UDS_MANAGED_LABEL = "uds/managed-by"; // Label to identify UDS-managed res
  * @returns boolean indicating if ambient waypoint should be used
  */
 export const shouldUseAmbientWaypoint = (pkg: UDSPackage): boolean => {
-  if (!pkg) return false;
-
   // Check if package has ambient mode and authservice SSO
   return pkg.spec?.network?.serviceMesh?.mode === Mode.Ambient && hasAuthserviceSSO(pkg);
 };
@@ -101,28 +96,3 @@ export function matchesLabels(
 ): boolean {
   return Object.entries(selector).every(([k, v]) => labels[k] === v);
 }
-
-/**
- * Network Policy Helper: Creates a network policy object
- * @param name - Name of the network policy
- * @param namespace - Namespace for the policy
- * @param pkg - The owning UDS package
- * @param spec - Network policy spec
- * @returns Network policy object
- */
-export const createNetworkPolicy = (
-  name: string,
-  namespace: string,
-  pkg: UDSPackage,
-  spec: V1NetworkPolicySpec,
-) => ({
-  apiVersion: "networking.k8s.io/v1",
-  kind: "NetworkPolicy",
-  metadata: {
-    name,
-    namespace,
-    labels: { [UDS_MANAGED_LABEL]: "uds-operator" },
-    ownerReferences: getOwnerRef(pkg),
-  },
-  spec,
-});

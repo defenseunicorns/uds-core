@@ -3,13 +3,11 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { V1NetworkPolicySpec } from "@kubernetes/client-node";
 import { a } from "pepr";
 import { describe, expect, it, test, vi } from "vitest";
 import { Sso, UDSPackage } from "../../crd";
 import { Mode } from "../../crd/generated/package-v1alpha1";
 import {
-  createNetworkPolicy,
   getPodSelector,
   getWaypointName,
   hasAuthserviceSSO,
@@ -108,11 +106,6 @@ describe("shouldUseAmbientWaypoint", () => {
           ],
         },
       } as UDSPackage,
-      expected: false,
-    },
-    {
-      name: "should return false when package is undefined",
-      pkg: undefined as unknown as UDSPackage,
       expected: false,
     },
   ];
@@ -271,53 +264,9 @@ describe("getPodSelector", () => {
       waypointName: "test-waypoint",
       expected: { app: "test" },
     },
-    {
-      name: "should handle undefined package",
-      pkg: undefined as unknown as UDSPackage,
-      selector: { app: "test" },
-      waypointName: "test-waypoint",
-      expected: { app: "test" },
-    },
   ];
 
   it.each(testCases)("$name", ({ pkg, selector, waypointName, expected }) => {
     expect(getPodSelector(pkg, selector, waypointName)).toEqual(expected);
-  });
-});
-
-describe("createNetworkPolicy", () => {
-  it("should create a network policy with the correct structure", () => {
-    const pkg = createMockPackage("test-pkg", { "app.kubernetes.io/name": "test-app" }, "ambient", [
-      {
-        clientId: "test-client",
-        name: "test-sso",
-        enableAuthserviceSelector: { "app.kubernetes.io/name": "test-app" },
-      },
-    ]);
-    const spec: V1NetworkPolicySpec = {
-      podSelector: { matchLabels: { app: "test" } },
-      policyTypes: ["Ingress"],
-    };
-
-    const policy = createNetworkPolicy("test-policy", "test-ns", pkg, spec);
-
-    expect(policy).toMatchObject({
-      apiVersion: "networking.k8s.io/v1",
-      kind: "NetworkPolicy",
-      metadata: {
-        name: "test-policy",
-        namespace: "test-ns",
-        labels: { "uds/managed-by": "uds-operator" },
-        ownerReferences: [
-          {
-            apiVersion: "uds.dev/v1alpha1",
-            kind: "Package",
-            name: "test-pkg",
-            uid: "test-uid", // This should match the mock
-          },
-        ],
-      },
-      spec,
-    });
   });
 });

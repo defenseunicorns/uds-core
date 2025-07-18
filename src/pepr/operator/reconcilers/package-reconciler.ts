@@ -97,43 +97,19 @@ async function reconcilePackageFlow(pkg: UDSPackage): Promise<void> {
   // 2. Now enable Istio injection (this may restart pods in sidecar mode)
   await enableIstio(pkg);
 
-  // 3. If in ambient mode, set up waypoints after network policies are in place
-  if (istioMode === Mode.Ambient) {
-    const authServiceClients = pkg.spec?.sso?.filter(sso => sso.enableAuthserviceSelector) || [];
-
-    for (const client of authServiceClients) {
-      try {
-        log.info(`Setting up ambient waypoint for client`, {
-          namespace: pkg.metadata?.namespace,
-          package: pkg.metadata?.name,
-          clientId: client.clientId,
-          selector: JSON.stringify(client.enableAuthserviceSelector),
-        });
-        await setupAmbientWaypoint(pkg, client.clientId);
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : String(err);
-        const errorStack = err instanceof Error ? err.stack : undefined;
-
-        log.error(`Failed to set up ambient waypoint for client ${client.clientId}:`, {
-          namespace: pkg.metadata?.namespace,
-          package: pkg.metadata?.name,
-          clientId: client.clientId,
-          error: errorMessage,
-          stack: errorStack,
-        });
-        throw err; // Re-throw to fail the reconciliation if any waypoint setup fails
-      }
-    }
-  }
-
-  // Clean up any existing waypoint resources if SSO is not configured
-  await purgeOrphans(generation, metadata.namespace!, metadata.name!, K8sGateway, log);
-
   let endpoints: string[] = [];
   let ssoClients = new Map<string, Client>();
   let authserviceClients: string[] = [];
 
   if (UDSConfig.isIdentityDeployed) {
+    // 3. If in ambient mode, set up waypoints after network policies are in place
+    if (istioMode === Mode.Ambient) {
+      await setupAmbientWaypoint(pkg);
+    }
+
+    // Clean up any existing waypoint resources if SSO is not configured
+    await purgeOrphans(generation, metadata.namespace!, metadata.name!, K8sGateway, log);
+
     // Configure SSO
     ssoClients = await keycloak(pkg);
     authserviceClients = await authservice(pkg, ssoClients);
