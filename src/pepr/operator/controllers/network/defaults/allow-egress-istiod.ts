@@ -6,10 +6,10 @@
 import { Direction } from "../../../crd";
 import { generate } from "../generate";
 
-export const allowEgressIstiod = (namespace: string) =>
+export const allowEgressIstiod = (namespace: string, clientId?: string) =>
   generate(namespace, {
     direction: Direction.Egress,
-    description: "Istiod communication",
+    description: clientId ? `Istiod communication for ${clientId}` : "Istiod communication",
     remoteNamespace: "istio-system",
     remoteSelector: {
       istio: "pilot",

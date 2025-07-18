@@ -45,8 +45,6 @@ Authservice is fully supported for packages running in Istio Ambient Mesh mode (
   - Associate the waypoint proxy with the correct services based on your selector.
   - Clean up the waypoint and related configuration automatically when the package is deleted.
 
-This enhancement removes the previous limitation and enables transparent authentication and authorization for ambient workloads protected by Authservice. No manual waypoint management is required.
-
 **Usage:**
 - Set `spec.network.serviceMesh.mode: ambient` in your Package CR.
 - Add your SSO configuration with `enableAuthserviceSelector` as usual.

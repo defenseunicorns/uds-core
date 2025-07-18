@@ -404,7 +404,7 @@ export async function generateWaypointAuthPolicies(
   }
 
   const policyName = sanitizeResourceName(
-    `protect-${pkg.metadata.name}-ingress-${exposeRule.port || "http"}-${exposeRule.selector?.app || "app"}-istio-${exposeRule.gateway || "tenant"}-gateway`,
+    `protect-${pkg.metadata.name}-ingress-${exposeRule.port || "http"}-${exposeRule.selector?.app || "app"}-${waypointName}-istio-${exposeRule.gateway || "tenant"}-gateway`,
   );
 
   await applyWaypointAuthPolicy(policyName, pkg, source, waypointPorts, waypointName);

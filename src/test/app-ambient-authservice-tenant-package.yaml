@@ -22,6 +22,15 @@ spec:
       groups:
         anyOf:
           - "/UDS Core/Admin"
+    - name: "Ambient 2 SSO"
+      clientId: uds-core-ambient2-httpbin
+      redirectUris:
+        - "https://ambient2-protected.uds.dev/login"
+      enableAuthserviceSelector:
+        app: httpbin2
+      groups:
+        anyOf:
+          - "/UDS Core/Admin"
   network:
     serviceMesh:
       mode: ambient
@@ -33,9 +42,21 @@ spec:
         host: ambient-protected
         port: 8000
         targetPort: 80
+      - service: httpbin2
+        selector:
+          app: httpbin2
+        gateway: tenant
+        host: ambient2-protected
+        port: 8000
+        targetPort: 80
     allow:
       - direction: Ingress
         selector:
           app: httpbin
+        ports:
+          - 80
+      - direction: Ingress
+        selector:
+          app: httpbin2
         ports:
           - 80

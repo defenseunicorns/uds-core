@@ -90,15 +90,17 @@ async function reconcilePackageFlow(pkg: UDSPackage): Promise<void> {
   // Get the requested service mesh mode, default to sidecar if not specified
   const istioMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Sidecar;
 
-  // Enable Istio mode in the namespace first (for ambient, ensures waypoint can be created)
+  // 1. First, ensure network policies are in place
+  const netPol = await networkPolicies(pkg, namespace!, istioMode);
+  const authPol = await generateAuthorizationPolicies(pkg, namespace!, istioMode);
+
+  // 2. Now enable Istio injection (this may restart pods in sidecar mode)
   await enableIstio(pkg);
 
-  // If ambient mode and authservice needed, create waypoints before policies
+  // 3. If in ambient mode, set up waypoints after network policies are in place
   if (istioMode === Mode.Ambient) {
-    // Get all authservice clients that need waypoints
     const authServiceClients = pkg.spec?.sso?.filter(sso => sso.enableAuthserviceSelector) || [];
 
-    // Set up waypoints for each client that needs one
     for (const client of authServiceClients) {
       try {
         log.info(`Setting up ambient waypoint for client`, {
@@ -126,10 +128,6 @@ async function reconcilePackageFlow(pkg: UDSPackage): Promise<void> {
 
   // Clean up any existing waypoint resources if SSO is not configured
   await purgeOrphans(generation, metadata.namespace!, metadata.name!, K8sGateway, log);
-
-  // Pass the effective Istio mode to the networkPolicies and auth policies
-  const netPol = await networkPolicies(pkg, namespace!, istioMode);
-  const authPol = await generateAuthorizationPolicies(pkg, namespace!, istioMode);
 
   let endpoints: string[] = [];
   let ssoClients = new Map<string, Client>();

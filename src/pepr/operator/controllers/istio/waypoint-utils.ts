@@ -5,18 +5,14 @@
  */
 
 import { V1NetworkPolicySpec } from "@kubernetes/client-node";
-import { getOwnerRef } from "../controllers/utils";
-import { UDSPackage } from "../crd";
-import { Mode } from "../crd/generated/package-v1alpha1";
+import { UDSPackage } from "../../crd";
+import { Mode } from "../../crd/generated/package-v1alpha1";
+import { getOwnerRef } from "../utils";
 // No logger needed in this utility module
 
 // Constants for waypoint configuration
 const WAYPOINT_SUFFIX = "-waypoint"; // Suffix for waypoint resource names
-const WAYPOINT_PREFIX = "uds-core-"; // Prefix for waypoint resource names
 const UDS_MANAGED_LABEL = "uds/managed-by"; // Label to identify UDS-managed resources
-
-// Cache for waypoint names to avoid regenerating them
-const waypointNameCache = new Map<string, string>();
 
 /**
  * Determines if a package should use ambient waypoint networking
@@ -40,7 +36,7 @@ export const hasAuthserviceSSO = (pkg: UDSPackage): boolean =>
   pkg.spec?.sso?.some(s => s.enableAuthserviceSelector !== undefined) || false;
 
 /**
- * Generates a consistent waypoint name from an ID with caching
+ * Generates a consistent waypoint name from an ID
  * @param id - The base ID to generate the name from
  * @returns Formatted waypoint name
  */
@@ -50,27 +46,13 @@ export const getWaypointName = (id: string): string => {
     throw new Error("Waypoint ID cannot be empty");
   }
 
-  // Check cache first
-  if (waypointNameCache.has(id)) {
-    return waypointNameCache.get(id)!;
-  }
-
   // Generate standardized name
-  // Check if the ID already has the prefix and/or suffix
   let waypointName = id;
-
-  // Don't add the prefix if it already exists
-  if (!waypointName.startsWith(WAYPOINT_PREFIX)) {
-    waypointName = `${WAYPOINT_PREFIX}${waypointName}`;
-  }
 
   // Don't add the suffix if it already exists
   if (!waypointName.endsWith(WAYPOINT_SUFFIX)) {
     waypointName = `${waypointName}${WAYPOINT_SUFFIX}`;
   }
-
-  // Cache the result
-  waypointNameCache.set(id, waypointName);
 
   return waypointName;
 };

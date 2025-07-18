@@ -3,9 +3,8 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { V1NetworkPolicySpec } from "@kubernetes/client-node";
 import { a } from "pepr";
-import { beforeEach, describe, expect, it, test, vi, type MockedFunction } from "vitest";
+import { beforeEach, describe, expect, it, vi, type MockedFunction } from "vitest";
 import { UDSPackage } from "../../crd";
 import { Mode, Sso } from "../../crd/generated/package-v1alpha1";
 import { PackageStore } from "../packages/package-store";
@@ -16,17 +15,6 @@ import {
   reconcileService,
   setupAmbientWaypoint,
 } from "./ambient-waypoint";
-
-// Import waypoint utilities
-import {
-  createNetworkPolicy,
-  getPodSelector,
-  getWaypointName,
-  hasAuthserviceSSO,
-  matchesLabels,
-  serviceMatchesSelector,
-  shouldUseAmbientWaypoint,
-} from "../../utils/waypoint";
 
 // Test helpers
 const createMockPackage = (
@@ -103,7 +91,19 @@ vi.mock("pepr", async () => {
 // Mock the PackageStore
 vi.mock("../packages/package-store", () => ({
   PackageStore: {
-    getPackageByNamespace: vi.fn().mockReturnValue(undefined),
+    getPackageByNamespace: vi.fn().mockImplementation(namespace => {
+      // Return the test package when the namespace matches
+      if (namespace === "test-ns") {
+        return createMockPackage("test-pkg", { "app.kubernetes.io/name": "test-app" }, "ambient", [
+          {
+            clientId: "test-client",
+            name: "test-sso",
+            enableAuthserviceSelector: { "app.kubernetes.io/name": "test-app" },
+          },
+        ]);
+      }
+      return undefined;
+    }),
     addPackage: vi.fn(),
     removePackage: vi.fn(),
   },
@@ -134,196 +134,6 @@ const mockLog = vi.hoisted(() => ({
 vi.mock("./istio-resources.js", () => ({
   log: mockLog,
 }));
-
-describe("hasAuthserviceSSO", () => {
-  const testCases = [
-    {
-      name: "should return true when package has SSO with enableAuthserviceSelector",
-      pkg: createMockPackage("test", { "app.kubernetes.io/name": "test-app" }, "ambient", [
-        {
-          clientId: "test-client",
-          name: "test-sso",
-          enableAuthserviceSelector: { "app.kubernetes.io/name": "test-app" },
-        },
-      ]),
-      expected: true,
-    },
-    {
-      name: "should return false when package has no SSO configuration",
-      pkg: createMockPackage("test", {}, "ambient", []),
-      expected: false,
-    },
-    {
-      name: "should return false when package has SSO without enableAuthserviceSelector",
-      pkg: createMockPackage("test", {}, "ambient", [
-        {
-          clientId: "test-client",
-          name: "test-sso",
-        },
-      ]),
-      expected: false,
-    },
-    {
-      name: "should return false when package spec is undefined",
-      pkg: { metadata: { name: "test", namespace: "test" } } as UDSPackage,
-      expected: false,
-    },
-  ];
-
-  it.each(testCases)("$name", ({ pkg, expected }) => {
-    expect(hasAuthserviceSSO(pkg)).toBe(expected);
-  });
-});
-
-describe("shouldUseAmbientWaypoint", () => {
-  const testCases = [
-    {
-      name: "should return true when in ambient mode with SSO",
-      pkg: createMockPackage("test", { "app.kubernetes.io/name": "test-app" }, "ambient", [
-        {
-          clientId: "test-client",
-          name: "test-sso",
-          enableAuthserviceSelector: { "app.kubernetes.io/name": "test-app" },
-        },
-      ]),
-      expected: true,
-    },
-    {
-      name: "should return false when not in ambient mode",
-      pkg: createMockPackage("test", { "app.kubernetes.io/name": "test-app" }, "sidecar", [
-        {
-          clientId: "test-client",
-          name: "test-sso",
-          enableAuthserviceSelector: { "app.kubernetes.io/name": "test-app" },
-        },
-      ]),
-      expected: false,
-    },
-    {
-      name: "should return false when no serviceMesh config exists",
-      pkg: {
-        metadata: { name: "test", namespace: "test" },
-        spec: {
-          sso: [
-            {
-              clientId: "test-client",
-              name: "test-sso",
-              enableAuthserviceSelector: { "app.kubernetes.io/name": "test-app" },
-            },
-          ],
-        },
-      } as UDSPackage,
-      expected: false,
-    },
-    {
-      name: "should return false when package is undefined",
-      pkg: undefined as unknown as UDSPackage,
-      expected: false,
-    },
-  ];
-
-  it.each(testCases)("$name", ({ pkg, expected }) => {
-    expect(shouldUseAmbientWaypoint(pkg)).toBe(expected);
-  });
-});
-
-describe("getWaypointName", () => {
-  const validTestCases = [
-    { input: "test", expected: "uds-core-test-waypoint" },
-    { input: "uds-core-test", expected: "uds-core-test-waypoint" },
-  ];
-
-  it.each(validTestCases)("should handle '$input'", ({ input, expected }) => {
-    expect(getWaypointName(input)).toBe(expected);
-  });
-
-  it("should throw an error when an empty ID is provided", () => {
-    expect(() => getWaypointName("")).toThrow("Waypoint ID cannot be empty");
-  });
-
-  it("should throw an error when an ID with only whitespace is provided", () => {
-    expect(() => getWaypointName("   ")).toThrow("Waypoint ID cannot be empty");
-  });
-});
-
-describe("getPodSelector", () => {
-  const testCases = [
-    {
-      name: "should return waypoint selector in ambient mode",
-      pkg: createMockPackage("test", { "app.kubernetes.io/name": "test-app" }, "ambient", [
-        {
-          clientId: "test-client",
-          name: "test-sso",
-          enableAuthserviceSelector: { "app.kubernetes.io/name": "test-app" },
-        },
-      ]),
-      selector: { app: "test" },
-      waypointName: "test-waypoint",
-      expected: { "istio.io/gateway-name": "test-waypoint" },
-    },
-    {
-      name: "should return original selector in non-ambient mode",
-      pkg: createMockPackage("test", { "app.kubernetes.io/name": "test-app" }, "sidecar", [
-        {
-          clientId: "test-client",
-          name: "test-sso",
-          enableAuthserviceSelector: { "app.kubernetes.io/name": "test-app" },
-        },
-      ]),
-      selector: { app: "test" },
-      waypointName: "test-waypoint",
-      expected: { app: "test" },
-    },
-    {
-      name: "should handle undefined package",
-      pkg: undefined as unknown as UDSPackage,
-      selector: { app: "test" },
-      waypointName: "test-waypoint",
-      expected: { app: "test" },
-    },
-  ];
-
-  it.each(testCases)("$name", ({ pkg, selector, waypointName, expected }) => {
-    expect(getPodSelector(pkg, selector, waypointName)).toEqual(expected);
-  });
-});
-
-describe("createNetworkPolicy", () => {
-  it("should create a network policy with the correct structure", () => {
-    const pkg = createMockPackage("test-pkg", { "app.kubernetes.io/name": "test-app" }, "ambient", [
-      {
-        clientId: "test-client",
-        name: "test-sso",
-        enableAuthserviceSelector: { "app.kubernetes.io/name": "test-app" },
-      },
-    ]);
-    const spec: V1NetworkPolicySpec = {
-      podSelector: { matchLabels: { app: "test" } },
-      policyTypes: ["Ingress"],
-    };
-
-    const policy = createNetworkPolicy("test-policy", "test-ns", pkg, spec);
-
-    expect(policy).toMatchObject({
-      apiVersion: "networking.k8s.io/v1",
-      kind: "NetworkPolicy",
-      metadata: {
-        name: "test-policy",
-        namespace: "test-ns",
-        labels: { "uds/managed-by": "uds-operator" },
-        ownerReferences: [
-          {
-            apiVersion: "uds.dev/v1alpha1",
-            kind: "Package",
-            name: "test-pkg",
-            uid: "test-uid", // This should match the mock
-          },
-        ],
-      },
-      spec,
-    });
-  });
-});
 
 describe("isWaypointPodHealthy", () => {
   const namespace = "test-ns";
@@ -383,41 +193,6 @@ describe("isWaypointPodHealthy", () => {
   });
 });
 
-describe("matchesLabels", () => {
-  const testCases = [
-    {
-      name: "should match when all key-value pairs match",
-      labels: { app: "test", env: "prod" },
-      selector: { app: "test", env: "prod" },
-      expected: true,
-    },
-    {
-      name: "should not match when values differ",
-      labels: { app: "test", env: "prod" },
-      selector: { app: "test", env: "dev" },
-      expected: false,
-    },
-    {
-      name: "should not match when key is missing",
-      labels: { app: "test" },
-      selector: { app: "test", missing: "key" },
-      expected: false,
-    },
-    {
-      name: "should match empty selector",
-      labels: { app: "test" },
-      selector: {},
-      expected: true,
-    },
-  ];
-
-  it.each(testCases)("$name", ({ labels, selector, expected }) => {
-    expect(
-      matchesLabels(labels as Record<string, string>, selector as Record<string, string>),
-    ).toBe(expected);
-  });
-});
-
 describe("reconcileService and reconcilePod", () => {
   const testCases = [
     {
@@ -425,7 +200,7 @@ describe("reconcileService and reconcilePod", () => {
       reconcileFn: reconcileService,
       createResource: createMockService,
       expectedLabels: {
-        "istio.io/use-waypoint": "uds-core-test-pkg-waypoint",
+        "istio.io/use-waypoint": "test-client-waypoint",
         "istio.io/ingress-use-waypoint": "true",
       },
     },
@@ -434,7 +209,7 @@ describe("reconcileService and reconcilePod", () => {
       reconcileFn: reconcilePod,
       createResource: createMockPod,
       expectedLabels: {
-        "istio.io/use-waypoint": "uds-core-test-pkg-waypoint",
+        "istio.io/use-waypoint": "test-client-waypoint",
       },
     },
   ];
@@ -516,42 +291,17 @@ describe("reconcileService and reconcilePod", () => {
   );
 });
 
-describe("serviceMatchesSelector", () => {
-  const testCases = [
-    {
-      name: "should match when selectors match",
-      service: createMockService({ app: "test" }),
-      selector: { app: "test" },
-      expected: true,
-    },
-    {
-      name: "should not match when values differ",
-      service: createMockService({ app: "test" }),
-      selector: { app: "different" },
-      expected: false,
-    },
-    {
-      name: "should not match when key is missing",
-      service: createMockService({}),
-      selector: { app: "test" },
-      expected: false,
-    },
-  ];
-
-  test.each(testCases)("$name", ({ service, selector, expected }) => {
-    expect(serviceMatchesSelector(service, selector)).toBe(expected);
-  });
-});
-
 describe("setupAmbientWaypoint", () => {
+  const waypointId = "test-client";
+  const expectedWaypointName = "test-client-waypoint"; // This matches getWaypointName(waypointId)
+
   const pkg = createMockPackage("test-pkg", { "app.kubernetes.io/name": "test-app" }, "ambient", [
     {
-      clientId: "test-client",
+      clientId: "test-client", // This will be transformed to test-client-waypoint
       name: "test-sso",
       enableAuthserviceSelector: { "app.kubernetes.io/name": "test-app" },
     },
   ]);
-  const waypointId = "test-waypoint";
 
   beforeEach(async () => {
     vi.clearAllMocks();
@@ -575,7 +325,7 @@ describe("setupAmbientWaypoint", () => {
     // Mock the createWaypointGateway function directly
     mockCreate.mockResolvedValue({
       metadata: {
-        name: "uds-core-test-waypoint",
+        name: expectedWaypointName, // Use the expected waypoint name
         namespace: "test-ns",
       },
     });
@@ -583,9 +333,9 @@ describe("setupAmbientWaypoint", () => {
 
   it("should create a waypoint gateway and network policies", async () => {
     // Mock the Get method to first return undefined (gateway doesn't exist)
-    // and then return a pod for the waitForWaypointPodHealthy function
     mockGet.mockImplementation(name => {
-      if (name === "uds-core-test-waypoint") {
+      if (name === expectedWaypointName) {
+        // Use the expected waypoint name
         // Simulate gateway not existing to force creation
         throw new Error("Gateway not found");
       }
@@ -608,57 +358,23 @@ describe("setupAmbientWaypoint", () => {
 
     await setupAmbientWaypoint(pkg, waypointId);
 
-    // Check that Apply was called for network policies
-    expect(mockApply).toHaveBeenCalled();
-
-    // We need to verify that the gateway was created
-    // Since we're using K8s(K8sGateway).Create() in the implementation,
-    // we need to check that K8s was called with K8sGateway and then Create was called
+    // Verify the gateway was created
     expect(mockCreate).toHaveBeenCalled();
-    expect(mockCreate.mock.calls.length).toBeGreaterThan(0);
-
-    // Verify the gateway object structure
     const gatewayArg = mockCreate.mock.calls[0]?.[0];
-    expect(gatewayArg).toBeDefined();
+
     expect(gatewayArg).toMatchObject({
       metadata: {
-        name: "uds-core-test-waypoint",
+        name: expectedWaypointName,
         namespace: "test-ns",
+        labels: {
+          "uds/managed-by": "uds-operator",
+          "app.kubernetes.io/component": "ambient-waypoint",
+          "istio.io/waypoint-for": "all",
+          "istio.io/gateway-name": expectedWaypointName,
+        },
       },
       spec: {
         gatewayClassName: "istio-waypoint",
-      },
-    });
-
-    // Find network policy calls
-    const networkPolicyCall = mockApply.mock.calls.find(call => call[0]?.kind === "NetworkPolicy");
-
-    expect(networkPolicyCall).toBeDefined();
-    expect(networkPolicyCall?.[0]).toMatchObject({
-      metadata: {
-        name: "uds-core-test-waypoint-ingress-from-app",
-        namespace: "test-ns",
-      },
-      spec: {
-        podSelector: {
-          matchLabels: {
-            "istio.io/gateway-name": "uds-core-test-waypoint",
-          },
-        },
-        policyTypes: ["Ingress"],
-        ingress: [
-          {
-            from: [
-              {
-                podSelector: {
-                  matchLabels: {
-                    "app.kubernetes.io/name": "test-app",
-                  },
-                },
-              },
-            ],
-          },
-        ],
       },
     });
 

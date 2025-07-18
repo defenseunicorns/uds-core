@@ -7,17 +7,17 @@ import { V1LabelSelector } from "@kubernetes/client-node";
 import { a, K8s } from "pepr";
 import { K8sGateway, UDSPackage } from "../../crd";
 import { Mode } from "../../crd/generated/package-v1alpha1";
+import { generateWaypointAuthPolicies } from "../network/authorizationPolicies";
+import { PackageStore } from "../packages/package-store";
+import { getOwnerRef } from "../utils";
+import { log } from "./istio-resources";
 import {
   createNetworkPolicy,
   getWaypointName,
   matchesLabels,
   serviceMatchesSelector,
   shouldUseAmbientWaypoint,
-} from "../../utils/waypoint";
-import { generateWaypointAuthPolicies } from "../network/authorizationPolicies";
-import { PackageStore } from "../packages/package-store";
-import { getOwnerRef } from "../utils";
-import { log } from "./istio-resources";
+} from "./waypoint-utils";
 
 // Constants for labels and configuration
 const ISTIO_WAYPOINT_LABEL = "istio.io/use-waypoint"; // Label to enable waypoint injection
@@ -45,21 +45,42 @@ export async function setupAmbientWaypoint(pkg: UDSPackage, waypointId: string):
 
   try {
     log.info("Creating waypoint gateway", { namespace, package: name, waypointId, waypointName });
-    await createWaypointGateway(pkg, waypointId);
+    await createWaypointGateway(pkg, waypointName, waypointId);
 
     log.info("Waiting for waypoint pod to become healthy", { namespace, waypointName });
     await waitForWaypointPodHealthy(namespace, waypointName);
 
-    const appSelector = pkg.spec?.sso?.find(
-      s => s.enableAuthserviceSelector,
-    )?.enableAuthserviceSelector;
+    // Get all SSO clients with enableAuthserviceSelector
+    const ssoClients = pkg.spec?.sso?.filter(s => s.enableAuthserviceSelector) || [];
 
-    if (appSelector) {
-      log.info("Generating waypoint network policies", { namespace, waypointName });
-      await generateWaypointNetworkPolicies(pkg, waypointName, appSelector);
+    // Find the SSO client that matches this waypoint
+    const ssoClient = ssoClients.find(sso => {
+      const clientWaypointName = sso.clientId ? getWaypointName(sso.clientId) : null;
+      return clientWaypointName === waypointName;
+    });
 
-      log.info("Generating waypoint authorization policies", { namespace, waypointName });
-      await generateWaypointAuthPolicies(pkg, waypointName, appSelector);
+    if (ssoClient?.enableAuthserviceSelector) {
+      log.info("Generating waypoint network policies", {
+        namespace,
+        waypointName,
+        clientId: ssoClient.clientId,
+        appSelector: ssoClient.enableAuthserviceSelector,
+      });
+
+      await generateWaypointNetworkPolicies(pkg, waypointName, ssoClient.enableAuthserviceSelector);
+
+      log.info("Generating waypoint authorization policies", {
+        namespace,
+        waypointName,
+        clientId: ssoClient.clientId,
+      });
+
+      await generateWaypointAuthPolicies(pkg, waypointName, ssoClient.enableAuthserviceSelector);
+    } else {
+      log.warn("No matching SSO client found for waypoint", {
+        waypointName,
+        ssoClients: ssoClients.map(s => s.clientId),
+      });
     }
 
     log.info("Successfully set up ambient waypoint", { namespace, package: name, waypointName });
@@ -87,12 +108,14 @@ export async function setupAmbientWaypoint(pkg: UDSPackage, waypointId: string):
  * @param waypointId - The ID for the waypoint
  * @returns Promise resolving to the waypoint name
  */
-export async function createWaypointGateway(pkg: UDSPackage, waypointId: string) {
+export async function createWaypointGateway(
+  pkg: UDSPackage,
+  waypointName: string,
+  waypointId: string,
+) {
   const { namespace, name } = pkg.metadata || {};
   if (!namespace || !name) throw new Error("Package metadata is missing namespace or name");
 
-  // Get the waypoint name using the utility function
-  const waypointName = getWaypointName(waypointId);
   log.info(`Creating waypoint gateway for package: ${namespace}/${name}`, {
     waypointName,
     waypointId,
@@ -108,9 +131,9 @@ export async function createWaypointGateway(pkg: UDSPackage, waypointId: string)
         log.info(`Waypoint gateway ${waypointName} already exists in namespace ${namespace}`);
         return waypointName;
       }
-    } catch (e) {
+    } catch {
       // Gateway doesn't exist, which is expected
-      log.info(`Waypoint gateway ${waypointName} does not exist yet, creating it`, e.message);
+      log.info(`Waypoint gateway ${waypointName} does not exist yet, creating it`);
     }
 
     const gateway = new K8sGateway();
@@ -153,16 +176,6 @@ export async function createWaypointGateway(pkg: UDSPackage, waypointId: string)
         errorType: typeof applyError,
         errorDetails: applyError,
       });
-
-      // Try to get more information about what went wrong
-      try {
-        const gatewayClass = await K8s(a.CustomResourceDefinition).Get(
-          "gatewayclasses.gateway.networking.k8s.io",
-        );
-        log.info("GatewayClass CRD exists", { exists: !!gatewayClass });
-      } catch (crdError) {
-        log.error("Error checking GatewayClass CRD", { error: crdError });
-      }
 
       throw new Error(
         `Failed to create waypoint gateway: ${applyError instanceof Error ? applyError.message : String(applyError)}`,
@@ -360,17 +373,27 @@ export async function reconcileService(svc: a.Service): Promise<void> {
   const pkg = PackageStore.getPackageByNamespace(namespace);
   if (!pkg || pkg.spec?.network?.serviceMesh?.mode !== Mode.Ambient) return;
 
-  const waypointName = pkg.metadata?.name && getWaypointName(pkg.metadata.name);
-  const selector = pkg.spec?.sso?.find(s => s.enableAuthserviceSelector)?.enableAuthserviceSelector;
+  // Find the SSO client that matches this service's selector
+  const matchingSso = pkg.spec?.sso?.find(sso => {
+    if (!sso.enableAuthserviceSelector) return false;
+    return serviceMatchesSelector(svc, sso.enableAuthserviceSelector);
+  });
 
-  if (waypointName && selector && serviceMatchesSelector(svc, selector)) {
-    svc.metadata.labels = {
-      ...svc.metadata.labels,
-      [ISTIO_WAYPOINT_LABEL]: waypointName,
-      "istio.io/ingress-use-waypoint": "true",
-    };
-    return;
-  }
+  if (!matchingSso?.clientId) return;
+
+  const waypointName = getWaypointName(matchingSso.clientId);
+
+  svc.metadata.labels = {
+    ...svc.metadata.labels,
+    [ISTIO_WAYPOINT_LABEL]: waypointName,
+    "istio.io/ingress-use-waypoint": "true",
+  };
+
+  log.info(`Added waypoint labels to service ${svc.metadata?.name}`, {
+    namespace,
+    waypointName,
+    clientId: matchingSso.clientId,
+  });
 }
 
 /**
@@ -384,14 +407,25 @@ export async function reconcilePod(pod: a.Pod): Promise<void> {
   const pkg = PackageStore.getPackageByNamespace(namespace);
   if (!pkg || pkg.spec?.network?.serviceMesh?.mode !== Mode.Ambient) return;
 
-  const waypointName = pkg.metadata?.name && getWaypointName(pkg.metadata.name);
-  const selector = pkg.spec?.sso?.find(s => s.enableAuthserviceSelector)?.enableAuthserviceSelector;
+  // Find the SSO client that matches this pod's labels
+  const matchingSso = pkg.spec?.sso?.find(sso => {
+    if (!sso.enableAuthserviceSelector) return false;
+    return matchesLabels(pod.metadata?.labels || {}, sso.enableAuthserviceSelector);
+  });
 
-  if (waypointName && selector && matchesLabels(pod.metadata.labels, selector)) {
-    pod.metadata.labels = {
-      ...pod.metadata.labels,
-      [ISTIO_WAYPOINT_LABEL]: waypointName,
-    };
-    return;
-  }
+  if (!matchingSso?.clientId) return;
+
+  const waypointName = getWaypointName(matchingSso.clientId);
+
+  pod.metadata.labels = {
+    ...pod.metadata.labels,
+    [ISTIO_WAYPOINT_LABEL]: waypointName,
+  };
+
+  log.info(`Added waypoint labels to pod ${pod.metadata?.name}`, {
+    namespace,
+    waypointName,
+    clientId: matchingSso.clientId,
+    labels: pod.metadata.labels,
+  });
 }

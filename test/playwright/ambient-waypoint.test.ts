@@ -6,65 +6,97 @@
 import { expect, test } from "@playwright/test";
 import { domain } from "./uds.config";
 
-const url = `https://ambient-protected.${domain}`;
+const url_client_1 = `https://ambient-protected.${domain}`;
+const url_client_2 = `https://ambient2-protected.${domain}`;
 
-test("validate ambient waypoint authentication flow with saved session", async ({ page }) => {
-  // The auth.setup.ts will handle the authentication automatically because:
-  // 1. The test is marked with 'setup' dependency in playwright.config.ts
-  // 2. The storage state is automatically loaded from authFile
+test.describe("Ambient Waypoint Authentication", () => {
+  const clients = [
+    { name: "Client 1", url: url_client_1 },
+    { name: "Client 2", url: url_client_2 },
+  ];
 
-  // Navigate to the protected URL - should be automatically authenticated
-  await test.step("should load protected URL with saved session", async () => {
-    await page.goto(url);
+  for (const client of clients) {
+    test(`validate ${client.name} ambient waypoint authentication flow with saved session`, async ({
+      page,
+    }) => {
+      // Navigate to the protected URL - should be automatically authenticated
+      await test.step(`should load ${client.name} protected URL with saved session`, async () => {
+        // Navigate and wait for network to be idle
+        await page.goto(client.url, { waitUntil: "networkidle" });
 
-    // Verify we're on the protected page (not redirected to login)
-    await expect(page).toHaveURL(url, { timeout: 5000 });
+        // Wait for the page to be fully loaded
+        await page.waitForLoadState("domcontentloaded");
+        await page.waitForLoadState("networkidle");
 
-    // Verify the specific title element with text 'httpbin.org'
-    const titleElement = page.locator("h2.title");
-    await expect(titleElement).toContainText("httpbin.org");
-  });
+        // Check if we're on the expected page or if we got redirected to SSO
+        const currentUrl = page.url();
+        if (currentUrl.includes("sso.uds.dev")) {
+          // If we're on SSO, the auth might have failed
+          throw new Error(`Unexpected redirect to SSO login. Current URL: ${currentUrl}`);
+        }
+
+        // Verify we're on the protected page (not redirected to login)
+        await expect(page).toHaveURL(client.url, { timeout: 5000 });
+
+        // Wait for the title element to be visible
+        const titleElement = page.locator("h2.title");
+        await expect(titleElement).toBeVisible({ timeout: 10000 });
+        await expect(titleElement).toContainText("httpbin.org", { timeout: 5000 });
+      });
+    });
+  }
 });
 
-test("should redirect unauthenticated users to login", async ({ browser }) => {
-  // Create a new browser context without any stored authentication
-  const context = await browser.newContext({
-    storageState: undefined, // Ensures no saved auth state
-    permissions: [], // Clear any permissions that might bypass auth
-  });
+test.describe("Unauthenticated Access", () => {
+  const clients = [
+    { name: "Client 1", url: url_client_1 },
+    { name: "Client 2", url: url_client_2 },
+  ];
 
-  // Create a new page in this context
-  const page = await context.newPage();
+  for (const client of clients) {
+    test(`should redirect unauthenticated users to login for ${client.name}`, async ({
+      browser,
+    }) => {
+      // Create a new browser context without any stored authentication
+      const context = await browser.newContext({
+        storageState: undefined, // Ensures no saved auth state
+        permissions: [], // Clear any permissions that might bypass auth
+      });
 
-  try {
-    // Navigate to the protected URL - this should trigger the authentication flow
-    await page.goto(url);
+      // Create a new page in this context
+      const page = await context.newPage();
 
-    // Wait for navigation to complete and redirects to finish
-    await page.waitForLoadState("networkidle");
+      try {
+        // Navigate to the protected URL - this should trigger the authentication flow
+        await page.goto(client.url);
 
-    // Get the final URL after all redirects
-    const currentUrl = page.url();
+        // Wait for navigation to complete and redirects to finish
+        await page.waitForLoadState("networkidle");
 
-    // Check if we were redirected to the SSO login page
-    // The URL contains the SSO domain and OAuth2/OIDC parameters
-    const isSSOLoginPage =
-      currentUrl.includes("sso.uds.dev/realms/uds/protocol/openid-connect/auth") &&
-      currentUrl.includes("client_id=") &&
-      currentUrl.includes("response_type=code");
+        // Get the final URL after all redirects
+        const currentUrl = page.url();
 
-    expect(
-      isSSOLoginPage,
-      `Expected to be redirected to SSO login page, but was on ${currentUrl}`,
-    ).toBeTruthy();
+        // Check if we were redirected to the SSO login page
+        // The URL contains the SSO domain and OAuth2/OIDC parameters
+        const isSSOLoginPage =
+          currentUrl.includes("sso.uds.dev/realms/uds/protocol/openid-connect/auth") &&
+          currentUrl.includes("client_id=") &&
+          currentUrl.includes("response_type=code");
 
-    // Verify SSO login form elements are present
-    if (isSSOLoginPage) {
-      await expect(page.locator('input[name="username"]')).toBeVisible();
-      await expect(page.locator('input[name="password"]')).toBeVisible();
-    }
-  } finally {
-    // Clean up
-    await context.close();
+        expect(
+          isSSOLoginPage,
+          `Expected to be redirected to SSO login page, but was on ${currentUrl}`,
+        ).toBeTruthy();
+
+        // Verify SSO login form elements are present
+        if (isSSOLoginPage) {
+          await expect(page.locator('input[name="username"]')).toBeVisible();
+          await expect(page.locator('input[name="password"]')).toBeVisible();
+        }
+      } finally {
+        // Clean up
+        await context.close();
+      }
+    });
   }
 });

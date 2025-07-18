@@ -8,8 +8,8 @@ import { K8s, kind } from "pepr";
 import { UDSConfig } from "../../../config";
 import { Component, setupLogger } from "../../../logger";
 import { Allow, Direction, Gateway, RemoteGenerated, UDSPackage } from "../../crd";
-import { getPodSelector, getWaypointName, shouldUseAmbientWaypoint } from "../../utils/waypoint";
 import { IstioState } from "../istio/namespace";
+import { getPodSelector, getWaypointName, shouldUseAmbientWaypoint } from "../istio/waypoint-utils";
 import { getOwnerRef, purgeOrphans, sanitizeResourceName } from "../utils";
 import { allowEgressDNS } from "./defaults/allow-egress-dns";
 import { allowEgressIstiod } from "./defaults/allow-egress-istiod";
@@ -155,7 +155,7 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
       remoteNamespace: "keycloak",
       remoteSelector: { "app.kubernetes.io/name": "keycloak" },
       port: 8080,
-      description: `${sso.clientId} keycloak JWKS egress`,
+      description: `${sanitizeResourceName(sso.clientId)} keycloak JWKS egress`,
     };
 
     // Generate the policy
@@ -164,7 +164,7 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
 
     // Ambient mode: add waypoint-to-istiod egress policy for this client's waypoint
     if (shouldUseAmbientWaypoint(pkg)) {
-      const istiodPolicy = allowEgressIstiod(namespace);
+      const istiodPolicy = allowEgressIstiod(namespace, sso.clientId);
       istiodPolicy.spec!.podSelector = { matchLabels: netpolSelector };
       istiodPolicy.metadata = istiodPolicy.metadata || {};
       istiodPolicy.metadata.labels = {

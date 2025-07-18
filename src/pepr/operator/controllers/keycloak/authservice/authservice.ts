@@ -8,7 +8,7 @@ import { UDSConfig } from "../../../../config";
 import { Component, setupLogger } from "../../../../logger";
 import { UDSPackage } from "../../../crd";
 import { Mode } from "../../../crd/generated/package-v1alpha1";
-import { getWaypointName } from "../../../utils/waypoint";
+import { getWaypointName } from "../../istio/waypoint-utils";
 import { Client } from "../types";
 import { updatePolicy } from "./authorization-policy";
 import {
