@@ -3,23 +3,23 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
-import { afterEach, beforeEach, describe, expect, Mock, test, vi } from 'vitest';
-import * as yaml from 'yaml';
-import { getImagesAndCharts } from './getImagesAndCharts';
+import * as fs from "fs";
+import * as path from "path";
+import { afterEach, beforeEach, describe, expect, Mock, test, vi } from "vitest";
+import * as yaml from "yaml";
+import { getImagesAndCharts } from "./getImagesAndCharts";
 
 // Mock fs and path modules
-vi.mock('fs');
-vi.mock('path');
+vi.mock("fs");
+vi.mock("path");
 
-describe('getImagesAndCharts', () => {
+describe("getImagesAndCharts", () => {
   beforeEach(() => {
     // Clear all mocks
     vi.clearAllMocks();
 
     // Mock path.join to return predictable paths
-    (path.join as Mock).mockImplementation((...args) => args.join('/'));
+    (path.join as Mock).mockImplementation((...args) => args.join("/"));
 
     // Mock fs.existsSync to return false for extract dir
     (fs.existsSync as Mock).mockReturnValue(false);
@@ -28,26 +28,26 @@ describe('getImagesAndCharts', () => {
     (fs.mkdirSync as Mock).mockImplementation(() => undefined);
 
     // Mock fs.readdirSync for the main directory
-    (fs.readdirSync as Mock).mockImplementation((dir) => {
-      if (dir === 'test-dir') {
-        return ['zarf.yaml', 'common'];
+    (fs.readdirSync as Mock).mockImplementation(dir => {
+      if (dir === "test-dir") {
+        return ["zarf.yaml", "common"];
       }
-      if (dir === 'test-dir/common') {
-        return ['zarf.yaml'];
+      if (dir === "test-dir/common") {
+        return ["zarf.yaml"];
       }
       return [];
     });
 
     // Mock fs.statSync
-    (fs.statSync as Mock).mockImplementation((filePath) => ({
-      isDirectory: () => filePath.endsWith('common')
+    (fs.statSync as Mock).mockImplementation(filePath => ({
+      isDirectory: () => filePath.endsWith("common"),
     }));
 
     // Mock fs.writeFileSync
     (fs.writeFileSync as Mock).mockImplementation(() => undefined);
 
     // Mock console.error to prevent test output pollution
-    vi.spyOn(console, 'error').mockImplementation(() => { });
+    vi.spyOn(console, "error").mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -55,10 +55,10 @@ describe('getImagesAndCharts', () => {
     vi.restoreAllMocks();
   });
 
-  test('should extract charts and images from realistic zarf.yaml files', async () => {
+  test("should extract charts and images from realistic zarf.yaml files", async () => {
     // Mock real-world zarf.yaml files based on the grafana example
-    (fs.readFileSync as Mock).mockImplementation((filePath) => {
-      if (filePath === 'test-dir/zarf.yaml') {
+    (fs.readFileSync as Mock).mockImplementation(filePath => {
+      if (filePath === "test-dir/zarf.yaml") {
         return `
 kind: ZarfPackageConfig
 metadata:
@@ -120,7 +120,7 @@ components:
       - quay.io/rfcurated/k8s-sidecar:1.30.3-jammy-scratch-fips-rfcurated-rfhardened
 `;
       }
-      if (filePath === 'test-dir/common/zarf.yaml') {
+      if (filePath === "test-dir/common/zarf.yaml") {
         return `
 kind: ZarfPackageConfig
 metadata:
@@ -146,34 +146,34 @@ components:
           - ../values/values.yaml
 `;
       }
-      return '';
+      return "";
     });
 
-    await getImagesAndCharts('test-dir');
+    await getImagesAndCharts("test-dir");
 
     // Check if extract directory was created
-    expect(fs.mkdirSync).toHaveBeenCalledWith('test-dir/extract', { recursive: true });
+    expect(fs.mkdirSync).toHaveBeenCalledWith("test-dir/extract", { recursive: true });
 
     // Check if charts.yaml was written correctly
     expect(fs.writeFileSync).toHaveBeenCalledWith(
-      'test-dir/extract/charts.yaml',
-      expect.any(String)
+      "test-dir/extract/charts.yaml",
+      expect.any(String),
     );
 
     // Check if images.yaml was written correctly
     expect(fs.writeFileSync).toHaveBeenCalledWith(
-      'test-dir/extract/images.yaml',
-      expect.any(String)
+      "test-dir/extract/images.yaml",
+      expect.any(String),
     );
 
     // Get the actual content written to charts.yaml
     const chartsContent = (fs.writeFileSync as Mock).mock.calls.find(
-      call => call[0] === 'test-dir/extract/charts.yaml'
+      call => call[0] === "test-dir/extract/charts.yaml",
     )![1];
 
     // Get the actual content written to images.yaml
     const imagesContent = (fs.writeFileSync as Mock).mock.calls.find(
-      call => call[0] === 'test-dir/extract/images.yaml'
+      call => call[0] === "test-dir/extract/images.yaml",
     )![1];
 
     // Parse the YAML content
@@ -182,37 +182,37 @@ components:
 
     // Verify charts content - note that local charts are skipped
     expect(charts).toEqual({
-      'https://grafana.github.io/helm-charts/grafana': '8.11.0'
+      "https://grafana.github.io/helm-charts/grafana": "8.11.0",
     });
 
     // Verify images content - note that we expect normalized versions
     expect(images).toEqual({
-      '11.6.0': [
-        'docker.io/grafana/grafana:11.6.0',
-        'registry1.dso.mil/ironbank/opensource/grafana/grafana:11.6.0'
+      "11.6.0": [
+        "docker.io/grafana/grafana:11.6.0",
+        "registry1.dso.mil/ironbank/opensource/grafana/grafana:11.6.0",
       ],
-      '8.12.1': [
-        'docker.io/curlimages/curl:8.12.1',
-        'quay.io/rfcurated/curl:8.12.1-jammy-scratch-fips-rfcurated'
+      "8.12.1": [
+        "docker.io/curlimages/curl:8.12.1",
+        "quay.io/rfcurated/curl:8.12.1-jammy-scratch-fips-rfcurated",
       ],
-      '1.37.0': [
-        'docker.io/library/busybox:1.37.0',
-        'quay.io/rfcurated/busybox:1.37.0-glibc-rf.1-rfcurated'
+      "1.37.0": [
+        "docker.io/library/busybox:1.37.0",
+        "quay.io/rfcurated/busybox:1.37.0-glibc-rf.1-rfcurated",
       ],
-      '1.30.3': [
-        'ghcr.io/kiwigrid/k8s-sidecar:1.30.3',
-        'registry1.dso.mil/ironbank/kiwigrid/k8s-sidecar:1.30.3',
-        'quay.io/rfcurated/k8s-sidecar:1.30.3-jammy-scratch-fips-rfcurated-rfhardened'
+      "1.30.3": [
+        "ghcr.io/kiwigrid/k8s-sidecar:1.30.3",
+        "registry1.dso.mil/ironbank/kiwigrid/k8s-sidecar:1.30.3",
+        "quay.io/rfcurated/k8s-sidecar:1.30.3-jammy-scratch-fips-rfcurated-rfhardened",
       ],
-      '11.5.3': ['quay.io/rfcurated/grafana:11.5.3-jammy-scratch-fips-rfcurated'],
-      '9.5': ['registry1.dso.mil/ironbank/redhat/ubi/ubi9-minimal:9.5']
+      "11.5.3": ["quay.io/rfcurated/grafana:11.5.3-jammy-scratch-fips-rfcurated"],
+      "9.5": ["registry1.dso.mil/ironbank/redhat/ubi/ubi9-minimal:9.5"],
     });
   });
 
-  test('should handle multi-flavor images with same version but different image names', async () => {
+  test("should handle multi-flavor images with same version but different image names", async () => {
     // Mock zarf.yaml with different image names but same versions across flavors
-    (fs.readFileSync as Mock).mockImplementation((filePath) => {
-      if (filePath === 'test-dir/zarf.yaml') {
+    (fs.readFileSync as Mock).mockImplementation(filePath => {
+      if (filePath === "test-dir/zarf.yaml") {
         return `
 kind: ZarfPackageConfig
 metadata:
@@ -245,7 +245,7 @@ components:
       - quay.io/rfcurated/postgres:15.4.0-slim-jammy-fips-rfcurated-rfhardened
 `;
       }
-      if (filePath === 'test-dir/common/zarf.yaml') {
+      if (filePath === "test-dir/common/zarf.yaml") {
         return `
 kind: ZarfPackageConfig
 metadata:
@@ -256,14 +256,14 @@ metadata:
       required: true
 `;
       }
-      return '';
+      return "";
     });
 
-    await getImagesAndCharts('test-dir');
+    await getImagesAndCharts("test-dir");
 
     // Get the actual content written to images.yaml
     const imagesContent = (fs.writeFileSync as Mock).mock.calls.find(
-      call => call[0] === 'test-dir/extract/images.yaml'
+      call => call[0] === "test-dir/extract/images.yaml",
     )![1];
 
     // Parse the YAML content
@@ -271,35 +271,35 @@ metadata:
 
     // Verify images are correctly grouped by version across different flavors
     expect(images).toEqual({
-      '1.25.3': [
-        'docker.io/library/nginx:1.25.3',
-        'registry1.dso.mil/ironbank/opensource/nginx/nginx:1.25.3',
-        'quay.io/rfcurated/nginx:1.25.3-slim-jammy-fips-rfcurated-rfhardened'
+      "1.25.3": [
+        "docker.io/library/nginx:1.25.3",
+        "registry1.dso.mil/ironbank/opensource/nginx/nginx:1.25.3",
+        "quay.io/rfcurated/nginx:1.25.3-slim-jammy-fips-rfcurated-rfhardened",
       ],
-      '15.4.0': [
-        'docker.io/library/postgres:15.4.0',
-        'registry1.dso.mil/ironbank/opensource/postgres/postgresql:15.4.0',
-        'quay.io/rfcurated/postgres:15.4.0-slim-jammy-fips-rfcurated-rfhardened'
-      ]
+      "15.4.0": [
+        "docker.io/library/postgres:15.4.0",
+        "registry1.dso.mil/ironbank/opensource/postgres/postgresql:15.4.0",
+        "quay.io/rfcurated/postgres:15.4.0-slim-jammy-fips-rfcurated-rfhardened",
+      ],
     });
   });
 
-  test('should handle empty directory', async () => {
+  test("should handle empty directory", async () => {
     // Mock empty directory
     (fs.readdirSync as Mock).mockReturnValue([]);
 
-    await getImagesAndCharts('empty-dir');
+    await getImagesAndCharts("empty-dir");
 
     // Check if extract directory was created
-    expect(fs.mkdirSync).toHaveBeenCalledWith('empty-dir/extract', { recursive: true });
+    expect(fs.mkdirSync).toHaveBeenCalledWith("empty-dir/extract", { recursive: true });
 
     // Check if empty files were written
     const chartsContent = (fs.writeFileSync as Mock).mock.calls.find(
-      call => call[0] === 'empty-dir/extract/charts.yaml'
+      call => call[0] === "empty-dir/extract/charts.yaml",
     )![1];
 
     const imagesContent = (fs.writeFileSync as Mock).mock.calls.find(
-      call => call[0] === 'empty-dir/extract/images.yaml'
+      call => call[0] === "empty-dir/extract/images.yaml",
     )![1];
 
     // Parse the YAML content
@@ -311,27 +311,27 @@ metadata:
     expect(images).toEqual({});
   });
 
-  test('should handle invalid zarf.yaml file', async () => {
+  test("should handle invalid zarf.yaml file", async () => {
     // Mock invalid YAML content
-    (fs.readFileSync as Mock).mockImplementation((filePath) => {
-      if (filePath === 'test-dir/zarf.yaml') {
+    (fs.readFileSync as Mock).mockImplementation(filePath => {
+      if (filePath === "test-dir/zarf.yaml") {
         return `invalid: yaml: content: - [ }`;
       }
-      return '';
+      return "";
     });
 
-    await getImagesAndCharts('test-dir');
+    await getImagesAndCharts("test-dir");
 
     // Check if extract directory was created
-    expect(fs.mkdirSync).toHaveBeenCalledWith('test-dir/extract', { recursive: true });
+    expect(fs.mkdirSync).toHaveBeenCalledWith("test-dir/extract", { recursive: true });
 
     // Check if empty files were written
     const chartsContent = (fs.writeFileSync as Mock).mock.calls.find(
-      call => call[0] === 'test-dir/extract/charts.yaml'
+      call => call[0] === "test-dir/extract/charts.yaml",
     )![1];
 
     const imagesContent = (fs.writeFileSync as Mock).mock.calls.find(
-      call => call[0] === 'test-dir/extract/images.yaml'
+      call => call[0] === "test-dir/extract/images.yaml",
     )![1];
 
     // Parse the YAML content
@@ -343,10 +343,10 @@ metadata:
     expect(images).toEqual({});
   });
 
-  test('should handle images with beta/rc version tags', async () => {
+  test("should handle images with beta/rc version tags", async () => {
     // Mock YAML with images having beta/rc version tags
-    (fs.readFileSync as Mock).mockImplementation((filePath) => {
-      if (filePath === 'test-dir/zarf.yaml') {
+    (fs.readFileSync as Mock).mockImplementation(filePath => {
+      if (filePath === "test-dir/zarf.yaml") {
         return `
 kind: ZarfPackageConfig
 metadata:
@@ -360,7 +360,7 @@ components:
       - docker.io/library/postgres:15.2.0-beta.2
 `;
       }
-      if (filePath === 'test-dir/common/zarf.yaml') {
+      if (filePath === "test-dir/common/zarf.yaml") {
         return `
 kind: ZarfPackageConfig
 metadata:
@@ -371,14 +371,14 @@ metadata:
       required: true
 `;
       }
-      return '';
+      return "";
     });
 
-    await getImagesAndCharts('test-dir');
+    await getImagesAndCharts("test-dir");
 
     // Get the actual content written to images.yaml
     const imagesContent = (fs.writeFileSync as Mock).mock.calls.find(
-      call => call[0] === 'test-dir/extract/images.yaml'
+      call => call[0] === "test-dir/extract/images.yaml",
     )![1];
 
     // Parse the YAML content
@@ -386,11 +386,11 @@ metadata:
 
     // Verify beta/rc versions are normalized correctly
     expect(images).toEqual({
-      '15.2.0': [
-        'registry1.dso.mil/ironbank/postgres:15.2.0',
-        'quay.io/rfcurated/postgres:15.2.0-slim-jammy-fips-rfcurated-rfhardened',
-        'docker.io/library/postgres:15.2.0-beta.2'
-      ]
+      "15.2.0": [
+        "registry1.dso.mil/ironbank/postgres:15.2.0",
+        "quay.io/rfcurated/postgres:15.2.0-slim-jammy-fips-rfcurated-rfhardened",
+        "docker.io/library/postgres:15.2.0-beta.2",
+      ],
     });
   });
 });

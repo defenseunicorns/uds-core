@@ -22,6 +22,7 @@ spec:
      title: "Istio CNI exemptions"
      description: "Exemptions necessary for Istio CNI to manage network configurations and ensure proper traffic routing"
    - policies:
+       - RestrictIstioUser # ztunnel requires user 1337
        - DisallowPrivileged # ztunnel runs with allowPrivilegeEscalation
        - RequireNonRootUser # ztunnel requires root
        - RestrictVolumeTypes # ztunnel uses 'hostPath' volume type

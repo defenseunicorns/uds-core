@@ -25,6 +25,7 @@
         "packages/standard/zarf.yaml",
         "bundles/k3d-slim-dev/uds-bundle.yaml",
         "bundles/k3d-standard/uds-bundle.yaml",
+        "bundles/base-shim/uds-bundle.yaml",
         ".github/bundles/rke2/uds-bundle.yaml",
         ".github/bundles/eks/uds-bundle.yaml",
         ".github/bundles/aks/uds-bundle.yaml",

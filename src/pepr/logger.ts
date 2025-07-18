@@ -18,6 +18,7 @@ export enum Component {
   OPERATOR_MONITORING = "operator.monitoring",
   OPERATOR_NETWORK = "operator.network",
   OPERATOR_PACKAGES = "operator.packages",
+  OPERATOR_SECRETS = "operator.secrets",
   OPERATOR_GENERATORS = "operator.generators",
   OPERATOR_CRD = "operator.crd",
   OPERATOR_RECONCILERS = "operator.reconcilers",

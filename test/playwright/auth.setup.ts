@@ -20,9 +20,7 @@ setup("authenticate", async ({ page, context }) => {
 
   // ensure auth cookies were set
   const cookies = await context.cookies();
-  const keycloakCookie = cookies.find(
-    (cookie) => cookie.name === "KEYCLOAK_SESSION",
-  );
+  const keycloakCookie = cookies.find(cookie => cookie.name === "KEYCLOAK_SESSION");
 
   expect(keycloakCookie).toBeDefined();
   expect(keycloakCookie?.value).not.toBe("");

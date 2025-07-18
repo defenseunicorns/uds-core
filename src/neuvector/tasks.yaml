@@ -7,6 +7,12 @@ includes:
 tasks:
   - name: validate
     actions:
+      - description: Wait for NeuVector Job Completion
+        cmd: |
+          # On upgrades there may be cert rotation jobs or other jobs that run
+          if ./uds zarf tools kubectl get jobs -n neuvector --no-headers 2>/dev/null | grep -q .; then
+            ./uds zarf tools kubectl wait --for=condition=complete job --all -n neuvector --timeout=5m
+          fi
       - description: Validate NeuVector Controller
         wait:
           cluster:
@@ -34,13 +40,6 @@ tasks:
             protocol: https
             address: neuvector.admin.uds.dev
             code: 200
-      - description: Trigger updater job and wait for all job completion
-        cmd: |
-          kubectl create job --from=cronjob/neuvector-updater-pod updater -n neuvector
-          if ./uds zarf tools kubectl get jobs -n neuvector --no-headers 2>/dev/null | grep -q .; then
-            ./uds zarf tools kubectl wait --for=condition=complete job --all -n neuvector --timeout=5m
-          fi
-      # Wait after job completion since updater job cycles scanners
       - description: Validate NeuVector Scanner
         wait:
           cluster:
@@ -64,3 +63,9 @@ tasks:
             npx playwright test neuvector.test.ts \
             "
         dir: test/playwright
+      - description: Trigger updater job and wait for all job completion
+        cmd: |
+          kubectl create job --from=cronjob/neuvector-updater-pod updater -n neuvector
+          if ./uds zarf tools kubectl get jobs -n neuvector --no-headers 2>/dev/null | grep -q .; then
+            ./uds zarf tools kubectl wait --for=condition=complete job --all -n neuvector --timeout=5m
+          fi

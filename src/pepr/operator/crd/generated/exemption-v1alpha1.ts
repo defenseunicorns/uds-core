@@ -60,6 +60,7 @@ export enum Policy {
   RestrictExternalNames = "RestrictExternalNames",
   RestrictHostPathWrite = "RestrictHostPathWrite",
   RestrictHostPorts = "RestrictHostPorts",
+  RestrictIstioUser = "RestrictIstioUser",
   RestrictProcMount = "RestrictProcMount",
   RestrictSELinuxType = "RestrictSELinuxType",
   RestrictSeccomp = "RestrictSeccomp",

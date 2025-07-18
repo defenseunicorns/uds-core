@@ -43,6 +43,10 @@ packages:
     overrides:
       pepr-uds-core:
         module:
+          values:
+            - path: additionalIgnoredNamespaces
+              value:
+                - uds-dev-stack
           variables:
             - name: PEPR_WATCHER_MEMORY_REQUEST
               description: "Memory requests for the pepr watcher pod"

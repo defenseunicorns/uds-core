@@ -16,6 +16,17 @@ When a new UDS Package CR with the `sso` configuration gets deployed, the UDS Op
 
 The UDS Operator uses a dedicated Client in Keycloak. In some cases, the Client Secret needs to be rotated. In order to do so, you need to manually modify the `keycloak-client-secrets` Kubernetes Secret in the `keycloak` namespace and delete the `uds-operator` key. The UDS Operator will automatically re-create it.
 
+## Secret Pod Reload for SSO Clients
+
+When SSO client secrets are updated or rotated, applications using these secrets may need to be restarted to pick up the new values. UDS Core provides a Secret Pod Reload mechanism that detects changes to secrets and restarts the relevant pods or deployments.
+
+To enable this functionality for SSO client secrets, you can add the `uds.dev/pod-reload: "true"` label to the secret via the `secretLabels` field in your Package CR. When a secret with this label is updated, UDS Core will either:
+
+1. Restart pods matching the selector specified in the `uds.dev/pod-reload-selector` annotation (which can be added via the `secretAnnotations` field), or
+2. Automatically discover and restart pods that are consuming the secret through volume mounts, environment variables, or projected volumes
+
+For more details on configuring Secret Pod Reload, see the [Secret Pod Reload documentation](/reference/deployment/secret-pod-reload) or the [Secret Templating documentation](/reference/configuration/single-sign-on/sso-templating#secret-pod-reload).
+
 ## User Groups
 
 UDS Core deploys Keycloak which has some preconfigured groups that applications inherit from SSO and IDP configurations. More details might be found in the [Package CR](/reference/configuration/custom-resources/packages-v1alpha1-cr/#groups) spec.

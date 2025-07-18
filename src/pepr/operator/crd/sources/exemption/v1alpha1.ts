@@ -49,6 +49,7 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
                         "RestrictExternalNames",
                         "RestrictHostPathWrite",
                         "RestrictHostPorts",
+                        "RestrictIstioUser",
                         "RestrictProcMount",
                         "RestrictSeccomp",
                         "RestrictSELinuxType",

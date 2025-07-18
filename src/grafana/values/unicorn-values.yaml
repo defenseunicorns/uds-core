@@ -21,4 +21,4 @@ sidecar:
   image:
     registry: quay.io
     repository: rfcurated/k8s-sidecar
-    tag: 1.30.6-jammy-scratch-fips-rfcurated-rfhardened
+    tag: 1.30.7-jammy-scratch-fips-rfcurated-rfhardened

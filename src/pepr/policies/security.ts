@@ -5,7 +5,7 @@
 
 import { a, sdk } from "pepr";
 
-import { V1SecurityContext } from "@kubernetes/client-node";
+import { V1PodSecurityContext } from "@kubernetes/client-node";
 import { Policy } from "../operator/crd";
 import {
   When,
@@ -16,6 +16,58 @@ import {
 import { exemptionAnnotationPrefix, isExempt, markExemption } from "./exemptions";
 
 const { containers } = sdk;
+
+/**
+ * This policy restricts the use of the Istio proxy user/group (1337) to only be used by Istio proxy containers.
+ * It allows specific Istio components (waypoints, ztunnel, and sidecars) to use these IDs.
+ * This prevents unauthorized pods from running with elevated privileges that could be used to bypass security controls.
+ */
+When(a.Pod)
+  .IsCreatedOrUpdated()
+  .Mutate(markExemption(Policy.RestrictIstioUser))
+  .Validate(request => {
+    if (isExempt(request, Policy.RestrictIstioUser)) {
+      return request.Approve();
+    }
+
+    const pod = request.Raw.spec!;
+    const podSecurityCtx = pod.securityContext || ({} as V1PodSecurityContext);
+
+    // Check pod-level security context for UID/GID 1337
+    if (
+      podSecurityCtx.runAsUser === 1337 ||
+      podSecurityCtx.runAsGroup === 1337 ||
+      podSecurityCtx.fsGroup === 1337 ||
+      podSecurityCtx.supplementalGroups?.includes(1337)
+    ) {
+      return request.Deny(
+        "Pods cannot use UID/GID 1337 (Istio proxy) unless they are trusted Istio components",
+      );
+    }
+
+    // Check container security contexts
+    for (const container of containers(request)) {
+      const containerCtx = container.securityContext || {};
+
+      // Check if this is an Istio proxy container
+      const isIstioProxy =
+        container.name === "istio-proxy" &&
+        container.ports?.some(p => p.name === "http-envoy-prom") &&
+        container.args?.some(arg => arg.includes("proxy"));
+
+      // Only check UID/GID 1337 if this is not an Istio proxy container
+      if (!isIstioProxy) {
+        if (containerCtx.runAsUser === 1337 || containerCtx.runAsGroup === 1337) {
+          return request.Deny(
+            `Container '${container.name}' cannot use UID/GID 1337 (Istio proxy) as it is not a trusted Istio component`,
+          );
+        }
+      }
+    }
+
+    return request.Approve();
+  });
+
 /**
  * This policy ensures that Pods do not allow privilege escalation.
  *
@@ -141,12 +193,13 @@ When(a.Pod)
     if (isExempt(request, Policy.RequireNonRootUser)) {
       return request.Approve();
     }
-    // Check if running as root by checking if runAsNonRoot is false or runAsUser is 0
-    const isRoot = (ctx: Partial<V1SecurityContext>) => {
+    // Check if running as root by checking if runAsNonRoot is false, runAsUser is 0, or has root-level supplemental groups
+    const isRoot = (ctx: Partial<V1PodSecurityContext>) => {
       const isRunAsRoot = ctx.runAsNonRoot === false;
       const isRunAsRootUser = ctx.runAsUser === 0;
+      const hasRootSupplementalGroups = ctx.supplementalGroups?.includes(0);
 
-      return isRunAsRoot || isRunAsRootUser;
+      return isRunAsRoot || isRunAsRootUser || hasRootSupplementalGroups;
     };
 
     // Check pod securityContext
@@ -161,8 +214,8 @@ When(a.Pod)
     if (violations.length) {
       return request.Deny(
         securityContextMessage(
-          "Unauthorized container securityContext. Containers must not run as root",
-          ["runAsNonRoot = true", "runAsUser > 0"],
+          "Unauthorized container securityContext. Containers must not run as root or have root-level supplemental groups",
+          ["runAsNonRoot = true", "runAsUser > 0", "supplementalGroups must not include 0"],
           violations,
         ),
       );
@@ -270,7 +323,7 @@ When(a.Pod)
     if (seLinuxOptions?.user || seLinuxOptions?.role) {
       return request.Deny(
         securityContextMessage(`Unauthorized pod SELinux Options`, authorized, [
-          { ctx: request.Raw.spec?.securityContext as V1SecurityContext },
+          { ctx: request.Raw.spec?.securityContext as V1PodSecurityContext },
         ]),
       );
     }
@@ -313,7 +366,7 @@ When(a.Pod)
     if (!authorized.includes(podSeLinuxType)) {
       return request.Deny(
         securityContextMessage("Unauthorized pod SELinux type", authorized, [
-          { ctx: request.Raw.spec?.securityContext as V1SecurityContext },
+          { ctx: request.Raw.spec?.securityContext as V1PodSecurityContext },
         ]),
       );
     }

@@ -204,3 +204,8 @@ runs:
       run: |
         echo "PR is waiting on image updates or only contains a helm chart update. Failing job."
         exit 1
+
+    - name: Cleanup extract folders
+      if: always()
+      shell: bash
+      run: rm -rf $GITHUB_WORKSPACE/old $GITHUB_WORKSPACE/new
