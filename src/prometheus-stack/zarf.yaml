@@ -32,11 +32,11 @@ components:
     images:
       - "quay.io/prometheus/node-exporter:v1.9.1"
       - "quay.io/prometheus-operator/prometheus-operator:v0.83.0"
-      - "registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.15.0"
+      - "registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.16.0"
       - "quay.io/prometheus/alertmanager:v0.28.1"
       - "quay.io/prometheus-operator/prometheus-config-reloader:v0.83.0"
-      - "quay.io/prometheus/prometheus:v3.4.1"
-      - "registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.5.4"
+      - "quay.io/prometheus/prometheus:v3.4.2"
+      - "registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.6.0"
 
   - name: kube-prometheus-stack
     required: true
@@ -52,11 +52,11 @@ components:
     images:
       - "registry1.dso.mil/ironbank/opensource/prometheus/node-exporter:v1.9.1"
       - "registry1.dso.mil/ironbank/opensource/prometheus-operator/prometheus-operator:v0.83.0"
-      - "registry1.dso.mil/ironbank/opensource/kubernetes/kube-state-metrics:v2.15.0"
+      - "registry1.dso.mil/ironbank/opensource/kubernetes/kube-state-metrics:v2.16.0"
       - "registry1.dso.mil/ironbank/opensource/prometheus/alertmanager:v0.28.1"
       - "registry1.dso.mil/ironbank/opensource/prometheus-operator/prometheus-config-reloader:v0.83.0"
-      - "registry1.dso.mil/ironbank/opensource/prometheus/prometheus:v3.4.1"
-      - "registry1.dso.mil/ironbank/opensource/ingress-nginx/kube-webhook-certgen:v1.5.4"
+      - "registry1.dso.mil/ironbank/opensource/prometheus/prometheus:v3.4.2"
+      - "registry1.dso.mil/ironbank/opensource/ingress-nginx/kube-webhook-certgen:v1.6.0"
 
   - name: kube-prometheus-stack
     required: true
@@ -72,8 +72,8 @@ components:
     images:
       - "quay.io/rfcurated/prometheus/node-exporter:1.9.1-jammy-scratch-fips-rfcurated"
       - "quay.io/rfcurated/prometheus-operator:0.83.0-jammy-scratch-fips-rfcurated"
-      - "quay.io/rfcurated/kube-state-metrics:2.15.0-jammy-scratch-fips-rfcurated-rfhardened"
+      - "quay.io/rfcurated/kube-state-metrics:2.16.0-jammy-scratch-fips-rfcurated-rfhardened"
       - "quay.io/rfcurated/prometheus/alertmanager:0.28.1-jammy-fips-rfcurated-rfhardened"
       - "quay.io/rfcurated/prometheus-operator/prometheus-config-reloader:0.83.0-jammy-scratch-fips-rfcurated"
-      - "quay.io/rfcurated/prometheus:3.4.1-jammy-fips-rfcurated-rfhardened"
-      - "quay.io/rfcurated/ingress-nginx/kube-webhook-certgen:1.5.4-jammy-fips-rfcurated-rfhardened"
+      - "quay.io/rfcurated/prometheus:3.4.2-jammy-fips-rfcurated-rfhardened"
+      - "quay.io/rfcurated/ingress-nginx/kube-webhook-certgen:1.6.0-jammy-fips-rfcurated-rfhardened"
