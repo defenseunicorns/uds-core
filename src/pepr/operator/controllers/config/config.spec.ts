@@ -114,26 +114,18 @@ describe("initial config load", () => {
   it("throws error because no config", async () => {
     mockClusterConfGet.mockResolvedValue(undefined);
 
-    try {
-      await loadUDSConfig();
-    } catch (e) {
-      expect(e.message).toBe("No ClusterConfig found");
-    }
+    const mockError = new Error("Error while fetching cluster config");
+
+    await expect(loadUDSConfig()).rejects.toThrowError(mockError);
   });
 
-  it("does not throw error because no config secret", async () => {
+  it("throws error because no config secret", async () => {
     mockClusterConfGet.mockResolvedValue(mockCfg);
     mockSecretGet.mockResolvedValue(undefined);
 
-    await loadUDSConfig();
+    const mockError = new Error("Error while fetching operator config secret");
 
-    expect(UDSConfig.caCert).toBe(btoa("mock-ca-cert"));
-    expect(UDSConfig.kubeApiCIDR).toBe("mock-cidr");
-    expect(UDSConfig.kubeNodeCIDRs).toStrictEqual(["mock-node-cidrs"]);
-    expect(UDSConfig.domain).toBe("mock-domain");
-    expect(UDSConfig.adminDomain).toBe("mock-admin-domain");
-    expect(UDSConfig.allowAllNSExemptions).toBe(true);
-    expect(UDSConfig.authserviceRedisUri).toBe("");
+    await expect(loadUDSConfig()).rejects.toThrowError(mockError);
   });
 
   it("validates config and bubbles error", async () => {
