@@ -79,19 +79,131 @@ Create the service DNS name.
 Check external PostgreSQL connection information. Fails when required values are missing or if PostgreSQL is configured when devMode is enabled.
 */}}
 
+{{/* Main PostgreSQL configuration validation function */}}
 {{- define "keycloak.postgresql.config" -}}
 {{- if not .Values.devMode -}}
 {{- if .Values.postgresql -}}
-{{ $requiredKeys := list "username" "password" "database" "host" "port" }}
-{{- range $k := $requiredKeys -}}
-{{ if empty (get $.Values.postgresql $k) }}{{- fail (printf "Missing value for \"postgresql.%s\"." $k ) -}}{{- end }}
-{{- end }}
+{{- $requiredKeys := list "username" "password" "database" "host" "port" -}}
+
+{{- if eq (include "keycloak.postgresql.usingExistingSecrets" .) "true" -}}
+  {{- /* Validate secretRef configuration only */ -}}
+  {{- range $k := $requiredKeys -}}
+    {{- if empty (get $.Values.postgresql.secretRef $k) -}}{{- fail (printf "Missing secretRef configuration for \"postgresql.%s\"." $k ) -}}{{- end -}}
+    {{- $secretRefConfig := get $.Values.postgresql.secretRef $k -}}
+    {{- if empty $secretRefConfig.name -}}{{- fail (printf "Missing 'name' in secretRef for \"postgresql.%s\"." $k ) -}}{{- end -}}
+    {{- if empty $secretRefConfig.key -}}{{- fail (printf "Missing 'key' in secretRef for \"postgresql.%s\"." $k ) -}}{{- end -}}
+  {{- end -}}
+{{- else -}}
+  {{- /* Validate direct values only */ -}}
+  {{- range $k := $requiredKeys -}}
+    {{- if empty (get $.Values.postgresql $k) -}}{{- fail (printf "Missing value for \"postgresql.%s\"." $k ) -}}{{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- true -}}
 {{- else -}}{{fail "You must define \"username\", \"password\", \"database\", \"host\", and \"port\" for \"postgresql\"."}}
 {{- end -}}
-{{- default "true" "" }}
 {{- else if not (empty (compact (values (omit .Values.postgresql "port" "internal")))) -}}
 {{ fail "Cannot use an external PostgreSQL Database when devMode is enabled." -}}
 {{- else -}}
-{{ default "false" "" }}
-{{- end }}
-{{- end }}
+{{- false -}}
+{{- end -}}
+{{- end -}}
+
+{{/* Helper to determine if we're using existing secrets via secretRef */}}
+{{- define "keycloak.postgresql.usingExistingSecrets" -}}
+{{- if and .Values.postgresql.secretRef (not (empty (compact (values .Values.postgresql.secretRef)))) -}}
+true
+{{- else -}}
+false
+{{- end -}}
+{{- end -}}
+
+{{/* Get the secret name for PostgreSQL username. */}}
+{{- define "keycloak.postgresql.username.secretName" -}}
+{{- if eq (include "keycloak.postgresql.usingExistingSecrets" .) "true" -}}
+{{- .Values.postgresql.secretRef.username.name -}}
+{{- else -}}
+{{- include "keycloak.fullname" . }}-postgresql
+{{- end -}}
+{{- end -}}
+
+{{/* Get the secret key for PostgreSQL username. */}}
+{{- define "keycloak.postgresql.username.secretKey" -}}
+{{- if eq (include "keycloak.postgresql.usingExistingSecrets" .) "true" -}}
+{{- .Values.postgresql.secretRef.username.key -}}
+{{- else -}}
+{{- "username" -}}
+{{- end -}}
+{{- end -}}
+
+{{/* Get the secret name for PostgreSQL password. */}}
+{{- define "keycloak.postgresql.password.secretName" -}}
+{{- if eq (include "keycloak.postgresql.usingExistingSecrets" .) "true" -}}
+{{- .Values.postgresql.secretRef.password.name -}}
+{{- else -}}
+{{- include "keycloak.fullname" . }}-postgresql
+{{- end -}}
+{{- end -}}
+
+{{/* Get the secret key for PostgreSQL password. */}}
+{{- define "keycloak.postgresql.password.secretKey" -}}
+{{- if eq (include "keycloak.postgresql.usingExistingSecrets" .) "true" -}}
+{{- .Values.postgresql.secretRef.password.key -}}
+{{- else -}}
+{{- "password" -}}
+{{- end -}}
+{{- end -}}
+
+{{/* Get the secret name for PostgreSQL database. */}}
+{{- define "keycloak.postgresql.database.secretName" -}}
+{{- if eq (include "keycloak.postgresql.usingExistingSecrets" .) "true" -}}
+{{- .Values.postgresql.secretRef.database.name -}}
+{{- else -}}
+{{- include "keycloak.fullname" . }}-postgresql
+{{- end -}}
+{{- end -}}
+
+{{/* Get the secret key for PostgreSQL database. */}}
+{{- define "keycloak.postgresql.database.secretKey" -}}
+{{- if eq (include "keycloak.postgresql.usingExistingSecrets" .) "true" -}}
+{{- .Values.postgresql.secretRef.database.key -}}
+{{- else -}}
+{{- "database" -}}
+{{- end -}}
+{{- end -}}
+
+{{/* Get the secret name for PostgreSQL host. */}}
+{{- define "keycloak.postgresql.host.secretName" -}}
+{{- if eq (include "keycloak.postgresql.usingExistingSecrets" .) "true" -}}
+{{- .Values.postgresql.secretRef.host.name -}}
+{{- else -}}
+{{- include "keycloak.fullname" . }}-postgresql
+{{- end -}}
+{{- end -}}
+
+{{/* Get the secret key for PostgreSQL host. */}}
+{{- define "keycloak.postgresql.host.secretKey" -}}
+{{- if eq (include "keycloak.postgresql.usingExistingSecrets" .) "true" -}}
+{{- .Values.postgresql.secretRef.host.key -}}
+{{- else -}}
+{{- "host" -}}
+{{- end -}}
+{{- end -}}
+
+{{/* Get the secret name for PostgreSQL port. */}}
+{{- define "keycloak.postgresql.port.secretName" -}}
+{{- if eq (include "keycloak.postgresql.usingExistingSecrets" .) "true" -}}
+{{- .Values.postgresql.secretRef.port.name -}}
+{{- else -}}
+{{- include "keycloak.fullname" . }}-postgresql
+{{- end -}}
+{{- end -}}
+
+{{/* Get the secret key for PostgreSQL port. */}}
+{{- define "keycloak.postgresql.port.secretKey" -}}
+{{- if eq (include "keycloak.postgresql.usingExistingSecrets" .) "true" -}}
+{{- .Values.postgresql.secretRef.port.key -}}
+{{- else -}}
+{{- "port" -}}
+{{- end -}}
+{{- end -}}
