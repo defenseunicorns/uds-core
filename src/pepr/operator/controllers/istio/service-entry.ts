@@ -116,7 +116,7 @@ export function generateLocalEgressServiceEntry(
   const name = generateLocalEgressSEName(pkgName, portProtocol, host);
 
   // Update the ports array
-  const portsArray: IstioPort[] = portProtocol.map(pp => ({
+  const ports: IstioPort[] = portProtocol.map(pp => ({
     name: `${pp.protocol.toLowerCase()}-${pp.port.toString()}`,
     number: pp.port,
     protocol: pp.protocol,
@@ -137,7 +137,7 @@ export function generateLocalEgressServiceEntry(
       hosts: [host],
       location: IstioLocation.MeshExternal,
       resolution: IstioResolution.DNS,
-      ports: portsArray,
+      ports,
       exportTo: ["."],
     },
   };

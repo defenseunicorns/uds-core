@@ -11,16 +11,17 @@ import {
   createHostResourceMap,
   egressRequestedFromNetwork,
   getHostPortsProtocol,
-  inMemoryAmbientPackages,
+  inMemoryAmbientPackageMap,
   inMemoryPackageMap,
   lastReconciliationPackages,
   performEgressReconciliation,
   performEgressReconciliationWithMutex,
   reconcileSharedEgressResources,
-  removeEgressResources,
-  updateInMemoryPackageList,
+  removeMapResources,
+  updateInMemoryAmbientPackageMap,
   updateInMemoryPackageMap,
   updateLastReconciliationPackages,
+  validatePortProtocolConflicts,
   validateProtocolConflicts,
 } from "./egress";
 import { IstioState } from "./namespace";
@@ -112,7 +113,9 @@ describe("test reconcileSharedEgressResources", () => {
     for (const key in inMemoryPackageMap) {
       delete inMemoryPackageMap[key];
     }
-    inMemoryAmbientPackages.clear();
+    for (const key in inMemoryAmbientPackageMap) {
+      delete inMemoryAmbientPackageMap[key];
+    }
 
     (purgeOrphans as Mock).mockImplementation(mockPurgeOrphans);
   });
@@ -136,8 +139,8 @@ describe("test reconcileSharedEgressResources", () => {
     // Validate inMemoryPackageMap
     expect(inMemoryPackageMap).toEqual({ "test-package-test-namespace": hostResourceMapMock });
 
-    // Validate inMemoryAmbientPackages
-    expect(inMemoryAmbientPackages).toEqual(new Set());
+    // Validate inMemoryAmbientPackageMap
+    expect(inMemoryAmbientPackageMap).toEqual({});
   });
 
   it("should populate in-memory vars on action AddOrUpdate, ambient", async () => {
@@ -153,8 +156,10 @@ describe("test reconcileSharedEgressResources", () => {
     // Validate inMemoryPackageMap
     expect(inMemoryPackageMap).toEqual({});
 
-    // Validate inMemoryAmbientPackages
-    expect(inMemoryAmbientPackages).toEqual(new Set([packageIdMock]));
+    // Validate inMemoryAmbientPackageMap
+    expect(inMemoryAmbientPackageMap).toEqual({
+      "test-package-test-namespace": hostResourceMapMock,
+    });
   });
 
   it("should update in-memory vars on action AddOrUpdate, sidecar to ambient", async () => {
@@ -170,8 +175,8 @@ describe("test reconcileSharedEgressResources", () => {
     // Validate inMemoryPackageMap is populated
     expect(inMemoryPackageMap).toEqual({ "test-package-test-namespace": hostResourceMapMock });
 
-    // Validate inMemoryAmbientPackages is still empty
-    expect(inMemoryAmbientPackages).toEqual(new Set());
+    // Validate inMemoryAmbientPackageMap is still empty
+    expect(inMemoryAmbientPackageMap).toEqual({});
 
     // Update to ambient
     await reconcileSharedEgressResources(
@@ -184,8 +189,10 @@ describe("test reconcileSharedEgressResources", () => {
     // Validate inMemoryPackageMap now empty
     expect(inMemoryPackageMap).toEqual({});
 
-    // Validate inMemoryAmbientPackages is populated
-    expect(inMemoryAmbientPackages).toEqual(new Set([packageIdMock]));
+    // Validate inMemoryAmbientPackageMap is populated
+    expect(inMemoryAmbientPackageMap).toEqual({
+      "test-package-test-namespace": hostResourceMapMock,
+    });
   });
 
   it("should update in-memory vars on action AddOrUpdate, ambient to sidecar", async () => {
@@ -201,8 +208,10 @@ describe("test reconcileSharedEgressResources", () => {
     // Validate inMemoryPackageMap is empty
     expect(inMemoryPackageMap).toEqual({});
 
-    // Validate inMemoryAmbientPackages is populated
-    expect(inMemoryAmbientPackages).toEqual(new Set([packageIdMock]));
+    // Validate inMemoryAmbientPackageMap is populated
+    expect(inMemoryAmbientPackageMap).toEqual({
+      "test-package-test-namespace": hostResourceMapMock,
+    });
 
     await reconcileSharedEgressResources(
       hostResourceMapMock,
@@ -214,8 +223,8 @@ describe("test reconcileSharedEgressResources", () => {
     // Validate inMemoryPackageMap is populated
     expect(inMemoryPackageMap).toEqual({ "test-package-test-namespace": hostResourceMapMock });
 
-    // Validate inMemoryAmbientPackages is now empty
-    expect(inMemoryAmbientPackages).toEqual(new Set());
+    // Validate inMemoryAmbientPackageMap is now empty
+    expect(inMemoryAmbientPackageMap).toEqual({});
   });
 
   it("should update in-memory vars on action Remove, sidecar", async () => {
@@ -232,8 +241,8 @@ describe("test reconcileSharedEgressResources", () => {
     // Validate inMemoryPackageMap is populated
     expect(inMemoryPackageMap).toEqual({ "test-package-test-namespace": hostResourceMapMock });
 
-    // Validate inMemoryAmbientPackages is still empty
-    expect(inMemoryAmbientPackages).toEqual(new Set());
+    // Validate inMemoryAmbientPackageMap is empty
+    expect(inMemoryAmbientPackageMap).toEqual({});
 
     // Remove packageIdMock
     await reconcileSharedEgressResources(
@@ -246,8 +255,8 @@ describe("test reconcileSharedEgressResources", () => {
     // Validate inMemoryPackageMap is now empty
     expect(inMemoryPackageMap).toEqual({});
 
-    // Validate inMemoryAmbientPackages is still empty
-    expect(inMemoryAmbientPackages).toEqual(new Set());
+    // Validate inMemoryAmbientPackageMap is still empty
+    expect(inMemoryAmbientPackageMap).toEqual({});
   });
 
   it("should update in-memory vars on action Remove, ambient", async () => {
@@ -264,8 +273,10 @@ describe("test reconcileSharedEgressResources", () => {
     // Validate inMemoryPackageMap is still empty
     expect(inMemoryPackageMap).toEqual({});
 
-    // Validate inMemoryAmbientPackages is populated
-    expect(inMemoryAmbientPackages).toEqual(new Set([packageIdMock]));
+    // Validate inMemoryAmbientPackageMap is populated
+    expect(inMemoryAmbientPackageMap).toEqual({
+      "test-package-test-namespace": hostResourceMapMock,
+    });
 
     // Remove packageIdMock
     await reconcileSharedEgressResources(
@@ -279,7 +290,7 @@ describe("test reconcileSharedEgressResources", () => {
     expect(inMemoryPackageMap).toEqual({});
 
     // Validate inMemoryAmbientPackages is now empty
-    expect(inMemoryAmbientPackages).toEqual(new Set());
+    expect(inMemoryAmbientPackageMap).toEqual({});
   });
 });
 
@@ -399,7 +410,9 @@ describe("test performEgressReconciliation", () => {
     for (const key in inMemoryPackageMap) {
       delete inMemoryPackageMap[key];
     }
-    inMemoryAmbientPackages.clear();
+    for (const key in inMemoryAmbientPackageMap) {
+      delete inMemoryAmbientPackageMap[key];
+    }
 
     (purgeOrphans as Mock).mockImplementation(mockPurgeOrphans);
     (applySidecarEgressResources as Mock).mockImplementation(mockApplySidecarEgressResources);
@@ -522,18 +535,12 @@ describe("test updateInMemoryPackageMap", () => {
   });
 
   it("should handle normal update scenario", async () => {
-    const hostResourceMap: HostResourceMap = {
-      "example.com": {
-        portProtocol: [{ port: 443, protocol: RemoteProtocol.TLS }],
-      },
-    };
-
     // This test verifies the normal update mechanism works correctly
     await expect(
-      updateInMemoryPackageMap(hostResourceMap, "package1", PackageAction.AddOrUpdate),
+      updateInMemoryPackageMap(hostResourceMapMockTls, "package1", PackageAction.AddOrUpdate),
     ).resolves.not.toThrow();
 
-    expect(inMemoryPackageMap["package1"]).toEqual(hostResourceMap);
+    expect(inMemoryPackageMap["package1"]).toEqual(hostResourceMapMockTls);
   });
 
   it("should resolve concurrent updates correctly", async () => {
@@ -661,161 +668,181 @@ describe("test updateInMemoryPackageMap", () => {
   });
 });
 
-describe("test updateInMemoryPackageList", () => {
+describe("test updateInMemoryAmbientPackageMap", () => {
+  const hostResourceMapMockTls: HostResourceMap = {
+    "example.com": {
+      portProtocol: [{ port: 443, protocol: RemoteProtocol.TLS }],
+    },
+  };
+  const hostResourceMapMockTls2: HostResourceMap = {
+    "httpbin.org": {
+      portProtocol: [{ port: 443, protocol: RemoteProtocol.TLS }],
+    },
+  };
+  const hostResourceMapMockHttp: HostResourceMap = {
+    "example.com": {
+      portProtocol: [{ port: 80, protocol: RemoteProtocol.HTTP }],
+    },
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
-    // Reset the list before each test
-    inMemoryAmbientPackages.clear();
+    // Reset the map before each test
+    for (const key in inMemoryAmbientPackageMap) {
+      delete inMemoryAmbientPackageMap[key];
+    }
   });
 
-  it("should update list correctly on AddOrUpdate", async () => {
-    await updateInMemoryPackageList("test-package-1", PackageAction.AddOrUpdate);
-    expect(inMemoryAmbientPackages).toEqual(new Set(["test-package-1"]));
+  it("should handle normal update scenario", async () => {
+    // This test verifies the normal update mechanism works correctly
+    await expect(
+      updateInMemoryAmbientPackageMap(
+        hostResourceMapMockTls,
+        "package1",
+        PackageAction.AddOrUpdate,
+      ),
+    ).resolves.not.toThrow();
+
+    expect(inMemoryAmbientPackageMap["package1"]).toEqual(hostResourceMapMockTls);
   });
 
-  it("should update list correctly on AddOrUpdate if pkg exists", async () => {
-    await updateInMemoryPackageList("test-package-1", PackageAction.AddOrUpdate);
-    expect(inMemoryAmbientPackages).toEqual(new Set(["test-package-1"]));
-
-    await updateInMemoryPackageList("test-package-1", PackageAction.AddOrUpdate);
-    expect(inMemoryAmbientPackages).toEqual(new Set(["test-package-1"]));
-  });
-
-  it("should update list correctly on Remove", async () => {
-    await updateInMemoryPackageList("test-package-1", PackageAction.AddOrUpdate);
-    await updateInMemoryPackageList("test-package-2", PackageAction.AddOrUpdate);
-    expect(inMemoryAmbientPackages).toEqual(new Set(["test-package-1", "test-package-2"]));
-
-    await updateInMemoryPackageList("test-package-1", PackageAction.Remove);
-    expect(inMemoryAmbientPackages).toEqual(new Set(["test-package-2"]));
-  });
-
-  it("should handle concurrent requests with race conditions", async () => {
-    // This test simulates real concurrent requests by introducing delays
-    // and ensuring operations start before others complete
-
-    const operationTimes: number[] = [];
-
-    // Create promises that start immediately but have different execution patterns
-    const promises = [
-      // Fast operation
-      (async () => {
-        await updateInMemoryPackageList("fast-package", PackageAction.AddOrUpdate);
-        operationTimes.push(Date.now());
-        return "fast-package";
-      })(),
-
-      // Slow operation that should be queued
-      (async () => {
-        // Simulate some async work before the update
-        await new Promise(resolve => setTimeout(resolve, 10));
-        await updateInMemoryPackageList("slow-package", PackageAction.AddOrUpdate);
-        operationTimes.push(Date.now());
-        return "slow-package";
-      })(),
-
-      // Another fast operation that should be queued behind the slow one
-      (async () => {
-        await updateInMemoryPackageList("queued-package", PackageAction.AddOrUpdate);
-        operationTimes.push(Date.now());
-        return "queued-package";
-      })(),
-
-      // Mixed operation with remove action
-      (async () => {
-        await new Promise(resolve => setTimeout(resolve, 5));
-        await updateInMemoryPackageList("temp-package", PackageAction.AddOrUpdate);
-        await updateInMemoryPackageList("temp-package", PackageAction.Remove);
-        operationTimes.push(Date.now());
-        return "temp-package";
-      })(),
+  it("should resolve concurrent updates correctly", async () => {
+    // Mock packages
+    const mockUpdates = [
+      {
+        pkgId: "test-package-test-namespace1",
+        hostResourceMap: hostResourceMapMockTls,
+        action: PackageAction.AddOrUpdate,
+      },
+      {
+        pkgId: "test-package-test-namespace2",
+        hostResourceMap: hostResourceMapMockTls2,
+        action: PackageAction.AddOrUpdate,
+      },
+      {
+        pkgId: "test-package-test-namespace3",
+        hostResourceMap: hostResourceMapMockTls,
+        action: PackageAction.AddOrUpdate,
+      },
+      {
+        pkgId: "test-package-test-namespace4",
+        hostResourceMap: hostResourceMapMockTls2,
+        action: PackageAction.AddOrUpdate,
+      },
     ];
 
-    // Start all operations concurrently
+    // Create an array of promises for each update
+    const promises = mockUpdates.map(
+      ({ pkgId, hostResourceMap, action }) =>
+        new Promise<void>((resolve, reject) => {
+          setTimeout(async () => {
+            try {
+              await updateInMemoryAmbientPackageMap(hostResourceMap, pkgId, action);
+              resolve();
+            } catch (error) {
+              reject(error);
+            }
+          }, 0);
+        }),
+    );
+
+    // Wait for all updates to complete
     await Promise.all(promises);
 
-    // Validate final state - temp-package should be removed
-    expect(inMemoryAmbientPackages).toContain("fast-package");
-    expect(inMemoryAmbientPackages).toContain("slow-package");
-    expect(inMemoryAmbientPackages).toContain("queued-package");
-    expect(inMemoryAmbientPackages).not.toContain("temp-package");
+    // Validate inMemoryAmbientPackageMap
+    expect(inMemoryAmbientPackageMap).toEqual({
+      "test-package-test-namespace1": hostResourceMapMockTls,
+      "test-package-test-namespace2": hostResourceMapMockTls2,
+      "test-package-test-namespace3": hostResourceMapMockTls,
+      "test-package-test-namespace4": hostResourceMapMockTls2,
+    });
 
-    // Verify that lock/unlock operations occurred multiple times
-    const lockCalls = (log.debug as Mock).mock.calls.filter(call =>
-      call[0]?.includes("Locking ambient package list for update"),
+    // Check that the lock was set and released
+    expect(log.debug).toHaveBeenCalledWith(
+      expect.stringContaining("Locking ambient package map for update"),
     );
-    const unlockCalls = (log.debug as Mock).mock.calls.filter(call =>
-      call[0]?.includes("Unlocking ambient package map for update"),
+    expect(log.debug).toHaveBeenCalledWith(
+      expect.stringContaining("Unlocking ambient package map for update"),
     );
-
-    // Should have at least 5 lock/unlock pairs (4 adds + 1 remove)
-    expect(lockCalls.length).toBeGreaterThanOrEqual(5);
-    expect(unlockCalls.length).toBeGreaterThanOrEqual(5);
-    expect(lockCalls.length).toEqual(unlockCalls.length);
-
-    // Verify no errors occurred during concurrent operations
     expect(log.error).not.toHaveBeenCalled();
   });
 
-  it("should demonstrate lock queue mechanism with blocking operations", async () => {
-    // This test verifies that the lock queue properly serializes operations
-    // by creating a scenario where operations must wait for each other
-
-    const executionOrder: string[] = [];
-
-    // Create a long-running operation that will hold the lock
-    const longRunningOperation = (async () => {
-      executionOrder.push("long-start");
-      await updateInMemoryPackageList("long-package", PackageAction.AddOrUpdate);
-      // Simulate additional work while holding the lock conceptually
-      await new Promise(resolve => setTimeout(resolve, 20));
-      executionOrder.push("long-end");
-      return "long-package";
-    })();
-
-    // Create operations that should be queued
-    const queuedOperations = [
-      (async () => {
-        // Small delay to ensure this starts after the long operation
-        await new Promise(resolve => setTimeout(resolve, 5));
-        executionOrder.push("queued1-start");
-        await updateInMemoryPackageList("queued1-package", PackageAction.AddOrUpdate);
-        executionOrder.push("queued1-end");
-        return "queued1-package";
-      })(),
-
-      (async () => {
-        // Small delay to ensure this starts after the long operation
-        await new Promise(resolve => setTimeout(resolve, 8));
-        executionOrder.push("queued2-start");
-        await updateInMemoryPackageList("queued2-package", PackageAction.AddOrUpdate);
-        executionOrder.push("queued2-end");
-        return "queued2-package";
-      })(),
-    ];
-
-    // Wait for all operations to complete
-    await Promise.all([longRunningOperation, ...queuedOperations]);
-
-    // Verify all packages were added
-    expect(inMemoryAmbientPackages).toContain("long-package");
-    expect(inMemoryAmbientPackages).toContain("queued1-package");
-    expect(inMemoryAmbientPackages).toContain("queued2-package");
-
-    // Verify that operations were properly serialized
-    // The long operation should start first, and queued operations should start after
-    expect(executionOrder[0]).toBe("long-start");
-    expect(executionOrder).toContain("queued1-start");
-    expect(executionOrder).toContain("queued2-start");
-
-    // Verify multiple lock/unlock cycles occurred
-    const lockCalls = (log.debug as Mock).mock.calls.filter(call =>
-      call[0]?.includes("Locking ambient package list for update"),
+  it("should return error if port/protocol conflict exists", async () => {
+    // Populate with example.com:443
+    await updateInMemoryAmbientPackageMap(
+      hostResourceMapMockTls,
+      "package1",
+      PackageAction.AddOrUpdate,
     );
-    expect(lockCalls.length).toBeGreaterThanOrEqual(3);
 
-    // Verify no errors occurred
-    expect(log.error).not.toHaveBeenCalled();
+    // Try and add example.com:80
+    await expect(
+      updateInMemoryAmbientPackageMap(
+        hostResourceMapMockHttp,
+        "package2",
+        PackageAction.AddOrUpdate,
+      ),
+    ).rejects.toThrow(
+      'Port/Protocol conflict detected for example.com. Package "package1" is using different port/protocol combination for the same host.',
+    );
+
+    // Verify the first package is still in the map and the conflicting one was not added
+    expect(inMemoryAmbientPackageMap).toEqual({
+      package1: hostResourceMapMockTls,
+    });
+  });
+
+  it("should handle undefined hostResourceMap correctly", async () => {
+    await updateInMemoryPackageMap(undefined, "package1", PackageAction.AddOrUpdate);
+    expect(inMemoryPackageMap).toEqual({});
+  });
+
+  it("should remove package correctly on action on AddOrUpdate", async () => {
+    await updateInMemoryAmbientPackageMap(
+      hostResourceMapMockTls,
+      "package-1",
+      PackageAction.AddOrUpdate,
+    );
+    await updateInMemoryAmbientPackageMap(
+      hostResourceMapMockTls,
+      "package-2",
+      PackageAction.AddOrUpdate,
+    );
+    expect(inMemoryAmbientPackageMap).toEqual({
+      "package-1": hostResourceMapMockTls,
+      "package-2": hostResourceMapMockTls,
+    });
+
+    await updateInMemoryAmbientPackageMap(undefined, "package-1", PackageAction.AddOrUpdate);
+    expect(inMemoryAmbientPackageMap).toEqual({
+      "package-2": hostResourceMapMockTls,
+    });
+  });
+
+  it("should remove package correctly on action on Remove", async () => {
+    await updateInMemoryAmbientPackageMap(
+      hostResourceMapMockTls,
+      "package-1",
+      PackageAction.AddOrUpdate,
+    );
+    await updateInMemoryAmbientPackageMap(
+      hostResourceMapMockTls,
+      "package-2",
+      PackageAction.AddOrUpdate,
+    );
+    expect(inMemoryAmbientPackageMap).toEqual({
+      "package-1": hostResourceMapMockTls,
+      "package-2": hostResourceMapMockTls,
+    });
+
+    await updateInMemoryAmbientPackageMap(
+      hostResourceMapMockTls,
+      "package-1",
+      PackageAction.Remove,
+    );
+    expect(inMemoryAmbientPackageMap).toEqual({
+      "package-2": hostResourceMapMockTls,
+    });
   });
 });
 
@@ -832,7 +859,9 @@ describe("test updateLastReconciliationPackages", () => {
     for (const key in inMemoryPackageMap) {
       delete inMemoryPackageMap[key];
     }
-    inMemoryAmbientPackages.clear();
+    for (const key in inMemoryAmbientPackageMap) {
+      delete inMemoryAmbientPackageMap[key];
+    }
     lastReconciliationPackages.clear();
   });
 
@@ -843,7 +872,11 @@ describe("test updateLastReconciliationPackages", () => {
       "test-package-1",
       PackageAction.AddOrUpdate,
     );
-    await updateInMemoryPackageList("test-package-2", PackageAction.AddOrUpdate);
+    await updateInMemoryAmbientPackageMap(
+      hostResourceMapMock,
+      "test-package-2",
+      PackageAction.AddOrUpdate,
+    );
 
     // Validate lastReconciliationPackages
     updateLastReconciliationPackages();
@@ -852,8 +885,16 @@ describe("test updateLastReconciliationPackages", () => {
 
   it("should update lastReconciliationPackages correctly for empty set", async () => {
     // Update in-memory vars
-    await updateInMemoryPackageList("test-package-1", PackageAction.AddOrUpdate);
-    await updateInMemoryPackageList("test-package-2", PackageAction.AddOrUpdate);
+    await updateInMemoryAmbientPackageMap(
+      hostResourceMapMock,
+      "test-package-1",
+      PackageAction.AddOrUpdate,
+    );
+    await updateInMemoryAmbientPackageMap(
+      hostResourceMapMock,
+      "test-package-2",
+      PackageAction.AddOrUpdate,
+    );
 
     // Validate lastReconciliationPackages
     updateLastReconciliationPackages();
@@ -1242,7 +1283,196 @@ describe("test validateProtocolConflicts", () => {
   });
 });
 
-describe("test removeEgressResources", () => {
+describe("test validatePortConflicts", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("should return correct results when no conflicts exist", () => {
+    const currentPackageMap: PackageHostMap = {
+      package1: {
+        "example.com": {
+          portProtocol: [{ port: 443, protocol: RemoteProtocol.TLS }],
+        },
+      },
+    };
+
+    const newHostResourceMap: HostResourceMap = {
+      "httpbin.org": {
+        portProtocol: [{ port: 80, protocol: RemoteProtocol.HTTP }],
+      },
+    };
+
+    const newPackageMap = validatePortProtocolConflicts(
+      currentPackageMap,
+      newHostResourceMap,
+      "package2",
+    );
+
+    expect(newPackageMap).toEqual(newHostResourceMap);
+  });
+
+  it("should return correct results when updating the same package", () => {
+    const currentPackageMap: PackageHostMap = {
+      package1: {
+        "example.com": {
+          portProtocol: [{ port: 443, protocol: RemoteProtocol.TLS }],
+        },
+      },
+    };
+
+    const newHostResourceMap: HostResourceMap = {
+      "example.com": {
+        portProtocol: [{ port: 80, protocol: RemoteProtocol.TLS }],
+      },
+    };
+
+    const newPackageMap = validatePortProtocolConflicts(
+      currentPackageMap,
+      newHostResourceMap,
+      "package1",
+    );
+
+    expect(newPackageMap).toEqual(newHostResourceMap);
+  });
+
+  it("should throw error when port conflict exists", () => {
+    const currentPackageMap: PackageHostMap = {
+      package1: {
+        "example.com": {
+          portProtocol: [{ port: 443, protocol: RemoteProtocol.TLS }],
+        },
+      },
+    };
+
+    const newHostResourceMap: HostResourceMap = {
+      "example.com": {
+        portProtocol: [{ port: 80, protocol: RemoteProtocol.TLS }],
+      },
+    };
+
+    expect(() => {
+      validatePortProtocolConflicts(currentPackageMap, newHostResourceMap, "package2");
+    }).toThrow(
+      'Port/Protocol conflict detected for example.com. Package "package1" is using different port/protocol combination for the same host.',
+    );
+  });
+
+  it("should throw an error when a protocol confict exists", () => {
+    const currentPackageMap: PackageHostMap = {
+      package1: {
+        "example.com": {
+          portProtocol: [{ port: 443, protocol: RemoteProtocol.TLS }],
+        },
+      },
+    };
+
+    const newHostResourceMap: HostResourceMap = {
+      "example.com": {
+        portProtocol: [{ port: 443, protocol: RemoteProtocol.HTTP }],
+      },
+    };
+
+    expect(() => {
+      validatePortProtocolConflicts(currentPackageMap, newHostResourceMap, "package2");
+    }).toThrow(
+      'Port/Protocol conflict detected for example.com. Package "package1" is using different port/protocol combination for the same host.',
+    );
+  });
+
+  it("should return superset of port/protocols", () => {
+    const currentPackageMap: PackageHostMap = {
+      package1: {
+        "example.com": {
+          portProtocol: [
+            { port: 443, protocol: RemoteProtocol.TLS },
+            { port: 80, protocol: RemoteProtocol.HTTP },
+          ],
+        },
+      },
+    };
+
+    const newHostResourceMap: HostResourceMap = {
+      "example.com": {
+        portProtocol: [{ port: 80, protocol: RemoteProtocol.HTTP }],
+      },
+    };
+
+    const newPackageMap = validatePortProtocolConflicts(
+      currentPackageMap,
+      newHostResourceMap,
+      "package2",
+    );
+
+    expect(newPackageMap).toEqual({
+      "example.com": {
+        portProtocol: [
+          { port: 443, protocol: RemoteProtocol.TLS },
+          { port: 80, protocol: RemoteProtocol.HTTP },
+        ],
+      },
+    });
+  });
+
+  // todo: multiple packages exist that use the port/protocol
+  it("should return expected output when multiple packages/multiple hosts", () => {
+    const currentPackageMap: PackageHostMap = {
+      package1: {
+        "example.com": {
+          portProtocol: [
+            { port: 443, protocol: RemoteProtocol.TLS },
+            { port: 80, protocol: RemoteProtocol.HTTP },
+          ],
+        },
+      },
+      package2: {
+        "httpbin.org": {
+          portProtocol: [
+            { port: 443, protocol: RemoteProtocol.TLS },
+            { port: 80, protocol: RemoteProtocol.HTTP },
+          ],
+        },
+      },
+      package3: {
+        "github.com": {
+          portProtocol: [{ port: 443, protocol: RemoteProtocol.TLS }],
+        },
+      },
+    };
+
+    const newHostResourceMap: HostResourceMap = {
+      "httpbin.org": {
+        portProtocol: [{ port: 80, protocol: RemoteProtocol.HTTP }],
+      },
+      "example.com": {
+        portProtocol: [{ port: 443, protocol: RemoteProtocol.TLS }],
+      },
+    };
+
+    const newPackageMap = validatePortProtocolConflicts(
+      currentPackageMap,
+      newHostResourceMap,
+      "package4",
+    );
+
+    expect(newPackageMap).toEqual({
+      "httpbin.org": {
+        portProtocol: [
+          { port: 443, protocol: RemoteProtocol.TLS },
+          { port: 80, protocol: RemoteProtocol.HTTP },
+        ],
+      },
+      "example.com": {
+        portProtocol: [
+          { port: 443, protocol: RemoteProtocol.TLS },
+          { port: 80, protocol: RemoteProtocol.HTTP },
+        ],
+      },
+    });
+  });
+});
+
+describe("test removeMapResources", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Reset the map before each test
@@ -1263,7 +1493,7 @@ describe("test removeEgressResources", () => {
     expect(inMemoryPackageMap).toHaveProperty("test-package");
 
     // Remove the package
-    removeEgressResources("test-package");
+    removeMapResources(inMemoryPackageMap, "test-package");
 
     // Verify it's removed
     expect(inMemoryPackageMap).not.toHaveProperty("test-package");
@@ -1272,7 +1502,7 @@ describe("test removeEgressResources", () => {
 
   it("should handle removal of non-existent package gracefully", () => {
     // Try to remove a package that doesn't exist
-    removeEgressResources("non-existent-package");
+    removeMapResources(inMemoryPackageMap, "non-existent-package");
 
     // Should not throw and map should remain empty
     expect(inMemoryPackageMap).toEqual({});
@@ -1296,7 +1526,7 @@ describe("test removeEgressResources", () => {
     inMemoryPackageMap["package2"] = hostResourceMap2;
 
     // Remove only one package
-    removeEgressResources("package1");
+    removeMapResources(inMemoryPackageMap, "package1");
 
     // Verify only the specified package is removed
     expect(inMemoryPackageMap).not.toHaveProperty("package1");

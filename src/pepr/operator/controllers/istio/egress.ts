@@ -27,7 +27,7 @@ let lock = false;
 let lockQueue: (() => void)[] = [];
 
 // Cache for in-memory ambient egress resources from package CRs
-export const inMemoryAmbientPackages: Set<string> = new Set();
+export const inMemoryAmbientPackageMap: PackageHostMap = {};
 let ambientLock = false;
 // eslint-disable-next-line prefer-const
 let ambientLockQueue: (() => void)[] = [];
@@ -56,13 +56,13 @@ export async function reconcileSharedEgressResources(
     await updateInMemoryPackageMap(hostResourceMap, pkgId, PackageAction.Remove);
 
     // Update ambient package list
-    await updateInMemoryPackageList(pkgId, action);
+    await updateInMemoryAmbientPackageMap(hostResourceMap, pkgId, action);
   } else {
     // Update sidecar map
     await updateInMemoryPackageMap(hostResourceMap, pkgId, action);
 
     // Remove from ambient list (handles ambient -> sidecar transition)
-    await updateInMemoryPackageList(pkgId, PackageAction.Remove);
+    await updateInMemoryAmbientPackageMap(hostResourceMap, pkgId, PackageAction.Remove);
   }
 
   // Reconcile both modes to ensure proper cleanup and application
@@ -135,7 +135,8 @@ export async function performEgressReconciliation() {
       ambientGeneration++;
 
       // Apply ambient egress resources (waypoint)
-      await applyAmbientEgressResources(inMemoryAmbientPackages, ambientGeneration);
+      const packageSet = new Set(Object.keys(inMemoryAmbientPackageMap));
+      await applyAmbientEgressResources(packageSet, ambientGeneration);
 
       // Purge any orphaned ambient resources (waypoint)
       await purgeAmbientEgressResources(ambientGeneration.toString());
@@ -177,10 +178,10 @@ export async function updateInMemoryPackageMap(
         // update inMemoryPackageMap
         inMemoryPackageMap[pkgId] = hostResourceMap;
       } else {
-        removeEgressResources(pkgId);
+        removeMapResources(inMemoryPackageMap, pkgId);
       }
     } else if (action == PackageAction.Remove) {
-      removeEgressResources(pkgId);
+      removeMapResources(inMemoryPackageMap, pkgId);
     }
   } catch (e) {
     log.error("Failed to update in memory egress package map for event", action, e);
@@ -197,7 +198,11 @@ export async function updateInMemoryPackageMap(
 }
 
 // Update the inMemoryAmbientPackages list with the latest package
-export async function updateInMemoryPackageList(pkgId: string, action: PackageAction) {
+export async function updateInMemoryAmbientPackageMap(
+  hostResourceMap: HostResourceMap | undefined,
+  pkgId: string,
+  action: PackageAction,
+) {
   // Wait for lock to be available using a promise-based queue
   if (ambientLock) {
     await new Promise<void>(resolve => {
@@ -206,16 +211,28 @@ export async function updateInMemoryPackageList(pkgId: string, action: PackageAc
   }
 
   try {
-    log.debug("Locking ambient package list for update");
+    log.debug("Locking ambient package map for update");
     ambientLock = true;
 
     if (action == PackageAction.AddOrUpdate) {
-      inMemoryAmbientPackages.add(pkgId);
+      if (hostResourceMap) {
+        // Validate for port conflicts before updating
+        const newPackageMap = validatePortProtocolConflicts(
+          inMemoryAmbientPackageMap,
+          hostResourceMap,
+          pkgId,
+        );
+
+        // Set newly calculated package map if no port conflicts
+        inMemoryAmbientPackageMap[pkgId] = newPackageMap;
+      } else {
+        removeMapResources(inMemoryAmbientPackageMap, pkgId);
+      }
     } else if (action == PackageAction.Remove) {
-      inMemoryAmbientPackages.delete(pkgId);
+      removeMapResources(inMemoryAmbientPackageMap, pkgId);
     }
   } catch (e) {
-    log.error("Failed to update in memory ambient package list for event", action, e);
+    log.error("Failed to update in memory ambient package map for event", action, e);
     throw e;
   } finally {
     // unlock inMemoryAmbientPackages and notify next waiter
@@ -232,7 +249,7 @@ export async function updateInMemoryPackageList(pkgId: string, action: PackageAc
 export function updateLastReconciliationPackages() {
   lastReconciliationPackages = new Set([
     ...Object.keys(inMemoryPackageMap),
-    ...inMemoryAmbientPackages,
+    ...Object.keys(inMemoryAmbientPackageMap),
   ]);
   return lastReconciliationPackages;
 }
@@ -280,6 +297,49 @@ export function validateProtocolConflicts(
       }
     }
   }
+}
+
+// Validate that there are no port/protocol conflicts across packages for the same host
+export function validatePortProtocolConflicts(
+  currentPackageMap: PackageHostMap,
+  newHostResourceMap: HostResourceMap,
+  newPkgId: string,
+): HostResourceMap {
+  // Default to returning the new host resource map
+  const calculatedPackageMap = newHostResourceMap;
+
+  for (const [pkgId, hostResourceMap] of Object.entries(currentPackageMap)) {
+    // Skip the package being updated since it will be replaced
+    if (pkgId === newPkgId) {
+      continue;
+    }
+
+    for (const [host, hostResource] of Object.entries(hostResourceMap)) {
+      const portProtocolList = hostResource.portProtocol.map(pp => `${pp.port}-${pp.protocol}`);
+      for (const [newHost, newHostResource] of Object.entries(newHostResourceMap)) {
+        if (host === newHost) {
+          // If the host is defined in both maps, validate port/protocols don't conflict
+          const newPortProtocolList = newHostResource.portProtocol.map(
+            pp => `${pp.port}-${pp.protocol}`,
+          );
+
+          // Ensure all newPortProtocolList items are in portProtocolList
+          if (!newPortProtocolList.every(pp => portProtocolList.includes(pp))) {
+            const errorMsg =
+              `Port/Protocol conflict detected for ${host}. ` +
+              `Package "${pkgId}" is using different port/protocol combination for the same host.`;
+            log.error(errorMsg);
+            throw new Error(errorMsg);
+          }
+
+          // Copy portProtocols from hostResource -> newHostResource to ensure it's the superset
+          calculatedPackageMap[newHost].portProtocol = hostResource.portProtocol;
+        }
+      }
+    }
+  }
+
+  return calculatedPackageMap;
 }
 
 // Create a host resource map from a UDSPackage
@@ -348,12 +408,12 @@ export function getHostPortsProtocol(allow: Allow) {
   return hostPortsProtocol;
 }
 
-// Remove egress resources for a package
-export function removeEgressResources(pkgId: string) {
-  if (inMemoryPackageMap[pkgId]) {
-    delete inMemoryPackageMap[pkgId];
+// Remove resources from a given package map
+export function removeMapResources(packageMap: PackageHostMap, pkgId: string) {
+  if (packageMap[pkgId]) {
+    delete packageMap[pkgId];
   } else {
-    log.debug("No egress resources found for package", pkgId);
+    log.debug("No resources found for package", pkgId);
   }
 }
 
