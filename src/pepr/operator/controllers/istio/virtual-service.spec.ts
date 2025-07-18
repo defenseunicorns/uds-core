@@ -7,7 +7,7 @@ import { K8s } from "pepr";
 import { afterEach, beforeEach, describe, expect, it, Mock, vi } from "vitest";
 import { UDSConfig } from "../../../config";
 import { Expose, Gateway, IstioVirtualService, RemoteProtocol } from "../../crd";
-import { istioEgressGatewayNamespace } from "./istio-resources";
+import { sidecarEgressNamespace, sharedEgressPkgId } from "./egress-sidecar";
 import { EgressResource } from "./types";
 import {
   generateEgressVirtualService,
@@ -187,10 +187,10 @@ describe("test generate egress virtual service", () => {
 
     expect(virtualService).toBeDefined();
     expect(virtualService.metadata?.name).toEqual("egress-vs-example-com");
-    expect(virtualService.metadata?.namespace).toEqual("istio-egress-gateway");
+    expect(virtualService.metadata?.namespace).toEqual(sidecarEgressNamespace);
     expect(virtualService.metadata?.labels).toEqual({
       "uds/generation": generation.toString(),
-      "uds/package": "shared-egress-resource",
+      "uds/package": sharedEgressPkgId,
     });
     expect(virtualService.metadata?.annotations).toEqual({
       "uds.dev/user-test-pkg1": "user",
@@ -286,7 +286,7 @@ describe("test warnMatchingExistingVirtualServices", () => {
         {
           metadata: {
             name: vsName,
-            namespace: istioEgressGatewayNamespace,
+            namespace: sidecarEgressNamespace,
           },
           spec: {
             hosts: [host],
@@ -315,7 +315,7 @@ describe("test warnMatchingExistingVirtualServices", () => {
         {
           metadata: {
             name: newVsName,
-            namespace: istioEgressGatewayNamespace,
+            namespace: sidecarEgressNamespace,
           },
           spec: {
             hosts: [newHost],
