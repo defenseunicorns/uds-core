@@ -2,6 +2,34 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.47.0](https://github.com/defenseunicorns/uds-core/compare/v0.46.0...v0.47.0) (2025-07-18)
+
+
+### ⚠ BREAKING CHANGES
+
+* add policy restricting usage of istio user/group 1337 ([#1730](https://github.com/defenseunicorns/uds-core/issues/1730))
+* The `uds-dev-stack` namespace is no longer ignored by default for policies and operator reconciliation. If you wish to ignore this namespace or another namespace, you can continue to ignore namespaces by setting the `additionalIgnoredNamespaces` list in the `pepr-uds-core` component, `module` chart (via a bundle override). The dev and demo bundles will continue to ignore `uds-dev-stack`.
+
+### Features
+
+* add policy restricting usage of istio user/group 1337 ([#1730](https://github.com/defenseunicorns/uds-core/issues/1730)) ([8d338c7](https://github.com/defenseunicorns/uds-core/commit/8d338c7b165fbbc12f6f9bd79f31927660341a77))
+* add secret pod reload ([#1713](https://github.com/defenseunicorns/uds-core/issues/1713)) ([8585a6f](https://github.com/defenseunicorns/uds-core/commit/8585a6fb6bfa6b820eddc417028bbdb3c9fbd832))
+
+
+### Bug Fixes
+
+* dev-setup with uds-dev-stack exemption ([#1736](https://github.com/defenseunicorns/uds-core/issues/1736)) ([299cb49](https://github.com/defenseunicorns/uds-core/commit/299cb49587741a3e2c7e4e2ff15b0a7613ca5f7e))
+
+
+### Miscellaneous
+
+* **deps:** update k8s-sidecar to 1.30.7 ([#1715](https://github.com/defenseunicorns/uds-core/issues/1715)) ([5e37fe7](https://github.com/defenseunicorns/uds-core/commit/5e37fe7d4fc6f9e35f75a846a4e59ec360f89d5a))
+* **deps:** update keycloak to v26.3.1 ([#1690](https://github.com/defenseunicorns/uds-core/issues/1690)) ([920320a](https://github.com/defenseunicorns/uds-core/commit/920320aa9fdbebb641bb1688f6c414186bc82019))
+* **deps:** update pepr to v0.51.6 ([#1701](https://github.com/defenseunicorns/uds-core/issues/1701)) ([f523c31](https://github.com/defenseunicorns/uds-core/commit/f523c3157115923619cc999174a706369c0c0f6f))
+* **deps:** update pepr to v9.31.0 ([#1729](https://github.com/defenseunicorns/uds-core/issues/1729)) ([77f36a0](https://github.com/defenseunicorns/uds-core/commit/77f36a0d3f325555b05a97156faaac1a8aa324b7))
+* enable linting on test dirs and address eslint/formatting issues ([#1728](https://github.com/defenseunicorns/uds-core/issues/1728)) ([40f484d](https://github.com/defenseunicorns/uds-core/commit/40f484d9c50ebfba08f299d9457e223556e18e9f))
+* remove uds-dev-stack namespace from default ignored namespaces ([#1732](https://github.com/defenseunicorns/uds-core/issues/1732)) ([0402455](https://github.com/defenseunicorns/uds-core/commit/040245500eec2106ea467f858c3dca5d2531eb27))
+
 ## [0.46.0](https://github.com/defenseunicorns/uds-core/compare/v0.45.1...v0.46.0) (2025-07-08)
 
 
