@@ -54,5 +54,5 @@ components:
         valuesFiles:
           - "values/unicorn-values.yaml"
     images:
-      - quay.io/rfcurated/keycloak:26.3.1-jammy-rfcurated
+      - quay.io/rfcurated/keycloak:26.3.1-jammy-fips-rfcurated
       - ghcr.io/defenseunicorns/uds/identity-config:0.15.2
