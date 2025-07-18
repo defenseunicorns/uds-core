@@ -6,10 +6,10 @@
 import { V1NetworkPolicyPeer } from "@kubernetes/client-node";
 import { K8s, kind, R } from "pepr";
 
-import { UDSConfig } from "../../../../config";
 import { Component, setupLogger } from "../../../../logger";
 import { RemoteGenerated } from "../../../crd";
 import { AuthorizationPolicy } from "../../../crd/generated/istio/authorizationpolicy-v1beta1";
+import { UDSConfig } from "../../config/config";
 import { retryWithDelay } from "../../utils";
 import { anywhere } from "./anywhere";
 
@@ -19,6 +19,9 @@ const log = setupLogger(Component.OPERATOR_GENERATORS);
 // This is an in-memory cache of the API server CIDR
 let apiServerPeers: V1NetworkPolicyPeer[];
 
+// Track whether AuthorizationPolicies are available yet (Pepr installs before Istio)
+let authorizationPolicyExists = false;
+
 /**
  * Initialize the API server CIDR.
  *
@@ -27,23 +30,25 @@ let apiServerPeers: V1NetworkPolicyPeer[];
  * Otherwise, it fetches the EndpointSlice and updates the CIDR dynamically.
  */
 export async function initAPIServerCIDR() {
-  try {
-    const svc = await retryWithDelay(fetchKubernetesService, log);
+  if (process.env.PEPR_WATCH_MODE === "true" || process.env.PEPR_MODE === "dev") {
+    try {
+      const svc = await retryWithDelay(fetchKubernetesService, log);
 
-    // If static CIDR is defined, pass it directly
-    if (UDSConfig.kubeApiCidr) {
-      log.info(
-        `Static CIDR (${UDSConfig.kubeApiCidr}) is defined for KubeAPI, skipping EndpointSlice lookup.`,
-      );
-      await updateAPIServerCIDR(svc, UDSConfig.kubeApiCidr); // Pass static CIDR
-    } else {
-      const slice = await retryWithDelay(fetchKubernetesEndpointSlice, log);
-      await updateAPIServerCIDR(svc, slice);
+      // If static CIDR is defined, pass it directly
+      if (UDSConfig.kubeApiCIDR) {
+        log.info(
+          `Static CIDR (${UDSConfig.kubeApiCIDR}) is defined for KubeAPI, skipping EndpointSlice lookup.`,
+        );
+        await updateAPIServerCIDR(svc, UDSConfig.kubeApiCIDR); // Pass static CIDR
+      } else {
+        const slice = await retryWithDelay(fetchKubernetesEndpointSlice, log);
+        await updateAPIServerCIDR(svc, slice);
+      }
+    } catch (error) {
+      log.error("Failed to initialize API Server CIDR for KubeAPI generated network policies", {
+        err: JSON.stringify(error),
+      });
     }
-  } catch (error) {
-    log.error("Failed to initialize API Server CIDR for KubeAPI generated network policies", {
-      err: JSON.stringify(error),
-    });
   }
 }
 
@@ -71,7 +76,7 @@ export function kubeAPI(): V1NetworkPolicyPeer[] {
 export async function updateAPIServerCIDRFromEndpointSlice(slice: kind.EndpointSlice) {
   try {
     log.debug(
-      "Processing watch for endpointslices, getting k8s service for updating API server CIDR",
+      "Processing update for endpointslices, getting k8s service for updating API server CIDR",
     );
     const svc = await retryWithDelay(fetchKubernetesService, log);
     await updateAPIServerCIDR(svc, slice);
@@ -90,12 +95,12 @@ export async function updateAPIServerCIDRFromEndpointSlice(slice: kind.EndpointS
  */
 export async function updateAPIServerCIDRFromService(svc: kind.Service) {
   try {
-    if (UDSConfig.kubeApiCidr) {
-      log.debug("Processing watch for api service, using configured API CIDR for endpoints");
-      await updateAPIServerCIDR(svc, UDSConfig.kubeApiCidr);
+    if (UDSConfig.kubeApiCIDR) {
+      log.debug("Processing update for api service, using configured API CIDR for endpoints");
+      await updateAPIServerCIDR(svc, UDSConfig.kubeApiCIDR);
     } else {
       log.debug(
-        "Processing watch for api service, getting endpoint slices for updating API server CIDR",
+        "Processing update for api service, getting endpoint slices for updating API server CIDR",
       );
       const slice = await retryWithDelay(fetchKubernetesEndpointSlice, log);
       await updateAPIServerCIDR(svc, slice);
@@ -169,7 +174,9 @@ export async function updateKubeAPINetworkPolicies(newPeers: V1NetworkPolicyPeer
     // Safety check for network policy spec existence
     if (!netPol.spec) {
       log.warn(
-        `KubeAPI NetworkPolicy ${netPol.metadata!.namespace}/${netPol.metadata!.name} is missing spec.`,
+        `KubeAPI NetworkPolicy ${netPol.metadata!.namespace}/${
+          netPol.metadata!.name
+        } is missing spec.`,
       );
       continue;
     }
@@ -205,13 +212,15 @@ export async function updateKubeAPINetworkPolicies(newPeers: V1NetworkPolicyPeer
       }
 
       log.debug(
-        `Updating KubeAPI NetworkPolicy ${netPol.metadata!.namespace}/${netPol.metadata!.name} with new CIDRs.`,
+        `Updating KubeAPI NetworkPolicy ${netPol.metadata!.namespace}/${
+          netPol.metadata!.name
+        } with new CIDRs.`,
       );
       try {
         await K8s(kind.NetworkPolicy).Apply(netPol, { force: true });
       } catch (err) {
         let message = err.data?.message || "Unknown error while applying KubeAPI network policies";
-        if (UDSConfig.kubeApiCidr) {
+        if (UDSConfig.kubeApiCIDR) {
           message +=
             ", ensure that the KUBEAPI_CIDR override configured for the operator is correct.";
         }
@@ -241,6 +250,19 @@ export async function updateKubeAPIAuthorizationPolicies(
   const newIpBlocks = newPeers
     .map(peer => peer.ipBlock?.cidr)
     .filter((cidr): cidr is string => typeof cidr === "string");
+
+  // Check if AuthorizationPolicy is available in the cluster
+  if (!authorizationPolicyExists) {
+    try {
+      await K8s(kind.CustomResourceDefinition).Get("authorizationpolicies.security.istio.io");
+      authorizationPolicyExists = true;
+    } catch {
+      log.warn(
+        "AuthorizationPolicy CRD is not present in the cluster, skipping KubeAPI AuthorizationPolicy updates",
+      );
+      return;
+    }
+  }
 
   // Query for AuthorizationPolicies with the generated label for KubeAPI.
   const authPols = await K8s(AuthorizationPolicy)

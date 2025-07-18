@@ -57,6 +57,8 @@ describe("updateKubeNodesAuthorizationPolicies", () => {
     mockGetAuthPolicies.mockReset();
     mockGetNetworkPolicies.mockResolvedValue({ items: [] });
     mockK8sGetNodes.mockResolvedValue({ items: [] }); // ensures nodeSet starts empty
+    process.env.PEPR_WATCH_MODE = "true";
+    process.env.PEPR_MODE = "dev";
 
     await initAllNodesTarget(); // resets nodeSet to []
   });
