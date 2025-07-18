@@ -117,6 +117,10 @@ spec:
             {{- if .Values.jsonLogFormat }}
             - "--log-console-output=json"
             {{- end }}
+          {{- with .Values.lifecycleHooks }}
+          lifecycle:
+          {{- toYaml . | nindent 12 }}
+          {{- end }}
           envFrom:
             - secretRef:
                 name: {{ include "keycloak.fullname" . }}-realm-env

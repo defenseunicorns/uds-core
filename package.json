@@ -19,7 +19,6 @@
     "logLevel": "info",
     "alwaysIgnore": {
       "namespaces": [
-        "uds-dev-stack",
         "zarf"
       ],
       "labels": []
@@ -29,11 +28,12 @@
     "k3d-setup": "k3d cluster delete pepr-dev && k3d cluster create pepr-dev --k3s-arg '--debug@server:0'"
   },
   "dependencies": {
-    "pepr": "0.51.4"
+    "pepr": "0.51.6"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.27.0",
+    "@types/ws": "^8.18.1",
     "globals": "^16.2.0",
     "husky": "9.1.7",
     "lint-staged": "16.1.2",

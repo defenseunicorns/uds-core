@@ -31,17 +31,15 @@ describe("Test Resources Configuration", () => {
       // Check each pod for absence of istio-proxy in initContainers
       for (const pod of pods.items) {
         const initContainers = pod.spec?.initContainers || [];
-        const hasIstioNativeProxy = initContainers.some(container =>
-          container.name === "istio-proxy"
+        const hasIstioNativeProxy = initContainers.some(
+          container => container.name === "istio-proxy",
         );
 
         expect(hasIstioNativeProxy).toBe(false);
 
         // Also check regular containers to be thorough
         const containers = pod.spec?.containers || [];
-        const hasIstioProxy = containers.some(container =>
-          container.name === "istio-proxy"
-        );
+        const hasIstioProxy = containers.some(container => container.name === "istio-proxy");
 
         expect(hasIstioProxy).toBe(false);
       }

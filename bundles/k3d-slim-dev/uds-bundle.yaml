@@ -7,13 +7,13 @@ metadata:
   name: k3d-core-slim-dev
   description: A UDS bundle for deploying Istio from UDS Core on a development cluster
   # x-release-please-start-version
-  version: "0.44.0"
+  version: "0.46.0"
   # x-release-please-end
 
 packages:
   - name: uds-k3d-dev
     repository: ghcr.io/defenseunicorns/packages/uds-k3d
-    ref: 0.14.2
+    ref: 0.14.3-airgap
     overrides:
       uds-dev-stack:
         minio:
@@ -33,16 +33,20 @@ packages:
 
   - name: init
     repository: ghcr.io/zarf-dev/packages/init
-    ref: v0.56.0
+    ref: v0.57.0
 
   - name: core-base
     path: ../../build/
     # x-release-please-start-version
-    ref: 0.44.0
+    ref: 0.46.0
     # x-release-please-end
     overrides:
       pepr-uds-core:
         module:
+          values:
+            - path: additionalIgnoredNamespaces
+              value:
+                - uds-dev-stack
           variables:
             - name: PEPR_WATCHER_MEMORY_REQUEST
               description: "Memory requests for the pepr watcher pod"
@@ -120,7 +124,7 @@ packages:
   - name: core-identity-authorization
     path: ../../build/
     # x-release-please-start-version
-    ref: 0.44.0
+    ref: 0.46.0
     # x-release-please-end
     overrides:
       keycloak:

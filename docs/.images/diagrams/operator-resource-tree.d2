@@ -1,0 +1,347 @@
+# Theme and direction
+direction: down
+
+# Global diagram styling
+style: {
+  fill: "white"
+  stroke: "#144a8f"
+  stroke-width: 2
+  border-radius: 10
+  font-color: "#000000"
+}
+
+# Define classes for styling
+classes: {
+  pkgSpec: {
+    style: {
+      fill: "#144a8f"
+      stroke: "#102349"
+      stroke-width: 2
+      border-radius: 5
+      font-color: "#ffffff"
+      bold: false
+    }
+  }
+  defaultResource: {
+    style: {
+      fill: "#e6e6e6"
+      stroke: "#9e9e9e"
+      border-radius: 5
+      bold: false
+    }
+    width: 225
+    height: 65
+  }
+  networkResource: {
+    style: {
+      fill: "#24b0ff"
+      stroke: "#144a8f"
+      stroke-width: 2
+      border-radius: 5
+      font-color: "#000000"
+      bold: false
+    }
+    width: 225
+    height: 65
+  }
+  istioResource: {
+    style: {
+      fill: "#102349"
+      stroke: "#0c1a3e"
+      stroke-width: 2
+      border-radius: 5
+      font-color: "#ffffff"
+      bold: false
+    }
+    width: 225
+    height: 65
+  }
+  monitorResource: {
+    style: {
+      fill: "#9e9e9e"
+      stroke: "#323336"
+      stroke-width: 2
+      border-radius: 5
+      bold: false
+    }
+    width: 225
+    height: 65
+  }
+  authResource: {
+    style: {
+      fill: "#eb2628"
+      stroke: "#a51c1e"
+      stroke-width: 2
+      border-radius: 5
+      font-color: "#ffffff"
+      bold: false
+    }
+    width: 225
+    height: 65
+  }
+  container: {
+    style: {
+      fill: "transparent"
+      stroke: "#144a8f"
+      stroke-width: 1
+      border-radius: 8
+      stroke-dash: 3
+    }
+    grid-columns: 1
+    direction: down
+  }
+  containerNoDash: {
+    style: {
+      fill: "transparent"
+      stroke: "#144a8f"
+      stroke-width: 1
+      border-radius: 8
+    }
+    grid-columns: 1
+    direction: down
+  }
+}
+
+# Main Package CR
+Package: {
+  label: "Package CR"
+  class: pkgSpec
+}
+
+# Package Specs
+AllowSpec: {
+  label: "spec.network.allow"
+  class: pkgSpec
+}
+
+ExposeSpec: {
+  label: "spec.network.expose"
+  class: pkgSpec
+}
+
+ServiceMeshSpec: {
+  label: "spec.network.serviceMesh.mode"
+  class: pkgSpec
+}
+
+MonitorSpec: {
+  label: "spec.monitor"
+  class: pkgSpec
+}
+
+SSOSpec: {
+  label: "spec.sso"
+  class: pkgSpec
+}
+
+# Default Resources & Service Mesh
+DefaultResources: {
+  label: "Default Resources"
+  class: containerNoDash
+
+  DefPol: {
+    label: "Default-Deny Policy"
+    class: networkResource
+  }
+
+  DNSPol: {
+    label: "DNS Egress Policy"
+    class: networkResource
+  }
+}
+
+ServiceMeshResources: {
+  label: "Service Mesh Resources"
+  class: containerNoDash
+
+  SidecarResources: {
+    label: "Sidecar Mode"
+    class: container
+
+    NSLabelsSidecar: {
+      label: "Namespace Labels\n(Istio Injection)"
+      class: defaultResource
+    }
+
+    SidecarNetPols: {
+      label: "Istiod Egress\nSidecar Monitoring"
+      class: networkResource
+    }
+  }
+
+  AmbientResources: {
+    label: "Ambient Mode"
+    class: container
+
+    NSLabelsAmbient: {
+      label: "Namespace Labels\n(Ambient)"
+      class: defaultResource
+    }
+
+    AmbientNetPols: {
+      label: "Ambient Healthprobes"
+      class: networkResource
+    }
+  }
+}
+
+# Network Resources
+NetworkResources: {
+  label: "Network Resources"
+  class: container
+
+  AllowNetPol: {
+    label: "NetworkPolicies"
+    class: networkResource
+  }
+
+  AllowAuthPol: {
+    label: "ALLOW Authorization\nPolicies"
+    class: networkResource
+  }
+
+  RemoteHostResources: {
+    label: "Remote Host Resources"
+    class: container
+    direction: down
+
+    RemoteSvcEntry: {
+      label: "ServiceEntries"
+      class: istioResource
+    }
+
+    RemoteSidecar: {
+      label: "Sidecar Config\n(egress)"
+      class: istioResource
+    }
+  }
+}
+
+# Identity Resources
+IdentityResources: {
+  label: "Identity Resources"
+  class: container
+
+  KeycloakClients: {
+    label: "Keycloak Clients"
+    class: authResource
+  }
+
+  AuthserviceResources: {
+    label: "Authservice Resources"
+    class: container
+
+    AuthserviceConfig: {
+      label: "Authservice Config"
+      class: authResource
+    }
+
+    AuthserviceNetPol: {
+      label: "Keycloak / Authservice\nEgress"
+      class: networkResource
+    }
+
+    IstioAuth: {
+      label: "Authorization Policies\nRequest Authentication"
+      class: istioResource
+    }
+  }
+}
+
+# Expose Resources
+ExposeResources: {
+  label: "Expose Resources"
+  class: container
+
+  ExposeNetPol: {
+    label: "Gateway Ingress"
+    class: networkResource
+  }
+
+  ExposeAuthPol: {
+    label: "Authorization Policies\n(ALLOW from gateway)"
+    class: networkResource
+  }
+
+  ExposeVirtSvc: {
+    label: "VirtualServices"
+    class: istioResource
+  }
+
+  ExposeSvcEntry: {
+    label: "ServiceEntries"
+    class: istioResource
+  }
+}
+
+# Monitoring Resources
+MonitoringResources: {
+  label: "Monitoring Resources"
+  class: container
+
+  MonitorNetPols: {
+    label: "Prometheus Ingress"
+    class: networkResource
+  }
+
+  MonitorAuthPols: {
+    label: "Authorization Policies\n(Prometheus ingress)"
+    class: networkResource
+  }
+
+  PodMonitorResources: {
+    label: "PodMonitor Resources"
+    class: container
+
+    PodMonitors: {
+      label: "PodMonitors"
+      class: monitorResource
+    }
+  }
+
+  ServiceMonitorResources: {
+    label: "ServiceMonitor Resources"
+    class: container
+
+    ServiceMonitors: {
+      label: "ServiceMonitors"
+      class: monitorResource
+    }
+  }
+}
+
+# Legend
+Legend: {
+  label: "Legend"
+  style: {
+    fill: "white"
+    stroke: "#144a8f"
+    stroke-width: 2
+    border-radius: 8
+  }
+  direction: down
+
+  L1: {label: "Package Spec Fields"; class: pkgSpec}
+  L2: {label: "Namespace Labels"; class: defaultResource}
+  L3: {label: "Network Policies"; class: networkResource}
+  L4: {label: "Istio Custom Resources"; class: istioResource}
+  L5: {label: "Prometheus\nCustom Resources"; class: monitorResource}
+  L6: {label: "Identity Resources"; class: authResource}
+  L7: {label: "Conditional Resources"; class: container; style.font-size: 16; style.bold: false}
+
+  near: "bottom-center"
+}
+
+# Edges
+Package -> DefaultResources
+Package -> ServiceMeshSpec
+Package -> AllowSpec
+Package -> ExposeSpec
+Package -> MonitorSpec
+Package -> SSOSpec
+
+ServiceMeshSpec -> ServiceMeshResources
+AllowSpec -> NetworkResources
+SSOSpec -> IdentityResources
+ExposeSpec -> ExposeResources
+MonitorSpec -> MonitoringResources

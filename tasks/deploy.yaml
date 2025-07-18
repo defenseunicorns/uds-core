@@ -8,7 +8,7 @@ variables:
   - name: VERSION
     description: "The version of the packages to deploy"
     # x-release-please-start-version
-    default: "0.44.0"
+    default: "0.46.0"
     # x-release-please-end
   - name: FLAVOR
     default: upstream
@@ -50,7 +50,7 @@ tasks:
     actions:
       - description: "Deploy UDS Core Base Layer"
         if: ${{ eq .inputs.layer "base"}}
-        cmd: uds zarf package deploy build/zarf-package-core-${{ index .inputs "layer" }}-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress --components '*' --set PROXY_MEMORY_REQUEST=40Mi --set PROXY_CPU_REQUEST=10m
+        cmd: uds deploy bundles/base-shim/uds-bundle-base-shim-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress
       - description: "Deploy a single UDS Core Layer (must set UDS_LAYER environment variable)"
         if: ${{ ne .inputs.layer "base"}}
         cmd: uds zarf package deploy build/zarf-package-core-${{ index .inputs "layer" }}-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress --components '*'

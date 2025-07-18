@@ -38,13 +38,7 @@ runs:
       uses: defenseunicorns/setup-uds@ab842abcad1f7a3305c2538e3dd1950d0daacfa5 # v1.0.1
       with:
         # renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
-        version: v0.27.7
-
-    - name: Install Lula
-      uses: defenseunicorns/lula-action/setup@badad8c4b1570095f57e66ffd62664847698a3b9 # v0.0.1
-      with:
-        # renovate: datasource=github-tags depName=defenseunicorns/lula versioning=semver-coerced
-        version: v0.16.0
+        version: v0.27.8
 
     - name: Iron Bank Login
       if: ${{ inputs.registry1Username != '' }}
@@ -68,6 +62,7 @@ runs:
       shell: bash
 
     - name: Rapidfort Login
+      if: ${{ inputs.rapidfortUsername != '' }}
       shell: bash
       env:
         RAPIDFORT_USERNAME: ${{ inputs.rapidfortUsername }}
