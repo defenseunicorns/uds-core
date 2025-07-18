@@ -45,3 +45,13 @@ packages:
               # Supported formats are "AWS" and "PEM".
               value: "AWS"
 ```
+
+## Infrastructure Requirements
+
+When using an L7 Load Balancer, UDS Core completely trusts information passed through the Istio Gateways. In order to provide the necessary security guarantees, the following infrastructure requirements must be met:
+
+- All the network components between the public internet and the Istio Gateways must be hardened against HTTP header injection and spoofing attacks.
+- The Client Certificate header always needs to sanitized and ensure a client application cannot forge it (from both outside and inside the cluster).
+- All the traffic between edge and Istio Gateways must be secured (and preferably not reachable from both inside and outside the cluster).
+
+If any of these requirements cannot be met, it is not recommended to make any authentication decisions based on the Client Certificate header and use other MFA methods. 
