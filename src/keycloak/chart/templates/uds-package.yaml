@@ -180,7 +180,7 @@ spec:
           app.kubernetes.io/name: keycloak
         host: sso
         port: 8080
-        {{- if .Values.thirdPartyIntegration.tls.tlsCertificateHeader | default "" | eq "" }}
+        {{- if .Values.thirdPartyIntegration.tls.tlsCertificateHeader }}
         advancedHTTP:
           headers:
             request:
