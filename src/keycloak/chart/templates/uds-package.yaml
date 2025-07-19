@@ -165,7 +165,7 @@ spec:
                 prefix: /metrics
           redirect:
             uri: "/realms/{{ .Values.realm }}/account"
-          {{- if .Values.thirdPartyIntegration.tls.tlsCertificateHeader | default "" | eq "" }}
+          {{- if .Values.thirdPartyIntegration.tls.tlsCertificateHeader }}
           headers:
             request:
               remove:
