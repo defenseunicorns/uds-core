@@ -13,6 +13,7 @@ import {
   Source,
 } from "../../crd/generated/istio/authorizationpolicy-v1beta1";
 import { IstioState } from "../istio/namespace";
+import { getWaypointName, shouldUseAmbientWaypoint } from "../istio/waypoint-utils";
 import { getOwnerRef, purgeOrphans, sanitizeResourceName } from "../utils";
 import { META_IP } from "./generators/cloudMetadata";
 import { kubeAPI } from "./generators/kubeAPI";
@@ -239,14 +240,16 @@ export async function generateAuthorizationPolicies(
     }
   }
 
-  // Process expose rules.
+  // Process expose rules
   if (pkg.spec?.network?.expose) {
     for (const rule of pkg.spec.network.expose) {
-      const { source, ports } = processExposeRule(rule);
-      const policyName = sanitizeResourceName(`protect-${pkgName}-${generateExposeName(rule)}`);
-      const authPolicy = buildAuthPolicy(policyName, pkg, rule.selector, source, ports);
-      policies.push(authPolicy);
-      log.trace(`Generated authpol: ${authPolicy.metadata?.name}`);
+      if (!isAmbientWaypointService(pkg, rule.selector)) {
+        const { source, ports } = processExposeRule(rule);
+        const policyName = sanitizeResourceName(`protect-${pkgName}-${generateExposeName(rule)}`);
+        const authPolicy = buildAuthPolicy(policyName, pkg, rule.selector, source, ports);
+        policies.push(authPolicy);
+        log.trace(`Generated authpol: ${authPolicy.metadata?.name}`);
+      }
     }
   }
 
@@ -260,6 +263,57 @@ export async function generateAuthorizationPolicies(
       const authPolicy = buildAuthPolicy(policyName, pkg, selector, source, ports);
       policies.push(authPolicy);
       log.trace(`Generated monitor authpol: ${authPolicy.metadata?.name}`);
+    }
+  }
+
+  // Process waypoint auth policies for SSO clients
+  if (pkg.spec?.sso && shouldUseAmbientWaypoint(pkg)) {
+    for (const sso of pkg.spec.sso) {
+      if (!sso.enableAuthserviceSelector) continue;
+
+      const waypointName = getWaypointName(sso.clientId);
+      const appSelector = sso.enableAuthserviceSelector;
+
+      // Add deny-all policy that only allows traffic from the waypoint
+      const denyPolicy = createDenyAllExceptWaypointPolicy(pkg, waypointName, appSelector);
+      policies.push(denyPolicy);
+
+      // Find matching expose rule
+      const exposeRule = pkg.spec.network?.expose?.find(exp => {
+        if (!exp.selector) return false;
+        return (
+          (exp.selector["app.kubernetes.io/name"] &&
+            exp.selector["app.kubernetes.io/name"] === appSelector?.["app.kubernetes.io/name"]) ||
+          (exp.selector.app && exp.selector.app === appSelector?.app)
+        );
+      });
+
+      if (exposeRule) {
+        const { source } = processExposeRule(exposeRule);
+        const waypointPorts = exposeRule.port ? [exposeRule.port.toString()] : [];
+
+        if (waypointPorts.length > 0) {
+          const policyName = sanitizeResourceName(
+            `protect-${pkgName}-ingress-${exposeRule.port || "http"}-${exposeRule.selector?.app || "app"}-${waypointName}-istio-${exposeRule.gateway || "tenant"}-gateway`,
+          );
+
+          // Create waypoint selector
+          const waypointSelector = { "istio.io/gateway-name": waypointName };
+
+          // Build and add the policy
+          const authPolicy = buildAuthPolicy(
+            policyName,
+            pkg,
+            waypointSelector,
+            source,
+            waypointPorts,
+          );
+          policies.push(authPolicy);
+          log.trace(`Generated waypoint authpol: ${authPolicy.metadata?.name}`);
+        } else {
+          log.warn(`No exposed port found for waypoint policy for ${exposeRule.selector?.app}`);
+        }
+      }
     }
   }
 
@@ -304,4 +358,76 @@ export async function generateAuthorizationPolicies(
   });
 
   return policies;
+}
+
+/**
+ * Checks if a service should be handled by an ambient waypoint by verifying:
+ * 1. The package is in ambient mode
+ * 2. The service has an SSO configuration with a matching enableAuthserviceSelector
+ */
+function isAmbientWaypointService(
+  pkg: UDSPackage,
+  selector: Record<string, string> | undefined,
+): boolean {
+  // Early return if no selector or not in ambient mode
+  if (!selector || pkg.spec?.network?.serviceMesh?.mode !== "ambient") {
+    return false;
+  }
+
+  return (
+    pkg.spec.sso?.some(sso => {
+      const waypointSelector = sso.enableAuthserviceSelector;
+      if (!waypointSelector) return false;
+
+      // Check if any label in the waypoint selector matches the service selector
+      return Object.entries(waypointSelector).some(([key, value]) => selector[key] === value);
+    }) ?? false
+  );
+}
+
+/**
+ * Creates a deny-all AuthorizationPolicy that only allows traffic from the specified waypoint.
+ * This policy is used in ambient mode to ensure all traffic to application pods
+ * must go through the waypoint proxy.
+ */
+export function createDenyAllExceptWaypointPolicy(
+  pkg: UDSPackage,
+  waypointName: string,
+  appSelector: Record<string, string>,
+): AuthorizationPolicy {
+  const pkgName = pkg.metadata?.name ?? "unknown";
+  const policyName = sanitizeResourceName(`deny-all-except-waypoint-${waypointName}`);
+
+  return {
+    apiVersion: "security.istio.io/v1beta1",
+    kind: "AuthorizationPolicy",
+    metadata: {
+      name: policyName,
+      namespace: pkg.metadata?.namespace ?? "default",
+      labels: {
+        "uds/package": pkgName,
+        "uds/generation": pkg.metadata?.generation?.toString() ?? "0",
+        "uds/for": "network",
+        "uds/ambient-waypoint": waypointName,
+      },
+      ownerReferences: getOwnerRef(pkg),
+    },
+    spec: {
+      action: Action.Deny,
+      selector: {
+        matchLabels: appSelector,
+      },
+      rules: [
+        {
+          from: [
+            {
+              source: {
+                notPrincipals: [`cluster.local/ns/${pkg.metadata?.namespace}/sa/${waypointName}`],
+              },
+            },
+          ],
+        },
+      ],
+    },
+  };
 }

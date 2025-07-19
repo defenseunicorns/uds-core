@@ -61,7 +61,7 @@ test("validate namespace dashboard", async ({ page }) => {
       await page.getByRole("option", { name: "grafana" }).click();
       return;
     }
-    await page.getByRole("option", { name: "authservice-test-app" }).click();
+    await page.getByRole("option", { name: "authservice-sidecar-test-app" }).click();
   });
 });
 
@@ -81,7 +81,7 @@ test("validate loki dashboard", async ({ page }) => {
       // Check grafana if not a full core deploy
       await page.getByRole("option", { name: "grafana" }).click();
     } else {
-      await page.getByRole("option", { name: "authservice-test-app" }).click();
+      await page.getByRole("option", { name: "authservice-sidecar-test-app" }).click();
     }
     await expect(
       page

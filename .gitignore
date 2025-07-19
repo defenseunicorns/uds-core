@@ -33,5 +33,6 @@ uds-docs/**
 **.backup
 **/.playwright/**
 **/.playwright
+test-results/**
 
 coverage/**

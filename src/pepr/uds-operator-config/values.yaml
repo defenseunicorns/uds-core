@@ -17,3 +17,7 @@ operator:
   PEPR_RELIST_INTERVAL_SECONDS: "600"
   # Configure Pepr reconcile strategy to have separate queues for faster reconciliation
   PEPR_RECONCILE_STRATEGY: "kindNsName"
+  # Waypoint health check configuration
+  WAYPOINT_HEALTH_MAX_ATTEMPTS: "10"
+  WAYPOINT_HEALTH_INTERVAL_MS: "5000"
+  WAYPOINT_HEALTH_TIMEOUT_MS: "60000"

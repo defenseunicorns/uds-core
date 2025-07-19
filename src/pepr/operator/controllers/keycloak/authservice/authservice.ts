@@ -6,7 +6,11 @@
 import { R } from "pepr";
 import { UDSConfig } from "../../../../config";
 import { Component, setupLogger } from "../../../../logger";
-import { UDSPackage } from "../../../crd";
+import { K8sGateway, UDSPackage } from "../../../crd";
+import { Mode } from "../../../crd/generated/package-v1alpha1";
+import { cleanupWaypointLabels, setupAmbientWaypoint } from "../../istio/ambient-waypoint";
+import { getWaypointName } from "../../istio/waypoint-utils";
+import { purgeOrphans } from "../../utils";
 import { Client } from "../types";
 import { updatePolicy } from "./authorization-policy";
 import {
@@ -27,41 +31,82 @@ export const log = setupLogger(Component.OPERATOR_AUTHSERVICE);
 let lock = false;
 
 export async function authservice(pkg: UDSPackage, clients: Map<string, Client>) {
+  if (!pkg.metadata?.namespace || !pkg.metadata?.name) {
+    throw new Error("Package metadata is missing required fields");
+  }
+
   // Get the list of clients from the package
   const authServiceClients = R.filter(
     sso => R.isNotNil(sso.enableAuthserviceSelector),
     pkg.spec?.sso || [],
   );
 
+  // Check if we're in ambient mode by looking for the waypoint annotation
+  const isAmbient = pkg.spec?.network?.serviceMesh?.mode === Mode.Ambient;
+
   for (const sso of authServiceClients) {
+    if (isAmbient) {
+      await setupAmbientWaypoint(pkg);
+    }
+
     const client = clients.get(sso.clientId);
     if (!client) {
       throw new Error(`Failed to get client ${sso.clientId}`);
     }
 
+    // Use client ID directly as the waypoint ID
+    // The full waypoint name with prefix and suffix will be constructed by getWaypointName
+    const waypointId = sso.clientId;
+    // Get the full waypoint name for authorization policies
+    const fullWaypointName = getWaypointName(waypointId);
+
     await reconcileAuthservice(
       { name: sso.clientId, action: Action.AddClient, client },
       sso.enableAuthserviceSelector!,
       pkg,
+      isAmbient,
+      fullWaypointName,
     );
   }
 
   const authserviceClients = authServiceClients.map(client => client.clientId);
 
-  await purgeAuthserviceClients(pkg, authserviceClients);
-
+  await purgeAuthserviceClients(pkg, authserviceClients, isAmbient);
+  // Clean up any existing waypoint resources if SSO is not configured
+  await purgeOrphans(
+    (pkg.metadata?.generation ?? 0).toString(),
+    pkg.metadata.namespace,
+    pkg.metadata.name,
+    K8sGateway,
+    log,
+  );
   return authserviceClients;
 }
 
 export async function purgeAuthserviceClients(
   pkg: UDSPackage,
   newAuthserviceClients: string[] = [],
+  isAmbient = false,
 ) {
-  // compute set difference of pkg.status.authserviceClients and authserviceClients using Ramda
   R.difference(pkg.status?.authserviceClients || [], newAuthserviceClients).forEach(
     async clientId => {
       log.info(`Removing stale authservice chain for client ${clientId}`);
-      await reconcileAuthservice({ name: clientId, action: Action.RemoveClient }, {}, pkg);
+      // Use client ID directly as the waypoint ID
+      const waypointId = clientId;
+      // Get the full waypoint name for authorization policies
+      const fullWaypointName = getWaypointName(waypointId);
+      await reconcileAuthservice(
+        { name: clientId, action: Action.RemoveClient },
+        {},
+        pkg,
+        isAmbient,
+        fullWaypointName,
+      );
+
+      // Clean up waypoint labels
+      if (isAmbient && pkg.metadata?.namespace) {
+        await cleanupWaypointLabels(pkg.metadata.namespace, fullWaypointName);
+      }
     },
   );
 }
@@ -71,15 +116,17 @@ function isAddOrRemoveClientEvent(event: AuthServiceEvent): event is AddOrRemove
 }
 export async function reconcileAuthservice(
   event: AuthServiceEvent,
-  labelSelector?: { [key: string]: string },
+  labelSelector: { [key: string]: string } = {},
   pkg?: UDSPackage,
+  isAmbient = false,
+  waypointName?: string,
 ) {
   await updateConfig(event);
   if (isAddOrRemoveClientEvent(event)) {
     if (!pkg) {
       throw new Error("Package must be provided for AddClient or RemoveClient events");
     }
-    await updatePolicy(event, labelSelector || {}, pkg);
+    await updatePolicy(event, labelSelector, pkg, isAmbient, waypointName);
   }
 }
 
