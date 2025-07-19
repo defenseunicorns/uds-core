@@ -30,12 +30,12 @@ export async function compareImagesAndCharts(
 
   try {
     // Load chart data
-    const oldCharts = loadYamlFile(path.join(oldPath, "charts.yaml"));
-    const newCharts = loadYamlFile(path.join(newPath, "charts.yaml"));
+    const oldCharts = loadYamlFile(path.join(oldPath, "charts.yaml")) as Record<string, string>;
+    const newCharts = loadYamlFile(path.join(newPath, "charts.yaml")) as Record<string, string>;
 
     // Load image data
-    const oldImages = loadYamlFile(path.join(oldPath, "images.yaml"));
-    const newImages = loadYamlFile(path.join(newPath, "images.yaml"));
+    const oldImages = loadYamlFile(path.join(oldPath, "images.yaml")) as Record<string, string[]>;
+    const newImages = loadYamlFile(path.join(newPath, "images.yaml")) as Record<string, string[]>;
 
     // Compare charts
     const hasHelmUpdates = compareCharts(oldCharts, newCharts, result);
@@ -99,7 +99,7 @@ function loadYamlFile(filePath: string): YamlContent {
 
     // If content is already an object (for testing), return it
     if (typeof content !== "string") {
-      return content;
+      return content as YamlContent;
     }
 
     // Empty file is allowed, return empty object
