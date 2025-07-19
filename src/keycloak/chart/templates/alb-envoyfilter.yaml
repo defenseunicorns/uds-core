@@ -1,8 +1,7 @@
 # Copyright 2025 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
-{{- if eq .Values.thirdPartyIntegration.tls.tlsTermination "external" }}
-{{- if .Values.thirdPartyIntegration.tls.tlsCertificateHeader | default "" | ne "" }}
+{{- if .Values.thirdPartyIntegration.tls.tlsCertificateHeader }}
 # This filter
 apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
