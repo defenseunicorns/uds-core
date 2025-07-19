@@ -333,7 +333,7 @@ migrations:
   # Deletes the generated truststore to enable recreating it by Keycloak
   deleteGeneratedTrustStore: false
 
-# Third-party integration settings, such as Application Load Balancer support
+# Third-party integration settings, such as L7 Load Balancer support
 thirdPartyIntegration:
   tls:
     # This setting controls deploying additional Envoy Filter that transforms Client Certificate into
