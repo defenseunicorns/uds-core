@@ -197,7 +197,7 @@ spec:
         gateway: admin
         host: keycloak
         port: 8080
-        {{- if .Values.thirdPartyIntegration.tls.tlsCertificateHeader | default "" | eq "" }}
+        {{- if .Values.thirdPartyIntegration.tls.tlsCertificateHeader }}
         advancedHTTP:
           headers:
             request:
