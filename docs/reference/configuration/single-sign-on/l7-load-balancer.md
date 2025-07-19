@@ -30,6 +30,7 @@ packages:
       istio-controlplane:
         istiod:
           values:
+            # Reminder: this should be set to the number of proxies in front of Istio, which may be more than 1 in some setups
             - path: meshConfig.defaultConfig.gatewayTopology.numTrustedProxies
               value: 1
       keycloak:
