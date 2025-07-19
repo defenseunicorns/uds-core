@@ -71,7 +71,7 @@ export function getPodSelector(
 }
 
 /**
- * Checks if a service's selector matches the given labels
+ * Checks if a service's spec.selector matches the given selector
  * @param svc - The service to check
  * @param selector - The label selector to match against
  * @returns boolean indicating if there's a match

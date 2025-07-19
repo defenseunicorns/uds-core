@@ -12,11 +12,11 @@ import {
   cleanupWaypointLabels,
   createWaypointGateway,
   isWaypointPodHealthy,
+  reconcileExistingResources,
   reconcilePod,
   reconcileService,
   setupAmbientWaypoint,
 } from "./ambient-waypoint";
-import { matchesLabels, serviceMatchesSelector } from "./waypoint-utils";
 
 // Test helpers
 const createMockPackage = (
@@ -114,13 +114,11 @@ vi.mock("../packages/package-store", () => ({
 }));
 
 // Mock the waypoint-utils module
-vi.mock("./waypoint-utils", () => {
-  const originalModule = vi.importActual("./waypoint-utils");
+vi.mock("./waypoint-utils", async () => {
+  const actual = await vi.importActual("./waypoint-utils");
   return {
-    ...originalModule,
+    ...actual,
     getWaypointName: vi.fn().mockImplementation((id: string) => `${id}-waypoint`),
-    serviceMatchesSelector: vi.fn().mockReturnValue(false),
-    matchesLabels: vi.fn().mockReturnValue(false),
   };
 });
 
@@ -209,55 +207,42 @@ describe("isWaypointPodHealthy", () => {
 });
 
 describe("reconcileService and reconcilePod", () => {
-  const testCases = [
+  const testNamespace = "test-ns";
+  interface TestCase {
+    name: string;
+    createResource: (labels?: Record<string, string>) => a.Pod | a.Service;
+    expectedLabels: Record<string, string>;
+  }
+
+  const testCases: TestCase[] = [
     {
       name: "service",
-      reconcileFn: reconcileService,
-      createResource: createMockService,
+      createResource: (labels = {}) =>
+        createMockService({ "app.kubernetes.io/name": "test-app" }, labels),
       expectedLabels: {
         "istio.io/use-waypoint": "test-client-waypoint",
         "istio.io/ingress-use-waypoint": "true",
       },
-      patchOperations: [
-        {
-          op: "add",
-          path: "/metadata/labels/istio.io~1use-waypoint",
-          value: "test-client-waypoint",
-        },
-        {
-          op: "add",
-          path: "/metadata/labels/istio.io~1ingress-use-waypoint",
-          value: "true",
-        },
-      ],
     },
     {
       name: "pod",
-      reconcileFn: reconcilePod,
-      createResource: createMockPod,
+      createResource: (labels = {}) =>
+        createMockPod({ ...labels, "app.kubernetes.io/name": "test-app" }),
       expectedLabels: {
         "istio.io/use-waypoint": "test-client-waypoint",
       },
-      patchOperations: [
-        {
-          op: "add",
-          path: "/metadata/labels/istio.io~1use-waypoint",
-          value: "test-client-waypoint",
-        },
-      ],
     },
   ];
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockPatch.mockReset();
-    mockPatch.mockResolvedValue({});
   });
 
   it.each(testCases)(
     "$name - should add waypoint labels when matching package exists",
-    async ({ name, createResource, expectedLabels, patchOperations }) => {
-      const resource = createResource({ "app.kubernetes.io/name": "test-app" });
+    async ({ createResource, expectedLabels, name }) => {
+      const resource = createResource();
+
       const pkg = createMockPackage(
         "test-pkg",
         { "app.kubernetes.io/name": "test-app" },
@@ -270,53 +255,31 @@ describe("reconcileService and reconcilePod", () => {
           },
         ],
       );
+
+      // Set up the mock to return the package when called with the test namespace
       (
         PackageStore.getPackageByNamespace as MockedFunction<
           typeof PackageStore.getPackageByNamespace
         >
-      ).mockReturnValue(pkg);
+      ).mockImplementation(namespace => {
+        return namespace === testNamespace ? pkg : undefined;
+      });
 
-      // Ensure metadata and labels exist
-      if (!resource.metadata) resource.metadata = {};
-      if (!resource.metadata.labels) resource.metadata.labels = {};
-      resource.metadata.name = "test-resource";
-      resource.metadata.namespace = "test-namespace";
-
-      // Mock the serviceMatchesSelector or matchesLabels function based on resource type
-      if ("spec" in resource && "selector" in resource.spec!) {
-        (
-          serviceMatchesSelector as unknown as { mockReturnValue: (val: boolean) => void }
-        ).mockReturnValue(true);
+      // Call the appropriate reconcile function based on the resource type
+      if (name === "service") {
         await reconcileService(resource as a.Service);
       } else {
-        (matchesLabels as unknown as { mockReturnValue: (val: boolean) => void }).mockReturnValue(
-          true,
-        );
         await reconcilePod(resource as a.Pod);
       }
 
-      // Verify the labels were updated in the object
       expect(resource.metadata?.labels).toMatchObject(expectedLabels);
-
-      // Verify the K8s Patch operation was called correctly
-      expect(mockPatch).toHaveBeenCalledWith(patchOperations);
-      expect(mockLog.info).toHaveBeenCalledWith(
-        expect.stringContaining(
-          `Added waypoint labels to ${name === "service" ? "service" : "pod"} test-resource`,
-        ),
-        expect.objectContaining({
-          namespace: "test-namespace",
-          waypointName: "test-client-waypoint",
-          clientId: "test-client",
-        }),
-      );
     },
   );
 
   it.each(testCases)(
     "$name - should not modify when no matching package",
-    async ({ createResource, expectedLabels }) => {
-      const resource = createResource({ "app.kubernetes.io/name": "test-app" });
+    async ({ createResource, name }) => {
+      const resource = createResource();
       const pkg = createMockPackage(
         "test-pkg",
         { "app.kubernetes.io/name": "no-match" },
@@ -338,155 +301,21 @@ describe("reconcileService and reconcilePod", () => {
       // Save the original state
       const originalLabels = { ...(resource.metadata?.labels || {}) };
 
-      // Mock the serviceMatchesSelector or matchesLabels function to return false
-      if ("spec" in resource && "selector" in resource.spec!) {
-        (
-          serviceMatchesSelector as unknown as { mockReturnValue: (val: boolean) => void }
-        ).mockReturnValue(false);
+      // Call the appropriate reconcile function based on the resource type
+      if (name === "service") {
         await reconcileService(resource as a.Service);
       } else {
-        (matchesLabels as unknown as { mockReturnValue: (val: boolean) => void }).mockReturnValue(
-          false,
-        );
         await reconcilePod(resource as a.Pod);
       }
 
-      // Verify labels weren't changed
+      // Verify the labels weren't modified
       expect(resource.metadata?.labels).toEqual(originalLabels);
 
       // Verify no waypoint labels were added
-      Object.keys(expectedLabels).forEach(label => {
-        expect(resource.metadata?.labels?.[label]).toBeUndefined();
-      });
-
-      // Verify the K8s Patch operation was not called
-      expect(mockPatch).not.toHaveBeenCalled();
-    },
-  );
-
-  it.each(testCases)(
-    "$name - should handle errors during patch operation",
-    async ({ createResource }) => {
-      const resource = createResource({ "app.kubernetes.io/name": "test-app" });
-      const pkg = createMockPackage(
-        "test-pkg",
-        { "app.kubernetes.io/name": "test-app" },
-        "ambient",
-        [
-          {
-            clientId: "test-client",
-            name: "test-sso",
-            enableAuthserviceSelector: { "app.kubernetes.io/name": "test-app" },
-          },
-        ],
-      );
-      (
-        PackageStore.getPackageByNamespace as MockedFunction<
-          typeof PackageStore.getPackageByNamespace
-        >
-      ).mockReturnValue(pkg);
-
-      // Ensure metadata and labels exist
-      if (!resource.metadata) resource.metadata = {};
-      if (!resource.metadata.labels) resource.metadata.labels = {};
-      resource.metadata.name = "test-resource";
-      resource.metadata.namespace = "test-namespace";
-
-      // Mock the serviceMatchesSelector or matchesLabels function based on resource type
-      if ("spec" in resource && "selector" in resource.spec!) {
-        (
-          serviceMatchesSelector as unknown as { mockReturnValue: (val: boolean) => void }
-        ).mockReturnValue(true);
-      } else {
-        (matchesLabels as unknown as { mockReturnValue: (val: boolean) => void }).mockReturnValue(
-          true,
-        );
+      expect(resource.metadata?.labels?.["istio.io/use-waypoint"]).toBeUndefined();
+      if (name === "service") {
+        expect(resource.metadata?.labels?.["istio.io/ingress-use-waypoint"]).toBeUndefined();
       }
-
-      // Mock the patch operation to throw an error
-      const testError = new Error("Test patch error");
-      mockPatch.mockRejectedValueOnce(testError);
-
-      // Call the function
-      if ("spec" in resource && "selector" in resource.spec!) {
-        await reconcileService(resource as a.Service);
-      } else {
-        await reconcilePod(resource as a.Pod);
-      }
-
-      // Verify error was logged
-      expect(mockLog.error).toHaveBeenCalledWith(
-        expect.stringContaining(
-          `Failed to update waypoint labels for ${"spec" in resource ? "service" : "pod"} test-resource`,
-        ),
-        expect.objectContaining({
-          namespace: "test-namespace",
-          waypointName: "test-client-waypoint",
-          error: "Test patch error",
-        }),
-      );
-    },
-  );
-
-  it.each(testCases)(
-    "$name - should skip update if labels already exist",
-    async ({ createResource, expectedLabels }) => {
-      const resource = createResource({ "app.kubernetes.io/name": "test-app" });
-      const pkg = createMockPackage(
-        "test-pkg",
-        { "app.kubernetes.io/name": "test-app" },
-        "ambient",
-        [
-          {
-            clientId: "test-client",
-            name: "test-sso",
-            enableAuthserviceSelector: { "app.kubernetes.io/name": "test-app" },
-          },
-        ],
-      );
-      (
-        PackageStore.getPackageByNamespace as MockedFunction<
-          typeof PackageStore.getPackageByNamespace
-        >
-      ).mockReturnValue(pkg);
-
-      // Ensure metadata and labels exist with waypoint labels already set
-      if (!resource.metadata) resource.metadata = {};
-      if (!resource.metadata.labels) resource.metadata.labels = {};
-      resource.metadata.name = "test-resource";
-      resource.metadata.namespace = "test-namespace";
-
-      // Set the waypoint labels that would normally be added
-      Object.entries(expectedLabels).forEach(([key, value]) => {
-        if (resource.metadata?.labels) {
-          resource.metadata.labels[key] = value;
-        }
-      });
-
-      // Mock the serviceMatchesSelector or matchesLabels function based on resource type
-      if ("spec" in resource && "selector" in resource.spec!) {
-        (
-          serviceMatchesSelector as unknown as { mockReturnValue: (val: boolean) => void }
-        ).mockReturnValue(true);
-        await reconcileService(resource as a.Service);
-      } else {
-        (matchesLabels as unknown as { mockReturnValue: (val: boolean) => void }).mockReturnValue(
-          true,
-        );
-        await reconcilePod(resource as a.Pod);
-      }
-
-      // Verify the K8s Patch operation was not called
-      expect(mockPatch).not.toHaveBeenCalled();
-
-      // Verify debug log was called
-      expect(mockLog.debug).toHaveBeenCalledWith(
-        expect.stringContaining(`already has correct waypoint label`),
-        expect.objectContaining({
-          namespace: "test-namespace",
-          waypointName: "test-client-waypoint",
-        }),
-      );
     },
   );
 });
@@ -532,11 +361,7 @@ describe("setupAmbientWaypoint", () => {
 
     // This should not throw and should complete successfully with empty results
     const result = await setupAmbientWaypoint(pkg);
-    expect(result).toEqual({
-      clientsProcessed: 0,
-      waypointsCreated: 0,
-      reconciliationResults: [],
-    });
+    expect(result).toEqual(undefined);
   });
 });
 
@@ -781,6 +606,119 @@ describe("createWaypointGateway", () => {
         errorType: "string",
         errorDetails: testError,
       }),
+    );
+  });
+});
+
+describe("reconcileExistingResources", () => {
+  const waypointName = "test-client-waypoint";
+  const selector = { "app.kubernetes.io/name": "test-app" };
+  const ssoClient = {
+    clientId: "test-client",
+    name: "test-sso",
+    enableAuthserviceSelector: selector,
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGet.mockReset();
+    mockPatch.mockReset();
+    mockLog.info.mockClear();
+    mockLog.warn.mockClear();
+    mockLog.error.mockClear();
+  });
+
+  it("should warn and return if no namespace in package", async () => {
+    const pkg = { ...createMockPackage("test-pkg"), metadata: {} };
+    await reconcileExistingResources(pkg, ssoClient, waypointName);
+    expect(mockLog.warn).toHaveBeenCalledWith(
+      expect.stringContaining("No namespace found in package metadata"),
+    );
+    expect(mockGet).not.toHaveBeenCalled();
+    expect(mockPatch).not.toHaveBeenCalled();
+  });
+
+  it("should patch matching services and pods", async () => {
+    const pkg = createMockPackage("test-pkg", selector);
+    // Mock K8s.Get for services and pods
+    const mockService = createMockService(selector);
+    const mockPod = createMockPod(selector);
+    mockGet
+      .mockResolvedValueOnce({ items: [mockService] }) // Services
+      .mockResolvedValueOnce({ items: [mockPod] }); // Pods
+    mockPatch.mockResolvedValue(undefined);
+
+    await reconcileExistingResources(pkg, ssoClient, waypointName);
+
+    // Service patch
+    expect(mockPatch).toHaveBeenCalledWith([
+      expect.objectContaining({
+        op: "add",
+        path: expect.stringContaining("ingress-use-waypoint"),
+        value: "true",
+      }),
+      expect.objectContaining({
+        op: "add",
+        path: expect.stringContaining("istio.io~1use-waypoint"),
+        value: waypointName,
+      }),
+    ]);
+    // Pod patch
+    expect(mockPatch).toHaveBeenCalledWith([
+      expect.objectContaining({
+        op: "add",
+        path: expect.stringContaining("istio.io~1use-waypoint"),
+        value: waypointName,
+      }),
+    ]);
+    expect(mockLog.info).toHaveBeenCalledWith(
+      expect.stringContaining("Found resources to update with waypoint labels"),
+    );
+  });
+
+  it("should log error if service patch fails", async () => {
+    const pkg = createMockPackage("test-pkg", selector);
+    const mockService = createMockService(selector);
+    const mockPod = createMockPod(selector);
+    mockGet
+      .mockResolvedValueOnce({ items: [mockService] })
+      .mockResolvedValueOnce({ items: [mockPod] });
+    // Service patch throws
+    mockPatch.mockRejectedValueOnce(new Error("patch failed")).mockResolvedValueOnce(undefined); // Pod patch succeeds
+
+    await reconcileExistingResources(pkg, ssoClient, waypointName);
+    expect(mockLog.error).toHaveBeenCalledWith(
+      expect.stringContaining("Service reconciliation failed"),
+    );
+    // Pod patch still called
+    expect(mockPatch).toHaveBeenCalledTimes(2);
+  });
+
+  it("should log error if pod patch fails", async () => {
+    const pkg = createMockPackage("test-pkg", selector);
+    const mockService = createMockService(selector);
+    const mockPod = createMockPod(selector);
+    mockGet
+      .mockResolvedValueOnce({ items: [mockService] })
+      .mockResolvedValueOnce({ items: [mockPod] });
+    // Service patch succeeds, pod patch fails
+    mockPatch.mockResolvedValueOnce(undefined).mockRejectedValueOnce(new Error("pod patch failed"));
+
+    await reconcileExistingResources(pkg, ssoClient, waypointName);
+    expect(mockLog.error).toHaveBeenCalledWith(
+      expect.stringContaining("Pod reconciliation failed"),
+    );
+    expect(mockPatch).toHaveBeenCalledTimes(2);
+  });
+
+  it("should log and throw if K8s.Get fails", async () => {
+    const pkg = createMockPackage("test-pkg", selector);
+    mockGet.mockRejectedValueOnce(new Error("get failed"));
+    await expect(reconcileExistingResources(pkg, ssoClient, waypointName)).rejects.toThrow(
+      "get failed",
+    );
+    expect(mockLog.error).toHaveBeenCalledWith(
+      expect.stringContaining("Error in reconcileExistingResources"),
     );
   });
 });

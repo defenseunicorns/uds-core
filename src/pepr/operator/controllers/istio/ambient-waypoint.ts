@@ -5,7 +5,7 @@
 
 import { a, K8s, kind } from "pepr";
 import { K8sGateway, UDSPackage } from "../../crd";
-import { Mode } from "../../crd/generated/package-v1alpha1";
+import { Mode, Sso } from "../../crd/generated/package-v1alpha1";
 import { PackageStore } from "../packages/package-store";
 import { getOwnerRef } from "../utils";
 import { log } from "./istio-resources";
@@ -27,36 +27,41 @@ const HEALTH_OPTS = {
  */
 export async function setupAmbientWaypoint(pkg: UDSPackage): Promise<void> {
   const { namespace, name } = pkg.metadata || {};
-  if (!namespace || !name) throw new Error("Package metadata is missing namespace or name");
+  if (!namespace || !name) {
+    const error = "Package metadata is missing namespace or name";
+    log.error(JSON.stringify({ error, package: pkg }));
+    throw new Error(error);
+  }
 
   const authServiceClients = pkg.spec?.sso?.filter(sso => sso.enableAuthserviceSelector) || [];
+
+  log.info(
+    JSON.stringify({
+      message: "Starting ambient waypoint setup",
+      namespace,
+      package: name,
+    }),
+  );
 
   for (const client of authServiceClients) {
     const waypointId = client.clientId;
     const waypointName = getWaypointName(waypointId);
+
     try {
-      log.info("Creating waypoint gateway", { namespace, package: name, waypointId, waypointName });
       await createWaypointGateway(pkg, waypointName, waypointId);
-
-      log.info("Waiting for waypoint pod to become healthy", { namespace, waypointName });
       await waitForWaypointPodHealthy(namespace, waypointName);
-
-      //todo: add existing resources check here in the event the application is up before the waypoint
-
-      log.info("Successfully set up ambient waypoint", { namespace, package: name, waypointName });
+      await reconcileExistingResources(pkg, client, waypointName);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      const errorStack = error instanceof Error ? error.stack : undefined;
-
-      log.error("Failed to set up ambient waypoint", {
-        namespace,
-        package: name,
-        waypointName,
-        error: errorMessage,
-        stack: errorStack,
-      });
-
-      throw new Error(`Failed to set up ambient waypoint: ${errorMessage}`);
+      log.error(
+        JSON.stringify({
+          message: "Error in ambient waypoint setup",
+          namespace,
+          waypointName,
+          error: errorMessage,
+        }),
+      );
+      throw error;
     }
   }
 }
@@ -247,16 +252,26 @@ export async function waitForWaypointPodHealthy(
  */
 export async function reconcileService(svc: a.Service): Promise<void> {
   const namespace = svc.metadata?.namespace;
-  if (!namespace || !svc.metadata?.labels) return;
+  if (!namespace) {
+    return;
+  }
+
+  // Ensure labels object exists
+  if (!svc.metadata) {
+    svc.metadata = {};
+  }
+  if (!svc.metadata.labels) {
+    svc.metadata.labels = {};
+  }
 
   const pkg = PackageStore.getPackageByNamespace(namespace);
   if (!pkg || pkg.spec?.network?.serviceMesh?.mode !== Mode.Ambient) return;
 
   // Find the SSO client that matches this service's selector
-  const matchingSso = pkg.spec?.sso?.find(sso => {
-    if (!sso.enableAuthserviceSelector) return false;
-    return serviceMatchesSelector(svc, sso.enableAuthserviceSelector);
-  });
+  const matchingSso = pkg.spec?.sso?.find(
+    sso =>
+      sso.enableAuthserviceSelector && serviceMatchesSelector(svc, sso.enableAuthserviceSelector),
+  );
 
   if (!matchingSso?.clientId) return;
 
@@ -272,6 +287,7 @@ export async function reconcileService(svc: a.Service): Promise<void> {
     namespace,
     waypointName,
     clientId: matchingSso.clientId,
+    labels: svc.metadata.labels,
   });
 }
 
@@ -280,16 +296,27 @@ export async function reconcileService(svc: a.Service): Promise<void> {
  */
 export async function reconcilePod(pod: a.Pod): Promise<void> {
   const namespace = pod.metadata?.namespace;
-  if (!namespace || !pod.metadata?.labels) return;
+  if (!namespace) {
+    return;
+  }
+
+  // Ensure labels object exists
+  if (!pod.metadata) {
+    pod.metadata = {};
+  }
+  if (!pod.metadata.labels) {
+    pod.metadata.labels = {};
+  }
 
   const pkg = PackageStore.getPackageByNamespace(namespace);
   if (!pkg || pkg.spec?.network?.serviceMesh?.mode !== Mode.Ambient) return;
 
   // Find the SSO client that matches this pod's labels
-  const matchingSso = pkg.spec?.sso?.find(sso => {
-    if (!sso.enableAuthserviceSelector) return false;
-    return matchesLabels(pod.metadata?.labels || {}, sso.enableAuthserviceSelector);
-  });
+  const matchingSso = pkg.spec?.sso?.find(
+    sso =>
+      sso.enableAuthserviceSelector &&
+      matchesLabels(pod.metadata?.labels || {}, sso.enableAuthserviceSelector),
+  );
 
   if (!matchingSso?.clientId) return;
 
@@ -407,5 +434,128 @@ export async function cleanupWaypointLabels(
       error: errorMessage,
     });
     // Don't throw here to allow other cleanup to continue
+  }
+}
+
+export async function reconcileExistingResources(
+  pkg: UDSPackage,
+  ssoClient: Sso,
+  waypointName: string,
+): Promise<void> {
+  const namespace = pkg.metadata?.namespace;
+  if (!namespace) {
+    log.warn(JSON.stringify({ message: "No namespace found in package metadata" }));
+    return;
+  }
+
+  log.info(
+    JSON.stringify({
+      message: "Starting reconciliation of existing resources",
+      namespace,
+      waypointName,
+      clientId: ssoClient.clientId,
+    }),
+  );
+
+  try {
+    const [services, pods] = await Promise.all([
+      K8s(kind.Service).InNamespace(namespace).Get(),
+      K8s(kind.Pod).InNamespace(namespace).Get(),
+    ]);
+
+    const matchingServices = services.items.filter(svc =>
+      serviceMatchesSelector(svc, ssoClient.enableAuthserviceSelector!),
+    );
+
+    const matchingPods = pods.items.filter(pod => {
+      const matches = matchesLabels(
+        pod.metadata?.labels || {},
+        ssoClient.enableAuthserviceSelector!,
+      );
+      return matches;
+    });
+
+    log.info(
+      JSON.stringify({
+        message: "Found resources to update with waypoint labels",
+        namespace,
+        matchingServices: matchingServices.length,
+        matchingPods: matchingPods.length,
+      }),
+    );
+
+    // Process matching services
+    for (const svc of matchingServices) {
+      const serviceName = svc.metadata?.name || "unknown";
+      try {
+        await K8s(kind.Service, {
+          name: svc.metadata!.name!,
+          namespace: namespace,
+        }).Patch([
+          {
+            op: "add",
+            path: "/metadata/labels/istio.io~1ingress-use-waypoint",
+            value: "true",
+          },
+          {
+            op: "add",
+            path: `/metadata/labels/${ISTIO_WAYPOINT_LABEL.replace(/\//g, "~1")}`,
+            value: waypointName,
+          },
+        ]);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        log.error(
+          JSON.stringify({
+            message: "Service reconciliation failed",
+            namespace,
+            service: serviceName,
+            error: errorMessage,
+          }),
+        );
+      }
+    }
+
+    // Process matching pods
+    for (const pod of matchingPods) {
+      const podName = pod.metadata?.name || "unknown";
+      try {
+        await K8s(kind.Pod, {
+          name: pod.metadata!.name!,
+          namespace: namespace,
+        }).Patch([
+          {
+            op: "add",
+            path: `/metadata/labels/${ISTIO_WAYPOINT_LABEL.replace(/\//g, "~1")}`,
+            value: waypointName,
+          },
+        ]);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        log.error(
+          JSON.stringify({
+            message: "Pod reconciliation failed",
+            namespace,
+            pod: podName,
+            error: errorMessage,
+          }),
+        );
+      }
+    }
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+
+    log.error(
+      JSON.stringify({
+        message: "Error in reconcileExistingResources",
+        namespace,
+        error: errorMessage,
+        stack: errorStack,
+      }),
+    );
+
+    // Re-throw to allow the caller to handle the error
+    throw error;
   }
 }
