@@ -6,9 +6,11 @@
 import { R } from "pepr";
 import { UDSConfig } from "../../../../config";
 import { Component, setupLogger } from "../../../../logger";
-import { UDSPackage } from "../../../crd";
+import { K8sGateway, UDSPackage } from "../../../crd";
 import { Mode } from "../../../crd/generated/package-v1alpha1";
+import { cleanupWaypointLabels, setupAmbientWaypoint } from "../../istio/ambient-waypoint";
 import { getWaypointName } from "../../istio/waypoint-utils";
+import { purgeOrphans } from "../../utils";
 import { Client } from "../types";
 import { updatePolicy } from "./authorization-policy";
 import {
@@ -29,6 +31,10 @@ export const log = setupLogger(Component.OPERATOR_AUTHSERVICE);
 let lock = false;
 
 export async function authservice(pkg: UDSPackage, clients: Map<string, Client>) {
+  if (!pkg.metadata?.namespace || !pkg.metadata?.name) {
+    throw new Error("Package metadata is missing required fields");
+  }
+
   // Get the list of clients from the package
   const authServiceClients = R.filter(
     sso => R.isNotNil(sso.enableAuthserviceSelector),
@@ -39,6 +45,10 @@ export async function authservice(pkg: UDSPackage, clients: Map<string, Client>)
   const isAmbient = pkg.spec?.network?.serviceMesh?.mode === Mode.Ambient;
 
   for (const sso of authServiceClients) {
+    if (isAmbient) {
+      await setupAmbientWaypoint(pkg);
+    }
+
     const client = clients.get(sso.clientId);
     if (!client) {
       throw new Error(`Failed to get client ${sso.clientId}`);
@@ -62,7 +72,14 @@ export async function authservice(pkg: UDSPackage, clients: Map<string, Client>)
   const authserviceClients = authServiceClients.map(client => client.clientId);
 
   await purgeAuthserviceClients(pkg, authserviceClients, isAmbient);
-
+  // Clean up any existing waypoint resources if SSO is not configured
+  await purgeOrphans(
+    (pkg.metadata?.generation ?? 0).toString(),
+    pkg.metadata.namespace,
+    pkg.metadata.name,
+    K8sGateway,
+    log,
+  );
   return authserviceClients;
 }
 
@@ -85,6 +102,11 @@ export async function purgeAuthserviceClients(
         isAmbient,
         fullWaypointName,
       );
+
+      // Clean up waypoint labels
+      if (isAmbient && pkg.metadata?.namespace) {
+        await cleanupWaypointLabels(pkg.metadata.namespace, fullWaypointName);
+      }
     },
   );
 }

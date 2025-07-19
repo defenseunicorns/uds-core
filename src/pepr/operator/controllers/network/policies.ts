@@ -226,7 +226,6 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
           remoteSelector: { "app.kubernetes.io/name": "prometheus" },
           ports: [
             15020, // Envoy admin port
-            15008, // HBONE port
           ],
           description: `Allow health checks from monitoring to ${waypointName}`,
         }),

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { a, K8s } from "pepr";
+import { a, K8s, kind } from "pepr";
 import { K8sGateway, UDSPackage } from "../../crd";
 import { Mode } from "../../crd/generated/package-v1alpha1";
 import { PackageStore } from "../packages/package-store";
@@ -24,9 +24,6 @@ const HEALTH_OPTS = {
 
 /**
  * Sets up an ambient waypoint for a package
- * @param pkg - The package to set up the waypoint for
- * @param waypointId - The ID of the waypoint to set up
- * @throws Error if setup fails
  */
 export async function setupAmbientWaypoint(pkg: UDSPackage): Promise<void> {
   const { namespace, name } = pkg.metadata || {};
@@ -43,6 +40,8 @@ export async function setupAmbientWaypoint(pkg: UDSPackage): Promise<void> {
 
       log.info("Waiting for waypoint pod to become healthy", { namespace, waypointName });
       await waitForWaypointPodHealthy(namespace, waypointName);
+
+      //todo: add existing resources check here in the event the application is up before the waypoint
 
       log.info("Successfully set up ambient waypoint", { namespace, package: name, waypointName });
     } catch (error) {
@@ -64,9 +63,6 @@ export async function setupAmbientWaypoint(pkg: UDSPackage): Promise<void> {
 
 /**
  * Creates a waypoint gateway for the given package
- * @param pkg - The UDS package
- * @param waypointId - The ID for the waypoint
- * @returns Promise resolving to the waypoint name
  */
 export async function createWaypointGateway(
   pkg: UDSPackage,
@@ -84,18 +80,6 @@ export async function createWaypointGateway(
   });
 
   try {
-    // First check if the gateway already exists
-    try {
-      const existingGateway = await K8s(K8sGateway).InNamespace(namespace).Get(waypointName);
-      if (existingGateway) {
-        log.info(`Waypoint gateway ${waypointName} already exists in namespace ${namespace}`);
-        return waypointName;
-      }
-    } catch {
-      // Gateway doesn't exist, which is expected
-      log.info(`Waypoint gateway ${waypointName} does not exist yet, creating it`);
-    }
-
     const gateway = new K8sGateway();
 
     gateway.metadata = {
@@ -106,6 +90,8 @@ export async function createWaypointGateway(
         "app.kubernetes.io/component": "ambient-waypoint",
         "istio.io/waypoint-for": "all",
         "istio.io/gateway-name": waypointName,
+        "uds/generation": (pkg.metadata?.generation ?? 0).toString(),
+        "uds/package": pkg.metadata?.name ?? "unknown",
       },
       ownerReferences: getOwnerRef(pkg),
     };
@@ -125,7 +111,7 @@ export async function createWaypointGateway(
 
     try {
       // Use Create instead of Apply to get more specific error messages
-      await K8s(K8sGateway).Create(gateway);
+      await K8s(K8sGateway).Apply(gateway);
       log.info("Successfully created waypoint gateway", { namespace, waypointName });
       return waypointName;
     } catch (applyError) {
@@ -157,9 +143,6 @@ export async function createWaypointGateway(
 
 /**
  * Checks if a waypoint pod is healthy
- * @param namespace - Namespace of the pod
- * @param waypointName - Name of the waypoint
- * @returns Promise resolving to boolean indicating pod health
  */
 export async function isWaypointPodHealthy(
   namespace: string,
@@ -180,9 +163,6 @@ export async function isWaypointPodHealthy(
 
 /**
  * Waits for a waypoint pod to become healthy with retries
- * @param namespace - Namespace of the pod
- * @param waypointName - Name of the waypoint
- * @throws Error if pod doesn't become healthy within timeout
  */
 export async function waitForWaypointPodHealthy(
   namespace: string,
@@ -264,7 +244,6 @@ export async function waitForWaypointPodHealthy(
 
 /**
  * Reconciles a service to add waypoint labels
- * @param svc - The service to reconcile
  */
 export async function reconcileService(svc: a.Service): Promise<void> {
   const namespace = svc.metadata?.namespace;
@@ -298,7 +277,6 @@ export async function reconcileService(svc: a.Service): Promise<void> {
 
 /**
  * Reconciles a pod to add waypoint labels
- * @param pod - The pod to reconcile
  */
 export async function reconcilePod(pod: a.Pod): Promise<void> {
   const namespace = pod.metadata?.namespace;
@@ -326,6 +304,108 @@ export async function reconcilePod(pod: a.Pod): Promise<void> {
     namespace,
     waypointName,
     clientId: matchingSso.clientId,
-    labels: pod.metadata.labels,
   });
+}
+
+/**
+ * Cleans up waypoint labels from pods and services that reference a specific waypoint
+ */
+export async function cleanupWaypointLabels(
+  namespace: string,
+  waypointName: string,
+): Promise<void> {
+  log.info(`Starting cleanup of waypoint labels: namespace=${namespace}, waypoint=${waypointName}`);
+
+  try {
+    const pods = await K8s(a.Pod)
+      .InNamespace(namespace)
+      .WithLabel(ISTIO_WAYPOINT_LABEL, waypointName)
+      .Get();
+
+    for (const pod of pods.items) {
+      const podName = pod.metadata?.name || "unknown";
+
+      // Skip if pod is being deleted or doesn't have the label anymore
+      if (pod.metadata?.deletionTimestamp) {
+        log.debug(`Skipping pod ${podName}: marked for deletion`);
+        continue;
+      }
+
+      if (pod.metadata?.labels?.[ISTIO_WAYPOINT_LABEL] !== waypointName) {
+        log.debug(
+          `Skipping pod ${podName}: label ${ISTIO_WAYPOINT_LABEL} does not match ${waypointName}`,
+        );
+        continue;
+      }
+
+      try {
+        await K8s(kind.Pod, {
+          name: podName,
+          namespace,
+        }).Patch([
+          {
+            op: "remove",
+            path: "/metadata/labels/istio.io~1use-waypoint",
+          },
+        ]);
+        log.debug(`Successfully removed waypoint label from pod ${podName}`);
+      } catch (error) {
+        log.error(
+          `Failed to remove waypoint label from pod ${podName}: ${JSON.stringify(error, Object.getOwnPropertyNames(error))}`,
+        );
+      }
+    }
+
+    // Clean up services with the waypoint label
+    const services = await K8s(a.Service)
+      .InNamespace(namespace)
+      .WithLabel(ISTIO_WAYPOINT_LABEL, waypointName)
+      .Get();
+
+    for (const svc of services.items) {
+      const svcName = svc.metadata?.name || "unknown";
+
+      // Skip if service is being deleted or doesn't have the label anymore
+      if (svc.metadata?.deletionTimestamp) {
+        log.debug(`Skipping service ${svcName}: marked for deletion`);
+        continue;
+      }
+
+      if (svc.metadata?.labels?.[ISTIO_WAYPOINT_LABEL] !== waypointName) {
+        log.debug(
+          `Skipping service ${svcName}: label ${ISTIO_WAYPOINT_LABEL} does not match ${waypointName}`,
+        );
+        continue;
+      }
+
+      try {
+        await K8s(kind.Service, {
+          name: svcName,
+          namespace,
+        }).Patch([
+          {
+            op: "remove",
+            path: "/metadata/labels/istio.io~1ingress-use-waypoint",
+          },
+          {
+            op: "remove",
+            path: "/metadata/labels/istio.io~1use-waypoint",
+          },
+        ]);
+        log.debug(`Successfully removed waypoint labels from service ${svcName}`);
+      } catch (error) {
+        log.error(
+          `Failed to remove waypoint labels from service ${svcName}: ${JSON.stringify(error, Object.getOwnPropertyNames(error))}`,
+        );
+      }
+    }
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    log.error("Failed to clean up waypoint labels", {
+      namespace,
+      waypointName,
+      error: errorMessage,
+    });
+    // Don't throw here to allow other cleanup to continue
+  }
 }

@@ -9,7 +9,7 @@ import { domain } from "./uds.config";
 const url_client_1 = `https://ambient-protected.${domain}`;
 const url_client_2 = `https://ambient2-protected.${domain}`;
 
-test.describe("Ambient Waypoint Authentication", () => {
+test.describe.serial("Ambient Waypoint Authentication", () => {
   const clients = [
     { name: "Client 1", url: url_client_1 },
     { name: "Client 2", url: url_client_2 },
@@ -47,7 +47,7 @@ test.describe("Ambient Waypoint Authentication", () => {
   }
 });
 
-test.describe("Unauthenticated Access", () => {
+test.describe.serial("Unauthenticated Access", () => {
   const clients = [
     { name: "Client 1", url: url_client_1 },
     { name: "Client 2", url: url_client_2 },
