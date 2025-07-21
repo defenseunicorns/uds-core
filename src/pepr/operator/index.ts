@@ -141,7 +141,6 @@ When(a.Secret)
 When(a.Secret).IsDeleted().WithLabel("uds.dev/pod-reload", "true").Reconcile(handleSecretDelete);
 
 // Istio Gateway Pods are not restarted automatically when the Istio ConfigMap is updated.
-// This approach helps with rapid progress and prototyping.
 When(a.ConfigMap)
   .IsUpdated()
   .InNamespace("istio-system")
