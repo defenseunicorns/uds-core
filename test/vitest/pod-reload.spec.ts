@@ -163,6 +163,12 @@ describe("Secret Auto-reload", () => {
         },
       });
 
+      // Get the current deployment generation
+      const deployment = await K8s(kind.Deployment)
+        .InNamespace(PODINFO_NAMESPACE)
+        .Get(PODINFO_DEPLOYMENT);
+      const initialGeneration = deployment.metadata!.generation!;
+
       // Update the secret to trigger controller restart
       const newValue = uuidv4();
 
@@ -174,12 +180,6 @@ describe("Secret Auto-reload", () => {
           value: Buffer.from(newValue).toString("base64"),
         },
       ]);
-
-      // Get the current deployment generation
-      const deployment = await K8s(kind.Deployment)
-        .InNamespace(PODINFO_NAMESPACE)
-        .Get(PODINFO_DEPLOYMENT);
-      const initialGeneration = deployment.metadata!.generation!;
 
       // Wait for the deployment to be restarted
       const { rolledOut } = await waitForDeploymentRollout(
@@ -300,6 +300,12 @@ describe("Secret Auto-reload", () => {
 
       await waitForPodReady(PODINFO_NAMESPACE, { app: testDeploymentName });
 
+      // Get the current test deployment generation
+      const testDeployment = await K8s(kind.Deployment)
+        .InNamespace(PODINFO_NAMESPACE)
+        .Get(testDeploymentName);
+      const testInitialGeneration = testDeployment.metadata!.generation!;
+
       // Update the auto-lookup secret to trigger controller restart
       const newValue = uuidv4();
 
@@ -311,12 +317,6 @@ describe("Secret Auto-reload", () => {
           value: Buffer.from(newValue).toString("base64"),
         },
       ]);
-
-      // Get the current test deployment generation
-      const testDeployment = await K8s(kind.Deployment)
-        .InNamespace(PODINFO_NAMESPACE)
-        .Get(testDeploymentName);
-      const testInitialGeneration = testDeployment.metadata!.generation!;
 
       // Wait for the test deployment to be restarted
       const { rolledOut } = await waitForDeploymentRollout(
