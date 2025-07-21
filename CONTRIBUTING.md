@@ -51,9 +51,8 @@ This task requires that `GO` and `addlicense` dependencies are installed. Instal
 uds run -f tasks/lint.yaml fix-license
 ```
 
-:::note
-If you choose to forgo pre-commit checking there is a possibility that the commit will fail Github pipeline jobs that perform these checks.
-:::
+> [!NOTE]
+> If you choose to forgo pre-commit checking there is a possibility that the commit will fail Github pipeline jobs that perform these checks.
 
 ## Definition of Done
 
