@@ -165,7 +165,7 @@ spec:
                 prefix: /metrics
           redirect:
             uri: "/realms/{{ .Values.realm }}/account"
-          {{- if .Values.thirdPartyIntegration.tls.tlsCertificateHeader | default "" | ne "" }}
+          {{- if .Values.thirdPartyIntegration.tls.tlsCertificateHeader }}
           headers:
             request:
               remove:
@@ -180,7 +180,7 @@ spec:
           app.kubernetes.io/name: keycloak
         host: sso
         port: 8080
-        {{- if .Values.thirdPartyIntegration.tls.tlsCertificateHeader | default "" | ne "" }}
+        {{- if .Values.thirdPartyIntegration.tls.tlsCertificateHeader }}
         advancedHTTP:
           headers:
             request:
@@ -197,7 +197,7 @@ spec:
         gateway: admin
         host: keycloak
         port: 8080
-        {{- if .Values.thirdPartyIntegration.tls.tlsCertificateHeader | default "" | ne "" }}
+        {{- if .Values.thirdPartyIntegration.tls.tlsCertificateHeader }}
         advancedHTTP:
           headers:
             request:
