@@ -1,0 +1,62 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+{{- if .Values.thirdPartyIntegration.tls.tlsCertificateHeader }}
+# This filter is responsible for converting the client certificate header obtained from an external
+# L7 Load Balancer (like AWS ALB) into a format that Keycloak can use.
+apiVersion: networking.istio.io/v1alpha3
+kind: EnvoyFilter
+metadata:
+  name: alb-client-cert-converter
+  namespace: istio-system
+spec:
+  configPatches:
+    - applyTo: HTTP_FILTER
+      match:
+        context: GATEWAY
+        listener:
+          filterChain:
+            filter:
+              name: envoy.filters.network.http_connection_manager
+      patch:
+        operation: INSERT_BEFORE
+        value:
+          name: envoy.filters.http.lua
+          typed_config:
+            '@type': type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
+            defaultSourceCode:
+              inlineString: |
+{{- if eq .Values.thirdPartyIntegration.tls.tlsCertificateFormat "AWS" }}
+                function url_decode(str)
+                  str = string.gsub(str, "%%(%x%x)", function(h) return string.char(tonumber(h,16)) end)
+                  str = string.gsub(str, "\r\n", "\n")
+                  return str
+                end
+{{- end }}
+
+                function envoy_on_request(request_handle)
+                  -- Removing headers to avoid spoofing
+                  request_handle:headers():remove("istio-mtls-client-certificate")
+                  request_handle:headers():remove("x-ssl-uds-processing-status")
+
+                  request_handle:headers():add("x-ssl-uds-processing-status", "received")
+                  local raw_cert = request_handle:headers():get("{{ .Values.thirdPartyIntegration.tls.tlsCertificateHeader }}")
+                  request_handle:headers():replace("x-ssl-uds-processing-status", "obtained client header")
+                  if raw_cert ~= nil and raw_cert ~= "" then
+                    local decoded
+                    request_handle:headers():replace("x-ssl-uds-processing-status", "client header present")
+{{- if eq .Values.thirdPartyIntegration.tls.tlsCertificateFormat "AWS" }}
+                    decoded = url_decode(raw_cert)
+                    local encoded = request_handle:base64Escape(decoded)
+{{- else }}
+                    decoded = raw_cert
+                    local encoded = decoded
+{{- end }}
+
+                    request_handle:headers():add("istio-mtls-client-certificate", encoded)
+                    request_handle:headers():replace("x-ssl-uds-processing-status", "processed - encoded")
+                  else
+                    request_handle:headers():replace("x-ssl-uds-processing-status", "processed - no cert")
+                  end
+                end
+{{- end }}
