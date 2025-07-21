@@ -155,24 +155,6 @@ false
 {{- end -}}
 {{- end -}}
 
-{{/* Get the secret name for PostgreSQL database. */}}
-{{- define "keycloak.postgresql.database.secretName" -}}
-{{- if eq (include "keycloak.postgresql.usingExistingSecrets" .) "true" -}}
-{{- .Values.postgresql.secretRef.database.name -}}
-{{- else -}}
-{{- include "keycloak.fullname" . }}-postgresql
-{{- end -}}
-{{- end -}}
-
-{{/* Get the secret key for PostgreSQL database. */}}
-{{- define "keycloak.postgresql.database.secretKey" -}}
-{{- if eq (include "keycloak.postgresql.usingExistingSecrets" .) "true" -}}
-{{- .Values.postgresql.secretRef.database.key -}}
-{{- else -}}
-{{- "database" -}}
-{{- end -}}
-{{- end -}}
-
 {{/* Get the secret name for PostgreSQL host. */}}
 {{- define "keycloak.postgresql.host.secretName" -}}
 {{- if eq (include "keycloak.postgresql.usingExistingSecrets" .) "true" -}}
@@ -191,20 +173,3 @@ false
 {{- end -}}
 {{- end -}}
 
-{{/* Get the secret name for PostgreSQL port. */}}
-{{- define "keycloak.postgresql.port.secretName" -}}
-{{- if eq (include "keycloak.postgresql.usingExistingSecrets" .) "true" -}}
-{{- .Values.postgresql.secretRef.port.name -}}
-{{- else -}}
-{{- include "keycloak.fullname" . }}-postgresql
-{{- end -}}
-{{- end -}}
-
-{{/* Get the secret key for PostgreSQL port. */}}
-{{- define "keycloak.postgresql.port.secretKey" -}}
-{{- if eq (include "keycloak.postgresql.usingExistingSecrets" .) "true" -}}
-{{- .Values.postgresql.secretRef.port.key -}}
-{{- else -}}
-{{- "port" -}}
-{{- end -}}
-{{- end -}}
