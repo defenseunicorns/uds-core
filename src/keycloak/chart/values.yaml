@@ -226,23 +226,12 @@ postgresql:
   username: ""
   # The password of the database user
   password: ""
-  # Database name
-  database: ""
   # URL for the database
   host: ""
 
-  # Alternative: Use existing secret(s) instead of direct values
-  # Uncomment and configure to use existing secrets:
-  #
-  # This is mutually exclusive with the above username/password/database/host values
-  # if secretRef is defined, the above values for username, password, database, and
-  # host will be ignored.
-  #
-  # Individual secret references for each PostgreSQL configuration value
-  # Each can reference a different secret and key
-  #   name - the name of the secret to reference
-  #   key - the key to reference from the aforementioned key
-  #
+  # Alternative: Use existing secret(s) for username, password, and host
+  # This is mutually exclusive with the above username/password/host values
+  # if a secretRef is defined, the corresponding value above will be ignored.
   # secretRef:
   #   username:
   #     name: ""
@@ -250,21 +239,14 @@ postgresql:
   #   password:
   #     name: ""
   #     key: ""
-  #   database:
-  #     name: ""
-  #     key: ""
   #   host:
   #     name: ""
   #     key: ""
-  #   # NOTE: postgresql.port must be defined even if postgresql.secretRef is used
-  #   # as it is required to configure egress in UDS
-  #   port:
-  #     name: ""
-  #     key: ""
 
-  # Port the database is listening on. This is required to configure egress in UDS and
-  # must be defined even if postgresql.secretRef is used. When postgresql.secretRef is used,
-  # keycloak pods will be configured using the port secret defined in postgresql.secretRef
+  # Database name
+  database: ""
+
+  # Port the database is listening on
   port: 5432
 
   egressCidr: ""
