@@ -29,19 +29,13 @@ export async function setupAmbientWaypoint(pkg: UDSPackage): Promise<void> {
   const { namespace, name } = pkg.metadata || {};
   if (!namespace || !name) {
     const error = "Package metadata is missing namespace or name";
-    log.error(JSON.stringify({ error, package: pkg }));
+    log.error(error, pkg);
     throw new Error(error);
   }
 
   const authServiceClients = pkg.spec?.sso?.filter(sso => sso.enableAuthserviceSelector) || [];
 
-  log.info(
-    JSON.stringify({
-      message: "Starting ambient waypoint setup",
-      namespace,
-      package: name,
-    }),
-  );
+  log.info(`Starting ambient waypoint setup for package ${name} in ${namespace}`);
 
   for (const client of authServiceClients) {
     const waypointId = client.clientId;
@@ -53,14 +47,7 @@ export async function setupAmbientWaypoint(pkg: UDSPackage): Promise<void> {
       await reconcileExistingResources(pkg, client, waypointName);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      log.error(
-        JSON.stringify({
-          message: "Error in ambient waypoint setup",
-          namespace,
-          waypointName,
-          error: errorMessage,
-        }),
-      );
+      log.error("Error in ambient waypoint setup", errorMessage);
       throw error;
     }
   }
@@ -444,18 +431,11 @@ export async function reconcileExistingResources(
 ): Promise<void> {
   const namespace = pkg.metadata?.namespace;
   if (!namespace) {
-    log.warn(JSON.stringify({ message: "No namespace found in package metadata" }));
+    log.warn("No namespace found in package metadata", pkg);
     return;
   }
 
-  log.info(
-    JSON.stringify({
-      message: "Starting reconciliation of existing resources",
-      namespace,
-      waypointName,
-      clientId: ssoClient.clientId,
-    }),
-  );
+  log.info(`Starting reconciliation of existing resources in ${namespace} for ${waypointName}`);
 
   try {
     const [services, pods] = await Promise.all([
@@ -475,18 +455,10 @@ export async function reconcileExistingResources(
       return matches;
     });
 
-    log.info(
-      JSON.stringify({
-        message: "Found resources to update with waypoint labels",
-        namespace,
-        matchingServices: matchingServices.length,
-        matchingPods: matchingPods.length,
-      }),
-    );
+    log.debug(`Found resource to update with waypoint labels in ${namespace}`);
 
     // Process matching services
     for (const svc of matchingServices) {
-      const serviceName = svc.metadata?.name || "unknown";
       try {
         await K8s(kind.Service, {
           name: svc.metadata!.name!,
@@ -505,20 +477,12 @@ export async function reconcileExistingResources(
         ]);
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
-        log.error(
-          JSON.stringify({
-            message: "Service reconciliation failed",
-            namespace,
-            service: serviceName,
-            error: errorMessage,
-          }),
-        );
+        log.error(`Service reconciliation failed for ${namespace}`, errorMessage);
       }
     }
 
     // Process matching pods
     for (const pod of matchingPods) {
-      const podName = pod.metadata?.name || "unknown";
       try {
         await K8s(kind.Pod, {
           name: pod.metadata!.name!,
@@ -532,28 +496,12 @@ export async function reconcileExistingResources(
         ]);
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
-        log.error(
-          JSON.stringify({
-            message: "Pod reconciliation failed",
-            namespace,
-            pod: podName,
-            error: errorMessage,
-          }),
-        );
+        log.info(`Pod reconciliation failed for ${namespace}`, errorMessage);
       }
     }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    const errorStack = error instanceof Error ? error.stack : undefined;
-
-    log.error(
-      JSON.stringify({
-        message: "Error in reconcileExistingResources",
-        namespace,
-        error: errorMessage,
-        stack: errorStack,
-      }),
-    );
+    log.error(`Error in reconcileExistingResources()`, errorMessage);
 
     // Re-throw to allow the caller to handle the error
     throw error;

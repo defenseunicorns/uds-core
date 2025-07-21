@@ -75,10 +75,9 @@ When(a.Service)
   .WithName("kubernetes")
   .Reconcile(updateAPIServerCIDRFromService);
 
-// Watch for Service mutations
+// Watch for Service mutations to apply ambient waypoint labels
 When(a.Service)
   .IsCreatedOrUpdated()
-  // apply ambient waypoint labels
   .Mutate(req => reconcileService(req.Raw));
 
 // Watch for Pod mutations to apply ambient waypoint labels

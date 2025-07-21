@@ -55,7 +55,6 @@ export async function authservice(pkg: UDSPackage, clients: Map<string, Client>)
     }
 
     // Use client ID directly as the waypoint ID
-    // The full waypoint name with prefix and suffix will be constructed by getWaypointName
     const waypointId = sso.clientId;
     // Get the full waypoint name for authorization policies
     const fullWaypointName = getWaypointName(waypointId);

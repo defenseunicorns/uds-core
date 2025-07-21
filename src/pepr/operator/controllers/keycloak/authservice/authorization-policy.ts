@@ -27,11 +27,6 @@ const operationMap: {
  * Sets the target for an Istio policy spec based on ambient mode.
  * If ambient mode is enabled and a waypoint name is provided, sets targetRef to the Gateway.
  * Otherwise, sets a pod selector for non-ambient mode. Ensures only one targeting field is present.
- *
- * @param spec - The policy spec object to modify
- * @param isAmbient - Whether ambient mode is enabled
- * @param waypointName - The name of the waypoint Gateway (if ambient)
- * @param labelSelector - The pod selector labels (if not ambient)
  */
 function setPolicyTarget(
   spec: NonNullable<IstioAuthorizationPolicy["spec"]>,
