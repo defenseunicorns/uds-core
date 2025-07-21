@@ -248,7 +248,7 @@ packages:
               value: "AWS"
 ```
 
-##### Infrastructure Requirements
+#### Infrastructure Requirements
 
 When using an L7 Load Balancer, UDS Core completely trusts information passed through the Istio Gateways. In order to provide the necessary security guarantees, the following infrastructure requirements must be met:
 
