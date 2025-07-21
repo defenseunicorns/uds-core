@@ -38,6 +38,7 @@ import {
 import { validateCfgUpdate } from "./crd/validators/clusterconfig-validator";
 import { exemptValidator } from "./crd/validators/exempt-validator";
 import { packageFinalizer, packageReconciler } from "./reconcilers/package-reconciler";
+import { restartGatewayPods } from "./controllers/istio/istio-configmap-sync";
 
 // Export the operator capability for registration in the root pepr.ts
 export { operator } from "./common";
@@ -128,3 +129,10 @@ When(a.Secret)
 
 // Watch for deleted secrets to clean up the checksum cache
 When(a.Secret).IsDeleted().WithLabel("uds.dev/pod-reload", "true").Reconcile(handleSecretDelete);
+
+// Istio Gateway Pods are not restarted automatically when the Istio ConfigMap is updated.
+When(a.ConfigMap)
+  .IsUpdated()
+  .InNamespace("istio-system")
+  .WithName("istio")
+  .Reconcile(restartGatewayPods);
