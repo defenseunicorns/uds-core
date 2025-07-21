@@ -256,5 +256,5 @@ When using an L7 Load Balancer, UDS Core completely trusts information passed th
 - The Client Certificate header always needs to be sanitized and ensure a client application cannot forge it (from both outside and inside the cluster).
 - All the traffic between edge and Istio Gateways must be secured (and preferably not reachable from both inside and outside the cluster).
 
-If any of these requirements cannot be met, it is not recommended to make any authentication decisions based on the Client Certificate header and use other MFA methods.
+If any of these requirements cannot be met, it is not recommended to make any authentication decisions based on the Client Certificate header. We would recommend using other MFA methods instead.
 
