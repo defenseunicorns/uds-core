@@ -314,7 +314,7 @@ describe("updateKubeAPINetworkPolicies", () => {
           spec: {
             ingress: [
               {
-                from: newPeers,
+                _from: newPeers,
               },
             ],
           },
@@ -383,7 +383,7 @@ describe("updateKubeAPINetworkPolicies", () => {
           spec: {
             ingress: [
               {
-                from: oldPeers,
+                _from: oldPeers,
               },
             ],
           },
@@ -465,7 +465,7 @@ describe("updateKubeAPINetworkPolicies", () => {
           spec: {
             ingress: [
               {
-                from: undefined,
+                _from: undefined,
               },
             ],
           },

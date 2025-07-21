@@ -9,11 +9,11 @@ import { kind } from "pepr";
 import { Allow, RemoteGenerated } from "../../crd";
 import { anywhere, anywhereInCluster } from "./generators/anywhere";
 import { cloudMetadata } from "./generators/cloudMetadata";
+import { egressGateway } from "./generators/egressGateway";
 import { intraNamespace } from "./generators/intraNamespace";
 import { kubeAPI } from "./generators/kubeAPI";
 import { kubeNodes } from "./generators/kubeNodes";
 import { remoteCidr } from "./generators/remoteCidr";
-import { egressGateway } from "./generators/egressGateway";
 
 function isWildcardNamespace(namespace: string) {
   return namespace === "" || namespace === "*";
@@ -122,7 +122,7 @@ export function generate(namespace: string, policy: Allow): kind.NetworkPolicy {
   // Add the ingress or egress rule
   switch (policy.direction) {
     case "Ingress":
-      generated.spec!.ingress = [{ from: peers, ports }];
+      generated.spec!.ingress = [{ _from: peers, ports }];
       break;
 
     case "Egress":

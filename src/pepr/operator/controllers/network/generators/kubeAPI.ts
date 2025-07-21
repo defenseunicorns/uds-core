@@ -188,12 +188,12 @@ export async function updateKubeAPINetworkPolicies(newPeers: V1NetworkPolicyPeer
       // Handle ingress policies
     } else if (netPol.spec.ingress) {
       if (!netPol.spec.ingress[0]) {
-        netPol.spec.ingress[0] = { from: [] };
+        netPol.spec.ingress[0] = { _from: [] };
       }
-      const oldPeers = netPol.spec.ingress[0].from;
+      const oldPeers = netPol.spec.ingress[0]._from;
       if (!R.equals(oldPeers, newPeers)) {
         updateRequired = true;
-        netPol.spec.ingress[0].from = newPeers;
+        netPol.spec.ingress[0]._from = newPeers;
       }
     }
 

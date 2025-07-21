@@ -120,10 +120,10 @@ export async function updateKubeNodesNetworkPolicies() {
       }
     } else if (netPol.spec.ingress) {
       netPol.spec.ingress[0] = netPol.spec.ingress[0] || { from: [] };
-      const oldNodes = netPol.spec.ingress[0].from;
+      const oldNodes = netPol.spec.ingress[0]._from;
       if (!R.equals(oldNodes, newNodes)) {
         updateRequired = true;
-        netPol.spec.ingress[0].from = newNodes;
+        netPol.spec.ingress[0]._from = newNodes;
       }
     }
 

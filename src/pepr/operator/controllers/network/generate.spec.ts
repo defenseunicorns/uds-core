@@ -22,7 +22,7 @@ describe("network policy generate", () => {
     expect(policy.spec).toEqual({
       ingress: [
         {
-          from: [
+          _from: [
             {
               namespaceSelector: {
                 matchLabels: {
@@ -58,7 +58,7 @@ describe("network policy generate", () => {
     expect(policy.spec).toEqual({
       ingress: [
         {
-          from: [
+          _from: [
             {
               namespaceSelector: {
                 matchLabels: {
@@ -157,7 +157,7 @@ describe("network policy generate with remoteCidr", () => {
     expect(policy.spec).toEqual({
       ingress: [
         {
-          from: [
+          _from: [
             {
               ipBlock: {
                 cidr: "10.0.0.0/8",
