@@ -40,6 +40,17 @@ Alternatively, you can install them with `pip`:
 pip install yamllint codespell
 ```
 
+Additionally, we add and check for license headers in our files. The pre-commit check is performed by this [UDS Common task](https://github.com/defenseunicorns/uds-common/blob/main/tasks/lint.yaml#L159-L225).
+
+This task requires that `GO` and `addlicense` dependencies are installed. Install `GO` by following the [official documentation](https://go.dev/doc/install). To install `addlicense` and it's required dependencies you can run the following command:
+```bash
+uds run -f tasks/lint.yaml fix-license
+```
+
+:::note
+If you choose to forgo pre-commit checking there is a possibility that the commit will fail Github pipeline jobs that perform these checks.
+:::
+
 ## Definition of Done
 
 We apply these principles to all User Stories and contributions:
@@ -70,6 +81,7 @@ Before starting, ensure that you have the following installed:
 - **K3d**: [Install K3d](https://k3d.io/#installation)
 - **Node.js** (for building and running Pepr): [Install Node.js](https://nodejs.org/en/download/) (we recommend Node 24 to align with what CI tests/builds with)
 - **UDS CLI** (for running tasks and deploying): [Install UDS](https://uds.defenseunicorns.com/cli/quickstart-and-usage/)
+- **Go** (for development and testing): [Install Go](https://go.dev/doc/install)
 
 ### 2. Clone the Repository and Make a Branch
 
