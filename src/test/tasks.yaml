@@ -3,7 +3,7 @@
 
 includes:
   - utils: ../../tasks/utils.yaml
-  - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.16.4/tasks/setup.yaml
+  - uds-common: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.16.4/tasks/setup.yaml
 
 tasks:
   - name: validate
@@ -31,7 +31,7 @@ tasks:
           npx vitest run "test-resources.spec.ts"
         dir: test/vitest
       - description: "Setup the Doug User for testing"
-        task: common-setup:keycloak-user
+        task: uds-common:keycloak-user
         with:
           group: "/UDS Core/Admin"
       - description: "Run Ambient Playwright Test"
