@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { kind } from "pepr";
 import { afterEach, beforeEach, describe, expect, it, Mock, MockedFunction, vi } from "vitest";
 import { Direction, RemoteProtocol } from "../../crd";
 import { purgeOrphans } from "../utils";
@@ -216,43 +215,5 @@ describe("test createAmbientWorkloadEgressResources", () => {
 
     expect(defaultEgressMocks.applySeMock).toHaveBeenCalledTimes(1);
     expect(defaultEgressMocks.applyApMock).not.toHaveBeenCalled();
-  });
-
-  it("should err if bad service account specified", async () => {
-    // Mock ServiceAccount get inNamespace error
-    const errorMessage =
-      "ServiceAccount foo does not exist in namespace test-ns. Please create the ServiceAccount and retry.";
-    const getServiceAccountMock = vi
-      .fn<() => Promise<kind.ServiceAccount>>()
-      .mockRejectedValue(new Error("Service account not found"));
-
-    updateEgressMocks({
-      ...defaultEgressMocks,
-      getServiceAccountMock,
-    });
-
-    // Should throw error
-    await expect(
-      createAmbientWorkloadEgressResources(
-        {
-          "example.com": {
-            portProtocol: [{ port: 443, protocol: RemoteProtocol.TLS }],
-          },
-        },
-        [
-          {
-            direction: Direction.Egress,
-            remoteHost: "example.com",
-            remoteProtocol: RemoteProtocol.TLS,
-            port: 443,
-            serviceAccount: "foo",
-          },
-        ],
-        "test-package",
-        "test-ns",
-        "1",
-        [],
-      ),
-    ).rejects.toThrow(errorMessage);
   });
 });

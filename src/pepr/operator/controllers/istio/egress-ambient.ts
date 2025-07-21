@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 import { V1OwnerReference } from "@kubernetes/client-node";
-import { K8s, kind } from "pepr";
+import { K8s } from "pepr";
 import { Allow, IstioAuthorizationPolicy, IstioServiceEntry, IstioWaypoint } from "../../crd";
 import { purgeOrphans } from "../utils";
 import { generateAuthorizationPolicy } from "./auth-policy";
@@ -82,15 +82,6 @@ export async function createAmbientWorkloadEgressResources(
       }
       const { host, ports, protocol } = hostPortsProtocol;
       const portsProtocol = ports.map(port => ({ port, protocol }));
-
-      // Validate serviceAccount exists - else all egress traffic will fail
-      try {
-        await K8s(kind.ServiceAccount).InNamespace(namespace).Get(serviceAccount);
-      } catch {
-        const errText = `ServiceAccount ${serviceAccount} does not exist in namespace ${namespace}. Please create the ServiceAccount and retry.`;
-        log.error(errText);
-        throw new Error(errText);
-      }
 
       // Create Authorization Policy
       const authPolicy = generateAuthorizationPolicy(
