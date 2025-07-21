@@ -83,10 +83,10 @@ Check external PostgreSQL connection information. Fails when required values are
 {{- define "keycloak.postgresql.config" -}}
 {{- if not .Values.devMode -}}
 {{- if .Values.postgresql -}}
-{{- $requiredKeys := list "username" "password" "database" "host" "port" -}}
 
 {{- if eq (include "keycloak.postgresql.usingExistingSecrets" .) "true" -}}
   {{- /* Validate secretRef configuration only */ -}}
+  {{- $requiredKeys := list "username" "password" "host" -}}
   {{- range $k := $requiredKeys -}}
     {{- if empty (get $.Values.postgresql.secretRef $k) -}}{{- fail (printf "Missing secretRef configuration for \"postgresql.%s\"." $k ) -}}{{- end -}}
     {{- $secretRefConfig := get $.Values.postgresql.secretRef $k -}}
@@ -95,6 +95,7 @@ Check external PostgreSQL connection information. Fails when required values are
   {{- end -}}
 {{- else -}}
   {{- /* Validate direct values only */ -}}
+  {{- $requiredKeys := list "username" "password" "database" "host" "port" -}}
   {{- range $k := $requiredKeys -}}
     {{- if empty (get $.Values.postgresql $k) -}}{{- fail (printf "Missing value for \"postgresql.%s\"." $k ) -}}{{- end -}}
   {{- end -}}

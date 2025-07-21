@@ -219,13 +219,13 @@ spec:
             - name: KC_DB_URL_PORT
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "keycloak.postgresql.port.secretName" . }}
-                  key: {{ include "keycloak.postgresql.port.secretKey" . }}
+                  name: {{ include "keycloak.fullname" . }}-postgresql
+                  key: port
             - name: KC_DB_URL_DATABASE
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "keycloak.postgresql.database.secretName" . }}
-                  key: {{ include "keycloak.postgresql.database.secretKey" . }}
+                  name: {{ include "keycloak.fullname" . }}-postgresql
+                  key: database
             - name: KC_DB_USERNAME
               valueFrom:
                 secretKeyRef:
