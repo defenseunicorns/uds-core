@@ -1,6 +1,3 @@
-#!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
-
 echo "\nRunning YAML Lint Check"
 
 # Run yamllint globally, which will respect the .yamllint config, including ignores

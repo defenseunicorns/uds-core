@@ -31,6 +31,10 @@ We use [codespell](https://github.com/codespell-project/codespell) and [yamllint
 To install these tools, run:
 
 ```console
+# Setup husky pre-commit dependency
+npx husky
+
+# Install codespell and yamllint
 uds run lint-check
 ```
 
@@ -43,7 +47,7 @@ pip install yamllint codespell
 Additionally, we add and check for license headers in our files. The pre-commit check is performed by this [UDS Common task](https://github.com/defenseunicorns/uds-common/blob/main/tasks/lint.yaml#L159-L225).
 
 This task requires that `GO` and `addlicense` dependencies are installed. Install `GO` by following the [official documentation](https://go.dev/doc/install). To install `addlicense` and it's required dependencies you can run the following command:
-```bash
+```console
 uds run -f tasks/lint.yaml fix-license
 ```
 
