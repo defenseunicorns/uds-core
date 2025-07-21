@@ -2,11 +2,17 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 includes:
-  - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.16.3/tasks/setup.yaml
+  - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.16.4/tasks/setup.yaml
 
 tasks:
   - name: validate
     actions:
+      - description: Wait for NeuVector Job Completion
+        cmd: |
+          # On upgrades there may be cert rotation jobs or other jobs that run
+          if ./uds zarf tools kubectl get jobs -n neuvector --no-headers 2>/dev/null | grep -q .; then
+            ./uds zarf tools kubectl wait --for=condition=complete job --all -n neuvector --timeout=5m
+          fi
       - description: Validate NeuVector Controller
         wait:
           cluster:
@@ -34,13 +40,6 @@ tasks:
             protocol: https
             address: neuvector.admin.uds.dev
             code: 200
-      - description: Trigger updater job and wait for all job completion
-        cmd: |
-          kubectl create job --from=cronjob/neuvector-updater-pod updater -n neuvector
-          if ./uds zarf tools kubectl get jobs -n neuvector --no-headers 2>/dev/null | grep -q .; then
-            ./uds zarf tools kubectl wait --for=condition=complete job --all -n neuvector --timeout=5m
-          fi
-      # Wait after job completion since updater job cycles scanners
       - description: Validate NeuVector Scanner
         wait:
           cluster:
@@ -58,9 +57,15 @@ tasks:
       - description: E2E Test for NeuVector
         cmd: |
           # renovate: datasource=docker depName=mcr.microsoft.com/playwright versioning=docker
-          docker run --rm --ipc=host -e FULL_CORE="${FULL_CORE}" --net=host --mount type=bind,source="$(pwd)",target=/app mcr.microsoft.com/playwright:v1.53.2-noble sh -c " \
+          docker run --rm --ipc=host -e FULL_CORE="${FULL_CORE}" --net=host --mount type=bind,source="$(pwd)",target=/app mcr.microsoft.com/playwright:v1.54.1-noble sh -c " \
             cd app && \
             npm ci && \
             npx playwright test neuvector.test.ts \
             "
         dir: test/playwright
+      - description: Trigger updater job and wait for all job completion
+        cmd: |
+          kubectl create job --from=cronjob/neuvector-updater-pod updater -n neuvector
+          if ./uds zarf tools kubectl get jobs -n neuvector --no-headers 2>/dev/null | grep -q .; then
+            ./uds zarf tools kubectl wait --for=condition=complete job --all -n neuvector --timeout=5m
+          fi

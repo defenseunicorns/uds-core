@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 includes:
-  - common: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.16.3/tasks/create.yaml
+  - common: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.16.4/tasks/create.yaml
 
 variables:
   - name: FLAVOR
@@ -95,6 +95,9 @@ tasks:
           config: ./zarf-config.yaml
           options: ${{ .inputs.create_options }}
           architecture: ${ZARF_ARCHITECTURE}
+      - description: "Create the shim bundle (Base only)"
+        if: ${{ eq .inputs.layer "base" }}
+        cmd: "uds create bundles/base-shim --confirm --no-progress --architecture=${ZARF_ARCHITECTURE}"
 
   - name: pepr-build
     description: "Build the UDS Core Pepr Module"
