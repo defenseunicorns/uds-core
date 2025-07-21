@@ -1,29 +1,61 @@
 # Copyright 2024 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
+{{- if .Values.config.enabled }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: egress-waypoint-config
   namespace: {{ .Release.Namespace }}
 data:
-  {{- if .Values.config.deployment }}
+  {{- with .Values.config.deployment }}
   deployment: |
-    {{ .Values.config.deployment | nindent 4 }}
+    {{- with .podAnnotations }}
+    metadata:
+      annotations: 
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    spec:
+      replicas: {{ .replicas }}
+      template:
+        spec:
+          containers:
+          - name: istio-proxy
+            resources:
+              requests:
+                cpu: {{ .requests.cpu }}
+                memory: {{ .requests.memory }}
+              limits:
+                cpu: {{ .limits.cpu }}
+                memory: {{ .limits.memory }}
   {{- end }}
-  {{- if .Values.config.service }}
+  {{- with .Values.config.service }}
   service: |
-    {{ .Values.config.service | nindent 4 }}
+    {{- toYaml . | nindent 4 }}
   {{- end }}
-  {{- if .Values.config.serviceAccount }}
+  {{- with .Values.config.serviceAccount }}
   serviceAccount: |
-    {{ .Values.config.serviceAccount | nindent 4 }}
+    {{-  toYaml . | nindent 4 }}
   {{- end }}
-  {{- if .Values.config.horizontalPodAutoscaler }}
+  {{- with .Values.config.horizontalPodAutoscaler }}
   horizontalPodAutoscaler: |
-    {{ .Values.config.horizontalPodAutoscaler | nindent 4 }}
+    spec:
+      {{ with .minReplicas }}minReplicas: {{ . }}{{- end }}
+      {{ with .maxReplicas }}maxReplicas: {{ . }}{{- end }}
+      {{- if .metrics }}
+      metrics:
+        {{- toYaml .metrics | nindent 8 }}
+      {{- end }}
   {{- end }}
-  {{- if .Values.config.podDisruptionBudget }}
+  {{- with .Values.config.podDisruptionBudget }}
   podDisruptionBudget: |
-    {{ .Values.config.podDisruptionBudget | nindent 4 }}
+    spec:
+      selector:
+        matchLabels:
+          gateway.networking.k8s.io/gateway-name: egress-waypoint
+      {{ with .minAvailable }}minAvailable: {{ . }}{{- end }}
+      {{- if and .maxUnavailable (not .minAvailable) }}
+      maxUnavailable: {{ .maxUnavailable }}
+      {{- end }}
   {{- end }}
+{{- end }}

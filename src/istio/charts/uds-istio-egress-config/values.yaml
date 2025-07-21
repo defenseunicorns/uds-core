@@ -2,37 +2,29 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 # Egress Config
-config: {}
-  # Set the deployment specification for the following resource types:
-  # - service
-  # - deployment
-  # - serviceAccount
-  # - horizontalPodAutoscaler
-  # - podDisruptionBudget
-  # These configurations will be overlaid on top of the generated resources using a Strategic Merge Patch strategy
-  #
-  # Examples:
-  # horizontalPodAutoscaler: |
-  #   spec:
-  #     minReplicas: 2
-  #     maxReplicas: 2
-  #
-  # deployment: |
-  #   metadata:
-  #     annotations:
-  #       additional-annotation: some-value
-  #   spec:
-  #     replicas: 4
-  #     template:
-  #       spec:
-  #         containers:
-  #         - name: istio-proxy
-  #           resources:
-  #             requests:
-  #               cpu: 1234m
-  #
-  # service: |
-  #   spec:
-  #     ports:
-  #     - "\$patch": delete
-  #       port: 15021
+config:
+  enabled: false
+
+  deployment:
+    podAnnotations:
+    replicas: 1
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 2
+      memory: 1Gi
+
+  horizontalPodAutoscaler:
+    # minReplicas: 1
+    # maxReplicas: 2
+    # metrics: []
+
+  # minAvailable and maxUnavailable are mutually exclusive, minAvailable takes precedence
+  podDisruptionBudget:
+    # minAvailable: 1
+    # maxUnavailable: 1
+
+  service:
+
+  serviceAccount:
