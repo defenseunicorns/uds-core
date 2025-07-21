@@ -122,6 +122,10 @@ When a Package CR specifies the `network.allow` field with, at minimum, the `rem
 * (Optional, if `serviceAccount`) An Istio AuthorizationPolicy, in the package namespace, which is used to enforce that only traffic from workloads using the selected service account can egress.
 * A shared Istio Waypoint, in the `istio-egress-waypoint` namespace, which is used to route the egress traffic.
 
+#### Limitations
+
+Due to Istio limitations and the selected implementation of shared waypoint egress, if two different egress requests in different packages specify the same host (e.g., pkg1 -> example.com AND pkg2 -> example.com) but request different port or protocols (e.g., pkg1 -> example.com:443/TLS AND pkg2 -> example.com:80/HTTP), the second request will be blocked during reconciliation and the package will fail to reconcile.
+
 ### Sidecar Mode
 
 The following sample Package CR shows configuring egress to a specific host, "httpbin.org", on port 443. 
