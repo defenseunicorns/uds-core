@@ -17,20 +17,15 @@ overrides:
   istio-egress-waypoint:
     uds-istio-egress-config:
       values:
-        - path: "config.deployment"
-          value: |
-            spec:
-              replicas: 4
-              template:
-                spec:
-                  containers:
-                  - name: istio-proxy
-                    resources:
-                      requests:
-                        cpu: 1234m
+        - path: config.enabled
+          value: true
+        - path: "config.deployment.replicas"
+          value: 4
+        - path: "config.horizontalPodAutoscaler.minReplicas"
+          value: 2
 ```
 
-See the values.yaml for additional details.
+See the values.yaml for additional details and configuration options.
 
 ### Sidecar
 
