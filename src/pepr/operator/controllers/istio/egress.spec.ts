@@ -1358,7 +1358,7 @@ describe("test validatePortConflicts", () => {
     );
   });
 
-  it("should throw an error when a protocol confict exists", () => {
+  it("should throw an error when a protocol conflict exists", () => {
     const currentPackageMap: PackageHostMap = {
       package1: {
         "example.com": {
