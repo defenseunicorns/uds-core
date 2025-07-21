@@ -26,5 +26,6 @@ config:
     # maxUnavailable: 1
 
   service:
-
+    # ports: []
+  
   serviceAccount:

@@ -31,7 +31,9 @@ data:
   {{- end }}
   {{- with .Values.config.service }}
   service: |
-    {{- toYaml . | nindent 4 }}
+    spec:
+      ports:
+        {{- toYaml .ports | nindent 8 }}
   {{- end }}
   {{- with .Values.config.serviceAccount }}
   serviceAccount: |
