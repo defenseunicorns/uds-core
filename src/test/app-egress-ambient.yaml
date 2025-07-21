@@ -1,6 +1,7 @@
 # Copyright 2024 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
+# egress-ambient-1 tests curl to example.com via 443
 apiVersion: v1
 kind: Service
 metadata:
@@ -16,12 +17,6 @@ spec:
       targetPort: 8080
   selector:
     app: curl
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: curl
-  namespace: egress-ambient-1
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -41,7 +36,6 @@ spec:
         sidecar.istio.io/proxyCPU: "10m"
         sidecar.istio.io/proxyMemory: "16Mi"
     spec:
-      serviceAccountName: curl
       containers:
         - name: curl
           image: curlimages/curl
@@ -57,6 +51,7 @@ spec:
           ports:
             - containerPort: 8080
 ---
+# egress-ambient-2 tests serviceAccount access
 apiVersion: v1
 kind: Service
 metadata:
@@ -98,6 +93,55 @@ spec:
         sidecar.istio.io/proxyMemory: "16Mi"
     spec:
       serviceAccountName: curl
+      containers:
+        - name: curl
+          image: curlimages/curl
+          imagePullPolicy: IfNotPresent
+          command: ["sleep", "3600"]
+          resources:
+            limits:
+              cpu: 50m
+              memory: 64Mi
+            requests:
+              cpu: 10m
+              memory: 16Mi
+          ports:
+            - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: another-curl
+  namespace: egress-ambient-2
+  labels:
+    name: another-curl
+    namespace: egress-ambient-2
+spec:
+  ports:
+    - name: port8080
+      port: 8080
+      targetPort: 8080
+  selector:
+    app: another-curl
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: another-curl
+  namespace: egress-ambient-2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: another-curl
+  template:
+    metadata:
+      labels:
+        app: another-curl
+      annotations:
+        sidecar.istio.io/proxyCPU: "10m"
+        sidecar.istio.io/proxyMemory: "16Mi"
+    spec:
       containers:
         - name: curl
           image: curlimages/curl

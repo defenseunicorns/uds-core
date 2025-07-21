@@ -45,10 +45,9 @@ spec:
       mode: ambient
     allow:
       - direction: Egress
-        selector:
-          app: curl
         ports:
-          - 80
-        remoteHost: example.com
-        remoteProtocol: HTTP
-        description: "Example Curl"
+          - 443
+        remoteHost: google.com
+        remoteProtocol: TLS
+        serviceAccount: curl
+        description: "Google Curl"
