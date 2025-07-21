@@ -237,8 +237,6 @@ packages:
       keycloak:
         keycloak:
           values:
-            - path: thirdPartyIntegration.tls.tlsTermination
-              value: "external"
             - path: thirdPartyIntegration.tls.tlsCertificateHeader
               # This header is used by the ALB to pass the client certificate
               value: "x-amzn-mtls-clientcert"
