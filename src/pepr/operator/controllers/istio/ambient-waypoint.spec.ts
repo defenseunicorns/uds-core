@@ -631,9 +631,7 @@ describe("reconcileExistingResources", () => {
   it("should warn and return if no namespace in package", async () => {
     const pkg = { ...createMockPackage("test-pkg"), metadata: {} };
     await reconcileExistingResources(pkg, ssoClient, waypointName);
-    expect(mockLog.warn).toHaveBeenCalledWith(
-      expect.stringContaining("No namespace found in package metadata"),
-    );
+    expect(mockLog.warn).toHaveBeenCalledWith("No namespace found in package metadata", pkg);
     expect(mockGet).not.toHaveBeenCalled();
     expect(mockPatch).not.toHaveBeenCalled();
   });
@@ -671,8 +669,8 @@ describe("reconcileExistingResources", () => {
         value: waypointName,
       }),
     ]);
-    expect(mockLog.info).toHaveBeenCalledWith(
-      expect.stringContaining("Found resources to update with waypoint labels"),
+    expect(mockLog.debug).toHaveBeenCalledWith(
+      `Found resource to update with waypoint labels in ${pkg.metadata?.namespace}`,
     );
   });
 
@@ -688,7 +686,8 @@ describe("reconcileExistingResources", () => {
 
     await reconcileExistingResources(pkg, ssoClient, waypointName);
     expect(mockLog.error).toHaveBeenCalledWith(
-      expect.stringContaining("Service reconciliation failed"),
+      `Service reconciliation failed for ${pkg.metadata?.namespace}`,
+      "patch failed",
     );
     // Pod patch still called
     expect(mockPatch).toHaveBeenCalledTimes(2);
@@ -705,8 +704,9 @@ describe("reconcileExistingResources", () => {
     mockPatch.mockResolvedValueOnce(undefined).mockRejectedValueOnce(new Error("pod patch failed"));
 
     await reconcileExistingResources(pkg, ssoClient, waypointName);
-    expect(mockLog.error).toHaveBeenCalledWith(
-      expect.stringContaining("Pod reconciliation failed"),
+    expect(mockLog.info).toHaveBeenCalledWith(
+      `Pod reconciliation failed for ${pkg.metadata?.namespace}`,
+      "pod patch failed",
     );
     expect(mockPatch).toHaveBeenCalledTimes(2);
   });
@@ -718,7 +718,8 @@ describe("reconcileExistingResources", () => {
       "get failed",
     );
     expect(mockLog.error).toHaveBeenCalledWith(
-      expect.stringContaining("Error in reconcileExistingResources"),
+      "Error in reconcileExistingResources()",
+      "get failed",
     );
   });
 });
