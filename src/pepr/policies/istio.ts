@@ -100,6 +100,7 @@ When(a.Pod)
           "istio-tenant-gateway",
           "istio-admin-gateway",
           "istio-passthrough-gateway",
+          "istio-egress-gateway",
         ];
         if (
           key === "sidecar.istio.io/inject" &&
