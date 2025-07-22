@@ -7,9 +7,9 @@ export type Config = {
   domain: string;
   adminDomain: string;
   caCert: string;
-  authserviceRedisUri: string | undefined;
+  authserviceRedisUri: string;
   allowAllNSExemptions: boolean;
-  kubeApiCIDR: string | undefined;
+  kubeApiCIDR: string;
   kubeNodeCIDRs: string[];
   isIdentityDeployed: boolean;
 };

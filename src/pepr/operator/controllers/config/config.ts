@@ -20,7 +20,7 @@ export const UDSConfig: Config = {
   domain: "",
   adminDomain: "",
   caCert: "",
-  authserviceRedisUri: undefined,
+  authserviceRedisUri: "",
   allowAllNSExemptions: false,
   kubeApiCIDR: "",
   kubeNodeCIDRs: [],
@@ -132,7 +132,7 @@ export async function updateCfg(cfg: ClusterConfig) {
 
   // Handle changes to the kubeApiCidr
   if (networking?.kubeApiCIDR !== UDSConfig.kubeApiCIDR) {
-    UDSConfig.kubeApiCIDR = networking?.kubeApiCIDR;
+    UDSConfig.kubeApiCIDR = networking?.kubeApiCIDR || "";
     if (updateClusterResources) {
       // This re-runs the "init" function to update netpols if necessary
       configLog.debug("Updating KubeAPI network policies based on change to kubeApiCidr");

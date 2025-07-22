@@ -8,12 +8,22 @@ metadata:
   labels:
     {{- include "uds-operator-config.labels" . | nindent 4 }}
 spec:
+  {{- if or .Values.cluster.attributes.clusterName .Values.cluster.attributes.clusterTags }}
   attributes:
+    {{- if .Values.cluster.attributes.clusterName }}
     clusterName: {{ .Values.cluster.attributes.clusterName | quote }}
+    {{- end }}
+    {{- if .Values.cluster.attributes.clusterTags }}
     tags:
       {{- toYaml .Values.cluster.attributes.clusterTags | nindent 6 }}
+    {{- end }}
+  {{- end }}
+  {{- if or .Values.cluster.networking.kubeApiCIDR .Values.operator.KUBEAPI_CIDR .Values.cluster.networking.kubeNodeCIDRs .Values.operator.KUBENODE_CIDRS }}
   networking:
+    {{- if or .Values.cluster.networking.kubeApiCIDR .Values.operator.KUBEAPI_CIDR }}
     kubeApiCIDR: {{ .Values.cluster.networking.kubeApiCIDR | default .Values.operator.KUBEAPI_CIDR | quote }}
+    {{- end }}
+    {{- if or .Values.cluster.networking.kubeNodeCIDRs .Values.operator.KUBENODE_CIDRS }}
     kubeNodeCIDRs:
     {{- if .Values.cluster.networking.kubeNodeCIDRs }}
       {{- toYaml .Values.cluster.networking.kubeNodeCIDRs | nindent 6 }}
@@ -21,12 +31,18 @@ spec:
     {{- range ( split "," .Values.operator.KUBENODE_CIDRS ) }}
       - {{ . | quote }}
     {{- end }}
-    {{- else }}
-      []
     {{- end }}
+    {{- end }}
+  {{- end }}
   expose:
     domain: {{ .Values.cluster.expose.domain | quote }}
+    {{- if .Values.cluster.expose.adminDomain }}
     adminDomain: {{ .Values.cluster.expose.adminDomain | quote }}
+    {{- else }}
+    adminDomain: "admin.{{ .Values.cluster.expose.domain }}"
+    {{- end }}
+    {{- if .Values.cluster.expose.caCert }}
     caCert: {{ .Values.cluster.expose.caCert | quote }}
+    {{- end }}
   policy:
     allowAllNsExemptions: {{ .Values.cluster.policy.allowAllNsExemptions }}
