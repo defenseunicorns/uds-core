@@ -25,7 +25,7 @@ const HEALTH_OPTS = {
 /**
  * Sets up an ambient waypoint for a package
  */
-export async function setupAmbientWaypoint(pkg: UDSPackage): Promise<void> {
+export async function setupAmbientWaypoint(pkg: UDSPackage, client: Sso): Promise<void> {
   const { namespace, name } = pkg.metadata || {};
   if (!namespace || !name) {
     const error = "Package metadata is missing namespace or name";
@@ -33,43 +33,30 @@ export async function setupAmbientWaypoint(pkg: UDSPackage): Promise<void> {
     throw new Error(error);
   }
 
-  const authServiceClients = pkg.spec?.sso?.filter(sso => sso.enableAuthserviceSelector) || [];
-
   log.info(`Starting ambient waypoint setup for package ${name} in ${namespace}`);
 
-  for (const client of authServiceClients) {
-    const waypointId = client.clientId;
-    const waypointName = getWaypointName(waypointId);
+  const waypointId = client.clientId;
+  const waypointName = getWaypointName(waypointId);
 
-    try {
-      await createWaypointGateway(pkg, waypointName, waypointId);
-      await waitForWaypointPodHealthy(namespace, waypointName);
-      await reconcileExistingResources(pkg, client, waypointName);
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      log.error("Error in ambient waypoint setup", errorMessage);
-      throw error;
-    }
+  try {
+    await createWaypointGateway(pkg, waypointName);
+    await waitForWaypointPodHealthy(namespace, waypointName);
+    await reconcileExistingResources(pkg, client, waypointName);
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    log.error("Error in ambient waypoint setup", errorMessage);
+    throw error;
   }
 }
 
 /**
  * Creates a waypoint gateway for the given package
  */
-export async function createWaypointGateway(
-  pkg: UDSPackage,
-  waypointName: string,
-  waypointId: string,
-) {
+export async function createWaypointGateway(pkg: UDSPackage, waypointName: string) {
   const { namespace, name } = pkg.metadata || {};
   if (!namespace || !name) throw new Error("Package metadata is missing namespace or name");
 
-  log.info(`Creating waypoint gateway for package: ${namespace}/${name}`, {
-    waypointName,
-    waypointId,
-    namespace,
-    packageName: name,
-  });
+  log.info(`Creating waypoint gateway for package: ${namespace}/${name}`);
 
   try {
     const gateway = new K8sGateway();
@@ -139,18 +126,28 @@ export async function createWaypointGateway(
 export async function isWaypointPodHealthy(
   namespace: string,
   waypointName: string,
-): Promise<boolean> {
-  const pods = await K8s(a.Pod)
-    .InNamespace(namespace)
-    .WithLabel(`istio.io/gateway-name=${waypointName}`)
-    .Get();
+): Promise<{ healthy: boolean; podCount: number }> {
+  try {
+    const pods = await K8s(a.Pod)
+      .InNamespace(namespace)
+      .WithLabel(`istio.io/gateway-name=${waypointName}`)
+      .Get();
 
-  return (
-    pods.items?.some(
+    const podCount = pods.items?.length || 0;
+    const healthy = pods.items?.some(
       pod =>
         pod.status?.phase === "Running" && pod.status?.containerStatuses?.every(cs => cs.ready),
-    ) || false
-  );
+    );
+
+    return {
+      healthy: Boolean(healthy),
+      podCount,
+    };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    log.warn(`Error checking waypoint pod health: ${errorMessage}`);
+    return { healthy: false, podCount: 0 };
+  }
 }
 
 /**
@@ -163,61 +160,28 @@ export async function waitForWaypointPodHealthy(
   const start = Date.now();
   const { maxAttempts, intervalMs, timeoutMs } = HEALTH_OPTS;
 
-  log.info("Starting waypoint pod health check", {
-    namespace,
-    waypointName,
-    maxAttempts,
-    intervalMs,
-    timeoutMs,
-  });
+  log.info("Starting waypoint pod health check");
 
   for (let i = 1; i <= maxAttempts; i++) {
     if (Date.now() - start > timeoutMs) {
-      log.error("Timeout waiting for waypoint pod", {
-        namespace,
-        waypointName,
-        elapsedMs: Date.now() - start,
-      });
+      log.error(`imeout waiting for waypoint pod in ${namespace} with name ${waypointName}`);
       throw new Error(`Timeout waiting for waypoint pod ${waypointName} in ${namespace}`);
     }
 
-    try {
-      // Check if pods exist with the waypoint label
-      const pods = await K8s(a.Pod)
-        .InNamespace(namespace)
-        .WithLabel(`istio.io/gateway-name=${waypointName}`)
-        .Get();
+    const healthCheck = await isWaypointPodHealthy(namespace, waypointName);
 
-      if (!pods.items || pods.items.length === 0) {
-        log.info(
-          `No waypoint pods found for ${waypointName} in ${namespace}, attempt ${i}/${maxAttempts}`,
-        );
-      } else {
-        log.info(
-          `Found ${pods.items.length} waypoint pods for ${waypointName} in ${namespace}, checking health...`,
-        );
-
-        // Log pod status for debugging
-        pods.items.forEach(pod => {
-          log.info(`Pod status: ${pod.metadata?.name}`, {
-            phase: pod.status?.phase,
-            ready: pod.status?.containerStatuses?.every(cs => cs.ready),
-            conditions: pod.status?.conditions,
-          });
-        });
-
-        if (await isWaypointPodHealthy(namespace, waypointName)) {
-          log.info(`Waypoint pod ${waypointName} in ${namespace} is healthy`);
-          return;
-        }
+    if (healthCheck.podCount === 0) {
+      log.info(
+        `No waypoint pods found for ${waypointName} in ${namespace}, attempt ${i}/${maxAttempts}`,
+      );
+    } else {
+      log.info(
+        `Found ${healthCheck.podCount} waypoint pods for ${waypointName} in ${namespace}, checking health...`,
+      );
+      if (healthCheck.healthy) {
+        log.info(`Waypoint pod ${waypointName} in ${namespace} is healthy`);
+        return;
       }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      log.warn(`Error checking waypoint pod health (attempt ${i}/${maxAttempts})`, {
-        namespace,
-        waypointName,
-        error: errorMessage,
-      });
     }
 
     if (i < maxAttempts) {

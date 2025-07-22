@@ -173,29 +173,17 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
       const appSelector = sso.enableAuthserviceSelector;
 
       // Egress policy: Allow traffic from waypoint to istiod
-      const istiodPolicy: Allow = {
-        direction: Direction.Egress,
-        selector: netpolSelector,
-        remoteNamespace: "istio-system",
-        remoteSelector: { app: "istiod" },
-        port: 15012,
-        description: `istiod egress for ${sso.clientId} waypoint`,
+      const istiodPolicy = allowEgressIstiod(namespace, sso.clientId);
+      // Add labels to the generated policy
+      istiodPolicy.metadata = {
+        ...istiodPolicy.metadata,
         labels: {
+          ...istiodPolicy.metadata?.labels,
           "uds/package": pkg.metadata!.name!,
           "uds/sso-client": sso.clientId,
         },
       };
-      policies.push(generate(namespace, istiodPolicy));
-
-      // Ingress policy: Allow traffic from app pods to waypoint
-      policies.push(
-        generate(namespace, {
-          direction: Direction.Ingress,
-          selector: { "istio.io/gateway-name": waypointName },
-          remoteSelector: appSelector,
-          description: `Allow traffic from app to ${waypointName}`,
-        }),
-      );
+      policies.push(istiodPolicy);
 
       // Egress policy: Allow traffic from waypoint to app pods
       policies.push(
@@ -223,7 +211,7 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
           direction: Direction.Ingress,
           selector: { "istio.io/gateway-name": waypointName },
           remoteNamespace: "monitoring",
-          remoteSelector: { "app.kubernetes.io/name": "prometheus" },
+          remoteSelector: { app: "prometheus" },
           ports: [
             15020, // Envoy admin port
           ],

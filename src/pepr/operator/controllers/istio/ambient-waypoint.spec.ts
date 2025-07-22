@@ -167,12 +167,7 @@ describe("isWaypointPodHealthy", () => {
           { name: "container-2", ready: true },
         ],
       },
-      expected: true,
-    },
-    {
-      name: "should return false when no pods exist",
-      podStatus: { items: [] },
-      expected: false,
+      expected: { healthy: true, podCount: 1 },
     },
     {
       name: "should return false when pod is not running",
@@ -186,7 +181,7 @@ describe("isWaypointPodHealthy", () => {
           },
         ],
       },
-      expected: false,
+      expected: { healthy: false, podCount: 1 },
     },
   ];
 
@@ -200,7 +195,7 @@ describe("isWaypointPodHealthy", () => {
     );
 
     const result = await isWaypointPodHealthy(namespace, waypointName);
-    expect(result).toBe(expected);
+    expect(result).toEqual(expected);
     expect(mockInNamespace).toHaveBeenCalledWith(namespace);
     expect(mockWithLabel).toHaveBeenCalledWith(`istio.io/gateway-name=${waypointName}`);
   });
@@ -326,42 +321,33 @@ describe("setupAmbientWaypoint", () => {
     vi.clearAllMocks();
   });
 
+  const client = {
+    clientId: "test-client",
+    name: "test-sso",
+    enableAuthserviceSelector: {
+      app: "test-client",
+    },
+  };
+
   it("should throw an error when package metadata is missing namespace or name", async () => {
     // Create a package with missing metadata
     const pkg = { metadata: {} } as UDSPackage;
 
     // Expect the function to throw with the correct error message
-    await expect(setupAmbientWaypoint(pkg)).rejects.toThrow(
+    await expect(setupAmbientWaypoint(pkg, client)).rejects.toThrow(
       "Package metadata is missing namespace or name",
     );
 
     // Also test with partial metadata
     const pkgNoNamespace = { metadata: { name: "test" } } as UDSPackage;
-    await expect(setupAmbientWaypoint(pkgNoNamespace)).rejects.toThrow(
+    await expect(setupAmbientWaypoint(pkgNoNamespace, client)).rejects.toThrow(
       "Package metadata is missing namespace or name",
     );
 
     const pkgNoName = { metadata: { namespace: "test-ns" } } as UDSPackage;
-    await expect(setupAmbientWaypoint(pkgNoName)).rejects.toThrow(
+    await expect(setupAmbientWaypoint(pkgNoName, client)).rejects.toThrow(
       "Package metadata is missing namespace or name",
     );
-  });
-
-  it("should handle empty auth service clients array", async () => {
-    // Create a package with no auth service clients
-    const pkg = {
-      metadata: {
-        namespace: "test-ns",
-        name: "test-pkg",
-      },
-      spec: {
-        sso: [], // Empty array of SSO clients
-      },
-    } as UDSPackage;
-
-    // This should not throw and should complete successfully with empty results
-    const result = await setupAmbientWaypoint(pkg);
-    expect(result).toEqual(undefined);
   });
 });
 
@@ -478,7 +464,6 @@ describe("cleanupWaypointLabels", () => {
 
 describe("createWaypointGateway", () => {
   const waypointName = "test-client-waypoint";
-  const waypointId = "test-client";
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -491,7 +476,7 @@ describe("createWaypointGateway", () => {
     const pkg = createMockPackage("test-pkg");
 
     // Call the function
-    const result = await createWaypointGateway(pkg, waypointName, waypointId);
+    const result = await createWaypointGateway(pkg, waypointName);
 
     // Verify the gateway was created with correct properties
     expect(mockApply).toHaveBeenCalledTimes(1);
@@ -528,22 +513,22 @@ describe("createWaypointGateway", () => {
     expect(result).toBe(waypointName);
 
     // Verify logging
-    expect(mockLog.info).toHaveBeenCalledWith(
-      expect.stringContaining("Creating waypoint gateway for package"),
-      expect.objectContaining({
-        waypointName,
-        waypointId,
-        namespace: "test-ns",
-        packageName: "test-pkg",
-      }),
+    expect(mockLog.info).toHaveBeenNthCalledWith(
+      1,
+      `Creating waypoint gateway for package: test-ns/test-pkg`,
     );
-    expect(mockLog.info).toHaveBeenCalledWith(
-      "Successfully created waypoint gateway",
-      expect.objectContaining({
-        namespace: "test-ns",
-        waypointName,
-      }),
-    );
+
+    expect(mockLog.info).toHaveBeenNthCalledWith(2, "Applying waypoint gateway", {
+      namespace: "test-ns",
+      name: waypointName,
+      gatewayClassName: "istio-waypoint",
+      ownerReferences: expect.stringContaining('"kind":"Package"'),
+    });
+
+    expect(mockLog.info).toHaveBeenNthCalledWith(3, "Successfully created waypoint gateway", {
+      namespace: "test-ns",
+      waypointName,
+    });
   });
 
   it("should throw an error when package metadata is missing", async () => {
@@ -551,7 +536,7 @@ describe("createWaypointGateway", () => {
     const pkg = { ...createMockPackage("test-pkg"), metadata: {} };
 
     // Expect the function to throw an error
-    await expect(createWaypointGateway(pkg, waypointName, waypointId)).rejects.toThrow(
+    await expect(createWaypointGateway(pkg, waypointName)).rejects.toThrow(
       "Package metadata is missing namespace or name",
     );
 
@@ -568,7 +553,7 @@ describe("createWaypointGateway", () => {
     mockApply.mockRejectedValueOnce(testError);
 
     // Expect the function to throw an error
-    await expect(createWaypointGateway(pkg, waypointName, waypointId)).rejects.toThrow(
+    await expect(createWaypointGateway(pkg, waypointName)).rejects.toThrow(
       "Failed to create waypoint gateway: Test apply error",
     );
 
@@ -593,7 +578,7 @@ describe("createWaypointGateway", () => {
     mockApply.mockRejectedValueOnce(testError);
 
     // Expect the function to throw an error
-    await expect(createWaypointGateway(pkg, waypointName, waypointId)).rejects.toThrow(
+    await expect(createWaypointGateway(pkg, waypointName)).rejects.toThrow(
       "Failed to create waypoint gateway: String error message",
     );
 

@@ -46,7 +46,7 @@ export async function authservice(pkg: UDSPackage, clients: Map<string, Client>)
 
   for (const sso of authServiceClients) {
     if (isAmbient) {
-      await setupAmbientWaypoint(pkg);
+      await setupAmbientWaypoint(pkg, sso);
     }
 
     const client = clients.get(sso.clientId);

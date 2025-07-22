@@ -49,3 +49,12 @@ Authservice is fully supported for packages running in Istio Ambient Mesh mode (
 - Set `spec.network.serviceMesh.mode: ambient` in your Package CR.
 - Add your SSO configuration with `enableAuthserviceSelector` as usual.
 - The operator will handle the rest.
+
+:::caution
+### Important Note on Selector Matching
+When using `enableAuthserviceSelector` in ambient mode, ensure that the selector matches the labels on your pods **and** services. If the selector only matches pod labels but not service selectors, you may encounter incomplete Authservice protection where:
+  - The pod is mutated to use the waypoint
+  - But the service is not properly associated with the waypoint
+
+Additionally, the package network expose also needs to match the selector for the network policies to be associated properly.
+:::
