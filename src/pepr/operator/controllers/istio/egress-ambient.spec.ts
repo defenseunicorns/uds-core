@@ -214,6 +214,6 @@ describe("test createAmbientWorkloadEgressResources", () => {
     );
 
     expect(defaultEgressMocks.applySeMock).toHaveBeenCalledTimes(1);
-    expect(defaultEgressMocks.applyApMock).not.toHaveBeenCalled();
+    expect(defaultEgressMocks.applyApMock).toHaveBeenCalledTimes(1); // still called with default service account
   });
 });

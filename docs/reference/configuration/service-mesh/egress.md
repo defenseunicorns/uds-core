@@ -112,7 +112,7 @@ spec:
 
 When a Package CR specifies the `network.allow` field with, at minimum, the `remoteHost` and `port` or `ports` parameters, the UDS Core operator will create the necessary Istio resources to allow traffic to egress from the mesh. For ambient, the `serviceAccount` can be specified for an additional layer of security. The resources that are created include the following:
 * An Istio ServiceEntry, in the package namespace, which is used to define the external service that the workload can access.
-* (Optional, if `serviceAccount`) An Istio AuthorizationPolicy, in the package namespace, which is used to enforce that only traffic from workloads using the selected service account can egress.
+* An Istio AuthorizationPolicy, in the package namespace, which is used to enforce that only traffic from workloads using the selected service account can egress. If no `serviceAccount` is specified, the `default` service account is used.
 * A shared Istio Waypoint, in the `istio-egress-waypoint` namespace, which is used to route the egress traffic.
 
 #### Limitations

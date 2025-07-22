@@ -74,30 +74,28 @@ export async function createAmbientWorkloadEgressResources(
 
   // Create Authorization Policy for service entry, if serviceAccount is specified
   for (const allow of egressRequested) {
-    if (allow.serviceAccount) {
-      const serviceAccount = allow.serviceAccount;
-      const hostPortsProtocol = getHostPortsProtocol(allow);
-      if (!hostPortsProtocol) {
-        continue;
-      }
-      const { host, ports, protocol } = hostPortsProtocol;
-      const portsProtocol = ports.map(port => ({ port, protocol }));
-
-      // Create Authorization Policy
-      const authPolicy = generateAuthorizationPolicy(
-        host,
-        pkgName,
-        namespace,
-        generation,
-        ownerRefs,
-        generateLocalEgressSEName(pkgName, portsProtocol, host),
-        serviceAccount,
-      );
-
-      log.debug(authPolicy, `Applying Authorization Policy ${authPolicy.metadata?.name}`);
-
-      // Apply the AuthorizationPolicy and force overwrite any existing resource
-      await K8s(IstioAuthorizationPolicy).Apply(authPolicy, { force: true });
+    const serviceAccount = allow.serviceAccount ?? "default";
+    const hostPortsProtocol = getHostPortsProtocol(allow);
+    if (!hostPortsProtocol) {
+      continue;
     }
+    const { host, ports, protocol } = hostPortsProtocol;
+    const portsProtocol = ports.map(port => ({ port, protocol }));
+
+    // Create Authorization Policy
+    const authPolicy = generateAuthorizationPolicy(
+      host,
+      pkgName,
+      namespace,
+      generation,
+      ownerRefs,
+      generateLocalEgressSEName(pkgName, portsProtocol, host),
+      serviceAccount,
+    );
+
+    log.debug(authPolicy, `Applying Authorization Policy ${authPolicy.metadata?.name}`);
+
+    // Apply the AuthorizationPolicy and force overwrite any existing resource
+    await K8s(IstioAuthorizationPolicy).Apply(authPolicy, { force: true });
   }
 }
