@@ -185,7 +185,8 @@ tasks:
       - task: create:standard-package
         with:
           create_options: "--skip-sbom"
-      - task: deploy:standard-package
+      - task: create:k3d-standard-bundle
+      - cmd: uds deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --packages core --confirm --no-progress
       - task: validate-packages
       - task: e2e-tests
 
