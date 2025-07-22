@@ -57,8 +57,23 @@ tasks:
 
   - name: latest-package-release
     actions:
-      - description: "Deploy the latest UDS Core package release"
-        cmd: uds deploy oci://ghcr.io/defenseunicorns/packages/uds/bundles/k3d-core-demo:latest --confirm --no-progress --packages core
+      - task: utils:determine-repo
+      - description: "Get latest tag version from OCI"
+        cmd: uds zarf tools registry ls ${TARGET_REPO}/core | grep ${FLAVOR} | sort -V | tail -1
+        setVariables:
+          - name: LATEST_VERSION
+      - description: "Deploy the latest version"
+        cmd: |
+          # Update the bundle with the latest version
+          uds zarf tools yq e -i ".packages[0].repository = \"${TARGET_REPO}/core\" | .packages[0].ref = \"${LATEST_VERSION}\"" bundles/core-shim/uds-bundle.yaml
+
+          # Create and deploy the bundle
+          uds create bundles/core-shim --confirm --no-progress --architecture=${ZARF_ARCHITECTURE}
+
+          # Restore the original dev reference
+          uds zarf tools yq e -i '.packages[0].repository = "core" | .packages[0].ref = "dev"' bundles/core-shim/uds-bundle.yaml
+
+          uds deploy bundles/core-shim/uds-bundle-core-shim-${UDS_ARCH}-dev.tar.zst --confirm --no-progress
 
   - name: latest-bundle-release-ha
     actions:

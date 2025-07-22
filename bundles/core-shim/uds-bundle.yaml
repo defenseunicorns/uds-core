@@ -1,0 +1,31 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+kind: UDSBundle
+metadata:
+  name: core-shim
+  description: A shim bundle for deploying the UDS Core package with overrides in CI/Dev environments
+  version: "dev"
+packages:
+  - name: core
+    # repository and ref are dynamically replaced by the `latest-package-release` deploy task
+    repository: core
+    ref: "dev"
+    optionalComponents:
+      - istio-passthrough-gateway
+      - istio-egress-gateway
+    overrides:
+      pepr-uds-core:
+        module:
+          values:
+            - path: additionalIgnoredNamespaces
+              value:
+                - uds-dev-stack
+            - path: "watcher.resources.requests.memory"
+              value: "256Mi"
+            - path: "admission.resources.requests.memory"
+              value: "256Mi"
+            - path: "watcher.resources.requests.cpu"
+              value: "200m"
+            - path: "admission.resources.requests.cpu"
+              value: "200m"
