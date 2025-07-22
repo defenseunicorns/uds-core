@@ -10,6 +10,7 @@ import { Component, setupLogger } from "../logger";
 import { ExemptionStore } from "../operator/controllers/exemptions/exemption-store";
 import { processExemptions } from "../operator/controllers/exemptions/exemptions";
 import { Matcher, Policy, UDSExemption } from "../operator/crd";
+import "./istio";
 import "./networking";
 import "./security";
 import "./storage";
