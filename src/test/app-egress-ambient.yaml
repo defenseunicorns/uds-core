@@ -51,6 +51,17 @@ spec:
           ports:
             - containerPort: 8080
 ---
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: example-com-tls
+  namespace: egress-ambient-1
+spec:
+  host: example.com
+  trafficPolicy:
+    tls:
+      mode: SIMPLE
+---
 # egress-ambient-2 tests serviceAccount access
 apiVersion: v1
 kind: Service

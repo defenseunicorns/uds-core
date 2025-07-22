@@ -3,17 +3,16 @@
 
 # Egress Config
 config:
-  enabled: false
 
   deployment:
-    podAnnotations:
-    replicas: 1
-    requests:
-      cpu: 100m
-      memory: 128Mi
-    limits:
-      cpu: 2
-      memory: 1Gi
+    # podAnnotations:
+    # replicas: 1
+    # requests:
+    #   cpu: 100m
+    #   memory: 128Mi
+    # limits:
+    #   cpu: 2
+    #   memory: 1Gi
 
   horizontalPodAutoscaler:
     # minReplicas: 1
