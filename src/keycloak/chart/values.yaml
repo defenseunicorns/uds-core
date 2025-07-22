@@ -232,16 +232,16 @@ postgresql:
   # Alternative: Use existing secret(s) for username, password, and host
   # This is mutually exclusive with the above username/password/host values
   # if a secretRef is defined, the corresponding value above will be ignored.
-  # secretRef:
-  #   username:
-  #     name: ""
-  #     key: ""
-  #   password:
-  #     name: ""
-  #     key: ""
-  #   host:
-  #     name: ""
-  #     key: ""
+  secretRef:
+    username:
+      name: ""
+      key: ""
+    password:
+      name: ""
+      key: ""
+    host:
+      name: ""
+      key: ""
 
   # Database name
   database: ""
