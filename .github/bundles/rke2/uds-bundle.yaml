@@ -6,7 +6,7 @@ metadata:
   name: uds-core-rke2-nightly
   description: A UDS bundle for deploying RKE2 and UDS Core
   # x-release-please-start-version
-  version: "0.46.0"
+  version: "0.47.0"
   # x-release-please-end
 
 packages:
@@ -16,7 +16,7 @@ packages:
 
   - name: init
     repository: ghcr.io/zarf-dev/packages/init
-    ref: v0.57.0
+    ref: v0.58.0
     overrides:
       zarf-registry:
         docker-registry:
@@ -38,7 +38,7 @@ packages:
   - name: core
     path: ../../../build
     # x-release-please-start-version
-    ref: 0.46.0
+    ref: 0.47.0
     # x-release-please-end
     optionalComponents:
       - metrics-server
