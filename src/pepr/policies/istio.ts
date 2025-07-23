@@ -18,15 +18,14 @@ import { isExempt, markExemption } from "./exemptions";
  */
 When(a.Pod)
   .IsCreatedOrUpdated()
-  .Mutate(markExemption(Policy.RestrictIstioSidecarConfigurationOverrides))
+  .Mutate(markExemption(Policy.RestrictIstioSidecarOverrides))
   .Validate(request => {
-    if (isExempt(request, Policy.RestrictIstioSidecarConfigurationOverrides)) {
+    if (isExempt(request, Policy.RestrictIstioSidecarOverrides)) {
       return request.Approve();
     }
 
     // ref: https://istio.io/latest/docs/reference/config/annotations/
     const blockedAnnotations = [
-      "inject.istio.io/templates", // Allows use of custom injection templates
       "sidecar.istio.io/bootstrapOverride", // Overrides entire Envoy bootstrap config
       "sidecar.istio.io/discoveryAddress", // Can redirect sidecar to an untrusted control plane
       "sidecar.istio.io/proxyImage", // Allows use of arbitrary proxy images
@@ -39,13 +38,6 @@ When(a.Pod)
 
     const violations = Object.keys(annotations)
       .filter(annotation => {
-        // Exempt if the custom inject template is specifically "gateway"
-        if (
-          annotation === "inject.istio.io/templates" &&
-          annotations[annotation]?.trim() === "gateway"
-        ) {
-          return false;
-        }
         return blockedAnnotations.includes(annotation);
       })
       .sort((a, b) => a.localeCompare(b));
@@ -76,9 +68,9 @@ When(a.Pod)
  */
 When(a.Pod)
   .IsCreatedOrUpdated()
-  .Mutate(markExemption(Policy.RestrictIstioTrafficInterceptionOverrides))
+  .Mutate(markExemption(Policy.RestrictIstioTrafficOverrides))
   .Validate(request => {
-    if (isExempt(request, Policy.RestrictIstioTrafficInterceptionOverrides)) {
+    if (isExempt(request, Policy.RestrictIstioTrafficOverrides)) {
       return request.Approve();
     }
 

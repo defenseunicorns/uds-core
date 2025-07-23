@@ -93,9 +93,8 @@ spec:
   });
 
   // TODO: enable this test once we enforce the policy
-  it.skip("should prevent multiple dangerous istio sidecard configuration annotations", async () => {
+  it.skip("should prevent multiple dangerous istio sidecar configuration annotations", async () => {
     const blockedAnnotations = [
-      "inject.istio.io/templates",
       "proxy.istio.io/config",
       "sidecar.istio.io/bootstrapOverride",
       "sidecar.istio.io/discoveryAddress",
@@ -143,7 +142,6 @@ spec:
     const podYamlPath = join(tmpDir, "istio-warning-test.yaml");
 
     const blockedAnnotations = [
-      "inject.istio.io/templates",
       "proxy.istio.io/config",
       "sidecar.istio.io/bootstrapOverride",
       "sidecar.istio.io/discoveryAddress",
@@ -165,7 +163,6 @@ metadata:
   name: istio-warning-multiple-bad-annotations
   namespace: policy-tests
   annotations:
-    inject.istio.io/templates: "true"
     proxy.istio.io/config: "true"
     sidecar.istio.io/bootstrapOverride: "true"
     sidecar.istio.io/discoveryAddress: "true"
