@@ -94,8 +94,8 @@ When(a.Pod)
 
     const violations = Object.entries(annotations)
       .filter(([key]) => {
-        // Ignore 'sidecar.istio.io/inject' annotation in 'istio-system' 'istio-tenant-gateway' 'istio-admin-gateway' 'istio-passthrough-gateway' namespace
-        const allowedIstioInjectDisableNamespaces = [
+        // Ignore 'sidecar.istio.io/inject' annotation in 'istio-system' 'istio-tenant-gateway' 'istio-admin-gateway' 'istio-passthrough-gateway' namespaces
+        const allowedIstioInjectAnnotationNamespaces = [
           "istio-system",
           "istio-tenant-gateway",
           "istio-admin-gateway",
@@ -104,7 +104,7 @@ When(a.Pod)
         ];
         if (
           key === "sidecar.istio.io/inject" &&
-          allowedIstioInjectDisableNamespaces.includes(namespace)
+          allowedIstioInjectAnnotationNamespaces.includes(namespace)
         ) {
           return false;
         }
@@ -124,9 +124,9 @@ When(a.Pod)
   });
 
 /**
- * This policy prevents the use of any Istio Annotations that override default secure mesh behavior on Pods.
+ * This policy prevents the use of any Istio Annotations that override default secure ambient mesh behavior on Pods.
  *
- * Istio allows some annotations to be used to override default secure mesh behavior, such as traffic interception
+ * Istio allows some annotations to be used to override default secure ambient mesh behavior, such as traffic interception
  * This policy blocks all such annotations to prevent security vulnerabilities or misconfigurations.
  */
 When(a.Pod)
