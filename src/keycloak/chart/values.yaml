@@ -229,9 +229,7 @@ postgresql:
   # URL for the database
   host: ""
 
-  # Alternative: Use existing secret(s) for username, password, and host
-  # This is mutually exclusive with the above username/password/host values
-  # if a secretRef is defined, the corresponding value above will be ignored.
+  # Alternative: Use existing secret(s) for username, password, or host
   secretRef:
     username:
       name: ""
