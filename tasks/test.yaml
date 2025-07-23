@@ -126,6 +126,7 @@ tasks:
     inputs:
       K3D_EXTRA_ARGS:
         default: ""
+        description: "Extra args for k3d"
     actions:
       - task: create:standard-package
         with:
@@ -166,26 +167,28 @@ tasks:
   - name: uds-core-ha-upgrade
     description: "Test an upgrade from the latest released UDS Core package with HA to current branch with HA"
     actions:
-      - task: deploy:latest-bundle-release-ha
+      - task: uds-core-upgrade
+        with:
+          configFile: "bundles/k3d-standard/uds-ha-config.yaml"
+
+  - name: uds-core-upgrade
+    inputs:
+      configFile:
+        description: "UDS_CONFIG file to use for the deployments"
+    description: "Test an upgrade from the latest released UDS Core package to current branch"
+    actions:
+      - task: deploy:latest-bundle-release
+        with:
+          configFile: ${{ .inputs.configFile }}
       - task: create:standard-package
         with:
           create_options: "--skip-sbom"
       - task: create:k3d-standard-bundle
-      - cmd: uds deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --packages core --confirm --no-progress
-        env:
-          - UDS_CONFIG=bundles/k3d-standard/uds-ha-config.yaml
-      - task: validate-packages
-      - task: e2e-tests
-
-  - name: uds-core-upgrade
-    description: "Test an upgrade from the latest released UDS Core package to current branch"
-    actions:
-      - task: setup:k3d-test-cluster
-      - task: deploy:latest-package-release
-      - task: create:standard-package
-        with:
-          create_options: "--skip-sbom"
-      - task: deploy:standard-package
+      # Note: we want to deploy from the bundle since we need overrides, but we don't want to redeploy k3d/zarf init so we pass `--packages` here
+      - cmd: |
+          # Set UDS_CONFIG for bundle deployment
+          export UDS_CONFIG="${{ .inputs.configFile }}"
+          uds deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --packages core --confirm --no-progress
       - task: validate-packages
       - task: e2e-tests
 
