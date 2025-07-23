@@ -171,3 +171,12 @@ Additional security considerations to keep in mind when implementing egress:
 * Some potential vulnerabilities are introduced using TLS Passthrough - you’ll need to know what’s on the other side of that domain because of [domain fronting](https://en.wikipedia.org/wiki/Domain_fronting) - Essentially, this is only a safe feature for trusted hosts, or hosts you know are not vulnerable to domain fronting
 
 * We are not blocking DNS exfiltration
+
+## Debugging Tips
+
+Egress not working? Some things to try:
+
+- `google.com` is not the same as `www.google.com` - Does your `remoteHost` match the request?
+- Do your selectors and serviceAccounts match the workloads you expect?
+- Check `istioctl analyze -n <egress-namespace>` for any errors
+- Check `istioctl proxy-config listeners <egress-pod> -n <egress-namespace>` for expected routes

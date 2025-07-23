@@ -450,9 +450,6 @@ describe("Network Policy Validation", () => {
     );
     expect(isResponseError(denied_google_response_1)).toBe(true);
 
-    // Wait 5 seconds
-    await new Promise(resolve => setTimeout(resolve, 5000));
-
     // Validate allowed tls request to Google when using Egress with ServiceAccount in curl for curl-pkg-egress-ambient-2
     const success_response_google_tls = await execInPod(
       "egress-ambient-2",

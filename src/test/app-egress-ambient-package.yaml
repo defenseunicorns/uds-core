@@ -47,7 +47,7 @@ spec:
       - direction: Egress
         ports:
           - 443
-        remoteHost: google.com
+        remoteHost: www.google.com
         remoteProtocol: TLS
         serviceAccount: curl
         description: "Google Curl"
