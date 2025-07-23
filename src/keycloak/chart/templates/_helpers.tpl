@@ -102,7 +102,7 @@ Check external PostgreSQL connection information. Fails when required values are
     {{- fail "Cannot use an external PostgreSQL Database when 'devMode' is enabled." -}}
 {{- end -}}
 
-
+{{- /* If any non-default postgresql values are set, validate that all required values are set */ -}}
 {{- if or $usernameConfigured $passwordConfigured $hostConfigured $databaseConfigured -}}
   {{- /* Validate username configuration */ -}}
   {{- if not $usernameConfigured -}}
@@ -136,7 +136,7 @@ Check external PostgreSQL connection information. Fails when required values are
 {{- end -}}
 
 
-{{/* Helper to determine there is a valid configured secretRef for PostgreSQL username */}}
+{{/* Helper to determine if there is a valid configured secretRef for PostgreSQL username */}}
 {{- define "keycloak.postgresql.username.validExistingSecretRef" -}}
   {{- if not (empty (compact (values .Values.postgresql.secretRef.username))) -}}
     {{/* Validate that both name and key are set for the secretRef and are not set to "", otherwise fail*/}}
@@ -150,7 +150,7 @@ Check external PostgreSQL connection information. Fails when required values are
   {{- end -}}
 {{- end -}}
 
-{{/* Get the secret name for PostgreSQL username. */}}
+{{/* Determine the secret name for PostgreSQL username. */}}
 {{- define "keycloak.postgresql.username.secretName" -}}
 {{- if eq (include "keycloak.postgresql.username.validExistingSecretRef" .) "true" -}}
 {{- .Values.postgresql.secretRef.username.name -}}
@@ -159,7 +159,7 @@ Check external PostgreSQL connection information. Fails when required values are
 {{- end -}}
 {{- end -}}
 
-{{/* Get the secret key for PostgreSQL username. */}}
+{{/* Determine the secret key for PostgreSQL username. */}}
 {{- define "keycloak.postgresql.username.secretKey" -}}
 {{- if eq (include "keycloak.postgresql.username.validExistingSecretRef" .) "true" -}}
 {{- .Values.postgresql.secretRef.username.key -}}
@@ -168,7 +168,7 @@ Check external PostgreSQL connection information. Fails when required values are
 {{- end -}}
 {{- end -}}
 
-{{/* Helper to determine there is a valid configured secretRef for PostgreSQL password */}}
+{{/* Helper to determine if there is a valid configured secretRef for PostgreSQL password */}}
 {{- define "keycloak.postgresql.password.validExistingSecretRef" -}}
   {{- if not (empty (compact (values .Values.postgresql.secretRef.password))) -}}
     {{/* Validate that both name and key are set for the secretRef and are not set to "", otherwise fail*/}}
@@ -182,7 +182,7 @@ Check external PostgreSQL connection information. Fails when required values are
   {{- end -}}
 {{- end -}}
 
-{{/* Get the secret name for PostgreSQL password. */}}
+{{/* Determine the secret name for PostgreSQL password. */}}
 {{- define "keycloak.postgresql.password.secretName" -}}
 {{- if eq (include "keycloak.postgresql.password.validExistingSecretRef" .) "true" -}}
 {{- .Values.postgresql.secretRef.password.name -}}
@@ -191,7 +191,7 @@ Check external PostgreSQL connection information. Fails when required values are
 {{- end -}}
 {{- end -}}
 
-{{/* Get the secret key for PostgreSQL password. */}}
+{{/* Determine the secret key for PostgreSQL password. */}}
 {{- define "keycloak.postgresql.password.secretKey" -}}
 {{- if eq (include "keycloak.postgresql.password.validExistingSecretRef" .) "true" -}}
 {{- .Values.postgresql.secretRef.password.key -}}
@@ -201,7 +201,7 @@ Check external PostgreSQL connection information. Fails when required values are
 {{- end -}}
 
 
-{{/* Helper to determine there is a valid configured secretRef for PostgreSQL host */}}
+{{/* Helper to determine if there is a valid configured secretRef for PostgreSQL host */}}
 {{- define "keycloak.postgresql.host.validExistingSecretRef" -}}
   {{- if not (empty (compact (values .Values.postgresql.secretRef.host))) -}}
     {{/* Validate that both name and key are set for the secretRef and are not set to "", otherwise fail*/}}
@@ -215,7 +215,7 @@ Check external PostgreSQL connection information. Fails when required values are
   {{- end -}}
 {{- end -}}
 
-{{/* Get the secret name for PostgreSQL host. */}}
+{{/* Determine the secret name for PostgreSQL host. */}}
 {{- define "keycloak.postgresql.host.secretName" -}}
 {{- if eq (include "keycloak.postgresql.host.validExistingSecretRef" .) "true" -}}
 {{- .Values.postgresql.secretRef.host.name -}}
@@ -224,7 +224,7 @@ Check external PostgreSQL connection information. Fails when required values are
 {{- end -}}
 {{- end -}}
 
-{{/* Get the secret key for PostgreSQL host. */}}
+{{/* Determine the secret key for PostgreSQL host. */}}
 {{- define "keycloak.postgresql.host.secretKey" -}}
 {{- if eq (include "keycloak.postgresql.host.validExistingSecretRef" .) "true" -}}
 {{- .Values.postgresql.secretRef.host.key -}}
