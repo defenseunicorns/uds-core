@@ -456,9 +456,12 @@ describe("cleanupWaypointLabels", () => {
 
     // Should only patch the target pod
     expect(mockGet).toHaveBeenCalledTimes(2);
-    expect(mockLog.debug).toHaveBeenCalledWith(
-      `Skipping pod test-pod: label ${ISTIO_WAYPOINT_LABEL} does not match ${waypointName}`,
-    );
+    expect(mockLog.debug).toHaveBeenCalledWith("Skipping pod: waypoint label does not match", {
+      podName: "test-pod",
+      namespace: "test-ns",
+      expectedWaypoint: waypointName,
+      actualWaypoint: "other-waypoint",
+    });
   });
 });
 

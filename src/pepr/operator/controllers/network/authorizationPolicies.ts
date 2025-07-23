@@ -371,6 +371,9 @@ export async function generateAuthorizationPolicies(
  * Checks if a service should be handled by an ambient waypoint by verifying:
  * 1. The package is in ambient mode
  * 2. The service has an SSO configuration with a matching enableAuthserviceSelector
+ *
+ * An empty enableAuthserviceSelector ({}) indicates namespace-wide protection
+ * and will match all services in the namespace.
  */
 function isAmbientWaypointService(
   pkg: UDSPackage,
@@ -384,9 +387,18 @@ function isAmbientWaypointService(
   return (
     pkg.spec.sso?.some(sso => {
       const waypointSelector = sso.enableAuthserviceSelector;
-      if (!waypointSelector) return false;
 
-      // Check if any label in the waypoint selector matches the service selector
+      // If waypointSelector is not defined, skip this SSO config
+      if (waypointSelector === undefined || waypointSelector === null) {
+        return false;
+      }
+
+      // Empty object means namespace-wide protection
+      if (Object.keys(waypointSelector).length === 0) {
+        return true;
+      }
+
+      // For non-empty selectors, check if any label matches the service's selector
       return Object.entries(waypointSelector).some(([key, value]) => selector[key] === value);
     }) ?? false
   );

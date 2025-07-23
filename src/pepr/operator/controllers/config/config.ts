@@ -70,7 +70,7 @@ export async function updateUDSConfig(config: kind.Secret) {
       redisUri: UDSConfig.authserviceRedisUri,
     };
     log.debug("Updating Authservice secret based on change to CA Cert or Redis URI");
-    await reconcileAuthservice(authserviceUpdate);
+    await reconcileAuthservice(authserviceUpdate, {}, false, undefined, undefined);
   }
 
   // Handle changes to the kubeApiCidr

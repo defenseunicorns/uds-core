@@ -217,8 +217,18 @@ describe("authservice", () => {
       },
     };
     try {
-      await updatePolicy({ name: "auth-test", action: Action.AddClient }, labelSelector, pkg);
-      await updatePolicy({ name: "auth-test", action: Action.RemoveClient }, labelSelector, pkg);
+      await updatePolicy(
+        { name: "auth-test", action: Action.AddClient },
+        labelSelector,
+        pkg,
+        false,
+      );
+      await updatePolicy(
+        { name: "auth-test", action: Action.RemoveClient },
+        labelSelector,
+        pkg,
+        false,
+      );
     } catch (e) {
       expect(e).toBeUndefined();
     }

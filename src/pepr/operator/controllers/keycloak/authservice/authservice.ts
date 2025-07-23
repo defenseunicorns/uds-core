@@ -7,9 +7,9 @@ import { R } from "pepr";
 import { UDSConfig } from "../../../../config";
 import { Component, setupLogger } from "../../../../logger";
 import { K8sGateway, UDSPackage } from "../../../crd";
-import { Mode } from "../../../crd/generated/package-v1alpha1";
+import { AuthserviceClient, Mode } from "../../../crd/generated/package-v1alpha1";
 import { cleanupWaypointLabels, setupAmbientWaypoint } from "../../istio/ambient-waypoint";
-import { getWaypointName } from "../../istio/waypoint-utils";
+import { getWaypointName, shouldUseAmbientWaypoint } from "../../istio/waypoint-utils";
 import { purgeOrphans } from "../../utils";
 import { Client } from "../types";
 import { updatePolicy } from "./authorization-policy";
@@ -30,10 +30,17 @@ import {
 export const log = setupLogger(Component.OPERATOR_AUTHSERVICE);
 let lock = false;
 
-export async function authservice(pkg: UDSPackage, clients: Map<string, Client>) {
+export async function authservice(
+  pkg: UDSPackage,
+  clients: Map<string, Client>,
+): Promise<AuthserviceClient[]> {
   if (!pkg.metadata?.namespace || !pkg.metadata?.name) {
     throw new Error("Package metadata is missing required fields");
   }
+
+  // Get the requested service mesh mode, default to sidecar if not specified
+  const istioMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Sidecar;
+  const previousMeshMode = pkg.status?.meshMode || Mode.Sidecar;
 
   // Get the list of clients from the package
   const authServiceClients = R.filter(
@@ -42,8 +49,16 @@ export async function authservice(pkg: UDSPackage, clients: Map<string, Client>)
   );
 
   // Check if we're in ambient mode by looking for the waypoint annotation
-  const isAmbient = pkg.spec?.network?.serviceMesh?.mode === Mode.Ambient;
+  const isAmbient = shouldUseAmbientWaypoint(pkg);
 
+  // Build the new client status objects
+  const newAuthserviceClients = authServiceClients.map(sso => ({
+    name: sso.name ?? sso.clientId,
+    clientId: sso.clientId,
+    selector: sso.enableAuthserviceSelector || {},
+  }));
+
+  // Reconcile each client
   for (const sso of authServiceClients) {
     if (isAmbient) {
       await setupAmbientWaypoint(pkg, sso);
@@ -54,23 +69,21 @@ export async function authservice(pkg: UDSPackage, clients: Map<string, Client>)
       throw new Error(`Failed to get client ${sso.clientId}`);
     }
 
-    // Use client ID directly as the waypoint ID
-    const waypointId = sso.clientId;
     // Get the full waypoint name for authorization policies
-    const fullWaypointName = getWaypointName(waypointId);
+    const fullWaypointName = getWaypointName(sso.clientId);
 
     await reconcileAuthservice(
       { name: sso.clientId, action: Action.AddClient, client },
       sso.enableAuthserviceSelector!,
-      pkg,
       isAmbient,
+      pkg,
       fullWaypointName,
     );
   }
 
-  const authserviceClients = authServiceClients.map(client => client.clientId);
+  // Cleanup logic now takes the new objects
+  await purgeAuthserviceClients(pkg, newAuthserviceClients, previousMeshMode, istioMode);
 
-  await purgeAuthserviceClients(pkg, authserviceClients, isAmbient);
   // Clean up any existing waypoint resources if SSO is not configured
   await purgeOrphans(
     (pkg.metadata?.generation ?? 0).toString(),
@@ -79,45 +92,97 @@ export async function authservice(pkg: UDSPackage, clients: Map<string, Client>)
     K8sGateway,
     log,
   );
-  return authserviceClients;
+
+  // Return the new status objects for status update
+  return newAuthserviceClients;
 }
 
 export async function purgeAuthserviceClients(
   pkg: UDSPackage,
-  newAuthserviceClients: string[] = [],
-  isAmbient = false,
-) {
-  R.difference(pkg.status?.authserviceClients || [], newAuthserviceClients).forEach(
-    async clientId => {
-      log.info(`Removing stale authservice chain for client ${clientId}`);
-      // Use client ID directly as the waypoint ID
-      const waypointId = clientId;
-      // Get the full waypoint name for authorization policies
-      const fullWaypointName = getWaypointName(waypointId);
+  newAuthserviceClients: AuthserviceClient[] = [],
+  previousMeshMode: string,
+  currentMeshMode: string,
+): Promise<void> {
+  const isAmbient = shouldUseAmbientWaypoint(pkg);
+  const prevClients = pkg.status?.authserviceClients || [];
+
+  // Check if mesh mode changed
+  const meshModeChanged = previousMeshMode !== currentMeshMode;
+
+  // Find clients to clean up:
+  // 1. Removed clients
+  // 2. Clients with changed selectors
+  // 3. All clients if mesh mode changed
+  const clientsToCleanup = meshModeChanged
+    ? prevClients // Clean up all previous clients if mesh mode changed
+    : prevClients.filter(oldClient => {
+        // Find matching client by ID
+        const match = newAuthserviceClients.find(
+          newClient => newClient.clientId === oldClient.clientId,
+        );
+
+        // If no match found, this client was removed
+        if (!match) {
+          return true;
+        }
+
+        // Check if either selector is empty
+        const oldSelectorEmpty =
+          !oldClient.selector || Object.keys(oldClient.selector).length === 0;
+        const newSelectorEmpty = !match.selector || Object.keys(match.selector).length === 0;
+
+        // Both empty, no need for cleanup
+        if (oldSelectorEmpty && newSelectorEmpty) {
+          return false;
+        } else if (!oldSelectorEmpty && !newSelectorEmpty) {
+          // Both non-empty, check if they're different
+          return !R.equals(match.selector, oldClient.selector);
+        } else if (oldSelectorEmpty && !newSelectorEmpty) {
+          // Changed from empty to non-empty
+          return true;
+        } else {
+          // Changed from non-empty to empty
+          return false;
+        }
+      });
+
+  if (meshModeChanged) {
+    log.info(
+      `Mesh mode changed from ${previousMeshMode} to ${currentMeshMode}, cleaning up waypoint labels`,
+    );
+  }
+
+  await Promise.all(
+    clientsToCleanup.map(async client => {
+      const fullWaypointName = getWaypointName(client.clientId);
+      log.info(`Cleaning up authservice client ${client.clientId}`, {
+        reason: meshModeChanged ? "mesh_mode_change" : "client_removed_or_modified",
+      });
+
       await reconcileAuthservice(
-        { name: clientId, action: Action.RemoveClient },
+        { name: client.clientId, action: Action.RemoveClient },
         {},
-        pkg,
         isAmbient,
+        pkg,
         fullWaypointName,
       );
 
-      // Clean up waypoint labels
-      if (isAmbient && pkg.metadata?.namespace) {
+      if (pkg.metadata?.namespace) {
         await cleanupWaypointLabels(pkg.metadata.namespace, fullWaypointName);
       }
-    },
+    }),
   );
 }
 
 function isAddOrRemoveClientEvent(event: AuthServiceEvent): event is AddOrRemoveClientEvent {
   return event.action === Action.AddClient || event.action === Action.RemoveClient;
 }
+
 export async function reconcileAuthservice(
   event: AuthServiceEvent,
   labelSelector: { [key: string]: string } = {},
+  isAmbient: boolean,
   pkg?: UDSPackage,
-  isAmbient = false,
   waypointName?: string,
 ) {
   await updateConfig(event);
@@ -209,6 +274,7 @@ export function buildConfig(config: AuthserviceConfig, event: AuthServiceEvent) 
 
 export function buildChain(update: AuthServiceEvent) {
   // TODO: get this from the package
+  // TODO: update to loop and build multiple chaings on redirectUris
   // Parse the hostname from the first client redirect URI
   const hostname = new URL(update.client!.redirectUris[0]).hostname;
 

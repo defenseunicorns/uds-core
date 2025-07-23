@@ -22,7 +22,7 @@ import { generateAuthorizationPolicies } from "../controllers/network/authorizat
 import { networkPolicies } from "../controllers/network/policies";
 import { retryWithDelay } from "../controllers/utils";
 import { Phase, UDSPackage } from "../crd";
-import { Mode } from "../crd/generated/package-v1alpha1";
+import { AuthserviceClient, Mode } from "../crd/generated/package-v1alpha1";
 import { migrate } from "../crd/migrate";
 
 // configure subproject logger
@@ -97,7 +97,7 @@ async function reconcilePackageFlow(pkg: UDSPackage): Promise<void> {
 
   let endpoints: string[] = [];
   let ssoClients = new Map<string, Client>();
-  let authserviceClients: string[] = [];
+  let authserviceClients: AuthserviceClient[] = [];
 
   if (UDSConfig.isIdentityDeployed) {
     // Configure SSO
@@ -127,6 +127,7 @@ async function reconcilePackageFlow(pkg: UDSPackage): Promise<void> {
     monitors,
     networkPolicyCount: netPol.length,
     authorizationPolicyCount: authPol.length + authserviceClients.length * 2,
+    meshMode: istioMode,
     observedGeneration: metadata.generation,
     retryAttempt: 0, // todo: make this nullable when kfc generates the type
   });
@@ -195,7 +196,8 @@ export async function packageFinalizer(pkg: UDSPackage) {
     });
     // Remove any Authservice configuration - retry on failure
     await retryWithDelay(async function cleanupAuthserviceConfig() {
-      return purgeAuthserviceClients(pkg, []);
+      const currentMeshMode = pkg.spec?.network?.serviceMesh?.mode || "sidecar";
+      return purgeAuthserviceClients(pkg, [], currentMeshMode, currentMeshMode);
     }, log);
   } catch (e) {
     log.debug(

@@ -102,12 +102,18 @@ describe("updateUDSConfig", () => {
 
     await updateUDSConfig(mockSecret);
 
-    expect(reconcileAuthservice).toHaveBeenCalledWith({
-      name: "global-config-update",
-      action: expect.any(String),
-      trustedCA: "mock-ca-cert",
-      redisUri: "mock-redis-uri",
-    });
+    expect(reconcileAuthservice).toHaveBeenCalledWith(
+      {
+        name: "global-config-update",
+        action: expect.any(String),
+        trustedCA: "mock-ca-cert",
+        redisUri: "mock-redis-uri",
+      },
+      expect.any(Object), // options
+      false, // force
+      undefined, // client
+      undefined, // callback
+    );
   });
 
   it("should call initAPIServerCIDR if KUBEAPI_CIDR changes", async () => {

@@ -211,12 +211,27 @@ export async function reconcileService(svc: a.Service): Promise<void> {
   if (!svc.metadata) {
     svc.metadata = {};
   }
+
   if (!svc.metadata.labels) {
     svc.metadata.labels = {};
   }
 
+  // Skip if this is a waypoint service
+  if (
+    svc.metadata?.labels?.["app.kubernetes.io/component"] === "ambient-waypoint" &&
+    svc.metadata?.labels?.["gateway.networking.k8s.io/gateway-name"]?.includes("waypoint")
+  ) {
+    return;
+  }
+
   const pkg = PackageStore.getPackageByNamespace(namespace);
-  if (!pkg || pkg.spec?.network?.serviceMesh?.mode !== Mode.Ambient) return;
+  if (
+    !pkg ||
+    pkg.metadata?.deletionTimestamp ||
+    pkg.spec?.network?.serviceMesh?.mode !== Mode.Ambient
+  ) {
+    return;
+  }
 
   // Find the SSO client that matches this service's selector
   const matchingSso = pkg.spec?.sso?.find(
@@ -255,12 +270,27 @@ export async function reconcilePod(pod: a.Pod): Promise<void> {
   if (!pod.metadata) {
     pod.metadata = {};
   }
+
   if (!pod.metadata.labels) {
     pod.metadata.labels = {};
   }
 
+  // Skip if this is a waypoint service
+  if (
+    pod.metadata?.labels?.["app.kubernetes.io/component"] === "ambient-waypoint" &&
+    pod.metadata?.labels?.["gateway.networking.k8s.io/gateway-name"]?.includes("waypoint")
+  ) {
+    return;
+  }
+
   const pkg = PackageStore.getPackageByNamespace(namespace);
-  if (!pkg || pkg.spec?.network?.serviceMesh?.mode !== Mode.Ambient) return;
+  if (
+    !pkg ||
+    pkg.metadata?.deletionTimestamp ||
+    pkg.spec?.network?.serviceMesh?.mode !== Mode.Ambient
+  ) {
+    return;
+  }
 
   // Find the SSO client that matches this pod's labels
   const matchingSso = pkg.spec?.sso?.find(
@@ -295,25 +325,53 @@ export async function cleanupWaypointLabels(
   log.info(`Starting cleanup of waypoint labels: namespace=${namespace}, waypoint=${waypointName}`);
 
   try {
-    const pods = await K8s(a.Pod)
-      .InNamespace(namespace)
-      .WithLabel(ISTIO_WAYPOINT_LABEL, waypointName)
-      .Get();
+    // Clean up pods with the waypoint label
+    await cleanupPodsWithWaypointLabel(namespace, waypointName);
 
-    for (const pod of pods.items) {
-      const podName = pod.metadata?.name || "unknown";
+    // Clean up services with the waypoint label
+    await cleanupServicesWithWaypointLabel(namespace, waypointName);
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    log.error("Failed to clean up waypoint labels", {
+      namespace,
+      waypointName,
+      error: errorMessage,
+    });
+    // Don't throw here to allow other cleanup to continue
+  }
+}
+
+/**
+ * Cleans up waypoint labels from pods
+ */
+async function cleanupPodsWithWaypointLabel(
+  namespace: string,
+  waypointName: string,
+): Promise<void> {
+  const pods = await K8s(a.Pod)
+    .InNamespace(namespace)
+    .WithLabel(ISTIO_WAYPOINT_LABEL, waypointName)
+    .Get();
+
+  await Promise.all(
+    pods.items.map(async pod => {
+      const podName = pod.metadata?.name;
+      if (!podName) return;
 
       // Skip if pod is being deleted or doesn't have the label anymore
       if (pod.metadata?.deletionTimestamp) {
-        log.debug(`Skipping pod ${podName}: marked for deletion`);
-        continue;
+        log.debug("Skipping pod: marked for deletion", { namespace, podName });
+        return;
       }
 
       if (pod.metadata?.labels?.[ISTIO_WAYPOINT_LABEL] !== waypointName) {
-        log.debug(
-          `Skipping pod ${podName}: label ${ISTIO_WAYPOINT_LABEL} does not match ${waypointName}`,
-        );
-        continue;
+        log.debug("Skipping pod: waypoint label does not match", {
+          namespace,
+          podName,
+          expectedWaypoint: waypointName,
+          actualWaypoint: pod.metadata?.labels?.[ISTIO_WAYPOINT_LABEL],
+        });
+        return;
       }
 
       try {
@@ -326,34 +384,50 @@ export async function cleanupWaypointLabels(
             path: "/metadata/labels/istio.io~1use-waypoint",
           },
         ]);
-        log.debug(`Successfully removed waypoint label from pod ${podName}`);
+        log.info("Removed waypoint label from pod", { namespace, podName, waypointName });
       } catch (error) {
-        log.error(
-          `Failed to remove waypoint label from pod ${podName}: ${JSON.stringify(error, Object.getOwnPropertyNames(error))}`,
-        );
+        log.error("Failed to remove waypoint label from pod", {
+          namespace,
+          podName,
+          waypointName,
+          error: error instanceof Error ? error.message : String(error),
+        });
       }
-    }
+    }),
+  );
+}
 
-    // Clean up services with the waypoint label
-    const services = await K8s(a.Service)
-      .InNamespace(namespace)
-      .WithLabel(ISTIO_WAYPOINT_LABEL, waypointName)
-      .Get();
+/**
+ * Cleans up waypoint labels from services
+ */
+async function cleanupServicesWithWaypointLabel(
+  namespace: string,
+  waypointName: string,
+): Promise<void> {
+  const services = await K8s(a.Service)
+    .InNamespace(namespace)
+    .WithLabel(ISTIO_WAYPOINT_LABEL, waypointName)
+    .Get();
 
-    for (const svc of services.items) {
-      const svcName = svc.metadata?.name || "unknown";
+  await Promise.all(
+    services.items.map(async svc => {
+      const svcName = svc.metadata?.name;
+      if (!svcName) return;
 
       // Skip if service is being deleted or doesn't have the label anymore
       if (svc.metadata?.deletionTimestamp) {
-        log.debug(`Skipping service ${svcName}: marked for deletion`);
-        continue;
+        log.debug("Skipping service: marked for deletion", { namespace, svcName });
+        return;
       }
 
       if (svc.metadata?.labels?.[ISTIO_WAYPOINT_LABEL] !== waypointName) {
-        log.debug(
-          `Skipping service ${svcName}: label ${ISTIO_WAYPOINT_LABEL} does not match ${waypointName}`,
-        );
-        continue;
+        log.debug("Skipping service: waypoint label does not match", {
+          namespace,
+          svcName,
+          expectedWaypoint: waypointName,
+          actualWaypoint: svc.metadata?.labels?.[ISTIO_WAYPOINT_LABEL],
+        });
+        return;
       }
 
       try {
@@ -370,22 +444,17 @@ export async function cleanupWaypointLabels(
             path: "/metadata/labels/istio.io~1use-waypoint",
           },
         ]);
-        log.debug(`Successfully removed waypoint labels from service ${svcName}`);
+        log.info("Removed waypoint labels from service", { namespace, svcName, waypointName });
       } catch (error) {
-        log.error(
-          `Failed to remove waypoint labels from service ${svcName}: ${JSON.stringify(error, Object.getOwnPropertyNames(error))}`,
-        );
+        log.error("Failed to remove waypoint labels from service", {
+          namespace,
+          svcName,
+          waypointName,
+          error: error instanceof Error ? error.message : String(error),
+        });
       }
-    }
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    log.error("Failed to clean up waypoint labels", {
-      namespace,
-      waypointName,
-      error: errorMessage,
-    });
-    // Don't throw here to allow other cleanup to continue
-  }
+    }),
+  );
 }
 
 export async function reconcileExistingResources(

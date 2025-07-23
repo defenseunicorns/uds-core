@@ -607,8 +607,22 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
             authserviceClients: {
               type: "array",
               items: {
-                type: "string",
+                type: "object",
+                required: ["name", "clientId"],
+                properties: {
+                  name: { type: "string" },
+                  clientId: { type: "string" },
+                  selector: {
+                    type: "object",
+                    additionalProperties: { type: "string" },
+                  },
+                },
               },
+            },
+            meshMode: {
+              type: "string",
+              enum: ["ambient", "sidecar"],
+              description: "The current service mesh mode for this package",
             },
             endpoints: {
               type: "array",

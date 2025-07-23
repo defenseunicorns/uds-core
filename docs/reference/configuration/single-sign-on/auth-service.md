@@ -58,3 +58,36 @@ When using `enableAuthserviceSelector` in ambient mode, ensure that the selector
 
 Additionally, the package network expose also needs to match the selector for the network policies to be associated properly.
 :::
+
+:::caution
+### Multiple Services in a Single Namespace
+When protecting multiple services within the same namespace, each service must have its own dedicated SSO client configuration. The current implementation creates a one-to-one mapping between an SSO client and its associated waypoint proxy. This means:
+
+- Each protected service must have its own SSO client entry in the package configuration
+- Each service will get its own dedicated waypoint proxy
+- Sharing a single waypoint proxy between multiple services is not supported
+
+Example configuration for multiple services:
+```yaml
+spec:
+  sso:
+    - name: "Ambient SSO"
+      clientId: uds-core-ambient-httpbin
+      redirectUris:
+        - "https://ambient-protected.uds.dev/login"
+      enableAuthserviceSelector:
+        app: httpbin
+      groups:
+        anyOf:
+          - "/UDS Core/Admin"
+    - name: "Ambient 2 SSO"
+      clientId: uds-core-ambient2-httpbin
+      redirectUris:
+        - "https://ambient2-protected.uds.dev/login"
+      enableAuthserviceSelector:
+        app: httpbin2
+      groups:
+        anyOf:
+          - "/UDS Core/Admin"
+```
+:::

@@ -180,7 +180,7 @@ async function updatePolicy(
   event: AddOrRemoveClientEvent,
   labelSelector: { [key: string]: string },
   pkg: UDSPackage,
-  isAmbient = false,
+  isAmbient: boolean,
   waypointName?: string,
 ) {
   // type safe map event to operation (either Apply or Delete)
