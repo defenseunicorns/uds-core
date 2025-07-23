@@ -6,14 +6,14 @@ name: Nightly
 on:
   schedule:
     # Runs every morning at 2:00 AM UTC
-    - cron: '0 2 * * *'
+    - cron: "0 2 * * *"
   pull_request:
     # milestoned is added here as a workaround for release-please not triggering PR workflows (PRs should be added to a milestone to trigger the workflow).
     # labeled is added to support renovate-ready labelling on PRs
     types: [milestoned, labeled, opened, reopened, synchronize]
     paths:
-      - '.github/workflows/upgrade-ha.yaml'
-      - 'bundles/k3d-standard/**'
+      - ".github/workflows/upgrade-ha.yaml"
+      - "bundles/k3d-standard/**"
 
 permissions:
   contents: read
