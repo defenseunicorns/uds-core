@@ -8,7 +8,7 @@ variables:
   - name: VERSION
     description: "The version of the packages to deploy"
     # x-release-please-start-version
-    default: "0.46.0"
+    default: "0.47.0"
     # x-release-please-end
   - name: FLAVOR
     default: upstream
@@ -18,6 +18,7 @@ tasks:
     inputs:
       K3D_EXTRA_ARGS:
         default: ""
+        description: "Extra args for k3d"
     actions:
       - description: "Deploy the UDS Core Standard Bundle"
         cmd: uds deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --set INSECURE_ADMIN_PASSWORD_GENERATION=true --set K3D_EXTRA_ARGS="${{ .inputs.K3D_EXTRA_ARGS }}" --confirm --no-progress
@@ -55,22 +56,40 @@ tasks:
         if: ${{ ne .inputs.layer "base"}}
         cmd: uds zarf package deploy build/zarf-package-core-${{ index .inputs "layer" }}-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress --components '*'
 
-  - name: latest-package-release
+  - name: latest-bundle-release
+    inputs:
+      configFile:
+        description: "UDS_CONFIG file to use for the deployment"
     actions:
       - task: utils:determine-repo
       - description: "Get latest tag version from OCI"
         cmd: uds zarf tools registry ls ${TARGET_REPO}/core | grep ${FLAVOR} | sort -V | tail -1
         setVariables:
           - name: LATEST_VERSION
-      - description: "Deploy the latest UDS Core package release"
-        cmd: uds zarf package deploy oci://${TARGET_REPO}/core:${LATEST_VERSION} --confirm --no-progress --components '*' --set CNI_BIN_DIR="/var/lib/rancher/k3s/data/cni"
+      - description: "Create the latest version with bundle overrides"
+        cmd: |
+          # Create temp directory
+          mkdir -p tmp/core-shim
 
-  - name: latest-bundle-release-ha
-    actions:
-      - description: "Deploy the latest UDS Core bundle release with HA config"
-        cmd: uds deploy oci://ghcr.io/defenseunicorns/packages/uds/bundles/k3d-core-demo:latest --confirm --no-progress
-        env:
-          - UDS_CONFIG=bundles/k3d-standard/uds-ha-config.yaml
+          # Copy k3d-standard bundle
+          cp -r bundles/k3d-standard/uds-bundle.yaml tmp/core-shim/
+
+          # Update the bundle with the latest version using yq
+          uds zarf tools yq e -i "
+            del(.packages[] | select(.name == \"core\").path) |
+            .packages[] |= (select(.name == \"core\") |
+            .repository = \"${TARGET_REPO}/core\" | .ref = \"${LATEST_VERSION}\")" \
+            tmp/core-shim/uds-bundle.yaml
+
+          # Create and deploy the bundle
+          uds create tmp/core-shim --confirm --no-progress --architecture=${ZARF_ARCHITECTURE}
+      - description: "Deploy the latest version from the bundle"
+        cmd: |
+          # Set UDS_CONFIG for bundle deployment
+          export UDS_CONFIG="${{ .inputs.configFile }}"
+          uds deploy tmp/core-shim/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress
+      - description: "Clean up temporary files"
+        cmd: rm -rf tmp/core-shim
 
   - name: latest-slim-bundle-release
     actions:
@@ -80,7 +99,6 @@ tasks:
   - name: standard-package
     actions:
       - description: "Deploy the standard UDS Core zarf package"
-        # Note: The `CNI_BIN_DIR` override is temporary to workaround an upgrade issue with the k3s 1.31.7
         cmd: uds zarf package deploy build/zarf-package-core-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress --components '*'
 
   - name: checkpoint-package
