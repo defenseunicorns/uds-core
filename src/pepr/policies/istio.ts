@@ -6,7 +6,6 @@
 import { a } from "pepr";
 
 import { Policy } from "../operator/crd";
-import { AuthorizationPolicy } from "../operator/crd/generated/istio/authorizationpolicy-v1beta1";
 import { When } from "./common";
 import { isExempt, markExemption } from "./exemptions";
 
@@ -52,9 +51,17 @@ When(a.Pod)
       .sort((a, b) => a.localeCompare(b));
 
     if (violations.length > 0) {
-      return request.Deny(
-        `The following istio annotations can modify secure sidecar configuration and are not allowed: ${violations.join(", ")}`,
-      );
+      // TODO: Remove this line to enforce the block
+      return request.Approve([
+        [
+          "Warning: The following istio annotations can modify secure sidecar configuration and should be removed/exempted: ",
+          violations.join(", "),
+        ].join(""),
+      ]);
+      // TODO: Uncomment this line to block the request
+      // return request.Deny(
+      //   `The following istio annotations can modify secure sidecar configuration and are not allowed: ${violations.join(", ")}`,
+      // );
     }
 
     return request.Approve();
@@ -94,17 +101,11 @@ When(a.Pod)
 
     const violations = Object.entries(annotations)
       .filter(([key]) => {
-        // Ignore 'sidecar.istio.io/inject' annotation in 'istio-system' 'istio-tenant-gateway' 'istio-admin-gateway' 'istio-passthrough-gateway' namespaces
-        const allowedIstioInjectAnnotationNamespaces = [
-          "istio-system",
-          "istio-tenant-gateway",
-          "istio-admin-gateway",
-          "istio-passthrough-gateway",
-          "istio-egress-gateway",
-        ];
         if (
-          key === "sidecar.istio.io/inject" &&
-          allowedIstioInjectAnnotationNamespaces.includes(namespace)
+          //ignore 'sidecar.istio.io/inject' annotation in istio-system namespace
+          (key === "sidecar.istio.io/inject" && namespace === "istio-system") ||
+          // Ignore 'sidecar.istio.io/inject=true' annotation
+          (key === "sidecar.istio.io/inject" && annotations[key].trim() === "true")
         ) {
           return false;
         }
@@ -115,9 +116,17 @@ When(a.Pod)
       .sort((a, b) => a.localeCompare(b));
 
     if (violations.length > 0) {
-      return request.Deny(
-        `The following istio annotations can modify secure traffic interception are not allowed: ${violations.join(", ")}`,
-      );
+      // TODO: Remove this line to enforce the block
+      return request.Approve([
+        [
+          "Warning: The following istio annotations can modify secure traffic interception and should be removed/exempted: ",
+          violations.join(", "),
+        ].join(""),
+      ]);
+      // TODO: Uncomment this line to block the request
+      // return request.Deny(
+      //   `The following istio annotations can modify secure traffic interception are not allowed: ${violations.join(", ")}`,
+      // );
     }
 
     return request.Approve();
@@ -147,35 +156,17 @@ When(a.Pod)
       .sort((a, b) => a.localeCompare(b));
 
     if (violations.length > 0) {
-      return request.Deny(
-        `The following istio ambient annotations that can modify secure mesh behavior are not allowed: ${violations.join(", ")}`,
-      );
-    }
-
-    return request.Approve();
-  });
-
-/**
- * This policy prevents the use of the 'istio.io/dry-run' annotation on AuthorizationPolicies.
- *
- * Dry-run mode allows policies to be evaluated without enforcement, which may introduce
- * confusion or bypass intended security behavior if not properly monitored.
- */
-When(AuthorizationPolicy)
-  .IsCreatedOrUpdated()
-  .Mutate(markExemption(Policy.RestrictIstioAuthorizationPolicyOverrides))
-  .Validate(request => {
-    if (isExempt(request, Policy.RestrictIstioAuthorizationPolicyOverrides)) {
-      return request.Approve();
-    }
-
-    const annotations = request.Raw?.metadata?.annotations || {};
-    const dryRunAnnotation = "istio.io/dry-run";
-
-    if (dryRunAnnotation in annotations) {
-      return request.Deny(
-        `The '${dryRunAnnotation}' annotation is not allowed on AuthorizationPolicies because it can lead to unintended policy bypass.`,
-      );
+      // TODO: Remove this line to enforce the block
+      return request.Approve([
+        [
+          "Warning: The following istio ambient annotations can modify secure mesh behavior and should be removed/exempted: ",
+          violations.join(", "),
+        ].join(""),
+      ]);
+      // TODO: Uncomment this line to block the request
+      // return request.Deny(
+      //   `The following istio ambient annotations that can modify secure mesh behavior are not allowed: ${violations.join(", ")}`,
+      // );
     }
 
     return request.Approve();

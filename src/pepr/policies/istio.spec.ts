@@ -5,12 +5,17 @@
 
 import { K8s, kind } from "pepr";
 import { describe, expect, it } from "vitest";
-import { IstioAuthorizationPolicy, IstioAction } from "../operator/crd";
+// Import for kubectl testing
+import { spawnSync } from "child_process";
+import { mkdtempSync, rmSync, writeFileSync } from "fs";
+import { tmpdir } from "os";
+import { join } from "path";
 
 const failIfReached = () => expect(true).toBe(false);
 
 describe("restrict istio sidecar configuration overrides", () => {
-  it("should prevent single dangerous istio sidecar configuration annotation", async () => {
+  // TODO: enable this test once we enforce the policy
+  it.skip("should prevent single dangerous istio sidecar configuration annotation", async () => {
     const expected = (e: Error) =>
       expect(e).toMatchObject({
         ok: false,
@@ -43,7 +48,52 @@ describe("restrict istio sidecar configuration overrides", () => {
       .catch(expected);
   });
 
-  it("should prevent multiple dangerous istio sidecard configuration annotations", async () => {
+  // TODO: delete this test once we enforce the policy
+  // Note: This test is designed to run with kubectl directly to verify the warning message
+  it("should warn on dangerous istio sidecar configuration annotation", () => {
+    // Create a temporary directory and file for the pod manifest
+    const tmpDir = mkdtempSync(join(tmpdir(), "istio-test-"));
+    const podYamlPath = join(tmpDir, "istio-warning-test.yaml");
+
+    // Create the YAML file for the pod with dangerous annotation
+    const podYaml = `
+apiVersion: v1
+kind: Pod
+metadata:
+  name: istio-warning-bad-annotation
+  namespace: policy-tests
+  annotations:
+    sidecar.istio.io/proxyImage: "malicious/image:latest"
+spec:
+  containers:
+  - name: test
+    image: 127.0.0.1/fake
+`;
+    writeFileSync(podYamlPath, podYaml);
+
+    try {
+      // Apply the Pod using kubectl and capture stdout and stderr separately
+      const result = spawnSync("uds", ["zarf", "tools", "kubectl", "apply", "-f", podYamlPath], {
+        encoding: "utf-8",
+        stdio: "pipe",
+      });
+
+      // Verify that warnings are present in stderr
+      expect(result.stderr).toContain(
+        "Warning: The following istio annotations can modify secure sidecar configuration and should be removed/exempted:",
+      );
+      expect(result.stderr).toContain("sidecar.istio.io/proxyImage");
+
+      // Verify that the resource was created successfully in stdout
+      expect(result.stdout).toContain("pod/istio-warning-bad-annotation created");
+      expect(result.status).toBe(0); // Zero exit code indicates success
+    } finally {
+      rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  // TODO: enable this test once we enforce the policy
+  it.skip("should prevent multiple dangerous istio sidecard configuration annotations", async () => {
     const blockedAnnotations = [
       "inject.istio.io/templates",
       "proxy.istio.io/config",
@@ -84,10 +134,79 @@ describe("restrict istio sidecar configuration overrides", () => {
       .then(failIfReached)
       .catch(expected);
   });
+
+  // TODO: delete this test once we enforce the policy
+  // Note: This test is designed to run with kubectl directly to verify the warning message
+  it("should warn on multiple dangerous istio sidecar configuration annotations", () => {
+    // Create a temporary directory and file for the pod manifest
+    const tmpDir = mkdtempSync(join(tmpdir(), "istio-test-"));
+    const podYamlPath = join(tmpDir, "istio-warning-test.yaml");
+
+    const blockedAnnotations = [
+      "inject.istio.io/templates",
+      "proxy.istio.io/config",
+      "sidecar.istio.io/bootstrapOverride",
+      "sidecar.istio.io/discoveryAddress",
+      "sidecar.istio.io/proxyImage",
+      "sidecar.istio.io/userVolume",
+    ];
+
+    // Create annotations object for YAML
+    const annotations: Record<string, string> = {};
+    blockedAnnotations.forEach(annotation => {
+      annotations[annotation] = "true";
+    });
+
+    // Create the YAML file for the pod with multiple dangerous annotations
+    const podYaml = `
+apiVersion: v1
+kind: Pod
+metadata:
+  name: istio-warning-multiple-bad-annotations
+  namespace: policy-tests
+  annotations:
+    inject.istio.io/templates: "true"
+    proxy.istio.io/config: "true"
+    sidecar.istio.io/bootstrapOverride: "true"
+    sidecar.istio.io/discoveryAddress: "true"
+    sidecar.istio.io/proxyImage: "true"
+    sidecar.istio.io/userVolume: "true"
+spec:
+  containers:
+  - name: test
+    image: 127.0.0.1/fake
+`;
+    writeFileSync(podYamlPath, podYaml);
+
+    try {
+      // Apply the Pod using kubectl and capture stdout and stderr separately
+      const result = spawnSync("uds", ["zarf", "tools", "kubectl", "apply", "-f", podYamlPath], {
+        encoding: "utf-8",
+        stdio: "pipe",
+      });
+
+      // Verify that warnings are present in stderr
+      expect(result.stderr).toContain(
+        "Warning: The following istio annotations can modify secure sidecar configuration and should be removed/exempted:",
+      );
+
+      // Check that each annotation is mentioned in the warning
+      blockedAnnotations.forEach(annotation => {
+        expect(result.stderr).toContain(annotation);
+      });
+
+      // Verify that the resource was created successfully in stdout
+      expect(result.stdout).toContain("pod/istio-warning-multiple-bad-annotations created");
+      expect(result.status).toBe(0); // Zero exit code indicates success
+    } finally {
+      rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
 });
 
 describe("restrict istio traffic interception overrides", () => {
-  it("should prevent single dangerous traffic interception annotation", async () => {
+  // TODO: enable this test once we enforce the policy
+  it.skip("should prevent single dangerous traffic interception annotation", async () => {
     const expected = (e: Error) =>
       expect(e).toMatchObject({
         ok: false,
@@ -120,7 +239,52 @@ describe("restrict istio traffic interception overrides", () => {
       .catch(expected);
   });
 
-  it("should prevent multiple dangerous traffic interception annotations", async () => {
+  // TODO: delete this test once we enforce the policy
+  // Note: This test is designed to run with kubectl directly to verify the warning message
+  it("should warn on dangerous traffic interception annotation", () => {
+    // Create a temporary directory and file for the pod manifest
+    const tmpDir = mkdtempSync(join(tmpdir(), "istio-test-"));
+    const podYamlPath = join(tmpDir, "istio-warning-test.yaml");
+
+    // Create the YAML file for the pod with dangerous annotation
+    const podYaml = `
+apiVersion: v1
+kind: Pod
+metadata:
+  name: istio-warning-traffic-override
+  namespace: policy-tests
+  annotations:
+    traffic.sidecar.istio.io/excludeOutboundPorts: "443,8443"
+spec:
+  containers:
+  - name: test
+    image: 127.0.0.1/fake
+`;
+    writeFileSync(podYamlPath, podYaml);
+
+    try {
+      // Apply the Pod using kubectl and capture stdout and stderr separately
+      const result = spawnSync("uds", ["zarf", "tools", "kubectl", "apply", "-f", podYamlPath], {
+        encoding: "utf-8",
+        stdio: "pipe",
+      });
+
+      // Verify that warnings are present in stderr
+      expect(result.stderr).toContain(
+        "Warning: The following istio annotations can modify secure traffic interception and should be removed/exempted:",
+      );
+      expect(result.stderr).toContain("traffic.sidecar.istio.io/excludeOutboundPorts");
+
+      // Verify that the resource was created successfully in stdout
+      expect(result.stdout).toContain("pod/istio-warning-traffic-override created");
+      expect(result.status).toBe(0); // Zero exit code indicates success
+    } finally {
+      rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  // TODO: enable this test once we enforce the policy
+  it.skip("should prevent multiple dangerous traffic interception annotations", async () => {
     const blockedAnnotations = [
       "sidecar.istio.io/interceptionMode",
       "traffic.sidecar.istio.io/excludeInboundPorts",
@@ -158,10 +322,73 @@ describe("restrict istio traffic interception overrides", () => {
       .then(failIfReached)
       .catch(expected);
   });
+
+  // TODO: delete this test once we enforce the policy
+  // Note: This test is designed to run with kubectl directly to verify the warning message
+  it("should warn on multiple dangerous traffic interception annotations", () => {
+    // Create a temporary directory and file for the pod manifest
+    const tmpDir = mkdtempSync(join(tmpdir(), "istio-test-"));
+    const podYamlPath = join(tmpDir, "istio-warning-test.yaml");
+
+    const blockedAnnotations = [
+      "sidecar.istio.io/interceptionMode",
+      "traffic.sidecar.istio.io/excludeInboundPorts",
+      "traffic.sidecar.istio.io/excludeOutboundIPRanges",
+    ];
+
+    // Create annotations object for YAML
+    const annotations: Record<string, string> = {};
+    blockedAnnotations.forEach(annotation => {
+      annotations[annotation] = "true";
+    });
+
+    // Create the YAML file for the pod with multiple dangerous annotations
+    const podYaml = `
+apiVersion: v1
+kind: Pod
+metadata:
+  name: istio-warning-multiple-traffic-overrides
+  namespace: policy-tests
+  annotations:
+    sidecar.istio.io/interceptionMode: "true"
+    traffic.sidecar.istio.io/excludeInboundPorts: "true"
+    traffic.sidecar.istio.io/excludeOutboundIPRanges: "true"
+spec:
+  containers:
+  - name: test
+    image: 127.0.0.1/fake
+`;
+    writeFileSync(podYamlPath, podYaml);
+
+    try {
+      // Apply the Pod using kubectl and capture stdout and stderr separately
+      const result = spawnSync("uds", ["zarf", "tools", "kubectl", "apply", "-f", podYamlPath], {
+        encoding: "utf-8",
+        stdio: "pipe",
+      });
+
+      // Verify that warnings are present in stderr
+      expect(result.stderr).toContain(
+        "Warning: The following istio annotations can modify secure traffic interception and should be removed/exempted:",
+      );
+
+      // Check that each annotation is mentioned in the warning
+      blockedAnnotations.forEach(annotation => {
+        expect(result.stderr).toContain(annotation);
+      });
+
+      // Verify that the resource was created successfully in stdout
+      expect(result.stdout).toContain("pod/istio-warning-multiple-traffic-overrides created");
+      expect(result.status).toBe(0); // Zero exit code indicates success
+    } finally {
+      rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
 });
 
 describe("restrict istio ambient overrides", () => {
-  it("should prevent ambient override annotation", async () => {
+  // TODO: enable this test once we enforce the policy
+  it.skip("should prevent ambient override annotation", async () => {
     const expected = (e: Error) =>
       expect(e).toMatchObject({
         ok: false,
@@ -193,45 +420,48 @@ describe("restrict istio ambient overrides", () => {
       .then(failIfReached)
       .catch(expected);
   });
-});
 
-describe("restrict istio authorization policy overrides", () => {
-  it("should prevent dry-run annotation on AuthorizationPolicy", async () => {
-    const expected = (e: Error) =>
-      expect(e).toMatchObject({
-        ok: false,
-        data: {
-          message: expect.stringContaining(
-            "The 'istio.io/dry-run' annotation is not allowed on AuthorizationPolicies because it can lead to unintended policy bypass.",
-          ),
-        },
+  // TODO: delete this test once we enforce the policy
+  // Note: This test is designed to run with kubectl directly to verify the warning message
+  it("should warn on ambient override annotation", () => {
+    // Create a temporary directory and file for the pod manifest
+    const tmpDir = mkdtempSync(join(tmpdir(), "istio-test-"));
+    const podYamlPath = join(tmpDir, "istio-warning-test.yaml");
+
+    // Create the YAML file for the pod with ambient override annotation
+    const podYaml = `
+apiVersion: v1
+kind: Pod
+metadata:
+  name: istio-warning-ambient-override
+  namespace: policy-tests
+  annotations:
+    ambient.istio.io/bypass-inbound-capture: "true"
+spec:
+  containers:
+  - name: test
+    image: 127.0.0.1/fake
+`;
+    writeFileSync(podYamlPath, podYaml);
+
+    try {
+      // Apply the Pod using kubectl and capture stdout and stderr separately
+      const result = spawnSync("uds", ["zarf", "tools", "kubectl", "apply", "-f", podYamlPath], {
+        encoding: "utf-8",
+        stdio: "pipe",
       });
 
-    return K8s(IstioAuthorizationPolicy)
-      .Apply({
-        metadata: {
-          name: "istio-auth-policy-with-dry-run",
-          namespace: "policy-tests",
-          annotations: {
-            "istio.io/dry-run": "true",
-          },
-        },
-        spec: {
-          action: IstioAction.Deny,
-          rules: [
-            {
-              from: [
-                {
-                  source: {
-                    principals: ["cluster.local/ns/default/sa/default"],
-                  },
-                },
-              ],
-            },
-          ],
-        },
-      })
-      .then(failIfReached)
-      .catch(expected);
+      // Verify that warnings are present in stderr
+      expect(result.stderr).toContain(
+        "Warning: The following istio ambient annotations can modify secure mesh behavior and should be removed/exempted:",
+      );
+      expect(result.stderr).toContain("ambient.istio.io/bypass-inbound-capture");
+
+      // Verify that the resource was created successfully in stdout
+      expect(result.stdout).toContain("pod/istio-warning-ambient-override created");
+      expect(result.status).toBe(0); // Zero exit code indicates success
+    } finally {
+      rmSync(tmpDir, { recursive: true, force: true });
+    }
   });
 });
