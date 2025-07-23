@@ -65,6 +65,7 @@ tasks:
         dir: test/playwright
       - description: Trigger updater job and wait for all job completion
         cmd: |
+          kubectl delete job updater -n neuvector &>/dev/null || true # Clean up previous runs if necessary
           kubectl create job --from=cronjob/neuvector-updater-pod updater -n neuvector
           if ./uds zarf tools kubectl get jobs -n neuvector --no-headers 2>/dev/null | grep -q .; then
             ./uds zarf tools kubectl wait --for=condition=complete job --all -n neuvector --timeout=5m

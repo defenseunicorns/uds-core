@@ -15,8 +15,6 @@ manager:
 enforcer:
   image:
     repository: rfcurated/neuvector/enforcer
-  containerSecurityContext:
-    privileged: true
 
 controller:
   image:
