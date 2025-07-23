@@ -274,7 +274,7 @@ export function buildConfig(config: AuthserviceConfig, event: AuthServiceEvent) 
 
 export function buildChain(update: AuthServiceEvent) {
   // TODO: get this from the package
-  // TODO: update to loop and build multiple chaings on redirectUris
+  // TODO: update to loop and build multiple chains on redirectUris
   // Parse the hostname from the first client redirect URI
   const hostname = new URL(update.client!.redirectUris[0]).hostname;
 
