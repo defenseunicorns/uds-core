@@ -111,7 +111,7 @@ Check external PostgreSQL connection information. Fails when required values are
 
   {{- /* Validate password configuration */ -}}
   {{- if not $passwordConfigured -}}
-    {{- fail "You must define either 'postgresql.username' or 'postgresql.secretRef.username'." -}}
+    {{- fail "You must define either 'postgresql.password' or 'postgresql.secretRef.password'." -}}
   {{- end -}}
 
   {{- /* Validate host configuration */ -}}
