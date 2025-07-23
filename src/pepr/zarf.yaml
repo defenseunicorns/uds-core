@@ -31,7 +31,19 @@ variables:
     description: "Enables Service Monitors for Pepr services (watcher, admission)"
     default: "true"
 
+  - name: ALLOW_ALL_NS_EXEMPTIONS
+    description: "Whether to allow exemptions to be created in all namespaces"
+    default: "false"
+
 components:
+  - name: uds-crds
+    required: true
+    charts:
+      - name: uds-cluster-crds
+        namespace: pepr-system
+        version: 0.1.0
+        localPath: uds-cluster-crds
+
   - name: uds-operator-config
     required: true
     charts:
