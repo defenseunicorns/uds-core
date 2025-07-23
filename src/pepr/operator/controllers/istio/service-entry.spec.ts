@@ -4,8 +4,8 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { UDSConfig } from "../../../config";
 import { Expose, Gateway, IstioLocation, IstioResolution, RemoteProtocol } from "../../crd";
+import { UDSConfig } from "../config/config";
 import { ownerRefsMock } from "./defaultTestMocks";
 import {
   sidecarEgressNamespace,

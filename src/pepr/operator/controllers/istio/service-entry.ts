@@ -4,7 +4,7 @@
  */
 
 import { V1OwnerReference } from "@kubernetes/client-node";
-import { UDSConfig } from "../../../config";
+
 import {
   Expose,
   Gateway,
@@ -14,6 +14,7 @@ import {
   IstioResolution,
   IstioServiceEntry,
 } from "../../crd";
+import { UDSConfig } from "../config/config";
 import { getSharedAnnotationKey } from "./istio-resources";
 import {
   sidecarEgressNamespace,

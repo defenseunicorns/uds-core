@@ -72,6 +72,39 @@ tasks:
       - description: "Deploy the Prometheus-Stack source package with Zarf Dev to only install the CRDs"
         cmd: "uds zarf dev deploy src/prometheus-stack --no-progress"
 
+      - description: "Deploy the UDS Cluster Config CRD, CR, and config secret"
+        cmd: |
+          uds zarf tools kubectl apply -f src/pepr/uds-cluster-crds/templates/clusterconfig.uds.dev.yaml
+          uds zarf tools kubectl apply -f - <<EOF
+          apiVersion: uds.dev/v1alpha1
+          kind: ClusterConfig
+          metadata:
+            name: uds-cluster-config
+          spec:
+            attributes:
+              clusterName: ""
+              tags: []
+            expose:
+              adminDomain: ""
+              caCert: ""
+              domain: uds.dev
+            networking:
+              kubeApiCIDR: ""
+              kubeNodeCIDRs: []
+            policy:
+              allowAllNsExemptions: false
+          EOF
+          uds zarf tools kubectl apply -f - <<EOF
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: uds-operator-config
+            namespace: pepr-system
+          type: Opaque
+          stringData:
+            devMode: "active"
+          EOF
+
       - description: "Dev instructions"
         cmd: |
           echo "Next steps:"

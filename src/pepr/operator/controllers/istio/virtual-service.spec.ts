@@ -5,8 +5,8 @@
 
 import { K8s } from "pepr";
 import { afterEach, beforeEach, describe, expect, it, Mock, vi } from "vitest";
-import { UDSConfig } from "../../../config";
 import { Expose, Gateway, IstioVirtualService, RemoteProtocol } from "../../crd";
+import { UDSConfig } from "../config/config";
 import { sidecarEgressNamespace, sharedEgressPkgId } from "./egress-sidecar";
 import { EgressResource } from "./types";
 import {

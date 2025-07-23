@@ -4,8 +4,8 @@
  */
 
 import { V1OwnerReference } from "@kubernetes/client-node";
+
 import { K8s } from "pepr";
-import { UDSConfig } from "../../../config";
 import {
   Expose,
   Gateway,
@@ -14,6 +14,7 @@ import {
   IstioTLS,
   IstioVirtualService,
 } from "../../crd";
+import { UDSConfig } from "../config/config";
 import { sanitizeResourceName } from "../utils";
 import { sidecarEgressNamespace as namespace, sharedEgressPkgId } from "./egress-sidecar";
 import { generateGatewayName } from "./gateway";
