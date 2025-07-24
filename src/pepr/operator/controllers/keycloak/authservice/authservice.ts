@@ -6,13 +6,13 @@
 import { R } from "pepr";
 
 import { Component, setupLogger } from "../../../../logger";
-import { UDSPackage } from "../../../crd";
+import { K8sGateway, UDSPackage } from "../../../crd";
 import { AuthserviceClient, Mode } from "../../../crd/generated/package-v1alpha1";
-import { setupAmbientWaypoint } from "../../istio/ambient-waypoint";
+import { cleanupWaypointLabels, setupAmbientWaypoint } from "../../istio/ambient-waypoint";
 import { getWaypointName } from "../../istio/waypoint-utils";
 import { purgeOrphans } from "../../utils";
 import { Client } from "../types";
-import { updatePolicy } from "./authorization-policy";
+import { UDSConfig, updatePolicy } from "./authorization-policy";
 import {
   getAuthserviceConfig,
   operatorConfig,

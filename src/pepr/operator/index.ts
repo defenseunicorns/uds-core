@@ -28,8 +28,9 @@ import { validator } from "./crd/validators/package-validator";
 
 // Reconciler imports
 import { Component, setupLogger } from "../logger";
+import { UDSConfig, updateCfg, updateCfgSecrets } from "./controllers/config/config";
 import { reconcilePod, reconcileService } from "./controllers/istio/ambient-waypoint";
-import { UDSConfig } from "./controllers/config/config";
+import { restartGatewayPods } from "./controllers/istio/istio-configmap-sync";
 import {
   KEYCLOAK_CLIENTS_SECRET_NAME,
   KEYCLOAK_CLIENTS_SECRET_NAMESPACE,
@@ -38,7 +39,6 @@ import {
 import { validateCfgUpdate } from "./crd/validators/clusterconfig-validator";
 import { exemptValidator } from "./crd/validators/exempt-validator";
 import { packageFinalizer, packageReconciler } from "./reconcilers/package-reconciler";
-import { restartGatewayPods } from "./controllers/istio/istio-configmap-sync";
 
 // Export the operator capability for registration in the root pepr.ts
 export { operator } from "./common";

@@ -17,9 +17,9 @@ const UDS_MANAGED_LABEL = "uds/managed-by"; // Label to identify UDS-managed res
 
 // Environment variables with defaults for waypoint health checking
 const HEALTH_OPTS = {
-  maxAttempts: parseInt(process.env.WAYPOINT_HEALTH_MAX_ATTEMPTS || "10", 10),
-  intervalMs: parseInt(process.env.WAYPOINT_HEALTH_INTERVAL_MS || "5000", 10),
-  timeoutMs: parseInt(process.env.WAYPOINT_HEALTH_TIMEOUT_MS || "60000", 10),
+  maxAttempts: 10,
+  intervalMs: 5000,
+  timeoutMs: 60000,
 };
 
 /**
