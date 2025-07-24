@@ -44,7 +44,10 @@ export async function setupAmbientWaypoint(pkg: UDSPackage, client: Sso): Promis
     await reconcileExistingResources(pkg, client, waypointName);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    log.error("Error in ambient waypoint setup", errorMessage);
+    log.error(
+      `Error in ambient waypoint setup for waypoint ${waypointName} in ${namespace}`,
+      errorMessage,
+    );
     throw error;
   }
 }
@@ -126,27 +129,22 @@ export async function createWaypointGateway(pkg: UDSPackage, waypointName: strin
 export async function isWaypointPodHealthy(
   namespace: string,
   waypointName: string,
-): Promise<{ healthy: boolean; podCount: number }> {
+): Promise<boolean> {
   try {
     const pods = await K8s(a.Pod)
       .InNamespace(namespace)
       .WithLabel(`istio.io/gateway-name=${waypointName}`)
       .Get();
 
-    const podCount = pods.items?.length || 0;
-    const healthy = pods.items?.some(
-      pod =>
-        pod.status?.phase === "Running" && pod.status?.containerStatuses?.every(cs => cs.ready),
+    return (
+      pods.items?.some(
+        pod =>
+          pod.status?.phase === "Running" && pod.status?.containerStatuses?.every(cs => cs.ready),
+      ) ?? false
     );
-
-    return {
-      healthy: Boolean(healthy),
-      podCount,
-    };
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    log.warn(`Error checking waypoint pod health: ${errorMessage}`);
-    return { healthy: false, podCount: 0 };
+    log.warn(`Error checking waypoint pod health for ${waypointName} in ${namespace}:`, error);
+    return false;
   }
 }
 
@@ -160,39 +158,22 @@ export async function waitForWaypointPodHealthy(
   const start = Date.now();
   const { maxAttempts, intervalMs, timeoutMs } = HEALTH_OPTS;
 
-  log.info("Starting waypoint pod health check");
-
   for (let i = 1; i <= maxAttempts; i++) {
     if (Date.now() - start > timeoutMs) {
-      log.error(`imeout waiting for waypoint pod in ${namespace} with name ${waypointName}`);
       throw new Error(`Timeout waiting for waypoint pod ${waypointName} in ${namespace}`);
     }
 
-    const healthCheck = await isWaypointPodHealthy(namespace, waypointName);
-
-    if (healthCheck.podCount === 0) {
-      log.info(
-        `No waypoint pods found for ${waypointName} in ${namespace}, attempt ${i}/${maxAttempts}`,
-      );
-    } else {
-      log.info(
-        `Found ${healthCheck.podCount} waypoint pods for ${waypointName} in ${namespace}, checking health...`,
-      );
-      if (healthCheck.healthy) {
-        log.info(`Waypoint pod ${waypointName} in ${namespace} is healthy`);
-        return;
-      }
+    const isHealthy = await isWaypointPodHealthy(namespace, waypointName);
+    if (isHealthy) {
+      log.debug(`Waypoint pod ${waypointName} in ${namespace} is healthy`);
+      return;
     }
 
     if (i < maxAttempts) {
-      log.info(`Waiting for waypoint pod to become healthy, attempt ${i}/${maxAttempts}`);
       await new Promise(resolve => setTimeout(resolve, intervalMs));
     }
   }
 
-  log.error(
-    `Waypoint pod ${waypointName} in ${namespace} did not become healthy after ${maxAttempts} attempts`,
-  );
   throw new Error(
     `Waypoint pod ${waypointName} in ${namespace} did not become healthy after ${maxAttempts} attempts`,
   );
@@ -364,16 +345,6 @@ async function cleanupPodsWithWaypointLabel(
         return;
       }
 
-      if (pod.metadata?.labels?.[ISTIO_WAYPOINT_LABEL] !== waypointName) {
-        log.debug("Skipping pod: waypoint label does not match", {
-          namespace,
-          podName,
-          expectedWaypoint: waypointName,
-          actualWaypoint: pod.metadata?.labels?.[ISTIO_WAYPOINT_LABEL],
-        });
-        return;
-      }
-
       try {
         await K8s(kind.Pod, {
           name: podName,
@@ -417,16 +388,6 @@ async function cleanupServicesWithWaypointLabel(
       // Skip if service is being deleted or doesn't have the label anymore
       if (svc.metadata?.deletionTimestamp) {
         log.debug("Skipping service: marked for deletion", { namespace, svcName });
-        return;
-      }
-
-      if (svc.metadata?.labels?.[ISTIO_WAYPOINT_LABEL] !== waypointName) {
-        log.debug("Skipping service: waypoint label does not match", {
-          namespace,
-          svcName,
-          expectedWaypoint: waypointName,
-          actualWaypoint: svc.metadata?.labels?.[ISTIO_WAYPOINT_LABEL],
-        });
         return;
       }
 

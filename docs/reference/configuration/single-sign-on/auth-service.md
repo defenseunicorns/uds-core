@@ -31,6 +31,58 @@ The UDS Operator uses the first `redirectUris` to populate the `match.prefix` ho
 
 For a complete example, see [app-authservice-tenant.yaml](https://github.com/defenseunicorns/uds-core/blob/main/src/test/app-authservice-tenant.yaml)
 
+## Multiple Services and Selectors
+
+### Protecting Multiple Services
+
+You can protect multiple services with a single SSO client by using a common label selector. This is useful when you want to apply the same authentication rules to multiple related services.
+
+#### Example: Single SSO Client for Multiple Services
+
+```yaml
+# This will protect all pods with the label 'app: myapp'
+sso:
+  - name: "My App Services"
+    clientId: my-app-auth
+    redirectUris: ["https://myapp.example.com/login"]
+    enableAuthserviceSelector:
+      app: myapp  # Matches all pods with label app=myapp
+    groups:
+      anyOf: ["/MyApp/Users"]
+```
+
+### Multiple SSO Configurations
+
+If you need different authentication rules for different services, you can define multiple SSO clients with different selectors.
+
+#### Example: Multiple SSO Clients
+
+```yaml
+sso:
+  - name: "Admin Services"
+    clientId: admin-auth
+    redirectUris: ["https://admin.example.com/login"]
+    enableAuthserviceSelector:
+      app: admin
+    groups:
+      anyOf: ["/Admin"]
+
+  - name: "User Services"
+    clientId: user-auth
+    redirectUris: ["https://app.example.com/login"]
+    enableAuthserviceSelector:
+      app: user
+    groups:
+      anyOf: ["/Users"]
+```
+
+:::note
+When using `network.expose` with protected services:
+- Each expose entry must map to exactly one SSO client
+- Multiple services behind the same expose entry must share the same SSO configuration
+- This limitation applies to both ambient and non-ambient modes
+:::
+
 ## Limitations:
 Authservice is intended for simple, basic protection scenarios where an absolute level of protection is acceptable (such as a Web UI or dashboard). For more advanced authentication requirements, you should implement authentication directly in your application or via a more comprehensive solution.
 
@@ -52,42 +104,11 @@ Authservice is fully supported for packages running in Istio Ambient Mesh mode (
 
 :::caution
 ### Important Note on Selector Matching
-When using `enableAuthserviceSelector` in ambient mode, ensure that the selector matches the labels on your pods **and** services. If the selector only matches pod labels but not service selectors, you may encounter incomplete Authservice protection where:
+When using `enableAuthserviceSelector` in ambient mode, ensure that the selector matches the labels on your pods **and** is the same selector used by any services (`spec.selector`). If the selector matches pod labels but not the selector used by the service, you may encounter incomplete Authservice protection where:
   - The pod is mutated to use the waypoint
   - But the service is not properly associated with the waypoint
 
-Additionally, the package network expose also needs to match the selector for the network policies to be associated properly.
-:::
+This will "fail closed" and result in traffic through the service being blocked, rather than routing through the expected SSO login flow.
 
-:::caution
-### Multiple Services in a Single Namespace
-When protecting multiple services within the same namespace, each service must have its own dedicated SSO client configuration. The current implementation creates a one-to-one mapping between an SSO client and its associated waypoint proxy. This means:
-
-- Each protected service must have its own SSO client entry in the package configuration
-- Each service will get its own dedicated waypoint proxy
-- Sharing a single waypoint proxy between multiple services is not supported
-
-Example configuration for multiple services:
-```yaml
-spec:
-  sso:
-    - name: "Ambient SSO"
-      clientId: uds-core-ambient-httpbin
-      redirectUris:
-        - "https://ambient-protected.uds.dev/login"
-      enableAuthserviceSelector:
-        app: httpbin
-      groups:
-        anyOf:
-          - "/UDS Core/Admin"
-    - name: "Ambient 2 SSO"
-      clientId: uds-core-ambient2-httpbin
-      redirectUris:
-        - "https://ambient2-protected.uds.dev/login"
-      enableAuthserviceSelector:
-        app: httpbin2
-      groups:
-        anyOf:
-          - "/UDS Core/Admin"
-```
+Additionally, any package `network.expose` entries should use the same selector to allow traffic to flow properly from the gateway to the waypoint.
 :::

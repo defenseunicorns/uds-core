@@ -9,7 +9,7 @@ import { Component, setupLogger } from "../../../../logger";
 import { K8sGateway, UDSPackage } from "../../../crd";
 import { AuthserviceClient, Mode } from "../../../crd/generated/package-v1alpha1";
 import { cleanupWaypointLabels, setupAmbientWaypoint } from "../../istio/ambient-waypoint";
-import { getWaypointName, shouldUseAmbientWaypoint } from "../../istio/waypoint-utils";
+import { getWaypointName } from "../../istio/waypoint-utils";
 import { purgeOrphans } from "../../utils";
 import { Client } from "../types";
 import { updatePolicy } from "./authorization-policy";
@@ -41,6 +41,7 @@ export async function authservice(
   // Get the requested service mesh mode, default to sidecar if not specified
   const istioMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Sidecar;
   const previousMeshMode = pkg.status?.meshMode || Mode.Sidecar;
+  const isAmbient = istioMode === Mode.Ambient;
 
   // Get the list of clients from the package
   const authServiceClients = R.filter(
@@ -48,12 +49,8 @@ export async function authservice(
     pkg.spec?.sso || [],
   );
 
-  // Check if we're in ambient mode by looking for the waypoint annotation
-  const isAmbient = shouldUseAmbientWaypoint(pkg);
-
   // Build the new client status objects
   const newAuthserviceClients = authServiceClients.map(sso => ({
-    name: sso.name ?? sso.clientId,
     clientId: sso.clientId,
     selector: sso.enableAuthserviceSelector || {},
   }));
@@ -100,69 +97,38 @@ export async function authservice(
 export async function purgeAuthserviceClients(
   pkg: UDSPackage,
   newAuthserviceClients: AuthserviceClient[] = [],
-  previousMeshMode: string,
-  currentMeshMode: string,
+  previousMeshMode: Mode,
+  currentMeshMode: Mode,
 ): Promise<void> {
-  const isAmbient = shouldUseAmbientWaypoint(pkg);
   const prevClients = pkg.status?.authserviceClients || [];
 
   // Check if mesh mode changed
   const meshModeChanged = previousMeshMode !== currentMeshMode;
 
-  // Find clients to clean up:
-  // 1. Removed clients
-  // 2. Clients with changed selectors
-  // 3. All clients if mesh mode changed
-  const clientsToCleanup = meshModeChanged
-    ? prevClients // Clean up all previous clients if mesh mode changed
+  // First handle truly removed clients
+  const removedClients = prevClients.filter(
+    oldClient => !newAuthserviceClients.some(c => c.clientId === oldClient.clientId),
+  );
+
+  // Then handle updated clients (selector changes or mesh mode change)
+  const updatedClients = meshModeChanged
+    ? prevClients // All clients need update if mesh mode changed
     : prevClients.filter(oldClient => {
-        // Find matching client by ID
-        const match = newAuthserviceClients.find(
-          newClient => newClient.clientId === oldClient.clientId,
-        );
-
-        // If no match found, this client was removed
-        if (!match) {
-          return true;
-        }
-
-        // Check if either selector is empty
-        const oldSelectorEmpty =
-          !oldClient.selector || Object.keys(oldClient.selector).length === 0;
-        const newSelectorEmpty = !match.selector || Object.keys(match.selector).length === 0;
-
-        // Both empty, no need for cleanup
-        if (oldSelectorEmpty && newSelectorEmpty) {
-          return false;
-        } else if (!oldSelectorEmpty && !newSelectorEmpty) {
-          // Both non-empty, check if they're different
-          return !R.equals(match.selector, oldClient.selector);
-        } else if (oldSelectorEmpty && !newSelectorEmpty) {
-          // Changed from empty to non-empty
-          return true;
-        } else {
-          // Changed from non-empty to empty
-          return false;
-        }
+        const newClient = newAuthserviceClients.find(c => c.clientId === oldClient.clientId);
+        if (!newClient) return false; // Already handled by removedClients
+        return JSON.stringify(oldClient.selector) !== JSON.stringify(newClient.selector);
       });
 
-  if (meshModeChanged) {
-    log.info(
-      `Mesh mode changed from ${previousMeshMode} to ${currentMeshMode}, cleaning up waypoint labels`,
-    );
-  }
-
+  // Process removed clients
   await Promise.all(
-    clientsToCleanup.map(async client => {
+    removedClients.map(async client => {
       const fullWaypointName = getWaypointName(client.clientId);
-      log.info(`Cleaning up authservice client ${client.clientId}`, {
-        reason: meshModeChanged ? "mesh_mode_change" : "client_removed_or_modified",
-      });
+      log.info(`Removing authservice client ${client.clientId}`);
 
       await reconcileAuthservice(
         { name: client.clientId, action: Action.RemoveClient },
         {},
-        isAmbient,
+        false, // Don't need to update policy for removed clients
         pkg,
         fullWaypointName,
       );
@@ -170,6 +136,30 @@ export async function purgeAuthserviceClients(
       if (pkg.metadata?.namespace) {
         await cleanupWaypointLabels(pkg.metadata.namespace, fullWaypointName);
       }
+    }),
+  );
+
+  // Process updated clients (selector changes or mesh mode)
+  await Promise.all(
+    updatedClients.map(async client => {
+      const newClient = newAuthserviceClients.find(c => c.clientId === client.clientId);
+      if (!newClient) return;
+
+      log.info(`Updating authservice client ${client.clientId}`, {
+        reason: meshModeChanged ? "mesh_mode_change" : "selector_changed",
+      });
+
+      // Update the configuration without removing the chain
+      await reconcileAuthservice(
+        {
+          name: client.clientId,
+          action: Action.AddClient,
+        },
+        newClient.selector,
+        currentMeshMode === Mode.Ambient,
+        pkg,
+        getWaypointName(client.clientId),
+      );
     }),
   );
 }

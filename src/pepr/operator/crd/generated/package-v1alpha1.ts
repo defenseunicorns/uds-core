@@ -802,7 +802,6 @@ export interface StatusObject {
 
 export interface AuthserviceClient {
   clientId: string;
-  name: string;
   selector?: { [key: string]: string };
 }
 

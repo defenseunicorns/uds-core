@@ -196,7 +196,7 @@ export async function packageFinalizer(pkg: UDSPackage) {
     });
     // Remove any Authservice configuration - retry on failure
     await retryWithDelay(async function cleanupAuthserviceConfig() {
-      const currentMeshMode = pkg.spec?.network?.serviceMesh?.mode || "sidecar";
+      const currentMeshMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Sidecar;
       return purgeAuthserviceClients(pkg, [], currentMeshMode, currentMeshMode);
     }, log);
   } catch (e) {

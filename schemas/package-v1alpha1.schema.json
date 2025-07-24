@@ -1066,9 +1066,6 @@
         "clientId": {
           "type": "string"
         },
-        "name": {
-          "type": "string"
-        },
         "selector": {
           "type": "object",
           "additionalProperties": {
@@ -1078,8 +1075,7 @@
         }
       },
       "required": [
-        "clientId",
-        "name"
+        "clientId"
       ],
       "title": "AuthserviceClient"
     },

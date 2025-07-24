@@ -608,9 +608,8 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
               type: "array",
               items: {
                 type: "object",
-                required: ["name", "clientId"],
+                required: ["clientId"],
                 properties: {
-                  name: { type: "string" },
                   clientId: { type: "string" },
                   selector: {
                     type: "object",

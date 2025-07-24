@@ -173,13 +173,13 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
       const appSelector = sso.enableAuthserviceSelector;
 
       // Egress policy: Allow traffic from waypoint to istiod
-      const istiodPolicy = allowEgressIstiod(namespace, sso.clientId);
+      const istiodPolicy = allowEgressIstiod(namespace, sso.clientId, netpolSelector);
+
       // Add labels to the generated policy
       istiodPolicy.metadata = {
         ...istiodPolicy.metadata,
         labels: {
           ...istiodPolicy.metadata?.labels,
-          "uds/package": pkg.metadata!.name!,
           "uds/sso-client": sso.clientId,
         },
       };

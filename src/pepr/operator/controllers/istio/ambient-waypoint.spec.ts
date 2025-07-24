@@ -167,35 +167,30 @@ describe("isWaypointPodHealthy", () => {
           { name: "container-2", ready: true },
         ],
       },
-      expected: { healthy: true, podCount: 1 },
+      expected: true,
     },
     {
       name: "should return false when pod is not running",
       podStatus: {
-        items: [
-          {
-            status: {
-              phase: "Pending",
-              containerStatuses: [{ name: "container-1", ready: true }],
-            },
-          },
-        ],
+        phase: "Pending",
+        containerStatuses: [{ name: "container-1", ready: true }],
       },
-      expected: { healthy: false, podCount: 1 },
+      expected: false,
     },
   ];
 
   it.each(testCases)("$name", async ({ podStatus, expected }) => {
-    mockGet.mockResolvedValueOnce(
-      Array.isArray(podStatus)
-        ? { items: podStatus }
-        : {
-            items: [{ metadata: { name: "test-pod" }, status: podStatus }],
-          },
-    );
+    mockGet.mockResolvedValueOnce({
+      items: [
+        {
+          metadata: { name: "test-pod" },
+          status: podStatus,
+        },
+      ],
+    });
 
     const result = await isWaypointPodHealthy(namespace, waypointName);
-    expect(result).toEqual(expected);
+    expect(result).toBe(expected);
     expect(mockInNamespace).toHaveBeenCalledWith(namespace);
     expect(mockWithLabel).toHaveBeenCalledWith(`istio.io/gateway-name=${waypointName}`);
   });
@@ -456,12 +451,6 @@ describe("cleanupWaypointLabels", () => {
 
     // Should only patch the target pod
     expect(mockGet).toHaveBeenCalledTimes(2);
-    expect(mockLog.debug).toHaveBeenCalledWith("Skipping pod: waypoint label does not match", {
-      podName: "test-pod",
-      namespace: "test-ns",
-      expectedWaypoint: waypointName,
-      actualWaypoint: "other-waypoint",
-    });
   });
 });
 

@@ -13,7 +13,7 @@ import {
   Source,
 } from "../../crd/generated/istio/authorizationpolicy-v1beta1";
 import { IstioState } from "../istio/namespace";
-import { getWaypointName, matchesLabels, shouldUseAmbientWaypoint } from "../istio/waypoint-utils";
+import { getWaypointName, shouldUseAmbientWaypoint } from "../istio/waypoint-utils";
 import { getOwnerRef, purgeOrphans, sanitizeResourceName } from "../utils";
 import { META_IP } from "./generators/cloudMetadata";
 import { kubeAPI } from "./generators/kubeAPI";
@@ -243,48 +243,39 @@ export async function generateAuthorizationPolicies(
   // Process expose rules
   if (pkg.spec?.network?.expose) {
     for (const rule of pkg.spec.network.expose) {
-      const isWaypointService = isAmbientWaypointService(pkg, rule.selector);
+      const sso = findMatchingSsoClient(pkg, rule.selector);
 
-      if (isWaypointService) {
-        // Find the matching SSO config for this waypoint service
-        const sso = pkg.spec.sso?.find(
-          s =>
-            s.enableAuthserviceSelector &&
-            rule.selector &&
-            matchesLabels(rule.selector, s.enableAuthserviceSelector),
-        );
+      if (sso) {
+        // Waypoint service handling
+        const waypointName = getWaypointName(sso.clientId);
+        const { source } = processExposeRule(rule);
+        const waypointPorts = rule.port ? [rule.port.toString()] : [];
 
-        if (sso) {
-          const waypointName = getWaypointName(sso.clientId);
-          const { source } = processExposeRule(rule);
-          const waypointPorts = rule.port ? [rule.port.toString()] : [];
+        if (waypointPorts.length > 0) {
+          const labelString =
+            Object.entries(rule.selector || {})
+              .map(([k, v]) => `${k}-${v}`)
+              .join("-") || "all";
 
-          if (waypointPorts.length > 0) {
-            const labelString =
-              Object.entries(rule.selector || {})
-                .map(([k, v]) => `${k}-${v}`)
-                .join("-") || "all";
+          const policyName = sanitizeResourceName(
+            `protect-${pkgName}-ingress-${rule.port || "http"}-${labelString}-${waypointName}`,
+          );
 
-            const policyName = sanitizeResourceName(
-              `protect-${pkgName}-ingress-${rule.port || "http"}-${labelString}-${waypointName}`,
-            );
-
-            const waypointSelector = { "istio.io/gateway-name": waypointName };
-            const authPolicy = buildAuthPolicy(
-              policyName,
-              pkg,
-              waypointSelector,
-              source,
-              waypointPorts,
-            );
-            policies.push(authPolicy);
-            log.trace(`Generated waypoint authpol: ${authPolicy.metadata?.name}`);
-          } else {
-            log.warn(`No exposed port found for waypoint policy`, {
-              selector: rule.selector,
-              package: pkgName,
-            });
-          }
+          const waypointSelector = { "istio.io/gateway-name": waypointName };
+          const authPolicy = buildAuthPolicy(
+            policyName,
+            pkg,
+            waypointSelector,
+            source,
+            waypointPorts,
+          );
+          policies.push(authPolicy);
+          log.trace(`Generated waypoint authpol: ${authPolicy.metadata?.name}`);
+        } else {
+          log.warn(`No exposed port found for waypoint policy`, {
+            selector: rule.selector,
+            package: pkgName,
+          });
         }
       } else {
         // Regular expose rule processing
@@ -368,40 +359,33 @@ export async function generateAuthorizationPolicies(
 }
 
 /**
- * Checks if a service should be handled by an ambient waypoint by verifying:
- * 1. The package is in ambient mode
- * 2. The service has an SSO configuration with a matching enableAuthserviceSelector
- *
- * An empty enableAuthserviceSelector ({}) indicates namespace-wide protection
- * and will match all services in the namespace.
+ * Finds the first SSO client that matches the given selector.
+ * @returns The matching SSO client, or undefined if no match found
  */
-function isAmbientWaypointService(
+export function findMatchingSsoClient(
   pkg: UDSPackage,
   selector: Record<string, string> | undefined,
-): boolean {
-  // Early return if no selector or not in ambient mode
+) {
   if (!selector || pkg.spec?.network?.serviceMesh?.mode !== "ambient") {
-    return false;
+    return undefined;
   }
 
-  return (
-    pkg.spec.sso?.some(sso => {
-      const waypointSelector = sso.enableAuthserviceSelector;
+  return pkg.spec.sso?.find(sso => {
+    const waypointSelector = sso.enableAuthserviceSelector;
 
-      // If waypointSelector is not defined, skip this SSO config
-      if (waypointSelector === undefined || waypointSelector === null) {
-        return false;
-      }
+    // Skip if no selector defined
+    if (waypointSelector === undefined || waypointSelector === null) {
+      return false;
+    }
 
-      // Empty object means namespace-wide protection
-      if (Object.keys(waypointSelector).length === 0) {
-        return true;
-      }
+    // Empty object means namespace-wide protection
+    if (Object.keys(waypointSelector).length === 0) {
+      return true;
+    }
 
-      // For non-empty selectors, check if any label matches the service's selector
-      return Object.entries(waypointSelector).some(([key, value]) => selector[key] === value);
-    }) ?? false
-  );
+    // For non-empty selectors, check if any label matches
+    return Object.entries(waypointSelector).some(([key, value]) => selector[key] === value);
+  });
 }
 
 /**
