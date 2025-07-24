@@ -3,11 +3,13 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { a } from "pepr";
+import { a, sdk } from "pepr";
 
 import { Policy } from "../operator/crd";
 import { When } from "./common";
 import { isExempt, markExemption } from "./exemptions";
+
+const { containers } = sdk;
 
 /**
  * This policy prevents the usage of Istio annotations to override sidecar behavior/configuration.
@@ -46,7 +48,7 @@ When(a.Pod)
       // TODO: Remove this line to enforce the block
       return request.Approve([
         [
-          "Warning: The following istio annotations can modify secure sidecar configuration and should be removed/exempted: ",
+          "The following istio annotations can modify secure sidecar configuration and should be removed/exempted: ",
           violations.join(", "),
         ].join(""),
       ]);
@@ -111,6 +113,20 @@ When(a.Pod)
       })
       .map(([key]) => `annotation ${key}`);
 
+    // Check if the pod is an Istio waypoint pod so we can ignore it when checking side inject label
+    let isIstioWaypointPod = false;
+    for (const container of containers(request)) {
+      if (
+        container.name === "istio-proxy" &&
+        container.ports?.some(p => p.name === "http-envoy-prom") &&
+        container.args?.some(arg => arg === "proxy") &&
+        container.args?.some(arg => arg === "waypoint")
+      ) {
+        isIstioWaypointPod = true;
+        break;
+      }
+    }
+
     // Check labels for violations
     const labelViolations = Object.entries(labels)
       .filter(([key, value]) => {
@@ -118,7 +134,9 @@ When(a.Pod)
           // Ignore 'sidecar.istio.io/inject' label in istio-system namespace
           (key === "sidecar.istio.io/inject" && namespace === "istio-system") ||
           // Ignore 'sidecar.istio.io/inject=true' label
-          (key === "sidecar.istio.io/inject" && value.trim() === "true")
+          (key === "sidecar.istio.io/inject" && value.trim() === "true") ||
+          // Ignore labels on Istio waypoint pods
+          (key === "sidecar.istio.io/inject" && isIstioWaypointPod)
         ) {
           return false;
         }
@@ -136,7 +154,7 @@ When(a.Pod)
       // TODO: Remove this line to enforce the block
       return request.Approve([
         [
-          "Warning: The following istio annotations or labels can modify secure traffic interception and should be removed/exempted: ",
+          "The following istio annotations or labels can modify secure traffic interception and should be removed/exempted: ",
           violations.join(", "),
         ].join(""),
       ]);
@@ -176,7 +194,7 @@ When(a.Pod)
       // TODO: Remove this line to enforce the block
       return request.Approve([
         [
-          "Warning: The following istio ambient annotations can modify secure mesh behavior and should be removed/exempted: ",
+          "The following istio ambient annotations can modify secure mesh behavior and should be removed/exempted: ",
           violations.join(", "),
         ].join(""),
       ]);
