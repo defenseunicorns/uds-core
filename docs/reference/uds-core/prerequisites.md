@@ -21,7 +21,7 @@ When running Kubernetes on any type of host it is important to ensure you are fo
 
 In hardened RKE2 setups (using the CIS profile), control plane components (etcd, kube-scheduler, kube-controller-manager) bind to 127.0.0.1 by default, which prevents Prometheus from scraping them.
 
-To fix this, add the following settings to your control plane node’s config file (`/etc/rancher/rke2/config.yaml`) :
+To fix this, add the following settings to your control plane node’s config file (`/etc/rancher/rke2/config.yaml`):
 
 ```yaml
 kube-controller-manager-arg:
