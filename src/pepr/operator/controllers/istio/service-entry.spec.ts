@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { Expose, Gateway, IstioLocation, IstioResolution, RemoteProtocol } from "../../crd";
 import { UDSConfig } from "../config/config";
 import { ownerRefsMock } from "./defaultTestMocks";
@@ -15,6 +15,11 @@ import {
   generateSharedServiceEntry,
 } from "./service-entry";
 import { EgressResource, HostResource } from "./types";
+
+beforeEach(() => {
+  UDSConfig.domain = "uds.dev";
+  UDSConfig.adminDomain = "admin.uds.dev";
+});
 
 describe("test generate service entry", () => {
   const ownerRefs = [
@@ -62,6 +67,39 @@ describe("test generate service entry", () => {
     expect(payload.spec!.endpoints![0].address).toEqual(
       `${Gateway.Tenant}-ingressgateway.istio-${Gateway.Tenant}-gateway.svc.cluster.local`,
     );
+  });
+
+  it("should create a root domain ServiceEntry object for tenant gateway", () => {
+    const expose: Expose = {
+      host: ".",
+      port,
+      service,
+    };
+
+    const payload = generateIngressServiceEntry(expose, namespace, pkgName, generation, ownerRefs);
+
+    expect(payload).toBeDefined();
+    expect(payload.metadata?.name).toContain("root-domain");
+    expect(payload.spec?.hosts).toBeDefined();
+    expect(payload.spec!.hosts![0]).toEqual(UDSConfig.domain);
+    expect(payload.spec?.endpoints?.[0].address).toContain(Gateway.Tenant);
+  });
+
+  it("should create a root domain ServiceEntry object for admin gateway", () => {
+    const expose: Expose = {
+      gateway: Gateway.Admin,
+      host: ".",
+      port,
+      service,
+    };
+
+    const payload = generateIngressServiceEntry(expose, namespace, pkgName, generation, ownerRefs);
+
+    expect(payload).toBeDefined();
+    expect(payload.metadata?.name).toContain("root-domain");
+    expect(payload.spec?.hosts).toBeDefined();
+    expect(payload.spec!.hosts![0]).toEqual(UDSConfig.adminDomain);
+    expect(payload.spec?.endpoints?.[0].address).toContain(Gateway.Admin);
   });
 });
 
