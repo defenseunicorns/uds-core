@@ -268,9 +268,9 @@ spec:
 
       // Verify that warnings are present in stderr
       expect(result.stderr).toContain(
-        "Warning: The following istio annotations can modify secure traffic interception and should be removed/exempted:",
+        "Warning: The following istio annotations or labels can modify secure traffic interception and should be removed/exempted:",
       );
-      expect(result.stderr).toContain("traffic.sidecar.istio.io/excludeOutboundPorts");
+      expect(result.stderr).toContain("annotation traffic.sidecar.istio.io/excludeOutboundPorts");
 
       // Verify that the resource was created successfully in stdout
       expect(result.stdout).toContain("pod/istio-warning-traffic-override created");
@@ -410,12 +410,12 @@ spec:
 
       // Verify that warnings are present in stderr
       expect(result.stderr).toContain(
-        "Warning: The following istio annotations can modify secure traffic interception and should be removed/exempted:",
+        "Warning: The following istio annotations or labels can modify secure traffic interception and should be removed/exempted:",
       );
 
       // Check that each annotation is mentioned in the warning
       blockedAnnotations.forEach(annotation => {
-        expect(result.stderr).toContain(annotation);
+        expect(result.stderr).toContain("annotation " + annotation);
       });
 
       // Verify that the resource was created successfully in stdout
