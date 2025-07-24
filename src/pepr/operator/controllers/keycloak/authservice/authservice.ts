@@ -111,7 +111,7 @@ export async function purgeAuthserviceClients(
   );
 
   // Then handle updated clients (selector changes or mesh mode change)
-  const updatedClients = meshModeChanged
+  const updatedWaypointClients = meshModeChanged
     ? prevClients // All clients need update if mesh mode changed
     : prevClients.filter(oldClient => {
         const newClient = newAuthserviceClients.find(c => c.clientId === oldClient.clientId);
@@ -141,7 +141,7 @@ export async function purgeAuthserviceClients(
 
   // Process updated clients (selector changes or mesh mode)
   await Promise.all(
-    updatedClients.map(async client => {
+    updatedWaypointClients.map(async client => {
       const newClient = newAuthserviceClients.find(c => c.clientId === client.clientId);
       if (!newClient) return;
 
@@ -171,7 +171,7 @@ function isAddOrRemoveClientEvent(event: AuthServiceEvent): event is AddOrRemove
 export async function reconcileAuthservice(
   event: AuthServiceEvent,
   labelSelector: { [key: string]: string } = {},
-  isAmbient: boolean,
+  isAmbient?: boolean,
   pkg?: UDSPackage,
   waypointName?: string,
 ) {

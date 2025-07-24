@@ -17,7 +17,6 @@ const UDS_MANAGED_LABEL = "uds/managed-by"; // Label to identify UDS-managed res
 
 // Environment variables with defaults for waypoint health checking
 const HEALTH_OPTS = {
-  maxAttempts: 10,
   intervalMs: 5000,
   timeoutMs: 60000,
 };
@@ -156,27 +155,29 @@ export async function waitForWaypointPodHealthy(
   waypointName: string,
 ): Promise<void> {
   const start = Date.now();
-  const { maxAttempts, intervalMs, timeoutMs } = HEALTH_OPTS;
+  const { intervalMs, timeoutMs } = HEALTH_OPTS;
+  let attempts = 0;
 
-  for (let i = 1; i <= maxAttempts; i++) {
-    if (Date.now() - start > timeoutMs) {
-      throw new Error(`Timeout waiting for waypoint pod ${waypointName} in ${namespace}`);
+  while (true) {
+    attempts++;
+    const elapsed = Date.now() - start;
+
+    if (elapsed >= timeoutMs) {
+      throw new Error(
+        `Timeout waiting for waypoint pod ${waypointName} in ${namespace} after ${elapsed}ms`,
+      );
     }
 
     const isHealthy = await isWaypointPodHealthy(namespace, waypointName);
     if (isHealthy) {
-      log.debug(`Waypoint pod ${waypointName} in ${namespace} is healthy`);
+      log.debug(
+        `Waypoint pod ${waypointName} in ${namespace} is healthy after ${attempts} attempts and ${elapsed}ms`,
+      );
       return;
     }
 
-    if (i < maxAttempts) {
-      await new Promise(resolve => setTimeout(resolve, intervalMs));
-    }
+    await new Promise(resolve => setTimeout(resolve, intervalMs));
   }
-
-  throw new Error(
-    `Waypoint pod ${waypointName} in ${namespace} did not become healthy after ${maxAttempts} attempts`,
-  );
 }
 
 /**

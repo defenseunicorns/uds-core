@@ -13,10 +13,18 @@ import { Logger } from "pino";
  * This is primarily used for any watches occurring in admission pods
  */
 export const watchCfg: WatchCfg = {
-  resyncFailureMax: 5,
-  resyncDelaySec: 5,
-  lastSeenLimitSeconds: 300,
-  relistIntervalSec: 1800,
+  resyncFailureMax: process.env.PEPR_RESYNC_FAILURE_MAX
+    ? parseInt(process.env.PEPR_RESYNC_FAILURE_MAX, 10)
+    : 5,
+  resyncDelaySec: process.env.PEPR_RESYNC_DELAY_SECONDS
+    ? parseInt(process.env.PEPR_RESYNC_DELAY_SECONDS, 10)
+    : 5,
+  lastSeenLimitSeconds: process.env.PEPR_LAST_SEEN_LIMIT_SECONDS
+    ? parseInt(process.env.PEPR_LAST_SEEN_LIMIT_SECONDS, 10)
+    : 300,
+  relistIntervalSec: process.env.PEPR_RELIST_INTERVAL_SECONDS
+    ? parseInt(process.env.PEPR_RELIST_INTERVAL_SECONDS, 10)
+    : 1800,
 };
 
 /**
