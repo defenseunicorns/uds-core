@@ -38,9 +38,7 @@ These changes require restarting RKE2 to take effect.
 
 In hardened RKE2 setups (using the CIS profile), RKE2 applies some default network policies that [block ingress to the kube-system namespace](https://docs.rke2.io/security/hardening_guide#network-policies).  In order to enable CoreDNS metrics scraping you will need to enable an additional network policy.  UDS Core includes an option to deploy a network policy for CoreDNS metrics scraping.
 
-To enable this policy, set the value `rke2CorednsNetpol.enabled` to `true` in the `uds-prometheus-config` helm chart.  Example `uds-bundle.yaml` override:
-
-
+To enable this policy, set the value `rke2CorednsNetpol.enabled` to `true` in the `uds-prometheus-config` helm chart with the following override:
 ```yaml
 - name: uds-core
   ...
