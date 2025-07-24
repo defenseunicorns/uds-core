@@ -10,9 +10,9 @@ spec:
   exemptions:
     - policies:
         - DisallowHostNamespaces
-        - DisallowPrivileged
         - RequireNonRootUser
-        - DropAllCapabilities
+        - RestrictCapabilities
+        - RestrictSeccomp
         - RestrictHostPathWrite
         - RestrictVolumeTypes
       matcher:

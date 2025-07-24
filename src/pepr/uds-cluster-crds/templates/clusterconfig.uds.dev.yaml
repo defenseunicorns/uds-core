@@ -1,0 +1,85 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: clusterconfig.uds.dev
+spec:
+  conversion:
+    strategy: None
+  group: uds.dev
+  names:
+    kind: ClusterConfig
+    listKind: ClusterConfigList
+    plural: clusterconfig
+    singular: clusterconfig
+  scope: Cluster
+  versions:
+    - name: v1alpha1
+      schema:
+        openAPIV3Schema:
+          properties:
+            metadata:
+              properties:
+                name:
+                  enum:
+                    - uds-cluster-config
+                  type: string
+              type: object
+            spec:
+              properties:
+                attributes:
+                  properties:
+                    clusterName:
+                      description: Friendly name to associate with your UDS cluster
+                      type: string
+                    tags:
+                      description: Tags to apply to your UDS cluster
+                      items:
+                        type: string
+                      type: array
+                  type: object
+                expose:
+                  properties:
+                    adminDomain:
+                      description: Domain all cluster services on the admin gateway will be exposed on
+                      type: string
+                    caCert:
+                      description: The trusted CA that signed your domain certificates if using Private PKI
+                      type: string
+                    domain:
+                      description: Domain all cluster services will be exposed on
+                      type: string
+                  required:
+                    - domain
+                  type: object
+                networking:
+                  properties:
+                    kubeApiCIDR:
+                      description: CIDR range for your Kubernetes control plane nodes. This is a manual override that can be used instead of relying on Pepr to automatically watch and update the values
+                      type: string
+                    kubeNodeCIDRs:
+                      description: CIDR(s) for all Kubernetes nodes (not just control plane). Similar reason to above,annual override instead of relying on watch
+                      items:
+                        type: string
+                      type: array
+                  type: object
+                policy:
+                  properties:
+                    allowAllNsExemptions:
+                      default: false
+                      description: Allow UDS Exemption custom resources to live in any namespace (default false)
+                      type: boolean
+                  required:
+                    - allowAllNsExemptions
+                  type: object
+              required:
+                - expose
+                - policy
+              type: object
+          required:
+            - spec
+          type: object
+      served: true
+      storage: true

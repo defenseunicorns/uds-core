@@ -5,6 +5,8 @@
 
 import { defineConfig } from 'vitest/config';
 
+const isCi = process.env.CI_COVERAGE_ALL === 'true';
+
 export default defineConfig({
   test: {
     globals: true,
@@ -14,7 +16,9 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html'],
-      exclude: ['**/node_modules/**', '**/dist/**', '**/crd/**'],
+      all: isCi,
+      include: ['src/pepr/**'],
+      exclude: ['**/docs-gen/**', '**/crd/generated/**', '**/crd/sources/**'],
     },
   },
 });
