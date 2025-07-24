@@ -43,13 +43,17 @@ tasks:
     actions:
       - description: Run helm unittest on all charts
         cmd: |
+          failed=0
           for chart in $(find . -name Chart.yaml -type f -exec dirname {} \;); do
             if [ -d "$chart/tests" ]; then
-              helm unittest --color=true "$chart"
+              if ! helm unittest --color=true "$chart"; then
+                failed=1
+              fi
             else
               echo "No helm unittests configured for $chart"
             fi
           done
+          exit $failed
 
   # - name: oscal
   #   actions:
