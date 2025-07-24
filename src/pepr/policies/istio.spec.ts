@@ -322,6 +322,50 @@ spec:
 
   // TODO: delete this test once we enforce the policy
   // Note: This test is designed to run with kubectl directly to verify the warning message
+  it("should warn on disabling sidecar injection with label", () => {
+    // Create a temporary directory and file for the pod manifest
+    const tmpDir = mkdtempSync(join(tmpdir(), "istio-test-"));
+    const podYamlPath = join(tmpDir, "istio-warning-test.yaml");
+
+    // Create the YAML file for the pod with sidecar.istio.io/inject: false label
+    const podYaml = `
+apiVersion: v1
+kind: Pod
+metadata:
+  name: istio-warning-label-sidecar-inject-false
+  namespace: policy-tests
+  labels:
+    sidecar.istio.io/inject: "false"
+spec:
+  containers:
+  - name: test
+    image: 127.0.0.1/fake
+`;
+    writeFileSync(podYamlPath, podYaml);
+
+    try {
+      // Apply the Pod using kubectl and capture stdout and stderr separately
+      const result = spawnSync("uds", ["zarf", "tools", "kubectl", "apply", "-f", podYamlPath], {
+        encoding: "utf-8",
+        stdio: "pipe",
+      });
+
+      // Verify that warnings are present in stderr
+      expect(result.stderr).toContain(
+        "Warning: The following istio annotations or labels can modify secure traffic interception and should be removed/exempted:",
+      );
+      expect(result.stderr).toContain("label sidecar.istio.io/inject");
+
+      // Verify that the resource was created successfully in stdout
+      expect(result.stdout).toContain("pod/istio-warning-label-sidecar-inject-false created");
+      expect(result.status).toBe(0); // Zero exit code indicates success
+    } finally {
+      rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  // TODO: delete this test once we enforce the policy
+  // Note: This test is designed to run with kubectl directly to verify the warning message
   it("should warn on multiple dangerous traffic interception annotations", () => {
     // Create a temporary directory and file for the pod manifest
     const tmpDir = mkdtempSync(join(tmpdir(), "istio-test-"));

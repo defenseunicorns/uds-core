@@ -60,10 +60,10 @@ When(a.Pod)
   });
 
 /**
- * This policy prevents the usage of Istio annotations that override traffic interception behavior.
+ * This policy prevents the usage of Istio annotations or labels that override traffic interception behavior.
  *
- * Istio traffic annotations can be used to modify how traffic is intercepted and routed, which can
- * lead to security bypasses or unintended network paths. This policy ensures that annotations that
+ * Istio traffic annotations or labels can be used to modify how traffic is intercepted and routed, which can
+ * lead to security bypasses or unintended network paths. This policy ensures that annotations or labels that
  * can potentially bypass secure networking controls are not used on pods.
  */
 When(a.Pod)
@@ -74,7 +74,6 @@ When(a.Pod)
       return request.Approve();
     }
 
-    // ref: https://istio.io/latest/docs/reference/config/annotations/
     const blockedTrafficAnnotations = [
       "sidecar.istio.io/inject", // Can disable sidecar injection
       "traffic.sidecar.istio.io/excludeInboundPorts", // Can bypass inbound port interception
@@ -88,13 +87,19 @@ When(a.Pod)
       "traffic.sidecar.istio.io/kubevirtInterfaces", // Can modify kubevirt interface handling
     ];
 
+    const blockedTrafficLabels = [
+      "sidecar.istio.io/inject", // Can disable sidecar injection
+    ];
+
     const namespace = request.Raw?.metadata?.namespace || "default";
     const annotations = request.Raw?.metadata?.annotations || {};
+    const labels = request.Raw?.metadata?.labels || {};
 
-    const violations = Object.entries(annotations)
+    // Check annotations for violations
+    const annotationViolations = Object.entries(annotations)
       .filter(([key]) => {
         if (
-          //ignore 'sidecar.istio.io/inject' annotation in istio-system namespace
+          // Ignore 'sidecar.istio.io/inject' annotation in istio-system namespace
           (key === "sidecar.istio.io/inject" && namespace === "istio-system") ||
           // Ignore 'sidecar.istio.io/inject=true' annotation
           (key === "sidecar.istio.io/inject" && annotations[key].trim() === "true")
@@ -104,20 +109,40 @@ When(a.Pod)
 
         return blockedTrafficAnnotations.includes(key);
       })
-      .map(([key]) => key)
-      .sort((a, b) => a.localeCompare(b));
+      .map(([key]) => `annotation ${key}`);
+
+    // Check labels for violations
+    const labelViolations = Object.entries(labels)
+      .filter(([key, value]) => {
+        if (
+          // Ignore 'sidecar.istio.io/inject' label in istio-system namespace
+          (key === "sidecar.istio.io/inject" && namespace === "istio-system") ||
+          // Ignore 'sidecar.istio.io/inject=true' label
+          (key === "sidecar.istio.io/inject" && value.trim() === "true")
+        ) {
+          return false;
+        }
+
+        return blockedTrafficLabels.includes(key);
+      })
+      .map(([key]) => `label ${key}`);
+
+    // Combine all violations and sort
+    const violations = [...annotationViolations, ...labelViolations].sort((a, b) =>
+      a.localeCompare(b),
+    );
 
     if (violations.length > 0) {
       // TODO: Remove this line to enforce the block
       return request.Approve([
         [
-          "Warning: The following istio annotations can modify secure traffic interception and should be removed/exempted: ",
+          "Warning: The following istio annotations or labels can modify secure traffic interception and should be removed/exempted: ",
           violations.join(", "),
         ].join(""),
       ]);
       // TODO: Uncomment this line to block the request
       // return request.Deny(
-      //   `The following istio annotations can modify secure traffic interception are not allowed: ${violations.join(", ")}`,
+      //   `The following istio annotations or labels can modify secure traffic interception are not allowed: ${violations.join(", ")}`,
       // );
     }
 
