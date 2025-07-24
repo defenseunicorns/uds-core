@@ -35,6 +35,21 @@ tasks:
         cmd: GOPATH="$HOME/go" go install github.com/google/addlicense@v1.1.1
       - description: license lint
         task: license
+      - description: Run helm unittest on all charts
+        task: helm-unittest
+
+  - name: helm-unittest
+    description: "Run helm unittest on all charts"
+    actions:
+      - description: Run helm unittest on all charts
+        cmd: |
+          for chart in $(find . -name Chart.yaml -type f -exec dirname {} \;); do
+            if [ -d "$chart/tests" ]; then
+              helm unittest --color=true "$chart"
+            else
+              echo "No helm unittests configured for $chart"
+            fi
+          done
 
   # - name: oscal
   #   actions:
