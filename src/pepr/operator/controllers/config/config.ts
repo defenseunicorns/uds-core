@@ -238,7 +238,7 @@ async function performAuthserviceUpdate(reason: string) {
     redisUri: UDSConfig.authserviceRedisUri,
   };
   configLog.debug(`Updating Authservice secret based on: ${reason}`);
-  await reconcileAuthservice(authserviceUpdate);
+  await reconcileAuthservice(authserviceUpdate, {}, false, undefined, undefined);
 }
 
 // Starts a watch of the cluster config, used for Admission pods

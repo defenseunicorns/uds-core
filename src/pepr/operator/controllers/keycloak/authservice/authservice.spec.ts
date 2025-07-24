@@ -3,15 +3,316 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { beforeEach, describe, expect, test, vi } from "vitest";
-import { UDSPackage } from "../../../crd";
-import { updateCfg, updateCfgSecrets } from "../../config/config";
+import { beforeEach, describe, expect, it, test, vi } from "vitest";
+import { Sso, UDSPackage } from "../../../crd";
+import { AuthserviceClient, Mode } from "../../../crd/generated/package-v1alpha1";
+import { cleanupWaypointLabels } from "../../istio/ambient-waypoint";
+import { getWaypointName } from "../../istio/waypoint-utils";
 import { Client } from "../types";
-import { updatePolicy } from "./authorization-policy";
-import { buildChain, buildConfig } from "./authservice";
-import { initializeOperatorConfig } from "./config";
+import * as authorizationPolicy from "./authorization-policy.js";
+import { authservice, buildChain, buildConfig } from "./authservice.js";
+import * as configModule from "./config";
 import * as mockConfig from "./mock-authservice-config.json";
-import { Action, AuthServiceEvent, AuthserviceConfig } from "./types";
+import { Action, AuthserviceConfig, AuthServiceEvent } from "./types";
+
+// Mock the waypoint utilities
+vi.mock("../../istio/waypoint-utils", () => ({
+  getWaypointName: vi.fn().mockImplementation((id: string) => `${id}-waypoint`),
+}));
+
+// Mock the ambient-waypoint module
+vi.mock("../../istio/ambient-waypoint", () => ({
+  cleanupWaypointLabels: vi.fn().mockResolvedValue(undefined),
+  setupAmbientWaypoint: vi.fn().mockResolvedValue(undefined),
+}));
+
+// Mock the K8s API
+const mockGet = vi.fn();
+const mockUpdate = vi.fn();
+const mockApply = vi.fn();
+const mockList = vi.fn();
+
+vi.mock("kubernetes-fluent-client", async importOriginal => {
+  const actual = await importOriginal<typeof import("kubernetes-fluent-client")>();
+  return {
+    ...actual,
+    K8s: {
+      withNamespace: () => ({
+        Get: mockGet,
+        Update: mockUpdate,
+        Apply: mockApply,
+        List: mockList,
+      }),
+      IstioAuthorizationPolicy: {
+        withNamespace: () => ({
+          Apply: vi.fn().mockResolvedValue({}),
+          List: vi.fn().mockResolvedValue({ items: [] }),
+        }),
+      },
+      IstioRequestAuthentication: {
+        withNamespace: () => ({
+          Apply: vi.fn().mockResolvedValue({}),
+          List: vi.fn().mockResolvedValue({ items: [] }),
+        }),
+      },
+      Namespace: {
+        Get: vi.fn().mockResolvedValue({
+          metadata: {
+            name: "test-ns",
+          },
+        }),
+      },
+    },
+  };
+});
+
+// Mock dependencies
+vi.mock("../../istio/ambient-waypoint", () => ({
+  setupAmbientWaypoint: vi.fn().mockResolvedValue(undefined),
+  cleanupWaypointLabels: vi.fn().mockResolvedValue(undefined),
+}));
+
+// Mock the config module
+vi.mock("./config", () => {
+  const mockAuthserviceConfig = {
+    listen_address: "0.0.0.0",
+    listen_port: "8080",
+    log_level: "info",
+    threads: 4,
+    allow_unmatched_requests: true,
+    default_oidc_config: {
+      authorization_uri: "https://sso.uds.dev/realms/uds/protocol/openid-connect/auth",
+      token_uri: "https://sso.uds.dev/realms/uds/protocol/openid-connect/token",
+      callback_uri: "https://authservice.test-ns.svc.cluster.local/oauth2/callback",
+      client_id: "authservice",
+      client_secret: "test-secret",
+      scopes: ["openid", "profile", "email"],
+      logout: {
+        path: "/oauth2/sign_out",
+        redirect_uri: "https://authservice.test-ns.svc.cluster.local/oauth2/sign_out",
+      },
+    },
+    chains: [],
+  };
+
+  return {
+    initializeOperatorConfig: vi.fn().mockResolvedValue(undefined),
+    getAuthserviceConfig: vi.fn().mockResolvedValue(mockAuthserviceConfig),
+    setAuthserviceConfig: vi.fn().mockResolvedValue(undefined),
+    updateAuthServiceSecret: vi.fn().mockResolvedValue(undefined),
+    operatorConfig: {
+      secretName: "authservice-secret",
+      namespace: "test-ns",
+      realm: "uds",
+      domain: "uds.dev",
+    },
+  };
+});
+
+// Mock UDSConfig for domain
+vi.mock("../../config/config", () => ({
+  UDSConfig: {
+    domain: "uds.dev",
+  },
+}));
+
+// Mock the authorization-policy module
+vi.mock("./authorization-policy", () => ({
+  updatePolicy: vi.fn().mockResolvedValue(undefined),
+  UDSConfig: {
+    domain: "uds.dev",
+  },
+}));
+
+// Test helpers
+function createMockPackage(
+  name: string,
+  labels: Record<string, string> = {},
+  ssoConfig: Sso[] = [],
+): UDSPackage {
+  return {
+    apiVersion: "uds.dev/v1alpha1",
+    kind: "Package",
+    metadata: {
+      name,
+      namespace: "test-ns",
+      labels,
+    },
+    spec: {
+      sso: ssoConfig,
+    },
+    status: {
+      conditions: [],
+      authserviceClients: [],
+    },
+  };
+}
+
+describe("purgeAuthserviceClients", () => {
+  // Move the common mocks to the top level
+  const mockSecretResponse = {
+    metadata: {
+      name: "authservice-secret",
+      namespace: "test-ns",
+    },
+    data: {
+      "config.json": Buffer.from(
+        JSON.stringify({
+          listen_address: "0.0.0.0",
+          default_oidc_config: {},
+        }),
+      ).toString("base64"),
+    },
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGet.mockResolvedValue(mockSecretResponse);
+    mockUpdate.mockResolvedValue({});
+  });
+
+  it("should handle selector changes for existing clients", async () => {
+    // Arrange
+    const pkg = createMockPackage("test-pkg");
+    const originalClient: AuthserviceClient = {
+      clientId: "test-client",
+      selector: { "app.kubernetes.io/name": "old-selector" },
+    };
+    const updatedClient: AuthserviceClient = {
+      clientId: "test-client",
+      selector: { "app.kubernetes.io/name": "new-selector" },
+    };
+
+    pkg.status = {
+      ...pkg.status,
+      authserviceClients: [originalClient],
+    };
+
+    // Set up the mock response for this test
+    mockGet.mockResolvedValueOnce(mockSecretResponse);
+
+    // Act
+    const { purgeAuthserviceClients } = await import("./authservice.js");
+    await purgeAuthserviceClients(pkg, [updatedClient], Mode.Ambient, Mode.Ambient);
+
+    // Assert
+    expect(getWaypointName).toHaveBeenCalledWith("test-client");
+    expect(cleanupWaypointLabels).toHaveBeenCalledWith("test-ns", "test-client-waypoint");
+    expect(pkg.status?.authserviceClients).toHaveLength(1);
+  });
+
+  it("should handle empty initial clients list", async () => {
+    // Arrange
+    const pkg = createMockPackage("test-pkg");
+    const newClient: AuthserviceClient = {
+      clientId: "new-client",
+      selector: { app: "test" },
+    };
+
+    // Act
+    const { purgeAuthserviceClients } = await import("./authservice.js");
+    await purgeAuthserviceClients(pkg, [newClient], Mode.Ambient, Mode.Ambient);
+
+    // Assert
+    const { cleanupWaypointLabels } = await import("../../istio/ambient-waypoint.js");
+    expect(cleanupWaypointLabels).not.toHaveBeenCalled();
+    expect(pkg.status?.authserviceClients).toHaveLength(0);
+  });
+});
+
+describe("authservice", () => {
+  const mockClient = {
+    clientId: "test-client",
+    clientSecret: "test-secret",
+    redirectUris: ["http://test.com/callback"],
+    webOrigins: ["http://test.com"],
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+
+    // Mock the updatePolicy function
+    vi.spyOn(authorizationPolicy, "updatePolicy").mockResolvedValue(undefined);
+
+    // Setup default mocks
+    mockGet.mockImplementation((opts: { name: string; namespace: string }) => {
+      if (opts.name === "authservice-secret") {
+        return Promise.resolve({
+          metadata: {
+            name: "authservice-secret",
+            namespace: "test-ns",
+          },
+          data: {
+            "config.json": Buffer.from(
+              JSON.stringify({
+                listen_address: "0.0.0.0",
+                default_oidc_config: {},
+                chains: [],
+                filters: [],
+              }),
+            ).toString("base64"),
+          },
+        });
+      }
+      return Promise.reject({ status: 404 });
+    });
+
+    mockUpdate.mockResolvedValue({});
+    mockApply.mockResolvedValue({});
+    mockList.mockResolvedValue({ items: [] });
+  });
+
+  it("should process a package with a single SSO configuration", async () => {
+    // Arrange
+    const pkg = {
+      metadata: {
+        name: "test-pkg",
+        namespace: "test-ns",
+      },
+      spec: {
+        sso: [
+          {
+            name: "test-sso",
+            clientId: "test-client",
+            enableAuthserviceSelector: { "app.kubernetes.io/name": "test-app" },
+          },
+        ],
+      },
+      status: {},
+    } as unknown as UDSPackage;
+
+    const clients = new Map();
+    clients.set("test-client", mockClient);
+
+    // Mock the required Kubernetes API responses
+    mockGet.mockResolvedValueOnce({
+      metadata: {
+        name: "authservice-secret",
+        namespace: "test-ns",
+      },
+      data: {
+        "config.json": Buffer.from(
+          JSON.stringify({
+            listen_address: "0.0.0.0",
+            default_oidc_config: {},
+            chains: [],
+            filters: [],
+          }),
+        ).toString("base64"),
+      },
+    });
+
+    // Act
+    const result = await authservice(pkg, clients);
+
+    // Assert
+    expect(result).toHaveLength(1);
+    expect(result[0]).toEqual({
+      clientId: "test-client",
+      selector: { "app.kubernetes.io/name": "test-app" },
+    });
+  });
+});
 
 describe("authservice", () => {
   let mockClient: Client;
@@ -48,11 +349,34 @@ describe("authservice", () => {
       webOrigins: [],
     };
 
-    await updateCfg({
-      spec: { expose: { domain: "uds.dev" }, policy: { allowAllNsExemptions: false } },
+    // Setup mock config values
+    vi.mocked(configModule.operatorConfig).secretName = "authservice-secret";
+    vi.mocked(configModule.operatorConfig).namespace = "test-ns";
+
+    // Mock the config functions with proper AuthserviceConfig
+    vi.mocked(configModule.getAuthserviceConfig).mockResolvedValue({
+      listen_address: "0.0.0.0",
+      listen_port: "8080",
+      log_level: "info",
+      threads: 4,
+      allow_unmatched_requests: true,
+      default_oidc_config: {
+        authorization_uri: "https://sso.uds.dev/realms/uds/protocol/openid-connect/auth",
+        token_uri: "https://sso.uds.dev/realms/uds/protocol/openid-connect/token",
+        callback_uri: "https://authservice.test-ns.svc.cluster.local/oauth2/callback",
+        client_id: "authservice",
+        client_secret: "test-secret",
+        scopes: ["openid", "profile", "email"],
+        logout: {
+          path: "/oauth2/sign_out",
+          redirect_uri: "https://authservice.test-ns.svc.cluster.local/oauth2/sign_out",
+        },
+      },
+      chains: [],
     });
-    await updateCfgSecrets({ data: { AUTHSERVICE_REDIS_URI: btoa("redis://localhost:6379") } });
-    initializeOperatorConfig();
+
+    // Initialize the operator config
+    await configModule.initializeOperatorConfig();
   });
 
   test("should update redis session store config to add value", async () => {
@@ -148,20 +472,22 @@ describe("authservice", () => {
       client: mockClient,
       name: "sso-client-test",
       action: Action.AddClient,
-    } as AuthServiceEvent);
+    } as unknown as AuthServiceEvent);
+
     expect(chain.name).toEqual("sso-client-test");
     expect(chain.match.prefix).toEqual("foo.uds.dev");
-    expect(chain.filters.length).toEqual(1);
+    expect(chain.filters).toHaveLength(1);
 
-    expect(chain.filters[0].oidc_override.authorization_uri).toEqual(
-      "https://sso.uds.dev/realms/uds/protocol/openid-connect/auth",
-    );
+    expect(chain.filters[0].oidc_override).toBeDefined();
 
-    expect(chain.filters[0].oidc_override.client_id).toEqual(mockClient.clientId);
-
-    expect(chain.filters[0].oidc_override.client_secret).toEqual(mockClient.secret);
-
-    expect(chain.filters[0].oidc_override.callback_uri).toEqual(mockClient.redirectUris[0]);
+    if (chain.filters[0].oidc_override) {
+      expect(chain.filters[0].oidc_override.authorization_uri).toEqual(
+        "https://sso.uds.dev/realms/uds/protocol/openid-connect/auth",
+      );
+      expect(chain.filters[0].oidc_override.client_id).toEqual(mockClient.clientId);
+      expect(chain.filters[0].oidc_override.client_secret).toEqual(mockClient.secret);
+      expect(chain.filters[0].oidc_override.callback_uri).toEqual(mockClient.redirectUris[0]);
+    }
   });
 
   test("should test authservice chain removal", async () => {
@@ -225,13 +551,13 @@ describe("authservice", () => {
       },
     };
     try {
-      await updatePolicy(
+      await authorizationPolicy.updatePolicy(
         { name: "auth-test", action: Action.AddClient },
         labelSelector,
         pkg,
         false,
       );
-      await updatePolicy(
+      await authorizationPolicy.updatePolicy(
         { name: "auth-test", action: Action.RemoveClient },
         labelSelector,
         pkg,

@@ -110,15 +110,6 @@ export async function purgeAuthserviceClients(
     oldClient => !newAuthserviceClients.some(c => c.clientId === oldClient.clientId),
   );
 
-  // Then handle updated clients (selector changes or mesh mode change)
-  const updatedWaypointClients = meshModeChanged
-    ? prevClients // All clients need update if mesh mode changed
-    : prevClients.filter(oldClient => {
-        const newClient = newAuthserviceClients.find(c => c.clientId === oldClient.clientId);
-        if (!newClient) return false; // Already handled by removedClients
-        return JSON.stringify(oldClient.selector) !== JSON.stringify(newClient.selector);
-      });
-
   // Process removed clients
   await Promise.all(
     removedClients.map(async client => {
@@ -139,29 +130,29 @@ export async function purgeAuthserviceClients(
     }),
   );
 
-  // Process updated clients (selector changes or mesh mode)
-  await Promise.all(
-    updatedWaypointClients.map(async client => {
-      const newClient = newAuthserviceClients.find(c => c.clientId === client.clientId);
-      if (!newClient) return;
-
-      log.info(`Updating authservice client ${client.clientId}`, {
-        reason: meshModeChanged ? "mesh_mode_change" : "selector_changed",
+  // Then handle updated clients (selector changes or mesh mode change)
+  const updatedWaypointClients = meshModeChanged
+    ? prevClients // All clients need update if mesh mode changed
+    : prevClients.filter(oldClient => {
+        const newClient = newAuthserviceClients.find(c => c.clientId === oldClient.clientId);
+        if (!newClient) return false; // Already handled by removedClients
+        return JSON.stringify(oldClient.selector) !== JSON.stringify(newClient.selector);
       });
 
-      // Update the configuration without removing the chain
-      await reconcileAuthservice(
-        {
-          name: client.clientId,
-          action: Action.AddClient,
-        },
-        newClient.selector,
-        currentMeshMode === Mode.Ambient,
-        pkg,
-        getWaypointName(client.clientId),
-      );
-    }),
-  );
+  // Process updated clients (selector changes or mesh mode)
+  for (const client of updatedWaypointClients) {
+    const newClient = newAuthserviceClients.find(c => c.clientId === client.clientId);
+    const fullWaypointName = getWaypointName(client.clientId);
+    if (!newClient) continue;
+
+    log.info(`Updating authservice client ${client.clientId}`, {
+      reason: meshModeChanged ? "mesh_mode_change" : "selector_changed",
+    });
+
+    if (pkg.metadata?.namespace) {
+      await cleanupWaypointLabels(pkg.metadata.namespace, fullWaypointName);
+    }
+  }
 }
 
 function isAddOrRemoveClientEvent(event: AuthServiceEvent): event is AddOrRemoveClientEvent {
