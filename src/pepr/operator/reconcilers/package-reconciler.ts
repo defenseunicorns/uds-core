@@ -4,8 +4,8 @@
  */
 
 import { getReadinessConditions, handleFailure, shouldSkip, updateStatus, writeEvent } from ".";
-import { UDSConfig } from "../../config";
 import { Component, setupLogger } from "../../logger";
+import { UDSConfig } from "../controllers/config/config";
 import { reconcileSharedEgressResources } from "../controllers/istio/egress";
 import { getPackageId, istioResources } from "../controllers/istio/istio-resources";
 import { cleanupNamespace, enableIstio } from "../controllers/istio/namespace";

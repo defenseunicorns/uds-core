@@ -5,9 +5,9 @@
 
 import { K8s, kind } from "pepr";
 
-import { UDSConfig } from "../../../config";
 import { Component, setupLogger } from "../../../logger";
 import { Allow, Direction, Gateway, RemoteGenerated, UDSPackage } from "../../crd";
+import { UDSConfig } from "../config/config";
 import { IstioState } from "../istio/namespace";
 import { getPodSelector, getWaypointName, shouldUseAmbientWaypoint } from "../istio/waypoint-utils";
 import { getOwnerRef, purgeOrphans, sanitizeResourceName } from "../utils";
@@ -296,14 +296,14 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
     } catch (err) {
       let message = err.data?.message || "Unknown error while applying network policies";
       if (
-        UDSConfig.kubeApiCidr &&
+        UDSConfig.kubeApiCIDR &&
         policy.metadata.labels["uds/generated"] === RemoteGenerated.KubeAPI
       ) {
         message +=
           ", ensure that the KUBEAPI_CIDR override configured for the operator is correct.";
       }
       if (
-        UDSConfig.kubeNodeCidrs &&
+        UDSConfig.kubeNodeCIDRs.length > 0 &&
         policy.metadata.labels["uds/generated"] === RemoteGenerated.KubeNodes
       ) {
         message +=

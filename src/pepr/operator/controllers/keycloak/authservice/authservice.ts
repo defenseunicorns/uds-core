@@ -4,11 +4,11 @@
  */
 
 import { R } from "pepr";
-import { UDSConfig } from "../../../../config";
+
 import { Component, setupLogger } from "../../../../logger";
-import { K8sGateway, UDSPackage } from "../../../crd";
+import { UDSPackage } from "../../../crd";
 import { AuthserviceClient, Mode } from "../../../crd/generated/package-v1alpha1";
-import { cleanupWaypointLabels, setupAmbientWaypoint } from "../../istio/ambient-waypoint";
+import { setupAmbientWaypoint } from "../../istio/ambient-waypoint";
 import { getWaypointName } from "../../istio/waypoint-utils";
 import { purgeOrphans } from "../../utils";
 import { Client } from "../types";
