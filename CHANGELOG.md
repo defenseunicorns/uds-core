@@ -2,6 +2,41 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.48.0](https://github.com/defenseunicorns/uds-core/compare/v0.47.0...v0.48.0) (2025-07-25)
+
+
+### ⚠ BREAKING CHANGES
+
+* 
+
+### Features
+
+* create ClusterConfig CRD ([#1233](https://github.com/defenseunicorns/uds-core/issues/1233)) ([6547cad](https://github.com/defenseunicorns/uds-core/commit/6547cad1efd71cddaacbc0ad7da3334c7a71f72a))
+
+
+### Bug Fixes
+
+* security scanning warnings ([#1764](https://github.com/defenseunicorns/uds-core/issues/1764)) ([48edfa0](https://github.com/defenseunicorns/uds-core/commit/48edfa090ce0a472ec592b8aee5a9e96ab49fddd))
+* upgrade tests uds-dev-stack ignore ([#1750](https://github.com/defenseunicorns/uds-core/issues/1750)) ([a0fd207](https://github.com/defenseunicorns/uds-core/commit/a0fd20726b2944f9fb681bffc62891217c72addd))
+
+
+### Miscellaneous
+
+* add openssf best practices badge ([#1762](https://github.com/defenseunicorns/uds-core/issues/1762)) ([0ba7012](https://github.com/defenseunicorns/uds-core/commit/0ba7012490fe7294e83b6bc41ed2eb51dc733f23))
+* **deps:** bump @eslint/plugin-kit from 0.3.2 to 0.3.3 ([#1741](https://github.com/defenseunicorns/uds-core/issues/1741)) ([37713a4](https://github.com/defenseunicorns/uds-core/commit/37713a4e1cefb7b0a398e53c9e6c54d4b209a295))
+* **deps:** bump form-data from 4.0.3 to 4.0.4 ([#1749](https://github.com/defenseunicorns/uds-core/issues/1749)) ([ea8ca0e](https://github.com/defenseunicorns/uds-core/commit/ea8ca0eec24c72b0b42eca3c03a3a66c70824ca3))
+* **deps:** update eslint to v9.32.0 ([#1760](https://github.com/defenseunicorns/uds-core/issues/1760)) ([f0a64ea](https://github.com/defenseunicorns/uds-core/commit/f0a64ea386c30d13d85d1644e31893541409b500))
+* **deps:** update neuvector to 5.4.5 ([#1717](https://github.com/defenseunicorns/uds-core/issues/1717)) ([81505b1](https://github.com/defenseunicorns/uds-core/commit/81505b189d7b12ae8318fa1f82b97bdbcec28607))
+* **deps:** update pepr to v0.52.1 ([#1751](https://github.com/defenseunicorns/uds-core/issues/1751)) ([6d9d8ac](https://github.com/defenseunicorns/uds-core/commit/6d9d8ac0435d6b0a54018bd60f27051810407ee4))
+* revert security context change on neuvector ([#1765](https://github.com/defenseunicorns/uds-core/issues/1765)) ([823a8ae](https://github.com/defenseunicorns/uds-core/commit/823a8aea8db86bbf4f61c12dbca1511ee41519e7))
+* switch single-layer tests to use airgapped k3d ([#1755](https://github.com/defenseunicorns/uds-core/issues/1755)) ([08334ed](https://github.com/defenseunicorns/uds-core/commit/08334eda27d31995e75ec040d27e8ee13e71b164))
+
+
+### Documentation
+
+* add RKE2 metrics config notes for control plane and CoreDNS ([#1759](https://github.com/defenseunicorns/uds-core/issues/1759)) ([eaaead4](https://github.com/defenseunicorns/uds-core/commit/eaaead4d8d5f8c97ea54f4cfcc1d66d6f9695a90))
+* update readme for accuracy ([#1758](https://github.com/defenseunicorns/uds-core/issues/1758)) ([e1b7daa](https://github.com/defenseunicorns/uds-core/commit/e1b7daa1058c6706191304993eb7ea3297631224))
+
 ## [0.47.0](https://github.com/defenseunicorns/uds-core/compare/v0.46.0...v0.47.0) (2025-07-22)
 
 
