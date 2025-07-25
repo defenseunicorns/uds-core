@@ -26,7 +26,7 @@ spec:
         {{- range $key, $value := .Values.podLabels }}
         {{- printf "%s: %s" $key (tpl $value $ | quote) | nindent 8 }}
         {{- end }}
-       {{- if not .Values.devMode }}
+      {{- if not .Values.devMode }}
       annotations:
         postgres-hash: {{ include (print $.Template.BasePath "/secret-postgresql.yaml") . | sha256sum }}
         kc-realm-hash: {{ include (print $.Template.BasePath "/secret-kc-realm.yaml") . | sha256sum }}
@@ -210,11 +210,12 @@ spec:
             # Postgres database configuration
             - name: KC_DB
               value: postgres
+            # PostgreSQL configuration
             - name: KC_DB_URL_HOST
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "keycloak.fullname" . }}-postgresql
-                  key: host
+                  name: {{ include "keycloak.postgresql.host.secretName" . }}
+                  key: {{ include "keycloak.postgresql.host.secretKey" . }}
             - name: KC_DB_URL_PORT
               valueFrom:
                 secretKeyRef:
@@ -228,13 +229,13 @@ spec:
             - name: KC_DB_USERNAME
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "keycloak.fullname" . }}-postgresql
-                  key: username
+                  name: {{ include "keycloak.postgresql.username.secretName" . }}
+                  key: {{ include "keycloak.postgresql.username.secretKey" . }}
             - name: KC_DB_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "keycloak.fullname" . }}-postgresql
-                  key: password
+                  name: {{ include "keycloak.postgresql.password.secretName" . }}
+                  key: {{ include "keycloak.postgresql.password.secretKey" . }}
           {{- end }}
           {{- if .Values.insecureAdminPasswordGeneration.enabled }}
             - name: KEYCLOAK_ADMIN

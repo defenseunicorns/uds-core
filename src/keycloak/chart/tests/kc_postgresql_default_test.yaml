@@ -1,0 +1,52 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+
+suite: Keycloak PostgreSQL - Using Default Chart Values
+templates:
+  - statefulset.yaml
+  - secret-postgresql.yaml
+  - uds-package.yaml
+tests:
+  - it: should not create a postgresql secret when using default values
+    template: secret-postgresql.yaml
+    asserts:
+      - notExists: {}
+
+  - it: should not render PostgreSQL Database access rule when using default values
+    template: uds-package.yaml
+    asserts:
+      - notContains:
+          path: spec.network.allow
+          any: true
+          content:
+            description: "PostgreSQL Database access"
+
+  - it: should not render Postgres env vars when using default values
+    template: statefulset.yaml
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: KC_DB
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: KC_DB_URL_HOST
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: KC_DB_URL_PORT
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: KC_DB_URL_DATABASE
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: KC_DB_USERNAME
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: KC_DB_PASSWORD
