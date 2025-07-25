@@ -2,7 +2,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 output "aws_region" {
-  value = data.aws_region.current.name
+  description = "AWS region in use"
+  value       = data.aws_region.current.id
 }
 
 output "loki_irsa_role_arn" {
