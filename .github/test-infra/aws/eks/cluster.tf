@@ -23,7 +23,7 @@ resource "aws_launch_template" "eks_node_group" {
 }
 
 # Create EKS Cluster
-module "eks" {
+module "eks_cluster" {
   source  = "terraform-aws-modules/eks/aws"
   version = "~> 21.0.0"
 

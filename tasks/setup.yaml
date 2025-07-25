@@ -9,8 +9,8 @@ tasks:
         description: "Extra args to pass to k3d"
     actions:
       - description: "Create the K3d cluster"
-        # renovate: datasource=github-tags depName=defenseunicorns/uds-k3d versioning=semver
-        cmd: "uds zarf package deploy oci://defenseunicorns/uds-k3d:v0.15.0 --confirm --set K3D_EXTRA_ARGS='${{ .inputs.K3D_EXTRA_ARGS }}' --no-progress"
+        # renovate: datasource=docker depName=ghcr.io/defenseunicorns/packages/uds-k3d versioning=docker
+        cmd: "uds zarf package deploy oci://defenseunicorns/uds-k3d:0.15.0-airgap --confirm --no-progress"
 
   - name: k3d-test-cluster
     actions:
