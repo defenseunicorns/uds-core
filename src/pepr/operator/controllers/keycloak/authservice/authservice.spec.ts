@@ -9,8 +9,8 @@ import { AuthserviceClient, Mode } from "../../../crd/generated/package-v1alpha1
 import { cleanupWaypointLabels } from "../../istio/ambient-waypoint";
 import { getWaypointName } from "../../istio/waypoint-utils";
 import { Client } from "../types";
-import * as authorizationPolicy from "./authorization-policy.js";
-import { authservice, buildChain, buildConfig } from "./authservice.js";
+import * as authorizationPolicy from "./authorization-policy";
+import { authservice, buildChain, buildConfig } from "./authservice";
 import * as configModule from "./config";
 import * as mockConfig from "./mock-authservice-config.json";
 import { Action, AuthserviceConfig, AuthServiceEvent } from "./types";

@@ -93,6 +93,18 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
 
   // Process custom policies
   for (const policy of customPolicies) {
+    // Only process ingress policies that have a selector
+    if (policy.direction === Direction.Ingress && policy.selector) {
+      // Find if this policy's selector matches an authservice-protected workload
+      const matchingClient = findMatchingClient(pkg, policy.selector);
+      const waypointName = matchingClient ? getWaypointName(matchingClient.clientId) : undefined;
+
+      // If we found a matching client with a waypoint, update the selector
+      if (waypointName) {
+        policy.selector = getPodSelector(pkg, policy.selector, waypointName);
+      }
+    }
+
     const generatedPolicy = generate(namespace, policy);
     policies.push(generatedPolicy);
   }
@@ -227,10 +239,19 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
   for (const monitor of monitorList) {
     const { selector, targetPort, podSelector } = monitor;
 
+    // Find if this service has a matching client with waypoint
+    const matchingClient = findMatchingClient(pkg, selector);
+    const waypointName = matchingClient ? getWaypointName(matchingClient.clientId) : undefined;
+
+    // Use waypoint selector only if we have a waypoint and the package is configured for ambient waypoint
+    const allowSelector = waypointName
+      ? getPodSelector(pkg, podSelector ?? selector, waypointName)
+      : (podSelector ?? selector);
+
     // Create the NetworkPolicy for the monitor
     const policy: Allow = {
       direction: Direction.Ingress,
-      selector: podSelector ?? selector,
+      selector: allowSelector,
       remoteNamespace: "monitoring",
       remoteSelector: {
         app: "prometheus",

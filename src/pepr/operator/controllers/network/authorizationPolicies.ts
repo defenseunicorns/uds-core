@@ -222,21 +222,50 @@ export async function generateAuthorizationPolicies(
   if (pkg.spec?.network?.allow) {
     for (const rule of pkg.spec.network.allow) {
       if (rule.direction === "Egress") continue;
+
+      const sso = findMatchingSsoClient(pkg, rule.selector);
       const { source, ports } = processAllowRule(rule, pkgNamespace);
-      const policyName = sanitizeResourceName(`protect-${pkgName}-${generateAllowName(rule)}`);
-      const additionalLabels: Record<string, string> | undefined = rule.remoteGenerated
-        ? { "uds/generated": rule.remoteGenerated }
-        : undefined;
-      const authPolicy = buildAuthPolicy(
-        policyName,
-        pkg,
-        rule.selector,
-        source,
-        ports,
-        additionalLabels,
-      );
-      policies.push(authPolicy);
-      log.trace(`Generated authpol: ${authPolicy.metadata?.name}`);
+
+      if (sso) {
+        // Waypoint service handling for allow rules
+        const waypointName = getWaypointName(sso.clientId);
+        const waypointSelector = { "istio.io/gateway-name": waypointName };
+
+        const policyName = sanitizeResourceName(
+          `protect-${pkgName}-allow-${generateAllowName(rule)}-${waypointName}`,
+        );
+
+        const additionalLabels: Record<string, string> | undefined = rule.remoteGenerated
+          ? { "uds/generated": rule.remoteGenerated, "uds/waypoint": waypointName }
+          : { "uds/waypoint": waypointName };
+
+        const authPolicy = buildAuthPolicy(
+          policyName,
+          pkg,
+          waypointSelector,
+          source,
+          ports,
+          additionalLabels,
+        );
+        policies.push(authPolicy);
+        log.trace(`Generated waypoint allow authpol: ${authPolicy.metadata?.name}`);
+      } else {
+        // Regular allow rule processing
+        const policyName = sanitizeResourceName(`protect-${pkgName}-${generateAllowName(rule)}`);
+        const additionalLabels: Record<string, string> | undefined = rule.remoteGenerated
+          ? { "uds/generated": rule.remoteGenerated }
+          : undefined;
+        const authPolicy = buildAuthPolicy(
+          policyName,
+          pkg,
+          rule.selector,
+          source,
+          ports,
+          additionalLabels,
+        );
+        policies.push(authPolicy);
+        log.trace(`Generated allow authpol: ${authPolicy.metadata?.name}`);
+      }
     }
   }
 
@@ -294,10 +323,33 @@ export async function generateAuthorizationPolicies(
       const selector = monitor.podSelector ?? monitor.selector;
       const source: Source = { principals: [PROMETHEUS_PRINCIPAL] };
       const ports: string[] = [monitor.targetPort.toString()];
-      const policyName = sanitizeResourceName(`protect-${pkgName}-${generateMonitorName(monitor)}`);
-      const authPolicy = buildAuthPolicy(policyName, pkg, selector, source, ports);
-      policies.push(authPolicy);
-      log.trace(`Generated monitor authpol: ${authPolicy.metadata?.name}`);
+
+      // Check if this monitor's selector matches an SSO client
+      const sso = findMatchingSsoClient(pkg, selector);
+
+      if (sso) {
+        // Waypoint service handling for monitor rules
+        const waypointName = getWaypointName(sso.clientId);
+        const waypointSelector = { "istio.io/gateway-name": waypointName };
+
+        const policyName = sanitizeResourceName(
+          `protect-${pkgName}-monitor-${generateMonitorName(monitor)}-${waypointName}`,
+        );
+
+        const authPolicy = buildAuthPolicy(policyName, pkg, waypointSelector, source, ports, {
+          "uds/waypoint": waypointName,
+        });
+        policies.push(authPolicy);
+        log.trace(`Generated waypoint monitor authpol: ${authPolicy.metadata?.name}`);
+      } else {
+        // Regular monitor rule processing
+        const policyName = sanitizeResourceName(
+          `protect-${pkgName}-${generateMonitorName(monitor)}`,
+        );
+        const authPolicy = buildAuthPolicy(policyName, pkg, selector, source, ports);
+        policies.push(authPolicy);
+        log.trace(`Generated monitor authpol: ${authPolicy.metadata?.name}`);
+      }
     }
   }
 
