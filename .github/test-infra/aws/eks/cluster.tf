@@ -1,7 +1,6 @@
 # Copyright 2025 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
-
 # Create a custom launch template with public IP association
 resource "aws_launch_template" "eks_node_group" {
   name_prefix = "${var.name}-lt-"
@@ -28,20 +27,65 @@ module "eks" {
   source  = "terraform-aws-modules/eks/aws"
   version = "~> 21.0.0"
 
-  cluster_name                    = var.name
-  cluster_version                 = var.kubernetes_version
-  cluster_endpoint_public_access  = true
-  cluster_endpoint_private_access = false
+  eks_cluster = {
+    name                   = var.name
+    version                = var.kubernetes_version
+    endpoint_public_access = true
+    endpoint_private_access = false
+    enabled_log_types      = []
+
+    cluster_addons = {
+      vpc-cni = {
+        most_recent = true
+        configuration_values = jsonencode({
+          enableNetworkPolicy = "true"
+        })
+      }
+      aws-ebs-csi-driver = {
+        most_recent = true
+      }
+      kube-proxy = {
+        most_recent = true
+      }
+      coredns = {
+        most_recent = true
+        configuration_values = jsonencode({
+          corefile = <<-EOT
+            .:53 {
+                errors
+                health {
+                    lameduck 5s
+                }
+                ready
+                kubernetes cluster.local cluster.local in-addr.arpa ip6.arpa {
+                    pods insecure
+                    fallthrough in-addr.arpa ip6.arpa
+                    ttl 30
+                }
+                prometheus 0.0.0.0:9153
+                forward . /etc/resolv.conf
+                cache 30
+                loop
+                reload
+                loadbalance
+                rewrite stop {
+                  name regex (.*\.admin\.uds\.dev) admin-ingressgateway.istio-admin-gateway.svc.cluster.local answer auto
+                }
+                rewrite stop {
+                  name regex (.*\.uds\.dev) tenant-ingressgateway.istio-tenant-gateway.svc.cluster.local answer auto
+                }
+            }
+          EOT
+        })
+      }
+    }
+  }
 
   vpc_id     = data.aws_vpc.vpc.id
   subnet_ids = local.subnet_ids
 
   # IAM
   iam_role_permissions_boundary = "arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:policy/${var.permissions_boundary_name}"
-
-  # Add CloudWatch logging
-  cluster_enabled_log_types              = []
-  cloudwatch_log_group_retention_in_days = 0
 
   # Authentication mode
   authentication_mode = "API_AND_CONFIG_MAP"
@@ -83,7 +127,7 @@ module "eks" {
       disk_size = var.node_disk_size
 
       # Let the module create the IAM role with permissions boundary
-      create_iam_role               = true
+      create_iam_role                = true
       iam_role_use_name_prefix      = false
       iam_role_name                 = "${substr(var.name, 0, 30)}-eks-node-role"
       iam_role_permissions_boundary = "arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:policy/${var.permissions_boundary_name}"
@@ -101,53 +145,6 @@ module "eks" {
 
       tags = merge(local.tags, {
         PermissionsBoundary = var.permissions_boundary_name
-      })
-    }
-  }
-
-  # EKS Addons
-  cluster_addons = {
-    vpc-cni = {
-      most_recent = true
-      configuration_values = jsonencode({
-        enableNetworkPolicy = "true"
-      })
-    }
-    aws-ebs-csi-driver = {
-      most_recent = true
-    }
-    kube-proxy = {
-      most_recent = true
-    }
-    coredns = {
-      most_recent = true
-      configuration_values = jsonencode({
-        corefile = <<-EOT
-          .:53 {
-              errors
-              health {
-                  lameduck 5s
-              }
-              ready
-              kubernetes cluster.local cluster.local in-addr.arpa ip6.arpa {
-                  pods insecure
-                  fallthrough in-addr.arpa ip6.arpa
-                  ttl 30
-              }
-              prometheus 0.0.0.0:9153
-              forward . /etc/resolv.conf
-              cache 30
-              loop
-              reload
-              loadbalance
-              rewrite stop {
-                name regex (.*\.admin\.uds\.dev) admin-ingressgateway.istio-admin-gateway.svc.cluster.local answer auto
-                }
-              rewrite stop {
-              name regex (.*\.uds\.dev) tenant-ingressgateway.istio-tenant-gateway.svc.cluster.local answer auto
-                }
-          }
-        EOT
       })
     }
   }
