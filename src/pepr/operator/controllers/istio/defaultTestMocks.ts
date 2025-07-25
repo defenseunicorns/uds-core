@@ -7,10 +7,12 @@ import { V1OwnerReference } from "@kubernetes/client-node";
 import { K8s, kind } from "pepr";
 import { Mock, MockedFunction, vi } from "vitest";
 import {
+  IstioAuthorizationPolicy,
   IstioGateway,
   IstioServiceEntry,
   IstioSidecar,
   IstioVirtualService,
+  IstioWaypoint,
   RemoteProtocol,
   UDSPackage,
 } from "../../crd";
@@ -67,15 +69,22 @@ type EgressMocks = {
   applyVsMock: MockedFunction<() => Promise<void>>;
   applySeMock: MockedFunction<() => Promise<void>>;
   applySidecarMock: MockedFunction<() => Promise<void>>;
+  applyApMock: MockedFunction<() => Promise<void>>;
+  applyWaypointMock: MockedFunction<() => Promise<void>>;
   getGwMock: MockedFunction<() => Promise<{ items: IstioGateway[] }>>;
   getVsMock: MockedFunction<() => Promise<{ items: IstioVirtualService[] }>>;
   getNsMock: MockedFunction<() => Promise<kind.Namespace>>;
   getServiceInNsMock: MockedFunction<() => K8sMockImpl>;
   getServiceMock: MockedFunction<() => Promise<kind.Service>>;
+  getServiceAccountInNsMock: MockedFunction<() => K8sMockImpl>;
+  getServiceAccountMock: MockedFunction<() => Promise<kind.ServiceAccount>>;
+  getWaypointMock: MockedFunction<() => Promise<IstioWaypoint>>;
   deleteGwMock: MockedFunction<() => Promise<void>>;
   deleteVsMock: MockedFunction<() => Promise<void>>;
   deleteSeMock: MockedFunction<() => Promise<void>>;
   deleteSidecarMock: MockedFunction<() => Promise<void>>;
+  deleteApMock: MockedFunction<() => Promise<void>>;
+  deleteWaypointMock: MockedFunction<() => Promise<void>>;
 };
 
 // Default mock implementation for K8s egress operations
@@ -84,6 +93,8 @@ export const defaultEgressMocks: EgressMocks = {
   applyVsMock: vi.fn<() => Promise<void>>().mockResolvedValue(),
   applySeMock: vi.fn<() => Promise<void>>().mockResolvedValue(),
   applySidecarMock: vi.fn<() => Promise<void>>().mockResolvedValue(),
+  applyApMock: vi.fn<() => Promise<void>>().mockResolvedValue(),
+  applyWaypointMock: vi.fn<() => Promise<void>>().mockResolvedValue(),
   getGwMock: vi.fn<() => Promise<{ items: IstioGateway[] }>>().mockResolvedValue({
     items: [],
   }),
@@ -106,10 +117,15 @@ export const defaultEgressMocks: EgressMocks = {
       ],
     },
   }),
+  getServiceAccountInNsMock: vi.fn<() => K8sMockImpl>().mockReturnThis(),
+  getServiceAccountMock: vi.fn<() => Promise<kind.ServiceAccount>>().mockResolvedValue({}),
+  getWaypointMock: vi.fn<() => Promise<IstioWaypoint>>().mockResolvedValue({}),
   deleteGwMock: vi.fn<() => Promise<void>>().mockResolvedValue(),
   deleteVsMock: vi.fn<() => Promise<void>>().mockResolvedValue(),
   deleteSeMock: vi.fn<() => Promise<void>>().mockResolvedValue(),
   deleteSidecarMock: vi.fn<() => Promise<void>>().mockResolvedValue(),
+  deleteApMock: vi.fn<() => Promise<void>>().mockResolvedValue(),
+  deleteWaypointMock: vi.fn<() => Promise<void>>().mockResolvedValue(),
 };
 
 export function updateEgressMocks(egressMocks: EgressMocks) {
@@ -149,6 +165,17 @@ export function updateEgressMocks(egressMocks: EgressMocks) {
       Apply: egressMocks.applySidecarMock,
       Delete: egressMocks.deleteSidecarMock,
     },
+    [IstioAuthorizationPolicy.name]: {
+      ...baseImplementation,
+      Apply: egressMocks.applyApMock,
+      Delete: egressMocks.deleteApMock,
+    },
+    [IstioWaypoint.name]: {
+      ...baseImplementation,
+      Get: egressMocks.getWaypointMock,
+      Apply: egressMocks.applyWaypointMock,
+      Delete: egressMocks.deleteWaypointMock,
+    },
     Namespace: {
       ...baseImplementation,
       Get: egressMocks.getNsMock,
@@ -157,6 +184,11 @@ export function updateEgressMocks(egressMocks: EgressMocks) {
       ...baseImplementation,
       InNamespace: egressMocks.getServiceInNsMock,
       Get: egressMocks.getServiceMock,
+    },
+    ServiceAccount: {
+      ...baseImplementation,
+      InNamespace: egressMocks.getServiceAccountInNsMock,
+      Get: egressMocks.getServiceAccountMock,
     },
   };
 
