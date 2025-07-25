@@ -41,6 +41,16 @@ enforcer:
   internal:
     certificate:
       secret: neuvector-internal-cert
+  securityContext:
+    privileged: false
+    seccompProfile:
+      type: Unconfined
+    capabilities:
+      add:
+        - SYS_ADMIN
+        - NET_ADMIN
+        - SYS_PTRACE
+        - IPC_LOCK
 
 cve:
   updater:

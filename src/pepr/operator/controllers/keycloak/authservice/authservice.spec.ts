@@ -5,16 +5,18 @@
 
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { UDSPackage } from "../../../crd";
+import { updateCfg, updateCfgSecrets } from "../../config/config";
 import { Client } from "../types";
 import { updatePolicy } from "./authorization-policy";
 import { buildChain, buildConfig } from "./authservice";
+import { initializeOperatorConfig } from "./config";
 import * as mockConfig from "./mock-authservice-config.json";
 import { Action, AuthServiceEvent, AuthserviceConfig } from "./types";
 
 describe("authservice", () => {
   let mockClient: Client;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
 
     mockClient = {
@@ -45,6 +47,12 @@ describe("authservice", () => {
       surrogateAuthRequired: false,
       webOrigins: [],
     };
+
+    await updateCfg({
+      spec: { expose: { domain: "uds.dev" }, policy: { allowAllNsExemptions: false } },
+    });
+    await updateCfgSecrets({ data: { AUTHSERVICE_REDIS_URI: btoa("redis://localhost:6379") } });
+    initializeOperatorConfig();
   });
 
   test("should update redis session store config to add value", async () => {
