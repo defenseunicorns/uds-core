@@ -3,10 +3,6 @@
 
 tasks:
   - name: create-k3d-cluster
-    inputs:
-      K3D_EXTRA_ARGS:
-        default: ""
-        description: "Extra args to pass to k3d"
     actions:
       - description: "Create the K3d cluster"
         # renovate: datasource=docker depName=ghcr.io/defenseunicorns/packages/uds-k3d versioning=docker
