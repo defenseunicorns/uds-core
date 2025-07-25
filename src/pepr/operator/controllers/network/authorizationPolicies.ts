@@ -12,6 +12,7 @@ import {
   Rule,
   Source,
 } from "../../crd/generated/istio/authorizationpolicy-v1beta1";
+import { Mode } from "../../crd/generated/package-v1alpha1";
 import { IstioState } from "../istio/namespace";
 import { getWaypointName, shouldUseAmbientWaypoint } from "../istio/waypoint-utils";
 import { getOwnerRef, purgeOrphans, sanitizeResourceName } from "../utils";
@@ -418,7 +419,7 @@ export function findMatchingSsoClient(
   pkg: UDSPackage,
   selector: Record<string, string> | undefined,
 ) {
-  if (!selector || pkg.spec?.network?.serviceMesh?.mode !== "ambient") {
+  if (!selector || pkg.spec?.network?.serviceMesh?.mode !== Mode.Ambient) {
     return undefined;
   }
 
