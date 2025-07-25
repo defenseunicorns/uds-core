@@ -10,6 +10,7 @@
  */
 import { Component, setupLogger } from "../../../logger";
 import { UDSPackage } from "../../crd";
+import { Mode } from "../../crd/generated/package-v1alpha1";
 const log = setupLogger(Component.OPERATOR_PACKAGES);
 
 // Map structure: namespace -> (package name -> package)
@@ -67,6 +68,14 @@ function add(pkg: UDSPackage, logger: boolean = true): void {
       // Store based on namespace since we only allow a single Package per namespace
       ssoIndex.get(clientId)!.add(namespace);
     });
+  }
+
+  // Add ambient waypoint labels if needed
+  if (pkg.metadata.annotations?.["istio.io/use-waypoint"]) {
+    pkg.metadata.labels = {
+      ...pkg.metadata.labels,
+      "istio.io/use-waypoint": "enabled",
+    };
   }
 
   if (logger) {
@@ -173,11 +182,42 @@ function findPackagesWithSsoClientId(clientId: string): Set<string> {
   return ssoIndex.get(clientId) ?? new Set<string>();
 }
 
+/**
+ * Finds all packages that have ambient waypoint enabled
+ * @returns Array of UDSPackage objects with ambient waypoint enabled
+ */
+function getAmbientPackages(): UDSPackage[] {
+  const result: UDSPackage[] = [];
+  for (const namespaceMap of packageNamespaceMap.values()) {
+    for (const pkg of namespaceMap.values()) {
+      if (pkg.spec?.network?.serviceMesh?.mode === Mode.Ambient) {
+        result.push(pkg);
+      }
+    }
+  }
+  return result;
+}
+
+/**
+ * Gets the package for a specific namespace
+ * @param namespace The namespace to get the package for
+ * @returns The UDSPackage for the namespace, or undefined if not found
+ */
+function getPackageByNamespace(namespace: string): UDSPackage | undefined {
+  const namespaceMap = packageNamespaceMap.get(namespace);
+  if (!namespaceMap || namespaceMap.size === 0) return undefined;
+
+  // Since we only allow one package per namespace, just return the first one
+  return Array.from(namespaceMap.values())[0];
+}
+
 export const PackageStore = {
   init,
   add,
+  remove,
   hasKey,
   getPkgName,
-  remove,
   findPackagesWithSsoClientId,
+  getAmbientPackages,
+  getPackageByNamespace,
 };

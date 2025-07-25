@@ -2,10 +2,10 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { beforeAll, describe, expect, test, vi } from "vitest";
 import { Exec, KubeConfig } from "@kubernetes/client-node";
 import { K8s, kind } from "pepr";
 import { Writable } from "stream";
+import { beforeAll, describe, expect, test, vi } from "vitest";
 
 // Set timeout for all tests
 vi.setConfig({ testTimeout: 30000 });
@@ -286,13 +286,13 @@ describe("Network Policy Validation", () => {
     const authservice_curl_header = [
       "sh",
       "-c",
-      `curl -s -o /dev/null -w "%{http_code}" -k -H "Authorization: foobar" http://httpbin.authservice-test-app.svc.cluster.local:8000`,
+      `curl -s -o /dev/null -w "%{http_code}" -k -H "Authorization: foobar" http://httpbin.authservice-sidecar-test-app.svc.cluster.local:8000`,
     ];
 
     const authservice_curl = [
       "sh",
       "-c",
-      `curl -s -o /dev/null -w "%{http_code}" http://httpbin.authservice-test-app.svc.cluster.local:8000`,
+      `curl -s -o /dev/null -w "%{http_code}" http://httpbin.authservice-sidecar-test-app.svc.cluster.local:8000`,
     ];
 
     // Validate that request is not success when using Ingress Gateway Bypass

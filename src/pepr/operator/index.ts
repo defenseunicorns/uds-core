@@ -27,9 +27,10 @@ import { ClusterConfig, UDSExemption, UDSPackage } from "./crd";
 import { validator } from "./crd/validators/package-validator";
 
 // Reconciler imports
-
 import { Component, setupLogger } from "../logger";
 import { UDSConfig, updateCfg, updateCfgSecrets } from "./controllers/config/config";
+import { reconcilePod, reconcileService } from "./controllers/istio/ambient-waypoint";
+import { restartGatewayPods } from "./controllers/istio/istio-configmap-sync";
 import {
   KEYCLOAK_CLIENTS_SECRET_NAME,
   KEYCLOAK_CLIENTS_SECRET_NAMESPACE,
@@ -38,7 +39,6 @@ import {
 import { validateCfgUpdate } from "./crd/validators/clusterconfig-validator";
 import { exemptValidator } from "./crd/validators/exempt-validator";
 import { packageFinalizer, packageReconciler } from "./reconcilers/package-reconciler";
-import { restartGatewayPods } from "./controllers/istio/istio-configmap-sync";
 
 // Export the operator capability for registration in the root pepr.ts
 export { operator } from "./common";
@@ -62,7 +62,17 @@ When(a.Service)
   .WithName("kubernetes")
   .Reconcile(updateAPIServerCIDRFromService);
 
-// Watch for changes to the UDSPackage CRD to enqueue a package for processing
+// Watch for Service mutations to apply ambient waypoint labels
+When(a.Service)
+  .IsCreatedOrUpdated()
+  .Mutate(req => reconcileService(req.Raw));
+
+// Watch for Pod mutations to apply ambient waypoint labels
+When(a.Pod)
+  .IsCreatedOrUpdated()
+  .Mutate(req => reconcilePod(req.Raw));
+
+// Watch for changes to the UDSPackage CRD for processing
 When(UDSPackage)
   .IsCreatedOrUpdated()
   // Advanced CR validation
