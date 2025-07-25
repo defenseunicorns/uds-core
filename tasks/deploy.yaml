@@ -87,7 +87,7 @@ tasks:
         cmd: |
           # Set UDS_CONFIG for bundle deployment
           export UDS_CONFIG="${{ .inputs.configFile }}"
-          uds deploy tmp/core-shim/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress
+          uds deploy tmp/core-shim/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --set INSECURE_ADMIN_PASSWORD_GENERATION=true --confirm --no-progress
       - description: "Clean up temporary files"
         cmd: rm -rf tmp/core-shim
 
