@@ -411,6 +411,9 @@ describe("Network Policy Validation", () => {
   });
 
   test.concurrent("Egress Ambient", async () => {
+    // Wait 30 seconds for waypoint to be ready (test)
+    await new Promise(resolve => setTimeout(resolve, 30000));
+
     const egress_ambient_http_curl = [
       "sh",
       "-c",
