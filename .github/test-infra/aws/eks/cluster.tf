@@ -27,12 +27,16 @@ module "eks" {
   source  = "terraform-aws-modules/eks/aws"
   version = "~> 21.0.0"
 
-  eks_cluster = {
-    name                   = var.name
-    version                = var.kubernetes_version
-    endpoint_public_access = true
-    endpoint_private_access = false
-    enabled_log_types      = []
+  eks = {
+    cluster_name                    = var.name
+    cluster_version                 = var.kubernetes_version
+    cluster_endpoint_public_access  = true
+    cluster_endpoint_private_access = false
+    cluster_enabled_log_types       = []
+
+    cluster_security_group = {
+      create = true
+    }
 
     cluster_addons = {
       vpc-cni = {
@@ -87,6 +91,10 @@ module "eks" {
   # IAM
   iam_role_permissions_boundary = "arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:policy/${var.permissions_boundary_name}"
 
+
+  # Add CloudWatch logging
+  cloudwatch_log_group_retention_in_days = 0
+
   # Authentication mode
   authentication_mode = "API_AND_CONFIG_MAP"
 
@@ -94,7 +102,6 @@ module "eks" {
   enable_cluster_creator_admin_permissions = true
 
   # Security groups
-  create_cluster_security_group                = true
   create_node_security_group                   = true
   node_security_group_enable_recommended_rules = true
   node_security_group_additional_rules = {
@@ -108,7 +115,6 @@ module "eks" {
     }
   }
 
-  enable_security_groups_for_pods = false
 
   # Add tags to all resources
   tags = local.tags
