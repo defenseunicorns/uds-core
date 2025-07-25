@@ -10,6 +10,7 @@ import { ExemptionStore } from "../operator/controllers/exemptions/exemption-sto
 import { processExemptions } from "../operator/controllers/exemptions/exemptions";
 import { watchCfg } from "../operator/controllers/utils";
 import { Matcher, Policy, UDSExemption } from "../operator/crd";
+import "./istio";
 import "./networking";
 import "./security";
 import "./storage";
