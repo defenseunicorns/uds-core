@@ -410,67 +410,71 @@ describe("Network Policy Validation", () => {
     expect(success_google_response.stdout).toBe("200");
   });
 
-  test.concurrent("Egress Ambient", async () => {
-    // Wait 30 seconds for waypoint to be ready (test)
-    await new Promise(resolve => setTimeout(resolve, 30000));
+  test.concurrent(
+    "Egress Ambient",
+    async () => {
+      // Wait 20 seconds for waypoint to be ready (test)
+      await new Promise(resolve => setTimeout(resolve, 20000));
 
-    const egress_ambient_http_curl = [
-      "sh",
-      "-c",
-      `curl -s -o /dev/null -w "%{http_code}" http://example.com`,
-    ];
+      const egress_ambient_http_curl = [
+        "sh",
+        "-c",
+        `curl -s -o /dev/null -w "%{http_code}" http://example.com`,
+      ];
 
-    const egress_ambient_tls_curl = [
-      "sh",
-      "-c",
-      `curl -s -o /dev/null -w "%{http_code}" https://example.com`,
-    ];
+      const egress_ambient_tls_curl = [
+        "sh",
+        "-c",
+        `curl -s -o /dev/null -w "%{http_code}" https://example.com`,
+      ];
 
-    // Validate successful tls request when using Egress for egress-ambient-1
-    const success_response_tls = await execInPod(
-      "egress-ambient-1",
-      curlPodNameEgressAmbient1,
-      "curl",
-      egress_ambient_tls_curl,
-    );
-    expect(isResponseError(success_response_tls)).toBe(false);
+      // Validate successful tls request when using Egress for egress-ambient-1
+      const success_response_tls = await execInPod(
+        "egress-ambient-1",
+        curlPodNameEgressAmbient1,
+        "curl",
+        egress_ambient_tls_curl,
+      );
+      expect(isResponseError(success_response_tls)).toBe(false);
 
-    // Validate denied http request when using Egress for egress-ambient-1
-    const denied_response_http = await execInPod(
-      "egress-ambient-1",
-      curlPodNameEgressAmbient1,
-      "curl",
-      egress_ambient_http_curl,
-    );
-    expect(isResponseError(denied_response_http)).toBe(true);
+      // Validate denied http request when using Egress for egress-ambient-1
+      const denied_response_http = await execInPod(
+        "egress-ambient-1",
+        curlPodNameEgressAmbient1,
+        "curl",
+        egress_ambient_http_curl,
+      );
+      expect(isResponseError(denied_response_http)).toBe(true);
 
-    // Validate denied request to Google when using Egress for egress-ambient-1
-    const denied_google_response_1 = await execInPod(
-      "egress-ambient-1",
-      curlPodNameEgressAmbient1,
-      "curl",
-      GOOGLE_CURL,
-    );
-    expect(isResponseError(denied_google_response_1)).toBe(true);
+      // Validate denied request to Google when using Egress for egress-ambient-1
+      const denied_google_response_1 = await execInPod(
+        "egress-ambient-1",
+        curlPodNameEgressAmbient1,
+        "curl",
+        GOOGLE_CURL,
+      );
+      expect(isResponseError(denied_google_response_1)).toBe(true);
 
-    // Validate allowed tls request to Google when using Egress with ServiceAccount in curl for curl-pkg-egress-ambient-2
-    const success_response_google_tls = await execInPod(
-      "egress-ambient-2",
-      curlPodNameEgressAmbient2,
-      "curl",
-      GOOGLE_CURL,
-    );
-    expect(isResponseError(success_response_google_tls)).toBe(false);
+      // Validate allowed tls request to Google when using Egress with ServiceAccount in curl for curl-pkg-egress-ambient-2
+      const success_response_google_tls = await execInPod(
+        "egress-ambient-2",
+        curlPodNameEgressAmbient2,
+        "curl",
+        GOOGLE_CURL,
+      );
+      expect(isResponseError(success_response_google_tls)).toBe(false);
 
-    // Validate denied tls request to Google when using Egress without ServiceAccount in another-curl for curl-pkg-egress-ambient-2
-    const denied_response_google_tls = await execInPod(
-      "egress-ambient-2",
-      curlPodNameEgressAmbient3,
-      "curl",
-      GOOGLE_CURL,
-    );
-    expect(isResponseError(denied_response_google_tls)).toBe(true);
-  });
+      // Validate denied tls request to Google when using Egress without ServiceAccount in another-curl for curl-pkg-egress-ambient-2
+      const denied_response_google_tls = await execInPod(
+        "egress-ambient-2",
+        curlPodNameEgressAmbient3,
+        "curl",
+        GOOGLE_CURL,
+      );
+      expect(isResponseError(denied_response_google_tls)).toBe(true);
+    },
+    45000,
+  );
 
   (runEgressTests ? test.concurrent : test.concurrent.skip)("Egress Gateway", async () => {
     const egress_gateway_http_curl = [
