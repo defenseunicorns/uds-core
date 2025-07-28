@@ -40,7 +40,7 @@ export function generateIngressServiceEntry(
   // Get the correct domain based on gateway
   const domain = gateway === Gateway.Admin ? UDSConfig.adminDomain : UDSConfig.domain;
 
-  // Append the domain to the host, unless this is the reserved root domain host (`.`)
+  // Add the host to the domain, unless this is the reserved root domain host (`.`)
   let fqdn = "";
   if (host === ".") {
     fqdn = domain;
