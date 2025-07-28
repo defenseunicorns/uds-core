@@ -193,28 +193,6 @@ describe("Package Store", () => {
       PackageStore.init();
     });
 
-    it("should add ambient waypoint label when annotation is present", () => {
-      const pkg = makeMockReq({
-        metadata: {
-          name: "test-pkg",
-          namespace: "test-ns",
-          annotations: {
-            "istio.io/use-waypoint": "true",
-          },
-          labels: {
-            existing: "label",
-          },
-        },
-      }).Raw;
-
-      PackageStore.add(pkg);
-
-      expect(pkg.metadata!.labels).toEqual({
-        existing: "label",
-        "istio.io/use-waypoint": "enabled",
-      });
-    });
-
     it("should not modify labels when ambient waypoint annotation is missing", () => {
       const pkg = makeMockReq({
         metadata: {

@@ -61,7 +61,7 @@ If you need different authentication rules for different services, you can defin
 sso:
   - name: "Admin Services"
     clientId: admin-auth
-    redirectUris: ["https://admin.example.com/login"]
+    redirectUris: ["https://admin-app.example.com/login"]
     enableAuthserviceSelector:
       app: admin
     groups:

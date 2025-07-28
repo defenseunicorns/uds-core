@@ -91,7 +91,6 @@ export async function createWaypointGateway(pkg: UDSPackage, waypointName: strin
     });
 
     try {
-      // Use Create instead of Apply to get more specific error messages
       await K8s(K8sGateway).Apply(gateway);
       log.info("Successfully created waypoint gateway", { namespace, waypointName });
       return waypointName;
