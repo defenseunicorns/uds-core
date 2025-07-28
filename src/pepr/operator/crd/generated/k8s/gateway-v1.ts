@@ -29,6 +29,7 @@ export class K8sGateway extends GenericKind {
    */
   declare kind?: string;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   declare metadata?: { [key: string]: any };
   /**
    * Spec defines the desired state of Gateway.
