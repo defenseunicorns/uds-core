@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2025 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -35,6 +35,7 @@ export class PodMonitor extends GenericKind {
    * https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
    */
   declare kind?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   declare metadata?: { [key: string]: any };
   /**
    * Specification of desired Pod selection for target discovery by Prometheus.
@@ -60,6 +61,12 @@ export interface Spec {
    * It requires Prometheus >= v2.28.0.
    */
   bodySizeLimit?: string;
+  /**
+   * Whether to convert all scraped classic histograms into a native histogram with custom
+   * buckets.
+   * It requires Prometheus >= v3.0.0.
+   */
+  convertClassicHistogramsToNHCB?: boolean;
   /**
    * The protocol to use if a scrape returns blank, unparseable, or otherwise invalid
    * Content-Type.
@@ -301,6 +308,14 @@ export interface PodMetricsEndpoint {
    */
   metricRelabelings?: MetricRelabeling[];
   /**
+   * `noProxy` is a comma-separated string that can contain IPs, CIDR notation, domain names
+   * that should be excluded from proxying. IP and domain names can
+   * contain port numbers.
+   *
+   * It requires Prometheus >= v2.43.0, Alertmanager >= v0.25.0 or Thanos >= v0.32.0.
+   */
+  noProxy?: string;
+  /**
    * `oauth2` configures the OAuth2 settings to use when scraping the target.
    *
    * It requires Prometheus >= 2.27.0.
@@ -329,8 +344,21 @@ export interface PodMetricsEndpoint {
    */
   portNumber?: number;
   /**
-   * `proxyURL` configures the HTTP Proxy URL (e.g.
-   * "http://proxyserver:2195") to go through when scraping the target.
+   * ProxyConnectHeader optionally specifies headers to send to
+   * proxies during CONNECT requests.
+   *
+   * It requires Prometheus >= v2.43.0, Alertmanager >= v0.25.0 or Thanos >= v0.32.0.
+   */
+  proxyConnectHeader?: { [key: string]: PodMetricsEndpointProxyConnectHeader[] };
+  /**
+   * Whether to use the proxy configuration defined by environment variables (HTTP_PROXY,
+   * HTTPS_PROXY, and NO_PROXY).
+   *
+   * It requires Prometheus >= v2.43.0, Alertmanager >= v0.25.0 or Thanos >= v0.32.0.
+   */
+  proxyFromEnvironment?: boolean;
+  /**
+   * `proxyURL` defines the HTTP proxy server to use.
    */
   proxyUrl?: string;
   /**
@@ -359,6 +387,8 @@ export interface PodMetricsEndpoint {
    *
    * If empty, Prometheus uses the global scrape timeout unless it is less
    * than the target's scrape interval value in which the latter is used.
+   * The value cannot be greater than the scrape interval otherwise the operator will reject
+   * the resource.
    */
   scrapeTimeout?: string;
   /**
@@ -634,21 +664,21 @@ export interface Oauth2 {
    * that should be excluded from proxying. IP and domain names can
    * contain port numbers.
    *
-   * It requires Prometheus >= v2.43.0 or Alertmanager >= 0.25.0.
+   * It requires Prometheus >= v2.43.0, Alertmanager >= v0.25.0 or Thanos >= v0.32.0.
    */
   noProxy?: string;
   /**
    * ProxyConnectHeader optionally specifies headers to send to
    * proxies during CONNECT requests.
    *
-   * It requires Prometheus >= v2.43.0 or Alertmanager >= 0.25.0.
+   * It requires Prometheus >= v2.43.0, Alertmanager >= v0.25.0 or Thanos >= v0.32.0.
    */
-  proxyConnectHeader?: { [key: string]: ProxyConnectHeader[] };
+  proxyConnectHeader?: { [key: string]: Oauth2ProxyConnectHeader[] };
   /**
    * Whether to use the proxy configuration defined by environment variables (HTTP_PROXY,
    * HTTPS_PROXY, and NO_PROXY).
    *
-   * It requires Prometheus >= v2.43.0 or Alertmanager >= 0.25.0.
+   * It requires Prometheus >= v2.43.0, Alertmanager >= v0.25.0 or Thanos >= v0.32.0.
    */
   proxyFromEnvironment?: boolean;
   /**
@@ -755,7 +785,7 @@ export interface ClientSecret {
 /**
  * SecretKeySelector selects a key of a Secret.
  */
-export interface ProxyConnectHeader {
+export interface Oauth2ProxyConnectHeader {
   /**
    * The key of the secret to select from.  Must be a valid secret key.
    */
@@ -798,13 +828,13 @@ export interface Oauth2TLSConfig {
   /**
    * Maximum acceptable TLS version.
    *
-   * It requires Prometheus >= v2.41.0.
+   * It requires Prometheus >= v2.41.0 or Thanos >= v0.31.0.
    */
   maxVersion?: Version;
   /**
    * Minimum acceptable TLS version.
    *
-   * It requires Prometheus >= v2.35.0.
+   * It requires Prometheus >= v2.35.0 or Thanos >= v0.28.0.
    */
   minVersion?: Version;
   /**
@@ -954,17 +984,39 @@ export interface PurpleKeySecret {
 /**
  * Maximum acceptable TLS version.
  *
- * It requires Prometheus >= v2.41.0.
+ * It requires Prometheus >= v2.41.0 or Thanos >= v0.31.0.
  *
  * Minimum acceptable TLS version.
  *
- * It requires Prometheus >= v2.35.0.
+ * It requires Prometheus >= v2.35.0 or Thanos >= v0.28.0.
  */
 export enum Version {
   Tls10 = "TLS10",
   Tls11 = "TLS11",
   Tls12 = "TLS12",
   Tls13 = "TLS13",
+}
+
+/**
+ * SecretKeySelector selects a key of a Secret.
+ */
+export interface PodMetricsEndpointProxyConnectHeader {
+  /**
+   * The key of the secret to select from.  Must be a valid secret key.
+   */
+  key: string;
+  /**
+   * Name of the referent.
+   * This field is effectively required, but due to backwards compatibility is
+   * allowed to be empty. Instances of this type with an empty value here are
+   * almost certainly wrong.
+   * More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+   */
+  name?: string;
+  /**
+   * Specify whether the Secret or its key must be defined
+   */
+  optional?: boolean;
 }
 
 /**
@@ -1058,13 +1110,13 @@ export interface PodMetricsEndpointTLSConfig {
   /**
    * Maximum acceptable TLS version.
    *
-   * It requires Prometheus >= v2.41.0.
+   * It requires Prometheus >= v2.41.0 or Thanos >= v0.31.0.
    */
   maxVersion?: Version;
   /**
    * Minimum acceptable TLS version.
    *
-   * It requires Prometheus >= v2.35.0.
+   * It requires Prometheus >= v2.35.0 or Thanos >= v0.28.0.
    */
   minVersion?: Version;
   /**
