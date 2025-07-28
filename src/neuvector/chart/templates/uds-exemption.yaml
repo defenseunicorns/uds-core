@@ -13,6 +13,7 @@ spec:
         - DisallowPrivileged
         - RequireNonRootUser
         - DropAllCapabilities
+        - RestrictSeccomp
         - RestrictHostPathWrite
         - RestrictVolumeTypes
       matcher:

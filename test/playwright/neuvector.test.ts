@@ -13,8 +13,10 @@ test.use({ baseURL: url });
 
 test("validate system health", async ({ page }) => {
   await test.step("check sso", async () => {
-    await page.goto("/#/login");
+    const eulaPromise = page.waitForResponse(`${url}/eula`);
+    await page.goto("/");
     await page.waitForLoadState("domcontentloaded");
+    await eulaPromise;
 
     await expect(page.getByRole("button", { name: "Login with OpenID" })).toBeVisible();
     const termsCheckbox = await page.locator(".mat-checkbox-inner-container");
@@ -89,8 +91,16 @@ test("validate system health", async ({ page }) => {
 
 test("validate local login is blocked", async ({ page }) => {
   await test.step("check local login", async () => {
-    await page.goto("/#/login");
-    await page.locator(".mat-checkbox-inner-container").click();
+    const eulaPromise = page.waitForResponse(`${url}/eula`);
+    await page.goto("/");
+    await page.waitForLoadState("domcontentloaded");
+    await eulaPromise;
+
+    const termsCheckbox = await page.locator(".mat-checkbox-inner-container");
+    if (await termsCheckbox.isVisible()) {
+      await termsCheckbox.click();
+    }
+
     await page.locator("#Email1").fill("admin");
     await page.locator("#password1").fill("admin");
     await page.getByRole("button", { name: "Login", exact: true }).click();

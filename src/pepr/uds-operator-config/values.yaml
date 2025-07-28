@@ -2,18 +2,23 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 operator:
-  # Domain configuration (admin defaults to `admin.UDS_DOMAIN`)
-  UDS_DOMAIN: "###ZARF_VAR_DOMAIN###"
-  UDS_ADMIN_DOMAIN: "###ZARF_VAR_ADMIN_DOMAIN###"
-  UDS_CA_CERT: "###ZARF_VAR_CA_CERT###"
-  UDS_ALLOW_ALL_NS_EXEMPTIONS: "###ZARF_VAR_ALLOW_ALL_NS_EXEMPTIONS###"
-  UDS_LOG_LEVEL: "###ZARF_VAR_UDS_LOG_LEVEL###"
-  AUTHSERVICE_REDIS_URI: "###ZARF_VAR_AUTHSERVICE_REDIS_URI###"
+  ### DEPRECATED: This section is deprecated and will be removed in a future release. ###
   KUBEAPI_CIDR: ""
   KUBENODE_CIDRS: ""
-  # Allow Pepr watch to be configurable to react to dropped connections faster
-  PEPR_LAST_SEEN_LIMIT_SECONDS: "300"
-  # Allow Pepr to re-list resources more frequently to avoid missing resources
-  PEPR_RELIST_INTERVAL_SECONDS: "600"
-  # Configure Pepr reconcile strategy to have separate queues for faster reconciliation
-  PEPR_RECONCILE_STRATEGY: "kindNsName"
+  ### END DEPRECATED ###
+  AUTHSERVICE_REDIS_URI: "###ZARF_VAR_AUTHSERVICE_REDIS_URI###"
+
+cluster:
+  attributes:
+    clusterName: ""
+    clusterTags: []
+  expose:
+    # Domain configuration (admin defaults to `admin.UDS_DOMAIN`)
+    domain: "###ZARF_VAR_DOMAIN###"
+    adminDomain: "###ZARF_VAR_ADMIN_DOMAIN###"
+    caCert: "###ZARF_VAR_CA_CERT###"
+  policy:
+    allowAllNsExemptions: "###ZARF_VAR_ALLOW_ALL_NS_EXEMPTIONS###"
+  networking:
+    kubeApiCIDR: ""
+    kubeNodeCIDRs: []

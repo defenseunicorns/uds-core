@@ -4,7 +4,7 @@
  */
 
 import { V1OwnerReference } from "@kubernetes/client-node";
-import { UDSConfig } from "../../../config";
+
 import {
   Expose,
   Gateway,
@@ -14,10 +14,11 @@ import {
   IstioResolution,
   IstioServiceEntry,
 } from "../../crd";
-import { istioEgressGatewayNamespace, getSharedAnnotationKey } from "./istio-resources";
+import { UDSConfig } from "../config/config";
 import { sanitizeResourceName } from "../utils";
-import { HostResource, EgressResource, PortProtocol } from "./types";
 import { sharedEgressPkgId } from "./egress";
+import { getSharedAnnotationKey, istioEgressGatewayNamespace } from "./istio-resources";
+import { EgressResource, HostResource, PortProtocol } from "./types";
 
 /**
  * Creates a ServiceEntry for each exposed service in the package
