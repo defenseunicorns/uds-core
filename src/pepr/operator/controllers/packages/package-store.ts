@@ -70,14 +70,6 @@ function add(pkg: UDSPackage, logger: boolean = true): void {
     });
   }
 
-  // Add ambient waypoint labels if needed
-  // if (pkg.metadata.annotations?.["istio.io/use-waypoint"]) {
-  //   pkg.metadata.labels = {
-  //     ...pkg.metadata.labels,
-  //     "istio.io/use-waypoint": "enabled",
-  //   };
-  // }
-
   if (logger) {
     if (isUpdate) {
       log.debug(`Updating PackageStore for package ${name} in namespace ${namespace}.`);
