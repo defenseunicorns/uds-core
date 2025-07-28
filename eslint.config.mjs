@@ -52,11 +52,4 @@ export default defineConfig([
       "@typescript-eslint/no-floating-promises": ["error"],
     },
   },
-  {
-    files: ["src/pepr/operator/crd/generated/**/*.ts", "src/pepr/operator/crd/generated/*.ts"],
-
-    rules: {
-      "@typescript-eslint/no-explicit-any": "off",
-    },
-  },
 ]);
