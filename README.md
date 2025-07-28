@@ -3,10 +3,11 @@
 [![Latest Release](https://img.shields.io/github/v/release/defenseunicorns/uds-core)](https://github.com/defenseunicorns/uds-core/releases)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/defenseunicorns/uds-core/tag-and-release.yaml)](https://github.com/defenseunicorns/uds-core/tag-and-release.yaml)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/defenseunicorns/uds-core/badge)](https://api.securityscorecards.dev/projects/github.com/defenseunicorns/uds-core)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/10959/badge)](https://www.bestpractices.dev/projects/10959)
 
 ## [UDS Core Overview](https://uds.defenseunicorns.com/reference/uds-core/overview/)
 
-UDS Core establishes a secure baseline for cloud-native systems and ships with compliance documentation and first-class support for airgap/egress-limited systems. Based on the work of [Platform One](https://p1.dso.mil), UDS Core expands on the security posture of [Big Bang](https://repo1.dso.mil/big-bang/bigbang) while providing advanced automation with the [UDS Operator](./src/pepr/operator/README.md) and [UDS Policy Engine](./src/pepr/policies/README.md). UDS Core is a collection of several individual applications combined into a single [Zarf](https://zarf.dev) package and we recommend using [UDS CLI](https://github.com/defenseunicorns/uds-cli?tab=readme-ov-file#install) to deploy it as a [UDS Bundle](#using-uds-core-in-production).
+UDS Core establishes a secure baseline for cloud-native systems and ships with compliance documentation and first-class support for airgap/egress-limited systems. UDS Core provides advanced automation with the [UDS Operator](./src/pepr/operator/README.md) and [UDS Policy Engine](./src/pepr/policies/README.md). UDS Core is a collection of several individual applications combined into a single [Zarf](https://zarf.dev) package and we recommend using [UDS CLI](https://github.com/defenseunicorns/uds-cli?tab=readme-ov-file#install) to deploy it as a [UDS Bundle](#using-uds-core-in-production).
 
 #### tl;dr - [try it now](#quickstart)
 
