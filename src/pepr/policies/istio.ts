@@ -47,10 +47,7 @@ When(a.Pod)
     if (violations.length > 0) {
       // TODO: Remove this line to enforce the block
       return request.Approve([
-        [
-          "The following istio annotations can modify secure sidecar configuration and should be removed/exempted: ",
-          violations.join(", "),
-        ].join(""),
+        `The following istio annotations can modify secure sidecar configuration and should be removed/exempted: ${violations.join(", ")}`,
       ]);
       // TODO: Uncomment this line to block the request
       // return request.Deny(
@@ -153,10 +150,7 @@ When(a.Pod)
     if (violations.length > 0) {
       // TODO: Remove this line to enforce the block
       return request.Approve([
-        [
-          "The following istio annotations or labels can modify secure traffic interception and should be removed/exempted: ",
-          violations.join(", "),
-        ].join(""),
+        `The following istio annotations or labels can modify secure traffic interception and should be removed/exempted: ${violations.join(", ")}`,
       ]);
       // TODO: Uncomment this line to block the request
       // return request.Deny(
@@ -193,10 +187,7 @@ When(a.Pod)
     if (violations.length > 0) {
       // TODO: Remove this line to enforce the block
       return request.Approve([
-        [
-          "The following istio ambient annotations can modify secure mesh behavior and should be removed/exempted: ",
-          violations.join(", "),
-        ].join(""),
+        `The following istio ambient annotations can modify secure mesh behavior and should be removed/exempted: ${violations.join(", ")}`,
       ]);
       // TODO: Uncomment this line to block the request
       // return request.Deny(
