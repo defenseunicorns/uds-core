@@ -51,6 +51,6 @@ components:
         valuesFiles:
           - ./values/unicorn-values.yaml
     images:
-      - quay.io/rfcurated/grafana/loki:3.5.1-jammy-fips-rfcurated-rfhardened
-      - quay.io/rfcurated/nginx:1.27.5-slim-jammy-fips-rfcurated-rfhardened
+      - quay.io/rfcurated/grafana/loki:3.5.3-jammy-fips-rfcurated-rfhardened
+      - quay.io/rfcurated/nginx:1.29.0-slim-jammy-fips-rfcurated-rfhardened
       - quay.io/rfcurated/memcached:1.6.38-jammy-fips-rfcurated-rfhardened
