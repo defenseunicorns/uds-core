@@ -12,7 +12,7 @@ import {
   IstioServiceEntry,
   IstioSidecar,
   IstioVirtualService,
-  IstioWaypoint,
+  K8sGateway,
   RemoteProtocol,
   UDSPackage,
 } from "../../crd";
@@ -78,7 +78,7 @@ type EgressMocks = {
   getServiceMock: MockedFunction<() => Promise<kind.Service>>;
   getServiceAccountInNsMock: MockedFunction<() => K8sMockImpl>;
   getServiceAccountMock: MockedFunction<() => Promise<kind.ServiceAccount>>;
-  getWaypointMock: MockedFunction<() => Promise<IstioWaypoint>>;
+  getWaypointMock: MockedFunction<() => Promise<K8sGateway>>;
   deleteGwMock: MockedFunction<() => Promise<void>>;
   deleteVsMock: MockedFunction<() => Promise<void>>;
   deleteSeMock: MockedFunction<() => Promise<void>>;
@@ -119,7 +119,7 @@ export const defaultEgressMocks: EgressMocks = {
   }),
   getServiceAccountInNsMock: vi.fn<() => K8sMockImpl>().mockReturnThis(),
   getServiceAccountMock: vi.fn<() => Promise<kind.ServiceAccount>>().mockResolvedValue({}),
-  getWaypointMock: vi.fn<() => Promise<IstioWaypoint>>().mockResolvedValue({}),
+  getWaypointMock: vi.fn<() => Promise<K8sGateway>>().mockResolvedValue({}),
   deleteGwMock: vi.fn<() => Promise<void>>().mockResolvedValue(),
   deleteVsMock: vi.fn<() => Promise<void>>().mockResolvedValue(),
   deleteSeMock: vi.fn<() => Promise<void>>().mockResolvedValue(),
@@ -170,7 +170,7 @@ export function updateEgressMocks(egressMocks: EgressMocks) {
       Apply: egressMocks.applyApMock,
       Delete: egressMocks.deleteApMock,
     },
-    [IstioWaypoint.name]: {
+    [K8sGateway.name]: {
       ...baseImplementation,
       Get: egressMocks.getWaypointMock,
       Apply: egressMocks.applyWaypointMock,

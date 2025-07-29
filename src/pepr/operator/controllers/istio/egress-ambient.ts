@@ -4,7 +4,7 @@
  */
 import { V1OwnerReference } from "@kubernetes/client-node";
 import { K8s } from "pepr";
-import { Allow, IstioAuthorizationPolicy, IstioServiceEntry, IstioWaypoint } from "../../crd";
+import { Allow, IstioAuthorizationPolicy, IstioServiceEntry, K8sGateway } from "../../crd";
 import { purgeOrphans } from "../utils";
 import { generateAuthorizationPolicy } from "./auth-policy";
 import { getHostPortsProtocol } from "./egress";
@@ -30,13 +30,13 @@ export async function applyAmbientEgressResources(packageList: Set<string>, gene
   log.debug(waypoint, `Applying Waypoint ${waypoint.metadata?.name}`);
 
   // Apply the Waypoint and force overwrite any existing resource
-  await K8s(IstioWaypoint).Apply(waypoint, { force: true });
+  await K8s(K8sGateway).Apply(waypoint, { force: true });
 }
 
 // Purge any orphaned ambient egress resources
 export async function purgeAmbientEgressResources(generation: string) {
   try {
-    await purgeOrphans(generation, ambientEgressNamespace, sharedEgressPkgId, IstioWaypoint, log);
+    await purgeOrphans(generation, ambientEgressNamespace, sharedEgressPkgId, K8sGateway, log);
   } catch (e) {
     const errText = `Failed to purge orphaned ambient egress resources`;
     log.error(`Failed to purge orphaned ambient egress resources`, e);
