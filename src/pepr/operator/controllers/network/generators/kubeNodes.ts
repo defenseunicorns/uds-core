@@ -18,6 +18,9 @@ const log = setupLogger(Component.OPERATOR_GENERATORS);
 // Maintain a set of all node internal IPs
 const nodeSet = new Set<string>();
 
+// Maintain a map of node names to their internal IPs
+const nodeNameToIPMap = new Map<string, string>();
+
 // Track whether AuthorizationPolicies are available yet (Pepr installs before Istio)
 let authorizationPolicyExists = false;
 
@@ -43,7 +46,14 @@ export async function initAllNodesTarget() {
 
       for (const node of nodes.items) {
         const ip = getNodeInternalIP(node);
-        if (ip) nodeSet.add(ip);
+        const nodeName = node.metadata?.name;
+
+        if (ip) {
+          nodeSet.add(ip);
+        }
+        if (nodeName && ip) {
+          nodeNameToIPMap.set(nodeName, ip);
+        }
       }
       await updateKubeNodesNetworkPolicies();
       await updateKubeNodesAuthorizationPolicies();
@@ -71,7 +81,19 @@ export function kubeNodes(): V1NetworkPolicyPeer[] {
  */
 export async function updateKubeNodesFromCreateUpdate(node: kind.Node) {
   const ip = getNodeInternalIP(node);
+  const nodeName = node.metadata?.name;
   if (ip) nodeSet.add(ip);
+
+  // Account for a node being updated with a new IP
+  if (nodeName && ip) {
+    const oldIP = nodeNameToIPMap.get(nodeName);
+    // If the IP changed, remove the old IP from the set and map
+    if (oldIP && oldIP !== ip) {
+      nodeNameToIPMap.set(nodeName, ip);
+      nodeSet.delete(oldIP);
+      log.debug(`Node ${nodeName} updated with new IP: ${ip}`);
+    }
+  }
 
   await updateKubeNodesNetworkPolicies();
   await updateKubeNodesAuthorizationPolicies();
@@ -83,7 +105,12 @@ export async function updateKubeNodesFromCreateUpdate(node: kind.Node) {
  */
 export async function updateKubeNodesFromDelete(node: kind.Node) {
   const ip = getNodeInternalIP(node);
+  const nodeName = node.metadata?.name;
   if (ip) nodeSet.delete(ip);
+  if (nodeName) {
+    nodeNameToIPMap.delete(nodeName);
+    log.debug(`Node ${nodeName} deleted, removed IP: ${ip}`);
+  }
 
   await updateKubeNodesNetworkPolicies();
   await updateKubeNodesAuthorizationPolicies();

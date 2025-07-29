@@ -285,7 +285,7 @@ describe("kubeNodes module", () => {
       );
 
       const notReadyNode = {
-        metadata: { name: "node2" },
+        metadata: { name: "node1" },
         status: {
           addresses: [{ type: "InternalIP", address: "10.0.0.1" }],
           conditions: [{ type: "Ready", status: "False" }],
@@ -332,6 +332,40 @@ describe("kubeNodes module", () => {
 
       // the apply should not have been called
       expect(mockApply).not.toHaveBeenCalled();
+    });
+
+    it("should remove the old node IP if the node is updated with a new IP", async () => {
+      const oneNodeList = {
+        items: [
+          {
+            metadata: { name: "node1" },
+            status: {
+              addresses: [{ type: "InternalIP", address: "10.0.0.1" }],
+              conditions: [{ type: "Ready", status: "True" }],
+            },
+          },
+        ],
+      };
+
+      mockK8sGetNodes.mockResolvedValueOnce(oneNodeList);
+      await initAllNodesTarget();
+      const cidrsBeforeUpdate = kubeNodes();
+      expect(cidrsBeforeUpdate).toHaveLength(1);
+      expect(cidrsBeforeUpdate[0].ipBlock?.cidr).toBe("10.0.0.1/32");
+
+      // Update the node with a new IP
+      const updatedNode = {
+        metadata: { name: "node1" },
+        status: {
+          addresses: [{ type: "InternalIP", address: "10.0.0.2/32" }],
+          conditions: [{ type: "Ready", status: "True" }],
+        },
+      };
+
+      await updateKubeNodesFromCreateUpdate(updatedNode);
+      const cidrsAfterUpdate = kubeNodes();
+      expect(cidrsAfterUpdate).toHaveLength(1);
+      expect(cidrsAfterUpdate[0].ipBlock?.cidr).toBe("10.0.0.2/32");
     });
   });
 
