@@ -72,9 +72,6 @@ export async function packageReconciler(pkg: UDSPackage) {
   // Migrate the package to the latest version
   migrate(pkg);
 
-  // Get the requested service mesh mode, default to sidecar if not specified
-  const istioMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Sidecar;
-
   // Configure the namespace and namespace-wide network policies
   try {
     await updateStatus(pkg, { phase: Phase.Pending, conditions: getReadinessConditions(false) });
@@ -117,8 +114,8 @@ async function reconcilePackageFlow(pkg: UDSPackage): Promise<void> {
     );
   }
 
-    // Create the Istio Resources per the package configuration
-    endpoints = await istioResources(pkg, namespace!, istioMode);
+  // Create the Istio Resources per the package configuration
+  endpoints = await istioResources(pkg, namespace!, istioMode);
 
   // Configure the ServiceMonitors
   const monitors: string[] = [];

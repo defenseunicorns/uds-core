@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { IstioWaypoint, WaypointFromType } from "../../crd";
+import { K8sGatewayFromType, K8sGateway } from "../../crd";
 import { getSharedAnnotationKey } from "./istio-resources";
 import { ambientEgressNamespace, sharedEgressPkgId } from "./egress-ambient";
 
@@ -18,7 +18,7 @@ export function generateWaypoint(pkgs: Set<string>, generation: number) {
   }
 
   // Waypoint resource
-  const waypoint: IstioWaypoint = {
+  const waypoint: K8sGateway = {
     metadata: {
       name: waypointName,
       namespace: ambientEgressNamespace,
@@ -37,7 +37,7 @@ export function generateWaypoint(pkgs: Set<string>, generation: number) {
           protocol: "HBONE",
           allowedRoutes: {
             namespaces: {
-              from: WaypointFromType.All,
+              from: K8sGatewayFromType.All,
             },
             kinds: [
               {
