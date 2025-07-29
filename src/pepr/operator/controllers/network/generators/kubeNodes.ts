@@ -76,7 +76,7 @@ export function kubeNodes(): V1NetworkPolicyPeer[] {
 }
 
 /**
- * When a node is created or updated, if it's Ready, add its IP to the set,
+ * When a node is created or updated, if it's Ready, add its IP to the nodeSet and nodeNameToIPMap,
  * rebuild the policies, and update the NetworkPolicies.
  */
 export async function updateKubeNodesFromCreateUpdate(node: kind.Node) {
@@ -87,11 +87,13 @@ export async function updateKubeNodesFromCreateUpdate(node: kind.Node) {
   // Account for a node being updated with a new IP
   if (nodeName && ip) {
     const oldIP = nodeNameToIPMap.get(nodeName);
-    // If the IP changed, remove the old IP from the set and map
-    if (oldIP && oldIP !== ip) {
+    if (!oldIP) {
+      // New node added
+      nodeNameToIPMap.set(nodeName, ip);
+    } else if (oldIP !== ip) {
+      // If the IP changed, remove the old IP from the set and map
       nodeNameToIPMap.set(nodeName, ip);
       nodeSet.delete(oldIP);
-      log.debug(`Node ${nodeName} updated with new IP: ${ip}`);
     }
   }
 
@@ -109,7 +111,6 @@ export async function updateKubeNodesFromDelete(node: kind.Node) {
   if (ip) nodeSet.delete(ip);
   if (nodeName) {
     nodeNameToIPMap.delete(nodeName);
-    log.debug(`Node ${nodeName} deleted, removed IP: ${ip}`);
   }
 
   await updateKubeNodesNetworkPolicies();

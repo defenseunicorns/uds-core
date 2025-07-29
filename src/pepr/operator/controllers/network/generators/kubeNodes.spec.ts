@@ -357,7 +357,7 @@ describe("kubeNodes module", () => {
       const updatedNode = {
         metadata: { name: "node1" },
         status: {
-          addresses: [{ type: "InternalIP", address: "10.0.0.2/32" }],
+          addresses: [{ type: "InternalIP", address: "10.0.0.2" }],
           conditions: [{ type: "Ready", status: "True" }],
         },
       };
