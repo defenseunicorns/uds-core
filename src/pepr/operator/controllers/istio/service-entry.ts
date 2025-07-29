@@ -45,8 +45,13 @@ export function generateIngressServiceEntry(
   // Get the correct domain based on gateway
   const domain = gateway === Gateway.Admin ? UDSConfig.adminDomain : UDSConfig.domain;
 
-  // Append the domain to the host
-  const fqdn = `${host}.${domain}`;
+  // Add the host to the domain, unless this is the reserved root domain host (`.`)
+  let fqdn = "";
+  if (host === ".") {
+    fqdn = domain;
+  } else {
+    fqdn = `${host}.${domain}`;
+  }
 
   const serviceEntryPort: IstioPort = {
     name: "https",
@@ -87,7 +92,8 @@ export function generateSEName(pkgName: string, expose: Expose) {
   const { gateway = Gateway.Tenant, host } = expose;
 
   // Ensure the resource name is valid
-  const name = sanitizeResourceName(`${pkgName}-${gateway}-${host}`);
+  const sanitizedHost = host === "." ? "root-domain" : host;
+  const name = sanitizeResourceName(`${pkgName}-${gateway}-${sanitizedHost}`);
 
   return name;
 }

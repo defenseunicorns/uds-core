@@ -189,9 +189,9 @@ describe("updateUDSConfig", () => {
 
       expect(reconcileAuthservice).toHaveBeenCalledWith({
         name: "global-config-update",
-        action: expect.any(String),
-        trustedCA: "mock-ca-cert",
+        action: "UpdateGlobalConfig",
         redisUri: "",
+        trustedCA: "mock-ca-cert",
       });
     });
 
@@ -206,9 +206,9 @@ describe("updateUDSConfig", () => {
 
       expect(reconcileAuthservice).toHaveBeenCalledWith({
         name: "global-config-update",
-        action: expect.any(String),
-        trustedCA: "",
+        action: "UpdateGlobalConfig",
         redisUri: "",
+        trustedCA: "",
       });
     });
 
@@ -220,9 +220,9 @@ describe("updateUDSConfig", () => {
 
       expect(reconcileAuthservice).toHaveBeenCalledWith({
         name: "global-config-update",
-        action: expect.any(String),
-        trustedCA: "",
+        action: "UpdateGlobalConfig",
         redisUri: "",
+        trustedCA: "",
       });
     });
 
@@ -246,9 +246,9 @@ describe("updateUDSConfig", () => {
 
       expect(reconcileAuthservice).toHaveBeenCalledWith({
         name: "global-config-update",
-        action: expect.any(String),
-        trustedCA: "old-ca-cert",
+        action: "UpdateGlobalConfig",
         redisUri: "mock-redis-uri",
+        trustedCA: "old-ca-cert",
       });
     });
 
@@ -260,9 +260,9 @@ describe("updateUDSConfig", () => {
 
       expect(reconcileAuthservice).toHaveBeenCalledWith({
         name: "global-config-update",
-        action: expect.any(String),
-        trustedCA: "",
+        action: "UpdateGlobalConfig",
         redisUri: "",
+        trustedCA: "",
       });
     });
 
@@ -277,9 +277,9 @@ describe("updateUDSConfig", () => {
 
       expect(reconcileAuthservice).toHaveBeenCalledWith({
         name: "global-config-update",
-        action: expect.any(String),
-        trustedCA: "",
+        action: "UpdateGlobalConfig",
         redisUri: "",
+        trustedCA: "",
       });
     });
 
@@ -291,9 +291,9 @@ describe("updateUDSConfig", () => {
 
       expect(reconcileAuthservice).toHaveBeenCalledWith({
         name: "global-config-update",
-        action: expect.any(String),
-        trustedCA: "",
+        action: "UpdateGlobalConfig",
         redisUri: "",
+        trustedCA: "",
       });
     });
 

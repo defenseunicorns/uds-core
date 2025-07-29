@@ -6,13 +6,22 @@
 import { Direction } from "../../../crd";
 import { generate } from "../generate";
 
-export const allowEgressIstiod = (namespace: string) =>
-  generate(namespace, {
+export const allowEgressIstiod = (
+  namespace: string,
+  clientId?: string,
+  podSelector?: Record<string, string>,
+) => {
+  const policy = {
     direction: Direction.Egress,
-    description: "Istiod communication",
+    description: clientId ? `Istiod communication for ${clientId}` : "Istiod communication",
     remoteNamespace: "istio-system",
     remoteSelector: {
       istio: "pilot",
     },
     port: 15012,
-  });
+    // Add the pod selector if provided
+    ...(podSelector && { selector: podSelector }),
+  };
+
+  return generate(namespace, policy);
+};

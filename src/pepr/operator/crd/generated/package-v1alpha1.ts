@@ -617,6 +617,8 @@ export interface ServiceMesh {
 
 /**
  * Set the service mesh mode for this package (namespace), defaults to sidecar
+ *
+ * The current service mesh mode for this package
  */
 export enum Mode {
   Ambient = "ambient",
@@ -785,18 +787,27 @@ export interface ProtocolMapper {
 
 export interface StatusObject {
   authorizationPolicyCount?: number;
-  authserviceClients?: string[];
+  authserviceClients?: AuthserviceClient[];
   /**
    * Status conditions following Kubernetes-style conventions
    */
   conditions?: Condition[];
   endpoints?: string[];
+  /**
+   * The current service mesh mode for this package
+   */
+  meshMode?: Mode;
   monitors?: string[];
   networkPolicyCount?: number;
   observedGeneration?: number;
   phase?: Phase;
   retryAttempt?: number;
   ssoClients?: string[];
+}
+
+export interface AuthserviceClient {
+  clientId: string;
+  selector?: { [key: string]: string };
 }
 
 export interface Condition {

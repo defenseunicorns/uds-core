@@ -637,26 +637,6 @@ describe("Test validation of Package CRs", () => {
     await validator(mockReq);
     expect(mockReq.Approve).toHaveBeenCalledTimes(1);
   });
-
-  it("denies authservice clients in ambient mode", async () => {
-    const mockReq = makeMockReq(
-      {},
-      [],
-      [],
-      [
-        {
-          clientId: "http://example.com",
-          enableAuthserviceSelector: {
-            app: "foobar",
-          },
-        },
-      ],
-      [],
-      true,
-    );
-    await validator(mockReq);
-    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
-  });
 });
 
 describe("Test Allowed SSO Client Attributes", () => {
