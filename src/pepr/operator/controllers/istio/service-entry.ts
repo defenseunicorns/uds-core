@@ -4,7 +4,7 @@
  */
 
 import { V1OwnerReference } from "@kubernetes/client-node";
-import { UDSConfig } from "../../../config";
+
 import {
   Expose,
   Gateway,
@@ -14,10 +14,11 @@ import {
   IstioResolution,
   IstioServiceEntry,
 } from "../../crd";
-import { istioEgressGatewayNamespace, getSharedAnnotationKey } from "./istio-resources";
+import { UDSConfig } from "../config/config";
 import { sanitizeResourceName } from "../utils";
-import { HostResource, EgressResource, PortProtocol } from "./types";
 import { sharedEgressPkgId } from "./egress";
+import { getSharedAnnotationKey, istioEgressGatewayNamespace } from "./istio-resources";
+import { EgressResource, HostResource, PortProtocol } from "./types";
 
 /**
  * Creates a ServiceEntry for each exposed service in the package
@@ -39,8 +40,13 @@ export function generateIngressServiceEntry(
   // Get the correct domain based on gateway
   const domain = gateway === Gateway.Admin ? UDSConfig.adminDomain : UDSConfig.domain;
 
-  // Append the domain to the host
-  const fqdn = `${host}.${domain}`;
+  // Add the host to the domain, unless this is the reserved root domain host (`.`)
+  let fqdn = "";
+  if (host === ".") {
+    fqdn = domain;
+  } else {
+    fqdn = `${host}.${domain}`;
+  }
 
   const serviceEntryPort: IstioPort = {
     name: "https",
@@ -81,7 +87,8 @@ export function generateSEName(pkgName: string, expose: Expose) {
   const { gateway = Gateway.Tenant, host } = expose;
 
   // Ensure the resource name is valid
-  const name = sanitizeResourceName(`${pkgName}-${gateway}-${host}`);
+  const sanitizedHost = host === "." ? "root-domain" : host;
+  const name = sanitizeResourceName(`${pkgName}-${gateway}-${sanitizedHost}`);
 
   return name;
 }

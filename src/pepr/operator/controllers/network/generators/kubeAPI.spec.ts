@@ -26,14 +26,21 @@ vi.mock("pepr", async () => {
 
 const mockApply = vi.fn();
 const mockGet = vi.fn<() => Promise<KubernetesList<kind.NetworkPolicy>>>();
+const mockCrdGet = vi.fn<() => Promise<KubernetesList<kind.CustomResourceDefinition>>>();
+
+beforeEach(async () => {
+  process.env.PEPR_WATCH_MODE = "true";
+  process.env.PEPR_MODE = "dev";
+  vi.clearAllMocks();
+});
 
 describe("updateAPIServerCIDR", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
     (K8s as Mock).mockImplementation(() => ({
       WithLabel: vi.fn(() => ({
         Get: mockGet,
       })),
+      Get: mockCrdGet, // Mock authorization policy CRD get
       Apply: mockApply,
     }));
   });
@@ -267,7 +274,6 @@ describe("updateAPIServerCIDR", () => {
 
 describe("updateKubeAPINetworkPolicies", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
     (K8s as Mock).mockImplementation(() => ({
       WithLabel: vi.fn(() => ({
         Get: mockGet,
@@ -582,10 +588,6 @@ describe("updateKubeAPINetworkPolicies", () => {
 });
 
 describe("updateKubeAPIAuthorizationPolicies", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
   it("should not update a policy if ipBlocks are already correct", async () => {
     const newPeers = [{ ipBlock: { cidr: "10.0.0.1/32" } }, { ipBlock: { cidr: "10.0.0.2/32" } }];
 

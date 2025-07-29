@@ -5,8 +5,8 @@
 
 import { K8s } from "pepr";
 import { afterEach, beforeEach, describe, expect, it, Mock, vi } from "vitest";
-import { UDSConfig } from "../../../config";
 import { Expose, Gateway, IstioVirtualService, RemoteProtocol } from "../../crd";
+import { UDSConfig } from "../config/config";
 import { istioEgressGatewayNamespace } from "./istio-resources";
 import { EgressResource } from "./types";
 import {
@@ -15,6 +15,11 @@ import {
   generateIngressVirtualService,
   warnMatchingExistingVirtualServices,
 } from "./virtual-service";
+
+beforeEach(() => {
+  UDSConfig.domain = "uds.dev";
+  UDSConfig.adminDomain = "admin.uds.dev";
+});
 
 describe("test generate virtual service", () => {
   const ownerRefs = [
@@ -91,6 +96,51 @@ describe("test generate virtual service", () => {
     expect(payload).toBeDefined();
     expect(payload.spec?.hosts).toBeDefined();
     expect(payload.spec!.hosts![0]).toEqual(`${host}.${UDSConfig.adminDomain}`);
+  });
+
+  it("should create a root domain VirtualService object for tenant gateway", () => {
+    const expose: Expose = {
+      host: ".",
+      port,
+      service,
+    };
+
+    const payload = generateIngressVirtualService(
+      expose,
+      namespace,
+      pkgName,
+      generation,
+      ownerRefs,
+    );
+
+    expect(payload).toBeDefined();
+    expect(payload.metadata?.name).toContain("root-domain");
+    expect(payload.spec?.hosts).toBeDefined();
+    expect(payload.spec!.hosts![0]).toEqual(UDSConfig.domain);
+    expect(payload.spec?.gateways?.[0]).toContain(Gateway.Tenant);
+  });
+
+  it("should create a root domain VirtualService object for admin gateway", () => {
+    const expose: Expose = {
+      gateway: Gateway.Admin,
+      host: ".",
+      port,
+      service,
+    };
+
+    const payload = generateIngressVirtualService(
+      expose,
+      namespace,
+      pkgName,
+      generation,
+      ownerRefs,
+    );
+
+    expect(payload).toBeDefined();
+    expect(payload.metadata?.name).toContain("root-domain");
+    expect(payload.spec?.hosts).toBeDefined();
+    expect(payload.spec!.hosts![0]).toEqual(UDSConfig.adminDomain);
+    expect(payload.spec?.gateways?.[0]).toContain(Gateway.Admin);
   });
 
   it("should create an advancedHttp VirtualService object", () => {

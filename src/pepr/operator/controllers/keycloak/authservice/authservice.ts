@@ -4,11 +4,15 @@
  */
 
 import { R } from "pepr";
-import { UDSConfig } from "../../../../config";
+
 import { Component, setupLogger } from "../../../../logger";
-import { UDSPackage } from "../../../crd";
+import { K8sGateway, UDSPackage } from "../../../crd";
+import { AuthserviceClient, Mode } from "../../../crd/generated/package-v1alpha1";
+import { cleanupWaypointLabels, setupAmbientWaypoint } from "../../istio/ambient-waypoint";
+import { getWaypointName } from "../../istio/waypoint-utils";
+import { purgeOrphans } from "../../utils";
 import { Client } from "../types";
-import { updatePolicy } from "./authorization-policy";
+import { UDSConfig, updatePolicy } from "./authorization-policy";
 import {
   getAuthserviceConfig,
   operatorConfig,
@@ -26,60 +30,148 @@ import {
 export const log = setupLogger(Component.OPERATOR_AUTHSERVICE);
 let lock = false;
 
-export async function authservice(pkg: UDSPackage, clients: Map<string, Client>) {
+export async function authservice(
+  pkg: UDSPackage,
+  clients: Map<string, Client>,
+): Promise<AuthserviceClient[]> {
+  if (!pkg.metadata?.namespace || !pkg.metadata?.name) {
+    throw new Error("Package metadata is missing required fields");
+  }
+
+  // Get the requested service mesh mode, default to sidecar if not specified
+  const istioMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Sidecar;
+  const previousMeshMode = pkg.status?.meshMode || Mode.Sidecar;
+  const isAmbient = istioMode === Mode.Ambient;
+
   // Get the list of clients from the package
   const authServiceClients = R.filter(
     sso => R.isNotNil(sso.enableAuthserviceSelector),
     pkg.spec?.sso || [],
   );
 
+  // Build the new client status objects
+  const newAuthserviceClients = authServiceClients.map(sso => ({
+    clientId: sso.clientId,
+    selector: sso.enableAuthserviceSelector || {},
+  }));
+
+  // Reconcile each client
   for (const sso of authServiceClients) {
+    if (isAmbient) {
+      await setupAmbientWaypoint(pkg, sso);
+    }
+
     const client = clients.get(sso.clientId);
     if (!client) {
       throw new Error(`Failed to get client ${sso.clientId}`);
     }
 
+    // Get the full waypoint name for authorization policies
+    const fullWaypointName = getWaypointName(sso.clientId);
+
     await reconcileAuthservice(
       { name: sso.clientId, action: Action.AddClient, client },
       sso.enableAuthserviceSelector!,
+      isAmbient,
       pkg,
+      fullWaypointName,
     );
   }
 
-  const authserviceClients = authServiceClients.map(client => client.clientId);
+  // Cleanup logic now takes the new objects
+  await purgeAuthserviceClients(pkg, newAuthserviceClients, previousMeshMode, istioMode);
 
-  await purgeAuthserviceClients(pkg, authserviceClients);
+  // Clean up any existing waypoint resources if SSO is not configured
+  await purgeOrphans(
+    (pkg.metadata?.generation ?? 0).toString(),
+    pkg.metadata.namespace,
+    pkg.metadata.name,
+    K8sGateway,
+    log,
+  );
 
-  return authserviceClients;
+  // Return the new status objects for status update
+  return newAuthserviceClients;
 }
 
 export async function purgeAuthserviceClients(
   pkg: UDSPackage,
-  newAuthserviceClients: string[] = [],
-) {
-  // compute set difference of pkg.status.authserviceClients and authserviceClients using Ramda
-  R.difference(pkg.status?.authserviceClients || [], newAuthserviceClients).forEach(
-    async clientId => {
-      log.info(`Removing stale authservice chain for client ${clientId}`);
-      await reconcileAuthservice({ name: clientId, action: Action.RemoveClient }, {}, pkg);
-    },
+  newAuthserviceClients: AuthserviceClient[] = [],
+  previousMeshMode: Mode,
+  currentMeshMode: Mode,
+): Promise<void> {
+  const prevClients = pkg.status?.authserviceClients || [];
+
+  // Check if mesh mode changed
+  const meshModeChanged = previousMeshMode !== currentMeshMode;
+
+  // First handle truly removed clients
+  const removedClients = prevClients.filter(
+    oldClient => !newAuthserviceClients.some(c => c.clientId === oldClient.clientId),
   );
+
+  // Process removed clients
+  await Promise.all(
+    removedClients.map(async client => {
+      const fullWaypointName = getWaypointName(client.clientId);
+      log.info(`Removing authservice client ${client.clientId}`);
+
+      await reconcileAuthservice(
+        { name: client.clientId, action: Action.RemoveClient },
+        {},
+        false, // Don't need to update policy for removed clients
+        pkg,
+        fullWaypointName,
+      );
+
+      if (pkg.metadata?.namespace) {
+        await cleanupWaypointLabels(pkg.metadata.namespace, fullWaypointName);
+      }
+    }),
+  );
+
+  // Then handle updated clients (selector changes or mesh mode change)
+  const updatedWaypointClients = meshModeChanged
+    ? prevClients // All clients need update if mesh mode changed
+    : prevClients.filter(oldClient => {
+        const newClient = newAuthserviceClients.find(c => c.clientId === oldClient.clientId);
+        if (!newClient) return false; // Already handled by removedClients
+        return JSON.stringify(oldClient.selector) !== JSON.stringify(newClient.selector);
+      });
+
+  // Process updated clients (selector changes or mesh mode)
+  for (const client of updatedWaypointClients) {
+    const newClient = newAuthserviceClients.find(c => c.clientId === client.clientId);
+    const fullWaypointName = getWaypointName(client.clientId);
+    if (!newClient) continue;
+
+    log.info(`Updating authservice client ${client.clientId}`, {
+      reason: meshModeChanged ? "mesh_mode_change" : "selector_changed",
+    });
+
+    if (pkg.metadata?.namespace) {
+      await cleanupWaypointLabels(pkg.metadata.namespace, fullWaypointName);
+    }
+  }
 }
 
 function isAddOrRemoveClientEvent(event: AuthServiceEvent): event is AddOrRemoveClientEvent {
   return event.action === Action.AddClient || event.action === Action.RemoveClient;
 }
+
 export async function reconcileAuthservice(
   event: AuthServiceEvent,
-  labelSelector?: { [key: string]: string },
+  labelSelector: { [key: string]: string } = {},
+  isAmbient?: boolean,
   pkg?: UDSPackage,
+  waypointName?: string,
 ) {
   await updateConfig(event);
   if (isAddOrRemoveClientEvent(event)) {
     if (!pkg) {
       throw new Error("Package must be provided for AddClient or RemoveClient events");
     }
-    await updatePolicy(event, labelSelector || {}, pkg);
+    await updatePolicy(event, labelSelector, pkg, isAmbient, waypointName);
   }
 }
 
@@ -163,6 +255,7 @@ export function buildConfig(config: AuthserviceConfig, event: AuthServiceEvent) 
 
 export function buildChain(update: AuthServiceEvent) {
   // TODO: get this from the package
+  // TODO: update to loop and build multiple chains on redirectUris
   // Parse the hostname from the first client redirect URI
   const hostname = new URL(update.client!.redirectUris[0]).hostname;
 

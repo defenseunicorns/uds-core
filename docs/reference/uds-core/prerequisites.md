@@ -17,6 +17,40 @@ When running Kubernetes on any type of host it is important to ensure you are fo
 - [Modifying NetworkManager to prevent CNI conflicts](https://docs.rke2.io/known_issues#networkmanager)
 - [Known Issues](https://docs.rke2.io/known_issues)
 
+##### Control Plane Metrics Configuration
+
+In hardened RKE2 setups (using the CIS profile), control plane components (etcd, kube-scheduler, kube-controller-manager) bind to 127.0.0.1 by default, which prevents Prometheus from scraping them.
+
+To fix this, add the following settings to your control plane node’s config file (`/etc/rancher/rke2/config.yaml`):
+
+```yaml
+kube-controller-manager-arg:
+  - bind-address=0.0.0.0
+kube-scheduler-arg:
+  - bind-address=0.0.0.0
+etcd-arg:
+  - listen-metrics-urls=http://0.0.0.0:2381
+```
+
+These changes require restarting RKE2 to take effect.
+
+##### CoreDNS Metrics Configuration
+
+In hardened RKE2 setups (using the CIS profile), RKE2 applies some default network policies that [block ingress to the kube-system namespace](https://docs.rke2.io/security/hardening_guide#network-policies). In order to enable CoreDNS metrics scraping you will need to enable an additional network policy. UDS Core includes an option to deploy a network policy for CoreDNS metrics scraping.
+
+To enable this policy, set the value `rke2CorednsNetpol.enabled` to `true` in the `uds-prometheus-config` helm chart with the following override:
+```yaml
+- name: uds-core
+  ...
+  overrides:
+    kube-prometheus-stack:
+      uds-prometheus-config:
+        values:
+          - path: rke2CorednsNetpol.enabled
+            value: true
+
+```
+
 #### K3S
 
 - [General installation requirements](https://docs.k3s.io/installation/requirements)
@@ -84,8 +118,6 @@ When using ambient mode with UDS Packages, you can benefit from:
 - Reduced resource overhead compared to sidecar mode, as workloads don't require an injected sidecar container
 - Simplified deployment and operations for service mesh capabilities
 - Faster pod startup times since there's no need to wait for sidecar initialization
-
-Note that Packages with Authservice clients are not currently supported in ambient mode and will be rejected by the UDS Operator.
 
 The `istio-controlplane` component installs the Istio CNI plugin which requires specifying the `CNI_CONF_DIR` and `CNI_BIN_DIR` variables. These values can change based on the environment Istio is being deployed into. By default the package will attempt to auto-detect these values and will use the following values if not specified:
 

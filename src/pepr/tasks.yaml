@@ -8,18 +8,18 @@ tasks:
   - name: gen-crds
     description: "Generate CRDS, requires a running kubernetes cluster"
     actions:
-      - cmd: npx ts-node -e "import { registerCRDs } from './src/pepr/operator/crd/register'; registerCRDs()"
+      - cmd: npx ts-node -e "import { registerCRDs, registerClusterConfig } from './src/pepr/operator/crd/register'; registerCRDs(); registerClusterConfig();"
         description: "Register CRDs in cluster"
         env:
           - "PEPR_MODE=dev"
       - cmd: |
           # renovate: datasource=github-tags depName=defenseunicorns/kubernetes-fluent-client versioning=semver
-          npx kubernetes-fluent-client@3.8.1 crd packages.uds.dev src/pepr/operator/crd/generated
+          npx kubernetes-fluent-client@3.9.0 crd packages.uds.dev src/pepr/operator/crd/generated
         description: "Generate TS types for packages.uds.dev"
 
       - cmd: |
           # renovate: datasource=github-tags depName=defenseunicorns/kubernetes-fluent-client versioning=semver
-          npx kubernetes-fluent-client@3.8.1 crd packages.uds.dev -l json-schema schemas
+          npx kubernetes-fluent-client@3.9.0 crd packages.uds.dev -l json-schema schemas
           # Move the schema files to a standard path
           mv schemas/package-v1alpha1.json-schema schemas/package-v1alpha1.schema.json
           # Make the schema strict on additionalProperties
@@ -29,18 +29,35 @@ tasks:
 
       - cmd: |
           # renovate: datasource=github-tags depName=defenseunicorns/kubernetes-fluent-client versioning=semver
-          npx kubernetes-fluent-client@3.8.1 crd exemptions.uds.dev src/pepr/operator/crd/generated
+          npx kubernetes-fluent-client@3.9.0 crd exemptions.uds.dev src/pepr/operator/crd/generated
         description: "Generate TS types for exemptions.uds.dev"
 
       - cmd: |
           # renovate: datasource=github-tags depName=defenseunicorns/kubernetes-fluent-client versioning=semver
-          npx kubernetes-fluent-client@3.8.1 crd exemptions.uds.dev -l json-schema schemas
+          npx kubernetes-fluent-client@3.9.0 crd exemptions.uds.dev -l json-schema schemas
           # Move the schema files to a standard path
           mv schemas/exemption-v1alpha1.json-schema schemas/exemption-v1alpha1.schema.json
           # Make the schema strict on additionalProperties
           uds zarf tools yq -i '(.. | select(has("additionalProperties") and .additionalProperties | select(length==0))) |= .additionalProperties = false' schemas/exemption-v1alpha1.schema.json
           uds zarf tools yq -i '.definitions.Exemption.additionalProperties = {}' schemas/exemption-v1alpha1.schema.json
         description: "Generate JSON schema for exemptions.uds.dev"
+
+      - cmd: |
+          # renovate: datasource=github-tags depName=defenseunicorns/kubernetes-fluent-client versioning=semver
+          npx kubernetes-fluent-client@3.9.0 crd clusterconfig.uds.dev src/pepr/operator/crd/generated
+        description: "Generate TS types for clusterconfig.uds.dev"
+
+      - cmd: |
+          # renovate: datasource=github-tags depName=defenseunicorns/kubernetes-fluent-client versioning=semver
+          npx kubernetes-fluent-client@3.9.0 crd clusterconfig.uds.dev -l json-schema schemas
+          # Move the schema files to a standard path
+          mv schemas/clusterconfig-v1alpha1.json-schema schemas/clusterconfig-v1alpha1.schema.json
+          # Make the schema strict on additionalProperties
+          uds zarf tools yq -i '(.. | select(has("additionalProperties") and .additionalProperties | select(length==0))) |= .additionalProperties = false' schemas/clusterconfig-v1alpha1.schema.json
+          uds zarf tools yq -i '.definitions.ClusterConfig.additionalProperties = {}' schemas/clusterconfig-v1alpha1.schema.json
+        description: "Generate JSON schema for clusterconfig.uds.dev"
+
+      - task: gen-manifests
 
       - description: "Add license headers to generated CRD files"
         shell:
@@ -55,10 +72,22 @@ tasks:
             exit 1
           fi
           $HOME/go/bin/addlicense -l "AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial" -s=only -v -c "Defense Unicorns" src/pepr/operator/crd/generated
+          $HOME/go/bin/addlicense -l "AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial" -s=only -v -c "Defense Unicorns" src/pepr/uds-cluster-crds/templates
 
       - task: gen-docs
 
       - cmd: "npx pepr format"
+
+  - name: gen-manifests
+    description: "Generate CRD manifests"
+    actions:
+      - cmd: |
+          CRD_LIST="clusterconfig.uds.dev"
+          for CRD in $CRD_LIST; do
+             FILE="src/pepr/uds-cluster-crds/templates/$CRD.yaml"
+             uds zarf tools kubectl get crd $CRD -o yaml > $FILE
+             uds zarf tools yq -i 'del(.metadata.creationTimestamp,.metadata.generation,.metadata.resourceVersion,.metadata.uid,.status,.metadata.labels,.metadata.annotations)' $FILE
+          done
 
   - name: gen-docs
     description: "Generate Docs for generated CRDs, requires a running kubernetes cluster"
@@ -66,7 +95,7 @@ tasks:
       - description: "Generate Docs for CRDs"
         cmd: |
           # Define CRD list as a space-separated string
-          CRD_LIST="exemptions.uds.dev packages.uds.dev"
+          CRD_LIST="exemptions.uds.dev packages.uds.dev clusterconfig.uds.dev"
           # For each CRD retrieve the CRD and create a Go struct file to then create a markdown file
           for CRD in $CRD_LIST; do
               # Retrieve CRD Json from Cluster

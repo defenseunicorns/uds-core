@@ -27,6 +27,15 @@ export {
 } from "./generated/exemption-v1alpha1";
 
 export {
+  Attributes,
+  ClusterConfig,
+  Expose as ConfigExpose,
+  Policy as ConfigPolicy,
+  Name,
+  Networking,
+} from "./generated/clusterconfig-v1alpha1";
+
+export {
   HTTP as IstioHTTP,
   HTTPRoute as IstioHTTPRoute,
   Tl as IstioTLS,
@@ -71,3 +80,5 @@ export {
   OutboundTrafficPolicyMode as IstioOutboundTrafficPolicyMode,
   Sidecar as IstioSidecar,
 } from "./generated/istio/sidecar-v1";
+
+export { K8sGateway as K8sGateway } from "./generated/k8s/gateway-v1";

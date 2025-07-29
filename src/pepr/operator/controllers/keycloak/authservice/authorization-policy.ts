@@ -4,13 +4,14 @@
  */
 
 import { K8s } from "pepr";
-import { UDSConfig } from "../../../../config";
+
 import {
   IstioAction,
   IstioAuthorizationPolicy,
   IstioRequestAuthentication,
   UDSPackage,
 } from "../../../crd";
+import { UDSConfig } from "../../config/config";
 import { getOwnerRef, purgeOrphans, sanitizeResourceName } from "../../utils";
 import { log } from "./authservice";
 import { AddOrRemoveClientEvent, Action as AuthServiceAction } from "./types";
@@ -23,53 +24,89 @@ const operationMap: {
   [AuthServiceAction.RemoveClient]: "Delete",
 };
 
+/**
+ * Sets the target for an Istio policy spec based on ambient mode.
+ * If ambient mode is enabled and a waypoint name is provided, sets targetRef to the Gateway.
+ * Otherwise, sets a pod selector for non-ambient mode. Ensures only one targeting field is present.
+ */
+function setPolicyTarget(
+  spec: NonNullable<IstioAuthorizationPolicy["spec"]>,
+  isAmbient: boolean,
+  waypointName: string | undefined,
+  labelSelector: { [key: string]: string },
+) {
+  if (isAmbient && waypointName) {
+    spec.targetRef = {
+      group: "gateway.networking.k8s.io",
+      kind: "Gateway",
+      name: waypointName,
+    };
+    delete spec.selector;
+  } else {
+    spec.selector = { matchLabels: labelSelector };
+    delete spec.targetRef;
+  }
+}
+
 function authserviceAuthorizationPolicy(
   labelSelector: { [key: string]: string },
   name: string,
   namespace: string,
+  isAmbient = false,
+  waypointName?: string,
 ): IstioAuthorizationPolicy {
-  return {
-    kind: "AuthorizationPolicy",
-    metadata: {
-      name: sanitizeResourceName(`${name}-authservice`),
-      namespace,
-    },
-    spec: {
-      action: IstioAction.Custom,
-      provider: {
-        name: "authservice",
+  // Create base policy with spec explicitly typed
+  const policy: IstioAuthorizationPolicy & { spec: NonNullable<IstioAuthorizationPolicy["spec"]> } =
+    {
+      kind: "AuthorizationPolicy",
+      metadata: {
+        name: sanitizeResourceName(`${name}-authservice`),
+        namespace,
       },
-      rules: [
-        {
-          when: [
-            {
-              key: "request.headers[authorization]",
-              notValues: ["*"],
-            },
-          ],
-          to: [
-            {
-              operation: {
-                notPorts: ["15020"],
-                notPaths: ["/stats/prometheus"],
-              },
-            },
-          ],
+      spec: {
+        action: IstioAction.Custom,
+        provider: {
+          name: "authservice",
         },
-      ],
-      selector: {
-        matchLabels: labelSelector,
+        rules: [
+          {
+            when: [
+              {
+                key: "request.headers[authorization]",
+                notValues: ["*"],
+              },
+            ],
+            // Only add the 'to' block if not in ambient mode
+            ...(isAmbient
+              ? []
+              : {
+                  to: [
+                    {
+                      operation: {
+                        notPorts: ["15020"],
+                        notPaths: ["/stats/prometheus"],
+                      },
+                    },
+                  ],
+                }),
+          },
+        ],
       },
-    },
-  };
+    };
+
+  setPolicyTarget(policy.spec, isAmbient, waypointName, labelSelector);
+  return policy;
 }
 
 function jwtAuthZAuthorizationPolicy(
   labelSelector: { [key: string]: string },
   name: string,
   namespace: string,
+  isAmbient = false,
+  waypointName?: string,
 ): IstioAuthorizationPolicy {
-  return {
+  // Create a base policy with the common properties
+  const policy: IstioAuthorizationPolicy = {
     kind: "AuthorizationPolicy",
     metadata: {
       name: sanitizeResourceName(`${name}-jwt-authz`),
@@ -77,9 +114,6 @@ function jwtAuthZAuthorizationPolicy(
     },
     spec: {
       action: IstioAction.Deny,
-      selector: {
-        matchLabels: labelSelector,
-      },
       rules: [
         {
           from: [
@@ -89,26 +123,39 @@ function jwtAuthZAuthorizationPolicy(
               },
             },
           ],
-          to: [
-            {
-              operation: {
-                notPorts: ["15020"],
-                notPaths: ["/stats/prometheus"],
-              },
-            },
-          ],
+          // Only add the 'to' block if not in ambient mode
+          ...(isAmbient
+            ? []
+            : {
+                to: [
+                  {
+                    operation: {
+                      notPorts: ["15020"],
+                      notPaths: ["/stats/prometheus"],
+                    },
+                  },
+                ],
+              }),
         },
       ],
     },
   };
+
+  setPolicyTarget(policy.spec!, isAmbient, waypointName, labelSelector);
+  return policy;
 }
 
 function authNRequestAuthentication(
   labelSelector: { [key: string]: string },
   name: string,
   namespace: string,
+  isAmbient = false,
+  waypointName?: string,
 ): IstioRequestAuthentication {
-  return {
+  // Create base policy with spec explicitly typed
+  const policy: IstioRequestAuthentication & {
+    spec: NonNullable<IstioRequestAuthentication["spec"]>;
+  } = {
     kind: "RequestAuthentication",
     metadata: {
       name: sanitizeResourceName(`${name}-jwt-authn`),
@@ -123,17 +170,19 @@ function authNRequestAuthentication(
           jwksUri: `http://keycloak-http.keycloak.svc.cluster.local:8080/realms/uds/protocol/openid-connect/certs`,
         },
       ],
-      selector: {
-        matchLabels: labelSelector,
-      },
     },
   };
+
+  setPolicyTarget(policy.spec!, isAmbient, waypointName, labelSelector);
+  return policy;
 }
 
 async function updatePolicy(
   event: AddOrRemoveClientEvent,
   labelSelector: { [key: string]: string },
   pkg: UDSPackage,
+  isAmbient?: boolean,
+  waypointName?: string,
 ) {
   // type safe map event to operation (either Apply or Delete)
   const operation = operationMap[event.action];
@@ -151,14 +200,31 @@ async function updatePolicy(
   };
 
   try {
+    // Apply the authservice authorization policy
     await K8s(IstioAuthorizationPolicy)[operation](
-      updateMetadata(authserviceAuthorizationPolicy(labelSelector, event.name, namespace)),
+      updateMetadata(
+        authserviceAuthorizationPolicy(
+          labelSelector,
+          event.name,
+          namespace,
+          isAmbient,
+          waypointName,
+        ),
+      ),
     );
+
+    // Apply the JWT authentication policy
     await K8s(IstioRequestAuthentication)[operation](
-      updateMetadata(authNRequestAuthentication(labelSelector, event.name, namespace)),
+      updateMetadata(
+        authNRequestAuthentication(labelSelector, event.name, namespace, isAmbient, waypointName),
+      ),
     );
+
+    // Apply the JWT authorization policy
     await K8s(IstioAuthorizationPolicy)[operation](
-      updateMetadata(jwtAuthZAuthorizationPolicy(labelSelector, event.name, namespace)),
+      updateMetadata(
+        jwtAuthZAuthorizationPolicy(labelSelector, event.name, namespace, isAmbient, waypointName),
+      ),
     );
   } catch (e) {
     const msg = `Failed to update auth policy for ${event.name} in ${namespace}: ${e}`;
@@ -181,4 +247,10 @@ async function purgeOrphanPolicies(generation: string, namespace: string, pkgNam
   }
 }
 
-export { updatePolicy };
+export {
+  authNRequestAuthentication,
+  authserviceAuthorizationPolicy,
+  jwtAuthZAuthorizationPolicy,
+  UDSConfig,
+  updatePolicy,
+};

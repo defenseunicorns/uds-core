@@ -4,8 +4,8 @@
  */
 
 import { getReadinessConditions, handleFailure, shouldSkip, updateStatus, writeEvent } from ".";
-import { UDSConfig } from "../../config";
 import { Component, setupLogger } from "../../logger";
+import { UDSConfig } from "../controllers/config/config";
 import { reconcileSharedEgressResources } from "../controllers/istio/egress";
 import { getPackageId, istioResources } from "../controllers/istio/istio-resources";
 import { cleanupNamespace, enableIstio } from "../controllers/istio/namespace";
@@ -22,7 +22,7 @@ import { generateAuthorizationPolicies } from "../controllers/network/authorizat
 import { networkPolicies } from "../controllers/network/policies";
 import { retryWithDelay } from "../controllers/utils";
 import { Phase, UDSPackage } from "../crd";
-import { Mode } from "../crd/generated/package-v1alpha1";
+import { AuthserviceClient, Mode } from "../crd/generated/package-v1alpha1";
 import { migrate } from "../crd/migrate";
 
 // configure subproject logger
@@ -49,9 +49,12 @@ export async function packageReconciler(pkg: UDSPackage) {
     return;
   }
 
+  // Migrate the package to the latest version
+  migrate(pkg);
+
   if (pkg.status?.retryAttempt && pkg.status?.retryAttempt > 0) {
     // calculate exponential backoff where backoffSeconds = 3^retryAttempt
-    const backOffSeconds = 3 ** pkg.status?.retryAttempt;
+    const backOffSeconds = 3 ** pkg.status.retryAttempt;
 
     log.info(
       metadata,
@@ -66,62 +69,68 @@ export async function packageReconciler(pkg: UDSPackage) {
     await new Promise(resolve => setTimeout(resolve, backOffSeconds * 1000));
   }
 
-  // Migrate the package to the latest version
-  migrate(pkg);
-
-  // Configure the namespace and namespace-wide network policies
   try {
     await updateStatus(pkg, { phase: Phase.Pending, conditions: getReadinessConditions(false) });
-
-    // Get the requested service mesh mode, default to sidecar if not specified
-    const istioMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Sidecar;
-
-    // Pass the effective Istio mode to the networkPolicies function
-    const netPol = await networkPolicies(pkg, namespace!, istioMode);
-
-    const authPol = await generateAuthorizationPolicies(pkg, namespace!, istioMode);
-
-    let endpoints: string[] = [];
-    // Update the namespace to enable the expected Istio mode (sidecar or ambient)
-    await enableIstio(pkg);
-
-    let ssoClients = new Map<string, Client>();
-    let authserviceClients: string[] = [];
-
-    if (UDSConfig.isIdentityDeployed) {
-      // Configure SSO
-      ssoClients = await keycloak(pkg);
-      authserviceClients = await authservice(pkg, ssoClients);
-    } else if (pkg.spec?.sso) {
-      log.error("Identity & Authorization is not deployed, but the package has SSO configuration");
-      throw new Error(
-        "Identity & Authorization is not deployed, but the package has SSO configuration",
-      );
-    }
-
-    // Create the Istio Resources per the package configuration
-    endpoints = await istioResources(pkg, namespace!);
-
-    // Configure the ServiceMonitors
-    const monitors: string[] = [];
-    monitors.push(...(await podMonitor(pkg, namespace!)));
-    monitors.push(...(await serviceMonitor(pkg, namespace!)));
-
-    await updateStatus(pkg, {
-      phase: Phase.Ready,
-      conditions: getReadinessConditions(true),
-      ssoClients: [...ssoClients.keys()],
-      authserviceClients,
-      endpoints,
-      monitors,
-      networkPolicyCount: netPol.length,
-      authorizationPolicyCount: authPol.length + authserviceClients.length * 2,
-      observedGeneration: metadata.generation,
-      retryAttempt: 0, // todo: make this nullable when kfc generates the type
-    });
+    await reconcilePackageFlow(pkg);
   } catch (err) {
-    void handleFailure(err, pkg);
+    await handleFailure(err, pkg);
   }
+}
+
+/**
+ * Orchestrates the main reconciliation flow for a package.
+ * Handles status updates, resource creation, and sequencing.
+ */
+async function reconcilePackageFlow(pkg: UDSPackage): Promise<void> {
+  const metadata = pkg.metadata!;
+  const { namespace } = metadata;
+
+  // Get the requested service mesh mode, default to sidecar if not specified
+  const istioMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Sidecar;
+
+  // 1. First, ensure network policies are in place
+  const netPol = await networkPolicies(pkg, namespace!, istioMode);
+  const authPol = await generateAuthorizationPolicies(pkg, namespace!, istioMode);
+
+  // 2. Now enable Istio injection (this may restart pods in sidecar mode)
+  await enableIstio(pkg);
+
+  let endpoints: string[] = [];
+  let ssoClients = new Map<string, Client>();
+  let authserviceClients: AuthserviceClient[] = [];
+
+  if (UDSConfig.isIdentityDeployed) {
+    // Configure SSO
+    ssoClients = await keycloak(pkg);
+    authserviceClients = await authservice(pkg, ssoClients);
+  } else if (pkg.spec?.sso) {
+    log.error("Identity & Authorization is not deployed, but the package has SSO configuration");
+    throw new Error(
+      "Identity & Authorization is not deployed, but the package has SSO configuration",
+    );
+  }
+
+  // Create the Istio Resources per the package configuration
+  endpoints = await istioResources(pkg, namespace!);
+
+  // Configure the ServiceMonitors
+  const monitors: string[] = [];
+  monitors.push(...(await podMonitor(pkg, namespace!)));
+  monitors.push(...(await serviceMonitor(pkg, namespace!)));
+
+  await updateStatus(pkg, {
+    phase: Phase.Ready,
+    conditions: getReadinessConditions(true),
+    ssoClients: [...ssoClients.keys()],
+    authserviceClients,
+    endpoints,
+    monitors,
+    networkPolicyCount: netPol.length,
+    authorizationPolicyCount: authPol.length + authserviceClients.length * 2,
+    meshMode: istioMode,
+    observedGeneration: metadata.generation,
+    retryAttempt: 0, // todo: make this nullable when kfc generates the type
+  });
 }
 
 /**
@@ -187,7 +196,8 @@ export async function packageFinalizer(pkg: UDSPackage) {
     });
     // Remove any Authservice configuration - retry on failure
     await retryWithDelay(async function cleanupAuthserviceConfig() {
-      return purgeAuthserviceClients(pkg, []);
+      const currentMeshMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Sidecar;
+      return purgeAuthserviceClients(pkg, [], currentMeshMode, currentMeshMode);
     }, log);
   } catch (e) {
     log.debug(
