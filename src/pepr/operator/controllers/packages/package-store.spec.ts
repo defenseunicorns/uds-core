@@ -6,6 +6,7 @@
 import { PeprValidateRequest } from "pepr";
 import { beforeEach, describe, expect, it } from "vitest";
 import { UDSPackage } from "../../crd";
+import { Mode } from "../../crd/generated/package-v1alpha1";
 import { PackageStore } from "./package-store";
 PackageStore.init();
 
@@ -183,6 +184,123 @@ describe("Package Store", () => {
       // Verify the package in the namespace has the expected client ID
       const pkgName = PackageStore.getPkgName("test-ns");
       expect(pkgName).toEqual("test-app");
+    });
+  });
+
+  describe("Ambient Waypoint", () => {
+    // Reset the PackageStore before each test
+    beforeEach(() => {
+      PackageStore.init();
+    });
+
+    it("should not modify labels when ambient waypoint annotation is missing", () => {
+      const pkg = makeMockReq({
+        metadata: {
+          name: "test-pkg",
+          namespace: "test-ns",
+          labels: {
+            existing: "label",
+          },
+        },
+      }).Raw;
+
+      const originalLabels = { ...pkg.metadata!.labels };
+      PackageStore.add(pkg);
+
+      expect(pkg.metadata!.labels).toEqual(originalLabels);
+    });
+
+    it("should find all packages with ambient mode enabled", () => {
+      // Add packages with and without ambient mode
+      const ambientPkg1 = makeMockReq({
+        metadata: { namespace: "ns1", name: "ambient1" },
+        spec: {
+          network: {
+            serviceMesh: { mode: Mode.Ambient },
+          },
+        },
+      }).Raw;
+
+      const ambientPkg2 = makeMockReq({
+        metadata: { namespace: "ns2", name: "ambient2" },
+        spec: {
+          network: {
+            serviceMesh: { mode: Mode.Ambient },
+          },
+        },
+      }).Raw;
+
+      const nonAmbientPkg = makeMockReq({
+        metadata: { namespace: "ns3", name: "non-ambient" },
+        spec: {
+          network: {},
+        },
+      }).Raw;
+
+      PackageStore.add(ambientPkg1);
+      PackageStore.add(ambientPkg2);
+      PackageStore.add(nonAmbientPkg);
+
+      const ambientPackages = PackageStore.getAmbientPackages();
+
+      expect(ambientPackages).toHaveLength(2);
+      const packageNames = ambientPackages.map(pkg => pkg.metadata?.name).sort();
+      expect(packageNames).toEqual(["ambient1", "ambient2"]);
+    });
+
+    it("should find ambient packages in a specific namespace", () => {
+      // Add package to different namespaces
+      const ambientPkg1 = makeMockReq({
+        metadata: { namespace: "target-ns", name: "ambient1" },
+        spec: {
+          network: {
+            serviceMesh: { mode: Mode.Ambient },
+          },
+        },
+      }).Raw;
+
+      // This one is in a different namespace
+      const ambientPkgOtherNs = makeMockReq({
+        metadata: { namespace: "other-ns", name: "ambient-other" },
+        spec: {
+          network: {
+            serviceMesh: { mode: Mode.Ambient },
+          },
+        },
+      }).Raw;
+
+      PackageStore.add(ambientPkg1);
+      PackageStore.add(ambientPkgOtherNs);
+
+      const ambientPackage = PackageStore.getPackageByNamespace("target-ns");
+
+      expect(ambientPackage).toBeDefined();
+      expect(ambientPackage?.metadata?.name).toBeDefined();
+      // Since we now only get one package per namespace, we should get either ambient1 or ambient2
+      expect(["ambient1", "ambient2"]).toContain(ambientPackage?.metadata?.name);
+    });
+
+    it("should return a package even if it's not in ambient mode", () => {
+      // Add a non-ambient package
+      const nonAmbientPkg = makeMockReq({
+        metadata: { namespace: "empty-ns", name: "non-ambient" },
+        spec: {
+          network: {},
+        },
+      }).Raw;
+
+      PackageStore.add(nonAmbientPkg);
+
+      const pkg = PackageStore.getPackageByNamespace("empty-ns");
+      expect(pkg).toBeDefined();
+      expect(pkg?.metadata?.name).toBe("non-ambient");
+      // Verify it's not in ambient mode
+      expect(pkg?.spec?.network?.serviceMesh?.mode).not.toBe(Mode.Ambient);
+    });
+
+    it("should return undefined when namespace doesn't exist", () => {
+      const ambientPackage = PackageStore.getPackageByNamespace("non-existent-ns");
+      expect(ambientPackage).toBeUndefined();
     });
   });
 });
