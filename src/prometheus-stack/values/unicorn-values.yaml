@@ -11,7 +11,7 @@ kube-state-metrics:
   image:
     registry: quay.io
     repository: rfcurated/kube-state-metrics
-    tag: 2.15.0-jammy-scratch-fips-rfcurated-rfhardened
+    tag: 2.16.0-jammy-scratch-fips-rfcurated-rfhardened
   securityContext:
     enabled: true
     fsGroup: 65532
@@ -23,7 +23,7 @@ prometheus:
     image:
       registry: quay.io
       repository: rfcurated/prometheus
-      tag: 3.4.1-jammy-fips-rfcurated-rfhardened
+      tag: 3.5.0-jammy-fips-rfcurated-rfhardened
 prometheus-node-exporter:
   image:
     registry: quay.io
@@ -40,7 +40,7 @@ prometheusOperator:
       image:
         registry: quay.io
         repository: rfcurated/ingress-nginx/kube-webhook-certgen
-        tag: 1.5.4-jammy-fips-rfcurated-rfhardened
+        tag: 1.6.0-jammy-fips-rfcurated-rfhardened
       securityContext:
         runAsGroup: 65532
         runAsNonRoot: true
@@ -48,9 +48,9 @@ prometheusOperator:
   image:
     registry: quay.io
     repository: rfcurated/prometheus-operator
-    tag: 0.83.0-jammy-scratch-fips-rfcurated
+    tag: 0.84.0-jammy-scratch-fips-rfcurated
   prometheusConfigReloader:
     image:
       registry: quay.io
       repository: rfcurated/prometheus-operator/prometheus-config-reloader
-      tag: 0.83.0-jammy-scratch-fips-rfcurated
+      tag: 0.84.0-jammy-scratch-fips-rfcurated

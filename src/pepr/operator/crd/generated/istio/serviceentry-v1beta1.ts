@@ -13,6 +13,7 @@ export class ServiceEntry extends GenericKind {
    * https://istio.io/docs/reference/config/networking/service-entry.html
    */
   spec?: Spec;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   status?: { [key: string]: any };
 }
 

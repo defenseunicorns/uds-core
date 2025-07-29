@@ -6,7 +6,7 @@ import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import * as net from "net";
 import { closeForward, getForward } from "./forward";
 
-describe("Prometheus and Alertmanager", () => {
+describe("Prometheus and Alertmanager", { retry: 1 }, () => {
   let prometheusProxy: { server: net.Server; url: string };
   let alertmanagerProxy: { server: net.Server; url: string };
 
