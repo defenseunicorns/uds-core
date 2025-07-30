@@ -65,6 +65,11 @@ module "eks" {
       iam_role_name                 = "${substr(var.name, 0, 30)}-eks-node-role"
       iam_role_permissions_boundary = "arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:policy/${var.permissions_boundary_name}"
 
+      metadata_options = {
+        http_put_response_hop_limit = 2 // Need 2 hops to not break IRSA from inside pods
+        http_tokens                 = "required"
+      }
+
       enable_efa_only            = false
       create_launch_template     = true
       enable_bootstrap_user_data = true
