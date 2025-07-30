@@ -28,10 +28,10 @@ module "eks" {
   source  = "terraform-aws-modules/eks/aws"
   version = "~> 21.0.0"
 
-  cluster_name                    = var.name
-  cluster_version                 = var.kubernetes_version
-  cluster_endpoint_public_access  = true
-  cluster_endpoint_private_access = false
+  name                    = var.name
+  kubernetes_version      = var.kubernetes_version
+  endpoint_public_access  = true
+  endpoint_private_access = false
 
   vpc_id     = data.aws_vpc.vpc.id
   subnet_ids = local.subnet_ids
@@ -40,7 +40,7 @@ module "eks" {
   iam_role_permissions_boundary = "arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:policy/${var.permissions_boundary_name}"
 
   # Add CloudWatch logging
-  cluster_enabled_log_types              = []
+  enabled_log_types                      = []
   cloudwatch_log_group_retention_in_days = 0
 
   # Authentication mode
@@ -50,7 +50,7 @@ module "eks" {
   enable_cluster_creator_admin_permissions = true
 
   # Security groups
-  create_cluster_security_group                = true
+  create_security_group                        = true
   create_node_security_group                   = true
   node_security_group_enable_recommended_rules = true
   node_security_group_additional_rules = {
@@ -63,8 +63,6 @@ module "eks" {
       source_cluster_security_group = true
     }
   }
-
-  enable_security_groups_for_pods = false
 
   # Add tags to all resources
   tags = local.tags
@@ -95,8 +93,9 @@ module "eks" {
 
       # Add required policies for node functionality
       iam_role_additional_policies = {
-        AmazonSSMManagedInstanceCore = "arn:${data.aws_partition.current.partition}:iam::aws:policy/AmazonSSMManagedInstanceCore"
-        AmazonEBSCSIDriverPolicy     = "arn:${data.aws_partition.current.partition}:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
+        AmazonSSMManagedInstanceCore   = "arn:${data.aws_partition.current.partition}:iam::aws:policy/AmazonSSMManagedInstanceCore"
+        AmazonEBSCSIDriverPolicy       = "arn:${data.aws_partition.current.partition}:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
+        AmazonEKSVPCResourceController = "arn:${data.aws_partition.current.partition}:iam::aws:policy/AmazonEKSVPCResourceController"
       }
 
       tags = merge(local.tags, {
@@ -106,7 +105,7 @@ module "eks" {
   }
 
   # EKS Addons
-  cluster_addons = {
+  addons = {
     vpc-cni = {
       most_recent = true
       configuration_values = jsonencode({
