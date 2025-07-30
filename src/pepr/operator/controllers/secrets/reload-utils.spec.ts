@@ -65,7 +65,6 @@ function createMockK8sClient(overrides = {}) {
     PatchStatus: vi.fn().mockResolvedValue({}),
     Raw: vi.fn().mockResolvedValue({}),
     Proxy: vi.fn().mockResolvedValue({}),
-    Scale: vi.fn().mockResolvedValue({}),
 
     // Fluent API methods
     WithField: vi.fn().mockReturnThis(),
@@ -446,7 +445,7 @@ describe("restartController", () => {
     mockK8sClient.Get.mockResolvedValue(testDeployment);
 
     // Set up K8s mock to return our mockK8sClient
-    vi.mocked(K8s).mockReturnValue(mockK8sClient);
+    vi.mocked(K8s).mockImplementation(() => mockK8sClient);
 
     // Call the function
     await restartController(

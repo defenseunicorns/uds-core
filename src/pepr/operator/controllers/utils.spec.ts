@@ -55,7 +55,6 @@ function createMockK8sClient(overrides = {}) {
     PatchStatus: vi.fn().mockResolvedValue({}),
     Raw: vi.fn().mockResolvedValue({}),
     Proxy: vi.fn().mockResolvedValue({}),
-    Scale: vi.fn().mockResolvedValue({}),
 
     // Fluent API methods
     WithField: vi.fn().mockReturnThis(),
@@ -166,7 +165,7 @@ describe("createEvent", () => {
 
   it("should create an event for a valid resource", async () => {
     // Set up K8s mocks
-    vi.mocked(K8s).mockReturnValue(mockK8sClient);
+    vi.mocked(K8s).mockImplementation(() => mockK8sClient);
 
     // Create a test resource
     const resource = {
@@ -220,7 +219,7 @@ describe("createEvent", () => {
     const mockCreate = vi.fn().mockRejectedValue(new Error("Test error"));
 
     // Set up K8s mocks
-    vi.mocked(K8s).mockReturnValue(
+    vi.mocked(K8s).mockImplementation(() =>
       createMockK8sClient({
         Create: mockCreate,
       }),
