@@ -91,7 +91,7 @@ test("validate loki dashboard", async ({ page }) => {
   });
 });
 
-// If these tests are failing, may indicate the dashboards need to be updatd
+// If these tests are failing, may indicate the dashboards need to be updated
 // originally brought in from: https://github.com/keycloak/keycloak-grafana-dashboard
 test.describe("validate Keycloak Dashboards", () => {
   const keycloakDashboards = [
