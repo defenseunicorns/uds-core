@@ -41,6 +41,16 @@ module "eks" {
       type                          = "ingress"
       source_cluster_security_group = true
     }
+
+    // This is needed to allow the ELB to communicate with Istio ingress gateways
+    istio_elb_ingress = {
+      description = "Allow ELB to Istio via NodePort or LoadBalancer"
+      protocol    = "tcp"
+      from_port   = 443
+      to_port     = 443
+      type        = "ingress"
+      cidr_blocks = [data.aws_vpc.vpc.cidr_block]
+    }
   }
 
   # Add tags to all resources
