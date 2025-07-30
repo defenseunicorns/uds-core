@@ -26,7 +26,7 @@ resource "aws_launch_template" "eks_node_group" {
 # Create EKS Cluster
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "~> 21.0.0"
+  version = "~> 20.37.0"
 
   cluster_name                    = var.name
   cluster_version                 = var.kubernetes_version
