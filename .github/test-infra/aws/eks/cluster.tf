@@ -65,7 +65,9 @@ module "eks" {
       iam_role_name                 = "${substr(var.name, 0, 30)}-eks-node-role"
       iam_role_permissions_boundary = "arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:policy/${var.permissions_boundary_name}"
 
-      create_launch_template = true
+      enable_efa_only            = false
+      create_launch_template     = true
+      enable_bootstrap_user_data = true
       network_interfaces = [
         {
           // Set launch template to use public IP
@@ -91,7 +93,8 @@ module "eks" {
   # EKS Addons
   addons = {
     vpc-cni = {
-      most_recent = true
+      most_recent    = true
+      before_compute = true
       configuration_values = jsonencode({
         enableNetworkPolicy = "true"
       })
