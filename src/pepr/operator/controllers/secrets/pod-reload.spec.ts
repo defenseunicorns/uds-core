@@ -102,6 +102,7 @@ describe("pod-reload", () => {
       PatchStatus: vi.fn(),
       Raw: vi.fn(),
       Proxy: vi.fn(),
+      Scale: vi.fn(),
     };
 
     // Setup the K8s function mock
