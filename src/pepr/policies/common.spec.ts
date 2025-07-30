@@ -26,31 +26,31 @@ describe("parseImageRef", () => {
     expect(parseImageRef(undefined)).toBeNull();
   });
 
-  it("should handle simple repository names", () => {
-    expect(parseImageRef("nginx")).toEqual({
+  it("should handle repository names", () => {
+    expect(parseImageRef("istio/proxyv2")).toEqual({
       registry: "docker.io",
-      repository: "library/nginx",
+      repository: "istio/proxyv2",
     });
   });
 
   it("should handle repository names with tags", () => {
-    expect(parseImageRef("nginx:latest")).toEqual({
+    expect(parseImageRef("istio/proxyv2:1.2.3")).toEqual({
       registry: "docker.io",
-      repository: "library/nginx",
+      repository: "istio/proxyv2",
     });
   });
 
   it("should handle repository names with digests", () => {
-    expect(parseImageRef("nginx@sha256:abc123")).toEqual({
+    expect(parseImageRef("istio/proxyv2@sha256:abc123")).toEqual({
       registry: "docker.io",
-      repository: "library/nginx",
+      repository: "istio/proxyv2",
     });
   });
 
-  it("should handle namespaced repositories", () => {
-    expect(parseImageRef("organization/nginx:latest")).toEqual({
+  it("should handle non-namespaced repositories", () => {
+    expect(parseImageRef("proxyv2:latest")).toEqual({
       registry: "docker.io",
-      repository: "organization/nginx",
+      repository: "proxyv2",
     });
   });
 

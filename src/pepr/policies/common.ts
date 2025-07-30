@@ -50,18 +50,17 @@ export function parseImageRef(imageRef: string): { registry: string; repository:
   if (!imageRef) return null;
 
   try {
-    // Handle empty input
     const trimmed = imageRef.trim();
     if (trimmed === "") return null;
 
     // Remove any tag or digest
     const imageWithoutTag = trimmed.replace(/[@:][^/]+$/, "");
 
-    // Split into parts by /
+    // Split on / - the repository section always starts with /
     const parts = imageWithoutTag.split("/");
 
-    // Check if the first part is a registry (contains . or : or is 'localhost')
     const firstPart = parts[0];
+    // A registry must contain either `.`, `:`, or be `localhost`. Otherwise it is assumed this is `docker.io`.
     const isRegistry =
       firstPart.includes(".") || firstPart.includes(":") || firstPart === "localhost";
 
@@ -69,24 +68,17 @@ export function parseImageRef(imageRef: string): { registry: string; repository:
     let repository: string;
 
     if (isRegistry) {
-      // First part is the registry (with optional port)
       registry = firstPart;
-      // The rest is the repository path
       repository = parts.slice(1).join("/");
 
-      // Handle case where there's no repository part
+      // If there's no repository, this image is unparsable
       if (!repository) {
         return null;
       }
     } else {
-      // No registry specified, use default docker.io
+      // No registry specified, use default `docker.io`
       registry = "docker.io";
       repository = imageWithoutTag;
-
-      // For docker.io, if there's no namespace, add 'library/'
-      if (!repository.includes("/")) {
-        repository = `library/${repository}`;
-      }
     }
 
     return { registry, repository };
