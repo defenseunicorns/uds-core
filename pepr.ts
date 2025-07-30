@@ -18,6 +18,7 @@ import { startPackageWatch } from "./src/pepr/operator/controllers/packages/pack
 import { registerCRDs } from "./src/pepr/operator/crd/register";
 import { patches } from "./src/pepr/patches";
 import { policies, startExemptionWatch } from "./src/pepr/policies";
+import { initPolicyVariables } from "./src/pepr/policies/common";
 import { prometheus } from "./src/pepr/prometheus";
 
 const log = setupLogger(Component.STARTUP);
@@ -33,6 +34,8 @@ const log = setupLogger(Component.STARTUP);
   // Initialize API Server and Nodes IPs in-memory
   await initAPIServerCIDR();
   await initAllNodesTarget();
+  // Initialize Policy variables in-memory
+  await initPolicyVariables();
   // Setup Authservice and Keycloak Secrets used by the operator
   await setupAuthserviceSecret();
   await setupKeycloakClientSecret();
