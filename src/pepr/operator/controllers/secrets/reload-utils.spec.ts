@@ -6,7 +6,7 @@
 import { GenericClass } from "kubernetes-fluent-client";
 import { K8s, kind } from "pepr";
 import { Logger } from "pino";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, Mock, vi } from "vitest";
 import * as reloadUtils from "./reload-utils";
 import { reloadPods, restartController } from "./reload-utils";
 
@@ -174,7 +174,7 @@ describe("reloadPods", () => {
     lastControllerName = "";
 
     // Configure the main K8s mock
-    vi.mocked(K8s).mockImplementation(
+    vi.mocked(K8s as Mock).mockImplementation(
       (resourceKind: GenericClass, options?: { name?: string; namespace?: string }) => {
         // Track the controller kind and name when a specific controller is targeted
         if (options?.name) {
@@ -394,7 +394,7 @@ describe("reloadPods", () => {
     mockK8sClient.Apply.mockRejectedValueOnce(new Error("Failed to apply controller"));
 
     // Set up K8s mock to return our mockK8sClient
-    vi.mocked(K8s).mockImplementation((resourceKind, options) => {
+    vi.mocked(K8s as Mock).mockImplementation((resourceKind, options) => {
       // Track the controller kind and name when a specific controller is targeted
       if (options?.name) {
         lastUsedControllerKind = resourceKind;
@@ -445,7 +445,7 @@ describe("restartController", () => {
     mockK8sClient.Get.mockResolvedValue(testDeployment);
 
     // Set up K8s mock to return our mockK8sClient
-    vi.mocked(K8s).mockReturnValue(mockK8sClient);
+    vi.mocked(K8s as Mock).mockImplementation(() => mockK8sClient);
 
     // Call the function
     await restartController(
@@ -492,7 +492,7 @@ describe("restartController", () => {
 
   it("should throw an error for unsupported controller kinds", async () => {
     // Set up K8s mocks
-    vi.mocked(K8s).mockReturnValue(createMockK8sClient());
+    vi.mocked(K8s as Mock).mockImplementation(() => createMockK8sClient());
 
     // Call the function and expect it to throw
     await expect(
@@ -505,7 +505,7 @@ describe("restartController", () => {
     const mockApply = vi.fn().mockRejectedValue(new Error("Test error"));
 
     // Set up K8s mocks with custom implementation
-    vi.mocked(K8s).mockImplementation((resourceKind, options) => {
+    vi.mocked(K8s as Mock).mockImplementation((resourceKind, options) => {
       if (options?.name && options?.namespace) {
         return createMockK8sClient({
           Apply: mockApply,
