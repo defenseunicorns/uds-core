@@ -2,27 +2,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 
-# Create a custom launch template with public IP association
-resource "aws_launch_template" "eks_node_group" {
-  name_prefix = "${var.name}-lt-"
-
-  network_interfaces {
-    associate_public_ip_address = true
-    delete_on_termination       = true
-  }
-
-  tag_specifications {
-    resource_type = "instance"
-    tags = merge(local.tags, {
-      Name = "${var.name}-node"
-    })
-  }
-
-  lifecycle {
-    create_before_destroy = true
-  }
-}
-
 # Create EKS Cluster
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
@@ -86,10 +65,15 @@ module "eks" {
       iam_role_name                 = "${substr(var.name, 0, 30)}-eks-node-role"
       iam_role_permissions_boundary = "arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:policy/${var.permissions_boundary_name}"
 
-      # Use our custom launch template that has public IP association
-      create_launch_template  = false
-      launch_template_id      = aws_launch_template.eks_node_group.id
-      launch_template_version = aws_launch_template.eks_node_group.latest_version
+      create_launch_template = true
+      network_interfaces = [
+        {
+          // Set launch template to use public IP
+          associate_public_ip_address = true
+          delete_on_termination       = true
+        }
+      ]
+
 
       # Add required policies for node functionality
       iam_role_additional_policies = {
