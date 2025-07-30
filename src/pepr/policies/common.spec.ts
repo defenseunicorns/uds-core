@@ -5,7 +5,7 @@
 
 import { K8s, kind } from "pepr";
 import { afterEach, beforeEach, describe, expect, it, Mock, vi } from "vitest";
-import { initPolicyVariables, parseImageRef, validateIstioImage } from "./common";
+import { parseImageRef, validateIstioImage } from "./common";
 
 // Mock the K8s client
 vi.mock("pepr", async () => {
@@ -95,7 +95,6 @@ describe("parseImageRef", () => {
 });
 
 describe("validateIstioImage", () => {
-  const originalWatchMode = process.env.PEPR_WATCH_MODE;
   beforeEach(async () => {
     // Set up the test environment
     vi.clearAllMocks();
@@ -124,15 +123,10 @@ describe("validateIstioImage", () => {
         };
       }
     });
-
-    // Initialize policy variables which will set up the currentImageRegistry
-    process.env.PEPR_WATCH_MODE = "false";
-    await initPolicyVariables();
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
-    process.env.PEPR_WATCH_MODE = originalWatchMode;
   });
 
   // Test each flavor with its canonical registry

@@ -4,7 +4,7 @@
  */
 
 import { KubernetesObject, V1Container, V1SecurityContext } from "@kubernetes/client-node";
-import { Capability, K8s, PeprMutateRequest, PeprValidateRequest, a, kind, sdk } from "pepr";
+import { Capability, PeprMutateRequest, PeprValidateRequest, a, sdk } from "pepr";
 import { Component, setupLogger } from "../logger";
 import { Policy } from "../operator/crd";
 
@@ -24,36 +24,8 @@ export const { When } = policies;
 
 const log = setupLogger(Component.POLICIES);
 
-// Track the registry used by the Pepr pods (zarf registry)
-let currentImageRegistry: string;
-
-// Initialize variables needed for processing
-export async function initPolicyVariables() {
-  if (process.env.PEPR_WATCH_MODE === "false" || process.env.PEPR_MODE === "dev") {
-    try {
-      // Get all pods in the pepr-system namespace
-      const pods = await K8s(kind.Pod).InNamespace("pepr-system").Get();
-
-      // Use the first pod's image
-      const image = pods.items?.[0]?.spec?.containers?.[0]?.image;
-
-      if (!image) {
-        throw new Error("No image found in pepr-system pods.");
-      }
-
-      const parsed = parseImageRef(image);
-
-      if (!parsed) {
-        throw new Error("Unable to parse the current registry from the pepr-system pods.");
-      }
-      currentImageRegistry = parsed.registry;
-      log.debug(`Initialized Istio policy check variables with registry: ${currentImageRegistry}`);
-    } catch (error) {
-      log.error("Failed to initialize Istio policy check variables:", error);
-      throw error;
-    }
-  }
-}
+// The default shouldn't be used, but is the default zarf registry in case our env doesn't get set as expected
+const zarfRegistry = process.env.ZARF_REGISTRY_ADDRESS || "127.0.0.1:31999";
 
 // Map of flavor to its expected registry and repository for Istio proxy image
 const ISTIO_IMAGE_FLAVOR_CONFIGS = {
@@ -137,8 +109,8 @@ export function validateIstioImage(imageString: string): boolean {
     // Find matching flavor by repository
     for (const config of Object.values(ISTIO_IMAGE_FLAVOR_CONFIGS)) {
       if (config.repository === repository) {
-        // Check if registry matches either the flavor's registry (connected environment) or the current pod's registry (zarf registry)
-        return registry === config.registry || registry === currentImageRegistry;
+        // Check if registry matches either the flavor's registry (connected environment) or the zarf registry
+        return registry === config.registry || registry === zarfRegistry;
       }
     }
 
