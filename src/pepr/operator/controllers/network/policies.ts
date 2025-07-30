@@ -105,7 +105,7 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
       }
     }
 
-    const generatedPolicy = generate(namespace, policy);
+    const generatedPolicy = generate(namespace, policy, istioMode);
     policies.push(generatedPolicy);
   }
 
@@ -142,7 +142,7 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
     };
 
     // Generate the policy
-    const generatedPolicy = generate(namespace, policy);
+    const generatedPolicy = generate(namespace, policy, istioMode);
     policies.push(generatedPolicy);
   }
 
@@ -163,7 +163,7 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
     };
 
     // Generate the workload to keycloak for JWKS endpoint policy
-    const generatedPolicy = generate(namespace, policy);
+    const generatedPolicy = generate(namespace, policy, istioMode);
     policies.push(generatedPolicy);
 
     const keycloakPolicy: Allow = {
@@ -176,7 +176,7 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
     };
 
     // Generate the policy
-    const keycloakGeneratedPolicy = generate(namespace, keycloakPolicy);
+    const keycloakGeneratedPolicy = generate(namespace, keycloakPolicy, istioMode);
     policies.push(keycloakGeneratedPolicy);
 
     // Add waypoint network policies for ambient mode
@@ -261,7 +261,7 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
       description: `${targetPort}-${Object.values(selector)} Metrics`,
     };
     // Generate the policy
-    const generatedPolicy = generate(namespace, policy);
+    const generatedPolicy = generate(namespace, policy, istioMode);
     policies.push(generatedPolicy);
   }
 

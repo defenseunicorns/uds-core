@@ -10,6 +10,7 @@ import * as utils from "../utils";
 import { defaultEgressMocks, pkgMock, updateEgressMocks } from "./defaultTestMocks";
 import * as egressMod from "./egress";
 import { istioEgressResources } from "./istio-resources";
+import { IstioState } from "./namespace";
 
 vi.mock("../utils", async importOriginal => {
   const original = (await importOriginal()) as typeof utils;
@@ -69,8 +70,7 @@ describe("test istioEgressResources", () => {
       },
     };
 
-    const errorMessage =
-      "Unable to reconcile get the egress gateway namespace istio-egress-gateway.";
+    const errorMessage = "Unable to get the egress gateway namespace istio-egress-gateway.";
 
     const getNsMock = vi
       .fn<() => Promise<kind.Namespace>>()
@@ -90,6 +90,7 @@ describe("test istioEgressResources", () => {
         pkgMock.metadata!.namespace!,
         pkgMock.metadata!.generation!.toString(),
         [],
+        IstioState.Sidecar,
       ),
     ).rejects.toThrow(errorMessage);
   });
@@ -116,6 +117,7 @@ describe("test istioEgressResources", () => {
         pkgMock.metadata!.namespace!,
         pkgMock.metadata!.generation!.toString(),
         [],
+        IstioState.Sidecar,
       ),
     ).rejects.toThrowError(mockError);
   });
@@ -129,6 +131,7 @@ describe("test istioEgressResources", () => {
       pkgMock.metadata!.namespace!,
       pkgMock.metadata!.generation!.toString(),
       [],
+      IstioState.Sidecar,
     );
 
     expect(egressMod.reconcileSharedEgressResources).toHaveBeenCalledTimes(1);
@@ -175,6 +178,7 @@ describe("test istioEgressResources", () => {
       pkgMock.metadata!.namespace!,
       pkgMock.metadata!.generation!.toString(),
       [],
+      IstioState.Sidecar,
     );
 
     expect(defaultEgressMocks.applySeMock).toHaveBeenCalledTimes(1);
@@ -201,6 +205,7 @@ describe("test istioEgressResources", () => {
       pkgMock.metadata!.namespace!,
       pkgMock.metadata!.generation!.toString(),
       [],
+      IstioState.Sidecar,
     );
 
     expect(defaultEgressMocks.applySeMock).not.toHaveBeenCalled();

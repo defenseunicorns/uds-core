@@ -69,6 +69,10 @@ export async function packageReconciler(pkg: UDSPackage) {
     await new Promise(resolve => setTimeout(resolve, backOffSeconds * 1000));
   }
 
+  // Migrate the package to the latest version
+  migrate(pkg);
+
+  // Configure the namespace and namespace-wide network policies
   try {
     await updateStatus(pkg, { phase: Phase.Pending, conditions: getReadinessConditions(false) });
     await reconcilePackageFlow(pkg);
@@ -111,7 +115,7 @@ async function reconcilePackageFlow(pkg: UDSPackage): Promise<void> {
   }
 
   // Create the Istio Resources per the package configuration
-  endpoints = await istioResources(pkg, namespace!);
+  endpoints = await istioResources(pkg, namespace!, istioMode);
 
   // Configure the ServiceMonitors
   const monitors: string[] = [];
@@ -245,7 +249,13 @@ export async function packageFinalizer(pkg: UDSPackage) {
     });
     // Clean annotations and/or remove any shared egress resources
     await retryWithDelay(async function cleanupSharedEgressResources() {
-      await reconcileSharedEgressResources(undefined, getPackageId(pkg), PackageAction.Remove);
+      const istioMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Sidecar;
+      await reconcileSharedEgressResources(
+        undefined,
+        getPackageId(pkg),
+        PackageAction.Remove,
+        istioMode,
+      );
     }, log);
   } catch (e) {
     log.debug(
