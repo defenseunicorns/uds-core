@@ -46,12 +46,10 @@ export async function initAllNodesTarget() {
 
       for (const node of nodes.items) {
         const ip = getNodeInternalIP(node);
-        const nodeName = node.metadata?.name;
+        const nodeName = node.metadata!.name!;
 
         if (ip) {
           nodeSet.add(ip);
-        }
-        if (nodeName && ip) {
           nodeNameToIPMap.set(nodeName, ip);
         }
       }
@@ -81,9 +79,9 @@ export function kubeNodes(): V1NetworkPolicyPeer[] {
  */
 export async function updateKubeNodesFromCreateUpdate(node: kind.Node) {
   const ip = getNodeInternalIP(node);
-  const nodeName = node.metadata?.name;
+  const nodeName = node.metadata!.name!;
 
-  if (ip && nodeName) {
+  if (ip) {
     const oldIP = nodeNameToIPMap.get(nodeName);
 
     nodeSet.add(ip);
@@ -105,8 +103,8 @@ export async function updateKubeNodesFromCreateUpdate(node: kind.Node) {
  */
 export async function updateKubeNodesFromDelete(node: kind.Node) {
   const ip = getNodeInternalIP(node);
-  const nodeName = node.metadata?.name;
-  if (ip && nodeName) {
+  const nodeName = node.metadata!.name!;
+  if (ip) {
     nodeSet.delete(ip);
     nodeNameToIPMap.delete(nodeName);
   }
