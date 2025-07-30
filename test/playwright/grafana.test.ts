@@ -91,6 +91,63 @@ test("validate loki dashboard", async ({ page }) => {
   });
 });
 
+// If these tests are failing, may indicate the dashboards need to be updatd
+// originally brought in from: https://github.com/keycloak/keycloak-grafana-dashboard
+test.describe("validate Keycloak Dashboards", () => {
+  const keycloakDashboards = [
+    { name: "Keycloak capacity planning dashboard", id: "keycloak-capacity-planning" },
+    { name: "Keycloak troubleshooting dashboard", id: "keycloak-troubleshooting" },
+  ];
+
+  for (const dashboard of keycloakDashboards) {
+    test(`should load ${dashboard.name} without panel errors`, async ({ page }) => {
+      const errors: string[] = [];
+
+      // Set up console error collection
+      page.on("console", msg => {
+        if (msg.type() === "error") {
+          const text = msg.text();
+          if (
+            text.includes("PanelQueryRunner Error") &&
+            !text.includes("updateAndValidate error")
+          ) {
+            errors.push(text);
+          }
+        }
+      });
+
+      // Navigate to dashboards page
+      await page.goto("/dashboards");
+
+      // Search for the dashboard
+      await page.getByPlaceholder("Search for dashboards and folders").fill("Keycloak");
+      await page.click(`text="${dashboard.name}"`);
+
+      // Wait for dashboard to load
+      await page.waitForLoadState("networkidle");
+
+      // Wait for panels to load
+      await page
+        .waitForSelector(".panel-loading", { state: "hidden", timeout: 15000 })
+        .catch(() => console.log("No loading indicator found or already loaded"));
+
+      // Additional wait for any async operations
+      await page.waitForTimeout(2000);
+
+      // Check for any panel errors in the UI
+      const panelErrors = await page.$$eval(".panel-error", elements =>
+        elements.map(el => el.textContent || ""),
+      );
+
+      // Combine all errors
+      const allErrors = [...errors, ...panelErrors.filter(Boolean)];
+
+      // Assert no errors found
+      expect(allErrors, `Found PanelQueryRunner errors: ${allErrors.join("\n")}`).toHaveLength(0);
+    });
+  }
+});
+
 // Test the logout functionality
 test("validate logout functionality", async ({ page }) => {
   await test.step("perform logout", async () => {
