@@ -86,17 +86,11 @@ Check external PostgreSQL connection information. Fails when required values are
 {{- $validHostSecretRef := eq (include "keycloak.postgresql.host.validExistingSecretRef" .) "true" -}}
 {{- $secretRefUsed := or $validUsernameSecretRef $validPasswordSecretRef $validHostSecretRef -}}
 
-{{- $emptyUsernameValue := empty $.Values.postgresql.username -}}
-{{- $emptyPasswordValue := empty $.Values.postgresql.password -}}
-{{- $emptyHostValue := empty $.Values.postgresql.host -}}
-{{- $emptyDatabaseValue := empty $.Values.postgresql.database -}}
-{{- $emptyPortValue := empty $.Values.postgresql.port -}}
-
-{{- $usernameConfigured := or (not $emptyUsernameValue) $validUsernameSecretRef -}}
-{{- $passwordConfigured := or (not $emptyPasswordValue) $validPasswordSecretRef -}}
-{{- $hostConfigured := or (not $emptyHostValue) $validHostSecretRef -}}
-{{- $databaseConfigured := not $emptyDatabaseValue -}}
-{{- $portConfigured := not $emptyPortValue -}}
+{{- $usernameConfigured := or $.Values.postgresql.username $validUsernameSecretRef -}}
+{{- $passwordConfigured := or $.Values.postgresql.password $validPasswordSecretRef -}}
+{{- $hostConfigured := or $.Values.postgresql.host $validHostSecretRef -}}
+{{- $databaseConfigured := $.Values.postgresql.database -}}
+{{- $portConfigured := $.Values.postgresql.port -}}
 
 {{- if and .Values.devMode (or $usernameConfigured $passwordConfigured $hostConfigured $databaseConfigured) -}}
     {{- fail "Cannot use an external PostgreSQL Database when 'devMode' is enabled." -}}
