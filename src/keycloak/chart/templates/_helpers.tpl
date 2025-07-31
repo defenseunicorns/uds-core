@@ -138,16 +138,13 @@ Check external PostgreSQL connection information. Fails when required values are
 
 {{/* Helper to determine if there is a valid configured secretRef for PostgreSQL username */}}
 {{- define "keycloak.postgresql.username.validExistingSecretRef" -}}
-  {{- if not (empty (compact (values .Values.postgresql.secretRef.username))) -}}
-    {{/* Validate that both name and key are set for the secretRef and are not set to "", otherwise fail*/}}
-    {{- if or (empty .Values.postgresql.secretRef.username.name) (empty .Values.postgresql.secretRef.username.key) -}}
-      {{- fail "Both \"postgresql.secretRef.username.name\" and \"postgresql.secretRef.username.key\" must be set when using secretRef." -}}
-    {{- else -}}
-      {{- true -}}
-    {{- end -}}
-  {{- else -}}
-    {{- false -}}
-  {{- end -}}
+{{- if and .Values.postgresql.secretRef.username.name .Values.postgresql.secretRef.username.key -}}
+  {{- true -}}
+{{- else if or .Values.postgresql.secretRef.username.name .Values.postgresql.secretRef.username.key -}}
+  {{- fail "Both \"postgresql.secretRef.username.name\" and \"postgresql.secretRef.username.key\" must be set when using secretRef." -}}
+{{- else -}}
+  {{- false -}}
+{{- end -}}
 {{- end -}}
 
 {{/* Determine the secret name for PostgreSQL username. */}}
@@ -170,16 +167,13 @@ Check external PostgreSQL connection information. Fails when required values are
 
 {{/* Helper to determine if there is a valid configured secretRef for PostgreSQL password */}}
 {{- define "keycloak.postgresql.password.validExistingSecretRef" -}}
-  {{- if not (empty (compact (values .Values.postgresql.secretRef.password))) -}}
-    {{/* Validate that both name and key are set for the secretRef and are not set to "", otherwise fail*/}}
-    {{- if or (empty .Values.postgresql.secretRef.password.name) (empty .Values.postgresql.secretRef.password.key) -}}
-      {{- fail "Both \"postgresql.secretRef.password.name\" and \"postgresql.secretRef.password.key\" must be set when using secretRef." -}}
-    {{- else -}}
-      {{- true -}}
-    {{- end -}}
-  {{- else -}}
-    {{- false -}}
-  {{- end -}}
+{{- if and .Values.postgresql.secretRef.password.name .Values.postgresql.secretRef.password.key -}}
+  {{- true -}}
+{{- else if or .Values.postgresql.secretRef.password.name .Values.postgresql.secretRef.password.key -}}
+  {{- fail "Both \"postgresql.secretRef.password.name\" and \"postgresql.secretRef.password.key\" must be set when using secretRef." -}}
+{{- else -}}
+  {{- false -}}
+{{- end -}}
 {{- end -}}
 
 {{/* Determine the secret name for PostgreSQL password. */}}
@@ -203,16 +197,13 @@ Check external PostgreSQL connection information. Fails when required values are
 
 {{/* Helper to determine if there is a valid configured secretRef for PostgreSQL host */}}
 {{- define "keycloak.postgresql.host.validExistingSecretRef" -}}
-  {{- if not (empty (compact (values .Values.postgresql.secretRef.host))) -}}
-    {{/* Validate that both name and key are set for the secretRef and are not set to "", otherwise fail*/}}
-    {{- if or (empty .Values.postgresql.secretRef.host.name) (empty .Values.postgresql.secretRef.host.key) -}}
-      {{- fail "Both \"postgresql.secretRef.host.name\" and \"postgresql.secretRef.host.key\" must be set when using secretRef." -}}
-    {{- else -}}
-      {{- true -}}
-    {{- end -}}
-  {{- else -}}
-    {{- false -}}
-  {{- end -}}
+{{- if and .Values.postgresql.secretRef.host.name .Values.postgresql.secretRef.host.key -}}
+  {{- true -}}
+{{- else if or .Values.postgresql.secretRef.host.name .Values.postgresql.secretRef.host.key -}}
+  {{- fail "Both \"postgresql.secretRef.host.name\" and \"postgresql.secretRef.host.key\" must be set when using secretRef." -}}
+{{- else -}}
+  {{- false -}}
+{{- end -}}
 {{- end -}}
 
 {{/* Determine the secret name for PostgreSQL host. */}}
