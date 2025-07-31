@@ -12,6 +12,25 @@ UDS Core automates Keycloak Client configuration, secret management, and advance
 
 When a new UDS Package CR with the `sso` configuration gets deployed, the UDS Operator creates a new Keycloak Client. This process happens using the [Keycloak Admin endpoint](https://www.keycloak.org/docs-api/latest/rest-api/index.html#_clients) for managing Clients. The latter mode reads the Client Secrets from the `keycloak-client-secrets` Kubernetes Secret deployed in `keycloak` namespace. This Secret is managed automatically by the UDS Operator. Once the Keycloak Client is ready, and the `enableAuthserviceSelector` is defined in the spec, the UDS Operator deploys Istio [Request Authentication](https://istio.io/latest/docs/reference/config/security/request_authentication/) and [AuthorizationPolicy](https://istio.io/latest/docs/reference/config/security/authorization-policy/) for both JWT and Request Headers. Both actions combined, enables seamless and transparent application authentication and authorization capabilities.
 
+:::note
+Keycloak provides comprehensive monitoring through Grafana dashboards. For more information, see the [Keycloak Observability Documentation](https://www.keycloak.org/observability/grafana-dashboards).
+
+Key dashboards included:
+
+- **Keycloak Capacity Planning Dashboard**
+  - Focuses on authentication request metrics and events
+  - Tracks authentication success/failure rates
+  - Monitors token issuance and validation metrics
+  - Helps with understanding authentication workload patterns
+
+- **Keycloak Troubleshooting Dashboard**
+  - Comprehensive cluster health monitoring
+  - Tracks JVM metrics (memory, GC, threads)
+  - Monitors database connection pool and performance
+  - Provides system resource utilization metrics
+  - Helps identify and diagnose cluster-wide issues
+:::
+
 ## Rotating the UDS Operator Client Secret
 
 The UDS Operator uses a dedicated Client in Keycloak. In some cases, the Client Secret needs to be rotated. In order to do so, you need to manually modify the `keycloak-client-secrets` Kubernetes Secret in the `keycloak` namespace and delete the `uds-operator` key. The UDS Operator will automatically re-create it.

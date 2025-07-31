@@ -10,7 +10,7 @@ image:
   pullPolicy: IfNotPresent
 
 # renovate: datasource=github-tags depName=defenseunicorns/uds-identity-config versioning=semver
-configImage: ghcr.io/defenseunicorns/uds/identity-config:0.16.1
+configImage: ghcr.io/defenseunicorns/uds/identity-config:0.16.2
 
 # The public domain name of the Keycloak server
 domain: "###ZARF_VAR_DOMAIN###"
@@ -84,6 +84,10 @@ themeCustomizations:
 insecureAdminPasswordGeneration:
   enabled: false
   username: admin
+
+# Optional annotations for grouping dashboards in Grafana folders.
+# see docs for more info: https://uds.defenseunicorns.com/reference/configuration/uds-monitoring-metrics/#grouping-dashboards
+dashboardAnnotations: {}
 
 # Support for custom `network.allow` entries on the Package CR, useful for extra datasources
 additionalNetworkAllow: []
