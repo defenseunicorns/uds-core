@@ -2,36 +2,15 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 
-# Create a custom launch template with public IP association
-resource "aws_launch_template" "eks_node_group" {
-  name_prefix = "${var.name}-lt-"
-
-  network_interfaces {
-    associate_public_ip_address = true
-    delete_on_termination       = true
-  }
-
-  tag_specifications {
-    resource_type = "instance"
-    tags = merge(local.tags, {
-      Name = "${var.name}-node"
-    })
-  }
-
-  lifecycle {
-    create_before_destroy = true
-  }
-}
-
 # Create EKS Cluster
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "~> 20.37.0"
+  version = "~> 21.0.0"
 
-  cluster_name                    = var.name
-  cluster_version                 = var.kubernetes_version
-  cluster_endpoint_public_access  = true
-  cluster_endpoint_private_access = false
+  name                    = var.name
+  kubernetes_version      = var.kubernetes_version
+  endpoint_public_access  = true
+  endpoint_private_access = false
 
   vpc_id     = data.aws_vpc.vpc.id
   subnet_ids = local.subnet_ids
@@ -40,7 +19,7 @@ module "eks" {
   iam_role_permissions_boundary = "arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:policy/${var.permissions_boundary_name}"
 
   # Add CloudWatch logging
-  cluster_enabled_log_types              = []
+  enabled_log_types                      = []
   cloudwatch_log_group_retention_in_days = 0
 
   # Authentication mode
@@ -50,7 +29,7 @@ module "eks" {
   enable_cluster_creator_admin_permissions = true
 
   # Security groups
-  create_cluster_security_group                = true
+  create_security_group                        = true
   create_node_security_group                   = true
   node_security_group_enable_recommended_rules = true
   node_security_group_additional_rules = {
@@ -62,9 +41,35 @@ module "eks" {
       type                          = "ingress"
       source_cluster_security_group = true
     }
-  }
 
-  enable_security_groups_for_pods = false
+    // This is needed to allow the ELB to communicate with Istio ingress gateways
+    ingress_443 = {
+      description = "Allow ELB to Nodes"
+      protocol    = "tcp"
+      from_port   = 443
+      to_port     = 443
+      type        = "ingress"
+      cidr_blocks = [data.aws_vpc.vpc.cidr_block]
+    }
+
+    ingress_80 = {
+      description = "Allow ELB to Nodes"
+      protocol    = "tcp"
+      from_port   = 80
+      to_port     = 80
+      type        = "ingress"
+      cidr_blocks = [data.aws_vpc.vpc.cidr_block]
+    }
+
+    ingress_node_ports = {
+      description = "Allow ELB to Nodes"
+      protocol    = "tcp"
+      from_port   = 30000
+      to_port     = 32767
+      type        = "ingress"
+      cidr_blocks = [data.aws_vpc.vpc.cidr_block]
+    }
+  }
 
   # Add tags to all resources
   tags = local.tags
@@ -88,10 +93,22 @@ module "eks" {
       iam_role_name                 = "${substr(var.name, 0, 30)}-eks-node-role"
       iam_role_permissions_boundary = "arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:policy/${var.permissions_boundary_name}"
 
-      # Use our custom launch template that has public IP association
-      create_launch_template  = false
-      launch_template_id      = aws_launch_template.eks_node_group.id
-      launch_template_version = aws_launch_template.eks_node_group.latest_version
+      metadata_options = {
+        http_put_response_hop_limit = 2 // Need 2 hops to not break IRSA from inside pods
+        http_tokens                 = "required"
+      }
+
+      enable_efa_only            = false
+      create_launch_template     = true
+      enable_bootstrap_user_data = true
+      network_interfaces = [
+        {
+          // Set launch template to use public IP
+          associate_public_ip_address = true
+          delete_on_termination       = true
+        }
+      ]
+
 
       # Add required policies for node functionality
       iam_role_additional_policies = {
@@ -106,9 +123,10 @@ module "eks" {
   }
 
   # EKS Addons
-  cluster_addons = {
+  addons = {
     vpc-cni = {
-      most_recent = true
+      most_recent    = true
+      before_compute = true
       configuration_values = jsonencode({
         enableNetworkPolicy = "true"
       })
