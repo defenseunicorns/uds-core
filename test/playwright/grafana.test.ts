@@ -95,12 +95,12 @@ test("validate loki dashboard", async ({ page }) => {
 // originally brought in from: https://github.com/keycloak/keycloak-grafana-dashboard
 test.describe("validate Keycloak Dashboards", () => {
   const keycloakDashboards = [
-    { name: "Keycloak capacity planning dashboard", id: "keycloak-capacity-planning" },
-    { name: "Keycloak troubleshooting dashboard", id: "keycloak-troubleshooting" },
+    "Keycloak capacity planning dashboard",
+    "Keycloak troubleshooting dashboard",
   ];
 
   for (const dashboard of keycloakDashboards) {
-    test(`should load ${dashboard.name} without panel errors`, async ({ page }) => {
+    test(`should load ${dashboard} without panel errors`, async ({ page }) => {
       const errors: string[] = [];
 
       // Set up console error collection
@@ -121,7 +121,7 @@ test.describe("validate Keycloak Dashboards", () => {
 
       // Search for the dashboard
       await page.getByPlaceholder("Search for dashboards and folders").fill("Keycloak");
-      await page.click(`text="${dashboard.name}"`);
+      await page.click(`text="${dashboard}"`);
 
       // Wait for DOM to be parsed and dashboard controls to be present
       await page.waitForLoadState("domcontentloaded");
