@@ -4,17 +4,17 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: authservice-test-app
+  name: authservice-sidecar-test-app
 ---
 apiVersion: uds.dev/v1alpha1
 kind: Package
 metadata:
   name: httpbin-other
-  namespace: authservice-test-app
+  namespace: authservice-sidecar-test-app
 spec:
   sso:
     - name: Demo SSO
-      clientId: uds-core-httpbin
+      clientId: uds-core-sidecar-httpbin
       redirectUris:
         - "https://protected.uds.dev/login"
       enableAuthserviceSelector:

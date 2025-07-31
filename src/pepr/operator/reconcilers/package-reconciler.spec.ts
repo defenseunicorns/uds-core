@@ -5,6 +5,48 @@
 
 import { beforeEach, describe, expect, Mock, MockedFunction, test, vi } from "vitest";
 
+// ---- Vitest mocks ----
+vi.mock("kubernetes-fluent-client");
+vi.mock("../../config");
+vi.mock("../controllers/istio/namespace", () => ({ cleanupNamespace: vi.fn() }));
+vi.mock("../controllers/keycloak/client-sync", () => ({ purgeSSOClients: vi.fn() }));
+vi.mock("../controllers/keycloak/authservice/authservice", () => ({
+  purgeAuthserviceClients: vi.fn(),
+}));
+vi.mock("../controllers/utils", () => ({
+  retryWithDelay: vi.fn(async <T>(fn: () => Promise<T>) => fn()),
+}));
+vi.mock(".", async () => {
+  const originalModule = (await vi.importActual(".")) as object;
+  return { ...originalModule, writeEvent: vi.fn() };
+});
+vi.mock("../controllers/istio/egress", async () => {
+  const originalModule = (await vi.importActual("../controllers/istio/egress")) as object;
+  return {
+    ...originalModule,
+    reconcileSharedEgressResources: vi.fn(async <T>(fn: () => Promise<T>) => fn()),
+  };
+});
+vi.mock("../controllers/istio/virtual-service");
+vi.mock("../controllers/network/policies");
+vi.mock("pepr", () => ({
+  K8s: vi.fn(),
+  Log: {
+    info: vi.fn(),
+    debug: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    trace: vi.fn(),
+    child: vi.fn().mockReturnThis(),
+  },
+  kind: { CoreEvent: "CoreEvent" },
+  Capability: vi.fn().mockImplementation(() => ({
+    name: "uds-core-operator",
+    description: "The UDS Operator is responsible for managing the lifecycle of UDS resources",
+  })),
+}));
+
+// ---- Imports that depend on mocks ----
 import { K8s, Log } from "pepr";
 import { writeEvent } from ".";
 import { reconcileSharedEgressResources } from "../controllers/istio/egress";
@@ -24,12 +66,8 @@ const mockWriteEvent = vi.fn();
 
 vi.mock("kubernetes-fluent-client");
 vi.mock("../../config");
-vi.mock("../controllers/istio/namespace", () => ({
-  cleanupNamespace: vi.fn(),
-}));
-vi.mock("../controllers/keycloak/client-sync", () => ({
-  purgeSSOClients: vi.fn(),
-}));
+vi.mock("../controllers/istio/namespace", () => ({ cleanupNamespace: vi.fn() }));
+vi.mock("../controllers/keycloak/client-sync", () => ({ purgeSSOClients: vi.fn() }));
 vi.mock("../controllers/keycloak/authservice/authservice", () => ({
   purgeAuthserviceClients: vi.fn(),
 }));
@@ -38,10 +76,7 @@ vi.mock("../controllers/utils", () => ({
 }));
 vi.mock(".", async () => {
   const originalModule = (await vi.importActual(".")) as object;
-  return {
-    ...originalModule,
-    writeEvent: vi.fn(),
-  };
+  return { ...originalModule, writeEvent: vi.fn() };
 });
 vi.mock("../controllers/istio/egress", async () => {
   const originalModule = (await vi.importActual("../controllers/istio/egress")) as object;
@@ -50,10 +85,8 @@ vi.mock("../controllers/istio/egress", async () => {
     reconcileSharedEgressResources: vi.fn(async <T>(fn: () => Promise<T>) => fn()),
   };
 });
-
 vi.mock("../controllers/istio/virtual-service");
 vi.mock("../controllers/network/policies");
-
 vi.mock("pepr", () => ({
   K8s: vi.fn(),
   Log: {
@@ -64,51 +97,54 @@ vi.mock("pepr", () => ({
     trace: vi.fn(),
     child: vi.fn().mockReturnThis(),
   },
-  kind: {
-    CoreEvent: "CoreEvent",
-  },
-  Capability: vi.fn().mockImplementation(() => {
-    return {
-      name: "uds-core-operator",
-      description: "The UDS Operator is responsible for managing the lifecycle of UDS resources",
-    };
-  }),
+  kind: { CoreEvent: "CoreEvent" },
+  Capability: vi.fn().mockImplementation(() => ({
+    name: "uds-core-operator",
+    description: "The UDS Operator is responsible for managing the lifecycle of UDS resources",
+  })),
 }));
 
-describe("reconciler", () => {
+describe("packageReconciler", () => {
   let mockPackage: UDSPackage;
-
   beforeEach(() => {
     vi.clearAllMocks();
-
     mockPackage = {
       metadata: { name: "test-package", namespace: "test-namespace", generation: 1 },
       status: { phase: Phase.Pending, observedGeneration: 0 },
     };
-
-    (K8s as Mock).mockImplementation(() => ({
-      Create: vi.fn(),
-      PatchStatus: vi.fn(),
-    }));
+    (K8s as Mock).mockImplementation(() => ({ Create: vi.fn(), PatchStatus: vi.fn() }));
   });
-
-  test("should log an error for invalid package definitions", async () => {
+  test("logs error for invalid package definitions", async () => {
     delete mockPackage.metadata!.namespace;
     await packageReconciler(mockPackage);
     expect(Log.error).toHaveBeenCalled();
   });
 });
 
-describe("finalizer", () => {
+describe("packageFinalizer", () => {
   let mockPackage: UDSPackage;
-
   beforeEach(() => {
     vi.clearAllMocks();
 
     mockPackage = {
       metadata: { name: "test-package", namespace: "test-namespace", generation: 1 },
+      spec: {
+        sso: [
+          {
+            name: "test-sso",
+            clientId: "test-client",
+            enableAuthserviceSelector: { enabled: "true" },
+          },
+        ],
+      },
     };
 
+    mockCleanupNamespace.mockReset().mockResolvedValue(undefined);
+    mockPurgeSSO.mockReset().mockResolvedValue(undefined);
+    mockPurgeAuthservice.mockReset().mockResolvedValue(undefined);
+    mockPatchStatus.mockReset().mockResolvedValue(undefined);
+    mockReconcileSharedEgressResources.mockReset().mockResolvedValue(undefined);
+    mockWriteEvent.mockReset();
     (K8s as Mock).mockImplementation(() => ({
       Create: vi.fn(),
       PatchStatus: mockPatchStatus,
@@ -253,10 +289,12 @@ describe("finalizer", () => {
 
   test("should handle failure in reconcileSharedEgressResources and set phase to RemovalFailed", async () => {
     mockPackage.status = { phase: Phase.Ready };
-    mockCleanupNamespace.mockReset();
-    mockPurgeAuthservice.mockReset();
-    mockPurgeSSO.mockReset();
-    mockReconcileSharedEgressResources.mockRejectedValue(new Error("Egress cleanup failed"));
+    mockCleanupNamespace.mockReset().mockResolvedValue(undefined);
+    mockPurgeAuthservice.mockReset().mockResolvedValue(undefined);
+    mockPurgeSSO.mockReset().mockResolvedValue(undefined);
+    mockReconcileSharedEgressResources
+      .mockReset()
+      .mockRejectedValue(new Error("Egress cleanup failed"));
 
     const finalizerRemoved = await packageFinalizer(mockPackage);
 

@@ -1,0 +1,132 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: httpbin
+  namespace: authservice-ambient-test-app
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: httpbin2
+  namespace: authservice-ambient-test-app
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: httpbin
+  namespace: authservice-ambient-test-app
+  labels:
+    app: httpbin
+    service: httpbin
+spec:
+  ports:
+    - name: http
+      port: 8000
+      targetPort: 80
+  selector:
+    app: httpbin
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: httpbin2
+  namespace: authservice-ambient-test-app
+  labels:
+    app: httpbin2
+    service: httpbin2
+spec:
+  ports:
+    - name: http
+      port: 8000
+      targetPort: 80
+  selector:
+    app: httpbin2
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin
+  namespace: authservice-ambient-test-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: httpbin
+        version: v1
+    spec:
+      serviceAccountName: httpbin
+      containers:
+        - image: docker.io/kong/httpbin:0.2.3
+          imagePullPolicy: IfNotPresent
+          name: httpbin
+          resources:
+            limits:
+              cpu: 50m
+              memory: 64Mi
+            requests:
+              cpu: 50m
+              memory: 64Mi
+          ports:
+            - containerPort: 80
+          securityContext:
+            allowPrivilegeEscalation: false
+            privileged: false
+            runAsGroup: 10001
+            runAsNonRoot: true
+            runAsUser: 10001
+            capabilities:
+              drop:
+                - ALL
+              add:
+                - NET_BIND_SERVICE
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin2
+  namespace: authservice-ambient-test-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin2
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: httpbin2
+        version: v1
+    spec:
+      serviceAccountName: httpbin2
+      containers:
+        - image: docker.io/kong/httpbin:0.2.3
+          imagePullPolicy: IfNotPresent
+          name: httpbin2
+          resources:
+            limits:
+              cpu: 50m
+              memory: 64Mi
+            requests:
+              cpu: 50m
+              memory: 64Mi
+          ports:
+            - containerPort: 80
+          securityContext:
+            allowPrivilegeEscalation: false
+            privileged: false
+            runAsGroup: 10001
+            runAsNonRoot: true
+            runAsUser: 10001
+            capabilities:
+              drop:
+                - ALL
+              add:
+                - NET_BIND_SERVICE

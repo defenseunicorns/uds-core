@@ -3,14 +3,10 @@
 
 tasks:
   - name: create-k3d-cluster
-    inputs:
-      K3D_EXTRA_ARGS:
-        default: ""
-        description: "Extra args to pass to k3d"
     actions:
       - description: "Create the K3d cluster"
-        # renovate: datasource=github-tags depName=defenseunicorns/uds-k3d versioning=semver
-        cmd: "uds zarf package deploy oci://defenseunicorns/uds-k3d:0.14.3-airgap --confirm --set K3D_EXTRA_ARGS='${{ .inputs.K3D_EXTRA_ARGS }}' --no-progress"
+        # renovate: datasource=docker depName=ghcr.io/defenseunicorns/packages/uds-k3d versioning=docker
+        cmd: "uds zarf package deploy oci://defenseunicorns/uds-k3d:0.15.2-airgap --confirm --no-progress"
 
   - name: k3d-test-cluster
     actions:
@@ -18,7 +14,7 @@ tasks:
 
       - description: "Initialize the cluster with Zarf"
         # renovate: datasource=github-tags depName=zarf-dev/zarf versioning=semver
-        cmd: "uds zarf package deploy oci://ghcr.io/zarf-dev/packages/init:v0.58.0 --confirm --no-progress"
+        cmd: "uds zarf package deploy oci://ghcr.io/zarf-dev/packages/init:v0.59.0 --confirm --no-progress"
 
   - name: ha-postgres
     actions:
