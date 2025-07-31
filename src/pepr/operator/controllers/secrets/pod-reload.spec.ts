@@ -4,7 +4,7 @@
  */
 
 import { K8s, kind } from "pepr";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, Mock, vi } from "vitest";
 import {
   computeSecretChecksum,
   discoverSecretConsumers,
@@ -105,7 +105,7 @@ describe("pod-reload", () => {
     };
 
     // Setup the K8s function mock
-    vi.mocked(K8s).mockImplementation(() => mockK8sClient);
+    vi.mocked(K8s as Mock).mockImplementation(() => mockK8sClient);
   }
 
   beforeEach(() => {
