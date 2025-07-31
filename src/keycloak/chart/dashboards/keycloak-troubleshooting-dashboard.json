@@ -1,4 +1,59 @@
 {
+  "__inputs": [
+    {
+      "name": "DS_PROMETHEUS",
+      "label": "Prometheus",
+      "description": "",
+      "type": "datasource",
+      "pluginId": "prometheus",
+      "pluginName": "Prometheus"
+    }
+  ],
+  "__elements": {},
+  "__requires": [
+    {
+      "type": "panel",
+      "id": "gauge",
+      "name": "Gauge",
+      "version": ""
+    },
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "9.4.7"
+    },
+    {
+      "type": "panel",
+      "id": "heatmap",
+      "name": "Heatmap",
+      "version": ""
+    },
+    {
+      "type": "datasource",
+      "id": "prometheus",
+      "name": "Prometheus",
+      "version": "1.0.0"
+    },
+    {
+      "type": "panel",
+      "id": "stat",
+      "name": "Stat",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "table",
+      "name": "Table",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "timeseries",
+      "name": "Time series",
+      "version": ""
+    }
+  ],
   "annotations": {
     "list": [
       {
@@ -42,7 +97,10 @@
       "type": "row"
     },
     {
-      "datasource": "Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -91,7 +149,10 @@
       "pluginVersion": "9.4.7",
       "targets": [
         {
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "Prometheus"
+          },
           "editorMode": "code",
           "expr": "count_over_time(\n  sum (up{\n    container=\"keycloak\", \n    namespace=\"$namespace\"\n  } > 0)[$__range:$__interval]\n)\n/\ncount_over_time(vector(1)[$__range:$__interval])",
           "hide": false,
@@ -105,7 +166,10 @@
       "type": "gauge"
     },
     {
-      "datasource": "Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -154,7 +218,10 @@
       "pluginVersion": "9.4.7",
       "targets": [
         {
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "Prometheus"
+          },
           "editorMode": "code",
           "expr": "sum(\n  rate(\n    http_server_requests_seconds_bucket{\n      uri=~\"/realms/{realm}/protocol/{protocol}/.*|/realms/{realm}/login-actions/.*\", \n      le=\"0.25\", \n      container=\"keycloak\", \n      namespace=\"$namespace\"}\n    [$__range] \n  )\n) without (le,uri,status,outcome,method,pod,instance) \n/\nsum(\n  rate(\n    http_server_requests_seconds_count{\n      uri=~\"/realms/{realm}/protocol/{protocol}/.*|/realms/{realm}/login-actions/.*\", \n      container=\"keycloak\",\n      namespace=\"$namespace\"}\n    [$__range] \n  )\n) without (le,uri,status,outcome,method,pod,instance)",
           "legendFormat": "__auto",
@@ -167,7 +234,10 @@
       "type": "gauge"
     },
     {
-      "datasource": "Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -213,7 +283,10 @@
       "pluginVersion": "9.4.7",
       "targets": [
         {
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "Prometheus"
+          },
           "editorMode": "code",
           "expr": "sum(\n  rate(\n    http_server_requests_seconds_count{\n      uri=~\"/realms/{realm}/protocol/{protocol}.*|/realms/{realm}/login-actions.*\", \n      outcome=\"SERVER_ERROR\", \n      container=\"keycloak\", \n      namespace=\"$namespace\"}\n    [$__range] \n  )\n) or vector(0) \n/\nsum(\n  rate(\n    http_server_requests_seconds_count{\n      uri=~\"/realms/{realm}/protocol/{protocol}.*|/realms/{realm}/login-actions.*\", \n      container=\"keycloak\", \n      namespace=\"$namespace\"}\n    [$__range] \n  )\n)",
           "legendFormat": "__auto",
@@ -225,7 +298,10 @@
       "type": "gauge"
     },
     {
-      "datasource": "Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
       "description": "This Prometheus query calculates the percentage of authentication requests that completed within 0.25 seconds relative to all authentication requests for specific Keycloak endpoints, targeting a particular namespace and pod, over the past 5 minutes.",
       "fieldConfig": {
         "defaults": {
@@ -305,7 +381,10 @@
       },
       "targets": [
         {
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "Prometheus"
+          },
           "editorMode": "code",
           "exemplar": true,
           "expr": "sum(\n  irate(\n    http_server_requests_seconds_bucket{\n      uri=~\"/realms/{realm}/protocol/{protocol}.*|/realms/{realm}/login-actions.*\", \n      le=\"0.25\", \n      container=\"keycloak\", \n      namespace=\"$namespace\"}\n    [5m] \n  )\n) without (le,uri,status,outcome,method,instance) \n/\nsum(\n  irate(\n    http_server_requests_seconds_count{\n      uri=~\"/realms/{realm}/protocol/{protocol}.*|/realms/{realm}/login-actions.*\", \n      container=\"keycloak\",\n      namespace=\"$namespace\"}\n    [5m] \n  )\n) without (le,uri,status,outcome,method,instance)",
@@ -315,7 +394,10 @@
           "refId": "A"
         },
         {
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "Prometheus"
+          },
           "editorMode": "code",
           "expr": "sum(\n  irate(\n    http_server_requests_seconds_bucket{\n      uri=~\"/realms/{realm}/protocol/{protocol}/.*|/realms/{realm}/login-actions/.*\", \n      le=\"0.25\", \n      container=\"keycloak\", \n      namespace=\"$namespace\"}\n    [5m] \n  )\n) without (le,uri,status,outcome,method,pod,instance) \n/\nsum(\n  irate(\n    http_server_requests_seconds_count{\n      uri=~\"/realms/{realm}/protocol/{protocol}/.*|/realms/{realm}/login-actions/.*\", \n      container=\"keycloak\",\n      namespace=\"$namespace\"}\n    [5m] \n  )\n) without (le,uri,status,outcome,method,pod,instance)",
           "hide": false,
@@ -329,7 +411,10 @@
       "type": "timeseries"
     },
     {
-      "datasource": "Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
       "description": "This Prometheus query calculates the percentage of authentication requests that returned a server side error for all authentication requests, targeting a particular namespace, over the past 5 minutes.",
       "fieldConfig": {
         "defaults": {
@@ -401,7 +486,10 @@
       },
       "targets": [
         {
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "Prometheus"
+          },
           "editorMode": "code",
           "expr": "sum by(uri)\n(\n  rate(\n    http_server_requests_seconds_count{\n      outcome=\"SERVER_ERROR\",\n      uri=~\"/realms/{realm}/protocol/{protocol}.*|/realms/{realm}/login-actions/.*\", \n      container=\"keycloak\", \n      namespace=\"$namespace\"}\n    [5m] \n  )\n)\n/\nsum by (uri)\n(\n  rate(\n    http_server_requests_seconds_count{\n      uri=~\"/realms/{realm}/protocol/{protocol}.*|/realms/{realm}/login-actions/.*\", \n      container=\"keycloak\",\n      namespace=\"$namespace\"}\n    [5m] \n  )\n)",
           "hide": false,
@@ -428,7 +516,10 @@
       "type": "row"
     },
     {
-      "datasource": "Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -494,7 +585,10 @@
       "pluginVersion": "9.4.7",
       "targets": [
         {
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "Prometheus"
+          },
           "editorMode": "code",
           "exemplar": true,
           "expr": "max(jvm_info_total{namespace=\"$namespace\"}) by (pod, vendor, runtime, version)",
@@ -522,7 +616,10 @@
       "type": "table"
     },
     {
-      "datasource": "Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
       "description": "This is available only in Kubernetes and only if your pods have cpu limits set",
       "fieldConfig": {
         "defaults": {
@@ -598,7 +695,10 @@
       },
       "targets": [
         {
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "Prometheus"
+          },
           "editorMode": "code",
           "expr": "sum(rate(container_cpu_usage_seconds_total{container=\"keycloak\", namespace=\"$namespace\"}[5m])) by (pod) /\nsum(container_spec_cpu_quota{container=\"keycloak\", namespace=\"$namespace\"}/container_spec_cpu_period{container=\"keycloak\", namespace=\"$namespace\"}) by (pod)",
           "hide": false,
@@ -611,7 +711,10 @@
       "type": "timeseries"
     },
     {
-      "datasource": "Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -655,7 +758,10 @@
       "pluginVersion": "9.4.7",
       "targets": [
         {
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "Prometheus"
+          },
           "editorMode": "code",
           "expr": "sum_over_time((sum by (pod) (jvm_memory_used_bytes{namespace=\"$namespace\"}))[$__range:$__interval]) / count_over_time((sum by (pod) (jvm_memory_used_bytes{namespace=\"$namespace\"}))[$__range:$__interval]) ",
           "hide": false,
@@ -668,7 +774,10 @@
       "type": "stat"
     },
     {
-      "datasource": "Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -744,7 +853,10 @@
       "pluginVersion": "9.4.7",
       "targets": [
         {
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "Prometheus"
+          },
           "editorMode": "code",
           "expr": "sum by (pod) (jvm_memory_used_bytes{namespace=\"$namespace\"})",
           "hide": false,
@@ -753,7 +865,10 @@
           "refId": "A"
         },
         {
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "Prometheus"
+          },
           "editorMode": "code",
           "expr": "sum by (pod) (jvm_memory_committed_bytes{namespace=\"$namespace\"})",
           "hide": false,
@@ -766,7 +881,10 @@
       "type": "timeseries"
     },
     {
-      "datasource": "Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -809,11 +927,17 @@
       "pluginVersion": "9.4.7",
       "targets": [
         {
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "Prometheus"
+          },
           "refId": "A"
         },
         {
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "Prometheus"
+          },
           "editorMode": "code",
           "expr": "sum(\n  rate(\n    jvm_gc_pause_seconds_sum{\n      container=\"keycloak\", \n      namespace=\"$namespace\"}\n    [$__range] \n  )\n) without (action,instance,cause) \n/\nsum(\n  rate(\n    jvm_gc_pause_seconds_count{\n      container=\"keycloak\",\n      namespace=\"$namespace\"}\n    [$__range] \n  )\n) without (action,instance,cause)",
           "hide": false,
@@ -826,7 +950,10 @@
       "type": "stat"
     },
     {
-      "datasource": "Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -903,7 +1030,10 @@
       },
       "targets": [
         {
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "Prometheus"
+          },
           "editorMode": "code",
           "expr": "sum by (pod,cause)(irate(jvm_gc_pause_seconds_sum{container=\"keycloak\", namespace=\"$namespace\"}[5m]))",
           "legendFormat": "{{pod}} - {{cause}}",
@@ -915,7 +1045,10 @@
       "type": "timeseries"
     },
     {
-      "datasource": "Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -989,7 +1122,10 @@
       },
       "targets": [
         {
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "Prometheus"
+          },
           "editorMode": "code",
           "expr": "sum by (pod,cause)(irate(jvm_gc_pause_seconds_count{container=\"keycloak\", namespace=\"$namespace\"}[5m]))",
           "legendFormat": "{{pod}} - {{cause}}",
@@ -1001,7 +1137,10 @@
       "type": "timeseries"
     },
     {
-      "datasource": "Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
       "description": "I am not sure about this metric. I would expect _max to be only increasing number while here it is going up and down so I am not sure what this really means",
       "fieldConfig": {
         "defaults": {
@@ -1075,7 +1214,10 @@
       },
       "targets": [
         {
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "Prometheus"
+          },
           "editorMode": "code",
           "expr": "max by (pod,cause) (jvm_gc_pause_seconds_max{container=\"keycloak\", namespace=\"$namespace\"})",
           "legendFormat": "{{pod}} - {{cause}}",
@@ -1087,7 +1229,10 @@
       "type": "timeseries"
     },
     {
-      "datasource": "Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
       "description": "The percentage of CPU time spent on garbage collection, indicating the impact of GC on application performance in the JVM. It refers to the proportion of the total CPU processing time that is dedicated to executing garbage collection (GC) operations, as opposed to running application code or performing other tasks. This metric helps determine how much overhead GC introduces, affecting the overall performance of the Keycloak’s JVM.",
       "fieldConfig": {
         "defaults": {
@@ -1161,7 +1306,10 @@
       },
       "targets": [
         {
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "Prometheus"
+          },
           "editorMode": "code",
           "expr": "sum by (pod) (jvm_gc_overhead{container=\"keycloak\", namespace=\"$namespace\"})",
           "legendFormat": "{{pod}}",
@@ -1173,7 +1321,10 @@
       "type": "timeseries"
     },
     {
-      "datasource": "Prometheus",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1251,7 +1402,10 @@
       },
       "targets": [
         {
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "Prometheus"
+          },
           "editorMode": "code",
           "exemplar": true,
           "expr": "sum by (pod)(jvm_threads_states_threads{namespace=\"$namespace\", container=\"keycloak\", state=\"waiting\"})",
@@ -1277,7 +1431,10 @@
       "id": 28,
       "panels": [
         {
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "Prometheus"
+          },
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -1324,7 +1481,10 @@
           "pluginVersion": "9.4.7",
           "targets": [
             {
-              "datasource": "Prometheus",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "Prometheus"
+              },
               "editorMode": "code",
               "expr": "avg by (pod) (sum_over_time(agroal_active_count{namespace=\"$namespace\"}[$__range:$__interval]) / sum_over_time((agroal_active_count{namespace=\"$namespace\"} + agroal_available_count{namespace=\"$namespace\"})[$__range:$__interval]))",
               "legendFormat": "__auto",
@@ -1336,7 +1496,10 @@
           "type": "stat"
         },
         {
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "Prometheus"
+          },
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -1411,7 +1574,10 @@
           },
           "targets": [
             {
-              "datasource": "Prometheus",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "Prometheus"
+              },
               "editorMode": "code",
               "expr": "agroal_awaiting_count{container=\"keycloak\", namespace=\"$namespace\"}",
               "legendFormat": "{{pod}}",
@@ -1423,7 +1589,10 @@
           "type": "timeseries"
         },
         {
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "Prometheus"
+          },
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -1500,7 +1669,10 @@
           },
           "targets": [
             {
-              "datasource": "Prometheus",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "Prometheus"
+              },
               "editorMode": "code",
               "expr": "agroal_available_count{job=\"${namespace}/keycloak-metrics\",namespace=\"${namespace}\"}",
               "legendFormat": "{{pod}} - available connections",
@@ -1508,7 +1680,10 @@
               "refId": "A"
             },
             {
-              "datasource": "Prometheus",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "Prometheus"
+              },
               "editorMode": "code",
               "expr": "agroal_active_count{job=\"${namespace}/keycloak-metrics\",namespace=\"${namespace}\"}",
               "hide": false,
@@ -1521,7 +1696,10 @@
           "type": "timeseries"
         },
         {
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "Prometheus"
+          },
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -1594,7 +1772,10 @@
           },
           "targets": [
             {
-              "datasource": "Prometheus",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "Prometheus"
+              },
               "editorMode": "code",
               "expr": "sum by (pod)(irate(agroal_acquire_count_total{container=\"keycloak\", namespace=\"$namespace\"}[5m]))",
               "legendFormat": "{{pod}}",
@@ -1620,7 +1801,10 @@
       "id": 36,
       "panels": [
         {
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "Prometheus"
+          },
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -1696,7 +1880,10 @@
           },
           "targets": [
             {
-              "datasource": "Prometheus",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "Prometheus"
+              },
               "editorMode": "code",
               "expr": "sum by (pod) (\n  irate(\n    http_server_requests_seconds_count{\n      container=\"keycloak\",\n      namespace=\"$namespace\"}\n    [5m] \n  )\n)",
               "legendFormat": "__auto",
@@ -1708,7 +1895,10 @@
           "type": "timeseries"
         },
         {
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "Prometheus"
+          },
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -1787,7 +1977,10 @@
           "pluginVersion": "9.4.7",
           "targets": [
             {
-              "datasource": "Prometheus",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "Prometheus"
+              },
               "editorMode": "code",
               "expr": "sum by (uri,outcome) (http_server_requests_seconds_count{container=\"keycloak\", namespace=\"$namespace\"})",
               "format": "time_series",
@@ -1800,7 +1993,10 @@
           "type": "timeseries"
         },
         {
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "Prometheus"
+          },
           "fieldConfig": {
             "defaults": {
               "custom": {
@@ -1839,7 +2035,7 @@
               "color": "rgba(255,0,255,0.7)"
             },
             "filterValues": {
-              "le": 1e-9
+              "le": 1E-9
             },
             "legend": {
               "show": true
@@ -1861,7 +2057,10 @@
           "pluginVersion": "9.4.7",
           "targets": [
             {
-              "datasource": "Prometheus",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "Prometheus"
+              },
               "editorMode": "code",
               "exemplar": true,
               "expr": "sum by (le) (idelta(http_server_requests_seconds_bucket{container=\"keycloak\", namespace=\"$namespace\"} [5m]))",
@@ -1875,7 +2074,10 @@
           "type": "heatmap"
         },
         {
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "Prometheus"
+          },
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -1951,7 +2153,10 @@
           "pluginVersion": "9.4.7",
           "targets": [
             {
-              "datasource": "Prometheus",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "Prometheus"
+              },
               "editorMode": "code",
               "expr": "sum by (uri,outcome) (irate(http_server_requests_seconds_count{container=\"keycloak\", namespace=\"$namespace\"}[5m]))",
               "format": "time_series",
@@ -1964,7 +2169,10 @@
           "type": "timeseries"
         },
         {
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "Prometheus"
+          },
           "description": "The current number of active requests processed by each pod",
           "fieldConfig": {
             "defaults": {
@@ -2036,7 +2244,10 @@
           },
           "targets": [
             {
-              "datasource": "Prometheus",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "Prometheus"
+              },
               "editorMode": "code",
               "expr": "sum by (pod) (http_server_active_requests{container=\"keycloak\", namespace=\"$namespace\"})",
               "legendFormat": "{{pod}}",
@@ -2048,7 +2259,10 @@
           "type": "timeseries"
         },
         {
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "Prometheus"
+          },
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -2126,7 +2340,10 @@
           "pluginVersion": "9.4.7",
           "targets": [
             {
-              "datasource": "Prometheus",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "Prometheus"
+              },
               "editorMode": "code",
               "expr": "sum by (pod,outcome) (irate(http_server_requests_seconds_count{container=\"keycloak\", namespace=\"$namespace\"}[5m]))",
               "format": "time_series",
@@ -2139,7 +2356,10 @@
           "type": "timeseries"
         },
         {
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "Prometheus"
+          },
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -2216,7 +2436,10 @@
           },
           "targets": [
             {
-              "datasource": "Prometheus",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "Prometheus"
+              },
               "editorMode": "code",
               "expr": "sum by (pod)(\n  irate(\n    http_server_bytes_written_sum{\n      container=\"keycloak\", \n      namespace=\"$namespace\"}\n    [5m] \n  )\n)\n/\nsum by (pod)(\n  irate(\n    http_server_bytes_written_count{\n      container=\"keycloak\",\n      namespace=\"$namespace\"}\n    [5m] \n  )\n)",
               "hide": false,
@@ -2229,7 +2452,10 @@
           "type": "timeseries"
         },
         {
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "Prometheus"
+          },
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -2272,7 +2498,10 @@
           "pluginVersion": "9.4.7",
           "targets": [
             {
-              "datasource": "Prometheus",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "Prometheus"
+              },
               "editorMode": "code",
               "expr": "sum by (pod)(\n  rate(\n    http_server_bytes_written_sum{\n      container=\"keycloak\", \n      namespace=\"$namespace\"}\n    [$__range] \n  )\n)\n/\nsum by(pod)(\n  rate(\n    http_server_bytes_written_count{\n      container=\"keycloak\",\n      namespace=\"$namespace\"}\n    [$__range] \n  )\n)",
               "hide": false,
@@ -2281,7 +2510,10 @@
               "refId": "A"
             },
             {
-              "datasource": "Prometheus",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "Prometheus"
+              },
               "editorMode": "code",
               "expr": "http_server_bytes_written_sum{\n      container=\"keycloak\", \n      namespace=\"$namespace\"}",
               "hide": true,
@@ -2294,7 +2526,10 @@
           "type": "stat"
         },
         {
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "Prometheus"
+          },
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -2337,7 +2572,10 @@
           "pluginVersion": "9.4.7",
           "targets": [
             {
-              "datasource": "Prometheus",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "Prometheus"
+              },
               "editorMode": "code",
               "expr": "sum by (pod)(\n  rate(\n    http_server_bytes_read_sum{\n      container=\"keycloak\", \n      namespace=\"$namespace\"}\n    [$__range] \n  )\n)\n/\nsum by(pod)(\n  rate(\n    http_server_bytes_read_count{\n      container=\"keycloak\",\n      namespace=\"$namespace\"}\n    [$__range] \n  )\n)",
               "hide": false,
@@ -2346,7 +2584,10 @@
               "refId": "A"
             },
             {
-              "datasource": "Prometheus",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "Prometheus"
+              },
               "editorMode": "code",
               "expr": "http_server_bytes_written_sum{\n      container=\"keycloak\", \n      namespace=\"$namespace\"}",
               "hide": true,
@@ -2359,7 +2600,10 @@
           "type": "stat"
         },
         {
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "Prometheus"
+          },
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -2436,7 +2680,10 @@
           },
           "targets": [
             {
-              "datasource": "Prometheus",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "Prometheus"
+              },
               "editorMode": "code",
               "expr": "sum by (pod)(\n  irate(\n    http_server_bytes_read_sum{\n      container=\"keycloak\", \n      namespace=\"$namespace\"}\n    [5m] \n  )\n)\n/\nsum by (pod)(\n  irate(\n    http_server_bytes_read_count{\n      container=\"keycloak\",\n      namespace=\"$namespace\"}\n    [5m] \n  )\n)",
               "hide": false,
@@ -2463,7 +2710,10 @@
       "id": 58,
       "panels": [
         {
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "Prometheus"
+          },
           "description": "The approximate number of entries stored by the node, excluding backup copies.",
           "fieldConfig": {
             "defaults": {
@@ -2537,7 +2787,10 @@
           },
           "targets": [
             {
-              "datasource": "Prometheus",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "Prometheus"
+              },
               "editorMode": "code",
               "expr": "sum by (pod)(vendor_statistics_approximate_entries_unique{container=\"keycloak\", namespace=\"$namespace\", cache=\"$jdbc_cache_names\"})",
               "legendFormat": "{{pod}}",
@@ -2549,7 +2802,10 @@
           "type": "timeseries"
         },
         {
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "Prometheus"
+          },
           "description": "The approximate number of entries stored by the node, including backup copies.",
           "fieldConfig": {
             "defaults": {
@@ -2623,7 +2879,10 @@
           },
           "targets": [
             {
-              "datasource": "Prometheus",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "Prometheus"
+              },
               "editorMode": "code",
               "expr": "sum by (pod)(vendor_statistics_approximate_entries_unique{container=\"keycloak\", namespace=\"$namespace\", cache=\"$jdbc_cache_names\"})",
               "legendFormat": "{{pod}}",
@@ -2635,7 +2894,10 @@
           "type": "timeseries"
         },
         {
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "Prometheus"
+          },
           "description": "Eviction is the process to limit the cache size and, when full, an entry is removed to make room for a new entry to be cached. As Keycloak caches the database entities in the users, realms and authorization, database access always proceeds with an eviction event.\n\nA rapid increase of eviction and very high database CPU usage means the users or realms cache is too small for smooth Keycloak operation, as data needs to be re-loaded very often from the database which slows down responses. If enough memory is available, consider increasing the max cache size using the CLI options cache-embedded-users-max-count or cache-embedded-realms-max-count",
           "fieldConfig": {
             "defaults": {
@@ -2712,7 +2974,10 @@
           },
           "targets": [
             {
-              "datasource": "Prometheus",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "Prometheus"
+              },
               "editorMode": "code",
               "expr": "sum by (pod)(irate(vendor_statistics_evictions{container=\"keycloak\", namespace=\"$namespace\", cache=\"$jdbc_cache_names\"}[5m]))",
               "legendFormat": "__auto",
@@ -2724,7 +2989,10 @@
           "type": "timeseries"
         },
         {
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "Prometheus"
+          },
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -2797,7 +3065,10 @@
           },
           "targets": [
             {
-              "datasource": "Prometheus",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "Prometheus"
+              },
               "editorMode": "code",
               "expr": "sum by (pod)(irate(vendor_statistics_store_times_seconds_count{container=\"keycloak\", namespace=\"$namespace\", cache=\"$jdbc_cache_names\"}[5m]))",
               "legendFormat": "{{pod}}",
@@ -2809,7 +3080,10 @@
           "type": "timeseries"
         },
         {
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "Prometheus"
+          },
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -2883,7 +3157,10 @@
           },
           "targets": [
             {
-              "datasource": "Prometheus",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "Prometheus"
+              },
               "editorMode": "code",
               "expr": "avg by (pod)((\nirate(vendor_statistics_hit_times_seconds_count{container=\"keycloak\", namespace=\"$namespace\", cache=\"$jdbc_cache_names\"}[5m]) + irate(vendor_statistics_miss_times_seconds_count{container=\"keycloak\", namespace=\"$namespace\", cache=\"$jdbc_cache_names\"}[5m]))\n/\n(\n    irate(vendor_statistics_hit_times_seconds_count{container=\"keycloak\", namespace=\"$namespace\", cache=\"$jdbc_cache_names\"}[5m]) + irate(vendor_statistics_miss_times_seconds_count{container=\"keycloak\", namespace=\"$namespace\", cache=\"$jdbc_cache_names\"}[5m])\n    + \n    irate(vendor_statistics_remove_hit_times_seconds_count{container=\"keycloak\", namespace=\"$namespace\", cache=\"$jdbc_cache_names\"}[5m]) + irate(vendor_statistics_remove_miss_times_seconds_count{container=\"keycloak\", namespace=\"$namespace\", cache=\"$jdbc_cache_names\"}[5m]) \n    + \n    irate(vendor_statistics_store_times_seconds_count{container=\"keycloak\", namespace=\"$namespace\", cache=\"$jdbc_cache_names\"}[5m])\n))",
               "legendFormat": "{{pod}}",
@@ -2895,7 +3172,10 @@
           "type": "timeseries"
         },
         {
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "Prometheus"
+          },
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -2938,7 +3218,10 @@
           "pluginVersion": "9.4.7",
           "targets": [
             {
-              "datasource": "Prometheus",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "Prometheus"
+              },
               "editorMode": "code",
               "expr": "avg by (pod)(\n  rate(\n    vendor_statistics_store_times_seconds_sum{\n      container=\"keycloak\", \n      namespace=\"$namespace\",\n      cache=\"$jdbc_cache_names\"}\n    [$__range] \n  )\n)\n/\nsum by(pod)(\n  rate(\n    vendor_statistics_store_times_seconds_count{\n      container=\"keycloak\",\n      namespace=\"$namespace\",\n      cache=\"$jdbc_cache_names\"}\n    [$__range] \n  )\n)",
               "legendFormat": "__auto",
@@ -2950,7 +3233,10 @@
           "type": "stat"
         },
         {
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "Prometheus"
+          },
           "description": "A read operation reads a value from the cache. It divides into two groups, a hit if a value is found, and a miss if not found.",
           "fieldConfig": {
             "defaults": {
@@ -3024,7 +3310,10 @@
           },
           "targets": [
             {
-              "datasource": "Prometheus",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "Prometheus"
+              },
               "editorMode": "code",
               "expr": "sum by (pod) (irate(vendor_statistics_hit_times_seconds_count{container=\"keycloak\", namespace=\"$namespace\", cache=\"$jdbc_cache_names\"}[5m]) + irate(vendor_statistics_miss_times_seconds_count{container=\"keycloak\", namespace=\"$namespace\", cache=\"$jdbc_cache_names\"}[5m]))",
               "legendFormat": "__auto",
@@ -3036,7 +3325,10 @@
           "type": "timeseries"
         },
         {
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "Prometheus"
+          },
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -3111,7 +3403,10 @@
           },
           "targets": [
             {
-              "datasource": "Prometheus",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "Prometheus"
+              },
               "editorMode": "code",
               "expr": "avg by (pod)(irate(vendor_statistics_hit_times_seconds_count{container=\"keycloak\", cache=\"$jdbc_cache_names\", namespace=\"$namespace\"}[5m]) / (irate(vendor_statistics_hit_times_seconds_count{cache=\"$jdbc_cache_names\", namespace=\"$namespace\", container=\"keycloak\"}[5m]) + irate(vendor_statistics_miss_times_seconds_count{cache=\"$jdbc_cache_names\", namespace=\"$namespace\", container=\"keycloak\"}[5m])))",
               "hide": false,
@@ -3124,7 +3419,10 @@
           "type": "timeseries"
         },
         {
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "Prometheus"
+          },
           "description": "A read operation reads a value from the cache. It divides into two groups, a hit if a value is found, and a miss if not found.",
           "fieldConfig": {
             "defaults": {
@@ -3198,7 +3496,10 @@
           },
           "targets": [
             {
-              "datasource": "Prometheus",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "Prometheus"
+              },
               "editorMode": "code",
               "expr": "sum by (pod) (irate(vendor_statistics_miss_times_seconds_count{container=\"keycloak\", namespace=\"$namespace\", cache=\"$jdbc_cache_names\"}[5m]))",
               "legendFormat": "{{pod}}",
@@ -3210,7 +3511,10 @@
           "type": "timeseries"
         },
         {
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "Prometheus"
+          },
           "description": "A remove operation removes a value from the cache. It divides in two groups, a hit if a value exists, and a miss if the value does not exist.",
           "fieldConfig": {
             "defaults": {
@@ -3284,7 +3588,10 @@
           },
           "targets": [
             {
-              "datasource": "Prometheus",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "Prometheus"
+              },
               "editorMode": "code",
               "expr": "sum by (pod)(irate(vendor_statistics_remove_hit_times_seconds_count{container=\"keycloak\", namespace=\"$namespace\", cache=\"$jdbc_cache_names\"}[5m]) + irate(vendor_statistics_remove_miss_times_seconds_count{container=\"keycloak\", namespace=\"$namespace\", cache=\"$jdbc_cache_names\"}[5m]))",
               "legendFormat": "__auto",
@@ -3296,7 +3603,10 @@
           "type": "timeseries"
         },
         {
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "Prometheus"
+          },
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -3371,7 +3681,10 @@
           },
           "targets": [
             {
-              "datasource": "Prometheus",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "Prometheus"
+              },
               "editorMode": "code",
               "expr": "avg by (pod)(irate(vendor_statistics_remove_hit_times_seconds_count{container=\"keycloak\", cache=\"$jdbc_cache_names\", namespace=\"$namespace\"}[5m]) / (irate(vendor_statistics_remove_hit_times_seconds_count{cache=\"$jdbc_cache_names\", namespace=\"$namespace\", container=\"keycloak\"}[5m]) + irate(vendor_statistics_remove_miss_times_seconds_count{cache=\"$jdbc_cache_names\", namespace=\"$namespace\", container=\"keycloak\"}[5m])))",
               "hide": false,
@@ -3384,7 +3697,10 @@
           "type": "timeseries"
         },
         {
-          "datasource": "Prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "Prometheus"
+          },
           "description": "A remove operation removes a value from the cache. It divides in two groups, a hit if a value exists, and a miss if the value does not exist.",
           "fieldConfig": {
             "defaults": {
@@ -3454,7 +3770,10 @@
           },
           "targets": [
             {
-              "datasource": "Prometheus",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "Prometheus"
+              },
               "editorMode": "code",
               "expr": "sum by (pod) (irate(vendor_statistics_remove_miss_times_seconds_count{container=\"keycloak\", namespace=\"$namespace\", cache=\"$jdbc_cache_names\"}[5m]))",
               "legendFormat": "{{pod}}",

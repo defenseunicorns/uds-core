@@ -1,15 +1,16 @@
-# Copyright 2025 Defense Unicorns
+# Copyright 2024 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: uds-grafana-dashboards
-  namespace: {{ .Release.Namespace }}
+  name: keycloak-grafana-dashboards
+  namespace: grafana
   labels:
     grafana_dashboard: "1"
+  annotations:
+    {{- toYaml .Values.dashboardAnnotations | nindent 4 }}
 data:
-  # Load dashboards from files
   {{- $files := .Files }}
   {{- range $path, $bytes := .Files.Glob "dashboards/*.json" }}
   {{ base $path }}: |-

@@ -91,7 +91,7 @@ test("validate loki dashboard", async ({ page }) => {
   });
 });
 
-// If these tests are failing, may indicate the dashboards need to be updated
+// If these tests are failing, may indicate the dashboards need to be updated (use src/keycloak/tasks.yaml update-keycloak-grafana-dashboards to update)
 // originally brought in from: https://github.com/keycloak/keycloak-grafana-dashboard
 test.describe("validate Keycloak Dashboards", () => {
   const keycloakDashboards = [
@@ -123,16 +123,14 @@ test.describe("validate Keycloak Dashboards", () => {
       await page.getByPlaceholder("Search for dashboards and folders").fill("Keycloak");
       await page.click(`text="${dashboard.name}"`);
 
-      // Wait for dashboard to load
-      await page.waitForLoadState("networkidle");
+      // Wait for DOM to be parsed and dashboard controls to be present
+      await page.waitForLoadState("domcontentloaded");
+      await page.waitForSelector('[data-testid="data-testid dashboard controls"]');
 
       // Wait for panels to load
       await page
         .waitForSelector(".panel-loading", { state: "hidden", timeout: 15000 })
         .catch(() => console.log("No loading indicator found or already loaded"));
-
-      // Additional wait for any async operations
-      await page.waitForTimeout(2000);
 
       // Check for any panel errors in the UI
       const panelErrors = await page.$$eval(".panel-error", elements =>
