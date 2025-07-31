@@ -7,10 +7,6 @@ name: change-me
 # Domain name for the gateway
 domain: "###ZARF_VAR_DOMAIN###"
 
-# Optional annotations for grouping dashboards in Grafana folders.
-# see docs for more info: https://uds.defenseunicorns.com/reference/configuration/uds-monitoring-metrics/#grouping-dashboards
-dashboardAnnotations: {}
-
 # tls:
 #   # The TLS certificate for the gateway, if not in 'PASSTHROUGH' mode (base64 encoded)
 #   cert: ""
