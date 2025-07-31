@@ -442,7 +442,7 @@ describe("isIstioInitContainer", () => {
     // Create a mock request with required annotation and istio-proxy in initContainers
     const mockRequest = createPodRequest(true, [istioProxyContainer]);
 
-    // Create a container with command defined (should be undefined)
+    // Create a container with image missing
     const containerWithCommand: V1Container = {
       name: "istio-init",
       args: ["istio-iptables"],
