@@ -43,11 +43,29 @@ module "eks" {
     }
 
     // This is needed to allow the ELB to communicate with Istio ingress gateways
-    ingress = {
-      description = "Allow ELB to Istio"
+    ingress_443 = {
+      description = "Allow ELB to Nodes"
       protocol    = "tcp"
-      from_port   = 1
-      to_port     = 65535
+      from_port   = 443
+      to_port     = 443
+      type        = "ingress"
+      cidr_blocks = [data.aws_vpc.vpc.cidr_block]
+    }
+
+    ingress_80 = {
+      description = "Allow ELB to Nodes"
+      protocol    = "tcp"
+      from_port   = 80
+      to_port     = 80
+      type        = "ingress"
+      cidr_blocks = [data.aws_vpc.vpc.cidr_block]
+    }
+
+    ingress_node_ports = {
+      description = "Allow ELB to Nodes"
+      protocol    = "tcp"
+      from_port   = 30000
+      to_port     = 32767
       type        = "ingress"
       cidr_blocks = [data.aws_vpc.vpc.cidr_block]
     }
