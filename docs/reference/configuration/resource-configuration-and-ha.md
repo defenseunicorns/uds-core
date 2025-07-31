@@ -177,7 +177,9 @@ packages:
               path: postgresql.secretRef.password.key
 ```
 
-**Note:** When using secret references, you may use a mixture of both secret references and direct values for `username`, `password`, and `host`. The `database` and `port` values are configured using direct values.
+:::note
+When using secret references, you may use a mixture of both secret references and direct values for `username`, `password`, and `host`. The `database` and `port` values are configured using direct values.
+:::
 
 When running Keycloak on new Kernels 6.12+, it may be necessary to override Keycloak Environment Variables and set `JAVA_OPTS_KC_HEAP` to `-XX:MaxRAMPercentage=70 -XX:MinRAMPercentage=70 -XX:InitialRAMPercentage=50 -XX:MaxRAM=1G`. This happens due to a fact that Java doesn't properly recognize the amount of memory allocated by the CGroups. By specifying `-XX:MaxRAM` equal to the memory limits, this setting gets overridden. Here's an example:
 
