@@ -74,8 +74,8 @@ tasks:
           done
       - description: "Copy updated dashboards into uds-core"
         cmd: |
-          cp .tmp-keycloak-grafana-dashboard/dashboards/keycloak-capacity-planning-dashboard.json src/grafana/chart/dashboards/keycloak-capacity-planning-dashboard.json
-          cp .tmp-keycloak-grafana-dashboard/dashboards/keycloak-troubleshooting-dashboard.json src/grafana/chart/dashboards/keycloak-troubleshooting-dashboard.json
+          cp .tmp-keycloak-grafana-dashboard/dashboards/keycloak-capacity-planning-dashboard.json src/keycloak/chart/dashboards/keycloak-capacity-planning-dashboard.json
+          cp .tmp-keycloak-grafana-dashboard/dashboards/keycloak-troubleshooting-dashboard.json src/keycloak/chart/dashboards/keycloak-troubleshooting-dashboard.json
       - description: "Patch dashboard variable defaults (capacity planning)"
         cmd: |
           jq '
@@ -90,7 +90,7 @@ tasks:
                 .datasource = "Prometheus"
               else . end
             )
-          ' src/grafana/chart/dashboards/keycloak-capacity-planning-dashboard.json > tmp.json && mv tmp.json src/grafana/chart/dashboards/keycloak-capacity-planning-dashboard.json
+          ' src/keycloak/chart/dashboards/keycloak-capacity-planning-dashboard.json > tmp.json && mv tmp.json src/keycloak/chart/dashboards/keycloak-capacity-planning-dashboard.json
       - description: "Patch dashboard variable defaults (troubleshooting)"
         cmd: |
           jq '
@@ -101,6 +101,6 @@ tasks:
                 .datasource = "Prometheus"
               else . end
             )
-          ' src/grafana/chart/dashboards/keycloak-troubleshooting-dashboard.json > tmp.json && mv tmp.json src/grafana/chart/dashboards/keycloak-troubleshooting-dashboard.json
+          ' src/keycloak/chart/dashboards/keycloak-troubleshooting-dashboard.json > tmp.json && mv tmp.json src/keycloak/chart/dashboards/keycloak-troubleshooting-dashboard.json
       - description: "Clean up temp directory"
         cmd: rm -rf .tmp-keycloak-grafana-dashboard || true
