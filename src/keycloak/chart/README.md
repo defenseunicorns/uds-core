@@ -35,43 +35,6 @@ If you are unable to open a browser to create this user (i.e. a headless install
 
 Note that this is highly discouraged as it is often used as a shared admin account rather than a being tied to a specific user. If you do use this toggle, you should immediately change the password after initial login so that your admin account information is not exposed in the cluster secret. This secret will only contain the initial password and will not be updated after you change the password during initial login.
 
-### PostgreSQL Configuration
-
-#### Method 1: Direct Value Configuration
-
-You can specify PostgreSQL credentials directly in the values, which will be stored in a Kubernetes secret which is created during deployment:
-
-```yaml
-postgresql:
-  username: "your-db-user"
-  password: "your-db-password"
-  host: "your-postgres-host.example.com"
-  database: "keycloak"
-  port: 5432
-```
-
-#### Method 2: Existing Secret References
-
-Alternatively, you can reference existing Kubernetes secrets that contain the PostgreSQL credentials for username, password, and host. This is useful if you using shared secrets for the database credentials or external secrets from another source.
-
-```yaml
-postgresql:
-  secretRef:
-    username:
-      name: "postgresql-username-secret"
-      key: "username"
-    password:
-      name: "postgresql-password-secret"
-      key: "password"
-    host:
-      name: "postgresql-host-secret"
-      key: "host"
-  database: "keycloak"
-  port: 5432
-```
-
-**Note:** When using `secretRef`, you may use a mixture of both secretRef and direct values for username, password, and host. The `database` and `port` values are configured using direct values.
-
 ## Why StatefulSet?
 
 The chart sets node identifiers to the system property `jboss.node.name` which is in fact the pod name.

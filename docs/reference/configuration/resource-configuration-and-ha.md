@@ -144,6 +144,41 @@ packages:
               path: postgresql.password
 ```
 
+Alternatively, you can configure the postgres `username`, `password`, and `host` using references to pre-existing secrets. This is useful if you are using shared secrets for the database credentials or external secrets from another source.
+
+```yaml
+packages:
+  - name: core
+    repository: oci://ghcr.io/defenseunicorns/packages/uds/core
+    ref: x.x.x
+    overrides:
+      keycloak:
+        keycloak:
+          values:
+            - path: devMode
+              value: false
+            # Enable HPA to autoscale Keycloak
+            - path: autoscaling.enabled
+              value: true
+          variables:
+            - name: KEYCLOAK_DB_HOST_SECRETREF_NAME
+              path: postgresql.secretRef.host.name
+            - name: KEYCLOAK_DB_HOST_SECRETREF_KEY
+              path: postgresql.secretRef.host.key
+            - name: KEYCLOAK_DB_USERNAME_SECRETREF_NAME
+              path: postgresql.secretRef.username.name
+            - name: KEYCLOAK_DB_USERNAME_SECRETREF_KEY
+              path: postgresql.secretRef.username.key
+            - name: KEYCLOAK_DB_DATABASE
+              path: postgresql.database
+            - name: KEYCLOAK_DB_PASSWORD_SECRETREF_NAME
+              path: postgresql.secretRef.password.name
+            - name: KEYCLOAK_DB_PASSWORD_SECRETREF_KEY
+              path: postgresql.secretRef.password.key
+```
+
+**Note:** When using secret references, you may use a mixture of both secret references and direct values for `username`, `password`, and `host`. The `database` and `port` values are configured using direct values.
+
 When running Keycloak on new Kernels 6.12+, it may be necessary to override Keycloak Environment Variables and set `JAVA_OPTS_KC_HEAP` to `-XX:MaxRAMPercentage=70 -XX:MinRAMPercentage=70 -XX:InitialRAMPercentage=50 -XX:MaxRAM=1G`. This happens due to a fact that Java doesn't properly recognize the amount of memory allocated by the CGroups. By specifying `-XX:MaxRAM` equal to the memory limits, this setting gets overridden. Here's an example:
 
 ```yaml
