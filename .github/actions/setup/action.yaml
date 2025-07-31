@@ -40,15 +40,6 @@ runs:
         # renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
         version: v0.27.10
 
-    # TODO: Test removing helm install (helm preinstalled on runner?). Remove section if successfull
-    # - name: Install helm
-    #   shell: bash
-    #   run: |
-    #     curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
-    #     chmod +x get_helm.sh
-    #     # renovate: datasource=github-tags depName=helm/helm versioning=semver
-    #     DESIRED_VERSION=v3.17.0 ./get_helm.sh
-
     - name: Install helm unittest plugin
       shell: bash
       # renovate: datasource=github-tags depName=helm-unittest/helm-unittest versioning=semver
