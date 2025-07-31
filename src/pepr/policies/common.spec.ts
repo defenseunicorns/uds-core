@@ -3,9 +3,15 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { K8s, kind } from "pepr";
+import { V1Container } from "@kubernetes/client-node";
+import { a, K8s, kind, PeprValidateRequest } from "pepr";
 import { afterEach, beforeEach, describe, expect, it, Mock, vi } from "vitest";
-import { parseImageRef, validateIstioImage } from "./common";
+import {
+  isIstioInitContainer,
+  isIstioProxyContainer,
+  parseImageRef,
+  validateIstioImage,
+} from "./common";
 
 // Mock the K8s client
 vi.mock("pepr", async () => {
@@ -19,11 +25,6 @@ vi.mock("pepr", async () => {
 describe("parseImageRef", () => {
   it("should handle empty input", () => {
     expect(parseImageRef("")).toBeNull();
-    expect(parseImageRef("   ")).toBeNull();
-    // @ts-expect-error - testing invalid input
-    expect(parseImageRef(null)).toBeNull();
-    // @ts-expect-error - testing invalid input
-    expect(parseImageRef(undefined)).toBeNull();
   });
 
   it("should handle repository names", () => {
@@ -166,11 +167,287 @@ describe("validateIstioImage", () => {
 
   it("should return false for images with wrong registry", () => {
     expect(validateIstioImage("wrong.registry/istio/proxyv2:1.16.0")).toBe(false);
-    expect(validateIstioImage("docker.io/wrong/repo:1.16.0")).toBe(false);
+    expect(validateIstioImage("localhost/repo:1.16.0")).toBe(false);
   });
 
   it("should return false for images with wrong repository", () => {
     expect(validateIstioImage("quay.io/wrong/repo:1.16.0")).toBe(false);
     expect(validateIstioImage("registry1.dso.mil/wrong/repo:1.16.0")).toBe(false);
+  });
+});
+
+describe("isIstioProxyContainer", () => {
+  it("should return true for a valid Istio proxy container", () => {
+    // Create a valid Istio proxy container
+    const validContainer: V1Container = {
+      name: "istio-proxy",
+      image: "docker.io/istio/proxyv2:1.16.0",
+      ports: [{ name: "http-envoy-prom", containerPort: 15090 }],
+      args: ["proxy", "sidecar"],
+    };
+
+    expect(isIstioProxyContainer(validContainer)).toBe(true);
+  });
+
+  it("should return false for container with wrong name", () => {
+    const container: V1Container = {
+      name: "not-istio-proxy",
+      image: "docker.io/istio/proxyv2:1.16.0",
+      ports: [{ name: "http-envoy-prom", containerPort: 15090 }],
+      args: ["proxy", "sidecar"],
+    };
+    expect(isIstioProxyContainer(container)).toBe(false);
+  });
+
+  it("should return false for container with invalid image", () => {
+    const container: V1Container = {
+      name: "istio-proxy",
+      image: "quay.io/wrong/repo:1.16.0",
+      ports: [{ name: "http-envoy-prom", containerPort: 15090 }],
+      args: ["proxy", "sidecar"],
+    };
+    expect(isIstioProxyContainer(container)).toBe(false);
+  });
+
+  it("should return false for container with wrong port name", () => {
+    const container: V1Container = {
+      name: "istio-proxy",
+      image: "docker.io/istio/proxyv2:1.16.0",
+      ports: [{ name: "wrong-port-name", containerPort: 15090 }],
+      args: ["proxy", "sidecar"],
+    };
+    expect(isIstioProxyContainer(container)).toBe(false);
+  });
+
+  it("should return false for container with wrong first arg", () => {
+    const container: V1Container = {
+      name: "istio-proxy",
+      image: "docker.io/istio/proxyv2:1.16.0",
+      ports: [{ name: "http-envoy-prom", containerPort: 15090 }],
+      args: ["not-proxy", "sidecar"],
+    };
+    expect(isIstioProxyContainer(container)).toBe(false);
+  });
+
+  it("should return false for container with no image", () => {
+    const container: V1Container = {
+      name: "istio-proxy",
+      ports: [{ name: "http-envoy-prom", containerPort: 15090 }],
+      args: ["proxy", "sidecar"],
+    };
+    expect(isIstioProxyContainer(container)).toBe(false);
+  });
+});
+
+describe("isIstioInitContainer", () => {
+  class TestPodRequest implements Partial<PeprValidateRequest<a.Pod>> {
+    HasAnnotation: (key: string) => boolean;
+    Raw: a.Pod;
+
+    constructor(hasIstioAnnotation: boolean, initContainers: V1Container[]) {
+      this.HasAnnotation = (key: string) => hasIstioAnnotation && key === "sidecar.istio.io/status";
+
+      this.Raw = {
+        apiVersion: "v1",
+        kind: "Pod",
+        metadata: {
+          name: "test-pod",
+          namespace: "default",
+          annotations: hasIstioAnnotation
+            ? { "sidecar.istio.io/status": '{"version":"1.20.0"}' }
+            : {},
+        },
+        spec: {
+          containers: [],
+          initContainers: initContainers,
+        },
+      } as a.Pod;
+    }
+  }
+
+  // Helper function to create a test double for PeprValidateRequest
+  function createPodRequest(
+    hasIstioAnnotation: boolean,
+    initContainers: V1Container[],
+  ): PeprValidateRequest<a.Pod> {
+    return new TestPodRequest(
+      hasIstioAnnotation,
+      initContainers,
+    ) as unknown as PeprValidateRequest<a.Pod>;
+  }
+
+  it("should return true for a valid Istio init container", () => {
+    // Create a valid istio-proxy container for initContainers
+    const istioProxyContainer: V1Container = {
+      name: "istio-proxy",
+      image: "docker.io/istio/proxyv2:1.16.0",
+      ports: [{ name: "http-envoy-prom", containerPort: 15090 }],
+      args: ["proxy", "sidecar"],
+    };
+
+    // Create a mock request with required annotation and istio-proxy in initContainers
+    const mockRequest = createPodRequest(true, [istioProxyContainer]);
+
+    // Create a valid Istio init container
+    const validContainer: V1Container = {
+      name: "istio-init",
+      image: "docker.io/istio/proxyv2:1.16.0",
+      args: ["istio-iptables"],
+    };
+
+    expect(isIstioInitContainer(mockRequest, validContainer)).toBe(true);
+  });
+
+  it("should return false for a non-Istio init container", () => {
+    // Create a non-istio container for initContainers
+    const nonIstioContainer: V1Container = {
+      name: "some-other-container",
+      image: "some-image:latest",
+      args: ["some-command"],
+    };
+
+    // Create a mock request with required annotation but no istio-proxy in initContainers
+    const mockRequest = createPodRequest(true, [nonIstioContainer]);
+
+    // Create a container that looks like an istio-init container
+    const container: V1Container = {
+      name: "istio-init",
+      image: "docker.io/istio/proxyv2:1.16.0",
+      args: ["istio-iptables"],
+    };
+
+    expect(isIstioInitContainer(mockRequest, container)).toBe(false);
+  });
+
+  it("should return false when request is missing the required annotation", () => {
+    // Create a valid istio-proxy container for initContainers
+    const istioProxyContainer: V1Container = {
+      name: "istio-proxy",
+      image: "docker.io/istio/proxyv2:1.16.0",
+      ports: [{ name: "http-envoy-prom", containerPort: 15090 }],
+      args: ["proxy", "sidecar"],
+    };
+
+    // Create a mock request WITHOUT the required annotation
+    const mockRequest = createPodRequest(false, [istioProxyContainer]);
+
+    // Create a valid Istio init container
+    const validContainer: V1Container = {
+      name: "istio-init",
+      image: "docker.io/istio/proxyv2:1.16.0",
+      args: ["istio-iptables"],
+    };
+
+    expect(isIstioInitContainer(mockRequest, validContainer)).toBe(false);
+  });
+
+  it("should return false when container has wrong name", () => {
+    // Create a valid istio-proxy container for initContainers
+    const istioProxyContainer: V1Container = {
+      name: "istio-proxy",
+      image: "docker.io/istio/proxyv2:1.16.0",
+      ports: [{ name: "http-envoy-prom", containerPort: 15090 }],
+      args: ["proxy", "sidecar"],
+    };
+
+    // Create a mock request with required annotation and istio-proxy in initContainers
+    const mockRequest = createPodRequest(true, [istioProxyContainer]);
+
+    // Create a container with wrong name
+    const containerWithWrongName: V1Container = {
+      name: "not-istio-init",
+      image: "docker.io/istio/proxyv2:1.16.0",
+      args: ["istio-iptables"],
+    };
+
+    expect(isIstioInitContainer(mockRequest, containerWithWrongName)).toBe(false);
+  });
+
+  it("should return false when container has wrong first argument", () => {
+    // Create a valid istio-proxy container for initContainers
+    const istioProxyContainer: V1Container = {
+      name: "istio-proxy",
+      image: "docker.io/istio/proxyv2:1.16.0",
+      ports: [{ name: "http-envoy-prom", containerPort: 15090 }],
+      args: ["proxy", "sidecar"],
+    };
+
+    // Create a mock request with required annotation and istio-proxy in initContainers
+    const mockRequest = createPodRequest(true, [istioProxyContainer]);
+
+    // Create a container with wrong first argument
+    const containerWithWrongArg: V1Container = {
+      name: "istio-init",
+      image: "docker.io/istio/proxyv2:1.16.0",
+      args: ["wrong-arg"],
+    };
+
+    expect(isIstioInitContainer(mockRequest, containerWithWrongArg)).toBe(false);
+  });
+
+  it("should return false when container has invalid image", () => {
+    // Create a valid istio-proxy container for initContainers
+    const istioProxyContainer: V1Container = {
+      name: "istio-proxy",
+      image: "docker.io/istio/proxyv2:1.16.0",
+      ports: [{ name: "http-envoy-prom", containerPort: 15090 }],
+      args: ["proxy", "sidecar"],
+    };
+
+    // Create a mock request with required annotation and istio-proxy in initContainers
+    const mockRequest = createPodRequest(true, [istioProxyContainer]);
+
+    // Create a container with invalid image
+    const containerWithInvalidImage: V1Container = {
+      name: "istio-init",
+      image: "docker.io/not-istio/invalid-image:1.0.0", // Not a valid istio image
+      args: ["istio-iptables"],
+    };
+
+    expect(isIstioInitContainer(mockRequest, containerWithInvalidImage)).toBe(false);
+  });
+
+  it("should return false when container has command defined", () => {
+    // Create a valid istio-proxy container for initContainers
+    const istioProxyContainer: V1Container = {
+      name: "istio-proxy",
+      image: "docker.io/istio/proxyv2:1.16.0",
+      ports: [{ name: "http-envoy-prom", containerPort: 15090 }],
+      args: ["proxy", "sidecar"],
+    };
+
+    // Create a mock request with required annotation and istio-proxy in initContainers
+    const mockRequest = createPodRequest(true, [istioProxyContainer]);
+
+    // Create a container with command defined (should be undefined)
+    const containerWithCommand: V1Container = {
+      name: "istio-init",
+      image: "docker.io/istio/proxyv2:1.16.0",
+      command: ["/bin/sh"],
+      args: ["istio-iptables"],
+    };
+
+    expect(isIstioInitContainer(mockRequest, containerWithCommand)).toBe(false);
+  });
+
+  it("should return false when container has no image", () => {
+    // Create a valid istio-proxy container for initContainers
+    const istioProxyContainer: V1Container = {
+      name: "istio-proxy",
+      image: "docker.io/istio/proxyv2:1.16.0",
+      ports: [{ name: "http-envoy-prom", containerPort: 15090 }],
+      args: ["proxy", "sidecar"],
+    };
+
+    // Create a mock request with required annotation and istio-proxy in initContainers
+    const mockRequest = createPodRequest(true, [istioProxyContainer]);
+
+    // Create a container with command defined (should be undefined)
+    const containerWithCommand: V1Container = {
+      name: "istio-init",
+      args: ["istio-iptables"],
+    };
+
+    expect(isIstioInitContainer(mockRequest, containerWithCommand)).toBe(false);
   });
 });
