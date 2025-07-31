@@ -85,6 +85,10 @@ insecureAdminPasswordGeneration:
   enabled: false
   username: admin
 
+# Optional annotations for grouping dashboards in Grafana folders.
+# see docs for more info: https://uds.defenseunicorns.com/reference/configuration/uds-monitoring-metrics/#grouping-dashboards
+dashboardAnnotations: {}
+
 # Support for custom `network.allow` entries on the Package CR, useful for extra datasources
 additionalNetworkAllow: []
 # ref: https://uds.defenseunicorns.com/reference/configuration/custom-resources/packages-v1alpha1-cr/#allow
