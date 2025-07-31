@@ -2,7 +2,7 @@
 title: Configuring Cluster Level Data
 ---
 
-To set and control certain cluster level configurations, UDS uses a combination of a [UDS ClusterConfig](/reference/configuration/custom-resources/clusterconfig-v1alpha1-cr.md) and Kubernetes secret, both deployed as templates from the `uds-operator-config` chart.
+To set and control certain cluster level configurations, UDS uses a combination of a [UDS ClusterConfig](/reference/configuration/custom-resources/clusterconfig-v1alpha1-cr) and Kubernetes secret, both deployed as templates from the `uds-operator-config` chart.
 
 ## Values
 
