@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2025 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -35,12 +35,23 @@ export class ServiceMonitor extends GenericKind {
    * https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
    */
   declare kind?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   declare metadata?: { [key: string]: any };
   /**
    * Specification of desired Service selection for target discovery by
    * Prometheus.
    */
   spec?: Spec;
+  /**
+   * This Status subresource is under active development and is updated only when the
+   * "StatusForConfigurationResources" feature gate is enabled.
+   *
+   * Most recent observed status of the ServiceMonitor. Read-only.
+   * More info:
+   *
+   * https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
+   */
+  status?: Status;
 }
 
 /**
@@ -62,6 +73,12 @@ export interface Spec {
    * It requires Prometheus >= v2.28.0.
    */
   bodySizeLimit?: string;
+  /**
+   * Whether to convert all scraped classic histograms into a native histogram with custom
+   * buckets.
+   * It requires Prometheus >= v3.0.0.
+   */
+  convertClassicHistogramsToNHCB?: boolean;
   /**
    * List of endpoints part of this ServiceMonitor.
    * Defines how to scrape metrics from Kubernetes
@@ -282,6 +299,14 @@ export interface Endpoint {
    */
   metricRelabelings?: MetricRelabeling[];
   /**
+   * `noProxy` is a comma-separated string that can contain IPs, CIDR notation, domain names
+   * that should be excluded from proxying. IP and domain names can
+   * contain port numbers.
+   *
+   * It requires Prometheus >= v2.43.0, Alertmanager >= v0.25.0 or Thanos >= v0.32.0.
+   */
+  noProxy?: string;
+  /**
    * `oauth2` configures the OAuth2 settings to use when scraping the target.
    *
    * It requires Prometheus >= 2.27.0.
@@ -306,8 +331,21 @@ export interface Endpoint {
    */
   port?: string;
   /**
-   * `proxyURL` configures the HTTP Proxy URL (e.g.
-   * "http://proxyserver:2195") to go through when scraping the target.
+   * ProxyConnectHeader optionally specifies headers to send to
+   * proxies during CONNECT requests.
+   *
+   * It requires Prometheus >= v2.43.0, Alertmanager >= v0.25.0 or Thanos >= v0.32.0.
+   */
+  proxyConnectHeader?: { [key: string]: EndpointProxyConnectHeader[] };
+  /**
+   * Whether to use the proxy configuration defined by environment variables (HTTP_PROXY,
+   * HTTPS_PROXY, and NO_PROXY).
+   *
+   * It requires Prometheus >= v2.43.0, Alertmanager >= v0.25.0 or Thanos >= v0.32.0.
+   */
+  proxyFromEnvironment?: boolean;
+  /**
+   * `proxyURL` defines the HTTP proxy server to use.
    */
   proxyUrl?: string;
   /**
@@ -336,6 +374,8 @@ export interface Endpoint {
    *
    * If empty, Prometheus uses the global scrape timeout unless it is less
    * than the target's scrape interval value in which the latter is used.
+   * The value cannot be greater than the scrape interval otherwise the operator will reject
+   * the resource.
    */
   scrapeTimeout?: string;
   /**
@@ -609,21 +649,21 @@ export interface Oauth2 {
    * that should be excluded from proxying. IP and domain names can
    * contain port numbers.
    *
-   * It requires Prometheus >= v2.43.0 or Alertmanager >= 0.25.0.
+   * It requires Prometheus >= v2.43.0, Alertmanager >= v0.25.0 or Thanos >= v0.32.0.
    */
   noProxy?: string;
   /**
    * ProxyConnectHeader optionally specifies headers to send to
    * proxies during CONNECT requests.
    *
-   * It requires Prometheus >= v2.43.0 or Alertmanager >= 0.25.0.
+   * It requires Prometheus >= v2.43.0, Alertmanager >= v0.25.0 or Thanos >= v0.32.0.
    */
-  proxyConnectHeader?: { [key: string]: ProxyConnectHeader[] };
+  proxyConnectHeader?: { [key: string]: Oauth2ProxyConnectHeader[] };
   /**
    * Whether to use the proxy configuration defined by environment variables (HTTP_PROXY,
    * HTTPS_PROXY, and NO_PROXY).
    *
-   * It requires Prometheus >= v2.43.0 or Alertmanager >= 0.25.0.
+   * It requires Prometheus >= v2.43.0, Alertmanager >= v0.25.0 or Thanos >= v0.32.0.
    */
   proxyFromEnvironment?: boolean;
   /**
@@ -730,7 +770,7 @@ export interface ClientSecret {
 /**
  * SecretKeySelector selects a key of a Secret.
  */
-export interface ProxyConnectHeader {
+export interface Oauth2ProxyConnectHeader {
   /**
    * The key of the secret to select from.  Must be a valid secret key.
    */
@@ -773,13 +813,13 @@ export interface Oauth2TLSConfig {
   /**
    * Maximum acceptable TLS version.
    *
-   * It requires Prometheus >= v2.41.0.
+   * It requires Prometheus >= v2.41.0 or Thanos >= v0.31.0.
    */
   maxVersion?: Version;
   /**
    * Minimum acceptable TLS version.
    *
-   * It requires Prometheus >= v2.35.0.
+   * It requires Prometheus >= v2.35.0 or Thanos >= v0.28.0.
    */
   minVersion?: Version;
   /**
@@ -929,17 +969,39 @@ export interface PurpleKeySecret {
 /**
  * Maximum acceptable TLS version.
  *
- * It requires Prometheus >= v2.41.0.
+ * It requires Prometheus >= v2.41.0 or Thanos >= v0.31.0.
  *
  * Minimum acceptable TLS version.
  *
- * It requires Prometheus >= v2.35.0.
+ * It requires Prometheus >= v2.35.0 or Thanos >= v0.28.0.
  */
 export enum Version {
   Tls10 = "TLS10",
   Tls11 = "TLS11",
   Tls12 = "TLS12",
   Tls13 = "TLS13",
+}
+
+/**
+ * SecretKeySelector selects a key of a Secret.
+ */
+export interface EndpointProxyConnectHeader {
+  /**
+   * The key of the secret to select from.  Must be a valid secret key.
+   */
+  key: string;
+  /**
+   * Name of the referent.
+   * This field is effectively required, but due to backwards compatibility is
+   * allowed to be empty. Instances of this type with an empty value here are
+   * almost certainly wrong.
+   * More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+   */
+  name?: string;
+  /**
+   * Specify whether the Secret or its key must be defined
+   */
+  optional?: boolean;
 }
 
 /**
@@ -1045,13 +1107,13 @@ export interface EndpointTLSConfig {
   /**
    * Maximum acceptable TLS version.
    *
-   * It requires Prometheus >= v2.41.0.
+   * It requires Prometheus >= v2.41.0 or Thanos >= v0.31.0.
    */
   maxVersion?: Version;
   /**
    * Minimum acceptable TLS version.
    *
-   * It requires Prometheus >= v2.35.0.
+   * It requires Prometheus >= v2.35.0 or Thanos >= v0.28.0.
    */
   minVersion?: Version;
   /**
@@ -1291,6 +1353,108 @@ export interface MatchExpression {
 export enum SelectorMechanism {
   RelabelConfig = "RelabelConfig",
   RoleSelector = "RoleSelector",
+}
+
+/**
+ * This Status subresource is under active development and is updated only when the
+ * "StatusForConfigurationResources" feature gate is enabled.
+ *
+ * Most recent observed status of the ServiceMonitor. Read-only.
+ * More info:
+ *
+ * https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
+ */
+export interface Status {
+  /**
+   * The list of workload resources (Prometheus or PrometheusAgent) which select the
+   * configuration resource.
+   */
+  bindings?: Binding[];
+}
+
+/**
+ * WorkloadBinding is a link between a configuration resource and a workload resource.
+ */
+export interface Binding {
+  /**
+   * The current state of the configuration resource when bound to the referenced Prometheus
+   * object.
+   */
+  conditions?: Condition[];
+  /**
+   * The group of the referenced resource.
+   */
+  group: Group;
+  /**
+   * The name of the referenced object.
+   */
+  name: string;
+  /**
+   * The namespace of the referenced object.
+   */
+  namespace: string;
+  /**
+   * The type of resource being referenced (e.g. Prometheus or PrometheusAgent).
+   */
+  resource: Resource;
+}
+
+/**
+ * ConfigResourceCondition describes the status of configuration resources linked to
+ * Prometheus, PrometheusAgent, Alertmanager, or ThanosRuler.
+ */
+export interface Condition {
+  /**
+   * LastTransitionTime is the time of the last update to the current status property.
+   */
+  lastTransitionTime: Date;
+  /**
+   * Human-readable message indicating details for the condition's last transition.
+   */
+  message?: string;
+  /**
+   * ObservedGeneration represents the .metadata.generation that the
+   * condition was set based upon. For instance, if `.metadata.generation` is
+   * currently 12, but the `.status.conditions[].observedGeneration` is 9, the
+   * condition is out of date with respect to the current state of the object.
+   */
+  observedGeneration?: number;
+  /**
+   * Reason for the condition's last transition.
+   */
+  reason?: string;
+  /**
+   * Status of the condition.
+   */
+  status: string;
+  /**
+   * Type of the condition being reported.
+   * Currently, only "Accepted" is supported.
+   */
+  type: Type;
+}
+
+/**
+ * Type of the condition being reported.
+ * Currently, only "Accepted" is supported.
+ */
+export enum Type {
+  Accepted = "Accepted",
+}
+
+/**
+ * The group of the referenced resource.
+ */
+export enum Group {
+  MonitoringCoreosCOM = "monitoring.coreos.com",
+}
+
+/**
+ * The type of resource being referenced (e.g. Prometheus or PrometheusAgent).
+ */
+export enum Resource {
+  Prometheusagents = "prometheusagents",
+  Prometheuses = "prometheuses",
 }
 
 RegisterKind(ServiceMonitor, {

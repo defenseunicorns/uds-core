@@ -1011,7 +1011,7 @@
         "authserviceClients": {
           "type": "array",
           "items": {
-            "type": "string"
+            "$ref": "#/definitions/AuthserviceClient"
           }
         },
         "conditions": {
@@ -1026,6 +1026,10 @@
           "items": {
             "type": "string"
           }
+        },
+        "meshMode": {
+          "$ref": "#/definitions/Mode",
+          "description": "The current service mesh mode for this package"
         },
         "monitors": {
           "type": "array",
@@ -1054,6 +1058,26 @@
       },
       "required": [],
       "title": "StatusObject"
+    },
+    "AuthserviceClient": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "clientId": {
+          "type": "string"
+        },
+        "selector": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret"
+        }
+      },
+      "required": [
+        "clientId"
+      ],
+      "title": "AuthserviceClient"
     },
     "Condition": {
       "type": "object",
@@ -1171,7 +1195,7 @@
         "ambient"
       ],
       "title": "Mode",
-      "description": "Set the service mesh mode for this package (namespace), defaults to sidecar"
+      "description": "Set the service mesh mode for this package (namespace), defaults to sidecar\nThe current service mesh mode for this package"
     },
     "ClientAuthenticatorType": {
       "type": "string",

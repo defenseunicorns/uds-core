@@ -119,8 +119,6 @@ When using ambient mode with UDS Packages, you can benefit from:
 - Simplified deployment and operations for service mesh capabilities
 - Faster pod startup times since there's no need to wait for sidecar initialization
 
-Note that Packages with Authservice clients are not currently supported in ambient mode and will be rejected by the UDS Operator.
-
 The `istio-controlplane` component installs the Istio CNI plugin which requires specifying the `CNI_CONF_DIR` and `CNI_BIN_DIR` variables. These values can change based on the environment Istio is being deployed into. By default the package will attempt to auto-detect these values and will use the following values if not specified:
 
 ```yaml
