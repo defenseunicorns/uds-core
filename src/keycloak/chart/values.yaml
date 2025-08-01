@@ -230,13 +230,29 @@ postgresql:
   username: ""
   # The password of the database user
   password: ""
-  # Database name
-  database: ""
   # URL for the database
   host: ""
+
+  # Alternative: Use existing secret(s) for username, password, or host
+  secretRef:
+    username:
+      name: ""
+      key: ""
+    password:
+      name: ""
+      key: ""
+    host:
+      name: ""
+      key: ""
+
+  # Database name
+  database: ""
+
   # Port the database is listening on
   port: 5432
+
   egressCidr: ""
+
   # Configure internal postgresql deployment, requires keycloak not be deployed in dev-mode
   internal:
     enabled: false
