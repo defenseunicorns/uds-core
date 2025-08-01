@@ -19,7 +19,7 @@ Staying current with UDS Core releases helps maintain the security posture and f
 
 ## Upgrade Strategies
 
-### Sequential Minor Version Upgrades (Recommended)
+### Sequential Minor Version Upgrades
 
 UDS Core is designed and tested for sequential minor version upgrades (e.g., 0.9.0 → 0.10.0 → 0.11.0). This approach:
 
@@ -27,7 +27,7 @@ UDS Core is designed and tested for sequential minor version upgrades (e.g., 0.9
 - Allows for incremental validation of each upgrade step
 - Reduces complexity when troubleshooting issues
 
-### Direct Version Jumps (Use with Caution)
+### Direct Version Jumps
 
 Jumping multiple minor versions (e.g., 0.9.0 → 0.12.0) is **not directly tested** and requires additional caution:
 
@@ -64,7 +64,7 @@ Testing in a staging environment that mirrors production is **strongly recommend
 The value of a staging environment cannot be overstated. It provides a safe space to identify and resolve issues before they impact production workloads.
 :::
 
-### Verify High Availability Configuration
+### Verify High Availability
 
 If you require minimal downtime during upgrades:
 
@@ -134,11 +134,9 @@ After the bundle deployment completes, verify the health and functionality of yo
   - Check that your mission apps are still running and healthy
   - Validate endpoint accessibility and proper configuration (i.e. monitoring, SSO working as expected)
 
-## Rollback Considerations
+## Upgrade Troubleshooting and Rollbacks
 
 UDS Core does not officially test or support rollback procedures. Individual opensource applications included in the UDS Core platform may not behave well during a rollback.
-
-### Recommended Approach for Upgrade Issues
 
 Rather than attempting a rollback we recommend the following approaches:
 
