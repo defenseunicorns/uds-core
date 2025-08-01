@@ -9,6 +9,8 @@ watcher:
       value: ###ZARF_VAR_UDS_LOG_LEVEL###
     - name: PEPR_RECONCILE_STRATEGY
       value: "kindNsName"
+    - name: ZARF_REGISTRY_ADDRESS
+      value: "###ZARF_REGISTRY###"
 admission:
   serviceMonitor:
     enabled: ###ZARF_VAR_PEPR_SERVICE_MONITORS###
@@ -17,3 +19,5 @@ admission:
       value: ###ZARF_VAR_UDS_LOG_LEVEL###
     - name: PEPR_RECONCILE_STRATEGY
       value: "kindNsName"
+    - name: ZARF_REGISTRY_ADDRESS
+      value: "###ZARF_REGISTRY###"

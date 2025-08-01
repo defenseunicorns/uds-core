@@ -18,57 +18,6 @@ import { exemptionAnnotationPrefix, isExempt, markExemption } from "./exemptions
 const { containers } = sdk;
 
 /**
- * This policy restricts the use of the Istio proxy user/group (1337) to only be used by Istio proxy containers.
- * It allows specific Istio components (waypoints, ztunnel, and sidecars) to use these IDs.
- * This prevents unauthorized pods from running with elevated privileges that could be used to bypass security controls.
- */
-When(a.Pod)
-  .IsCreatedOrUpdated()
-  .Mutate(markExemption(Policy.RestrictIstioUser))
-  .Validate(request => {
-    if (isExempt(request, Policy.RestrictIstioUser)) {
-      return request.Approve();
-    }
-
-    const pod = request.Raw.spec!;
-    const podSecurityCtx = pod.securityContext || ({} as V1PodSecurityContext);
-
-    // Check pod-level security context for UID/GID 1337
-    if (
-      podSecurityCtx.runAsUser === 1337 ||
-      podSecurityCtx.runAsGroup === 1337 ||
-      podSecurityCtx.fsGroup === 1337 ||
-      podSecurityCtx.supplementalGroups?.includes(1337)
-    ) {
-      return request.Deny(
-        "Pods cannot use UID/GID 1337 (Istio proxy) unless they are trusted Istio components",
-      );
-    }
-
-    // Check container security contexts
-    for (const container of containers(request)) {
-      const containerCtx = container.securityContext || {};
-
-      // Check if this is an Istio proxy container
-      const isIstioProxy =
-        container.name === "istio-proxy" &&
-        container.ports?.some(p => p.name === "http-envoy-prom") &&
-        container.args?.some(arg => arg.includes("proxy"));
-
-      // Only check UID/GID 1337 if this is not an Istio proxy container
-      if (!isIstioProxy) {
-        if (containerCtx.runAsUser === 1337 || containerCtx.runAsGroup === 1337) {
-          return request.Deny(
-            `Container '${container.name}' cannot use UID/GID 1337 (Istio proxy) as it is not a trusted Istio component`,
-          );
-        }
-      }
-    }
-
-    return request.Approve();
-  });
-
-/**
  * This policy ensures that Pods do not allow privilege escalation.
  *
  * The `allowPrivilegeEscalation` field in a container's security context should either be undefined
@@ -208,8 +157,8 @@ When(a.Pod)
       return request.Deny("Pod level securityContext does not meet the non-root user requirement.");
     }
 
-    // Check container securityContext
-    const violations = securityContextContainers(request).filter(c => isRoot(c.ctx));
+    // Check container securityContext, filter out istio-init containers
+    const violations = securityContextContainers(request, true).filter(c => isRoot(c.ctx));
 
     if (violations.length) {
       return request.Deny(
@@ -453,7 +402,8 @@ When(a.Pod)
     }
     const authorized = ["NET_BIND_SERVICE"];
 
-    const violations = securityContextContainers(request).filter(
+    // Check container securityContext, filter out istio-init containers
+    const violations = securityContextContainers(request, true).filter(
       c => c.ctx?.capabilities?.add && !c.ctx?.capabilities.add.includes(authorized[0]),
     );
 
