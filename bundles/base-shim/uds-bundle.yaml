@@ -6,14 +6,14 @@ metadata:
   name: base-shim
   description: A shim bundle for deploying the base package with overrides in CI/Dev environments
   # x-release-please-start-version
-  version: "0.47.0"
+  version: "0.48.0"
   # x-release-please-end
 
 packages:
   - name: core-base
     path: ../../build/
     # x-release-please-start-version
-    ref: 0.47.0
+    ref: 0.48.0
     # x-release-please-end
     optionalComponents:
       - istio-passthrough-gateway
