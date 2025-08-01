@@ -26,7 +26,7 @@ Specifically:
 
 ### Pre-Commit Checks
 
-We use [codespell](https://github.com/codespell-project/codespell) and [yamllint](https://yamllint.readthedocs.io/en/stable/) for pre-commit checks. Please install these before committing, or your commit may fail.
+We use [codespell](https://github.com/codespell-project/codespell), [yamllint](https://yamllint.readthedocs.io/en/stable/), and [helm unittest](https://github.com/helm-unittest/helm-unittest) for pre-commit checks. Please install these before committing, or your commit may fail.
 
 To install these tools, run:
 
@@ -47,9 +47,12 @@ pip install yamllint codespell
 Additionally, we add and check for license headers in our files. The pre-commit check is performed by this [UDS Common task](https://github.com/defenseunicorns/uds-common/blob/main/tasks/lint.yaml#L159-L225).
 
 This task requires that `GO` and `addlicense` dependencies are installed. Install `GO` by following the [official documentation](https://go.dev/doc/install). To install `addlicense` and it's required dependencies you can run the following command:
+
 ```console
 uds run -f tasks/lint.yaml fix-license
 ```
+
+Helm unittest is also included in the `lint-check` task and requires [Helm](https://helm.sh/docs/intro/install/) and the [Helm Unittest Plugin](https://github.com/helm-unittest/helm-unittest?tab=readme-ov-file#install) to be installed.
 
 > [!NOTE]
 > If you choose to forgo pre-commit checking there is a possibility that the commit will fail Github pipeline jobs that perform these checks.
@@ -85,6 +88,8 @@ Before starting, ensure that you have the following installed:
 - **Node.js** (for building and running Pepr): [Install Node.js](https://nodejs.org/en/download/) (we recommend Node 24 to align with what CI tests/builds with)
 - **UDS CLI** (for running tasks and deploying): [Install UDS](https://uds.defenseunicorns.com/cli/quickstart-and-usage/)
 - **Go** (for development and testing): [Install Go](https://go.dev/doc/install)
+- **Helm** (for development and testing): [Install Helm](https://helm.sh/docs/intro/install/)
+- **Helm Unittest Plugin** (for development and testing): [Install Helm unittest](https://github.com/helm-unittest/helm-unittest?tab=readme-ov-file#install)
 
 ### 2. Clone the Repository and Make a Branch
 
@@ -136,18 +141,19 @@ Note you can also specify the `--set FLAVOR=<registry1/unicorn>` flag to test us
 
 ### Note for External Contributors
 
-When submitting a pull request (PR) from a forked repository, please note that our CI/CD processes may not run completely due to security restrictions. This is because certain secrets required for the full CI/CD pipeline are not accessible from forks. 
+When submitting a pull request (PR) from a forked repository, please note that our CI/CD processes may not run completely due to security restrictions. This is because certain secrets required for the full CI/CD pipeline are not accessible from forks.
 
 **What to expect:**
+
 1. **CI/CD Failures**: If you notice CI/CD failures, it might be due to these limitations rather than issues with your code.
 2. **Maintainer Review**: Our maintainers will review your PR and, if necessary, check out your branch and push it to the main repository. This step allows the full CI/CD process to run with the required secrets, ensuring that all checks are performed.
 
 ### PR Requirements
 
-* PRs must be against the `main` branch.
-* PRs must pass CI checks.
-* All commits must be signed.
-* PRs should have a related issue, except for trivial fixes.
+- PRs must be against the `main` branch.
+- PRs must pass CI checks.
+- All commits must be signed.
+- PRs should have a related issue, except for trivial fixes.
 
 ## Contact
 

@@ -52,3 +52,55 @@ tasks:
   - name: e2e-test
     actions:
       - description: "Run Keycloak E2E tests"
+
+  - name: update-keycloak-grafana-dashboards
+    description: "Pull and update grafana keycloak dashboards"
+    actions:
+      - description: "Remove any existing dashboards clone"
+        cmd: rm -rf .tmp-keycloak-grafana-dashboard || true
+      - description: "Clone the Keycloak Grafana dashboards repository"
+        cmd: git clone --branch "${KC_GRAFANA_DASHBOARDS_BRANCH:-main}" "${KC_GRAFANA_DASHBOARDS_REPOSITORY:-https://github.com/keycloak/keycloak-grafana-dashboard.git}" .tmp-keycloak-grafana-dashboard --depth 1
+      - description: "Ensure correct branch and update"
+        cmd: |
+          git -C .tmp-keycloak-grafana-dashboard checkout "${KC_GRAFANA_DASHBOARDS_BRANCH:-main}"
+          git -C .tmp-keycloak-grafana-dashboard pull
+      - description: "Inject Prometheus datasource UID into dashboards"
+        cmd: |
+          cd .tmp-keycloak-grafana-dashboard/dashboards
+          for F in *; do
+            cp "${F}" copy.json
+            DS_PROMETHEUS=Prometheus envsubst '${DS_PROMETHEUS}' < copy.json > "${F}"
+            rm copy.json
+          done
+      - description: "Copy updated dashboards into uds-core"
+        cmd: |
+          cp .tmp-keycloak-grafana-dashboard/dashboards/keycloak-capacity-planning-dashboard.json src/keycloak/chart/dashboards/keycloak-capacity-planning-dashboard.json
+          cp .tmp-keycloak-grafana-dashboard/dashboards/keycloak-troubleshooting-dashboard.json src/keycloak/chart/dashboards/keycloak-troubleshooting-dashboard.json
+      - description: "Patch dashboard variable defaults (capacity planning)"
+        cmd: |
+          jq '
+            .templating.list |= map(
+              if .name == "namespace" then
+                .current = {"selected":true,"text":"keycloak","value":"keycloak"} |
+                .options = [{"selected":true,"text":"keycloak","value":"keycloak"}] |
+                .datasource = "Prometheus"
+              elif .name == "realm" then
+                .current = {"selected":true,"text":"uds","value":"uds"} |
+                .options = [{"selected":true,"text":"uds","value":"uds"}] |
+                .datasource = "Prometheus"
+              else . end
+            )
+          ' src/keycloak/chart/dashboards/keycloak-capacity-planning-dashboard.json > tmp.json && mv tmp.json src/keycloak/chart/dashboards/keycloak-capacity-planning-dashboard.json
+      - description: "Patch dashboard variable defaults (troubleshooting)"
+        cmd: |
+          jq '
+            .templating.list |= map(
+              if .name == "namespace" then
+                .current = {"selected":true,"text":"keycloak","value":"keycloak"} |
+                .options = [{"selected":true,"text":"keycloak","value":"keycloak"}] |
+                .datasource = "Prometheus"
+              else . end
+            )
+          ' src/keycloak/chart/dashboards/keycloak-troubleshooting-dashboard.json > tmp.json && mv tmp.json src/keycloak/chart/dashboards/keycloak-troubleshooting-dashboard.json
+      - description: "Clean up temp directory"
+        cmd: rm -rf .tmp-keycloak-grafana-dashboard || true
