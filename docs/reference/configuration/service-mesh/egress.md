@@ -1,5 +1,7 @@
 ---
 title: Istio Egress
+tableOfContents:
+  maxHeadingLevel: 4
 ---
 
 UDS Core leverages Istio to route dedicated egress out of the service mesh. This document provides an overview and examples of the Istio resources that UDS Core deploys to handle egress.

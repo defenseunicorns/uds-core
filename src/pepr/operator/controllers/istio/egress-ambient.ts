@@ -11,7 +11,7 @@ import { getHostPortsProtocol } from "./egress";
 import { log } from "./istio-resources";
 import { generateLocalEgressSEName, generateLocalEgressServiceEntry } from "./service-entry";
 import { HostResourceMap } from "./types";
-import { generateWaypoint } from "./waypoint";
+import { createEgressWaypointGateway } from "./ambient-waypoint";
 
 export const ambientEgressNamespace = "istio-egress-waypoint";
 export const sharedEgressPkgId = "shared-ambient-egress-resource";
@@ -24,7 +24,7 @@ export async function applyAmbientEgressResources(packageList: Set<string>, gene
   }
 
   // Generate the waypoint payload
-  const waypoint = generateWaypoint(packageList, generation);
+  const waypoint = createEgressWaypointGateway(packageList, generation);
 
   // Apply waypoint
   log.debug(waypoint, `Applying Waypoint ${waypoint.metadata?.name}`);

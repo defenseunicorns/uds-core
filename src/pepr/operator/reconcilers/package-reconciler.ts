@@ -69,9 +69,6 @@ export async function packageReconciler(pkg: UDSPackage) {
     await new Promise(resolve => setTimeout(resolve, backOffSeconds * 1000));
   }
 
-  // Migrate the package to the latest version
-  migrate(pkg);
-
   // Configure the namespace and namespace-wide network policies
   try {
     await updateStatus(pkg, { phase: Phase.Pending, conditions: getReadinessConditions(false) });

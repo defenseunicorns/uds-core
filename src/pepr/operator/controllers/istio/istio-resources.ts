@@ -109,7 +109,6 @@ export async function istioResources(pkg: UDSPackage, namespace: string, istioMo
   return [...hosts];
 }
 
-// TODO: Update tests for this function
 /**
  * Creates a ServiceEntry and Sidecar resource for egress traffic and reconciles
  * shared egress resources

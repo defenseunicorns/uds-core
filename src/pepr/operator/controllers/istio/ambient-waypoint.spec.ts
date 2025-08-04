@@ -11,12 +11,15 @@ import { PackageStore } from "../packages/package-store";
 import {
   cleanupWaypointLabels,
   createWaypointGateway,
+  createEgressWaypointGateway,
+  egressWaypointName,
   isWaypointPodHealthy,
   reconcileExistingResources,
   reconcilePod,
   reconcileService,
   setupAmbientWaypoint,
 } from "./ambient-waypoint";
+import { ambientEgressNamespace, sharedEgressPkgId } from "./egress-ambient";
 
 // Test helpers
 const createMockPackage = (
@@ -144,9 +147,13 @@ const mockLog = vi.hoisted(() => ({
 }));
 
 // Mock the istio-resources module
-vi.mock("./istio-resources.js", () => ({
-  log: mockLog,
-}));
+vi.mock("./istio-resources.js", async importOriginal => {
+  const actual = await importOriginal<typeof import("./istio-resources")>();
+  return {
+    ...actual,
+    log: mockLog,
+  };
+});
 
 describe("isWaypointPodHealthy", () => {
   const namespace = "test-ns";
@@ -698,5 +705,29 @@ describe("reconcileExistingResources", () => {
       "Error in reconcileExistingResources()",
       "get failed",
     );
+  });
+});
+
+describe("test createEgressWaypointGateway", () => {
+  it("should create egress waypoint", () => {
+    const pkgs = new Set(["test-pkg1", "test-pkg2"]);
+    const generation = 1;
+
+    const waypoint = createEgressWaypointGateway(pkgs, generation);
+
+    expect(waypoint).toBeDefined();
+    expect(waypoint.metadata?.name).toEqual(egressWaypointName);
+    expect(waypoint.metadata?.namespace).toEqual(ambientEgressNamespace);
+    expect(waypoint.metadata?.labels).toEqual({
+      "uds/package": sharedEgressPkgId,
+      "uds/generation": generation.toString(),
+    });
+    expect(waypoint.metadata?.annotations).toEqual({
+      "uds.dev/user-test-pkg1": "user",
+      "uds.dev/user-test-pkg2": "user",
+    });
+    expect(waypoint.spec?.gatewayClassName).toEqual("istio-waypoint");
+    expect(waypoint.spec?.listeners).toBeDefined();
+    expect(waypoint.spec?.infrastructure).toBeDefined();
   });
 });

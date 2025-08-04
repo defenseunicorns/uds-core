@@ -18,7 +18,7 @@ import {
   generateSharedServiceEntry,
 } from "./service-entry";
 import { EgressResource, HostResource } from "./types";
-import { waypointName } from "./waypoint";
+import { egressWaypointName } from "./ambient-waypoint";
 
 beforeEach(() => {
   UDSConfig.domain = "uds.dev";
@@ -223,7 +223,7 @@ describe("test generate local egress service entry", () => {
     expect(serviceEntry.metadata?.labels).toEqual({
       "uds/package": packageName,
       "uds/generation": generation,
-      "istio.io/use-waypoint": waypointName,
+      "istio.io/use-waypoint": egressWaypointName,
       "istio.io/use-waypoint-namespace": ambientEgressNamespace,
     });
     expect(serviceEntry.metadata?.ownerReferences).toBeDefined();
