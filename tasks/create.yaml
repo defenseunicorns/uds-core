@@ -101,8 +101,11 @@ tasks:
           architecture: ${ZARF_ARCHITECTURE}
       - description: "Create the shim bundle (Base only)"
         if: ${{ eq .inputs.layer "base" }}
+        shell:
+          darwin: bash
+          linux: bash
         cmd: |
-          if [ ${{.inputs.shim_bundle}} = "true" ]; then
+          if [[ ${{.inputs.shim_bundle}} == "true" ]]; then
             uds create bundles/base-shim --confirm --no-progress --architecture=${ZARF_ARCHITECTURE}
           else
             echo "Skipping base-shim bundle creation."
