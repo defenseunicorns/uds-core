@@ -56,6 +56,7 @@ function createMockK8sClient(overrides = {}) {
     PatchStatus: vi.fn().mockResolvedValue({}),
     Raw: vi.fn().mockResolvedValue({}),
     Proxy: vi.fn().mockResolvedValue({}),
+    Scale: vi.fn().mockResolvedValue({}),
 
     // Fluent API methods
     WithField: vi.fn().mockReturnThis(),
