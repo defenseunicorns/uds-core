@@ -4,7 +4,7 @@ tableOfContents:
   maxHeadingLevel: 3
 ---
 
-This guide provides instructions and best practices for upgrading UDS Core installations. Following these guidelines helps ensure a smooth upgrade process and minimizes potential disruptions to your environment.
+This guide provides instructions and best practices for upgrading UDS Core installations. Following these guidelines will help ensure a smooth upgrade process and minimize potential disruptions to your environment.
 
 ## Importance of Upgrades
 
@@ -15,7 +15,7 @@ Regularly upgrading UDS Core is essential for several reasons:
 - **New Features**: Access to new capabilities and improvements
 - **Compatibility**: Ensuring continued compatibility with the broader UDS ecosystem
 
-Staying current with UDS Core releases helps maintain the security posture and functionality of your deployment.
+Staying current with UDS Core releases helps maintain the security posture and functionality of your environment.
 
 ## Upgrade Strategies
 
@@ -25,7 +25,7 @@ UDS Core is designed and tested for sequential minor version upgrades (e.g., 0.9
 
 - Follows the tested upgrade path
 - Allows for incremental validation of each upgrade step
-- Reduces complexity when troubleshooting issues
+- Reduces complexity during troubleshooting
 
 ### Direct Version Jumps
 
@@ -94,7 +94,7 @@ packages:
     ref: 0.10.0-upstream
 ```
 
-Try to avoid other concurrent package upgrades (i.e. zarf init, other UDS Packages) or larger changes like switching between flavors unless you have restrictive maintenance windows. Where possible it is often better to perform these upgrades independently to identify and troubleshoot if issues occur. 
+Try to avoid other concurrent package upgrades (e.g., zarf init or other UDS packages) or larger changes, such as switching between flavors, unless you have restrictive maintenance windows. Where possible, it is often better to perform these upgrades independently to simplify troubleshooting if issues occur.
 
 ### Update Configurations
 
@@ -105,7 +105,7 @@ Before creating the new bundle, update configuration as needed:
    - Review any values changes to UDS Core helm charts and zarf variables
 
 2. **Upstream Tool Configuration Changes**:
-   - Review and upstream tooling release notes especially if there are major version updates
+   - Review the release notes for upstream tools, especially if major version updates are included
    - Where necessary update bundle overrides based on any helm chart values changes
 
 ### Build and Deploy Bundle
@@ -127,7 +127,7 @@ Depending on your configuration and process this may have additional steps with 
 After the bundle deployment completes, verify the health and functionality of your environment:
 
 1. **Verify UDS Core Components**:
-  - The UDS Core deployment will perform basic health checking for you
+  - The UDS Core deployment performs basic health checks automatically
   - Additionally confirm all UDS Core components are accessible at their endpoints, with SSO login
 
 2. **Verify Mission Applications**:
@@ -141,10 +141,10 @@ UDS Core does not officially test or support rollback procedures. Individual ope
 Rather than attempting a rollback we recommend the following approaches:
 
 1. **Roll Forward**: Address issues by applying fixes or configuration changes to the current version.
-1. **Manual Intervention**: Where necessary perform manual "one-time" upgrade fixes to restore access. If there are persistent issues, these should reported as [GitHub Issues](https://github.com/defenseunicorns/uds-core/issues) for the team to address going forward.
+1. **Manual Intervention**: Where necessary perform manual "one-time" upgrade fixes to restore access. If there are persistent issues, these should be reported as [GitHub Issues](https://github.com/defenseunicorns/uds-core/issues) for the team to address going forward.
 1. **Restore from Backup**: In critical situations, consider restoring from backups rather than attempting a version rollback.
 
-With any upgrade issues it is also important to:
+If you encounter upgrade issues, it's important to:
 - Re-review release notes to check if any known issues have been identified
 - Check the [UDS Core GitHub Issues](https://github.com/defenseunicorns/uds-core/issues) for similar problems and solutions
 - Open a new issue with detailed information about your environment and the problem
