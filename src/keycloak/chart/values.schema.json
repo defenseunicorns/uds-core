@@ -133,6 +133,9 @@
     "mtlsClientCert": {
       "type": "string"
     },
+    "dashboardAnnotations": {
+      "type": "object"
+    },
     "debugMode": {
       "type": "boolean"
     },

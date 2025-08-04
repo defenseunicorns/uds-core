@@ -11,3 +11,7 @@ classificationBanner:
 domain: "###ZARF_VAR_DOMAIN###"
 # Note: This does not handle an empty admin domain zarf var
 adminDomain: "###ZARF_VAR_ADMIN_DOMAIN###"
+
+# Optional annotations for grouping dashboards in Grafana folders.
+# see docs for more info: https://uds.defenseunicorns.com/reference/configuration/uds-monitoring-metrics/#grouping-dashboards
+dashboardAnnotations: {}

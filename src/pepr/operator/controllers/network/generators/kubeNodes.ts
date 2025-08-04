@@ -18,6 +18,9 @@ const log = setupLogger(Component.OPERATOR_GENERATORS);
 // Maintain a set of all node internal IPs
 const nodeSet = new Set<string>();
 
+// Maintain a map of node names to their internal IPs
+const nodeNameToIPMap = new Map<string, string>();
+
 // Track whether AuthorizationPolicies are available yet (Pepr installs before Istio)
 let authorizationPolicyExists = false;
 
@@ -43,7 +46,12 @@ export async function initAllNodesTarget() {
 
       for (const node of nodes.items) {
         const ip = getNodeInternalIP(node);
-        if (ip) nodeSet.add(ip);
+        const nodeName = node.metadata!.name!;
+
+        if (ip) {
+          nodeSet.add(ip);
+          nodeNameToIPMap.set(nodeName, ip);
+        }
       }
       await updateKubeNodesNetworkPolicies();
       await updateKubeNodesAuthorizationPolicies();
@@ -66,12 +74,24 @@ export function kubeNodes(): V1NetworkPolicyPeer[] {
 }
 
 /**
- * When a node is created or updated, if it's Ready, add its IP to the set,
+ * When a node is created or updated, if it's Ready, add its IP to the nodeSet and nodeNameToIPMap,
  * rebuild the policies, and update the NetworkPolicies.
  */
 export async function updateKubeNodesFromCreateUpdate(node: kind.Node) {
   const ip = getNodeInternalIP(node);
-  if (ip) nodeSet.add(ip);
+  const nodeName = node.metadata!.name!;
+
+  if (ip) {
+    const oldIP = nodeNameToIPMap.get(nodeName);
+
+    nodeSet.add(ip);
+    nodeNameToIPMap.set(nodeName, ip);
+
+    // If the node's IP has changed, remove the old IP from the set
+    if (oldIP && oldIP !== ip) {
+      nodeSet.delete(oldIP);
+    }
+  }
 
   await updateKubeNodesNetworkPolicies();
   await updateKubeNodesAuthorizationPolicies();
@@ -83,7 +103,11 @@ export async function updateKubeNodesFromCreateUpdate(node: kind.Node) {
  */
 export async function updateKubeNodesFromDelete(node: kind.Node) {
   const ip = getNodeInternalIP(node);
-  if (ip) nodeSet.delete(ip);
+  const nodeName = node.metadata!.name!;
+  if (ip) {
+    nodeSet.delete(ip);
+    nodeNameToIPMap.delete(nodeName);
+  }
 
   await updateKubeNodesNetworkPolicies();
   await updateKubeNodesAuthorizationPolicies();

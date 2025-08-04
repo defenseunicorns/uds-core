@@ -5,8 +5,9 @@
 
 import { a, sdk } from "pepr";
 
+import { V1PodSecurityContext } from "@kubernetes/client-node";
 import { Policy } from "../operator/crd";
-import { When } from "./common";
+import { isIstioProxyContainer, When } from "./common";
 import { isExempt, markExemption } from "./exemptions";
 
 const { containers } = sdk;
@@ -114,9 +115,7 @@ When(a.Pod)
     let isIstioWaypointPod = false;
     for (const container of containers(request)) {
       if (
-        container.name === "istio-proxy" &&
-        container.ports?.some(p => p.name === "http-envoy-prom") &&
-        container.args?.some(arg => arg === "proxy") &&
+        isIstioProxyContainer(container) && // Waypoints run istio-proxy containers
         container.args?.some(arg => arg === "waypoint")
       ) {
         isIstioWaypointPod = true;
@@ -193,6 +192,53 @@ When(a.Pod)
       // return request.Deny(
       //   `The following istio ambient annotations that can modify secure mesh behavior are not allowed: ${violations.join(", ")}`,
       // );
+    }
+
+    return request.Approve();
+  });
+
+/**
+ * This policy restricts the use of the Istio proxy user/group (1337) to only be used by Istio proxy containers.
+ * It allows specific Istio components (waypoints, ztunnel, and sidecars) to use these IDs.
+ * This prevents unauthorized pods from running with elevated privileges that could be used to bypass security controls.
+ */
+When(a.Pod)
+  .IsCreatedOrUpdated()
+  .Mutate(markExemption(Policy.RestrictIstioUser))
+  .Validate(request => {
+    if (isExempt(request, Policy.RestrictIstioUser)) {
+      return request.Approve();
+    }
+
+    const pod = request.Raw.spec!;
+    const podSecurityCtx = pod.securityContext || ({} as V1PodSecurityContext);
+
+    // Check pod-level security context for UID/GID 1337
+    if (
+      podSecurityCtx.runAsUser === 1337 ||
+      podSecurityCtx.runAsGroup === 1337 ||
+      podSecurityCtx.fsGroup === 1337 ||
+      podSecurityCtx.supplementalGroups?.includes(1337)
+    ) {
+      return request.Deny(
+        "Pods cannot use UID/GID 1337 (Istio proxy) unless they are trusted Istio components",
+      );
+    }
+
+    // Check container security contexts
+    for (const container of containers(request)) {
+      // Check if this is an Istio proxy container
+      const isIstioProxy = isIstioProxyContainer(container);
+
+      // Only check UID/GID 1337 if this is not an Istio proxy container
+      if (!isIstioProxy) {
+        const containerCtx = container.securityContext || {};
+        if (containerCtx.runAsUser === 1337 || containerCtx.runAsGroup === 1337) {
+          return request.Deny(
+            `Container '${container.name}' cannot use UID/GID 1337 (Istio proxy) as it is not a trusted Istio component`,
+          );
+        }
+      }
     }
 
     return request.Approve();

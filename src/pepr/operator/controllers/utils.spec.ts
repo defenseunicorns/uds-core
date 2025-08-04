@@ -5,7 +5,7 @@
 
 import { K8s, kind } from "pepr";
 import { Logger } from "pino";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, Mock, vi } from "vitest";
 import { createEvent, retryWithDelay, validateNamespace } from "./utils";
 
 // Mock K8s client
@@ -166,7 +166,7 @@ describe("createEvent", () => {
 
   it("should create an event for a valid resource", async () => {
     // Set up K8s mocks
-    vi.mocked(K8s).mockReturnValue(mockK8sClient);
+    vi.mocked(K8s as Mock).mockImplementation(() => mockK8sClient);
 
     // Create a test resource
     const resource = {
@@ -220,7 +220,7 @@ describe("createEvent", () => {
     const mockCreate = vi.fn().mockRejectedValue(new Error("Test error"));
 
     // Set up K8s mocks
-    vi.mocked(K8s).mockReturnValue(
+    vi.mocked(K8s as Mock).mockImplementation(() =>
       createMockK8sClient({
         Create: mockCreate,
       }),

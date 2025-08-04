@@ -8,6 +8,8 @@ storage:
     remoteNamespace: ""
   egressCidr: ""
 
+# Optional annotations for grouping dashboards in Grafana folders.
+# see docs for more info: https://uds.defenseunicorns.com/reference/configuration/uds-monitoring-metrics/#grouping-dashboards
 dashboardAnnotations: {}
 
 # Support for custom `network.allow` entries on the Package CR, useful for extra datasources
