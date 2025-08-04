@@ -1,7 +1,10 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2025 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
-# Egress Config
+# Egress Waypoint Configuration
+# The following configuration settings reference the resources created from adding an Istio Waypoint
+# These configurations will be overlaid on top of the generated resources using a Strategic Merge Patch strategy
+# See documentation: https://istio.io/latest/docs/tasks/traffic-management/ingress/gateway-api/#automated-deployment
 config:
 
   deployment:

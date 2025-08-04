@@ -141,7 +141,7 @@ export async function istioEgressResources(
       } catch (e) {
         let errText = `Unable to get the egress waypoint namespace ${ambientEgressNamespace}.`;
         if (e?.status == 404) {
-          errText = `Egress waypoint is not enabled in the cluster. Please enable the egress waypoint and retry.`;
+          errText = `The '${ambientEgressNamespace}' namespace was not found. Ensure the 'istio-egress-waypoint' component is deployed and try again.`;
         }
         log.error(errText);
         throw new Error(errText);

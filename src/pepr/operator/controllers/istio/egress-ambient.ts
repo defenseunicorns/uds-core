@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2025 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 import { V1OwnerReference } from "@kubernetes/client-node";
@@ -72,7 +72,7 @@ export async function createAmbientWorkloadEgressResources(
     await K8s(IstioServiceEntry).Apply(serviceEntry, { force: true });
   }
 
-  // Create Authorization Policy for service entry, if serviceAccount is specified
+  // Create Authorization Policy for service entry, use specified serviceAccount or use "default" if no serviceAccount specified
   for (const allow of egressRequested) {
     const serviceAccount = allow.serviceAccount ?? "default";
     const hostPortsProtocol = getHostPortsProtocol(allow);
