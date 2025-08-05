@@ -9,7 +9,9 @@ import { Direction, RemoteGenerated, RemoteProtocol } from "../../crd";
 import * as utils from "../utils";
 import { defaultEgressMocks, pkgMock, updateEgressMocks } from "./defaultTestMocks";
 import * as egressMod from "./egress";
+import * as egressAmbientMod from "./egress-ambient";
 import { istioEgressResources } from "./istio-resources";
+import { IstioState } from "./namespace";
 
 vi.mock("../utils", async importOriginal => {
   const original = (await importOriginal()) as typeof utils;
@@ -53,6 +55,9 @@ describe("test istioEgressResources", () => {
     vi.useFakeTimers();
 
     vi.spyOn(egressMod, "reconcileSharedEgressResources").mockImplementation(async () => {});
+    vi.spyOn(egressAmbientMod, "createAmbientWorkloadEgressResources").mockImplementation(
+      async () => {},
+    );
     updateEgressMocks(defaultEgressMocks);
     vi.clearAllMocks();
   });
@@ -62,15 +67,14 @@ describe("test istioEgressResources", () => {
     vi.useRealTimers();
   });
 
-  it("should err if no egress gateway namespace with defined hostResourceMap", async () => {
+  it("should err if no egress gateway namespace with defined hostResourceMap for sidecar mode", async () => {
     const mockHostResourceMap = {
       "example.com": {
         portProtocol: [{ port: 443, protocol: RemoteProtocol.TLS }],
       },
     };
 
-    const errorMessage =
-      "Unable to reconcile get the egress gateway namespace istio-egress-gateway.";
+    const errorMessage = "Unable to get the egress gateway namespace istio-egress-gateway.";
 
     const getNsMock = vi
       .fn<() => Promise<kind.Namespace>>()
@@ -90,11 +94,12 @@ describe("test istioEgressResources", () => {
         pkgMock.metadata!.namespace!,
         pkgMock.metadata!.generation!.toString(),
         [],
+        IstioState.Sidecar,
       ),
     ).rejects.toThrow(errorMessage);
   });
 
-  it("should err if no egress gateway port with defined hostResourceMap", async () => {
+  it("should err if no egress gateway port with defined hostResourceMap for sidecar mode", async () => {
     const mockError = new Error(
       "Egress gateway does not expose port 1234 for host example.com. Please update the egress gateway service to expose this port.",
     );
@@ -116,6 +121,7 @@ describe("test istioEgressResources", () => {
         pkgMock.metadata!.namespace!,
         pkgMock.metadata!.generation!.toString(),
         [],
+        IstioState.Sidecar,
       ),
     ).rejects.toThrowError(mockError);
   });
@@ -129,12 +135,13 @@ describe("test istioEgressResources", () => {
       pkgMock.metadata!.namespace!,
       pkgMock.metadata!.generation!.toString(),
       [],
+      IstioState.Sidecar,
     );
 
     expect(egressMod.reconcileSharedEgressResources).toHaveBeenCalledTimes(1);
   });
 
-  it("should create egress resources", async () => {
+  it("should create egress resources for sidecar mode", async () => {
     const mockHostResourceMap = {
       "example.com": {
         portProtocol: [
@@ -175,13 +182,14 @@ describe("test istioEgressResources", () => {
       pkgMock.metadata!.namespace!,
       pkgMock.metadata!.generation!.toString(),
       [],
+      IstioState.Sidecar,
     );
 
     expect(defaultEgressMocks.applySeMock).toHaveBeenCalledTimes(1);
     expect(defaultEgressMocks.applySidecarMock).toHaveBeenCalledTimes(2);
   });
 
-  it("should not create egress resources", async () => {
+  it("should not create egress resources for sidecar mode", async () => {
     updateEgressMocks(defaultEgressMocks);
 
     await istioEgressResources(
@@ -201,9 +209,88 @@ describe("test istioEgressResources", () => {
       pkgMock.metadata!.namespace!,
       pkgMock.metadata!.generation!.toString(),
       [],
+      IstioState.Sidecar,
     );
 
     expect(defaultEgressMocks.applySeMock).not.toHaveBeenCalled();
     expect(defaultEgressMocks.applySidecarMock).not.toHaveBeenCalled();
+  });
+
+  it("should err if no egress waypoint namespace for ambient mode", async () => {
+    const mockHostResourceMap = {
+      "example.com": {
+        portProtocol: [{ port: 443, protocol: RemoteProtocol.TLS }],
+      },
+    };
+
+    const errorMessage = "Unable to get the egress waypoint namespace istio-egress-waypoint.";
+
+    const validateNamespaceMock = vi
+      .spyOn(utils, "validateNamespace")
+      .mockRejectedValue(new Error(errorMessage));
+
+    await expect(
+      istioEgressResources(
+        mockHostResourceMap,
+        [],
+        pkgIdMock,
+        pkgMock.metadata!.name!,
+        pkgMock.metadata!.namespace!,
+        pkgMock.metadata!.generation!.toString(),
+        [],
+        IstioState.Ambient,
+      ),
+    ).rejects.toThrow(errorMessage);
+
+    expect(validateNamespaceMock).toHaveBeenCalledWith("istio-egress-waypoint");
+    expect(egressAmbientMod.createAmbientWorkloadEgressResources).not.toHaveBeenCalled();
+  });
+
+  it("should create ambient workload egress resources for ambient mode", async () => {
+    const mockHostResourceMap = {
+      "example.com": {
+        portProtocol: [
+          { port: 443, protocol: RemoteProtocol.TLS },
+          { port: 80, protocol: RemoteProtocol.HTTP },
+        ],
+      },
+    };
+
+    const mockAllowList = [
+      {
+        remoteHost: "example.com",
+        port: 443,
+        remoteProtocol: RemoteProtocol.TLS,
+        direction: Direction.Egress,
+        selector: {
+          app: "example-app1",
+        },
+      },
+    ];
+
+    const validateNamespaceMock = vi
+      .spyOn(utils, "validateNamespace")
+      .mockResolvedValue({} as kind.Namespace);
+
+    await istioEgressResources(
+      mockHostResourceMap,
+      mockAllowList,
+      pkgIdMock,
+      pkgMock.metadata!.name!,
+      pkgMock.metadata!.namespace!,
+      pkgMock.metadata!.generation!.toString(),
+      [],
+      IstioState.Ambient,
+    );
+
+    expect(validateNamespaceMock).toHaveBeenCalledWith("istio-egress-waypoint");
+    expect(egressAmbientMod.createAmbientWorkloadEgressResources).toHaveBeenCalledWith(
+      mockHostResourceMap,
+      mockAllowList,
+      pkgMock.metadata!.name!,
+      pkgMock.metadata!.namespace!,
+      pkgMock.metadata!.generation!.toString(),
+      [],
+    );
   });
 });
