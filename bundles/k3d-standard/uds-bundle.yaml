@@ -6,7 +6,7 @@ metadata:
   name: k3d-core-demo
   description: A UDS bundle for deploying the standard UDS Core package on a development cluster
   # x-release-please-start-version
-  version: "0.47.0"
+  version: "0.48.0"
   # x-release-please-end
 
 packages:
@@ -37,7 +37,7 @@ packages:
   - name: core
     path: ../../build/
     # x-release-please-start-version
-    ref: 0.47.0
+    ref: 0.48.0
     # x-release-please-end
     optionalComponents:
       - istio-passthrough-gateway
