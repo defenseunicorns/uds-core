@@ -7,7 +7,7 @@ metadata:
   description: "UDS Core (Identity & Authorization)"
   authors: "Defense Unicorns - Product"
   # x-release-please-start-version
-  version: "0.47.0"
+  version: "0.48.0"
   # x-release-please-end
   x-uds-dependencies: ["base"]
   annotations:
