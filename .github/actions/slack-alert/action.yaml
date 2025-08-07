@@ -1,9 +1,13 @@
 # Copyright 2024 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
-# action.yml
 name: "Slack Alerts"
 description: "UDS Core Slack Alert"
+
+inputs:
+  webhook-url:
+    description: 'Slack webhook URL'
+    required: true
 
 runs:
   using: "composite"
@@ -49,5 +53,5 @@ runs:
             ]
           }
       env:
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        SLACK_WEBHOOK_URL: ${{ inputs.webhook-url }}
         SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK

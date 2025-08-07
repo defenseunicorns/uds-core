@@ -24,3 +24,5 @@ jobs:
       - name: Send Slack notification
         if: failure()
         uses: ./.github/actions/slack-alert
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
