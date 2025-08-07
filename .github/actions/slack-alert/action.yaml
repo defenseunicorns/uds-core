@@ -15,15 +15,17 @@ runs:
     - name: Send Slack notification
       uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
       with:
-        channel-id: 'uds-foundations-ci-alerts'
+        webhook: ${{ inputs.webhook-url }}
+        webhook-type: 'incoming-webhook'
         payload: |
           {
+            "channel": "#uds-foundations-ci-alerts",
             "blocks": [
               {
                 "type": "section",
                 "text": {
                   "type": "mrkdwn",
-                  "text": "🚨 *Workflow Failure Alert*"
+                  "text": "<!here> 🚨 *Workflow Failure Alert*"
                 }
               },
               {
@@ -31,7 +33,7 @@ runs:
                 "fields": [
                   {
                     "type": "mrkdwn",
-                    "text": "*Workflow:*`${{ github.workflow }}`"
+                    "text": "*Workflow:* `${{ github.workflow }}`"
                   }
                 ]
               },
@@ -52,6 +54,3 @@ runs:
               }
             ]
           }
-      env:
-        SLACK_WEBHOOK_URL: ${{ inputs.webhook-url }}
-        SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK

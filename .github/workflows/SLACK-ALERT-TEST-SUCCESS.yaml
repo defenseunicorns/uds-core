@@ -13,6 +13,8 @@ on:
 jobs:
   scan-unicorn-package:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout repository
