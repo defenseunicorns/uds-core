@@ -1,7 +1,7 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2025 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
-name: "Slack Alerts"
+name: "Pipeline Alerts"
 description: "UDS Core Slack Alert"
 
 inputs:
@@ -30,21 +30,27 @@ runs:
               },
               {
                 "type": "section",
-                "text": {
-                  "type": "mrkdwn",
-                  "text": "Workflow: *`${{ github.workflow }}`*"
-                },
-                "accessory": {
-                  "type": "button",
-                  "text": {
-                    "type": "plain_text",
-                    "text": "View Run",
-                    "emoji": true
-                  },
-                  "value": "click_me_123",
-                  "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
-                  "action_id": "button-action"
-                }
+                "fields": [
+                  {
+                    "type": "mrkdwn",
+                    "text": "*Workflow:* `${{ github.workflow }}`"
+                  }
+                ]
+              },
+              {
+                "type": "actions",
+                "elements": [
+                  {
+                    "type": "button",
+                    "text": {
+                      "type": "plain_text",
+                      "text": "View Run",
+                      "emoji": true
+                    },
+                    "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+                    "style": "primary"
+                  }
+                ]
               }
             ]
           }
