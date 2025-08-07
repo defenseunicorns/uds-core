@@ -25,32 +25,26 @@ runs:
                 "type": "section",
                 "text": {
                   "type": "mrkdwn",
-                  "text": "<!here> 🚨 *Workflow Failure Alert*"
+                  "text": "<!here> 🚨 *UDS Core Pipeline Failure Alert*"
                 }
               },
               {
                 "type": "section",
-                "fields": [
-                  {
-                    "type": "mrkdwn",
-                    "text": "*Workflow:* `${{ github.workflow }}`"
-                  }
-                ]
-              },
-              {
-                "type": "actions",
-                "elements": [
-                  {
-                    "type": "button",
-                    "text": {
-                      "type": "plain_text",
-                      "text": "View Run",
-                      "emoji": true
-                    },
-                    "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
-                    "style": "primary"
-                  }
-                ]
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "Workflow: *`${{ github.workflow }}`*"
+                },
+                "accessory": {
+                  "type": "button",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "View Run",
+                    "emoji": true
+                  },
+                  "value": "click_me_123",
+                  "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+                  "action_id": "button-action"
+                }
               }
             ]
           }

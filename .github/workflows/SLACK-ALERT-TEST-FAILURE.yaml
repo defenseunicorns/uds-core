@@ -10,11 +10,13 @@ on:
       - '.github/workflows/test-slack-alert.yaml'
       - '.github/actions/slack-alert/**'
 
+
+permissions:
+  contents: read
+
 jobs:
   scan-unicorn-package:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
 
     steps:
       - name: Checkout repository
