@@ -68,3 +68,7 @@ jobs:
         uses: ./.github/actions/save-logs
         with:
           suffix: -nightly-${{ matrix.flavor }}-${{ matrix.test-type }}
+
+      - name: Send Slack notification
+        if: failure() && github.event_name == 'schedule'
+        uses: ./.github/actions/slack-alert

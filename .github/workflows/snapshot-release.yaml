@@ -46,3 +46,7 @@ jobs:
           fi
           # generate new release
           gh release create snapshot-latest -t "snapshot-latest" --prerelease --notes-start-tag "${LAST_RELEASE_TAG}" --generate-notes
+
+      - name: Send Slack notification
+        if: failure() && github.event_name == 'schedule'
+        uses: ./.github/actions/slack-alert
