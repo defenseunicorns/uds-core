@@ -29,7 +29,7 @@ const { When } = prometheus;
  *
  * ServiceMonitor mutation logic:
  * - If a custom scrapeClass is set (neither "istio-certs" nor "exempt"), update fallback only.
- * - Else if skip conditions apply (skip annotations or scrapeClass is "exempt"),simply remove scrapeClass.
+ * - Else if skip conditions apply (skip annotations or scrapeClass is "exempt"), simply remove scrapeClass.
  * - Otherwise (assumed "istio-certs"), remove scrapeClass, delete any TLS config, and set endpoints to HTTP.
  *
  * @param sm The ServiceMonitor to mutate
