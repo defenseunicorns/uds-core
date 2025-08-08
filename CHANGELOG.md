@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.48.1](https://github.com/defenseunicorns/uds-core/compare/v0.48.0...v0.48.1) (2025-08-08)
+
+
+### Miscellaneous
+
+* **deps:** update pepr ([#1803](https://github.com/defenseunicorns/uds-core/issues/1803)) ([5d21c1d](https://github.com/defenseunicorns/uds-core/commit/5d21c1d67db1198fa942cf56f3c3e2e19cf255ea))
+
+
+### Documentation
+
+* update pepr-policies doc to include full list of istio annotations ([#1799](https://github.com/defenseunicorns/uds-core/issues/1799)) ([5c8d9e5](https://github.com/defenseunicorns/uds-core/commit/5c8d9e55f6eee2a49127909430aa791499950e33))
+
 ## [0.48.0](https://github.com/defenseunicorns/uds-core/compare/v0.47.0...v0.48.0) (2025-08-05)
 
 
