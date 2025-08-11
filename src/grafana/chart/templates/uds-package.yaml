@@ -74,8 +74,6 @@ spec:
         remoteNamespace: monitoring
         remoteSelector:
           app.kubernetes.io/name: alertmanager
-        selector:
-          app.kubernetes.io/name: grafana
         description: "Alertmanager Datasource"
         port: 9093
 
