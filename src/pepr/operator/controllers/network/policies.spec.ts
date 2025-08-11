@@ -359,17 +359,12 @@ describe("networkPolicies", () => {
     // Verify we have the expected number of policies (default policies + exposed services)
     expect(policies.length).toBeGreaterThanOrEqual(3);
 
-    // Find policies for each exposed service by name pattern
-    const frontendPolicies = policies.filter(p => p.metadata?.name?.includes("frontend"));
-
-    const backendPolicies = policies.filter(p => p.metadata?.name?.includes("backend"));
-
-    const apiPolicies = policies.filter(p => p.metadata?.name?.includes("api-3000"));
-
-    // Each service should have at least one policy
-    expect(frontendPolicies.length).toBeGreaterThan(0);
-    expect(backendPolicies.length).toBeGreaterThan(0);
-    expect(apiPolicies.length).toBeGreaterThan(0);
+    // Define expected service policies
+    const servicePolicies = [
+      { name: "frontend", ports: [8080, 15008] },
+      { name: "backend", ports: [8080, 15008] },
+      { name: "api-3000", ports: [3000, 15008] },
+    ];
 
     // Helper function to validate common policy properties
     const validatePolicy = (policy: V1NetworkPolicy, expectedPorts: number[]) => {
@@ -402,23 +397,24 @@ describe("networkPolicies", () => {
       });
     };
 
-    // Verify frontend policy
-    expect(frontendPolicies).toHaveLength(1);
-    validatePolicy(frontendPolicies[0], [8080, 15008]);
-
-    // Verify backend policy
-    expect(backendPolicies).toHaveLength(1);
-    validatePolicy(backendPolicies[0], [8080, 15008]);
-
-    // Verify API policy
-    expect(apiPolicies).toHaveLength(1);
-    validatePolicy(apiPolicies[0], [3000, 15008]);
+    // Verify service policies
+    for (const { name, ports } of servicePolicies) {
+      const matchingPolicies = policies.filter(p => p.metadata?.name?.includes(name));
+      expect(matchingPolicies).toHaveLength(1);
+      validatePolicy(matchingPolicies[0], ports);
+    }
 
     // Verify default policies are included with package prefix
     const defaultPolicyNames = policies.map(p => p.metadata?.name);
-    expect(defaultPolicyNames).toContain("deny-test-pkg-default-deny-all");
-    expect(defaultPolicyNames).toContain("allow-test-pkg-allow-egress-dns");
-    expect(defaultPolicyNames).toContain("allow-test-pkg-allow-egress-istiod");
+    const expectedDefaultPolicies = [
+      "deny-test-pkg-default-deny-all",
+      "allow-test-pkg-allow-egress-dns",
+      "allow-test-pkg-allow-egress-istiod",
+    ];
+
+    for (const policyName of expectedDefaultPolicies) {
+      expect(defaultPolicyNames).toContain(policyName);
+    }
 
     // Verify default deny all policy
     const defaultDenyPolicy = policies.find(
