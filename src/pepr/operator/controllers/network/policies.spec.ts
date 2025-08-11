@@ -3,9 +3,10 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { describe, expect, it, vi } from "vitest";
-import { Direction, UDSPackage } from "../../crd";
-import { findMatchingClient, getGatewayPolicyDescription } from "./policies";
+import { V1NetworkPolicy } from "@kubernetes/client-node";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { Direction, Gateway, UDSPackage } from "../../crd";
+import { findMatchingClient, getGatewayPolicyDescription, networkPolicies } from "./policies";
 
 // Mock dependencies
 vi.mock("pepr", () => {
@@ -278,43 +279,175 @@ describe("findMatchingClient", () => {
 });
 
 describe("getGatewayPolicyDescription", () => {
-  it("should return ambient description when isAmbient is true and clientId is provided", () => {
+  it("should return ambient description when isAmbient is true", () => {
+    const serviceName = "test-service";
     const port = 8080;
-    const clientId = "test-client";
     const gateway = "tenant";
     const isAmbient = true;
 
-    const result = getGatewayPolicyDescription(port, clientId, gateway, isAmbient);
-    expect(result).toBe("8080-test-client Istio tenant gateway (ambient)");
+    const result = getGatewayPolicyDescription(serviceName, port, gateway, isAmbient);
+    expect(result).toBe("test-service-8080 Istio tenant gateway (ambient)");
   });
 
   it("should return standard description when isAmbient is false", () => {
+    const serviceName = "test-service";
     const port = 8080;
-    const clientId = "test-client";
     const gateway = "tenant";
     const isAmbient = false;
 
-    const result = getGatewayPolicyDescription(port, clientId, gateway, isAmbient);
-    expect(result).toBe("8080-service Istio tenant gateway");
-  });
-
-  it("should return standard description when clientId is undefined", () => {
-    const port = 8080;
-    const clientId = undefined;
-    const gateway = "tenant";
-    const isAmbient = true;
-
-    const result = getGatewayPolicyDescription(port, clientId, gateway, isAmbient);
-    expect(result).toBe("8080-service Istio tenant gateway");
+    const result = getGatewayPolicyDescription(serviceName, port, gateway, isAmbient);
+    expect(result).toBe("test-service-8080 Istio tenant gateway");
   });
 
   it("should handle different gateway types", () => {
+    const serviceName = "test-service";
     const port = 8080;
-    const clientId = "test-client";
     const gateway = "public";
     const isAmbient = true;
 
-    const result = getGatewayPolicyDescription(port, clientId, gateway, isAmbient);
-    expect(result).toBe("8080-test-client Istio public gateway (ambient)");
+    const result = getGatewayPolicyDescription(serviceName, port, gateway, isAmbient);
+    expect(result).toBe("test-service-8080 Istio public gateway (ambient)");
+  });
+});
+
+describe("networkPolicies", () => {
+  const mockPkg: UDSPackage = {
+    apiVersion: "uds.dev/v1",
+    kind: "UDSPackage",
+    metadata: {
+      name: "test-pkg",
+      namespace: "test-ns",
+      generation: 1,
+      uid: "test-uid",
+    },
+    spec: {
+      network: {
+        expose: [
+          {
+            service: "frontend",
+            host: "frontend.example.com",
+            selector: { app: "frontend" },
+            port: 8080,
+            gateway: Gateway.Tenant,
+          },
+          {
+            service: "backend",
+            host: "backend.example.com",
+            selector: { app: "backend" },
+            port: 8080, // Same port as frontend
+            gateway: Gateway.Tenant,
+          },
+          {
+            service: "api",
+            host: "api.example.com",
+            selector: { app: "api" },
+            port: 3000,
+            gateway: Gateway.Tenant,
+          },
+        ],
+      },
+    },
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("should generate network policies for multiple exposed services", async () => {
+    const policies = await networkPolicies(mockPkg, "test-ns", "sidecar");
+
+    // Verify we have the expected number of policies (default policies + exposed services)
+    expect(policies.length).toBeGreaterThanOrEqual(3);
+
+    // Find policies for each exposed service by name pattern
+    const frontendPolicies = policies.filter(p => p.metadata?.name?.includes("frontend"));
+
+    const backendPolicies = policies.filter(p => p.metadata?.name?.includes("backend"));
+
+    const apiPolicies = policies.filter(p => p.metadata?.name?.includes("api-3000"));
+
+    // Each service should have at least one policy
+    expect(frontendPolicies.length).toBeGreaterThan(0);
+    expect(backendPolicies.length).toBeGreaterThan(0);
+    expect(apiPolicies.length).toBeGreaterThan(0);
+
+    // Helper function to validate common policy properties
+    const validatePolicy = (policy: V1NetworkPolicy, expectedPorts: number[]) => {
+      // Verify namespace
+      expect(policy.metadata?.namespace).toBe("test-ns");
+
+      // Verify labels
+      expect(policy.metadata?.labels).toMatchObject({
+        "uds/package": "test-pkg",
+        "uds/generation": "1",
+      });
+
+      // Verify owner references - only check kind and name as that's what's set in the implementation
+      expect(policy.metadata?.ownerReferences).toContainEqual({
+        kind: "UDSPackage",
+        name: "test-pkg",
+      });
+
+      // Verify policy type is Ingress (if policyTypes is defined)
+      if (policy.spec?.policyTypes) {
+        expect(policy.spec.policyTypes).toContain("Ingress");
+      }
+
+      // Verify ingress rules exist and have the correct ports
+      expect(policy.spec?.ingress).toBeDefined();
+      const ports = policy.spec?.ingress?.[0]?.ports || [];
+      expect(ports).toHaveLength(expectedPorts.length);
+      expectedPorts.forEach(port => {
+        expect(ports).toContainEqual({ port });
+      });
+    };
+
+    // Verify frontend policy
+    expect(frontendPolicies).toHaveLength(1);
+    validatePolicy(frontendPolicies[0], [8080, 15008]);
+
+    // Verify backend policy
+    expect(backendPolicies).toHaveLength(1);
+    validatePolicy(backendPolicies[0], [8080, 15008]);
+
+    // Verify API policy
+    expect(apiPolicies).toHaveLength(1);
+    validatePolicy(apiPolicies[0], [3000, 15008]);
+
+    // Verify default policies are included with package prefix
+    const defaultPolicyNames = policies.map(p => p.metadata?.name);
+    expect(defaultPolicyNames).toContain("deny-test-pkg-default-deny-all");
+    expect(defaultPolicyNames).toContain("allow-test-pkg-allow-egress-dns");
+    expect(defaultPolicyNames).toContain("allow-test-pkg-allow-egress-istiod");
+
+    // Verify default deny all policy
+    const defaultDenyPolicy = policies.find(
+      p => p.metadata?.name === "deny-test-pkg-default-deny-all",
+    );
+    expect(defaultDenyPolicy).toBeDefined();
+    // For default deny policy, either policyTypes should contain 'Ingress' or be undefined
+    if (defaultDenyPolicy?.spec?.policyTypes) {
+      expect(defaultDenyPolicy.spec.policyTypes).toContain("Ingress");
+    }
+    // The ingress array should be empty or undefined
+    if (defaultDenyPolicy?.spec?.ingress) {
+      expect(defaultDenyPolicy.spec.ingress).toEqual([]);
+    }
+
+    // Verify egress DNS policy
+    const dnsPolicy = policies.find(p => p.metadata?.name === "allow-test-pkg-allow-egress-dns");
+    expect(dnsPolicy).toBeDefined();
+    if (dnsPolicy?.spec?.policyTypes) {
+      expect(dnsPolicy.spec.policyTypes).toContain("Egress");
+    }
+
+    // Verify egress Istio policy
+    const istioPolicy = policies.find(
+      p => p.metadata?.name === "allow-test-pkg-allow-egress-istiod",
+    );
+    expect(istioPolicy).toBeDefined();
+    if (istioPolicy?.spec?.policyTypes) {
+      expect(istioPolicy.spec.policyTypes).toContain("Egress");
+    }
   });
 });
