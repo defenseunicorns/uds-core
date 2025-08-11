@@ -18,6 +18,14 @@ spec:
         - "https://grafana.admin.{{ .Values.domain }}/login/generic_oauth"
         - "https://grafana.admin.{{ .Values.domain }}/login"
         {{- end }}
+      {{- if .Values.sso.groups }}
+      groups:
+        anyOf:
+        {{- range .Values.sso.groups }}
+        - {{ . | quote }}
+        {{- end }}
+      {{- end }}
+
 
   monitor:
     - selector:
