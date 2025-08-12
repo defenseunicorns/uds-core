@@ -203,7 +203,6 @@ packages:
               path: postgresql.ssl_mode
       velero:
         velero:
-          variables:
-            - name: VELERO_BUCKET_PREFIX
-              description: "Prefix/directory path in the storage bucket where Velero stores backup data."
-              path: "configuration.backupStorageLocation[0].prefix"
+          values:
+            - path: "configuration.backupStorageLocation[0].prefix"
+              value: "backups"
