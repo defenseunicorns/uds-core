@@ -11,6 +11,11 @@ watcher:
       value: "kindNsName"
     - name: ZARF_REGISTRY_ADDRESS
       value: "###ZARF_REGISTRY###"
+    # Default envs from upstream
+    - name: "PEPR_PRETTY_LOG"
+      value: "false"
+    - name: "LOG_LEVEL"
+      value: "info"
 admission:
   serviceMonitor:
     enabled: ###ZARF_VAR_PEPR_SERVICE_MONITORS###
@@ -21,3 +26,8 @@ admission:
       value: "kindNsName"
     - name: ZARF_REGISTRY_ADDRESS
       value: "###ZARF_REGISTRY###"
+    # Default envs from upstream
+    - name: "PEPR_PRETTY_LOG"
+      value: "false"
+    - name: "LOG_LEVEL"
+      value: "info"

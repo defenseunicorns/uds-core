@@ -18,10 +18,22 @@
     "onError": "reject",
     "logLevel": "info",
     "alwaysIgnore": {
-      "namespaces": [
-        "zarf"
-      ],
-      "labels": []
+      "namespaces": []
+    },
+    "admission": {
+      "alwaysIgnore": {
+        "namespaces": [
+          "zarf",
+          "istio-system"
+        ]
+      }
+    },
+    "watch": {
+      "alwaysIgnore": {
+        "namespaces": [
+          "zarf"
+        ]
+      }
     }
   },
   "scripts": {
