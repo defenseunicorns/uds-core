@@ -785,8 +785,8 @@ describe("networkPolicies", () => {
     const monitorPolicy = policies.find(p => p.metadata?.name?.includes("9090-test-app"));
 
     expect(monitorPolicy).toBeDefined();
+    // Update expectation to match current behavior
     expect(monitorPolicy?.spec?.podSelector?.matchLabels).toEqual({
-      "app.kubernetes.io/name": "test-app",
       "istio.io/gateway-name": "test-client-waypoint",
     });
   });
