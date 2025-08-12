@@ -14,6 +14,11 @@ import {
 } from "../operator/crd";
 import { FallbackScrapeProtocol } from "../operator/crd/generated/prometheus/servicemonitor-v1";
 import { mutatePodMonitor, mutateServiceMonitor } from "./index";
+import { isIstioInjected } from "./utils";
+
+vi.mock("./utils", () => ({
+  isIstioInjected: vi.fn().mockResolvedValue(true), // Default to true
+}));
 
 // Mock the logger
 vi.mock("../logger", () => {
@@ -27,6 +32,19 @@ vi.mock("../logger", () => {
       warn: vi.fn(),
       debug: vi.fn(),
     }),
+  };
+});
+
+// Mock Pepr K8s
+vi.mock("pepr", async () => {
+  const actual = await vi.importActual<typeof import("pepr")>("pepr");
+  return {
+    ...actual,
+    K8s: vi.fn(),
+    kind: {
+      ...actual.kind,
+      Namespace: "Namespace",
+    },
   };
 });
 
@@ -214,5 +232,28 @@ describe("mutatePodMonitor", () => {
 
     expect(podMonitor.Raw.spec!.scrapeClass).toBeUndefined();
     expect(podMonitor.Raw.spec!.podMetricsEndpoints![0].scheme).toBe(PodMonitorScheme.HTTP);
+  });
+
+  it("should remove scrapeClass but not modify scheme if not in istio-injected namespace", async () => {
+    // Set up test data
+    const endpoint: PodMonitorEndpoint = {
+      port: "http",
+      scheme: PodMonitorScheme.HTTPS,
+    };
+
+    podMonitor.Raw.spec!.scrapeClass = "istio-certs";
+    podMonitor.Raw.spec!.podMetricsEndpoints = [endpoint];
+
+    // Override the isIstioInjected mock to return false for this test
+    vi.mocked(isIstioInjected).mockResolvedValueOnce(false);
+
+    // Run the function with our mocked dependency
+    await mutatePodMonitor(podMonitor);
+
+    // The scrapeClass should be removed
+    expect(podMonitor.Raw.spec!.scrapeClass).toBeUndefined();
+
+    // But the scheme should remain HTTPS (not modified) since we skipped due to no istio-injection
+    expect(podMonitor.Raw.spec!.podMetricsEndpoints![0].scheme).toBe(PodMonitorScheme.HTTPS);
   });
 });

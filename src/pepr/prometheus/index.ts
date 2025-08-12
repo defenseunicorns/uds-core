@@ -24,6 +24,12 @@ export const prometheus = new Capability({
 
 const { When } = prometheus;
 
+// Import isIstioInjected from utils
+import { isIstioInjected } from "./utils";
+
+// Re-export for backwards compatibility
+export { isIstioInjected };
+
 /**
  * Mutate a ServiceMonitor resource by applying UDS conventions.
  *
@@ -94,7 +100,7 @@ When(PrometheusServiceMonitor)
  *
  * PodMonitor mutation logic:
  * - If a custom scrapeClass is set (not "istio-certs" or "exempt"), update fallback only.
- * - Else if skip conditions apply (skip annotations, or scrapeClass is "exempt"),
+ * - Else if skip conditions apply (skip annotations, not istio-injected, or scrapeClass is "exempt"),
  *   remove scrapeClass.
  * - Otherwise, remove scrapeClass, and set endpoints to HTTP.
  *
@@ -114,10 +120,9 @@ export async function mutatePodMonitor(pm: PrometheusPodMonitor): Promise<void> 
     return;
   }
 
-  // Skip conditions: skip annotations, or already "exempt".
   if (
     pm.Raw.metadata?.annotations?.["uds/skip-mutate"] ||
-    pm.Raw.metadata?.annotations?.["uds/skip-pm-mutate"] ||
+    !(await isIstioInjected(pm)) ||
     sc === "exempt"
   ) {
     log.info(`PodMonitor ${pm.Raw.metadata?.name} meets skip conditions; clearing scrapeClass.`);
