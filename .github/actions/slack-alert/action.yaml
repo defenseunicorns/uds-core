@@ -8,6 +8,10 @@ inputs:
   webhook-url:
     description: 'Slack webhook URL'
     required: true
+  channel:
+    description: 'Slack channel to send alerts to (including #)'
+    required: false
+    default: '#uds-foundations-ci-alerts'
 
 runs:
   using: "composite"
@@ -19,7 +23,7 @@ runs:
         webhook-type: 'incoming-webhook'
         payload: |
           {
-            "channel": "#uds-foundations-ci-alerts",
+            "channel": "${{ inputs.channel }}",
             "blocks": [
               {
                 "type": "section",
