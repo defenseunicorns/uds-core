@@ -201,3 +201,9 @@ packages:
             - name: GRAFANA_PG_SSL_MODE
               description: Grafana postgresql SSL mode
               path: postgresql.ssl_mode
+      velero:
+        velero:
+          variables:
+            - name: VELERO_BUCKET_PREFIX
+              description: "Prefix/directory path in the storage bucket where Velero stores backup data."
+              path: "configuration.backupStorageLocation[0].prefix"

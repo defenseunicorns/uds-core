@@ -14,7 +14,6 @@ configuration:
     - name: default
       provider: aws
       bucket: "###ZARF_VAR_VELERO_BUCKET###"
-      prefix: "backups"
       config:
         region: "###ZARF_VAR_VELERO_BUCKET_REGION###"
         s3ForcePathStyle: true

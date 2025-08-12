@@ -19,3 +19,6 @@ variables:
     grafana_pg_password: unicorn123!@#UN
     grafana_pg_user: postgres
     grafana_pg_ssl_mode: disable
+
+  # Velero variables
+    VELERO_BUCKET_PREFIX: backups
