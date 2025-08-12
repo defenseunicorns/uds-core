@@ -5,8 +5,9 @@
 
 import { V1NetworkPolicy } from "@kubernetes/client-node";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { Direction, Gateway, UDSPackage } from "../../crd";
-import { findMatchingClient, getGatewayPolicyDescription, networkPolicies } from "./policies";
+import { Gateway, UDSPackage } from "../../crd";
+import { Mode } from "../../crd/generated/package-v1alpha1";
+import { findMatchingClient, networkPolicies } from "./policies";
 
 // Mock dependencies
 vi.mock("pepr", () => {
@@ -31,14 +32,6 @@ vi.mock("../../../logger", () => ({
   Component: {
     OPERATOR_NETWORK: "OPERATOR_NETWORK",
   },
-}));
-
-vi.mock("../../utils/waypoint", () => ({
-  getWaypointName: vi.fn().mockImplementation(clientId => `${clientId}-waypoint`),
-  getPodSelector: vi.fn().mockImplementation((pkg, selector, waypointName) => ({
-    "gateway.networking.k8s.io/gateway-name": waypointName,
-  })),
-  shouldUseAmbientWaypoint: vi.fn().mockReturnValue(true),
 }));
 
 vi.mock("../utils", () => ({
@@ -92,35 +85,6 @@ vi.mock("./defaults/allow-ingress-sidecar-monitoring", () => ({
       namespace,
     },
     spec: {},
-  })),
-}));
-
-vi.mock("./generators/ambientHealthprobes", () => ({
-  allowAmbientHealthprobes: vi.fn().mockImplementation(namespace => ({
-    apiVersion: "networking.k8s.io/v1",
-    kind: "NetworkPolicy",
-    metadata: {
-      name: "allow-ambient-healthprobes",
-      namespace,
-    },
-    spec: {},
-  })),
-}));
-
-vi.mock("./generate", () => ({
-  generate: vi.fn().mockImplementation((namespace, policy) => ({
-    apiVersion: "networking.k8s.io/v1",
-    kind: "NetworkPolicy",
-    metadata: {
-      name: `generated-${policy.description || "policy"}`,
-      namespace,
-    },
-    spec: {
-      ingress:
-        policy.direction === Direction.Ingress ? [{ ports: [{ port: policy.port }] }] : undefined,
-      egress:
-        policy.direction === Direction.Egress ? [{ ports: [{ port: policy.port }] }] : undefined,
-    },
   })),
 }));
 
@@ -278,38 +242,6 @@ describe("findMatchingClient", () => {
   });
 });
 
-describe("getGatewayPolicyDescription", () => {
-  it("should return ambient description when isAmbient is true", () => {
-    const serviceName = "test-service";
-    const port = 8080;
-    const gateway = "tenant";
-    const isAmbient = true;
-
-    const result = getGatewayPolicyDescription(serviceName, port, gateway, isAmbient);
-    expect(result).toBe("test-service-8080 Istio tenant gateway (ambient)");
-  });
-
-  it("should return standard description when isAmbient is false", () => {
-    const serviceName = "test-service";
-    const port = 8080;
-    const gateway = "tenant";
-    const isAmbient = false;
-
-    const result = getGatewayPolicyDescription(serviceName, port, gateway, isAmbient);
-    expect(result).toBe("test-service-8080 Istio tenant gateway");
-  });
-
-  it("should handle different gateway types", () => {
-    const serviceName = "test-service";
-    const port = 8080;
-    const gateway = "public";
-    const isAmbient = true;
-
-    const result = getGatewayPolicyDescription(serviceName, port, gateway, isAmbient);
-    expect(result).toBe("test-service-8080 Istio public gateway (ambient)");
-  });
-});
-
 describe("networkPolicies", () => {
   const mockPkg: UDSPackage = {
     apiVersion: "uds.dev/v1",
@@ -357,13 +289,22 @@ describe("networkPolicies", () => {
     const policies = await networkPolicies(mockPkg, "test-ns", "sidecar");
 
     // Verify we have the expected number of policies (default policies + exposed services)
-    expect(policies.length).toBeGreaterThanOrEqual(3);
+    expect(policies).toHaveLength(7);
 
     // Define expected service policies
     const servicePolicies = [
-      { name: "frontend", ports: [8080, 15008] },
-      { name: "backend", ports: [8080, 15008] },
-      { name: "api-3000", ports: [3000, 15008] },
+      {
+        name: "allow-test-pkg-Ingress-8080-frontend Istio tenant gateway",
+        ports: [8080, 15008],
+      },
+      {
+        name: "allow-test-pkg-Ingress-8080-backend Istio tenant gateway",
+        ports: [8080, 15008],
+      },
+      {
+        name: "allow-test-pkg-Ingress-3000-api Istio tenant gateway",
+        ports: [3000, 15008],
+      },
     ];
 
     // Helper function to validate common policy properties
@@ -399,7 +340,7 @@ describe("networkPolicies", () => {
 
     // Verify service policies
     for (const { name, ports } of servicePolicies) {
-      const matchingPolicies = policies.filter(p => p.metadata?.name?.includes(name));
+      const matchingPolicies = policies.filter(p => p.metadata?.name === name);
       expect(matchingPolicies).toHaveLength(1);
       validatePolicy(matchingPolicies[0], ports);
     }
@@ -410,6 +351,7 @@ describe("networkPolicies", () => {
       "deny-test-pkg-default-deny-all",
       "allow-test-pkg-allow-egress-dns",
       "allow-test-pkg-allow-egress-istiod",
+      "allow-test-pkg-allow-ingress-sidecar-monitoring",
     ];
 
     for (const policyName of expectedDefaultPolicies) {
@@ -445,5 +387,465 @@ describe("networkPolicies", () => {
     if (istioPolicy?.spec?.policyTypes) {
       expect(istioPolicy.spec.policyTypes).toContain("Egress");
     }
+  });
+
+  it("should generate authservice policies for SSO clients", async () => {
+    const ssoPkg: UDSPackage = {
+      ...mockPkg,
+      spec: {
+        ...mockPkg.spec,
+        sso: [
+          {
+            clientId: "test-client",
+            enableAuthserviceSelector: { app: "test-app" },
+            name: "",
+          },
+        ],
+      },
+    };
+
+    const policies = await networkPolicies(ssoPkg, "test-ns", "sidecar");
+
+    // Should have authservice and keycloak policies
+    const authservicePolicy = policies.find(p => p.metadata?.name?.includes("authservice egress"));
+    const keycloakPolicy = policies.find(p => p.metadata?.name?.includes("keycloak JWKS egress"));
+
+    expect(authservicePolicy).toBeDefined();
+    expect(keycloakPolicy).toBeDefined();
+    expect(authservicePolicy?.spec?.egress?.[0]?.to?.[0]?.podSelector?.matchLabels).toEqual({
+      "app.kubernetes.io/name": "authservice",
+    });
+  });
+
+  it("should skip directResponse services in expose", async () => {
+    const directResponsePkg: UDSPackage = {
+      ...mockPkg,
+      spec: {
+        ...mockPkg.spec,
+        network: {
+          ...mockPkg.spec?.network,
+          expose: [
+            {
+              service: "direct-svc",
+              host: "direct.example.com",
+              selector: { app: "direct" },
+              port: 8080,
+              advancedHTTP: {
+                directResponse: {
+                  status: 200,
+                },
+              },
+            },
+          ],
+        },
+      },
+    };
+
+    const policies = await networkPolicies(directResponsePkg, "test-ns", "sidecar");
+    const directResponsePolicy = policies.find(p => p.metadata?.name?.includes("direct"));
+    expect(directResponsePolicy).toBeUndefined();
+  });
+
+  it("should handle missing network config", async () => {
+    const noNetworkPkg: UDSPackage = {
+      ...mockPkg,
+      spec: {
+        ...mockPkg.spec,
+        network: undefined,
+      },
+    };
+
+    const policies = await networkPolicies(noNetworkPkg, "test-ns", "sidecar");
+    // Should still generate default policies
+    expect(policies.length).toBeGreaterThan(0);
+  });
+
+  it("should handle complex selectors", async () => {
+    const complexSelectorPkg: UDSPackage = {
+      ...mockPkg,
+      spec: {
+        ...mockPkg.spec,
+        network: {
+          expose: [
+            {
+              service: "complex",
+              host: "complex.example.com",
+              selector: {
+                app: "test",
+                "app.kubernetes.io/component": "frontend",
+                "app.kubernetes.io/instance": "test-instance",
+              },
+              port: 80,
+            },
+          ],
+        },
+      },
+    };
+
+    const policies = await networkPolicies(complexSelectorPkg, "test-ns", "sidecar");
+    const policy = policies.find(
+      p => p.metadata?.name?.includes("80-test"), // Look for port and part of the selector
+    );
+    expect(policy).toBeDefined();
+    expect(policy?.spec?.podSelector?.matchLabels).toEqual({
+      app: "test",
+      "app.kubernetes.io/component": "frontend",
+      "app.kubernetes.io/instance": "test-instance",
+    });
+  });
+
+  it("should handle missing expose array", async () => {
+    const noExposePkg: UDSPackage = {
+      ...mockPkg,
+      spec: {
+        ...mockPkg.spec,
+        network: {},
+      },
+    };
+
+    const policies = await networkPolicies(noExposePkg, "test-ns", "sidecar");
+    // Should still generate default policies
+    expect(policies.length).toBeGreaterThan(0);
+  });
+
+  it("should handle undefined SSO clients", async () => {
+    const noSSOPkg: UDSPackage = {
+      ...mockPkg,
+      spec: {
+        ...mockPkg.spec,
+        sso: undefined,
+      },
+    };
+
+    const policies = await networkPolicies(noSSOPkg, "test-ns", "sidecar");
+    // Should not fail and still generate default policies
+    expect(policies.length).toBeGreaterThan(0);
+  });
+
+  it("should handle multiple gateways", async () => {
+    const multiGatewayPkg: UDSPackage = {
+      ...mockPkg,
+      spec: {
+        ...mockPkg.spec,
+        network: {
+          expose: [
+            {
+              service: "test1",
+              host: "test1.example.com",
+              selector: { app: "test1" },
+              port: 80,
+              gateway: Gateway.Tenant,
+            },
+            {
+              service: "test2",
+              host: "test2.example.com",
+              selector: { app: "test2" },
+              port: 80,
+              gateway: Gateway.Admin,
+            },
+          ],
+        },
+      },
+    };
+
+    const policies = await networkPolicies(multiGatewayPkg, "test-ns", "sidecar");
+
+    // Look for policies with the expected port and gateway in the name
+    const tenantPolicy = policies.find(
+      p =>
+        p.metadata?.name?.includes("80-test1") &&
+        p.metadata?.name?.toLowerCase().includes("tenant"),
+    );
+    const adminPolicy = policies.find(
+      p =>
+        p.metadata?.name?.includes("80-test2") && p.metadata?.name?.toLowerCase().includes("admin"),
+    );
+
+    expect(tenantPolicy).toBeDefined();
+    expect(adminPolicy).toBeDefined();
+  });
+
+  it("should use targetPort when specified", async () => {
+    const targetPortPkg: UDSPackage = {
+      ...mockPkg,
+      spec: {
+        ...mockPkg.spec,
+        network: {
+          expose: [
+            {
+              service: "test-svc",
+              host: "test.example.com",
+              selector: { app: "test" },
+              port: 80,
+              targetPort: 8080,
+            },
+          ],
+        },
+      },
+    };
+
+    const policies = await networkPolicies(targetPortPkg, "test-ns", "sidecar");
+    const policy = policies.find(
+      p => p.metadata?.name?.includes("80-test"), // Look for the policy by port and service
+    );
+
+    // The port in the policy spec should match targetPort
+    const port = policy?.spec?.ingress?.[0]?.ports?.[0]?.port;
+    expect(port).toBe(8080);
+  });
+
+  it("should apply waypoint selector to ingress policies with matching client", async () => {
+    const pkg: UDSPackage = {
+      ...mockPkg,
+      metadata: {
+        ...mockPkg.metadata,
+        annotations: {
+          "networking.istio.io/waypoint": "test-waypoint",
+        },
+      },
+      spec: {
+        ...mockPkg.spec,
+        sso: [
+          {
+            clientId: "test-client",
+            enableAuthserviceSelector: { app: "test-app" },
+            name: "",
+          },
+        ],
+        network: {
+          serviceMesh: {
+            mode: Mode.Ambient,
+          },
+          expose: [
+            {
+              service: "test-service",
+              host: "test.example.com",
+              selector: { app: "test-app" },
+              port: 8080,
+              gateway: Gateway.Tenant,
+            },
+          ],
+        },
+      },
+    };
+
+    const policies = await networkPolicies(pkg, "test-ns", "ambient");
+
+    // Should find the ingress policy with waypoint selector
+    const ingressPolicy = policies.find(
+      p => p.metadata?.name?.includes("8080-test-app") && p.spec?.ingress,
+    );
+
+    expect(ingressPolicy).toBeDefined();
+    // For ingress policies, the waypoint selector should be in the selector
+    expect(ingressPolicy?.spec?.podSelector?.matchLabels?.["istio.io/gateway-name"]).toBe(
+      "test-client-waypoint",
+    );
+  });
+
+  it("should use waypoint selector in ambient mode", async () => {
+    const waypointPkg: UDSPackage = {
+      ...mockPkg,
+      metadata: {
+        ...mockPkg.metadata,
+        annotations: {
+          "networking.istio.io/waypoint": "test-waypoint",
+        },
+      },
+      spec: {
+        ...mockPkg.spec,
+        sso: [
+          {
+            clientId: "test-client",
+            enableAuthserviceSelector: { app: "test-app" },
+            name: "",
+          },
+        ],
+      },
+    };
+
+    const policies = await networkPolicies(waypointPkg, "test-ns", "ambient");
+
+    // Check for the authservice egress policy
+    const authservicePolicy = policies.find(
+      p =>
+        p.metadata?.name?.includes("test-client") &&
+        p.metadata?.name?.toLowerCase().includes("authservice"),
+    );
+
+    // Check for the keycloak egress policy
+    const keycloakPolicy = policies.find(
+      p =>
+        p.metadata?.name?.includes("test-client") &&
+        p.metadata?.name?.toLowerCase().includes("keycloak"),
+    );
+
+    // Check for the ambient health probes policy
+    const ambientHealthProbePolicy = policies.find(p =>
+      p.metadata?.name?.includes("Ambient Healthprobes"),
+    );
+
+    // In ambient mode, we should have the authservice and keycloak policies
+    expect(authservicePolicy).toBeDefined();
+    expect(keycloakPolicy).toBeDefined();
+
+    // We should also have the ambient health probe policy
+    expect(ambientHealthProbePolicy).toBeDefined();
+  });
+  const basePkg: UDSPackage = {
+    ...mockPkg,
+    spec: {
+      ...mockPkg.spec,
+      monitor: [
+        {
+          description: "Test Metrics",
+          selector: { "app.kubernetes.io/name": "test-app" },
+          targetPort: 9090,
+          portName: "metrics",
+        },
+      ],
+    },
+  };
+
+  it("should generate monitor policy with basic configuration", async () => {
+    const policies = await networkPolicies(basePkg, "test-ns", "sidecar");
+    const monitorPolicy = policies.find(
+      p => p.metadata?.name?.includes("9090-test-app") && p.metadata?.name?.includes("Metrics"),
+    );
+
+    expect(monitorPolicy).toBeDefined();
+    expect(monitorPolicy?.spec?.podSelector?.matchLabels).toEqual({
+      "app.kubernetes.io/name": "test-app",
+    });
+    expect(monitorPolicy?.spec?.ingress?.[0]?.from?.[0]?.namespaceSelector?.matchLabels).toEqual({
+      "kubernetes.io/metadata.name": "monitoring",
+    });
+    expect(monitorPolicy?.spec?.ingress?.[0]?.from?.[0]?.podSelector?.matchLabels).toEqual({
+      app: "prometheus",
+    });
+    expect(monitorPolicy?.spec?.ingress?.[0]?.ports).toContainEqual({ port: 9090 });
+  });
+
+  it("should use podSelector when both selector and podSelector are provided", async () => {
+    const pkg = {
+      ...basePkg,
+      spec: {
+        ...basePkg.spec,
+        monitor: [
+          {
+            ...(basePkg.spec?.monitor?.[0] ?? {
+              description: "Test Metrics",
+              selector: { "app.kubernetes.io/name": "test-app" },
+              targetPort: 9090,
+              portName: "metrics",
+            }),
+            podSelector: { "app.kubernetes.io/name": "specific-pod" },
+          },
+        ],
+      },
+    };
+
+    const policies = await networkPolicies(pkg, "test-ns", "sidecar");
+    // Look for the policy using the generated name pattern: "9090-test-app"
+    const monitorPolicy = policies.find(
+      p =>
+        p.metadata?.name?.includes("9090-specific-pod") ||
+        p.metadata?.name?.includes("9090-test-app"),
+    );
+
+    expect(monitorPolicy).toBeDefined();
+    expect(monitorPolicy?.spec?.podSelector?.matchLabels).toEqual({
+      "app.kubernetes.io/name": "specific-pod",
+    });
+  });
+
+  it("should include waypoint selector when ambient mode is enabled and client matches", async () => {
+    const pkg = {
+      ...basePkg,
+      metadata: {
+        ...basePkg.metadata,
+        annotations: { "networking.istio.io/waypoint": "test-waypoint" },
+      },
+      spec: {
+        ...basePkg.spec,
+        sso: [
+          {
+            clientId: "test-client",
+            enableAuthserviceSelector: { "app.kubernetes.io/name": "test-app" },
+            name: "",
+          },
+        ],
+        network: {
+          serviceMesh: { mode: Mode.Ambient },
+        },
+      },
+    };
+
+    const policies = await networkPolicies(pkg, "test-ns", "ambient");
+    const monitorPolicy = policies.find(p => p.metadata?.name?.includes("9090-test-app"));
+
+    expect(monitorPolicy).toBeDefined();
+    expect(monitorPolicy?.spec?.podSelector?.matchLabels).toEqual({
+      "app.kubernetes.io/name": "test-app",
+      "istio.io/gateway-name": "test-client-waypoint",
+    });
+  });
+
+  it("should handle missing targetPort gracefully", async () => {
+    const pkg = {
+      ...basePkg,
+      spec: {
+        ...basePkg.spec,
+        monitor: [
+          {
+            description: "Test Metrics",
+            selector: { "app.kubernetes.io/name": "test-app" },
+            portName: "metrics",
+            targetPort: undefined,
+          },
+        ],
+      },
+    } as unknown as UDSPackage;
+
+    const policies = await networkPolicies(pkg, "test-ns", "sidecar");
+    // Look for the policy with undefined targetPort in the name
+    const monitorPolicy = policies.find(p => p.metadata?.name?.includes("undefined-test-app"));
+
+    // The policy should be created but with an empty ports array
+    expect(monitorPolicy).toBeDefined();
+    // Check for empty ports array or undefined ports
+    const ports = monitorPolicy?.spec?.ingress?.[0]?.ports;
+    expect(ports === undefined || (Array.isArray(ports) && ports.length === 0)).toBe(true);
+  });
+
+  it("should handle complex selectors correctly", async () => {
+    const pkg = {
+      ...basePkg,
+      spec: {
+        ...basePkg.spec,
+        monitor: [
+          {
+            description: "Complex Selector",
+            selector: {
+              "app.kubernetes.io/name": "test-app",
+              "app.kubernetes.io/instance": "test-instance",
+              environment: "prod",
+            },
+            targetPort: 9090,
+            portName: "metrics",
+          },
+        ],
+      },
+    };
+
+    const policies = await networkPolicies(pkg, "test-ns", "sidecar");
+    const monitorPolicy = policies.find(p => p.metadata?.name?.includes("9090-test-app"));
+
+    expect(monitorPolicy).toBeDefined();
+    expect(monitorPolicy?.spec?.podSelector?.matchLabels).toEqual({
+      "app.kubernetes.io/name": "test-app",
+      "app.kubernetes.io/instance": "test-instance",
+      environment: "prod",
+    });
   });
 });
