@@ -204,5 +204,16 @@ packages:
       velero:
         velero:
           values:
-            - path: "configuration.backupStorageLocation[0].prefix"
-              value: "backups"
+            - path: "configuration.backupStorageLocation"
+              value:
+                - name: default
+                  provider: aws
+                  bucket: "uds"
+                  prefix: "backups"
+                  config:
+                    region: "uds-dev-stack"
+                    s3ForcePathStyle: true
+                    s3Url: "http://minio.uds-dev-stack.svc.cluster.local:9000"
+                  credential:
+                    name: "velero-bucket-credentials"
+                    key: "cloud"
