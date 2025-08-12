@@ -56,3 +56,4 @@ jobs:
         uses: ./.github/actions/slack-alert
         with:
           webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          channel: ${{ vars.SLACK_ALERT_CHANNEL }}
