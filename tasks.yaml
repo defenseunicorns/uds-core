@@ -126,7 +126,7 @@ tasks:
       - task: dev-setup
 
       - description: "Deploy Pepr"
-        cmd: "npx pepr deploy --confirm"
+        cmd: "npx pepr deploy --yes"
 
       - description: "Deploy Keycloak + Authservice"
         cmd: "uds run dev-deploy --set LAYER=identity-authorization --no-progress"
