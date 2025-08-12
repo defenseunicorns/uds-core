@@ -28,7 +28,7 @@ runs:
                 "type": "section",
                 "text": {
                   "type": "mrkdwn",
-                  "text": "<!here> 🚨 *UDS Core Pipeline Failure Alert*"
+                  "text": "<!channel> 🚨 *UDS Core Pipeline Failure Alert*"
                 }
               },
               {

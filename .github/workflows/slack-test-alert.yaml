@@ -6,6 +6,9 @@ name: Slack Alert Test
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   test-slack-alert:
     name: Test Slack Alert
