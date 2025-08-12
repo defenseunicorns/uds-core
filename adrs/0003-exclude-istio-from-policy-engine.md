@@ -1,4 +1,4 @@
-# 3. Ignore Istio from Policy Engine
+# 3. Exclude Istio from Policy Engine
 
 Date: 2025-08-12
 
