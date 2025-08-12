@@ -45,18 +45,17 @@ export function findMatchingClient(pkg: UDSPackage, podLabels: Record<string, st
 
 /**
  * Generates a description for Istio gateway network policies, with special handling for ambient mode.
- * In ambient mode, includes the client ID in the description for better traceability.
  */
 export function getGatewayPolicyDescription(
+  serviceName: string,
   port: number,
-  clientId: string | undefined,
   gateway: string,
   isAmbient: boolean,
 ): string {
-  if (isAmbient && clientId) {
-    return `${port}-${clientId} Istio ${gateway} gateway (ambient)`;
+  if (isAmbient) {
+    return `${serviceName}-${port} Istio ${gateway} gateway (ambient)`;
   }
-  return `${port}-service Istio ${gateway} gateway`;
+  return `${serviceName}-${port} Istio ${gateway} gateway`;
 }
 
 // configure subproject logger
@@ -124,7 +123,8 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
     const podSelector = waypointName ? getPodSelector(pkg, selector, waypointName) : selector;
 
     // Create the NetworkPolicy for the VirtualService
-    const policy: Allow = {
+    const serviceName = expose.service || "unknown";
+    const policy: Allow & { metadata?: { labels?: Record<string, string> } } = {
       direction: Direction.Ingress,
       // Use the waypoint selector if in ambient mode with a matching client
       selector: podSelector,
@@ -133,12 +133,7 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
         app: `${gateway}-ingressgateway`,
       },
       port: policyPort,
-      description: getGatewayPolicyDescription(
-        policyPort!,
-        matchingClient?.clientId || undefined,
-        gateway,
-        !!waypointName,
-      ),
+      description: getGatewayPolicyDescription(serviceName, policyPort!, gateway, !!waypointName),
     };
 
     // Generate the policy
