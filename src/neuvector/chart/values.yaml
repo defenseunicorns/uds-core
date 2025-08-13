@@ -11,6 +11,14 @@ generateInternalCert: true
 
 denyLocalAuth: true
 
+sso:
+  # Groups that will be assigned admin role
+  adminGroups:
+    - "/UDS Core/Admin"
+  # Groups that will be assigned reader role
+  readerGroups:
+    - "/UDS Core/Auditor"
+
 # Support for custom `network.allow` entries on the Package CR, useful for sending NeuVector alerts
 additionalNetworkAllow: []
 # ref: https://uds.defenseunicorns.com/reference/configuration/custom-resources/packages-v1alpha1-cr/#allow

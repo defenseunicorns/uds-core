@@ -1,0 +1,28 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+
+suite: Grafana SSO Groups Configuration
+set:
+  domain: "example.com"
+  adminDomain: "admin.example.com"
+  sso:
+    groups:
+      - "/UDS Core/Admin"
+      - "/UDS Core/Auditor"
+      - "/UDS Core/Test"
+templates:
+  - uds-package.yaml
+tests:
+  - it: should correctly include all groups in the groups.anyOf list
+    template: uds-package.yaml
+    asserts:
+      - isKind:
+          of: Package
+      - equal:
+          path: spec.sso[0].groups.anyOf
+          value:
+            - "/UDS Core/Admin"
+            - "/UDS Core/Auditor"
+            - "/UDS Core/Test"
