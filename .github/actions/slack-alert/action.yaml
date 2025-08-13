@@ -1,0 +1,59 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+name: "Pipeline Alerts"
+description: "UDS Core Slack Alert"
+
+inputs:
+  webhook-url:
+    description: 'Slack webhook URL'
+    required: true
+  channel:
+    description: 'Slack channel to send alerts to (including #)'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Send Slack notification
+      uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
+      with:
+        webhook: ${{ inputs.webhook-url }}
+        webhook-type: 'incoming-webhook'
+        payload: |
+          {
+            "channel": "${{ inputs.channel }}",
+            "blocks": [
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "<!channel> 🚨 *UDS Core Pipeline Failure Alert*"
+                }
+              },
+              {
+                "type": "section",
+                "fields": [
+                  {
+                    "type": "mrkdwn",
+                    "text": "*Workflow:* `${{ github.workflow }}`"
+                  }
+                ]
+              },
+              {
+                "type": "actions",
+                "elements": [
+                  {
+                    "type": "button",
+                    "text": {
+                      "type": "plain_text",
+                      "text": "View Run",
+                      "emoji": true
+                    },
+                    "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+                    "style": "primary"
+                  }
+                ]
+              }
+            ]
+          }

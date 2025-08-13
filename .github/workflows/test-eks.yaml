@@ -123,3 +123,10 @@ jobs:
         run: uds run -f tasks/iac.yaml destroy-iac --no-progress --set K8S_DISTRO=eks --set CLOUD=aws
         timeout-minutes: 30
         continue-on-error: true
+
+      - name: Send Slack notification
+        if: failure() && github.event_name == 'schedule'
+        uses: ./.github/actions/slack-alert
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          channel: ${{ vars.SLACK_ALERT_CHANNEL }}
