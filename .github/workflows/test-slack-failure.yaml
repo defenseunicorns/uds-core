@@ -27,8 +27,8 @@ jobs:
   slack_alerts:
     name: Slack Alerts
     runs-on: ubuntu-latest
-    needs: test
-    if: ${{ needs.test.result == 'failure' }}
+    needs: [test]
+    if: ${{ always() && needs.test.result == 'failure' }}
     steps:
       - name: Send Slack notification
         uses: ./.github/actions/slack-alert
