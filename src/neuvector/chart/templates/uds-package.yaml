@@ -71,10 +71,30 @@ spec:
           group_claim: groups
           issuer: https://sso.{{ .Values.domain }}/realms/uds
           group_mapped_roles:
-            - group: /UDS Core/Admin
+            {{- with .Values.sso.adminGroups }}
+            {{- range . }}
+            - group: {{ . }}
               global_role: admin
-            - group: /UDS Core/Auditor
+            {{- end }}
+            {{- end }}
+            {{- with .Values.sso.readerGroups }}
+            {{- range . }}
+            - group: {{ . }}
               global_role: reader
+            {{- end }}
+            {{- end }}
+      groups:
+        anyOf:
+        {{- with .Values.sso.adminGroups }}
+        {{- range . }}
+        - {{ . | quote }}
+        {{- end }}
+        {{- end }}
+        {{- with .Values.sso.readerGroups }}
+        {{- range . }}
+        - {{ . | quote }}
+        {{- end }}
+        {{- end }}
 
   network:
     serviceMesh:
