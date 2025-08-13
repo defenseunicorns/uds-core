@@ -67,5 +67,5 @@ components:
       - quay.io/rfcurated/neuvector/controller:5.4.5-jammy-scratch-fips-rfcurated
       - quay.io/rfcurated/neuvector/manager:5.4.5-jammy-scratch-fips-rfcurated
       - quay.io/rfcurated/neuvector/enforcer:5.4.5-jammy-scratch-fips-rfcurated
-      - quay.io/rfcurated/curl:8.14.1-jammy-scratch-fips-rfcurated
+      - quay.io/rfcurated/curl:8.15.0-jammy-scratch-fips-rfcurated
       - quay.io/rfcurated/neuvector/scanner:latest-jammy-scratch-fips-rfcurated
