@@ -90,7 +90,7 @@ describe("restrict istio sidecar configuration overrides", () => {
           ok: false,
           data: {
             message: expect.stringContaining(
-              "The following istio annotations or labels can modify secure traffic interception are not allowed: traffic.sidecar.istio.io/excludeOutboundPorts",
+              "The following istio annotations or labels can modify secure traffic interception are not allowed: annotation traffic.sidecar.istio.io/excludeOutboundPorts",
             ),
           },
         });
@@ -129,7 +129,7 @@ describe("restrict istio sidecar configuration overrides", () => {
           ok: false,
           data: {
             message: expect.stringContaining(
-              `The following istio annotations or labels can modify secure traffic interception are not allowed: ${blockedAnnotations.join(", ")}`,
+              `The following istio annotations or labels can modify secure traffic interception are not allowed: annotation ${blockedAnnotations.join(", annotation ")}`,
             ),
           },
         });
