@@ -5,8 +5,8 @@ pilot:
   image: "quay.io/rfcurated/istio/pilot:1.26.2-jammy-fips-rfcurated-rfhardened"
 global:
   proxy_init:
-    # renovate: image=quay.io/rfcurated/istio/proxy
+    # renovate: image=quay.io/rfcurated/istio/proxyv2
     image: "###ZARF_REGISTRY###/rfcurated/istio/proxyv2:1.26.2-jammy-fips-rfcurated-rfhardened"
   proxy:
-    # renovate: image=quay.io/rfcurated/istio/proxy
+    # renovate: image=quay.io/rfcurated/istio/proxyv2
     image: "###ZARF_REGISTRY###/rfcurated/istio/proxyv2:1.26.2-jammy-fips-rfcurated-rfhardened"

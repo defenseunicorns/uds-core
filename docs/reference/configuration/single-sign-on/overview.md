@@ -63,6 +63,27 @@ Grafana [maps the groups](https://github.com/defenseunicorns/uds-core/blob/49cb1
 
 If a user doesn't belong to either of these Keycloak groups the user will be unauthorized when accessing Grafana.
 
+##### Overriding Grafana Groups
+
+To override the Keycloak -> Grafana group mapping you can provide the following bundle overrides:
+
+```yaml
+grafana:
+  uds-grafana-config:
+    values:
+      # Allows access to Keycloak Client
+      - path: sso.groups
+        value:
+          - KEYCLOAK_ADMIN_GROUP # name of an existing Keycloak group
+          - KEYCLOAK_AUDITOR_GROUP # name of an existing Keycloak group
+  grafana:
+    values:
+      # Sets the role mappings in grafana
+      - path: grafana\.ini.role_attribute_path
+        value: "contains(groups[], 'KEYCLOAK_ADMIN_GROUP') && 'Admin' || contains(groups[], 'KEYCLOAK_AUDITOR_GROUP') && 'Viewer' || 'Unauthorized'"
+
+```
+
 #### Neuvector
 
 Neuvector [maps the groups](https://github.com/defenseunicorns/uds-core/blob/main/src/neuvector/chart/templates/uds-package.yaml#L31-L35) from Keycloak to its internal `admin` and `reader` groups.
@@ -72,9 +93,28 @@ Neuvector [maps the groups](https://github.com/defenseunicorns/uds-core/blob/mai
 | `Admin`        | `admin`                |
 | `Auditor`      | `reader`               |
 
+##### Overriding Neuvector Groups
+
+To override the Keycloak -> Neuvector group mapping you can provide the following bundle overrides:
+
+```yaml
+neuvector:
+  uds-neuvector-config:
+    values:
+        # Sets this as an allowed group for the Keycloak Client and maps to Neuvector admin group
+        - path: sso.adminGroups
+          value:
+            - KEYCLOAK_ADMIN_GROUP # name of an existing Keycloak group
+        # Sets this as an allowed group for the Keycloak Client and maps to Neuvector reader group
+        - path: sso.readerGroups
+          value:
+            - KEYCLOAK_AUDITOR_GROUP # name of an existing Keycloak group
+
+```
+
 #### Keycloak
 
-All groups are under the Uds Core parent group. Frequently a group will be referred to as Uds Core/Admin or Uds Core/Auditor. In the Keycloak UI this requires an additional click to get down to the sub groups.
+All groups are under the `UDS Core` parent group. Frequently a group will be referred to as `UDS Core/Admin` or `UDS Core/Auditor`. In the Keycloak UI this requires an additional click to get down to the sub groups.
 
 ## Single Sign-On Contents
 
