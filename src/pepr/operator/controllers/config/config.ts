@@ -15,12 +15,15 @@ import { initAllNodesTarget } from "../network/generators/kubeNodes";
 import { watchCfg } from "../utils";
 import { Config } from "./types";
 
+const NOT_LOADED = "##NOT_LOADED##";
+
 // Set default UDSConfig for build time compiling
 export const UDSConfig: Config = {
   domain: "",
   adminDomain: "",
   caCert: "",
-  authserviceRedisUri: "",
+  // An empty string is a valid identitifer for the Redis URI. We need a "special" value to indicate that it has not been loaded yet.
+  authserviceRedisUri: NOT_LOADED,
   allowAllNSExemptions: false,
   kubeApiCIDR: "",
   kubeNodeCIDRs: [],
@@ -50,9 +53,8 @@ function decodeSecret(secret: kind.Secret) {
 
 export async function updateCfgSecrets(cfg: kind.Secret) {
   let firstLoad = false;
-  // If the authserviceRedisUri is undefined we know we're loading the config for the first time
-  // An "empty" redis uri will be an empty string after the first load
-  if (UDSConfig.authserviceRedisUri === undefined) {
+  // This will be set to an empty string (if not provided) after the first load.
+  if (UDSConfig.authserviceRedisUri == NOT_LOADED) {
     firstLoad = true;
   }
 
