@@ -12,12 +12,15 @@ import { initAPIServerCIDR } from "../network/generators/kubeAPI";
 import { initAllNodesTarget } from "../network/generators/kubeNodes";
 import {
   ConfigAction,
+  ConfigPhase,
   configLog,
   decodeSecret,
+  getConfigLogMessage,
+  loadUDSConfig,
+  shouldUpdateClusterResources,
+  UDSConfig,
   handleCfg,
   handleCfgSecret,
-  loadUDSConfig,
-  UDSConfig,
 } from "./config";
 
 // Mock dependencies
@@ -167,6 +170,59 @@ describe("initial config load", () => {
     expect(initAPIServerCIDR).not.toHaveBeenCalled();
     expect(initAllNodesTarget).not.toHaveBeenCalled();
     expect(reconcileAuthservice).not.toHaveBeenCalled();
+  });
+});
+
+// Tests for helper functions
+describe("Config Helper Functions", () => {
+  describe("getConfigLogMessage", () => {
+    it("should generate loading start message", () => {
+      const message = getConfigLogMessage(ConfigAction.LOAD, ConfigPhase.START, "test-resource");
+      expect(message).toBe("Loading UDS Config from test-resource");
+    });
+
+    it("should generate loading finish message", () => {
+      const message = getConfigLogMessage(ConfigAction.LOAD, ConfigPhase.FINISH, "test-resource");
+      expect(message).toBe("Loaded UDS Config from test-resource");
+    });
+
+    it("should generate updating start message with change", () => {
+      const message = getConfigLogMessage(ConfigAction.UPDATE, ConfigPhase.START, "test-resource");
+      expect(message).toBe("Updating UDS Config from test-resource change");
+    });
+
+    it("should generate updating finish message with change", () => {
+      const message = getConfigLogMessage(ConfigAction.UPDATE, ConfigPhase.FINISH, "test-resource");
+      expect(message).toBe("Updated UDS Config from test-resource change");
+    });
+  });
+
+  describe("shouldUpdateClusterResources", () => {
+    beforeEach(() => {
+      // Reset environment variables before each test
+      delete process.env.PEPR_WATCH_MODE;
+      delete process.env.PEPR_MODE;
+    });
+
+    it("should return false for LOAD action regardless of env vars", () => {
+      process.env.PEPR_WATCH_MODE = "true";
+      process.env.PEPR_MODE = "dev";
+      expect(shouldUpdateClusterResources(ConfigAction.LOAD)).toBe(false);
+    });
+
+    it("should return true for UPDATE action with PEPR_WATCH_MODE=true", () => {
+      process.env.PEPR_WATCH_MODE = "true";
+      expect(shouldUpdateClusterResources(ConfigAction.UPDATE)).toBe(true);
+    });
+
+    it("should return true for UPDATE action with PEPR_MODE=dev", () => {
+      process.env.PEPR_MODE = "dev";
+      expect(shouldUpdateClusterResources(ConfigAction.UPDATE)).toBe(true);
+    });
+
+    it("should return false for UPDATE action with no env vars set", () => {
+      expect(shouldUpdateClusterResources(ConfigAction.UPDATE)).toBe(false);
+    });
   });
 });
 

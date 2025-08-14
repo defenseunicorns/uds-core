@@ -38,7 +38,7 @@ export enum ConfigPhase {
 }
 
 // Helper function to generate config log messages
-function getConfigLogMessage(
+export function getConfigLogMessage(
   action: ConfigAction,
   phase: ConfigPhase,
   resourceName: string,
@@ -52,7 +52,7 @@ function getConfigLogMessage(
 }
 
 // Helper function to determine if cluster resources should be updated
-function shouldUpdateClusterResources(action: ConfigAction): boolean {
+export function shouldUpdateClusterResources(action: ConfigAction): boolean {
   return (
     action === ConfigAction.UPDATE &&
     (process.env.PEPR_WATCH_MODE === "true" || process.env.PEPR_MODE === "dev")
