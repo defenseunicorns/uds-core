@@ -10,7 +10,18 @@ import { ClusterConfig, Name } from "../../crd";
 import { reconcileAuthservice } from "../keycloak/authservice/authservice";
 import { initAPIServerCIDR } from "../network/generators/kubeAPI";
 import { initAllNodesTarget } from "../network/generators/kubeNodes";
-import { loadUDSConfig, UDSConfig, updateCfg, updateCfgSecrets } from "./config";
+import {
+  ConfigAction,
+  ConfigPhase,
+  configLog,
+  decodeSecret,
+  getConfigLogMessage,
+  loadUDSConfig,
+  shouldUpdateClusterResources,
+  UDSConfig,
+  handleCfg,
+  handleCfgSecret,
+} from "./config";
 
 // Mock dependencies
 const mockClusterConfGet = vi.fn();
@@ -61,7 +72,8 @@ vi.mock("pepr", async importOriginal => {
   };
 });
 
-const mockCfg: ClusterConfig = {
+let mockCfg: ClusterConfig;
+const defaultConfig: ClusterConfig = {
   metadata: {
     name: Name.UdsClusterConfig,
   },
@@ -81,7 +93,8 @@ const mockCfg: ClusterConfig = {
   },
 };
 
-const mockSecret: kind.Secret = {
+let mockSecret: kind.Secret;
+const defaultSecret: kind.Secret = {
   metadata: {
     name: "uds-operator-config",
     namespace: "pepr-system",
@@ -95,11 +108,14 @@ describe("initial config load", () => {
   beforeEach(() => {
     process.env.PEPR_WATCH_MODE = "true";
     process.env.PEPR_MODE = "dev";
+    vi.clearAllMocks();
+    mockCfg = defaultConfig;
+    mockSecret = defaultSecret;
+    mockClusterConfGet.mockResolvedValue(mockCfg);
+    mockSecretGet.mockResolvedValue(mockSecret);
   });
 
   it("loads initial config", async () => {
-    mockClusterConfGet.mockResolvedValue(mockCfg);
-    mockSecretGet.mockResolvedValue(mockSecret);
     await loadUDSConfig();
 
     expect(UDSConfig.caCert).toBe(btoa("mock-ca-cert"));
@@ -120,7 +136,6 @@ describe("initial config load", () => {
   });
 
   it("throws error because no config secret", async () => {
-    mockClusterConfGet.mockResolvedValue(mockCfg);
     mockSecretGet.mockResolvedValue(undefined);
 
     const mockError = new Error("Error while fetching operator config secret");
@@ -141,7 +156,6 @@ describe("initial config load", () => {
     };
 
     mockClusterConfGet.mockResolvedValue(invalidCfg);
-    mockSecretGet.mockResolvedValue(mockSecret);
 
     try {
       await loadUDSConfig();
@@ -149,12 +163,116 @@ describe("initial config load", () => {
       expect(e.message).toBe("ClusterConfig: caCert must be base64 encoded; found invalid value");
     }
   });
+
+  it("should not update cluster resources during initial load", async () => {
+    await loadUDSConfig();
+
+    expect(initAPIServerCIDR).not.toHaveBeenCalled();
+    expect(initAllNodesTarget).not.toHaveBeenCalled();
+    expect(reconcileAuthservice).not.toHaveBeenCalled();
+  });
 });
 
-describe("updateUDSConfig", () => {
+// Tests for helper functions
+describe("Config Helper Functions", () => {
+  describe("getConfigLogMessage", () => {
+    it("should generate loading start message", () => {
+      const message = getConfigLogMessage(ConfigAction.LOAD, ConfigPhase.START, "test-resource");
+      expect(message).toBe("Loading UDS Config from test-resource");
+    });
+
+    it("should generate loading finish message", () => {
+      const message = getConfigLogMessage(ConfigAction.LOAD, ConfigPhase.FINISH, "test-resource");
+      expect(message).toBe("Loaded UDS Config from test-resource");
+    });
+
+    it("should generate updating start message with change", () => {
+      const message = getConfigLogMessage(ConfigAction.UPDATE, ConfigPhase.START, "test-resource");
+      expect(message).toBe("Updating UDS Config from test-resource change");
+    });
+
+    it("should generate updating finish message with change", () => {
+      const message = getConfigLogMessage(ConfigAction.UPDATE, ConfigPhase.FINISH, "test-resource");
+      expect(message).toBe("Updated UDS Config from test-resource change");
+    });
+  });
+
+  describe("shouldUpdateClusterResources", () => {
+    beforeEach(() => {
+      // Reset environment variables before each test
+      delete process.env.PEPR_WATCH_MODE;
+      delete process.env.PEPR_MODE;
+    });
+
+    it("should return false for LOAD action regardless of env vars", () => {
+      process.env.PEPR_WATCH_MODE = "true";
+      process.env.PEPR_MODE = "dev";
+      expect(shouldUpdateClusterResources(ConfigAction.LOAD)).toBe(false);
+    });
+
+    it("should return true for UPDATE action with PEPR_WATCH_MODE=true", () => {
+      process.env.PEPR_WATCH_MODE = "true";
+      expect(shouldUpdateClusterResources(ConfigAction.UPDATE)).toBe(true);
+    });
+
+    it("should return true for UPDATE action with PEPR_MODE=dev", () => {
+      process.env.PEPR_MODE = "dev";
+      expect(shouldUpdateClusterResources(ConfigAction.UPDATE)).toBe(true);
+    });
+
+    it("should return false for UPDATE action with no env vars set", () => {
+      expect(shouldUpdateClusterResources(ConfigAction.UPDATE)).toBe(false);
+    });
+  });
+});
+
+// Test for decodeSecret function error handling
+describe("decodeSecret", () => {
+  it("should handle invalid base64 data", () => {
+    // Create a secret with invalid base64 data
+    const invalidSecret: kind.Secret = {
+      metadata: {
+        name: "invalid-secret",
+        namespace: "test",
+      },
+      data: {
+        // This is not valid base64
+        INVALID_KEY: "!@#$%^",
+        // Valid base64 for comparison
+        VALID_KEY: btoa("test-value"),
+      },
+    };
+
+    // Spy on the configLog.error method
+    const errorSpy = vi.spyOn(configLog, "error");
+
+    // Call decodeSecret directly
+    const result = decodeSecret(invalidSecret);
+
+    // Verify the error was logged
+    expect(errorSpy).toHaveBeenCalledWith(
+      expect.stringContaining("Failed to decode secret key: INVALID_KEY"),
+    );
+
+    // Verify the valid key was decoded correctly
+    expect(result.VALID_KEY).toBe("test-value");
+
+    // Verify the invalid key is not in the result
+    expect(result.INVALID_KEY).toBe(undefined);
+
+    // Clean up the spy
+    errorSpy.mockRestore();
+  });
+});
+
+describe("handleUDSConfig", () => {
   beforeEach(() => {
     // Reset mocks
     vi.clearAllMocks();
+    mockCfg = defaultConfig;
+    mockSecret = defaultSecret;
+    mockClusterConfGet.mockResolvedValue(mockCfg);
+    mockSecretGet.mockResolvedValue(mockSecret);
     UDSConfig.caCert = "";
     UDSConfig.authserviceRedisUri = "";
     UDSConfig.kubeApiCIDR = "";
@@ -162,16 +280,18 @@ describe("updateUDSConfig", () => {
     UDSConfig.domain = "uds.dev";
     UDSConfig.adminDomain = "";
     UDSConfig.allowAllNSExemptions = false;
+    process.env.PEPR_WATCH_MODE = "true";
+    process.env.PEPR_MODE = "dev";
   });
 
   it("handles update to operator-config secret and updates UDSConfig secret values", async () => {
-    await updateCfgSecrets(mockSecret);
+    await handleCfgSecret(mockSecret, ConfigAction.UPDATE);
 
     expect(UDSConfig.authserviceRedisUri).toBe("mock-redis-uri");
   });
 
   it("handles updates to ClusterConfig and updates UDSConfig", async () => {
-    await updateCfg(mockCfg);
+    await handleCfg(mockCfg, ConfigAction.UPDATE);
 
     expect(UDSConfig.caCert).toBe(btoa("mock-ca-cert"));
     expect(UDSConfig.kubeApiCIDR).toBe("mock-cidr");
@@ -185,7 +305,7 @@ describe("updateUDSConfig", () => {
     it("calls if CA Cert changes", async () => {
       UDSConfig.caCert = "old-ca-cert";
 
-      await updateCfg(mockCfg);
+      await handleCfg(mockCfg, ConfigAction.UPDATE);
 
       expect(reconcileAuthservice).toHaveBeenCalledWith({
         name: "global-config-update",
@@ -202,7 +322,7 @@ describe("updateUDSConfig", () => {
         spec: { ...mockCfg.spec, expose: { caCert: "###ZARF_VAR_CA_CERT###" } },
       } as ClusterConfig;
 
-      await updateCfg(cfg);
+      await handleCfg(cfg, ConfigAction.UPDATE);
 
       expect(reconcileAuthservice).toHaveBeenCalledWith({
         name: "global-config-update",
@@ -216,7 +336,7 @@ describe("updateUDSConfig", () => {
       UDSConfig.caCert = "old-ca-cert";
       const cfg = { ...mockCfg, spec: { ...mockCfg.spec, expose: {} } } as ClusterConfig;
 
-      await updateCfg(cfg);
+      await handleCfg(cfg, ConfigAction.UPDATE);
 
       expect(reconcileAuthservice).toHaveBeenCalledWith({
         name: "global-config-update",
@@ -233,7 +353,7 @@ describe("updateUDSConfig", () => {
         spec: { ...mockCfg.spec, expose: { caCert: "###ZARF_VAR_CA_CERT###" } },
       } as ClusterConfig;
 
-      await updateCfg(cfg);
+      await handleCfg(cfg, ConfigAction.UPDATE);
 
       expect(reconcileAuthservice).not.toHaveBeenCalled();
     });
@@ -242,7 +362,7 @@ describe("updateUDSConfig", () => {
       UDSConfig.caCert = btoa("old-ca-cert");
       UDSConfig.authserviceRedisUri = "old-redis-uri";
 
-      await updateCfgSecrets(mockSecret);
+      await handleCfgSecret(mockSecret, ConfigAction.UPDATE);
 
       expect(reconcileAuthservice).toHaveBeenCalledWith({
         name: "global-config-update",
@@ -256,7 +376,7 @@ describe("updateUDSConfig", () => {
       UDSConfig.authserviceRedisUri = "old-redis-uri";
       const emptyRedisURI = { ...mockSecret, data: { AUTHSERVICE_REDIS_URI: btoa("") } };
 
-      await updateCfgSecrets(emptyRedisURI);
+      await handleCfgSecret(emptyRedisURI, ConfigAction.UPDATE);
 
       expect(reconcileAuthservice).toHaveBeenCalledWith({
         name: "global-config-update",
@@ -273,7 +393,7 @@ describe("updateUDSConfig", () => {
         data: { AUTHSERVICE_REDIS_URI: btoa("###ZARF_VAR_AUTHSERVICE_REDIS_URI###") },
       };
 
-      await updateCfgSecrets(emptyRedisURI);
+      await handleCfgSecret(emptyRedisURI, ConfigAction.UPDATE);
 
       expect(reconcileAuthservice).toHaveBeenCalledWith({
         name: "global-config-update",
@@ -287,7 +407,7 @@ describe("updateUDSConfig", () => {
       UDSConfig.authserviceRedisUri = "original";
       const emptyRedisURI = { ...mockSecret, data: {} };
 
-      await updateCfgSecrets(emptyRedisURI);
+      await handleCfgSecret(emptyRedisURI, ConfigAction.UPDATE);
 
       expect(reconcileAuthservice).toHaveBeenCalledWith({
         name: "global-config-update",
@@ -304,7 +424,7 @@ describe("updateUDSConfig", () => {
         data: { AUTHSERVICE_REDIS_URI: btoa("###ZARF_VAR_AUTHSERVICE_REDIS_URI###") },
       };
 
-      await updateCfgSecrets(emptyRedisURI);
+      await handleCfgSecret(emptyRedisURI, ConfigAction.UPDATE);
 
       expect(reconcileAuthservice).not.toHaveBeenCalled();
     });
@@ -313,7 +433,7 @@ describe("updateUDSConfig", () => {
   it("should call initAPIServerCIDR if KUBEAPI_CIDR changes", async () => {
     UDSConfig.kubeApiCIDR = "old-cidr";
 
-    await updateCfg(mockCfg);
+    await handleCfg(mockCfg, ConfigAction.UPDATE);
 
     expect(initAPIServerCIDR).toHaveBeenCalled();
   });
@@ -321,7 +441,7 @@ describe("updateUDSConfig", () => {
   it("should call initAllNodesTarget if KUBENODE_CIDRS changes", async () => {
     UDSConfig.kubeNodeCIDRs = ["old-node-cidrs"];
 
-    await updateCfg(mockCfg);
+    await handleCfg(mockCfg, ConfigAction.UPDATE);
 
     expect(initAllNodesTarget).toHaveBeenCalled();
   });
@@ -330,7 +450,7 @@ describe("updateUDSConfig", () => {
     mockCfg.spec!.expose.domain = "###ZARF_VAR_DOMAIN###";
     mockCfg.spec!.expose.adminDomain = "###ZARF_VAR_ADMIN_DOMAIN###";
 
-    await updateCfg(mockCfg);
+    await handleCfg(mockCfg, ConfigAction.LOAD);
 
     expect(UDSConfig.domain).toBe("uds.dev");
     expect(UDSConfig.adminDomain).toBe("admin.uds.dev");
@@ -345,7 +465,7 @@ describe("updateUDSConfig", () => {
     UDSConfig.adminDomain = "mock-admin-domain";
     UDSConfig.allowAllNSExemptions = true;
 
-    await updateCfg(mockCfg);
+    await handleCfg(mockCfg, ConfigAction.UPDATE);
 
     expect(reconcileAuthservice).not.toHaveBeenCalled();
     expect(initAPIServerCIDR).not.toHaveBeenCalled();
@@ -357,16 +477,17 @@ describe("updateUDSConfig", () => {
     mockCfg.spec!.networking!.kubeApiCIDR = "";
     mockCfg.spec!.networking!.kubeNodeCIDRs = [];
 
-    await updateCfg(mockCfg);
+    await handleCfg(mockCfg, ConfigAction.UPDATE);
 
     expect(initAPIServerCIDR).not.toHaveBeenCalled();
     expect(initAllNodesTarget).not.toHaveBeenCalled();
   });
 
   it("should not update cluster resources during initial load", async () => {
-    UDSConfig.domain = ""; // Simulate first load
-
-    await updateCfg(mockCfg);
+    mockCfg.spec!.networking!.kubeApiCIDR = "diff-cidr";
+    mockCfg.spec!.networking!.kubeNodeCIDRs = ["diff-cidr"];
+    await handleCfg(mockCfg, ConfigAction.LOAD);
+    await handleCfgSecret(mockSecret, ConfigAction.LOAD);
 
     expect(initAPIServerCIDR).not.toHaveBeenCalled();
     expect(initAllNodesTarget).not.toHaveBeenCalled();

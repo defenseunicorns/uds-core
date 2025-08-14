@@ -74,7 +74,7 @@ jobs:
           rapidfortPassword: ${{ secrets.RAPIDFORT_PASSWORD }}
 
       - name: Setup Tofu
-        uses: opentofu/setup-opentofu@592200bd4b9bbf4772ace78f887668b1aee8f716 # v1.0.5
+        uses: opentofu/setup-opentofu@000eeb8522f0572907c393e8151076c205fdba1b # v1.0.6
         with:
           tofu_version: 1.8.2
           tofu_wrapper: false
@@ -128,3 +128,10 @@ jobs:
         run: uds run -f tasks/iac.yaml destroy-iac --no-progress --set K8S_DISTRO=rke2 --set CLOUD=aws
         timeout-minutes: 10
         continue-on-error: true
+
+      - name: Send Slack notification
+        if: failure() && github.event_name == 'schedule'
+        uses: ./.github/actions/slack-alert
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          channel: ${{ vars.SLACK_ALERT_CHANNEL }}

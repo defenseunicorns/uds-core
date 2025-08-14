@@ -43,22 +43,6 @@ export function findMatchingClient(pkg: UDSPackage, podLabels: Record<string, st
   });
 }
 
-/**
- * Generates a description for Istio gateway network policies, with special handling for ambient mode.
- * In ambient mode, includes the client ID in the description for better traceability.
- */
-export function getGatewayPolicyDescription(
-  port: number,
-  clientId: string | undefined,
-  gateway: string,
-  isAmbient: boolean,
-): string {
-  if (isAmbient && clientId) {
-    return `${port}-${clientId} Istio ${gateway} gateway (ambient)`;
-  }
-  return `${port}-service Istio ${gateway} gateway`;
-}
-
 // configure subproject logger
 const log = setupLogger(Component.OPERATOR_NETWORK);
 
@@ -133,12 +117,7 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
         app: `${gateway}-ingressgateway`,
       },
       port: policyPort,
-      description: getGatewayPolicyDescription(
-        policyPort!,
-        matchingClient?.clientId || undefined,
-        gateway,
-        !!waypointName,
-      ),
+      description: `${policyPort}-${Object.values(selector).join("-")} Istio ${gateway} gateway`,
     };
 
     // Generate the policy

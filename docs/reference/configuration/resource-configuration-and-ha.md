@@ -204,7 +204,7 @@ packages:
 
 ### AuthService
 
-AuthService can be configured in a HA setup if an [external session store](https://docs.tetrate.io/istio-authservice/configuration/oidc#session-store-configuration) is provided (key value store like Redis/Valkey). For configuring an external session store you can set the `UDS_AUTHSERVICE_REDIS_URI` env when deploying or via your `uds-config.yaml`:
+AuthService can be configured in a HA setup if an [external session store](https://github.com/istio-ecosystem/authservice/blob/f8193e22db11183d0d3a9da58da39267f15c3ae0/config/README.md#authservice-config-v1-oidc-RedisConfig) is provided (key value store like Redis/Valkey). For configuring an external session store you can set the `UDS_AUTHSERVICE_REDIS_URI` env when deploying or via your `uds-config.yaml`:
 
 ```yaml
 variables:

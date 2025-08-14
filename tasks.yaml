@@ -126,7 +126,7 @@ tasks:
       - task: dev-setup
 
       - description: "Deploy Pepr"
-        cmd: "npx pepr deploy --confirm"
+        cmd: "npx pepr deploy --yes"
 
       - description: "Deploy Keycloak + Authservice"
         cmd: "uds run dev-deploy --set LAYER=identity-authorization --no-progress"
@@ -172,12 +172,14 @@ tasks:
     description: "Build and test UDS Core"
     actions:
       - task: setup:ha-postgres
+      - task: setup:ha-redis
       - task: test:uds-core-ha
 
   - name: test-uds-core-ha-upgrade
     description: "Test an upgrade from the latest released UDS Core package with HA to current branch with HA"
     actions:
       - task: setup:ha-postgres
+      - task: setup:ha-redis
       - task: test:uds-core-ha-upgrade
 
   - name: test-uds-core-upgrade

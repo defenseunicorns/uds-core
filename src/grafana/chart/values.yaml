@@ -29,6 +29,12 @@ postgresql:
     remoteSelector: {}
     remoteNamespace: ""
 
+sso:
+  # Groups that are allowed to use the Keycloak Client for Grafana
+  groups:
+    - "/UDS Core/Admin"
+    - "/UDS Core/Auditor"
+
 # Support for custom `network.allow` entries on the Package CR, useful for extra datasources
 additionalNetworkAllow: []
 # ref: https://uds.defenseunicorns.com/reference/configuration/custom-resources/packages-v1alpha1-cr/#allow

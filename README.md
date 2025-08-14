@@ -32,7 +32,7 @@ UDS Core establishes a secure baseline for cloud-native systems and ships with c
 - A running container environment for K3D to interact with for dev & test environments
 - [K3D](https://k3d.io/) v5.7.1 or later for dev & test environments or any [CNCF Certified Kubernetes Cluster](https://www.cncf.io/training/certification/software-conformance/#logos) for production environments.
 <!-- renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver -->
-- [UDS CLI](https://github.com/defenseunicorns/uds-cli?tab=readme-ov-file#install): v0.20.0 or later
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli?tab=readme-ov-file#install): v0.27.10 or later
 
 ---
 
@@ -56,7 +56,7 @@ If you want to try out UDS Core, you can use the [k3d-core-demo bundle](./bundle
 <!-- x-release-please-start-version -->
 
 ```bash
-uds deploy k3d-core-demo:0.47.0
+uds deploy k3d-core-demo:0.49.0
 ```
 
 <!-- x-release-please-end -->
@@ -70,8 +70,10 @@ Deploy Istio, Keycloak and Pepr:
 <!-- x-release-please-start-version -->
 
 ```bash
-uds deploy k3d-core-slim-dev:0.47.0
+uds deploy k3d-core-slim-dev:0.49.0
 ```
+
+<!-- x-release-please-end -->
 
 > [!IMPORTANT]
 > The k3d-core-slim-dev bundle is intended for dev/test/demo environments and should not be used for production use.
@@ -79,10 +81,9 @@ uds deploy k3d-core-slim-dev:0.47.0
 > [!TIP]
 > While the k3d-core-slim-dev bundle will work without internet, DNS will likely not resolve. If you are in an airgapped environment you may need to configure your /etc/hosts file such as:
 > ```
-> 0.47.0.1 localhost yourAppNameHere.uds.dev sso.uds.dev keycloak.admin.uds.dev
+> 127.0.0.1 localhost yourAppNameHere.uds.dev sso.uds.dev keycloak.admin.uds.dev
 > ```
 
-<!-- x-release-please-end -->
 
 #### Developing UDS Core
 

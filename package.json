@@ -28,7 +28,7 @@
     "k3d-setup": "k3d cluster delete pepr-dev && k3d cluster create pepr-dev --k3s-arg '--debug@server:0'"
   },
   "dependencies": {
-    "pepr": "0.52.2"
+    "pepr": "0.52.3"
   },
   "devDependencies": {
     "@commitlint/cli": "19.8.1",
@@ -39,7 +39,7 @@
     "@vitest/coverage-v8": "^3.2.4",
     "globals": "^16.2.0",
     "husky": "9.1.7",
-    "lint-staged": "16.1.2",
+    "lint-staged": "16.1.5",
     "vitest": "^3.0.0"
   }
 }
