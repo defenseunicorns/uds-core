@@ -178,7 +178,7 @@ tasks:
   - name: test-uds-core-ha-upgrade
     description: "Test an upgrade from the latest released UDS Core package with HA to current branch with HA"
     actions:
-      - cmd: "Skipped. To be uncommented after the next release"
+      - cmd: echo "Skipped. To be uncommented after the next release"
 #      - task: setup:ha-postgres
 #      - task: setup:ha-redis
 #      - task: test:uds-core-ha-upgrade
