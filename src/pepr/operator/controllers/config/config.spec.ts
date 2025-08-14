@@ -14,10 +14,10 @@ import {
   ConfigAction,
   configLog,
   decodeSecret,
+  handleCfg,
+  handleCfgSecret,
   loadUDSConfig,
   UDSConfig,
-  updateCfg,
-  updateCfgSecrets,
 } from "./config";
 
 // Mock dependencies
@@ -209,7 +209,7 @@ describe("decodeSecret", () => {
   });
 });
 
-describe("updateUDSConfig", () => {
+describe("handleUDSConfig", () => {
   beforeEach(() => {
     // Reset mocks
     vi.clearAllMocks();
@@ -229,13 +229,13 @@ describe("updateUDSConfig", () => {
   });
 
   it("handles update to operator-config secret and updates UDSConfig secret values", async () => {
-    await updateCfgSecrets(mockSecret, ConfigAction.UPDATE);
+    await handleCfgSecret(mockSecret, ConfigAction.UPDATE);
 
     expect(UDSConfig.authserviceRedisUri).toBe("mock-redis-uri");
   });
 
   it("handles updates to ClusterConfig and updates UDSConfig", async () => {
-    await updateCfg(mockCfg, ConfigAction.UPDATE);
+    await handleCfg(mockCfg, ConfigAction.UPDATE);
 
     expect(UDSConfig.caCert).toBe(btoa("mock-ca-cert"));
     expect(UDSConfig.kubeApiCIDR).toBe("mock-cidr");
@@ -249,7 +249,7 @@ describe("updateUDSConfig", () => {
     it("calls if CA Cert changes", async () => {
       UDSConfig.caCert = "old-ca-cert";
 
-      await updateCfg(mockCfg, ConfigAction.UPDATE);
+      await handleCfg(mockCfg, ConfigAction.UPDATE);
 
       expect(reconcileAuthservice).toHaveBeenCalledWith({
         name: "global-config-update",
@@ -266,7 +266,7 @@ describe("updateUDSConfig", () => {
         spec: { ...mockCfg.spec, expose: { caCert: "###ZARF_VAR_CA_CERT###" } },
       } as ClusterConfig;
 
-      await updateCfg(cfg, ConfigAction.UPDATE);
+      await handleCfg(cfg, ConfigAction.UPDATE);
 
       expect(reconcileAuthservice).toHaveBeenCalledWith({
         name: "global-config-update",
@@ -280,7 +280,7 @@ describe("updateUDSConfig", () => {
       UDSConfig.caCert = "old-ca-cert";
       const cfg = { ...mockCfg, spec: { ...mockCfg.spec, expose: {} } } as ClusterConfig;
 
-      await updateCfg(cfg, ConfigAction.UPDATE);
+      await handleCfg(cfg, ConfigAction.UPDATE);
 
       expect(reconcileAuthservice).toHaveBeenCalledWith({
         name: "global-config-update",
@@ -297,7 +297,7 @@ describe("updateUDSConfig", () => {
         spec: { ...mockCfg.spec, expose: { caCert: "###ZARF_VAR_CA_CERT###" } },
       } as ClusterConfig;
 
-      await updateCfg(cfg, ConfigAction.UPDATE);
+      await handleCfg(cfg, ConfigAction.UPDATE);
 
       expect(reconcileAuthservice).not.toHaveBeenCalled();
     });
@@ -306,7 +306,7 @@ describe("updateUDSConfig", () => {
       UDSConfig.caCert = btoa("old-ca-cert");
       UDSConfig.authserviceRedisUri = "old-redis-uri";
 
-      await updateCfgSecrets(mockSecret, ConfigAction.UPDATE);
+      await handleCfgSecret(mockSecret, ConfigAction.UPDATE);
 
       expect(reconcileAuthservice).toHaveBeenCalledWith({
         name: "global-config-update",
@@ -320,7 +320,7 @@ describe("updateUDSConfig", () => {
       UDSConfig.authserviceRedisUri = "old-redis-uri";
       const emptyRedisURI = { ...mockSecret, data: { AUTHSERVICE_REDIS_URI: btoa("") } };
 
-      await updateCfgSecrets(emptyRedisURI, ConfigAction.UPDATE);
+      await handleCfgSecret(emptyRedisURI, ConfigAction.UPDATE);
 
       expect(reconcileAuthservice).toHaveBeenCalledWith({
         name: "global-config-update",
@@ -337,7 +337,7 @@ describe("updateUDSConfig", () => {
         data: { AUTHSERVICE_REDIS_URI: btoa("###ZARF_VAR_AUTHSERVICE_REDIS_URI###") },
       };
 
-      await updateCfgSecrets(emptyRedisURI, ConfigAction.UPDATE);
+      await handleCfgSecret(emptyRedisURI, ConfigAction.UPDATE);
 
       expect(reconcileAuthservice).toHaveBeenCalledWith({
         name: "global-config-update",
@@ -351,7 +351,7 @@ describe("updateUDSConfig", () => {
       UDSConfig.authserviceRedisUri = "original";
       const emptyRedisURI = { ...mockSecret, data: {} };
 
-      await updateCfgSecrets(emptyRedisURI, ConfigAction.UPDATE);
+      await handleCfgSecret(emptyRedisURI, ConfigAction.UPDATE);
 
       expect(reconcileAuthservice).toHaveBeenCalledWith({
         name: "global-config-update",
@@ -368,7 +368,7 @@ describe("updateUDSConfig", () => {
         data: { AUTHSERVICE_REDIS_URI: btoa("###ZARF_VAR_AUTHSERVICE_REDIS_URI###") },
       };
 
-      await updateCfgSecrets(emptyRedisURI, ConfigAction.UPDATE);
+      await handleCfgSecret(emptyRedisURI, ConfigAction.UPDATE);
 
       expect(reconcileAuthservice).not.toHaveBeenCalled();
     });
@@ -377,7 +377,7 @@ describe("updateUDSConfig", () => {
   it("should call initAPIServerCIDR if KUBEAPI_CIDR changes", async () => {
     UDSConfig.kubeApiCIDR = "old-cidr";
 
-    await updateCfg(mockCfg, ConfigAction.UPDATE);
+    await handleCfg(mockCfg, ConfigAction.UPDATE);
 
     expect(initAPIServerCIDR).toHaveBeenCalled();
   });
@@ -385,7 +385,7 @@ describe("updateUDSConfig", () => {
   it("should call initAllNodesTarget if KUBENODE_CIDRS changes", async () => {
     UDSConfig.kubeNodeCIDRs = ["old-node-cidrs"];
 
-    await updateCfg(mockCfg, ConfigAction.UPDATE);
+    await handleCfg(mockCfg, ConfigAction.UPDATE);
 
     expect(initAllNodesTarget).toHaveBeenCalled();
   });
@@ -394,7 +394,7 @@ describe("updateUDSConfig", () => {
     mockCfg.spec!.expose.domain = "###ZARF_VAR_DOMAIN###";
     mockCfg.spec!.expose.adminDomain = "###ZARF_VAR_ADMIN_DOMAIN###";
 
-    await updateCfg(mockCfg, ConfigAction.LOAD);
+    await handleCfg(mockCfg, ConfigAction.LOAD);
 
     expect(UDSConfig.domain).toBe("uds.dev");
     expect(UDSConfig.adminDomain).toBe("admin.uds.dev");
@@ -409,7 +409,7 @@ describe("updateUDSConfig", () => {
     UDSConfig.adminDomain = "mock-admin-domain";
     UDSConfig.allowAllNSExemptions = true;
 
-    await updateCfg(mockCfg, ConfigAction.UPDATE);
+    await handleCfg(mockCfg, ConfigAction.UPDATE);
 
     expect(reconcileAuthservice).not.toHaveBeenCalled();
     expect(initAPIServerCIDR).not.toHaveBeenCalled();
@@ -421,7 +421,7 @@ describe("updateUDSConfig", () => {
     mockCfg.spec!.networking!.kubeApiCIDR = "";
     mockCfg.spec!.networking!.kubeNodeCIDRs = [];
 
-    await updateCfg(mockCfg, ConfigAction.UPDATE);
+    await handleCfg(mockCfg, ConfigAction.UPDATE);
 
     expect(initAPIServerCIDR).not.toHaveBeenCalled();
     expect(initAllNodesTarget).not.toHaveBeenCalled();
@@ -430,8 +430,8 @@ describe("updateUDSConfig", () => {
   it("should not update cluster resources during initial load", async () => {
     mockCfg.spec!.networking!.kubeApiCIDR = "diff-cidr";
     mockCfg.spec!.networking!.kubeNodeCIDRs = ["diff-cidr"];
-    await updateCfg(mockCfg, ConfigAction.LOAD);
-    await updateCfgSecrets(mockSecret, ConfigAction.LOAD);
+    await handleCfg(mockCfg, ConfigAction.LOAD);
+    await handleCfgSecret(mockSecret, ConfigAction.LOAD);
 
     expect(initAPIServerCIDR).not.toHaveBeenCalled();
     expect(initAllNodesTarget).not.toHaveBeenCalled();

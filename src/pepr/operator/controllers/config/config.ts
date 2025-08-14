@@ -81,7 +81,7 @@ export function decodeSecret(secret: kind.Secret) {
   return decodedData;
 }
 
-export async function updateCfgSecrets(cfg: kind.Secret, action: ConfigAction) {
+export async function handleCfgSecret(cfg: kind.Secret, action: ConfigAction) {
   const resourceName = "uds-operator-config secret";
   configLog.info(getConfigLogMessage(action, ConfigPhase.START, resourceName));
 
@@ -132,7 +132,7 @@ async function handleCAUpdate(expose: ConfigExpose, updateClusterResources?: boo
   }
 }
 
-export async function updateCfg(cfg: ClusterConfig, action: ConfigAction) {
+export async function handleCfg(cfg: ClusterConfig, action: ConfigAction) {
   const resourceName = "uds-operator-config ClusterConfig";
   configLog.info(getConfigLogMessage(action, ConfigPhase.START, resourceName));
 
@@ -214,8 +214,8 @@ export async function loadUDSConfig() {
 
     try {
       validateCfg(cfg);
-      await updateCfg(cfg, ConfigAction.LOAD);
-      await updateCfgSecrets(cfgSecret, ConfigAction.LOAD);
+      await handleCfg(cfg, ConfigAction.LOAD);
+      await handleCfgSecret(cfgSecret, ConfigAction.LOAD);
       configLog.info(redactConfig(), "Loaded UDS Config");
     } catch (e) {
       configLog.error(e);
@@ -269,7 +269,7 @@ export async function startConfigWatch() {
         case WatchPhase.Added:
         case WatchPhase.Modified:
           try {
-            await updateCfg(cfg);
+            await handleCfg(cfg, ConfigAction.UPDATE);
           } catch (e) {
             configLog.error(e, "Unexpected error during cluster config update");
           }

@@ -28,7 +28,7 @@ import { validator } from "./crd/validators/package-validator";
 
 // Reconciler imports
 import { Component, setupLogger } from "../logger";
-import { ConfigAction, UDSConfig, updateCfg, updateCfgSecrets } from "./controllers/config/config";
+import { ConfigAction, handleCfg, handleCfgSecret, UDSConfig } from "./controllers/config/config";
 import { reconcilePod, reconcileService } from "./controllers/istio/ambient-waypoint";
 import { restartGatewayPods } from "./controllers/istio/istio-configmap-sync";
 import {
@@ -119,13 +119,13 @@ When(a.Secret)
   .IsCreatedOrUpdated()
   .InNamespace("pepr-system")
   .WithName("uds-operator-config")
-  .Reconcile(secret => updateCfgSecrets(secret, ConfigAction.UPDATE));
+  .Reconcile(secret => handleCfgSecret(secret, ConfigAction.UPDATE));
 
 // Watch UDS ClusterConfig and handle changes
 When(ClusterConfig)
   .IsCreatedOrUpdated()
   .Validate(validateCfgUpdate)
-  .Reconcile(cfg => updateCfg(cfg, ConfigAction.UPDATE));
+  .Reconcile(cfg => handleCfg(cfg, ConfigAction.UPDATE));
 
 // Watch the Kubernetes Clients Secret
 When(a.Secret)
