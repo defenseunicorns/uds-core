@@ -27,9 +27,6 @@ const { When } = prometheus;
 // Import isIstioInjected from utils
 import { isIstioInjected } from "./utils";
 
-// Re-export for backwards compatibility
-export { isIstioInjected };
-
 /**
  * Mutate a ServiceMonitor resource by applying UDS conventions.
  *
