@@ -27,9 +27,42 @@ export const UDSConfig: Config = {
   isIdentityDeployed: false,
 };
 
+// Enums for tracking the config action and "phase" of the action
+export enum ConfigAction {
+  LOAD,
+  UPDATE,
+}
+export enum ConfigPhase {
+  START,
+  FINISH,
+}
+
+// Helper function to generate config log messages
+export function getConfigLogMessage(
+  action: ConfigAction,
+  phase: ConfigPhase,
+  resourceName: string,
+): string {
+  const isLoad = action === ConfigAction.LOAD;
+  const verb =
+    phase === ConfigPhase.START ? (isLoad ? "Loading" : "Updating") : isLoad ? "Loaded" : "Updated";
+  const change = isLoad ? "" : " change";
+
+  return `${verb} UDS Config from ${resourceName}${change}`;
+}
+
+// Helper function to determine if cluster resources should be updated
+export function shouldUpdateClusterResources(action: ConfigAction): boolean {
+  return (
+    action === ConfigAction.UPDATE &&
+    (process.env.PEPR_WATCH_MODE === "true" || process.env.PEPR_MODE === "dev")
+  );
+}
+
 export const configLog = setupLogger(Component.OPERATOR_CONFIG);
 
-function decodeSecret(secret: kind.Secret) {
+// Exported for testing purposes
+export function decodeSecret(secret: kind.Secret) {
   // Base64 decode the secret data
   const decodedData: { [key: string]: string } = {};
   for (const key in secret.data) {
@@ -48,21 +81,12 @@ function decodeSecret(secret: kind.Secret) {
   return decodedData;
 }
 
-export async function updateCfgSecrets(cfg: kind.Secret) {
-  let firstLoad = false;
-  // If the authserviceRedisUri is undefined we know we're loading the config for the first time
-  // An "empty" redis uri will be an empty string after the first load
-  if (UDSConfig.authserviceRedisUri === undefined) {
-    firstLoad = true;
-  }
-
-  configLog.info(
-    `${firstLoad ? "Loading" : "Updating"} UDS Config from uds-operator-config secret${firstLoad ? "" : " change"}`,
-  );
+export async function handleCfgSecret(cfg: kind.Secret, action: ConfigAction) {
+  const resourceName = "uds-operator-config secret";
+  configLog.info(getConfigLogMessage(action, ConfigPhase.START, resourceName));
 
   // Only update cluster resources in the watcher pod if not on the first load
-  const updateClusterResources =
-    !firstLoad && (process.env.PEPR_WATCH_MODE === "true" || process.env.PEPR_MODE === "dev");
+  const updateClusterResources = shouldUpdateClusterResources(action);
 
   const decodedCfgData = decodeSecret(cfg);
 
@@ -85,9 +109,7 @@ export async function updateCfgSecrets(cfg: kind.Secret) {
     }
   }
 
-  configLog.info(
-    `${firstLoad ? "Loaded" : "Updated"} UDS Config based on uds-operator-config secret${firstLoad ? "" : " change"}`,
-  );
+  configLog.info(getConfigLogMessage(action, ConfigPhase.FINISH, resourceName));
 }
 
 async function handleCAUpdate(expose: ConfigExpose, updateClusterResources?: boolean) {
@@ -110,20 +132,12 @@ async function handleCAUpdate(expose: ConfigExpose, updateClusterResources?: boo
   }
 }
 
-export async function updateCfg(cfg: ClusterConfig) {
-  let firstLoad = false;
-  // If the domain is empty we know we're loading the config for the first time
-  if (!UDSConfig.domain) {
-    firstLoad = true;
-  }
-
-  configLog.info(
-    `${firstLoad ? "Loading" : "Updating"} UDS Config from uds-operator-config ClusterConfig${firstLoad ? "" : " change"}`,
-  );
+export async function handleCfg(cfg: ClusterConfig, action: ConfigAction) {
+  const resourceName = "uds-operator-config ClusterConfig";
+  configLog.info(getConfigLogMessage(action, ConfigPhase.START, resourceName));
 
   // Only update cluster resources in the watcher pod if not on the first load
-  const updateClusterResources =
-    !firstLoad && (process.env.PEPR_WATCH_MODE === "true" || process.env.PEPR_MODE === "dev");
+  const updateClusterResources = shouldUpdateClusterResources(action);
 
   const { expose, policy, networking } = cfg.spec!;
 
@@ -166,9 +180,7 @@ export async function updateCfg(cfg: ClusterConfig) {
   // Update other config values (no need for special handling)
   UDSConfig.allowAllNSExemptions = policy.allowAllNsExemptions === true;
 
-  configLog.info(
-    `${firstLoad ? "Loaded" : "Updated"} UDS Config based on uds-operator-config ClusterConfig${firstLoad ? "" : " change"}`,
-  );
+  configLog.info(getConfigLogMessage(action, ConfigPhase.FINISH, resourceName));
 }
 
 // Loads the UDS Config on startup
@@ -202,8 +214,8 @@ export async function loadUDSConfig() {
 
     try {
       validateCfg(cfg);
-      await updateCfg(cfg);
-      await updateCfgSecrets(cfgSecret || {});
+      await handleCfg(cfg, ConfigAction.LOAD);
+      await handleCfgSecret(cfgSecret, ConfigAction.LOAD);
       configLog.info(redactConfig(), "Loaded UDS Config");
     } catch (e) {
       configLog.error(e);
@@ -257,7 +269,7 @@ export async function startConfigWatch() {
         case WatchPhase.Added:
         case WatchPhase.Modified:
           try {
-            await updateCfg(cfg);
+            await handleCfg(cfg, ConfigAction.UPDATE);
           } catch (e) {
             configLog.error(e, "Unexpected error during cluster config update");
           }

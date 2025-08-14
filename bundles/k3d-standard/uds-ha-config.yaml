@@ -19,3 +19,6 @@ variables:
     grafana_pg_password: unicorn123!@#UN
     grafana_pg_user: postgres
     grafana_pg_ssl_mode: disable
+
+    # Authservice variables
+    AUTHSERVICE_REDIS_URI: redis://authservice:authservice@host.k3d.internal:6379
