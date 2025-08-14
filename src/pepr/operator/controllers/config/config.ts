@@ -15,24 +15,32 @@ import { initAllNodesTarget } from "../network/generators/kubeNodes";
 import { watchCfg } from "../utils";
 import { Config } from "./types";
 
-const NOT_LOADED = "##NOT_LOADED##";
-
 // Set default UDSConfig for build time compiling
 export const UDSConfig: Config = {
   domain: "",
   adminDomain: "",
   caCert: "",
-  // An empty string is a valid identitifer for the Redis URI. We need a "special" value to indicate that it has not been loaded yet.
-  authserviceRedisUri: NOT_LOADED,
+  authserviceRedisUri: "",
   allowAllNSExemptions: false,
   kubeApiCIDR: "",
   kubeNodeCIDRs: [],
   isIdentityDeployed: false,
 };
 
+// These track whether we have loaded the config/secret to determine proper logging and resource changes
+let cfgLoaded = false;
+let secretLoaded = false;
+
+// This function is used for testing, to change the load state
+export function setLoadedVars(loaded: boolean) {
+  cfgLoaded = loaded;
+  secretLoaded = loaded;
+}
+
 export const configLog = setupLogger(Component.OPERATOR_CONFIG);
 
-function decodeSecret(secret: kind.Secret) {
+// Exported for testing purposes
+export function decodeSecret(secret: kind.Secret) {
   // Base64 decode the secret data
   const decodedData: { [key: string]: string } = {};
   for (const key in secret.data) {
@@ -52,19 +60,13 @@ function decodeSecret(secret: kind.Secret) {
 }
 
 export async function updateCfgSecrets(cfg: kind.Secret) {
-  let firstLoad = false;
-  // This will be set to an empty string (if not provided) after the first load.
-  if (UDSConfig.authserviceRedisUri == NOT_LOADED) {
-    firstLoad = true;
-  }
-
   configLog.info(
-    `${firstLoad ? "Loading" : "Updating"} UDS Config from uds-operator-config secret${firstLoad ? "" : " change"}`,
+    `${!secretLoaded ? "Loading" : "Updating"} UDS Config from uds-operator-config secret${!secretLoaded ? "" : " change"}`,
   );
 
   // Only update cluster resources in the watcher pod if not on the first load
   const updateClusterResources =
-    !firstLoad && (process.env.PEPR_WATCH_MODE === "true" || process.env.PEPR_MODE === "dev");
+    secretLoaded && (process.env.PEPR_WATCH_MODE === "true" || process.env.PEPR_MODE === "dev");
 
   const decodedCfgData = decodeSecret(cfg);
 
@@ -88,8 +90,10 @@ export async function updateCfgSecrets(cfg: kind.Secret) {
   }
 
   configLog.info(
-    `${firstLoad ? "Loaded" : "Updated"} UDS Config based on uds-operator-config secret${firstLoad ? "" : " change"}`,
+    `${!secretLoaded ? "Loaded" : "Updated"} UDS Config based on uds-operator-config secret${!secretLoaded ? "" : " change"}`,
   );
+
+  secretLoaded = true;
 }
 
 async function handleCAUpdate(expose: ConfigExpose, updateClusterResources?: boolean) {
@@ -113,19 +117,13 @@ async function handleCAUpdate(expose: ConfigExpose, updateClusterResources?: boo
 }
 
 export async function updateCfg(cfg: ClusterConfig) {
-  let firstLoad = false;
-  // If the domain is empty we know we're loading the config for the first time
-  if (!UDSConfig.domain) {
-    firstLoad = true;
-  }
-
   configLog.info(
-    `${firstLoad ? "Loading" : "Updating"} UDS Config from uds-operator-config ClusterConfig${firstLoad ? "" : " change"}`,
+    `${!cfgLoaded ? "Loading" : "Updating"} UDS Config from uds-operator-config ClusterConfig${!cfgLoaded ? "" : " change"}`,
   );
 
   // Only update cluster resources in the watcher pod if not on the first load
   const updateClusterResources =
-    !firstLoad && (process.env.PEPR_WATCH_MODE === "true" || process.env.PEPR_MODE === "dev");
+    cfgLoaded && (process.env.PEPR_WATCH_MODE === "true" || process.env.PEPR_MODE === "dev");
 
   const { expose, policy, networking } = cfg.spec!;
 
@@ -169,8 +167,10 @@ export async function updateCfg(cfg: ClusterConfig) {
   UDSConfig.allowAllNSExemptions = policy.allowAllNsExemptions === true;
 
   configLog.info(
-    `${firstLoad ? "Loaded" : "Updated"} UDS Config based on uds-operator-config ClusterConfig${firstLoad ? "" : " change"}`,
+    `${!cfgLoaded ? "Loaded" : "Updated"} UDS Config based on uds-operator-config ClusterConfig${!cfgLoaded ? "" : " change"}`,
   );
+
+  cfgLoaded = true;
 }
 
 // Loads the UDS Config on startup

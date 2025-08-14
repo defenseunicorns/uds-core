@@ -10,7 +10,15 @@ import { ClusterConfig, Name } from "../../crd";
 import { reconcileAuthservice } from "../keycloak/authservice/authservice";
 import { initAPIServerCIDR } from "../network/generators/kubeAPI";
 import { initAllNodesTarget } from "../network/generators/kubeNodes";
-import { loadUDSConfig, UDSConfig, updateCfg, updateCfgSecrets } from "./config";
+import {
+  configLog,
+  decodeSecret,
+  loadUDSConfig,
+  setLoadedVars,
+  UDSConfig,
+  updateCfg,
+  updateCfgSecrets,
+} from "./config";
 
 // Mock dependencies
 const mockClusterConfGet = vi.fn();
@@ -61,7 +69,8 @@ vi.mock("pepr", async importOriginal => {
   };
 });
 
-const mockCfg: ClusterConfig = {
+let mockCfg: ClusterConfig;
+const defaultConfig: ClusterConfig = {
   metadata: {
     name: Name.UdsClusterConfig,
   },
@@ -81,7 +90,8 @@ const mockCfg: ClusterConfig = {
   },
 };
 
-const mockSecret: kind.Secret = {
+let mockSecret: kind.Secret;
+const defaultSecret: kind.Secret = {
   metadata: {
     name: "uds-operator-config",
     namespace: "pepr-system",
@@ -95,11 +105,15 @@ describe("initial config load", () => {
   beforeEach(() => {
     process.env.PEPR_WATCH_MODE = "true";
     process.env.PEPR_MODE = "dev";
+    setLoadedVars(false);
+    vi.clearAllMocks();
+    mockCfg = defaultConfig;
+    mockSecret = defaultSecret;
+    mockClusterConfGet.mockResolvedValue(mockCfg);
+    mockSecretGet.mockResolvedValue(mockSecret);
   });
 
   it("loads initial config", async () => {
-    mockClusterConfGet.mockResolvedValue(mockCfg);
-    mockSecretGet.mockResolvedValue(mockSecret);
     await loadUDSConfig();
 
     expect(UDSConfig.caCert).toBe(btoa("mock-ca-cert"));
@@ -120,7 +134,6 @@ describe("initial config load", () => {
   });
 
   it("throws error because no config secret", async () => {
-    mockClusterConfGet.mockResolvedValue(mockCfg);
     mockSecretGet.mockResolvedValue(undefined);
 
     const mockError = new Error("Error while fetching operator config secret");
@@ -141,7 +154,6 @@ describe("initial config load", () => {
     };
 
     mockClusterConfGet.mockResolvedValue(invalidCfg);
-    mockSecretGet.mockResolvedValue(mockSecret);
 
     try {
       await loadUDSConfig();
@@ -149,12 +161,65 @@ describe("initial config load", () => {
       expect(e.message).toBe("ClusterConfig: caCert must be base64 encoded; found invalid value");
     }
   });
+
+  it("should not update cluster resources during initial load", async () => {
+    setLoadedVars(false);
+    await loadUDSConfig();
+
+    expect(initAPIServerCIDR).not.toHaveBeenCalled();
+    expect(initAllNodesTarget).not.toHaveBeenCalled();
+    expect(reconcileAuthservice).not.toHaveBeenCalled();
+  });
+});
+
+// Test for decodeSecret function error handling
+describe("decodeSecret", () => {
+  it("should handle invalid base64 data", () => {
+    // Create a secret with invalid base64 data
+    const invalidSecret: kind.Secret = {
+      metadata: {
+        name: "invalid-secret",
+        namespace: "test",
+      },
+      data: {
+        // This is not valid base64
+        INVALID_KEY: "!@#$%^",
+        // Valid base64 for comparison
+        VALID_KEY: btoa("test-value"),
+      },
+    };
+
+    // Spy on the configLog.error method
+    const errorSpy = vi.spyOn(configLog, "error");
+
+    // Call decodeSecret directly
+    const result = decodeSecret(invalidSecret);
+
+    // Verify the error was logged
+    expect(errorSpy).toHaveBeenCalledWith(
+      expect.stringContaining("Failed to decode secret key: INVALID_KEY"),
+    );
+
+    // Verify the valid key was decoded correctly
+    expect(result.VALID_KEY).toBe("test-value");
+
+    // Verify the invalid key is not in the result
+    expect(result.INVALID_KEY).toBe(undefined);
+
+    // Clean up the spy
+    errorSpy.mockRestore();
+  });
 });
 
 describe("updateUDSConfig", () => {
   beforeEach(() => {
     // Reset mocks
     vi.clearAllMocks();
+    mockCfg = defaultConfig;
+    mockSecret = defaultSecret;
+    mockClusterConfGet.mockResolvedValue(mockCfg);
+    mockSecretGet.mockResolvedValue(mockSecret);
+    setLoadedVars(true);
     UDSConfig.caCert = "";
     UDSConfig.authserviceRedisUri = "";
     UDSConfig.kubeApiCIDR = "";
@@ -162,6 +227,8 @@ describe("updateUDSConfig", () => {
     UDSConfig.domain = "uds.dev";
     UDSConfig.adminDomain = "";
     UDSConfig.allowAllNSExemptions = false;
+    process.env.PEPR_WATCH_MODE = "true";
+    process.env.PEPR_MODE = "dev";
   });
 
   it("handles update to operator-config secret and updates UDSConfig secret values", async () => {
@@ -364,9 +431,11 @@ describe("updateUDSConfig", () => {
   });
 
   it("should not update cluster resources during initial load", async () => {
-    UDSConfig.domain = ""; // Simulate first load
-
+    setLoadedVars(false);
+    mockCfg.spec!.networking!.kubeApiCIDR = "diff-cidr";
+    mockCfg.spec!.networking!.kubeNodeCIDRs = ["diff-cidr"];
     await updateCfg(mockCfg);
+    await updateCfgSecrets(mockSecret);
 
     expect(initAPIServerCIDR).not.toHaveBeenCalled();
     expect(initAllNodesTarget).not.toHaveBeenCalled();
