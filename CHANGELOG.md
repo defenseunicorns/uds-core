@@ -2,6 +2,33 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.49.0](https://github.com/defenseunicorns/uds-core/compare/v0.48.1...v0.49.0) (2025-08-14)
+
+
+### ⚠ BREAKING CHANGES
+
+* Grafana and NeuVector now have [group auth protection](https://uds.defenseunicorns.com/reference/configuration/single-sign-on/group-based-auth/) provided by Keycloak. If you have been allowing different groups access to these applications (beyond the default Admin/Auditor groups), you will need to provide additional overrides to ensure Keycloak allows these groups to access the applications (see [docs](https://uds.defenseunicorns.com/reference/configuration/single-sign-on/overview/#applications)).
+
+### Features
+
+* add sso group auth grafana/neuvector ([#1809](https://github.com/defenseunicorns/uds-core/issues/1809)) ([1e7a402](https://github.com/defenseunicorns/uds-core/commit/1e7a40284aefb5d635c2219fe45b69ebdbda74c1))
+
+
+### Bug Fixes
+
+* add missing gateway crd and fix dev workflow ([#1807](https://github.com/defenseunicorns/uds-core/issues/1807)) ([615a958](https://github.com/defenseunicorns/uds-core/commit/615a95869c07e5868cb8d76d0830101b0885b441))
+* authservice config processing ([#1824](https://github.com/defenseunicorns/uds-core/issues/1824)) ([d10102c](https://github.com/defenseunicorns/uds-core/commit/d10102c9aa24d43829176b8fa4c6479ccc45839f))
+* renovate comments on unicorn istio values ([#1818](https://github.com/defenseunicorns/uds-core/issues/1818)) ([c1cb5b6](https://github.com/defenseunicorns/uds-core/commit/c1cb5b6e202a1d706324b62403b81d5893e3c614))
+* revert the naming of network policies to pre authservice ambient pr ([#1813](https://github.com/defenseunicorns/uds-core/issues/1813)) ([65afe98](https://github.com/defenseunicorns/uds-core/commit/65afe9862ab291973f18629ef51d1cef061bd306))
+* scorecard slack alerts ([#1822](https://github.com/defenseunicorns/uds-core/issues/1822)) ([97b1343](https://github.com/defenseunicorns/uds-core/commit/97b1343fd994ea0ea571f49dc8472c00d73b9024))
+
+
+### Miscellaneous
+
+* **ci:** slack pipeline alerting for nightly tests ([#1804](https://github.com/defenseunicorns/uds-core/issues/1804)) ([03ecda7](https://github.com/defenseunicorns/uds-core/commit/03ecda794cd8a1c5c55a062a322a80abaea1af6f))
+* **deps:** update neuvector curl image to v8.15.0 ([#1817](https://github.com/defenseunicorns/uds-core/issues/1817)) ([80052ca](https://github.com/defenseunicorns/uds-core/commit/80052ca4d527611a2114a8f5c129ce1d4db17365))
+* **deps:** update velero ([#1775](https://github.com/defenseunicorns/uds-core/issues/1775)) ([65160ef](https://github.com/defenseunicorns/uds-core/commit/65160eff8e2e90ab0323be0a67f5d441872631e9))
+
 ## [0.48.1](https://github.com/defenseunicorns/uds-core/compare/v0.48.0...v0.48.1) (2025-08-11)
 
 
