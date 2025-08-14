@@ -37,4 +37,4 @@ cve:
     image:
       repository: rfcurated/curl
       # renovate: datasource=docker depName=quay.io/rfcurated/curl versioning=docker
-      tag: 8.14.1-jammy-scratch-fips-rfcurated
+      tag: 8.15.0-jammy-scratch-fips-rfcurated
