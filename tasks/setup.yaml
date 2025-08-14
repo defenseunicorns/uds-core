@@ -77,3 +77,34 @@ tasks:
           done
       - description: "Add Grafana database to PostgreSQL"
         cmd: docker exec postgres psql -U postgres -c "CREATE DATABASE grafana;"
+
+  - name: ha-redis
+    actions:
+      - description: "Cleanup previous Redis runs"
+        cmd: |
+          docker kill redis || true
+          docker rm redis || true
+      - description: "Create a network for the Redis container"
+        cmd: docker network create k3d-uds || true
+      - description: "Generate Redis ACL file"
+        cmd: |
+          mkdir -p build/redis
+          cat > build/redis/users.acl <<'EOF'
+          user default off
+          user authservice on >authservice ~* +@all
+          EOF
+      - description: "Start Redis Docker container"
+        cmd: |
+          # renovate: datasource=docker depName=redis versioning=docker
+          REDIS_VERSION=7.4.0
+          docker run -p 6379:6379 --network=k3d-uds --rm --name redis \
+            -v $(pwd)/build/redis/users.acl:/usr/local/etc/redis/users.acl:ro \
+            -d redis:${REDIS_VERSION} \
+            --aclfile /usr/local/etc/redis/users.acl \
+            --appendonly yes
+      - description: "Wait for Redis to be ready"
+        cmd: |
+          for i in {1..10}; do
+            docker exec redis redis-cli -u redis://authservice:authservice@127.0.0.1:6379 ping && break
+            sleep 1
+          done
