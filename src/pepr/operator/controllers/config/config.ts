@@ -27,14 +27,36 @@ export const UDSConfig: Config = {
   isIdentityDeployed: false,
 };
 
-// These track whether we have loaded the config/secret to determine proper logging and resource changes
-let cfgLoaded = false;
-let secretLoaded = false;
+// Enums for tracking the config action and "phase" of the action
+export enum ConfigAction {
+  LOAD,
+  UPDATE,
+}
+export enum ConfigPhase {
+  START,
+  FINISH,
+}
 
-// This function is used for testing, to change the load state
-export function setLoadedVars(loaded: boolean) {
-  cfgLoaded = loaded;
-  secretLoaded = loaded;
+// Helper function to generate config log messages
+function getConfigLogMessage(
+  action: ConfigAction,
+  phase: ConfigPhase,
+  resourceName: string,
+): string {
+  const isLoad = action === ConfigAction.LOAD;
+  const verb =
+    phase === ConfigPhase.START ? (isLoad ? "Loading" : "Updating") : isLoad ? "Loaded" : "Updated";
+  const change = isLoad ? "" : " change";
+
+  return `${verb} UDS Config from ${resourceName}${change}`;
+}
+
+// Helper function to determine if cluster resources should be updated
+function shouldUpdateClusterResources(action: ConfigAction): boolean {
+  return (
+    action === ConfigAction.UPDATE &&
+    (process.env.PEPR_WATCH_MODE === "true" || process.env.PEPR_MODE === "dev")
+  );
 }
 
 export const configLog = setupLogger(Component.OPERATOR_CONFIG);
@@ -59,14 +81,12 @@ export function decodeSecret(secret: kind.Secret) {
   return decodedData;
 }
 
-export async function updateCfgSecrets(cfg: kind.Secret) {
-  configLog.info(
-    `${!secretLoaded ? "Loading" : "Updating"} UDS Config from uds-operator-config secret${!secretLoaded ? "" : " change"}`,
-  );
+export async function updateCfgSecrets(cfg: kind.Secret, action: ConfigAction) {
+  const resourceName = "uds-operator-config secret";
+  configLog.info(getConfigLogMessage(action, ConfigPhase.START, resourceName));
 
   // Only update cluster resources in the watcher pod if not on the first load
-  const updateClusterResources =
-    secretLoaded && (process.env.PEPR_WATCH_MODE === "true" || process.env.PEPR_MODE === "dev");
+  const updateClusterResources = shouldUpdateClusterResources(action);
 
   const decodedCfgData = decodeSecret(cfg);
 
@@ -89,11 +109,7 @@ export async function updateCfgSecrets(cfg: kind.Secret) {
     }
   }
 
-  configLog.info(
-    `${!secretLoaded ? "Loaded" : "Updated"} UDS Config based on uds-operator-config secret${!secretLoaded ? "" : " change"}`,
-  );
-
-  secretLoaded = true;
+  configLog.info(getConfigLogMessage(action, ConfigPhase.FINISH, resourceName));
 }
 
 async function handleCAUpdate(expose: ConfigExpose, updateClusterResources?: boolean) {
@@ -116,14 +132,12 @@ async function handleCAUpdate(expose: ConfigExpose, updateClusterResources?: boo
   }
 }
 
-export async function updateCfg(cfg: ClusterConfig) {
-  configLog.info(
-    `${!cfgLoaded ? "Loading" : "Updating"} UDS Config from uds-operator-config ClusterConfig${!cfgLoaded ? "" : " change"}`,
-  );
+export async function updateCfg(cfg: ClusterConfig, action: ConfigAction) {
+  const resourceName = "uds-operator-config ClusterConfig";
+  configLog.info(getConfigLogMessage(action, ConfigPhase.START, resourceName));
 
   // Only update cluster resources in the watcher pod if not on the first load
-  const updateClusterResources =
-    cfgLoaded && (process.env.PEPR_WATCH_MODE === "true" || process.env.PEPR_MODE === "dev");
+  const updateClusterResources = shouldUpdateClusterResources(action);
 
   const { expose, policy, networking } = cfg.spec!;
 
@@ -166,11 +180,7 @@ export async function updateCfg(cfg: ClusterConfig) {
   // Update other config values (no need for special handling)
   UDSConfig.allowAllNSExemptions = policy.allowAllNsExemptions === true;
 
-  configLog.info(
-    `${!cfgLoaded ? "Loaded" : "Updated"} UDS Config based on uds-operator-config ClusterConfig${!cfgLoaded ? "" : " change"}`,
-  );
-
-  cfgLoaded = true;
+  configLog.info(getConfigLogMessage(action, ConfigPhase.FINISH, resourceName));
 }
 
 // Loads the UDS Config on startup
@@ -204,8 +214,8 @@ export async function loadUDSConfig() {
 
     try {
       validateCfg(cfg);
-      await updateCfg(cfg);
-      await updateCfgSecrets(cfgSecret || {});
+      await updateCfg(cfg, ConfigAction.LOAD);
+      await updateCfgSecrets(cfgSecret, ConfigAction.LOAD);
       configLog.info(redactConfig(), "Loaded UDS Config");
     } catch (e) {
       configLog.error(e);
