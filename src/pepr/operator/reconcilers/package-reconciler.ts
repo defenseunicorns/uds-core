@@ -112,7 +112,7 @@ async function reconcilePackageFlow(pkg: UDSPackage): Promise<void> {
   }
 
   // Create the Istio Resources per the package configuration
-  endpoints = await istioResources(pkg, namespace!, istioMode);
+  endpoints = await istioResources(pkg, namespace!);
 
   // Configure the ServiceMonitors
   const monitors: string[] = [];

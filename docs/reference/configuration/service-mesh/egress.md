@@ -174,7 +174,7 @@ Additional security considerations to keep in mind when implementing egress:
 
 * We are not blocking DNS exfiltration
 
-## Debugging Tips
+## Troubleshooting
 
 Egress not working? Some things to try:
 
