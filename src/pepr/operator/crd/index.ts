@@ -81,4 +81,4 @@ export {
   Sidecar as IstioSidecar,
 } from "./generated/istio/sidecar-v1";
 
-export { K8sGateway as K8sGateway } from "./generated/k8s/gateway-v1";
+export { K8sGateway as K8sGateway, From as K8sGatewayFromType } from "./generated/k8s/gateway-v1";
