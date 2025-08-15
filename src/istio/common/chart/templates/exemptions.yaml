@@ -1,5 +1,9 @@
 # Copyright 2024 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# Note: These exemptions are not currently used/processed since `istio-system` is excluded from UDS Policies via webhook configuration. This Exemption does however provide:
+# 1. Backwards compatible support for upgrade/downgrade cases that may be unexpected and still require Exemptions.
+# 2. A helpful reference for the privileges Istio is expected to have, and why.
 apiVersion: uds.dev/v1alpha1
 kind: Exemption
 metadata:
