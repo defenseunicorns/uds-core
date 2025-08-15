@@ -5,6 +5,10 @@ sidebar:
   order: 1
 ---
 
+:::note
+The following issue should not occur in UDS Core 0.50.0+ due to changes in default webhook configuration. This troubleshooting guide is provided as a reference for older versions of UDS Core.
+:::
+
 ## Overview
 During cluster restarts or after upgrades, Istiod and Pepr pods may fail to start properly due to a circular dependency between their admission webhooks.
 
