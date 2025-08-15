@@ -46,14 +46,9 @@ When(a.Pod)
       .sort((a, b) => a.localeCompare(b));
 
     if (violations.length > 0) {
-      // TODO: Remove this line to enforce the block
-      return request.Approve([
-        `The following istio annotations can modify secure sidecar configuration and should be removed/exempted: ${violations.join(", ")}`,
-      ]);
-      // TODO: Uncomment this line to block the request
-      // return request.Deny(
-      //   `The following istio annotations can modify secure sidecar configuration and are not allowed: ${violations.join(", ")}`,
-      // );
+      return request.Deny(
+        `The following istio annotations can modify secure sidecar configuration and are not allowed: ${violations.join(", ")}`,
+      );
     }
 
     return request.Approve();
@@ -147,14 +142,9 @@ When(a.Pod)
     );
 
     if (violations.length > 0) {
-      // TODO: Remove this line to enforce the block
-      return request.Approve([
-        `The following istio annotations or labels can modify secure traffic interception and should be removed/exempted: ${violations.join(", ")}`,
-      ]);
-      // TODO: Uncomment this line to block the request
-      // return request.Deny(
-      //   `The following istio annotations or labels can modify secure traffic interception are not allowed: ${violations.join(", ")}`,
-      // );
+      return request.Deny(
+        `The following istio annotations or labels can modify secure traffic interception are not allowed: ${violations.join(", ")}`,
+      );
     }
 
     return request.Approve();
@@ -184,14 +174,9 @@ When(a.Pod)
       .sort((a, b) => a.localeCompare(b));
 
     if (violations.length > 0) {
-      // TODO: Remove this line to enforce the block
-      return request.Approve([
-        `The following istio ambient annotations can modify secure mesh behavior and should be removed/exempted: ${violations.join(", ")}`,
-      ]);
-      // TODO: Uncomment this line to block the request
-      // return request.Deny(
-      //   `The following istio ambient annotations that can modify secure mesh behavior are not allowed: ${violations.join(", ")}`,
-      // );
+      return request.Deny(
+        `The following istio ambient annotations that can modify secure mesh behavior are not allowed: ${violations.join(", ")}`,
+      );
     }
 
     return request.Approve();
