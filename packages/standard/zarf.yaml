@@ -63,7 +63,7 @@ components:
     required: false
     import:
       path: ../base
-  
+
   - name: istio-egress-waypoint
     required: true
     import:
