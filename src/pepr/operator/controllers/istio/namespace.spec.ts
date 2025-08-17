@@ -6,7 +6,13 @@
 import { K8s, kind } from "pepr";
 import { UDSPackage } from "../../crd";
 import { Mode } from "../../crd/generated/package-v1alpha1";
-import { cleanupNamespace, enableIstio, IstioState, killPods } from "./namespace";
+import {
+  cleanupNamespace,
+  enableIstio,
+  IstioState,
+  killPods,
+  getIstioStateFromPackage,
+} from "./namespace";
 
 // Import the utility functions for direct testing
 // Note: These need to be exported in namespace.ts for testing
@@ -981,5 +987,54 @@ describe("applyNamespaceUpdates", () => {
 
     expect(result).toBe(true);
     expect(mockApply).toHaveBeenCalled();
+  });
+});
+
+describe("getIstioStateFromPackage", () => {
+  test("should return IstioState.Sidecar when serviceMesh.mode is not found", () => {
+    const pkg: UDSPackage = {
+      apiVersion: "uds.dev/v1alpha1",
+      kind: "Package",
+      metadata: { name: "test-package", namespace: "test-namespace" },
+    };
+
+    const result = getIstioStateFromPackage(pkg);
+    expect(result).toBe(IstioState.Sidecar);
+  });
+
+  test("should return IstioState.Sidecar when serviceMesh.mode is sidecar", () => {
+    const pkg: UDSPackage = {
+      apiVersion: "uds.dev/v1alpha1",
+      kind: "Package",
+      metadata: { name: "test-package", namespace: "test-namespace" },
+      spec: {
+        network: {
+          serviceMesh: {
+            mode: Mode.Sidecar,
+          },
+        },
+      },
+    };
+
+    const result = getIstioStateFromPackage(pkg);
+    expect(result).toBe(IstioState.Sidecar);
+  });
+
+  test("should return IstioState.Ambient when serviceMesh.mode is ambient", () => {
+    const pkg: UDSPackage = {
+      apiVersion: "uds.dev/v1alpha1",
+      kind: "Package",
+      metadata: { name: "test-package", namespace: "test-namespace" },
+      spec: {
+        network: {
+          serviceMesh: {
+            mode: Mode.Ambient,
+          },
+        },
+      },
+    };
+
+    const result = getIstioStateFromPackage(pkg);
+    expect(result).toBe(IstioState.Ambient);
   });
 });

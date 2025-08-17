@@ -32,7 +32,7 @@ config:
 
   # Map of values that will be merged via Strategic Merge Patch strategy to the generated serviceAccount
   # e.g.,
-  # serviceAccout:
+  # serviceAccount:
   #   metadata:
   #     annotations:
   #       eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/s3-writer-role

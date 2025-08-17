@@ -8,14 +8,9 @@ import { K8s, kind } from "pepr";
 import { Component, setupLogger } from "../../../logger";
 import { Allow, Direction, Gateway, RemoteGenerated, UDSPackage } from "../../crd";
 import { UDSConfig } from "../config/config";
-import { IstioState } from "../istio/namespace";
+import { IstioState, getIstioStateFromPackage } from "../istio/namespace";
 import { getPodSelector, getWaypointName, shouldUseAmbientWaypoint } from "../istio/waypoint-utils";
-import {
-  getIstioStateFromPackage,
-  getOwnerRef,
-  purgeOrphans,
-  sanitizeResourceName,
-} from "../utils";
+import { getOwnerRef, purgeOrphans, sanitizeResourceName } from "../utils";
 import { allowEgressDNS } from "./defaults/allow-egress-dns";
 import { allowEgressIstiod } from "./defaults/allow-egress-istiod";
 import { allowIngressSidecarMonitoring } from "./defaults/allow-ingress-sidecar-monitoring";

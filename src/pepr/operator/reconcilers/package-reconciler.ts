@@ -8,7 +8,11 @@ import { Component, setupLogger } from "../../logger";
 import { UDSConfig } from "../controllers/config/config";
 import { reconcileSharedEgressResources } from "../controllers/istio/egress";
 import { getPackageId, istioResources } from "../controllers/istio/istio-resources";
-import { cleanupNamespace, enableIstio } from "../controllers/istio/namespace";
+import {
+  cleanupNamespace,
+  enableIstio,
+  getIstioStateFromPackage,
+} from "../controllers/istio/namespace";
 import { PackageAction } from "../controllers/istio/types";
 import {
   authservice,
@@ -20,7 +24,7 @@ import { podMonitor } from "../controllers/monitoring/pod-monitor";
 import { serviceMonitor } from "../controllers/monitoring/service-monitor";
 import { generateAuthorizationPolicies } from "../controllers/network/authorizationPolicies";
 import { networkPolicies } from "../controllers/network/policies";
-import { retryWithDelay, getIstioStateFromPackage } from "../controllers/utils";
+import { retryWithDelay } from "../controllers/utils";
 import { Phase, UDSPackage } from "../crd";
 import { AuthserviceClient, Mode } from "../crd/generated/package-v1alpha1";
 import { migrate } from "../crd/migrate";

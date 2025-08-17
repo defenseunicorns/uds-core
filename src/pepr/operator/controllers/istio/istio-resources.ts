@@ -7,8 +7,8 @@ import { K8s } from "pepr";
 
 import { Component, setupLogger } from "../../../logger";
 import { IstioServiceEntry, IstioSidecar, IstioVirtualService, UDSPackage } from "../../crd";
-import { getOwnerRef, purgeOrphans, validateNamespace, getIstioStateFromPackage } from "../utils";
-import { IstioState } from "./namespace";
+import { getOwnerRef, purgeOrphans, validateNamespace } from "../utils";
+import { IstioState, getIstioStateFromPackage } from "./namespace";
 import {
   createHostResourceMap,
   egressRequestedFromNetwork,

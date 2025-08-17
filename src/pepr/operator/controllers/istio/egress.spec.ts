@@ -1414,7 +1414,6 @@ describe("test validatePortConflicts", () => {
     });
   });
 
-  // todo: multiple packages exist that use the port/protocol
   it("should return expected output when multiple packages/multiple hosts", () => {
     const currentPackageMap: PackageHostMap = {
       package1: {
