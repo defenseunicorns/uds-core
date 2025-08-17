@@ -19,6 +19,7 @@ import {
 } from "./service-entry";
 import { EgressResource, HostResource } from "./types";
 import { egressWaypointName } from "./ambient-waypoint";
+import { IstioState } from "./namespace";
 
 beforeEach(() => {
   UDSConfig.domain = "uds.dev";
@@ -114,7 +115,7 @@ describe("test generate local egress service entry", () => {
   const packageName = "test-pkg";
   const generation = "1";
 
-  it("should create a local egress ServiceEntry object, non ambient", () => {
+  it("should create a local egress ServiceEntry object, sidecar", () => {
     const port = 80;
     const protocol = RemoteProtocol.HTTP;
 
@@ -129,7 +130,7 @@ describe("test generate local egress service entry", () => {
       namespace,
       generation,
       ownerRefsMock,
-      false,
+      IstioState.Sidecar,
     );
 
     expect(serviceEntry).toBeDefined();
@@ -152,7 +153,7 @@ describe("test generate local egress service entry", () => {
     expect(serviceEntry.spec!.exportTo?.[0]).toEqual(".");
   });
 
-  it("should create a local egress ServiceEntry with multiple ports, non ambient", () => {
+  it("should create a local egress ServiceEntry with multiple ports, sidecar", () => {
     const port1 = 80;
     const protocol1 = RemoteProtocol.HTTP;
     const port2 = 443;
@@ -172,7 +173,7 @@ describe("test generate local egress service entry", () => {
       namespace,
       generation,
       ownerRefsMock,
-      false,
+      IstioState.Sidecar,
     );
 
     expect(serviceEntry).toBeDefined();
@@ -212,7 +213,7 @@ describe("test generate local egress service entry", () => {
       namespace,
       generation,
       ownerRefsMock,
-      true,
+      IstioState.Ambient,
     );
 
     expect(serviceEntry).toBeDefined();

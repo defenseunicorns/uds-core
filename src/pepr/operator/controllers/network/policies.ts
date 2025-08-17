@@ -10,7 +10,12 @@ import { Allow, Direction, Gateway, RemoteGenerated, UDSPackage } from "../../cr
 import { UDSConfig } from "../config/config";
 import { IstioState } from "../istio/namespace";
 import { getPodSelector, getWaypointName, shouldUseAmbientWaypoint } from "../istio/waypoint-utils";
-import { getOwnerRef, purgeOrphans, sanitizeResourceName } from "../utils";
+import {
+  getIstioStateFromPackage,
+  getOwnerRef,
+  purgeOrphans,
+  sanitizeResourceName,
+} from "../utils";
 import { allowEgressDNS } from "./defaults/allow-egress-dns";
 import { allowEgressIstiod } from "./defaults/allow-egress-istiod";
 import { allowIngressSidecarMonitoring } from "./defaults/allow-ingress-sidecar-monitoring";
@@ -49,6 +54,7 @@ const log = setupLogger(Component.OPERATOR_NETWORK);
 export async function networkPolicies(pkg: UDSPackage, namespace: string, istioMode: string) {
   const customPolicies = pkg.spec?.network?.allow ?? [];
   const pkgName = pkg.metadata!.name!;
+  const istioState = getIstioStateFromPackage(pkg);
 
   // Get the current generation of the package
   const generation = (pkg.metadata?.generation ?? 0).toString();
@@ -89,7 +95,7 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
       }
     }
 
-    const generatedPolicy = generate(namespace, policy, istioMode);
+    const generatedPolicy = generate(namespace, policy, istioState);
     policies.push(generatedPolicy);
   }
 
@@ -121,7 +127,7 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
     };
 
     // Generate the policy
-    const generatedPolicy = generate(namespace, policy, istioMode);
+    const generatedPolicy = generate(namespace, policy, istioState);
     policies.push(generatedPolicy);
   }
 
@@ -142,7 +148,7 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
     };
 
     // Generate the workload to keycloak for JWKS endpoint policy
-    const generatedPolicy = generate(namespace, policy, istioMode);
+    const generatedPolicy = generate(namespace, policy, istioState);
     policies.push(generatedPolicy);
 
     const keycloakPolicy: Allow = {
@@ -155,7 +161,7 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
     };
 
     // Generate the policy
-    const keycloakGeneratedPolicy = generate(namespace, keycloakPolicy, istioMode);
+    const keycloakGeneratedPolicy = generate(namespace, keycloakPolicy, istioState);
     policies.push(keycloakGeneratedPolicy);
 
     // Add waypoint network policies for ambient mode
@@ -240,7 +246,7 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
       description: `${targetPort}-${Object.values(selector)} Metrics`,
     };
     // Generate the policy
-    const generatedPolicy = generate(namespace, policy, istioMode);
+    const generatedPolicy = generate(namespace, policy, istioState);
     policies.push(generatedPolicy);
   }
 

@@ -48,10 +48,10 @@ export async function reconcileSharedEgressResources(
   hostResourceMap: HostResourceMap | undefined,
   pkgId: string,
   action: PackageAction,
-  istioMode: string,
+  istioState: IstioState,
 ) {
   // Update in-memory maps based on the target mode
-  if (istioMode === IstioState.Ambient) {
+  if (istioState === IstioState.Ambient) {
     // Remove from sidecar map (handles sidecar -> ambient transition)
     await updateInMemoryPackageMap(hostResourceMap, pkgId, PackageAction.Remove);
 

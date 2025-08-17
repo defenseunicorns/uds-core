@@ -255,7 +255,7 @@ describe("network policy generate with remoteHost", () => {
     } as kind.NetworkPolicy["spec"]);
   });
 
-  it("should generate sidecar network policy when no istioMode specified", async () => {
+  it("should generate sidecar network policy when no istioState specified", async () => {
     const policy = generate("test-namespace", {
       description: "default-egress-test",
       direction: Direction.Egress,

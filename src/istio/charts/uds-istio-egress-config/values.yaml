@@ -7,7 +7,7 @@
 # See documentation: https://istio.io/latest/docs/tasks/traffic-management/ingress/gateway-api/#automated-deployment
 config:
 
-  deployment:
+  deployment: {}
     # podAnnotations:
     # replicas: 1
     # requests:
@@ -17,26 +17,26 @@ config:
     #   cpu: 2
     #   memory: 1Gi
 
-  horizontalPodAutoscaler:
+  horizontalPodAutoscaler: {}
     # minReplicas: 1
     # maxReplicas: 2
     # metrics: []
 
   # minAvailable and maxUnavailable are mutually exclusive, minAvailable takes precedence
-  podDisruptionBudget:
+  podDisruptionBudget: {}
     # minAvailable: 1
     # maxUnavailable: 1
 
-  service:
+  service: {}
     # ports: []
 
-  # Stringified yaml that will be merged via Strategic Merge Patch strategy to the generated serviceAccount
+  # Map of values that will be merged via Strategic Merge Patch strategy to the generated serviceAccount
   # e.g.,
-  # serviceAccout: |
+  # serviceAccout:
   #   metadata:
   #     annotations:
   #       eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/s3-writer-role
   #   spec:
   #     imagePullSecrets:
   #     - name: my-registry-secret
-  serviceAccount:
+  serviceAccount: {}

@@ -15,6 +15,7 @@ export {
   RemoteGenerated,
   RemoteProtocol,
   Sso,
+  Mode as IstioMode,
   Package as UDSPackage,
 } from "./generated/package-v1alpha1";
 

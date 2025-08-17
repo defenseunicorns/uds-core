@@ -12,6 +12,7 @@ import { log } from "./istio-resources";
 import { generateLocalEgressSEName, generateLocalEgressServiceEntry } from "./service-entry";
 import { HostResourceMap } from "./types";
 import { createEgressWaypointGateway } from "./ambient-waypoint";
+import { IstioState } from "./namespace";
 
 export const ambientEgressNamespace = "istio-egress-waypoint";
 export const sharedEgressPkgId = "shared-ambient-egress-resource";
@@ -63,7 +64,7 @@ export async function createAmbientWorkloadEgressResources(
       namespace,
       generation,
       ownerRefs,
-      true,
+      IstioState.Ambient,
     );
 
     log.debug(serviceEntry, `Applying Service Entry ${serviceEntry.metadata?.name}`);

@@ -117,14 +117,6 @@ components:
         valuesFiles:
           - "values/config-tenant.yaml"
 
-  - name: istio-egress-waypoint
-    required: true
-    charts:
-      - name: uds-istio-egress-config
-        version: 0.1.0
-        localPath: charts/uds-istio-egress-config
-        namespace: istio-egress-waypoint
-
   - name: istio-passthrough-gateway
     required: false
     charts:
@@ -139,6 +131,14 @@ components:
         namespace: istio-passthrough-gateway
         valuesFiles:
           - "values/config-passthrough.yaml"
+
+  - name: istio-egress-waypoint
+    required: true
+    charts:
+      - name: uds-istio-egress-config
+        version: 0.1.0
+        localPath: charts/uds-istio-egress-config
+        namespace: istio-egress-waypoint
 
   - name: istio-egress-gateway
     required: false

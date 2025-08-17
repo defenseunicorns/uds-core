@@ -6,9 +6,11 @@
 import { K8s, kind } from "pepr";
 import { Logger } from "pino";
 import { afterEach, beforeEach, describe, expect, it, Mock, vi } from "vitest";
-import { createEvent, retryWithDelay, validateNamespace } from "./utils";
+import { createEvent, retryWithDelay, validateNamespace, getIstioStateFromPackage } from "./utils";
+import { UDSPackage, IstioMode } from "../crd";
+import { IstioState } from "./istio/namespace";
 
-// Mock K8s client
+// Mock K8s client and Log
 vi.mock("pepr", () => {
   const actualKind = {
     Pod: "Pod",
@@ -20,9 +22,14 @@ vi.mock("pepr", () => {
     Namespace: "Namespace",
   };
 
+  const mockLog = {
+    child: vi.fn().mockReturnValue(createMockLogger()),
+  };
+
   return {
     K8s: vi.fn(),
     kind: actualKind,
+    Log: mockLog,
   };
 });
 
@@ -311,5 +318,54 @@ describe("test validateNamespace", () => {
     );
 
     await expect(validateNamespace("test-ns", true)).rejects.toEqual(error);
+  });
+});
+
+describe("getIstioStateFromPackage", () => {
+  it("should return IstioState.Sidecar when serviceMesh.mode is not found", () => {
+    const pkg: UDSPackage = {
+      apiVersion: "uds.dev/v1alpha1",
+      kind: "Package",
+      metadata: { name: "test-package", namespace: "test-namespace" },
+    };
+
+    const result = getIstioStateFromPackage(pkg);
+    expect(result).toBe(IstioState.Sidecar);
+  });
+
+  it("should return IstioState.Sidecar when serviceMesh.mode is sidecar", () => {
+    const pkg: UDSPackage = {
+      apiVersion: "uds.dev/v1alpha1",
+      kind: "Package",
+      metadata: { name: "test-package", namespace: "test-namespace" },
+      spec: {
+        network: {
+          serviceMesh: {
+            mode: IstioMode.Sidecar,
+          },
+        },
+      },
+    };
+
+    const result = getIstioStateFromPackage(pkg);
+    expect(result).toBe(IstioState.Sidecar);
+  });
+
+  it("should return IstioState.Ambient when serviceMesh.mode is ambient", () => {
+    const pkg: UDSPackage = {
+      apiVersion: "uds.dev/v1alpha1",
+      kind: "Package",
+      metadata: { name: "test-package", namespace: "test-namespace" },
+      spec: {
+        network: {
+          serviceMesh: {
+            mode: IstioMode.Ambient,
+          },
+        },
+      },
+    };
+
+    const result = getIstioStateFromPackage(pkg);
+    expect(result).toBe(IstioState.Ambient);
   });
 });

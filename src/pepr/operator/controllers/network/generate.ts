@@ -20,7 +20,7 @@ function isWildcardNamespace(namespace: string) {
   return namespace === "" || namespace === "*";
 }
 
-function getPeers(policy: Allow, istioMode: string | undefined): V1NetworkPolicyPeer[] {
+function getPeers(policy: Allow, istioState: IstioState | undefined): V1NetworkPolicyPeer[] {
   let peers: V1NetworkPolicyPeer[] = [];
 
   if (policy.remoteGenerated) {
@@ -68,7 +68,7 @@ function getPeers(policy: Allow, istioMode: string | undefined): V1NetworkPolicy
   } else if (policy.remoteCidr !== undefined) {
     peers = [remoteCidr(policy.remoteCidr)];
   } else if (policy.remoteHost) {
-    if (istioMode === IstioState.Ambient) {
+    if (istioState === IstioState.Ambient) {
       peers = [egressWaypoint];
     } else {
       peers = [egressGateway];
@@ -78,7 +78,11 @@ function getPeers(policy: Allow, istioMode: string | undefined): V1NetworkPolicy
   return peers;
 }
 
-export function generate(namespace: string, policy: Allow, istioMode?: string): kind.NetworkPolicy {
+export function generate(
+  namespace: string,
+  policy: Allow,
+  istioState?: IstioState,
+): kind.NetworkPolicy {
   // Generate a unique name for the NetworkPolicy
   const name = generateName(policy);
 
@@ -112,7 +116,7 @@ export function generate(namespace: string, policy: Allow, istioMode?: string): 
   }
 
   // Create the network policy peers
-  const peers: V1NetworkPolicyPeer[] = getPeers(policy, istioMode);
+  const peers: V1NetworkPolicyPeer[] = getPeers(policy, istioState);
 
   // Define the ports to allow from the ports property
   const ports: V1NetworkPolicyPort[] = (policy.ports ?? []).map(port => ({ port }));

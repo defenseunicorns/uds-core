@@ -20,7 +20,7 @@ import { podMonitor } from "../controllers/monitoring/pod-monitor";
 import { serviceMonitor } from "../controllers/monitoring/service-monitor";
 import { generateAuthorizationPolicies } from "../controllers/network/authorizationPolicies";
 import { networkPolicies } from "../controllers/network/policies";
-import { retryWithDelay } from "../controllers/utils";
+import { retryWithDelay, getIstioStateFromPackage } from "../controllers/utils";
 import { Phase, UDSPackage } from "../crd";
 import { AuthserviceClient, Mode } from "../crd/generated/package-v1alpha1";
 import { migrate } from "../crd/migrate";
@@ -246,12 +246,11 @@ export async function packageFinalizer(pkg: UDSPackage) {
     });
     // Clean annotations and/or remove any shared egress resources
     await retryWithDelay(async function cleanupSharedEgressResources() {
-      const istioMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Sidecar;
       await reconcileSharedEgressResources(
         undefined,
         getPackageId(pkg),
         PackageAction.Remove,
-        istioMode,
+        getIstioStateFromPackage(pkg),
       );
     }, log);
   } catch (e) {
