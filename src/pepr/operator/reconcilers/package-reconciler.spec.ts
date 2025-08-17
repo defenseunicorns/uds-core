@@ -66,7 +66,10 @@ const mockWriteEvent = vi.fn();
 
 vi.mock("kubernetes-fluent-client");
 vi.mock("../../config");
-vi.mock("../controllers/istio/namespace", () => ({ cleanupNamespace: vi.fn() }));
+vi.mock("../controllers/istio/namespace", async () => {
+  const originalModule = (await vi.importActual("../controllers/istio/namespace")) as object;
+  return { ...originalModule, cleanupNamespace: vi.fn() };
+});
 vi.mock("../controllers/keycloak/client-sync", () => ({ purgeSSOClients: vi.fn() }));
 vi.mock("../controllers/keycloak/authservice/authservice", () => ({
   purgeAuthserviceClients: vi.fn(),
