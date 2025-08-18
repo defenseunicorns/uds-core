@@ -4,16 +4,21 @@ sidebar:
   order: 3
 ---
 
-UDS Core is a versatile software baseline designed to operate effectively across a variety of Kubernetes distributions. While it is not specifically tailored to any single Kubernetes distribution, it is compatible with multiple environments. This documentation provides an overview of UDS Core's compatibility with different distributions and the level of support provided.
+UDS Core is a versatile platform designed to operate across any [CNCF conformant](https://www.cncf.io/training/certification/software-conformance/) Kubernetes distribution. This documentation provides an overview of UDS Core's testing with different distributions as well as expectations and support provided for other distributions.
 
-### Understanding Support Levels
+### Tested Distributions
 
-- **Supported:** The Kubernetes distributions listed under this category undergo testing and are officially supported by UDS Core. Users can expect a high level of reliability and compatibility when deploying UDS Core on these distributions.
+| Distribution | Status (latest pipeline) | Testing Schedule |
+|-------------|--------------|---------------------------------------------------------------------------------------------------------|
+| [K3s](https://k3s.io/) (run with [k3d](https://k3d.io/stable/)) | [![K3d HA Test](https://github.com/defenseunicorns/uds-core/actions/workflows/upgrade-ha.yaml/badge.svg?branch=main&event=schedule)](https://github.com/defenseunicorns/uds-core/actions/workflows/upgrade-ha.yaml?query=event%3Aschedule+branch%3Amain) | Nightly and before each release |
+| [Amazon EKS](https://aws.amazon.com/eks/) | [![EKS Test](https://github.com/defenseunicorns/uds-core/actions/workflows/test-eks.yaml/badge.svg?branch=main&event=schedule)](https://github.com/defenseunicorns/uds-core/actions/workflows/test-eks.yaml?query=event%3Aschedule+branch%3Amain) | Weekly and before each release |
+| [Azure AKS](https://azure.microsoft.com/en-us/products/kubernetes-service) | [![AKS Test](https://github.com/defenseunicorns/uds-core/actions/workflows/test-aks.yaml/badge.svg?branch=main&event=schedule)](https://github.com/defenseunicorns/uds-core/actions/workflows/test-aks.yaml?query=event%3Aschedule+branch%3Amain) | Weekly and before each release |
+| [RKE2](https://github.com/rancher/rke2) (run on [AWS](https://aws.amazon.com/)) | [![RKE2 Test](https://github.com/defenseunicorns/uds-core/actions/workflows/test-rke2.yaml/badge.svg?branch=main&event=schedule)](https://github.com/defenseunicorns/uds-core/actions/workflows/test-rke2.yaml?query=event%3Aschedule+branch%3Amain) | Weekly and before each release |
 
-- **Compatible:** Kubernetes distributions listed under this category may not have undergone extensive testing in UDS Core's CI environments. While UDS Core may be compatible on these distributions, users should exercise caution and be prepared for potential compatibility issues or limitations.
+:::note
+Unless otherwise indicated, the Kubernetes version used for testing is typically one minor version back from the [latest release](https://kubernetes.io/releases/) ("n-1"). If the latest Kubernetes version were 1.33, testing would be performed on 1.32, on the latest patch version where possible.
+:::
 
-| Distribution    | Category               | Support Level                                                                                             |
-| --------------- | ---------------------- | --------------------------------------------------------------------------------------------------------- |
-| K3d/K3s, Amazon EKS, Azure AKS, RKE2 on AWS | Tested                 | Supported Kubernetes distributions undergoing testing in CI environments.                                 |
-| RKE2            | Tested                 | Supported Kubernetes distribution tested in production environments other than CI.                        |
-| Other           | Untested/Unknown state | Compatible Kubernetes distributions that are not explicitly tested, documented, or supported by UDS Core. |
+### Other Distributions
+
+UDS Core is typically compatible with other CNCF-conformant Kubernetes distributions that have not reached their end of life. While these distributions are not part of our regular testing pipeline, we welcome and will review bug reports and contributions related to compatibility issues. When reporting issues, please include details about your environment and any relevant logs.
