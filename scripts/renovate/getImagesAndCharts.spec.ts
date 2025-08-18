@@ -83,7 +83,7 @@ components:
         valuesFiles:
           - values/upstream-values.yaml
     images:
-      - docker.io/grafana/grafana:11.6.0
+      - docker.io/grafana/grafana:v11.6.0
       - docker.io/curlimages/curl:8.12.1
       - docker.io/library/busybox:1.37.0
       - ghcr.io/kiwigrid/k8s-sidecar:1.30.3
@@ -188,7 +188,7 @@ components:
     // Verify images content - note that we expect normalized versions
     expect(images).toEqual({
       "11.6.0": [
-        "docker.io/grafana/grafana:11.6.0",
+        "docker.io/grafana/grafana:v11.6.0",
         "registry1.dso.mil/ironbank/opensource/grafana/grafana:11.6.0",
       ],
       "8.12.1": [
