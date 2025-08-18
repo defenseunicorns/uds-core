@@ -8,6 +8,8 @@ UDS Core is a versatile platform designed to operate across any [CNCF conformant
 
 ### Tested Distributions
 
+UDS Core maintains a number of testing pipelines across various distributions to validate compatibility with each. These pipelines are run on schedules (testing `main`) and before each release is published. Where applicable/available these tests use external dependencies (such as cloud-provider databases and object storage) to best simulate an end-user environment.
+
 | Distribution | Status (latest pipeline) | Testing Schedule |
 |-------------|--------------|---------------------------------------------------------------------------------------------------------|
 | [K3s](https://k3s.io/) (run with [k3d](https://k3d.io/stable/)) | [![K3d HA Test](https://github.com/defenseunicorns/uds-core/actions/workflows/upgrade-ha.yaml/badge.svg?branch=main&event=schedule)](https://github.com/defenseunicorns/uds-core/actions/workflows/upgrade-ha.yaml?query=event%3Aschedule+branch%3Amain) | Nightly and before each release |
@@ -21,4 +23,4 @@ Unless otherwise indicated, the Kubernetes version used for testing is typically
 
 ### Other Distributions
 
-UDS Core is typically compatible with other CNCF-conformant Kubernetes distributions that have not reached their end of life. While these distributions are not part of our regular testing pipeline, we welcome and will review bug reports and contributions related to compatibility issues. When reporting issues, please include details about your environment and any relevant logs.
+UDS Core is typically compatible with other CNCF conformant Kubernetes distributions that have not reached their end of life. While these distributions are not part of our regular testing pipeline, we welcome and will review bug reports and contributions related to compatibility issues. When reporting issues, please include details about your environment and any relevant logs.
