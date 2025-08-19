@@ -91,7 +91,7 @@ Automated builds from the latest `main` branch are created daily at 10:00 UTC:
 
 - Tagged as `snapshot-latest` on GitHub
 - Available as Zarf packages and UDS bundles in the [GitHub Packages repository](https://github.com/orgs/defenseunicorns/packages?tab=packages&q=uds%2Fsnapshots+repo%3Adefenseunicorns%2Fuds-core)
-- Packages are versioned both with `latest` tags (mutable tag, will always have the latest snapshot), and with a date string + commit hash (for a specific pinned snapshot)
+- Each snapshot is tagged with a unique identifier combining date string + commit hash (for immutable, pinned references), while the most recent snapshots are also tagged with `latest` (a mutable tag that always points to the newest snapshot)
 - Useful for testing new features before official releases
 - **Not recommended for production use**
 
