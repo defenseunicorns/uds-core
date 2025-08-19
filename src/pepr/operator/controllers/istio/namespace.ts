@@ -296,13 +296,3 @@ export function getIstioLabels(
 
   return { labels, shouldRestartPods };
 }
-
-/**
- * Gets the IstioState from a UDSPackage
- * @param pkg The UDSPackage to extract the Istio state from
- * @returns The corresponding IstioState enum value
- */
-export function getIstioStateFromPackage(pkg: UDSPackage): IstioState {
-  const mode = pkg.spec?.network?.serviceMesh?.mode || Mode.Sidecar;
-  return mode === Mode.Ambient ? IstioState.Ambient : IstioState.Sidecar;
-}

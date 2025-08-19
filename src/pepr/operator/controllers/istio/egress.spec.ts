@@ -24,7 +24,6 @@ import {
   validatePortProtocolConflicts,
   validateProtocolConflicts,
 } from "./egress";
-import { IstioState } from "./namespace";
 import { HostResourceMap, PackageAction, PackageHostMap } from "./types";
 
 // Mock istio-resources
@@ -65,6 +64,7 @@ vi.mock("./egress-sidecar.ts", async () => {
 
 // Mock apply functions for ambient
 import { applyAmbientEgressResources } from "./egress-ambient";
+import { Mode } from "../../crd/generated/package-v1alpha1";
 const mockApplyAmbientEgressResources: MockedFunction<() => Promise<void>> = vi.fn();
 vi.mock("./egress-ambient.ts", async () => {
   const originalModule = await vi.importActual("./egress-ambient");
@@ -133,7 +133,7 @@ describe("test reconcileSharedEgressResources", () => {
       hostResourceMapMock,
       packageIdMock,
       PackageAction.AddOrUpdate,
-      IstioState.Sidecar,
+      Mode.Sidecar,
     );
 
     // Validate inMemoryPackageMap
@@ -150,7 +150,7 @@ describe("test reconcileSharedEgressResources", () => {
       hostResourceMapMock,
       packageIdMock,
       PackageAction.AddOrUpdate,
-      IstioState.Ambient,
+      Mode.Ambient,
     );
 
     // Validate inMemoryPackageMap
@@ -169,7 +169,7 @@ describe("test reconcileSharedEgressResources", () => {
       hostResourceMapMock,
       packageIdMock,
       PackageAction.AddOrUpdate,
-      IstioState.Sidecar,
+      Mode.Sidecar,
     );
 
     // Validate inMemoryPackageMap is populated
@@ -183,7 +183,7 @@ describe("test reconcileSharedEgressResources", () => {
       hostResourceMapMock,
       packageIdMock,
       PackageAction.AddOrUpdate,
-      IstioState.Ambient,
+      Mode.Ambient,
     );
 
     // Validate inMemoryPackageMap now empty
@@ -202,7 +202,7 @@ describe("test reconcileSharedEgressResources", () => {
       hostResourceMapMock,
       packageIdMock,
       PackageAction.AddOrUpdate,
-      IstioState.Ambient,
+      Mode.Ambient,
     );
 
     // Validate inMemoryPackageMap is empty
@@ -217,7 +217,7 @@ describe("test reconcileSharedEgressResources", () => {
       hostResourceMapMock,
       packageIdMock,
       PackageAction.AddOrUpdate,
-      IstioState.Sidecar,
+      Mode.Sidecar,
     );
 
     // Validate inMemoryPackageMap is populated
@@ -235,7 +235,7 @@ describe("test reconcileSharedEgressResources", () => {
       hostResourceMapMock,
       packageIdMock,
       PackageAction.AddOrUpdate,
-      IstioState.Sidecar,
+      Mode.Sidecar,
     );
 
     // Validate inMemoryPackageMap is populated
@@ -249,7 +249,7 @@ describe("test reconcileSharedEgressResources", () => {
       hostResourceMapMock,
       packageIdMock,
       PackageAction.Remove,
-      IstioState.Sidecar,
+      Mode.Sidecar,
     );
 
     // Validate inMemoryPackageMap is now empty
@@ -267,7 +267,7 @@ describe("test reconcileSharedEgressResources", () => {
       hostResourceMapMock,
       packageIdMock,
       PackageAction.AddOrUpdate,
-      IstioState.Ambient,
+      Mode.Ambient,
     );
 
     // Validate inMemoryPackageMap is still empty
@@ -283,7 +283,7 @@ describe("test reconcileSharedEgressResources", () => {
       hostResourceMapMock,
       packageIdMock,
       PackageAction.Remove,
-      IstioState.Ambient,
+      Mode.Ambient,
     );
 
     // Validate inMemoryPackageMap is still empty

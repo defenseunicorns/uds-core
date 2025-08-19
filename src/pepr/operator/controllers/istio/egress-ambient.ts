@@ -10,7 +10,7 @@ import { createEgressWaypointGateway, waitForWaypointPodHealthy } from "./ambien
 import { generateAmbientEgressAuthorizationPolicy } from "./auth-policy";
 import { getHostPortsProtocol } from "./egress";
 import { log } from "./istio-resources";
-import { IstioState } from "./namespace";
+import { Mode } from "../../crd/generated/package-v1alpha1";
 import { generateLocalEgressSEName, generateLocalEgressServiceEntry } from "./service-entry";
 import { HostResourceMap } from "./types";
 
@@ -68,7 +68,7 @@ export async function createAmbientWorkloadEgressResources(
       namespace,
       generation,
       ownerRefs,
-      IstioState.Ambient,
+      Mode.Ambient,
     );
 
     log.debug(serviceEntry, `Applying Service Entry ${serviceEntry.metadata?.name}`);

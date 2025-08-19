@@ -19,7 +19,7 @@ import {
 } from "./service-entry";
 import { EgressResource, HostResource } from "./types";
 import { egressWaypointName } from "./ambient-waypoint";
-import { IstioState } from "./namespace";
+import { Mode } from "../../crd/generated/package-v1alpha1";
 
 beforeEach(() => {
   UDSConfig.domain = "uds.dev";
@@ -130,7 +130,7 @@ describe("test generate local egress service entry", () => {
       namespace,
       generation,
       ownerRefsMock,
-      IstioState.Sidecar,
+      Mode.Sidecar,
     );
 
     expect(serviceEntry).toBeDefined();
@@ -173,7 +173,7 @@ describe("test generate local egress service entry", () => {
       namespace,
       generation,
       ownerRefsMock,
-      IstioState.Sidecar,
+      Mode.Sidecar,
     );
 
     expect(serviceEntry).toBeDefined();
@@ -213,7 +213,7 @@ describe("test generate local egress service entry", () => {
       namespace,
       generation,
       ownerRefsMock,
-      IstioState.Ambient,
+      Mode.Ambient,
     );
 
     expect(serviceEntry).toBeDefined();

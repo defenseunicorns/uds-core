@@ -14,6 +14,7 @@ import {
   IstioResolution,
   IstioServiceEntry,
 } from "../../crd";
+import { Mode } from "../../crd/generated/package-v1alpha1";
 import { UDSConfig } from "../config/config";
 import { getSharedAnnotationKey } from "./istio-resources";
 import {
@@ -24,7 +25,6 @@ import { ambientEgressNamespace } from "./egress-ambient";
 import { sanitizeResourceName } from "../utils";
 import { HostResource, EgressResource, PortProtocol } from "./types";
 import { egressWaypointName } from "./ambient-waypoint";
-import { IstioState } from "./namespace";
 
 /**
  * Creates a ServiceEntry for each exposed service in the package
@@ -116,7 +116,7 @@ export function generateLocalEgressServiceEntry(
   namespace: string,
   generation: string,
   ownerRefs: V1OwnerReference[],
-  istioState: IstioState,
+  istioMode: Mode,
 ) {
   const { portProtocol } = hostResource;
 
@@ -150,7 +150,7 @@ export function generateLocalEgressServiceEntry(
   };
 
   // If ambient, add labels for service entry to use waypoint proxy
-  if (istioState === IstioState.Ambient) {
+  if (istioMode === Mode.Ambient) {
     serviceEntry.metadata!.labels!["istio.io/use-waypoint"] = egressWaypointName;
     serviceEntry.metadata!.labels!["istio.io/use-waypoint-namespace"] = ambientEgressNamespace;
   }

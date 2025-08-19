@@ -7,8 +7,8 @@ import { K8s } from "pepr";
 
 import { Component, setupLogger } from "../../../logger";
 import { IstioServiceEntry, IstioSidecar, IstioVirtualService, UDSPackage } from "../../crd";
+import { Mode } from "../../crd/generated/package-v1alpha1";
 import { getOwnerRef, purgeOrphans, validateNamespace } from "../utils";
-import { IstioState, getIstioStateFromPackage } from "./namespace";
 import {
   createHostResourceMap,
   egressRequestedFromNetwork,
@@ -105,7 +105,7 @@ export async function istioResources(pkg: UDSPackage, namespace: string) {
  */
 export async function istioEgressResources(pkg: UDSPackage, namespace: string) {
   // Get package data
-  const istioState = getIstioStateFromPackage(pkg);
+  const istioMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Sidecar;
   const pkgId = getPackageId(pkg);
   const pkgName = pkg.metadata!.name!;
   const generation = (pkg.metadata?.generation ?? 0).toString();
@@ -119,7 +119,7 @@ export async function istioEgressResources(pkg: UDSPackage, namespace: string) {
 
   // Add needed service entries and sidecars if egress is requested
   if (hostResourceMap) {
-    if (istioState === IstioState.Ambient) {
+    if (istioMode === Mode.Ambient) {
       // Validate existing egress waypoint namespace
       try {
         await validateNamespace(ambientEgressNamespace);
@@ -163,7 +163,7 @@ export async function istioEgressResources(pkg: UDSPackage, namespace: string) {
       hostResourceMap,
       pkgId,
       PackageAction.AddOrUpdate,
-      istioState,
+      istioMode,
     );
   } catch (e) {
     log.error(`Failed to reconcile shared egress resources for package ${pkgId}`, e);

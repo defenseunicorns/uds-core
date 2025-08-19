@@ -8,11 +8,7 @@ import { Component, setupLogger } from "../../logger";
 import { UDSConfig } from "../controllers/config/config";
 import { reconcileSharedEgressResources } from "../controllers/istio/egress";
 import { getPackageId, istioResources } from "../controllers/istio/istio-resources";
-import {
-  cleanupNamespace,
-  enableIstio,
-  getIstioStateFromPackage,
-} from "../controllers/istio/namespace";
+import { cleanupNamespace, enableIstio } from "../controllers/istio/namespace";
 import { PackageAction } from "../controllers/istio/types";
 import {
   authservice,
@@ -253,7 +249,7 @@ export async function packageFinalizer(pkg: UDSPackage) {
         undefined,
         getPackageId(pkg),
         PackageAction.Remove,
-        getIstioStateFromPackage(pkg),
+        pkg.spec?.network?.serviceMesh?.mode || Mode.Sidecar,
       );
     }, log);
   } catch (e) {

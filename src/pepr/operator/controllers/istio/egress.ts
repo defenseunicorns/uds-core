@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 import { Allow, RemoteProtocol, UDSPackage } from "../../crd";
+import { Mode } from "../../crd/generated/package-v1alpha1";
 import { validateNamespace } from "../utils";
 import {
   ambientEgressNamespace,
@@ -15,7 +16,6 @@ import {
   sidecarEgressNamespace,
 } from "./egress-sidecar";
 import { log } from "./istio-resources";
-import { IstioState } from "./namespace";
 import { HostPortsProtocol, HostResourceMap, PackageAction, PackageHostMap } from "./types";
 
 // Cache for in-memory sidecar-only shared egress resources from package CRs
@@ -48,10 +48,10 @@ export async function reconcileSharedEgressResources(
   hostResourceMap: HostResourceMap | undefined,
   pkgId: string,
   action: PackageAction,
-  istioState: IstioState,
+  istioMode: Mode,
 ) {
   // Update in-memory maps based on the target mode
-  if (istioState === IstioState.Ambient) {
+  if (istioMode === Mode.Ambient) {
     // Remove from sidecar map (handles sidecar -> ambient transition)
     await updateInMemoryPackageMap(hostResourceMap, pkgId, PackageAction.Remove);
 

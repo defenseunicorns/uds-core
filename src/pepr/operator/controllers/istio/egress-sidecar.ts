@@ -11,10 +11,10 @@ import {
   IstioSidecar,
   IstioVirtualService,
 } from "../../crd";
+import { Mode } from "../../crd/generated/package-v1alpha1";
 import { purgeOrphans, validateNamespace } from "../utils";
 import { generateEgressGateway, warnMatchingExistingGateways } from "./gateway";
 import { log } from "./istio-resources";
-import { IstioState } from "./namespace";
 import { generateLocalEgressServiceEntry, generateSharedServiceEntry } from "./service-entry";
 import { generateEgressSidecar } from "./sidecar";
 import { EgressResource, EgressResourceMap, HostResourceMap, PackageHostMap } from "./types";
@@ -219,7 +219,7 @@ export async function createSidecarWorkloadEgressResources(
       namespace,
       generation,
       ownerRefs,
-      IstioState.Sidecar,
+      Mode.Sidecar,
     );
 
     log.debug(serviceEntry, `Applying Service Entry ${serviceEntry.metadata?.name}`);
