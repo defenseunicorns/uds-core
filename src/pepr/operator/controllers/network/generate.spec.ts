@@ -6,8 +6,8 @@
 import { kind } from "pepr";
 import { describe, expect, it } from "vitest";
 import { Direction } from "../../crd";
-import { IstioState } from "../istio/namespace";
 import { generate } from "./generate";
+import { Mode } from "../../crd/generated/package-v1alpha1";
 
 describe("network policy generate", () => {
   it("should generate correct network policy", async () => {
@@ -185,7 +185,7 @@ describe("network policy generate with remoteHost", () => {
         remoteHost: "example.com",
         port: 443,
       },
-      IstioState.Ambient,
+      Mode.Ambient,
     );
 
     expect(policy.metadata?.name).toEqual("Egress-ambient-egress-test");
@@ -225,7 +225,7 @@ describe("network policy generate with remoteHost", () => {
         remoteHost: "example.com",
         ports: [80, 8080],
       },
-      IstioState.Sidecar,
+      Mode.Sidecar,
     );
 
     expect(policy.metadata?.name).toEqual("Egress-sidecar-egress-test");
