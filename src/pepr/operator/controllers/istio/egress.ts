@@ -22,9 +22,9 @@ import { HostPortsProtocol, HostResourceMap, PackageAction, PackageHostMap } fro
 export const inMemoryPackageMap: PackageHostMap = {};
 
 // Lock to prevent concurrent updates to the inMemoryPackageMap
-let lock = false;
+let sidecarLock = false;
 // eslint-disable-next-line prefer-const
-let lockQueue: (() => void)[] = [];
+let sidecarLockQueue: (() => void)[] = [];
 
 // Cache for in-memory ambient egress resources from package CRs
 export const inMemoryAmbientPackageMap: PackageHostMap = {};
@@ -161,15 +161,15 @@ export async function updateInMemoryPackageMap(
   action: PackageAction,
 ) {
   // Wait for lock to be available using a promise-based queue
-  if (lock) {
+  if (sidecarLock) {
     await new Promise<void>(resolve => {
-      lockQueue.push(resolve);
+      sidecarLockQueue.push(resolve);
     });
   }
 
   try {
     log.debug("Locking egress package map for update");
-    lock = true;
+    sidecarLock = true;
 
     if (action == PackageAction.AddOrUpdate) {
       if (hostResourceMap) {
@@ -189,8 +189,8 @@ export async function updateInMemoryPackageMap(
   } finally {
     // unlock inMemoryPackageMap and notify next waiter
     log.debug("Unlocking egress package map for update");
-    lock = false;
-    const nextResolve = lockQueue.shift();
+    sidecarLock = false;
+    const nextResolve = sidecarLockQueue.shift();
     if (nextResolve) {
       nextResolve();
     }
