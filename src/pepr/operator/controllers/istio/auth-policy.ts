@@ -4,19 +4,23 @@
  */
 
 import { V1OwnerReference } from "@kubernetes/client-node";
-import { IstioAuthorizationPolicy, IstioAction } from "../../crd";
+import { IstioAction, IstioAuthorizationPolicy } from "../../crd";
 import { sanitizeResourceName } from "../utils";
 
 // Generate Authorization Policy for ambient egress
-export function generateAuthorizationPolicy(
+export function generateAmbientEgressAuthorizationPolicy(
   host: string,
   pkgName: string,
   namespace: string,
   generation: string,
   ownerRefs: V1OwnerReference[],
   serviceEntryName: string,
-  serviceAccount: string,
+  serviceAccount: string | undefined,
 ) {
+  const source = serviceAccount
+    ? { principals: [`cluster.local/ns/${namespace}/sa/${serviceAccount}`] }
+    : { namespaces: [`${namespace}`] };
+
   const authPolicy: IstioAuthorizationPolicy = {
     metadata: {
       name: generateAuthorizationPolicyName(host, serviceAccount),
@@ -34,9 +38,7 @@ export function generateAuthorizationPolicy(
         {
           from: [
             {
-              source: {
-                serviceAccounts: [serviceAccount],
-              },
+              source,
             },
           ],
         },
@@ -53,6 +55,8 @@ export function generateAuthorizationPolicy(
   return authPolicy;
 }
 
-function generateAuthorizationPolicyName(host: string, serviceAccount: string) {
-  return sanitizeResourceName(`${host}-${serviceAccount}-egress`);
+function generateAuthorizationPolicyName(host: string, serviceAccount: string | undefined) {
+  return serviceAccount
+    ? sanitizeResourceName(`${host}-${serviceAccount}-egress`)
+    : sanitizeResourceName(`${host}-egress`);
 }

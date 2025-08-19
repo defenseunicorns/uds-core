@@ -6,13 +6,13 @@ import { V1OwnerReference } from "@kubernetes/client-node";
 import { K8s } from "pepr";
 import { Allow, IstioAuthorizationPolicy, IstioServiceEntry, K8sGateway } from "../../crd";
 import { purgeOrphans } from "../utils";
-import { generateAuthorizationPolicy } from "./auth-policy";
+import { createEgressWaypointGateway } from "./ambient-waypoint";
+import { generateAmbientEgressAuthorizationPolicy } from "./auth-policy";
 import { getHostPortsProtocol } from "./egress";
 import { log } from "./istio-resources";
+import { IstioState } from "./namespace";
 import { generateLocalEgressSEName, generateLocalEgressServiceEntry } from "./service-entry";
 import { HostResourceMap } from "./types";
-import { createEgressWaypointGateway } from "./ambient-waypoint";
-import { IstioState } from "./namespace";
 
 export const ambientEgressNamespace = "istio-egress-waypoint";
 export const sharedEgressPkgId = "shared-ambient-egress-resource";
@@ -73,9 +73,8 @@ export async function createAmbientWorkloadEgressResources(
     await K8s(IstioServiceEntry).Apply(serviceEntry, { force: true });
   }
 
-  // Create Authorization Policy for service entry, use specified serviceAccount or use "default" if no serviceAccount specified
+  // Create Authorization Policy for service entry, use specified serviceAccount or use from namespace if no serviceAccount specified
   for (const allow of egressRequested) {
-    const serviceAccount = allow.serviceAccount ?? "default";
     const hostPortsProtocol = getHostPortsProtocol(allow);
     if (!hostPortsProtocol) {
       continue;
@@ -84,14 +83,14 @@ export async function createAmbientWorkloadEgressResources(
     const portsProtocol = ports.map(port => ({ port, protocol }));
 
     // Create Authorization Policy
-    const authPolicy = generateAuthorizationPolicy(
+    const authPolicy = generateAmbientEgressAuthorizationPolicy(
       host,
       pkgName,
       namespace,
       generation,
       ownerRefs,
       generateLocalEgressSEName(pkgName, portsProtocol, host),
-      serviceAccount,
+      allow.serviceAccount,
     );
 
     log.debug(authPolicy, `Applying Authorization Policy ${authPolicy.metadata?.name}`);
