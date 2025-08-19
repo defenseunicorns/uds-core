@@ -314,6 +314,12 @@
       "properties": {
         "GOOGLE_IDP_ENABLED": {
           "type": "boolean"
+        },
+        "SSO_SESSION_MAX_PER_USER": {
+          "type": "string"
+        },
+        "SSO_SESSION_MAX_IN_FLIGHT_LOGINS_PER_USER": {
+          "type": "string"
         }
       }
     },

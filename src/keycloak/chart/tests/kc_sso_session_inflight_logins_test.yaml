@@ -1,0 +1,29 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+
+suite: Keycloak - SSO_SESSION_MAX_IN_FLIGHT_LOGINS_PER_USER propagation
+templates:
+  - statefulset.yaml
+
+tests:
+  - it: should propagate a custom SSO_SESSION_MAX_IN_FLIGHT_LOGINS_PER_USER value to container args
+    set:
+      realmInitEnv:
+        SSO_SESSION_MAX_IN_FLIGHT_LOGINS_PER_USER: "123"
+    template: statefulset.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: "--spi-authentication-sessions--map--auth-sessions-limit=123"
+
+  - it: should default to 300 when SSO_SESSION_MAX_IN_FLIGHT_LOGINS_PER_USER is empty
+    set:
+      realmInitEnv:
+        SSO_SESSION_MAX_IN_FLIGHT_LOGINS_PER_USER: ""
+    template: statefulset.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: "--spi-authentication-sessions--map--auth-sessions-limit=300"
