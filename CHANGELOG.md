@@ -2,6 +2,42 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.50.0](https://github.com/defenseunicorns/uds-core/compare/v0.49.0...v0.50.0) (2025-08-19)
+
+
+### ⚠ BREAKING CHANGES
+
+* Pod annotations/labels that can modify secure Istio behavior are now blocked by policy. If you currently use these annotations/labels, you must remove them or add a [UDS Exemption](https://uds.defenseunicorns.com/reference/configuration/uds-operator/exemption/) prior to upgrading. See the policies `RestrictIstioSidecarOverrides`, `RestrictIstioTrafficOverrides`, `RestrictIstioAmbientOverrides` in the table [here](https://uds.defenseunicorns.com/reference/configuration/pepr-policies/#pepr-policy-validations) for the full list of annotations/labels blocked.
+
+### Features
+
+* enforce block on dangerous istio annotations/labels ([#1819](https://github.com/defenseunicorns/uds-core/issues/1819)) ([59fbc4f](https://github.com/defenseunicorns/uds-core/commit/59fbc4fa2355f52080cc2391917b3ae5d2aa10f2))
+
+
+### Bug Fixes
+
+* renovate readiness changes list ([#1833](https://github.com/defenseunicorns/uds-core/issues/1833)) ([350cab4](https://github.com/defenseunicorns/uds-core/commit/350cab44e6719512e00d35c6087bb3ffedc2c78c))
+* servicemonitor mutation logic cleanup ([#1805](https://github.com/defenseunicorns/uds-core/issues/1805)) ([3efb97c](https://github.com/defenseunicorns/uds-core/commit/3efb97cc1c03792e1c17044806bc2d853faa2129))
+
+
+### Miscellaneous
+
+* **deps:** update keycloak to v0.16.3 ([#1841](https://github.com/defenseunicorns/uds-core/issues/1841)) ([0b881fc](https://github.com/defenseunicorns/uds-core/commit/0b881fcbc8c576d7f4653e61c6a231d62130d057))
+* **deps:** update loki unicorn nginx to 1.29.1 ([#1802](https://github.com/defenseunicorns/uds-core/issues/1802)) ([d7c71dc](https://github.com/defenseunicorns/uds-core/commit/d7c71dc36894defbce9dcd3b7b2f9c8858a58595))
+* **deps:** update prometheus-stack ([#1767](https://github.com/defenseunicorns/uds-core/issues/1767)) ([70de491](https://github.com/defenseunicorns/uds-core/commit/70de49165718876bd1567ea12edb2c073533d1b4))
+* **deps:** update vector ([#1812](https://github.com/defenseunicorns/uds-core/issues/1812)) ([0ce9d6b](https://github.com/defenseunicorns/uds-core/commit/0ce9d6b72678e2dcb0103fdf77d2a276d46fb573))
+* **deps:** update velero ([#1815](https://github.com/defenseunicorns/uds-core/issues/1815)) ([bf48941](https://github.com/defenseunicorns/uds-core/commit/bf489411aa56e1a300cd5ffc8dda0f7d1b7aedb8))
+* exclude istio-system from policy checks ([#1816](https://github.com/defenseunicorns/uds-core/issues/1816)) ([978fbe2](https://github.com/defenseunicorns/uds-core/commit/978fbe2ac0cb8dd57db47cd0ffb4299ad48fd071))
+* re-add ha testing, simplify cfg loading code ([#1825](https://github.com/defenseunicorns/uds-core/issues/1825)) ([57cab48](https://github.com/defenseunicorns/uds-core/commit/57cab48d0e7fe4be1189b29dcfaf82962d7e7f66))
+* renovate readiness log output ([#1831](https://github.com/defenseunicorns/uds-core/issues/1831)) ([1faae26](https://github.com/defenseunicorns/uds-core/commit/1faae26ebc20014e072950b98edd2f4b575b34ed))
+
+
+### Documentation
+
+* note on webhook troubleshooting ([#1830](https://github.com/defenseunicorns/uds-core/issues/1830)) ([eacd754](https://github.com/defenseunicorns/uds-core/commit/eacd7540ee14a17f085d59bcb6113b6ef4644a4e))
+* readme localhost note ([#1826](https://github.com/defenseunicorns/uds-core/issues/1826)) ([f9ce909](https://github.com/defenseunicorns/uds-core/commit/f9ce9092607858882eb9773b66a3b54104be2181))
+* update distribution support, add pipeline badges ([#1834](https://github.com/defenseunicorns/uds-core/issues/1834)) ([c263f12](https://github.com/defenseunicorns/uds-core/commit/c263f128b55e2001f017c9f97da7c6d4ab4e4585))
+
 ## [0.49.0](https://github.com/defenseunicorns/uds-core/compare/v0.48.1...v0.49.0) (2025-08-14)
 
 
