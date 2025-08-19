@@ -25,7 +25,7 @@ overrides:
           value: 2
 ```
 
-See the [values.yaml](../../../../src/istio/charts/uds-istio-egress-config/values.yaml) for additional details and configuration options.
+See the [values.yaml](https://github.com/defenseunicorns/uds-core/tree/main/src/istio/charts/uds-istio-egress-config/values.yaml) for additional details and configuration options.
 
 ### Sidecar
 
