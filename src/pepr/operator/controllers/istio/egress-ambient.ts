@@ -6,7 +6,7 @@ import { V1OwnerReference } from "@kubernetes/client-node";
 import { K8s } from "pepr";
 import { Allow, IstioAuthorizationPolicy, IstioServiceEntry, K8sGateway } from "../../crd";
 import { purgeOrphans } from "../utils";
-import { createEgressWaypointGateway } from "./ambient-waypoint";
+import { createEgressWaypointGateway, waitForWaypointPodHealthy } from "./ambient-waypoint";
 import { generateAmbientEgressAuthorizationPolicy } from "./auth-policy";
 import { getHostPortsProtocol } from "./egress";
 import { log } from "./istio-resources";
@@ -26,12 +26,16 @@ export async function applyAmbientEgressResources(packageList: Set<string>, gene
 
   // Generate the waypoint payload
   const waypoint = createEgressWaypointGateway(packageList, generation);
+  const waypointName = waypoint.metadata?.name ?? "undefined";
 
   // Apply waypoint
-  log.debug(waypoint, `Applying Waypoint ${waypoint.metadata?.name}`);
+  log.debug(waypoint, `Applying Waypoint ${waypointName}`);
 
   // Apply the Waypoint and force overwrite any existing resource
   await K8s(K8sGateway).Apply(waypoint, { force: true });
+
+  // Wait for waypoint pod healthy
+  await waitForWaypointPodHealthy(ambientEgressNamespace, waypointName);
 }
 
 // Purge any orphaned ambient egress resources

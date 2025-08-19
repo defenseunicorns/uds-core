@@ -721,6 +721,7 @@ describe("test createEgressWaypointGateway", () => {
     expect(waypoint.metadata?.labels).toEqual({
       "uds/package": sharedEgressPkgId,
       "uds/generation": generation.toString(),
+      "istio.io/gateway-name": egressWaypointName,
     });
     expect(waypoint.metadata?.annotations).toEqual({
       "uds.dev/user-test-pkg1": "user",

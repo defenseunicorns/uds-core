@@ -522,6 +522,7 @@ export function createEgressWaypointGateway(pkgs: Set<string>, generation: numbe
       labels: {
         "uds/package": sharedEgressPkgId,
         "uds/generation": generation.toString(),
+        "istio.io/gateway-name": egressWaypointName,
       },
     },
     spec: {

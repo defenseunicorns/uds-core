@@ -13,6 +13,7 @@ import {
   createAmbientWorkloadEgressResources,
   purgeAmbientEgressResources,
 } from "./egress-ambient";
+import { waitForWaypointPodHealthy } from "./ambient-waypoint";
 
 // Mock purge orphans
 const mockPurgeOrphans: MockedFunction<() => Promise<void>> = vi.fn();
@@ -21,6 +22,15 @@ vi.mock("../utils", async () => {
   return {
     ...originalModule,
     purgeOrphans: vi.fn(async <T>(fn: () => Promise<T>) => fn()),
+  };
+});
+
+// Mock ambient-waypoint functions
+vi.mock("./ambient-waypoint", async () => {
+  const originalModule = (await vi.importActual("./ambient-waypoint")) as object;
+  return {
+    ...originalModule,
+    waitForWaypointPodHealthy: vi.fn().mockResolvedValue(undefined),
   };
 });
 
@@ -74,6 +84,23 @@ describe("test applyAmbientEgressResources", () => {
 
     // No resources should be applied for empty set
     expect(defaultEgressMocks.applyWaypointMock).not.toHaveBeenCalled();
+  });
+
+  it("should propagate waitForWaypointPodHealthy failure", async () => {
+    updateEgressMocks(defaultEgressMocks);
+
+    // Mock waitForWaypointPodHealthy to reject
+    const mockWaitForWaypointPodHealthy = vi.mocked(waitForWaypointPodHealthy);
+    mockWaitForWaypointPodHealthy.mockRejectedValueOnce(new Error("Pod health check failed"));
+
+    // Should throw the error from waitForWaypointPodHealthy
+    await expect(applyAmbientEgressResources(new Set(["test-package-1"]), 1)).rejects.toThrow(
+      "Pod health check failed",
+    );
+
+    // Should still have applied the waypoint before the failure
+    expect(defaultEgressMocks.applyWaypointMock).toHaveBeenCalledTimes(1);
+    expect(mockWaitForWaypointPodHealthy).toHaveBeenCalledTimes(1);
   });
 });
 

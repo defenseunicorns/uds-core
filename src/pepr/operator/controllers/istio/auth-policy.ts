@@ -23,7 +23,7 @@ export function generateAmbientEgressAuthorizationPolicy(
 
   const authPolicy: IstioAuthorizationPolicy = {
     metadata: {
-      name: generateAuthorizationPolicyName(host, serviceAccount),
+      name: generateAmbientEgressAuthorizationPolicyName(host, serviceAccount),
       namespace,
       labels: {
         "uds/package": pkgName,
@@ -55,7 +55,10 @@ export function generateAmbientEgressAuthorizationPolicy(
   return authPolicy;
 }
 
-function generateAuthorizationPolicyName(host: string, serviceAccount: string | undefined) {
+export function generateAmbientEgressAuthorizationPolicyName(
+  host: string,
+  serviceAccount: string | undefined,
+) {
   return serviceAccount
     ? sanitizeResourceName(`${host}-${serviceAccount}-egress`)
     : sanitizeResourceName(`${host}-egress`);

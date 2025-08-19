@@ -5,7 +5,10 @@
 
 import { describe, expect, it } from "vitest";
 import { RemoteProtocol } from "../../crd";
-import { generateAmbientEgressAuthorizationPolicy } from "./auth-policy";
+import {
+  generateAmbientEgressAuthorizationPolicy,
+  generateAmbientEgressAuthorizationPolicyName,
+} from "./auth-policy";
 import { generateLocalEgressSEName } from "./service-entry";
 
 describe("test generate authorization policy", () => {
@@ -90,5 +93,41 @@ describe("test generate authorization policy", () => {
       kind: "ServiceEntry",
       name: serviceEntryName,
     });
+  });
+});
+
+describe("test generate authorization policy name", () => {
+  it("should generate policy name with service account", () => {
+    const host = "example.com";
+    const serviceAccount = "test-service-account";
+
+    const name = generateAmbientEgressAuthorizationPolicyName(host, serviceAccount);
+
+    expect(name).toBe("example-com-test-service-account-egress");
+  });
+
+  it("should generate policy name without service account", () => {
+    const host = "example.com";
+
+    const name = generateAmbientEgressAuthorizationPolicyName(host, undefined);
+
+    expect(name).toBe("example-com-egress");
+  });
+
+  it("should sanitize host with special characters", () => {
+    const host = "api.example-service.com";
+    const serviceAccount = "my_service_account";
+
+    const name = generateAmbientEgressAuthorizationPolicyName(host, serviceAccount);
+
+    expect(name).toBe("api-example-service-com-my-service-account-egress");
+  });
+
+  it("should handle host with underscores and dots", () => {
+    const host = "db_host.internal.com";
+
+    const name = generateAmbientEgressAuthorizationPolicyName(host, undefined);
+
+    expect(name).toBe("db-host-internal-com-egress");
   });
 });
