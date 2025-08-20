@@ -45,12 +45,12 @@ While UDS Core has not yet reached version 1.0, it is considered production-read
 The release process is automated using [release-please](https://github.com/googleapis/release-please) and GitHub workflows:
 
 1. Changes are merged to the `main` branch through pull requests
-2. Release-please automatically determines the next version based on conventional commits
-3. A release PR is created with updated version numbers and CHANGELOG entries
-4. Once merged, a new version tag is created and the release workflow is triggered
-5. Release artifacts are built, tested, and published
-6. CVE scans are performed on the released artifacts
-7. Release notes are automatically generated from the CHANGELOG
+1. Release-please automatically determines the next version based on conventional commits
+1. A release PR is created with updated version numbers and CHANGELOG entries
+1. Once merged, a new version tag is created and the release workflow is triggered
+1. Release artifacts are built, tested, and published
+1. CVE scans are performed on the released artifacts
+1. Release notes are automatically generated from the CHANGELOG
 
 ### Release Artifacts
 
@@ -106,9 +106,10 @@ For significant new features or architectural changes, special snapshot builds m
 
 When upgrading UDS Core:
 
-1. Always review the [CHANGELOG](https://github.com/defenseunicorns/uds-core/blob/main/CHANGELOG.md) for breaking changes and new features
-2. Test upgrades in a staging environment before upgrading production
-3. Follow the detailed [upgrade documentation](/reference/deployment/upgrades)
-4. Consider the impact on any mission applications running on UDS Core
+1. Always review the [CHANGELOG](https://github.com/defenseunicorns/uds-core/blob/main/CHANGELOG.md) for breaking changes and new features. 
+1. Ensure you have reviewed and performed any [Keycloak / Identity Config upgrade steps](/reference/uds-core/idam/upgrading-versions).
+1. Test upgrades in a staging environment before upgrading production
+1. Follow the detailed [upgrade documentation](/reference/deployment/upgrades)
+1. Consider the impact on any mission applications running on UDS Core
 
 For mission-critical deployments, we recommend maintaining a staging environment that mirrors production for validating upgrades before deployment.
