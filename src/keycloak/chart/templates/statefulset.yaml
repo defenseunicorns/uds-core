@@ -109,7 +109,7 @@ spec:
             {{- else }}
             - "--features=preview"
             {{- end }}
-            - "--spi-authentication-sessions--map--auth-sessions-limit={{ .Values.realmInitEnv.SSO_SESSION_MAX_IN_FLIGHT_LOGINS_PER_USER | default 300 }}"
+            - "--spi-authentication-sessions--map--auth-sessions-limit={{ .Values.realmConfig.maxInFlightLoginsPerUser | default 300 }}"
             - "--proxy-headers=xforwarded"
             - "--http-enabled=true"
             - "--hostname-strict=false"

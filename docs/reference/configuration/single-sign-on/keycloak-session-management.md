@@ -4,11 +4,13 @@ title: Keycloak Session Management
 
 ## Limiting the Number of Concurrent Sessions
 
-To support operational controls around concurrent usage and to mitigate login storms, UDS Core exposes two realm initialization settings that map to UDS Identity Config templated values. These are provided via Helm values under realmInitEnv and applied during realm configuration:
+To support operational controls around concurrent usage and to mitigate login storms, UDS Core exposes two settings:
+- SSO_SESSION_MAX_PER_USER is provided via Helm values under realmInitEnv and applied during realm configuration.
+- The in-flight logins limit is configured via realmConfig.maxInFlightLoginsPerUser and passed to Keycloak as a startup argument.
 
 - `SSO_SESSION_MAX_PER_USER`: Maximum number of concurrent active sessions per user.
     - Default: 0 (unlimited, the same as the default in Keycloak)
-- `SSO_SESSION_MAX_IN_FLIGHT_LOGINS_PER_USER`: Maximum number of in-flight (ongoing) login attempts per user.
+- `realmConfig.maxInFlightLoginsPerUser`: Maximum number of in-flight (ongoing) login attempts per user.
     - Default: 300 (the same as the default in Keycloak)
 
 Below is an example of how to set these values using the bundle overrides:
@@ -21,7 +23,9 @@ overrides:
         - path: realmInitEnv
           value:
             SSO_SESSION_MAX_PER_USER: "3"
-            SSO_SESSION_MAX_IN_FLIGHT_LOGINS_PER_USER: "1"
+        - path: realmConfig
+          value:
+            maxInFlightLoginsPerUser: 1
 ```
 
 ## Understanding Keycloak Session Idle Timeouts

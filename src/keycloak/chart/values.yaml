@@ -45,8 +45,11 @@ realmInitEnv:
   # X509_OCSP_FAIL_OPEN: true
   # Maximum number of concurrent active sessions per user. Set to 0 to disable the limit (unlimited).
   SSO_SESSION_MAX_PER_USER: "0"
+
+# Realm-level configuration
+realmConfig:
   # Maximum number of in-flight (ongoing) login attempts per user to prevent login storms.
-  SSO_SESSION_MAX_IN_FLIGHT_LOGINS_PER_USER: "300"
+  maxInFlightLoginsPerUser: 300
 
 # UDS Identity Config Authentication Flows Environment Variables. More info here: https://github.com/defenseunicorns/uds-identity-config/blob/main/docs/CUSTOMIZE.md#templated-realm-values
 realmAuthFlows:

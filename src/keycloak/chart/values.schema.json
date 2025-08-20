@@ -317,9 +317,14 @@
         },
         "SSO_SESSION_MAX_PER_USER": {
           "type": "string"
-        },
-        "SSO_SESSION_MAX_IN_FLIGHT_LOGINS_PER_USER": {
-          "type": "string"
+        }
+      }
+    },
+    "realmConfig": {
+      "type": "object",
+      "properties": {
+        "maxInFlightLoginsPerUser": {
+          "type": "number"
         }
       }
     },
