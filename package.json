@@ -40,7 +40,7 @@
     "k3d-setup": "k3d cluster delete pepr-dev && k3d cluster create pepr-dev --k3s-arg '--debug@server:0'"
   },
   "dependencies": {
-    "pepr": "0.53.0"
+    "pepr": "0.53.1"
   },
   "devDependencies": {
     "@commitlint/cli": "19.8.1",
