@@ -91,8 +91,6 @@ spec:
             - "--spi-theme-cache-templates=false"
             {{- else }}
             - "start"
-            # # Needed for nginx provider
-            # - "--auto-build"
             {{- end }}
             # This will only import the realm if it does not exist
             - "--import-realm"
@@ -111,6 +109,7 @@ spec:
             {{- else }}
             - "--features=preview"
             {{- end }}
+            - "--spi-authentication-sessions--map--auth-sessions-limit={{ .Values.realmConfig.maxInFlightLoginsPerUser | default 300 }}"
             - "--proxy-headers=xforwarded"
             - "--http-enabled=true"
             - "--hostname-strict=false"
