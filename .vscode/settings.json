@@ -12,11 +12,10 @@
     "https://raw.githubusercontent.com/defenseunicorns/uds-cli/v0.27.11/uds.schema.json": [
       "uds-bundle.yaml"
     ],
-    // renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
-    "https://raw.githubusercontent.com/defenseunicorns/uds-cli/v0.27.11/tasks.schema.json": [
+    "https://raw.githubusercontent.com/defenseunicorns/maru2/main/maru2.schema.json": [
       "tasks.yaml",
       "tasks/**/*.yaml",
-      "src/**/validate.yaml"
+      "src/**/tasks.yaml"
     ],
     // renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
     "https://raw.githubusercontent.com/defenseunicorns/uds-cli/v0.27.11/zarf.schema.json": [

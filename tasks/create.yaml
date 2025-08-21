@@ -1,131 +1,109 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2025 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
-includes:
-  - common: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.17.1/tasks/create.yaml
+schema-version: v0
 
-variables:
-  - name: FLAVOR
+inputs:
+  flavor:
+    description: "Flavor of the package"
     default: upstream
 
-  - name: REGISTRY1_PEPR_IMAGE
+  registry1_pepr_image:
     # renovate: datasource=docker depName=registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller versioning=semver
     default: registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller:v0.53.0
+    description: "Pepr image for registry1 flavor"
 
-  - name: UNICORN_PEPR_IMAGE
+  unicorn_pepr_image:
     # renovate: datasource=github-tags depName=defenseunicorns/pepr versioning=semver
     default: ghcr.io/defenseunicorns/pepr/private/controller:v0.53.0
+    description: "Pepr image for unicorn flavor"
 
-  - name: LAYER
+  pepr_custom_image:
+    default: ""
+    description: "Custom image for Pepr build"
 
-  - name: CREATE_OPTIONS
+  layer:
+    description: "Layer to use"
+    default: ""
+
+  create_options:
     description: "Additional options passed in when creating Zarf packages. For example: --skip-sbom"
     default: ""
 
+  architecture:
+    description: "Architecture to use for create, defaults to system arch"
+    default: "${ZARF_ARCHITECTURE:-}"
+
+  shim_bundle:
+    description: "Whether to create the shim bundle for base layer"
+    default: true
+
 tasks:
-  - name: standard-package
-    description: "Create the UDS Core Zarf Package"
-    inputs:
-      create_options:
-        default: ${CREATE_OPTIONS}
-        description: "Additional options passed in when creating Zarf packages. For example: --skip-sbom"
-    actions:
-      - task: single-layer
-        with:
-          layer: standard
-          create_options: ${{ .inputs.create_options }}
+  standard-package:
+    - uses: single-layer
+      with:
+        layer: standard
+        create_options: ${{ input "create_options" }}
 
-  - name: k3d-standard-bundle
-    description: "Create the K3d-UDS Core Bundle"
-    actions:
-      - description: "Create the UDS Core Standard Bundle"
-        cmd: "uds create bundles/k3d-standard --confirm --no-progress --architecture=${ZARF_ARCHITECTURE}"
+  k3d-standard-bundle:
+    - run: ${{ which "uds" }} create bundles/k3d-standard --confirm --no-progress --architecture=${{ input "architecture" }}
 
-  - name: k3d-slim-dev-bundle
-    description: "Create the slim dev bundle (Base and Identity)"
-    actions:
-      - description: "Create base package"
-        task: single-layer
-        with:
-          layer: base
-          shim_bundle: "false" # Don't create the shim bundle since we are making the slim-dev bundle
+  k3d-slim-dev-bundle:
+    - uses: single-layer
+      with:
+        layer: base
+        shim_bundle: "false" # Don't create the shim bundle since we are making the slim-dev bundle
 
-      - description: "Create identity-authorization package"
-        task: single-layer
-        with:
-          layer: identity-authorization
+    - uses: single-layer
+      with:
+        layer: identity-authorization
 
-      - description: "Create the slim dev bundle (Base and Identity)"
-        cmd: "uds create bundles/k3d-slim-dev --confirm --no-progress --architecture=${ZARF_ARCHITECTURE}"
+    - run: ${{ which "uds" }} create bundles/k3d-slim-dev --confirm --no-progress --architecture=${{ input "architecture" }}
 
-  - name: checkpoint-dev-package
-    description: "Create the K3d + UDS Core Checkpoint Zarf Package"
-    actions:
-      - description: "Create build output directory"
-        cmd: "mkdir -p build"
-      - description: "Create the UDS Core Checkpoint Zarf Package"
-        cmd: "uds zarf package create packages/checkpoint-dev --confirm --no-progress --skip-sbom"
+  checkpoint-dev-package:
+    - run: "mkdir -p build"
+    - run: ${{ which "zarf" }} package create packages/checkpoint-dev --confirm --no-progress --skip-sbom
 
-  # This task is a wrapper to support --set LAYER=identity-authorization
-  - name: single-layer-callable
-    actions:
-      - task: single-layer
-        with:
-          layer: $LAYER
+  # I'm lazy and don't want to convert uds-common tasks yet
+  common-package:
+    - run: |
+        export ZARF_CONFIG=${{ input "config" }}
+        ${{ which "zarf" }} package create ${{ input "path" }} --confirm --no-progress --architecture=${{ input "architecture" }} --flavor ${{ input "flavor" }} ${{ input "create_options" }}
 
-  - name: single-layer
-    inputs:
-      layer:
-        default: base
-        description: The UDS Core layer to build
-      create_options:
-        default: ${CREATE_OPTIONS}
-        description: "Additional options passed in when creating Zarf packages. For example: --skip-sbom"
-      shim_bundle:
-        default: "true"
-        description: "Whether to create the shim bundle or not (base layer only)"
-    actions:
-      # Note: Maru does not support `or` for this conditional task so we just duplicate it for each case
-      - task: pepr-build
-        if: ${{ eq .inputs.layer "standard" }}
-      - task: pepr-build
-        if: ${{ eq .inputs.layer "base" }}
-      - description: "Create build output directory"
-        cmd: "mkdir -p build"
-      - description: "Create the UDS Core Zarf Package"
-        task: common:package
-        with:
-          path: packages/${{ index .inputs "layer" }}
-          config: ./zarf-config.yaml
-          options: ${{ .inputs.create_options }}
-          architecture: ${ZARF_ARCHITECTURE}
-      - description: "Create the shim bundle (Base only)"
-        if: ${{ eq .inputs.layer "base" }}
-        shell:
-          darwin: bash
-          linux: bash
-        cmd: |
-          if [[ ${{.inputs.shim_bundle}} == "true" ]]; then
-            uds create bundles/base-shim --confirm --no-progress --architecture=${ZARF_ARCHITECTURE}
-          else
-            echo "Skipping base-shim bundle creation."
-          fi
+  single-layer:
+    # Note: Maru does not support `or` for this conditional task so we just duplicate it for each case
+    - uses: pepr-build
+      if: input("layer") == "standard" || input("layer") == "base"
+    - run: "mkdir -p build"
+    - uses: common-package
+      with:
+        path: packages/${{ input "layer" }}
+        config: ./zarf-config.yaml
+        create_options: ${{ input "create_options" }}
+        architecture: ${{ input "architecture" }}
+    - run: ${{ which "uds" }} create bundles/base-shim --confirm --no-progress --architecture=${{ input "architecture" }}
+      if: input("layer") == "base" && input("shim_bundle")
+      shell: bash
 
-  - name: pepr-build
-    description: "Build the UDS Core Pepr Module"
-    actions:
-      - description: "Build the UDS Core Pepr Module"
-        cmd: |
-          if [ -n "${PEPR_CUSTOM_IMAGE}" ] ; then
-            # e.g. PEPR_CUSTOM_IMAGE="pepr:dev uds run slim-dev"
-            PEPR_OVERRIDE_IMAGE="--custom-image ${PEPR_CUSTOM_IMAGE}"
-          elif [ "${FLAVOR}" = "registry1" ] ; then
-            PEPR_OVERRIDE_IMAGE="--custom-image ${REGISTRY1_PEPR_IMAGE}"
-          elif [ "${FLAVOR}" = "unicorn" ] ; then
-            PEPR_OVERRIDE_IMAGE="--custom-image ${UNICORN_PEPR_IMAGE}"
-          else
-            PEPR_OVERRIDE_IMAGE=""
-          fi
-          rm -fr dist
-          npm ci
-          npx pepr build -z chart $PEPR_OVERRIDE_IMAGE
+  pepr-build:
+    - run: |
+        if [ ! "${{ input "pepr_custom_image" }}" == "" ] ; then
+          # e.g. PEPR_CUSTOM_IMAGE="pepr:dev uds run slim-dev"
+          PEPR_OVERRIDE_IMAGE="--custom-image ${{ input "pepr_custom_image" }}"
+        elif [ "${{ input "flavor"}}" = "registry1" ] ; then
+          PEPR_OVERRIDE_IMAGE="--custom-image ${{ input "registry1_pepr_image" }}"
+        elif [ "${{ input "flavor" }}" = "unicorn" ] ; then
+          PEPR_OVERRIDE_IMAGE="--custom-image ${{ input "unicorn_pepr_image" }}"
+        else
+          PEPR_OVERRIDE_IMAGE=""
+        fi
+        rm -fr dist
+        npm ci
+        npx pepr build -z chart $PEPR_OVERRIDE_IMAGE
+
+  test:
+    - uses: builtin:fetch
+      id: fetch
+      with:
+        url: "https://sso.uds.dev"
+    - run: echo ${{ from "fetch" "body" }}

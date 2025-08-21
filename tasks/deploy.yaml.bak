@@ -1,0 +1,107 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+includes:
+  - utils: utils.yaml
+
+variables:
+  - name: VERSION
+    description: "The version of the packages to deploy"
+    # x-release-please-start-version
+    default: "0.50.0"
+    # x-release-please-end
+  - name: FLAVOR
+    default: upstream
+
+tasks:
+  - name: k3d-standard-bundle
+    inputs:
+      K3D_EXTRA_ARGS:
+        default: ""
+        description: "Extra args for k3d"
+    actions:
+      - description: "Deploy the UDS Core Standard Bundle"
+        cmd: uds deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --set INSECURE_ADMIN_PASSWORD_GENERATION=true --set K3D_EXTRA_ARGS="${{ .inputs.K3D_EXTRA_ARGS }}" --confirm --no-progress
+
+  - name: k3d-standard-bundle-ha
+    actions:
+      - description: "Deploy the UDS Core Standard Bundle"
+        cmd: uds deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress
+        env:
+          - UDS_CONFIG=bundles/k3d-standard/uds-ha-config.yaml
+
+  - name: k3d-slim-dev-bundle
+    actions:
+      - description: "Deploy the UDS Core Slim Dev Only Bundle"
+        cmd: uds deploy bundles/k3d-slim-dev/uds-bundle-k3d-core-slim-dev-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress
+
+  # This task is a wrapper to support --set LAYER=identity-authorization
+  - name: single-layer-callable
+    actions:
+      - task: single-layer
+        with:
+          layer: $LAYER
+
+  - name: single-layer
+    description: "Deploy a single UDS Core layer, must set UDS_LAYER environment variable"
+    inputs:
+      layer:
+        default: base
+        description: The UDS Core layer to deploy
+    actions:
+      - description: "Deploy UDS Core Base Layer"
+        if: ${{ eq .inputs.layer "base"}}
+        cmd: uds deploy bundles/base-shim/uds-bundle-base-shim-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress
+      - description: "Deploy a single UDS Core Layer (must set UDS_LAYER environment variable)"
+        if: ${{ ne .inputs.layer "base"}}
+        cmd: uds zarf package deploy build/zarf-package-core-${{ index .inputs "layer" }}-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress --components '*'
+
+  - name: latest-bundle-release
+    inputs:
+      configFile:
+        description: "UDS_CONFIG file to use for the deployment"
+    actions:
+      - task: utils:determine-repo
+      - description: "Get latest tag version from OCI"
+        cmd: uds zarf tools registry ls ${TARGET_REPO}/core | grep ${FLAVOR} | sort -V | tail -1
+        setVariables:
+          - name: LATEST_VERSION
+      - description: "Create the latest version with bundle overrides"
+        cmd: |
+          # Create temp directory
+          mkdir -p tmp/core-shim
+
+          # Copy k3d-standard bundle
+          cp -r bundles/k3d-standard/uds-bundle.yaml tmp/core-shim/
+
+          # Update the bundle with the latest version using yq
+          uds zarf tools yq e -i "
+            del(.packages[] | select(.name == \"core\").path) |
+            .packages[] |= (select(.name == \"core\") |
+            .repository = \"${TARGET_REPO}/core\" | .ref = \"${LATEST_VERSION}\")" \
+            tmp/core-shim/uds-bundle.yaml
+
+          # Create and deploy the bundle
+          uds create tmp/core-shim --confirm --no-progress --architecture=${ZARF_ARCHITECTURE}
+      - description: "Deploy the latest version from the bundle"
+        cmd: |
+          # Set UDS_CONFIG for bundle deployment
+          export UDS_CONFIG="${{ .inputs.configFile }}"
+          uds deploy tmp/core-shim/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress
+      - description: "Clean up temporary files"
+        cmd: rm -rf tmp/core-shim
+
+  - name: latest-slim-bundle-release
+    actions:
+      - description: "Deploy the latest UDS Core package release"
+        cmd: uds deploy oci://ghcr.io/defenseunicorns/packages/uds/bundles/k3d-core-slim-dev:latest --set INSECURE_ADMIN_PASSWORD_GENERATION=true --confirm --no-progress
+
+  - name: standard-package
+    actions:
+      - description: "Deploy the standard UDS Core zarf package"
+        cmd: uds zarf package deploy build/zarf-package-core-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress --components '*'
+
+  - name: checkpoint-package
+    actions:
+      - description: "Deploy the checkpoint K3d + UDS Core Slim zarf package"
+        cmd: uds zarf package deploy build/zarf-package-k3d-core-slim-dev-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress
