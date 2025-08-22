@@ -9,11 +9,15 @@ Current draw.io diagrams include:
 1. Architecture Overview with two diagrams that display the following:
   1. `Overview`, basic view of what applications are present and what other services/applications they are communicating with.
   1. `Traffic Direction`, similar to `Overview` layer with the addition of directional arrows to represent the flow of traffic in cluster.
-1. Operator Overview with four diagrams that display the following:
-  1. Overview of custom resource flow
-  1. Package custom resource processing flow
-  1. Exemption custom resource processing flow
-  1. Keycloak/Authservice specific processing flow for Package custom resource
+1. UDS Package custom resource processing flow
+1. UDS Exemption custom resource processing flow
+1. Keycloak/Authservice specific processing flow for Package custom resource
+1. Layered Diagram for Operator, covering Watch/Validate behavior for:
+  1. Full operator
+  1. Custom Resources (Package/Exemption)
+  1. EndpointSlices
+  1. Node (Create/Update and Delete)
+  1. Kubernetes Service (API)
 
 ## D2 Diagrams
 
