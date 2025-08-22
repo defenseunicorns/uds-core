@@ -34,11 +34,15 @@ vi.mock("../../../logger", () => ({
   },
 }));
 
-vi.mock("../utils", () => ({
-  getOwnerRef: vi.fn().mockReturnValue([{ kind: "UDSPackage", name: "test-pkg" }]),
-  purgeOrphans: vi.fn().mockResolvedValue({}),
-  sanitizeResourceName: vi.fn().mockImplementation(name => name),
-}));
+vi.mock("../utils", async () => {
+  const originalModule = (await vi.importActual("../utils")) as object;
+  return {
+    ...originalModule,
+    getOwnerRef: vi.fn().mockReturnValue([{ kind: "UDSPackage", name: "test-pkg" }]),
+    purgeOrphans: vi.fn().mockResolvedValue({}),
+    sanitizeResourceName: vi.fn().mockImplementation(name => name),
+  };
+});
 
 vi.mock("./defaults/default-deny-all", () => ({
   defaultDenyAll: vi.fn().mockImplementation(namespace => ({

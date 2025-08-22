@@ -16,13 +16,9 @@ import {
 } from "../../crd";
 import { UDSConfig } from "../config/config";
 import { sanitizeResourceName } from "../utils";
-import { sharedEgressPkgId } from "./egress";
+import { sidecarEgressNamespace as namespace, sharedEgressPkgId } from "./egress-sidecar";
 import { generateGatewayName } from "./gateway";
-import {
-  getSharedAnnotationKey,
-  log,
-  istioEgressGatewayNamespace as namespace,
-} from "./istio-resources";
+import { getSharedAnnotationKey, log } from "./istio-resources";
 import { EgressResource } from "./types";
 
 /**

@@ -245,7 +245,12 @@ export async function packageFinalizer(pkg: UDSPackage) {
     });
     // Clean annotations and/or remove any shared egress resources
     await retryWithDelay(async function cleanupSharedEgressResources() {
-      await reconcileSharedEgressResources(undefined, getPackageId(pkg), PackageAction.Remove);
+      await reconcileSharedEgressResources(
+        undefined,
+        getPackageId(pkg),
+        PackageAction.Remove,
+        pkg.spec?.network?.serviceMesh?.mode || Mode.Sidecar,
+      );
     }, log);
   } catch (e) {
     log.debug(
