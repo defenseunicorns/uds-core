@@ -152,6 +152,7 @@ When opening a pull request make sure to follow the below guidelines to ensure t
 
 > [!NOTE]
 > When submitting a pull request (PR) from a forked repository, please note that our CI/CD processes may not run completely due to security restrictions. This is because certain secrets required for the full CI/CD pipeline are not accessible from forks.
+>
 > If you notice CI/CD failures, it might be due to these limitations rather than issues with your code. Our maintainers will review your PR and, if necessary, check out your branch and push it to the main repository. This step allows the full CI/CD process to run with the required secrets, ensuring that all checks are performed.
 
 ## Additional Notes
