@@ -4,7 +4,7 @@ Date: 2025-08-12
 
 ## Status
 
-Accepted
+Superseded by [ADR-0004](./0004-implement-per-namespace-webhook-failure-policy.md)
 
 ## Context
 
