@@ -111,17 +111,11 @@ components:
           - description: "Scale up ztunnel, pepr, and keycloak after checkpoint restore"
             cmd: |
               set -e
-              ./zarf tools kubectl patch mutatingwebhookconfiguration pepr-uds-core --type='json' -p='[{"op":"replace","path":"/webhooks/0/failurePolicy","value":"Ignore"}]'
-              ./zarf tools kubectl patch validatingwebhookconfiguration pepr-uds-core --type='json' -p='[{"op":"replace","path":"/webhooks/0/failurePolicy","value":"Ignore"}]'
-
               ./zarf tools kubectl -n istio-system patch daemonset ztunnel --type=json -p='[{"op":"remove","path":"/spec/template/spec/nodeSelector/no-such-label"}]'
               ./zarf tools kubectl -n istio-system rollout status daemonset ztunnel --timeout=60s
 
               ./zarf tools kubectl -n pepr-system scale deploy pepr-uds-core --replicas=2
               ./zarf tools kubectl rollout status -n pepr-system deploy pepr-uds-core --timeout=60s
-
-              ./zarf tools kubectl patch mutatingwebhookconfiguration pepr-uds-core --type='json' -p='[{"op":"replace","path":"/webhooks/0/failurePolicy","value":"Fail"}]'
-              ./zarf tools kubectl patch validatingwebhookconfiguration pepr-uds-core --type='json' -p='[{"op":"replace","path":"/webhooks/0/failurePolicy","value":"Fail"}]'
 
               ./zarf tools kubectl -n pepr-system scale deploy pepr-uds-core-watcher --replicas=1
               ./zarf tools kubectl -n pepr-system rollout status deploy pepr-uds-core-watcher --timeout=60s
