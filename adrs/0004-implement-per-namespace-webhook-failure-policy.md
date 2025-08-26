@@ -33,7 +33,7 @@ The following changes will be made to `package.json`:
 
 ### Positive
 
-- Improved Security: Maintains strict policy enforcement for all namespaces, and ensures "best-effort" policy enforcement on `istio-system` (when webhooks are available).
+- Improved Security: Maintains strict policy enforcement for all namespaces, and ensures policy enforcement on `istio-system` when webhooks are available.
 - Continued Reliability: Does not have any poor impact on availability of service mesh (`istio-system`) components, or cause any new deadlock behaviors.
 
 ### Negative
@@ -43,6 +43,6 @@ The following changes will be made to `package.json`:
 
 ## Alternatives Considered
 
-Maintain the current implementation: Rejected as it leaves a wider gap in policy enforcement for the `istio-system` nameespace.
+Maintain the current implementation: Rejected as it leaves a wider gap in policy enforcement for the `istio-system` namespace.
 
 For additional alternatives considered on the original issue see [ADR-0003](./0003-exclude-istio-from-policy-engine.md).
