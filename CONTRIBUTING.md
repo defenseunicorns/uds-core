@@ -1,20 +1,22 @@
 # Welcome to UDS Core
 
-Thank you for your interest in contributing to Defense Unicorns UDS Core! This document will guide you through the contribution process.
+Thank you for your interest in contributing to Defense Unicorns UDS Core! This document will guide you through the process of contributing code, documentation, or ideas. We welcome improvements and fixes from anyone and our goal is to ensure you have all the information you need to contribute effectively and in alignment with the project’s requirements.
 
-## Table of Contents
+## How You Can Contribute
 
-1. [Developer Experience](#developer-experience)
-2. [Definition of Done](#definition-of-done)
-3. [Getting Started](#getting-started)
-4. [Submitting a Pull Request](#submitting-a-pull-request)
-   - [Note for External Contributors](#note-for-external-contributors)
-5. [PR Requirements](#pr-requirements)
-6. [Contact](#contact)
+We appreciate contributions in several forms:
+- **Report Issues or Bugs**: If you encounter a problem, feel free to open a [GitHub issue](https://github.com/defenseunicorns/uds-core/issues/new?template=bug_report.md). Include details on your environment, how to reproduce the bug, and any relevant logs or screenshots. This helps us improve UDS Core’s stability.
+- **Suggest Enhancements**: Have an idea for a new feature or an improvement? You can [open an issue](https://github.com/defenseunicorns/uds-core/issues/new?template=feature_request.md) to propose it. For significant feature ideas, please start with an issue only to gather feedback before spending time on code. This ensures the idea aligns with our project goals and roadmap, which is primarily driven by internal needs (we’ll evaluate suggestions for alignment).
+- **Submit Code Changes (Pull Requests)**: You can contribute fixes, minor enhancements, or even new features via pull requests (PRs). We especially welcome contributions that fix bugs or improve performance/stability. If you plan to work on something, it’s a good idea to open an issue first to ensure you are aligned with the maintainers.
+- **Improve Documentation**: Contributions to documentation (e.g. tutorials, configuration reference, even code comments) are valuable. If you find areas of the docs that can be clearer, you can submit changes. Please follow existing documentation structure and style where possible (ask if you're unsure).
 
-## Developer Experience
+Please note that large-scale changes or new features might not be immediately incorporated if they don’t fit with our current focus. We’ll do our best to communicate politely and provide guidance on such contributions (e.g. suggesting a smaller scope or alternative approaches) – our intent is not to discourage ideas, but to keep the project stable and aligned with its vision.
 
-Continuous Delivery is core to our development philosophy. Check out [https://minimumcd.org](https://minimumcd.org) for a good baseline agreement on what that means.
+## Development Workflow
+
+### Development Philosophy
+
+Continuous Delivery is core to our development philosophy. Check out [https://minimumcd.org](https://minimumcd.org) for a good baseline on what that means.
 
 Specifically:
 
@@ -24,62 +26,9 @@ Specifically:
 - Continuous integration (CI) pipeline tests are the source of truth.
 - We produce immutable release artifacts.
 
-### Pre-Commit Checks
+### Development Environment Setup
 
-We use [codespell](https://github.com/codespell-project/codespell), [yamllint](https://yamllint.readthedocs.io/en/stable/), and [helm unittest](https://github.com/helm-unittest/helm-unittest) for pre-commit checks. Please install these before committing, or your commit may fail.
-
-To install these tools, run:
-
-```console
-# Setup husky pre-commit dependency
-npx husky
-
-# Install codespell and yamllint
-uds run lint-check
-```
-
-Alternatively, you can install them with `pip`:
-
-```console
-pip install yamllint codespell
-```
-
-Additionally, we add and check for license headers in our files. The pre-commit check is performed by this [UDS Common task](https://github.com/defenseunicorns/uds-common/blob/main/tasks/lint.yaml#L159-L225).
-
-This task requires that `GO` and `addlicense` dependencies are installed. Install `GO` by following the [official documentation](https://go.dev/doc/install). To install `addlicense` and it's required dependencies you can run the following command:
-
-```console
-uds run -f tasks/lint.yaml fix-license
-```
-
-Helm unittest is also included in the `lint-check` task and requires [Helm](https://helm.sh/docs/intro/install/) and the [Helm Unittest Plugin](https://github.com/helm-unittest/helm-unittest?tab=readme-ov-file#install) to be installed.
-
-> [!NOTE]
-> If you choose to forgo pre-commit checking there is a possibility that the commit will fail Github pipeline jobs that perform these checks.
-
-## Definition of Done
-
-We apply these principles to all User Stories and contributions:
-
-- Automated continuous integration (CI) pipeline tests pass
-- CI tests are updated to cover new system changes
-- Changes are peer-reviewed
-- Acceptance criteria is met
-- Documentation is updated to reflect changes
-
-### Testing
-
-Each individual component of UDS Core contains lightweight validations in its own `src/<component>/tasks.yaml` file. These validations focus on the bare minimum functionality, typically covering pod health and endpoint accessibility.
-
-We also place end-to-end tests under the `e2e` folder. In particular we use [Playwright](https://playwright.dev/) for browser based testing and have authentication setup to login to applications with a shared SSO session. Playwright provides a [test recorder](https://playwright.dev/docs/codegen#generate-tests-with-the-playwright-inspector) which can be beneficial to get a quickstart on new tests.
-
-In general our testing focuses on the unique configuration and setup provided by UDS Core, rather than exhaustive functionality testing. We take this approach since each of the opensource applications we package and configure also have extensive end-to-end testing in their upstream repositories.
-
-## Getting Started
-
-This section will help you get set up and ready to contribute to UDS Core.
-
-### 1. Prerequisites
+#### Prerequisites
 
 Before starting, ensure that you have the following installed:
 
@@ -87,16 +36,16 @@ Before starting, ensure that you have the following installed:
 - **K3d**: [Install K3d](https://k3d.io/#installation)
 - **Node.js** (for building and running Pepr): [Install Node.js](https://nodejs.org/en/download/) (we recommend Node 24 to align with what CI tests/builds with)
 - **UDS CLI** (for running tasks and deploying): [Install UDS](https://uds.defenseunicorns.com/cli/quickstart-and-usage/)
-- **Go** (for development and testing): [Install Go](https://go.dev/doc/install)
+- **Go** (for pre-commit tooling): [Install Go](https://go.dev/doc/install)
 - **Helm** (for development and testing): [Install Helm](https://helm.sh/docs/intro/install/)
 - **Helm Unittest Plugin** (for development and testing): [Install Helm unittest](https://github.com/helm-unittest/helm-unittest?tab=readme-ov-file#install)
 
-### 2. Clone the Repository and Make a Branch
+#### Setting Up Your Local Repository
 
-Clone the UDS Core repository to your local machine using Git (note that you may want to [fork](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo) this repository):
+Clone the UDS Core repository to your local machine using Git (if you don't have access to the `defenseunicorns` org you will want to [fork](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo) this repository):
 
 ```console
-git clone https://github.com/DefenseUnicorns/uds-core.git
+git clone https://github.com/defenseunicorns/uds-core.git
 cd uds-core
 ```
 
@@ -106,7 +55,42 @@ Then make a branch for your changes:
 git checkout -b my-feature-branch
 ```
 
-### 3. Make Changes and Test Locally
+#### Pre-Commit / Lint Checks
+
+We use pre-commit hooks to ensure code quality and consistency. These checks run automatically when you commit code and help catch issues early.
+
+**Setup Pre-Commit with Husky:**
+
+```console
+# Initialize husky hooks (only needed once after cloning)
+npx husky
+```
+
+**Required Tools:**
+
+Our pre-commit and linting checks validate:
+
+1. **YAML formatting** using [yamllint](https://yamllint.readthedocs.io/)
+1. **Spelling** using [codespell](https://github.com/codespell-project/codespell)
+1. **License headers** using [addlicense](https://github.com/google/addlicense)
+1. **TypeScript formatting** using [Pepr](https://github.com/defenseunicorns/pepr)'s formatter (eslint)
+1. **Helm charts** using [helm-unittest](https://github.com/helm-unittest/helm-unittest)
+
+The easiest way to install all required dependencies is:
+
+```console
+# Install the helm-unittest plugin
+helm plugin install https://github.com/helm-unittest/helm-unittest.git
+# Run the lint-check which installs other dependencies
+uds run lint-check
+```
+
+> [!TIP]
+> If your commit fails due to linting issues, you can generally fix them automatically with `uds run lint-fix` or `uds run -f tasks/lint.yaml fix-license` (for missing license headers).
+
+### Testing Your Changes
+
+#### Local Testing
 
 Make the changes to add the new feature, bug fix, or other change necessary. Keep in mind any documentation or testing changes that are relevant while making code changes.
 
@@ -130,31 +114,51 @@ uds run test-single-layer --set LAYER=metrics-server
 
 Note you can also specify the `--set FLAVOR=<registry1/unicorn>` flag to test using with either the Iron Bank or Unicorn sourced images instead of the upstream ones.
 
-## Submitting a Pull Request
+Depending on the scope and focus of your changes you may find other specific types of testing valuable. You can review available tasks to assist with local testing in [`tasks.yaml`](./tasks.yaml) and the `tasks/` folder. If you are unsure of the best way to test a given change, feel free to ask in the issue that you are working.
+
+#### Testing Strategy
+
+Each individual component of UDS Core contains lightweight validations in its own `src/<component>/tasks.yaml` file. These validations focus on the bare minimum functionality, typically covering pod health and endpoint accessibility.
+
+We also place end-to-end tests under the `e2e` folder. In particular we use [Playwright](https://playwright.dev/) for browser based testing and have authentication setup to login to applications with a shared SSO session. We also use [Vitest](https://vitest.dev/) for some lower level API and Kubernetes based testing.
+
+In general our testing focuses on the unique configuration and setup provided by UDS Core, rather than exhaustive functionality testing. We take this approach since each of the opensource applications we package and configure also have extensive end-to-end testing in their upstream repositories.
+
+### Definition of Done
+
+We apply these principles to all User Stories and contributions:
+
+- Automated continuous integration (CI) pipeline tests pass
+- CI tests are updated to cover new system changes
+- Changes are peer-reviewed
+- Acceptance criteria is met
+- Documentation is updated to reflect changes
+
+## Pull Request Process
+
+### Before Creating a Pull Request
 
 1. **Create an Issue**: For significant changes, please create an issue first, describing the problem or feature proposal. Trivial fixes do not require an issue.
-2. **Branch vs. Fork**: We prefer contributors to work on branches within the main repository when possible, as this allows full CI/CD processes to run without encountering issues with restricted secrets. If you do not have permissions, you may use a fork, but be aware of potential CI/CD limitations.
-3. **Commit Your Changes**: Make your changes and commit them. **All commits must be signed**.
-4. **Run Tests**: Ensure that your changes pass all tests.
-5. **Push Your Branch**: Push your branch to the main repository or your fork on GitHub.
-6. **Create a Pull Request**: Open a pull request against the `main` branch of the Bundle repository. Please make sure that your PR passes all CI checks.
+1. **Ensure All Tests Pass**: Run the full core install/test as described in the [local testing section](#local-testing) to verify your changes work as expected.
+1. **Sign Your Commits**: All commits must be signed. [Learn about signing commits](https://docs.github.com/en/authentication/managing-commit-signature-verification/signing-commits).
 
-### Note for External Contributors
+### Submitting a Pull Request
 
-When submitting a pull request (PR) from a forked repository, please note that our CI/CD processes may not run completely due to security restrictions. This is because certain secrets required for the full CI/CD pipeline are not accessible from forks.
+When opening a pull request make sure to follow the below guidelines to ensure there aren't delays in reviews of your contribution:
+- Ensure that the title of the PR follows [conventional commit](https://www.conventionalcommits.org/en/v1.0.0/) syntax. Typically PRs will fall into the categories of `fix:` (bug fixes), `feat:` (new features), `chore:` (dependency/other updates), or `docs:` (documentation changes).
+- Update the PR description adding a summary of changes, linking related issues, and noting the type of change. If appropriate, also make sure to fill out the "Steps to Validate" section noting how you tested your change, as well as any test coverage you added.
+- Ensure all CI checks pass, and make any necessary changes if they do not. See the note below if you are an external contributor (changes from a fork outside of the `defenseunicorns` GitHub organization).
+- In general do not force-push updates to your PR branch. This will make it harder for reviewers to see what has changed since their last review. Also note that we do not strictly require branches to be up to date with `main`, so only rebase your branch as necessary/when making other changes.
 
-**What to expect:**
+> [!NOTE]
+> When submitting a pull request (PR) from a forked repository, please note that our CI/CD processes may not run completely due to security restrictions. This is because certain secrets required for the full CI/CD pipeline are not accessible from forks.
+>
+> If you notice CI/CD failures, it might be due to these limitations rather than issues with your code. Our maintainers will review your PR and, if necessary, check out your branch and push it to the main repository. This step allows the full CI/CD process to run with the required secrets, ensuring that all checks are performed.
 
-1. **CI/CD Failures**: If you notice CI/CD failures, it might be due to these limitations rather than issues with your code.
-2. **Maintainer Review**: Our maintainers will review your PR and, if necessary, check out your branch and push it to the main repository. This step allows the full CI/CD process to run with the required secrets, ensuring that all checks are performed.
+## Additional Notes
 
-### PR Requirements
+**Roadmap and Vision**: The high-level roadmap of UDS Core is primarily driven by Defense Unicorns’ internal planning and needs. This means we may not be able to incorporate every feature suggestion, especially if it diverges from our core mission. However, we do value external feedback - even if a proposed change isn’t merged, your ideas could inspire future solutions. We aim to communicate our reasons respectfully if we decline a contribution. You can also check the GitHub issues to see what kinds of improvements and features are slated for upcoming releases.
 
-- PRs must be against the `main` branch.
-- PRs must pass CI checks.
-- All commits must be signed.
-- PRs should have a related issue, except for trivial fixes.
+**License Notice**: UDS Core is dual licensed under the GNU Affero General Public License v3.0 (AGPL-3.0) and the Defense Unicorns Commercial License (see [LICENSING.md](./LICENSING.md) for details). By contributing to this project, you agree that your contributions will be released under the same license. If you’re not comfortable with that (for example, if your employer has restrictions), please consult the necessary parties before submitting code. We do not require a separate Contributor License Agreement (CLA) at this time; contributions are accepted under this license via the act of contributing.
 
-## Contact
-
-For any questions or concerns, please open an issue on GitHub or contact the maintainers.
+**Support and Contact**: If you have questions about the contribution process or need guidance on something, you can open a GitHub issue. Because we’re not running a dedicated community forum or chat for UDS Core, the best way to get help is through the repository’s issue tracker. We’ll do our best to respond in a reasonable time. Remember that maintainers are likely juggling multiple responsibilities, so please be patient.
