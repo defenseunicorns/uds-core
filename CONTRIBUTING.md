@@ -45,7 +45,7 @@ Before starting, ensure that you have the following installed:
 Clone the UDS Core repository to your local machine using Git (if you don't have access to the `defenseunicorns` org you will want to [fork](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo) this repository):
 
 ```console
-git clone https://github.com/DefenseUnicorns/uds-core.git
+git clone https://github.com/defenseunicorns/uds-core.git
 cd uds-core
 ```
 
