@@ -6,8 +6,8 @@
 import { kind } from "pepr";
 import { describe, expect, it } from "vitest";
 import { Direction } from "../../crd";
-import { generate } from "./generate";
 import { Mode } from "../../crd/generated/package-v1alpha1";
+import { generate } from "./generate";
 
 describe("network policy generate", () => {
   it("should generate correct network policy", async () => {
@@ -197,7 +197,7 @@ describe("network policy generate with remoteHost", () => {
             {
               namespaceSelector: {
                 matchLabels: {
-                  "kubernetes.io/metadata.name": "istio-egress-waypoint",
+                  "kubernetes.io/metadata.name": "istio-egress-ambient",
                 },
               },
               podSelector: {

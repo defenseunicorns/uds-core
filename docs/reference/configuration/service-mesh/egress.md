@@ -10,13 +10,13 @@ UDS Core leverages Istio to route dedicated egress out of the service mesh. This
 
 ### Ambient
 
-For workloads running in ambient mode, the dedicated egress gateway is a *default* component of UDS Core. It is enabled by default and deploys waypoint workloads to the `istio-egress-waypoint` namespace.
+For workloads running in ambient mode, the dedicated egress gateway is a *default* component of UDS Core. It is enabled by default and deploys waypoint workloads to the `istio-egress-ambient` namespace.
 
 Additional configurations for the waypoint can be added in the form of helm overrides to the `uds-istio-egress-config` chart in the UDS Bundle, such as:
 
 ```yaml
 overrides:
-  istio-egress-waypoint:
+  istio-egress-ambient:
     uds-istio-egress-config:
       values:
         - path: "config.deployment.replicas"
@@ -115,7 +115,7 @@ spec:
 When a Package CR specifies the `network.allow` field with, at minimum, the `remoteHost` and `port` or `ports` parameters, the UDS Operator will create the necessary Istio resources to allow traffic to egress from the mesh. For ambient, the `serviceAccount` should be specified if your workload is not using the default service account. The resources that are created include the following:
 * An Istio ServiceEntry, in the package namespace, which is used to define the external service that the workload can access.
 * An Istio AuthorizationPolicy, in the package namespace, which is used to enforce that only traffic from workloads using the selected service account can egress. If no `serviceAccount` is specified, the `default` service account is used.
-* A shared Istio Waypoint, in the `istio-egress-waypoint` namespace, which is used to route the egress traffic.
+* A shared Istio Waypoint, in the `istio-egress-ambient` namespace, which is used to route the egress traffic.
 
 #### Limitations
 

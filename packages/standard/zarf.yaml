@@ -64,7 +64,7 @@ components:
     import:
       path: ../base
 
-  - name: istio-egress-waypoint
+  - name: istio-egress-ambient
     required: true
     import:
       path: ../base

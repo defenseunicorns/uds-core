@@ -10,12 +10,12 @@ import { IstioServiceEntry, IstioSidecar, IstioVirtualService, UDSPackage } from
 import { Mode } from "../../crd/generated/package-v1alpha1";
 import { getOwnerRef, purgeOrphans, validateNamespace } from "../utils";
 import {
-  createHostResourceMap,
-  egressRequestedFromNetwork,
-  reconcileSharedEgressResources,
+    createHostResourceMap,
+    egressRequestedFromNetwork,
+    reconcileSharedEgressResources,
 } from "./egress";
-import { createAmbientWorkloadEgressResources, ambientEgressNamespace } from "./egress-ambient";
-import { validateEgressGateway, createSidecarWorkloadEgressResources } from "./egress-sidecar";
+import { ambientEgressNamespace, createAmbientWorkloadEgressResources } from "./egress-ambient";
+import { createSidecarWorkloadEgressResources, validateEgressGateway } from "./egress-sidecar";
 import { generateIngressServiceEntry } from "./service-entry";
 import { PackageAction } from "./types";
 import { generateIngressVirtualService } from "./virtual-service";
@@ -126,7 +126,7 @@ export async function istioEgressResources(pkg: UDSPackage, namespace: string) {
       } catch (e) {
         let errText = `Unable to get the egress waypoint namespace ${ambientEgressNamespace}.`;
         if (e?.status == 404) {
-          errText = `The '${ambientEgressNamespace}' namespace was not found. Ensure the 'istio-egress-waypoint' component is deployed and try again.`;
+          errText = `The '${ambientEgressNamespace}' namespace was not found. Ensure the 'istio-egress-ambient' component is deployed and try again.`;
         }
         log.error(errText);
         throw new Error(errText);

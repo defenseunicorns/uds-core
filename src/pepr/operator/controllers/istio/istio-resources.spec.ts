@@ -273,7 +273,7 @@ describe("test istioEgressResources", () => {
       },
     };
 
-    const errorMessage = "Unable to get the egress waypoint namespace istio-egress-waypoint.";
+    const errorMessage = "Unable to get the egress waypoint namespace istio-egress-ambient.";
 
     const validateNamespaceMock = vi
       .spyOn(utils, "validateNamespace")
@@ -285,7 +285,7 @@ describe("test istioEgressResources", () => {
       errorMessage,
     );
 
-    expect(validateNamespaceMock).toHaveBeenCalledWith("istio-egress-waypoint");
+    expect(validateNamespaceMock).toHaveBeenCalledWith("istio-egress-ambient");
     expect(egressAmbientMod.createAmbientWorkloadEgressResources).not.toHaveBeenCalled();
   });
 
@@ -343,7 +343,7 @@ describe("test istioEgressResources", () => {
 
     await istioEgressResources(mockPkg, pkgMock.metadata!.namespace!);
 
-    expect(validateNamespaceMock).toHaveBeenCalledWith("istio-egress-waypoint");
+    expect(validateNamespaceMock).toHaveBeenCalledWith("istio-egress-ambient");
     expect(egressAmbientMod.createAmbientWorkloadEgressResources).toHaveBeenCalledWith(
       mockHostResourceMap,
       mockAllowList,

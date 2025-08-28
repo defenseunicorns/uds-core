@@ -132,13 +132,13 @@ components:
         valuesFiles:
           - "values/config-passthrough.yaml"
 
-  - name: istio-egress-waypoint
+  - name: istio-egress-ambient
     required: true
     charts:
       - name: uds-istio-egress-config
         version: 0.1.0
         localPath: charts/uds-istio-egress-config
-        namespace: istio-egress-waypoint
+        namespace: istio-egress-ambient
 
   - name: istio-egress-gateway
     required: false

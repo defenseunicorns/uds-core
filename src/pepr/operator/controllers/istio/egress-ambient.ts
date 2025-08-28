@@ -5,16 +5,16 @@
 import { V1OwnerReference } from "@kubernetes/client-node";
 import { K8s } from "pepr";
 import { Allow, IstioAuthorizationPolicy, IstioServiceEntry, K8sGateway } from "../../crd";
+import { Mode } from "../../crd/generated/package-v1alpha1";
 import { purgeOrphans } from "../utils";
 import { createEgressWaypointGateway, waitForWaypointPodHealthy } from "./ambient-waypoint";
 import { generateAmbientEgressAuthorizationPolicy } from "./auth-policy";
 import { getHostPortsProtocol } from "./egress";
 import { log } from "./istio-resources";
-import { Mode } from "../../crd/generated/package-v1alpha1";
 import { generateLocalEgressSEName, generateLocalEgressServiceEntry } from "./service-entry";
 import { HostResourceMap } from "./types";
 
-export const ambientEgressNamespace = "istio-egress-waypoint";
+export const ambientEgressNamespace = "istio-egress-ambient";
 export const sharedEgressPkgId = "shared-ambient-egress-resource";
 
 // Apply the ambient egress resources
