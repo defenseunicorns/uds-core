@@ -10,7 +10,7 @@ UDS Core leverages Istio to route dedicated egress out of the service mesh. This
 
 ### Ambient
 
-For workloads running in ambient mode, the dedicated egress gateway is a *default* component of UDS Core. It is enabled by default and deploys waypoint workloads to the `istio-egress-ambient` namespace.
+For workloads running in ambient mode, the dedicated egress gateway is automatically included in UDS Core. It comes pre-enabled and deploys waypoint workloads to the `istio-egress-waypoint` namespace.
 
 Additional configurations for the waypoint can be added in the form of helm overrides to the `uds-istio-egress-config` chart in the UDS Bundle, such as:
 
@@ -89,7 +89,7 @@ Wildcards in host names are NOT currently supported.
 
 ### Ambient Mode
 
-The following sample Package CR shows configuring egress to a specific host, "httpbin.org", on port 443. 
+The following sample Package CR shows configuring egress to a specific host, "httpbin.org", on port 443.
 
 ```yaml
 apiVersion: uds.dev/v1alpha1
@@ -123,7 +123,7 @@ Due to Istio limitations and the selected implementation of shared waypoint egre
 
 ### Sidecar Mode
 
-The following sample Package CR shows configuring egress to a specific host, "httpbin.org", on port 443. 
+The following sample Package CR shows configuring egress to a specific host, "httpbin.org", on port 443.
 
 ```yaml
 apiVersion: uds.dev/v1alpha1

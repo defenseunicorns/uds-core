@@ -11,7 +11,7 @@ data:
   deployment: |
     {{- with .podAnnotations }}
     metadata:
-      annotations: 
+      annotations:
         {{- toYaml . | nindent 8 }}
     {{- end }}
     spec:
