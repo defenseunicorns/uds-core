@@ -6,7 +6,10 @@
 import { getReadinessConditions, handleFailure, shouldSkip, updateStatus, writeEvent } from ".";
 import { Component, setupLogger } from "../../logger";
 import { UDSConfig } from "../controllers/config/config";
-import { reconcileSharedEgressResources } from "../controllers/istio/egress";
+import {
+  egressRequestedFromNetwork,
+  reconcileSharedEgressResources,
+} from "../controllers/istio/egress";
 import { getPackageId, istioResources } from "../controllers/istio/istio-resources";
 import { cleanupNamespace, enableIstio } from "../controllers/istio/namespace";
 import { PackageAction } from "../controllers/istio/types";
@@ -113,6 +116,12 @@ async function reconcilePackageFlow(pkg: UDSPackage): Promise<void> {
   // Create the Istio Resources per the package configuration
   endpoints = await istioResources(pkg, namespace!);
 
+  // Get quantity of authorization policies created - only if istioMode = ambient
+  let numEgressAuthPols = 0;
+  if (istioMode === Mode.Ambient && pkg.spec?.network?.allow) {
+    numEgressAuthPols = egressRequestedFromNetwork(pkg.spec!.network!.allow!).length;
+  }
+
   // Configure the ServiceMonitors
   const monitors: string[] = [];
   monitors.push(...(await podMonitor(pkg, namespace!)));
@@ -126,7 +135,7 @@ async function reconcilePackageFlow(pkg: UDSPackage): Promise<void> {
     endpoints,
     monitors,
     networkPolicyCount: netPol.length,
-    authorizationPolicyCount: authPol.length + authserviceClients.length * 2,
+    authorizationPolicyCount: authPol.length + authserviceClients.length * 2 + numEgressAuthPols,
     meshMode: istioMode,
     observedGeneration: metadata.generation,
     retryAttempt: 0, // todo: make this nullable when kfc generates the type
