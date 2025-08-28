@@ -28,6 +28,7 @@ export function generateAmbientEgressAuthorizationPolicy(
       labels: {
         "uds/package": pkgName,
         "uds/generation": generation,
+        "uds/for": "egress",
       },
       // Use the CR as the owner ref for each AuthorizationPolicy
       ownerReferences: ownerRefs,

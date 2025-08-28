@@ -97,7 +97,9 @@ export async function istioResources(pkg: UDSPackage, namespace: string) {
   await purgeOrphans(generation, namespace, pkgName, IstioVirtualService, log);
   await purgeOrphans(generation, namespace, pkgName, IstioServiceEntry, log); // for ingress and egress
   await purgeOrphans(generation, namespace, pkgName, IstioSidecar, log); // for egress only
-  await purgeOrphans(generation, namespace, pkgName, IstioAuthorizationPolicy, log); // for egress only
+  await purgeOrphans(generation, namespace, pkgName, IstioAuthorizationPolicy, log, {
+    "uds/for": "egress",
+  }); // for egress only
 
   // Return the list of unique hostnames
   return [...hosts];
