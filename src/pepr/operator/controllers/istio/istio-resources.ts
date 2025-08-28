@@ -10,9 +10,9 @@ import { IstioServiceEntry, IstioSidecar, IstioVirtualService, UDSPackage } from
 import { Mode } from "../../crd/generated/package-v1alpha1";
 import { getOwnerRef, purgeOrphans, validateNamespace } from "../utils";
 import {
-    createHostResourceMap,
-    egressRequestedFromNetwork,
-    reconcileSharedEgressResources,
+  createHostResourceMap,
+  egressRequestedFromNetwork,
+  reconcileSharedEgressResources,
 } from "./egress";
 import { ambientEgressNamespace, createAmbientWorkloadEgressResources } from "./egress-ambient";
 import { createSidecarWorkloadEgressResources, validateEgressGateway } from "./egress-sidecar";

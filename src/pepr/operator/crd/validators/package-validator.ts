@@ -153,6 +153,11 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
       return req.Deny("remoteHost does not support wildcard domains");
     }
 
+    // The 'serviceAccount' cannot be used if `remoteHost` is not specified.
+    if (policy.serviceAccount && !policy.remoteHost) {
+      return req.Deny("serviceAccount cannot be used without specifying remoteHost");
+    }
+
     // Ensure the policy name is unique
     const name = sanitizeResourceName(`allow-${pkg.metadata?.name}-${generateName(policy)}`);
     if (networkPolicyNames.has(name)) {
