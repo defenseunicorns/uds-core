@@ -26,42 +26,41 @@ vi.mock("../../istio/ambient-waypoint", () => ({
   setupAmbientWaypoint: vi.fn().mockResolvedValue(undefined),
 }));
 
-// Mock the K8s API
+// --- Pepr K8s and R utility mock ---
 const mockGet = vi.fn();
 const mockUpdate = vi.fn();
 const mockApply = vi.fn();
 const mockList = vi.fn();
 
-vi.mock("kubernetes-fluent-client", async importOriginal => {
-  const actual = await importOriginal<typeof import("kubernetes-fluent-client")>();
+vi.mock("pepr", async () => {
+  const actual = await vi.importActual<typeof import("pepr")>("pepr");
   return {
     ...actual,
-    K8s: {
-      withNamespace: () => ({
+    K8s: () =>
+      Object.assign({
         Get: mockGet,
         Update: mockUpdate,
         Apply: mockApply,
         List: mockList,
+        // Add more methods if needed
+        InNamespace: vi.fn().mockImplementation(() => ({
+          WithLabel: vi.fn().mockReturnThis(),
+          Delete: vi.fn().mockResolvedValue(undefined),
+          Get: vi.fn().mockResolvedValue({ items: [] }),
+          // Add other chainable/query methods as needed
+        })),
       }),
-      IstioAuthorizationPolicy: {
-        withNamespace: () => ({
-          Apply: vi.fn().mockResolvedValue({}),
-          List: vi.fn().mockResolvedValue({ items: [] }),
-        }),
-      },
-      IstioRequestAuthentication: {
-        withNamespace: () => ({
-          Apply: vi.fn().mockResolvedValue({}),
-          List: vi.fn().mockResolvedValue({ items: [] }),
-        }),
-      },
-      Namespace: {
-        Get: vi.fn().mockResolvedValue({
-          metadata: {
-            name: "test-ns",
-          },
-        }),
-      },
+    kind: {
+      Secret: "Secret",
+      // Add more kinds if needed
+    },
+    Log: {
+      child: vi.fn().mockReturnValue({
+        debug: vi.fn(),
+        info: vi.fn(),
+        warn: vi.fn(),
+        error: vi.fn(),
+      }),
     },
   };
 });
