@@ -1,0 +1,37 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+
+suite: Keycloak - useFixedHostname propagation
+templates:
+  - statefulset.yaml
+
+tests:
+  - it: should render hostname args when useFixedHostname is true
+    set:
+      useFixedHostname: true
+      domain: example.com
+      adminDomain: admin.example.com
+    template: statefulset.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: "--hostname=https://sso.example.com"
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: "--hostname-admin=https://keycloak.admin.example.com"
+
+  - it: should not render hostname args when useFixedHostname is false
+    set:
+      useFixedHostname: false
+      domain: example.com
+      adminDomain: admin.example.com
+    template: statefulset.yaml
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].args
+          content: "--hostname=https://sso.example.com"
+      - notContains:
+          path: spec.template.spec.containers[0].args
+          content: "--hostname-admin=https://keycloak.admin.example.com"

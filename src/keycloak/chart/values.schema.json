@@ -148,6 +148,9 @@
     "adminDomain": {
       "type": "string"
     },
+    "useFixedHostname": {
+      "type": "boolean"
+    },
     "enableServiceLinks": {
       "type": "boolean"
     },
