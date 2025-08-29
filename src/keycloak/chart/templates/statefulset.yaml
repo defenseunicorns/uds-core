@@ -121,6 +121,11 @@ spec:
             - "--proxy-headers=xforwarded"
             - "--http-enabled=true"
             - "--hostname-strict=false"
+            - "--hostname-backchannel-dynamic=true"
+            {{- if .Values.useFixedHostname }}
+            - "--hostname=https://sso.{{ .Values.domain }}"
+            - "--hostname-admin=https://keycloak.{{ tpl .Values.adminDomain . }}"
+            {{- end }}
             {{- if .Values.jsonLogFormat }}
             - "--log-console-output=json"
             {{- end }}
