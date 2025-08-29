@@ -32,51 +32,38 @@ const mockUpdate = vi.fn();
 const mockApply = vi.fn();
 const mockList = vi.fn();
 
-vi.mock("pepr", () => ({
-  K8s: () =>
-    Object.assign({
-      Get: mockGet,
-      Update: mockUpdate,
-      Apply: mockApply,
-      List: mockList,
-      // Add more methods if needed
-      InNamespace: vi.fn().mockImplementation(() => ({
-        WithLabel: vi.fn().mockReturnThis(),
-        Delete: vi.fn().mockResolvedValue(undefined),
-        Get: vi.fn().mockResolvedValue({ items: [] }),
-        // Add other chainable/query methods as needed
-      })),
-    }),
-  kind: {
-    Secret: "Secret",
-    // Add more kinds if needed
-  },
-  R: {
-    filter: <T>(fn: (value: T, index: number, array: T[]) => boolean, arr: T[]): T[] =>
-      arr.filter(fn),
-    isNotNil: <T>(val: T | null | undefined): val is T => val !== null && val !== undefined,
-    sortBy:
-      <T>(fn: (item: T) => string | number) =>
-      (arr: T[]): T[] =>
-        [...arr].sort((a, b) => {
-          const aVal = fn(a);
-          const bVal = fn(b);
-          return aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
-        }),
-    prop:
-      <T, K extends keyof T>(name: K) =>
-      (obj: T): T[K] =>
-        obj[name],
-  },
-  Log: {
-    child: vi.fn().mockReturnValue({
-      debug: vi.fn(),
-      info: vi.fn(),
-      warn: vi.fn(),
-      error: vi.fn(),
-    }),
-  },
-}));
+vi.mock("pepr", async importOriginal => {
+  const actual = (await importOriginal()) as Record<string, unknown>;
+  return {
+    ...actual,
+    K8s: () =>
+      Object.assign({
+        Get: mockGet,
+        Update: mockUpdate,
+        Apply: mockApply,
+        List: mockList,
+        // Add more methods if needed
+        InNamespace: vi.fn().mockImplementation(() => ({
+          WithLabel: vi.fn().mockReturnThis(),
+          Delete: vi.fn().mockResolvedValue(undefined),
+          Get: vi.fn().mockResolvedValue({ items: [] }),
+          // Add other chainable/query methods as needed
+        })),
+      }),
+    kind: {
+      Secret: "Secret",
+      // Add more kinds if needed
+    },
+    Log: {
+      child: vi.fn().mockReturnValue({
+        debug: vi.fn(),
+        info: vi.fn(),
+        warn: vi.fn(),
+        error: vi.fn(),
+      }),
+    },
+  };
+});
 
 // Mock dependencies
 vi.mock("../../istio/ambient-waypoint", () => ({

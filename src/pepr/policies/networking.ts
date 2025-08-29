@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { a, sdk } from "pepr";
+import { a, PeprValidateRequest, sdk } from "pepr";
 
 import { Policy } from "../operator/crd";
 import { When } from "./common";
@@ -24,21 +24,25 @@ When(a.Pod)
   .IsCreatedOrUpdated()
   .Mutate(markExemption(Policy.DisallowHostNamespaces))
   .Validate(request => {
-    if (isExempt(request, Policy.DisallowHostNamespaces)) {
-      return request.Approve();
-    }
-
-    const pod = request.Raw.spec!;
-
-    // If the pod is using the host network, IPC, or PID namespaces, deny the request.
-    if (pod.hostNetwork || pod.hostIPC || pod.hostPID) {
-      return request.Deny(
-        "Sharing the host namespaces is disallowed. The fields spec.hostNetwork, spec.hostIPC, and spec.hostPID must not be set to true.",
-      );
-    }
-
-    return request.Approve();
+    return validateDisallowHostNamespaces(request);
   });
+
+export function validateDisallowHostNamespaces(request: PeprValidateRequest<a.Pod>) {
+  if (isExempt(request, Policy.DisallowHostNamespaces)) {
+    return request.Approve();
+  }
+
+  const pod = request.Raw.spec!;
+
+  // If the pod is using the host network, IPC, or PID namespaces, deny the request.
+  if (pod.hostNetwork || pod.hostIPC || pod.hostPID) {
+    return request.Deny(
+      "Sharing the host namespaces is disallowed. The fields spec.hostNetwork, spec.hostIPC, and spec.hostPID must not be set to true.",
+    );
+  }
+
+  return request.Approve();
+}
 
 /**
  * This policy restricts the use of host ports in Pods.
@@ -53,22 +57,26 @@ When(a.Pod)
   .IsCreatedOrUpdated()
   .Mutate(markExemption(Policy.RestrictHostPorts))
   .Validate(request => {
-    if (isExempt(request, Policy.RestrictHostPorts)) {
-      return request.Approve();
-    }
-
-    // Check all containers in the pod spec, and find the first one that has a host port, if any
-    const hasHostPort = containers(request)
-      .flatMap(c => c.ports || [])
-      .find(p => p.hostPort);
-
-    // If the container has a host port, deny the request
-    if (hasHostPort) {
-      return request.Deny(`Host ports are not allowed.`);
-    }
-
-    return request.Approve();
+    return validateRestrictHostPorts(request);
   });
+
+export function validateRestrictHostPorts(request: PeprValidateRequest<a.Pod>) {
+  if (isExempt(request, Policy.RestrictHostPorts)) {
+    return request.Approve();
+  }
+
+  // Check all containers in the pod spec, and find the first one that has a host port, if any
+  const hasHostPort = containers(request)
+    .flatMap(c => c.ports || [])
+    .find(p => p.hostPort);
+
+  // If the container has a host port, deny the request
+  if (hasHostPort) {
+    return request.Deny(`Host ports are not allowed.`);
+  }
+
+  return request.Approve();
+}
 
 /**
  * This policy restricts the use of external names in services to mitigate the risk of MITM attacks.
@@ -81,15 +89,19 @@ When(a.Service)
   .IsCreatedOrUpdated()
   .Mutate(markExemption(Policy.RestrictExternalNames))
   .Validate(request => {
-    if (isExempt(request, Policy.RestrictExternalNames)) {
-      return request.Approve();
-    }
-    if (request.Raw.spec?.type === "ExternalName") {
-      return request.Deny("ExternalName services are not allowed.");
-    }
-
-    return request.Approve();
+    return validateRestrictExternalNames(request);
   });
+
+export function validateRestrictExternalNames(request: PeprValidateRequest<a.Service>) {
+  if (isExempt(request, Policy.RestrictExternalNames)) {
+    return request.Approve();
+  }
+  if (request.Raw.spec?.type === "ExternalName") {
+    return request.Deny("ExternalName services are not allowed.");
+  }
+
+  return request.Approve();
+}
 
 /**
  * This policy prevents the use of NodePort services in Kubernetes.
@@ -104,13 +116,17 @@ When(a.Service)
   .IsCreatedOrUpdated()
   .Mutate(markExemption(Policy.DisallowNodePortServices))
   .Validate(request => {
-    if (isExempt(request, Policy.DisallowNodePortServices)) {
-      return request.Approve();
-    }
-    // If the service is of type NodePort, deny the request.
-    if (request.Raw.spec?.type === "NodePort") {
-      return request.Deny("NodePort services are not allowed.");
-    }
-
-    return request.Approve();
+    return validateDisallowNodePortServices(request);
   });
+
+export function validateDisallowNodePortServices(request: PeprValidateRequest<a.Service>) {
+  if (isExempt(request, Policy.DisallowNodePortServices)) {
+    return request.Approve();
+  }
+  // If the service is of type NodePort, deny the request.
+  if (request.Raw.spec?.type === "NodePort") {
+    return request.Deny("NodePort services are not allowed.");
+  }
+
+  return request.Approve();
+}
