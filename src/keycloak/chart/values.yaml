@@ -17,6 +17,9 @@ domain: "###ZARF_VAR_DOMAIN###"
 # The admin domain for hosts to trust clients on
 adminDomain: '{{ "###ZARF_VAR_ADMIN_DOMAIN###" | default "admin.###ZARF_VAR_DOMAIN###" }}'
 
+# When true, Keycloak will use fixed hostnames for tenant and admin endpoints
+useFixedHostname: true
+
 # Additional Istio Gateways that expose Keycloak, to allow for client cert usage
 # A prefix of `istio-` is required for namespaces to prevent accidental misconfiguration
 additionalGatewayNamespaces: []
