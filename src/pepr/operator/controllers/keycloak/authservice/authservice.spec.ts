@@ -32,8 +32,8 @@ const mockUpdate = vi.fn();
 const mockApply = vi.fn();
 const mockList = vi.fn();
 
-vi.mock("pepr", async importOriginal => {
-  const actual = (await importOriginal()) as Record<string, unknown>;
+vi.mock("pepr", async () => {
+  const actual = await vi.importActual<typeof import("pepr")>("pepr");
   return {
     ...actual,
     K8s: () =>
