@@ -3,11 +3,10 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { V1Container, V1Volume, V1VolumeMount } from "@kubernetes/client-node";
-import { a, PeprValidateRequest, sdk } from "pepr";
+import { a, sdk } from "pepr";
 
 import { Policy } from "../operator/crd";
-import { volumes, When } from "./common";
+import { When, volumes } from "./common";
 import { isExempt, markExemption } from "./exemptions";
 
 const { containers } = sdk;
@@ -25,51 +24,38 @@ When(a.Pod)
   .IsCreatedOrUpdated()
   .Mutate(markExemption(Policy.RestrictVolumeTypes))
   .Validate(request => {
-    return restrictVolumeTypes(request);
-  });
+    // List of allowed volume types
+    const allowedVolumeTypes = [
+      "configMap",
+      "csi",
+      "downwardAPI",
+      "emptyDir",
+      "ephemeral",
+      "persistentVolumeClaim",
+      "projected",
+      "secret",
+    ];
 
-// List of allowed volume types
-export function checkAllowedVolumeTypes(
-  volumes: V1Volume[],
-  isExempt: boolean,
-): { approved: boolean; message?: string } {
-  const allowedVolumeTypes = [
-    "configMap",
-    "csi",
-    "downwardAPI",
-    "emptyDir",
-    "ephemeral",
-    "persistentVolumeClaim",
-    "projected",
-    "secret",
-  ];
-  if (isExempt) return { approved: true };
-  // Check all volumes in the pod spec, if any
-  for (const volume of volumes) {
-    // Get the volume type, which will be the only key in the volume object other than "name"
-    const volumeType = Object.keys(volume).find(key => key !== "name") || "unknown";
-
-    // If the volume type is not in the allowed list, deny the request
-    if (!allowedVolumeTypes.includes(volumeType)) {
-      return {
-        approved: false,
-        message: `Volume ${volume.name} has a disallowed volume type of '${volumeType}'.`,
-      };
+    if (isExempt(request, Policy.RestrictVolumeTypes)) {
+      return request.Approve();
     }
-  }
 
-  // All volumes are allowed, so approve the request
-  return { approved: true };
-}
+    // Check all volumes in the pod spec, if any
+    for (const volume of volumes(request)) {
+      // Get the volume type, which will be the only key in the volume object other than "name"
+      const volumeType = Object.keys(volume).find(key => key !== "name") || "unknown";
 
-export function restrictVolumeTypes(request: PeprValidateRequest<a.Pod>) {
-  const result = checkAllowedVolumeTypes(
-    volumes(request),
-    isExempt(request, Policy.RestrictVolumeTypes),
-  );
-  if (result.approved) return request.Approve();
-  return request.Deny(result.message!);
-}
+      // If the volume type is not in the allowed list, deny the request
+      if (!allowedVolumeTypes.includes(volumeType)) {
+        return request.Deny(
+          `Volume ${volume.name} has a disallowed volume type of '${volumeType}'.`,
+        );
+      }
+    }
+
+    // All volumes are allowed, so approve the request
+    return request.Approve();
+  });
 
 /**
  * Restrict hostPath Volume Writable Paths for Pods
@@ -87,44 +73,26 @@ When(a.Pod)
   .IsCreatedOrUpdated()
   .Mutate(markExemption(Policy.RestrictHostPathWrite))
   .Validate(request => {
-    return restrictHostPathWrite(request);
-  });
+    if (isExempt(request, Policy.RestrictHostPathWrite)) {
+      return request.Approve();
+    }
 
-export function checkHostPathWrite(
-  volumes: V1Volume[],
-  containers: V1Container[],
-  isExempt: boolean,
-): { approved: boolean; message?: string } {
-  if (isExempt) return { approved: true };
-  for (const volume of volumes) {
-    // If the volume is a hostPath
-    if (volume.hostPath) {
-      // Check all mounts in any container for this volume and verify they are readOnly
-      const hasRWMount = containers
-        .flatMap((c: V1Container) => c.volumeMounts || [])
-        .filter((mount: V1VolumeMount) => mount.name === volume.name)
-        .find((mount: V1VolumeMount) => !mount.readOnly);
+    for (const volume of volumes(request)) {
+      // If the volume is a hostPath
+      if (volume.hostPath) {
+        // Check all mounts in any container for this volume and verify they are readOnly
+        const hasRWMount = containers(request)
+          .flatMap(c => c.volumeMounts || [])
+          .filter(mount => mount.name === volume.name)
+          .find(mount => !mount.readOnly);
 
-      // If any mount is not readOnly, deny the request
-      if (hasRWMount) {
-        return {
-          approved: false,
-          message: `hostPath volume '${volume.name}' must be mounted as readOnly.`,
-        };
+        // If any mount is not readOnly, deny the request
+        if (hasRWMount) {
+          return request.Deny(`hostPath volume '${volume.name}' must be mounted as readOnly.`);
+        }
       }
     }
-  }
 
-  // All volumes are allowed, so approve the request
-  return { approved: true };
-}
-
-export function restrictHostPathWrite(request: PeprValidateRequest<a.Pod>) {
-  const result = checkHostPathWrite(
-    volumes(request),
-    containers(request),
-    isExempt(request, Policy.RestrictHostPathWrite),
-  );
-  if (result.approved) return request.Approve();
-  return request.Deny(result.message!);
-}
+    // All volumes are allowed, so approve the request
+    return request.Approve();
+  });
