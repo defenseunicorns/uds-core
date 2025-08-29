@@ -10,7 +10,7 @@ gateway:
   image:
     registry: quay.io
     repository: rfcurated/nginx
-    tag: 1.29.0-slim-jammy-fips-rfcurated-rfhardened
+    tag: 1.29.1-slim-jammy-fips-rfcurated-rfhardened
 memcached:
   image:
     repository: quay.io/rfcurated/memcached

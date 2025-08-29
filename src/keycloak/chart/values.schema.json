@@ -314,6 +314,17 @@
       "properties": {
         "GOOGLE_IDP_ENABLED": {
           "type": "boolean"
+        },
+        "SSO_SESSION_MAX_PER_USER": {
+          "type": "string"
+        }
+      }
+    },
+    "realmConfig": {
+      "type": "object",
+      "properties": {
+        "maxInFlightLoginsPerUser": {
+          "type": "number"
         }
       }
     },

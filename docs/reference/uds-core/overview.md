@@ -16,6 +16,12 @@ UDS Core enables your team to:
 
 ![UDS Core Architecture Diagram](https://github.com/defenseunicorns/uds-core/blob/main/docs/.images/diagrams/uds-core-arch-overview.svg?raw=true)
 
+:::note
+The above diagram captures an overview of the UDS Core architecture, primarily focusing on Kubernetes pod communications and namespace separation. In some cases this diagram omits some more complex connections for the sake of simplicity, for example:
+- Prometheus scraping is occurring with all available metrics endpoints in the cluster.
+- All pod communications in Istio ambient mode involve its CNI plugin and the node level Ztunnel proxy (additional information and diagrams of this architecture can be found [upstream](https://istio.io/latest/docs/ambient/architecture/)).
+:::
+
 ### Accomplishing Mission Objectives with Functional Applications
 
 UDS leverages functional applications that are well-suited to perform the specific tasks required. These tools are carefully selected to ensure optimal performance and compatibility within the UDS landscape. By integrating functional tools into the platform, UDS ensures that Mission Heroes have access to cutting-edge technologies and best-in-class solutions for their missions.

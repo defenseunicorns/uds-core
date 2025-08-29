@@ -8,7 +8,7 @@ image:
 kubectl:
   image:
     repository: quay.io/rfcurated/kubectl
-    tag: 1.33.3-jammy-scratch-fips-rfcurated
+    tag: 1.33.4-jammy-scratch-fips-rfcurated
 
 initContainers:
   - name: velero-plugin-for-aws

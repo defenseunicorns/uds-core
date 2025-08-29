@@ -250,15 +250,21 @@ function compareImages(
           }
 
           if (missingImg.includes("registry1.dso.mil")) {
+            // Only add the label once, but add a message for each missing image
             if (!result.labels.includes("waiting on ironbank")) {
               result.labels.push("waiting on ironbank");
-              result.changes.push(`Waiting on Ironbank image update: ${missingImg}`);
             }
+            result.changes.push(
+              `Waiting on Ironbank to update ${imgName} to version ${newVersion}`,
+            );
           } else if (missingImg.startsWith("quay.io/rfcurated")) {
+            // Only add the label once, but add a message for each missing image
             if (!result.labels.includes("waiting on rapidfort")) {
               result.labels.push("waiting on rapidfort");
-              result.changes.push(`Waiting on Rapidfort image update: ${missingImg}`);
             }
+            result.changes.push(
+              `Waiting on Rapidfort to update ${imgName} to version ${newVersion}`,
+            );
           }
         }
 

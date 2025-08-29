@@ -362,7 +362,88 @@ describe("compareImagesAndCharts", () => {
 
     expect(result.labels).toEqual(["waiting on ironbank"]);
     expect(result.changes).toContain(
-      "Waiting on Ironbank image update: registry1.dso.mil/ironbank/nginx:1.21.6",
+      "Waiting on Ironbank to update registry1.dso.mil/ironbank/nginx to version 1.25.3",
+    );
+  });
+
+  it("should detect multiple waiting on messages for multiple missing images", async () => {
+    // Mock fs.readFileSync to return different content based on the file path
+    (fs.readFileSync as Mock).mockImplementation(filePath => {
+      if (filePath === "old/charts.yaml") {
+        return "charts-old";
+      }
+      if (filePath === "new/charts.yaml") {
+        return "charts-new";
+      }
+      if (filePath === "old/images.yaml") {
+        return "images-old";
+      }
+      if (filePath === "new/images.yaml") {
+        return "images-new";
+      }
+      return "";
+    });
+
+    // Mock fs.existsSync to return true for all files
+    (fs.existsSync as Mock).mockReturnValue(true);
+
+    // Mock yaml.parse to return different content based on the input
+    (yaml.parse as Mock).mockImplementation(content => {
+      if (content === "charts-old") {
+        return {
+          chart1: "1.0.0",
+        };
+      }
+      if (content === "charts-new") {
+        return {
+          chart1: "1.0.0",
+        };
+      }
+      if (content === "images-old") {
+        return {
+          "1.21.6": [
+            "docker.io/library/nginx:1.25.3",
+            "docker.io/library/curl:1.25.3",
+            "registry1.dso.mil/ironbank/nginx:1.21.6",
+            "registry1.dso.mil/ironbank/curl:1.21.6",
+            "quay.io/rfcurated/nginx:1.21.6-slim-jammy-fips-rfcurated-rfhardened",
+            "quay.io/rfcurated/curl:1.21.6-jammy-scratch-fips-rfcurated",
+          ],
+        };
+      }
+      if (content === "images-new") {
+        return {
+          "1.25.3": ["docker.io/library/nginx:1.25.3", "docker.io/library/curl:1.25.3"],
+          "1.21.6": [
+            "registry1.dso.mil/ironbank/nginx:1.21.6",
+            "registry1.dso.mil/ironbank/curl:1.21.6",
+            "quay.io/rfcurated/nginx:1.21.6-slim-jammy-fips-rfcurated-rfhardened",
+            "quay.io/rfcurated/curl:1.21.6-jammy-scratch-fips-rfcurated",
+          ],
+        };
+      }
+      return {};
+    });
+
+    const result = await compareImagesAndCharts("old", "new");
+
+    expect(result.labels).toContain("waiting on ironbank");
+    expect(result.labels).toContain("waiting on rapidfort");
+
+    // Check for multiple Ironbank messages
+    expect(result.changes).toContain(
+      "Waiting on Ironbank to update registry1.dso.mil/ironbank/nginx to version 1.25.3",
+    );
+    expect(result.changes).toContain(
+      "Waiting on Ironbank to update registry1.dso.mil/ironbank/curl to version 1.25.3",
+    );
+
+    // Check for multiple Rapidfort messages
+    expect(result.changes).toContain(
+      "Waiting on Rapidfort to update quay.io/rfcurated/nginx to version 1.25.3",
+    );
+    expect(result.changes).toContain(
+      "Waiting on Rapidfort to update quay.io/rfcurated/curl to version 1.25.3",
     );
   });
 
@@ -421,7 +502,7 @@ describe("compareImagesAndCharts", () => {
 
     expect(result.labels).toEqual(["waiting on rapidfort"]);
     expect(result.changes).toContain(
-      "Waiting on Rapidfort image update: quay.io/rfcurated/nginx:1.21.6-slim-jammy-fips-rfcurated-rfhardened",
+      "Waiting on Rapidfort to update quay.io/rfcurated/nginx to version 1.25.3",
     );
   });
 
@@ -491,10 +572,10 @@ describe("compareImagesAndCharts", () => {
 
     expect(result.labels).toEqual(["waiting on ironbank", "waiting on rapidfort"]);
     expect(result.changes).toContain(
-      "Waiting on Ironbank image update: registry1.dso.mil/ironbank/nginx:1.21.6",
+      "Waiting on Ironbank to update registry1.dso.mil/ironbank/nginx to version 1.25.3",
     );
     expect(result.changes).toContain(
-      "Waiting on Rapidfort image update: quay.io/rfcurated/nginx:1.21.6-slim-jammy-fips-rfcurated-rfhardened",
+      "Waiting on Rapidfort to update quay.io/rfcurated/nginx to version 1.25.3",
     );
   });
 
@@ -890,6 +971,6 @@ it("should detect wait for loki (regression test)", async () => {
 
   expect(result.labels).toEqual(["waiting on rapidfort"]);
   expect(result.changes).toContain(
-    "Waiting on Rapidfort image update: quay.io/rfcurated/grafana/loki:3.4.3-jammy-fips-rfcurated-rfhardened",
+    "Waiting on Rapidfort to update quay.io/rfcurated/grafana/loki to version 3.5.0",
   );
 });

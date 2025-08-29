@@ -47,6 +47,7 @@ Before upgrading UDS Core, complete the following preparation steps:
 
 Read the [release notes](https://github.com/defenseunicorns/uds-core/releases) for all versions between your current version and the target version. Pay special attention to:
 - Breaking changes
+- Keycloak / Identity Config specific upgrade steps (documented [here](/reference/uds-core/idam/upgrading-versions))
 - Deprecated features
 - Configuration changes
 - New security policies and restrictions

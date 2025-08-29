@@ -1,0 +1,26 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+
+suite: Keycloak - realmConfig.maxInFlightLoginsPerUser propagation
+templates:
+  - statefulset.yaml
+
+tests:
+  - it: should propagate a custom realmConfig.maxInFlightLoginsPerUser value to container args
+    set:
+      realmConfig:
+        maxInFlightLoginsPerUser: 123
+    template: statefulset.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: "--spi-authentication-sessions--map--auth-sessions-limit=123"
+
+  - it: should default to 300 when realmConfig.maxInFlightLoginsPerUser is not set
+    template: statefulset.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: "--spi-authentication-sessions--map--auth-sessions-limit=300"

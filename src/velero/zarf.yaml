@@ -21,7 +21,7 @@ components:
     images:
       - velero/velero:v1.16.2
       - velero/velero-plugin-for-aws:v1.12.2
-      - docker.io/bitnami/kubectl:1.33.3
+      - docker.io/bitnamilegacy/kubectl:1.33.4
       - velero/velero-plugin-for-microsoft-azure:v1.12.2
 
   - name: velero
@@ -53,5 +53,5 @@ components:
     images:
       - quay.io/rfcurated/velero/velero:1.16.2-jammy-scratch-fips-rfcurated
       - quay.io/rfcurated/velero/velero-plugin-for-aws:1.12.2-jammy-scratch-fips-rfcurated
-      - quay.io/rfcurated/kubectl:1.33.3-jammy-scratch-fips-rfcurated
+      - quay.io/rfcurated/kubectl:1.33.4-jammy-scratch-fips-rfcurated
       - quay.io/rfcurated/velero/velero-plugin-for-microsoft-azure:1.12.2-jammy-scratch-fips-rfcurated
