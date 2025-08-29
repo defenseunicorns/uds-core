@@ -112,12 +112,10 @@ spec:
             - "--spi-authentication-sessions--map--auth-sessions-limit={{ .Values.realmConfig.maxInFlightLoginsPerUser | default 300 }}"
             - "--proxy-headers=xforwarded"
             - "--http-enabled=true"
-
             {{- if .Values.useFixedHostname }}
             - "--hostname=https://sso.{{ .Values.domain }}"
             - "--hostname-admin=https://keycloak.{{ tpl .Values.adminDomain . }}"
             - "--hostname-backchannel-dynamic=false"
-            - "--hostname-strict=true"
             {{- else }}
             - "--hostname-backchannel-dynamic=true"
             - "--hostname-strict=false"
