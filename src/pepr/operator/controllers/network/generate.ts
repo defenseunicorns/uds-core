@@ -7,19 +7,20 @@ import { V1NetworkPolicyPeer, V1NetworkPolicyPort } from "@kubernetes/client-nod
 import { kind } from "pepr";
 
 import { Allow, RemoteGenerated } from "../../crd";
+import { Mode } from "../../crd/generated/package-v1alpha1";
 import { anywhere, anywhereInCluster } from "./generators/anywhere";
 import { cloudMetadata } from "./generators/cloudMetadata";
 import { intraNamespace } from "./generators/intraNamespace";
 import { kubeAPI } from "./generators/kubeAPI";
 import { kubeNodes } from "./generators/kubeNodes";
 import { remoteCidr } from "./generators/remoteCidr";
-import { egressGateway } from "./generators/egressGateway";
+import { egressGateway, egressWaypoint } from "./generators/egress";
 
 function isWildcardNamespace(namespace: string) {
   return namespace === "" || namespace === "*";
 }
 
-function getPeers(policy: Allow): V1NetworkPolicyPeer[] {
+function getPeers(policy: Allow, istioMode: Mode | undefined): V1NetworkPolicyPeer[] {
   let peers: V1NetworkPolicyPeer[] = [];
 
   if (policy.remoteGenerated) {
@@ -67,13 +68,17 @@ function getPeers(policy: Allow): V1NetworkPolicyPeer[] {
   } else if (policy.remoteCidr !== undefined) {
     peers = [remoteCidr(policy.remoteCidr)];
   } else if (policy.remoteHost) {
-    peers = [egressGateway];
+    if (istioMode === Mode.Ambient) {
+      peers = [egressWaypoint];
+    } else {
+      peers = [egressGateway];
+    }
   }
 
   return peers;
 }
 
-export function generate(namespace: string, policy: Allow): kind.NetworkPolicy {
+export function generate(namespace: string, policy: Allow, istioMode?: Mode): kind.NetworkPolicy {
   // Generate a unique name for the NetworkPolicy
   const name = generateName(policy);
 
@@ -107,7 +112,7 @@ export function generate(namespace: string, policy: Allow): kind.NetworkPolicy {
   }
 
   // Create the network policy peers
-  const peers: V1NetworkPolicyPeer[] = getPeers(policy);
+  const peers: V1NetworkPolicyPeer[] = getPeers(policy, istioMode);
 
   // Define the ports to allow from the ports property
   const ports: V1NetworkPolicyPort[] = (policy.ports ?? []).map(port => ({ port }));

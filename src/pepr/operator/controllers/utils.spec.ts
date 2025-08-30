@@ -6,9 +6,9 @@
 import { K8s, kind } from "pepr";
 import { Logger } from "pino";
 import { afterEach, beforeEach, describe, expect, it, Mock, vi } from "vitest";
-import { createEvent, retryWithDelay } from "./utils";
+import { createEvent, retryWithDelay, validateNamespace } from "./utils";
 
-// Mock K8s client
+// Mock K8s client and Log
 vi.mock("pepr", () => {
   const actualKind = {
     Pod: "Pod",
@@ -17,11 +17,17 @@ vi.mock("pepr", () => {
     StatefulSet: "StatefulSet",
     DaemonSet: "DaemonSet",
     CoreEvent: "CoreEvent",
+    Namespace: "Namespace",
+  };
+
+  const mockLog = {
+    child: vi.fn().mockReturnValue(createMockLogger()),
   };
 
   return {
     K8s: vi.fn(),
     kind: actualKind,
+    Log: mockLog,
   };
 });
 
@@ -55,6 +61,8 @@ function createMockK8sClient(overrides = {}) {
     PatchStatus: vi.fn().mockResolvedValue({}),
     Raw: vi.fn().mockResolvedValue({}),
     Proxy: vi.fn().mockResolvedValue({}),
+    Scale: vi.fn().mockResolvedValue({}),
+    Finalize: vi.fn().mockResolvedValue({}),
 
     // Fluent API methods
     WithField: vi.fn().mockReturnThis(),
@@ -237,5 +245,76 @@ describe("createEvent", () => {
 
     // Call the function - should throw
     await expect(createEvent(resource, {}, mockLogger)).rejects.toThrow("Test error");
+  });
+});
+
+describe("test validateNamespace", () => {
+  beforeEach(() => {
+    process.env.PEPR_WATCH_MODE = "true";
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("should return namespace object when namespace is found", async () => {
+    // Mock K8s Get function to return test-ns
+    const mockNamespace = { metadata: { name: "test-ns" } } as kind.Namespace;
+    const mockGet = vi.fn().mockResolvedValue(mockNamespace);
+
+    // Set up K8s mocks
+    vi.mocked(K8s).mockReturnValue(
+      createMockK8sClient({
+        Get: mockGet,
+      }),
+    );
+
+    await expect(validateNamespace("test-ns")).resolves.toEqual(mockNamespace);
+  });
+
+  it("should return null if namespace is missing with missingAllowed=true", async () => {
+    // Mock K8s Get function to return test-ns
+    const error = { status: 404, message: "Namespace not found" };
+    const mockGet = vi.fn().mockRejectedValue(error);
+
+    // Set up K8s mocks
+    vi.mocked(K8s).mockReturnValue(
+      createMockK8sClient({
+        Get: mockGet,
+      }),
+    );
+
+    await expect(validateNamespace("test-ns", true)).resolves.toEqual(null);
+  });
+
+  it("should throw error if namespace is missing with missingAllowed=false", async () => {
+    // Mock K8s Get function to return test-ns
+    const error = { status: 404, message: "Namespace not found" };
+    const mockGet = vi.fn().mockRejectedValue(error);
+
+    // Set up K8s mocks
+    vi.mocked(K8s).mockReturnValue(
+      createMockK8sClient({
+        Get: mockGet,
+      }),
+    );
+
+    await expect(validateNamespace("test-ns", false)).rejects.toEqual(error);
+  });
+
+  it("should throw error for non-404 errors even with missingAllowed=true", async () => {
+    // Mock K8s Get function to return test-ns
+    const error = { status: 401, message: "Namespace not found" };
+    const mockGet = vi.fn().mockRejectedValue(error);
+
+    // Set up K8s mocks
+    vi.mocked(K8s).mockReturnValue(
+      createMockK8sClient({
+        Get: mockGet,
+      }),
+    );
+
+    await expect(validateNamespace("test-ns", true)).rejects.toEqual(error);
   });
 });

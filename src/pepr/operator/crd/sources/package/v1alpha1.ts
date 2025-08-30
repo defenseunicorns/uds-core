@@ -123,6 +123,12 @@ const allow = {
           Only valid for Ingress rules.",
         type: "string",
       },
+      serviceAccount: {
+        description:
+          "The service account to restrict outgoing traffic from within the package namespace. \
+          Only valid for Egress rules.",
+        type: "string",
+      },
       // Deprecated fields
       podLabels: {
         description: "Deprecated: use selector",

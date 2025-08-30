@@ -5,46 +5,49 @@ apiVersion: v1
 kind: Namespace
 metadata:
   labels:
-    uds: egress-testing-namespace-1
-  name: egress-gw-1
+    uds: egress-ambient-testing-namespace-1
+  name: egress-ambient-1
 ---
 apiVersion: uds.dev/v1alpha1
 kind: Package
 metadata:
   name: pkg-1
-  namespace: egress-gw-1
+  namespace: egress-ambient-1
 spec:
   network:
+    serviceMesh:
+      mode: ambient
     allow:
       - direction: Egress
         selector:
           app: curl
         ports:
           - 443
-        remoteHost: example.com
+        remoteHost: api.github.com
         remoteProtocol: TLS
-        description: "Example Curl"
+        description: "Github API Curl"
 ---
 apiVersion: v1
 kind: Namespace
 metadata:
   labels:
-    uds: egress-testing-namespace-2
-  name: egress-gw-2
+    uds: egress-ambient-testing-namespace-2
+  name: egress-ambient-2
 ---
 apiVersion: uds.dev/v1alpha1
 kind: Package
 metadata:
   name: pkg-2
-  namespace: egress-gw-2
+  namespace: egress-ambient-2
 spec:
   network:
+    serviceMesh:
+      mode: ambient
     allow:
       - direction: Egress
-        selector:
-          app: curl
         ports:
-          - 80
-        remoteHost: example.com
-        remoteProtocol: HTTP
-        description: "Example Curl"
+          - 443
+        remoteHost: www.google.com
+        remoteProtocol: TLS
+        serviceAccount: curl
+        description: "Google Curl"

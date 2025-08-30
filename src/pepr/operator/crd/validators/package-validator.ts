@@ -11,7 +11,7 @@ import { generateMonitorName } from "../../controllers/monitoring/common";
 import { generateName } from "../../controllers/network/generate";
 import { PackageStore } from "../../controllers/packages/package-store";
 import { sanitizeResourceName } from "../../controllers/utils";
-import { Kind, Mode } from "../../crd/generated/package-v1alpha1";
+import { Kind } from "../../crd/generated/package-v1alpha1";
 import { migrate } from "../migrate";
 
 const invalidNamespaces = ["kube-system", "kube-public", "_unknown_", "pepr-system"];
@@ -73,7 +73,6 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
   }
 
   const networkPolicy = pkg.spec?.network?.allow ?? [];
-  const networkSpec = pkg.spec?.network;
 
   // Track the names of the network policies to ensure they are unique
   const networkPolicyNames = new Set<string>();
@@ -154,9 +153,9 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
       return req.Deny("remoteHost does not support wildcard domains");
     }
 
-    // Ambient is not compatible with 'remoteHost'.
-    if (policy.remoteHost && networkSpec?.serviceMesh?.mode === Mode.Ambient) {
-      return req.Deny("remoteHost not supported in ambient mode");
+    // The 'serviceAccount' cannot be used if `remoteHost` is not specified.
+    if (policy.serviceAccount && !policy.remoteHost) {
+      return req.Deny("serviceAccount cannot be used without specifying remoteHost");
     }
 
     // Ensure the policy name is unique
