@@ -53,5 +53,5 @@ components:
     images:
       - quay.io/rfcurated/velero/velero:1.16.2-jammy-scratch-fips-rfcurated
       - quay.io/rfcurated/velero/velero-plugin-for-aws:1.12.2-jammy-scratch-fips-rfcurated
-      - quay.io/rfcurated/kubectl:1.33.4-jammy-scratch-fips-rfcurated
+      - quay.io/rfcurated/kubectl:1.34.0-jammy-scratch-fips-rfcurated
       - quay.io/rfcurated/velero/velero-plugin-for-microsoft-azure:1.12.2-jammy-scratch-fips-rfcurated
