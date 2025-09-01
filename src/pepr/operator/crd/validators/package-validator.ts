@@ -11,7 +11,7 @@ import { generateMonitorName } from "../../controllers/monitoring/common";
 import { generateName } from "../../controllers/network/generate";
 import { PackageStore } from "../../controllers/packages/package-store";
 import { sanitizeResourceName } from "../../controllers/utils";
-import { Kind } from "../../crd/generated/package-v1alpha1";
+import { Kind, Mode } from "../../crd/generated/package-v1alpha1";
 import { migrate } from "../migrate";
 
 const invalidNamespaces = ["kube-system", "kube-public", "_unknown_", "pepr-system"];
@@ -22,6 +22,7 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
   const pkgName = pkg.metadata?.name ?? "_unknown_";
   const ns = pkg.metadata?.namespace ?? "_unknown_";
   const deletionTimestamp = pkg.metadata?.deletionTimestamp ?? null;
+  const istioMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Sidecar;
 
   if (invalidNamespaces.includes(ns)) {
     return req.Deny("invalid namespace");
@@ -154,8 +155,8 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
     }
 
     // The 'serviceAccount' cannot be used if `remoteHost` is not specified.
-    if (policy.serviceAccount && !policy.remoteHost) {
-      return req.Deny("serviceAccount cannot be used without specifying remoteHost");
+    if (policy.serviceAccount && !(policy.remoteHost && istioMode === Mode.Ambient)) {
+      return req.Deny("serviceAccount is only valid for Ambient mode when using remoteHost");
     }
 
     // Ensure the policy name is unique
