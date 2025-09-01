@@ -2,9 +2,9 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import * as net from "net";
-import { closeForward, getForward } from "./forward";
+import { afterAll, beforeAll, describe, expect, test } from "vitest";
+import { closeForward, getForward } from "./helpers/forward";
 
 describe("Prometheus and Alertmanager", { retry: 1 }, () => {
   let prometheusProxy: { server: net.Server; url: string };
