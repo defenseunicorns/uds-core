@@ -9,5 +9,5 @@ securityContext:
 
 service:
   enabled: true
-  type: NodePort
-  hostPort: 1000
+  # Using a Load Balancer (rather than a NodePort) avoids port conflicts on the host.
+  type: LoadBalancer
