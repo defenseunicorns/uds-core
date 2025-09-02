@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
+import { V1Container, V1PodSpec, V1ServiceSpec } from "@kubernetes/client-node";
 import { a, sdk } from "pepr";
 
 import { Policy } from "../operator/crd";
@@ -28,17 +29,28 @@ When(a.Pod)
       return request.Approve();
     }
 
-    const pod = request.Raw.spec!;
+    const podSpec = request.Raw.spec!;
+    const isValid = checkHostNamespaces(podSpec);
 
-    // If the pod is using the host network, IPC, or PID namespaces, deny the request.
-    if (pod.hostNetwork || pod.hostIPC || pod.hostPID) {
+    if (isValid) {
+      return request.Approve();
+    } else {
       return request.Deny(
         "Sharing the host namespaces is disallowed. The fields spec.hostNetwork, spec.hostIPC, and spec.hostPID must not be set to true.",
       );
     }
-
-    return request.Approve();
   });
+
+/**
+ * Checks if a pod spec is using host namespaces
+ */
+export function checkHostNamespaces(pod: V1PodSpec): boolean {
+  // If the pod is using the host network, IPC, or PID namespaces, it's invalid
+  if (pod.hostNetwork || pod.hostIPC || pod.hostPID) {
+    return false;
+  }
+  return true;
+}
 
 /**
  * This policy restricts the use of host ports in Pods.
@@ -57,18 +69,26 @@ When(a.Pod)
       return request.Approve();
     }
 
-    // Check all containers in the pod spec, and find the first one that has a host port, if any
-    const hasHostPort = containers(request)
-      .flatMap(c => c.ports || [])
-      .find(p => p.hostPort);
+    const containerList = containers(request);
+    const isValid = checkNoHostPorts(containerList);
 
-    // If the container has a host port, deny the request
-    if (hasHostPort) {
+    if (isValid) {
+      return request.Approve();
+    } else {
       return request.Deny(`Host ports are not allowed.`);
     }
-
-    return request.Approve();
   });
+
+/**
+ * Checks if any containers in the pod are using host ports
+ */
+export function checkNoHostPorts(containerList: V1Container[]): boolean {
+  // Check if any container has a host port
+  const hasHostPort = containerList.flatMap(c => c.ports || []).find(p => p.hostPort);
+
+  // If a container has a host port, it's invalid
+  return !hasHostPort;
+}
 
 /**
  * This policy restricts the use of external names in services to mitigate the risk of MITM attacks.
@@ -84,12 +104,25 @@ When(a.Service)
     if (isExempt(request, Policy.RestrictExternalNames)) {
       return request.Approve();
     }
-    if (request.Raw.spec?.type === "ExternalName") {
+
+    const isValid = checkNotExternalNameService(request.Raw.spec);
+
+    if (isValid) {
+      return request.Approve();
+    } else {
       return request.Deny("ExternalName services are not allowed.");
     }
-
-    return request.Approve();
   });
+
+/**
+ * Checks if a service is using ExternalName type
+ */
+export function checkNotExternalNameService(serviceSpec: V1ServiceSpec | undefined): boolean {
+  if (!serviceSpec) {
+    return true; // No spec means no ExternalName type
+  }
+  return serviceSpec.type !== "ExternalName";
+}
 
 /**
  * This policy prevents the use of NodePort services in Kubernetes.
@@ -107,10 +140,22 @@ When(a.Service)
     if (isExempt(request, Policy.DisallowNodePortServices)) {
       return request.Approve();
     }
-    // If the service is of type NodePort, deny the request.
-    if (request.Raw.spec?.type === "NodePort") {
+
+    const isValid = checkNotNodePortService(request.Raw.spec);
+
+    if (isValid) {
+      return request.Approve();
+    } else {
       return request.Deny("NodePort services are not allowed.");
     }
-
-    return request.Approve();
   });
+
+/**
+ * Checks if a service is using NodePort type
+ */
+export function checkNotNodePortService(serviceSpec: V1ServiceSpec | undefined): boolean {
+  if (!serviceSpec) {
+    return true; // No spec means no NodePort type
+  }
+  return serviceSpec.type !== "NodePort";
+}
