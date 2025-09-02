@@ -342,18 +342,17 @@ describe("Test validation of Package CRs", () => {
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
   });
 
-  it("denies network policies that specify remoteHost during ambient mode", async () => {
+  it("denies network policies that specify serviceAccount without a remoteHost", async () => {
     const mockReq = makeMockReq(
       {},
       [],
       [
         {
-          remoteHost: "example.com",
+          serviceAccount: "example-sa",
         },
       ],
       [],
       [],
-      true,
     );
     await validator(mockReq);
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);

@@ -19,6 +19,7 @@ components:
           - "app-tenant-package.yaml"
           - "app-ambient-authservice-tenant-package.yaml"
           - "app-curl-packages.yaml"
+          - "app-egress-ambient-package.yaml"
 
   # This is excluded from slim-dev to save some resources in package CI
   - name: egress-app
@@ -52,6 +53,9 @@ components:
       - name: curl-test
         files:
           - "app-curl.yaml"
+      - name: egress-ambient-test
+        files:
+          - "app-egress-ambient.yaml"
     images:
       - docker.io/kong/httpbin:0.2.3
       - hashicorp/http-echo:latest

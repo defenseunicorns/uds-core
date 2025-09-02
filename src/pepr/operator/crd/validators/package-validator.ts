@@ -22,6 +22,7 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
   const pkgName = pkg.metadata?.name ?? "_unknown_";
   const ns = pkg.metadata?.namespace ?? "_unknown_";
   const deletionTimestamp = pkg.metadata?.deletionTimestamp ?? null;
+  const istioMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Sidecar;
 
   if (invalidNamespaces.includes(ns)) {
     return req.Deny("invalid namespace");
@@ -73,7 +74,6 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
   }
 
   const networkPolicy = pkg.spec?.network?.allow ?? [];
-  const networkSpec = pkg.spec?.network;
 
   // Track the names of the network policies to ensure they are unique
   const networkPolicyNames = new Set<string>();
@@ -154,9 +154,9 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
       return req.Deny("remoteHost does not support wildcard domains");
     }
 
-    // Ambient is not compatible with 'remoteHost'.
-    if (policy.remoteHost && networkSpec?.serviceMesh?.mode === Mode.Ambient) {
-      return req.Deny("remoteHost not supported in ambient mode");
+    // The 'serviceAccount' cannot be used if `remoteHost` is not specified.
+    if (policy.serviceAccount && !(policy.remoteHost && istioMode === Mode.Ambient)) {
+      return req.Deny("serviceAccount is only valid for Ambient mode when using remoteHost");
     }
 
     // Ensure the policy name is unique

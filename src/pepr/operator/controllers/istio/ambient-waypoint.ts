@@ -4,12 +4,15 @@
  */
 
 import { a, K8s, kind } from "pepr";
-import { K8sGateway, UDSPackage } from "../../crd";
+import { K8sGateway, UDSPackage, K8sGatewayFromType } from "../../crd";
 import { Mode, Sso } from "../../crd/generated/package-v1alpha1";
 import { PackageStore } from "../packages/package-store";
 import { getOwnerRef } from "../utils";
-import { log } from "./istio-resources";
+import { ambientEgressNamespace, sharedEgressPkgId } from "./egress-ambient";
+import { log, getSharedAnnotationKey } from "./istio-resources";
 import { getWaypointName, matchesLabels, serviceMatchesSelector } from "./waypoint-utils";
+
+export const egressWaypointName = "egress-waypoint";
 
 // Constants for labels and configuration
 const ISTIO_WAYPOINT_LABEL = "istio.io/use-waypoint"; // Label to enable waypoint injection
@@ -500,4 +503,57 @@ export async function reconcileExistingResources(
     // Re-throw to allow the caller to handle the error
     throw error;
   }
+}
+
+// Generate Waypoint for ambient egress
+export function createEgressWaypointGateway(pkgs: Set<string>, generation: number) {
+  // Add annotations from resource
+  const annotations: Record<string, string> = {};
+  for (const pkgId of pkgs) {
+    annotations[`${getSharedAnnotationKey(pkgId)}`] = "user";
+  }
+
+  // Waypoint resource
+  const waypoint: K8sGateway = {
+    metadata: {
+      name: egressWaypointName,
+      namespace: ambientEgressNamespace,
+      annotations,
+      labels: {
+        "uds/package": sharedEgressPkgId,
+        "uds/generation": generation.toString(),
+        "istio.io/gateway-name": egressWaypointName,
+      },
+    },
+    spec: {
+      gatewayClassName: "istio-waypoint",
+      listeners: [
+        {
+          name: "mesh",
+          port: 15008,
+          protocol: "HBONE",
+          allowedRoutes: {
+            namespaces: {
+              from: K8sGatewayFromType.All,
+            },
+            kinds: [
+              {
+                group: "networking.istio.io",
+                kind: "ServiceEntry",
+              },
+            ],
+          },
+        },
+      ],
+      infrastructure: {
+        parametersRef: {
+          group: "",
+          kind: "ConfigMap",
+          name: "egress-waypoint-config",
+        },
+      },
+    },
+  };
+
+  return waypoint;
 }

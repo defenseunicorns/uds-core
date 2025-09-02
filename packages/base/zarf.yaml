@@ -65,6 +65,11 @@ components:
     import:
       path: ../../src/istio
 
+  - name: istio-egress-ambient
+    required: true
+    import:
+      path: ../../src/istio
+
   - name: istio-egress-gateway
     required: false
     import:

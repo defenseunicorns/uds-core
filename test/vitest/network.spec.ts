@@ -138,6 +138,9 @@ let curlPodName1 = "";
 let testAdminApp = "";
 let curlPodName6 = "";
 let curlPodName8 = "";
+let curlPodNameEgressAmbient1 = "";
+let curlPodNameEgressAmbient2 = "";
+let curlPodNameEgressAmbient3 = "";
 let curlPodNameEgress1 = "";
 let curlPodNameEgress2 = "";
 
@@ -147,6 +150,9 @@ beforeAll(async () => {
   testAdminApp = await getPodName("test-admin-app", "app=httpbin");
   curlPodName6 = await getPodName("curl-ns-remote-ns-1", "app=curl-pkg-remote-ns-egress");
   curlPodName8 = await getPodName("curl-ns-kube-api", "app=curl-pkg-kube-api");
+  curlPodNameEgressAmbient1 = await getPodName("egress-ambient-1", "app=curl");
+  curlPodNameEgressAmbient2 = await getPodName("egress-ambient-2", "app=curl");
+  curlPodNameEgressAmbient3 = await getPodName("egress-ambient-2", "app=another-curl");
 
   // Only fetch egress pod names if egress tests will run
   if (runEgressTests) {
@@ -402,6 +408,68 @@ describe("Network Policy Validation", () => {
       GOOGLE_CURL,
     );
     expect(success_google_response.stdout).toBe("200");
+  });
+
+  test("Egress Ambient", { concurrent: true, retry: 3 }, async () => {
+    // Wait 10 seconds for waypoint to be ready
+    await new Promise(resolve => setTimeout(resolve, 10000));
+
+    const egress_ambient_http_curl = [
+      "sh",
+      "-c",
+      `curl -s -o /dev/null -w "%{http_code}" http://api.github.com`,
+    ];
+
+    const egress_ambient_tls_curl = [
+      "sh",
+      "-c",
+      `curl -s -o /dev/null -w "%{http_code}" https://api.github.com`,
+    ];
+
+    // Validate successful tls request when using Egress for egress-ambient-1
+    const success_response_tls = await execInPod(
+      "egress-ambient-1",
+      curlPodNameEgressAmbient1,
+      "curl",
+      egress_ambient_tls_curl,
+    );
+    expect(isResponseError(success_response_tls)).toBe(false);
+
+    // Validate denied http request when using Egress for egress-ambient-1
+    const denied_response_http = await execInPod(
+      "egress-ambient-1",
+      curlPodNameEgressAmbient1,
+      "curl",
+      egress_ambient_http_curl,
+    );
+    expect(isResponseError(denied_response_http)).toBe(true);
+
+    // Validate denied request to Google when using Egress for egress-ambient-1
+    const denied_google_response_1 = await execInPod(
+      "egress-ambient-1",
+      curlPodNameEgressAmbient1,
+      "curl",
+      GOOGLE_CURL,
+    );
+    expect(isResponseError(denied_google_response_1)).toBe(true);
+
+    // Validate allowed tls request to Google when using Egress with ServiceAccount in curl for curl-pkg-egress-ambient-2
+    const success_response_google_tls = await execInPod(
+      "egress-ambient-2",
+      curlPodNameEgressAmbient2,
+      "curl",
+      GOOGLE_CURL,
+    );
+    expect(isResponseError(success_response_google_tls)).toBe(false);
+
+    // Validate denied tls request to Google when using Egress without ServiceAccount in another-curl for curl-pkg-egress-ambient-2
+    const denied_response_google_tls = await execInPod(
+      "egress-ambient-2",
+      curlPodNameEgressAmbient3,
+      "curl",
+      GOOGLE_CURL,
+    );
+    expect(isResponseError(denied_response_google_tls)).toBe(true);
   });
 
   (runEgressTests ? test.concurrent : test.concurrent.skip)("Egress Gateway", async () => {

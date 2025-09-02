@@ -212,3 +212,23 @@ export async function createEvent(
     reportingInstance: process.env.HOSTNAME,
   });
 }
+
+// Validate that namespace exists, optionally allowing for missing namespace
+export async function validateNamespace(
+  namespace: string,
+  missingAllowed?: boolean,
+): Promise<kind.Namespace | null> {
+  try {
+    return await K8s(kind.Namespace).Get(namespace);
+  } catch (e) {
+    if (e?.status == 404) {
+      if (missingAllowed) {
+        return null;
+      } else {
+        throw e;
+      }
+    } else {
+      throw e;
+    }
+  }
+}
