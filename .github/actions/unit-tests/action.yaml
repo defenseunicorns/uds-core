@@ -1,0 +1,15 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+name: unit-tests
+description: "Run all Core Unit Tests"
+
+runs:
+  using: composite
+  steps:
+    - name: Environment setup
+      uses: ./.github/actions/setup
+
+    - name: Run Formatting Checks
+      run: uds run test:unit-tests
+      shell: bash

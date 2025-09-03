@@ -63,8 +63,10 @@ jobs:
   unit-tests:
     runs-on: ubuntu-latest
     steps:
-      - name: "Run all Core unit tests"
-        run: uds run test:unit-tests
+      - name: Checkout repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - name: unit-tests
+        uses: ./.github/actions/unit-tests
 
   # This job checks if there are changes in specific paths source packages.
   check-paths:
