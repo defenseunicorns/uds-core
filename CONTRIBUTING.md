@@ -97,10 +97,10 @@ Make the changes to add the new feature, bug fix, or other change necessary. Kee
 When you are ready to test locally you can run the same tests as CI using the below UDS commands:
 
 ```console
-# Lightweight validations + Unit Tests
+# Lightweight validations
 uds run test-uds-core
 
-# Unit Tests Only
+# Unit Tests
 uds run test:unit-tests
 
 # Full e2e tests (run in CI)
