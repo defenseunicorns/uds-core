@@ -4,7 +4,7 @@
 tasks:
   - name: validate
     actions:
-      - cmd: "npx vitest src/pepr"
+      - description: "Run Pepr Validate"
   - name: gen-crds
     description: "Generate CRDS, requires a running kubernetes cluster"
     actions:

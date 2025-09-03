@@ -121,6 +121,13 @@ tasks:
       - description: remove test resources
         task: test-resources:remove
 
+  - name: unit-tests
+    description: "Run all unit tests for uds-core"
+    actions:
+      - cmd: |
+          npm ci
+          npx vitest run
+
   - name: uds-core
     description: "Build and test UDS Core"
     inputs:
