@@ -480,6 +480,18 @@
         "required": ["name", "value"]
       }
     },
+    "extraVolumes": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "extraVolumeMounts": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
     "themeCustomizations": {
       "type": "object",
       "properties": {
