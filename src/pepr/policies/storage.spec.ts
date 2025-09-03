@@ -50,9 +50,8 @@ describe("Storage Validation Tests", () => {
 
     it("should handle unnamed volumes", () => {
       const volumes = [{ configMap: {} }] as V1Volume[];
-      const [isValid, invalidVolume] = validateVolumeTypes(volumes);
-      expect(isValid).toBe(false);
-      expect(invalidVolume).toEqual({ name: "unnamed", type: "configMap" });
+      const [isValid] = validateVolumeTypes(volumes);
+      expect(isValid).toBe(true);
     });
   });
 
@@ -115,9 +114,8 @@ describe("Storage Validation Tests", () => {
         },
       ];
 
-      const [isValid, invalidVolume] = validateHostPathVolumes(volumes, containers);
-      expect(isValid).toBe(false);
-      expect(invalidVolume).toEqual({ name: "unnamed" });
+      const [isValid] = validateHostPathVolumes(volumes, containers);
+      expect(isValid).toBe(true);
     });
   });
 });

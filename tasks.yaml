@@ -159,6 +159,7 @@ tasks:
   - name: test-uds-core
     description: "Build and test UDS Core"
     actions:
+      - task: test:unit-tests
       - task: test:uds-core
 
   - name: test-uds-core-multi-node

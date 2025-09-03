@@ -33,7 +33,7 @@ When(a.Pod)
 
     if (!isValid && invalidVolume) {
       return request.Deny(
-        `Volume '${invalidVolume.name}' has a disallowed volume type of '${invalidVolume.type}'.`,
+        `Volume ${invalidVolume.name} has a disallowed volume type of '${invalidVolume.type}'.`,
       );
     }
 
@@ -61,18 +61,6 @@ export function validateVolumeTypes(
 
   // Check all volumes in the pod spec, if any
   for (const volume of volumes) {
-    // Check for unnamed volume first
-    if (!volume.name) {
-      const volumeType = Object.keys(volume).find(key => key !== "name") || "unknown";
-      return [
-        false,
-        {
-          name: "unnamed",
-          type: volumeType,
-        },
-      ];
-    }
-
     // Get the volume type, which will be the only key in the volume object other than "name"
     const volumeType = Object.keys(volume).find(key => key !== "name") || "unknown";
 
@@ -130,13 +118,6 @@ export function validateHostPathVolumes(
   containers: V1Container[],
 ): [boolean, { name: string } | null] {
   for (const volume of volumes) {
-    // Check for unnamed volume mount first
-    const hasUnnamedMount = containers.some(c => (c.volumeMounts || []).some(mount => !mount.name));
-
-    if (!volume.name || hasUnnamedMount) {
-      return [false, { name: "unnamed" }];
-    }
-
     // If the volume is a hostPath
     if (volume.hostPath) {
       // Check all mounts in any container for this volume and verify they are readOnly
