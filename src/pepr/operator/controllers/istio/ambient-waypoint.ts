@@ -313,7 +313,14 @@ export async function cleanupWaypointLabels(
     await cleanupServicesWithWaypointLabel(namespace, waypointName);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    log.error({ errorMessage }, "Failed to clean up waypoint labels");
+    log.error(
+      {
+        namespace,
+        waypointName,
+        error: errorMessage,
+      },
+      "Failed to clean up waypoint labels",
+    );
     // Don't throw here to allow other cleanup to continue
   }
 }
