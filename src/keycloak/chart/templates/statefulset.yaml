@@ -109,6 +109,9 @@ spec:
             {{- else }}
             - "--features=preview"
             {{- end }}
+            {{- if .Values.truststorePaths }}
+            - "--truststore-paths={{ join "," .Values.truststorePaths }}"
+            {{- end }}
             - "--spi-authentication-sessions--map--auth-sessions-limit={{ .Values.realmConfig.maxInFlightLoginsPerUser | default 300 }}"
             - "--proxy-headers=xforwarded"
             - "--http-enabled=true"
@@ -292,6 +295,9 @@ spec:
               readOnly: true
             - name: client-secrets
               mountPath: /var/run/secrets/uds/client-secrets
+            {{- with .Values.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
       enableServiceLinks: {{ .Values.enableServiceLinks }}
       restartPolicy: {{ .Values.restartPolicy }}
       {{- with .Values.nodeSelector }}
@@ -372,4 +378,7 @@ spec:
                       path: tc.txt
               {{- end }}
               {{- end }}
+        {{- end }}
+        {{- with .Values.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
         {{- end }}
