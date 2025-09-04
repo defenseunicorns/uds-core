@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.51.1](https://github.com/defenseunicorns/uds-core/compare/v0.51.0...v0.51.1) (2025-09-04)
+
+
+### Bug Fixes
+
+* avoid port conflicts on the host ([#1870](https://github.com/defenseunicorns/uds-core/issues/1870)) ([09a1364](https://github.com/defenseunicorns/uds-core/commit/09a1364ab26270ea9ee621aff178b92bad2004cb))
+
+
+### Miscellaneous
+
+* **deps:** update pepr to v0.54.0 ([#1879](https://github.com/defenseunicorns/uds-core/issues/1879)) ([f1463e7](https://github.com/defenseunicorns/uds-core/commit/f1463e7e067482b69651da6d53d5aba1864a9fa1))
+
 ## [0.51.0](https://github.com/defenseunicorns/uds-core/compare/v0.50.0...v0.51.0) (2025-09-02)
 
 
