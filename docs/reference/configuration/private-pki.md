@@ -125,22 +125,28 @@ This approach replaces the system CA bundle for all Loki components. Ensure your
 
 ### Keycloak
 
-Keycloak needs to validate certificates when connecting to external identity providers or LDAP servers. Configure Keycloak to trust private certificates using its built-in truststore mechanism:
+Keycloak needs to validate certificates when connecting to external identity providers or LDAP servers. Configure Keycloak to trust private certificates using additional truststore paths:
 
 ```yaml
 values:
   - path: extraVolumeMounts
     value:
       - name: ca-certs
-        mountPath: /opt/keycloak/conf/truststores/private-ca
+        mountPath: /tmp/ca-certs
         readOnly: true
   - path: extraVolumes
     value:
       - name: ca-certs
         configMap:
           name: private-ca
+  - path: truststorePaths
+    value:
+      - "/tmp/ca-certs"
 ```
 
-Keycloak automatically scans the `conf/truststores` directory for certificate files and adds them to its system truststore, preserving existing Java default certificates.
+This configuration:
+- Mounts your private CA ConfigMap to `/tmp/ca-certs`
+- Configures Keycloak to scan this directory using the `--truststore-paths` startup argument
+- Preserves Keycloak's default truststore while adding your private certificates
 
 For additional details on Keycloak truststore configuration, see the [upstream Keycloak documentation](https://www.keycloak.org/server/keycloak-truststore#_configuring_the_system_truststore).
