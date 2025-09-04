@@ -97,7 +97,7 @@ export async function purgeOrphans<T extends GenericClass>(
 
   for (const resource of resources.items) {
     if (resource.metadata?.labels?.["uds/generation"] !== generation) {
-      log.debug(resource, `Deleting orphaned ${resource.kind!} ${resource.metadata!.name}`);
+      log.debug({ resource }, `Deleting orphaned ${resource.kind!} ${resource.metadata!.name}`);
       await K8s(kind).Delete(resource);
     }
   }
@@ -141,8 +141,8 @@ export async function retryWithDelay<T>(
         }
       }
       log.warn(
-        `Attempt ${attempt} of ${fn.name || "anonymous function"} failed, retrying in ${delayMs}ms.`,
         { error },
+        `Attempt ${attempt} of ${fn.name || "anonymous function"} failed, retrying in ${delayMs}ms.`,
       );
       await new Promise(resolve => setTimeout(resolve, delayMs));
     }
