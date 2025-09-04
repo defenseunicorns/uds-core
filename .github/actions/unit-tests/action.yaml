@@ -10,6 +10,6 @@ runs:
     - name: Environment setup
       uses: ./.github/actions/setup
 
-    - name: Run Formatting Checks
+    - name: Run Unit Tests
       run: uds run test:unit-tests
       shell: bash
