@@ -11,3 +11,4 @@ service:
   enabled: true
   type: NodePort
   hostPort: 1000
+  nodePort: 0
