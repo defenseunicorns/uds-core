@@ -1,0 +1,27 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+
+suite: Keycloak - truststorePaths
+templates:
+  - statefulset.yaml
+
+tests:
+  - it: should not render truststore-paths argument when not configured
+    template: statefulset.yaml
+    asserts:
+      - notMatchRegex:
+          path: spec.template.spec.containers[0].args
+          pattern: "--truststore-paths"
+
+  - it: should render truststore-paths argument when configured
+    set:
+      truststorePaths:
+        - "/tmp/ca-certs"
+        - "/opt/custom-certs"
+    template: statefulset.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: "--truststore-paths=/tmp/ca-certs,/opt/custom-certs"

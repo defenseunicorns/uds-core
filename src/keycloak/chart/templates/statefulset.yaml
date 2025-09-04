@@ -109,6 +109,9 @@ spec:
             {{- else }}
             - "--features=preview"
             {{- end }}
+            {{- if .Values.truststorePaths }}
+            - "--truststore-paths={{ join "," .Values.truststorePaths }}"
+            {{- end }}
             - "--spi-authentication-sessions--map--auth-sessions-limit={{ .Values.realmConfig.maxInFlightLoginsPerUser | default 300 }}"
             - "--proxy-headers=xforwarded"
             - "--http-enabled=true"

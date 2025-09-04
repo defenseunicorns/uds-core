@@ -459,6 +459,12 @@
       "type": "array",
       "items": {}
     },
+    "truststorePaths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "topologySpreadConstraints": {
       "type": "null"
     },
