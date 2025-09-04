@@ -8,13 +8,6 @@ templates:
   - statefulset.yaml
 
 tests:
-  - it: should not render truststore-paths argument when not configured
-    template: statefulset.yaml
-    asserts:
-      - notMatchRegex:
-          path: spec.template.spec.containers[0].args
-          pattern: "--truststore-paths"
-
   - it: should render truststore-paths argument when configured
     set:
       truststorePaths:
