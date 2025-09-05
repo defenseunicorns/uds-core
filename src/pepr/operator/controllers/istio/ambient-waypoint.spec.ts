@@ -430,11 +430,14 @@ describe("cleanupWaypointLabels", () => {
 
     await cleanupWaypointLabels(namespace, waypointName);
 
-    expect(mockLog.error).toHaveBeenCalledWith({
-      namespace,
-      waypointName,
-      error: "Test error",
-    }, "Failed to clean up waypoint labels");
+    expect(mockLog.error).toHaveBeenCalledWith(
+      {
+        namespace,
+        waypointName,
+        error: "Test error",
+      },
+      "Failed to clean up waypoint labels",
+    );
   });
 
   it("should only remove matching waypoint labels", async () => {
@@ -517,17 +520,25 @@ describe("createWaypointGateway", () => {
       `Creating waypoint gateway for package: test-ns/test-pkg`,
     );
 
-    expect(mockLog.info).toHaveBeenNthCalledWith(2,{
-      namespace: "test-ns",
-      name: waypointName,
-      gatewayClassName: "istio-waypoint",
-      ownerReferences: expect.stringContaining('"kind":"Package"'),
-    }, "Applying waypoint gateway");
+    expect(mockLog.info).toHaveBeenNthCalledWith(
+      2,
+      {
+        namespace: "test-ns",
+        name: waypointName,
+        gatewayClassName: "istio-waypoint",
+        ownerReferences: expect.stringContaining('"kind":"Package"'),
+      },
+      "Applying waypoint gateway",
+    );
 
-    expect(mockLog.info).toHaveBeenNthCalledWith(3,  {
-      namespace: "test-ns",
-      waypointName,
-    }, "Successfully created waypoint gateway");
+    expect(mockLog.info).toHaveBeenNthCalledWith(
+      3,
+      {
+        namespace: "test-ns",
+        waypointName,
+      },
+      "Successfully created waypoint gateway",
+    );
   });
 
   it("should throw an error when package metadata is missing", async () => {
@@ -558,13 +569,13 @@ describe("createWaypointGateway", () => {
 
     // Verify error logging
     expect(mockLog.error).toHaveBeenCalledWith(
-       expect.objectContaining({
+      expect.objectContaining({
         namespace: "test-ns",
         waypointName,
         errorType: "object",
         errorDetails: testError,
       }),
-      "Error creating waypoint gateway"
+      "Error creating waypoint gateway",
     );
   });
 
@@ -583,13 +594,13 @@ describe("createWaypointGateway", () => {
 
     // Verify error logging
     expect(mockLog.error).toHaveBeenCalledWith(
-       expect.objectContaining({
+      expect.objectContaining({
         namespace: "test-ns",
         waypointName,
         errorType: "string",
         errorDetails: testError,
       }),
-      "Error creating waypoint gateway"
+      "Error creating waypoint gateway",
     );
   });
 });
@@ -615,7 +626,7 @@ describe("reconcileExistingResources", () => {
   it("should warn and return if no namespace in package", async () => {
     const pkg = { ...createMockPackage("test-pkg"), metadata: {} };
     await reconcileExistingResources(pkg, ssoClient, waypointName);
-    expect(mockLog.warn).toHaveBeenCalledWith({pkg},"No namespace found in package metadata");
+    expect(mockLog.warn).toHaveBeenCalledWith({ pkg }, "No namespace found in package metadata");
     expect(mockGet).not.toHaveBeenCalled();
     expect(mockPatch).not.toHaveBeenCalled();
   });
@@ -670,8 +681,8 @@ describe("reconcileExistingResources", () => {
 
     await reconcileExistingResources(pkg, ssoClient, waypointName);
     expect(mockLog.error).toHaveBeenCalledWith(
-      {"errorMessage": "patch failed"},
-      `Service reconciliation failed for ${pkg.metadata?.namespace}`
+      { errorMessage: "patch failed" },
+      `Service reconciliation failed for ${pkg.metadata?.namespace}`,
     );
     // Pod patch still called
     expect(mockPatch).toHaveBeenCalledTimes(2);
@@ -689,8 +700,8 @@ describe("reconcileExistingResources", () => {
 
     await reconcileExistingResources(pkg, ssoClient, waypointName);
     expect(mockLog.info).toHaveBeenCalledWith(
-      {"errorMessage": "pod patch failed"},
-      `Pod reconciliation failed for ${pkg.metadata?.namespace}`
+      { errorMessage: "pod patch failed" },
+      `Pod reconciliation failed for ${pkg.metadata?.namespace}`,
     );
     expect(mockPatch).toHaveBeenCalledTimes(2);
   });
@@ -702,7 +713,7 @@ describe("reconcileExistingResources", () => {
       "get failed",
     );
     expect(mockLog.error).toHaveBeenCalledWith(
-      {"errorMessage": "get failed"},
+      { errorMessage: "get failed" },
       "Error in reconcileExistingResources()",
     );
   });

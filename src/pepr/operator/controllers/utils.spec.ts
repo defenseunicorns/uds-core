@@ -106,7 +106,7 @@ describe("retryWithDelay", () => {
     expect(mockLogger.warn).toHaveBeenCalledTimes(1); // Warned once for the retry
     expect(mockLogger.warn).toHaveBeenCalledWith(
       expect.objectContaining({ error: expect.any(String) }),
-      expect.stringContaining("Attempt 1 of spy failed, retrying in 100ms.")
+      expect.stringContaining("Attempt 1 of spy failed, retrying in 100ms."),
     );
   });
 
@@ -122,8 +122,8 @@ describe("retryWithDelay", () => {
     expect(mockFn).toHaveBeenCalledTimes(2); // Called twice (1 fail + 1 success)
     expect(mockLogger.warn).toHaveBeenCalledTimes(1);
     expect(mockLogger.warn).toHaveBeenCalledWith(
-            expect.objectContaining({ error: "Unknown Error" }),
-      expect.stringContaining("Attempt 1 of spy failed, retrying in 100ms.")
+      expect.objectContaining({ error: "Unknown Error" }),
+      expect.stringContaining("Attempt 1 of spy failed, retrying in 100ms."),
     );
   });
 
@@ -136,11 +136,11 @@ describe("retryWithDelay", () => {
     expect(mockFn).toHaveBeenCalledTimes(3); // Retries up to the limit
     expect(mockLogger.warn).toHaveBeenCalledTimes(2); // Logged for each failure except the final one
     expect(mockLogger.warn).toHaveBeenCalledWith(
-            expect.objectContaining({ error: error.message }),
-      expect.stringContaining("Attempt 1 of spy failed, retrying in 100ms.")
+      expect.objectContaining({ error: error.message }),
+      expect.stringContaining("Attempt 1 of spy failed, retrying in 100ms."),
     );
     expect(mockLogger.warn).toHaveBeenCalledWith(
-            expect.objectContaining({ error: error.message }),
+      expect.objectContaining({ error: error.message }),
       expect.stringContaining("Attempt 2 of spy failed, retrying in 100ms."),
     );
   });
