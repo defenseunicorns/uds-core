@@ -145,9 +145,12 @@ export async function purgeAuthserviceClients(
     const fullWaypointName = getWaypointName(client.clientId);
     if (!newClient) continue;
 
-    log.info(`Updating authservice client ${client.clientId}`, {
-      reason: meshModeChanged ? "mesh_mode_change" : "selector_changed",
-    });
+    log.info(
+      {
+        reason: meshModeChanged ? "mesh_mode_change" : "selector_changed",
+      },
+      `Updating authservice client ${client.clientId}`,
+    );
 
     if (pkg.metadata?.namespace) {
       await cleanupWaypointLabels(pkg.metadata.namespace, fullWaypointName);
@@ -198,7 +201,7 @@ export async function updateConfig(event: AuthServiceEvent) {
     // Update the in-memory config immediately
     setAuthserviceConfig(config);
   } catch (e) {
-    log.error("Failed to build in memory authservice secret for event", event, e);
+    log.error({ event, e }, "Failed to build in memory authservice secret for event");
     throw e;
   } finally {
     // unlock config

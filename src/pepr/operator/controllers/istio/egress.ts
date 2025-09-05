@@ -184,7 +184,7 @@ export async function updateInMemoryPackageMap(
       removeMapResources(inMemoryPackageMap, pkgId);
     }
   } catch (e) {
-    log.error("Failed to update in memory egress package map for event", action, e);
+    log.error({ action, e }, "Failed to update in memory egress package map for event");
     throw e;
   } finally {
     // unlock inMemoryPackageMap and notify next waiter
@@ -232,7 +232,7 @@ export async function updateInMemoryAmbientPackageMap(
       removeMapResources(inMemoryAmbientPackageMap, pkgId);
     }
   } catch (e) {
-    log.error("Failed to update in memory ambient package map for event", action, e);
+    log.error({ action, e }, "Failed to update in memory ambient package map for event");
     throw e;
   } finally {
     // unlock inMemoryAmbientPackages and notify next waiter
@@ -413,7 +413,7 @@ export function removeMapResources(packageMap: PackageHostMap, pkgId: string) {
   if (packageMap[pkgId]) {
     delete packageMap[pkgId];
   } else {
-    log.debug("No resources found for package", pkgId);
+    log.debug({ pkgId }, "No resources found for package");
   }
 }
 

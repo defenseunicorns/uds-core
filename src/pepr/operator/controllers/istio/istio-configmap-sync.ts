@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
+import yaml from "js-yaml";
 import { K8s, kind } from "pepr";
 import { Component, setupLogger } from "../../../logger";
-import yaml from "js-yaml";
 import { reloadPods } from "../secrets/reload-utils";
 
 export const TENANT_GATEWAY_NAMESPACE = "istio-tenant-gateway";
@@ -41,10 +41,10 @@ export async function restartGatewayPods(istioConfig: kind.ConfigMap): Promise<v
       const tenantGatewayPods = await K8s(kind.Pod).InNamespace(TENANT_GATEWAY_NAMESPACE).Get();
       const adminGatewayPods = await K8s(kind.Pod).InNamespace(ADMIN_GATEWAY_NAMESPACE).Get();
 
-      log.info("Restarting {} pods to apply new configuration", TENANT_GATEWAY_NAMESPACE);
+      log.info({ TENANT_GATEWAY_NAMESPACE }, "Restarting {} pods to apply new configuration");
       await reloadPods(TENANT_GATEWAY_NAMESPACE, tenantGatewayPods.items, RESTART_REASON, log);
 
-      log.info("Restarting {} pods to apply new configuration", ADMIN_GATEWAY_NAMESPACE);
+      log.info({ ADMIN_GATEWAY_NAMESPACE }, "Restarting {} pods to apply new configuration");
       await reloadPods(ADMIN_GATEWAY_NAMESPACE, adminGatewayPods.items, RESTART_REASON, log);
     }
   }

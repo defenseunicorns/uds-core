@@ -302,10 +302,13 @@ export async function generateAuthorizationPolicies(
           policies.push(authPolicy);
           log.trace(`Generated waypoint authpol: ${authPolicy.metadata?.name}`);
         } else {
-          log.warn(`No exposed port found for waypoint policy`, {
-            selector: rule.selector,
-            package: pkgName,
-          });
+          log.warn(
+            {
+              selector: rule.selector,
+              package: pkgName,
+            },
+            `No exposed port found for waypoint policy`,
+          );
         }
       } else {
         // Regular expose rule processing

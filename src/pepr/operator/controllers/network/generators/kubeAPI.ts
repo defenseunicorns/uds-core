@@ -45,9 +45,12 @@ export async function initAPIServerCIDR() {
         await updateAPIServerCIDR(svc, slice);
       }
     } catch (error) {
-      log.error("Failed to initialize API Server CIDR for KubeAPI generated network policies", {
-        err: JSON.stringify(error),
-      });
+      log.error(
+        {
+          err: JSON.stringify(error),
+        },
+        "Failed to initialize API Server CIDR for KubeAPI generated network policies",
+      );
     }
   }
 }

@@ -34,13 +34,16 @@
         ]
       }
     },
-    "additionalWebhooks": [{
-      "failurePolicy": "Ignore",
-      "namespace": "istio-system"
-    }]
+    "additionalWebhooks": [
+      {
+        "failurePolicy": "Ignore",
+        "namespace": "istio-system"
+      }
+    ]
   },
   "scripts": {
-    "k3d-setup": "k3d cluster delete pepr-dev && k3d cluster create pepr-dev --k3s-arg '--debug@server:0'"
+    "k3d-setup": "k3d cluster delete pepr-dev && k3d cluster create pepr-dev --k3s-arg '--debug@server:0'",
+    "test:unit": "vitest run src/pepr/"
   },
   "dependencies": {
     "pepr": "0.54.0"
