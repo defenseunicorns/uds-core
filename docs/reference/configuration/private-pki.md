@@ -47,7 +47,7 @@ Authservice can be configured with an additional trusted CA bundle when UDS Core
 
 To configure, set `UDS_CA_CERT` as an environment variable with a Base64 encoded PEM formatted CA bundle that can be used to verify the certificates of the tenant gateway.
 
-See [trusted-ca.md](./single-sign-on/trusted-ca.md) for complete Authservice configuration details.
+See [trusted CA SSO doc](/reference/configuration/single-sign-on/trusted-ca) for complete Authservice configuration details.
 
 ### Grafana
 
