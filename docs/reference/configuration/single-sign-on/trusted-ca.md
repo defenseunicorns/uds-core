@@ -6,7 +6,7 @@ Authservice can be configured with additional trusted certificate bundle in case
 
 To configure, set `UDS_CA_CERT` as an environment variable with a Base64 encoded PEM formatted CA bundle that can be used to verify the certificates of the tenant gateway.
 
-Alternatively you can specify the `caCert` override in your `uds-bundle.yaml`:
+Alternatively you can specify the `CA_CERT` variable in your `uds-config.yaml`:
 
 ```yaml
 variables:
