@@ -4,6 +4,10 @@ title: Private Certificate Authority (CA) Configuration
 
 Some UDS Core components need to connect to external services over TLS. By default, they trust the well-known public certificate authorities (CAs) that come with their container images. If your environment uses self-signed certificates or certificates issued by a private CA, these components will not trust those endpoints unless you explicitly provide the CA bundle.
 
+Example scenarios include:
+- **Your domain cert is self-signed or private PKI**: Grafana would need the CA for SSO to work with Keycloak
+- **External dependencies use private PKI**: Velero, Loki (object storage) and potentially Grafana/Keycloak for databases, data sources, external identity providers
+
 This guide explains how to configure UDS Core components to recognize and trust your private CA certificates. Not every component requires this configuration — only those that make outbound TLS connections (for example, to identity providers, object storage, or other HTTPS endpoints).
 
 :::tip[Who should use this guide?]
