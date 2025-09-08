@@ -6,7 +6,7 @@ Some UDS Core components need to connect to external services over TLS. By defau
 
 This guide explains how to configure UDS Core components to recognize and trust your private CA certificates. Not every component requires this configuration — only those that make outbound TLS connections (for example, to identity providers, object storage, or other HTTPS endpoints).
 
-:::tip Who should use this guide?
+:::tip[Who should use this guide?]
 If your UDS Core environment connects to services using **self-signed certificates** or certificates issued by a **private CA**, you'll need to follow this configuration.
 If you only use certificates from public, trusted CAs (e.g., Let's Encrypt, DigiCert), you do **not** need these steps.
 :::
