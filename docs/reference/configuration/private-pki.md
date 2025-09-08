@@ -11,7 +11,7 @@ If your UDS Core environment connects to services using **self-signed certificat
 If you only use certificates from public, trusted CAs (e.g., Let's Encrypt, DigiCert), you do **not** need these steps.
 :::
 
-:::warning Security Consideration
+:::caution[Security Consideration]
 Mounting additional volumes and certificates can introduce minimal security risks by expanding the attack surface. Only mount trusted CA certificates from verified sources and regularly audit your certificate configurations.
 :::
 
