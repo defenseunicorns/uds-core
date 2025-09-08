@@ -1,0 +1,46 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+
+suite: Keycloak - extraVolumes and extraVolumeMounts
+templates:
+  - statefulset.yaml
+
+tests:
+  - it: should not render extra volumes or mounts when not configured
+    template: statefulset.yaml
+    asserts:
+      - notContains:
+          path: spec.template.spec.volumes
+          content:
+            name: ca-certs
+      - notContains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: ca-certs
+
+  - it: should render extraVolumes and extraVolumeMounts when configured
+    set:
+      extraVolumes:
+        - name: ca-certs
+          configMap:
+            name: private-ca
+      extraVolumeMounts:
+        - name: ca-certs
+          mountPath: /opt/keycloak/conf/truststores/private-ca
+          readOnly: true
+    template: statefulset.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: ca-certs
+            configMap:
+              name: private-ca
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: ca-certs
+            mountPath: /opt/keycloak/conf/truststores/private-ca
+            readOnly: true
