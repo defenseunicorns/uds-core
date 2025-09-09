@@ -4,17 +4,9 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  PodMonitorEndpoint,
-  PodMonitorScheme,
-  PrometheusPodMonitor,
-  PrometheusServiceMonitor,
-  ServiceMonitorEndpoint,
-  ServiceMonitorScheme,
-} from "../operator/crd";
+import { PrometheusPodMonitor, PrometheusServiceMonitor } from "../operator/crd";
 import { FallbackScrapeProtocol } from "../operator/crd/generated/prometheus/servicemonitor-v1";
 import { mutatePodMonitor, mutateServiceMonitor } from "./index";
-import { isIstioInjected } from "./utils";
 
 vi.mock("./utils", () => ({
   isIstioInjected: vi.fn().mockResolvedValue(true), // Default to true
@@ -78,80 +70,15 @@ describe("mutateServiceMonitor", () => {
     );
   });
 
-  it("should not modify custom scrapeClass that is not istio-certs or exempt", async () => {
-    serviceMonitor.Raw.spec!.scrapeClass = "custom-class";
+  it("should not redefine fallbackScrapeProtocol if already defined", async () => {
+    // Set a different protocol value
+    serviceMonitor.Raw.spec!.fallbackScrapeProtocol = FallbackScrapeProtocol.OpenMetricsText100;
 
     await mutateServiceMonitor(serviceMonitor);
 
-    expect(serviceMonitor.Raw.spec!.scrapeClass).toBe("custom-class");
-  });
-
-  it("should remove scrapeClass when skip annotation is present", async () => {
-    serviceMonitor.Raw.spec!.scrapeClass = "istio-certs";
-    serviceMonitor.Raw.metadata!.annotations!["uds/skip-mutate"] = "true";
-
-    await mutateServiceMonitor(serviceMonitor);
-
-    expect(serviceMonitor.Raw.spec!.scrapeClass).toBeUndefined();
-  });
-
-  it("should remove scrapeClass when specific skip-sm-mutate annotation is present", async () => {
-    serviceMonitor.Raw.spec!.scrapeClass = "istio-certs";
-    serviceMonitor.Raw.metadata!.annotations!["uds/skip-sm-mutate"] = "true";
-
-    await mutateServiceMonitor(serviceMonitor);
-
-    expect(serviceMonitor.Raw.spec!.scrapeClass).toBeUndefined();
-  });
-
-  it("should remove scrapeClass when it equals exempt", async () => {
-    serviceMonitor.Raw.spec!.scrapeClass = "exempt";
-
-    await mutateServiceMonitor(serviceMonitor);
-
-    expect(serviceMonitor.Raw.spec!.scrapeClass).toBeUndefined();
-  });
-
-  it("should remove istio TLS config and set scheme to HTTP for istio-certs scrapeClass", async () => {
-    const endpoint: ServiceMonitorEndpoint = {
-      port: "http",
-      tlsConfig: {
-        caFile: "/etc/prom-certs/root-cert.pem",
-        certFile: "/etc/prom-certs/cert-chain.pem",
-        keyFile: "/etc/prom-certs/key.pem",
-      },
-      scheme: ServiceMonitorScheme.HTTPS,
-    };
-
-    serviceMonitor.Raw.spec!.scrapeClass = "istio-certs";
-    serviceMonitor.Raw.spec!.endpoints = [endpoint];
-
-    await mutateServiceMonitor(serviceMonitor);
-
-    expect(serviceMonitor.Raw.spec!.scrapeClass).toBeUndefined();
-    expect(serviceMonitor.Raw.spec!.endpoints![0].tlsConfig).toBeUndefined();
-    expect(serviceMonitor.Raw.spec!.endpoints![0].scheme).toBe(ServiceMonitorScheme.HTTP);
-  });
-
-  it("should not modify TLS config or scheme that is not Istio TLS", async () => {
-    const endpoint: ServiceMonitorEndpoint = {
-      port: "https",
-      tlsConfig: {
-        caFile: "/etc/custom-certs/ca.pem",
-        certFile: "/etc/custom-certs/cert.pem",
-        keyFile: "/etc/custom-certs/key.pem",
-      },
-      scheme: ServiceMonitorScheme.HTTPS,
-    };
-
-    serviceMonitor.Raw.spec!.scrapeClass = "istio-certs";
-    serviceMonitor.Raw.spec!.endpoints = [endpoint];
-
-    await mutateServiceMonitor(serviceMonitor);
-
-    expect(serviceMonitor.Raw.spec!.scrapeClass).toBeUndefined();
-    expect(serviceMonitor.Raw.spec!.endpoints![0].tlsConfig).toEqual(endpoint.tlsConfig);
-    expect(serviceMonitor.Raw.spec!.endpoints![0].scheme).toBe(ServiceMonitorScheme.HTTPS);
+    expect(serviceMonitor.Raw.spec!.fallbackScrapeProtocol).toBe(
+      FallbackScrapeProtocol.OpenMetricsText100,
+    );
   });
 });
 
@@ -185,75 +112,14 @@ describe("mutatePodMonitor", () => {
     );
   });
 
-  it("should not modify custom scrapeClass that is not istio-certs or exempt", async () => {
-    podMonitor.Raw.spec!.scrapeClass = "custom-class";
+  it("should not redefine fallbackScrapeProtocol if already defined", async () => {
+    // Set a different protocol value
+    podMonitor.Raw.spec!.fallbackScrapeProtocol = FallbackScrapeProtocol.OpenMetricsText100;
 
     await mutatePodMonitor(podMonitor);
 
-    expect(podMonitor.Raw.spec!.scrapeClass).toBe("custom-class");
-  });
-
-  it("should remove scrapeClass when skip annotation is present", async () => {
-    podMonitor.Raw.spec!.scrapeClass = "istio-certs";
-    podMonitor.Raw.metadata!.annotations!["uds/skip-mutate"] = "true";
-
-    await mutatePodMonitor(podMonitor);
-
-    expect(podMonitor.Raw.spec!.scrapeClass).toBeUndefined();
-  });
-
-  it("should remove scrapeClass when specific skip-pm-mutate annotation is present", async () => {
-    podMonitor.Raw.spec!.scrapeClass = "istio-certs";
-    podMonitor.Raw.metadata!.annotations!["uds/skip-pm-mutate"] = "true";
-
-    await mutatePodMonitor(podMonitor);
-
-    expect(podMonitor.Raw.spec!.scrapeClass).toBeUndefined();
-  });
-
-  it("should remove scrapeClass when it equals exempt", async () => {
-    podMonitor.Raw.spec!.scrapeClass = "exempt";
-
-    await mutatePodMonitor(podMonitor);
-
-    expect(podMonitor.Raw.spec!.scrapeClass).toBeUndefined();
-  });
-
-  it("should set scheme to HTTP for istio-certs scrapeClass", async () => {
-    const endpoint: PodMonitorEndpoint = {
-      port: "http",
-      scheme: PodMonitorScheme.HTTPS,
-    };
-
-    podMonitor.Raw.spec!.scrapeClass = "istio-certs";
-    podMonitor.Raw.spec!.podMetricsEndpoints = [endpoint];
-
-    await mutatePodMonitor(podMonitor);
-
-    expect(podMonitor.Raw.spec!.scrapeClass).toBeUndefined();
-    expect(podMonitor.Raw.spec!.podMetricsEndpoints![0].scheme).toBe(PodMonitorScheme.HTTP);
-  });
-
-  it("should remove scrapeClass but not modify scheme if not in istio-injected namespace", async () => {
-    // Set up test data
-    const endpoint: PodMonitorEndpoint = {
-      port: "http",
-      scheme: PodMonitorScheme.HTTPS,
-    };
-
-    podMonitor.Raw.spec!.scrapeClass = "istio-certs";
-    podMonitor.Raw.spec!.podMetricsEndpoints = [endpoint];
-
-    // Override the isIstioInjected mock to return false for this test
-    vi.mocked(isIstioInjected).mockResolvedValueOnce(false);
-
-    // Run the function with our mocked dependency
-    await mutatePodMonitor(podMonitor);
-
-    // The scrapeClass should be removed
-    expect(podMonitor.Raw.spec!.scrapeClass).toBeUndefined();
-
-    // But the scheme should remain HTTPS (not modified) since we skipped due to no istio-injection
-    expect(podMonitor.Raw.spec!.podMetricsEndpoints![0].scheme).toBe(PodMonitorScheme.HTTPS);
+    expect(podMonitor.Raw.spec!.fallbackScrapeProtocol).toBe(
+      FallbackScrapeProtocol.OpenMetricsText100,
+    );
   });
 });
