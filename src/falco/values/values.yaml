@@ -1,0 +1,54 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# Disable automatic update/loading of Falco default rules for airgapped environments
+falcoctl:
+  artifact:
+    install:
+      enabled: false
+    follow:
+      enabled: false
+driver:
+  kind: modern-bpf
+
+# work around for: https://github.com/falcosecurity/charts/issues/888
+falco:
+  config_files:
+    - /dummy
+
+# Enable falcosidekick
+falcosidekick:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+  grafana:
+    # Dashboard for Falcosidekick metrics
+    dashboards:
+      enabled: true
+  config:
+    # Set this to enable sending alerts to Alertmanager
+    # alertmanager:
+    #   hostport: "http://kube-prometheus-stack-alertmanager.monitoring.svc.cluster.local:9093"
+    #   endpoint: "/api/v2/alerts"
+    loki:
+      # This dashboard is broken and not needed unless we explicitly ship alerts to Loki (which is a bit redundant)
+      # can remove this once https://github.com/falcosecurity/charts/pull/907 is merged/released
+      grafanaDashboard:
+        enabled: false
+
+# Enable Grafana dashboards
+grafana:
+  dashboards:
+    enabled: true
+
+# Enable metrics
+metrics:
+  enabled: true
+
+# Enable serviceMonitor
+serviceMonitor:
+  create: true
+
+# Enable Prometheus metrics endpoint
+webserver:
+  prometheus_metrics_enabled: true
