@@ -371,3 +371,13 @@ thirdPartyIntegration:
     # The Client Certificate format used by the L7 Load Balancer.
     # Allowed settings: "PEM" and "AWS"
     tlsCertificateFormat: PEM
+
+# Extra volumes to mount in the StatefulSet
+extraVolumes: []
+
+# Extra volume mounts to mount in the Keycloak container
+extraVolumeMounts: []
+
+# Additional truststore paths for Keycloak to scan for certificates
+# These paths will be added to the --truststore-paths startup argument
+truststorePaths: []
