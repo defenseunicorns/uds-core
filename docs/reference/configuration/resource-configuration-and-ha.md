@@ -202,6 +202,35 @@ packages:
               value: "2Gi"
 ```
 
+You can also configure autoscaling for the Keycloak [waypoint](https://istio.io/latest/docs/ambient/usage/waypoint/) (its Istio Layer7 proxy). The independent scalability of the waypoint proxy ensures that you never encounter a bottleneck due to service mesh integration. An HPA is enabled by default for the waypoint, with access to the configuration parameters via values. The below override example includes the default values which could be changed based on your needs:
+
+```yaml
+packages:
+  - name: core
+    repository: oci://ghcr.io/defenseunicorns/packages/uds/core
+    ref: x.x.x
+    overrides:
+      keycloak:
+        keycloak:
+          values:
+            - path: waypoint.horizontalPodAutoscaler.minReplicas
+              value: 1
+            - path: waypoint.horizontalPodAutoscaler.maxReplicas
+              value: 5
+            - path: waypoint.horizontalPodAutoscaler.metrics
+              value:
+                - type: Resource
+                  resource:
+                    name: cpu
+                    target:
+                      type: Utilization
+                      averageUtilization: 90
+            - path: waypoint.deployment.requests.cpu
+              value: 250m
+            - path: waypoint.deployment.requests.memory
+              value: 256Mi
+```
+
 ### AuthService
 
 AuthService can be configured in a HA setup if an [external session store](https://github.com/istio-ecosystem/authservice/blob/f8193e22db11183d0d3a9da58da39267f15c3ae0/config/README.md#authservice-config-v1-oidc-RedisConfig) is provided (key value store like Redis/Valkey). For configuring an external session store you can set the `UDS_AUTHSERVICE_REDIS_URI` env when deploying or via your `uds-config.yaml`:

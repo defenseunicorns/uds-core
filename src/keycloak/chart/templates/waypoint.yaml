@@ -7,6 +7,8 @@ kind: Gateway
 metadata:
   name: {{ include "keycloak.fullname" . }}-waypoint
   namespace: {{ .Release.Namespace }}
+  labels:
+    istio.io/waypoint-for: "all"
 spec:
   gatewayClassName: istio-waypoint
   listeners:
@@ -16,4 +18,8 @@ spec:
   infrastructure:
     labels:
       app.kubernetes.io/name: {{ include "keycloak.fullname" . }}
+    parametersRef:
+      group: ""
+      kind: ConfigMap
+      name: keycloak-waypoint-config
 {{- end }}

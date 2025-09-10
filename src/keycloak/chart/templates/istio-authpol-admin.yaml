@@ -29,13 +29,12 @@ spec:
     - to:
         - operation:
             ports:
-              - "8080"
+              - "9000"
             paths:
             - /metrics*
       from:
         - source:
             notNamespaces:
-            - istio-admin-gateway
             - monitoring
     - to:
         - operation:
