@@ -235,7 +235,7 @@ export async function reconcileService(svc: a.Service): Promise<void> {
 
   log.info(
     { namespace, waypointName, clientId: matchingSso.clientId, labels: svc.metadata.labels },
-    "Added waypoint labels to service",
+    `Added waypoint labels to service ${svc.metadata?.name}`,
   );
 }
 
@@ -292,7 +292,7 @@ export async function reconcilePod(pod: a.Pod): Promise<void> {
 
   log.info(
     { namespace, waypointName, clientId: matchingSso.clientId },
-    "Added waypoint labels to pod",
+    `Added waypoint labels to pod ${pod.metadata?.name}`,
   );
 }
 
