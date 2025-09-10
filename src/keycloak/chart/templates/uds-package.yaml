@@ -80,11 +80,13 @@ spec:
         remoteGenerated: IntraNamespace
         ports:
           - 8080
+          - 9000
       - description: "Waypoint to Keycloak"
         direction: Egress
         remoteGenerated: IntraNamespace
         ports:
           - 8080
+          - 9000
 
       - description: "Waypoint to Istio Control Plane"
         direction: Egress

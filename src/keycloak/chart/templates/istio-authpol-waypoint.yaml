@@ -1,0 +1,24 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+{{- if .Capabilities.APIVersions.Has "security.istio.io/v1beta1" }}
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: keycloak-enforce-waypoint
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "keycloak.selectorLabels" . | nindent 6 }}
+  action: DENY
+  rules:
+    # Only other pods in the Keycloak namespace should be allowed to hit keycloak server pods:
+    # - Other keycloak servers for clustering
+    # - Waypoint for any inbound traffic from other namespaces
+    # Direct access from other namespaces (without going through the waypoint) should be denied
+    - from:
+        - source:
+            notNamespaces:
+              - keycloak
+{{- end }}
