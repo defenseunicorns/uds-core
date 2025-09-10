@@ -347,6 +347,30 @@ autoscaling:
           value: 1
           periodSeconds: 300
 
+# Istio waypoint configuration
+waypoint:
+  deployment:
+    # Larger requests by default since Keycloak manages all SSO for the cluster
+    requests:
+      cpu: 250m
+      memory: 256Mi
+    # Upstream defaults for limits
+    limits:
+      cpu: 2
+      memory: 1Gi
+  horizontalPodAutoscaler:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 5
+    metrics:
+      - type: Resource
+        resource:
+          name: cpu
+          target:
+            type: Utilization
+            averageUtilization: 90
+    behavior: {}
+
 env: []
 
 # DEPRECATED: Use `thirdPartyIntegration` instead
