@@ -26,10 +26,16 @@ falcosidekick:
     dashboards:
       enabled: true
   config:
+    # Logs alerts/payloads to stdout
+    # This should be ok to keep on by default so that users can see events logged to falcosidekick without needing to set up an external destination
+    # If you setup a forwarding destination (https://falco.org/docs/concepts/outputs/forwarding/) you may want to disable this
+    debug: true
+
     # Set this to enable sending alerts to Alertmanager
     # alertmanager:
     #   hostport: "http://kube-prometheus-stack-alertmanager.monitoring.svc.cluster.local:9093"
     #   endpoint: "/api/v2/alerts"
+
     loki:
       # This dashboard is broken and not needed unless we explicitly ship alerts to Loki (which is a bit redundant)
       # can remove this once https://github.com/falcosecurity/charts/pull/907 is merged/released
