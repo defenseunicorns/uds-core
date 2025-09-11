@@ -167,7 +167,7 @@ function authNRequestAuthentication(
           audiences: [name],
           forwardOriginalToken: true,
           issuer: `https://sso.${UDSConfig.domain}/realms/uds`,
-          jwksUri: `http://keycloak-http.keycloak.svc.cluster.local:8080/realms/uds/protocol/openid-connect/certs`,
+          jwksUri: `https://sso.${UDSConfig.domain}/realms/uds/protocol/openid-connect/certs`,
         },
       ],
     },

@@ -9,6 +9,8 @@ metadata:
   labels:
     {{- include "keycloak.labels" . | nindent 4 }}
     app.kubernetes.io/component: headless
+    istio.io/use-waypoint: {{ include "keycloak.fullname" . }}-waypoint
+    istio.io/ingress-use-waypoint: "true"
 spec:
   type: ClusterIP
   clusterIP: None

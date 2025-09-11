@@ -540,3 +540,42 @@ describe("Network Policy Validation", () => {
     expect(isResponseError(denied_google_response_2)).toBe(true);
   });
 });
+
+test.concurrent("Keycloak AuthorizationPolicies", async () => {
+  const SSO_CURL = [
+    "curl",
+    "-s",
+    "-m",
+    "3",
+    "-o",
+    "/dev/null",
+    "-w",
+    "%{http_code}",
+    "https://sso.uds.dev/realms/master/.well-known/openid-configuration",
+  ];
+
+  const KEYCLOAK_CURL = [
+    "curl",
+    "-s",
+    "-m",
+    "3",
+    "-o",
+    "/dev/null",
+    "-w",
+    "%{http_code}",
+    "https://keycloak-http.keycloak.svc.cluster.local:8080/realms/master/.well-known/openid-configuration",
+  ];
+
+  // Validate redirected request when hitting the external address
+  const redirect_response = await execInPod("test-admin-app", testAdminApp, "curl", SSO_CURL);
+  expect(redirect_response.stdout).toBe("301");
+
+  // Validate denied request when hitting the internal address
+  const denied_keycloak_response = await execInPod(
+    "test-admin-app",
+    testAdminApp,
+    "curl",
+    KEYCLOAK_CURL,
+  );
+  expect(isResponseError(denied_keycloak_response)).toBe(true);
+});

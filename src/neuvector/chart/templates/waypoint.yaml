@@ -6,7 +6,7 @@ apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
   labels:
-    istio.io/waypoint-for: service
+    istio.io/waypoint-for: all
     app: neuvector-manager-waypoint
   name: neuvector-manager-waypoint
   namespace: {{ .Release.Namespace }}

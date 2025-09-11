@@ -2,6 +2,34 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.52.0](https://github.com/defenseunicorns/uds-core/compare/v0.51.0...v0.52.0) (2025-09-10)
+
+
+### Features
+
+* add helm values for extra volumes and truststorepaths to keycloak ([#1882](https://github.com/defenseunicorns/uds-core/issues/1882)) ([47c444b](https://github.com/defenseunicorns/uds-core/commit/47c444be0440c8c9a6d3cbe046e4a82161fce26c))
+
+
+### Bug Fixes
+
+* avoid port conflicts on the host ([#1870](https://github.com/defenseunicorns/uds-core/issues/1870)) ([09a1364](https://github.com/defenseunicorns/uds-core/commit/09a1364ab26270ea9ee621aff178b92bad2004cb))
+* waypoint configuration for keycloak and neuvector ([#1896](https://github.com/defenseunicorns/uds-core/issues/1896)) ([51b08db](https://github.com/defenseunicorns/uds-core/commit/51b08db4c44b88c924f7295d4628744042e394e7))
+
+
+### Miscellaneous
+
+* **deps-dev:** bump vite from 6.3.5 to 7.1.5 in /test/vitest ([#1895](https://github.com/defenseunicorns/uds-core/issues/1895)) ([2028a45](https://github.com/defenseunicorns/uds-core/commit/2028a45fcf3e661988244ed31d89583f9f11f165))
+* **deps:** bump vite from 7.0.6 to 7.1.5 ([#1892](https://github.com/defenseunicorns/uds-core/issues/1892)) ([042f19c](https://github.com/defenseunicorns/uds-core/commit/042f19c23eb192b8ab90472eafa79d92f056813f))
+* **deps:** update eslint/js to v9.35.0 ([#1888](https://github.com/defenseunicorns/uds-core/issues/1888)) ([6c056ae](https://github.com/defenseunicorns/uds-core/commit/6c056aef86366206529e651348fcd6ec579996db))
+* **deps:** update neuvector to 5.4.6 ([#1859](https://github.com/defenseunicorns/uds-core/issues/1859)) ([54c58c7](https://github.com/defenseunicorns/uds-core/commit/54c58c7bbefee68d7ca17e69e82f31bf7021a218))
+* **deps:** update pepr to v0.54.0 ([#1879](https://github.com/defenseunicorns/uds-core/issues/1879)) ([f1463e7](https://github.com/defenseunicorns/uds-core/commit/f1463e7e067482b69651da6d53d5aba1864a9fa1))
+* remove upgrade mutations for prometheus monitors ([#1877](https://github.com/defenseunicorns/uds-core/issues/1877)) ([bbeadc7](https://github.com/defenseunicorns/uds-core/commit/bbeadc7efd20db8f79c2166ac60ee7203364739f))
+
+
+### Documentation
+
+* fix some broken links on authservice ([#1890](https://github.com/defenseunicorns/uds-core/issues/1890)) ([07d7621](https://github.com/defenseunicorns/uds-core/commit/07d76218996ac454aecb640da9274728607c429d))
+
 ## [0.51.0](https://github.com/defenseunicorns/uds-core/compare/v0.50.0...v0.51.0) (2025-09-02)
 
 

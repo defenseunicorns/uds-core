@@ -26,6 +26,8 @@ spec:
         {{- range $key, $value := .Values.podLabels }}
         {{- printf "%s: %s" $key (tpl $value $ | quote) | nindent 8 }}
         {{- end }}
+        istio.io/use-waypoint: {{ include "keycloak.fullname" . }}-waypoint
+        istio.io/ingress-use-waypoint: "true"
       {{- if not .Values.devMode }}
       annotations:
         postgres-hash: {{ include (print $.Template.BasePath "/secret-postgresql.yaml") . | sha256sum }}
