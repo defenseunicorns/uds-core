@@ -16,19 +16,14 @@ falco:
   config_files:
     - /dummy
 
-  # Send to Falco Sidekick
-  # http_output:
-  #   enabled: true
-  #   echo: true
-  #   url: http://falcosidekick:2801 # URL of the Falco Sidekick service from the sidekick chart
-
 falcosidekick:
   enabled: true
 
   serviceMonitor:
     enabled: true
+
+  # Enable Grafana dashboard for FalcoSidekick metrics
   grafana:
-    # Dashboard for Falcosidekick metrics
     dashboards:
       enabled: true
 
@@ -44,16 +39,15 @@ falcosidekick:
     #   endpoint: "/api/v2/alerts"
 
     # Send alert events to loki by default
-    # This creates a cleaner stream of alert events for querying rather than looking at pod logs
+    # This creates a cleaner stream of Falco events with labels for querying rather than looking at raw pod logs
     loki:
       hostport: "http://loki-gateway.loki.svc.cluster.local:80"
       format: json
+      # Enables the Grafana dashboard for visualizing Falco events
       grafanaDashboard:
         enabled: true
-        configmap:
-          folder: "Falco"
 
-# Enable Grafana dashboards
+# Enable Grafana dashboard for Falco metrics
 grafana:
   dashboards:
     enabled: true
