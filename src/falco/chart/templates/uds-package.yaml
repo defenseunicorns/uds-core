@@ -38,6 +38,15 @@ spec:
         port: 2801
         description: "Prometheus Falcosidekick Metrics"
 
+      - direction: Egress
+        selector:
+          app.kubernetes.io/name: falcosidekick
+        remoteNamespace: loki
+        remoteSelector:
+          app.kubernetes.io/name: loki
+        port: 8080
+        description: "Write Alert Events to Loki"
+
       # Custom rules for unanticipated scenarios
       {{- with .Values.additionalNetworkAllow }}
       {{ toYaml . | nindent 6 }}

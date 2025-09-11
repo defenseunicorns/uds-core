@@ -46,17 +46,17 @@ components:
       - registry1.dso.mil/ironbank/opensource/falcosecurity/falco:0.41.3
       - registry1.dso.mil/ironbank/opensource/falcosecurity/falcosidekick:2.31.1
 
-  # - name: falco
-  #   description: "Deploy Falco"
-  #   required: false # Optional component until we swap out Neuvector
-  #   only:
-  #     flavor: unicorn
-  #   import:
-  #     path: common
-  #   charts:
-  #     - name: falco
-  #       valuesFiles:
-  #         - values/unicorn-values.yaml
-  #   images:
-  #     - quay.io/rfcurated/falcosecurity/falco:0.41.3-jammy-scratch-fips-rfcurated
-  #     - quay.io/rfcurated/falcoseucrity/falcosidekick:2.31.1-jammy-scratch-fips-rfcurated
+  - name: falco
+    description: "Deploy Falco"
+    required: false # Optional component until we swap out Neuvector
+    only:
+      flavor: unicorn
+    import:
+      path: common
+    charts:
+      - name: falco
+        valuesFiles:
+          - values/unicorn-values.yaml
+    images:
+      - quay.io/rfcurated/falcosecurity/falco:0.41.3-jammy-scratch-fips-rfcurated
+      - quay.io/rfcurated/falcoseucrity/falcosidekick:2.31.1-jammy-scratch-fips-rfcurated

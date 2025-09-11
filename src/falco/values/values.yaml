@@ -16,15 +16,22 @@ falco:
   config_files:
     - /dummy
 
-# Enable falcosidekick
+  # Send to Falco Sidekick
+  # http_output:
+  #   enabled: true
+  #   echo: true
+  #   url: http://falcosidekick:2801 # URL of the Falco Sidekick service from the sidekick chart
+
 falcosidekick:
   enabled: true
+
   serviceMonitor:
     enabled: true
   grafana:
     # Dashboard for Falcosidekick metrics
     dashboards:
       enabled: true
+
   config:
     # Logs alerts/payloads to stdout
     # This should be ok to keep on by default so that users can see events logged to falcosidekick without needing to set up an external destination
@@ -36,11 +43,15 @@ falcosidekick:
     #   hostport: "http://kube-prometheus-stack-alertmanager.monitoring.svc.cluster.local:9093"
     #   endpoint: "/api/v2/alerts"
 
+    # Send alert events to loki by default
+    # This creates a cleaner stream of alert events for querying rather than looking at pod logs
     loki:
-      # This dashboard is broken and not needed unless we explicitly ship alerts to Loki (which is a bit redundant)
-      # can remove this once https://github.com/falcosecurity/charts/pull/907 is merged/released
+      hostport: "http://loki-gateway.loki.svc.cluster.local:80"
+      format: json
       grafanaDashboard:
-        enabled: false
+        enabled: true
+        configmap:
+          folder: "Falco"
 
 # Enable Grafana dashboards
 grafana:
