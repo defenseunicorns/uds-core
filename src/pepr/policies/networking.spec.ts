@@ -6,19 +6,19 @@
 import { V1Container, V1PodSpec, V1ServiceSpec } from "@kubernetes/client-node";
 import { describe, expect, it } from "vitest";
 import {
-  checkHostNamespaces,
+  checkNoHostNamespaces,
   checkNoHostPorts,
   checkNotExternalNameService,
   checkNotNodePortService,
 } from "./networking";
 
-describe("checkHostNamespaces", () => {
+describe("checkNoHostNamespaces", () => {
   it("should approve pods that don't use host namespaces", () => {
     const podSpec: V1PodSpec = {
       containers: [],
     };
 
-    expect(checkHostNamespaces(podSpec)).toBe(true);
+    expect(checkNoHostNamespaces(podSpec)).toBe(true);
   });
 
   it("should deny pods using hostNetwork", () => {
@@ -27,7 +27,7 @@ describe("checkHostNamespaces", () => {
       hostNetwork: true,
     };
 
-    expect(checkHostNamespaces(podSpec)).toBe(false);
+    expect(checkNoHostNamespaces(podSpec)).toBe(false);
   });
 
   it("should deny pods using hostIPC", () => {
@@ -36,7 +36,7 @@ describe("checkHostNamespaces", () => {
       hostIPC: true,
     };
 
-    expect(checkHostNamespaces(podSpec)).toBe(false);
+    expect(checkNoHostNamespaces(podSpec)).toBe(false);
   });
 
   it("should deny pods using hostPID", () => {
@@ -45,7 +45,7 @@ describe("checkHostNamespaces", () => {
       hostPID: true,
     };
 
-    expect(checkHostNamespaces(podSpec)).toBe(false);
+    expect(checkNoHostNamespaces(podSpec)).toBe(false);
   });
 
   it("should deny pods using multiple host namespaces", () => {
@@ -56,7 +56,7 @@ describe("checkHostNamespaces", () => {
       hostPID: false,
     };
 
-    expect(checkHostNamespaces(podSpec)).toBe(false);
+    expect(checkNoHostNamespaces(podSpec)).toBe(false);
   });
 });
 

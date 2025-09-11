@@ -123,7 +123,7 @@ Depending on the scope and focus of your changes you may find other specific typ
 
 Each individual component of UDS Core contains lightweight validations in its own `src/<component>/tasks.yaml` file. These validations focus on the bare minimum functionality, typically covering pod health and endpoint accessibility.
 
-Unit test files are placed next to the source code they are testing. These tests should be designed to run without dependencies like a running cluster or mocking higher level functions, for example we want to avoid mocking pepr functions where possible.
+Unit test files are placed next to the source code they are testing and are used for Pepr code (under `src/pepr/`). These tests should be designed to run without requiring a running cluster.
 
 We also place end-to-end tests under the `e2e` folder. In particular we use [Playwright](https://playwright.dev/) for browser based testing and have authentication setup to login to applications with a shared SSO session. We also use [Vitest](https://vitest.dev/) for some lower level API and Kubernetes based testing.
 

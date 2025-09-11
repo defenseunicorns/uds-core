@@ -30,7 +30,7 @@ When(a.Pod)
     }
 
     const podSpec = request.Raw.spec!;
-    const isValid = checkHostNamespaces(podSpec);
+    const isValid = checkNoHostNamespaces(podSpec);
 
     if (isValid) {
       return request.Approve();
@@ -44,7 +44,7 @@ When(a.Pod)
 /**
  * Checks if a pod spec is using host namespaces
  */
-export function checkHostNamespaces(pod: V1PodSpec): boolean {
+export function checkNoHostNamespaces(pod: V1PodSpec): boolean {
   // If the pod is using the host network, IPC, or PID namespaces, it's invalid
   if (pod.hostNetwork || pod.hostIPC || pod.hostPID) {
     return false;
@@ -118,10 +118,7 @@ When(a.Service)
  * Checks if a service is using ExternalName type
  */
 export function checkNotExternalNameService(serviceSpec: V1ServiceSpec | undefined): boolean {
-  if (!serviceSpec) {
-    return true; // No spec means no ExternalName type
-  }
-  return serviceSpec.type !== "ExternalName";
+  return serviceSpec?.type !== "ExternalName";
 }
 
 /**
@@ -154,8 +151,5 @@ When(a.Service)
  * Checks if a service is using NodePort type
  */
 export function checkNotNodePortService(serviceSpec: V1ServiceSpec | undefined): boolean {
-  if (!serviceSpec) {
-    return true; // No spec means no NodePort type
-  }
-  return serviceSpec.type !== "NodePort";
+  return serviceSpec?.type !== "NodePort";
 }
