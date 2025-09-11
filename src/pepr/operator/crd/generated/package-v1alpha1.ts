@@ -251,9 +251,14 @@ export interface Expose {
    */
   description?: string;
   /**
+   * The domain to expose the service on, only valid for additional gateways (not tenant,
+   * admin, or passthrough)
+   */
+  domain?: string;
+  /**
    * The name of the gateway to expose the service on (default: tenant)
    */
-  gateway?: Gateway;
+  gateway?: string;
   /**
    * The hostname to expose the service on
    */
@@ -550,15 +555,6 @@ export interface URIRegexRewrite {
    * The string that should replace into matching portions of original URI.
    */
   rewrite?: string;
-}
-
-/**
- * The name of the gateway to expose the service on (default: tenant)
- */
-export enum Gateway {
-  Admin = "admin",
-  Passthrough = "passthrough",
-  Tenant = "tenant",
 }
 
 export interface ExposeMatch {
