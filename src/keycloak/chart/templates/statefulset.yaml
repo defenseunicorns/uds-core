@@ -276,22 +276,18 @@ spec:
               path: /health/live
               port: metrics
               scheme: HTTP
-            failureThreshold: 3
-            periodSeconds: 10
+            failureThreshold: 15
+            timeoutSeconds: 2
+            periodSeconds: 15
+            initialDelaySeconds: 10
           readinessProbe:
             httpGet:
               path: /health/ready
               port: metrics
               scheme: HTTP
-            failureThreshold: 3
-            periodSeconds: 10
-          startupProbe:
-            httpGet:
-              path: /health/started
-              port: metrics
-              scheme: HTTP
-            failureThreshold: 600
-            periodSeconds: 1
+            failureThreshold: 15
+            timeoutSeconds: 2
+            initialDelaySeconds: 10
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:
