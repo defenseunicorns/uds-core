@@ -4,7 +4,7 @@ title: Trusted Certificate Authority
 
 Authservice can be configured with additional trusted certificate bundle in cases where UDS Core ingress gateways are deployed with private PKI.
 
-To configure, set [UDS_CA_CERT](https://github.com/defenseunicorns/uds-core/blob/main/src/pepr/uds-operator-config/values.yaml#L8) as an environment variable with a Base64 encoded PEM formatted certificate bundle that can be used to verify the certificates of the tenant gateway.
+To configure, set `UDS_CA_CERT` as an environment variable with a Base64 encoded PEM formatted CA bundle that can be used to verify the certificates of the tenant gateway.
 
 Alternatively you can specify the `CA_CERT` variable in your `uds-config.yaml`:
 
