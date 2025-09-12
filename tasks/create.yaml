@@ -39,9 +39,6 @@ tasks:
   - name: k3d-standard-bundle
     description: "Create the K3d-UDS Core Bundle"
     actions:
-      - description: "Rename flavored package files by removing the flavor suffix"
-        task: utils:rename-flavored-packages
-
       - description: "Create the UDS Core Standard Bundle"
         cmd: uds create bundles/k3d-standard --confirm --no-progress --architecture=${ZARF_ARCHITECTURE}
 
@@ -58,9 +55,6 @@ tasks:
         task: single-layer
         with:
           layer: identity-authorization
-
-      - description: "Rename flavored package files by removing the flavor suffix"
-        task: utils:rename-flavored-packages
 
       - description: "Create the slim dev bundle (Base and Identity)"
         cmd: uds create bundles/k3d-slim-dev --confirm --no-progress --architecture=${ZARF_ARCHITECTURE}
