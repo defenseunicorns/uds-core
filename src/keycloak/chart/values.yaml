@@ -110,7 +110,9 @@ additionalNetworkAllow: []
 enableServiceLinks: true
 
 # Pod management policy. One of `Parallel` or `OrderedReady`
-podManagementPolicy: Parallel
+# The strong recommendation is to use `OrderedReady` for Keycloak clusters as Keycloak tries to perform a database migration on startup.
+# If this happens in multiple nodes at the same time, only one will succeed and others will cause Keycloak to crash.
+podManagementPolicy: OrderedReady
 
 # StatefulSet's update strategy
 updateStrategy: RollingUpdate
@@ -187,8 +189,8 @@ podLabels: {}
 # Pod resource requests and limits
 resources:
   requests:
-    cpu: "500m"
-    memory: "512Mi"
+    cpu: "100m"
+    memory: "750Mi"
   limits:
     cpu: "1"
     memory: "1Gi"
@@ -319,45 +321,27 @@ prometheusRule:
   #   labels:
   #     severity: warning
 
-autoscaling:
-  # If `true`, an autoscaling/v2beta2 HorizontalPodAutoscaler resource is created (requires Kubernetes 1.18 or above)
-  # Autoscaling seems to be most reliable when using KUBE_PING service discovery (see README for details)
-  # This disables the `replicas` field in the StatefulSet
+# High availability options for deployments where pod count is controlled outside HPA
+highAvailability:
+  # If `true`, enables HA-recommended settings without using HPA
   enabled: false
-  # Additional HorizontalPodAutoscaler labels
-  labels: {}
-  # The minimum and maximum number of replicas for the Keycloak StatefulSet
-  minReplicas: 3
-  maxReplicas: 10
-  # The metrics to use for scaling
-  metrics:
-    - type: Resource
-      resource:
-        name: cpu
-        target:
-          type: Utilization
-          averageUtilization: 80
-  # The scaling policy to use. This will scale up quickly but only scale down a single Pod per 5 minutes.
-  # This is important because caches are usually only replicated to 2 Pods and if one of those Pods is terminated this will give the cluster time to recover.
-  behavior:
-    scaleDown:
-      stabilizationWindowSeconds: 300
-      policies:
-        - type: Pods
-          value: 1
-          periodSeconds: 300
+  # Upper bound for replicas when HA mode is enabled (should be an odd number in practice)
+  maxReplicas: 3
+
+# Deprecated, use `autoscaling` instead
+autoscaling:
+  # Deprecated, use `autoscaling.enabled` instead
+  enabled: false
 
 # Istio waypoint configuration
 waypoint:
   deployment:
-    # Larger requests by default since Keycloak manages all SSO for the cluster
     requests:
-      cpu: 250m
-      memory: 256Mi
-    # Upstream defaults for limits
+      cpu: 20m
+      memory: 60Mi
     limits:
-      cpu: 2
-      memory: 1Gi
+      cpu: 100m
+      memory: 100Mi
   horizontalPodAutoscaler:
     enabled: true
     minReplicas: 1

@@ -140,6 +140,14 @@
     "autoscaling": {
       "$ref": "#/definitions/autoscalingSchema"
     },
+    "highAvailability": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "maxReplicas": { "type": "number" }
+      }
+    },
     "waypoint": {
       "type": "object",
       "properties": {
