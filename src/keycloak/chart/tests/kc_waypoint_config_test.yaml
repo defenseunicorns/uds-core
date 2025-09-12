@@ -1,0 +1,117 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+
+suite: Keycloak - Waypoint Config
+templates:
+  - waypoint-config.yaml
+
+tests:
+  - it: should render deployment and HPA resources with default values
+    template: waypoint-config.yaml
+    asserts:
+      - equal:
+          path: data.deployment
+          value: |
+            spec:
+              template:
+                spec:
+                  containers:
+                  - name: istio-proxy
+                    resources:
+                      requests:
+                        cpu: 250m
+                        memory: 256Mi
+                      limits:
+                        cpu: 2
+                        memory: 1Gi
+      - equal:
+          path: data.horizontalPodAutoscaler
+          value: |
+            spec:
+              minReplicas: 1
+              maxReplicas: 5
+              metrics:
+                - resource:
+                    name: cpu
+                    target:
+                      averageUtilization: 90
+                      type: Utilization
+                  type: Resource
+
+  - it: should render deployment with custom resources
+    set:
+      waypoint.deployment.requests.cpu: 500m
+      waypoint.deployment.requests.memory: 512Mi
+      waypoint.deployment.limits.cpu: 4
+      waypoint.deployment.limits.memory: 2Gi
+    template: waypoint-config.yaml
+    asserts:
+      - equal:
+          path: data.deployment
+          value: |
+            spec:
+              template:
+                spec:
+                  containers:
+                  - name: istio-proxy
+                    resources:
+                      requests:
+                        cpu: 500m
+                        memory: 512Mi
+                      limits:
+                        cpu: 4
+                        memory: 2Gi
+
+  - it: should not render horizontalPodAutoscaler when disabled
+    set:
+      waypoint.horizontalPodAutoscaler.enabled: false
+    template: waypoint-config.yaml
+    asserts:
+      - exists:
+          path: data.deployment
+      - notExists:
+          path: data.horizontalPodAutoscaler
+
+  - it: should render horizontalPodAutoscaler with custom settings
+    set:
+      waypoint.horizontalPodAutoscaler.enabled: true
+      waypoint.horizontalPodAutoscaler.minReplicas: 2
+      waypoint.horizontalPodAutoscaler.maxReplicas: 10
+      waypoint.horizontalPodAutoscaler.metrics:
+        - type: Resource
+          resource:
+            name: cpu
+            target:
+              type: Utilization
+              averageUtilization: 75
+      waypoint.horizontalPodAutoscaler.behavior:
+        scaleDown:
+          stabilizationWindowSeconds: 300
+          policies:
+            - type: Pods
+              value: 1
+              periodSeconds: 300
+    template: waypoint-config.yaml
+    asserts:
+      - equal:
+          path: data.horizontalPodAutoscaler
+          value: |
+            spec:
+              minReplicas: 2
+              maxReplicas: 10
+              metrics:
+                - resource:
+                    name: cpu
+                    target:
+                      averageUtilization: 75
+                      type: Utilization
+                  type: Resource
+              behavior:
+                scaleDown:
+                  policies:
+                  - periodSeconds: 300
+                    type: Pods
+                    value: 1
+                  stabilizationWindowSeconds: 300

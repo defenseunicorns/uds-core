@@ -1,0 +1,40 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: keycloak-waypoint-config
+  namespace: {{ .Release.Namespace }}
+data:
+  {{- with .Values.waypoint.deployment }}
+  deployment: |
+    spec:
+      template:
+        spec:
+          containers:
+          - name: istio-proxy
+            resources:
+              requests:
+                cpu: {{ .requests.cpu }}
+                memory: {{ .requests.memory }}
+              limits:
+                cpu: {{ .limits.cpu }}
+                memory: {{ .limits.memory }}
+  {{- end }}
+  {{- if .Values.waypoint.horizontalPodAutoscaler.enabled }}
+  {{- with .Values.waypoint.horizontalPodAutoscaler }}
+  horizontalPodAutoscaler: |
+    spec:
+      {{ with .minReplicas }}minReplicas: {{ . }}{{- end }}
+      {{ with .maxReplicas }}maxReplicas: {{ . }}{{- end }}
+      {{- if .metrics }}
+      metrics:
+        {{- toYaml .metrics | nindent 8 }}
+      {{- end }}
+      {{- if .behavior }}
+      behavior:
+        {{- toYaml .behavior | nindent 8 }}
+      {{- end }}
+  {{- end }}
+  {{- end }}
