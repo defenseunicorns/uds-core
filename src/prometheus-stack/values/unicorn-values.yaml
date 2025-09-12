@@ -11,7 +11,7 @@ kube-state-metrics:
   image:
     registry: quay.io
     repository: rfcurated/kube-state-metrics
-    tag: 2.16.0-jammy-scratch-fips-rfcurated-rfhardened
+    tag: 2.17.0-jammy-scratch-fips-rfcurated-rfhardened
   securityContext:
     enabled: true
     fsGroup: 65532
