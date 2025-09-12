@@ -12,6 +12,11 @@ metadata:
     {{- printf "%s: %s" $key (tpl $value $ | quote) | nindent 4 }}
     {{- end }}
 spec:
+  {{- if and (not .Values.autoscaling.enabled) (not .Values.highAvailability.enabled) }}
+  replicas: 1
+  {{- else }}
+  replicas: {{ max (int .Values.highAvailability.maxReplicas) (int .Values.autoscaling.maxReplicas) }}
+  {{- end }}
   selector:
     matchLabels:
       {{- include "keycloak.selectorLabels" . | nindent 6 }}

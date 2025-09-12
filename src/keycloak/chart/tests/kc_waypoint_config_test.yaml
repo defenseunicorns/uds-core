@@ -21,11 +21,11 @@ tests:
                   - name: istio-proxy
                     resources:
                       requests:
-                        cpu: 250m
-                        memory: 256Mi
+                        cpu: 20m
+                        memory: 60Mi
                       limits:
-                        cpu: 2
-                        memory: 1Gi
+                        cpu: 100m
+                        memory: 100Mi
       - equal:
           path: data.horizontalPodAutoscaler
           value: |

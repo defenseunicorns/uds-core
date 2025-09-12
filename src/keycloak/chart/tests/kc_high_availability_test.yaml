@@ -1,0 +1,50 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+
+suite: Keycloak - High Availability
+templates:
+  - statefulset.yaml
+
+tests:
+  - it: should set replicas to 1 by default when HA and autoscaling are disabled
+    template: statefulset.yaml
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 1
+
+  - it: should set replicas to highAvailability.maxReplicas when HA is enabled
+    set:
+      highAvailability.enabled: true
+      highAvailability.maxReplicas: 3
+      autoscaling.enabled: false
+    template: statefulset.yaml
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 3
+
+  - it: should prefer the larger of highAvailability.maxReplicas and autoscaling.maxReplicas
+    set:
+      highAvailability.enabled: true
+      highAvailability.maxReplicas: 3
+      autoscaling.enabled: true
+      autoscaling.maxReplicas: 5
+    template: statefulset.yaml
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 5
+
+  - it: should handle custom highAvailability.maxReplicas value
+    set:
+      highAvailability.enabled: true
+      highAvailability.maxReplicas: 7
+      autoscaling.enabled: false
+    template: statefulset.yaml
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 7
