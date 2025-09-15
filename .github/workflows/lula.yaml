@@ -2,8 +2,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 # This workflow runs a Lula scan against the PR to see if compliance has changed
-name: Lula Scan
 
+# @lulaStart 123e4567-e89b-12d3-a456-426614174001
+name: Lula Scan
+# @lulaEnd 123e4567-e89b-12d3-a456-426614174001
 on:
   pull_request:
     branches: ["main"]
