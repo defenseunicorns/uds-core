@@ -88,7 +88,7 @@ Configure Grafana to trust private certificates by mounting the CA bundle via UD
 
 ```yaml
 values:
-  - path: extraConfigMapMounts
+  - path: extraConfigmapMounts
     value:
       - name: ca-certs
         mountPath: /etc/ssl/certs/ca.pem # Adds CA alongside system CAs (Go applications)
