@@ -43,6 +43,33 @@ data:
 ```
 :::
 
+## CA Mounting Approaches
+
+There are two main approaches for configuring applications to trust private CA certificates:
+
+### System CA Bundle Replacement
+This approach replaces the entire system CA bundle with your custom bundle at the container level. This gives you complete control but requires your bundle to include both your private CAs and any public CAs the application needs.
+
+**When to use:**
+- You want complete control over which CAs are trusted
+- Your environment should only trust specific private CAs
+- You need to restrict trust to a limited set of CAs
+
+**Paths:**
+- Debian/Ubuntu: `/etc/ssl/certs/ca-certificates.crt`
+- RedHat/CentOS: `/etc/pki/tls/certs/ca-bundle.crt`
+
+### Additional CA Trust (Go Applications)
+Many Go-based applications automatically check `/etc/ssl/certs/ca.pem` for additional CA certificates alongside the system bundle. This approach adds your private CAs without replacing the system CAs.
+
+**When to use:**
+- You want to trust private CAs alongside standard public CAs
+- The application is Go-based and supports this path
+- You prefer a less intrusive approach
+
+**Path:**
+- `/etc/ssl/certs/ca.pem` (Go applications)
+
 ## Component Configuration
 
 ### Authservice
@@ -57,23 +84,24 @@ See [trusted CA SSO doc](/reference/configuration/single-sign-on/trusted-ca) for
 
 Grafana may need to access external https services.  If these services use certificates signed by a private CA, Grafana needs to be configured to trust these certificates.
 
-Configure Grafana to trust private certificates by mounting and overriding the CA bundle via UDS Bundle overrides:
+Configure Grafana to trust private certificates by mounting the CA bundle via UDS Bundle overrides:
 
 ```yaml
 values:
   - path: extraConfigMapMounts
     value:
       - name: ca-certs
-        mountPath: /etc/ssl/certs/ca-certificates.crt # For Debian/Ubuntu images
-        # For RedHat-based images (registry1 flavor), use:
-        # mountPath: /etc/pki/tls/certs/ca-bundle.crt
+        mountPath: /etc/ssl/certs/ca.pem # Adds CA alongside system CAs (Go applications)
+        # Alternative - System CA replacement (requires bundle with both private and public CAs):
+        # mountPath: /etc/ssl/certs/ca-certificates.crt # For Debian/Ubuntu images (upstream, unicorn flavors)
+        # mountPath: /etc/pki/tls/certs/ca-bundle.crt # For RedHat-based images (registry1 flavor)
         configMap: private-ca
         readOnly: true
         subPath: ca.pem
 ```
 
 :::caution
-Mounting to `/etc/ssl/certs/ca-certificates.crt` replaces the system CA bundle. Ensure your CA bundle includes both your private CA certificates and any public CAs that Grafana needs to trust.
+Mounting to system CA paths (`/etc/ssl/certs/ca-certificates.crt` or `/etc/pki/tls/certs/ca-bundle.crt`) replaces the system CA bundle. Ensure your CA bundle includes both your private CA certificates and any public CAs that Grafana needs to trust.
 :::
 
 For additional details on Grafana private CA configuration, see the [upstream Grafana documentation](https://grafana.com/docs/grafana/latest/setup-grafana/installation/helm/#configure-a-private-ca-certificate-authority).
@@ -89,9 +117,10 @@ values:
   - path: extraVolumeMounts
     value:
       - name: ca-certs
-        mountPath: /etc/ssl/certs/ca-certificates.crt # For Debian/Ubuntu images
-        # For RedHat-based images (registry1 flavor), use:
-        # mountPath: /etc/pki/tls/certs/ca-bundle.crt
+        mountPath: /etc/ssl/certs/ca.pem # Recommended: Adds CA alongside system CAs (Go applications)
+        # Alternative - System CA replacement (requires bundle with both private and public CAs):
+        # mountPath: /etc/ssl/certs/ca-certificates.crt # For Debian/Ubuntu images (upstream, unicorn flavors)
+        # mountPath: /etc/pki/tls/certs/ca-bundle.crt # For RedHat-based images (registry1 flavor)
         subPath: ca.pem
         readOnly: true
   - path: extraVolumes
@@ -102,23 +131,24 @@ values:
 ```
 
 :::caution
-Mounting to `/etc/ssl/certs/ca-certificates.crt` replaces the system CA bundle. Ensure your CA bundle includes both your private CA certificates and any public CAs that Velero needs to trust.
+Mounting to system CA paths (`/etc/ssl/certs/ca-certificates.crt` or `/etc/pki/tls/certs/ca-bundle.crt`) replaces the system CA bundle. Ensure your CA bundle includes both your private CA certificates and any public CAs that Velero needs to trust.
 :::
 
 ### Loki
 
 Loki components need to access external storage backends. To configure Loki to use S3-compatible storage with private certificates, you need to provide the CA bundle to all components.
 
-Configure Loki to trust private certificates by overriding the system CA bundle using global volume mounts:
+Configure Loki to trust private certificates using global volume mounts:
 
 ```yaml
 values:
   - path: global.extraVolumeMounts
     value:
       - name: ca-certs
-        mountPath: /etc/ssl/certs/ca-certificates.crt # For Debian/Ubuntu images
-        # For RedHat-based images (registry1 flavor), use:
-        # mountPath: /etc/pki/tls/certs/ca-bundle.crt
+        mountPath: /etc/ssl/certs/ca.pem # Adds CA alongside system CAs (Go applications)
+        # Alternative - System CA replacement (requires bundle with both private and public CAs):
+        # mountPath: /etc/ssl/certs/ca-certificates.crt # For Debian/Ubuntu images (upstream, unicorn flavors)
+        # mountPath: /etc/pki/tls/certs/ca-bundle.crt # For RedHat-based images (registry1 flavor)
         subPath: ca.pem
   - path: global.extraVolumes
     value:
@@ -128,7 +158,7 @@ values:
 ```
 
 :::caution
-This approach replaces the system CA bundle for all Loki components. Ensure your CA bundle includes both your private CA certificates and any public CAs that Loki needs to trust.
+Mounting to system CA paths replaces the system CA bundle for all Loki components. Ensure your CA bundle includes both your private CA certificates and any public CAs that Loki needs to trust.
 :::
 
 ### Keycloak
