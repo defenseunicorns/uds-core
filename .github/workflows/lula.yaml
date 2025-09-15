@@ -1,0 +1,26 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# This workflow runs a Lula scan against the PR to see if compliance has changed
+name: Lula Scan
+
+on:
+  pull_request:
+    branches: ["main"]
+permissions:
+  contents: read
+
+jobs:
+  scan-pr:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Use Node.js 22
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 22
+          cache: "npm"
+      - name: Run Lula Scan
+        run: |
+          npx --yes lula2 crawl
+        shell: bash
