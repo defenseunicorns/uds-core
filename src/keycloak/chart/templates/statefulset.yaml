@@ -16,7 +16,7 @@ spec:
     matchLabels:
       {{- include "keycloak.selectorLabels" . | nindent 6 }}
   serviceName: {{ include "keycloak.fullname" . }}-headless
-  podManagementPolicy: {{ .Values.podManagementPolicy }}
+  podManagementPolicy: OrderedReady
   updateStrategy:
     type: {{ .Values.updateStrategy }}
   template:
@@ -271,18 +271,22 @@ spec:
               path: /health/live
               port: metrics
               scheme: HTTP
-            failureThreshold: 15
-            timeoutSeconds: 2
-            periodSeconds: 15
-            initialDelaySeconds: 10
+            failureThreshold: 3
+            periodSeconds: 10
           readinessProbe:
             httpGet:
               path: /health/ready
               port: metrics
               scheme: HTTP
-            failureThreshold: 15
-            timeoutSeconds: 2
-            initialDelaySeconds: 10
+            failureThreshold: 3
+            periodSeconds: 10
+          startupProbe:
+            httpGet:
+              path: /health/started
+              port: metrics
+              scheme: HTTP
+            failureThreshold: 600
+            periodSeconds: 1
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:
