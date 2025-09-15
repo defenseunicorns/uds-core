@@ -26,7 +26,8 @@ jobs:
           cache: "npm"
       - name: Run Lula Scan
         run: |
-          npx --yes lula2 crawl
+          # renovate: datasource=github-tags depName=defenseunicorns/kubernetes-fluent-client versioning=semver
+          npx --yes lula2 crawl@0.0.10
         shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
