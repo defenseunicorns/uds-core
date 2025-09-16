@@ -112,7 +112,7 @@ tasks:
     actions:
       - description: Rename flavored package files
         cmd: |
-          for FLAVORED_PACKAGE in $(find build/ -maxdepth 1 -name "zarf-package-*-${UDS_ARCH}-${VERSION}*${FLAVOR}.tar.zst" 2>/dev/null || echo ""); do
+          for FLAVORED_PACKAGE in $(find build/ -maxdepth 1 -name "zarf-package-*${FLAVOR}.tar.zst" 2>/dev/null || echo ""); do
             BASE_NAME=$(echo "${FLAVORED_PACKAGE}" | sed "s/-${FLAVOR}\.tar\.zst/.tar.zst/")
             mv -v "${FLAVORED_PACKAGE}" "${BASE_NAME}"
           done
