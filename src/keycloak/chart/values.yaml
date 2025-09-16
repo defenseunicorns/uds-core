@@ -109,9 +109,6 @@ additionalNetworkAllow: []
 # Indicates whether information about services should be injected into Pod's environment variables, matching the syntax of Docker links
 enableServiceLinks: true
 
-# Pod management policy. One of `Parallel` or `OrderedReady`
-podManagementPolicy: Parallel
-
 # StatefulSet's update strategy
 updateStrategy: RollingUpdate
 
