@@ -30,7 +30,7 @@ components:
               KEYCLOAK_INSTALLED=$(./zarf tools kubectl get sts -n keycloak keycloak > /dev/null 2>&1; echo $?)
               if [ "${KEYCLOAK_INSTALLED}" -eq 0 ]; then
                 echo "Keycloak has been previously installed. Checking the podManagementPolicy..."
-                POD_MGMT_POLICY=$(uds zarf tools kubectl get sts -n keycloak keycloak -o jsonpath='{.spec.podManagementPolicy}' 2>/dev/null || true)
+                POD_MGMT_POLICY=$(./zarf tools kubectl get sts -n keycloak keycloak -o jsonpath='{.spec.podManagementPolicy}' 2>/dev/null || true)
                 echo "Detected podManagementPolicy: ${POD_MGMT_POLICY:-<none>}"
                 if [ -n "${POD_MGMT_POLICY}" ] && [ "${POD_MGMT_POLICY}" != "OrderedReady" ]; then
                   echo "podManagementPolicy is '${POD_MGMT_POLICY}', deleting StatefulSet (cascade=orphan) to allow re-create with OrderedReady"
