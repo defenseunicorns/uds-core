@@ -4,7 +4,7 @@
 # This workflow runs a Lula scan against the PR to see if compliance has changed
 
 # @lulaStart 123e4567-e89b-12d3-a456-426614174001
-name: Lula Scan Against a UDS Core Pull Request - Test Again
+name: Lula Scan Against a UDS Core Pull Request - Test Again - and again
 # @lulaEnd 123e4567-e89b-12d3-a456-426614174001
 on:
   pull_request:
@@ -15,11 +15,12 @@ on:
 permissions:
   contents: read
   pull-requests: write
-
+# @lulaStart 123e4567-e89b-12d3-a456-426614174002
 jobs:
   scan-pr:
+     # ubuntu latest is not a requirement
     runs-on: ubuntu-latest
-
+# @lulaEnd 123e4567-e89b-12d3-a456-426614174002
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
       - name: Use Node.js 22
@@ -30,7 +31,7 @@ jobs:
       - name: Run Lula Scan
         run: |
           # renovate: datasource=github-tags depName=defenseunicorns/lula versioning=semver
-          npx --yes lula2@nightly crawl
+          npx --yes lula2 crawl
         shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
