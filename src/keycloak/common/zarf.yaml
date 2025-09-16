@@ -19,6 +19,28 @@ components:
           - ../chart/values.yaml
     actions:
       onDeploy:
+        before:
+          - description: Re-create Keycloak StatefulSet
+            # This can be switched to true in subsequent UDS Core versions
+            mute: false
+            cmd: |
+              set +e
+
+              echo "Checking if Keycloak StatefulSet should be deleted"
+              KEYCLOAK_INSTALLED=$(uds zarf tools kubectl get sts -n keycloak keycloak > /dev/null 2>&1; echo $?)
+              if [ "${KEYCLOAK_INSTALLED}" -eq 0 ]; then
+                echo "Keycloak has been previously installed. Checking the podManagementPolicy..."
+                POD_MGMT_POLICY=$(uds zarf tools kubectl get sts -n keycloak keycloak -o jsonpath='{.spec.podManagementPolicy}' 2>/dev/null || true)
+                echo "Detected podManagementPolicy: ${POD_MGMT_POLICY:-<none>}"
+                if [ -n "${POD_MGMT_POLICY}" ] && [ "${POD_MGMT_POLICY}" != "OrderedReady" ]; then
+                  echo "podManagementPolicy is '${POD_MGMT_POLICY}', deleting StatefulSet (cascade=orphan) to allow re-create with OrderedReady"
+                  uds zarf tools kubectl delete sts -n keycloak keycloak --cascade=orphan
+                else
+                  echo "podManagementPolicy is correct. Skipping..."
+                fi
+              else
+                echo "Keycloak has not been installed. Skipping..."
+              fi
         after:
           - description: Validate Keycloak Pods
             wait:
