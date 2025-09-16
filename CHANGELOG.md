@@ -24,7 +24,6 @@ All notable changes to this project will be documented in this file.
 * **deps:** update support-deps ([#1876](https://github.com/defenseunicorns/uds-core/issues/1876)) ([f36f1bc](https://github.com/defenseunicorns/uds-core/commit/f36f1bc1221bb88ba916019d50d3157b63a36bba))
 * fix logging breaking change in pino 9.9.x ([#1885](https://github.com/defenseunicorns/uds-core/issues/1885)) ([73a5920](https://github.com/defenseunicorns/uds-core/commit/73a59204813efcdca4ed5585543da246a014df7a))
 * lula2 crawl to prs ([#1918](https://github.com/defenseunicorns/uds-core/issues/1918)) ([3d667b0](https://github.com/defenseunicorns/uds-core/commit/3d667b017923804c7b0948312a9f8586ed5730f6))
-* **main:** release 0.52.1 ([#1897](https://github.com/defenseunicorns/uds-core/issues/1897)) ([892c4b3](https://github.com/defenseunicorns/uds-core/commit/892c4b3923c3305d2d040087329f646c90a21a5d))
 
 
 ### Documentation
