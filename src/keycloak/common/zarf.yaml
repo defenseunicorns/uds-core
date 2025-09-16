@@ -27,7 +27,7 @@ components:
               set +e
 
               echo "Checking if Keycloak StatefulSet should be deleted"
-              KEYCLOAK_INSTALLED=$(uds zarf tools kubectl get sts -n keycloak keycloak > /dev/null 2>&1; echo $?)
+              KEYCLOAK_INSTALLED=$(./zarf tools kubectl get sts -n keycloak keycloak > /dev/null 2>&1; echo $?)
               if [ "${KEYCLOAK_INSTALLED}" -eq 0 ]; then
                 echo "Keycloak has been previously installed. Checking the podManagementPolicy..."
                 POD_MGMT_POLICY=$(uds zarf tools kubectl get sts -n keycloak keycloak -o jsonpath='{.spec.podManagementPolicy}' 2>/dev/null || true)
