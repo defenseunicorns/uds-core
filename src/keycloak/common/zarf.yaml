@@ -34,7 +34,7 @@ components:
                 echo "Detected podManagementPolicy: ${POD_MGMT_POLICY:-<none>}"
                 if [ -n "${POD_MGMT_POLICY}" ] && [ "${POD_MGMT_POLICY}" != "OrderedReady" ]; then
                   echo "podManagementPolicy is '${POD_MGMT_POLICY}', deleting StatefulSet (cascade=orphan) to allow re-create with OrderedReady"
-                  uds zarf tools kubectl delete sts -n keycloak keycloak --cascade=orphan
+                 ./zarf tools kubectl delete sts -n keycloak keycloak --cascade=orphan
                 else
                   echo "podManagementPolicy is correct. Skipping..."
                 fi
