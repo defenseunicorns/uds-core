@@ -48,6 +48,14 @@ name: custom # This should be <gateway-name>
 domain: mydomain.dev # Set domain if different from default tenant domain for this gateway
 
 tls:
+  # The TLS certificate for the gateway, if not in 'PASSTHROUGH' mode (base64 encoded)
+  cert: ""
+  # The TLS key for the gateway, if not in 'PASSTHROUGH' mode (base64 encoded)
+  key: ""
+  # The CA certificate for the gateway when using `MUTUAL' or 'OPTIONAL_MUTUAL' (base64 encoded)
+  cacert: ""
+ # The name of the secret containing the TLS certificate to use for this gateway, this will override cert, key and cacert
+  credentialName: ""
   servers:
     custom:
       mode: # One of `SIMPLE`, `MUTUAL`, 'OPTIONAL_MUTUAL', `PASSTHROUGH`
