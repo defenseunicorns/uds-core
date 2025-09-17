@@ -43,7 +43,7 @@ components:
 
 Then for your values file (`config-custom.yaml` above) you will want to need to setup your configuration. Reference the [default values file](https://github.com/defenseunicorns/uds-core/blob/main/src/istio/charts/uds-istio-config/values.yaml) for full configuration options, but you will need to at minimum provide:
 ```yaml
-name: custom # This should be i<gateway-name>
+name: custom # This should be <gateway-name>
 
 domain: mydomain.dev # Set domain if different from default tenant domain for this gateway
 
