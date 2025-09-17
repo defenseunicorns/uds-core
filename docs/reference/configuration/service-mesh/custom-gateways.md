@@ -30,20 +30,20 @@ components:
       - name: gateway
         url: https://istio-release.storage.googleapis.com/charts
         version: 1.26.2 # This should match the Istio version currently in UDS Core
-        releaseName: custom-ingressgateway
-        namespace: istio-custom-gateway
+        releaseName: custom-ingressgateway # This should be <gateway-name>-ingressgateway
+        namespace: istio-custom-gateway # This should be istio-<gateway-name>-gateway
       - name: uds-istio-config
         version: v0.52.0 # This should match the version of UDS Core you are deploying
         url: https://github.com/defenseunicorns/uds-core.git
         gitPath: src/istio/charts/uds-istio-config
-        namespace: istio-custom-gateway
+        namespace: istio-custom-gateway # This should be istio-<gateway-name>-gateway
         valuesFiles:
           - "config-custom.yaml"
 ```
 
 Then for your values file (`config-custom.yaml` above) you will want to need to setup your configuration. Reference the [default values file](https://github.com/defenseunicorns/uds-core/blob/main/src/istio/charts/uds-istio-config/values.yaml) for full configuration options, but you will need to at minimum provide:
 ```yaml
-name: custom
+name: custom # This should be i<gateway-name>
 
 domain: mydomain.dev # Set domain if different from default tenant domain for this gateway
 
@@ -86,7 +86,7 @@ spec:
         port: 8080
 ```
 
-Make sure that the `gateway` name lines up with the name you used in your gateway deployment (`custom` in our example). For `domain`, you will want to set this if exposing your service on a domain separate
+Make sure that the `gateway` name lines up with the name you used in your gateway deployment (`custom` in our example). For `domain`, you will want to set this if exposing your service on a domain different from the default domain name for your environment.
 
 - `gateway`: This is where you will want to use the name of your gateway (matching the name used in your Zarf package for the gateway - `custom` from our example).
 - `domain`: If exposing your service on a domain that is different from the default domain name for your environment (or admin domain name if your gateway includes admin), ensure that you have set this to the expected domain value.
