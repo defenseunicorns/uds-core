@@ -10,7 +10,8 @@ image:
   pullPolicy: IfNotPresent
 
 # renovate: datasource=github-tags depName=defenseunicorns/uds-identity-config versioning=semver
-configImage: ghcr.io/defenseunicorns/uds/identity-config:0.17.0
+configImage: 127.0.0.1:5001/uds-identity-config:keycloak
+
 
 # The public domain name of the Keycloak server
 domain: "###ZARF_VAR_DOMAIN###"

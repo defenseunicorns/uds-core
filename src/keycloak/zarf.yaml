@@ -27,7 +27,7 @@ components:
           - "values/upstream-values.yaml"
     images:
       - quay.io/keycloak/keycloak:26.3.4
-      - ghcr.io/defenseunicorns/uds/identity-config:0.17.0
+      - 127.0.0.1:5001/uds-identity-config:keycloak
 
   - name: keycloak
     required: true
@@ -55,4 +55,4 @@ components:
           - "values/unicorn-values.yaml"
     images:
       - quay.io/rfcurated/keycloak:26.3.4-jammy-fips-rfcurated
-      - ghcr.io/defenseunicorns/uds/identity-config:0.17.0
+      - 127.0.0.1:5001/uds-identity-config:keycloak
