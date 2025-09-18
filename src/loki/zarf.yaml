@@ -22,7 +22,7 @@ components:
       - docker.io/grafana/loki:3.5.3
       - docker.io/nginxinc/nginx-unprivileged:1.29-alpine
       - docker.io/memcached:1.6.39-alpine
-      - docker.io/kiwigrid/k8s-sidecar:1.30.10
+      - ghcr.io/kiwigrid/k8s-sidecar:1.30.10
 
   - name: loki
     required: true
