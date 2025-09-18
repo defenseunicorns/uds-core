@@ -291,9 +291,6 @@
       "type": "object",
       "properties": {}
     },
-    "podManagementPolicy": {
-      "type": "string"
-    },
     "podSecurityContext": {
       "type": "object",
       "properties": {}
