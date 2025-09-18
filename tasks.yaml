@@ -64,6 +64,21 @@ tasks:
                 description: "The dev stack is not production-ready and can run without adhering to policies"
           EOF
 
+      - description: "Deploy sso-ca-cert in istio-system to avoid circular dependency"
+        cmd: |
+          uds zarf tools kubectl create ns istio-system
+          # Istiod needs this secret to exist for a volume mount
+          uds zarf tools kubectl apply -f - <<EOF
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: sso-ca-cert
+            namespace: istio-system
+          type: Opaque
+          data:
+            extra.pem: ""
+          EOF
+
       # Note: the `registry-url` flag used here requires uds 0.19.2+
       - description: "Deploy the Istio source package with Zarf Dev"
         cmd: "uds zarf dev deploy src/istio --flavor upstream --registry-url docker.io --no-progress --components=${{ .inputs.istio_components }}"
