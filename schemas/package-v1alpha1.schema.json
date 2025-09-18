@@ -269,8 +269,12 @@
           "type": "string",
           "description": "A description of this expose entry, this will become part of the VirtualService name"
         },
+        "domain": {
+          "type": "string",
+          "description": "The domain to expose the service on, only valid for additional gateways (not tenant,\nadmin, or passthrough)"
+        },
         "gateway": {
-          "$ref": "#/definitions/Gateway",
+          "type": "string",
           "description": "The name of the gateway to expose the service on (default: tenant)"
         },
         "host": {
@@ -1181,16 +1185,6 @@
       ],
       "title": "DerivePort",
       "description": "On a redirect, dynamically set the port: * FROM_PROTOCOL_DEFAULT: automatically set to 80 for HTTP and 443 for HTTPS.\n\nValid Options: FROM_PROTOCOL_DEFAULT, FROM_REQUEST_PORT"
-    },
-    "Gateway": {
-      "type": "string",
-      "enum": [
-        "admin",
-        "tenant",
-        "passthrough"
-      ],
-      "title": "Gateway",
-      "description": "The name of the gateway to expose the service on (default: tenant)"
     },
     "Mode": {
       "type": "string",
