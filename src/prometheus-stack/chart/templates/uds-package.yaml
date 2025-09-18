@@ -91,8 +91,18 @@ spec:
         remoteServiceAccount: loki
         selector:
           app.kubernetes.io/name: alertmanager
-        description: "Loki Ruler to Alertmanager"
+        description: "Loki Ruler Alerts to Alertmanager"
         port: 9093
+
+      - direction: Ingress
+        remoteNamespace: loki
+        remoteSelector:
+          app.kubernetes.io/name: loki
+        remoteServiceAccount: loki
+        selector:
+          app.kubernetes.io/name: prometheus
+        description: "Loki Ruler Recording Rules to Prometheus"
+        port: 9090
 
       # Custom rules for additional networking access
       {{- with .Values.additionalNetworkAllow }}

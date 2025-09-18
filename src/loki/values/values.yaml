@@ -112,6 +112,13 @@ loki:
     # File path to store temporary rule files when loaded (shouldn't conflict with sidecar path)
     rule_path: /var/loki/rules-temp
 
+    # enable remote write of loki recorder rules to prometheus
+    remote_write:
+      enabled: true
+      clients:
+        prometheus:
+          url: http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090/api/v1/write
+
 enterprise:
   # Enable enterprise features, license must be provided
   enabled: false
