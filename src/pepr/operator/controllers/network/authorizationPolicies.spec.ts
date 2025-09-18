@@ -46,6 +46,91 @@ vi.mock("./generators/kubeNodes", () => ({
   kubeNodes: () => [{ ipBlock: { cidr: "192.168.0.0/16" } }],
 }));
 
+describe("flexible gateway configuration", () => {
+  test("should generate correct principal for custom gateway", async () => {
+    const pkg: UDSPackage = {
+      metadata: { name: "custom-gateway-test", namespace: "test-ns", generation: 1 },
+      spec: {
+        network: {
+          expose: [
+            {
+              service: "test-service",
+              selector: { app: "test-app" },
+              gateway: "custom",
+              host: "test",
+              port: 8080,
+            },
+          ],
+        },
+      },
+    };
+
+    const policies = await generateAuthorizationPolicies(pkg, "test-ns", IstioState.Ambient);
+    expect(policies.length).toBe(1);
+    const policy = policies[0];
+    expect(policy.metadata?.name).toBe(
+      "protect-custom-gateway-test-ingress-8080-test-app-istio-custom-gateway",
+    );
+    expect(policy.spec?.rules?.[0].from?.[0].source).toEqual({
+      principals: ["cluster.local/ns/istio-custom-gateway/sa/custom-ingressgateway"],
+    });
+  });
+
+  test("should generate correct principal for admin-like custom gateway", async () => {
+    const pkg: UDSPackage = {
+      metadata: { name: "admin-like-test", namespace: "test-ns", generation: 1 },
+      spec: {
+        network: {
+          expose: [
+            {
+              service: "test-service",
+              selector: { app: "test-app" },
+              gateway: "my-admin",
+              host: "test",
+              port: 8080,
+            },
+          ],
+        },
+      },
+    };
+
+    const policies = await generateAuthorizationPolicies(pkg, "test-ns", IstioState.Ambient);
+    expect(policies.length).toBe(1);
+    const policy = policies[0];
+    expect(policy.spec?.rules?.[0].from?.[0].source).toEqual({
+      principals: ["cluster.local/ns/istio-my-admin-gateway/sa/my-admin-ingressgateway"],
+    });
+  });
+
+  test("should generate correct principal for passthrough-like custom gateway", async () => {
+    const pkg: UDSPackage = {
+      metadata: { name: "passthrough-like-test", namespace: "test-ns", generation: 1 },
+      spec: {
+        network: {
+          expose: [
+            {
+              service: "test-service",
+              selector: { app: "test-app" },
+              gateway: "my-passthrough",
+              host: "test",
+              port: 8443,
+            },
+          ],
+        },
+      },
+    };
+
+    const policies = await generateAuthorizationPolicies(pkg, "test-ns", IstioState.Ambient);
+    expect(policies.length).toBe(1);
+    const policy = policies[0];
+    expect(policy.spec?.rules?.[0].from?.[0].source).toEqual({
+      principals: [
+        "cluster.local/ns/istio-my-passthrough-gateway/sa/my-passthrough-ingressgateway",
+      ],
+    });
+  });
+});
+
 describe("authorization policy generation", () => {
   test("should generate authpol with ipBlock for CloudMetadata", async () => {
     const pkg: UDSPackage = {
