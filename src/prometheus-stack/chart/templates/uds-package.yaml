@@ -84,6 +84,16 @@ spec:
         description: Grafana Alerts Queries
         port: 9093
 
+      - direction: Ingress
+        remoteNamespace: loki
+        remoteSelector:
+          app.kubernetes.io/name: loki
+        remoteServiceAccount: loki
+        selector:
+          app.kubernetes.io/name: alertmanager
+        description: "Loki Ruler to Alertmanager"
+        port: 9093
+
       # Custom rules for additional networking access
       {{- with .Values.additionalNetworkAllow }}
       {{ toYaml . | nindent 6 }}
