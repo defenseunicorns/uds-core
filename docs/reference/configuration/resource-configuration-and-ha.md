@@ -193,7 +193,7 @@ packages:
         keycloak:
           values:
             # Override Java memory settings
-            - path: env
+            - path: env[0]
               value:
                 - name: JAVA_OPTS_KC_HEAP
                   value: "-XX:MaxRAMPercentage=70 -XX:MinRAMPercentage=70 -XX:InitialRAMPercentage=50 -XX:MaxRAM=2G"
