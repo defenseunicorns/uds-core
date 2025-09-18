@@ -35,49 +35,16 @@ tasks:
         env:
           - "PEPR_MODE=dev"
 
-      - description: "Add Exemption for uds-dev-stack"
+      - description: "Create required namespaces"
         cmd: |
-          # Note: this behaves a bit differently than a normal dev/demo deploy where 'uds-dev-stack' is ignored at the webhook level
-          # Since we can't customize the 'pepr dev' setup this is a close enough approximation to work for dev locally
           uds zarf tools kubectl create ns uds-policy-exemptions
-          uds zarf tools kubectl apply -f - <<EOF
-          apiVersion: uds.dev/v1alpha1
-          kind: Exemption
-          metadata:
-            name: dev-stack
-            namespace: uds-policy-exemptions
-          spec:
-            exemptions:
-              - policies:
-                  - DisallowHostNamespaces
-                  - DisallowPrivileged
-                  - DropAllCapabilities
-                  - RequireNonRootUser
-                  - RestrictCapabilities
-                  - RestrictHostPathWrite
-                  - RestrictHostPorts
-                  - RestrictVolumeTypes
-                matcher:
-                  namespace: uds-dev-stack
-                  name: "^.*"
-                title: "dev-stack-pods"
-                description: "The dev stack is not production-ready and can run without adhering to policies"
-          EOF
-
-      - description: "Deploy sso-ca-cert in istio-system to avoid circular dependency"
-        cmd: |
           uds zarf tools kubectl create ns istio-system
-          # Istiod needs this secret to exist for a volume mount
-          uds zarf tools kubectl apply -f - <<EOF
-          apiVersion: v1
-          kind: Secret
-          metadata:
-            name: sso-ca-cert
-            namespace: istio-system
-          type: Opaque
-          data:
-            extra.pem: ""
-          EOF
+          uds zarf tools kubectl create ns pepr-system
+
+      - description: "Deploy the UDS Cluster Config CRD and apply all hack dev manifests"
+        cmd: |
+          uds zarf tools kubectl apply -f src/pepr/uds-cluster-crds/templates/clusterconfig.uds.dev.yaml
+          uds zarf tools kubectl apply -f hack/dev-manifests/
 
       # Note: the `registry-url` flag used here requires uds 0.19.2+
       - description: "Deploy the Istio source package with Zarf Dev"
@@ -86,39 +53,6 @@ tasks:
       # Note: Since this is a dev deploy without any `--flavor` it only deploys the CRDs (other components are flavored)
       - description: "Deploy the Prometheus-Stack source package with Zarf Dev to only install the CRDs"
         cmd: "uds zarf dev deploy src/prometheus-stack --no-progress"
-
-      - description: "Deploy the UDS Cluster Config CRD, CR, and config secret"
-        cmd: |
-          uds zarf tools kubectl apply -f src/pepr/uds-cluster-crds/templates/clusterconfig.uds.dev.yaml
-          uds zarf tools kubectl apply -f - <<EOF
-          apiVersion: uds.dev/v1alpha1
-          kind: ClusterConfig
-          metadata:
-            name: uds-cluster-config
-          spec:
-            attributes:
-              clusterName: ""
-              tags: []
-            expose:
-              adminDomain: ""
-              caCert: ""
-              domain: uds.dev
-            networking:
-              kubeApiCIDR: ""
-              kubeNodeCIDRs: []
-            policy:
-              allowAllNsExemptions: false
-          EOF
-          uds zarf tools kubectl apply -f - <<EOF
-          apiVersion: v1
-          kind: Secret
-          metadata:
-            name: uds-operator-config
-            namespace: pepr-system
-          type: Opaque
-          stringData:
-            devMode: "active"
-          EOF
 
       - description: "Dev instructions"
         cmd: |
