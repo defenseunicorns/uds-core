@@ -16,7 +16,19 @@ While UDS Core allows you to expose services on custom gateways, you are respons
 
 UDS Core's gateways follow a pattern of provisioning a single [Ingress Gateway](https://github.com/istio/istio/tree/master/manifests/charts/gateway) per [Istio Gateway custom resource](https://istio.io/latest/docs/reference/config/networking/gateway/). The ingress gateway provides the actual deployment and load balancer service used to route requests, while the gateway custom resource provides configuration detailing the hosts and TLS settings for requests to respond to. By ensuring these are always 1:1 you can maintain clear separation between gateways with different domains, TLS modes, and security controls.
 
-To provision an ingress gateway you will want to use the upstream Istio helm chart in your zarf package. Then you can add additional manifests (or a copy of the UDS Core gateway config chart) to create the gateway CR and any necessary TLS credential secrets. The below is a good example to follow for this setup:
+To provision an ingress gateway you will want to use the upstream Istio helm chart in your zarf package. Then you can add additional manifests (or a copy of the UDS Core gateway config chart) to create the gateway CR and any necessary TLS credential secrets.
+
+When constructing your Zarf package and values you will want to pick a short name for your gateway. In the example below this is "custom". There are a few very important configuration items that you must ensure match the expected patterns for naming:
+- `releaseName` for the `gateway` chart MUST match `<gateway-name>-ingressgateway` (`custom-ingressgateway` above)
+- `namespace` for BOTH charts MUST match `istio-<gateway-name>-gateway` (`istio-custom-gateway` above)
+- `name` in your `uds-istio-config` chart values MUST match `<gateway-name>` (`custom` above)
+
+These naming conventions will ensure that you are able to properly expose a service via the gateway. Also be aware of two keywords that you can use in your gateway name to alter the behavior:
+- `admin`: If present in your gateway's name, such as `custom-admin`, the `domain` will default to the admin domain for all `expose` entries. You will still need to ensure that your gateway values properly set this domain as well.
+- `passthrough`: If present in your gateway's name, such as `custom-passthrough`, there will be an extra SNI Host match added for all `expose` entries (reference [Istio documentation](https://istio.io/latest/docs/reference/config/networking/virtual-service/#TLSRoute)).
+
+The below example shows how to create a zarf package for a "custom" gateway:
+
 ```yaml
 kind: ZarfPackageConfig
 metadata:
@@ -42,35 +54,40 @@ components:
 ```
 
 Then for your values file (`config-custom.yaml` above) you will want to need to setup your configuration. Reference the [default values file](https://github.com/defenseunicorns/uds-core/blob/main/src/istio/charts/uds-istio-config/values.yaml) for full configuration options, but you will need to at minimum provide:
+
 ```yaml
 name: custom # This should be <gateway-name>
 
 domain: mydomain.dev # Set domain if different from default tenant domain for this gateway
 
 tls:
-  # The TLS certificate for the gateway, if not in 'PASSTHROUGH' mode (base64 encoded)
-  cert: ""
-  # The TLS key for the gateway, if not in 'PASSTHROUGH' mode (base64 encoded)
-  key: ""
-  # The CA certificate for the gateway when using `MUTUAL' or 'OPTIONAL_MUTUAL' (base64 encoded)
-  cacert: ""
- # The name of the secret containing the TLS certificate to use for this gateway, this will override cert, key and cacert
-  credentialName: ""
   servers:
     custom:
       mode: # One of `SIMPLE`, `MUTUAL`, 'OPTIONAL_MUTUAL', `PASSTHROUGH`
 ```
 
-Other fields may or may not apply depending on your configuration desires (specific subdomain hosts, TLS certificates, etc).
+Other fields may or may not apply depending on your configuration desires (specific subdomain hosts, TLS certificates, etc). If using a gateway that is not in PASSTHROUGH mode you will need to supply a TLS cert and key. Typically this should be done during deployment by exposing these values as variables in your bundle, like the below example:
 
-When constructing your Zarf package and values you will want to pick a short name for your gateway. In the example above this is "custom". There are a few very important configuration items that you must ensure match the expected patterns for naming:
-- `releaseName` for the `gateway` chart MUST match `<gateway-name>-ingressgateway` (`custom-ingressgateway` above)
-- `namespace` for BOTH charts MUST match `istio-<gateway-name>-gateway` (`istio-custom-gateway` above)
-- `name` in your `uds-istio-config` chart values MUST match `<gateway-name>` (`custom` above)
-
-These naming conventions will ensure that you are able to properly expose a service via the gateway. Also be aware of two keywords that you can use in your gateway name to alter the behavior:
-- `admin`: If present in your gateway's name, such as `custom-admin`, the `domain` will default to the admin domain for all `expose` entries. You will still need to ensure that your gateway values properly set this domain as well.
-- `passthrough`: If present in your gateway's name, such as `custom-passthrough`, there will be an extra SNI Host match added for all `expose` entries (reference [Istio documentation](https://istio.io/latest/docs/reference/config/networking/virtual-service/#TLSRoute)).
+```yaml
+packages:
+  - name: custom-gateway
+    ...
+    overrides:
+      istio-custom-gateway:
+        uds-istio-config:
+          # Set via UDS_ environment variables, `--set` at deploy time, or `uds-config.yaml`
+          variables:
+            - name: CUSTOM_TLS_CERT
+              description: "The TLS cert for the custom gateway (must be base64 encoded)"
+              path: tls.cert
+            - name: CUSTOM_TLS_KEY
+              description: "The TLS key for the custom gateway (must be base64 encoded)"
+              path: tls.key
+          # Alternatively, point to an existing secret
+          values:
+            - path: tls.credentialName
+              value: custom-gateway-tls-secret # Reference to the Kubernetes secret for the custom gateway's TLS certificate
+```
 
 ## Exposing a Service
 
