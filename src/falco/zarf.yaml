@@ -59,4 +59,4 @@ components:
           - values/unicorn-values.yaml
     images:
       - quay.io/rfcurated/falcosecurity/falco:0.41.3-jammy-scratch-fips-rfcurated
-      - quay.io/rfcurated/falcoseucrity/falcosidekick:2.31.1-jammy-scratch-fips-rfcurated
+      - quay.io/rfcurated/falcosecurity/falcosidekick:2.31.1-jammy-scratch-fips-rfcurated
