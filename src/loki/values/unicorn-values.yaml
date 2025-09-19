@@ -15,3 +15,7 @@ memcached:
   image:
     repository: quay.io/rfcurated/memcached
     tag: 1.6.39-jammy-fips-rfcurated-rfhardened
+sidecar:
+  image:
+    repository: quay.io/rfcurated/k8s-sidecar
+    tag: 1.30.10-jammy-scratch-fips-rfcurated-rfhardened

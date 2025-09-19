@@ -27,3 +27,8 @@ memcached:
   image:
     repository: registry1.dso.mil/ironbank/opensource/memcached/memcached
     tag: 1.6.39
+
+sidecar:
+  image:
+    repository: registry1.dso.mil/ironbank/kiwigrid/k8s-sidecar
+    tag: 1.30.10

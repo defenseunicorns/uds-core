@@ -7,7 +7,7 @@ grafana:
   enabled: false
   forceDeployDashboards: true
 kube-state-metrics:
-  # Enable scraping of istio-specifc namespace labels
+  # Enable scraping of istio-specific namespace labels
   metricLabelsAllowlist:
     - namespaces=[istio-injection,istio.io/dataplane-mode]
 nameOverride: kube-prometheus-stack
@@ -47,6 +47,7 @@ prometheus:
             requests:
               storage: 50Gi
           storageClassName: null
+    enableRemoteWriteReceiver: true # enable Prometheus remote write receiver (needed by loki ruler for recording rules)
 prometheus-node-exporter:
   containerSecurityContext:
     readOnlyRootFilesystem: true

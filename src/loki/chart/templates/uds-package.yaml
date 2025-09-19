@@ -51,6 +51,26 @@ spec:
           - 8080
         description: "Vector Log Storage"
 
+      - direction: Egress
+        selector:
+          app.kubernetes.io/name: loki
+        remoteNamespace: monitoring
+        remoteSelector:
+          app.kubernetes.io/name: alertmanager
+        ports:
+          - 9093
+        description: "Loki Ruler Alerts to Alertmanager"
+
+      - direction: Egress
+        selector:
+          app.kubernetes.io/name: loki
+        remoteNamespace: monitoring
+        remoteSelector:
+          app.kubernetes.io/name: prometheus
+        ports:
+          - 9090
+        description: "Loki Ruler Recording Rules to Prometheus"
+
       # Egress for S3 connections
       - direction: Egress
         selector:
