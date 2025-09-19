@@ -7,7 +7,6 @@ export {
   Allow,
   Direction,
   Expose,
-  Gateway,
   Monitor,
   Phase,
   StatusObject as PkgStatus,
@@ -17,6 +16,13 @@ export {
   Sso,
   Package as UDSPackage,
 } from "./generated/package-v1alpha1";
+
+// Type for the standard gateways
+export enum Gateway {
+  Tenant = "tenant",
+  Admin = "admin",
+  Passthrough = "passthrough",
+}
 
 export {
   ExemptionElement,

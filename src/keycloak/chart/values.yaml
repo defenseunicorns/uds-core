@@ -5,7 +5,7 @@ image:
   # The Keycloak image repository
   repository: quay.io/keycloak/keycloak
   # Overrides the Keycloak image tag whose default is the chart appVersion
-  tag: "26.3.3"
+  tag: "26.3.4"
   # The Keycloak image pull policy
   pullPolicy: IfNotPresent
 
@@ -108,9 +108,6 @@ additionalNetworkAllow: []
 
 # Indicates whether information about services should be injected into Pod's environment variables, matching the syntax of Docker links
 enableServiceLinks: true
-
-# Pod management policy. One of `Parallel` or `OrderedReady`
-podManagementPolicy: Parallel
 
 # StatefulSet's update strategy
 updateStrategy: RollingUpdate

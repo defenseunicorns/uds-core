@@ -50,6 +50,7 @@ tasks:
             namespace: kube-system
           EOF
             uds zarf tools kubectl -n kube-system rollout restart deployment coredns
+
   - name: eks-storageclass-setup
     actions:
       - description: Setup GP3 Storage Class
@@ -70,6 +71,7 @@ tasks:
               fsType: ext4
               type: gp3
           EOF
+
   - name: admin-gw-ip
     actions:
       - description: Fetch Admin Gateway IP Address
@@ -82,6 +84,7 @@ tasks:
         mute: true
         setVariables:
           - name: ADMIN_GW_IP
+
   - name: tenant-gw-ip
     actions:
       - description: Fetch Tenant Gateway IP Address
@@ -94,6 +97,7 @@ tasks:
         mute: true
         setVariables:
           - name: TENANT_GW_IP
+
   - name: setup-hosts
     actions:
       - task: admin-gw-ip
@@ -102,3 +106,13 @@ tasks:
         mute: true
         cmd: |
           echo "$ADMIN_GW_IP keycloak.admin.uds.dev neuvector.admin.uds.dev grafana.admin.uds.dev demo.admin.uds.dev\n$TENANT_GW_IP sso.uds.dev demo-8080.uds.dev demo-8081.uds.dev protected.uds.dev ambient-protected.uds.dev ambient2-protected.uds.dev" | sudo tee -a /etc/hosts
+
+  - name: rename-flavored-packages
+    description: "Rename flavored package files by removing the flavor suffix"
+    actions:
+      - description: Rename flavored package files
+        cmd: |
+          for FLAVORED_PACKAGE in $(find build/ -maxdepth 1 -name "zarf-package-*${FLAVOR}.tar.zst" 2>/dev/null || echo ""); do
+            BASE_NAME=$(echo "${FLAVORED_PACKAGE}" | sed "s/-${FLAVOR}\.tar\.zst/.tar.zst/")
+            mv -v "${FLAVORED_PACKAGE}" "${BASE_NAME}"
+          done

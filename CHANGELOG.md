@@ -2,6 +2,34 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.52.1](https://github.com/defenseunicorns/uds-core/compare/v0.52.0...v0.52.1) (2025-09-16)
+
+
+### ⚠ BREAKING CHANGES
+
+* Keycloak `podManagementPolicy` Helm Chart value has been removed as setting it to anything other than `OrderedReady` can cause clustering outages. During the upgrade procedure, if the previously used value was `Parallel`, Keycloak will temporarily scale in to 1 replica. Once the StatefulSet gets updated, it will scale out to previously set value.
+
+### Bug Fixes
+
+* bundle and package naming ([#1906](https://github.com/defenseunicorns/uds-core/issues/1906)) ([2f83774](https://github.com/defenseunicorns/uds-core/commit/2f8377454cc324d901f834a8964add6bc656d5c4))
+* improve Keycloak stability (https://github.com/defenseunicorns/uds-core/pull/1917) ([6422900](https://github.com/defenseunicorns/uds-core/commit/6422900b1d5d059b019b8f452e7b7594cfec31db))
+* pepr policy unit testing ([#1880](https://github.com/defenseunicorns/uds-core/issues/1880)) ([b367419](https://github.com/defenseunicorns/uds-core/commit/b367419f17ee2c8283a171424fde7b58b2751a35))
+* revert 0.52.1 and adjust CI publish workflow ([#1921](https://github.com/defenseunicorns/uds-core/issues/1921)) ([5e6dd36](https://github.com/defenseunicorns/uds-core/commit/5e6dd3650dd2fdd48e3f93dcbebdb097055756aa))
+
+
+### Miscellaneous
+
+* **deps-dev:** bump vite from 6.3.5 to 7.1.5 in /scripts/renovate ([#1904](https://github.com/defenseunicorns/uds-core/issues/1904)) ([df5c418](https://github.com/defenseunicorns/uds-core/commit/df5c41812099b7664e8c074661309f64c911e67f))
+* **deps:** update prometheus-stack ([#1829](https://github.com/defenseunicorns/uds-core/issues/1829)) ([b78d1e8](https://github.com/defenseunicorns/uds-core/commit/b78d1e8147c24262e78c4618b04286e15e3b32a1))
+* **deps:** update support-deps ([#1876](https://github.com/defenseunicorns/uds-core/issues/1876)) ([f36f1bc](https://github.com/defenseunicorns/uds-core/commit/f36f1bc1221bb88ba916019d50d3157b63a36bba))
+* fix logging breaking change in pino 9.9.x ([#1885](https://github.com/defenseunicorns/uds-core/issues/1885)) ([73a5920](https://github.com/defenseunicorns/uds-core/commit/73a59204813efcdca4ed5585543da246a014df7a))
+* lula2 crawl to prs ([#1918](https://github.com/defenseunicorns/uds-core/issues/1918)) ([3d667b0](https://github.com/defenseunicorns/uds-core/commit/3d667b017923804c7b0948312a9f8586ed5730f6))
+
+
+### Documentation
+
+* add doc on trusting private pki ([#1881](https://github.com/defenseunicorns/uds-core/issues/1881)) ([4a4d366](https://github.com/defenseunicorns/uds-core/commit/4a4d3667c5af84d78e68a4ea2bee358ac9ee694c))
+
 ## [0.52.0](https://github.com/defenseunicorns/uds-core/compare/v0.51.0...v0.52.0) (2025-09-10)
 
 

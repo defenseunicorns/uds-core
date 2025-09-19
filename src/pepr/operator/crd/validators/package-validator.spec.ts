@@ -93,6 +93,92 @@ describe("Test validation of Package CRs", () => {
     vi.resetAllMocks();
   });
 
+  describe("Gateway name validation", () => {
+    it("allows valid custom gateway names", async () => {
+      const mockReq = makeMockReq(
+        {},
+        [
+          {
+            gateway: "custom",
+            host: "app",
+            service: "app-service",
+            port: 8080,
+          },
+        ],
+        [],
+        [],
+        [],
+      );
+      await validator(mockReq);
+      expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+    });
+
+    it("denies invalid custom gateway names", async () => {
+      const mockReq = makeMockReq(
+        {},
+        [
+          {
+            gateway: "Invalid_Gateway_Name",
+            host: "app",
+            service: "app-service",
+            port: 8080,
+          },
+        ],
+        [],
+        [],
+        [],
+      );
+      await validator(mockReq);
+      expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+      expect(mockReq.Deny).toHaveBeenCalledWith(
+        "Gateway name \"Invalid_Gateway_Name\" is not a valid Kubernetes resource name. It should only contain lowercase alphanumeric characters, '-', or '.'",
+      );
+    });
+
+    it("denies setting domain for standard gateways", async () => {
+      const mockReq = makeMockReq(
+        {},
+        [
+          {
+            gateway: Gateway.Tenant,
+            domain: "custom.example.com",
+            host: "app",
+            service: "app-service",
+            port: 8080,
+          },
+        ],
+        [],
+        [],
+        [],
+      );
+      await validator(mockReq);
+      expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+      expect(mockReq.Deny).toHaveBeenCalledWith(
+        "domain cannot be set for the standard gateways (tenant, admin, or passthrough)",
+      );
+    });
+
+    it("allows setting domain for custom gateways", async () => {
+      const mockReq = makeMockReq(
+        {},
+        [
+          {
+            gateway: "custom",
+            domain: "custom.example.com",
+            host: "app",
+            service: "app-service",
+            port: 8080,
+          },
+        ],
+        [],
+        [],
+        [],
+      );
+      await validator(mockReq);
+      expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+    });
+  });
+
   it("allows packages that have no issues", async () => {
     const mockReq = makeMockReq({}, [{}], [{}], [{}], [{}]);
     await validator(mockReq);

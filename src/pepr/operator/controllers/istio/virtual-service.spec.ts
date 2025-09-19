@@ -7,7 +7,7 @@ import { K8s } from "pepr";
 import { afterEach, beforeEach, describe, expect, it, Mock, vi } from "vitest";
 import { Expose, Gateway, IstioVirtualService, RemoteProtocol } from "../../crd";
 import { UDSConfig } from "../config/config";
-import { sidecarEgressNamespace, sharedEgressPkgId } from "./egress-sidecar";
+import { sharedEgressPkgId, sidecarEgressNamespace } from "./egress-sidecar";
 import { EgressResource } from "./types";
 import {
   generateEgressVirtualService,
@@ -38,6 +38,97 @@ describe("test generate virtual service", () => {
   const namespace = "test";
   const pkgName = "test";
   const generation = "1";
+
+  describe("flexible gateway configuration", () => {
+    it("should use custom domain when specified", () => {
+      const expose: Expose = {
+        host,
+        port,
+        service,
+        gateway: "custom",
+        domain: "custom.example.com",
+      };
+
+      const payload = generateIngressVirtualService(
+        expose,
+        namespace,
+        pkgName,
+        generation,
+        ownerRefs,
+      );
+
+      expect(payload).toBeDefined();
+      expect(payload.spec?.hosts).toBeDefined();
+      expect(payload.spec!.hosts![0]).toEqual(`${host}.custom.example.com`);
+      expect(payload.spec?.gateways).toEqual([`istio-custom-gateway/custom-gateway`]);
+    });
+
+    it("should use admin domain for custom gateway with 'admin' in the name", () => {
+      const expose: Expose = {
+        host,
+        port,
+        service,
+        gateway: "my-admin",
+      };
+
+      const payload = generateIngressVirtualService(
+        expose,
+        namespace,
+        pkgName,
+        generation,
+        ownerRefs,
+      );
+
+      expect(payload).toBeDefined();
+      expect(payload.spec?.hosts).toBeDefined();
+      expect(payload.spec!.hosts![0]).toEqual(`${host}.${UDSConfig.adminDomain}`);
+    });
+
+    it("should prioritize custom domain over gateway name pattern", () => {
+      const expose: Expose = {
+        host,
+        port,
+        service,
+        gateway: "my-admin",
+        domain: "custom.example.com",
+      };
+
+      const payload = generateIngressVirtualService(
+        expose,
+        namespace,
+        pkgName,
+        generation,
+        ownerRefs,
+      );
+
+      expect(payload).toBeDefined();
+      expect(payload.spec?.hosts).toBeDefined();
+      expect(payload.spec!.hosts![0]).toEqual(`${host}.custom.example.com`);
+    });
+
+    it("should add TLS configuration for custom gateway with 'passthrough' in the name", () => {
+      const expose: Expose = {
+        host,
+        port,
+        service,
+        gateway: "my-passthrough",
+      };
+
+      const payload = generateIngressVirtualService(
+        expose,
+        namespace,
+        pkgName,
+        generation,
+        ownerRefs,
+      );
+
+      expect(payload).toBeDefined();
+      expect(payload.spec?.tls).toBeDefined();
+      expect(payload.spec?.hosts).toBeDefined();
+      expect(payload.spec!.hosts![0]).toEqual(`${host}.${UDSConfig.domain}`);
+      expect(payload.spec!.tls![0].match![0].sniHosts![0]).toEqual(`${host}.${UDSConfig.domain}`);
+    });
+  });
 
   it("should create a simple VirtualService object", () => {
     const expose: Expose = {
