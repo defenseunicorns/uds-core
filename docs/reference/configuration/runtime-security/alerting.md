@@ -22,7 +22,7 @@ UDS Core ships Falco with [stable default rules](https://github.com/falcosecurit
 See more about default rules in the [Falco documentation](https://falco.org/docs/reference/rules/default-rules/).
 
 :::caution[Sandbox/Incubating Rules]
-UDS Core currently does not include the Falco sandbox/incubating ruleset by default. These rules are experimental and may generate false positives.
+UDS Core currently does not enable the Falco sandbox/incubating ruleset by default.
 :::
 
 ### Querying Events with Loki
@@ -44,13 +44,7 @@ This query retrieves all Falco events with any priority level. You can filter fu
 
 ### Grafana Dashboards
 
-The upstream Falco helm charts include some Grafana dashboards out of the box for visualizing security events:
-
-1. **Falco Metrics Dashboard** - Shows Falco performance and rule statistics
-2. **Falco Sidekick Metrics Dashboard** - Displays Sidekick forwarding performance
-3. **Falco Sidekick Events Dashboard** - Visualizes security events and logs
-
-These dashboards are automatically available in Grafana when Falco is deployed and can be accessed through the standard UDS Core Grafana interface.
+The upstream Falco helm chart includes a Grafana dashboard out of the box for visualizing security events logs for Falcosidekick. The dashboard `Falco Logs` is automatically available in Grafana when Falco is deployed and can be accessed through the standard UDS Core Grafana interface.
 
 ### External Alert Forwarding
 
@@ -118,6 +112,18 @@ packages:
                   minimumpriority: "notice"
                   # -- a Go template to format Slack Text above Attachment, displayed in addition to the output from `slack.outputformat`. If empty, no Text is displayed before Attachment
                   messageformat: ""
+        uds-falco-config:
+          values:
+            - path: additionalNetworkAllow
+              value:
+                - direction: Egress
+                  selector:
+                    app.kubernetes.io/name: falcosidekick
+                    ports:
+                      - 443
+                    remoteHost: api.slack.com 
+                    remoteProtocol: TLS
+                    description: "Allow egress Falco Sidekick to Slack API"
 ```
 
 This configuration will send Falco alerts with priority "notice" and above to your specified Slack channel.
@@ -154,6 +160,18 @@ packages:
                   minimumpriority: "notice"
                   # -- a Go template to format Mattermost Text above Attachment, displayed in addition to the output from `mattermost.outputformat`. If empty, no Text is displayed before Attachment
                   messageformat: ""
+        uds-falco-config:
+          values:
+            - path: additionalNetworkAllow
+              value:
+                - direction: Egress
+                  selector:
+                    app.kubernetes.io/name: falcosidekick
+                    ports:
+                      - 443
+                    remoteHost: your.mattermost.instance # replace with your Mattermost hostname
+                    remoteProtocol: TLS
+                    description: "Allow egress Falco Sidekick to Mattermost instance"
 ```
 
 This configuration will send Falco alerts with priority "notice" and above to your specified Mattermost instance.
@@ -184,6 +202,18 @@ packages:
                   outputformat: "all"
                   # -- minimum priority of event to use this output, order is `emergency\|alert\|critical\|error\|warning\|notice\|informational\|debug or ""`
                   minimumpriority: "notice"
+        uds-falco-config:
+          values:
+            - path: additionalNetworkAllow
+              value:
+                - direction: Egress
+                  selector:
+                    app.kubernetes.io/name: falcosidekick
+                    ports:
+                      - 443
+                    remoteHost: outlook.office.com
+                    remoteProtocol: TLS
+                    description: "Allow egress Falco Sidekick to Microsoft Teams"
 ```
 
 This configuration will send Falco alerts with priority "notice" and above to your specified Microsoft Teams channel.

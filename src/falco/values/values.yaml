@@ -23,9 +23,10 @@ falcosidekick:
     enabled: true
 
   # Enable Grafana dashboard for FalcoSidekick metrics
-  grafana:
-    dashboards:
-      enabled: true
+  # This dashboard is currently showing inaccurate event data over time so we are disabling it for now until we can investigate further
+  # grafana:
+  #   dashboards:
+  #     enabled: true
 
   config:
     # Logs alerts/payloads to stdout
@@ -48,9 +49,10 @@ falcosidekick:
         enabled: true
 
 # Enable Grafana dashboard for Falco metrics
-grafana:
-  dashboards:
-    enabled: true
+# This dashboard is currently showing inaccurate event data over time so we are disabling it for now until we can investigate further
+# grafana:
+#   dashboards:
+#     enabled: true
 
 # Enable metrics
 metrics:
