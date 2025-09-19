@@ -2,12 +2,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 image:
-  repository: quay.io/rfcurated/falcosecurity/falco
+  registry: quay.io
+  repository: rfcurated/falcosecurity/falco
   tag: 0.41.3-jammy-scratch-fips-rfcurated
   pullPolicy: IfNotPresent
 
 falcosidekick:
   image:
-    repository: quay.io/rfcurated/falcosecurity/falcosidekick
+    registry: quay.io
+    repository: rfcurated/falcosecurity/falcosidekick
     tag: 2.31.1-jammy-scratch-fips-rfcurated
     pullPolicy: IfNotPresent

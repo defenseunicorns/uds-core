@@ -2,12 +2,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 image:
-  repository: registry1.dso.mil/ironbank/opensource/falcosecurity/falco
+  registry: registry1.dso.mil
+  repository: ironbank/opensource/falcosecurity/falco
   tag: 0.41.3
   pullPolicy: IfNotPresent
 
 falcosidekick:
   image:
-    repository: registry1.dso.mil/ironbank/opensource/falcosecurity/falcosidekick
+    registry: registry1.dso.mil
+    repository: ironbank/opensource/falcosecurity/falcosidekick
     tag: 2.31.1
     pullPolicy: IfNotPresent

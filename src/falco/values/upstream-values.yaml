@@ -2,12 +2,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 image:
+  registry: docker.io
   repository: falcosecurity/falco
   tag: 0.41.3
   pullPolicy: IfNotPresent
 
 falcosidekick:
   image:
+    registry: docker.io
     repository: falcosecurity/falcosidekick
     tag: 2.31.1
     pullPolicy: IfNotPresent
