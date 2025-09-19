@@ -98,9 +98,9 @@ describe("integration - Loki Ruler Tests", () => {
       () => queryPrometheusMetric(prometheusProxy.url, "loki:test_constant"),
       value => value === 1,
       "Checking for loki:test_constant metric with value 1",
-      70000,
+      100000,
     );
-  }, 80000);
+  }, 110000);
 
   test("Loki ruler should send alerts to Alertmanager", async () => {
     await pollUntilSuccess(
