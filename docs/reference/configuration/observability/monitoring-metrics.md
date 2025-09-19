@@ -1,5 +1,7 @@
 ---
 title: Monitoring and Metrics
+sidebar:
+    order: 1
 ---
 
 UDS Core deploys Prometheus and Grafana to provide metrics collection and dashboarding. Out of the box all applications in UDS Core will have their metrics collected by Prometheus, with some default dashboards present in Grafana for viewing this data. This document primarily focuses on the integrations and options provided for extending this to monitor any additional applications you would like to deploy.
