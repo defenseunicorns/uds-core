@@ -1,0 +1,25 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: uds.dev/v1alpha1
+kind: Exemption
+metadata:
+  name: falco
+  namespace: uds-policy-exemptions
+spec:
+  exemptions:
+    - policies:
+        - DisallowHostNamespaces
+        - DisallowPrivileged
+        - RequireNonRootUser
+        - DropAllCapabilities
+        - RestrictHostPathWrite
+        - RestrictVolumeTypes
+      matcher:
+        namespace: falco
+        name: "falco-(?!falcosidekick-).*" # regex to match falco but not falcosidekick
+      title: "falco"
+      description: "Falco requires elevated privileges and host access for runtime security monitoring.
+          As a security monitoring tool, Falco needs to run with privileged access, use host namespaces,
+          run as root, retain security capabilities, access host filesystems, and use restricted volume types
+          to effectively monitor system calls and detect security threats at the kernel level."

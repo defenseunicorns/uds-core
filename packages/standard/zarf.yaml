@@ -92,6 +92,12 @@ components:
     import:
       path: ../runtime-security
 
+  # Falco
+  - name: falco
+    required: false # Optional component until we swap out Neuvector
+    import:
+      path: ../runtime-security
+
   # Loki
   - name: loki
     required: true
