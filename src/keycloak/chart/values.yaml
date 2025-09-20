@@ -186,8 +186,8 @@ podLabels: {}
 # Pod resource requests and limits
 resources:
   requests:
-    cpu: "500m"
-    memory: "512Mi"
+    cpu: "100m"
+    memory: "700Mi"
   limits:
     cpu: "1"
     memory: "1Gi"
