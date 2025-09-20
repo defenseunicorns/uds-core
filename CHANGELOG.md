@@ -2,6 +2,38 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.53.0](https://github.com/defenseunicorns/uds-core/compare/v0.52.1...v0.53.0) (2025-09-20)
+
+
+### Features
+
+* add support for extra gateways in expose spec ([#1912](https://github.com/defenseunicorns/uds-core/issues/1912)) ([7380d0f](https://github.com/defenseunicorns/uds-core/commit/7380d0f175f7fb8c15b3be7cf8e3ea8f4d9e519b))
+* keycloak sizing ([#1898](https://github.com/defenseunicorns/uds-core/issues/1898)) ([cfd4dc3](https://github.com/defenseunicorns/uds-core/commit/cfd4dc32504a32f2ee0544e7b19c5733b6920950))
+* x509 Authentication Flow control ([#1925](https://github.com/defenseunicorns/uds-core/issues/1925)) ([55ed398](https://github.com/defenseunicorns/uds-core/commit/55ed3988344d9faa25d54b0c2ca07745fa9a3677))
+
+
+### Bug Fixes
+
+* add pull-requests write to lula workflow ([#1926](https://github.com/defenseunicorns/uds-core/issues/1926)) ([4d21925](https://github.com/defenseunicorns/uds-core/commit/4d219255d7284071175f6d3d6016c2defe3937e1))
+* dev task workflow ([#1931](https://github.com/defenseunicorns/uds-core/issues/1931)) ([84f0ec1](https://github.com/defenseunicorns/uds-core/commit/84f0ec1021da2334ce7c73b358656a0f3490459d))
+* renovate readiness pepr labels ([#1920](https://github.com/defenseunicorns/uds-core/issues/1920)) ([4d13422](https://github.com/defenseunicorns/uds-core/commit/4d13422e5018d914876423e483c724aad0fbce03))
+
+
+### Miscellaneous
+
+* add lula uuid to core ([#1933](https://github.com/defenseunicorns/uds-core/issues/1933)) ([21b7156](https://github.com/defenseunicorns/uds-core/commit/21b7156fc40e2007a445090e874c11830e30feff))
+* **deps:** update grafana chart to 10.0.0, curl to 8.16.0 ([#1901](https://github.com/defenseunicorns/uds-core/issues/1901)) ([d62468c](https://github.com/defenseunicorns/uds-core/commit/d62468cab3bc2d5899d2f35d0b5b6010ba25fe50))
+* **deps:** update keycloak to v26.3.4 ([#1907](https://github.com/defenseunicorns/uds-core/issues/1907)) ([f951047](https://github.com/defenseunicorns/uds-core/commit/f95104794ee0ca5c79c2ef6173b3915cfbbb9291))
+* **deps:** update kube-webhook-certgen to 1.6.2, kube-state-metrics to 2.17.0 ([#1902](https://github.com/defenseunicorns/uds-core/issues/1902)) ([6ee7051](https://github.com/defenseunicorns/uds-core/commit/6ee70512bb28dc9e2f01865cbaa145ff21ba432f))
+* **deps:** update neuvector curl to v8.16.0 ([#1923](https://github.com/defenseunicorns/uds-core/issues/1923)) ([c2cb4b1](https://github.com/defenseunicorns/uds-core/commit/c2cb4b1fa95ddd4a7ad5fe07b285cf42a5fbc590))
+* **deps:** update pepr to 0.55.0 ([#1894](https://github.com/defenseunicorns/uds-core/issues/1894)) ([4ec1bba](https://github.com/defenseunicorns/uds-core/commit/4ec1bba8f3faeb723856de1e16d20b415f5163d0))
+* **deps:** update support-deps ([#1927](https://github.com/defenseunicorns/uds-core/issues/1927)) ([373b265](https://github.com/defenseunicorns/uds-core/commit/373b265f5341bfb06973dc7b7795ba84fbb48e7f))
+
+
+### Documentation
+
+* update keycloak kernel bug workaround bundle override ([#1928](https://github.com/defenseunicorns/uds-core/issues/1928)) ([a4537a8](https://github.com/defenseunicorns/uds-core/commit/a4537a82e48b69715791e333e9f2555a8cdd5a0a))
+
 ## [0.52.1](https://github.com/defenseunicorns/uds-core/compare/v0.52.0...v0.52.1) (2025-09-16)
 
 
