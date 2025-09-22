@@ -23,7 +23,7 @@ describe("Falco e2e Tests", () => {
 
   /*
    * Test Falco detection of rule Search Private Keys or Passwords: see default rules: https://falco.org/docs/reference/rules/default-rules/
-   * This test execs into the falco pod and runs a command that simulates searching for private keys with a unique identifier
+   * This test execs into the nginx pod in uds-dev-stack and runs a command that simulates searching for private keys with a unique identifier
    * Then it checks the falcosidekick logs for an alert containing that unique identifier
    * This tests the full e2e pipeline from Falco detection to falcosidekick alerting
    * Note: this requires falcosidekick to be configured in debug mode (or have a registered output) to ensure the alert is logged
@@ -32,24 +32,24 @@ describe("Falco e2e Tests", () => {
     // Generate a random string to identify this test run
     const randomString = Math.random().toString(36).substring(2, 10); // 8-character alphanumeric string
 
-    // Get Falco pod so we can exec into it
+    // Get nginx pod in the uds-dev-stack so we can exec into it and trigger an event
     const core = kc.makeApiClient(k8s.CoreV1Api);
     const podsResponse = await core.listNamespacedPod({
-      namespace: "falco",
-      labelSelector: "app.kubernetes.io/name=falco",
+      namespace: "uds-dev-stack",
+      labelSelector: "name=nginx",
     });
 
-    const falcoPod = podsResponse.items[0];
-    if (!falcoPod!.metadata!.name) {
-      throw new Error("No falco pod found");
+    const nginxPod = podsResponse.items[0];
+    if (!nginxPod?.metadata?.name) {
+      throw new Error("No nginx pod found");
     }
 
     await execAndWait(
       exec,
-      "falco",
-      falcoPod.metadata!.name!,
+      "uds-dev-stack",
+      nginxPod.metadata!.name!,
       ["find", `/tmp/test-${randomString}`, "-name", "id_rsa"],
-      "falco",
+      "nginx",
     );
 
     // Poll for the Falco event in falcosidekick logs until success or timeout

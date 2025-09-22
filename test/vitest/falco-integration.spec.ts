@@ -27,26 +27,31 @@ describe("Falco Integration e2e Tests", () => {
     await closeForward(lokiRead.server);
   });
 
+  /*
+   * Test Falco detection of rule Search Private Keys or Passwords: see default rules: https://falco.org/docs/reference/rules/default-rules/
+   * This test execs into the nginx pod in the uds-dev-stack namespace and runs a command that simulates searching for private keys with a unique identifier
+   * Then it checks that this event appears in Loki
+   */
   test("Falco detects 'Search Private Keys or Passwords' event and logs appear in Loki", async () => {
     const randomString = Math.random().toString(36).substring(2, 10);
 
     const core = kc.makeApiClient(k8s.CoreV1Api);
     const podsResponse = await core.listNamespacedPod({
-      namespace: "falco",
-      labelSelector: "app.kubernetes.io/name=falco",
+      namespace: "uds-dev-stack",
+      labelSelector: "name=nginx",
     });
 
-    const falcoPod = podsResponse.items[0];
-    if (!falcoPod!.metadata!.name) {
-      throw new Error("No falco pod found");
+    const nginxPod = podsResponse.items[0];
+    if (!nginxPod?.metadata?.name) {
+      throw new Error("No nginx pod found");
     }
 
     await execAndWait(
       exec,
-      "falco",
-      falcoPod.metadata!.name!,
+      "uds-dev-stack",
+      nginxPod.metadata!.name!,
       ["find", `/tmp/test-${randomString}`, "-name", "id_rsa"],
-      "falco",
+      "nginx",
     );
 
     const falcoEvent = await pollUntilSuccess(
