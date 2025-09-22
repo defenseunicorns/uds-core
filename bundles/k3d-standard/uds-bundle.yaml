@@ -218,3 +218,8 @@ packages:
                   credential:
                     name: "velero-bucket-credentials"
                     key: "cloud"
+      falco:
+        falco:
+          values:
+            - path: "falcosidekick.replicaCount"
+              value: 1
