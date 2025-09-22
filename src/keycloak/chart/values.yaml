@@ -340,8 +340,8 @@ autoscaling:
   # This is important because caches are usually only replicated to 2 Pods and if one of those Pods is terminated this will give the cluster time to recover.
   behavior:
     scaleUp:
-      # Keycloak CPU spikes at boot time, this aims to prevent massive unwanted scale outs.
-      stabilizationWindowSeconds: 300
+      # Keycloak CPU spikes at boot time, this aims to prevent massive unwanted scale outs during the boot time or upgrades
+      stabilizationWindowSeconds: 600
     scaleDown:
       stabilizationWindowSeconds: 300
       policies:
