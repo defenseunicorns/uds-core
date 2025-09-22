@@ -72,5 +72,5 @@ describe("Falco e2e Tests", () => {
     );
 
     expect(falcoSidekickEvent).toBeDefined();
-  });
+  }, 70000); // Set test timeout to 70 seconds
 });

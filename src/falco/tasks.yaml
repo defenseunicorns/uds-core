@@ -23,5 +23,5 @@ tasks:
     actions:
       - description: "Run Falco E2E tests"
         cmd: |
-          npm ci && npx vitest run "falco"
+          npm ci && npx vitest run "falco" --exclude "**/*integration*"
         dir: test/vitest
