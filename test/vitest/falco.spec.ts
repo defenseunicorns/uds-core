@@ -6,6 +6,7 @@
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { getAllLogsByLabelSelector } from "./helpers/pod-logs";
 import { execAndWait } from "./helpers/kubectl-exec";
+import { pollUntilSuccess } from "./helpers/polling";
 import * as k8s from "@kubernetes/client-node";
 
 describe("Falco e2e Tests", () => {
@@ -51,25 +52,25 @@ describe("Falco e2e Tests", () => {
       "falco",
     );
 
-    // Wait a bit for falco to process the event and send to falcosidekick
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    // Get all the logs for falcosidekick and search for our unique identifier
-    const falcoSidekickLogs = await getAllLogsByLabelSelector(
-      "falco",
-      "app.kubernetes.io/name=falcosidekick",
+    // Poll for the Falco event in falcosidekick logs until success or timeout
+    const falcoSidekickEvent = await pollUntilSuccess(
+      async () => {
+        const falcoSidekickLogs = await getAllLogsByLabelSelector(
+          "falco",
+          "app.kubernetes.io/name=falcosidekick",
+        );
+        return falcoSidekickLogs.find(
+          log =>
+            log.includes("Grep private keys or passwords activities found") &&
+            log.includes(`test-${randomString}`),
+        );
+      },
+      result => result !== undefined,
+      `Falco event with identifier "test-${randomString}" in falcosidekick logs`,
+      60000, // 1 minute timeout
+      15000, // 15 seconds interval
     );
-    const falcoSidekickEvent = falcoSidekickLogs.find(
-      log =>
-        log.includes("Grep private keys or passwords activities found") &&
-        log.includes(`test-${randomString}`),
-    );
 
-    expect(
-      falcoSidekickEvent,
-      `Expected to find Falco event with identifier "test-${randomString}" in falcosidekick logs. ` +
-        `Found ${falcoSidekickLogs.length} total log lines. ` +
-        `Logs containing "Grep private keys": ${falcoSidekickLogs.filter(log => log.includes("Grep private keys")).length}`,
-    ).toBeDefined();
+    expect(falcoSidekickEvent).toBeDefined();
   });
 });
