@@ -4,7 +4,7 @@
 kind: UDSBundle
 metadata:
   name: uds-core-eks-nightly
-  description: A UDS bundle for deploying and testing EKS and UDS Core
+  description: A UDS bundle for deploying EKS and UDS Core
   # x-release-please-start-version
   version: "0.52.1"
   # x-release-please-end

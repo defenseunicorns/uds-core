@@ -4,7 +4,7 @@
 kind: UDSBundle
 metadata:
   name: uds-core-rke2-nightly
-  description: A UDS bundle for deploying and testing RKE2 and UDS Core
+  description: A UDS bundle for deploying RKE2 and UDS Core
   # x-release-please-start-version
   version: "0.52.1"
   # x-release-please-end
