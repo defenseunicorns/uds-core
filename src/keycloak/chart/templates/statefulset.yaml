@@ -167,13 +167,6 @@ spec:
             # Dumb value (not used in the nginx provider, but required by the SPI)
             - name: KC_SPI_X509CERT_LOOKUP_{{ .Values.x509LookupProvider | upper }}_SSL_CLIENT_CERT_CHAIN_PREFIX
               value: UNUSED
-          {{- if .Values.fips }}
-            # This is a workaround for https://github.com/keycloak/keycloak/issues/39454
-            # It silences the TLS Errors coming from DNS_PING out. Once the above issue is resolved and released,
-            # this can be removed.
-            - name: QUARKUS_LOG_CATEGORY__ORG_BOUNCYCASTLE_JSSE_PROVIDER__LEVEL
-              value: WARNING
-          {{- end }}
           {{- if or .Values.devMode .Values.debugMode }}
             # Enable debug logs
             - name: KC_LOG_LEVEL
@@ -200,17 +193,17 @@ spec:
               value: password
           {{- end }}
           {{- if eq (include "keycloak.postgresql.config" .) "true" }}
-            # Infinispan cache configuration
+            # Use Infinispan distributes caches
             - name: KC_CACHE
               value: ispn
-            - name: KC_CACHE_STACK
-              value: kubernetes
+            # Hints Infinispan to distribute data across machines in a Multi AZ environment
+            - name: KC_SPI_CACHE_EMBEDDED_DEFAULT_MACHINE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+                  apiVersion: v1
             - name: KC_SPI_STICKY_SESSION_ENCODER_INFINISPAN_SHOULD_ATTACH_ROUTE
               value: "false"
-            # java opts for jgroups required for infinispan distributed cache when using the kubernetes stack.
-            # https://www.keycloak.org/server/caching
-            - name: JAVA_OPTS_APPEND
-              value: -Djgroups.dns.query={{ include "keycloak.fullname" . }}-headless.keycloak.svc.cluster.local
             # Postgres database configuration
             - name: KC_DB
               value: postgres

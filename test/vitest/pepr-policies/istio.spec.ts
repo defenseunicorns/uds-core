@@ -315,6 +315,9 @@ describe("restrict istio sidecar configuration overrides", () => {
               metadata: {
                 name: "istio-sidecar",
                 namespace: "policy-tests",
+                labels: {
+                  "istio-prometheus-ignore": "yes",
+                },
               },
               spec: {
                 containers: [

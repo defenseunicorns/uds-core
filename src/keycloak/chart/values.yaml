@@ -43,8 +43,10 @@ realmInitEnv:
   # EMAIL_VERIFICATION_ENABLED: true
   # TERMS_AND_CONDITIONS_ENABLED: true
   # X509_OCSP_FAIL_OPEN: true
+  # @lulaStart ef276ec4-7921-4287-a18c-80dec5f8e742
   # Maximum number of concurrent active sessions per user. Set to 0 to disable the limit (unlimited).
   SSO_SESSION_MAX_PER_USER: "0"
+  # @lulaEnd ef276ec4-7921-4287-a18c-80dec5f8e742
 
 # Realm-level configuration
 realmConfig:
@@ -184,8 +186,8 @@ podLabels: {}
 # Pod resource requests and limits
 resources:
   requests:
-    cpu: "500m"
-    memory: "512Mi"
+    cpu: "100m"
+    memory: "700Mi"
   limits:
     cpu: "1"
     memory: "1Gi"
@@ -337,6 +339,9 @@ autoscaling:
   # The scaling policy to use. This will scale up quickly but only scale down a single Pod per 5 minutes.
   # This is important because caches are usually only replicated to 2 Pods and if one of those Pods is terminated this will give the cluster time to recover.
   behavior:
+    scaleUp:
+      # Keycloak CPU spikes at boot time, this aims to prevent massive unwanted scale outs during the boot time or upgrades
+      stabilizationWindowSeconds: 600
     scaleDown:
       stabilizationWindowSeconds: 300
       policies:
