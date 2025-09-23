@@ -8,6 +8,15 @@ metadata:
   url: https://github.com/defenseunicorns/uds-core
 
 components:
+  # Things needed for Loki testing
+  - name: loki-test
+    required: true
+    manifests:
+      # ConfigMap used for loki ruler integration tests
+      - name: loki-ruler-test-configmap
+        files:
+          - "loki-ruler-test-configmap.yaml"
+
   # Deploy package CRs
   - name: test-app-packages
     required: true

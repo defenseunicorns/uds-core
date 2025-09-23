@@ -1,0 +1,29 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: loki-test-rules
+  namespace: loki
+  labels:
+    loki_rule: "1"
+data:
+  test-rules.yaml: |
+    groups:
+    - name: always-firing
+      interval: 5s    # how often to evaluate this rule
+      rules:
+      - alert: LokiAlwaysFiring
+        expr: vector(1)
+        for: 0s
+        labels:
+          severity: test
+        annotations:
+          summary: "This is a test alert from Loki ruler"
+          description: "It always fires to confirm Loki → Alertmanager wiring."
+    - name: test-recording
+      interval: 5s    # how often to evaluate this rule
+      rules:
+      - record: loki:test_constant
+        expr: vector(1)
