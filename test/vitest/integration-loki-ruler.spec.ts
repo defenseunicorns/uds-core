@@ -29,6 +29,7 @@ const applyTestConfigMap = async (): Promise<void> => {
     data: {
       "test-rules.yaml": `groups:
 - name: always-firing
+  interval: 5s    # how often to evaluate this rule
   rules:
   - alert: LokiAlwaysFiring
     expr: vector(1)
@@ -49,12 +50,11 @@ const applyTestConfigMap = async (): Promise<void> => {
 
   try {
     // Try to delete existing ConfigMap first (in case of previous test failures)
-    await K8s(kind.ConfigMap)
-      .InNamespace("loki")
-      .Delete("loki-test-rules")
-      .catch(() => {
-        // Ignore errors if ConfigMap doesn't exist
-      });
+    try {
+      await removeTestConfigMap();
+    } catch {
+      // Ignore errors if it doesn't exist
+    }
 
     // Apply the new ConfigMap
     await K8s(kind.ConfigMap).Apply(configMap);
