@@ -45,7 +45,7 @@ realmInitEnv:
   # X509_OCSP_FAIL_OPEN: true
   # @lulaStart ef276ec4-7921-4287-a18c-80dec5f8e742
   # Maximum number of concurrent active sessions per user. Set to 0 to disable the limit (unlimited).
-  SSO_SESSION_MAX_PER_USER: "0"
+  SSO_SESSION_MAX_PER_USER: "27"
   # @lulaEnd ef276ec4-7921-4287-a18c-80dec5f8e742
 
 # Realm-level configuration
