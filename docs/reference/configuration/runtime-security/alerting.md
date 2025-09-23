@@ -25,6 +25,34 @@ See more about default rules in the [Falco documentation](https://falco.org/docs
 UDS Core currently does not enable the Falco sandbox/incubating ruleset by default.
 :::
 
+#### Additional Rulesets
+
+:::note
+UDS Core ships with **sandbox** and **incubating** rulesets from the Falco community, but they are **disabled by default**. These rulesets contain experimental rules that may need tuning to reduce false positives and noise.
+:::
+
+#### Enabling and Configuring Rulesets
+
+To enable the [sandbox and incubating](https://falco.org/docs/reference/rules/default-rules/) rulesets and exclude specific rules, override the `extraRules` value in your UDS Core bundle:
+
+```yaml
+  overrides:
+    falco:
+      uds-falco-config:
+        values:
+          - path: "sandboxRulesEnabled"
+            value: true
+          - path: "incubationRulesEnabled"
+            value: true
+          - path: "disabledRules"
+            value: ["Write below root"]
+```
+
+This configuration:
+
+1. Enables the sandbox ruleset while excluding the "Terminal shell in container" rule
+2. Enables the incubating ruleset while excluding the "Read environment variable from /proc files" rule
+
 ### Querying Events with Loki
 
 By default, Falco generates events for rule violations and ships them to Loki for centralized log aggregation and querying.

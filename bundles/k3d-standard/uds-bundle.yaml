@@ -223,3 +223,14 @@ packages:
           values:
             - path: "falcosidekick.replicaCount"
               value: 1
+        uds-falco-config:
+          variables:
+            - name: FALCO_SANDBOX_RULES_ENABLED
+              description: Enable sandbox rules
+              path: sandboxRulesEnabled
+            - name: FALCO_INCUBATION_RULES_ENABLED
+              description: Enable incubation rules
+              path: incubationRulesEnabled
+            - name: FALCO_DISABLED_RULES
+              description: Disable specific rules
+              path: disabledRules

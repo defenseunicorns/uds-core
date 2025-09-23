@@ -20,8 +20,38 @@ tasks:
             namespace: falco
 
   - name: e2e-test
+    inputs:
+      validate_extra_rules:
+        description: Whether to validate extra rules
+        default: "true"
+
     actions:
       - description: "Run Falco E2E tests"
         cmd: |
-          npm ci && npx vitest run "falco" --exclude "**/*integration*"
+          npm ci && EXTRA_RULES=${{ .inputs.validate_extra_rules }} npx vitest run "falco" --exclude "**/*integration*"
         dir: test/vitest
+
+  - name: update-rules
+    description: "Update Falco Incubating and Sandbox rules from upstream repository"
+    actions:
+      - description: "Download latest Falco rules"
+        timeout: 60s
+        dir: src/falco
+        cmd: |
+          set -e
+          RULES_DIR="chart/rules"
+
+          echo "Downloading latest Falco rules..."
+          if ! curl -sSfL --connect-timeout 30 --max-time 60 \
+               https://raw.githubusercontent.com/falcosecurity/rules/main/rules/falco-sandbox_rules.yaml \
+               -o "${RULES_DIR}/sandbox-rules.yaml"; then
+            echo "Error: Failed to download sandbox rules"
+            exit 1
+          fi
+
+          if ! curl -sSfL --connect-timeout 30 --max-time 60 \
+               https://raw.githubusercontent.com/falcosecurity/rules/main/rules/falco-incubating_rules.yaml \
+               -o "${RULES_DIR}/incubating-rules.yaml"; then
+            echo "Error: Failed to download incubating rules"
+            exit 1
+          fi

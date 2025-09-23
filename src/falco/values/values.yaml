@@ -16,6 +16,24 @@ falco:
   config_files:
     - /dummy
 
+  # Specify which rule files to load, ordering matters for rule precedence
+  rules_files:
+    - /etc/falco/falco_rules.yaml
+    - /etc/falco/falco_rules.local.yaml
+    - /etc/falco/rules.d/sandbox-rules.yaml
+    - /etc/falco/rules.d/incubating-rules.yaml
+    - /etc/falco/rules.d/disable-rules.yaml
+
+mounts:
+  volumes:
+    - name: extra-rules
+      configMap:
+        name: falco-extra-rules
+  volumeMounts:
+    - name: extra-rules
+      mountPath: /etc/falco/rules.d
+      readOnly: true
+
 falcosidekick:
   enabled: true
 

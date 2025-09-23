@@ -10,3 +10,13 @@ additionalNetworkAllow: []
 #     remoteGenerated: Anywhere
 #     description: "from falcosidekick to anywhere"
 #     port: 443
+
+# Toggle inclusion of Falco's "sandbox" ruleset (experimental but more polished than incubating ruleset)
+sandboxRulesEnabled: false
+
+# Toggle inclusion of Falco's "incubating" ruleset (newer, less stable rules)
+incubationRulesEnabled: false
+
+# List of rules to explicitly disable by name
+# Example: ["Read environment variable from /proc files"]
+disabledRules: []

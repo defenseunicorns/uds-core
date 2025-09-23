@@ -4,7 +4,7 @@
  */
 
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
-import { getAllLogsByLabelSelector, execAndWait, withTempPod } from "./helpers/k8s";
+import { execAndWait, getAllLogsByLabelSelector, withTempPod } from "./helpers/k8s";
 import { pollUntilSuccess } from "./helpers/polling";
 
 describe("Falco e2e Tests", () => {
@@ -62,4 +62,54 @@ describe("Falco e2e Tests", () => {
       },
     );
   }, 70000); // Set test timeout to 70 seconds
+
+  // Check if extra rules tests should run
+  const runExtraRulesTest = process.env.EXTRA_RULES === "true";
+  if (runExtraRulesTest) {
+    test("Falco detects 'Write below root' event and sends to Falco Sidekick", async () => {
+      // Generate a random string to identify this test run
+      const randomString = Math.random().toString(36).substring(2, 10);
+
+      // Use a temporary pod in kube-system to trigger the Falco event
+      await withTempPod(
+        {
+          name: `falco-write-test-${randomString}`,
+          namespace: "kube-system", // Use kube-system to get around zarf mutations
+          image: "alpine:latest",
+          command: ["sleep", "3600"],
+        },
+        async podName => {
+          // Try to write to a system directory (should trigger the rule)
+          await execAndWait(
+            "kube-system",
+            podName,
+            ["sh", "-c", `echo "test" >> /etc/passwd`],
+            "main",
+          );
+
+          // Poll for the Falco event in falcosidekick logs until success or timeout
+          const falcoSidekickEvent = await pollUntilSuccess(
+            async () => {
+              const falcoSidekickLogs = await getAllLogsByLabelSelector(
+                "falco",
+                "app.kubernetes.io/name=falcosidekick",
+              );
+              return falcoSidekickLogs.find(
+                log =>
+                  log.includes('"rule":"Write below etc"') &&
+                  log.includes("File below /etc opened for writing") &&
+                  log.includes("file=/etc/passwd"),
+              );
+            },
+            result => result !== undefined,
+            "Falco event for write to /etc/passwd in falcosidekick logs",
+            60000, // 1 minute timeout
+            15000, // 15 seconds interval
+          );
+
+          expect(falcoSidekickEvent).toBeDefined();
+        },
+      );
+    }, 70000); // Set test timeout to 70 seconds
+  }
 });

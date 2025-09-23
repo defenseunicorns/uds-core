@@ -1,0 +1,31 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: falco-extra-rules
+  namespace: falco
+data:
+  # Include sandbox rules if sandbox ruleset is enabled in values.yaml
+  {{- if .Values.sandboxRulesEnabled }}
+  sandbox-rules.yaml: |-
+{{ .Files.Get "rules/sandbox-rules.yaml" | nindent 4 }}
+  {{- end }}
+
+  # Include incubating rules if incubating ruleset is enabled in values.yaml
+  {{- if .Values.incubationRulesEnabled }}
+  incubating-rules.yaml: |-
+{{ .Files.Get "rules/incubating-rules.yaml" | nindent 4 }}
+  {{- end }}
+
+  # If either sandbox or incubating excludes are defined, generate a disable-rules file.
+  {{- if (gt (len .Values.disabledRules) 0) }}
+  disable-rules.yaml: |-
+{{- range .Values.disabledRules }}
+    - rule: "{{ . }}"
+      enabled: false
+      override:
+        enabled: replace
+{{- end }}
+  {{- end }}

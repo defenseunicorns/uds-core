@@ -16,6 +16,8 @@ ignore:
   - "**/package-lock.json"
   - "uds-docs/**"
   - "/tmp/**"
+  - "sandbox-rules.yaml"
+  - "incubating-rules.yaml"
 
 rules:
   anchors: enable
