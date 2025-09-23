@@ -1,7 +1,5 @@
 ---
 title: Log Based Alerting
-sidebar:
-    order: 2
 ---
 
 UDS Core deploys Loki with log alerting and metrics recording capabilities enabled through the Loki Ruler. This allows you to create alerts based on log patterns and generate metrics from logs using recording rules. The Loki Ruler evaluates LogQL expressions and can send alerts to Alertmanager and recording rule metrics to Prometheus.
