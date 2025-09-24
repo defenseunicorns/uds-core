@@ -113,4 +113,45 @@ describe("Falco Integration e2e Tests", () => {
       },
     );
   }, 70000); // Set test timeout to 70 seconds
+
+  test("Falco detects 'Read environment variables from /proc files' event and sends to Falco Sidekick", async () => {
+    // Generate a random string to identify this test run
+    const randomString = Math.random().toString(36).substring(2, 10);
+
+    // Use a temporary pod in kube-system to trigger the Falco event
+    await withTempPod(
+      {
+        name: `falco-proc-env-test-${randomString}`,
+        namespace: "kube-system", // Use kube-system to get around zarf mutations
+        image: "alpine:latest",
+        command: ["sleep", "3600"],
+      },
+      async podName => {
+        // Try to read environment variables from /proc/1/environ
+        await execAndWait("kube-system", podName, ["sh", "-c", "cat /proc/1/environ"], "main");
+
+        // Poll for the Falco event in falcosidekick logs until success or timeout
+        const falcoSidekickEvent = await pollUntilSuccess(
+          async () => {
+            const falcoSidekickLogs = await getAllLogsByLabelSelector(
+              "falco",
+              "app.kubernetes.io/name=falcosidekick",
+            );
+            return falcoSidekickLogs.find(
+              log =>
+                log.includes('"rule":"Read environment variable from /proc files"') &&
+                log.includes("Environment variables") &&
+                log.includes("file=/proc/1/environ"),
+            );
+          },
+          result => result !== undefined,
+          "Falco event for reading /proc/1/environ in falcosidekick logs",
+          60000, // 1 minute timeout
+          15000, // 15 seconds interval
+        );
+
+        expect(falcoSidekickEvent).toBeDefined();
+      },
+    );
+  }, 70000); // Set test timeout to 70 seconds
 });
