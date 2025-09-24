@@ -5,12 +5,8 @@
 
 import { K8s } from "pepr";
 import { IstioGateway, IstioServer, IstioTLSMode, RemoteProtocol } from "../../crd";
-import {
-  getSharedAnnotationKey,
-  istioEgressGatewayNamespace as namespace,
-  log,
-} from "./istio-resources";
-import { sharedEgressPkgId } from "./egress";
+import { getSharedAnnotationKey, log } from "./istio-resources";
+import { sidecarEgressNamespace as namespace, sharedEgressPkgId } from "./egress-sidecar";
 import { sanitizeResourceName } from "../utils";
 import { EgressResource } from "./types";
 

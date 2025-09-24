@@ -4,12 +4,15 @@
  */
 
 import { a, K8s, kind } from "pepr";
-import { K8sGateway, UDSPackage } from "../../crd";
+import { K8sGateway, K8sGatewayFromType, UDSPackage } from "../../crd";
 import { Mode, Sso } from "../../crd/generated/package-v1alpha1";
 import { PackageStore } from "../packages/package-store";
 import { getOwnerRef } from "../utils";
-import { log } from "./istio-resources";
+import { ambientEgressNamespace, sharedEgressPkgId } from "./egress-ambient";
+import { getSharedAnnotationKey, log } from "./istio-resources";
 import { getWaypointName, matchesLabels, serviceMatchesSelector } from "./waypoint-utils";
+
+export const egressWaypointName = "egress-waypoint";
 
 // Constants for labels and configuration
 const ISTIO_WAYPOINT_LABEL = "istio.io/use-waypoint"; // Label to enable waypoint injection
@@ -28,7 +31,7 @@ export async function setupAmbientWaypoint(pkg: UDSPackage, client: Sso): Promis
   const { namespace, name } = pkg.metadata || {};
   if (!namespace || !name) {
     const error = "Package metadata is missing namespace or name";
-    log.error(error, pkg);
+    log.error({ pkg }, error);
     throw new Error(error);
   }
 
@@ -44,8 +47,8 @@ export async function setupAmbientWaypoint(pkg: UDSPackage, client: Sso): Promis
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     log.error(
+      { errorMessage },
       `Error in ambient waypoint setup for waypoint ${waypointName} in ${namespace}`,
-      errorMessage,
     );
     throw error;
   }
@@ -83,25 +86,26 @@ export async function createWaypointGateway(pkg: UDSPackage, waypointName: strin
     };
 
     // Log the gateway object before applying
-    log.info("Applying waypoint gateway", {
-      namespace,
-      name: waypointName,
-      gatewayClassName: gateway.spec.gatewayClassName,
-      ownerReferences: JSON.stringify(gateway.metadata.ownerReferences),
-    });
+    log.info(
+      {
+        namespace,
+        name: waypointName,
+        gatewayClassName: gateway.spec.gatewayClassName,
+        ownerReferences: JSON.stringify(gateway.metadata.ownerReferences),
+      },
+      "Applying waypoint gateway",
+    );
 
     try {
       await K8s(K8sGateway).Apply(gateway);
-      log.info("Successfully created waypoint gateway", { namespace, waypointName });
+      log.info({ namespace, waypointName }, "Successfully created waypoint gateway");
       return waypointName;
     } catch (applyError) {
       // Detailed logging of the apply error
-      log.error("Error creating waypoint gateway", {
-        namespace,
-        waypointName,
-        errorType: typeof applyError,
-        errorDetails: applyError,
-      });
+      log.error(
+        { namespace, waypointName, errorType: typeof applyError, errorDetails: applyError },
+        "Error creating waypoint gateway",
+      );
 
       throw new Error(
         `Failed to create waypoint gateway: ${applyError instanceof Error ? applyError.message : String(applyError)}`,
@@ -109,11 +113,10 @@ export async function createWaypointGateway(pkg: UDSPackage, waypointName: strin
     }
   } catch (error) {
     // Capture all error details
-    log.error("Failed to create waypoint gateway", {
-      namespace,
-      waypointName,
-      errorDetails: error,
-    });
+    log.error(
+      { namespace, waypointName, errorDetails: error },
+      "Failed to create waypoint gateway",
+    );
 
     throw new Error(
       `Failed to create waypoint gateway: ${error instanceof Error ? error.message : String(error)}`,
@@ -230,12 +233,10 @@ export async function reconcileService(svc: a.Service): Promise<void> {
     "istio.io/ingress-use-waypoint": "true",
   };
 
-  log.info(`Added waypoint labels to service ${svc.metadata?.name}`, {
-    namespace,
-    waypointName,
-    clientId: matchingSso.clientId,
-    labels: svc.metadata.labels,
-  });
+  log.info(
+    { namespace, waypointName, clientId: matchingSso.clientId, labels: svc.metadata.labels },
+    `Added waypoint labels to service ${svc.metadata?.name}`,
+  );
 }
 
 /**
@@ -289,11 +290,10 @@ export async function reconcilePod(pod: a.Pod): Promise<void> {
     [ISTIO_WAYPOINT_LABEL]: waypointName,
   };
 
-  log.info(`Added waypoint labels to pod ${pod.metadata?.name}`, {
-    namespace,
-    waypointName,
-    clientId: matchingSso.clientId,
-  });
+  log.info(
+    { namespace, waypointName, clientId: matchingSso.clientId },
+    `Added waypoint labels to pod ${pod.metadata?.name}`,
+  );
 }
 
 /**
@@ -313,11 +313,14 @@ export async function cleanupWaypointLabels(
     await cleanupServicesWithWaypointLabel(namespace, waypointName);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    log.error("Failed to clean up waypoint labels", {
-      namespace,
-      waypointName,
-      error: errorMessage,
-    });
+    log.error(
+      {
+        namespace,
+        waypointName,
+        error: errorMessage,
+      },
+      "Failed to clean up waypoint labels",
+    );
     // Don't throw here to allow other cleanup to continue
   }
 }
@@ -341,7 +344,7 @@ async function cleanupPodsWithWaypointLabel(
 
       // Skip if pod is being deleted or doesn't have the label anymore
       if (pod.metadata?.deletionTimestamp) {
-        log.debug("Skipping pod: marked for deletion", { namespace, podName });
+        log.debug({ namespace, podName }, "Skipping pod: marked for deletion");
         return;
       }
 
@@ -355,14 +358,17 @@ async function cleanupPodsWithWaypointLabel(
             path: "/metadata/labels/istio.io~1use-waypoint",
           },
         ]);
-        log.info("Removed waypoint label from pod", { namespace, podName, waypointName });
+        log.info({ namespace, podName, waypointName }, "Removed waypoint label from pod");
       } catch (error) {
-        log.error("Failed to remove waypoint label from pod", {
-          namespace,
-          podName,
-          waypointName,
-          error: error instanceof Error ? error.message : String(error),
-        });
+        log.error(
+          {
+            namespace,
+            podName,
+            waypointName,
+            error: error instanceof Error ? error.message : String(error),
+          },
+          "Failed to remove waypoint label from pod",
+        );
       }
     }),
   );
@@ -387,7 +393,7 @@ async function cleanupServicesWithWaypointLabel(
 
       // Skip if service is being deleted or doesn't have the label anymore
       if (svc.metadata?.deletionTimestamp) {
-        log.debug("Skipping service: marked for deletion", { namespace, svcName });
+        log.debug({ namespace, svcName }, "Skipping service: marked for deletion");
         return;
       }
 
@@ -405,14 +411,17 @@ async function cleanupServicesWithWaypointLabel(
             path: "/metadata/labels/istio.io~1use-waypoint",
           },
         ]);
-        log.info("Removed waypoint labels from service", { namespace, svcName, waypointName });
+        log.info({ namespace, svcName, waypointName }, "Removed waypoint labels from service");
       } catch (error) {
-        log.error("Failed to remove waypoint labels from service", {
-          namespace,
-          svcName,
-          waypointName,
-          error: error instanceof Error ? error.message : String(error),
-        });
+        log.error(
+          {
+            namespace,
+            svcName,
+            waypointName,
+            error: error instanceof Error ? error.message : String(error),
+          },
+          "Failed to remove waypoint labels from service",
+        );
       }
     }),
   );
@@ -425,7 +434,7 @@ export async function reconcileExistingResources(
 ): Promise<void> {
   const namespace = pkg.metadata?.namespace;
   if (!namespace) {
-    log.warn("No namespace found in package metadata", pkg);
+    log.warn({ pkg }, "No namespace found in package metadata");
     return;
   }
 
@@ -471,7 +480,7 @@ export async function reconcileExistingResources(
         ]);
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
-        log.error(`Service reconciliation failed for ${namespace}`, errorMessage);
+        log.error({ errorMessage }, `Service reconciliation failed for ${namespace}`);
       }
     }
 
@@ -490,14 +499,67 @@ export async function reconcileExistingResources(
         ]);
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
-        log.info(`Pod reconciliation failed for ${namespace}`, errorMessage);
+        log.info({ errorMessage }, `Pod reconciliation failed for ${namespace}`);
       }
     }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    log.error(`Error in reconcileExistingResources()`, errorMessage);
+    log.error({ errorMessage }, `Error in reconcileExistingResources()`);
 
     // Re-throw to allow the caller to handle the error
     throw error;
   }
+}
+
+// Generate Waypoint for ambient egress
+export function createEgressWaypointGateway(pkgs: Set<string>, generation: number) {
+  // Add annotations from resource
+  const annotations: Record<string, string> = {};
+  for (const pkgId of pkgs) {
+    annotations[`${getSharedAnnotationKey(pkgId)}`] = "user";
+  }
+
+  // Waypoint resource
+  const waypoint: K8sGateway = {
+    metadata: {
+      name: egressWaypointName,
+      namespace: ambientEgressNamespace,
+      annotations,
+      labels: {
+        "uds/package": sharedEgressPkgId,
+        "uds/generation": generation.toString(),
+        "istio.io/gateway-name": egressWaypointName,
+      },
+    },
+    spec: {
+      gatewayClassName: "istio-waypoint",
+      listeners: [
+        {
+          name: "mesh",
+          port: 15008,
+          protocol: "HBONE",
+          allowedRoutes: {
+            namespaces: {
+              from: K8sGatewayFromType.All,
+            },
+            kinds: [
+              {
+                group: "networking.istio.io",
+                kind: "ServiceEntry",
+              },
+            ],
+          },
+        },
+      ],
+      infrastructure: {
+        parametersRef: {
+          group: "",
+          kind: "ConfigMap",
+          name: "egress-waypoint-config",
+        },
+      },
+    },
+  };
+
+  return waypoint;
 }

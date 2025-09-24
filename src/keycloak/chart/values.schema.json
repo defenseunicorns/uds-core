@@ -2,26 +2,19 @@
   "$schema": "http://json-schema.org/draft-04/schema#",
   "type": "object",
   "additionalProperties": false,
-  "properties": {
-    "affinity": {
-      "type": "string"
-    },
-    "additionalGatewayNamespaces": {
-      "type": "array",
-      "items": {
-        "type": "string"
+  "definitions": {
+    "resourcesSchema": {
+      "type": "object",
+      "properties": {
+        "cpu": {
+          "type": ["number", "string"]
+        },
+        "memory": {
+          "type": "string"
+        }
       }
     },
-    "pathParameterProtection": {
-      "type": "boolean"
-    },
-    "additionalNetworkAllow": {
-      "type": "array",
-      "items": {
-        "type": "object"
-      }
-    },
-    "autoscaling": {
+    "autoscalingSchema": {
       "type": "object",
       "properties": {
         "behavior": {
@@ -121,6 +114,48 @@
         },
         "minReplicas": {
           "type": "number"
+        }
+      }
+    }
+  },
+  "properties": {
+    "affinity": {
+      "type": "string"
+    },
+    "additionalGatewayNamespaces": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "pathParameterProtection": {
+      "type": "boolean"
+    },
+    "additionalNetworkAllow": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "autoscaling": {
+      "$ref": "#/definitions/autoscalingSchema"
+    },
+    "waypoint": {
+      "type": "object",
+      "properties": {
+        "deployment": {
+          "type": "object",
+          "properties": {
+            "requests": {
+              "$ref": "#/definitions/resourcesSchema"
+            },
+            "limits": {
+              "$ref": "#/definitions/resourcesSchema"
+            }
+          }
+        },
+        "horizontalPodAutoscaler": {
+          "$ref": "#/definitions/autoscalingSchema"
         }
       }
     },
@@ -256,9 +291,6 @@
       "type": "object",
       "properties": {}
     },
-    "podManagementPolicy": {
-      "type": "string"
-    },
     "podSecurityContext": {
       "type": "object",
       "properties": {}
@@ -349,26 +381,10 @@
       "type": "object",
       "properties": {
         "limits": {
-          "type": "object",
-          "properties": {
-            "cpu": {
-              "type": "string"
-            },
-            "memory": {
-              "type": "string"
-            }
-          }
+          "$ref": "#/definitions/resourcesSchema"
         },
         "requests": {
-          "type": "object",
-          "properties": {
-            "cpu": {
-              "type": "string"
-            },
-            "memory": {
-              "type": "string"
-            }
-          }
+          "$ref": "#/definitions/resourcesSchema"
         }
       }
     },
@@ -459,6 +475,12 @@
       "type": "array",
       "items": {}
     },
+    "truststorePaths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "topologySpreadConstraints": {
       "type": "null"
     },
@@ -478,6 +500,18 @@
           }
         },
         "required": ["name", "value"]
+      }
+    },
+    "extraVolumes": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "extraVolumeMounts": {
+      "type": "array",
+      "items": {
+        "type": "object"
       }
     },
     "themeCustomizations": {

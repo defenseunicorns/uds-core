@@ -11,6 +11,9 @@ manager:
     type: ClusterIP
   probes:
     enabled: true
+  podLabels:
+    istio.io/use-waypoint: "neuvector-manager-waypoint"
+    istio.io/ingress-use-waypoint: "true"
 
 internal:
   autoRotateCert: true

@@ -1,0 +1,20 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: uds.dev/v1alpha1
+kind: ClusterConfig
+metadata:
+  name: uds-cluster-config
+spec:
+  attributes:
+    clusterName: ""
+    tags: []
+  expose:
+    adminDomain: ""
+    caCert: ""
+    domain: uds.dev
+  networking:
+    kubeApiCIDR: ""
+    kubeNodeCIDRs: []
+  policy:
+    allowAllNsExemptions: false

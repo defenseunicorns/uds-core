@@ -2,7 +2,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 includes:
-  - common: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.17.1/tasks/create.yaml
+  - common: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.20.3/tasks/create.yaml
+  - utils: utils.yaml
 
 variables:
   - name: FLAVOR
@@ -10,11 +11,11 @@ variables:
 
   - name: REGISTRY1_PEPR_IMAGE
     # renovate: datasource=docker depName=registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller versioning=semver
-    default: registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller:v0.53.1
+    default: registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller:v0.55.0
 
   - name: UNICORN_PEPR_IMAGE
     # renovate: datasource=github-tags depName=defenseunicorns/pepr versioning=semver
-    default: ghcr.io/defenseunicorns/pepr/private/controller:v0.53.1
+    default: ghcr.io/defenseunicorns/pepr/private/controller:v0.55.0
 
   - name: LAYER
 
@@ -39,7 +40,7 @@ tasks:
     description: "Create the K3d-UDS Core Bundle"
     actions:
       - description: "Create the UDS Core Standard Bundle"
-        cmd: "uds create bundles/k3d-standard --confirm --no-progress --architecture=${ZARF_ARCHITECTURE}"
+        cmd: uds create bundles/k3d-standard --confirm --no-progress --architecture=${ZARF_ARCHITECTURE}
 
   - name: k3d-slim-dev-bundle
     description: "Create the slim dev bundle (Base and Identity)"
@@ -56,7 +57,7 @@ tasks:
           layer: identity-authorization
 
       - description: "Create the slim dev bundle (Base and Identity)"
-        cmd: "uds create bundles/k3d-slim-dev --confirm --no-progress --architecture=${ZARF_ARCHITECTURE}"
+        cmd: uds create bundles/k3d-slim-dev --confirm --no-progress --architecture=${ZARF_ARCHITECTURE}
 
   - name: checkpoint-dev-package
     description: "Create the K3d + UDS Core Checkpoint Zarf Package"
@@ -99,6 +100,8 @@ tasks:
           config: ./zarf-config.yaml
           options: ${{ .inputs.create_options }}
           architecture: ${ZARF_ARCHITECTURE}
+      - description: "Rename flavored package files by removing the flavor suffix"
+        task: utils:rename-flavored-packages
       - description: "Create the shim bundle (Base only)"
         if: ${{ eq .inputs.layer "base" }}
         shell:

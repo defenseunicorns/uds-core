@@ -14,8 +14,8 @@ includes:
   - test-resources: ../src/test/tasks.yaml
   - base-layer: ../packages/base/tasks.yaml
   - idam-layer: ../packages/identity-authorization/tasks.yaml
-  - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.17.1/tasks/setup.yaml
-  - compliance: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.17.1/tasks/compliance.yaml
+  - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.20.3/tasks/setup.yaml
+  - compliance: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.20.3/tasks/compliance.yaml
 
 tasks:
   - name: base
@@ -120,6 +120,13 @@ tasks:
         dir: test/vitest
       - description: remove test resources
         task: test-resources:remove
+
+  - name: unit-tests
+    description: "Run all unit tests for uds-core"
+    actions:
+      - cmd: |
+          npm ci
+          npx vitest run
 
   - name: uds-core
     description: "Build and test UDS Core"

@@ -193,13 +193,42 @@ packages:
         keycloak:
           values:
             # Override Java memory settings
-            - path: env
+            - path: env[0]
               value:
                 - name: JAVA_OPTS_KC_HEAP
                   value: "-XX:MaxRAMPercentage=70 -XX:MinRAMPercentage=70 -XX:InitialRAMPercentage=50 -XX:MaxRAM=2G"
             # Override limits - both figures need to match!
             - path: resources.limits.memory
               value: "2Gi"
+```
+
+You can also configure autoscaling for the Keycloak [waypoint](https://istio.io/latest/docs/ambient/usage/waypoint/) (its Istio Layer7 proxy). The independent scalability of the waypoint proxy ensures that you never encounter a bottleneck due to service mesh integration. An HPA is enabled by default for the waypoint, with access to the configuration parameters via values. The below override example includes the default values which could be changed based on your needs:
+
+```yaml
+packages:
+  - name: core
+    repository: oci://ghcr.io/defenseunicorns/packages/uds/core
+    ref: x.x.x
+    overrides:
+      keycloak:
+        keycloak:
+          values:
+            - path: waypoint.horizontalPodAutoscaler.minReplicas
+              value: 1
+            - path: waypoint.horizontalPodAutoscaler.maxReplicas
+              value: 5
+            - path: waypoint.horizontalPodAutoscaler.metrics
+              value:
+                - type: Resource
+                  resource:
+                    name: cpu
+                    target:
+                      type: Utilization
+                      averageUtilization: 90
+            - path: waypoint.deployment.requests.cpu
+              value: 250m
+            - path: waypoint.deployment.requests.memory
+              value: 256Mi
 ```
 
 ### AuthService

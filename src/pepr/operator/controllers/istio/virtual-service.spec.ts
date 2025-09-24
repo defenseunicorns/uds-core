@@ -7,7 +7,7 @@ import { K8s } from "pepr";
 import { afterEach, beforeEach, describe, expect, it, Mock, vi } from "vitest";
 import { Expose, Gateway, IstioVirtualService, RemoteProtocol } from "../../crd";
 import { UDSConfig } from "../config/config";
-import { istioEgressGatewayNamespace } from "./istio-resources";
+import { sharedEgressPkgId, sidecarEgressNamespace } from "./egress-sidecar";
 import { EgressResource } from "./types";
 import {
   generateEgressVirtualService,
@@ -38,6 +38,97 @@ describe("test generate virtual service", () => {
   const namespace = "test";
   const pkgName = "test";
   const generation = "1";
+
+  describe("flexible gateway configuration", () => {
+    it("should use custom domain when specified", () => {
+      const expose: Expose = {
+        host,
+        port,
+        service,
+        gateway: "custom",
+        domain: "custom.example.com",
+      };
+
+      const payload = generateIngressVirtualService(
+        expose,
+        namespace,
+        pkgName,
+        generation,
+        ownerRefs,
+      );
+
+      expect(payload).toBeDefined();
+      expect(payload.spec?.hosts).toBeDefined();
+      expect(payload.spec!.hosts![0]).toEqual(`${host}.custom.example.com`);
+      expect(payload.spec?.gateways).toEqual([`istio-custom-gateway/custom-gateway`]);
+    });
+
+    it("should use admin domain for custom gateway with 'admin' in the name", () => {
+      const expose: Expose = {
+        host,
+        port,
+        service,
+        gateway: "my-admin",
+      };
+
+      const payload = generateIngressVirtualService(
+        expose,
+        namespace,
+        pkgName,
+        generation,
+        ownerRefs,
+      );
+
+      expect(payload).toBeDefined();
+      expect(payload.spec?.hosts).toBeDefined();
+      expect(payload.spec!.hosts![0]).toEqual(`${host}.${UDSConfig.adminDomain}`);
+    });
+
+    it("should prioritize custom domain over gateway name pattern", () => {
+      const expose: Expose = {
+        host,
+        port,
+        service,
+        gateway: "my-admin",
+        domain: "custom.example.com",
+      };
+
+      const payload = generateIngressVirtualService(
+        expose,
+        namespace,
+        pkgName,
+        generation,
+        ownerRefs,
+      );
+
+      expect(payload).toBeDefined();
+      expect(payload.spec?.hosts).toBeDefined();
+      expect(payload.spec!.hosts![0]).toEqual(`${host}.custom.example.com`);
+    });
+
+    it("should add TLS configuration for custom gateway with 'passthrough' in the name", () => {
+      const expose: Expose = {
+        host,
+        port,
+        service,
+        gateway: "my-passthrough",
+      };
+
+      const payload = generateIngressVirtualService(
+        expose,
+        namespace,
+        pkgName,
+        generation,
+        ownerRefs,
+      );
+
+      expect(payload).toBeDefined();
+      expect(payload.spec?.tls).toBeDefined();
+      expect(payload.spec?.hosts).toBeDefined();
+      expect(payload.spec!.hosts![0]).toEqual(`${host}.${UDSConfig.domain}`);
+      expect(payload.spec!.tls![0].match![0].sniHosts![0]).toEqual(`${host}.${UDSConfig.domain}`);
+    });
+  });
 
   it("should create a simple VirtualService object", () => {
     const expose: Expose = {
@@ -237,10 +328,10 @@ describe("test generate egress virtual service", () => {
 
     expect(virtualService).toBeDefined();
     expect(virtualService.metadata?.name).toEqual("egress-vs-example-com");
-    expect(virtualService.metadata?.namespace).toEqual("istio-egress-gateway");
+    expect(virtualService.metadata?.namespace).toEqual(sidecarEgressNamespace);
     expect(virtualService.metadata?.labels).toEqual({
       "uds/generation": generation.toString(),
-      "uds/package": "shared-egress-resource",
+      "uds/package": sharedEgressPkgId,
     });
     expect(virtualService.metadata?.annotations).toEqual({
       "uds.dev/user-test-pkg1": "user",
@@ -336,7 +427,7 @@ describe("test warnMatchingExistingVirtualServices", () => {
         {
           metadata: {
             name: vsName,
-            namespace: istioEgressGatewayNamespace,
+            namespace: sidecarEgressNamespace,
           },
           spec: {
             hosts: [host],
@@ -365,7 +456,7 @@ describe("test warnMatchingExistingVirtualServices", () => {
         {
           metadata: {
             name: newVsName,
-            namespace: istioEgressGatewayNamespace,
+            namespace: sidecarEgressNamespace,
           },
           spec: {
             hosts: [newHost],

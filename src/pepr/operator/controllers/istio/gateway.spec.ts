@@ -11,7 +11,7 @@ import {
   generateGatewayName,
   warnMatchingExistingGateways,
 } from "./gateway";
-import { istioEgressGatewayNamespace } from "./istio-resources";
+import { sidecarEgressNamespace, sharedEgressPkgId } from "./egress-sidecar";
 import { EgressResource } from "./types";
 
 describe("test generate egress gateway", () => {
@@ -27,10 +27,10 @@ describe("test generate egress gateway", () => {
 
     expect(gateway).toBeDefined();
     expect(gateway.metadata?.name).toEqual("gateway-example-com");
-    expect(gateway.metadata?.namespace).toEqual("istio-egress-gateway");
+    expect(gateway.metadata?.namespace).toEqual(sidecarEgressNamespace);
     expect(gateway.metadata?.labels).toEqual({
       "uds/generation": generation.toString(),
-      "uds/package": "shared-egress-resource",
+      "uds/package": sharedEgressPkgId,
     });
     expect(gateway.metadata?.annotations).toEqual({
       "uds.dev/user-test-pkg1": "user",
@@ -97,7 +97,7 @@ describe("test warnMatchingExistingGateways", () => {
         {
           metadata: {
             name: gwName,
-            namespace: istioEgressGatewayNamespace,
+            namespace: sidecarEgressNamespace,
           },
           spec: {
             servers: [
@@ -135,7 +135,7 @@ describe("test warnMatchingExistingGateways", () => {
         {
           metadata: {
             name: newGwName,
-            namespace: istioEgressGatewayNamespace,
+            namespace: sidecarEgressNamespace,
           },
           spec: {
             servers: [

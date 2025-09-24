@@ -22,11 +22,7 @@ import { kubeNodes } from "./generators/kubeNodes";
 
 const log = setupLogger(Component.OPERATOR_NETWORK);
 
-// Constants for gateway principals.
-const ADMIN_INGRESS = "cluster.local/ns/istio-admin-gateway/sa/admin-ingressgateway";
-const TENANT_INGRESS = "cluster.local/ns/istio-tenant-gateway/sa/tenant-ingressgateway";
-const PASSTHROUGH_INGRESS =
-  "cluster.local/ns/istio-passthrough-gateway/sa/passthrough-ingressgateway";
+// Constants for principals.
 const PROMETHEUS_PRINCIPAL = "cluster.local/ns/monitoring/sa/kube-prometheus-stack-prometheus";
 
 /**
@@ -141,12 +137,10 @@ function processExposeRule(rule: Expose): { source: Source; ports: string[] } {
   if (effectivePort !== undefined) {
     ports.push(effectivePort.toString());
   }
-  const source =
-    rule.gateway === Gateway.Admin
-      ? { principals: [ADMIN_INGRESS] }
-      : rule.gateway === Gateway.Passthrough
-        ? { principals: [PASSTHROUGH_INGRESS] }
-        : { principals: [TENANT_INGRESS] };
+  const gateway = rule.gateway ?? Gateway.Tenant;
+  const source = {
+    principals: [`cluster.local/ns/istio-${gateway}-gateway/sa/${gateway}-ingressgateway`],
+  };
   return { source, ports };
 }
 
@@ -302,10 +296,13 @@ export async function generateAuthorizationPolicies(
           policies.push(authPolicy);
           log.trace(`Generated waypoint authpol: ${authPolicy.metadata?.name}`);
         } else {
-          log.warn(`No exposed port found for waypoint policy`, {
-            selector: rule.selector,
-            package: pkgName,
-          });
+          log.warn(
+            {
+              selector: rule.selector,
+              package: pkgName,
+            },
+            `No exposed port found for waypoint policy`,
+          );
         }
       } else {
         // Regular expose rule processing

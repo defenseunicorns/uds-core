@@ -1,0 +1,42 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# Egress Waypoint Configuration
+# The following configuration settings reference the resources created from adding an Istio Waypoint
+# These configurations will be overlaid on top of the generated resources using a Strategic Merge Patch strategy
+# See documentation: https://istio.io/latest/docs/tasks/traffic-management/ingress/gateway-api/#automated-deployment
+config:
+
+  deployment: {}
+    # podAnnotations:
+    # replicas: 1
+    # requests:
+    #   cpu: 100m
+    #   memory: 128Mi
+    # limits:
+    #   cpu: 2
+    #   memory: 1Gi
+
+  horizontalPodAutoscaler: {}
+    # minReplicas: 1
+    # maxReplicas: 2
+    # metrics: []
+
+  # minAvailable and maxUnavailable are mutually exclusive, minAvailable takes precedence
+  podDisruptionBudget: {}
+    # minAvailable: 1
+    # maxUnavailable: 1
+
+  service: {}
+    # ports: []
+
+  # Map of values that will be merged via Strategic Merge Patch strategy to the generated serviceAccount
+  # e.g.,
+  # serviceAccount:
+  #   metadata:
+  #     annotations:
+  #       eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/s3-writer-role
+  #   spec:
+  #     imagePullSecrets:
+  #     - name: my-registry-secret
+  serviceAccount: {}

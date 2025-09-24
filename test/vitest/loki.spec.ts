@@ -4,7 +4,7 @@
 
 import * as net from "net";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
-import { closeForward, getForward } from "./forward";
+import { closeForward, getForward } from "./helpers/forward";
 
 // Global variables
 let lokiBackend: { server: net.Server; url: string };

@@ -16,7 +16,7 @@ spec:
     matchLabels:
       {{- include "keycloak.selectorLabels" . | nindent 6 }}
   serviceName: {{ include "keycloak.fullname" . }}-headless
-  podManagementPolicy: {{ .Values.podManagementPolicy }}
+  podManagementPolicy: OrderedReady
   updateStrategy:
     type: {{ .Values.updateStrategy }}
   template:
@@ -26,6 +26,8 @@ spec:
         {{- range $key, $value := .Values.podLabels }}
         {{- printf "%s: %s" $key (tpl $value $ | quote) | nindent 8 }}
         {{- end }}
+        istio.io/use-waypoint: {{ include "keycloak.fullname" . }}-waypoint
+        istio.io/ingress-use-waypoint: "true"
       {{- if not .Values.devMode }}
       annotations:
         postgres-hash: {{ include (print $.Template.BasePath "/secret-postgresql.yaml") . | sha256sum }}
@@ -109,6 +111,9 @@ spec:
             {{- else }}
             - "--features=preview"
             {{- end }}
+            {{- if .Values.truststorePaths }}
+            - "--truststore-paths={{ join "," .Values.truststorePaths }}"
+            {{- end }}
             - "--spi-authentication-sessions--map--auth-sessions-limit={{ .Values.realmConfig.maxInFlightLoginsPerUser | default 300 }}"
             - "--proxy-headers=xforwarded"
             - "--http-enabled=true"
@@ -162,13 +167,6 @@ spec:
             # Dumb value (not used in the nginx provider, but required by the SPI)
             - name: KC_SPI_X509CERT_LOOKUP_{{ .Values.x509LookupProvider | upper }}_SSL_CLIENT_CERT_CHAIN_PREFIX
               value: UNUSED
-          {{- if .Values.fips }}
-            # This is a workaround for https://github.com/keycloak/keycloak/issues/39454
-            # It silences the TLS Errors coming from DNS_PING out. Once the above issue is resolved and released,
-            # this can be removed.
-            - name: QUARKUS_LOG_CATEGORY__ORG_BOUNCYCASTLE_JSSE_PROVIDER__LEVEL
-              value: WARNING
-          {{- end }}
           {{- if or .Values.devMode .Values.debugMode }}
             # Enable debug logs
             - name: KC_LOG_LEVEL
@@ -195,17 +193,17 @@ spec:
               value: password
           {{- end }}
           {{- if eq (include "keycloak.postgresql.config" .) "true" }}
-            # Infinispan cache configuration
+            # Use Infinispan distributes caches
             - name: KC_CACHE
               value: ispn
-            - name: KC_CACHE_STACK
-              value: kubernetes
+            # Hints Infinispan to distribute data across machines in a Multi AZ environment
+            - name: KC_SPI_CACHE_EMBEDDED_DEFAULT_MACHINE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+                  apiVersion: v1
             - name: KC_SPI_STICKY_SESSION_ENCODER_INFINISPAN_SHOULD_ATTACH_ROUTE
               value: "false"
-            # java opts for jgroups required for infinispan distributed cache when using the kubernetes stack.
-            # https://www.keycloak.org/server/caching
-            - name: JAVA_OPTS_APPEND
-              value: -Djgroups.dns.query={{ include "keycloak.fullname" . }}-headless.keycloak.svc.cluster.local
             # Postgres database configuration
             - name: KC_DB
               value: postgres
@@ -266,18 +264,22 @@ spec:
               path: /health/live
               port: metrics
               scheme: HTTP
-            failureThreshold: 15
-            timeoutSeconds: 2
-            periodSeconds: 15
-            initialDelaySeconds: 10
+            failureThreshold: 3
+            periodSeconds: 10
           readinessProbe:
             httpGet:
               path: /health/ready
               port: metrics
               scheme: HTTP
-            failureThreshold: 15
-            timeoutSeconds: 2
-            initialDelaySeconds: 10
+            failureThreshold: 3
+            periodSeconds: 10
+          startupProbe:
+            httpGet:
+              path: /health/started
+              port: metrics
+              scheme: HTTP
+            failureThreshold: 600
+            periodSeconds: 1
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:
@@ -292,6 +294,9 @@ spec:
               readOnly: true
             - name: client-secrets
               mountPath: /var/run/secrets/uds/client-secrets
+            {{- with .Values.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
       enableServiceLinks: {{ .Values.enableServiceLinks }}
       restartPolicy: {{ .Values.restartPolicy }}
       {{- with .Values.nodeSelector }}
@@ -372,4 +377,7 @@ spec:
                       path: tc.txt
               {{- end }}
               {{- end }}
+        {{- end }}
+        {{- with .Values.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
         {{- end }}

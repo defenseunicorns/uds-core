@@ -123,6 +123,12 @@ const allow = {
           Only valid for Ingress rules.",
         type: "string",
       },
+      serviceAccount: {
+        description:
+          "The service account to restrict outgoing traffic from within the package namespace. \
+          Only valid for Egress rules.",
+        type: "string",
+      },
       // Deprecated fields
       podLabels: {
         description: "Deprecated: use selector",
@@ -171,9 +177,13 @@ const expose = {
       },
       gateway: {
         description: "The name of the gateway to expose the service on (default: tenant)",
-        enum: ["admin", "tenant", "passthrough"],
         type: "string",
         default: "tenant",
+      },
+      domain: {
+        description:
+          "The domain to expose the service on, only valid for additional gateways (not tenant, admin, or passthrough)",
+        type: "string",
       },
       service: {
         description: "The name of the service to expose",

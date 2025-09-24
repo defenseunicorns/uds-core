@@ -25,7 +25,7 @@ runs:
   using: "composite"
   steps:
     - name: Use Node.js latest
-      uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+      uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
       with:
         node-version: 24
 
@@ -38,12 +38,12 @@ runs:
       uses: defenseunicorns/setup-uds@ab842abcad1f7a3305c2538e3dd1950d0daacfa5 # v1.0.1
       with:
         # renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
-        version: v0.27.11
+        version: v0.27.13
 
     - name: Install helm unittest plugin
       shell: bash
       # renovate: datasource=github-tags depName=helm-unittest/helm-unittest versioning=semver
-      run: HELM_UNITTEST_VERSION=v1.0.0 helm plugin install https://github.com/helm-unittest/helm-unittest.git --version "$HELM_UNITTEST_VERSION"
+      run: HELM_UNITTEST_VERSION=v1.0.1 helm plugin install https://github.com/helm-unittest/helm-unittest.git --version "$HELM_UNITTEST_VERSION"
 
     - name: Iron Bank Login
       if: ${{ inputs.registry1Username != '' }}

@@ -10,13 +10,16 @@ import { Mode, Sso } from "../../crd/generated/package-v1alpha1";
 import { PackageStore } from "../packages/package-store";
 import {
   cleanupWaypointLabels,
+  createEgressWaypointGateway,
   createWaypointGateway,
+  egressWaypointName,
   isWaypointPodHealthy,
   reconcileExistingResources,
   reconcilePod,
   reconcileService,
   setupAmbientWaypoint,
 } from "./ambient-waypoint";
+import { ambientEgressNamespace, sharedEgressPkgId } from "./egress-ambient";
 
 // Test helpers
 const createMockPackage = (
@@ -144,9 +147,13 @@ const mockLog = vi.hoisted(() => ({
 }));
 
 // Mock the istio-resources module
-vi.mock("./istio-resources.js", () => ({
-  log: mockLog,
-}));
+vi.mock("./istio-resources.js", async importOriginal => {
+  const actual = await importOriginal<typeof import("./istio-resources")>();
+  return {
+    ...actual,
+    log: mockLog,
+  };
+});
 
 describe("isWaypointPodHealthy", () => {
   const namespace = "test-ns";
@@ -423,11 +430,14 @@ describe("cleanupWaypointLabels", () => {
 
     await cleanupWaypointLabels(namespace, waypointName);
 
-    expect(mockLog.error).toHaveBeenCalledWith("Failed to clean up waypoint labels", {
-      namespace,
-      waypointName,
-      error: "Test error",
-    });
+    expect(mockLog.error).toHaveBeenCalledWith(
+      {
+        namespace,
+        waypointName,
+        error: "Test error",
+      },
+      "Failed to clean up waypoint labels",
+    );
   });
 
   it("should only remove matching waypoint labels", async () => {
@@ -510,17 +520,25 @@ describe("createWaypointGateway", () => {
       `Creating waypoint gateway for package: test-ns/test-pkg`,
     );
 
-    expect(mockLog.info).toHaveBeenNthCalledWith(2, "Applying waypoint gateway", {
-      namespace: "test-ns",
-      name: waypointName,
-      gatewayClassName: "istio-waypoint",
-      ownerReferences: expect.stringContaining('"kind":"Package"'),
-    });
+    expect(mockLog.info).toHaveBeenNthCalledWith(
+      2,
+      {
+        namespace: "test-ns",
+        name: waypointName,
+        gatewayClassName: "istio-waypoint",
+        ownerReferences: expect.stringContaining('"kind":"Package"'),
+      },
+      "Applying waypoint gateway",
+    );
 
-    expect(mockLog.info).toHaveBeenNthCalledWith(3, "Successfully created waypoint gateway", {
-      namespace: "test-ns",
-      waypointName,
-    });
+    expect(mockLog.info).toHaveBeenNthCalledWith(
+      3,
+      {
+        namespace: "test-ns",
+        waypointName,
+      },
+      "Successfully created waypoint gateway",
+    );
   });
 
   it("should throw an error when package metadata is missing", async () => {
@@ -551,13 +569,13 @@ describe("createWaypointGateway", () => {
 
     // Verify error logging
     expect(mockLog.error).toHaveBeenCalledWith(
-      "Error creating waypoint gateway",
       expect.objectContaining({
         namespace: "test-ns",
         waypointName,
         errorType: "object",
         errorDetails: testError,
       }),
+      "Error creating waypoint gateway",
     );
   });
 
@@ -576,13 +594,13 @@ describe("createWaypointGateway", () => {
 
     // Verify error logging
     expect(mockLog.error).toHaveBeenCalledWith(
-      "Error creating waypoint gateway",
       expect.objectContaining({
         namespace: "test-ns",
         waypointName,
         errorType: "string",
         errorDetails: testError,
       }),
+      "Error creating waypoint gateway",
     );
   });
 });
@@ -608,7 +626,7 @@ describe("reconcileExistingResources", () => {
   it("should warn and return if no namespace in package", async () => {
     const pkg = { ...createMockPackage("test-pkg"), metadata: {} };
     await reconcileExistingResources(pkg, ssoClient, waypointName);
-    expect(mockLog.warn).toHaveBeenCalledWith("No namespace found in package metadata", pkg);
+    expect(mockLog.warn).toHaveBeenCalledWith({ pkg }, "No namespace found in package metadata");
     expect(mockGet).not.toHaveBeenCalled();
     expect(mockPatch).not.toHaveBeenCalled();
   });
@@ -663,8 +681,8 @@ describe("reconcileExistingResources", () => {
 
     await reconcileExistingResources(pkg, ssoClient, waypointName);
     expect(mockLog.error).toHaveBeenCalledWith(
+      { errorMessage: "patch failed" },
       `Service reconciliation failed for ${pkg.metadata?.namespace}`,
-      "patch failed",
     );
     // Pod patch still called
     expect(mockPatch).toHaveBeenCalledTimes(2);
@@ -682,8 +700,8 @@ describe("reconcileExistingResources", () => {
 
     await reconcileExistingResources(pkg, ssoClient, waypointName);
     expect(mockLog.info).toHaveBeenCalledWith(
+      { errorMessage: "pod patch failed" },
       `Pod reconciliation failed for ${pkg.metadata?.namespace}`,
-      "pod patch failed",
     );
     expect(mockPatch).toHaveBeenCalledTimes(2);
   });
@@ -695,8 +713,33 @@ describe("reconcileExistingResources", () => {
       "get failed",
     );
     expect(mockLog.error).toHaveBeenCalledWith(
+      { errorMessage: "get failed" },
       "Error in reconcileExistingResources()",
-      "get failed",
     );
+  });
+});
+
+describe("test createEgressWaypointGateway", () => {
+  it("should create egress waypoint", () => {
+    const pkgs = new Set(["test-pkg1", "test-pkg2"]);
+    const generation = 1;
+
+    const waypoint = createEgressWaypointGateway(pkgs, generation);
+
+    expect(waypoint).toBeDefined();
+    expect(waypoint.metadata?.name).toEqual(egressWaypointName);
+    expect(waypoint.metadata?.namespace).toEqual(ambientEgressNamespace);
+    expect(waypoint.metadata?.labels).toEqual({
+      "uds/package": sharedEgressPkgId,
+      "uds/generation": generation.toString(),
+      "istio.io/gateway-name": egressWaypointName,
+    });
+    expect(waypoint.metadata?.annotations).toEqual({
+      "uds.dev/user-test-pkg1": "user",
+      "uds.dev/user-test-pkg2": "user",
+    });
+    expect(waypoint.spec?.gatewayClassName).toEqual("istio-waypoint");
+    expect(waypoint.spec?.listeners).toBeDefined();
+    expect(waypoint.spec?.infrastructure).toBeDefined();
   });
 });

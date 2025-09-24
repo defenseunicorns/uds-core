@@ -3,357 +3,198 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { K8s, kind } from "pepr";
+import { V1Container, V1Pod, V1SecurityContext } from "@kubernetes/client-node";
 import { describe, expect, it } from "vitest";
+import {
+  checkIstioAmbientOverrides,
+  checkIstioSidecarOverrides,
+  checkIstioTrafficInterceptionOverrides,
+  findContainerUsingIstioUserID,
+  isPodUsingIstioUserID,
+} from "./istio";
 
-const failIfReached = () => expect(true).toBe(false);
+describe("isPodUsingIstioUserID", () => {
+  const testCases = [
+    { name: "runAsUser", context: { runAsUser: 1337 } },
+    { name: "runAsGroup", context: { runAsGroup: 1337 } },
+    { name: "fsGroup", context: { fsGroup: 1337 } },
+    { name: "supplementalGroups", context: { supplementalGroups: [1000, 1337, 2000] } },
+  ];
 
-describe("restrict istio sidecar configuration overrides", () => {
-  it("should prevent single dangerous istio sidecar configuration annotation", async () => {
-    const expected = (e: Error) =>
-      expect(e).toMatchObject({
-        ok: false,
-        data: {
-          message: expect.stringContaining(
-            "The following istio annotations can modify secure sidecar configuration and are not allowed: sidecar.istio.io/proxyImage",
-          ),
-        },
-      });
-
-    return K8s(kind.Pod)
-      .Apply({
-        metadata: {
-          name: "istio-bad-annotation",
-          namespace: "policy-tests",
-          annotations: {
-            "sidecar.istio.io/proxyImage": "malicious/image:latest",
-          },
-        },
-        spec: {
-          containers: [
-            {
-              name: "test",
-              image: "127.0.0.1/fake",
-            },
-          ],
-        },
-      })
-      .then(failIfReached)
-      .catch(expected);
+  testCases.forEach(({ name, context }) => {
+    it(`should return true when ${name} is 1337`, () => {
+      const pod = { spec: { securityContext: context } };
+      expect(isPodUsingIstioUserID(pod as V1Pod)).toBe(true);
+    });
   });
 
-  it("should prevent multiple dangerous istio sidecar configuration annotations", async () => {
-    const blockedAnnotations = [
+  it("should return false for non-Istio security contexts", () => {
+    const pod = {
+      spec: {
+        securityContext: {
+          runAsUser: 1000,
+          runAsGroup: 2000,
+          fsGroup: 3000,
+          supplementalGroups: [4000, 5000],
+        },
+      },
+    };
+    expect(isPodUsingIstioUserID(pod as V1Pod)).toBe(false);
+  });
+
+  it("should handle undefined spec or security context", () => {
+    expect(isPodUsingIstioUserID({} as V1Pod)).toBe(false);
+    expect(isPodUsingIstioUserID({ spec: {} } as V1Pod)).toBe(false);
+  });
+});
+
+describe("findContainerUsingIstioUserID", () => {
+  const createContainer = (name: string, context: V1SecurityContext = {}) => ({
+    name,
+    securityContext: context,
+  });
+
+  it("should find containers using Istio UID/GID", () => {
+    const containers = [
+      createContainer("container-1", { runAsUser: 1000 }),
+      createContainer("container-2", { runAsUser: 1337 }),
+      createContainer("container-3", { runAsGroup: 1337 }),
+    ];
+
+    expect(findContainerUsingIstioUserID(containers as V1Container[])).toBe("container-2");
+  });
+
+  it("should handle edge cases", () => {
+    expect(findContainerUsingIstioUserID([])).toBeUndefined();
+    expect(
+      findContainerUsingIstioUserID([createContainer("no-context")] as V1Container[]),
+    ).toBeUndefined();
+
+    const noMatch = createContainer("no-match", { runAsUser: 1000 });
+    expect(findContainerUsingIstioUserID([noMatch] as V1Container[])).toBeUndefined();
+  });
+});
+
+describe("checkIstioAmbientOverrides", () => {
+  const podWithAnnotations = (annotations: Record<string, string>) => ({
+    metadata: { annotations },
+  });
+
+  it("should handle pod metadata variations", () => {
+    expect(checkIstioAmbientOverrides({} as V1Pod)).toEqual([]);
+    expect(checkIstioAmbientOverrides({ metadata: {} } as V1Pod)).toEqual([]);
+  });
+
+  it("should only detect blocked ambient annotations", () => {
+    const pod = podWithAnnotations({
+      "ambient.istio.io/bypass-inbound-capture": "true",
+      "some.other/annotation": "value",
+    });
+
+    expect(checkIstioAmbientOverrides(pod as V1Pod)).toEqual([
+      "ambient.istio.io/bypass-inbound-capture",
+    ]);
+  });
+});
+
+describe("checkIstioSidecarOverrides", () => {
+  const podWithAnnotations = (annotations: Record<string, string>) => ({
+    metadata: { annotations },
+  });
+
+  it("should handle pod metadata variations", () => {
+    expect(checkIstioSidecarOverrides({} as V1Pod)).toEqual([]);
+    expect(checkIstioSidecarOverrides({ metadata: {} } as V1Pod)).toEqual([]);
+  });
+
+  it("should detect blocked sidecar annotations", () => {
+    const pod = podWithAnnotations({
+      "sidecar.istio.io/bootstrapOverride": "/path",
+      "proxy.istio.io/config": "custom",
+      "sidecar.istio.io/userVolume": "vol",
+      "sidecar.istio.io/userVolumeMount": "mount",
+      "ignored/annotation": "value",
+    });
+
+    expect(checkIstioSidecarOverrides(pod as V1Pod)).toEqual([
       "proxy.istio.io/config",
       "sidecar.istio.io/bootstrapOverride",
-      "sidecar.istio.io/discoveryAddress",
-      "sidecar.istio.io/proxyImage",
       "sidecar.istio.io/userVolume",
-    ].sort(); // ensure consistent order for tests
-
-    const expected = (e: Error) =>
-      expect(e).toMatchObject({
-        ok: false,
-        data: {
-          message: expect.stringContaining(
-            `The following istio annotations can modify secure sidecar configuration and are not allowed: ${blockedAnnotations.join(", ")}`,
-          ),
-        },
-      });
-
-    return K8s(kind.Pod)
-      .Apply({
-        metadata: {
-          name: "istio-multiple-bad-annotations",
-          namespace: "policy-tests",
-          annotations: Object.fromEntries(
-            blockedAnnotations.map(annotation => [annotation, "true"]),
-          ),
-        },
-        spec: {
-          containers: [
-            {
-              name: "test",
-              image: "127.0.0.1/fake",
-            },
-          ],
-        },
-      })
-      .then(failIfReached)
-      .catch(expected);
+      "sidecar.istio.io/userVolumeMount",
+    ]);
   });
 
-  describe("restrict istio traffic interception overrides", () => {
-    it("should prevent single dangerous traffic interception annotation", async () => {
-      const expected = (e: Error) =>
-        expect(e).toMatchObject({
-          ok: false,
-          data: {
-            message: expect.stringContaining(
-              "The following istio annotations or labels can modify secure traffic interception are not allowed: annotation traffic.sidecar.istio.io/excludeOutboundPorts",
-            ),
-          },
-        });
-
-      return K8s(kind.Pod)
-        .Apply({
-          metadata: {
-            name: "istio-traffic-override",
-            namespace: "policy-tests",
-            annotations: {
-              "traffic.sidecar.istio.io/excludeOutboundPorts": "443,8443",
-            },
-          },
-          spec: {
-            containers: [
-              {
-                name: "test",
-                image: "127.0.0.1/fake",
-              },
-            ],
-          },
-        })
-        .then(failIfReached)
-        .catch(expected);
+  it("should be case sensitive and not match partial names", () => {
+    const pod = podWithAnnotations({
+      "SIDECAR.ISTIO.IO/BOOTSTRAPOVERRIDE": "/path",
+      "sidecar.istio.io/userVolumeX": "no-match",
     });
 
-    it("should prevent multiple dangerous traffic interception annotations", async () => {
-      const blockedAnnotations = [
-        "sidecar.istio.io/interceptionMode",
-        "traffic.sidecar.istio.io/excludeInboundPorts",
-        "traffic.sidecar.istio.io/excludeOutboundIPRanges",
-      ].sort(); // ensure consistent order for tests
+    expect(checkIstioSidecarOverrides(pod as V1Pod)).toEqual([]);
+  });
+});
 
-      const expected = (e: Error) =>
-        expect(e).toMatchObject({
-          ok: false,
-          data: {
-            message: expect.stringContaining(
-              `The following istio annotations or labels can modify secure traffic interception are not allowed: annotation ${blockedAnnotations.join(", annotation ")}`,
-            ),
-          },
-        });
+describe("checkIstioTrafficInterceptionOverrides", () => {
+  const mockContainers = [{ name: "app", image: "app:latest" }] as V1Container[];
+  const waypointContainers = [
+    {
+      name: "istio-proxy",
+      image: "docker.io/istio/proxyv2:1.20.0",
+      args: ["proxy", "waypoint", "--log-level=info"],
+      ports: [{ name: "http-envoy-prom", containerPort: 15020 }],
+    },
+  ] as V1Container[];
 
-      return K8s(kind.Pod)
-        .Apply({
-          metadata: {
-            name: "istio-multiple-traffic-overrides",
-            namespace: "policy-tests",
-            annotations: Object.fromEntries(
-              blockedAnnotations.map(annotation => [annotation, "true"]),
-            ),
-          },
-          spec: {
-            containers: [
-              {
-                name: "test",
-                image: "127.0.0.1/fake",
-              },
-            ],
-          },
-        })
-        .then(failIfReached)
-        .catch(expected);
+  const podWithAnnotations = (annotations: Record<string, string> = {}) => ({
+    metadata: { annotations },
+  });
+
+  const podWithLabels = (labels: Record<string, string>) => ({
+    metadata: { labels },
+  });
+
+  it("should handle pod metadata variations", () => {
+    expect(checkIstioTrafficInterceptionOverrides(mockContainers, {} as V1Pod)).toEqual([]);
+    expect(
+      checkIstioTrafficInterceptionOverrides(mockContainers, { metadata: {} } as V1Pod),
+    ).toEqual([]);
+  });
+
+  it("should detect blocked traffic interception settings", () => {
+    const pod = {
+      metadata: {
+        namespace: "test-namespace",
+        annotations: {
+          "sidecar.istio.io/inject": "false",
+          "traffic.sidecar.istio.io/excludeInboundPorts": "8080",
+          "some.other/annotation": "value",
+        },
+        labels: {
+          "sidecar.istio.io/inject": "disabled",
+          app: "test-app",
+        },
+      },
+    } as V1Pod;
+
+    const result = checkIstioTrafficInterceptionOverrides(mockContainers, pod);
+    expect(result).toContain("annotation sidecar.istio.io/inject");
+    expect(result).toContain("annotation traffic.sidecar.istio.io/excludeInboundPorts");
+    expect(result).toContain("label sidecar.istio.io/inject");
+  });
+
+  it("should ignore allowed cases", () => {
+    const pod = podWithAnnotations({
+      "sidecar.istio.io/inject": "true",
     });
 
-    describe("restrict istio ambient overrides", () => {
-      it("should prevent ambient override annotation", async () => {
-        const expected = (e: Error) =>
-          expect(e).toMatchObject({
-            ok: false,
-            data: {
-              message: expect.stringContaining(
-                "The following istio ambient annotations that can modify secure mesh behavior are not allowed: ambient.istio.io/bypass-inbound-capture",
-              ),
-            },
-          });
+    expect(checkIstioTrafficInterceptionOverrides(mockContainers, pod as V1Pod)).toEqual([]);
+  });
 
-        return K8s(kind.Pod)
-          .Apply({
-            metadata: {
-              name: "istio-ambient-override",
-              namespace: "policy-tests",
-              annotations: {
-                "ambient.istio.io/bypass-inbound-capture": "true",
-              },
-            },
-            spec: {
-              containers: [
-                {
-                  name: "test",
-                  image: "127.0.0.1/fake",
-                },
-              ],
-            },
-          })
-          .then(failIfReached)
-          .catch(expected);
-      });
-
-      describe("istio proxy user/group restrictions", () => {
-        interface K8sError extends Error {
-          data?: {
-            message?: string;
-          };
-          ok: boolean;
-        }
-
-        const expectIstioUserDenied = (e: unknown) => {
-          const error = e as K8sError;
-          const message = error.data?.message || error.message || "";
-          expect(message).toMatch(/use UID\/GID 1337 \(Istio proxy\)/);
-          return expect(error).toMatchObject({ ok: false });
-        };
-
-        it("should deny pod with runAsUser 1337", async () => {
-          return K8s(kind.Pod)
-            .Apply({
-              metadata: {
-                name: "istio-user-pod",
-                namespace: "policy-tests",
-              },
-              spec: {
-                securityContext: {
-                  runAsUser: 1337,
-                },
-                containers: [
-                  {
-                    name: "test",
-                    image: "127.0.0.1/fake",
-                  },
-                ],
-              },
-            })
-            .then(failIfReached)
-            .catch(expectIstioUserDenied);
-        });
-
-        it("should deny pod with runAsGroup 1337", async () => {
-          return K8s(kind.Pod)
-            .Apply({
-              metadata: {
-                name: "istio-group-pod",
-                namespace: "policy-tests",
-              },
-              spec: {
-                securityContext: {
-                  runAsGroup: 1337,
-                },
-                containers: [
-                  {
-                    name: "test",
-                    image: "127.0.0.1/fake",
-                  },
-                ],
-              },
-            })
-            .then(failIfReached)
-            .catch(expectIstioUserDenied);
-        });
-
-        it("should deny non-istio container with UID 1337", async () => {
-          return K8s(kind.Pod)
-            .Apply({
-              metadata: {
-                name: "bad-container",
-                namespace: "policy-tests",
-              },
-              spec: {
-                containers: [
-                  {
-                    name: "bad-container",
-                    image: "127.0.0.1/malicious",
-                    securityContext: {
-                      runAsUser: 1337,
-                    },
-                  },
-                ],
-              },
-            })
-            .then(failIfReached)
-            .catch(expectIstioUserDenied);
-        });
-
-        it("should allow ztunnel pod with UID/GID 1337", async () => {
-          return K8s(kind.Pod)
-            .Apply({
-              metadata: {
-                name: "ztunnel-test",
-                namespace: "istio-system",
-                labels: {
-                  app: "ztunnel",
-                  "app.kubernetes.io/name": "ztunnel",
-                  "app.kubernetes.io/part-of": "istio",
-                },
-              },
-              spec: {
-                securityContext: {
-                  runAsUser: 1337,
-                  runAsGroup: 1337,
-                },
-                containers: [
-                  {
-                    name: "ztunnel",
-                    image: "127.0.0.1/ztunnel",
-                  },
-                ],
-              },
-            })
-            .then(pod => {
-              expect(pod).toMatchObject({
-                metadata: {
-                  name: "ztunnel-test",
-                  namespace: "istio-system",
-                },
-              });
-            });
-        });
-
-        it("should allow istio-proxy container with UID/GID 1337", async () => {
-          return K8s(kind.Pod)
-            .Apply({
-              metadata: {
-                name: "istio-sidecar",
-                namespace: "policy-tests",
-              },
-              spec: {
-                containers: [
-                  {
-                    name: "app",
-                    image: "127.0.0.1/app",
-                    securityContext: {
-                      runAsUser: 1000,
-                    },
-                  },
-                  {
-                    name: "istio-proxy",
-                    // Using upstream istio proxy image format for testing
-                    image: "docker.io/istio/proxyv2:1.0.0",
-                    ports: [
-                      {
-                        name: "http-envoy-prom",
-                        containerPort: 15090,
-                        protocol: "TCP",
-                      },
-                    ],
-                    args: ["proxy", "sidecar"],
-                    securityContext: {
-                      runAsUser: 1337,
-                      runAsGroup: 1337,
-                    },
-                  },
-                ],
-              },
-            })
-            .then(pod => {
-              expect(pod).toMatchObject({
-                metadata: {
-                  name: "istio-sidecar",
-                },
-              });
-            });
-        });
-      });
+  it("should ignore waypoint pods", () => {
+    const pod = podWithLabels({
+      "sidecar.istio.io/inject": "false",
     });
+
+    expect(checkIstioTrafficInterceptionOverrides(waypointContainers, pod as V1Pod)).toEqual([]);
   });
 });

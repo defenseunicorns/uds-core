@@ -5,12 +5,12 @@ image:
   # The Keycloak image repository
   repository: quay.io/keycloak/keycloak
   # Overrides the Keycloak image tag whose default is the chart appVersion
-  tag: "26.3.3"
+  tag: "26.3.4"
   # The Keycloak image pull policy
   pullPolicy: IfNotPresent
 
 # renovate: datasource=github-tags depName=defenseunicorns/uds-identity-config versioning=semver
-configImage: ghcr.io/defenseunicorns/uds/identity-config:0.16.3
+configImage: ghcr.io/defenseunicorns/uds/identity-config:0.17.0
 
 # The public domain name of the Keycloak server
 domain: "###ZARF_VAR_DOMAIN###"
@@ -43,8 +43,10 @@ realmInitEnv:
   # EMAIL_VERIFICATION_ENABLED: true
   # TERMS_AND_CONDITIONS_ENABLED: true
   # X509_OCSP_FAIL_OPEN: true
+  # @lulaStart ef276ec4-7921-4287-a18c-80dec5f8e742
   # Maximum number of concurrent active sessions per user. Set to 0 to disable the limit (unlimited).
   SSO_SESSION_MAX_PER_USER: "0"
+  # @lulaEnd ef276ec4-7921-4287-a18c-80dec5f8e742
 
 # Realm-level configuration
 realmConfig:
@@ -108,9 +110,6 @@ additionalNetworkAllow: []
 
 # Indicates whether information about services should be injected into Pod's environment variables, matching the syntax of Docker links
 enableServiceLinks: true
-
-# Pod management policy. One of `Parallel` or `OrderedReady`
-podManagementPolicy: Parallel
 
 # StatefulSet's update strategy
 updateStrategy: RollingUpdate
@@ -187,8 +186,8 @@ podLabels: {}
 # Pod resource requests and limits
 resources:
   requests:
-    cpu: "500m"
-    memory: "512Mi"
+    cpu: "100m"
+    memory: "700Mi"
   limits:
     cpu: "1"
     memory: "1Gi"
@@ -340,12 +339,39 @@ autoscaling:
   # The scaling policy to use. This will scale up quickly but only scale down a single Pod per 5 minutes.
   # This is important because caches are usually only replicated to 2 Pods and if one of those Pods is terminated this will give the cluster time to recover.
   behavior:
+    scaleUp:
+      # Keycloak CPU spikes at boot time, this aims to prevent massive unwanted scale outs during the boot time or upgrades
+      stabilizationWindowSeconds: 600
     scaleDown:
       stabilizationWindowSeconds: 300
       policies:
         - type: Pods
           value: 1
           periodSeconds: 300
+
+# Istio waypoint configuration
+waypoint:
+  deployment:
+    # Larger requests by default since Keycloak manages all SSO for the cluster
+    requests:
+      cpu: 250m
+      memory: 256Mi
+    # Upstream defaults for limits
+    limits:
+      cpu: 2
+      memory: 1Gi
+  horizontalPodAutoscaler:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 5
+    metrics:
+      - type: Resource
+        resource:
+          name: cpu
+          target:
+            type: Utilization
+            averageUtilization: 90
+    behavior: {}
 
 env: []
 
@@ -371,3 +397,13 @@ thirdPartyIntegration:
     # The Client Certificate format used by the L7 Load Balancer.
     # Allowed settings: "PEM" and "AWS"
     tlsCertificateFormat: PEM
+
+# Extra volumes to mount in the StatefulSet
+extraVolumes: []
+
+# Extra volume mounts to mount in the Keycloak container
+extraVolumeMounts: []
+
+# Additional truststore paths for Keycloak to scan for certificates
+# These paths will be added to the --truststore-paths startup argument
+truststorePaths: []

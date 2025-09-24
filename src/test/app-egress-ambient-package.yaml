@@ -1,0 +1,53 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    uds: egress-ambient-testing-namespace-1
+  name: egress-ambient-1
+---
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: pkg-1
+  namespace: egress-ambient-1
+spec:
+  network:
+    serviceMesh:
+      mode: ambient
+    allow:
+      - direction: Egress
+        selector:
+          app: curl
+        ports:
+          - 443
+        remoteHost: api.github.com
+        remoteProtocol: TLS
+        description: "Github API Curl"
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    uds: egress-ambient-testing-namespace-2
+  name: egress-ambient-2
+---
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: pkg-2
+  namespace: egress-ambient-2
+spec:
+  network:
+    serviceMesh:
+      mode: ambient
+    allow:
+      - direction: Egress
+        ports:
+          - 443
+        remoteHost: www.google.com
+        remoteProtocol: TLS
+        serviceAccount: curl
+        description: "Google Curl"

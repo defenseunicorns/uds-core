@@ -16,13 +16,9 @@ import {
 } from "../../crd";
 import { UDSConfig } from "../config/config";
 import { sanitizeResourceName } from "../utils";
-import { sharedEgressPkgId } from "./egress";
+import { sidecarEgressNamespace as namespace, sharedEgressPkgId } from "./egress-sidecar";
 import { generateGatewayName } from "./gateway";
-import {
-  getSharedAnnotationKey,
-  log,
-  istioEgressGatewayNamespace as namespace,
-} from "./istio-resources";
+import { getSharedAnnotationKey, log } from "./istio-resources";
 import { EgressResource } from "./types";
 
 /**
@@ -42,8 +38,13 @@ export function generateIngressVirtualService(
 
   const name = generateVSName(pkgName, expose);
 
-  // Get the correct domain based on gateway
-  const domain = gateway === Gateway.Admin ? UDSConfig.adminDomain : UDSConfig.domain;
+  // Get the correct domain based on gateway or custom domain
+  let domain = UDSConfig.domain;
+  if (expose.domain) {
+    domain = expose.domain;
+  } else if (gateway === Gateway.Admin || gateway.includes("admin")) {
+    domain = UDSConfig.adminDomain;
+  }
 
   // Add the host to the domain, unless this is the reserved root domain host (`.`)
   let fqdn = "";
@@ -93,8 +94,8 @@ export function generateIngressVirtualService(
     },
   };
 
-  // If the gateway is the passthrough gateway, apply the TLS match
-  if (gateway === Gateway.Passthrough) {
+  // If the gateway is the passthrough gateway or includes passthrough in the name, apply the TLS match
+  if (gateway === Gateway.Passthrough || gateway.includes("passthrough")) {
     payload.spec!.tls = [
       {
         match: [{ port: 443, sniHosts: [fqdn] }],
