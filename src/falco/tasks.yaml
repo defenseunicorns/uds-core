@@ -20,15 +20,10 @@ tasks:
             namespace: falco
 
   - name: e2e-test
-    inputs:
-      validate_extra_rules:
-        description: Whether to validate extra rules
-        default: "true"
-
     actions:
       - description: "Run Falco E2E tests"
         cmd: |
-          npm ci && EXTRA_RULES=${{ .inputs.validate_extra_rules }} npx vitest run "falco" --exclude "**/*integration*"
+          npm ci && npx vitest run "falco" --exclude "**/*integration*"
         dir: test/vitest
 
   - name: update-rules
