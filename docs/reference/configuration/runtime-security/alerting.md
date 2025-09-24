@@ -24,7 +24,7 @@ See more about default rules in the [Falco documentation](https://falco.org/docs
 #### Additional Rulesets
 
 :::note
-UDS Core ships with **sandbox** and **incubating** rulesets from the Falco community, but they are **disabled by default**. These rulesets contain experimental rules that may need tuning to reduce false positives and noise.
+UDS Core ships with **sandbox** and **incubating** rulesets from the Falco community, but they are **disabled by default**. More information from Falco about these rulesets can be found [here](https://falco.org/docs/reference/rules/default-rules/).
 :::
 
 #### Enabling and Configuring Rulesets
@@ -41,28 +41,31 @@ To enable the [sandbox and incubating](https://falco.org/docs/reference/rules/de
           - path: "incubationRulesEnabled"
             value: true
           - path: "disabledRules"
-            value: ["Write below root"]
+            value: ["Write below root", "Read environment variable from /proc files"]
 ```
 
 This configuration:
 
-1. Enables the sandbox ruleset while excluding the "Terminal shell in container" rule
-2. Enables the incubating ruleset while excluding the "Read environment variable from /proc files" rule
+1. Enables the sandbox ruleset while excluding the "Write below root" rule.
+2. Enables the incubating ruleset while excluding the "Read environment variable from /proc files" rule.
 
 #### Finding Rule Names for `disabledRules`
 
-The rule names used in the `disabledRules` array should match the `rule` field from the Falco rules files. You can find these rule names in the following locations:
+The rule names used in the `disabledRules` array should match the `rule` field from the Falco rules files. `disabledRules` applies to all rulesets from falco, including the default rules and any additional rulesets you enable. You can find these rule names in the following locations:
 
-1. **In the rule files shipped with UDS Core**:
+1. **From Falco Official Documentation**:
+  - [List of Falco Rules](https://falco.org/docs/reference/rules/default-rules/)
+
+2. **In the rule files shipped with UDS Core**:
    - Sandbox rules: [`src/falco/chart/rules/sandbox-rules.yaml`](https://github.com/defenseunicorns/uds-core/blob/main/src/falco/chart/rules/sandbox-rules.yaml)
    - Incubating rules: [`src/falco/chart/rules/incubating-rules.yaml`](https://github.com/defenseunicorns/uds-core/blob/main/src/falco/chart/rules/incubating-rules.yaml)
 
    Look for entries that start with `- rule:` to find the rule names.
 
-2. **From Falco logs**:
+3. **From Falco logs**:
    When Falco detects an event, it logs the rule name in the output. You can find these logs by querying Loki with:
    ```txt
-   {component="falco"} |~ "rule"
+   {rule=~".+"}
    ```
 
 ### Querying Events with Loki
