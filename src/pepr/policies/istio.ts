@@ -101,6 +101,7 @@ export function checkIstioTrafficInterceptionOverrides(podContainers: V1Containe
     "traffic.sidecar.istio.io/includeOutboundPorts", // Can modify outbound port interception
     "sidecar.istio.io/interceptionMode", // Can change interception mode (REDIRECT/TPROXY)
     "traffic.sidecar.istio.io/kubevirtInterfaces", // Can modify kubevirt interface handling
+    "istio.io/redirect-virtual-interfaces", // Can modify virtual interface traffic handling
   ];
   const blockedTrafficLabels = [
     "sidecar.istio.io/inject", // Can disable sidecar injection
