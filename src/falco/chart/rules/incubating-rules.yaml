@@ -1119,6 +1119,11 @@
     ((k8s.ns.name = kube-system and container.image.repository in (mcr.microsoft.com/oss/kubernetes-csi/azuredisk-csi,mcr.microsoft.com/oss/kubernetes-csi/azurefile-csi))
     or (k8s.ns.name = system and container.image.repository = mcr.microsoft.com/oss/kubernetes-csi/secrets-store/driver))
 
+- macro: known_eks_mount_in_privileged_containers
+  condition:
+    (k8s.ns.name = kube-system
+    and container.image.repository = public.ecr.aws/ebs-csi-driver/aws-ebs-csi-driver)
+
 - macro: user_known_mount_in_privileged_containers
   condition: (never_true)
 
@@ -1135,6 +1140,7 @@
     and not mount_info
     and not known_gke_mount_in_privileged_containers
     and not known_aks_mount_in_privileged_containers
+    and not known_eks_mount_in_privileged_containers
     and not user_known_mount_in_privileged_containers
   output: Mount was executed inside a privileged container | evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty exe_flags=%evt.arg.flags
   priority: WARNING
