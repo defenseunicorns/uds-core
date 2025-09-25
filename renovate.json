@@ -44,6 +44,11 @@
       "commitMessageTopic": "neuvector"
     },
     {
+      "matchFileNames": ["src/falco/**"],
+      "groupName": "falco",
+      "commitMessageTopic": "falco"
+    },
+    {
       "matchFileNames": ["src/metrics-server/**"],
       "groupName": "metrics-server",
       "commitMessageTopic": "metrics-server"

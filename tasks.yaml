@@ -95,7 +95,7 @@ tasks:
   - name: dev-deploy
     description: "Deploy the given core layer with Zarf Dev"
     actions:
-      - cmd: "uds zarf dev deploy packages/${LAYER} --flavor ${FLAVOR} --no-progress"
+      - cmd: "uds zarf dev deploy packages/${LAYER} --flavor ${FLAVOR} --components '*' --no-progress"
 
   - name: setup-cluster
     description: "Create a k3d Cluster and Initialize with Zarf"

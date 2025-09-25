@@ -1,0 +1,27 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+tasks:
+  - name: validate
+    actions:
+      - description: Validate Falcosidekick Deployment
+        wait:
+          cluster:
+            kind: Deployment
+            name: falco-falcosidekick
+            condition: Available
+            namespace: falco
+      - description: Validate Falco Pod
+        wait:
+          cluster:
+            kind: Pod
+            name: app.kubernetes.io/name=falco
+            condition: Ready
+            namespace: falco
+
+  - name: e2e-test
+    actions:
+      - description: "Run Falco E2E tests"
+        cmd: |
+          npm ci && npx vitest run "falco" --exclude "**/*integration*"
+        dir: test/vitest

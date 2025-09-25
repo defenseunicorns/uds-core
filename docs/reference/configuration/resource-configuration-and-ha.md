@@ -242,3 +242,24 @@ variables:
 ```
 
 To scale up replicas or modify resource requests/limits you can use UDS bundle overrides for the helm values of `replicaCount` and `resources` (using the component and chart name of `authservice`).
+
+## Runtime Security
+
+### Falco
+
+Falco's FalcoSidekick component runs with 2 replicas by default for high availability. This ensures alert processing continues if one replica fails. You can adjust the replica count based on your environment needs:
+
+```yaml
+packages:
+  - name: core
+    repository: oci://ghcr.io/defenseunicorns/packages/uds/core
+    ref: x.x.x
+    overrides:
+      falco:
+        falco:
+          values:
+            - path: falcosidekick.replicaCount
+              value: 3  # Set replicas to 3 (default is 2)
+```
+
+For production environments, keeping the default of 2 or more replicas is recommended to ensure continuous alert processing and delivery to your logging/monitoring systems.

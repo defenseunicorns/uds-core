@@ -43,6 +43,7 @@ packages:
     optionalComponents:
       - metrics-server
       - istio-egress-gateway
+      - falco
     overrides:
       istio-admin-gateway:
         gateway:

@@ -78,8 +78,10 @@ tasks:
           # Create temp directory
           mkdir -p tmp/core-shim
 
-          # Copy k3d-standard bundle
-          cp -r bundles/k3d-standard/uds-bundle.yaml tmp/core-shim/
+          LATEST_CORE_VERSION=$(echo ${LATEST_VERSION} | cut -d'-' -f1) # Extract version before any hyphen (e.g., "0.52.0" from "0.52.0-upstream")
+
+          # Download latest release bundle
+          curl -sSL https://raw.githubusercontent.com/defenseunicorns/uds-core/v${LATEST_CORE_VERSION}/bundles/k3d-standard/uds-bundle.yaml -o tmp/core-shim/uds-bundle.yaml
 
           # Update the bundle with the latest version using yq
           uds zarf tools yq e -i "

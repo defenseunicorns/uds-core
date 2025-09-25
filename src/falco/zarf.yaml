@@ -1,0 +1,54 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+kind: ZarfPackageConfig
+metadata:
+  name: uds-core-falco
+  description: "UDS Core Falco"
+  url: https://falco.org/docs/
+
+components:
+  - name: falco
+    description: "Deploy Falco"
+    required: false # Optional component until we swap out Neuvector
+    only:
+      flavor: upstream
+    import:
+      path: common
+    charts:
+      - name: falco
+        valuesFiles:
+          - values/upstream-values.yaml
+    images:
+      - docker.io/falcosecurity/falco:0.41.3
+      - docker.io/falcosecurity/falcosidekick:2.31.1
+
+  - name: falco
+    description: "Deploy Falco"
+    required: false # Optional component until we swap out Neuvector
+    only:
+      flavor: registry1
+    import:
+      path: common
+    charts:
+      - name: falco
+        valuesFiles:
+          - values/registry1-values.yaml
+    images:
+      - registry1.dso.mil/ironbank/opensource/falcosecurity/falco:0.41.3
+      - registry1.dso.mil/ironbank/opensource/falcosecurity/falcosidekick:2.31.1
+
+  - name: falco
+    description: "Deploy Falco"
+    required: false # Optional component until we swap out Neuvector
+    only:
+      flavor: unicorn
+    import:
+      path: common
+    charts:
+      - name: falco
+        valuesFiles:
+          - values/unicorn-values.yaml
+    images:
+      - quay.io/rfcurated/falcosecurity/falco:0.41.3-jammy-scratch-fips-rfcurated
+      - quay.io/rfcurated/falcosecurity/falcosidekick:2.31.1-jammy-scratch-fips-rfcurated
