@@ -3,4 +3,4 @@
 
 image:
   repository: quay.io/rfcurated/istio-ecosystem/authservice
-  tag: "1.1.0-jammy-scratch-fips-rfcurated"
+  tag: "1.0.4-jammy-scratch-fips-rfcurated"
