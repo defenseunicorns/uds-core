@@ -1,0 +1,15 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+variables:
+  core-identity-authorization:
+    keycloak_ha: true
+    keycloak_pg_username: postgres
+    keycloak_pg_password: unicorn123!@#UN
+    keycloak_pg_database: keycloak
+    keycloak_pg_host: host.k3d.internal
+    keycloak_devmode: false
+
+  # Authservice config is managed by the operator in the base layer
+  core-base:
+    AUTHSERVICE_REDIS_URI: redis://authservice:authservice@host.k3d.internal:6379
