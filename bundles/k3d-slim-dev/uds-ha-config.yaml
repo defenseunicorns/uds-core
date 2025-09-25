@@ -9,6 +9,7 @@ variables:
     keycloak_pg_database: keycloak
     keycloak_pg_host: host.k3d.internal
     keycloak_devmode: false
+    AUTHSERVICE_REPLICA_COUNT: 2
 
   # Authservice config is managed by the operator in the base layer
   core-base:
