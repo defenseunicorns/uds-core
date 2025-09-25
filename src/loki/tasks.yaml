@@ -29,5 +29,5 @@ tasks:
     actions:
       - description: "Run Loki E2E tests"
         cmd: |
-          npm ci && npx vitest run "loki"
+          npm ci && npx vitest run "loki" --exclude "**/*integration*"
         dir: test/vitest

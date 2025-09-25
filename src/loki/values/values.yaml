@@ -26,7 +26,6 @@ loki:
   storage:
     bucketNames:
       chunks: uds
-      ruler: uds
       admin: uds
     type: s3
     s3:
@@ -98,6 +97,28 @@ loki:
       drop:
         - ALL
     allowPrivilegeEscalation: false
+
+  # Loki Ruler configuration
+  rulerConfig:
+    alertmanager_url: http://kube-prometheus-stack-alertmanager.monitoring.svc.cluster.local:9093
+    enable_alertmanager_v2: true
+    enable_api: true
+    enable_sharding: true # deduplicates rule evaluation between loki ruler instances
+    # Overwrite Loki ruler config to use local storage (this folder is populated by configmaps loaded in by the sidecar)
+    storage:
+      type: local
+      local:
+        directory: /rules
+    # File path to store temporary rule files when loaded (shouldn't conflict with sidecar path)
+    rule_path: /var/loki/rules-temp
+
+    # enable remote write of loki recorder rules to prometheus
+    remote_write:
+      enabled: true
+      clients:
+        prometheus:
+          url: http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090/api/v1/write
+
 enterprise:
   # Enable enterprise features, license must be provided
   enabled: false
@@ -130,27 +151,27 @@ singleBinary:
     enabled: true
     # -- Size of persistent disk
     size: 12Gi
+
 minio:
   # -- Enable minio instance support, must have minio-operator installed
   enabled: false
+
 sidecar:
+  enableUniqueFilenames: true
   resources:
     limits:
       cpu: 100m
       memory: 100Mi
     requests:
-      cpu: 100m
-      memory: 100Mi
-  securityContext:
-    allowPrivilegeEscalation: false
-    capabilities:
-      drop:
-        - ALL
-    seccompProfile:
-      type: RuntimeDefault
+      cpu: 50m
+      memory: 50Mi
   rules:
     # -- Whether or not to create a sidecar to ingest rule from specific ConfigMaps and/or Secrets.
-    enabled: false
+    enabled: true
+    # -- Folder into which the rules will be placed.
+    folder: /rules/fake # Note: when auth is not enabled on Loki the tenant is 'fake'
+    # -- Look for configmaps/secrets in all namespaces
+    searchNamespace: ALL
 
 memcachedExporter:
   # -- Whether memcached metrics should be exported
