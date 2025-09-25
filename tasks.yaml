@@ -69,6 +69,18 @@ tasks:
       - description: "Deploy slim dev bundle"
         task: deploy:k3d-slim-dev-bundle
 
+  - name: slim-dev-ha
+    description: "Build and deploy slim dev bundle with HA configuration"
+    actions:
+      - description: "Setup HA PostgreSQL"
+        task: setup:ha-postgres
+      - description: "Setup HA Redis"
+        task: setup:ha-redis
+      - description: "Build slim dev bundle"
+        task: create:k3d-slim-dev-bundle
+      - description: "Deploy slim dev bundle with HA configuration"
+        task: deploy:k3d-slim-dev-bundle-ha
+
   - name: dev-identity
     description: "Create k3d cluster with istio, Pepr, Keycloak, and Authservice for development"
     actions:
