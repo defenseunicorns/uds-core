@@ -97,7 +97,7 @@ uds run dev-setup
 npx pepr dev
 
 # If not developing the Pepr module (can be run multiple times):
-npx pepr deploy
+npx pepr deploy --yes
 
 # Deploy the layer (can be run multiple times)
 uds run dev-deploy --set LAYER=identity-authorization
