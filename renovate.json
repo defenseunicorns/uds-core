@@ -70,6 +70,12 @@
     },
     {
       "matchFileNames": ["package.json", "package-lock.json"],
+      "groupName": "support-deps",
+      "matchDepTypes": ["devDependencies"],
+      "commitMessageTopic": "support dependencies"
+    },
+    {
+      "matchFileNames": ["package.json", "package-lock.json"],
       "groupName": "operator-deps",
       "excludeDepNames": ["pepr"],
       "commitMessageTopic": "operator-deps"
