@@ -22,3 +22,4 @@ variables:
 
     # Authservice variables
     AUTHSERVICE_REDIS_URI: redis://authservice:authservice@host.k3d.internal:6379
+    AUTHSERVICE_REPLICA_COUNT: 2
