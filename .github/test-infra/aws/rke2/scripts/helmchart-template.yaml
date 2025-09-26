@@ -10,7 +10,7 @@ spec:
   chart: aws-cloud-controller-manager
   repo: https://kubernetes.github.io/cloud-provider-aws
   # renovate: datasource=helm depName=aws-cloud-controller-manager versioning=helm registryUrl=https://kubernetes.github.io/cloud-provider-aws
-  version: 0.0.9
+  version: 0.0.10
   targetNamespace: kube-system
   bootstrap: true
   valuesContent: |-
