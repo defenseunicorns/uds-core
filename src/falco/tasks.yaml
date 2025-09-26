@@ -27,7 +27,7 @@ tasks:
         dir: test/vitest
 
   - name: update-rules
-    description: "Update Falco Incubating and Sandbox rules from upstream repository"
+    description: "Update Falco rules from upstream repository"
     actions:
       - description: "Download latest Falco rules"
         timeout: 60s
@@ -37,6 +37,13 @@ tasks:
           RULES_DIR="chart/rules"
 
           echo "Downloading latest Falco rules..."
+          if ! curl -sSfL --connect-timeout 30 --max-time 60 \
+               https://raw.githubusercontent.com/falcosecurity/rules/falco-rules-4.0.0/rules/falco_rules.yaml \
+               -o "${RULES_DIR}/stable-rules.yaml"; then
+            echo "Error: Failed to download stable rules"
+            exit 1
+          fi
+
           if ! curl -sSfL --connect-timeout 30 --max-time 60 \
                https://raw.githubusercontent.com/falcosecurity/rules/falco-sandbox-rules-5.0.1/rules/falco-sandbox_rules.yaml \
                -o "${RULES_DIR}/sandbox-rules.yaml"; then

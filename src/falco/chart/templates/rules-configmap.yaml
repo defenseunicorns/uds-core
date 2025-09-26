@@ -7,6 +7,10 @@ metadata:
   name: falco-extra-rules
   namespace: falco
 data:
+  # Include stable rules
+  stable-rules.yaml: |-
+{{ .Files.Get "rules/stable-rules.yaml" | nindent 4 }}
+
   # Include sandbox rules if sandbox ruleset is enabled in values.yaml
   {{- if .Values.sandboxRulesEnabled }}
   sandbox-rules.yaml: |-
