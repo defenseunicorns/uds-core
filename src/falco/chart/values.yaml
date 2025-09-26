@@ -11,11 +11,11 @@ additionalNetworkAllow: []
 #     description: "from falcosidekick to anywhere"
 #     port: 443
 
-# Toggle inclusion of Falco's "sandbox" ruleset (experimental but more polished than incubating ruleset)
-sandboxRulesEnabled: false
+# Toggle inclusion of Falco's "incubating" ruleset (provide a certain level of robustness guarantee but have been identified by experts as catering to more specific use cases, which may or may not be relevant for each adopter.)
+incubatingRulesEnabled: false
 
-# Toggle inclusion of Falco's "incubating" ruleset (newer, less stable rules)
-incubationRulesEnabled: false
+# Toggle inclusion of Falco's "sandbox" ruleset (experimental rules)
+sandboxRulesEnabled: false
 
 # List of rules to explicitly disable by name
 # Example: ["Read environment variable from /proc files"]

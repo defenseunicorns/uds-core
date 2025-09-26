@@ -38,7 +38,7 @@ To enable the [sandbox and incubating](https://falco.org/docs/reference/rules/de
         values:
           - path: "sandboxRulesEnabled"
             value: true
-          - path: "incubationRulesEnabled"
+          - path: "incubatingRulesEnabled"
             value: true
           - path: "disabledRules"
             value: ["Write below root", "Read environment variable from /proc files"]

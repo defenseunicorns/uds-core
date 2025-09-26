@@ -18,12 +18,12 @@ data:
   {{- end }}
 
   # Include incubating rules if incubating ruleset is enabled in values.yaml
-  {{- if .Values.incubationRulesEnabled }}
+  {{- if .Values.incubatingRulesEnabled }}
   incubating-rules.yaml: |-
 {{ .Files.Get "rules/incubating-rules.yaml" | nindent 4 }}
   {{- end }}
 
-  # If either sandbox or incubating excludes are defined, generate a disable-rules file.
+  # If disabledRules are passed in, generate a disable-rules file
   {{- if (gt (len .Values.disabledRules) 0) }}
   disable-rules.yaml: |-
 {{- range .Values.disabledRules }}

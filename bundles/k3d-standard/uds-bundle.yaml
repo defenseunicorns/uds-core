@@ -228,9 +228,9 @@ packages:
             - name: FALCO_SANDBOX_RULES_ENABLED
               description: Enable sandbox rules
               path: sandboxRulesEnabled
-            - name: FALCO_INCUBATION_RULES_ENABLED
-              description: Enable incubation rules
-              path: incubationRulesEnabled
+            - name: FALCO_INCUBATING_RULES_ENABLED
+              description: Enable incubating rules
+              path: incubatingRulesEnabled
             - name: FALCO_DISABLED_RULES
               description: Disable specific rules
               path: disabledRules
