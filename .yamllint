@@ -16,6 +16,7 @@ ignore:
   - "**/package-lock.json"
   - "uds-docs/**"
   - "/tmp/**"
+  - "src/falco/chart/rules/**"
 
 rules:
   anchors: enable
