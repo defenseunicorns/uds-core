@@ -41,7 +41,7 @@ Falco was selected based on operational considerations:
 ## Implementation Details
 
 - Replace NeuVector Zarf package with Falco Zarf package (Falco will be offered as an initial optional component in the Runtime Security layer until Neuvector is fully deprecated)
-- Neuvector will be moved to a standalone package for users who wish to continue using it
+- NeuVector will be moved to a standalone package for users who wish to continue using it
 - Leverage and enable Falco's default ruleset
 - Document integration patterns for alert routing to various destinations (Slack, Mattermost, etc.)
 - Update UDS Core Runtime Security functional layer documentation
