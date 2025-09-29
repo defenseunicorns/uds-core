@@ -43,6 +43,7 @@ packages:
       - istio-passthrough-gateway
       - istio-egress-gateway
       - metrics-server
+      - falco
     overrides:
       pepr-uds-core:
         module:
@@ -224,3 +225,8 @@ packages:
                   credential:
                     name: "velero-bucket-credentials"
                     key: "cloud"
+      falco:
+        falco:
+          values:
+            - path: "falcosidekick.replicaCount"
+              value: 1

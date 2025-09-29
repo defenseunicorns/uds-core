@@ -21,6 +21,7 @@ packages:
     # x-release-please-end
     optionalComponents:
       - istio-egress-gateway
+      - falco
     overrides:
       istio-admin-gateway:
         gateway:

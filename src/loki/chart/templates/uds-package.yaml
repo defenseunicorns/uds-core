@@ -51,6 +51,17 @@ spec:
           - 8080
         description: "Vector Log Storage"
 
+      - direction: Ingress
+        selector:
+          app.kubernetes.io/name: loki
+        remoteNamespace: falco
+        remoteSelector:
+          app.kubernetes.io/name: falcosidekick
+        remoteServiceAccount: falco-falcosidekick
+        ports:
+          - 8080
+        description: "Falco Sidekick Events"
+
       - direction: Egress
         selector:
           app.kubernetes.io/name: loki
