@@ -4,7 +4,7 @@
  */
 
 import { kind } from "pepr";
-
+// @lulaStart a8335592-06b3-4035-915d-4b54b2c019a7
 export function defaultDenyAll(namespace: string): kind.NetworkPolicy {
   return {
     apiVersion: "networking.k8s.io/v1",
@@ -21,3 +21,4 @@ export function defaultDenyAll(namespace: string): kind.NetworkPolicy {
     },
   };
 }
+// @lulaEnd a8335592-06b3-4035-915d-4b54b2c019a7

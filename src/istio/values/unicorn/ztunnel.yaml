@@ -1,4 +1,6 @@
 # Copyright 2024 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
+# @lulaStart c7e8c697-e3ce-4d5e-a186-22f9fdc93e50
 image: quay.io/rfcurated/istio/ztunnel:1.26.2-jammy-scratch-fips-rfcurated
+# @lulaEnd c7e8c697-e3ce-4d5e-a186-22f9fdc93e50

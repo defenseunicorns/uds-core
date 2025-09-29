@@ -3,9 +3,11 @@
 
 kind: ZarfPackageConfig
 metadata:
+  # @lulaStart e2ac3d4f-f1c8-49af-803b-1196d870d4ff
   name: uds-core-istio-common
   description: "UDS Core Istio Common"
   url: https://istio.io/latest/
+  # @lulaEnd e2ac3d4f-f1c8-49af-803b-1196d870d4ff
 variables:
   - name: CNI_CONF_DIR
     description: "CNI configuration directory"

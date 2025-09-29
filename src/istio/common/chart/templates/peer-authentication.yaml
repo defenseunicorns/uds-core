@@ -10,4 +10,6 @@ metadata:
   namespace: istio-system
 spec:
   mtls:
+    # @lulaStart 169c38da-d7bd-40d0-889b-1fc80fae8480 
     mode: STRICT
+    # @lulaEnd 169c38da-d7bd-40d0-889b-1fc80fae8480
