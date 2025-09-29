@@ -12,7 +12,7 @@ metadata:
 packages:
   - name: uds-k3d-dev
     repository: ghcr.io/defenseunicorns/packages/uds-k3d
-    ref: 0.16.0-airgap
+    ref: 0.17.0
     overrides:
       uds-dev-stack:
         minio:
