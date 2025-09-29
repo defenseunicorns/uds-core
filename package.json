@@ -46,18 +46,18 @@
     "test:unit": "vitest run src/pepr/"
   },
   "dependencies": {
-    "pepr": "0.55.0"
+    "pepr": "0.55.1"
   },
   "devDependencies": {
-    "@commitlint/cli": "19.8.1",
-    "@commitlint/config-conventional": "19.8.1",
+    "@commitlint/cli": "20.0.0",
+    "@commitlint/config-conventional": "20.0.0",
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.27.0",
     "@types/ws": "^8.18.1",
     "@vitest/coverage-v8": "^3.2.4",
     "globals": "^16.2.0",
     "husky": "9.1.7",
-    "lint-staged": "16.2.0",
+    "lint-staged": "16.2.1",
     "vitest": "^3.0.0"
   }
 }
