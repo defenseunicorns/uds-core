@@ -11,5 +11,5 @@ falcosidekick:
   image:
     registry: quay.io
     repository: rfcurated/falcosecurity/falcosidekick
-    tag: 2.31.1-jammy-scratch-fips-rfcurated
+    tag: 2.32.0-jammy-scratch-fips-rfcurated
     pullPolicy: IfNotPresent
