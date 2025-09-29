@@ -19,8 +19,8 @@ falco:
   # Specify which rule files to load, ordering matters for rule precedence
   rules_files:
     - /etc/falco/rules.d/stable-rules.yaml
-    - /etc/falco/rules.d/sandbox-rules.yaml
     - /etc/falco/rules.d/incubating-rules.yaml
+    - /etc/falco/rules.d/sandbox-rules.yaml
     - /etc/falco/rules.d/disable-rules.yaml
 
 mounts:
