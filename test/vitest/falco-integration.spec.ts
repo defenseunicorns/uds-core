@@ -6,9 +6,10 @@
 import * as net from "net";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { closeForward, getForward } from "./helpers/forward";
-import { execAndWait, getAllLogsByLabelSelector, withTempPod } from "./helpers/k8s";
-import { queryLoki } from "./helpers/loki";
+import { execAndWait, withTempPod } from "./helpers/k8s";
 import { pollUntilSuccess } from "./helpers/polling";
+import { queryLoki } from "./helpers/loki";
+
 
 describe("Falco Integration e2e Tests", () => {
   let lokiRead: { server: net.Server; url: string };

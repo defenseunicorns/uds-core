@@ -55,6 +55,11 @@ runs:
           echo "package=support-deps" >> $GITHUB_OUTPUT
           echo "is_support_deps=true" >> $GITHUB_OUTPUT
           echo "needs_comparison=false" >> $GITHUB_OUTPUT
+        elif [[ "$PACKAGE_NAME" == "operator-deps" ]]; then
+          echo "Detected operator dependencies update"
+          echo "package=operator-deps" >> $GITHUB_OUTPUT
+          echo "is_operator_deps=true" >> $GITHUB_OUTPUT
+          echo "needs_comparison=false" >> $GITHUB_OUTPUT
         else
           echo "Regular package update: $PACKAGE_NAME"
           echo "package=$PACKAGE_NAME" >> $GITHUB_OUTPUT
@@ -100,6 +105,16 @@ runs:
         gh pr edit ${{ github.event.pull_request.number }} --add-label "needs-review"
         # Fail the job to prevent excessive CI runs of IAC clusters
         exit 1
+
+    # Handle operator dependencies
+    - name: Handle operator dependencies
+      if: steps.process-branch.outputs.is_operator_deps == 'true'
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github_token }}
+      run: |
+        echo "Operator dependencies update detected. Needs manual review."
+        gh pr edit ${{ github.event.pull_request.number }} --add-label "needs-review"
 
     # Checkout PR branch (sparse checkout of src/<pkg>)
     - name: Checkout PR branch

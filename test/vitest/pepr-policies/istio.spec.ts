@@ -156,6 +156,39 @@ describe("restrict istio sidecar configuration overrides", () => {
         .catch(expected);
     });
 
+    it("should prevent redirect virtual interfaces annotation", async () => {
+      const expected = (e: Error) =>
+        expect(e).toMatchObject({
+          ok: false,
+          data: {
+            message: expect.stringContaining(
+              "The following istio annotations or labels can modify secure traffic interception are not allowed: annotation istio.io/redirect-virtual-interfaces",
+            ),
+          },
+        });
+
+      return K8s(kind.Pod)
+        .Apply({
+          metadata: {
+            name: "istio-redirect-virtual-interfaces",
+            namespace: "policy-tests",
+            annotations: {
+              "istio.io/redirect-virtual-interfaces": "eth0,eth1",
+            },
+          },
+          spec: {
+            containers: [
+              {
+                name: "test",
+                image: "127.0.0.1/fake",
+              },
+            ],
+          },
+        })
+        .then(failIfReached)
+        .catch(expected);
+    });
+
     describe("restrict istio ambient overrides", () => {
       it("should prevent ambient override annotation", async () => {
         const expected = (e: Error) =>

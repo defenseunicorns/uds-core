@@ -1,7 +1,5 @@
 ---
 title: Runtime Security Alerting
-sidebar:
-  order: 2
 tableOfContents:
   maxHeadingLevel: 4
 ---

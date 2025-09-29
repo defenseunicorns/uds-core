@@ -4,7 +4,7 @@
  */
 
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
-import { execAndWait, getAllLogsByLabelSelector, withTempPod } from "./helpers/k8s";
+import { getAllLogsByLabelSelector, execAndWait, withTempPod } from "./helpers/k8s";
 import { pollUntilSuccess } from "./helpers/polling";
 
 describe("Falco e2e Tests", () => {

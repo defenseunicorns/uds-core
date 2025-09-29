@@ -74,7 +74,20 @@
       "commitMessageTopic": "support dependencies"
     },
     {
+      "matchFileNames": ["package.json", "package-lock.json"],
+      "groupName": "operator-deps",
+      "excludeDepNames": ["pepr"],
+      "commitMessageTopic": "operator-deps"
+    },
+    {
+      "matchFileNames": ["package.json", "package-lock.json"],
+      "groupName": "support-deps",
+      "matchDepTypes": ["devDependencies"],
+      "commitMessageTopic": "support dependencies"
+    },
+    {
       "matchFileNames": ["package.json", "package-lock.json", "tasks/create.yaml"],
+      "matchDepNames": ["pepr", "registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller", "defenseunicorns/pepr"],
       "groupName": "pepr",
       "commitMessageTopic": "pepr"
     },

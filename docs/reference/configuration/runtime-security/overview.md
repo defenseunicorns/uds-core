@@ -1,7 +1,7 @@
 ---
 title: Runtime Security Overview
 sidebar:
-  order: 1
+  order: 7
 ---
 
 UDS Core provides runtime security capabilities to monitor and protect applications during execution. Runtime security solutions detect threats and malicious behavior in real-time across containerized workloads.

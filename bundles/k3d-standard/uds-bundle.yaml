@@ -133,6 +133,13 @@ packages:
             - name: TENANT_SERVICE_PORTS
               description: "The ports that are exposed from the tenant gateway LoadBalancer (useful for non-HTTP(S) traffic)"
               path: "service.ports"
+      authservice:
+        authservice:
+          variables:
+            - name: AUTHSERVICE_REPLICA_COUNT
+              description: "Number of authservice replicas"
+              default: 1
+              path: replicaCount
       keycloak:
         keycloak:
           variables:
