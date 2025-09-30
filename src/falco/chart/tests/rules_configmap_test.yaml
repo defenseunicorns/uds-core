@@ -1,0 +1,110 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+
+suite: Falco Rules ConfigMap - Disabled Rules Functionality
+templates:
+  - templates/rules-configmap.yaml
+
+tests:
+  - it: should create disable-rules.yaml section with only udsDefaultDisabledRules
+    set:
+      udsDefaultDisabledRules:
+        - "Change thread namespace"
+        - "Contact EC2 Instance Metadata Service From Container"
+      disabledRules: []
+    asserts:
+      - isNotEmpty:
+          path: data["disable-rules.yaml"]
+      - matchRegex:
+          path: data["disable-rules.yaml"]
+          pattern: '- rule: "Change thread namespace"'
+      - matchRegex:
+          path: data["disable-rules.yaml"]
+          pattern: '- rule: "Contact EC2 Instance Metadata Service From Container"'
+      - matchRegex:
+          path: data["disable-rules.yaml"]
+          pattern: 'enabled: false'
+      - matchRegex:
+          path: data["disable-rules.yaml"]
+          pattern: 'override:\s+enabled: replace'
+
+  - it: should create disable-rules.yaml section with only disabledRules
+    set:
+      udsDefaultDisabledRules: []
+      disabledRules:
+        - "Custom Rule 1"
+        - "Custom Rule 2"
+    asserts:
+      - isNotEmpty:
+          path: data["disable-rules.yaml"]
+      - matchRegex:
+          path: data["disable-rules.yaml"]
+          pattern: '- rule: "Custom Rule 1"'
+      - matchRegex:
+          path: data["disable-rules.yaml"]
+          pattern: '- rule: "Custom Rule 2"'
+      - matchRegex:
+          path: data["disable-rules.yaml"]
+          pattern: 'enabled: false'
+      - matchRegex:
+          path: data["disable-rules.yaml"]
+          pattern: 'override:\s+enabled: replace'
+
+  - it: should create disable-rules.yaml section merging both udsDefaultDisabledRules and disabledRules
+    set:
+      udsDefaultDisabledRules:
+        - "Change thread namespace"
+        - "Contact EC2 Instance Metadata Service From Container"
+      disabledRules:
+        - "Custom Rule 1"
+        - "Custom Rule 2"
+    asserts:
+      - isNotEmpty:
+          path: data["disable-rules.yaml"]
+      - matchRegex:
+          path: data["disable-rules.yaml"]
+          pattern: '- rule: "Change thread namespace"'
+      - matchRegex:
+          path: data["disable-rules.yaml"]
+          pattern: '- rule: "Contact EC2 Instance Metadata Service From Container"'
+      - matchRegex:
+          path: data["disable-rules.yaml"]
+          pattern: '- rule: "Custom Rule 1"'
+      - matchRegex:
+          path: data["disable-rules.yaml"]
+          pattern: '- rule: "Custom Rule 2"'
+
+  - it: should include stable rules by default
+    asserts:
+      - isNotEmpty:
+          path: data["stable-rules.yaml"]
+
+  - it: should not include sandbox rules when sandboxRulesEnabled is false
+    set:
+      sandboxRulesEnabled: false
+    asserts:
+      - isNull:
+          path: data["sandbox-rules.yaml"]
+
+  - it: should include sandbox rules when sandboxRulesEnabled is true
+    set:
+      sandboxRulesEnabled: true
+    asserts:
+      - isNotEmpty:
+          path: data["sandbox-rules.yaml"]
+
+  - it: should not include incubating rules when incubatingRulesEnabled is false
+    set:
+      incubatingRulesEnabled: false
+    asserts:
+      - isNull:
+          path: data["incubating-rules.yaml"]
+
+  - it: should include incubating rules when incubatingRulesEnabled is true
+    set:
+      incubatingRulesEnabled: true
+    asserts:
+      - isNotEmpty:
+          path: data["incubating-rules.yaml"]
