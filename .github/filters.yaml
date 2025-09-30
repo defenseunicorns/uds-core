@@ -20,6 +20,7 @@ logging:
 runtime-security:
   - "packages/runtime-security/**"
   - "src/neuvector/**"
+  - "src/falco/**"
 
 backup-restore:
   - "packages/backup-restore/**"
