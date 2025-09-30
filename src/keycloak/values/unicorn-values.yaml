@@ -12,7 +12,7 @@ securityContext:
       - ALL
 image:
   repository: quay.io/rfcurated/keycloak
-  tag: "26.3.4-jammy-fips-rfcurated"
+  tag: "26.3.5-jammy-fips-rfcurated"
 
 migrations:
   deleteGeneratedTrustStore: true

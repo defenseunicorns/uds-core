@@ -1,0 +1,84 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# Disable automatic update/loading of Falco default rules for airgapped environments
+falcoctl:
+  artifact:
+    install:
+      enabled: false
+    follow:
+      enabled: false
+driver:
+  kind: modern-bpf
+
+# work around for: https://github.com/falcosecurity/charts/issues/888
+falco:
+  config_files:
+    - /dummy
+
+  # Specify which rule files to load, ordering matters for rule precedence
+  rules_files:
+    - /etc/falco/rules.d/stable-rules.yaml
+    - /etc/falco/rules.d/incubating-rules.yaml
+    - /etc/falco/rules.d/sandbox-rules.yaml
+    - /etc/falco/rules.d/disable-rules.yaml
+
+mounts:
+  volumes:
+    - name: extra-rules
+      configMap:
+        name: falco-extra-rules
+  volumeMounts:
+    - name: extra-rules
+      mountPath: /etc/falco/rules.d
+      readOnly: true
+
+falcosidekick:
+  enabled: true
+
+  serviceMonitor:
+    enabled: true
+
+  # Enable Grafana dashboard for FalcoSidekick metrics
+  # This dashboard is currently showing inaccurate event data over time so we are disabling it for now until we can investigate further
+  # grafana:
+  #   dashboards:
+  #     enabled: true
+
+  config:
+    # Logs alerts/payloads to stdout
+    # This should be ok to keep on by default so that users can see events logged to falcosidekick without needing to set up an external destination
+    # If you setup a forwarding destination (https://falco.org/docs/concepts/outputs/forwarding/) you may want to disable this
+    debug: true
+
+    # Set this to enable sending alerts to Alertmanager
+    # alertmanager:
+    #   hostport: "http://kube-prometheus-stack-alertmanager.monitoring.svc.cluster.local:9093"
+    #   endpoint: "/api/v2/alerts"
+
+    # Send alert events to loki by default
+    # This creates a cleaner stream of Falco events with labels for querying rather than looking at raw pod logs
+    loki:
+      hostport: "http://loki-gateway.loki.svc.cluster.local:80"
+      format: json
+      # Enables the Grafana dashboard for visualizing Falco events
+      grafanaDashboard:
+        enabled: true
+
+# Enable Grafana dashboard for Falco metrics
+# This dashboard is currently showing inaccurate event data over time so we are disabling it for now until we can investigate further
+# grafana:
+#   dashboards:
+#     enabled: true
+
+# Enable metrics
+metrics:
+  enabled: true
+
+# Enable serviceMonitor
+serviceMonitor:
+  create: true
+
+# Enable Prometheus metrics endpoint
+webserver:
+  prometheus_metrics_enabled: true

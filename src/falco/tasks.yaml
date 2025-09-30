@@ -1,0 +1,59 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+tasks:
+  - name: validate
+    actions:
+      - description: Validate Falcosidekick Deployment
+        wait:
+          cluster:
+            kind: Deployment
+            name: falco-falcosidekick
+            condition: Available
+            namespace: falco
+      - description: Validate Falco Pod
+        wait:
+          cluster:
+            kind: Pod
+            name: app.kubernetes.io/name=falco
+            condition: Ready
+            namespace: falco
+
+  - name: e2e-test
+    actions:
+      - description: "Run Falco E2E tests"
+        cmd: |
+          npm ci && npx vitest run "falco" --exclude "**/*integration*"
+        dir: test/vitest
+
+  - name: update-rules
+    description: "Update Falco rules from upstream repository"
+    actions:
+      - description: "Download latest Falco rules"
+        timeout: 60s
+        dir: src/falco
+        cmd: |
+          set -e
+          RULES_DIR="chart/rules"
+
+          echo "Downloading latest Falco rules..."
+          if ! curl -sSfL --connect-timeout 30 --max-time 60 \
+               https://raw.githubusercontent.com/falcosecurity/rules/falco-rules-4.0.0/rules/falco_rules.yaml \
+               -o "${RULES_DIR}/stable-rules.yaml"; then
+            echo "Error: Failed to download stable rules"
+            exit 1
+          fi
+
+          if ! curl -sSfL --connect-timeout 30 --max-time 60 \
+               https://raw.githubusercontent.com/falcosecurity/rules/falco-sandbox-rules-5.0.1/rules/falco-sandbox_rules.yaml \
+               -o "${RULES_DIR}/sandbox-rules.yaml"; then
+            echo "Error: Failed to download sandbox rules"
+            exit 1
+          fi
+
+          if ! curl -sSfL --connect-timeout 30 --max-time 60 \
+               https://raw.githubusercontent.com/falcosecurity/rules/falco-incubating-rules-5.0.1/rules/falco-incubating_rules.yaml \
+               -o "${RULES_DIR}/incubating-rules.yaml"; then
+            echo "Error: Failed to download incubating rules"
+            exit 1
+          fi

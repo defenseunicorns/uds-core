@@ -1,0 +1,22 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# Support for custom `network.allow` entries on the Package CR, useful for sending Falco Sidekick alerts to external destinations
+additionalNetworkAllow: []
+# ref: https://uds.defenseunicorns.com/reference/configuration/custom-resources/packages-v1alpha1-cr/#allow
+#   - direction: Egress
+#     selector:
+#       app.kubernetes.io/name: falcosidekick
+#     remoteGenerated: Anywhere
+#     description: "from falcosidekick to anywhere"
+#     port: 443
+
+# Toggle inclusion of Falco's "incubating" ruleset (provide a certain level of robustness guarantee but have been identified by experts as catering to more specific use cases, which may or may not be relevant for each adopter.)
+incubatingRulesEnabled: false
+
+# Toggle inclusion of Falco's "sandbox" ruleset (experimental rules)
+sandboxRulesEnabled: false
+
+# List of rules to explicitly disable by name
+# Example: ["Read environment variable from /proc files"]
+disabledRules: []

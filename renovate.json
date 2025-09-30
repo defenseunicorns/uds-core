@@ -44,6 +44,11 @@
       "commitMessageTopic": "neuvector"
     },
     {
+      "matchFileNames": ["src/falco/**"],
+      "groupName": "falco",
+      "commitMessageTopic": "falco"
+    },
+    {
       "matchFileNames": ["src/metrics-server/**"],
       "groupName": "metrics-server",
       "commitMessageTopic": "metrics-server"
@@ -90,6 +95,12 @@
       "matchPackageNames": ["defenseunicorns/uds-common", "mcr.microsoft.com/playwright", "defenseunicorns/kubernetes-fluent-client"],
       "groupName": "support-deps",
       "commitMessageTopic": "support-deps"
+    },
+    {
+      "matchPackageNames": [
+          "registry1.dso.mil/ironbank/opensource/falcosecurity/falcosidekick"
+      ],
+      "allowedVersions": "!/99.99.99/"
     }
   ]
 }

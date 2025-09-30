@@ -1,0 +1,15 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+image:
+  registry: quay.io
+  repository: rfcurated/falcosecurity/falco
+  tag: 0.41.3-jammy-scratch-fips-rfcurated
+  pullPolicy: IfNotPresent
+
+falcosidekick:
+  image:
+    registry: quay.io
+    repository: rfcurated/falcosecurity/falcosidekick
+    tag: 2.32.0-jammy-scratch-fips-rfcurated
+    pullPolicy: IfNotPresent

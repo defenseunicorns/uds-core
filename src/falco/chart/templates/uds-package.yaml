@@ -1,0 +1,53 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: falco
+  namespace: {{ .Release.Namespace }}
+spec:
+  # Customize network policies and expose services via istio
+  network:
+    serviceMesh:
+      mode: ambient
+    allow:
+      - direction: Ingress
+        remoteGenerated: IntraNamespace
+
+      - direction: Egress
+        remoteGenerated: IntraNamespace
+
+      - direction: Ingress
+        selector:
+          app.kubernetes.io/name: falco
+        remoteNamespace: monitoring
+        remoteSelector:
+          app.kubernetes.io/name: prometheus
+        remoteServiceAccount: kube-prometheus-stack-prometheus
+        port: 8765
+        description: "Prometheus Falco Metrics"
+
+      - direction: Ingress
+        selector:
+          app.kubernetes.io/name: falcosidekick
+        remoteNamespace: monitoring
+        remoteSelector:
+          app.kubernetes.io/name: prometheus
+        remoteServiceAccount: kube-prometheus-stack-prometheus
+        port: 2801
+        description: "Prometheus Falcosidekick Metrics"
+
+      - direction: Egress
+        selector:
+          app.kubernetes.io/name: falcosidekick
+        remoteNamespace: loki
+        remoteSelector:
+          app.kubernetes.io/name: loki
+        port: 8080
+        description: "Write Alert Events to Loki"
+
+      # Custom rules for unanticipated scenarios
+      {{- with .Values.additionalNetworkAllow }}
+      {{ toYaml . | nindent 6 }}
+      {{- end }}

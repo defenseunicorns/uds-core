@@ -1,0 +1,26 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+kind: ZarfPackageConfig
+metadata:
+  name: uds-core-falco-common
+  description: "UDS Core Falco Common"
+  url: https://falco.org/docs/
+
+components:
+  - name: falco
+    description: "Deploy Falco"
+    required: true
+    charts:
+      - name: uds-falco-config
+        namespace: falco
+        version: 0.1.0
+        localPath: ../chart
+        valuesFiles:
+          - ../chart/values.yaml
+      - name: falco
+        url: https://falcosecurity.github.io/charts
+        version: 6.3.0
+        namespace: falco
+        valuesFiles:
+          - ../values/values.yaml
