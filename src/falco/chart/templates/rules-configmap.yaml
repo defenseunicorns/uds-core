@@ -23,10 +23,11 @@ data:
 {{ .Files.Get "rules/incubating-rules.yaml" | nindent 4 }}
   {{- end }}
 
-  # If disabledRules are passed in, generate a disable-rules file
-  {{- if (gt (len .Values.disabledRules) 0) }}
+  # If disabledRules or udsDefaultDisabledRules are passed in, generate a disable-rules file
+  {{- $allDisabledRules := concat .Values.udsDefaultDisabledRules .Values.disabledRules }}
+  {{- if (gt (len $allDisabledRules) 0) }}
   disable-rules.yaml: |-
-{{- range .Values.disabledRules }}
+{{- range $allDisabledRules }}
     - rule: "{{ . }}"
       enabled: false
       override:
