@@ -76,6 +76,27 @@ tests:
           path: data["disable-rules.yaml"]
           pattern: '- rule: "Custom Rule 2"'
 
+  - it: should deduplicate duplicate rules between udsDefaultDisabledRules and disabledRules
+    set:
+      udsDefaultDisabledRules:
+        - "Change thread namespace"
+      disabledRules:
+        - "Change thread namespace"
+        - "Custom Rule"
+    asserts:
+      - isNotEmpty:
+          path: data["disable-rules.yaml"]
+      - matchRegex:
+          path: data["disable-rules.yaml"]
+          pattern: '- rule: "Change thread namespace"'
+      - matchRegex:
+          path: data["disable-rules.yaml"]
+          pattern: '- rule: "Custom Rule"'
+      # Ensure "Change thread namespace" only appears once
+      - notMatchRegex:
+          path: data["disable-rules.yaml"]
+          pattern: '(?s).*- rule: "Change thread namespace".*- rule: "Change thread namespace".*'
+
   - it: should include stable rules by default
     asserts:
       - isNotEmpty:
