@@ -19,7 +19,7 @@ components:
         valuesFiles:
           - values/upstream-values.yaml
     images:
-      - ghcr.io/istio-ecosystem/authservice/authservice:1.0.4
+      - ghcr.io/istio-ecosystem/authservice/authservice:1.1.1
 
   - name: authservice
     required: true
@@ -32,7 +32,7 @@ components:
         valuesFiles:
           - values/registry1-values.yaml
     images:
-      - registry1.dso.mil/ironbank/istio-ecosystem/authservice:1.0.4-ubi9
+      - registry1.dso.mil/ironbank/istio-ecosystem/authservice:1.1.1-ubi9
 
   - name: authservice
     required: true
@@ -45,4 +45,4 @@ components:
         valuesFiles:
           - values/unicorn-values.yaml
     images:
-      - quay.io/rfcurated/istio-ecosystem/authservice:1.0.4-jammy-scratch-fips-rfcurated
+      - quay.io/rfcurated/istio-ecosystem/authservice:1.1.1-jammy-scratch-fips-rfcurated
