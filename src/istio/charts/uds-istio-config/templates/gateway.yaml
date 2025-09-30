@@ -17,6 +17,7 @@ spec:
     app: {{ .Values.name }}-ingressgateway
   servers:
     {{ range $name,$server := .Values.tls.servers }}
+    # @lulaStart 0a4b40fa-7d87-4523-a64d-304969a47b44
     - hosts:
         {{- range $server.hosts | default (list "*") }}
         - "{{ . }}.{{ $domain }}"
@@ -25,6 +26,7 @@ spec:
         name: "http-{{ $name }}"
         number: 80
         protocol: HTTP
+        # @lulaStart 169c38da-d7bd-40d0-889b-1fc80fae8480 
       {{- if or (not (hasKey $server "enableHttpsRedirect")) $server.enableHttpsRedirect }}
       tls:
         httpsRedirect: true
@@ -37,6 +39,7 @@ spec:
         name: "https-{{ $name }}"
         number: 443
         protocol: HTTPS
+        # @lulaEnd 169c38da-d7bd-40d0-889b-1fc80fae8480 
       tls:
         mode: {{ $server.mode }}
         {{- if ne $server.mode "PASSTHROUGH" }}
@@ -72,4 +75,5 @@ spec:
         minProtocolVersion: {{ if $rootSupportTLS }}TLSV1_2{{ else }}TLSV1_3{{ end }}
         {{- end }}
     {{- end }}
+  # @lulaEnd 0a4b40fa-7d87-4523-a64d-304969a47b44
 {{ end }}

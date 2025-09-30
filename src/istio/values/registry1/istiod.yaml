@@ -4,9 +4,11 @@
 pilot:
   image: registry1.dso.mil/ironbank/tetrate/istio/pilot:1.26.2-fips
 global:
+  # @lulaStart c7e8c697-e3ce-4d5e-a186-22f9fdc93e50
   proxy_init:
     # renovate: image=registry1.dso.mil/ironbank/tetrate/istio/proxyv2
     image: "###ZARF_REGISTRY###/ironbank/tetrate/istio/proxyv2:1.26.2-fips"
   proxy:
     # renovate: image=registry1.dso.mil/ironbank/tetrate/istio/proxyv2
     image: "###ZARF_REGISTRY###/ironbank/tetrate/istio/proxyv2:1.26.2-fips"
+  # @lulaEnd c7e8c697-e3ce-4d5e-a186-22f9fdc93e50

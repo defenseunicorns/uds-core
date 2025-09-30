@@ -10,11 +10,11 @@ import { Allow, RemoteGenerated } from "../../crd";
 import { Mode } from "../../crd/generated/package-v1alpha1";
 import { anywhere, anywhereInCluster } from "./generators/anywhere";
 import { cloudMetadata } from "./generators/cloudMetadata";
+import { egressGateway, egressWaypoint } from "./generators/egress";
 import { intraNamespace } from "./generators/intraNamespace";
 import { kubeAPI } from "./generators/kubeAPI";
 import { kubeNodes } from "./generators/kubeNodes";
 import { remoteCidr } from "./generators/remoteCidr";
-import { egressGateway, egressWaypoint } from "./generators/egress";
 
 function isWildcardNamespace(namespace: string) {
   return namespace === "" || namespace === "*";
@@ -78,6 +78,7 @@ function getPeers(policy: Allow, istioMode: Mode | undefined): V1NetworkPolicyPe
   return peers;
 }
 
+// @lulaStart 177c38da-d7bd-40d0-889b-1fc80fae8777
 export function generate(namespace: string, policy: Allow, istioMode?: Mode): kind.NetworkPolicy {
   // Generate a unique name for the NetworkPolicy
   const name = generateName(policy);
@@ -137,7 +138,7 @@ export function generate(namespace: string, policy: Allow, istioMode?: Mode): ki
 
   return generated;
 }
-
+// @lulaEnd 177c38da-d7bd-40d0-889b-1fc80fae8777
 /**
  * Generates a unique name for the NetworkPolicy based on the policy.
  * Will use the description if it exists, otherwise it will use the
