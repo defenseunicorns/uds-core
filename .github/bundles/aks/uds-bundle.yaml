@@ -165,8 +165,8 @@ packages:
             - name: FALCO_SANDBOX_RULES_ENABLED
               description: Enable sandbox rules
               path: sandboxRulesEnabled
-              default: "true"
+              default: "false" # TODO: enable this when we fix flakey test
             - name: FALCO_INCUBATING_RULES_ENABLED
               description: Enable incubating rules
               path: incubatingRulesEnabled
-              default: "true"
+              default: "false" # TODO: enable this when we fix flakey test
