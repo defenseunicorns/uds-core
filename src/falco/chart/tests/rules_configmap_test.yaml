@@ -8,12 +8,38 @@ templates:
   - templates/rules-configmap.yaml
 
 tests:
-  - it: should create disable-rules.yaml section with only udsDefaultDisabledRules
+  - it: should create disable-rules.yaml section with only stable default disabled rules
     set:
-      udsDefaultDisabledRules:
+      udsDefaultDisabledRulesStable:
+        - "Contact K8S API Server From Container"
+      udsDefaultDisabledRulesIncubating: []
+      udsDefaultDisabledRulesSandbox: []
+      disabledRules: []
+      incubatingRulesEnabled: false
+      sandboxRulesEnabled: false
+    asserts:
+      - isNotEmpty:
+          path: data["disable-rules.yaml"]
+      - matchRegex:
+          path: data["disable-rules.yaml"]
+          pattern: '- rule: "Contact K8S API Server From Container"'
+      - matchRegex:
+          path: data["disable-rules.yaml"]
+          pattern: 'enabled: false'
+      - matchRegex:
+          path: data["disable-rules.yaml"]
+          pattern: 'override:\s+enabled: replace'
+
+  - it: should create disable-rules.yaml section with incubating default disabled rules when incubating is enabled
+    set:
+      udsDefaultDisabledRulesStable: []
+      udsDefaultDisabledRulesIncubating:
         - "Change thread namespace"
         - "Contact EC2 Instance Metadata Service From Container"
+      udsDefaultDisabledRulesSandbox: []
       disabledRules: []
+      incubatingRulesEnabled: true
+      sandboxRulesEnabled: false
     asserts:
       - isNotEmpty:
           path: data["disable-rules.yaml"]
@@ -32,10 +58,14 @@ tests:
 
   - it: should create disable-rules.yaml section with only disabledRules
     set:
-      udsDefaultDisabledRules: []
+      udsDefaultDisabledRulesStable: []
+      udsDefaultDisabledRulesIncubating: []
+      udsDefaultDisabledRulesSandbox: []
       disabledRules:
         - "Custom Rule 1"
         - "Custom Rule 2"
+      incubatingRulesEnabled: false
+      sandboxRulesEnabled: false
     asserts:
       - isNotEmpty:
           path: data["disable-rules.yaml"]
@@ -52,17 +82,25 @@ tests:
           path: data["disable-rules.yaml"]
           pattern: 'override:\s+enabled: replace'
 
-  - it: should create disable-rules.yaml section merging both udsDefaultDisabledRules and disabledRules
+  - it: should create disable-rules.yaml section merging stable, incubating default disabled rules and disabledRules
     set:
-      udsDefaultDisabledRules:
+      udsDefaultDisabledRulesStable:
+        - "Contact K8S API Server From Container"
+      udsDefaultDisabledRulesIncubating:
         - "Change thread namespace"
         - "Contact EC2 Instance Metadata Service From Container"
+      udsDefaultDisabledRulesSandbox: []
       disabledRules:
         - "Custom Rule 1"
         - "Custom Rule 2"
+      incubatingRulesEnabled: true
+      sandboxRulesEnabled: false
     asserts:
       - isNotEmpty:
           path: data["disable-rules.yaml"]
+      - matchRegex:
+          path: data["disable-rules.yaml"]
+          pattern: '- rule: "Contact K8S API Server From Container"'
       - matchRegex:
           path: data["disable-rules.yaml"]
           pattern: '- rule: "Change thread namespace"'
@@ -76,16 +114,24 @@ tests:
           path: data["disable-rules.yaml"]
           pattern: '- rule: "Custom Rule 2"'
 
-  - it: should deduplicate duplicate rules between udsDefaultDisabledRules and disabledRules
+  - it: should deduplicate duplicate rules between category-specific default rules and disabledRules
     set:
-      udsDefaultDisabledRules:
+      udsDefaultDisabledRulesStable:
+        - "Contact K8S API Server From Container"
+      udsDefaultDisabledRulesIncubating:
         - "Change thread namespace"
+      udsDefaultDisabledRulesSandbox: []
       disabledRules:
         - "Change thread namespace"
         - "Custom Rule"
+      incubatingRulesEnabled: true
+      sandboxRulesEnabled: false
     asserts:
       - isNotEmpty:
           path: data["disable-rules.yaml"]
+      - matchRegex:
+          path: data["disable-rules.yaml"]
+          pattern: '- rule: "Contact K8S API Server From Container"'
       - matchRegex:
           path: data["disable-rules.yaml"]
           pattern: '- rule: "Change thread namespace"'
@@ -96,6 +142,26 @@ tests:
       - notMatchRegex:
           path: data["disable-rules.yaml"]
           pattern: '(?s).*- rule: "Change thread namespace".*- rule: "Change thread namespace".*'
+
+  - it: should not include incubating default disabled rules when incubating is disabled
+    set:
+      udsDefaultDisabledRulesStable:
+        - "Contact K8S API Server From Container"
+      udsDefaultDisabledRulesIncubating:
+        - "Change thread namespace"
+      udsDefaultDisabledRulesSandbox: []
+      disabledRules: []
+      incubatingRulesEnabled: false
+      sandboxRulesEnabled: false
+    asserts:
+      - isNotEmpty:
+          path: data["disable-rules.yaml"]
+      - matchRegex:
+          path: data["disable-rules.yaml"]
+          pattern: '- rule: "Contact K8S API Server From Container"'
+      - notMatchRegex:
+          path: data["disable-rules.yaml"]
+          pattern: '- rule: "Change thread namespace"'
 
   - it: should include stable rules by default
     asserts:

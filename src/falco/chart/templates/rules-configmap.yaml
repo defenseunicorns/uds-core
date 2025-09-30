@@ -23,8 +23,16 @@ data:
 {{ .Files.Get "rules/incubating-rules.yaml" | nindent 4 }}
   {{- end }}
 
-  # If disabledRules or udsDefaultDisabledRules are passed in, generate a disable-rules file
-  {{- $allDisabledRules := concat .Values.udsDefaultDisabledRules .Values.disabledRules | uniq }}
+  # If disabledRules or category-specific udsDefaultDisabledRules are passed in, generate a disable-rules file
+  {{- $allDisabledRules := list }}
+  {{- $allDisabledRules = concat $allDisabledRules .Values.udsDefaultDisabledRulesStable }}
+  {{- if .Values.incubatingRulesEnabled }}
+  {{- $allDisabledRules = concat $allDisabledRules .Values.udsDefaultDisabledRulesIncubating }}
+  {{- end }}
+  {{- if .Values.sandboxRulesEnabled }}
+  {{- $allDisabledRules = concat $allDisabledRules .Values.udsDefaultDisabledRulesSandbox }}
+  {{- end }}
+  {{- $allDisabledRules = concat $allDisabledRules .Values.disabledRules | uniq }}
   {{- if (gt (len $allDisabledRules) 0) }}
   disable-rules.yaml: |-
 {{- range $allDisabledRules }}

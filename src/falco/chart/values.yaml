@@ -22,8 +22,16 @@ sandboxRulesEnabled: false
 disabledRules: []
 
 # Falco rules that are disabled by default in UDS as they tend to generate a lot of noise
-udsDefaultDisabledRules:
+
+# Stable ruleset disabled rules
+udsDefaultDisabledRulesStable:
+  - "Contact K8S API Server From Container" # This generates noise in UDS Core and is expected behavior
+
+# Incubating ruleset disabled rules
+udsDefaultDisabledRulesIncubating:
   - "Change thread namespace" # Ztunnel generates a lot of this noise for this rule
   - "Contact EC2 Instance Metadata Service From Container" # This generates noise in AWS environments where IMDS is used
   - "Contact cloud metadata service from container" # This generates noise in cloud environments where metadata services are used
-  - "Contact K8S API Server From Container" # This generates noise in UDS Core and is expected behavior
+
+# Sandbox ruleset disabled rules
+udsDefaultDisabledRulesSandbox: []
