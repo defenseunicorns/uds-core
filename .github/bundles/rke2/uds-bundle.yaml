@@ -141,3 +141,14 @@ packages:
             - name: KEYCLOAK_DB_PASSWORD
               path: postgresql.password
               sensitive: true
+      falco:
+        uds-falco-config:
+          variables:
+            - name: FALCO_SANDBOX_RULES_ENABLED
+              description: Enable sandbox rules
+              path: sandboxRulesEnabled
+              default: "true"
+            - name: FALCO_INCUBATING_RULES_ENABLED
+              description: Enable incubating rules
+              path: incubatingRulesEnabled
+              default: "true"

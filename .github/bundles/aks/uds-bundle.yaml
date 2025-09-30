@@ -159,3 +159,14 @@ packages:
                   cloud: |
                     AZURE_STORAGE_ACCOUNT_ACCESS_KEY=${AZURE_VELERO_STORAGE_ACCOUNT_ACCESS_KEY}
                     AZURE_CLOUD_NAME=AzureUSGovernmentCloud
+      falco:
+        uds-falco-config:
+          variables:
+            - name: FALCO_SANDBOX_RULES_ENABLED
+              description: Enable sandbox rules
+              path: sandboxRulesEnabled
+              default: "true"
+            - name: FALCO_INCUBATING_RULES_ENABLED
+              description: Enable incubating rules
+              path: incubatingRulesEnabled
+              default: "true"
