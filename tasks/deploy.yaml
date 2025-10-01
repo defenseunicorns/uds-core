@@ -8,7 +8,7 @@ variables:
   - name: VERSION
     description: "The version of the packages to deploy"
     # x-release-please-start-version
-    default: "0.52.1"
+    default: "0.53.0"
     # x-release-please-end
   - name: FLAVOR
     default: upstream
@@ -22,8 +22,6 @@ tasks:
     actions:
       - description: "Deploy the UDS Core Standard Bundle"
         cmd: uds deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --set INSECURE_ADMIN_PASSWORD_GENERATION=true --set FALCO_SANDBOX_RULES_ENABLED=true --set FALCO_INCUBATING_RULES_ENABLED=true --set K3D_EXTRA_ARGS="${{ .inputs.K3D_EXTRA_ARGS }}" --confirm --no-progress
-        env:
-          - UDS_K3D_IMAGE=rancher/k3s:v1.33.0-k3s1
 
   - name: k3d-standard-bundle-ha
     actions:
@@ -31,14 +29,11 @@ tasks:
         cmd: uds deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress
         env:
           - UDS_CONFIG=bundles/k3d-standard/uds-ha-config.yaml
-          - UDS_K3D_IMAGE=rancher/k3s:v1.33.0-k3s1
 
   - name: k3d-slim-dev-bundle
     actions:
       - description: "Deploy the UDS Core Slim Dev Only Bundle"
         cmd: uds deploy bundles/k3d-slim-dev/uds-bundle-k3d-core-slim-dev-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress
-        env:
-          - UDS_K3D_IMAGE=rancher/k3s:v1.33.0-k3s1
 
   - name: k3d-slim-dev-bundle-ha
     actions:
@@ -46,7 +41,6 @@ tasks:
         cmd: uds deploy bundles/k3d-slim-dev/uds-bundle-k3d-core-slim-dev-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress
         env:
           - UDS_CONFIG=bundles/k3d-slim-dev/uds-ha-config.yaml
-          - UDS_K3D_IMAGE=rancher/k3s:v1.33.0-k3s1
 
   # This task is a wrapper to support --set LAYER=identity-authorization
   - name: single-layer-callable
@@ -79,15 +73,17 @@ tasks:
         cmd: uds zarf tools registry ls ${TARGET_REPO}/core | grep ${FLAVOR} | sort -V | tail -1
         setVariables:
           - name: LATEST_VERSION
+      - description: "Extract unflavored version for git tag"
+        cmd: echo ${LATEST_VERSION} | cut -d'-' -f1 # Extract version before any hyphen (e.g., "0.52.0" from "0.52.0-upstream")
+        setVariables:
+          - name: LATEST_CORE_TAG
       - description: "Create the latest version with bundle overrides"
         cmd: |
           # Create temp directory
           mkdir -p tmp/core-shim
 
-          LATEST_CORE_VERSION=$(echo ${LATEST_VERSION} | cut -d'-' -f1) # Extract version before any hyphen (e.g., "0.52.0" from "0.52.0-upstream")
-
           # Download latest release bundle
-          curl -sSL https://raw.githubusercontent.com/defenseunicorns/uds-core/v${LATEST_CORE_VERSION}/bundles/k3d-standard/uds-bundle.yaml -o tmp/core-shim/uds-bundle.yaml
+          curl -sSL https://raw.githubusercontent.com/defenseunicorns/uds-core/v${LATEST_CORE_TAG}/bundles/k3d-standard/uds-bundle.yaml -o tmp/core-shim/uds-bundle.yaml
 
           # Update the bundle with the latest version using yq
           uds zarf tools yq e -i "
@@ -102,9 +98,7 @@ tasks:
         cmd: |
           # Set UDS_CONFIG for bundle deployment
           export UDS_CONFIG="${{ .inputs.configFile }}"
-          uds deploy tmp/core-shim/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress
-        env:
-          - UDS_K3D_IMAGE=rancher/k3s:v1.33.0-k3s1
+          uds deploy tmp/core-shim/uds-bundle-k3d-core-demo-${UDS_ARCH}-${LATEST_CORE_TAG}.tar.zst --confirm --no-progress
       - description: "Clean up temporary files"
         cmd: rm -rf tmp/core-shim
 
@@ -112,8 +106,6 @@ tasks:
     actions:
       - description: "Deploy the latest UDS Core package release"
         cmd: uds deploy oci://ghcr.io/defenseunicorns/packages/uds/bundles/k3d-core-slim-dev:latest --set INSECURE_ADMIN_PASSWORD_GENERATION=true --confirm --no-progress
-        env:
-          - UDS_K3D_IMAGE=rancher/k3s:v1.33.0-k3s1
 
   - name: standard-package
     actions:
