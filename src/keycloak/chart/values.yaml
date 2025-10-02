@@ -407,3 +407,6 @@ extraVolumeMounts: []
 # Additional truststore paths for Keycloak to scan for certificates
 # These paths will be added to the --truststore-paths startup argument
 truststorePaths: []
+
+# Enable additional Keycloak observability, including Loki-based Recording Rules and Alerts
+detailedObservability: true
