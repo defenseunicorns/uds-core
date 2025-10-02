@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.53.1](https://github.com/defenseunicorns/uds-core/compare/v0.53.0...v0.53.1) (2025-10-02)
+
+
+### Miscellaneous
+
+* **deps:** update grafana to v12.2.0 ([#1943](https://github.com/defenseunicorns/uds-core/issues/1943)) ([f6d486e](https://github.com/defenseunicorns/uds-core/commit/f6d486e948ac6983965978549d4672f3081e6844))
+* enable sandbox incubating falco rules for iac tests ([#1982](https://github.com/defenseunicorns/uds-core/issues/1982)) ([f144a10](https://github.com/defenseunicorns/uds-core/commit/f144a10515733852e213755e16e53221c81a04be))
+* lula workflow ([#1985](https://github.com/defenseunicorns/uds-core/issues/1985)) ([2f7906d](https://github.com/defenseunicorns/uds-core/commit/2f7906dc4b468efcca796ae86a8f469e7744e32a))
+* remove lula1/oscal compliance information ([#1984](https://github.com/defenseunicorns/uds-core/issues/1984)) ([8638b92](https://github.com/defenseunicorns/uds-core/commit/8638b92195470c5b3e7d83ed09da8ee26197f415))
+
 ## [0.53.0](https://github.com/defenseunicorns/uds-core/compare/v0.52.1...v0.53.0) (2025-09-30)
 
 
