@@ -3,7 +3,9 @@
 
 kind: ZarfPackageConfig
 metadata:
+  # @lulaStart 0a4b40fa-7d87-4523-a64d-304969a47b44
   name: uds-core-falco
+  # @lulaEnd 0a4b40fa-7d87-4523-a64d-304969a47b44
   description: "UDS Core Falco"
   url: https://falco.org/docs/
 

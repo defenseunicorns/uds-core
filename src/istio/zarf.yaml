@@ -88,7 +88,7 @@ components:
     required: true
     import:
       path: common
-
+  # @lulaStart 0a4b40fa-7d87-4523-a64d-304969a47b44
   - name: istio-admin-gateway
     required: true
     charts:
@@ -118,7 +118,7 @@ components:
         namespace: istio-tenant-gateway
         valuesFiles:
           - "values/config-tenant.yaml"
-
+  # @lulaEnd 0a4b40fa-7d87-4523-a64d-304969a47b44
   - name: istio-passthrough-gateway
     required: false
     charts:
