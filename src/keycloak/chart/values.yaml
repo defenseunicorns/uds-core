@@ -47,6 +47,10 @@ realmInitEnv:
   # Maximum number of concurrent active sessions per user. Set to 0 to disable the limit (unlimited).
   SSO_SESSION_MAX_PER_USER: "0"
   # @lulaEnd ef276ec4-7921-4287-a18c-80dec5f8e742
+  # @lulaStart 251f6498-05a3-416c-b6eb-b9fadd776704
+  # Specifies how long a session remains active without user activity
+  SSO_SESSION_IDLE_TIMEOUT: "600"
+  # @lulaEnd 251f6498-05a3-416c-b6eb-b9fadd776704
 
 # Realm-level configuration
 realmConfig:
