@@ -1,7 +1,5 @@
 # Copyright 2024 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
-# @lulaStart c7e8c697-e3ce-4d5e-a186-22f9fdc93e50
 cni:
   image: registry1.dso.mil/ironbank/tetrate/istio/install-cni:1.26.2-fips
-# @lulaEnd c7e8c697-e3ce-4d5e-a186-22f9fdc93e50
