@@ -24,6 +24,7 @@ runs:
         if docker ps | grep -q "$CONTAINER_NAME"; then
           echo "Container $CONTAINER_NAME is running. Proceeding with log copy..."
           docker cp ${CONTAINER_NAME}:/var/log/ /tmp/uds-containerd-logs
+          docker cp ${CONTAINER_NAME}:/var/lib/rancher/k3s/agent/containerd/containerd.log /tmp/uds-containerd-logs
         else
           echo "Container $CONTAINER_NAME is not running. Skipping log copy."
         fi
