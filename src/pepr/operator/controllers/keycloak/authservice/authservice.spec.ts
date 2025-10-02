@@ -217,6 +217,38 @@ describe("purgeAuthserviceClients", () => {
     expect(cleanupWaypointLabels).not.toHaveBeenCalled();
     expect(pkg.status?.authserviceClients).toHaveLength(0);
   });
+
+  it("should handle legacy string-list status by removing missing clients", async () => {
+    const pkg = createMockPackage("test-pkg");
+    pkg.status = {
+      ...pkg.status,
+      authserviceClients: ["legacy-client-a"],
+    } as unknown as UDSPackage["status"]; // simulate legacy
+
+    const { purgeAuthserviceClients } = await import("./authservice.js");
+    await purgeAuthserviceClients(pkg, [], Mode.Sidecar, Mode.Sidecar);
+
+    expect(getWaypointName).toHaveBeenCalledWith("legacy-client-a");
+    expect(cleanupWaypointLabels).toHaveBeenCalledWith("test-ns", "legacy-client-a-waypoint");
+  });
+
+  it("should skip waypoint update logic when previous status is legacy string-list format", async () => {
+    const pkg = createMockPackage("test-pkg");
+    pkg.status = {
+      ...pkg.status,
+      authserviceClients: ["same-client"],
+    } as unknown as UDSPackage["status"]; // simulate legacy
+
+    const updatedClient: AuthserviceClient = {
+      clientId: "same-client",
+      selector: { "app.kubernetes.io/name": "some-selector" },
+    };
+
+    const { purgeAuthserviceClients } = await import("./authservice.js");
+    await purgeAuthserviceClients(pkg, [updatedClient], Mode.Sidecar, Mode.Sidecar);
+
+    expect(cleanupWaypointLabels).not.toHaveBeenCalled();
+  });
 });
 
 describe("authservice", () => {
