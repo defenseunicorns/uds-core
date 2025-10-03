@@ -100,32 +100,24 @@ export async function purgeAuthserviceClients(
   previousMeshMode: Mode,
   currentMeshMode: Mode,
 ): Promise<void> {
-  const prevClients = (pkg.status?.authserviceClients as unknown[]) || [];
-
-  // Determine if previous status used the legacy string[] format (list of client IDs)
-  const isLegacyPrevFormat = prevClients.length > 0 && typeof prevClients[0] === "string";
-
-  // Normalize previous client IDs for comparison
-  const prevClientIds: string[] = isLegacyPrevFormat
-    ? (prevClients as string[])
-    : (prevClients as { clientId: string }[]).map(c => c.clientId);
+  const prevClients = pkg.status?.authserviceClients || [];
 
   // Check if mesh mode changed
   const meshModeChanged = previousMeshMode !== currentMeshMode;
 
   // First handle truly removed clients
-  const removedClientIds = prevClientIds.filter(
-    id => !newAuthserviceClients.some(c => c.clientId === id),
+  const removedClients = prevClients.filter(
+    oldClient => !newAuthserviceClients.some(c => c.clientId === oldClient.clientId),
   );
 
   // Process removed clients
   await Promise.all(
-    removedClientIds.map(async clientId => {
-      const fullWaypointName = getWaypointName(clientId);
-      log.info(`Removing authservice client ${clientId}`);
+    removedClients.map(async client => {
+      const fullWaypointName = getWaypointName(client.clientId);
+      log.info(`Removing authservice client ${client.clientId}`);
 
       await reconcileAuthservice(
-        { name: clientId, action: Action.RemoveClient },
+        { name: client.clientId, action: Action.RemoveClient },
         {},
         false, // Don't need to update policy for removed clients
         pkg,
@@ -138,16 +130,10 @@ export async function purgeAuthserviceClients(
     }),
   );
 
-  // If the previous status was in legacy format, skip waypoint update logic entirely.
-  // Packages with the older status format did not support ambient/selector tracking in status objects.
-  if (isLegacyPrevFormat) {
-    return;
-  }
-
   // Then handle updated clients (selector changes or mesh mode change)
   const updatedWaypointClients = meshModeChanged
-    ? (prevClients as AuthserviceClient[]) // All clients need update if mesh mode changed
-    : (prevClients as AuthserviceClient[]).filter(oldClient => {
+    ? prevClients // All clients need update if mesh mode changed
+    : prevClients.filter(oldClient => {
         const newClient = newAuthserviceClients.find(c => c.clientId === oldClient.clientId);
         if (!newClient) return false; // Already handled by removedClients
         return JSON.stringify(oldClient.selector) !== JSON.stringify(newClient.selector);
