@@ -10,18 +10,6 @@ export default defineConfig({
   sources: ['./docs/.c4'],
   outDir: './docs/.c4/diagrams',
   styles: {
-    theme: {
-      colors: {
-        system: '#144a8f',
-        namespace: '#24b0ff',
-        pod: '#e6e6e6',
-        cluster: '#9e9e9e',
-        actor: '#0b1329',
-        storage: '#323336',
-        external: '#d18484',
-        cloud: '#ffffff',
-      }
-    },
     defaults: {
       border: 'solid',
       opacity: 100,

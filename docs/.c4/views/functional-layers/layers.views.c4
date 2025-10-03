@@ -1,4 +1,4 @@
-views "Functional Layers" {
+views "uds-core-functional-layers" {
   // Base Layer - Istio, UDS Operator, Policy Engine
   view base-layer of cloud.cluster {
     title "UDS Core Base Layer"

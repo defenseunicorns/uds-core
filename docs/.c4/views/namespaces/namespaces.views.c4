@@ -1,4 +1,4 @@
-views "namespaces" {
+views "uds-core-namespaces" {
   view pepr-system of cloud.cluster.uds-core.pepr-system {
     title "Pepr System"
     autoLayout TopBottom 200 100

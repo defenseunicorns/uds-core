@@ -65,48 +65,6 @@ The extension provides several benefits:
 
 With this extension, you can develop C4 diagrams more efficiently without needing to run the development server separately.
 
-## C4 File Structure
-
-The C4 diagrams in UDS Core are organized as follows:
-
-```
-docs/.c4/
-├── src/
-│   ├── models/
-│   │   └── model.c4               # Main model definition
-│   └── views/
-│       ├── overview.views.c4      # Overview diagrams
-│       ├── namespaces.views.c4    # Namespace-specific views
-│       └── layers.views.c4        # Functional Layer-specific views
-```
-
-### Model Definition
-
-The `model.c4` file defines the core elements of our architecture, including:
-
-- Actors (users, administrators)
-- Systems and subsystems
-- Namespaces and pods
-- Relationships between components
-
-### Views
-
-Views define different perspectives on the model:
-
-- **overview.views.c4**: High-level views of the entire system
-- **namespaces.views.c4**: Detailed views of specific namespaces
-- **layers.views.c4**: Views organized by functional layers
-
-## Ports and Protocols Diagrams (TBD)
-
-A future enhancement will include ports and protocols diagrams stored in the compliance repository. A script will be developed to:
-
-1. Fetch the ports and protocols definition file from the compliance repository
-2. Integrate this information with existing C4 diagrams
-3. Generate comprehensive diagrams that include both architectural components and their communication protocols
-
-This integration will provide a more complete picture of the system's communication patterns and security boundaries.
-
 ## Additional Resources
 
 - [C4 Model Official Website](https://c4model.com/)

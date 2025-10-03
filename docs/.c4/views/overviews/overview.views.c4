@@ -3,12 +3,14 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
- views {
-  view overview-uds-core of cloud {
+ views "uds-core-overviews" {
+  view uds-core-namespaces of cloud {
     title "Namespace Architecture Overview"
 
     group {
       border solid
+      color background
+      opacity 100%
 
       // include all elements inside uds-core
       include
@@ -43,38 +45,40 @@
     * CEqSzQ0AzQhfks0M4M0IdqcxZm9ydzNrgqJjcJGCoXjNEc2hec0F7qFwlJLNDgTNCHySzQ4AzQhZks0OAM0IMZLNDgPNCA6nMXVibWNsdYKiY3CRgqF4zRHsoXnNBRuhcJSSzQ9DzQh8ks0PCM0IWJLNDsjNCC6SzQ6UzQgJpzFjc3Q2ZWSComNwkYKheM0TpqF5zQONoXCUks0TQM0IfJLNEzzNCFmSzRM7zQgxks0TPs0IDqcxNXFrbzk0gqJjcJWCoXjNFV2hec0E2oKheM0Vi6F5zQTIgqF4zRV5oXnNAuqCoXjNFVWhec0Cw4KheM0VIqF5zQLDoXCUks0Rjs0IfJLNEYvNCFmSzRGLzQgxks0Rjs0IDqY1bDAyOWqComNwkYKheM0UD6F5zQZxoXCaks0KVs0IfJLNCjTNCGOSzQoLzQhMks0J4s0IPpLNCVPNCBCSzQfNzQhWks0HPM0ILJLNByHNCCOSzQcFzQgXks0G680I
     * CQ==
     */
-   view indepth-uds-core of cloud.cluster.uds-core {
+   view uds-core-ingress-egress of cloud.cluster.uds-core {
     title "Indepth Architecture Overview"
 
     group {
       border solid
+      color background
+      opacity 100%
 
-        // include all relationships (internal + external)
-        include
-          cloud.cluster,
-          cloud.cluster.uds-core,
-          cloud.cluster.external-services,
-          cloud.cluster.external-services.*,
-          admin,
-          enduser,
-          ext-siem,
-          ext-alerts,
-          pepr-system.*,
-          zarf.*,
-          istio-system.*,
-          istio-tenant-gateway.*,
-          istio-admin-gateway.*,
-          monitoring.*,
-          grafana.*,
-          falco.*,
-          loki.*,
-          vector.*,
-          velero,
-          velero.*,
-          authservice.*,
-          keycloak.*,
-          generic-customer.*,
-          kubernetes-control-plane.*
-      }
+      // include all relationships (internal + external)
+      include
+        cloud.cluster,
+        cloud.cluster.uds-core,
+        cloud.cluster.external-services,
+        cloud.cluster.external-services.*,
+        admin,
+        enduser,
+        ext-siem,
+        ext-alerts,
+        pepr-system.*,
+        zarf.*,
+        istio-system.*,
+        istio-tenant-gateway.*,
+        istio-admin-gateway.*,
+        monitoring.*,
+        grafana.*,
+        falco.*,
+        loki.*,
+        vector.*,
+        velero,
+        velero.*,
+        authservice.*,
+        keycloak.*,
+        generic-customer.*,
+        kubernetes-control-plane.*
     }
-  }
+	}
+}

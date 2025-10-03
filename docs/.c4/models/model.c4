@@ -15,8 +15,8 @@
     -> uds-core.istio-tenant-gateway.external-tenant-loadbalancer
   }
 
-  cloud = system "Cloud" {
-    cluster = system "Kubernetes Cluster" {
+  cloud = cloud "Cloud" {
+    cluster = cluster "Kubernetes Cluster" {
       // system
       uds-core = system "UDS Core" {
         description "UDS Core"
@@ -226,7 +226,7 @@
           pepr-validating-webhook -> pepr-system.pepr-admission
         }
       }
-      external-services = system "External Services" {
+      external-services = namespace "External Services" {
         ext-keycloak-db = database "External Keycloak Database"
         ext-loki-storage = storage "External Loki Storage"
         ext-velero-storage = storage "External Velero Storage"
