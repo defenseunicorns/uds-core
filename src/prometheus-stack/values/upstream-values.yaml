@@ -35,7 +35,7 @@ prometheusOperator:
       image:
         registry: registry.k8s.io
         repository: ingress-nginx/kube-webhook-certgen
-        tag: v1.6.2
+        tag: v1.6.3
       securityContext:
         runAsGroup: 2000
         runAsNonRoot: true
