@@ -55,11 +55,6 @@ tasks:
           done
           exit $failed
 
-  # - name: oscal
-  #   actions:
-  #     - description: Lula Lint OSCAL
-  #       task: remote:oscal
-
   - name: license
     actions:
       - description: Lint for the SPDX license identifier being in source files

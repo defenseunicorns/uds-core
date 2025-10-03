@@ -21,7 +21,7 @@ components:
           - values/upstream-values.yaml
     images:
       - docker.io/falcosecurity/falco:0.41.3
-      - docker.io/falcosecurity/falcosidekick:2.31.1
+      - docker.io/falcosecurity/falcosidekick:2.32.0
 
   - name: falco
     description: "Deploy Falco"
@@ -36,7 +36,7 @@ components:
           - values/registry1-values.yaml
     images:
       - registry1.dso.mil/ironbank/opensource/falcosecurity/falco:0.41.3
-      - registry1.dso.mil/ironbank/opensource/falcosecurity/falcosidekick:2.31.1
+      - registry1.dso.mil/ironbank/opensource/falcosecurity/falcosidekick:2.32.0
 
   - name: falco
     description: "Deploy Falco"
@@ -51,4 +51,4 @@ components:
           - values/unicorn-values.yaml
     images:
       - quay.io/rfcurated/falcosecurity/falco:0.41.3-jammy-scratch-fips-rfcurated
-      - quay.io/rfcurated/falcosecurity/falcosidekick:2.31.1-jammy-scratch-fips-rfcurated
+      - quay.io/rfcurated/falcosecurity/falcosidekick:2.32.0-jammy-scratch-fips-rfcurated

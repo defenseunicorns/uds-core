@@ -3,9 +3,8 @@
 
 # This workflow runs a Lula scan against the PR to see if compliance has changed
 
-# @lulaStart 123e4567-e89b-12d3-a456-426614174001
 name: Lula Scan
-# @lulaEnd 123e4567-e89b-12d3-a456-426614174001
+
 on:
   pull_request:
     branches: ["main"]
@@ -30,7 +29,7 @@ jobs:
       - name: Run Lula Scan
         run: |
           # renovate: datasource=github-tags depName=defenseunicorns/lula versioning=semver
-          npx --yes lula2@0.4.0 crawl
+          npx --yes lula2@0.5.0 crawl
         shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

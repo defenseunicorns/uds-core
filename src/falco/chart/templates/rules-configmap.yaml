@@ -1,0 +1,44 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: falco-extra-rules
+  namespace: falco
+data:
+  # Include stable rules
+  stable-rules.yaml: |-
+{{ .Files.Get "rules/stable-rules.yaml" | nindent 4 }}
+
+  # Include sandbox rules if sandbox ruleset is enabled in values.yaml
+  {{- if .Values.sandboxRulesEnabled }}
+  sandbox-rules.yaml: |-
+{{ .Files.Get "rules/sandbox-rules.yaml" | nindent 4 }}
+  {{- end }}
+
+  # Include incubating rules if incubating ruleset is enabled in values.yaml
+  {{- if .Values.incubatingRulesEnabled }}
+  incubating-rules.yaml: |-
+{{ .Files.Get "rules/incubating-rules.yaml" | nindent 4 }}
+  {{- end }}
+
+  # If disabledRules or category-specific udsDefaultDisabledRules are passed in, generate a disable-rules file
+  {{- $allDisabledRules := list }}
+  {{- $allDisabledRules = concat $allDisabledRules .Values.udsDefaultDisabledRulesStable }}
+  {{- if .Values.incubatingRulesEnabled }}
+  {{- $allDisabledRules = concat $allDisabledRules .Values.udsDefaultDisabledRulesIncubating }}
+  {{- end }}
+  {{- if .Values.sandboxRulesEnabled }}
+  {{- $allDisabledRules = concat $allDisabledRules .Values.udsDefaultDisabledRulesSandbox }}
+  {{- end }}
+  {{- $allDisabledRules = concat $allDisabledRules .Values.disabledRules | uniq }}
+  {{- if (gt (len $allDisabledRules) 0) }}
+  disable-rules.yaml: |-
+{{- range $allDisabledRules }}
+    - rule: "{{ . }}"
+      enabled: false
+      override:
+        enabled: replace
+{{- end }}
+  {{- end }}

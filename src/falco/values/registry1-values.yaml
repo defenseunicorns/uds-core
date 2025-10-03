@@ -11,5 +11,5 @@ falcosidekick:
   image:
     registry: registry1.dso.mil
     repository: ironbank/opensource/falcosecurity/falcosidekick
-    tag: 2.31.1
+    tag: 2.32.0
     pullPolicy: IfNotPresent
