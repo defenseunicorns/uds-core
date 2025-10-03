@@ -1,0 +1,98 @@
+views "Functional Layers" {
+  // Base Layer - Istio, UDS Operator, Policy Engine
+  view base-layer of cloud.cluster {
+    title "UDS Core Base Layer"
+
+    include
+      cloud,
+      cluster,
+      uds-core,
+      istio-system.*,
+      istio-tenant-gateway.*,
+      istio-admin-gateway.*,
+      pepr-system.*,
+      zarf.*,
+      kubernetes-control-plane.*
+  }
+
+  // Identity and Authorization Layer - Keycloak, AuthService
+  view identity-authorization-layer of cloud.cluster {
+    title "UDS Core Identity & Authorization Layer"
+
+    include
+      cloud,
+      cluster,
+      admin,
+      enduser,
+      uds-core,
+      uds-core.keycloak.*,
+      uds-core.authservice.*,
+      uds-core.istio-tenant-gateway.*,
+      uds-core.istio-admin-gateway.*,
+      cloud.cluster.external-services.ext-keycloak-db
+  }
+
+  // Metrics Server Layer (if applicable)
+  view metrics-server-layer of cloud.cluster {
+    title "UDS Core Metrics Server Layer"
+
+    include
+      cloud,
+      cluster,
+      uds-core,
+      kubernetes-control-plane.*
+  }
+
+  // Runtime Security Layer - Falco
+  view runtime-security-layer of cloud.cluster {
+    title "UDS Core Runtime Security Layer"
+
+    include
+      cloud,
+      cluster,
+      uds-core,
+      uds-core.falco.*,
+      uds-core.loki.*,
+      cloud.cluster.external-services.ext-loki-storage,
+      ext-alerts
+  }
+
+  // Logging Layer - Loki,Vector
+  view logging-layer of cloud.cluster {
+    title "UDS Core Logging Layer"
+
+    include
+      cloud,
+      cluster,
+      uds-core,
+      uds-core.loki.*,
+      uds-core.vector.*,
+      cloud.cluster.external-services.ext-loki-storage,
+      ext-siem
+  }
+
+  // Monitoring Layer - Prometheus,Grafana
+  view monitoring-layer of cloud.cluster {
+    title "UDS Core Monitoring Layer"
+
+    include
+      cloud,
+      cluster,
+      uds-core,
+      uds-core.monitoring.*,
+      uds-core.grafana.*,
+      uds-core.keycloak.*,
+      cloud.cluster.external-services.ext-keycloak-db
+  }
+
+  // Backup and Restore Layer - Velero
+  view backup-restore-layer of cloud.cluster {
+    title "UDS Core Backup & Restore Layer"
+
+    include
+      cloud,
+      cluster,
+      uds-core.velero.*,
+      cloud.cluster.external-services.ext-velero-storage
+  }
+}

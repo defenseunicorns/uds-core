@@ -1,0 +1,12 @@
+{
+    "name": "diagrams",
+    "description": "UDS Core LikeC4 Diagrams",
+    "scripts": {
+        "setup": "node node_modules/likec4/node_modules/playwright/cli.js install chromium"
+    },
+    "devDependencies": {
+        "@types/node": "^22.18.6",
+        "likec4": "latest",
+        "typescript": "^5.9.2"
+    }
+}

@@ -1,0 +1,155 @@
+views "namespaces" {
+  view pepr-system of cloud.cluster.uds-core.pepr-system {
+    title "Pepr System"
+    autoLayout TopBottom 200 100
+
+    include
+      *,
+      cloud.cluster.uds-core.kubernetes-control-plane.*,
+      cloud.cluster.uds-core
+  }
+
+  view zarf of cloud.cluster.uds-core.zarf {
+    title "Zarf"
+
+    include
+      *,
+      cloud.cluster.uds-core.kubernetes-control-plane.*,
+      cloud.cluster.uds-core
+  }
+
+  view istio-system of cloud.cluster.uds-core.istio-system {
+    title "Istio System"
+
+    include
+      *,
+      cloud.cluster.uds-core.kubernetes-control-plane.*,
+      cloud.cluster.uds-core
+  }
+
+  view istio-tenant-gateway of cloud.cluster.uds-core.istio-tenant-gateway {
+    title "Istio Tenant Gateway"
+
+    include
+      *,
+      cloud.cluster.uds-core.keycloak.*,
+      cloud.cluster.uds-core.generic-customer.*,
+      cloud.cluster.uds-core
+  }
+
+  view istio-admin-gateway of cloud.cluster.uds-core.istio-admin-gateway {
+    title "Istio Admin Gateway"
+
+    include
+      *,
+      cloud.cluster.uds-core.keycloak.*,
+      cloud.cluster.uds-core.grafana.*,
+      cloud.cluster.uds-core
+  }
+
+  view monitoring of cloud.cluster.uds-core.monitoring {
+    title "Monitoring"
+
+    include
+      *,
+      cloud.cluster.uds-core.grafana.*,
+      cloud.cluster.uds-core.kubernetes-control-plane.*,
+      cloud.cluster.uds-core
+  }
+
+  view grafana of cloud.cluster.uds-core.grafana {
+    title "Grafana"
+
+    include
+      *,
+      cloud.cluster.uds-core.istio-admin-gateway.*,
+      cloud.cluster.uds-core.keycloak.*,
+      cloud.cluster.uds-core.loki.*,
+      cloud.cluster.uds-core.monitoring.*,
+      cloud.cluster.uds-core
+  }
+
+  view falco of cloud.cluster.uds-core.falco {
+    title "Falco"
+
+    include
+      *,
+      cloud.cluster.uds-core.loki.*,
+      cloud.cluster.uds-core
+  }
+
+  view loki of cloud.cluster.uds-core.loki {
+    title "Loki"
+
+    include
+      *,
+      cloud.cluster.uds-core.grafana.*,
+      cloud.cluster.uds-core.falco.*,
+      cloud.cluster.uds-core.vector.*,
+      cloud.cluster.uds-core,
+      cloud.cluster.external-services.*
+  }
+
+  view vector of cloud.cluster.uds-core.vector {
+    title "Vector"
+
+    include
+      *,
+      cloud.cluster.uds-core.loki.*,
+      cloud.cluster.uds-core
+  }
+
+  view velero of cloud.cluster.uds-core.velero {
+    title "Velero"
+
+    include
+      *,
+      cloud.cluster.uds-core,
+      cloud.cluster.external-services.*
+  }
+
+  view authservice of cloud.cluster.uds-core.authservice {
+    title "Authservice"
+
+    include
+      *,
+      cloud.cluster.uds-core.keycloak.*,
+      cloud.cluster.uds-core.generic-customer.*,
+      cloud.cluster.uds-core
+  }
+
+  view generic-customer of cloud.cluster.uds-core.generic-customer {
+    title "Generic Customer App"
+
+    include
+      *,
+      cloud.cluster.uds-core.istio-tenant-gateway.*,
+      cloud.cluster.uds-core.authservice.*,
+      cloud.cluster.uds-core
+  }
+
+  view keycloak of cloud.cluster.uds-core.keycloak {
+    title "Keycloak"
+
+    include
+      *,
+      cloud.cluster.uds-core.istio-admin-gateway.*,
+      cloud.cluster.uds-core.grafana.*,
+      cloud.cluster.uds-core.istio-tenant-gateway.*,
+      cloud.cluster.uds-core.authservice.*,
+      cloud.cluster.uds-core,
+      cloud.cluster.external-services.*
+  }
+
+  view control-plane of cloud.cluster.uds-core.kubernetes-control-plane {
+    title "Kubernetes Control Plane"
+
+    include
+      *,
+      cloud.cluster.uds-core.pepr-system.*,
+      cloud.cluster.uds-core.monitoring.*,
+      cloud.cluster.uds-core.zarf.*,
+      cloud.cluster.uds-core.istio-system.*,
+      cloud.cluster.uds-core
+  }
+}
