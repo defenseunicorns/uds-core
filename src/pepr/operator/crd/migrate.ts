@@ -80,7 +80,7 @@ export function buildMigratedAuthserviceStatus(pkg: UDSPackage): AuthserviceClie
 /**
  * Mutates the package status in-place to migrate legacy authserviceClients string[] to object[]
  */
-export function migrateLegacyAuthserviceStatus(pkg: UDSPackage): void {
+export function migrateAuthserviceStatus(pkg: UDSPackage) {
   const migrated = buildMigratedAuthserviceStatus(pkg);
   if (!migrated) return;
 
@@ -91,6 +91,6 @@ export function migrateLegacyAuthserviceStatus(pkg: UDSPackage): void {
 /**
  * Aggregates all status migrations. Add new status migrations here over time.
  */
-export function migrateStatus(pkg: UDSPackage): void {
-  migrateLegacyAuthserviceStatus(pkg);
+export function migrateStatus(pkg: UDSPackage) {
+  migrateAuthserviceStatus(pkg);
 }
