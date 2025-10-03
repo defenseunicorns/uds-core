@@ -6,9 +6,10 @@
 suite: Keycloak - extraVolumes and extraVolumeMounts
 templates:
   - statefulset.yaml
-
 tests:
+# @lulaStart be84ba72-e5d0-4c66-b56c-5fc9b57fdd9c
   - it: should not render extra volumes or mounts when not configured
+# @lulaEnd be84ba72-e5d0-4c66-b56c-5fc9b57fdd9c
     template: statefulset.yaml
     asserts:
       - notContains:
