@@ -92,6 +92,7 @@ views "uds-core-functional-layers" {
     include
       cloud,
       cluster,
+      uds-core.velero,
       uds-core.velero.*,
       cloud.cluster.external-services.ext-velero-storage
   }
