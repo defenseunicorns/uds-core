@@ -95,6 +95,50 @@ describe("updateStatus", () => {
       status,
     });
   });
+
+  it("should normalize legacy string-list authserviceClients and populate selector from spec.sso", async () => {
+    const cr = {
+      kind: "Package",
+      metadata: { name: "test", namespace: "default", uid: "123" },
+      spec: {
+        sso: [
+          { clientId: "client-a", enableAuthserviceSelector: { app: "a" } },
+          { clientId: "client-b", enableAuthserviceSelector: { app: "b" } },
+        ],
+      },
+      status: {
+        // Simulate legacy format persisted in cluster
+        authserviceClients: ["client-a", "client-b"],
+      },
+    } as unknown as UDSPackage;
+
+    const status: PkgStatus = {
+      phase: Phase.Pending,
+      conditions: [
+        {
+          type: "Ready",
+          status: StatusEnum.False,
+          lastTransitionTime: new Date(),
+          message: "The package is not ready for use.",
+          reason: "ReconciliationComplete",
+        },
+      ],
+    };
+
+    await updateStatus(cr, status);
+
+    // Ensure PatchStatus is called with normalized authserviceClients objects and selectors from spec
+    expect(PatchStatus).toHaveBeenCalledWith({
+      metadata: { name: "test", namespace: "default" },
+      status: {
+        ...status,
+        authserviceClients: [
+          { clientId: "client-a", selector: { app: "a" } },
+          { clientId: "client-b", selector: { app: "b" } },
+        ],
+      },
+    });
+  });
 });
 
 describe("writeEvent", () => {
