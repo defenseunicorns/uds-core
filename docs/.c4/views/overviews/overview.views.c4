@@ -4,6 +4,12 @@
  */
 
  views "uds-core-overviews" {
+  view index of cloud.cluster.uds-core {
+    title "Base UDS Core Overview"
+
+    include *
+  }
+
   view uds-core-namespaces of cloud {
     title "Namespace Architecture Overview"
 
