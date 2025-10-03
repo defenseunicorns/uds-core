@@ -28,3 +28,19 @@ runs:
         uds zarf tools kubectl describe nodes | tee /tmp/debug-k-describe-node.log || true
         echo "::endgroup::"
       shell: bash
+    - name: Print specific debug for containerd crash issue
+      run: |
+        set -euxo pipefail
+        sudo dmesg -T | tail -n 500 || true
+        sudo dmesg -T | egrep -i 'out of memory|killed process|oom|segfault|containerd|k3s' || true
+        docker ps -a || true
+        k3d node list || true
+        SERVER_CONT=$(docker ps --format '{{.ID}}\t{{.Names}}' | egrep 'k3d-.*server-0' | awk '{print $1}' || true)
+        if [ -n "${SERVER_CONT:-}" ]; then
+          docker logs --tail=400 "${SERVER_CONT}" || true
+          docker exec -i "$SERVER_CONT" sh -c '
+            echo "== versions =="; k3s --version || true; containerd --version || true; ctr version || true
+            echo "== containerd log =="; tail -n 300 /var/lib/rancher/k3s/agent/containerd/containerd.log 2>/dev/null || true
+          ' || true
+        fi
+      shell: bash
