@@ -202,6 +202,10 @@ spec:
                 fieldRef:
                   fieldPath: spec.nodeName
                   apiVersion: v1
+            # Rely on Istio mTLS encryption
+            # See https://www.keycloak.org/server/caching#_running_inside_a_service_mesh
+            - name: KC_CACHE_EMBEDDED_MTLS_ENABLED
+              value: "false"
             - name: KC_SPI_STICKY_SESSION_ENCODER_INFINISPAN_SHOULD_ATTACH_ROUTE
               value: "false"
             # Postgres database configuration
