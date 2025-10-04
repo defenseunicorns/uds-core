@@ -31,8 +31,9 @@ runs:
     - name: Print specific debug for containerd crash issue
       run: |
         set -euxo pipefail
-        sudo dmesg -T | tail -n 500 || true
+        sudo dmesg -T || true
         sudo dmesg -T | egrep -i 'out of memory|killed process|oom|segfault|containerd|k3s' || true
+        sudo journalctl -u containerd --no-pager -e || true
         docker ps -a || true
         k3d node list || true
         SERVER_CONT=$(docker ps --format '{{.ID}}\t{{.Names}}' | egrep 'k3d-.*server-0' | awk '{print $1}' || true)
@@ -43,4 +44,5 @@ runs:
             echo "== containerd log =="; tail -n 300 /var/lib/rancher/k3s/agent/containerd/containerd.log 2>/dev/null || true
           ' || true
         fi
+
       shell: bash
