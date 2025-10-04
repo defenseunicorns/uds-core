@@ -70,6 +70,8 @@ jobs:
       - name: Test UDS Core Install
         if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
         run: uds run test:uds-core-e2e --set FLAVOR=${{ inputs.flavor }} --no-progress
+        env:
+          UDS_K3D_DEBUG: true
 
       # - name: Compose UDS Core Component Definitions
       #   if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
@@ -89,6 +91,8 @@ jobs:
       - name: Test UDS Core Upgrade
         if: ${{ inputs.package == 'all' && inputs.test_type == 'upgrade' }}
         run: uds run test-uds-core-upgrade --set FLAVOR=${{ inputs.flavor }} --no-progress
+        env:
+          UDS_K3D_DEBUG: true
 
       - name: Debug Output
         if: ${{ always() }}
