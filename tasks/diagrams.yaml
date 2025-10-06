@@ -33,4 +33,3 @@ tasks:
           d2 docs/.images/diagrams/operator-resource-tree.d2 docs/.images/diagrams/operator-resource-tree.png --layout elk --pad 20 \
             --font-regular docs/.images/fonts/Poppins-Regular.ttf --font-italic docs/.images/fonts/Poppins-Italic.ttf \
             --font-bold docs/.images/fonts/Poppins-Bold.ttf --font-semibold docs/.images/fonts/Poppins-SemiBold.ttf
-
