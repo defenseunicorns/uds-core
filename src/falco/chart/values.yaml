@@ -10,3 +10,28 @@ additionalNetworkAllow: []
 #     remoteGenerated: Anywhere
 #     description: "from falcosidekick to anywhere"
 #     port: 443
+
+# Toggle inclusion of Falco's "incubating" ruleset (provide a certain level of robustness guarantee but have been identified by experts as catering to more specific use cases, which may or may not be relevant for each adopter.)
+incubatingRulesEnabled: false
+
+# Toggle inclusion of Falco's "sandbox" ruleset (experimental rules)
+sandboxRulesEnabled: false
+
+# List of rules to explicitly disable by name
+# Example: ["Read environment variable from /proc files"]
+disabledRules: []
+
+# Falco rules that are disabled by default in UDS as they tend to generate a lot of noise
+
+# Stable ruleset disabled rules
+udsDefaultDisabledRulesStable:
+  - "Contact K8S API Server From Container" # This generates noise in UDS Core and is expected behavior
+
+# Incubating ruleset disabled rules
+udsDefaultDisabledRulesIncubating:
+  - "Change thread namespace" # Ztunnel generates a lot of this noise for this rule
+  - "Contact EC2 Instance Metadata Service From Container" # This generates noise in AWS environments where IMDS is used
+  - "Contact cloud metadata service from container" # This generates noise in cloud environments where metadata services are used
+
+# Sandbox ruleset disabled rules
+udsDefaultDisabledRulesSandbox: []

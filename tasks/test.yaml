@@ -195,7 +195,7 @@ tasks:
       - cmd: |
           # Set UDS_CONFIG for bundle deployment
           export UDS_CONFIG="${{ .inputs.configFile }}"
-          uds deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --packages core --confirm --no-progress
+          uds deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --set FALCO_SANDBOX_RULES_ENABLED=true --set FALCO_INCUBATING_RULES_ENABLED=true --packages core --confirm --no-progress
       - task: validate-packages
       - task: e2e-tests
 
@@ -226,14 +226,3 @@ tasks:
       - task: test-resources:e2e-test
         with:
           validate_egress: "false"
-
-  - name: local-compliance-compose
-    description: "compose oscal component definitions"
-    inputs:
-      oscalfile:
-        description: oscal file to compose
-        default: ./compliance/oscal-component.yaml
-      options:
-        description: for setting additional flags
-    actions:
-      - cmd: lula tools compose -f ${{ .inputs.oscalfile }} ${{ .inputs.options }}
