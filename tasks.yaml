@@ -200,12 +200,9 @@ tasks:
           cd uds-docs && npm i && echo "Sidebar will be different from the live docs, this is expected" && npm run dev && echo ""
 
   - name: update-diagrams
-    description: "Regenerate D2 Diagrams for the Docs Site"
+    description: "Regenerate C4 and D2 Diagrams"
     actions:
       - description: "Regenerate operator resource tree"
-        cmd: |
-          d2 fmt docs/.images/diagrams/operator-resource-tree.d2
-          # Using Poppins font from https://fonts.google.com/specimen/Poppins, license: https://fonts.google.com/specimen/Poppins/license
-          d2 docs/.images/diagrams/operator-resource-tree.d2 docs/.images/diagrams/operator-resource-tree.png --layout elk --pad 20 \
-            --font-regular docs/.images/fonts/Poppins-Regular.ttf --font-italic docs/.images/fonts/Poppins-Italic.ttf \
-            --font-bold docs/.images/fonts/Poppins-Bold.ttf --font-semibold docs/.images/fonts/Poppins-SemiBold.ttf
+        task: diagrams:d2-update
+      - description: "Regenerate C4 Diagrams"
+        task: diagrams:c4-update
