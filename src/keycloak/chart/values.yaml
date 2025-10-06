@@ -409,4 +409,4 @@ extraVolumeMounts: []
 truststorePaths: []
 
 # Enable additional Keycloak observability, including Loki-based Recording Rules and Alerts
-detailedObservability: true
+detailedObservability: false

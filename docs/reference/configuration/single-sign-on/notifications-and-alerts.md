@@ -76,7 +76,9 @@ Event logging is not enabled in the `master` realm by default because this realm
 
 ## Keycloak notifications and alerting
 
-UDS Core provides built-in [Loki recording rules](/reference/configuration/observability/logging-alerting/#deploying-recording-rules), [Grafana dashboards](/reference/configuration/observability/monitoring-metrics/#adding-dashboards), and [alerts](/reference/configuration/observability/logging-alerting/#deploying-alerting-rules) to notify about important changes to Keycloak configuration. These are enabled by default and can be disabled with a Bundle override:
+By default, UDS Core does not enable detailed notifications and alerting for Keycloak. This feature is opt-in and must be explicitly enabled if you want to receive advanced metrics and alerts about Keycloak configuration changes.
+
+To enable detailed observability, set the following override in your Bundle configuration:
 
 ```yaml
 packages:
@@ -88,10 +90,10 @@ packages:
         keycloak:
           values:
             - path: detailedObservability
-              value: "false"
+              value: "true"
 ```
 
-First, UDS Core converts Keycloak event logs into Prometheus metrics using the following [Loki recording rules](/reference/configuration/observability/logging-alerting/#deploying-recording-rules):
+When enabled, UDS Core converts Keycloak event logs into Prometheus metrics using [Loki recording rules](/reference/configuration/observability/logging-alerting/#deploying-recording-rules):
 
 | Loki Recording Rule Name                        | Description                                                                                                                              |
 |-------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------|
