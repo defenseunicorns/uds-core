@@ -18,7 +18,7 @@ export default defineConfig({
       reporter: ['text', 'html'],
       all: isCi,
       include: ['src/pepr/**'],
-      exclude: ['**/docs-gen/**', '**/crd/generated/**', '**/crd/sources/**'],
+      exclude: ['**/docs-gen/**', '**/crd/generated/**', '**/crd/sources/**', 'uds-docs/**'],
     },
   },
 });
