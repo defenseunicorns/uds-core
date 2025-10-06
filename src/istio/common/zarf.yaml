@@ -114,4 +114,4 @@ components:
     manifests:
       - name: gateway-api-crds
         files:
-          - https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.4.0/standard-install.yaml
+          - https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.3.0/standard-install.yaml
