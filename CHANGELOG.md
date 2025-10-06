@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.53.1](https://github.com/defenseunicorns/uds-core/compare/v0.53.0...v0.53.1) (2025-10-06)
+
+
+### Bug Fixes
+
+* handle legacy authservice client status ([#1992](https://github.com/defenseunicorns/uds-core/issues/1992)) ([f877047](https://github.com/defenseunicorns/uds-core/commit/f877047d764daa6cb2f9a3a4afa276def72d4e5d))
+
+
+### Miscellaneous
+
+* **deps:** update grafana to v12.2.0 ([#1943](https://github.com/defenseunicorns/uds-core/issues/1943)) ([f6d486e](https://github.com/defenseunicorns/uds-core/commit/f6d486e948ac6983965978549d4672f3081e6844))
+* **deps:** update kube-webhook-certgen to 1.6.3 ([#1966](https://github.com/defenseunicorns/uds-core/issues/1966)) ([0962fe3](https://github.com/defenseunicorns/uds-core/commit/0962fe35ddac15be2e027452df831d8c2fbf37c0))
+* **deps:** update pepr to v0.55.3 ([#1983](https://github.com/defenseunicorns/uds-core/issues/1983)) ([0cd873a](https://github.com/defenseunicorns/uds-core/commit/0cd873a2132c9e442150dcb92c376b9c325de6cd))
+* **deps:** update vector to 0.50.0 ([#1942](https://github.com/defenseunicorns/uds-core/issues/1942)) ([8c6de9c](https://github.com/defenseunicorns/uds-core/commit/8c6de9c3f871350b850cd64f0ea27f9070d27784))
+* **deps:** update velero to 1.17.0 ([#1869](https://github.com/defenseunicorns/uds-core/issues/1869)) ([4c6724b](https://github.com/defenseunicorns/uds-core/commit/4c6724b447549d40a87ecab045c74efa43cf3831))
+* enable sandbox incubating falco rules for iac tests ([#1982](https://github.com/defenseunicorns/uds-core/issues/1982)) ([f144a10](https://github.com/defenseunicorns/uds-core/commit/f144a10515733852e213755e16e53221c81a04be))
+* lula workflow ([#1985](https://github.com/defenseunicorns/uds-core/issues/1985)) ([2f7906d](https://github.com/defenseunicorns/uds-core/commit/2f7906dc4b468efcca796ae86a8f469e7744e32a))
+* remove lula1/oscal compliance information ([#1984](https://github.com/defenseunicorns/uds-core/issues/1984)) ([8638b92](https://github.com/defenseunicorns/uds-core/commit/8638b92195470c5b3e7d83ed09da8ee26197f415))
+
 ## [0.53.0](https://github.com/defenseunicorns/uds-core/compare/v0.52.1...v0.53.0) (2025-09-30)
 
 
