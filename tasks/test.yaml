@@ -226,14 +226,3 @@ tasks:
       - task: test-resources:e2e-test
         with:
           validate_egress: "false"
-
-  - name: local-compliance-compose
-    description: "compose oscal component definitions"
-    inputs:
-      oscalfile:
-        description: oscal file to compose
-        default: ./compliance/oscal-component.yaml
-      options:
-        description: for setting additional flags
-    actions:
-      - cmd: lula tools compose -f ${{ .inputs.oscalfile }} ${{ .inputs.options }}
