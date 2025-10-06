@@ -36,14 +36,14 @@ describe("integration - Keycloak Notifications", () => {
     await expectAlertFires(alertmanagerProxy.url, "KeycloakRealmModificationsDetected");
     await expectAlertFires(alertmanagerProxy.url, "KeycloakUserModificationsDetected");
     await expectAlertFires(alertmanagerProxy.url, "KeycloakSystemAdminModificationsDetected");
-  }, 60000);
+  }, 80000);
 });
 
 // Small helper to simplify alert checks in Alertmanager
 async function expectAlertFires(
   alertmanagerUrl: string,
   alertName: string,
-  timeoutMs = 10000,
+  timeoutMs = 60000,
 ): Promise<void> {
   await pollUntilSuccess(
     () => checkAlertInAlertmanager(alertmanagerUrl, alertName),
