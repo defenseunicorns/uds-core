@@ -194,7 +194,10 @@ spec:
             - name: KC_DB_PASSWORD
               value: password
           {{- end }}
-          {{- if eq (include "keycloak.postgresql.config" .) "true" }}
+          {{- if .Values.autoscaling.enabled }}
+          {{- if ne (include "keycloak.postgresql.config" .) "true" -}}
+              {{- fail "You must configure PostgreSQL when using Autoscaling (HA Mode)" -}}
+          {{- end -}}
             # Use Infinispan distributes caches
             - name: KC_CACHE
               value: ispn
@@ -206,6 +209,12 @@ spec:
                   apiVersion: v1
             - name: KC_SPI_STICKY_SESSION_ENCODER_INFINISPAN_SHOULD_ATTACH_ROUTE
               value: "false"
+            # Rely on Istio mTLS encryption
+            # See https://www.keycloak.org/server/caching#_running_inside_a_service_mesh
+            - name: KC_CACHE_EMBEDDED_MTLS_ENABLED
+              value: "false"
+          {{- end }}
+          {{- if eq (include "keycloak.postgresql.config" .) "true" }}
             # Postgres database configuration
             - name: KC_DB
               value: postgres
