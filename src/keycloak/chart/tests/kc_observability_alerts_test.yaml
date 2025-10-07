@@ -26,4 +26,3 @@ tests:
       - equal:
           path: kind
           value: PrometheusRule
-
