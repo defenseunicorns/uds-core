@@ -36,3 +36,5 @@ uds-docs/**
 test-results/**
 
 coverage/**
+
+**/ca.crt
