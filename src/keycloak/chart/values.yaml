@@ -408,5 +408,9 @@ extraVolumeMounts: []
 # These paths will be added to the --truststore-paths startup argument
 truststorePaths: []
 
-# Enable additional Keycloak observability, including Loki-based Recording Rules and Alerts
-detailedObservability: false
+# Detailed observability settings (Dashboards, Alerts, etc)
+detailedObservability:
+  alerts:
+    enabled: true
+  dashboards:
+    enabled: true

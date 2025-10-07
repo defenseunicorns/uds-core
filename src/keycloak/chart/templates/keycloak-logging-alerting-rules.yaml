@@ -1,7 +1,7 @@
 # Copyright 2025 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
-{{- if .Values.detailedObservability }}
+{{- if .Values.detailedObservability.alerts.enabled }}
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
@@ -17,8 +17,8 @@ spec:
     - name: keycloak-logging-alerts
       rules:
         - alert: KeycloakRealmModificationsDetected
-          expr: sum_over_time(uds_keycloak:realm_modifications_total[5m]) > 0
-          for: 0m
+          expr: sum_over_time(uds_keycloak:realm_modifications_count[5m]) > 0
+          for: 1m
           labels:
             severity: warning
             service: keycloak
@@ -29,8 +29,8 @@ spec:
             description: "Realm {{`{{ $labels.realmName }}`}} had {{`{{ $value }}`}} modifications in the last 5 minutes. Check the \"UDS Keycloak Notifications\" Dashboard as well as Keycloak logs in Loki for more details."
 
         - alert: KeycloakUserModificationsDetected
-          expr: sum_over_time(uds_keycloak:user_modifications_total[5m]) > 0
-          for: 0m
+          expr: sum_over_time(uds_keycloak:user_modifications_count[5m]) > 0
+          for: 1m
           labels:
             severity: warning
             service: keycloak
@@ -41,8 +41,8 @@ spec:
             description: "User-related administrative actions detected in Keycloak logs for realm {{`{{ $labels.realmName }}`}} in the last 5 minutes. Check the \"UDS Keycloak Notifications\" Dashboard as well as Keycloak logs in Loki for more details."
 
         - alert: KeycloakSystemAdminModificationsDetected
-          expr: sum_over_time(uds_keycloak:system_admin_modifications_total[5m]) > 0
-          for: 0m
+          expr: sum_over_time(uds_keycloak:system_admin_modifications_count[5m]) > 0
+          for: 1m
           labels:
             severity: critical
             service: keycloak

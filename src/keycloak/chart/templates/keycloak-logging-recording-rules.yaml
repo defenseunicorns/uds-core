@@ -1,7 +1,7 @@
 # Copyright 2025 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
-{{- if .Values.detailedObservability }}
+{{- if or .Values.detailedObservability.alerts.enabled .Values.detailedObservability.dashboards.enabled }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -15,15 +15,15 @@ data:
       - name: keycloak-notifications-metrics
         interval: 30s
         rules:
-          - record: uds_keycloak:realm_modifications_total
+          - record: uds_keycloak:realm_modifications_count
             expr: |
-              sum by (realmName) (count_over_time({app="keycloak", namespace="keycloak"} | json | loggerName="uds.keycloak.plugin.eventListeners.JSONLogEventListenerProvider" | eventType="ADMIN" | label_format realmName="{{ "{{" }}.realmName{{ "}}" }}" [30s]))
+              sum by (realmName) (count_over_time({app="keycloak", namespace="keycloak"} | json | loggerName="uds.keycloak.plugin.eventListeners.JSONLogEventListenerProvider" | eventType="ADMIN" | label_format realmName="{{ "{{" }}.realmName{{ "}}" }}" [1m]))
 
-          - record: uds_keycloak:user_modifications_total
+          - record: uds_keycloak:user_modifications_count
             expr: |
-              sum by (realmName) (count_over_time({app="keycloak", namespace="keycloak"} | json | loggerName="uds.keycloak.plugin.eventListeners.JSONLogEventListenerProvider" | eventType="ADMIN" | resourceType=~"USER|GROUP_MEMBERSHIP" | label_format realmName="{{ "{{" }}.realmName{{ "}}" }}" [30s]))
+              sum by (realmName) (count_over_time({app="keycloak", namespace="keycloak"} | json | loggerName="uds.keycloak.plugin.eventListeners.JSONLogEventListenerProvider" | eventType="ADMIN" | resourceType=~"USER|GROUP_MEMBERSHIP" | label_format realmName="{{ "{{" }}.realmName{{ "}}" }}" [1m]))
 
-          - record: uds_keycloak:system_admin_modifications_total
+          - record: uds_keycloak:system_admin_modifications_count
             expr: |
-              sum by (realmName) (count_over_time({app="keycloak", namespace="keycloak"} | json | loggerName="uds.keycloak.plugin.eventListeners.JSONLogEventListenerProvider" | eventType="ADMIN" | resourceType=~"USER|GROUP_MEMBERSHIP" |= "/UDS Core/Admin" | label_format realmName="{{ "{{" }}.realmName{{ "}}" }}" [30s]))
+              sum by (realmName) (count_over_time({app="keycloak", namespace="keycloak"} | json | loggerName="uds.keycloak.plugin.eventListeners.JSONLogEventListenerProvider" | eventType="ADMIN" | resourceType=~"USER|GROUP_MEMBERSHIP" |= "/UDS Core/Admin" | label_format realmName="{{ "{{" }}.realmName{{ "}}" }}" [1m]))
 {{- end }}

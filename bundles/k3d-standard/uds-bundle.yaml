@@ -170,7 +170,7 @@ packages:
               description: "Sets the JAVA_OPTS_KC_HEAP environment variable in Keycloak"
               path: env[0].value
           values:
-            - path: detailedObservability
+            - path: detailedObservability.alerts.enabled
               value: true
             - path: realmInitEnv
               value:

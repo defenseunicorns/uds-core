@@ -76,7 +76,8 @@ Event logging is not enabled in the `master` realm by default because this realm
 
 ## Keycloak notifications and alerting
 
-By default, UDS Core does not enable detailed notifications and alerting for Keycloak. This feature is opt-in and must be explicitly enabled if you want to receive advanced metrics and alerts about Keycloak configuration changes.
+By default, UDS Core does not enable detailed notifications and alerting for Keycloak. This feature is opt-in and must
+be explicitly enabled if you want to receive advanced metrics and alerts about Keycloak configuration changes.
 
 To enable detailed observability, set the following override in your Bundle configuration:
 
@@ -89,17 +90,18 @@ packages:
       keycloak:
         keycloak:
           values:
-            - path: detailedObservability
-              value: "true"
+            - path: detailedObservability.alerts.enabled
+              value: true
 ```
 
-When enabled, UDS Core converts Keycloak event logs into Prometheus metrics using [Loki recording rules](/reference/configuration/observability/logging-alerting/#deploying-recording-rules):
+When enabled, UDS Core converts Keycloak event logs into Prometheus metrics
+using [Loki recording rules](/reference/configuration/observability/logging-alerting/#deploying-recording-rules):
 
-| Loki Recording Rule Name                        | Description                                                                                                                              |
-|-------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------|
-| `uds_keycloak:realm_modifications_total`        | Total number of realm configuration changes, aggregated into 30-second windows                                                           |
-| `uds_keycloak:user_modifications_total`         | Total number of user configuration changes, aggregated into 30-second windows                                                            |
-| `uds_keycloak:system_admin_modifications_total` | Total number of system administrator configuration changes (members of `/UDS Core/Admin`), aggregated into 30-second windows            |
+| Loki Recording Rule Name                        | Description                                                                                                                 |
+|-------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------|
+| `uds_keycloak:realm_modifications_count`        | Total number of realm configuration changes, aggregated into 1-minute windows                                               |
+| `uds_keycloak:user_modifications_count`         | Total number of user configuration changes, aggregated into 1-minute windows                                                |
+| `uds_keycloak:system_admin_modifications_count` | Total number of system administrator configuration changes (members of `/UDS Core/Admin`), aggregated into 1-minute windows |
 
 You can view these metrics in the built-in `UDS Keycloak Notifications` Grafana dashboard:
 
@@ -107,12 +109,15 @@ You can view these metrics in the built-in `UDS Keycloak Notifications` Grafana 
 
 Based on these metrics, UDS Core provides three alerts:
 
-| Alert name                                 | Metric used for alerting                        | Description                                                                                                           |
-|--------------------------------------------|-------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------|
-| `KeycloakRealmModificationsDetected`       | `uds_keycloak:realm_modifications_total`        | Alerts on realm configuration changes within a 5-minute window                                                        |
-| `KeycloakUserModificationsDetected`        | `uds_keycloak:user_modifications_total`         | Alerts on user configuration changes within a 5-minute window                                                         |
-| `KeycloakSystemAdminModificationsDetected` | `uds_keycloak:system_admin_modifications_total` | Alerts on system administrator configuration changes (members of `/UDS Core/Admin` group) within a 5-minute window        |
+| Alert name                                 | Metric used for alerting                        | Description                                                                                                        |
+|--------------------------------------------|-------------------------------------------------|--------------------------------------------------------------------------------------------------------------------|
+| `KeycloakRealmModificationsDetected`       | `uds_keycloak:realm_modifications_count`        | Alerts on realm configuration changes within a 5-minute window                                                     |
+| `KeycloakUserModificationsDetected`        | `uds_keycloak:user_modifications_count`         | Alerts on user configuration changes within a 5-minute window                                                      |
+| `KeycloakSystemAdminModificationsDetected` | `uds_keycloak:system_admin_modifications_count` | Alerts on system administrator configuration changes (members of `/UDS Core/Admin` group) within a 5-minute window |
 
 ### Third-party integrations
 
-All Keycloak notification alerts are available in Grafana. System administrators can enable third-party Grafana integrations to receive notifications in the tool of their choice. See [Configure Grafana notifications](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/) for details.
+All Keycloak notification alerts are available in Grafana. System administrators can enable third-party Grafana
+integrations to receive notifications in the tool of their choice.
+See [Configure Grafana notifications](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/) for
+details.

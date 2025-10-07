@@ -13,6 +13,9 @@ let alertmanagerProxy: { server: net.Server; url: string };
 let prometheusProxy: { server: net.Server; url: string };
 let keycloakProxy: { server: net.Server; url: string };
 
+const alertTimeoutMs = 3 * 60 * 1000 + 60 * 1000; // 3m (1m max for alert being discovered, 1m for changing state from pending, 1m safety buffer) for alert to start firing + safety buffer
+const testTimeoutMs = alertTimeoutMs + 60 * 1000; // alert timeout + safety buffer
+
 describe("integration - Keycloak Notifications", () => {
   beforeAll(async () => {
     alertmanagerProxy = await getForward("kube-prometheus-stack-alertmanager", "monitoring", 9093);
@@ -26,24 +29,28 @@ describe("integration - Keycloak Notifications", () => {
     await closeForward(keycloakProxy.server);
   });
 
-  test("Keycloak Alerts should fire on Realm Modifications", async () => {
-    // At first, we need to trigger some Realm and User modification events.
-    const accessToken = await getAdminToken(keycloakProxy.url);
-    await createRandomClient(keycloakProxy.url, accessToken, "uds");
-    await createRandomUserAndJoinGroup(keycloakProxy.url, accessToken, "/UDS Core/Admin", "uds");
+  test(
+    "Keycloak Alerts should fire on Realm Modifications",
+    async () => {
+      // At first, we need to trigger some Realm and User modification events.
+      const accessToken = await getAdminToken(keycloakProxy.url);
+      await createRandomClient(keycloakProxy.url, accessToken, "uds");
+      await createRandomUserAndJoinGroup(keycloakProxy.url, accessToken, "/UDS Core/Admin", "uds");
 
-    // Next, we wait until the alerts fire
-    await expectAlertFires(alertmanagerProxy.url, "KeycloakRealmModificationsDetected");
-    await expectAlertFires(alertmanagerProxy.url, "KeycloakUserModificationsDetected");
-    await expectAlertFires(alertmanagerProxy.url, "KeycloakSystemAdminModificationsDetected");
-  }, 80000);
+      // Next, we wait until the alerts fire
+      await expectAlertFires(alertmanagerProxy.url, "KeycloakRealmModificationsDetected");
+      await expectAlertFires(alertmanagerProxy.url, "KeycloakUserModificationsDetected");
+      await expectAlertFires(alertmanagerProxy.url, "KeycloakSystemAdminModificationsDetected");
+    },
+    testTimeoutMs,
+  );
 });
 
 // Small helper to simplify alert checks in Alertmanager
 async function expectAlertFires(
   alertmanagerUrl: string,
   alertName: string,
-  timeoutMs = 60000,
+  timeoutMs = alertTimeoutMs, // 2 times (for stability) time 1m alert to start firing + safety buffer
 ): Promise<void> {
   await pollUntilSuccess(
     () => checkAlertInAlertmanager(alertmanagerUrl, alertName),

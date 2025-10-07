@@ -25,7 +25,7 @@
     "editable": true,
     "fiscalYearStartMonth": 0,
     "graphTooltip": 0,
-    "id": 33,
+    "id": 5,
     "links": [],
     "panels": [
         {
@@ -46,7 +46,7 @@
                 "type": "prometheus",
                 "uid": "PBFA97CFB590B2093"
             },
-            "description": "uds_keycloak:realm_modifications_total",
+            "description": "uds_keycloak:realm_modifications_count",
             "fieldConfig": {
                 "defaults": {
                     "color": {
@@ -132,7 +132,7 @@
                     },
                     "editorMode": "code",
                     "exemplar": false,
-                    "expr": "uds_keycloak:realm_modifications_total",
+                    "expr": "uds_keycloak:realm_modifications_count",
                     "instant": false,
                     "legendFormat": "{{realmName}}",
                     "range": true,
@@ -279,7 +279,7 @@
                         },
                         "includeByName": {},
                         "indexByName": {
-                            "authDetails": 10,
+                            "authDetails": 11,
                             "details": 13,
                             "error": 12,
                             "eventType": 2,
@@ -288,7 +288,7 @@
                             "operationType": 8,
                             "realmId": 5,
                             "realmName": 6,
-                            "representation": 11,
+                            "representation": 10,
                             "resourcePath": 9,
                             "resourceType": 7,
                             "resourceTypeAsString": 14,
@@ -319,7 +319,7 @@
                 "type": "prometheus",
                 "uid": "PBFA97CFB590B2093"
             },
-            "description": "uds_keycloak:system_admin_modifications_total",
+            "description": "uds_keycloak:system_admin_modifications_count",
             "fieldConfig": {
                 "defaults": {
                     "color": {
@@ -405,7 +405,7 @@
                     },
                     "editorMode": "code",
                     "exemplar": false,
-                    "expr": "uds_keycloak:system_admin_modifications_total",
+                    "expr": "uds_keycloak:system_admin_modifications_count",
                     "instant": false,
                     "legendFormat": "{{realmName}}",
                     "range": true,
@@ -420,7 +420,7 @@
                 "type": "prometheus",
                 "uid": "PBFA97CFB590B2093"
             },
-            "description": "uds_keycloak:user_modifications_total",
+            "description": "uds_keycloak:user_modifications_count",
             "fieldConfig": {
                 "defaults": {
                     "color": {
@@ -506,7 +506,7 @@
                     },
                     "editorMode": "code",
                     "exemplar": false,
-                    "expr": "uds_keycloak:user_modifications_total",
+                    "expr": "uds_keycloak:user_modifications_count",
                     "instant": false,
                     "legendFormat": "{{realmName}}",
                     "range": true,
@@ -604,7 +604,7 @@
                         },
                         "includeByName": {},
                         "indexByName": {
-                            "authDetails": 10,
+                            "authDetails": 11,
                             "details": 13,
                             "error": 12,
                             "eventType": 2,
@@ -613,7 +613,7 @@
                             "operationType": 8,
                             "realmId": 5,
                             "realmName": 6,
-                            "representation": 11,
+                            "representation": 10,
                             "resourcePath": 9,
                             "resourceType": 7,
                             "resourceTypeAsString": 14,
@@ -640,7 +640,7 @@
     },
     "timepicker": {},
     "timezone": "browser",
-    "title": "UDS Keycloak Notifications",
+    "title": "UDS / Keycloak / Notifications",
     "uid": "sexp6bt",
     "version": 1,
     "weekStart": "monday"
