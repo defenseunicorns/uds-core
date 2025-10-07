@@ -199,7 +199,7 @@ function buildAuthPolicy(
 
 /**
  * Generate and apply Istio Authorization Policies for a given UDSPackage.
- * 
+ *
  * @lulaStart cd540e07-153b-424c-90e0-c0daec56b16a
  * @lulaStart cd540e07-153b-424c-90e0-c0daec56b18f
  */
