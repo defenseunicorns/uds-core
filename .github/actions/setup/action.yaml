@@ -38,12 +38,12 @@ runs:
       uses: defenseunicorns/setup-uds@ab842abcad1f7a3305c2538e3dd1950d0daacfa5 # v1.0.1
       with:
         # renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
-        version: v0.27.14
+        version: v0.27.15
 
     - name: Install helm unittest plugin
       shell: bash
       # renovate: datasource=github-tags depName=helm-unittest/helm-unittest versioning=semver
-      run: HELM_UNITTEST_VERSION=v1.0.1 helm plugin install https://github.com/helm-unittest/helm-unittest.git --version "$HELM_UNITTEST_VERSION"
+      run: HELM_UNITTEST_VERSION=v1.0.3 helm plugin install https://github.com/helm-unittest/helm-unittest.git --version "$HELM_UNITTEST_VERSION"
 
     - name: Iron Bank Login
       if: ${{ inputs.registry1Username != '' }}
