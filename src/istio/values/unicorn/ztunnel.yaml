@@ -4,4 +4,3 @@
 # @lulaStart c7e8c697-e3ce-4d5e-a186-22f9fdc93e50
 image: quay.io/rfcurated/istio/ztunnel:1.27.1-jammy-scratch-fips-rfcurated
 # @lulaEnd c7e8c697-e3ce-4d5e-a186-22f9fdc93e50
-

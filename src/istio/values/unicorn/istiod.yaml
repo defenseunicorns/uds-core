@@ -12,4 +12,3 @@ global:
     # renovate: image=quay.io/rfcurated/istio/proxyv2
     image: "###ZARF_REGISTRY###/rfcurated/istio/proxyv2:1.27.1-jammy-fips-rfcurated-rfhardened"
   # @lulaEnd c7e8c697-e3ce-4d5e-a186-22f9fdc93e50
-
