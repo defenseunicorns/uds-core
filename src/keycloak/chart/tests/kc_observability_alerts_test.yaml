@@ -18,8 +18,6 @@ tests:
       detailedObservability:
         alerts:
           enabled: true
-        dashboards:
-          enabled: true
     template: keycloak-logging-alerting-rules.yaml
     asserts:
       - exists: {}

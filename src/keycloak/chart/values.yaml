@@ -411,6 +411,6 @@ truststorePaths: []
 # Detailed observability settings (Dashboards, Alerts, etc)
 detailedObservability:
   alerts:
-    enabled: true
+    enabled: false
   dashboards:
     enabled: true
