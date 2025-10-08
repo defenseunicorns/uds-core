@@ -50,3 +50,12 @@ tests:
           path: spec.template.spec.containers[0].env
           content:
             name: KC_DB_PASSWORD
+
+  - it: should fail when autoscaling is enabled without PostgreSQL integration
+    set:
+      autoscaling:
+        enabled: true
+    template: statefulset.yaml
+    asserts:
+      - failedTemplate:
+          errorMessage: "You must configure PostgreSQL when using Autoscaling (HA Mode)"
