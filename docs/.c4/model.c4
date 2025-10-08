@@ -1,9 +1,4 @@
-/**
- * Copyright 2025 Defense Unicorns
- * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
- */
-
- model {
+model {
   // personas
   admin = actor "Cluster Administrator" {
     -> uds-core.istio-admin-gateway
@@ -65,7 +60,7 @@
           istio-tenant-ingress-gateway -> keycloak
           istio-tenant-ingress-gateway -> keycloak.keycloak-waypoint
           istio-tenant-ingress-gateway -> generic-customer
-          istio-tenant-ingress-gateway -> generic-customer.customer-waypoint
+          istio-tenant-ingress-gateway -> customer-waypoint
         }
 
         istio-admin-gateway = namespace "Istio Admin Gateway Namespace" {
@@ -82,6 +77,14 @@
           istio-admin-ingress-gateway -> keycloak.keycloak-waypoint
           istio-admin-ingress-gateway -> grafana
           istio-admin-ingress-gateway -> grafana.grafana
+        }
+
+        istio-passthrough-gateway = namespace "Istio Passthrough Gateway Namespace" {
+          istio-passthrough-ingress-gateway = pod "Istio Passthrough Ingress Gateway"
+        }
+
+        istio-egress-gateway = namespace "Istio Egress Gateway Namespace" {
+          istio-egress-gateway = pod "Istio Egress Gateway"
         }
 
         monitoring = namespace "Monitoring Namespace" {
@@ -141,7 +144,6 @@
           loki-write -> loki-backend
 
           // external relationships
-          loki-backend -> external-services
           loki-backend -> external-services.ext-loki-storage
           loki-read -> external-services.ext-loki-storage
           loki-write -> external-services.ext-loki-storage
@@ -160,7 +162,6 @@
           velero = pod "Velero"
 
           // external relationships
-          velero -> external-services
           velero -> external-services.ext-velero-storage
         }
 
@@ -181,7 +182,6 @@
           keycloak -> keycloak-waypoint
 
           // external relationships
-          keycloak-waypoint -> external-services
           keycloak-waypoint -> external-services.ext-keycloak-db
 
           // hack that connects pepr-watcher to keycloak
@@ -214,6 +214,7 @@
           api-server = component "API Server"
           zarf-mutating-webhook = component "Zarf Mutating Webhook"
           istio-mutating-webhook = component "Istio Mutating Webhook"
+          metrics-api-service = component "Metrics API Service"
 
           // external relationships
           istio-mutating-webhook -> istio-system
@@ -225,14 +226,23 @@
           pepr-mutation-webhook -> pepr-system.pepr-admission
           pepr-validating-webhook -> pepr-system.pepr-admission
         }
+
+        metrics-server = namespace "Metrics Server" {
+          metrics-server = pod "Metrics Server"
+
+          // external relationships
+          metrics-server -> kubernetes-control-plane.metrics-api-service
+        }
       }
-      external-services = namespace "External Services" {
+      external-services = namespace "External Cluster Services" {
         ext-keycloak-db = database "External Keycloak Database"
         ext-loki-storage = storage "External Loki Storage"
         ext-velero-storage = storage "External Velero Storage"
       }
     }
   }
-  ext-siem = siem_tool "External SIEM Tool"
-  ext-alerts = alert_destination "External Alerting Destination"
+  external-apps = system "External Apps" {
+    ext-siem = siem_tool "External SIEM Tool"
+    ext-alerts = alert_destination "External Alerting Destination"
+  }
 }

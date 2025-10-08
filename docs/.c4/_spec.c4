@@ -1,0 +1,131 @@
+specification {
+  color background #011f66
+  color actor #102349
+  color external #102349
+  color cloud #12488e
+  color cluster #bee7ff
+  color system #353333
+  color namespace #772828
+  color pod #bea6a6
+  color storage #bea6a6
+
+  element actor {
+    style {
+      size xs
+      shape person
+      border solid
+      color actor
+      opacity 100%
+    }
+  }
+
+  element cloud {
+    notation "Cloud Boundary"
+    style {
+      size xs
+      border solid
+      color cloud
+      opacity 100%
+    }
+  }
+
+  element cluster {
+    notation "Cluster Boundary"
+    style {
+      size xs
+      border solid
+      color cluster
+      opacity 100%
+    }
+  }
+
+  element system {
+    notation "UDS Core"
+    style {
+      size xs
+      border solid
+      color system
+      opacity 100%
+    }
+  }
+
+  element namespace {
+    style {
+      size xs
+      icon ./images/namespace_icon.svg
+      border solid
+      color namespace
+      opacity 100%
+    }
+  }
+
+  element pod {
+    style {
+      size sm
+      icon ./images/pod_icon.svg
+      border solid
+      color pod
+      opacity 100%
+    }
+  }
+
+  element component {
+    style {
+      size xs
+      icon ./images/component_icon.svg
+      border solid
+      color pod
+      opacity 100%
+    }
+  }
+
+  element loadbalancer {
+    style {
+      size xs
+      icon ./images/loadbalancer_icon.svg
+      border solid
+      color pod
+      opacity 100%
+    }
+  }
+
+  element database {
+    style {
+      size xs
+      shape cylinder
+      border solid
+      color storage
+      opacity 100%
+    }
+  }
+
+  element storage {
+    style {
+      size xs
+      shape storage
+      border solid
+      color storage
+      opacity 100%
+    }
+  }
+
+  element alert_destination {
+    style {
+      size xs
+      icon ./images/alert_icon.png
+      border solid
+      color external
+      opacity 100%
+    }
+  }
+
+  element siem_tool {
+    style {
+      size xs
+      icon ./images/siem_icon.png
+      border solid
+      color external
+      opacity 100%
+    }
+  }
+}
