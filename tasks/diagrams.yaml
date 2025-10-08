@@ -20,6 +20,7 @@ tasks:
       - cmd: |
           npm ci
           npm run setup
+          rm -rf diagrams
           npx likec4 export png -o diagrams
         dir: docs/.c4/
 

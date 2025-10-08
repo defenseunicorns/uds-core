@@ -61,7 +61,7 @@ specification {
 
   element pod {
     style {
-      size sm
+      size md
       icon ./images/pod_icon.svg
       border solid
       color pod
