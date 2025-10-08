@@ -50,7 +50,7 @@ describe("integration - Keycloak Notifications", () => {
 async function expectAlertFires(
   alertmanagerUrl: string,
   alertName: string,
-  timeoutMs = alertTimeoutMs, // 2 times (for stability) time 1m alert to start firing + safety buffer
+  timeoutMs = alertTimeoutMs, // 2 times (for stability) 1m alert to start firing + safety buffer
 ): Promise<void> {
   await pollUntilSuccess(
     () => checkAlertInAlertmanager(alertmanagerUrl, alertName),
