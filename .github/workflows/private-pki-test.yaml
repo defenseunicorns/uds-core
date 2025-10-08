@@ -55,7 +55,7 @@ jobs:
           rapidfortPassword: ${{ secrets.RAPIDFORT_PASSWORD }}
 
       - name: Run UDS Core Private PKI Test
-        run: uds run -f tasks/test.yaml uds-core-private-pki --set FLAVOR=$FLAVOR --no-progress
+        run: uds run -f tasks/test.yaml uds-core-private-pki --set FLAVOR=${{ matrix.flavor }} --no-progress
 
       - name: Debug Output
         if: ${{ always() }}
@@ -65,4 +65,4 @@ jobs:
         if: always()
         uses: ./.github/actions/save-logs
         with:
-          suffix: -private-pki-${{ env.FLAVOR }}
+          suffix: -private-pki-${{ matrix.flavor }}
