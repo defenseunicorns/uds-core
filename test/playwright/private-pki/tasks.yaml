@@ -5,7 +5,13 @@ tasks:
   - name: private-pki-certs
     description: "Generate Private PKI Certs for Playwright tests"
     actions:
-      - cmd: |
+      - description: "Check for sudo access"
+        cmd: |
+          echo "This package requires elevated permissions to deploy - requesting sudo (if paused enter password)"
+          sudo echo "got sudo! success!"
+
+      - description: "Generate and Setup CA certs"
+        cmd: |
           # Create directories and clean up old certificates
           mkdir -p build/private-pki
 
