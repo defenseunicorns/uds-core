@@ -1,0 +1,120 @@
+views "uds-core" {
+  // Overviews
+  view index of cloud.cluster {
+    title "Overviews / Namespaces"
+    autoLayout TopBottom 75 40
+
+    group {
+      border solid
+      color background
+      opacity 100%
+
+      include
+        *,
+        cloud,
+        external-apps,
+        external-services,
+        uds-core.*
+    }
+  }
+
+  view indepth-uds-core of cloud.cluster {
+    title "Overviews / Pods"
+
+    group {
+      border solid
+      color background
+      opacity 100%
+
+      include
+        *,
+        external-apps,
+        external-apps.*,
+        cloud.**,
+    }
+	}
+
+  // Functional Layers
+  view base-layer of cloud.cluster {
+    title "Functional Layers / Base"
+
+    include
+      cloud,
+      cluster,
+      uds-core,
+      uds-core.pepr-system,
+      pepr-system.*,
+      uds-core.istio-system,
+      istio-system.*,
+      uds-core.istio-admin-gateway.*,
+      uds-core.istio-tenant-gateway.*,
+      uds-core.istio-egress-gateway,
+      uds-core.istio-passthrough-gateway,
+      uds-core.istio-egress-gateway.*,
+      istio-passthrough-gateway.*,
+  }
+
+  view identity-authorization-layer of cloud.cluster {
+    title "Functional Layers / Identity & Authorization"
+
+    include
+      cloud,
+      cluster,
+      uds-core,
+      uds-core.keycloak.*,
+      uds-core.authservice.*,
+  }
+
+  view metrics-server-layer of cloud.cluster {
+    title "Functional Layers / Metrics Server"
+
+    include
+      cloud,
+      cluster,
+      uds-core,
+      uds-core.metrics-server,
+      uds-core.metrics-server.*,
+  }
+
+  view runtime-security-layer of cloud.cluster {
+    title "Functional Layers / Runtime Security"
+
+    include
+      cloud,
+      cluster,
+      uds-core,
+      uds-core.falco.*,
+  }
+
+  view logging-layer of cloud.cluster {
+    title "Functional Layers / Logging"
+
+    include
+      cloud,
+      cluster,
+      uds-core,
+      uds-core.loki.*,
+      uds-core.vector.*,
+  }
+
+  view monitoring-layer of cloud.cluster {
+    title "Functional Layers / Monitoring"
+
+    include
+      cloud,
+      cluster,
+      uds-core,
+      uds-core.monitoring.*,
+      uds-core.grafana.*,
+  }
+
+  view backup-restore-layer of cloud.cluster {
+    title "Functional Layers / Backup & Restore"
+
+    include
+      cloud,
+      cluster,
+      uds-core.velero,
+      uds-core.velero.*,
+  }
+}
