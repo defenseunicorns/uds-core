@@ -116,7 +116,4 @@ Based on these metrics, UDS Core provides three alerts:
 
 ### Third-party integrations
 
-All Keycloak notification alerts are available in Grafana. System administrators can enable third-party Grafana
-integrations to receive notifications in the tool of their choice.
-See [Configure Grafana notifications](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/) for
-details.
+All Keycloak notification alerts are sent to Alertmanager. You can use Alertmanager to route to external notification sources.  See [Alertmanager Configuration](https://prometheus.io/docs/alerting/latest/configuration/#receiver-integration-settings) for details.
