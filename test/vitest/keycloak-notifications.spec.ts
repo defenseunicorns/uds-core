@@ -7,7 +7,11 @@ import * as crypto from "crypto";
 import { afterAll, beforeAll, describe, test } from "vitest";
 import { closeForward, getForward } from "./helpers/forward";
 import { expectAlertFires } from "./helpers/alertmanager";
-import { getAdminToken, createRandomClient, createRandomUserAndJoinGroup } from "./helpers/keycloak";
+import {
+  getAdminToken,
+  createRandomClient,
+  createRandomUserAndJoinGroup,
+} from "./helpers/keycloak";
 
 let alertmanagerProxy: { server: net.Server; url: string };
 let prometheusProxy: { server: net.Server; url: string };
@@ -38,7 +42,13 @@ describe("integration - Keycloak Notifications", () => {
       await createRandomClient(keycloakProxy.url, accessToken, randomClientId, "uds");
 
       const randomUsername = `keycloak-notifications-test-${crypto.randomBytes(6).toString("base64url")}`;
-      await createRandomUserAndJoinGroup(keycloakProxy.url, accessToken, randomUsername, "/UDS Core/Admin", "uds");
+      await createRandomUserAndJoinGroup(
+        keycloakProxy.url,
+        accessToken,
+        randomUsername,
+        "/UDS Core/Admin",
+        "uds",
+      );
 
       // Next, we wait until the alerts fire
       await expectAlertFires(alertmanagerProxy.url, "KeycloakRealmModificationsDetected");
@@ -48,5 +58,3 @@ describe("integration - Keycloak Notifications", () => {
     testTimeoutMs,
   );
 });
-
-

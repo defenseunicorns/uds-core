@@ -5,7 +5,7 @@
 import { K8s, kind } from "pepr";
 
 export async function getAdminToken(baseUrl: string): Promise<string> {
-  const secret = await K8s(kind.Secret).InNamespace("keycloak").Get("keycloak-admin-password")
+  const secret = await K8s(kind.Secret).InNamespace("keycloak").Get("keycloak-admin-password");
 
   if (!secret.data) {
     throw new Error("keycloak-admin-password secret has no data");
@@ -143,4 +143,3 @@ export async function createRandomUserAndJoinGroup(
 
   return { userId, username, groupId: group.id };
 }
-
