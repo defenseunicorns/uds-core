@@ -229,25 +229,9 @@ tasks:
           validate_egress: "false"
 
   - name: uds-core-private-pki
-    description: "Generate CA certs and deploy private pki bundle"
-    actions:
-      - task: playwright:private-pki-certs
-      - task: private-pki-bundle
-      - task: test-resources:remove
-
-  - name: uds-core-local-private-pki
-    description: "Locally Generate CA certs and deploy private pki bundle"
-    actions:
-      - task: playwright:local-private-pki-certs
-      - task: private-pki-bundle
-      - cmd: |
-          echo ""
-          echo "You will need to load these certs into your browser if you want to use the Grafana, Keycloak, or httpbin UIs."
-          echo ""
-
-  - name: private-pki-bundle
     description: "Create and Deploy Private PKI Bundle"
     actions:
+      - task: playwright:private-pki-certs
       - task: create:standard-package
         with:
           create_options: "--skip-sbom"
@@ -261,3 +245,8 @@ tasks:
       - description: "Create and Deploy Test App Package"
         task: test-resources:create-deploy
       - task: playwright:private-pki-tests
+      - task: test-resources:remove
+      - cmd: |
+          echo ""
+          echo "Load the `build/private-pki/ca.crt` into your browser if you want to use the Grafana, Keycloak, or httpbin UIs."
+          echo ""
