@@ -242,11 +242,14 @@ tasks:
         task: common-setup:keycloak-user
         with:
           group: "/UDS Core/Admin"
-      - description: "Create and Deploy Test App Package"
-        task: test-resources:create-deploy
+      - description: "Setup Authservice App for Testing"
+        cmd: |
+          uds zarf tools kubectl apply -f src/test/app-ambient-authservice-tenant-package.yaml
+          uds zarf tools kubectl label namespace authservice-ambient-test-app zarf.dev/agent=ignore
+          uds zarf tools kubectl apply -f src/test/app-ambient-authservice-tenant.yaml
       - task: playwright:private-pki-tests
-      - task: test-resources:remove
-      - cmd: |
+      - description: "Follow on Instructions"
+        cmd: |
           echo ""
-          echo "Load the `build/private-pki/ca.crt` into your browser if you want to use the Grafana, Keycloak, or httpbin UIs."
+          echo "Load the build/private-pki/ca.crt into your browser if you want to use the Grafana, Keycloak, or httpbin UIs."
           echo ""

@@ -28,7 +28,7 @@ test.describe("Grafana SSO with Private PKI", () => {
 
   test("Authservice protected app SSO authentication flow", async ({ page }) => {
     // Step 1: Navigate to protected app which should redirect to Keycloak
-    await page.goto(`https://protected.uds.dev`);
+    await page.goto(`https://ambient-protected.uds.dev`);
 
     // Step 2: Verify redirect to Keycloak
     await expect(page).toHaveURL(
@@ -41,6 +41,8 @@ test.describe("Grafana SSO with Private PKI", () => {
     await page.getByRole("button", { name: "Sign In" }).click();
 
     // Step 5: After successful authentication
-    await expect(page).toHaveURL(new RegExp(`^https://protected\\.uds\\.dev`), { timeout: 10000 });
+    await expect(page).toHaveURL(new RegExp(`^https://ambient-protected\\.uds\\.dev`), {
+      timeout: 10000,
+    });
   });
 });
