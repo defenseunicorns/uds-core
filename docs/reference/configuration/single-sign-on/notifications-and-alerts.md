@@ -76,8 +76,7 @@ Event logging is not enabled in the `master` realm by default because this realm
 
 ## Keycloak notifications and alerting
 
-By default, UDS Core does not enable detailed notifications and alerting for Keycloak. This feature is opt-in and must
-be explicitly enabled if you want to receive advanced metrics and alerts about Keycloak configuration changes.
+By default, UDS Core does not enable detailed notifications and alerting for Keycloak. This feature is opt-in and must be explicitly enabled if you want to receive alerts about Keycloak configuration changes.
 
 To enable detailed observability, set the following override in your Bundle configuration:
 
