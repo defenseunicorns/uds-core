@@ -57,7 +57,9 @@ realmConfig:
 realmAuthFlows:
   USERNAME_PASSWORD_AUTH_ENABLED: true
   X509_AUTH_ENABLED: true
+  # @lulaStart 96b7aa1b-b307-45c0-af40-8b57f3726693
   SOCIAL_AUTH_ENABLED: true
+  # @lulaEnd 96b7aa1b-b307-45c0-af40-8b57f3726693
   OTP_ENABLED: true
   WEBAUTHN_ENABLED: false
   X509_MFA_ENABLED: false

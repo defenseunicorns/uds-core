@@ -122,6 +122,7 @@ export function convertSsoToClient(sso: Partial<Sso>): Client {
   return client as Client;
 }
 
+// @lulaStart 720f5e66-1e05-4757-8dc4-36de723ceef7
 export async function syncClient(
   { secretName, secretTemplate, ...clientReq }: Sso,
   pkg: UDSPackage,
@@ -212,6 +213,7 @@ export async function syncClient(
 
   return client;
 }
+// @lulaEnd 720f5e66-1e05-4757-8dc4-36de723ceef7
 
 export function generateSecretData(client: Client, secretTemplate?: { [key: string]: string }) {
   if (secretTemplate) {
