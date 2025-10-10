@@ -53,7 +53,7 @@ components:
         before:
           - description: Handle Helm ownership metadata change on upgrade
             cmd: |
-              RELEASE_NAME="zarf-0e23ce035b6722c6e66014045bb9ecdae2c1bbe8"
+              RELEASE_NAME="zarf-06ee059327936135c2152d44040c9f947f933034"
               RELEASE_NAMESPACE="default"
 
               for crd in \
